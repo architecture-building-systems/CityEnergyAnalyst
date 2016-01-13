@@ -1,0 +1,217 @@
+Code,Code2,Code3,Year type,Year interval,Wall_ext_ag,Wall_ext_bg,Floor_int,Wall_int_sup,Wall_int_nosup,Roof,Floor_g,Services,Win_ext,Excavation
+MDU1,MDU,Multiple dwelling unit,construction,1920,57,57,64,39,32,29,39,32,47,135
+MDU2,MDU,Multiple dwelling unit,construction,1920-1970,34,34,113,32,20,57,113,32,62,135
+MDU3,MDU,Multiple dwelling unit,construction,1970-1980,36,35,110,34,21,113,113,32,123,135
+MDU4,MDU,Multiple dwelling unit,construction,1980-2005,57,71,91,34,21,113,104,32,69,135
+MDU5,MDU,Multiple dwelling unit,construction,2005-2020,112,188,75,73,16,78,180,32,85,135
+MDU6,MDU,Multiple dwelling unit,construction,2020-2030,112,188,75,73,16,78,180,32,85,135
+MDU7,MDU,Multiple dwelling unit,Renovation,1920,0,0,0,0,0,0,0,5,0,0
+MDU8,MDU,Multiple dwelling unit,Renovation,1920-1970,7,7,5,3,3,10,5,5,62,0
+MDU9,MDU,Multiple dwelling unit,Renovation,1970-1980,7,7,5,2,2,9,11,5,123,0
+MDU10,MDU,Multiple dwelling unit,Renovation,1980-2005,12,26,7,3,3,24,23,5,69,0
+MDU11,MDU,Multiple dwelling unit,Renovation,2005-2020,38,52,8,6,6,47,44,5,85,0
+MDU12,MDU,Multiple dwelling unit,Renovation,2020-2030,38,52,8,6,6,47,44,5,85,0
+HOT1,HOT,Hotel,construction,>1920,57,57,64,39,32,29,39,32,47,135
+HOT2,HOT,Hotel,construction,1920-1970,34,34,113,32,20,57,113,32,62,135
+HOT3,HOT,Hotel,construction,1970-1980,36,35,110,34,21,113,113,32,123,135
+HOT4,HOT,Hotel,construction,1980-2005,57,71,91,34,21,113,104,32,69,135
+HOT5,HOT,Hotel,construction,2005-2020,112,188,75,73,16,78,180,32,85,135
+HOT6,HOT,Hotel,construction,2020-2030,112,188,75,73,16,78,180,32,85,135
+HOT7,HOT,Hotel,Renovation,1920,0,0,0,0,0,0,0,5,0,0
+HOT8,HOT,Hotel,Renovation,1920-1970,7,7,5,3,3,10,5,5,62,0
+HOT9,HOT,Hotel,Renovation,1970-1980,7,7,5,2,2,9,11,5,123,0
+HOT10,HOT,Hotel,Renovation,1980-2005,12,26,7,3,3,24,23,5,69,0
+HOT11,HOT,Hotel,Renovation,2005-2020,38,52,8,6,6,47,44,5,85,0
+HOT12,HOT,Hotel,Renovation,2020-2030,38,52,8,6,6,47,44,5,85,0
+SDU1,SDU,Single Dwelling unit,construction,1920,39,39,51,32,26,23,39,32,47,135
+SDU2,SDU,Single Dwelling unit,construction,1920-1970,25,25,95,23,15,34,95,32,62,135
+SDU3,SDU,Single Dwelling unit,construction,1970-1980,30,29,92,28,21,95,95,32,96,135
+SDU4,SDU,Single Dwelling unit,construction,1980-2005,88,102,73,34,21,56,104,32,79,135
+SDU5,SDU,Single Dwelling unit,construction,2005-2020,112,188,75,73,16,78,180,32,85,135
+SDU6,SDU,Single Dwelling unit,construction,2020-2030,112,188,75,73,16,78,180,32,85,135
+SDU7,SDU,Single Dwelling unit,Renovation,1920,0,0,0,0,0,0,0,5,0,0
+SDU8,SDU,Single Dwelling unit,Renovation,1920-1970,7,7,5,3,3,3,5,5,62,0
+SDU9,SDU,Single Dwelling unit,Renovation,1970-1980,7,7,9,2,2,9,11,5,96,0
+SDU10,SDU,Single Dwelling unit,Renovation,1980-2005,12,26,7,3,3,24,23,5,79,0
+SDU11,SDU,Single Dwelling unit,Renovation,2005-2020,38,52,8,6,6,47,44,5,85,0
+SDU12,SDU,Single Dwelling unit,Renovation,2020-2030,38,52,8,6,6,47,44,5,85,0
+ADMIN1,ADMIN,Administrative,construction,1920,57,57,64,39,32,29,39,47,47,135
+ADMIN2,ADMIN,Administrative,construction,1920-1970,31,31,106,26,17,57,106,47,62,135
+ADMIN3,ADMIN,Administrative,construction,1970-1980,36,35,110,34,21,114,113,47,62,135
+ADMIN4,ADMIN,Administrative,construction,1980-2005,57,71,91,34,21,113,104,47,69,135
+ADMIN5,ADMIN,Administrative,construction,2005-2020,112,162,75,73,20,165,161,47,85,135
+ADMIN6,ADMIN,Administrative,construction,2020-2030,112,162,75,73,20,165,161,47,85,135
+ADMIN7,ADMIN,Administrative,Renovation,1920,0,0,0,0,0,0,0,7,0,0
+ADMIN8,ADMIN,Administrative,Renovation,1920-1970,7,7,5,3,3,10,5,7,62,0
+ADMIN9,ADMIN,Administrative,Renovation,1970-1980,7,7,5,2,2,9,11,7,62,0
+ADMIN10,ADMIN,Administrative,Renovation,1980-2005,12,26,7,3,3,24,23,7,69,0
+ADMIN11,ADMIN,Administrative,Renovation,2005-2020,35,49,8,5,5,47,44,7,85,0
+ADMIN12,ADMIN,Administrative,Renovation,2020-2030,35,49,8,5,5,47,44,7,85,0
+COM1,COM,Commercial,construction,1920,57,57,64,39,32,29,39,47,47,135
+COM2,COM,Commercial,construction,1920-1970,31,31,106,26,17,57,106,47,62,135
+COM3,COM,Commercial,construction,1970-1980,77,75,110,67,32,131,115,47,123,135
+COM4,COM,Commercial,construction,1980-2005,50,54,92,47,6,85,126,47,76,135
+COM5,COM,Commercial,construction,2005-2020,99,144,79,73,20,132,148,47,85,135
+COM6,COM,Commercial,construction,2020-2030,99,144,79,73,20,132,148,47,85,135
+COM7,COM,Commercial,Renovation,1920,0,0,0,0,0,0,0,7,0,0
+COM8,COM,Commercial,Renovation,1920-1970,7,7,5,3,3,10,5,7,62,0
+COM9,COM,Commercial,Renovation,1970-1980,10,10,9,5,5,9,13,7,123,0
+COM10,COM,Commercial,Renovation,1980-2005,8,22,6,4,2,24,22,7,76,0
+COM11,COM,Commercial,Renovation,2005-2020,31,46,7,2,2,43,42,7,85,0
+COM12,COM,Commercial,Renovation,2020-2030,31,46,7,2,2,43,42,7,85,0
+SUPER1,SUPER,SuperMarket,construction,1920,39,39,51,32,26,23,39,47,47,135
+SUPER2,SUPER,SuperMarket,construction,1920-1970,31,31,106,26,17,57,106,47,62,135
+SUPER3,SUPER,SuperMarket,construction,1970-1980,77,75,110,67,32,131,115,47,123,135
+SUPER4,SUPER,SuperMarket,construction,1980-2005,52,59,92,43,11,93,120,47,74,135
+SUPER5,SUPER,SuperMarket,construction,2005-2020,99,144,79,73,20,132,148,47,85,135
+SUPER6,SUPER,SuperMarket,construction,2020-2030,99,144,79,73,20,132,148,47,85,135
+SUPER7,SUPER,SuperMarket,Renovation,1920,0,0,0,0,0,0,0,7,0,0
+SUPER8,SUPER,SuperMarket,Renovation,1920-1970,7,7,5,3,3,10,5,7,62,0
+SUPER9,SUPER,SuperMarket,Renovation,1970-1980,10,10,9,5,5,9,13,7,123,0
+SUPER10,SUPER,SuperMarket,Renovation,1980-2005,8,22,6,4,2,24,22,7,74,0
+SUPER11,SUPER,SuperMarket,Renovation,2005-2020,31,46,7,2,2,43,42,7,85,0
+SUPER12,SUPER,SuperMarket,Renovation,2020-2030,31,46,7,2,2,43,42,7,85,0
+REST1,REST,Restaurant,construction,1920,39,39,51,32,26,23,39,47,47,135
+REST2,REST,Restaurant,construction,1920-1970,31,31,106,26,17,57,106,47,62,135
+REST3,REST,Restaurant,construction,1970-1980,77,75,110,67,32,131,115,47,123,135
+REST4,REST,Restaurant,construction,1980-2005,69,84,84,34,21,90,104,47,73,135
+REST5,REST,Restaurant,construction,2005-2020,99,144,79,73,20,132,148,47,85,135
+REST6,REST,Restaurant,construction,2020-2030,99,144,79,73,20,132,148,47,85,135
+REST7,REST,Restaurant,Renovation,1920,0,0,0,0,0,0,0,7,0,0
+REST8,REST,Restaurant,Renovation,1920-1970,7,7,5,3,3,10,5,7,62,0
+REST9,REST,Restaurant,Renovation,1970-1980,10,10,9,5,5,9,13,7,123,0
+REST10,REST,Restaurant,Renovation,1980-2005,12,26,7,3,3,24,23,7,73,0
+REST11,REST,Restaurant,Renovation,2005-2020,31,46,7,2,2,43,42,7,85,0
+REST12,REST,Restaurant,Renovation,2020-2030,31,46,7,2,2,43,42,7,85,0
+RESTS1,RESTS,Restaurant,construction,1920,39,39,51,32,26,23,39,47,47,135
+RESTS2,RESTS,Restaurant,construction,1920-1970,31,31,106,26,17,57,106,47,62,135
+RESTS3,RESTS,Restaurant,construction,1970-1980,77,75,110,67,32,131,115,47,123,135
+RESTS4,RESTS,Restaurant,construction,1980-2005,69,84,84,34,21,90,104,47,73,135
+RESTS5,RESTS,Restaurant,construction,2005-2020,99,144,79,73,20,132,148,47,85,135
+RESTS6,RESTS,Restaurant,construction,2020-2030,99,144,79,73,20,132,148,47,85,135
+RESTS7,RESTS,Restaurant,Renovation,1920,0,0,0,0,0,0,0,7,0,0
+RESTS8,RESTS,Restaurant,Renovation,1920-1970,7,7,5,3,3,10,5,7,62,0
+RESTS9,RESTS,Restaurant,Renovation,1970-1980,10,10,9,5,5,9,13,7,123,0
+RESTS10,RESTS,Restaurant,Renovation,1980-2005,12,26,7,3,3,24,23,7,73,0
+RESTS11,RESTS,Restaurant,Renovation,2005-2020,31,46,7,2,2,43,42,7,85,0
+RESTS12,RESTS,Restaurant,Renovation,2020-2030,31,46,7,2,2,43,42,7,85,0
+INDUS1,INDUS,Industrial,construction,1920,77,77,81,51,0,94,62,47,47,135
+INDUS2,INDUS,Industrial,construction,1920-1970,43,43,118,42,0,115,118,47,62,135
+INDUS3,INDUS,Industrial,construction,1970-1980,71,71,108,67,0,126,110,47,123,135
+INDUS4,INDUS,Industrial,construction,1980-2005,47,47,92,52,0,73,136,47,79,135
+INDUS5,INDUS,Industrial,construction,2005-2020,67,147,90,52,20,99,136,47,85,135
+INDUS6,INDUS,Industrial,construction,2020-2030,67,147,90,52,20,99,136,47,85,135
+INDUS7,INDUS,Industrial,Renovation,1920,0,0,0,0,0,0,0,7,0,0
+INDUS8,INDUS,Industrial,Renovation,1920-1970,5,5,3,3,0,8,3,7,31,0
+INDUS9,INDUS,Industrial,Renovation,1970-1980,5,5,4,5,0,4,10,7,123,0
+INDUS10,INDUS,Industrial,Renovation,1980-2005,8,22,4,4,0,24,21,7,79,0
+INDUS11,INDUS,Industrial,Renovation,2005-2020,26,40,4,4,0,50,31,7,85,0
+INDUS12,INDUS,Industrial,Renovation,2020-2030,26,40,4,4,0,50,31,7,85,0
+EDU1,EDU,Education,construction,1920,57,57,64,39,32,29,39,47,47,135
+EDU2,EDU,Education,construction,1920-1970,31,31,106,26,17,57,106,47,62,135
+EDU3,EDU,Education,construction,1970-1980,36,35,110,34,21,114,113,47,62,135
+EDU4,EDU,Education,construction,1980-2005,57,71,91,34,21,113,104,47,69,135
+EDU5,EDU,Education,construction,2005-2020,112,162,75,73,20,165,161,47,85,135
+EDU6,EDU,Education,construction,2020-2030,112,162,75,73,20,165,161,47,85,135
+EDU7,EDU,Education,Renovation,1920,0,0,0,0,0,0,0,7,0,0
+EDU8,EDU,Education,Renovation,1920-1970,7,7,5,3,3,10,5,7,62,0
+EDU9,EDU,Education,Renovation,1970-1980,7,7,5,2,2,9,11,7,62,0
+EDU10,EDU,Education,Renovation,1980-2005,12,26,7,3,3,24,23,7,69,0
+EDU11,EDU,Education,Renovation,2005-2020,35,49,8,5,5,47,44,7,85,0
+EDU12,EDU,Education,Renovation,2020-2030,35,49,8,5,5,47,44,7,85,0
+HEALTH1,HEALTH,Hospital,construction,1920,57,57,64,39,32,29,39,47,47,135
+HEALTH2,HEALTH,Hospital,construction,1920-1970,34,34,113,32,20,57,113,47,62,135
+HEALTH3,HEALTH,Hospital,construction,1970-1980,36,35,110,34,21,113,113,47,123,135
+HEALTH4,HEALTH,Hospital,construction,1980-2005,57,71,91,34,21,113,104,47,69,135
+HEALTH5,HEALTH,Hospital,construction,2005-2020,99,144,79,73,20,132,148,47,85,135
+HEALTH6,HEALTH,Hospital,construction,2020-2030,99,144,79,73,20,132,148,47,85,135
+HEALTH7,HEALTH,Hospital,Renovation,1920,0,0,0,0,0,0,0,7,0,0
+HEALTH8,HEALTH,Hospital,Renovation,1920-1970,7,7,5,3,3,10,5,7,62,0
+HEALTH9,HEALTH,Hospital,Renovation,1970-1980,7,7,5,2,2,9,11,7,123,0
+HEALTH10,HEALTH,Hospital,Renovation,1980-2005,12,26,7,3,3,24,23,7,69,0
+HEALTH11,HEALTH,Hospital,Renovation,2005-2020,38,52,8,6,6,47,44,7,85,0
+HEALTH12,HEALTH,Hospital,Renovation,2020-2030,38,52,8,6,6,47,44,7,85,0
+PUBLIC1,PUBLIC,Public/Other,construction,1920,57,57,64,39,32,29,39,47,47,135
+PUBLIC2,PUBLIC,Public/Other,construction,1920-1970,34,34,113,32,20,57,113,47,62,135
+PUBLIC3,PUBLIC,Public/Other,construction,1970-1980,36,35,110,34,21,113,113,47,123,135
+PUBLIC4,PUBLIC,Public/Other,construction,1980-2005,57,71,91,34,21,113,104,47,69,135
+PUBLIC5,PUBLIC,Public/Other,construction,2005-2020,99,144,79,73,20,132,148,47,85,135
+PUBLIC6,PUBLIC,Public/Other,construction,2020-2030,99,144,79,73,20,132,148,47,85,135
+PUBLIC7,PUBLIC,Public/Other,Renovation,1920,0,0,0,0,0,0,0,7,0,0
+PUBLIC8,PUBLIC,Public/Other,Renovation,1920-1970,7,7,5,3,3,10,5,7,62,0
+PUBLIC9,PUBLIC,Public/Other,Renovation,1970-1980,7,7,5,2,2,9,11,7,123,0
+PUBLIC10,PUBLIC,Public/Other,Renovation,1980-2005,12,26,7,3,3,24,23,7,69,0
+PUBLIC11,PUBLIC,Public/Other,Renovation,2005-2020,38,52,8,6,6,47,44,7,85,0
+PUBLIC12,PUBLIC,Public/Other,Renovation,2020-2030,38,52,8,6,6,47,44,7,85,0
+SPORT1,SPORT,Fitness-Sport,construction,1920,57,57,64,39,32,29,39,47,47,135
+SPORT2,SPORT,Fitness-Sport,construction,1920-1970,31,31,106,26,17,57,106,47,62,135
+SPORT3,SPORT,Fitness-Sport,construction,1970-1980,77,75,110,67,32,131,115,47,123,135
+SPORT4,SPORT,Fitness-Sport,construction,1980-2005,50,54,92,47,6,85,126,47,76,135
+SPORT5,SPORT,Fitness-Sport,construction,2005-2020,99,144,79,73,20,132,148,47,85,135
+SPORT6,SPORT,Fitness-Sport,construction,2020-2030,99,144,79,73,20,132,148,47,85,135
+SPORT7,SPORT,Fitness-Sport,Renovation,1920,0,0,0,0,0,0,0,7,0,0
+SPORT8,SPORT,Fitness-Sport,Renovation,1920-1970,7,7,5,3,3,10,5,7,62,0
+SPORT9,SPORT,Fitness-Sport,Renovation,1970-1980,10,10,9,5,5,9,13,7,123,0
+SPORT10,SPORT,Fitness-Sport,Renovation,1980-2005,8,22,6,4,2,24,22,7,76,0
+SPORT11,SPORT,Fitness-Sport,Renovation,2005-2020,26,40,4,4,4,50,31,7,85,0
+SPORT12,SPORT,Fitness-Sport,Renovation,2020-2030,26,40,4,4,4,50,31,7,85,0
+SWIM1,SWIM,Swimming Hall,construction,1920,57,57,64,39,32,29,39,47,47,135
+SWIM2,SWIM,Swimming Hall,construction,1920-1970,31,31,106,26,17,57,106,47,62,135
+SWIM3,SWIM,Swimming Hall,construction,1970-1980,77,75,110,67,32,131,115,47,123,135
+SWIM4,SWIM,Swimming Hall,construction,1980-2005,50,54,92,47,6,85,126,47,76,135
+SWIM5,SWIM,Swimming Hall,construction,2005-2020,67,147,90,52,20,99,136,47,85,135
+SWIM6,SWIM,Swimming Hall,construction,2020-2030,67,147,90,52,20,99,136,47,85,135
+SWIM7,SWIM,Swimming Hall,Renovation,1920,0,0,0,0,0,0,0,7,0,0
+SWIM8,SWIM,Swimming Hall,Renovation,1920-1970,7,7,5,3,3,10,5,7,62,0
+SWIM9,SWIM,Swimming Hall,Renovation,1970-1980,10,10,9,5,5,9,13,7,123,0
+SWIM10,SWIM,Swimming Hall,Renovation,1980-2005,8,22,6,4,2,24,22,7,76,0
+SWIM11,SWIM,Swimming Hall,Renovation,2005-2020,26,40,4,4,4,50,31,7,85,0
+SWIM12,SWIM,Swimming Hall,Renovation,2020-2030,26,40,4,4,4,50,31,7,85,0
+SR1,SR,Server room,construction,1920,57,57,64,39,32,29,39,47,47,135
+SR2,SR,Server room,construction,1920-1970,31,31,106,26,17,57,106,47,62,135
+SR3,SR,Server room,construction,1970-1980,36,35,110,34,21,114,113,47,62,135
+SR4,SR,Server room,construction,1980-2005,50,54,92,47,6,85,126,47,76,135
+SR5,SR,Server room,construction,2005-2020,67,147,90,52,20,99,136,47,85,135
+SR6,SR,Server room,construction,2020-2030,67,147,90,52,20,99,136,47,85,135
+SR7,SR,Server room,Renovation,1920,0,0,0,0,0,0,0,7,0,0
+SR8,SR,Server room,Renovation,1920-1970,7,7,5,3,3,10,5,7,62,0
+SR9,SR,Server room,Renovation,1970-1980,7,7,5,2,2,9,11,7,62,0
+SR10,SR,Server room,Renovation,1980-2005,8,22,6,4,2,24,22,7,76,0
+SR11,SR,Server room,Renovation,2005-2020,31,46,7,2,2,43,42,7,85,0
+SR12,SR,Server room,Renovation,2020-2030,31,46,7,2,2,43,42,7,85,0
+ICE1,ICE,Icering,construction,1920,57,57,64,39,32,29,39,47,47,135
+ICE2,ICE,Icering,construction,1920-1970,31,31,106,26,17,57,106,47,62,135
+ICE3,ICE,Icering,construction,1970-1980,77,75,110,67,32,131,115,47,123,135
+ICE4,ICE,Icering,construction,1980-2005,50,54,92,47,6,85,126,47,76,135
+ICE5,ICE,Icering,construction,2005-2020,67,108,90,52,20,99,136,47,85,135
+ICE6,ICE,Icering,construction,2020-2030,67,108,90,52,20,99,136,47,85,135
+ICE7,ICE,Icering,Renovation,1920,0,0,0,0,0,0,0,7,0,0
+ICE8,ICE,Icering,Renovation,1920-1970,7,7,5,3,3,10,5,7,62,0
+ICE9,ICE,Icering,Renovation,1970-1980,10,10,9,5,5,9,13,7,123,0
+ICE10,ICE,Icering,Renovation,1980-2005,8,22,6,4,2,24,22,7,76,0
+ICE11,ICE,Icering,Renovation,2005-2020,26,147,4,4,0,50,31,7,85,0
+ICE12,ICE,Icering,Renovation,2020-2030,26,147,4,4,0,50,31,7,85,0
+DEPO1,DEPO,Deposit/parking,construction,1920,77,77,81,51,0,94,62,15,47,135
+DEPO2,DEPO,Deposit/parking,construction,1920-1970,43,43,118,42,0,115,118,15,62,135
+DEPO3,DEPO,Deposit/parking,construction,1970-1980,71,71,108,67,0,126,110,15,123,135
+DEPO4,DEPO,Deposit/parking,construction,1980-2005,47,47,92,52,0,73,136,15,79,135
+DEPO5,DEPO,Deposit/parking,construction,2005-2020,67,108,90,52,0,99,136,15,85,135
+DEPO6,DEPO,Deposit/parking,construction,2020-2030,67,108,90,52,0,99,136,15,85,135
+DEPO7,DEPO,Deposit/parking,Renovation,1920,0,0,0,0,0,0,0,2,0,0
+DEPO8,DEPO,Deposit/parking,Renovation,1920-1970,5,5,3,3,0,8,3,2,31,0
+DEPO9,DEPO,Deposit/parking,Renovation,1970-1980,5,5,4,5,0,4,10,2,123,0
+DEPO10,DEPO,Deposit/parking,Renovation,1980-2005,8,22,4,4,0,24,21,2,79,0
+DEPO11,DEPO,Deposit/parking,Renovation,2005-2020,26,40,4,4,0,50,31,2,85,0
+DEPO12,DEPO,Deposit/parking,Renovation,2020-2030,26,40,4,4,0,50,31,2,85,0
+CR11,CR,Cooling-room,construction,1920,77,77,81,51,0,94,62,47,47,135
+CR12,CR,Cooling-room,construction,1920-1970,31,31,106,26,17,57,106,47,62,135
+CR13,CR,Cooling-room,construction,1970-1980,77,75,110,67,32,131,115,47,123,135
+CR14,CR,Cooling-room,construction,1980-2005,50,54,92,47,6,85,126,47,76,135
+CR15,CR,Cooling-room,construction,2005-2020,99,144,79,73,20,132,148,47,85,135
+CR16,CR,Cooling-room,construction,2020-2030,99,144,79,73,20,132,148,47,85,135
+CR17,CR,Cooling-room,Renovation,1920,0,0,0,0,0,0,0,7,0,0
+CR18,CR,Cooling-room,Renovation,1920-1970,7,7,5,3,3,10,5,7,62,0
+CR19,CR,Cooling-room,Renovation,1970-1980,10,10,9,5,5,9,13,7,123,0
+CR20,CR,Cooling-room,Renovation,1980-2005,8,22,6,4,2,24,22,7,76,0
+CR21,CR,Cooling-room,Renovation,2005-2020,31,46,7,2,2,43,42,7,85,0
+CR22,CR,Cooling-room,Renovation,2020-2030,31,46,7,2,2,43,42,7,85,0
