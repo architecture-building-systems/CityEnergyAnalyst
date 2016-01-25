@@ -1,3 +1,6 @@
+# PyCharm files
+.idea/
+
 # VIM files
 *.swp
 

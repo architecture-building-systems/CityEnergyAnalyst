@@ -108,7 +108,7 @@ def analytical(path_radiation, path_schedules, path_weather,
     # local variables
     WeatherData = pd.read_csv(path_weather, usecols=['te', 'RH'])
     list_uses = gv.list_uses
-    RadiationFile = pd.read_csv(path_radiation)
+    radiation_file = pd.read_csv(path_radiation)
     systems_temp = pd.read_excel(path_properties, sheetname='systems_temp')
     systems = pd.read_excel(path_properties, sheetname='systems')
     envelope = pd.read_excel(path_properties, sheetname='envelope')
@@ -134,19 +134,19 @@ def analytical(path_radiation, path_schedules, path_weather,
                                           general,
                                           systems,
                                           systems_temp,
-                                          RadiationFile,
+                                          radiation_file,
                                           gv)
 
     # calculate clean file of radiation - @ daren: this is a A BOTTLE NECK
-    Solar = f.CalcIncidentRadiation(all_properties, RadiationFile)
+    Solar = f.CalcIncidentRadiation(all_properties, radiation_file)
 
-    # compute demand and save in disc
-    buildings = all_properties.Name.count()
-    for building in range(buildings):
-        total = f.CalcThermalLoads(
-            building,
-            all_properties.ix[building],
-            Solar.ix[building],
+    # compute demand and save to disc
+    buildings_count = all_properties.Name.count()
+    for building_index in range(buildings_count):
+        thermal_loads = f.CalcThermalLoads(
+            building_index,
+            all_properties.ix[building_index],
+            Solar.ix[building_index],
             path_results,
             Profiles,
             list_uses,
@@ -157,13 +157,13 @@ def analytical(path_radiation, path_schedules, path_weather,
             gv,
             0,
             0)
-        print 'complete building ' + str(building+1) + 'of ' + str(buildings)
+        print 'complete building %i of %i' % (building_index+1, buildings_count)
 
         # compute total files and save in disc
-        if building == 0:
-            df = total
+        if building_index == 0:
+            df = thermal_loads
         else:
-            df = df.append(total, ignore_index=True)
+            df = df.append(thermal_loads, ignore_index=True)
     df.to_csv(
         os.path.join(
             path_results,

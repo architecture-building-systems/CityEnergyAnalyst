@@ -88,8 +88,8 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses,
                generate_envelope, generate_systems, generate_equipment, gv):
     """
     algorithm to query building properties from statistical database
-    Archetypes_HVAC_properties.csv. for more info check the integrated demand
-    model of Fonseca et al. 2015. Appl. energy.
+    Archetypes_HVAC_properties.csv. For more info check the integrated demand
+    model of "Fonseca et al. 2015. Appl. energy".
 
     Parameters
     ----------
@@ -101,8 +101,8 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses,
         path to intermediate results folder
     generate_uses - generate_envelope -generate_systems - generate_equipment
         flags True or False to know which categories of the
-        properties file to run. it could be represented by acheck box in the
-        form
+        properties file to run. it could be represented by a check box in the
+        form.
 
     Returns
     -------
