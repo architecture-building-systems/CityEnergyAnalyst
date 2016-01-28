@@ -1,36 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
-import pandas as pd
-import numpy as np
-import scipy.optimize as sopt
-import scipy
+
 import math
 
-def calc_mainuse(uses_df, uses):
-    """
-    FIXME: look up input, look up output and rtype!
-    :rtype: object
-    """
-    databaseclean = uses_df[uses].transpose()
-    array_min = np.array(
-        databaseclean[
-            databaseclean[:] > 0].idxmin(
-            skipna=True))
-    array_max = np.array(
-        databaseclean[
-            databaseclean[:] > 0].idxmax(
-            skipna=True))
-    mainuse = np.vectorize(calc_comparison)(array_min, array_max)
-    return mainuse
-
-
-def calc_comparison(array_min, array_max):
-    # do this to avoid that the selection of values
-    # be based on the DEPO. for buildings qih heated spaces
-    if array_max == 'DEPO':
-        if array_min != 'DEPO':
-            array_max = array_min
-    return array_max
+import numpy as np
+import pandas as pd
+import scipy
+import scipy.optimize as sopt
 
 
 def calc_category(x, y):

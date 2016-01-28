@@ -99,10 +99,14 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses,
         path to buildings file buildings.shp
     path_results : string
         path to intermediate results folder
-    generate_uses - generate_envelope -generate_systems - generate_equipment
-        flags True or False to know which categories of the
-        properties file to run. it could be represented by a check box in the
-        form.
+    generate_uses: boolean
+        True, if the building uses are to be generated, otherwise False.
+    generate_envelope: boolean
+        True, if the envelope is to be generated, otherwise False.
+    generate_systems: boolean
+        True, if the systems are to be generated, otherwise False.
+    generate_equipment: boolean
+        True, if equipment is to be generated, otherwise False.
 
     Returns
     -------
@@ -187,7 +191,7 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses,
                                'perimeter': perimeter,
                                'xperimeter': xperimeter,
                                'yperimeter': yperimeter})
-    general_df['mainuse'] = f.calc_mainuse(uses_df, list_uses)
+    general_df['mainuse'] = cea.properties.calc_mainuse(uses_df, list_uses)
     general_df.to_excel(writer, 'general', index=False, float_format="%.2f")
     writer.save()
 
@@ -266,6 +270,7 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses,
             float_format="%.2f")
         writer.save()
 
+
 def test_properties():
     path_archetypes = os.path.join(
             os.path.dirname(__file__),
@@ -283,3 +288,30 @@ def test_properties():
 
 if __name__ == '__main__':
     test_properties()
+
+
+def calc_main_use(uses_df, uses):
+    """
+    FIXME: look up input, look up output and rtype!
+    :rtype: object
+    """
+    databaseclean = uses_df[uses].transpose()
+    array_min = np.array(
+        databaseclean[
+            databaseclean[:] > 0].idxmin(
+            skipna=True))
+    array_max = np.array(
+        databaseclean[
+            databaseclean[:] > 0].idxmax(
+            skipna=True))
+    main_use = np.vectorize(calc_comparison)(array_min, array_max)
+    return main_use
+
+
+def calc_comparison(array_min, array_max):
+    # do this to avoid that the selection of values
+    # be based on the DEPO. for buildings qih heated spaces
+    if array_max == 'DEPO':
+        if array_min != 'DEPO':
+            array_max = array_min
+    return array_max
