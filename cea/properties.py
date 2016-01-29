@@ -77,15 +77,15 @@ class PropertiesTool(object):
         properties(path_archetypes=path_archetypes,
                    path_buildings=path_buildings.valueAsText,
                    path_results=path_results.valueAsText,
-                   generate_uses=generate_uses.value,
-                   generate_envelope=generate_envelope.value,
-                   generate_systems=generate_systems.value,
-                   generate_equipment=generate_equipment.value,
+                   generate_uses_flag=generate_uses.value,
+                   generate_envelope_flag=generate_envelope.value,
+                   generate_systems_flag=generate_systems.value,
+                   generate_equipment_flag=generate_equipment.value,
                    gv=globalvar.GlobalVariables())
 
 
-def properties(path_archetypes, path_buildings, path_results, generate_uses,
-               generate_envelope, generate_systems, generate_equipment, gv):
+def properties(path_archetypes, path_buildings, path_results, generate_uses_flag,
+               generate_envelope_flag, generate_systems_flag, generate_equipment_flag, gv):
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. For more info check the integrated demand
@@ -99,13 +99,13 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses,
         path to buildings file buildings.shp
     path_results : string
         path to intermediate results folder
-    generate_uses: boolean
+    generate_uses_flag: boolean
         True, if the building uses are to be generated, otherwise False.
-    generate_envelope: boolean
+    generate_envelope_flag: boolean
         True, if the envelope is to be generated, otherwise False.
-    generate_systems: boolean
+    generate_systems_flag: boolean
         True, if the systems are to be generated, otherwise False.
-    generate_equipment: boolean
+    generate_equipment_flag: boolean
         True, if equipment is to be generated, otherwise False.
 
     Returns
@@ -160,18 +160,8 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses,
             yperimeter.append(row[9])
     arcpy.Delete_management("in_memory\\built")
     # Generate uses properties
-    if generate_uses:
-        value = np.zeros(len(areas))
-        uses_df = pd.DataFrame({'Name': name, 'ADMIN': value+1, 'SR': value,
-                                'REST': value, 'RESTS': value, 'DEPO': value,
-                                'COM': value, 'MDU': value, 'SDU': value,
-                                'EDU': value, 'CR': value, 'HEALTH': value,
-                                'SPORT': value, 'SWIM': value, 'PUBLIC': value,
-                                'SUPER': value, 'ICE': value, 'HOT': value,
-                                'INDUS': value})
-        writer = pd.ExcelWriter(path_results+'\\'+'properties.xls')
-        uses_df.to_excel(writer, 'uses', index=False, float_format="%.2f")
-        writer.save()
+    if generate_uses_flag:
+        uses_df, writer = generate_uses(areas, name, path_results)  # FIXME: refactor - writer should not be part of the interface!
     else:
         uses_df = pd.read_excel(
             path_results +
@@ -192,7 +182,7 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses,
                                'xperimeter': xperimeter,
                                'yperimeter': yperimeter})
     general_df['mainuse'] = cea.properties.calc_mainuse(uses_df, list_uses)
-    general_df.to_excel(writer, 'general', index=False, float_format="%.2f")
+    general_df.to_excel(writer, 'general', index=False, float_format="%.2f")  # FIXME: there is a bug here: `writer` not guaranteed to be initialized!
     writer.save()
 
     # Assign the year of each category and create a new code
@@ -214,7 +204,7 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses,
     q['Generation_electricity'] = gv.generation_electricity
 
     # Generate envelope properties
-    if generate_envelope:
+    if generate_envelope_flag:
         q.to_excel(writer, 'envelope', cols={'Name', 'Shading_Type',
                    'Shading_Pos', 'fwindow', 'Construction', 'Uwall',
                    'Ubasement', 'Uwindow', 'Uroof', 'Hs', 'Es','PFloor'}, index=False,
@@ -222,7 +212,7 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses,
         writer.save()
 
     # generate systems properties
-    if generate_systems:
+    if generate_systems_flag:
         q.to_excel(
             writer,
             'systems',
@@ -256,7 +246,7 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses,
             index=False,
             float_format="%.2f")
         writer.save()
-    if generate_equipment:
+    if generate_equipment_flag:
         q.to_excel(
             writer,
             'equipment',
@@ -269,6 +259,21 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses,
             index=False,
             float_format="%.2f")
         writer.save()
+
+
+def generate_uses(areas, name, path_results):
+    value = np.zeros(len(areas))
+    uses_df = pd.DataFrame({'Name': name, 'ADMIN': value + 1, 'SR': value,
+                            'REST': value, 'RESTS': value, 'DEPO': value,
+                            'COM': value, 'MDU': value, 'SDU': value,
+                            'EDU': value, 'CR': value, 'HEALTH': value,
+                            'SPORT': value, 'SWIM': value, 'PUBLIC': value,
+                            'SUPER': value, 'ICE': value, 'HOT': value,
+                            'INDUS': value})
+    writer = pd.ExcelWriter(path_results + '\\' + 'properties.xls')
+    uses_df.to_excel(writer, 'uses', index=False, float_format="%.2f")
+    writer.save()
+    return uses_df, writer
 
 
 def test_properties():
