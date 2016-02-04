@@ -40,7 +40,7 @@ To install pandas in the correct version I used the following approach:
   - create a file `Lib/site-packages/esri103.pth`
   - edit the file to contain the following:
      ``` # .pth file for accessing pandas from ArcGIS 10.3
-     C:\Users\jdoe\Anaconda\envs\esri103\Lib\site-packages```
+     C:\Users\jdoe\Anaconda2\envs\esri103\Lib\site-packages```
 
 If you would like to be able to access the `arcpy` module from the `esri103` Anaconda python environment, create a file called  `arcpy.pth` in `C:\Users\jdoe\Anaconda\envs\esri103\Lib\site-packages` with the following contents:
 ```txt
