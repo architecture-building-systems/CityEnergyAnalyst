@@ -1,19 +1,19 @@
-import prototype.demand
-reload(prototype.demand)
-import prototype.properties
-reload(prototype.properties)
-import prototype.emissions
-reload(prototype.emissions)
-import prototype.embodied
-reload(prototype.embodied)
-import prototype.heatmaps
-reload(prototype.heatmaps)
+import cea.demand
+reload(cea.demand)
+import cea.properties
+reload(cea.properties)
+import cea.emissions
+reload(cea.emissions)
+import cea.embodied
+reload(cea.embodied)
+import cea.heatmaps
+reload(cea.heatmaps)
 
-DemandTool = prototype.demand.DemandTool
-PropertiesTool = prototype.properties.PropertiesTool
-EmissionsTool = prototype.emissions.EmissionsTool
-EmbodiedEnergyTool = prototype.embodied.EmbodiedEnergyTool
-HeatmapsTool = prototype.heatmaps.HeatmapsTool
+DemandTool = cea.demand.DemandTool
+PropertiesTool = cea.properties.PropertiesTool
+EmissionsTool = cea.emissions.EmissionsTool
+EmbodiedEnergyTool = cea.embodied.EmbodiedEnergyTool
+HeatmapsTool = cea.heatmaps.HeatmapsTool
 
 class Toolbox(object):
     def __init__(self):
