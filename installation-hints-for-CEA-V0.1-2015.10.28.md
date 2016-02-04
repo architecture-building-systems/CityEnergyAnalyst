@@ -22,8 +22,8 @@ This is the list of modules and their versions needed:
 To install pandas in the correct version I used the following approach:
 
 - install the Anaconda distribution of python (I did not install it as the default python version)
-- open an Anaconda Command Prompt (from the start menu) and type: `conda create -n esri103 python=2.7 numpy=2.7.1`
-	- this will create an environment (in your user folder) called "esri103" that is tied to the numpy version 2.7.1.
+- open an Anaconda Command Prompt (from the start menu) and type: `conda create -n esri103 python=2.7 numpy=1.7.1`
+	- this will create an environment (in your user folder) called "esri103" that is tied to the numpy version 1.7.1.
 	- that environment can be found in `C:\Users\jdoe\Anaconda\envs\esri103`
 	- inside the subfolder `conda-meta` create a file called `pinned` (that is right, no extension) and set the contents to: 
 	```numpy ==1.7.1```
