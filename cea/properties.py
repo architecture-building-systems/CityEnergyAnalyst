@@ -158,7 +158,7 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses_flag
             perimeter.append(row[7])
             xperimeter.append(row[8])
             yperimeter.append(row[9])
-    arcpy.Delete_management("in_memory\\built")
+    arcpy.Delete_management("in_memory/built")
     # Generate uses properties
     if generate_uses_flag:
         uses_df, writer = generate_uses(areas, name, path_results)  # FIXME: refactor - writer should not be part of the interface!
