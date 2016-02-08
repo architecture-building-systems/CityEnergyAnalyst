@@ -181,7 +181,7 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses_flag
                                'perimeter': perimeter,
                                'xperimeter': xperimeter,
                                'yperimeter': yperimeter})
-    general_df['mainuse'] = cea.properties.calc_mainuse(uses_df, list_uses)
+    general_df['mainuse'] = calc_main_use(uses_df, list_uses)
     general_df.to_excel(writer, 'general', index=False, float_format="%.2f")  # FIXME: there is a bug here: `writer` not guaranteed to be initialized!
     writer.save()
 
