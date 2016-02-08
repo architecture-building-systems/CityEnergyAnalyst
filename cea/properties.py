@@ -160,13 +160,12 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses_flag
             yperimeter.append(row[9])
     arcpy.Delete_management("in_memory/built")
     # Generate uses properties
+    writer = pd.ExcelWriter(os.path.join(path_results, 'properties.xls'))
     if generate_uses_flag:
-        uses_df, writer = generate_uses(areas, name, path_results)  # FIXME: refactor - writer should not be part of the interface!
+        uses_df = generate_uses(areas, name, writer)
     else:
         uses_df = pd.read_excel(
-            path_results +
-            '\\' +
-            'properties.xls',
+            os.path.join(path_results, 'properties.xls'),
             sheetname="uses")
 
     # Generate general properties
@@ -261,7 +260,8 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses_flag
         writer.save()
 
 
-def generate_uses(areas, name, path_results):
+def generate_uses(areas, name, writer):
+    # FIXME: generate_uses does two things here: 1) create the uses df and 2) save it to excel! refactor...
     value = np.zeros(len(areas))
     uses_df = pd.DataFrame({'Name': name, 'ADMIN': value + 1, 'SR': value,
                             'REST': value, 'RESTS': value, 'DEPO': value,
@@ -270,10 +270,9 @@ def generate_uses(areas, name, path_results):
                             'SPORT': value, 'SWIM': value, 'PUBLIC': value,
                             'SUPER': value, 'ICE': value, 'HOT': value,
                             'INDUS': value})
-    writer = pd.ExcelWriter(path_results + '\\' + 'properties.xls')
     uses_df.to_excel(writer, 'uses', index=False, float_format="%.2f")
     writer.save()
-    return uses_df, writer
+    return uses_df
 
 
 def test_properties():
