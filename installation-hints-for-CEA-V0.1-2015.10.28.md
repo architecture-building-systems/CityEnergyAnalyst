@@ -21,9 +21,9 @@ This is the list of modules and their versions needed:
 
 To install pandas in the correct version I used the following approach:
 
-- install the Anaconda distribution of python (I did not install it as the default python version)
-- open an Anaconda Command Prompt (from the start menu) and type: `conda create -n esri103 python=2.7 numpy=2.7.1`
-	- this will create an environment (in your user folder) called "esri103" that is tied to the numpy version 2.7.1.
+- install the Anaconda distribution of python for 32-bit (I did not install it as the default python version)
+- open an Anaconda Command Prompt (from the start menu) and type: `conda create -n esri103 python=2.7 numpy=1.7.1`
+	- this will create an environment (in your user folder) called "esri103" that is tied to the numpy version 1.7.1.
 	- that environment can be found in `C:\Users\jdoe\Anaconda\envs\esri103`
 	- inside the subfolder `conda-meta` create a file called `pinned` (that is right, no extension) and set the contents to: 
 	```numpy ==1.7.1```
@@ -40,7 +40,7 @@ To install pandas in the correct version I used the following approach:
   - create a file `Lib/site-packages/esri103.pth`
   - edit the file to contain the following:
      ``` # .pth file for accessing pandas from ArcGIS 10.3
-     C:\Users\jdoe\Anaconda\envs\esri103\Lib\site-packages```
+     C:\Users\jdoe\Anaconda2\envs\esri103\Lib\site-packages```
 
 If you would like to be able to access the `arcpy` module from the `esri103` Anaconda python environment, create a file called  `arcpy.pth` in `C:\Users\jdoe\Anaconda\envs\esri103\Lib\site-packages` with the following contents:
 ```txt
