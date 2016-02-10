@@ -133,10 +133,10 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses_flag
     # get zperimeter=width building and yperimeter = lenght building
     arcpy.env.overwriteOutput = True
     arcpy.MinimumBoundingGeometry_management(path_buildings,
-                                             "in_memory/built",
-                                             "RECTANGLE_BY_AREA",
-                                             "NONE")
-
+                                             "in_memory/built", "RECTANGLE_BY_AREA",
+                                             "NONE",
+                                             "",
+                                             "MBG_FIELDS")
     with arcpy.da.SearchCursor("in_memory/built",
                                ('Height',
                                 'SHAPE@AREA',
