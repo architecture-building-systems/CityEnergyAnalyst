@@ -223,47 +223,48 @@ def lca_embodied(
             embodied_LCA,
             left_on='code2',
             right_on='Code')
-
+        
+        df3 = pd.merge(df,df2,left_on='Name', right_on='Name', suffixes=['','_y'])
         # building construction properties to array
-        fp = df['footprint'].values
-        floors = df['floors'].values
-        af = fp*floors*df['Hs'].values
-        yearcons = df['year_built'].values
-        yearretro = df['year_retrofit'].values
-        height = df['height'].values
-        fwindow = df['fwindow'].values
-        perimeter = df['perimeter'].values
-        area = df['built_area'].values
-        PFloor = df['PFloor'].values
+        fp = df3['footprint'].values
+        floors = df3['floors'].values
+        af = fp*floors*df3['Es'].values
+        yearcons = df3['year_built'].values
+        yearretro = df3['year_retrofit'].values
+        height = df3['height'].values
+        fwindow = df3['fwindow'].values
+        perimeter = df3['perimeter'].values
+        area = df3['built_area'].values
+        PFloor = df3['PFloor'].values
         windows = perimeter*height*fwindow
 
         # computing factors to array of construction
-        win_ext_factor = df['Win_ext'].values
-        excavation_factor = df['Excavation'].values
+        win_ext_factor = df3['Win_ext'].values
+        excavation_factor = df3['Excavation'].values
         wall_int_avg_factor = (
-            (df['Wall_int_nosup'] +
-             df['Wall_int_sup']) *
+            (df3['Wall_int_nosup'] +
+             df3['Wall_int_sup']) *
             gv.fwratio /
             2).values
-        walls_ext_bg_factor = df['Wall_ext_bg'].values
-        walls_ext_ag_factor = df['Wall_ext_ag'].values
-        floor_int_factor = df['Floor_int'].values
-        services_factor = df['Services'].values
-        floor_basement_factor = df['Floor_g'].values
-        roof_factor = df['Roof'].values
+        walls_ext_bg_factor = df3['Wall_ext_bg'].values
+        walls_ext_ag_factor = df3['Wall_ext_ag'].values
+        floor_int_factor = df3['Floor_int'].values
+        services_factor = df3['Services'].values
+        floor_basement_factor = df3['Floor_g'].values
+        roof_factor = df3['Roof'].values
 
         # computing factors to array of retrofit
-        win_ext_factor2 = df2['Win_ext'].values
+        win_ext_factor2 = df3['Win_ext_y'].values
         wall_int_avg_factor2 = (
-            (df2['Wall_int_nosup'] +
-             df2['Wall_int_sup']) *
+            (df3['Wall_int_nosup_y'] +
+             df3['Wall_int_sup_y']) *
             gv.fwratio /
             2).values
-        walls_ext_ag_factor2 = df2['Wall_ext_ag'].values
-        floor_int_factor2 = df2['Floor_int'].values
-        services_factor2 = df2['Services'].values
-        floor_basement_factor2 = df2['Floor_g'].values
-        roof_factor2 = df2['Roof'].values
+        walls_ext_ag_factor2 = df3['Wall_ext_ag_y'].values
+        floor_int_factor2 = df3['Floor_int_y'].values
+        services_factor2 = df3['Services_y'].values
+        floor_basement_factor2 = df3['Floor_g_y'].values
+        roof_factor2 = df3['Roof_y'].values
 
         # computing factor out vectorization
         # windows
@@ -323,13 +324,25 @@ def lca_embodied(
                 area,
                 gv))
 
-    pd.DataFrame({'GEN_GJ': result[0] / 1000,
-                  'GEN_MJm2': result[0] / af,
-                  'CO2_ton': result[1] / 1000,
-                  'CO2_kgm2': result[1] / af}).to_csv(
-        os.path.join(path_results, 'Total_LCA_embodied.csv'),
-        index=False, float_format='%.2f')
-
+    
+    df3['GEN_MJm2'] = 0
+    df3['CO2_kgm2'] = 0
+    for x in range(df3.Name.count()):
+        if af[x] <= 0:
+            df3.loc[x,'GEN_MJm2'] = result[0][x]/(fp[x]*floors[x]*0.9)
+            df3.loc[x,'CO2_kgm2'] = result[1][x]/(fp[x]*floors[x]*0.9)
+        else:
+            df3.loc[x,'GEN_MJm2'] = result[0][x]/(af[x])
+            df3.loc[x,'CO2_kgm2'] = result[1][x]/(af[x])
+            
+    
+    pd.DataFrame({'Name':df3['Name'],
+                    'GEN_GJ': result[0] / 1000,
+                    'GEN_MJm2': df3['GEN_MJm2'],
+                    'CO2_ton': result[1] / 1000,
+                    'CO2_kgm2': df3['CO2_kgm2']}).to_csv(
+    os.path.join(path_results, 'Total_LCA_embodied.csv'),
+                            index=False, float_format='%.2f')
 
 def query_embodied(
         fp,
@@ -443,10 +456,10 @@ def calc_category_retrofit(y):
 
 
 def test_lca_embodied():
-    path_results = r'C:\CEA_FS2015_EXERCISE01\01_Scenario one\103_final output\emissions'  # noqa
+    path_results = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\103_final output\emissions'  # noqa
     path_LCA_embodied_energy = os.path.join(os.path.dirname(__file__), 'db', 'Archetypes', 'Archetypes_embodied_energy.csv')  # noqa
     path_LCA_embodied_emissions = os.path.join(os.path.dirname(__file__), 'db', 'Archetypes', 'Archetypes_embodied_emissions.csv')  # noqa
-    path_properties = r'C:\CEA_FS2015_EXERCISE01\01_Scenario one\102_intermediate output\building properties\properties.xls'  # noqa
+    path_properties = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\102_intermediate output\building properties\properties.xls'  # noqa
     yearcalc = 2050
     retrofit_windows = True
     retrofit_roof = True

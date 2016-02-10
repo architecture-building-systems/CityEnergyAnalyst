@@ -19,7 +19,7 @@ import arcpy
 class GraphsDemandTool(object):
 
     def __init__(self):
-        self.label = 'Demand Graphs'
+        self.label = 'Demand graphs'
         self.description = 'Calculate Graphs of the Demand'
         self.canRunInBackground = False
 
