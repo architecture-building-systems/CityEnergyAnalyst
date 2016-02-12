@@ -6,6 +6,7 @@ File history and credits:
 J. Fonseca  script development          24.08.15
 D. Thomas   formatting and cleaning
 D. Thomas   integration in toolbox
+A. Elesawy  first steps with GitHub
 """
 from __future__ import division
 import pandas as pd
