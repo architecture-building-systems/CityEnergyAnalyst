@@ -6,6 +6,7 @@ File history and credits:
 J. Fonseca  script development          24.08.15
 D. Thomas   formatting and cleaning
 D. Thomas   integration in toolbox
+A. Elesawy  first steps with GitHub
 """
 from __future__ import division
 import pandas as pd
@@ -14,6 +15,7 @@ import functions as f
 import globalvar
 reload(globalvar)
 import arcpy
+import tempfile
 import os
 
 gv = globalvar.GlobalVariables()
@@ -71,13 +73,14 @@ class DemandTool(object):
         analytical(path_radiation=parameters[0].valueAsText,
                    path_schedules=os.path.join(
                        os.path.dirname(__file__), 'db', 'Schedules'),
+                   path_temporary_folder = tempfile.gettempdir(),
                    path_weather=parameters[1].valueAsText,
                    path_results=parameters[2].valueAsText,
                    path_properties=parameters[3].valueAsText,
                    gv=gv)
 
 
-def analytical(path_radiation, path_schedules, path_weather,
+def analytical(path_radiation, path_schedules, path_temporary_folder, path_weather,
                path_results, path_properties, gv):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
@@ -140,30 +143,36 @@ def analytical(path_radiation, path_schedules, path_weather,
     # calculate clean file of radiation - @ daren: this is a A BOTTLE NECK
     Solar = f.CalcIncidentRadiation(all_properties, radiation_file)
 
-    # compute demand and save to disc
-    buildings_count = all_properties.Name.count()
-    for building_index in range(buildings_count):
-        thermal_loads = f.CalcThermalLoads(
-            building_index,
-            all_properties.ix[building_index],
-            Solar.ix[building_index],
+    # compute demand and save in disc
+    buildings = all_properties.Name.count()
+    list_buildings =  range(buildings) #buildings
+    for building in list_buildings:
+        total = f.CalcThermalLoads(
+            building,
+            all_properties.ix[building],
+            Solar.ix[building],
             path_results,
             Profiles,
             list_uses,
             T_ext,
             T_ext_max,
             RH_ext,
-            T_ext_min,
+            T_ext_min,path_temporary_folder,
             gv,
             0,
             0)
-        print 'complete building %i of %i' % (building_index+1, buildings_count)
-
-        # compute total files and save in disc
-        if building_index == 0:
-            df = thermal_loads
+        message = 'Building No. ' + str(building+1) + ' completed out of ' + str(buildings)
+        arcpy.AddMessage(message)
+    
+    counter = 0
+    for x in list_buildings:
+        name = all_properties.Name[x]
+        if counter ==0:
+            df = pd.read_csv(path_temporary_folder+'\\'+name+'T'+'.csv')
+            counter +=1
         else:
-            df = df.append(thermal_loads, ignore_index=True)
+            df2 = pd.read_csv(path_temporary_folder+'\\'+name+'T'+'.csv')
+            df = df.append(df2,ignore_index=True)
     df.to_csv(
         os.path.join(
             path_results,
@@ -175,14 +184,14 @@ def analytical(path_radiation, path_schedules, path_weather,
 
 
 def test_demand():
-    path_radiation = r'C:\CEA_FS2015_EXERCISE01\01_Scenario one\102_intermediate output\radiation data\RadiationYearFinal.csv'  # noqa
+    path_radiation = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\102_intermediate output\radiation data\Radiation2000-2009.csv'  # noqa
     path_schedules = os.path.join(os.path.dirname(__file__), 'db', 'Schedules')
-    path_weather = r'C:\CEA_FS2015_EXERCISE01\01_Scenario one\101_input files\weather data\weather_design_hour.csv'  # noqa
-    path_results = r'C:\CEA_FS2015_EXERCISE01\01_Scenario one\103_final output\demand'  # noqa
-    path_properties = r'C:\CEA_FS2015_EXERCISE01\01_Scenario one\102_intermediate output\building properties\properties.xls'  # noqa
-    analytical(path_radiation, path_schedules, path_weather,
+    path_weather = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\101_input files\weather data\weather_2000-2009_hour.csv'  # noqa
+    path_results = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\103_final output\demand'  # noqa
+    path_properties = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\102_intermediate output\building properties\properties.xls'  # noqa
+    path_temporary_folder = tempfile.gettempdir()
+    analytical(path_radiation, path_schedules, path_temporary_folder, path_weather,
                path_results, path_properties, gv)
-
 
 if __name__ == '__main__':
     test_demand()

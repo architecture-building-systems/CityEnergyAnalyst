@@ -61,7 +61,7 @@ class HeatmapsTool(object):
         analysis_field_variables = parameters[1]
         csv = pd.read_csv(path_data.valueAsText)
         fields = set(csv.columns.tolist())
-        fields.remove('Name')
+        #fields.remove('Name')
         analysis_field_variables.filter.list = list(fields)
         return
 
@@ -128,23 +128,19 @@ def heatmaps(
     heat map of variable n: .tif
         heat map file per variable of interest n.
     """
-
-    # local variables
-    vector = [[]]
     arcpy.env.overwriteOutput = True
-    arcpy.FeatureToPoint_management(
-        path_buildings,
-        path_temporary_folder +
-        '\\' +
-        'temp1.shp',
-        "CENTROID")
-    arcpy.MakeFeatureLayer_management(
-        path_temporary_folder +
-        '\\' +
-        'temp1.shp',
-        "lyr",
-        "#",
-        "#")
+    arcpy.CheckOutExtension("Spatial")
+    
+    # local variables
+    #create dbf file
+    tempfile_name = "tempfile"
+    tempfile = os.path.join(path_temporary_folder, 'tempfile.shp')
+    tempfile_db_name = "data"
+    tempfile_db = os.path.join(path_temporary_folder, 'data.dbf')
+    arcpy.CopyRows_management(os.path.join(path_variables, file_variable), out_table=tempfile_db, config_keyword="")
+    
+    arcpy.FeatureToPoint_management(path_buildings,tempfile, "CENTROID")
+    arcpy.MakeFeatureLayer_management(tempfile,"lyr","#","#")
     for field in analysis_field_variables:
         arcpy.AddField_management(
             "lyr",
@@ -157,52 +153,25 @@ def heatmaps(
             "NULLABLE",
             "NON_REQUIRED",
             "#")
-        vector.append([])
-    arcpy.AddJoin_management(
-        "lyr",
-        "Name",
-        os.path.join(path_variables, file_variable),
-        "Name",
-        "KEEP_ALL")
-    arcpy.CheckOutExtension("Spatial")
-    # Null values to Zero:.
+       # vector.append([])
+    arcpy.AddJoin_management("lyr","Name",tempfile_db,"Name","KEEP_ALL")
+    for field in  analysis_field_variables:              
+        arcpy.CalculateField_management(in_table="lyr", field="%(tempfile_name)s.%(field)s" % locals(),
+                                        expression="calc_non_null(!%(tempfile_db_name)s.%(field)s!)" % locals(),
+                                        expression_type="PYTHON_9.3",
+                                        code_block="def calc_non_null(x):\n     if x is None:\n         return 0\n     elif x == '':\n         return 0\n     else:\n         return x\n")
 
-    def RemoveNULL(x):
-        if x is None:
-            return 0
-        elif x == '':
-            return 0
-        else:
-            return x
-
-    fields = [file_variable+"."+a for a in analysis_field_variables]
-    with arcpy.da.SearchCursor("lyr", fields) as cursor:
-        for row in cursor:
-            for n in range(len(fields)):
-                vector[n].append(RemoveNULL(row[n]))
-    counter = 0
-    with arcpy.da.UpdateCursor(os.path.join(path_temporary_folder, 'temp1.shp'), analysis_field_variables) as cursor:  # noqa
-        for row in cursor:
-            for n in range(len(fields)):
-                row[n] = vector[n][counter]
-                cursor.updateRow(row)
-            counter += 1
-
+    # calculate heatmaps
     for field in analysis_field_variables:
-        arcpy.gp.Idw_sa(
-            os.path.join(path_temporary_folder, 'temp1.shp'),
-            field,
+        arcpy.gp.Idw_sa(tempfile,field,
             os.path.join(path_results, field),
             "1", "2", "VARIABLE 12")
-
-    arcpy.Delete_management("in_memory/building_points")
-
-
+            
 def test_heatmaps():
     analysis_field_variables = ["Qhsf", "Qcsf"]  # noqa
-    path_buildings = r'C:\CEA_FS2015_EXERCISE01\01_Scenario one\101_input files\feature classes'+'\\'+'buildings.shp'  # noqa
-    path_variables = r'C:\CEA_FS2015_EXERCISE01\01_Scenario one\103_final output\demand'  # noqa
-    path_results = r'C:\CEA_FS2015_EXERCISE01\01_Scenario one\103_final output\heatmaps'  # noqa
+    path_buildings = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\101_input files\feature classes'+'\\'+'buildings.shp'  # noqa
+    path_variables = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\103_final output\demand'  # noqa
+    path_results = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\103_final output\heatmaps'  # noqa
     path_temporary_folder = tempfile.gettempdir()
     file_variable = 'Total_demand.csv'
     heatmaps(

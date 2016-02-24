@@ -15,8 +15,8 @@ import arcpy
 class EmissionsTool(object):
 
     def __init__(self):
-        self.label = 'Emissions'
-        self.description = 'Calculate the Emissions for operation'
+        self.label = 'Emissions_Operation'
+        self.description = 'Calculate emissions and primary energy due to building operation'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -27,6 +27,7 @@ class EmissionsTool(object):
             parameterType="Required",
             direction="Input")
         path_total_demand.filter.list = ['csv']
+        
         path_LCA_operation = arcpy.Parameter(
             displayName="LCA operation data (LCA_operation.xls)",
             name="path_LCA_operation",
@@ -34,6 +35,7 @@ class EmissionsTool(object):
             parameterType="Required",
             direction="Input")
         path_LCA_operation.filter.list = ['xls']
+        
         path_properties = arcpy.Parameter(
             displayName="Properties File Path (properties.xls)",
             name="path_properties",
@@ -41,6 +43,7 @@ class EmissionsTool(object):
             parameterType="Required",
             direction="Input")
         path_properties.filter.list = ['xls']
+        
         path_results = arcpy.Parameter(
             displayName="Results folder",
             name="path_results",
@@ -68,8 +71,8 @@ class EmissionsTool(object):
 
 def lca_operation(
         path_total_demand,
-        path_LCA_operation,
         path_properties,
+        path_LCA_operation,
         path_results):
     """
     algorithm to calculate the primary energy and CO2 emissions of buildings
@@ -99,16 +102,15 @@ def lca_operation(
     # local files
     demand = pd.read_csv(
         path_total_demand,
-        usecols={
+        usecols=[
             'Name',
             'Qhsf',
             'Af',
             'Qcsf',
             'Qwwf',
-            'Ealf'})
+            'Ealf'])
     systems = pd.read_excel(path_properties, sheetname='systems')
     systems_hs = systems[['Name', 'Generation_heating']].copy()
-    systems_ww = systems[['Name', 'Generation_hotwater']].copy()
     systems_cs = systems[['Name', 'Generation_cooling']].copy()
     systems_e = systems[['Name', 'Generation_electricity']].copy()
     factors_heating = pd.read_excel(path_LCA_operation, sheetname='heating')
@@ -131,17 +133,10 @@ def lca_operation(
     heating['Qhs_CO2_ton'] = (heating['Qhsf']*heating['CO2']*3.6)
     heating['Qhs_PEN_MJm2'] = (heating['Qhs_PEN_GJ']*1000)/heating['Af']
     heating['Qhs_CO2_kgm2'] = (heating['Qhs_CO2_ton']*1000)/heating['Af']
-
-    heating2 = systems_ww.merge(
-        demand,
-        on='Name').merge(
-        factors_heating,
-        left_on='Generation_hotwater',
-        right_on='code')
-    heating['Qww_PEN_GJ'] = (heating2['Qwwf']*heating2['PEN']*3.6)
-    heating['Qww_CO2_ton'] = (heating2['Qwwf']*heating2['CO2']*3.6)
-    heating['Qww_PEN_MJm2'] = (heating['Qww_PEN_GJ']*1000)/heating2['Af']
-    heating['Qww_CO2_kgm2'] = (heating['Qww_CO2_ton']*1000)/heating2['Af']
+    heating['Qww_PEN_GJ'] = (heating['Qwwf']*heating['PEN']*3.6)
+    heating['Qww_CO2_ton'] = (heating['Qwwf']*heating['CO2']*3.6)
+    heating['Qww_PEN_MJm2'] = (heating['Qww_PEN_GJ']*1000)/heating['Af']
+    heating['Qww_CO2_kgm2'] = (heating['Qww_CO2_ton']*1000)/heating['Af']
 
     cooling = systems_cs.merge(
         demand,
@@ -167,21 +162,31 @@ def lca_operation(
     electricity['Qe_CO2_kgm2'] = (
         electricity['Qe_CO2_ton']*1000)/electricity['Af']
 
-    Total = heating[['Name']].copy()
-    Total['PEN_GJ'] = heating['Qhs_PEN_GJ'] + heating['Qww_PEN_GJ'] + \
-        cooling['Qcs_PEN_GJ'] + electricity['Qe_PEN_GJ']
-    Total['CO2_ton'] = heating['Qhs_CO2_ton'] + heating['Qww_CO2_ton'] + \
-        cooling['Qcs_CO2_ton'] + electricity['Qe_CO2_ton']
-    Total['PEN_MJm2'] = heating['Qhs_PEN_MJm2'] + heating['Qww_PEN_MJm2'] + \
-        cooling['Qcs_PEN_MJm2'] + electricity['Qe_PEN_MJm2']
-    Total['CO2_kgm2'] = heating['Qhs_CO2_kgm2'] + heating['Qww_CO2_kgm2'] + \
-        cooling['Qcs_CO2_kgm2'] + electricity['Qe_CO2_kgm2']
 
-    # save results to disc
-    columns_to_drop = {'Ealf', 'Qcsf', 'Qhsf', 'Qwwf', 'officialcode', 'code'}
+    # drop columns and join all results
+    columns_to_drop = ['Ealf', 'Qcsf', 'Qhsf', 'Qwwf', 'officialcode', 'code',
+                       'COP_low_temp','COP_high_temp','Description','Af','PEN','CO2']
+    columns_to_drop2 = ['Ealf', 'Qcsf', 'Qhsf', 'Qwwf', 'officialcode', 'code','Af',
+                        'Description','PEN','CO2']
     heating.drop(columns_to_drop, inplace=True, axis=1)
     cooling.drop(columns_to_drop, inplace=True, axis=1)
-    electricity.drop(columns_to_drop, inplace=True, axis=1)
+    electricity.drop(columns_to_drop2, inplace=True, axis=1)
+    
+    total = heating.merge(cooling,on='Name').merge(electricity,on='Name')
+    
+    total['PEN_GJ'] = total['Qhs_PEN_GJ'] + total['Qww_PEN_GJ'] + \
+        total['Qcs_PEN_GJ'] + total['Qe_PEN_GJ']
+        
+    total['PCO2_ton'] = total['Qhs_CO2_ton'] + total['Qww_CO2_ton'] + \
+        total['Qcs_CO2_ton'] + total['Qe_CO2_ton']
+        
+    total['PEN_MJm2'] = total['Qhs_PEN_MJm2'] + total['Qww_PEN_MJm2'] + \
+        total['Qcs_PEN_MJm2'] + total['Qe_PEN_MJm2']
+        
+    total['PCO2_kgm2'] = total['Qhs_CO2_kgm2'] + total['Qww_CO2_kgm2'] + \
+        total['Qcs_CO2_kgm2'] + total['Qe_CO2_kgm2']
+
+    # save results to disc
     heating.to_csv(
         path_results +
         '\\' +
@@ -200,7 +205,7 @@ def lca_operation(
         'electricity_LCA.csv',
         index=False,
         float_format='%.2f')
-    Total.to_csv(
+    total[['Name','PEN_GJ','PCO2_ton','PEN_MJm2','PCO2_kgm2']].to_csv(
         path_results +
         '\\' +
         'Total_LCA_operation.csv',
@@ -209,15 +214,15 @@ def lca_operation(
 
 
 def test_lca_operation():
-    path_results = r'C:\CEA_FS2015_EXERCISE01\01_Scenario one\103_final output\emissions'  # noqa
-    path_LCA_operation = r'C:\CEA_FS2015_EXERCISE01\01_Scenario one\101_input files\LCA data\LCA_operation.xls'  # noqa
-    path_properties = r'C:\CEA_FS2015_EXERCISE01\01_Scenario one\102_intermediate output\building properties\properties.xls'  # noqa
-    path_total_demand = r'C:\CEA_FS2015_EXERCISE01\01_Scenario one\103_final output\demand\Total_demand.csv'  # noqa
+    path_results = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\103_final output\emissions'  # noqa
+    path_LCA_operation = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\101_input files\LCA data\LCA_operation.xls'  # noqa
+    path_properties = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\102_intermediate output\building properties\properties - Copy.xls'  # noqa
+    path_total_demand = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\103_final output\demand\Total_demand.csv'  # noqa
     lca_operation(
-        path_LCA_operation,
-        path_properties,
-        path_total_demand,
-        path_results)
+        path_total_demand=path_total_demand,
+        path_properties=path_properties,
+        path_LCA_operation=path_LCA_operation,
+        path_results=path_results)
     print 'done!'
 
 if __name__ == '__main__':

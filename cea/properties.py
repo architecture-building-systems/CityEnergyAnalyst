@@ -15,6 +15,8 @@ import os
 import numpy as np
 import globalvar
 
+reload(f)
+
 gv = globalvar.GlobalVariables()
 class PropertiesTool(object):
 
@@ -31,6 +33,13 @@ class PropertiesTool(object):
             parameterType="Required",
             direction="Input")
         path_buildings.filter.list = ['shp']
+        path_generation = arcpy.Parameter(
+            displayName="Genearation systems file",
+            name="path_generation",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Input")
+        path_generation.filter.list = ['shp']
         path_results = arcpy.Parameter(
             displayName="path to intermediate results folder",
             name="path_results",
@@ -61,7 +70,7 @@ class PropertiesTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        return [path_buildings, path_results, generate_uses,
+        return [path_buildings, path_generation, path_results, generate_uses,
                 generate_envelope, generate_systems, generate_equipment]
 
     def execute(self, parameters, messages):
@@ -69,27 +78,29 @@ class PropertiesTool(object):
             os.path.dirname(__file__),
             'db', 'Archetypes', 'Archetypes_HVAC_properties.csv')
         path_buildings = parameters[0]
-        path_results = parameters[1]
-        generate_uses = parameters[2]
-        generate_envelope = parameters[3]
-        generate_systems = parameters[4]
-        generate_equipment = parameters[5]
+        path_generation = parameters[1]
+        path_results = parameters[2]
+        generate_uses = parameters[3]
+        generate_envelope = parameters[4]
+        generate_systems = parameters[5]
+        generate_equipment = parameters[6]
         properties(path_archetypes=path_archetypes,
                    path_buildings=path_buildings.valueAsText,
+                   path_generation=path_generation.valueAsText,
                    path_results=path_results.valueAsText,
-                   generate_uses_flag=generate_uses.value,
-                   generate_envelope_flag=generate_envelope.value,
-                   generate_systems_flag=generate_systems.value,
-                   generate_equipment_flag=generate_equipment.value,
+                   generate_uses=generate_uses.value,
+                   generate_envelope=generate_envelope.value,
+                   generate_systems=generate_systems.value,
+                   generate_equipment=generate_equipment.value,
                    gv=globalvar.GlobalVariables())
 
 
-def properties(path_archetypes, path_buildings, path_results, generate_uses_flag,
-               generate_envelope_flag, generate_systems_flag, generate_equipment_flag, gv):
+def properties(path_archetypes, path_buildings, path_generation, path_results, generate_uses,
+               generate_envelope, generate_systems, generate_equipment, gv):
     """
     algorithm to query building properties from statistical database
-    Archetypes_HVAC_properties.csv. For more info check the integrated demand
-    model of "Fonseca et al. 2015. Appl. energy".
+    Archetypes_HVAC_properties.csv. for more info check the integrated demand
+    model of Fonseca et al. 2015. Appl. energy.
 
     Parameters
     ----------
@@ -97,6 +108,8 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses_flag
         path to database of archetypes file Archetypes_HVAC_properties.csv
     path_buildings : string
         path to buildings file buildings.shp
+    path_generation : string
+        path to generation file generation.shp
     path_results : string
         path to intermediate results folder
     generate_uses_flag: boolean
@@ -120,68 +133,123 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses_flag
     archetypes = pd.read_csv(path_archetypes)
     list_uses = gv.list_uses
     areas = []
-    floors = []
+    floors_bg = []
+    floors_ag = []
+    height_bg = []
+    height_ag = []
     year_built = []
     year_retrofit = []
     name = []
-    height = []
     perimeter = []
     PFloor = []
     xperimeter = []
     yperimeter = []
+    generation_heating = []
+    generation_cooling = []
+    generation_electricity = []
+    ADMIN = []
+    SR = []
+    INDUS = []
+    REST = []
+    RESTS = []
+    DEPO = []
+    COM = []
+    MDU = []
+    SDU = []
+    EDU = []
+    CR = []
+    HEALTH = []
+    SPORT = []
+    SWIM = []
+    PUBLIC = []
+    SUPER = []
+    ICE = []
+    HOT = []
 
     # get zperimeter=width building and yperimeter = lenght building
     arcpy.env.overwriteOutput = True
     arcpy.MinimumBoundingGeometry_management(path_buildings,
                                              "in_memory/built",
                                              "RECTANGLE_BY_AREA",
-                                             "NONE")
+                                             "NONE","#","MBG_FIELDS")
 
-    with arcpy.da.SearchCursor("in_memory/built",
-                               ('Height',
-                                'SHAPE@AREA',
-                                'Floors',
-                                'PFloor',
-                                'Year_built',
-                                'Year_retro',
-                                'Name',
-                                'SHAPE@LENGTH',
-                                'MBG_Width', 'MBG_Length')) as cursor:
+    fields = ['Height_bg','Height_ag','SHAPE@AREA','Floors_bg','Floors_ag',
+                'PFloor','Year_built','Year_retro','Name','SHAPE@LENGTH',
+                'MBG_Width', 'MBG_Length']
+    fields.extend(gv.list_uses)
+    with arcpy.da.SearchCursor("in_memory/built",fields) as cursor:
         for row in cursor:
-            height.append(row[0])
-            areas.append(row[1])
-            floors.append(row[2])
-            PFloor.append(row[3])
-            year_built.append(row[4])
-            year_retrofit.append(row[5])
-            name.append(row[6])
-            perimeter.append(row[7])
-            xperimeter.append(row[8])
-            yperimeter.append(row[9])
-    arcpy.Delete_management("in_memory/built")
+            height_bg.append(row[0])
+            height_ag.append(row[1])
+            areas.append(row[2])
+            floors_bg.append(row[3])
+            floors_ag.append(row[4])
+            PFloor.append(row[5])
+            year_built.append(row[6])
+            year_retrofit.append(row[7])
+            name.append(row[8])
+            perimeter.append(row[9])
+            xperimeter.append(row[10])
+            yperimeter.append(row[11])
+            ADMIN.append(row[12])
+            SR.append(row[13])
+            INDUS.append(row[14])
+            REST.append(row[15])
+            RESTS.append(row[16])
+            DEPO.append(row[17])
+            COM.append(row[18])
+            MDU.append(row[19])
+            SDU.append(row[20])
+            EDU.append(row[21])
+            CR.append(row[22])
+            HEALTH.append(row[23])
+            SPORT.append(row[24])
+            SWIM.append(row[25])
+            PUBLIC.append(row[26])
+            SUPER.append(row[27])
+            ICE.append(row[28])
+            HOT.append(row[29])
+    arcpy.Delete_management("in_memory\\built")
     # Generate uses properties
-    writer = pd.ExcelWriter(os.path.join(path_results, 'properties.xls'))
-    if generate_uses_flag:
-        uses_df = generate_uses(areas, name, writer)
+    if generate_uses:
+        value = np.zeros(len(areas))
+        uses_df = pd.DataFrame({'Name': name, 'ADMIN': ADMIN, 'SR': SR,
+                                'REST': REST, 'RESTS': RESTS, 'DEPO': DEPO,
+                                'COM': COM, 'MDU': MDU, 'SDU': SDU,
+                                'EDU': EDU, 'CR': CR, 'HEALTH': HEALTH,
+                                'SPORT': SPORT, 'SWIM': SWIM, 'PUBLIC': PUBLIC,
+                                'SUPER': SUPER, 'ICE': ICE, 'HOT': HOT,
+                                'INDUS': INDUS})
+        writer = pd.ExcelWriter(path_results+'\\'+'properties.xls')
+        uses_df.to_excel(writer, 'uses', index=False, float_format="%.2f")
+        writer.save()
     else:
         uses_df = pd.read_excel(
-            os.path.join(path_results, 'properties.xls'),
+            path_results +
+            '\\' +
+            'properties.xls',
             sheetname="uses")
 
     # Generate general properties
-    total_area = [a*b for a, b in zip(floors, areas)]
+    total_floors = [a+b for a, b in zip(floors_bg, floors_ag)]
+    total_area = [a*b for a, b in zip(total_floors, areas)]
+    total_height = [a+b for a, b in zip(height_bg, height_ag)]
     general_df = pd.DataFrame({'Name': name,
-                               'height': height,
+                               'height': total_height,
+                               'height_bg': height_bg,
+                               'height_ag': height_ag,
                                'built_area': total_area,
                                'footprint': areas,
-                               'floors': floors,
+                               'floors_bg': floors_bg,
+                               'floors_ag': floors_ag, 
+                               'floors': total_floors,
                                'year_built': year_built,
                                'year_retrofit': year_retrofit,
                                'perimeter': perimeter,
                                'xperimeter': xperimeter,
                                'yperimeter': yperimeter})
-    general_df['mainuse'] = calc_main_use(uses_df, list_uses)
-    general_df.to_excel(writer, 'general', index=False, float_format="%.2f")  # FIXME: there is a bug here: `writer` not guaranteed to be initialized!
+    general_df['mainuse'] = f.calc_mainuse(uses_df, list_uses)
+    general_df.to_excel(writer, 'general', index=False, float_format="%.2f")
     writer.save()
 
     # Assign the year of each category and create a new code
@@ -197,28 +265,39 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses_flag
     q['Shading_Type'] = gv.shading_type
     q['Shading_Pos'] = gv.shading_position
     q['fwindow'] = gv.window_to_wall_ratio
-    q['Generation_heating'] = gv.generation_heating
-    q['Generation_hotwater'] = gv.generation_hotwater
-    q['Generation_cooling'] = gv.generation_cooling
-    q['Generation_electricity'] = gv.generation_electricity
-
+    name = []
+    with arcpy.da.SearchCursor(path_generation,
+                            ('Gen_hs',
+                            'Gen_cs',
+                            'Gen_e',
+                            'Name')) as cursor:
+        for row in cursor:
+            generation_heating.append(row[0])
+            generation_cooling.append(row[1])
+            generation_electricity.append(row[2])
+            name.append(row[3])  
+    qgen = pd.DataFrame({'Generation_heating': generation_heating,
+                         'Generation_cooling': generation_cooling,
+                         'Generation_electricity':generation_electricity,
+                         'Name':name})
+    q1 = pd.merge(q, qgen, left_on='Name', right_on='Name')
     # Generate envelope properties
-    if generate_envelope_flag:
-        q.to_excel(writer, 'envelope', cols={'Name', 'Shading_Type',
+    if generate_envelope:
+        q1.to_excel(writer, 'envelope', cols={'Name', 'Shading_Type',
                    'Shading_Pos', 'fwindow', 'Construction', 'Uwall',
                    'Ubasement', 'Uwindow', 'Uroof', 'Hs', 'Es','PFloor'}, index=False,
                    float_format="%.2f")
         writer.save()
 
     # generate systems properties
-    if generate_systems_flag:
-        q.to_excel(
+    if generate_systems:
+        q1['Generation_cooling'] = 2
+        q1.to_excel(
             writer,
             'systems',
             cols={
                 'Name',
                 'Generation_heating',
-                'Generation_hotwater',
                 'Generation_cooling',
                 'Generation_electricity',
                 'Emission_heating',
@@ -226,7 +305,7 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses_flag
                 },
             index=False,
             float_format="%.2f")
-        q.to_excel(
+        q1.to_excel(
             writer,
             'systems_temp',
             cols={
@@ -245,8 +324,8 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses_flag
             index=False,
             float_format="%.2f")
         writer.save()
-    if generate_equipment_flag:
-        q.to_excel(
+    if generate_equipment:
+        q1.to_excel(
             writer,
             'equipment',
             cols={
@@ -259,63 +338,21 @@ def properties(path_archetypes, path_buildings, path_results, generate_uses_flag
             float_format="%.2f")
         writer.save()
 
-
-def generate_uses(areas, name, writer):
-    # FIXME: generate_uses does two things here: 1) create the uses df and 2) save it to excel! refactor...
-    value = np.zeros(len(areas))
-    uses_df = pd.DataFrame({'Name': name, 'ADMIN': value + 1, 'SR': value,
-                            'REST': value, 'RESTS': value, 'DEPO': value,
-                            'COM': value, 'MDU': value, 'SDU': value,
-                            'EDU': value, 'CR': value, 'HEALTH': value,
-                            'SPORT': value, 'SWIM': value, 'PUBLIC': value,
-                            'SUPER': value, 'ICE': value, 'HOT': value,
-                            'INDUS': value})
-    uses_df.to_excel(writer, 'uses', index=False, float_format="%.2f")
-    writer.save()
-    return uses_df
-
-
 def test_properties():
     path_archetypes = os.path.join(
             os.path.dirname(__file__),
             'db', 'Archetypes', 'Archetypes_HVAC_properties.csv')
-    path_buildings = r'C:\CEA_FS2015_EXERCISE01\01_Scenario one\101_input files\feature classes'+'\\'+'buildings.shp'  # noqa
-    path_results = r'C:\CEA_FS2015_EXERCISE01\01_Scenario one\102_intermediate output\building properties'  # noqa
+    path_buildings = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\101_input files\feature classes'+'\\'+'buildings.shp'  # noqa
+    path_generation = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\101_input files\feature classes'+'\\'+'generation.shp'  # noqa
+    path_results = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\102_intermediate output\building properties'  # noqa
     generate_uses = True
     generate_envelope = True
     generate_systems = True
     generate_equipment = True
-    properties(path_archetypes, path_buildings, path_results, generate_uses,
+    properties(path_archetypes, path_buildings, path_generation, path_results, generate_uses,
                generate_envelope, generate_systems, generate_equipment,
                gv)
     print 'done.'
 
 if __name__ == '__main__':
     test_properties()
-
-
-def calc_main_use(uses_df, uses):
-    """
-    FIXME: look up input, look up output and rtype!
-    :rtype: object
-    """
-    databaseclean = uses_df[uses].transpose()
-    array_min = np.array(
-        databaseclean[
-            databaseclean[:] > 0].idxmin(
-            skipna=True))
-    array_max = np.array(
-        databaseclean[
-            databaseclean[:] > 0].idxmax(
-            skipna=True))
-    main_use = np.vectorize(calc_comparison)(array_min, array_max)
-    return main_use
-
-
-def calc_comparison(array_min, array_max):
-    # do this to avoid that the selection of values
-    # be based on the DEPO. for buildings qih heated spaces
-    if array_max == 'DEPO':
-        if array_min != 'DEPO':
-            array_max = array_min
-    return array_max
