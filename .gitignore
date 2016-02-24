@@ -63,3 +63,5 @@ docs/_build/
 target/
 *.pyt.xml
 *.pyc
+
+*.bak
