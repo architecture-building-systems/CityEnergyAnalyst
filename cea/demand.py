@@ -163,7 +163,8 @@ def analytical(path_radiation, path_schedules, path_temporary_folder, path_weath
             0)
         message = 'Building No. ' + str(building+1) + ' completed out of ' + str(buildings)
         arcpy.AddMessage(message)
-    
+
+    #
     counter = 0
     for x in list_buildings:
         name = all_properties.Name[x]

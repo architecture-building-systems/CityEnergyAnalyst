@@ -164,7 +164,7 @@ def Calc_Tm(Htr_3,Htr_1,tm_t0,Cm,Htr_em,Im_tot,Htr_ms,I_st,Htr_w,te_t,I_ia,IHC_n
     return tm, ts, ta, top
 
 def calc_mixed_schedule(Profiles, Profiles_names, AllProperties, te):  
-    
+    # weighted average of schedules
     def calc_average(last, current, share_of_use):
          return last + current * share_of_use
     
@@ -194,7 +194,8 @@ def calc_mixed_schedule(Profiles, Profiles_names, AllProperties, te):
         mww = np.vectorize(calc_average)(mww,np.array(Profiles[num].Mww),current_share_of_use)
         mw = np.vectorize(calc_average)(mw,np.array(Profiles[num].Mw),current_share_of_use)
         
-    return ta_hs_set,ta_cs_set,people,ve,q_int,Eal_nove,Eal_ve/2,mww,mw, w_int, hour #divided in two because in the scehdules the
+    return ta_hs_set,ta_cs_set,people,ve,q_int,Eal_nove,Eal_ve/2,mww,mw, w_int, hour
+    #divided in two because in the scehdules the
     #load of the ventilator per m3/h is computed as 2 (an error!). here we skip it.
 
 def calc_Htr(Hve, Htr_is, Htr_ms, Htr_w):
@@ -232,7 +233,7 @@ def Calc_Im_tot(I_m,Htr_em,te_t,Htr_3,I_st,Htr_w,Htr_1,I_ia,IHC_nd,Hve,Htr_2):
 def calc_TL(SystemH, SystemC, te_min, te_max, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Htr_ms, Htr_is, Htr_1, Htr_2, Htr_3, 
             I_st, Hve, Htr_w, I_ia, I_m, Cm, Af, Losses, tHset_corr,tCset_corr, IC_max,IH_max, Flag):
     # assumptions
-    if Losses == 1:
+    if Losses:
         #Losses due to emission and control of systems
         tintH_set = tintH_set + tHset_corr
         tintC_set = tintC_set + tCset_corr
@@ -297,7 +298,7 @@ def calc_Qdis_ls(tair, text, Qhs, Qcs, tsh, trh, tsc,trc, Qhs_max, Qcs_max,D,Y, 
     else:
         Qhs_d_ls = 0
     if SystemC != 0 and Qcs < 0:    
-        Qcs_d_ls = ((tsc+trc)/2-tamb)*(Qcs/Qcs_max)*(Lv*Y)
+        Qcs_d_ls = ((tsc + trc)/2-tamb)*(Qcs/Qcs_max)*(Lv*Y)
     else:
         Qcs_d_ls = 0
         
@@ -376,16 +377,17 @@ def calc_TABSH(Qh,tair,Qh0,tair0, tsh0,trh0,nh):
     return  tsh,trh, mCw
     
 def calc_qv_req(ve,people,Af,gv,hour_day,hour_year,limit_inf_season,limit_sup_season):
-    infiltration_occupied = gv.height_floor*gv.NACH_inf_occ
-    infiltration_non_occupied = gv.height_floor*gv.NACH_inf_non_occ
+
+    infiltration_occupied = gv.height_floor*gv.NACH_inf_occ #m3/h.m2
+    infiltration_non_occupied = gv.height_floor*gv.NACH_inf_non_occ #m3/h.m2
     if people >0:
-        q_req = (ve+infiltration_occupied)*Af/3600
+        q_req = (ve+infiltration_occupied)*Af/3600 #m3/s
     else:
         if (21 < hour_day or hour_day < 7) and (limit_inf_season < hour_year <limit_sup_season): 
             q_req = (ve*1.3+infiltration_non_occupied)*Af/3600 # free cooling
         else:
-            q_req = (ve+infiltration_non_occupied)*Af/3600
-    return q_req
+            q_req = (ve+infiltration_non_occupied)*Af/3600 #
+    return q_req #m3/s
 
 def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
                      Profiles_names, T_ext, T_ext_max, RH_ext,
@@ -408,7 +410,7 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
         Am = prop.Am
         Aw = prop.Aw
         Awall_all = prop.Awall_all
-        Atot = Af*4.5
+        Atot = prop.Atot
         footprint = prop.footprint
         # construction,renovation etc years of the building
         Year = prop.year_built
@@ -419,7 +421,7 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
         # thermal mass properties
         Cm = prop.Cm
 
-        Y = calc_Y(Year,Retrofit) # linear trasmissivity coefficeitn of piping W/(m.K)
+        Y = calc_Y(Year,Retrofit) # linear trasmissivity coefficient of piping W/(m.K)
         # nominal temperatures
         Ths_sup_0 = prop.tshs0
         Ths_re_0 = prop.trhs0
@@ -427,21 +429,22 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
         Tcs_re_0 = prop.trcs0
         Tww_sup_0 = prop.tsww0
         
-        # we define limtis of season =
+        # we define limtis of season.
         limit_inf_season = gv.seasonhours[0]+1
         limit_sup_season = gv.seasonhours[1]
 
-        #3Identification of equivalent lenghts
-        fforma = Calc_form(Lw,Ll,footprint) # factor forma comparison real surface and rectangular
+        #Identification of equivalent lenghts
+        fforma = Calc_form(Lw,Ll,footprint) # factor form comparison real surface and rectangular
         Lv = (2*Ll+0.0325*Ll*Lw+6)*fforma # lenght vertical lines
         Lcww_dis = 2*(Ll+2.5+nf_ag*nfp*gv.hf)*fforma # lenghtotwater piping circulation circuit
         Lsww_dis = 0.038*Ll*Lw*nf_ag*nfp*gv.hf*fforma # length hotwater piping distribution circuit
         Lvww_c = (2*Ll+0.0125*Ll*Lw)*fforma # lenghth piping heating system circulation circuit
         Lvww_dis = (Ll+0.0625*Ll*Lw)*fforma # lenghth piping heating system distribution circuit
                 
-        #calculate schedule and varaibles
+        #calculate schedule and variables
         ta_hs_set,ta_cs_set,people,ve,q_int,Eal_nove,Eal_ve,vww,vw,X_int,hour_day = calc_mixed_schedule(Profiles, Profiles_names,prop, T_ext)
-        #2. Transmission coefficients in W/K
+
+        #2. Transmission coefficients in W/K 
         qv_req = np.vectorize(calc_qv_req)(ve,people,Af,gv,hour_day,range(8760),limit_inf_season,limit_sup_season)# in m3/s
         Hve = (gv.PaCa*qv_req)
         Htr_is = prop.Htr_is
@@ -453,7 +456,7 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
         #3. Heat flows in W
         #. Solar heat gains
         Rf_sh = Calc_Rf_sh(Sh_pos,Sh_typ)  
-        solar_specific = np.array(Solar)/Awall_all
+        solar_specific = np.array(Solar)/Awall_all #array in W/m2
         Asol = np.vectorize(calc_gl)(solar_specific,gv.g_gl,Rf_sh)*(1-gv.F_f)*Aw # Calculation of solar efective area per hour in m2
         I_sol = Asol*solar_specific
 
@@ -472,10 +475,8 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
         I_st = (1-(Am/Atot)-(Htr_w/(9.1*Atot)))*(I_ia+I_sol)
         
         #4. Heating and cooling loads
-        # factors of Losses due to emission of systems vector hot or cold water for heating and cooling
-        tHset_corr, tCset_corr = calc_Qem_ls(sys_e_heating,sys_e_cooling)
-        
         # the installed capacities are assumed to be gigantic, it is assumed that the building can  generate heat and cold at anytime
+        # this is where the potential task of changing the set-back temperature for H&C can start.....
         if sys_e_heating == 2:
             IC_max = -500*Af # typical of HVAC
             IH_max = 115*Af  #100W/m2 in the center and 175W/m2 in edge zones
@@ -508,14 +509,17 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
         Tww_re = np.zeros(8760)
         Top = np.zeros(8760)
         Im_tot = np.zeros(8760)
+        
         # we give a seed high enough to avoid doing a iteration for 2 years.
         if sys_e_heating == 2: #TABS
             tm_t0 = tm_t1 = 16
         else:
             tm_t0 = tm_t1 = 16
 
-        # definition of first temperature to start calculation of air conditioning system
-        t5_1 = 21
+        # model of losses in the emission and control system for space heating and cooling
+        tHset_corr, tCset_corr = calc_Qem_ls(sys_e_heating,sys_e_cooling)
+        # end-use demand calculation
+        t5_1 = 21# definition of first temperature to start calculation of air conditioning system
         for k in range(8760):
             #if it is in the season
             if  limit_inf_season <= k < limit_sup_season:
@@ -527,7 +531,7 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
                 Tww_re[k] = 10
                 Flag_season = False
             # Calc of Qhs/Qcs - net/useful heating and cooling deamnd in W
-            Losses = 0
+            Losses = False # 0 is false and 1 is true
             Tm[k], Ta[k], Qhs_sen[k], Qcs_sen[k], uncomfort[k], Top[k], Im_tot[k] = calc_TL(sys_e_heating,sys_e_cooling, T_ext_min, T_ext_max, tm_t0,
                                                            T_ext[k], ta_hs_set[k], ta_cs_set[k], Htr_em, Htr_ms, Htr_is, Htr_1[k],
                                                            Htr_2[k], Htr_3[k], I_st[k], Hve[k], Htr_w, I_ia[k], I_m[k], Cm, Af, Losses,
@@ -535,7 +539,7 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
             tm_t0 = Tm[k]
 
             # Calc of Qhs_em_ls/Qcs_em_ls - losses due to emission systems in W
-            Losses = 1
+            Losses = True
             Results1 = calc_TL(sys_e_heating,sys_e_cooling, T_ext_min, T_ext_max, tm_t1, T_ext[k], ta_hs_set[k], ta_cs_set[k],
                                Htr_em, Htr_ms, Htr_is, Htr_1[k],Htr_2[k], Htr_3[k], I_st[k], Hve[k], Htr_w, I_ia[k], I_m[k],
                                Cm, Af, Losses, tHset_corr,tCset_corr,IC_max,IH_max, Flag_season)
@@ -556,6 +560,7 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
             uncomfort[k] = Results1[4]
             Top[k] = Results1[5]
             Im_tot[k] = Results1[6]
+            
             # Calculate new sensible loads with HVAC systems incl. recovery.
             if sys_e_heating == 1 or sys_e_heating == 2:
                 Qhs_sen_incl_em_ls[k] = Results1[2]
@@ -563,7 +568,11 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
                 Qcs_sen_incl_em_ls[k] = 0
             if sys_e_heating == 3 or sys_e_cooling == 3:
                 QHC_sen[k] = Qhs_sen[k] + Qcs_sen[k] + Qhs_em_ls[k] + Qcs_em_ls[k]
-                temporal_Qhs, temporal_Qcs, Qhs_lat[k], Qcs_lat[k], Ehs_lat_aux[k], ma_sup_hs[k], ma_sup_cs[k], Ta_sup_hs[k], Ta_sup_cs[k], Ta_re_hs[k], Ta_re_cs[k], w_re[k], w_sup[k], t5[k] =  calc_HVAC(sys_e_heating, sys_e_cooling, people[k],RH_ext[k], T_ext[k],Ta[k], qv_req[k],Flag_season, QHC_sen[k],t5_1, w_int[k],gv)
+                temporal_Qhs, temporal_Qcs, Qhs_lat[k], Qcs_lat[k], Ehs_lat_aux[k], ma_sup_hs[k], ma_sup_cs[k],
+                Ta_sup_hs[k], Ta_sup_cs[k], Ta_re_hs[k], Ta_re_cs[k], w_re[k], w_sup[k], t5[k] =  calc_HVAC(sys_e_heating, sys_e_cooling,
+                                                                                                            people[k],RH_ext[k], T_ext[k],Ta[k],
+                                                                                                            qv_req[k],Flag_season, QHC_sen[k],t5_1,
+                                                                                                            w_int[k],gv)
                 t5_1 = t5[k]
                 if sys_e_heating == 3:
                     Qhs_sen_incl_em_ls[k] = temporal_Qhs
@@ -575,7 +584,7 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
         #Qhs_sen_incl_em_ls[Qhs_sen_incl_em_ls < 0] = 0
         #Qcs_sen_incl_em_ls[Qcs_sen_incl_em_ls > 0] = 0
         Qhs_sen_incl_em_ls_0 = Qhs_sen_incl_em_ls.max()
-        Qcs_sen_incl_em_ls_0 = Qcs_sen_incl_em_ls.min()
+        Qcs_sen_incl_em_ls_0 = Qcs_sen_incl_em_ls.min() # cooling loads up to here in negative values
         Qhs_d_ls, Qcs_d_ls =  np.vectorize(calc_Qdis_ls)(Ta, T_ext, Qhs_sen_incl_em_ls, Qcs_sen_incl_em_ls, Ths_sup_0, Ths_re_0, Tcs_sup_0, Tcs_re_0, Qhs_sen_incl_em_ls_0, Qcs_sen_incl_em_ls_0 ,
                                                          gv.D, Y[0], sys_e_heating, sys_e_cooling, gv.Bf, Lv)         
                 
@@ -653,10 +662,10 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
                                                                LMRT0, UA0, mCw0, Qcsf)  
         #1. Calculate water consumption
         Vww = vww*Af/1000 ## consumption of hot water in m3/hour
-        Vw = vw*Af/1000 ## consumption of fresh water in m3/h 
+        Vw = vw*Af/1000 ## consumption of fresh water in m3/h = cold water + hot water
         Mww = Vww*gv.Pwater/3600 # in kg/s
         #Mw = Vw*Pwater/3600 # in kg/s
-        #2. Calculate water hot demand
+        #2. Calculate hot water demand
         mcpww = Mww*gv.Cpw
         Qww = mcpww*(Tww_sup_0-Tww_re)*1000 # in W
         #3. losses distribution of domestic hot water recoverable and not recoverable
