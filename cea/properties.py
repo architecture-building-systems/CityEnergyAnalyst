@@ -18,8 +18,9 @@ import globalvar
 reload(f)
 
 gv = globalvar.GlobalVariables()
-class PropertiesTool(object):
 
+
+class PropertiesTool(object):
     def __init__(self):
         self.label = 'Properties'
         self.description = 'Query building properties from statistical database'  # noqa
@@ -166,18 +167,19 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
     ICE = []
     HOT = []
 
-    # get zperimeter=width building and yperimeter = lenght building
+    # get zperimeter=width building and yperimeter = length building
     arcpy.env.overwriteOutput = True
     arcpy.MinimumBoundingGeometry_management(path_buildings,
                                              "in_memory/built",
                                              "RECTANGLE_BY_AREA",
-                                             "NONE","#","MBG_FIELDS")
+                                             "NONE", "#", "MBG_FIELDS")
 
-    fields = ['Height_bg','Height_ag','SHAPE@AREA','Floors_bg','Floors_ag',
-                'PFloor','Year_built','Year_retro','Name','SHAPE@LENGTH',
-                'MBG_Width', 'MBG_Length']
-    fields.extend(gv.list_uses)
-    with arcpy.da.SearchCursor("in_memory/built",fields) as cursor:
+    fields = ['Height_bg', 'Height_ag', 'SHAPE@AREA', 'Floors_bg', 'Floors_ag',
+              'PFloor', 'Year_built', 'Year_retro', 'Name', 'SHAPE@LENGTH',
+              'MBG_Width', 'MBG_Length']
+    arcpy_fields = set(f.name for f in arcpy.ListFields('in_memory/built'))
+    assert set(fields).issubset(arcpy_fields), 'missing following fields: %s' % set(fields).difference(arcpy_fields)
+    with arcpy.da.SearchCursor("in_memory/built", fields) as cursor:
         for row in cursor:
             height_bg.append(row[0])
             height_ag.append(row[1])
@@ -220,7 +222,7 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
                                 'SPORT': SPORT, 'SWIM': SWIM, 'PUBLIC': PUBLIC,
                                 'SUPER': SUPER, 'ICE': ICE, 'HOT': HOT,
                                 'INDUS': INDUS})
-        writer = pd.ExcelWriter(path_results+'\\'+'properties.xls')
+        writer = pd.ExcelWriter(path_results + '\\' + 'properties.xls')
         uses_df.to_excel(writer, 'uses', index=False, float_format="%.2f")
         writer.save()
     else:
@@ -231,9 +233,9 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
             sheetname="uses")
 
     # Generate general properties
-    total_floors = [a+b for a, b in zip(floors_bg, floors_ag)]
-    total_area = [a*b for a, b in zip(total_floors, areas)]
-    total_height = [a+b for a, b in zip(height_bg, height_ag)]
+    total_floors = [a + b for a, b in zip(floors_bg, floors_ag)]
+    total_area = [a * b for a, b in zip(total_floors, areas)]
+    total_height = [a + b for a, b in zip(height_bg, height_ag)]
     general_df = pd.DataFrame({'Name': name,
                                'height': total_height,
                                'height_bg': height_bg,
@@ -241,7 +243,7 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
                                'built_area': total_area,
                                'footprint': areas,
                                'floors_bg': floors_bg,
-                               'floors_ag': floors_ag, 
+                               'floors_ag': floors_ag,
                                'floors': total_floors,
                                'year_built': year_built,
                                'year_retrofit': year_retrofit,
@@ -267,26 +269,26 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
     q['fwindow'] = gv.window_to_wall_ratio
     name = []
     with arcpy.da.SearchCursor(path_generation,
-                            ('Gen_hs',
-                            'Gen_cs',
-                            'Gen_e',
-                            'Name')) as cursor:
+                               ('Gen_hs',
+                                'Gen_cs',
+                                'Gen_e',
+                                'Name')) as cursor:
         for row in cursor:
             generation_heating.append(row[0])
             generation_cooling.append(row[1])
             generation_electricity.append(row[2])
-            name.append(row[3])  
+            name.append(row[3])
     qgen = pd.DataFrame({'Generation_heating': generation_heating,
                          'Generation_cooling': generation_cooling,
-                         'Generation_electricity':generation_electricity,
-                         'Name':name})
+                         'Generation_electricity': generation_electricity,
+                         'Name': name})
     q1 = pd.merge(q, qgen, left_on='Name', right_on='Name')
     # Generate envelope properties
     if generate_envelope:
         q1.to_excel(writer, 'envelope', cols={'Name', 'Shading_Type',
-                   'Shading_Pos', 'fwindow', 'Construction', 'Uwall',
-                   'Ubasement', 'Uwindow', 'Uroof', 'Hs', 'Es','PFloor'}, index=False,
-                   float_format="%.2f")
+                                              'Shading_Pos', 'fwindow', 'Construction', 'Uwall',
+                                              'Ubasement', 'Uwindow', 'Uroof', 'Hs', 'Es', 'PFloor'}, index=False,
+                    float_format="%.2f")
         writer.save()
 
     # generate systems properties
@@ -302,7 +304,7 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
                 'Generation_electricity',
                 'Emission_heating',
                 'Emission_cooling',
-                },
+            },
             index=False,
             float_format="%.2f")
         q1.to_excel(
@@ -338,13 +340,21 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
             float_format="%.2f")
         writer.save()
 
+
 def test_properties():
+    """
+    Run the properties script with input from the reference case and compare the results. This ensures that changes
+    made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
+    """
+    import tempfile
+
+    path_test = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'test'))
     path_archetypes = os.path.join(
-            os.path.dirname(__file__),
-            'db', 'Archetypes', 'Archetypes_HVAC_properties.csv')
-    path_buildings = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\101_input files\feature classes'+'\\'+'buildings.shp'  # noqa
-    path_generation = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\101_input files\feature classes'+'\\'+'generation.shp'  # noqa
-    path_results = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\102_intermediate output\building properties'  # noqa
+        os.path.dirname(__file__),
+        'db', 'Archetypes', 'Archetypes_HVAC_properties.csv')
+    path_buildings = os.path.join(path_test, 'reference-case', 'feature-classes', 'buildings.shp')
+    path_generation = os.path.join(path_test, 'reference-case', 'feature-classes', 'generation.shp')
+    path_results = tempfile.mkdtemp(prefix='CEAforArcGIS_')
     generate_uses = True
     generate_envelope = True
     generate_systems = True
@@ -352,7 +362,10 @@ def test_properties():
     properties(path_archetypes, path_buildings, path_generation, path_results, generate_uses,
                generate_envelope, generate_systems, generate_equipment,
                gv)
+
+    # read in the output and compare to reference output
     print 'done.'
+
 
 if __name__ == '__main__':
     test_properties()
