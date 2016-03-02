@@ -131,7 +131,7 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
     """
 
     # local variables:
-    archetypes = pd.read_csv(path_archetypes)
+    archetypes = pd.read_csv(path_archetypes, sep='[,;]', engine='python')
     list_uses = gv.list_uses
     areas = []
     floors_bg = []
@@ -174,44 +174,43 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
                                              "RECTANGLE_BY_AREA",
                                              "NONE", "#", "MBG_FIELDS")
 
-    fields = ['Height_bg', 'Height_ag', 'SHAPE@AREA', 'Floors_bg', 'Floors_ag',
-              'PFloor', 'Year_built', 'Year_retro', 'Name', 'SHAPE@LENGTH',
-              'MBG_Width', 'MBG_Length']
-    arcpy_fields = set(f.name for f in arcpy.ListFields('in_memory/built'))
-    assert set(fields).issubset(arcpy_fields), 'missing following fields: %s' % set(fields).difference(arcpy_fields)
+    fields = ['Height_bg', 'Height_ag', 'SHAPE@AREA', 'Floors_bg', 'Floors_ag', 'PFloor', 'Year_built', 'Year_retro',
+              'Name', 'SHAPE@LENGTH', 'MBG_Width', 'MBG_Length', 'ADMIN', 'SR', 'INDUS', 'REST', 'RESTS', 'DEPO', 'COM',
+              'MDU', 'SDU', 'EDU', 'CR', 'HEALTH', 'SPORT', 'SWIM', 'PUBLIC', 'SUPER', 'ICE', 'HOT']
+    fields_lookup = dict(zip(fields, range(len(fields))))
     with arcpy.da.SearchCursor("in_memory/built", fields) as cursor:
         for row in cursor:
-            height_bg.append(row[0])
-            height_ag.append(row[1])
-            areas.append(row[2])
-            floors_bg.append(row[3])
-            floors_ag.append(row[4])
-            PFloor.append(row[5])
-            year_built.append(row[6])
-            year_retrofit.append(row[7])
-            name.append(row[8])
-            perimeter.append(row[9])
-            xperimeter.append(row[10])
-            yperimeter.append(row[11])
-            ADMIN.append(row[12])
-            SR.append(row[13])
-            INDUS.append(row[14])
-            REST.append(row[15])
-            RESTS.append(row[16])
-            DEPO.append(row[17])
-            COM.append(row[18])
-            MDU.append(row[19])
-            SDU.append(row[20])
-            EDU.append(row[21])
-            CR.append(row[22])
-            HEALTH.append(row[23])
-            SPORT.append(row[24])
-            SWIM.append(row[25])
-            PUBLIC.append(row[26])
-            SUPER.append(row[27])
-            ICE.append(row[28])
-            HOT.append(row[29])
-    arcpy.Delete_management("in_memory\\built")
+            height_bg.append(fields_lookup['Height_bg'])
+            height_ag.append(fields_lookup['Height_ag'])
+            areas.append(fields_lookup['SHAPE@AREA'])
+            floors_bg.append(fields_lookup['Floors_bg'])
+            floors_ag.append(fields_lookup['Floors_ag'])
+            PFloor.append(fields_lookup['PFloor'])
+            year_built.append(fields_lookup['Year_built'])
+            year_retrofit.append(fields_lookup['Year_retro'])
+            name.append(fields_lookup['Name'])
+            perimeter.append(fields_lookup['SHAPE@LENGTH'])
+            xperimeter.append(fields_lookup['MBG_Width'])
+            yperimeter.append(fields_lookup['MBG_Length'])
+            ADMIN.append(fields_lookup['ADMIN'])
+            SR.append(fields_lookup['SR'])
+            INDUS.append(fields_lookup['INDUS'])
+            REST.append(fields_lookup['REST'])
+            RESTS.append(fields_lookup['RESTS'])
+            DEPO.append(fields_lookup['DEPO'])
+            COM.append(fields_lookup['COM'])
+            MDU.append(fields_lookup['MDU'])
+            SDU.append(fields_lookup['SDU'])
+            EDU.append(fields_lookup['EDU'])
+            CR.append(fields_lookup['CR'])
+            HEALTH.append(fields_lookup['HEALTH'])
+            SPORT.append(fields_lookup['SPORT'])
+            SWIM.append(fields_lookup['SWIM'])
+            PUBLIC.append(fields_lookup['PUBLIC'])
+            SUPER.append(fields_lookup['SUPER'])
+            ICE.append(fields_lookup['ICE'])
+            HOT.append(fields_lookup['HOT'])
+    arcpy.Delete_management("in_memory/built")
     # Generate uses properties
     if generate_uses:
         value = np.zeros(len(areas))
