@@ -363,8 +363,21 @@ def test_properties():
                gv)
 
     # read in the output and compare to reference output
-    print 'done.'
+    expected_output_path = os.path.join(path_test, 'reference-case', 'expected-output', 'properties.xls')
+    computed_output_path = os.path.join(path_results, 'properties.xls')
+    for sheet in ('uses', 'general', 'envelope', 'systems', 'systems_temp', 'equipment'):
+        expected = pd.read_excel(expected_output_path, sheetname=sheet)
+        computed = pd.read_excel(computed_output_path, sheetname=sheet)
+        assert is_dataframe_equal(expected, computed), 'Difference found in sheet %s' % sheet
+    # tidy up
+    import shutil
+    shutil.rmtree(path_results)
+    print 'test_properties() succeeded'
 
+
+def is_dataframe_equal(dfa, dfb):
+    comparison = dfa == dfb
+    return all((comparison[c].all() for c in comparison.columns))
 
 if __name__ == '__main__':
     test_properties()
