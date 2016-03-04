@@ -568,8 +568,7 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
                 Qcs_sen_incl_em_ls[k] = 0
             if sys_e_heating == 3 or sys_e_cooling == 3:
                 QHC_sen[k] = Qhs_sen[k] + Qcs_sen[k] + Qhs_em_ls[k] + Qcs_em_ls[k]
-                temporal_Qhs, temporal_Qcs, Qhs_lat[k], Qcs_lat[k], Ehs_lat_aux[k], ma_sup_hs[k], ma_sup_cs[k],
-                Ta_sup_hs[k], Ta_sup_cs[k], Ta_re_hs[k], Ta_re_cs[k], w_re[k], w_sup[k], t5[k] =  calc_HVAC(sys_e_heating, sys_e_cooling,
+                temporal_Qhs, temporal_Qcs, Qhs_lat[k], Qcs_lat[k], Ehs_lat_aux[k], ma_sup_hs[k], ma_sup_cs[k], Ta_sup_hs[k], Ta_sup_cs[k], Ta_re_hs[k], Ta_re_cs[k], w_re[k], w_sup[k], t5[k] =  calc_HVAC(sys_e_heating, sys_e_cooling,
                                                                                                             people[k],RH_ext[k], T_ext[k],Ta[k],
                                                                                                             qv_req[k],Flag_season, QHC_sen[k],t5_1,
                                                                                                             w_int[k],gv)
