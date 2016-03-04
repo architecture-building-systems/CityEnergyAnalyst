@@ -131,7 +131,7 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
     """
 
     # local variables:
-    archetypes = pd.read_csv(path_archetypes, sep='[,;]', engine='python')
+    archetypes = pd.read_csv(path_archetypes) #the file is separated by commas now.
     list_uses = gv.list_uses
     areas = []
     floors_bg = []
@@ -175,8 +175,8 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
                                              "NONE", "#", "MBG_FIELDS")
 
     fields = ['Height_bg', 'Height_ag', 'SHAPE@AREA', 'Floors_bg', 'Floors_ag', 'PFloor', 'Year_built', 'Year_retro',
-              'Name', 'SHAPE@LENGTH', 'MBG_Width', 'MBG_Length', 'ADMIN', 'SR', 'INDUS', 'REST', 'RESTS', 'DEPO', 'COM',
-              'MDU', 'SDU', 'EDU', 'CR', 'HEALTH', 'SPORT', 'SWIM', 'PUBLIC', 'SUPER', 'ICE', 'HOT']
+              'Name', 'SHAPE@LENGTH', 'MBG_Width', 'MBG_Length']
+    fields.extend(list_uses)# better this way as the name of uses can change in another case study.
     fields_lookup = dict(zip(fields, range(len(fields))))
     with arcpy.da.SearchCursor("in_memory/built", fields) as cursor:
         for row in cursor:
@@ -293,35 +293,14 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
     # generate systems properties
     if generate_systems:
         q1['Generation_cooling'] = 2
-        q1.to_excel(
-            writer,
-            'systems',
-            cols={
-                'Name',
-                'Generation_heating',
-                'Generation_cooling',
-                'Generation_electricity',
-                'Emission_heating',
-                'Emission_cooling',
-            },
-            index=False,
-            float_format="%.2f")
+        q1.to_excel( writer, 'systems', cols={'Name', 'Generation_heating', 'Generation_cooling',
+                                              'Generation_electricity', 'Emission_heating', 'Emission_cooling'},
+                     index=False, float_format="%.2f")
         q1.to_excel(
             writer,
             'systems_temp',
-            cols={
-                'Name',
-                'tshs0',
-                'trhs0',
-                'tscs0',
-                'trcs0',
-                'tsww0',
-                'tsice0',
-                'trice0',
-                'tscp0',
-                'trcp0',
-                'tshp0',
-                'trhp0'},
+            cols={'Name', 'tshs0', 'trhs0', 'tscs0', 'trcs0', 'tsww0', 'tsice0',
+                  'trice0', 'tscp0', 'trcp0', 'tshp0', 'trhp0'},
             index=False,
             float_format="%.2f")
         writer.save()
