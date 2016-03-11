@@ -205,6 +205,8 @@ def calc_Htr(Hve, Htr_is, Htr_ms, Htr_w):
     return Htr_1,Htr_2,Htr_3
 
 def calc_Qem_ls(SystemH,SystemC):
+    """model of losses in the emission and control system for space heating and cooling.
+    correction factor for the heating and cooling setpoints. extracted from SIA 2044 (replacing EN 15243)"""
     tHC_corr = [0,0]
     # values extracted from SIA 2044 - national standard replacing values suggested in EN 15243
     if SystemH == 4 or 1:
