@@ -293,6 +293,7 @@ def calc_TL(SystemH, SystemC, te_min, te_max, tm_t0, te_t, tintH_set, tintC_set,
     return tm, ta, IH_nd_ac, IC_nd_ac,uncomfort, top, Im_tot
 
 def calc_Qdis_ls(tair, text, Qhs, Qcs, tsh, trh, tsc,trc, Qhs_max, Qcs_max,D,Y, SystemH,SystemC, Bf, Lv):
+    """calculates distribution losses based on ISO 15316"""
     # Calculate tamb in basement according to EN
     tamb = tair - Bf*(tair-text)
     if SystemH != 0 and Qhs > 0:
