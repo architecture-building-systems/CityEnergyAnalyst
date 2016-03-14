@@ -1,9 +1,10 @@
 # CEAforArcGIS
 
-City Energy Analyst Toolbox for ArcGIS
+City Energy Analyst Toolbox for ArcGIS \n
 
-<iframe src="https://player.vimeo.com/video/158859616" width="500" height="281" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+Check me out on Vimeo:
 
+https://vimeo.com/futurecitieslaboratory/the_city_energy_analyst
 
 ## Style Guide
 
