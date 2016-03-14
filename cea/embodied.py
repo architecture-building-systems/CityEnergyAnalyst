@@ -151,20 +151,9 @@ class EmbodiedEnergyTool(object):
             gv=gv)
 
 
-def lca_embodied(
-        path_LCA_embodied_energy,
-        path_LCA_embodied_emissions,
-        path_properties,
-        path_results,
-        yearcalc,
-        retrofit_windows,
-        retrofit_roof,
-        retrofit_walls,
-        retrofit_partitions,
-        retrofit_int_floors,
-        retrofit_installations,
-        retrofit_basement_floor,
-        gv):
+def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_properties, path_results, yearcalc,
+                 retrofit_windows, retrofit_roof, retrofit_walls, retrofit_partitions, retrofit_int_floors,
+                 retrofit_installations, retrofit_basement_floor, gv):
     """
     algorithm to calculate the embodied energy and grey energy of buildings
     according to the method of Fonseca et al 2015. CISBAT 2015. and Thoma et al
@@ -202,29 +191,25 @@ def lca_embodied(
     general = pd.read_excel(path_properties, sheetname='general')
     envelope = pd.read_excel(path_properties, sheetname='envelope')
     general_df = general.merge(envelope, on='Name')
-    general_df['cat'] = general_df['year_built'].apply(
-        lambda x: calc_category_construction(x))
-    general_df['cat2'] = general_df['year_retrofit'].apply(
-        lambda x: calc_category_retrofit(x))
+    general_df['cat'] = general_df['year_built'].apply(lambda x: calc_category_construction(x))
+    general_df['cat2'] = general_df['year_retrofit'].apply(lambda x: calc_category_retrofit(x))
     general_df['code'] = general_df.mainuse + general_df.cat
     general_df['code2'] = general_df.mainuse + general_df.cat2
 
-    list_embodied = [path_LCA_embodied_energy, path_LCA_embodied_emissions]
+    list_of_analysis = [path_LCA_embodied_energy, path_LCA_embodied_emissions]
     result = []
-    for var in list_embodied:
-        embodied_LCA = pd.read_csv(var)
-        df = pd.merge(
-            general_df,
-            embodied_LCA,
-            left_on='code',
-            right_on='Code')
-        df2 = pd.merge(
-            general_df,
-            embodied_LCA,
-            left_on='code2',
-            right_on='Code')
-        
+    for item in list_of_analysis:
+        LCA_item = pd.read_csv(item)
+
+        # merging with the category of construction
+        df = pd.merge(general_df, LCA_item, left_on='code', right_on='Code')
+
+        # merging with the category of retrofit
+        df2 = pd.merge(general_df, LCA_item,left_on='code2', right_on='Code')
+
+        # merging both dataframes
         df3 = pd.merge(df,df2,left_on='Name', right_on='Name', suffixes=['','_y'])
+
         # building construction properties to array
         fp = df3['footprint'].values
         floors = df3['floors'].values
@@ -287,7 +272,7 @@ def lca_embodied(
         roof2 = roof_factor2*fp
         # excavation
         excavation = excavation_factor*fp
-        # computing individual shares per buildign component
+        # computing individual shares per building component
         result.append(
             np.vectorize(query_embodied)(
                 fp,
@@ -344,33 +329,10 @@ def lca_embodied(
     os.path.join(path_results, 'Total_LCA_embodied.csv'),
                             index=False, float_format='%.2f')
 
-def query_embodied(
-        fp,
-        floors,
-        yearcons,
-        yearretro,
-        PFloor,
-        walls_ext_ag,
-        walls_ext_ag2,
-        yearcalc,
-        windows,
-        win_ext,
-        win_ext2,
-        excavation,
-        wall_int_avg_factor,
-        wall_int_avg_factor2,
-        walls_ext_bg,
-        floor_int_factor,
-        floor_int_factor2,
-        services,
-        services2,
-        floor_basement,
-        floor_basement2,
-        roof,
-        roof2,
-        retrofit,
-        area,
-        gv):
+def query_embodied(fp, floors, yearcons, yearretro, PFloor, walls_ext_ag, walls_ext_ag2, yearcalc, windows, win_ext,
+                   win_ext2, excavation, wall_int_avg_factor, wall_int_avg_factor2, walls_ext_bg, floor_int_factor,
+                   floor_int_factor2, services, services2, floor_basement, floor_basement2, roof, roof2, retrofit,
+                   area, gv):
     flagroof, flag_ext_wall, flag_int_wall, flag_windows, flag_int, flag_services, flagbasement = [bool(int(c)) for c in retrofit]  # noqa
     # internal walls
     # it means that part is a parking lot or storage in the building so

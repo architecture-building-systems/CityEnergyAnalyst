@@ -69,11 +69,7 @@ class EmissionsTool(object):
                       path_results=parameters[3].valueAsText)
 
 
-def lca_operation(
-        path_total_demand,
-        path_properties,
-        path_LCA_operation,
-        path_results):
+def lca_operation(path_total_demand, path_properties, path_LCA_operation, path_results):
     """
     algorithm to calculate the primary energy and CO2 emissions of buildings
     according to the method used in the integrated model of
@@ -100,24 +96,14 @@ def lca_operation(
     """
 
     # local files
-    demand = pd.read_csv(
-        path_total_demand,
-        usecols=[
-            'Name',
-            'Qhsf',
-            'Af',
-            'Qcsf',
-            'Qwwf',
-            'Ealf'])
+    demand = pd.read_csv(path_total_demand, usecols=['Name', 'Qhsf', 'Af', 'Qcsf', 'Qwwf', 'Ef'])
     systems = pd.read_excel(path_properties, sheetname='systems')
     systems_hs = systems[['Name', 'Generation_heating']].copy()
     systems_cs = systems[['Name', 'Generation_cooling']].copy()
     systems_e = systems[['Name', 'Generation_electricity']].copy()
     factors_heating = pd.read_excel(path_LCA_operation, sheetname='heating')
     factors_cooling = pd.read_excel(path_LCA_operation, sheetname='cooling')
-    factors_electricity = pd.read_excel(
-        path_LCA_operation,
-        sheetname='electricity')
+    factors_electricity = pd.read_excel(path_LCA_operation, sheetname='electricity')
 
     # calculate values Qhs_PEN_MJm2, Qww_PEN_MJm2, Qh_PEN_MJm2
     # Qhs_CO2_kgm2, Qww_CO2_kgm2, Qh_CO2_kgm2

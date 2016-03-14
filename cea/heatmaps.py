@@ -87,13 +87,8 @@ class HeatmapsTool(object):
             file_variable=file_variable)
 
 
-def heatmaps(
-        analysis_field_variables,
-        path_variables,
-        path_buildings,
-        path_results,
-        path_temporary_folder,
-        file_variable):
+def heatmaps(analysis_field_variables, path_variables, path_buildings, path_results, path_temporary_folder,
+             file_variable):
     """
     algorithm to calculate heat maps out of n variables of interest
 
@@ -142,18 +137,9 @@ def heatmaps(
     arcpy.FeatureToPoint_management(path_buildings,tempfile, "CENTROID")
     arcpy.MakeFeatureLayer_management(tempfile,"lyr","#","#")
     for field in analysis_field_variables:
-        arcpy.AddField_management(
-            "lyr",
-            field,
-            "DOUBLE",
-            "#",
-            "#",
-            "#",
-            "#",
-            "NULLABLE",
-            "NON_REQUIRED",
-            "#")
-       # vector.append([])
+        arcpy.AddField_management("lyr", field, "DOUBLE", "#", "#", "#", "#", "NULLABLE", "NON_REQUIRED", "#")
+
+    # vector.append([])
     arcpy.AddJoin_management("lyr","Name",tempfile_db,"Name","KEEP_ALL")
     for field in  analysis_field_variables:              
         arcpy.CalculateField_management(in_table="lyr", field="%(tempfile_name)s.%(field)s" % locals(),
@@ -163,9 +149,7 @@ def heatmaps(
 
     # calculate heatmaps
     for field in analysis_field_variables:
-        arcpy.gp.Idw_sa(tempfile,field,
-            os.path.join(path_results, field),
-            "1", "2", "VARIABLE 12")
+        arcpy.gp.Idw_sa(tempfile, field, os.path.join(path_results, field), "1", "2", "VARIABLE 12")
             
 def test_heatmaps():
     analysis_field_variables = ["Qhsf", "Qcsf"]  # noqa
