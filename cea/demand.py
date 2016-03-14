@@ -124,12 +124,12 @@ def analytical(path_radiation, path_schedules, path_temporary_folder, path_weath
     T_ext_max = T_ext.max()
     T_ext_min = T_ext.min()
 
-    # obtain scehdules per building
-    rows = len(list_uses)
+    # obtain schedules per building
+    list = len(list_uses)
     Profiles = list(range(rows))
-    for row in range(rows):
-        Profiles[row] = pd.read_csv(path_schedules + '\\' + 'Occupancy_' +
-                                    list_uses[row] + '.csv', nrows=8760)
+    for use in range(list):
+        Profiles[use] = pd.read_csv(path_schedules + '\\' + 'Occupancy_' +
+                                    list_uses[use] + '.csv', nrows=8760)
 
     # calculate file with all properties @ daren:
     all_properties = f.get_all_properties(uses,
@@ -143,28 +143,16 @@ def analytical(path_radiation, path_schedules, path_temporary_folder, path_weath
     # calculate clean file of radiation - @ daren: this is a A BOTTLE NECK
     Solar = f.CalcIncidentRadiation(all_properties, radiation_file)
 
-    # compute demand and save in disc
-    buildings = all_properties.Name.count()
+    # compute demand
+    buildings = all_properties.Name.count() #how many buildings are there to analyze
     list_buildings =  range(buildings) #buildings
     for building in list_buildings:
-        total = f.CalcThermalLoads(
-            building,
-            all_properties.ix[building],
-            Solar.ix[building],
-            path_results,
-            Profiles,
-            list_uses,
-            T_ext,
-            T_ext_max,
-            RH_ext,
-            T_ext_min,path_temporary_folder,
-            gv,
-            0,
-            0)
+        total = f.CalcThermalLoads(building, all_properties.ix[building], Solar.ix[building], path_results, Profiles,
+                                    list_uses, T_ext, T_ext_max, RH_ext, T_ext_min, path_temporary_folder,  gv, 0, 0)
         message = 'Building No. ' + str(building+1) + ' completed out of ' + str(buildings)
         arcpy.AddMessage(message)
 
-    #
+    # put together all rows of the total file
     counter = 0
     for x in list_buildings:
         name = all_properties.Name[x]

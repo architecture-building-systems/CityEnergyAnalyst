@@ -169,11 +169,9 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
 
     # get zperimeter=width building and yperimeter = length building
     arcpy.env.overwriteOutput = True
-    arcpy.MinimumBoundingGeometry_management(path_buildings,
-                                             "in_memory/built",
-                                             "RECTANGLE_BY_AREA",
-                                             "NONE", "#", "MBG_FIELDS")
-
+    arcpy.MinimumBoundingGeometry_management(path_buildings, "in_memory/built", "RECTANGLE_BY_AREA", "NONE", "#",
+                                             "MBG_FIELDS")
+    # assign values of the shapefiles to the lists of local variables.
     fields = ['Height_bg', 'Height_ag', 'SHAPE@AREA', 'Floors_bg', 'Floors_ag', 'PFloor', 'Year_built', 'Year_retro',
               'Name', 'SHAPE@LENGTH', 'MBG_Width', 'MBG_Length']
     fields.extend(list_uses)# better this way as the name of uses can change in another case study.
@@ -253,12 +251,9 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
     general_df.to_excel(writer, 'general', index=False, float_format="%.2f")
     writer.save()
 
+    # Extract data from Archetypes
     # Assign the year of each category and create a new code
-    general_df['cat'] = general_df.apply(
-        lambda x: f.calc_category(
-            x['year_built'],
-            x['year_retrofit']),
-        axis=1)
+    general_df['cat'] = general_df.apply(lambda x: f.calc_category(x['year_built'],x['year_retrofit']),axis=1)
     general_df['code'] = general_df.mainuse + general_df.cat
     general_df['PFloor'] = PFloor
     # Query all properties
@@ -266,6 +261,8 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
     q['Shading_Type'] = gv.shading_type
     q['Shading_Pos'] = gv.shading_position
     q['fwindow'] = gv.window_to_wall_ratio
+
+    # extract from generation file
     name = []
     with arcpy.da.SearchCursor(path_generation,
                                ('Gen_hs',
@@ -282,6 +279,7 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
                          'Generation_electricity': generation_electricity,
                          'Name': name})
     q1 = pd.merge(q, qgen, left_on='Name', right_on='Name')
+
     # Generate envelope properties
     if generate_envelope:
         q1.to_excel(writer, 'envelope', cols={'Name', 'Shading_Type',
@@ -304,6 +302,8 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
             index=False,
             float_format="%.2f")
         writer.save()
+
+    # if generate equipment
     if generate_equipment:
         q1.to_excel(
             writer,
