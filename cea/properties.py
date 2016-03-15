@@ -14,6 +14,7 @@ import arcpy
 import os
 import numpy as np
 import globalvar
+from arcpyhelpers import index_cursor
 
 reload(f)
 
@@ -175,40 +176,39 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
     fields = ['Height_bg', 'Height_ag', 'SHAPE@AREA', 'Floors_bg', 'Floors_ag', 'PFloor', 'Year_built', 'Year_retro',
               'Name', 'SHAPE@LENGTH', 'MBG_Width', 'MBG_Length']
     fields.extend(list_uses)# better this way as the name of uses can change in another case study.
-    fields_lookup = dict(zip(fields, range(len(fields))))
     with arcpy.da.SearchCursor("in_memory/built", fields) as cursor:
-        for row in cursor:
-            height_bg.append(row[fields_lookup['Height_bg']])
-            height_ag.append(row[fields_lookup['Height_ag']])
-            areas.append(row[fields_lookup['SHAPE@AREA']])
-            floors_bg.append(row[fields_lookup['Floors_bg']])
-            floors_ag.append(row[fields_lookup['Floors_ag']])
-            PFloor.append(row[fields_lookup['PFloor']])
-            year_built.append(row[fields_lookup['Year_built']])
-            year_retrofit.append(row[fields_lookup['Year_retro']])
-            name.append(row[fields_lookup['Name']])
-            perimeter.append(row[fields_lookup['SHAPE@LENGTH']])
-            xperimeter.append(row[fields_lookup['MBG_Width']])
-            yperimeter.append(row[fields_lookup['MBG_Length']])
-            ADMIN.append(row[fields_lookup['ADMIN']])
-            SR.append(row[fields_lookup['SR']])
-            INDUS.append(row[fields_lookup['INDUS']])
-            REST.append(row[fields_lookup['REST']])
-            RESTS.append(row[fields_lookup['RESTS']])
-            DEPO.append(row[fields_lookup['DEPO']])
-            COM.append(row[fields_lookup['COM']])
-            MDU.append(row[fields_lookup['MDU']])
-            SDU.append(row[fields_lookup['SDU']])
-            EDU.append(row[fields_lookup['EDU']])
-            CR.append(row[fields_lookup['CR']])
-            HEALTH.append(row[fields_lookup['HEALTH']])
-            SPORT.append(row[fields_lookup['SPORT']])
-            SWIM.append(row[fields_lookup['SWIM']])
-            PUBLIC.append(row[fields_lookup['PUBLIC']])
-            SUPER.append(row[fields_lookup['SUPER']])
-            ICE.append(row[fields_lookup['ICE']])
-            HOT.append(row[fields_lookup['HOT']])
-    arcpy.Delete_management("in_memory\\built")
+        for row in index_cursor(cursor, fields):
+            height_bg.append(row['Height_bg'])
+            height_ag.append(row['Height_ag'])
+            areas.append(row['SHAPE@AREA'])
+            floors_bg.append(row['Floors_bg'])
+            floors_ag.append(row['Floors_ag'])
+            PFloor.append(row['PFloor'])
+            year_built.append(row['Year_built'])
+            year_retrofit.append(row['Year_retro'])
+            name.append(row['Name'])
+            perimeter.append(row['SHAPE@LENGTH'])
+            xperimeter.append(row['MBG_Width'])
+            yperimeter.append(row['MBG_Length'])
+            ADMIN.append(row['ADMIN'])
+            SR.append(row['SR'])
+            INDUS.append(row['INDUS'])
+            REST.append(row['REST'])
+            RESTS.append(row['RESTS'])
+            DEPO.append(row['DEPO'])
+            COM.append(row['COM'])
+            MDU.append(row['MDU'])
+            SDU.append(row['SDU'])
+            EDU.append(row['EDU'])
+            CR.append(row['CR'])
+            HEALTH.append(row['HEALTH'])
+            SPORT.append(row['SPORT'])
+            SWIM.append(row['SWIM'])
+            PUBLIC.append(row['PUBLIC'])
+            SUPER.append(row['SUPER'])
+            ICE.append(row['ICE'])
+            HOT.append(row['HOT'])
+    arcpy.Delete_management("in_memory/built")
     # Generate uses properties
     if generate_uses:
         value = np.zeros(len(areas))
