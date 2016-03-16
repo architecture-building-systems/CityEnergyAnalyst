@@ -114,14 +114,17 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
         path to generation file generation.shp
     path_results : string
         path to intermediate results folder
-    generate_uses_flag: boolean
+    generate_uses: boolean
         True, if the building uses are to be generated, otherwise False.
-    generate_envelope_flag: boolean
+    generate_envelope: boolean
         True, if the envelope is to be generated, otherwise False.
-    generate_systems_flag: boolean
+    generate_systems: boolean
         True, if the systems are to be generated, otherwise False.
-    generate_equipment_flag: boolean
+    generate_equipment: boolean
         True, if equipment is to be generated, otherwise False.
+    gv: GlobalVariables
+        an instance of globalvar.GlobalVariables with the constants
+        to use (like `list_uses` etc.)
 
     Returns
     -------
@@ -211,7 +214,6 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
     arcpy.Delete_management("in_memory/built")
     # Generate uses properties
     if generate_uses:
-        value = np.zeros(len(areas))
         uses_df = pd.DataFrame({'Name': name, 'ADMIN': ADMIN, 'SR': SR,
                                 'REST': REST, 'RESTS': RESTS, 'DEPO': DEPO,
                                 'COM': COM, 'MDU': MDU, 'SDU': SDU,
@@ -219,15 +221,12 @@ def properties(path_archetypes, path_buildings, path_generation, path_results, g
                                 'SPORT': SPORT, 'SWIM': SWIM, 'PUBLIC': PUBLIC,
                                 'SUPER': SUPER, 'ICE': ICE, 'HOT': HOT,
                                 'INDUS': INDUS})
-        writer = pd.ExcelWriter(path_results + '\\' + 'properties.xls')
+        writer = pd.ExcelWriter(os.path.join(path_results, 'properties.xls'))
         uses_df.to_excel(writer, 'uses', index=False, float_format="%.2f")
         writer.save()
     else:
-        uses_df = pd.read_excel(
-            path_results +
-            '\\' +
-            'properties.xls',
-            sheetname="uses")
+        # FIXME: test to see what happens if properties.xls does not exist!
+        uses_df = pd.read_excel(os.path.join(path_results, 'properties.xls'), sheetname="uses")
 
     # Generate general properties
     total_floors = [a + b for a, b in zip(floors_bg, floors_ag)]
