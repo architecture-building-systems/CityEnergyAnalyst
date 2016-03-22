@@ -22,7 +22,7 @@ def calc_mainuse(uses_df, uses):
 
 def calc_comparison(array_min, array_max):
     # do this to avoid that the selection of values
-    # be vbased on the DEPO. for buildings qih heated spaces
+    # be based on the DEPO. for buildings qih heated spaces
     if array_max == 'DEPO':
         if array_min != 'DEPO':
             array_max = array_min
