@@ -70,7 +70,7 @@ class DemandTool(object):
         return
 
     def execute(self, parameters, messages):
-        analytical(path_radiation=parameters[0].valueAsText,
+        demand_calculation(path_radiation=parameters[0].valueAsText,
                    path_schedules=os.path.join(
                        os.path.dirname(__file__), 'db', 'Schedules'),
                    path_temporary_folder = tempfile.gettempdir(),
@@ -80,7 +80,7 @@ class DemandTool(object):
                    gv=gv)
 
 
-def analytical(path_radiation, path_schedules, path_temporary_folder, path_weather,
+def demand_calculation(path_radiation, path_schedules, path_temporary_folder, path_weather,
                path_results, path_properties, gv):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
@@ -179,7 +179,7 @@ def test_demand():
     path_results = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\103_final output\demand'  # noqa
     path_properties = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\102_intermediate output\building properties\properties.xls'  # noqa
     path_temporary_folder = tempfile.gettempdir()
-    analytical(path_radiation, path_schedules, path_temporary_folder, path_weather,
+    demand_calculation(path_radiation, path_schedules, path_temporary_folder, path_weather,
                path_results, path_properties, gv)
 
 if __name__ == '__main__':
