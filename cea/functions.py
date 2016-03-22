@@ -68,19 +68,24 @@ def check_temp_file(T_ext,tH,tC, tmax):
     return tH, tC
 
 
-def get_all_properties(uses, envelope, general, systems, systems_temp, radiation_file, gv):
+def get_all_properties(uses, architecture, thermal, geometry, age, supply, HVAC, radiation_file, gv):
     rf = radiation_file
+
+    # geometry
+    uses['footprint'] = uses.area
+    uses['perimeter'] = uses.length
 
     #Areas above ground #get the area of each wall in the buildings
     rf['Awall_all'] = rf['Shape_Leng']*rf['Freeheight']*rf['FactorShade']
     Awalls0 = pd.pivot_table(rf, rows='Name', values='Awall_all', aggfunc=np.sum)
     Awalls = pd.DataFrame(Awalls0) #get the area of walls in the whole buildings
-    Areas = pd.merge(Awalls,envelope, left_index=True,right_on='Name')
-    Areas['Aw'] = Areas['Awall_all']*Areas['fwindow']*Areas['PFloor'] # Finally get the Area of windows 
+    Areas = pd.merge(Awalls, architecture, left_index=True,right_on='Name').merge(uses,on='Name')
+    Areas['Aw'] = Areas['Awall_all']*Areas['win_wall']*Areas['PFloor'] # Finally get the Area of windows
     Areas['Aop_sup'] = Areas['Awall_all']*Areas['PFloor']-Areas['Aw'] #....and Opaque areas PFloor represents a factor according to the amount of floors heated
-    
+
     #Areas bellow ground
-    all_prop = Areas.merge(uses,on='Name').merge(general,on='Name').merge(systems,on='Name').merge(systems_temp,on='Name')
+    all_prop = Areas.merge(thermal,on='Name').merge(age,on='Name').merge(geometry,on='Name').merge(supply,on='Name').merge(HVAC,on='Name')
+    all_prop['floors'] = all_prop['floors_bg']+ all_prop['floors_ag']
     all_prop['Aop_bel'] = all_prop['height_bg']*all_prop['perimeter']+all_prop['footprint']   # Opague areas in m2 below ground including floor
     all_prop['Atot'] = all_prop['Aop_sup']+all_prop['footprint']+all_prop['Aop_bel']+all_prop['footprint']*(all_prop['floors']-1) # Total area of the building envelope m2, it is considered the roof to be flat
     all_prop['Af'] = all_prop['footprint']*all_prop['floors']*all_prop['Hs']*(1-all_prop.DEPO)*(1-all_prop.CR)*(1-all_prop.SR) # conditioned area - áreas not heated
@@ -88,9 +93,9 @@ def get_all_properties(uses, envelope, general, systems, systems_temp, radiation
     all_prop['Am'] = all_prop.Construction.apply(lambda x:AmFunction(x))*all_prop['Af'] # Effective mass area in m2
 
     #Steady-state Thermal transmittance coefficients and Internal heat Capacity
-    all_prop['Htr_w'] = all_prop['Aw']*all_prop['Uwindow']  # Thermal transmission coefficient for windows and glagv.Zing. in W/K
-    all_prop['HD'] = all_prop['Aop_sup']*all_prop['Uwall']+all_prop['footprint']*all_prop['Uroof']  # Direct Thermal transmission coefficient to the external environment in W/K
-    all_prop['Hg'] = gv.Bf*all_prop ['Aop_bel']*all_prop['Ubasement'] # stady-state Thermal transmission coeffcient to the ground. in W/K
+    all_prop['Htr_w'] = all_prop['Aw']*all_prop['U_win']  # Thermal transmission coefficient for windows and glagv.Zing. in W/K
+    all_prop['HD'] = all_prop['Aop_sup']*all_prop['U_wall']+all_prop['footprint']*all_prop['U_roof']  # Direct Thermal transmission coefficient to the external environment in W/K
+    all_prop['Hg'] = gv.Bf*all_prop ['Aop_bel']*all_prop['U_base'] # stady-state Thermal transmission coeffcient to the ground. in W/K
     all_prop['Htr_op'] = all_prop ['Hg']+ all_prop ['HD']
     all_prop['Htr_ms'] = gv.hms*all_prop ['Am'] # Coupling conduntance 1 in W/K
     all_prop['Htr_em'] = 1/(1/all_prop['Htr_op']-1/all_prop['Htr_ms']) # Coupling conduntance 2 in W/K
@@ -100,21 +105,21 @@ def get_all_properties(uses, envelope, general, systems, systems_temp, radiation
     return all_prop
 
 def AmFunction (x): 
-    if x == 'Medium':
+    if x == 'T2':
         return 2.5
-    elif x == 'Heavy':
+    elif x == 'T3':
         return 3.2
-    elif x == 'Light':
+    elif x == 'T1':
         return 2.5
     else:
         return 2.5
 
 def CmFunction (x): 
-    if x == 'Medium':
+    if x == 'T2':
         return 165000
-    elif x == 'Heavy':
+    elif x == 'T3':
         return 300000
-    elif x == 'Light':
+    elif x == 'T1':
         return 110000
     else:
         return 165000
