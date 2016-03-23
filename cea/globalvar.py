@@ -45,7 +45,6 @@ class GlobalVariables(object):
         self.hoursop = 5  # assuming around 2000 hours of operation per year. It is charged to the electrical system from 11 am to 4 pm
         self.gr = 9.81  # m/s2 gravity
         self.effi = 0.6  # efficiency of pumps
-        self.equivalentlength = 0.6
         self.deltaP_l = 0.1  # delta of pressure
         self.fsr = 0.3  # factor for pressure calculation
         # grey emssions
