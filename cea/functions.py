@@ -388,8 +388,8 @@ def calc_TABSH(Qh,tair,Qh0,tair0, tsh0,trh0,nh):
     
 def calc_qv_req(ve,people,Af,gv,hour_day,hour_year,limit_inf_season,limit_sup_season):
 
-    infiltration_occupied = gv.height_floor*gv.NACH_inf_occ #m3/h.m2
-    infiltration_non_occupied = gv.height_floor*gv.NACH_inf_non_occ #m3/h.m2
+    infiltration_occupied = gv.hf*gv.NACH_inf_occ #m3/h.m2
+    infiltration_non_occupied = gv.hf*gv.NACH_inf_non_occ #m3/h.m2
     if people >0:
         q_req = (ve+infiltration_occupied)*Af/3600 #m3/s
     else:

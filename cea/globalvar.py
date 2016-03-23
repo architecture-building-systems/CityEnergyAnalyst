@@ -18,7 +18,6 @@ class GlobalVariables(object):
         self.generation_hotwater = 3
         self.generation_cooling = 2
         self.generation_electricity = 1
-        self.height_floor = 3  # average height per floor in m
         self.Z = 3  # height of basement for every building in m
         self.Bf = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
         self.his = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
