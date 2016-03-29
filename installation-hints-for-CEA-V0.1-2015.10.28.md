@@ -36,7 +36,7 @@ To install pandas in the correct version I used the following approach:
   - copy `numpy/core/libifcoremd.dll` to `scipy/optimize`  
   - copy `numpy/core/libiomp5md.dll`to `scipy/linalg`
   - these files are being copied, so that the `scipy.optimize` and `scipy.linalg` modules can be loaded from ArcGIS python.
-- to add the `esri103` environment to ArcGIS python, navigate to `C:\Python27\ArcGIS10.3`(folder name may be different for versions of Windows > 7)
+- to add the `esri103` environment to ArcGIS python, navigate to `C:\Python27\ArcGIS10.3`(folder name may be different for versions of Windows > 7, also, if you don't find the folder `ArcGIS10.3`, use `C:\Python27` instead)
   - create a file `Lib/site-packages/esri103.pth`
   - edit the file to contain the following:
      ``` # .pth file for accessing pandas from ArcGIS 10.3
