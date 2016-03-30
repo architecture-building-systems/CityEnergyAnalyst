@@ -135,10 +135,9 @@ def CalcIncidentRadiation(AllProperties, Radiation_Shading2):
         Radiation_Shading2['T'+str(Column)] = Radiation_Shading2['T'+str(Column)]*Radiation_Shading2['AreaExposed']
 
     Radiation_Shading2.to_csv(r'C:\Users\Jimeno\Desktop\test.csv')
-    radiation = Radiation_Shading2[['T1','T2','T3']]
     #Do pivot table to sum up the irradiation in every surface to the building 
     #and merge the result with the table allProperties
-    PivotTable3 = pd.pivot_table(radiation, rows='Name', margins='Add all row')
+    PivotTable3 = pd.pivot_table(Radiation_Shading2, rows='Name', margins='Add all row')
     RadiationLoad = pd.DataFrame(PivotTable3)
     Solar = AllProperties.merge(RadiationLoad, left_index=True,right_index=True)
     
