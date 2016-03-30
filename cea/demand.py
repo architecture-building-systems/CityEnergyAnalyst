@@ -6,20 +6,21 @@ File history and credits:
 J. Fonseca  script development          24.08.15
 D. Thomas   formatting and cleaning
 D. Thomas   integration in toolbox
-A. Elesawy  first steps with GitHub
+J. Fonseca  refactoring to new properties file   22.03.16
 """
 from __future__ import division
 import pandas as pd
 import numpy as np
 import functions as f
 import globalvar
-reload(globalvar)
 import arcpy
 import tempfile
 import os
+from geopandas import GeoDataFrame as gpdf
 
 gv = globalvar.GlobalVariables()
 reload(f)
+reload(globalvar)
 
 
 class DemandTool(object):
@@ -70,7 +71,7 @@ class DemandTool(object):
         return
 
     def execute(self, parameters, messages):
-        analytical(path_radiation=parameters[0].valueAsText,
+        demand_calculation(path_radiation=parameters[0].valueAsText,
                    path_schedules=os.path.join(
                        os.path.dirname(__file__), 'db', 'Schedules'),
                    path_temporary_folder = tempfile.gettempdir(),
@@ -78,10 +79,10 @@ class DemandTool(object):
                    path_results=parameters[2].valueAsText,
                    path_properties=parameters[3].valueAsText,
                    gv=gv)
-
-
-def analytical(path_radiation, path_schedules, path_temporary_folder, path_weather,
-               path_results, path_properties, gv):
+        
+def demand_calculation(path_radiation, path_schedules, path_temporary_folder, path_weather, path_results,
+                       path_HVAC_shp, path_thermal_shp, path_occupancy_shp,
+                       path_geometry_shp, path_age_shp, path_architecture_shp, gv):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
     using the integrated model of Fonseca et al. 2015. Appl. energy.
@@ -98,7 +99,7 @@ def analytical(path_radiation, path_schedules, path_temporary_folder, path_weath
     path_results : string
         path to demand results folder demand
     path_properties: string
-        path to properties file properties.xls
+        path to folder with .shp files created with the properties script there should be a total of 6
 
     Returns
     -------
@@ -112,11 +113,15 @@ def analytical(path_radiation, path_schedules, path_temporary_folder, path_weath
     WeatherData = pd.read_csv(path_weather, usecols=['te', 'RH'])
     list_uses = gv.list_uses
     radiation_file = pd.read_csv(path_radiation)
-    systems_temp = pd.read_excel(path_properties, sheetname='systems_temp')
-    systems = pd.read_excel(path_properties, sheetname='systems')
-    envelope = pd.read_excel(path_properties, sheetname='envelope')
-    uses = pd.read_excel(path_properties, sheetname='uses')
-    general = pd.read_excel(path_properties, sheetname='general')
+    prop_geometry = gpdf.from_file(path_geometry_shp)
+    prop_geometry['footprint'] = prop_geometry.area
+    prop_geometry['perimeter'] = prop_geometry.length
+    prop_geometry = prop_geometry.drop('geometry',axis=1).set_index('Name')
+    prop_HVAC = gpdf.from_file(path_HVAC_shp).drop('geometry',axis=1).set_index('Name')
+    prop_thermal = gpdf.from_file(path_thermal_shp).drop('geometry',axis=1).set_index('Name')
+    prop_occupancy = gpdf.from_file(path_occupancy_shp).drop('geometry',axis=1).set_index('Name')
+    prop_architecture = gpdf.from_file(path_architecture_shp).drop('geometry',axis=1).set_index('Name')
+    prop_age = gpdf.from_file(path_age_shp).drop('geometry',axis=1).set_index('Name')
 
     # weather conditions
     T_ext = np.array(WeatherData.te)
@@ -125,62 +130,62 @@ def analytical(path_radiation, path_schedules, path_temporary_folder, path_weath
     T_ext_min = T_ext.min()
 
     # obtain schedules per building
-    list = len(list_uses)
+    rows = len(list_uses)
     Profiles = list(range(rows))
-    for use in range(list):
-        Profiles[use] = pd.read_csv(path_schedules + '\\' + 'Occupancy_' +
-                                    list_uses[use] + '.csv', nrows=8760)
+    for row in range(rows):
+        Profiles[row] = pd.read_csv(path_schedules + '\\' + 'Occupancy_' +list_uses[row] + '.csv', nrows=8760)
 
-    # calculate file with all properties @ daren:
-    all_properties = f.get_all_properties(uses,
-                                          envelope,
-                                          general,
-                                          systems,
-                                          systems_temp,
-                                          radiation_file,
-                                          gv)
+    # calculate file with thermal properties for RC model
+    prop_RC_model = f.get_prop_RC_model(prop_occupancy, prop_architecture, prop_thermal, prop_geometry, prop_HVAC, radiation_file, gv)
 
     # calculate clean file of radiation - @ daren: this is a A BOTTLE NECK
-    Solar = f.CalcIncidentRadiation(all_properties, radiation_file)
+    Solar = f.CalcIncidentRadiation(prop_RC_model, radiation_file)
 
     # compute demand
-    buildings = all_properties.Name.count() #how many buildings are there to analyze
-    list_buildings =  range(buildings) #buildings
-    for building in list_buildings:
-        total = f.CalcThermalLoads(building, all_properties.ix[building], Solar.ix[building], path_results, Profiles,
-                                    list_uses, T_ext, T_ext_max, RH_ext, T_ext_min, path_temporary_folder,  gv, 0, 0)
-        message = 'Building No. ' + str(building+1) + ' completed out of ' + str(buildings)
+    num_buildings = len(prop_RC_model.index)
+    counter = 0
+    for building in prop_RC_model.index:
+        f.CalcThermalLoads(building, prop_occupancy.ix[building], prop_architecture.ix[building], prop_thermal.ix[building],
+                           prop_geometry.ix[building], prop_HVAC.ix[building], prop_RC_model.ix[building],
+                           prop_age.ix[building], Solar.ix[building], path_results, Profiles, list_uses, T_ext,
+                           T_ext_max, RH_ext, T_ext_min ,path_temporary_folder,  gv, 0, 0)
+        message = 'Building No. ' + str(counter+1) + ' completed out of ' + str(num_buildings)
         arcpy.AddMessage(message)
-
+        counter+=1
     # put together all rows of the total file
     counter = 0
-    for x in list_buildings:
-        name = all_properties.Name[x]
+    for name in prop_RC_model.index:
         if counter ==0:
             df = pd.read_csv(path_temporary_folder+'\\'+name+'T'+'.csv')
             counter +=1
         else:
             df2 = pd.read_csv(path_temporary_folder+'\\'+name+'T'+'.csv')
             df = df.append(df2,ignore_index=True)
-    df.to_csv(
-        os.path.join(
-            path_results,
-            'Total_demand.csv'),
-        index=False,
-        float_format='%.2f')
+    df.to_csv(os.path.join(path_results,'Total_demand.csv'), index=False, float_format='%.2f')
 
     print 'finished'
 
 
 def test_demand():
-    path_radiation = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\102_intermediate output\radiation data\Radiation2000-2009.csv'  # noqa
+    path_test = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'test'))
+    path_reference_case = os.path.join(path_test, 'reference-case')
+
+    #path_radiation = os.path.join(path_reference_case, 'Radiation2000-2009.csv')
+    path_radiation = os.path.join(path_reference_case, 'RadiationYearFinal.csv')
     path_schedules = os.path.join(os.path.dirname(__file__), 'db', 'Schedules')
-    path_weather = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\101_input files\weather data\weather_2000-2009_hour.csv'  # noqa
-    path_results = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\103_final output\demand'  # noqa
-    path_properties = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\102_intermediate output\building properties\properties.xls'  # noqa
+    path_weather = os.path.join(path_reference_case, 'weather_design_hour.csv')
+    path_results = os.path.join(path_reference_case, 'expected-output', 'demand')
+    path_HVAC_shp = os.path.join(path_reference_case, 'expected-output', 'properties', 'building_HVAC.shp')
+    path_thermal_shp =  os.path.join(path_reference_case, 'expected-output', 'properties', 'building_thermal.shp')
+    path_occupancy_shp = os.path.join(path_reference_case, 'feature-classes', 'building_occupancy.shp')
+    path_geometry_shp = os.path.join(path_reference_case, 'feature-classes', 'building_geometry.shp')
+    path_age_shp = os.path.join(path_reference_case, 'feature-classes', 'building_age.shp')
+    path_architecture_shp = os.path.join(path_reference_case, 'expected-output', 'properties',
+                                         'building_architecture.shp')
     path_temporary_folder = tempfile.gettempdir()
-    analytical(path_radiation, path_schedules, path_temporary_folder, path_weather,
-               path_results, path_properties, gv)
+    demand_calculation(path_radiation, path_schedules, path_temporary_folder, path_weather, path_results,
+                       path_HVAC_shp, path_thermal_shp, path_occupancy_shp,
+                       path_geometry_shp, path_age_shp, path_architecture_shp, gv)
 
 if __name__ == '__main__':
     test_demand()

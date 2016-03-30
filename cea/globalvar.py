@@ -12,8 +12,7 @@ class GlobalVariables(object):
                           'EDU', 'CR', 'HEALTH', 'SPORT', 'SWIM', 'PUBLIC', 'SUPER', 'ICE', 'HOT']
         self.seasonhours = [3216, 6192]
         self.main_use = 'ADMIN'
-        self.shading_type = 1
-        self.shading_position = 1
+        self.shading_type = "T1"
         self.window_to_wall_ratio = 0.4
         self.generation_heating = 3
         self.generation_hotwater = 3
