@@ -71,7 +71,7 @@ class DemandTool(object):
         return
 
     def execute(self, parameters, messages):
-        analytical(path_radiation=parameters[0].valueAsText,
+        demand_calculation(path_radiation=parameters[0].valueAsText,
                    path_schedules=os.path.join(
                        os.path.dirname(__file__), 'db', 'Schedules'),
                    path_temporary_folder = tempfile.gettempdir(),
@@ -167,16 +167,21 @@ def demand_calculation(path_radiation, path_schedules, path_temporary_folder, pa
 
 
 def test_demand():
-    path_radiation = r'C:\reference-case\stautus-quo\intermediate-output\vertical-insolation\Radiation2000-2009.csv'  # noqa
+    path_test = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'test'))
+    path_reference_case = os.path.join(path_test, 'reference-case')
+
+    #path_radiation = os.path.join(path_reference_case, 'Radiation2000-2009.csv')
+    path_radiation = os.path.join(path_reference_case, 'RadiationYearFinal.csv')
     path_schedules = os.path.join(os.path.dirname(__file__), 'db', 'Schedules')
-    path_weather = r'C:\Users\Jimeno\AppData\Roaming\ESRI\Desktop10.3\ArcToolbox\My Toolboxes\test\reference-case\weather_design_hour.csv'  # noqa
-    path_results = r'C:\Users\Jimeno\AppData\Roaming\ESRI\Desktop10.3\ArcToolbox\My Toolboxes\test\reference-case\expected-output\demand'  # noqa
-    path_HVAC_shp = r'C:\Users\Jimeno\AppData\Roaming\ESRI\Desktop10.3\ArcToolbox\My Toolboxes\test\reference-case\expected-output\properties\building_HVAC.shp'
-    path_thermal_shp =  r'C:\Users\Jimeno\AppData\Roaming\ESRI\Desktop10.3\ArcToolbox\My Toolboxes\test\reference-case\expected-output\properties\building_thermal.shp'
-    path_occupancy_shp = r'C:\Users\Jimeno\AppData\Roaming\ESRI\Desktop10.3\ArcToolbox\My Toolboxes\test\reference-case\feature-classes\building_occupancy.shp'
-    path_geometry_shp = r'C:\Users\Jimeno\AppData\Roaming\ESRI\Desktop10.3\ArcToolbox\My Toolboxes\test\reference-case\feature-classes\building_geometry.shp'
-    path_age_shp = r'C:\Users\Jimeno\AppData\Roaming\ESRI\Desktop10.3\ArcToolbox\My Toolboxes\test\reference-case\feature-classes\building_age.shp'
-    path_architecture_shp = r'C:\Users\Jimeno\AppData\Roaming\ESRI\Desktop10.3\ArcToolbox\My Toolboxes\test\reference-case\expected-output\properties\building_architecture.shp'
+    path_weather = os.path.join(path_reference_case, 'weather_design_hour.csv')
+    path_results = os.path.join(path_reference_case, 'expected-output', 'demand')
+    path_HVAC_shp = os.path.join(path_reference_case, 'expected-output', 'properties', 'building_HVAC.shp')
+    path_thermal_shp =  os.path.join(path_reference_case, 'expected-output', 'properties', 'building_thermal.shp')
+    path_occupancy_shp = os.path.join(path_reference_case, 'feature-classes', 'building_occupancy.shp')
+    path_geometry_shp = os.path.join(path_reference_case, 'feature-classes', 'building_geometry.shp')
+    path_age_shp = os.path.join(path_reference_case, 'feature-classes', 'building_age.shp')
+    path_architecture_shp = os.path.join(path_reference_case, 'expected-output', 'properties',
+                                         'building_architecture.shp')
     path_temporary_folder = tempfile.gettempdir()
     demand_calculation(path_radiation, path_schedules, path_temporary_folder, path_weather, path_results,
                        path_HVAC_shp, path_thermal_shp, path_occupancy_shp,
