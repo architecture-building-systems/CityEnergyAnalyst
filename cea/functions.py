@@ -22,7 +22,7 @@ def calc_mainuse(uses_df, uses):
 
 def calc_comparison(array_min, array_max):
     # do this to avoid that the selection of values
-    # be vbased on the DEPO. for buildings qih heated spaces
+    # be based on the DEPO. for buildings qih heated spaces
     if array_max == 'DEPO':
         if array_min != 'DEPO':
             array_max = array_min
@@ -68,53 +68,59 @@ def check_temp_file(T_ext,tH,tC, tmax):
     return tH, tC
 
 
-def get_all_properties(uses, envelope, general, systems, systems_temp, radiation_file, gv):
+def get_prop_RC_model(uses, architecture, thermal, geometry, HVAC, radiation_file, gv):
     rf = radiation_file
 
-    #Areas above ground #get the area of each wall in the buildings
+    # Areas above ground #get the area of each wall in the buildings
     rf['Awall_all'] = rf['Shape_Leng']*rf['Freeheight']*rf['FactorShade']
     Awalls0 = pd.pivot_table(rf, rows='Name', values='Awall_all', aggfunc=np.sum)
     Awalls = pd.DataFrame(Awalls0) #get the area of walls in the whole buildings
-    Areas = pd.merge(Awalls,envelope, left_index=True,right_on='Name')
-    Areas['Aw'] = Areas['Awall_all']*Areas['fwindow']*Areas['PFloor'] # Finally get the Area of windows 
-    Areas['Aop_sup'] = Areas['Awall_all']*Areas['PFloor']-Areas['Aw'] #....and Opaque areas PFloor represents a factor according to the amount of floors heated
-    
-    #Areas bellow ground
-    all_prop = Areas.merge(uses,on='Name').merge(general,on='Name').merge(systems,on='Name').merge(systems_temp,on='Name')
+    Areas = pd.merge(Awalls, architecture, left_index=True, right_index=True).merge(uses,left_index=True, right_index=True)
+    Areas['Aw'] = Areas['Awall_all']*Areas['win_wall']*Areas['PFloor'] # Finally get the Area of windows
+    Areas['Aop_sup'] = Areas['Awall_all']*Areas['PFloor']-Areas['Aw'] # Opaque areas PFloor represents a factor according to the amount of floors heated
+
+    # Areas below ground
+    all_prop = Areas.merge(thermal,left_index=True, right_index=True).\
+                   merge(geometry,left_index=True,right_index=True).\
+                   merge(HVAC,left_index=True,right_index=True)
+    all_prop['floors'] = all_prop['floors_bg']+ all_prop['floors_ag']
     all_prop['Aop_bel'] = all_prop['height_bg']*all_prop['perimeter']+all_prop['footprint']   # Opague areas in m2 below ground including floor
     all_prop['Atot'] = all_prop['Aop_sup']+all_prop['footprint']+all_prop['Aop_bel']+all_prop['footprint']*(all_prop['floors']-1) # Total area of the building envelope m2, it is considered the roof to be flat
     all_prop['Af'] = all_prop['footprint']*all_prop['floors']*all_prop['Hs']*(1-all_prop.DEPO)*(1-all_prop.CR)*(1-all_prop.SR) # conditioned area - áreas not heated
     all_prop['Aef'] = all_prop['footprint']*all_prop['floors']*all_prop['Es']# conditioned area only those for electricity
-    all_prop['Am'] = all_prop.Construction.apply(lambda x:AmFunction(x))*all_prop['Af'] # Effective mass area in m2
+    all_prop['Am'] = all_prop.th_mass.apply(lambda x:AmFunction(x))*all_prop['Af'] # Effective mass area in m2
 
-    #Steady-state Thermal transmittance coefficients and Internal heat Capacity
-    all_prop['Htr_w'] = all_prop['Aw']*all_prop['Uwindow']  # Thermal transmission coefficient for windows and glagv.Zing. in W/K
-    all_prop['HD'] = all_prop['Aop_sup']*all_prop['Uwall']+all_prop['footprint']*all_prop['Uroof']  # Direct Thermal transmission coefficient to the external environment in W/K
-    all_prop['Hg'] = gv.Bf*all_prop ['Aop_bel']*all_prop['Ubasement'] # stady-state Thermal transmission coeffcient to the ground. in W/K
+    # Steady-state Thermal transmittance coefficients and Internal heat Capacity
+    all_prop['Htr_w'] = all_prop['Aw']*all_prop['U_win']  # Thermal transmission coefficient for windows and glagv.Zing. in W/K
+    all_prop['HD'] = all_prop['Aop_sup']*all_prop['U_wall']+all_prop['footprint']*all_prop['U_roof']  # Direct Thermal transmission coefficient to the external environment in W/K
+    all_prop['Hg'] = gv.Bf*all_prop ['Aop_bel']*all_prop['U_base'] # stady-state Thermal transmission coeffcient to the ground. in W/K
     all_prop['Htr_op'] = all_prop ['Hg']+ all_prop ['HD']
     all_prop['Htr_ms'] = gv.hms*all_prop ['Am'] # Coupling conduntance 1 in W/K
     all_prop['Htr_em'] = 1/(1/all_prop['Htr_op']-1/all_prop['Htr_ms']) # Coupling conduntance 2 in W/K
     all_prop['Htr_is'] = gv.his*all_prop ['Atot']
-    all_prop['Cm'] = all_prop.Construction.apply(lambda x:CmFunction(x))*all_prop['Af'] # Internal heat capacity in J/K
-    
-    return all_prop
+    all_prop['Cm'] = all_prop.th_mass.apply(lambda x:CmFunction(x))*all_prop['Af'] # Internal heat capacity in J/K
+
+    #all_prop.to_csv(r'C:\Users\Jimeno\Desktop\test.csv')
+    fields = ['Awall_all', 'Atot', 'Aw', 'Am','Aef','Af','Cm','Htr_is','Htr_em','Htr_ms','Htr_op','Hg','HD','Htr_w']
+    result = all_prop[fields]
+    return result
 
 def AmFunction (x): 
-    if x == 'Medium':
+    if x == 'T2':
         return 2.5
-    elif x == 'Heavy':
+    elif x == 'T3':
         return 3.2
-    elif x == 'Light':
+    elif x == 'T1':
         return 2.5
     else:
         return 2.5
 
 def CmFunction (x): 
-    if x == 'Medium':
+    if x == 'T2':
         return 165000
-    elif x == 'Heavy':
+    elif x == 'T3':
         return 300000
-    elif x == 'Light':
+    elif x == 'T1':
         return 110000
     else:
         return 165000
@@ -127,12 +133,13 @@ def CalcIncidentRadiation(AllProperties, Radiation_Shading2):
     for Column in range(1, Columns):
          #transform all the points of solar radiation into Wh
         Radiation_Shading2['T'+str(Column)] = Radiation_Shading2['T'+str(Column)]*Radiation_Shading2['AreaExposed']
-        
+
+    Radiation_Shading2.to_csv(r'C:\Users\Jimeno\Desktop\test.csv')
     #Do pivot table to sum up the irradiation in every surface to the building 
     #and merge the result with the table allProperties
     PivotTable3 = pd.pivot_table(Radiation_Shading2, rows='Name', margins='Add all row')
     RadiationLoad = pd.DataFrame(PivotTable3)
-    Solar = AllProperties.merge(RadiationLoad, left_on='Name',right_index=True)
+    Solar = AllProperties.merge(RadiationLoad, left_index=True,right_index=True)
     
     columns_names = list(range(8760))
     for time in range(len(columns_names)):
@@ -163,7 +170,7 @@ def Calc_Tm(Htr_3,Htr_1,tm_t0,Cm,Htr_em,Im_tot,Htr_ms,I_st,Htr_w,te_t,I_ia,IHC_n
     top = 0.31*ta+0.69*ts
     return tm, ts, ta, top
 
-def calc_mixed_schedule(Profiles, Profiles_names, AllProperties, te):  
+def calc_mixed_schedule(Profiles, Profiles_names, prop_occupancy, te):
     # weighted average of schedules
     def calc_average(last, current, share_of_use):
          return last + current * share_of_use
@@ -182,7 +189,7 @@ def calc_mixed_schedule(Profiles, Profiles_names, AllProperties, te):
     
     hour = Profiles[0].Hour
     for num in range(len(Profiles_names)):
-        current_share_of_use = AllProperties[Profiles_names[num]]
+        current_share_of_use = prop_occupancy[Profiles_names[num]]
         ta_hs_set = np.vectorize(calc_average)(ta_hs_set,np.array(Profiles[num].tintH_set),current_share_of_use)
         ta_cs_set = np.vectorize(calc_average)(ta_cs_set,np.array(Profiles[num].tintC_set),current_share_of_use)
         people = np.vectorize(calc_average)(people,np.array(Profiles[num].People),current_share_of_use)
@@ -209,20 +216,20 @@ def calc_Qem_ls(SystemH,SystemC):
     correction factor for the heating and cooling setpoints. extracted from SIA 2044 (replacing EN 15243)"""
     tHC_corr = [0,0]
     # values extracted from SIA 2044 - national standard replacing values suggested in EN 15243
-    if SystemH == 4 or 1:
+    if SystemH == 'T4' or 'T1':
         tHC_corr[0] = 0.5 + 1.2
-    elif SystemH == 2: 
+    elif SystemH == 'T2':
         tHC_corr[0] = 0 + 1.2
-    elif SystemH == 3: # no emission losses but emissions for ventilation
+    elif SystemH == 'T3': # no emission losses but emissions for ventilation
         tHC_corr[0] = 0.5 + 1 #regulation is not taking into account here
     else:
         tHC_corr[0] = 0.5 + 1.2
     
-    if SystemC == 4:
+    if SystemC == 'T4':
         tHC_corr[1] = 0 - 1.2
-    elif SystemC == 5: 
+    elif SystemC == 'T5':
         tHC_corr[1] = - 0.4 - 1.2
-    elif SystemC == 3: # no emission losses but emissions for ventilation
+    elif SystemC == 'T3': # no emission losses but emissions for ventilation
         tHC_corr[1] = 0 - 1 #regulation is not taking into account here
     else:
         tHC_corr[1] = 0 + - 1.2
@@ -296,11 +303,11 @@ def calc_Qdis_ls(tair, text, Qhs, Qcs, tsh, trh, tsc,trc, Qhs_max, Qcs_max,D,Y, 
     """calculates distribution losses based on ISO 15316"""
     # Calculate tamb in basement according to EN
     tamb = tair - Bf*(tair-text)
-    if SystemH != 0 and Qhs > 0:
+    if SystemH != 'T0' and Qhs > 0:
         Qhs_d_ls = ((tsh + trh)/2-tamb)*(Qhs/Qhs_max)*(Lv*Y) 
     else:
         Qhs_d_ls = 0
-    if SystemC != 0 and Qcs < 0:    
+    if SystemC != 'T0' and Qcs < 0:
         Qcs_d_ls = ((tsc + trc)/2-tamb)*(Qcs/Qcs_max)*(Lv*Y)
     else:
         Qcs_d_ls = 0
@@ -392,44 +399,43 @@ def calc_qv_req(ve,people,Af,gv,hour_day,hour_year,limit_inf_season,limit_sup_se
             q_req = (ve+infiltration_non_occupied)*Af/3600 #
     return q_req #m3/s
 
-def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
-                     Profiles_names, T_ext, T_ext_max, RH_ext,
-                     T_ext_min, path_temporary_folder, gv, servers, coolingroom):
-
-    Af = prop.Af
-    Aef = prop.Aef
-    Name = prop.Name
-    sys_e_heating = prop.Emission_heating
-    sys_e_cooling = prop.Emission_cooling
+def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop_geometry, prop_HVAC, prop_RC_model,
+                     prop_age, Solar, locationFinal, Profiles, Profiles_names, T_ext, T_ext_max, RH_ext, T_ext_min,
+                     path_temporary_folder,  gv, servers, coolingroom):
+    Af = prop_RC_model.Af
+    Aef = prop_RC_model.Aef
+    sys_e_heating = prop_HVAC.type_hs
+    sys_e_cooling = prop_HVAC.type_cs
     if Af > 0:
         #extract properties of building
         # Geometry
-        nf_ag = prop.floors_ag
-        nfp = prop.PFloor
-        Lw = prop.xperimeter
-        Ll = prop.yperimeter
-        Aw = prop.Aw
-        Awall_all = prop.Awall_all
-        Atot = prop.Atot
-        footprint = prop.footprint
+        nfp = prop_occupancy.PFloor
+        footprint = prop_geometry.footprint
+        nf_ag = prop_geometry.floors_ag
+        nf_bg = prop_geometry.floors_bg
+        Lw = prop_geometry.Bwidth
+        Ll = prop_geometry.Blength
         # construction,renovation etc years of the building
-        Year = prop.year_built
-        Retrofit = prop.year_retrofit # year building  renovated or not
+        Year = prop_age.built
+        Retrofit = prop_age.HVAC # year building  renovated or not
         # shading position and types
-        Sh_pos = prop.Shading_Pos
-        Sh_typ = prop.Shading_Type
+        Sh_typ = prop_architecture.type_shade
         # thermal mass properties
-        Cm = prop.Cm
-        Am = prop.Am
+        Aw = prop_RC_model.Aw
+        Awall_all = prop_RC_model.Awall_all
+        Atot = prop_RC_model.Atot
+        Cm = prop_RC_model.Cm
+        Am = prop_RC_model.Am
 
         Y = calc_Y(Year,Retrofit) # linear trasmissivity coefficient of piping W/(m.K)
         # nominal temperatures
-        Ths_sup_0 = prop.tshs0
-        Ths_re_0 = prop.trhs0
-        Tcs_sup_0 = prop.tscs0
-        Tcs_re_0 = prop.trcs0
-        Tww_sup_0 = prop.tsww0
-        
+        Ths_sup_0 = prop_HVAC.tshs0
+        Ths_re_0 = prop_HVAC.trhs0
+        Tcs_sup_0 = prop_HVAC.tscs0
+        Tcs_re_0 = prop_HVAC.trcs0
+        Tww_sup_0 = prop_HVAC.tsww0
+        Tww_re_0 = prop_HVAC.trww0
+
         # we define limtis of season.
         limit_inf_season = gv.seasonhours[0]+1
         limit_sup_season = gv.seasonhours[1]
@@ -443,20 +449,22 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
         Lvww_dis = (Ll+0.0625*Ll*Lw)*fforma # lenghth piping heating system distribution circuit
                 
         #calculate schedule and variables
-        ta_hs_set,ta_cs_set,people,ve,q_int,Eal_nove,Eal_ve,vww,vw,X_int,hour_day = calc_mixed_schedule(Profiles, Profiles_names,prop, T_ext)
-
+        ta_hs_set,ta_cs_set,people,ve,q_int,Eal_nove,Eal_ve,vww,vw,X_int,hour_day = calc_mixed_schedule(Profiles,
+                                                                                                        Profiles_names,
+                                                                                                        prop_occupancy,
+                                                                                                        T_ext)
         #2. Transmission coefficients in W/K 
         qv_req = np.vectorize(calc_qv_req)(ve,people,Af,gv,hour_day,range(8760),limit_inf_season,limit_sup_season)# in m3/s
         Hve = (gv.PaCa*qv_req)
-        Htr_is = prop.Htr_is
-        Htr_ms = prop.Htr_ms
-        Htr_w = prop.Htr_w
-        Htr_em = prop.Htr_em
+        Htr_is = prop_RC_model.Htr_is
+        Htr_ms = prop_RC_model.Htr_ms
+        Htr_w = prop_RC_model.Htr_w
+        Htr_em = prop_RC_model.Htr_em
         Htr_1,Htr_2, Htr_3 = np.vectorize(calc_Htr)(Hve, Htr_is, Htr_ms, Htr_w)
         
         #3. Heat flows in W
         #. Solar heat gains
-        Rf_sh = Calc_Rf_sh(Sh_pos,Sh_typ)  
+        Rf_sh = Calc_Rf_sh(Sh_typ)
         solar_specific = np.array(Solar)/Awall_all #array in W/m2
         Asol = np.vectorize(calc_gl)(solar_specific,gv.g_gl,Rf_sh)*(1-gv.F_f)*Aw # Calculation of solar efective area per hour in m2
         I_sol = Asol*solar_specific #how much are the net solar gains in Wh per hour of the year.
@@ -465,7 +473,7 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
         I_int_sen = q_int*Af # Internal heat gains
 
         #  Calculate latent internal loads in terms of added moisture:
-        if sys_e_heating == 3 or sys_e_cooling == 3:
+        if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
             w_int = X_int/(1000*3600)*Af #in kg/kg.s
         else:
             w_int = 0
@@ -478,7 +486,7 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
         #4. Heating and cooling loads
         # the installed capacities are assumed to be gigantic, it is assumed that the building can  generate heat and cold at anytime
         # this is where the potential task of changing the set-back temperature for H&C can start.....
-        if sys_e_heating == 2: # i.e., floor heating
+        if sys_e_heating == 'T2': # i.e., floor heating
             IC_max = -500*Af # typical of HVAC
             IH_max = 115*Af  #100W/m2 in the center and 175W/m2 in edge zones
         else:            
@@ -512,7 +520,7 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
         Im_tot = np.zeros(8760)
         
         # we give a seed high enough to avoid doing a iteration for 2 years.
-        if sys_e_heating == 2: #TABS
+        if sys_e_heating == 'T2': #TABS
             tm_t0 = tm_t1 = 16
         else:
             tm_t0 = tm_t1 = 16
@@ -530,7 +538,7 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
                 Tww_re[k] = 14
             else:
                 #take advantage of this loop to fill the values of cold water
-                Tww_re[k] = 10
+                Tww_re[k] = Tww_re_0
                 Flag_season = False
             # Calc of Qhs/Qcs - net/useful heating and cooling deamnd in W
             Losses = False # 0 is false and 1 is true
@@ -564,20 +572,20 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
             Im_tot[k] = Results1[6]
             
             # Calculate new sensible loads with HVAC systems incl. recovery.
-            if sys_e_heating == 1 or sys_e_heating == 2:
+            if sys_e_heating == 'T1' or sys_e_heating == 'T2':
                 Qhs_sen_incl_em_ls[k] = Results1[2]
-            if sys_e_cooling == 0:    
+            if sys_e_cooling == 'T0':
                 Qcs_sen_incl_em_ls[k] = 0
-            if sys_e_heating == 3 or sys_e_cooling == 3:
+            if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
                 QHC_sen[k] = Qhs_sen[k] + Qcs_sen[k] + Qhs_em_ls[k] + Qcs_em_ls[k]
                 temporal_Qhs, temporal_Qcs, Qhs_lat[k], Qcs_lat[k], Ehs_lat_aux[k], ma_sup_hs[k], ma_sup_cs[k], Ta_sup_hs[k], Ta_sup_cs[k], Ta_re_hs[k], Ta_re_cs[k], w_re[k], w_sup[k], t5[k] =  calc_HVAC(sys_e_heating, sys_e_cooling,
                                                                                                             people[k],RH_ext[k], T_ext[k],Ta[k],
                                                                                                             qv_req[k],Flag_season, QHC_sen[k],t5_1,
                                                                                                             w_int[k],gv)
                 t5_1 = t5[k]
-                if sys_e_heating == 3:
+                if sys_e_heating == 'T3':
                     Qhs_sen_incl_em_ls[k] = temporal_Qhs
-                if sys_e_cooling == 3:
+                if sys_e_cooling == 'T3':
                     Qcs_sen_incl_em_ls[k] = temporal_Qcs
         
         # Calc of Qhs_dis_ls/Qcs_dis_ls - losses due to distribution of heating/cooling coils
@@ -610,15 +618,15 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
         mcpcs = np.zeros(8760) # in KW/C
         Ta_0 = ta_hs_set.max()
         
-        if sys_e_heating == 1: #radiators
+        if sys_e_heating == 'T1': #radiators
             nh = 0.3
             Ths_sup, Ths_re, mcphs = np.vectorize(calc_RAD)(Qhsf,Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0,nh)
 
-        if sys_e_heating == 2: #floor heating
+        if sys_e_heating == 'T2': #floor heating
             nh = 0.2
             Ths_sup, Ths_re, mcphs = np.vectorize(calc_TABSH)(Qhsf,Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0,nh)
 
-        if sys_e_heating == 3: #air conditioning
+        if sys_e_heating == 'T3': #air conditioning
             tasup = Ta_sup_hs +273
             tare = Ta_re_hs +273
             index = np.where(Qhsf == Qhsf_0)
@@ -638,7 +646,7 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles,
             Ths_sup, Ths_re, mcphs = np.vectorize(calc_Hcoil2)(Qhsf, tasup, tare, Qhsf_0, Ta_re_0, Ta_sup_0,
                                                                 tsh0, trh0, w_re, w_sup, ma_sup_0, ma_sup_hs,
                                                                 gv.Cpa, LMRT0, UA0, mCw0, Qhsf)
-        if sys_e_cooling == 3: 
+        if sys_e_cooling == 'T3':
 
             # Initialize temperatures
             tasup = Ta_sup_cs + 273
@@ -931,16 +939,15 @@ def calc_t(w,RH): # tempeature in C
     t = result.real
     return t
 
-def Calc_Rf_sh (ShadingPosition,ShadingType):
+def Calc_Rf_sh (ShadingType):
+    # this script assumes shading is always located outside! most of the cases
     #0 for not #1 for Louvres, 2 for Rollo, 3 for Venetian blinds, 4 for Courtain, 5 for Solar control glass
-    d ={'Type':[0, 1, 2, 3, 4,5],'ValueIN':[1, 0.2,0.2,0.3,0.77,0.1],'ValueOUT':[1, 0.08,0.08,0.15,0.57,0.1]}
+    d ={'Type':['T0', 'T1', 'T2', 'T3', 'T4', 'T5'],'ValueOUT':[1, 0.08,0.08,0.15,0.57,0.1]}
     ValuesRf_Table = pd.DataFrame(d)
     rows = ValuesRf_Table.Type.count()
     for row in range(rows):
-        if ShadingType == ValuesRf_Table.loc[row,'Type'] and  ShadingPosition == 1: #1 is exterior
+        if ShadingType == ValuesRf_Table.loc[row,'Type']:
             return ValuesRf_Table.loc[row,'ValueOUT']
-        elif ShadingType == ValuesRf_Table.loc[row,'Type'] and  ShadingPosition == 0: #0 is interior
-            return ValuesRf_Table.loc[row,'ValueIN']
 
 def calc_gl(radiation, g_gl,Rf_sh):
     if radiation > 300: #in w/m2
@@ -1145,12 +1152,12 @@ def calc_Eaux_fw(freshw,nf,gv):
     return Eaux_fw
 
 def calc_Eaux_ve(Qhsf,Qcsf,E_ve, qve, SystemH, SystemC, Af):
-    if SystemH == 3:
+    if SystemH == 'T3':
         if Qhsf >0: 
             Eve_aux = E_ve*qve*3600
         else: 
             Eve_aux = 0
-    elif SystemC == 3:
+    elif SystemC == 'T3':
         if Qcsf <0:
             Eve_aux = E_ve*qve*3600
         else:
