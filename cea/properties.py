@@ -15,59 +15,6 @@ from geopandas import GeoDataFrame as gpdf
 
 gv = globalvar.GlobalVariables()
 
-class PropertiesTool(object):
-    def __init__(self):
-        self.label = 'Properties'
-        self.description = 'Query building properties from statistical database'  # noqa
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        path_buildings = arcpy.Parameter(
-            displayName="Buildings file",
-            name="path_buildings",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_buildings.filter.list = ['shp']
-        path_generation = arcpy.Parameter(
-            displayName="Genearation systems file",
-            name="path_generation",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_generation.filter.list = ['shp']
-        path_results = arcpy.Parameter(
-            displayName="path to intermediate results folder",
-            name="path_results",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        generate_uses = arcpy.Parameter(
-            displayName="Generate the uses",
-            name="generate_uses",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        generate_envelope = arcpy.Parameter(
-            displayName="Generate the envelope",
-            name="generate_envelope",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        generate_systems = arcpy.Parameter(
-            displayName="Generate the systems",
-            name="generate_systems",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        generate_equipment = arcpy.Parameter(
-            displayName="Generate the equipment",
-            name="generate_equipment",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        return [path_buildings, path_generation, path_results, generate_uses,
-                generate_envelope, generate_systems, generate_equipment]
 
 def properties(path_archetypes, path_age, path_occupancy, path_results, prop_thermal_flag, prop_architecture_flag,
                prop_HVAC_flag, gv):
