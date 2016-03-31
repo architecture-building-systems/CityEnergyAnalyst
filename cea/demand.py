@@ -22,64 +22,6 @@ gv = globalvar.GlobalVariables()
 reload(f)
 reload(globalvar)
 
-
-class DemandTool(object):
-    def __init__(self):
-        self.label = 'Demand'
-        self.description = 'Calculate the Demand'
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        path_radiation = arcpy.Parameter(
-            displayName="Radiation Path",
-            name="path_radiation",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_radiation.filter.list = ['csv']
-        path_weather = arcpy.Parameter(
-            displayName="Weather Data File Path",
-            name="path_weather",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_weather.filter.list = ['csv']
-        path_results = arcpy.Parameter(
-            displayName="Demand Results Folder Path",
-            name="path_results",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        path_properties = arcpy.Parameter(
-            displayName="Properties File Path",
-            name="path_properties",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_properties.filter.list = ['xls']
-        return [path_radiation, path_weather,
-                path_results, path_properties]
-
-    def isLicensed(self):
-        return True
-
-    def updateParameters(self, parameters):
-        return
-
-    def updateMessages(self, parameters):
-        return
-
-    def execute(self, parameters, messages):
-        demand_calculation(path_radiation=parameters[0].valueAsText,
-                           path_schedules=os.path.join(
-                               os.path.dirname(__file__), 'db', 'Schedules'),
-                           path_temporary_folder=tempfile.gettempdir(),
-                           path_weather=parameters[1].valueAsText,
-                           path_results=parameters[2].valueAsText,
-                           path_properties=parameters[3].valueAsText,
-                           gv=gv)
-
-
 def demand_calculation(path_radiation, path_schedules, path_temporary_folder, path_weather, path_results,
                        path_HVAC_shp, path_thermal_shp, path_occupancy_shp,
                        path_geometry_shp, path_age_shp, path_architecture_shp, gv):
