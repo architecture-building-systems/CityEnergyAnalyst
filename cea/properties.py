@@ -192,10 +192,8 @@ def test_properties():
     Run the properties script with input from the reference case and compare the results. This ensures that changes
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
     """
-    import tempfile
-
     path_test = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'test'))
-    path_archetypes = os.path.join(os.path.dirname(__file__),'db', 'Archetypes', 'Archetypes_HVAC_properties.csv')
+    path_archetypes = os.path.join(os.path.dirname(__file__), 'db', 'Archetypes', 'Archetypes_HVAC_properties.csv')
     path_age = os.path.join(path_test, 'reference-case', 'feature-classes', 'building_age.shp')
     path_occupancy = os.path.join(path_test, 'reference-case', 'feature-classes', 'building_occupancy.shp')
     path_results = os.path.join(path_test, 'reference-case', 'expected-output', 'properties')
@@ -204,7 +202,7 @@ def test_properties():
     prop_HVAC_flag = True
 
     properties(path_archetypes, path_age, path_occupancy, path_results, prop_thermal_flag,
-                prop_architecture_flag, prop_HVAC_flag, gv)
+               prop_architecture_flag, prop_HVAC_flag, gv)
 
     print 'test_properties() succeeded'
 
