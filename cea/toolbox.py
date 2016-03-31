@@ -1,7 +1,11 @@
 """
 ArcGIS Tool classes for integrating the CEA with ArcGIS.
 """
+import os
 import arcpy
+from cea import globalvar
+
+gv = globalvar.GlobalVariables()
 
 class PropertiesTool(object):
     """
@@ -109,6 +113,8 @@ class DemandTool(object):
         return
 
     def execute(self, parameters, messages):
+        from cea.demand import demand_calculation
+        import tempfile
         demand_calculation(path_radiation=parameters[0].valueAsText,
                            path_schedules=os.path.join(
                                os.path.dirname(__file__), 'db', 'Schedules'),
@@ -237,6 +243,7 @@ class EmbodiedEnergyTool(object):
         retrofit_installations = parameters[8]
         retrofit_basement_floor = parameters[9]
 
+        from cea.embodied import lca_embodied
         lca_embodied(
             path_LCA_embodied_energy=path_LCA_embodied_energy,
             path_LCA_embodied_emissions=path_LCA_embodied_emissions,
@@ -304,6 +311,7 @@ class EmissionsTool(object):
         return
 
     def execute(self, parameters, messages):
+        from cea.emissions import lca_operation
         lca_operation(path_total_demand=parameters[0].valueAsText,
                       path_LCA_operation=parameters[1].valueAsText,
                       path_properties=parameters[2].valueAsText,
@@ -341,6 +349,7 @@ class GraphsDemandTool(object):
                 path_results]
 
     def execute(self, parameters, messages):
+        from cea.graphs import graphs_demand
         graphs_demand(path_buildings=parameters[0].valueAsText,
                     path_results_demand=parameters[1].valueAsText,
                     path_results = parameters[2].valueAsText,
@@ -390,6 +399,7 @@ class HeatmapsTool(object):
         return True
 
     def updateParameters(self, parameters):
+        import pandas as pd
         path_data = parameters[0]
         analysis_field_variables = parameters[1]
         csv = pd.read_csv(path_data.valueAsText)
@@ -402,6 +412,9 @@ class HeatmapsTool(object):
         return
 
     def execute(self, parameters, messages):
+        import tempfile
+        from cea.heatmaps import heatmaps
+        
         path_data = parameters[0].valueAsText
         value_table = parameters[1].value
         path_buildings = parameters[2].valueAsText
