@@ -17,52 +17,66 @@ class PropertiesTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        path_buildings = arcpy.Parameter(
-            displayName="Buildings file",
-            name="path_buildings",
+        path_age = arcpy.Parameter(
+            displayName="Path to file buildings_age.shp",
+            name="path_age",
             datatype="DEFile",
             parameterType="Required",
             direction="Input")
-        path_buildings.filter.list = ['shp']
-        path_generation = arcpy.Parameter(
-            displayName="Genearation systems file",
-            name="path_generation",
+        path_age.filter.list = ['shp']
+        path_occupancy = arcpy.Parameter(
+            displayName="Path to file buildings_occupancy.shp",
+            name="path_occupancy",
             datatype="DEFile",
             parameterType="Required",
             direction="Input")
-        path_generation.filter.list = ['shp']
+        path_occupancy.filter.list = ['shp']
+        prop_thermal_flag = arcpy.Parameter(
+            displayName="Generate thermal properties of the building envelope",
+            name="prop_thermal_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        prop_thermal_flag.value = True
+        prop_architecture_flag = arcpy.Parameter(
+            displayName="Generate construction and architecture properties",
+            name="prop_architecture_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        prop_architecture_flag.value = True
+        prop_HVAC_flag = arcpy.Parameter(
+            displayName="Generate HVAC systems properties",
+            name="prop_HVAC_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        prop_HVAC_flag.value = True
         path_results = arcpy.Parameter(
-            displayName="path to intermediate results folder",
+            displayName="Path to folder to store results",
             name="path_results",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
-        generate_uses = arcpy.Parameter(
-            displayName="Generate the uses",
-            name="generate_uses",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        generate_envelope = arcpy.Parameter(
-            displayName="Generate the envelope",
-            name="generate_envelope",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        generate_systems = arcpy.Parameter(
-            displayName="Generate the systems",
-            name="generate_systems",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        generate_equipment = arcpy.Parameter(
-            displayName="Generate the equipment",
-            name="generate_equipment",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        return [path_buildings, path_generation, path_results, generate_uses,
-                generate_envelope, generate_systems, generate_equipment]
+        return [path_age, path_occupancy, prop_thermal_flag, prop_architecture_flag,
+                prop_HVAC_flag, path_results]
+
+    def execute(self, parameters, messages):
+        from cea.properties import properties
+        path_archetypes = os.path.join(
+            os.path.dirname(__file__),
+            'db', 'Archetypes', 'Archetypes_HVAC_properties.csv')
+        path_age = parameters[0]
+        path_occupancy = parameters[1]
+        prop_thermal_flag = parameters[2]
+        prop_architecture_flag = parameters[3]
+        prop_HVAC_flag = parameters[4]
+        path_results = parameters[5]
+        properties(path_archetypes=path_archetypes, path_age=path_age.valueAsText,
+                   path_occupancy=path_occupancy.valueAsText, path_results=path_results.valueAsText,
+                   prop_thermal_flag=prop_thermal_flag.value,
+                   prop_architecture_flag=prop_architecture_flag.value,
+                   prop_HVAC_flag=prop_HVAC_flag.value, gv=gv)
 
 
 class DemandTool(object):
@@ -414,7 +428,7 @@ class HeatmapsTool(object):
     def execute(self, parameters, messages):
         import tempfile
         from cea.heatmaps import heatmaps
-        
+
         path_data = parameters[0].valueAsText
         value_table = parameters[1].value
         path_buildings = parameters[2].valueAsText
