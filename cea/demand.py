@@ -22,8 +22,9 @@ gv = globalvar.GlobalVariables()
 reload(f)
 reload(globalvar)
 
+
 def demand_calculation(path_radiation, path_schedules, path_temporary_folder, path_weather, path_results,
-                       path_HVAC_shp, path_thermal_shp, path_occupancy_shp,
+                       path_hvac_shp, path_thermal_shp, path_occupancy_shp,
                        path_geometry_shp, path_age_shp, path_architecture_shp, gv):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
@@ -59,7 +60,7 @@ def demand_calculation(path_radiation, path_schedules, path_temporary_folder, pa
     prop_geometry['footprint'] = prop_geometry.area
     prop_geometry['perimeter'] = prop_geometry.length
     prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
-    prop_HVAC = gpdf.from_file(path_HVAC_shp).drop('geometry', axis=1).set_index('Name')
+    prop_HVAC = gpdf.from_file(path_hvac_shp).drop('geometry', axis=1).set_index('Name')
     prop_thermal = gpdf.from_file(path_thermal_shp).drop('geometry', axis=1).set_index('Name')
     prop_occupancy = gpdf.from_file(path_occupancy_shp).drop('geometry', axis=1).set_index('Name')
     prop_architecture = gpdf.from_file(path_architecture_shp).drop('geometry', axis=1).set_index('Name')
@@ -127,9 +128,11 @@ def test_demand():
     path_architecture_shp = os.path.join(path_reference_case, 'expected-output', 'properties',
                                          'building_architecture.shp')
     path_temporary_folder = tempfile.gettempdir()
-    demand_calculation(path_radiation, path_schedules, path_temporary_folder, path_weather, path_results,
-                       path_HVAC_shp, path_thermal_shp, path_occupancy_shp,
-                       path_geometry_shp, path_age_shp, path_architecture_shp, gv)
+    demand_calculation(path_radiation=path_radiation, path_schedules=path_schedules,
+                       path_temporary_folder=path_temporary_folder, path_weather=path_weather,
+                       path_results=path_results, path_HVAC_shp=path_HVAC_shp, path_thermal_shp=path_thermal_shp,
+                       path_occupancy_shp=path_occupancy_shp, path_geometry_shp=path_geometry_shp,
+                       path_age_shp=path_age_shp, path_architecture_shp=path_architecture_shp, gv=gv)
 
 
 if __name__ == '__main__':

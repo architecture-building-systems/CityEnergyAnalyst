@@ -101,21 +101,56 @@ class DemandTool(object):
             parameterType="Required",
             direction="Input")
         path_weather.filter.list = ['csv']
+        path_hvac_shp = arcpy.Parameter(
+            displayName="Path to file buildings_HVAC.shp",
+            name="path_hvac_shp",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Input")
+        path_hvac_shp.filter.list = ['shp']
+        path_thermal_shp = arcpy.Parameter(
+            displayName="Path to file buildings_thermal.shp",
+            name="path_thermal_shp",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Input")
+        path_thermal_shp.filter.list = ['shp']
+        path_occupancy_shp = arcpy.Parameter(
+            displayName="Path to file path_occupancy.shp",
+            name="path_occupancy_shp",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Input")
+        path_occupancy_shp.filter.list = ['shp']
+        path_geometry_shp = arcpy.Parameter(
+            displayName="Path to file path_geometry.shp",
+            name="path_geometry_shp",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Input")
+        path_geometry_shp.filter.list = ['shp']
+        path_age_shp = arcpy.Parameter(
+            displayName="Path to file path_age.shp",
+            name="path_age_shp",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Input")
+        path_age_shp.filter.list = ['shp']
+        path_architecture_shp = arcpy.Parameter(
+            displayName="Path to file path_architecture.shp",
+            name="path_architecture_shp",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Input")
+        path_architecture_shp.filter.list = ['shp']
         path_results = arcpy.Parameter(
             displayName="Demand Results Folder Path",
             name="path_results",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
-        path_properties = arcpy.Parameter(
-            displayName="Properties File Path",
-            name="path_properties",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_properties.filter.list = ['xls']
-        return [path_radiation, path_weather,
-                path_results, path_properties]
+        return [path_radiation, path_weather, path_hvac_shp, path_thermal_shp, path_occupancy_shp,
+                path_geometry_shp, path_age_shp, path_architecture_shp, path_results]
 
     def isLicensed(self):
         return True
@@ -127,16 +162,30 @@ class DemandTool(object):
         return
 
     def execute(self, parameters, messages):
-        from cea.demand import demand_calculation
+        import cea.demand
+        reload(cea.demand)
         import tempfile
-        demand_calculation(path_radiation=parameters[0].valueAsText,
-                           path_schedules=os.path.join(
-                               os.path.dirname(__file__), 'db', 'Schedules'),
+        path_radiation = parameters[0]
+        path_weather = parameters[1]
+        path_hvac_shp = parameters[2]
+        path_thermal_shp = parameters[3]
+        path_occupancy_shp = parameters[4]
+        path_geometry_shp = parameters[5]
+        path_age_shp = parameters[6]
+        path_architecture_shp = parameters[7]
+        path_results = parameters[8]
+
+        cea.demand.demand_calculation(path_radiation=path_radiation.valueAsText,
+                           path_schedules=os.path.join(os.path.dirname(__file__), 'db', 'Schedules'),
                            path_temporary_folder=tempfile.gettempdir(),
-                           path_weather=parameters[1].valueAsText,
-                           path_results=parameters[2].valueAsText,
-                           path_properties=parameters[3].valueAsText,
-                           gv=gv)
+                           path_weather=path_weather.valueAsText,
+                           path_results=path_results.valueAsText,
+                           path_hvac_shp=path_hvac_shp.valueAsText,
+                           path_thermal_shp=path_thermal_shp.valueAsText,
+                           path_occupancy_shp=path_occupancy_shp.valueAsText,
+                           path_geometry_shp=path_geometry_shp.valueAsTExt,
+                           path_age_shp=path_age_shp.valueAsText,
+                           path_architecture_shp=path_architecture_shp.valueAsText, gv=gv)
 
 
 class EmbodiedEnergyTool(object):
