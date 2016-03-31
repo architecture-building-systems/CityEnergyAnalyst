@@ -266,5 +266,5 @@ def is_dataframe_equal(dfa, dfb):
     comparison = dfa == dfb
     return all((comparison[c].all() for c in comparison.columns))
 
-#if __name__ == '__main__':
-test_properties()
+if __name__ == '__main__':
+    test_properties()
