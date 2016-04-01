@@ -23,65 +23,8 @@ reload(f)
 reload(globalvar)
 
 
-class DemandTool(object):
-    def __init__(self):
-        self.label = 'Demand'
-        self.description = 'Calculate the Demand'
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        path_radiation = arcpy.Parameter(
-            displayName="Radiation Path",
-            name="path_radiation",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_radiation.filter.list = ['csv']
-        path_weather = arcpy.Parameter(
-            displayName="Weather Data File Path",
-            name="path_weather",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_weather.filter.list = ['csv']
-        path_results = arcpy.Parameter(
-            displayName="Demand Results Folder Path",
-            name="path_results",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        path_properties = arcpy.Parameter(
-            displayName="Properties File Path",
-            name="path_properties",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_properties.filter.list = ['xls']
-        return [path_radiation, path_weather,
-                path_results, path_properties]
-
-    def isLicensed(self):
-        return True
-
-    def updateParameters(self, parameters):
-        return
-
-    def updateMessages(self, parameters):
-        return
-
-    def execute(self, parameters, messages):
-        demand_calculation(path_radiation=parameters[0].valueAsText,
-                           path_schedules=os.path.join(
-                               os.path.dirname(__file__), 'db', 'Schedules'),
-                           path_temporary_folder=tempfile.gettempdir(),
-                           path_weather=parameters[1].valueAsText,
-                           path_results=parameters[2].valueAsText,
-                           path_properties=parameters[3].valueAsText,
-                           gv=gv)
-
-
 def demand_calculation(path_radiation, path_schedules, path_temporary_folder, path_weather, path_results,
-                       path_HVAC_shp, path_thermal_shp, path_occupancy_shp,
+                       path_hvac_shp, path_thermal_shp, path_occupancy_shp,
                        path_geometry_shp, path_age_shp, path_architecture_shp, gv):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
@@ -117,7 +60,7 @@ def demand_calculation(path_radiation, path_schedules, path_temporary_folder, pa
     prop_geometry['footprint'] = prop_geometry.area
     prop_geometry['perimeter'] = prop_geometry.length
     prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
-    prop_HVAC = gpdf.from_file(path_HVAC_shp).drop('geometry', axis=1).set_index('Name')
+    prop_HVAC = gpdf.from_file(path_hvac_shp).drop('geometry', axis=1).set_index('Name')
     prop_thermal = gpdf.from_file(path_thermal_shp).drop('geometry', axis=1).set_index('Name')
     prop_occupancy = gpdf.from_file(path_occupancy_shp).drop('geometry', axis=1).set_index('Name')
     prop_architecture = gpdf.from_file(path_architecture_shp).drop('geometry', axis=1).set_index('Name')
@@ -155,6 +98,7 @@ def demand_calculation(path_radiation, path_schedules, path_temporary_folder, pa
         arcpy.AddMessage(message)
         counter += 1
     # put together all rows of the total file
+    arcpy.AddMessage('len(prop_RC_model.index): %i' % len(prop_RC_model.index))
     counter = 0
     for name in prop_RC_model.index:
         if counter == 0:
@@ -173,7 +117,7 @@ def test_demand():
     path_reference_case = os.path.join(path_test, 'reference-case')
 
     # path_radiation = os.path.join(path_reference_case, 'Radiation2000-2009.csv')
-    path_radiation = os.path.join(path_reference_case, 'RadiationYearFinal.csv')
+    path_radiation = os.path.join(path_reference_case, 'Radiation2000-2009.csv')
     path_schedules = os.path.join(os.path.dirname(__file__), 'db', 'Schedules')
     path_weather = os.path.join(path_reference_case, 'weather_design_hour.csv')
     path_results = os.path.join(path_reference_case, 'expected-output', 'demand')
@@ -185,9 +129,11 @@ def test_demand():
     path_architecture_shp = os.path.join(path_reference_case, 'expected-output', 'properties',
                                          'building_architecture.shp')
     path_temporary_folder = tempfile.gettempdir()
-    demand_calculation(path_radiation, path_schedules, path_temporary_folder, path_weather, path_results,
-                       path_HVAC_shp, path_thermal_shp, path_occupancy_shp,
-                       path_geometry_shp, path_age_shp, path_architecture_shp, gv)
+    demand_calculation(path_radiation=path_radiation, path_schedules=path_schedules,
+                       path_temporary_folder=path_temporary_folder, path_weather=path_weather,
+                       path_results=path_results, path_hvac_shp=path_HVAC_shp, path_thermal_shp=path_thermal_shp,
+                       path_occupancy_shp=path_occupancy_shp, path_geometry_shp=path_geometry_shp,
+                       path_age_shp=path_age_shp, path_architecture_shp=path_architecture_shp, gv=gv)
 
 
 if __name__ == '__main__':

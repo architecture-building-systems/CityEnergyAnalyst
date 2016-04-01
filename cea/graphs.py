@@ -10,47 +10,10 @@ D. Thomas   integration in toolbox
 """
 from __future__ import division
 import matplotlib.pyplot as plt
-import matplotlib.ticker as plticker
 import os
 import pandas as pd
-import numpy as np
 import arcpy
 
-class GraphsDemandTool(object):
-
-    def __init__(self):
-        self.label = 'Demand graphs'
-        self.description = 'Calculate Graphs of the Demand'
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        path_buildings = arcpy.Parameter(
-            displayName="Buildings file",
-            name="path_buildings",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_buildings.filter.list = ['shp']
-        path_results_demand = arcpy.Parameter(
-            displayName="Demand Folder Path",
-            name="path_results_demand",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        path_results = arcpy.Parameter(
-            displayName="Graphs Demand Results Folder Path",
-            name="path_results",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")        
-        return [path_buildings, path_results_demand,
-                path_results]
-
-    def execute(self, parameters, messages):
-        graphs_demand(path_buildings=parameters[0].valueAsText,
-                    path_results_demand=parameters[1].valueAsText,
-                    path_results = parameters[2].valueAsText,
-                    analysis_fields = ["Ealf", "Qhsf","Qwwf", "Qcsf"])
 
 def graphs_demand(path_buildings, path_results_demand, path_results, analysis_fields):
     """
@@ -89,11 +52,11 @@ def graphs_demand(path_buildings, path_results_demand, path_results, analysis_fi
                 fig.subplots_adjust(hspace=0.7)
                 
                 plt.savefig(path_results+'\\'+name+".pdf")
-		plt.clf()
+        plt.clf()
                 plt.close()
                 message = 'Graph Building ' + str(name)+ ' complete'
                 arcpy.AddMessage(message)
-	   
+
 
 def test_graph_demand():
     analysis_fields = ["Ealf", "Qhsf","Qwwf", "Qcsf"]

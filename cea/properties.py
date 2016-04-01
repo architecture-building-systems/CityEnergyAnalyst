@@ -15,59 +15,6 @@ from geopandas import GeoDataFrame as gpdf
 
 gv = globalvar.GlobalVariables()
 
-class PropertiesTool(object):
-    def __init__(self):
-        self.label = 'Properties'
-        self.description = 'Query building properties from statistical database'  # noqa
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        path_buildings = arcpy.Parameter(
-            displayName="Buildings file",
-            name="path_buildings",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_buildings.filter.list = ['shp']
-        path_generation = arcpy.Parameter(
-            displayName="Genearation systems file",
-            name="path_generation",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_generation.filter.list = ['shp']
-        path_results = arcpy.Parameter(
-            displayName="path to intermediate results folder",
-            name="path_results",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        generate_uses = arcpy.Parameter(
-            displayName="Generate the uses",
-            name="generate_uses",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        generate_envelope = arcpy.Parameter(
-            displayName="Generate the envelope",
-            name="generate_envelope",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        generate_systems = arcpy.Parameter(
-            displayName="Generate the systems",
-            name="generate_systems",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        generate_equipment = arcpy.Parameter(
-            displayName="Generate the equipment",
-            name="generate_equipment",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        return [path_buildings, path_generation, path_results, generate_uses,
-                generate_envelope, generate_systems, generate_equipment]
 
 def properties(path_archetypes, path_age, path_occupancy, path_results, prop_thermal_flag, prop_architecture_flag,
                prop_HVAC_flag, gv):
@@ -245,10 +192,8 @@ def test_properties():
     Run the properties script with input from the reference case and compare the results. This ensures that changes
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
     """
-    import tempfile
-
     path_test = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'test'))
-    path_archetypes = os.path.join(os.path.dirname(__file__),'db', 'Archetypes', 'Archetypes_HVAC_properties.csv')
+    path_archetypes = os.path.join(os.path.dirname(__file__), 'db', 'Archetypes', 'Archetypes_HVAC_properties.csv')
     path_age = os.path.join(path_test, 'reference-case', 'feature-classes', 'building_age.shp')
     path_occupancy = os.path.join(path_test, 'reference-case', 'feature-classes', 'building_occupancy.shp')
     path_results = os.path.join(path_test, 'reference-case', 'expected-output', 'properties')
@@ -257,7 +202,7 @@ def test_properties():
     prop_HVAC_flag = True
 
     properties(path_archetypes, path_age, path_occupancy, path_results, prop_thermal_flag,
-                prop_architecture_flag, prop_HVAC_flag, gv)
+               prop_architecture_flag, prop_HVAC_flag, gv)
 
     print 'test_properties() succeeded'
 
