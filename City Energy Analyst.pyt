@@ -1,22 +1,12 @@
-import cea.demand
-reload(cea.demand)
-import cea.properties
-reload(cea.properties)
-import cea.emissions
-reload(cea.emissions)
-import cea.embodied
-reload(cea.embodied)
-import cea.heatmaps
-reload(cea.heatmaps)
-import cea.graphs
-reload(cea.graphs)
+import cea.toolbox
+reload(cea.toolbox)
 
-DemandTool = cea.demand.DemandTool
-PropertiesTool = cea.properties.PropertiesTool
-EmissionsTool = cea.emissions.EmissionsTool
-EmbodiedEnergyTool = cea.embodied.EmbodiedEnergyTool
-HeatmapsTool = cea.heatmaps.HeatmapsTool
-GraphsDemandTool = cea.graphs.GraphsDemandTool
+DemandTool = cea.toolbox.DemandTool
+PropertiesTool = cea.toolbox.PropertiesTool
+EmissionsTool = cea.toolbox.EmissionsTool
+EmbodiedEnergyTool = cea.toolbox.EmbodiedEnergyTool
+HeatmapsTool = cea.toolbox.HeatmapsTool
+GraphsDemandTool = cea.toolbox.GraphsDemandTool
 
 class Toolbox(object):
     def __init__(self):

@@ -1,6 +1,6 @@
 """
 ===========================
-Primary energy and CO2 emissions model algorithm for buidling operation
+Primary energy and CO2 emissions model algorithm for building operation
 ===========================
 J. Fonseca  script development          26.08.15
 D. Thomas   formatting and cleaning     27.08.15
@@ -10,63 +10,6 @@ D. Thomas   integration in toolbox      27.08.15
 from __future__ import division
 import pandas as pd
 import arcpy
-
-
-class EmissionsTool(object):
-
-    def __init__(self):
-        self.label = 'Emissions_Operation'
-        self.description = 'Calculate emissions and primary energy due to building operation'
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        path_total_demand = arcpy.Parameter(
-            displayName="Energy demand (Total_demand.csv)",
-            name="path_total_demand",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_total_demand.filter.list = ['csv']
-        
-        path_LCA_operation = arcpy.Parameter(
-            displayName="LCA operation data (LCA_operation.xls)",
-            name="path_LCA_operation",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_LCA_operation.filter.list = ['xls']
-        
-        path_properties = arcpy.Parameter(
-            displayName="Properties File Path (properties.xls)",
-            name="path_properties",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_properties.filter.list = ['xls']
-        
-        path_results = arcpy.Parameter(
-            displayName="Results folder",
-            name="path_results",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        return [path_total_demand, path_LCA_operation,
-                path_properties, path_results]
-
-    def isLicensed(self):
-        return True
-
-    def updateParameters(self, parameters):
-        return
-
-    def updateMessages(self, parameters):
-        return
-
-    def execute(self, parameters, messages):
-        lca_operation(path_total_demand=parameters[0].valueAsText,
-                      path_LCA_operation=parameters[1].valueAsText,
-                      path_properties=parameters[2].valueAsText,
-                      path_results=parameters[3].valueAsText)
 
 
 def lca_operation(path_total_demand, path_properties, path_LCA_operation, path_results):
