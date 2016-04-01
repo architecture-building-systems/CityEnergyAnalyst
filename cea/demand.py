@@ -98,6 +98,7 @@ def demand_calculation(path_radiation, path_schedules, path_temporary_folder, pa
         arcpy.AddMessage(message)
         counter += 1
     # put together all rows of the total file
+    arcpy.AddMessage('len(prop_RC_model.index): %i' % len(prop_RC_model.index))
     counter = 0
     for name in prop_RC_model.index:
         if counter == 0:
@@ -116,7 +117,7 @@ def test_demand():
     path_reference_case = os.path.join(path_test, 'reference-case')
 
     # path_radiation = os.path.join(path_reference_case, 'Radiation2000-2009.csv')
-    path_radiation = os.path.join(path_reference_case, 'RadiationYearFinal.csv')
+    path_radiation = os.path.join(path_reference_case, 'Radiation2000-2009.csv')
     path_schedules = os.path.join(os.path.dirname(__file__), 'db', 'Schedules')
     path_weather = os.path.join(path_reference_case, 'weather_design_hour.csv')
     path_results = os.path.join(path_reference_case, 'expected-output', 'demand')
@@ -130,7 +131,7 @@ def test_demand():
     path_temporary_folder = tempfile.gettempdir()
     demand_calculation(path_radiation=path_radiation, path_schedules=path_schedules,
                        path_temporary_folder=path_temporary_folder, path_weather=path_weather,
-                       path_results=path_results, path_HVAC_shp=path_HVAC_shp, path_thermal_shp=path_thermal_shp,
+                       path_results=path_results, path_hvac_shp=path_HVAC_shp, path_thermal_shp=path_thermal_shp,
                        path_occupancy_shp=path_occupancy_shp, path_geometry_shp=path_geometry_shp,
                        path_age_shp=path_age_shp, path_architecture_shp=path_architecture_shp, gv=gv)
 
