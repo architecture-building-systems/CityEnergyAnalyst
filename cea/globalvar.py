@@ -50,3 +50,5 @@ class GlobalVariables(object):
         self.fwratio = 1.5  # conversion component's area to floor area
         self.sl_materials = 60  # service life of standard building components and materials
         self.sl_installations = 40  # service life of technical instalations
+        # constant variables for air conditioning fan
+        self.Pfan = 0.55 # specific fan consumption in W/m3/h

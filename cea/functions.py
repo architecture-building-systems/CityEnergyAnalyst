@@ -196,14 +196,16 @@ def calc_mixed_schedule(Profiles, Profiles_names, prop_occupancy, te):
         ve = np.vectorize(calc_average)(ve,np.array(Profiles[num].Ve),current_share_of_use)
         q_int = np.vectorize(calc_average)(q_int,np.array(Profiles[num].I_int),current_share_of_use)
         w_int = np.vectorize(calc_average)(w_int,np.array(Profiles[num].w_int),current_share_of_use)
-        Eal_nove = np.vectorize(calc_average)(Eal_nove,np.array(Profiles[num].Ealf_nove),current_share_of_use)
-        Eal_ve = np.vectorize(calc_average)(Eal_ve,np.array(Profiles[num].Ealf_ve),current_share_of_use)
+        Epro = np.vectorize(calc_average)(Eal_nove,np.array(Profiles[num].Epro),current_share_of_use)
+        Edata = np.vectorize(calc_average)(Eal_nove,np.array(Profiles[num].Edata),current_share_of_use)
+        Qcdata = np.vectorize(calc_average)(Eal_nove,np.array(Profiles[num].Qcdata),current_share_of_use)
+        Qcrefri = np.vectorize(calc_average)(Eal_nove,np.array(Profiles[num].Qcrefri),current_share_of_use)
+        Eal = np.vectorize(calc_average)(Eal_nove,np.array(Profiles[num].Ealf_nove),current_share_of_use)
         mww = np.vectorize(calc_average)(mww,np.array(Profiles[num].Mww),current_share_of_use)
         mw = np.vectorize(calc_average)(mw,np.array(Profiles[num].Mw),current_share_of_use)
         
-    return ta_hs_set,ta_cs_set,people,ve,q_int,Eal_nove,Eal_ve/2,mww,mw, w_int, hour
-    #divided in two because in the scehdules the
-    #load of the ventilator per m3/h is computed as 2 (an error!). here we skip it.
+    return ta_hs_set,ta_cs_set,people,ve,q_int,Eal,Epro, Edata, Qcdata,Qcrefri, mww, mw, w_int, hour
+
 
 def calc_Htr(Hve, Htr_is, Htr_ms, Htr_w):
     Htr_1 = 1/(1/Hve+1/Htr_is)
@@ -447,13 +449,17 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         Lsww_dis = 0.038*Ll*Lw*nf_ag*nfp*gv.hf*fforma # length hotwater piping distribution circuit
         Lvww_c = (2*Ll+0.0125*Ll*Lw)*fforma # lenghth piping heating system circulation circuit
         Lvww_dis = (Ll+0.0625*Ll*Lw)*fforma # lenghth piping heating system distribution circuit
-                
+
         #calculate schedule and variables
-        ta_hs_set,ta_cs_set,people,ve,q_int,Eal_nove,Eal_ve,vww,vw,X_int,hour_day = calc_mixed_schedule(Profiles,
-                                                                                                        Profiles_names,
-                                                                                                        prop_occupancy,
-                                                                                                        T_ext)
-        #2. Transmission coefficients in W/K 
+        ta_hs_set,ta_cs_set,people,ve,q_int,Eal_nove,Eprof,Edataf, Qcdataf, Qcrefrif,vww,vw,X_int,hour_day = calc_mixed_schedule(Profiles,
+                                                                                                                        Profiles_names,
+                                                                                                                        prop_occupancy,
+                                                                                                                         T_ext)
+        # data and refrigeration loads
+        Qcdata = Qcdataf*Af
+        Qcrefri = Qcrefrif*Af
+
+        #2. Transmission coefficients in W/K
         qv_req = np.vectorize(calc_qv_req)(ve,people,Af,gv,hour_day,range(8760),limit_inf_season,limit_sup_season)# in m3/s
         Hve = (gv.PaCa*qv_req)
         Htr_is = prop_RC_model.Htr_is
@@ -706,9 +712,9 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
             Eaux_cs  = np.vectorize(calc_Eaux_cs_dis)(Qcsf,Qcsf_0,Imax,deltaP_des,b,Tcs_sup,Tcs_re,gv.Cpw)
         if nf_ag > 5: #up to 5th floor no pumping needs
             Eaux_fw = calc_Eaux_fw(Vw,nf_ag,gv)
-        if sys_e_heating == 3 or sys_e_cooling ==3:
-            Eaux_ve = np.vectorize(calc_Eaux_ve)(Qhsf,Qcsf,Eal_ve, qv_req,sys_e_heating,sys_e_cooling, Af)
-            
+        if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
+            Eaux_ve = np.vectorize(calc_Eaux_ve)(Qhsf,Qcsf,qv.Pfan, qv_req,sys_e_heating,sys_e_cooling, Af)
+
         # Calc total auxiliary loads
         Eauxf = (Eaux_ww + Eaux_fw + Eaux_hs + Eaux_cs + Ehs_lat_aux + Eaux_ve)
     
@@ -725,23 +731,30 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         Ths_sup_0 = Ths_re_0 = Tcs_re_0 = Tcs_sup_0 = Tww_sup_0 = 0
         #arrays
         Occupancy = Eauxf = Waterconsumption = np.zeros(8760)
-        Qwwf = Qww = Qhs_sen = Qhsf = Qcs_sen = Qcs = Qcsf = np.zeros(8760)
+        Qwwf = Qww = Qhs_sen = Qhsf = Qcs_sen = Qcs = Qcsf = Qcdata = Qcrefri = np.zeros(8760)
         Ths_sup = Ths_re = Tcs_re = Tcs_sup = mcphs = mcpcs = mcpww = Tww_re = uncomfort = np.zeros(8760) # in C 
        
     if Aef > 0:
         # calc appliance and lighting loads
         Ealf = Eal_nove*Aef
+        Epro = Eprof*Aef
+        Edata = Edataf*Aef
         Ealf_0 = Ealf.max()
 
         # compute totals electrical loads in MWh
         Ealf_tot = Ealf.sum()/1000000
         Eauxf_tot = Eauxf.sum()/1000000
+        Epro_tot = Epro.sum()/1000000
+        Edata_tot = Edata.sum()/1000000
     else:
-        Ealf_tot = Eauxf_tot =  Ealf_0 = 0 
+        Ealf_tot = Eauxf_tot =  Ealf_0 = 0
+        Epro_tot = Edata_tot = 0
         Ealf = np.zeros(8760)
-        
+        Epro = np.zeros(8760)
+        Edata = np.zeros(8760)
+
     # compute totals heating loads loads in MW
-    if sys_e_heating != 0:
+    if sys_e_heating != 'T0':
         Qhsf_tot = Qhsf.sum()/1000000
         Qhs_tot = Qhs_sen.sum()/1000000
         Qwwf_tot = Qwwf.sum()/1000000
@@ -750,24 +763,26 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         Qhsf_tot = Qhs_tot = Qwwf_tot  = Qww_tot = 0
 
     # compute totals cooling loads in MW
-    if sys_e_cooling != 0:
+    if sys_e_cooling != 'T0':
         Qcs_tot = -Qcs.sum()/1000000 
         Qcsf_tot = -Qcsf.sum()/1000000
+        Qcrefri_tot = Qcrefri.sum()/1000000
+        Qcdata_tot = Qcdata.sum()/1000000
     else:
-        Qcs_tot = Qcsf_tot = 0
+        Qcs_tot = Qcsf_tot = 'T0'
         
     #print series all in kW, mcp in kW/h, cooling loads shown as positive, water consumption m3/h, temperature in Degrees celcious
     DATE = pd.date_range('1/1/2010', periods=8760, freq='H') 
     pd.DataFrame({'DATE':DATE, 'Name':Name,'Ealf':Ealf/1000,'Eauxf':Eauxf/1000,'Qwwf':Qwwf/1000,'Qww':Qww/1000,'Qhs':Qhs_sen/1000,
                   'Qhsf':Qhsf/1000,'Qcs':-1*Qcs/1000,'Qcsf':-1*Qcsf/1000,'Occupancy':Occupancy,'mw':Waterconsumption,
-                  'tsh':Ths_sup, 'trh':Ths_re, 'mcphs':mcphs,'mcpww':mcpww,'tsc':Tcs_sup, 'trc':Tcs_re, 'mcpcs':mcpcs,
-                  'tsww':Tww_sup_0,'trww':Tww_re,'Ef':(Ealf+Eauxf)/1000,'QHf':(Qwwf+Qhsf)/1000,'QCf':-1*Qcsf/1000,'uncomfortable':uncomfort}).to_csv(locationFinal+'\\'+Name+'.csv',index=False, float_format='%.2f')
+                  'tsh':Ths_sup, 'trh':Ths_re, 'mcphs':mcphs,'mcpww':mcpww,'tsc':Tcs_sup, 'trc':Tcs_re, 'mcpcs':mcpcs,'Qcdata':Qcdata/1000,
+                  'tsww':Tww_sup_0,'trww':Tww_re,'Ef':(Ealf+Eauxf+Epro)/1000,'Epro':Epro/1000,'Qcrefri':Qcrefri/1000,'Edata':Edata/1000 'QHf':(Qwwf+Qhsf)/1000,'QCf':(-1*Qcsf+Qcdata+Qcrefri)/1000,'uncomfortable':uncomfort}).to_csv(locationFinal+'\\'+Name+'.csv',index=False, float_format='%.2f')
 
     # print peaks in kW and totals in MWh, temperature peaks in C
     totals = pd.DataFrame({'Name':Name,'Af':Af,'occupants':Occupants,'uncomfort': uncomfort.sum()/8760, 'Qwwf0': Qwwf_0/1000, 'Ealf0': Ealf_0/1000,'Qhsf0':Qhsf_0/1000,
-                  'Qcsf0':-Qcsf_0/1000,'Water0':waterpeak,'tsh0':Ths_sup_0, 'trh0':Ths_re_0, 'mcphs0':mcphs.max(),'tsc0':Tcs_sup_0,
+                  'Qcsf0':-Qcsf_0/1000,'Water0':waterpeak,'tsh0':Ths_sup_0, 'trh0':Ths_re_0, 'mcphs0':mcphs.max(),'tsc0':Tcs_sup_0,'Qcdata':Qcdata_tot,'Qcrefri':Qcrefri_tot,
                   'trc0':Tcs_re_0, 'mcpcs0':mcpcs.max(),'Qwwf':Qwwf_tot,'Qww':Qww_tot,'Qhsf':Qhsf_tot,'Qhs':Qhs_tot,'Qcsf':Qcsf_tot,'Qcs':Qcs_tot,
-                  'Ealf':Ealf_tot,'Eauxf':Eauxf_tot, 'tsww0':Tww_sup_0,'Ef':(Ealf_tot+Eauxf_tot),'QHf':(Qwwf_tot+Qhsf_tot),'QCf':Qcsf_tot}, index= [0])
+                  'Ealf':Ealf_tot,'Eauxf':Eauxf_tot, 'tsww0':Tww_sup_0,'Ef':(Ealf_tot+Eauxf_tot+Epro_tot+Edata_tot),'QHf':(Qwwf_tot+Qhsf_tot),'QCf':(Qcsf_tot+Qcdata_tot+Qcrefri_tot)}, index= [0])
     totals.to_csv(path_temporary_folder+'\\'+Name+'T.csv',index=False, float_format='%.2f')
 
 
@@ -1151,15 +1166,15 @@ def calc_Eaux_fw(freshw,nf,gv):
                 Eaux_fw[time] = Energy_hourWh
     return Eaux_fw
 
-def calc_Eaux_ve(Qhsf,Qcsf,E_ve, qve, SystemH, SystemC, Af):
+def calc_Eaux_ve(Qhsf,Qcsf,P_ve, qve, SystemH, SystemC, Af):
     if SystemH == 'T3':
         if Qhsf >0: 
-            Eve_aux = E_ve*qve*3600
+            Eve_aux = P_ve*qve*3600
         else: 
             Eve_aux = 0
     elif SystemC == 'T3':
         if Qcsf <0:
-            Eve_aux = E_ve*qve*3600
+            Eve_aux = P_ve*qve*3600
         else:
             Eve_aux = 0
     else:
