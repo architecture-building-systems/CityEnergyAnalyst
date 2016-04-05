@@ -16,7 +16,7 @@ https://vimeo.com/futurecitieslaboratory/the_city_energy_analyst
 
 ## Contact
 
-cea@systems.arch.ethz.ch
+cea@arch.ethz.ch
 
 
 
