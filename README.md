@@ -1,10 +1,11 @@
 # CEAforArcGIS
 
-City Energy Analyst Toolbox for ArcGIS
+City Energy Analyst Toolbox for ArcGIS (CEA)
 
-## Style Guide
+## Documentation and style guide
 
-Contributions to this repository should follow the style guide (CODECONVENTIONS.md). It is based on https://github.com/amontalenti/elements-of-python-style.
+Documentation is still a work-in-progress and will be made available on the release of the CEA V1.0b.
+The release is programmed for the 13.06.16.
 
 ##Check me out on Video
 
@@ -12,7 +13,7 @@ https://vimeo.com/futurecitieslaboratory/the_city_energy_analyst
 
 ## Contact
 
-cea@systems.arch.ethz.ch
+cea@arch.ethz.ch
 
 
 
