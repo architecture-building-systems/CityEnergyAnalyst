@@ -76,7 +76,7 @@ class PropertiesTool(object):
                    path_occupancy=path_occupancy.valueAsText, path_results=path_results.valueAsText,
                    prop_thermal_flag=prop_thermal_flag.value,
                    prop_architecture_flag=prop_architecture_flag.value,
-                   prop_HVAC_flag=prop_HVAC_flag.value, gv=gv)
+                   prop_hvac_flag=prop_HVAC_flag.value, gv=gv)
 
 
 class DemandTool(object):
