@@ -193,6 +193,7 @@ def test_properties():
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
     """
     # path_test = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'test')) # old path
+    path_test = 'C:\\' # new path to C:\\ for testing purposes
     path_archetypes = os.path.join(os.path.dirname(__file__), 'db', 'Archetypes', 'Archetypes_HVAC_properties.csv')
     path_age = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs','1-buildings', 'building_age.shp')
     path_occupancy = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs','1-buildings', 'building_occupancy.shp')
