@@ -98,9 +98,9 @@ def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age
         built_df['confirm'] = built_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_materials), axis=1)
         built_df['contrib'] = ((built_df['Wall_ext_ag']*built_df['area_walls_ext_ag'])+
                                (built_df['Roof']*built_df['footprint'])+
-                               (built_df['windows_ag']*built_df['Win_ext']) +
+                               (built_df['windows_ag']*built_df['Win_ext']*(built_df['PFloor']-1)) +
                                (built_df['floor_area_ag']*built_df['Floor_int']+
-                                built_df['floor_area_ag']*built_df['Wall_int_sup']*gv.fwratio +
+                                built_df['floor_area_ag']*built_df['Wall_int_sup']*(built_df['PFloor']-1)*gv.fwratio +
                                 built_df['footprint'] * built_df['Wall_int_nosup']*gv.fwratio)+
                                (basement_df['footprint'] * basement_df['Floor_g'] +
                                 basement_df['Wall_ext_bg'] * basement_df['area_walls_ext_bg']) +
@@ -110,7 +110,7 @@ def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age
         # contributions due to envelope retrofit
         envelope_df['delta_year'] =  (envelope_df['envelope']-yearcalc)*-1
         envelope_df['confirm'] = envelope_df.apply(lambda x: calc_if_existing(x['delta_year'],gv.sl_materials), axis=1)
-        envelope_df['contrib'] = (envelope_df['Wall_ext_ag']*envelope_df['area_walls_ext_ag'])*envelope_df['confirm']/(gv.sl_materials)
+        envelope_df['contrib'] = (envelope_df['Wall_ext_ag']*envelope_df['area_walls_ext_ag']*(envelope_df['PFloor']-1))*envelope_df['confirm']/(gv.sl_materials)
 
         # contributions due to roof retrofit
         roof_df['delta_year'] =  (roof_df['roof']-yearcalc)*-1
@@ -120,7 +120,7 @@ def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age
         # contributions due to windows retrofit
         windows_df['delta_year'] =  (windows_df['windows']-yearcalc)*-1
         windows_df['confirm'] = windows_df.apply(lambda x: calc_if_existing(x['delta_year'],gv.sl_materials), axis=1)
-        windows_df['contrib'] = windows_df['windows_ag']*windows_df['Win_ext']*windows_df['confirm']/gv.sl_materials
+        windows_df['contrib'] = windows_df['windows_ag']*windows_df['Win_ext']*(windows_df['PFloor']-1)*windows_df['confirm']/gv.sl_materials
 
         # contributions due to partitions retrofit
         partitions_df['delta_year'] =  (partitions_df['partitions']-yearcalc)*-1
