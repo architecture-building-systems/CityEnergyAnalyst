@@ -18,7 +18,8 @@ from geopandas import GeoDataFrame as gpdf
 gv = globalvar.GlobalVariables()
 
 
-def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age_shp, path_occupancy_shp, path_geometry_shp, path_results, yearcalc, gv):
+def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age_shp, path_occupancy_shp,
+                 path_geometry_shp, path_architecture_shp, path_results, yearcalc, gv):
     """
     algorithm to calculate the embodied energy and grey energy of buildings
     according to the method of Fonseca et al 2015. CISBAT 2015. and Thoma et al
@@ -48,35 +49,41 @@ def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age
     """
 
     # localvariables
+    list_uses = gv.list_uses
+    architecture_df = gpdf.from_file(path_architecture_shp).drop('geometry', axis=1).set_index('Name')
+    occupancy_df = gpdf.from_file(path_occupancy_shp).drop('geometry', axis=1).set_index('Name')
+    age_df = gpdf.from_file(path_age_shp).drop('geometry', axis=1).set_index('Name')
     geometry_df = gpdf.from_file(path_geometry_shp)
     geometry_df['footprint'] = geometry_df.area
     geometry_df['perimeter'] = geometry_df.length
     geometry_df = geometry_df.drop('geometry', axis=1).set_index('Name')
-    occupancy_df = gpdf.from_file(path_occupancy_shp).drop('geometry', axis=1).set_index('Name')
-    age_df = gpdf.from_file(path_age_shp).drop('geometry', axis=1).set_index('Name')
-    list_uses = gv.list_uses
 
     # define main use:
     occupancy_df['mainuse'] = calc_mainuse(occupancy_df, list_uses)
 
     # dataframe with jonned data for categories
-    cat_df = occupancy_df.merge(age_df, left_index=True, right_index=True)
+    cat_df = occupancy_df.merge(age_df,
+                                left_index=True,
+                                right_index=True).merge(geometry_df,
+                                                        left_index=True,
+                                                        right_index=True).merge(architecture_df,
+                                                                                left_index=True,
+                                                                                right_index=True)
+    cat_df['facade'] =
 
-    # get categories
+    # get categories for each year of construction/retrofit
     cat_df['cat_built'] = cat_df.apply(lambda x: calc_category_construction(x['mainuse'],x['built']), axis=1)
-    cat_df['cat_envelope'] = cat_df.apply(lambda x: calc_category_retrofit(x['mainuse'],x['envelope']), axis=1)
-    cat_df['cat_roof'] = cat_df.apply(lambda x: calc_category_retrofit(x['mainuse'],x['roof']), axis=1)
-    cat_df['cat_windows'] = cat_df.apply(lambda x: calc_category_retrofit(x['mainuse'],x['windows']), axis=1)
-    cat_df['cat_partitions'] = cat_df.apply(lambda x: calc_category_retrofit(x['mainuse'],x['partitions']), axis=1)
-    cat_df['cat_basement'] = cat_df.apply(lambda x: calc_category_retrofit(x['mainuse'],x['basement']), axis=1)
-    cat_df['cat_HVAC'] = cat_df.apply(lambda x: calc_category_retrofit(x['mainuse'], x['HVAC']), axis=1)
+    retro_cat = ['envelope', 'roof', 'windows', 'partitions', 'basement', 'HVAC']
+    for cat in retro_cat:
+        cat_df['cat_'+cat] = cat_df.apply(lambda x: calc_category_retrofit(x['mainuse'],x[cat]), axis=1)
 
+    # calculate contributions to embodied energy and emissions
     list_of_archetypes = [path_LCA_embodied_energy, path_LCA_embodied_emissions]
     result = []
     for archetype in list_of_archetypes:
         database_df = pd.read_csv(archetype)
 
-        # create merge with databases
+        # merge databases acording to category
         built_df = cat_df.merge(database_df, left_on='cat_built', right_on='Code')
         envelope_df = cat_df.merge(database_df, left_on='cat_envelope', right_on='Code')
         roof_df = cat_df.merge(database_df, left_on='cat_roof', right_on='Code')
@@ -84,15 +91,29 @@ def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age
         partitions_df = cat_df.merge(database_df, left_on='cat_partitions', right_on='Code')
         basement_df = cat_df.merge(database_df, left_on='cat_basement', right_on='Code')
         HVAC_df = cat_df.merge(database_df, left_on='cat_HVAC', right_on='Code')
-        
-        # merging with the category of construction
-        df = pd.merge(general_df, database_df, left_on='code', right_on='Code')
 
-        # merging with the category of retrofit
-        df2 = pd.merge(general_df, database_df,left_on='code2', right_on='Code')
+        # contributions due to construction
+        [Wall_ext_ag, Wall_ext_bg, Floor_int, Wall_int_sup, Wall_int_nosup, Roof, Floor_g, Services, Win_ext, Excavation]
 
-        # merging both dataframes
-        df3 = pd.merge(df,df2,left_on='Name', right_on='Name', suffixes=['','_y'])
+        # contributions due to envelope retrofit
+        [Wall_ext_ag]
+        envelope_df['contrib'] = envelope_df['Wall_ext_ag']*envelope_df['Wall_ext_ag']
+
+        # contributions due to roof retrofit
+        [Roof]
+
+        # contributions due to windows retrofit
+        [Win_ext]
+
+        # contributions due to partitions retrofit
+        [[Floor_int, Wall_int_sup, Wall_int_nosup]]
+
+        # contributions due to basement_df
+        [[Floor_g, Wall_ext_bg]]
+
+        # contributions due to HVAC_df
+        [[Services]]
+
 
         # building construction properties to array
         fp = df3['footprint'].values

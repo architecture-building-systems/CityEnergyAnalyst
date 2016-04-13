@@ -129,6 +129,7 @@ def test_demand():
     path_architecture_shp = os.path.join(path_reference_case, 'expected-output', 'properties',
                                          'building_architecture.shp')
     path_temporary_folder = tempfile.gettempdir()
+
     demand_calculation(path_radiation=path_radiation, path_schedules=path_schedules,
                        path_temporary_folder=path_temporary_folder, path_weather=path_weather,
                        path_results=path_results, path_hvac_shp=path_HVAC_shp, path_thermal_shp=path_thermal_shp,
