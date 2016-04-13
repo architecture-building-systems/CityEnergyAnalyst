@@ -2,6 +2,7 @@
 inputlocator.py - locate input files by name based on the reference folder structure.
 """
 import os
+import tempfile
 
 
 class InputLocator(object):
@@ -48,4 +49,28 @@ class InputLocator(object):
 
     def get_radiation(self):
         """scenario/2-results/1-radiation/1-timeseries/Radiation2000-2010.csv"""
-        return os.path.join(self.scenario_path, '2-results', '1-radiation', '1-timeseries', 'Radiation2000-2010.csv')
+        return os.path.join(self.scenario_path, '2-results', '1-radiation', '1-timeseries', 'radiation.csv')
+
+    def get_weather_hourly(self):
+        """scenario/1-inputs/3-weather/weather_hourly.csv"""
+        return os.path.join(self.scenario_path, '1-inputs', '3-weather', 'weather_hourly.csv')
+
+    def get_demand_results_folder(self):
+        """scenario/2-results/2-demand/1-timeseries"""
+        return os.path.join(self.scenario_path, '2-results', '2-demand', '1-timeseries')
+
+    def get_total_demand(self):
+        """scenario/2-results/2-demand/1-timeseries/Total_demand.csv"""
+        return os.path.join(self.scenario_path, '2-results', '2-demand', '1-timeseries', 'Total_demand.csv')
+
+    def get_schedule(self, schedule):
+        """cea/db/Schedules/Occupancy_%SCHEDULE%.csv"""
+        return os.path.join(self.db_path, 'Schedules', 'Occupancy_%s.csv' % schedule)
+
+    def get_temporary_folder(self):
+        """Temporary folder as returned by `tempfile`."""
+        return tempfile.gettempdir()
+
+    def get_temporary_file(self, filename):
+        """Returns the path to a file in the temporary folder with the name `filename`"""
+        return os.path.join(self.get_temporary_folder(), filename)
