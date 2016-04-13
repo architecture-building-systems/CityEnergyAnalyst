@@ -17,6 +17,7 @@ Reference:
 
 from __future__ import division
 import numpy
+from scipy.optimize import minimize
 
 
 #  calculate volume air flow of single leakage path according to 6.4.3.6.5 in [1]
@@ -264,14 +265,16 @@ def calc_air_flow_mass_balance(p_zone_ref):
     # mass balance, Eq. (69) in [1]
     qm_balance = qm_sup_dis + qm_eta_dis + qm_lea_sup_dis + qm_lea_eta_dis + qm_comb_in + qm_comb_out + qm_pdu_in + qm_pdu_out + qm_arg_in + qm_arg_out + qm_vent_in + qm_vent_out + qm_lea_in + qm_lea_out
 
-    return qm_balance
+    return abs(qm_balance)
 
 
 # TESTING
 if __name__ == '__main__':
-    p_zone_ref = 3  # (Pa) zone pressure, THE UNKNOWN VALUE
+    p_zone_ref = 1  # (Pa) zone pressure, THE UNKNOWN VALUE
+
+    res = minimize(calc_air_flow_mass_balance, p_zone_ref, method='Nelder-Mead')
 
     # this will be the function to minimize by a slover
-    qm_balance = calc_air_flow_mass_balance(p_zone_ref)
+    # qm_balance = calc_air_flow_mass_balance(p_zone_ref)
 
-    print(qm_balance)
+    print(res)
