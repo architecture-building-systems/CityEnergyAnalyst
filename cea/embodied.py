@@ -5,21 +5,20 @@ embodied energy and related grey emissions model algorithm
 J. Fonseca  script development          26.08.15
 D. Thomas   formatting and cleaning
 D. Thomas   integration in toolbox
+J. Fonseca  new development             13.04.16
 
 """
 from __future__ import division
 import pandas as pd
 import numpy as np
 import os
-import arcpy
 import globalvar
-reload(globalvar)
+from geopandas import GeoDataFrame as gpdf
+
 gv = globalvar.GlobalVariables()
 
 
-def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_properties, path_results, yearcalc,
-                 retrofit_windows, retrofit_roof, retrofit_walls, retrofit_partitions, retrofit_int_floors,
-                 retrofit_installations, retrofit_basement_floor, gv):
+def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age_shp, path_occupancy_shp, path_geometry_shp, path_results, yearcalc, gv):
     """
     algorithm to calculate the embodied energy and grey energy of buildings
     according to the method of Fonseca et al 2015. CISBAT 2015. and Thoma et al
@@ -37,41 +36,60 @@ def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_pro
     path_LCA_embodied_emissions:
         path to database of archetypes grey emissions file
         Archetypes_embodied_emissions.csv
-    path_properties: string
-        path to properties file properties.xls
+    path_age_shp: string
+        path to buildings_age.shp
     path_results : string
         path to demand results folder emissions
-    retrofit_windows, retrofit_roof, retrofit_walls, retrofit_partitions,
-    retrofit_int_floors, retrofit_installation, retrofit_basement_floor
-       flags True or False to know which building compoenents have been
-       retrofited properties file to run. it could be represented by a
-       check box in the form
 
     Returns
     -------
     Total_LCA_embodied: .csv
-        csv file of yearly primary energy and grey emissions per building
+        csv file of yearly primary energy and grey emissions per building stored in path_results
     """
 
-    # localfiles
-    general = pd.read_excel(path_properties, sheetname='general')
-    envelope = pd.read_excel(path_properties, sheetname='envelope')
-    general_df = general.merge(envelope, on='Name')
-    general_df['cat'] = general_df['year_built'].apply(lambda x: calc_category_construction(x))
-    general_df['cat2'] = general_df['year_retrofit'].apply(lambda x: calc_category_retrofit(x))
-    general_df['code'] = general_df.mainuse + general_df.cat
-    general_df['code2'] = general_df.mainuse + general_df.cat2
+    # localvariables
+    geometry_df = gpdf.from_file(path_geometry_shp)
+    geometry_df['footprint'] = geometry_df.area
+    geometry_df['perimeter'] = geometry_df.length
+    geometry_df = geometry_df.drop('geometry', axis=1).set_index('Name')
+    occupancy_df = gpdf.from_file(path_occupancy_shp).drop('geometry', axis=1).set_index('Name')
+    age_df = gpdf.from_file(path_age_shp).drop('geometry', axis=1).set_index('Name')
+    list_uses = gv.list_uses
 
-    list_of_analysis = [path_LCA_embodied_energy, path_LCA_embodied_emissions]
+    # define main use:
+    occupancy_df['mainuse'] = calc_mainuse(occupancy_df, list_uses)
+
+    # dataframe with jonned data for categories
+    cat_df = occupancy_df.merge(age_df, left_index=True, right_index=True)
+
+    # get categories
+    cat_df['cat_built'] = cat_df.apply(lambda x: calc_category_construction(x['mainuse'],x['built']), axis=1)
+    cat_df['cat_envelope'] = cat_df.apply(lambda x: calc_category_retrofit(x['mainuse'],x['envelope']), axis=1)
+    cat_df['cat_roof'] = cat_df.apply(lambda x: calc_category_retrofit(x['mainuse'],x['roof']), axis=1)
+    cat_df['cat_windows'] = cat_df.apply(lambda x: calc_category_retrofit(x['mainuse'],x['windows']), axis=1)
+    cat_df['cat_partitions'] = cat_df.apply(lambda x: calc_category_retrofit(x['mainuse'],x['partitions']), axis=1)
+    cat_df['cat_basement'] = cat_df.apply(lambda x: calc_category_retrofit(x['mainuse'],x['basement']), axis=1)
+    cat_df['cat_HVAC'] = cat_df.apply(lambda x: calc_category_retrofit(x['mainuse'], x['HVAC']), axis=1)
+
+    list_of_archetypes = [path_LCA_embodied_energy, path_LCA_embodied_emissions]
     result = []
-    for item in list_of_analysis:
-        LCA_item = pd.read_csv(item)
+    for archetype in list_of_archetypes:
+        database_df = pd.read_csv(archetype)
 
+        # create merge with databases
+        built_df = cat_df.merge(database_df, left_on='cat_built', right_on='Code')
+        envelope_df = cat_df.merge(database_df, left_on='cat_envelope', right_on='Code')
+        roof_df = cat_df.merge(database_df, left_on='cat_roof', right_on='Code')
+        windows_df = cat_df.merge(database_df, left_on='cat_windows', right_on='Code')
+        partitions_df = cat_df.merge(database_df, left_on='cat_partitions', right_on='Code')
+        basement_df = cat_df.merge(database_df, left_on='cat_basement', right_on='Code')
+        HVAC_df = cat_df.merge(database_df, left_on='cat_HVAC', right_on='Code')
+        
         # merging with the category of construction
-        df = pd.merge(general_df, LCA_item, left_on='code', right_on='Code')
+        df = pd.merge(general_df, database_df, left_on='code', right_on='Code')
 
         # merging with the category of retrofit
-        df2 = pd.merge(general_df, LCA_item,left_on='code2', right_on='Code')
+        df2 = pd.merge(general_df, database_df,left_on='code2', right_on='Code')
 
         # merging both dataframes
         df3 = pd.merge(df,df2,left_on='Name', right_on='Name', suffixes=['','_y'])
@@ -250,7 +268,7 @@ def query_embodied(fp, floors, yearcons, yearretro, PFloor, walls_ext_ag, walls_
     return result
 
 
-def calc_category_construction(x):
+def calc_category_construction(a, x):
     if 0 <= x <= 1920:
         # Database['Qh'] = Database.ADMIN.value * Model.
         result = '1'
@@ -262,12 +280,14 @@ def calc_category_construction(x):
         result = '4'
     elif x > 2000 and x <= 2020:
         result = '5'
-    elif x > 2020:
+    else:
         result = '6'
-    return result
+
+    category = a+result
+    return category
 
 
-def calc_category_retrofit(y):
+def calc_category_retrofit(a, y):
     if 0 <= y <= 1920:
         result = '7'
     elif 1920 < y <= 1970:
@@ -278,10 +298,26 @@ def calc_category_retrofit(y):
         result = '10'
     elif 2000 < y <= 2020:
         result = '11'
-    elif y > 2020:
+    else:
         result = '12'
-    return result
 
+    category = a+result
+    return category
+
+def calc_mainuse(uses_df, uses):
+
+    databaseclean = uses_df[uses].transpose()
+    array_min = np.array(databaseclean[databaseclean[:] > 0].idxmin(skipna=True), dtype='S10')
+    array_max = np.array(databaseclean[databaseclean[:] > 0].idxmax(skipna=True), dtype='S10')
+    mainuse = np.array(map(calc_comparison, array_min, array_max))
+
+    return mainuse
+
+def calc_comparison(array_min, array_max):
+    if array_max == 'DEPO':
+        if array_min != 'DEPO':
+            array_max = array_min
+    return array_max
 
 def test_lca_embodied():
     path_results = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\103_final output\emissions'  # noqa
