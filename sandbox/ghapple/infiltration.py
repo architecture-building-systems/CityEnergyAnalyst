@@ -21,7 +21,6 @@ import numpy
 
 #  calculate volume air flow of single leakage path according to 6.4.3.6.5 in [1]
 def calc_qv_lea_path(coeff_lea_path, delta_p_lea_path):
-
     # default values in [1]
     # TODO reference global variables
     n_lea = 0.667  # (-), B.1.3.15 in [1]
@@ -33,16 +32,16 @@ def calc_qv_lea_path(coeff_lea_path, delta_p_lea_path):
 
 # calculate default leakage coefficient of zone according to B.1.3.16 in [1]
 def calc_coeff_lea_zone(qv_delta_p_lea_ref, area_lea):
-
     # default values in [1]
     # TODO reference global variables
-    delta_p_lea_ref = 50 # (Pa), B.1.3.14 in [1]
-    n_lea = 0.667 # (-), B.1.3.15 in [1]
+    delta_p_lea_ref = 50  # (Pa), B.1.3.14 in [1]
+    n_lea = 0.667  # (-), B.1.3.15 in [1]
 
     # Eq. (B.5) in [1]
-    coeff_lea_zone = qv_delta_p_lea_ref*area_lea/(delta_p_lea_ref**n_lea)
+    coeff_lea_zone = qv_delta_p_lea_ref * area_lea / (delta_p_lea_ref ** n_lea)
 
     return coeff_lea_zone
+
 
 # allocate default leakage paths according to B.1.3.17 in [1]
 def allocate_default_leakage_paths(coeff_lea_zone, area_facade_zone, area_roof_zone, height_zone):
@@ -115,7 +114,7 @@ def lookup_coeff_wind_pressure(height_path, class_shielding, orientation_path, s
     num_paths = height_path.shape[0]
     coeff_wind_pressure = numpy.zeros(num_paths)
 
-    for i in range(0,num_paths):
+    for i in range(0, num_paths):
 
         if id_cross_ventilation == 0:
 
@@ -151,54 +150,59 @@ def lookup_coeff_wind_pressure(height_path, class_shielding, orientation_path, s
 
 # calculation of indoor-outdoor pressure difference at air path according to 6.4.2.4 in [1]
 def calc_delta_p_path(p_zone_ref, height_path, temp_zone, coeff_wind_pressure_path, u_wind_site, temp_ext):
-
     # constants from Table 12 in [1]
     # TODO import from global variables
-    g = 9.81 # (m/s2)
-    rho_air_ref = 1.23 # (kg/m3)
-    temp_ext_ref = 283 # (K)
+    g = 9.81  # (m/s2)
+    rho_air_ref = 1.23  # (kg/m3)
+    temp_ext_ref = 283  # (K)
 
     # Equation (5) in [1]
-    p_zone_path = p_zone_ref-rho_air_ref*height_path*g*temp_ext_ref/temp_zone
+    p_zone_path = p_zone_ref - rho_air_ref * height_path * g * temp_ext_ref / temp_zone
 
     # Equation (4) in [1]
-    p_ext_path = rho_air_ref*(0.5*coeff_wind_pressure_path*u_wind_site**2-height_path*g*temp_ext_ref/temp_ext)
+    p_ext_path = rho_air_ref * (
+        0.5 * coeff_wind_pressure_path * u_wind_site ** 2 - height_path * g * temp_ext_ref / temp_ext)
 
     # Equation (3) in [1]
-    delta_p_path = p_ext_path-p_zone_path
+    delta_p_path = p_ext_path - p_zone_path
 
     return delta_p_path
 
+
 # calculation of density of air according to 6.4.2.1 in [1]
 def calc_rho_air(temp_air):
-
     # constants from Table 12 in [1]
     # TODO import from global variables
     rho_air_ref = 1.23  # (kg/m3)
     temp_air_ref = 283  # (K)
 
     # Equation (1) in [1]
-    rho_air = temp_air_ref/temp_air*rho_air_ref
+    rho_air = temp_air_ref / temp_air * rho_air_ref
     return rho_air
 
-# calculation of leakage infiltration and exfiltration air mass flow as a function of zone indoor reference pressure
-def calc_qm_lea(qv_delta_p_lea_ref_zone, area_lea_zone, area_facade_zone, area_roof_zone, height_zone, class_shielding, slope_roof, id_cross_ventilation, p_zone_ref, temp_zone, u_wind_site, temp_ext):
 
+# calculation of leakage infiltration and exfiltration air mass flow as a function of zone indoor reference pressure
+def calc_qm_lea(qv_delta_p_lea_ref_zone, area_lea_zone, area_facade_zone, area_roof_zone, height_zone, class_shielding,
+                slope_roof, id_cross_ventilation, p_zone_ref, temp_zone, u_wind_site, temp_ext):
     # calculate leakage coefficient of zone
-    coeff_lea_zone =  calc_coeff_lea_zone(qv_delta_p_lea_ref_zone, area_lea_zone)
+    coeff_lea_zone = calc_coeff_lea_zone(qv_delta_p_lea_ref_zone, area_lea_zone)
 
     # allocate default leakage paths
-    coeff_lea_path, height_lea_path, orientation_lea_path = allocate_default_leakage_paths(coeff_lea_zone, area_facade_zone, area_roof_zone, height_zone)
+    coeff_lea_path, height_lea_path, orientation_lea_path = allocate_default_leakage_paths(coeff_lea_zone,
+                                                                                           area_facade_zone,
+                                                                                           area_roof_zone, height_zone)
 
     # print(coeff_lea_path, height_lea_path, orientation_lea_path)
 
     # lookup wind pressure coefficients for leakage paths
-    coeff_wind_pressure_path = lookup_coeff_wind_pressure(height_lea_path, class_shielding, orientation_lea_path, slope_roof, id_cross_ventilation)
+    coeff_wind_pressure_path = lookup_coeff_wind_pressure(height_lea_path, class_shielding, orientation_lea_path,
+                                                          slope_roof, id_cross_ventilation)
 
     # print(coeff_wind_pressure_path)
 
     # calculation of pressure difference at leakage path
-    delta_p_path = calc_delta_p_path(p_zone_ref,height_lea_path,temp_zone,coeff_wind_pressure_path,u_wind_site,temp_ext)
+    delta_p_path = calc_delta_p_path(p_zone_ref, height_lea_path, temp_zone, coeff_wind_pressure_path, u_wind_site,
+                                     temp_ext)
 
     # print(delta_p_path)
 
@@ -215,9 +219,9 @@ def calc_qm_lea(qv_delta_p_lea_ref_zone, area_lea_zone, area_facade_zone, area_r
 
     # conversion to air mass flows according to 6.4.3.8 in [1]
     # Eq. (67) in [1]
-    qm_lea_in = qv_lea_in*calc_rho_air(temp_ext)
+    qm_lea_in = qv_lea_in * calc_rho_air(temp_ext)
     # Eq. (68) in [1]
-    qm_lea_out = qv_lea_out*calc_rho_air(temp_zone)
+    qm_lea_out = qv_lea_out * calc_rho_air(temp_zone)
 
     # print (qm_lea_in, qm_lea_out)
 
@@ -226,7 +230,6 @@ def calc_qm_lea(qv_delta_p_lea_ref_zone, area_lea_zone, area_facade_zone, area_r
 
 # air flow mass balance for iterative calculation according to 6.4.3.9 in [1]
 def calc_air_flow_mass_balance(p_zone_ref):
-
     # TODO the idea is that the inputs to this functions consist of handles (or similar) to a building geometry in the buildings file, to the climate file, etc.
 
     # for testing the scripts
@@ -254,59 +257,21 @@ def calc_air_flow_mass_balance(p_zone_ref):
     qm_arg_out = 0
     qm_vent_in = 0
     qm_vent_out = 0
-    qm_lea_in, qm_lea_out = calc_qm_lea(qv_delta_p_lea_ref_zone, area_lea_zone,area_facade_zone,area_roof_zone,height_zone,class_shielding,slope_roof,id_cross_ventilation,p_zone_ref,temp_zone,u_wind_site,temp_ext )
+    qm_lea_in, qm_lea_out = calc_qm_lea(qv_delta_p_lea_ref_zone, area_lea_zone, area_facade_zone, area_roof_zone,
+                                        height_zone, class_shielding, slope_roof, id_cross_ventilation, p_zone_ref,
+                                        temp_zone, u_wind_site, temp_ext)
 
     # mass balance, Eq. (69) in [1]
-    qm_balance = qm_sup_dis+qm_eta_dis+qm_lea_sup_dis+qm_lea_eta_dis+qm_comb_in+qm_comb_out+qm_pdu_in+qm_pdu_out+qm_arg_in+qm_arg_out+qm_vent_in+qm_vent_out+qm_lea_in+qm_lea_out
+    qm_balance = qm_sup_dis + qm_eta_dis + qm_lea_sup_dis + qm_lea_eta_dis + qm_comb_in + qm_comb_out + qm_pdu_in + qm_pdu_out + qm_arg_in + qm_arg_out + qm_vent_in + qm_vent_out + qm_lea_in + qm_lea_out
 
     return qm_balance
 
 
 # TESTING
-p_zone_ref = 3  # (Pa) zone pressure, THE UNKNOWN VALUE
+if __name__ == '__main__':
+    p_zone_ref = 3  # (Pa) zone pressure, THE UNKNOWN VALUE
 
-# this will be the function to minimize by a slover
-qm_balance = calc_air_flow_mass_balance( p_zone_ref )
+    # this will be the function to minimize by a slover
+    qm_balance = calc_air_flow_mass_balance(p_zone_ref)
 
-print(qm_balance)
-
-
-
-
-
-
-# # for testing the scripts
-# qv_delta_p_lea_ref_zone = 500 # (m3/h), 1 ACH
-# area_lea_zone = 0.1 # (m2) ?
-# area_facade_zone = 200 # (m2)
-# area_roof_zone = 100 # (m2)
-# height_zone = 5 # (m)
-# class_shielding = 0 # open
-# slope_roof = 10 # (deg)
-# id_cross_ventilation = 0 # cross ventilation possible
-# p_zone_ref = 10 # (Pa) zone pressure, THE UNKNOWN VALUE
-# temp_zone = 293 # (K)
-# u_wind_site = 5 # (m/s)
-# temp_ext = 299 # (K)
-#
-# calc_qm_lea(coeff_lea_zone,area_facade_zone,area_roof_zone,height_zone,class_shielding,slope_roof,id_cross_ventilation,p_zone_ref,temp_zone,u_wind_site,temp_ext, n_lea)
-
-# C_lea_path = 1
-# delta_p_lea_path = 4
-# n_lea = 0.667  # standard value according to [1]
-#
-# qV_lea_path = calc_qv_lea_path(C_lea_path, delta_p_lea_path, n_lea)
-#
-# print(qV_lea_path)
-#
-# coeff_lea_zone = 5
-# area_facade_zone = 50
-# area_roof_zone = 20
-# height_zone = 3
-#
-# coeff_lea_path, height_lea_path, orientation_lea_path = allocate_default_leakage_paths(coeff_lea_zone, area_facade_zone,
-#                                                                                        area_roof_zone, height_zone)
-#
-# print coeff_lea_path, height_lea_path, orientation_lea_path
-#
-# print(lookup_coeff_wind_pressure(20, 4, 1, 0, 1))
+    print(qm_balance)
