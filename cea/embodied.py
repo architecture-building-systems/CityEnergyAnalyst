@@ -50,25 +50,20 @@ def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age
 
     # localvariables
     list_uses = gv.list_uses
-    architecture_df = gpdf.from_file(path_architecture_shp).drop('geometry', axis=1).set_index('Name')
-    occupancy_df = gpdf.from_file(path_occupancy_shp).drop('geometry', axis=1).set_index('Name')
-    age_df = gpdf.from_file(path_age_shp).drop('geometry', axis=1).set_index('Name')
+    architecture_df = gpdf.from_file(path_architecture_shp).drop('geometry', axis=1)
+    occupancy_df = gpdf.from_file(path_occupancy_shp).drop('geometry', axis=1)
+    age_df = gpdf.from_file(path_age_shp).drop('geometry', axis=1)
     geometry_df = gpdf.from_file(path_geometry_shp)
     geometry_df['footprint'] = geometry_df.area
     geometry_df['perimeter'] = geometry_df.length
-    geometry_df = geometry_df.drop('geometry', axis=1).set_index('Name')
+    geometry_df = geometry_df.drop('geometry', axis=1)
 
     # define main use:
     occupancy_df['mainuse'] = calc_mainuse(occupancy_df, list_uses)
 
     # dataframe with jonned data for categories
-    cat_df = occupancy_df.merge(age_df,
-                                left_index=True,
-                                right_index=True).merge(geometry_df,
-                                                        left_index=True,
-                                                        right_index=True).merge(architecture_df,
-                                                                                left_index=True,
-                                                                                right_index=True)
+    cat_df = occupancy_df.merge(age_df,on='Name').merge(geometry_df,on='Name').merge(architecture_df,on='Name')
+
     # calculate building geometry
     cat_df['windows_ag'] = cat_df['win_wall']*cat_df['perimeter']*cat_df['height_ag']
     cat_df['area_walls_ext_ag'] = cat_df['perimeter']*cat_df['height_ag'] - cat_df['windows_ag']
@@ -85,10 +80,10 @@ def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age
 
     # calculate contributions to embodied energy and emissions
     list_of_archetypes = [path_LCA_embodied_energy, path_LCA_embodied_emissions]
-    result = []
+    result = [0,0]
+    counter = 0
     for archetype in list_of_archetypes:
         database_df = pd.read_csv(archetype)
-        counter = 0
         # merge databases acording to category
         built_df = cat_df.merge(database_df, left_on='cat_built', right_on='Code')
         envelope_df = cat_df.merge(database_df, left_on='cat_envelope', right_on='Code')
@@ -110,7 +105,7 @@ def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age
                                (basement_df['footprint'] * basement_df['Floor_g'] +
                                 basement_df['Wall_ext_bg'] * basement_df['area_walls_ext_bg']) +
                                (built_df['footprint'] * built_df['Excavation']))/gv.sl_materials + \
-                               ((HVAC_df['floor_area_ag']+HVAC_df['footprint']) * HVAC_df['Services')/gv.sl_services
+                               ((HVAC_df['floor_area_ag']+HVAC_df['footprint']) * HVAC_df['Services'])/gv.sl_services
 
         # contributions due to envelope retrofit
         envelope_df['delta_year'] =  (envelope_df['envelope']-yearcalc)*-1
@@ -148,24 +143,25 @@ def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age
         HVAC_df['confirm'] = HVAC_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_materials),axis=1)
         HVAC_df['contrib'] = ((HVAC_df['floor_area_ag']+HVAC_df['footprint']) * HVAC_df['Services'])*HVAC_df['confirm'] \
                              /gv.sl_services
-        if counter = 0:
+
+        if counter is 0:
             built_df['GEN_GJ'] = (HVAC_df['contrib']+basement_df['contrib']+ partitions_df['contrib']+built_df['contrib']+
                                   roof_df['contrib'] + envelope_df['contrib'] + windows_df['contrib'])/1000
             built_df['GEN_MJm2'] = built_df['GEN_GJ']*1000/built_df['total_area']
 
-            result[0] = built_df[['GEN_GJ','GEN_MJm2']]
+            result[0] = built_df[['Name','GEN_GJ','GEN_MJm2']]
         else:
             built_df['CO2_ton'] = (HVAC_df['contrib'] + basement_df['contrib'] + partitions_df['contrib'] + built_df['contrib'] +
                                   roof_df['contrib'] + envelope_df['contrib'] + windows_df['contrib']) / 1000
             built_df['CO2_kgm2'] = built_df['CO2_ton'] * 1000 / built_df['total_area']
 
-            result[1] = built_df[['CO2_ton', 'CO2_kgm2']]
+            result[1] = built_df[['Name','CO2_ton', 'CO2_kgm2']]
         counter += 1
 
-    pd.DataFrame({'Name':result[0].ix,'GEN_GJ': result[0].GEN_GJ, 'GEN_MJm2': result[0].GEN_MJm2,
+    pd.DataFrame({'Name':result[0].Name,'Namex':result[1].Name,'GEN_GJ': result[0].GEN_GJ, 'GEN_MJm2': result[0].GEN_MJm2,
                   'CO2_ton': result[1].CO2_ton, 'CO2_kgm2': result[1].CO2_kgm2}).to_csv(os.path.join(path_results, 'Total_LCA_embodied.csv'),
                    index=False, float_format='%.2f')
-    print 'done'
+    print 'done!'
 
 def calc_if_existing(x, y):
     if x <= y:
@@ -190,7 +186,6 @@ def calc_category_construction(a, x):
 
     category = a+result
     return category
-
 
 def calc_category_retrofit(a, y):
     if 0 <= y <= 1920:
@@ -225,16 +220,19 @@ def calc_comparison(array_min, array_max):
     return array_max
 
 def test_lca_embodied():
-    path_results = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\103_final output\emissions'  # noqa
+
+    path_test = 'C:\\' # new path to C:\\ for testing purposes
+    path_age_shp = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs','1-buildings', 'building_age.shp')
+    path_occupancy_shp = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs','1-buildings', 'building_occupancy.shp')
+    path_geometry_shp = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs','1-buildings', 'building_geometry.shp')
+    path_architecture_shp = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs','1-buildings', 'building_architecture.shp')
     path_LCA_embodied_energy = os.path.join(os.path.dirname(__file__), 'db', 'Archetypes', 'Archetypes_embodied_energy.csv')  # noqa
     path_LCA_embodied_emissions = os.path.join(os.path.dirname(__file__), 'db', 'Archetypes', 'Archetypes_embodied_emissions.csv')  # noqa
-    path_age_shp =
-    path_occupancy_shp =
+    path_results = os.path.join(path_test, 'reference-case', 'baseline', '2-results','3-emissions','1-timeseries')
     yearcalc = 2050
 
     lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age_shp, path_occupancy_shp,
-                 path_geometry_shp, path_architecture_shp, path_results, yearcalc, gv
-    print 'done!'
+                 path_geometry_shp, path_architecture_shp, path_results, yearcalc, gv)
 
 if __name__ == '__main__':
     test_lca_embodied()
