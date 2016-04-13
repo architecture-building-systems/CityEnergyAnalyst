@@ -38,7 +38,13 @@ def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age
         path to database of archetypes grey emissions file
         Archetypes_embodied_emissions.csv
     path_age_shp: string
-        path to buildings_age.shp
+        path to building_age.shp
+    path_occupancy_shp:
+        path to building_occupancyshp
+    path_geometry_shp:
+        path to building_geometrys.hp
+    path_architecture_shp:
+        path to building_architecture.shp
     path_results : string
         path to demand results folder emissions
 
@@ -158,7 +164,7 @@ def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age
             result[1] = built_df[['Name','CO2_ton', 'CO2_kgm2']]
         counter += 1
 
-    pd.DataFrame({'Name':result[0].Name,'Namex':result[1].Name,'GEN_GJ': result[0].GEN_GJ, 'GEN_MJm2': result[0].GEN_MJm2,
+    pd.DataFrame({'Name':result[0].Name, 'GEN_GJ': result[0].GEN_GJ, 'GEN_MJm2': result[0].GEN_MJm2,
                   'CO2_ton': result[1].CO2_ton, 'CO2_kgm2': result[1].CO2_kgm2}).to_csv(os.path.join(path_results, 'Total_LCA_embodied.csv'),
                    index=False, float_format='%.2f')
     print 'done!'
