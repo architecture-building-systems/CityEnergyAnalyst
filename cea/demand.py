@@ -84,6 +84,7 @@ def demand_calculation(path_radiation, path_schedules, path_temporary_folder, pa
 
     # calculate clean file of radiation - @ daren: this is a A BOTTLE NECK
     Solar = f.CalcIncidentRadiation(prop_RC_model, radiation_file)
+    Solar.to_csv(r"C:\Users\darthoma\Desktop\Solar_old.csv")
 
     # compute demand
     num_buildings = len(prop_RC_model.index)
@@ -113,21 +114,16 @@ def demand_calculation(path_radiation, path_schedules, path_temporary_folder, pa
 
 
 def test_demand():
-    path_test = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'test'))
-    path_reference_case = os.path.join(path_test, 'reference-case')
-
-    # path_radiation = os.path.join(path_reference_case, 'Radiation2000-2009.csv')
-    path_radiation = os.path.join(path_reference_case, 'Radiation2000-2009.csv')
-    path_schedules = os.path.join(os.path.dirname(__file__), 'db', 'Schedules')
-    path_weather = os.path.join(path_reference_case, 'weather_design_hour.csv')
-    path_results = os.path.join(path_reference_case, 'expected-output', 'demand')
-    path_HVAC_shp = os.path.join(path_reference_case, 'expected-output', 'properties', 'building_HVAC.shp')
-    path_thermal_shp = os.path.join(path_reference_case, 'expected-output', 'properties', 'building_thermal.shp')
-    path_occupancy_shp = os.path.join(path_reference_case, 'feature-classes', 'building_occupancy.shp')
-    path_geometry_shp = os.path.join(path_reference_case, 'feature-classes', 'building_geometry.shp')
-    path_age_shp = os.path.join(path_reference_case, 'feature-classes', 'building_age.shp')
-    path_architecture_shp = os.path.join(path_reference_case, 'expected-output', 'properties',
-                                         'building_architecture.shp')
+    path_radiation = r"C:\reference-case\baseline\2-results\1-radiation\1-timeseries\radiation.csv"
+    path_schedules = r"c:\projects\CEAforArcGIS\cea\db\Schedules"
+    path_weather = r"C:\reference-case\baseline\1-inputs\3-weather\weather_hourly.csv"
+    path_results = r"c:\reference-case\baseline\2-results\2-demand\1-timeseries"
+    path_HVAC_shp = r"C:\reference-case\baseline\1-inputs\1-buildings\building_HVAC.shp"
+    path_thermal_shp = r"C:\reference-case\baseline\1-inputs\1-buildings\building_thermal.shp"
+    path_occupancy_shp = r"C:\reference-case\baseline\1-inputs\1-buildings\building_occupancy.shp"
+    path_geometry_shp = r"C:\reference-case\baseline\1-inputs\1-buildings\building_geometry.shp"
+    path_age_shp = r"C:\reference-case\baseline\1-inputs\1-buildings\building_age.shp"
+    path_architecture_shp = r"C:\reference-case\baseline\1-inputs\1-buildings\building_architecture.shp"
     path_temporary_folder = tempfile.gettempdir()
     demand_calculation(path_radiation=path_radiation, path_schedules=path_schedules,
                        path_temporary_folder=path_temporary_folder, path_weather=path_weather,
