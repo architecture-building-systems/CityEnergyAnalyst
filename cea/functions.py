@@ -126,32 +126,20 @@ def CmFunction (x):
         return 165000
 
 
-def CalcIncidentRadiation(AllProperties, Radiation_Shading2):
+def CalcIncidentRadiation(radiation):
 
     # Import Radiation table and compute the Irradiation in W in every building's surface
-    Columns = 8761
-    Radiation_Shading2['AreaExposed'] = Radiation_Shading2['Shape_Leng']*Radiation_Shading2['FactorShade']*Radiation_Shading2['Freeheight']
-    for Column in range(1, Columns):
+    hours_in_year = 8760
+    radiation['AreaExposed'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
+
+    for hour in range(hours_in_year):
          # transform all the points of solar radiation into Wh
-        Radiation_Shading2['T'+str(Column)] = Radiation_Shading2['T'+str(Column)]*Radiation_Shading2['AreaExposed']
+        radiation['T%i' % (hour+1)] = radiation['T%i' % (hour+1)] * radiation['AreaExposed']
 
-    # FIXME: Delete this comment / update it...
-    # Do pivot table to sum up the irradiation in every surface to the building
-    # and merge the result with the table allProperties
-    RadiationLoad = Radiation_Shading2.groupby('Name').sum()
-    # FIXME: remove the line below
-    # PivotTable3 = pd.pivot_table(Radiation_Shading2, rows='Name', margins='Add all row')
-
-    # FIXME: remove the lines below
-    # Solar = AllProperties.merge(RadiationLoad, left_index=True,right_index=True)
-    
-    # columns_names = list(range(8760))
-    # for time in range(len(columns_names)):
-    #     columns_names[time] = 'T'+str(time+1)
-    #
-    Final = RadiationLoad[['T%i' % (i+1) for i in range(8760)]]
-
-    return Final  # total solar radiation in areas exposed to radiation in Watts
+    # sum up radiation load per building
+    radiation_load = radiation.groupby('Name').sum()
+    incident_radiation = radiation_load[['T%i' % (i+1) for i in range(hours_in_year)]]
+    return incident_radiation  # total solar radiation in areas exposed to radiation in Watts
 
 def calc_Y(year, Retrofit):
     if year >= 1995 or Retrofit > 0:
