@@ -4,7 +4,7 @@ Analytical energy demand model algorithm
 ===========================
 File history and credits:
 J. Fonseca  script development          24.08.15
-D. Thomas   formatting and cleaning
+D. Thomas   formatting, refactoring, debugging and cleaning
 D. Thomas   integration in toolbox
 J. Fonseca  refactoring to new properties file   22.03.16
 """
