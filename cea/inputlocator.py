@@ -19,6 +19,16 @@ class InputLocator(object):
         path to database of archetypes file Archetypes_HVAC_properties.csv"""
         return os.path.join(self.db_path, 'Archetypes', 'Archetypes_HVAC_properties.csv')
 
+    def get_archetypes_embodied_emissions(self):
+        """/cea/db/Archetypes/Archetypes_embodied_emissions.csv
+        path to database of archetypes file Archetypes_embodied_emissions.csv"""
+        return os.path.join(self.db_path, 'Archetypes', 'Archetypes_embodied_emissions.csv')
+
+    def get_archetypes_embodied_energy(self):
+        """/cea/db/Archetypes/Archetypes_embodied_energy.csv
+        path to database of archetypes file Archetypes_embodied_energy.csv"""
+        return os.path.join(self.db_path, 'Archetypes', 'Archetypes_embodied_energy.csv')
+
     def get_building_age(self):
         """scenario/1-inputs/1-buildings/building_age.shp"""
         return os.path.join(self.scenario_path, '1-inputs', '1-buildings', 'building_age.shp')
