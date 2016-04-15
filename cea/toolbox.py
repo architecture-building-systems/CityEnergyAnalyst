@@ -17,20 +17,12 @@ class PropertiesTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        path_age = arcpy.Parameter(
-            displayName="Path to file buildings_age.shp",
-            name="path_age",
-            datatype="DEFile",
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
             parameterType="Required",
             direction="Input")
-        path_age.filter.list = ['shp']
-        path_occupancy = arcpy.Parameter(
-            displayName="Path to file buildings_occupancy.shp",
-            name="path_occupancy",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_occupancy.filter.list = ['shp']
         prop_thermal_flag = arcpy.Parameter(
             displayName="Generate thermal properties of the building envelope",
             name="prop_thermal_flag",
@@ -52,28 +44,19 @@ class PropertiesTool(object):
             parameterType="Required",
             direction="Input")
         prop_HVAC_flag.value = True
-        path_results = arcpy.Parameter(
-            displayName="Path to folder to store results",
-            name="path_results",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        return [path_age, path_occupancy, prop_thermal_flag, prop_architecture_flag,
-                prop_HVAC_flag, path_results]
+        return [scenario_path, prop_thermal_flag, prop_architecture_flag, prop_HVAC_flag]
 
     def execute(self, parameters, messages):
         from cea.properties import properties
-        path_archetypes = os.path.join(
-            os.path.dirname(__file__),
-            'db', 'Archetypes', 'Archetypes_HVAC_properties.csv')
-        path_age = parameters[0]
-        path_occupancy = parameters[1]
-        prop_thermal_flag = parameters[2]
-        prop_architecture_flag = parameters[3]
-        prop_HVAC_flag = parameters[4]
-        path_results = parameters[5]
-        properties(path_archetypes=path_archetypes, path_age=path_age.valueAsText,
-                   path_occupancy=path_occupancy.valueAsText, path_results=path_results.valueAsText,
+        from cea.inputlocator import InputLocator
+
+        scenario_path = parameters[0].valueAsText
+        locator = InputLocator(scenario_path)
+
+        prop_thermal_flag = parameters[1]
+        prop_architecture_flag = parameters[2]
+        prop_HVAC_flag = parameters[3]
+        properties(locator=locator,
                    prop_thermal_flag=prop_thermal_flag.value,
                    prop_architecture_flag=prop_architecture_flag.value,
                    prop_hvac_flag=prop_HVAC_flag.value, gv=gv)
