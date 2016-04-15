@@ -84,7 +84,7 @@ def demand_calculation(locator, gv):
                                         radiation_file, gv)
 
     # calculate clean file of radiation - @ daren: this is a A BOTTLE NECK
-    Solar = f.CalcIncidentRadiation(prop_RC_model, radiation_file)
+    Solar = f.CalcIncidentRadiation(radiation_file)
 
     # compute demand
     num_buildings = len(prop_RC_model.index)
