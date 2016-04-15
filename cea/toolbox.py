@@ -4,6 +4,8 @@ ArcGIS Tool classes for integrating the CEA with ArcGIS.
 import os
 import arcpy
 from cea import globalvar
+import inputlocator
+reload(inputlocator)
 
 gv = globalvar.GlobalVariables()
 
@@ -48,10 +50,9 @@ class PropertiesTool(object):
 
     def execute(self, parameters, messages):
         from cea.properties import properties
-        from cea.inputlocator import InputLocator
 
         scenario_path = parameters[0].valueAsText
-        locator = InputLocator(scenario_path)
+        locator = inputlocator.InputLocator(scenario_path)
 
         prop_thermal_flag = parameters[1]
         prop_architecture_flag = parameters[2]
@@ -91,10 +92,9 @@ class DemandTool(object):
     def execute(self, parameters, messages):
         import cea.demand
         reload(cea.demand)
-        from cea.inputlocator import InputLocator
 
         scenario_path = parameters[0].valueAsText
-        locator = InputLocator(scenario_path)
+        locator = inputlocator.InputLocator(scenario_path)
 
         cea.demand.demand_calculation(locator=locator, gv=gv)
 
@@ -114,80 +114,14 @@ class EmbodiedEnergyTool(object):
             parameterType="Required",
             direction="Input")
 
-        path_properties = arcpy.Parameter(
-            displayName="Path to properties file (properties.xls)",
-            name="path_properties",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_properties.filter.list = ['xls']
-
-        path_results = arcpy.Parameter(
-            displayName="Path to emissions results folder",
-            name="path_results",
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
 
-        retrofit_windows = arcpy.Parameter(
-            displayName="retrofit windows",
-            name="retrofit_windows",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-
-        retrofit_roof = arcpy.Parameter(
-            displayName="retrofit roof",
-            name="retrofit_roof",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-
-        retrofit_walls = arcpy.Parameter(
-            displayName="retrofit walls",
-            name="retrofit_walls",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-
-        retrofit_partitions = arcpy.Parameter(
-            displayName="retrofit partitions",
-            name="retrofit_partitions",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-
-        retrofit_int_floors = arcpy.Parameter(
-            displayName="retrofit int floors",
-            name="retrofit_int_floors",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-
-        retrofit_installations = arcpy.Parameter(
-            displayName="retrofit installations",
-            name="retrofit_installations",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-
-        retrofit_basement_floor = arcpy.Parameter(
-            displayName="retrofit basement floor",
-            name="retrofit_basement_floor",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-
-        return [path_properties,
-                path_results,
-                yearcalc,
-                retrofit_windows,
-                retrofit_roof,
-                retrofit_walls,
-                retrofit_partitions,
-                retrofit_int_floors,
-                retrofit_installations,
-                retrofit_basement_floor]
+        return [yearcalc, scenario_path]
 
     def isLicensed(self):
         return True
@@ -199,39 +133,14 @@ class EmbodiedEnergyTool(object):
         return
 
     def execute(self, parameters, messages):
-        path_LCA_embodied_energy = os.path.join(
-            os.path.dirname(__file__),
-            'db', 'Archetypes', 'Archetypes_embodied_energy.csv')
-        path_LCA_embodied_emissions = os.path.join(
-            os.path.dirname(__file__),
-            'db', 'Archetypes', 'Archetypes_embodied_emissions.csv')
-
-        path_properties = parameters[0]
-        path_results = parameters[1]
-        yearcalc = parameters[2]
-        retrofit_windows = parameters[3]
-        retrofit_roof = parameters[4]
-        retrofit_walls = parameters[5]
-        retrofit_partitions = parameters[6]
-        retrofit_int_floors = parameters[7]
-        retrofit_installations = parameters[8]
-        retrofit_basement_floor = parameters[9]
-
         from cea.embodied import lca_embodied
-        lca_embodied(
-            path_LCA_embodied_energy=path_LCA_embodied_energy,
-            path_LCA_embodied_emissions=path_LCA_embodied_emissions,
-            path_properties=path_properties.valueAsText,
-            path_results=path_results.valueAsText,
-            yearcalc=int(yearcalc.valueAsText),
-            retrofit_windows=bool(retrofit_windows),
-            retrofit_roof=bool(retrofit_roof),
-            retrofit_walls=bool(retrofit_walls),
-            retrofit_partitions=bool(retrofit_partitions),
-            retrofit_int_floors=bool(retrofit_int_floors),
-            retrofit_installations=bool(retrofit_installations),
-            retrofit_basement_floor=bool(retrofit_basement_floor),
-            gv=gv)
+
+        yearcalc = int(parameters[0].valueAsText)
+        scenario_path = parameters[1].valueAsText
+
+        locator = inputlocator.InputLocator(scenario_path=scenario_path)
+        lca_embodied(yearcalc=yearcalc, locator=locator, gv=gv)
+
 
 
 class EmissionsTool(object):
