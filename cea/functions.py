@@ -125,28 +125,21 @@ def CmFunction (x):
     else:
         return 165000
 
-def CalcIncidentRadiation(AllProperties, Radiation_Shading2):
 
-    #Import Radiation table and compute the Irradiation in W in every building's surface
-    Columns = 8761
-    Radiation_Shading2['AreaExposed'] = Radiation_Shading2['Shape_Leng']*Radiation_Shading2['FactorShade']*Radiation_Shading2['Freeheight']
-    for Column in range(1, Columns):
-         #transform all the points of solar radiation into Wh
-        Radiation_Shading2['T'+str(Column)] = Radiation_Shading2['T'+str(Column)]*Radiation_Shading2['AreaExposed']
+def CalcIncidentRadiation(radiation):
 
-    #Do pivot table to sum up the irradiation in every surface to the building 
-    #and merge the result with the table allProperties
-    PivotTable3 = pd.pivot_table(Radiation_Shading2, rows='Name', margins='Add all row')
-    RadiationLoad = pd.DataFrame(PivotTable3)
-    Solar = AllProperties.merge(RadiationLoad, left_index=True,right_index=True)
-    
-    columns_names = list(range(8760))
-    for time in range(len(columns_names)):
-        columns_names[time] = 'T'+str(time+1)
-        
-    Final = Solar[columns_names]
+    # Import Radiation table and compute the Irradiation in W in every building's surface
+    hours_in_year = 8760
+    radiation['AreaExposed'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
 
-    return Final # total solar radiation in areas exposed to radiation in Watts
+    for hour in range(hours_in_year):
+         # transform all the points of solar radiation into Wh
+        radiation['T%i' % (hour+1)] = radiation['T%i' % (hour+1)] * radiation['AreaExposed']
+
+    # sum up radiation load per building
+    radiation_load = radiation.groupby('Name').sum()
+    incident_radiation = radiation_load[['T%i' % (i+1) for i in range(hours_in_year)]]
+    return incident_radiation  # total solar radiation in areas exposed to radiation in Watts
 
 def calc_Y(year, Retrofit):
     if year >= 1995 or Retrofit > 0:
