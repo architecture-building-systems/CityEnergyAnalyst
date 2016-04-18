@@ -680,8 +680,8 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
                                                                tsc0, trc0, w_re, w_sup, ma_sup_0, ma_sup_cs, gv.Cpa,
                                                                LMRT0, UA0, mCw0, Qcsf)
         #1. Calculate water consumption
-        Vww = vww*Af/1000 ## consumption of hot water in m3/hour
-        Vw = vw*Af/1000 ## consumption of fresh water in m3/h = cold water + hot water
+        Vww = vww*Af/1000  ## consumption of hot water in m3/hour
+        Vw = vw*Af/1000    ## consumption of fresh water in m3/h = cold water + hot water
         Mww = Vww*gv.Pwater/3600 # in kg/s
         #Mw = Vw*Pwater/3600 # in kg/s
         #2. Calculate hot water demand
@@ -696,15 +696,15 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         # the following part is connected to storage sensible heat loss calculation
         Qww_ls_st = np.zeros(8760)
         Tww_st = np.zeros(8760)
-        Tww_st_0=80
-        vsource=2
-        Tsource=80
+        Qd = np.zeros(8760)
+        Qc = np.zeros(8760)
+        Tww_st_0 = 60
         vww_0 = vww.max()
         V = sto_m.calc_V_dhwtank(vww, vww_0)
 
         for k in range(8760):
-            Qww_ls_st[k], Qs = np.vectorize(sto_m.calc_Qww_ls_st)(gv.Cpw, gv.Pwater, Tww_st_0, Ta, gv.Bf, T_ext, vsource, vww)
-            Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_ls_st[k], Qww, Qs, gv.Pwater, gv.Cpw)
+            Qww_ls_st[k], Qd[k], Qc[k] = np.vectorize(sto_m.calc_Qww_ls_st)(gv.Cpw, gv.Pwater, Tww_st_0, Ta, gv.Bf, T_ext, vww, vww_0, Qww, Qww_ls_r, Qww_ls_nr)
+            Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_ls_st[k], Qd[k], Qc[k], gv.Pwater, gv.Cpw)
             Tww_st_0 = Tww_st[k]
 
 
