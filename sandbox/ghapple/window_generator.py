@@ -14,6 +14,8 @@ import geopandas
 import rtree
 
 from geopandas import GeoDataFrame as gpdf
+import descartes
+from matplotlib import pyplot
 
 from shapely.geometry import Polygon, Point
 from rtree import index
@@ -27,7 +29,11 @@ if __name__ == '__main__':
 
     building_geometry = gpdf.from_file(path_geometry)
 
+    building_geometry
+
     print(building_geometry.get_value(0, 'geometry'))
+
+    building_geometry.plot()
 
     # testing some code with rtree from stackoverflow
     # ***********************************************
