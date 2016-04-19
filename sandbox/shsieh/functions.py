@@ -698,13 +698,16 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         Tww_st = np.zeros(8760)
         Qd = np.zeros(8760)
         Qc = np.zeros(8760)
-        Tww_st_0 = 60
+        Tww_st_0 = 60            # dhw tank initial temperature in C, move to global variable
         vww_0 = vww.max()
-        V = sto_m.calc_V_dhwtank(vww, vww_0)
+        V_dhwtank = np.vectorize(sto_m.calc_V_dhwtank)(vww, vww_0)
+
+        #calculate heat loss in dhw tank and temperature change
 
         for k in range(8760):
-            Qww_ls_st[k], Qd[k], Qc[k] = np.vectorize(sto_m.calc_Qww_ls_st)(gv.Cpw, gv.Pwater, Tww_st_0, Ta, gv.Bf, T_ext, vww, vww_0, Qww, Qww_ls_r, Qww_ls_nr)
-            Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_ls_st[k], Qd[k], Qc[k], gv.Pwater, gv.Cpw)
+            Qww_ls_st[k], Qd[k], Qc[k] = sto_m.calc_Qww_ls_st(Tww_st_0, Ta, gv.Bf, T_ext, V_dhwtank, Qww, Qww_ls_r, Qww_ls_nr)
+            Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_ls_st[k], Qd[k], Qc[k], gv.Pwater, gv.Cpw, V_dhwtank)
+            Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_ls_st[k], Qd[k], Qc[k], gv.Pwater, gv.Cpw, V_dhwtank)
             Tww_st_0 = Tww_st[k]
 
 
@@ -797,7 +800,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
     pd.DataFrame({'DATE':DATE, 'Name':Name,'Ealf':Ealf/1000,'Eauxf':Eauxf/1000,'Qwwf':Qwwf/1000,'Qww':Qww/1000,'Qhs':Qhs_sen/1000,
                   'Qhsf':Qhsf/1000,'Qcs':-1*Qcs/1000,'Qcsf':-1*Qcsf/1000,'Occupancy':Occupancy,'mw':Waterconsumption,
                   'tsh':Ths_sup, 'trh':Ths_re, 'mcphs':mcphs,'mcpww':mcpww,'tsc':Tcs_sup, 'trc':Tcs_re, 'mcpcs':mcpcs,'Qcdata':Qcdata/1000,
-                  'tsww':Tww_sup_0,'trww':Tww_re,'Ef':(Ealf+Eauxf+Epro)/1000,'Epro':Epro/1000,'Qcrefri':Qcrefri/1000,'Edata':Edata/1000, 'QHf':(Qwwf+Qhsf)/1000,'QCf':(-1*Qcsf+Qcdata+Qcrefri)/1000,'uncomfortable':uncomfort}).to_csv(locationFinal+'\\'+Name+'.csv',index=False, float_format='%.2f')
+                  'tsww':Tww_sup_0,'trww':Tww_re,'twwst':Tww_st,'Qwwst':Qww_ls_st/1000,'Qd':Qd/1000,'Qc':Qc/1000,'Vtank':V_dhwtank,'Ef':(Ealf+Eauxf+Epro)/1000,'Epro':Epro/1000,'Qcrefri':Qcrefri/1000,'Edata':Edata/1000, 'QHf':(Qwwf+Qhsf)/1000,'QCf':(-1*Qcsf+Qcdata+Qcrefri)/1000,'uncomfortable':uncomfort}).to_csv(locationFinal+'\\'+Name+'.csv',index=False, float_format='%.2f')
 
     # print peaks in kW and totals in MWh, temperature peaks in C
     totals = pd.DataFrame({'Name':Name,'Af':Af,'occupants':Occupants,'uncomfort': uncomfort.sum()/8760, 'Qwwf0': Qwwf_0/1000, 'Ealf0': Ealf_0/1000,'Qhsf0':Qhsf_0/1000,

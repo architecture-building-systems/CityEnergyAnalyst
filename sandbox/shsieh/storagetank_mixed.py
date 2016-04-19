@@ -30,6 +30,7 @@ gv = globalvar.GlobalVariables()
 
 
 def calc_Qww_ls_st(Tww_st_0, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_nr ):
+
     # Calculate tamb in basement according to EN
     tamb = tair - Bf*(tair-te)
 
@@ -40,23 +41,20 @@ def calc_Qww_ls_st(Tww_st_0, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_nr ):
     r= (V/(math.pi*h))*(1/2) # tank radius in m, assuming tank shape is cylinder
 
     Atank= 2*math.pi*r**2+2*math.pi*r*h      #tank surface area in m2.
-    ql= U*Atank*(tamb-Tww_st_0)              #storage sensible heat loss.
-    qd= Qww + Qww_ls_r + Qww_ls_nr           #discharing of storage in kWh, including DHW usage and distribution losses.
-    qc= qd + ql                              #charging of storage in kWh.
+    ql= U*Atank*(tamb-Tww_st_0)              #storage sensible heat loss in W.
+    qd= Qww + Qww_ls_r + Qww_ls_nr           #discharing of storage in W, including DHW usage and distribution losses.
+    qc= qd + ql                              #charging of storage in W.
     return ql, qd, qc
 
 
-def ode(y,t0,ql,qd,qc,Pwater,Cpw):
-            r=5
-            h=5
-            Vtank= math.pi*r**2*h
+def ode(y,t,(ql,qd,qc,Pwater,Cpw,Vtank)):
             dydt= (qc-ql-qd)/(Pwater*Vtank*Cpw)
             return dydt
 
-def solve_ode_storage(Tww_st_0,ql,qu,qs,Pwater,Cpw):
+def solve_ode_storage(Tww_st_0,ql,qd,qc,Pwater,Cpw,Vtank):
             t=np.linspace(0,1,2)
-            Tww_st=odeint(ode,Tww_st_0,t,(ql,qu,qs,Pwater,Cpw)) 
-            return Tww_st[1]
+            y=odeint(ode,Tww_st_0,t,(ql,qd,qc,Pwater,Cpw,Vtank))
+            return y[1]
 
 #Qww_ls_st = np.zeros(8760)
 #Tww_st = np.zeros(8760)
