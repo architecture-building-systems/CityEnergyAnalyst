@@ -27,15 +27,15 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
     Parameters
     ----------
     :param InputLocator locator: an InputLocator instance set to the scenario to work on
-    :param boolean Qww_flag_flag: if True, get separate file with emissions due to hot water consumption
-    :param boolean Qhs_flag_flag: if True, get separate file with emissions due to space heating
-    :param boolean Qcs_flag_flag: if True, get separate file with emissions due to space cooling
-    :param boolean Qcdata_flag_flag: if True, get separate file with emissions due to servers cooling
-    :param boolean Qcrefri_flag_flag: if True, get separate file with emissions due to refrigeration
-    :param boolean Eal_flag_flag: if True, get separate file with emissions due to appliances and lighting
-    :param boolean Eaux_flag_flag: if True, get separate file with emissions due to auxiliary electricity
-    :param boolean Epro_flag_flag: if True, get separate file with emissions due to electricity in industrial processes
-    :param boolean Edata_flag_flag: if True, get separate file with emissions due to electricity consumption in data centers
+    :param boolean Qww_flag: create a separate file with emissions due to hot water consumption?
+    :param boolean Qhs_flag: create a separate file with emissions due to space heating?
+    :param boolean Qcs_flag: create a get separate file with emissions due to space cooling?
+    :param boolean Qcdata_flag: create a separate file with emissions due to servers cooling?
+    :param boolean Qcrefri_flag: create a separate file with emissions due to refrigeration?
+    :param boolean Eal_flag: create a separate file with emissions due to appliances and lighting?
+    :param boolean Eaux_flag: create a separate file with emissions due to auxiliary electricity?
+    :param boolean Epro_flag: create a separate file with emissions due to electricity in industrial processes?
+    :param boolean Edata_flag: create a separate file with emissions due to electricity consumption in data centers?
 
     Returns
     -------
@@ -85,8 +85,8 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
     electricity = supply_systems.merge(demand,on='Name').merge(factors_electricity, left_on='type_el', right_on='code')
 
     # for heating services
-    tupple = [[QH_flag,'QHf_MWyr', 'QHf'], [Qhs_flag,'Qhsf_MWyr', 'Qhsf'],[Qww_flag,'Qwwf_MWyr', 'Qwwf']]
-    for x in tupple:
+    heating_services = [[QH_flag, 'QHf_MWyr', 'QHf'], [Qhs_flag, 'Qhsf_MWyr', 'Qhsf'], [Qww_flag, 'Qwwf_MWyr', 'Qwwf']]
+    for x in heating_services:
         if x[0]:
             fields_to_plot = ['Name', x[2] + '_pen_GJ', x[2] + '_ghg_ton', x[2] + '_pen_MJm2', x[2] + '_ghg_kgm2']
             heating[fields_to_plot[1]] = heating[x[1]] * heating['PEN'] * 3.6
@@ -96,9 +96,9 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
             heating[fields_to_plot].to_csv(result_folder+'\\' +x[2]+'_LCA_operation.csv',index=False,
                                            float_format='%.2f')
     # for cooling services
-    tupple = (QC_flag, 'QCf_MWyr', 'QCf'), (Qcs_flag, 'Qcsf_MWyr', 'Qcsf'),(Qcdata_flag, 'Qcdataf_MWyr', 'Qcdataf'),\
-             (Qcrefri_flag, 'Qcref_MWyr', 'Qcref')
-    for x in tupple:
+    cooling_services = [(QC_flag, 'QCf_MWyr', 'QCf'), (Qcs_flag, 'Qcsf_MWyr', 'Qcsf'),
+                        (Qcdata_flag, 'Qcdataf_MWyr', 'Qcdataf'), (Qcrefri_flag, 'Qcref_MWyr', 'Qcref')]
+    for x in cooling_services:
         if x[0]:
             fields_to_plot = ['Name', x[2] + '_pen_GJ', x[2] + '_ghg_ton', x[2] + '_pen_MJm2', x[2] + '_ghg_kgm2']
             cooling[fields_to_plot[1]] = cooling[x[1]] * cooling['PEN'] * 3.6
@@ -108,10 +108,11 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
             cooling[fields_to_plot].to_csv(result_folder+ '\\' + x[2] + '_LCA_operation.csv', index=False,
                            float_format='%.2f')
 
-    # for electricical services
-    tupple = (E_flag, 'Ef_MWyr', 'Ef'), (Eal_flag, 'Ealf_MWyr', 'Ealf'), (Eaux_flag, 'Eauxf_MWyr', 'Eauxf'),\
-             (Epro_flag, 'Eprof_MWyr', 'Eprof'), (Edata_flag, 'Edataf_MWyr', 'Edataf')
-    for x in tupple:
+    # for electrical services
+    electrical_services = [(E_flag, 'Ef_MWyr', 'Ef'), (Eal_flag, 'Ealf_MWyr', 'Ealf'),
+                           (Eaux_flag, 'Eauxf_MWyr', 'Eauxf'), (Epro_flag, 'Eprof_MWyr', 'Eprof'),
+                           (Edata_flag, 'Edataf_MWyr', 'Edataf')]
+    for x in electrical_services:
         if x[0]:
             fields_to_plot = ['Name', x[2] + '_pen_GJ', x[2] + '_ghg_ton', x[2] + '_pen_MJm2', x[2] + '_ghg_kgm2']
             electricity[fields_to_plot[1]] = electricity[x[1]] * electricity['PEN'] * 3.6
@@ -121,24 +122,23 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
             electricity[fields_to_plot].to_csv(result_folder + '\\' + x[2] + '_LCA_operation.csv', index=False,
                            float_format='%.2f')
 
-
     result = heating.merge(cooling, on='Name').merge(electricity, on='Name')
-    result['pen_GJ'] =  result['QHf_pen_GJ'] + result['QCf_pen_GJ'] + result['Ef_pen_GJ']
-    result['ghg_ton'] =  result['QHf_ghg_ton'] + result['QCf_ghg_ton'] + result['Ef_ghg_ton']
+    result['pen_GJ'] = result['QHf_pen_GJ'] + result['QCf_pen_GJ'] + result['Ef_pen_GJ']
+    result['ghg_ton'] = result['QHf_ghg_ton'] + result['QCf_ghg_ton'] + result['Ef_ghg_ton']
     result['pen_MJm2'] = result['QHf_pen_MJm2'] + result['QCf_pen_MJm2'] + result['Ef_pen_MJm2']
     result['ghg_kgm2'] = result['QHf_ghg_kgm2'] + result['QCf_ghg_kgm2'] + result['Ef_ghg_kgm2']
     fields_to_plot = ['Name', 'pen_GJ', 'ghg_ton', 'pen_MJm2', 'ghg_kgm2']
     result[fields_to_plot].to_csv(locator.get_lca_operation(), index=False, float_format='%.2f')
 
-def test_lca_operation():
 
+def test_lca_operation():
     Qww_flag = Qhs_flag = True
     Qcs_flag = Qcdata_flag = Qcrefri_flag = True
     Eal_flag = Eaux_flag = Epro_flag = Edata_flag = True
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
-    lca_operation(locator=locator, Qww_flag= Qww_flag, Qhs_flag = Qhs_flag, Qcs_flag = Qcs_flag, Qcdata_flag = Qcdata_flag,
-                  Qcrefri_flag = Qcrefri_flag, Eal_flag = Eal_flag, Eaux_flag = Eaux_flag, Epro_flag = Epro_flag,
-                  Edata_flag = Edata_flag)
+    lca_operation(locator=locator, Qww_flag=Qww_flag, Qhs_flag=Qhs_flag, Qcs_flag=Qcs_flag, Qcdata_flag=Qcdata_flag,
+                  Qcrefri_flag=Qcrefri_flag, Eal_flag=Eal_flag, Eaux_flag=Eaux_flag, Epro_flag=Epro_flag,
+                  Edata_flag=Edata_flag)
 
     print 'test_properties() succeeded'
 
