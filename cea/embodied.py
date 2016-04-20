@@ -179,9 +179,9 @@ def lca_embodied(yearcalc, locator, gv):
             result[1] = built_df[['Name','CO2_ton', 'CO2_kgm2']]
         counter += 1
 
-    pd.DataFrame({'Name': result[0].Name, 'GEN_GJ': result[0].GEN_GJ, 'GEN_MJm2': result[0].GEN_MJm2,
-                  'CO2_ton': result[1].CO2_ton, 'CO2_kgm2': result[1].CO2_kgm2}).to_csv(
-        locator.get_lca_embodied(), index=False, float_format='%.2f')
+    pd.DataFrame({'Name': result[0].Name, 'pen_GJ': result[0].GEN_GJ, 'pen_MJm2': result[0].GEN_MJm2,
+                  'ghg_ton': result[1].CO2_ton, 'ghg_kgm2': result[1].CO2_kgm2}).to_csv(locator.get_lca_embodied(),
+                                                                                         index=False, float_format='%.2f')
     print 'done!'
 
 def calc_if_existing(x, y):
