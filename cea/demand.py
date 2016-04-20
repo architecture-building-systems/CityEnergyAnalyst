@@ -4,7 +4,7 @@ Analytical energy demand model algorithm
 ===========================
 File history and credits:
 J. Fonseca  script development          24.08.15
-D. Thomas   formatting and cleaning
+D. Thomas   formatting, refactoring, debugging and cleaning
 D. Thomas   integration in toolbox
 J. Fonseca  refactoring to new properties file   22.03.16
 """
@@ -17,21 +17,23 @@ import arcpy
 import tempfile
 import os
 from geopandas import GeoDataFrame as gpdf
+import inputlocator
 
 gv = globalvar.GlobalVariables()
 reload(f)
 reload(globalvar)
 
 
-def demand_calculation(path_radiation, path_schedules, path_temporary_folder, path_weather, path_results,
-                       path_hvac_shp, path_thermal_shp, path_occupancy_shp,
-                       path_geometry_shp, path_age_shp, path_architecture_shp, gv):
+def demand_calculation(locator, gv):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
-    using the integrated model of Fonseca et al. 2015. Appl. energy.
+    using the integrated model of Fonseca et al. 2015. Applied energy.
 
     Parameters
     ----------
+    :param locator: An InputLocator to locate input files
+    :type locator: inputlocator.InputLocator
+
     path_radiation:
         path to solar radiation file in vertical surfaces
         RadiationYearFinal.csv
@@ -51,20 +53,19 @@ def demand_calculation(path_radiation, path_schedules, path_temporary_folder, pa
     total_demand: .csv
         csv file of yearly demand data per buidling.
     """
-
     # local variables
-    weather_data = pd.read_csv(path_weather, usecols=['te', 'RH'])
+    weather_data = pd.read_csv(locator.get_weather_hourly(), usecols=['te', 'RH'])
     list_uses = gv.list_uses
-    radiation_file = pd.read_csv(path_radiation)
-    prop_geometry = gpdf.from_file(path_geometry_shp)
+    radiation_file = pd.read_csv(locator.get_radiation())
+    prop_geometry = gpdf.from_file(locator.get_building_geometry())
     prop_geometry['footprint'] = prop_geometry.area
     prop_geometry['perimeter'] = prop_geometry.length
     prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
-    prop_HVAC = gpdf.from_file(path_hvac_shp).drop('geometry', axis=1).set_index('Name')
-    prop_thermal = gpdf.from_file(path_thermal_shp).drop('geometry', axis=1).set_index('Name')
-    prop_occupancy = gpdf.from_file(path_occupancy_shp).drop('geometry', axis=1).set_index('Name')
-    prop_architecture = gpdf.from_file(path_architecture_shp).drop('geometry', axis=1).set_index('Name')
-    prop_age = gpdf.from_file(path_age_shp).drop('geometry', axis=1).set_index('Name')
+    prop_HVAC = gpdf.from_file(locator.get_building_hvac()).drop('geometry', axis=1).set_index('Name')
+    prop_thermal = gpdf.from_file(locator.get_building_thermal()).drop('geometry', axis=1).set_index('Name')
+    prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index('Name')
+    prop_architecture = gpdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1).set_index('Name')
+    prop_age = gpdf.from_file(locator.get_building_age()).drop('geometry', axis=1).set_index('Name')
 
     # weather conditions
     T_ext = np.array(weather_data.te)
@@ -76,15 +77,14 @@ def demand_calculation(path_radiation, path_schedules, path_temporary_folder, pa
     rows = len(list_uses)
     profiles = list(range(rows))
     for row in range(rows):
-        profiles[row] = pd.read_csv(os.path.join(path_schedules, 'Occupancy_%s.csv' % list_uses[row]), nrows=8760)
+        profiles[row] = pd.read_csv(locator.get_schedule(list_uses[row]), nrows=8760)
 
     # calculate file with thermal properties for RC model
     prop_RC_model = f.get_prop_RC_model(prop_occupancy, prop_architecture, prop_thermal, prop_geometry, prop_HVAC,
                                         radiation_file, gv)
 
     # calculate clean file of radiation - @ daren: this is a A BOTTLE NECK
-    Solar = f.CalcIncidentRadiation(prop_RC_model, radiation_file)
-    Solar.to_csv(r"C:\Users\darthoma\Desktop\Solar_old.csv")
+    Solar = f.CalcIncidentRadiation(radiation_file)
 
     # compute demand
     num_buildings = len(prop_RC_model.index)
@@ -93,8 +93,8 @@ def demand_calculation(path_radiation, path_schedules, path_temporary_folder, pa
         f.CalcThermalLoads(building, prop_occupancy.ix[building], prop_architecture.ix[building],
                            prop_thermal.ix[building],
                            prop_geometry.ix[building], prop_HVAC.ix[building], prop_RC_model.ix[building],
-                           prop_age.ix[building], Solar.ix[building], path_results, profiles, list_uses, T_ext,
-                           T_ext_max, RH_ext, T_ext_min, path_temporary_folder, gv, 0, 0)
+                           prop_age.ix[building], Solar.ix[building], locator.get_demand_results_folder(), profiles,
+                           list_uses, T_ext, T_ext_max, RH_ext, T_ext_min, locator.get_temporary_folder(), gv, 0, 0)
         message = 'Building No. ' + str(counter + 1) + ' completed out of ' + str(num_buildings)
         arcpy.AddMessage(message)
         counter += 1
@@ -102,34 +102,22 @@ def demand_calculation(path_radiation, path_schedules, path_temporary_folder, pa
     arcpy.AddMessage('len(prop_RC_model.index): %i' % len(prop_RC_model.index))
     counter = 0
     for name in prop_RC_model.index:
+        temporary_file = locator.get_temporary_file('%(name)sT.csv' % locals())
+        # TODO: check this logic
         if counter == 0:
-            df = pd.read_csv(path_temporary_folder + '\\' + name + 'T' + '.csv')
+            df = pd.read_csv(temporary_file)
             counter += 1
         else:
-            df2 = pd.read_csv(path_temporary_folder + '\\' + name + 'T' + '.csv')
+            df2 = pd.read_csv(temporary_file)
             df = df.append(df2, ignore_index=True)
-    df.to_csv(os.path.join(path_results, 'Total_demand.csv'), index=False, float_format='%.2f')
+    df.to_csv(locator.get_total_demand(), index=False, float_format='%.2f')
 
     print 'finished'
 
 
 def test_demand():
-    path_radiation = r"C:\reference-case\baseline\2-results\1-radiation\1-timeseries\radiation.csv"
-    path_schedules = r"c:\projects\CEAforArcGIS\cea\db\Schedules"
-    path_weather = r"C:\reference-case\baseline\1-inputs\3-weather\weather_hourly.csv"
-    path_results = r"c:\reference-case\baseline\2-results\2-demand\1-timeseries"
-    path_HVAC_shp = r"C:\reference-case\baseline\1-inputs\1-buildings\building_HVAC.shp"
-    path_thermal_shp = r"C:\reference-case\baseline\1-inputs\1-buildings\building_thermal.shp"
-    path_occupancy_shp = r"C:\reference-case\baseline\1-inputs\1-buildings\building_occupancy.shp"
-    path_geometry_shp = r"C:\reference-case\baseline\1-inputs\1-buildings\building_geometry.shp"
-    path_age_shp = r"C:\reference-case\baseline\1-inputs\1-buildings\building_age.shp"
-    path_architecture_shp = r"C:\reference-case\baseline\1-inputs\1-buildings\building_architecture.shp"
-    path_temporary_folder = tempfile.gettempdir()
-    demand_calculation(path_radiation=path_radiation, path_schedules=path_schedules,
-                       path_temporary_folder=path_temporary_folder, path_weather=path_weather,
-                       path_results=path_results, path_hvac_shp=path_HVAC_shp, path_thermal_shp=path_thermal_shp,
-                       path_occupancy_shp=path_occupancy_shp, path_geometry_shp=path_geometry_shp,
-                       path_age_shp=path_age_shp, path_architecture_shp=path_architecture_shp, gv=gv)
+    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    demand_calculation(locator=locator, gv=gv)
 
 
 if __name__ == '__main__':

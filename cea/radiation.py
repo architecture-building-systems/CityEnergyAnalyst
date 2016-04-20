@@ -31,24 +31,31 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
          path to file zone_of_study.shp
      path_arcgisDB: boolean
          path to default database of Arcgis. Generally of the form c:\users\your_name\Documents\Arcgis\Default.gdb
+     latitude: float
+         latitude north  at the centre of the location
+     longitude: float
+         latitude north
+     timezone: integer
+         timezone (UTC)
+     year: integer
+         year of calculation
+     path_dem_raster: string
+         path to terrain file
+     weather_daily_data: string
+         path to weather_day.csv file
      prop_architecture_flag: boolean
          True, get properties about the construction and architecture, otherwise False.
      prop_HVAC_flag: boolean
          True, get properties about types of HVAC systems, otherwise False.
-     path_results:
-         Path to folder to store results
+
      gv: GlobalVariables
          an instance of globalvar.GlobalVariables with the constants
          to use (like `list_uses` etc.)
 
      Returns
      -------
-     building_HVAC: .shp
-         file recorded in path_results describing the queried properties of HVAC systems.
-     building_architecture: .shp
-         file recorded in path_results describing the queried properties of architectural features
-     building_thermal: .shp
-         file recorded in path_results describing the queried thermal properties of buildings
+     radiation: .csv
+         solar radiation file in vertical surfaces of buildings stored in path_output
      """
 
 
