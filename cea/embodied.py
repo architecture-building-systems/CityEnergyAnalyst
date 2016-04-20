@@ -13,13 +13,13 @@ import pandas as pd
 import numpy as np
 import os
 import globalvar
+import inputlocator
 from geopandas import GeoDataFrame as gpdf
 
 gv = globalvar.GlobalVariables()
 
 
-def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age_shp, path_occupancy_shp,
-                 path_geometry_shp, path_architecture_shp, path_results, yearcalc, gv):
+def lca_embodied(yearcalc, locator, gv):
     """
     algorithm to calculate the embodied energy and grey energy of buildings
     according to the method of Fonseca et al 2015. CISBAT 2015. and Thoma et al
@@ -27,10 +27,25 @@ def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age
 
     Parameters
     ----------
-    yearcalc: int
-        year between 1900 and 2100 indicating when embodied energy is evaluated
+
+    :param yearcalc:  year between 1900 and 2100 indicating when embodied energy is evaluated
         to account for emissions already offset from building construction
         and retrofits more than 60 years ago.
+    :type yearcalc: int
+
+    :param locator: an instance of InputLocator set to the scenario
+    :type locator: inputlocator.InputLocator
+
+
+    Files read / written from InputLocator:
+
+    get_building_architecture
+    get_building_occupancy
+    get_building_age
+    get_building_geometry
+    get_archetypes_embodied_energy
+    get_archetypes_embodied_emissions
+
     path_LCA_embodied_energy:
         path to database of archetypes embodied energy file
         Archetypes_embodied_energy.csv
@@ -56,10 +71,10 @@ def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age
 
     # localvariables
     list_uses = gv.list_uses
-    architecture_df = gpdf.from_file(path_architecture_shp).drop('geometry', axis=1)
-    occupancy_df = gpdf.from_file(path_occupancy_shp).drop('geometry', axis=1)
-    age_df = gpdf.from_file(path_age_shp).drop('geometry', axis=1)
-    geometry_df = gpdf.from_file(path_geometry_shp)
+    architecture_df = gpdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1)
+    occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
+    age_df = gpdf.from_file(locator.get_building_age()).drop('geometry', axis=1)
+    geometry_df = gpdf.from_file(locator.get_building_geometry())
     geometry_df['footprint'] = geometry_df.area
     geometry_df['perimeter'] = geometry_df.length
     geometry_df = geometry_df.drop('geometry', axis=1)
@@ -85,8 +100,8 @@ def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age
         cat_df['cat_'+cat] = cat_df.apply(lambda x: calc_category_retrofit(x['mainuse'],x[cat]), axis=1)
 
     # calculate contributions to embodied energy and emissions
-    list_of_archetypes = [path_LCA_embodied_energy, path_LCA_embodied_emissions]
-    result = [0,0]
+    list_of_archetypes = [locator.get_archetypes_embodied_energy(), locator.get_archetypes_embodied_emissions()]
+    result = [0, 0]
     counter = 0
     for archetype in list_of_archetypes:
         database_df = pd.read_csv(archetype)
@@ -164,9 +179,9 @@ def lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age
             result[1] = built_df[['Name','CO2_ton', 'CO2_kgm2']]
         counter += 1
 
-    pd.DataFrame({'Name':result[0].Name, 'GEN_GJ': result[0].GEN_GJ, 'GEN_MJm2': result[0].GEN_MJm2,
-                  'CO2_ton': result[1].CO2_ton, 'CO2_kgm2': result[1].CO2_kgm2}).to_csv(os.path.join(path_results, 'Total_LCA_embodied.csv'),
-                   index=False, float_format='%.2f')
+    pd.DataFrame({'Name': result[0].Name, 'GEN_GJ': result[0].GEN_GJ, 'GEN_MJm2': result[0].GEN_MJm2,
+                  'CO2_ton': result[1].CO2_ton, 'CO2_kgm2': result[1].CO2_kgm2}).to_csv(
+        locator.get_lca_embodied(), index=False, float_format='%.2f')
     print 'done!'
 
 def calc_if_existing(x, y):
@@ -210,6 +225,7 @@ def calc_category_retrofit(a, y):
     category = a+result
     return category
 
+
 def calc_mainuse(uses_df, uses):
 
     databaseclean = uses_df[uses].transpose()
@@ -219,26 +235,19 @@ def calc_mainuse(uses_df, uses):
 
     return mainuse
 
+
 def calc_comparison(array_min, array_max):
     if array_max == 'DEPO':
         if array_min != 'DEPO':
             array_max = array_min
     return array_max
 
-def test_lca_embodied():
 
-    path_test = 'C:\\' # new path to C:\\ for testing purposes
-    path_age_shp = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs','1-buildings', 'building_age.shp')
-    path_occupancy_shp = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs','1-buildings', 'building_occupancy.shp')
-    path_geometry_shp = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs','1-buildings', 'building_geometry.shp')
-    path_architecture_shp = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs','1-buildings', 'building_architecture.shp')
-    path_LCA_embodied_energy = os.path.join(os.path.dirname(__file__), 'db', 'Archetypes', 'Archetypes_embodied_energy.csv')  # noqa
-    path_LCA_embodied_emissions = os.path.join(os.path.dirname(__file__), 'db', 'Archetypes', 'Archetypes_embodied_emissions.csv')  # noqa
-    path_results = os.path.join(path_test, 'reference-case', 'baseline', '2-results','3-emissions','1-timeseries')
+def test_lca_embodied():
+    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
     yearcalc = 2050
 
-    lca_embodied(path_LCA_embodied_energy, path_LCA_embodied_emissions, path_age_shp, path_occupancy_shp,
-                 path_geometry_shp, path_architecture_shp, path_results, yearcalc, gv)
+    lca_embodied(locator=locator, yearcalc=yearcalc, gv=gv)
 
 if __name__ == '__main__':
     test_lca_embodied()
