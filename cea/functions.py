@@ -73,8 +73,7 @@ def get_prop_RC_model(uses, architecture, thermal, geometry, HVAC, radiation_fil
 
     # Areas above ground #get the area of each wall in the buildings
     rf['Awall_all'] = rf['Shape_Leng']*rf['Freeheight']*rf['FactorShade']
-    Awalls0 = pd.pivot_table(rf, rows='Name', values='Awall_all', aggfunc=np.sum)
-    Awalls = pd.DataFrame(Awalls0) #get the area of walls in the whole buildings
+    Awalls = rf[['Name', 'Awall_all']].groupby(by='Name').sum()
     Areas = pd.merge(Awalls, architecture, left_index=True, right_index=True).merge(uses,left_index=True, right_index=True)
     Areas['Aw'] = Areas['Awall_all']*Areas['win_wall']*Areas['PFloor'] # Finally get the Area of windows
     Areas['Aop_sup'] = Areas['Awall_all']*Areas['PFloor']-Areas['Aw'] # Opaque areas PFloor represents a factor according to the amount of floors heated
