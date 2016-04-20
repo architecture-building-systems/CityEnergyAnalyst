@@ -65,6 +65,10 @@ class InputLocator(object):
         """scenario/1-inputs/3-weather/weather_hourly.csv"""
         return os.path.join(self.scenario_path, '1-inputs', '3-weather', 'weather_hourly.csv')
 
+    def get_life_cycle_inventory_supply_systems(self):
+        """scenario/1-inputs/4-LCI/supply_systems.csv"""
+        return os.path.join(self.scenario_path, '1-inputs', '4-LCI', 'supply_systems.xls')
+
     def get_demand_results_folder(self):
         """scenario/2-results/2-demand/1-timeseries"""
         return os.path.join(self.scenario_path, '2-results', '2-demand', '1-timeseries')
@@ -73,13 +77,17 @@ class InputLocator(object):
         """scenario/2-results/2-demand/1-timeseries/Total_demand.csv"""
         return os.path.join(self.scenario_path, '2-results', '2-demand', '1-timeseries', 'Total_demand.csv')
 
-    def get_lca_embodied_results_folder(self):
+    def get_lca_emissions_results_folder(self):
         """scenario/2-results/3-emissions/1-timeseries"""
         return os.path.join(self.scenario_path, '2-results', '3-emissions', '1-timeseries')
 
     def get_lca_embodied(self):
         """scenario/2-results/3-emissions/1-timeseries/Total_LCA_embodied.csv"""
-        return os.path.join(self.get_lca_embodied_results_folder(), 'Total_LCA_embodied.csv')
+        return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_embodied.csv')
+
+    def get_lca_operation(self):
+        """scenario/2-results/3-emissions/1-timeseries/Total_LCA_operation.csv"""
+        return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_operation.csv')
 
     def get_schedule(self, schedule):
         """cea/db/Schedules/Occupancy_%SCHEDULE%.csv"""

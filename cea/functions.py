@@ -73,8 +73,7 @@ def get_prop_RC_model(uses, architecture, thermal, geometry, HVAC, radiation_fil
 
     # Areas above ground #get the area of each wall in the buildings
     rf['Awall_all'] = rf['Shape_Leng']*rf['Freeheight']*rf['FactorShade']
-    Awalls0 = pd.pivot_table(rf, rows='Name', values='Awall_all', aggfunc=np.sum)
-    Awalls = pd.DataFrame(Awalls0) #get the area of walls in the whole buildings
+    Awalls = rf[['Name', 'Awall_all']].groupby(by='Name').sum()
     Areas = pd.merge(Awalls, architecture, left_index=True, right_index=True).merge(uses,left_index=True, right_index=True)
     Areas['Aw'] = Areas['Awall_all']*Areas['win_wall']*Areas['PFloor'] # Finally get the Area of windows
     Areas['Aop_sup'] = Areas['Awall_all']*Areas['PFloor']-Areas['Aw'] # Opaque areas PFloor represents a factor according to the amount of floors heated
@@ -763,20 +762,29 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         Qcrefri_tot = Qcrefri.sum()/1000000
         Qcdata_tot = Qcdata.sum()/1000000
     else:
-        Qcs_tot = Qcsf_tot = Qcdata_tot = Qcrefri_tot = 'T0'
+        Qcs_tot = Qcsf_tot = Qcdata_tot = Qcrefri_tot = 0
         
     #print series all in kW, mcp in kW/h, cooling loads shown as positive, water consumption m3/h, temperature in Degrees celcious
     DATE = pd.date_range('1/1/2010', periods=8760, freq='H') 
-    pd.DataFrame({'DATE':DATE, 'Name':Name,'Ealf':Ealf/1000,'Eauxf':Eauxf/1000,'Qwwf':Qwwf/1000,'Qww':Qww/1000,'Qhs':Qhs_sen/1000,
-                  'Qhsf':Qhsf/1000,'Qcs':-1*Qcs/1000,'Qcsf':-1*Qcsf/1000,'Occupancy':Occupancy,'mw':Waterconsumption,
-                  'tsh':Ths_sup, 'trh':Ths_re, 'mcphs':mcphs,'mcpww':mcpww,'tsc':Tcs_sup, 'trc':Tcs_re, 'mcpcs':mcpcs,'Qcdata':Qcdata/1000,
-                  'tsww':Tww_sup_0,'trww':Tww_re,'Ef':(Ealf+Eauxf+Epro)/1000,'Epro':Epro/1000,'Qcrefri':Qcrefri/1000,'Edata':Edata/1000, 'QHf':(Qwwf+Qhsf)/1000,'QCf':(-1*Qcsf+Qcdata+Qcrefri)/1000,'uncomfortable':uncomfort}).to_csv(locationFinal+'\\'+Name+'.csv',index=False, float_format='%.2f')
+    pd.DataFrame({'DATE':DATE, 'Name':Name,'Ealf_kW':Ealf/1000,'Eauxf_kW':Eauxf/1000,'Qwwf_kW':Qwwf/1000,
+                  'Qww_kW':Qww/1000,'Qhs_kW':Qhs_sen/1000,'Qhsf_kW':Qhsf/1000,'Qcs_kW':-1*Qcs/1000,
+                  'Qcsf_kW':-1*Qcsf/1000,'occ_pax':Occupancy,'Vw_m3':Waterconsumption,
+                  'Tshs_C':Ths_sup, 'Trhs_C':Ths_re, 'mcphs_kWC':mcphs,'mcpww_kWC':mcpww,'Tscs_C':Tcs_sup, 'Trcs_C':Tcs_re,
+                  'mcpcs_kWC':mcpcs,'Qcdataf_kW':Qcdata/1000, 'Tsww_C':Tww_sup_0,'Trww_C':Tww_re,'Ef_kW':(Ealf+Eauxf+Epro)/1000,
+                  'Epro_kW':Epro/1000,'Qcref_kW':Qcrefri/1000,'Edataf_kW':Edata/1000, 'QHf_kW':(Qwwf+Qhsf)/1000,
+                  'QCf':(-1*Qcsf+Qcdata+Qcrefri)/1000}).to_csv(locationFinal+'\\'+Name+'.csv', index=False, float_format='%.2f')
 
     # print peaks in kW and totals in MWh, temperature peaks in C
-    totals = pd.DataFrame({'Name':Name,'Af':Af,'occupants':Occupants,'uncomfort': uncomfort.sum()/8760, 'Qwwf0': Qwwf_0/1000, 'Ealf0': Ealf_0/1000,'Qhsf0':Qhsf_0/1000,
-                  'Qcsf0':-Qcsf_0/1000,'Water0':waterpeak,'tsh0':Ths_sup_0, 'trh0':Ths_re_0, 'mcphs0':mcphs.max(),'tsc0':Tcs_sup_0,'Qcdata':Qcdata_tot,'Qcrefri':Qcrefri_tot,
-                  'trc0':Tcs_re_0, 'mcpcs0':mcpcs.max(),'Qwwf':Qwwf_tot,'Qww':Qww_tot,'Qhsf':Qhsf_tot,'Qhs':Qhs_tot,'Qcsf':Qcsf_tot,'Qcs':Qcs_tot,
-                  'Ealf':Ealf_tot,'Eauxf':Eauxf_tot, 'tsww0':Tww_sup_0,'Ef':(Ealf_tot+Eauxf_tot+Epro_tot+Edata_tot),'QHf':(Qwwf_tot+Qhsf_tot),'QCf':(Qcsf_tot+Qcdata_tot+Qcrefri_tot)}, index= [0])
+    totals = pd.DataFrame({'Name':Name,'Af_m2':Af,'occ_pax':Occupants, 'Qwwf0_kW': Qwwf_0/1000, 'Ealf0_kW': Ealf_0/1000,
+                           'Qhsf0_kW':Qhsf_0/1000, 'Qcsf0_kW':-Qcsf_0/1000,'Vw0_m3':waterpeak,'Tshs0_C':Ths_sup_0,
+                           'Trhs0_C':Ths_re_0, 'mcphs0_kWC':mcphs.max(),'Tscs0_C':Tcs_sup_0,'Qcdataf_MWyr':Qcdata_tot,
+                           'Qcref_MWyr':Qcrefri_tot, 'Trcs0_C':Tcs_re_0, 'mcpcs0_kWC':mcpcs.max(),'Qwwf_MWyr':Qwwf_tot,
+                           'Qww_MWyr':Qww_tot,'Qhsf_MWyr':Qhsf_tot,'Qhs_MWyr':Qhs_tot,'Qcsf_MWyr':Qcsf_tot,'Qcs_MWyr':Qcs_tot,
+                           'Ealf_MWyr':Ealf_tot,'Eauxf_MWyr':Eauxf_tot, 'Eprof_MWyr':Epro_tot,'Edataf_MWyr':Edata_tot,
+                           'Tsww0_C':Tww_sup_0, 'Vw_m3yr':Waterconsumption.sum(),
+                           'Ef_MWyr':(Ealf_tot+Eauxf_tot+Epro_tot+Edata_tot),'QHf_MWyr':(Qwwf_tot+Qhsf_tot),
+                           'QCf_MWyr':(Qcsf_tot+Qcdata_tot+Qcrefri_tot)}, index= [0])
+
     totals.to_csv(path_temporary_folder+'\\'+Name+'T.csv',index=False, float_format='%.2f')
 
     return

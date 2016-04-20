@@ -5,14 +5,19 @@ Primary energy and CO2 emissions model algorithm for building operation
 J. Fonseca  script development          26.08.15
 D. Thomas   formatting and cleaning     27.08.15
 D. Thomas   integration in toolbox      27.08.15
+J. Fonseca  script redevelopment        19.04.16
 
 """
 from __future__ import division
 import pandas as pd
-import arcpy
+from geopandas import GeoDataFrame as gpdf
+import inputlocator
+
+reload(inputlocator)
 
 
-def lca_operation(path_total_demand, path_properties, path_LCA_operation, path_results):
+def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_flag, Eal_flag, Eaux_flag, Epro_flag,
+                  Edata_flag):
     """
     algorithm to calculate the primary energy and CO2 emissions of buildings
     according to the method used in the integrated model of
@@ -21,138 +26,121 @@ def lca_operation(path_total_demand, path_properties, path_LCA_operation, path_r
 
     Parameters
     ----------
-    path_total_demand: string
-        path to database of total energy consumption Total.csv
-    path_LCA_operation: string
-        path to database of emisisions and primary energy factors
-        LCA_operation.xls
-    path_properties: string
-        path to properties file properties.xls
-    path_results : string
-        path to demand results folder emissions
+    :param InputLocator locator: an InputLocator instance set to the scenario to work on
+    :param boolean Qww_flag: create a separate file with emissions due to hot water consumption?
+    :param boolean Qhs_flag: create a separate file with emissions due to space heating?
+    :param boolean Qcs_flag: create a get separate file with emissions due to space cooling?
+    :param boolean Qcdata_flag: create a separate file with emissions due to servers cooling?
+    :param boolean Qcrefri_flag: create a separate file with emissions due to refrigeration?
+    :param boolean Eal_flag: create a separate file with emissions due to appliances and lighting?
+    :param boolean Eaux_flag: create a separate file with emissions due to auxiliary electricity?
+    :param boolean Epro_flag: create a separate file with emissions due to electricity in industrial processes?
+    :param boolean Edata_flag: create a separate file with emissions due to electricity consumption in data centers?
 
     Returns
     -------
-    LCA_operation:.csv
+    total_LCA_operation:.csv
         csv file of yearly primary energy per building and energy service
         (i.e. heating, hot water, cooling, electricity)
+
+    The following files are created by this script, depending on which flags were set:
+
+    - Qhs_LCA_operation:.csv
+        describes the emissions and primary energy due to space heating
+    - Qww_LCA_operation:.csv
+        describes the emissions and primary energy due to domestic hot water consumption
+    - Qcs_LCA_operation:.csv
+        describes the emissions and primary energy due to space cooling
+    - Qcdata_LCA_operation:.csv
+        describes the emissions and primary energy due to servers cooling
+    - Qcrefri_LCA_operation:.csv
+        describes the emissions and primary energy due to refrigeration
+    - Eal_LCA_operation:.csv
+        describes the emissions and primary energy due to appliances and lighting
+    - Eaux_LCA_operation:.csv
+        describes the emissions and primary energy due to auxiliary electricity
+    - Epro_LCA_operation:.csv
+        describes the emissions and primary energy due to electricity in industrial processes
+    - Edata_LCA_operation:.csv
+        describes the emissions and primary energy due to electricity consumption in data centers
+
+
     """
 
     # local files
-    demand = pd.read_csv(path_total_demand, usecols=['Name', 'Qhsf', 'Af', 'Qcsf', 'Qwwf', 'Ef'])
-    systems = pd.read_excel(path_properties, sheetname='systems')
-    systems_hs = systems[['Name', 'Generation_heating']].copy()
-    systems_cs = systems[['Name', 'Generation_cooling']].copy()
-    systems_e = systems[['Name', 'Generation_electricity']].copy()
-    factors_heating = pd.read_excel(path_LCA_operation, sheetname='heating')
-    factors_cooling = pd.read_excel(path_LCA_operation, sheetname='cooling')
-    factors_electricity = pd.read_excel(path_LCA_operation, sheetname='electricity')
+    demand = pd.read_csv(locator.get_total_demand())
+    supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
+    data_LCI = locator.get_life_cycle_inventory_supply_systems()
+    factors_heating = pd.read_excel(data_LCI, sheetname='heating')
+    factors_cooling = pd.read_excel(data_LCI, sheetname='cooling')
+    factors_electricity = pd.read_excel(data_LCI, sheetname='electricity')
 
-    # calculate values Qhs_PEN_MJm2, Qww_PEN_MJm2, Qh_PEN_MJm2
-    # Qhs_CO2_kgm2, Qww_CO2_kgm2, Qh_CO2_kgm2
-    # Qhs_PEN_GJ, Qww_PEN_GJ, Qh_PEN_GJ
-    # Qhs_CO2_ton, Qww_CO2_ton, Qh_CO2_ton
-    heating = systems_hs.merge(
-        demand,
-        on='Name').merge(
-        factors_heating,
-        left_on='Generation_heating',
-        right_on='code')
-    heating['Qhs_PEN_GJ'] = (heating['Qhsf']*heating['PEN']*3.6)
-    heating['Qhs_CO2_ton'] = (heating['Qhsf']*heating['CO2']*3.6)
-    heating['Qhs_PEN_MJm2'] = (heating['Qhs_PEN_GJ']*1000)/heating['Af']
-    heating['Qhs_CO2_kgm2'] = (heating['Qhs_CO2_ton']*1000)/heating['Af']
-    heating['Qww_PEN_GJ'] = (heating['Qwwf']*heating['PEN']*3.6)
-    heating['Qww_CO2_ton'] = (heating['Qwwf']*heating['CO2']*3.6)
-    heating['Qww_PEN_MJm2'] = (heating['Qww_PEN_GJ']*1000)/heating['Af']
-    heating['Qww_CO2_kgm2'] = (heating['Qww_CO2_ton']*1000)/heating['Af']
+    # local variables
+    QH_flag = QC_flag = E_flag = True # minmum output values
+    result_folder = locator.get_lca_emissions_results_folder()
 
-    cooling = systems_cs.merge(
-        demand,
-        on='Name').merge(
-        factors_cooling,
-        left_on='Generation_cooling',
-        right_on='code')
-    cooling['Qcs_PEN_GJ'] = (cooling['Qcsf']*cooling['PEN']*3.6)
-    cooling['Qcs_CO2_ton'] = (cooling['Qcsf']*cooling['CO2']*3.6)
-    cooling['Qcs_PEN_MJm2'] = (cooling['Qcs_PEN_GJ']*1000)/cooling['Af']
-    cooling['Qcs_CO2_kgm2'] = (cooling['Qcs_CO2_ton']*1000)/cooling['Af']
+    # calculate total_LCA_operation:.csv
+    heating = supply_systems.merge(demand,on='Name').merge(factors_heating, left_on='type_hs', right_on='code')
+    cooling = supply_systems.merge(demand,on='Name').merge(factors_cooling, left_on='type_cs', right_on='code')
+    electricity = supply_systems.merge(demand,on='Name').merge(factors_electricity, left_on='type_el', right_on='code')
 
-    electricity = systems_e.merge(
-        demand,
-        on='Name').merge(
-        factors_electricity,
-        left_on='Generation_electricity',
-        right_on='code')
-    electricity['Qe_PEN_GJ'] = (electricity['Ealf']*electricity['PEN']*3.6)
-    electricity['Qe_CO2_ton'] = (electricity['Ealf']*electricity['CO2']*3.6)
-    electricity['Qe_PEN_MJm2'] = (
-        electricity['Qe_PEN_GJ']*1000)/electricity['Af']
-    electricity['Qe_CO2_kgm2'] = (
-        electricity['Qe_CO2_ton']*1000)/electricity['Af']
+    # for heating services
+    heating_services = [[QH_flag, 'QHf_MWyr', 'QHf'], [Qhs_flag, 'Qhsf_MWyr', 'Qhsf'], [Qww_flag, 'Qwwf_MWyr', 'Qwwf']]
+    for x in heating_services:
+        if x[0]:
+            fields_to_plot = ['Name', x[2] + '_pen_GJ', x[2] + '_ghg_ton', x[2] + '_pen_MJm2', x[2] + '_ghg_kgm2']
+            heating[fields_to_plot[1]] = heating[x[1]] * heating['PEN'] * 3.6
+            heating[fields_to_plot[2]] = heating[x[1]] * heating['CO2'] * 3.6
+            heating[fields_to_plot[3]] = heating[x[1]] * heating['PEN'] * 3600/heating['Af_m2']
+            heating[fields_to_plot[4]] =  heating[x[1]] * heating['CO2'] * 3600/heating['Af_m2']
+            heating[fields_to_plot].to_csv(result_folder+'\\' +x[2]+'_LCA_operation.csv',index=False,
+                                           float_format='%.2f')
+    # for cooling services
+    cooling_services = [(QC_flag, 'QCf_MWyr', 'QCf'), (Qcs_flag, 'Qcsf_MWyr', 'Qcsf'),
+                        (Qcdata_flag, 'Qcdataf_MWyr', 'Qcdataf'), (Qcrefri_flag, 'Qcref_MWyr', 'Qcref')]
+    for x in cooling_services:
+        if x[0]:
+            fields_to_plot = ['Name', x[2] + '_pen_GJ', x[2] + '_ghg_ton', x[2] + '_pen_MJm2', x[2] + '_ghg_kgm2']
+            cooling[fields_to_plot[1]] = cooling[x[1]] * cooling['PEN'] * 3.6
+            cooling[fields_to_plot[2]] = cooling[x[1]] * cooling['CO2'] * 3.6
+            cooling[fields_to_plot[3]] = cooling[x[1]] * cooling['PEN'] * 3600/cooling['Af_m2']
+            cooling[fields_to_plot[4]] =  cooling[x[1]] * cooling['CO2'] * 3600/cooling['Af_m2']
+            cooling[fields_to_plot].to_csv(result_folder+ '\\' + x[2] + '_LCA_operation.csv', index=False,
+                           float_format='%.2f')
 
+    # for electrical services
+    electrical_services = [(E_flag, 'Ef_MWyr', 'Ef'), (Eal_flag, 'Ealf_MWyr', 'Ealf'),
+                           (Eaux_flag, 'Eauxf_MWyr', 'Eauxf'), (Epro_flag, 'Eprof_MWyr', 'Eprof'),
+                           (Edata_flag, 'Edataf_MWyr', 'Edataf')]
+    for x in electrical_services:
+        if x[0]:
+            fields_to_plot = ['Name', x[2] + '_pen_GJ', x[2] + '_ghg_ton', x[2] + '_pen_MJm2', x[2] + '_ghg_kgm2']
+            electricity[fields_to_plot[1]] = electricity[x[1]] * electricity['PEN'] * 3.6
+            electricity[fields_to_plot[2]] = electricity[x[1]] * electricity['CO2'] * 3.6
+            electricity[fields_to_plot[3]] = electricity[x[1]] * electricity['PEN'] * 3600/electricity['Af_m2']
+            electricity[fields_to_plot[4]] =  electricity[x[1]] * electricity['CO2'] * 3600/electricity['Af_m2']
+            electricity[fields_to_plot].to_csv(result_folder + '\\' + x[2] + '_LCA_operation.csv', index=False,
+                           float_format='%.2f')
 
-    # drop columns and join all results
-    columns_to_drop = ['Ealf', 'Qcsf', 'Qhsf', 'Qwwf', 'officialcode', 'code',
-                       'COP_low_temp','COP_high_temp','Description','Af','PEN','CO2']
-    columns_to_drop2 = ['Ealf', 'Qcsf', 'Qhsf', 'Qwwf', 'officialcode', 'code','Af',
-                        'Description','PEN','CO2']
-    heating.drop(columns_to_drop, inplace=True, axis=1)
-    cooling.drop(columns_to_drop, inplace=True, axis=1)
-    electricity.drop(columns_to_drop2, inplace=True, axis=1)
-    
-    total = heating.merge(cooling,on='Name').merge(electricity,on='Name')
-    
-    total['PEN_GJ'] = total['Qhs_PEN_GJ'] + total['Qww_PEN_GJ'] + \
-        total['Qcs_PEN_GJ'] + total['Qe_PEN_GJ']
-        
-    total['PCO2_ton'] = total['Qhs_CO2_ton'] + total['Qww_CO2_ton'] + \
-        total['Qcs_CO2_ton'] + total['Qe_CO2_ton']
-        
-    total['PEN_MJm2'] = total['Qhs_PEN_MJm2'] + total['Qww_PEN_MJm2'] + \
-        total['Qcs_PEN_MJm2'] + total['Qe_PEN_MJm2']
-        
-    total['PCO2_kgm2'] = total['Qhs_CO2_kgm2'] + total['Qww_CO2_kgm2'] + \
-        total['Qcs_CO2_kgm2'] + total['Qe_CO2_kgm2']
-
-    # save results to disc
-    heating.to_csv(
-        path_results +
-        '\\' +
-        'heating_LCA.csv',
-        index=False,
-        float_format='%.2f')
-    cooling.to_csv(
-        path_results +
-        '\\' +
-        'cooling_LCA.csv',
-        index=False,
-        float_format='%.2f')
-    electricity.to_csv(
-        path_results +
-        '\\' +
-        'electricity_LCA.csv',
-        index=False,
-        float_format='%.2f')
-    total[['Name','PEN_GJ','PCO2_ton','PEN_MJm2','PCO2_kgm2']].to_csv(
-        path_results +
-        '\\' +
-        'Total_LCA_operation.csv',
-        index=False,
-        float_format='%.2f')
+    result = heating.merge(cooling, on='Name').merge(electricity, on='Name')
+    result['pen_GJ'] = result['QHf_pen_GJ'] + result['QCf_pen_GJ'] + result['Ef_pen_GJ']
+    result['ghg_ton'] = result['QHf_ghg_ton'] + result['QCf_ghg_ton'] + result['Ef_ghg_ton']
+    result['pen_MJm2'] = result['QHf_pen_MJm2'] + result['QCf_pen_MJm2'] + result['Ef_pen_MJm2']
+    result['ghg_kgm2'] = result['QHf_ghg_kgm2'] + result['QCf_ghg_kgm2'] + result['Ef_ghg_kgm2']
+    fields_to_plot = ['Name', 'pen_GJ', 'ghg_ton', 'pen_MJm2', 'ghg_kgm2']
+    result[fields_to_plot].to_csv(locator.get_lca_operation(), index=False, float_format='%.2f')
 
 
 def test_lca_operation():
-    path_results = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\103_final output\emissions'  # noqa
-    path_LCA_operation = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\101_input files\LCA data\LCA_operation.xls'  # noqa
-    path_properties = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\102_intermediate output\building properties\properties - Copy.xls'  # noqa
-    path_total_demand = r'C:\CEA_FS2015_EXERCISE02\01_Scenario one\103_final output\demand\Total_demand.csv'  # noqa
-    lca_operation(
-        path_total_demand=path_total_demand,
-        path_properties=path_properties,
-        path_LCA_operation=path_LCA_operation,
-        path_results=path_results)
-    print 'done!'
+    Qww_flag = Qhs_flag = True
+    Qcs_flag = Qcdata_flag = Qcrefri_flag = True
+    Eal_flag = Eaux_flag = Epro_flag = Edata_flag = True
+    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    lca_operation(locator=locator, Qww_flag=Qww_flag, Qhs_flag=Qhs_flag, Qcs_flag=Qcs_flag, Qcdata_flag=Qcdata_flag,
+                  Qcrefri_flag=Qcrefri_flag, Eal_flag=Eal_flag, Eaux_flag=Eaux_flag, Epro_flag=Epro_flag,
+                  Edata_flag=Edata_flag)
+
+    print 'test_properties() succeeded'
 
 if __name__ == '__main__':
     test_lca_operation()

@@ -1,47 +1,19 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar 31 15:58:08 2016
-
-@author: Shanshan Hsieh
-This algorithm describes the energy conversion process of a fully mixed sensible heat storage tank (water based).
-Calculation refers to E+ documentation.
-
-Input variables: Tank Size, Tank Insulation Property
-Output variables: Qww_ls_st(sensible heat loss from storage tank), Tww_st(storage tank temperature)
-"""
 
 import numpy as np
 from scipy.integrate import odeint
 import math
-import globalvar
-
-gv = globalvar.GlobalVariables()
-
-#tair= 20
-#Bf=1         #global variable
-#te=10        #property
-#twws=60      #property
-#Mww=2        #property
-#vsource=3    #property
-#Tww_st_0 = 80
-
-#vww = np.random.rand(8760)
-#vww_0= vww.max()
 
 
-def calc_Qww_ls_st(Tww_st_0, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_nr ):
+def calc_Qww_ls_st(Tww_st_0, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_nr, Utank, AR ):
 
     # Calculate tamb in basement according to EN
     tamb = tair - Bf*(tair-te)
 
-    U= 0.225    # tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
-    AR= 3.3     # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), value taken from commercial tank geometry (jenni.ch)
-
-    h= (4*V*AR**2/math.pi)^(1/3)  # tank height in m, derived from tank AR
+    h= (4*V*AR**2/math.pi)**(1/3)  # tank height in m, derived from tank AR
     r= (V/(math.pi*h))*(1/2) # tank radius in m, assuming tank shape is cylinder
 
     Atank= 2*math.pi*r**2+2*math.pi*r*h      #tank surface area in m2.
-    ql= U*Atank*(tamb-Tww_st_0)              #storage sensible heat loss in W.
+    ql= Utank*Atank*(tamb-Tww_st_0)              #storage sensible heat loss in W.
     qd= Qww + Qww_ls_r + Qww_ls_nr           #discharing of storage in W, including DHW usage and distribution losses.
     qc= qd + ql                              #charging of storage in W.
     return ql, qd, qc
