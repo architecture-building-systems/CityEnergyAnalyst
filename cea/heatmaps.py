@@ -8,12 +8,10 @@ D. Thomas   integration in toolbox
 
 """
 from __future__ import division
-import pandas as pd
+
 import os
-import arcpy
 import tempfile
-
-
+import arcpy
 
 
 def heatmaps(analysis_field_variables, path_variables, path_buildings, path_results, path_temporary_folder,
@@ -56,7 +54,7 @@ def heatmaps(analysis_field_variables, path_variables, path_buildings, path_resu
     arcpy.CheckOutExtension("Spatial")
     
     # local variables
-    #create dbf file
+    # create dbf file
     tempfile_name = "tempfile"
     tempfile = os.path.join(path_temporary_folder, 'tempfile.shp')
     tempfile_db_name = "data"
