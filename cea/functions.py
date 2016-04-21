@@ -73,7 +73,7 @@ def get_prop_RC_model(uses, architecture, thermal, geometry, HVAC, radiation_fil
 
     # Areas above ground #get the area of each wall in the buildings
     rf['Awall_all'] = rf['Shape_Leng']*rf['Freeheight']*rf['FactorShade']
-    Awalls = rf[['Name', 'Awall_all']].groupby(by='Name').sum()
+    Awalls = pd.DataFrame({'Name': rf['Name'], 'Awall_all': rf['Awall_all']}).groupby(by='Name').sum()
     Areas = pd.merge(Awalls, architecture, left_index=True, right_index=True).merge(uses,left_index=True, right_index=True)
     Areas['Aw'] = Areas['Awall_all']*Areas['win_wall']*Areas['PFloor'] # Finally get the Area of windows
     Areas['Aop_sup'] = Areas['Awall_all']*Areas['PFloor']-Areas['Aw'] # Opaque areas PFloor represents a factor according to the amount of floors heated
@@ -128,16 +128,27 @@ def CmFunction (x):
 def CalcIncidentRadiation(radiation):
 
     # Import Radiation table and compute the Irradiation in W in every building's surface
-    hours_in_year = 8760
     radiation['AreaExposed'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
 
-    for hour in range(hours_in_year):
+    hours_in_year = 8760
+    column_names = ['T%i' % (i + 1) for i in range(hours_in_year)]
+    for column in column_names:
          # transform all the points of solar radiation into Wh
-        radiation['T%i' % (hour+1)] = radiation['T%i' % (hour+1)] * radiation['AreaExposed']
+        radiation[column] = radiation[column] * radiation['AreaExposed']
 
     # sum up radiation load per building
-    radiation_load = radiation.groupby('Name').sum()
-    incident_radiation = radiation_load[['T%i' % (i+1) for i in range(hours_in_year)]]
+    # NOTE: this looks like an ugly hack because it is: in order to work around a pandas MemoryError, we group/sum the
+    # columns individually...
+    grouped_data_frames = {}
+    for column in column_names:
+        df = pd.DataFrame(data={'Name': radiation['Name'],
+                                column: radiation[column]})
+        grouped_data_frames[column] = df.groupby(by='Name').sum()
+    radiation_load = pd.DataFrame(index=grouped_data_frames.values()[0].index)
+    for column in column_names:
+        radiation_load[column] = grouped_data_frames[column][column]
+
+    incident_radiation = radiation_load[column_names]
     return incident_radiation  # total solar radiation in areas exposed to radiation in Watts
 
 def calc_Y(year, Retrofit):
