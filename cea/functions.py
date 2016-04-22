@@ -5,6 +5,7 @@ import numpy as np
 import scipy.optimize as sopt
 import scipy
 import math
+from contributions.Thermal_Storage import storagetank_mixed as sto_m
 
 def calc_mainuse(uses_df, uses):
     databaseclean = uses_df[uses].transpose()
@@ -692,12 +693,28 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         Vol_ls = Lsww_dis*(gv.D/1000)**(2/4)*math.pi
         Qww_ls_r  = np.vectorize(calc_Qww_ls_r)(Ta, Qww, Lsww_dis, Lcww_dis, Y[1], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0, gv.Cpw , gv.Pwater)
         Qww_ls_nr  = np.vectorize(calc_Qww_ls_nr)(Ta, Qww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0, gv.Cpw , gv.Pwater, gv.Bf, T_ext)
-    
-        
+
+        # fully mixed storage tank sensible heat loss calculation
+        Qww_ls_st = np.zeros(8760)
+        Tww_st = np.zeros(8760)
+        Qd = np.zeros(8760)
+        Qc = np.zeros(8760)
+        Tww_st_0 = 60  # dhw tank initial temperature in C, move to global variable.
+        vww_0 = vww.max()  # peak dhw demand in m3/hour, also used for dhw tank sizing.
+
+        # calculate heat loss and temperature in dhw tank
+        for k in range(8760):
+            Qww_ls_st[k], Qd[k], Qc[k] = sto_m.calc_Qww_ls_st(Tww_st_0, Ta[k], gv.Bf, T_ext[k], vww_0, Qww[k],
+                                                              Qww_ls_r[k], Qww_ls_nr[k], gv.U_dhwtank, gv.AR)
+            Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_ls_st[k], Qd[k], Qc[k], gv.Pwater, gv.Cpw, vww_0)
+            Tww_st_0 = Tww_st[k]
+
+        # def calc_Qww_ls_r(Tair, Qww, lsww_dis, lcww_dis, Y, Qww_0, V, Flowtap, twws, Cpw, Pwater):
+
         # Calc requirements of generation systems for hot water - assume losses of 10% due to local storage
-        Qwwf = (Qww+Qww_ls_r+Qww_ls_nr)/0.9
-        Qwwf_0 = Qwwf.max()    
-        
+        Qwwf = Qww + Qww_ls_r + Qww_ls_nr + Qww_ls_st
+        Qwwf_0 = Qwwf.max()
+
         # clac auxiliary loads of pumping systems
         Eaux_cs = np.zeros(8760)
         Eaux_ve = np.zeros(8760)

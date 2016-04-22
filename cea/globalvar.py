@@ -39,6 +39,8 @@ class GlobalVariables(object):
         self.Pair = 1.2  # air density in kg/m3
         self.Cpv = 1.859  # specific heat capacity of water vapor in KJ/kgK
         self.Cpa = 1.008  # specific heat capacity of air in KJ/kgK
+        self.U_dhwtank = 0.225  # tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
+        self.AR = 3.3  # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), taken from commercial tank geometry (jenni.ch)
         self.lvapor = 2257  # latent heat of air kJ/kg
         # constant variables for pumping operation
         self.hoursop = 5  # assuming around 2000 hours of operation per year. It is charged to the electrical system from 11 am to 4 pm

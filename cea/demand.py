@@ -114,7 +114,7 @@ def demand_calculation(locator, gv):
 
 
 def test_demand():
-    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator = inputlocator.InputLocator(scenario_path=r'C:\cea-reference-case\reference-case\baseline')
     demand_calculation(locator=locator, gv=gv)
 
 
