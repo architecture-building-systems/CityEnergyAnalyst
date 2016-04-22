@@ -42,6 +42,8 @@ class GlobalVariables(object):
         self.U_dhwtank = 0.225  # tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
         self.AR = 3.3  # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), taken from commercial tank geometry (jenni.ch)
         self.lvapor = 2257  # latent heat of air kJ/kg
+        self.Tww_st_0 = 60  # dhw tank initial temperature in C
+        self.Tww_setpoint = 60  # dhw/dhw tank set point temperature in C
         # constant variables for pumping operation
         self.hoursop = 5  # assuming around 2000 hours of operation per year. It is charged to the electrical system from 11 am to 4 pm
         self.gr = 9.81  # m/s2 gravity
