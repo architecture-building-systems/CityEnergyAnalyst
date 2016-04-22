@@ -50,7 +50,7 @@ def calc_Qww_ls_st(Tww_st_0, Tww_setpoint, tair, Bf, te, V, Qww, Qww_ls_r, Qww_l
     if  Qww <= 0:
         qc = 0
     else:
-        qc = qd + ql + gv.Pwater*V*(Tww_setpoint-Tww_st_0)
+        qc = qd + ql + gv.Pwater*V*gv.Cpw*(Tww_setpoint-Tww_st_0)/3.6
     return ql, qd, qc
 
 
