@@ -72,7 +72,7 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
     supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
     data_LCI = locator.get_life_cycle_inventory_supply_systems()
     factors_heating = pd.read_excel(data_LCI, sheetname='heating')
-    factors_dhw = pd.read_excel(data_LCI, sheetname='heating')
+    factors_dhw = pd.read_excel(data_LCI, sheetname='dhw')
     factors_cooling = pd.read_excel(data_LCI, sheetname='cooling')
     factors_electricity = pd.read_excel(data_LCI, sheetname='electricity')
 
