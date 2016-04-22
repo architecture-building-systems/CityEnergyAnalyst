@@ -72,6 +72,7 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
     supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
     data_LCI = locator.get_life_cycle_inventory_supply_systems()
     factors_heating = pd.read_excel(data_LCI, sheetname='heating')
+    factors_dhw = pd.read_excel(data_LCI, sheetname='heating')
     factors_cooling = pd.read_excel(data_LCI, sheetname='cooling')
     factors_electricity = pd.read_excel(data_LCI, sheetname='electricity')
 
@@ -81,7 +82,7 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
 
     # calculate total_LCA_operation:.csv
     heating = supply_systems.merge(demand,on='Name').merge(factors_heating, left_on='type_hs', right_on='code')
-    dhw = supply_systems.merge(demand,on='Name').merge(factors_heating, left_on='type_dhw', right_on='code')
+    dhw = supply_systems.merge(demand,on='Name').merge(factors_dhw, left_on='type_dhw', right_on='code')
     cooling = supply_systems.merge(demand,on='Name').merge(factors_cooling, left_on='type_cs', right_on='code')
     electricity = supply_systems.merge(demand,on='Name').merge(factors_electricity, left_on='type_el', right_on='code')
 
@@ -133,7 +134,7 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
             electricity[fields_to_plot[3]] = electricity[x[1]] * electricity['PEN'] * 3600/electricity['Af_m2']
             electricity[fields_to_plot[4]] =  electricity[x[1]] * electricity['CO2'] * 3600/electricity['Af_m2']
             electricity[fields_to_plot].to_csv(result_folder + '\\' + x[2] + '_LCA_operation.csv', index=False,
-                           float_format='%.2f')
+                                               float_format='%.2f')
 
     result = heating.merge(dhw, on='Name').merge(cooling, on='Name').merge(electricity, on='Name')
     result['pen_GJ'] = result['Qhsf_pen_GJ'] + result['Qwwf_pen_GJ'] + result['QCf_pen_GJ'] + result['Ef_pen_GJ']
