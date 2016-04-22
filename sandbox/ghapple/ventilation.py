@@ -20,41 +20,64 @@ import numpy
 import pandas
 from scipy.optimize import minimize
 from cea import inputlocator
+import geopandas
 
 
 # ++++ GEOMETRY ++++
 
 # for now get geometric properties of exposed facades from the radiation file
-def create_windows(table_radiation, building_architecture):
+def create_windows(dataframe_radiation, geodataframe_building_architecture):
     # TODO: documentation
 
+    # sort dataframe for name of building for default orientation generation
+    # FIXME remove this in the future
+    dataframe_radiation.sort(['Name'])
+
     # default values
+    # FIXME use real window angle in the future
     angle_window_default = 90  # (deg), 90° = vertical, 0° = horizontal
 
-    freeheight = table_radiation['Freeheight']
-    height_ag = table_radiation['height_ag']
-    height = table_radiation['height']
-    length_shape = table_radiation['Shape_Leng']
-    name = table_radiation['Name']
+    # read relevant columns from dataframe
+    freeheight = dataframe_radiation['Freeheight']
+    height_ag = dataframe_radiation['height_ag']
+    length_shape = dataframe_radiation['Shape_Leng']
+    name = dataframe_radiation['Name']
 
+    # calculate number of exposed floors per facade
     num_floors_freeheight = (freeheight / 3).astype('int')  # floor heigth is 3 m
-    num_windows = num_floors_freeheight.sum()
-    print(num_windows)
+    num_windows = num_floors_freeheight.sum()  # total number of windows in model, not used
 
+    # initialize lists for results
     col_name_building = []
     col_area_window = []
     col_height_window_above_ground = []
     col_orientation_window = []
     col_angle_window = []
     col_height_window_in_zone = []
-    # pandas.DataFrame(columns=['name_building','area_window','height_window','orientation_window'])
 
-    # generate windows
-    w = 0
+    # for all vertical exposed facades
     for i in range(name.size):
 
+        # generate orientation
+        # TODO in the future get real orientation
+        # FIXME
+        if i % 4 == 0:
+            orientation_default = 0
+        elif i % 4 == 1:
+            orientation_default = 180
+        elif i % 4 == 2:
+            orientation_default = 90
+        elif i % 4 == 3:
+            orientation_default = 270
+        else:
+            orientation_default = 0
+
+        # get window-wall ratio of building from architecture geodataframe
+        win_wall_ratio = geodataframe_building_architecture.loc[geodataframe_building_architecture['Name'] == name[i]].iloc[0]['win_wall']
+
+        # for all levels in a facade
         for j in range(num_floors_freeheight[i]):
-            window_area = length_shape[i] * 3 * 0.4  # 3m = average floor height, 0.4 = window_wall fraction
+            window_area = length_shape[i] * 3 * win_wall_ratio  # 3m = average floor height, 0.4 = window_wall fraction
             window_height_above_ground = height_ag[i] - freeheight[
                 i] + j * 3 + 1.5  # 1.5m = window is placed in the middle of the floor height
             window_height_in_zone = window_height_above_ground  # for now the building is one ventilation zone
@@ -62,22 +85,17 @@ def create_windows(table_radiation, building_architecture):
             col_name_building.append(name[i])
             col_area_window.append(window_area)
             col_height_window_above_ground.append(window_height_above_ground)
-            col_orientation_window.append(0)
+            col_orientation_window.append(orientation_default)
             col_angle_window.append(angle_window_default)
             col_height_window_in_zone.append(window_height_in_zone)
-            w = w + 1
 
     # create pandas dataframe with table of all windows
-    table_windows = pandas.DataFrame({'name_building': col_name_building, 'area_window': col_area_window,
+    dataframe_windows = pandas.DataFrame({'name_building': col_name_building, 'area_window': col_area_window,
                                       'height_window_above_ground': col_height_window_above_ground,
                                       'orientation_window': col_orientation_window, 'angle_window': col_angle_window,
                                       'height_window_in_zone': col_height_window_in_zone})
 
-    print(w, 'windows generated')
-    # print(table_windows)
-
-
-    return table_windows
+    return dataframe_windows
 
 
 def get_windows_of_building(table_windows, name_building):
@@ -404,63 +422,132 @@ def calc_qm_vent(area_vent_zone, height_zone, class_shielding, factor_cros, p_zo
 
 # ++++ WINDOW VENTILATION ++++
 
-# calculation of total open window area
-def calc_area_window_tot(dataframe_windows_building):
-    # TODO: reference standard
+# calculate free window opening area according to 6.4.3.5.2 in [1]
+def calc_area_window_free(area_window_max):
 
     # default values
-    r_window_arg = 0.5
+    r_window_arg = 0.5  # (-), Tab 11 in [1]
+    # TODO: this might be a dynamic parameter
 
-    area_window_tot = sum(dataframe_windows_building['height_window_in_zone']) * r_window_arg
+    # Eq. (42) in [1]
+    area_window_free = r_window_arg * area_window_max
+    return area_window_free
+
+# calculation of total open window area according to 6.4.3.5.2 in [1]
+def calc_area_window_tot(dataframe_windows_building):
+
+    # Eq. (43) in [1]
+    area_window_tot = calc_area_window_free(sum(dataframe_windows_building['area_window']))
 
     return area_window_tot
 
 
-# calculation of effective stack height for window ventilation
+# calculation of effective stack height for window ventilation according to 6.4.3.4.1 in [1]
 def calc_effective_stack_height(dataframe_windows_building):
-    # TODO: reference standard
     # TODO: maybe this formula is wrong
 
+    # first part of Eq. (46) in [1]
     height_window_stack_1 = dataframe_windows_building['height_window_in_zone'] + dataframe_windows_building[
                                                                                       'height_window_above_ground'] / 2
+    # second part of Eq. (46) in [1]
     height_window_stack_2 = dataframe_windows_building['height_window_in_zone'] - dataframe_windows_building[
                                                                                       'height_window_above_ground'] / 2
-
+    # Eq. (46) in [1]
     height_window_stack = max(height_window_stack_1) - min(height_window_stack_2)
 
     return height_window_stack
 
-# calculation of cross ventilated and non-cross ventilated window ventilation
-def calc_q_v_arg(factor_cros, temp_ext, dataframe_windows_building, u_wind_10, temp_zone):
+# calculate cross-ventilation window area according to the procedure in 6.4.3.5.4.3 in [1]
+def calc_area_window_cros(dataframe_windows_building):
 
+    # initialize results
+    area_window_ori = numpy.zeros(4)
+    area_window_cros = numpy.zeros(2)
+
+    # area window tot
+    area_window_tot = calc_area_window_tot(dataframe_windows_building)
+
+    for i in range(2):
+        for j in range(4):
+
+            # Eq. (51) in [1]
+            alpha_ref = i*45 + j*90
+            alpha_max = alpha_ref + 45
+            alpha_min = alpha_ref - 45
+            for k in range(dataframe_windows_building['name_building'].size):
+                if alpha_min <= dataframe_windows_building['orientation_window'].iloc[k] <= alpha_max and dataframe_windows_building['angle_window'].iloc[k] >= 60:
+                    # Eq. (52) in [1]
+                    area_window_free = calc_area_window_free(dataframe_windows_building['area_window'].iloc[k])
+                    area_window_ori[j] = area_window_ori[j] + area_window_free
+        for j in range(4):
+            if area_window_ori[j] > 0:
+                # Eq. (53) in [1]
+                area_window_cros[i] = area_window_cros[i] + 0.25 * 1/(((1/area_window_ori[j]**2)+(1/(area_window_tot-area_window_ori[j])**2))**0.5)
+
+    # Eq. (54) in [1]
+    return min(area_window_cros)
+
+
+# calculation of cross ventilated and non-cross ventilated window ventilation according to procedure in 6.4.3.5.4 in [1]
+def calc_q_v_arg(factor_cros, temp_ext, dataframe_windows_building, u_wind_10, temp_zone):
+    # initialize result
     q_v_arg_in = 0
     q_v_arg_out = 0
 
     # constants from Table 12 in [1]
     # TODO import from global variables
     rho_air_ref = 1.23  # (kg/m3)
-    coeff_turb = 0.01 # (m/s)
-    coeff_wind = 0.001 # (1/(m/s))
-    coeff_stack = 0.0035 # ((m/s)/(mK))
+    coeff_turb = 0.01  # (m/s)
+    coeff_wind = 0.001  # (1/(m/s))
+    coeff_stack = 0.0035  # ((m/s)/(mK))
 
+    # default values from annex B in [1]
+    coeff_d_window = 0.67  # (-), B.1.2.1 in [1]
+    delta_c_p = 0.75  # (-), option 2 in B.1.3.4 in [1]
 
+    # get necessary inputs
     rho_air_ext = calc_rho_air(temp_ext)
     rho_air_zone = calc_rho_air(temp_zone)
     area_window_tot = calc_area_window_tot(dataframe_windows_building)
     h_window_stack = calc_effective_stack_height(dataframe_windows_building)
 
-
+    # volume flow rates of non-cross ventilated zone according to 6.4.3.5.4.2 in [1]
     if factor_cros == 0:
 
-         q_v_arg_in = 3600*rho_air_ref/rho_air_ext*area_window_tot/2*(coeff_turb + coeff_wind*u_wind_10**2 + coeff_stack * h_window_stack*abs(temp_zone-temp_ext)**0.5)
-         q_v_arg_out = -3600*rho_air_ref/rho_air_zone*area_window_tot/2*(coeff_turb + coeff_wind*u_wind_10**2 + coeff_stack * h_window_stack*abs(temp_zone-temp_ext)**0.5) # TODO check and reference
+        # Eq. (47) in [1]
+        q_v_arg_in = 3600 * rho_air_ref / rho_air_ext * area_window_tot / 2 * (
+            coeff_turb + coeff_wind * u_wind_10 ** 2 + coeff_stack * h_window_stack * abs(temp_zone - temp_ext) ** 0.5)
+        # Eq. (48) in [1]
+        q_v_arg_out = -3600 * rho_air_ref / rho_air_zone * area_window_tot / 2 * (
+            coeff_turb + coeff_wind * u_wind_10 ** 2 + coeff_stack * h_window_stack * abs(temp_zone - temp_ext) ** 0.5)
 
-    # elif factor_cros == 1:
+    elif factor_cros == 1:
 
-        # something
+        # get window area of cross-ventilation
+        area_window_cros = calc_area_window_cros(dataframe_windows_building)
+        print(area_window_cros)
 
+        # Eq. (49) in [1]
+        q_v_arg_in = 3600 * rho_air_ref / rho_air_ext * ((
+                                                             coeff_d_window * area_window_cros * u_wind_10 * delta_c_p ** 0.5) ** 2 + (
+                                                             area_window_tot / 2 * (coeff_stack * h_window_stack * abs(
+                                                                 temp_zone - temp_ext)) ** 0.5) ** 2) ** 0.5
 
-    return q_v_arg_in, q_v_arg_out
+        # Eq. (50) in [1]
+        # TODO this formula was changed from the standard to use the air density in the zone
+        q_v_arg_out = -3600 * rho_air_ref / rho_air_zone * ((
+                                                               coeff_d_window * area_window_cros * u_wind_10 * delta_c_p ** 0.5) ** 2 + (
+                                                               area_window_tot / 2 * (
+                                                               coeff_stack * h_window_stack * abs(
+                                                                   temp_zone - temp_ext)) ** 0.5) ** 2) ** 0.5
+
+    # conversion to air mass flows according to 6.4.3.8 in [1]
+    # Eq. (67) in [1]
+    qm_arg_in = q_v_arg_in * calc_rho_air(temp_ext)
+    # Eq. (68) in [1]
+    qm_arg_out = q_v_arg_out * calc_rho_air(temp_zone)
+
+    return qm_arg_in, qm_arg_out
 
 
 # ++++ MASS BALANCE ++++
@@ -477,13 +564,12 @@ def calc_air_flow_mass_balance(p_zone_ref, dataframe_windows_building):
     height_zone = 5  # (m)
     class_shielding = 0  # open
     slope_roof = 10  # (deg)
-    factor_cros = 0  # 1 = cross ventilation possible
+    factor_cros = 1  # 1 = cross ventilation possible
     temp_zone = 293  # (K)
     u_wind_site = 5  # (m/s)
     u_wind_10 = 5
     temp_ext = 299  # (K)
     area_vent_zone = 50  # (cm2) area of ventilation openings
-
 
     qm_sup_dis = 0
     qm_eta_dis = 0
@@ -503,20 +589,25 @@ def calc_air_flow_mass_balance(p_zone_ref, dataframe_windows_building):
     # mass balance, Eq. (69) in [1]
     qm_balance = qm_sup_dis + qm_eta_dis + qm_lea_sup_dis + qm_lea_eta_dis + qm_comb_in + qm_comb_out + qm_pdu_in + qm_pdu_out + qm_arg_in + qm_arg_out + qm_vent_in + qm_vent_out + qm_lea_in + qm_lea_out
 
+    print(qm_arg_in, qm_arg_out)
+    print(qm_vent_in, qm_vent_out)
+    print(qm_lea_in, qm_lea_out)
+
     return abs(qm_balance)
 
 
 # TESTING
 if __name__ == '__main__':
-
     # generate windows based on geometry of vertical surfaces in radiation file
     locator = inputlocator.InputLocator(scenario_path=r'C:\cea-reference-case\reference-case\baseline')
-    table_radiation = pandas.read_csv(locator.get_radiation())
-    table_windows = create_windows(table_radiation, 0)
+    dataframe_radiation = pandas.read_csv(locator.get_radiation())
+    geodataframe_building_architecture = geopandas.GeoDataFrame.from_file(locator.get_building_architecture())
+
+    dataframe_windows = create_windows(dataframe_radiation, geodataframe_building_architecture)
 
     building_test = 'B302040213'
 
-    windows_building_test = get_windows_of_building(table_windows, building_test)
+    windows_building_test = get_windows_of_building(dataframe_windows, building_test)
     print(type(windows_building_test))
     print(windows_building_test)
 
@@ -529,4 +620,3 @@ if __name__ == '__main__':
 
 
     print(res)
-
