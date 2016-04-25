@@ -40,32 +40,31 @@ def graphs_demand(locator, analysis_fields):
     # create figure for every name
     counter = 0
     for name in building_names:
-        pathfile = locator.get_demand_results_folder()+'\\'+name+".csv"
-        df = pd.read_csv(pathfile,usecols=fields)
+        df = pd.read_csv(locator.get_demand_results_file(name), usecols=fields)
         df.index = pd.to_datetime(df.DATE)
         fig, (ax1, ax2, ax3, ax4) = plt.subplots(4,figsize=(12,16))
         fig.text(0.07, 0.5, 'Demand [kWh]', va='center', rotation='vertical')
 
-        df.plot(ax = ax1, y=analysis_fields,title='YEAR', color=color_palette, label=' ',legend=False)
-        df[408:576].plot(ax = ax2, y=analysis_fields,title='WINTER', legend=False, color=color_palette)
-        df[4102:4270].plot(ax = ax3, y=analysis_fields, title='SUMMER', legend=False, color=color_palette)
-        df[3096:3264].plot(ax = ax4, y=analysis_fields,title='SPRING AND FALL', legend=False, color=color_palette)
+        df.plot(ax=ax1, y=analysis_fields, title='YEAR', color=color_palette, label=' ', legend=False)
+        df[408:576].plot(ax=ax2, y=analysis_fields, title='WINTER', legend=False, color=color_palette)
+        df[4102:4270].plot(ax=ax3, y=analysis_fields, title='SUMMER', legend=False, color=color_palette)
+        df[3096:3264].plot(ax=ax4, y=analysis_fields, title='SPRING AND FALL', legend=False, color=color_palette)
 
-        ax4.legend(bbox_to_anchor=(0, -0.4, 1, 0.102), loc=0, ncol=4, mode="expand", borderaxespad=0,fontsize=15)
+        ax4.legend(bbox_to_anchor=(0, -0.4, 1, 0.102), loc=0, ncol=4, mode="expand", borderaxespad=0, fontsize=15)
         fig.subplots_adjust(hspace=0.4)
         plt.close()
-        plt.savefig(locator.get_demand_plots_folder()+'\\'+name+".pdf")
+        plt.savefig(locator.get_demand_plots_file(name))
         plt.clf()
         message = 'Building No. ' + str(counter + 1) + ' completed out of ' + str(num_buildings)
         arcpy.AddMessage(message)
         counter += 1
 
-def test_graph_demand():
 
-    analysis_fields = ["Ealf_kW", "Qhsf_kW","Qwwf_kW", "Qcsf_kW"]
-    #the user can select a maximum of 4! the user should see all the fields from the total_demands.csv
+def test_graph_demand():
+    analysis_fields = ["Ealf_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
+    # the user can select a maximum of 4! the user should see all the fields from the total_demands.csv
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
-    graphs_demand(locator = locator, analysis_fields = analysis_fields)
+    graphs_demand(locator=locator, analysis_fields=analysis_fields)
 
 if __name__ == '__main__':
     test_graph_demand()
