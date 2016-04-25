@@ -71,7 +71,10 @@ class InputLocator(object):
 
     def get_demand_results_folder(self):
         """scenario/2-results/2-demand/1-timeseries"""
-        return os.path.join(self.scenario_path, '2-results', '2-demand', '1-timeseries')
+        demand_results_folder = os.path.join(self.scenario_path, '2-results', '2-demand', '1-timeseries')
+        if not os.path.exists(demand_results_folder):
+            os.makedirs(demand_results_folder)
+        return demand_results_folder
 
     def get_demand_plots_folder(self):
         """scenario/2-results/2-demand/2-plots"""
