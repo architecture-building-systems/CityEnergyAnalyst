@@ -788,18 +788,12 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         Qcs_tot = Qcsf_tot = Qcdata_tot = Qcrefri_tot = 0
         
     #print series all in kW, mcp in kW/h, cooling loads shown as positive, water consumption m3/h, temperature in Degrees celcious
-    DATE = pd.date_range('1/1/2010', periods=8760, freq='H') 
-<<<<<<< HEAD
-    pd.DataFrame({'DATE':DATE, 'Name':Name,'Ealf_kW':Ealf/1000,'Eauxf_kW':Eauxf/1000,'Qwwf_kW':Qwwf/1000,
-                  'Qww_kW':Qww/1000,'Tww_tank_C':Tww_st,'Qhs_kW':Qhs_sen/1000,'Qhsf_kW':Qhsf/1000,'Qcs_kW':-1*Qcs/1000,
-                  'Qcsf_kW':-1*Qcsf/1000,'occ_pax':Occupancy,'Vw_m3':Waterconsumption,
-=======
+    DATE = pd.date_range('1/1/2010', periods=8760, freq='H')
     pd.DataFrame({'DATE':DATE, 'Name':Name,'Ealf_kWh':Ealf/1000,'Eauxf_kWh':Eauxf/1000,'Qwwf_kWh':Qwwf/1000,
-                  'Qww_kWh':Qww/1000,'Qhs_kWh':Qhs_sen/1000,'Qhsf_kWh':Qhsf/1000,'Qcs_kWh':-1*Qcs/1000,
+                  'Qww_kWh':Qww/1000,'Qww_tankloss_kWh':Qww_ls_st/1000,'Qhs_kWh':Qhs_sen/1000,'Qhsf_kWh':Qhsf/1000,'Qcs_kWh':-1*Qcs/1000,
                   'Qcsf_kWh':-1*Qcsf/1000,'occ_pax':Occupancy,'Vw_m3':Waterconsumption,
->>>>>>> refs/remotes/origin/master
                   'Tshs_C':Ths_sup, 'Trhs_C':Ths_re, 'mcphs_kWC':mcphs,'mcpww_kWC':mcpww,'Tscs_C':Tcs_sup, 'Trcs_C':Tcs_re,
-                  'mcpcs_kWC':mcpcs,'Qcdataf_kWh':Qcdata/1000, 'Tsww_C':Tww_sup_0,'Trww_C':Tww_re,'Ef_kWh':(Ealf+Eauxf+Epro)/1000,
+                  'mcpcs_kWC':mcpcs,'Qcdataf_kWh':Qcdata/1000, 'Tsww_C':Tww_sup_0,'Trww_C':Tww_re,'Tww_tank_C':Tww_st,'Ef_kWh':(Ealf+Eauxf+Epro)/1000,
                   'Epro_kWh':Epro/1000,'Qcref_kWh':Qcrefri/1000,'Edataf_kWh':Edata/1000, 'QHf_kWh':(Qwwf+Qhsf)/1000,
                   'QCf_kWh':(-1*Qcsf+Qcdata+Qcrefri)/1000}).to_csv(locationFinal+'\\'+Name+'.csv', index=False, float_format='%.2f')
 
