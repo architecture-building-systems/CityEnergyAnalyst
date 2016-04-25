@@ -72,20 +72,22 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
     supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
     data_LCI = locator.get_life_cycle_inventory_supply_systems()
     factors_heating = pd.read_excel(data_LCI, sheetname='heating')
+    factors_dhw = pd.read_excel(data_LCI, sheetname='dhw')
     factors_cooling = pd.read_excel(data_LCI, sheetname='cooling')
     factors_electricity = pd.read_excel(data_LCI, sheetname='electricity')
 
     # local variables
-    QH_flag = QC_flag = E_flag = True # minmum output values
+    QC_flag = E_flag = True # minmum output values
     result_folder = locator.get_lca_emissions_results_folder()
 
     # calculate total_LCA_operation:.csv
     heating = supply_systems.merge(demand,on='Name').merge(factors_heating, left_on='type_hs', right_on='code')
+    dhw = supply_systems.merge(demand,on='Name').merge(factors_dhw, left_on='type_dhw', right_on='code')
     cooling = supply_systems.merge(demand,on='Name').merge(factors_cooling, left_on='type_cs', right_on='code')
     electricity = supply_systems.merge(demand,on='Name').merge(factors_electricity, left_on='type_el', right_on='code')
 
     # for heating services
-    heating_services = [[QH_flag, 'QHf_MWyr', 'QHf'], [Qhs_flag, 'Qhsf_MWyr', 'Qhsf'], [Qww_flag, 'Qwwf_MWyr', 'Qwwf']]
+    heating_services = [[Qhs_flag, 'Qhsf_MWyr', 'Qhsf']]
     for x in heating_services:
         if x[0]:
             fields_to_plot = ['Name', x[2] + '_pen_GJ', x[2] + '_ghg_ton', x[2] + '_pen_MJm2', x[2] + '_ghg_kgm2']
@@ -95,6 +97,18 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
             heating[fields_to_plot[4]] =  heating[x[1]] * heating['CO2'] * 3600/heating['Af_m2']
             heating[fields_to_plot].to_csv(result_folder+'\\' +x[2]+'_LCA_operation.csv',index=False,
                                            float_format='%.2f')
+
+    # for dhw services
+    dhw_services = [[Qww_flag, 'Qwwf_MWyr', 'Qwwf']]
+    for x in dhw_services:
+        if x[0]:
+            fields_to_plot = ['Name', x[2] + '_pen_GJ', x[2] + '_ghg_ton', x[2] + '_pen_MJm2', x[2] + '_ghg_kgm2']
+            dhw[fields_to_plot[1]] = dhw[x[1]] * dhw['PEN'] * 3.6
+            dhw[fields_to_plot[2]] = dhw[x[1]] * dhw['CO2'] * 3.6
+            dhw[fields_to_plot[3]] = dhw[x[1]] * dhw['PEN'] * 3600 / dhw['Af_m2']
+            dhw[fields_to_plot[4]] = dhw[x[1]] * dhw['CO2'] * 3600 / dhw['Af_m2']
+            dhw[fields_to_plot].to_csv(result_folder + '\\' + x[2] + '_LCA_operation.csv', index=False,
+                                       float_format='%.2f')
     # for cooling services
     cooling_services = [(QC_flag, 'QCf_MWyr', 'QCf'), (Qcs_flag, 'Qcsf_MWyr', 'Qcsf'),
                         (Qcdata_flag, 'Qcdataf_MWyr', 'Qcdataf'), (Qcrefri_flag, 'Qcref_MWyr', 'Qcref')]
@@ -106,7 +120,7 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
             cooling[fields_to_plot[3]] = cooling[x[1]] * cooling['PEN'] * 3600/cooling['Af_m2']
             cooling[fields_to_plot[4]] =  cooling[x[1]] * cooling['CO2'] * 3600/cooling['Af_m2']
             cooling[fields_to_plot].to_csv(result_folder+ '\\' + x[2] + '_LCA_operation.csv', index=False,
-                           float_format='%.2f')
+                                           float_format='%.2f')
 
     # for electrical services
     electrical_services = [(E_flag, 'Ef_MWyr', 'Ef'), (Eal_flag, 'Ealf_MWyr', 'Ealf'),
@@ -120,13 +134,13 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
             electricity[fields_to_plot[3]] = electricity[x[1]] * electricity['PEN'] * 3600/electricity['Af_m2']
             electricity[fields_to_plot[4]] =  electricity[x[1]] * electricity['CO2'] * 3600/electricity['Af_m2']
             electricity[fields_to_plot].to_csv(result_folder + '\\' + x[2] + '_LCA_operation.csv', index=False,
-                           float_format='%.2f')
+                                               float_format='%.2f')
 
-    result = heating.merge(cooling, on='Name').merge(electricity, on='Name')
-    result['pen_GJ'] = result['QHf_pen_GJ'] + result['QCf_pen_GJ'] + result['Ef_pen_GJ']
-    result['ghg_ton'] = result['QHf_ghg_ton'] + result['QCf_ghg_ton'] + result['Ef_ghg_ton']
-    result['pen_MJm2'] = result['QHf_pen_MJm2'] + result['QCf_pen_MJm2'] + result['Ef_pen_MJm2']
-    result['ghg_kgm2'] = result['QHf_ghg_kgm2'] + result['QCf_ghg_kgm2'] + result['Ef_ghg_kgm2']
+    result = heating.merge(dhw, on='Name').merge(cooling, on='Name').merge(electricity, on='Name')
+    result['pen_GJ'] = result['Qhsf_pen_GJ'] + result['Qwwf_pen_GJ'] + result['QCf_pen_GJ'] + result['Ef_pen_GJ']
+    result['ghg_ton'] = result['Qhsf_ghg_ton'] + result['Qwwf_ghg_ton'] +result['QCf_ghg_ton'] + result['Ef_ghg_ton']
+    result['pen_MJm2'] = result['Qhsf_pen_MJm2'] + result['Qwwf_pen_MJm2'] + result['QCf_pen_MJm2'] + result['Ef_pen_MJm2']
+    result['ghg_kgm2'] = result['Qhsf_ghg_kgm2'] + result['Qwwf_ghg_kgm2'] + result['QCf_ghg_kgm2'] + result['Ef_ghg_kgm2']
     fields_to_plot = ['Name', 'pen_GJ', 'ghg_ton', 'pen_MJm2', 'ghg_kgm2']
     result[fields_to_plot].to_csv(locator.get_lca_operation(), index=False, float_format='%.2f')
 
