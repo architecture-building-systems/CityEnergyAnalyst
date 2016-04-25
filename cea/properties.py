@@ -107,10 +107,6 @@ def properties(locator, prop_thermal_flag, prop_architecture_flag,
         # define architectural characteristics
         prop_architecture_df = categories_df.merge(archetypes, left_on='cat_architecture', right_on='Code')
 
-        # define shading system, window-to-wall ratio,
-        prop_architecture_df['win_wall'] = gv.window_to_wall_ratio
-        prop_architecture_df['type_shade'] = gv.shading_type
-
         # write to shapefile
         prop_architecture_df_merged = names_shp.merge(prop_architecture_df, on="Name")
         fields = ['win_wall','type_shade']
@@ -130,7 +126,7 @@ def properties(locator, prop_thermal_flag, prop_architecture_flag,
 
         # write to shapefile
         prop_HVAC_df_merged = names_shp.merge(prop_HVAC_df, on="Name")
-        fields = ['type_cs', 'type_hs', 'tshs0','trhs0','tscs0','trcs0','tsww0','trww0']
+        fields = ['type_cs', 'type_hs', 'type_dhw', 'tshs0','trhs0','tscs0','trcs0','tsww0','trww0']
         prop_HVAC_shp = names_shp.copy()
         for field in fields:
             prop_HVAC_shp[field] = prop_HVAC_df_merged[field].copy()

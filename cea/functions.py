@@ -972,13 +972,13 @@ def calc_t(w,RH): # tempeature in C
 
 def Calc_Rf_sh (ShadingType):
     # this script assumes shading is always located outside! most of the cases
-    #0 for not #1 for Louvres, 2 for Rollo, 3 for Venetian blinds, 4 for Courtain, 5 for Solar control glass
-    d ={'Type':['T0', 'T1', 'T2', 'T3', 'T4', 'T5'],'ValueOUT':[1, 0.08,0.08,0.15,0.57,0.1]}
+    # 0 for not, 1 for Rollo, 2 for Venetian blinds, 3 for Solar control glass
+    d = {'Type': ['T0', 'T1', 'T2', 'T3', 'T4', 'T5'], 'ValueOUT': [1, 0.08, 0.08, 0.15, 0.57, 0.1]}
     ValuesRf_Table = pd.DataFrame(d)
     rows = ValuesRf_Table.Type.count()
     for row in range(rows):
-        if ShadingType == ValuesRf_Table.loc[row,'Type']:
-            return ValuesRf_Table.loc[row,'ValueOUT']
+        if ShadingType == ValuesRf_Table.loc[row, 'Type']:
+            return ValuesRf_Table.loc[row, 'ValueOUT']
 
 def calc_gl(radiation, g_gl,Rf_sh):
     if radiation > 300: #in w/m2
