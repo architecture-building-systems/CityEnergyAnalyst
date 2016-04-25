@@ -1,7 +1,7 @@
 """
-===========================
+=========================================
 Sensible Heat Storage - Fully Mixed tank
-===========================
+=========================================
 File history and credits:
 S. Hsieh script development          20.04.16
 
@@ -21,7 +21,7 @@ gv = globalvar.GlobalVariables()
 
 def calc_Qww_ls_st(Tww_st_0, Tww_setpoint, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_nr, Utank, AR ):
     """
-    This algorithm to calculate the heat flows within a fully mixed water storage tank.
+    This algorithm calculates the heat flows within a fully mixed water storage tank.
     Heat flows include sensible heat loss to the environment (ql), heat charged into the tank (qc), and heat discharged from the tank (qd).
 
     Parameters
@@ -62,7 +62,7 @@ def ode(y, t, ql, qd, qc, Pwater, Cpw, Vtank):
     ----------
     :param y: storage sensible temperature in K.
     :param t: time steps.
-    :param ql: storage sensible heat loss in W.
+    :param ql: storage tank sensible heat loss in W.
     :param qd: heat discharged from the tank in W.
     :param qc: heat charged into the tank in W.
 
