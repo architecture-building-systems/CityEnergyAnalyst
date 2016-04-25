@@ -790,7 +790,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
                            'Qhsf0_kW':Qhsf_0/1000, 'Qcsf0_kW':-Qcsf_0/1000,'Vw0_m3':waterpeak,'Tshs0_C':Ths_sup_0,
                            'Trhs0_C':Ths_re_0, 'mcphs0_kWC':mcphs.max(),'Tscs0_C':Tcs_sup_0,'Qcdataf_MWhyr':Qcdata_tot,
                            'Qcref_MWhyr':Qcrefri_tot, 'Trcs0_C':Tcs_re_0, 'mcpcs0_kWC':mcpcs.max(),'Qwwf_MWhyr':Qwwf_tot,
-                           'Qww_MWhyr':Qww_tot,'Qhsf_MWhyr':Qhsf_tot,'Qhs_MWhyr':Qhs_tot,'Qcsf_MWyr':Qcsf_tot,'Qcs_MWhyr':Qcs_tot,
+                           'Qww_MWhyr':Qww_tot,'Qhsf_MWhyr':Qhsf_tot,'Qhs_MWhyr':Qhs_tot,'Qcsf_MWhyr':Qcsf_tot,'Qcs_MWhyr':Qcs_tot,
                            'Ealf_MWhyr':Ealf_tot,'Eauxf_MWhyr':Eauxf_tot, 'Eprof_MWhyr':Epro_tot,'Edataf_MWhyr':Edata_tot,
                            'Tsww0_C':Tww_sup_0, 'Vw_m3yr':Waterconsumption.sum(),
                            'Ef_MWhyr':(Ealf_tot+Eauxf_tot+Epro_tot+Edata_tot),'QHf_MWhyr':(Qwwf_tot+Qhsf_tot),
