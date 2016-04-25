@@ -73,6 +73,10 @@ class InputLocator(object):
         """scenario/2-results/2-demand/1-timeseries"""
         return os.path.join(self.scenario_path, '2-results', '2-demand', '1-timeseries')
 
+    def get_demand_plots_folder(self):
+        """scenario/2-results/2-demand/2-plots"""
+        return os.path.join(self.scenario_path, '2-results', '2-demand', '2-plots')
+
     def get_total_demand(self):
         """scenario/2-results/2-demand/1-timeseries/Total_demand.csv"""
         return os.path.join(self.scenario_path, '2-results', '2-demand', '1-timeseries', 'Total_demand.csv')
