@@ -12,11 +12,6 @@ class GlobalVariables(object):
                           'EDU', 'CR', 'HEALTH', 'SPORT', 'SWIM', 'PUBLIC', 'SUPER', 'ICE', 'HOT']
         self.seasonhours = [3216, 6192]
         self.main_use = 'ADMIN'
-        self.window_to_wall_ratio = 0.4
-        self.generation_heating = 3
-        self.generation_hotwater = 3
-        self.generation_cooling = 2
-        self.generation_electricity = 1
         self.Z = 3  # height of basement for every building in m
         self.Bf = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
         self.his = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
