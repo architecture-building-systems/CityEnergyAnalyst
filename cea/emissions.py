@@ -87,7 +87,7 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
     electricity = supply_systems.merge(demand,on='Name').merge(factors_electricity, left_on='type_el', right_on='code')
 
     # for heating services
-    heating_services = [[Qhs_flag, 'Qhsf_MWyr', 'Qhsf']]
+    heating_services = [[Qhs_flag, 'Qhsf_MWhyr', 'Qhsf']]
     for x in heating_services:
         if x[0]:
             fields_to_plot = ['Name', x[2] + '_pen_GJ', x[2] + '_ghg_ton', x[2] + '_pen_MJm2', x[2] + '_ghg_kgm2']
@@ -99,7 +99,7 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
                                            float_format='%.2f')
 
     # for dhw services
-    dhw_services = [[Qww_flag, 'Qwwf_MWyr', 'Qwwf']]
+    dhw_services = [[Qww_flag, 'Qwwf_MWhyr', 'Qwwf']]
     for x in dhw_services:
         if x[0]:
             fields_to_plot = ['Name', x[2] + '_pen_GJ', x[2] + '_ghg_ton', x[2] + '_pen_MJm2', x[2] + '_ghg_kgm2']
@@ -110,8 +110,8 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
             dhw[fields_to_plot].to_csv(result_folder + '\\' + x[2] + '_LCA_operation.csv', index=False,
                                        float_format='%.2f')
     # for cooling services
-    cooling_services = [(QC_flag, 'QCf_MWyr', 'QCf'), (Qcs_flag, 'Qcsf_MWyr', 'Qcsf'),
-                        (Qcdata_flag, 'Qcdataf_MWyr', 'Qcdataf'), (Qcrefri_flag, 'Qcref_MWyr', 'Qcref')]
+    cooling_services = [(QC_flag, 'QCf_MWhyr', 'QCf'), (Qcs_flag, 'Qcsf_MWhyr', 'Qcsf'),
+                        (Qcdata_flag, 'Qcdataf_MWhyr', 'Qcdataf'), (Qcrefri_flag, 'Qcref_MWhyr', 'Qcref')]
     for x in cooling_services:
         if x[0]:
             fields_to_plot = ['Name', x[2] + '_pen_GJ', x[2] + '_ghg_ton', x[2] + '_pen_MJm2', x[2] + '_ghg_kgm2']
@@ -123,9 +123,9 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
                                            float_format='%.2f')
 
     # for electrical services
-    electrical_services = [(E_flag, 'Ef_MWyr', 'Ef'), (Eal_flag, 'Ealf_MWyr', 'Ealf'),
-                           (Eaux_flag, 'Eauxf_MWyr', 'Eauxf'), (Epro_flag, 'Eprof_MWyr', 'Eprof'),
-                           (Edata_flag, 'Edataf_MWyr', 'Edataf')]
+    electrical_services = [(E_flag, 'Ef_MWhyr', 'Ef'), (Eal_flag, 'Ealf_MWhyr', 'Ealf'),
+                           (Eaux_flag, 'Eauxf_MWhyr', 'Eauxf'), (Epro_flag, 'Eprof_MWhyr', 'Eprof'),
+                           (Edata_flag, 'Edataf_MWhyr', 'Edataf')]
     for x in electrical_services:
         if x[0]:
             fields_to_plot = ['Name', x[2] + '_pen_GJ', x[2] + '_ghg_ton', x[2] + '_pen_MJm2', x[2] + '_ghg_kgm2']
