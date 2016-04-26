@@ -795,8 +795,8 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
     # temperature in Degrees celcious
     DATE = pd.date_range('1/1/2010', periods=8760, freq='H')
     pd.DataFrame({'DATE':DATE, 'Name':Name,'Ealf_kWh':Ealf/1000,'Eauxf_kWh':Eauxf/1000,'Qwwf_kWh':Qwwf/1000,
-                  'Qww_kWh':Qww/1000,'Qww_tankloss_Wh':Qww_ls_st,'Qww_tankloss_kWh':Qww_ls_st/1000,'Qww_distloss':(Qd-Qww)/1000,'Qhs_kWh':Qhs_sen/1000,'Qhsf_kWh':Qhsf/1000,
-                  'Qcs_kWh':-1*Qcs/1000,'Qcsf_kWh':-1*Qcsf/1000,'occ_pax':Occupancy,'Vw_m3':Waterconsumption,'Vww_m3':Vww,
+                  'Qww_kWh':Qww/1000,'Qww_tankloss_kWh':Qww_ls_st/1000,'Qhs_kWh':Qhs_sen/1000,'Qhsf_kWh':Qhsf/1000,
+                  'Qcs_kWh':-1*Qcs/1000,'Qcsf_kWh':-1*Qcsf/1000,'occ_pax':Occupancy,'Vw_m3':Waterconsumption,
                   'Tshs_C':Ths_sup, 'Trhs_C':Ths_re, 'mcphs_kWC':mcphs,'mcpww_WC':mcpww*1000,'Tscs_C':Tcs_sup,
                   'Trcs_C':Tcs_re, 'mcpcs_kWC':mcpcs,'Qcdataf_kWh':Qcdata/1000, 'Tsww_C':Tww_sup_0,'Trww_C':Tww_re,
                   'Tww_tank_C':Tww_st,'Ef_kWh':(Ealf+Eauxf+Epro)/1000, 'Epro_kWh':Epro/1000,'Qcref_kWh':Qcrefri/1000,
