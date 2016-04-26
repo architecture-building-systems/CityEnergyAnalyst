@@ -12,7 +12,6 @@ from __future__ import division
 import matplotlib.pyplot as plt
 import pandas as pd
 import inputlocator
-import arcpy
 
 
 def graphs_demand(locator, analysis_fields):
@@ -52,17 +51,22 @@ def graphs_demand(locator, analysis_fields):
 
         ax4.legend(bbox_to_anchor=(0, -0.4, 1, 0.102), loc=0, ncol=4, mode="expand", borderaxespad=0, fontsize=15)
         fig.subplots_adjust(hspace=0.4)
-        plt.close()
+
+        # save to disc
         plt.savefig(locator.get_demand_plots_file(name))
+        plt.close()
         plt.clf()
-        message = 'Building No. ' + str(counter + 1) + ' completed out of ' + str(num_buildings)
-        arcpy.AddMessage(message)
+
+        print 'Building No. ' + str(counter + 1) + ' completed out of ' + str(num_buildings)
         counter += 1
 
 
 def test_graph_demand():
+    # HINTS FOR ARCGIS INTERFACE:
+    # the user should see all the column names of the total_demands.csv
+    # the user can select a maximum of 4 of those column names to graph (analysis fields!
     analysis_fields = ["Ealf_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
-    # the user can select a maximum of 4! the user should see all the fields from the total_demands.csv
+
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
     graphs_demand(locator=locator, analysis_fields=analysis_fields)
 
