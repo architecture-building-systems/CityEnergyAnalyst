@@ -69,6 +69,10 @@ class InputLocator(object):
         """scenario/1-inputs/4-technical/supply_systems.csv"""
         return os.path.join(self.scenario_path, '1-inputs', '4-technical', 'supply_systems.xls')
 
+    def get_technical_emission_systems(self):
+        """scenario/1-inputs/4-technical/emission_systems.csv"""
+        return os.path.join(self.scenario_path, '1-inputs', '4-technical', 'emission_systems.xls')
+
     def get_demand_results_folder(self):
         """scenario/2-results/2-demand/1-timeseries"""
         demand_results_folder = os.path.join(self.scenario_path, '2-results', '2-demand', '1-timeseries')
