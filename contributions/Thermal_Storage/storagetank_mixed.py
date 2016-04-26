@@ -15,9 +15,9 @@ Output variables: Qww_ls_st(sensible heat loss from storage tank), Tww_st(storag
 import numpy as np
 from scipy.integrate import odeint
 import math
-import globalvar
+import cea.globalvar
 
-gv = globalvar.GlobalVariables()
+gv = cea.globalvar.GlobalVariables()
 
 def calc_Qww_ls_st(Tww_st, Tww_setpoint, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_nr, Utank, AR ):
     """
