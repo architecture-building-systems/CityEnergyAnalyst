@@ -72,8 +72,7 @@ def check_temp_file(T_ext,tH,tC, tmax):
     return tH, tC
 
 
-def get_prop_RC_model(uses, architecture, thermal, geometry, HVAC, radiation_file, gv):
-    rf = radiation_file
+def get_prop_RC_model(uses, architecture, thermal, geometry, HVAC, rf, gv):
 
     # Areas above ground #get the area of each wall in the buildings
     rf['Awall_all'] = rf['Shape_Leng']*rf['Freeheight']*rf['FactorShade']
@@ -103,12 +102,11 @@ def get_prop_RC_model(uses, architecture, thermal, geometry, HVAC, radiation_fil
     all_prop['Htr_is'] = gv.his*all_prop ['Atot']
     all_prop['Cm'] = all_prop.th_mass.apply(lambda x:CmFunction(x))*all_prop['Af'] # Internal heat capacity in J/K
 
-    #all_prop.to_csv(r'C:\Users\Jimeno\Desktop\test.csv')
     fields = ['Awall_all', 'Atot', 'Aw', 'Am','Aef','Af','Cm','Htr_is','Htr_em','Htr_ms','Htr_op','Hg','HD','Htr_w']
     result = all_prop[fields]
     return result
 
-def AmFunction (x): 
+def AmFunction (x):
     if x == 'T2':
         return 2.5
     elif x == 'T3':
@@ -118,7 +116,7 @@ def AmFunction (x):
     else:
         return 2.5
 
-def CmFunction (x): 
+def CmFunction (x):
     if x == 'T2':
         return 165000
     elif x == 'T3':
@@ -423,6 +421,10 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
     sys_e_heating = prop_HVAC.type_hs
     sys_e_cooling = prop_HVAC.type_cs
 
+    # calculate schedule and variables
+    ta_hs_set, ta_cs_set, people, ve, q_int, Eal_nove, Eprof,\
+    Edataf, Qcdataf, Qcrefrif, vww, vw, X_int, hour_day = calc_mixed_schedule(Profiles,Profiles_names,prop_occupancy)
+
     if Af > 0:
         #extract properties of building
         # Geometry
@@ -445,13 +447,14 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         Am = prop_RC_model.Am
 
         Y = calc_Y(Year,Retrofit) # linear trasmissivity coefficient of piping W/(m.K)
+
         # nominal temperatures
-        Ths_sup_0 = prop_HVAC.tshs0
-        Ths_re_0 = prop_HVAC.trhs0
-        Tcs_sup_0 = prop_HVAC.tscs0
-        Tcs_re_0 = prop_HVAC.trcs0
-        Tww_sup_0 = prop_HVAC.tsww0
-        Tww_re_0 = prop_HVAC.trww0
+        Ths_sup_0 = prop_HVAC.Tshs0_C
+        Ths_re_0 = Ths_sup_0 - prop_HVAC.dThs0_C
+        Tcs_sup_0 = prop_HVAC.Tscs0_C
+        Tcs_re_0 = Tcs_sup_0 + prop_HVAC.dTcs0_C
+        Tww_sup_0 = prop_HVAC.Tsww0_C
+        Tww_re_0 = Tww_sup_0 + prop_HVAC.dTww0_C
 
         # we define limtis of season.
         limit_inf_season = gv.seasonhours[0]+1
@@ -465,10 +468,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         Lvww_c = (2*Ll+0.0125*Ll*Lw)*fforma # lenghth piping heating system circulation circuit
         Lvww_dis = (Ll+0.0625*Ll*Lw)*fforma # lenghth piping heating system distribution circuit
 
-        #calculate schedule and variables
-        ta_hs_set,ta_cs_set,people,ve,q_int,Eal_nove,Eprof,Edataf, Qcdataf, Qcrefrif,vww,vw,X_int,hour_day = calc_mixed_schedule(Profiles,
-                                                                                                                        Profiles_names,
-                                                                                                                        prop_occupancy)
+
         # data and refrigeration loads
         Qcdata = Qcdataf*Af
         Qcrefri = Qcrefrif*Af
@@ -504,14 +504,9 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         I_st = (1-(Am/Atot)-(Htr_w/(9.1*Atot)))*(I_ia+I_sol)
 
         #4. Heating and cooling loads
-        # the installed capacities are assumed to be gigantic, it is assumed that the building can  generate heat and cold at anytime
-        # this is where the potential task of changing the set-back temperature for H&C can start.....
-        if sys_e_heating == 'T2': # i.e., floor heating
-            IC_max = -500*Af # typical of HVAC
-            IH_max = 115*Af  #100W/m2 in the center and 175W/m2 in edge zones
-        else:            
-            IC_max = -500*Af
-            IH_max = 500*Af # typical of radiators and HVAC
+        IC_max = -prop_HVAC.Qcsmax_Wm2 * Af
+        IH_max = prop_HVAC.Qhsmax_Wm2 * Af
+
         # define empty arrrays
         uncomfort = np.zeros(8760)
         Ta = np.zeros(8760)
@@ -586,7 +581,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
             Im_tot[k] = Results1[6]
 
             # Calculate new sensible loads with HVAC systems incl. recovery.
-            if sys_e_heating == 'T1' or sys_e_heating == 'T2':
+            if sys_e_heating != 'T3':
                 Qhs_sen_incl_em_ls[k] = Results1[2]
             if sys_e_cooling == 'T0':
                 Qcs_sen_incl_em_ls[k] = 0
@@ -632,13 +627,9 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         mcpcs = np.zeros(8760) # in KW/C
         Ta_0 = ta_hs_set.max()
         
-        if sys_e_heating == 'T1': #radiators
+        if sys_e_heating == 'T1' or sys_e_heating == 'T2': #radiators
             nh = 0.3
             Ths_sup, Ths_re, mcphs = np.vectorize(calc_RAD)(Qhsf,Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0,nh)
-
-        if sys_e_heating == 'T2': #floor heating
-            nh = 0.2
-            Ths_sup, Ths_re, mcphs = np.vectorize(calc_TABSH)(Qhsf,Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0,nh)
 
         if sys_e_heating == 'T3': #air conditioning
             tasup = Ta_sup_hs +273
@@ -660,6 +651,11 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
             Ths_sup, Ths_re, mcphs = np.vectorize(calc_Hcoil2)(Qhsf, tasup, tare, Qhsf_0, Ta_re_0, Ta_sup_0,
                                                                 tsh0, trh0, w_re, w_sup, ma_sup_0, ma_sup_hs,
                                                                 gv.Cpa, LMRT0, UA0, mCw0, Qhsf)
+
+        if sys_e_heating == 'T4': #floor heating
+            nh = 0.2
+            Ths_sup, Ths_re, mcphs = np.vectorize(calc_TABSH)(Qhsf,Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0,nh)
+
         if sys_e_cooling == 'T3':
 
             # Initialize temperatures
