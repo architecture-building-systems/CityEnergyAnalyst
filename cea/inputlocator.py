@@ -66,8 +66,8 @@ class InputLocator(object):
         return os.path.join(self.scenario_path, '1-inputs', '3-weather', 'weather_hourly.csv')
 
     def get_life_cycle_inventory_supply_systems(self):
-        """scenario/1-inputs/4-LCI/supply_systems.csv"""
-        return os.path.join(self.scenario_path, '1-inputs', '4-LCI', 'supply_systems.xls')
+        """scenario/1-inputs/4-technical/supply_systems.csv"""
+        return os.path.join(self.scenario_path, '1-inputs', '4-technical', 'supply_systems.xls')
 
     def get_demand_results_folder(self):
         """scenario/2-results/2-demand/1-timeseries"""
