@@ -823,8 +823,22 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
     return
 
 def calc_HVAC(SystemH, SystemC, people, RH1, t1, tair, qv_req, Flag, Qsen, t5_1, wint,gv):
+
+    """ HVAC model of Kaempf
+
+    Keyword arguments:
+    RH1 -- external relative humidity at time step t
+    t1 -- external air temperature at time step t
+    tair --
+    qv_req -- ventilation requirements at time step t according to the mixed occupancy schedule of the building
+    Qsen -- sensible heating or cooling load to be supplied by the HVAC system at time step t
+    t5_1 -- zone air temperature at time step t-1
+    wint -- internal moisture gains at time step t according to the mixed occupancy schedule of the building
+    gv -- object of class globalvar
+    """
+
     # State No. 5 # indoor air set point
-    t5 = tair + 1 # accounding for an increase in temperature
+    t5 = tair + 1 # accounding for an increase in temperature # TODO: where is this from? why use calculated tair and not the setpoint temperature? why +1?
     if Qsen != 0:
         #sensiblea nd latennt loads
         Qsen = Qsen*0.001 # transform in kJ/s
@@ -844,14 +858,14 @@ def calc_HVAC(SystemH, SystemC, people, RH1, t1, tair, qv_req, Flag, Qsen, t5_1,
         # Assuming thath AHU do not modify the air humidity
         w3 = w2  
         if Qsen > 0:  #if heating
-            t3 = 30 # in C
+            t3 = 30 # in C #TODO: temperature set points to gv
         elif Qsen < 0: # if cooling
-            t3 = 16 #in C
+            t3 = 16 #in C #TODO: temperature set points to gv
 
         # mass of the system
         h_t5_w3 =  calc_h(t5,w3)
         h_t3_w3 = calc_h(t3,w3)
-        m1 = max(Qsen/((t3-t5)*gv.Cpa),(gv.Pair*qv)) #kg/s # from the point of view of internal loads
+        m1 = max(Qsen/((t3-t5)*gv.Cpa),(gv.Pair*qv)) #kg/s # from the point of view of internal loads % FIXME correct formula: enthalpy instead of temperatures
         w5 = (wint+w3*m1)/m1
 
         #room supply moisture content:
