@@ -21,6 +21,9 @@ import pandas
 from scipy.optimize import minimize
 from cea import inputlocator
 import geopandas
+from cea.functions import calc_HVAC
+import cea.globalvar
+gv = cea.globalvar.GlobalVariables()
 
 
 # ++++ GEOMETRY ++++
@@ -98,8 +101,7 @@ def create_windows(dataframe_radiation, geodataframe_building_architecture):
     return dataframe_windows
 
 
-def get_windows_of_building(table_windows, name_building):
-    return table_windows.loc[table_windows['name_building'] == name_building]
+
 
 
 # ++++ GENERAL ++++
@@ -549,27 +551,46 @@ def calc_q_v_arg(factor_cros, temp_ext, dataframe_windows_building, u_wind_10, t
 
     return qm_arg_in, qm_arg_out
 
+# ++++ MECHANICAL VENTILATION ++++
+def calc_q_m_mech():
+
+    # testing
+    area_floor = 100
+    q_ve_required_schedule = 2/3600*area_floor
+    w_int_schedule = 5/(1000*3600)*area_floor # internal moisture gains
+    rel_humidity_ext = 60
+    temp_ext = 25
+    temp_zone = 20
+    q_sensible = 1
+    t_zone_prev = 20
+
+    res = calc_HVAC(0, 0, 0, rel_humidity_ext, temp_ext, temp_zone, q_ve_required_schedule, 0, q_sensible, t_zone_prev, w_int_schedule, gv)
+
+    print(res)
+    return
 
 # ++++ MASS BALANCE ++++
 
 # air flow mass balance for iterative calculation according to 6.4.3.9 in [1]
-def calc_air_flow_mass_balance(p_zone_ref, dataframe_windows_building):
+def calc_air_flow_mass_balance(p_zone_ref, geodataframe_geometry_building, dataframe_windows_building):
     # TODO the idea is that the inputs to this functions consist of handles (or similar) to a building geometry in the buildings file, to the climate file, etc.
 
     # for testing the scripts
     qv_delta_p_lea_ref_zone = 500  # (m3/h), 1 ACH
     area_lea_zone = 0.1  # (m2) ?
-    area_facade_zone = 200  # (m2)
-    area_roof_zone = 100  # (m2)
-    height_zone = 5  # (m)
+    # area_facade_zone = 200  # (m2)
+    # area_roof_zone = 100  # (m2)
+    # height_zone = 5  # (m)
     class_shielding = 0  # open
-    slope_roof = 10  # (deg)
+    # slope_roof = 10  # (deg)
     factor_cros = 1  # 1 = cross ventilation possible
     temp_zone = 293  # (K)
     u_wind_site = 5  # (m/s)
     u_wind_10 = 5
     temp_ext = 299  # (K)
     area_vent_zone = 50  # (cm2) area of ventilation openings
+
+    area_facade_zone, area_roof_zone, height_zone, slope_roof = get_building_properties_ventilation(geodataframe_geometry_building)
 
     qm_sup_dis = 0
     qm_eta_dis = 0
@@ -596,24 +617,55 @@ def calc_air_flow_mass_balance(p_zone_ref, dataframe_windows_building):
     return abs(qm_balance)
 
 
+# ++++ HELPERS ++++
+def get_building_properties_ventilation(geodataframe_building_geometry):
+    # geodataframe contains single building
+
+
+    # TODO: get real slope of roof in the future
+    slope_roof_default = 0
+
+    # geometry = geodataframe_building_geometry.iloc[0]
+    area_facade_zone = geodataframe_building_geometry.length.iloc[0] * geodataframe_building_geometry.iloc[0].height_ag
+    area_roof_zone = geodataframe_building_geometry.area.iloc[0]
+    height_zone = geodataframe_building_geometry.iloc[0].height_ag
+    slope_roof = slope_roof_default
+
+    return area_facade_zone, area_roof_zone, height_zone, slope_roof
+
+def get_windows_of_building(dataframe_windows, name_building):
+    return dataframe_windows.loc[dataframe_windows['name_building'] == name_building]
+
+
 # TESTING
 if __name__ == '__main__':
+
+    calc_q_m_mech()
+
+
     # generate windows based on geometry of vertical surfaces in radiation file
     locator = inputlocator.InputLocator(scenario_path=r'C:\cea-reference-case\reference-case\baseline')
     dataframe_radiation = pandas.read_csv(locator.get_radiation())
     geodataframe_building_architecture = geopandas.GeoDataFrame.from_file(locator.get_building_architecture())
+    # print(geodataframe_building_architecture)
+    geodataframe_building_geometry = geopandas.GeoDataFrame.from_file(locator.get_building_geometry())
+    # print(geodataframe_building_geometry)
 
     dataframe_windows = create_windows(dataframe_radiation, geodataframe_building_architecture)
 
     building_test = 'B302040213'
 
+    # get building windows
     windows_building_test = get_windows_of_building(dataframe_windows, building_test)
-    print(type(windows_building_test))
-    print(windows_building_test)
+    # get building geometry
+    geometry_building_test = geodataframe_building_geometry.loc[geodataframe_building_geometry['Name'] == building_test]
+
+    # print(type(windows_building_test))
+    # print(windows_building_test)
 
     p_zone_ref = 5  # (Pa) zone pressure, THE UNKNOWN VALUE
 
-    res = minimize(calc_air_flow_mass_balance, p_zone_ref, args=(windows_building_test,), method='Nelder-Mead')
+    res = minimize(calc_air_flow_mass_balance, p_zone_ref, args=(geometry_building_test,windows_building_test,), method='Nelder-Mead')
 
     # this will be the function to minimize by a slover
     # qm_balance = calc_air_flow_mass_balance(p_zone_ref)
