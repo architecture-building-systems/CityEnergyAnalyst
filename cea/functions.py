@@ -420,6 +420,10 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
     sys_e_heating = prop_HVAC.type_hs
     sys_e_cooling = prop_HVAC.type_cs
 
+    # calculate schedule and variables
+    ta_hs_set, ta_cs_set, people, ve, q_int, Eal_nove, Eprof,\
+    Edataf, Qcdataf, Qcrefrif, vww, vw, X_int, hour_day = calc_mixed_schedule(Profiles,Profiles_names,prop_occupancy)
+
     if Af > 0:
         #extract properties of building
         # Geometry
@@ -463,10 +467,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         Lvww_c = (2*Ll+0.0125*Ll*Lw)*fforma # lenghth piping heating system circulation circuit
         Lvww_dis = (Ll+0.0625*Ll*Lw)*fforma # lenghth piping heating system distribution circuit
 
-        #calculate schedule and variables
-        ta_hs_set,ta_cs_set,people,ve,q_int,Eal_nove,Eprof,Edataf, Qcdataf, Qcrefrif,vww,vw,X_int,hour_day = calc_mixed_schedule(Profiles,
-                                                                                                                        Profiles_names,
-                                                                                                                        prop_occupancy)
+
         # data and refrigeration loads
         Qcdata = Qcdataf*Af
         Qcrefri = Qcrefrif*Af
