@@ -19,7 +19,7 @@ import globalvar
 
 gv = globalvar.GlobalVariables()
 
-def calc_Qww_ls_st(Tww_st_0, Tww_setpoint, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_nr, Utank, AR ):
+def calc_Qww_ls_st(Tww_st, Tww_setpoint, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_nr, Utank, AR ):
     """
     This algorithm calculates the heat flows within a fully mixed water storage tank.
     Heat flows include sensible heat loss to the environment (ql), heat charged into the tank (qc), and heat discharged from the tank (qd).
@@ -44,13 +44,13 @@ def calc_Qww_ls_st(Tww_st_0, Tww_setpoint, tair, Bf, te, V, Qww, Qww_ls_r, Qww_l
 
     h = (4*V*AR**2/math.pi)**(1.0/3.0)     # tank height in m, derived from tank Aspect Ratio(AR)
     r = (V/(math.pi*h))**(1.0/2.0)         # tank radius in m, assuming tank shape is cylinder
-    Atank = 2*math.pi*r**2 + 2*math.pi*r*h      #tank surface area in m2.
-    ql = Utank*Atank*(Tww_st_0 - tamb)
+    Atank = 2*math.pi*r**2 + 2*math.pi*r*h      # tank surface area in m2.
+    ql = Utank*Atank*(Tww_st - tamb)
     qd = Qww + Qww_ls_r + Qww_ls_nr
-    if  Qww <= 0:
+    if Qww <= 0:
         qc = 0
     else:
-        qc = qd + ql + gv.Pwater*V*gv.Cpw*(Tww_setpoint-Tww_st_0)/3.6
+        qc = qd + ql + gv.Pwater*V*gv.Cpw*(Tww_setpoint-Tww_st)/3.6
     return ql, qd, qc
 
 
