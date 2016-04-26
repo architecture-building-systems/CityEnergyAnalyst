@@ -21,6 +21,9 @@ import pandas
 from scipy.optimize import minimize
 from cea import inputlocator
 import geopandas
+from cea.functions import calc_HVAC
+import cea.globalvar
+gv = cea.globalvar.GlobalVariables()
 
 
 # ++++ GEOMETRY ++++
@@ -98,8 +101,7 @@ def create_windows(dataframe_radiation, geodataframe_building_architecture):
     return dataframe_windows
 
 
-def get_windows_of_building(dataframe_windows, name_building):
-    return dataframe_windows.loc[dataframe_windows['name_building'] == name_building]
+
 
 
 # ++++ GENERAL ++++
@@ -549,6 +551,23 @@ def calc_q_v_arg(factor_cros, temp_ext, dataframe_windows_building, u_wind_10, t
 
     return qm_arg_in, qm_arg_out
 
+# ++++ MECHANICAL VENTILATION ++++
+def calc_q_m_mech():
+
+    # testing
+    area_floor = 100
+    q_ve_required_schedule = 2/3600*area_floor
+    w_int_schedule = 5/(1000*3600)*area_floor # internal moisture gains
+    rel_humidity_ext = 60
+    temp_ext = 25
+    temp_zone = 20
+    q_sensible = 1
+    t_zone_prev = 20
+
+    res = calc_HVAC(0, 0, 0, rel_humidity_ext, temp_ext, temp_zone, q_ve_required_schedule, 0, q_sensible, t_zone_prev, w_int_schedule, gv)
+
+    print(res)
+    return
 
 # ++++ MASS BALANCE ++++
 
@@ -606,17 +625,24 @@ def get_building_properties_ventilation(geodataframe_building_geometry):
     # TODO: get real slope of roof in the future
     slope_roof_default = 0
 
-    geometry = geodataframe_building_geometry.iloc[0]
-    area_facade_zone = (2*geometry.Blength + 2*geometry.Bwidth) * geometry.height_ag
-    area_roof_zone = geometry.Blength * geometry.Bwidth
-    height_zone = geometry.height_ag
+    # geometry = geodataframe_building_geometry.iloc[0]
+    area_facade_zone = geodataframe_building_geometry.length.iloc[0] * geodataframe_building_geometry.iloc[0].height_ag
+    area_roof_zone = geodataframe_building_geometry.area.iloc[0]
+    height_zone = geodataframe_building_geometry.iloc[0].height_ag
     slope_roof = slope_roof_default
 
     return area_facade_zone, area_roof_zone, height_zone, slope_roof
 
+def get_windows_of_building(dataframe_windows, name_building):
+    return dataframe_windows.loc[dataframe_windows['name_building'] == name_building]
+
 
 # TESTING
 if __name__ == '__main__':
+
+    calc_q_m_mech()
+
+
     # generate windows based on geometry of vertical surfaces in radiation file
     locator = inputlocator.InputLocator(scenario_path=r'C:\cea-reference-case\reference-case\baseline')
     dataframe_radiation = pandas.read_csv(locator.get_radiation())
