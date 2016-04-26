@@ -8,6 +8,7 @@ import numpy as np
 import scipy.optimize as sopt
 import scipy
 import math
+from contributions.Thermal_Storage import storagetank_mixed as sto_m
 
 def calc_mainuse(uses_df, uses):
     databaseclean = uses_df[uses].transpose()
@@ -691,12 +692,24 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         Vol_ls = Lsww_dis*(gv.D/1000)**(2/4)*math.pi
         Qww_ls_r  = np.vectorize(calc_Qww_ls_r)(Ta, Qww, Lsww_dis, Lcww_dis, Y[1], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0, gv.Cpw , gv.Pwater)
         Qww_ls_nr  = np.vectorize(calc_Qww_ls_nr)(Ta, Qww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0, gv.Cpw , gv.Pwater, gv.Bf, T_ext)
-    
-        
-        # Calc requirements of generation systems for hot water - assume losses of 10% due to local storage
-        Qwwf = (Qww+Qww_ls_r+Qww_ls_nr)/0.9
-        Qwwf_0 = Qwwf.max()    
-        
+
+        # fully mixed storage tank sensible heat loss calculation
+        Qww_ls_st = np.zeros(8760)
+        Tww_st = np.zeros(8760)
+        Qd = np.zeros(8760)
+        Qwwf = np.zeros(8760)
+        Vww_0 = Vww.max()  # peak dhw demand in m3/hour, also used for dhw tank sizing.
+        Tww_st_0 = gv.Tww_setpoint  #initial tank temperature in C
+
+        # calculate heat loss and temperature in dhw tank
+        for k in range(8760):
+            Qww_ls_st[k], Qd[k], Qwwf[k] = sto_m.calc_Qww_ls_st(Tww_st_0, gv.Tww_setpoint, Ta[k], gv.Bf, T_ext[k], Vww_0,
+                                                              Qww[k], Qww_ls_r[k], Qww_ls_nr[k], gv.U_dhwtank, gv.AR)
+            Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_ls_st[k], Qd[k], Qwwf[k], gv.Pwater, gv.Cpw, Vww_0)
+            Tww_st_0 = Tww_st[k]
+
+        Qwwf_0 = Qwwf.max()
+
         # clac auxiliary loads of pumping systems
         Eaux_cs = np.zeros(8760)
         Eaux_ve = np.zeros(8760)
@@ -708,7 +721,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
             b =1
         else:
             b =1.2
-        Eaux_ww = np.vectorize(calc_Eaux_ww)(Qwwf,Qwwf_0,Imax,deltaP_des,b,Mww) 
+        Eaux_ww = np.vectorize(calc_Eaux_ww)(Qww,Qwwf,Qwwf_0,Imax,deltaP_des,b,Mww)
         if sys_e_heating > 0:
             Eaux_hs = np.vectorize(calc_Eaux_hs_dis)(Qhsf,Qhsf_0,Imax,deltaP_des,b,Ths_sup,Ths_re,gv.Cpw)
         if sys_e_cooling > 0:
@@ -734,8 +747,8 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         Ths_sup_0 = Ths_re_0 = Tcs_re_0 = Tcs_sup_0 = Tww_sup_0 = 0
         #arrays
         Occupancy = Eauxf = Waterconsumption = np.zeros(8760)
-        Qwwf = Qww = Qhs_sen = Qhsf = Qcs_sen = Qcs = Qcsf = Qcdata = Qcrefri = np.zeros(8760)
-        Ths_sup = Ths_re = Tcs_re = Tcs_sup = mcphs = mcpcs = mcpww = Tww_re = uncomfort = np.zeros(8760) # in C 
+        Qwwf = Qww = Qhs_sen = Qhsf = Qcs_sen = Qcs = Qcsf = Qcdata = Qcrefri = Qd = Qc = Qww_ls_st = np.zeros(8760)
+        Ths_sup = Ths_re = Tcs_re = Tcs_sup = mcphs = mcpcs = mcpww = Vww = Tww_re = Tww_st = uncomfort = np.zeros(8760) # in C
        
     if Aef > 0:
         # calc appliance and lighting loads
@@ -774,21 +787,19 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
     else:
         Qcs_tot = Qcsf_tot = Qcdata_tot = Qcrefri_tot = 0
 
-    # print series all in kW, mcp in kW/h, cooling loads shown as positive, water consumption m3/h,
+    #print series all in kW, mcp in kW/h, cooling loads shown as positive, water consumption m3/h,
     # temperature in Degrees celcious
     DATE = pd.date_range('1/1/2010', periods=8760, freq='H')
-    pd.DataFrame(
-        {'DATE': DATE, 'Name': Name, 'Ealf_kWh': Ealf / 1000, 'Eauxf_kWh': Eauxf / 1000, 'Qwwf_kWh': Qwwf / 1000,
-         'Qww_kWh': Qww / 1000, 'Qhs_kWh': Qhs_sen / 1000, 'Qhsf_kWh': Qhsf / 1000, 'Qcs_kWh': -1 * Qcs / 1000,
-         'Qcsf_kWh': -1 * Qcsf / 1000, 'occ_pax': Occupancy, 'Vw_m3': Waterconsumption,
-         'Tshs_C': Ths_sup, 'Trhs_C': Ths_re, 'mcphs_kWC': mcphs, 'mcpww_kWC': mcpww, 'Tscs_C': Tcs_sup,
-         'Trcs_C': Tcs_re,
-         'mcpcs_kWC': mcpcs, 'Qcdataf_kWh': Qcdata / 1000, 'Tsww_C': Tww_sup_0, 'Trww_C': Tww_re,
-         'Ef_kWh': (Ealf + Eauxf + Epro) / 1000,
-         'Epro_kWh': Epro / 1000, 'Qcref_kWh': Qcrefri / 1000, 'Edataf_kWh': Edata / 1000,
-         'QHf_kWh': (Qwwf + Qhsf) / 1000,
-         'QCf_kWh': (-1 * Qcsf + Qcdata + Qcrefri) / 1000}).to_csv(os.path.join(locationFinal, '%s.csv' % Name),
+    pd.DataFrame({'DATE':DATE, 'Name':Name,'Ealf_kWh':Ealf/1000,'Eauxf_kWh':Eauxf/1000,'Qwwf_kWh':Qwwf/1000,
+                  'Qww_kWh':Qww/1000,'Qww_tankloss_kWh':Qww_ls_st/1000,'Qhs_kWh':Qhs_sen/1000,'Qhsf_kWh':Qhsf/1000,
+                  'Qcs_kWh':-1*Qcs/1000,'Qcsf_kWh':-1*Qcsf/1000,'occ_pax':Occupancy,'Vw_m3':Waterconsumption,
+                  'Tshs_C':Ths_sup, 'Trhs_C':Ths_re, 'mcphs_kWC':mcphs,'mcpww_WC':mcpww*1000,'Tscs_C':Tcs_sup,
+                  'Trcs_C':Tcs_re, 'mcpcs_kWC':mcpcs,'Qcdataf_kWh':Qcdata/1000, 'Tsww_C':Tww_sup_0,'Trww_C':Tww_re,
+                  'Tww_tank_C':Tww_st,'Ef_kWh':(Ealf+Eauxf+Epro)/1000, 'Epro_kWh':Epro/1000,'Qcref_kWh':Qcrefri/1000,
+                  'Edataf_kWh':Edata/1000, 'QHf_kWh':(Qwwf+Qhsf)/1000,
+                  'QCf_kWh':(-1*Qcsf+Qcdata+Qcrefri)/1000}).to_csv(locationFinal+'\\'+Name+'.csv',
                                                                    index=False, float_format='%.2f')
+
 
     # print peaks in kW and totals in MWh, temperature peaks in C
     totals = pd.DataFrame(
@@ -1096,8 +1107,8 @@ def calc_disls(tamb,hotw,Flowtap,V,twws,Lsww_dis,p,cpw, Y):
         losses= 0
     return losses
 
-def calc_Eaux_ww(Qwwf,Qwwf0,Imax,deltaP_des,b,qV_des):
-    if Qwwf>0:
+def calc_Eaux_ww(Qww,Qwwf,Qwwf0,Imax,deltaP_des,b,qV_des):
+    if Qww>0:
         # for domestichotwater 
         #the power of the pump in Watts 
         Phy_des = 0.2778*deltaP_des*qV_des
@@ -1142,7 +1153,7 @@ def calc_Eaux_cs_dis(Qcsf,Qcsf0,Imax,deltaP_des,b, ts,tr,cpw):
     #the power of the pump in Watts 
     if Qcsf <0 and (ts-tr) != 0:
         fctr = 1.10
-        qV_des = Qcsf/((ts-tr)*cpw*1000)
+        qV_des = Qcsf/((ts-tr)*cpw*1000)  # kg/s
         Phy_des = 0.2778*deltaP_des*qV_des
         feff = (1.25*(200/Phy_des)**0.5)*fctr*b
         #Ppu_dis = Phy_des*feff
@@ -1193,3 +1204,4 @@ def calc_Eaux_ve(Qhsf,Qcsf,P_ve, qve, SystemH, SystemC, Af):
         Eve_aux = 0
         
     return Eve_aux
+
