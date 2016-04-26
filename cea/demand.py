@@ -13,7 +13,6 @@ import pandas as pd
 import numpy as np
 import functions as f
 import globalvar
-import arcpy
 from geopandas import GeoDataFrame as gpdf
 import inputlocator
 
