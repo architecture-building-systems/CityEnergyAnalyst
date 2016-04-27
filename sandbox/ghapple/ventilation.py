@@ -518,30 +518,33 @@ def calc_q_v_arg(factor_cros, temp_ext, dataframe_windows_building, u_wind_10, t
 
         # Eq. (47) in [1]
         q_v_arg_in = 3600 * rho_air_ref / rho_air_ext * area_window_tot / 2 * (
-            coeff_turb + coeff_wind * u_wind_10 ** 2 + coeff_stack * h_window_stack * abs(temp_zone - temp_ext) ** 0.5)
+            coeff_turb + coeff_wind * u_wind_10 ** 2 + coeff_stack * h_window_stack * abs(temp_zone - temp_ext))# ** 0.5
         # Eq. (48) in [1]
         q_v_arg_out = -3600 * rho_air_ref / rho_air_zone * area_window_tot / 2 * (
-            coeff_turb + coeff_wind * u_wind_10 ** 2 + coeff_stack * h_window_stack * abs(temp_zone - temp_ext) ** 0.5)
+            coeff_turb + coeff_wind * u_wind_10 ** 2 + coeff_stack * h_window_stack * abs(temp_zone - temp_ext))# ** 0.5
+
+        #print(coeff_turb + coeff_wind * u_wind_10 ** 2 + coeff_stack * h_window_stack * abs(temp_zone - temp_ext))
 
     elif factor_cros == 1:
 
         # get window area of cross-ventilation
         area_window_cros = calc_area_window_cros(dataframe_windows_building)
-        print(area_window_cros)
+        #print(area_window_cros)
 
         # Eq. (49) in [1]
         q_v_arg_in = 3600 * rho_air_ref / rho_air_ext * ((
                                                              coeff_d_window * area_window_cros * u_wind_10 * delta_c_p ** 0.5) ** 2 + (
                                                              area_window_tot / 2 * (coeff_stack * h_window_stack * abs(
-                                                                 temp_zone - temp_ext)) ** 0.5) ** 2) ** 0.5
+                                                                 temp_zone - temp_ext)) ) ** 2) ** 0.5
 
         # Eq. (50) in [1]
         # TODO this formula was changed from the standard to use the air density in the zone
+        # TODO adjusted from the standard to have consistent units
         q_v_arg_out = -3600 * rho_air_ref / rho_air_zone * ((
                                                                coeff_d_window * area_window_cros * u_wind_10 * delta_c_p ** 0.5) ** 2 + (
                                                                area_window_tot / 2 * (
                                                                coeff_stack * h_window_stack * abs(
-                                                                   temp_zone - temp_ext)) ** 0.5) ** 2) ** 0.5
+                                                                   temp_zone - temp_ext)) ) ** 2) ** 0.5
 
     # conversion to air mass flows according to 6.4.3.8 in [1]
     # Eq. (67) in [1]
@@ -555,7 +558,7 @@ def calc_q_v_arg(factor_cros, temp_ext, dataframe_windows_building, u_wind_10, t
 def calc_q_m_mech():
 
     # testing
-    area_floor = 100
+    area_floor = 100 * 3
     q_ve_required_schedule = 2/3600*area_floor
     w_int_schedule = 5/(1000*3600)*area_floor # internal moisture gains
     rel_humidity_ext = 60
@@ -566,7 +569,9 @@ def calc_q_m_mech():
 
     res = calc_HVAC(0, 0, 0, rel_humidity_ext, temp_ext, temp_zone, q_ve_required_schedule, 0, q_sensible, t_zone_prev, w_int_schedule, gv)
 
-    print(res)
+    q_m_SUP = max(res[5], res[6])
+
+    print(q_m_SUP)
     return
 
 # ++++ MASS BALANCE ++++
@@ -583,12 +588,12 @@ def calc_air_flow_mass_balance(p_zone_ref, geodataframe_geometry_building, dataf
     # height_zone = 5  # (m)
     class_shielding = 0  # open
     # slope_roof = 10  # (deg)
-    factor_cros = 1  # 1 = cross ventilation possible
+    factor_cros = 0  # 1 = cross ventilation possible
     temp_zone = 293  # (K)
-    u_wind_site = 5  # (m/s)
-    u_wind_10 = 5
+    u_wind_site = 3  # (m/s)
+    u_wind_10 = 3
     temp_ext = 299  # (K)
-    area_vent_zone = 50  # (cm2) area of ventilation openings
+    area_vent_zone = 0  # (cm2) area of ventilation openings
 
     area_facade_zone, area_roof_zone, height_zone, slope_roof = get_building_properties_ventilation(geodataframe_geometry_building)
 
@@ -649,7 +654,7 @@ if __name__ == '__main__':
     geodataframe_building_architecture = geopandas.GeoDataFrame.from_file(locator.get_building_architecture())
     # print(geodataframe_building_architecture)
     geodataframe_building_geometry = geopandas.GeoDataFrame.from_file(locator.get_building_geometry())
-    # print(geodataframe_building_geometry)
+    #print(geodataframe_building_geometry)
 
     dataframe_windows = create_windows(dataframe_radiation, geodataframe_building_architecture)
 
@@ -662,6 +667,7 @@ if __name__ == '__main__':
 
     # print(type(windows_building_test))
     # print(windows_building_test)
+    print(geometry_building_test)
 
     p_zone_ref = 5  # (Pa) zone pressure, THE UNKNOWN VALUE
 

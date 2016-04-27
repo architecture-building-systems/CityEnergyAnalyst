@@ -822,9 +822,10 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
 
     return
 
-def calc_HVAC(SystemH, SystemC, people, RH1, t1, tair, qv_req, Flag, Qsen, t5_1, wint,gv):
 
-    """ HVAC model of Kaempf
+def calc_HVAC(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_sup_cool):
+
+    """ HVAC model of Kämpf
 
     Keyword arguments:
     RH1 -- external relative humidity at time step t
@@ -835,59 +836,79 @@ def calc_HVAC(SystemH, SystemC, people, RH1, t1, tair, qv_req, Flag, Qsen, t5_1,
     t5_1 -- zone air temperature at time step t-1
     wint -- internal moisture gains at time step t according to the mixed occupancy schedule of the building
     gv -- object of class globalvar
+    temp_sup_heat -- heating system supply temperature
+    temp_sup_cool -- cooling system supply temperature
+
+
+    [1] Kämpf, Jérôme Henri
+        On the modelling and optimisation of urban energy fluxes
+        http://dx.doi.org/10.5075/epfl-thesis-4548
     """
 
     # State No. 5 # indoor air set point
-    t5 = tair + 1 # accounding for an increase in temperature # TODO: where is this from? why use calculated tair and not the setpoint temperature? why +1?
+    t5_prime = tair + 1 # accounding for an increase in temperature # TODO: where is this from? why use calculated tair and not the setpoint temperature? why +1?
     if Qsen != 0:
         #sensiblea nd latennt loads
         Qsen = Qsen*0.001 # transform in kJ/s
         # Properties of heat recovery and required air incl. Leakage
-        qv = qv_req*1.0184     # in m3/s corrected taking into acocunt leakage
-        Veff = gv.Vmax*qv/qv_req        #max velocity effective      
+        qv = qv_req*1.0184     # in m3/s corrected taking into account leakage # TODO: add source
+        Veff = gv.Vmax*qv/qv_req        # max velocity effective
         nrec = gv.nrec_N-gv.C1*(Veff-2)   # heat exchanger coefficient
 
         # State No. 1
-        w1 = calc_w(t1,RH1) #kg/kg    
+        w1 = calc_w(t1, RH1)  # outdoor moisture (kg/kg)
 
         # State No. 2
-        t2 = t1 + nrec*(t5_1-t1)
-        w2 = min(w1,calc_w(t2,100))
+        t2 = t1 + nrec*(t5_1-t1)  # inlet air temperature after HEX calculated from zone air temperature at time step t-1 (°C)
+        w2 = min(w1, calc_w(t2, 100))  # inlet air moisture (kg/kg), Eq. (4.24) in [1]
 
         # State No. 3
-        # Assuming thath AHU do not modify the air humidity
+        # Assuming that AHU does not modify the air humidity
         w3 = w2  
-        if Qsen > 0:  #if heating
-            t3 = 30 # in C #TODO: temperature set points to gv
-        elif Qsen < 0: # if cooling
-            t3 = 16 #in C #TODO: temperature set points to gv
+        if Qsen > 0:  # if heating
+            t3 = temp_sup_heat # heating system supply temperature in (°C)
+        elif Qsen < 0:  # if cooling
+            t3 = temp_sup_cool # cooling system supply temperature in (°C)
 
-        # mass of the system
-        h_t5_w3 =  calc_h(t5,w3)
-        h_t3_w3 = calc_h(t3,w3)
-        m1 = max(Qsen/((t3-t5)*gv.Cpa),(gv.Pair*qv)) #kg/s # from the point of view of internal loads % FIXME correct formula: enthalpy instead of temperatures
-        w5 = (wint+w3*m1)/m1
+        # initial guess of mass flow rate
+        h_t5_prime_w3 = calc_h(t5_prime, w3) # for enthalpy change in first assumption, see Eq.(4.31) in [1]
+        h_t3_w3 = calc_h(t3, w3) # for enthalpy change in first assumption, see Eq.(4.31) in [1]
+        m1 = max(Qsen/(h_t5_prime_w3-h_t3_w3), (gv.Pair*qv))  # Eq. (4.34) in [1] for first prediction of mass flow rater in (kg/s)
+
+        # determine virtual state in the zone without moisture conditioning
+        c_p_air_w3 = 1.005 + 1.82*w3  # heat capacity of humid air, source: https: // en.wiktionary.org / wiki / humid_heat
+        t5 = Qsen/(m1*c_p_air_w3)+t3  # Eq. (4.31) in [1]
+        w5 = (wint+w3*m1)/m1  # moisture balance accounting for internal moisture load, see also Eq. (4.32) in [1]
+
 
         #room supply moisture content:
-        liminf= calc_w(t5,30)
-        limsup = calc_w(t5,70)
-        if Qsen > 0:  #if heating
-            w3, Qhum , Qdhum = calc_w3_heating_case(t5,w2,w5,t3,t5_1,m1,gv.lvapor,liminf,limsup)
-        elif Qsen < 0: # if cooling
-            w3, Qhum , Qdhum = calc_w3_cooling_case(w2,t3,w5,liminf,limsup,m1,gv.lvapor)
+        # liminf= calc_w(t5,30) TODO: remove
+        # limsup = calc_w(t5,70) TODO: remove
+        if Qsen > 0:  # if heating
+            w3 = calc_w3_heating_case(t5, w2, w5, t3)
+            # TODO: ts = t3 + 0.5
+        elif Qsen < 0:  # if cooling
+            w3 = calc_w3_cooling_case(t5, w2, t3, w5)
+            # TODO: ts = t3 - 0.5
 
         # State of Supply
         ws = w3
-        ts = t3 - 0.5 # minus the expected delta T rise temperature in the ducts
+        ts = t3 - 0.5 # minus the expected delta T rise temperature in the ducts # FIXME drop or rise as function of heating/cooling? TODO: remove
 
         # the new mass flow rate
-        h_t5_w3 =  calc_h(t5,w3)
-        h_ts_ws = calc_h(t3,ws)
-        m = max(Qsen/((ts-t2)*gv.Cpa),(gv.Pair*qv)) #kg/s # from the point of view of internal loads
+        h_t5_w3 = calc_h(t5, w3)
+        h_t3_w3 = calc_h(t3, w3)
+        m = max(Qsen/(h_t5_w3-h_t3_w3), (gv.Pair*qv)) #kg/s # from the point of view of internal loads # FIXME other formula than in soure, in this way the mass flow rate is not influenced by the calculations above
+
+        # TODO: now the energy of humidification and dehumidification can be calculated
+        # Qhum = lvapor*m*(w3 - w2)*1000 # in Watts
+        # Qdhum = lvapor*m*(w3 - w2)*1000 # in Watt
 
         # Total loads
-        h_t2_w2 = calc_h(t2,w2)
-        Qtot = m*(h_t3_w3-h_t2_w2)*1000 # in watts
+        h_t2_w2 = calc_h(t2, w2)
+        h_ts_ws = calc_h(ts, ws)
+        # Qtot = m*(h_t3_w3-h_t2_w2)*1000 # in watts # FIXME h_t3_w3 is not calculated using the new w3, should it not be h_ts_ws? TODO: remove
+        Qtot = m*(h_ts_ws-h_t2_w2)*1000 # TODO: document
         
         # Adiabatic humidifier - computation of electrical auxiliary loads
         if Qhum >0:
@@ -923,45 +944,92 @@ def calc_HVAC(SystemH, SystemC, people, RH1, t1, tair, qv_req, Flag, Qsen, t5_1,
         Ehum_aux = 0
         #Edhum_aux = 0
         ma_hs = ts_hs = tr_hs = ts_cs = tr_cs = ma_cs =  0
+
+        # TODO: return air mass flow rates
     
     return Qhs_sen, Qcs_sen, Qhum, Qdhum, Ehum_aux, ma_hs, ma_cs, ts_hs, ts_cs, tr_hs, tr_cs, w2 , w3, t5
 
-def calc_w3_heating_case(t5,w2,w5,t3,t5_1,m,lvapor,liminf,limsup):
-    Qhum = 0
-    Qdhum = 0
-    if w5 < liminf:
+
+def calc_w3_heating_case(t5, w2, w5, t3):
+    # TODO: add documentation
+    """ Algorithm 1 Determination of the room's supply moisture content (w3) for the heating case from Kaempf's HVAC model
+
+    t5 -- zone air temperature
+    w2 --
+    w5 --
+    t3 --
+
+
+    Source:
+    [1] Kämpf, Jérôme Henri
+        On the modelling and optimisation of urban energy fluxes
+        http://dx.doi.org/10.5075/epfl-thesis-4548
+
+    """
+
+    # get constants and properties
+    temp_comf_max = 26 # limits of comfort in zone TODO: get from properties
+    hum_comf_max = 70 # limits of comfort in zone TODO: get from properties
+
+    w_liminf = calc_w(t5, 30)  # TODO: document
+    w_limsup = calc_w(t5, 70)  # TODO: document
+    w_comf_max = calc_w(temp_comf_max, hum_comf_max)  # moisture content at maximum comfortable state
+
+
+    # Qhum = 0 TODO: remove
+    # Qdhum = 0 TODO: remove
+    if w5 < w_liminf:
         # humidification
-        w3 = liminf - w5 + w2
-        Qhum = lvapor*m*(w3 - w2)*1000 # in Watts
-    elif w5 < limsup and w5  < calc_w(35,70):
+        w3 = w_liminf - w5 + w2
+        # Qhum = lvapor*m*(w3 - w2)*1000 # in Watts # TODO: I think this should be calculated using the corrected mass flow rate
+    elif w5 > w_limsup and w5  < w_comf_max:
         # heating and no dehumidification
         #delta_HVAC = calc_t(w5,70)-t5
         w3 = w2
-    elif w5 > limsup:
+    elif w5 > w_comf_max: # FIXME in the source the comparison is to w(26,70)
         # dehumidification
-        w3 = max(min(min(calc_w(35,70)-w5+w2,calc_w(t3,100)),limsup-w5+w2),0)
-        Qdhum = lvapor*m*(w3 - w2)*1000 # in Watts
+        w3 = max(min(min(w_comf_max-w5+w2, calc_w(t3, 100)), w_limsup-w5+w2), 0)
+        # Qdhum = lvapor*m*(w3 - w2)*1000 # in Watts # TODO: I think this should be calculated using the corrected mass flow rate
     else:
         # no moisture control
         w3 = w2
-    return w3, Qhum , Qdhum 
+    return w3
 
-def calc_w3_cooling_case(w2,t3,w5, liminf,limsup,m,lvapor):
-    Qhum = 0
-    Qdhum = 0
-    if w5 > limsup:
+
+def calc_w3_cooling_case(t5, w2, t3, w5):
+    # TODO add documentation
+    """ Algorithm 2 Determination of the room's supply moisture content (w3) for the cooling case from Kaempf's HVAC model
+    for non-evaporative cooling
+
+    Source:
+
+    [1] Kämpf, Jérôme Henri
+        On the modelling and optimisation of urban energy fluxes
+        http://dx.doi.org/10.5075/epfl-thesis-4548
+
+    """
+
+    # get constants and properties
+    w_liminf = calc_w(t5, 30)  # TODO: document
+    w_limsup = calc_w(t5, 70)  # TODO: document
+
+
+    # Qhum = 0 TODO: remove
+    # Qdhum = 0 TODO: remove
+    if w5 > w_limsup:
         #dehumidification
-        w3 = max(min(limsup-w5+w2,calc_w(t3,100)),0)
-        Qdhum = lvapor*m*(w3 - w2)*1000 # in Watts
-    elif w5 < liminf:
+        w3 = max(min(w_limsup-w5+w2, calc_w(t3, 100)), 0)
+        # Qdhum = lvapor*m*(w3 - w2)*1000 # in Watts TODO: I think this should be calculated using the corrected mass flow rate
+    elif w5 < w_liminf:
         # humidification
-        w3 = liminf-w5+w2
-        Qhum = lvapor*m*(w3 - w2)*1000 # in Watts
+        w3 = w_liminf-w5+w2
+        # Qhum = lvapor*m*(w3 - w2)*1000 # in Watts TODO: I think this should be calculated using the corrected mass flow rate
     else:
-        w3 = min(w2,calc_w(t3,100))
-    return w3, Qhum , Qdhum
+        w3 = min(w2, calc_w(t3, 100))
+    return w3
 
 def calc_w(t,RH): # Moisture content in kg/kg of dry air
+    # TODO: add documentation and source of formula
     Pa = 100000 #Pa
     Ps = 610.78*math.exp(t/(t+238.3)*17.2694)
     Pv = RH/100*Ps
@@ -969,6 +1037,8 @@ def calc_w(t,RH): # Moisture content in kg/kg of dry air
     return w
 
 def calc_h(t,w): # enthalpyh of most air in kJ/kg
+    # TODO: add documentation and source of formula
+    # source: thesis Kaempf Eq.(4.30) extended to temperatures below -10°
     if 0 < t < 60:
         h = (1.007*t-0.026)+w*(2501+1.84*t)    
     elif -100 < t <= 0:
