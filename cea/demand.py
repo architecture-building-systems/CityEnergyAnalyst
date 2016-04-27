@@ -128,7 +128,7 @@ def get_temperatures(locator, prop_HVAC):
     df2 = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
     df3 = prop_HVAC.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
 
-    fields = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'Tshs0_C', 'dThs0_C', 'Qhsmax_Wm2']
+    fields = ['Name', 'type_hs', 'type_cs', 'type_dhw',  'type_ctrl', 'Tshs0_C', 'dThs0_C', 'Qhsmax_Wm2']
     fields2 = ['Name', 'Tscs0_C', 'dTcs0_C', 'Qcsmax_Wm2']
     fields3 = ['Name', 'Tsww0_C', 'dTww0_C', 'Qwwmax_Wm2']
 
