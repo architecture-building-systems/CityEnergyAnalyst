@@ -49,13 +49,13 @@ def heatmaps(locator, analysis_field_variables, path_results, path_variables):
     arcpy.CopyRows_management(path_variables, out_table=tempfile_db, config_keyword="")
     
     arcpy.FeatureToPoint_management(locator.get_building_geometry(),tempfile, "CENTROID")
-    arcpy.MakeFeatureLayer_management(tempfile,"lyr","#","#")
+    arcpy.MakeFeatureLayer_management(tempfile, "lyr", "#", "#")
     for field in analysis_field_variables:
         arcpy.AddField_management("lyr", field, "DOUBLE", "#", "#", "#", "#", "NULLABLE", "NON_REQUIRED", "#")
 
     # vector.append([])
-    arcpy.AddJoin_management("lyr","Name",tempfile_db,"Name","KEEP_ALL")
-    for field in  analysis_field_variables:              
+    arcpy.AddJoin_management("lyr", "Name", tempfile_db, "Name", "KEEP_ALL")
+    for field in analysis_field_variables:
         arcpy.CalculateField_management(in_table="lyr", field="%(tempfile_name)s.%(field)s" % locals(),
                                         expression="calc_non_null(!%(tempfile_db_name)s.%(field)s!)" % locals(),
                                         expression_type="PYTHON_9.3",
