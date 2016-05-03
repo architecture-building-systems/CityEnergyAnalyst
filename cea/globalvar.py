@@ -12,12 +12,6 @@ class GlobalVariables(object):
                           'EDU', 'CR', 'HEALTH', 'SPORT', 'SWIM', 'PUBLIC', 'SUPER', 'ICE', 'HOT']
         self.seasonhours = [3216, 6192]
         self.main_use = 'ADMIN'
-        self.shading_type = "T1"
-        self.window_to_wall_ratio = 0.4
-        self.generation_heating = 3
-        self.generation_hotwater = 3
-        self.generation_cooling = 2
-        self.generation_electricity = 1
         self.Z = 3  # height of basement for every building in m
         self.Bf = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
         self.his = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
@@ -39,7 +33,10 @@ class GlobalVariables(object):
         self.Pair = 1.2  # air density in kg/m3
         self.Cpv = 1.859  # specific heat capacity of water vapor in KJ/kgK
         self.Cpa = 1.008  # specific heat capacity of air in KJ/kgK
+        self.U_dhwtank = 0.225  # tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
+        self.AR = 3.3  # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), taken from commercial tank geometry (jenni.ch)
         self.lvapor = 2257  # latent heat of air kJ/kg
+        self.Tww_setpoint = 60  # dhw tank set point temperature in C
         # constant variables for pumping operation
         self.hoursop = 5  # assuming around 2000 hours of operation per year. It is charged to the electrical system from 11 am to 4 pm
         self.gr = 9.81  # m/s2 gravity
@@ -49,6 +46,6 @@ class GlobalVariables(object):
         # grey emssions
         self.fwratio = 1.5  # conversion component's area to floor area
         self.sl_materials = 60  # service life of standard building components and materials
-        self.sl_installations = 40  # service life of technical instalations
+        self.sl_services = 40  # service life of technical instalations
         # constant variables for air conditioning fan
         self.Pfan = 0.55 # specific fan consumption in W/m3/h
