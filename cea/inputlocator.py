@@ -69,6 +69,10 @@ class InputLocator(object):
         """scenario/1-inputs/4-technical/supply_systems.csv"""
         return os.path.join(self.scenario_path, '1-inputs', '4-technical', 'supply_systems.xls')
 
+    def get_technical_emission_systems(self):
+        """scenario/1-inputs/4-technical/emission_systems.csv"""
+        return os.path.join(self.scenario_path, '1-inputs', '4-technical', 'emission_systems.xls')
+
     def get_demand_results_folder(self):
         """scenario/2-results/2-demand/1-timeseries"""
         demand_results_folder = os.path.join(self.scenario_path, '2-results', '2-demand', '1-timeseries')
@@ -100,6 +104,17 @@ class InputLocator(object):
     def get_lca_emissions_results_folder(self):
         """scenario/2-results/3-emissions/1-timeseries"""
         return os.path.join(self.scenario_path, '2-results', '3-emissions', '1-timeseries')
+
+    def get_heatmaps_demand_folder(self):
+        """scenario/2-results/2-demand/3-heatmaps"""
+        heatmaps_demand_folder = os.path.join(self.scenario_path, '2-results', '2-demand', '3-heatmaps')
+        if not os.path.exists(heatmaps_demand_folder):
+            os.makedirs(heatmaps_demand_folder)
+        return heatmaps_demand_folder
+
+    def get_heatmaps_emission_folder(self):
+        """scenario/2-results/3-emissions/3-heatmaps"""
+        return os.path.join(self.scenario_path, '2-results', '3-emissions', '3-heatmaps')
 
     def get_lca_embodied(self):
         """scenario/2-results/3-emissions/1-timeseries/Total_LCA_embodied.csv"""
