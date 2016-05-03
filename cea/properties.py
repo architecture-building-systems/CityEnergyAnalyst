@@ -12,12 +12,13 @@ import os
 import numpy as np
 import globalvar
 from geopandas import GeoDataFrame as gpdf
+import inputlocator
 
 gv = globalvar.GlobalVariables()
 
 
-def properties(path_archetypes, path_age, path_occupancy, path_results, prop_thermal_flag, prop_architecture_flag,
-               prop_HVAC_flag, gv):
+def properties(locator, prop_thermal_flag, prop_architecture_flag,
+               prop_hvac_flag, gv):
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
@@ -25,43 +26,36 @@ def properties(path_archetypes, path_age, path_occupancy, path_results, prop_the
 
     Parameters
     ----------
-    path_archetypes : string
-        path to database of archetypes file Archetypes_HVAC_properties.csv
-    path_age : string
-        path to file buildings_age.shp
-    path_occupancy: renovation
-        path to file buildings_occupancy.shp
-    prop_thermal_flag: boolean
-        True, get properties about thermal properties of the building envelope, otherwise False.
-    prop_architecture_flag: boolean
-        True, get properties about the construction and architecture, otherwise False.
-    prop_HVAC_flag: boolean
-        True, get properties about types of HVAC systems, otherwise False.
-    path_results:
-        Path to folder to store results
-    gv: GlobalVariables
-        an instance of globalvar.GlobalVariables with the constants
-        to use (like `list_uses` etc.)
+    :param InputLocator locator: an InputLocator instance set to the scenario to work on
+    :param boolean prop_thermal_flag: if True, get properties about thermal properties of the building envelope.
+    :param boolean prop_architecture_flag: if True, get properties about the construction and architecture.
+    :param boolean prop_hvac_flag: if True, get properties about types of HVAC systems, otherwise False.
+    :param GlobalVariables gv: an instance of globalvar.GlobalVariables with the constants  to use
+        (like `list_uses` etc.)
 
-    Returns
-    -------
-    building_HVAC: .shp
-        file recorded in path_results describing the queried properties of HVAC systems.
-    building_architecture: .shp
-        file recorded in path_results describing the queried properties of architectural features
-    building_thermal: .shp
-        file recorded in path_results describing the queried thermal properties of buildings
+    Side effects:
+    -------------
+
+    The following files are created by this script, depending on which flags were set:
+
+    - building_HVAC: .shp
+        describes the queried properties of HVAC systems.
+
+    - building_architecture: .shp
+        describes the queried properties of architectural features
+
+    - building_thermal: .shp
+        describes the queried thermal properties of buildings
     """
-
     # local variables:
-    archetypes = pd.read_csv(path_archetypes) # the file is separated by commas now.
+    archetypes = pd.read_csv(locator.get_archetypes_hvac_properties())
     list_uses = gv.list_uses
-    building_occupancy_df = gpdf.from_file(path_occupancy)
-    building_age_df = gpdf.from_file(path_age)
+    building_occupancy_df = gpdf.from_file(locator.get_building_occupancy())
+    building_age_df = gpdf.from_file(locator.get_building_age())
 
     # prepare shapefile to store results (a shapefile with only names of buildings
-    fields_drop = ['envelope','roof','windows','partitions','basement','HVAC','built']
-    names_shp = gpdf.from_file(path_age).drop(fields_drop, axis=1)
+    fields_drop = ['envelope', 'roof', 'windows', 'partitions', 'basement', 'HVAC', 'built']  # FIXME: this hardcodes the field names!!
+    names_shp = gpdf.from_file(locator.get_building_age()).drop(fields_drop, axis=1)
 
     # define main use:
     building_occupancy_df['mainuse'] = calc_mainuse(building_occupancy_df, list_uses)
@@ -99,23 +93,19 @@ def properties(path_archetypes, path_age, path_occupancy, path_results, prop_the
 
         # write to shapefile
         prop_thermal_df_merged = names_shp.merge(prop_thermal_df, on="Name")
-        fields = ['U_base','U_roof','U_win','U_wall','th_mass','Es','Hs']
+        fields = ['U_base', 'U_roof', 'U_win', 'U_wall', 'th_mass', 'Es', 'Hs']
         prop_thermal_shp = names_shp.copy()
         for field in fields:
             prop_thermal_shp[field] = prop_thermal_df_merged[field].copy()
-        prop_thermal_shp.to_file(os.path.join(path_results, 'building_thermal.shp'))
+        prop_thermal_shp.to_file(locator.get_building_thermal())
 
     # get properties about the construction and architecture
     if prop_architecture_flag:
 
         categories_df['cat_architecture'] = categories_df.apply(lambda x: calc_category(x['mainuse'], x['built'],  x['envelope']),axis=1)
 
-        #define architectural characteristics
+        # define architectural characteristics
         prop_architecture_df = categories_df.merge(archetypes, left_on='cat_architecture', right_on='Code')
-
-        # define shading system, window-to-wall ratio,
-        prop_architecture_df['win_wall'] = gv.window_to_wall_ratio
-        prop_architecture_df['type_shade'] = gv.shading_type
 
         # write to shapefile
         prop_architecture_df_merged = names_shp.merge(prop_architecture_df, on="Name")
@@ -123,24 +113,24 @@ def properties(path_archetypes, path_age, path_occupancy, path_results, prop_the
         prop_architecture_shp = names_shp.copy()
         for field in fields:
             prop_architecture_shp[field] = prop_architecture_df_merged[field].copy()
-        prop_architecture_shp.to_file(os.path.join(path_results, 'building_architecture.shp'))
+        prop_architecture_shp.to_file(locator.get_building_architecture())
 
 
     # get properties about types of HVAC systems
-    if prop_HVAC_flag:
+    if prop_hvac_flag:
 
         categories_df['cat_HVAC'] = categories_df.apply(lambda x: calc_category(x['mainuse'], x['built'],  x['HVAC']),axis=1)
 
-        #define HVAC systems types
+        # define HVAC systems types
         prop_HVAC_df = categories_df.merge(archetypes, left_on='cat_HVAC', right_on='Code')
 
         # write to shapefile
         prop_HVAC_df_merged = names_shp.merge(prop_HVAC_df, on="Name")
-        fields = ['type_cs', 'type_hs', 'tshs0','trhs0','tscs0','trcs0','tsww0','trww0']
+        fields = ['type_cs', 'type_hs', 'type_dhw', 'type_ctrl']
         prop_HVAC_shp = names_shp.copy()
         for field in fields:
             prop_HVAC_shp[field] = prop_HVAC_df_merged[field].copy()
-        prop_HVAC_shp.to_file(os.path.join(path_results, 'building_HVAC.shp'))
+        prop_HVAC_shp.to_file(locator.get_building_hvac())
 
 def calc_mainuse(uses_df, uses):
 
@@ -192,19 +182,8 @@ def test_properties():
     Run the properties script with input from the reference case and compare the results. This ensures that changes
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
     """
-    # path_test = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'test')) # old path
-    path_test = 'C:\\' # new path to C:\\ for testing purposes
-    path_archetypes = os.path.join(os.path.dirname(__file__), 'db', 'Archetypes', 'Archetypes_HVAC_properties.csv')
-    path_age = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs','1-buildings', 'building_age.shp')
-    path_occupancy = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs','1-buildings', 'building_occupancy.shp')
-    path_results = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs','1-buildings')
-    prop_thermal_flag = True
-    prop_architecture_flag = True
-    prop_HVAC_flag = True
-
-    properties(path_archetypes, path_age, path_occupancy, path_results, prop_thermal_flag,
-               prop_architecture_flag, prop_HVAC_flag, gv)
-
+    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    properties(locator=locator, prop_thermal_flag=True, prop_architecture_flag=True, prop_hvac_flag=True, gv=gv)
     print 'test_properties() succeeded'
 
 

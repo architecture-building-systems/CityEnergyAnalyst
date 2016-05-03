@@ -4,6 +4,8 @@ ArcGIS Tool classes for integrating the CEA with ArcGIS.
 import os
 import arcpy
 from cea import globalvar
+import inputlocator
+reload(inputlocator)
 
 gv = globalvar.GlobalVariables()
 
@@ -17,20 +19,12 @@ class PropertiesTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        path_age = arcpy.Parameter(
-            displayName="Path to file buildings_age.shp",
-            name="path_age",
-            datatype="DEFile",
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
             parameterType="Required",
             direction="Input")
-        path_age.filter.list = ['shp']
-        path_occupancy = arcpy.Parameter(
-            displayName="Path to file buildings_occupancy.shp",
-            name="path_occupancy",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_occupancy.filter.list = ['shp']
         prop_thermal_flag = arcpy.Parameter(
             displayName="Generate thermal properties of the building envelope",
             name="prop_thermal_flag",
@@ -52,31 +46,21 @@ class PropertiesTool(object):
             parameterType="Required",
             direction="Input")
         prop_HVAC_flag.value = True
-        path_results = arcpy.Parameter(
-            displayName="Path to folder to store results",
-            name="path_results",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        return [path_age, path_occupancy, prop_thermal_flag, prop_architecture_flag,
-                prop_HVAC_flag, path_results]
+        return [scenario_path, prop_thermal_flag, prop_architecture_flag, prop_HVAC_flag]
 
     def execute(self, parameters, messages):
         from cea.properties import properties
-        path_archetypes = os.path.join(
-            os.path.dirname(__file__),
-            'db', 'Archetypes', 'Archetypes_HVAC_properties.csv')
-        path_age = parameters[0]
-        path_occupancy = parameters[1]
-        prop_thermal_flag = parameters[2]
-        prop_architecture_flag = parameters[3]
-        prop_HVAC_flag = parameters[4]
-        path_results = parameters[5]
-        properties(path_archetypes=path_archetypes, path_age=path_age.valueAsText,
-                   path_occupancy=path_occupancy.valueAsText, path_results=path_results.valueAsText,
+
+        scenario_path = parameters[0].valueAsText
+        locator = inputlocator.InputLocator(scenario_path)
+
+        prop_thermal_flag = parameters[1]
+        prop_architecture_flag = parameters[2]
+        prop_HVAC_flag = parameters[3]
+        properties(locator=locator,
                    prop_thermal_flag=prop_thermal_flag.value,
                    prop_architecture_flag=prop_architecture_flag.value,
-                   prop_HVAC_flag=prop_HVAC_flag.value, gv=gv)
+                   prop_hvac_flag=prop_HVAC_flag.value, gv=gv)
 
 
 class DemandTool(object):
@@ -87,70 +71,14 @@ class DemandTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        path_radiation = arcpy.Parameter(
-            displayName="Radiation Path",
-            name="path_radiation",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_radiation.filter.list = ['csv']
-        path_weather = arcpy.Parameter(
-            displayName="Weather Data File Path",
-            name="path_weather",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_weather.filter.list = ['csv']
-        path_hvac_shp = arcpy.Parameter(
-            displayName="Path to file buildings_HVAC.shp",
-            name="path_hvac_shp",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_hvac_shp.filter.list = ['shp']
-        path_thermal_shp = arcpy.Parameter(
-            displayName="Path to file buildings_thermal.shp",
-            name="path_thermal_shp",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_thermal_shp.filter.list = ['shp']
-        path_occupancy_shp = arcpy.Parameter(
-            displayName="Path to file path_occupancy.shp",
-            name="path_occupancy_shp",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_occupancy_shp.filter.list = ['shp']
-        path_geometry_shp = arcpy.Parameter(
-            displayName="Path to file path_geometry.shp",
-            name="path_geometry_shp",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_geometry_shp.filter.list = ['shp']
-        path_age_shp = arcpy.Parameter(
-            displayName="Path to file path_age.shp",
-            name="path_age_shp",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_age_shp.filter.list = ['shp']
-        path_architecture_shp = arcpy.Parameter(
-            displayName="Path to file path_architecture.shp",
-            name="path_architecture_shp",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_architecture_shp.filter.list = ['shp']
-        path_results = arcpy.Parameter(
-            displayName="Demand Results Folder Path",
-            name="path_results",
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
-        return [path_radiation, path_weather, path_hvac_shp, path_thermal_shp, path_occupancy_shp,
-                path_geometry_shp, path_age_shp, path_architecture_shp, path_results]
+
+        return [scenario_path]
 
     def isLicensed(self):
         return True
@@ -164,28 +92,11 @@ class DemandTool(object):
     def execute(self, parameters, messages):
         import cea.demand
         reload(cea.demand)
-        import tempfile
-        path_radiation = parameters[0]
-        path_weather = parameters[1]
-        path_hvac_shp = parameters[2]
-        path_thermal_shp = parameters[3]
-        path_occupancy_shp = parameters[4]
-        path_geometry_shp = parameters[5]
-        path_age_shp = parameters[6]
-        path_architecture_shp = parameters[7]
-        path_results = parameters[8]
 
-        cea.demand.demand_calculation(path_radiation=path_radiation.valueAsText,
-                           path_schedules=os.path.join(os.path.dirname(__file__), 'db', 'Schedules'),
-                           path_temporary_folder=tempfile.gettempdir(),
-                           path_weather=path_weather.valueAsText,
-                           path_results=path_results.valueAsText,
-                           path_hvac_shp=path_hvac_shp.valueAsText,
-                           path_thermal_shp=path_thermal_shp.valueAsText,
-                           path_occupancy_shp=path_occupancy_shp.valueAsText,
-                           path_geometry_shp=path_geometry_shp.valueAsTExt,
-                           path_age_shp=path_age_shp.valueAsText,
-                           path_architecture_shp=path_architecture_shp.valueAsText, gv=gv)
+        scenario_path = parameters[0].valueAsText
+        locator = inputlocator.InputLocator(scenario_path)
+
+        cea.demand.demand_calculation(locator=locator, gv=gv)
 
 
 class EmbodiedEnergyTool(object):
@@ -203,80 +114,14 @@ class EmbodiedEnergyTool(object):
             parameterType="Required",
             direction="Input")
 
-        path_properties = arcpy.Parameter(
-            displayName="Path to properties file (properties.xls)",
-            name="path_properties",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_properties.filter.list = ['xls']
-
-        path_results = arcpy.Parameter(
-            displayName="Path to emissions results folder",
-            name="path_results",
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
 
-        retrofit_windows = arcpy.Parameter(
-            displayName="retrofit windows",
-            name="retrofit_windows",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-
-        retrofit_roof = arcpy.Parameter(
-            displayName="retrofit roof",
-            name="retrofit_roof",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-
-        retrofit_walls = arcpy.Parameter(
-            displayName="retrofit walls",
-            name="retrofit_walls",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-
-        retrofit_partitions = arcpy.Parameter(
-            displayName="retrofit partitions",
-            name="retrofit_partitions",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-
-        retrofit_int_floors = arcpy.Parameter(
-            displayName="retrofit int floors",
-            name="retrofit_int_floors",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-
-        retrofit_installations = arcpy.Parameter(
-            displayName="retrofit installations",
-            name="retrofit_installations",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-
-        retrofit_basement_floor = arcpy.Parameter(
-            displayName="retrofit basement floor",
-            name="retrofit_basement_floor",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-
-        return [path_properties,
-                path_results,
-                yearcalc,
-                retrofit_windows,
-                retrofit_roof,
-                retrofit_walls,
-                retrofit_partitions,
-                retrofit_int_floors,
-                retrofit_installations,
-                retrofit_basement_floor]
+        return [yearcalc, scenario_path]
 
     def isLicensed(self):
         return True
@@ -288,39 +133,14 @@ class EmbodiedEnergyTool(object):
         return
 
     def execute(self, parameters, messages):
-        path_LCA_embodied_energy = os.path.join(
-            os.path.dirname(__file__),
-            'db', 'Archetypes', 'Archetypes_embodied_energy.csv')
-        path_LCA_embodied_emissions = os.path.join(
-            os.path.dirname(__file__),
-            'db', 'Archetypes', 'Archetypes_embodied_emissions.csv')
-
-        path_properties = parameters[0]
-        path_results = parameters[1]
-        yearcalc = parameters[2]
-        retrofit_windows = parameters[3]
-        retrofit_roof = parameters[4]
-        retrofit_walls = parameters[5]
-        retrofit_partitions = parameters[6]
-        retrofit_int_floors = parameters[7]
-        retrofit_installations = parameters[8]
-        retrofit_basement_floor = parameters[9]
-
         from cea.embodied import lca_embodied
-        lca_embodied(
-            path_LCA_embodied_energy=path_LCA_embodied_energy,
-            path_LCA_embodied_emissions=path_LCA_embodied_emissions,
-            path_properties=path_properties.valueAsText,
-            path_results=path_results.valueAsText,
-            yearcalc=int(yearcalc.valueAsText),
-            retrofit_windows=bool(retrofit_windows),
-            retrofit_roof=bool(retrofit_roof),
-            retrofit_walls=bool(retrofit_walls),
-            retrofit_partitions=bool(retrofit_partitions),
-            retrofit_int_floors=bool(retrofit_int_floors),
-            retrofit_installations=bool(retrofit_installations),
-            retrofit_basement_floor=bool(retrofit_basement_floor),
-            gv=gv)
+
+        yearcalc = int(parameters[0].valueAsText)
+        scenario_path = parameters[1].valueAsText
+
+        locator = inputlocator.InputLocator(scenario_path=scenario_path)
+        lca_embodied(yearcalc=yearcalc, locator=locator, gv=gv)
+
 
 
 class EmissionsTool(object):
@@ -331,38 +151,78 @@ class EmissionsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        path_total_demand = arcpy.Parameter(
-            displayName="Energy demand (Total_demand.csv)",
-            name="path_total_demand",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_total_demand.filter.list = ['csv']
-
-        path_LCA_operation = arcpy.Parameter(
-            displayName="LCA operation data (LCA_operation.xls)",
-            name="path_LCA_operation",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_LCA_operation.filter.list = ['xls']
-
-        path_properties = arcpy.Parameter(
-            displayName="Properties File Path (properties.xls)",
-            name="path_properties",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_properties.filter.list = ['xls']
-
-        path_results = arcpy.Parameter(
-            displayName="Results folder",
-            name="path_results",
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
-        return [path_total_demand, path_LCA_operation,
-                path_properties, path_results]
+        Qww_flag = arcpy.Parameter(
+            displayName="Create a separate file with emissions due to hot water consumption.",
+            name="Qww_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        Qww_flag.value = True
+        Qhs_flag = arcpy.Parameter(
+            displayName="Create a separate file with emissions due to space heating.",
+            name="Qhs_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        Qhs_flag.value = True
+        Qcs_flag = arcpy.Parameter(
+            displayName="Create a separate file with emissions due to space cooling.",
+            name="Qcs_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        Qcs_flag.value = True
+        Qcdata_flag = arcpy.Parameter(
+            displayName="Create a separate file with emissions due to servers cooling.",
+            name="Qcdata_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        Qcdata_flag.value = True
+        Qcrefri_flag = arcpy.Parameter(
+            displayName="Create a separate file with emissions due to refrigeration.",
+            name="Qcrefri_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        Qcrefri_flag.value = True
+        Eal_flag = arcpy.Parameter(
+            displayName="Create a separate file with emissions due to appliances and lighting.",
+            name="Eal_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        Eal_flag.value = True
+        Eaux_flag = arcpy.Parameter(
+            displayName="Create a separate file with emissions due to auxiliary electricity.",
+            name="Eaux_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        Eaux_flag.value = True
+        Epro_flag = arcpy.Parameter(
+            displayName="Create a separate file with emissions due to electricity in industrial processes.",
+            name="Epro_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        Epro_flag.value = True
+        Edata_flag = arcpy.Parameter(
+            displayName="Create a separate file with emissions due to electricity consumption in data centers.",
+            name="Edata_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        Edata_flag.value = True
+
+        return [scenario_path, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_flag, Eal_flag, Eaux_flag, Epro_flag,
+                Edata_flag]
 
     def isLicensed(self):
         return True
@@ -375,10 +235,21 @@ class EmissionsTool(object):
 
     def execute(self, parameters, messages):
         from cea.emissions import lca_operation
-        lca_operation(path_total_demand=parameters[0].valueAsText,
-                      path_LCA_operation=parameters[1].valueAsText,
-                      path_properties=parameters[2].valueAsText,
-                      path_results=parameters[3].valueAsText)
+        import inputlocator
+        scenario_path = parameters[0].valueAsText
+        locator = inputlocator.InputLocator(scenario_path)
+        Qww_flag = parameters[1].value
+        Qhs_flag = parameters[2].value
+        Qcs_flag = parameters[3].value
+        Qcdata_flag = parameters[4].value
+        Qcrefri_flag = parameters[5].value
+        Eal_flag = parameters[6].value
+        Eaux_flag = parameters[7].value
+        Epro_flag = parameters[8].value
+        Edata_flag = parameters[9].value
+        lca_operation(locator=locator, Qww_flag=Qww_flag, Qhs_flag=Qhs_flag, Qcs_flag=Qcs_flag, Qcdata_flag=Qcdata_flag,
+                      Qcrefri_flag=Qcrefri_flag, Eal_flag=Eal_flag, Eaux_flag=Eaux_flag, Epro_flag=Epro_flag,
+                      Edata_flag=Edata_flag)
 
 
 class GraphsDemandTool(object):

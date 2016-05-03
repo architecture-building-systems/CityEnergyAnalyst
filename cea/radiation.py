@@ -15,6 +15,8 @@ import tempfile
 import ephem
 import datetime
 from simpledbf import Dbf5
+import pp
+import sys, time
 
 def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitude, longitude, timezone,
                              year, path_dem_raster, weather_daily_data, path_temporary, path_output):
@@ -75,7 +77,7 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     DataFactorsBoundaries = path_temporary + '\\' + 'DataFactorsBoundaries.csv'
     DataFactorsCentroids = path_temporary + '\\' + 'DataFactorsCentroids.csv'
     DataradiationLocation = path_temporary + '\\' + 'RadiationYear.csv'
-    Radiationyearfinal = path_output + '\\' + 'RadiationYearFinal.csv'
+    Radiationyearfinal = path_output + '\\' + 'radiation.csv'
     radiations = []
     
     #get values needed from the weather data file
@@ -108,14 +110,14 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     
     # Calculate radiation
     for day in range(1,366):
-        result = None        
+        result = None
         while result == None:
             try:
                 result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude, path_temporary, aspect_slope, heightoffset)
-            except: 
+            except:
                 pass
     print 'complete raw radiation files'
-    
+
     #run the transformation of files appending all and adding non-sunshine hours
     for day in range(1,366):    
         radiations.append(calc_radiationday(day,T_G_day, path_temporary))
@@ -426,7 +428,7 @@ def test_solar_radiation():
     path_geometry = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs', '1-buildings', 'building_geometry.shp')
     path_terrain = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs', '2-terrain', 'terrain')
     weather_daily_data = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs', '3-weather', 'weather_day.csv')
-    path_output = os.path.join(path_test, 'reference-case','baseline', '2-results', '1-radiation', '1-timeseries', 'radiation.csv')
+    path_output = os.path.join(path_test, 'reference-case','baseline', '2-results', '1-radiation', '1-timeseries')
 
     solar_radiation_vertical(path_geometry, path_boundary, path_default_arcgisDB, latitude, longitude, timezone,
                              year, path_terrain, weather_daily_data, path_temporary_folder, path_output)
