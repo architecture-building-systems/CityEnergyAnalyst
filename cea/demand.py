@@ -87,7 +87,7 @@ def demand_calculation(locator, gv):
     # compute demand
     num_buildings = len(prop_RC_model.index)
     counter = 0
-    for building in prop_RC_model.index:
+    for building in prop_RC_model.index[0:5]:
         f.CalcThermalLoads(building, prop_occupancy.ix[building], prop_architecture.ix[building],
                            prop_thermal.ix[building],
                            prop_geometry.ix[building], prop_HVAC.ix[building], prop_RC_model.ix[building],

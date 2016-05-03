@@ -249,7 +249,11 @@ def calc_Qem_ls(SystemH,SystemC):
     return list(tHC_corr)
 
 def Calc_Im_tot(I_m,Htr_em,te_t,Htr_3,I_st,Htr_w,Htr_1,I_ia,IHC_nd,Hve,Htr_2):
-    return I_m + Htr_em * te_t + Htr_3*(I_st + Htr_w*te_t + Htr_1*(((I_ia + IHC_nd)/Hve) + te_t))/Htr_2
+    # TODO: DOCUMENTATION
+    if Hve != 0:
+        return I_m + Htr_em * te_t + Htr_3*(I_st + Htr_w*te_t + Htr_1*(((I_ia + IHC_nd)/Hve) + te_t))/Htr_2
+    elif Hve == 0: # added this line for calculation w/o ventilation losses (HVAC model)
+        return I_m + Htr_em * te_t + Htr_3*(I_st + Htr_w*te_t + Htr_1*(((I_ia + IHC_nd)/Hve) + te_t))/Htr_2
 
 def calc_TL(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Htr_ms, Htr_is, Htr_1, Htr_2, Htr_3,
             I_st, Hve, Htr_w, I_ia, I_m, Cm, Af, Losses, tHset_corr,tCset_corr, IC_max,IH_max, Flag):
@@ -562,6 +566,9 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
                                                            T_ext[k], ta_hs_set[k], ta_cs_set[k], Htr_em, Htr_ms, Htr_is, Htr_1[k],
                                                            Htr_2[k], Htr_3[k], I_st[k], Hve[k], Htr_w, I_ia[k], I_m[k], Cm, Af, Losses,
                                                            tHset_corr,tCset_corr,IC_max,IH_max, Flag_season)
+            print('Ta from calc_TL', Ta[k])
+            print('Qhs_sen from calc_TL', Qhs_sen[k])
+            print('Qcs_sen from calc_TL', Qcs_sen[k])
 
             # Calc of Qhs_em_ls/Qcs_em_ls - losses due to emission systems in W
             Losses = True
@@ -592,10 +599,10 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
                 Qcs_sen_incl_em_ls[k] = 0
             if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
                 QHC_sen[k] = Qhs_sen[k] + Qcs_sen[k] + Qhs_em_ls[k] + Qcs_em_ls[k]
-                temporal_Qhs, temporal_Qcs, Qhs_lat[k], Qcs_lat[k], Ehs_lat_aux[k], ma_sup_hs[k], ma_sup_cs[k], Ta_sup_hs[k], Ta_sup_cs[k], Ta_re_hs[k], Ta_re_cs[k], w_re[k], w_sup[k], t5[k] =  calc_HVAC(sys_e_heating, sys_e_cooling,
-                                                                                                            people[k],RH_ext[k], T_ext[k],Ta[k],
-                                                                                                            qv_req[k],Flag_season, QHC_sen[k],t5_1,
-                                                                                                            w_int[k],gv)
+                temporal_Qhs, temporal_Qcs, Qhs_lat[k], Qcs_lat[k], Ehs_lat_aux[k], ma_sup_hs[k], ma_sup_cs[k], Ta_sup_hs[k], Ta_sup_cs[k], Ta_re_hs[k], Ta_re_cs[k], w_re[k], w_sup[k], t5[k] =  calc_HVAC(
+                                                                                                            RH_ext[k], T_ext[k],Ta[k],
+                                                                                                            qv_req[k],QHC_sen[k],t5_1,
+                                                                                                            w_int[k],gv, 35, 16) # TODO: get supply temperatures from properties
                 t5_1 = t5[k]
                 if sys_e_heating == 'T3':
                     Qhs_sen_incl_em_ls[k] = temporal_Qhs
@@ -801,7 +808,9 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
                   'Trcs_C':Tcs_re, 'mcpcs_kWC':mcpcs,'Qcdataf_kWh':Qcdata/1000, 'Tsww_C':Tww_sup_0,'Trww_C':Tww_re,
                   'Tww_tank_C':Tww_st,'Ef_kWh':(Ealf+Eauxf+Epro)/1000, 'Epro_kWh':Epro/1000,'Qcref_kWh':Qcrefri/1000,
                   'Edataf_kWh':Edata/1000, 'QHf_kWh':(Qwwf+Qhsf)/1000,
-                  'QCf_kWh':(-1*Qcsf+Qcdata+Qcrefri)/1000}).to_csv(locationFinal+'\\'+Name+'.csv',
+                  'QCf_kWh':(-1*Qcsf+Qcdata+Qcrefri)/1000,
+                  'Qhs_sen_incl_em_ls':Qhs_sen_incl_em_ls/1000,'Qcs_sen_incl_em_ls':Qcs_sen_incl_em_ls/1000,'Qhs_lat':Qhs_lat/1000,'Qcs_lat': Qcs_lat/1000  } # TODO: remove again
+                 ).to_csv(locationFinal+'\\'+Name+'.csv',
                                                                    index=False, float_format='%.2f')
 
 
@@ -832,7 +841,7 @@ def calc_HVAC(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_s
     t1 -- external air temperature at time step t
     tair --
     qv_req -- ventilation requirements at time step t according to the mixed occupancy schedule of the building
-    Qsen -- sensible heating or cooling load to be supplied by the HVAC system at time step t
+    Qsen -- sensible heating or cooling load to be supplied by the HVAC system at time step t in [W]
     t5_1 -- zone air temperature at time step t-1
     wint -- internal moisture gains at time step t according to the mixed occupancy schedule of the building
     gv -- object of class globalvar
@@ -847,6 +856,7 @@ def calc_HVAC(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_s
 
     # State No. 5 # indoor air set point
     t5_prime = tair + 1 # accounding for an increase in temperature # TODO: where is this from? why use calculated tair and not the setpoint temperature? why +1?
+    print(t5_prime)
     if Qsen != 0:
         #sensiblea nd latennt loads
         Qsen = Qsen*0.001 # transform in kJ/s
@@ -873,36 +883,49 @@ def calc_HVAC(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_s
         # initial guess of mass flow rate
         h_t5_prime_w3 = calc_h(t5_prime, w3) # for enthalpy change in first assumption, see Eq.(4.31) in [1]
         h_t3_w3 = calc_h(t3, w3) # for enthalpy change in first assumption, see Eq.(4.31) in [1]
-        m1 = max(Qsen/(h_t5_prime_w3-h_t3_w3), (gv.Pair*qv))  # Eq. (4.34) in [1] for first prediction of mass flow rater in (kg/s)
+        print(-Qsen/(h_t5_prime_w3-h_t3_w3), (gv.Pair*qv))
+        m1 = max(-Qsen/(h_t5_prime_w3-h_t3_w3), (gv.Pair*qv))  # Eq. (4.34) in [1] for first prediction of mass flow rater in (kg/s)
 
         # determine virtual state in the zone without moisture conditioning
-        c_p_air_w3 = 1.005 + 1.82*w3  # heat capacity of humid air, source: https: // en.wiktionary.org / wiki / humid_heat
-        t5 = Qsen/(m1*c_p_air_w3)+t3  # Eq. (4.31) in [1]
-        w5 = (wint+w3*m1)/m1  # moisture balance accounting for internal moisture load, see also Eq. (4.32) in [1]
+        # c_p_air_w3 = (1.005 + 1.82*w3)  # heat capacity of humid air (kJ/(kg*K)), source: https: // en.wiktionary.org / wiki / humid_heat
+        # t5 = -Qsen/(m1*c_p_air_w3)+t3  # Eq. (4.31) in [1]
+        # print(t5)
+        w5_prime = (wint+w3*m1)/m1  # moisture balance accounting for internal moisture load, see also Eq. (4.32) in [1]
 
 
         #room supply moisture content:
         # liminf= calc_w(t5,30) TODO: remove
         # limsup = calc_w(t5,70) TODO: remove
         if Qsen > 0:  # if heating
-            w3 = calc_w3_heating_case(t5, w2, w5, t3)
-            # TODO: ts = t3 + 0.5
+            w3 = calc_w3_heating_case(t5_prime, w2, w5_prime, t3)
+            ts = t3 + 0.5  # plus expected delta T drop in the ducts
         elif Qsen < 0:  # if cooling
-            w3 = calc_w3_cooling_case(t5, w2, t3, w5)
-            # TODO: ts = t3 - 0.5
+            w3 = calc_w3_cooling_case(t5_prime, w2, t3, w5_prime)
+            ts = t3 - 0.5  # minus expected delta T rise in the ducts
 
         # State of Supply
         ws = w3
-        ts = t3 - 0.5 # minus the expected delta T rise temperature in the ducts # FIXME drop or rise as function of heating/cooling? TODO: remove
+        # ts = t3 - 0.5 # minus the expected delta T rise temperature in the ducts # FIXME drop or rise as function of heating/cooling? TODO: remove
 
         # the new mass flow rate
-        h_t5_w3 = calc_h(t5, w3)
+        h_t5_prime_w3 = calc_h(t5_prime, w3)
         h_t3_w3 = calc_h(t3, w3)
-        m = max(Qsen/(h_t5_w3-h_t3_w3), (gv.Pair*qv)) #kg/s # from the point of view of internal loads # FIXME other formula than in soure, in this way the mass flow rate is not influenced by the calculations above
+        m = max(-Qsen/(h_t5_prime_w3-h_t3_w3), (gv.Pair*qv)) #kg/s # from the point of view of internal loads # FIXME other formula than in soure, in this way the mass flow rate is not influenced by the calculations above
+        print(-Qsen / (h_t5_prime_w3 - h_t3_w3), (gv.Pair * qv))
 
         # TODO: now the energy of humidification and dehumidification can be calculated
-        # Qhum = lvapor*m*(w3 - w2)*1000 # in Watts
-        # Qdhum = lvapor*m*(w3 - w2)*1000 # in Watt
+        q_hum_dehum = gv.lvapor*m*(w3 - w2)*1000 # in Watts
+        if q_hum_dehum > 0:
+            Qhum = q_hum_dehum
+            Qdhum = 0
+        elif q_hum_dehum < 0:
+            Qhum = 0
+            Qdhum = q_hum_dehum
+        else:
+            Qhum = 0
+            Qdhum = 0
+        # Qdhum = gv.lvapor*m*(w3 - w2)*1000 # in Watt
+        # print('Qhum', Qhum)
 
         # Total loads
         h_t2_w2 = calc_h(t2, w2)
@@ -946,6 +969,7 @@ def calc_HVAC(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_s
         ma_hs = ts_hs = tr_hs = ts_cs = tr_cs = ma_cs =  0
 
         # TODO: return air mass flow rates
+    t5 = t5_prime # FIXME: this should not be input or output of this function
     
     return Qhs_sen, Qcs_sen, Qhum, Qdhum, Ehum_aux, ma_hs, ma_cs, ts_hs, ts_cs, tr_hs, tr_cs, w2 , w3, t5
 
@@ -981,15 +1005,18 @@ def calc_w3_heating_case(t5, w2, w5, t3):
     if w5 < w_liminf:
         # humidification
         w3 = w_liminf - w5 + w2
+        print('heating with humidification')
         # Qhum = lvapor*m*(w3 - w2)*1000 # in Watts # TODO: I think this should be calculated using the corrected mass flow rate
     elif w5 > w_limsup and w5  < w_comf_max:
         # heating and no dehumidification
         #delta_HVAC = calc_t(w5,70)-t5
         w3 = w2
+        print('heating without humidification')
     elif w5 > w_comf_max: # FIXME in the source the comparison is to w(26,70)
         # dehumidification
         w3 = max(min(min(w_comf_max-w5+w2, calc_w(t3, 100)), w_limsup-w5+w2), 0)
         # Qdhum = lvapor*m*(w3 - w2)*1000 # in Watts # TODO: I think this should be calculated using the corrected mass flow rate
+        print('heating with dehumidification')
     else:
         # no moisture control
         w3 = w2
@@ -1018,13 +1045,16 @@ def calc_w3_cooling_case(t5, w2, t3, w5):
     # Qdhum = 0 TODO: remove
     if w5 > w_limsup:
         #dehumidification
+        print('cooling with dehumidification')
         w3 = max(min(w_limsup-w5+w2, calc_w(t3, 100)), 0)
         # Qdhum = lvapor*m*(w3 - w2)*1000 # in Watts TODO: I think this should be calculated using the corrected mass flow rate
     elif w5 < w_liminf:
         # humidification
+        print('cooling with humidification')
         w3 = w_liminf-w5+w2
         # Qhum = lvapor*m*(w3 - w2)*1000 # in Watts TODO: I think this should be calculated using the corrected mass flow rate
     else:
+        print('cooling without humidification/dehumidification')
         w3 = min(w2, calc_w(t3, 100))
     return w3
 
