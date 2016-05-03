@@ -1,6 +1,6 @@
 """
 ===========================
-Solar vertical insolation algorithm based on Arcpy Solar analyst
+Solar vertical insolation algorithm based on ArcGIS Solar Analyst
 ===========================
 File history and credits:
 J. A. Fonseca  script development          10.08.13
@@ -8,15 +8,16 @@ J. A. Fonseca  adaptation for CEA tool     12.04.16
 
 """
 from __future__ import division
-import arcpy
-import pandas as pd
+
+import datetime
 import os
 import tempfile
+
+import arcpy
 import ephem
-import datetime
+import pandas as pd
 from simpledbf import Dbf5
-import pp
-import sys, time
+
 
 def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitude, longitude, timezone,
                              year, path_dem_raster, weather_daily_data, path_temporary, path_output):
@@ -70,7 +71,7 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     #local variables
     aspect_slope = "FROM_DEM"
     heightoffset = 1
-    Simple_CQ = path_arcgisDB +'\\'+'Simple_CQ'
+    Simple_CQ = path_arcgisDB + '\\' + 'Simple_CQ'
     Simple_context = path_arcgisDB +'\\'+'Simple_context'
     dem_rasterfinal = path_arcgisDB + '\\' + 'DEM_All2'
     observers = path_arcgisDB+'\\'+'observers'
@@ -85,7 +86,7 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     
     #calculate sunrise
     T_G_day['sunrise'] = 0
-    T_G_day =  calc_sunrise(T_G_day,year,timezone,longitude,latitude)
+    T_G_day = calc_sunrise(T_G_day,year,timezone,longitude,latitude)
 
     # Select buildings
     buildings_selection = path_arcgisDB +'\\'+'building_selection'
@@ -118,7 +119,7 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
                 pass
     print 'complete raw radiation files'
 
-    #run the transformation of files appending all and adding non-sunshine hours
+    # run the transformation of files appending all and adding non-sunshine hours
     for day in range(1,366):    
         radiations.append(calc_radiationday(day,T_G_day, path_temporary))
 
@@ -368,11 +369,11 @@ def CalcBoundaries (Simple_CQ,locationtemp1, locationtemp2, DataFactorsCentroids
             SecondaryJoin.loc[row,'FactorShade'] = 1
             SecondaryJoin.loc[row,'Freeheight'] = abs(SecondaryJoin.loc[row,'height_ag_y']- SecondaryJoin.loc[row,'height_ag_x'])
 
-    #Create and export Secondary Join with results, it will be Useful for the function CalcObservers
+    # Create and export Secondary Join with results, it will be Useful for the function CalcObservers
     SecondaryJoin.to_csv(DataFactorsBoundaries,index=False)
 
-    #Update table Datacentroids with the Fields Freeheight and Factor Shade. for those buildings without
-    #shading boundaries these factors are equal to 1 and the field 'height' respectively.
+    # Update table Datacentroids with the Fields Freeheight and Factor Shade. for those buildings without
+    # shading boundaries these factors are equal to 1 and the field 'height' respectively.
     DataCentroids['FactorShade'] = 1
     DataCentroids['Freeheight'] = DataCentroids['height_ag']
     Results = DataCentroids.merge(SecondaryJoin, left_on='ORIG_FID', right_on='ORIG_FID_x', how='outer')
@@ -387,12 +388,12 @@ def CalcBoundaries (Simple_CQ,locationtemp1, locationtemp2, DataFactorsCentroids
 
 def Burn(Buildings,DEM,DEMfinal,locationtemp1, DEM_extent):
 
-    #Create a raster with all the buildings
+    # Create a raster with all the buildings
     Outraster = locationtemp1+'\\'+'AllRaster'
     arcpy.env.extent = DEM_extent #These coordinates are extracted from the environment settings/once the DEM raster is selected directly in ArcGIS,
     arcpy.FeatureToRaster_conversion(Buildings,'height_ag',Outraster,'0.5') #creating raster of the footprints of the buildings
 
-    #Clear non values and add all the Buildings to the DEM
+    # Clear non values and add all the Buildings to the DEM
     OutNullRas = arcpy.sa.IsNull(Outraster) # identify noData Locations
     Output = arcpy.sa.Con(OutNullRas == 1,0,Outraster)
     RadiationDEM = arcpy.sa.Raster(DEM) + Output
@@ -417,20 +418,20 @@ def calc_sunrise(T_G_day,Yearsimul,timezone,longitude,latitude):
 
 def test_solar_radiation():
 
-    latitude =  46.95240555555556
+    latitude = 46.95240555555556
     longitude = 7.439583333333333
     timezone = 1
     year = 2014
     path_temporary_folder = tempfile.gettempdir()
-    path_test =  'C:\\'
-    path_default_arcgisDB = r'C:\Users\Jimeno\Documents\ArcGIS\Default.gdb'
+    path_test = 'C:\\'
+    path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
     path_boundary = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs', '1-buildings', 'zone_of_study.shp')
     path_geometry = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs', '1-buildings', 'building_geometry.shp')
     path_terrain = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs', '2-terrain', 'terrain')
     weather_daily_data = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs', '3-weather', 'weather_day.csv')
     path_output = os.path.join(path_test, 'reference-case','baseline', '2-results', '1-radiation', '1-timeseries')
 
-    solar_radiation_vertical(path_geometry, path_boundary, path_default_arcgisDB, latitude, longitude, timezone,
+    solar_radiation_vertical(path_geometry, path_boundary, path_default_arcgis_db, latitude, longitude, timezone,
                              year, path_terrain, weather_daily_data, path_temporary_folder, path_output)
 
 
