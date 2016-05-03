@@ -622,7 +622,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         Ths_sup = Ths_re = Tcs_re = Tcs_sup = mcphs = mcpcs = mcpww = Vww = Tww_re = Tww_st = uncomfort = np.zeros(8760) # in C
 
     # calc electrical loads
-    Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot = calc_loads_electrical(Aef, Eal_nove, Ealf_0,
+    Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot = calc_loads_electrical(Aef, Eal_nove,
                                                                                                 Eauxf, Edataf, Eprof)
 
     # write results to csv
@@ -653,7 +653,7 @@ def calc_comp_heat_gains_sensible(Am, Atot, Htr_w, I_int_sen, I_sol):
     return I_ia, I_m, I_st
 
 
-def calc_loads_electrical(Aef, Eal_nove, Ealf_0, Eauxf, Edataf, Eprof):
+def calc_loads_electrical(Aef, Eal_nove, Eauxf, Edataf, Eprof):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
     if Aef > 0:
