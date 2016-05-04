@@ -58,8 +58,8 @@ def graphs_demand(locator, analysis_fields):
 
         # save to disc
         plt.savefig(locator.get_demand_plots_file(name))
-        plt.close()
         plt.clf()
+        plt.close()
 
         print 'Building No. ' + str(counter + 1) + ' completed out of ' + str(num_buildings)
         counter += 1
