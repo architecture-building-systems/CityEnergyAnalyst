@@ -454,7 +454,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         Tcs_sup_0 = prop_HVAC.Tscs0_C
         Tcs_re_0 = Tcs_sup_0 + prop_HVAC.dTcs0_C
         Tww_sup_0 = prop_HVAC.Tsww0_C
-        Tww_re_0 = Tww_sup_0 + prop_HVAC.dTww0_C
+        Tww_re_0 = Tww_sup_0 - prop_HVAC.dTww0_C
 
         # we define limtis of season.
         limit_inf_season = gv.seasonhours[0]+1
