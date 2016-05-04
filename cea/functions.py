@@ -8,7 +8,7 @@ import pandas as pd
 import scipy
 import scipy.optimize as sopt
 
-from cea import storagetank_mixed as sto_m
+import storagetank_mixed as sto_m
 
 
 def calc_mainuse(uses_df, uses):
@@ -929,7 +929,7 @@ def calc_dhw_heating_demand(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta,
     # calculate heat loss and temperature in dhw tank
     for k in range(8760):
         Qww_ls_st[k], Qd[k], Qwwf[k] = sto_m.calc_Qww_ls_st(Tww_st_0, gv.Tww_setpoint, Ta[k], gv.Bf, T_ext[k], Vww_0,
-                                                            Qww[k], Qww_ls_r[k], Qww_ls_nr[k], gv.U_dhwtank, gv.AR)
+                                                            Qww[k], Qww_ls_r[k], Qww_ls_nr[k], gv.U_dhwtank, gv.AR, gv)
         Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_ls_st[k], Qd[k], Qwwf[k], gv.Pwater, gv.Cpw, Vww_0)
         Tww_st_0 = Tww_st[k]
     Qwwf_0 = Qwwf.max()
