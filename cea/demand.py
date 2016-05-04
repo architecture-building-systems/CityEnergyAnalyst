@@ -16,7 +16,6 @@ import globalvar
 from geopandas import GeoDataFrame as gpdf
 import inputlocator
 
-gv = globalvar.GlobalVariables()
 reload(f)
 reload(globalvar)
 
@@ -137,6 +136,7 @@ def get_temperatures(locator, prop_HVAC):
 
 def test_demand():
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    gv = globalvar.GlobalVariables()
     demand_calculation(locator=locator, gv=gv)
 
 
