@@ -15,11 +15,8 @@ Output variables: Qww_ls_st(sensible heat loss from storage tank), Tww_st(storag
 import numpy as np
 from scipy.integrate import odeint
 import math
-import cea.globalvar
 
-gv = cea.globalvar.GlobalVariables()
-
-def calc_Qww_ls_st(Tww_st, Tww_setpoint, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_nr, Utank, AR ):
+def calc_Qww_ls_st(Tww_st, Tww_setpoint, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_nr, Utank, AR, gv):
     """
     This algorithm calculates the heat flows within a fully mixed water storage tank.
     Heat flows include sensible heat loss to the environment (ql), heat charged into the tank (qc), and heat discharged from the tank (qd).
