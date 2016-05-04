@@ -167,9 +167,15 @@ def Calc_form(Lw,Ll,footprint):
     return factor
 
 def Calc_Tm(Htr_3,Htr_1,tm_t0,Cm,Htr_em,Im_tot,Htr_ms,I_st,Htr_w,te_t,I_ia,IHC_nd,Hve,Htr_is):
+    # TODO: Document
+
+
     tm_t = (tm_t0 *((Cm/3600)-0.5*(Htr_3+ Htr_em))+ Im_tot)/((Cm/3600)+0.5*(Htr_3+Htr_em))
     tm = (tm_t+tm_t0)/2
-    ts = (Htr_ms * tm + I_st + Htr_w*te_t + Htr_1*(te_t+(I_ia+IHC_nd)/Hve))/(Htr_ms+Htr_w+Htr_1)
+    if Hve != 0:
+        ts = (Htr_ms * tm + I_st + Htr_w*te_t + Htr_1*(te_t+(I_ia+IHC_nd)/Hve))/(Htr_ms+Htr_w+Htr_1)
+    elif Hve == 0:  # added this line for the case of Hve = 0 to avoid division by zero
+        ts = (Htr_ms * tm + I_st + Htr_w*te_t + Htr_1*(te_t))/(Htr_ms+Htr_w+Htr_1) # TODO: check if equation still valid
     ta = (Htr_is*ts + Hve*te_t + I_ia + IHC_nd)/(Htr_is+Hve)
     top = 0.31*ta+0.69*ts
     return tm, ts, ta, top
@@ -251,7 +257,7 @@ def Calc_Im_tot(I_m,Htr_em,te_t,Htr_3,I_st,Htr_w,Htr_1,I_ia,IHC_nd,Hve,Htr_2):
     if Hve != 0:
         return I_m + Htr_em * te_t + Htr_3*(I_st + Htr_w*te_t + Htr_1*(((I_ia + IHC_nd)/Hve) + te_t))/Htr_2
     elif Hve == 0: # added this line for calculation w/o ventilation losses (HVAC model)
-        return I_m + Htr_em * te_t + Htr_3*(I_st + Htr_w*te_t + Htr_1*(((I_ia + IHC_nd)/Hve) + te_t))/Htr_2
+        return I_m + Htr_em * te_t + Htr_3*(I_st + Htr_w*te_t + Htr_1*(te_t))/Htr_2 # TODO: check if equation is still valid
 
 def calc_TL(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Htr_ms, Htr_is, Htr_1, Htr_2, Htr_3,
             I_st, Hve, Htr_w, I_ia, I_m, Cm, Af, Losses, tHset_corr,tCset_corr, IC_max,IH_max, Flag):

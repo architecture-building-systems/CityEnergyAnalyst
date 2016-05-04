@@ -13,6 +13,11 @@ Reference:
     Berechnungsmethoden zur Bestimmung der Luftvolumenströme in Gebäuden inklusive Infiltration;
     Deutsche Fassung prEN 16798-7:2014
 
+[2] Wärmetechnisches Verhalten von Gebäuden –
+    Bestimmung der Luftdurchlässigkeit von Gebäuden –
+    Differenzdruckverfahren (ISO 9972:2015);
+    Deutsche Fassung EN ISO 9972:2015
+
 """
 
 from __future__ import division
@@ -208,6 +213,16 @@ def calc_delta_p_path(p_zone_ref, height_path, temp_zone, coeff_wind_pressure_pa
 # ++++ LEAKAGES ++++
 
 
+# calculate airflow at reference pressure according to 6.3.2 in [2]
+def calc_qv_delta_p_ref(n_delta_p_ref, vol_building):
+
+    # Eq. (9) in [2]
+    # -- n_delta_p_ref = air changes at reference pressure [1/h]
+    # -- vol_building = building_volume [m3]
+
+    return n_delta_p_ref * vol_building
+
+
 #  calculate volume air flow of single leakage path according to 6.4.3.6.5 in [1]
 def calc_qv_lea_path(coeff_lea_path, delta_p_lea_path):
     # default values in [1]
@@ -220,14 +235,14 @@ def calc_qv_lea_path(coeff_lea_path, delta_p_lea_path):
 
 
 # calculate default leakage coefficient of zone according to B.1.3.16 in [1]
-def calc_coeff_lea_zone(qv_delta_p_lea_ref, area_lea):
+def calc_coeff_lea_zone(qv_delta_p_lea_ref):
     # default values in [1]
     # TODO reference global variables
     delta_p_lea_ref = 50  # (Pa), B.1.3.14 in [1]
     n_lea = 0.667  # (-), B.1.3.15 in [1]
 
-    # Eq. (B.5) in [1]
-    coeff_lea_zone = qv_delta_p_lea_ref * area_lea / (delta_p_lea_ref ** n_lea)
+    # Eq. (B.5) in [1] # TODO: Formula assumed to be wrong in [1], corrected to match Eq. (8) in [2]
+    coeff_lea_zone = qv_delta_p_lea_ref / (delta_p_lea_ref ** n_lea)
 
     return coeff_lea_zone
 
@@ -276,7 +291,7 @@ def allocate_default_leakage_paths(coeff_lea_zone, area_facade_zone, area_roof_z
 def calc_qm_lea(qv_delta_p_lea_ref_zone, area_lea_zone, area_facade_zone, area_roof_zone, height_zone, class_shielding,
                 slope_roof, factor_cros, p_zone_ref, temp_zone, u_wind_site, temp_ext):
     # calculate leakage coefficient of zone
-    coeff_lea_zone = calc_coeff_lea_zone(qv_delta_p_lea_ref_zone, area_lea_zone)
+    coeff_lea_zone = calc_coeff_lea_zone(qv_delta_p_lea_ref_zone)
 
     # allocate default leakage paths
     coeff_lea_path, height_lea_path, orientation_lea_path = allocate_default_leakage_paths(coeff_lea_zone,
@@ -588,7 +603,9 @@ def calc_air_flow_mass_balance(p_zone_ref, geodataframe_geometry_building, dataf
     # TODO the idea is that the inputs to this functions consist of handles (or similar) to a building geometry in the buildings file, to the climate file, etc.
 
     # for testing the scripts
-    qv_delta_p_lea_ref_zone = 500  # (m3/h), 1 ACH
+    n50 = 1
+    vol_building = geodataframe_geometry_building.area.iloc[0] + geodataframe_geometry_building['height_ag'].iloc[0]
+    qv_delta_p_lea_ref_zone = calc_qv_delta_p_ref(n50, vol_building)
     area_lea_zone = 0.2  # (m2) ?
     # area_facade_zone = 200  # (m2)
     # area_roof_zone = 100  # (m2)
@@ -612,7 +629,9 @@ def calc_air_flow_mass_balance(p_zone_ref, geodataframe_geometry_building, dataf
     qm_comb_out = 0
     qm_pdu_in = 0
     qm_pdu_out = 0
-    qm_arg_in, qm_arg_out = calc_q_v_arg(factor_cros, temp_ext, dataframe_windows_building, u_wind_10, temp_zone, r_window_arg)
+    qm_arg_in = qm_arg_out = 0
+    if not dataframe_windows_building.empty:
+        qm_arg_in, qm_arg_out = calc_q_v_arg(factor_cros, temp_ext, dataframe_windows_building, u_wind_10, temp_zone, r_window_arg)
     qm_vent_in, qm_vent_out = calc_qm_vent(area_vent_zone, height_zone, class_shielding, factor_cros, p_zone_ref,
                                            temp_zone, u_wind_site, temp_ext)
     qm_lea_in, qm_lea_out = calc_qm_lea(qv_delta_p_lea_ref_zone, area_lea_zone, area_facade_zone, area_roof_zone,
@@ -621,7 +640,7 @@ def calc_air_flow_mass_balance(p_zone_ref, geodataframe_geometry_building, dataf
 
     # mass balance, Eq. (69) in [1]
     qm_balance = qm_sup_dis + qm_eta_dis + qm_lea_sup_dis + qm_lea_eta_dis + qm_comb_in + qm_comb_out + qm_pdu_in + qm_pdu_out + qm_arg_in + qm_arg_out + qm_vent_in + qm_vent_out + qm_lea_in + qm_lea_out
-
+    print('iterate air flows')
     print(qm_arg_in, qm_arg_out)
     print(qm_vent_in, qm_vent_out)
     print(qm_lea_in, qm_lea_out)
@@ -635,13 +654,16 @@ def calc_air_flow_mass_balance(p_zone_ref, geodataframe_geometry_building, dataf
 
 
 # ++++ CALCULATION PROCEDURE ++++
-def calc_thermal_loads(sys_e_heating, sys_e_cooling, qv_req, t_hour, gv, tm_t0, temp_ext, ta_hs_set, ta_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_tr_w, i_ia, i_m, cm, af, losses, tHset_corr, tCset_corr, ic_max, ih_max, flag_season, rh_ext, t5_1, w_int, temp_comfort):
+def calc_thermal_loads(sys_e_heating, sys_e_cooling, qv_req, t_hour, gv, tm_t0, temp_ext, ta_hs_set, ta_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_tr_w, i_ia, i_m, cm, af, losses, tHset_corr, tCset_corr, ic_max, ih_max, flag_season, rh_ext, t5_1, w_int, temp_comfort, geometry_building_test, windows_building_test):
 
     """assumption if building has HVAC system:
     - all ventilation is mechanically controlled ventilation
     - building has no infiltration (pressurized)
     - building has no other ventilation (windows can not be opened)
     -> no ventilation losses in thermal load calculation, Hve = 0"""
+
+    # initialize outputs
+    temp_m = temp_a = q_hs_sen = q_cs_sen = uncomfort = temp_op = i_m_tot = temporal_Qhs = temporal_Qcs = Qhs_lat = Qcs_lat = Ehs_lat_aux = ma_sup_hs = ma_sup_cs = Ta_sup_hs = Ta_sup_cs = Ta_re_hs = Ta_re_cs = w_re = w_sup = t5 = 0
 
     # we define limits of season
     t_stop_heating_season = gv.seasonhours[0] + 1
@@ -698,23 +720,28 @@ def calc_thermal_loads(sys_e_heating, sys_e_cooling, qv_req, t_hour, gv, tm_t0, 
     elif sys_e_cooling != 'T3' and sys_e_heating != 'T3':
 
         print('natural ventilation')
+        status_windows = 0
+        qm_sum_in, qm_sum_out = calc_air_flows(geometry_building_test, windows_building_test,
+                                               status_windows)
+        qm_tot = qm_sum_in * 3600  # (kg/h)
 
+        if not windows_building_test.empty:
+            status_windows = numpy.array([0.1, 0.5, 0.9])
 
-        status_windows = numpy.array([0, 0.1, 0.5, 0.9])
+            # test if air flows satisfy requirements
+            # test ventilation with closed windows
+            index_window_opening = 0
+            while qm_tot < qv_req*calc_rho_air(temp_ext):
 
-        # test if air flows satisfy requirements
-        # test ventilation with closed windows
-        index_window_opening = 0
-        while qm_tot < qv_req*calc_rho_air(temp_ext):
+                # increase window opening
+                print('increase window opening')
+                qm_sum_in, qm_sum_out = calc_air_flows(geometry_building_test, windows_building_test, status_windows[index_window_opening])
+                qm_tot = qm_sum_in*3600 #(kg/h)
+                if index_window_opening < status_windows.size:
+                    index_window_opening = index_window_opening + 1
 
-            # increase window opening
-            qm_sum_in, qm_sum_out = calc_air_flows(geometry_building_test, windows_building_test, status_windows[index_window_opening])
-            qm_tot = qm_sum_in*3600 #(kg/h)
-            if index_window_opening < status_windows.size:
-                index_window_opening = index_window_opening + 1
-
-            elif index_window_opening == status_windows.size:
-                break
+                elif index_window_opening == status_windows.size:
+                    break
 
         # calculate h_ve
         h_ve = qm_tot*gv.Cpa  # (kJ/(hK))
@@ -732,7 +759,7 @@ def calc_thermal_loads(sys_e_heating, sys_e_cooling, qv_req, t_hour, gv, tm_t0, 
 
         # check for overheating
         # in case of overheating: open windows to the maximum
-        if temp_a > temp_comfort:
+        if temp_a > temp_comfort and not dataframe_windows.empty:
 
             # message
             print('opening windows for overheating prevention')
@@ -831,13 +858,15 @@ if __name__ == '__main__':
     # this will be the function to minimize by a slover
     # qm_balance = calc_air_flow_mass_balance(p_zone_ref)
 
-    sys_e_heating = 'T3'
-    sys_e_cooling = 'T3'
-    area_floor = 100 * 3
+    sys_e_heating = 'T1'
+    sys_e_cooling = 'T1'
+    temp_ext = 5
+    area_floor = geometry_building_test.area.iloc[0]
     qv_req = 2 / 3600 * area_floor
+    print(qv_req*calc_rho_air(temp_ext))
     w_int = 5 / (1000 * 3600) * area_floor  # internal moisture gains
     rh_ext = 60
-    temp_ext = 5
+
     temp_zone = 22
     q_sensible = -20
     t_zone_prev = 22
@@ -880,9 +909,9 @@ if __name__ == '__main__':
 
 
 
-    calc_thermal_loads(sys_e_heating, sys_e_cooling, qv_req, t_hour, gv, tm_t0, temp_ext, ta_hs_set, ta_cs_set, h_tr_em,
+    res = calc_thermal_loads(sys_e_heating, sys_e_cooling, qv_req, t_hour, gv, tm_t0, temp_ext, ta_hs_set, ta_cs_set, h_tr_em,
                        h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_tr_w, i_ia, i_m, cm, af, losses, tHset_corr,
-                       tCset_corr, ic_max, ih_max, flag_season, rh_ext, t5_1, w_int, temp_comfort)
+                       tCset_corr, ic_max, ih_max, flag_season, rh_ext, t5_1, w_int, temp_comfort, geometry_building_test, windows_building_test)
 
 
-    # print(res)
+    print(res)
