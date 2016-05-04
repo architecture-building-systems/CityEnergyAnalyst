@@ -260,34 +260,44 @@ class GraphsDemandTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        path_buildings = arcpy.Parameter(
-            displayName="Buildings file",
-            name="path_buildings",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_buildings.filter.list = ['shp']
-        path_results_demand = arcpy.Parameter(
-            displayName="Demand Folder Path",
-            name="path_results_demand",
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
-        path_results = arcpy.Parameter(
-            displayName="Graphs Demand Results Folder Path",
-            name="path_results",
-            datatype="DEFolder",
+        analysis_fields = arcpy.Parameter(
+            displayName="Variables to analyse",
+            name="analysis_fields",
+            datatype="String",
             parameterType="Required",
+            multiValue=True,
             direction="Input")
-        return [path_buildings, path_results_demand,
-                path_results]
+        analysis_fields.filter.list = []
+        return [scenario_path, analysis_fields]
+
+    def updateParameters(self, parameters):
+        import pandas as pd
+        scenario_path = parameters[0].valueAsText
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+        analysis_fields = parameters[1]
+        locator = inputlocator.InputLocator(scenario_path)
+        df_total_demand = pd.read_csv(locator.get_total_demand())
+        first_building = df_total_demand['Name'][0]
+        df_building = pd.read_csv(locator.get_demand_results_file(first_building))
+        fields = set(df_building.columns.tolist())
+        fields.remove('DATE')
+        analysis_fields.filter.list = list(fields)
+        return
 
     def execute(self, parameters, messages):
         from cea.graphs import graphs_demand
-        graphs_demand(path_buildings=parameters[0].valueAsText,
-                    path_results_demand=parameters[1].valueAsText,
-                    path_results = parameters[2].valueAsText,
-                    analysis_fields = ["Ealf", "Qhsf","Qwwf", "Qcsf"])
+        scenario_path = parameters[0].valueAsText
+        locator = inputlocator.InputLocator(scenario_path)
+        analysis_fields = parameters[1].valueAsText.split(';')[:4]  # max 4 fields for analysis
+        graphs_demand(locator=locator, analysis_fields=analysis_fields)
 
 
 class HeatmapsTool(object):
