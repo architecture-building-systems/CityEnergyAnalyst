@@ -7,7 +7,10 @@ from cea import globalvar
 import inputlocator
 reload(inputlocator)
 
-gv = globalvar.GlobalVariables()
+
+def add_message(msg, **kwargs):
+    """Log to arcpy.AddMessage() instead of print to STDOUT"""
+    arcpy.AddMessage(msg % kwargs)
 
 class PropertiesTool(object):
     """
@@ -57,6 +60,8 @@ class PropertiesTool(object):
         prop_thermal_flag = parameters[1]
         prop_architecture_flag = parameters[2]
         prop_HVAC_flag = parameters[3]
+        gv = globalvar.GlobalVariables()
+        gv.log = add_message
         properties(locator=locator,
                    prop_thermal_flag=prop_thermal_flag.value,
                    prop_architecture_flag=prop_architecture_flag.value,
@@ -95,7 +100,8 @@ class DemandTool(object):
 
         scenario_path = parameters[0].valueAsText
         locator = inputlocator.InputLocator(scenario_path)
-
+        gv = globalvar.GlobalVariables()
+        gv.log = add_message
         cea.demand.demand_calculation(locator=locator, gv=gv)
 
 
@@ -137,7 +143,8 @@ class EmbodiedEnergyTool(object):
 
         yearcalc = int(parameters[0].valueAsText)
         scenario_path = parameters[1].valueAsText
-
+        gv = globalvar.GlobalVariables()
+        gv.log = add_message
         locator = inputlocator.InputLocator(scenario_path=scenario_path)
         lca_embodied(yearcalc=yearcalc, locator=locator, gv=gv)
 
@@ -289,15 +296,19 @@ class GraphsDemandTool(object):
         df_building = pd.read_csv(locator.get_demand_results_file(first_building))
         fields = set(df_building.columns.tolist())
         fields.remove('DATE')
+        fields.remove('Name')
         analysis_fields.filter.list = list(fields)
         return
 
     def execute(self, parameters, messages):
-        from cea.graphs import graphs_demand
+        import cea.graphs
+        reload(cea.graphs)
         scenario_path = parameters[0].valueAsText
         locator = inputlocator.InputLocator(scenario_path)
         analysis_fields = parameters[1].valueAsText.split(';')[:4]  # max 4 fields for analysis
-        graphs_demand(locator=locator, analysis_fields=analysis_fields)
+        gv = globalvar.GlobalVariables()
+        gv.log = add_message
+        cea.graphs.graphs_demand(locator=locator, analysis_fields=analysis_fields, gv=gv)
 
 
 class HeatmapsTool(object):
