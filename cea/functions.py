@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 
-import os
-
-import pandas as pd
-import numpy as np
-import scipy.optimize as sopt
-import scipy
 import math
-from contributions.Thermal_Storage import storagetank_mixed as sto_m
+import numpy as np
+import os
+import pandas as pd
+import scipy
+import scipy.optimize as sopt
+
+from cea import storagetank_mixed as sto_m
+
 
 def calc_mainuse(uses_df, uses):
     databaseclean = uses_df[uses].transpose()
