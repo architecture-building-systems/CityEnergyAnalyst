@@ -53,3 +53,6 @@ class GlobalVariables(object):
 
         # here is where we plug in the models to use for calculations
         self.models = {'calc-thermal-loads': functions.CalcThermalLoads}
+
+    def log(self, msg, **kwargs):
+        print msg % kwargs
