@@ -114,10 +114,7 @@ class InputLocator(object):
 
     def get_heatmaps_emission_folder(self):
         """scenario/2-results/3-emissions/3-heatmaps"""
-        heatmaps_emissions_folder = os.path.join(self.scenario_path, '2-results', '3-emissions', '3-heatmaps')
-        if not os.path.exists(heatmaps_emissions_folder):
-            os.makedirs(heatmaps_emissions_folder)
-        return heatmaps_emissions_folder
+        return os.path.join(self.scenario_path, '2-results', '3-emissions', '3-heatmaps')
 
     def get_lca_embodied(self):
         """scenario/2-results/3-emissions/1-timeseries/Total_LCA_embodied.csv"""

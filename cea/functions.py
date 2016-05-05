@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 
-import math
-import numpy as np
 import os
+
 import pandas as pd
-import scipy
+import numpy as np
 import scipy.optimize as sopt
-
-import storagetank_mixed as sto_m
-
+import scipy
+import math
+from contributions.Thermal_Storage import storagetank_mixed as sto_m
 
 def calc_mainuse(uses_df, uses):
     databaseclean = uses_df[uses].transpose()
@@ -168,9 +167,15 @@ def Calc_form(Lw,Ll,footprint):
     return factor
 
 def Calc_Tm(Htr_3,Htr_1,tm_t0,Cm,Htr_em,Im_tot,Htr_ms,I_st,Htr_w,te_t,I_ia,IHC_nd,Hve,Htr_is):
+    # TODO: Document
+
+
     tm_t = (tm_t0 *((Cm/3600)-0.5*(Htr_3+ Htr_em))+ Im_tot)/((Cm/3600)+0.5*(Htr_3+Htr_em))
     tm = (tm_t+tm_t0)/2
-    ts = (Htr_ms * tm + I_st + Htr_w*te_t + Htr_1*(te_t+(I_ia+IHC_nd)/Hve))/(Htr_ms+Htr_w+Htr_1)
+    if Hve != 0:
+        ts = (Htr_ms * tm + I_st + Htr_w*te_t + Htr_1*(te_t+(I_ia+IHC_nd)/Hve))/(Htr_ms+Htr_w+Htr_1)
+    elif Hve == 0:  # added this line for the case of Hve = 0 to avoid division by zero
+        ts = (Htr_ms * tm + I_st + Htr_w*te_t + Htr_1*(te_t))/(Htr_ms+Htr_w+Htr_1) # TODO: check if equation still valid
     ta = (Htr_is*ts + Hve*te_t + I_ia + IHC_nd)/(Htr_is+Hve)
     top = 0.31*ta+0.69*ts
     return tm, ts, ta, top
@@ -248,7 +253,11 @@ def calc_Qem_ls(SystemH,SystemC):
     return list(tHC_corr)
 
 def Calc_Im_tot(I_m,Htr_em,te_t,Htr_3,I_st,Htr_w,Htr_1,I_ia,IHC_nd,Hve,Htr_2):
-    return I_m + Htr_em * te_t + Htr_3*(I_st + Htr_w*te_t + Htr_1*(((I_ia + IHC_nd)/Hve) + te_t))/Htr_2
+    # TODO: DOCUMENTATION
+    if Hve != 0:
+        return I_m + Htr_em * te_t + Htr_3*(I_st + Htr_w*te_t + Htr_1*(((I_ia + IHC_nd)/Hve) + te_t))/Htr_2
+    elif Hve == 0: # added this line for calculation w/o ventilation losses (HVAC model)
+        return I_m + Htr_em * te_t + Htr_3*(I_st + Htr_w*te_t + Htr_1*(te_t))/Htr_2 # TODO: check if equation is still valid
 
 def calc_TL(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Htr_ms, Htr_is, Htr_1, Htr_2, Htr_3,
             I_st, Hve, Htr_w, I_ia, I_m, Cm, Af, Losses, tHset_corr,tCset_corr, IC_max,IH_max, Flag):
@@ -429,15 +438,46 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
     if Af > 0:
         #extract properties of building
         # Geometry
-        Am, Atot, Aw, Awall_all, Cm, Ll, Lw, Retrofit, Sh_typ, Year, footprint, nf_ag, nfp = get_properties_building_envelope(
-            prop_RC_model, prop_age, prop_architecture, prop_geometry, prop_occupancy)
+        nfp = prop_occupancy.PFloor
+        footprint = prop_geometry.footprint
+        nf_ag = prop_geometry.floors_ag
+        nf_bg = prop_geometry.floors_bg
+        Lw = prop_geometry.Bwidth
+        Ll = prop_geometry.Blength
+        # construction,renovation etc years of the building
+        Year = prop_age.built
+        Retrofit = prop_age.HVAC # year building  renovated or not
+        # shading position and types
+        Sh_typ = prop_architecture.type_shade
+        # thermal mass properties
+        Aw = prop_RC_model.Aw
+        Awall_all = prop_RC_model.Awall_all
+        Atot = prop_RC_model.Atot
+        Cm = prop_RC_model.Cm
+        Am = prop_RC_model.Am
 
-        Lcww_dis, Lsww_dis, Lv, Lvww_c, Lvww_dis, Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, Tww_re_0, Tww_sup_0, Y, fforma = get_properties_building_systems(
-            Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, prop_HVAC)
+        Y = calc_Y(Year,Retrofit) # linear trasmissivity coefficient of piping W/(m.K)
+
+        # nominal temperatures
+        Ths_sup_0 = prop_HVAC.Tshs0_C
+        Ths_re_0 = Ths_sup_0 - prop_HVAC.dThs0_C
+        Tcs_sup_0 = prop_HVAC.Tscs0_C
+        Tcs_re_0 = Tcs_sup_0 + prop_HVAC.dTcs0_C
+        Tww_sup_0 = prop_HVAC.Tsww0_C
+        Tww_re_0 = Tww_sup_0 + prop_HVAC.dTww0_C
 
         # we define limtis of season.
         limit_inf_season = gv.seasonhours[0]+1
         limit_sup_season = gv.seasonhours[1]
+
+        #Identification of equivalent lenghts
+        fforma = Calc_form(Lw,Ll,footprint) # factor form comparison real surface and rectangular
+        Lv = (2*Ll+0.0325*Ll*Lw+6)*fforma # lenght vertical lines
+        Lcww_dis = 2*(Ll+2.5+nf_ag*nfp*gv.hf)*fforma # lenghtotwater piping circulation circuit
+        Lsww_dis = 0.038*Ll*Lw*nf_ag*nfp*gv.hf*fforma # length hotwater piping distribution circuit
+        Lvww_c = (2*Ll+0.0125*Ll*Lw)*fforma # lenghth piping heating system circulation circuit
+        Lvww_dis = (Ll+0.0625*Ll*Lw)*fforma # lenghth piping heating system distribution circuit
+
 
         # data and refrigeration loads
         Qcdata = Qcdataf*Af
@@ -454,19 +494,28 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         
         #3. Heat flows in W
         #. Solar heat gains
-        I_sol = calc_heat_gains_solar(Aw, Awall_all, Sh_typ, Solar, gv)
+        Rf_sh = Calc_Rf_sh(Sh_typ)
+        solar_specific = Solar/Awall_all #array in W/m2
+        Asol = np.vectorize(calc_gl)(solar_specific,gv.g_gl,Rf_sh)*(1-gv.F_f)*Aw # Calculation of solar efective area per hour in m2
+        I_sol = Asol*solar_specific #how much are the net solar gains in Wh per hour of the year.
 
         #  Sensible heat gains
-        I_int_sen = calc_heat_gains_internal_sensible(Af, q_int)
+        I_int_sen = q_int*Af # Internal heat gains
 
         #  Calculate latent internal loads in terms of added moisture:
-        w_int = calc_heat_gains_internal_latent(Af, X_int, sys_e_cooling, sys_e_heating)
+        if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
+            w_int = X_int/(1000*3600)*Af #in kg/kg.s
+        else:
+            w_int = 0
 
         #  Components of Sensible heat gains
-        I_ia, I_m, I_st = calc_comp_heat_gains_sensible(Am, Atot, Htr_w, I_int_sen, I_sol) # TODO: rename function according to ISO standard
+        I_ia = 0.5*I_int_sen
+        I_m = (Am/Atot)*(I_ia+I_sol)
+        I_st = (1-(Am/Atot)-(Htr_w/(9.1*Atot)))*(I_ia+I_sol)
 
         #4. Heating and cooling loads
-        IC_max, IH_max = calc_capacity_heating_cooling_system(Af, prop_HVAC) # TODO: check name of function
+        IC_max = -prop_HVAC.Qcsmax_Wm2 * Af
+        IH_max = prop_HVAC.Qhsmax_Wm2 * Af
 
         # define empty arrrays
         uncomfort = np.zeros(8760)
@@ -518,6 +567,9 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
                                                            T_ext[k], ta_hs_set[k], ta_cs_set[k], Htr_em, Htr_ms, Htr_is, Htr_1[k],
                                                            Htr_2[k], Htr_3[k], I_st[k], Hve[k], Htr_w, I_ia[k], I_m[k], Cm, Af, Losses,
                                                            tHset_corr,tCset_corr,IC_max,IH_max, Flag_season)
+            print('Ta from calc_TL', Ta[k])
+            print('Qhs_sen from calc_TL', Qhs_sen[k])
+            print('Qcs_sen from calc_TL', Qcs_sen[k])
 
             # Calc of Qhs_em_ls/Qcs_em_ls - losses due to emission systems in W
             Losses = True
@@ -548,10 +600,10 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
                 Qcs_sen_incl_em_ls[k] = 0
             if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
                 QHC_sen[k] = Qhs_sen[k] + Qcs_sen[k] + Qhs_em_ls[k] + Qcs_em_ls[k]
-                temporal_Qhs, temporal_Qcs, Qhs_lat[k], Qcs_lat[k], Ehs_lat_aux[k], ma_sup_hs[k], ma_sup_cs[k], Ta_sup_hs[k], Ta_sup_cs[k], Ta_re_hs[k], Ta_re_cs[k], w_re[k], w_sup[k], t5[k] =  calc_HVAC(sys_e_heating, sys_e_cooling,
-                                                                                                            people[k],RH_ext[k], T_ext[k],Ta[k],
-                                                                                                            qv_req[k],Flag_season, QHC_sen[k],t5_1,
-                                                                                                            w_int[k],gv)
+                temporal_Qhs, temporal_Qcs, Qhs_lat[k], Qcs_lat[k], Ehs_lat_aux[k], ma_sup_hs[k], ma_sup_cs[k], Ta_sup_hs[k], Ta_sup_cs[k], Ta_re_hs[k], Ta_re_cs[k], w_re[k], w_sup[k], t5[k] =  calc_HVAC(
+                                                                                                            RH_ext[k], T_ext[k],Ta[k],
+                                                                                                            qv_req[k],QHC_sen[k],t5_1,
+                                                                                                            w_int[k],gv, 35, 16) # TODO: get supply temperatures from properties
                 t5_1 = t5[k]
                 if sys_e_heating == 'T3':
                     Qhs_sen_incl_em_ls[k] = temporal_Qhs
@@ -580,27 +632,117 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
    
         
         # Cal temperatures of all systems
-        Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs = calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0,
-                                                                                            Ta, Ta_re_cs, Ta_re_hs,
-                                                                                            Ta_sup_cs, Ta_sup_hs,
-                                                                                            Tcs_re_0, Tcs_sup_0,
-                                                                                            Ths_re_0, Ths_sup_0, gv,
-                                                                                            ma_sup_cs, ma_sup_hs,
-                                                                                            sys_e_cooling,
-                                                                                            sys_e_heating, ta_hs_set,
-                                                                                            w_re, w_sup)
-        Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpww = calc_dhw_heating_demand(Af, Lcww_dis, Lsww_dis,
-                                                                                            Lvww_c, Lvww_dis, T_ext, Ta,
-                                                                                            Tww_re, Tww_sup_0, Y, gv,
-                                                                                            vw, vww)
+        Ths_sup = np.zeros(8760) # in C 
+        Ths_re = np.zeros(8760) # in C 
+        Tcs_re = np.zeros(8760) # in C 
+        Tcs_sup = np.zeros(8760) # in C 
+        mcphs = np.zeros(8760) # in KW/C
+        mcpcs = np.zeros(8760) # in KW/C
+        Ta_0 = ta_hs_set.max()
+        
+        if sys_e_heating == 'T1' or sys_e_heating == 'T2': #radiators
+            nh = 0.3
+            Ths_sup, Ths_re, mcphs = np.vectorize(calc_RAD)(Qhsf,Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0,nh)
+
+        if sys_e_heating == 'T3': #air conditioning
+            tasup = Ta_sup_hs +273
+            tare = Ta_re_hs +273
+            index = np.where(Qhsf == Qhsf_0)
+            ma_sup_0 = ma_sup_hs[index[0][0]]
+            Ta_sup_0 = Ta_sup_hs[index[0][0]] +273
+            Ta_re_0 = Ta_re_hs[index[0][0]] + 273
+            tsh0 = Ths_sup_0 +273
+            trh0 = Ths_re_0 +273
+            mCw0 = Qhsf_0/(tsh0-trh0)
+
+            #log mean temperature at nominal conditions
+            TD10 = Ta_sup_0 - trh0
+            TD20 = Ta_re_0 - tsh0
+            LMRT0 = (TD10-TD20)/scipy.log(TD20/TD10)
+            UA0 = Qhsf_0/LMRT0
+
+            Ths_sup, Ths_re, mcphs = np.vectorize(calc_Hcoil2)(Qhsf, tasup, tare, Qhsf_0, Ta_re_0, Ta_sup_0,
+                                                                tsh0, trh0, w_re, w_sup, ma_sup_0, ma_sup_hs,
+                                                                gv.Cpa, LMRT0, UA0, mCw0, Qhsf)
+
+        if sys_e_heating == 'T4': #floor heating
+            nh = 0.2
+            Ths_sup, Ths_re, mcphs = np.vectorize(calc_TABSH)(Qhsf,Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0,nh)
+
+        if sys_e_cooling == 'T3':
+
+            # Initialize temperatures
+            tasup = Ta_sup_cs + 273
+            tare = Ta_re_cs + 273
+            index = np.where(Qcsf == Qcsf_0)
+            ma_sup_0 = ma_sup_cs[index[0][0]] + 273
+            Ta_sup_0 = Ta_sup_cs[index[0][0]] + 273
+            Ta_re_0 = Ta_re_cs[index[0][0]] + 273
+            tsc0 = Tcs_sup_0 + 273
+            trc0 = Tcs_re_0 + 273
+            mCw0 = Qcsf_0/(tsc0 - trc0)
+
+            # log mean temperature at nominal conditions
+            TD10 = Ta_sup_0 - trc0
+            TD20 = Ta_re_0 - tsc0
+            LMRT0 = (TD20-TD10)/scipy.log(TD20/TD10)
+            UA0 = Qcsf_0/LMRT0
+
+            # Make loop
+            Tcs_sup, Tcs_re, mcpcs = np.vectorize(calc_Ccoil2)(Qcsf, tasup, tare, Qcsf_0, Ta_re_0, Ta_sup_0,
+                                                               tsc0, trc0, w_re, w_sup, ma_sup_0, ma_sup_cs, gv.Cpa,
+                                                               LMRT0, UA0, mCw0, Qcsf)  
+        #1. Calculate water consumption
+        Vww = vww*Af/1000 ## consumption of hot water in m3/hour
+        Vw = vw*Af/1000 ## consumption of fresh water in m3/h = cold water + hot water
+        Mww = Vww*gv.Pwater/3600 # in kg/s
+        #Mw = Vw*Pwater/3600 # in kg/s
+        #2. Calculate hot water demand
+        mcpww = Mww*gv.Cpw
+        Qww = mcpww*(Tww_sup_0-Tww_re)*1000 # in W
+        #3. losses distribution of domestic hot water recoverable and not recoverable
+        Qww_0 = Qww.max()
+        Vol_ls = Lsww_dis*(gv.D/1000)**(2/4)*math.pi
+        Qww_ls_r  = np.vectorize(calc_Qww_ls_r)(Ta, Qww, Lsww_dis, Lcww_dis, Y[1], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0, gv.Cpw , gv.Pwater)
+        Qww_ls_nr  = np.vectorize(calc_Qww_ls_nr)(Ta, Qww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0, gv.Cpw , gv.Pwater, gv.Bf, T_ext)
+
+        # fully mixed storage tank sensible heat loss calculation
+        Qww_ls_st = np.zeros(8760)
+        Tww_st = np.zeros(8760)
+        Qd = np.zeros(8760)
+        Qwwf = np.zeros(8760)
+        Vww_0 = Vww.max()  # peak dhw demand in m3/hour, also used for dhw tank sizing.
+        Tww_st_0 = gv.Tww_setpoint  #initial tank temperature in C
+
+        # calculate heat loss and temperature in dhw tank
+        for k in range(8760):
+            Qww_ls_st[k], Qd[k], Qwwf[k] = sto_m.calc_Qww_ls_st(Tww_st_0, gv.Tww_setpoint, Ta[k], gv.Bf, T_ext[k], Vww_0,
+                                                              Qww[k], Qww_ls_r[k], Qww_ls_nr[k], gv.U_dhwtank, gv.AR)
+            Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_ls_st[k], Qd[k], Qwwf[k], gv.Pwater, gv.Cpw, Vww_0)
+            Tww_st_0 = Tww_st[k]
+
+        Qwwf_0 = Qwwf.max()
 
         # clac auxiliary loads of pumping systems
-        Eaux_cs, Eaux_fw, Eaux_hs, Eaux_ve, Eaux_ww = calc_pumping_systems_aux_loads(Af, Ll, Lw, Mww, Qcsf, Qcsf_0,
-                                                                                     Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0,
-                                                                                     Tcs_re, Tcs_sup, Ths_re, Ths_sup,
-                                                                                     Vw, Year, fforma, gv, nf_ag, nfp,
-                                                                                     qv_req, sys_e_cooling,
-                                                                                     sys_e_heating)
+        Eaux_cs = np.zeros(8760)
+        Eaux_ve = np.zeros(8760)
+        Eaux_fw = np.zeros(8760)
+        Eaux_hs = np.zeros(8760)
+        Imax = 2*(Ll+Lw/2+gv.hf+(nf_ag*nfp)+10)*fforma
+        deltaP_des = Imax*gv.deltaP_l*(1+gv.fsr)
+        if Year >= 2000:
+            b =1
+        else:
+            b =1.2
+        Eaux_ww = np.vectorize(calc_Eaux_ww)(Qww,Qwwf,Qwwf_0,Imax,deltaP_des,b,Mww)
+        if sys_e_heating > 0:
+            Eaux_hs = np.vectorize(calc_Eaux_hs_dis)(Qhsf,Qhsf_0,Imax,deltaP_des,b,Ths_sup,Ths_re,gv.Cpw)
+        if sys_e_cooling > 0:
+            Eaux_cs  = np.vectorize(calc_Eaux_cs_dis)(Qcsf,Qcsf_0,Imax,deltaP_des,b,Tcs_sup,Tcs_re,gv.Cpw)
+        if nf_ag > 5: #up to 5th floor no pumping needs
+            Eaux_fw = calc_Eaux_fw(Vw,nf_ag,gv)
+        if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
+            Eaux_ve = np.vectorize(calc_Eaux_ve)(Qhsf,Qcsf, gv.Pfan, qv_req,sys_e_heating,sys_e_cooling, Af)
 
         # Calc total auxiliary loads
         Eauxf = (Eaux_ww + Eaux_fw + Eaux_hs + Eaux_cs + Ehs_lat_aux + Eaux_ve)
@@ -611,7 +753,6 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         Waterconsumption = Vww+Vw  #volume of water consumed in m3/h
         waterpeak = Waterconsumption.max()
     
-    # Af = 0: no conditioned floor area
     else:
         #scalars
         waterpeak = Occupants = 0
@@ -621,242 +762,59 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         Occupancy = Eauxf = Waterconsumption = np.zeros(8760)
         Qwwf = Qww = Qhs_sen = Qhsf = Qcs_sen = Qcs = Qcsf = Qcdata = Qcrefri = Qd = Qc = Qww_ls_st = np.zeros(8760)
         Ths_sup = Ths_re = Tcs_re = Tcs_sup = mcphs = mcpcs = mcpww = Vww = Tww_re = Tww_st = uncomfort = np.zeros(8760) # in C
-
-    # calc electrical loads
-    Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot = calc_loads_electrical(Aef, Eal_nove,
-                                                                                                Eauxf, Edataf, Eprof)
-
-    # write results to csv
-    results_to_csv(Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot, Name, Occupancy,
-                   Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs_sen, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
-                   Tcs_re, Tcs_re_0, Tcs_sup, Tcs_sup_0, Ths_re, Ths_re_0, Ths_sup, Ths_sup_0, Tww_re, Tww_st,
-                   Tww_sup_0, Waterconsumption, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
-                   sys_e_cooling, sys_e_heating, waterpeak)
-
-    return
-
-
-def calc_capacity_heating_cooling_system(Af, prop_HVAC):
-    # TODO: Documentation
-    # Refactored from CalcThermalLoads
-
-    IC_max = -prop_HVAC.Qcsmax_Wm2 * Af
-    IH_max = prop_HVAC.Qhsmax_Wm2 * Af
-    return IC_max, IH_max
-
-
-def calc_comp_heat_gains_sensible(Am, Atot, Htr_w, I_int_sen, I_sol):
-    # TODO: Documentation
-    # Refactored from CalcThermalLoads
-    I_ia = 0.5 * I_int_sen
-    I_m = (Am / Atot) * (I_ia + I_sol)
-    I_st = (1 - (Am / Atot) - (Htr_w / (9.1 * Atot))) * (I_ia + I_sol)
-    return I_ia, I_m, I_st
-
-
-def calc_loads_electrical(Aef, Eal_nove, Eauxf, Edataf, Eprof):
-    # TODO: Documentation
-    # Refactored from CalcThermalLoads
+       
     if Aef > 0:
         # calc appliance and lighting loads
-        Ealf = Eal_nove * Aef
-        Epro = Eprof * Aef
-        Edata = Edataf * Aef
+        Ealf = Eal_nove*Aef
+        Epro = Eprof*Aef
+        Edata = Edataf*Aef
         Ealf_0 = Ealf.max()
 
         # compute totals electrical loads in MWh
-        Ealf_tot = Ealf.sum() / 1000000
-        Eauxf_tot = Eauxf.sum() / 1000000
-        Epro_tot = Epro.sum() / 1000000
-        Edata_tot = Edata.sum() / 1000000
+        Ealf_tot = Ealf.sum()/1000000
+        Eauxf_tot = Eauxf.sum()/1000000
+        Epro_tot = Epro.sum()/1000000
+        Edata_tot = Edata.sum()/1000000
     else:
-        Ealf_tot = Eauxf_tot = Ealf_0 = 0
+        Ealf_tot = Eauxf_tot =  Ealf_0 = 0
         Epro_tot = Edata_tot = 0
         Ealf = np.zeros(8760)
         Epro = np.zeros(8760)
         Edata = np.zeros(8760)
-    return Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot
-
-
-def calc_heat_gains_internal_latent(Af, X_int, sys_e_cooling, sys_e_heating):
-    # TODO: Documentation
-    # Refactored from CalcThermalLoads
-    if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
-        w_int = X_int / (1000 * 3600) * Af  # in kg/kg.s
-    else:
-        w_int = 0
-
-    return w_int
-
-
-def calc_heat_gains_internal_sensible(Af, q_int):
-    # TODO: Documentation
-    # Refactored from CalcThermalLoads
-    I_int_sen = q_int * Af  # Internal heat gains
-    return I_int_sen
-
-
-def calc_heat_gains_solar(Aw, Awall_all, Sh_typ, Solar, gv):
-    # TODO: Documentation
-    # Refactored from CalcThermalLoads
-    Rf_sh = Calc_Rf_sh(Sh_typ)
-    solar_specific = Solar / Awall_all  # array in W/m2
-    Asol = np.vectorize(calc_gl)(solar_specific, gv.g_gl, Rf_sh) * (
-    1 - gv.F_f) * Aw  # Calculation of solar efective area per hour in m2
-    I_sol = Asol * solar_specific  # how much are the net solar gains in Wh per hour of the year.
-    return I_sol
-
-
-def get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, prop_HVAC):
-    # TODO: Documentation
-    # Refactored from CalcThermalLoads
-    Y = calc_Y(Year, Retrofit)  # linear trasmissivity coefficient of piping W/(m.K)
-    # nominal temperatures
-    Ths_sup_0 = prop_HVAC.Tshs0_C
-    Ths_re_0 = Ths_sup_0 - prop_HVAC.dThs0_C
-    Tcs_sup_0 = prop_HVAC.Tscs0_C
-    Tcs_re_0 = Tcs_sup_0 + prop_HVAC.dTcs0_C
-    Tww_sup_0 = prop_HVAC.Tsww0_C
-    Tww_re_0 = Tww_sup_0 + prop_HVAC.dTww0_C
-    # Identification of equivalent lenghts
-    fforma = Calc_form(Lw, Ll, footprint)  # factor form comparison real surface and rectangular
-    Lv = (2 * Ll + 0.0325 * Ll * Lw + 6) * fforma  # lenght vertical lines
-    Lcww_dis = 2 * (Ll + 2.5 + nf_ag * nfp * gv.hf) * fforma  # lenghtotwater piping circulation circuit
-    Lsww_dis = 0.038 * Ll * Lw * nf_ag * nfp * gv.hf * fforma  # length hotwater piping distribution circuit
-    Lvww_c = (2 * Ll + 0.0125 * Ll * Lw) * fforma  # lenghth piping heating system circulation circuit
-    Lvww_dis = (Ll + 0.0625 * Ll * Lw) * fforma  # lenghth piping heating system distribution circuit
-    return Lcww_dis, Lsww_dis, Lv, Lvww_c, Lvww_dis, Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, Tww_re_0, Tww_sup_0, Y, fforma
-
-
-def get_properties_building_envelope(prop_RC_model, prop_age, prop_architecture, prop_geometry, prop_occupancy):
-    # TODO: Documentation
-    # Refactored from CalcThermalLoads
-    nfp = prop_occupancy.PFloor
-    footprint = prop_geometry.footprint
-    nf_ag = prop_geometry.floors_ag
-    nf_bg = prop_geometry.floors_bg
-    Lw = prop_geometry.Bwidth
-    Ll = prop_geometry.Blength
-    # construction,renovation etc years of the building
-    Year = prop_age.built
-    Retrofit = prop_age.HVAC  # year building  renovated or not
-    # shading position and types
-    Sh_typ = prop_architecture.type_shade
-    # thermal mass properties
-    Aw = prop_RC_model.Aw
-    Awall_all = prop_RC_model.Awall_all
-    Atot = prop_RC_model.Atot
-    Cm = prop_RC_model.Cm
-    Am = prop_RC_model.Am
-    return Am, Atot, Aw, Awall_all, Cm, Ll, Lw, Retrofit, Sh_typ, Year, footprint, nf_ag, nfp
-
-
-def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs, Ta_re_hs, Ta_sup_cs, Ta_sup_hs,
-                                       Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, gv, ma_sup_cs, ma_sup_hs,
-                                       sys_e_cooling, sys_e_heating, ta_hs_set, w_re, w_sup):
-    # TODO: Documentation
-    # Refactored from CalcThermalLoads
-
-    Ths_sup = np.zeros(8760)  # in C
-    Ths_re = np.zeros(8760)  # in C
-    Tcs_re = np.zeros(8760)  # in C
-    Tcs_sup = np.zeros(8760)  # in C
-    mcphs = np.zeros(8760)  # in KW/C
-    mcpcs = np.zeros(8760)  # in KW/C
-    Ta_0 = ta_hs_set.max()
-    if sys_e_heating == 'T1' or sys_e_heating == 'T2':  # radiators
-        nh = 0.3
-        Ths_sup, Ths_re, mcphs = np.vectorize(calc_RAD)(Qhsf, Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0, nh)
-    if sys_e_heating == 'T3':  # air conditioning
-        tasup = Ta_sup_hs + 273
-        tare = Ta_re_hs + 273
-        index = np.where(Qhsf == Qhsf_0)
-        ma_sup_0 = ma_sup_hs[index[0][0]]
-        Ta_sup_0 = Ta_sup_hs[index[0][0]] + 273
-        Ta_re_0 = Ta_re_hs[index[0][0]] + 273
-        tsh0 = Ths_sup_0 + 273
-        trh0 = Ths_re_0 + 273
-        mCw0 = Qhsf_0 / (tsh0 - trh0)
-
-        # log mean temperature at nominal conditions
-        TD10 = Ta_sup_0 - trh0
-        TD20 = Ta_re_0 - tsh0
-        LMRT0 = (TD10 - TD20) / scipy.log(TD20 / TD10)
-        UA0 = Qhsf_0 / LMRT0
-
-        Ths_sup, Ths_re, mcphs = np.vectorize(calc_Hcoil2)(Qhsf, tasup, tare, Qhsf_0, Ta_re_0, Ta_sup_0,
-                                                           tsh0, trh0, w_re, w_sup, ma_sup_0, ma_sup_hs,
-                                                           gv.Cpa, LMRT0, UA0, mCw0, Qhsf)
-    if sys_e_heating == 'T4':  # floor heating
-        nh = 0.2
-        Ths_sup, Ths_re, mcphs = np.vectorize(calc_TABSH)(Qhsf, Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0, nh)
-    if sys_e_cooling == 'T3':
-        # Initialize temperatures
-        tasup = Ta_sup_cs + 273
-        tare = Ta_re_cs + 273
-        index = np.where(Qcsf == Qcsf_0)
-        ma_sup_0 = ma_sup_cs[index[0][0]] + 273
-        Ta_sup_0 = Ta_sup_cs[index[0][0]] + 273
-        Ta_re_0 = Ta_re_cs[index[0][0]] + 273
-        tsc0 = Tcs_sup_0 + 273
-        trc0 = Tcs_re_0 + 273
-        mCw0 = Qcsf_0 / (tsc0 - trc0)
-
-        # log mean temperature at nominal conditions
-        TD10 = Ta_sup_0 - trc0
-        TD20 = Ta_re_0 - tsc0
-        LMRT0 = (TD20 - TD10) / scipy.log(TD20 / TD10)
-        UA0 = Qcsf_0 / LMRT0
-
-        # Make loop
-        Tcs_sup, Tcs_re, mcpcs = np.vectorize(calc_Ccoil2)(Qcsf, tasup, tare, Qcsf_0, Ta_re_0, Ta_sup_0,
-                                                           tsc0, trc0, w_re, w_sup, ma_sup_0, ma_sup_cs, gv.Cpa,
-                                                           LMRT0, UA0, mCw0, Qcsf)
-        # 1. Calculate water consumption
-    return Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs
-
-
-def results_to_csv(Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot, Name, Occupancy,
-                   Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs_sen, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
-                   Tcs_re, Tcs_re_0, Tcs_sup, Tcs_sup_0, Ths_re, Ths_re_0, Ths_sup, Ths_sup_0, Tww_re, Tww_st,
-                   Tww_sup_0, Waterconsumption, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
-                   sys_e_cooling, sys_e_heating, waterpeak):
-    # TODO: Document
-    # Refactored from CalcThermalLoads
 
     # compute totals heating loads loads in MW
     if sys_e_heating != 'T0':
-        Qhsf_tot = Qhsf.sum() / 1000000
-        Qhs_tot = Qhs_sen.sum() / 1000000
-        Qwwf_tot = Qwwf.sum() / 1000000
-        Qww_tot = Qww.sum() / 1000000
+        Qhsf_tot = Qhsf.sum()/1000000
+        Qhs_tot = Qhs_sen.sum()/1000000
+        Qwwf_tot = Qwwf.sum()/1000000
+        Qww_tot = Qww.sum()/1000000
     else:
-        Qhsf_tot = Qhs_tot = Qwwf_tot = Qww_tot = 0
+        Qhsf_tot = Qhs_tot = Qwwf_tot  = Qww_tot = 0
 
     # compute totals cooling loads in MW
     if sys_e_cooling != 'T0':
-        Qcs_tot = -Qcs.sum() / 1000000
-        Qcsf_tot = -Qcsf.sum() / 1000000
-        Qcrefri_tot = Qcrefri.sum() / 1000000
-        Qcdata_tot = Qcdata.sum() / 1000000
+        Qcs_tot = -Qcs.sum()/1000000 
+        Qcsf_tot = -Qcsf.sum()/1000000
+        Qcrefri_tot = Qcrefri.sum()/1000000
+        Qcdata_tot = Qcdata.sum()/1000000
     else:
         Qcs_tot = Qcsf_tot = Qcdata_tot = Qcrefri_tot = 0
 
-    # print series all in kW, mcp in kW/h, cooling loads shown as positive, water consumption m3/h,
+    #print series all in kW, mcp in kW/h, cooling loads shown as positive, water consumption m3/h,
     # temperature in Degrees celcious
     DATE = pd.date_range('1/1/2010', periods=8760, freq='H')
-    pd.DataFrame(
-        {'DATE': DATE, 'Name': Name, 'Ealf_kWh': Ealf / 1000, 'Eauxf_kWh': Eauxf / 1000, 'Qwwf_kWh': Qwwf / 1000,
-         'Qww_kWh': Qww / 1000, 'Qww_tankloss_kWh': Qww_ls_st / 1000, 'Qhs_kWh': Qhs_sen / 1000,
-         'Qhsf_kWh': Qhsf / 1000,
-         'Qcs_kWh': -1 * Qcs / 1000, 'Qcsf_kWh': -1 * Qcsf / 1000, 'occ_pax': Occupancy, 'Vw_m3': Waterconsumption,
-         'Tshs_C': Ths_sup, 'Trhs_C': Ths_re, 'mcphs_kWC': mcphs, 'mcpww_WC': mcpww * 1000, 'Tscs_C': Tcs_sup,
-         'Trcs_C': Tcs_re, 'mcpcs_kWC': mcpcs, 'Qcdataf_kWh': Qcdata / 1000, 'Tsww_C': Tww_sup_0, 'Trww_C': Tww_re,
-         'Tww_tank_C': Tww_st, 'Ef_kWh': (Ealf + Eauxf + Epro) / 1000, 'Epro_kWh': Epro / 1000,
-         'Qcref_kWh': Qcrefri / 1000,
-         'Edataf_kWh': Edata / 1000, 'QHf_kWh': (Qwwf + Qhsf) / 1000,
-         'QCf_kWh': (-1 * Qcsf + Qcdata + Qcrefri) / 1000}).to_csv(locationFinal + '\\' + Name + '.csv',
+    pd.DataFrame({'DATE':DATE, 'Name':Name,'Ealf_kWh':Ealf/1000,'Eauxf_kWh':Eauxf/1000,'Qwwf_kWh':Qwwf/1000,
+                  'Qww_kWh':Qww/1000,'Qww_tankloss_kWh':Qww_ls_st/1000,'Qhs_kWh':Qhs_sen/1000,'Qhsf_kWh':Qhsf/1000,
+                  'Qcs_kWh':-1*Qcs/1000,'Qcsf_kWh':-1*Qcsf/1000,'occ_pax':Occupancy,'Vw_m3':Waterconsumption,
+                  'Tshs_C':Ths_sup, 'Trhs_C':Ths_re, 'mcphs_kWC':mcphs,'mcpww_WC':mcpww*1000,'Tscs_C':Tcs_sup,
+                  'Trcs_C':Tcs_re, 'mcpcs_kWC':mcpcs,'Qcdataf_kWh':Qcdata/1000, 'Tsww_C':Tww_sup_0,'Trww_C':Tww_re,
+                  'Tww_tank_C':Tww_st,'Ef_kWh':(Ealf+Eauxf+Epro)/1000, 'Epro_kWh':Epro/1000,'Qcref_kWh':Qcrefri/1000,
+                  'Edataf_kWh':Edata/1000, 'QHf_kWh':(Qwwf+Qhsf)/1000,
+                  'QCf_kWh':(-1*Qcsf+Qcdata+Qcrefri)/1000}
+                 ).to_csv(locationFinal+'\\'+Name+'.csv',
                                                                    index=False, float_format='%.2f')
+
+
     # print peaks in kW and totals in MWh, temperature peaks in C
     totals = pd.DataFrame(
         {'Name': Name, 'Af_m2': Af, 'occ_pax': Occupants, 'Qwwf0_kW': Qwwf_0 / 1000, 'Ealf0_kW': Ealf_0 / 1000,
@@ -869,125 +827,112 @@ def results_to_csv(Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_to
          'Tsww0_C': Tww_sup_0, 'Vw_m3yr': Waterconsumption.sum(),
          'Ef_MWhyr': (Ealf_tot + Eauxf_tot + Epro_tot + Edata_tot), 'QHf_MWhyr': (Qwwf_tot + Qhsf_tot),
          'QCf_MWhyr': (Qcsf_tot + Qcdata_tot + Qcrefri_tot)}, index=[0])
-    totals.to_csv(os.path.join(path_temporary_folder, '%sT.csv' % Name), index=False, float_format='%.2f')
+
+    totals.to_csv(os.path.join(path_temporary_folder, '%sT.csv' % Name),index=False, float_format='%.2f')
+
+    return
 
 
-def calc_pumping_systems_aux_loads(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
-                                   Ths_re, Ths_sup, Vw, Year, fforma, gv, nf_ag, nfp, qv_req, sys_e_cooling,
-                                   sys_e_heating):
-    # TODO: Documentation
-    # Refactored from CalcThermalLoads
+def calc_HVAC(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_sup_cool):
 
-    Eaux_cs = np.zeros(8760)
-    Eaux_ve = np.zeros(8760)
-    Eaux_fw = np.zeros(8760)
-    Eaux_hs = np.zeros(8760)
-    Imax = 2 * (Ll + Lw / 2 + gv.hf + (nf_ag * nfp) + 10) * fforma
-    deltaP_des = Imax * gv.deltaP_l * (1 + gv.fsr)
-    if Year >= 2000:
-        b = 1
-    else:
-        b = 1.2
-    Eaux_ww = np.vectorize(calc_Eaux_ww)(Qww, Qwwf, Qwwf_0, Imax, deltaP_des, b, Mww)
-    if sys_e_heating > 0:
-        Eaux_hs = np.vectorize(calc_Eaux_hs_dis)(Qhsf, Qhsf_0, Imax, deltaP_des, b, Ths_sup, Ths_re, gv.Cpw)
-    if sys_e_cooling > 0:
-        Eaux_cs = np.vectorize(calc_Eaux_cs_dis)(Qcsf, Qcsf_0, Imax, deltaP_des, b, Tcs_sup, Tcs_re, gv.Cpw)
-    if nf_ag > 5:  # up to 5th floor no pumping needs
-        Eaux_fw = calc_Eaux_fw(Vw, nf_ag, gv)
-    if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
-        Eaux_ve = np.vectorize(calc_Eaux_ve)(Qhsf, Qcsf, gv.Pfan, qv_req, sys_e_heating, sys_e_cooling, Af)
+    """ HVAC model of Kämpf
 
-    return Eaux_cs, Eaux_fw, Eaux_hs, Eaux_ve, Eaux_ww
+    Keyword arguments:
+    RH1 -- external relative humidity at time step t
+    t1 -- external air temperature at time step t
+    tair --
+    qv_req -- ventilation requirements at time step t according to the mixed occupancy schedule of the building
+    Qsen -- sensible heating or cooling load to be supplied by the HVAC system at time step t in [W]
+    t5_1 -- zone air temperature at time step t-1
+    wint -- internal moisture gains at time step t according to the mixed occupancy schedule of the building
+    gv -- object of class globalvar
+    temp_sup_heat -- heating system supply temperature
+    temp_sup_cool -- cooling system supply temperature
 
 
-def calc_dhw_heating_demand(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, vw, vww):
-    # TODO: Documentation
-    # Refactored from CalcThermalLoads
+    [1] Kämpf, Jérôme Henri
+        On the modelling and optimisation of urban energy fluxes
+        http://dx.doi.org/10.5075/epfl-thesis-4548
+    """
 
-    Vww = vww * Af / 1000  ## consumption of hot water in m3/hour
-    Vw = vw * Af / 1000  ## consumption of fresh water in m3/h = cold water + hot water
-    Mww = Vww * gv.Pwater / 3600  # in kg/s
-    # Mw = Vw*Pwater/3600 # in kg/s
-    # 2. Calculate hot water demand
-    mcpww = Mww * gv.Cpw
-    Qww = mcpww * (Tww_sup_0 - Tww_re) * 1000  # in W
-    # 3. losses distribution of domestic hot water recoverable and not recoverable
-    Qww_0 = Qww.max()
-    Vol_ls = Lsww_dis * (gv.D / 1000) ** (2 / 4) * math.pi
-    Qww_ls_r = np.vectorize(calc_Qww_ls_r)(Ta, Qww, Lsww_dis, Lcww_dis, Y[1], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
-                                           gv.Cpw, gv.Pwater)
-    Qww_ls_nr = np.vectorize(calc_Qww_ls_nr)(Ta, Qww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
-                                             gv.Cpw, gv.Pwater, gv.Bf, T_ext)
-    # fully mixed storage tank sensible heat loss calculation
-    Qww_ls_st = np.zeros(8760)
-    Tww_st = np.zeros(8760)
-    Qd = np.zeros(8760)
-    Qwwf = np.zeros(8760)
-    Vww_0 = Vww.max()  # peak dhw demand in m3/hour, also used for dhw tank sizing.
-    Tww_st_0 = gv.Tww_setpoint  # initial tank temperature in C
-    # calculate heat loss and temperature in dhw tank
-    for k in range(8760):
-        Qww_ls_st[k], Qd[k], Qwwf[k] = sto_m.calc_Qww_ls_st(Tww_st_0, gv.Tww_setpoint, Ta[k], gv.Bf, T_ext[k], Vww_0,
-                                                            Qww[k], Qww_ls_r[k], Qww_ls_nr[k], gv.U_dhwtank, gv.AR, gv)
-        Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_ls_st[k], Qd[k], Qwwf[k], gv.Pwater, gv.Cpw, Vww_0)
-        Tww_st_0 = Tww_st[k]
-    Qwwf_0 = Qwwf.max()
-    return Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpww
-
-
-def calc_HVAC(SystemH, SystemC, people, RH1, t1, tair, qv_req, Flag, Qsen, t5_1, wint,gv):
     # State No. 5 # indoor air set point
-    t5 = tair + 1 # accounding for an increase in temperature
+    t5_prime = tair + 1 # accounding for an increase in temperature # TODO: where is this from? why use calculated tair and not the setpoint temperature? why +1?
+    print(t5_prime)
     if Qsen != 0:
         #sensiblea nd latennt loads
         Qsen = Qsen*0.001 # transform in kJ/s
         # Properties of heat recovery and required air incl. Leakage
-        qv = qv_req*1.0184     # in m3/s corrected taking into acocunt leakage
-        Veff = gv.Vmax*qv/qv_req        #max velocity effective      
+        qv = qv_req*1.0184     # in m3/s corrected taking into account leakage # TODO: add source
+        Veff = gv.Vmax*qv/qv_req        # max velocity effective
         nrec = gv.nrec_N-gv.C1*(Veff-2)   # heat exchanger coefficient
 
         # State No. 1
-        w1 = calc_w(t1,RH1) #kg/kg    
+        w1 = calc_w(t1, RH1)  # outdoor moisture (kg/kg)
 
         # State No. 2
-        t2 = t1 + nrec*(t5_1-t1)
-        w2 = min(w1,calc_w(t2,100))
+        t2 = t1 + nrec*(t5_1-t1)  # inlet air temperature after HEX calculated from zone air temperature at time step t-1 (°C)
+        w2 = min(w1, calc_w(t2, 100))  # inlet air moisture (kg/kg), Eq. (4.24) in [1]
 
         # State No. 3
-        # Assuming thath AHU do not modify the air humidity
+        # Assuming that AHU does not modify the air humidity
         w3 = w2  
-        if Qsen > 0:  #if heating
-            t3 = 30 # in C
-        elif Qsen < 0: # if cooling
-            t3 = 16 #in C
+        if Qsen > 0:  # if heating
+            t3 = temp_sup_heat # heating system supply temperature in (°C)
+        elif Qsen < 0:  # if cooling
+            t3 = temp_sup_cool # cooling system supply temperature in (°C)
 
-        # mass of the system
-        h_t5_w3 =  calc_h(t5,w3)
-        h_t3_w3 = calc_h(t3,w3)
-        m1 = max(Qsen/((t3-t5)*gv.Cpa),(gv.Pair*qv)) #kg/s # from the point of view of internal loads
-        w5 = (wint+w3*m1)/m1
+        # initial guess of mass flow rate
+        h_t5_prime_w3 = calc_h(t5_prime, w3) # for enthalpy change in first assumption, see Eq.(4.31) in [1]
+        h_t3_w3 = calc_h(t3, w3) # for enthalpy change in first assumption, see Eq.(4.31) in [1]
+        print(-Qsen/(h_t5_prime_w3-h_t3_w3), (gv.Pair*qv))
+        m1 = max(-Qsen/(h_t5_prime_w3-h_t3_w3), (gv.Pair*qv))  # Eq. (4.34) in [1] for first prediction of mass flow rater in (kg/s)
+
+        # determine virtual state in the zone without moisture conditioning
+        # c_p_air_w3 = (1.005 + 1.82*w3)  # heat capacity of humid air (kJ/(kg*K)), source: https: // en.wiktionary.org / wiki / humid_heat
+        # t5 = -Qsen/(m1*c_p_air_w3)+t3  # Eq. (4.31) in [1]
+        # print(t5)
+        w5_prime = (wint+w3*m1)/m1  # moisture balance accounting for internal moisture load, see also Eq. (4.32) in [1]
+
 
         #room supply moisture content:
-        liminf= calc_w(t5,30)
-        limsup = calc_w(t5,70)
-        if Qsen > 0:  #if heating
-            w3, Qhum , Qdhum = calc_w3_heating_case(t5,w2,w5,t3,t5_1,m1,gv.lvapor,liminf,limsup)
-        elif Qsen < 0: # if cooling
-            w3, Qhum , Qdhum = calc_w3_cooling_case(w2,t3,w5,liminf,limsup,m1,gv.lvapor)
+        # liminf= calc_w(t5,30) TODO: remove
+        # limsup = calc_w(t5,70) TODO: remove
+        if Qsen > 0:  # if heating
+            w3 = calc_w3_heating_case(t5_prime, w2, w5_prime, t3)
+            ts = t3 + 0.5  # plus expected delta T drop in the ducts
+        elif Qsen < 0:  # if cooling
+            w3 = calc_w3_cooling_case(t5_prime, w2, t3, w5_prime)
+            ts = t3 - 0.5  # minus expected delta T rise in the ducts
 
         # State of Supply
         ws = w3
-        ts = t3 - 0.5 # minus the expected delta T rise temperature in the ducts
+        # ts = t3 - 0.5 # minus the expected delta T rise temperature in the ducts # FIXME drop or rise as function of heating/cooling? TODO: remove
 
         # the new mass flow rate
-        h_t5_w3 =  calc_h(t5,w3)
-        h_ts_ws = calc_h(t3,ws)
-        m = max(Qsen/((ts-t2)*gv.Cpa),(gv.Pair*qv)) #kg/s # from the point of view of internal loads
+        h_t5_prime_w3 = calc_h(t5_prime, w3)
+        h_t3_w3 = calc_h(t3, w3)
+        m = max(-Qsen/(h_t5_prime_w3-h_t3_w3), (gv.Pair*qv)) #kg/s # from the point of view of internal loads # FIXME other formula than in soure, in this way the mass flow rate is not influenced by the calculations above
+        print(-Qsen / (h_t5_prime_w3 - h_t3_w3), (gv.Pair * qv))
+
+        # TODO: now the energy of humidification and dehumidification can be calculated
+        q_hum_dehum = gv.lvapor*m*(w3 - w2)*1000 # in Watts
+        if q_hum_dehum > 0:
+            Qhum = q_hum_dehum
+            Qdhum = 0
+        elif q_hum_dehum < 0:
+            Qhum = 0
+            Qdhum = q_hum_dehum
+        else:
+            Qhum = 0
+            Qdhum = 0
+        # Qdhum = gv.lvapor*m*(w3 - w2)*1000 # in Watt
+        # print('Qhum', Qhum)
 
         # Total loads
-        h_t2_w2 = calc_h(t2,w2)
-        Qtot = m*(h_t3_w3-h_t2_w2)*1000 # in watts
+        h_t2_w2 = calc_h(t2, w2)
+        h_ts_ws = calc_h(ts, ws)
+        # Qtot = m*(h_t3_w3-h_t2_w2)*1000 # in watts # FIXME h_t3_w3 is not calculated using the new w3, should it not be h_ts_ws? TODO: remove
+        Qtot = m*(h_ts_ws-h_t2_w2)*1000 # TODO: document
         
         # Adiabatic humidifier - computation of electrical auxiliary loads
         if Qhum >0:
@@ -1023,45 +968,99 @@ def calc_HVAC(SystemH, SystemC, people, RH1, t1, tair, qv_req, Flag, Qsen, t5_1,
         Ehum_aux = 0
         #Edhum_aux = 0
         ma_hs = ts_hs = tr_hs = ts_cs = tr_cs = ma_cs =  0
+
+        # TODO: return air mass flow rates
+    t5 = t5_prime # FIXME: this should not be input or output of this function
     
     return Qhs_sen, Qcs_sen, Qhum, Qdhum, Ehum_aux, ma_hs, ma_cs, ts_hs, ts_cs, tr_hs, tr_cs, w2 , w3, t5
 
-def calc_w3_heating_case(t5,w2,w5,t3,t5_1,m,lvapor,liminf,limsup):
-    Qhum = 0
-    Qdhum = 0
-    if w5 < liminf:
+
+def calc_w3_heating_case(t5, w2, w5, t3):
+    # TODO: add documentation
+    """ Algorithm 1 Determination of the room's supply moisture content (w3) for the heating case from Kaempf's HVAC model
+
+    t5 -- zone air temperature
+    w2 --
+    w5 --
+    t3 --
+
+
+    Source:
+    [1] Kämpf, Jérôme Henri
+        On the modelling and optimisation of urban energy fluxes
+        http://dx.doi.org/10.5075/epfl-thesis-4548
+
+    """
+
+    # get constants and properties
+    temp_comf_max = 26 # limits of comfort in zone TODO: get from properties
+    hum_comf_max = 70 # limits of comfort in zone TODO: get from properties
+
+    w_liminf = calc_w(t5, 30)  # TODO: document
+    w_limsup = calc_w(t5, 70)  # TODO: document
+    w_comf_max = calc_w(temp_comf_max, hum_comf_max)  # moisture content at maximum comfortable state
+
+
+    # Qhum = 0 TODO: remove
+    # Qdhum = 0 TODO: remove
+    if w5 < w_liminf:
         # humidification
-        w3 = liminf - w5 + w2
-        Qhum = lvapor*m*(w3 - w2)*1000 # in Watts
-    elif w5 < limsup and w5  < calc_w(35,70):
+        w3 = w_liminf - w5 + w2
+        print('heating with humidification')
+        # Qhum = lvapor*m*(w3 - w2)*1000 # in Watts # TODO: I think this should be calculated using the corrected mass flow rate
+    elif w5 > w_limsup and w5  < w_comf_max:
         # heating and no dehumidification
         #delta_HVAC = calc_t(w5,70)-t5
         w3 = w2
-    elif w5 > limsup:
+        print('heating without humidification')
+    elif w5 > w_comf_max: # FIXME in the source the comparison is to w(26,70)
         # dehumidification
-        w3 = max(min(min(calc_w(35,70)-w5+w2,calc_w(t3,100)),limsup-w5+w2),0)
-        Qdhum = lvapor*m*(w3 - w2)*1000 # in Watts
+        w3 = max(min(min(w_comf_max-w5+w2, calc_w(t3, 100)), w_limsup-w5+w2), 0)
+        # Qdhum = lvapor*m*(w3 - w2)*1000 # in Watts # TODO: I think this should be calculated using the corrected mass flow rate
+        print('heating with dehumidification')
     else:
         # no moisture control
         w3 = w2
-    return w3, Qhum , Qdhum 
+    return w3
 
-def calc_w3_cooling_case(w2,t3,w5, liminf,limsup,m,lvapor):
-    Qhum = 0
-    Qdhum = 0
-    if w5 > limsup:
+
+def calc_w3_cooling_case(t5, w2, t3, w5):
+    # TODO add documentation
+    """ Algorithm 2 Determination of the room's supply moisture content (w3) for the cooling case from Kaempf's HVAC model
+    for non-evaporative cooling
+
+    Source:
+
+    [1] Kämpf, Jérôme Henri
+        On the modelling and optimisation of urban energy fluxes
+        http://dx.doi.org/10.5075/epfl-thesis-4548
+
+    """
+
+    # get constants and properties
+    w_liminf = calc_w(t5, 30)  # TODO: document
+    w_limsup = calc_w(t5, 70)  # TODO: document
+
+
+    # Qhum = 0 TODO: remove
+    # Qdhum = 0 TODO: remove
+    if w5 > w_limsup:
         #dehumidification
-        w3 = max(min(limsup-w5+w2,calc_w(t3,100)),0)
-        Qdhum = lvapor*m*(w3 - w2)*1000 # in Watts
-    elif w5 < liminf:
+        print('cooling with dehumidification')
+        w3 = max(min(w_limsup-w5+w2, calc_w(t3, 100)), 0)
+        # Qdhum = lvapor*m*(w3 - w2)*1000 # in Watts TODO: I think this should be calculated using the corrected mass flow rate
+    elif w5 < w_liminf:
         # humidification
-        w3 = liminf-w5+w2
-        Qhum = lvapor*m*(w3 - w2)*1000 # in Watts
+        print('cooling with humidification')
+        w3 = w_liminf-w5+w2
+        # Qhum = lvapor*m*(w3 - w2)*1000 # in Watts TODO: I think this should be calculated using the corrected mass flow rate
     else:
-        w3 = min(w2,calc_w(t3,100))
-    return w3, Qhum , Qdhum
+        print('cooling without humidification/dehumidification')
+        w3 = min(w2, calc_w(t3, 100))
+    return w3
 
 def calc_w(t,RH): # Moisture content in kg/kg of dry air
+    # TODO: add documentation and source of formula
     Pa = 100000 #Pa
     Ps = 610.78*math.exp(t/(t+238.3)*17.2694)
     Pv = RH/100*Ps
@@ -1069,6 +1068,8 @@ def calc_w(t,RH): # Moisture content in kg/kg of dry air
     return w
 
 def calc_h(t,w): # enthalpyh of most air in kJ/kg
+    # TODO: add documentation and source of formula
+    # source: thesis Kaempf Eq.(4.30) extended to temperatures below -10°
     if 0 < t < 60:
         h = (1.007*t-0.026)+w*(2501+1.84*t)    
     elif -100 < t <= 0:

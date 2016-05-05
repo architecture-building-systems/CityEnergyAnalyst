@@ -16,6 +16,7 @@ import globalvar
 from geopandas import GeoDataFrame as gpdf
 import inputlocator
 
+gv = globalvar.GlobalVariables()
 reload(f)
 reload(globalvar)
 
@@ -84,8 +85,8 @@ def demand_calculation(locator, gv):
     # get timeseries of demand
     num_buildings = len(prop_RC_model.index)
     counter = 0
-    for building in prop_RC_model.index:
-        gv.models['calc-thermal-loads'](building, prop_occupancy.ix[building], prop_architecture.ix[building],
+    for building in prop_RC_model.index[0:5]:
+        f.CalcThermalLoads(building, prop_occupancy.ix[building], prop_architecture.ix[building],
                            prop_thermal.ix[building],
                            prop_geometry.ix[building], prop_HVAC_result.ix[building], prop_RC_model.ix[building],
                            prop_age.ix[building], Solar.ix[building], locator.get_demand_results_folder(), schedules,
@@ -136,7 +137,6 @@ def get_temperatures(locator, prop_HVAC):
 
 def test_demand():
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
-    gv = globalvar.GlobalVariables()
     demand_calculation(locator=locator, gv=gv)
 
 
