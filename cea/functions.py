@@ -810,8 +810,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
                   'Trcs_C':Tcs_re, 'mcpcs_kWC':mcpcs,'Qcdataf_kWh':Qcdata/1000, 'Tsww_C':Tww_sup_0,'Trww_C':Tww_re,
                   'Tww_tank_C':Tww_st,'Ef_kWh':(Ealf+Eauxf+Epro)/1000, 'Epro_kWh':Epro/1000,'Qcref_kWh':Qcrefri/1000,
                   'Edataf_kWh':Edata/1000, 'QHf_kWh':(Qwwf+Qhsf)/1000,
-                  'QCf_kWh':(-1*Qcsf+Qcdata+Qcrefri)/1000,
-                  'Qhs_sen_incl_em_ls':Qhs_sen_incl_em_ls/1000,'Qcs_sen_incl_em_ls':Qcs_sen_incl_em_ls/1000,'Qhs_lat':Qhs_lat/1000,'Qcs_lat': Qcs_lat/1000  } # TODO: remove again
+                  'QCf_kWh':(-1*Qcsf+Qcdata+Qcrefri)/1000}
                  ).to_csv(locationFinal+'\\'+Name+'.csv',
                                                                    index=False, float_format='%.2f')
 
