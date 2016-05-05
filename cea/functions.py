@@ -717,7 +717,7 @@ def get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag
     Tcs_sup_0 = prop_HVAC.Tscs0_C
     Tcs_re_0 = Tcs_sup_0 + prop_HVAC.dTcs0_C
     Tww_sup_0 = prop_HVAC.Tsww0_C
-    Tww_re_0 = Tww_sup_0 + prop_HVAC.dTww0_C
+    Tww_re_0 = Tww_sup_0 - prop_HVAC.dTww0_C
     # Identification of equivalent lenghts
     fforma = Calc_form(Lw, Ll, footprint)  # factor form comparison real surface and rectangular
     Lv = (2 * Ll + 0.0325 * Ll * Lw + 6) * fforma  # lenght vertical lines
