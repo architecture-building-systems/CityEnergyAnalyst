@@ -22,7 +22,7 @@ def calc_HVAC(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_s
     RH1 -- external relative humidity at time step t
     t1 -- external air temperature at time step t
     tair --
-    qv_req -- ventilation requirements at time step t according to the mixed occupancy schedule of the building
+    qm_ve_req -- ventilation requirements at time step t according to the mixed occupancy schedule of the building
     Qsen -- sensible heating or cooling load to be supplied by the HVAC system at time step t in [W]
     t5_1 -- zone air temperature at time step t-1
     wint -- internal moisture gains at time step t according to the mixed occupancy schedule of the building
@@ -37,20 +37,7 @@ def calc_HVAC(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_s
     if abs(Qsen) != 0: # to account for the bug of possible -0.0
         # sensible and latent loads
         Qsen = Qsen*0.001  # transform in kJ/s
-        # Properties of heat recovery and required air incl. Leakage
-        qv = qv_req*1.0184     # in m3/s corrected taking into account leakage # TODO: add source
-        Veff = gv.Vmax*qv/qv_req        # max velocity effective
-        nrec = gv.nrec_N-gv.C1*(Veff-2)   # heat exchanger coefficient
-        print(nrec)
-
-        # State No. 1
-        w1 = calc_w(t1, RH1)  # outdoor moisture (kg/kg)
-
-        # State No. 2
-        t2 = t1 + nrec*(t5_1-t1)  # inlet air temperature after HEX calculated from zone air temperature at time step t-1 (°C)
-        print(t2)
-        w2 = min(w1, calc_w(t2, 100))  # inlet air moisture (kg/kg), Eq. (4.24) in [1]
-        print(w2)
+        t2, w2 = calc_hex(RH1, gv, qv_req, t1, t5_1)
 
         # State No. 3
         # Assuming that AHU does not modify the air humidity
@@ -155,6 +142,25 @@ def calc_HVAC(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_s
     t5 = t5_prime # FIXME: this should not be input or output of this function
 
     return Qhs_sen, Qcs_sen, Qhum, Qdhum, Ehum_aux, ma_hs, ma_cs, ts_hs, ts_cs, tr_hs, tr_cs, w2, w3, t5
+
+
+def calc_hex(rel_humidity_ext, gv, qv_req, temp_ext, temp_zone_prev):
+    """ calculates air properties of mechanical ventilation system with heat exchanger"""
+    # TODO add documentation
+
+    # Properties of heat recovery and required air incl. Leakage
+    qv = qv_req * 1.0184  # in m3/s corrected taking into account leakage # TODO: add source
+    Veff = gv.Vmax * qv / qv_req  # max velocity effective
+    nrec = gv.nrec_N - gv.C1 * (Veff - 2)  # heat exchanger coefficient
+    # State No. 1
+    w1 = calc_w(temp_ext, rel_humidity_ext)  # outdoor moisture (kg/kg)
+    # State No. 2
+    t2 = temp_ext + nrec * (
+    temp_zone_prev - temp_ext)  # inlet air temperature after HEX calculated from zone air temperature at time step t-1 (°C)
+
+    w2 = min(w1, calc_w(t2, 100))  # inlet air moisture (kg/kg), Eq. (4.24) in [1]
+
+    return t2, w2
 
 
 def calc_w3_heating_case(t5, w2, w5, t3):
