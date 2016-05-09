@@ -4,6 +4,7 @@ Global variables
 ================
 
 """
+import functions
 
 
 class GlobalVariables(object):
@@ -49,3 +50,9 @@ class GlobalVariables(object):
         self.sl_services = 40  # service life of technical instalations
         # constant variables for air conditioning fan
         self.Pfan = 0.55 # specific fan consumption in W/m3/h
+
+        # here is where we plug in the models to use for calculations
+        self.models = {'calc-thermal-loads': functions.CalcThermalLoads}
+
+    def log(self, msg, **kwargs):
+        print msg % kwargs

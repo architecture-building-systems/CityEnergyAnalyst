@@ -7,7 +7,10 @@ from cea import globalvar
 import inputlocator
 reload(inputlocator)
 
-gv = globalvar.GlobalVariables()
+
+def add_message(msg, **kwargs):
+    """Log to arcpy.AddMessage() instead of print to STDOUT"""
+    arcpy.AddMessage(msg % kwargs)
 
 class PropertiesTool(object):
     """
@@ -57,6 +60,8 @@ class PropertiesTool(object):
         prop_thermal_flag = parameters[1]
         prop_architecture_flag = parameters[2]
         prop_HVAC_flag = parameters[3]
+        gv = globalvar.GlobalVariables()
+        gv.log = add_message
         properties(locator=locator,
                    prop_thermal_flag=prop_thermal_flag.value,
                    prop_architecture_flag=prop_architecture_flag.value,
@@ -95,7 +100,8 @@ class DemandTool(object):
 
         scenario_path = parameters[0].valueAsText
         locator = inputlocator.InputLocator(scenario_path)
-
+        gv = globalvar.GlobalVariables()
+        gv.log = add_message
         cea.demand.demand_calculation(locator=locator, gv=gv)
 
 
@@ -137,7 +143,8 @@ class EmbodiedEnergyTool(object):
 
         yearcalc = int(parameters[0].valueAsText)
         scenario_path = parameters[1].valueAsText
-
+        gv = globalvar.GlobalVariables()
+        gv.log = add_message
         locator = inputlocator.InputLocator(scenario_path=scenario_path)
         lca_embodied(yearcalc=yearcalc, locator=locator, gv=gv)
 
@@ -260,34 +267,48 @@ class GraphsDemandTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        path_buildings = arcpy.Parameter(
-            displayName="Buildings file",
-            name="path_buildings",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_buildings.filter.list = ['shp']
-        path_results_demand = arcpy.Parameter(
-            displayName="Demand Folder Path",
-            name="path_results_demand",
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
-        path_results = arcpy.Parameter(
-            displayName="Graphs Demand Results Folder Path",
-            name="path_results",
-            datatype="DEFolder",
+        analysis_fields = arcpy.Parameter(
+            displayName="Variables to analyse",
+            name="analysis_fields",
+            datatype="String",
             parameterType="Required",
+            multiValue=True,
             direction="Input")
-        return [path_buildings, path_results_demand,
-                path_results]
+        analysis_fields.filter.list = []
+        return [scenario_path, analysis_fields]
+
+    def updateParameters(self, parameters):
+        import pandas as pd
+        scenario_path = parameters[0].valueAsText
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+        analysis_fields = parameters[1]
+        locator = inputlocator.InputLocator(scenario_path)
+        df_total_demand = pd.read_csv(locator.get_total_demand())
+        first_building = df_total_demand['Name'][0]
+        df_building = pd.read_csv(locator.get_demand_results_file(first_building))
+        fields = set(df_building.columns.tolist())
+        fields.remove('DATE')
+        fields.remove('Name')
+        analysis_fields.filter.list = list(fields)
+        return
 
     def execute(self, parameters, messages):
-        from cea.graphs import graphs_demand
-        graphs_demand(path_buildings=parameters[0].valueAsText,
-                    path_results_demand=parameters[1].valueAsText,
-                    path_results = parameters[2].valueAsText,
-                    analysis_fields = ["Ealf", "Qhsf","Qwwf", "Qcsf"])
+        import cea.graphs
+        reload(cea.graphs)
+        scenario_path = parameters[0].valueAsText
+        locator = inputlocator.InputLocator(scenario_path)
+        analysis_fields = parameters[1].valueAsText.split(';')[:4]  # max 4 fields for analysis
+        gv = globalvar.GlobalVariables()
+        gv.log = add_message
+        cea.graphs.graphs_demand(locator=locator, analysis_fields=analysis_fields, gv=gv)
 
 
 class HeatmapsTool(object):
@@ -298,70 +319,79 @@ class HeatmapsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        path_data = arcpy.Parameter(
-            displayName="File containing the data to read (Total_demand.csv)",
-            name="path_data",
-            datatype="DEFile",
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
             parameterType="Required",
             direction="Input")
-        path_data.filter.list = ['csv']
-        analysis_field_variables = arcpy.Parameter(
+        path_variables = arcpy.Parameter(
+            displayName="Choose the file to analyse",
+            name="path_variables",
+            datatype="String",
+            parameterType="Required",
+            direction="Input")
+        path_variables.filter.list = []
+        analysis_fields = arcpy.Parameter(
             displayName="Variables to analyse",
-            name="analysis_field_variables",
+            name="analysis_fields",
             datatype="String",
             parameterType="Required",
             multiValue=True,
             direction="Input")
-        analysis_field_variables.filter.list = []
-        path_buildings = arcpy.Parameter(
-            displayName="Buildings file",
-            name="path_buildings",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        path_buildings.filter.list = ['shp']
-        path_results = arcpy.Parameter(
-            displayName="Results folder",
-            name="path_results",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        return [path_data, analysis_field_variables,
-                path_buildings, path_results]
+        analysis_fields.filter.list = []
+        analysis_fields.parameterDependencies = ['path_variables']
+
+        return [scenario_path, path_variables, analysis_fields]
 
     def isLicensed(self):
         return True
 
     def updateParameters(self, parameters):
+        # scenario_path
+        scenario_path = parameters[0].valueAsText
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+        # path_variables
+        locator = inputlocator.InputLocator(scenario_path)
+        file_names = [os.path.basename(locator.get_total_demand())]
+        file_names.extend([f for f in os.listdir(locator.get_lca_emissions_results_folder()) if f.endswith('.csv')])
+        path_variables = parameters[1]
+        if not path_variables.value or path_variables.value not in file_names:
+            path_variables.filter.list = file_names
+            path_variables.value = file_names[0]
+        # analysis_fields
+        analysis_fields = parameters[2]
+        if path_variables.value == file_names[0]:
+            file_to_analyze = locator.get_total_demand()
+        else:
+            file_to_analyze = os.path.join(locator.get_lca_emissions_results_folder(), path_variables.value)
         import pandas as pd
-        path_data = parameters[0]
-        analysis_field_variables = parameters[1]
-        csv = pd.read_csv(path_data.valueAsText)
-        fields = set(csv.columns.tolist())
-        #fields.remove('Name')
-        analysis_field_variables.filter.list = list(fields)
+        df = pd.read_csv(file_to_analyze)
+        fields = df.columns.tolist()
+        fields.remove('Name')
+        analysis_fields.filter.list = list(fields)
         return
 
     def updateMessages(self, parameters):
         return
 
     def execute(self, parameters, messages):
-        import tempfile
-        from cea.heatmaps import heatmaps
+        scenario_path = parameters[0].valueAsText
+        file_to_analyze = parameters[1].valueAsText
+        analysis_fields = parameters[2].valueAsText.split(';')
 
-        path_data = parameters[0].valueAsText
-        value_table = parameters[1].value
-        path_buildings = parameters[2].valueAsText
-        path_results = parameters[3].valueAsText
-        path_variables = os.path.dirname(path_data)
-        path_temporary_folder = tempfile.gettempdir()
-        file_variable = os.path.basename(path_data)
-        analysis_field_variables = [value_table.getvalue(i, 0)
-                                    for i in range(value_table.rowcount)]
-        heatmaps(
-            analysis_field_variables=analysis_field_variables,
-            path_variables=path_variables,
-            path_buildings=path_buildings,
-            path_results=path_results,
-            path_temporary_folder=path_temporary_folder,
-            file_variable=file_variable)
+        locator = inputlocator.InputLocator(scenario_path)
+        if file_to_analyze == os.path.basename(locator.get_total_demand()):
+            file_to_analyze = locator.get_total_demand()
+            path_results = locator.get_heatmaps_demand_folder()
+        else:
+            file_to_analyze = os.path.join(locator.get_lca_emissions_results_folder(), file_to_analyze)
+            path_results = locator.get_heatmaps_emission_folder()
+        import cea.heatmaps
+        reload(cea.heatmaps)
+        cea.heatmaps.heatmaps(locator=locator, analysis_fields=analysis_fields,
+                 path_results=path_results, file_to_analyze=file_to_analyze)
+        return
+

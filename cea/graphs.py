@@ -14,14 +14,18 @@ import pandas as pd
 import inputlocator
 
 
-def graphs_demand(locator, analysis_fields):
+def graphs_demand(locator, analysis_fields, gv):
     """
     algorithm to print graphs in PDF concerning the dynamics of each and all buildings
 
     Parameters
     ----------
-    path_buildings : string
-        path to buildings file buildings.shp
+
+    :param locator: an InputLocator set to the scenario to compute
+    :type locator: inputlocator.InputLocator
+
+    :param analysis_fields: list of fields (column names in Totals.csv) to analyse
+    :type analysis_fields: list[string]
 
     Returns
     -------
@@ -33,7 +37,7 @@ def graphs_demand(locator, analysis_fields):
     building_names = pd.read_csv(locator.get_total_demand()).Name
     num_buildings = len(building_names)
     # setup-time
-    color_palette = ['g','r','y','c']
+    color_palette = ['g', 'r', 'y', 'c']
     fields = analysis_fields.append('DATE')
 
     # create figure for every name
@@ -54,10 +58,10 @@ def graphs_demand(locator, analysis_fields):
 
         # save to disc
         plt.savefig(locator.get_demand_plots_file(name))
-        plt.close()
         plt.clf()
+        plt.close()
 
-        print 'Building No. ' + str(counter + 1) + ' completed out of ' + str(num_buildings)
+        gv.log('Building No. %(bno)i completed out of %(btot)i', bno=counter+1, btot=num_buildings)
         counter += 1
 
 
@@ -68,7 +72,9 @@ def test_graph_demand():
     analysis_fields = ["Ealf_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
 
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
-    graphs_demand(locator=locator, analysis_fields=analysis_fields)
+    import globalvar
+    gv = globalvar.GlobalVariables()
+    graphs_demand(locator=locator, analysis_fields=analysis_fields, gv=gv)
 
 if __name__ == '__main__':
     test_graph_demand()

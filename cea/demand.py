@@ -16,7 +16,6 @@ import globalvar
 from geopandas import GeoDataFrame as gpdf
 import inputlocator
 
-gv = globalvar.GlobalVariables()
 reload(f)
 reload(globalvar)
 
@@ -86,12 +85,12 @@ def demand_calculation(locator, gv):
     num_buildings = len(prop_RC_model.index)
     counter = 0
     for building in prop_RC_model.index:
-        f.CalcThermalLoads(building, prop_occupancy.ix[building], prop_architecture.ix[building],
+        gv.models['calc-thermal-loads'](building, prop_occupancy.ix[building], prop_architecture.ix[building],
                            prop_thermal.ix[building],
                            prop_geometry.ix[building], prop_HVAC_result.ix[building], prop_RC_model.ix[building],
                            prop_age.ix[building], Solar.ix[building], locator.get_demand_results_folder(), schedules,
                            list_uses, T_ext, T_ext_max, RH_ext, T_ext_min, locator.get_temporary_folder(), gv, 0, 0)
-        print 'Building No. ' + str(counter + 1) + ' completed out of ' + str(num_buildings)
+        gv.log('Building No. %(bno)i completed out of %(btot)i', bno=counter + 1, btot=num_buildings)
         counter += 1
 
     # get total file
@@ -109,7 +108,7 @@ def demand_calculation(locator, gv):
             df = df.append(df2, ignore_index=True)
     df.to_csv(locator.get_total_demand(), index=False, float_format='%.2f')
 
-    print 'finished'
+    gv.log('finished')
 
 
 def get_schedules(locator, list_uses):
@@ -137,6 +136,7 @@ def get_temperatures(locator, prop_HVAC):
 
 def test_demand():
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    gv = globalvar.GlobalVariables()
     demand_calculation(locator=locator, gv=gv)
 
 
