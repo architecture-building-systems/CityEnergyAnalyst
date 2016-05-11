@@ -12,6 +12,7 @@ def add_message(msg, **kwargs):
     """Log to arcpy.AddMessage() instead of print to STDOUT"""
     arcpy.AddMessage(msg % kwargs)
 
+
 class PropertiesTool(object):
     """
     integrate the properties script with ArcGIS.
@@ -395,3 +396,60 @@ class HeatmapsTool(object):
                  path_results=path_results, file_to_analyze=file_to_analyze)
         return
 
+class RadiationTool(object):
+    def __init__(self):
+        self.label = 'Radiation'
+        self.description = 'Create radiation file'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+        latitude = arcpy.Parameter(
+            displayName="Latitude",
+            name="latitude",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        longitude = arcpy.Parameter(
+            displayName="Longitude",
+            name="longitude",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        timezone = arcpy.Parameter(
+            displayName="Timezone",
+            name="timezone",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        year = arcpy.Parameter(
+            displayName="Year",
+            name="year",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+
+        return [scenario_path, latitude, longitude, timezone, year]
+
+    def execute(self, parameters, messages):
+        scenario_path = parameters[0].valueAsText
+        latitude = parameters[1].value
+        longitude = parameters[2].value
+        timezone = parameters[3].value
+        year = parameters[4].value
+
+        # FIXME: use current arcgis db...
+        path_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
+
+        locator = inputlocator.InputLocator(scenario_path)
+
+        import cea.radiation
+        reload(cea.radiation)
+        cea.radiation.solar_radiation_vertical(locator=locator, path_arcgis_db=path_arcgis_db, latitude=latitude,
+                                               longitude=longitude, timezone=timezone, year=year)
+        return
