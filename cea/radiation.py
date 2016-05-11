@@ -19,122 +19,116 @@ import pandas as pd
 from simpledbf import Dbf5
 
 
-def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitude, longitude, timezone,
-                             year, path_dem_raster, weather_daily_data, path_temporary, path_output):
+def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timezone, year):
     """
-     algorithm to calculate the hourly solar isolation in vertical building surfaces.
-     The algorithm is based on the Solar Analyst Engine of ArcGIS 10.
-     For more info check the integrated demand model of Fonseca et al. 2015. Appl. energy.
+    algorithm to calculate the hourly solar isolation in vertical building surfaces.
+    The algorithm is based on the Solar Analyst Engine of ArcGIS 10.
+    For more info check the integrated demand model of Fonseca et al. 2015. Appl. energy.
 
-     Parameters
-     ----------
-     path_geometry : string
-         path to file buildings_geometry.shp
-     path_boundary: renovation
-         path to file zone_of_study.shp
-     path_arcgisDB: boolean
+    Parameters
+    ----------
+    path_geometry : string
+        path to file buildings_geometry.shp
+    path_boundary: renovation
+        path to file zone_of_study.shp
+    path_arcgis_db: boolean
          path to default database of Arcgis. Generally of the form c:\users\your_name\Documents\Arcgis\Default.gdb
-     latitude: float
+    latitude: float
          latitude north  at the centre of the location
-     longitude: float
+    longitude: float
          latitude north
-     timezone: integer
-         timezone (UTC)
-     year: integer
-         year of calculation
-     path_dem_raster: string
-         path to terrain file
-     weather_daily_data: string
-         path to weather_day.csv file
-     prop_architecture_flag: boolean
-         True, get properties about the construction and architecture, otherwise False.
-     prop_HVAC_flag: boolean
-         True, get properties about types of HVAC systems, otherwise False.
+    timezone: integer
+        timezone (UTC)
+    year: integer
+        year of calculation
+    path_terrain: string
+        path to terrain file
+    path_weather_daily: string
+        path to weather_day.csv file
+    prop_architecture_flag: boolean
+        True, get properties about the construction and architecture, otherwise False.
+    prop_HVAC_flag: boolean
+        True, get properties about types of HVAC systems, otherwise False.
 
-     gv: GlobalVariables
-         an instance of globalvar.GlobalVariables with the constants
-         to use (like `list_uses` etc.)
-
-     Returns
-     -------
-     radiation: .csv
-         solar radiation file in vertical surfaces of buildings stored in path_output
-     """
-
-
-
+    Returns
+    -------
+    radiation: .csv
+        solar radiation file in vertical surfaces of buildings stored in path_output
+    """
     # Set environment settings
-    arcpy.env.workspace = path_arcgisDB
+    arcpy.env.workspace = path_arcgis_db
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("spatial")
 
     #local variables
     aspect_slope = "FROM_DEM"
     heightoffset = 1
-    Simple_CQ = path_arcgisDB + '\\' + 'Simple_CQ'
-    Simple_context = path_arcgisDB +'\\'+'Simple_context'
-    dem_rasterfinal = path_arcgisDB + '\\' + 'DEM_All2'
-    observers = path_arcgisDB+'\\'+'observers'
-    DataFactorsBoundaries = path_temporary + '\\' + 'DataFactorsBoundaries.csv'
-    DataFactorsCentroids = path_temporary + '\\' + 'DataFactorsCentroids.csv'
-    DataradiationLocation = path_temporary + '\\' + 'RadiationYear.csv'
-    Radiationyearfinal = path_output + '\\' + 'radiation.csv'
+    Simple_CQ = path_arcgis_db + '\\' + 'Simple_CQ'
+    Simple_context = path_arcgis_db + '\\' + 'Simple_context'
+    dem_rasterfinal = path_arcgis_db + '\\' + 'DEM_All2'
+    observers = path_arcgis_db + '\\' + 'observers'
+    DataFactorsBoundaries = locator.get_temporary_file('DataFactorsBoundaries.csv')
+    DataFactorsCentroids = locator.get_temporary_file('DataFactorsCentroids.csv')
+    DataradiationLocation = locator.get_temporary_file('RadiationYear.csv')
     radiations = []
     
     #get values needed from the weather data file
-    T_G_day = pd.read_csv(weather_daily_data) # temperature and radiation table
+    T_G_day = pd.read_csv(locator.get_weather_daily())  # temperature and radiation table
     
     #calculate sunrise
     T_G_day['sunrise'] = 0
     T_G_day = calc_sunrise(T_G_day,year,timezone,longitude,latitude)
 
     # Select buildings
-    buildings_selection = path_arcgisDB +'\\'+'building_selection'
-    arcpy.MakeFeatureLayer_management(path_geometry, 'lyr')
-    arcpy.SelectLayerByLocation_management('lyr', 'intersect', path_boundary)
+    buildings_selection = path_arcgis_db + '\\' + 'building_selection'
+    arcpy.MakeFeatureLayer_management(locator.get_building_geometry(), 'lyr')
+    arcpy.SelectLayerByLocation_management('lyr', 'intersect', locator.get_zone_of_study())
     arcpy.CopyFeatures_management('lyr', buildings_selection)
 
     # Simplify building's geometry
-    elevRaster = arcpy.sa.Raster(path_dem_raster)
+    elevRaster = arcpy.sa.Raster(locator.get_terrain())
     dem_raster_extent = elevRaster.extent
     arcpy.SimplifyBuilding_cartography(buildings_selection, Simple_CQ, simplification_tolerance=8, minimum_area=None)
-    arcpy.SimplifyBuilding_cartography(path_geometry, Simple_context, simplification_tolerance=8, minimum_area=None)
+    arcpy.SimplifyBuilding_cartography(locator.get_building_geometry(), Simple_context, simplification_tolerance=8,
+                                       minimum_area=None)
 
     # burn buildings into raster
-    Burn(Simple_context, path_dem_raster, dem_rasterfinal, path_temporary, dem_raster_extent)
+    Burn(Simple_context, locator.get_terrain(), dem_rasterfinal, locator.get_temporary_folder(), dem_raster_extent)
 
     # Calculate boundaries of buildings
-    CalcBoundaries(Simple_CQ, path_temporary, path_arcgisDB, DataFactorsCentroids, DataFactorsBoundaries)
+    CalcBoundaries(Simple_CQ, locator.get_temporary_folder(), path_arcgis_db, DataFactorsCentroids,
+                   DataFactorsBoundaries)
     
     # calculate observers
-    CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgisDB)
+    CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgis_db)
     
     # Calculate radiation
     for day in range(1,366):
         result = None
         while result == None:
             try:
-                result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude, path_temporary, aspect_slope, heightoffset)
+                result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
+                                       locator.get_temporary_folder(), aspect_slope, heightoffset)
             except:
                 pass
     print 'complete raw radiation files'
 
     # run the transformation of files appending all and adding non-sunshine hours
-    for day in range(1,366):    
-        radiations.append(calc_radiationday(day,T_G_day, path_temporary))
+    for day in range(1, 366):
+        radiations.append(calc_radiationday(day, T_G_day, locator.get_temporary_folder()))
 
     Radiationyear = radiations[0]
     for r in radiations[1:]:
         Radiationyear = Radiationyear.merge(r, on='ID',how='outer')
-    Radiationyear.fillna(value=0,inplace=True)
+    Radiationyear.fillna(value=0, inplace=True)
     Radiationyear.to_csv(DataradiationLocation,Index=False)
     
     print 'complete transfromation radiation files'
     
     # Assign ratiation to every surface of the buildings
 
-    CalcRadiationSurfaces(observers, Radiationyearfinal, DataFactorsCentroids,
-                          DataradiationLocation, path_temporary, path_arcgisDB)
+    CalcRadiationSurfaces(observers, locator.get_radiation(), DataFactorsCentroids,
+                          DataradiationLocation, locator.get_temporary_folder(), path_arcgis_db)
     
     print 'done'
 
@@ -417,22 +411,11 @@ def calc_sunrise(T_G_day,Yearsimul,timezone,longitude,latitude):
 
 
 def test_solar_radiation():
-
-    latitude = 46.95240555555556
-    longitude = 7.439583333333333
-    timezone = 1
-    year = 2014
-    path_temporary_folder = tempfile.gettempdir()
-    path_test = 'C:\\'
+    import cea.inputlocator
+    locator = cea.inputlocator.InputLocator(r'C:\reference-case\baseline')
     path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
-    path_boundary = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs', '1-buildings', 'zone_of_study.shp')
-    path_geometry = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs', '1-buildings', 'building_geometry.shp')
-    path_terrain = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs', '2-terrain', 'terrain')
-    weather_daily_data = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs', '3-weather', 'weather_day.csv')
-    path_output = os.path.join(path_test, 'reference-case','baseline', '2-results', '1-radiation', '1-timeseries')
-
-    solar_radiation_vertical(path_geometry, path_boundary, path_default_arcgis_db, latitude, longitude, timezone,
-                             year, path_terrain, weather_daily_data, path_temporary_folder, path_output)
+    solar_radiation_vertical(locator=locator, path_arcgis_db=path_default_arcgis_db,
+                             latitude=46.95240555555556, longitude=7.439583333333333, timezone=1, year=2014)
 
 
 if __name__ == '__main__':
