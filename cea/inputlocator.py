@@ -14,10 +14,15 @@ class InputLocator(object):
         self.scenario_path = scenario_path
         self.db_path = os.path.join(os.path.dirname(__file__), 'db')
 
-    def get_archetypes_hvac_properties(self):
-        """/cea/db/Archetypes/Archetypes_HVAC_properties.csv
-        path to database of archetypes file Archetypes_HVAC_properties.csv"""
-        return os.path.join(self.db_path, 'Archetypes', 'Archetypes_HVAC_properties.csv')
+    def get_archetypes_properties(self):
+        """/cea/db/Archetypes/Switzerland/Archetypes_properties.xlsx
+        path to database of archetypes file Archetypes_properties.xlsx"""
+        return os.path.join(self.db_path, 'Archetypes', 'Switzerland', 'Archetypes__properties.xlsx')
+
+    def get_archetypes_schedules(self):
+        """/cea/db/Archetypes/Switzerland/Archetypes_schedules.xlsx
+        path to database of archetypes file Archetypes_HVAC_properties.xlsx"""
+        return os.path.join(self.db_path, 'Archetypes', 'Switzerland', 'Archetypes_schedules.xlsx')
 
     def get_archetypes_embodied_emissions(self):
         """/cea/db/Archetypes/Archetypes_embodied_emissions.csv
