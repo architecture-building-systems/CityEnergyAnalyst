@@ -113,6 +113,7 @@ def calc_rho_air(temp_air):
     # TODO import from global variables
     rho_air_ref = 1.23  # (kg/m3)
     temp_air_ref = 283  # (K)
+    temp_air = temp_air + 273 # conversion to (K)
 
     # Equation (1) in [1]
     rho_air = temp_air_ref / temp_air * rho_air_ref
@@ -283,7 +284,7 @@ def allocate_default_leakage_paths(coeff_lea_zone, area_facade_zone, area_roof_z
 
 
 # calculation of leakage infiltration and exfiltration air mass flow as a function of zone indoor reference pressure
-def calc_qm_lea(qv_delta_p_lea_ref_zone, area_lea_zone, area_facade_zone, area_roof_zone, height_zone, class_shielding,
+def calc_qm_lea(qv_delta_p_lea_ref_zone, area_facade_zone, area_roof_zone, height_zone, class_shielding,
                 slope_roof, factor_cros, p_zone_ref, temp_zone, u_wind_site, temp_ext):
     # calculate leakage coefficient of zone
     coeff_lea_zone = calc_coeff_lea_zone(qv_delta_p_lea_ref_zone)
@@ -523,7 +524,7 @@ def calc_q_v_arg(factor_cros, temp_ext, dataframe_windows_building, u_wind_10, t
     rho_air_zone = calc_rho_air(temp_zone)
     area_window_tot = calc_area_window_tot(dataframe_windows_building, r_window_arg)
     h_window_stack = calc_effective_stack_height(dataframe_windows_building)
-    print(h_window_stack, area_window_tot)
+    # print(h_window_stack, area_window_tot)
 
     # volume flow rates of non-cross ventilated zone according to 6.4.3.5.4.2 in [1]
     if factor_cros == 0:
@@ -541,7 +542,7 @@ def calc_q_v_arg(factor_cros, temp_ext, dataframe_windows_building, u_wind_10, t
 
         # get window area of cross-ventilation
         area_window_cros = calc_area_window_cros(dataframe_windows_building, r_window_arg)
-        print(area_window_cros)
+        # print(area_window_cros)
 
         # Eq. (49) in [1]
         q_v_arg_in = 3600 * rho_air_ref / rho_air_ext * ((
@@ -594,24 +595,24 @@ def calc_q_m_mech():
 # ++++ MASS BALANCE ++++
 
 # air flow mass balance for iterative calculation according to 6.4.3.9 in [1]
-def calc_air_flow_mass_balance(p_zone_ref, geodataframe_geometry_building, dataframe_windows_building, r_window_arg, option):
+def calc_air_flow_mass_balance(p_zone_ref, geodataframe_geometry_building, dataframe_windows_building, r_window_arg, temp_zone, u_wind, temp_ext, option ):
     # TODO the idea is that the inputs to this functions consist of handles (or similar) to a building geometry in the buildings file, to the climate file, etc.
 
     # for testing the scripts
-    n50 = 1
+    n50 = 0.3 # air tight
     vol_building = geodataframe_geometry_building.area.iloc[0] + geodataframe_geometry_building['height_ag'].iloc[0]
     qv_delta_p_lea_ref_zone = calc_qv_delta_p_ref(n50, vol_building)
-    area_lea_zone = 0.2  # (m2) ?
+    # area_lea_zone = 0.2  # (m2) ?
     # area_facade_zone = 200  # (m2)
     # area_roof_zone = 100  # (m2)
     # height_zone = 5  # (m)
     class_shielding = 2  # open
     # slope_roof = 10  # (deg)
     factor_cros = 1  # 1 = cross ventilation possible
-    temp_zone = 293  # (K)
-    u_wind_site = 2  # (m/s)
-    u_wind_10 = 2
-    temp_ext = 299  # (K)
+    temp_zone = temp_zone + 273  # (K)
+    u_wind_site = u_wind  # (m/s)
+    u_wind_10 = u_wind
+    temp_ext = temp_ext + 273  # (K)
     area_vent_zone = 0  # (cm2) area of ventilation openings
     # r_window_arg = 0 # fraction of open windows
     area_facade_zone, area_roof_zone, height_zone, slope_roof = get_building_properties_ventilation(geodataframe_geometry_building)
@@ -629,16 +630,16 @@ def calc_air_flow_mass_balance(p_zone_ref, geodataframe_geometry_building, dataf
         qm_arg_in, qm_arg_out = calc_q_v_arg(factor_cros, temp_ext, dataframe_windows_building, u_wind_10, temp_zone, r_window_arg)
     qm_vent_in, qm_vent_out = calc_qm_vent(area_vent_zone, height_zone, class_shielding, factor_cros, p_zone_ref,
                                            temp_zone, u_wind_site, temp_ext)
-    qm_lea_in, qm_lea_out = calc_qm_lea(qv_delta_p_lea_ref_zone, area_lea_zone, area_facade_zone, area_roof_zone,
+    qm_lea_in, qm_lea_out = calc_qm_lea(qv_delta_p_lea_ref_zone, area_facade_zone, area_roof_zone,
                                         height_zone, class_shielding, slope_roof, factor_cros, p_zone_ref,
                                         temp_zone, u_wind_site, temp_ext)
 
     # mass balance, Eq. (69) in [1]
     qm_balance = qm_sup_dis + qm_eta_dis + qm_lea_sup_dis + qm_lea_eta_dis + qm_comb_in + qm_comb_out + qm_pdu_in + qm_pdu_out + qm_arg_in + qm_arg_out + qm_vent_in + qm_vent_out + qm_lea_in + qm_lea_out
-    print('iterate air flows')
-    print(qm_arg_in, qm_arg_out)
-    print(qm_vent_in, qm_vent_out)
-    print(qm_lea_in, qm_lea_out)
+    # print('iterate air flows')
+    # print(qm_arg_in, qm_arg_out)
+    # print(qm_vent_in, qm_vent_out)
+    # print(qm_lea_in, qm_lea_out)
     qm_sum_in = qm_sup_dis + qm_lea_sup_dis + qm_comb_in + qm_pdu_in + qm_arg_in + qm_vent_in + qm_lea_in
     qm_sum_out = qm_eta_dis + qm_lea_eta_dis + qm_comb_out + qm_pdu_out + qm_arg_out + qm_vent_out + qm_lea_out
 
@@ -649,7 +650,7 @@ def calc_air_flow_mass_balance(p_zone_ref, geodataframe_geometry_building, dataf
 
 
 # ++++ CALCULATION PROCEDURE ++++
-def calc_thermal_loads(sys_e_heating, sys_e_cooling, qv_req, t_hour, gv, tm_t0, temp_ext, ta_hs_set, ta_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_tr_w, i_ia, i_m, cm, af, losses, tHset_corr, tCset_corr, ic_max, ih_max, flag_season, rh_ext, t5_1, w_int, temp_comfort, geometry_building_test, windows_building_test):
+def calc_thermal_loads(sys_e_heating, sys_e_cooling, qv_req, t_hour, gv, tm_t0, temp_ext, ta_hs_set, ta_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_tr_w, i_ia, i_m, cm, af, losses, tHset_corr, tCset_corr, ic_max, ih_max, flag_season, rh_ext, t5_1, w_int, temp_comfort, geometry_building_test, windows_building_test, u_wind):
 
     """assumption if building has HVAC system:
     - all ventilation is mechanically controlled ventilation
@@ -717,7 +718,7 @@ def calc_thermal_loads(sys_e_heating, sys_e_cooling, qv_req, t_hour, gv, tm_t0, 
         print('natural ventilation')
         status_windows = 0
         qm_sum_in, qm_sum_out = calc_air_flows(geometry_building_test, windows_building_test,
-                                               status_windows)
+                                               status_windows, t5_1, u_wind, temp_ext)
         qm_tot = qm_sum_in * 3600  # (kg/h)
 
         if not windows_building_test.empty:
@@ -800,17 +801,17 @@ def get_building_properties_ventilation(geodataframe_building_geometry):
     return area_facade_zone, area_roof_zone, height_zone, slope_roof
 
 
-def calc_air_flows(geometry_building_test, windows_building_test, r_window_arg):
+def calc_air_flows(geometry_building_test, windows_building_test, r_window_arg, temp_zone, u_wind, temp_ext):
 
     # solve air flow mass balance via iteration
     p_zone_ref = 1  # (Pa) zone pressure, THE UNKNOWN VALUE
-    res = minimize(calc_air_flow_mass_balance, p_zone_ref, args=(geometry_building_test, windows_building_test, r_window_arg, 'minimize', ),
-                   method='Nelder-Mead')
+    res = minimize(calc_air_flow_mass_balance, p_zone_ref, args=(geometry_building_test, windows_building_test, r_window_arg, temp_zone, u_wind, temp_ext, 'minimize', ),
+                   method='Nelder-Mead', options={'disp': False, 'maxiter': 10, 'maxfev': None, 'xtol': 0.01, 'ftol': 0.01})
     # get zone pressure of air flow mass balance
     p_zone = res.x[0]
 
     # calculate air flows at zone pressure
-    qm_sum_in, qm_sum_out = calc_air_flow_mass_balance(p_zone,geometry_building_test, windows_building_test, r_window_arg, 'calculate')
+    qm_sum_in, qm_sum_out = calc_air_flow_mass_balance(p_zone,geometry_building_test, windows_building_test, r_window_arg, temp_zone, u_wind, temp_ext, 'calculate')
 
     return qm_sum_in, qm_sum_out
 
@@ -818,11 +819,11 @@ def get_windows_of_building(dataframe_windows, name_building):
     return dataframe_windows.loc[dataframe_windows['name_building'] == name_building]
 
 
-# TESTING
-if __name__ == '__main__':
 
+
+
+def testing():
     # calc_q_m_mech()
-
 
     # generate windows based on geometry of vertical surfaces in radiation file
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
@@ -847,7 +848,7 @@ if __name__ == '__main__':
 
     # p_zone_ref = 5  # (Pa) zone pressure, THE UNKNOWN VALUE
     # r_window_arg = 0.1
-
+    #
     # res = minimize(calc_air_flow_mass_balance, p_zone_ref, args=(geometry_building_test, windows_building_test, r_window_arg, 'minimize', ), method='Nelder-Mead')
 
     # this will be the function to minimize by a slover
@@ -902,11 +903,17 @@ if __name__ == '__main__':
 
     t_hour = 1
 
+    u_wind = 0.5
+
 
 
     res = calc_thermal_loads(sys_e_heating, sys_e_cooling, qv_req, t_hour, gv, tm_t0, temp_ext, ta_hs_set, ta_cs_set, h_tr_em,
                        h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_tr_w, i_ia, i_m, cm, af, losses, tHset_corr,
-                       tCset_corr, ic_max, ih_max, flag_season, rh_ext, t5_1, w_int, temp_comfort, geometry_building_test, windows_building_test)
+                       tCset_corr, ic_max, ih_max, flag_season, rh_ext, t5_1, w_int, temp_comfort, geometry_building_test, windows_building_test, u_wind)
 
 
     print(res)
+
+# TESTING
+if __name__ == '__main__':
+    testing()

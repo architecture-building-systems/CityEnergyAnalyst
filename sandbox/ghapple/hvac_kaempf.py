@@ -33,11 +33,15 @@ def calc_HVAC(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_s
 
     # State No. 5 # indoor air set point
     t5_prime = tair + 1 # accounding for an increase in temperature # TODO: where is this from? why use calculated tair and not the setpoint temperature? why +1?
+
+    # state after heat exchanger
+    t2, w2 = calc_hex(RH1, gv, qv_req, t1, t5_1)
+
     # print(t5_prime)
     if abs(Qsen) != 0: # to account for the bug of possible -0.0
         # sensible and latent loads
         Qsen = Qsen*0.001  # transform in kJ/s
-        t2, w2 = calc_hex(RH1, gv, qv_req, t1, t5_1)
+
 
         # State No. 3
         # Assuming that AHU does not modify the air humidity
@@ -50,9 +54,9 @@ def calc_HVAC(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_s
         # initial guess of mass flow rate
         h_t5_prime_w3 = calc_h(t5_prime, w3) # for enthalpy change in first assumption, see Eq.(4.31) in [1]
         h_t3_w3 = calc_h(t3, w3) # for enthalpy change in first assumption, see Eq.(4.31) in [1]
-        print(h_t5_prime_w3, h_t3_w3)
-        m1 = max(-Qsen/(h_t5_prime_w3-h_t3_w3), (gv.Pair*qv))  # Eq. (4.34) in [1] for first prediction of mass flow rater in (kg/s)
-        print(-Qsen/(h_t5_prime_w3-h_t3_w3), (gv.Pair*qv))
+        # print(h_t5_prime_w3, h_t3_w3)
+        m1 = max(-Qsen/(h_t5_prime_w3-h_t3_w3), (gv.Pair*qv_req))  # Eq. (4.34) in [1] for first prediction of mass flow rater in (kg/s) # TODO: use dynamic air density
+        # print(-Qsen/(h_t5_prime_w3-h_t3_w3), (gv.Pair*qv_req))
 
         # determine virtual state in the zone without moisture conditioning
         # c_p_air_w3 = (1.005 + 1.82*w3)  # heat capacity of humid air (kJ/(kg*K)), source: https: // en.wiktionary.org / wiki / humid_heat
@@ -77,8 +81,8 @@ def calc_HVAC(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_s
         # the new mass flow rate
         h_t5_prime_w3 = calc_h(t5_prime, w3)
         h_t3_w3 = calc_h(t3, w3)
-        m = max(-Qsen/(h_t5_prime_w3-h_t3_w3), (gv.Pair*qv)) #kg/s # from the point of view of internal loads # FIXME other formula than in soure, in this way the mass flow rate is not influenced by the calculations above
-        print(-Qsen / (h_t5_prime_w3 - h_t3_w3), (gv.Pair * qv))
+        m = max(-Qsen/(h_t5_prime_w3-h_t3_w3), (gv.Pair*qv_req)) #kg/s # from the point of view of internal loads # FIXME other formula than in soure, in this way the mass flow rate is not influenced by the calculations above
+        # print(-Qsen / (h_t5_prime_w3 - h_t3_w3), (gv.Pair * qv_req))
 
         # TODO: now the energy of humidification and dehumidification can be calculated
         h_t2_ws = calc_h(t2, ws)
@@ -133,10 +137,12 @@ def calc_HVAC(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_s
         Qtot = 0
         Qhs_sen = 0
         Qcs_sen = 0
-        w1 = w2 = w3 = w5 = t2 = t3 = ts = m = 0
+        w1 = w2 = w3 = w5 = t3 = ts = m = 0
         Ehum_aux = 0
         #Edhum_aux = 0
-        ma_hs = ts_hs = tr_hs = ts_cs = tr_cs = ma_cs =  0
+        ma_hs = ts_hs = ts_cs = ma_cs = 0 # TODO change temperatures to nan
+        tr_cs = t2 # temperature after hex
+        tr_hs = t2  # temperature after hex
 
         # TODO: return air mass flow rates
     t5 = t5_prime # FIXME: this should not be input or output of this function

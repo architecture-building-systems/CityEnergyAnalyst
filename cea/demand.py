@@ -16,6 +16,9 @@ import globalvar
 from geopandas import GeoDataFrame as gpdf
 import inputlocator
 
+# testing
+from sandbox.ghapple import hvac_kaempf, thermal_loads, ventilation
+
 reload(f)
 reload(globalvar)
 
@@ -81,15 +84,27 @@ def demand_calculation(locator, gv):
     # get solar insolation @ daren: this is a A BOTTLE NECK
     Solar = f.CalcIncidentRadiation(radiation_file)
 
+    # create windows in buildings
+    building_architecture = gpdf.from_file(locator.get_building_architecture())
+    windows_buildings = ventilation.create_windows(radiation_file, building_architecture)
+    building_geometry = gpdf.from_file(locator.get_building_geometry())
+
     # get timeseries of demand
     num_buildings = len(prop_RC_model.index)
     counter = 0
     for building in prop_RC_model.index:
-        gv.models['calc-thermal-loads'](building, prop_occupancy.ix[building], prop_architecture.ix[building],
-                           prop_thermal.ix[building],
-                           prop_geometry.ix[building], prop_HVAC_result.ix[building], prop_RC_model.ix[building],
-                           prop_age.ix[building], Solar.ix[building], locator.get_demand_results_folder(), schedules,
-                           list_uses, T_ext, T_ext_max, RH_ext, T_ext_min, locator.get_temporary_folder(), gv, 0, 0)
+
+        thermal_loads.calc_thermal_loads_new_ventilation(building, prop_RC_model.ix[building], prop_HVAC_result.ix[building],
+                                                         prop_occupancy.ix[building], prop_age.ix[building],
+                                                         prop_architecture.ix[building], prop_geometry.ix[building],
+                                                         schedules, list_uses, Solar.ix[building], T_ext, RH_ext,
+                                                         building_geometry.loc[building_geometry['Name'] == building], windows_buildings.loc[windows_buildings['name_building'] == building], locator.get_demand_results_folder(), gv)
+
+        # gv.models['calc-thermal-loads'](building, prop_occupancy.ix[building], prop_architecture.ix[building],
+        #                    prop_thermal.ix[building],
+        #                    prop_geometry.ix[building], prop_HVAC_result.ix[building], prop_RC_model.ix[building],
+        #                    prop_age.ix[building], Solar.ix[building], locator.get_demand_results_folder(), schedules,
+        #                    list_uses, T_ext, T_ext_max, RH_ext, T_ext_min, locator.get_temporary_folder(), gv, 0, 0)
         gv.log('Building No. %(bno)i completed out of %(btot)i', bno=counter + 1, btot=num_buildings)
         counter += 1
 
