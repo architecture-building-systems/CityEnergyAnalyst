@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import scipy
 import scipy.optimize as sopt
+import maker as m
 
 import storagetank_mixed as sto_m
 
@@ -174,47 +175,6 @@ def Calc_Tm(Htr_3,Htr_1,tm_t0,Cm,Htr_em,Im_tot,Htr_ms,I_st,Htr_w,te_t,I_ia,IHC_n
     ta = (Htr_is*ts + Hve*te_t + I_ia + IHC_nd)/(Htr_is+Hve)
     top = 0.31*ta+0.69*ts
     return tm, ts, ta, top
-
-def calc_mixed_schedule(Profiles, Profiles_names, prop_occupancy):
-    # weighted average of schedules
-    def calc_average(last, current, share_of_use):
-         return last + current*share_of_use
-    
-    #initialize variables
-    ta_hs_set = np.zeros(8760)
-    ta_cs_set = np.zeros(8760)
-    people = np.zeros(8760)
-    ve = np.zeros(8760)
-    q_int = np.zeros(8760)
-    w_int = np.zeros(8760)
-    Eal = np.zeros(8760)
-    E_pro = np.zeros(8760)
-    E_data = np.zeros(8760)
-    Qc_data = np.zeros(8760)
-    Qc_refri = np.zeros(8760)
-    mww = np.zeros(8760)
-    mw = np.zeros(8760)
-    
-    hour = Profiles[0].Hour
-    num_profiles = len(Profiles_names)
-    for num in range(num_profiles):
-        current_share_of_use = prop_occupancy[Profiles_names[num]]
-        ta_hs_set = np.vectorize(calc_average)(ta_hs_set,Profiles[num].tintH_set,current_share_of_use)
-        ta_cs_set = np.vectorize(calc_average)(ta_cs_set,Profiles[num].tintC_set,current_share_of_use)
-        people = np.vectorize(calc_average)(people,Profiles[num].People,current_share_of_use)
-        ve = np.vectorize(calc_average)(ve,Profiles[num].Ve,current_share_of_use)
-        q_int = np.vectorize(calc_average)(q_int,Profiles[num].I_int,current_share_of_use)
-        w_int = np.vectorize(calc_average)(w_int,Profiles[num].w_int,current_share_of_use)
-        E_pro = np.vectorize(calc_average)(E_pro,Profiles[num].Epro,current_share_of_use)
-        E_data = np.vectorize(calc_average)(E_data,Profiles[num].Edata,current_share_of_use)
-        Qc_data = np.vectorize(calc_average)(Qc_data, Profiles[num].Qcdata,current_share_of_use)
-        Qc_refri = np.vectorize(calc_average)(Qc_refri,Profiles[num].Qcrefri,current_share_of_use)
-        Eal = np.vectorize(calc_average)(Eal,Profiles[num].Ealf_nove,current_share_of_use)
-        mww = np.vectorize(calc_average)(mww,Profiles[num].Mww,current_share_of_use)
-        mw = np.vectorize(calc_average)(mw,Profiles[num].Mw,current_share_of_use)
-
-    return ta_hs_set,ta_cs_set,people,ve,q_int,Eal,E_pro, E_data, Qc_data,Qc_refri, mww, mw, w_int, hour
-
 
 def calc_Htr(Hve, Htr_is, Htr_ms, Htr_w):
     Htr_1 = 1/(1/Hve+1/Htr_is)
@@ -414,34 +374,63 @@ def calc_qv_req(ve,people,Af,gv,hour_day,hour_year,limit_inf_season,limit_sup_se
             q_req = (ve+infiltration_non_occupied)*Af/3600 #
     return q_req #m3/s
 
-def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop_geometry, prop_HVAC, prop_RC_model,
-                     prop_age, Solar, locationFinal, Profiles, Profiles_names, T_ext, T_ext_max, RH_ext, T_ext_min,
-                     path_temporary_folder,  gv, servers, coolingroom):
+def calc_mixed_schedule(gv, schedules, building_uses, building):
+    # weighted average of schedules
+    def calc_average(last, current, share_of_use):
+        return last + current * share_of_use
+    occ = np.zeros(8760)
+    el = np.zeros(8760)
+    dhw = np.zeros(8760)
+    pro = np.zeros(8760)
+    num_profiles = len(gv.list_uses)
+    for num in range(num_profiles):
+        current_share_of_use = building_uses[gv.list_uses[num]]
+        occ = np.vectorize(calc_average)(occ, schedules[num][0], current_share_of_use)
+        el = np.vectorize(calc_average)(el, schedules[num][1], current_share_of_use)
+        dhw = np.vectorize(calc_average)(dhw, schedules[num][2], current_share_of_use)
+        pro = np.vectorize(calc_average)(pro, schedules[num][3], current_share_of_use)
+
+    schedule = pd.DataFrame({'occ': occ, 'el':el, 'dhw':dhw, 'pro': pro})
+    return schedule
+
+def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_geometry, prop_HVAC, prop_RC_model, prop_comfort,
+                     prop_internal_loads, prop_age, Solar, locationFinal, schedules, T_ext, RH_ext, path_temporary_folder, gv, date):
+
     Af = prop_RC_model.Af
     Aef = prop_RC_model.Aef
     sys_e_heating = prop_HVAC.type_hs
     sys_e_cooling = prop_HVAC.type_cs
 
-    # calculate schedule and variables
-    ta_hs_set, ta_cs_set, people, ve, q_int, Eal_nove, Eprof,\
-    Edataf, Qcdataf, Qcrefrif, vww, vw, X_int, hour_day = calc_mixed_schedule(Profiles,Profiles_names,prop_occupancy)
-
     if Af > 0:
-        #extract properties of building
-        # Geometry
-        Am, Atot, Aw, Awall_all, Cm, Ll, Lw, Retrofit, Sh_typ, Year, footprint, nf_ag, nfp = get_properties_building_envelope(
-            prop_RC_model, prop_age, prop_architecture, prop_geometry, prop_occupancy)
-
-        Lcww_dis, Lsww_dis, Lv, Lvww_c, Lvww_dis, Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, Tww_re_0, Tww_sup_0, Y, fforma = get_properties_building_systems(
-            Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, prop_HVAC)
 
         # we define limtis of season.
         limit_inf_season = gv.seasonhours[0]+1
         limit_sup_season = gv.seasonhours[1]
 
-        # data and refrigeration loads
-        Qcdata = Qcdataf*Af
-        Qcrefri = Qcrefrif*Af
+        # get a mixed schedule
+        mixed_schedule = calc_mixed_schedule(gv, schedules, prop_occupancy)
+
+        # get properties of comfort
+        people = mixed_schedule.occ * (prop_architecture.Occ_m2p)**-1 * Af # in people
+        ve = people * prop_comfort.Ve_lps * 3.6 # in m3/h
+        ta_hs_set = prop_comfort.Ths_set_C
+        ta_cs_set = prop_comfort.Tcs_set_C
+
+        # get internal loads
+        Eal_nove =  mixed_schedule.el * (prop_internal_loads.El_Wm2 + prop_internal_loads.Ea_Wm2) * Af # in W
+        Edataf = mixed_schedule.el * prop_internal_loads.Ed_Wm2 * Af # in W
+        Eprof = mixed_schedule.pro * prop_internal_loads.Epro_Wm2 * Af # in W
+        Eref = mixed_schedule.el * prop_internal_loads.Ere_Wm2 * Af # in W
+        Qcrefri = (Eref * 4) #where 4 is the COP of the refrigeration unit   # in W
+        Qcdata = (Edataf * 0.9)  # where 0.9 is assumed of heat dissipation # in W
+        vww =  mixed_schedule.dhw * prop_internal_loads.Vww_lpd * (prop_architecture.Occ_m2p)**-1 * Af / 24000 # m3/h
+        vw =  mixed_schedule.dhw * prop_internal_loads.Vw_lpd * (prop_architecture.Occ_m2p)**-1 * Af / 24000 # m3/h
+
+        Am, Atot, Aw, Awall_all, Cm, Ll, Lw, Retrofit, Sh_typ, Year, footprint, nf_ag, nfp = get_properties_building_envelope(
+            prop_RC_model, prop_age, prop_architecture, prop_geometry, prop_occupancy)
+
+        Lcww_dis, Lsww_dis, Lv, Lvww_c, Lvww_dis, Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, Tww_re_0, Tww_sup_0, Y, fforma = get_properties_building_systems(
+            Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, prop_HVAC)
 
         #2. Transmission coefficients in W/K
         qv_req = np.vectorize(calc_qv_req)(ve,people,Af,gv,hour_day,range(8760),limit_inf_season,limit_sup_season)# in m3/s
@@ -457,10 +446,10 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         I_sol = calc_heat_gains_solar(Aw, Awall_all, Sh_typ, Solar, gv)
 
         #  Sensible heat gains
-        I_int_sen = calc_heat_gains_internal_sensible(Af, q_int)
+        I_int_sen = calc_heat_gains_internal_sensible(people, prop_internal_loads.Qs_Wp, Eal_nove, Eprof, Qcdata, Qcrefri)
 
-        #  Calculate latent internal loads in terms of added moisture:
-        w_int = calc_heat_gains_internal_latent(Af, X_int, sys_e_cooling, sys_e_heating)
+        #  Calculate latent internal loads:
+        w_int = calc_heat_gains_internal_latent(people, prop_internal_loads.X_ghp, sys_e_cooling, sys_e_heating)
 
         #  Components of Sensible heat gains
         I_ia, I_m, I_st = calc_comp_heat_gains_sensible(Am, Atot, Htr_w, I_int_sen, I_sol) # TODO: rename function according to ISO standard
@@ -631,7 +620,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
                    Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs_sen, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
                    Tcs_re, Tcs_re_0, Tcs_sup, Tcs_sup_0, Ths_re, Ths_re_0, Ths_sup, Ths_sup_0, Tww_re, Tww_st,
                    Tww_sup_0, Waterconsumption, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
-                   sys_e_cooling, sys_e_heating, waterpeak)
+                   sys_e_cooling, sys_e_heating, waterpeak, date)
 
     return
 
@@ -678,21 +667,21 @@ def calc_loads_electrical(Aef, Eal_nove, Eauxf, Edataf, Eprof):
     return Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot
 
 
-def calc_heat_gains_internal_latent(Af, X_int, sys_e_cooling, sys_e_heating):
+def calc_heat_gains_internal_latent(people, X_ghp, sys_e_cooling, sys_e_heating):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
     if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
-        w_int = X_int / (1000 * 3600) * Af  # in kg/kg.s
+        w_int = people * X_ghp / (1000 * 3600)  # kg/kg.s
     else:
         w_int = 0
 
     return w_int
 
 
-def calc_heat_gains_internal_sensible(Af, q_int):
+def calc_heat_gains_internal_sensible(people, Qs_Wp, Eal_nove, Eprof, Qcdata, Qcrefri):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
-    I_int_sen = q_int * Af  # Internal heat gains
+    I_int_sen = people * Qs_Wp + 0.9 * (Eal_nove + Eprof) + Qcdata - Qcrefri  # here 0.9 is assumed
     return I_int_sen
 
 
@@ -820,7 +809,7 @@ def results_to_csv(Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_to
                    Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs_sen, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
                    Tcs_re, Tcs_re_0, Tcs_sup, Tcs_sup_0, Ths_re, Ths_re_0, Ths_sup, Ths_sup_0, Tww_re, Tww_st,
                    Tww_sup_0, Waterconsumption, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
-                   sys_e_cooling, sys_e_heating, waterpeak):
+                   sys_e_cooling, sys_e_heating, waterpeak, date):
     # TODO: Document
     # Refactored from CalcThermalLoads
 
@@ -844,9 +833,8 @@ def results_to_csv(Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_to
 
     # print series all in kW, mcp in kW/h, cooling loads shown as positive, water consumption m3/h,
     # temperature in Degrees celcious
-    DATE = pd.date_range('1/1/2010', periods=8760, freq='H')
     pd.DataFrame(
-        {'DATE': DATE, 'Name': Name, 'Ealf_kWh': Ealf / 1000, 'Eauxf_kWh': Eauxf / 1000, 'Qwwf_kWh': Qwwf / 1000,
+        {'DATE': date, 'Name': Name, 'Ealf_kWh': Ealf / 1000, 'Eauxf_kWh': Eauxf / 1000, 'Qwwf_kWh': Qwwf / 1000,
          'Qww_kWh': Qww / 1000, 'Qww_tankloss_kWh': Qww_ls_st / 1000, 'Qhs_kWh': Qhs_sen / 1000,
          'Qhsf_kWh': Qhsf / 1000,
          'Qcs_kWh': -1 * Qcs / 1000, 'Qcsf_kWh': -1 * Qcsf / 1000, 'occ_pax': Occupancy, 'Vw_m3': Waterconsumption,

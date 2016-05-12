@@ -12,6 +12,7 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 import functions as f
+import maker as m
 import globalvar
 from geopandas import GeoDataFrame as gpdf
 import inputlocator
@@ -59,24 +60,30 @@ def demand_calculation(locator, gv):
     prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
     prop_HVAC = gpdf.from_file(locator.get_building_hvac()).drop('geometry', axis=1)
     prop_thermal = gpdf.from_file(locator.get_building_thermal()).drop('geometry', axis=1).set_index('Name')
-    prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index('Name')
+    prop_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index('Name')
+    prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)] # trick to erase occupancies that are not being used (it speeds up the code)
     prop_architecture = gpdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1).set_index('Name')
     prop_age = gpdf.from_file(locator.get_building_age()).drop('geometry', axis=1).set_index('Name')
 
     # get temperatures of operation
     prop_HVAC_result= get_temperatures(locator, prop_HVAC).set_index('Name')
+
     # weather conditions
     T_ext = np.array(weather_data.te)
     RH_ext = np.array(weather_data.RH)
-    T_ext_max = T_ext.max()
-    T_ext_min = T_ext.min()
+
+    #get list of uses
+    list_uses = [prop_occupancy.drop('PFloor', axis=1).columns]
+
+    #get date
+    date = pd.date_range(gv.date_start, periods=8760, freq='H')
 
     # get schedules
-    schedules = get_schedules(locator, list_uses)
+    schedules = m.schedule_maker(locator, list_uses)
 
     # get thermal properties for RC model
-    prop_RC_model = f.get_prop_RC_model(prop_occupancy, prop_architecture, prop_thermal, prop_geometry, prop_HVAC_result,
-                                        radiation_file, gv)
+    prop_RC_model = f.get_prop_RC_model(prop_occupancy, prop_architecture, prop_thermal, prop_geometry,
+                                        prop_HVAC_result, radiation_file, gv)
 
     # get solar insolation @ daren: this is a A BOTTLE NECK
     Solar = f.CalcIncidentRadiation(radiation_file)
@@ -86,10 +93,9 @@ def demand_calculation(locator, gv):
     counter = 0
     for building in prop_RC_model.index:
         gv.models['calc-thermal-loads'](building, prop_occupancy.ix[building], prop_architecture.ix[building],
-                           prop_thermal.ix[building],
                            prop_geometry.ix[building], prop_HVAC_result.ix[building], prop_RC_model.ix[building],
-                           prop_age.ix[building], Solar.ix[building], locator.get_demand_results_folder(), schedules,
-                           list_uses, T_ext, T_ext_max, RH_ext, T_ext_min, locator.get_temporary_folder(), gv, 0, 0)
+                           prop_age.ix[building], Solar.ix[building], locator.get_demand_results_folder(),
+                           schedules, T_ext, RH_ext, locator.get_temporary_folder(), gv, date)
         gv.log('Building No. %(bno)i completed out of %(btot)i', bno=counter + 1, btot=num_buildings)
         counter += 1
 
@@ -111,12 +117,6 @@ def demand_calculation(locator, gv):
     gv.log('finished')
 
 
-def get_schedules(locator, list_uses):
-    rows = len(list_uses)
-    result = list(range(rows))
-    for row in range(rows):
-        result[row] = pd.read_csv(locator.get_schedule(list_uses[row]), nrows=8760)
-    return result
 
 def get_temperatures(locator, prop_HVAC):
     prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(), 'heating')

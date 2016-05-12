@@ -142,8 +142,8 @@ def calc_mainuse(uses_df, uses):
     return mainuse
 
 def calc_comparison(array_min, array_max):
-    if array_max == 'DEPO':
-        if array_min != 'DEPO':
+    if array_max == 'PARKING':
+        if array_min != 'PARKING':
             array_max = array_min
     return array_max
 
