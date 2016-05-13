@@ -55,7 +55,7 @@ class GlobalVariables(object):
         self.models = {'calc-thermal-loads': functions.CalcThermalLoads}
 
         # here is where we decide whether full excel reports of the calculations are generated
-        self.testing = True  # if true: reports are generated, if false: not
+        self.testing = False  # if true: reports are generated, if false: not
 
     def log(self, msg, **kwargs):
         print msg % kwargs
