@@ -7,7 +7,6 @@ import os
 import pandas as pd
 import scipy
 import scipy.optimize as sopt
-import maker as m
 
 import storagetank_mixed as sto_m
 
@@ -29,8 +28,8 @@ def calc_mainuse(uses_df, uses):
 def calc_comparison(array_min, array_max):
     # do this to avoid that the selection of values
     # be based on the DEPO. for buildings qih heated spaces
-    if array_max == 'DEPO':
-        if array_min != 'DEPO':
+    if array_max == 'PARKING':
+        if array_min != 'PARKING':
             array_max = array_min
     return array_max
 
@@ -90,7 +89,7 @@ def get_prop_RC_model(uses, architecture, thermal, geometry, HVAC, rf, gv):
     all_prop['floors'] = all_prop['floors_bg']+ all_prop['floors_ag']
     all_prop['Aop_bel'] = all_prop['height_bg']*all_prop['perimeter']+all_prop['footprint']   # Opague areas in m2 below ground including floor
     all_prop['Atot'] = Areas['Aw']+all_prop['Aop_sup']+all_prop['footprint']+all_prop['Aop_bel']+all_prop['footprint']*(all_prop['floors']-1) # Total area of the building envelope m2, it is considered the roof to be flat
-    all_prop['Af'] = all_prop['footprint']*all_prop['floors']*all_prop['Hs']*(1-all_prop.DEPO)*(1-all_prop.CR)*(1-all_prop.SR) # conditioned area - áreas not heated
+    all_prop['Af'] = all_prop['footprint']*all_prop['floors']*all_prop['Hs']#*(1-all_prop.PARKING)*(1-all_prop.COOLROOM)*(1-all_prop.SERVERROOM) # conditioned area - áreas not heated
     all_prop['Aef'] = all_prop['footprint']*all_prop['floors']*all_prop['Es']# conditioned area only those for electricity
     all_prop['Am'] = all_prop.th_mass.apply(lambda x:AmFunction(x))*all_prop['Af'] # Effective mass area in m2
 
@@ -374,7 +373,7 @@ def calc_qv_req(ve,people,Af,gv,hour_day,hour_year,limit_inf_season,limit_sup_se
             q_req = (ve+infiltration_non_occupied)*Af/3600 #
     return q_req #m3/s
 
-def calc_mixed_schedule(gv, schedules, building_uses, building):
+def calc_mixed_schedule(list_uses, schedules, building_uses):
     # weighted average of schedules
     def calc_average(last, current, share_of_use):
         return last + current * share_of_use
@@ -382,9 +381,9 @@ def calc_mixed_schedule(gv, schedules, building_uses, building):
     el = np.zeros(8760)
     dhw = np.zeros(8760)
     pro = np.zeros(8760)
-    num_profiles = len(gv.list_uses)
+    num_profiles = len(list_uses)
     for num in range(num_profiles):
-        current_share_of_use = building_uses[gv.list_uses[num]]
+        current_share_of_use = building_uses[list_uses[num]]
         occ = np.vectorize(calc_average)(occ, schedules[num][0], current_share_of_use)
         el = np.vectorize(calc_average)(el, schedules[num][1], current_share_of_use)
         dhw = np.vectorize(calc_average)(dhw, schedules[num][2], current_share_of_use)
@@ -393,8 +392,45 @@ def calc_mixed_schedule(gv, schedules, building_uses, building):
     schedule = pd.DataFrame({'occ': occ, 'el':el, 'dhw':dhw, 'pro': pro})
     return schedule
 
+def get_internal_loads(mixed_schedule, prop_internal_loads, prop_architecture, Af):
+    Eal_nove = mixed_schedule.el.values * (prop_internal_loads.El_Wm2 + prop_internal_loads.Ea_Wm2) * Af  # in W
+    Edataf = mixed_schedule.el.values  * prop_internal_loads.Ed_Wm2 * Af  # in W
+    Eprof = mixed_schedule.pro.values  * prop_internal_loads.Epro_Wm2 * Af  # in W
+    Eref = mixed_schedule.el.values  * prop_internal_loads.Ere_Wm2 * Af  # in W
+    Qcrefri = (Eref * 4)  # where 4 is the COP of the refrigeration unit   # in W
+    Qcdata = (Edataf * 0.9)  # where 0.9 is assumed of heat dissipation # in W
+    vww = mixed_schedule.dhw.values  * prop_internal_loads.Vww_lpd * (prop_architecture.Occ_m2p) ** -1 * Af / 24000  # m3/h
+    vw = mixed_schedule.dhw.values  * prop_internal_loads.Vw_lpd * (prop_architecture.Occ_m2p) ** -1 * Af / 24000  # m3/h
+
+    return Eal_nove, Edataf, Eprof, Eref, Qcrefri, Qcdata, vww, vw
+
+def get_occupancy(mixed_schedule, prop_architecture, Af):
+    people = mixed_schedule.occ.values  * (prop_architecture.Occ_m2p) ** -1 * Af  # in people
+    return people
+
+def get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_season, hour_year):
+    def get_hsetpoint(a, b, Thset,):
+        if a > 0 and (b < limit_inf_season or b >= limit_sup_season):
+            return Thset
+        else:
+            return 0
+    def get_csetpoint(a, b, Tcset):
+        if a > 0 and (limit_inf_season <= b < limit_sup_season):
+            return Tcset
+        else:
+            return 0
+    ve = people * prop_comfort.Ve_lps * 3.6  # in m3/h
+
+    th = np.zeros(8760)+prop_comfort.Ths_set_C
+    tc = np.zeros(8760)+prop_comfort.Tcs_set_C
+    ta_hs_set = np.vectorize(get_hsetpoint)(people, range(8760), th)
+    ta_cs_set = np.vectorize(get_csetpoint)(people, range(8760), tc)
+    pd.DataFrame({'a':ta_hs_set, 'b':ta_cs_set, 'd':hour_year}).to_csv(r'C:\Users\JF\Documents\CEAforArcGIS\cea\db\Archetypes\Switzerland/xxx.csv')
+    return ve, ta_hs_set, ta_cs_set
+
 def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_geometry, prop_HVAC, prop_RC_model, prop_comfort,
-                     prop_internal_loads, prop_age, Solar, locationFinal, schedules, T_ext, RH_ext, path_temporary_folder, gv, date):
+                     prop_internal_loads, prop_age, Solar, locationFinal, schedules, T_ext, RH_ext,
+                     path_temporary_folder, gv, date, list_uses):
 
     Af = prop_RC_model.Af
     Aef = prop_RC_model.Aef
@@ -403,37 +439,31 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_geometry, pro
 
     if Af > 0:
 
-        # we define limtis of season.
+        # get limits of heating season
         limit_inf_season = gv.seasonhours[0]+1
         limit_sup_season = gv.seasonhours[1]
 
-        # get a mixed schedule
-        mixed_schedule = calc_mixed_schedule(gv, schedules, prop_occupancy)
+        # get mixed schedule
+        mixed_schedule = calc_mixed_schedule(list_uses, schedules, prop_occupancy)
 
-        # get properties of comfort
-        people = mixed_schedule.occ * (prop_architecture.Occ_m2p)**-1 * Af # in people
-        ve = people * prop_comfort.Ve_lps * 3.6 # in m3/h
-        ta_hs_set = prop_comfort.Ths_set_C
-        ta_cs_set = prop_comfort.Tcs_set_C
+        # get occupancy
+        people = get_occupancy(mixed_schedule, prop_architecture, Af)
+
+        # get internal comfort properties
+        ve, ta_hs_set, ta_cs_set = get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_season, date.hour)
 
         # get internal loads
-        Eal_nove =  mixed_schedule.el * (prop_internal_loads.El_Wm2 + prop_internal_loads.Ea_Wm2) * Af # in W
-        Edataf = mixed_schedule.el * prop_internal_loads.Ed_Wm2 * Af # in W
-        Eprof = mixed_schedule.pro * prop_internal_loads.Epro_Wm2 * Af # in W
-        Eref = mixed_schedule.el * prop_internal_loads.Ere_Wm2 * Af # in W
-        Qcrefri = (Eref * 4) #where 4 is the COP of the refrigeration unit   # in W
-        Qcdata = (Edataf * 0.9)  # where 0.9 is assumed of heat dissipation # in W
-        vww =  mixed_schedule.dhw * prop_internal_loads.Vww_lpd * (prop_architecture.Occ_m2p)**-1 * Af / 24000 # m3/h
-        vw =  mixed_schedule.dhw * prop_internal_loads.Vw_lpd * (prop_architecture.Occ_m2p)**-1 * Af / 24000 # m3/h
+        Eal_nove, Edataf, Eprof, Eref, Qcrefri, Qcdata, vww, vw = get_internal_loads(mixed_schedule, prop_internal_loads, prop_architecture, Af)
 
-        Am, Atot, Aw, Awall_all, Cm, Ll, Lw, Retrofit, Sh_typ, Year, footprint, nf_ag, nfp = get_properties_building_envelope(
+        # get envelope properties
+        Am, Atot, Aw, Awall_all, Cm, Ll, Lw, Retrofit,Sh_typ, Year, footprint, nf_ag, nfp = get_properties_building_envelope(
             prop_RC_model, prop_age, prop_architecture, prop_geometry, prop_occupancy)
 
         Lcww_dis, Lsww_dis, Lv, Lvww_c, Lvww_dis, Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, Tww_re_0, Tww_sup_0, Y, fforma = get_properties_building_systems(
             Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, prop_HVAC)
 
         #2. Transmission coefficients in W/K
-        qv_req = np.vectorize(calc_qv_req)(ve,people,Af,gv,hour_day,range(8760),limit_inf_season,limit_sup_season)# in m3/s
+        qv_req = np.vectorize(calc_qv_req)(ve,people,Af,gv,date.hour,range(8760),limit_inf_season,limit_sup_season)# in m3/s
         Hve = (gv.PaCa*qv_req)
         Htr_is = prop_RC_model.Htr_is
         Htr_ms = prop_RC_model.Htr_ms
@@ -718,6 +748,7 @@ def get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag
 
 
 def get_properties_building_envelope(prop_RC_model, prop_age, prop_architecture, prop_geometry, prop_occupancy):
+    # type: (object, object, object, object, object) -> object
     # TODO: Documentation
     # Refactored from CalcThermalLoads
     nfp = prop_occupancy.PFloor
