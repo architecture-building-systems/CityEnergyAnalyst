@@ -425,7 +425,6 @@ def get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_seaso
     tc = np.zeros(8760)+prop_comfort.Tcs_set_C
     ta_hs_set = np.vectorize(get_hsetpoint)(people, range(8760), th)
     ta_cs_set = np.vectorize(get_csetpoint)(people, range(8760), tc)
-    pd.DataFrame({'a':ta_hs_set, 'b':ta_cs_set, 'd':hour_year}).to_csv(r'C:\Users\JF\Documents\CEAforArcGIS\cea\db\Archetypes\Switzerland/xxx.csv')
     return ve, ta_hs_set, ta_cs_set
 
 def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_geometry, prop_HVAC, prop_RC_model, prop_comfort,
