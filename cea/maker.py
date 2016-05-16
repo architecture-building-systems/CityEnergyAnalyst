@@ -8,7 +8,6 @@ J. Fonseca  script development          26.08.15
 import pandas as pd
 import globalvar
 import inputlocator
-import numpy as np
 from geopandas import GeoDataFrame as gpdf
 
 def schedule_maker(date, locator, list_uses):

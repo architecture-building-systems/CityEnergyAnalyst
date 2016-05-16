@@ -17,7 +17,7 @@ class InputLocator(object):
     def get_archetypes_properties(self):
         """/cea/db/Archetypes/Switzerland/Archetypes_properties.xlsx
         path to database of archetypes file Archetypes_properties.xlsx"""
-        return os.path.join(self.db_path, 'Archetypes', 'Switzerland', 'Archetypes__properties.xlsx')
+        return os.path.join(self.db_path, 'Archetypes', 'Switzerland', 'Archetypes_properties.xlsx')
 
     def get_archetypes_schedules(self):
         """/cea/db/Archetypes/Switzerland/Archetypes_schedules.xlsx
@@ -53,6 +53,18 @@ class InputLocator(object):
     def get_building_thermal(self):
         """scenario/1-inputs/1-buildings/building_thermal.shp"""
         return os.path.join(self.scenario_path, '1-inputs', '1-buildings', 'building_thermal.shp')
+
+    def get_building_thermal(self):
+        """scenario/1-inputs/1-buildings/building_thermal.shp"""
+        return os.path.join(self.scenario_path, '1-inputs', '1-buildings', 'building_thermal.shp')
+
+    def get_building_internal(self):
+        """scenario/1-inputs/1-buildings/building_thermal.shp"""
+        return os.path.join(self.scenario_path, '1-inputs', '1-buildings', 'building_internal.shp')
+
+    def get_building_comfort(self):
+        """scenario/1-inputs/1-buildings/building_thermal.shp"""
+        return os.path.join(self.scenario_path, '1-inputs', '1-buildings', 'building_comfort.shp')
 
     def get_building_hvac(self):
         """scenario/1-inputs/1-buildings/building_HVAC.shp"""
