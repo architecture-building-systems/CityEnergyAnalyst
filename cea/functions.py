@@ -636,18 +636,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
                    sys_e_cooling, sys_e_heating, waterpeak)
 
     if gv.testing:
-        reporting.full_report_to_xls(Name, Af, Aef, sys_e_heating, sys_e_cooling, Occupants, Am, Atot, Awall_all, Cm,
-                                     Ll, Lw, Retrofit, Sh_typ, Year, footprint, nf_ag, nfp, Lcww_dis, Lsww_dis, Lv,
-                                     Lvww_dis, Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, Tww_re_0, Tww_sup_0, Y, fforma,
-                                     ta_hs_set, ta_cs_set, people, ve, q_int, Eal_nove, Eprof, Edata, Qcdataf, Qcrefrif,
-                                     vww, vw, Qcdata, Qcrefri, qv_req, Hve, Htr_is, Htr_ms, Htr_w, Htr_em, Htr_1, Htr_2,
-                                     Htr_3, I_sol, I_int_sen, w_int, I_ia, I_m, I_st, uncomfort, Ta, Tm, Qhs_sen,
-                                     Qcs_sen, Qhs_lat, Qcs_lat, Qhs_em_ls, Qcs_em_ls, QHC_sen, ma_sup_hs, Ta_sup_hs,
-                                     Ta_re_hs, ma_sup_cs, Ta_sup_cs, Ta_re_cs, w_sup, w_re, Ehs_lat_aux,
-                                     Qhs_sen_incl_em_ls, Qcs_sen_incl_em_ls, t5, Tww_re, Top, Im_tot, tHset_corr,
-                                     tCset_corr, Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs, Mww, Qww, Qww_ls_st,
-                                     Qwwf, Tww_st, Vw, Vww, mcpww, Eaux_cs, Eaux_fw, Eaux_ve, Eaux_ww, Eauxf, Occupancy,
-                                     Waterconsumption, locationFinal)
+        reporting.full_report_to_xls('calc-thermal-loads', locals(), locationFinal)
 
     return
 
