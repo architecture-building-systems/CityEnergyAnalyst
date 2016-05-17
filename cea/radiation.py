@@ -119,12 +119,12 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     for day in range(1,366):
         radiations.append(calc_radiationday(day,T_G_day, path_temporary))
 
-    Radiationyear = radiations[0]
+    radiationyear = radiations[0]
     for r in radiations[1:]:
-        Radiationyear = Radiationyear.merge(r, on='ID',how='outer')
-    Radiationyear.fillna(value=0,inplace=True)
-    Radiationyear.to_csv(DataradiationLocation,Index=False)
-    
+        radiationyear = radiationyear.merge(r, on='ID',how='outer')
+    radiationyear.fillna(value=0,inplace=True)
+    radiationyear.to_csv(DataradiationLocation,Index=False)
+    radiationyear = None
     print 'complete transformation radiation files'
     
     # Assign radiation to every surface of the buildings
@@ -145,7 +145,7 @@ def CalcIncidentRadiation(radiation, Radiationyearfinal, surface_properties):
     # export surfaces properties
     surfaces_prop = radiation[['Name', 'Freeheight', 'FactorShade', 'height_ag', 'Shape_Leng']]
     surfaces_prop.to_csv(surface_properties, index=False)
-
+    surfaces_prop = None
     # Import Radiation table and compute the Irradiation in W in every building's surface
     radiation['Awall_all'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
 
