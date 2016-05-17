@@ -127,33 +127,6 @@ def CmFunction (x):
     else:
         return 165000
 
-
-def CalcIncidentRadiation(radiation):
-
-    # Import Radiation table and compute the Irradiation in W in every building's surface
-    radiation['AreaExposed'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
-
-    hours_in_year = 8760
-    column_names = ['T%i' % (i + 1) for i in range(hours_in_year)]
-    for column in column_names:
-         # transform all the points of solar radiation into Wh
-        radiation[column] = radiation[column] * radiation['AreaExposed']
-
-    # sum up radiation load per building
-    # NOTE: this looks like an ugly hack because it is: in order to work around a pandas MemoryError, we group/sum the
-    # columns individually...
-    grouped_data_frames = {}
-    for column in column_names:
-        df = pd.DataFrame(data={'Name': radiation['Name'],
-                                column: radiation[column]})
-        grouped_data_frames[column] = df.groupby(by='Name').sum()
-    radiation_load = pd.DataFrame(index=grouped_data_frames.values()[0].index)
-    for column in column_names:
-        radiation_load[column] = grouped_data_frames[column][column]
-
-    incident_radiation = radiation_load[column_names]
-    return incident_radiation  # total solar radiation in areas exposed to radiation in Watts
-
 def calc_Y(year, Retrofit):
     if year >= 1995 or Retrofit > 0:
         Y = [0.2,0.3,0.3]

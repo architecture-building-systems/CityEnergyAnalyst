@@ -75,8 +75,6 @@ def demand_calculation(locator, gv):
     list_uses = list(prop_occupancy.drop('PFloor', axis=1).columns)
     #get date
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
-    # get solar insolation @ daren: this is a A BOTTLE NECK
-    Solar = f.CalcIncidentRadiation(radiation_file)
     print "done"
 
     print "reading occupancy schedules"

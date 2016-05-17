@@ -15,8 +15,6 @@ import tempfile
 import ephem
 import datetime
 from simpledbf import Dbf5
-import pp
-import sys, time
 
 def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitude, longitude, timezone,
                              year, path_dem_raster, weather_daily_data, path_temporary, path_output):
@@ -60,8 +58,6 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
          solar radiation file in vertical surfaces of buildings stored in path_output
      """
 
-
-
     # Set environment settings
     arcpy.env.workspace = path_arcgisDB
     arcpy.env.overwriteOutput = True
@@ -88,7 +84,7 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     T_G_day =  calc_sunrise(T_G_day,year,timezone,longitude,latitude)
 
     # Select buildings
-    buildings_selection = path_arcgisDB +'\\'+'building_selection'
+    buildings_selection = path_arcgisDB +'\\'+'building_select'
     arcpy.MakeFeatureLayer_management(path_geometry, 'lyr')
     arcpy.SelectLayerByLocation_management('lyr', 'intersect', path_boundary)
     arcpy.CopyFeatures_management('lyr', buildings_selection)
@@ -132,13 +128,46 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     
     # Assign ratiation to every surface of the buildings
 
-    CalcRadiationSurfaces(observers, Radiationyearfinal, DataFactorsCentroids,
+    DataRadiation = CalcRadiationSurfaces(observers, DataFactorsCentroids,
                           DataradiationLocation, path_temporary, path_arcgisDB)
+
+    # get solar insolation @ daren: this is a A BOTTLE NECK
+    CalcIncidentRadiation(DataRadiation, Radiationyearfinal)
     
     print 'done'
 
 #Functions
-def CalcRadiationSurfaces(Observers, Radiationyearfinal, DataFactorsCentroids, DataradiationLocation,  locationtemp1, locationtemp2):
+
+
+def CalcIncidentRadiation(radiation, Radiationyearfinal):
+
+    # Import Radiation table and compute the Irradiation in W in every building's surface
+    radiation['AreaExposed'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
+
+    hours_in_year = 8760
+    column_names = ['T%i' % (i + 1) for i in range(hours_in_year)]
+    for column in column_names:
+         # transform all the points of solar radiation into Wh
+        radiation[column] = radiation[column] * radiation['AreaExposed']
+
+    # sum up radiation load per building
+    # NOTE: this looks like an ugly hack because it is: in order to work around a pandas MemoryError, we group/sum the
+    # columns individually...
+    grouped_data_frames = {}
+    for column in column_names:
+        df = pd.DataFrame(data={'Name': radiation['Name'],
+                                column: radiation[column]})
+        grouped_data_frames[column] = df.groupby(by='Name').sum()
+    radiation_load = pd.DataFrame(index=grouped_data_frames.values()[0].index)
+    for column in column_names:
+        radiation_load[column] = grouped_data_frames[column][column]
+
+    incident_radiation = radiation_load[column_names]
+    incident_radiation.to_csv(Radiationyearfinal, index=False)
+
+    return  # total solar radiation in areas exposed to radiation in Watts
+
+def CalcRadiationSurfaces(Observers, DataFactorsCentroids, DataradiationLocation,  locationtemp1, locationtemp2):
     # local variables
     CQSegments_centroid = locationtemp2+'\\'+'CQSegmentCentro'
     Outjoin = locationtemp2+'\\'+'Join'
@@ -165,8 +194,7 @@ def CalcRadiationSurfaces(Observers, Radiationyearfinal, DataFactorsCentroids, D
     Radiationtable = pd.read_csv(DataradiationLocation,index_col='Unnamed: 0')
     DataRadiation = pd.merge(DataCentroidsFull,Radiationtable, left_on='ID',right_on='ID')
 
-    DataRadiation.to_csv(Radiationyearfinal,index=False)
-    return arcpy.GetMessages()
+    return DataRadiation
 
 def calc_radiationday(day, T_G_day, route):
     radiation_sunnyhours = Dbf5(route+'\\'+'Day_'+str(day)+'.dbf').to_dataframe()
@@ -423,7 +451,7 @@ def test_solar_radiation():
     year = 2014
     path_temporary_folder = tempfile.gettempdir()
     path_test =  'C:\\'
-    path_default_arcgisDB = r'C:\Users\Jimeno\Documents\ArcGIS\Default.gdb'
+    path_default_arcgisDB = r'C:\Users\JF\Documents\ArcGIS\Default.gdb'
     path_boundary = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs', '1-buildings', 'zone_of_study.shp')
     path_geometry = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs', '1-buildings', 'building_geometry.shp')
     path_terrain = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs', '2-terrain', 'terrain')
