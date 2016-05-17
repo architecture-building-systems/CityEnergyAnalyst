@@ -74,6 +74,7 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     DataFactorsCentroids = path_temporary + '\\' + 'DataFactorsCentroids.csv'
     DataradiationLocation = path_temporary + '\\' + 'RadiationYear.csv'
     Radiationyearfinal = path_output + '\\' + 'radiation.csv'
+    surface_properties = path_output + '\\' + 'properties_surfaces.csv'
     radiations = []
     
     #get values needed from the weather data file
@@ -115,7 +116,7 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     print 'complete raw radiation files'
 
     #run the transformation of files appending all and adding non-sunshine hours
-    for day in range(1,366):    
+    for day in range(1,366):
         radiations.append(calc_radiationday(day,T_G_day, path_temporary))
 
     Radiationyear = radiations[0]
@@ -124,31 +125,35 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     Radiationyear.fillna(value=0,inplace=True)
     Radiationyear.to_csv(DataradiationLocation,Index=False)
     
-    print 'complete transfromation radiation files'
+    print 'complete transformation radiation files'
     
-    # Assign ratiation to every surface of the buildings
+    # Assign radiation to every surface of the buildings
 
     DataRadiation = CalcRadiationSurfaces(observers, DataFactorsCentroids,
                           DataradiationLocation, path_temporary, path_arcgisDB)
 
     # get solar insolation @ daren: this is a A BOTTLE NECK
-    CalcIncidentRadiation(DataRadiation, Radiationyearfinal)
+    CalcIncidentRadiation(DataRadiation, Radiationyearfinal, surface_properties)
     
     print 'done'
 
 #Functions
 
 
-def CalcIncidentRadiation(radiation, Radiationyearfinal):
+def CalcIncidentRadiation(radiation, Radiationyearfinal, surface_properties):
+
+    # export surfaces properties
+    surfaces_prop = radiation[['Name', 'Freeheight', 'FactorShade', 'height_ag', 'Shape_Leng']]
+    surfaces_prop.to_csv(surface_properties, index=False)
 
     # Import Radiation table and compute the Irradiation in W in every building's surface
-    radiation['AreaExposed'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
+    radiation['Awall_all'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
 
     hours_in_year = 8760
     column_names = ['T%i' % (i + 1) for i in range(hours_in_year)]
     for column in column_names:
          # transform all the points of solar radiation into Wh
-        radiation[column] = radiation[column] * radiation['AreaExposed']
+        radiation[column] = radiation[column] * radiation['Awall_all']
 
     # sum up radiation load per building
     # NOTE: this looks like an ugly hack because it is: in order to work around a pandas MemoryError, we group/sum the
@@ -163,7 +168,7 @@ def CalcIncidentRadiation(radiation, Radiationyearfinal):
         radiation_load[column] = grouped_data_frames[column][column]
 
     incident_radiation = radiation_load[column_names]
-    incident_radiation.to_csv(Radiationyearfinal, index=False)
+    incident_radiation.to_csv(Radiationyearfinal)
 
     return  # total solar radiation in areas exposed to radiation in Watts
 
@@ -244,12 +249,12 @@ def calc_radiationday(day, T_G_day, route):
 def CalcRadiation(day, memoryFeature , Observers, T_G_day, latitude, locationtemp1, aspect_slope, heightoffset):
     # Local Variables
     Latitude = str(latitude)
-    skySize = '1800' #max 2400
+    skySize = '1000' #max 2400
     dayInterval = '1'
     hourInterval = '1'
     calcDirections = '32'
-    zenithDivisions = '1200' #max 1400
-    azimuthDivisions = '160'
+    zenithDivisions = '8' #max 1400
+    azimuthDivisions = '8'
     diffuseProp =  str(T_G_day.loc[day-1,'diff'])
     transmittivity =  str(T_G_day.loc[day-1,'ttr'])
     heightoffset = str(heightoffset)

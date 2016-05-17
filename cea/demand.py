@@ -53,7 +53,8 @@ def demand_calculation(locator, gv):
     # local variables
     print "reading input files"
     weather_data = pd.read_csv(locator.get_weather_hourly(), usecols=['te', 'RH'])
-    radiation_file = pd.read_csv(locator.get_radiation())
+    solar = pd.read_csv(locator.get_radiation())
+    surfaces = pd.read_csv(locator.get_surfaces())
     prop_geometry = gpdf.from_file(locator.get_building_geometry())
     prop_geometry['footprint'] = prop_geometry.area
     prop_geometry['perimeter'] = prop_geometry.length
@@ -85,7 +86,7 @@ def demand_calculation(locator, gv):
     print "calculating thermal properties"
     # get thermal properties for RC model
     prop_RC_model = f.get_prop_RC_model(prop_occupancy, prop_architecture, prop_thermal, prop_geometry,
-                                        prop_HVAC_result, radiation_file, gv)
+                                        prop_HVAC_result, surfaces, gv)
     print "done"
 
     # get timeseries of demand
@@ -95,7 +96,7 @@ def demand_calculation(locator, gv):
         gv.models['calc-thermal-loads'](building, prop_occupancy.ix[building], prop_architecture.ix[building],
                            prop_geometry.ix[building], prop_HVAC_result.ix[building], prop_RC_model.ix[building],
                            prop_comfort.ix[building],prop_internal_loads.ix[building],
-                           prop_age.ix[building], Solar.ix[building], locator.get_demand_results_folder(),
+                           prop_age.ix[building], solar.ix[building], locator.get_demand_results_folder(),
                            schedules, T_ext, RH_ext, locator.get_temporary_folder(), gv, date, list_uses)
         gv.log('Building No. %(bno)i completed out of %(btot)i', bno=counter + 1, btot=num_buildings)
         counter += 1
