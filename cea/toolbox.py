@@ -424,6 +424,39 @@ class RadiationTool(object):
 
         return [scenario_path, timezone, year]
 
+    def updateParameters(self, parameters):
+        """set the timezone by calling the Teleport API
+        FIXME: check if we are allowed to do this"""
+        # scenario_path
+        scenario_path = parameters[0].valueAsText
+
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+        locator = inputlocator.InputLocator(scenario_path)
+        latitude, longitude = self.get_location(locator)
+
+        timezone_parameter = parameters[1]
+        try:
+            import urllib2
+            import json
+            endpoint = "https://api.teleport.org/api/locations"
+            embed = "location:nearest-cities/location:nearest-city/city:timezone/tz:offsets-now"
+            url = "%(endpoint)s/%(latitude).4f,%(longitude).4f/?embed=%(embed)s" % locals()
+            arcpy.AddMessage(url)
+            r = urllib2.urlopen(url)
+            content = r.read()
+            r.close()
+            location = json.loads(content)
+            tz = location['_embedded']['location:nearest-cities'][0]['_embedded']['location:nearest-city']['_embedded'][
+                'city:timezone']['_embedded']['tz:offsets-now']['base_offset_min'] / 60
+            timezone_parameter.value = tz
+        except:
+            # just abort - user can fill this in himself
+            arcpy.AddMessage('Could not find timezone...')
+            pass
+        return
+
     def execute(self, parameters, messages):
         scenario_path = parameters[0].valueAsText
         timezone = parameters[1].value
@@ -433,10 +466,7 @@ class RadiationTool(object):
         path_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
 
         locator = inputlocator.InputLocator(scenario_path)
-        import fiona
-        with fiona.open(locator.get_building_geometry()) as shp:
-            longitude = shp.crs['lon_0']
-            latitude = shp.crs['lat_0']
+        latitude, longitude = self.get_location(locator)
         arcpy.AddMessage('longitude: %s' % longitude)
         arcpy.AddMessage('latitude: %s' % latitude)
 
@@ -445,3 +475,11 @@ class RadiationTool(object):
         cea.radiation.solar_radiation_vertical(locator=locator, path_arcgis_db=path_arcgis_db, latitude=latitude,
                                                longitude=longitude, timezone=timezone, year=year)
         return
+
+    def get_location(self, locator):
+        """returns (latitude, longitude) for a given scenario."""
+        import fiona
+        with fiona.open(locator.get_building_geometry()) as shp:
+            longitude = shp.crs['lon_0']
+            latitude = shp.crs['lat_0']
+        return latitude, longitude
