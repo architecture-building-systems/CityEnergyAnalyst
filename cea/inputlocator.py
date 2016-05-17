@@ -68,6 +68,10 @@ class InputLocator(object):
         """scenario/2-results/1-radiation/1-timeseries/Radiation2000-2010.csv"""
         return os.path.join(self.scenario_path, '2-results', '1-radiation', '1-timeseries', 'radiation.csv')
 
+    def get_surfaces(self):
+        """scenario/2-results/1-radiation/1-timeseries/Radiation2000-2010.csv"""
+        return os.path.join(self.scenario_path, '2-results', '1-radiation', '1-timeseries', 'properties_surfaces.csv')
+
     def get_weather_hourly(self):
         """scenario/1-inputs/3-weather/weather_hourly.csv"""
         return os.path.join(self.scenario_path, '1-inputs', '3-weather', 'weather_hourly.csv')
