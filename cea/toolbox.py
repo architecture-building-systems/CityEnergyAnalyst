@@ -409,18 +409,6 @@ class RadiationTool(object):
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
-        latitude = arcpy.Parameter(
-            displayName="Latitude",
-            name="latitude",
-            datatype="GPDouble",
-            parameterType="Required",
-            direction="Input")
-        longitude = arcpy.Parameter(
-            displayName="Longitude",
-            name="longitude",
-            datatype="GPDouble",
-            parameterType="Required",
-            direction="Input")
         timezone = arcpy.Parameter(
             displayName="Timezone",
             name="timezone",
@@ -434,19 +422,23 @@ class RadiationTool(object):
             parameterType="Required",
             direction="Input")
 
-        return [scenario_path, latitude, longitude, timezone, year]
+        return [scenario_path, timezone, year]
 
     def execute(self, parameters, messages):
         scenario_path = parameters[0].valueAsText
-        latitude = parameters[1].value
-        longitude = parameters[2].value
-        timezone = parameters[3].value
-        year = parameters[4].value
+        timezone = parameters[1].value
+        year = parameters[2].value
 
         # FIXME: use current arcgis db...
         path_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
 
         locator = inputlocator.InputLocator(scenario_path)
+        import fiona
+        with fiona.open(locator.get_building_geometry()) as shp:
+            longitude = shp.crs['lon_0']
+            latitude = shp.crs['lat_0']
+        arcpy.AddMessage('longitude: %s' % longitude)
+        arcpy.AddMessage('latitude: %s' % latitude)
 
         import cea.radiation
         reload(cea.radiation)
