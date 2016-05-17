@@ -17,6 +17,8 @@ import arcpy
 import ephem
 import pandas as pd
 from simpledbf import Dbf5
+import pp
+import sys, time
 
 
 def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timezone, year):
