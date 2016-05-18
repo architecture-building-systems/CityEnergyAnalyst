@@ -2,12 +2,14 @@
 from __future__ import division
 
 import math
-import numpy as np
 import os
+
+import numpy as np
 import pandas as pd
 import scipy
 import scipy.optimize as sopt
 
+import contributions.reporting as reporting
 import storagetank_mixed as sto_m
 
 
@@ -633,6 +635,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
                    Tww_sup_0, Waterconsumption, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
                    sys_e_cooling, sys_e_heating, waterpeak)
 
+    gv.report('calc-thermal-loads', locals(), locationFinal, Name)
     return
 
 
