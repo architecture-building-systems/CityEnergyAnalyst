@@ -104,15 +104,15 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     
     # calculate observers
     CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgisDB)
-    
-#    # Calculate radiation
-#    for day in range(1,366):
-#        result = None
-#        while result == None:
-#            try:
-#                result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude, path_temporary, aspect_slope, heightoffset)
-#            except:
-#                pass
+
+    # Calculate radiation
+    for day in range(1,366):
+        result = None
+        while result == None:
+            try:
+                result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude, path_temporary, aspect_slope, heightoffset)
+            except:
+                pass
     print 'complete raw radiation files'
 
     #run the transformation of files appending all and adding non-sunshine hours
