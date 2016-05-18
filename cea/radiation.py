@@ -76,10 +76,9 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     Radiationyearfinal = path_output + '\\' + 'radiation.csv'
     surface_properties = path_output + '\\' + 'properties_surfaces.csv'
 
-    
     #get values needed from the weather data file
     T_G_day = pd.read_csv(weather_daily_data) # temperature and radiation table
-    
+
     #calculate sunrise
     T_G_day['sunrise'] = 0
     T_G_day =  calc_sunrise(T_G_day,year,timezone,longitude,latitude)
@@ -101,7 +100,7 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
 
     # Calculate boundaries of buildings
     CalcBoundaries(Simple_CQ, path_temporary, path_arcgisDB, DataFactorsCentroids, DataFactorsBoundaries)
-    
+
     # calculate observers
     CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgisDB)
 
@@ -136,7 +135,6 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
 
     # get solar insolation @ daren: this is a A BOTTLE NECK
     CalcIncidentRadiation(Data_radiation_path , Radiationyearfinal, surface_properties)
-    
     print 'done'
 
 #Functions
