@@ -79,10 +79,10 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     DataradiationLocation = path_temporary + '\\' + 'RadiationYear.csv'
     Radiationyearfinal = path_output + '\\' + 'radiation.csv'
     radiations = []
-    
+
     #get values needed from the weather data file
     T_G_day = pd.read_csv(weather_daily_data) # temperature and radiation table
-    
+
     #calculate sunrise
     T_G_day['sunrise'] = 0
     T_G_day =  calc_sunrise(T_G_day,year,timezone,longitude,latitude)
@@ -104,10 +104,10 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
 
     # Calculate boundaries of buildings
     CalcBoundaries(Simple_CQ, path_temporary, path_arcgisDB, DataFactorsCentroids, DataFactorsBoundaries)
-    
+
     # calculate observers
     CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgisDB)
-    
+
     # Calculate radiation
     for day in range(1,366):
         result = None
@@ -119,7 +119,7 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     print 'complete raw radiation files'
 
     #run the transformation of files appending all and adding non-sunshine hours
-    for day in range(1,366):    
+    for day in range(1,366):
         radiations.append(calc_radiationday(day,T_G_day, path_temporary))
 
     Radiationyear = radiations[0]
@@ -127,14 +127,14 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
         Radiationyear = Radiationyear.merge(r, on='ID',how='outer')
     Radiationyear.fillna(value=0,inplace=True)
     Radiationyear.to_csv(DataradiationLocation,Index=False)
-    
+
     print 'complete transfromation radiation files'
-    
+
     # Assign ratiation to every surface of the buildings
 
     CalcRadiationSurfaces(observers, Radiationyearfinal, DataFactorsCentroids,
                           DataradiationLocation, path_temporary, path_arcgisDB)
-    
+
     print 'done'
 
 #Functions
