@@ -18,7 +18,7 @@ def full_report_to_xls(template, variables, output_folder, basename, gv):
     """ this function is to write a full report to an *.xls file containing all intermediate and final results of a
     single building thermal loads calculation"""
 
-    # TODO: get names of used functions from glovalvars for report
+    # TODO: get names of used functions from globalvars for report
     # TODO: write units to column names
     # TODO: split outputs into more work sheets, e.g. one for water, electricity, etc
 
