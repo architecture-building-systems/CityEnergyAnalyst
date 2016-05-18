@@ -75,7 +75,7 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     DataradiationLocation = path_temporary + '\\' + 'RadiationYear.csv'
     Radiationyearfinal = path_output + '\\' + 'radiation.csv'
     surface_properties = path_output + '\\' + 'properties_surfaces.csv'
-    radiations = []
+
     
     #get values needed from the weather data file
     T_G_day = pd.read_csv(weather_daily_data) # temperature and radiation table
@@ -105,17 +105,18 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     # calculate observers
     CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgisDB)
     
-    # Calculate radiation
-    for day in range(1,366):
-        result = None
-        while result == None:
-            try:
-                result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude, path_temporary, aspect_slope, heightoffset)
-            except:
-                pass
+#    # Calculate radiation
+#    for day in range(1,366):
+#        result = None
+#        while result == None:
+#            try:
+#                result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude, path_temporary, aspect_slope, heightoffset)
+#            except:
+#                pass
     print 'complete raw radiation files'
 
     #run the transformation of files appending all and adding non-sunshine hours
+    radiations = []
     for day in range(1,366):
         radiations.append(calc_radiationday(day,T_G_day, path_temporary))
 
@@ -124,28 +125,29 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
         radiationyear = radiationyear.merge(r, on='ID',how='outer')
     radiationyear.fillna(value=0,inplace=True)
     radiationyear.to_csv(DataradiationLocation,Index=False)
-    radiationyear = None
+
+    radiationyear = radiations = None
     print 'complete transformation radiation files'
     
     # Assign radiation to every surface of the buildings
 
-    DataRadiation = CalcRadiationSurfaces(observers, DataFactorsCentroids,
+    Data_radiation_path = CalcRadiationSurfaces(observers, DataFactorsCentroids,
                           DataradiationLocation, path_temporary, path_arcgisDB)
 
     # get solar insolation @ daren: this is a A BOTTLE NECK
-    CalcIncidentRadiation(DataRadiation, Radiationyearfinal, surface_properties)
+    CalcIncidentRadiation(Data_radiation_path , Radiationyearfinal, surface_properties)
     
     print 'done'
 
 #Functions
 
 
-def CalcIncidentRadiation(radiation, Radiationyearfinal, surface_properties):
+def CalcIncidentRadiation(Data_radiation_path , Radiationyearfinal, surface_properties):
 
+    radiation = pd.read_csv(Data_radiation_path )
     # export surfaces properties
-    surfaces_prop = radiation[['Name', 'Freeheight', 'FactorShade', 'height_ag', 'Shape_Leng']]
-    surfaces_prop.to_csv(surface_properties, index=False)
-    surfaces_prop = None
+    radiation[['Name', 'Freeheight', 'FactorShade', 'height_ag', 'Shape_Leng']].to_csv(surface_properties, index=False)
+
     # Import Radiation table and compute the Irradiation in W in every building's surface
     radiation['Awall_all'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
 
@@ -199,7 +201,10 @@ def CalcRadiationSurfaces(Observers, DataFactorsCentroids, DataradiationLocation
     Radiationtable = pd.read_csv(DataradiationLocation,index_col='Unnamed: 0')
     DataRadiation = pd.merge(DataCentroidsFull,Radiationtable, left_on='ID',right_on='ID')
 
-    return DataRadiation
+    Data_radiation_path = locationtemp1+'\\'+'tempradaition.csv'
+    DataRadiation.to_csv(Data_radiation_path, index = False)
+
+    return Data_radiation_path
 
 def calc_radiationday(day, T_G_day, route):
     radiation_sunnyhours = Dbf5(route+'\\'+'Day_'+str(day)+'.dbf').to_dataframe()
