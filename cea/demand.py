@@ -53,7 +53,7 @@ def demand_calculation(locator, gv):
         csv file of yearly demand data per buidling.
     """
     # local variables
-    weather_data = pd.read_csv(locator.get_weather_hourly(), usecols=['te', 'RH'])
+    weather_data = pd.read_csv(locator.get_weather_hourly(), usecols=['te', 'RH', 'Wind'])  # FIXME: added wind
     list_uses = gv.list_uses
     radiation_file = pd.read_csv(locator.get_radiation())
     prop_geometry = gpdf.from_file(locator.get_building_geometry())
@@ -71,6 +71,11 @@ def demand_calculation(locator, gv):
     # weather conditions
     T_ext = np.array(weather_data.te)
     RH_ext = np.array(weather_data.RH)
+    # FIXME added new weather
+    dict_climate = {'temp_ext': np.array(weather_data.te),
+                    'rh_ext': np.array(weather_data.RH),
+                    'u_wind': np.array(weather_data.Wind)}
+
     T_ext_max = T_ext.max()
     T_ext_min = T_ext.min()
 
@@ -92,12 +97,12 @@ def demand_calculation(locator, gv):
     # get timeseries of demand
     num_buildings = len(prop_RC_model.index)
     counter = 0
-    for building in prop_RC_model.index:
+    for building in prop_RC_model.index[0:30]:
 
         thermal_loads.calc_thermal_loads_new_ventilation(building, prop_RC_model.ix[building], prop_HVAC_result.ix[building],
                                                          prop_occupancy.ix[building], prop_age.ix[building],
                                                          prop_architecture.ix[building], prop_geometry.ix[building],
-                                                         schedules, list_uses, Solar.ix[building], T_ext, RH_ext,
+                                                         schedules, list_uses, Solar.ix[building], dict_climate,
                                                          building_geometry.loc[building_geometry['Name'] == building], windows_buildings.loc[windows_buildings['name_building'] == building], locator.get_demand_results_folder(), gv)
 
         # gv.models['calc-thermal-loads'](building, prop_occupancy.ix[building], prop_architecture.ix[building],
