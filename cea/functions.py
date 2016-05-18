@@ -156,14 +156,14 @@ def CalcIncidentRadiation(radiation):
     incident_radiation = radiation_load[column_names]
     return incident_radiation  # total solar radiation in areas exposed to radiation in Watts
 
-def calc_Y(year, Retrofit):
+def calculate_pipe_transmittance_values(year, Retrofit):
     if year >= 1995 or Retrofit > 0:
-        Y = [0.2,0.3,0.3]
+        phi_pipes = [0.2,0.3,0.3]
     elif 1985 <= year < 1995 and Retrofit == 0:
-        Y = [0.3,0.4,0.4]
+        phi_pipes = [0.3,0.4,0.4]
     else:
-        Y = [0.4,0.4,0.4] 
-    return Y
+        phi_pipes = [0.4,0.4,0.4]
+    return phi_pipes
 
 def Calc_form(Lw,Ll,footprint): 
     factor = footprint/(Lw*Ll)
@@ -715,7 +715,7 @@ def calc_heat_gains_solar(Aw, Awall_all, Sh_typ, Solar, gv):
 def get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, prop_HVAC):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
-    Y = calc_Y(Year, Retrofit)  # linear trasmissivity coefficient of piping W/(m.K)
+    phi_pipes = calculate_pipe_transmittance_values(Year, Retrofit)  # linear trasmissivity coefficient of piping W/(m.K)
     # nominal temperatures
     Ths_sup_0 = prop_HVAC.Tshs0_C
     Ths_re_0 = Ths_sup_0 - prop_HVAC.dThs0_C
@@ -730,7 +730,7 @@ def get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag
     Lsww_dis = 0.038 * Ll * Lw * nf_ag * nfp * gv.hf * fforma  # length hotwater piping distribution circuit
     Lvww_c = (2 * Ll + 0.0125 * Ll * Lw) * fforma  # lenghth piping heating system circulation circuit
     Lvww_dis = (Ll + 0.0625 * Ll * Lw) * fforma  # lenghth piping heating system distribution circuit
-    return Lcww_dis, Lsww_dis, Lv, Lvww_c, Lvww_dis, Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, Tww_re_0, Tww_sup_0, Y, fforma
+    return Lcww_dis, Lsww_dis, Lv, Lvww_c, Lvww_dis, Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, Tww_re_0, Tww_sup_0, phi_pipes, fforma
 
 
 def get_properties_building_envelope(prop_RC_model, prop_age, prop_architecture, prop_geometry, prop_occupancy):
