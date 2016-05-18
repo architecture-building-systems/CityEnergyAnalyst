@@ -62,6 +62,13 @@ def create_windows(df_radiation, gdf_building_architecture):
     num_floors_free_height = (free_height / 3).astype('int')  # floor heigth is 3 m
     num_windows = num_floors_free_height.sum()  # total number of windows in model, not used
 
+    # *** experiment with structured array
+    # initialize numpy structured array for results
+    # array_windows = np.zeros(num_windows,
+    #                          dtype={'names':['name_building','area_window','height_window_above_ground',
+    #                                          'orientation_window','angle_window','height_window_in_zone'],
+    #                                 'formats':['S10','f2','f2','f2','f2','f2']})
+
     # initialize lists for results
     col_name_building = []
     col_area_window = []
@@ -931,12 +938,12 @@ def calc_air_flows(temp_zone, u_wind, temp_ext, dict_locals):
     """
 
     # solve air flow mass balance via iteration
-    p_zone_ref = 100  # (Pa) zone pressure, THE UNKNOWN VALUE
+    p_zone_ref = 5  # (Pa) zone pressure, THE UNKNOWN VALUE
     res = minimize(calc_air_flow_mass_balance, p_zone_ref,
                    args=(temp_zone, u_wind, temp_ext, dict_locals, 'minimize',),
                    method='Nelder-Mead',
                    options={'disp': False, 'maxiter': 100, 'maxfev': None, 'xtol': 0.1, 'ftol': 0.1})
-    print(res)
+    # print(res)
     # get zone pressure of air flow mass balance
     p_zone = res.x[0]
 
