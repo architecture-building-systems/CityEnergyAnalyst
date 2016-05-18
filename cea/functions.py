@@ -635,9 +635,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
                    Tww_sup_0, Waterconsumption, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
                    sys_e_cooling, sys_e_heating, waterpeak)
 
-    if gv.testing:
-        reporting.full_report_to_xls('calc-thermal-loads', locals(), locationFinal)
-
+    gv.report('calc-thermal-loads', locals(), locationFinal, Name)
     return
 
 
