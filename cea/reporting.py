@@ -12,7 +12,6 @@ import datetime
 import xlwt
 import os
 
-pd.set_option('display.max_columns', 0)
 
 def full_report_to_xls(template, variables, output_folder, basename, gv):
 
