@@ -39,7 +39,7 @@ def calc_hvac(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_s
     """
 
     # State No. 5 # indoor air set point
-    t5_prime = tair + 1  # accounding for an increase in temperature # TODO: where is this from? why use calculated tair and not the setpoint temperature? why +1?
+    t5_prime = tair + 1  # accounding for an increase in temperature # TODO: where is this from? why use calculated tair and not the setpoint temperature? why +1? # FIXME: remove
 
     # state after heat exchanger
     t2, w2 = calc_hex(RH1, gv, qv_req, t1, t5_1)
@@ -277,7 +277,19 @@ def calc_w3_cooling_case(t5, w2, t3, w5):
     return w3
 
 
-def calc_w(t, RH):  # Moisture content in kg/kg of dry air
+def calc_w(t, RH):
+    """
+
+    Parameters
+    ----------
+    t : temperature
+    RH
+
+    Returns
+    -------
+
+    """
+    # Moisture content in kg/kg of dry air
     # TODO: add documentation and source of formula
     Pa = 100000  # Pa
     Ps = 610.78 * math.exp(t / (t + 238.3) * 17.2694)
