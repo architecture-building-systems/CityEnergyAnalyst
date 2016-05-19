@@ -51,7 +51,8 @@ def demand_calculation(locator, gv):
         csv file of yearly demand data per buidling.
     """
     # local variables
-    print "reading input files"
+    gv.log("reading input files")
+
     weather_data = pd.read_csv(locator.get_weather_hourly(), usecols=['te', 'RH'])
     radiation_file = pd.read_csv(locator.get_radiation())
     prop_geometry = gpdf.from_file(locator.get_building_geometry())
@@ -75,25 +76,27 @@ def demand_calculation(locator, gv):
     list_uses = list(prop_occupancy.drop('PFloor', axis=1).columns)
     #get date
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
+    gv.log('done')
+    gv.log('calculating incident radiation')
     # get solar insolation @ daren: this is a A BOTTLE NECK
     Solar = f.CalcIncidentRadiation(radiation_file)
-    print "done"
+    gv.log('done')
 
-    print "reading occupancy schedules"
+    gv.log("reading occupancy schedules")
     # get schedules
     schedules = m.schedule_maker(date, locator, list_uses)
-    print "done"
+    gv.log("done")
 
-    print "calculating thermal properties"
+    gv.log("calculating thermal properties")
     # get thermal properties for RC model
     prop_RC_model = f.get_prop_RC_model(prop_occupancy, prop_architecture, prop_thermal, prop_geometry,
                                         prop_HVAC_result, radiation_file, gv)
-    print "done"
+    gv.log("done")
 
     # get timeseries of demand
     num_buildings = len(prop_RC_model.index)
     counter = 0
-    for building in prop_RC_model.index[:2]:
+    for building in prop_RC_model.index:
         gv.models['calc-thermal-loads'](building, prop_occupancy.ix[building], prop_architecture.ix[building],
                            prop_geometry.ix[building], prop_HVAC_result.ix[building], prop_RC_model.ix[building],
                            prop_comfort.ix[building],prop_internal_loads.ix[building],
