@@ -409,22 +409,27 @@ def get_occupancy(mixed_schedule, prop_architecture, Af):
     return people
 
 def get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_season, hour_year):
-    def get_hsetpoint(a, b, Thset,):
-        if a > 0 and (b < limit_inf_season or b >= limit_sup_season):
-            return Thset
+    def get_hsetpoint(a, b, Thset, Thsetback):
+        if (b < limit_inf_season or b >= limit_sup_season):
+            if a >0:
+                return Thset
+            else:
+                return Thsetback
         else:
-            return 0
-    def get_csetpoint(a, b, Tcset):
-        if a > 0 and (limit_inf_season <= b < limit_sup_season):
-            return Tcset
+            return -30 #huge so the system will be off
+    def get_csetpoint(a, b, Tcset, Tcsetback):
+        if limit_inf_season <= b < limit_sup_season:
+            if a > 0:
+                return Tcset
+            else:
+                return Tcsetback
         else:
-            return 0
-    ve = people * prop_comfort.Ve_lps * 3.6  # in m3/h
+            return 50 # huge so the system will be off
 
-    th = np.zeros(8760)+prop_comfort.Ths_set_C
-    tc = np.zeros(8760)+prop_comfort.Tcs_set_C
-    ta_hs_set = np.vectorize(get_hsetpoint)(people, range(8760), th)
-    ta_cs_set = np.vectorize(get_csetpoint)(people, range(8760), tc)
+    ve = people * prop_comfort.Ve_lps * 3.6  # in m3/h
+    ta_hs_set = np.vectorize(get_hsetpoint)(people, range(8760), prop_comfort.Ths_set_C, prop_comfort.Ths_setb_C)
+    ta_cs_set = np.vectorize(get_csetpoint)(people, range(8760), prop_comfort.Tcs_set_C, prop_comfort.Tcs_setb_C)
+
     return ve, ta_hs_set, ta_cs_set
 
 def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_geometry, prop_HVAC, prop_RC_model, prop_comfort,
