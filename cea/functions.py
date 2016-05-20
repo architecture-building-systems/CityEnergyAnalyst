@@ -227,7 +227,6 @@ def calc_TL(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Htr_ms,
     if tintH_set <= tair_case0 <=tintC_set: 
         ta = tair_case0
         top = top_case0
-        IH_nd_ac
         IH_nd_ac = 0
         IC_nd_ac = 0
     else:
@@ -913,7 +912,6 @@ def calc_pumping_systems_aux_loads(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, 
         b = 1
     else:
         b = 1.2
-<<<<<<< HEAD
     Eaux_ww = np.vectorize(calc_Eaux_ww)(Qww, Qwwf, Qwwf_0, Imax, deltaP_des, b, Mww)
     if sys_e_heating != "T0":
         Eaux_hs = np.vectorize(calc_Eaux_hs_dis)(Qhsf, Qhsf_0, Imax, deltaP_des, b, Ths_sup, Ths_re, gv.Cpw)
@@ -923,20 +921,6 @@ def calc_pumping_systems_aux_loads(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, 
         Eaux_fw = calc_Eaux_fw(Vw, nf_ag, gv)
     if sys_e_heating is "T3" or sys_e_cooling is "T3":
         Eaux_ve = np.vectorize(calc_Eaux_ve)(Qhsf, Qcsf, gv.Pfan, qv_req, sys_e_heating, sys_e_cooling, Af)
-=======
-    Eaux_ww = np.vectorize(calc_Eaux_ww, otypes=[np.double])(Qww, Qwwf, Qwwf_0, Imax, deltaP_des, b, Mww)
-    if sys_e_heating > 0:
-        Eaux_hs = np.vectorize(calc_Eaux_hs_dis, otypes=[np.double])(Qhsf, Qhsf_0, Imax, deltaP_des, b,
-                                                                     Ths_sup, Ths_re, gv.Cpw)
-    if sys_e_cooling > 0:
-        Eaux_cs = np.vectorize(calc_Eaux_cs_dis, otypes=[np.double])(Qcsf, Qcsf_0, Imax, deltaP_des, b,
-                                                                     Tcs_sup, Tcs_re, gv.Cpw)
-    if nf_ag > 5:  # up to 5th floor no pumping needs
-        Eaux_fw = calc_Eaux_fw(Vw, nf_ag, gv)
-    if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
-        Eaux_ve = np.vectorize(calc_Eaux_ve, otypes=[np.double])(Qhsf, Qcsf, gv.Pfan, qv_req,
-                                                                 sys_e_heating, sys_e_cooling, Af)
->>>>>>> origin/i181-schedulemaker
 
     return Eaux_cs, Eaux_fw, Eaux_hs, Eaux_ve, Eaux_ww
 
