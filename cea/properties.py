@@ -148,7 +148,7 @@ def properties(locator, prop_thermal_flag, prop_architecture_flag,
 
         # write to shapefile
         prop_comfort_df_merged = names_shp.merge(prop_comfort_df, on="Name")
-        fields = ['Tcs_set_C', 'Ths_set_C', 'Ve_lps']
+        fields = ['Tcs_set_C', 'Ths_set_C','Tcs_setb_C', 'Ths_setb_C', 'Ve_lps']
         prop_comfort_shp = names_shp.copy()
         for field in fields:
             prop_comfort_shp[field] = prop_comfort_df_merged[field].copy()
@@ -179,7 +179,7 @@ def calc_mainuse(uses_df, uses):
     return mainuse
 
 def get_database(path_database, sheet):
-    database = pd.read_excel(path_database,sheet)
+    database = pd.read_excel(path_database, sheet)
     return database
 
 

@@ -2,8 +2,9 @@
 from __future__ import division
 
 import math
-import numpy as np
 import os
+
+import numpy as np
 import pandas as pd
 import scipy
 import scipy.optimize as sopt
@@ -127,14 +128,14 @@ def CmFunction (x):
     else:
         return 165000
 
-def calc_Y(year, Retrofit):
+def calculate_pipe_transmittance_values(year, Retrofit):
     if year >= 1995 or Retrofit > 0:
-        Y = [0.2,0.3,0.3]
+        phi_pipes = [0.2,0.3,0.3]
     elif 1985 <= year < 1995 and Retrofit == 0:
-        Y = [0.3,0.4,0.4]
+        phi_pipes = [0.3,0.4,0.4]
     else:
-        Y = [0.4,0.4,0.4] 
-    return Y
+        phi_pipes = [0.4,0.4,0.4]
+    return phi_pipes
 
 def Calc_form(Lw,Ll,footprint): 
     factor = footprint/(Lw*Ll)
@@ -200,7 +201,6 @@ def calc_TL(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Htr_ms,
     if tintH_set <= tair_case0 <=tintC_set: 
         ta = tair_case0
         top = top_case0
-        IH_nd_ac
         IH_nd_ac = 0
         IC_nd_ac = 0
     else:
@@ -382,22 +382,27 @@ def get_occupancy(mixed_schedule, prop_architecture, Af):
     return people
 
 def get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_season, hour_year):
-    def get_hsetpoint(a, b, Thset,):
-        if a > 0 and (b < limit_inf_season or b >= limit_sup_season):
-            return Thset
+    def get_hsetpoint(a, b, Thset, Thsetback):
+        if (b < limit_inf_season or b >= limit_sup_season):
+            if a >0:
+                return Thset
+            else:
+                return Thsetback
         else:
-            return 0
-    def get_csetpoint(a, b, Tcset):
-        if a > 0 and (limit_inf_season <= b < limit_sup_season):
-            return Tcset
+            return -30 #huge so the system will be off
+    def get_csetpoint(a, b, Tcset, Tcsetback):
+        if limit_inf_season <= b < limit_sup_season:
+            if a > 0:
+                return Tcset
+            else:
+                return Tcsetback
         else:
-            return 0
-    ve = people * prop_comfort.Ve_lps * 3.6  # in m3/h
+            return 50 # huge so the system will be off
 
-    th = np.zeros(8760)+prop_comfort.Ths_set_C
-    tc = np.zeros(8760)+prop_comfort.Tcs_set_C
-    ta_hs_set = np.vectorize(get_hsetpoint)(people, range(8760), th)
-    ta_cs_set = np.vectorize(get_csetpoint)(people, range(8760), tc)
+    ve = people * prop_comfort.Ve_lps * 3.6  # in m3/h
+    ta_hs_set = np.vectorize(get_hsetpoint)(people, range(8760), prop_comfort.Ths_set_C, prop_comfort.Ths_setb_C)
+    ta_cs_set = np.vectorize(get_csetpoint)(people, range(8760), prop_comfort.Tcs_set_C, prop_comfort.Tcs_setb_C)
+
     return ve, ta_hs_set, ta_cs_set
 
 def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_geometry, prop_HVAC, prop_RC_model, prop_comfort,
@@ -409,23 +414,24 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_geometry, pro
     sys_e_heating = prop_HVAC.type_hs
     sys_e_cooling = prop_HVAC.type_cs
 
+    # get mixed schedule
+    mixed_schedule = calc_mixed_schedule(list_uses, schedules, prop_occupancy)
+
+    # get internal loads
+    Eal_nove, Edataf, Eprof, Eref, Qcrefri, Qcdata, vww, vw = get_internal_loads(mixed_schedule, prop_internal_loads,
+                                                                                 prop_architecture, Af)
+
     if Af > 0:
 
         # get limits of heating season
         limit_inf_season = gv.seasonhours[0]+1
         limit_sup_season = gv.seasonhours[1]
 
-        # get mixed schedule
-        mixed_schedule = calc_mixed_schedule(list_uses, schedules, prop_occupancy)
-
         # get occupancy
         people = get_occupancy(mixed_schedule, prop_architecture, Af)
 
         # get internal comfort properties
         ve, ta_hs_set, ta_cs_set = get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_season, date.hour)
-
-        # get internal loads
-        Eal_nove, Edataf, Eprof, Eref, Qcrefri, Qcdata, vww, vw = get_internal_loads(mixed_schedule, prop_internal_loads, prop_architecture, Af)
 
         # get envelope properties
         Am, Atot, Aw, Awall_all, Cm, Ll, Lw, Retrofit,Sh_typ, Year, footprint, nf_ag, nfp = get_properties_building_envelope(
@@ -613,6 +619,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_geometry, pro
         Qwwf = Qww = Qhs_sen = Qhsf = Qcs_sen = Qcs = Qcsf = Qcdata = Qcrefri = Qd = Qc = Qww_ls_st = np.zeros(8760)
         Ths_sup = Ths_re = Tcs_re = Tcs_sup = mcphs = mcpcs = mcpww = Vww = Tww_re = Tww_st = uncomfort = np.zeros(8760) # in C
 
+
     # calc electrical loads
     Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot = calc_loads_electrical(Aef, Eal_nove,
                                                                                                 Eauxf, Edataf, Eprof)
@@ -624,6 +631,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_geometry, pro
                    Tww_sup_0, Waterconsumption, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
                    sys_e_cooling, sys_e_heating, waterpeak, date)
 
+    gv.report('calc-thermal-loads', locals(), locationFinal, Name)
     return
 
 
@@ -701,7 +709,7 @@ def calc_heat_gains_solar(Aw, Awall_all, Sh_typ, Solar, gv):
 def get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, prop_HVAC):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
-    Y = calc_Y(Year, Retrofit)  # linear trasmissivity coefficient of piping W/(m.K)
+    phi_pipes = calculate_pipe_transmittance_values(Year, Retrofit)  # linear trasmissivity coefficient of piping W/(m.K)
     # nominal temperatures
     Ths_sup_0 = prop_HVAC.Tshs0_C
     Ths_re_0 = Ths_sup_0 - prop_HVAC.dThs0_C
@@ -716,7 +724,7 @@ def get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag
     Lsww_dis = 0.038 * Ll * Lw * nf_ag * nfp * gv.hf * fforma  # length hotwater piping distribution circuit
     Lvww_c = (2 * Ll + 0.0125 * Ll * Lw) * fforma  # lenghth piping heating system circulation circuit
     Lvww_dis = (Ll + 0.0625 * Ll * Lw) * fforma  # lenghth piping heating system distribution circuit
-    return Lcww_dis, Lsww_dis, Lv, Lvww_c, Lvww_dis, Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, Tww_re_0, Tww_sup_0, Y, fforma
+    return Lcww_dis, Lsww_dis, Lv, Lvww_c, Lvww_dis, Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, Tww_re_0, Tww_sup_0, phi_pipes, fforma
 
 
 def get_properties_building_envelope(prop_RC_model, prop_age, prop_architecture, prop_geometry, prop_occupancy):
@@ -880,9 +888,9 @@ def calc_pumping_systems_aux_loads(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, 
     else:
         b = 1.2
     Eaux_ww = np.vectorize(calc_Eaux_ww)(Qww, Qwwf, Qwwf_0, Imax, deltaP_des, b, Mww)
-    if sys_e_heating > 0:
+    if sys_e_heating != "T0":
         Eaux_hs = np.vectorize(calc_Eaux_hs_dis)(Qhsf, Qhsf_0, Imax, deltaP_des, b, Ths_sup, Ths_re, gv.Cpw)
-    if sys_e_cooling > 0:
+    if sys_e_cooling != "T0":
         Eaux_cs = np.vectorize(calc_Eaux_cs_dis)(Qcsf, Qcsf_0, Imax, deltaP_des, b, Tcs_sup, Tcs_re, gv.Cpw)
     if nf_ag > 5:  # up to 5th floor no pumping needs
         Eaux_fw = calc_Eaux_fw(Vw, nf_ag, gv)
@@ -1233,7 +1241,7 @@ def calc_Eaux_ww(Qww,Qwwf,Qwwf0,Imax,deltaP_des,b,qV_des):
             feff = (1.25*(200/Ppu_dis_hy_i)**0.5)*b
             Eaux_ww = Ppu_dis_hy_i*feff 
     else:
-        Eaux_ww = 0
+        Eaux_ww = 0.0
     return Eaux_ww #in #W
 
 def calc_Eaux_hs_dis(Qhsf,Qhsf0,Imax,deltaP_des,b, ts,tr,cpw):  
@@ -1253,7 +1261,7 @@ def calc_Eaux_hs_dis(Qhsf,Qhsf0,Imax,deltaP_des,b, ts,tr,cpw):
             feff = (1.25*(200/Ppu_dis_hy_i)**0.5)*fctr*b
             Eaux_hs = Ppu_dis_hy_i*feff
     else:
-        Eaux_hs = 0
+        Eaux_hs = 0.0
     return Eaux_hs #in #W
 
 def calc_Eaux_cs_dis(Qcsf,Qcsf0,Imax,deltaP_des,b, ts,tr,cpw): 
@@ -1277,7 +1285,7 @@ def calc_Eaux_cs_dis(Qcsf,Qcsf0,Imax,deltaP_des,b, ts,tr,cpw):
                 feff = (1.25*(200/Ppu_dis_hy_i)**0.5)*fctr*b
                 Eaux_cs = Ppu_dis_hy_i*feff 
     else:
-        Eaux_cs = 0
+        Eaux_cs = 0.0
     return Eaux_cs #in #W
 
 def calc_Eaux_fw(freshw,nf,gv):
@@ -1303,14 +1311,14 @@ def calc_Eaux_ve(Qhsf,Qcsf,P_ve, qve, SystemH, SystemC, Af):
         if Qhsf >0: 
             Eve_aux = P_ve*qve*3600
         else: 
-            Eve_aux = 0
+            Eve_aux = 0.0
     elif SystemC == 'T3':
         if Qcsf <0:
             Eve_aux = P_ve*qve*3600
         else:
-            Eve_aux = 0
+            Eve_aux = 0.0
     else:
-        Eve_aux = 0
+        Eve_aux = 0.0
         
     return Eve_aux
 
