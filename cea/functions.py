@@ -441,23 +441,24 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_geometry, pro
     sys_e_heating = prop_HVAC.type_hs
     sys_e_cooling = prop_HVAC.type_cs
 
+    # get mixed schedule
+    mixed_schedule = calc_mixed_schedule(list_uses, schedules, prop_occupancy)
+
+    # get internal loads
+    Eal_nove, Edataf, Eprof, Eref, Qcrefri, Qcdata, vww, vw = get_internal_loads(mixed_schedule, prop_internal_loads,
+                                                                                 prop_architecture, Af)
+
     if Af > 0:
 
         # get limits of heating season
         limit_inf_season = gv.seasonhours[0]+1
         limit_sup_season = gv.seasonhours[1]
 
-        # get mixed schedule
-        mixed_schedule = calc_mixed_schedule(list_uses, schedules, prop_occupancy)
-
         # get occupancy
         people = get_occupancy(mixed_schedule, prop_architecture, Af)
 
         # get internal comfort properties
         ve, ta_hs_set, ta_cs_set = get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_season, date.hour)
-
-        # get internal loads
-        Eal_nove, Edataf, Eprof, Eref, Qcrefri, Qcdata, vww, vw = get_internal_loads(mixed_schedule, prop_internal_loads, prop_architecture, Af)
 
         # get envelope properties
         Am, Atot, Aw, Awall_all, Cm, Ll, Lw, Retrofit,Sh_typ, Year, footprint, nf_ag, nfp = get_properties_building_envelope(
@@ -912,13 +913,13 @@ def calc_pumping_systems_aux_loads(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, 
     else:
         b = 1.2
     Eaux_ww = np.vectorize(calc_Eaux_ww)(Qww, Qwwf, Qwwf_0, Imax, deltaP_des, b, Mww)
-    if sys_e_heating > 0:
+    if sys_e_heating != "T0":
         Eaux_hs = np.vectorize(calc_Eaux_hs_dis)(Qhsf, Qhsf_0, Imax, deltaP_des, b, Ths_sup, Ths_re, gv.Cpw)
-    if sys_e_cooling > 0:
+    if sys_e_cooling != "T0":
         Eaux_cs = np.vectorize(calc_Eaux_cs_dis)(Qcsf, Qcsf_0, Imax, deltaP_des, b, Tcs_sup, Tcs_re, gv.Cpw)
     if nf_ag > 5:  # up to 5th floor no pumping needs
         Eaux_fw = calc_Eaux_fw(Vw, nf_ag, gv)
-    if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
+    if sys_e_heating is "T3" or sys_e_cooling is "T3":
         Eaux_ve = np.vectorize(calc_Eaux_ve)(Qhsf, Qcsf, gv.Pfan, qv_req, sys_e_heating, sys_e_cooling, Af)
 
     return Eaux_cs, Eaux_fw, Eaux_hs, Eaux_ve, Eaux_ww

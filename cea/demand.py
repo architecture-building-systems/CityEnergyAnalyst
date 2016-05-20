@@ -93,7 +93,7 @@ def demand_calculation(locator, gv):
     # get timeseries of demand
     num_buildings = len(prop_RC_model.index)
     counter = 0
-    for building in prop_RC_model.index[:2]:
+    for building in prop_RC_model.index:
         gv.models['calc-thermal-loads'](building, prop_occupancy.ix[building], prop_architecture.ix[building],
                            prop_geometry.ix[building], prop_HVAC_result.ix[building], prop_RC_model.ix[building],
                            prop_comfort.ix[building],prop_internal_loads.ix[building],
