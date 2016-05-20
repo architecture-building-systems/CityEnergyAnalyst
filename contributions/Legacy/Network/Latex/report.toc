@@ -1,0 +1,31 @@
+\select@language {american}
+\contentsline {section}{\numberline {1}The District Heating Optimization Problem}{2}
+\contentsline {section}{\numberline {2}Context}{2}
+\contentsline {subsection}{\numberline {2.1}First Approach}{3}
+\contentsline {subsection}{\numberline {2.2}Second Approach}{3}
+\contentsline {subsection}{\numberline {2.3}Our Approach}{3}
+\contentsline {subsubsection}{\numberline {2.3.1}Hydraulic Problem}{3}
+\contentsline {subsubsection}{\numberline {2.3.2}Reduced Hydraulic Problem}{4}
+\contentsline {subsubsection}{\numberline {2.3.3}Thermal Problem}{4}
+\contentsline {subsubsection}{\numberline {2.3.4}Additional Remarks}{4}
+\contentsline {section}{\numberline {3}Layout Problem}{5}
+\contentsline {subsection}{\numberline {3.1}Data}{5}
+\contentsline {section}{\numberline {4}Hydraulic Problem}{5}
+\contentsline {subsection}{\numberline {4.1}Data}{5}
+\contentsline {subsection}{\numberline {4.2}Variables}{6}
+\contentsline {subsection}{\numberline {4.3}Pressure Drop}{7}
+\contentsline {subsection}{\numberline {4.4}Linearized Pressure Drop}{7}
+\contentsline {subsection}{\numberline {4.5}Mixed Integer Linear Program}{7}
+\contentsline {section}{\numberline {5}Reduced Hydraulic Problem}{9}
+\contentsline {subsection}{\numberline {5.1}Data}{9}
+\contentsline {subsection}{\numberline {5.2}Variables}{9}
+\contentsline {subsection}{\numberline {5.3}Linear Program}{9}
+\contentsline {section}{\numberline {6}Thermal Problem}{10}
+\contentsline {subsection}{\numberline {6.1}Data}{10}
+\contentsline {subsection}{\numberline {6.2}Variables}{10}
+\contentsline {subsection}{\numberline {6.3}Temperature Drop}{10}
+\contentsline {subsection}{\numberline {6.4}Linear Program}{11}
+\contentsline {section}{\numberline {7}Test Case New York}{11}
+\contentsline {section}{\numberline {8}How-To}{12}
+\contentsline {subsection}{\numberline {8.1}Port}{12}
+\contentsline {subsection}{\numberline {8.2}Run a New Test Case}{13}

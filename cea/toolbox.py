@@ -18,8 +18,8 @@ class PropertiesTool(object):
     integrate the properties script with ArcGIS.
     """
     def __init__(self):
-        self.label = 'Properties'
-        self.description = 'Query building properties from statistical database'
+        self.label = 'Data helper'
+        self.description = 'Query characteristics of buildings and systems from statistical data'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -30,21 +30,21 @@ class PropertiesTool(object):
             parameterType="Required",
             direction="Input")
         prop_thermal_flag = arcpy.Parameter(
-            displayName="Generate thermal properties of the building envelope",
+            displayName="Generate thermal properties",
             name="prop_thermal_flag",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
         prop_thermal_flag.value = True
         prop_architecture_flag = arcpy.Parameter(
-            displayName="Generate construction and architecture properties",
+            displayName="Generate architectural properties",
             name="prop_architecture_flag",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
         prop_architecture_flag.value = True
         prop_HVAC_flag = arcpy.Parameter(
-            displayName="Generate HVAC systems properties",
+            displayName="Generate technical systems properties",
             name="prop_HVAC_flag",
             datatype="GPBoolean",
             parameterType="Required",
