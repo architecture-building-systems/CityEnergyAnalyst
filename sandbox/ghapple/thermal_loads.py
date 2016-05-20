@@ -158,7 +158,7 @@ def calc_thermal_load_hvac_timestep(t, dict_locals):
                                     flag_season)
 
         # ventilation losses
-        q_ve_loss = h_ve*(temp_a - temp_ve_sup)
+        q_ve_loss = h_ve*(temp_a - temp_ext)
         # q_ve_loss = qm_ve_mech * gv.Cpa * (temp_a - temp_ve_sup) * 1000  # (W/s) # TODO make air heat capacity dynamic
 
         if q_hs_sen > 0:
