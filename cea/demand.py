@@ -51,7 +51,8 @@ def demand_calculation(locator, gv):
         csv file of yearly demand data per buidling.
     """
     # local variables
-    print "reading input files"
+    gv.log("reading input files")
+
     weather_data = pd.read_csv(locator.get_weather_hourly(), usecols=['te', 'RH'])
     solar = pd.read_csv(locator.get_radiation()).set_index('Name')
     surfaces = pd.read_csv(locator.get_surfaces())
@@ -76,14 +77,14 @@ def demand_calculation(locator, gv):
     list_uses = list(prop_occupancy.drop('PFloor', axis=1).columns)
     #get date
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
-    print "done"
+    gv.log('done')
 
-    print "reading occupancy schedules"
+    gv.log("reading occupancy schedules")
     # get schedules
     schedules = m.schedule_maker(date, locator, list_uses)
-    print "done"
+    gv.log("done")
 
-    print "calculating thermal properties"
+    gv.log("calculating thermal properties")
     # get thermal properties for RC model
     prop_RC_model = f.get_prop_RC_model(prop_occupancy, prop_architecture, prop_thermal, prop_geometry,
                                         prop_HVAC_result, surfaces, gv)
