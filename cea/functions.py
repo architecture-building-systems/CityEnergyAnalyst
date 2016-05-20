@@ -9,7 +9,6 @@ import pandas as pd
 import scipy
 import scipy.optimize as sopt
 
-import contributions.reporting as reporting
 import storagetank_mixed as sto_m
 
 
@@ -128,33 +127,6 @@ def CmFunction (x):
         return 110000
     else:
         return 165000
-
-
-def CalcIncidentRadiation(radiation):
-
-    # Import Radiation table and compute the Irradiation in W in every building's surface
-    radiation['AreaExposed'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
-
-    hours_in_year = 8760
-    column_names = ['T%i' % (i + 1) for i in range(hours_in_year)]
-    for column in column_names:
-         # transform all the points of solar radiation into Wh
-        radiation[column] = radiation[column] * radiation['AreaExposed']
-
-    # sum up radiation load per building
-    # NOTE: this looks like an ugly hack because it is: in order to work around a pandas MemoryError, we group/sum the
-    # columns individually...
-    grouped_data_frames = {}
-    for column in column_names:
-        df = pd.DataFrame(data={'Name': radiation['Name'],
-                                column: radiation[column]})
-        grouped_data_frames[column] = df.groupby(by='Name').sum()
-    radiation_load = pd.DataFrame(index=grouped_data_frames.values()[0].index)
-    for column in column_names:
-        radiation_load[column] = grouped_data_frames[column][column]
-
-    incident_radiation = radiation_load[column_names]
-    return incident_radiation  # total solar radiation in areas exposed to radiation in Watts
 
 def calculate_pipe_transmittance_values(year, Retrofit):
     if year >= 1995 or Retrofit > 0:
@@ -922,7 +894,7 @@ def calc_pumping_systems_aux_loads(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, 
         Eaux_cs = np.vectorize(calc_Eaux_cs_dis)(Qcsf, Qcsf_0, Imax, deltaP_des, b, Tcs_sup, Tcs_re, gv.Cpw)
     if nf_ag > 5:  # up to 5th floor no pumping needs
         Eaux_fw = calc_Eaux_fw(Vw, nf_ag, gv)
-    if sys_e_heating is "T3" or sys_e_cooling is "T3":
+    if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
         Eaux_ve = np.vectorize(calc_Eaux_ve)(Qhsf, Qcsf, gv.Pfan, qv_req, sys_e_heating, sys_e_cooling, Af)
 
     return Eaux_cs, Eaux_fw, Eaux_hs, Eaux_ve, Eaux_ww
