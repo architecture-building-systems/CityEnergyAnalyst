@@ -646,6 +646,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_geometry, pro
         Qwwf = Qww = Qhs_sen = Qhsf = Qcs_sen = Qcs = Qcsf = Qcdata = Qcrefri = Qd = Qc = Qww_ls_st = np.zeros(8760)
         Ths_sup = Ths_re = Tcs_re = Tcs_sup = mcphs = mcpcs = mcpww = Vww = Tww_re = Tww_st = uncomfort = np.zeros(8760) # in C
 
+
     # calc electrical loads
     Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot = calc_loads_electrical(Aef, Eal_nove,
                                                                                                 Eauxf, Edataf, Eprof)
@@ -912,6 +913,7 @@ def calc_pumping_systems_aux_loads(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, 
         b = 1
     else:
         b = 1.2
+<<<<<<< HEAD
     Eaux_ww = np.vectorize(calc_Eaux_ww)(Qww, Qwwf, Qwwf_0, Imax, deltaP_des, b, Mww)
     if sys_e_heating != "T0":
         Eaux_hs = np.vectorize(calc_Eaux_hs_dis)(Qhsf, Qhsf_0, Imax, deltaP_des, b, Ths_sup, Ths_re, gv.Cpw)
@@ -921,6 +923,20 @@ def calc_pumping_systems_aux_loads(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, 
         Eaux_fw = calc_Eaux_fw(Vw, nf_ag, gv)
     if sys_e_heating is "T3" or sys_e_cooling is "T3":
         Eaux_ve = np.vectorize(calc_Eaux_ve)(Qhsf, Qcsf, gv.Pfan, qv_req, sys_e_heating, sys_e_cooling, Af)
+=======
+    Eaux_ww = np.vectorize(calc_Eaux_ww, otypes=[np.double])(Qww, Qwwf, Qwwf_0, Imax, deltaP_des, b, Mww)
+    if sys_e_heating > 0:
+        Eaux_hs = np.vectorize(calc_Eaux_hs_dis, otypes=[np.double])(Qhsf, Qhsf_0, Imax, deltaP_des, b,
+                                                                     Ths_sup, Ths_re, gv.Cpw)
+    if sys_e_cooling > 0:
+        Eaux_cs = np.vectorize(calc_Eaux_cs_dis, otypes=[np.double])(Qcsf, Qcsf_0, Imax, deltaP_des, b,
+                                                                     Tcs_sup, Tcs_re, gv.Cpw)
+    if nf_ag > 5:  # up to 5th floor no pumping needs
+        Eaux_fw = calc_Eaux_fw(Vw, nf_ag, gv)
+    if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
+        Eaux_ve = np.vectorize(calc_Eaux_ve, otypes=[np.double])(Qhsf, Qcsf, gv.Pfan, qv_req,
+                                                                 sys_e_heating, sys_e_cooling, Af)
+>>>>>>> origin/i181-schedulemaker
 
     return Eaux_cs, Eaux_fw, Eaux_hs, Eaux_ve, Eaux_ww
 
@@ -1266,7 +1282,7 @@ def calc_Eaux_ww(Qww,Qwwf,Qwwf0,Imax,deltaP_des,b,qV_des):
             feff = (1.25*(200/Ppu_dis_hy_i)**0.5)*b
             Eaux_ww = Ppu_dis_hy_i*feff 
     else:
-        Eaux_ww = 0
+        Eaux_ww = 0.0
     return Eaux_ww #in #W
 
 def calc_Eaux_hs_dis(Qhsf,Qhsf0,Imax,deltaP_des,b, ts,tr,cpw):  
@@ -1286,7 +1302,7 @@ def calc_Eaux_hs_dis(Qhsf,Qhsf0,Imax,deltaP_des,b, ts,tr,cpw):
             feff = (1.25*(200/Ppu_dis_hy_i)**0.5)*fctr*b
             Eaux_hs = Ppu_dis_hy_i*feff
     else:
-        Eaux_hs = 0
+        Eaux_hs = 0.0
     return Eaux_hs #in #W
 
 def calc_Eaux_cs_dis(Qcsf,Qcsf0,Imax,deltaP_des,b, ts,tr,cpw): 
@@ -1310,7 +1326,7 @@ def calc_Eaux_cs_dis(Qcsf,Qcsf0,Imax,deltaP_des,b, ts,tr,cpw):
                 feff = (1.25*(200/Ppu_dis_hy_i)**0.5)*fctr*b
                 Eaux_cs = Ppu_dis_hy_i*feff 
     else:
-        Eaux_cs = 0
+        Eaux_cs = 0.0
     return Eaux_cs #in #W
 
 def calc_Eaux_fw(freshw,nf,gv):
@@ -1336,14 +1352,14 @@ def calc_Eaux_ve(Qhsf,Qcsf,P_ve, qve, SystemH, SystemC, Af):
         if Qhsf >0: 
             Eve_aux = P_ve*qve*3600
         else: 
-            Eve_aux = 0
+            Eve_aux = 0.0
     elif SystemC == 'T3':
         if Qcsf <0:
             Eve_aux = P_ve*qve*3600
         else:
-            Eve_aux = 0
+            Eve_aux = 0.0
     else:
-        Eve_aux = 0
+        Eve_aux = 0.0
         
     return Eve_aux
 
