@@ -14,11 +14,8 @@ import globalvar
 from geopandas import GeoDataFrame as gpdf
 import inputlocator
 
-gv = globalvar.GlobalVariables()
-
-
 def properties(locator, prop_thermal_flag, prop_architecture_flag,
-               prop_hvac_flag, prop_comfort_flag, prop_internal_loads_flag, gv):
+               prop_hvac_flag, prop_comfort_flag, prop_internal_loads_flag):
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
@@ -226,7 +223,7 @@ def test_properties():
     """
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
     properties(locator=locator, prop_thermal_flag=True, prop_architecture_flag=True, prop_hvac_flag=True,
-               prop_comfort_flag=True, prop_internal_loads_flag=True, gv=gv)
+               prop_comfort_flag=True, prop_internal_loads_flag=True)
     print 'test_properties() succeeded'
 
 

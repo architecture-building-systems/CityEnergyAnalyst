@@ -88,7 +88,7 @@ def demand_calculation(locator, gv):
     # get thermal properties for RC model
     prop_RC_model = f.get_prop_RC_model(prop_occupancy, prop_architecture, prop_thermal, prop_geometry,
                                         prop_HVAC_result, surfaces, gv)
-    print "done"
+    gv.log("done")
 
     # get timeseries of demand
     num_buildings = len(prop_RC_model.index)
