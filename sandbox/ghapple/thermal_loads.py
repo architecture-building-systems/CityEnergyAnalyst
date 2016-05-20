@@ -16,9 +16,9 @@ import ventilation
 import pandas as pd
 
 
-def calc_h_ve(q_m_mech, q_m_nat, temp_ext, temp_sup, temp_zone_set, gv):
+def calc_h_ve_adj(q_m_mech, q_m_nat, temp_ext, temp_sup, temp_zone_set, gv):
     """
-    calculate Hve / Hea according to ISO 13970
+    calculate Hve,adj according to ISO 13790
 
     Parameters
     ----------
@@ -126,7 +126,7 @@ def calc_thermal_load_hvac_timestep(t, dict_locals):
     # first guess of mechanical ventilation mass flow rate and supply temperature for ventilation losses
     qm_ve_mech = qm_ve_req  # required air mass flow rate
     qm_ve_nat = 0  # natural ventilation # TODO: this could be a fixed percentage of the mechanical ventilation (overpressure) as a function of n50
-    temp_ve_sup = hvac_kaempf.calc_hex(rh_ext, gv, qm_ve_req / gv.Pair, temp_ext, temp_air_prev)[0]
+    temp_ve_sup = hvac_kaempf.calc_hex(rh_ext, gv, qv_mech=(qm_ve_req/gv.Pair), qv_mech_dim=0, temp_ext=temp_ext, temp_zone_prev=temp_air_prev)[0]
 
     qv_ve_req = qm_ve_req / ventilation.calc_rho_air(
         temp_ext)  # TODO: modify Kaempf model to accept mass flow rate instead of volume flow
@@ -140,7 +140,7 @@ def calc_thermal_load_hvac_timestep(t, dict_locals):
     while (abs_diff_qm_ve_mech > abs_tolerance) and (rel_diff_qm_ve_mech > rel_tolerance):
 
         # Hve
-        h_ve = calc_h_ve(qm_ve_mech, qm_ve_nat, temp_ext, temp_ve_sup, temp_air_prev, gv)  # TODO
+        h_ve = calc_h_ve_adj(qm_ve_mech, qm_ve_nat, temp_ext, temp_ve_sup, temp_air_prev, gv)  # TODO
 
         # Htr1, Htr2, Htr3
         h_tr_1, h_tr_2, h_tr_3 = functions.calc_Htr(h_ve, h_tr_is, h_tr_ms, h_tr_w)
@@ -259,7 +259,7 @@ def calc_thermal_load_mechanical_ventilation_timestep(t, dict_locals):
     temp_ve_sup = temp_ext  # mechanical ventilation without heat exchanger
 
     # calc hve
-    h_ve = calc_h_ve(qm_ve_mech, qm_ve_nat, temp_ext, temp_ve_sup, temp_air_prev, gv)
+    h_ve = calc_h_ve_adj(qm_ve_mech, qm_ve_nat, temp_ext, temp_ve_sup, temp_air_prev, gv)
 
     # calc htr1, htr2, htr3
     h_tr_1, h_tr_2, h_tr_3 = functions.calc_Htr(h_ve, h_tr_is, h_tr_ms, h_tr_w)
@@ -344,8 +344,9 @@ def calc_thermal_load_natural_ventilation_timestep(t, dict_locals):
     # test if ventilation from infiltration is already enough to satisfy the requirements
 
     qm_arg_in = qm_arg_out = 0  # test ventilation with closed windows
-    qm_ve_sum_in, qm_ve_sum_out = ventilation.calc_air_flows(temp_air_prev, u_wind, temp_ext, locals())  # (kg/h)
-    qm_ve_nat = qm_ve_sum_in / 3600  # natural ventilation mass flow rate (kg/s)
+    # infiltration and ventilation openings
+    qm_ve_in, qm_ve_out = ventilation.calc_air_flows(temp_air_prev, u_wind, temp_ext, locals())  # (kg/h)
+    qm_ve_nat_tot = (qm_ve_in + qm_arg_in) / 3600  # total natural ventilation mass flow rate (kg/s)
 
     # if building has windows
     if not df_windows_building.empty:
@@ -354,7 +355,7 @@ def calc_thermal_load_natural_ventilation_timestep(t, dict_locals):
         # test if air flows satisfy requirements
 
         index_window_opening = 0
-        while qm_ve_nat < qm_ve_req and index_window_opening < status_windows.size:
+        while qm_ve_nat_tot < qm_ve_req and index_window_opening < status_windows.size:
 
             # increase window opening
             print('increase window opening')
@@ -363,14 +364,14 @@ def calc_thermal_load_natural_ventilation_timestep(t, dict_locals):
                                                             temp_air_prev, status_windows[index_window_opening])
 
             # total air flows
-            qm_ve_sum_in, qm_ve_sum_out = ventilation.calc_air_flows(temp_air_prev, u_wind, temp_ext, locals())
+            # qm_ve_sum_in, qm_ve_sum_out = ventilation.calc_air_flows(temp_air_prev, u_wind, temp_ext, locals())
 
-            qm_ve_nat = qm_ve_sum_in / 3600  # natural ventilation mass flow rate (kg/s)
+            qm_ve_nat_tot = (qm_ve_in + qm_arg_in) / 3600  # total natural ventilation mass flow rate (kg/s)
 
             index_window_opening += 1
 
     # calculate h_ve
-    h_ve = calc_h_ve(qm_ve_mech, qm_ve_nat, temp_ext, temp_ext, 0, gv)  # (kJ/(hK))
+    h_ve = calc_h_ve_adj(qm_ve_mech, qm_ve_nat_tot, temp_ext, temp_ext, temp_air_prev, gv)  # (kJ/(hK))
 
     # calculate htr1, htr2, htr3
     h_tr_1, h_tr_2, h_tr_3 = functions.calc_Htr(h_ve, h_tr_is, h_tr_ms, h_tr_w)
@@ -396,14 +397,14 @@ def calc_thermal_load_natural_ventilation_timestep(t, dict_locals):
                                                         temp_air_prev, status_windows[index_window_opening])
 
         # total air flows
-        qm_ve_sum_in, qm_ve_sum_out = ventilation.calc_air_flows(temp_air_prev, u_wind, temp_ext, locals())
+        # qm_ve_sum_in, qm_ve_sum_out = ventilation.calc_air_flows(temp_air_prev, u_wind, temp_ext, locals())
 
-        qm_ve_nat = qm_ve_sum_in / 3600  # natural ventilation mass flow rate (kg/s)
+        qm_ve_nat_tot = (qm_ve_in + qm_arg_in) / 3600  # total natural ventilation mass flow rate (kg/s)
 
         index_window_opening += 1
 
         # calculate h_ve
-        h_ve = calc_h_ve(qm_ve_mech, qm_ve_nat, temp_ext, temp_ext, 0, gv)  # (kJ/(hK))
+        h_ve = calc_h_ve_adj(qm_ve_mech, qm_ve_nat_tot, temp_ext, temp_ext, temp_air_prev, gv)  # (kJ/(hK))
 
         # calculate htr1, htr2, htr3
         h_tr_1, h_tr_2, h_tr_3 = functions.calc_Htr(h_ve, h_tr_is, h_tr_ms, h_tr_w)
@@ -420,7 +421,7 @@ def calc_thermal_load_natural_ventilation_timestep(t, dict_locals):
                                     cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max,
                                     flag_season)
 
-    return temp_m, temp_a, q_hs_sen, q_cs_sen, uncomfort, temp_op, i_m_tot, qm_ve_nat
+    return temp_m, temp_a, q_hs_sen, q_cs_sen, uncomfort, temp_op, i_m_tot, qm_ve_nat_tot
 
 
 def calc_thermal_loads_new_ventilation(name, prop_rc_model, prop_hvac, prop_occupancy, prop_age, prop_architecture,
@@ -646,6 +647,8 @@ def calc_thermal_loads_new_ventilation(name, prop_rc_model, prop_hvac, prop_occu
                  q_hs_sen_hvac=q_hs_sen_hvac, q_cs_sen_hvac=q_cs_sen_hvac, e_hum_aux_hvac=e_hum_aux_hvac)).to_csv(
             locationFinal + '\\' + name + '-new-loads-old-ve-1.csv',
             index=False, float_format='%.2f')
+
+        # gv.report('calc-thermal-loads', locals(), locationFinal, name)
 
 
 # TESTING

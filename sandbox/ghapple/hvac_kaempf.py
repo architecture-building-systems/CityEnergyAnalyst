@@ -42,7 +42,7 @@ def calc_hvac(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_s
     t5_prime = tair + 1  # accounding for an increase in temperature # TODO: where is this from? why use calculated tair and not the setpoint temperature? why +1? # FIXME: remove
 
     # state after heat exchanger
-    t2, w2 = calc_hex(RH1, gv, qv_req, t1, t5_1)
+    t2, w2 = calc_hex(RH1, gv, qv_mech = qv_req, qv_mech_dim=0,  temp_ext=t1, temp_zone_prev=t5_1)
 
     # print(t5_prime)
     if abs(Qsen) != 0:  # to account for the bug of possible -0.0
@@ -148,15 +148,16 @@ def calc_hvac(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_s
     return Qhs_sen, Qcs_sen, Qhum, Qdhum, Ehum_aux, ma_hs, ma_cs, ts_hs, ts_cs, tr_hs, tr_cs, w2, w3, t5
 
 
-def calc_hex(rel_humidity_ext, gv, qv_req, temp_ext, temp_zone_prev):
+def calc_hex(rel_humidity_ext, gv, qv_mech, qv_mech_dim, temp_ext, temp_zone_prev):
     """
     Calculates air properties of mechanical ventilation system with heat exchanger
+    Modeled after 2.4.2 in SIA 2044
 
     Parameters
     ----------
     rel_humidity_ext : (%)
     gv : globalvar
-    qv_req : required air volume flow (kg/s)
+    qv_mech : required air volume flow (kg/s)
     temp_ext : external temperature at time t (°C)
     temp_zone_prev : ventilation zone air temperature at time t-1 (°C)
 
@@ -168,9 +169,10 @@ def calc_hex(rel_humidity_ext, gv, qv_req, temp_ext, temp_zone_prev):
     # TODO add literature
 
     # Properties of heat recovery and required air incl. Leakage
-    qv = qv_req * 1.0184  # in m3/s corrected taking into account leakage # TODO: add source
-    Veff = gv.Vmax * qv / qv_req  # max velocity effective # FIXME this does not make sense qv/qv_req = 1.0184 (see above)
-    nrec = gv.nrec_N - gv.C1 * (Veff - 2)  # heat exchanger coefficient # TODO: add source
+    # qv_mech = qv_mech * 1.0184  # in m3/s corrected taking into account leakage # TODO: add source
+    # Veff = gv.Vmax * qv_mech / qv_mech_dim  # Eq. (85) in SIA 2044
+    # nrec = gv.nrec_N - gv.C1 * (Veff - 2)  # heat exchanger coefficient # TODO: add source
+    nrec = gv.nrec_N  # for now use constant efficiency for heat recovery
 
     # State No. 1
     w1 = calc_w(temp_ext, rel_humidity_ext)  # outdoor moisture (kg/kg)

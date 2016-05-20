@@ -821,8 +821,9 @@ def calc_air_flow_mass_balance(p_zone_ref, temp_zone, u_wind_site, temp_ext, dic
     qm_pdu_in = 0
     qm_pdu_out = 0
 
-    qm_arg_in = dict_locals['qm_arg_in']
-    qm_arg_out = dict_locals['qm_arg_out']
+    qm_arg_in = 0  # dict_locals['qm_arg_in'], removed to speed up code, as window ventilation is always balanced
+                                                #  with the currently implemented method
+    qm_arg_out = 0  # dict_locals['qm_arg_out']
 
     qm_vent_in, qm_vent_out = calc_qm_vent(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_locals)
     qm_lea_in, qm_lea_out = calc_qm_lea(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_locals)
@@ -936,16 +937,25 @@ def calc_air_flows(temp_zone, u_wind, temp_ext, dict_locals):
     -------
 
     """
+    # solver_options_nelder_mead ={'disp': False, 'maxiter': 100, 'maxfev': None, 'xtol': 0.1, 'ftol': 0.1}
+    # solver_options_cg ={'disp': False, 'gtol': 1e-05, 'eps': 1.4901161193847656e-08, 'return_all': False,
+    #                     'maxiter': None, 'norm': -np.inf}
+    # solver_options_powell = {'disp': True, 'maxiter': None, 'direc': None, 'maxfev': None,
+    #            'xtol': 0.0001, 'ftol': 0.0001}
+    # solver_options_tnc = {'disp': True, 'minfev': 0, 'scale': None, 'rescale': -1, 'offset': None, 'gtol': -1,
+    #                       'eps': 1e-08, 'eta': -1, 'maxiter': None, 'maxCGit': -1, 'mesg_num': None,
+    #                       'ftol': -1, 'xtol': -1, 'stepmx': 0, 'accuracy': 0}
+    solver_options_cobyla = {'iprint': 1, 'disp': False, 'maxiter': 100, 'rhobeg': 1.0, 'tol': 0.001}
 
     # solve air flow mass balance via iteration
-    p_zone_ref = 5  # (Pa) zone pressure, THE UNKNOWN VALUE
+    p_zone_ref = 1  # (Pa) zone pressure, THE UNKNOWN VALUE
     res = minimize(calc_air_flow_mass_balance, p_zone_ref,
                    args=(temp_zone, u_wind, temp_ext, dict_locals, 'minimize',),
-                   method='Nelder-Mead',
-                   options={'disp': False, 'maxiter': 100, 'maxfev': None, 'xtol': 0.1, 'ftol': 0.1})
+                   method='COBYLA',
+                   options=solver_options_cobyla)
     # print(res)
     # get zone pressure of air flow mass balance
-    p_zone = res.x[0]
+    p_zone = res.x
 
     # calculate air flows at zone pressure
     qm_sum_in, qm_sum_out = calc_air_flow_mass_balance(p_zone, temp_zone, u_wind,
