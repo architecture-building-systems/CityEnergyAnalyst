@@ -1,0 +1,59 @@
+\begin{thebibliography}{10}
+
+\bibitem{DarcyWeisbach}
+\url{http://en.wikipedia.org/wiki/Darcy-Weisbach_equation}.
+
+\bibitem{SwameeJain}
+\url{http://en.wikipedia.org/wiki/Darcy_friction_factor_formulae#Swamee.E2.80.%
+93Jain_equation}.
+
+\bibitem{Benchmarks}
+\url{http://www.or.deis.unibo.it/research_pages/ORinstances/WaterNetworkDesign%
+Instances.zip}.
+
+\bibitem{Afshar}
+M.~Afshar.
+\newblock Evaluation of selection algorithms for simultaneous layout and pipe
+  size optimization of water distribution networks.
+\newblock {\em Scientia Iranica}, 2007.
+
+\bibitem{Bragalli}
+C.~Bragalli, C.~D'Ambrosio, J.~Lee, A.~Lopi, and P.~Toth.
+\newblock Water network design by {MILP}.
+\newblock {\em IBM Research Report}, 2008.
+
+\bibitem{Cunha}
+M.~Cunha and J.~Sousa.
+\newblock Water distribution network design optimization: simulated annealing
+  approach.
+\newblock {\em Journal of Water Resources Planning and Management}, 1999.
+
+\bibitem{Djebedjian}
+B.~Djebedjian, A.~Yaseen, and M.~Rayan.
+\newblock Optimization of large water distribution network design using genetic
+  algorithm.
+\newblock {\em Tenth International Water Technology Conference, IWTC10 2006,
+  Alexandira, Egypt}, 2006.
+
+\bibitem{Jimeno}
+J.~Fonseca.
+\newblock Word Document.
+
+\bibitem{Fu}
+G.~Fu, Z.~Kapelan, and P.~Reed.
+\newblock Reducing the complexity of multiobjective water distribution system
+  optimization through global sensitivity analysis.
+\newblock {\em Journal of Water Resources Planning and Management}, 2012.
+
+\bibitem{Hendrickson}
+C.~Hendrickson and B.~Janson.
+\newblock A common network flow formulation for several civil engineering
+  problems.
+\newblock {\em Civil Engineering Systems}, 1984.
+
+\bibitem{Raghunathan}
+A.~Raghunathan.
+\newblock Global optimization of nonlinear network design.
+\newblock {\em SIAM Journal on Optimization}, 2013.
+
+\end{thebibliography}
