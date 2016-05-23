@@ -103,19 +103,18 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timez
 
     # Calculate radiation
     for day in range(1, 366):
-        result = None
-        while result == None:
-            try:
-                result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude, locator.get_temporary_folder(), aspect_slope,
-                                       heightoffset, gv)
-            except:
-                pass
+        try:
+            result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
+                                   locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
+        except:
+            gv.log(result)
+            raise
     gv.log('complete raw radiation files')
 
     # run the transformation of files appending all and adding non-sunshine hours
     radiations = []
     for day in range(1, 366):
-        radiations.append(calc_radiationday(day, T_G_day, locator.get_temporary_folder()))
+        radiations.append(calc_radiation_day(day, T_G_day, locator.get_temporary_folder()))
 
     radiationyear = radiations[0]
     for r in radiations[1:]:
@@ -202,7 +201,7 @@ def CalcRadiationSurfaces(Observers, DataFactorsCentroids, DataradiationLocation
     return Data_radiation_path
 
 
-def calc_radiationday(day, T_G_day, route):
+def calc_radiation_day(day, T_G_day, route):
     radiation_sunnyhours = Dbf5(route + '\\' + 'Day_' + str(day) + '.dbf').to_dataframe()
 
     # Obtain the number of points modeled to do the iterations
@@ -255,7 +254,7 @@ def calc_radiationday(day, T_G_day, route):
     return Table
 
 
-def CalcRadiation(day, memoryFeature, Observers, T_G_day, latitude, locationtemp1, aspect_slope, heightoffset, gv):
+def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, locationtemp1, aspect_slope, heightoffset, gv):
     # Local Variables
     Latitude = str(latitude)
     skySize = '1000'  # max 2400
@@ -271,11 +270,11 @@ def CalcRadiation(day, memoryFeature, Observers, T_G_day, latitude, locationtemp
     timeConfig = 'WithinDay    ' + str(day) + ', 0, 24'
 
     # Run the extension of arcgis
-    arcpy.gp.PointsSolarRadiation_sa(memoryFeature, Observers, global_radiation, heightoffset,
-                                     Latitude, skySize, timeConfig, dayInterval, hourInterval, "INTERVAL", "1",
-                                     aspect_slope,
-                                     calcDirections, zenithDivisions, azimuthDivisions, "STANDARD_OVERCAST_SKY",
-                                     diffuseProp, transmittivity, "#", "#", "#")
+    arcpy.sa.PointsSolarRadiation(in_surface_raster, in_points_feature, global_radiation, heightoffset,
+                                  Latitude, skySize, timeConfig, dayInterval, hourInterval, "INTERVAL", "1",
+                                  aspect_slope,
+                                  calcDirections, zenithDivisions, azimuthDivisions, "STANDARD_OVERCAST_SKY",
+                                  diffuseProp, transmittivity, "#", "#", "#")
     gv.log('complete calculating radiation ' + timeConfig)
     return arcpy.GetMessages()
 
