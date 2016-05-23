@@ -421,6 +421,7 @@ class RadiationTool(object):
             datatype="GPLong",
             parameterType="Required",
             direction="Input")
+        year.value = 2014
 
         return [scenario_path, timezone, year]
 
@@ -429,6 +430,8 @@ class RadiationTool(object):
         FIXME: check if we are allowed to do this"""
         # scenario_path
         scenario_path = parameters[0].valueAsText
+        if scenario_path is None:
+            return
 
         if not os.path.exists(scenario_path):
             parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
@@ -472,8 +475,10 @@ class RadiationTool(object):
 
         import cea.radiation
         reload(cea.radiation)
+        gv = globalvar.GlobalVariables()
+        gv.log = add_message
         cea.radiation.solar_radiation_vertical(locator=locator, path_arcgis_db=path_arcgis_db, latitude=latitude,
-                                               longitude=longitude, timezone=timezone, year=year)
+                                               longitude=longitude, timezone=timezone, year=year, gv=gv)
         return
 
     def get_location(self, locator):
