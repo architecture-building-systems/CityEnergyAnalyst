@@ -70,14 +70,18 @@ def lca_embodied(yearcalc, locator, gv):
     """
 
     # localvariables
-    list_uses = gv.list_uses
     architecture_df = gpdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1)
-    occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
+
+    prop_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
+    occupancy_df = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
     age_df = gpdf.from_file(locator.get_building_age()).drop('geometry', axis=1)
     geometry_df = gpdf.from_file(locator.get_building_geometry())
     geometry_df['footprint'] = geometry_df.area
     geometry_df['perimeter'] = geometry_df.length
     geometry_df = geometry_df.drop('geometry', axis=1)
+
+    #get list of uses
+    list_uses = list(occupancy_df.drop({'PFloor','Name'}, axis=1).columns)
 
     # define main use:
     occupancy_df['mainuse'] = calc_mainuse(occupancy_df, list_uses)
@@ -100,11 +104,11 @@ def lca_embodied(yearcalc, locator, gv):
         cat_df['cat_'+cat] = cat_df.apply(lambda x: calc_category_retrofit(x['mainuse'],x[cat]), axis=1)
 
     # calculate contributions to embodied energy and emissions
-    list_of_archetypes = [locator.get_archetypes_embodied_energy(), locator.get_archetypes_embodied_emissions()]
+    list_of_archetypes = ['EMBODIED_ENERGY', 'EMBODIED_EMISSIONS']
     result = [0, 0]
     counter = 0
     for archetype in list_of_archetypes:
-        database_df = pd.read_csv(archetype)
+        database_df = pd.read_excel(locator.get_archetypes_properties(), archetype)
         # merge databases acording to category
         built_df = cat_df.merge(database_df, left_on='cat_built', right_on='Code')
         envelope_df = cat_df.merge(database_df, left_on='cat_envelope', right_on='Code')
