@@ -34,7 +34,12 @@ def full_report_to_xls(template, variables, output_folder, basename, gv):
 
     # create data frames
     for sheet in report_template.keys():
-        df = pd.DataFrame({v: variables[v] for v in report_template[sheet]})
+        # log missing variables
+        missing_variables = [v for v in report_template[sheet] if not v in variables]
+        if missing_variables:
+            gv.log("cannot report following variables: %s" % ', '.join(missing_variables))
+
+        df = pd.DataFrame({v: variables[v] for v in report_template[sheet] if v in variables})
         # write data frames to excel work sheet
         df.to_excel(writer, sheet_name=sheet, na_rep='NaN')
 

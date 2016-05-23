@@ -14,20 +14,15 @@ class InputLocator(object):
         self.scenario_path = scenario_path
         self.db_path = os.path.join(os.path.dirname(__file__), 'db')
 
-    def get_archetypes_hvac_properties(self):
-        """/cea/db/Archetypes/Archetypes_HVAC_properties.csv
-        path to database of archetypes file Archetypes_HVAC_properties.csv"""
-        return os.path.join(self.db_path, 'Archetypes', 'Archetypes_HVAC_properties.csv')
+    def get_archetypes_properties(self):
+        """/cea/db/Archetypes/Switzerland/Archetypes_properties.xlsx
+        path to database of archetypes file Archetypes_properties.xlsx"""
+        return os.path.join(self.db_path, 'Archetypes', 'Switzerland', 'Archetypes_properties.xlsx')
 
-    def get_archetypes_embodied_emissions(self):
-        """/cea/db/Archetypes/Archetypes_embodied_emissions.csv
-        path to database of archetypes file Archetypes_embodied_emissions.csv"""
-        return os.path.join(self.db_path, 'Archetypes', 'Archetypes_embodied_emissions.csv')
-
-    def get_archetypes_embodied_energy(self):
-        """/cea/db/Archetypes/Archetypes_embodied_energy.csv
-        path to database of archetypes file Archetypes_embodied_energy.csv"""
-        return os.path.join(self.db_path, 'Archetypes', 'Archetypes_embodied_energy.csv')
+    def get_archetypes_schedules(self):
+        """/cea/db/Archetypes/Switzerland/Archetypes_schedules.xlsx
+        path to database of archetypes file Archetypes_HVAC_properties.xlsx"""
+        return os.path.join(self.db_path, 'Archetypes', 'Switzerland', 'Archetypes_schedules.xlsx')
 
     def get_building_age(self):
         """scenario/1-inputs/1-buildings/building_age.shp"""
@@ -49,6 +44,18 @@ class InputLocator(object):
         """scenario/1-inputs/1-buildings/building_thermal.shp"""
         return os.path.join(self.scenario_path, '1-inputs', '1-buildings', 'building_thermal.shp')
 
+    def get_building_thermal(self):
+        """scenario/1-inputs/1-buildings/building_thermal.shp"""
+        return os.path.join(self.scenario_path, '1-inputs', '1-buildings', 'building_thermal.shp')
+
+    def get_building_internal(self):
+        """scenario/1-inputs/1-buildings/building_thermal.shp"""
+        return os.path.join(self.scenario_path, '1-inputs', '1-buildings', 'building_internal.shp')
+
+    def get_building_comfort(self):
+        """scenario/1-inputs/1-buildings/building_thermal.shp"""
+        return os.path.join(self.scenario_path, '1-inputs', '1-buildings', 'building_comfort.shp')
+
     def get_building_hvac(self):
         """scenario/1-inputs/1-buildings/building_HVAC.shp"""
         return os.path.join(self.scenario_path, '1-inputs', '1-buildings', 'building_HVAC.shp')
@@ -60,6 +67,10 @@ class InputLocator(object):
     def get_radiation(self):
         """scenario/2-results/1-radiation/1-timeseries/Radiation2000-2010.csv"""
         return os.path.join(self.scenario_path, '2-results', '1-radiation', '1-timeseries', 'radiation.csv')
+
+    def get_surfaces(self):
+        """scenario/2-results/1-radiation/1-timeseries/Radiation2000-2010.csv"""
+        return os.path.join(self.scenario_path, '2-results', '1-radiation', '1-timeseries', 'properties_surfaces.csv')
 
     def get_weather_hourly(self):
         """scenario/1-inputs/3-weather/weather_hourly.csv"""

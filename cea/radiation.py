@@ -15,8 +15,6 @@ import tempfile
 import ephem
 import datetime
 from simpledbf import Dbf5
-import pp
-import sys, time
 
 def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitude, longitude, timezone,
                              year, path_dem_raster, weather_daily_data, path_temporary, path_output):
@@ -60,8 +58,6 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
          solar radiation file in vertical surfaces of buildings stored in path_output
      """
 
-
-
     # Set environment settings
     arcpy.env.workspace = path_arcgisDB
     arcpy.env.overwriteOutput = True
@@ -78,7 +74,7 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     DataFactorsCentroids = path_temporary + '\\' + 'DataFactorsCentroids.csv'
     DataradiationLocation = path_temporary + '\\' + 'RadiationYear.csv'
     Radiationyearfinal = path_output + '\\' + 'radiation.csv'
-    radiations = []
+    surface_properties = path_output + '\\' + 'properties_surfaces.csv'
 
     #get values needed from the weather data file
     T_G_day = pd.read_csv(weather_daily_data) # temperature and radiation table
@@ -88,7 +84,7 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     T_G_day =  calc_sunrise(T_G_day,year,timezone,longitude,latitude)
 
     # Select buildings
-    buildings_selection = path_arcgisDB +'\\'+'building_selection'
+    buildings_selection = path_arcgisDB +'\\'+'building_select'
     arcpy.MakeFeatureLayer_management(path_geometry, 'lyr')
     arcpy.SelectLayerByLocation_management('lyr', 'intersect', path_boundary)
     arcpy.CopyFeatures_management('lyr', buildings_selection)
@@ -119,26 +115,64 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     print 'complete raw radiation files'
 
     #run the transformation of files appending all and adding non-sunshine hours
+    radiations = []
     for day in range(1,366):
         radiations.append(calc_radiationday(day,T_G_day, path_temporary))
 
-    Radiationyear = radiations[0]
+    radiationyear = radiations[0]
     for r in radiations[1:]:
-        Radiationyear = Radiationyear.merge(r, on='ID',how='outer')
-    Radiationyear.fillna(value=0,inplace=True)
-    Radiationyear.to_csv(DataradiationLocation,Index=False)
+        radiationyear = radiationyear.merge(r, on='ID',how='outer')
+    radiationyear.fillna(value=0,inplace=True)
+    radiationyear.to_csv(DataradiationLocation,Index=False)
 
-    print 'complete transfromation radiation files'
+    radiationyear = radiations = None
+    print 'complete transformation radiation files'
+    
+    # Assign radiation to every surface of the buildings
 
-    # Assign ratiation to every surface of the buildings
-
-    CalcRadiationSurfaces(observers, Radiationyearfinal, DataFactorsCentroids,
+    Data_radiation_path = CalcRadiationSurfaces(observers, DataFactorsCentroids,
                           DataradiationLocation, path_temporary, path_arcgisDB)
 
+    # get solar insolation @ daren: this is a A BOTTLE NECK
+    CalcIncidentRadiation(Data_radiation_path , Radiationyearfinal, surface_properties)
     print 'done'
 
 #Functions
-def CalcRadiationSurfaces(Observers, Radiationyearfinal, DataFactorsCentroids, DataradiationLocation,  locationtemp1, locationtemp2):
+
+
+def CalcIncidentRadiation(Data_radiation_path , Radiationyearfinal, surface_properties):
+
+    radiation = pd.read_csv(Data_radiation_path )
+    # export surfaces properties
+    radiation[['Name', 'Freeheight', 'FactorShade', 'height_ag', 'Shape_Leng']].to_csv(surface_properties, index=False)
+
+    # Import Radiation table and compute the Irradiation in W in every building's surface
+    radiation['Awall_all'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
+
+    hours_in_year = 8760
+    column_names = ['T%i' % (i + 1) for i in range(hours_in_year)]
+    for column in column_names:
+         # transform all the points of solar radiation into Wh
+        radiation[column] = radiation[column] * radiation['Awall_all']
+
+    # sum up radiation load per building
+    # NOTE: this looks like an ugly hack because it is: in order to work around a pandas MemoryError, we group/sum the
+    # columns individually...
+    grouped_data_frames = {}
+    for column in column_names:
+        df = pd.DataFrame(data={'Name': radiation['Name'],
+                                column: radiation[column]})
+        grouped_data_frames[column] = df.groupby(by='Name').sum()
+    radiation_load = pd.DataFrame(index=grouped_data_frames.values()[0].index)
+    for column in column_names:
+        radiation_load[column] = grouped_data_frames[column][column]
+
+    incident_radiation = radiation_load[column_names]
+    incident_radiation.to_csv(Radiationyearfinal)
+
+    return  # total solar radiation in areas exposed to radiation in Watts
+
+def CalcRadiationSurfaces(Observers, DataFactorsCentroids, DataradiationLocation,  locationtemp1, locationtemp2):
     # local variables
     CQSegments_centroid = locationtemp2+'\\'+'CQSegmentCentro'
     Outjoin = locationtemp2+'\\'+'Join'
@@ -165,8 +199,10 @@ def CalcRadiationSurfaces(Observers, Radiationyearfinal, DataFactorsCentroids, D
     Radiationtable = pd.read_csv(DataradiationLocation,index_col='Unnamed: 0')
     DataRadiation = pd.merge(DataCentroidsFull,Radiationtable, left_on='ID',right_on='ID')
 
-    DataRadiation.to_csv(Radiationyearfinal,index=False)
-    return arcpy.GetMessages()
+    Data_radiation_path = locationtemp1+'\\'+'tempradaition.csv'
+    DataRadiation.to_csv(Data_radiation_path, index = False)
+
+    return Data_radiation_path
 
 def calc_radiationday(day, T_G_day, route):
     radiation_sunnyhours = Dbf5(route+'\\'+'Day_'+str(day)+'.dbf').to_dataframe()
@@ -216,12 +252,12 @@ def calc_radiationday(day, T_G_day, route):
 def CalcRadiation(day, memoryFeature , Observers, T_G_day, latitude, locationtemp1, aspect_slope, heightoffset):
     # Local Variables
     Latitude = str(latitude)
-    skySize = '1800' #max 2400
+    skySize = '1000' #max 2400
     dayInterval = '1'
     hourInterval = '1'
     calcDirections = '32'
-    zenithDivisions = '1200' #max 1400
-    azimuthDivisions = '160'
+    zenithDivisions = '8' #max 1400
+    azimuthDivisions = '8'
     diffuseProp =  str(T_G_day.loc[day-1,'diff'])
     transmittivity =  str(T_G_day.loc[day-1,'ttr'])
     heightoffset = str(heightoffset)
@@ -423,7 +459,7 @@ def test_solar_radiation():
     year = 2014
     path_temporary_folder = tempfile.gettempdir()
     path_test =  'C:\\'
-    path_default_arcgisDB = r'C:\Users\Jimeno\Documents\ArcGIS\Default.gdb'
+    path_default_arcgisDB = r'C:\Users\JF\Documents\ArcGIS\Default.gdb'
     path_boundary = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs', '1-buildings', 'zone_of_study.shp')
     path_geometry = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs', '1-buildings', 'building_geometry.shp')
     path_terrain = os.path.join(path_test, 'reference-case', 'baseline', '1-inputs', '2-terrain', 'terrain')
