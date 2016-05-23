@@ -3,6 +3,7 @@ ArcGIS Tool classes for integrating the CEA with ArcGIS.
 """
 import os
 import arcpy
+import tempfile
 from cea import globalvar
 import inputlocator
 reload(inputlocator)
@@ -11,6 +12,9 @@ reload(inputlocator)
 def add_message(msg, **kwargs):
     """Log to arcpy.AddMessage() instead of print to STDOUT"""
     arcpy.AddMessage(msg % kwargs)
+    log_file = os.path.join(tempfile.gettempdir(), 'cea.log')
+    with open(log_file, 'a') as log:
+        log.write(msg % kwargs)
 
 
 class PropertiesTool(object):
