@@ -8,8 +8,9 @@ J. A. Fonseca  adaptation for CEA tool     18.05.16
 
 """
 import pandas as pd
+import inputlocator
 
-def epw_reader(file_path):
+def epw_reader(weather_path):
 
     epw_labels = ['year', 'month', 'day', 'hour', 'minute', 'datasource', 'drybulb_C', 'dewpoint_C', 'relhum_percent',
                        'atmos_Pa', 'exthorrad_Whm2', 'extdirrad_Whm2', 'horirsky_Whm2', 'glohorrad_Whm2',
@@ -18,15 +19,17 @@ def epw_reader(file_path):
                        'ceiling_hgt_m', 'presweathobs', 'presweathcodes', 'precip_wtr_mm', 'aerosol_opt_thousandths',
                        'snowdepth_cm', 'days_last_snow', 'Albedo', 'liq_precip_depth_mm', 'liq_precip_rate_Hour']
 
-    result = pd.read_csv(file_path, skiprows=8, header=None, names=epw_labels).drop('datasource', axis=1)
+    result = pd.read_csv(weather_path, skiprows=8, header=None, names=epw_labels).drop('datasource', axis=1)
     result['dayofyear'] = pd.date_range('1/1/2010', periods=8760, freq='H').dayofyear
 
     return result
 
 def test_reader():
 
-    file_path = r'C:\Users\JF\Documents\CEAforArcGIS\cea\db\Weather/Zug.epw'
-    epw_reader(file_path=file_path)
+    locator = inputlocator.InputLocator(r'C:\reference-case\baseline')
+    # for the interface, the user should pick a file out of of those in ...DB/Weather/...
+    weather_path = locator.get_default_weather()
+    epw_reader(weather_path=weather_path)
 
 if __name__ == '__main__':
     test_reader()

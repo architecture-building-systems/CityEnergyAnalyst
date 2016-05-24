@@ -54,7 +54,7 @@ def demand_calculation(locator, weather_path, gv):
     # local variables
     gv.log("reading input files")
 
-    weather_data = epwreader(weather_path)[['drybulb_C', 'relhum_percent']]
+    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent']]
     solar = pd.read_csv(locator.get_radiation()).set_index('Name')
     surface_properties = pd.read_csv(locator.get_surface_properties())
     prop_geometry = gpdf.from_file(locator.get_building_geometry())
