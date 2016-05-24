@@ -30,12 +30,12 @@ gv = cea.globalvar.GlobalVariables()
 # ++++ GEOMETRY ++++
 
 # for now get geometric properties of exposed facades from the radiation file
-def create_windows(df_radiation, gdf_building_architecture):
+def create_windows(df_prop_surfaces, gdf_building_architecture):
     """
 
     Parameters
     ----------
-    df_radiation
+    df_prop_surfaces
     gdf_building_architecture
 
     Returns
@@ -46,17 +46,17 @@ def create_windows(df_radiation, gdf_building_architecture):
 
     # sort dataframe for name of building for default orientation generation
     # FIXME remove this in the future
-    df_radiation.sort(['Name'])
+    df_prop_surfaces.sort(['Name'])
 
     # default values
     # FIXME use real window angle in the future
     angle_window_default = 90  # (deg), 90° = vertical, 0° = horizontal
 
     # read relevant columns from dataframe
-    free_height = df_radiation['Freeheight']
-    height_ag = df_radiation['height_ag']
-    length_shape = df_radiation['Shape_Leng']
-    name = df_radiation['Name']
+    free_height = df_prop_surfaces['Freeheight']
+    height_ag = df_prop_surfaces['height_ag']
+    length_shape = df_prop_surfaces['Shape_Leng']
+    name = df_prop_surfaces['Name']
 
     # calculate number of exposed floors per facade
     num_floors_free_height = (free_height / 3).astype('int')  # floor heigth is 3 m
@@ -95,12 +95,14 @@ def create_windows(df_radiation, gdf_building_architecture):
             orientation_default = 0
 
         # get window-wall ratio of building from architecture geodataframe
-        win_wall_ratio = gdf_building_architecture.loc[gdf_building_architecture['Name'] == name[i]].iloc[0]['win_wall']
+        #win_wall_ratio = gdf_building_architecture.loc[gdf_building_architecture['Name'] == name[i]].iloc[0]['win_wall']
+        win_wall_ratio = gdf_building_architecture.ix[name[i]]['win_wall']
+        win_op_ratio = gdf_building_architecture.ix[name[i]]['win_op']
 
         # for all levels in a facade
         for j in range(num_floors_free_height[i]):
             window_area = length_shape[
-                              i] * 3 * win_wall_ratio  # 3m = average floor height, 0.4 = window_wall fraction # TODO: implement fraction of operable windows from building properties
+                              i] * 3 * win_wall_ratio * win_op_ratio  # 3m = average floor height
             window_height_above_ground = height_ag[i] - free_height[
                 i] + j * 3 + 1.5  # 1.5m = window is placed in the middle of the floor height # TODO: make heights dynamic
             window_height_in_zone = window_height_above_ground  # for now the building is one ventilation zone
@@ -871,7 +873,7 @@ def get_building_geometry_ventilation(gdf_building_geometry):
     return area_facade_zone, area_roof_zone, height_zone, slope_roof
 
 
-def get_properties_natural_ventilation(gdf_geometry_building):
+def get_properties_natural_ventilation(gdf_geometry_building, gdf_architecture_building):
     """
 
     Parameters
@@ -884,14 +886,14 @@ def get_properties_natural_ventilation(gdf_geometry_building):
     """
 
     # FIXME: for testing the scripts
-    n50 = 0.3  # air tight # TODO: get from building properties
-    vol_building = gdf_geometry_building.area.iloc[0] * gdf_geometry_building['height_ag'].iloc[
+    n50 = gdf_architecture_building['n50'].iloc[0]  # 0.3  # air tight # TODO: get from building properties
+    vol_building = gdf_geometry_building['footprint'].iloc[0] * gdf_geometry_building['height_ag'].iloc[
         0]  # TODO: get from building properties
     qv_delta_p_lea_ref_zone = calc_qv_delta_p_ref(n50, vol_building)
     area_facade_zone, area_roof_zone, height_zone, slope_roof = get_building_geometry_ventilation(
         gdf_geometry_building)  # TODO: maybe also from building properties
     class_shielding = 2  # open # TODO: get from globalvars or dynamic simulation parameters or building properties
-    factor_cros = 1  # 1 = cross ventilation possible # TODO: get from building properties
+    factor_cros = gdf_architecture_building['f_cros'].iloc[0]  # 1  # 1 = cross ventilation possible # TODO: get from building properties
     area_vent_zone = 0  # (cm2) area of ventilation openings # TODO: get from buildings properties
 
     # calculate properties that remain constant in the minimization

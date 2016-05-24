@@ -426,7 +426,7 @@ def calc_thermal_load_natural_ventilation_timestep(t, dict_locals):
 
 def calc_thermal_loads_new_ventilation(name, prop_rc_model, prop_hvac, prop_occupancy, prop_age, prop_architecture,
                                        prop_geometry, profiles, names_profiles, Solar, dict_climate,
-                                       gdf_geometry_building, df_windows_building, locationFinal, gv):
+                                       df_windows_building, locationFinal, gv, list_uses, prop_internal_loads):
     """ calculates thermal loads of single buildings with mechanical or natural ventilation"""
 
     # get climate vectors
@@ -442,9 +442,11 @@ def calc_thermal_loads_new_ventilation(name, prop_rc_model, prop_hvac, prop_occu
     system_cooling = prop_hvac.type_cs
 
     # copied from original calc thermal loads
-    temp_hs_set, temp_cs_set, people, ve_schedule, q_int,\
-    e_al_nove, e_prof, e_data, qc_data_f, qc_refri_f,\
-    vww, vw, x_int, hour_day = functions.calc_mixed_schedule(profiles, names_profiles, prop_occupancy)  # TODO: rename outputs
+    mixed_schedule = functions.calc_mixed_schedule(list_uses, names_profiles, prop_occupancy)  # TODO: rename outputs
+
+    # get internal loads
+    Eal_nove, Edataf, Eprof, Eref, Qcrefri, Qcdata, vww, vw = functions.get_internal_loads(mixed_schedule, prop_internal_loads,
+                                                                                 prop_architecture, area_f)
 
     if area_f > 0:  # building has conditioned area
 
@@ -486,9 +488,6 @@ def calc_thermal_loads_new_ventilation(name, prop_rc_model, prop_hvac, prop_occu
         limit_inf_season = gv.seasonhours[0] + 1  # TODO: maybe rename or remove
         limit_sup_season = gv.seasonhours[1]  # TODO maybe rename or remove
 
-        # data and refrigeration loads
-        qc_data = qc_data_f * area_f
-        qc_refri = qc_refri_f * area_f
 
         # minimum mass flow rate of ventilation according to schedule
         # qm_ve_req = numpy.vectorize(calc_qm_ve_req)(ve_schedule, area_f, temp_ext)
@@ -519,7 +518,7 @@ def calc_thermal_loads_new_ventilation(name, prop_rc_model, prop_hvac, prop_occu
 
         # natural ventilation building propertiess
         # new
-        dict_props_nat_vent = ventilation.get_properties_natural_ventilation(gdf_geometry_building)
+        dict_props_nat_vent = ventilation.get_properties_natural_ventilation(prop_geometry, prop_architecture)
 
         # factor for cross ventilation
         factor_cros = 0  # TODO: get from building properties
