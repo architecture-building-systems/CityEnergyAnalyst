@@ -9,10 +9,8 @@ import functions
 
 class GlobalVariables(object):
     def __init__(self):
-        self.list_uses = ['ADMIN', 'SR', 'INDUS', 'REST', 'RESTS', 'DEPO', 'COM', 'MDU', 'SDU',
-                          'EDU', 'CR', 'HEALTH', 'SPORT', 'SWIM', 'PUBLIC', 'SUPER', 'ICE', 'HOT']
+        self.date_start = '1/1/2016' #d/m/yyyy
         self.seasonhours = [3216, 6192]
-        self.main_use = 'ADMIN'
         self.Z = 3  # height of basement for every building in m
         self.Bf = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
         self.his = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
@@ -55,7 +53,7 @@ class GlobalVariables(object):
         self.models = {'calc-thermal-loads': functions.CalcThermalLoads}
 
         # here is where we decide whether full excel reports of the calculations are generated
-        self.testing = True  # if true: reports are generated, if false: not
+        self.testing = False  # if true: reports are generated, if false: not
 
         self.report_variables = {
             'calc-thermal-loads': {
