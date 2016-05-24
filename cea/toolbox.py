@@ -3,6 +3,7 @@ ArcGIS Tool classes for integrating the CEA with ArcGIS.
 """
 import os
 import arcpy
+import tempfile
 from cea import globalvar
 import inputlocator
 reload(inputlocator)
@@ -11,6 +12,10 @@ reload(inputlocator)
 def add_message(msg, **kwargs):
     """Log to arcpy.AddMessage() instead of print to STDOUT"""
     arcpy.AddMessage(msg % kwargs)
+    log_file = os.path.join(tempfile.gettempdir(), 'cea.log')
+    with open(log_file, 'a') as log:
+        log.write(msg % kwargs)
+
 
 class PropertiesTool(object):
     """
@@ -395,3 +400,95 @@ class HeatmapsTool(object):
                  path_results=path_results, file_to_analyze=file_to_analyze)
         return
 
+class RadiationTool(object):
+    def __init__(self):
+        self.label = 'Radiation'
+        self.description = 'Create radiation file'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+        timezone = arcpy.Parameter(
+            displayName="Timezone",
+            name="timezone",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        year = arcpy.Parameter(
+            displayName="Year",
+            name="year",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        year.value = 2014
+
+        return [scenario_path, timezone, year]
+
+    def updateParameters(self, parameters):
+        """set the timezone by calling the Teleport API
+        FIXME: check if we are allowed to do this"""
+        # scenario_path
+        scenario_path = parameters[0].valueAsText
+        if scenario_path is None:
+            return
+
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+        locator = inputlocator.InputLocator(scenario_path)
+        latitude, longitude = self.get_location(locator)
+
+        timezone_parameter = parameters[1]
+        try:
+            import urllib2
+            import json
+            endpoint = "https://api.teleport.org/api/locations"
+            embed = "location:nearest-cities/location:nearest-city/city:timezone/tz:offsets-now"
+            url = "%(endpoint)s/%(latitude).4f,%(longitude).4f/?embed=%(embed)s" % locals()
+            arcpy.AddMessage(url)
+            r = urllib2.urlopen(url)
+            content = r.read()
+            r.close()
+            location = json.loads(content)
+            tz = location['_embedded']['location:nearest-cities'][0]['_embedded']['location:nearest-city']['_embedded'][
+                'city:timezone']['_embedded']['tz:offsets-now']['base_offset_min'] / 60
+            timezone_parameter.value = tz
+        except:
+            # just abort - user can fill this in himself
+            arcpy.AddMessage('Could not find timezone...')
+            pass
+        return
+
+    def execute(self, parameters, messages):
+        scenario_path = parameters[0].valueAsText
+        timezone = parameters[1].value
+        year = parameters[2].value
+
+        # FIXME: use current arcgis db...
+        path_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
+
+        locator = inputlocator.InputLocator(scenario_path)
+        latitude, longitude = self.get_location(locator)
+        arcpy.AddMessage('longitude: %s' % longitude)
+        arcpy.AddMessage('latitude: %s' % latitude)
+
+        import cea.radiation
+        reload(cea.radiation)
+        gv = globalvar.GlobalVariables()
+        gv.log = add_message
+        cea.radiation.solar_radiation_vertical(locator=locator, path_arcgis_db=path_arcgis_db, latitude=latitude,
+                                               longitude=longitude, timezone=timezone, year=year, gv=gv)
+        return
+
+    def get_location(self, locator):
+        """returns (latitude, longitude) for a given scenario."""
+        import fiona
+        with fiona.open(locator.get_building_geometry()) as shp:
+            longitude = shp.crs['lon_0']
+            latitude = shp.crs['lat_0']
+        return latitude, longitude
