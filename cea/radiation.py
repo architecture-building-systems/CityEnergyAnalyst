@@ -76,11 +76,11 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timez
     sunrise = calc_sunrise(range(1,366), year, longitude, latitude, gv)
 
     # calcuate daily transmissivity and daily diffusivity
-    weather_data = epwreader(weather_path)[['exthorrad_Whm2', 'extdirrad_Whm2', 'glohorrad_Whm2', 'difhorrad_Whm2' ]]
+    weather_data = epwreader.epw_reader(weather_path)[['dayofyear', 'exthorrad_Whm2', 'extdirrad_Whm2', 'glohorrad_Whm2', 'difhorrad_Whm2' ]]
     weather_data['trr']= weather_data.exthorrad_Whm2/weather_data.extdirrad_Whm2
     weather_data['diff'] =  weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
     weather_data.fillna(0, inplace=True)
-    T_G_day = weather_data.groupby('dayofyear').mean()
+    T_G_day = weather_data.groupby(['dayofyear']).mean()
 
     # Select buildings
     buildings_selection = path_arcgis_db + '\\' + 'building_select'
