@@ -14,6 +14,11 @@ class InputLocator(object):
         self.scenario_path = scenario_path
         self.db_path = os.path.join(os.path.dirname(__file__), 'db')
 
+    def get_default_weather(self):
+        """/cea/db/Weather/Zurich.epw
+        path to database of archetypes file Archetypes_properties.xlsx"""
+        return os.path.join(self.db_path, 'Weather', 'Zurich.epw')
+
     def get_archetypes_properties(self):
         """/cea/db/Archetypes/Switzerland/Archetypes_properties.xlsx
         path to database of archetypes file Archetypes_properties.xlsx"""

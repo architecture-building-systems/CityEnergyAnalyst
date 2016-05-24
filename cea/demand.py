@@ -13,6 +13,7 @@ import pandas as pd
 import numpy as np
 import functions as f
 import maker as m
+import epwreader
 import globalvar
 from geopandas import GeoDataFrame as gpdf
 import inputlocator
@@ -21,7 +22,7 @@ reload(f)
 reload(globalvar)
 
 
-def demand_calculation(locator, gv):
+def demand_calculation(locator, weather_path, gv):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
     using the integrated model of Fonseca et al. 2015. Applied energy.
@@ -53,7 +54,7 @@ def demand_calculation(locator, gv):
     # local variables
     gv.log("reading input files")
 
-    weather_data = pd.read_csv(locator.get_weather_hourly(), usecols=['te', 'RH'])
+    weather_data = epwreader(weather_path)[['drybulb_C', 'relhum_percent']]
     solar = pd.read_csv(locator.get_radiation()).set_index('Name')
     surface_properties = pd.read_csv(locator.get_surface_properties())
     prop_geometry = gpdf.from_file(locator.get_building_geometry())
@@ -71,8 +72,8 @@ def demand_calculation(locator, gv):
     # get temperatures of operation
     prop_HVAC_result= get_temperatures(locator, prop_HVAC).set_index('Name')
     # weather conditions
-    T_ext = np.array(weather_data.te)
-    RH_ext = np.array(weather_data.RH)
+    T_ext = np.array(weather_data.drybulb_C)
+    RH_ext = np.array(weather_data.relhum_percent)
     #get list of uses
     list_uses = list(prop_occupancy.drop('PFloor', axis=1).columns)
     #get date
@@ -136,8 +137,10 @@ def get_temperatures(locator, prop_HVAC):
 
 def test_demand():
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    # for the interface, the user should pick a file out of of those in ...DB/Weather/...
+    weather_path = locator.get_default_weather()
     gv = globalvar.GlobalVariables()
-    demand_calculation(locator=locator, gv=gv)
+    demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
 
 
 if __name__ == '__main__':
