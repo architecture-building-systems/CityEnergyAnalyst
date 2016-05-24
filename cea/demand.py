@@ -12,6 +12,7 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 import functions as f
+import epwreader
 import maker as m
 import globalvar
 from geopandas import GeoDataFrame as gpdf
@@ -21,7 +22,7 @@ reload(f)
 reload(globalvar)
 
 
-def demand_calculation(locator, gv):
+def demand_calculation(locator, weather_path, gv):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
     using the integrated model of Fonseca et al. 2015. Applied energy.
@@ -51,9 +52,8 @@ def demand_calculation(locator, gv):
         csv file of yearly demand data per buidling.
     """
     # local variables
+    weather_data = epwreader(weather_path)[['drybulb_C', 'relhum_percent']]
     gv.log("reading input files")
-
-    weather_data = pd.read_csv(locator.get_weather_hourly(), usecols=['te', 'RH'])
     solar = pd.read_csv(locator.get_radiation()).set_index('Name')
     surfaces = pd.read_csv(locator.get_surfaces())
     prop_geometry = gpdf.from_file(locator.get_building_geometry())
@@ -70,10 +70,12 @@ def demand_calculation(locator, gv):
     prop_internal_loads = gpdf.from_file(locator.get_building_internal()).drop('geometry', axis=1).set_index('Name')
     # get temperatures of operation
     prop_HVAC_result= get_temperatures(locator, prop_HVAC).set_index('Name')
+
     # weather conditions
-    T_ext = np.array(weather_data.te)
-    RH_ext = np.array(weather_data.RH)
-    #get list of uses
+    T_ext = np.array(weather_data.drybulb_C)
+    RH_ext = np.array(weather_data.relhum_percent)
+    T_ext_max = T_ext.max()
+    T_ext_min = T_ext.min()
     list_uses = list(prop_occupancy.drop('PFloor', axis=1).columns)
     #get date
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
@@ -137,7 +139,9 @@ def get_temperatures(locator, prop_HVAC):
 def test_demand():
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
     gv = globalvar.GlobalVariables()
-    demand_calculation(locator=locator, gv=gv)
+    #for the interface the user should select a weather file from a list of files in ...DB/weather..
+    weather_path = r'C:\Users\JF\Documents\CEAforArcGIS\cea\db\Weather/Zug.epw'
+    demand_calculation(locator=locator, weather_path = weather_path, gv=gv)
 
 
 if __name__ == '__main__':
