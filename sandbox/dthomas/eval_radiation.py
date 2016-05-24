@@ -30,9 +30,10 @@ def main():
         print "- total duration:", sum(durations), "s"
         print
 
-        print "## INPUT"
+        print "### Input"
         for parameter in invocations[0].parameters:
-            print "- **%s** (%s): *%s*" % (parameter.name, parameter.ptype, summary_unpickle(parameter.value))
+            ptypes = sorted({str(p.ptype) for i in invocations for p in i.parameters if p.name == parameter.name})
+            print "- **%s** `%s`: *%s*" % (parameter.name, ptypes, summary_unpickle(parameter.value))
         print
 
         for df_parameter in [p for p in invocations[0].parameters
@@ -41,8 +42,8 @@ def main():
             print pickle.loads(df_parameter.value).describe()
         print
 
-        print "## OUTPUT"
-        print "- (%s): %s" % (invocations[0].rtype, summary_unpickle(invocations[0].result))
+        print "### Output"
+        print "- `%s`: %s" % (sorted(str(i.rtype) for i in invocations), summary_unpickle(invocations[0].result))
         if invocations[0].rtype == "<class 'pandas.core.frame.DataFrame'>":
             print pickle.loads(df_parameter.value).describe()
         print
