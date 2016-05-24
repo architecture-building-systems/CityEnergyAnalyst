@@ -32,7 +32,7 @@ def demand_calculation(locator, gv):
     :type locator: inputlocator.InputLocator
 
     path_radiation:
-        path to solar radiation file in vertical surfaces
+        path to solar radiation file in vertical surface_properties
         RadiationYearFinal.csv
     path_schedules: string
         path to folder containing occupancy profile schedules
@@ -55,7 +55,7 @@ def demand_calculation(locator, gv):
 
     weather_data = pd.read_csv(locator.get_weather_hourly(), usecols=['te', 'RH'])
     solar = pd.read_csv(locator.get_radiation()).set_index('Name')
-    surfaces = pd.read_csv(locator.get_surfaces())
+    surface_properties = pd.read_csv(locator.get_surface_properties())
     prop_geometry = gpdf.from_file(locator.get_building_geometry())
     prop_geometry['footprint'] = prop_geometry.area
     prop_geometry['perimeter'] = prop_geometry.length
@@ -87,7 +87,7 @@ def demand_calculation(locator, gv):
     gv.log("calculating thermal properties")
     # get thermal properties for RC model
     prop_RC_model = f.get_prop_RC_model(prop_occupancy, prop_architecture, prop_thermal, prop_geometry,
-                                        prop_HVAC_result, surfaces, gv)
+                                        prop_HVAC_result, surface_properties, gv)
     gv.log("done")
 
     # get timeseries of demand
