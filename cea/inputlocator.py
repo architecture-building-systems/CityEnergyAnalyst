@@ -64,17 +64,29 @@ class InputLocator(object):
         """scenario/1-inputs/1-buildings/building_architecture.shp"""
         return os.path.join(self.scenario_path, '1-inputs', '1-buildings', 'building_architecture.shp')
 
+    def get_zone_of_study(self):
+        """scenario/1-inputs/1-buildings/zone_of_study.shp"""
+        return os.path.join(self.scenario_path, '1-inputs', '1-buildings', 'zone_of_study.shp')
+
+    def get_terrain(self):
+        """scenario/1-inputs/2-terrain/terrain - (path to Digital Elevation Map)"""
+        return os.path.join(self.scenario_path, '1-inputs', '2-terrain', 'terrain')
+
     def get_radiation(self):
         """scenario/2-results/1-radiation/1-timeseries/Radiation2000-2010.csv"""
         return os.path.join(self.scenario_path, '2-results', '1-radiation', '1-timeseries', 'radiation.csv')
 
-    def get_surfaces(self):
-        """scenario/2-results/1-radiation/1-timeseries/Radiation2000-2010.csv"""
+    def get_surface_properties(self):
+        """scenario/2-results/1-radiation/1-timeseries/properties_surfaces.csv"""
         return os.path.join(self.scenario_path, '2-results', '1-radiation', '1-timeseries', 'properties_surfaces.csv')
 
     def get_weather_hourly(self):
         """scenario/1-inputs/3-weather/weather_hourly.csv"""
         return os.path.join(self.scenario_path, '1-inputs', '3-weather', 'weather_hourly.csv')
+
+    def get_weather_daily(self):
+        """scenario/1-inputs/3-weather/weather_daily.csv"""
+        return os.path.join(self.scenario_path, '1-inputs', '3-weather', 'weather_day.csv')
 
     def get_life_cycle_inventory_supply_systems(self):
         """scenario/1-inputs/4-technical/supply_systems.csv"""
@@ -83,6 +95,7 @@ class InputLocator(object):
     def get_technical_emission_systems(self):
         """scenario/1-inputs/4-technical/emission_systems.csv"""
         return os.path.join(self.scenario_path, '1-inputs', '4-technical', 'emission_systems.xls')
+
 
     def get_demand_results_folder(self):
         """scenario/2-results/2-demand/1-timeseries"""
