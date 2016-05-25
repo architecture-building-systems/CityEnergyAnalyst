@@ -49,6 +49,12 @@ class GlobalVariables(object):
         # constant variables for air conditioning fan
         self.Pfan = 0.55 # specific fan consumption in W/m3/h
 
+        # ==============================================================================================================
+        # ventilation
+        # ==============================================================================================================
+        self.shielding_class = 2  # according to ISO 16798-7, 0 = open terrain, 1 = partly shielded from wind,
+        #  2 = fully shielded from wind
+
         # here is where we plug in the models to use for calculations
         self.models = {'calc-thermal-loads': functions.CalcThermalLoads}
 
