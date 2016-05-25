@@ -603,7 +603,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_geometry, pro
         Eauxf = (Eaux_ww + Eaux_fw + Eaux_hs + Eaux_cs + Ehs_lat_aux + Eaux_ve)
     
         # calculate other quantities
-        Occupancy = np.floor(people*Af)
+        Occupancy = np.floor(people)
         Occupants = Occupancy.max()
         Waterconsumption = Vww+Vw  #volume of water consumed in m3/h
         waterpeak = Waterconsumption.max()
