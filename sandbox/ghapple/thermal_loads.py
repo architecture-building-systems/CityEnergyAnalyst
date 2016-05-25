@@ -426,7 +426,7 @@ def calc_thermal_load_natural_ventilation_timestep(t, dict_locals):
 
 def calc_thermal_loads_new_ventilation(name, prop_rc_model, prop_hvac, prop_occupancy, prop_age, prop_architecture,
                                        prop_geometry, profiles, names_profiles, Solar, dict_climate,
-                                       df_windows_building, locationFinal, gv, list_uses, prop_internal_loads):
+                                       df_windows_building, locationFinal, gv, list_uses, prop_internal_loads, prop_comfort, date):
     """ calculates thermal loads of single buildings with mechanical or natural ventilation"""
 
     # get climate vectors
@@ -449,6 +449,17 @@ def calc_thermal_loads_new_ventilation(name, prop_rc_model, prop_hvac, prop_occu
                                                                                  prop_architecture, area_f)
 
     if area_f > 0:  # building has conditioned area
+
+        # get heating and cooling season
+        limit_inf_season = gv.seasonhours[0] + 1  # TODO: maybe rename or remove
+        limit_sup_season = gv.seasonhours[1]  # TODO maybe rename or remove
+
+        # get occupancy
+        people = functions.get_occupancy(mixed_schedule, prop_architecture, area_f)
+
+        # get internal comfort properties
+        ve, ta_hs_set, ta_cs_set = functions.get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_season,
+                                                        date.hour)
 
         # extract properties of building
         # copied from original calc thermal loads
@@ -484,9 +495,7 @@ def calc_thermal_loads_new_ventilation(name, prop_rc_model, prop_hvac, prop_occu
         fforma = functions.get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp,
                                                             prop_hvac)  # TODO: rename outputs
 
-        # get heating and cooling season
-        limit_inf_season = gv.seasonhours[0] + 1  # TODO: maybe rename or remove
-        limit_sup_season = gv.seasonhours[1]  # TODO maybe rename or remove
+
 
 
         # minimum mass flow rate of ventilation according to schedule
