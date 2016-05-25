@@ -10,7 +10,9 @@ Pandas Dataframe, Series and numpy arrays are handled specially.
 
 This can be used to reverse-engineer thorny code bases! Also, as a starting point for unit tests...
 """
-
+import numpy as np
+import pandas as pd
+import os
 import functools
 import inspect
 import pickle
@@ -23,6 +25,8 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, Binary
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy import create_engine, ForeignKey
+
+import cea.radiation
 
 Base = declarative_base()
 Session = sessionmaker()
@@ -67,7 +71,9 @@ class Parameter(Base):
     def __repr__(self):
         return "<Parameter(name='%s', ptype='%s')>" % (self.name, self.ptype)
 
+
 Invocation.parameters = relationship('Parameter', order_by=Parameter.id, back_populates='invocation')
+
 
 class _LogArgs(object):
     """Logging decorator for function calls"""
@@ -139,3 +145,93 @@ class _LogArgs(object):
 
 
 log_args = _LogArgs()
+
+
+
+
+def generate_output(path_to_log, writer):
+    def write_line(line=None):
+        if line:
+            writer.write(line)
+        writer.write('\n')
+
+
+    connect_to(os.path.expandvars(path_to_log))
+
+    session = Session()
+
+    # functions analyzed
+    invocations = session.query(fl.Invocation).all()
+    function_names = sorted({invocation.name for invocation in invocations})
+
+    # print table of contents
+    write_line("# Table of contents")
+    for function_name in function_names:
+        write_line("- [%s](#%s)\n" % (function_name, anchor_name(function_name)))
+    write_line()
+
+    # figure out call structure...
+
+    # print list of functions
+    for function_name in function_names:
+        write_line("# %s" % function_name)
+
+        invocations = session.query(fl.Invocation).filter(fl.Invocation.name == function_name).all()
+        write_line("- number of invocations: %i" % len(invocations))
+        durations = [(i.end - i.start).total_seconds() for i in invocations if i.end]
+        if durations:
+            write_line("- max duration: %s s" % max(durations))
+            write_line("- avg duration: %s s" % np.mean(durations))
+            write_line("- min duration: %s s" % min(durations))
+            write_line("- total duration: %s s" % sum(durations))
+        write_line()
+
+        write_line("### Input")
+        for parameter in invocations[0].parameters:
+            ptypes = sorted({str(p.ptype) for i in invocations for p in i.parameters if p.name == parameter.name})
+            write_line("- **%s** `%s`: *%s*" % (parameter.name, ptypes, summary_unpickle(parameter.value)))
+        write_line()
+
+        for df_parameter in [p for p in invocations[0].parameters
+                             if p.ptype == "<class 'pandas.core.frame.DataFrame'>"]:
+            write_line("#### %s:" % df_parameter.name)
+            write_line("```\n%s\n```" % pickle.loads(df_parameter.value).describe())
+        write_line()
+        write_line("### Output")
+        write_line("- `%s`: %s" % (sorted({str(i.rtype) for i in invocations}),
+                                   summary_unpickle(invocations[0].result)))
+        if invocations[0].rtype == "<class 'pandas.core.frame.DataFrame'>":
+            write_line("```\n%s\n```" % pickle.loads(invocations[0].result).describe())
+        write_line()
+        write_line("[TOC](#table-of-contents)")
+        write_line("---")
+        write_line()
+
+
+def summary_unpickle(value):
+    """Unpickle the value to a string for simple values and a summary for more complicated values (like Dataframe)"""
+    try:
+        obj = pickle.loads(value)
+        if isinstance(obj, pd.DataFrame):
+            return obj.shape
+        else:
+            return obj
+    except:
+        return '???'
+
+
+def anchor_name(s):
+    """
+    return an anchor name for a heading (as in GitHub markdown)
+    NOTE: only really works with function names...
+    """
+    s = s.replace('_', '-')
+    s = s.lower()
+    return s
+
+
+def wrap_module(module):
+    # wrap all the functions in radiation.py with the logger
+    for member in dir(module):
+        if inspect.isfunction(getattr(cea.radiation, member)):
+            setattr(cea.radiation, member, functionlogger.log_args(getattr(cea.radiation, member)))
