@@ -233,5 +233,5 @@ def anchor_name(s):
 def wrap_module(module):
     # wrap all the functions in radiation.py with the logger
     for member in dir(module):
-        if inspect.isfunction(getattr(cea.radiation, member)):
-            setattr(cea.radiation, member, functionlogger.log_args(getattr(cea.radiation, member)))
+        if inspect.isfunction(getattr(module, member)):
+            setattr(module, member, log_args(getattr(module, member)))

@@ -3,17 +3,18 @@ run the radiation.py script with the functionlogger.
 """
 import os
 
-import cea.radiation
+import cea.demand
 import functionlogger
 
 if __name__ == '__main__':
-    path_to_log = os.path.expandvars(r'%TEMP%\cea.radiation.log.sql')
-    path_to_md = os.path.expandvars(r'%TEMP%\cea.radiation.log.md')
+    path_to_log = os.path.expandvars(r'%TEMP%\cea.demand.log.sql')
+    path_to_md = os.path.expandvars(r'%TEMP%\cea.demand.log.md')
 
     functionlogger.connect_to(path_to_log)
-    functionlogger.wrap_module(cea.radiation)
+    functionlogger.wrap_module(cea.demand)
+    functionlogger.wrap_module(cea.demand.f)
 
-    cea.radiation.test_solar_radiation()
+    cea.demand.test_demand()
 
     with open(path_to_md) as writer:
         functionlogger.generate_output(path_to_log, writer)
