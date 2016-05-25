@@ -45,6 +45,9 @@ class Invocation(Base):
     exception = Column(Boolean)
     rtype = Column(String)
     result = Column(Binary)
+    calling_file = Column(String)
+    calling_line = Column(Integer)
+    calling_function = Column(String)
 
     def __repr__(self):
         return "<Invocation(id=%s, name='%s', start='%s', end='%s')>" % (
@@ -64,9 +67,7 @@ class Parameter(Base):
     def __repr__(self):
         return "<Parameter(name='%s', ptype='%s')>" % (self.name, self.ptype)
 
-
 Invocation.parameters = relationship('Parameter', order_by=Parameter.id, back_populates='invocation')
-
 
 class _LogArgs(object):
     """Logging decorator for function calls"""
@@ -101,6 +102,13 @@ class _LogArgs(object):
             invocation = Invocation(name=func.__name__, start=datetime.datetime.now())
             invocation.parameters = [Parameter(name=name, value=self.to_pickle(value), ptype=str(type(value)))
                                      for name, value in args_dict.items()]
+
+            # figure out who called us (top two on call stack are wrapper stuff)
+            _, file_name, line_number, function_name, _, _ = inspect.stack()[2]
+            invocation.calling_file = file_name
+            invocation.calling_function = function_name
+            invocation.calling_line = line_number
+
             session.add(invocation)
             session.commit()
             map(session.refresh, iter(session))
@@ -110,11 +118,13 @@ class _LogArgs(object):
         except:
             import traceback
             traceback.print_exc()
+            raise
 
     def log_exit(self, func, result):
         invocation = self.invocations.pop()
         session = Session()
         session.add(invocation)
+        assert invocation.name == func.__name__, "something went wrong with call stack..."
         invocation.end = datetime.datetime.now()
         invocation.rtype = str(type(result))
         invocation.result = self.to_pickle(result)
