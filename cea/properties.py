@@ -113,7 +113,7 @@ def properties(locator, prop_thermal_flag, prop_architecture_flag,
 
         # write to shapefile
         prop_architecture_df_merged = names_shp.merge(prop_architecture_df, on="Name")
-        fields = ['win_wall','type_shade', 'Occ_m2p']
+        fields = ['win_wall', 'type_shade', 'Occ_m2p', 'n50', 'win_op', 'f_cros']  # added ventilation properties to architecture
         prop_architecture_shp = names_shp.copy()
         for field in fields:
             prop_architecture_shp[field] = prop_architecture_df_merged[field].copy()

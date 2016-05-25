@@ -9,16 +9,16 @@ J. A. Fonseca  adaptation for CEA tool     12.04.16
 """
 from __future__ import division
 
-import datetime
 import os
-
 import arcpy
 import ephem
+import datetime
+import epwreader
 import pandas as pd
 from simpledbf import Dbf5
 
 
-def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timezone, year, gv):
+def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timezone, year, gv, weather_path):
     """
     algorithm to calculate the hourly solar isolation in vertical building surfaces.
     The algorithm is based on the Solar Analyst Engine of ArcGIS 10.
@@ -73,12 +73,15 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timez
     DataFactorsCentroids = locator.get_temporary_file('DataFactorsCentroids.csv')
     DataradiationLocation = locator.get_temporary_file('RadiationYear.csv')
 
-    # get values needed from the weather data file
-    T_G_day = pd.read_csv(locator.get_weather_daily())  # temperature and radiation table
-
     # calculate sunrise
-    T_G_day['sunrise'] = 0
-    T_G_day = calc_sunrise(T_G_day, year, longitude, latitude, gv)
+    sunrise = calc_sunrise(range(1,366), year, longitude, latitude, gv)
+
+    # calcuate daily transmissivity and daily diffusivity
+    weather_data = epwreader.epw_reader(weather_path)[['dayofyear', 'exthorrad_Whm2', 'extdirrad_Whm2', 'glohorrad_Whm2', 'difhorrad_Whm2' ]]
+    weather_data['trr']= weather_data.exthorrad_Whm2/weather_data.extdirrad_Whm2
+    weather_data['diff'] =  weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
+    weather_data.fillna(0, inplace=True)
+    T_G_day = weather_data.groupby(['dayofyear']).mean()
 
     # Select buildings
     buildings_selection = path_arcgis_db + '\\' + 'building_select'
@@ -105,18 +108,19 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timez
 
     # Calculate radiation
     for day in range(1, 366):
-        try:
-            result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
-                                   locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
-        except:
-            gv.log(result)
-            raise
+        result = None
+        while result == None: # trick to avoid that arcgis stops claculating the days and tries again.
+            try:
+                result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
+                                       locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
+            except:
+                pass
     gv.log('complete raw radiation files')
 
     # run the transformation of files appending all and adding non-sunshine hours
     radiations = []
     for day in range(1, 366):
-        radiations.append(calc_radiation_day(day, T_G_day, locator.get_temporary_folder()))
+        radiations.append(calc_radiation_day(day, sunrise, locator.get_temporary_folder()))
 
     radiationyear = radiations[0]
     for r in radiations[1:]:
@@ -203,7 +207,7 @@ def CalcRadiationSurfaces(Observers, DataFactorsCentroids, DataradiationLocation
     return Data_radiation_path
 
 
-def calc_radiation_day(day, T_G_day, route):
+def calc_radiation_day(day, sunrise, route):
     radiation_sunnyhours = Dbf5(route + '\\' + 'Day_' + str(day) + '.dbf').to_dataframe()
 
     # Obtain the number of points modeled to do the iterations
@@ -229,7 +233,7 @@ def calc_radiation_day(day, T_G_day, route):
     else:
         D = 0
     # Calculation of Sunrise time
-    Sunrise_time = T_G_day.loc[day - 1, 'sunrise']
+    Sunrise_time = sunrise[day - 1]
     # Calculation of table
     for x in range(values):
         Hour = int(Sunrise_time) + int(D) + int(x)
@@ -456,7 +460,7 @@ def Burn(Buildings, DEM, DEMfinal, locationtemp1, DEM_extent, gv):
     return arcpy.GetMessages()
 
 
-def calc_sunrise(T_G_day, Yearsimul, longitude, latitude, gv):
+def calc_sunrise(sunrise, Yearsimul, longitude, latitude, gv):
     o = ephem.Observer()
     o.lat = str(latitude)
     o.long = str(longitude)
@@ -464,20 +468,23 @@ def calc_sunrise(T_G_day, Yearsimul, longitude, latitude, gv):
     for day in range(1, 366):  # Calculated according to NOAA website
         o.date = datetime.datetime(Yearsimul, 1, 1) + datetime.timedelta(day - 1)
         next_event = o.next_rising(s)
-        T_G_day.loc[day - 1, 'sunrise'] = next_event.datetime().hour
+        sunrise[day - 1] = next_event.datetime().hour
     gv.log('complete calculating sunrise')
-    return T_G_day
+    return sunrise
 
 
 def test_solar_radiation():
     import cea.globalvar
 
     locator = cea.inputlocator.InputLocator(r'C:\reference-case\baseline')
+    # for the interface, the user should pick a file out of of those in ...DB/Weather/...
+    weather_path = locator.get_default_weather()
     path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
     gv = cea.globalvar.GlobalVariables()
 
     solar_radiation_vertical(locator=locator, path_arcgis_db=path_default_arcgis_db,
-                             latitude=46.95240555555556, longitude=7.439583333333333, timezone=1, year=2014, gv=gv)
+                             latitude=46.95240555555556, longitude=7.439583333333333, timezone=1, year=2014, gv=gv,
+                             weather_path= weather_path)
 
 
 if __name__ == '__main__':
