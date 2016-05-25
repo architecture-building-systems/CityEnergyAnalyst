@@ -338,12 +338,12 @@ def calc_qv_req(ve,people,Af,gv,hour_day,hour_year,limit_inf_season,limit_sup_se
     infiltration_occupied = gv.hf*gv.NACH_inf_occ #m3/h.m2
     infiltration_non_occupied = gv.hf*gv.NACH_inf_non_occ #m3/h.m2
     if people >0:
-        q_req = (ve+infiltration_occupied)*Af/3600 #m3/s
+        q_req = (ve+(infiltration_occupied*Af))/3600 #m3/s
     else:
         if (21 < hour_day or hour_day < 7) and (limit_inf_season < hour_year <limit_sup_season): 
-            q_req = (ve*1.3+infiltration_non_occupied)*Af/3600 # free cooling
+            q_req = (ve*1.3+(infiltration_non_occupied*Af))/3600 # free cooling
         else:
-            q_req = (ve+infiltration_non_occupied)*Af/3600 #
+            q_req = (ve+(infiltration_non_occupied*Af))/3600 #
     return q_req #m3/s
 
 def calc_mixed_schedule(list_uses, schedules, building_uses):
@@ -603,7 +603,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_geometry, pro
         Eauxf = (Eaux_ww + Eaux_fw + Eaux_hs + Eaux_cs + Ehs_lat_aux + Eaux_ve)
     
         # calculate other quantities
-        Occupancy = np.floor(people*Af)
+        Occupancy = np.floor(people)
         Occupants = Occupancy.max()
         Waterconsumption = Vww+Vw  #volume of water consumed in m3/h
         waterpeak = Waterconsumption.max()
