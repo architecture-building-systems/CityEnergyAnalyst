@@ -115,14 +115,14 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
             col_height_window_in_zone.append(window_height_in_zone)
 
     # create pandas dataframe with table of all windows
-    df_windows = pd.DataFrame({'name_building': col_name_building,
-                               'area_window': col_area_window,
-                               'height_window_above_ground': col_height_window_above_ground,
-                               'orientation_window': col_orientation_window,
-                               'angle_window': col_angle_window,
-                               'height_window_in_zone': col_height_window_in_zone})
+    dict_windows = {'name_building': col_name_building,
+                    'area_window': col_area_window,
+                    'height_window_above_ground': col_height_window_above_ground,
+                    'orientation_window': col_orientation_window,
+                    'angle_window': col_angle_window,
+                    'height_window_in_zone': col_height_window_in_zone}
 
-    return df_windows
+    return dict_windows
 
 
 # ++++ GENERAL ++++
@@ -609,13 +609,13 @@ def calc_area_window_free(area_window_max, r_window_arg):
     return area_window_free
 
 
-def calc_area_window_tot(df_windows_building, r_window_arg):
+def calc_area_window_tot(dict_windows_building, r_window_arg):
     """
     Calculation of total open window area according to 6.4.3.5.2 in [1]
 
     Parameters
     ----------
-    df_windows_building
+    dict_windows_building
     r_window_arg
 
     Returns
@@ -625,18 +625,18 @@ def calc_area_window_tot(df_windows_building, r_window_arg):
 
     # Eq. (43) in [1]
     # TODO account only for operable windows and not total building window area
-    area_window_tot = calc_area_window_free(sum(df_windows_building['area_window']), r_window_arg)
+    area_window_tot = calc_area_window_free(sum(dict_windows_building['area_window']), r_window_arg)
 
     return area_window_tot
 
 
-def calc_effective_stack_height(df_windows_building):
+def calc_effective_stack_height(dict_windows_building):
     """
     Calculation of effective stack height for window ventilation according to 6.4.3.4.1 in [1]
 
     Parameters
     ----------
-    df_windows_building
+    dict_windows_building
 
     Returns
     -------
@@ -645,11 +645,11 @@ def calc_effective_stack_height(df_windows_building):
     # TODO: maybe this formula is wrong --> check final edition of standard as soon as possible
 
     # first part of Eq. (46) in [1]
-    height_window_stack_1 = df_windows_building['height_window_in_zone'] + df_windows_building[
-                                                                               'height_window_above_ground'] / 2
+    height_window_stack_1 = dict_windows_building['height_window_in_zone'] + np.array(dict_windows_building[
+                                                                               'height_window_above_ground']) / 2
     # second part of Eq. (46) in [1]
-    height_window_stack_2 = df_windows_building['height_window_in_zone'] - df_windows_building[
-                                                                               'height_window_above_ground'] / 2
+    height_window_stack_2 = dict_windows_building['height_window_in_zone'] - np.array(dict_windows_building[
+                                                                               'height_window_above_ground']) / 2
     # Eq. (46) in [1]
     height_window_stack = max(height_window_stack_1) - min(height_window_stack_2)
 
@@ -684,11 +684,11 @@ def calc_area_window_cros(df_windows_building, r_window_arg):
             alpha_ref = i * 45 + j * 90
             alpha_max = alpha_ref + 45
             alpha_min = alpha_ref - 45
-            for k in range(df_windows_building['name_building'].size):
-                if alpha_min <= df_windows_building['orientation_window'].iloc[k] <= \
-                        alpha_max and df_windows_building['angle_window'].iloc[k] >= 60:
+            for k in range(len(df_windows_building['name_building'])):
+                if alpha_min <= df_windows_building['orientation_window'][k] <= \
+                        alpha_max and df_windows_building['angle_window'][k] >= 60:
                     # Eq. (52) in [1]
-                    area_window_free = calc_area_window_free(df_windows_building['area_window'].iloc[k], r_window_arg)
+                    area_window_free = calc_area_window_free(df_windows_building['area_window'][k], r_window_arg)
                     area_window_ori[j] = area_window_ori[j] + area_window_free
         for j in range(4):
             if area_window_ori[j] > 0:
@@ -700,7 +700,7 @@ def calc_area_window_cros(df_windows_building, r_window_arg):
     return min(area_window_cros)
 
 
-def calc_qm_arg(factor_cros, temp_ext, df_windows_building, u_wind_10, temp_zone, r_window_arg):
+def calc_qm_arg(factor_cros, temp_ext, dict_windows_building, u_wind_10, temp_zone, r_window_arg):
     """
     Calculation of cross ventilated and non-cross ventilated window ventilation according to procedure in 6.4.3.5.4
     in [1]
@@ -709,7 +709,7 @@ def calc_qm_arg(factor_cros, temp_ext, df_windows_building, u_wind_10, temp_zone
     ----------
     factor_cros
     temp_ext : exterior temperature (°C)
-    df_windows_building
+    dict_windows_building
     u_wind_10
     temp_zone : zone temperature (°C)
     r_window_arg
@@ -725,7 +725,7 @@ def calc_qm_arg(factor_cros, temp_ext, df_windows_building, u_wind_10, temp_zone
     qm_arg_in = qm_arg_out = 0  # this is the output for buildings without windows
 
     # if building has windows
-    if not df_windows_building.empty:
+    if dict_windows_building:
 
         # constants from Table 12 in [1]
         # TODO import from global variables
@@ -741,8 +741,8 @@ def calc_qm_arg(factor_cros, temp_ext, df_windows_building, u_wind_10, temp_zone
         # get necessary inputs
         rho_air_ext = calc_rho_air(temp_ext)
         rho_air_zone = calc_rho_air(temp_zone)
-        area_window_tot = calc_area_window_tot(df_windows_building, r_window_arg)
-        h_window_stack = calc_effective_stack_height(df_windows_building)
+        area_window_tot = calc_area_window_tot(dict_windows_building, r_window_arg)
+        h_window_stack = calc_effective_stack_height(dict_windows_building)
         # print(h_window_stack, area_window_tot)
 
         # volume flow rates of non-cross ventilated zone according to 6.4.3.5.4.2 in [1]
@@ -764,7 +764,7 @@ def calc_qm_arg(factor_cros, temp_ext, df_windows_building, u_wind_10, temp_zone
         elif factor_cros == 1:
 
             # get window area of cross-ventilation
-            area_window_cros = calc_area_window_cros(df_windows_building, r_window_arg)
+            area_window_cros = calc_area_window_cros(dict_windows_building, r_window_arg)
             # print(area_window_cros)
 
             # Eq. (49) in [1]
@@ -865,9 +865,9 @@ def get_building_geometry_ventilation(gdf_building_geometry):
     # TODO: get real slope of roof in the future
     slope_roof_default = 0
 
-    area_facade_zone = gdf_building_geometry.length.iloc[0] * gdf_building_geometry.iloc[0].height_ag
-    area_roof_zone = gdf_building_geometry.area.iloc[0]
-    height_zone = gdf_building_geometry.iloc[0].height_ag
+    area_facade_zone = gdf_building_geometry['perimeter'] * gdf_building_geometry.height_ag
+    area_roof_zone = gdf_building_geometry['footprint']
+    height_zone = gdf_building_geometry.height_ag
     slope_roof = slope_roof_default
 
     return area_facade_zone, area_roof_zone, height_zone, slope_roof
@@ -886,14 +886,13 @@ def get_properties_natural_ventilation(gdf_geometry_building, gdf_architecture_b
     """
 
     # FIXME: for testing the scripts
-    n50 = gdf_architecture_building['n50'].iloc[0]  # 0.3  # air tight # TODO: get from building properties
-    vol_building = gdf_geometry_building['footprint'].iloc[0] * gdf_geometry_building['height_ag'].iloc[
-        0]  # TODO: get from building properties
+    n50 = gdf_architecture_building['n50']  # 0.3  # air tight # TODO: get from building properties
+    vol_building = gdf_geometry_building['footprint'] * gdf_geometry_building['height_ag']  # TODO: get from building properties
     qv_delta_p_lea_ref_zone = calc_qv_delta_p_ref(n50, vol_building)
     area_facade_zone, area_roof_zone, height_zone, slope_roof = get_building_geometry_ventilation(
         gdf_geometry_building)  # TODO: maybe also from building properties
     class_shielding = 2  # open # TODO: get from globalvars or dynamic simulation parameters or building properties
-    factor_cros = gdf_architecture_building['f_cros'].iloc[0]  # 1  # 1 = cross ventilation possible # TODO: get from building properties
+    factor_cros = gdf_architecture_building['f_cros']  # 1  # 1 = cross ventilation possible # TODO: get from building properties
     area_vent_zone = 0  # (cm2) area of ventilation openings # TODO: get from buildings properties
 
     # calculate properties that remain constant in the minimization

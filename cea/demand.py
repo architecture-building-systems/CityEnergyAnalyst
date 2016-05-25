@@ -91,7 +91,7 @@ def demand_calculation(locator, gv):
     gv.log("done")
 
     gv.log("creating windows")
-    df_windows = ventilation.create_windows(surface_properties, prop_architecture)
+    dict_windows = ventilation.create_windows(surface_properties, prop_architecture)
     gv.log("done")
 
     # get timeseries of demand
@@ -106,9 +106,10 @@ def demand_calculation(locator, gv):
 
         thermal_loads.calc_thermal_loads_new_ventilation(building,prop_RC_model.ix[building],prop_HVAC_result.ix[building],
                                                          prop_occupancy.ix[building], prop_age.ix[building], prop_architecture.ix[building],
-                                                         prop_geometry.ix[building], prop_occupancy.ix[building], schedules,
-                                                         solar.ix[building], {'temp_ext': T_ext, 'rh_ext': RH_ext, 'u_wind' : u_wind}, df_windows, locator.get_temporary_folder(), gv, list_uses, prop_internal_loads.ix[building],
-                                                         prop_comfort, date)
+                                                         prop_geometry.ix[building], schedules,
+                                                         solar.ix[building], {'temp_ext': T_ext, 'rh_ext': RH_ext, 'u_wind' : u_wind},
+                                                         dict_windows, locator.get_demand_results_folder(), gv, list_uses, prop_internal_loads.ix[building],
+                                                         prop_comfort.ix[building], date)
         gv.log('Building No. %(bno)i completed out of %(btot)i', bno=counter + 1, btot=num_buildings)
         counter += 1
 
