@@ -8,11 +8,13 @@ J. A. Fonseca  adaptation for CEA tool     12.04.16
 
 """
 from __future__ import division
-import arcpy
-import pandas as pd
-import os
-import ephem
+
 import datetime
+import os
+
+import arcpy
+import ephem
+import pandas as pd
 from simpledbf import Dbf5
 
 
@@ -468,7 +470,6 @@ def calc_sunrise(T_G_day, Yearsimul, longitude, latitude, gv):
 
 
 def test_solar_radiation():
-    import cea.inputlocator
     import cea.globalvar
 
     locator = cea.inputlocator.InputLocator(r'C:\reference-case\baseline')
