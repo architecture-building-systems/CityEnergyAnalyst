@@ -115,14 +115,15 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
             col_height_window_in_zone.append(window_height_in_zone)
 
     # create pandas dataframe with table of all windows
-    dict_windows = {'name_building': col_name_building,
+    df_windows = pd.DataFrame({'name_building': col_name_building,
                     'area_window': col_area_window,
                     'height_window_above_ground': col_height_window_above_ground,
                     'orientation_window': col_orientation_window,
                     'angle_window': col_angle_window,
-                    'height_window_in_zone': col_height_window_in_zone}
+                    'height_window_in_zone': col_height_window_in_zone})
 
-    return dict_windows
+
+    return df_windows
 
 
 # ++++ GENERAL ++++
@@ -211,7 +212,7 @@ def lookup_coeff_wind_pressure(height_path, class_shielding, orientation_path, s
             elif height_path[i] >= 50:
                 index_row = 6
 
-            index_row = index_row + class_shielding
+            index_row = min(index_row + class_shielding, 6)
 
             if orientation_path[i] == 2:
                 if slope_roof < 10:

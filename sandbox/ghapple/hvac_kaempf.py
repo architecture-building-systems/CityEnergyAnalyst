@@ -16,7 +16,8 @@ import math
 import numpy as np
 
 
-def calc_hvac(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_sup_cool):
+def calc_hvac(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_sup_cool, timestep,
+             stop_heating_season, start_heating_season):
     """
     HVAC model of Kämpf [1]
 
@@ -39,10 +40,11 @@ def calc_hvac(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_s
     """
 
     # State No. 5 # indoor air set point
-    t5_prime = tair + 1  # accounding for an increase in temperature # TODO: where is this from? why use calculated tair and not the setpoint temperature? why +1? # FIXME: remove
+    t5_prime = tair  # accounding for an increase in temperature # TODO: where is this from? why use calculated tair and not the setpoint temperature? why +1? # FIXME: remove
 
     # state after heat exchanger
-    t2, w2 = calc_hex(RH1, gv, qv_mech = qv_req, qv_mech_dim=0,  temp_ext=t1, temp_zone_prev=t5_1)
+    t2, w2 = calc_hex(RH1, gv, qv_mech = qv_req, qv_mech_dim=0,  temp_ext=t1, temp_zone_prev=t5_1, timestep=timestep,
+                                           stop_heating_season=stop_heating_season, start_heating_season=start_heating_season)
 
     # print(t5_prime)
     if abs(Qsen) != 0:  # to account for the bug of possible -0.0
@@ -53,9 +55,9 @@ def calc_hvac(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_s
         # Assuming that AHU does not modify the air humidity
         w3 = w2
         if Qsen > 0:  # if heating
-            t3 = temp_sup_heat  # heating system supply temperature in (°C)
+            t3 = max(temp_sup_heat, t2)  # heating system supply temperature in (°C) # TODO: document choose t2 if higher
         elif Qsen < 0:  # if cooling
-            t3 = temp_sup_cool  # cooling system supply temperature in (°C)
+            t3 = min(temp_sup_cool, t2)  # cooling system supply temperature in (°C)  # TODO: document choose t2 if lower
 
         # initial guess of mass flow rate
         h_t5_prime_w3 = calc_h(t5_prime, w3)  # for enthalpy change in first assumption, see Eq.(4.31) in [1]
@@ -118,7 +120,7 @@ def calc_hvac(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_s
             tr_hs = t2
             Qcs_sen = 0
             ma_cs = 0
-            ts_cs = 0
+            ts_cs = np.nan  # set unused temperatures to nan as they could potentially have the value 0
             tr_cs = np.nan  # set unused temperatures to nan as they could potentially have the value 0
         elif Qsen < 0:
             Qcs_sen = Qtot - Qdhum
@@ -148,7 +150,8 @@ def calc_hvac(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, temp_sup_heat, temp_s
     return Qhs_sen, Qcs_sen, Qhum, Qdhum, Ehum_aux, ma_hs, ma_cs, ts_hs, ts_cs, tr_hs, tr_cs, w2, w3, t5
 
 
-def calc_hex(rel_humidity_ext, gv, qv_mech, qv_mech_dim, temp_ext, temp_zone_prev):
+def calc_hex(rel_humidity_ext, gv, qv_mech, qv_mech_dim, temp_ext, temp_zone_prev, timestep,
+             stop_heating_season, start_heating_season):
     """
     Calculates air properties of mechanical ventilation system with heat exchanger
     Modeled after 2.4.2 in SIA 2044
@@ -181,6 +184,16 @@ def calc_hex(rel_humidity_ext, gv, qv_mech, qv_mech_dim, temp_ext, temp_zone_pre
     # inlet air temperature after HEX calculated from zone air temperature at time step t-1 (°C)
     t2 = temp_ext + nrec * (temp_zone_prev - temp_ext)
     w2 = min(w1, calc_w(t2, 100))  # inlet air moisture (kg/kg), Eq. (4.24) in [1]
+
+    # bypass heat exchanger if use is not beneficial
+    if temp_zone_prev > temp_ext and stop_heating_season < timestep < start_heating_season:
+        t2 = temp_ext
+        w2 = w1
+        print('bypass HEX cooling')
+    elif temp_zone_prev < temp_ext and (timestep > start_heating_season or timestep < stop_heating_season):
+        t2 = temp_ext
+        w2 = w1
+        print('bypass HEX heating')
 
     return t2, w2
 

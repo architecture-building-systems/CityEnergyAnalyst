@@ -54,7 +54,7 @@ def demand_calculation(locator, weather_path, gv):
     gv.log("reading input files")
 
 
-    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent']]
+    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent','windspd_ms']]
 
     solar = pd.read_csv(locator.get_radiation()).set_index('Name')
     surface_properties = pd.read_csv(locator.get_surface_properties())
@@ -76,6 +76,7 @@ def demand_calculation(locator, weather_path, gv):
 
     T_ext = np.array(weather_data.drybulb_C)
     RH_ext = np.array(weather_data.relhum_percent)
+    u_wind = np.array(weather_data.windspd_ms)
 
     #get list of uses
     list_uses = list(prop_occupancy.drop('PFloor', axis=1).columns)
@@ -95,7 +96,7 @@ def demand_calculation(locator, weather_path, gv):
     gv.log("done")
 
     gv.log("creating windows")
-    dict_windows = ventilation.create_windows(surface_properties, prop_architecture)
+    df_windows = ventilation.create_windows(surface_properties, prop_architecture)
     gv.log("done")
 
     # get timeseries of demand
@@ -108,12 +109,14 @@ def demand_calculation(locator, weather_path, gv):
         #                    prop_age.ix[building], solar.ix[building], locator.get_demand_results_folder(),
         #                    schedules, T_ext, RH_ext, locator.get_temporary_folder(), gv, date, list_uses)
 
+        dict_windows = df_windows.loc[df_windows['name_building'] == building].to_dict('list')
+
         thermal_loads.calc_thermal_loads_new_ventilation(building,prop_RC_model.ix[building],prop_HVAC_result.ix[building],
                                                          prop_occupancy.ix[building], prop_age.ix[building], prop_architecture.ix[building],
                                                          prop_geometry.ix[building], schedules,
                                                          solar.ix[building], {'temp_ext': T_ext, 'rh_ext': RH_ext, 'u_wind' : u_wind},
                                                          dict_windows, locator.get_demand_results_folder(), gv, list_uses, prop_internal_loads.ix[building],
-                                                         prop_comfort.ix[building], date)
+                                                         prop_comfort.ix[building], date, locator.get_temporary_folder())
         gv.log('Building No. %(bno)i completed out of %(btot)i', bno=counter + 1, btot=num_buildings)
         counter += 1
 
