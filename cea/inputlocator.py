@@ -94,12 +94,10 @@ class InputLocator(object):
         return os.path.join(self.scenario_path, '1-inputs', '3-weather', 'weather_day.csv')
 
     def get_life_cycle_inventory_supply_systems(self):
-        """scenario/1-inputs/4-technical/supply_systems.csv"""
-        return os.path.join(self.scenario_path, '1-inputs', '4-technical', 'supply_systems.xls')
+        return os.path.join(self.db_path, 'Systems', 'supply_systems.xls')
 
     def get_technical_emission_systems(self):
-        """scenario/1-inputs/4-technical/emission_systems.csv"""
-        return os.path.join(self.scenario_path, '1-inputs', '4-technical', 'emission_systems.xls')
+        return os.path.join(self.db_path, 'Systems', 'emission_systems.xls')
 
 
     def get_demand_results_folder(self):
