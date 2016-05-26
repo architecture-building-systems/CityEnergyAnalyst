@@ -80,6 +80,8 @@ class PropertiesTool(object):
         prop_thermal_flag = parameters[1]
         prop_architecture_flag = parameters[2]
         prop_HVAC_flag = parameters[3]
+        prop_comfort_flag = parameters[3]
+        prop_internal_loads_flag = parameters[3]
         gv = globalvar.GlobalVariables()
         gv.log = add_message
         properties(locator=locator, prop_thermal_flag=prop_thermal_flag.value,
@@ -102,8 +104,16 @@ class DemandTool(object):
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
+        weather_name = arcpy.Parameter(
+            displayName="Weather file (choose from list or enter full path to .epw file)",
+            name="weather_name",
+            datatype="String",
+            parameterType="Required",
+            direction="Input")
+        locator = inputlocator.InputLocator(None)
+        weather_name.filter.list = locator.get_weather_names()
 
-        return [scenario_path]
+        return [scenario_path, weather_name]
 
     def isLicensed(self):
         return True
@@ -120,9 +130,18 @@ class DemandTool(object):
 
         scenario_path = parameters[0].valueAsText
         locator = inputlocator.InputLocator(scenario_path)
+
+        weather_name = parameters[1].valueAsText
+        if weather_name in locator.get_weather_names():
+            weather_path = locator.get_default_weather()
+        elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
+            weather_path = weather_name
+        else:
+            weather_path = locator.get_default_weather()
+
         gv = globalvar.GlobalVariables()
         gv.log = add_message
-        cea.demand.demand_calculation(locator=locator, gv=gv)
+        cea.demand.demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
 
 
 class EmbodiedEnergyTool(object):

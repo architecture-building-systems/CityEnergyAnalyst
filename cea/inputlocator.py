@@ -19,6 +19,18 @@ class InputLocator(object):
         path to database of archetypes file Archetypes_properties.xlsx"""
         return os.path.join(self.db_path, 'Weather', 'Zurich.epw')
 
+    def get_weather(self, name):
+        """/cea/db/Weather/{name}.epw"""
+        weather_path = os.path.join(self.db_path, 'Weather', name + '.epw')
+        if not os.path.exists(weather_path):
+            return self.get_default_weather()
+        return weather_path
+
+    def get_weather_names(self):
+        """Return a list of all installed epw files in the system"""
+        weather_names = [os.path.splitext(f)[0] for f in os.listdir(os.path.join(self.db_path, 'Weather'))]
+        return weather_names
+
     def get_archetypes_properties(self):
         """/cea/db/Archetypes/Switzerland/Archetypes_properties.xlsx
         path to database of archetypes file Archetypes_properties.xlsx"""

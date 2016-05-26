@@ -220,7 +220,7 @@ def summary_unpickle(value):
         if isinstance(obj, pd.DataFrame):
             return obj.shape
         else:
-            return repr(obj)[:50]
+            return repr(obj)[:500]
     except:
         return '???'
 
@@ -230,7 +230,7 @@ def anchor_name(s):
     return an anchor name for a heading (as in GitHub markdown)
     NOTE: only really works with function names...
     """
-    s = s.replace('_', '-')
+    #s = s.replace('_', '-')
     s = s.lower()
     return s
 
