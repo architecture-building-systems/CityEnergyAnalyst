@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 ================
 Global variables
@@ -55,6 +56,13 @@ class GlobalVariables(object):
         self.shielding_class = 2  # according to ISO 16798-7, 0 = open terrain, 1 = partly shielded from wind,
         #  2 = fully shielded from wind
 
+        # ==============================================================================================================
+        # HVAC
+        # ==============================================================================================================
+
+        self.temp_sup_heat_hvac = 36  # (°C)
+        self.temp_sup_cool_hvac = 16  # (°C)
+
         # here is where we plug in the models to use for calculations
         self.models = {'calc-thermal-loads': functions.CalcThermalLoads}
 
@@ -108,3 +116,11 @@ class GlobalVariables(object):
 
     def log(self, msg, **kwargs):
         print msg % kwargs
+
+
+    def is_heating_season(self, timestep):
+
+        if self.seasonhours[0]+1 <= timestep < self.seasonhours[1]:
+            return False
+        else:
+            return True
