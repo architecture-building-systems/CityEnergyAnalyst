@@ -15,5 +15,5 @@ if __name__ == '__main__':
 
     cea.radiation.test_solar_radiation()
 
-    with open(path_to_md) as writer:
+    with open(path_to_md, 'w') as writer:
         functionlogger.generate_output(path_to_log, writer)

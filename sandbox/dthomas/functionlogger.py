@@ -81,21 +81,26 @@ class _LogArgs(object):
     def __init__(self):
         self.invocations = []
 
-    def __call__(self, func):
+    def __call__(self, func, first_only=False):
         """Returns a decorator that wraps `func`. The wrapper will log each call to `func` with arguments passed
         and the results."""
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            self.log_entry(func, args, kwargs)
-            try:
-                result = func(*args, **kwargs)
-                self.log_exit(func, result)
-            except:
-                import traceback
-                traceback.print_exc()
-                self.log_exit(func, None)  # FIXME: log with an exception!!!
-            return result
+            func._invocation_counter = getattr(func, '_invocation_counter', 0) + 1
+            if first_only and func._invocation_counter > 1:
+                return func(*args, **kwargs)
+            else:
+                self.log_entry(func, args, kwargs)
+                try:
+                    result = func(*args, **kwargs)
+                    self.log_exit(func, result)
+                except:
+                    import sys
+                    import traceback
+                    traceback.print_exc()
+                    self.log_exit(func, e)  # FIXME: log with an exception!!!
+                return result
 
         return wrapper
 
@@ -161,7 +166,7 @@ def generate_output(path_to_log, writer):
     session = Session()
 
     # functions analyzed
-    invocations = session.query(fl.Invocation).all()
+    invocations = session.query(Invocation).all()
     function_names = sorted({invocation.name for invocation in invocations})
 
     # print table of contents
@@ -176,7 +181,7 @@ def generate_output(path_to_log, writer):
     for function_name in function_names:
         write_line("# %s" % function_name)
 
-        invocations = session.query(fl.Invocation).filter(fl.Invocation.name == function_name).all()
+        invocations = session.query(Invocation).filter(Invocation.name == function_name).all()
         write_line("- number of invocations: %i" % len(invocations))
         durations = [(i.end - i.start).total_seconds() for i in invocations if i.end]
         if durations:
@@ -215,7 +220,7 @@ def summary_unpickle(value):
         if isinstance(obj, pd.DataFrame):
             return obj.shape
         else:
-            return obj
+            return repr(obj)[:50]
     except:
         return '???'
 
@@ -230,8 +235,8 @@ def anchor_name(s):
     return s
 
 
-def wrap_module(module):
+def wrap_module(module, first_only=False):
     # wrap all the functions in radiation.py with the logger
     for member in dir(module):
         if inspect.isfunction(getattr(module, member)):
-            setattr(module, member, log_args(getattr(module, member)))
+            setattr(module, member, log_args(getattr(module, member), first_only=first_only))
