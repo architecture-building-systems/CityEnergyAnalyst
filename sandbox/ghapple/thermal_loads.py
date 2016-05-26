@@ -166,12 +166,7 @@ def calc_thermal_load_hvac_timestep(t, dict_locals):
     temp_cs_set_corr = dict_locals['tCset_corr']
     i_c_max = dict_locals['i_c_max']
     i_h_max = dict_locals['i_h_max']
-    temp_sup_heat = dict_locals['temp_sup_heat']
-    temp_sup_cool = dict_locals['temp_sup_cool']
     gv = dict_locals['gv']
-
-    limit_inf_season = dict_locals['limit_inf_season']
-    limit_sup_season = dict_locals['limit_sup_season']
 
     # get constant properties of building R-C-model
     h_tr_is = dict_locals['prop_rc_model'].Htr_is
@@ -184,8 +179,7 @@ def calc_thermal_load_hvac_timestep(t, dict_locals):
     qm_ve_mech = qm_ve_req  # required air mass flow rate
     qm_ve_nat = 0  # natural ventilation # TODO: this could be a fixed percentage of the mechanical ventilation (overpressure) as a function of n50
     temp_ve_sup = hvac_kaempf.calc_hex(rh_ext, gv, qv_mech=(qm_ve_req/gv.Pair), qv_mech_dim=0, temp_ext=temp_ext,
-                                            temp_zone_prev=temp_air_prev, timestep=t,
-                                           stop_heating_season=limit_inf_season, start_heating_season=limit_sup_season )[0]
+                                            temp_zone_prev=temp_air_prev, timestep=t)[0]
 
     qv_ve_req = qm_ve_req / ventilation.calc_rho_air(
         temp_ext)  # TODO: modify Kaempf model to accept mass flow rate instead of volume flow
@@ -272,7 +266,7 @@ def calc_thermal_load_hvac_timestep(t, dict_locals):
         w_rec,\
         w_sup,\
         temp_air = hvac_kaempf.calc_hvac(rh_ext, temp_ext, t_air_set, qv_ve_req, q_sen_load_hvac, temp_air_prev,
-                                         w_int, gv, temp_sup_heat, temp_sup_cool, t, limit_inf_season, limit_sup_season)
+                                         w_int, gv, t)
 
         # mass flow rate output for cooling or heating is zero if the hvac is used only for ventilation
         qm_ve_hvac = max(qm_ve_hvac_h, qm_ve_hvac_c, qm_ve_req)  # ventilation mass flow rate of hvac system
@@ -775,8 +769,6 @@ def calc_thermal_loads_new_ventilation(Name, prop_rc_model, prop_hvac, prop_occu
         # end-use demand calculation
         temp_air_prev = 21  # definition of first temperature to start calculation of air conditioning system
 
-        temp_sup_heat = 35  # TODO: include to properties and get from properties
-        temp_sup_cool = 16  # TODO: include to properties and get from properties
         temp_comf_max = 26  # TODO: include to properties and get from properties
 
         # case 1: mechanical ventilation
@@ -787,8 +779,8 @@ def calc_thermal_loads_new_ventilation(Name, prop_rc_model, prop_hvac, prop_occu
                 print(t)
 
                 # case 1a: heating or cooling with hvac
-                if (sys_e_heating == 'T3' and (t <= gv.seasonhours[0] or t >= gv.seasonhours[1])) \
-                        or (sys_e_cooling == 'T3' and gv.seasonhours[0] < t < gv.seasonhours[1]):
+                if (sys_e_heating == 'T3' and gv.is_heating_season(t)) \
+                        or (sys_e_cooling == 'T3' and not gv.is_heating_season(t)):
                     print('1a')
 
                     Tm[t],\
@@ -915,6 +907,17 @@ def calc_thermal_loads_new_ventilation(Name, prop_rc_model, prop_hvac, prop_occu
         Waterconsumption = Vww + Vw  # volume of water consumed in m3/h
         waterpeak = Waterconsumption.max()
 
+        # print series all in kW, mcp in kW/h, cooling loads shown as positive, water consumption m3/h,
+        # temperature in Degrees celcious
+        DATE = pd.date_range('1/1/2010', periods=8760, freq='H')
+        pd.DataFrame(
+            dict(DATE=DATE, Name=Name, Tm=Tm, Ta=Ta, Qhs_sen=Qhs_sen, Qcs_sen=Qcs_sen, uncomfort=uncomfort, Top=Top,
+                 Im_tot=Im_tot, qm_ve_req=qm_ve_req, i_sol=i_sol, i_int_sen=i_int_sen, q_hum=q_hum_hvac,
+                 q_dhum=q_dhum_hvac, q_ve_loss=q_ve_loss, qm_ve_mech=qm_ve_mech, qm_ve_nat=qm_ve_nat,
+                 q_hs_sen_hvac=q_hs_sen_hvac, q_cs_sen_hvac=q_cs_sen_hvac, e_hum_aux_hvac=e_hum_aux_hvac)).to_csv(
+                locationFinal + '\\' + Name + '-new-loads-old-ve-1.csv',
+                index=False, float_format='%.2f')
+
     # Af = 0: no conditioned floor area
     else:
         # scalars
@@ -940,16 +943,7 @@ def calc_thermal_loads_new_ventilation(Name, prop_rc_model, prop_hvac, prop_occu
 
     gv.report('calc-thermal-loads', locals(), locationFinal, Name)
 
-    # print series all in kW, mcp in kW/h, cooling loads shown as positive, water consumption m3/h,
-    # temperature in Degrees celcious
-    DATE = pd.date_range('1/1/2010', periods=8760, freq='H')
-    pd.DataFrame(
-            dict(DATE=DATE, Name=Name, Tm=Tm, Ta=Ta, Qhs_sen=Qhs_sen, Qcs_sen=Qcs_sen, uncomfort=uncomfort, Top=Top,
-                 Im_tot=Im_tot, qm_ve_req=qm_ve_req, i_sol=i_sol, i_int_sen=i_int_sen, q_hum=q_hum_hvac,
-                 q_dhum=q_dhum_hvac, q_ve_loss=q_ve_loss, qm_ve_mech=qm_ve_mech, qm_ve_nat=qm_ve_nat,
-                 q_hs_sen_hvac=q_hs_sen_hvac, q_cs_sen_hvac=q_cs_sen_hvac, e_hum_aux_hvac=e_hum_aux_hvac)).to_csv(
-        locationFinal + '\\' + Name + '-new-loads-old-ve-1.csv',
-            index=False, float_format='%.2f')
+
 
         # gv.report('calc-thermal-loads', locals(), locationFinal, name)
     return
