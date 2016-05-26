@@ -54,7 +54,22 @@ class PropertiesTool(object):
             parameterType="Required",
             direction="Input")
         prop_HVAC_flag.value = True
-        return [scenario_path, prop_thermal_flag, prop_architecture_flag, prop_HVAC_flag]
+        prop_comfort_flag = arcpy.Parameter(
+            displayName="Generate comfort properties",
+            name="prop_comfort_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        prop_comfort_flag.value = True
+        prop_internal_loads_flag = arcpy.Parameter(
+            displayName="Generate internal loads properties",
+            name="prop_internal_loads_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        prop_internal_loads_flag.value = True
+        return [scenario_path, prop_thermal_flag, prop_architecture_flag, prop_HVAC_flag, prop_comfort_flag,
+                prop_internal_loads_flag]
 
     def execute(self, parameters, messages):
         from cea.properties import properties
@@ -67,10 +82,10 @@ class PropertiesTool(object):
         prop_HVAC_flag = parameters[3]
         gv = globalvar.GlobalVariables()
         gv.log = add_message
-        properties(locator=locator,
-                   prop_thermal_flag=prop_thermal_flag.value,
-                   prop_architecture_flag=prop_architecture_flag.value,
-                   prop_hvac_flag=prop_HVAC_flag.value, gv=gv)
+        properties(locator=locator, prop_thermal_flag=prop_thermal_flag.value,
+                   prop_architecture_flag=prop_architecture_flag.value, prop_hvac_flag=prop_HVAC_flag.value,
+                   prop_comfort_flag=prop_comfort_flag.value, prop_internal_loads_flag=prop_internal_loads_flag.value,
+                   gv=gv)
 
 
 class DemandTool(object):
