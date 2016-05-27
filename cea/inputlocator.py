@@ -13,7 +13,7 @@ class InputLocator(object):
     # SCENARIO
     def __init__(self, scenario_path):
         self.scenario_path = scenario_path
-        self.db_path = os.path.join(os.path.dirname(__file__), 'db')
+        self.db_path = os.path.join(os.path.dirname(__file__), 'db', 'CH')
 
     # DATABASES
     def get_default_weather(self):
@@ -95,7 +95,7 @@ class InputLocator(object):
 
     def get_terrain(self):
         """scenario/1-inputs/2-terrain/terrain - (path to Digital Elevation Map)"""
-        return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain')
+        return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain.tif')
 
     # OUTPUTS
 
