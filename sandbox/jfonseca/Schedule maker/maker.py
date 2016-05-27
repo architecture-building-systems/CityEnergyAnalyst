@@ -4,8 +4,6 @@ import numpy as np
     x = pd.read_excel(r'C:\Users\Jimeno\Desktop\BOOK_1.xlsx', 'ADMIN').T
 
 
-
-
 def get_schedules(x)
     weekday_occ = x['Weekday_1'].values
     saturday_occ = x['Saturday_1'].values
