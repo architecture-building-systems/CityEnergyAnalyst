@@ -169,13 +169,26 @@ def generate_output(path_to_log, writer):
     invocations = session.query(Invocation).all()
     function_names = sorted({invocation.name for invocation in invocations})
 
-    # print table of contents
+    # figure out call structure...
     write_line("# Table of contents")
-    for function_name in function_names:
-        write_line("- [%s](#%s)\n" % (function_name, anchor_name(function_name)))
+    invocations = session.query(Invocation).order_by(Invocation.id)
+    call_stack = [invocations[0].calling_function]
+    indent = 0
+    for invocation in invocations:
+        if invocation.calling_function == call_stack[-1]:
+            # stay at this level
+            pass
+        elif invocation.calling_function in call_stack:
+            while call_stack[-1] != invocation.calling_function:
+                call_stack.pop()
+                indent -= 1
+        else:
+            call_stack.append(invocation.calling_function)
+            indent += 1
+        write_line("%s- [%s](#%s)" % ("   " * indent, invocation.name, anchor_name(invocation.name)))
     write_line()
 
-    # figure out call structure...
+
 
     # print list of functions
     for function_name in function_names:
