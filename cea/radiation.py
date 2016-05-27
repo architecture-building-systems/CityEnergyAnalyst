@@ -77,23 +77,19 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timez
     sunrise = calc_sunrise(range(1,366), year, longitude, latitude, gv)
 
     # calcuate daily transmissivity and daily diffusivity
-    weather_data = epwreader.epw_reader(weather_path)[['dayofyear', 'exthorrad_Whm2', 'extdirrad_Whm2', 'glohorrad_Whm2', 'difhorrad_Whm2' ]]
+    weather_data = epwreader.epw_reader(weather_path)[['dayofyear', 'exthorrad_Whm2', 'extdirrad_Whm2',
+                                                       'glohorrad_Whm2', 'difhorrad_Whm2' ]]
     weather_data['trr']= weather_data.exthorrad_Whm2/weather_data.extdirrad_Whm2
     weather_data['diff'] =  weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
     weather_data.fillna(0, inplace=True)
     T_G_day = weather_data.groupby(['dayofyear']).mean()
 
-    # Select buildings
-    buildings_selection = path_arcgis_db + '\\' + 'building_select'
-    arcpy.MakeFeatureLayer_management(locator.get_building_geometry(), 'lyr')
-    arcpy.SelectLayerByLocation_management('lyr', 'intersect', locator.get_zone_of_study())
-    arcpy.CopyFeatures_management('lyr', buildings_selection)
-
     # Simplify building's geometry
     elevRaster = arcpy.sa.Raster(locator.get_terrain())
     dem_raster_extent = elevRaster.extent
-    arcpy.SimplifyBuilding_cartography(buildings_selection, Simple_CQ, simplification_tolerance=8, minimum_area=None)
-    arcpy.SimplifyBuilding_cartography(locator.get_building_geometry(), Simple_context,
+    arcpy.SimplifyBuilding_cartography(locator.get_building_geometry(), Simple_CQ,
+                                       simplification_tolerance=8, minimum_area=None)
+    arcpy.SimplifyBuilding_cartography(locator.get_district_geometry(), Simple_context,
                                        simplification_tolerance=8, minimum_area=None)
 
     # burn buildings into raster
