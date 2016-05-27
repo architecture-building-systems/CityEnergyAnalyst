@@ -15,7 +15,7 @@ from geopandas import GeoDataFrame as gpdf
 import inputlocator
 
 def properties(locator, prop_thermal_flag, prop_architecture_flag,
-               prop_hvac_flag, prop_comfort_flag, prop_internal_loads_flag):
+               prop_hvac_flag, prop_comfort_flag, prop_internal_loads_flag, gv):
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
@@ -221,9 +221,11 @@ def test_properties():
     Run the properties script with input from the reference case and compare the results. This ensures that changes
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
     """
+    import globalvar
+    gv = globalvar.GlobalVariables()
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
     properties(locator=locator, prop_thermal_flag=True, prop_architecture_flag=True, prop_hvac_flag=True,
-               prop_comfort_flag=True, prop_internal_loads_flag=True)
+               prop_comfort_flag=True, prop_internal_loads_flag=True, gv=gv)
     print 'test_properties() succeeded'
 
 
