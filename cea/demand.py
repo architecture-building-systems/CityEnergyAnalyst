@@ -17,6 +17,7 @@ import epwreader
 import globalvar
 from geopandas import GeoDataFrame as gpdf
 import inputlocator
+import functioninputs as fi
 
 reload(f)
 reload(globalvar)
@@ -54,7 +55,8 @@ def demand_calculation(locator, weather_path, gv):
     # local variables
     gv.log("reading input files")
 
-    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent']]
+    # initialize function inputs
+    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms']]
     solar = pd.read_csv(locator.get_radiation()).set_index('Name')
     surface_properties = pd.read_csv(locator.get_surface_properties())
     prop_geometry = gpdf.from_file(locator.get_building_geometry())
@@ -72,8 +74,8 @@ def demand_calculation(locator, weather_path, gv):
     # get temperatures of operation
     prop_HVAC_result= get_temperatures(locator, prop_HVAC).set_index('Name')
     # weather conditions
-    T_ext = np.array(weather_data.drybulb_C)
-    RH_ext = np.array(weather_data.relhum_percent)
+    # T_ext = np.array(weather_data.drybulb_C)
+    # RH_ext = np.array(weather_data.relhum_percent)
     #get list of uses
     list_uses = list(prop_occupancy.drop('PFloor', axis=1).columns)
     #get date
@@ -89,17 +91,36 @@ def demand_calculation(locator, weather_path, gv):
     # get thermal properties for RC model
     prop_RC_model = f.get_prop_RC_model(prop_occupancy, prop_architecture, prop_thermal, prop_geometry,
                                         prop_HVAC_result, surface_properties, gv)
+
     gv.log("done")
+
+    # construct function input object
+    building_props_thermal_loads = fi.BuildingPropsThermalLoads()
+    building_props_thermal_loads.prop_geometry = prop_geometry
+    building_props_thermal_loads.prop_occupancy = prop_occupancy
+    building_props_thermal_loads.prop_architecture = prop_architecture
+    building_props_thermal_loads.prop_age = prop_age
+    building_props_thermal_loads.prop_comfort = prop_comfort
+    building_props_thermal_loads.prop_internal_loads = prop_internal_loads
+    building_props_thermal_loads.prop_HVAC_result = prop_HVAC_result
+    building_props_thermal_loads.prop_RC_model = prop_RC_model
+    building_props_thermal_loads.solar = solar
+
+    # construct weather dict for input to function
+    weather = {'temp_ext': np.array(weather_data.drybulb_C),
+               'rh_ext': np.array(weather_data.relhum_percent),
+               'u_wind': np.array(weather_data.windspd_ms)}
+
+    # construct schedules dict for input to function
+    usage_schedules = {'list_uses': list_uses,
+                       'schedules': schedules}
 
     # get timeseries of demand
     num_buildings = len(prop_RC_model.index)
     counter = 0
     for building in prop_RC_model.index:
-        gv.models['calc-thermal-loads'](building, prop_occupancy.ix[building], prop_architecture.ix[building],
-                           prop_geometry.ix[building], prop_HVAC_result.ix[building], prop_RC_model.ix[building],
-                           prop_comfort.ix[building],prop_internal_loads.ix[building],
-                           prop_age.ix[building], solar.ix[building], locator.get_demand_results_folder(),
-                           schedules, T_ext, RH_ext, locator.get_temporary_folder(), gv, date, list_uses)
+        gv.models['calc-thermal-loads'](building, building_props_thermal_loads, weather, usage_schedules, date, gv,
+                                        locator.get_demand_results_folder(), locator.get_temporary_folder())
         gv.log('Building No. %(bno)i completed out of %(btot)i', bno=counter + 1, btot=num_buildings)
         counter += 1
 
