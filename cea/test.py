@@ -12,3 +12,5 @@ demand.test_demand()
 emissions.test_lca_operation()
 embodied.test_lca_embodied()
 graphs.test_graph_demand()
+
+print 'full test completed'
