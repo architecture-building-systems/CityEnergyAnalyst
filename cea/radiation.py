@@ -105,12 +105,10 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timez
     # Calculate radiation
     for day in range(1, 366):
         result = None
-        while result == None: # trick to avoid that arcgis stops calculating the days and tries again.
-            try:
-                result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
+        while result is None: # trick to avoid that arcgis stops calculating the days and tries again.
+            result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
                                        locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
-            except:
-                pass
+
     gv.log('complete raw radiation files')
 
     # run the transformation of files appending all and adding non-sunshine hours
@@ -257,6 +255,7 @@ def calc_radiation_day(day, sunrise, route):
 
 def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, locationtemp1, aspect_slope, heightoffset, gv):
     # Local Variables
+    gv.log('in CalcRadiation')
     Latitude = str(latitude)
     skySize = '1400'  # max 2400
     dayInterval = '1'
@@ -271,6 +270,7 @@ def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, 
     timeConfig = 'WithinDay    ' + str(day) + ', 0, 24'
 
     # Run the extension of arcgis
+    gv.log('start calculating radiation ' + timeConfig)
     arcpy.sa.PointsSolarRadiation(in_surface_raster, in_points_feature, global_radiation, heightoffset,
                                   Latitude, skySize, timeConfig, dayInterval, hourInterval, "INTERVAL", "1",
                                   aspect_slope,
