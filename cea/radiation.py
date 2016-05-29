@@ -89,7 +89,7 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timez
     dem_raster_extent = elevRaster.extent
     arcpy.SimplifyBuilding_cartography(locator.get_building_geometry(), Simple_CQ,
                                        simplification_tolerance=8, minimum_area=None)
-    arcpy.SimplifyBuilding_cartography(locator.get_district_geometry(), Simple_context,
+    arcpy.SimplifyBuilding_cartography(locator.get_district(), Simple_context,
                                        simplification_tolerance=8, minimum_area=None)
 
     # burn buildings into raster
@@ -105,7 +105,7 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timez
     # Calculate radiation
     for day in range(1, 366):
         result = None
-        while result == None: # trick to avoid that arcgis stops claculating the days and tries again.
+        while result == None: # trick to avoid that arcgis stops calculating the days and tries again.
             try:
                 result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
                                        locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
@@ -471,6 +471,7 @@ def calc_sunrise(sunrise, Yearsimul, longitude, latitude, gv):
 
 def test_solar_radiation():
     import cea.globalvar
+    import cea.inputlocator
 
     locator = cea.inputlocator.InputLocator(r'C:\reference-case\baseline')
     # for the interface, the user should pick a file out of of those in ...DB/Weather/...
