@@ -406,19 +406,19 @@ def get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_seaso
     return ve, ta_hs_set, ta_cs_set
 
 
-def CalcThermalLoads(Name, building_props_thermal_loads, weather, usage_schedules, date, gv, locationFinal,
+def CalcThermalLoads(Name, building_properties, weather, usage_schedules, date, gv, locationFinal,
                      path_temporary_folder):
 
     # get function inputs from object
-    prop_occupancy = building_props_thermal_loads.get_prop_occupancy(Name)
-    prop_architecture = building_props_thermal_loads.get_prop_architecture(Name)
-    prop_geometry = building_props_thermal_loads.get_prop_geometry(Name)
-    prop_HVAC = building_props_thermal_loads.get_prop_hvac(Name)
-    prop_RC_model = building_props_thermal_loads.get_prop_rc_model(Name)
-    prop_comfort = building_props_thermal_loads.get_prop_comfort(Name)
-    prop_internal_loads = building_props_thermal_loads.get_prop_internal_loads(Name)
-    prop_age = building_props_thermal_loads.get_prop_age(Name)
-    Solar = building_props_thermal_loads.get_solar(Name)
+    prop_occupancy = building_properties.get_prop_occupancy(Name)
+    prop_architecture = building_properties.get_prop_architecture(Name)
+    prop_geometry = building_properties.get_prop_geometry(Name)
+    prop_HVAC = building_properties.get_prop_hvac(Name)
+    prop_RC_model = building_properties.get_prop_rc_model(Name)
+    prop_comfort = building_properties.get_prop_comfort(Name)
+    prop_internal_loads = building_properties.get_prop_internal_loads(Name)
+    prop_age = building_properties.get_prop_age(Name)
+    Solar = building_properties.get_solar(Name)
 
     # get weather
     T_ext = weather['temp_ext']
