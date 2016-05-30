@@ -15,6 +15,7 @@ import ephem
 import datetime
 import epwreader
 import pandas as pd
+import numpy as np
 from simpledbf import Dbf5
 
 
@@ -81,7 +82,7 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timez
                                                        'glohorrad_Whm2', 'difhorrad_Whm2' ]]
     weather_data['trr']= weather_data.exthorrad_Whm2/weather_data.extdirrad_Whm2
     weather_data['diff'] =  weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
-    weather_data.fillna(0, inplace=True)
+    weather_data.replace(np.inf, 0, inplace=True)
     T_G_day = weather_data.groupby(['dayofyear']).mean()
 
     # Simplify building's geometry
@@ -265,8 +266,8 @@ def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, 
     calcDirections = '32'
     zenithDivisions = '8'  # max 1400
     azimuthDivisions = '8'
-    diffuseProp = str(T_G_day.loc[day - 1, 'diff'])
-    transmittivity = str(T_G_day.loc[day - 1, 'ttr'])
+    diffuseProp = str(T_G_day.loc[day, 'diff'])
+    transmittivity = str(T_G_day.loc[day, 'ttr'])
     heightoffset = str(heightoffset)
     global_radiation = locationtemp1 + '\\' + 'Day_' + str(day) + '.shp'
     timeConfig = 'WithinDay    ' + str(day) + ', 0, 24'
