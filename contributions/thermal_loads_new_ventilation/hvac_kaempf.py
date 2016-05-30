@@ -42,7 +42,7 @@ def calc_hvac(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, timestep):
     t5_prime = tair
 
     # state after heat exchanger
-    t2, w2 = calc_hex(RH1, gv, qv_mech = qv_req, qv_mech_dim=0,  temp_ext=t1, temp_zone_prev=t5_1, timestep=timestep)
+    t2, w2 = calc_hex(RH1, gv, qv_mech=qv_req, qv_mech_dim=0, temp_ext=t1, temp_zone_prev=t5_1, timestep=timestep)
 
     # print(t5_prime)
     if abs(Qsen) != 0:  # to account for the bug of possible -0.0
@@ -53,9 +53,11 @@ def calc_hvac(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, timestep):
         # Assuming that AHU does not modify the air humidity
         w3 = w2
         if Qsen > 0:  # if heating
-            t3 = max(gv.temp_sup_heat_hvac, t2)  # heating system supply temperature in (°C) # TODO: document choose t2 if higher
+            t3 = max(gv.temp_sup_heat_hvac,
+                     t2)  # heating system supply temperature in (°C) # TODO: document choose t2 if higher
         elif Qsen < 0:  # if cooling
-            t3 = min(gv.temp_sup_cool_hvac, t2)  # cooling system supply temperature in (°C)  # TODO: document choose t2 if lower
+            t3 = min(gv.temp_sup_cool_hvac,
+                     t2)  # cooling system supply temperature in (°C)  # TODO: document choose t2 if lower
 
         # initial guess of mass flow rate
         h_t5_prime_w3 = calc_h(t5_prime, w3)  # for enthalpy change in first assumption, see Eq.(4.31) in [1]

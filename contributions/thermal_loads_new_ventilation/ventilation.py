@@ -25,10 +25,6 @@ from scipy.optimize import minimize
 import geopandas as gpd
 
 
-
-
-
-
 # ++++ GENERAL ++++
 
 
@@ -298,7 +294,7 @@ def allocate_default_leakage_paths(coeff_lea_zone, area_facade_zone, area_roof_z
     return coeff_lea_path, height_lea_path, orientation_lea_path
 
 
-def calc_qm_lea(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_locals):
+def calc_qm_lea(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_props_nat_vent):
     """
     Calculation of leakage infiltration and exfiltration air mass flow as a function of zone indoor reference pressure
 
@@ -308,7 +304,7 @@ def calc_qm_lea(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_locals):
     temp_zone : air temperature in ventilation zone (°C)
     temp_ext : exterior air temperature (°C)
     u_wind_site
-    dict_locals
+    dict_props_nat_vent
 
     Returns
     -------
@@ -316,11 +312,11 @@ def calc_qm_lea(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_locals):
     """
 
     # get default leakage paths from locals
-    coeff_lea_path = dict_locals['dict_props_nat_vent']['coeff_lea_path']
-    height_lea_path = dict_locals['dict_props_nat_vent']['height_lea_path']
+    coeff_lea_path = dict_props_nat_vent['coeff_lea_path']
+    height_lea_path = dict_props_nat_vent['height_lea_path']
 
     # lookup wind pressure coefficients for leakage paths from locals
-    coeff_wind_pressure_path = dict_locals['dict_props_nat_vent']['coeff_wind_pressure_path_lea']
+    coeff_wind_pressure_path = dict_props_nat_vent['coeff_wind_pressure_path_lea']
 
     # calculation of pressure difference at leakage path
     delta_p_path = calc_delta_p_path(p_zone_ref, height_lea_path, temp_zone, coeff_wind_pressure_path, u_wind_site,
@@ -442,7 +438,7 @@ def allocate_default_ventilation_openings(coeff_vent_zone, height_zone):
     return coeff_vent_path, height_vent_path, orientation_vent_path
 
 
-def calc_qm_vent(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_locals):
+def calc_qm_vent(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_props_nat_vent):
     """
     Calculation of air flows through ventilation openings in the facade
 
@@ -452,7 +448,7 @@ def calc_qm_vent(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_locals):
     temp_zone : zone air temperature (°C)
     temp_ext : exterior air temperature (°C)
     u_wind_site
-    dict_locals
+    dict_props_nat_vent
 
     Returns
     -------
@@ -460,9 +456,9 @@ def calc_qm_vent(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_locals):
     """
 
     # get properties from locals()
-    coeff_vent_path = dict_locals['dict_props_nat_vent']['coeff_vent_path']
-    height_vent_path = dict_locals['dict_props_nat_vent']['height_vent_path']
-    coeff_wind_pressure_path = dict_locals['dict_props_nat_vent']['coeff_wind_pressure_path_vent']
+    coeff_vent_path = dict_props_nat_vent['coeff_vent_path']
+    height_vent_path = dict_props_nat_vent['height_vent_path']
+    coeff_wind_pressure_path = dict_props_nat_vent['coeff_wind_pressure_path_vent']
 
     # calculation of pressure difference at leakage path
     delta_p_path = calc_delta_p_path(p_zone_ref, height_vent_path, temp_zone, coeff_wind_pressure_path, u_wind_site,
@@ -550,10 +546,10 @@ def calc_effective_stack_height(dict_windows_building):
 
     # first part of Eq. (46) in [1]
     height_window_stack_1 = dict_windows_building['height_window_in_zone'] + np.array(dict_windows_building[
-                                                                               'height_window_above_ground']) / 2
+                                                                                          'height_window_above_ground']) / 2
     # second part of Eq. (46) in [1]
     height_window_stack_2 = dict_windows_building['height_window_in_zone'] - np.array(dict_windows_building[
-                                                                               'height_window_above_ground']) / 2
+                                                                                          'height_window_above_ground']) / 2
     # Eq. (46) in [1]
     height_window_stack = max(height_window_stack_1) - min(height_window_stack_2)
 
@@ -675,8 +671,8 @@ def calc_qm_arg(factor_cros, temp_ext, dict_windows_building, u_wind_10, temp_zo
             q_v_arg_in = 3600 * rho_air_ref / rho_air_ext * ((
                                                                  coeff_d_window * area_window_cros * u_wind_10 * delta_c_p ** 0.5) ** 2 + (
                                                                  area_window_tot / 2 * (
-                                                                 coeff_stack * h_window_stack * abs(
-                                                                     temp_zone - temp_ext))) ** 2) ** 0.5
+                                                                     coeff_stack * h_window_stack * abs(
+                                                                         temp_zone - temp_ext))) ** 2) ** 0.5
 
             # Eq. (50) in [1]
             # TODO this formula was changed from the standard to use the air density in the zone
@@ -699,7 +695,7 @@ def calc_qm_arg(factor_cros, temp_ext, dict_windows_building, u_wind_10, temp_zo
 
 # ++++ MASS BALANCE ++++
 
-def calc_air_flow_mass_balance(p_zone_ref, temp_zone, u_wind_site, temp_ext, dict_locals, option):
+def calc_air_flow_mass_balance(p_zone_ref, temp_zone, u_wind_site, temp_ext, dict_props_nat_vent, option):
     """
     Air flow mass balance for iterative calculation according to 6.4.3.9 in [1]
 
@@ -709,7 +705,7 @@ def calc_air_flow_mass_balance(p_zone_ref, temp_zone, u_wind_site, temp_ext, dic
     temp_zone : air temperature in ventilation zone (°C)
     u_wind_site
     temp_ext : exterior air temperature (°C)
-    dict_locals
+    dict_props_nat_vent
     option
 
     Returns
@@ -727,12 +723,12 @@ def calc_air_flow_mass_balance(p_zone_ref, temp_zone, u_wind_site, temp_ext, dic
     qm_pdu_in = 0
     qm_pdu_out = 0
 
-    qm_arg_in = 0  # dict_locals['qm_arg_in'], removed to speed up code, as window ventilation is always balanced
-                                                #  with the currently implemented method
-    qm_arg_out = 0  # dict_locals['qm_arg_out']
+    qm_arg_in = 0  # removed to speed up code, as window ventilation is always balanced
+    #  with the currently implemented method
+    qm_arg_out = 0  #
 
-    qm_vent_in, qm_vent_out = calc_qm_vent(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_locals)
-    qm_lea_in, qm_lea_out = calc_qm_lea(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_locals)
+    qm_vent_in, qm_vent_out = calc_qm_vent(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_props_nat_vent)
+    qm_lea_in, qm_lea_out = calc_qm_lea(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_props_nat_vent)
 
     # print('iterate air flows')
     # print(qm_arg_in, qm_arg_out)
@@ -791,12 +787,14 @@ def get_properties_natural_ventilation(gdf_geometry_building, gdf_architecture_b
 
     # FIXME: for testing the scripts
     n50 = gdf_architecture_building['n50']  # 0.3  # air tight # TODO: get from building properties
-    vol_building = gdf_geometry_building['footprint'] * gdf_geometry_building['height_ag']  # TODO: get from building properties
+    vol_building = gdf_geometry_building['footprint'] * gdf_geometry_building[
+        'height_ag']  # TODO: get from building properties
     qv_delta_p_lea_ref_zone = calc_qv_delta_p_ref(n50, vol_building)
     area_facade_zone, area_roof_zone, height_zone, slope_roof = get_building_geometry_ventilation(
         gdf_geometry_building)  # TODO: maybe also from building properties
     class_shielding = gv.shielding_class
-    factor_cros = gdf_architecture_building['f_cros']  # 1  # 1 = cross ventilation possible # TODO: get from building properties
+    factor_cros = gdf_architecture_building[
+        'f_cros']  # 1  # 1 = cross ventilation possible # TODO: get from building properties
     area_vent_zone = 0  # (cm2) area of ventilation openings # TODO: get from buildings properties
 
     # calculate properties that remain constant in the minimization
@@ -823,12 +821,12 @@ def get_properties_natural_ventilation(gdf_geometry_building, gdf_architecture_b
                            'coeff_vent_path': coeff_vent_path,
                            'height_vent_path': height_vent_path,
                            'coeff_wind_pressure_path_vent': coeff_wind_pressure_path_vent,
-                           'factor_cros' : factor_cros}
+                           'factor_cros': factor_cros}
 
     return dict_props_nat_vent
 
 
-def calc_air_flows(temp_zone, u_wind, temp_ext, dict_locals):
+def calc_air_flows(temp_zone, u_wind, temp_ext, dict_props_nat_vent):
     """
     Minimization of variable air flows as a function of zone gauge
 
@@ -837,7 +835,7 @@ def calc_air_flows(temp_zone, u_wind, temp_ext, dict_locals):
     temp_zone : zone indoor air temperature (°C)
     u_wind
     temp_ext : exterior air temperature (°C)
-    dict_locals
+    dict_props_nat_vent
 
     Returns
     -------
@@ -856,7 +854,7 @@ def calc_air_flows(temp_zone, u_wind, temp_ext, dict_locals):
     # solve air flow mass balance via iteration
     p_zone_ref = 1  # (Pa) zone pressure, THE UNKNOWN VALUE
     res = minimize(calc_air_flow_mass_balance, p_zone_ref,
-                   args=(temp_zone, u_wind, temp_ext, dict_locals, 'minimize',),
+                   args=(temp_zone, u_wind, temp_ext, dict_props_nat_vent, 'minimize',),
                    method='COBYLA',
                    options=solver_options_cobyla)
     # print(res)
@@ -865,7 +863,7 @@ def calc_air_flows(temp_zone, u_wind, temp_ext, dict_locals):
 
     # calculate air flows at zone pressure
     qm_sum_in, qm_sum_out = calc_air_flow_mass_balance(p_zone, temp_zone, u_wind,
-                                                       temp_ext, dict_locals, 'calculate')
+                                                       temp_ext, dict_props_nat_vent, 'calculate')
 
     return qm_sum_in, qm_sum_out
 
@@ -875,7 +873,6 @@ def get_windows_of_building(dataframe_windows, name_building):
 
 
 def testing():
-
     import cea.globalvar
     gv = cea.globalvar.GlobalVariables()
     from cea import inputlocator
