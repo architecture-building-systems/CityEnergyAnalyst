@@ -15,7 +15,7 @@ import ephem
 import datetime
 import epwreader
 import pandas as pd
-import numpy as np
+import arcgisscripting
 from simpledbf import Dbf5
 
 
@@ -105,9 +105,13 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timez
     # Calculate radiation
     for day in range(1, 366):
         result = None
-        while result is None: # trick to avoid that arcgis stops calculating the days and tries again.
-            result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
+        while result is None:  # trick to avoid that arcgis stops calculating the days and tries again.
+            try:
+                result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
                                        locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
+            except arcgisscripting.ExecuteError:
+                # redo the calculation
+                pass
 
     gv.log('complete raw radiation files')
 
@@ -255,7 +259,6 @@ def calc_radiation_day(day, sunrise, route):
 
 def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, locationtemp1, aspect_slope, heightoffset, gv):
     # Local Variables
-    gv.log('in CalcRadiation')
     Latitude = str(latitude)
     skySize = '1400'  # max 2400
     dayInterval = '1'
