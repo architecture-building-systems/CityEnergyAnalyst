@@ -258,7 +258,7 @@ def calc_radiation_day(day, sunrise, route):
 def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, locationtemp1, aspect_slope, heightoffset, gv):
     # Local Variables
     Latitude = str(latitude)
-    skySize = '1000'  # max 2400
+    skySize = '1400'  # max 2400
     dayInterval = '1'
     hourInterval = '1'
     calcDirections = '32'
