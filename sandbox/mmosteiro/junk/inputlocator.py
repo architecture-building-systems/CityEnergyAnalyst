@@ -19,18 +19,6 @@ class InputLocator(object):
         path to database of archetypes file Archetypes_properties.xlsx"""
         return os.path.join(self.db_path, 'Weather', 'Zurich.epw')
 
-    def get_weather(self, name):
-        """/cea/db/Weather/{name}.epw"""
-        weather_path = os.path.join(self.db_path, 'Weather', name + '.epw')
-        if not os.path.exists(weather_path):
-            return self.get_default_weather()
-        return weather_path
-
-    def get_weather_names(self):
-        """Return a list of all installed epw files in the system"""
-        weather_names = [os.path.splitext(f)[0] for f in os.listdir(os.path.join(self.db_path, 'Weather'))]
-        return weather_names
-
     def get_archetypes_properties(self):
         """/cea/db/Archetypes/Switzerland/Archetypes_properties.xlsx
         path to database of archetypes file Archetypes_properties.xlsx"""
@@ -106,10 +94,12 @@ class InputLocator(object):
         return os.path.join(self.scenario_path, '1-inputs', '3-weather', 'weather_day.csv')
 
     def get_life_cycle_inventory_supply_systems(self):
-        return os.path.join(self.db_path, 'Systems', 'supply_systems.xls')
+        """scenario/1-inputs/4-technical/supply_systems.csv"""
+        return os.path.join(self.scenario_path, '1-inputs', '4-technical', 'supply_systems.xls')
 
     def get_technical_emission_systems(self):
-        return os.path.join(self.db_path, 'Systems', 'emission_systems.xls')
+        """scenario/1-inputs/4-technical/emission_systems.csv"""
+        return os.path.join(self.scenario_path, '1-inputs', '4-technical', 'emission_systems.xls')
 
 
     def get_demand_results_folder(self):
@@ -177,3 +167,12 @@ class InputLocator(object):
     def get_temporary_file(self, filename):
         """Returns the path to a file in the temporary folder with the name `filename`"""
         return os.path.join(self.get_temporary_folder(), filename)
+
+    def get_data_mobility(self):
+        """cea/db/Benchmarks/Switzerland/mobility.csv"""
+        return os.path.join(self.db_path, 'Benchmarks', 'Switzerland', 'mobility.csv')
+
+    def get_lca_mobility(self):
+        """scenario/2-results/3-emissions/1-timeseries/Total_LCA_mobility.csv"""
+        return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_mobility.csv')
+
