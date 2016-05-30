@@ -12,7 +12,7 @@ G. Happle   BuildingPropsThermalLoads   27.05.2016
 from __future__ import division
 
 import pandas as pd
-import contributions.thermal_loads_new_ventilation.ventilation as ventilation
+import contributions.thermal_loads_new_ventilation.simple_window_generator as simple_window_generator
 from geopandas import GeoDataFrame as gpdf
 
 import epwreader
@@ -225,7 +225,7 @@ def read_building_properties(locator, gv):
     gv.log("done")
 
     gv.log("creating windows")
-    df_windows = ventilation.create_windows(surface_properties, prop_architecture)
+    df_windows = simple_window_generator.create_windows(surface_properties, prop_architecture)
     gv.log("done")
 
     # construct function input object
