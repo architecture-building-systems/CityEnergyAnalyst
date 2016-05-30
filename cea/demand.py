@@ -228,7 +228,6 @@ def read_building_properties(locator, gv):
                               solar=solar)
 
 
-
 def test_demand():
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
     # for the interface, the user should pick a file out of of those in ...DB/Weather/...
