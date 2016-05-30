@@ -39,7 +39,7 @@ def calc_hvac(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, timestep):
     """
 
     # State No. 5 # indoor air set point
-    t5_prime = tair  # accounding for an increase in temperature # TODO: where is this from? why use calculated tair and not the setpoint temperature? why +1? # FIXME: remove
+    t5_prime = tair
 
     # state after heat exchanger
     t2, w2 = calc_hex(RH1, gv, qv_mech = qv_req, qv_mech_dim=0,  temp_ext=t1, temp_zone_prev=t5_1, timestep=timestep)
@@ -168,6 +168,7 @@ def calc_hex(rel_humidity_ext, gv, qv_mech, qv_mech_dim, temp_ext, temp_zone_pre
     """
     # TODO add literature
 
+    # FIXME: dynamic HEX efficiency
     # Properties of heat recovery and required air incl. Leakage
     # qv_mech = qv_mech * 1.0184  # in m3/s corrected taking into account leakage # TODO: add source
     # Veff = gv.Vmax * qv_mech / qv_mech_dim  # Eq. (85) in SIA 2044
@@ -182,6 +183,7 @@ def calc_hex(rel_humidity_ext, gv, qv_mech, qv_mech_dim, temp_ext, temp_zone_pre
     t2 = temp_ext + nrec * (temp_zone_prev - temp_ext)
     w2 = min(w1, calc_w(t2, 100))  # inlet air moisture (kg/kg), Eq. (4.24) in [1]
 
+    # TODO: document
     # bypass heat exchanger if use is not beneficial
     if temp_zone_prev > temp_ext and not gv.is_heating_season(timestep):
         t2 = temp_ext
