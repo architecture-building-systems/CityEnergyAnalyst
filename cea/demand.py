@@ -53,70 +53,29 @@ def demand_calculation(locator, weather_path, gv):
         csv file of yearly demand data per buidling.
     """
     # local variables
-    gv.log("reading input files")
 
     # initialize function inputs
     weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms']]
-    solar = pd.read_csv(locator.get_radiation()).set_index('Name')
-    surface_properties = pd.read_csv(locator.get_surface_properties())
-    prop_geometry = gpdf.from_file(locator.get_building_geometry())
-    prop_geometry['footprint'] = prop_geometry.area
-    prop_geometry['perimeter'] = prop_geometry.length
-    prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
-    prop_HVAC = gpdf.from_file(locator.get_building_hvac()).drop('geometry', axis=1)
-    prop_thermal = gpdf.from_file(locator.get_building_thermal()).drop('geometry', axis=1).set_index('Name')
-    prop_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index('Name')
-    prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(
-        axis=0)]  # trick to erase occupancies that are not being used (it speeds up the code)
-    prop_architecture = gpdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1).set_index('Name')
-    prop_age = gpdf.from_file(locator.get_building_age()).drop('geometry', axis=1).set_index('Name')
-    prop_comfort = gpdf.from_file(locator.get_building_comfort()).drop('geometry', axis=1).set_index('Name')
-    prop_internal_loads = gpdf.from_file(locator.get_building_internal()).drop('geometry', axis=1).set_index('Name')
-    # get temperatures of operation
-    prop_HVAC_result = get_temperatures(locator, prop_HVAC).set_index('Name')
-    # weather conditions
-    # T_ext = np.array(weather_data.drybulb_C)
-    # RH_ext = np.array(weather_data.relhum_percent)
+    building_properties = read_building_properties(locator, gv)
     # get list of uses
-    list_uses = list(prop_occupancy.drop('PFloor', axis=1).columns)
+    list_uses = list(building_properties._prop_occupancy.drop('PFloor', axis=1).columns)
     # get date
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
-    gv.log('done')
 
     gv.log("reading occupancy schedules")
     # get schedules
     schedules = m.schedule_maker(date, locator, list_uses)
     gv.log("done")
 
-    gv.log("calculating thermal properties")
-    # get thermal properties for RC model
-    prop_RC_model = f.get_prop_RC_model(prop_occupancy, prop_architecture, prop_thermal, prop_geometry,
-                                        prop_HVAC_result, surface_properties, gv)
-
-    gv.log("done")
-
-    # construct function input object
-    building_properties = BuildingProperties(prop_geometry=prop_geometry, prop_occupancy=prop_occupancy,
-                                                      prop_architecture=prop_architecture, prop_age=prop_age,
-                                                      prop_comfort=prop_comfort,
-                                                      prop_internal_loads=prop_internal_loads,
-                                                      prop_HVAC_result=prop_HVAC_result,
-                                                      prop_RC_model=prop_RC_model, solar=solar)
-
-    # construct weather dict for input to function
-    weather = {'temp_ext': np.array(weather_data.drybulb_C),
-               'rh_ext': np.array(weather_data.relhum_percent),
-               'u_wind': np.array(weather_data.windspd_ms)}
-
     # construct schedules dict for input to function
     usage_schedules = {'list_uses': list_uses,
                        'schedules': schedules}
 
     # get timeseries of demand
-    num_buildings = len(prop_RC_model.index)
+    num_buildings = len(building_properties.get_list_building_name())
     counter = 0
-    for building in prop_RC_model.index:
-        gv.models['calc-thermal-loads'](building, building_properties, weather, usage_schedules, date, gv,
+    for building in building_properties.get_list_building_name():
+        gv.models['calc-thermal-loads'](building, building_properties, weather_data, usage_schedules, date, gv,
                                         locator.get_demand_results_folder(), locator.get_temporary_folder())
         gv.log('Building No. %(bno)i completed out of %(btot)i', bno=counter + 1, btot=num_buildings)
         counter += 1
@@ -124,7 +83,7 @@ def demand_calculation(locator, weather_path, gv):
     # get total file
 
     counter = 0
-    for name in prop_RC_model.index:
+    for name in building_properties.get_list_building_name():
         temporary_file = locator.get_temporary_file('%(name)sT.csv' % locals())
         # TODO: check this logic
         if counter == 0:
@@ -176,6 +135,10 @@ class BuildingProperties(object):
         self._solar = solar
         self._prop_windows = prop_windows
 
+    def get_list_building_name(self):
+        """get list of all building names"""
+        return self._prop_RC_model.index
+
     def get_prop_geometry(self, name_building):
         """get geometry of a building by name"""
         return self._prop_geometry.ix[name_building]
@@ -215,6 +178,55 @@ class BuildingProperties(object):
     def get_prop_windows(self, name_building):
         """get windows and their properties of a building by name"""
         return self._prop_windows.loc[self._prop_windows['name_building'] == name_building].to_dict('list')
+
+
+def read_building_properties(locator, gv):
+    """
+    Reads building properties from input shape files.
+    Copied first lines of demand script.
+
+    Parameters
+    ----------
+    locator
+    gv
+
+    Returns
+    -------
+    object of type BuildingProperties
+    """
+
+    gv.log("reading input files")
+    solar = pd.read_csv(locator.get_radiation()).set_index('Name')
+    surface_properties = pd.read_csv(locator.get_surface_properties())
+    prop_geometry = gpdf.from_file(locator.get_building_geometry())
+    prop_geometry['footprint'] = prop_geometry.area
+    prop_geometry['perimeter'] = prop_geometry.length
+    prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
+    prop_HVAC = gpdf.from_file(locator.get_building_hvac()).drop('geometry', axis=1)
+    prop_thermal = gpdf.from_file(locator.get_building_thermal()).drop('geometry', axis=1).set_index('Name')
+    prop_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index('Name')
+    prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(
+        axis=0)]  # trick to erase occupancies that are not being used (it speeds up the code)
+    prop_architecture = gpdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1).set_index('Name')
+    prop_age = gpdf.from_file(locator.get_building_age()).drop('geometry', axis=1).set_index('Name')
+    prop_comfort = gpdf.from_file(locator.get_building_comfort()).drop('geometry', axis=1).set_index('Name')
+    prop_internal_loads = gpdf.from_file(locator.get_building_internal()).drop('geometry', axis=1).set_index('Name')
+    # get temperatures of operation
+    prop_HVAC_result = get_temperatures(locator, prop_HVAC).set_index('Name')
+    gv.log('done')
+
+    gv.log("calculating thermal properties")
+    prop_RC_model = f.get_prop_RC_model(prop_occupancy, prop_architecture, prop_thermal, prop_geometry,
+                                        prop_HVAC_result, surface_properties, gv)
+    gv.log("done")
+
+    # construct function input object
+    return BuildingProperties(prop_geometry=prop_geometry, prop_occupancy=prop_occupancy,
+                              prop_architecture=prop_architecture, prop_age=prop_age,
+                              prop_comfort=prop_comfort, prop_internal_loads=prop_internal_loads,
+                              prop_HVAC_result=prop_HVAC_result, prop_RC_model=prop_RC_model,
+                              solar=solar)
+
 
 
 def test_demand():

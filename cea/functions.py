@@ -406,7 +406,7 @@ def get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_seaso
     return ve, ta_hs_set, ta_cs_set
 
 
-def CalcThermalLoads(Name, building_properties, weather, usage_schedules, date, gv, locationFinal,
+def CalcThermalLoads(Name, building_properties, weather_data, usage_schedules, date, gv, locationFinal,
                      path_temporary_folder):
 
     # get function inputs from object
@@ -421,8 +421,8 @@ def CalcThermalLoads(Name, building_properties, weather, usage_schedules, date, 
     Solar = building_properties.get_solar(Name)
 
     # get weather
-    T_ext = weather['temp_ext']
-    RH_ext = weather['rh_ext']
+    T_ext = np.array(weather_data.drybulb_C)
+    RH_ext = np.array(weather_data.relhum_percent)
 
     # get schedules
     list_uses = usage_schedules['list_uses']
