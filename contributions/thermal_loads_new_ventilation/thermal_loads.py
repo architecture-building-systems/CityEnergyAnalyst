@@ -11,8 +11,6 @@ Thermal loads
 from __future__ import division
 
 import numpy as np
-import pandas as pd
-
 import cea.functions as functions
 import hvac_kaempf
 import ventilation
@@ -202,8 +200,7 @@ def calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_
     temp_ve_sup = hvac_kaempf.calc_hex(rh_ext, gv, qv_mech=(qm_ve_req / gv.Pair), qv_mech_dim=0, temp_ext=temp_ext,
                                        temp_zone_prev=temp_air_prev, timestep=t)[0]
 
-    qv_ve_req = qm_ve_req / ventilation.calc_rho_air(
-        temp_ext)  # TODO: modify Kaempf model to accept mass flow rate instead of volume flow
+    qv_ve_req = qm_ve_req / gv.Pair  # TODO: modify Kaempf model to accept mass flow rate instead of volume flow
 
     rel_diff_qm_ve_mech = 1  # initialisation of difference for while loop
     abs_diff_qm_ve_mech = 1
@@ -1014,6 +1011,12 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
 
 
 class ThermalLoadsInput(object):
+    # TODO: documentation
+    """
+    Class to group input arguments for different tracks of calc thermal loads functions
+
+    """
+
     def __init__(self, qm_ve_req=None, temp_hs_set=None, temp_cs_set=None, i_st=None,
                  i_ia=None, i_m=None, w_int=None, flag_season=None, system_heating=None, system_cooling=None,
                  cm=None, area_f=None, temp_hs_set_corr=None, temp_cs_set_corr=None, i_c_max=None, i_h_max=None,
@@ -1037,7 +1040,4 @@ class ThermalLoadsInput(object):
         self._i_h_max = i_h_max
         self._prop_rc_model = prop_rc_model
 
-
-
-        # TESTING
-        # if __name__ == '__main__':
+    # TODO: get / set methods
