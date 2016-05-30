@@ -866,10 +866,6 @@ def calc_air_flows(temp_zone, u_wind, temp_ext, dict_props_nat_vent):
     return qm_sum_in, qm_sum_out
 
 
-def get_windows_of_building(dataframe_windows, name_building):
-    return dataframe_windows.loc[dataframe_windows['name_building'] == name_building]
-
-
 def testing():
     from geopandas import GeoDataFrame as gpdf
     import cea.globalvar
@@ -891,7 +887,7 @@ def testing():
 
     building_test = 'B153737'  # 'B154767' this building doesn't have windows
     # get building windows
-    df_windows_building_test = get_windows_of_building(df_windows, building_test)
+    df_windows_building_test = df_windows.loc[df_windows['name_building'] == building_test].to_dict('list')
     # get building geometry
     gdf_building_test = prop_geometry.ix[building_test]
     gdf_building_architecture = gdf_building_architecture.ix[building_test]
@@ -908,7 +904,7 @@ def testing():
         = calc_qm_arg(factor_cros, temp_ext, df_windows_building_test, u_wind_10, temp_zone, r_window_arg)
 
     t0 = time.time()
-    res = calc_air_flows(temp_zone, u_wind, temp_ext, locals())
+    res = calc_air_flows(temp_zone, u_wind, temp_ext, dict_props_nat_vent)
     t1 = time.time()
 
     print(res)
