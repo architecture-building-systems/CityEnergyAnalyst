@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
 
-import geopandas as gpd
+
 
 
 # ++++ GENERAL ++++
@@ -786,15 +786,13 @@ def get_properties_natural_ventilation(gdf_geometry_building, gdf_architecture_b
     """
 
     # FIXME: for testing the scripts
-    n50 = gdf_architecture_building['n50']  # 0.3  # air tight # TODO: get from building properties
-    vol_building = gdf_geometry_building['footprint'] * gdf_geometry_building[
-        'height_ag']  # TODO: get from building properties
+    n50 = gdf_architecture_building['n50']
+    vol_building = gdf_geometry_building['footprint'] * gdf_geometry_building['height_ag']
     qv_delta_p_lea_ref_zone = calc_qv_delta_p_ref(n50, vol_building)
     area_facade_zone, area_roof_zone, height_zone, slope_roof = get_building_geometry_ventilation(
-        gdf_geometry_building)  # TODO: maybe also from building properties
+        gdf_geometry_building)
     class_shielding = gv.shielding_class
-    factor_cros = gdf_architecture_building[
-        'f_cros']  # 1  # 1 = cross ventilation possible # TODO: get from building properties
+    factor_cros = gdf_architecture_building['f_cros']
     area_vent_zone = 0  # (cm2) area of ventilation openings # TODO: get from buildings properties
 
     # calculate properties that remain constant in the minimization
@@ -873,6 +871,7 @@ def get_windows_of_building(dataframe_windows, name_building):
 
 
 def testing():
+    from geopandas import GeoDataFrame as gpdf
     import cea.globalvar
     gv = cea.globalvar.GlobalVariables()
     from cea import inputlocator
@@ -882,25 +881,29 @@ def testing():
     # generate windows based on geometry of vertical surfaces in radiation file
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
 
-    df_radiation = pd.read_csv(locator.get_radiation())
-    gdf_building_architecture = gpd.GeoDataFrame.from_file(locator.get_building_architecture())
-    gdf_building_geometry = gpd.GeoDataFrame.from_file(locator.get_building_geometry())
-    df_windows = simple_window_generator.create_windows(df_radiation, gdf_building_architecture)
+    surface_properties = pd.read_csv(locator.get_surface_properties())
+    gdf_building_architecture = gpdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1).set_index('Name')
+    prop_geometry = gpdf.from_file(locator.get_building_geometry())
+    prop_geometry['footprint'] = prop_geometry.area
+    prop_geometry['perimeter'] = prop_geometry.length
+    prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
+    df_windows = simple_window_generator.create_windows(surface_properties, gdf_building_architecture)
 
     building_test = 'B153737'  # 'B154767' this building doesn't have windows
     # get building windows
     df_windows_building_test = get_windows_of_building(df_windows, building_test)
     # get building geometry
-    gdf_building_test = gdf_building_geometry.loc[gdf_building_geometry['Name'] == building_test]
+    gdf_building_test = prop_geometry.ix[building_test]
+    gdf_building_architecture = gdf_building_architecture.ix[building_test]
 
-    r_window_arg = 0
+    r_window_arg = 0.1
     temp_ext = 5
     temp_zone = 22
     u_wind = 0.5
     u_wind_10 = u_wind
     factor_cros = 1  # 1 = cross ventilation possible # TODO: get from building properties
 
-    dict_props_nat_vent = get_properties_natural_ventilation(gdf_building_test)
+    dict_props_nat_vent = get_properties_natural_ventilation(gdf_building_test, gdf_building_architecture, gv)
     qm_arg_in, qm_arg_out \
         = calc_qm_arg(factor_cros, temp_ext, df_windows_building_test, u_wind_10, temp_zone, r_window_arg)
 

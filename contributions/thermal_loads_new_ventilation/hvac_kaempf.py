@@ -30,8 +30,7 @@ def calc_hvac(RH1, t1, tair, qv_req, Qsen, t5_1, wint, gv, timestep):
     t5_1 : zone air temperature at time step t-1 (°C)
     wint : internal moisture gains at time step t according to the mixed occupancy schedule of the building
     gv : object of class globalvar
-    temp_sup_heat : heating system supply temperature (°C)
-    temp_sup_cool : cooling system supply temperature (°C)
+    timestep : hour of the year [0..8760]
 
     Returns
     -------
