@@ -21,12 +21,12 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
-from cea import inputlocator
-import geopandas as gpd
-import cea.globalvar
-import time
 
-gv = cea.globalvar.GlobalVariables()
+import geopandas as gpd
+
+
+
+
 
 
 # ++++ GENERAL ++++
@@ -777,7 +777,7 @@ def get_building_geometry_ventilation(gdf_building_geometry):
     return area_facade_zone, area_roof_zone, height_zone, slope_roof
 
 
-def get_properties_natural_ventilation(gdf_geometry_building, gdf_architecture_building):
+def get_properties_natural_ventilation(gdf_geometry_building, gdf_architecture_building, gv):
     """
 
     Parameters
@@ -795,7 +795,7 @@ def get_properties_natural_ventilation(gdf_geometry_building, gdf_architecture_b
     qv_delta_p_lea_ref_zone = calc_qv_delta_p_ref(n50, vol_building)
     area_facade_zone, area_roof_zone, height_zone, slope_roof = get_building_geometry_ventilation(
         gdf_geometry_building)  # TODO: maybe also from building properties
-    class_shielding = 2  # open # TODO: get from globalvars or dynamic simulation parameters or building properties
+    class_shielding = gv.shielding_class
     factor_cros = gdf_architecture_building['f_cros']  # 1  # 1 = cross ventilation possible # TODO: get from building properties
     area_vent_zone = 0  # (cm2) area of ventilation openings # TODO: get from buildings properties
 
@@ -822,7 +822,8 @@ def get_properties_natural_ventilation(gdf_geometry_building, gdf_architecture_b
                            'coeff_wind_pressure_path_lea': coeff_wind_pressure_path_lea,
                            'coeff_vent_path': coeff_vent_path,
                            'height_vent_path': height_vent_path,
-                           'coeff_wind_pressure_path_vent': coeff_wind_pressure_path_vent}
+                           'coeff_wind_pressure_path_vent': coeff_wind_pressure_path_vent,
+                           'factor_cros' : factor_cros}
 
     return dict_props_nat_vent
 
@@ -874,13 +875,20 @@ def get_windows_of_building(dataframe_windows, name_building):
 
 
 def testing():
+
+    import cea.globalvar
+    gv = cea.globalvar.GlobalVariables()
+    from cea import inputlocator
+    import time
+    import simple_window_generator
+
     # generate windows based on geometry of vertical surfaces in radiation file
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
 
     df_radiation = pd.read_csv(locator.get_radiation())
     gdf_building_architecture = gpd.GeoDataFrame.from_file(locator.get_building_architecture())
     gdf_building_geometry = gpd.GeoDataFrame.from_file(locator.get_building_geometry())
-    df_windows = create_windows(df_radiation, gdf_building_architecture)
+    df_windows = simple_window_generator.create_windows(df_radiation, gdf_building_architecture)
 
     building_test = 'B153737'  # 'B154767' this building doesn't have windows
     # get building windows

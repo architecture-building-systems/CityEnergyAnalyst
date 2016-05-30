@@ -188,11 +188,11 @@ def calc_hex(rel_humidity_ext, gv, qv_mech, qv_mech_dim, temp_ext, temp_zone_pre
     if temp_zone_prev > temp_ext and not gv.is_heating_season(timestep):
         t2 = temp_ext
         w2 = w1
-        print('bypass HEX cooling')
+        # print('bypass HEX cooling')
     elif temp_zone_prev < temp_ext and gv.is_heating_season(timestep):
         t2 = temp_ext
         w2 = w1
-        print('bypass HEX heating')
+        # print('bypass HEX heating')
 
     return t2, w2
 
