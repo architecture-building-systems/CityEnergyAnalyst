@@ -9,11 +9,13 @@
 
 
 from __future__ import division
+
 import numpy as np
+import pandas as pd
+
 import cea.functions as functions
 import hvac_kaempf
 import ventilation
-import pandas as pd
 
 
 def calc_tHC_corr(SystemH, SystemC, sys_e_ctrl):
@@ -123,6 +125,43 @@ def calc_qm_ve_req(ve_schedule, area_f, temp_ext):
     return qm_ve_req
 
 
+def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, sys_e_heating, sys_e_cooling):
+    """
+    Modified version of calc_qv_req from functions.
+    Fixed infiltration according to schedule is only considered for mechanically ventilated buildings.
+
+    Parameters
+    ----------
+    ve
+    people
+    Af
+    gv
+    hour_day
+    sys_e_heating
+    sys_e_cooling
+
+    Returns
+    -------
+
+    """
+
+    if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
+        infiltration_occupied = gv.hf*gv.NACH_inf_occ #m3/h.m2
+        infiltration_non_occupied = gv.hf*gv.NACH_inf_non_occ #m3/h.m2
+    else:
+        infiltration_occupied = 0
+        infiltration_non_occupied = 0
+
+    if people > 0:
+        q_req = (ve+(infiltration_occupied*Af))/3600  #m3/s
+    else:
+        if (21 < hour_day or hour_day < 7) and gv.is_heating_season(hour_year):
+            q_req = (ve*1.3+(infiltration_non_occupied*Af))/3600  # free cooling
+        else:
+            q_req = (ve+(infiltration_non_occupied*Af))/3600  #
+    return q_req #m3/s
+
+
 def calc_thermal_load_hvac_timestep(t, dict_locals):
     """
     This function is executed for the case of heating or cooling with a HVAC system
@@ -178,8 +217,8 @@ def calc_thermal_load_hvac_timestep(t, dict_locals):
     # first guess of mechanical ventilation mass flow rate and supply temperature for ventilation losses
     qm_ve_mech = qm_ve_req  # required air mass flow rate
     qm_ve_nat = 0  # natural ventilation # TODO: this could be a fixed percentage of the mechanical ventilation (overpressure) as a function of n50
-    temp_ve_sup = hvac_kaempf.calc_hex(rh_ext, gv, qv_mech=(qm_ve_req/gv.Pair), qv_mech_dim=0, temp_ext=temp_ext,
-                                            temp_zone_prev=temp_air_prev, timestep=t)[0]
+    temp_ve_sup = hvac_kaempf.calc_hex(rh_ext, gv, qv_mech=(qm_ve_req / gv.Pair), qv_mech_dim=0, temp_ext=temp_ext,
+                                       temp_zone_prev=temp_air_prev, timestep=t)[0]
 
     qv_ve_req = qm_ve_req / ventilation.calc_rho_air(
         temp_ext)  # TODO: modify Kaempf model to accept mass flow rate instead of volume flow
@@ -448,7 +487,6 @@ def calc_thermal_load_natural_ventilation_timestep(t, dict_locals):
     i_h_max = dict_locals['i_h_max']
     dict_windows_building = dict_locals['dict_windows_building']
     factor_cros = dict_locals['factor_cros']
-    temp_comf_max = dict_locals['temp_comf_max']
     gv = dict_locals['gv']
 
     # FIXME: this is quite problematic, as it is not clear visible that this is needed in ventilation.calc_air_flows(...,locals())
@@ -515,13 +553,13 @@ def calc_thermal_load_natural_ventilation_timestep(t, dict_locals):
                                     area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max, flag_season)
 
         # test for overheating
-        while temp_a > temp_comf_max and index_window_opening < status_windows.size:
+        while temp_a > gv.temp_comf_max and temp_ext < gv.temp_comf_max and index_window_opening < status_windows.size:
 
             # increase window opening to prevent overheating
             print('increase window opening to prevent over heating')
             # window air flows
             qm_arg_in, qm_arg_out = ventilation.calc_qm_arg(factor_cros, temp_ext, dict_windows_building, u_wind,
-                                                        temp_air_prev, status_windows[index_window_opening])
+                                                            temp_air_prev, status_windows[index_window_opening])
 
             # total air flows
             # qm_ve_sum_in, qm_ve_sum_out = ventilation.calc_air_flows(temp_air_prev, u_wind, temp_ext, locals())
@@ -603,17 +641,30 @@ def calc_thermal_load_natural_ventilation_timestep(t, dict_locals):
            temp_op, i_m_tot, qm_ve_nat_tot, q_hs_sen, q_cs_sen, qhs_em_ls, qcs_em_ls
 
 
-def calc_thermal_loads_new_ventilation(Name, prop_rc_model, prop_hvac, prop_occupancy, prop_age, prop_architecture,
-                                       prop_geometry, schedules, Solar, dict_climate,
-                                       dict_windows_building, locationFinal, gv, list_uses, prop_internal_loads,
-                                       prop_comfort, date, path_temporary_folder):
+def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, usage_schedules, date, gv, locationFinal,
+                     path_temporary_folder):
     """ calculates thermal loads of single buildings with mechanical or natural ventilation"""
 
-    # get climate vectors
-    # TODO: maybe move to inside of functions
-    T_ext = dict_climate['temp_ext']  # external temperature (°C)
-    rh_ext = dict_climate['rh_ext']  # external relative humidity (%)
-    u_wind = dict_climate['u_wind']  # wind speed (m/s)
+    # get function inputs from object
+    prop_occupancy = building_properties.get_prop_occupancy(Name)
+    prop_architecture = building_properties.get_prop_architecture(Name)
+    prop_geometry = building_properties.get_prop_geometry(Name)
+    prop_hvac = building_properties.get_prop_hvac(Name)
+    prop_rc_model = building_properties.get_prop_rc_model(Name)
+    prop_comfort = building_properties.get_prop_comfort(Name)
+    prop_internal_loads = building_properties.get_prop_internal_loads(Name)
+    prop_age = building_properties.get_prop_age(Name)
+    Solar = building_properties.get_solar(Name)
+    dict_windows_building = building_properties.get_prop_windows(Name)
+
+    # get weather
+    T_ext = np.array(weather_data.drybulb_C)
+    rh_ext = np.array(weather_data.relhum_percent)
+    u_wind = np.array(weather_data.windspd_ms)
+
+    # get schedules
+    list_uses = usage_schedules['list_uses']
+    schedules = usage_schedules['schedules']
 
     # copied from original calc thermal loads
     Af = prop_rc_model.Af
@@ -689,8 +740,8 @@ def calc_thermal_loads_new_ventilation(Name, prop_rc_model, prop_hvac, prop_occu
         # minimum mass flow rate of ventilation according to schedule
         # qm_ve_req = numpy.vectorize(calc_qm_ve_req)(ve_schedule, area_f, temp_ext)
         # with infiltration and overheating
-        qv_req = np.vectorize(functions.calc_qv_req)(ve_schedule, people, Af, gv, date.hour, range(8760),
-                                                        limit_inf_season, limit_sup_season)
+        qv_req = np.vectorize(calc_qv_req)(ve_schedule, people, Af, gv, date.hour, range(8760), sys_e_heating,
+                                           sys_e_cooling)
         qm_ve_req = qv_req * gv.Pair  # TODO:  use dynamic rho_air
 
         # heat flows in [W]
@@ -768,8 +819,6 @@ def calc_thermal_loads_new_ventilation(Name, prop_rc_model, prop_hvac, prop_occu
         temp_m_prev = 16
         # end-use demand calculation
         temp_air_prev = 21  # definition of first temperature to start calculation of air conditioning system
-
-        temp_comf_max = 26  # TODO: include to properties and get from properties
 
         # case 1: mechanical ventilation
         if sys_e_heating == 'T3' or sys_e_cooling == 'T3':

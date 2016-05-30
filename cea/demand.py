@@ -10,16 +10,16 @@ J. Fonseca  refactoring to new properties file   22.03.16
 G. Happle   BuildingPropsThermalLoads   27.05.2016
 """
 from __future__ import division
+
 import pandas as pd
-import numpy as np
-import functions as f
-import maker as m
-import epwreader
-import globalvar
+import contributions.thermal_loads_new_ventilation.ventilation as ventilation
 from geopandas import GeoDataFrame as gpdf
+
+import epwreader
+import functions as f
+import globalvar
 import inputlocator
-import sandbox.ghapple.ventilation as ventilation
-import sandbox.ghapple.thermal_loads as thermal_loads
+import maker as m
 
 reload(f)
 reload(globalvar)

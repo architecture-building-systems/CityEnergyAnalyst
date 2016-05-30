@@ -6,6 +6,7 @@ Global variables
 
 """
 import functions
+import contributions.thermal_loads_new_ventilation.thermal_loads
 
 
 class GlobalVariables(object):
@@ -59,12 +60,17 @@ class GlobalVariables(object):
         # ==============================================================================================================
         # HVAC
         # ==============================================================================================================
-
         self.temp_sup_heat_hvac = 36  # (°C)
         self.temp_sup_cool_hvac = 16  # (°C)
 
+        # ==============================================================================================================
+        # Comfort
+        # ==============================================================================================================
+        self.temp_comf_max = 26  # (°C) TODO: include to building properties and get from building properties
+
+
         # here is where we plug in the models to use for calculations
-        self.models = {'calc-thermal-loads': functions.CalcThermalLoads}
+        self.models = {'calc-thermal-loads': contributions.thermal_loads_new_ventilation.thermal_loads.calc_thermal_loads_new_ventilation}  # functions.CalcThermalLoads or contributions.thermal_loads_new_ventilation.thermal_loads.calc_thermal_loads_new_ventilation
 
         # here is where we decide whether full excel reports of the calculations are generated
         self.testing = False  # if true: reports are generated, if false: not
