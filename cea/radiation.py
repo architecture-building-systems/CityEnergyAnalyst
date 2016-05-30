@@ -80,10 +80,9 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timez
     # calcuate daily transmissivity and daily diffusivity
     weather_data = epwreader.epw_reader(weather_path)[['dayofyear', 'exthorrad_Whm2', 'extdirrad_Whm2',
                                                        'glohorrad_Whm2', 'difhorrad_Whm2' ]]
-    weather_data['trr']= weather_data.exthorrad_Whm2/weather_data.extdirrad_Whm2
-    weather_data['diff'] =  weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
-    weather_data.replace(np.inf, 0, inplace=True)
     T_G_day = weather_data.groupby(['dayofyear']).mean()
+    T_G_day['trr']= T_G_day.exthorrad_Whm2/T_G_day.extdirrad_Whm2
+    T_G_day['diff'] =  T_G_day.difhorrad_Whm2 / T_G_day.glohorrad_Whm2
 
     # Simplify building's geometry
     elevRaster = arcpy.sa.Raster(locator.get_terrain())
@@ -129,7 +128,6 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timez
     gv.log('complete transformation radiation files')
 
     # Assign radiation to every surface of the buildings
-
     Data_radiation_path = CalcRadiationSurfaces(observers, DataFactorsCentroids,
                                                 DataradiationLocation, locator.get_temporary_folder(), path_arcgis_db)
 
@@ -267,7 +265,7 @@ def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, 
     zenithDivisions = '8'  # max 1400
     azimuthDivisions = '8'
     diffuseProp = str(T_G_day.loc[day, 'diff'])
-    transmittivity = str(T_G_day.loc[day, 'ttr'])
+    transmittivity = str(T_G_day.loc[day, 'trr'])
     heightoffset = str(heightoffset)
     global_radiation = locationtemp1 + '\\' + 'Day_' + str(day) + '.shp'
     timeConfig = 'WithinDay    ' + str(day) + ', 0, 24'
@@ -278,7 +276,7 @@ def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, 
                                   aspect_slope,
                                   calcDirections, zenithDivisions, azimuthDivisions, "STANDARD_OVERCAST_SKY",
                                   diffuseProp, transmittivity, "#", "#", "#")
-    gv.log('complete calculating radiation ' + timeConfig)
+    gv.log('complete calculating radiation of day No. ' + str(day))
     return arcpy.GetMessages()
 
 
