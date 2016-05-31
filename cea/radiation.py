@@ -15,6 +15,7 @@ import ephem
 import datetime
 import epwreader
 import pandas as pd
+import numpy as np
 import arcgisscripting
 from simpledbf import Dbf5
 
