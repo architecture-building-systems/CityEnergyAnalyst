@@ -80,9 +80,11 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timez
     # calcuate daily transmissivity and daily diffusivity
     weather_data = epwreader.epw_reader(weather_path)[['dayofyear', 'exthorrad_Whm2', 'extdirrad_Whm2',
                                                        'glohorrad_Whm2', 'difhorrad_Whm2' ]]
+    weather_data['trr'] = weather_data.exthorrad_Whm2/weather_data.extdirrad_Whm2
+    weather_data['diff'] = weather_data.difhorrad_Whm2 /weather_data.glohorrad_Whm2
+    weather_data = weather_data[np.isfinite(weather_data['trr'])]
+    weather_data = weather_data[np.isfinite(weather_data['diff'])]
     T_G_day = weather_data.groupby(['dayofyear']).mean()
-    T_G_day['trr']= T_G_day.exthorrad_Whm2/T_G_day.extdirrad_Whm2
-    T_G_day['diff'] =  T_G_day.difhorrad_Whm2 / T_G_day.glohorrad_Whm2
 
     # Simplify building's geometry
     elevRaster = arcpy.sa.Raster(locator.get_terrain())
@@ -260,12 +262,12 @@ def calc_radiation_day(day, sunrise, route):
 def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, locationtemp1, aspect_slope, heightoffset, gv):
     # Local Variables
     Latitude = str(latitude)
-    skySize = '1400'  # max 2400
+    skySize = '1800'  # max 2400
     dayInterval = '1'
     hourInterval = '1'
     calcDirections = '32'
-    zenithDivisions = '8'  # max 1400
-    azimuthDivisions = '8'
+    zenithDivisions = '1200'  # max 1400
+    azimuthDivisions = '160'
     diffuseProp = str(T_G_day.loc[day, 'diff'])
     transmittivity = str(T_G_day.loc[day, 'trr'])
     heightoffset = str(heightoffset)
