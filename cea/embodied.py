@@ -252,6 +252,7 @@ def test_lca_embodied():
     yearcalc = 2050
 
     lca_embodied(locator=locator, yearcalc=yearcalc, gv=gv)
+    print "test_lca_embodied() succeeded"
 
 if __name__ == '__main__':
     test_lca_embodied()
