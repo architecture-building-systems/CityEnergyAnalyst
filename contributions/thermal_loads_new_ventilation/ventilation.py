@@ -51,8 +51,6 @@ def calc_u_wind_site(u_wind_10):
     return f_wnd[ter_class] * u_wind_10
 
 
-
-
 def calc_rho_air(temp_air):
     """
     Calculation of density of air according to 6.4.2.1 in [1]
