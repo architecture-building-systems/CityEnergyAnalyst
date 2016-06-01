@@ -25,6 +25,33 @@ from scipy.optimize import minimize
 
 # ++++ GENERAL ++++
 
+def calc_u_wind_site(u_wind_10):
+    """
+    Adjusts meteorological wind velocity to site surroundings according to 6.4.2.2 in [1]
+
+    Parameters
+    ----------
+    u_wind_10 : meteorological wind velocity (m/s)
+
+    Returns
+    -------
+    u_wind_site : site wind velocity (m/s)
+    """
+
+    # terrain class of surroundings
+    # 0 = open
+    # 1 = rural
+    # 2 = urban
+    ter_class = 2  # TODO: move to globalvars
+
+    # factors from Table B.11 in B.1.4.1 in [1]
+    f_wnd = np.array([1.0, 0.9, 0.8])
+
+    # Equation (2) in [1]
+    return f_wnd[ter_class] * u_wind_10
+
+
+
 
 def calc_rho_air(temp_air):
     """
@@ -719,7 +746,7 @@ def calc_qm_arg(factor_cros, temp_ext, dict_windows_building, u_wind_10, temp_zo
 
 # ++++ MASS BALANCE ++++
 
-def calc_air_flow_mass_balance(p_zone_ref, temp_zone, u_wind_site, temp_ext, dict_props_nat_vent, option):
+def calc_air_flow_mass_balance(p_zone_ref, temp_zone, u_wind_10, temp_ext, dict_props_nat_vent, option):
     """
     Air flow mass balance for iterative calculation according to 6.4.3.9 in [1]
 
@@ -727,7 +754,7 @@ def calc_air_flow_mass_balance(p_zone_ref, temp_zone, u_wind_site, temp_ext, dic
     ----------
     p_zone_ref : zone reference pressure (Pa)
     temp_zone : air temperature in ventilation zone (°C)
-    u_wind_site : wind velocity (m/s)
+    u_wind_10 : meteorological wind velocity (m/s)
     temp_ext : exterior air temperature (°C)
     dict_props_nat_vent : dictionary containing natural ventilation properties of zone
     option : 'minimize' = returns sum of air mass flows, 'calculate' = returns air mass flows
@@ -737,6 +764,9 @@ def calc_air_flow_mass_balance(p_zone_ref, temp_zone, u_wind_site, temp_ext, dic
     sum of air mass flows in and out of zone in (kg/h)
 
     """
+
+    # adjust wind velocity
+    u_wind_site = calc_u_wind_site(u_wind_10)
 
     qm_sup_dis = 0
     qm_eta_dis = 0
