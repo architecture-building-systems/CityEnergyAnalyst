@@ -67,6 +67,7 @@ class GlobalVariables(object):
         # Comfort
         # ==============================================================================================================
         self.temp_comf_max = 26  # (°C) TODO: include to building properties and get from building properties
+        self.rhum_comf_max = 70  # (%)
 
 
         # here is where we plug in the models to use for calculations
