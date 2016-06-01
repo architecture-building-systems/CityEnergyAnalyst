@@ -15,15 +15,16 @@ import pandas as pd
 # for now get geometric properties of exposed facades from the radiation file
 def create_windows(df_prop_surfaces, gdf_building_architecture):
     """
+    Creates windows on exposed building surfaces according to building win-wall-ratio
 
     Parameters
     ----------
-    df_prop_surfaces
-    gdf_building_architecture
+    df_prop_surfaces : DataFrame containing all exposed building surfaces (from radiation calculation)
+    gdf_building_architecture : GeoDataFrame containing building architecture
 
     Returns
     -------
-
+    df_windows : DataFrame containing all windows of all buildings
     """
     # TODO: documentation
 

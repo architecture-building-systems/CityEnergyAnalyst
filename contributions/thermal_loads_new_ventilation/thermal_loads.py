@@ -79,20 +79,22 @@ def calc_h_ve_adj(q_m_mech, q_m_nat, temp_ext, temp_sup, temp_zone_set, gv):
     ----------
     q_m_mech : air mass flow from mechanical ventilation (kg/s)
     q_m_nat : air mass flow from windows and leakages and other natural ventilation (kg/s)
-    temp_ext
-    temp_sup
-    temp_zone_set
-    gv
+    temp_ext : exterior air temperature (°C)
+    temp_sup : ventilation system supply air temperature (°C), e.g. after HEX
+    temp_zone_set : zone air temperature set point (°C)
+    gv : globalvars
 
     Returns
     -------
-    Hve in (W/K)
+    Hve,adj in (W/K)
 
     """
 
     c_p_air = gv.Cpa  # (kJ/(kg*K)) # TODO: maybe dynamic heat capacity of air f(temp)
+
     if abs(temp_sup - temp_ext) == 0:
         b_mech = 1
+
     else:
         eta_hru = (temp_sup - temp_ext) / (temp_zone_set - temp_ext)  # Eq. (28) in ISO 13970
         frac_hru = 1
@@ -108,23 +110,26 @@ def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, sys_e_heating, sys_e_co
 
     Parameters
     ----------
-    ve
-    people
-    Af
-    gv
-    hour_day
-    hour_year
-    sys_e_heating
-    sys_e_cooling
+    ve : required ventilation rate according to schedule (?)
+    people : occupancy schedules (pax?)
+    Af : conditioned floor area (m2)
+    gv : globalvars
+    hour_day : hour of the day [0..23]
+    hour_year : hour of the year [0..8760]
+    sys_e_heating : heating emissions system type
+    sys_e_cooling : cooling emission system type
 
     Returns
     -------
-
+    q_req : required ventilation rate schedule (m3/s)
     """
+    # TODO: check units
 
+    # 'flat rate' infiltration only considered for mechanically ventilated buildings
     if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
         infiltration_occupied = gv.hf * gv.NACH_inf_occ  # m3/h.m2
         infiltration_non_occupied = gv.hf * gv.NACH_inf_non_occ  # m3/h.m2
+
     else:
         infiltration_occupied = 0
         infiltration_non_occupied = 0
@@ -136,6 +141,7 @@ def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, sys_e_heating, sys_e_co
             q_req = (ve * 1.3 + (infiltration_non_occupied * Af)) / 3600  # free cooling
         else:
             q_req = (ve + (infiltration_non_occupied * Af)) / 3600  #
+
     return q_req  # m3/s
 
 
@@ -152,21 +158,34 @@ def calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_
     Parameters
     ----------
     t : time step, hour of year [0..8760]
-    thermal_loads_input :
-    weather_data :
-    state_prev :
-    gv :
+    thermal_loads_input : object of type ThermalLoadsInput
+    weather_data : data from epw weather file
+    state_prev : dict containing air and mass temperatures of previous calculation time step
+    gv : globalvars
 
     Returns
     -------
-    temp_m, temp_a, q_hs_sen, q_cs_sen, uncomfort, temp_op, i_m_tot, q_hs_sen_hvac, q_cs_sen_hvac, q_hum_hvac,
-     q_dhum_hvac, e_hum_aux_hvac, q_ve_loss, qm_ve_mech
+    temp_m
+    temp_a
+    q_hs_sen
+    q_cs_sen
+    uncomfort
+    temp_op
+    i_m_tot
+    q_hs_sen_hvac
+    q_cs_sen_hvac
+    q_hum_hvac
+    q_dhum_hvac
+    e_hum_aux_hvac
+    q_ve_loss
+    qm_ve_mech
     """
 
     # get arguments from inputs
     temp_ext = np.array(weather_data.drybulb_C)[t]
     rh_ext = np.array(weather_data.relhum_percent)[t]
 
+    # TODO: replace by getter methods
     qm_ve_req = thermal_loads_input._qm_ve_req[t]
     temp_hs_set = thermal_loads_input._temp_hs_set[t]
     temp_cs_set = thermal_loads_input._temp_cs_set[t]
@@ -194,29 +213,53 @@ def calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_
     h_tr_w = thermal_loads_input._prop_rc_model.Htr_w
     h_tr_em = thermal_loads_input._prop_rc_model.Htr_em
 
+    # initialize output
+    q_hs_sen = None
+    q_cs_sen = None
+    q_hs_sen_loss_true = None
+    q_cs_sen_loss_true = None
+    temp_m = None
+    temp_a = None
+    uncomfort = None
+    temp_op = None
+    i_m_tot = None
+    q_hs_sen_hvac = None
+    q_cs_sen_hvac = None
+    q_hum_hvac = None
+    q_dhum_hvac = None
+    e_hum_aux_hvac = None
+    q_ve_loss = None
+
+    # ==================================================================================================================
+    # ITERATION
+    # ==================================================================================================================
+
     # first guess of mechanical ventilation mass flow rate and supply temperature for ventilation losses
     qm_ve_mech = qm_ve_req  # required air mass flow rate
     qm_ve_nat = 0  # natural ventilation # TODO: this could be a fixed percentage of the mechanical ventilation (overpressure) as a function of n50
+
     temp_ve_sup = hvac_kaempf.calc_hex(rh_ext, gv, qv_mech=(qm_ve_req / gv.Pair), qv_mech_dim=0, temp_ext=temp_ext,
                                        temp_zone_prev=temp_air_prev, timestep=t)[0]
 
+    # conversion to volume flow rate
     qv_ve_req = qm_ve_req / gv.Pair  # TODO: modify Kaempf model to accept mass flow rate instead of volume flow
 
+    # TODO: review iteration parameters
     rel_diff_qm_ve_mech = 1  # initialisation of difference for while loop
     abs_diff_qm_ve_mech = 1
     rel_tolerance = 0.05  # 5% change  # TODO review tolerance
     abs_tolerance = 0.01  # 10g/s air flow  # TODO  review tolerance
     hvac_status_prev = 0  # system is turned OFF
-    switch = 0
+    switch = 0  # number of 'ON'/'OFF' switches of HVAC system during iteration to prevent an infinite loop
 
     # iterative loop to determine air mass flows and supply temperatures of the hvac system
     while (abs_diff_qm_ve_mech > abs_tolerance) and (rel_diff_qm_ve_mech > rel_tolerance) and switch < 10:
 
         # Hve
-        h_ve = calc_h_ve_adj(qm_ve_mech, qm_ve_nat, temp_ext, temp_ve_sup, temp_air_prev, gv)  # TODO
+        h_ve_adj = calc_h_ve_adj(qm_ve_mech, qm_ve_nat, temp_ext, temp_ve_sup, temp_air_prev, gv)  # TODO
 
         # Htr1, Htr2, Htr3
-        h_tr_1, h_tr_2, h_tr_3 = functions.calc_Htr(h_ve, h_tr_is, h_tr_ms, h_tr_w)
+        h_tr_1, h_tr_2, h_tr_3 = functions.calc_Htr(h_ve_adj, h_tr_is, h_tr_ms, h_tr_w)
 
         # TODO: adjust calc TL function to new way of losses calculation (adjust input parameters)
         Losses = True  # including emission and control losses for the iteration of air mass flow rate
@@ -229,11 +272,9 @@ def calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_
         uncomfort_loss_true, \
         temp_op_loss_true, \
         i_m_tot_loss_true = functions.calc_TL(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
-                                              temp_cs_set,
-                                              h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve, h_tr_w,
-                                              i_ia, i_m,
-                                              cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max,
-                                              flag_season)
+                                              temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st,
+                                              h_ve_adj, h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr,
+                                              temp_cs_set_corr, i_c_max, i_h_max, flag_season)
 
         # calculate sensible heat load
         Losses = False  # Losses are set to false for the calculation of the sensible heat load and actual temperatures
@@ -245,14 +286,13 @@ def calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_
         uncomfort, \
         temp_op, \
         i_m_tot = functions.calc_TL(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set, temp_cs_set,
-                                    h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve, h_tr_w, i_ia,
-                                    i_m, cm,
-                                    area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max,
+                                    h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve_adj, h_tr_w, i_ia,
+                                    i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max,
                                     flag_season)
+        # TODO: in the original calculation procedure this is calculated with another temp_m_prev (with and without losses), check if this is correct or not
 
         # ventilation losses
-        q_ve_loss = h_ve * (temp_a - temp_ext)
-        # q_ve_loss = qm_ve_mech * gv.Cpa * (temp_a - temp_ve_sup) * 1000  # (W/s) # TODO make air heat capacity dynamic
+        q_ve_loss = h_ve_adj * (temp_a - temp_ext)  # not used in calculation
 
         # HVAC supplies load if zone has load
         if q_hs_sen > 0:
@@ -296,6 +336,7 @@ def calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_
         temp_ve_sup = np.nanmax([temp_rec_h, temp_rec_c])
 
         # compare mass flow rates
+        # evaluate while statement of loop
         abs_diff_qm_ve_mech = abs(qm_ve_hvac - qm_ve_mech)
         rel_diff_qm_ve_mech = abs_diff_qm_ve_mech / qm_ve_mech
         if hvac_status_prev != hvac_status:
@@ -333,10 +374,10 @@ def calc_thermal_load_mechanical_ventilation_timestep(t, thermal_loads_input, we
     Parameters
     ----------
     t : time step, hour of year [0..8760]
-    thermal_loads_input :
-    weather_data :
-    state_prev :
-    gv :
+    thermal_loads_input : object of type ThermalLoadsInput
+    weather_data : data from epw weather file
+    state_prev : dict containing air and mass temperatures of previous calculation time step
+    gv : globalvars
 
     Returns
     -------
@@ -410,6 +451,7 @@ def calc_thermal_load_mechanical_ventilation_timestep(t, thermal_loads_input, we
                                           temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve,
                                           h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr,
                                           i_c_max, i_h_max, flag_season)
+    # TODO: in the original calculation procedure this is calculated with another temp_m_prev (with and without losses), check if this is correct or not
 
     # calculate emission losses
     # emission losses only if heating system or cooling system is in operation (q_hs_sen > 0 or q_cs_sen < 0)
@@ -442,12 +484,12 @@ def calc_thermal_load_natural_ventilation_timestep(t, thermal_loads_input, weath
     Parameters
     ----------
     t : time step, hour of year [0..8760]
-    thermal_loads_input :
-    weather_data :
-    dict_windows_building :
-    dict_props_nat_vent :
-    state_prev :
-    gv :
+    thermal_loads_input : object of type ThermalLoadsInput
+    weather_data : data from epw weather file
+    dict_windows_building : dict containing window properties of building
+    dict_props_nat_vent : : dict containing natural ventilation properties of building
+    state_prev : dict containing air and mass temperatures of previous calculation time step
+    gv : globalvars
 
     Returns
     -------
@@ -457,7 +499,6 @@ def calc_thermal_load_natural_ventilation_timestep(t, thermal_loads_input, weath
 
     # get arguments from input
     temp_ext = np.array(weather_data.drybulb_C)[t]
-    rh_ext = np.array(weather_data.relhum_percent)[t]
     u_wind = np.array(weather_data.windspd_ms)[t]
 
     qm_ve_req = thermal_loads_input._qm_ve_req[t]
@@ -480,7 +521,6 @@ def calc_thermal_load_natural_ventilation_timestep(t, thermal_loads_input, weath
     temp_air_prev = state_prev['temp_air_prev']
     temp_m_prev = state_prev['temp_m_prev']
 
-    # dict_props_nat_vent # FIXME: this is quite problematic, as it is not clear visible that this is needed in ventilation.calc_air_flows(...,locals()
     factor_cros = dict_props_nat_vent['factor_cros']
 
     # get constant properties of building R-C-model
@@ -489,23 +529,33 @@ def calc_thermal_load_natural_ventilation_timestep(t, thermal_loads_input, weath
     h_tr_w = thermal_loads_input._prop_rc_model.Htr_w
     h_tr_em = thermal_loads_input._prop_rc_model.Htr_em
 
+    # initialize output
+    temp_m = None
+    temp_a = None
+
+    # ==================================================================================================================
+    # ITERATION
+    # ==================================================================================================================
+
     # qm_ve_req = qv_req * ventilation.calc_rho_air(temp_ext)  # TODO
     qm_ve_mech = 0  # mechanical ventilation mass flow rate
 
     # test if ventilation from infiltration is already enough to satisfy the requirements
+    qm_arg_in = 0  # test ventilation with closed windows
 
-    qm_arg_in = qm_arg_out = 0  # test ventilation with closed windows
     # infiltration and ventilation openings
     qm_ve_in, qm_ve_out = ventilation.calc_air_flows(temp_air_prev, u_wind, temp_ext, dict_props_nat_vent)  # (kg/h)
     qm_ve_nat_tot = (qm_ve_in + qm_arg_in) / 3600  # total natural ventilation mass flow rate (kg/s)
 
-    # if building has windows
+    # if building has windows: open windows to satisfy required ventilation rate
     if dict_windows_building:
-        status_windows = np.array([0.01, 0.05, 0.1, 0.2, 0.5])
+
+        status_windows = np.array([0.01, 0.05, 0.1, 0.2, 0.5])  # window opening steps assumed # TODO: find source
 
         # test if air flows satisfy requirements
-
+        # **************************************
         index_window_opening = 0
+
         while qm_ve_nat_tot < qm_ve_req and index_window_opening < status_windows.size:
             # increase window opening
             # print('increase window opening')
@@ -520,11 +570,11 @@ def calc_thermal_load_natural_ventilation_timestep(t, thermal_loads_input, weath
 
             index_window_opening += 1
 
-        # calculate h_ve
-        h_ve = calc_h_ve_adj(qm_ve_mech, qm_ve_nat_tot, temp_ext, temp_ext, temp_air_prev, gv)  # (kJ/(hK))
+        # calculate h_ve_adj
+        h_ve_adj = calc_h_ve_adj(qm_ve_mech, qm_ve_nat_tot, temp_ext, temp_ext, temp_air_prev, gv)  # (kJ/(hK))
 
         # calculate htr1, htr2, htr3
-        h_tr_1, h_tr_2, h_tr_3 = functions.calc_Htr(h_ve, h_tr_is, h_tr_ms, h_tr_w)
+        h_tr_1, h_tr_2, h_tr_3 = functions.calc_Htr(h_ve_adj, h_tr_is, h_tr_ms, h_tr_w)
 
         # calculate air temperature with emission and control losses
         Losses = False  # TODO: adjust calc TL function to new way of losses calculation (adjust input parameters)
@@ -537,11 +587,12 @@ def calc_thermal_load_natural_ventilation_timestep(t, thermal_loads_input, weath
         uncomfort, \
         temp_op, \
         i_m_tot = functions.calc_TL(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set, temp_cs_set,
-                                    h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve, h_tr_w, i_ia, i_m,
+                                    h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve_adj, h_tr_w, i_ia, i_m,
                                     cm,
                                     area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max, flag_season)
 
         # test for overheating
+        # ********************
         while temp_ext < gv.temp_comf_max < temp_a and index_window_opening < status_windows.size:
             # increase window opening to prevent overheating
             # print('increase window opening to prevent over heating')
@@ -556,12 +607,13 @@ def calc_thermal_load_natural_ventilation_timestep(t, thermal_loads_input, weath
 
             index_window_opening += 1
 
-            # calculate h_ve
-            h_ve = calc_h_ve_adj(qm_ve_mech, qm_ve_nat_tot, temp_ext, temp_ext, temp_air_prev, gv)  # (kJ/(hK))
+            # calculate h_ve_adj
+            h_ve_adj = calc_h_ve_adj(qm_ve_mech, qm_ve_nat_tot, temp_ext, temp_ext, temp_air_prev, gv)  # (kJ/(hK))
 
             # calculate htr1, htr2, htr3
-            h_tr_1, h_tr_2, h_tr_3 = functions.calc_Htr(h_ve, h_tr_is, h_tr_ms, h_tr_w)
+            h_tr_1, h_tr_2, h_tr_3 = functions.calc_Htr(h_ve_adj, h_tr_is, h_tr_ms, h_tr_w)
 
+            Losses = False
             # calc_TL()
             temp_m, \
             temp_a, \
@@ -570,21 +622,20 @@ def calc_thermal_load_natural_ventilation_timestep(t, thermal_loads_input, weath
             uncomfort, \
             temp_op, \
             i_m_tot = functions.calc_TL(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set, temp_cs_set,
-                                        h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve, h_tr_w, i_ia,
+                                        h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve_adj, h_tr_w, i_ia,
                                         i_m,
                                         cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max,
                                         flag_season)
 
-    # no windows
+    # building has no windows
     elif not dict_windows_building:
-        # calculate h_ve
-        h_ve = calc_h_ve_adj(qm_ve_mech, qm_ve_nat_tot, temp_ext, temp_ext, temp_air_prev, gv)  # (kJ/(hK))
+        # calculate h_ve_adj
+        h_ve_adj = calc_h_ve_adj(qm_ve_mech, qm_ve_nat_tot, temp_ext, temp_ext, temp_air_prev, gv)  # (kJ/(hK))
 
         # calculate htr1, htr2, htr3
-        h_tr_1, h_tr_2, h_tr_3 = functions.calc_Htr(h_ve, h_tr_is, h_tr_ms, h_tr_w)
+        h_tr_1, h_tr_2, h_tr_3 = functions.calc_Htr(h_ve_adj, h_tr_is, h_tr_ms, h_tr_w)
 
         Losses = False
-
         # calc_TL()
         temp_m, \
         temp_a, \
@@ -593,12 +644,25 @@ def calc_thermal_load_natural_ventilation_timestep(t, thermal_loads_input, weath
         uncomfort, \
         temp_op, \
         i_m_tot = functions.calc_TL(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set, temp_cs_set,
-                                    h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve, h_tr_w, i_ia,
+                                    h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve_adj, h_tr_w, i_ia,
                                     i_m, cm,
                                     area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max,
                                     flag_season)
+    # default
+    else:
+        h_tr_1 = None
+        h_tr_2 = None
+        h_tr_3 = None
+        h_ve_adj = None
+        q_hs_sen = None
+        q_cs_sen = None
+        uncomfort = None
+        temp_op = None
+        i_m_tot = None
+        print('Warning: unsupported format of dict_windows_building')
+        print(dict_windows_building)
 
-    # calculate sensible heat load with Losses = False
+    # calculate sensible heat load with Losses = True
     Losses = True
     temp_m_loss_true, \
     temp_a_loss_true, \
@@ -608,10 +672,11 @@ def calc_thermal_load_natural_ventilation_timestep(t, thermal_loads_input, weath
     temp_op_loss_true, \
     i_m_tot_loss_true = functions.calc_TL(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
                                           temp_cs_set,
-                                          h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve, h_tr_w, i_ia,
+                                          h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve_adj, h_tr_w, i_ia,
                                           i_m, cm,
                                           area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max,
                                           flag_season)
+    # TODO: in the original calculation procedure this is calculated with another temp_m_prev (with and without losses), check if this is correct or not
 
     # calculate emission losses
     # emission losses only if heating system or cooling system is in operation (q_hs_sen > 0 or q_cs_sen < 0)
@@ -632,7 +697,25 @@ def calc_thermal_load_natural_ventilation_timestep(t, thermal_loads_input, weath
 
 def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, usage_schedules, date, gv,
                                        locationFinal, path_temporary_folder):
-    """ calculates thermal loads of single buildings with mechanical or natural ventilation"""
+    """
+    Calculates thermal loads of a single building with mechanical or natural ventilation.
+    Calculation procedure follows the methodology of ISO 13790
+
+    Parameters
+    ----------
+    Name : name of building
+    building_properties : object of type BuildingProperties containing building properties
+    weather_data : data from epw weather file
+    usage_schedules : dict containing schedules and function names of buildings
+    date :
+    gv : globalvar
+    locationFinal : path to results folder
+    path_temporary_folder : path to temporary folder
+
+    Returns
+    -------
+
+    """
 
     # get function inputs from object
     prop_occupancy = building_properties.get_prop_occupancy(Name)
