@@ -165,20 +165,8 @@ def calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_
 
     Returns
     -------
-    temp_m
-    temp_a
-    q_hs_sen
-    q_cs_sen
-    uncomfort
-    temp_op
-    i_m_tot
-    q_hs_sen_hvac
-    q_cs_sen_hvac
-    q_hum_hvac
-    q_dhum_hvac
-    e_hum_aux_hvac
-    q_ve_loss
-    qm_ve_mech
+    temp_m, temp_a, q_hs_sen_loss_true, q_cs_sen_loss_true, uncomfort, temp_op, i_m_tot, q_hs_sen_hvac, q_cs_sen_hvac,
+    q_hum_hvac, q_dhum_hvac, e_hum_aux_hvac, q_ve_loss, qm_ve_mech, q_hs_sen, q_cs_sen, qhs_em_ls, qcs_em_ls
     """
 
     # get arguments from inputs
