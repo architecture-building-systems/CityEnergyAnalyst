@@ -79,13 +79,15 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timez
     sunrise = calc_sunrise(range(1,366), year, longitude, latitude, gv)
 
     # calcuate daily transmissivity and daily diffusivity
-    weather_data = epwreader.epw_reader(weather_path)[['dayofyear', 'exthorrad_Whm2', 'extdirrad_Whm2',
-                                                       'glohorrad_Whm2', 'difhorrad_Whm2' ]]
-    weather_data['trr'] = weather_data.exthorrad_Whm2/weather_data.extdirrad_Whm2
+    weather_data = epwreader.epw_reader(weather_path)[['dayofyear', 'exthorrad_Whm2',
+                                                       'glohorrad_Whm2', 'difhorrad_Whm2']]
     weather_data['diff'] = weather_data.difhorrad_Whm2 /weather_data.glohorrad_Whm2
-    weather_data = weather_data[np.isfinite(weather_data['trr'])]
     weather_data = weather_data[np.isfinite(weather_data['diff'])]
-    T_G_day = weather_data.groupby(['dayofyear']).mean()
+    T_G_day = np.round(weather_data.groupby(['dayofyear']).mean(),2)
+    T_G_day['diff'] = T_G_day['diff'].replace(1,0.90)
+    T_G_day['trr'] = (1 - T_G_day['diff'])
+
+    #T_G_day.to_csv(r'C:\Users\Jimeno\Documents/test4.csv')
 
     # Simplify building's geometry
     elevRaster = arcpy.sa.Raster(locator.get_terrain())
@@ -167,7 +169,7 @@ def CalcIncidentRadiation(path_radiation_data, path_radiation_year_final, surfac
     for column in column_names:
         radiation_load[column] = grouped_data_frames[column][column]
 
-    incident_radiation = radiation_load[column_names]
+    incident_radiation = np.round(radiation_load[column_names],2)
     incident_radiation.to_csv(path_radiation_year_final)
 
     return  # total solar radiation in areas exposed to radiation in Watts
@@ -208,7 +210,7 @@ def CalcRadiationSurfaces(Observers, DataFactorsCentroids, DataradiationLocation
 
 
 def calc_radiation_day(day, sunrise, route):
-    radiation_sunnyhours = Dbf5(route + '\\' + 'Day_' + str(day) + '.dbf').to_dataframe()
+    radiation_sunnyhours = np.round(Dbf5(route + '\\' + 'Day_' + str(day) + '.dbf').to_dataframe(),2)
 
     # Obtain the number of points modeled to do the iterations
     radiation_sunnyhours['ID'] = 0
@@ -263,12 +265,12 @@ def calc_radiation_day(day, sunrise, route):
 def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, locationtemp1, aspect_slope, heightoffset, gv):
     # Local Variables
     Latitude = str(latitude)
-    skySize = '1800'  # max 2400
+    skySize = '1400' #max 10000
     dayInterval = '1'
     hourInterval = '1'
     calcDirections = '32'
-    zenithDivisions = '1200'  # max 1400
-    azimuthDivisions = '160'
+    zenithDivisions = '600'  # max 1200cor hlaf the skysize
+    azimuthDivisions = '80' #max 160
     diffuseProp = str(T_G_day.loc[day, 'diff'])
     transmittivity = str(T_G_day.loc[day, 'trr'])
     heightoffset = str(heightoffset)
@@ -276,7 +278,6 @@ def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, 
     timeConfig = 'WithinDay    ' + str(day) + ', 0, 24'
 
     # Run the extension of arcgis
-    gv.log('start calculating radiation ' + timeConfig)
     arcpy.sa.PointsSolarRadiation(in_surface_raster, in_points_feature, global_radiation, heightoffset,
                                   Latitude, skySize, timeConfig, dayInterval, hourInterval, "INTERVAL", "1",
                                   aspect_slope,
