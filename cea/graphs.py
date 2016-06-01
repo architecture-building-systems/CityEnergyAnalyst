@@ -75,6 +75,7 @@ def test_graph_demand():
     import globalvar
     gv = globalvar.GlobalVariables()
     graphs_demand(locator=locator, analysis_fields=analysis_fields, gv=gv)
+    print 'test_graph_demand() succeeded'
 
 if __name__ == '__main__':
     test_graph_demand()

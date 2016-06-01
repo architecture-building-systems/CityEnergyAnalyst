@@ -154,7 +154,7 @@ def test_lca_operation():
                   Qcrefri_flag=Qcrefri_flag, Eal_flag=Eal_flag, Eaux_flag=Eaux_flag, Epro_flag=Epro_flag,
                   Edata_flag=Edata_flag)
 
-    print 'test_properties() succeeded'
+    print 'test_lca_operation() succeeded'
 
 if __name__ == '__main__':
     test_lca_operation()
