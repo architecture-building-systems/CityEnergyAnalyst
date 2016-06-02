@@ -1,0 +1,80 @@
+@article{Fu,
+	author = "G. Fu and Z. Kapelan and P. Reed",
+	journal = "Journal of Water Resources Planning and Management",
+	title = "Reducing the Complexity of multiobjective water distribution system optimization through global sensitivity analysis",
+	year = "2012"
+}
+
+@article{Cunha,
+	author = "M. Cunha and J. Sousa",
+	journal = "Journal of Water Resources Planning and Management",
+	title = "Water distribution network design optimization: simulated annealing approach",
+	year = "1999"
+}
+
+@article{Bragalli,
+	author = "C. Bragalli and C. D'Ambrosio and J. Lee and A. Lopi and P. Toth",
+	journal = "IBM Research Report",
+	title = "Water network design by {MILP}",
+	year = "2008"
+}
+
+@article{Djebedjian,
+	author = "B. Djebedjian and A. Yaseen and M. Rayan",
+	journal = "Tenth International Water Technology Conference, IWTC10 2006, Alexandira, Egypt ",
+	title = "Optimization of large water distribution network design using genetic algorithm",
+	year = "2006"
+}
+
+
+
+@Misc{petsc-web-page,
+	author = "S. Balay and J. Brown and K. Buschelman and W. D. Gropp and D. Kaushik and M. G. Knepley and L. C. McInnes and B. F. Smith and H. Zhang",
+	title = "{PETS}c web page",
+	note = "\url{http://www.mcs.anl.gov/petsc}",
+	year = "2013"
+}
+
+@Misc{hypre-web-page,
+  title = "hypre web page",
+  note = "\url{http://www.llnl.gov/CASC/hypre}",
+  year = "2013"
+}
+
+@Book{Rasmussen:2006a,
+	author = "C. E. Rasmussen and C. K. I. Williams",
+	publisher = "MIT Press",
+	title = "Gaussian processes for machine learning",
+	year = "2006"
+}
+
+@techreport{Efendiev:2012a,
+    author = "Y. Efendiev and O. Iliev and C. Kronsbein",
+    title = "Multi-level {M}onte {C}arlo methods using ensemble level mixed {M}s{FEM} for two-phase flow and transport simulations",
+    institution = "Fraunhofer",
+    type = "ITWM report",
+    number = "217",
+    year = "2012"
+}
+
+@article{Jenny:2009a,
+    Author = "P. Jenny and H. A. Tchelepi and S. H. Lee",
+    Title = "Unconditionally convergent nonlinear solver for hyperbolic conservation laws with {S}-shaped flux functions",
+    journal = "Journal of Computational Physics",
+    Volume = "228",
+    Number = "20",
+    Pages = "7497--7512",
+    Year = "2009"
+}
+
+@article{Mueller:2013a,
+    author = "F. M{\"u}ller and P. Jenny and D. W. Meyer",
+    title = "Multilevel {M}onte {C}arlo for two phase flow and {B}uckley-{L}everett transport in random heterogeneous porous media",
+    journal = "Journal of Computational Physics",
+    volume = "250",
+    number = "0",
+    pages = "685--702",
+    year = "2013",
+}
+
+
