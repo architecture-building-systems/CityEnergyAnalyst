@@ -242,6 +242,7 @@ def test_demand():
     weather_path = locator.get_default_weather()
     gv = globalvar.GlobalVariables()
     demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
+    print "test_demand() succeeded"
 
 
 if __name__ == '__main__':
