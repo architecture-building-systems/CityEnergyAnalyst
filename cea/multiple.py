@@ -9,7 +9,6 @@ J. Fonseca  script development and cleaning          10.18.15
 from __future__ import division
 import pandas as pd
 import globalvar
-reload(globalvar)
 import arcpy
 import tempfile
 import os
@@ -19,6 +18,17 @@ import emissions
 import embodied
 import heatmaps
 
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
+
+reload(globalvar)
 reload(heatmaps)
 reload(embodied)
 reload(properties)
