@@ -21,6 +21,7 @@ def plot_scenarios(scenarios_root, output_file):
                 os.listdir(scenarios_root) if os.path.isdir(os.path.join(scenarios_root))]
 
     plot_config = {
+        '_pages': ['Demand', 'LCA Embodied', 'LCA Operation'],
         'Demand': {'columns': ['Ef_MWhyr', 'QHf_MWhyr', 'QCf_MWhyr'],
                    'titles': ['Ef_MWhyr', 'QHf_MWhyr', 'QCf_MWhyr'],
                    'locator_method': 'get_total_demand'},
@@ -32,35 +33,38 @@ def plot_scenarios(scenarios_root, output_file):
                          'locator_method': 'get_lca_operation'},
     }
 
-    nrows = sum(len(plot_config[prefix]['columns']) for prefix in plot_config.keys())
-    fig, axes = plt.subplots(nrows=nrows, figsize=(10, 30))
+    from matplotlib.backends.backend_pdf import PdfPages
+    with PdfPages(output_file) as pdf:
+        for prefix in plot_config['_pages']:
+            rows = len(plot_config[prefix]['columns'])
+            fig, axes = plt.subplots(nrows=rows, figsize=(8.27, 11.69))
+            dfs = read_scenario_data(locators, prefix, plot_config[prefix])
+            plt.suptitle(prefix)
 
-    dfs = {}
-    for prefix in plot_config.keys():
-        dfs.update(read_scenario_data(locators, prefix, plot_config[prefix]))
+            for i, key in enumerate(sorted(dfs.keys())):
+                ax2 = axes[i].twinx()
+                dfs[key].boxplot(ax=axes[i], sym='')
+                y = dfs[key].sum().ravel()
+                x = axes[i].get_xticks()
+                ax2.set_ylim(bottom=0, top=max(y) * 1.1)
+                plt.scatter(x, y, marker='D', color='g')
+                axes[i].set_title(key)
 
-    for i, key in enumerate(sorted(dfs.keys())):
-        dfs[key].boxplot(ax=axes[i], sym='')
-        axes[i].set_title(key)
+            fig.subplots_adjust(hspace=0.5)
+            pdf.savefig()
+            plt.close()
 
-    fig.subplots_adjust(hspace=0.5)
-
-    # save to pdf
-    plt.savefig(output_file)
-    plt.clf()
-    plt.close()
 
 
 def read_scenario_data(locators, prefix, config):
-    dfs = {'%s:%s' % (prefix, key): pd.DataFrame() for key in config['columns']}
+    dfs = {key: pd.DataFrame() for key in config['columns']}
     for locator in locators:
         scenario_name = os.path.basename(locator.scenario_path)
         data_path = getattr(locator, config['locator_method'])()
         if os.path.exists(data_path):
             df = pd.read_csv(data_path)
             for key in config['columns']:
-                df_name = '%s:%s' % (prefix, key)
-                dfs[df_name][scenario_name] = df[key]
+                dfs[key][scenario_name] = df[key]
     return dfs
 
 
