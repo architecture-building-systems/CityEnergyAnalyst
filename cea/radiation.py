@@ -20,7 +20,7 @@ import arcgisscripting
 from simpledbf import Dbf5
 
 
-def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, timezone, year, gv, weather_path):
+def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year, gv, weather_path):
     """
     algorithm to calculate the hourly solar isolation in vertical building surfaces.
     The algorithm is based on the Solar Analyst Engine of ArcGIS 10.
