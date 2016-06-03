@@ -371,6 +371,40 @@ class GraphsDemandTool(object):
         cea.benchmark.benchmark(scenario_path = scenario_path, scenario_names = analysis_scenarios, gv = gv)
         return
 
+class GraphsBenchmarkTool(object):
+    def __init__(self):
+        self.label = 'Benchmark graphs'
+        self.description = 'Create benchmark plots of scenarios in a folder'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenarios = arcpy.Parameter(
+            displayName="Path to the scenarios to plot",
+            name="scenarios",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input",
+            multiValue=True)
+        output_file = arcpy.Parameter(
+            displayName="Path to output PDF",
+            name="output_file",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Output")
+        output_file.filter.list = ['pdf']
+        return [scenarios, output_file]
+
+    def execute(self, parameters, messages):
+        scenarios = parameters[0].valueAsText.split(';')
+        output_file = parameters[1].valueAsText
+
+        arcpy.AddMessage(scenarios)
+
+        import cea.benchmark
+        reload(cea.benchmark)
+        locator_list = [inputlocator.InputLocator(scenario) for scenario in scenarios]
+        cea.benchmark.benchmark(locator_list = locator_list, output_file = output_file)
+        return
 
 class GraphsBenchmarkTool(object):
 

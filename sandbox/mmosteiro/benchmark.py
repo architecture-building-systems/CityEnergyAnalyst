@@ -14,7 +14,7 @@ import numpy as np
 import os
 import tempfile
 
-def benchmark(locator_list, gv):
+def benchmark(locator_list, output_file):
     """
     algorithm to print graphs in PDF concerning the 2000 Watt society benchmark 
     for two scenarios (A and B)
@@ -24,6 +24,7 @@ def benchmark(locator_list, gv):
 
     :param locator: an array of InputLocator set to each first scenario to be computed
     :type locator: inputlocator.InputLocator
+    :param output_file: the filename (pdf) to save the results as.
 
     Returns
     -------
@@ -97,7 +98,7 @@ def benchmark(locator_list, gv):
                fontsize=15, numpoints=1)
     '''
     # save to disk
-    plt.savefig(locator_list[0].get_benchmark_plots_file())
+    plt.savefig(output_file)
     plt.clf()
     plt.close()
 
@@ -206,9 +207,10 @@ def test_benchmark():
     locatorA = ExtendInputLocator(scenario_path=r'C:\reference-case\baseline')
     locatorB = ExtendInputLocator(scenario_path=r'C:\reference-case\scenario')
     locator_list = [locatorA,locatorB]
+    output_file = r'C:\reference-case\benchmark-plots\Test.pdf'
     from cea import globalvar
     gv = globalvar.GlobalVariables()
-    benchmark(locator_list = locator_list, gv=gv)
+    benchmark(locator_list = locator_list, output_file = output_file)
 
 def test_benchmark_targets():
     # HINTS FOR ARCGIS INTERFACE:
