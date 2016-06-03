@@ -11,12 +11,19 @@ J. Fonseca  new development             13.04.16
 from __future__ import division
 import pandas as pd
 import numpy as np
-import os
 import globalvar
 import inputlocator
 from geopandas import GeoDataFrame as gpdf
 
-gv = globalvar.GlobalVariables()
+
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
 
 def lca_embodied(yearcalc, locator, gv):
@@ -251,7 +258,10 @@ def test_lca_embodied():
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
     yearcalc = 2050
 
+    gv = globalvar.GlobalVariables()
+
     lca_embodied(locator=locator, yearcalc=yearcalc, gv=gv)
+    print "test_lca_embodied() succeeded"
 
 if __name__ == '__main__':
     test_lca_embodied()

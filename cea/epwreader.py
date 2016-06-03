@@ -10,6 +10,15 @@ J. A. Fonseca  adaptation for CEA tool     18.05.16
 import pandas as pd
 import inputlocator
 
+__author__ = "Clayton Miller"
+__copyright__ = "Copyright 2014, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Clayton Miller", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
 def epw_reader(weather_path):
 
     epw_labels = ['year', 'month', 'day', 'hour', 'minute', 'datasource', 'drybulb_C', 'dewpoint_C', 'relhum_percent',
