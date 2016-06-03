@@ -13,6 +13,17 @@ import pandas as pd
 from geopandas import GeoDataFrame as gpdf
 import inputlocator
 
+
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
+
 reload(inputlocator)
 
 
@@ -154,7 +165,7 @@ def test_lca_operation():
                   Qcrefri_flag=Qcrefri_flag, Eal_flag=Eal_flag, Eaux_flag=Eaux_flag, Epro_flag=Epro_flag,
                   Edata_flag=Edata_flag)
 
-    print 'test_properties() succeeded'
+    print 'test_lca_operation() succeeded'
 
 if __name__ == '__main__':
     test_lca_operation()
