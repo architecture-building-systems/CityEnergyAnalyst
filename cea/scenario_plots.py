@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def plot_scenarios(scenarios_root, output_file):
+def plot_scenarios(scenarios, output_file):
     """
     List each scenario in the folder `scenario_root` and plot demand and lca (operations, embodied) data.
 
@@ -17,8 +17,7 @@ def plot_scenarios(scenarios_root, output_file):
     :param output_file: The filename (pdf) to save the results as.
     :return: (None)
     """
-    locators = [inputlocator.InputLocator(os.path.join(scenarios_root, scenario)) for scenario in
-                os.listdir(scenarios_root) if os.path.isdir(os.path.join(scenarios_root))]
+    locators = [inputlocator.InputLocator(scenario) for scenario in scenarios]
 
     plot_config = {
         '_pages': ['Demand', 'LCA Embodied', 'LCA Operation'],
@@ -34,26 +33,29 @@ def plot_scenarios(scenarios_root, output_file):
     }
 
     from matplotlib.backends.backend_pdf import PdfPages
-    with PdfPages(output_file) as pdf:
-        for prefix in plot_config['_pages']:
-            rows = len(plot_config[prefix]['columns'])
-            fig, axes = plt.subplots(nrows=rows, figsize=(8.27, 11.69))
-            dfs = read_scenario_data(locators, prefix, plot_config[prefix])
-            plt.suptitle(prefix)
+    pdf = PdfPages(output_file)
+    for prefix in plot_config['_pages']:
+        rows = len(plot_config[prefix]['columns'])
+        fig, axes = plt.subplots(nrows=rows, figsize=(8.27, 11.69))
+        dfs = read_scenario_data(locators, prefix, plot_config[prefix])
+        plt.suptitle(prefix)
 
-            for i, key in enumerate(sorted(dfs.keys())):
-                ax2 = axes[i].twinx()
-                dfs[key].boxplot(ax=axes[i], sym='')
-                y = dfs[key].sum().ravel()
-                x = axes[i].get_xticks()
-                ax2.set_ylim(bottom=0, top=max(y) * 1.1)
-                plt.scatter(x, y, marker='D', color='g')
-                axes[i].set_title(key)
+        for i, key in enumerate(sorted(dfs.keys())):
+            ax2 = axes[i].twinx()
+            dfs[key].boxplot(ax=axes[i], sym='')
+            axes[i].set_ylabel('Building Totals')
 
-            fig.subplots_adjust(hspace=0.5)
-            pdf.savefig()
-            plt.close()
+            y = dfs[key].sum().ravel()
+            x = axes[i].get_xticks()
+            ax2.set_ylim(bottom=0, top=max(y) * 1.1)
+            plt.scatter(x, y, marker='D', color='g')
+            ax2.set_ylabel('Scenario Totals')
+            axes[i].set_title(key)
 
+        fig.subplots_adjust(hspace=0.5)
+        pdf.savefig()
+        plt.close()
+    pdf.close()
 
 
 def read_scenario_data(locators, prefix, config):
@@ -71,7 +73,9 @@ def read_scenario_data(locators, prefix, config):
 def test_plot_scenarios():
     output_file = os.path.expandvars(r'%TEMP%\scenario_plots.pdf')
     scenarios_root = r'c:\reference-case'
-    plot_scenarios(scenarios_root, output_file)
+    scenarios = [os.path.join(scenarios_root, scenario) for scenario in os.listdir(scenarios_root)
+                 if os.path.isdir(os.path.join(scenarios_root, scenario))]
+    plot_scenarios(scenarios, output_file)
     print 'plot_scenarios succeeded.'
 
 if __name__ == '__main__':

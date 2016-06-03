@@ -526,3 +526,38 @@ class RadiationTool(object):
             longitude = shp.crs['lon_0']
             latitude = shp.crs['lat_0']
         return latitude, longitude
+
+
+class ScenarioPlotsTool(object):
+    def __init__(self):
+        self.label = 'Scenario Plots'
+        self.description = 'Create summary plots of scenarios in a folder'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenarios = arcpy.Parameter(
+            displayName="Path to the scenarios to plot",
+            name="scenarios",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input",
+            multiValue=True)
+        output_file = arcpy.Parameter(
+            displayName="Path to output PDF",
+            name="output_file",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Output")
+        output_file.filter.list = ['pdf']
+        return [scenarios, output_file]
+
+    def execute(self, parameters, messages):
+        scenarios = parameters[0].valueAsText.split(';')
+        output_file = parameters[1].valueAsText
+
+        arcpy.AddMessage(scenarios)
+
+        import cea.scenario_plots
+        reload(cea.scenario_plots)
+        cea.scenario_plots.plot_scenarios(scenarios=scenarios, output_file=output_file)
+        return
