@@ -15,7 +15,7 @@ import inputlocator
 
 reload(inputlocator)
 
-def mobility(locator):
+def lca_mobility(locator):
     """
     algorithm to calculate the primary energy and CO2 emissions for mobility
     in the area in order to compare with the 2000 Watt society benchmark
@@ -58,14 +58,12 @@ def mobility(locator):
     mobility[fields_to_plot[1]] = mobility['Af_m2'] * mobility[fields_to_plot[3]] / 1000
     mobility[fields_to_plot[2]] = mobility['Af_m2'] * mobility[fields_to_plot[4]] / 1000
     mobility[fields_to_plot].to_csv(locator.get_lca_mobility(), index=False, float_format='%.2f')
+
 def test_mobility():
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
-    mobility(locator=locator)
+    lca_mobility(locator=locator)
 
     print 'test_properties() succeeded'
-
-if __name__ == '__main__':
-    test_mobility()
 
 class ExtendInputLocator(InputLocator):
     def __init__(self, InputLocator):
@@ -73,3 +71,6 @@ class ExtendInputLocator(InputLocator):
     def get_data_mobility(self):
         """cea/db/Benchmarks/Switzerland/mobility.xls"""
         return os.path.join(self.db_path, 'Benchmarks', 'Switzerland', 'mobility.xls')
+
+if __name__ == '__main__':
+    test_mobility()
