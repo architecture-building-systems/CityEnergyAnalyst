@@ -1,19 +1,11 @@
-import cea.toolbox
-reload(cea.toolbox)
+import benchmark_toolbox
+reload(benchmark_toolbox)
 
-DemandTool = cea.toolbox.DemandTool
-PropertiesTool = cea.toolbox.PropertiesTool
-EmissionsTool = cea.toolbox.EmissionsTool
-EmbodiedEnergyTool = cea.toolbox.EmbodiedEnergyTool
-MobilityTool = cea.toolbox.MobilityTool
-HeatmapsTool = cea.toolbox.HeatmapsTool
-GraphsDemandTool = cea.toolbox.GraphsDemandTool
-GraphsBenchmarkTool = cea.toolbox.GraphsBenchmarkTool
-RadiationTool = cea.toolbox.RadiationTool
+GraphsBenchmarkTool = benchmark_toolbox.GraphsBenchmarkTool
+MobilityTool = benchmark_toolbox.MobilityTool
 
-class Toolbox(object):
+class BenchmarkToolbox(object):
     def __init__(self):
-        self.label = 'City Energy Analyst'
-        self.alias = 'cea'
-        self.tools = [PropertiesTool, DemandTool, EmissionsTool, EmbodiedEnergyTool, MobilityTool, HeatmapsTool,
-                      GraphsDemandTool, GraphsBenchmarkTool, RadiationTool]
+        self.label = 'City Energy Analyst Benchmark Toolbox'
+        self.alias = 'cea=benchmark'
+        self.tools = [GraphsBenchmarkTool, MobilityTool]
