@@ -4,6 +4,14 @@ inputlocator.py - locate input files by name based on the reference folder struc
 import os
 import tempfile
 
+__author__ = "Daren Thomas"
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Daren Thomas"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
 class InputLocator(object):
     """The InputLocator locates files and folders for input to the scripts. This works, because we
