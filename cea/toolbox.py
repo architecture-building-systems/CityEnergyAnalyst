@@ -447,12 +447,16 @@ class RadiationTool(object):
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
-        timezone = arcpy.Parameter(
-            displayName="Timezone",
-            name="timezone",
-            datatype="GPLong",
+
+        weather_name = arcpy.Parameter(
+            displayName="Weather file (choose from list or enter full path to .epw file)",
+            name="weather_name",
+            datatype="String",
             parameterType="Required",
             direction="Input")
+        locator = inputlocator.InputLocator(None)
+        weather_name.filter.list = locator.get_weather_names()
+
         year = arcpy.Parameter(
             displayName="Year",
             name="year",
@@ -461,47 +465,21 @@ class RadiationTool(object):
             direction="Input")
         year.value = 2014
 
-        return [scenario_path, timezone, year]
-
-    def updateParameters(self, parameters):
-        """set the timezone by calling the Teleport API
-        FIXME: check if we are allowed to do this"""
-        # scenario_path
-        scenario_path = parameters[0].valueAsText
-        if scenario_path is None:
-            return
-
-        if not os.path.exists(scenario_path):
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
-            return
-        locator = inputlocator.InputLocator(scenario_path)
-        latitude, longitude = self.get_location(locator)
-
-        timezone_parameter = parameters[1]
-        try:
-            import urllib2
-            import json
-            endpoint = "https://api.teleport.org/api/locations"
-            embed = "location:nearest-cities/location:nearest-city/city:timezone/tz:offsets-now"
-            url = "%(endpoint)s/%(latitude).4f,%(longitude).4f/?embed=%(embed)s" % locals()
-            arcpy.AddMessage(url)
-            r = urllib2.urlopen(url)
-            content = r.read()
-            r.close()
-            location = json.loads(content)
-            tz = location['_embedded']['location:nearest-cities'][0]['_embedded']['location:nearest-city']['_embedded'][
-                'city:timezone']['_embedded']['tz:offsets-now']['base_offset_min'] / 60
-            timezone_parameter.value = tz
-        except:
-            # just abort - user can fill this in himself
-            arcpy.AddMessage('Could not find timezone...')
-            pass
-        return
+        return [scenario_path, weather_name, year]
 
     def execute(self, parameters, messages):
         scenario_path = parameters[0].valueAsText
-        timezone = parameters[1].value
+        weather_name = parameters[1].valueAsText
         year = parameters[2].value
+
+        locator = inputlocator.InputLocator(scenario_path)
+        weather_name = parameters[1].valueAsText
+        if weather_name in locator.get_weather_names():
+            weather_path = locator.get_default_weather()
+        elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
+            weather_path = weather_name
+        else:
+            weather_path = locator.get_default_weather()
 
         # FIXME: use current arcgis db...
         path_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
@@ -516,7 +494,7 @@ class RadiationTool(object):
         gv = globalvar.GlobalVariables()
         gv.log = add_message
         cea.radiation.solar_radiation_vertical(locator=locator, path_arcgis_db=path_arcgis_db, latitude=latitude,
-                                               longitude=longitude, timezone=timezone, year=year, gv=gv)
+                                               longitude=longitude, year=year, gv=gv, weather_path=weather_path)
         return
 
     def get_location(self, locator):
