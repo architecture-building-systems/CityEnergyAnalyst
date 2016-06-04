@@ -56,6 +56,7 @@ def benchmark(locator_list, output_file):
     for n in range(len(locator_list)):
         locator = locator_list[n]
         scenario_name = os.path.basename(locator.scenario_path)
+
         # get embodied and operation PEN and GHG for each building from CSV files
         demand = pd.read_csv(locator.get_total_demand())
         df_buildings = pd.read_csv(locator.get_lca_embodied()).merge\
@@ -139,8 +140,9 @@ def calc_benchmark_targets(locator):
 
     factors = pd.read_excel(data_benchmark, sheetname=categories[0])
     for i in range(len(factors['code'])):
-        if factors['PEN'][i] > 0 and factors['CO2'][i] > 0:
-            area_study += (occupancy['Af_m2'] * occupancy[factors['code'][i]]).sum()
+        if factors['code'][i] in occupancy:
+            if factors['PEN'][i] > 0 and factors['CO2'][i] > 0:
+                area_study += (occupancy['Af_m2'] * occupancy[factors['code'][i]]).sum()
 
     for category in categories:
         factors = pd.read_excel(data_benchmark, sheetname = category)
@@ -151,8 +153,9 @@ def calc_benchmark_targets(locator):
         for j in range(len(suffix)):
             targets[category + suffix[j]] = 0
         for i in range(len(vt)):
-            targets[category+suffix[0]] += (occupancy['Af_m2'] * occupancy[vt[i]] * pt[i]).sum() / 1000
-            targets[category+suffix[1]] += (occupancy['Af_m2'] * occupancy[vt[i]] * gt[i]).sum() / 1000
+            if vt[i] in occupancy:
+                targets[category+suffix[0]] += (occupancy['Af_m2'] * occupancy[vt[i]] * pt[i]).sum() / 1000
+                targets[category+suffix[1]] += (occupancy['Af_m2'] * occupancy[vt[i]] * gt[i]).sum() / 1000
         targets[category + suffix[2]] += targets[category+suffix[0]] / area_study * 1000
         targets[category + suffix[3]] += targets[category + suffix[1]] / area_study * 1000
 
@@ -161,7 +164,7 @@ def calc_benchmark_targets(locator):
 def calc_benchmark_today(locator):
     '''
     Calculates the embodied, operation, mobility and total targets (ghg_kgm2
-    and pen_MJm2) for the entire country.
+    and pen_MJm2) for the area for the current national trend.
     CURRENTLY BASED ON INDUCITY! Need a better source.
     :param locator: an InputLocator set to the scenario to compute
     :array values_today: pen_MJm2 and ghg_kgm2 for the scenario based on benchmarked present day situation
@@ -181,8 +184,9 @@ def calc_benchmark_today(locator):
 
     factors = pd.read_excel(data_benchmark_today, sheetname=categories[0])
     for i in range(len(factors['code'])):
-        if factors['PEN'][i] > 0 and factors['CO2'][i] > 0:
-            area_study += (occupancy['Af_m2'] * occupancy[factors['code'][i]]).sum()
+        if factors['code'][i] in occupancy:
+            if factors['PEN'][i] > 0 and factors['CO2'][i] > 0:
+                area_study += (occupancy['Af_m2'] * occupancy[factors['code'][i]]).sum()
 
     for category in categories:
         factors = pd.read_excel(data_benchmark_today, sheetname=category)
@@ -193,8 +197,9 @@ def calc_benchmark_today(locator):
         for j in range(len(suffix)):
             values_today[category + suffix[j]] = 0
         for i in range(len(vt)):
-            values_today[category + suffix[0]] += (occupancy['Af_m2'] * occupancy[vt[i]] * pt[i]).sum() / 1000
-            values_today[category + suffix[1]] += (occupancy['Af_m2'] * occupancy[vt[i]] * gt[i]).sum() / 1000
+            if vt[i] in occupancy:
+                values_today[category + suffix[0]] += (occupancy['Af_m2'] * occupancy[vt[i]] * pt[i]).sum() / 1000
+                values_today[category + suffix[1]] += (occupancy['Af_m2'] * occupancy[vt[i]] * gt[i]).sum() / 1000
         values_today[category + suffix[2]] += values_today[category + suffix[0]] / area_study * 1000
         values_today[category + suffix[3]] += values_today[category + suffix[1]] / area_study * 1000
 
@@ -204,19 +209,14 @@ def test_benchmark():
     # HINTS FOR ARCGIS INTERFACE:
     # the user can select a maximum of 2 scenarios to graph (analysis fields!)
 
-    locatorA = ExtendInputLocator(scenario_path=r'C:\reference-case\baseline')
-    locatorB = ExtendInputLocator(scenario_path=r'C:\reference-case\scenario')
-    locator_list = [locatorA,locatorB]
-    output_file = r'C:\reference-case\benchmark-plots\Test.pdf'
+    locator_list = [ExtendInputLocator(scenario_path=r'C:\scenario-results\baseline')]
+    output_file = r'C:\scenario-results\benchmark-plots\Test.pdf'
     from cea import globalvar
     gv = globalvar.GlobalVariables()
     benchmark(locator_list = locator_list, output_file = output_file)
 
 def test_benchmark_targets():
-    # HINTS FOR ARCGIS INTERFACE:
-    # the user can select a maximum of 2 scenarios to graph (analysis fields!)
-
-    locator = ExtendInputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator = ExtendInputLocator(scenario_path=r'C:\scenario-results\baseline')
     from cea import globalvar
     gv = globalvar.GlobalVariables()
     calc_benchmark_targets(locator)
@@ -229,10 +229,10 @@ class ExtendInputLocator(inputlocator.InputLocator):
         return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_mobility.csv')
     def get_data_benchmark(self):
         """cea/db/Benchmarks/Switzerland/benchmark_targets.xls"""
-        return os.path.join(self.db_path, 'Benchmarks', 'Switzerland', 'benchmark_targets.xls')
+        return os.path.join(self.db_path, 'Benchmarks', 'benchmark_targets.xls')
     def get_data_benchmark_today(self):
         """cea/db/Benchmarks/Switzerland/benchmark_today.xls"""
-        return os.path.join(self.db_path, 'Benchmarks', 'Switzerland', 'benchmark_today.xls')
+        return os.path.join(self.db_path, 'Benchmarks', 'benchmark_today.xls')
     def get_benchmark_plots_file(self):
         """scenario/2-results/3-emissions/2-plots/"""
         import time
