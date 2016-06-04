@@ -11,7 +11,7 @@ J. Fonseca  script redevelopment        19.04.16
 from __future__ import division
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
-import inputlocator
+from cea import inputlocator
 
 reload(inputlocator)
 
@@ -65,7 +65,7 @@ def test_mobility():
 
     print 'test_properties() succeeded'
 
-class ExtendInputLocator(InputLocator):
+class ExtendInputLocator(inputlocator.InputLocator):
     def __init__(self, InputLocator):
         self.InputLocator = InputLocator
     def get_data_mobility(self):
