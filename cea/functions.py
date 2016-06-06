@@ -99,8 +99,9 @@ def get_prop_RC_model(uses, architecture, thermal, geometry, HVAC, rf, gv):
     all_prop['floors'] = all_prop['floors_bg']+ all_prop['floors_ag']
     all_prop['Aop_bel'] = all_prop['height_bg']*all_prop['perimeter']+all_prop['footprint']   # Opague areas in m2 below ground including floor
     all_prop['Atot'] = Areas['Aw']+all_prop['Aop_sup']+all_prop['footprint']+all_prop['Aop_bel']+all_prop['footprint']*(all_prop['floors']-1) # Total area of the building envelope m2, it is considered the roof to be flat
-    all_prop['Af'] = all_prop['footprint']*all_prop['floors']*all_prop['Hs']#*(1-all_prop.PARKING)*(1-all_prop.COOLROOM)*(1-all_prop.SERVERROOM) # conditioned area - áreas not heated
-    all_prop['Aef'] = all_prop['footprint']*all_prop['floors']*all_prop['Es']# conditioned area only those for electricity
+    all_prop['GFA_m2'] = all_prop['footprint']*all_prop['floors'] #gross floor area
+    all_prop['Af'] = all_prop['GFA_m2']*all_prop['Hs']#*(1-all_prop.PARKING)*(1-all_prop.COOLROOM)*(1-all_prop.SERVERROOM) # conditioned area - áreas not heated
+    all_prop['Aef'] = all_prop['GFA_m2']*all_prop['Es']# conditioned area only those for electricity
     all_prop['Am'] = all_prop.th_mass.apply(lambda x:AmFunction(x))*all_prop['Af'] # Effective mass area in m2
 
     # Steady-state Thermal transmittance coefficients and Internal heat Capacity
@@ -113,7 +114,7 @@ def get_prop_RC_model(uses, architecture, thermal, geometry, HVAC, rf, gv):
     all_prop['Htr_is'] = gv.his*all_prop ['Atot']
     all_prop['Cm'] = all_prop.th_mass.apply(lambda x:CmFunction(x))*all_prop['Af'] # Internal heat capacity in J/K
 
-    fields = ['Awall_all', 'Atot', 'Aw', 'Am','Aef','Af','Cm','Htr_is','Htr_em','Htr_ms','Htr_op','Hg','HD','Htr_w']
+    fields = ['Awall_all', 'Atot', 'Aw', 'Am','Aef','Af','Cm','Htr_is','Htr_em','Htr_ms','Htr_op','Hg','HD','Htr_w','GFA_m2']
     result = all_prop[fields]
     return result
 
@@ -443,7 +444,7 @@ def CalcThermalLoads(Name, building_properties, weather_data, usage_schedules, d
     list_uses = usage_schedules['list_uses']
     schedules = usage_schedules['schedules']
 
-
+    GFA_m2 = prop_RC_model.GFA_m2 # gross floor area
     Af = prop_RC_model.Af
     Aef = prop_RC_model.Aef
     sys_e_heating = prop_HVAC.type_hs
@@ -659,7 +660,7 @@ def CalcThermalLoads(Name, building_properties, weather_data, usage_schedules, d
     Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot = calc_loads_electrical(Aef, Ealf, Eauxf, Edataf, Eprof)
 
     # write results to csv
-    results_to_csv(Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot, Name, Occupancy,
+    results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot, Name, Occupancy,
                    Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
                    Tcs_re, Tcs_re_0, Tcs_sup, Tcs_sup_0, Ths_re, Ths_re_0, Ths_sup, Ths_sup_0, Tww_re, Tww_st,
                    Tww_sup_0, Waterconsumption, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
@@ -846,7 +847,7 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
     return Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs
 
 
-def results_to_csv(Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot, Name, Occupancy,
+def results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot, Name, Occupancy,
                    Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
                    Tcs_re, Tcs_re_0, Tcs_sup, Tcs_sup_0, Ths_re, Ths_re_0, Ths_sup, Ths_sup_0, Tww_re, Tww_st,
                    Tww_sup_0, Waterconsumption, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
@@ -888,7 +889,7 @@ def results_to_csv(Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_to
                                                                    index=False, float_format='%.2f')
     # print peaks in kW and totals in MWh, temperature peaks in C
     totals = pd.DataFrame(
-        {'Name': Name, 'Af_m2': Af, 'occ_pax': Occupants, 'Qwwf0_kW': Qwwf_0 / 1000, 'Ealf0_kW': Ealf_0 / 1000,
+        {'Name': Name, 'GFA_m2':GFA_m2,'Af_m2': Af, 'occ_pax': Occupants, 'Qwwf0_kW': Qwwf_0 / 1000, 'Ealf0_kW': Ealf_0 / 1000,
          'Qhsf0_kW': Qhsf_0 / 1000, 'Qcsf0_kW': -Qcsf_0 / 1000, 'Vw0_m3': waterpeak, 'Tshs0_C': Ths_sup_0,
          'Trhs0_C': Ths_re_0, 'mcphs0_kWC': mcphs.max(), 'Tscs0_C': Tcs_sup_0, 'Qcdataf_MWhyr': Qcdata_tot,
          'Qcref_MWhyr': Qcrefri_tot, 'Trcs0_C': Tcs_re_0, 'mcpcs0_kWC': mcpcs.max(), 'Qwwf_MWhyr': Qwwf_tot,
