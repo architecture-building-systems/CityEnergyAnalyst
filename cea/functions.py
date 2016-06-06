@@ -474,7 +474,7 @@ def CalcThermalLoads(Name, building_properties, weather_data, usage_schedules, d
             prop_RC_model, prop_age, prop_architecture, prop_geometry, prop_occupancy)
 
         Lcww_dis, Lsww_dis, Lv, Lvww_c, Lvww_dis, Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, Tww_re_0, Tww_sup_0, Y, fforma = get_properties_building_systems(
-            Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, prop_HVAC)
+            Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, nf_bg, prop_HVAC)
 
         #2. Transmission coefficients in W/K
         qv_req = np.vectorize(calc_qv_req)(ve,people,Af,gv,date.hour,range(8760),limit_inf_season,limit_sup_season)# in m3/s
@@ -737,7 +737,7 @@ def calc_heat_gains_solar(Aw, Awall_all, Sh_typ, Solar, gv):
     return I_sol
 
 
-def get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, prop_HVAC):
+def get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, nf_bg, prop_HVAC):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
     phi_pipes = calculate_pipe_transmittance_values(Year, Retrofit)  # linear trasmissivity coefficient of piping W/(m.K)
@@ -751,9 +751,14 @@ def get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag
     # Identification of equivalent lenghts
     fforma = Calc_form(Lw, Ll, footprint)  # factor form comparison real surface and rectangular
     Lv = (2 * Ll + 0.0325 * Ll * Lw + 6) * fforma  # length vertical lines
-    Lcww_dis = 2 * (Ll + 2.5 + nf_ag * nfp * gv.hf) * fforma  # length hot water piping circulation circuit
+    if nf_ag < 2 and nf_bg < 2: # it is assumed that building with less than a floor and less than 2 floors udnerground do not have
+        Lcww_dis = 0
+        Lvww_c = 0
+    else:
+        Lcww_dis = 2 * (Ll + 2.5 + nf_ag * nfp * gv.hf) * fforma  # length hot water piping circulation circuit
+        Lvww_c = (2 * Ll + 0.0125 * Ll * Lw) * fforma  # length piping heating system circulation circuit
+
     Lsww_dis = 0.038 * Ll * Lw * nf_ag * nfp * gv.hf * fforma  # length hot water piping distribution circuit
-    Lvww_c = (2 * Ll + 0.0125 * Ll * Lw) * fforma  # length piping heating system circulation circuit
     Lvww_dis = (Ll + 0.0625 * Ll * Lw) * fforma  # length piping heating system distribution circuit
     return Lcww_dis, Lsww_dis, Lv, Lvww_c, Lvww_dis, Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, Tww_re_0, Tww_sup_0, phi_pipes, fforma
 
