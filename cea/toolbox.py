@@ -549,10 +549,10 @@ class GraphsBenchmarkTool(object):
 
         arcpy.AddMessage(scenarios)
 
-        import sandbox.mmosteiro.benchmark
-        reload(sandbox.mmosteiro.benchmark)
-        locator_list = [sandbox.mmosteiro.benchmark.ExtendInputLocator(scenario) for scenario in scenarios]
-        sandbox.mmosteiro.benchmark.benchmark(locator_list=locator_list, output_file=output_file)
+        import benchmark
+        reload(benchmark)
+        locator_list = [benchmark.ExtendInputLocator(scenario) for scenario in scenarios]
+        benchmark.benchmark(locator_list=locator_list, output_file=output_file)
         return
 
 class MobilityTool(object):
@@ -582,7 +582,7 @@ class MobilityTool(object):
         return
 
     def execute(self, parameters, messages):
-        from sandbox.mmosteiro.mobility import lca_mobility, ExtendInputLocator
+        from mobility import lca_mobility, ExtendInputLocator
 
         scenario_path = parameters[0].valueAsText
         gv = globalvar.GlobalVariables()
