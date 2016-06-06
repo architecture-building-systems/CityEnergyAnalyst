@@ -78,7 +78,6 @@ def lca_embodied(yearcalc, locator, gv):
 
     # localvariables
     architecture_df = gpdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1)
-    Area_df = pd.read_csv(locator.locator.get_total_demand())[['GFA_m2']]
     prop_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
     occupancy_df = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
     age_df = gpdf.from_file(locator.get_building_age()).drop('geometry', axis=1)
