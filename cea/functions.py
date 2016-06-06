@@ -594,7 +594,7 @@ def CalcThermalLoads(Name, building_properties, weather_data, usage_schedules, d
                                                          gv.D, Y[0], sys_e_heating, sys_e_cooling, gv.Bf, Lv)         
                 
         # Calc requirements of generation systems (both cooling and heating do not have a storage):
-        Qhsf = Qhs_sen_loss_true + Qhs_d_ls   # no latent is considered because it is already added as electricity from the adiabatic system.
+        Qhsf = Qhs_sen_incl_em_ls + Qhs_d_ls   # no latent is considered because it is already added as electricity from the adiabatic system.
         Qcs = Qcs_sen_incl_em_ls + Qcs_lat
         Qcsf = Qcs + Qcs_d_ls
         Qcsf = -abs(Qcsf)
