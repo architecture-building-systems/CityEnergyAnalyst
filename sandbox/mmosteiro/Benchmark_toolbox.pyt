@@ -1,8 +1,9 @@
-import toolbox
+import sandbox.mmosteiro.toolbox as toolbox
 reload(toolbox)
 
 GraphsBenchmarkTool = toolbox.GraphsBenchmarkTool
 MobilityTool = toolbox.MobilityTool
+
 
 class BenchmarkToolbox(object):
     def __init__(self):

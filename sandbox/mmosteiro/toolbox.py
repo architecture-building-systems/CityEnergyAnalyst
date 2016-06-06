@@ -78,7 +78,7 @@ class MobilityTool(object):
         return
 
     def execute(self, parameters, messages):
-        from cea.mobility import lca_mobility
+        from sandbox.mmosteiro.mobility import lca_mobility
 
         scenario_path = parameters[0].valueAsText
         gv = globalvar.GlobalVariables()
