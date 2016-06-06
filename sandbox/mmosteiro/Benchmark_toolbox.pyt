@@ -1,8 +1,8 @@
-import benchmark_toolbox
-reload(benchmark_toolbox)
+import toolbox
+reload(toolbox)
 
-GraphsBenchmarkTool = benchmark_toolbox.GraphsBenchmarkTool
-MobilityTool = benchmark_toolbox.MobilityTool
+GraphsBenchmarkTool = toolbox.GraphsBenchmarkTool
+MobilityTool = toolbox.MobilityTool
 
 class BenchmarkToolbox(object):
     def __init__(self):
