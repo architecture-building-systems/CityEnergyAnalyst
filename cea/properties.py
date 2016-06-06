@@ -8,11 +8,18 @@ J. A. Fonseca  script development          22.03.15
 """
 from __future__ import division
 import pandas as pd
-import os
 import numpy as np
-import globalvar
 from geopandas import GeoDataFrame as gpdf
 import inputlocator
+
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca", "Daren Thomas"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
 def properties(locator, prop_thermal_flag, prop_architecture_flag,
                prop_hvac_flag, prop_comfort_flag, prop_internal_loads_flag, gv):

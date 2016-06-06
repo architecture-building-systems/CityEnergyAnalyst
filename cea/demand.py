@@ -11,13 +11,22 @@ G. Happle   BuildingPropsThermalLoads   27.05.2016
 """
 from __future__ import division
 import pandas as pd
-import numpy as np
 import functions as f
 import maker as m
 import epwreader
 import globalvar
 from geopandas import GeoDataFrame as gpdf
 import inputlocator
+
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca", "Daren Thomas", "Gabriel Happle"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
 
 reload(f)
 reload(globalvar)
