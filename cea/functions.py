@@ -594,9 +594,10 @@ def CalcThermalLoads(Name, building_properties, weather_data, usage_schedules, d
                                                          gv.D, Y[0], sys_e_heating, sys_e_cooling, gv.Bf, Lv)         
                 
         # Calc requirements of generation systems (both cooling and heating do not have a storage):
+        Qhs = Qhs_sen_incl_em_ls - Qhs_em_ls
         Qhsf = Qhs_sen_incl_em_ls + Qhs_d_ls   # no latent is considered because it is already added as electricity from the adiabatic system.
-        Qcs = Qcs_sen_incl_em_ls + Qcs_lat
-        Qcsf = Qcs + Qcs_d_ls
+        Qcs = (Qcs_sen_incl_em_ls - Qcs_em_ls) + Qcs_lat
+        Qcsf = Qcs + Qcs_em_ls + Qcs_d_ls
         Qcsf = -abs(Qcsf)
         Qcs = -abs(Qcs)
         
@@ -655,7 +656,7 @@ def CalcThermalLoads(Name, building_properties, weather_data, usage_schedules, d
 
     # write results to csv
     results_to_csv(Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot, Name, Occupancy,
-                   Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs_sen, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
+                   Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
                    Tcs_re, Tcs_re_0, Tcs_sup, Tcs_sup_0, Ths_re, Ths_re_0, Ths_sup, Ths_sup_0, Tww_re, Tww_st,
                    Tww_sup_0, Waterconsumption, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
                    sys_e_cooling, sys_e_heating, waterpeak, date)
@@ -846,7 +847,7 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
 
 
 def results_to_csv(Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot, Name, Occupancy,
-                   Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs_sen, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
+                   Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
                    Tcs_re, Tcs_re_0, Tcs_sup, Tcs_sup_0, Ths_re, Ths_re_0, Ths_sup, Ths_sup_0, Tww_re, Tww_st,
                    Tww_sup_0, Waterconsumption, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
                    sys_e_cooling, sys_e_heating, waterpeak, date):
@@ -856,7 +857,7 @@ def results_to_csv(Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_to
     # compute totals heating loads loads in MW
     if sys_e_heating != 'T0':
         Qhsf_tot = Qhsf.sum() / 1000000
-        Qhs_tot = Qhs_sen.sum() / 1000000
+        Qhs_tot = Qhs.sum() / 1000000
         Qwwf_tot = Qwwf.sum() / 1000000
         Qww_tot = Qww.sum() / 1000000
     else:
@@ -875,7 +876,7 @@ def results_to_csv(Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_to
     # temperature in Degrees celcious
     pd.DataFrame(
         {'DATE': date, 'Name': Name, 'Ealf_kWh': Ealf / 1000, 'Eauxf_kWh': Eauxf / 1000, 'Qwwf_kWh': Qwwf / 1000,
-         'Qww_kWh': Qww / 1000, 'Qww_tankloss_kWh': Qww_ls_st / 1000, 'Qhs_kWh': Qhs_sen / 1000,
+         'Qww_kWh': Qww / 1000, 'Qww_tankloss_kWh': Qww_ls_st / 1000, 'Qhs_kWh': Qhs / 1000,
          'Qhsf_kWh': Qhsf / 1000,
          'Qcs_kWh': -1 * Qcs / 1000, 'Qcsf_kWh': -1 * Qcsf / 1000, 'occ_pax': Occupancy, 'Vw_m3': Waterconsumption,
          'Tshs_C': Ths_sup, 'Trhs_C': Ths_re, 'mcphs_kWC': mcphs, 'mcpww_WC': mcpww * 1000, 'Tscs_C': Tcs_sup,
