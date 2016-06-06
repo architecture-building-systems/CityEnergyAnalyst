@@ -54,7 +54,7 @@ def graphs_demand(locator, analysis_fields, gv):
     for name in building_names:
         df = pd.read_csv(locator.get_demand_results_file(name), usecols=fields)
         df.index = pd.to_datetime(df.DATE)
-        fig, (ax1, ax2, ax3, ax4) = plt.subplots(4,figsize=(12,16))
+        fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(4,figsize=(12,16))
         fig.text(0.07, 0.5, 'Demand [kWh]', va='center', rotation='vertical')
 
         df.plot(ax=ax1, y=analysis_fields, title='YEAR', color=color_palette, label=' ', legend=False)
@@ -69,6 +69,8 @@ def graphs_demand(locator, analysis_fields, gv):
         plt.savefig(locator.get_demand_plots_file(name))
         plt.clf()
         plt.close()
+
+        df.pd.read_csv(locator.get_total
 
         gv.log('Building No. %(bno)i completed out of %(btot)i', bno=counter+1, btot=num_buildings)
         counter += 1
