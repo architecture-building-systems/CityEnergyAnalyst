@@ -43,7 +43,7 @@ def calc_Qww_ls_st(Tww_st, Tww_setpoint, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_
     Returns
     -------
     :return ql: storage sensible heat loss in W.
-    :return qd: heat discharged from the tank in W.
+    :return qd: heat discharged from the tank in W, including dhw heating demand and distribution heat loss.
     :return qc: heat charged into the tank in W.
     """
     tamb = tair - Bf * (tair - te)         # Calculate tamb in basement according to EN
@@ -51,7 +51,7 @@ def calc_Qww_ls_st(Tww_st, Tww_setpoint, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_
     h = (4*V*AR**2/math.pi)**(1.0/3.0)     # tank height in m, derived from tank Aspect Ratio(AR)
     r = (V/(math.pi*h))**(1.0/2.0)         # tank radius in m, assuming tank shape is cylinder
     Atank = 2*math.pi*r**2 + 2*math.pi*r*h      # tank surface area in m2.
-    ql = Utank*Atank*(Tww_st - tamb)
+    ql = Utank*Atank*(Tww_st - tamb)       # tank heat loss to the room in W
     qd = Qww + Qww_ls_r + Qww_ls_nr
     if Qww <= 0:
         qc = 0
