@@ -54,16 +54,15 @@ def lca_mobility(locator):
     mobility[fields_to_plot[3]] = 0
     mobility[fields_to_plot[4]] = 0
     for i in range(len(vt)):
-        if vt[i] in factors_mobility:
-            mobility[fields_to_plot[3]] += mobility[vt[i]] * pt[i]
-            mobility[fields_to_plot[4]] += mobility[vt[i]] * gt[i]
+        mobility[fields_to_plot[3]] += mobility[vt[i]] * pt[i]
+        mobility[fields_to_plot[4]] += mobility[vt[i]] * gt[i]
     mobility[fields_to_plot[1]] = mobility['Af_m2'] * mobility[fields_to_plot[3]] / 1000
     mobility[fields_to_plot[2]] = mobility['Af_m2'] * mobility[fields_to_plot[4]] / 1000
 
     mobility[fields_to_plot].to_csv(locator.get_lca_mobility(), index=False, float_format='%.2f')
 
 def test_mobility():
-    locator = ExtendInputLocator(scenario_path=r'C:\scenario-results\baseline')
+    locator = ExtendInputLocator(scenario_path=r'C:\reference-case\baseline')
     lca_mobility(locator=locator)
 
     print 'test_properties() succeeded'
@@ -77,7 +76,7 @@ class ExtendInputLocator(inputlocator.InputLocator):
         return os.path.join(self.db_path, 'Benchmarks', 'mobility.xls')
 
     def get_lca_mobility(self):
-        """scenario/2-results/3-emissions/1-timeseries/Total_LCA_embodied.csv"""
+        """scenario/outputs/data/emissions/Total_LCA_mobility.csv"""
         return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_mobility.csv')
 
 if __name__ == '__main__':
