@@ -14,12 +14,23 @@ from __future__ import division
 import pandas as pd
 import contributions.thermal_loads_new_ventilation.simple_window_generator as simple_window_generator
 from geopandas import GeoDataFrame as gpdf
-
+import functions as f
+import maker as m
 import epwreader
 import functions as f
 import globalvar
 import inputlocator
 import maker as m
+
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca", "Daren Thomas", "Gabriel Happle"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
 
 reload(f)
 reload(globalvar)

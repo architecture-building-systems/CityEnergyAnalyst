@@ -12,6 +12,15 @@ import scipy.optimize as sopt
 import storagetank_mixed as sto_m
 
 
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca", "Daren Thomas", "Shanshan Hsieh", "Gabriel Happle"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
 def calc_mainuse(uses_df, uses):
     databaseclean = uses_df[uses].transpose()
     array_min = np.array(
