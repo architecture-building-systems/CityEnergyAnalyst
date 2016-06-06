@@ -10,6 +10,15 @@ import globalvar
 import inputlocator
 from geopandas import GeoDataFrame as gpdf
 
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
 def schedule_maker(date, locator, list_uses):
     schedules = []
     for use in list_uses:
