@@ -18,10 +18,12 @@ EmbodiedEnergyTool = cea.toolbox.EmbodiedEnergyTool
 HeatmapsTool = cea.toolbox.HeatmapsTool
 GraphsDemandTool = cea.toolbox.GraphsDemandTool
 RadiationTool = cea.toolbox.RadiationTool
+GraphsBenchmarkTool = cea.toolbox.GraphsBenchmarkTool
+MobilityTool = cea.toolbox.MobilityTool
 
 class Toolbox(object):
     def __init__(self):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
         self.tools = [PropertiesTool, DemandTool, EmissionsTool, EmbodiedEnergyTool, HeatmapsTool, GraphsDemandTool,
-                      RadiationTool]
+                      RadiationTool, GraphsBenchmarkTool, MobilityTool]
