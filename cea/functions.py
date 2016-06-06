@@ -390,27 +390,33 @@ def get_occupancy(mixed_schedule, prop_architecture, Af):
     people = mixed_schedule.occ.values  * (prop_architecture.Occ_m2p) ** -1 * Af  # in people
     return people
 
-def get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_season, hour_year):
-    def get_hsetpoint(a, b, Thset, Thsetback):
+def get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_season, weekday):
+    def get_hsetpoint(a, b, Thset, Thsetback, weekday):
         if (b < limit_inf_season or b >= limit_sup_season):
             if a >0:
-                return Thset
+                if weekday >= 5: #system is off on the weekend
+                    return -30 #huge so the system will be off
+                else:
+                    return Thset
             else:
                 return Thsetback
         else:
             return -30 #huge so the system will be off
-    def get_csetpoint(a, b, Tcset, Tcsetback):
+    def get_csetpoint(a, b, Tcset, Tcsetback, weekday):
         if limit_inf_season <= b < limit_sup_season:
             if a > 0:
-                return Tcset
+                if weekday >= 5: #system is off on the weekend
+                    return 50 # huge so the system will be off
+                else:
+                    return Tcset
             else:
                 return Tcsetback
         else:
             return 50 # huge so the system will be off
 
     ve = people * prop_comfort.Ve_lps * 3.6  # in m3/h
-    ta_hs_set = np.vectorize(get_hsetpoint)(people, range(8760), prop_comfort.Ths_set_C, prop_comfort.Ths_setb_C)
-    ta_cs_set = np.vectorize(get_csetpoint)(people, range(8760), prop_comfort.Tcs_set_C, prop_comfort.Tcs_setb_C)
+    ta_hs_set = np.vectorize(get_hsetpoint)(people, range(8760), prop_comfort.Ths_set_C, prop_comfort.Ths_setb_C,weekday)
+    ta_cs_set = np.vectorize(get_csetpoint)(people, range(8760), prop_comfort.Tcs_set_C, prop_comfort.Tcs_setb_C,weekday)
 
     return ve, ta_hs_set, ta_cs_set
 
@@ -460,7 +466,7 @@ def CalcThermalLoads(Name, building_properties, weather_data, usage_schedules, d
         people = get_occupancy(mixed_schedule, prop_architecture, Af)
 
         # get internal comfort properties
-        ve, ta_hs_set, ta_cs_set = get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_season, date.hour)
+        ve, ta_hs_set, ta_cs_set = get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_season, date.dayofweek)
 
         # get envelope properties
         Am, Atot, Aw, Awall_all, Cm, Ll, Lw, Retrofit,Sh_typ, Year, footprint, nf_ag, nfp = get_properties_building_envelope(
