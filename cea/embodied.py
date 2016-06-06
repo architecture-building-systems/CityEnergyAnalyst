@@ -78,7 +78,7 @@ def lca_embodied(yearcalc, locator, gv):
 
     # localvariables
     architecture_df = gpdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1)
-
+    Area_df = pd.read_csv(locator.locator.get_total_demand())[['GFA_m2']]
     prop_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
     occupancy_df = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
     age_df = gpdf.from_file(locator.get_building_age()).drop('geometry', axis=1)
@@ -181,7 +181,7 @@ def lca_embodied(yearcalc, locator, gv):
                                   roof_df['contrib'] + envelope_df['contrib'] + windows_df['contrib'])/1000
             built_df['GEN_MJm2'] = built_df['GEN_GJ']*1000/built_df['total_area']
 
-            result[0] = built_df[['Name','GEN_GJ','GEN_MJm2']]
+            result[0] = built_df[['Name','GEN_GJ','GEN_MJm2','total_area']]
         else:
             built_df['CO2_ton'] = (HVAC_df['contrib'] + basement_df['contrib'] + partitions_df['contrib'] + built_df['contrib'] +
                                   roof_df['contrib'] + envelope_df['contrib'] + windows_df['contrib']) / 1000
@@ -191,7 +191,7 @@ def lca_embodied(yearcalc, locator, gv):
         counter += 1
 
     pd.DataFrame({'Name': result[0].Name, 'pen_GJ': result[0].GEN_GJ, 'pen_MJm2': result[0].GEN_MJm2,
-                  'ghg_ton': result[1].CO2_ton, 'ghg_kgm2': result[1].CO2_kgm2}).to_csv(locator.get_lca_embodied(),
+                  'ghg_ton': result[1].CO2_ton, 'ghg_kgm2': result[1].CO2_kgm2,'GFA_m2': result[0].total_area}).to_csv(locator.get_lca_embodied(),
                                                                                          index=False, float_format='%.2f')
     print 'done!'
 
