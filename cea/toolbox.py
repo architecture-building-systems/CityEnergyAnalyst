@@ -541,7 +541,10 @@ class ScenarioPlotsTool(object):
         return [scenarios, output_file]
 
     def execute(self, parameters, messages):
-        scenarios = parameters[0].valueAsText.split(';')
+        scenarios = parameters[0].valueAsText
+        scenarios = scenarios.replace("'", "")
+        scenarios = scenarios.replace('"', '')
+        scenarios = scenarios.split(';')
         output_file = parameters[1].valueAsText
 
         arcpy.AddMessage(scenarios)
