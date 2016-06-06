@@ -16,6 +16,15 @@ import numpy as np
 from scipy.integrate import odeint
 import math
 
+__author__ = "Shanshan Hsieh"
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["ShanShan Hsieh"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
 def calc_Qww_ls_st(Tww_st, Tww_setpoint, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_nr, Utank, AR, gv):
     """
     This algorithm calculates the heat flows within a fully mixed water storage tank.
