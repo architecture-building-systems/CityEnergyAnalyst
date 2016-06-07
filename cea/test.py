@@ -22,4 +22,10 @@ radiation.test_solar_radiation()
 demand.test_demand()
 emissions.test_lca_operation()
 embodied.test_lca_embodied()
+<<<<<<< HEAD
 graphs.test_graph_demand()
+
+print 'full test completed'
+=======
+graphs.test_graph_demand()
+>>>>>>> refs/remotes/origin/master
