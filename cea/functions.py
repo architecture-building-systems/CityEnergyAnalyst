@@ -470,7 +470,7 @@ def CalcThermalLoads(Name, building_properties, weather_data, usage_schedules, d
         ve, ta_hs_set, ta_cs_set = get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_season, date.dayofweek)
 
         # get envelope properties
-        Am, Atot, Aw, Awall_all, Cm, Ll, Lw, Retrofit,Sh_typ, Year, footprint, nf_ag, nfp = get_properties_building_envelope(
+        Am, Atot, Aw, Awall_all, Cm, Ll, Lw, Retrofit,Sh_typ, Year, footprint, nf_ag, nf_bg, nfp = get_properties_building_envelope(
             prop_RC_model, prop_age, prop_architecture, prop_geometry, prop_occupancy)
 
         Lcww_dis, Lsww_dis, Lv, Lvww_c, Lvww_dis, Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, Tww_re_0, Tww_sup_0, Y, fforma = get_properties_building_systems(
@@ -784,7 +784,7 @@ def get_properties_building_envelope(prop_RC_model, prop_age, prop_architecture,
     Atot = prop_RC_model.Atot
     Cm = prop_RC_model.Cm
     Am = prop_RC_model.Am
-    return Am, Atot, Aw, Awall_all, Cm, Ll, Lw, Retrofit, Sh_typ, Year, footprint, nf_ag, nfp
+    return Am, Atot, Aw, Awall_all, Cm, Ll, Lw, Retrofit, Sh_typ, Year, footprint, nf_ag, nf_bg, nfp
 
 
 def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs, Ta_re_hs, Ta_sup_cs, Ta_sup_hs,
