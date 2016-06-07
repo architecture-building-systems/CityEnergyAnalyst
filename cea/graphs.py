@@ -64,6 +64,7 @@ def graphs_demand(locator, analysis_fields, gv):
         # create first page with timeseries
         df = pd.read_csv(locator.get_demand_results_file(name), usecols=fields_date)
         df.index = pd.to_datetime(df.DATE)
+
         fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, figsize=(12,16))
         fig.text(0.07, 0.5, 'Demand [kW]', va='center', rotation='vertical')
 

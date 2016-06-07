@@ -196,3 +196,7 @@ class InputLocator(object):
     def get_temporary_file(self, filename):
         """Returns the path to a file in the temporary folder with the name `filename`"""
         return os.path.join(self.get_temporary_folder(), filename)
+
+    def get_scenarios_plot_file(self):
+        """scenario/2-results/2-demand/2-plots/{building_name}.pdf"""
+        return os.path.join(self.scenario_path, 'outputs', 'plots', 'graphs', 'Boxplots_scenarios.pdf')

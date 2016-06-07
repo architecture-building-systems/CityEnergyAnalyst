@@ -18,6 +18,7 @@ EmbodiedEnergyTool = cea.toolbox.EmbodiedEnergyTool
 HeatmapsTool = cea.toolbox.HeatmapsTool
 GraphsDemandTool = cea.toolbox.GraphsDemandTool
 RadiationTool = cea.toolbox.RadiationTool
+ScenarioPlotsTool = cea.toolbox.ScenarioPlotsTool
 GraphsBenchmarkTool = cea.toolbox.GraphsBenchmarkTool
 MobilityTool = cea.toolbox.MobilityTool
 
@@ -26,4 +27,4 @@ class Toolbox(object):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
         self.tools = [PropertiesTool, DemandTool, EmissionsTool, EmbodiedEnergyTool, HeatmapsTool, GraphsDemandTool,
-                      RadiationTool, GraphsBenchmarkTool, MobilityTool]
+                      RadiationTool, ScenarioPlotsTool, GraphsBenchmarkTool, MobilityTool]
