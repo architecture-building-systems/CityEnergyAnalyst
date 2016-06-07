@@ -470,11 +470,11 @@ def CalcThermalLoads(Name, building_properties, weather_data, usage_schedules, d
         ve, ta_hs_set, ta_cs_set = get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_season, date.dayofweek)
 
         # get envelope properties
-        Am, Atot, Aw, Awall_all, Cm, Ll, Lw, Retrofit,Sh_typ, Year, footprint, nf_ag, nfp = get_properties_building_envelope(
+        Am, Atot, Aw, Awall_all, Cm, Ll, Lw, Retrofit,Sh_typ, Year, footprint, nf_ag, nf_bg, nfp = get_properties_building_envelope(
             prop_RC_model, prop_age, prop_architecture, prop_geometry, prop_occupancy)
 
         Lcww_dis, Lsww_dis, Lv, Lvww_c, Lvww_dis, Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, Tww_re_0, Tww_sup_0, Y, fforma = get_properties_building_systems(
-            Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, prop_HVAC)
+            Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, nf_bg, prop_HVAC)
 
         #2. Transmission coefficients in W/K
         qv_req = np.vectorize(calc_qv_req)(ve,people,Af,gv,date.hour,range(8760),limit_inf_season,limit_sup_season)# in m3/s
@@ -540,10 +540,10 @@ def CalcThermalLoads(Name, building_properties, weather_data, usage_schedules, d
             if  limit_inf_season <= k < limit_sup_season:
                 #take advantage of this loop to fill the values of cold water
                 Flag_season = True
-                Tww_re[k] = 14
+                Tww_re[k] = 14            # Ground water temperature in C during non-heating (summer) season according to norm
             else:
                 #take advantage of this loop to fill the values of cold water
-                Tww_re[k] = Tww_re_0
+                Tww_re[k] = Tww_re_0      # Ground water temperature in C during heating (heating) season according to norm
                 Flag_season = False
             # Calc of Qhs/Qcs - net/useful heating and cooling deamnd in W
             Losses = False # 0 is false and 1 is true
@@ -737,7 +737,7 @@ def calc_heat_gains_solar(Aw, Awall_all, Sh_typ, Solar, gv):
     return I_sol
 
 
-def get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, prop_HVAC):
+def get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, nf_bg, prop_HVAC):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
     phi_pipes = calculate_pipe_transmittance_values(Year, Retrofit)  # linear trasmissivity coefficient of piping W/(m.K)
@@ -747,14 +747,19 @@ def get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag
     Tcs_sup_0 = prop_HVAC.Tscs0_C
     Tcs_re_0 = Tcs_sup_0 + prop_HVAC.dTcs0_C
     Tww_sup_0 = prop_HVAC.Tsww0_C
-    Tww_re_0 = Tww_sup_0 - prop_HVAC.dTww0_C
+    Tww_re_0 = Tww_sup_0 - prop_HVAC.dTww0_C    # Ground water temperature in heating(winter) season, according to norm #TODO: check norm
     # Identification of equivalent lenghts
     fforma = Calc_form(Lw, Ll, footprint)  # factor form comparison real surface and rectangular
-    Lv = (2 * Ll + 0.0325 * Ll * Lw + 6) * fforma  # lenght vertical lines
-    Lcww_dis = 2 * (Ll + 2.5 + nf_ag * nfp * gv.hf) * fforma  # lenghtotwater piping circulation circuit
-    Lsww_dis = 0.038 * Ll * Lw * nf_ag * nfp * gv.hf * fforma  # length hotwater piping distribution circuit
-    Lvww_c = (2 * Ll + 0.0125 * Ll * Lw) * fforma  # lenghth piping heating system circulation circuit
-    Lvww_dis = (Ll + 0.0625 * Ll * Lw) * fforma  # lenghth piping heating system distribution circuit
+    Lv = (2 * Ll + 0.0325 * Ll * Lw + 6) * fforma  # length vertical lines
+    if nf_ag < 2 and nf_bg < 2: # it is assumed that building with less than a floor and less than 2 floors udnerground do not have
+        Lcww_dis = 0
+        Lvww_c = 0
+    else:
+        Lcww_dis = 2 * (Ll + 2.5 + nf_ag * nfp * gv.hf) * fforma  # length hot water piping circulation circuit
+        Lvww_c = (2 * Ll + 0.0125 * Ll * Lw) * fforma  # length piping heating system circulation circuit
+
+    Lsww_dis = 0.038 * Ll * Lw * nf_ag * nfp * gv.hf * fforma  # length hot water piping distribution circuit
+    Lvww_dis = (Ll + 0.0625 * Ll * Lw) * fforma  # length piping heating system distribution circuit
     return Lcww_dis, Lsww_dis, Lv, Lvww_c, Lvww_dis, Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, Tww_re_0, Tww_sup_0, phi_pipes, fforma
 
 
@@ -779,7 +784,7 @@ def get_properties_building_envelope(prop_RC_model, prop_age, prop_architecture,
     Atot = prop_RC_model.Atot
     Cm = prop_RC_model.Cm
     Am = prop_RC_model.Am
-    return Am, Atot, Aw, Awall_all, Cm, Ll, Lw, Retrofit, Sh_typ, Year, footprint, nf_ag, nfp
+    return Am, Atot, Aw, Awall_all, Cm, Ll, Lw, Retrofit, Sh_typ, Year, footprint, nf_ag, nf_bg, nfp
 
 
 def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs, Ta_re_hs, Ta_sup_cs, Ta_sup_hs,
@@ -880,7 +885,7 @@ def results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, 
          'Qww_kWh': Qww / 1000, 'Qww_tankloss_kWh': Qww_ls_st / 1000, 'Qhs_kWh': Qhs / 1000,
          'Qhsf_kWh': Qhsf / 1000,
          'Qcs_kWh': -1 * Qcs / 1000, 'Qcsf_kWh': -1 * Qcsf / 1000, 'occ_pax': Occupancy, 'Vw_m3': Waterconsumption,
-         'Tshs_C': Ths_sup, 'Trhs_C': Ths_re, 'mcphs_kWC': mcphs, 'mcpww_WC': mcpww * 1000, 'Tscs_C': Tcs_sup,
+         'Tshs_C': Ths_sup, 'Trhs_C': Ths_re, 'mcphs_kWC': mcphs, 'mcpww_kWC': mcpww/1000, 'Tscs_C': Tcs_sup,
          'Trcs_C': Tcs_re, 'mcpcs_kWC': mcpcs, 'Qcdataf_kWh': Qcdata / 1000, 'Tsww_C': Tww_sup_0, 'Trww_C': Tww_re,
          'Tww_tank_C': Tww_st, 'Ef_kWh': (Ealf + Eauxf + Epro) / 1000, 'Epro_kWh': Epro / 1000,
          'Qcref_kWh': Qcrefri / 1000,
@@ -932,16 +937,32 @@ def calc_pumping_systems_aux_loads(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, 
 
 
 def calc_dhw_heating_demand(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, vw, vww):
-    # TODO: Documentation
     # Refactored from CalcThermalLoads
+    """
+    This function calculates the distribution heat loss and final energy consumption of domestic hot water.
+    Final energy consumption of dhw includes dhw demand, sensible heat loss in hot water storage tank, and heat loss in the distribution network.
+    :param Af: Conditioned floor area in m2.
+    :param Lcww_dis: Length of dhw usage circulation pipeline in m.
+    :param Lsww_dis: Length of dhw usage distribution pipeline in m.
+    :param Lvww_c: Length of dhw heating circulation pipeline in m.
+    :param Lvww_dis: Length of dhw heating distribution pipeline in m.
+    :param T_ext: Ambient temperature in C.
+    :param Ta: Room temperature in C.
+    :param Tww_re: Domestic hot water tank return temperature in C, this temperature is the ground water temperature, set according to norm.
+    :param Tww_sup_0: Domestic hot water suppply set point temperature.
+    :param vw: specific fresh water consumption in m3/hr*m2.
+    :param vww: specific domestic hot water consumption in m3/hr*m2.
+    :return:
+
+    """
 
     Vww = vww * Af / 1000  ## consumption of hot water in m3/hour
     Vw = vw * Af / 1000  ## consumption of fresh water in m3/h = cold water + hot water
     Mww = Vww * gv.Pwater / 3600  # in kg/s
     # Mw = Vw*Pwater/3600 # in kg/s
     # 2. Calculate hot water demand
-    mcpww = Mww * gv.Cpw
-    Qww = mcpww * (Tww_sup_0 - Tww_re) * 1000  # in W
+    mcpww = Mww * gv.Cpw * 1000 # W/K
+    Qww = mcpww * (Tww_sup_0 - Tww_re)  # heating for dhw in W
     # 3. losses distribution of domestic hot water recoverable and not recoverable
     Qww_0 = Qww.max()
     Vol_ls = Lsww_dis * (gv.D / 1000) ** (2 / 4) * math.pi
@@ -954,8 +975,8 @@ def calc_dhw_heating_demand(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta,
     Tww_st = np.zeros(8760)
     Qd = np.zeros(8760)
     Qwwf = np.zeros(8760)
-    Vww_0 = Vww.max()  # peak dhw demand in m3/hour, also used for dhw tank sizing.
-    Tww_st_0 = gv.Tww_setpoint  # initial tank temperature in C
+    Vww_0 = Vww.max()             # peak dhw demand in m3/hour, also used for dhw tank sizing.
+    Tww_st_0 = gv.Tww_setpoint    # initial tank temperature in C
     # calculate heat loss and temperature in dhw tank
     for k in range(8760):
         Qww_ls_st[k], Qd[k], Qwwf[k] = sto_m.calc_Qww_ls_st(Tww_st_0, gv.Tww_setpoint, Ta[k], gv.Bf, T_ext[k], Vww_0,
@@ -1241,7 +1262,7 @@ def calc_Qww_ls_nr(tair,Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, Flowtap, twws, Cpw, 
     d_dis_ls = calc_disls(tamb,Qww,Flowtap,V,twws,Lvww_dis,Pwater,Cpw,Y)
     Qww_d_ls_nr = d_dis_ls + d_circ_ls
     
-    return Qww_d_ls_nr 
+    return Qww_d_ls_nr
 
 def calc_disls(tamb,hotw,Flowtap,V,twws,Lsww_dis,p,cpw, Y):
     if hotw > 0:
