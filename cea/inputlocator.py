@@ -59,6 +59,12 @@ class InputLocator(object):
         """scenario/1-inputs/4-technical/emission_systems.csv"""
         return os.path.join(self.db_path, 'Systems',  'emission_systems.xls')
 
+    def get_data_benchmark(self):
+        """cea/db/CH/Benchmarks/benchmark_targets.xls"""
+        return os.path.join(self.db_path, 'Benchmarks', 'benchmark_targets.xls')
+    def get_data_benchmark_today(self):
+        """cea/db/CH/Benchmarks/benchmark_today.xls"""
+        return os.path.join(self.db_path, 'Benchmarks', 'benchmark_today.xls')
 
     # INPUTS
     def get_building_geometry(self):
@@ -146,6 +152,10 @@ class InputLocator(object):
         """scenario/2-results/3-emissions/1-timeseries/Total_LCA_operation.csv"""
         return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_operation.csv')
 
+    def get_lca_mobility(self):
+        """scenario/outputs/data/emissions/Total_LCA_mobility.csv"""
+        return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_mobility.csv')
+
     ##GRAPHS
     def get_demand_plots_folder(self):
         """scenario/2-results/2-demand/2-plots"""
@@ -158,6 +168,10 @@ class InputLocator(object):
         """scenario/2-results/2-demand/2-plots/{building_name}.pdf"""
         demand_plots_folder = self.get_demand_plots_folder()
         return os.path.join(demand_plots_folder, '%s.pdf' % building_name)
+
+    def get_benchmark_plots_file(self):
+        """scenario/2-results/2-demand/2-plots/{building_name}.pdf"""
+        return os.path.join(self.scenario_path, 'outputs', 'plots', 'graphs', 'Benchmark_scenarios.pdf')
 
     ##HEATMAPS
     def get_heatmaps_demand_folder(self):
@@ -182,3 +196,7 @@ class InputLocator(object):
     def get_temporary_file(self, filename):
         """Returns the path to a file in the temporary folder with the name `filename`"""
         return os.path.join(self.get_temporary_folder(), filename)
+
+    def get_scenarios_plot_file(self):
+        """scenario/2-results/2-demand/2-plots/{building_name}.pdf"""
+        return os.path.join(self.scenario_path, 'outputs', 'plots', 'graphs', 'Boxplots_scenarios.pdf')

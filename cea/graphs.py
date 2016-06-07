@@ -47,15 +47,26 @@ def graphs_demand(locator, analysis_fields, gv):
     num_buildings = len(building_names)
     # setup-time
     color_palette = ['g', 'r', 'y', 'c']
-    fields = analysis_fields.append('DATE')
+    fields = list(analysis_fields)
+    fields_date = analysis_fields.append('DATE')
+
+    # get dataframes for totals
+    fields2 = ['QHf_MWhyr','QCf_MWhyr','Ef_MWhyr']
+    area_df =  pd.read_csv(locator.get_total_demand()).set_index('Name')['GFA_m2']
 
     # create figure for every name
     counter = 0
+    from matplotlib.backends.backend_pdf import PdfPages
     for name in building_names:
-        df = pd.read_csv(locator.get_demand_results_file(name), usecols=fields)
+        # open PDF file
+        pdf = PdfPages(locator.get_demand_plots_file(name))
+
+        # create first page with timeseries
+        df = pd.read_csv(locator.get_demand_results_file(name), usecols=fields_date)
         df.index = pd.to_datetime(df.DATE)
-        fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, figsize=(12, 16))
-        fig.text(0.07, 0.5, 'Demand [kWh]', va='center', rotation='vertical')
+
+        fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, figsize=(12,16))
+        fig.text(0.07, 0.5, 'Demand [kW]', va='center', rotation='vertical')
 
         df.plot(ax=ax1, y=analysis_fields, title='YEAR', color=color_palette, label=' ', legend=False)
         df[408:576].plot(ax=ax2, y=analysis_fields, title='WINTER', legend=False, color=color_palette)
@@ -65,10 +76,26 @@ def graphs_demand(locator, analysis_fields, gv):
         ax4.legend(bbox_to_anchor=(0, -0.4, 1, 0.102), loc=0, ncol=4, mode="expand", borderaxespad=0, fontsize=15)
         fig.subplots_adjust(hspace=0.4)
 
-        # save to disc
-        plt.savefig(locator.get_demand_plots_file(name))
-        plt.clf()
+        pdf.savefig()
         plt.close()
+
+        # Create second page
+        fig, (ax, ax1)= plt.subplots(1,2, figsize=(12, 6))
+        plt.subplot(121)
+        dftotal = df[fields].sum(axis=0)/1000 # in MWh
+        dftogether = pd.DataFrame({'YEARLY CONSUMPTION': dftotal}).T
+        dftogether.plot(ax=ax, kind='bar', title='TOTALS', legend=False, stacked=True, color=color_palette)
+        ax.set_ylabel('Yearly Consumption  [kWh x 10^3]')
+
+        dftogether = pd.DataFrame({'EUI': (dftotal / area_df.ix[name] * 1000)}).T
+        dftogether.plot(ax=ax1, kind='bar', legend=False, title='ENERGY USE INTENSITY', stacked=True, color=color_palette)
+        ax1.set_ylabel('Energy Use Intensity EUI [kWh/m2.yr]')
+
+        pdf.savefig()
+        plt.close()
+        plt.clf()
+        pdf.close()
+
 
         gv.log('Building No. %(bno)i completed out of %(btot)i', bno=counter+1, btot=num_buildings)
         counter += 1
