@@ -14,7 +14,11 @@ import numpy as np
 import os
 import tempfile
 
-def benchmark(locator_list, output_file):
+from cea import globalvar
+
+gv = globalvar.GlobalVariables()
+
+def benchmark(locator_list):
     """
     algorithm to print graphs in PDF concerning the 2000 Watt society benchmark 
     for two scenarios (A and B)
@@ -39,9 +43,11 @@ def benchmark(locator_list, output_file):
     old_suffix = ['_x', '_y', '']
     fields = ['_GJ', '_ton', '_MJm2', '_kgm2']
     new_cols = {}
+    scenario_max = {}
     for i in range(4):
         for j in range(3):
             new_cols[old_fields[i] + old_suffix[j]] = graphs[j] + fields[i]
+        scenario_max[graphs[i] + fields[2]] = scenario_max[graphs[i] + fields[3]] = 0
 
     # calculate target values - THIS IS ASSUMING THE FIRST SCENARIO IS ALWAYS THE BASELINE! Need to confirm.
     targets = calc_benchmark_targets(locator_list[0])
@@ -72,9 +78,12 @@ def benchmark(locator_list, output_file):
 
         # calculate total results for entire scenario
         df_scenario = df_buildings.drop('Name',axis=1).sum(axis=0)
-        for i in graphs:
+        for graph in graphs:
             for j in range(2):
-                df_scenario[i + fields[j+2]] = df_scenario[i+fields[j]] / df_scenario['Af_m2'] * 1000
+                df_scenario[graph + fields[j+2]] = df_scenario[graph + fields[j]] / df_scenario['Af_m2'] * 1000
+                if scenario_max[graph + fields[j+2]] < df_scenario[graph + fields[j+2]]:
+                    scenario_max[graph + fields[j+2]] = df_scenario[graph + fields[j+2]]
+
 
         for i in range(len(graphs)):
             plt.subplot(2,2,i+1)
@@ -85,12 +94,19 @@ def benchmark(locator_list, output_file):
     # complete graphs
     plt.plot()
     for i in range(len(graphs)):
+        # plot today and target values
         plt.subplot(2, 2, i + 1)
         plt.plot([0,targets[graphs[i] + fields[2]],targets[graphs[i] + fields[2]]],
                  [targets[graphs[i] + fields[3]],targets[graphs[i] + fields[3]],0], color='k')
         plt.plot([0, values_today[graphs[i] + fields[2]], values_today[graphs[i] + fields[2]]],
                  [values_today[graphs[i] + fields[3]], values_today[graphs[i] + fields[3]], 0], '--', color='k')
-        plt.axis([0, values_today[graphs[i] + fields[2]]*1.2, 0, values_today[graphs[i] + fields[3]]*1.2])
+        # set axis limits
+        if values_today[graphs[i] + fields[2]] > df_scenario[graphs[i] + fields[2]]:
+            plt.axis([0, values_today[graphs[i] + fields[2]] * 1.2, 0, values_today[graphs[i] + fields[3]] * 1.2])
+        else:
+            plt.axis([0, scenario_max[graphs[i] + fields[2]] * 1.2, 0, values_today[graphs[i] + fields[3]] *
+                      scenario_max[graphs[i] + fields[2]] / values_today[graphs[i] + fields[2]] * 1.2 ])
+        # plot title
         plt.title(graphs[i])
 
     legend.extend(['Benchmark targets','Present day values'])
@@ -100,24 +116,9 @@ def benchmark(locator_list, output_file):
                fontsize=15, numpoints=1)
     '''
     # save to disk
-    plt.savefig(output_file)
+    plt.savefig(locator_list[0].get_benchmark_plots_file())
     plt.clf()
     plt.close()
-
-def calc_total_scenario(name):
-    '''
-    Calculates the total ghg_kgm2 and pen_MJm2 for all buildings in a scenario.
-    :name = results for each building in the scenario from Total_LCA csv file
-    :total_scenario = array with the total pen_MJm2 and ghg_kgm2
-    '''
-    name = name.sum(axis=0).drop('Name')
-    for i in range(0,len(name.ghg_kgm2)):
-        total_ghg += name.ghg_ton[i]
-        total_pen += name.pen_GJ[i]
-        if name.ghg_kgm2[i] > 0:
-            total_area += (name.ghg_ton[i]) / name.ghg_kgm2[i]
-    total_scenario = [ total_pen / total_area,  total_ghg / total_area ]
-    return total_scenario
 
 def calc_benchmark_targets(locator):
     '''
@@ -154,9 +155,8 @@ def calc_benchmark_targets(locator):
         for j in range(len(suffix)):
             targets[category + suffix[j]] = 0
         for i in range(len(vt)):
-            if vt[i] in occupancy:
-                targets[category+suffix[0]] += (occupancy['Af_m2'] * occupancy[vt[i]] * pt[i]).sum() / 1000
-                targets[category+suffix[1]] += (occupancy['Af_m2'] * occupancy[vt[i]] * gt[i]).sum() / 1000
+            targets[category+suffix[0]] += (occupancy['Af_m2'] * occupancy[vt[i]] * pt[i]).sum() / 1000
+            targets[category+suffix[1]] += (occupancy['Af_m2'] * occupancy[vt[i]] * gt[i]).sum() / 1000
         targets[category + suffix[2]] += targets[category+suffix[0]] / area_study * 1000
         targets[category + suffix[3]] += targets[category + suffix[1]] / area_study * 1000
 
@@ -198,9 +198,8 @@ def calc_benchmark_today(locator):
         for j in range(len(suffix)):
             values_today[category + suffix[j]] = 0
         for i in range(len(vt)):
-            if vt[i] in occupancy:
-                values_today[category + suffix[0]] += (occupancy['Af_m2'] * occupancy[vt[i]] * pt[i]).sum() / 1000
-                values_today[category + suffix[1]] += (occupancy['Af_m2'] * occupancy[vt[i]] * gt[i]).sum() / 1000
+            values_today[category + suffix[0]] += (occupancy['Af_m2'] * occupancy[vt[i]] * pt[i]).sum() / 1000
+            values_today[category + suffix[1]] += (occupancy['Af_m2'] * occupancy[vt[i]] * gt[i]).sum() / 1000
         values_today[category + suffix[2]] += values_today[category + suffix[0]] / area_study * 1000
         values_today[category + suffix[3]] += values_today[category + suffix[1]] / area_study * 1000
 
@@ -209,42 +208,16 @@ def calc_benchmark_today(locator):
 def test_benchmark():
     # HINTS FOR ARCGIS INTERFACE:
     # the user can select a maximum of 2 scenarios to graph (analysis fields!)
-
-    locator_list = [ExtendInputLocator(scenario_path=r'C:\reference-case\baseline')]
-    output_file = tempfile.gettempdir()+'\\'+'Test.pdf'
-    from cea import globalvar
-    gv = globalvar.GlobalVariables()
-    benchmark(locator_list = locator_list, output_file = output_file)
+    locator1 = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator2 = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator_list = [locator1, locator2]
+    benchmark(locator_list = locator_list)
 
 def test_benchmark_targets():
-    locator = ExtendInputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
     from cea import globalvar
     gv = globalvar.GlobalVariables()
     calc_benchmark_targets(locator)
-
-class ExtendInputLocator(inputlocator.InputLocator):
-    def __init__(self, scenario_path):
-        super(ExtendInputLocator, self).__init__(scenario_path)
-    def get_lca_mobility(self):
-        """scenario/2-results/3-emissions/1-timeseries/Total_LCA_mobility.csv"""
-        return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_mobility.csv')
-    def get_data_benchmark(self):
-        """cea/db/Benchmarks/Switzerland/benchmark_targets.xls"""
-        return os.path.join(self.db_path, 'Benchmarks', 'benchmark_targets.xls')
-    def get_data_benchmark_today(self):
-        """cea/db/Benchmarks/Switzerland/benchmark_today.xls"""
-        return os.path.join(self.db_path, 'Benchmarks', 'benchmark_today.xls')
-    def get_benchmark_plots_file(self):
-        """scenario/2-results/3-emissions/2-plots/"""
-        import time
-        demand_plots_folder = self.get_benchmark_plots_folder()
-        return os.path.join(demand_plots_folder, 'Benchmark_plot_' + time.strftime("%Y%m%d_%H%M%S.pdf"))
-    def get_benchmark_plots_folder(self):
-        """scenario/2-results/3-emissions/2-plots"""
-        benchmark_plots_folder = os.path.join(self.scenario_path, '2-results', '3-emissions', '2-plots')
-        if not os.path.exists(benchmark_plots_folder):
-            os.makedirs(benchmark_plots_folder)
-        return benchmark_plots_folder
 
 if __name__ == '__main__':
     test_benchmark()

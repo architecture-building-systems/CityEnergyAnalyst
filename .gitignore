@@ -67,3 +67,4 @@ target/
 *.bak
 test/reference-case/Radiation2000-2009.csv
 *.spyderworkspace
+*.DS_Store
