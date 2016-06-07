@@ -10,13 +10,17 @@ J. Fonseca  refactoring to new properties file   22.03.16
 G. Happle   BuildingPropsThermalLoads   27.05.2016
 """
 from __future__ import division
+
 import pandas as pd
+import contributions.thermal_loads_new_ventilation.simple_window_generator as simple_window_generator
+from geopandas import GeoDataFrame as gpdf
 import functions as f
 import maker as m
 import epwreader
+import functions as f
 import globalvar
-from geopandas import GeoDataFrame as gpdf
 import inputlocator
+import maker as m
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -36,12 +40,10 @@ def demand_calculation(locator, weather_path, gv):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
     using the integrated model of Fonseca et al. 2015. Applied energy.
-
     Parameters
     ----------
     :param locator: An InputLocator to locate input files
     :type locator: inputlocator.InputLocator
-
     path_radiation:
         path to solar radiation file in vertical surface_properties
         RadiationYearFinal.csv
@@ -53,7 +55,6 @@ def demand_calculation(locator, weather_path, gv):
         path to demand results folder demand
     path_properties: string
         path to folder with .shp files created with the properties script there should be a total of 6
-
     Returns
     -------
     single_demand: .csv
@@ -62,6 +63,7 @@ def demand_calculation(locator, weather_path, gv):
         csv file of yearly demand data per buidling.
     """
     # local variables
+
 
     # initialize function inputs
     weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms']]
@@ -80,12 +82,16 @@ def demand_calculation(locator, weather_path, gv):
     usage_schedules = {'list_uses': list_uses,
                        'schedules': schedules}
 
+
+
     # get timeseries of demand
     num_buildings = len(building_properties.get_list_building_name())
     counter = 0
+
     for building in building_properties.get_list_building_name():
         gv.models['calc-thermal-loads'](building, building_properties, weather_data, usage_schedules, date, gv,
                                         locator.get_demand_results_folder(), locator.get_temporary_folder())
+
         gv.log('Building No. %(bno)i completed out of %(btot)i', bno=counter + 1, btot=num_buildings)
         counter += 1
 
@@ -229,12 +235,16 @@ def read_building_properties(locator, gv):
                                         prop_HVAC_result, surface_properties, gv)
     gv.log("done")
 
+    gv.log("creating windows")
+    df_windows = simple_window_generator.create_windows(surface_properties, prop_architecture)
+    gv.log("done")
+
     # construct function input object
     return BuildingProperties(prop_geometry=prop_geometry, prop_occupancy=prop_occupancy,
                               prop_architecture=prop_architecture, prop_age=prop_age,
                               prop_comfort=prop_comfort, prop_internal_loads=prop_internal_loads,
                               prop_HVAC_result=prop_HVAC_result, prop_RC_model=prop_RC_model,
-                              solar=solar)
+                              solar=solar, prop_windows=df_windows)
 
 
 def test_demand():
