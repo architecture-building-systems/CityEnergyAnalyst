@@ -144,7 +144,7 @@ class DemandTool(object):
 
         weather_name = parameters[1].valueAsText
         if weather_name in locator.get_weather_names():
-            weather_path = locator.get_default_weather()
+            weather_path = locator.get_weather(weather_name)
         elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
             weather_path = weather_name
         else:
@@ -484,9 +484,8 @@ class RadiationTool(object):
         year = parameters[2].value
 
         locator = inputlocator.InputLocator(scenario_path)
-        weather_name = parameters[1].valueAsText
         if weather_name in locator.get_weather_names():
-            weather_path = locator.get_default_weather()
+            weather_path = locator.get_weather(weather_name)
         elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
             weather_path = weather_name
         else:
