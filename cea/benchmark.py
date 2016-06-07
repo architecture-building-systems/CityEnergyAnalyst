@@ -14,7 +14,11 @@ import numpy as np
 import os
 import tempfile
 
-def benchmark(locator_list, output_file):
+from cea import globalvar
+
+gv = globalvar.GlobalVariables()
+
+def benchmark(locator_list):
     """
     algorithm to print graphs in PDF concerning the 2000 Watt society benchmark 
     for two scenarios (A and B)
@@ -44,6 +48,7 @@ def benchmark(locator_list, output_file):
         for j in range(3):
             new_cols[old_fields[i] + old_suffix[j]] = graphs[j] + fields[i]
         scenario_max[graphs[i] + fields[2]] = scenario_max[graphs[i] + fields[3]] = 0
+
     # calculate target values - THIS IS ASSUMING THE FIRST SCENARIO IS ALWAYS THE BASELINE! Need to confirm.
     targets = calc_benchmark_targets(locator_list[0])
     # calculate current values - THIS SHOULD NOT BE HARD CODED AND NEED A SOURCE (other than Inducity)
@@ -111,7 +116,7 @@ def benchmark(locator_list, output_file):
                fontsize=15, numpoints=1)
     '''
     # save to disk
-    plt.savefig(output_file)
+    plt.savefig(locator_list[0].get_benchmark_plots_file())
     plt.clf()
     plt.close()
 
@@ -203,32 +208,16 @@ def calc_benchmark_today(locator):
 def test_benchmark():
     # HINTS FOR ARCGIS INTERFACE:
     # the user can select a maximum of 2 scenarios to graph (analysis fields!)
-
-    locator_list = [ExtendInputLocator(scenario_path=r'C:\reference-case\baseline')]
-    output_file = r'C:\reference-case\benchmark-plots\Test.pdf'
-
-    from cea import globalvar
-    gv = globalvar.GlobalVariables()
-    benchmark(locator_list = locator_list, output_file = output_file)
+    locator1 = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator2 = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator_list = [locator1, locator2]
+    benchmark(locator_list = locator_list)
 
 def test_benchmark_targets():
-    locator = ExtendInputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
     from cea import globalvar
     gv = globalvar.GlobalVariables()
     calc_benchmark_targets(locator)
-
-class ExtendInputLocator(inputlocator.InputLocator):
-    def __init__(self, scenario_path):
-        super(ExtendInputLocator, self).__init__(scenario_path)
-    def get_lca_mobility(self):
-        """scenario/outputs/data/emissions/Total_LCA_mobility.csv"""
-        return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_mobility.csv')
-    def get_data_benchmark(self):
-        """cea/db/CH/Benchmarks/benchmark_targets.xls"""
-        return os.path.join(self.db_path, 'Benchmarks', 'benchmark_targets.xls')
-    def get_data_benchmark_today(self):
-        """cea/db/CH/Benchmarks/benchmark_today.xls"""
-        return os.path.join(self.db_path, 'Benchmarks', 'benchmark_today.xls')
 
 if __name__ == '__main__':
     test_benchmark()
