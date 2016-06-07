@@ -514,3 +514,70 @@ class RadiationTool(object):
             longitude = shp.crs['lon_0']
             latitude = shp.crs['lat_0']
         return latitude, longitude
+
+
+class GraphsBenchmarkTool(object):
+    def __init__(self):
+        self.label = 'Benchmark graphs'
+        self.description = 'Create benchmark plots of scenarios in a folder'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenarios = arcpy.Parameter(
+            displayName="Path to the scenarios to plot",
+            name="scenarios",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input",
+            multiValue=True)
+        return [scenarios]
+
+    def execute(self, parameters, messages):
+        scenarios = parameters[0].valueAsText
+        scenarios = scenarios.replace('"', '')
+        scenarios = scenarios.replace("'", '')
+        scenarios = scenarios.split(';')
+
+        arcpy.AddMessage(scenarios)
+
+        import benchmark
+        reload(benchmark)
+
+        locator_list = [inputlocator.InputLocator(scenario_path=scenario) for scenario in scenarios]
+        benchmark.benchmark(locator_list=locator_list)
+        return
+
+class MobilityTool(object):
+
+    def __init__(self):
+        self.label = 'Emissions Mobility'
+        self.description = 'Calculate emissions and primary energy due to mobility'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        return [scenario_path]
+
+    def isLicensed(self):
+        return True
+
+    def updateParameters(self, parameters):
+        return
+
+    def updateMessages(self, parameters):
+        return
+
+    def execute(self, parameters, messages):
+        from mobility import lca_mobility, ExtendInputLocator
+
+        scenario_path = parameters[0].valueAsText
+        gv = globalvar.GlobalVariables()
+        gv.log = add_message
+        locator = ExtendInputLocator(scenario_path=scenario_path)
+        lca_mobility(locator=locator)
