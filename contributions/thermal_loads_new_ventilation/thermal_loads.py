@@ -727,6 +727,7 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
     schedules = usage_schedules['schedules']
 
     # copied from original calc thermal loads
+    GFA_m2 = prop_rc_model.GFA_m2  # gross floor area
     Af = prop_rc_model.Af
     Aef = prop_rc_model.Aef
     sys_e_heating = prop_hvac.type_hs
@@ -775,6 +776,7 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
         Year, \
         footprint, \
         nf_ag, \
+        nf_bg,\
         nfp = functions.get_properties_building_envelope(prop_rc_model, prop_age, prop_architecture, prop_geometry,
                                                          prop_occupancy)  # TODO: rename outputs
 
@@ -791,7 +793,7 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
         Tww_re_0, \
         Tww_sup_0, \
         Y, \
-        fforma = functions.get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp,
+        fforma = functions.get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, nf_bg,
                                                            prop_hvac)  # TODO: rename outputs
 
         # minimum mass flow rate of ventilation according to schedule
@@ -1067,7 +1069,7 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
                                                                                                           Eprof)
 
     # write results to csv
-    functions.results_to_csv(Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot, Name,
+    functions.results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot, Name,
                              Occupancy,
                              Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs_sen, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf,
                              Qwwf_0,
