@@ -530,28 +530,21 @@ class GraphsBenchmarkTool(object):
             parameterType="Required",
             direction="Input",
             multiValue=True)
-        output_file = arcpy.Parameter(
-            displayName="Path to output PDF",
-            name="output_file",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Output")
-        output_file.filter.list = ['pdf']
-        return [scenarios, output_file]
+        return [scenarios]
 
     def execute(self, parameters, messages):
         scenarios = parameters[0].valueAsText
         scenarios = scenarios.replace('"', '')
         scenarios = scenarios.replace("'", '')
         scenarios = scenarios.split(';')
-        output_file = parameters[1].valueAsText
 
         arcpy.AddMessage(scenarios)
 
         import benchmark
         reload(benchmark)
-        locator_list = [benchmark.ExtendInputLocator(scenario) for scenario in scenarios]
-        benchmark.benchmark(locator_list=locator_list, output_file=output_file)
+
+        locator_list = [inputlocator.InputLocator(scenario_path=scenario) for scenario in scenarios]
+        benchmark.benchmark(locator_list=locator_list)
         return
 
 class MobilityTool(object):
