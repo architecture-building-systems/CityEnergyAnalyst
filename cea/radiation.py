@@ -495,8 +495,8 @@ def test_solar_radiation():
     gv = cea.globalvar.GlobalVariables()
 
     solar_radiation_vertical(locator=locator, path_arcgis_db=path_default_arcgis_db,
-                             latitude=46.95240555555556, longitude=7.439583333333333, timezone=1, year=2014, gv=gv,
-                             weather_path= weather_path)
+                             latitude=46.95240555555556, longitude=7.439583333333333, year=2014, gv=gv,
+                             weather_path=weather_path)
 
 
 if __name__ == '__main__':
