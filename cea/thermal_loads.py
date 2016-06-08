@@ -214,6 +214,14 @@ def calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_
     q_dhum_hvac = None
     e_hum_aux_hvac = None
     q_ve_loss = None
+    qm_ve_hvac_h = None
+    qm_ve_hvac_c = None
+    temp_sup_h = None
+    temp_sup_c = None
+    temp_rec_h = None
+    temp_rec_c = None
+    w_rec = None
+    w_sup = None
 
     # ==================================================================================================================
     # ITERATION
@@ -344,7 +352,8 @@ def calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_
 
     return temp_m, temp_a, q_hs_sen_loss_true, q_cs_sen_loss_true, uncomfort, \
            temp_op, i_m_tot, q_hs_sen_hvac, q_cs_sen_hvac, q_hum_hvac, q_dhum_hvac, e_hum_aux_hvac, \
-           q_ve_loss, qm_ve_mech, q_hs_sen, q_cs_sen, qhs_em_ls, qcs_em_ls
+           q_ve_loss, qm_ve_mech, q_hs_sen, q_cs_sen, qhs_em_ls, qcs_em_ls, qm_ve_hvac_h, qm_ve_hvac_c, temp_sup_h,\
+           temp_sup_c, temp_rec_h, temp_rec_c, w_rec, w_sup
 
 
 def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, thermal_loads_input, weather_data, state_prev, gv):
@@ -617,7 +626,7 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
         Qcs_lat = np.zeros(8760)
         Qhs_em_ls = np.zeros(8760)
         Qcs_em_ls = np.zeros(8760)
-        QHC_sen = np.zeros(8760)
+        # QHC_sen = np.zeros(8760)
         ma_sup_hs = np.zeros(8760)
         Ta_sup_hs = np.zeros(8760)
         Ta_re_hs = np.zeros(8760)
@@ -686,15 +695,23 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
                 Im_tot[t], \
                 q_hs_sen_hvac[t], \
                 q_cs_sen_hvac[t], \
-                q_hum_hvac[t], \
-                q_dhum_hvac[t], \
-                e_hum_aux_hvac[t], \
+                Qhs_lat[t], \
+                Qcs_lat[t], \
+                Ehs_lat_aux[t], \
                 q_ve_loss[t], \
                 qm_ve_mech[t], \
                 Qhs_sen[t], \
                 Qcs_sen[t], \
                 Qhs_em_ls[t],\
-                Qcs_em_ls[t] = calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_prev, gv)
+                Qcs_em_ls[t], \
+                ma_sup_hs[t], \
+                ma_sup_cs[t], \
+                Ta_sup_hs[t], \
+                Ta_sup_cs[t], \
+                Ta_re_hs[t], \
+                Ta_re_cs[t], \
+                w_re[t], \
+                w_sup[t]= calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_prev, gv)
 
                 # case 1b: mechanical ventilation
             else:
