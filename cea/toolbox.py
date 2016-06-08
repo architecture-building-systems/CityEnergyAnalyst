@@ -530,18 +530,27 @@ class ScenarioPlotsTool(object):
             parameterType="Required",
             direction="Input",
             multiValue=True)
-        return [scenarios]
+        output_file = arcpy.Parameter(
+            displayName="Path to output PDF",
+            name="output_file",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Output")
+        output_file.filter.list = ['pdf']
+        return [scenarios, output_file]
 
     def execute(self, parameters, messages):
         scenarios = parameters[0].valueAsText
         scenarios = scenarios.replace("'", "")
         scenarios = scenarios.replace('"', '')
         scenarios = scenarios.split(';')
+        output_file = parameters[1].valueAsText
+
         arcpy.AddMessage(scenarios)
 
         import cea.scenario_plots
         reload(cea.scenario_plots)
-        cea.scenario_plots.plot_scenarios(scenarios=scenarios)
+        cea.scenario_plots.plot_scenarios(scenarios=scenarios, output_file=output_file)
         return
 
 class GraphsBenchmarkTool(object):
@@ -558,7 +567,14 @@ class GraphsBenchmarkTool(object):
             parameterType="Required",
             direction="Input",
             multiValue=True)
-        return [scenarios]
+        output_file = arcpy.Parameter(
+            displayName="Path to output PDF",
+            name="output_file",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Output")
+        output_file.filter.list = ['pdf']
+        return [scenarios, output_file]
 
     def execute(self, parameters, messages):
         scenarios = parameters[0].valueAsText
@@ -566,11 +582,12 @@ class GraphsBenchmarkTool(object):
         scenarios = scenarios.replace("'", '')
         scenarios = scenarios.split(';')
         arcpy.AddMessage(scenarios)
+        output_file = parameters[1].valueAsText
 
         import benchmark
         reload(benchmark)
         locator_list = [inputlocator.InputLocator(scenario_path=scenario) for scenario in scenarios]
-        benchmark.benchmark(locator_list=locator_list)
+        benchmark.benchmark(locator_list=locator_list, output_file=output_file)
         return
 
 class MobilityTool(object):

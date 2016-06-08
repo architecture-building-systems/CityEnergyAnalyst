@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def plot_scenarios(scenarios):
+def plot_scenarios(scenarios, output_file):
     """
     List each scenario in the folder `scenario_root` and plot demand and lca (operations, embodied) data.
 
@@ -36,7 +36,7 @@ def plot_scenarios(scenarios):
                          'locator_method': 'get_lca_operation'},
     }
 
-    pdf = PdfPages(locators[0].get_scenarios_plot_file())
+    pdf = PdfPages(output_file)
 
     # Page one: Demand
     fig, axes = plt.subplots(nrows=3, figsize=(8.27, 11.69))
@@ -155,10 +155,11 @@ def plot_lca_operation(ax, locators, scenario_names, column, title, unit):
 
 
 def test_plot_scenarios():
+    output_file = os.path.expandvars(r'%TEMP%\scenario_plots.pdf')
     scenarios_root = r'c:\reference-case'
     scenarios = [os.path.join(scenarios_root, scenario) for scenario in os.listdir(scenarios_root)
                  if os.path.isdir(os.path.join(scenarios_root, scenario))]
-    plot_scenarios(scenarios)
+    plot_scenarios(scenarios, output_file)
     print 'plot_scenarios succeeded.'
 
 if __name__ == '__main__':
