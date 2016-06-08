@@ -208,6 +208,7 @@ def test_benchmark():
     locator_list = [locator1, locator2]
     output_file = os.path.expandvars(r'%TEMP%\test_benchmark.pdf')
     benchmark(locator_list=locator_list, output_file=output_file)
+    print 'test_benchmark() succeeded'
 
 def test_benchmark_targets():
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
@@ -215,4 +216,4 @@ def test_benchmark_targets():
 
 if __name__ == '__main__':
     test_benchmark()
-    test_benchmark_targets()
+

@@ -65,7 +65,7 @@ def test_mobility():
     locator = ExtendInputLocator(scenario_path=r'C:\reference-case\baseline')
     lca_mobility(locator=locator)
 
-    print 'test_properties() succeeded'
+    print 'test_mobility() succeeded'
 
 class ExtendInputLocator(inputlocator.InputLocator):
     def __init__(self, scenario_path):
