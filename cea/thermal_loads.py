@@ -352,7 +352,7 @@ def calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_
 
     return temp_m, temp_a, q_hs_sen_loss_true, q_cs_sen_loss_true, uncomfort, \
            temp_op, i_m_tot, q_hs_sen_hvac, q_cs_sen_hvac, q_hum_hvac, q_dhum_hvac, e_hum_aux_hvac, \
-           q_ve_loss, qm_ve_mech, q_hs_sen, q_cs_sen, qhs_em_ls, qcs_em_ls, qm_ve_hvac_h, qm_ve_hvac_c, temp_sup_h,\
+           qm_ve_mech, q_hs_sen, q_cs_sen, qhs_em_ls, qcs_em_ls, qm_ve_hvac_h, qm_ve_hvac_c, temp_sup_h,\
            temp_sup_c, temp_rec_h, temp_rec_c, w_rec, w_sup
 
 
@@ -638,19 +638,13 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
         Ehs_lat_aux = np.zeros(8760)
         Qhs_sen_incl_em_ls = np.zeros(8760)
         Qcs_sen_incl_em_ls = np.zeros(8760)
-        t5 = np.zeros(8760)
         Tww_re = np.zeros(8760)
         Top = np.zeros(8760)
         Im_tot = np.zeros(8760)
-        q_hum_hvac = np.zeros(8760)
-        q_dhum_hvac = np.zeros(8760)
-        q_ve_loss = np.zeros(8760)
         qm_ve_mech = np.zeros(8760)
-        qm_ve_nat = np.zeros(8760)
 
         q_hs_sen_hvac = np.zeros(8760)
         q_cs_sen_hvac = np.zeros(8760)
-        e_hum_aux_hvac = np.zeros(8760)
 
         # create flag season
         flag_season = np.zeros(8760, dtype=bool)  # default is heating season
@@ -698,7 +692,6 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
                 Qhs_lat[t], \
                 Qcs_lat[t], \
                 Ehs_lat_aux[t], \
-                q_ve_loss[t], \
                 qm_ve_mech[t], \
                 Qhs_sen[t], \
                 Qcs_sen[t], \
@@ -711,7 +704,7 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
                 Ta_re_hs[t], \
                 Ta_re_cs[t], \
                 w_re[t], \
-                w_sup[t]= calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_prev, gv)
+                w_sup[t] = calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_prev, gv)
 
                 # case 1b: mechanical ventilation
             else:
