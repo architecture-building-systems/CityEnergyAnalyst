@@ -64,6 +64,8 @@ class GlobalVariables(object):
         # ==============================================================================================================
         self.shielding_class = 2  # according to ISO 16798-7, 0 = open terrain, 1 = partly shielded from wind,
         #  2 = fully shielded from wind
+        self.delta_p_dim = 5  # (Pa) dimensioning differential pressure for multi-storey building shielded from wind,
+        # according to DIN 1946-6
 
         # ==============================================================================================================
         # HVAC
