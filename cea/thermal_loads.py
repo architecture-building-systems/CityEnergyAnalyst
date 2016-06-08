@@ -125,7 +125,7 @@ def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, n50):
     """
     # TODO: check units
 
-    # 'flat rate' infiltration only considered for mechanically ventilated buildings
+    # 'flat rate' infiltration considered for all buildings
     # estimation of infiltration air volume flow rate according to Eq. (3) in DIN 1946-6
     n_inf = 0.5 * n50 * (gv.delta_p_dim/50) ** (2/3)  # [air changes per hour]
 
@@ -664,6 +664,13 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
         # end-use demand calculation
         for t in range(8760):
                 # print(t)
+            # if it is in the season
+            if limit_inf_season <= t < limit_sup_season:
+                # take advantage of this loop to fill the values of cold water
+                Tww_re[t] = 14  # Ground water temperature in C during non-heating (summer) season according to norm
+            else:
+                # take advantage of this loop to fill the values of cold water
+                Tww_re[t] = Tww_re_0  # Ground water temperature in C during heating (heating) season according to norm
 
             # case 1a: heating or cooling with hvac
             if (sys_e_heating == 'T3' and gv.is_heating_season(t)) \
