@@ -6,6 +6,9 @@ import demand
 import emissions
 import embodied
 import graphs
+import mobility
+import scenario_plots
+import benchmark
 import radiation
 
 __author__ = "Daren Thomas"
@@ -23,5 +26,9 @@ demand.test_demand()
 emissions.test_lca_operation()
 embodied.test_lca_embodied()
 graphs.test_graph_demand()
+mobility.test_mobility()
+benchmark.test_benchmark()
+scenario_plots.test_plot_scenarios()
+
 
 print 'full test completed'
