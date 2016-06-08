@@ -88,7 +88,7 @@ def demand_calculation(locator, weather_path, gv):
     num_buildings = len(building_properties.get_list_building_name())
     counter = 0
 
-    for building in building_properties.get_list_building_name():
+    for building in building_properties.get_list_building_name()[200:]:
         gv.models['calc-thermal-loads'](building, building_properties, weather_data, usage_schedules, date, gv,
                                         locator.get_demand_results_folder(), locator.get_temporary_folder())
 
