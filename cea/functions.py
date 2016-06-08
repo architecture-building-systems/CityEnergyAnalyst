@@ -984,7 +984,8 @@ def calc_dhw_heating_demand(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta,
         Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_ls_st[k], Qd[k], Qwwf[k], gv.Pwater, gv.Cpw, Vww_0)
         Tww_st_0 = Tww_st[k]
     Qwwf_0 = Qwwf.max()
-    return Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpww
+    mcpwwf = Qwwf/abs(Tww_st-Tww_re)
+    return Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpwwf
 
 
 def calc_HVAC(SystemH, SystemC, people, RH1, t1, tair, qv_req, Flag, Qsen, t5_1, wint,gv):

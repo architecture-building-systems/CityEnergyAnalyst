@@ -6,6 +6,7 @@ Global variables
 
 """
 import functions
+import thermal_loads
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -64,6 +65,8 @@ class GlobalVariables(object):
         # ==============================================================================================================
         self.shielding_class = 2  # according to ISO 16798-7, 0 = open terrain, 1 = partly shielded from wind,
         #  2 = fully shielded from wind
+        self.delta_p_dim = 5  # (Pa) dimensioning differential pressure for multi-storey building shielded from wind,
+        # according to DIN 1946-6
 
         # ==============================================================================================================
         # HVAC
@@ -79,7 +82,7 @@ class GlobalVariables(object):
 
 
         # here is where we plug in the models to use for calculations
-        self.models = {'calc-thermal-loads': functions.CalcThermalLoads}  # functions.CalcThermalLoads or contributions.thermal_loads_new_ventilation.thermal_loads.calc_thermal_loads_new_ventilation
+        self.models = {'calc-thermal-loads': thermal_loads.calc_thermal_loads_new_ventilation}  # functions.CalcThermalLoads
 
         # here is where we decide whether full excel reports of the calculations are generated
         self.testing = False  # if true: reports are generated, if false: not
