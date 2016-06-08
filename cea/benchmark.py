@@ -10,15 +10,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from cea import inputlocator
 from geopandas import GeoDataFrame as gpdf
-import numpy as np
 import os
-import tempfile
 
-from cea import globalvar
 
-gv = globalvar.GlobalVariables()
-
-def benchmark(locator_list):
+def benchmark(locator_list, output_file):
     """
     algorithm to print graphs in PDF concerning the 2000 Watt society benchmark 
     for two scenarios (A and B)
@@ -116,7 +111,7 @@ def benchmark(locator_list):
                fontsize=15, numpoints=1)
     '''
     # save to disk
-    plt.savefig(locator_list[0].get_benchmark_plots_file())
+    plt.savefig(output_file)
     plt.clf()
     plt.close()
 
@@ -211,12 +206,11 @@ def test_benchmark():
     locator1 = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
     locator2 = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
     locator_list = [locator1, locator2]
-    benchmark(locator_list = locator_list)
+    output_file = os.path.expandvars(r'%TEMP%\test_benchmark.pdf')
+    benchmark(locator_list=locator_list, output_file=output_file)
 
 def test_benchmark_targets():
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
-    from cea import globalvar
-    gv = globalvar.GlobalVariables()
     calc_benchmark_targets(locator)
 
 if __name__ == '__main__':
