@@ -32,6 +32,6 @@ class MainUseTool(object):
 
         scenario_path = parameters[0].valueAsText
         occupation_shp = os.path.join(scenario_path, 'inputs', 'building-properties', 'occupancy.shp')
-        df = gpdf.from_file(occupation_shp).drop('geometry', axis=1).set_index('Name')
+        df = gpdf.from_file(occupation_shp).drop('geometry', axis=1).drop('PFloor', axis=1).set_index('Name')
         main_uses = pd.DataFrame({'main_use': df.idxmax(axis=1)})
         main_uses.to_csv(os.path.join(scenario_path, 'main_uses.csv'))
