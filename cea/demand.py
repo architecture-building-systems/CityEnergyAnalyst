@@ -13,7 +13,7 @@ from __future__ import division
 
 import pandas as pd
 import contributions.thermal_loads_new_ventilation.simple_window_generator as simple_window_generator
-from geopandas import GeoDataFrame as gpdf
+from geopandas import GeoDataFrame
 import epwreader
 import functions as f
 import globalvar
@@ -116,7 +116,7 @@ def demand_calculation(locator, weather_path, gv):
     gv.log('finished')
 
 
-def get_temperatures(locator, prop_HVAC):           
+def get_temperatures(locator, prop_HVAC):
     prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(), 'heating')
     prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')
     prop_emission_dhw = pd.read_excel(locator.get_technical_emission_systems(), 'dhw')
@@ -236,19 +236,19 @@ def read_building_properties(locator, gv):
     gv.log("reading input files")
     solar = pd.read_csv(locator.get_radiation()).set_index('Name')
     surface_properties = pd.read_csv(locator.get_surface_properties())
-    prop_geometry = gpdf.from_file(locator.get_building_geometry())
+    prop_geometry = GeoDataFrame.from_file(locator.get_building_geometry())
     prop_geometry['footprint'] = prop_geometry.area
     prop_geometry['perimeter'] = prop_geometry.length
     prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
-    prop_HVAC = gpdf.from_file(locator.get_building_hvac()).drop('geometry', axis=1)
-    prop_thermal = gpdf.from_file(locator.get_building_thermal()).drop('geometry', axis=1).set_index('Name')
-    prop_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index('Name')
+    prop_HVAC = GeoDataFrame.from_file(locator.get_building_hvac()).drop('geometry', axis=1)
+    prop_thermal = GeoDataFrame.from_file(locator.get_building_thermal()).drop('geometry', axis=1).set_index('Name')
+    prop_occupancy_df = GeoDataFrame.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index('Name')
     prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(
         axis=0)]  # trick to erase occupancies that are not being used (it speeds up the code)
-    prop_architecture = gpdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1).set_index('Name')
-    prop_age = gpdf.from_file(locator.get_building_age()).drop('geometry', axis=1).set_index('Name')
-    prop_comfort = gpdf.from_file(locator.get_building_comfort()).drop('geometry', axis=1).set_index('Name')
-    prop_internal_loads = gpdf.from_file(locator.get_building_internal()).drop('geometry', axis=1).set_index('Name')
+    prop_architecture = GeoDataFrame.from_file(locator.get_building_architecture()).drop('geometry', axis=1).set_index('Name')
+    prop_age = GeoDataFrame.from_file(locator.get_building_age()).drop('geometry', axis=1).set_index('Name')
+    prop_comfort = GeoDataFrame.from_file(locator.get_building_comfort()).drop('geometry', axis=1).set_index('Name')
+    prop_internal_loads = GeoDataFrame.from_file(locator.get_building_internal()).drop('geometry', axis=1).set_index('Name')
     # get temperatures of operation
     prop_HVAC_result = get_temperatures(locator, prop_HVAC).set_index('Name')
     gv.log('done')
