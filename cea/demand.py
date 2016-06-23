@@ -14,8 +14,6 @@ from __future__ import division
 import pandas as pd
 import contributions.thermal_loads_new_ventilation.simple_window_generator as simple_window_generator
 from geopandas import GeoDataFrame as gpdf
-import functions as f
-import maker as m
 import epwreader
 import functions as f
 import globalvar
@@ -40,23 +38,29 @@ def demand_calculation(locator, weather_path, gv):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
     using the integrated model of Fonseca et al. 2015. Applied energy.
+
     Parameters
     ----------
     :param locator: An InputLocator to locate input files
     :type locator: inputlocator.InputLocator
-    path_radiation:
-        path to solar radiation file in vertical surface_properties
-        RadiationYearFinal.csv
-    path_schedules: string
-        path to folder containing occupancy profile schedules
-    path_weather : string
-        path to weather data file weather_design_hour.csv
-    path_results : string
-        path to demand results folder demand
-    path_properties: string
-        path to folder with .shp files created with the properties script there should be a total of 6
+
+    :param weather_path: A path to the EnergyPlus weather data file (.epw)
+    :type weather_path: str
+
+    :param gv: A GlobalVariable (context) instance
+    :type gv: globalvar.GlobalVariable
+
     Returns
     -------
+
+    None
+
+    Side effects
+    ------------
+
+    Produces a demand file per building and a total demand file for the whole zone of interest.
+
+    FIXME: update this part of the documentation
     single_demand: .csv
         csv file for every building with hourly demand data
     total_demand: .csv
@@ -112,7 +116,7 @@ def demand_calculation(locator, weather_path, gv):
     gv.log('finished')
 
 
-def get_temperatures(locator, prop_HVAC):
+def get_temperatures(locator, prop_HVAC):           
     prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(), 'heating')
     prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')
     prop_emission_dhw = pd.read_excel(locator.get_technical_emission_systems(), 'dhw')
@@ -197,17 +201,36 @@ class BuildingProperties(object):
 
 def read_building_properties(locator, gv):
     """
-    Reads building properties from input shape files.
-    Copied first lines of demand script.
+    Read building properties from input shape files.
 
     Parameters
     ----------
-    locator
-    gv
+
+    :param locator: an InputLocator for locating the input files
+    :type locator: cea.inputlocator.InputLocator
+
+    :param gv: contains the context (constants and models) for the calculation
+    :type gv: cea.globalvar.GlobalVariables
 
     Returns
     -------
-    object of type BuildingProperties
+
+    :returns: object of type BuildingProperties
+    :rtype: BuildingProperties
+
+    Input files used
+    ----------------
+
+    - locator.get_radiation(): scenario/outputs/data/solar-radiation/radiation.csv
+    - locator.get_surface_properties(): scenario/outputs/data/solar-radiation/properties_surfaces.csv
+    - locator.get_building_geometry(): scenario/inputs/building-geometry/zone.shp
+    - locator.get_building_hvac(): scenario/inputs/building-properties/technical_systems.shp
+    - locator.get_building_thermal(): scenario/inputs/building-properties/thermal_properties.shp
+    - locator.get_building_occupancy(): scenario/inputs/building-properties/occupancy.shp
+    - locator.get_building_architecture(): scenario/inputs/building-properties/architecture.shp
+    - locator.get_building_age(): scenario/inputs/building-properties/age.shp
+    - locator.get_building_comfort(): scenario/inputs/building-properties/indoor_comfort.shp'
+    - locator.get_building_internal(): scenario/inputs/building-properties/internal_loads.shp
     """
 
     gv.log("reading input files")
