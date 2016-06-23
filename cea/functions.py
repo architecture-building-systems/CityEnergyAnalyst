@@ -967,9 +967,9 @@ def calc_dhw_heating_demand(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta,
     Qww_0 = Qww.max()
     Vol_ls = Lsww_dis * (gv.D / 1000) ** (2 / 4) * math.pi
     Qww_ls_r = np.vectorize(calc_Qww_ls_r)(Ta, Qww, Lsww_dis, Lcww_dis, Y[1], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
-                                           gv.Cpw, gv.Pwater)
+                                           gv.Cpw, gv.Pwater, gv)
     Qww_ls_nr = np.vectorize(calc_Qww_ls_nr)(Ta, Qww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
-                                             gv.Cpw, gv.Pwater, gv.Bf, T_ext)
+                                             gv.Cpw, gv.Pwater, gv.Bf, T_ext, gv)
     # fully mixed storage tank sensible heat loss calculation
     Qww_ls_st = np.zeros(8760)
     Tww_st = np.zeros(8760)
@@ -1238,7 +1238,7 @@ def calc_Ccoil2(Qc, tasup, tare, Qc0, tare_0, tasup_0, tsc0, trc0, wr, ws, ma0, 
         tsc = trc = mcpcs = 0
     return tsc, trc, mcpcs 
 
-def calc_Qww_ls_r(Tair,Qww, lsww_dis, lcww_dis, Y, Qww_0, V, Flowtap, twws, Cpw, Pwater):
+def calc_Qww_ls_r(Tair,Qww, lsww_dis, lcww_dis, Y, Qww_0, V, Flowtap, twws, Cpw, Pwater, gv):
     # Calculate tamb in basement according to EN
     tamb = Tair
 
@@ -1246,13 +1246,13 @@ def calc_Qww_ls_r(Tair,Qww, lsww_dis, lcww_dis, Y, Qww_0, V, Flowtap, twws, Cpw,
     circ_ls = (twws-tamb)*Y*lcww_dis*(Qww/Qww_0)
 
     # Distribtution circuit losses
-    dis_ls = calc_disls(tamb,Qww,Flowtap,V,twws,lsww_dis,Pwater,Cpw, Y)
+    dis_ls = calc_disls(tamb,Qww,Flowtap,V,twws,lsww_dis,Pwater,Cpw, Y, gv)
 
     Qww_d_ls_r = circ_ls + dis_ls
     
     return Qww_d_ls_r
 
-def calc_Qww_ls_nr(tair,Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, Flowtap, twws, Cpw, Pwater, Bf, te):
+def calc_Qww_ls_nr(tair,Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, Flowtap, twws, Cpw, Pwater, Bf, te, gv):
     # Calculate tamb in basement according to EN
     tamb = tair - Bf*(tair-te)
     
@@ -1260,17 +1260,22 @@ def calc_Qww_ls_nr(tair,Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, Flowtap, twws, Cpw, 
     d_circ_ls = (twws-tamb)*Y*(Lvww_c)*(Qww/Qww_0)
     
     # DISTRIBUTION LOSSEs
-    d_dis_ls = calc_disls(tamb,Qww,Flowtap,V,twws,Lvww_dis,Pwater,Cpw,Y)
+    d_dis_ls = calc_disls(tamb,Qww,Flowtap,V,twws,Lvww_dis,Pwater,Cpw,Y, gv)
     Qww_d_ls_nr = d_dis_ls + d_circ_ls
     
     return Qww_d_ls_nr
 
-def calc_disls(tamb,hotw,Flowtap,V,twws,Lsww_dis,p,cpw, Y):
+def calc_disls(tamb,hotw,Flowtap,V,twws,Lsww_dis,p,cpw, Y, gv):
     if hotw > 0:
         t = 3600/((hotw/1000)/Flowtap)
         if t > 3600: t = 3600
         q = (twws-tamb)*Y
-        exponential = scipy.exp(-(q*Lsww_dis*t)/(p*cpw*V*(twws-tamb)*1000))
+        try:
+            exponential = scipy.exp(-(q*Lsww_dis*t)/(p*cpw*V*(twws-tamb)*1000))
+        except ZeroDivisionError:
+            gv.log('twws: %(twws).2f, tamb: %(tamb).2f, p: %(p).2f, cpw: %(cpw).2f, V: %(V).2f',
+                   twws=twws, tamb=tamb, p=p, cpw=cpw, V=V)
+            exponential = scipy.exp(-(q*Lsww_dis*t)/(p*cpw*V*(twws-tamb)*1000))
         tamb = tamb + (twws-tamb)*exponential  
         losses = (twws-tamb)*V*cpw*p/1000*278
     else:

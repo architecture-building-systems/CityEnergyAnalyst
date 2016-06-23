@@ -98,8 +98,8 @@ class _LogArgs(object):
                 except:
                     import sys
                     import traceback
-                    traceback.print_exc()
-                    self.log_exit(func, e)  # FIXME: log with an exception!!!
+                    self.log_exit(func, traceback.format_exc())  # FIXME: log with an exception!!!
+                    raise
                 return result
 
         return wrapper
