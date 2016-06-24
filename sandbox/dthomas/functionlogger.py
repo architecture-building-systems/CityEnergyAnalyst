@@ -177,7 +177,7 @@ class _LogArgs(object):
     def log_exit(self, func, result):
         invocation = self.invocations.pop()
         session = Session()
-        session.query(Invocation).filter(Invocation.id == invocation.id).first()
+        session.add(invocation)
         assert invocation.name == func.__name__, "something went wrong with call stack..."
         invocation.end = datetime.datetime.now()
         invocation.rtype = type(result).__name__
@@ -264,6 +264,7 @@ def generate_output(path_to_log, writer):
         if invocations[0].rtype == "<class 'pandas.core.frame.DataFrame'>":
             write_line("```\n%s\n```" % pickle.loads(invocations[0].result).describe())
 
+        write_line()
         write_line("### Docstring template")
         write_line()
         write_line('```')

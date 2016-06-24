@@ -67,13 +67,18 @@
 
 # AmFunction
 - number of invocations: 1
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **x** `['unicode']`: *u'T3'*
 
 
 ### Output
-- `['None']`: ???
+- `['float']`: 3.2
+
 ### Docstring template
 
 ```
@@ -87,7 +92,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float
 
 ```
 
@@ -96,6 +101,10 @@ RETURNS
 
 # Calc_Im_tot
 - number of invocations: 1
+- max duration: 0.038 s
+- avg duration: 0.038 s
+- min duration: 0.038 s
+- total duration: 0.038 s
 
 ### Input
 - **I_m** `['float64']`: *2724.4521715126948*
@@ -112,7 +121,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['float64']`: 31273.645775067431
+
 ### Docstring template
 
 ```
@@ -156,7 +166,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float64
 
 ```
 
@@ -165,13 +175,18 @@ RETURNS
 
 # Calc_Rf_sh
 - number of invocations: 1
+- max duration: 0.052 s
+- avg duration: 0.052 s
+- min duration: 0.052 s
+- total duration: 0.052 s
 
 ### Input
 - **ShadingType** `['unicode']`: *u'T1'*
 
 
 ### Output
-- `['None']`: ???
+- `['float64']`: 0.080000000000000002
+
 ### Docstring template
 
 ```
@@ -185,7 +200,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float64
 
 ```
 
@@ -194,6 +209,10 @@ RETURNS
 
 # Calc_Tm
 - number of invocations: 1
+- max duration: 0.035 s
+- avg duration: 0.035 s
+- min duration: 0.035 s
+- total duration: 0.035 s
 
 ### Input
 - **Htr_3** `['float64']`: *2590.6666958115343*
@@ -213,7 +232,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (15.946568617146644, 15.663563567746825, 15.202170683665049, 15.520531773681475)
+
 ### Docstring template
 
 ```
@@ -266,7 +286,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -275,6 +295,10 @@ RETURNS
 
 # Calc_form
 - number of invocations: 1
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **Lw** `['float64']`: *16.008581384100001*
@@ -283,7 +307,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['float64']`: 0.76931348014904022
+
 ### Docstring template
 
 ```
@@ -303,7 +328,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float64
 
 ```
 
@@ -312,13 +337,18 @@ RETURNS
 
 # CmFunction
 - number of invocations: 1
+- max duration: 0.031 s
+- avg duration: 0.031 s
+- min duration: 0.031 s
+- total duration: 0.031 s
 
 ### Input
 - **x** `['unicode']`: *u'T3'*
 
 
 ### Output
-- `['None']`: ???
+- `['int']`: 300000
+
 ### Docstring template
 
 ```
@@ -332,7 +362,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: int
 
 ```
 
@@ -341,6 +371,10 @@ RETURNS
 
 # allocate_default_leakage_paths
 - number of invocations: 1
+- max duration: 0.035 s
+- avg duration: 0.035 s
+- min duration: 0.035 s
+- total duration: 0.035 s
 
 ### Input
 - **coeff_lea_zone** `['float64']`: *2130.2643780536373*
@@ -350,7 +384,9 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (array([ 401.92338084,  401.92338084,  401.92338084,  401.92338084,
+        522.57085469]), array([  3.,   3.,   9.,   9.,  12.]), array([ 0.,  1.,  0.,  1.,  2.]))
+
 ### Docstring template
 
 ```
@@ -373,7 +409,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -382,6 +418,10 @@ RETURNS
 
 # allocate_default_ventilation_openings
 - number of invocations: 1
+- max duration: 0.037 s
+- avg duration: 0.037 s
+- min duration: 0.037 s
+- total duration: 0.037 s
 
 ### Input
 - **coeff_vent_zone** `['float']`: *0.0*
@@ -389,7 +429,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (array([ 0.,  0.,  0.,  0.]), array([ 3.,  3.,  9.,  9.]), array([ 0.,  1.,  0.,  1.]))
+
 ### Docstring template
 
 ```
@@ -406,7 +447,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -415,6 +456,10 @@ RETURNS
 
 # calc_Ccoil2
 - number of invocations: 1
+- max duration: 0.035 s
+- avg duration: 0.035 s
+- min duration: 0.035 s
+- total duration: 0.035 s
 
 ### Input
 - **Qc** `['float64']`: *-0*
@@ -437,7 +482,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (0, 0, 0)
+
 ### Docstring template
 
 ```
@@ -499,7 +545,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -508,6 +554,10 @@ RETURNS
 
 # calc_Eaux_cs_dis
 - number of invocations: 1
+- max duration: 0.03 s
+- avg duration: 0.03 s
+- min duration: 0.03 s
+- total duration: 0.03 s
 
 ### Input
 - **Qcsf** `['float64']`: *-0*
@@ -521,7 +571,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['float']`: 0.0
+
 ### Docstring template
 
 ```
@@ -556,7 +607,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float
 
 ```
 
@@ -565,16 +616,21 @@ RETURNS
 
 # calc_Eaux_fw
 - number of invocations: 1
+- max duration: 0.043 s
+- avg duration: 0.043 s
+- min duration: 0.043 s
+- total duration: 0.043 s
 
 ### Input
 - **freshw** `['ndarray']`: *array([ 0.05684067,  0.02842034,  0.00710508, ...,  0.2397966 ,
         0.13322033,  0.10124745])*
 - **nf** `['float64']`: *7.0*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x05602030>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C5AE750>*
 
 
 ### Output
-- `['None']`: ???
+- `['ndarray']`: array([ 0.,  0.,  0., ...,  0.,  0.,  0.])
+
 ### Docstring template
 
 ```
@@ -594,7 +650,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: ndarray
 
 ```
 
@@ -603,6 +659,10 @@ RETURNS
 
 # calc_Eaux_hs_dis
 - number of invocations: 1
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **Qhsf** `['float64']`: *0.0*
@@ -616,7 +676,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['float']`: 0.0
+
 ### Docstring template
 
 ```
@@ -651,7 +712,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float
 
 ```
 
@@ -660,6 +721,10 @@ RETURNS
 
 # calc_Eaux_ve
 - number of invocations: 1
+- max duration: 0.033 s
+- avg duration: 0.033 s
+- min duration: 0.033 s
+- total duration: 0.033 s
 
 ### Input
 - **Qhsf** `['float64']`: *0.0*
@@ -672,7 +737,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['float']`: 0.0
+
 ### Docstring template
 
 ```
@@ -704,7 +770,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float
 
 ```
 
@@ -713,6 +779,10 @@ RETURNS
 
 # calc_Eaux_ww
 - number of invocations: 1
+- max duration: 0.034 s
+- avg duration: 0.034 s
+- min duration: 0.034 s
+- total duration: 0.034 s
 
 ### Input
 - **Qww** `['float64']`: *0.0*
@@ -725,7 +795,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['float']`: 0.0
+
 ### Docstring template
 
 ```
@@ -757,7 +828,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float
 
 ```
 
@@ -766,6 +837,10 @@ RETURNS
 
 # calc_Hcoil2
 - number of invocations: 1
+- max duration: 0.033 s
+- avg duration: 0.033 s
+- min duration: 0.033 s
+- total duration: 0.033 s
 
 ### Input
 - **Qh** `['float64']`: *0.0*
@@ -788,7 +863,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (0, 0, 0)
+
 ### Docstring template
 
 ```
@@ -850,7 +926,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -859,6 +935,10 @@ RETURNS
 
 # calc_Htr
 - number of invocations: 1
+- max duration: 0.031 s
+- avg duration: 0.031 s
+- min duration: 0.031 s
+- total duration: 0.031 s
 
 ### Input
 - **Hve** `['float64']`: *1414.5649132349504*
@@ -868,7 +948,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (1297.9787346036153, 2701.3529635310124, 2590.6666958115343)
+
 ### Docstring template
 
 ```
@@ -891,7 +972,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -900,6 +981,10 @@ RETURNS
 
 # calc_Qdis_ls
 - number of invocations: 1
+- max duration: 0.036 s
+- avg duration: 0.036 s
+- min duration: 0.036 s
+- total duration: 0.036 s
 
 ### Input
 - **tair** `['float64']`: *15.202170683665049*
@@ -921,7 +1006,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (0, 0)
+
 ### Docstring template
 
 ```
@@ -980,7 +1066,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -989,6 +1075,10 @@ RETURNS
 
 # calc_Qww_ls_nr
 - number of invocations: 1
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **tair** `['float64']`: *15.202170683665049*
@@ -1004,11 +1094,12 @@ RETURNS
 - **Pwater** `['int32']`: *998*
 - **Bf** `['float64']`: *0.69999999999999996*
 - **te** `['float64']`: *8.8000000000000007*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C506C10>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C5AE130>*
 
 
 ### Output
-- `['None']`: ???
+- `['float64']`: 0.0
+
 ### Docstring template
 
 ```
@@ -1061,7 +1152,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float64
 
 ```
 
@@ -1070,6 +1161,10 @@ RETURNS
 
 # calc_Qww_ls_r
 - number of invocations: 1
+- max duration: 0.091 s
+- avg duration: 0.091 s
+- min duration: 0.091 s
+- total duration: 0.091 s
 
 ### Input
 - **Tair** `['float64']`: *15.202170683665049*
@@ -1083,11 +1178,12 @@ RETURNS
 - **twws** `['int64']`: *60*
 - **Cpw** `['float64']`: *4.1840000000000002*
 - **Pwater** `['int32']`: *998*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C506EB0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C5AEA10>*
 
 
 ### Output
-- `['None']`: ???
+- `['float64']`: 0.0
+
 ### Docstring template
 
 ```
@@ -1134,7 +1230,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float64
 
 ```
 
@@ -1143,6 +1239,10 @@ RETURNS
 
 # calc_RAD
 - number of invocations: 1
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **Qh** `['float64']`: *0.0*
@@ -1155,7 +1255,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (0, 0, 0)
+
 ### Docstring template
 
 ```
@@ -1187,7 +1288,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -1196,6 +1297,10 @@ RETURNS
 
 # calc_TABSH
 - number of invocations: 1
+- max duration: 0.036 s
+- avg duration: 0.036 s
+- min duration: 0.036 s
+- total duration: 0.036 s
 
 ### Input
 - **Qh** `['float64']`: *79965.596518869046*
@@ -1208,7 +1313,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (40.0, 35.0, 15.993119303773808)
+
 ### Docstring template
 
 ```
@@ -1240,7 +1346,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -1249,6 +1355,10 @@ RETURNS
 
 # calc_TL
 - number of invocations: 1
+- max duration: 0.166 s
+- avg duration: 0.166 s
+- min duration: 0.166 s
+- total duration: 0.166 s
 
 ### Input
 - **SystemH** `['unicode']`: *u'T1'*
@@ -1279,7 +1389,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (15.946568617146644, 15.202170683665049, 0, 0, 0, 15.520531773681475, 31273.645775067431)
+
 ### Docstring template
 
 ```
@@ -1365,7 +1476,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -1374,6 +1485,10 @@ RETURNS
 
 # calc_capacity_heating_cooling_system
 - number of invocations: 1
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **Af** `['float64']`: *2171.2396513531003*
@@ -1394,7 +1509,8 @@ Name: B153767, dtype: object*
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (-1085619.8256765502, 1085619.8256765502)
+
 ### Docstring template
 
 ```
@@ -1411,7 +1527,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -1420,13 +1536,18 @@ RETURNS
 
 # calc_coeff_lea_zone
 - number of invocations: 1
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **qv_delta_p_lea_ref** `['float64']`: *28949.862018041335*
 
 
 ### Output
-- `['None']`: ???
+- `['float64']`: 2130.2643780536373
+
 ### Docstring template
 
 ```
@@ -1440,7 +1561,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float64
 
 ```
 
@@ -1449,13 +1570,18 @@ RETURNS
 
 # calc_coeff_vent_zone
 - number of invocations: 1
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **area_vent_zone** `['int']`: *0*
 
 
 ### Output
-- `['None']`: ???
+- `['float']`: 0.0
+
 ### Docstring template
 
 ```
@@ -1469,7 +1595,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float
 
 ```
 
@@ -1478,6 +1604,10 @@ RETURNS
 
 # calc_comp_heat_gains_sensible
 - number of invocations: 1
+- max duration: 0.066 s
+- avg duration: 0.066 s
+- min duration: 0.066 s
+- total duration: 0.066 s
 
 ### Input
 - **Am** `['float64']`: *6947.9668843299214*
@@ -1516,7 +1646,28 @@ T8757 *
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (array([ 1789.96996858,  1789.96996858,  1789.96996858, ...,  1342.47747643,
+        1342.47747643,  1342.47747643]), T1      2724.452172
+T2      2724.452172
+T3      2724.452172
+T4      2724.452172
+T5      2724.452172
+T6      2724.452172
+T7      2724.452172
+T8      6936.487402
+T9     15741.840244
+T10    31086.938009
+T11    33730.559278
+T12    20315.967881
+T13     8917.632399
+T14    14867.401538
+T15    27083.248952
+...
+T8746    23224.889370
+T8747    25151.459243
+T8748    14957.307018
+T8749     65
+
 ### Docstring template
 
 ```
@@ -1542,7 +1693,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -1551,6 +1702,10 @@ RETURNS
 
 # calc_dhw_heating_demand
 - number of invocations: 1
+- max duration: 0.702 s
+- avg duration: 0.702 s
+- min duration: 0.702 s
+- total duration: 0.702 s
 
 ### Input
 - **Af** `['float64']`: *2171.2396513531003*
@@ -1564,13 +1719,16 @@ RETURNS
 - **Tww_re** `['ndarray']`: *array([ 10.,  10.,  10., ...,  10.,  10.,  10.])*
 - **Tww_sup_0** `['int64']`: *60*
 - **Y** `['list']`: *[0.3, 0.4, 0.4]*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C506C30>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C5AE6D0>*
 - **vw** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **vww** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 16.32384849,  16.36585597,  16.40794422, ...,  18.70794871,
+        18.74110195,  18.77423176]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 8928.0324494644647, array([ 59.96517155,  59.93025348,  59.89524561, ...,  59.82668903,
+        59.78670315,  59.74664658]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]))
+
 ### Docstring template
 
 ```
@@ -1620,7 +1778,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -1629,6 +1787,10 @@ RETURNS
 
 # calc_disls
 - number of invocations: 1
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **tamb** `['float64']`: *15.202170683665049*
@@ -1640,11 +1802,12 @@ RETURNS
 - **p** `['int32']`: *998*
 - **cpw** `['float64']`: *4.1840000000000002*
 - **Y** `['float64']`: *0.40000000000000002*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0BFF3F10>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C5BD130>*
 
 
 ### Output
-- `['None']`: ???
+- `['int']`: 0
+
 ### Docstring template
 
 ```
@@ -1685,7 +1848,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: int
 
 ```
 
@@ -1694,6 +1857,10 @@ RETURNS
 
 # calc_gl
 - number of invocations: 1
+- max duration: 0.04 s
+- avg duration: 0.04 s
+- min duration: 0.04 s
+- total duration: 0.04 s
 
 ### Input
 - **radiation** `['float64']`: *0.0*
@@ -1702,7 +1869,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['float64']`: 0.67500000000000004
+
 ### Docstring template
 
 ```
@@ -1722,7 +1890,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float64
 
 ```
 
@@ -1731,6 +1899,10 @@ RETURNS
 
 # calc_h
 - number of invocations: 1
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **t** `['int32']`: *24*
@@ -1738,7 +1910,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['float64']`: 47.207559164780534
+
 ### Docstring template
 
 ```
@@ -1755,7 +1928,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float64
 
 ```
 
@@ -1764,6 +1937,10 @@ RETURNS
 
 # calc_h_ve_adj
 - number of invocations: 1
+- max duration: 0.034 s
+- avg duration: 0.034 s
+- min duration: 0.034 s
+- total duration: 0.034 s
 
 ### Input
 - **q_m_mech** `['float64']`: *1.4033382075743557*
@@ -1771,11 +1948,12 @@ RETURNS
 - **temp_ext** `['float64']`: *8.8000000000000007*
 - **temp_sup** `['float64']`: *8.8000000000000007*
 - **temp_zone_set** `['int']`: *21*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0D197D30>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C5C67B0>*
 
 
 ### Output
-- `['None']`: ???
+- `['float64']`: 1414.5649132349504
+
 ### Docstring template
 
 ```
@@ -1804,7 +1982,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float64
 
 ```
 
@@ -1813,6 +1991,10 @@ RETURNS
 
 # calc_heat_gains_internal_latent
 - number of invocations: 1
+- max duration: 0.03 s
+- avg duration: 0.03 s
+- min duration: 0.03 s
+- total duration: 0.03 s
 
 ### Input
 - **people** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
@@ -1822,7 +2004,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['ndarray']`: array([ 0.,  0.,  0., ...,  0.,  0.,  0.])
+
 ### Docstring template
 
 ```
@@ -1845,7 +2028,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: ndarray
 
 ```
 
@@ -1854,6 +2037,10 @@ RETURNS
 
 # calc_heat_gains_internal_sensible
 - number of invocations: 1
+- max duration: 0.041 s
+- avg duration: 0.041 s
+- min duration: 0.041 s
+- total duration: 0.041 s
 
 ### Input
 - **people** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
@@ -1866,7 +2053,9 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['ndarray']`: array([ 3579.93993715,  3579.93993715,  3579.93993715, ...,  2684.95495286,
+        2684.95495286,  2684.95495286])
+
 ### Docstring template
 
 ```
@@ -1895,7 +2084,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: ndarray
 
 ```
 
@@ -1904,6 +2093,10 @@ RETURNS
 
 # calc_heat_gains_solar
 - number of invocations: 1
+- max duration: 0.227 s
+- avg duration: 0.227 s
+- min duration: 0.227 s
+- total duration: 0.227 s
 
 ### Input
 - **Aw** `['float64']`: *452.70136417012804*
@@ -1940,11 +2133,39 @@ T8757        0.00
 T8758        0.00
 T8759        0.00
 T876*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0D178070>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C389DF0>*
 
 
 ### Output
-- `['None']`: ???
+- `['Series']`: T1        0.00000
+T2        0.00000
+T3        0.00000
+T4        0.00000
+T5        0.00000
+T6        0.00000
+T7        0.00000
+T8      108.84888
+T9     1445.54571
+T10    3498.92676
+T11    4367.29482
+T12    2713.76406
+T13     541.96884
+T14       2.54205
+T15       0.00000
+...
+T8746    2564.85852
+T8747    3179.24649
+T8748    1851.58008
+T8749     306.48429
+T8750       0.72765
+T8751       0.00000
+T8752       0.00000
+T8753       0.00000
+T8754       0.00000
+T8755       0.00000
+T8756       0.00000
+T8757 
+
 ### Docstring template
 
 ```
@@ -1970,7 +2191,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: Series
 
 ```
 
@@ -1979,10 +2200,14 @@ RETURNS
 
 # calc_hex
 - number of invocations: 1
+- max duration: 0.088 s
+- avg duration: 0.088 s
+- min duration: 0.088 s
+- total duration: 0.088 s
 
 ### Input
 - **rel_humidity_ext** `['int64']`: *73*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0D178430>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x057F39F0>*
 - **qv_mech** `['float64']`: *1.1694485063119631*
 - **timestep** `['int']`: *3217*
 - **temp_ext** `['float64']`: *8.1999999999999993*
@@ -1991,7 +2216,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (8.1999999999999993, 0.0049493200522193461)
+
 ### Docstring template
 
 ```
@@ -2023,7 +2249,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -2032,6 +2258,10 @@ RETURNS
 
 # calc_hvac
 - number of invocations: 1
+- max duration: 0.034 s
+- avg duration: 0.034 s
+- min duration: 0.034 s
+- total duration: 0.034 s
 
 ### Input
 - **rhum_1** `['int64']`: *73*
@@ -2041,12 +2271,13 @@ RETURNS
 - **qe_sen** `['int']`: *0*
 - **temp_5_prev** `['float64']`: *18.759995042815788*
 - **wint** `['float64']`: *0.0*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0BFEE710>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x057D9570>*
 - **timestep** `['int']`: *3217*
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (0, 0, 0, 0, 0, 0, 0, nan, nan, 8.1999999999999993, 8.1999999999999993, 0, 0, 18.639283464540256)
+
 ### Docstring template
 
 ```
@@ -2084,7 +2315,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -2093,6 +2324,10 @@ RETURNS
 
 # calc_loads_electrical
 - number of invocations: 1
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **Aef** `['float64']`: *2171.2396513531003*
@@ -2105,7 +2340,9 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (array([ 3977.71104128,  3977.71104128,  3977.71104128, ...,  2983.28328096,
+        2983.28328096,  2983.28328096]), 39777.110412788796, 90.946385247798304, 2.0151953749551139, array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 0.0, array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 0.0)
+
 ### Docstring template
 
 ```
@@ -2131,7 +2368,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -2140,6 +2377,10 @@ RETURNS
 
 # calc_mixed_schedule
 - number of invocations: 1
+- max duration: 0.683 s
+- avg duration: 0.683 s
+- min duration: 0.683 s
+- total duration: 0.683 s
 
 ### Input
 - **list_uses** `['list']`: *[u'GYM', u'HOSPITAL', u'HOTEL', u'INDUSTRIAL', u'MULTI_RES', u'OFFICE', u'PARKING', u'RETAIL']*
@@ -2157,7 +2398,8 @@ Name: B153767, dtype: float64*
 
 
 ### Output
-- `['None']`: ???
+- `['DataFrame']`: (8760, 4)
+
 ### Docstring template
 
 ```
@@ -2177,7 +2419,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: DataFrame
 
 ```
 
@@ -2186,6 +2428,10 @@ RETURNS
 
 # calc_pumping_systems_aux_loads
 - number of invocations: 1
+- max duration: 0.313 s
+- avg duration: 0.313 s
+- min duration: 0.313 s
+- total duration: 0.313 s
 
 ### Input
 - **Af** `['float64']`: *2171.2396513531003*
@@ -2207,7 +2453,7 @@ RETURNS
 - **Vw** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **Year** `['int64']`: *1993*
 - **fforma** `['float64']`: *0.76931348014904022*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x05748F70>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x057F0370>*
 - **nf_ag** `['float64']`: *4.0*
 - **nfp** `['float64']`: *1.0*
 - **qv_req** `['ndarray']`: *array([ 1.16944851,  1.16944851,  1.16944851, ...,  1.16944851,
@@ -2217,7 +2463,9 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([  0.        ,   0.        ,   0.        , ...,  12.38944692,
+        12.42892359,  12.46955796]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]))
+
 ### Docstring template
 
 ```
@@ -2300,7 +2548,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -2309,6 +2557,10 @@ RETURNS
 
 # calc_qv_delta_p_ref
 - number of invocations: 1
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **n_delta_p_ref** `['int64']`: *6*
@@ -2316,7 +2568,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['float64']`: 28949.862018041335
+
 ### Docstring template
 
 ```
@@ -2333,7 +2586,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float64
 
 ```
 
@@ -2342,19 +2595,24 @@ RETURNS
 
 # calc_qv_req
 - number of invocations: 1
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **ve** `['float64']`: *0.0*
 - **people** `['float64']`: *0.0*
 - **Af** `['float64']`: *2171.2396513531003*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x05748530>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x057F39F0>*
 - **hour_day** `['int32']`: *0*
 - **hour_year** `['int32']`: *0*
 - **n50** `['int64']`: *6*
 
 
 ### Output
-- `['None']`: ???
+- `['float64']`: 1.1694485063119631
+
 ### Docstring template
 
 ```
@@ -2386,7 +2644,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float64
 
 ```
 
@@ -2395,6 +2653,10 @@ RETURNS
 
 # calc_tHC_corr
 - number of invocations: 1
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **SystemH** `['unicode']`: *u'T1'*
@@ -2403,7 +2665,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (2.65, -2.0)
+
 ### Docstring template
 
 ```
@@ -2423,7 +2686,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -2432,6 +2695,10 @@ RETURNS
 
 # calc_temperatures_emission_systems
 - number of invocations: 1
+- max duration: 0.619 s
+- avg duration: 0.619 s
+- min duration: 0.619 s
+- total duration: 0.619 s
 
 ### Input
 - **Qcsf** `['ndarray']`: *array([-0., -0., -0., ..., -0., -0., -0.])*
@@ -2449,7 +2716,7 @@ RETURNS
 - **Tcs_sup_0** `['int64']`: *7*
 - **Ths_re_0** `['int64']`: *70*
 - **Ths_sup_0** `['int64']`: *90*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0D178FB0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C3A0A90>*
 - **ma_sup_cs** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **ma_sup_hs** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **sys_e_cooling** `['unicode']`: *u'T3'*
@@ -2460,7 +2727,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (array([0, 0, 0, ..., 0, 0, 0]), array([0, 0, 0, ..., 0, 0, 0]), array([ 0,  0,  0, ..., 32, 32, 32]), array([ 0,  0,  0, ..., 39, 39, 39]), array([0, 0, 0, ..., 0, 0, 0]), array([ 0,  0,  0, ..., 14, 14, 14]))
+
 ### Docstring template
 
 ```
@@ -2534,7 +2802,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -2543,17 +2811,22 @@ RETURNS
 
 # calc_thermal_load_hvac_timestep
 - number of invocations: 1
+- max duration: 0.249 s
+- avg duration: 0.249 s
+- min duration: 0.249 s
+- total duration: 0.249 s
 
 ### Input
 - **t** `['int']`: *3217*
-- **thermal_loads_input** `['ThermalLoadsInput']`: *<cea.thermal_loads.ThermalLoadsInput object at 0x0D178BB0>*
+- **thermal_loads_input** `['ThermalLoadsInput']`: *<cea.thermal_loads.ThermalLoadsInput object at 0x057D9D30>*
 - **weather_data** `['DataFrame']`: *(8760, 3)*
 - **state_prev** `['dict']`: *{'temp_air_prev': 18.759995042815788, 'temp_m_prev': 20.062727215496661}*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x059D7E90>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x057F0B30>*
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (19.966467702548133, 18.639283464540256, 0, 0, 0, 19.227457669603439, 28533.095180549077, 0, 0, 0, 0, 0, 1.4033382075743557, 0, 0, 0, 0, 0, 0, nan, nan, 8.1999999999999993, 8.1999999999999993, 0, 0)
+
 ### Docstring template
 
 ```
@@ -2579,7 +2852,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -2588,17 +2861,22 @@ RETURNS
 
 # calc_thermal_load_mechanical_and_natural_ventilation_timestep
 - number of invocations: 1
+- max duration: 0.435 s
+- avg duration: 0.435 s
+- min duration: 0.435 s
+- total duration: 0.435 s
 
 ### Input
 - **t** `['int']`: *0*
-- **thermal_loads_input** `['ThermalLoadsInput']`: *<cea.thermal_loads.ThermalLoadsInput object at 0x05748850>*
+- **thermal_loads_input** `['ThermalLoadsInput']`: *<cea.thermal_loads.ThermalLoadsInput object at 0x0557B770>*
 - **weather_data** `['DataFrame']`: *(8760, 3)*
 - **state_prev** `['dict']`: *{'temp_air_prev': 21, 'temp_m_prev': 16}*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x05734510>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0557B770>*
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (15.946568617146644, 15.202170683665049, 0, 0, 0, 15.520531773681475, 31273.645775067431, 1.4033382075743557, 0, 0, 0, 0)
+
 ### Docstring template
 
 ```
@@ -2624,7 +2902,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -2633,22 +2911,27 @@ RETURNS
 
 # calc_thermal_loads_new_ventilation
 - number of invocations: 1
+- max duration: 8.513 s
+- avg duration: 8.513 s
+- min duration: 8.513 s
+- total duration: 8.513 s
 
 ### Input
 - **Name** `['str']`: *'B153767'*
-- **building_properties** `['BuildingProperties']`: *<cea.demand.BuildingProperties object at 0x0D192BB0>*
+- **building_properties** `['BuildingProperties']`: *<cea.demand.BuildingProperties object at 0x0BE723D0>*
 - **weather_data** `['DataFrame']`: *(8760, 3)*
 - **usage_schedules** `['dict']`: *{'list_uses': [u'GYM', u'HOSPITAL', u'HOTEL', u'INDUSTRIAL', u'MULTI_RES', u'OFFICE', u'PARKING', u'RETAIL'], 'schedules': [([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4,*
 - **date** `['DatetimeIndex']`: *<class 'pandas.tseries.index.DatetimeIndex'>
 [2016-01-01 00:00:00, ..., 2016-12-30 23:00:00]
 Length: 8760, Freq: H, Timezone: None*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x05572E10>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0BE72670>*
 - **locationFinal** `['str']`: *'C:\\reference-case\\baseline\\outputs\\data\\demand'*
 - **path_temporary_folder** `['str']`: *'c:\\users\\darthoma\\appdata\\local\\temp'*
 
 
 ### Output
-- `['None']`: ???
+- `['NoneType']`: None
+
 ### Docstring template
 
 ```
@@ -2683,7 +2966,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: NoneType
 
 ```
 
@@ -2692,6 +2975,10 @@ RETURNS
 
 # calc_w
 - number of invocations: 1
+- max duration: 0.028 s
+- avg duration: 0.028 s
+- min duration: 0.028 s
+- total duration: 0.028 s
 
 ### Input
 - **t** `['float64']`: *8.1999999999999993*
@@ -2699,7 +2986,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['float64']`: 0.0049493200522193461
+
 ### Docstring template
 
 ```
@@ -2716,7 +3004,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float64
 
 ```
 
@@ -2725,6 +3013,10 @@ RETURNS
 
 # calc_w3_cooling_case
 - number of invocations: 1
+- max duration: 0.03 s
+- avg duration: 0.03 s
+- min duration: 0.03 s
+- total duration: 0.03 s
 
 ### Input
 - **t5** `['int32']`: *24*
@@ -2734,7 +3026,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['float64']`: 0.0090625183347139426
+
 ### Docstring template
 
 ```
@@ -2757,7 +3050,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float64
 
 ```
 
@@ -2766,17 +3059,22 @@ RETURNS
 
 # calc_w3_heating_case
 - number of invocations: 1
+- max duration: 0.037 s
+- avg duration: 0.037 s
+- min duration: 0.037 s
+- total duration: 0.037 s
 
 ### Input
 - **t5** `['float64']`: *20.0*
 - **w2** `['float64']`: *0.0041699403233700994*
 - **w5** `['float64']`: *0.0045258958486444414*
 - **t3** `['int']`: *36*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0BFE9EB0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C5DA6D0>*
 
 
 ### Output
-- `['None']`: ???
+- `['float64']`: 0.0041699403233700994
+
 ### Docstring template
 
 ```
@@ -2802,7 +3100,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: float64
 
 ```
 
@@ -2811,6 +3109,10 @@ RETURNS
 
 # calculate_pipe_transmittance_values
 - number of invocations: 1
+- max duration: 0.028 s
+- avg duration: 0.028 s
+- min duration: 0.028 s
+- total duration: 0.028 s
 
 ### Input
 - **year** `['int64']`: *1993*
@@ -2818,7 +3120,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['list']`: [0.3, 0.4, 0.4]
+
 ### Docstring template
 
 ```
@@ -2835,7 +3138,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: list
 
 ```
 
@@ -2844,6 +3147,10 @@ RETURNS
 
 # create_windows
 - number of invocations: 1
+- max duration: 0.89 s
+- avg duration: 0.89 s
+- min duration: 0.89 s
+- total duration: 0.89 s
 
 ### Input
 - **df_prop_surfaces** `['DataFrame']`: *(2140, 6)*
@@ -2851,7 +3158,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['DataFrame']`: (8749, 6)
+
 ### Docstring template
 
 ```
@@ -2868,7 +3176,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: DataFrame
 
 ```
 
@@ -2877,15 +3185,20 @@ RETURNS
 
 # demand_calculation
 - number of invocations: 1
+- max duration: 996.321 s
+- avg duration: 996.321 s
+- min duration: 996.321 s
+- total duration: 996.321 s
 
 ### Input
-- **locator** `['InputLocator']`: *<cea.inputlocator.InputLocator object at 0x0BFF06B0>*
+- **locator** `['InputLocator']`: *<cea.inputlocator.InputLocator object at 0x0C39CB10>*
 - **weather_path** `['str']`: *'C:\\Users\\darthoma\\Documents\\GitHub\\CEAforArcGIS\\cea\\db\\CH\\Weather\\Zurich.epw'*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0BFF06B0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C39CB10>*
 
 
 ### Output
-- `['None']`: ???
+- `['NoneType']`: None
+
 ### Docstring template
 
 ```
@@ -2905,7 +3218,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: NoneType
 
 INPUT / OUTPUT FILES
 --------------------
@@ -3748,6 +4061,10 @@ INPUT / OUTPUT FILES
 
 # get_building_geometry_ventilation
 - number of invocations: 1
+- max duration: 0.033 s
+- avg duration: 0.033 s
+- min duration: 0.033 s
+- total duration: 0.033 s
 
 ### Input
 - **gdf_building_geometry** `['Series']`: *Blength       32.648092
@@ -3762,7 +4079,8 @@ Name: B153767, dtype: float64*
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (1237.0067791693345, 402.0814169172408, 12.0, 0)
+
 ### Docstring template
 
 ```
@@ -3776,7 +4094,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -3785,6 +4103,10 @@ RETURNS
 
 # get_internal_comfort
 - number of invocations: 1
+- max duration: 0.044 s
+- avg duration: 0.044 s
+- min duration: 0.044 s
+- total duration: 0.044 s
 
 ### Input
 - **people** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
@@ -3800,7 +4122,8 @@ Name: B153767, dtype: float64*
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 12.,  12.,  12., ...,  12.,  12.,  12.]), array([50, 50, 50, ..., 50, 50, 50]))
+
 ### Docstring template
 
 ```
@@ -3826,7 +4149,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -3835,6 +4158,10 @@ RETURNS
 
 # get_internal_loads
 - number of invocations: 1
+- max duration: 0.041 s
+- avg duration: 0.041 s
+- min duration: 0.041 s
+- total duration: 0.041 s
 
 ### Input
 - **mixed_schedule** `['DataFrame']`: *(8760, 4)*
@@ -3859,7 +4186,9 @@ Name: B153767, dtype: object*
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (array([ 3977.71104128,  3977.71104128,  3977.71104128, ...,  2983.28328096,
+        2983.28328096,  2983.28328096]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]))
+
 ### Docstring template
 
 ```
@@ -3882,7 +4211,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -3891,6 +4220,10 @@ RETURNS
 
 # get_occupancy
 - number of invocations: 1
+- max duration: 0.037 s
+- avg duration: 0.037 s
+- min duration: 0.037 s
+- total duration: 0.037 s
 
 ### Input
 - **mixed_schedule** `['DataFrame']`: *(8760, 4)*
@@ -3905,7 +4238,8 @@ Name: B153767, dtype: object*
 
 
 ### Output
-- `['None']`: ???
+- `['ndarray']`: array([ 0.,  0.,  0., ...,  0.,  0.,  0.])
+
 ### Docstring template
 
 ```
@@ -3925,7 +4259,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: ndarray
 
 ```
 
@@ -3934,6 +4268,10 @@ RETURNS
 
 # get_prop_RC_model
 - number of invocations: 1
+- max duration: 0.23 s
+- avg duration: 0.23 s
+- min duration: 0.23 s
+- total duration: 0.23 s
 
 ### Input
 - **uses** `['GeoDataFrame']`: *(1482, 9)*
@@ -3942,11 +4280,12 @@ RETURNS
 - **geometry** `['GeoDataFrame']`: *(274, 8)*
 - **HVAC** `['DataFrame']`: *(1482, 13)*
 - **rf** `['DataFrame']`: *(2140, 5)*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x059E5750>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0453E630>*
 
 
 ### Output
-- `['None']`: ???
+- `['DataFrame']`: (274, 15)
+
 ### Docstring template
 
 ```
@@ -3978,7 +4317,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: DataFrame
 
 ```
 
@@ -3987,6 +4326,10 @@ RETURNS
 
 # get_properties_building_envelope
 - number of invocations: 1
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **prop_RC_model** `['Series']`: *Awall_all    1.131753e+03
@@ -4042,7 +4385,8 @@ Name: B153767, dtype: float64*
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (6947.9668843299214, 4564.8267184306733, 452.70136417012804, 1131.75341042532, 651371895.40593004, 32.648092418099999, 16.008581384100001, 0, u'T1', 1993, 402.0814169172408, 4.0, 2.0, 1.0)
+
 ### Docstring template
 
 ```
@@ -4068,7 +4412,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -4077,6 +4421,10 @@ RETURNS
 
 # get_properties_building_systems
 - number of invocations: 1
+- max duration: 0.152 s
+- avg duration: 0.152 s
+- min duration: 0.152 s
+- total duration: 0.152 s
 
 ### Input
 - **Ll** `['float64']`: *32.648092418099999*
@@ -4084,7 +4432,7 @@ RETURNS
 - **Retrofit** `['int64']`: *0*
 - **Year** `['int64']`: *1993*
 - **footprint** `['float64']`: *402.0814169172408*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0BFE3DF0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C39F530>*
 - **nf_ag** `['float64']`: *4.0*
 - **nfp** `['float64']`: *1.0*
 - **nf_bg** `['float64']`: *2.0*
@@ -4105,7 +4453,8 @@ Name: B153767, dtype: object*
 
 
 ### Output
-- `['None']`: ???
+- `['tuple']`: (72.543326121114177, 183.34912611426176, 67.916762127496582, 55.259252908257515, 50.246706155723558, 15, 7, 70, 90, 10, 60, [0.3, 0.4, 0.4], 0.76931348014904022)
+
 ### Docstring template
 
 ```
@@ -4146,7 +4495,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: tuple
 
 ```
 
@@ -4155,6 +4504,10 @@ RETURNS
 
 # get_properties_natural_ventilation
 - number of invocations: 1
+- max duration: 0.456 s
+- avg duration: 0.456 s
+- min duration: 0.456 s
+- total duration: 0.456 s
 
 ### Input
 - **gdf_geometry_building** `['Series']`: *Blength       32.648092
@@ -4173,11 +4526,13 @@ type_shade     T1
 win_op        0.5
 win_wall      0.4
 Name: B153767, dtype: object*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0BFF80F0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C39F530>*
 
 
 ### Output
-- `['None']`: ???
+- `['dict']`: {'coeff_wind_pressure_path_vent': array([ 0.05, -0.05,  0.05, -0.05]), 'coeff_vent_path': array([ 0.,  0.,  0.,  0.]), 'height_vent_path': array([ 3.,  3.,  9.,  9.]), 'coeff_lea_path': array([ 401.92338084,  401.92338084,  401.92338084,  401.92338084,
+        522.57085469]), 'factor_cros': 0, 'height_lea_path': array([  3.,   3.,   9.,   9.,  12.]), 'coeff_wind_pressure_path_lea': array([ 0.05, -0.05,  0.05, -0.05,  0.  ])}
+
 ### Docstring template
 
 ```
@@ -4197,7 +4552,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: dict
 
 ```
 
@@ -4206,6 +4561,10 @@ RETURNS
 
 # get_temperatures
 - number of invocations: 1
+- max duration: 0.184 s
+- avg duration: 0.184 s
+- min duration: 0.184 s
+- total duration: 0.184 s
 
 ### Input
 - **locator** `['LocatorDecorator']`: *???*
@@ -4213,7 +4572,8 @@ RETURNS
 
 
 ### Output
-- `['None']`: ???
+- `['DataFrame']`: (1482, 14)
+
 ### Docstring template
 
 ```
@@ -4230,7 +4590,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: DataFrame
 
 INPUT / OUTPUT FILES
 --------------------
@@ -4245,6 +4605,10 @@ INPUT / OUTPUT FILES
 
 # lookup_coeff_wind_pressure
 - number of invocations: 1
+- max duration: 0.04 s
+- avg duration: 0.04 s
+- min duration: 0.04 s
+- total duration: 0.04 s
 
 ### Input
 - **height_path** `['ndarray']`: *array([  3.,   3.,   9.,   9.,  12.])*
@@ -4255,7 +4619,8 @@ INPUT / OUTPUT FILES
 
 
 ### Output
-- `['None']`: ???
+- `['ndarray']`: array([ 0.05, -0.05,  0.05, -0.05,  0.  ])
+
 ### Docstring template
 
 ```
@@ -4281,7 +4646,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: ndarray
 
 ```
 
@@ -4290,14 +4655,19 @@ RETURNS
 
 # read_building_properties
 - number of invocations: 1
+- max duration: 4.275 s
+- avg duration: 4.275 s
+- min duration: 4.275 s
+- total duration: 4.275 s
 
 ### Input
 - **locator** `['LocatorDecorator']`: *???*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x059E52F0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x057D9BF0>*
 
 
 ### Output
-- `['None']`: ???
+- `['BuildingProperties']`: <cea.demand.BuildingProperties object at 0x057D2A90>
+
 ### Docstring template
 
 ```
@@ -4314,7 +4684,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: BuildingProperties
 
 INPUT / OUTPUT FILES
 --------------------
@@ -4336,6 +4706,10 @@ INPUT / OUTPUT FILES
 
 # results_to_csv
 - number of invocations: 1
+- max duration: 0.244 s
+- avg duration: 0.244 s
+- min duration: 0.244 s
+- total duration: 0.244 s
 
 ### Input
 - **GFA_m2** `['float64']`: *2412.4885015034447*
@@ -4396,7 +4770,8 @@ Length: 8760, Freq: H, Timezone: None*
 
 
 ### Output
-- `['None']`: ???
+- `['NoneType']`: None
+
 ### Docstring template
 
 ```
@@ -4548,7 +4923,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: NoneType
 
 ```
 
@@ -4557,12 +4932,17 @@ RETURNS
 
 # test_demand
 - number of invocations: 1
+- max duration: 996.412 s
+- avg duration: 996.412 s
+- min duration: 996.412 s
+- total duration: 996.412 s
 
 ### Input
 
 
 ### Output
-- `['None']`: ???
+- `['NoneType']`: None
+
 ### Docstring template
 
 ```
@@ -4573,7 +4953,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: None
+:rtype: NoneType
 
 ```
 
