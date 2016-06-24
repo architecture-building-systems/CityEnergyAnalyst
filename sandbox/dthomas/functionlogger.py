@@ -26,7 +26,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy import create_engine, ForeignKey
 
-import cea.radiation
 import cea.inputlocator
 
 Base = declarative_base()
@@ -104,7 +103,10 @@ class LocatorDecorator(object):
         session.add(self.invocation)
         self.invocation.locators.add(Locator(name=name, path=path))
         session.commit()
+        map(session.refresh, iter(session))
+        session.expunge_all()
         session.close()
+        session.commit()
         return path
 
 
@@ -130,7 +132,7 @@ class _LogArgs(object):
                     if isinstance(value, cea.inputlocator.InputLocator):
                         args_dict[key] = LocatorDecorator(value, invocation)
                     elif isinstance(value, LocatorDecorator):
-                        args_dict[key] = LocatorDecorator(value.locator)
+                        args_dict[key] = LocatorDecorator(value.locator, invocation)
                 try:
                     #
                     # THIS IS WHERE THE FUNCTION IS ACTUALLY CALLED!!
