@@ -102,7 +102,7 @@ class LocatorDecorator(object):
 
         session = Session()
         session.add(self.invocation)
-        invocation.locators.add(Locator(name=name, path=path))
+        self.invocation.locators.add(Locator(name=name, path=path))
         session.commit()
         session.close()
         return path
@@ -153,7 +153,7 @@ class _LogArgs(object):
 
             session = Session()
             invocation = Invocation(name=func.__name__, start=datetime.datetime.now())
-            invocation.parameters = [Parameter(name=name, value=self.to_pickle(value), ptype=str(type(value)))
+            invocation.parameters = [Parameter(name=name, value=self.to_pickle(value), ptype=type(value).__name__)
                                      for name, value in args_dict.items()]
 
             # figure out who called us (top two on call stack are wrapper stuff)
@@ -180,7 +180,7 @@ class _LogArgs(object):
         session.add(invocation)
         assert invocation.name == func.__name__, "something went wrong with call stack..."
         invocation.end = datetime.datetime.now()
-        invocation.rtype = str(type(result))
+        invocation.rtype = type(result).__name__
         invocation.result = self.to_pickle(result)
         session.commit()
         session.close()
@@ -263,10 +263,6 @@ def generate_output(path_to_log, writer):
                                    summary_unpickle(invocations[0].result)))
         if invocations[0].rtype == "<class 'pandas.core.frame.DataFrame'>":
             write_line("```\n%s\n```" % pickle.loads(invocations[0].result).describe())
-        write_line()
-        write_line("[TOC](#table-of-contents)")
-        write_line("---")
-        write_line()
 
         write_line("### Docstring template")
         write_line()
@@ -291,6 +287,10 @@ def generate_output(path_to_log, writer):
             for locator in invocations[0].locators:
                 write_line('- %s: %s' % locator.name, locator.path)
         write_line('```')
+        write_line()
+        write_line("[TOC](#table-of-contents)")
+        write_line("---")
+        write_line()
 
 
 def summary_unpickle(value):
