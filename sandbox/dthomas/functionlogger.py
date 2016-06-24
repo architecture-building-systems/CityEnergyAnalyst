@@ -97,17 +97,18 @@ class LocatorDecorator(object):
 
     def __getattr__(self, name):
         '''Log this call to the database'''
-        path = getattr(self.locator, name)
-
-        session = Session()
-        session.add(self.invocation)
-        self.invocation.locators.add(Locator(name=name, path=path))
-        session.commit()
-        map(session.refresh, iter(session))
-        session.expunge_all()
-        session.close()
-        session.commit()
-        return path
+        member = getattr(self.locator, name)
+        def wrap_member(*args):
+            path = member(*args)
+            session = Session()
+            session.add(self.invocation)
+            self.invocation.locators.append(Locator(name=name, path=path))
+            session.commit()
+            map(session.refresh, iter(session))
+            session.expunge_all()
+            session.close()
+            return path
+        return wrap_member
 
 
 class _LogArgs(object):
@@ -137,12 +138,9 @@ class _LogArgs(object):
                     #
                     # THIS IS WHERE THE FUNCTION IS ACTUALLY CALLED!!
                     #
-                    result = func(*args, **kwargs)
+                    result = func(**args_dict)
                     self.log_exit(func, result)
                 except:
-                    import sys
-                    import traceback
-                    self.log_exit(func, traceback.format_exc())  # FIXME: log with an exception!!!
                     raise
                 return result
 
@@ -179,7 +177,7 @@ class _LogArgs(object):
     def log_exit(self, func, result):
         invocation = self.invocations.pop()
         session = Session()
-        session.add(invocation)
+        session.query(Invocation).filter(Invocation.id == invocation.id).first()
         assert invocation.name == func.__name__, "something went wrong with call stack..."
         invocation.end = datetime.datetime.now()
         invocation.rtype = type(result).__name__
@@ -287,7 +285,7 @@ def generate_output(path_to_log, writer):
             write_line('--------------------')
             write_line()
             for locator in invocations[0].locators:
-                write_line('- %s: %s' % locator.name, locator.path)
+                write_line('- %s: %s' % (locator.name, locator.path))
         write_line('```')
         write_line()
         write_line("[TOC](#table-of-contents)")
