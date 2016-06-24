@@ -131,6 +131,7 @@ def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, n50):
 
     infiltration = gv.hf * n_inf  # m3/h.m2
 
+    # FIXME: THIS DOES NOT MAKE SENSE! CHECK! FREE COOLING ONLY WHEN PEOPLE ABSENT (No effect on q_req) AND HEATING SEASON!
     if people > 0:
         q_req = (ve + (infiltration * Af)) / 3600  # m3/s
     else:
