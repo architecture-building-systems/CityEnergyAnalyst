@@ -27,6 +27,7 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy import create_engine, ForeignKey
 
 import cea.radiation
+import cea.inputlocator
 
 Base = declarative_base()
 Session = sessionmaker()
@@ -71,8 +72,40 @@ class Parameter(Base):
     def __repr__(self):
         return "<Parameter(name='%s', ptype='%s')>" % (self.name, self.ptype)
 
+class Locator(Base):
+    __tablename__ = 'locators'
+
+    id = Column(Integer, primary_key=True)
+    call_id = Column(Integer, ForeignKey('invocations.id'))
+    name = Column(String, nullable=False)
+    path = Column(String)
+    invocation = relationship('Invocation', back_populates='locators')
+
+    def __repr__(self):
+        return "<Locator(name='%s', path='%s')>" % (self.name, self.path)
+
 
 Invocation.parameters = relationship('Parameter', order_by=Parameter.id, back_populates='invocation')
+Invocation.locators = relationship('Locator', order_by=Locator.id, back_populates='invocation')
+
+
+class LocatorDecorator(object):
+    '''wrap an InputLocator so we can track calls'''
+
+    def __init__(self, locator, invocation):
+        self.locator = locator
+        self.invocation = invocation
+
+    def __getattr__(self, name):
+        '''Log this call to the database'''
+        path = getattr(self.locator, name)
+
+        session = Session()
+        session.add(self.invocation)
+        invocation.locators.add(Locator(name=name, path=path))
+        session.commit()
+        session.close()
+        return path
 
 
 class _LogArgs(object):
@@ -91,8 +124,17 @@ class _LogArgs(object):
             if first_only and func._invocation_counter > 1:
                 return func(*args, **kwargs)
             else:
-                self.log_entry(func, args, kwargs)
+                args_dict, invocation = self.log_entry(func, args, kwargs)
+                # wrap the locators for logging
+                for key, value in args_dict.items():
+                    if isinstance(value, cea.inputlocator.InputLocator):
+                        args_dict[key] = LocatorDecorator(value, invocation)
+                    elif isinstance(value, LocatorDecorator):
+                        args_dict[key] = LocatorDecorator(value.locator)
                 try:
+                    #
+                    # THIS IS WHERE THE FUNCTION IS ACTUALLY CALLED!!
+                    #
                     result = func(*args, **kwargs)
                     self.log_exit(func, result)
                 except:
@@ -126,6 +168,7 @@ class _LogArgs(object):
             session.expunge_all()
             session.close()
             self.invocations.append(invocation)
+            return args_dict, invocation
         except:
             import traceback
             traceback.print_exc()
@@ -224,6 +267,30 @@ def generate_output(path_to_log, writer):
         write_line("[TOC](#table-of-contents)")
         write_line("---")
         write_line()
+
+        write_line("### Docstring template")
+        write_line()
+        write_line('```')
+        write_line('PARAMETERS')
+        write_line('----------')
+        write_line()
+        for parameter in invocations[0].parameters:
+            write_line(':param %s:' % parameter.name)
+            write_line(':type %s: %s' % (parameter.name, parameter.ptype))
+            write_line()
+        write_line('RETURNS')
+        write_line('-------')
+        write_line()
+        write_line(':returns:')
+        write_line(':rtype: %s' % invocations[0].rtype)
+        write_line()
+        if len(invocations[0].locators):
+            write_line('INPUT / OUTPUT FILES')
+            write_line('--------------------')
+            write_line()
+            for locator in invocations[0].locators:
+                write_line('- %s: %s' % locator.name, locator.path)
+        write_line('```')
 
 
 def summary_unpickle(value):

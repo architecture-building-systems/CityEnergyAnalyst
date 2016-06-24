@@ -67,10 +67,10 @@
 
 # AmFunction
 - number of invocations: 1
-- max duration: 0.03 s
-- avg duration: 0.03 s
-- min duration: 0.03 s
-- total duration: 0.03 s
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **x** `["<type 'unicode'>"]`: *u'T3'*
@@ -82,12 +82,28 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param x:
+:type x: <type 'unicode'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'float'>
+
+```
 # Calc_Im_tot
 - number of invocations: 1
-- max duration: 0.031 s
-- avg duration: 0.031 s
-- min duration: 0.031 s
-- total duration: 0.031 s
+- max duration: 0.03 s
+- avg duration: 0.03 s
+- min duration: 0.03 s
+- total duration: 0.03 s
 
 ### Input
 - **I_m** `["<type 'numpy.float64'>"]`: *2724.4521715126948*
@@ -109,12 +125,58 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param I_m:
+:type I_m: <type 'numpy.float64'>
+
+:param Htr_em:
+:type Htr_em: <type 'numpy.float64'>
+
+:param te_t:
+:type te_t: <type 'numpy.float64'>
+
+:param Htr_3:
+:type Htr_3: <type 'numpy.float64'>
+
+:param I_st:
+:type I_st: <type 'numpy.float64'>
+
+:param Htr_w:
+:type Htr_w: <type 'numpy.float64'>
+
+:param Htr_1:
+:type Htr_1: <type 'numpy.float64'>
+
+:param I_ia:
+:type I_ia: <type 'numpy.float64'>
+
+:param IHC_nd:
+:type IHC_nd: <type 'int'>
+
+:param Hve:
+:type Hve: <type 'numpy.float64'>
+
+:param Htr_2:
+:type Htr_2: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.float64'>
+
+```
 # Calc_Rf_sh
 - number of invocations: 1
-- max duration: 0.028 s
-- avg duration: 0.028 s
-- min duration: 0.028 s
-- total duration: 0.028 s
+- max duration: 0.035 s
+- avg duration: 0.035 s
+- min duration: 0.035 s
+- total duration: 0.035 s
 
 ### Input
 - **ShadingType** `["<type 'unicode'>"]`: *u'T1'*
@@ -126,6 +188,22 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param ShadingType:
+:type ShadingType: <type 'unicode'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.float64'>
+
+```
 # Calc_Tm
 - number of invocations: 1
 - max duration: 0.03 s
@@ -156,6 +234,61 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Htr_3:
+:type Htr_3: <type 'numpy.float64'>
+
+:param Htr_1:
+:type Htr_1: <type 'numpy.float64'>
+
+:param tm_t0:
+:type tm_t0: <type 'int'>
+
+:param Cm:
+:type Cm: <type 'numpy.float64'>
+
+:param Htr_em:
+:type Htr_em: <type 'numpy.float64'>
+
+:param Im_tot:
+:type Im_tot: <type 'numpy.float64'>
+
+:param Htr_ms:
+:type Htr_ms: <type 'numpy.float64'>
+
+:param I_st:
+:type I_st: <type 'numpy.float64'>
+
+:param Htr_w:
+:type Htr_w: <type 'numpy.float64'>
+
+:param te_t:
+:type te_t: <type 'numpy.float64'>
+
+:param I_ia:
+:type I_ia: <type 'numpy.float64'>
+
+:param IHC_nd:
+:type IHC_nd: <type 'int'>
+
+:param Hve:
+:type Hve: <type 'numpy.float64'>
+
+:param Htr_is:
+:type Htr_is: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # Calc_form
 - number of invocations: 1
 - max duration: 0.029 s
@@ -175,12 +308,34 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Lw:
+:type Lw: <type 'numpy.float64'>
+
+:param Ll:
+:type Ll: <type 'numpy.float64'>
+
+:param footprint:
+:type footprint: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.float64'>
+
+```
 # CmFunction
 - number of invocations: 1
-- max duration: 0.033 s
-- avg duration: 0.033 s
-- min duration: 0.033 s
-- total duration: 0.033 s
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **x** `["<type 'unicode'>"]`: *u'T3'*
@@ -192,12 +347,28 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param x:
+:type x: <type 'unicode'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'int'>
+
+```
 # allocate_default_leakage_paths
 - number of invocations: 1
-- max duration: 0.032 s
-- avg duration: 0.032 s
-- min duration: 0.032 s
-- total duration: 0.032 s
+- max duration: 0.033 s
+- avg duration: 0.033 s
+- min duration: 0.033 s
+- total duration: 0.033 s
 
 ### Input
 - **coeff_lea_zone** `["<type 'numpy.float64'>"]`: *2130.2643780536373*
@@ -213,12 +384,37 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param coeff_lea_zone:
+:type coeff_lea_zone: <type 'numpy.float64'>
+
+:param area_facade_zone:
+:type area_facade_zone: <type 'numpy.float64'>
+
+:param area_roof_zone:
+:type area_roof_zone: <type 'numpy.float64'>
+
+:param height_zone:
+:type height_zone: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # allocate_default_ventilation_openings
 - number of invocations: 1
-- max duration: 0.027 s
-- avg duration: 0.027 s
-- min duration: 0.027 s
-- total duration: 0.027 s
+- max duration: 0.033 s
+- avg duration: 0.033 s
+- min duration: 0.033 s
+- total duration: 0.033 s
 
 ### Input
 - **coeff_vent_zone** `["<type 'float'>"]`: *0.0*
@@ -231,12 +427,31 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param coeff_vent_zone:
+:type coeff_vent_zone: <type 'float'>
+
+:param height_zone:
+:type height_zone: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_Ccoil2
 - number of invocations: 1
-- max duration: 0.032 s
-- avg duration: 0.032 s
-- min duration: 0.032 s
-- total duration: 0.032 s
+- max duration: 0.035 s
+- avg duration: 0.035 s
+- min duration: 0.035 s
+- total duration: 0.035 s
 
 ### Input
 - **Qc** `["<type 'numpy.float64'>"]`: *-0*
@@ -264,12 +479,76 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Qc:
+:type Qc: <type 'numpy.float64'>
+
+:param tasup:
+:type tasup: <type 'numpy.float64'>
+
+:param tare:
+:type tare: <type 'numpy.float64'>
+
+:param Qc0:
+:type Qc0: <type 'numpy.float64'>
+
+:param tare_0:
+:type tare_0: <type 'numpy.float64'>
+
+:param tasup_0:
+:type tasup_0: <type 'numpy.float64'>
+
+:param tsc0:
+:type tsc0: <type 'numpy.int64'>
+
+:param trc0:
+:type trc0: <type 'numpy.int64'>
+
+:param wr:
+:type wr: <type 'numpy.float64'>
+
+:param ws:
+:type ws: <type 'numpy.float64'>
+
+:param ma0:
+:type ma0: <type 'numpy.float64'>
+
+:param ma:
+:type ma: <type 'numpy.float64'>
+
+:param Cpa:
+:type Cpa: <type 'numpy.float64'>
+
+:param LMRT0:
+:type LMRT0: <type 'numpy.float64'>
+
+:param UA0:
+:type UA0: <type 'numpy.float64'>
+
+:param mCw0:
+:type mCw0: <type 'numpy.float64'>
+
+:param Qcsf:
+:type Qcsf: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_Eaux_cs_dis
 - number of invocations: 1
-- max duration: 0.029 s
-- avg duration: 0.029 s
-- min duration: 0.029 s
-- total duration: 0.029 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **Qcsf** `["<type 'numpy.float64'>"]`: *-0*
@@ -288,6 +567,43 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Qcsf:
+:type Qcsf: <type 'numpy.float64'>
+
+:param Qcsf0:
+:type Qcsf0: <type 'numpy.float64'>
+
+:param Imax:
+:type Imax: <type 'numpy.float64'>
+
+:param deltaP_des:
+:type deltaP_des: <type 'numpy.float64'>
+
+:param b:
+:type b: <type 'numpy.float64'>
+
+:param ts:
+:type ts: <type 'numpy.int32'>
+
+:param tr:
+:type tr: <type 'numpy.int32'>
+
+:param cpw:
+:type cpw: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'float'>
+
+```
 # calc_Eaux_fw
 - number of invocations: 1
 - max duration: 0.04 s
@@ -299,7 +615,7 @@
 - **freshw** `["<type 'numpy.ndarray'>"]`: *array([ 0.05684067,  0.02842034,  0.00710508, ...,  0.2397966 ,
         0.13322033,  0.10124745])*
 - **nf** `["<type 'numpy.float64'>"]`: *7.0*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x20E2B8F0>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x20C7CDF0>*
 
 
 ### Output
@@ -308,12 +624,34 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param freshw:
+:type freshw: <type 'numpy.ndarray'>
+
+:param nf:
+:type nf: <type 'numpy.float64'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.ndarray'>
+
+```
 # calc_Eaux_hs_dis
 - number of invocations: 1
-- max duration: 0.029 s
-- avg duration: 0.029 s
-- min duration: 0.029 s
-- total duration: 0.029 s
+- max duration: 0.03 s
+- avg duration: 0.03 s
+- min duration: 0.03 s
+- total duration: 0.03 s
 
 ### Input
 - **Qhsf** `["<type 'numpy.float64'>"]`: *0.0*
@@ -332,6 +670,43 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Qhsf:
+:type Qhsf: <type 'numpy.float64'>
+
+:param Qhsf0:
+:type Qhsf0: <type 'numpy.float64'>
+
+:param Imax:
+:type Imax: <type 'numpy.float64'>
+
+:param deltaP_des:
+:type deltaP_des: <type 'numpy.float64'>
+
+:param b:
+:type b: <type 'numpy.float64'>
+
+:param ts:
+:type ts: <type 'numpy.int32'>
+
+:param tr:
+:type tr: <type 'numpy.int32'>
+
+:param cpw:
+:type cpw: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'float'>
+
+```
 # calc_Eaux_ve
 - number of invocations: 1
 - max duration: 0.029 s
@@ -355,6 +730,40 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Qhsf:
+:type Qhsf: <type 'numpy.float64'>
+
+:param Qcsf:
+:type Qcsf: <type 'numpy.float64'>
+
+:param P_ve:
+:type P_ve: <type 'numpy.float64'>
+
+:param qve:
+:type qve: <type 'numpy.float64'>
+
+:param SystemH:
+:type SystemH: <type 'numpy.unicode_'>
+
+:param SystemC:
+:type SystemC: <type 'numpy.unicode_'>
+
+:param Af:
+:type Af: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'float'>
+
+```
 # calc_Eaux_ww
 - number of invocations: 1
 - max duration: 0.032 s
@@ -378,12 +787,46 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Qww:
+:type Qww: <type 'numpy.float64'>
+
+:param Qwwf:
+:type Qwwf: <type 'numpy.float64'>
+
+:param Qwwf0:
+:type Qwwf0: <type 'numpy.float64'>
+
+:param Imax:
+:type Imax: <type 'numpy.float64'>
+
+:param deltaP_des:
+:type deltaP_des: <type 'numpy.float64'>
+
+:param b:
+:type b: <type 'numpy.float64'>
+
+:param qV_des:
+:type qV_des: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'float'>
+
+```
 # calc_Hcoil2
 - number of invocations: 1
-- max duration: 0.034 s
-- avg duration: 0.034 s
-- min duration: 0.034 s
-- total duration: 0.034 s
+- max duration: 0.033 s
+- avg duration: 0.033 s
+- min duration: 0.033 s
+- total duration: 0.033 s
 
 ### Input
 - **Qh** `["<type 'numpy.float64'>"]`: *0.0*
@@ -411,12 +854,76 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Qh:
+:type Qh: <type 'numpy.float64'>
+
+:param tasup:
+:type tasup: <type 'numpy.float64'>
+
+:param tare:
+:type tare: <type 'numpy.float64'>
+
+:param Qh0:
+:type Qh0: <type 'numpy.float64'>
+
+:param tare_0:
+:type tare_0: <type 'numpy.float64'>
+
+:param tasup_0:
+:type tasup_0: <type 'numpy.float64'>
+
+:param tsh0:
+:type tsh0: <type 'numpy.int64'>
+
+:param trh0:
+:type trh0: <type 'numpy.int64'>
+
+:param wr:
+:type wr: <type 'numpy.float64'>
+
+:param ws:
+:type ws: <type 'numpy.float64'>
+
+:param ma0:
+:type ma0: <type 'numpy.float64'>
+
+:param ma:
+:type ma: <type 'numpy.float64'>
+
+:param Cpa:
+:type Cpa: <type 'numpy.float64'>
+
+:param LMRT0:
+:type LMRT0: <type 'numpy.complex128'>
+
+:param UA0:
+:type UA0: <type 'numpy.complex128'>
+
+:param mCw0:
+:type mCw0: <type 'numpy.float64'>
+
+:param Qhsf:
+:type Qhsf: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_Htr
 - number of invocations: 1
-- max duration: 0.032 s
-- avg duration: 0.032 s
-- min duration: 0.032 s
-- total duration: 0.032 s
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **Hve** `["<type 'numpy.float64'>"]`: *1414.5649132349504*
@@ -431,12 +938,37 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Hve:
+:type Hve: <type 'numpy.float64'>
+
+:param Htr_is:
+:type Htr_is: <type 'numpy.float64'>
+
+:param Htr_ms:
+:type Htr_ms: <type 'numpy.float64'>
+
+:param Htr_w:
+:type Htr_w: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_Qdis_ls
 - number of invocations: 1
-- max duration: 0.037 s
-- avg duration: 0.037 s
-- min duration: 0.037 s
-- total duration: 0.037 s
+- max duration: 0.033 s
+- avg duration: 0.033 s
+- min duration: 0.033 s
+- total duration: 0.033 s
 
 ### Input
 - **tair** `["<type 'numpy.float64'>"]`: *15.202170683665049*
@@ -463,12 +995,73 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param tair:
+:type tair: <type 'numpy.float64'>
+
+:param text:
+:type text: <type 'numpy.float64'>
+
+:param Qhs:
+:type Qhs: <type 'numpy.float64'>
+
+:param Qcs:
+:type Qcs: <type 'numpy.float64'>
+
+:param tsh:
+:type tsh: <type 'numpy.int64'>
+
+:param trh:
+:type trh: <type 'numpy.int64'>
+
+:param tsc:
+:type tsc: <type 'numpy.int64'>
+
+:param trc:
+:type trc: <type 'numpy.int64'>
+
+:param Qhs_max:
+:type Qhs_max: <type 'numpy.float64'>
+
+:param Qcs_max:
+:type Qcs_max: <type 'numpy.float64'>
+
+:param D:
+:type D: <type 'numpy.int32'>
+
+:param Y:
+:type Y: <type 'numpy.float64'>
+
+:param SystemH:
+:type SystemH: <type 'numpy.unicode_'>
+
+:param SystemC:
+:type SystemC: <type 'numpy.unicode_'>
+
+:param Bf:
+:type Bf: <type 'numpy.float64'>
+
+:param Lv:
+:type Lv: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_Qww_ls_nr
 - number of invocations: 1
-- max duration: 0.036 s
-- avg duration: 0.036 s
-- min duration: 0.036 s
-- total duration: 0.036 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **tair** `["<type 'numpy.float64'>"]`: *15.202170683665049*
@@ -484,7 +1077,7 @@
 - **Pwater** `["<type 'numpy.int32'>"]`: *998*
 - **Bf** `["<type 'numpy.float64'>"]`: *0.69999999999999996*
 - **te** `["<type 'numpy.float64'>"]`: *8.8000000000000007*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x20E2DFD0>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x20C92BF0>*
 
 
 ### Output
@@ -493,12 +1086,67 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param tair:
+:type tair: <type 'numpy.float64'>
+
+:param Qww:
+:type Qww: <type 'numpy.float64'>
+
+:param Lvww_dis:
+:type Lvww_dis: <type 'numpy.float64'>
+
+:param Lvww_c:
+:type Lvww_c: <type 'numpy.float64'>
+
+:param Y:
+:type Y: <type 'numpy.float64'>
+
+:param Qww_0:
+:type Qww_0: <type 'numpy.float64'>
+
+:param V:
+:type V: <type 'numpy.float64'>
+
+:param Flowtap:
+:type Flowtap: <type 'numpy.float64'>
+
+:param twws:
+:type twws: <type 'numpy.int64'>
+
+:param Cpw:
+:type Cpw: <type 'numpy.float64'>
+
+:param Pwater:
+:type Pwater: <type 'numpy.int32'>
+
+:param Bf:
+:type Bf: <type 'numpy.float64'>
+
+:param te:
+:type te: <type 'numpy.float64'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.float64'>
+
+```
 # calc_Qww_ls_r
 - number of invocations: 1
-- max duration: 0.086 s
-- avg duration: 0.086 s
-- min duration: 0.086 s
-- total duration: 0.086 s
+- max duration: 0.094 s
+- avg duration: 0.094 s
+- min duration: 0.094 s
+- total duration: 0.094 s
 
 ### Input
 - **Tair** `["<type 'numpy.float64'>"]`: *15.202170683665049*
@@ -512,7 +1160,7 @@
 - **twws** `["<type 'numpy.int64'>"]`: *60*
 - **Cpw** `["<type 'numpy.float64'>"]`: *4.1840000000000002*
 - **Pwater** `["<type 'numpy.int32'>"]`: *998*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x20E2D8F0>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x20C7FF30>*
 
 
 ### Output
@@ -521,12 +1169,61 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Tair:
+:type Tair: <type 'numpy.float64'>
+
+:param Qww:
+:type Qww: <type 'numpy.float64'>
+
+:param lsww_dis:
+:type lsww_dis: <type 'numpy.float64'>
+
+:param lcww_dis:
+:type lcww_dis: <type 'numpy.float64'>
+
+:param Y:
+:type Y: <type 'numpy.float64'>
+
+:param Qww_0:
+:type Qww_0: <type 'numpy.float64'>
+
+:param V:
+:type V: <type 'numpy.float64'>
+
+:param Flowtap:
+:type Flowtap: <type 'numpy.float64'>
+
+:param twws:
+:type twws: <type 'numpy.int64'>
+
+:param Cpw:
+:type Cpw: <type 'numpy.float64'>
+
+:param Pwater:
+:type Pwater: <type 'numpy.int32'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.float64'>
+
+```
 # calc_RAD
 - number of invocations: 1
-- max duration: 0.029 s
-- avg duration: 0.029 s
-- min duration: 0.029 s
-- total duration: 0.029 s
+- max duration: 0.036 s
+- avg duration: 0.036 s
+- min duration: 0.036 s
+- total duration: 0.036 s
 
 ### Input
 - **Qh** `["<type 'numpy.float64'>"]`: *0.0*
@@ -544,6 +1241,40 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Qh:
+:type Qh: <type 'numpy.float64'>
+
+:param tair:
+:type tair: <type 'numpy.float64'>
+
+:param Qh0:
+:type Qh0: <type 'numpy.float64'>
+
+:param tair0:
+:type tair0: <type 'numpy.float64'>
+
+:param tsh0:
+:type tsh0: <type 'numpy.int64'>
+
+:param trh0:
+:type trh0: <type 'numpy.int64'>
+
+:param nh:
+:type nh: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_TABSH
 - number of invocations: 1
 - max duration: 0.031 s
@@ -567,12 +1298,46 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Qh:
+:type Qh: <type 'numpy.float64'>
+
+:param tair:
+:type tair: <type 'numpy.float64'>
+
+:param Qh0:
+:type Qh0: <type 'numpy.float64'>
+
+:param tair0:
+:type tair0: <type 'numpy.float64'>
+
+:param tsh0:
+:type tsh0: <type 'numpy.int64'>
+
+:param trh0:
+:type trh0: <type 'numpy.int64'>
+
+:param nh:
+:type nh: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_TL
 - number of invocations: 1
-- max duration: 0.142 s
-- avg duration: 0.142 s
-- min duration: 0.142 s
-- total duration: 0.142 s
+- max duration: 0.147 s
+- avg duration: 0.147 s
+- min duration: 0.147 s
+- total duration: 0.147 s
 
 ### Input
 - **SystemH** `["<type 'unicode'>"]`: *u'T1'*
@@ -608,12 +1373,100 @@
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param SystemH:
+:type SystemH: <type 'unicode'>
+
+:param SystemC:
+:type SystemC: <type 'unicode'>
+
+:param tm_t0:
+:type tm_t0: <type 'int'>
+
+:param te_t:
+:type te_t: <type 'numpy.float64'>
+
+:param tintH_set:
+:type tintH_set: <type 'numpy.float64'>
+
+:param tintC_set:
+:type tintC_set: <type 'numpy.int32'>
+
+:param Htr_em:
+:type Htr_em: <type 'numpy.float64'>
+
+:param Htr_ms:
+:type Htr_ms: <type 'numpy.float64'>
+
+:param Htr_is:
+:type Htr_is: <type 'numpy.float64'>
+
+:param Htr_1:
+:type Htr_1: <type 'numpy.float64'>
+
+:param Htr_2:
+:type Htr_2: <type 'numpy.float64'>
+
+:param Htr_3:
+:type Htr_3: <type 'numpy.float64'>
+
+:param I_st:
+:type I_st: <type 'numpy.float64'>
+
+:param Hve:
+:type Hve: <type 'numpy.float64'>
+
+:param Htr_w:
+:type Htr_w: <type 'numpy.float64'>
+
+:param I_ia:
+:type I_ia: <type 'numpy.float64'>
+
+:param I_m:
+:type I_m: <type 'numpy.float64'>
+
+:param Cm:
+:type Cm: <type 'numpy.float64'>
+
+:param Af:
+:type Af: <type 'numpy.float64'>
+
+:param Losses:
+:type Losses: <type 'bool'>
+
+:param tHset_corr:
+:type tHset_corr: <type 'float'>
+
+:param tCset_corr:
+:type tCset_corr: <type 'float'>
+
+:param IC_max:
+:type IC_max: <type 'numpy.float64'>
+
+:param IH_max:
+:type IH_max: <type 'numpy.float64'>
+
+:param Flag:
+:type Flag: <type 'numpy.bool_'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_capacity_heating_cooling_system
 - number of invocations: 1
-- max duration: 0.028 s
-- avg duration: 0.028 s
-- min duration: 0.028 s
-- total duration: 0.028 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **Af** `["<type 'numpy.float64'>"]`: *2171.2396513531003*
@@ -639,12 +1492,31 @@ Name: B153767, dtype: object*
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Af:
+:type Af: <type 'numpy.float64'>
+
+:param prop_HVAC:
+:type prop_HVAC: <class 'pandas.core.series.Series'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_coeff_lea_zone
 - number of invocations: 1
-- max duration: 0.028 s
-- avg duration: 0.028 s
-- min duration: 0.028 s
-- total duration: 0.028 s
+- max duration: 0.031 s
+- avg duration: 0.031 s
+- min duration: 0.031 s
+- total duration: 0.031 s
 
 ### Input
 - **qv_delta_p_lea_ref** `["<type 'numpy.float64'>"]`: *28949.862018041335*
@@ -656,12 +1528,28 @@ Name: B153767, dtype: object*
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param qv_delta_p_lea_ref:
+:type qv_delta_p_lea_ref: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.float64'>
+
+```
 # calc_coeff_vent_zone
 - number of invocations: 1
-- max duration: 0.028 s
-- avg duration: 0.028 s
-- min duration: 0.028 s
-- total duration: 0.028 s
+- max duration: 0.03 s
+- avg duration: 0.03 s
+- min duration: 0.03 s
+- total duration: 0.03 s
 
 ### Input
 - **area_vent_zone** `["<type 'int'>"]`: *0*
@@ -673,12 +1561,28 @@ Name: B153767, dtype: object*
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param area_vent_zone:
+:type area_vent_zone: <type 'int'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'float'>
+
+```
 # calc_comp_heat_gains_sensible
 - number of invocations: 1
-- max duration: 0.06 s
-- avg duration: 0.06 s
-- min duration: 0.06 s
-- total duration: 0.06 s
+- max duration: 0.072 s
+- avg duration: 0.072 s
+- min duration: 0.072 s
+- total duration: 0.072 s
 
 ### Input
 - **Am** `["<type 'numpy.float64'>"]`: *6947.9668843299214*
@@ -742,12 +1646,40 @@ T8749     65
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Am:
+:type Am: <type 'numpy.float64'>
+
+:param Atot:
+:type Atot: <type 'numpy.float64'>
+
+:param Htr_w:
+:type Htr_w: <type 'numpy.float64'>
+
+:param I_int_sen:
+:type I_int_sen: <type 'numpy.ndarray'>
+
+:param I_sol:
+:type I_sol: <class 'pandas.core.series.Series'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_dhw_heating_demand
 - number of invocations: 1
-- max duration: 0.789 s
-- avg duration: 0.789 s
-- min duration: 0.789 s
-- total duration: 0.789 s
+- max duration: 0.85 s
+- avg duration: 0.85 s
+- min duration: 0.85 s
+- total duration: 0.85 s
 
 ### Input
 - **Af** `["<type 'numpy.float64'>"]`: *2171.2396513531003*
@@ -761,7 +1693,7 @@ T8749     65
 - **Tww_re** `["<type 'numpy.ndarray'>"]`: *array([ 10.,  10.,  10., ...,  10.,  10.,  10.])*
 - **Tww_sup_0** `["<type 'numpy.int64'>"]`: *60*
 - **Y** `["<type 'list'>"]`: *[0.3, 0.4, 0.4]*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x2201C8F0>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x20C779D0>*
 - **vw** `["<type 'numpy.ndarray'>"]`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **vww** `["<type 'numpy.ndarray'>"]`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 
@@ -774,12 +1706,64 @@ T8749     65
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Af:
+:type Af: <type 'numpy.float64'>
+
+:param Lcww_dis:
+:type Lcww_dis: <type 'numpy.float64'>
+
+:param Lsww_dis:
+:type Lsww_dis: <type 'numpy.float64'>
+
+:param Lvww_c:
+:type Lvww_c: <type 'numpy.float64'>
+
+:param Lvww_dis:
+:type Lvww_dis: <type 'numpy.float64'>
+
+:param T_ext:
+:type T_ext: <type 'numpy.ndarray'>
+
+:param Ta:
+:type Ta: <type 'numpy.ndarray'>
+
+:param Tww_re:
+:type Tww_re: <type 'numpy.ndarray'>
+
+:param Tww_sup_0:
+:type Tww_sup_0: <type 'numpy.int64'>
+
+:param Y:
+:type Y: <type 'list'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+:param vw:
+:type vw: <type 'numpy.ndarray'>
+
+:param vww:
+:type vww: <type 'numpy.ndarray'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_disls
 - number of invocations: 1
-- max duration: 0.031 s
-- avg duration: 0.031 s
-- min duration: 0.031 s
-- total duration: 0.031 s
+- max duration: 0.037 s
+- avg duration: 0.037 s
+- min duration: 0.037 s
+- total duration: 0.037 s
 
 ### Input
 - **tamb** `["<type 'numpy.float64'>"]`: *15.202170683665049*
@@ -791,7 +1775,7 @@ T8749     65
 - **p** `["<type 'numpy.int32'>"]`: *998*
 - **cpw** `["<type 'numpy.float64'>"]`: *4.1840000000000002*
 - **Y** `["<type 'numpy.float64'>"]`: *0.40000000000000002*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x2201CA90>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x207E3290>*
 
 
 ### Output
@@ -800,12 +1784,55 @@ T8749     65
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param tamb:
+:type tamb: <type 'numpy.float64'>
+
+:param hotw:
+:type hotw: <type 'numpy.float64'>
+
+:param Flowtap:
+:type Flowtap: <type 'numpy.float64'>
+
+:param V:
+:type V: <type 'numpy.float64'>
+
+:param twws:
+:type twws: <type 'numpy.int64'>
+
+:param Lsww_dis:
+:type Lsww_dis: <type 'numpy.float64'>
+
+:param p:
+:type p: <type 'numpy.int32'>
+
+:param cpw:
+:type cpw: <type 'numpy.float64'>
+
+:param Y:
+:type Y: <type 'numpy.float64'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'int'>
+
+```
 # calc_gl
 - number of invocations: 1
-- max duration: 0.028 s
-- avg duration: 0.028 s
-- min duration: 0.028 s
-- total duration: 0.028 s
+- max duration: 0.04 s
+- avg duration: 0.04 s
+- min duration: 0.04 s
+- total duration: 0.04 s
 
 ### Input
 - **radiation** `["<type 'numpy.float64'>"]`: *0.0*
@@ -819,12 +1846,34 @@ T8749     65
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param radiation:
+:type radiation: <type 'numpy.float64'>
+
+:param g_gl:
+:type g_gl: <type 'numpy.float64'>
+
+:param Rf_sh:
+:type Rf_sh: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.float64'>
+
+```
 # calc_h
 - number of invocations: 1
-- max duration: 0.027 s
-- avg duration: 0.027 s
-- min duration: 0.027 s
-- total duration: 0.027 s
+- max duration: 0.031 s
+- avg duration: 0.031 s
+- min duration: 0.031 s
+- total duration: 0.031 s
 
 ### Input
 - **t** `["<type 'numpy.int32'>"]`: *24*
@@ -837,12 +1886,31 @@ T8749     65
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param t:
+:type t: <type 'numpy.int32'>
+
+:param w:
+:type w: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.float64'>
+
+```
 # calc_h_ve_adj
 - number of invocations: 1
-- max duration: 0.029 s
-- avg duration: 0.029 s
-- min duration: 0.029 s
-- total duration: 0.029 s
+- max duration: 0.03 s
+- avg duration: 0.03 s
+- min duration: 0.03 s
+- total duration: 0.03 s
 
 ### Input
 - **q_m_mech** `["<type 'numpy.float64'>"]`: *1.4033382075743557*
@@ -850,7 +1918,7 @@ T8749     65
 - **temp_ext** `["<type 'numpy.float64'>"]`: *8.8000000000000007*
 - **temp_sup** `["<type 'numpy.float64'>"]`: *8.8000000000000007*
 - **temp_zone_set** `["<type 'int'>"]`: *21*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x2201C6B0>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x21C267F0>*
 
 
 ### Output
@@ -859,12 +1927,43 @@ T8749     65
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param q_m_mech:
+:type q_m_mech: <type 'numpy.float64'>
+
+:param q_m_nat:
+:type q_m_nat: <type 'int'>
+
+:param temp_ext:
+:type temp_ext: <type 'numpy.float64'>
+
+:param temp_sup:
+:type temp_sup: <type 'numpy.float64'>
+
+:param temp_zone_set:
+:type temp_zone_set: <type 'int'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.float64'>
+
+```
 # calc_heat_gains_internal_latent
 - number of invocations: 1
-- max duration: 0.029 s
-- avg duration: 0.029 s
-- min duration: 0.029 s
-- total duration: 0.029 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **people** `["<type 'numpy.ndarray'>"]`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
@@ -879,12 +1978,37 @@ T8749     65
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param people:
+:type people: <type 'numpy.ndarray'>
+
+:param X_ghp:
+:type X_ghp: <type 'numpy.float64'>
+
+:param sys_e_cooling:
+:type sys_e_cooling: <type 'unicode'>
+
+:param sys_e_heating:
+:type sys_e_heating: <type 'unicode'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.ndarray'>
+
+```
 # calc_heat_gains_internal_sensible
 - number of invocations: 1
-- max duration: 0.033 s
-- avg duration: 0.033 s
-- min duration: 0.033 s
-- total duration: 0.033 s
+- max duration: 0.035 s
+- avg duration: 0.035 s
+- min duration: 0.035 s
+- total duration: 0.035 s
 
 ### Input
 - **people** `["<type 'numpy.ndarray'>"]`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
@@ -903,12 +2027,43 @@ T8749     65
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param people:
+:type people: <type 'numpy.ndarray'>
+
+:param Qs_Wp:
+:type Qs_Wp: <type 'numpy.float64'>
+
+:param Eal_nove:
+:type Eal_nove: <type 'numpy.ndarray'>
+
+:param Eprof:
+:type Eprof: <type 'numpy.ndarray'>
+
+:param Qcdata:
+:type Qcdata: <type 'numpy.ndarray'>
+
+:param Qcrefri:
+:type Qcrefri: <type 'numpy.ndarray'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.ndarray'>
+
+```
 # calc_heat_gains_solar
 - number of invocations: 1
-- max duration: 0.173 s
-- avg duration: 0.173 s
-- min duration: 0.173 s
-- total duration: 0.173 s
+- max duration: 0.22 s
+- avg duration: 0.22 s
+- min duration: 0.22 s
+- total duration: 0.22 s
 
 ### Input
 - **Aw** `["<type 'numpy.float64'>"]`: *452.70136417012804*
@@ -945,7 +2100,7 @@ T8757        0.00
 T8758        0.00
 T8759        0.00
 T876*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x20E377B0>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x20C80350>*
 
 
 ### Output
@@ -981,6 +2136,34 @@ T8757
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Aw:
+:type Aw: <type 'numpy.float64'>
+
+:param Awall_all:
+:type Awall_all: <type 'numpy.float64'>
+
+:param Sh_typ:
+:type Sh_typ: <type 'unicode'>
+
+:param Solar:
+:type Solar: <class 'pandas.core.series.Series'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <class 'pandas.core.series.Series'>
+
+```
 # calc_hex
 - number of invocations: 1
 - max duration: 0.084 s
@@ -990,7 +2173,7 @@ T8757
 
 ### Input
 - **rel_humidity_ext** `["<type 'numpy.int64'>"]`: *73*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x2201CBD0>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x1E51ACF0>*
 - **qv_mech** `["<type 'numpy.float64'>"]`: *1.1694485063119631*
 - **timestep** `["<type 'int'>"]`: *3217*
 - **temp_ext** `["<type 'numpy.float64'>"]`: *8.1999999999999993*
@@ -1004,6 +2187,40 @@ T8757
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param rel_humidity_ext:
+:type rel_humidity_ext: <type 'numpy.int64'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+:param qv_mech:
+:type qv_mech: <type 'numpy.float64'>
+
+:param timestep:
+:type timestep: <type 'int'>
+
+:param temp_ext:
+:type temp_ext: <type 'numpy.float64'>
+
+:param qv_mech_dim:
+:type qv_mech_dim: <type 'int'>
+
+:param temp_zone_prev:
+:type temp_zone_prev: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_hvac
 - number of invocations: 1
 - max duration: 0.032 s
@@ -1019,7 +2236,7 @@ T8757
 - **qe_sen** `["<type 'int'>"]`: *0*
 - **temp_5_prev** `["<type 'numpy.float64'>"]`: *18.759995042815788*
 - **wint** `["<type 'numpy.float64'>"]`: *0.0*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x208ECE10>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x1E5356D0>*
 - **timestep** `["<type 'int'>"]`: *3217*
 
 
@@ -1029,12 +2246,52 @@ T8757
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param rhum_1:
+:type rhum_1: <type 'numpy.int64'>
+
+:param temp_1:
+:type temp_1: <type 'numpy.float64'>
+
+:param temp_zone_set:
+:type temp_zone_set: <type 'numpy.float64'>
+
+:param qv_req:
+:type qv_req: <type 'numpy.float64'>
+
+:param qe_sen:
+:type qe_sen: <type 'int'>
+
+:param temp_5_prev:
+:type temp_5_prev: <type 'numpy.float64'>
+
+:param wint:
+:type wint: <type 'numpy.float64'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+:param timestep:
+:type timestep: <type 'int'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_loads_electrical
 - number of invocations: 1
-- max duration: 0.035 s
-- avg duration: 0.035 s
-- min duration: 0.035 s
-- total duration: 0.035 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **Aef** `["<type 'numpy.float64'>"]`: *2171.2396513531003*
@@ -1053,12 +2310,40 @@ T8757
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Aef:
+:type Aef: <type 'numpy.float64'>
+
+:param Ealf:
+:type Ealf: <type 'numpy.ndarray'>
+
+:param Eauxf:
+:type Eauxf: <type 'numpy.ndarray'>
+
+:param Edataf:
+:type Edataf: <type 'numpy.ndarray'>
+
+:param Eprof:
+:type Eprof: <type 'numpy.ndarray'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_mixed_schedule
 - number of invocations: 1
-- max duration: 0.56 s
-- avg duration: 0.56 s
-- min duration: 0.56 s
-- total duration: 0.56 s
+- max duration: 0.63 s
+- avg duration: 0.63 s
+- min duration: 0.63 s
+- total duration: 0.63 s
 
 ### Input
 - **list_uses** `["<type 'list'>"]`: *[u'GYM', u'HOSPITAL', u'HOTEL', u'INDUSTRIAL', u'MULTI_RES', u'OFFICE', u'PARKING', u'RETAIL']*
@@ -1094,12 +2379,34 @@ max       0.800000     0.800000     0.800000     0
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param list_uses:
+:type list_uses: <type 'list'>
+
+:param schedules:
+:type schedules: <type 'list'>
+
+:param building_uses:
+:type building_uses: <class 'pandas.core.series.Series'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <class 'pandas.core.frame.DataFrame'>
+
+```
 # calc_pumping_systems_aux_loads
 - number of invocations: 1
-- max duration: 0.287 s
-- avg duration: 0.287 s
-- min duration: 0.287 s
-- total duration: 0.287 s
+- max duration: 0.299 s
+- avg duration: 0.299 s
+- min duration: 0.299 s
+- total duration: 0.299 s
 
 ### Input
 - **Af** `["<type 'numpy.float64'>"]`: *2171.2396513531003*
@@ -1121,7 +2428,7 @@ max       0.800000     0.800000     0.800000     0
 - **Vw** `["<type 'numpy.ndarray'>"]`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **Year** `["<type 'numpy.int64'>"]`: *1993*
 - **fforma** `["<type 'numpy.float64'>"]`: *0.76931348014904022*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x20E2CE30>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x1E51A2D0>*
 - **nf_ag** `["<type 'numpy.float64'>"]`: *4.0*
 - **nfp** `["<type 'numpy.float64'>"]`: *1.0*
 - **qv_req** `["<type 'numpy.ndarray'>"]`: *array([ 1.16944851,  1.16944851,  1.16944851, ...,  1.16944851,
@@ -1137,12 +2444,97 @@ max       0.800000     0.800000     0.800000     0
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Af:
+:type Af: <type 'numpy.float64'>
+
+:param Ll:
+:type Ll: <type 'numpy.float64'>
+
+:param Lw:
+:type Lw: <type 'numpy.float64'>
+
+:param Mww:
+:type Mww: <type 'numpy.ndarray'>
+
+:param Qcsf:
+:type Qcsf: <type 'numpy.ndarray'>
+
+:param Qcsf_0:
+:type Qcsf_0: <type 'numpy.float64'>
+
+:param Qhsf:
+:type Qhsf: <type 'numpy.ndarray'>
+
+:param Qhsf_0:
+:type Qhsf_0: <type 'numpy.float64'>
+
+:param Qww:
+:type Qww: <type 'numpy.ndarray'>
+
+:param Qwwf:
+:type Qwwf: <type 'numpy.ndarray'>
+
+:param Qwwf_0:
+:type Qwwf_0: <type 'numpy.float64'>
+
+:param Tcs_re:
+:type Tcs_re: <type 'numpy.ndarray'>
+
+:param Tcs_sup:
+:type Tcs_sup: <type 'numpy.ndarray'>
+
+:param Ths_re:
+:type Ths_re: <type 'numpy.ndarray'>
+
+:param Ths_sup:
+:type Ths_sup: <type 'numpy.ndarray'>
+
+:param Vw:
+:type Vw: <type 'numpy.ndarray'>
+
+:param Year:
+:type Year: <type 'numpy.int64'>
+
+:param fforma:
+:type fforma: <type 'numpy.float64'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+:param nf_ag:
+:type nf_ag: <type 'numpy.float64'>
+
+:param nfp:
+:type nfp: <type 'numpy.float64'>
+
+:param qv_req:
+:type qv_req: <type 'numpy.ndarray'>
+
+:param sys_e_cooling:
+:type sys_e_cooling: <type 'unicode'>
+
+:param sys_e_heating:
+:type sys_e_heating: <type 'unicode'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_qv_delta_p_ref
 - number of invocations: 1
-- max duration: 0.028 s
-- avg duration: 0.028 s
-- min duration: 0.028 s
-- total duration: 0.028 s
+- max duration: 0.03 s
+- avg duration: 0.03 s
+- min duration: 0.03 s
+- total duration: 0.03 s
 
 ### Input
 - **n_delta_p_ref** `["<type 'numpy.int64'>"]`: *6*
@@ -1155,18 +2547,37 @@ max       0.800000     0.800000     0.800000     0
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param n_delta_p_ref:
+:type n_delta_p_ref: <type 'numpy.int64'>
+
+:param vol_building:
+:type vol_building: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.float64'>
+
+```
 # calc_qv_req
 - number of invocations: 1
-- max duration: 0.031 s
-- avg duration: 0.031 s
-- min duration: 0.031 s
-- total duration: 0.031 s
+- max duration: 0.035 s
+- avg duration: 0.035 s
+- min duration: 0.035 s
+- total duration: 0.035 s
 
 ### Input
 - **ve** `["<type 'numpy.float64'>"]`: *0.0*
 - **people** `["<type 'numpy.float64'>"]`: *0.0*
 - **Af** `["<type 'numpy.float64'>"]`: *2171.2396513531003*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x20E414B0>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x1E51A830>*
 - **hour_day** `["<type 'numpy.int32'>"]`: *0*
 - **hour_year** `["<type 'numpy.int32'>"]`: *0*
 - **n50** `["<type 'numpy.int64'>"]`: *6*
@@ -1178,12 +2589,46 @@ max       0.800000     0.800000     0.800000     0
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param ve:
+:type ve: <type 'numpy.float64'>
+
+:param people:
+:type people: <type 'numpy.float64'>
+
+:param Af:
+:type Af: <type 'numpy.float64'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+:param hour_day:
+:type hour_day: <type 'numpy.int32'>
+
+:param hour_year:
+:type hour_year: <type 'numpy.int32'>
+
+:param n50:
+:type n50: <type 'numpy.int64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.float64'>
+
+```
 # calc_tHC_corr
 - number of invocations: 1
-- max duration: 0.027 s
-- avg duration: 0.027 s
-- min duration: 0.027 s
-- total duration: 0.027 s
+- max duration: 0.028 s
+- avg duration: 0.028 s
+- min duration: 0.028 s
+- total duration: 0.028 s
 
 ### Input
 - **SystemH** `["<type 'unicode'>"]`: *u'T1'*
@@ -1197,12 +2642,34 @@ max       0.800000     0.800000     0.800000     0
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param SystemH:
+:type SystemH: <type 'unicode'>
+
+:param SystemC:
+:type SystemC: <type 'unicode'>
+
+:param sys_e_ctrl:
+:type sys_e_ctrl: <type 'unicode'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_temperatures_emission_systems
 - number of invocations: 1
-- max duration: 0.649 s
-- avg duration: 0.649 s
-- min duration: 0.649 s
-- total duration: 0.649 s
+- max duration: 0.711 s
+- avg duration: 0.711 s
+- min duration: 0.711 s
+- total duration: 0.711 s
 
 ### Input
 - **Qcsf** `["<type 'numpy.ndarray'>"]`: *array([-0., -0., -0., ..., -0., -0., -0.])*
@@ -1220,7 +2687,7 @@ max       0.800000     0.800000     0.800000     0
 - **Tcs_sup_0** `["<type 'numpy.int64'>"]`: *7*
 - **Ths_re_0** `["<type 'numpy.int64'>"]`: *70*
 - **Ths_sup_0** `["<type 'numpy.int64'>"]`: *90*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x218BE9B0>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x1E51A3B0>*
 - **ma_sup_cs** `["<type 'numpy.ndarray'>"]`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **ma_sup_hs** `["<type 'numpy.ndarray'>"]`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **sys_e_cooling** `["<type 'unicode'>"]`: *u'T3'*
@@ -1236,19 +2703,95 @@ max       0.800000     0.800000     0.800000     0
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Qcsf:
+:type Qcsf: <type 'numpy.ndarray'>
+
+:param Qcsf_0:
+:type Qcsf_0: <type 'numpy.float64'>
+
+:param Qhsf:
+:type Qhsf: <type 'numpy.ndarray'>
+
+:param Qhsf_0:
+:type Qhsf_0: <type 'numpy.float64'>
+
+:param Ta:
+:type Ta: <type 'numpy.ndarray'>
+
+:param Ta_re_cs:
+:type Ta_re_cs: <type 'numpy.ndarray'>
+
+:param Ta_re_hs:
+:type Ta_re_hs: <type 'numpy.ndarray'>
+
+:param Ta_sup_cs:
+:type Ta_sup_cs: <type 'numpy.ndarray'>
+
+:param Ta_sup_hs:
+:type Ta_sup_hs: <type 'numpy.ndarray'>
+
+:param Tcs_re_0:
+:type Tcs_re_0: <type 'numpy.int64'>
+
+:param Tcs_sup_0:
+:type Tcs_sup_0: <type 'numpy.int64'>
+
+:param Ths_re_0:
+:type Ths_re_0: <type 'numpy.int64'>
+
+:param Ths_sup_0:
+:type Ths_sup_0: <type 'numpy.int64'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+:param ma_sup_cs:
+:type ma_sup_cs: <type 'numpy.ndarray'>
+
+:param ma_sup_hs:
+:type ma_sup_hs: <type 'numpy.ndarray'>
+
+:param sys_e_cooling:
+:type sys_e_cooling: <type 'unicode'>
+
+:param sys_e_heating:
+:type sys_e_heating: <type 'unicode'>
+
+:param ta_hs_set:
+:type ta_hs_set: <type 'numpy.ndarray'>
+
+:param w_re:
+:type w_re: <type 'numpy.ndarray'>
+
+:param w_sup:
+:type w_sup: <type 'numpy.ndarray'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_thermal_load_hvac_timestep
 - number of invocations: 1
-- max duration: 0.234 s
-- avg duration: 0.234 s
-- min duration: 0.234 s
-- total duration: 0.234 s
+- max duration: 0.239 s
+- avg duration: 0.239 s
+- min duration: 0.239 s
+- total duration: 0.239 s
 
 ### Input
 - **t** `["<type 'int'>"]`: *3217*
-- **thermal_loads_input** `["<class 'cea.thermal_loads.ThermalLoadsInput'>"]`: *<cea.thermal_loads.ThermalLoadsInput object at 0x20E37FD0>*
+- **thermal_loads_input** `["<class 'cea.thermal_loads.ThermalLoadsInput'>"]`: *<cea.thermal_loads.ThermalLoadsInput object at 0x1E51A890>*
 - **weather_data** `["<class 'pandas.core.frame.DataFrame'>"]`: *(8760, 3)*
 - **state_prev** `["<type 'dict'>"]`: *{'temp_air_prev': 18.759995042815788, 'temp_m_prev': 20.062727215496661}*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x20E37FD0>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x20CAFDB0>*
 
 #### weather_data:
 ```
@@ -1271,19 +2814,47 @@ max      32.500000      100.000000     9.400000
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param t:
+:type t: <type 'int'>
+
+:param thermal_loads_input:
+:type thermal_loads_input: <class 'cea.thermal_loads.ThermalLoadsInput'>
+
+:param weather_data:
+:type weather_data: <class 'pandas.core.frame.DataFrame'>
+
+:param state_prev:
+:type state_prev: <type 'dict'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_thermal_load_mechanical_and_natural_ventilation_timestep
 - number of invocations: 1
-- max duration: 0.349 s
-- avg duration: 0.349 s
-- min duration: 0.349 s
-- total duration: 0.349 s
+- max duration: 0.359 s
+- avg duration: 0.359 s
+- min duration: 0.359 s
+- total duration: 0.359 s
 
 ### Input
 - **t** `["<type 'int'>"]`: *0*
-- **thermal_loads_input** `["<class 'cea.thermal_loads.ThermalLoadsInput'>"]`: *<cea.thermal_loads.ThermalLoadsInput object at 0x20E3DDB0>*
+- **thermal_loads_input** `["<class 'cea.thermal_loads.ThermalLoadsInput'>"]`: *<cea.thermal_loads.ThermalLoadsInput object at 0x20CAFE70>*
 - **weather_data** `["<class 'pandas.core.frame.DataFrame'>"]`: *(8760, 3)*
 - **state_prev** `["<type 'dict'>"]`: *{'temp_air_prev': 21, 'temp_m_prev': 16}*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x20E1E110>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x20C7F2B0>*
 
 #### weather_data:
 ```
@@ -1306,22 +2877,50 @@ max      32.500000      100.000000     9.400000
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param t:
+:type t: <type 'int'>
+
+:param thermal_loads_input:
+:type thermal_loads_input: <class 'cea.thermal_loads.ThermalLoadsInput'>
+
+:param weather_data:
+:type weather_data: <class 'pandas.core.frame.DataFrame'>
+
+:param state_prev:
+:type state_prev: <type 'dict'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # calc_thermal_loads_new_ventilation
 - number of invocations: 1
-- max duration: 8.44 s
-- avg duration: 8.44 s
-- min duration: 8.44 s
-- total duration: 8.44 s
+- max duration: 9.178 s
+- avg duration: 9.178 s
+- min duration: 9.178 s
+- total duration: 9.178 s
 
 ### Input
 - **Name** `["<type 'str'>"]`: *'B153767'*
-- **building_properties** `["<class 'cea.demand.BuildingProperties'>"]`: *<cea.demand.BuildingProperties object at 0x20102A10>*
+- **building_properties** `["<class 'cea.demand.BuildingProperties'>"]`: *<cea.demand.BuildingProperties object at 0x20CAF130>*
 - **weather_data** `["<class 'pandas.core.frame.DataFrame'>"]`: *(8760, 3)*
 - **usage_schedules** `["<type 'dict'>"]`: *{'list_uses': [u'GYM', u'HOSPITAL', u'HOTEL', u'INDUSTRIAL', u'MULTI_RES', u'OFFICE', u'PARKING', u'RETAIL'], 'schedules': [([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4,*
 - **date** `["<class 'pandas.tseries.index.DatetimeIndex'>"]`: *<class 'pandas.tseries.index.DatetimeIndex'>
 [2016-01-01 00:00:00, ..., 2016-12-30 23:00:00]
 Length: 8760, Freq: H, Timezone: None*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x20372550>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x21A69DB0>*
 - **locationFinal** `["<type 'str'>"]`: *'C:\\reference-case\\baseline\\outputs\\data\\demand'*
 - **path_temporary_folder** `["<type 'str'>"]`: *'c:\\users\\darthoma\\appdata\\local\\temp'*
 
@@ -1346,12 +2945,49 @@ max      32.500000      100.000000     9.400000
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Name:
+:type Name: <type 'str'>
+
+:param building_properties:
+:type building_properties: <class 'cea.demand.BuildingProperties'>
+
+:param weather_data:
+:type weather_data: <class 'pandas.core.frame.DataFrame'>
+
+:param usage_schedules:
+:type usage_schedules: <type 'dict'>
+
+:param date:
+:type date: <class 'pandas.tseries.index.DatetimeIndex'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+:param locationFinal:
+:type locationFinal: <type 'str'>
+
+:param path_temporary_folder:
+:type path_temporary_folder: <type 'str'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'NoneType'>
+
+```
 # calc_w
 - number of invocations: 1
-- max duration: 0.031 s
-- avg duration: 0.031 s
-- min duration: 0.031 s
-- total duration: 0.031 s
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **t** `["<type 'numpy.float64'>"]`: *8.1999999999999993*
@@ -1364,12 +3000,31 @@ max      32.500000      100.000000     9.400000
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param t:
+:type t: <type 'numpy.float64'>
+
+:param RH:
+:type RH: <type 'numpy.int64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.float64'>
+
+```
 # calc_w3_cooling_case
 - number of invocations: 1
-- max duration: 0.028 s
-- avg duration: 0.028 s
-- min duration: 0.028 s
-- total duration: 0.028 s
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **t5** `["<type 'numpy.int32'>"]`: *24*
@@ -1384,19 +3039,44 @@ max      32.500000      100.000000     9.400000
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param t5:
+:type t5: <type 'numpy.int32'>
+
+:param w2:
+:type w2: <type 'numpy.float64'>
+
+:param t3:
+:type t3: <type 'int'>
+
+:param w5:
+:type w5: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.float64'>
+
+```
 # calc_w3_heating_case
 - number of invocations: 1
-- max duration: 0.033 s
-- avg duration: 0.033 s
-- min duration: 0.033 s
-- total duration: 0.033 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **t5** `["<type 'numpy.float64'>"]`: *20.0*
 - **w2** `["<type 'numpy.float64'>"]`: *0.0041699403233700994*
 - **w5** `["<type 'numpy.float64'>"]`: *0.0045258958486444414*
 - **t3** `["<type 'int'>"]`: *36*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x207D4CB0>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x1EADC8F0>*
 
 
 ### Output
@@ -1405,12 +3085,40 @@ max      32.500000      100.000000     9.400000
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param t5:
+:type t5: <type 'numpy.float64'>
+
+:param w2:
+:type w2: <type 'numpy.float64'>
+
+:param w5:
+:type w5: <type 'numpy.float64'>
+
+:param t3:
+:type t3: <type 'int'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.float64'>
+
+```
 # calculate_pipe_transmittance_values
 - number of invocations: 1
-- max duration: 0.027 s
-- avg duration: 0.027 s
-- min duration: 0.027 s
-- total duration: 0.027 s
+- max duration: 0.031 s
+- avg duration: 0.031 s
+- min duration: 0.031 s
+- total duration: 0.031 s
 
 ### Input
 - **year** `["<type 'numpy.int64'>"]`: *1993*
@@ -1423,12 +3131,31 @@ max      32.500000      100.000000     9.400000
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param year:
+:type year: <type 'numpy.int64'>
+
+:param Retrofit:
+:type Retrofit: <type 'numpy.int64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'list'>
+
+```
 # create_windows
 - number of invocations: 1
-- max duration: 0.978 s
-- avg duration: 0.978 s
-- min duration: 0.978 s
-- total duration: 0.978 s
+- max duration: 1.032 s
+- avg duration: 1.032 s
+- min duration: 1.032 s
+- total duration: 1.032 s
 
 ### Input
 - **df_prop_surfaces** `["<class 'pandas.core.frame.DataFrame'>"]`: *(2140, 6)*
@@ -1478,17 +3205,36 @@ max                52.500000          270.000000
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param df_prop_surfaces:
+:type df_prop_surfaces: <class 'pandas.core.frame.DataFrame'>
+
+:param gdf_building_architecture:
+:type gdf_building_architecture: <class 'geopandas.geodataframe.GeoDataFrame'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <class 'pandas.core.frame.DataFrame'>
+
+```
 # demand_calculation
 - number of invocations: 1
-- max duration: 1077.785 s
-- avg duration: 1077.785 s
-- min duration: 1077.785 s
-- total duration: 1077.785 s
+- max duration: 1167.38 s
+- avg duration: 1167.38 s
+- min duration: 1167.38 s
+- total duration: 1167.38 s
 
 ### Input
-- **locator** `["<class 'cea.inputlocator.InputLocator'>"]`: *<cea.inputlocator.InputLocator object at 0x2035FF30>*
+- **locator** `["<class 'cea.inputlocator.InputLocator'>"]`: *<cea.inputlocator.InputLocator object at 0x21BF5F90>*
 - **weather_path** `["<type 'str'>"]`: *'C:\\Users\\darthoma\\Documents\\GitHub\\CEAforArcGIS\\cea\\db\\CH\\Weather\\Zurich.epw'*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x2035FF30>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x21BF5F90>*
 
 
 ### Output
@@ -1497,12 +3243,34 @@ max                52.500000          270.000000
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param locator:
+:type locator: <class 'cea.inputlocator.InputLocator'>
+
+:param weather_path:
+:type weather_path: <type 'str'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'NoneType'>
+
+```
 # get_building_geometry_ventilation
 - number of invocations: 1
-- max duration: 0.029 s
-- avg duration: 0.029 s
-- min duration: 0.029 s
-- total duration: 0.029 s
+- max duration: 0.03 s
+- avg duration: 0.03 s
+- min duration: 0.03 s
+- total duration: 0.03 s
 
 ### Input
 - **gdf_building_geometry** `["<class 'pandas.core.series.Series'>"]`: *Blength       32.648092
@@ -1522,12 +3290,28 @@ Name: B153767, dtype: float64*
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param gdf_building_geometry:
+:type gdf_building_geometry: <class 'pandas.core.series.Series'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # get_internal_comfort
 - number of invocations: 1
-- max duration: 0.037 s
-- avg duration: 0.037 s
-- min duration: 0.037 s
-- total duration: 0.037 s
+- max duration: 0.039 s
+- avg duration: 0.039 s
+- min duration: 0.039 s
+- total duration: 0.039 s
 
 ### Input
 - **people** `["<type 'numpy.ndarray'>"]`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
@@ -1548,12 +3332,40 @@ Name: B153767, dtype: float64*
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param people:
+:type people: <type 'numpy.ndarray'>
+
+:param prop_comfort:
+:type prop_comfort: <class 'pandas.core.series.Series'>
+
+:param limit_inf_season:
+:type limit_inf_season: <type 'int'>
+
+:param limit_sup_season:
+:type limit_sup_season: <type 'int'>
+
+:param weekday:
+:type weekday: <type 'numpy.ndarray'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # get_internal_loads
 - number of invocations: 1
-- max duration: 0.037 s
-- avg duration: 0.037 s
-- min duration: 0.037 s
-- total duration: 0.037 s
+- max duration: 0.034 s
+- avg duration: 0.034 s
+- min duration: 0.034 s
+- total duration: 0.034 s
 
 ### Input
 - **mixed_schedule** `["<class 'pandas.core.frame.DataFrame'>"]`: *(8760, 4)*
@@ -1598,12 +3410,37 @@ max       0.800000     0.800000     0.800000     0
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param mixed_schedule:
+:type mixed_schedule: <class 'pandas.core.frame.DataFrame'>
+
+:param prop_internal_loads:
+:type prop_internal_loads: <class 'pandas.core.series.Series'>
+
+:param prop_architecture:
+:type prop_architecture: <class 'pandas.core.series.Series'>
+
+:param Af:
+:type Af: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # get_occupancy
 - number of invocations: 1
-- max duration: 0.033 s
-- avg duration: 0.033 s
-- min duration: 0.033 s
-- total duration: 0.033 s
+- max duration: 0.038 s
+- avg duration: 0.038 s
+- min duration: 0.038 s
+- total duration: 0.038 s
 
 ### Input
 - **mixed_schedule** `["<class 'pandas.core.frame.DataFrame'>"]`: *(8760, 4)*
@@ -1637,12 +3474,34 @@ max       0.800000     0.800000     0.800000     0
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param mixed_schedule:
+:type mixed_schedule: <class 'pandas.core.frame.DataFrame'>
+
+:param prop_architecture:
+:type prop_architecture: <class 'pandas.core.series.Series'>
+
+:param Af:
+:type Af: <type 'numpy.float64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.ndarray'>
+
+```
 # get_prop_RC_model
 - number of invocations: 1
-- max duration: 0.235 s
-- avg duration: 0.235 s
-- min duration: 0.235 s
-- total duration: 0.235 s
+- max duration: 0.239 s
+- avg duration: 0.239 s
+- min duration: 0.239 s
+- total duration: 0.239 s
 
 ### Input
 - **uses** `["<class 'geopandas.geodataframe.GeoDataFrame'>"]`: *(1482, 9)*
@@ -1651,7 +3510,7 @@ max       0.800000     0.800000     0.800000     0
 - **geometry** `["<class 'geopandas.geodataframe.GeoDataFrame'>"]`: *(274, 8)*
 - **HVAC** `["<class 'pandas.core.frame.DataFrame'>"]`: *(1482, 13)*
 - **rf** `["<class 'pandas.core.frame.DataFrame'>"]`: *(2140, 5)*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x207D06B0>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x1EABC670>*
 
 #### HVAC:
 ```
@@ -1741,12 +3600,46 @@ max    146462.563596
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param uses:
+:type uses: <class 'geopandas.geodataframe.GeoDataFrame'>
+
+:param architecture:
+:type architecture: <class 'geopandas.geodataframe.GeoDataFrame'>
+
+:param thermal:
+:type thermal: <class 'geopandas.geodataframe.GeoDataFrame'>
+
+:param geometry:
+:type geometry: <class 'geopandas.geodataframe.GeoDataFrame'>
+
+:param HVAC:
+:type HVAC: <class 'pandas.core.frame.DataFrame'>
+
+:param rf:
+:type rf: <class 'pandas.core.frame.DataFrame'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <class 'pandas.core.frame.DataFrame'>
+
+```
 # get_properties_building_envelope
 - number of invocations: 1
-- max duration: 0.03 s
-- avg duration: 0.03 s
-- min duration: 0.03 s
-- total duration: 0.03 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **prop_RC_model** `["<class 'pandas.core.series.Series'>"]`: *Awall_all    1.131753e+03
@@ -1807,12 +3700,40 @@ Name: B153767, dtype: float64*
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param prop_RC_model:
+:type prop_RC_model: <class 'pandas.core.series.Series'>
+
+:param prop_age:
+:type prop_age: <class 'pandas.core.series.Series'>
+
+:param prop_architecture:
+:type prop_architecture: <class 'pandas.core.series.Series'>
+
+:param prop_geometry:
+:type prop_geometry: <class 'pandas.core.series.Series'>
+
+:param prop_occupancy:
+:type prop_occupancy: <class 'pandas.core.series.Series'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # get_properties_building_systems
 - number of invocations: 1
-- max duration: 0.139 s
-- avg duration: 0.139 s
-- min duration: 0.139 s
-- total duration: 0.139 s
+- max duration: 0.143 s
+- avg duration: 0.143 s
+- min duration: 0.143 s
+- total duration: 0.143 s
 
 ### Input
 - **Ll** `["<type 'numpy.float64'>"]`: *32.648092418099999*
@@ -1820,7 +3741,7 @@ Name: B153767, dtype: float64*
 - **Retrofit** `["<type 'numpy.int64'>"]`: *0*
 - **Year** `["<type 'numpy.int64'>"]`: *1993*
 - **footprint** `["<type 'numpy.float64'>"]`: *402.0814169172408*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x20C2D2D0>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x1EAD3710>*
 - **nf_ag** `["<type 'numpy.float64'>"]`: *4.0*
 - **nfp** `["<type 'numpy.float64'>"]`: *1.0*
 - **nf_bg** `["<type 'numpy.float64'>"]`: *2.0*
@@ -1846,12 +3767,55 @@ Name: B153767, dtype: object*
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Ll:
+:type Ll: <type 'numpy.float64'>
+
+:param Lw:
+:type Lw: <type 'numpy.float64'>
+
+:param Retrofit:
+:type Retrofit: <type 'numpy.int64'>
+
+:param Year:
+:type Year: <type 'numpy.int64'>
+
+:param footprint:
+:type footprint: <type 'numpy.float64'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+:param nf_ag:
+:type nf_ag: <type 'numpy.float64'>
+
+:param nfp:
+:type nfp: <type 'numpy.float64'>
+
+:param nf_bg:
+:type nf_bg: <type 'numpy.float64'>
+
+:param prop_HVAC:
+:type prop_HVAC: <class 'pandas.core.series.Series'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'tuple'>
+
+```
 # get_properties_natural_ventilation
 - number of invocations: 1
-- max duration: 0.402 s
-- avg duration: 0.402 s
-- min duration: 0.402 s
-- total duration: 0.402 s
+- max duration: 0.455 s
+- avg duration: 0.455 s
+- min duration: 0.455 s
+- total duration: 0.455 s
 
 ### Input
 - **gdf_geometry_building** `["<class 'pandas.core.series.Series'>"]`: *Blength       32.648092
@@ -1870,7 +3834,7 @@ type_shade     T1
 win_op        0.5
 win_wall      0.4
 Name: B153767, dtype: object*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x20C30A50>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x1EAD99D0>*
 
 
 ### Output
@@ -1880,15 +3844,37 @@ Name: B153767, dtype: object*
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param gdf_geometry_building:
+:type gdf_geometry_building: <class 'pandas.core.series.Series'>
+
+:param gdf_architecture_building:
+:type gdf_architecture_building: <class 'pandas.core.series.Series'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'dict'>
+
+```
 # get_temperatures
 - number of invocations: 1
-- max duration: 0.091 s
-- avg duration: 0.091 s
-- min duration: 0.091 s
-- total duration: 0.091 s
+- max duration: 0.097 s
+- avg duration: 0.097 s
+- min duration: 0.097 s
+- total duration: 0.097 s
 
 ### Input
-- **locator** `["<class 'cea.inputlocator.InputLocator'>"]`: *<cea.inputlocator.InputLocator object at 0x20C2D070>*
+- **locator** `["<class 'cea.inputlocator.InputLocator'>"]`: *<cea.inputlocator.InputLocator object at 0x21A70E90>*
 - **prop_HVAC** `["<class 'geopandas.geodataframe.GeoDataFrame'>"]`: *(1482, 5)*
 
 
@@ -1921,12 +3907,31 @@ max     500.000000    60.000000    50.000000   500.000000
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param locator:
+:type locator: <class 'cea.inputlocator.InputLocator'>
+
+:param prop_HVAC:
+:type prop_HVAC: <class 'geopandas.geodataframe.GeoDataFrame'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <class 'pandas.core.frame.DataFrame'>
+
+```
 # lookup_coeff_wind_pressure
 - number of invocations: 1
-- max duration: 0.028 s
-- avg duration: 0.028 s
-- min duration: 0.028 s
-- total duration: 0.028 s
+- max duration: 0.038 s
+- avg duration: 0.038 s
+- min duration: 0.038 s
+- total duration: 0.038 s
 
 ### Input
 - **height_path** `["<type 'numpy.ndarray'>"]`: *array([  3.,   3.,   9.,   9.,  12.])*
@@ -1942,30 +3947,77 @@ max     500.000000    60.000000    50.000000   500.000000
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param height_path:
+:type height_path: <type 'numpy.ndarray'>
+
+:param class_shielding:
+:type class_shielding: <type 'int'>
+
+:param orientation_path:
+:type orientation_path: <type 'numpy.ndarray'>
+
+:param slope_roof:
+:type slope_roof: <type 'int'>
+
+:param factor_cros:
+:type factor_cros: <type 'numpy.int64'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'numpy.ndarray'>
+
+```
 # read_building_properties
 - number of invocations: 1
-- max duration: 4.346 s
-- avg duration: 4.346 s
-- min duration: 4.346 s
-- total duration: 4.346 s
+- max duration: 4.763 s
+- avg duration: 4.763 s
+- min duration: 4.763 s
+- total duration: 4.763 s
 
 ### Input
-- **locator** `["<class 'cea.inputlocator.InputLocator'>"]`: *<cea.inputlocator.InputLocator object at 0x207A8330>*
-- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x207A8330>*
+- **locator** `["<class 'cea.inputlocator.InputLocator'>"]`: *<cea.inputlocator.InputLocator object at 0x1EAEB5D0>*
+- **gv** `["<class 'cea.globalvar.GlobalVariables'>"]`: *<cea.globalvar.GlobalVariables object at 0x1EAEB5D0>*
 
 
 ### Output
-- `["<class 'cea.demand.BuildingProperties'>"]`: <cea.demand.BuildingProperties object at 0x2035D930>
+- `["<class 'cea.demand.BuildingProperties'>"]`: <cea.demand.BuildingProperties object at 0x21A70D50>
 
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param locator:
+:type locator: <class 'cea.inputlocator.InputLocator'>
+
+:param gv:
+:type gv: <class 'cea.globalvar.GlobalVariables'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <class 'cea.demand.BuildingProperties'>
+
+```
 # results_to_csv
 - number of invocations: 1
-- max duration: 0.241 s
-- avg duration: 0.241 s
-- min duration: 0.241 s
-- total duration: 0.241 s
+- max duration: 0.253 s
+- avg duration: 0.253 s
+- min duration: 0.253 s
+- total duration: 0.253 s
 
 ### Input
 - **GFA_m2** `["<type 'numpy.float64'>"]`: *2412.4885015034447*
@@ -2031,12 +4083,166 @@ Length: 8760, Freq: H, Timezone: None*
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param GFA_m2:
+:type GFA_m2: <type 'numpy.float64'>
+
+:param Af:
+:type Af: <type 'numpy.float64'>
+
+:param Ealf:
+:type Ealf: <type 'numpy.ndarray'>
+
+:param Ealf_0:
+:type Ealf_0: <type 'numpy.float64'>
+
+:param Ealf_tot:
+:type Ealf_tot: <type 'numpy.float64'>
+
+:param Eauxf:
+:type Eauxf: <type 'numpy.ndarray'>
+
+:param Eauxf_tot:
+:type Eauxf_tot: <type 'numpy.float64'>
+
+:param Edata:
+:type Edata: <type 'numpy.ndarray'>
+
+:param Edata_tot:
+:type Edata_tot: <type 'numpy.float64'>
+
+:param Epro:
+:type Epro: <type 'numpy.ndarray'>
+
+:param Epro_tot:
+:type Epro_tot: <type 'numpy.float64'>
+
+:param Name:
+:type Name: <type 'str'>
+
+:param Occupancy:
+:type Occupancy: <type 'numpy.ndarray'>
+
+:param Occupants:
+:type Occupants: <type 'numpy.float64'>
+
+:param Qcdata:
+:type Qcdata: <type 'numpy.ndarray'>
+
+:param Qcrefri:
+:type Qcrefri: <type 'numpy.ndarray'>
+
+:param Qcs:
+:type Qcs: <type 'numpy.ndarray'>
+
+:param Qcsf:
+:type Qcsf: <type 'numpy.ndarray'>
+
+:param Qcsf_0:
+:type Qcsf_0: <type 'numpy.float64'>
+
+:param Qhs:
+:type Qhs: <type 'numpy.ndarray'>
+
+:param Qhsf:
+:type Qhsf: <type 'numpy.ndarray'>
+
+:param Qhsf_0:
+:type Qhsf_0: <type 'numpy.float64'>
+
+:param Qww:
+:type Qww: <type 'numpy.ndarray'>
+
+:param Qww_ls_st:
+:type Qww_ls_st: <type 'numpy.ndarray'>
+
+:param Qwwf:
+:type Qwwf: <type 'numpy.ndarray'>
+
+:param Qwwf_0:
+:type Qwwf_0: <type 'numpy.float64'>
+
+:param Tcs_re:
+:type Tcs_re: <type 'numpy.ndarray'>
+
+:param Tcs_re_0:
+:type Tcs_re_0: <type 'numpy.int64'>
+
+:param Tcs_sup:
+:type Tcs_sup: <type 'numpy.ndarray'>
+
+:param Tcs_sup_0:
+:type Tcs_sup_0: <type 'numpy.int64'>
+
+:param Ths_re:
+:type Ths_re: <type 'numpy.ndarray'>
+
+:param Ths_re_0:
+:type Ths_re_0: <type 'numpy.int64'>
+
+:param Ths_sup:
+:type Ths_sup: <type 'numpy.ndarray'>
+
+:param Ths_sup_0:
+:type Ths_sup_0: <type 'numpy.int64'>
+
+:param Tww_re:
+:type Tww_re: <type 'numpy.ndarray'>
+
+:param Tww_st:
+:type Tww_st: <type 'numpy.ndarray'>
+
+:param Tww_sup_0:
+:type Tww_sup_0: <type 'numpy.int64'>
+
+:param Waterconsumption:
+:type Waterconsumption: <type 'numpy.ndarray'>
+
+:param locationFinal:
+:type locationFinal: <type 'str'>
+
+:param mcpcs:
+:type mcpcs: <type 'numpy.ndarray'>
+
+:param mcphs:
+:type mcphs: <type 'numpy.ndarray'>
+
+:param mcpww:
+:type mcpww: <type 'numpy.ndarray'>
+
+:param path_temporary_folder:
+:type path_temporary_folder: <type 'str'>
+
+:param sys_e_cooling:
+:type sys_e_cooling: <type 'unicode'>
+
+:param sys_e_heating:
+:type sys_e_heating: <type 'unicode'>
+
+:param waterpeak:
+:type waterpeak: <type 'numpy.float64'>
+
+:param date:
+:type date: <class 'pandas.tseries.index.DatetimeIndex'>
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'NoneType'>
+
+```
 # test_demand
 - number of invocations: 1
-- max duration: 1077.891 s
-- avg duration: 1077.891 s
-- min duration: 1077.891 s
-- total duration: 1077.891 s
+- max duration: 1167.477 s
+- avg duration: 1167.477 s
+- min duration: 1167.477 s
+- total duration: 1167.477 s
 
 ### Input
 
@@ -2047,3 +4253,16 @@ Length: 8760, Freq: H, Timezone: None*
 [TOC](#table-of-contents)
 ---
 
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+RETURNS
+-------
+
+:returns:
+:rtype: <type 'NoneType'>
+
+```
