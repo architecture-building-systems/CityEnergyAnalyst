@@ -83,41 +83,6 @@ def check_temp_file(T_ext,tH,tC, tmax):
     return tH, tC
 
 
-def get_prop_RC_model(uses, architecture, thermal, geometry, HVAC, rf, gv):
-
-    # Areas above ground #get the area of each wall in the buildings
-    rf['Awall_all'] = rf['Shape_Leng']*rf['Freeheight']*rf['FactorShade']
-    Awalls = pd.DataFrame({'Name': rf['Name'], 'Awall_all': rf['Awall_all']}).groupby(by='Name').sum()
-    Areas = pd.merge(Awalls, architecture, left_index=True, right_index=True).merge(uses,left_index=True, right_index=True)
-    Areas['Aw'] = Areas['Awall_all']*Areas['win_wall']*Areas['PFloor'] # Finally get the Area of windows
-    Areas['Aop_sup'] = Areas['Awall_all']*Areas['PFloor']-Areas['Aw'] # Opaque areas PFloor represents a factor according to the amount of floors heated
-
-    # Areas below ground
-    all_prop = Areas.merge(thermal,left_index=True, right_index=True).\
-                   merge(geometry,left_index=True,right_index=True).\
-                   merge(HVAC,left_index=True,right_index=True)
-    all_prop['floors'] = all_prop['floors_bg']+ all_prop['floors_ag']
-    all_prop['Aop_bel'] = all_prop['height_bg']*all_prop['perimeter']+all_prop['footprint']   # Opague areas in m2 below ground including floor
-    all_prop['Atot'] = Areas['Aw']+all_prop['Aop_sup']+all_prop['footprint']+all_prop['Aop_bel']+all_prop['footprint']*(all_prop['floors']-1) # Total area of the building envelope m2, it is considered the roof to be flat
-    all_prop['GFA_m2'] = all_prop['footprint']*all_prop['floors'] #gross floor area
-    all_prop['Af'] = all_prop['GFA_m2']*all_prop['Hs']#*(1-all_prop.PARKING)*(1-all_prop.COOLROOM)*(1-all_prop.SERVERROOM) # conditioned area - áreas not heated
-    all_prop['Aef'] = all_prop['GFA_m2']*all_prop['Es']# conditioned area only those for electricity
-    all_prop['Am'] = all_prop.th_mass.apply(lambda x:AmFunction(x))*all_prop['Af'] # Effective mass area in m2
-
-    # Steady-state Thermal transmittance coefficients and Internal heat Capacity
-    all_prop['Htr_w'] = all_prop['Aw']*all_prop['U_win']  # Thermal transmission coefficient for windows and glagv.Zing. in W/K
-    all_prop['HD'] = all_prop['Aop_sup']*all_prop['U_wall']+all_prop['footprint']*all_prop['U_roof']  # Direct Thermal transmission coefficient to the external environment in W/K
-    all_prop['Hg'] = gv.Bf*all_prop ['Aop_bel']*all_prop['U_base'] # stady-state Thermal transmission coeffcient to the ground. in W/K
-    all_prop['Htr_op'] = all_prop ['Hg']+ all_prop ['HD']
-    all_prop['Htr_ms'] = gv.hms*all_prop ['Am'] # Coupling conduntance 1 in W/K
-    all_prop['Htr_em'] = 1/(1/all_prop['Htr_op']-1/all_prop['Htr_ms']) # Coupling conduntance 2 in W/K
-    all_prop['Htr_is'] = gv.his*all_prop ['Atot']
-    all_prop['Cm'] = all_prop.th_mass.apply(lambda x:CmFunction(x))*all_prop['Af'] # Internal heat capacity in J/K
-
-    fields = ['Awall_all', 'Atot', 'Aw', 'Am','Aef','Af','Cm','Htr_is','Htr_em','Htr_ms','Htr_op','Hg','HD','Htr_w','GFA_m2']
-    result = all_prop[fields]
-    return result
-
 def AmFunction (x):
     if x == 'T2':
         return 2.5
