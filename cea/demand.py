@@ -39,7 +39,7 @@ def demand_calculation(locator, weather_path, gv):
     Algorithm to calculate the hourly demand of energy services in buildings
     using the integrated model of Fonseca et al. 2015. Applied energy.
 
-    Parameters
+    PARAMETERS
     ----------
     :param locator: An InputLocator to locate input files
     :type locator: inputlocator.InputLocator
@@ -50,21 +50,30 @@ def demand_calculation(locator, weather_path, gv):
     :param gv: A GlobalVariable (context) instance
     :type gv: globalvar.GlobalVariable
 
-    Returns
+
+    RETURNS
     -------
 
-    None
+    :returns: None
+    :rtype: NoneType
 
-    Side effects
+
+    INPUT / OUTPUT FILES
+    --------------------
+
+    - get_demand_results_folder: C:\reference-case\baseline\outputs\data\demand
+    - get_temporary_folder: c:\users\darthoma\appdata\local\temp
+    - get_temporary_file: c:\users\darthoma\appdata\local\temp\B153767T.csv (* for each building)
+    - get_total_demand: C:\reference-case\baseline\outputs\data\demand\Total_demand.csv
+
+
+    SIDE EFFECTS
     ------------
 
     Produces a demand file per building and a total demand file for the whole zone of interest.
 
-    FIXME: update this part of the documentation
-    single_demand: .csv
-        csv file for every building with hourly demand data
-    total_demand: .csv
-        csv file of yearly demand data per buidling.
+    B153767T.csv: csv file for every building with hourly demand data
+    Total_demand.csv: csv file of yearly demand data per buidling.
     """
     # local variables
 
@@ -117,6 +126,61 @@ def demand_calculation(locator, weather_path, gv):
 
 
 def get_temperatures(locator, prop_HVAC):
+    """
+    Return temperature data per building based on the HVAC systems of the building. Uses the `emission_systems.xls`
+    file to look up the temperatures.
+
+    PARAMETERS
+    ----------
+
+    :param locator:
+    :type locator: LocatorDecorator
+
+    :param prop_HVAC: HVAC properties for each building (type of cooling system, control system, domestic hot water
+                      system and heating system.
+                      The values can be looked up in the contributors manual:
+                      https://architecture-building-systems.gitbooks.io/cea-toolbox-for-arcgis-manual/content/building_properties.html#mechanical-systems
+    :type prop_HVAC: GeoDataFrame
+
+    Sample data (first 5 rows):
+                 Name type_cs type_ctrl type_dhw type_hs
+    0     B154862      T0        T1       T1      T1
+    1     B153604      T0        T1       T1      T1
+    2     B153831      T0        T1       T1      T1
+    3  B302022960      T0        T0       T0      T0
+    4  B302034063      T0        T0       T0      T0
+
+
+    RETURNS
+    -------
+
+    :returns: A DataFrame containing temperature data for each building in the scenario. More information can be
+              found in the contributors manual:
+              https://architecture-building-systems.gitbooks.io/cea-toolbox-for-arcgis-manual/content/delivery_technologies.html
+    :rtype: DataFrame
+
+    Each row contains the following fields:
+    Name          B154862   (building name)
+    type_hs            T1   (copied from input)
+    type_cs            T0   (copied from input)
+    type_dhw           T1   (copied from input)
+    type_ctrl          T1   (copied from input)
+    Tshs0_C            90   (heating system supply temperature at nominal conditions [C])
+    dThs0_C            20   (delta of heating system temperature at nominal conditions [C])
+    Qhsmax_Wm2        500   (maximum heating system power capacity per unit of gross built area [W/m2])
+    Tscs0_C             0   (cooling system supply temperature at nominal conditions [C])
+    dTcs0_C             0   (delta of cooling system temperature at nominal conditions [C])
+    Qcsmax_Wm2          0   (maximum cooling system power capacity per unit of gross built area [W/m2])
+    Tsww0_C            60   (dhw system supply temperature at nominal conditions [C])
+    dTww0_C            50   (delta of dwh system temperature at nominal conditions [C])
+    Qwwmax_Wm2        500   (maximum dwh system power capacity per unit of gross built area [W/m2])
+    Name: 0, dtype: object
+
+    INPUT / OUTPUT FILES
+    --------------------
+
+    - get_technical_emission_systems: cea\db\CH\Systems\emission_systems.xls
+    """
     prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(), 'heating')
     prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')
     prop_emission_dhw = pd.read_excel(locator.get_technical_emission_systems(), 'dhw')
@@ -203,7 +267,7 @@ def read_building_properties(locator, gv):
     """
     Read building properties from input shape files.
 
-    Parameters
+    PARAMETERS
     ----------
 
     :param locator: an InputLocator for locating the input files
@@ -212,25 +276,25 @@ def read_building_properties(locator, gv):
     :param gv: contains the context (constants and models) for the calculation
     :type gv: cea.globalvar.GlobalVariables
 
-    Returns
+    RETURNS
     -------
 
     :returns: object of type BuildingProperties
     :rtype: BuildingProperties
 
-    Input files used
-    ----------------
+    INPUT / OUTPUT FILES
+    --------------------
 
-    - locator.get_radiation(): scenario/outputs/data/solar-radiation/radiation.csv
-    - locator.get_surface_properties(): scenario/outputs/data/solar-radiation/properties_surfaces.csv
-    - locator.get_building_geometry(): scenario/inputs/building-geometry/zone.shp
-    - locator.get_building_hvac(): scenario/inputs/building-properties/technical_systems.shp
-    - locator.get_building_thermal(): scenario/inputs/building-properties/thermal_properties.shp
-    - locator.get_building_occupancy(): scenario/inputs/building-properties/occupancy.shp
-    - locator.get_building_architecture(): scenario/inputs/building-properties/architecture.shp
-    - locator.get_building_age(): scenario/inputs/building-properties/age.shp
-    - locator.get_building_comfort(): scenario/inputs/building-properties/indoor_comfort.shp'
-    - locator.get_building_internal(): scenario/inputs/building-properties/internal_loads.shp
+    - get_radiation: C:\reference-case\baseline\outputs\data\solar-radiation\radiation.csv
+    - get_surface_properties: C:\reference-case\baseline\outputs\data\solar-radiation\properties_surfaces.csv
+    - get_building_geometry: C:\reference-case\baseline\inputs\building-geometry\zone.shp
+    - get_building_hvac: C:\reference-case\baseline\inputs\building-properties\technical_systems.shp
+    - get_building_thermal: C:\reference-case\baseline\inputs\building-properties\thermal_properties.shp
+    - get_building_occupancy: C:\reference-case\baseline\inputs\building-properties\occupancy.shp
+    - get_building_architecture: C:\reference-case\baseline\inputs\building-properties\architecture.shp
+    - get_building_age: C:\reference-case\baseline\inputs\building-properties\age.shp
+    - get_building_comfort: C:\reference-case\baseline\inputs\building-properties\indoor_comfort.shp
+    - get_building_internal: C:\reference-case\baseline\inputs\building-properties\internal_loads.shp
     """
 
     gv.log("reading input files")

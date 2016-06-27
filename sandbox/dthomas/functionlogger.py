@@ -254,7 +254,7 @@ def generate_output(path_to_log, writer):
         write_line()
 
         for df_parameter in [p for p in invocations[0].parameters
-                             if p.ptype == "<class 'pandas.core.frame.DataFrame'>"]:
+                             if p.ptype in ("DataFrame", "GeoDataFrame")]:
             write_line("#### %s:" % df_parameter.name)
             write_line("```\n%s\n```" % pickle.loads(df_parameter.value).describe())
         write_line()
