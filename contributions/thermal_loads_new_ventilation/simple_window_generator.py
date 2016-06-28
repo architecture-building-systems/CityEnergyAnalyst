@@ -17,14 +17,40 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
     """
     Creates windows on exposed building surfaces according to building win-wall-ratio
 
-    Parameters
-    ----------
-    df_prop_surfaces : DataFrame containing all exposed building surfaces (from radiation calculation)
-    gdf_building_architecture : GeoDataFrame containing building architecture
 
-    Returns
+    PARAMETERS
+    ----------
+
+    :param df_prop_surfaces: DataFrame containing all exposed building surfaces (this is the `properties_surfaces.csv`
+        file from the radiation calculation)
+    :type df_prop_surfaces: DataFrame
+
+    :param gdf_building_architecture: GeoDataFrame containing building architecture - this is the `architecture.shp`
+        file from the scenario input, containing the `win_wall` column with the window to wall ratio.
+    :type gdf_building_architecture: GeoDataFrame
+
+    RETURNS
     -------
-    df_windows : DataFrame containing all windows of all buildings
+
+    :returns: DataFrame containing all windows of all buildings
+    :rtype: DataFrame
+
+    Sample rows of output:
+           angle_window  area_window  height_window_above_ground  \
+    0            90     1.910858                         1.5
+    1            90     2.276739                         1.5
+    2            90     2.276739                         4.5
+    3            90     2.276739                         7.5
+    4            90     2.276739                        10.5
+
+       height_window_in_zone name_building  orientation_window
+    0                    1.5       B140589                   0
+    1                    1.5       B140590                 180
+    2                    4.5       B140590                 180
+    3                    7.5       B140590                 180
+    4                   10.5       B140590                 180
+
+    [5 rows x 6 columns]
     """
     # TODO: documentation
 
@@ -43,7 +69,7 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
     name = df_prop_surfaces['Name']
 
     # calculate number of exposed floors per facade
-    num_floors_free_height = (free_height / 3).astype('int')  # floor heigth is 3 m
+    num_floors_free_height = (free_height / 3).astype('int')  # floor height is 3 m
     num_windows = num_floors_free_height.sum()  # total number of windows in model, not used
 
     # *** experiment with structured array
