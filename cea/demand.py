@@ -19,7 +19,6 @@ import functions as f
 import globalvar
 import inputlocator
 import maker as m
-from cea.functions import AmFunction, CmFunction
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -336,19 +335,6 @@ def read_building_properties(locator, gv):
                               solar=solar, prop_windows=df_windows)
 
 
-def test_demand():
-    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
-    # for the interface, the user should pick a file out of of those in ...DB/Weather/...
-    weather_path = locator.get_default_weather()
-    gv = globalvar.GlobalVariables()
-    demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
-    print "test_demand() succeeded"
-
-
-if __name__ == '__main__':
-    test_demand()
-
-
 def get_prop_RC_model(occupancy, architecture, thermal_properties, geometry, hvac_temperatures, surface_properties, gv):
     """
     Return the RC model properties for all buildings.
@@ -370,6 +356,9 @@ def get_prop_RC_model(occupancy, architecture, thermal_properties, geometry, hva
 
     :param thermal_properties: The contents of the `thermal_properties.shp` file, indexed by building name. It
         contains the following fields: Es, Hs, U_base, U_roof, U_wall, U_win, th_mass.
+        - Es: fraction of gross floor area that has electricity {0 <= Es <= 1}
+        - Hs: fraction of gross floor area that is heated/cooled {0 <= Hs <= 1}
+        - th_mass: type of building construction {T1: light, T2: medium, T3: heavy}
     :type thermal_properties: GeoDataFrame
 
     :param geometry: The contents of the `zone.shp` file indexed by building name - the list of buildings, their floor
@@ -396,54 +385,134 @@ def get_prop_RC_model(occupancy, architecture, thermal_properties, geometry, hva
     :rtype: DataFrame
 
     Sample result data:
-    Awall_all    1.131753e+03
-    Atot         4.564827e+03
-    Aw           4.527014e+02
-    Am           6.947967e+03
-    Aef          2.171240e+03
-    Af           2.171240e+03
-    Cm           6.513719e+08
-    Htr_is       1.574865e+04
-    Htr_em       5.829963e+02
-    Htr_ms       6.322650e+04
-    Htr_op       5.776698e+02
+    Awall_all    1.131753e+03   (total wall surface exposed to outside conditions in [m2])
+    Atot         4.564827e+03   (total area of the building envelope in [m2], the roof is considered to be flat)
+    Aw           4.527014e+02   (area of windows in [m2])
+    Am           6.947967e+03   (effective mass area in [m2])
+    Aef          2.171240e+03   (floor area with electricity in [m2])
+    Af           2.171240e+03   (conditioned floor area (heated/cooled) in [m2])
+    Cm           6.513719e+08   (internal heat capacity in [J/K])
+    Htr_is       1.574865e+04   FIXME: some heat transfer coefficient
+    Htr_em       5.829963e+02   FIXME: some heat transfer coefficient
+    Htr_ms       6.322650e+04   FIXME: some heat transfer coefficient
+    Htr_op       5.776698e+02   FIXME: some heat transfer coefficient
     Hg           2.857637e+02   (steady-state Thermal transmission coefficient to the ground in [W/K])
     HD           2.919060e+02   (direct thermal transmission coefficient to the external environment in [W/K])
     Htr_w        1.403374e+03   (thermal transmission coefficient for windows and glazing in [W/K])
     GFA_m2       2.412489e+03   (gross floor area [m2])
     Name: B153767, dtype: float64
+
+    FIXME: finish documenting the result data...
+    FIXME: rename Awall_all to something more sane...
     """
 
-    # Areas above ground #get the area of each wall in the buildings
-    surface_properties['Awall_all'] = (surface_properties['Shape_Leng'] * surface_properties['Freeheight'] *
-                                       surface_properties['FactorShade'])
-    Awalls = pd.DataFrame({'Name': surface_properties['Name'], 'Awall_all': surface_properties['Awall_all']}).groupby(by='Name').sum()
-    Areas = pd.merge(Awalls, architecture, left_index=True, right_index=True).merge(occupancy, left_index=True, right_index=True)
-    Areas['Aw'] = Areas['Awall_all']*Areas['win_wall']*Areas['PFloor']  # Finally get the Area of windows
-    Areas['Aop_sup'] = Areas['Awall_all']*Areas['PFloor']-Areas['Aw'] # Opaque areas PFloor represents a factor according to the amount of floors heated
+    # Areas above ground
+    # get the area of each wall in the buildings
+    surface_properties['Awall'] = (surface_properties['Shape_Leng'] * surface_properties['Freeheight'] *
+                                   surface_properties['FactorShade'])
+    df = pd.DataFrame({'Name': surface_properties['Name'],
+                             'Awall_all': surface_properties['Awall']}).groupby(by='Name').sum()
+
+    df = df.merge(architecture, left_index=True, right_index=True)
+    df = df.merge(occupancy, left_index=True, right_index=True)
+
+    # area of windows
+    df['Aw'] = df['Awall_all'] * df['win_wall'] * df['PFloor']
+
+    # opaque areas (PFloor represents a factor according to the amount of floors heated)
+    df['Aop_sup'] = df['Awall_all']*df['PFloor']-df['Aw']
 
     # Areas below ground
-    all_prop = Areas.merge(thermal_properties, left_index=True, right_index=True).\
-                   merge(geometry, left_index=True, right_index=True).\
-                   merge(hvac_temperatures, left_index=True, right_index=True)
-    all_prop['floors'] = all_prop['floors_bg']+ all_prop['floors_ag']
-    all_prop['Aop_bel'] = all_prop['height_bg']*all_prop['perimeter']+all_prop['footprint']   # Opague areas in m2 below ground including floor
-    all_prop['Atot'] = Areas['Aw']+all_prop['Aop_sup']+all_prop['footprint']+all_prop['Aop_bel']+all_prop['footprint']*(all_prop['floors']-1) # Total area of the building envelope m2, it is considered the roof to be flat
-    all_prop['GFA_m2'] = all_prop['footprint']*all_prop['floors'] #gross floor area
-    all_prop['Af'] = all_prop['GFA_m2']*all_prop['Hs']  #*(1-all_prop.PARKING)*(1-all_prop.COOLROOM)*(1-all_prop.SERVERROOM) # conditioned area - áreas not heated
-    all_prop['Aef'] = all_prop['GFA_m2']*all_prop['Es']# conditioned area only those for electricity
-    all_prop['Am'] = all_prop.th_mass.apply(lambda x:AmFunction(x))*all_prop['Af'] # Effective mass area in m2
+    df = df.merge(thermal_properties, left_index=True, right_index=True)
+    df = df.merge(geometry, left_index=True, right_index=True)
+    df = df.merge(hvac_temperatures, left_index=True, right_index=True)
+    df['floors'] = df['floors_bg'] + df['floors_ag']
+
+    # opague areas in [m2] below ground including floor
+    df['Aop_bel'] = df['height_bg'] * df['perimeter'] + df['footprint']
+
+    # total area of the building envelope in [m2], the roof is considered to be flat
+    df['Atot'] = df[['Aw', 'Aop_sup', 'footprint', 'Aop_bel']].sum(axis=1) + (df['footprint'] * (df['floors'] - 1))
+
+    df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
+    df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated
+    df['Aef'] = df['GFA_m2'] * df['Es']  # conditioned area only those for electricity
+    df['Am'] = df['th_mass'].apply(lookup_effective_mass_area_factor) * df['Af']  # Effective mass area in [m2]
 
     # Steady-state Thermal transmittance coefficients and Internal heat Capacity
-    all_prop['Htr_w'] = all_prop['Aw']*all_prop['U_win']  # Thermal transmission coefficient for windows and glagv.Zing. in W/K
-    all_prop['HD'] = all_prop['Aop_sup']*all_prop['U_wall']+all_prop['footprint']*all_prop['U_roof']  # Direct Thermal transmission coefficient to the external environment in W/K
-    all_prop['Hg'] = gv.Bf*all_prop ['Aop_bel']*all_prop['U_base'] # stady-state Thermal transmission coeffcient to the ground. in W/K
-    all_prop['Htr_op'] = all_prop ['Hg']+ all_prop ['HD']
-    all_prop['Htr_ms'] = gv.hms*all_prop ['Am']  # Coupling conductance 1 in W/K
-    all_prop['Htr_em'] = 1/(1/all_prop['Htr_op']-1/all_prop['Htr_ms'])  # Coupling conductance 2 in W/K
-    all_prop['Htr_is'] = gv.his*all_prop ['Atot']
-    all_prop['Cm'] = all_prop.th_mass.apply(lambda x:CmFunction(x))*all_prop['Af'] # Internal heat capacity in J/K
+    df['Htr_w'] = df['Aw']*df['U_win']  # Thermal transmission coefficient for windows and glazing in [W/K]
 
-    fields = ['Awall_all', 'Atot', 'Aw', 'Am','Aef','Af','Cm','Htr_is','Htr_em','Htr_ms','Htr_op','Hg','HD','Htr_w','GFA_m2']
-    result = all_prop[fields]
+    # direct thermal transmission coefficient to the external environment in [W/K]
+    df['HD'] = df['Aop_sup'] * df['U_wall'] + df['footprint'] * df['U_roof']
+
+    df['Hg'] = gv.Bf * df['Aop_bel'] * df['U_base']  # steady-state Thermal transmission coefficient to the ground. in W/K
+    df['Htr_op'] = df ['Hg']+ df ['HD']
+    df['Htr_ms'] = gv.hms*df ['Am']  # Coupling conductance 1 in W/K
+    df['Htr_em'] = 1/(1/df['Htr_op']-1/df['Htr_ms'])  # Coupling conductance 2 in W/K
+    df['Htr_is'] = gv.his*df ['Atot']
+    df['Cm'] = df['th_mass'].apply(lookup_specific_heat_capacity) * df['Af']  # Internal heat capacity in J/K
+
+    fields = ['Awall_all', 'Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg', 'HD',
+              'Htr_w', 'GFA_m2']
+    result = df[fields]
     return result
+
+
+def lookup_specific_heat_capacity(th_mass):
+    """
+    Look up the specific heat capacity in [J/K] for the building construction type. This is used for the calculation
+    of the internal heat capacity "Cm" in `get_prop_RC_model`.
+
+    `th_mass` is one of the following values:
+
+    - T1: light
+    - T2: medium (default)
+    - T3: heavy
+
+    :param th_mass: the type of building construction (origin: thermal_properties.shp)
+    :return:
+    """
+    if th_mass == 'T1':
+        return 110000.0
+    elif th_mass == 'T3':
+        return 300000.0
+    else:
+        return 165000.0
+
+
+def lookup_effective_mass_area_factor(th_mass):
+    """
+    Look up the factor to multiply the conditioned floor area by to get the effective mass area by building construction
+    type. This is used for the calculation of the effective mass area "Am" in `get_prop_RC_model`.
+
+    `th_mass` is one of the following values:
+
+    - T1: light
+    - T2: medium (default)
+    - T3: heavy
+
+    :param th_mass: the type of building construction (origin: thermal_properties.shp)
+    :return: effective mass area factor
+    """
+    if th_mass == 'T2':
+        return 2.5
+    elif th_mass == 'T3':
+        return 3.2
+    elif th_mass == 'T1':
+        return 2.5
+    else:
+        return 2.5
+
+
+def test_demand():
+        locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+        # for the interface, the user should pick a file out of of those in ...DB/Weather/...
+        weather_path = locator.get_default_weather()
+        gv = globalvar.GlobalVariables()
+        demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
+        print "test_demand() succeeded"
+
+
+if __name__ == '__main__':
+    test_demand()
+

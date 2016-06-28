@@ -83,26 +83,6 @@ def check_temp_file(T_ext,tH,tC, tmax):
     return tH, tC
 
 
-def AmFunction (x):
-    if x == 'T2':
-        return 2.5
-    elif x == 'T3':
-        return 3.2
-    elif x == 'T1':
-        return 2.5
-    else:
-        return 2.5
-
-def CmFunction (x):
-    if x == 'T2':
-        return 165000
-    elif x == 'T3':
-        return 300000
-    elif x == 'T1':
-        return 110000
-    else:
-        return 165000
-
 def calculate_pipe_transmittance_values(year, Retrofit):
     if year >= 1995 or Retrofit > 0:
         phi_pipes = [0.2,0.3,0.3]
