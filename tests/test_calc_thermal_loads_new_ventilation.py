@@ -36,13 +36,16 @@ class TestCalcThermalLoadsNewVentilation(TestCase):
         self.assertTrue(os.path.exists(locator.get_temporary_file('B140577.csv')), 'Building csv not produced')
         self.assertTrue(os.path.exists(locator.get_temporary_file('B140577T.csv')), 'Building temp file not produced')
 
+        # test the building csv file
         df = pd.read_csv(locator.get_temporary_file('B140577.csv'))
+
+        #
         expected_columns = [u'DATE', u'Ealf_kWh', u'Eauxf_kWh', u'Edataf_kWh', u'Ef_kWh', u'Epro_kWh', u'Name',
                             u'QCf_kWh', u'QHf_kWh', u'Qcdataf_kWh', u'Qcref_kWh', u'Qcs_kWh', u'Qcsf_kWh', u'Qhs_kWh',
                             u'Qhsf_kWh', u'Qww_kWh', u'Qww_tankloss_kWh', u'Qwwf_kWh', u'Trcs_C', u'Trhs_C', u'Trww_C',
                             u'Tscs_C', u'Tshs_C', u'Tsww_C', u'Tww_tank_C', u'Vw_m3', u'mcpcs_kWC', u'mcphs_kWC',
                             u'mcpww_kWC', u'occ_pax']
-        self.assertEqual(set(expected_columns), set(df.columns))
-        print set(df.columns)
+        self.assertEqual(set(expected_columns), set(df.columns), 'Column list of building csv does not match')
+        self.assertEqual(df.shape[0], 8760, 'Expected one row per hour in the year')
 
 
