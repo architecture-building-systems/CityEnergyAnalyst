@@ -294,6 +294,18 @@ def generate_output(path_to_log, writer):
         write_line()
 
 
+def read(function_name):
+    """read the function `function_name` from the log"""
+    session = Session()
+    invocation = session.query(Invocation).filter(Invocation.name == function_name).first()
+    args = type('', (object,), {})
+    for parameter in invocation.parameters:
+        setattr(args, parameter.name, pickle.loads(parameter.value))
+    ret = pickle.loads(invocation.result)
+    return args, ret
+
+
+
 def summary_unpickle(value):
     """Unpickle the value to a string for simple values and a summary for more complicated values (like Dataframe)"""
     try:

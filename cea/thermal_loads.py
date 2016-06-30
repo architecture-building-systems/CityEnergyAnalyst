@@ -466,25 +466,73 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, thermal_loa
 
 
 def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, usage_schedules, date, gv,
-                                       locationFinal, path_temporary_folder):
+                                       results_folder, temporary_folder):
     """
-    Calculates thermal loads of a single building with mechanical or natural ventilation.
+    Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
 
-    Parameters
-    ----------
-    Name : name of building
-    building_properties : object of type BuildingProperties containing building properties
-    weather_data : data from epw weather file
-    usage_schedules : dict containing schedules and function names of buildings
-    date :
-    gv : globalvar
-    locationFinal : path to results folder
-    path_temporary_folder : path to temporary folder
 
-    Returns
+    PARAMETERS
+    ----------
+
+    :param Name: name of building
+    :type Name: str
+
+    :param building_properties: a collection of building properties used for thermal loads calculation
+    :type building_properties: BuildingProperties
+
+    :param weather_data: data from the .epw weather file. Each row represents an hour of the year. The columns are:
+        drybulb_C, relhum_percent, and windspd_ms
+    :type weather_data: DataFrame
+
+    :param usage_schedules: dict containing schedules and function names of buildings. The structure is:
+        {
+            'list_uses': ['ADMIN', 'GYM', ...],
+            'schedules': [ ([...], [...], [...], [...]), (), (), () ]
+        }
+        each element of the 'list_uses' entry represents a building occupancy type.
+        each element of the 'schedules' entry represents the schedules for a building occupancy type.
+        the schedules for a building occupancy type are a 4-tuple (occupancy, electricity, domestic hot water,
+        probability of use), with each element of the 4-tuple being a list of hourly values (8760 values).
+    :type usage_schedules: dict
+
+    :param date: the dates (hours) of the year (8760)
+        <class 'pandas.tseries.index.DatetimeIndex'>
+        [2016-01-01 00:00:00, ..., 2016-12-30 23:00:00]
+        Length: 8760, Freq: H, Timezone: None
+    :type date: DatetimeIndex
+
+    :param gv: global variables / context
+    :type gv: GlobalVariables
+
+    :param results_folder: path to results folder (sample value: 'C:\reference-case\baseline\outputs\data\demand')
+        obtained from inputlocator.InputLocator..get_demand_results_folder() in demand.demand_calculation
+        used for writing the ${Name}.csv file and also the report file (${Name}-{yyyy-mm-dd-hh-MM-ss}.xls)
+    :type results_folder: str
+
+    :param temporary_folder: path to a temporary folder for intermediate results
+        (sample value: c:\users\darthoma\appdata\local\temp')
+        obtained from inputlocator.InputLocator..get_temporary_folder() in demand.demand_calculation
+        used for writing the ${Name}.csv file
+    :type temporary_folder: str
+
+
+    RETURNS
     -------
 
+    :returns: This function does not return anything
+    :rtype: NoneType
+
+
+    SIDE EFFECTS
+    ------------
+
+    A number of files in two folders:
+    - results_folder
+      - ${Name}.csv for each building
+      - Total_demand.csv
+    - temporary_folder
+      - ${Name}T.csv for each building
     """
 
     # get function inputs from object
@@ -500,8 +548,8 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
     dict_windows_building = building_properties.get_prop_windows(Name)
 
     # get weather
-    T_ext = np.array(weather_data.drybulb_C)
-    rh_ext = np.array(weather_data.relhum_percent)
+    T_ext = weather_data.drybulb_C.values
+    rh_ext = weather_data.relhum_percent.values
     # u_wind = np.array(weather_data.windspd_ms)
 
     # get schedules
@@ -804,13 +852,13 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
 
     # write results to csv
     functions.results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot, Name,
-                   Occupancy,
-                   Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
-                   Tcs_re, Tcs_re_0, Tcs_sup, Tcs_sup_0, Ths_re, Ths_re_0, Ths_sup, Ths_sup_0, Tww_re, Tww_st,
-                   Tww_sup_0, Waterconsumption, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
-                   sys_e_cooling, sys_e_heating, waterpeak, date)
+                             Occupancy,
+                             Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
+                             Tcs_re, Tcs_re_0, Tcs_sup, Tcs_sup_0, Ths_re, Ths_re_0, Ths_sup, Ths_sup_0, Tww_re, Tww_st,
+                             Tww_sup_0, Waterconsumption, results_folder, mcpcs, mcphs, mcpww, temporary_folder,
+                             sys_e_cooling, sys_e_heating, waterpeak, date)
 
-    gv.report('calc-thermal-loads', locals(), locationFinal, Name)
+    gv.report('calc-thermal-loads', locals(), results_folder, Name)
     return
 
 
