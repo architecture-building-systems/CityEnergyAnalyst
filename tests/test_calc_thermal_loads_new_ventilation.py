@@ -2,7 +2,7 @@ import os
 from unittest import TestCase
 
 from cea import epwreader
-from cea.demand import read_building_properties
+from cea.demand import BuildingProperties
 from cea.thermal_loads import calc_thermal_loads_new_ventilation
 from cea.inputlocator import InputLocator
 from cea.globalvar import GlobalVariables
@@ -14,9 +14,8 @@ class TestCalcThermalLoadsNewVentilation(TestCase):
     def test_calc_thermal_loads_new_ventilation(self):
 
         locator = InputLocator(r'C:\reference-case\baseline')
-        gv = GlobalVariables\
-            ()
-        building_properties = read_building_properties(locator, gv)
+        gv = GlobalVariables()
+        building_properties = BuildingProperties(locator, gv)
 
         weather_path = locator.get_default_weather()
         weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms']]
