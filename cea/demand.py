@@ -291,6 +291,10 @@ class BuildingProperties(object):
         """get list of all building names"""
         return self._prop_RC_model.index
 
+    def list_uses(self):
+        """get list of all uses (occupancy types)"""
+        return list(self._prop_occupancy.drop('PFloor', axis=1).columns)
+
     def get_prop_geometry(self, name_building):
         """get geometry of a building by name"""
         return self._prop_geometry.ix[name_building]
