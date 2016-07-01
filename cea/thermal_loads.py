@@ -465,7 +465,7 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, thermal_loa
            temp_op, i_m_tot, qm_ve_mech, q_hs_sen, q_cs_sen, qhs_em_ls, qcs_em_ls
 
 
-def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, usage_schedules, date, gv,
+def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules, date, gv,
                                        results_folder, temporary_folder):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
@@ -478,8 +478,8 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
     :param Name: name of building
     :type Name: str
 
-    :param building_properties: a collection of building properties used for thermal loads calculation
-    :type building_properties: BuildingProperties
+    :param bpr: a collection of building properties for the building used for thermal loads calculation
+    :type bpr: BuildingPropertiesRow
 
     :param weather_data: data from the .epw weather file. Each row represents an hour of the year. The columns are:
         drybulb_C, relhum_percent, and windspd_ms
@@ -534,19 +534,7 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
     - temporary_folder
       - ${Name}T.csv for each building
     """
-
-    # get function inputs from object
-    prop_occupancy = building_properties.get_prop_occupancy(Name)
-    prop_architecture = building_properties.get_prop_architecture(Name)
-    prop_geometry = building_properties.get_prop_geometry(Name)
-    prop_hvac = building_properties.get_prop_hvac(Name)
-    prop_rc_model = building_properties.get_prop_rc_model(Name)
-    prop_comfort = building_properties.get_prop_comfort(Name)
-    prop_internal_loads = building_properties.get_prop_internal_loads(Name)
-    prop_age = building_properties.get_prop_age(Name)
-    Solar = building_properties.get_solar(Name)
-    dict_windows_building = building_properties.get_prop_windows(Name)
-
+    
     # get weather
     T_ext = weather_data.drybulb_C.values
     rh_ext = weather_data.relhum_percent.values
@@ -557,18 +545,18 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
     schedules = usage_schedules['schedules']
 
     # copied from original calc thermal loads
-    GFA_m2 = prop_rc_model.GFA_m2  # gross floor area
-    Af = prop_rc_model.Af
-    Aef = prop_rc_model.Aef
-    sys_e_heating = prop_hvac.type_hs
-    sys_e_cooling = prop_hvac.type_cs
-    sys_e_ctrl = prop_hvac.type_ctrl  # room temperature control types
+    GFA_m2 = bpr.rc_model.GFA_m2  # gross floor area
+    Af = bpr.rc_model.Af
+    Aef = bpr.rc_model.Aef
+    sys_e_heating = bpr.hvac.type_hs
+    sys_e_cooling = bpr.hvac.type_cs
+    sys_e_ctrl = bpr.hvac.type_ctrl  # room temperature control types
 
     # get n50 value
-    n50 = prop_architecture['n50']
+    n50 = bpr.architecture['n50']
 
     # copied from original calc thermal loads
-    mixed_schedule = functions.calc_mixed_schedule(list_uses, schedules, prop_occupancy)  # TODO: rename outputs
+    mixed_schedule = functions.calc_mixed_schedule(list_uses, schedules, bpr.occupancy)  # TODO: rename outputs
 
     # get internal loads
     Ealf, \
@@ -578,7 +566,7 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
     Qcrefri, \
     Qcdata, \
     vww, \
-    vw = functions.get_internal_loads(mixed_schedule, prop_internal_loads, prop_architecture, Af)
+    vw = functions.get_internal_loads(mixed_schedule, bpr.internal_loads, bpr.architecture, Af)
 
     if Af > 0:  # building has conditioned area
 
@@ -587,12 +575,13 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
         limit_sup_season = gv.seasonhours[1]  # TODO maybe rename or remove
 
         # get occupancy
-        people = functions.get_occupancy(mixed_schedule, prop_architecture, Af)
+        people = functions.get_occupancy(mixed_schedule, bpr.architecture, Af)
 
         # get internal comfort properties
         ve_schedule, \
         ta_hs_set, \
-        ta_cs_set = functions.get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_season, date.dayofweek)
+        ta_cs_set = functions.get_internal_comfort(people, bpr.comfort, limit_inf_season, limit_sup_season,
+                                                   date.dayofweek)
 
         # extract properties of building
         # copied from original calc thermal loads
@@ -609,9 +598,9 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
         Year, \
         footprint, \
         nf_ag, \
-        nf_bg,\
-        nfp = functions.get_properties_building_envelope(prop_rc_model, prop_age, prop_architecture, prop_geometry,
-                                                         prop_occupancy)  # TODO: rename outputs
+        nf_bg, \
+        nfp = functions.get_properties_building_envelope(bpr.rc_model, bpr.age, bpr.architecture, bpr.geometry,
+                                                         bpr.occupancy)  # TODO: rename outputs
 
         # building systems
         Lcww_dis, \
@@ -627,7 +616,7 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
         Tww_sup_0, \
         Y, \
         fforma = functions.get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, nf_bg,
-                                                           prop_hvac)  # TODO: rename outputs
+                                                           bpr.hvac)  # TODO: rename outputs
 
         # minimum mass flow rate of ventilation according to schedule
         # qm_ve_req = numpy.vectorize(calc_qm_ve_req)(ve_schedule, area_f, temp_ext)
@@ -638,32 +627,34 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
         # heat flows in [W]
         # solar gains
         # copied from original calc thermal loads
-        i_sol = functions.calc_heat_gains_solar(Aw, Awall_all, Sh_typ, Solar, gv)
+        i_sol = functions.calc_heat_gains_solar(Aw, Awall_all, Sh_typ, bpr.solar, gv)
 
         # sensible internal heat gains
         # copied from original calc thermal loads
-        i_int_sen = functions.calc_heat_gains_internal_sensible(people, prop_internal_loads.Qs_Wp, Ealf, Eprof,
+        i_int_sen = functions.calc_heat_gains_internal_sensible(people, bpr.internal_loads.Qs_Wp, Ealf, Eprof,
                                                                 Qcdata, Qcrefri)
 
         # components of internal heat gains for R-C-model
         # copied from original calc thermal loads
-        i_ia, i_m, i_st = functions.calc_comp_heat_gains_sensible(Am, Atot, prop_rc_model.Htr_w, i_int_sen, i_sol)
+        i_ia, i_m, i_st = functions.calc_comp_heat_gains_sensible(Am, Atot, bpr.rc_model.Htr_w, i_int_sen, i_sol)
 
         # internal moisture gains
         # copied from original calc thermal loads
-        w_int = functions.calc_heat_gains_internal_latent(people, prop_internal_loads.X_ghp, sys_e_cooling,
+        w_int = functions.calc_heat_gains_internal_latent(people, bpr.internal_loads.X_ghp, sys_e_cooling,
                                                           sys_e_heating)
 
         # heating and cooling loads
         # copied from original calc thermal loads
-        i_c_max, i_h_max = functions.calc_capacity_heating_cooling_system(Af, prop_hvac)
+        i_c_max, i_h_max = functions.calc_capacity_heating_cooling_system(Af, bpr.hvac)
 
         # natural ventilation building propertiess
         # new
-        dict_props_nat_vent = contributions.thermal_loads_new_ventilation.ventilation.get_properties_natural_ventilation(prop_geometry, prop_architecture, gv)
+        dict_props_nat_vent = contributions.thermal_loads_new_ventilation.ventilation.get_properties_natural_ventilation(
+            bpr.geometry,
+            bpr.architecture, gv)
 
         # # # factor for cross ventilation
-        # factor_cros = prop_architecture.f_cros  # TODO: get from building properties
+        # factor_cros = architecture.f_cros  # TODO: get from building properties
 
         # define empty arrrays
         uncomfort = np.zeros(8760)
@@ -707,7 +698,7 @@ def calc_thermal_loads_new_ventilation(Name, building_properties, weather_data, 
                                                 i_st=i_st, i_ia=i_ia, i_m=i_m, w_int=w_int, flag_season=flag_season,
                                                 system_heating=sys_e_heating, system_cooling=sys_e_cooling, cm=cm,
                                                 area_f=Af, temp_hs_set_corr=tHset_corr, temp_cs_set_corr=tCset_corr,
-                                                i_c_max=i_c_max, i_h_max=i_h_max, prop_rc_model=prop_rc_model)
+                                                i_c_max=i_c_max, i_h_max=i_h_max, prop_rc_model=(bpr.rc_model))
 
         # we give a seed high enough to avoid doing a iteration for 2 years.
         # definition of first temperature to start calculation of air conditioning system
