@@ -337,7 +337,8 @@ def read_building_properties(locator, gv):
 
 def get_prop_RC_model(occupancy, architecture, thermal_properties, geometry, hvac_temperatures, surface_properties, gv):
     """
-    Return the RC model properties for all buildings.
+    Return the RC model properties for all buildings. The RC model used is described in ISO 13790:2008, Annex C (Full
+    set of equations for simple hourly method).
 
 
     PARAMETERS
