@@ -28,7 +28,8 @@ class TestCalcThermalLoadsNewVentilation(TestCase):
 
     def test_calc_thermal_loads_new_ventilation(self):
         # FIXME: the usage_schedules bit needs to be fixed!!
-        result = calc_thermal_loads_new_ventilation('B140577', self.building_properties, self.weather_data,
+        bpr = self.building_properties['B140577']
+        result = calc_thermal_loads_new_ventilation('B140577', bpr, self.weather_data,
                                                     self.usage_schedules, self.date, self.gv,
                                                     self.locator.get_temporary_folder(),
                                                     self.locator.get_temporary_folder())
