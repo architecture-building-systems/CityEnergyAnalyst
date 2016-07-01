@@ -81,7 +81,7 @@ def demand_calculation(locator, weather_path, gv):
 
     # initialize function inputs
     weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms']]
-    building_properties = read_building_properties(locator, gv)
+    building_properties = BuildingProperties(locator, gv)
     # get list of uses
     list_uses = list(building_properties._prop_occupancy.drop('PFloor', axis=1).columns)
     # get date
@@ -99,20 +99,20 @@ def demand_calculation(locator, weather_path, gv):
 
 
     # get timeseries of demand
-    num_buildings = len(building_properties.get_list_building_name())
+    num_buildings = len(building_properties)
     counter = 0
 
-    for building in building_properties.get_list_building_name():
-        gv.models['calc-thermal-loads'](building, building_properties, weather_data, usage_schedules, date, gv,
+    for building_name in building_properties.list_building_names():
+        gv.models['calc-thermal-loads'](building_name, building_properties, weather_data, usage_schedules, date, gv,
                                         locator.get_demand_results_folder(), locator.get_temporary_folder())
 
-        gv.log('Building No. %(bno)i completed out of %(btot)i', bno=counter + 1, btot=num_buildings)
+        gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=counter + 1, num_buildings=num_buildings)
         counter += 1
 
     # get total file
 
     counter = 0
-    for name in building_properties.get_list_building_name():
+    for name in building_properties.list_building_names():
         temporary_file = locator.get_temporary_file('%(name)sT.csv' % locals())
         # TODO: check this logic
         if counter == 0:
@@ -205,21 +205,89 @@ class BuildingProperties(object):
 
     G. Happle   BuildingPropsThermalLoads   27.05.2016
     """
-    def __init__(self, prop_geometry=None, prop_architecture=None, prop_occupancy=None, prop_HVAC_result=None,
-                 prop_RC_model=None, prop_comfort=None, prop_internal_loads=None, prop_age=None, solar=None,
-                 prop_windows=None):
+
+    def __init__(self, locator, gv):
+        """
+        Read building properties from input shape files and construct a new BuildingProperties object.
+
+        PARAMETERS
+        ----------
+
+        :param locator: an InputLocator for locating the input files
+        :type locator: cea.inputlocator.InputLocator
+
+        :param gv: contains the context (constants and models) for the calculation
+        :type gv: cea.globalvar.GlobalVariables
+
+        RETURNS
+        -------
+
+        :returns: object of type BuildingProperties
+        :rtype: BuildingProperties
+
+        INPUT / OUTPUT FILES
+        --------------------
+
+        - get_radiation: C:\reference-case\baseline\outputs\data\solar-radiation\radiation.csv
+        - get_surface_properties: C:\reference-case\baseline\outputs\data\solar-radiation\properties_surfaces.csv
+        - get_building_geometry: C:\reference-case\baseline\inputs\building-geometry\zone.shp
+        - get_building_hvac: C:\reference-case\baseline\inputs\building-properties\technical_systems.shp
+        - get_building_thermal: C:\reference-case\baseline\inputs\building-properties\thermal_properties.shp
+        - get_building_occupancy: C:\reference-case\baseline\inputs\building-properties\occupancy.shp
+        - get_building_architecture: C:\reference-case\baseline\inputs\building-properties\architecture.shp
+        - get_building_age: C:\reference-case\baseline\inputs\building-properties\age.shp
+        - get_building_comfort: C:\reference-case\baseline\inputs\building-properties\indoor_comfort.shp
+        - get_building_internal: C:\reference-case\baseline\inputs\building-properties\internal_loads.shp
+        """
+
+        gv.log("reading input files")
+        solar = pd.read_csv(locator.get_radiation()).set_index('Name')
+        surface_properties = pd.read_csv(locator.get_surface_properties())
+        prop_geometry = GeoDataFrame.from_file(locator.get_building_geometry())
+        prop_geometry['footprint'] = prop_geometry.area
+        prop_geometry['perimeter'] = prop_geometry.length
+        prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
+        prop_hvac = GeoDataFrame.from_file(locator.get_building_hvac()).drop('geometry', axis=1)
+        prop_thermal = GeoDataFrame.from_file(locator.get_building_thermal()).drop('geometry', axis=1).set_index('Name')
+        prop_occupancy_df = GeoDataFrame.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index(
+            'Name')
+        prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(
+            axis=0)]  # trick to erase occupancies that are not being used (it speeds up the code)
+        prop_architecture = GeoDataFrame.from_file(locator.get_building_architecture()).drop('geometry',
+                                                                                             axis=1).set_index('Name')
+        prop_age = GeoDataFrame.from_file(locator.get_building_age()).drop('geometry', axis=1).set_index('Name')
+        prop_comfort = GeoDataFrame.from_file(locator.get_building_comfort()).drop('geometry', axis=1).set_index('Name')
+        prop_internal_loads = GeoDataFrame.from_file(locator.get_building_internal()).drop('geometry',
+                                                                                           axis=1).set_index('Name')
+        # get temperatures of operation
+        prop_HVAC_result = get_temperatures(locator, prop_hvac).set_index('Name')
+        gv.log('done')
+
+        gv.log("calculating thermal properties")
+        prop_rc_model = get_prop_RC_model(prop_occupancy, prop_architecture, prop_thermal, prop_geometry,
+                                          prop_HVAC_result, surface_properties, gv)
+        gv.log("done")
+
+        gv.log("creating windows")
+        df_windows = simple_window_generator.create_windows(surface_properties, prop_architecture)
+        gv.log("done")
+
+        # save resulting data
         self._prop_geometry = prop_geometry
         self._prop_architecture = prop_architecture
         self._prop_occupancy = prop_occupancy
         self._prop_HVAC_result = prop_HVAC_result
-        self._prop_RC_model = prop_RC_model
+        self._prop_RC_model = prop_rc_model
         self._prop_comfort = prop_comfort
         self._prop_internal_loads = prop_internal_loads
         self._prop_age = prop_age
         self._solar = solar
-        self._prop_windows = prop_windows
+        self._prop_windows = df_windows
 
-    def get_list_building_name(self):
+    def __len__(self):
+        return len(self.list_building_names())
+
+    def list_building_names(self):
         """get list of all building names"""
         return self._prop_RC_model.index
 
@@ -263,76 +331,37 @@ class BuildingProperties(object):
         """get windows and their properties of a building by name"""
         return self._prop_windows.loc[self._prop_windows['name_building'] == name_building].to_dict('list')
 
+    def __getitem__(self, building_name):
+        """return a (read-only) BuildingPropertiesRow for the building"""
+        return BuildingPropertiesRow(geometry=self.get_prop_geometry(building_name),
+                                     architecture=self.get_prop_architecture(building_name),
+                                     occupancy=self.get_prop_occupancy(building_name),
+                                     hvac=self.get_prop_hvac(building_name),
+                                     rc_model=self.get_prop_rc_model(building_name),
+                                     comfort=self.get_prop_comfort(building_name),
+                                     internal_loads=self.get_prop_internal_loads(building_name),
+                                     age=self.get_prop_age(building_name),
+                                     solar=self.get_solar(building_name),
+                                     windows=self.get_prop_windows(building_name))
 
-def read_building_properties(locator, gv):
-    """
-    Read building properties from input shape files.
+class BuildingPropertiesRow(object):
+    """Encapsulate the data of a single row in the DataSets of BuildingProperties. This class meant to be
+    read-only."""
 
-    PARAMETERS
-    ----------
-
-    :param locator: an InputLocator for locating the input files
-    :type locator: cea.inputlocator.InputLocator
-
-    :param gv: contains the context (constants and models) for the calculation
-    :type gv: cea.globalvar.GlobalVariables
-
-    RETURNS
-    -------
-
-    :returns: object of type BuildingProperties
-    :rtype: BuildingProperties
-
-    INPUT / OUTPUT FILES
-    --------------------
-
-    - get_radiation: C:\reference-case\baseline\outputs\data\solar-radiation\radiation.csv
-    - get_surface_properties: C:\reference-case\baseline\outputs\data\solar-radiation\properties_surfaces.csv
-    - get_building_geometry: C:\reference-case\baseline\inputs\building-geometry\zone.shp
-    - get_building_hvac: C:\reference-case\baseline\inputs\building-properties\technical_systems.shp
-    - get_building_thermal: C:\reference-case\baseline\inputs\building-properties\thermal_properties.shp
-    - get_building_occupancy: C:\reference-case\baseline\inputs\building-properties\occupancy.shp
-    - get_building_architecture: C:\reference-case\baseline\inputs\building-properties\architecture.shp
-    - get_building_age: C:\reference-case\baseline\inputs\building-properties\age.shp
-    - get_building_comfort: C:\reference-case\baseline\inputs\building-properties\indoor_comfort.shp
-    - get_building_internal: C:\reference-case\baseline\inputs\building-properties\internal_loads.shp
-    """
-
-    gv.log("reading input files")
-    solar = pd.read_csv(locator.get_radiation()).set_index('Name')
-    surface_properties = pd.read_csv(locator.get_surface_properties())
-    prop_geometry = GeoDataFrame.from_file(locator.get_building_geometry())
-    prop_geometry['footprint'] = prop_geometry.area
-    prop_geometry['perimeter'] = prop_geometry.length
-    prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
-    prop_HVAC = GeoDataFrame.from_file(locator.get_building_hvac()).drop('geometry', axis=1)
-    prop_thermal = GeoDataFrame.from_file(locator.get_building_thermal()).drop('geometry', axis=1).set_index('Name')
-    prop_occupancy_df = GeoDataFrame.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index('Name')
-    prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(
-        axis=0)]  # trick to erase occupancies that are not being used (it speeds up the code)
-    prop_architecture = GeoDataFrame.from_file(locator.get_building_architecture()).drop('geometry', axis=1).set_index('Name')
-    prop_age = GeoDataFrame.from_file(locator.get_building_age()).drop('geometry', axis=1).set_index('Name')
-    prop_comfort = GeoDataFrame.from_file(locator.get_building_comfort()).drop('geometry', axis=1).set_index('Name')
-    prop_internal_loads = GeoDataFrame.from_file(locator.get_building_internal()).drop('geometry', axis=1).set_index('Name')
-    # get temperatures of operation
-    prop_HVAC_result = get_temperatures(locator, prop_HVAC).set_index('Name')
-    gv.log('done')
-
-    gv.log("calculating thermal properties")
-    prop_RC_model = get_prop_RC_model(prop_occupancy, prop_architecture, prop_thermal, prop_geometry,
-                                      prop_HVAC_result, surface_properties, gv)
-    gv.log("done")
-
-    gv.log("creating windows")
-    df_windows = simple_window_generator.create_windows(surface_properties, prop_architecture)
-    gv.log("done")
-
-    # construct function input object
-    return BuildingProperties(prop_geometry=prop_geometry, prop_occupancy=prop_occupancy,
-                              prop_architecture=prop_architecture, prop_age=prop_age,
-                              prop_comfort=prop_comfort, prop_internal_loads=prop_internal_loads,
-                              prop_HVAC_result=prop_HVAC_result, prop_RC_model=prop_RC_model,
-                              solar=solar, prop_windows=df_windows)
+    def __init__(self, geometry, architecture, occupancy, hvac,
+                 rc_model, comfort, internal_loads, age, solar, windows):
+        """Create a new instance of BuildingPropertiesRow - meant to be called by BuildingProperties[building_name].
+        Each of the arguments is a pandas Series object representing a row in the corresponding DataFrame."""
+        self.geometry = geometry
+        self.architecture = architecture
+        self.occupancy = occupancy
+        self.hvac = hvac
+        self.rc_model = rc_model
+        self.comfort = comfort
+        self.internal_loads = internal_loads
+        self.age = age
+        self.solar = solar
+        self.windows = windows
 
 
 def get_prop_RC_model(occupancy, architecture, thermal_properties, geometry, hvac_temperatures, surface_properties, gv):
