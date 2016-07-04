@@ -533,12 +533,13 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
       - Total_demand.csv
     - temporary_folder
       - ${Name}T.csv for each building
+
+    daren-thomas: as far as I can tell, these are the only side-effects.
     """
-    
+
     # get weather
     T_ext = weather_data.drybulb_C.values
     rh_ext = weather_data.relhum_percent.values
-    # u_wind = np.array(weather_data.windspd_ms)
 
     # get schedules
     list_uses = usage_schedules['list_uses']

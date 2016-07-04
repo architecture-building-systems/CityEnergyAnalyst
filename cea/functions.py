@@ -640,10 +640,10 @@ def calc_loads_electrical(Aef, Ealf, Eauxf, Edataf, Eprof):
         Ealf_0 = Ealf.max()
 
         # compute totals electrical loads in MWh
-        Ealf_tot = Ealf.sum() / 1000000
-        Eauxf_tot = Eauxf.sum() / 1000000
-        Epro_tot = Eprof.sum() / 1000000
-        Edata_tot = Edataf.sum() / 1000000
+        Ealf_tot = Ealf.sum() / 1e6
+        Eauxf_tot = Eauxf.sum() / 1e6
+        Epro_tot = Eprof.sum() / 1e6
+        Edata_tot = Edataf.sum() / 1e6
     else:
         Ealf_tot = Eauxf_tot = Ealf_0 = 0
         Epro_tot = Edata_tot = 0
