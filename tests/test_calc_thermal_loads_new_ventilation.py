@@ -12,7 +12,8 @@ import pandas as pd
 
 
 class TestCalcThermalLoadsNewVentilation(TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
         self.locator = InputLocator(r'C:\reference-case\baseline')
         self.gv = GlobalVariables()
 
@@ -61,3 +62,21 @@ class TestCalcThermalLoadsNewVentilation(TestCase):
                   6827181.0]
         for i, column in enumerate(value_columns):
             self.assertAlmostEqual(values[i], df[column].sum(), 'Sum of column %s differs' % column)
+
+    def test_calc_thermal_loads_other_buildings(self):
+        """Test some other buildings just to make sure we have the proper data"""
+        buildings = {'B140571': (87082.27, 173418.77),
+                     'B140557': (67011.74, 141896.5),
+                     'B140577': (1600579.37, 10583959.85),
+                     'B302040335': (1525.49, 8443.68),
+                     'B2372467': (33608.18, 76675.11)}  # randomly selected
+        for building in buildings.keys():
+            bpr = self.building_properties[building]
+            result = calc_thermal_loads_new_ventilation(building, bpr, self.weather_data,
+                                                        self.usage_schedules, self.date, self.gv,
+                                                        self.locator.get_temporary_folder(),
+                                                        self.locator.get_temporary_folder())
+            df = pd.read_csv(self.locator.get_temporary_file('%s.csv' % building))
+            self.assertAlmostEqual(buildings[building][0], df['QCf_kWh'].sum())
+            self.assertAlmostEqual(buildings[building][1], df['QHf_kWh'].sum())
+
