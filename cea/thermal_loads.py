@@ -708,6 +708,9 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         # end-use demand calculation
         for t in range(8760):
                 # print(t)
+
+            # FIXME: Remove the setting of Tww_re[t] from this loop - it doesn't belong here and should probably
+            # just be done with a pandas assignment...
             # if it is in the season
             if limit_inf_season <= t < limit_sup_season:
                 # take advantage of this loop to fill the values of cold water
