@@ -635,6 +635,7 @@ def calc_comp_heat_gains_sensible(Am, Atot, Htr_w, I_int_sen, I_sol):
 
 def calc_loads_electrical(Aef, Ealf, Eauxf, Edataf, Eprof):
     # TODO: Documentation
+    # FIXME: is input `Ealf` ever non-zero for Aef <= 0? (also check the other values)
     # Refactored from CalcThermalLoads
     if Aef > 0:
         Ealf_0 = Ealf.max()
