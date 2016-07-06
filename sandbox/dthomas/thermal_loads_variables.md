@@ -35,3 +35,6 @@ The main variables introduced is `tsd`, which stands for "time step data".
   - to: `calc_qv_req:ve`
   - to: `ThermalLoadsInput:temp_hs_set, temp_cs_set`
   - to: `calc_temperatures_emission_systems:ta_hs_set`
+- `qv_req` -> `tsd['qv_req']`
+  - from: `calc_qv_req`
+  - to `calc_pumping_systems_aux_loads:qv_req`

@@ -618,8 +618,8 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         # minimum mass flow rate of ventilation according to schedule
         # qm_ve_req = numpy.vectorize(calc_qm_ve_req)(ve_schedule, area_f, temp_ext)
         # with infiltration and overheating
-        qv_req = np.vectorize(calc_qv_req)(tsd['ve'].values, tsd['people'].values, Af, gv, date.hour, range(8760), n50)
-        qm_ve_req = qv_req * gv.Pair  # TODO:  use dynamic rho_air
+        tsd['qv_req'] = np.vectorize(calc_qv_req)(tsd['ve'].values, tsd['people'].values, Af, gv, date.hour, range(8760), n50)
+        qm_ve_req = tsd['qv_req'] * gv.Pair  # TODO:  use dynamic rho_air
 
         # heat flows in [W]
         # solar gains
@@ -813,7 +813,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
                                                                                      Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0,
                                                                                      Tcs_re, Tcs_sup, Ths_re, Ths_sup,
                                                                                      Vw, Year, fforma, gv, nf_ag, nfp,
-                                                                                     qv_req, sys_e_cooling,
+                                                                                     tsd['qv_req'].values, sys_e_cooling,
                                                                                      sys_e_heating)
 
         # Calc total auxiliary loads
