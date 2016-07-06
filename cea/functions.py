@@ -323,17 +323,18 @@ def calc_mixed_schedule(tsd, list_uses, schedules, building_uses):
     tsd['pro'] = pro
     return tsd
 
-def get_internal_loads(mixed_schedule, prop_internal_loads, prop_architecture, Af):
-    Ealf = mixed_schedule.el.values * (prop_internal_loads.El_Wm2 + prop_internal_loads.Ea_Wm2) * Af  # in W
-    Edataf = mixed_schedule.el.values  * prop_internal_loads.Ed_Wm2 * Af  # in W
-    Eprof = mixed_schedule.pro.values  * prop_internal_loads.Epro_Wm2 * Af  # in W
-    Eref = mixed_schedule.el.values  * prop_internal_loads.Ere_Wm2 * Af  # in W
-    Qcrefri = (Eref * 4)  # where 4 is the COP of the refrigeration unit   # in W
-    Qcdata = (Edataf * 0.9)  # where 0.9 is assumed of heat dissipation # in W
-    vww = mixed_schedule.dhw.values  * prop_internal_loads.Vww_lpd * (prop_architecture.Occ_m2p) ** -1 * Af / 24000  # m3/h
-    vw = mixed_schedule.dhw.values  * prop_internal_loads.Vw_lpd * (prop_architecture.Occ_m2p) ** -1 * Af / 24000  # m3/h
 
-    return Ealf, Edataf, Eprof, Eref, Qcrefri, Qcdata, vww, vw
+def get_internal_loads(tsd, prop_internal_loads, prop_architecture, Af):
+    tsd['Ealf'] = tsd.el.values * (prop_internal_loads.El_Wm2 + prop_internal_loads.Ea_Wm2) * Af  # in W
+    tsd['Edataf'] = tsd.el.values * prop_internal_loads.Ed_Wm2 * Af  # in W
+    tsd['Eprof'] = tsd.pro.values * prop_internal_loads.Epro_Wm2 * Af  # in W
+    tsd['Eref'] = tsd.el.values * prop_internal_loads.Ere_Wm2 * Af  # in W
+    tsd['Qcrefri'] = (tsd['Eref'] * 4)  # where 4 is the COP of the refrigeration unit   # in W
+    tsd['Qcdata'] = (tsd['Edataf'] * 0.9)  # where 0.9 is assumed of heat dissipation # in W
+    tsd['vww'] = tsd.dhw.values * prop_internal_loads.Vww_lpd * prop_architecture.Occ_m2p ** -1 * Af / 24000  # m3/h
+    tsd['vw'] = tsd.dhw.values * prop_internal_loads.Vw_lpd * prop_architecture.Occ_m2p ** -1 * Af / 24000  # m3/h
+
+    return tsd
 
 def get_occupancy(mixed_schedule, prop_architecture, Af):
     people = mixed_schedule.occ.values  * (prop_architecture.Occ_m2p) ** -1 * Af  # in people
