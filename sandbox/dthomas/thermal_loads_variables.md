@@ -30,3 +30,8 @@ The main variables introduced is `tsd`, which stands for "time step data".
   - to: `calc_qv_req:people`
   - to: `calc_heat_gains_internal_sensible:people`
   - to: `calc_heat_gains_internal_latent:people`
+- `ve_schedule,  ta_hs_set,  ta_cs_set` -> `tsd[['ve',  'ta_hs_set',  'ta_cs_set']]`
+  - from: `functions.get_internal_comfort:ve, ta_hs_set, ta_cs_set`
+  - to: `calc_qv_req:ve`
+  - to: `ThermalLoadsInput:temp_hs_set, temp_cs_set`
+  - to: `calc_temperatures_emission_systems:ta_hs_set`
