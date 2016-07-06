@@ -256,7 +256,12 @@ def generate_output(path_to_log, writer):
         for df_parameter in [p for p in invocations[0].parameters
                              if p.ptype in ("DataFrame", "GeoDataFrame")]:
             write_line("#### %s:" % df_parameter.name)
-            write_line("```\n%s\n```" % pickle.loads(df_parameter.value).describe())
+            try:
+                pickle.loads(df_parameter.value).describe()
+                write_line("```\n%s\n```" % pickle.loads(df_parameter.value).describe())
+            except:
+                write_line("```\n%s\n```" % pickle.loads(df_parameter.value).columns)
+
         write_line()
         write_line("### Output")
         write_line("- `%s`: %s" % (sorted({str(i.rtype) for i in invocations}),

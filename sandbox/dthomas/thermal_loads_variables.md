@@ -1,0 +1,3 @@
+# List of variables in thermal_loads
+
+Especially since I am refactoring them to one big dataframe...
