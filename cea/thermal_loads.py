@@ -568,6 +568,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
     tsd = functions.get_internal_loads(tsd, bpr.internal_loads, bpr.architecture, Af)
 
     tsd['uncomfort'] = np.zeros(8760)
+    tsd['Ta'] = np.zeros(8760)
     if Af > 0:  # building has conditioned area
 
         # get heating and cooling season
@@ -656,7 +657,6 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         # factor_cros = architecture.f_cros  # TODO: get from building properties
 
         # define empty arrrays
-        Ta = np.zeros(8760)
         Tm = np.zeros(8760)
         Qhs_sen = np.zeros(8760)
         Qcs_sen = np.zeros(8760)
@@ -725,7 +725,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
                 # print('1a')
 
                 Tm[t], \
-                Ta[t], \
+                tsd['Ta'][t], \
                 Qhs_sen_incl_em_ls[t], \
                 Qcs_sen_incl_em_ls[t], \
                 tsd['uncomfort'][t], \
@@ -754,7 +754,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
             else:
                 # print('1b')
                 Tm[t], \
-                Ta[t], \
+                tsd['Ta'][t], \
                 Qhs_sen_incl_em_ls[t], \
                 Qcs_sen_incl_em_ls[t], \
                 tsd['uncomfort'][t], \
@@ -767,7 +767,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
                 Qcs_em_ls[t] = calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, thermal_loads_input,
                                                                                      weather_data, state_prev, gv)
 
-            state_prev['temp_air_prev'] = Ta[t]
+            state_prev['temp_air_prev'] = tsd['Ta'][t]
             state_prev['temp_m_prev'] = Tm[t]
 
 
@@ -779,7 +779,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         # Qcs_sen_incl_em_ls[Qcs_sen_incl_em_ls > 0] = 0
         Qhs_sen_incl_em_ls_0 = Qhs_sen_incl_em_ls.max()
         Qcs_sen_incl_em_ls_0 = Qcs_sen_incl_em_ls.min()  # cooling loads up to here in negative values
-        Qhs_d_ls, Qcs_d_ls = np.vectorize(functions.calc_Qdis_ls)(Ta, tsd['T_ext'].values, Qhs_sen_incl_em_ls, Qcs_sen_incl_em_ls, Ths_sup_0,
+        Qhs_d_ls, Qcs_d_ls = np.vectorize(functions.calc_Qdis_ls)(tsd['Ta'], tsd['T_ext'].values, Qhs_sen_incl_em_ls, Qcs_sen_incl_em_ls, Ths_sup_0,
                                                         Ths_re_0, Tcs_sup_0, Tcs_re_0, Qhs_sen_incl_em_ls_0,
                                                         Qcs_sen_incl_em_ls_0,
                                                         gv.D, Y[0], sys_e_heating, sys_e_cooling, gv.Bf, Lv)
@@ -798,7 +798,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
 
         # Cal temperatures of all systems
         Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs = functions.calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0,
-                                                                                            Ta, Ta_re_cs, Ta_re_hs,
+                                                                                                      tsd['Ta'], Ta_re_cs, Ta_re_hs,
                                                                                             Ta_sup_cs, Ta_sup_hs,
                                                                                             Tcs_re_0, Tcs_sup_0,
                                                                                             Ths_re_0, Ths_sup_0, gv,
@@ -807,7 +807,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
                                                                                             sys_e_heating, tsd['ta_hs_set'].values,
                                                                                             w_re, w_sup)
         Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpww = functions.calc_dhw_heating_demand(Af, Lcww_dis, Lsww_dis,
-                                                                                            Lvww_c, Lvww_dis, tsd['T_ext'], Ta,
+                                                                                            Lvww_c, Lvww_dis, tsd['T_ext'], tsd['Ta'],
                                                                                             Tww_re, Tww_sup_0, Y, gv,
                                                                                             tsd['vw'], tsd['vww'])
 
