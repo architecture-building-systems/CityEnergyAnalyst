@@ -38,3 +38,6 @@ The main variables introduced is `tsd`, which stands for "time step data".
 - `qv_req` -> `tsd['qv_req']`
   - from: `calc_qv_req`
   - to `calc_pumping_systems_aux_loads:qv_req`
+- `qm_ve_req` -> `tsd['qm_ve_req']`
+  - from: `tsd['qv_req'] * gv.Pair`
+  - to: `ThermalLoadsInput:qm_ve_req`
