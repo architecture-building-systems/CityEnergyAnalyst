@@ -50,7 +50,9 @@ The main variables introduced is `tsd`, which stands for "time step data".
 - `i_ia, i_m, i_st` -> `tsd[['I_ia', 'I_m', 'I_st']]`
   - from: `functions.calc_comp_heat_gains_sensible:I_ia, I_m, I_st`
   - to: `ThermalLoadsInput:i_st, i_ia, i_m`
-
+- `w_int` -> `tsd['w_int']`
+  - from: `functions.calc_heat_gains_internal_latent:w_int`
+  - to: `ThermalLoadsInput:w_int`
   
   
   

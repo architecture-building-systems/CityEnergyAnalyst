@@ -684,7 +684,7 @@ def calc_heat_gains_solar(Aw, Awall_all, Sh_typ, Solar, gv):
     Asol = np.vectorize(calc_gl)(solar_specific, gv.g_gl, Rf_sh) * (
     1 - gv.F_f) * Aw  # Calculation of solar efective area per hour in m2
     I_sol = Asol * solar_specific  # how much are the net solar gains in Wh per hour of the year.
-    return I_sol
+    return I_sol.values
 
 
 def get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, nf_bg, prop_HVAC):
