@@ -619,7 +619,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         # qm_ve_req = numpy.vectorize(calc_qm_ve_req)(ve_schedule, area_f, temp_ext)
         # with infiltration and overheating
         tsd['qv_req'] = np.vectorize(calc_qv_req)(tsd['ve'].values, tsd['people'].values, Af, gv, date.hour, range(8760), n50)
-        qm_ve_req = tsd['qv_req'] * gv.Pair  # TODO:  use dynamic rho_air
+        tsd['qm_ve_req'] = tsd['qv_req'] * gv.Pair  # TODO:  use dynamic rho_air
 
         # heat flows in [W]
         # solar gains
@@ -691,7 +691,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         tHset_corr, tCset_corr = calc_tHC_corr(sys_e_heating, sys_e_cooling, sys_e_ctrl)
 
         # group function inputs
-        thermal_loads_input = ThermalLoadsInput(qm_ve_req=qm_ve_req, temp_hs_set=tsd['ta_hs_set'].values,
+        thermal_loads_input = ThermalLoadsInput(qm_ve_req=tsd['qm_ve_req'].values, temp_hs_set=tsd['ta_hs_set'].values,
                                                 temp_cs_set=tsd['ta_cs_set'].values,
                                                 i_st=i_st, i_ia=i_ia, i_m=i_m, w_int=w_int, flag_season=flag_season,
                                                 system_heating=sys_e_heating, system_cooling=sys_e_cooling, cm=cm,
