@@ -624,7 +624,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         # heat flows in [W]
         # solar gains
         # copied from original calc thermal loads
-        tsd['I_sol'] = functions.calc_heat_gains_solar(Aw, Awall_all, Sh_typ, bpr.solar, gv).values
+        tsd['I_sol'] = functions.calc_heat_gains_solar(Aw, Awall_all, Sh_typ, bpr.solar, gv)
 
         # sensible internal heat gains
         # copied from original calc thermal loads
@@ -638,7 +638,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
 
         # internal moisture gains
         # copied from original calc thermal loads
-        w_int = functions.calc_heat_gains_internal_latent(tsd['people'].values, bpr.internal_loads.X_ghp, sys_e_cooling,
+        tsd['w_int'] = functions.calc_heat_gains_internal_latent(tsd['people'].values, bpr.internal_loads.X_ghp, sys_e_cooling,
                                                           sys_e_heating)
 
         # heating and cooling loads
@@ -695,7 +695,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         thermal_loads_input = ThermalLoadsInput(qm_ve_req=tsd['qm_ve_req'].values, temp_hs_set=tsd['ta_hs_set'].values,
                                                 temp_cs_set=tsd['ta_cs_set'].values,
                                                 i_st=tsd['I_st'].values, i_ia=tsd['I_ia'].values, i_m=tsd['I_m'].values,
-                                                w_int=w_int,
+                                                w_int=tsd['w_int'],
                                                 flag_season=flag_season,
                                                 system_heating=sys_e_heating, system_cooling=sys_e_cooling, cm=cm,
                                                 area_f=Af, temp_hs_set_corr=tHset_corr, temp_cs_set_corr=tCset_corr,
