@@ -11,6 +11,7 @@ Thermal loads
 from __future__ import division
 
 import numpy as np
+import pandas as pd
 
 import cea.functions as functions
 import contributions.thermal_loads_new_ventilation.ventilation
@@ -143,6 +144,7 @@ def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, n50):
     return q_req  # m3/s
 
 
+# FIXME: replace weather_data with tsd['T_ext'] and tsd['rh_ext']
 def calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_prev, gv):
     """
     This function is executed for the case of heating or cooling with a HVAC system
@@ -538,8 +540,11 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
     """
 
     # get weather
-    T_ext = weather_data.drybulb_C.values
-    rh_ext = weather_data.relhum_percent.values
+
+    tsd = pd.DataFrame({
+        'T_ext': weather_data.drybulb_C.values,
+        'rh_ext': weather_data.relhum_percent.values
+    })
 
     # get schedules
     list_uses = usage_schedules['list_uses']
@@ -779,7 +784,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         # Qcs_sen_incl_em_ls[Qcs_sen_incl_em_ls > 0] = 0
         Qhs_sen_incl_em_ls_0 = Qhs_sen_incl_em_ls.max()
         Qcs_sen_incl_em_ls_0 = Qcs_sen_incl_em_ls.min()  # cooling loads up to here in negative values
-        Qhs_d_ls, Qcs_d_ls = np.vectorize(functions.calc_Qdis_ls)(Ta, T_ext, Qhs_sen_incl_em_ls, Qcs_sen_incl_em_ls, Ths_sup_0,
+        Qhs_d_ls, Qcs_d_ls = np.vectorize(functions.calc_Qdis_ls)(Ta, tsd['T_ext'].values, Qhs_sen_incl_em_ls, Qcs_sen_incl_em_ls, Ths_sup_0,
                                                         Ths_re_0, Tcs_sup_0, Tcs_re_0, Qhs_sen_incl_em_ls_0,
                                                         Qcs_sen_incl_em_ls_0,
                                                         gv.D, Y[0], sys_e_heating, sys_e_cooling, gv.Bf, Lv)
@@ -807,7 +812,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
                                                                                             sys_e_heating, ta_hs_set,
                                                                                             w_re, w_sup)
         Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpww = functions.calc_dhw_heating_demand(Af, Lcww_dis, Lsww_dis,
-                                                                                            Lvww_c, Lvww_dis, T_ext, Ta,
+                                                                                            Lvww_c, Lvww_dis, tsd['T_ext'], Ta,
                                                                                             Tww_re, Tww_sup_0, Y, gv,
                                                                                             vw, vww)
 
@@ -823,6 +828,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         Eauxf = (Eaux_ww + Eaux_fw + Eaux_hs + Eaux_cs + Ehs_lat_aux + Eaux_ve)
 
         # calculate other quantities
+        # noinspection PyUnresolvedReferences
         Occupancy = np.floor(people)
         Occupants = Occupancy.max()
         Waterconsumption = Vww + Vw  # volume of water consumed in m3/h
@@ -915,7 +921,7 @@ def test_thermal_loads_new_ventilation():
 
     # run demand
     demand.demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
-    print "test_thermal_loads_new_ventilation() succeeded"
+    gv.log("test_thermal_loads_new_ventilation() succeeded")
 
 
 if __name__ == '__main__':
