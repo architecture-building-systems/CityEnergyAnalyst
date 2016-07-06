@@ -577,9 +577,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         tsd = functions.get_occupancy(tsd, bpr.architecture, Af)
 
         # get internal comfort properties
-        ve_schedule, \
-        ta_hs_set, \
-        ta_cs_set = functions.get_internal_comfort(tsd, bpr.comfort, limit_inf_season, limit_sup_season,
+        tsd = functions.get_internal_comfort(tsd, bpr.comfort, limit_inf_season, limit_sup_season,
                                                    date.dayofweek)
 
         # extract properties of building
@@ -620,7 +618,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         # minimum mass flow rate of ventilation according to schedule
         # qm_ve_req = numpy.vectorize(calc_qm_ve_req)(ve_schedule, area_f, temp_ext)
         # with infiltration and overheating
-        qv_req = np.vectorize(calc_qv_req)(ve_schedule, tsd['people'].values, Af, gv, date.hour, range(8760), n50)
+        qv_req = np.vectorize(calc_qv_req)(tsd['ve'].values, tsd['people'].values, Af, gv, date.hour, range(8760), n50)
         qm_ve_req = qv_req * gv.Pair  # TODO:  use dynamic rho_air
 
         # heat flows in [W]
@@ -693,7 +691,8 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         tHset_corr, tCset_corr = calc_tHC_corr(sys_e_heating, sys_e_cooling, sys_e_ctrl)
 
         # group function inputs
-        thermal_loads_input = ThermalLoadsInput(qm_ve_req=qm_ve_req, temp_hs_set=ta_hs_set, temp_cs_set=ta_cs_set,
+        thermal_loads_input = ThermalLoadsInput(qm_ve_req=qm_ve_req, temp_hs_set=tsd['ta_hs_set'].values,
+                                                temp_cs_set=tsd['ta_cs_set'].values,
                                                 i_st=i_st, i_ia=i_ia, i_m=i_m, w_int=w_int, flag_season=flag_season,
                                                 system_heating=sys_e_heating, system_cooling=sys_e_cooling, cm=cm,
                                                 area_f=Af, temp_hs_set_corr=tHset_corr, temp_cs_set_corr=tCset_corr,
@@ -802,7 +801,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
                                                                                             Ths_re_0, Ths_sup_0, gv,
                                                                                             ma_sup_cs, ma_sup_hs,
                                                                                             sys_e_cooling,
-                                                                                            sys_e_heating, ta_hs_set,
+                                                                                            sys_e_heating, tsd['ta_hs_set'].values,
                                                                                             w_re, w_sup)
         Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpww = functions.calc_dhw_heating_demand(Af, Lcww_dis, Lsww_dis,
                                                                                             Lvww_c, Lvww_dis, tsd['T_ext'], Ta,

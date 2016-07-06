@@ -364,11 +364,11 @@ def get_internal_comfort(tsd, prop_comfort, limit_inf_season, limit_sup_season, 
         else:
             return 50 # huge so the system will be off
 
-    ve = tsd['people'] * prop_comfort.Ve_lps * 3.6  # in m3/h
-    ta_hs_set = np.vectorize(get_hsetpoint)(tsd['people'], range(8760), prop_comfort.Ths_set_C, prop_comfort.Ths_setb_C,weekday)
-    ta_cs_set = np.vectorize(get_csetpoint)(tsd['people'], range(8760), prop_comfort.Tcs_set_C, prop_comfort.Tcs_setb_C,weekday)
+    tsd['ve'] = tsd['people'] * prop_comfort.Ve_lps * 3.6  # in m3/h
+    tsd['ta_hs_set'] = np.vectorize(get_hsetpoint)(tsd['people'], range(8760), prop_comfort.Ths_set_C, prop_comfort.Ths_setb_C,weekday)
+    tsd['ta_cs_set'] = np.vectorize(get_csetpoint)(tsd['people'], range(8760), prop_comfort.Tcs_set_C, prop_comfort.Tcs_setb_C,weekday)
 
-    return ve, ta_hs_set, ta_cs_set
+    return tsd
 
 
 def CalcThermalLoads(Name, building_properties, weather_data, usage_schedules, date, gv, locationFinal,
