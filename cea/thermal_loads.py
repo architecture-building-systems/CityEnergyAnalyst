@@ -565,14 +565,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
     tsd = functions.calc_mixed_schedule(tsd, list_uses, schedules, bpr.occupancy)  # TODO: rename outputs
 
     # get internal loads
-    Ealf, \
-    Edataf, \
-    Eprof, \
-    Eref, \
-    Qcrefri, \
-    Qcdata, \
-    vww, \
-    vw = functions.get_internal_loads(tsd, bpr.internal_loads, bpr.architecture, Af)
+    tsd = functions.get_internal_loads(tsd, bpr.internal_loads, bpr.architecture, Af)
 
     if Af > 0:  # building has conditioned area
 
@@ -637,8 +630,8 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
 
         # sensible internal heat gains
         # copied from original calc thermal loads
-        i_int_sen = functions.calc_heat_gains_internal_sensible(people, bpr.internal_loads.Qs_Wp, Ealf, Eprof,
-                                                                Qcdata, Qcrefri)
+        i_int_sen = functions.calc_heat_gains_internal_sensible(people, bpr.internal_loads.Qs_Wp, tsd['Ealf'].values, tsd['Eprof'].values,
+                                                                tsd['Qcdata'].values, tsd['Qcrefri'].values)
 
         # components of internal heat gains for R-C-model
         # copied from original calc thermal loads
@@ -814,7 +807,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpww = functions.calc_dhw_heating_demand(Af, Lcww_dis, Lsww_dis,
                                                                                             Lvww_c, Lvww_dis, tsd['T_ext'], Ta,
                                                                                             Tww_re, Tww_sup_0, Y, gv,
-                                                                                            vw, vww)
+                                                                                            tsd['vw'], tsd['vww'])
 
         # clac auxiliary loads of pumping systems
         Eaux_cs, Eaux_fw, Eaux_hs, Eaux_ve, Eaux_ww = functions.calc_pumping_systems_aux_loads(Af, Ll, Lw, Mww, Qcsf, Qcsf_0,
@@ -848,13 +841,15 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
             8760)  # in C
 
     # Cacl totals and peaks electrical loads
-    Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot = functions.calc_loads_electrical(Aef, Ealf, Eauxf,
-                                                                                                    Edataf, Eprof)
+    Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot = functions.calc_loads_electrical(Aef, tsd['Ealf'].values, Eauxf,
+                                                                                                    tsd['Edataf'].values, tsd['Eprof'].values)
 
     # write results to csv
-    functions.results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot, Name,
+    functions.results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot,
+                             Name,
                              Occupancy,
-                             Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
+                             Occupants, tsd['Qcdata'].values, tsd['Qcrefri'].values, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf,
+                             Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
                              Tcs_re, Tcs_re_0, Tcs_sup, Tcs_sup_0, Ths_re, Ths_re_0, Ths_sup, Ths_sup_0, Tww_re, Tww_st,
                              Tww_sup_0, Waterconsumption, results_folder, mcpcs, mcphs, mcpww, temporary_folder,
                              sys_e_cooling, sys_e_heating, waterpeak, date)

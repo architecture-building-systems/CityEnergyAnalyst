@@ -19,3 +19,8 @@ The main variables introduced is `tsd`, which stands for "time step data".
   - from: `functions.calc_mixed_schedule`
   - to: `functions.get_internal_loads`
   - to: `functions.get_occupancy`
+- `Ealf`, `Edataf`,  `Eprof`,  `Eref`,  `Qcrefri`,  `Qcdata`,  `vww`, `vw` -> `tsd[['Ealf', 'Edataf', 'Eprof', 'Eref', 'Qcrefri', 'Qcdata', 'vww', 'vw']]`
+  - from: `functions.get_internal_loads:Ealf, Edataf, Eprof, Eref, Qcrefri, Qcdata, vww, vw`
+  - to: `calc_heat_gains_internal_sensible:Eal_nove, Eprof, Qcdata, Qcrefri`
+  - to: `calc_dhw_heating_demand:vw, vww`
+  - to: `calc_loads_electrical:Ealf, Edataf, Eprof`
