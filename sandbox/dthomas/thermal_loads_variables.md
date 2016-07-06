@@ -56,7 +56,12 @@ The main variables introduced is `tsd`, which stands for "time step data".
 - `uncomfort` -> `tsd['uncomfort']
   - from: `calc_thermal_load_hvac_timestep:uncomfort`
   - from: `calc_thermal_load_mechanical_and_natural_ventilation_timestep:uncomfort`
-  - to: 
-  
+- `Ta` -> `tsd['Ta']`
+  - from: `calc_thermal_load_hvac_timestep:temp_a`
+  - from: `calc_thermal_load_mechanical_and_natural_ventilation_timestep:temp_a`
+  - to: `state_prev['temp_air_prev']`
+  - to: `functions.calc_Qdis_ls:tair`
+  - to: `functions.calc_temperatures_emission_systems:Ta`
+  - to: `functions.calc_dhw_heating_demand:Ta`
   
   
