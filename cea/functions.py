@@ -628,13 +628,13 @@ def calc_capacity_heating_cooling_system(Af, prop_HVAC):
     return IC_max, IH_max
 
 
-def calc_comp_heat_gains_sensible(Am, Atot, Htr_w, I_int_sen, I_sol):
+def calc_comp_heat_gains_sensible(tsd, Am, Atot, Htr_w):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
-    I_ia = 0.5 * I_int_sen
-    I_m = (Am / Atot) * (I_ia + I_sol)
-    I_st = (1 - (Am / Atot) - (Htr_w / (9.1 * Atot))) * (I_ia + I_sol)
-    return I_ia, I_m, I_st
+    tsd['I_ia'] = 0.5 * tsd['I_int_sen']
+    tsd['I_m'] = (Am / Atot) * (tsd['I_ia'] + tsd['I_sol'])
+    tsd['I_st'] = (1 - (Am / Atot) - (Htr_w / (9.1 * Atot))) * (tsd['I_ia'] + tsd['I_sol'])
+    return tsd
 
 
 def calc_loads_electrical(Aef, Ealf, Eauxf, Edataf, Eprof):
