@@ -567,6 +567,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
     # get internal loads
     tsd = functions.get_internal_loads(tsd, bpr.internal_loads, bpr.architecture, Af)
 
+    tsd['uncomfort'] = np.zeros(8760)
     if Af > 0:  # building has conditioned area
 
         # get heating and cooling season
@@ -655,7 +656,6 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         # factor_cros = architecture.f_cros  # TODO: get from building properties
 
         # define empty arrrays
-        uncomfort = np.zeros(8760)
         Ta = np.zeros(8760)
         Tm = np.zeros(8760)
         Qhs_sen = np.zeros(8760)
@@ -728,7 +728,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
                 Ta[t], \
                 Qhs_sen_incl_em_ls[t], \
                 Qcs_sen_incl_em_ls[t], \
-                uncomfort[t], \
+                tsd['uncomfort'][t], \
                 Top[t], \
                 Im_tot[t], \
                 q_hs_sen_hvac[t], \
@@ -757,7 +757,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
                 Ta[t], \
                 Qhs_sen_incl_em_ls[t], \
                 Qcs_sen_incl_em_ls[t], \
-                uncomfort[t], \
+                tsd['uncomfort'][t], \
                 Top[t], \
                 Im_tot[t], \
                 qm_ve_mech[t], \
@@ -839,7 +839,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         Occupancy = Eauxf = Waterconsumption = np.zeros(8760)
         Qwwf = Qww = Qhs_sen = Qhsf = Qcs_sen = Qcs = Qcsf = Qcdata = Qcrefri = Qd = Qc = Qhs = Qww_ls_st = np.zeros(
             8760)
-        Ths_sup = Ths_re = Tcs_re = Tcs_sup = mcphs = mcpcs = mcpww = Vww = Tww_re = Tww_st = uncomfort = np.zeros(
+        Ths_sup = Ths_re = Tcs_re = Tcs_sup = mcphs = mcpcs = mcpww = Vww = Tww_re = Tww_st = np.zeros(
             8760)  # in C
 
     # Cacl totals and peaks electrical loads

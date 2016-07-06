@@ -53,6 +53,10 @@ The main variables introduced is `tsd`, which stands for "time step data".
 - `w_int` -> `tsd['w_int']`
   - from: `functions.calc_heat_gains_internal_latent:w_int`
   - to: `ThermalLoadsInput:w_int`
+- `uncomfort` -> `tsd['uncomfort']
+  - from: `calc_thermal_load_hvac_timestep:uncomfort`
+  - from: `calc_thermal_load_mechanical_and_natural_ventilation_timestep:uncomfort`
+  - to: 
   
   
   
