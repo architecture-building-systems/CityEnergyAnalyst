@@ -24,3 +24,9 @@ The main variables introduced is `tsd`, which stands for "time step data".
   - to: `calc_heat_gains_internal_sensible:Eal_nove, Eprof, Qcdata, Qcrefri`
   - to: `calc_dhw_heating_demand:vw, vww`
   - to: `calc_loads_electrical:Ealf, Edataf, Eprof`
+- `people` -> `tsd['people']`
+  - from: `functions.get_occupancy:people`
+  - to: `functions.get_internal_comfort:people`
+  - to: `calc_qv_req:people`
+  - to: `calc_heat_gains_internal_sensible:people`
+  - to: `calc_heat_gains_internal_latent:people`

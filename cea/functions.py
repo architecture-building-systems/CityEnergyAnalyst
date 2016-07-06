@@ -336,11 +336,11 @@ def get_internal_loads(tsd, prop_internal_loads, prop_architecture, Af):
 
     return tsd
 
-def get_occupancy(mixed_schedule, prop_architecture, Af):
-    people = mixed_schedule.occ.values  * (prop_architecture.Occ_m2p) ** -1 * Af  # in people
-    return people
+def get_occupancy(tsd, prop_architecture, Af):
+    tsd['people'] = tsd.occ.values * (prop_architecture.Occ_m2p) ** -1 * Af  # in people
+    return tsd
 
-def get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_season, weekday):
+def get_internal_comfort(tsd, prop_comfort, limit_inf_season, limit_sup_season, weekday):
     def get_hsetpoint(a, b, Thset, Thsetback, weekday):
         if (b < limit_inf_season or b >= limit_sup_season):
             if a >0:
@@ -364,9 +364,9 @@ def get_internal_comfort(people, prop_comfort, limit_inf_season, limit_sup_seaso
         else:
             return 50 # huge so the system will be off
 
-    ve = people * prop_comfort.Ve_lps * 3.6  # in m3/h
-    ta_hs_set = np.vectorize(get_hsetpoint)(people, range(8760), prop_comfort.Ths_set_C, prop_comfort.Ths_setb_C,weekday)
-    ta_cs_set = np.vectorize(get_csetpoint)(people, range(8760), prop_comfort.Tcs_set_C, prop_comfort.Tcs_setb_C,weekday)
+    ve = tsd['people'] * prop_comfort.Ve_lps * 3.6  # in m3/h
+    ta_hs_set = np.vectorize(get_hsetpoint)(tsd['people'], range(8760), prop_comfort.Ths_set_C, prop_comfort.Ths_setb_C,weekday)
+    ta_cs_set = np.vectorize(get_csetpoint)(tsd['people'], range(8760), prop_comfort.Tcs_set_C, prop_comfort.Tcs_setb_C,weekday)
 
     return ve, ta_hs_set, ta_cs_set
 
