@@ -14,3 +14,8 @@ The main variables introduced is `tsd`, which stands for "time step data".
 - `rh_ext` -> `tsd['rh_ext']`
   - relative humidity
   - from: `weather_data.relhum_percent.values`
+-  mixed_schedule -> `tsd[['occ', 'el', 'pro', 'dhw']]`
+  - schedule data (occupancy, electric use, probability of occupancy, domestic hot water use
+  - from: `functions.calc_mixed_schedule`
+  - to: `functions.get_internal_loads`
+  - to: `functions.get_occupancy`

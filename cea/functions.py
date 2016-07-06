@@ -301,7 +301,7 @@ def calc_qv_req(ve,people,Af,gv,hour_day,hour_year,limit_inf_season,limit_sup_se
             q_req = (ve+(infiltration_non_occupied*Af))/3600 #
     return q_req #m3/s
 
-def calc_mixed_schedule(list_uses, schedules, building_uses):
+def calc_mixed_schedule(tsd, list_uses, schedules, building_uses):
     # weighted average of schedules
     def calc_average(last, current, share_of_use):
         return last + current * share_of_use
@@ -317,8 +317,11 @@ def calc_mixed_schedule(list_uses, schedules, building_uses):
         dhw = np.vectorize(calc_average)(dhw, schedules[num][2], current_share_of_use)
         pro = np.vectorize(calc_average)(pro, schedules[num][3], current_share_of_use)
 
-    schedule = pd.DataFrame({'occ': occ, 'el':el, 'dhw':dhw, 'pro': pro})
-    return schedule
+    tsd['occ'] = occ
+    tsd['el'] = el
+    tsd['dhw'] = dhw
+    tsd['pro'] = pro
+    return tsd
 
 def get_internal_loads(mixed_schedule, prop_internal_loads, prop_architecture, Af):
     Ealf = mixed_schedule.el.values * (prop_internal_loads.El_Wm2 + prop_internal_loads.Ea_Wm2) * Af  # in W

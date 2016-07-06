@@ -562,7 +562,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
     n50 = bpr.architecture['n50']
 
     # copied from original calc thermal loads
-    mixed_schedule = functions.calc_mixed_schedule(list_uses, schedules, bpr.occupancy)  # TODO: rename outputs
+    tsd = functions.calc_mixed_schedule(tsd, list_uses, schedules, bpr.occupancy)  # TODO: rename outputs
 
     # get internal loads
     Ealf, \
@@ -572,7 +572,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
     Qcrefri, \
     Qcdata, \
     vww, \
-    vw = functions.get_internal_loads(mixed_schedule, bpr.internal_loads, bpr.architecture, Af)
+    vw = functions.get_internal_loads(tsd, bpr.internal_loads, bpr.architecture, Af)
 
     if Af > 0:  # building has conditioned area
 
@@ -581,7 +581,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         limit_sup_season = gv.seasonhours[1]  # TODO maybe rename or remove
 
         # get occupancy
-        people = functions.get_occupancy(mixed_schedule, bpr.architecture, Af)
+        people = functions.get_occupancy(tsd, bpr.architecture, Af)
 
         # get internal comfort properties
         ve_schedule, \
