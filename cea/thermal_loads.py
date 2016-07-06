@@ -574,12 +574,12 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         limit_sup_season = gv.seasonhours[1]  # TODO maybe rename or remove
 
         # get occupancy
-        people = functions.get_occupancy(tsd, bpr.architecture, Af)
+        tsd = functions.get_occupancy(tsd, bpr.architecture, Af)
 
         # get internal comfort properties
         ve_schedule, \
         ta_hs_set, \
-        ta_cs_set = functions.get_internal_comfort(people, bpr.comfort, limit_inf_season, limit_sup_season,
+        ta_cs_set = functions.get_internal_comfort(tsd, bpr.comfort, limit_inf_season, limit_sup_season,
                                                    date.dayofweek)
 
         # extract properties of building
@@ -620,7 +620,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         # minimum mass flow rate of ventilation according to schedule
         # qm_ve_req = numpy.vectorize(calc_qm_ve_req)(ve_schedule, area_f, temp_ext)
         # with infiltration and overheating
-        qv_req = np.vectorize(calc_qv_req)(ve_schedule, people, Af, gv, date.hour, range(8760), n50)
+        qv_req = np.vectorize(calc_qv_req)(ve_schedule, tsd['people'].values, Af, gv, date.hour, range(8760), n50)
         qm_ve_req = qv_req * gv.Pair  # TODO:  use dynamic rho_air
 
         # heat flows in [W]
@@ -630,7 +630,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
 
         # sensible internal heat gains
         # copied from original calc thermal loads
-        i_int_sen = functions.calc_heat_gains_internal_sensible(people, bpr.internal_loads.Qs_Wp, tsd['Ealf'].values, tsd['Eprof'].values,
+        i_int_sen = functions.calc_heat_gains_internal_sensible(tsd['people'].values, bpr.internal_loads.Qs_Wp, tsd['Ealf'].values, tsd['Eprof'].values,
                                                                 tsd['Qcdata'].values, tsd['Qcrefri'].values)
 
         # components of internal heat gains for R-C-model
@@ -639,7 +639,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
 
         # internal moisture gains
         # copied from original calc thermal loads
-        w_int = functions.calc_heat_gains_internal_latent(people, bpr.internal_loads.X_ghp, sys_e_cooling,
+        w_int = functions.calc_heat_gains_internal_latent(tsd['people'].values, bpr.internal_loads.X_ghp, sys_e_cooling,
                                                           sys_e_heating)
 
         # heating and cooling loads
@@ -822,7 +822,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
 
         # calculate other quantities
         # noinspection PyUnresolvedReferences
-        Occupancy = np.floor(people)
+        Occupancy = np.floor(tsd['people'])
         Occupants = Occupancy.max()
         Waterconsumption = Vww + Vw  # volume of water consumed in m3/h
         waterpeak = Waterconsumption.max()
