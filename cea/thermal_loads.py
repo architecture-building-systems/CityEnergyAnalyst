@@ -634,8 +634,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
 
         # components of internal heat gains for R-C-model
         # copied from original calc thermal loads
-        i_ia, i_m, i_st = functions.calc_comp_heat_gains_sensible(Am, Atot, bpr.rc_model.Htr_w, tsd['I_int_sen'].values,
-                                                                  tsd['I_sol'].values)
+        tsd = functions.calc_comp_heat_gains_sensible(tsd, Am, Atot, bpr.rc_model.Htr_w)
 
         # internal moisture gains
         # copied from original calc thermal loads
@@ -695,7 +694,9 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         # group function inputs
         thermal_loads_input = ThermalLoadsInput(qm_ve_req=tsd['qm_ve_req'].values, temp_hs_set=tsd['ta_hs_set'].values,
                                                 temp_cs_set=tsd['ta_cs_set'].values,
-                                                i_st=i_st, i_ia=i_ia, i_m=i_m, w_int=w_int, flag_season=flag_season,
+                                                i_st=tsd['I_st'].values, i_ia=tsd['I_ia'].values, i_m=tsd['I_m'].values,
+                                                w_int=w_int,
+                                                flag_season=flag_season,
                                                 system_heating=sys_e_heating, system_cooling=sys_e_cooling, cm=cm,
                                                 area_f=Af, temp_hs_set_corr=tHset_corr, temp_cs_set_corr=tCset_corr,
                                                 i_c_max=i_c_max, i_h_max=i_h_max, prop_rc_model=(bpr.rc_model))
