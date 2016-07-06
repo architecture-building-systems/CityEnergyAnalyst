@@ -103,7 +103,8 @@ def demand_calculation(locator, weather_path, gv):
     counter = 0
 
     for building_name in building_properties.list_building_names():
-        gv.models['calc-thermal-loads'](building_name, building_properties, weather_data, usage_schedules, date, gv,
+        gv.models['calc-thermal-loads'](building_name, building_properties[building_name], weather_data,
+                                        usage_schedules, date, gv,
                                         locator.get_demand_results_folder(), locator.get_temporary_folder())
 
         gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=counter + 1, num_buildings=num_buildings)
