@@ -41,3 +41,7 @@ The main variables introduced is `tsd`, which stands for "time step data".
 - `qm_ve_req` -> `tsd['qm_ve_req']`
   - from: `tsd['qv_req'] * gv.Pair`
   - to: `ThermalLoadsInput:qm_ve_req`
+- `i_sol` -> `tsd['I_sol']`
+  - from: `calc_heat_gains_solar:I_sol`
+  - to: `calc_comp_heat_gains_sensible:I_sol`
+  

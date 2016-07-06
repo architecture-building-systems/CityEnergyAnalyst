@@ -624,7 +624,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         # heat flows in [W]
         # solar gains
         # copied from original calc thermal loads
-        i_sol = functions.calc_heat_gains_solar(Aw, Awall_all, Sh_typ, bpr.solar, gv)
+        tsd['I_sol'] = functions.calc_heat_gains_solar(Aw, Awall_all, Sh_typ, bpr.solar, gv).values
 
         # sensible internal heat gains
         # copied from original calc thermal loads
@@ -633,7 +633,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
 
         # components of internal heat gains for R-C-model
         # copied from original calc thermal loads
-        i_ia, i_m, i_st = functions.calc_comp_heat_gains_sensible(Am, Atot, bpr.rc_model.Htr_w, i_int_sen, i_sol)
+        i_ia, i_m, i_st = functions.calc_comp_heat_gains_sensible(Am, Atot, bpr.rc_model.Htr_w, i_int_sen, tsd['I_sol'].values)
 
         # internal moisture gains
         # copied from original calc thermal loads
