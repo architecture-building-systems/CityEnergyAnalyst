@@ -63,5 +63,13 @@ The main variables introduced is `tsd`, which stands for "time step data".
   - to: `functions.calc_Qdis_ls:tair`
   - to: `functions.calc_temperatures_emission_systems:Ta`
   - to: `functions.calc_dhw_heating_demand:Ta`
+- `Tm` -> `tsd['Tm']`
+  - from: `calc_thermal_load_hvac_timestep:temp_m`
+  - from: `calc_thermal_load_mechanical_and_natural_ventilation_timestep:temp_m`
+  - to: `state_prev['temp_m_prev']`
+- `Qhs_sen` -> `tsd['Qhs_sen']`
+  - from: `calc_thermal_load_hvac_timestep:q_hs_sen`
+  - from: `calc_thermal_load_mechanical_and_natural_ventilation_timestep:q_hs_sen`
+  - 
   
   

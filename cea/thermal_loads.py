@@ -569,6 +569,8 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
 
     tsd['uncomfort'] = np.zeros(8760)
     tsd['Ta'] = np.zeros(8760)
+    tsd['Tm'] = np.zeros(8760)
+    tsd['Qhs_sen'] = np.zeros(8760)
     if Af > 0:  # building has conditioned area
 
         # get heating and cooling season
@@ -657,8 +659,6 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         # factor_cros = architecture.f_cros  # TODO: get from building properties
 
         # define empty arrrays
-        Tm = np.zeros(8760)
-        Qhs_sen = np.zeros(8760)
         Qcs_sen = np.zeros(8760)
         Qhs_lat = np.zeros(8760)
         Qcs_lat = np.zeros(8760)
@@ -724,7 +724,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
                     or (sys_e_cooling == 'T3' and not gv.is_heating_season(t)):
                 # print('1a')
 
-                Tm[t], \
+                tsd['Tm'][t], \
                 tsd['Ta'][t], \
                 Qhs_sen_incl_em_ls[t], \
                 Qcs_sen_incl_em_ls[t], \
@@ -737,7 +737,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
                 Qcs_lat[t], \
                 Ehs_lat_aux[t], \
                 qm_ve_mech[t], \
-                Qhs_sen[t], \
+                tsd['Qhs_sen'][t], \
                 Qcs_sen[t], \
                 Qhs_em_ls[t],\
                 Qcs_em_ls[t], \
@@ -753,7 +753,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
                 # case 1b: mechanical ventilation
             else:
                 # print('1b')
-                Tm[t], \
+                tsd['Tm'][t], \
                 tsd['Ta'][t], \
                 Qhs_sen_incl_em_ls[t], \
                 Qcs_sen_incl_em_ls[t], \
@@ -761,14 +761,14 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
                 Top[t], \
                 Im_tot[t], \
                 qm_ve_mech[t], \
-                Qhs_sen[t], \
+                tsd['Qhs_sen'][t], \
                 Qcs_sen[t], \
                 Qhs_em_ls[t], \
                 Qcs_em_ls[t] = calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, thermal_loads_input,
                                                                                      weather_data, state_prev, gv)
 
             state_prev['temp_air_prev'] = tsd['Ta'][t]
-            state_prev['temp_m_prev'] = Tm[t]
+            state_prev['temp_m_prev'] = tsd['Tm'][t]
 
 
         # TODO: check this out with Shanshan :)
