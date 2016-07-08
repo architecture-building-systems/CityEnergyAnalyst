@@ -84,17 +84,17 @@ The main variables introduced is `tsd`, which stands for "time step data".
   - `tsd['uncomfort'][t]` <- `calc_thermal_load_hvac_timestep:uncomfort`
   - `tsd['Top'][t]` <- `calc_thermal_load_hvac_timestep:temp_op`
   - `tsd['Im_tot'][t]` <- `calc_thermal_load_hvac_timestep:i_m_tot`
-  - `q_hs_sen_hvac[t]` <- `calc_thermal_load_hvac_timestep:q_hs_sen_hvac`
-  - `q_cs_sen_hvac[t]` <- `calc_thermal_load_hvac_timestep:q_cs_sen_hvac`
-  - `Qhs_lat[t]` <- `calc_thermal_load_hvac_timestep:q_hum_hvac`
+  - `tsd['q_hs_sen_hvac'][t]` <- `calc_thermal_load_hvac_timestep:q_hs_sen_hvac`
+  - `tsd['q_cs_sen_hvac'][t]` <- `calc_thermal_load_hvac_timestep:q_cs_sen_hvac`
+  - `tsd['Qhs_lat'][t]` <- `calc_thermal_load_hvac_timestep:q_hum_hvac`
   - `tsd['Qcs_lat'][t]` <- `calc_thermal_load_hvac_timestep:q_dhum_hvac`
-  - `Ehs_lat_aux[t]` <- `calc_thermal_load_hvac_timestep:e_hum_aux_hvac`
-  - `qm_ve_mech[t]` <- `calc_thermal_load_hvac_timestep:qm_ve_mech`
+  - `tsd['Ehs_lat_aux'][t]` <- `calc_thermal_load_hvac_timestep:e_hum_aux_hvac`
+  - `tsd['qm_ve_mech'][t]` <- `calc_thermal_load_hvac_timestep:qm_ve_mech`
   - `tsd['Qhs_sen'][t]` <- `calc_thermal_load_hvac_timestep:q_hs_sen`
   - `tsd['Qcs_sen'][t]` <- `calc_thermal_load_hvac_timestep:q_cs_sen`
-  - `Qhs_em_ls[t]` <- `calc_thermal_load_hvac_timestep:qhs_em_ls`
-  - `Qcs_em_ls[t]` <- `calc_thermal_load_hvac_timestep:qcs_em_ls`
-  - `ma_sup_hs[t]` <- `calc_thermal_load_hvac_timestep:qm_ve_hvac_h`
+  - `tsd['Qhs_em_ls'][t]` <- `calc_thermal_load_hvac_timestep:qhs_em_ls`
+  - `tsd['Qcs_em_ls'][t]` <- `calc_thermal_load_hvac_timestep:qcs_em_ls`
+  - `tsd['ma_sup_hs'][t]` <- `calc_thermal_load_hvac_timestep:qm_ve_hvac_h`
   - `ma_sup_cs[t]` <- `calc_thermal_load_hvac_timestep:qm_ve_hvac_c`
   - `Ta_sup_hs[t]` <- `calc_thermal_load_hvac_timestep:temp_sup_h`
   - `Ta_sup_cs[t]` <- `calc_thermal_load_hvac_timestep:temp_sup_c`
