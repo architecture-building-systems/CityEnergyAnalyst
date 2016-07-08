@@ -574,6 +574,10 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
     tsd['Qcs_sen'] = np.zeros(8760)
     tsd['Qhs_lat'] = np.zeros(8760)
     tsd['Qhs_sen_incl_em_ls'] = np.zeros(8760)
+    tsd['Qcs_sen_incl_em_ls'] = np.zeros(8760)
+    tsd['Qcs_lat'] = np.zeros(8760)
+    tsd['Top'] = np.zeros(8760)
+    tsd['Im_tot'] = np.zeros(8760)
     if Af > 0:  # building has conditioned area
 
         # get heating and cooling season
@@ -662,7 +666,6 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         # factor_cros = architecture.f_cros  # TODO: get from building properties
 
         # define empty arrrays
-        Qcs_lat = np.zeros(8760)
         Qhs_em_ls = np.zeros(8760)
         Qcs_em_ls = np.zeros(8760)
         # QHC_sen = np.zeros(8760)
@@ -675,10 +678,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         w_sup = np.zeros(8760)
         w_re = np.zeros(8760)
         Ehs_lat_aux = np.zeros(8760)
-        Qcs_sen_incl_em_ls = np.zeros(8760)
         Tww_re = np.zeros(8760)
-        Top = np.zeros(8760)
-        Im_tot = np.zeros(8760)
         qm_ve_mech = np.zeros(8760)
 
         q_hs_sen_hvac = np.zeros(8760)
@@ -727,14 +727,14 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
                 tsd['Tm'][t], \
                 tsd['Ta'][t], \
                 tsd['Qhs_sen_incl_em_ls'][t], \
-                Qcs_sen_incl_em_ls[t], \
+                tsd['Qcs_sen_incl_em_ls'][t], \
                 tsd['uncomfort'][t], \
-                Top[t], \
-                Im_tot[t], \
+                tsd['Top'][t], \
+                tsd['Im_tot'][t], \
                 q_hs_sen_hvac[t], \
                 q_cs_sen_hvac[t], \
                 tsd['Qhs_lat'][t], \
-                Qcs_lat[t], \
+                tsd['Qcs_lat'][t], \
                 Ehs_lat_aux[t], \
                 qm_ve_mech[t], \
                 tsd['Qhs_sen'][t], \
@@ -756,10 +756,10 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
                 tsd['Tm'][t], \
                 tsd['Ta'][t], \
                 tsd['Qhs_sen_incl_em_ls'][t], \
-                Qcs_sen_incl_em_ls[t], \
+                tsd['Qcs_sen_incl_em_ls'][t], \
                 tsd['uncomfort'][t], \
-                Top[t], \
-                Im_tot[t], \
+                tsd['Top'][t], \
+                tsd['Im_tot'][t], \
                 qm_ve_mech[t], \
                 tsd['Qhs_sen'][t], \
                 tsd['Qcs_sen'][t], \
@@ -778,8 +778,8 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         # Qhs_sen_incl_em_ls[Qhs_sen_incl_em_ls < 0] = 0
         # Qcs_sen_incl_em_ls[Qcs_sen_incl_em_ls > 0] = 0
         Qhs_sen_incl_em_ls_0 = tsd['Qhs_sen_incl_em_ls'].max()
-        Qcs_sen_incl_em_ls_0 = Qcs_sen_incl_em_ls.min()  # cooling loads up to here in negative values
-        Qhs_d_ls, Qcs_d_ls = np.vectorize(functions.calc_Qdis_ls)(tsd['Ta'], tsd['T_ext'].values, tsd['Qhs_sen_incl_em_ls'].values, Qcs_sen_incl_em_ls, Ths_sup_0,
+        Qcs_sen_incl_em_ls_0 = tsd['Qcs_sen_incl_em_ls'].min()  # cooling loads up to here in negative values
+        Qhs_d_ls, Qcs_d_ls = np.vectorize(functions.calc_Qdis_ls)(tsd['Ta'], tsd['T_ext'].values, tsd['Qhs_sen_incl_em_ls'].values, tsd['Qcs_sen_incl_em_ls'].values, Ths_sup_0,
                                                         Ths_re_0, Tcs_sup_0, Tcs_re_0, Qhs_sen_incl_em_ls_0,
                                                         Qcs_sen_incl_em_ls_0,
                                                         gv.D, Y[0], sys_e_heating, sys_e_cooling, gv.Bf, Lv)
@@ -787,7 +787,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         # Calc requirements of generation systems (both cooling and heating do not have a storage):
         Qhs = tsd['Qhs_sen_incl_em_ls'] - Qhs_em_ls
         Qhsf = tsd['Qhs_sen_incl_em_ls'] + Qhs_d_ls  # no latent is considered because it is already added as electricity from the adiabatic system.
-        Qcs = (Qcs_sen_incl_em_ls - Qcs_em_ls) + Qcs_lat
+        Qcs = (tsd['Qcs_sen_incl_em_ls'] - Qcs_em_ls) + tsd['Qcs_lat']
         Qcsf = Qcs + Qcs_em_ls + Qcs_d_ls
         Qcsf = -abs(Qcsf)
         Qcs = -abs(Qcs)
