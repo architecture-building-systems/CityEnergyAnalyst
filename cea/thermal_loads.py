@@ -585,6 +585,13 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
     tsd['Qhs_em_ls'] = np.zeros(8760)
     tsd['Qcs_em_ls'] = np.zeros(8760)
     tsd['ma_sup_hs'] = np.zeros(8760)
+    tsd['ma_sup_cs'] = np.zeros(8760)
+    tsd['Ta_sup_hs'] = np.zeros(8760)
+    tsd['Ta_sup_cs'] = np.zeros(8760)
+    tsd['Ta_re_hs'] = np.zeros(8760)
+    tsd['Ta_re_cs'] = np.zeros(8760)
+    tsd['w_re'] = np.zeros(8760)
+    tsd['w_sup'] = np.zeros(8760)
     if Af > 0:  # building has conditioned area
 
         # get heating and cooling season
@@ -673,13 +680,6 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
         # factor_cros = architecture.f_cros  # TODO: get from building properties
 
         # define empty arrrays
-        Ta_sup_hs = np.zeros(8760)
-        Ta_re_hs = np.zeros(8760)
-        ma_sup_cs = np.zeros(8760)
-        Ta_sup_cs = np.zeros(8760)
-        Ta_re_cs = np.zeros(8760)
-        w_sup = np.zeros(8760)
-        w_re = np.zeros(8760)
         Tww_re = np.zeros(8760)
 
         # create flag season
@@ -740,13 +740,13 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
                 tsd['Qhs_em_ls'][t], \
                 tsd['Qcs_em_ls'][t], \
                 tsd['ma_sup_hs'][t], \
-                ma_sup_cs[t], \
-                Ta_sup_hs[t], \
-                Ta_sup_cs[t], \
-                Ta_re_hs[t], \
-                Ta_re_cs[t], \
-                w_re[t], \
-                w_sup[t] = calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_prev, gv)
+                tsd['ma_sup_cs'][t], \
+                tsd['Ta_sup_hs'][t], \
+                tsd['Ta_sup_cs'][t], \
+                tsd['Ta_re_hs'][t], \
+                tsd['Ta_re_cs'][t], \
+                tsd['w_re'][t], \
+                tsd['w_sup'][t] = calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_prev, gv)
 
                 # case 1b: mechanical ventilation
             else:
@@ -796,14 +796,14 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
 
         # Cal temperatures of all systems
         Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs = functions.calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0,
-                                                                                                      tsd['Ta'], Ta_re_cs, Ta_re_hs,
-                                                                                            Ta_sup_cs, Ta_sup_hs,
+                                                                                                      tsd['Ta'], tsd['Ta_re_cs'], tsd['Ta_re_hs'],
+                                                                                            tsd['Ta_sup_cs'], tsd['Ta_sup_hs'],
                                                                                             Tcs_re_0, Tcs_sup_0,
                                                                                             Ths_re_0, Ths_sup_0, gv,
-                                                                                            ma_sup_cs, tsd['ma_sup_hs'],
+                                                                                                      tsd['ma_sup_cs'], tsd['ma_sup_hs'],
                                                                                             sys_e_cooling,
                                                                                             sys_e_heating, tsd['ta_hs_set'].values,
-                                                                                            w_re, w_sup)
+                                                                                                      tsd['w_re'], tsd['w_sup'])
         Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpww = functions.calc_dhw_heating_demand(Af, Lcww_dis, Lsww_dis,
                                                                                             Lvww_c, Lvww_dis, tsd['T_ext'], tsd['Ta'],
                                                                                             Tww_re, Tww_sup_0, Y, gv,
