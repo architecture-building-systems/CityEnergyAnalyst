@@ -65,18 +65,33 @@ class TestCalcThermalLoadsNewVentilation(TestCase):
 
     def test_calc_thermal_loads_other_buildings(self):
         """Test some other buildings just to make sure we have the proper data"""
+        import multiprocessing as mp
+        pool = mp.Pool()
         buildings = {'B140571': (87082.27, 173418.77),
                      'B140557': (67011.74, 141896.5),
                      'B140577': (1600579.37, 10583959.85),
                      'B302040335': (1525.49, 8443.68),
                      'B2372467': (33608.18, 76675.11)}  # randomly selected
+        joblist = []
         for building in buildings.keys():
             bpr = self.building_properties[building]
-            result = calc_thermal_loads_new_ventilation(building, bpr, self.weather_data,
-                                                        self.usage_schedules, self.date, self.gv,
-                                                        self.locator.get_temporary_folder(),
-                                                        self.locator.get_temporary_folder())
-            df = pd.read_csv(self.locator.get_temporary_file('%s.csv' % building))
-            self.assertAlmostEqual(buildings[building][0], df['QCf_kWh'].sum())
-            self.assertAlmostEqual(buildings[building][1], df['QHf_kWh'].sum())
+            job = pool.apply_async(run_for_single_building,
+                                   [building, bpr, self.weather_data, self.usage_schedules, self.date, self.gv,
+                                    self.locator.get_temporary_folder(),
+                                    self.locator.get_temporary_file('%s.csv' % building)])
+            joblist.append(job)
+        for job in joblist:
+            b, qcf_kwh, qhf_kwh = job.get(10)
+            self.assertAlmostEqual(buildings[b][0], qcf_kwh)
+            self.assertAlmostEqual(buildings[b][1], qhf_kwh)
+
+
+def run_for_single_building(building, bpr, weather_data, usage_schedules, date, gv, temporary_folder, temporary_file):
+    calc_thermal_loads_new_ventilation(building, bpr, weather_data,
+                                       usage_schedules, date, gv,
+                                       temporary_folder,
+                                       temporary_folder)
+    df = pd.read_csv(temporary_file)
+    return building, df['QCf_kWh'].sum(), df['QHf_kWh'].sum()
+
 
