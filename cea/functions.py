@@ -82,20 +82,6 @@ def check_temp_file(T_ext,tH,tC, tmax):
         tC = tmax+1
     return tH, tC
 
-
-def calculate_pipe_transmittance_values(year, Retrofit):
-    if year >= 1995 or Retrofit > 0:
-        phi_pipes = [0.2,0.3,0.3]
-    elif 1985 <= year < 1995 and Retrofit == 0:
-        phi_pipes = [0.3,0.4,0.4]
-    else:
-        phi_pipes = [0.4,0.4,0.4]
-    return phi_pipes
-
-def Calc_form(Lw,Ll,footprint): 
-    factor = footprint/(Lw*Ll)
-    return factor
-
 def Calc_Tm(Htr_3,Htr_1,tm_t0,Cm,Htr_em,Im_tot,Htr_ms,I_st,Htr_w,te_t,I_ia,IHC_nd,Hve,Htr_is):
     tm_t = (tm_t0 *((Cm/3600)-0.5*(Htr_3+ Htr_em))+ Im_tot)/((Cm/3600)+0.5*(Htr_3+Htr_em))
     tm = (tm_t+tm_t0)/2
@@ -685,55 +671,6 @@ def calc_heat_gains_solar(Aw, Awall_all, Sh_typ, Solar, gv):
     1 - gv.F_f) * Aw  # Calculation of solar efective area per hour in m2
     I_sol = Asol * solar_specific  # how much are the net solar gains in Wh per hour of the year.
     return I_sol.values
-
-
-def get_properties_building_systems(bpr, gv):
-    # TODO: Documentation
-    # Refactored from CalcThermalLoads
-
-    Ll = bpr.geometry.Blength
-    Lw = bpr.geometry.Bwidth
-    nf_ag = bpr.geometry.floors_ag
-    nf_bg = bpr.geometry.floors_bg
-    nfp = bpr.occupancy.PFloor
-    phi_pipes = calculate_pipe_transmittance_values(bpr.age.built, bpr.age.HVAC)  # linear trasmissivity coefficient of piping W/(m.K)
-
-    # nominal temperatures
-    Ths_sup_0 = bpr.hvac.Tshs0_C
-    Ths_re_0 = Ths_sup_0 - bpr.hvac.dThs0_C
-    Tcs_sup_0 = bpr.hvac.Tscs0_C
-    Tcs_re_0 = Tcs_sup_0 + bpr.hvac.dTcs0_C
-    Tww_sup_0 = bpr.hvac.Tsww0_C
-    Tww_re_0 = Tww_sup_0 - bpr.hvac.dTww0_C  # Ground water temperature in heating(winter) season, according to norm #TODO: check norm
-    # Identification of equivalent lenghts
-    fforma = Calc_form(Lw, Ll, bpr.geometry.footprint)  # factor form comparison real surface and rectangular
-    Lv = (2 * Ll + 0.0325 * Ll * Lw + 6) * fforma  # length vertical lines
-    if nf_ag < 2 and nf_bg < 2: # it is assumed that building with less than a floor and less than 2 floors udnerground do not have
-        Lcww_dis = 0
-        Lvww_c = 0
-    else:
-        Lcww_dis = 2 * (Ll + 2.5 + nf_ag * nfp * gv.hf) * fforma  # length hot water piping circulation circuit
-        Lvww_c = (2 * Ll + 0.0125 * Ll * Lw) * fforma  # length piping heating system circulation circuit
-
-    Lsww_dis = 0.038 * Ll * Lw * nf_ag * nfp * gv.hf * fforma  # length hot water piping distribution circuit
-    Lvww_dis = (Ll + 0.0625 * Ll * Lw) * fforma  # length piping heating system distribution circuit
-
-    bpr.building_systems = pd.Series({'Lcww_dis': Lcww_dis,
-                                      'Lsww_dis': Lsww_dis,
-                                      'Lv': Lv,
-                                      'Lvww_c': Lvww_c,
-                                      'Lvww_dis': Lvww_dis,
-                                      'Tcs_re_0': Tcs_re_0,
-                                      'Tcs_sup_0': Tcs_sup_0,
-                                      'Ths_re_0': Ths_re_0,
-                                      'Ths_sup_0': Ths_sup_0,
-                                      'Tww_re_0': Tww_re_0,
-                                      'Tww_sup_0': Tww_sup_0,
-                                      'Y': phi_pipes,
-                                      'fforma': fforma})
-
-    return bpr
-
 
 def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs, Ta_re_hs, Ta_sup_cs, Ta_sup_hs,
                                        Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, gv, ma_sup_cs, ma_sup_hs,
