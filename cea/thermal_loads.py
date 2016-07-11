@@ -12,10 +12,9 @@ from __future__ import division
 
 import numpy as np
 import pandas as pd
-
-import cea.functions as functions
 import contributions.thermal_loads_new_ventilation.ventilation
 import hvac_kaempf
+import functions
 
 
 def calc_tHC_corr(SystemH, SystemC, sys_e_ctrl):
@@ -641,9 +640,7 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
         # heat flows in [W]
         # solar gains
         # copied from original calc thermal loads
-        tsd['I_sol'] = functions.calc_heat_gains_solar(bpr.rc_model.Aw, bpr.rc_model.Awall_all,
-                                                       bpr.architecture.type_shade,
-                                                       bpr.solar, gv)
+        tsd['I_sol'] = calc_heat_gains_solar(bpr, gv)
 
         # sensible internal heat gains
         # copied from original calc thermal loads
@@ -927,3 +924,31 @@ def test_thermal_loads_new_ventilation():
 
 if __name__ == '__main__':
     test_thermal_loads_new_ventilation()
+
+
+def calc_heat_gains_solar(bpr, gv):
+    # TODO: Documentation
+    # Refactored from CalcThermalLoads
+    solar_specific = bpr.solar / bpr.rc_model['Awall_all']  # array in W/m2
+    gl = np.vectorize(calc_gl)(solar_specific, gv.g_gl, Calc_Rf_sh(bpr.architecture['type_shade']))
+    solar_effective_area = gl * (1 - gv.F_f) * bpr.rc_model['Aw']  # Calculation of solar effective area per hour in m2
+    net_solar_gains = solar_effective_area * solar_specific  # how much are the net solar gains in Wh per hour of the year.
+    return net_solar_gains.values
+
+
+def calc_gl(radiation, g_gl, Rf_sh):
+    if radiation > 300:  # in w/m2
+        return g_gl * Rf_sh
+    else:
+        return g_gl
+
+
+def Calc_Rf_sh (ShadingType):
+    # this script assumes shading is always located outside! most of the cases
+    # 0 for not, 1 for Rollo, 2 for Venetian blinds, 3 for Solar control glass
+    d = {'Type': ['T0', 'T1', 'T2', 'T3'], 'ValueOUT': [1, 0.08, 0.15, 0.1]}
+    ValuesRf_Table = pd.DataFrame(d)
+    rows = ValuesRf_Table.Type.count()
+    for row in range(rows):
+        if ShadingType == ValuesRf_Table.loc[row, 'Type']:
+            return ValuesRf_Table.loc[row, 'ValueOUT']
