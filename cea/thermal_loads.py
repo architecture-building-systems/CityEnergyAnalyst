@@ -382,7 +382,7 @@ def calc_thermal_load_hvac_timestep(t, tsd, thermal_loads_input, weather_data, s
     return tsd
 
 
-def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, thermal_loads_input, weather_data, state_prev, gv):
+def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, thermal_loads_input, weather_data, state_prev, gv):
     """
     This function is executed for the case of mechanical ventilation with outdoor air
 
@@ -486,8 +486,20 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, thermal_loa
         q_cs_sen_loss_true = 0
         qcs_em_ls = 0
 
-    return temp_m, temp_a, q_hs_sen_loss_true, q_cs_sen_loss_true, uncomfort, \
-           temp_op, i_m_tot, qm_ve_mech, q_hs_sen, q_cs_sen, qhs_em_ls, qcs_em_ls
+    tsd['Tm'][t] = temp_m
+    tsd['Ta'][t] = temp_a
+    tsd['Qhs_sen_incl_em_ls'][t] = q_hs_sen_loss_true
+    tsd['Qcs_sen_incl_em_ls'][t] = q_cs_sen_loss_true
+    tsd['uncomfort'][t] = uncomfort
+    tsd['Top'][t] = temp_op
+    tsd['Im_tot'][t] = i_m_tot
+    tsd['qm_ve_mech'][t] = qm_ve_mech
+    tsd['Qhs_sen'][t] = q_hs_sen
+    tsd['Qcs_sen'][t] = q_cs_sen
+    tsd['Qhs_em_ls'][t] = qhs_em_ls
+    tsd['Qcs_em_ls'][t] = qcs_em_ls
+
+    return tsd
 
 
 def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules, date, gv,
@@ -748,18 +760,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
                 # case 1b: mechanical ventilation
             else:
                 # print('1b')
-                tsd['Tm'][t], \
-                tsd['Ta'][t], \
-                tsd['Qhs_sen_incl_em_ls'][t], \
-                tsd['Qcs_sen_incl_em_ls'][t], \
-                tsd['uncomfort'][t], \
-                tsd['Top'][t], \
-                tsd['Im_tot'][t], \
-                tsd['qm_ve_mech'][t], \
-                tsd['Qhs_sen'][t], \
-                tsd['Qcs_sen'][t], \
-                tsd['Qhs_em_ls'][t], \
-                tsd['Qcs_em_ls'][t] = calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, thermal_loads_input,
+                tsd = calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, thermal_loads_input,
                                                                                      weather_data, state_prev, gv)
 
             state_prev['temp_air_prev'] = tsd['Ta'][t]
