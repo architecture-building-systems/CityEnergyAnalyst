@@ -10,7 +10,7 @@ import scipy
 import scipy.optimize as sopt
 
 import storagetank_mixed as sto_m
-
+from cea.thermal_loads import calc_heat_gains_solar
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -662,16 +662,6 @@ def calc_heat_gains_internal_sensible(people, Qs_Wp, Eal_nove, Eprof, Qcdata, Qc
     return I_int_sen
 
 
-def calc_heat_gains_solar(Aw, Awall_all, Sh_typ, Solar, gv):
-    # TODO: Documentation
-    # Refactored from CalcThermalLoads
-    Rf_sh = Calc_Rf_sh(Sh_typ)
-    solar_specific = Solar / Awall_all  # array in W/m2
-    Asol = np.vectorize(calc_gl)(solar_specific, gv.g_gl, Rf_sh) * (
-    1 - gv.F_f) * Aw  # Calculation of solar efective area per hour in m2
-    I_sol = Asol * solar_specific  # how much are the net solar gains in Wh per hour of the year.
-    return I_sol.values
-
 def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs, Ta_re_hs, Ta_sup_cs, Ta_sup_hs,
                                        Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, gv, ma_sup_cs, ma_sup_hs,
                                        sys_e_cooling, sys_e_heating, ta_hs_set, w_re, w_sup):
@@ -1032,21 +1022,6 @@ def calc_t(w,RH): # tempeature in C
     t = result.real
     return t
 
-def Calc_Rf_sh (ShadingType):
-    # this script assumes shading is always located outside! most of the cases
-    # 0 for not, 1 for Rollo, 2 for Venetian blinds, 3 for Solar control glass
-    d = {'Type': ['T0', 'T1', 'T2', 'T3'], 'ValueOUT': [1, 0.08, 0.15, 0.1]}
-    ValuesRf_Table = pd.DataFrame(d)
-    rows = ValuesRf_Table.Type.count()
-    for row in range(rows):
-        if ShadingType == ValuesRf_Table.loc[row, 'Type']:
-            return ValuesRf_Table.loc[row, 'ValueOUT']
-
-def calc_gl(radiation, g_gl,Rf_sh):
-    if radiation > 300: #in w/m2
-        return g_gl*Rf_sh
-    else:
-        return g_gl
 
 def calc_Hcoil2(Qh, tasup, tare, Qh0, tare_0, tasup_0, tsh0, trh0, wr, ws, ma0, ma, Cpa, LMRT0, UA0, mCw0, Qhsf):
     if Qh > 0 and ma >0:
