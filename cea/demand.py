@@ -12,6 +12,7 @@ G. Happle   BuildingPropsThermalLoads   27.05.2016
 from __future__ import division
 
 import pandas as pd
+import numpy as np
 import contributions.thermal_loads_new_ventilation.simple_window_generator as simple_window_generator
 from geopandas import GeoDataFrame
 import epwreader
@@ -537,6 +538,19 @@ class BuildingPropertiesRow(object):
         self.age = age
         self.solar = solar
         self.windows = windows
+        self.building_systems = pd.Series({'Lcww_dis': np.NaN,
+                                           'Lsww_dis': np.NaN,
+                                           'Lv': np.NaN,
+                                           'Lvww_c': np.NaN,
+                                           'Lvww_dis': np.NaN,
+                                           'Tcs_re_0': np.NaN,
+                                           'Tcs_sup_0': np.NaN,
+                                           'Ths_re_0': np.NaN,
+                                           'Ths_sup_0': np.NaN,
+                                           'Tww_re_0': np.NaN,
+                                           'Tww_sup_0': np.NaN,
+                                           'Y': (np.NaN, np.NaN, np.NaN),
+                                           'fforma': np.NaN})
 
 
 def test_demand():

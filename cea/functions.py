@@ -717,7 +717,22 @@ def get_properties_building_systems(bpr, gv):
 
     Lsww_dis = 0.038 * Ll * Lw * nf_ag * nfp * gv.hf * fforma  # length hot water piping distribution circuit
     Lvww_dis = (Ll + 0.0625 * Ll * Lw) * fforma  # length piping heating system distribution circuit
-    return Lcww_dis, Lsww_dis, Lv, Lvww_c, Lvww_dis, Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, Tww_re_0, Tww_sup_0, phi_pipes, fforma
+
+    bpr.building_systems = pd.Series({'Lcww_dis': Lcww_dis,
+                                      'Lsww_dis': Lsww_dis,
+                                      'Lv': Lv,
+                                      'Lvww_c': Lvww_c,
+                                      'Lvww_dis': Lvww_dis,
+                                      'Tcs_re_0': Tcs_re_0,
+                                      'Tcs_sup_0': Tcs_sup_0,
+                                      'Ths_re_0': Ths_re_0,
+                                      'Ths_sup_0': Ths_sup_0,
+                                      'Tww_re_0': Tww_re_0,
+                                      'Tww_sup_0': Tww_sup_0,
+                                      'Y': phi_pipes,
+                                      'fforma': fforma})
+
+    return bpr
 
 
 def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs, Ta_re_hs, Ta_sup_cs, Ta_sup_hs,
