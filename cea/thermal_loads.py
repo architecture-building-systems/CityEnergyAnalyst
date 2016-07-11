@@ -632,11 +632,7 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
         tsd = functions.get_internal_comfort(tsd, bpr.comfort, limit_inf_season, limit_sup_season,
                                              date.dayofweek)
 
-
-        bpr = functions.get_properties_building_systems(bpr, gv)  # TODO: rename outputs
-
         # minimum mass flow rate of ventilation according to schedule
-        # qm_ve_req = numpy.vectorize(calc_qm_ve_req)(ve_schedule, area_f, temp_ext)
         # with infiltration and overheating
         tsd['qv_req'] = np.vectorize(calc_qv_req)(tsd['ve'].values, tsd['people'].values, bpr.rc_model.Af, gv,
                                                   date.hour, range(8760), n50)

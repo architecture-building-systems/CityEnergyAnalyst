@@ -12,9 +12,9 @@ G. Happle   BuildingPropsThermalLoads   27.05.2016
 from __future__ import division
 
 import pandas as pd
-import numpy as np
-import contributions.thermal_loads_new_ventilation.simple_window_generator as simple_window_generator
 from geopandas import GeoDataFrame
+
+import contributions.thermal_loads_new_ventilation.simple_window_generator as simple_window_generator
 import epwreader
 import functions as f
 import globalvar
@@ -241,7 +241,7 @@ class BuildingProperties(object):
         - get_building_comfort: C:\reference-case\baseline\inputs\building-properties\indoor_comfort.shp
         - get_building_internal: C:\reference-case\baseline\inputs\building-properties\internal_loads.shp
         """
-
+        self.gv = gv
         gv.log("reading input files")
         solar = pd.read_csv(locator.get_radiation()).set_index('Name')
         surface_properties = pd.read_csv(locator.get_surface_properties())
@@ -518,14 +518,15 @@ class BuildingProperties(object):
                                      internal_loads=self.get_prop_internal_loads(building_name),
                                      age=self.get_prop_age(building_name),
                                      solar=self.get_solar(building_name),
-                                     windows=self.get_prop_windows(building_name))
+                                     windows=self.get_prop_windows(building_name), gv=self.gv)
+
 
 class BuildingPropertiesRow(object):
     """Encapsulate the data of a single row in the DataSets of BuildingProperties. This class meant to be
     read-only."""
 
     def __init__(self, geometry, architecture, occupancy, hvac,
-                 rc_model, comfort, internal_loads, age, solar, windows):
+                 rc_model, comfort, internal_loads, age, solar, windows, gv):
         """Create a new instance of BuildingPropertiesRow - meant to be called by BuildingProperties[building_name].
         Each of the arguments is a pandas Series object representing a row in the corresponding DataFrame."""
         self.geometry = geometry
@@ -538,19 +539,67 @@ class BuildingPropertiesRow(object):
         self.age = age
         self.solar = solar
         self.windows = windows
-        self.building_systems = pd.Series({'Lcww_dis': np.NaN,
-                                           'Lsww_dis': np.NaN,
-                                           'Lv': np.NaN,
-                                           'Lvww_c': np.NaN,
-                                           'Lvww_dis': np.NaN,
-                                           'Tcs_re_0': np.NaN,
-                                           'Tcs_sup_0': np.NaN,
-                                           'Ths_re_0': np.NaN,
-                                           'Ths_sup_0': np.NaN,
-                                           'Tww_re_0': np.NaN,
-                                           'Tww_sup_0': np.NaN,
-                                           'Y': (np.NaN, np.NaN, np.NaN),
-                                           'fforma': np.NaN})
+        self.building_systems = self._get_properties_building_systems(gv)
+
+    def _get_properties_building_systems(self, gv):
+        # TODO: Documentation
+        # Refactored from CalcThermalLoads
+
+        Ll = self.geometry.Blength
+        Lw = self.geometry.Bwidth
+        nf_ag = self.geometry.floors_ag
+        nf_bg = self.geometry.floors_bg
+        nfp = self.occupancy.PFloor
+        phi_pipes = self._calculate_pipe_transmittance_values()
+
+        # nominal temperatures
+        Ths_sup_0 = self.hvac.Tshs0_C
+        Ths_re_0 = Ths_sup_0 - self.hvac.dThs0_C
+        Tcs_sup_0 = self.hvac.Tscs0_C
+        Tcs_re_0 = Tcs_sup_0 + self.hvac.dTcs0_C
+        Tww_sup_0 = self.hvac.Tsww0_C
+        Tww_re_0 = Tww_sup_0 - self.hvac.dTww0_C  # Ground water temperature in heating(winter) season, according to norm #TODO: check norm
+        # Identification of equivalent lenghts
+        fforma = self._calc_form()  # factor form comparison real surface and rectangular
+        Lv = (2 * Ll + 0.0325 * Ll * Lw + 6) * fforma  # length vertical lines
+        if nf_ag < 2 and nf_bg < 2:  # it is assumed that building with less than a floor and less than 2 floors udnerground do not have
+            Lcww_dis = 0
+            Lvww_c = 0
+        else:
+            Lcww_dis = 2 * (Ll + 2.5 + nf_ag * nfp * gv.hf) * fforma  # length hot water piping circulation circuit
+            Lvww_c = (2 * Ll + 0.0125 * Ll * Lw) * fforma  # length piping heating system circulation circuit
+
+        Lsww_dis = 0.038 * Ll * Lw * nf_ag * nfp * gv.hf * fforma  # length hot water piping distribution circuit
+        Lvww_dis = (Ll + 0.0625 * Ll * Lw) * fforma  # length piping heating system distribution circuit
+
+        building_systems = pd.Series({'Lcww_dis': Lcww_dis,
+                                      'Lsww_dis': Lsww_dis,
+                                      'Lv': Lv,
+                                      'Lvww_c': Lvww_c,
+                                      'Lvww_dis': Lvww_dis,
+                                      'Tcs_re_0': Tcs_re_0,
+                                      'Tcs_sup_0': Tcs_sup_0,
+                                      'Ths_re_0': Ths_re_0,
+                                      'Ths_sup_0': Ths_sup_0,
+                                      'Tww_re_0': Tww_re_0,
+                                      'Tww_sup_0': Tww_sup_0,
+                                      'Y': phi_pipes,
+                                      'fforma': fforma})
+        return building_systems
+
+    def _calculate_pipe_transmittance_values(self):
+        """linear trasmissivity coefficients of piping W/(m.K)"""
+        if self.age.built >= 1995 or self.age.HVAC > 0:
+            phi_pipes = [0.2, 0.3, 0.3]
+        elif 1985 <= self.age.built < 1995 and self.age.HVAC == 0:
+            phi_pipes = [0.3, 0.4, 0.4]
+        else:
+            phi_pipes = [0.4, 0.4, 0.4]
+        return phi_pipes
+
+    def _calc_form(self):
+        factor = self.geometry.footprint / (self.geometry.Bwidth * self.geometry.Blength)
+        return factor
 
 
 def test_demand():
