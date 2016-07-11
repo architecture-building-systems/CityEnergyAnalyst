@@ -502,7 +502,7 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, therma
     return tsd
 
 
-def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules, date, gv,
+def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_schedules, date, gv,
                                        results_folder, temporary_folder):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
@@ -512,8 +512,8 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
     PARAMETERS
     ----------
 
-    :param Name: name of building
-    :type Name: str
+    :param building_name: name of building
+    :type building_name: str
 
     :param bpr: a collection of building properties for the building used for thermal loads calculation
     :type bpr: BuildingPropertiesRow
@@ -844,7 +844,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
 
     # write results to csv
     functions.results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot,
-                             Name,
+                             building_name,
                              Occupancy,
                              Occupants, tsd['Qcdata'].values, tsd['Qcrefri'].values, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf,
                              Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
@@ -852,7 +852,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
                              Tww_sup_0, Waterconsumption, results_folder, mcpcs, mcphs, mcpww, temporary_folder,
                              sys_e_cooling, sys_e_heating, waterpeak, date)
 
-    gv.report('calc-thermal-loads', locals(), results_folder, Name)
+    gv.report('calc-thermal-loads', locals(), results_folder, building_name)
     return
 
 
