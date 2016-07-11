@@ -687,19 +687,26 @@ def calc_heat_gains_solar(Aw, Awall_all, Sh_typ, Solar, gv):
     return I_sol.values
 
 
-def get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag, nfp, nf_bg, prop_HVAC):
+def get_properties_building_systems(bpr, gv):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
-    phi_pipes = calculate_pipe_transmittance_values(Year, Retrofit)  # linear trasmissivity coefficient of piping W/(m.K)
+
+    Ll = bpr.geometry.Blength
+    Lw = bpr.geometry.Bwidth
+    nf_ag = bpr.geometry.floors_ag
+    nf_bg = bpr.geometry.floors_bg
+    nfp = bpr.occupancy.PFloor
+    phi_pipes = calculate_pipe_transmittance_values(bpr.age.built, bpr.age.HVAC)  # linear trasmissivity coefficient of piping W/(m.K)
+
     # nominal temperatures
-    Ths_sup_0 = prop_HVAC.Tshs0_C
-    Ths_re_0 = Ths_sup_0 - prop_HVAC.dThs0_C
-    Tcs_sup_0 = prop_HVAC.Tscs0_C
-    Tcs_re_0 = Tcs_sup_0 + prop_HVAC.dTcs0_C
-    Tww_sup_0 = prop_HVAC.Tsww0_C
-    Tww_re_0 = Tww_sup_0 - prop_HVAC.dTww0_C    # Ground water temperature in heating(winter) season, according to norm #TODO: check norm
+    Ths_sup_0 = bpr.hvac.Tshs0_C
+    Ths_re_0 = Ths_sup_0 - bpr.hvac.dThs0_C
+    Tcs_sup_0 = bpr.hvac.Tscs0_C
+    Tcs_re_0 = Tcs_sup_0 + bpr.hvac.dTcs0_C
+    Tww_sup_0 = bpr.hvac.Tsww0_C
+    Tww_re_0 = Tww_sup_0 - bpr.hvac.dTww0_C  # Ground water temperature in heating(winter) season, according to norm #TODO: check norm
     # Identification of equivalent lenghts
-    fforma = Calc_form(Lw, Ll, footprint)  # factor form comparison real surface and rectangular
+    fforma = Calc_form(Lw, Ll, bpr.geometry.footprint)  # factor form comparison real surface and rectangular
     Lv = (2 * Ll + 0.0325 * Ll * Lw + 6) * fforma  # length vertical lines
     if nf_ag < 2 and nf_bg < 2: # it is assumed that building with less than a floor and less than 2 floors udnerground do not have
         Lcww_dis = 0
