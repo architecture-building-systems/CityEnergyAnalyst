@@ -713,30 +713,6 @@ def get_properties_building_systems(Ll, Lw, Retrofit, Year, footprint, gv, nf_ag
     return Lcww_dis, Lsww_dis, Lv, Lvww_c, Lvww_dis, Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, Tww_re_0, Tww_sup_0, phi_pipes, fforma
 
 
-def get_properties_building_envelope(prop_RC_model, prop_age, prop_architecture, prop_geometry, prop_occupancy):
-    # type: (object, object, object, object, object) -> object
-    # TODO: Documentation
-    # Refactored from CalcThermalLoads
-    nfp = prop_occupancy.PFloor
-    footprint = prop_geometry.footprint
-    nf_ag = prop_geometry.floors_ag
-    nf_bg = prop_geometry.floors_bg
-    Lw = prop_geometry.Bwidth
-    Ll = prop_geometry.Blength
-    # construction,renovation etc years of the building
-    Year = prop_age.built
-    Retrofit = prop_age.HVAC  # year building  renovated or not
-    # shading position and types
-    Sh_typ = prop_architecture.type_shade
-    # thermal mass properties
-    Aw = prop_RC_model.Aw
-    Awall_all = prop_RC_model.Awall_all
-    Atot = prop_RC_model.Atot
-    Cm = prop_RC_model.Cm
-    Am = prop_RC_model.Am
-    return Am, Atot, Aw, Awall_all, Cm, Ll, Lw, Retrofit, Sh_typ, Year, footprint, nf_ag, nf_bg, nfp
-
-
 def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs, Ta_re_hs, Ta_sup_cs, Ta_sup_hs,
                                        Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, gv, ma_sup_cs, ma_sup_hs,
                                        sys_e_cooling, sys_e_heating, ta_hs_set, w_re, w_sup):
