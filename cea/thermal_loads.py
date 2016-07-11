@@ -145,7 +145,7 @@ def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, n50):
 
 
 # FIXME: replace weather_data with tsd['T_ext'] and tsd['rh_ext']
-def calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_prev, gv):
+def calc_thermal_load_hvac_timestep(t, tsd, thermal_loads_input, weather_data, state_prev, gv):
     """
     This function is executed for the case of heating or cooling with a HVAC system
     by coupling the R-C model of ISO 13790 with the HVAC model of Kaempf
@@ -353,10 +353,33 @@ def calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_
         q_cs_sen_loss_true = 0
         qcs_em_ls = 0
 
-    return temp_m, temp_a, q_hs_sen_loss_true, q_cs_sen_loss_true, uncomfort, \
-           temp_op, i_m_tot, q_hs_sen_hvac, q_cs_sen_hvac, q_hum_hvac, q_dhum_hvac, e_hum_aux_hvac, \
-           qm_ve_mech, q_hs_sen, q_cs_sen, qhs_em_ls, qcs_em_ls, qm_ve_hvac_h, qm_ve_hvac_c, temp_sup_h,\
-           temp_sup_c, temp_rec_h, temp_rec_c, w_rec, w_sup
+    tsd['Tm'][t] = temp_m
+    tsd['Ta'][t] = temp_a
+    tsd['Qhs_sen_incl_em_ls'][t] = q_hs_sen_loss_true
+    tsd['Qcs_sen_incl_em_ls'][t] = q_cs_sen_loss_true
+    tsd['uncomfort'][t] = uncomfort
+    tsd['Top'][t] = temp_op
+    tsd['Im_tot'][t] = i_m_tot
+    tsd['q_hs_sen_hvac'][t] = q_hs_sen_hvac
+    tsd['q_cs_sen_hvac'][t] = q_cs_sen_hvac
+    tsd['Qhs_lat'][t] = q_hum_hvac
+    tsd['Qcs_lat'][t] = q_dhum_hvac
+    tsd['Ehs_lat_aux'][t] = e_hum_aux_hvac
+    tsd['qm_ve_mech'][t] = qm_ve_mech
+    tsd['Qhs_sen'][t] = q_hs_sen
+    tsd['Qcs_sen'][t] = q_cs_sen
+    tsd['Qhs_em_ls'][t] = qhs_em_ls
+    tsd['Qcs_em_ls'][t] = qcs_em_ls
+    tsd['ma_sup_hs'][t] = qm_ve_hvac_h
+    tsd['ma_sup_cs'][t] = qm_ve_hvac_c
+    tsd['Ta_sup_hs'][t] = temp_sup_h
+    tsd['Ta_sup_cs'][t] = temp_sup_c
+    tsd['Ta_re_hs'][t] = temp_rec_h
+    tsd['Ta_re_cs'][t] = temp_rec_c
+    tsd['w_re'][t] = w_rec
+    tsd['w_sup'][t] = w_sup
+
+    return tsd
 
 
 def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, thermal_loads_input, weather_data, state_prev, gv):
@@ -720,33 +743,7 @@ def calc_thermal_loads_new_ventilation(Name, bpr, weather_data, usage_schedules,
             # case 1a: heating or cooling with hvac
             if (sys_e_heating == 'T3' and gv.is_heating_season(t)) \
                     or (sys_e_cooling == 'T3' and not gv.is_heating_season(t)):
-                # print('1a')
-
-                tsd['Tm'][t], \
-                tsd['Ta'][t], \
-                tsd['Qhs_sen_incl_em_ls'][t], \
-                tsd['Qcs_sen_incl_em_ls'][t], \
-                tsd['uncomfort'][t], \
-                tsd['Top'][t], \
-                tsd['Im_tot'][t], \
-                tsd['q_hs_sen_hvac'][t], \
-                tsd['q_cs_sen_hvac'][t], \
-                tsd['Qhs_lat'][t], \
-                tsd['Qcs_lat'][t], \
-                tsd['Ehs_lat_aux'][t], \
-                tsd['qm_ve_mech'][t], \
-                tsd['Qhs_sen'][t], \
-                tsd['Qcs_sen'][t], \
-                tsd['Qhs_em_ls'][t], \
-                tsd['Qcs_em_ls'][t], \
-                tsd['ma_sup_hs'][t], \
-                tsd['ma_sup_cs'][t], \
-                tsd['Ta_sup_hs'][t], \
-                tsd['Ta_sup_cs'][t], \
-                tsd['Ta_re_hs'][t], \
-                tsd['Ta_re_cs'][t], \
-                tsd['w_re'][t], \
-                tsd['w_sup'][t] = calc_thermal_load_hvac_timestep(t, thermal_loads_input, weather_data, state_prev, gv)
+                tsd = calc_thermal_load_hvac_timestep(t, tsd, thermal_loads_input, weather_data, state_prev, gv)
 
                 # case 1b: mechanical ventilation
             else:

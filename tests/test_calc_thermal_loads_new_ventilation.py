@@ -81,7 +81,7 @@ class TestCalcThermalLoadsNewVentilation(TestCase):
                                     self.locator.get_temporary_file('%s.csv' % building)])
             joblist.append(job)
         for job in joblist:
-            b, qcf_kwh, qhf_kwh = job.get(10)
+            b, qcf_kwh, qhf_kwh = job.get(20)
             self.assertAlmostEqual(buildings[b][0], qcf_kwh)
             self.assertAlmostEqual(buildings[b][1], qhf_kwh)
 
