@@ -646,12 +646,7 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
         Tww_re_0, \
         Tww_sup_0, \
         Y, \
-        fforma = functions.get_properties_building_systems(bpr.geometry.Blength, bpr.geometry.Bwidth, bpr.age.HVAC,
-                                                           bpr.age.built,
-                                                           bpr.geometry.footprint, gv,
-                                                           bpr.geometry.floors_ag,
-                                                           bpr.occupancy.PFloor, bpr.geometry.floors_bg,
-                                                           bpr.hvac)  # TODO: rename outputs
+        fforma = functions.get_properties_building_systems(bpr, gv)  # TODO: rename outputs
 
         # minimum mass flow rate of ventilation according to schedule
         # qm_ve_req = numpy.vectorize(calc_qm_ve_req)(ve_schedule, area_f, temp_ext)
