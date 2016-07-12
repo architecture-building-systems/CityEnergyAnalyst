@@ -173,14 +173,14 @@ def calc_thermal_load_hvac_timestep(t, tsd, thermal_loads_input, weather_data, s
     rh_ext = np.array(weather_data.relhum_percent)[t]
 
     # TODO: replace by getter methods
-    qm_ve_req = thermal_loads_input._qm_ve_req[t]
-    temp_hs_set = thermal_loads_input._temp_hs_set[t]
-    temp_cs_set = thermal_loads_input._temp_cs_set[t]
-    i_st = thermal_loads_input._i_st[t]
-    i_ia = thermal_loads_input._i_ia[t]
-    i_m = thermal_loads_input._i_m[t]
-    flag_season = thermal_loads_input._flag_season[t]
-    w_int = thermal_loads_input._w_int[t]
+    qm_ve_req = tsd['qm_ve_req'][t]
+    temp_hs_set = tsd['ta_hs_set'][t]
+    temp_cs_set = tsd['ta_cs_set'][t]
+    i_st = tsd['I_st'][t]
+    i_ia = tsd['I_ia'][t]
+    i_m = tsd['I_m'][t]
+    flag_season = tsd['flag_season'][t]
+    w_int = tsd['w_int'][t]
 
     system_heating = thermal_loads_input._sys_e_heating
     system_cooling = thermal_loads_input._sys_e_cooling
@@ -672,8 +672,8 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
         # factor_cros = architecture.f_cros  # TODO: get from building properties
 
         # create flag season
-        flag_season = np.zeros(8760, dtype=bool)  # default is heating season
-        flag_season[gv.seasonhours[0] + 1:gv.seasonhours[1]] = True
+        tsd['flag_season'] = np.zeros(8760, dtype=bool)  # default is heating season
+        tsd.loc[limit_inf_season:limit_sup_season, 'flag_season'] = True
 
         # model of losses in the emission and control system for space heating and cooling
         tHset_corr, tCset_corr = calc_tHC_corr(bpr.hvac.type_hs, bpr.hvac.type_cs, bpr.hvac.type_ctrl)
@@ -683,12 +683,12 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
                                                 temp_cs_set=tsd['ta_cs_set'].values,
                                                 i_st=tsd['I_st'].values, i_ia=tsd['I_ia'].values, i_m=tsd['I_m'].values,
                                                 w_int=tsd['w_int'],
-                                                flag_season=flag_season,
+                                                flag_season=tsd['flag_season'],
                                                 system_heating=bpr.hvac.type_hs, system_cooling=bpr.hvac.type_cs,
-                                                cm=(bpr.rc_model.Cm),
-                                                area_f=(bpr.rc_model.Af), temp_hs_set_corr=tHset_corr,
+                                                cm=bpr.rc_model.Cm,
+                                                area_f=bpr.rc_model.Af, temp_hs_set_corr=tHset_corr,
                                                 temp_cs_set_corr=tCset_corr,
-                                                i_c_max=i_c_max, i_h_max=i_h_max, prop_rc_model=(bpr.rc_model))
+                                                i_c_max=i_c_max, i_h_max=i_h_max, prop_rc_model=bpr.rc_model)
 
         # we give a seed high enough to avoid doing a iteration for 2 years.
         # definition of first temperature to start calculation of air conditioning system
