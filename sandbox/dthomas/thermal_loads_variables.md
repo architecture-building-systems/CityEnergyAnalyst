@@ -134,7 +134,7 @@ The main variables introduced is `tsd`, which stands for "time step data".
     - area_f=bpr.rc_model.Af
     - temp_hs_set_corr, temp_cs_set_corr calculated inside the function now...
     - i_c_max, i_h_max calculated inside the function now...
-    - 
+  - similar for `calc_thermal_load_mechanical_and_natural_ventilation_timestep`
     
     
 
