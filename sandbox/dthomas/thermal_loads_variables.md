@@ -116,7 +116,8 @@ The main variables introduced is `tsd`, which stands for "time step data".
   - `tsd['Qhs_em_ls'][t]` <- `calc_thermal_load_hvac_timestep:qhs_em_ls`
   - `tsd['Qcs_em_ls'][t]` <- `calc_thermal_load_hvac_timestep:qcs_em_ls`
 - refactored output of `calc_thermal_load_hvac_timestep` to new parameter `tsd`
-- - refactored output of `calc_thermal_load_mechanical_and_natural_ventilation_timestep` to new parameter `tsd`
+- refactored output of `calc_thermal_load_mechanical_and_natural_ventilation_timestep` to new parameter `tsd`
+- refactored `Tww_re` to `tsd`
 
 
 
