@@ -118,6 +118,17 @@ The main variables introduced is `tsd`, which stands for "time step data".
 - refactored output of `calc_thermal_load_hvac_timestep` to new parameter `tsd`
 - refactored output of `calc_thermal_load_mechanical_and_natural_ventilation_timestep` to new parameter `tsd`
 - refactored `Tww_re` to `tsd`
+- working through `ThermalLoadsInput`, replacing with `tsd`
+  - in `calc_thermal_load_hvac_timestep`:
+    - qm_ve_req=tsd['qm_ve_req'].values
+    - temp_hs_set=tsd['ta_hs_set'].values
+    - temp_cs_set=tsd['ta_cs_set'].values
+    - i_st=tsd['I_st'].values
+    - i_ia=tsd['I_ia'].values
+    - i_m=tsd['I_m'].values
+    - flag_season=tsd['flag_season']
+    - w_int=tsd['w_int']
+    
 
 
 
