@@ -359,6 +359,7 @@ def get_internal_comfort(tsd, prop_comfort, limit_inf_season, limit_sup_season, 
 
 def CalcThermalLoads(Name, building_properties, weather_data, usage_schedules, date, gv, locationFinal,
                      path_temporary_folder):
+    # FIXME: This is an old version and will be removed soon...
 
     # get function inputs from object
     prop_occupancy = building_properties.get_prop_occupancy(Name)

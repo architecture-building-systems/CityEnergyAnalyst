@@ -671,9 +671,6 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
         # # # factor for cross ventilation
         # factor_cros = architecture.f_cros  # TODO: get from building properties
 
-        # define empty arrrays
-        Tww_re = np.zeros(8760)
-
         # create flag season
         flag_season = np.zeros(8760, dtype=bool)  # default is heating season
         flag_season[gv.seasonhours[0] + 1:gv.seasonhours[1]] = True
@@ -687,7 +684,7 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
                                                 i_st=tsd['I_st'].values, i_ia=tsd['I_ia'].values, i_m=tsd['I_m'].values,
                                                 w_int=tsd['w_int'],
                                                 flag_season=flag_season,
-                                                system_heating=(bpr.hvac.type_hs), system_cooling=(bpr.hvac.type_cs),
+                                                system_heating=bpr.hvac.type_hs, system_cooling=bpr.hvac.type_cs,
                                                 cm=(bpr.rc_model.Cm),
                                                 area_f=(bpr.rc_model.Af), temp_hs_set_corr=tHset_corr,
                                                 temp_cs_set_corr=tCset_corr,
@@ -697,19 +694,13 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
         # definition of first temperature to start calculation of air conditioning system
         state_prev = {'temp_m_prev': 16, 'temp_air_prev': 21}
 
+        # ground water temperature in C during heating season (winter) according to norm
+        tsd['Tww_re'] = bpr.building_systems['Tww_re_0']
+        # ground water temperature in C during non-heating season (summer) according to norm
+        tsd.loc[limit_inf_season:limit_sup_season-1, 'Tww_re'] = 14
+
         # end-use demand calculation
         for t in range(8760):
-            # print(t)
-
-            # FIXME: Remove the setting of Tww_re[t] from this loop - it doesn't belong here and should probably
-            # just be done with a pandas assignment...
-            # if it is in the season
-            if limit_inf_season <= t < limit_sup_season:
-                # take advantage of this loop to fill the values of cold water
-                Tww_re[t] = 14  # Ground water temperature in C during non-heating (summer) season according to norm
-            else:
-                # take advantage of this loop to fill the values of cold water
-                Tww_re[t] = bpr.building_systems['Tww_re_0']  # Ground water temperature in C during heating (heating) season according to norm
 
             # case 1a: heating or cooling with hvac
             if (bpr.hvac.type_hs == 'T3' and gv.is_heating_season(t)) \
@@ -786,7 +777,7 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
                                                                                                       bpr.building_systems['Lvww_dis'],
                                                                                                       tsd['T_ext'],
                                                                                                       tsd['Ta'],
-                                                                                                      Tww_re,
+                                                                                                      tsd['Tww_re'],
                                                                                                       bpr.building_systems['Tww_sup_0'],
                                                                                                       bpr.building_systems['Y'],
                                                                                                       gv,
@@ -831,6 +822,8 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
         Occupancy = Eauxf = Waterconsumption = np.zeros(8760)
         Qwwf = Qww = Qhs_sen = Qhsf = Qcs_sen = Qcs = Qcsf = Qcdata = Qcrefri = Qd = Qc = Qhs = Qww_ls_st = np.zeros(
             8760)
+
+        # FIXME: this is a bug (all the variables are being set to the same array)
         Ths_sup = Ths_re = Tcs_re = Tcs_sup = mcphs = mcpcs = mcpww = Vww = Tww_re = Tww_st = np.zeros(
             8760)  # in C
 
@@ -852,7 +845,7 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
                              Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
                              Tcs_re, bpr.building_systems['Tcs_re_0'], Tcs_sup,
                              bpr.building_systems['Tcs_sup_0'], Ths_re, bpr.building_systems['Ths_re_0'], Ths_sup,
-                             bpr.building_systems['Ths_sup_0'], Tww_re, Tww_st,
+                             bpr.building_systems['Ths_sup_0'], tsd['Tww_re'], Tww_st,
                              bpr.building_systems['Tww_sup_0'], Waterconsumption, results_folder, mcpcs, mcphs, mcpww,
                              temporary_folder,
                              bpr.hvac.type_cs, bpr.hvac.type_hs, waterpeak, date)
