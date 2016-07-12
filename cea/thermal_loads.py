@@ -144,7 +144,7 @@ def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, n50):
 
 
 # FIXME: replace weather_data with tsd['T_ext'] and tsd['rh_ext']
-def calc_thermal_load_hvac_timestep(t, tsd, thermal_loads_input, weather_data, state_prev, gv):
+def calc_thermal_load_hvac_timestep(t, tsd, bpr, thermal_loads_input, weather_data, state_prev, gv):
     """
     This function is executed for the case of heating or cooling with a HVAC system
     by coupling the R-C model of ISO 13790 with the HVAC model of Kaempf
@@ -182,10 +182,10 @@ def calc_thermal_load_hvac_timestep(t, tsd, thermal_loads_input, weather_data, s
     flag_season = tsd['flag_season'][t]
     w_int = tsd['w_int'][t]
 
-    system_heating = thermal_loads_input._sys_e_heating
-    system_cooling = thermal_loads_input._sys_e_cooling
-    cm = thermal_loads_input._cm
-    area_f = thermal_loads_input._area_f
+    system_heating = bpr.hvac.type_hs
+    system_cooling = bpr.hvac.type_cs
+    cm = bpr.rc_model.Cm
+    area_f = bpr.rc_model.Af
     temp_hs_set_corr = thermal_loads_input._temp_hs_set_corr
     temp_cs_set_corr = thermal_loads_input._temp_cs_set_corr
     i_c_max = thermal_loads_input._i_c_max
@@ -705,7 +705,7 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
             # case 1a: heating or cooling with hvac
             if (bpr.hvac.type_hs == 'T3' and gv.is_heating_season(t)) \
                     or (bpr.hvac.type_cs == 'T3' and not gv.is_heating_season(t)):
-                tsd = calc_thermal_load_hvac_timestep(t, tsd, thermal_loads_input, weather_data, state_prev, gv)
+                tsd = calc_thermal_load_hvac_timestep(t, tsd, bpr, thermal_loads_input, weather_data, state_prev, gv)
 
                 # case 1b: mechanical ventilation
             else:
