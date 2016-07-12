@@ -144,7 +144,7 @@ def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, n50):
 
 
 # FIXME: replace weather_data with tsd['T_ext'] and tsd['rh_ext']
-def calc_thermal_load_hvac_timestep(t, tsd, bpr, thermal_loads_input, weather_data, state_prev, gv):
+def calc_thermal_load_hvac_timestep(t, tsd, bpr, weather_data, state_prev, gv):
     """
     This function is executed for the case of heating or cooling with a HVAC system
     by coupling the R-C model of ISO 13790 with the HVAC model of Kaempf
@@ -186,8 +186,6 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, thermal_loads_input, weather_da
     system_cooling = bpr.hvac.type_cs
     cm = bpr.rc_model.Cm
     area_f = bpr.rc_model.Af
-    i_c_max = thermal_loads_input._i_c_max
-    i_h_max = thermal_loads_input._i_h_max
 
     # model of losses in the emission and control system for space heating and cooling
     temp_hs_set_corr, temp_cs_set_corr = calc_tHC_corr(bpr.hvac.type_hs, bpr.hvac.type_cs, bpr.hvac.type_ctrl)
@@ -195,15 +193,14 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, thermal_loads_input, weather_da
     # heating and cooling loads
     i_c_max, i_h_max = functions.calc_capacity_heating_cooling_system(bpr.rc_model.Af, bpr.hvac)
 
-
     temp_air_prev = state_prev['temp_air_prev']
     temp_m_prev = state_prev['temp_m_prev']
 
     # get constant properties of building R-C-model
-    h_tr_is = thermal_loads_input._prop_rc_model.Htr_is
-    h_tr_ms = thermal_loads_input._prop_rc_model.Htr_ms
-    h_tr_w = thermal_loads_input._prop_rc_model.Htr_w
-    h_tr_em = thermal_loads_input._prop_rc_model.Htr_em
+    h_tr_is = bpr.rc_model.Htr_is
+    h_tr_ms = bpr.rc_model.Htr_ms
+    h_tr_w = bpr.rc_model.Htr_w
+    h_tr_em = bpr.rc_model.Htr_em
 
     # initialize output
     q_hs_sen = None
@@ -220,7 +217,6 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, thermal_loads_input, weather_da
     q_hum_hvac = None
     q_dhum_hvac = None
     e_hum_aux_hvac = None
-    q_ve_loss = None
     qm_ve_hvac_h = None
     qm_ve_hvac_c = None
     temp_sup_h = None
@@ -386,7 +382,7 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, thermal_loads_input, weather_da
     return tsd
 
 
-def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, thermal_loads_input, weather_data, state_prev, gv):
+def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, weather_data, state_prev, gv):
     """
     This function is executed for the case of mechanical ventilation with outdoor air
 
@@ -411,18 +407,18 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, t
     # get arguments from input
     temp_ext = np.array(weather_data.drybulb_C)[t]
 
-    qm_ve_req = thermal_loads_input._qm_ve_req[t]
-    temp_hs_set = thermal_loads_input._temp_hs_set[t]
-    temp_cs_set = thermal_loads_input._temp_cs_set[t]
-    i_st = thermal_loads_input._i_st[t]
-    i_ia = thermal_loads_input._i_ia[t]
-    i_m = thermal_loads_input._i_m[t]
-    flag_season = thermal_loads_input._flag_season[t]
+    qm_ve_req = tsd['qm_ve_req'][t]
+    temp_hs_set = tsd['ta_hs_set'][t]
+    temp_cs_set = tsd['ta_cs_set'][t]
+    i_st = tsd['I_st'][t]
+    i_ia = tsd['I_ia'][t]
+    i_m = tsd['I_m'][t]
+    flag_season = tsd['flag_season'][t]
 
-    system_heating = thermal_loads_input._sys_e_heating
-    system_cooling = thermal_loads_input._sys_e_cooling
-    cm = thermal_loads_input._cm
-    area_f = thermal_loads_input._area_f
+    system_heating = bpr.hvac.type_hs
+    system_cooling = bpr.hvac.type_cs
+    cm = bpr.rc_model.Cm
+    area_f = bpr.rc_model.Af
 
     # model of losses in the emission and control system for space heating and cooling
     temp_hs_set_corr, temp_cs_set_corr = calc_tHC_corr(bpr.hvac.type_hs, bpr.hvac.type_cs, bpr.hvac.type_ctrl)
@@ -433,10 +429,10 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, t
     temp_m_prev = state_prev['temp_m_prev']
 
     # get constant properties of building R-C-model
-    h_tr_is = thermal_loads_input._prop_rc_model.Htr_is
-    h_tr_ms = thermal_loads_input._prop_rc_model.Htr_ms
-    h_tr_w = thermal_loads_input._prop_rc_model.Htr_w
-    h_tr_em = thermal_loads_input._prop_rc_model.Htr_em
+    h_tr_is = bpr.rc_model.Htr_is
+    h_tr_ms = bpr.rc_model.Htr_ms
+    h_tr_w = bpr.rc_model.Htr_w
+    h_tr_em = bpr.rc_model.Htr_em
 
     # mass flow rate of mechanical ventilation
     qm_ve_mech = qm_ve_req  # required air mass flow rate
@@ -677,18 +673,6 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
         tsd['flag_season'] = np.zeros(8760, dtype=bool)  # default is heating season
         tsd.loc[limit_inf_season:limit_sup_season, 'flag_season'] = True
 
-        # group function inputs
-        thermal_loads_input = ThermalLoadsInput(qm_ve_req=tsd['qm_ve_req'].values, temp_hs_set=tsd['ta_hs_set'].values,
-                                                temp_cs_set=tsd['ta_cs_set'].values,
-                                                i_st=tsd['I_st'].values, i_ia=tsd['I_ia'].values, i_m=tsd['I_m'].values,
-                                                w_int=tsd['w_int'],
-                                                flag_season=tsd['flag_season'],
-                                                system_heating=bpr.hvac.type_hs, system_cooling=bpr.hvac.type_cs,
-                                                cm=bpr.rc_model.Cm,
-                                                area_f=bpr.rc_model.Af, temp_hs_set_corr=None,
-                                                temp_cs_set_corr=None,
-                                                i_c_max=None, i_h_max=None, prop_rc_model=bpr.rc_model)
-
         # we give a seed high enough to avoid doing a iteration for 2 years.
         # definition of first temperature to start calculation of air conditioning system
         state_prev = {'temp_m_prev': 16, 'temp_air_prev': 21}
@@ -704,12 +688,12 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
             # case 1a: heating or cooling with hvac
             if (bpr.hvac.type_hs == 'T3' and gv.is_heating_season(t)) \
                     or (bpr.hvac.type_cs == 'T3' and not gv.is_heating_season(t)):
-                tsd = calc_thermal_load_hvac_timestep(t, tsd, bpr, thermal_loads_input, weather_data, state_prev, gv)
+                tsd = calc_thermal_load_hvac_timestep(t, tsd, bpr, weather_data, state_prev, gv)
 
                 # case 1b: mechanical ventilation
             else:
                 # print('1b')
-                tsd = calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, thermal_loads_input,
+                tsd = calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr,
                                                                                     weather_data, state_prev, gv)
 
             state_prev['temp_air_prev'] = tsd['Ta'][t]
@@ -851,39 +835,6 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
 
     gv.report('calc-thermal-loads', locals(), results_folder, building_name)
     return
-
-
-class ThermalLoadsInput(object):
-    # TODO: documentation
-    """
-    Class to group input arguments for different tracks of calc thermal loads functions
-
-    """
-
-    def __init__(self, qm_ve_req=None, temp_hs_set=None, temp_cs_set=None, i_st=None,
-                 i_ia=None, i_m=None, w_int=None, flag_season=None, system_heating=None, system_cooling=None,
-                 cm=None, area_f=None, temp_hs_set_corr=None, temp_cs_set_corr=None, i_c_max=None, i_h_max=None,
-                 prop_rc_model=None):
-        self._qm_ve_req = qm_ve_req
-        self._temp_hs_set = temp_hs_set
-        self._temp_cs_set = temp_cs_set
-        self._i_st = i_st
-        self._i_ia = i_ia
-        self._i_m = i_m
-        self._w_int = w_int
-        self._flag_season = flag_season
-
-        self._sys_e_heating = system_heating
-        self._sys_e_cooling = system_cooling
-        self._cm = cm
-        self._area_f = area_f
-        self._temp_hs_set_corr = temp_hs_set_corr
-        self._temp_cs_set_corr = temp_cs_set_corr
-        self._i_c_max = i_c_max
-        self._i_h_max = i_h_max
-        self._prop_rc_model = prop_rc_model
-
-    # TODO: get / set methods
 
 
 def test_thermal_loads_new_ventilation():
