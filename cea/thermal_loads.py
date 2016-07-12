@@ -144,7 +144,7 @@ def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, n50):
 
 
 # FIXME: replace weather_data with tsd['T_ext'] and tsd['rh_ext']
-def calc_thermal_load_hvac_timestep(t, tsd, bpr, weather_data, state_prev, gv):
+def calc_thermal_load_hvac_timestep(t, tsd, bpr, state_prev, gv):
     """
     This function is executed for the case of heating or cooling with a HVAC system
     by coupling the R-C model of ISO 13790 with the HVAC model of Kaempf
@@ -169,8 +169,8 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, weather_data, state_prev, gv):
     """
 
     # get arguments from inputs
-    temp_ext = np.array(weather_data.drybulb_C)[t]
-    rh_ext = np.array(weather_data.relhum_percent)[t]
+    temp_ext = tsd['T_ext'][t]
+    rh_ext = tsd['rh_ext'][t]
 
     # TODO: replace by getter methods
     qm_ve_req = tsd['qm_ve_req'][t]
@@ -382,7 +382,7 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, weather_data, state_prev, gv):
     return tsd
 
 
-def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, weather_data, state_prev, gv):
+def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, state_prev, gv):
     """
     This function is executed for the case of mechanical ventilation with outdoor air
 
@@ -405,7 +405,7 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, w
     """
 
     # get arguments from input
-    temp_ext = np.array(weather_data.drybulb_C)[t]
+    temp_ext = tsd['T_ext'][t]
 
     qm_ve_req = tsd['qm_ve_req'][t]
     temp_hs_set = tsd['ta_hs_set'][t]
@@ -688,13 +688,13 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
             # case 1a: heating or cooling with hvac
             if (bpr.hvac.type_hs == 'T3' and gv.is_heating_season(t)) \
                     or (bpr.hvac.type_cs == 'T3' and not gv.is_heating_season(t)):
-                tsd = calc_thermal_load_hvac_timestep(t, tsd, bpr, weather_data, state_prev, gv)
+                tsd = calc_thermal_load_hvac_timestep(t, tsd, bpr, state_prev, gv)
 
                 # case 1b: mechanical ventilation
             else:
                 # print('1b')
                 tsd = calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr,
-                                                                                    weather_data, state_prev, gv)
+                                                                                    state_prev, gv)
 
             state_prev['temp_air_prev'] = tsd['Ta'][t]
             state_prev['temp_m_prev'] = tsd['Tm'][t]
