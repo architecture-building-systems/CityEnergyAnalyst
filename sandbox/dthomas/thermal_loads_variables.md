@@ -132,6 +132,10 @@ The main variables introduced is `tsd`, which stands for "time step data".
     - system_cooling=bpr.hvac.type_cs
     - cm=bpr.rc_model.Cm
     - area_f=bpr.rc_model.Af
+    - temp_hs_set_corr, temp_cs_set_corr calculated inside the function now...
+    - i_c_max, i_h_max calculated inside the function now...
+    - 
+    
     
 
 

@@ -186,10 +186,15 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, thermal_loads_input, weather_da
     system_cooling = bpr.hvac.type_cs
     cm = bpr.rc_model.Cm
     area_f = bpr.rc_model.Af
-    temp_hs_set_corr = thermal_loads_input._temp_hs_set_corr
-    temp_cs_set_corr = thermal_loads_input._temp_cs_set_corr
     i_c_max = thermal_loads_input._i_c_max
     i_h_max = thermal_loads_input._i_h_max
+
+    # model of losses in the emission and control system for space heating and cooling
+    temp_hs_set_corr, temp_cs_set_corr = calc_tHC_corr(bpr.hvac.type_hs, bpr.hvac.type_cs, bpr.hvac.type_ctrl)
+
+    # heating and cooling loads
+    i_c_max, i_h_max = functions.calc_capacity_heating_cooling_system(bpr.rc_model.Af, bpr.hvac)
+
 
     temp_air_prev = state_prev['temp_air_prev']
     temp_m_prev = state_prev['temp_m_prev']
@@ -381,7 +386,7 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, thermal_loads_input, weather_da
     return tsd
 
 
-def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, thermal_loads_input, weather_data, state_prev, gv):
+def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, thermal_loads_input, weather_data, state_prev, gv):
     """
     This function is executed for the case of mechanical ventilation with outdoor air
 
@@ -418,10 +423,11 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, therma
     system_cooling = thermal_loads_input._sys_e_cooling
     cm = thermal_loads_input._cm
     area_f = thermal_loads_input._area_f
-    temp_hs_set_corr = thermal_loads_input._temp_hs_set_corr
-    temp_cs_set_corr = thermal_loads_input._temp_cs_set_corr
-    i_c_max = thermal_loads_input._i_c_max
-    i_h_max = thermal_loads_input._i_h_max
+
+    # model of losses in the emission and control system for space heating and cooling
+    temp_hs_set_corr, temp_cs_set_corr = calc_tHC_corr(bpr.hvac.type_hs, bpr.hvac.type_cs, bpr.hvac.type_ctrl)
+
+    i_c_max, i_h_max = functions.calc_capacity_heating_cooling_system(bpr.rc_model.Af, bpr.hvac)
 
     temp_air_prev = state_prev['temp_air_prev']
     temp_m_prev = state_prev['temp_m_prev']
@@ -658,10 +664,6 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
                                                                  bpr.hvac.type_cs,
                                                                  bpr.hvac.type_hs)
 
-        # heating and cooling loads
-        # copied from original calc thermal loads
-        i_c_max, i_h_max = functions.calc_capacity_heating_cooling_system(bpr.rc_model.Af, bpr.hvac)
-
         # natural ventilation building propertiess
         # new
         dict_props_nat_vent = contributions.thermal_loads_new_ventilation.ventilation.get_properties_natural_ventilation(
@@ -675,9 +677,6 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
         tsd['flag_season'] = np.zeros(8760, dtype=bool)  # default is heating season
         tsd.loc[limit_inf_season:limit_sup_season, 'flag_season'] = True
 
-        # model of losses in the emission and control system for space heating and cooling
-        tHset_corr, tCset_corr = calc_tHC_corr(bpr.hvac.type_hs, bpr.hvac.type_cs, bpr.hvac.type_ctrl)
-
         # group function inputs
         thermal_loads_input = ThermalLoadsInput(qm_ve_req=tsd['qm_ve_req'].values, temp_hs_set=tsd['ta_hs_set'].values,
                                                 temp_cs_set=tsd['ta_cs_set'].values,
@@ -686,9 +685,9 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
                                                 flag_season=tsd['flag_season'],
                                                 system_heating=bpr.hvac.type_hs, system_cooling=bpr.hvac.type_cs,
                                                 cm=bpr.rc_model.Cm,
-                                                area_f=bpr.rc_model.Af, temp_hs_set_corr=tHset_corr,
-                                                temp_cs_set_corr=tCset_corr,
-                                                i_c_max=i_c_max, i_h_max=i_h_max, prop_rc_model=bpr.rc_model)
+                                                area_f=bpr.rc_model.Af, temp_hs_set_corr=None,
+                                                temp_cs_set_corr=None,
+                                                i_c_max=None, i_h_max=None, prop_rc_model=bpr.rc_model)
 
         # we give a seed high enough to avoid doing a iteration for 2 years.
         # definition of first temperature to start calculation of air conditioning system
@@ -710,7 +709,7 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
                 # case 1b: mechanical ventilation
             else:
                 # print('1b')
-                tsd = calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, thermal_loads_input,
+                tsd = calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, thermal_loads_input,
                                                                                     weather_data, state_prev, gv)
 
             state_prev['temp_air_prev'] = tsd['Ta'][t]
