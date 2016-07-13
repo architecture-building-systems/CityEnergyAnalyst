@@ -3,7 +3,7 @@ import unittest
 
 from cea import epwreader
 from cea.demand import BuildingProperties
-from cea.thermal_loads import calc_thermal_loads_new_ventilation
+from cea.thermal_loads import calc_thermal_loads_new_ventilation, BuildingProperties
 from cea.inputlocator import InputLocator
 from cea.globalvar import GlobalVariables
 from cea.maker import schedule_maker
