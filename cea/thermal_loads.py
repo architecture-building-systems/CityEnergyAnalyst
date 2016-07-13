@@ -194,8 +194,8 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
     i_c_max, i_h_max = functions.calc_capacity_heating_cooling_system(bpr.rc_model.Af, bpr.hvac)
 
     # previous timestep data (we give a seed high enough to avoid doing a iteration for 2 years, Ta=21, Tm=16)
-    temp_air_prev = tsd['Ta'][t-1] if t > 0 else 21
-    temp_m_prev = tsd['Tm'][t-1] if t > 0 else 16
+    temp_air_prev = tsd['Ta'][t-1] if t > 0 else gv.initial_temp_air_prev
+    temp_m_prev = tsd['Tm'][t-1] if t > 0 else gv.initial_temp_m_prev
 
     # get constant properties of building R-C-model
     h_tr_is = bpr.rc_model.Htr_is
@@ -427,8 +427,8 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
     i_c_max, i_h_max = functions.calc_capacity_heating_cooling_system(bpr.rc_model.Af, bpr.hvac)
 
     # previous timestep data (we give a seed high enough to avoid doing a iteration for 2 years, Ta=21, Tm=16)
-    temp_air_prev = tsd['Ta'][t - 1] if t > 0 else 21
-    temp_m_prev = tsd['Tm'][t - 1] if t > 0 else 16
+    temp_air_prev = tsd['Ta'][t - 1] if t > 0 else gv.initial_temp_air_prev
+    temp_m_prev = tsd['Tm'][t - 1] if t > 0 else gv.initial_temp_m_prev
 
     # get constant properties of building R-C-model
     h_tr_is = bpr.rc_model.Htr_is
