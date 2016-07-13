@@ -668,10 +668,8 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
             bpr.geometry,
             bpr.architecture, gv)
 
-        # # # factor for cross ventilation
-        # factor_cros = architecture.f_cros  # TODO: get from building properties
-
-        # create flag season
+        # create flag season FIXME: rename, e.g. "is_not_heating_season" or something like that...
+        # FIXME: or work with gv.is_heating_season(t)?
         tsd['flag_season'] = np.zeros(8760, dtype=bool)  # default is heating season
         tsd.loc[limit_inf_season:limit_sup_season, 'flag_season'] = True
 
@@ -682,15 +680,14 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
 
         # end-use demand calculation
         for t in range(8760):
-
-            # case 1a: heating or cooling with hvac
-            if (bpr.hvac.type_hs == 'T3' and gv.is_heating_season(t)) \
-                    or (bpr.hvac.type_cs == 'T3' and not gv.is_heating_season(t)):
+            if bpr.hvac.type_hs == 'T3' and gv.is_heating_season(t):
+                # case 1a: heating with hvac
                 tsd = calc_thermal_load_hvac_timestep(t, tsd, bpr, gv)
-
-                # case 1b: mechanical ventilation
+            elif bpr.hvac.type_cs == 'T3' and not gv.is_heating_season(t):
+                # case 1a: cooling with hvac
+                tsd = calc_thermal_load_hvac_timestep(t, tsd, bpr, gv)
             else:
-                # print('1b')
+                # case 1b: mechanical ventilation
                 tsd = calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, gv)
 
         # TODO: check this out with Shanshan :)
