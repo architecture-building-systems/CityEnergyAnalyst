@@ -624,15 +624,11 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
     tsd['w_sup'] = np.zeros(8760)
     if bpr.rc_model.Af > 0:  # building has conditioned area
 
-        # get heating and cooling season
-        limit_inf_season = gv.seasonhours[0] + 1  # TODO: maybe rename or remove
-        limit_sup_season = gv.seasonhours[1]  # TODO maybe rename or remove
-
         # get occupancy
         tsd = functions.get_occupancy(tsd, bpr.architecture, bpr.rc_model.Af)
 
         # get internal comfort properties
-        tsd = functions.get_internal_comfort(tsd, bpr.comfort, limit_inf_season, limit_sup_season,
+        tsd = functions.get_internal_comfort(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
                                              date.dayofweek)
 
         # minimum mass flow rate of ventilation according to schedule
@@ -671,12 +667,12 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
         # create flag season FIXME: rename, e.g. "is_not_heating_season" or something like that...
         # FIXME: or work with gv.is_heating_season(t)?
         tsd['flag_season'] = np.zeros(8760, dtype=bool)  # default is heating season
-        tsd.loc[limit_inf_season:limit_sup_season, 'flag_season'] = True
+        tsd.loc[gv.seasonhours[0] + 1:gv.seasonhours[1], 'flag_season'] = True  # True means cooling season
 
         # ground water temperature in C during heating season (winter) according to norm
         tsd['Tww_re'] = bpr.building_systems['Tww_re_0']
         # ground water temperature in C during non-heating season (summer) according to norm
-        tsd.loc[limit_inf_season:limit_sup_season-1, 'Tww_re'] = 14
+        tsd.loc[gv.seasonhours[0] + 1:gv.seasonhours[1] - 1, 'Tww_re'] = 14
 
         # end-use demand calculation
         for t in range(8760):

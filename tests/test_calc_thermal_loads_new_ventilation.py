@@ -1,5 +1,5 @@
 import os
-from unittest import TestCase
+import unittest
 
 from cea import epwreader
 from cea.demand import BuildingProperties
@@ -11,21 +11,21 @@ from cea.maker import schedule_maker
 import pandas as pd
 
 
-class TestCalcThermalLoadsNewVentilation(TestCase):
+class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
     @classmethod
-    def setUpClass(self):
-        self.locator = InputLocator(r'C:\reference-case\baseline')
-        self.gv = GlobalVariables()
+    def setUpClass(cls):
+        cls.locator = InputLocator(r'C:\reference-case\baseline')
+        cls.gv = GlobalVariables()
 
-        weather_path = self.locator.get_default_weather()
-        self.weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms']]
+        weather_path = cls.locator.get_default_weather()
+        cls.weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms']]
 
-        self.building_properties = BuildingProperties(self.locator, self.gv)
-        self.date = pd.date_range(self.gv.date_start, periods=8760, freq='H')
-        self.list_uses = self.building_properties.list_uses()
-        self.schedules = schedule_maker(self.date, self.locator, self.list_uses)
-        self.usage_schedules = {'list_uses': self.list_uses,
-                                'schedules': self.schedules}
+        cls.building_properties = BuildingProperties(cls.locator, cls.gv)
+        cls.date = pd.date_range(cls.gv.date_start, periods=8760, freq='H')
+        cls.list_uses = cls.building_properties.list_uses()
+        cls.schedules = schedule_maker(cls.date, cls.locator, cls.list_uses)
+        cls.usage_schedules = {'list_uses': cls.list_uses,
+                                'schedules': cls.schedules}
 
     def test_calc_thermal_loads_new_ventilation(self):
         # FIXME: the usage_schedules bit needs to be fixed!!
@@ -93,5 +93,8 @@ def run_for_single_building(building, bpr, weather_data, usage_schedules, date, 
                                        temporary_folder)
     df = pd.read_csv(temporary_file)
     return building, df['QCf_kWh'].sum(), df['QHf_kWh'].sum()
+
+if __name__ == "__main__":
+    unittest.main()
 
 
