@@ -144,7 +144,7 @@ def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, n50):
 
 
 # FIXME: replace weather_data with tsd['T_ext'] and tsd['rh_ext']
-def calc_thermal_load_hvac_timestep(t, tsd, bpr, state_prev, gv):
+def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
     """
     This function is executed for the case of heating or cooling with a HVAC system
     by coupling the R-C model of ISO 13790 with the HVAC model of Kaempf
@@ -193,8 +193,9 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, state_prev, gv):
     # heating and cooling loads
     i_c_max, i_h_max = functions.calc_capacity_heating_cooling_system(bpr.rc_model.Af, bpr.hvac)
 
-    temp_air_prev = state_prev['temp_air_prev']
-    temp_m_prev = state_prev['temp_m_prev']
+    # previous timestep data (we give a seed high enough to avoid doing a iteration for 2 years, Ta=21, Tm=16)
+    temp_air_prev = tsd['Ta'][t-1] if t > 0 else 21
+    temp_m_prev = tsd['Tm'][t-1] if t > 0 else 16
 
     # get constant properties of building R-C-model
     h_tr_is = bpr.rc_model.Htr_is
@@ -382,7 +383,7 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, state_prev, gv):
     return tsd
 
 
-def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, state_prev, gv):
+def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, gv):
     """
     This function is executed for the case of mechanical ventilation with outdoor air
 
@@ -425,8 +426,9 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, s
 
     i_c_max, i_h_max = functions.calc_capacity_heating_cooling_system(bpr.rc_model.Af, bpr.hvac)
 
-    temp_air_prev = state_prev['temp_air_prev']
-    temp_m_prev = state_prev['temp_m_prev']
+    # previous timestep data (we give a seed high enough to avoid doing a iteration for 2 years, Ta=21, Tm=16)
+    temp_air_prev = tsd['Ta'][t - 1] if t > 0 else 21
+    temp_m_prev = tsd['Tm'][t - 1] if t > 0 else 16
 
     # get constant properties of building R-C-model
     h_tr_is = bpr.rc_model.Htr_is
@@ -673,10 +675,6 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
         tsd['flag_season'] = np.zeros(8760, dtype=bool)  # default is heating season
         tsd.loc[limit_inf_season:limit_sup_season, 'flag_season'] = True
 
-        # we give a seed high enough to avoid doing a iteration for 2 years.
-        # definition of first temperature to start calculation of air conditioning system
-        state_prev = {'temp_m_prev': 16, 'temp_air_prev': 21}
-
         # ground water temperature in C during heating season (winter) according to norm
         tsd['Tww_re'] = bpr.building_systems['Tww_re_0']
         # ground water temperature in C during non-heating season (summer) according to norm
@@ -688,16 +686,12 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
             # case 1a: heating or cooling with hvac
             if (bpr.hvac.type_hs == 'T3' and gv.is_heating_season(t)) \
                     or (bpr.hvac.type_cs == 'T3' and not gv.is_heating_season(t)):
-                tsd = calc_thermal_load_hvac_timestep(t, tsd, bpr, state_prev, gv)
+                tsd = calc_thermal_load_hvac_timestep(t, tsd, bpr, gv)
 
                 # case 1b: mechanical ventilation
             else:
                 # print('1b')
-                tsd = calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr,
-                                                                                    state_prev, gv)
-
-            state_prev['temp_air_prev'] = tsd['Ta'][t]
-            state_prev['temp_m_prev'] = tsd['Tm'][t]
+                tsd = calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, gv)
 
         # TODO: check this out with Shanshan :)
 
