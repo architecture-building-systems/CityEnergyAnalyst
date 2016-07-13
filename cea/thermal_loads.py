@@ -235,8 +235,7 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
     qm_ve_mech = qm_ve_req  # required air mass flow rate
     qm_ve_nat = 0  # natural ventilation # TODO: this could be a fixed percentage of the mechanical ventilation (overpressure) as a function of n50
 
-    temp_ve_sup = hvac_kaempf.calc_hex(rh_ext, gv, qv_mech=(qm_ve_req / gv.Pair), qv_mech_dim=0, temp_ext=temp_ext,
-                                       temp_zone_prev=temp_air_prev, timestep=t)[0]
+    temp_ve_sup, _ = hvac_kaempf.calc_hex(rh_ext, gv,  temp_ext, temp_air_prev, t)
 
     # conversion to volume flow rate
     qv_ve_req = qm_ve_req / gv.Pair  # TODO: modify Kaempf model to accept mass flow rate instead of volume flow
