@@ -624,6 +624,12 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
     tsd['Ta_re_cs'] = np.zeros(8760)
     tsd['w_re'] = np.zeros(8760)
     tsd['w_sup'] = np.zeros(8760)
+
+    # ground water temperature in C during heating season (winter) according to norm
+    tsd['Tww_re'] = bpr.building_systems['Tww_re_0']
+    # ground water temperature in C during non-heating season (summer) according to norm
+    tsd.loc[gv.seasonhours[0] + 1:gv.seasonhours[1] - 1, 'Tww_re'] = 14
+
     if bpr.rc_model.Af > 0:  # building has conditioned area
 
         # get occupancy
@@ -670,11 +676,6 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
         # FIXME: or work with gv.is_heating_season(t)?
         tsd['flag_season'] = np.zeros(8760, dtype=bool)  # default is heating season
         tsd.loc[gv.seasonhours[0] + 1:gv.seasonhours[1], 'flag_season'] = True  # True means cooling season
-
-        # ground water temperature in C during heating season (winter) according to norm
-        tsd['Tww_re'] = bpr.building_systems['Tww_re_0']
-        # ground water temperature in C during non-heating season (summer) according to norm
-        tsd.loc[gv.seasonhours[0] + 1:gv.seasonhours[1] - 1, 'Tww_re'] = 14
 
         # end-use demand calculation
         for t in range(8760):
