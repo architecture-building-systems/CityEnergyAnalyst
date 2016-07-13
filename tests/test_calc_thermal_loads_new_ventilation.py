@@ -67,11 +67,13 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
         """Test some other buildings just to make sure we have the proper data"""
         import multiprocessing as mp
         pool = mp.Pool()
+        # randomly selected except for B302006716, which has `Af == 0`
         buildings = {'B140571': (87082.27, 173418.77),
                      'B140557': (67011.74, 141896.5),
                      'B140577': (1600579.37, 10583959.85),
                      'B302040335': (1525.49, 8443.68),
-                     'B2372467': (33608.18, 76675.11)}  # randomly selected
+                     'B2372467': (33608.18, 76675.11),
+                     'B302006716': (0.0, 0.0)}
         joblist = []
         for building in buildings.keys():
             bpr = self.building_properties[building]

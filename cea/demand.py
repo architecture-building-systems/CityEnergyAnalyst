@@ -115,7 +115,7 @@ def demand_calculation(locator, weather_path, gv):
         joblist.append(job)
 
     for i, job in enumerate(joblist):
-        job.get(20)
+        job.get(60)
         gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
 
     # get total file
