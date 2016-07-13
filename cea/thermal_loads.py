@@ -852,10 +852,6 @@ def test_thermal_loads_new_ventilation():
     gv.log("test_thermal_loads_new_ventilation() succeeded")
 
 
-if __name__ == '__main__':
-    test_thermal_loads_new_ventilation()
-
-
 def calc_heat_gains_solar(bpr, gv):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
@@ -882,3 +878,7 @@ def Calc_Rf_sh (ShadingType):
     for row in range(rows):
         if ShadingType == ValuesRf_Table.loc[row, 'Type']:
             return ValuesRf_Table.loc[row, 'ValueOUT']
+
+
+if __name__ == '__main__':
+    test_thermal_loads_new_ventilation()
