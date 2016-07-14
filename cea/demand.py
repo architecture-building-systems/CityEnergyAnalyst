@@ -104,7 +104,7 @@ def demand_calculation(locator, weather_path, gv):
     # demand calculation for each building
     num_buildings = len(building_properties)
 
-    thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, usage_schedules,
+    thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, num_buildings, usage_schedules,
                                                 weather_data)
 
     # get total file
