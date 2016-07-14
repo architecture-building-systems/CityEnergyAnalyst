@@ -104,19 +104,8 @@ def demand_calculation(locator, weather_path, gv):
     # demand calculation for each building
     num_buildings = len(building_properties)
 
-    pool = mp.Pool()
-    joblist = []
-    for building in building_properties.list_building_names():
-        bpr = building_properties[building]
-        job = pool.apply_async(thermal_loads.calc_thermal_loads_new_ventilation,
-                               [building, bpr, weather_data, usage_schedules, date, gv,
-                                locator.get_demand_results_folder(),
-                                locator.get_temporary_folder()])
-        joblist.append(job)
-
-    for i, job in enumerate(joblist):
-        job.get(60)
-        gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
+    thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, usage_schedules,
+                                                weather_data)
 
     # get total file
 
@@ -133,6 +122,33 @@ def demand_calculation(locator, weather_path, gv):
     df.to_csv(locator.get_total_demand(), index=False, float_format='%.2f')
 
     gv.log('finished')
+
+
+def thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, usage_schedules,
+                                weather_data):
+    for i, building in enumerate(building_properties.list_building_names()):
+        bpr = building_properties[building]
+        thermal_loads.calc_thermal_loads_new_ventilation(
+            building, bpr, weather_data, usage_schedules, date, gv,
+            locator.get_demand_results_folder(),
+            locator.get_temporary_folder())
+        gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
+
+
+def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, num_buildings, usage_schedules,
+                                                weather_data):
+    pool = mp.Pool()
+    joblist = []
+    for building in building_properties.list_building_names():
+        bpr = building_properties[building]
+        job = pool.apply_async(thermal_loads.calc_thermal_loads_new_ventilation,
+                               [building, bpr, weather_data, usage_schedules, date, gv,
+                                locator.get_demand_results_folder(),
+                                locator.get_temporary_folder()])
+        joblist.append(job)
+    for i, job in enumerate(joblist):
+        job.get(60)
+        gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
 
 
 def test_demand():
