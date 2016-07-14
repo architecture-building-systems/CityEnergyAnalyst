@@ -817,9 +817,9 @@ def get_building_geometry_ventilation(gdf_building_geometry):
     # TODO: get real slope of roof in the future
     slope_roof_default = 0
 
-    area_facade_zone = gdf_building_geometry['perimeter'] * gdf_building_geometry.height_ag
+    area_facade_zone = gdf_building_geometry['perimeter'] * gdf_building_geometry['height_ag']
     area_roof_zone = gdf_building_geometry['footprint']
-    height_zone = gdf_building_geometry.height_ag
+    height_zone = gdf_building_geometry['height_ag']
     slope_roof = slope_roof_default
 
     return area_facade_zone, area_roof_zone, height_zone, slope_roof
