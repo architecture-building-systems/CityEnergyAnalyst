@@ -185,26 +185,26 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
     flag_season = tsd['flag_season'][t]
     w_int = tsd['w_int'][t]
 
-    system_heating = bpr.hvac.type_hs
-    system_cooling = bpr.hvac.type_cs
-    cm = bpr.rc_model.Cm
-    area_f = bpr.rc_model.Af
+    system_heating = bpr.hvac['type_hs']
+    system_cooling = bpr.hvac['type_cs']
+    cm = bpr.rc_model['Cm']
+    area_f = bpr.rc_model['Af']
 
     # model of losses in the emission and control system for space heating and cooling
-    temp_hs_set_corr, temp_cs_set_corr = calc_tHC_corr(bpr.hvac.type_hs, bpr.hvac.type_cs, bpr.hvac.type_ctrl)
+    temp_hs_set_corr, temp_cs_set_corr = calc_tHC_corr(bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
 
     # heating and cooling loads
-    i_c_max, i_h_max = functions.calc_capacity_heating_cooling_system(bpr.rc_model.Af, bpr.hvac)
+    i_c_max, i_h_max = functions.calc_capacity_heating_cooling_system(bpr.rc_model['Af'], bpr.hvac)
 
     # previous timestep data (we give a seed high enough to avoid doing a iteration for 2 years, Ta=21, Tm=16)
     temp_air_prev = tsd['Ta'][t-1] if t > 0 else gv.initial_temp_air_prev
     temp_m_prev = tsd['Tm'][t-1] if t > 0 else gv.initial_temp_m_prev
 
     # get constant properties of building R-C-model
-    h_tr_is = bpr.rc_model.Htr_is
-    h_tr_ms = bpr.rc_model.Htr_ms
-    h_tr_w = bpr.rc_model.Htr_w
-    h_tr_em = bpr.rc_model.Htr_em
+    h_tr_is = bpr.rc_model['Htr_is']
+    h_tr_ms = bpr.rc_model['Htr_ms']
+    h_tr_w = bpr.rc_model['Htr_w']
+    h_tr_em = bpr.rc_model['Htr_em']
 
     # initialize output
     q_hs_sen = None
@@ -418,25 +418,25 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
     i_m = tsd['I_m'][t]
     flag_season = tsd['flag_season'][t]
 
-    system_heating = bpr.hvac.type_hs
-    system_cooling = bpr.hvac.type_cs
-    cm = bpr.rc_model.Cm
-    area_f = bpr.rc_model.Af
+    system_heating = bpr.hvac['type_hs']
+    system_cooling = bpr.hvac['type_cs']
+    cm = bpr.rc_model['Cm']
+    area_f = bpr.rc_model['Af']
 
     # model of losses in the emission and control system for space heating and cooling
-    temp_hs_set_corr, temp_cs_set_corr = calc_tHC_corr(bpr.hvac.type_hs, bpr.hvac.type_cs, bpr.hvac.type_ctrl)
+    temp_hs_set_corr, temp_cs_set_corr = calc_tHC_corr(bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
 
-    i_c_max, i_h_max = functions.calc_capacity_heating_cooling_system(bpr.rc_model.Af, bpr.hvac)
+    i_c_max, i_h_max = functions.calc_capacity_heating_cooling_system(bpr.rc_model['Af'], bpr.hvac)
 
     # previous timestep data (we give a seed high enough to avoid doing a iteration for 2 years, Ta=21, Tm=16)
     temp_air_prev = tsd['Ta'][t - 1] if t > 0 else gv.initial_temp_air_prev
     temp_m_prev = tsd['Tm'][t - 1] if t > 0 else gv.initial_temp_m_prev
 
     # get constant properties of building R-C-model
-    h_tr_is = bpr.rc_model.Htr_is
-    h_tr_ms = bpr.rc_model.Htr_ms
-    h_tr_w = bpr.rc_model.Htr_w
-    h_tr_em = bpr.rc_model.Htr_em
+    h_tr_is = bpr.rc_model['Htr_is']
+    h_tr_ms = bpr.rc_model['Htr_ms']
+    h_tr_w = bpr.rc_model['Htr_w']
+    h_tr_em = bpr.rc_model['Htr_em']
 
     # mass flow rate of mechanical ventilation
     qm_ve_mech = qm_ve_req  # required air mass flow rate
@@ -628,7 +628,7 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
     tsd = functions.calc_mixed_schedule(tsd, list_uses, schedules, bpr.occupancy)  # TODO: rename outputs
 
     # get internal loads
-    tsd = functions.get_internal_loads(tsd, bpr.internal_loads, bpr.architecture, bpr.rc_model.Af)
+    tsd = functions.get_internal_loads(tsd, bpr.internal_loads, bpr.architecture, bpr.rc_model['Af'])
 
 
     # ground water temperature in C during heating season (winter) according to norm
@@ -636,10 +636,10 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
     # ground water temperature in C during non-heating season (summer) according to norm
     tsd.loc[gv.seasonhours[0] + 1:gv.seasonhours[1] - 1, 'Tww_re'] = 14
 
-    if bpr.rc_model.Af > 0:  # building has conditioned area
+    if bpr.rc_model['Af'] > 0:  # building has conditioned area
 
         # get occupancy
-        tsd = functions.get_occupancy(tsd, bpr.architecture, bpr.rc_model.Af)
+        tsd = functions.get_occupancy(tsd, bpr.architecture, bpr.rc_model['Af'])
 
         # get internal comfort properties
         tsd = functions.get_internal_comfort(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
@@ -647,7 +647,7 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
 
         # minimum mass flow rate of ventilation according to schedule
         # with infiltration and overheating
-        tsd['qv_req'] = np.vectorize(calc_qv_req)(tsd['ve'].values, tsd['people'].values, bpr.rc_model.Af, gv,
+        tsd['qv_req'] = np.vectorize(calc_qv_req)(tsd['ve'].values, tsd['people'].values, bpr.rc_model['Af'], gv,
                                                   date.hour, range(8760), n50)
         tsd['qm_ve_req'] = tsd['qv_req'] * gv.Pair  # TODO:  use dynamic rho_air
 
@@ -658,19 +658,19 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
 
         # sensible internal heat gains
         # copied from original calc thermal loads
-        tsd['I_int_sen'] = functions.calc_heat_gains_internal_sensible(tsd['people'].values, bpr.internal_loads.Qs_Wp,
+        tsd['I_int_sen'] = functions.calc_heat_gains_internal_sensible(tsd['people'].values, bpr.internal_loads['Qs_Wp'],
                                                                        tsd['Ealf'].values, tsd['Eprof'].values,
                                                                        tsd['Qcdata'].values, tsd['Qcrefri'].values)
 
         # components of internal heat gains for R-C-model
         # copied from original calc thermal loads
-        tsd = functions.calc_comp_heat_gains_sensible(tsd, bpr.rc_model.Am, bpr.rc_model.Atot, bpr.rc_model.Htr_w)
+        tsd = functions.calc_comp_heat_gains_sensible(tsd, bpr.rc_model['Am'], bpr.rc_model['Atot'], bpr.rc_model['Htr_w'])
 
         # internal moisture gains
         # copied from original calc thermal loads
-        tsd['w_int'] = functions.calc_heat_gains_internal_latent(tsd['people'].values, bpr.internal_loads.X_ghp,
-                                                                 bpr.hvac.type_cs,
-                                                                 bpr.hvac.type_hs)
+        tsd['w_int'] = functions.calc_heat_gains_internal_latent(tsd['people'].values, bpr.internal_loads['X_ghp'],
+                                                                 bpr.hvac['type_cs'],
+                                                                 bpr.hvac['type_hs'])
 
         # natural ventilation building propertiess
         # new
@@ -685,10 +685,10 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
 
         # end-use demand calculation
         for t in range(8760):
-            if bpr.hvac.type_hs == 'T3' and gv.is_heating_season(t):
+            if bpr.hvac['type_hs'] == 'T3' and gv.is_heating_season(t):
                 # case 1a: heating with hvac
                 tsd = calc_thermal_load_hvac_timestep(t, tsd, bpr, gv)
-            elif bpr.hvac.type_cs == 'T3' and not gv.is_heating_season(t):
+            elif bpr.hvac['type_cs'] == 'T3' and not gv.is_heating_season(t):
                 # case 1a: cooling with hvac
                 tsd = calc_thermal_load_hvac_timestep(t, tsd, bpr, gv)
             else:
@@ -712,8 +712,8 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
                                                                   bpr.building_systems['Tcs_re_0'],
                                                                   Qhs_sen_incl_em_ls_0,
                                                                   Qcs_sen_incl_em_ls_0,
-                                                                  gv.D, bpr.building_systems['Y'][0], bpr.hvac.type_hs,
-                                                                  bpr.hvac.type_cs, gv.Bf,
+                                                                  gv.D, bpr.building_systems['Y'][0], bpr.hvac['type_hs'],
+                                                                  bpr.hvac['type_cs'], gv.Bf,
                                                                   bpr.building_systems['Lv'])
 
         # Calc requirements of generation systems (both cooling and heating do not have a storage):
@@ -744,12 +744,12 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
                                                                                                       gv,
                                                                                                       tsd['ma_sup_cs'],
                                                                                                       tsd['ma_sup_hs'],
-                                                                                                      bpr.hvac.type_cs,
-                                                                                                      bpr.hvac.type_hs,
+                                                                                                      bpr.hvac['type_cs'],
+                                                                                                      bpr.hvac['type_hs'],
                                                                                                       tsd['ta_hs_set'].values,
                                                                                                       tsd['w_re'],
                                                                                                       tsd['w_sup'])
-        Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpww = functions.calc_dhw_heating_demand(bpr.rc_model.Af,
+        Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpww = functions.calc_dhw_heating_demand(bpr.rc_model['Af'],
                                                                                                       bpr.building_systems['Lcww_dis'],
                                                                                                       bpr.building_systems['Lsww_dis'],
                                                                                                       bpr.building_systems['Lvww_c'],
@@ -764,22 +764,22 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
                                                                                                       tsd['vww'])
 
         # clac auxiliary loads of pumping systems
-        Eaux_cs, Eaux_fw, Eaux_hs, Eaux_ve, Eaux_ww = functions.calc_pumping_systems_aux_loads(bpr.rc_model.Af,
-                                                                                               bpr.geometry.Blength,
-                                                                                               bpr.geometry.Bwidth,
+        Eaux_cs, Eaux_fw, Eaux_hs, Eaux_ve, Eaux_ww = functions.calc_pumping_systems_aux_loads(bpr.rc_model['Af'],
+                                                                                               bpr.geometry['Blength'],
+                                                                                               bpr.geometry['Bwidth'],
                                                                                                Mww, Qcsf, Qcsf_0,
                                                                                                Qhsf, Qhsf_0, Qww, Qwwf,
                                                                                                Qwwf_0,
                                                                                                Tcs_re, Tcs_sup, Ths_re,
                                                                                                Ths_sup,
-                                                                                               Vw, bpr.age.built,
+                                                                                               Vw, bpr.age['built'],
                                                                                                bpr.building_systems['fforma'],
                                                                                                gv,
-                                                                                               bpr.geometry.floors_ag,
-                                                                                               bpr.occupancy.PFloor,
+                                                                                               bpr.geometry['floors_ag'],
+                                                                                               bpr.occupancy['PFloor'],
                                                                                                tsd['qv_req'].values,
-                                                                                               bpr.hvac.type_cs,
-                                                                                               bpr.hvac.type_hs)
+                                                                                               bpr.hvac['type_cs'],
+                                                                                               bpr.hvac['type_hs'])
 
         # Calc total auxiliary loads
         Eauxf = (Eaux_ww + Eaux_fw + Eaux_hs + Eaux_cs + tsd['Ehs_lat_aux'] + Eaux_ve)
@@ -808,10 +808,10 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
 
     # Cacl totals and peaks electrical loads
     Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot = functions.calc_loads_electrical(
-        bpr.rc_model.Aef, tsd['Ealf'].values, Eauxf, tsd['Edataf'].values, tsd['Eprof'].values)
+        bpr.rc_model['Aef'], tsd['Ealf'].values, Eauxf, tsd['Edataf'].values, tsd['Eprof'].values)
 
     # write results to csv
-    functions.results_to_csv(bpr.rc_model.GFA_m2, bpr.rc_model.Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edataf,
+    functions.results_to_csv(bpr.rc_model['GFA_m2'], bpr.rc_model['Af'], Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edataf,
                              Edataf_tot,
                              Eprof, Eprof_tot,
                              building_name,
@@ -823,7 +823,7 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
                              bpr.building_systems['Ths_sup_0'], tsd['Tww_re'], Tww_st,
                              bpr.building_systems['Tww_sup_0'], Waterconsumption, results_folder, mcpcs, mcphs, mcpww,
                              temporary_folder,
-                             bpr.hvac.type_cs, bpr.hvac.type_hs, waterpeak, date)
+                             bpr.hvac['type_cs'], bpr.hvac['type_hs'], waterpeak, date)
 
     gv.report('calc-thermal-loads', locals(), results_folder, building_name)
     return
@@ -980,35 +980,35 @@ class BuildingProperties(object):
 
     def get_prop_geometry(self, name_building):
         """get geometry of a building by name"""
-        return self._prop_geometry.ix[name_building]
+        return self._prop_geometry.ix[name_building].to_dict()
 
     def get_prop_architecture(self, name_building):
         """get the architecture properties of a building by name"""
-        return self._prop_architecture.ix[name_building]
+        return self._prop_architecture.ix[name_building].to_dict()
 
     def get_prop_occupancy(self, name_building):
         """get the occupancy properties of a building by name"""
-        return self._prop_occupancy.ix[name_building]
+        return self._prop_occupancy.ix[name_building].to_dict()
 
     def get_prop_hvac(self, name_building):
         """get HVAC properties of a building by name"""
-        return self._prop_HVAC_result.ix[name_building]
+        return self._prop_HVAC_result.ix[name_building].to_dict()
 
     def get_prop_rc_model(self, name_building):
         """get RC-model properties of a building by name"""
-        return self._prop_RC_model.ix[name_building]
+        return self._prop_RC_model.ix[name_building].to_dict()
 
     def get_prop_comfort(self, name_building):
         """get comfort properties of a building by name"""
-        return self._prop_comfort.ix[name_building]
+        return self._prop_comfort.ix[name_building].to_dict()
 
     def get_prop_internal_loads(self, name_building):
         """get internal loads properties of a building by name"""
-        return self._prop_internal_loads.ix[name_building]
+        return self._prop_internal_loads.ix[name_building].to_dict()
 
     def get_prop_age(self, name_building):
         """get age properties of a building by name"""
-        return self._prop_age.ix[name_building]
+        return self._prop_age.ix[name_building].to_dict()
 
     def get_solar(self, name_building):
         """get solar properties of a building by name"""
@@ -1226,20 +1226,20 @@ class BuildingPropertiesRow(object):
         # TODO: Documentation
         # Refactored from CalcThermalLoads
 
-        Ll = self.geometry.Blength
-        Lw = self.geometry.Bwidth
-        nf_ag = self.geometry.floors_ag
-        nf_bg = self.geometry.floors_bg
-        nfp = self.occupancy.PFloor
+        Ll = self.geometry['Blength']
+        Lw = self.geometry['Bwidth']
+        nf_ag = self.geometry['floors_ag']
+        nf_bg = self.geometry['floors_bg']
+        nfp = self.occupancy['PFloor']
         phi_pipes = self._calculate_pipe_transmittance_values()
 
         # nominal temperatures
-        Ths_sup_0 = self.hvac.Tshs0_C
-        Ths_re_0 = Ths_sup_0 - self.hvac.dThs0_C
-        Tcs_sup_0 = self.hvac.Tscs0_C
-        Tcs_re_0 = Tcs_sup_0 + self.hvac.dTcs0_C
-        Tww_sup_0 = self.hvac.Tsww0_C
-        Tww_re_0 = Tww_sup_0 - self.hvac.dTww0_C  # Ground water temperature in heating(winter) season, according to norm #TODO: check norm
+        Ths_sup_0 = self.hvac['Tshs0_C']
+        Ths_re_0 = Ths_sup_0 - self.hvac['dThs0_C']
+        Tcs_sup_0 = self.hvac['Tscs0_C']
+        Tcs_re_0 = Tcs_sup_0 + self.hvac['dTcs0_C']
+        Tww_sup_0 = self.hvac['Tsww0_C']
+        Tww_re_0 = Tww_sup_0 - self.hvac['dTww0_C']  # Ground water temperature in heating(winter) season, according to norm #TODO: check norm
         # Identification of equivalent lenghts
         fforma = self._calc_form()  # factor form comparison real surface and rectangular
         Lv = (2 * Ll + 0.0325 * Ll * Lw + 6) * fforma  # length vertical lines
@@ -1270,16 +1270,16 @@ class BuildingPropertiesRow(object):
 
     def _calculate_pipe_transmittance_values(self):
         """linear trasmissivity coefficients of piping W/(m.K)"""
-        if self.age.built >= 1995 or self.age.HVAC > 0:
+        if self.age['built'] >= 1995 or self.age['HVAC'] > 0:
             phi_pipes = [0.2, 0.3, 0.3]
-        elif 1985 <= self.age.built < 1995 and self.age.HVAC == 0:
+        elif 1985 <= self.age['built'] < 1995 and self.age['HVAC'] == 0:
             phi_pipes = [0.3, 0.4, 0.4]
         else:
             phi_pipes = [0.4, 0.4, 0.4]
         return phi_pipes
 
     def _calc_form(self):
-        factor = self.geometry.footprint / (self.geometry.Bwidth * self.geometry.Blength)
+        factor = self.geometry['footprint'] / (self.geometry['Bwidth'] * self.geometry['Blength'])
         return factor
 
 
