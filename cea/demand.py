@@ -88,8 +88,13 @@ def demand_calculation(locator, weather_path, gv):
 
     # demand model
     num_buildings = len(building_properties)
-    thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, num_buildings, schedules_dict,
-                                                weather_data)
+    if gv.multiprocessing:
+        thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, num_buildings,
+                                                    schedules_dict,
+                                                    weather_data)
+    else:
+        thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, schedules_dict,
+                                    weather_data)
     write_totals_csv(building_properties, locator)
     gv.log('done')
 
