@@ -1,14 +1,13 @@
 import os
 import unittest
 
-from cea import epwreader
-from cea.demand import BuildingProperties
-from cea.thermal_loads import calc_thermal_loads_new_ventilation, BuildingProperties
-from cea.inputlocator import InputLocator
-from cea.globalvar import GlobalVariables
-from cea.maker import schedule_maker
-
 import pandas as pd
+
+from cea.globalvar import GlobalVariables
+from cea.inputlocator import InputLocator
+from cea.maker import schedule_maker
+from cea.thermal_loads import calc_thermal_loads_new_ventilation, BuildingProperties
+from cea.utils import epwreader
 
 
 class TestCalcThermalLoadsNewVentilation(unittest.TestCase):

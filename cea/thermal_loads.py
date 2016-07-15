@@ -13,7 +13,6 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame
-
 import contributions.thermal_loads_new_ventilation.ventilation
 import hvac_kaempf
 import functions
