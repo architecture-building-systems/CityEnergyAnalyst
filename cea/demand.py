@@ -142,6 +142,8 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
 
 
 def run_as_script(scenario_path=None, weather_path=None):
+        if scenario_path is None:
+            scenario_path = r'c:\reference-case\baseline'
         locator = inputlocator.InputLocator(scenario_path=scenario_path)
         # for the interface, the user should pick a file out of of those in ...DB/Weather/...
         if weather_path is None:
