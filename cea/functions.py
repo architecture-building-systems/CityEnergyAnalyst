@@ -83,12 +83,32 @@ def check_temp_file(T_ext,tH,tC, tmax):
 
 
 def Calc_Tm(Htr_3, Htr_1, tm_t0, Cm, Htr_em, Im_tot, Htr_ms, I_st, Htr_w, te_t, I_ia, IHC_nd, Hve, Htr_is):
+    tm = calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0)
+    ts = calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm)
+    ta = calc_ta(Htr_is, Hve, IHC_nd, I_ia, te_t, ts)
+    top = calc_t_op(ta, ts)
+    return tm, ts, ta, top
+
+
+def calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0):
     tm_t = (tm_t0 * ((Cm / 3600) - 0.5 * (Htr_3 + Htr_em)) + Im_tot) / ((Cm / 3600) + 0.5 * (Htr_3 + Htr_em))
     tm = (tm_t + tm_t0) / 2
+    return tm
+
+
+def calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm):
     ts = (Htr_ms * tm + I_st + Htr_w * te_t + Htr_1 * (te_t + (I_ia + IHC_nd) / Hve)) / (Htr_ms + Htr_w + Htr_1)
+    return ts
+
+
+def calc_ta(Htr_is, Hve, IHC_nd, I_ia, te_t, ts):
     ta = (Htr_is * ts + Hve * te_t + I_ia + IHC_nd) / (Htr_is + Hve)
+    return ta
+
+
+def calc_t_op(ta, ts):
     top = 0.31 * ta + 0.69 * ts
-    return tm, ts, ta, top
+    return top
 
 
 def calc_Htr(Hve, Htr_is, Htr_ms, Htr_w):

@@ -60,7 +60,10 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
                   11376, 63853, 525600, 525426.29999996931, 476000.19000000018, 319634, 148190, 184502.95000000024,
                   6827181.0]
         for i, column in enumerate(value_columns):
-            self.assertAlmostEqual(values[i], df[column].sum(), 'Sum of column %s differs' % column)
+            try:
+                self.assertAlmostEqual(values[i], df[column].sum(), msg='Sum of column %s differs' % column)
+            except:
+                raise
 
     def test_calc_thermal_loads_other_buildings(self):
         """Test some other buildings just to make sure we have the proper data"""
@@ -73,18 +76,28 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
                      'B302040335': (1525.49, 8443.68),
                      'B2372467': (33608.18, 76675.11),
                      'B302006716': (0.0, 0.0)}
-        joblist = []
-        for building in buildings.keys():
-            bpr = self.building_properties[building]
-            job = pool.apply_async(run_for_single_building,
-                                   [building, bpr, self.weather_data, self.usage_schedules, self.date, self.gv,
-                                    self.locator.get_temporary_folder(),
-                                    self.locator.get_temporary_file('%s.csv' % building)])
-            joblist.append(job)
-        for job in joblist:
-            b, qcf_kwh, qhf_kwh = job.get(20)
-            self.assertAlmostEqual(buildings[b][0], qcf_kwh)
-            self.assertAlmostEqual(buildings[b][1], qhf_kwh)
+        if self.gv.multiprocessing:
+            joblist = []
+            for building in buildings.keys():
+                bpr = self.building_properties[building]
+                job = pool.apply_async(run_for_single_building,
+                                       [building, bpr, self.weather_data, self.usage_schedules, self.date, self.gv,
+                                        self.locator.get_temporary_folder(),
+                                        self.locator.get_temporary_file('%s.csv' % building)])
+                joblist.append(job)
+            for job in joblist:
+                b, qcf_kwh, qhf_kwh = job.get(20)
+                self.assertAlmostEqual(buildings[b][0], qcf_kwh)
+                self.assertAlmostEqual(buildings[b][1], qhf_kwh)
+        else:
+            for building in buildings.keys():
+                bpr = self.building_properties[building]
+                b, qcf_kwh, qhf_kwh = run_for_single_building(building, bpr, self.weather_data, self.usage_schedules,
+                                                              self.date, self.gv,
+                                                              self.locator.get_temporary_folder(),
+                                                              self.locator.get_temporary_file('%s.csv' % building))
+                self.assertAlmostEqual(buildings[b][0], qcf_kwh)
+                self.assertAlmostEqual(buildings[b][1], qhf_kwh)
 
 
 def run_for_single_building(building, bpr, weather_data, usage_schedules, date, gv, temporary_folder, temporary_file):
