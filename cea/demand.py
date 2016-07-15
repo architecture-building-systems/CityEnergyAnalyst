@@ -141,15 +141,22 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
         gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
 
 
-def test_demand():
-        locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+def run_as_script(scenario_path=None, weather_path=None):
+        locator = inputlocator.InputLocator(scenario_path=scenario_path)
         # for the interface, the user should pick a file out of of those in ...DB/Weather/...
-        weather_path = locator.get_default_weather()
+        if weather_path is None:
+            weather_path = locator.get_default_weather()
         gv = globalvar.GlobalVariables()
+        gv.log('Running demand calculation for scenario %(scenario)s', scenario=scenario_path)
+        gv.log('Running demand calculation with weather file %(weather)s', weather=weather_path)
         demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
-        print "test_demand() succeeded"
 
 
 if __name__ == '__main__':
-    test_demand()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
+    parser.add_argument('-w', '--weather', help='Path to the weather file')
+    args = parser.parse_args()
+    run_as_script(scenario_path=args.scenario, weather_path=args.weather)
 

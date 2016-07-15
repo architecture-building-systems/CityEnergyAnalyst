@@ -179,15 +179,18 @@ class DemandTool(object):
         # run demand script in subprocess (for multiprocessing)
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        process = subprocess.Popen(['python', '-u', demand_py], startupinfo=startupinfo, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE, env=dict(os.environ, PYTHONPATH=cea_root_path))
+        process = subprocess.Popen(['python', '-u', demand_py, '--scenario', scenario_path, '--weather', weather_path],
+                                   startupinfo=startupinfo,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, env=dict(os.environ, PYTHONPATH=cea_root_path))
         while True:
             nextline = process.stdout.readline()
             if nextline == '' and process.poll() is not None:
                 break
             gv.log(nextline.rstrip())
-        gv.log('end of output?')
-
+        stdout, stderr = process.communicate()
+        gv.log(stdout)
+        gv.log(stderr)
 
 class EmbodiedEnergyTool(object):
     def __init__(self):
