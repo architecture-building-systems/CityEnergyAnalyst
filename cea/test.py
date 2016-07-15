@@ -23,7 +23,7 @@ __status__ = "Production"
 
 properties.test_properties()
 #radiation.test_solar_radiation()
-demand.test_demand()
+demand.run_as_script()
 #emissions.test_lca_operation()
 #embodied.test_lca_embodied()
 #graphs.test_graph_demand()
