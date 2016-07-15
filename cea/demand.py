@@ -90,6 +90,23 @@ def demand_calculation(locator, weather_path, gv):
     num_buildings = len(building_properties)
     thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, num_buildings, schedules_dict,
                                                 weather_data)
+    write_totals_csv(building_properties, locator)
+    gv.log('done')
+
+
+def write_totals_csv(building_properties, locator):
+    """read in the temporary results files and append them to the Totals.csv file."""
+    counter = 0
+    for name in building_properties.list_building_names():
+        temporary_file = locator.get_temporary_file('%(name)sT.csv' % locals())
+        if counter == 0:
+            df = pd.read_csv(temporary_file)
+            counter += 1
+        else:
+            df2 = pd.read_csv(temporary_file)
+            df = df.append(df2, ignore_index=True)
+    df.to_csv(locator.get_total_demand(), index=False, float_format='%.2f')
+
 
 def thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, usage_schedules,
                                 weather_data):
@@ -116,18 +133,6 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
     for i, job in enumerate(joblist):
         job.get(60)
         gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
-
-    counter = 0
-    for name in building_properties.list_building_names():
-        temporary_file = locator.get_temporary_file('%(name)sT.csv' % locals())
-        if counter == 0:
-            df = pd.read_csv(temporary_file)
-            counter += 1
-        else:
-            df2 = pd.read_csv(temporary_file)
-            df = df.append(df2, ignore_index=True)
-    df.to_csv(locator.get_total_demand(), index=False, float_format='%.2f')
-    gv.log('done')
 
 
 def test_demand():
