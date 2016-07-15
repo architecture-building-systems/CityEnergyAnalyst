@@ -127,7 +127,7 @@ def thermal_loads_all_buildings(building_properties, date, gv, locator, num_buil
 def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, num_buildings, usage_schedules,
                                                 weather_data):
     pool = mp.Pool()
-    gv.log(mp.cpu_count())
+    gv.log("Using %i CPU's" % mp.cpu_count())
     joblist = []
     for building in building_properties.list_building_names():
         bpr = building_properties[building]
