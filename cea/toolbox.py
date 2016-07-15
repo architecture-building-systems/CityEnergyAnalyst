@@ -152,7 +152,14 @@ class DemandTool(object):
 
         gv = globalvar.GlobalVariables()
         gv.log = add_message
-        cea.demand.demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
+
+        # find the version of python to use:
+        import pandas
+        import os
+        python_exe = os.path.join(os.path.dirname(pandas.__file__), '..', '..', '..', 'python.exe')
+        gv.log(python_exe)
+        gv.log(os.path.exists(python_exe))
+        #cea.demand.demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
 
 
 class EmbodiedEnergyTool(object):
