@@ -13,9 +13,10 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame
+
 import contributions.thermal_loads_new_ventilation.ventilation
-import hvac_kaempf
 import functions
+import hvac_kaempf
 from contributions.thermal_loads_new_ventilation import simple_window_generator as simple_window_generator
 
 
@@ -837,7 +838,7 @@ def test_thermal_loads_new_ventilation():
     """
     import globalvar
     import inputlocator
-    import demand
+    from cea.db.CH.Benchmarks import demand
 
     # create globalvars
     gv = globalvar.GlobalVariables()

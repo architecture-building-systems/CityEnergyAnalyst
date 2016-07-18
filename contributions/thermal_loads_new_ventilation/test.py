@@ -1,6 +1,6 @@
-from cea import demand
 from cea import globalvar, thermal_loads
 from cea import inputlocator
+from cea.db.CH.Benchmarks import demand
 
 
 def test_thermal_loads_new_ventilation():

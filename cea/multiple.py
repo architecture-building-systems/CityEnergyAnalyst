@@ -7,16 +7,19 @@ J. Fonseca  script development and cleaning          10.18.15
 
 """
 from __future__ import division
-import pandas as pd
-import globalvar
-import arcpy
-import tempfile
+
 import os
-import demand
-import properties
-import emissions
+import tempfile
+
+import arcpy
+import pandas as pd
+
 import embodied
+import emissions
+import globalvar
 import heatmaps
+import properties
+from cea.db.CH.Benchmarks import demand
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -110,7 +113,7 @@ def multiple_scenarios(path_list_scenarios, path_LCA_embodied_energy, path_LCA_e
             path_properties = paths_of_scenarios.path_scenario[x]+'\\'+r'102_intermediate output\building properties\properties.xls'  # noqa
             path_temporary_folder = tempfile.gettempdir()
             demand.analytical(path_radiation, path_schedules, path_temporary_folder, path_weather,
-                    path_results, path_properties, gv)            
+                              path_results, path_properties, gv)
 
             message = 'Demand scenario ' + str(x) + ' completed'
             arcpy.AddMessage(message)

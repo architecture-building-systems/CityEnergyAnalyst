@@ -7,10 +7,10 @@ Analytical energy demand model algorithm
 from __future__ import division
 import multiprocessing as mp
 import pandas as pd
-import functions as f
-import globalvar
-import inputlocator
-import maker as m
+import cea.functions as f
+import cea.globalvar
+import cea.inputlocator
+import cea.maker as m
 from cea.utils import epwreader
 from cea import thermal_loads
 from cea.thermal_loads import BuildingProperties
@@ -26,7 +26,7 @@ __status__ = "Production"
 
 
 reload(f)
-reload(globalvar)
+reload(cea.globalvar)
 
 
 def demand_calculation(locator, weather_path, gv):
@@ -144,11 +144,11 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
 def run_as_script(scenario_path=None, weather_path=None):
         if scenario_path is None:
             scenario_path = r'c:\reference-case\baseline'
-        locator = inputlocator.InputLocator(scenario_path=scenario_path)
+        locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
         # for the interface, the user should pick a file out of of those in ...DB/Weather/...
         if weather_path is None:
             weather_path = locator.get_default_weather()
-        gv = globalvar.GlobalVariables()
+        gv = cea.globalvar.GlobalVariables()
         gv.log('Running demand calculation for scenario %(scenario)s', scenario=scenario_path)
         gv.log('Running demand calculation with weather file %(weather)s', weather=weather_path)
         demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
