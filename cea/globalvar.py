@@ -5,9 +5,7 @@ Global variables
 ================
 
 """
-import functions
-import thermal_loads
-
+from cea.demand import thermal_loads
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

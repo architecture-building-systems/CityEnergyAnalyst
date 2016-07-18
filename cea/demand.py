@@ -5,15 +5,18 @@ Analytical energy demand model algorithm
 
 """
 from __future__ import division
+
 import multiprocessing as mp
+
 import pandas as pd
-import cea.functions as f
+
+import cea.demand.functions as f
 import cea.globalvar
 import cea.inputlocator
 import cea.maker as m
+from cea.demand import thermal_loads
+from cea.demand.thermal_loads import BuildingProperties
 from cea.utils import epwreader
-from cea import thermal_loads
-from cea.thermal_loads import BuildingProperties
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

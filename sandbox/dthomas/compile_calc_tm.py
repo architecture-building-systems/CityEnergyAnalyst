@@ -3,16 +3,17 @@ NOTE: This approach will only work when we upgrade to a newer version of numpy, 
 of numba (>=18) for this to work...
 """
 
-from numba.pycc import CC
 import numba
-import cea.functions
+from numba.pycc import CC
+
+import cea.demand.functions
 
 cc = CC('calc_tm')
 
 # Uncomment the following line to print out the compilation steps
 cc.verbose = True
 
-cc.export('calc_tm', numba.float32(numba.float64, numba.float64, numba.float64, numba.float64, numba.float64) , cea.functions.calc_tm)
+cc.export('calc_tm', numba.float32(numba.float64, numba.float64, numba.float64, numba.float64, numba.float64), cea.demand.functions.calc_tm)
 
 
 if __name__ == "__main__":

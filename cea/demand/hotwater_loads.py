@@ -18,7 +18,7 @@ __status__ = "Production"
 import numpy as np
 import scipy
 import math
-from technologies import storagetank_mixed as sto_m
+from cea.technologies import storagetank_mixed as sto_m
 
 def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, vww):
     # Refactored from CalcThermalLoads
