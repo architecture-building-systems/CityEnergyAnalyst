@@ -13,11 +13,12 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame
-import hotwater_loads
+
+import cea.demand.electrical_loads
+import cea.demand.hotwater_loads
+import cea.hvac_kaempf
 import contributions.thermal_loads_new_ventilation.ventilation
-import electrical_loads
-import functions
-import hvac_kaempf
+from cea.demand import functions
 
 
 def calc_tHC_corr(SystemH, SystemC, sys_e_ctrl):
@@ -236,7 +237,7 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
     qm_ve_mech = qm_ve_req  # required air mass flow rate
     qm_ve_nat = 0  # natural ventilation # TODO: this could be a fixed percentage of the mechanical ventilation (overpressure) as a function of n50
 
-    temp_ve_sup, _ = hvac_kaempf.calc_hex(rh_ext, gv,  temp_ext, temp_air_prev, t)
+    temp_ve_sup, _ = cea.hvac_kaempf.calc_hex(rh_ext, gv, temp_ext, temp_air_prev, t)
 
     # conversion to volume flow rate
     qv_ve_req = qm_ve_req / gv.Pair  # TODO: modify Kaempf model to accept mass flow rate instead of volume flow
@@ -322,8 +323,8 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
         temp_rec_c, \
         w_rec, \
         w_sup, \
-        temp_air = hvac_kaempf.calc_hvac(rh_ext, temp_ext, t_air_set, qv_ve_req, q_sen_load_hvac, temp_air_prev,
-                                         w_int, gv, t)
+        temp_air = cea.hvac_kaempf.calc_hvac(rh_ext, temp_ext, t_air_set, qv_ve_req, q_sen_load_hvac, temp_air_prev,
+                                             w_int, gv, t)
 
         # mass flow rate output for cooling or heating is zero if the hvac is used only for ventilation
         qm_ve_hvac = max(qm_ve_hvac_h, qm_ve_hvac_c, qm_ve_req)  # ventilation mass flow rate of hvac system
@@ -747,36 +748,36 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                                       tsd['ta_hs_set'].values,
                                                                                                       tsd['w_re'],
                                                                                                       tsd['w_sup'])
-        Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpww = hotwater_loads.calc_Qwwf(bpr.rc_model['Af'],
-                                                                                                      bpr.building_systems['Lcww_dis'],
-                                                                                                      bpr.building_systems['Lsww_dis'],
-                                                                                                      bpr.building_systems['Lvww_c'],
-                                                                                                      bpr.building_systems['Lvww_dis'],
-                                                                                                      tsd['T_ext'],
-                                                                                                      tsd['Ta'],
-                                                                                                      tsd['Tww_re'],
-                                                                                                      bpr.building_systems['Tww_sup_0'],
-                                                                                                      bpr.building_systems['Y'],
-                                                                                                      gv,
-                                                                                                      tsd['vww'])
+        Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpww = cea.demand.hotwater_loads.calc_Qwwf(bpr.rc_model['Af'],
+                                                                                                        bpr.building_systems['Lcww_dis'],
+                                                                                                        bpr.building_systems['Lsww_dis'],
+                                                                                                        bpr.building_systems['Lvww_c'],
+                                                                                                        bpr.building_systems['Lvww_dis'],
+                                                                                                        tsd['T_ext'],
+                                                                                                        tsd['Ta'],
+                                                                                                        tsd['Tww_re'],
+                                                                                                        bpr.building_systems['Tww_sup_0'],
+                                                                                                        bpr.building_systems['Y'],
+                                                                                                        gv,
+                                                                                                        tsd['vww'])
 
         # calc auxiliary loads
-        Eauxf, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, = electrical_loads.calc_Eaux(bpr.rc_model['Af'],
-                                                                                               bpr.geometry['Blength'],
-                                                                                               bpr.geometry['Bwidth'],
-                                                                                               Mww, Qcsf, Qcsf_0,
-                                                                                               Qhsf, Qhsf_0, Qww, Qwwf,
-                                                                                               Qwwf_0,
-                                                                                               Tcs_re, Tcs_sup, Ths_re,
-                                                                                               Ths_sup,
-                                                                                               Vw, bpr.age['built'],
-                                                                                               bpr.building_systems['fforma'],
-                                                                                               gv,
-                                                                                               bpr.geometry['floors_ag'],
-                                                                                               bpr.occupancy['PFloor'],
-                                                                                               tsd['qv_req'].values,
-                                                                                               bpr.hvac['type_cs'],
-                                                                                               bpr.hvac['type_hs'].
+        Eauxf, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, = cea.demand.electrical_loads.calc_Eaux(bpr.rc_model['Af'],
+                                                                                                    bpr.geometry['Blength'],
+                                                                                                    bpr.geometry['Bwidth'],
+                                                                                                    Mww, Qcsf, Qcsf_0,
+                                                                                                    Qhsf, Qhsf_0, Qww, Qwwf,
+                                                                                                    Qwwf_0,
+                                                                                                    Tcs_re, Tcs_sup, Ths_re,
+                                                                                                    Ths_sup,
+                                                                                                    Vw, bpr.age['built'],
+                                                                                                    bpr.building_systems['fforma'],
+                                                                                                    gv,
+                                                                                                    bpr.geometry['floors_ag'],
+                                                                                                    bpr.occupancy['PFloor'],
+                                                                                                    tsd['qv_req'].values,
+                                                                                                    bpr.hvac['type_cs'],
+                                                                                                    bpr.hvac['type_hs'].
                                                                                                tsd['Ehs_lat_aux'].values)
 
         # calculate other quantities
@@ -802,7 +803,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             8760)  # in C
 
     # Cacl totals and peaks electrical loads
-    Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot = electrical_loads.calc_E_totals(
+    Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot = cea.demand.electrical_loads.calc_E_totals(
         bpr.rc_model['Aef'], tsd['Ealf'].values, Eauxf, tsd['Edataf'].values, tsd['Eprof'].values)
 
     # write results to csv
