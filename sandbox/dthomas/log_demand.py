@@ -4,7 +4,6 @@ run the radiation.py script with the functionlogger.
 import os
 
 import cea.db.CH.Benchmarks.demand
-import cea.hvac_kaempf
 import contributions.thermal_loads_new_ventilation.simple_window_generator
 import contributions.thermal_loads_new_ventilation.ventilation
 import functionlogger

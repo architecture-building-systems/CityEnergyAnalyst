@@ -13,10 +13,12 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame
-
+import electrical_loads
 import contributions.thermal_loads_new_ventilation.ventilation
 import functions
 import hvac_kaempf
+
+
 from contributions.thermal_loads_new_ventilation import simple_window_generator as simple_window_generator
 
 
@@ -762,7 +764,7 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
                                                                                                       tsd['vww'])
 
         # clac auxiliary loads of pumping systems
-        Eaux_cs, Eaux_fw, Eaux_hs, Eaux_ve, Eaux_ww = functions.calc_pumping_systems_aux_loads(bpr.rc_model['Af'],
+        Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, = electrical_loads.calc_Eaux(bpr.rc_model['Af'],
                                                                                                bpr.geometry['Blength'],
                                                                                                bpr.geometry['Bwidth'],
                                                                                                Mww, Qcsf, Qcsf_0,
@@ -805,7 +807,7 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
             8760)  # in C
 
     # Cacl totals and peaks electrical loads
-    Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot = functions.calc_loads_electrical(
+    Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot = electrical_loads.calc_E_totals(
         bpr.rc_model['Aef'], tsd['Ealf'].values, Eauxf, tsd['Edataf'].values, tsd['Eprof'].values)
 
     # write results to csv
