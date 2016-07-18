@@ -827,56 +827,14 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
     return
 
 
-def test_thermal_loads_new_ventilation():
-    """
-    script to test modified thermal loads calculation with new natural ventilation and improved mechanical ventilation
-     simulation
-
-    Returns
-    -------
-
-    """
-    import globalvar
-    import inputlocator
-    from cea import demand
-
-    # create globalvars
-    gv = globalvar.GlobalVariables()
-
-    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
-    # for the interface, the user should pick a file out of of those in ...DB/Weather/...
-    weather_path = locator.get_default_weather()
-
-    # plug in new thermal loads calculation
-    gv.models['calc-thermal-loads'] = calc_thermal_loads_new_ventilation
-
-    # run demand
-    demand.demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
-    gv.log("test_thermal_loads_new_ventilation() succeeded")
-
-
 def calc_heat_gains_solar(bpr, gv):
+    import shading
     # TODO: Documentation
-    # Refactored from CalcThermalLoads
     solar_specific = bpr.solar / bpr.rc_model['Awall_all']  # array in W/m2
-    gl = np.vectorize(calc_gl)(solar_specific, gv.g_gl, Calc_Rf_sh(bpr.architecture['type_shade']))
-    solar_effective_area = gl * (1 - gv.F_f) * bpr.rc_model['Aw']  # Calculation of solar effective area per hour in m2
+    blinds_reflection = np.vectorize(shading.calc_blinds_reflection)(solar_specific, bpr.architecture['type_shade'], gv.g_gl)
+    solar_effective_area = blinds_reflection * (1 - gv.F_f) * bpr.rc_model['Aw']  # Calculation of solar effective area per hour in m2
     net_solar_gains = solar_effective_area * solar_specific  # how much are the net solar gains in Wh per hour of the year.
     return net_solar_gains.values
-
-
-def calc_gl(radiation, g_gl, Rf_sh):
-    if radiation > 300:  # in w/m2
-        return g_gl * Rf_sh
-    else:
-        return g_gl
-
-
-def Calc_Rf_sh (shading_type):
-    # this script assumes shading is always located outside! most of the cases
-    # 0 for not, 1 for Rollo, 2 for Venetian blinds, 3 for Solar control glass
-    rf_sh = {'T0': 1, 'T1': 0.08, 'T2': 0.15, 'T3': 0.1}
-    return rf_sh[shading_type]
 
 
 class BuildingProperties(object):
