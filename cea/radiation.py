@@ -9,15 +9,17 @@ J. A. Fonseca  adaptation for CEA tool     12.04.16
 """
 from __future__ import division
 
+import arcgisscripting
+import datetime
 import os
+
 import arcpy
 import ephem
-import datetime
-import epwreader
-import pandas as pd
 import numpy as np
-import arcgisscripting
+import pandas as pd
 from simpledbf import Dbf5
+
+from cea.utils import epwreader
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2013, Architecture and Building Systems - ETH Zurich"
@@ -485,7 +487,6 @@ def calc_sunrise(sunrise, Yearsimul, longitude, latitude, gv):
 
 
 def test_solar_radiation():
-    import cea.globalvar
     import cea.inputlocator
 
     locator = cea.inputlocator.InputLocator(r'C:\reference-case\baseline')

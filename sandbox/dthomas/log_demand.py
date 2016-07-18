@@ -27,7 +27,7 @@ if __name__ == '__main__':
     functionlogger.wrap_module(contributions.thermal_loads_new_ventilation.simple_window_generator, first_only=True)
     functionlogger.wrap_module(contributions.thermal_loads_new_ventilation.ventilation, first_only=True)
 
-    cea.demand.test_demand()
+    cea.demand.run_as_script()
 
     with open(path_to_md, 'w') as writer:
         functionlogger.generate_output(path_to_log, writer)

@@ -80,12 +80,22 @@ class GlobalVariables(object):
         self.temp_comf_max = 26  # (°C) TODO: include to building properties and get from building properties
         self.rhum_comf_max = 70  # (%)
 
+        # ==============================================================================================================
+        # Initial temperatures for demand calculation
+        # ==============================================================================================================
+        self.initial_temp_air_prev = 21
+        self.initial_temp_m_prev = 16
+
 
         # here is where we plug in the models to use for calculations
         self.models = {'calc-thermal-loads': thermal_loads.calc_thermal_loads_new_ventilation}  # functions.CalcThermalLoads
 
+        # use multiprocessing / parallel execution if possible
+        self.multiprocessing = True
+
         # here is where we decide whether full excel reports of the calculations are generated
         self.testing = False  # if true: reports are generated, if false: not
+
 
         self.report_variables = {
             'calc-thermal-loads': {

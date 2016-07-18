@@ -1,31 +1,30 @@
 import os
-from unittest import TestCase
-
-from cea import epwreader
-from cea.demand import BuildingProperties
-from cea.thermal_loads import calc_thermal_loads_new_ventilation
-from cea.inputlocator import InputLocator
-from cea.globalvar import GlobalVariables
-from cea.maker import schedule_maker
+import unittest
 
 import pandas as pd
 
+from cea.globalvar import GlobalVariables
+from cea.inputlocator import InputLocator
+from cea.maker import schedule_maker
+from cea.thermal_loads import calc_thermal_loads_new_ventilation, BuildingProperties
+from cea.utils import epwreader
 
-class TestCalcThermalLoadsNewVentilation(TestCase):
+
+class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
     @classmethod
-    def setUpClass(self):
-        self.locator = InputLocator(r'C:\reference-case\baseline')
-        self.gv = GlobalVariables()
+    def setUpClass(cls):
+        cls.locator = InputLocator(r'C:\reference-case\baseline')
+        cls.gv = GlobalVariables()
 
-        weather_path = self.locator.get_default_weather()
-        self.weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms']]
+        weather_path = cls.locator.get_default_weather()
+        cls.weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms']]
 
-        self.building_properties = BuildingProperties(self.locator, self.gv)
-        self.date = pd.date_range(self.gv.date_start, periods=8760, freq='H')
-        self.list_uses = self.building_properties.list_uses()
-        self.schedules = schedule_maker(self.date, self.locator, self.list_uses)
-        self.usage_schedules = {'list_uses': self.list_uses,
-                                'schedules': self.schedules}
+        cls.building_properties = BuildingProperties(cls.locator, cls.gv)
+        cls.date = pd.date_range(cls.gv.date_start, periods=8760, freq='H')
+        cls.list_uses = cls.building_properties.list_uses()
+        cls.schedules = schedule_maker(cls.date, cls.locator, cls.list_uses)
+        cls.usage_schedules = {'list_uses': cls.list_uses,
+                                'schedules': cls.schedules}
 
     def test_calc_thermal_loads_new_ventilation(self):
         # FIXME: the usage_schedules bit needs to be fixed!!
@@ -61,22 +60,55 @@ class TestCalcThermalLoadsNewVentilation(TestCase):
                   11376, 63853, 525600, 525426.29999996931, 476000.19000000018, 319634, 148190, 184502.95000000024,
                   6827181.0]
         for i, column in enumerate(value_columns):
-            self.assertAlmostEqual(values[i], df[column].sum(), 'Sum of column %s differs' % column)
+            try:
+                self.assertAlmostEqual(values[i], df[column].sum(), msg='Sum of column %s differs' % column)
+            except:
+                raise
 
     def test_calc_thermal_loads_other_buildings(self):
         """Test some other buildings just to make sure we have the proper data"""
+        import multiprocessing as mp
+        pool = mp.Pool()
+        # randomly selected except for B302006716, which has `Af == 0`
         buildings = {'B140571': (87082.27, 173418.77),
                      'B140557': (67011.74, 141896.5),
                      'B140577': (1600579.37, 10583959.85),
                      'B302040335': (1525.49, 8443.68),
-                     'B2372467': (33608.18, 76675.11)}  # randomly selected
-        for building in buildings.keys():
-            bpr = self.building_properties[building]
-            result = calc_thermal_loads_new_ventilation(building, bpr, self.weather_data,
-                                                        self.usage_schedules, self.date, self.gv,
-                                                        self.locator.get_temporary_folder(),
-                                                        self.locator.get_temporary_folder())
-            df = pd.read_csv(self.locator.get_temporary_file('%s.csv' % building))
-            self.assertAlmostEqual(buildings[building][0], df['QCf_kWh'].sum())
-            self.assertAlmostEqual(buildings[building][1], df['QHf_kWh'].sum())
+                     'B2372467': (33608.18, 76675.11),
+                     'B302006716': (0.0, 0.0)}
+        if self.gv.multiprocessing:
+            joblist = []
+            for building in buildings.keys():
+                bpr = self.building_properties[building]
+                job = pool.apply_async(run_for_single_building,
+                                       [building, bpr, self.weather_data, self.usage_schedules, self.date, self.gv,
+                                        self.locator.get_temporary_folder(),
+                                        self.locator.get_temporary_file('%s.csv' % building)])
+                joblist.append(job)
+            for job in joblist:
+                b, qcf_kwh, qhf_kwh = job.get(20)
+                self.assertAlmostEqual(buildings[b][0], qcf_kwh)
+                self.assertAlmostEqual(buildings[b][1], qhf_kwh)
+        else:
+            for building in buildings.keys():
+                bpr = self.building_properties[building]
+                b, qcf_kwh, qhf_kwh = run_for_single_building(building, bpr, self.weather_data, self.usage_schedules,
+                                                              self.date, self.gv,
+                                                              self.locator.get_temporary_folder(),
+                                                              self.locator.get_temporary_file('%s.csv' % building))
+                self.assertAlmostEqual(buildings[b][0], qcf_kwh)
+                self.assertAlmostEqual(buildings[b][1], qhf_kwh)
+
+
+def run_for_single_building(building, bpr, weather_data, usage_schedules, date, gv, temporary_folder, temporary_file):
+    calc_thermal_loads_new_ventilation(building, bpr, weather_data,
+                                       usage_schedules, date, gv,
+                                       temporary_folder,
+                                       temporary_folder)
+    df = pd.read_csv(temporary_file)
+    return building, df['QCf_kWh'].sum(), df['QHf_kWh'].sum()
+
+if __name__ == "__main__":
+    unittest.main()
+
 
