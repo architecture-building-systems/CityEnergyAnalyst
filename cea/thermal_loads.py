@@ -19,9 +19,6 @@ import functions
 import hvac_kaempf
 
 
-from contributions.thermal_loads_new_ventilation import simple_window_generator as simple_window_generator
-
-
 def calc_tHC_corr(SystemH, SystemC, sys_e_ctrl):
     """
     Model of losses in the emission and control system for space heating and cooling.
