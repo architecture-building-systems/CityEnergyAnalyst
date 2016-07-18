@@ -13,7 +13,7 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame
-
+import hotwater_loads
 import contributions.thermal_loads_new_ventilation.ventilation
 import electrical_loads
 import functions
@@ -505,7 +505,7 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
     return tsd
 
 
-def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_schedules, date, gv,
+def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv,
                                        results_folder, temporary_folder):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
@@ -747,7 +747,7 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
                                                                                                       tsd['ta_hs_set'].values,
                                                                                                       tsd['w_re'],
                                                                                                       tsd['w_sup'])
-        Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpww = functions.calc_dhw_heating_demand(bpr.rc_model['Af'],
+        Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpww = hotwater_loads.calc_Qwwf(bpr.rc_model['Af'],
                                                                                                       bpr.building_systems['Lcww_dis'],
                                                                                                       bpr.building_systems['Lsww_dis'],
                                                                                                       bpr.building_systems['Lvww_c'],
@@ -758,11 +758,10 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
                                                                                                       bpr.building_systems['Tww_sup_0'],
                                                                                                       bpr.building_systems['Y'],
                                                                                                       gv,
-                                                                                                      tsd['vw'],
                                                                                                       tsd['vww'])
 
-        # clac auxiliary loads of pumping systems
-        Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, = electrical_loads.calc_Eaux(bpr.rc_model['Af'],
+        # calc auxiliary loads
+        Eauxf, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, = electrical_loads.calc_Eaux(bpr.rc_model['Af'],
                                                                                                bpr.geometry['Blength'],
                                                                                                bpr.geometry['Bwidth'],
                                                                                                Mww, Qcsf, Qcsf_0,
@@ -777,16 +776,14 @@ def calc_thermal_loads_new_ventilation(building_name, bpr, weather_data, usage_s
                                                                                                bpr.occupancy['PFloor'],
                                                                                                tsd['qv_req'].values,
                                                                                                bpr.hvac['type_cs'],
-                                                                                               bpr.hvac['type_hs'])
-
-        # Calc total auxiliary loads
-        Eauxf = (Eaux_ww + Eaux_fw + Eaux_hs + Eaux_cs + tsd['Ehs_lat_aux'] + Eaux_ve)
+                                                                                               bpr.hvac['type_hs'].
+                                                                                               tsd['Ehs_lat_aux'].values)
 
         # calculate other quantities
         # noinspection PyUnresolvedReferences
         Occupancy = np.floor(tsd['people'])
         Occupants = Occupancy.max()
-        Waterconsumption = Vww + Vw  # volume of water consumed in m3/h
+        Waterconsumption = tsd['vw'] * Af / 1000  # volume of water consumed in m3/h
         waterpeak = Waterconsumption.max()
 
     # Af = 0: no conditioned floor area
