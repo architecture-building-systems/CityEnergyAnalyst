@@ -1,15 +1,15 @@
 """
 Test all the main scripts in one go - drink coffee while you wait :)
 """
-import properties
-import demand
-import emissions
+import benchmark
 import embodied
+import emissions
 import graphs
 import mobility
-import scenario_plots
-import benchmark
+import properties
 import radiation
+import scenario_plots
+from cea.db.CH.Benchmarks import demand
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
