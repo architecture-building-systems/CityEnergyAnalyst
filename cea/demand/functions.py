@@ -229,85 +229,6 @@ def calc_Qdis_ls(tair, text, Qhs, Qcs, tsh, trh, tsc, trc, Qhs_max, Qcs_max, D, 
 
     return Qhs_d_ls, Qcs_d_ls
 
-
-def calc_RAD(Qh, tair, Qh0, tair0, tsh0, trh0, nh):
-    if Qh > 0:
-        tair = tair + 273
-        tair0 = tair0 + 273
-        tsh0 = tsh0 + 273
-        trh0 = trh0 + 273
-        mCw0 = Qh0 / (tsh0 - trh0)
-        # minimum
-        LMRT = (tsh0 - trh0) / scipy.log((tsh0 - tair0) / (trh0 - tair0))
-        k1 = 1 / mCw0
-
-        def fh(x):
-            Eq = mCw0 * k2 - Qh0 * (k2 / (scipy.log((x + k2 - tair) / (x - tair)) * LMRT)) ** (nh + 1)
-            return Eq
-
-        k2 = Qh * k1
-        result = scipy.optimize.newton(fh, trh0, maxiter=100, tol=0.01) - 273
-        trh = result.real
-        tsh = trh + k2
-
-        # Control system check
-        # min_AT = 10 # Its equal to 10% of the mass flowrate
-        # trh_min = tair + 5 - 273
-        # tsh_min = trh_min + min_AT
-        # AT = (tsh - trh)
-        # if AT < min_AT:
-        #    if (trh <= trh_min or tsh <= tsh_min):
-        #        trh = trh_min
-        ##        tsh = tsh_min
-        #    if  tsh > tsh_min:
-        #        trh = tsh - min_AT
-        mCw = Qh / (tsh - trh) / 1000
-    else:
-        mCw = 0
-        tsh = 0
-        trh = 0
-    return tsh, trh, mCw
-
-
-def calc_TABSH(Qh, tair, Qh0, tair0, tsh0, trh0, nh):
-    if Qh > 0:
-        tair0 = tair0 + 273
-        tsh0 = tsh0 + 273
-        trh0 = trh0 + 273
-        mCw0 = Qh0 / (tsh0 - trh0)
-        # minimum
-        LMRT = (tsh0 - trh0) / scipy.log((tsh0 - tair0) / (trh0 - tair0))
-        k1 = 1 / mCw0
-
-        def fh(x):
-            Eq = mCw0 * k2 - Qh0 * (k2 / (scipy.log((x + k2 - tair) / (x - tair)) * LMRT)) ** (nh + 1)
-            return Eq
-
-        k2 = Qh * k1
-        tair = tair + 273
-        result = sopt.newton(fh, trh0, maxiter=1000, tol=0.1) - 273
-        trh = result.real
-        tsh = trh + k2
-
-        # Control system check
-        # min_AT = 2 # Its equal to 10% of the mass flowrate
-        # trh_min = tair + 1 - 273
-        # tsh_min = trh_min + min_AT
-        # AT = (tsh - trh)
-        # if AT < min_AT:
-        #    if trh <= trh_min or tsh <= tsh_min:
-        #        trh = trh_min
-        #        tsh = tsh_min
-        #    if tsh > tsh_min:
-        #        trh = tsh - min_AT
-        mCw = Qh / (tsh - trh) / 1000
-    else:
-        mCw = 0
-        tsh = 0
-        trh = 0
-    return tsh, trh, mCw
-
-
 def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, limit_inf_season, limit_sup_season):
     infiltration_occupied = gv.hf * gv.NACH_inf_occ  # m3/h.m2
     infiltration_non_occupied = gv.hf * gv.NACH_inf_non_occ  # m3/h.m2
@@ -442,6 +363,8 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
                                        Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, gv, ma_sup_cs, ma_sup_hs,
                                        sys_e_cooling, sys_e_heating, ta_hs_set, w_re, w_sup):
     # TODO: Documentation
+    from cea.technologies import  radiator
+    from cea.technologies import heating_coils
     # Refactored from CalcThermalLoads
 
     Ths_sup = np.zeros(8760)  # in C
@@ -453,7 +376,7 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
     Ta_0 = ta_hs_set.max()
     if sys_e_heating == 'T1' or sys_e_heating == 'T2':  # radiators
         nh = 0.3
-        Ths_sup, Ths_re, mcphs = np.vectorize(calc_RAD)(Qhsf, Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0, nh)
+        Ths_sup, Ths_re, mcphs = np.vectorize(radiator.calc_RAD)(Qhsf, Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0, nh)
     if sys_e_heating == 'T3':  # air conditioning
         tasup = Ta_sup_hs + 273
         tare = Ta_re_hs + 273
@@ -471,7 +394,7 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
         LMRT0 = (TD10 - TD20) / scipy.log(TD20 / TD10)
         UA0 = Qhsf_0 / LMRT0
 
-        Ths_sup, Ths_re, mcphs = np.vectorize(calc_Hcoil2)(Qhsf, tasup, tare, Qhsf_0, Ta_re_0, Ta_sup_0,
+        Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_Hcoil2)(Qhsf, tasup, tare, Qhsf_0, Ta_re_0, Ta_sup_0,
                                                            tsh0, trh0, w_re, w_sup, ma_sup_0, ma_sup_hs,
                                                            gv.Cpa, LMRT0, UA0, mCw0, Qhsf)
     if sys_e_heating == 'T4':  # floor heating
@@ -496,7 +419,7 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
         UA0 = Qcsf_0 / LMRT0
 
         # Make loop
-        Tcs_sup, Tcs_re, mcpcs = np.vectorize(calc_Ccoil2)(Qcsf, tasup, tare, Qcsf_0, Ta_re_0, Ta_sup_0,
+        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_Ccoil2)(Qcsf, tasup, tare, Qcsf_0, Ta_re_0, Ta_sup_0,
                                                            tsc0, trc0, w_re, w_sup, ma_sup_0, ma_sup_cs, gv.Cpa,
                                                            LMRT0, UA0, mCw0, Qcsf)
         # 1. Calculate water consumption
@@ -729,84 +652,6 @@ def calc_t(w, RH):  # tempeature in C
     t = result.real
     return t
 
-
-def calc_Hcoil2(Qh, tasup, tare, Qh0, tare_0, tasup_0, tsh0, trh0, wr, ws, ma0, ma, Cpa, LMRT0, UA0, mCw0, Qhsf):
-    if Qh > 0 and ma > 0:
-        AUa = UA0 * (ma / ma0) ** 0.77
-        NTUc = AUa / (ma * Cpa * 1000)
-        ec = 1 - scipy.exp(-NTUc)
-        tc = (tare - tasup + tasup * ec) / ec  # contact temperature of coil
-
-        # minimum
-        LMRT = (tsh0 - trh0) / scipy.log((tsh0 - tc) / (trh0 - tc))
-        k1 = 1 / mCw0
-
-        def fh(x):
-            Eq = mCw0 * k2 - Qh0 * (k2 / (scipy.log((x + k2 - tc) / (x - tc)) * LMRT))
-            return Eq
-
-        k2 = Qh * k1
-        result = sopt.newton(fh, trh0, maxiter=100, tol=0.01) - 273
-        trh = result.real
-        tsh = trh + k2
-
-        # Control system check - close to optimal flow
-        # min_AT = 10 # Its equal to 10% of the mass flowrate
-        # tsh_min = tasup + min_AT -273  # to consider coolest source possible
-        # trh_min = tasup - 273
-        # if trh < trh_min or tsh < tsh_min:
-        #    trh = trh_min
-        #    tsh = tsh_min
-
-        mcphs = Qhsf / (tsh - trh) / 1000
-    else:
-        tsh = trh = mcphs = 0
-    return tsh, trh, mcphs
-
-
-def calc_Ccoil2(Qc, tasup, tare, Qc0, tare_0, tasup_0, tsc0, trc0, wr, ws, ma0, ma, Cpa, LMRT0, UA0, mCw0, Qcsf):
-    # Water cooling coil for temperature control
-    if Qc < 0 and ma > 0:
-        AUa = UA0 * (ma / ma0) ** 0.77
-        NTUc = AUa / (ma * Cpa * 1000)
-        ec = 1 - scipy.exp(-NTUc)
-        tc = (tare - tasup + tasup * ec) / ec  # contact temperature of coil
-
-        def fh(x):
-            TD1 = tc - (k2 + x)
-            TD2 = tc - x
-            LMRT = (TD2 - TD1) / scipy.log(TD2 / TD1)
-            Eq = mCw0 * k2 - Qc0 * (LMRT / LMRT0)
-            return Eq
-
-        k2 = -Qc / mCw0
-        result = sopt.newton(fh, trc0, maxiter=100, tol=0.01) - 273
-        tsc = result.real
-        trc = tsc + k2
-
-        # Control system check - close to optimal flow
-        min_AT = 5  # Its equal to 10% of the mass flowrate
-        tsc_min = 7  # to consider coolest source possible
-        trc_max = 17
-        tsc_max = 12
-        AT = tsc - trc
-        if AT < min_AT:
-            if tsc < tsc_min:
-                tsc = tsc_min
-                trc = tsc_min + min_AT
-            if tsc > tsc_max:
-                tsc = tsc_max
-                trc = tsc_max + min_AT
-            else:
-                trc = tsc + min_AT
-        elif tsc > tsc_max or trc > trc_max or tsc < tsc_min:
-            trc = trc_max
-            tsc = tsc_max
-
-        mcpcs = Qcsf / (tsc - trc) / 1000
-    else:
-        tsc = trc = mcpcs = 0
-    return tsc, trc, mcpcs
 
 
 
