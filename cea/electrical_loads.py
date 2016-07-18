@@ -1,9 +1,21 @@
 # -*- coding: utf-8 -*-
 """
-    Electrical loads
-    ===========
-"""
+=========================================
+Electrical demand
+=========================================
 
+"""
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
+
+import numpy as np
 
 def calc_E_totals(Aef, Ealf, Eauxf, Edataf, Eprof):
     # TODO: Documentation
@@ -48,7 +60,7 @@ def calc_Eref(schedule , Ere_Wm2, Af):
 
 def calc_Eaux(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
                   Ths_re, Ths_sup, Vw, Year, fforma, gv, nf_ag, nfp, qv_req, sys_e_cooling,
-                  sys_e_heating):
+                  sys_e_heating, Ehs_lat_aux):
 
 
     Eaux_cs = np.zeros(8760)
@@ -71,7 +83,9 @@ def calc_Eaux(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tc
     if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
         Eaux_ve = np.vectorize(calc_Eaux_ve)(Qhsf, Qcsf, gv.Pfan, qv_req, sys_e_heating, sys_e_cooling, Af)
 
-    return Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw
+    Eauxf = Eaux_hs + Eaux_cs + Eaux_ve + Eaux_ww + Eaux_fw + Ehs_lat_aux
+
+    return Eauxf, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw
 
 def calc_Eaux_hs_dis(Qhsf, Qhsf0, Imax, deltaP_des, b, ts, tr, cpw):
     # the power of the pump in Watts

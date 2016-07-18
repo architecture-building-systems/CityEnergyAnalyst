@@ -117,7 +117,7 @@ def thermal_loads_all_buildings(building_properties, date, gv, locator, num_buil
                                 weather_data):
     for i, building in enumerate(building_properties.list_building_names()):
         bpr = building_properties[building]
-        thermal_loads.calc_thermal_loads_new_ventilation(
+        thermal_loads.calc_thermal_loads(
             building, bpr, weather_data, usage_schedules, date, gv,
             locator.get_demand_results_folder(),
             locator.get_temporary_folder())
@@ -131,7 +131,7 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
     joblist = []
     for building in building_properties.list_building_names():
         bpr = building_properties[building]
-        job = pool.apply_async(thermal_loads.calc_thermal_loads_new_ventilation,
+        job = pool.apply_async(thermal_loads.calc_thermal_loads,
                                [building, bpr, weather_data, usage_schedules, date, gv,
                                 locator.get_demand_results_folder(),
                                 locator.get_temporary_folder()])
