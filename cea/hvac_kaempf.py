@@ -15,7 +15,6 @@ from __future__ import division
 import math
 import numpy as np
 
-
 def calc_hvac(rhum_1, temp_1, temp_zone_set, qv_req, qe_sen, temp_5_prev, wint, gv, timestep):
     """
     HVAC model of Kämpf [1]
@@ -54,7 +53,7 @@ def calc_hvac(rhum_1, temp_1, temp_zone_set, qv_req, qe_sen, temp_5_prev, wint, 
     t5_prime = temp_zone_set
 
     # state after heat exchanger
-    t2, w2 = calc_hex(rhum_1, gv, qv_mech=qv_req, qv_mech_dim=0, temp_ext=temp_1, temp_zone_prev=temp_5_prev, timestep=timestep)
+    t2, w2 = calc_hex(rhum_1, gv, temp_1, temp_5_prev, timestep)
 
     # print(t5_prime)
     if abs(qe_sen) != 0:  # to account for the bug of possible -0.0
@@ -185,7 +184,8 @@ def calc_hvac(rhum_1, temp_1, temp_zone_set, qv_req, qe_sen, temp_5_prev, wint, 
     return qe_hs_sen, qe_cs_sen, qe_hum, qe_dehum, pel_hum_aux, ma_hs, ma_cs, ts_hs, ts_cs, tr_hs, tr_cs, w2, w3, t5
 
 
-def calc_hex(rel_humidity_ext, gv, qv_mech, qv_mech_dim, temp_ext, temp_zone_prev, timestep):
+# @numba.autojit
+def calc_hex(rel_humidity_ext, gv, temp_ext, temp_zone_prev, timestep):
     """
     Calculates air properties of mechanical ventilation system with heat exchanger
     Modeled after 2.4.2 in SIA 2044

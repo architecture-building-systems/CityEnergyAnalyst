@@ -22,14 +22,14 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 properties.test_properties()
-radiation.test_solar_radiation()
-demand.test_demand()
-emissions.test_lca_operation()
-embodied.test_lca_embodied()
-graphs.test_graph_demand()
-mobility.test_mobility()
-benchmark.test_benchmark()
-scenario_plots.test_plot_scenarios()
+#radiation.test_solar_radiation()
+demand.run_as_script()
+#emissions.test_lca_operation()
+#embodied.test_lca_embodied()
+#graphs.test_graph_demand()
+#mobility.test_mobility()
+#benchmark.test_benchmark()
+#scenario_plots.test_plot_scenarios()
 
 
 print 'full test completed'

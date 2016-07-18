@@ -16,7 +16,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-
 reload(inputlocator)
 
 
@@ -32,6 +31,7 @@ class PropertiesTool(object):
     """
     integrate the properties script with ArcGIS.
     """
+
     def __init__(self):
         self.label = 'Data helper'
         self.description = 'Query characteristics of buildings and systems from statistical data'
@@ -103,6 +103,7 @@ class PropertiesTool(object):
 
 class DemandTool(object):
     """integrate the demand script with ArcGIS"""
+
     def __init__(self):
         self.label = 'Demand'
         self.description = 'Calculate the Demand'
@@ -152,11 +153,46 @@ class DemandTool(object):
 
         gv = globalvar.GlobalVariables()
         gv.log = add_message
-        cea.demand.demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
 
+        # find the version of python to use:
+        import pandas
+        import os
+        import subprocess
+        import sys
+
+        # find python executable to use
+        python_exe = os.path.normpath(os.path.join(os.path.dirname(pandas.__file__), '..', '..', '..', 'python.exe'))
+        gv.log("Using python: %(python_exe)s", python_exe=python_exe)
+        assert os.path.exists(python_exe), 'Python interpreter (see above) not found.'
+
+        # find demand script
+        demand_py = cea.demand.__file__
+        if os.path.splitext(demand_py)[1].endswith('c'):
+            demand_py = demand_py[:-1]
+        gv.log("Path to demand script: %(demand_py)s", demand_py=demand_py)
+
+        # add root of CEAforArcGIS to python path
+        cea_root_path = os.path.normpath(os.path.join(os.path.dirname(demand_py), '..'))
+        gv.log("Adding path to PYTHONPATH: %(path)s", path=cea_root_path)
+        sys.path.append(cea_root_path)
+
+        # run demand script in subprocess (for multiprocessing)
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        process = subprocess.Popen(['python', '-u', demand_py, '--scenario', scenario_path, '--weather', weather_path],
+                                   startupinfo=startupinfo,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE, env=dict(os.environ, PYTHONPATH=cea_root_path))
+        while True:
+            nextline = process.stdout.readline()
+            if nextline == '' and process.poll() is not None:
+                break
+            gv.log(nextline.rstrip())
+        stdout, stderr = process.communicate()
+        gv.log(stdout)
+        gv.log(stderr)
 
 class EmbodiedEnergyTool(object):
-
     def __init__(self):
         self.label = 'Embodied Energy'
         self.description = 'Calculate the Emissions for operation'
@@ -199,9 +235,7 @@ class EmbodiedEnergyTool(object):
         lca_embodied(yearcalc=yearcalc, locator=locator, gv=gv)
 
 
-
 class EmissionsTool(object):
-
     def __init__(self):
         self.label = 'Emissions Operation'
         self.description = 'Calculate emissions and primary energy due to building operation'
@@ -310,7 +344,6 @@ class EmissionsTool(object):
 
 
 class GraphsDemandTool(object):
-
     def __init__(self):
         self.label = 'Demand graphs'
         self.description = 'Calculate Graphs of the Demand'
@@ -362,7 +395,6 @@ class GraphsDemandTool(object):
 
 
 class HeatmapsTool(object):
-
     def __init__(self):
         self.label = 'Heatmaps'
         self.description = 'Create heatmap data layers'
@@ -442,8 +474,9 @@ class HeatmapsTool(object):
         import cea.heatmaps
         reload(cea.heatmaps)
         cea.heatmaps.heatmaps(locator=locator, analysis_fields=analysis_fields,
-                 path_results=path_results, file_to_analyze=file_to_analyze)
+                              path_results=path_results, file_to_analyze=file_to_analyze)
         return
+
 
 class RadiationTool(object):
     def __init__(self):
@@ -553,6 +586,7 @@ class ScenarioPlotsTool(object):
         cea.scenario_plots.plot_scenarios(scenarios=scenarios, output_file=output_file)
         return
 
+
 class GraphsBenchmarkTool(object):
     def __init__(self):
         self.label = 'Benchmark graphs'
@@ -590,8 +624,8 @@ class GraphsBenchmarkTool(object):
         benchmark.benchmark(locator_list=locator_list, output_file=output_file)
         return
 
-class MobilityTool(object):
 
+class MobilityTool(object):
     def __init__(self):
         self.label = 'Emissions Mobility'
         self.description = 'Calculate emissions and primary energy due to mobility'

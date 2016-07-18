@@ -23,7 +23,6 @@ __status__ = "Production"
 
 
 def full_report_to_xls(template, variables, output_folder, basename, gv):
-
     """ this function is to write a full report to an *.xls file containing all intermediate and final results of a
     single building thermal loads calculation"""
 
@@ -44,7 +43,13 @@ def full_report_to_xls(template, variables, output_folder, basename, gv):
     # create data frames
     for sheet in report_template.keys():
         # log missing variables
-        missing_variables = [v for v in report_template[sheet] if not v in variables]
+        missing_variables = [v for v in report_template[sheet] if v not in variables]
+        # try to add them from the `tds` variable:
+        if 'tsd' in variables:
+            for key in missing_variables:
+                if key in variables['tsd'].columns:
+                    variables[key] = variables['tsd'][key]
+        missing_variables = [v for v in report_template[sheet] if v not in variables]
         if missing_variables:
             gv.log("cannot report following variables: %s" % ', '.join(missing_variables))
 

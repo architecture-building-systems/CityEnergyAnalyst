@@ -68,3 +68,6 @@ target/
 test/reference-case/Radiation2000-2009.csv
 *.spyderworkspace
 *.DS_Store
+demand.prof
+demand_numba.prof
+*.prof
