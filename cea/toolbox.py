@@ -139,8 +139,8 @@ class DemandTool(object):
         return
 
     def execute(self, parameters, messages):
-        import cea.db.CH.Benchmarks.demand
-        reload(cea.db.CH.Benchmarks.demand)
+        import cea.demand
+        reload(cea.demand)
 
         scenario_path = parameters[0].valueAsText
         locator = inputlocator.InputLocator(scenario_path)
@@ -168,7 +168,7 @@ class DemandTool(object):
         assert os.path.exists(python_exe), 'Python interpreter (see above) not found.'
 
         # find demand script
-        demand_py = cea.db.CH.Benchmarks.demand.__file__
+        demand_py = cea.demand.__file__
         if os.path.splitext(demand_py)[1].endswith('c'):
             demand_py = demand_py[:-1]
         gv.log("Path to demand script: %(demand_py)s", demand_py=demand_py)

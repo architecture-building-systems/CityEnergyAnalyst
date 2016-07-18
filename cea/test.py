@@ -9,7 +9,7 @@ import mobility
 import properties
 import radiation
 import scenario_plots
-from cea.db.CH.Benchmarks import demand
+from cea import demand
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

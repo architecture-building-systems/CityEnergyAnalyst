@@ -1,4 +1,4 @@
-from cea import globalvar, thermal_loads
+from cea import globalvar, thermal_loads, demand
 from cea import inputlocator
 from cea.db.CH.Benchmarks import demand
 

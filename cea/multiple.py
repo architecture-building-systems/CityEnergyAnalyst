@@ -19,7 +19,7 @@ import emissions
 import globalvar
 import heatmaps
 import properties
-from cea.db.CH.Benchmarks import demand
+from cea import demand
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
