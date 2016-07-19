@@ -2,11 +2,29 @@
 
 import scipy
 import scipy.optimize as sopt
+import numpy as np
 
-def calc_Hcoil2(Qh, tasup, tare, Qh0, tare_0, tasup_0, tsh0, trh0, wr, ws, ma0, ma, Cpa, LMRT0, UA0, mCw0, Qhsf):
-    if Qh > 0 and ma > 0:
-        AUa = UA0 * (ma / ma0) ** 0.77
-        NTUc = AUa / (ma * Cpa * 1000)
+def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma_sup_hs, Cpa):
+
+    tasup = Ta_sup_hs + 273
+    tare = Ta_re_hs + 273
+    index = np.where(Qhsf == Qhsf_0)
+    ma_sup_0 = ma_sup_hs[index[0][0]]
+    Ta_sup_0 = Ta_sup_hs[index[0][0]] + 273
+    Ta_re_0 = Ta_re_hs[index[0][0]] + 273
+    tsh0 = Ths_sup_0 + 273
+    trh0 = Ths_re_0 + 273
+    mCw0 = Qhsf_0 / (tsh0 - trh0)
+
+    # log mean temperature at nominal conditions
+    TD10 = Ta_sup_0 - trh0
+    TD20 = Ta_re_0 - tsh0
+    LMRT0 = (TD10 - TD20) / scipy.log(TD20 / TD10)
+    UA0 = Qhsf_0 / LMRT0
+
+    if Qhsf > 0 and ma_sup_hs > 0:
+        AUa = UA0 * (ma_sup_hs / ma_sup_0) ** 0.77
+        NTUc = AUa / (ma_sup_hs * Cpa * 1000)
         ec = 1 - scipy.exp(-NTUc)
         tc = (tare - tasup + tasup * ec) / ec  # contact temperature of coil
 
@@ -15,10 +33,10 @@ def calc_Hcoil2(Qh, tasup, tare, Qh0, tare_0, tasup_0, tsh0, trh0, wr, ws, ma0, 
         k1 = 1 / mCw0
 
         def fh(x):
-            Eq = mCw0 * k2 - Qh0 * (k2 / (scipy.log((x + k2 - tc) / (x - tc)) * LMRT))
+            Eq = mCw0 * k2 - Qhsf_0 * (k2 / (scipy.log((x + k2 - tc) / (x - tc)) * LMRT))
             return Eq
 
-        k2 = Qh * k1
+        k2 = Qhsf * k1
         result = sopt.newton(fh, trh0, maxiter=100, tol=0.01) - 273
         trh = result.real
         tsh = trh + k2
@@ -27,11 +45,27 @@ def calc_Hcoil2(Qh, tasup, tare, Qh0, tare_0, tasup_0, tsh0, trh0, wr, ws, ma0, 
         tsh = trh = mcphs = 0
     return tsh, trh, mcphs
 
-def calc_Ccoil2(Qc, tasup, tare, Qc0, tare_0, tasup_0, tsc0, trc0, wr, ws, ma0, ma, Cpa, LMRT0, UA0, mCw0, Qcsf):
-    # Water cooling coil for temperature control
-    if Qc < 0 and ma > 0:
-        AUa = UA0 * (ma / ma0) ** 0.77
-        NTUc = AUa / (ma * Cpa * 1000)
+def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma_sup_cs, Cpa):
+    # Initialize temperatures
+    tasup = Ta_sup_cs + 273
+    tare = Ta_re_cs + 273
+    index = np.where(Qcsf == Qcsf_0)
+    ma_sup_0 = ma_sup_cs[index[0][0]] + 273
+    Ta_sup_0 = Ta_sup_cs[index[0][0]] + 273
+    Ta_re_0 = Ta_re_cs[index[0][0]] + 273
+    tsc0 = Tcs_sup_0 + 273
+    trc0 = Tcs_re_0 + 273
+    mCw0 = Qcsf_0 / (tsc0 - trc0)
+
+    # log mean temperature at nominal conditions
+    TD10 = Ta_sup_0 - trc0
+    TD20 = Ta_re_0 - tsc0
+    LMRT0 = (TD20 - TD10) / scipy.log(TD20 / TD10)
+    UA0 = Qcsf_0 / LMRT0
+
+    if Qcsf < 0 and ma_sup_cs > 0:
+        AUa = UA0 * (ma_sup_cs / ma_sup_0) ** 0.77
+        NTUc = AUa / (ma_sup_cs * Cpa * 1000)
         ec = 1 - scipy.exp(-NTUc)
         tc = (tare - tasup + tasup * ec) / ec  # contact temperature of coil
 
@@ -39,10 +73,10 @@ def calc_Ccoil2(Qc, tasup, tare, Qc0, tare_0, tasup_0, tsc0, trc0, wr, ws, ma0, 
             TD1 = tc - (k2 + x)
             TD2 = tc - x
             LMRT = (TD2 - TD1) / scipy.log(TD2 / TD1)
-            Eq = mCw0 * k2 - Qc0 * (LMRT / LMRT0)
+            Eq = mCw0 * k2 - Qcsf_0 * (LMRT / LMRT0)
             return Eq
 
-        k2 = -Qc / mCw0
+        k2 = -Qcsf / mCw0
         result = sopt.newton(fh, trc0, maxiter=100, tol=0.01) - 273
         tsc = result.real
         trc = tsc + k2

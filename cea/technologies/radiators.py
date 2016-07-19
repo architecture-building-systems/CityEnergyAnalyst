@@ -1,7 +1,8 @@
 
 import scipy
 
-def calc_RAD(Qh, tair, Qh0, tair0, tsh0, trh0, nh):
+def calc_radiator(Qh, tair, Qh0, tair0, tsh0, trh0, nh):
+    nh = 0.3 #radiator constant
     if Qh > 0:
         tair = tair + 273
         tair0 = tair0 + 273

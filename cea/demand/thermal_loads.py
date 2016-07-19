@@ -826,10 +826,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
 
 def calc_heat_gains_solar(bpr, gv):
-    import shading
-    # TODO: Documentation
+    import blinds
     solar_specific = bpr.solar / bpr.rc_model['Awall_all']  # array in W/m2
-    blinds_reflection = np.vectorize(shading.calc_blinds_reflection)(solar_specific, bpr.architecture['type_shade'], gv.g_gl)
+    blinds_reflection = np.vectorize(blinds.calc_blinds_reflection)(solar_specific, bpr.architecture['type_shade'], gv.g_gl)
     solar_effective_area = blinds_reflection * (1 - gv.F_f) * bpr.rc_model['Aw']  # Calculation of solar effective area per hour in m2
     net_solar_gains = solar_effective_area * solar_specific  # how much are the net solar gains in Wh per hour of the year.
     return net_solar_gains.values

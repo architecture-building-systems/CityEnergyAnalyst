@@ -304,7 +304,7 @@ def get_internal_comfort(tsd, prop_comfort, limit_inf_season, limit_sup_season, 
 
     def get_csetpoint(a, b, Tcset, Tcsetback, weekday):
         if limit_inf_season <= b < limit_sup_season:
-            if a > 0:
+            if a > 0:f
                 if weekday >= 5:  # system is off on the weekend
                     return 50  # huge so the system will be off
                 else:
@@ -354,18 +354,15 @@ def calc_heat_gains_internal_latent(people, X_ghp, sys_e_cooling, sys_e_heating)
 
 def calc_heat_gains_internal_sensible(people, Qs_Wp, Eal_nove, Eprof, Qcdata, Qcrefri):
     # TODO: Documentation
-    # Refactored from CalcThermalLoads
     I_int_sen = people * Qs_Wp + 0.9 * (Eal_nove + Eprof) + Qcdata - Qcrefri  # here 0.9 is assumed
     return I_int_sen
 
 
 def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs, Ta_re_hs, Ta_sup_cs, Ta_sup_hs,
                                        Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, gv, ma_sup_cs, ma_sup_hs,
-                                       sys_e_cooling, sys_e_heating, ta_hs_set, w_re, w_sup):
-    # TODO: Documentation
-    from cea.technologies import  radiator
-    from cea.technologies import heating_coils
-    # Refactored from CalcThermalLoads
+                                       sys_e_cooling, sys_e_heating, ta_hs_set):
+
+    from cea.technologies import  radiators, heating_coils, tabs
 
     Ths_sup = np.zeros(8760)  # in C
     Ths_re = np.zeros(8760)  # in C
@@ -375,54 +372,23 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
     mcpcs = np.zeros(8760)  # in KW/C
     Ta_0 = ta_hs_set.max()
     if sys_e_heating == 'T1' or sys_e_heating == 'T2':  # radiators
-        nh = 0.3
-        Ths_sup, Ths_re, mcphs = np.vectorize(radiator.calc_RAD)(Qhsf, Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0, nh)
+
+        Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(Qhsf, Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0, gv.nh)
+
     if sys_e_heating == 'T3':  # air conditioning
-        tasup = Ta_sup_hs + 273
-        tare = Ta_re_hs + 273
-        index = np.where(Qhsf == Qhsf_0)
-        ma_sup_0 = ma_sup_hs[index[0][0]]
-        Ta_sup_0 = Ta_sup_hs[index[0][0]] + 273
-        Ta_re_0 = Ta_re_hs[index[0][0]] + 273
-        tsh0 = Ths_sup_0 + 273
-        trh0 = Ths_re_0 + 273
-        mCw0 = Qhsf_0 / (tsh0 - trh0)
 
-        # log mean temperature at nominal conditions
-        TD10 = Ta_sup_0 - trh0
-        TD20 = Ta_re_0 - tsh0
-        LMRT0 = (TD10 - TD20) / scipy.log(TD20 / TD10)
-        UA0 = Qhsf_0 / LMRT0
+        Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_heating_coil)(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs,
+                                                                               Ths_sup_0, Ths_re_0, ma_sup_hs, gv.Cpa)
 
-        Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_Hcoil2)(Qhsf, tasup, tare, Qhsf_0, Ta_re_0, Ta_sup_0,
-                                                           tsh0, trh0, w_re, w_sup, ma_sup_0, ma_sup_hs,
-                                                           gv.Cpa, LMRT0, UA0, mCw0, Qhsf)
+    if sys_e_cooling == 'T3':  # air conditioning
+
+        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)((Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs,
+                                                                                Tcs_sup_0, Tcs_re_0, ma_sup_cs, gv.Cpa)
+
     if sys_e_heating == 'T4':  # floor heating
-        nh = 0.2
-        Ths_sup, Ths_re, mcphs = np.vectorize(calc_TABSH)(Qhsf, Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0, nh)
-    if sys_e_cooling == 'T3':
-        # Initialize temperatures
-        tasup = Ta_sup_cs + 273
-        tare = Ta_re_cs + 273
-        index = np.where(Qcsf == Qcsf_0)
-        ma_sup_0 = ma_sup_cs[index[0][0]] + 273
-        Ta_sup_0 = Ta_sup_cs[index[0][0]] + 273
-        Ta_re_0 = Ta_re_cs[index[0][0]] + 273
-        tsc0 = Tcs_sup_0 + 273
-        trc0 = Tcs_re_0 + 273
-        mCw0 = Qcsf_0 / (tsc0 - trc0)
 
-        # log mean temperature at nominal conditions
-        TD10 = Ta_sup_0 - trc0
-        TD20 = Ta_re_0 - tsc0
-        LMRT0 = (TD20 - TD10) / scipy.log(TD20 / TD10)
-        UA0 = Qcsf_0 / LMRT0
+        Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(Qhsf, Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0)
 
-        # Make loop
-        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_Ccoil2)(Qcsf, tasup, tare, Qcsf_0, Ta_re_0, Ta_sup_0,
-                                                           tsc0, trc0, w_re, w_sup, ma_sup_0, ma_sup_cs, gv.Cpa,
-                                                           LMRT0, UA0, mCw0, Qcsf)
-        # 1. Calculate water consumption
     return Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs
 
 
