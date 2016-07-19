@@ -304,7 +304,7 @@ def get_internal_comfort(tsd, prop_comfort, limit_inf_season, limit_sup_season, 
 
     def get_csetpoint(a, b, Tcset, Tcsetback, weekday):
         if limit_inf_season <= b < limit_sup_season:
-            if a > 0:f
+            if a > 0:
                 if weekday >= 5:  # system is off on the weekend
                     return 50  # huge so the system will be off
                 else:
@@ -363,14 +363,19 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
                                        sys_e_cooling, sys_e_heating, ta_hs_set):
 
     from cea.technologies import  radiators, heating_coils, tabs
-
-    Ths_sup = np.zeros(8760)  # in C
-    Ths_re = np.zeros(8760)  # in C
-    Tcs_re = np.zeros(8760)  # in C
-    Tcs_sup = np.zeros(8760)  # in C
-    mcphs = np.zeros(8760)  # in KW/C
-    mcpcs = np.zeros(8760)  # in KW/C
+    # local variables
     Ta_0 = ta_hs_set.max()
+
+    if sys_e_heating == 'T0':
+        Ths_sup = np.zeros(8760)  # in C
+        Ths_re = np.zeros(8760)  # in C
+        mcphs = np.zeros(8760)  # in KW/C
+
+    if sys_e_cooling == 'T0':
+        Tcs_re = np.zeros(8760)  # in C
+        Tcs_sup = np.zeros(8760)  # in C
+        mcpcs = np.zeros(8760)  # in KW/C
+
     if sys_e_heating == 'T1' or sys_e_heating == 'T2':  # radiators
 
         Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(Qhsf, Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0, gv.nh)
