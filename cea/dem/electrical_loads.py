@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 =========================================
-Electrical dem
+Electrical loads
 =========================================
 
 """
@@ -36,7 +36,6 @@ def calc_E_totals(Aef, Ealf, Eauxf, Edataf, Eprof):
         Eprof = np.zeros(8760)
         Edataf = np.zeros(8760)
     return Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edata_tot, Eprof, Epro_tot
-
 
 def calc_Ea(schedule, Ea_Wm2, Af):
     Eaf = schedule * Ea_Wm2 * Af  # in W
