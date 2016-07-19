@@ -8,7 +8,7 @@
       - [create_windows](#create_windows)
          - [calc_thermal_loads_new_ventilation](#calc_thermal_loads_new_ventilation)
             - [calc_mixed_schedule](#calc_mixed_schedule)
-            - [get_internal_loads](#get_internal_loads)
+            - [calc_Qint](#calc_Qint)
             - [get_occupancy](#get_occupancy)
             - [get_internal_comfort](#get_internal_comfort)
             - [get_properties_building_envelope](#get_properties_building_envelope)
@@ -35,7 +35,7 @@
             - [calc_thermal_load_mechanical_and_natural_ventilation_timestep](#calc_thermal_load_mechanical_and_natural_ventilation_timestep)
                - [calc_h_ve_adj](#calc_h_ve_adj)
                - [calc_Htr](#calc_htr)
-               - [calc_TL](#calc_tl)
+               - [calc_Qhs_Qcs](#calc_tl)
                   - [Calc_Im_tot](#calc_im_tot)
                   - [Calc_Tm](#calc_tm)
             - [calc_thermal_load_hvac_timestep](#calc_thermal_load_hvac_timestep)
@@ -44,7 +44,7 @@
                - [calc_hvac](#calc_hvac)
                   - [calc_h](#calc_h)
                   - [calc_w3_cooling_case](#calc_w3_cooling_case)
-                     - [calc_Qdis_ls](#calc_qdis_ls)
+                     - [calc_Qhs_Qcs_dis_ls](#calc_qdis_ls)
             - [calc_temperatures_emission_systems](#calc_temperatures_emission_systems)
                - [calc_RAD](#calc_rad)
                - [calc_Ccoil2](#calc_ccoil2)
@@ -808,7 +808,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_Qdis_ls
+# calc_Qhs_Qcs_dis_ls
 - number of invocations: 1
 - max duration: 0.033 s
 - avg duration: 0.033 s
@@ -1124,7 +1124,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_TL
+# calc_Qhs_Qcs
 - number of invocations: 1
 - max duration: 0.146 s
 - avg duration: 0.146 s
@@ -3152,7 +3152,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# get_internal_loads
+# calc_Qint
 - number of invocations: 1
 - max duration: 0.04 s
 - avg duration: 0.04 s

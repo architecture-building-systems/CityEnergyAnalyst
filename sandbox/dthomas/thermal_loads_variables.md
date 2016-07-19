@@ -9,7 +9,7 @@ The main variables introduced is `tsd`, which stands for "time step data".
 - `T_ext` -> `tsd['T_ext']`
   - outdoor drybulb temperature
   - from: `weather_data.drybulb_C.values`
-  - to: `calc_Qdis_ls:text`
+  - to: `calc_Qhs_Qcs_dis_ls:text`
   - to: `calc_dhw_heating_demand:T_ext`
 - `rh_ext` -> `tsd['rh_ext']`
   - relative humidity
@@ -17,10 +17,10 @@ The main variables introduced is `tsd`, which stands for "time step data".
 -  mixed_schedule -> `tsd[['occ', 'el', 'pro', 'dhw']]`
   - schedule data (occupancy, electric use, probability of occupancy, domestic hot water use
   - from: `functions.calc_mixed_schedule`
-  - to: `functions.get_internal_loads`
+  - to: `functions.calc_Qint`
   - to: `functions.get_occupancy`
 - `Ealf`, `Edataf`,  `Eprof`,  `Eref`,  `Qcrefri`,  `Qcdata`,  `vww`, `vw` -> `tsd[['Ealf', 'Edataf', 'Eprof', 'Eref', 'Qcrefri', 'Qcdata', 'vww', 'vw']]`
-  - from: `functions.get_internal_loads:Ealf, Edataf, Eprof, Eref, Qcrefri, Qcdata, vww, vw`
+  - from: `functions.calc_Qint:Ealf, Edataf, Eprof, Eref, Qcrefri, Qcdata, vww, vw`
   - to: `calc_heat_gains_internal_sensible:Eal_nove, Eprof, Qcdata, Qcrefri`
   - to: `calc_dhw_heating_demand:vw, vww`
   - to: `calc_loads_electrical:Ealf, Edataf, Eprof`
@@ -60,7 +60,7 @@ The main variables introduced is `tsd`, which stands for "time step data".
   - from: `calc_thermal_load_hvac_timestep:temp_a`
   - from: `calc_thermal_load_mechanical_and_natural_ventilation_timestep:temp_a`
   - to: `state_prev['temp_air_prev']`
-  - to: `functions.calc_Qdis_ls:tair`
+  - to: `functions.calc_Qhs_Qcs_dis_ls:tair`
   - to: `functions.calc_temperatures_emission_systems:Ta`
   - to: `functions.calc_dhw_heating_demand:Ta`
 - `Tm` -> `tsd['Tm']`

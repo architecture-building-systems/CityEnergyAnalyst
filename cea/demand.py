@@ -10,7 +10,7 @@ import multiprocessing as mp
 
 import pandas as pd
 
-import cea.dem.functions as f
+import cea.dem.sensible_loads as f
 import cea.globalvar
 import cea.inputlocator
 import cea.maker as m
