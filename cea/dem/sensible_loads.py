@@ -6,6 +6,14 @@ EN-13970
 =========================================
 
 """
+from __future__ import division
+import math
+import os
+import numpy as np
+import pandas as pd
+import scipy
+import scipy.optimize as sopt
+
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca"]
@@ -14,14 +22,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
-
-from __future__ import division
-import math
-import os
-import numpy as np
-import pandas as pd
-import scipy
-import scipy.optimize as sopt
 
 
 def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Htr_ms, Htr_is, Htr_1, Htr_2, Htr_3,
@@ -158,9 +158,6 @@ def calc_Qhs_Qcs_em_ls(SystemH, SystemC):
 
     return list(tHC_corr)
 
-def calc_Qhsf_Qcsf():
-
-
 
 def calc_Htr(Hve, Htr_is, Htr_ms, Htr_w):
     Htr_1 = 1 / (1 / Hve + 1 / Htr_is)
@@ -222,6 +219,15 @@ def calc_Qint(tsd, prop_internal_loads, prop_architecture, Af):
     tsd['vw'] = tsd.dhw.values * prop_internal_loads['Vw_lpd'] * prop_architecture['Occ_m2p'] ** -1 * Af / 24000  # m3/h
 
     return tsd
+
+
+def calc_Qsol(bpr, gv):
+    from cea.tech import blinds
+    solar_specific = bpr.solar / bpr.rc_model['Awall_all']  # array in W/m2
+    blinds_reflection = np.vectorize(blinds.calc_blinds_reflection)(solar_specific, bpr.architecture['type_shade'], gv.g_gl)
+    solar_effective_area = blinds_reflection * (1 - gv.F_f) * bpr.rc_model['Aw']  # Calculation of solar effective area per hour in m2
+    net_solar_gains = solar_effective_area * solar_specific  # how much are the net solar gains in Wh per hour of the year.
+    return net_solar_gains.values
 
 
 def get_occupancy(tsd, prop_architecture, Af):
@@ -305,7 +311,6 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
     from cea.tech import  radiators, heating_coils, tabs
     # local variables
     Ta_0 = ta_hs_set.max()
-
     if sys_e_heating == 'T0':
         Ths_sup = np.zeros(8760)  # in C
         Ths_re = np.zeros(8760)  # in C
@@ -318,17 +323,25 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
 
     if sys_e_heating == 'T1' or sys_e_heating == 'T2':  # radiators
 
-        Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(Qhsf, Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0, gv.nh)
+        Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(Qhsf, Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0)
 
     if sys_e_heating == 'T3':  # air conditioning
-
+        index = np.where(Qhsf == Qhsf_0)
+        ma_sup_0 = ma_sup_hs[index[0][0]]
+        Ta_sup_0 = Ta_sup_hs[index[0][0]] + 273
+        Ta_re_0 = Ta_re_hs[index[0][0]] + 273
         Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_heating_coil)(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs,
-                                                                               Ths_sup_0, Ths_re_0, ma_sup_hs, gv.Cpa)
+                                                                               Ths_sup_0, Ths_re_0, ma_sup_hs,ma_sup_0,
+                                                                               Ta_sup_0, Ta_re_0, gv.Cpa)
 
     if sys_e_cooling == 'T3':  # air conditioning
-
-        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)((Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs,
-                                                                                Tcs_sup_0, Tcs_re_0, ma_sup_cs, gv.Cpa)
+        index = np.where(Qcsf == Qcsf_0)
+        ma_sup_0 = ma_sup_cs[index[0][0]] + 273
+        Ta_sup_0 = Ta_sup_cs[index[0][0]] + 273
+        Ta_re_0 = Ta_re_cs[index[0][0]] + 273
+        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs,
+                                                                               Tcs_sup_0, Tcs_re_0, ma_sup_cs, ma_sup_0,
+                                                                               Ta_sup_0, Ta_re_0, gv.Cpa)
 
     if sys_e_heating == 'T4':  # floor heating
 

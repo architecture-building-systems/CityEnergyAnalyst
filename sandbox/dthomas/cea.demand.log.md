@@ -16,7 +16,7 @@
                - [calculate_pipe_transmittance_values](#calculate_pipe_transmittance_values)
                - [Calc_form](#calc_form)
                   - [calc_qv_req](#calc_qv_req)
-            - [calc_heat_gains_solar](#calc_heat_gains_solar)
+            - [calc_Qsol](#calc_Qsol)
                - [Calc_Rf_sh](#calc_rf_sh)
                   - [calc_gl](#calc_gl)
             - [calc_heat_gains_internal_sensible](#calc_heat_gains_internal_sensible)
@@ -1858,7 +1858,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_heat_gains_solar
+# calc_Qsol
 - number of invocations: 1
 - max duration: 0.196 s
 - avg duration: 0.196 s

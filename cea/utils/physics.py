@@ -3,6 +3,10 @@
     Physiscal properties
     ===========
 """
+
+from math import exp
+import numpy as np
+
 def calc_w(t, RH):
     """
     Moisture content in kg/kg of dry air
@@ -17,7 +21,7 @@ def calc_w(t, RH):
     w : moisture content of air in (kg/kg dry air)
     """
     Pa = 100000  # Pa
-    Ps = 610.78 * math.exp(t / (t + 238.3) * 17.2694)
+    Ps = 610.78 * exp(t / (t + 238.3) * 17.2694)
     Pv = RH / 100 * Ps
     w = 0.62 * Pv / (Pa - Pv)
 

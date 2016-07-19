@@ -80,7 +80,7 @@ def calc_Eaux(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tc
     if nf_ag > 5:  # up to 5th floor no pumping needs
         Eaux_fw = calc_Eaux_fw(Vw, nf_ag, gv)
     if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
-        Eaux_ve = np.vectorize(calc_Eaux_ve)(Qhsf, Qcsf, gv.Pfan, qv_req, sys_e_heating, sys_e_cooling, Af)
+        Eaux_ve = np.vectorize(calc_Eaux_ve)(Qhsf, Qcsf, gv.Pfan, qv_req, sys_e_heating, sys_e_cooling)
 
     Eauxf = Eaux_hs + Eaux_cs + Eaux_ve + Eaux_ww + Eaux_fw + Ehs_lat_aux
 
