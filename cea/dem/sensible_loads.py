@@ -1,153 +1,58 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
+"""
+=========================================
+Sensible space heating and space cooling loads
+EN-13970
+=========================================
 
-import math
-import os
-
-import numpy as np
-import pandas as pd
-import scipy
-import scipy.optimize as sopt
-
+"""
 __author__ = "Jimeno A. Fonseca"
-__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca", "Daren Thomas", "Shanshan Hsieh", "Gabriel Happle"]
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-
-def calc_mainuse(uses_df, uses):
-    databaseclean = uses_df[uses].transpose()
-    array_min = np.array(
-        databaseclean[
-            databaseclean[:] > 0].idxmin(
-            skipna=True), dtype='S10')
-    array_max = np.array(
-        databaseclean[
-            databaseclean[:] > 0].idxmax(
-            skipna=True), dtype='S10')
-    mainuse = np.array(map(calc_comparison, array_min, array_max))
-    return mainuse
+from __future__ import division
+import math
+import os
+import numpy as np
+import pandas as pd
+import scipy
+import scipy.optimize as sopt
 
 
-def calc_comparison(array_min, array_max):
-    # do this to avoid that the selection of values
-    # be based on the DEPO. for buildings qih heated spaces
-    if array_max == 'PARKING':
-        if array_min != 'PARKING':
-            array_max = array_min
-    return array_max
+def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Htr_ms, Htr_is, Htr_1, Htr_2, Htr_3,
+                 I_st, Hve, Htr_w, I_ia, I_m, Cm, Af, Losses, tHset_corr, tCset_corr, IC_max, IH_max, Flag):
 
+    def calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0):
+        tm_t = (tm_t0 * ((Cm / 3600) - 0.5 * (Htr_3 + Htr_em)) + Im_tot) / ((Cm / 3600) + 0.5 * (Htr_3 + Htr_em))
+        tm = (tm_t + tm_t0) / 2
+        return tm
 
-def calc_category(x, y):
-    if 0 < x <= 1920:
-        # Database['Qh'] = Database.ADMIN.value * Model.
-        result = '1'
-    elif x > 1920 and x <= 1970:
-        result = '2'
-    elif x > 1970 and x <= 1980:
-        result = '3'
-    elif x > 1980 and x <= 2000:
-        result = '4'
-    elif x > 2000 and x <= 2020:
-        result = '5'
-    elif x > 2020:
-        result = '6'
+    def calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm):
+        ts = (Htr_ms * tm + I_st + Htr_w * te_t + Htr_1 * (te_t + (I_ia + IHC_nd) / Hve)) / (Htr_ms + Htr_w + Htr_1)
+        return ts
 
-    if 0 < y <= 1920:
-        result = '7'
-    elif 1920 < y <= 1970:
-        result = '8'
-    elif 1970 < y <= 1980:
-        result = '9'
-    elif 1980 < y <= 2000:
-        result = '10'
-    elif 2000 < y <= 2020:
-        result = '11'
-    elif y > 2020:
-        result = '12'
+    def calc_ta(Htr_is, Hve, IHC_nd, I_ia, te_t, ts):
+        ta = (Htr_is * ts + Hve * te_t + I_ia + IHC_nd) / (Htr_is + Hve)
+        return ta
 
-    return result
+    def calc_top(ta, ts):
+        top = 0.31 * ta + 0.69 * ts
+        return top
 
+    def Calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd, Hve, Htr_2):
+        return I_m + Htr_em * te_t + Htr_3 * (I_st + Htr_w * te_t + Htr_1 * (((I_ia + IHC_nd) / Hve) + te_t)) / Htr_2
 
-def check_temp_file(T_ext, tH, tC, tmax):
-    if tH == 0:
-        tH = T_ext
-    if tC == 0:
-        tC = tmax + 1
-    return tH, tC
-
-
-def calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0):
-    tm_t = (tm_t0 * ((Cm / 3600) - 0.5 * (Htr_3 + Htr_em)) + Im_tot) / ((Cm / 3600) + 0.5 * (Htr_3 + Htr_em))
-    tm = (tm_t + tm_t0) / 2
-    return tm
-
-
-def calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm):
-    ts = (Htr_ms * tm + I_st + Htr_w * te_t + Htr_1 * (te_t + (I_ia + IHC_nd) / Hve)) / (Htr_ms + Htr_w + Htr_1)
-    return ts
-
-
-def calc_ta(Htr_is, Hve, IHC_nd, I_ia, te_t, ts):
-    ta = (Htr_is * ts + Hve * te_t + I_ia + IHC_nd) / (Htr_is + Hve)
-    return ta
-
-
-def calc_t_op(ta, ts):
-    top = 0.31 * ta + 0.69 * ts
-    return top
-
-
-def calc_Htr(Hve, Htr_is, Htr_ms, Htr_w):
-    Htr_1 = 1 / (1 / Hve + 1 / Htr_is)
-    Htr_2 = Htr_1 + Htr_w
-    Htr_3 = 1 / (1 / Htr_2 + 1 / Htr_ms)
-    return Htr_1, Htr_2, Htr_3
-
-
-def calc_Qem_ls(SystemH, SystemC):
-    """model of losses in the emission and control system for space heating and cooling.
-    correction factor for the heating and cooling setpoints. extracted from SIA 2044 (replacing EN 15243)"""
-    tHC_corr = [0, 0]
-    # values extracted from SIA 2044 - national standard replacing values suggested in EN 15243
-    if SystemH == 'T4' or 'T1':
-        tHC_corr[0] = 0.5 + 1.2
-    elif SystemH == 'T2':
-        tHC_corr[0] = 0 + 1.2
-    elif SystemH == 'T3':  # no emission losses but emissions for ventilation
-        tHC_corr[0] = 0.5 + 1  # regulation is not taking into account here
-    else:
-        tHC_corr[0] = 0.5 + 1.2
-
-    if SystemC == 'T4':
-        tHC_corr[1] = 0 - 1.2
-    elif SystemC == 'T5':
-        tHC_corr[1] = - 0.4 - 1.2
-    elif SystemC == 'T3':  # no emission losses but emissions for ventilation
-        tHC_corr[1] = 0 - 1  # regulation is not taking into account here
-    else:
-        tHC_corr[1] = 0 + - 1.2
-
-    return list(tHC_corr)
-
-
-def Calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd, Hve, Htr_2):
-    return I_m + Htr_em * te_t + Htr_3 * (I_st + Htr_w * te_t + Htr_1 * (((I_ia + IHC_nd) / Hve) + te_t)) / Htr_2
-
-
-def calc_TL(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Htr_ms, Htr_is, Htr_1, Htr_2, Htr_3,
-            I_st, Hve, Htr_w, I_ia, I_m, Cm, Af, Losses, tHset_corr, tCset_corr, IC_max, IH_max, Flag):
-    # assumptions
     if Losses:
         # Losses due to emission and control of systems
         tintH_set = tintH_set + tHset_corr
         tintC_set = tintC_set + tCset_corr
 
-    # measure if this an uncomfortable hour
+        # measure if this an uncomfortable hour
     uncomfort = 0
     # Case 0 or 1
     IHC_nd = IC_nd_ac = IH_nd_ac = 0
@@ -156,7 +61,7 @@ def calc_TL(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Htr_ms,
     tm = calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0)
     ts = calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm)
     tair_case0 = calc_ta(Htr_is, Hve, IHC_nd, I_ia, te_t, ts)
-    top_case0 = calc_t_op(tair_case0, ts)
+    top_case0 = calc_top(tair_case0, ts)
 
     if tintH_set <= tair_case0 <= tintC_set:
         ta = tair_case0
@@ -192,7 +97,7 @@ def calc_TL(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Htr_ms,
             tm = calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0)
             ts = calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd_ac, I_ia, I_st, te_t, tm)
             ta = calc_ta(Htr_is, Hve, IHC_nd_ac, I_ia, te_t, ts)
-            top = calc_t_op(ta, ts)
+            top = calc_top(ta, ts)
 
             uncomfort = 1
 
@@ -214,7 +119,7 @@ def calc_TL(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Htr_ms,
     return tm, ta, IH_nd_ac, IC_nd_ac, uncomfort, top, Im_tot
 
 
-def calc_Qdis_ls(tair, text, Qhs, Qcs, tsh, trh, tsc, trc, Qhs_max, Qcs_max, D, Y, SystemH, SystemC, Bf, Lv):
+def calc_Qhs_Qcs_dis_ls(tair, text, Qhs, Qcs, tsh, trh, tsc, trc, Qhs_max, Qcs_max, D, Y, SystemH, SystemC, Bf, Lv):
     """calculates distribution losses based on ISO 15316"""
     # Calculate tamb in basement according to EN
     tamb = tair - Bf * (tair - text)
@@ -228,6 +133,41 @@ def calc_Qdis_ls(tair, text, Qhs, Qcs, tsh, trh, tsc, trc, Qhs_max, Qcs_max, D, 
         Qcs_d_ls = 0
 
     return Qhs_d_ls, Qcs_d_ls
+
+
+def calc_Qhs_Qcs_em_ls(SystemH, SystemC):
+    """model of losses in the emission and control system for space heating and cooling.
+    correction factor for the heating and cooling setpoints. extracted from SIA 2044 (replacing EN 15243)"""
+    tHC_corr = [0, 0]
+    # values extracted from SIA 2044 - national standard replacing values suggested in EN 15243
+    if SystemH == 'T4' or 'T1':
+        tHC_corr[0] = 0.5 + 1.2
+    elif SystemH == 'T2':
+        tHC_corr[0] = 0 + 1.2
+    elif SystemH == 'T3':  # no emission losses but emissions for ventilation
+        tHC_corr[0] = 0.5 + 1  # regulation is not taking into account here
+    else:
+        tHC_corr[0] = 0.5 + 1.2
+
+    if SystemC == 'T4':
+        tHC_corr[1] = 0 - 1.2
+    elif SystemC == 'T5':
+        tHC_corr[1] = - 0.4 - 1.2
+    elif SystemC == 'T3':  # no emission losses but emissions for ventilation
+        tHC_corr[1] = 0 - 1  # regulation is not taking into account here
+    else:
+        tHC_corr[1] = 0 + - 1.2
+
+    return list(tHC_corr)
+
+
+
+def calc_Htr(Hve, Htr_is, Htr_ms, Htr_w):
+    Htr_1 = 1 / (1 / Hve + 1 / Htr_is)
+    Htr_2 = Htr_1 + Htr_w
+    Htr_3 = 1 / (1 / Htr_2 + 1 / Htr_ms)
+    return Htr_1, Htr_2, Htr_3
+
 
 def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, limit_inf_season, limit_sup_season):
     infiltration_occupied = gv.hf * gv.NACH_inf_occ  # m3/h.m2
@@ -266,7 +206,7 @@ def calc_mixed_schedule(tsd, list_uses, schedules, building_uses):
     return tsd
 
 
-def get_internal_loads(tsd, prop_internal_loads, prop_architecture, Af):
+def calc_Qint(tsd, prop_internal_loads, prop_architecture, Af):
     from electrical_loads import calc_Ea,calc_El,calc_Edata, calc_Epro, calc_Eref
 
     tsd['Eaf'] = calc_Ea(tsd.el.values,prop_internal_loads['Ea_Wm2'], Af)

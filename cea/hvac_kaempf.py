@@ -4,7 +4,7 @@
     ===========
     contains debugged version of HVAC model of Kämpf [1]
     originally coded by J. Fonseca
-    debugged and moved out of functions.py script by G. Happle
+    debugged and moved out of sensible_loads.py script by G. Happle
     Literature:
     [1] Kämpf, Jérôme Henri
         On the modelling and optimisation of urban energy fluxes

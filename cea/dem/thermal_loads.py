@@ -18,7 +18,7 @@ import cea.dem.electrical_loads
 import cea.dem.hotwater_loads
 import cea.hvac_kaempf
 import contributions.thermal_loads_new_ventilation.ventilation
-from cea.dem import functions
+from cea.dem import sensible_loads
 
 
 def calc_tHC_corr(SystemH, SystemC, sys_e_ctrl):
@@ -193,7 +193,7 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
     temp_hs_set_corr, temp_cs_set_corr = calc_tHC_corr(bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
 
     # heating and cooling loads
-    i_c_max, i_h_max = functions.calc_capacity_heating_cooling_system(bpr.rc_model['Af'], bpr.hvac)
+    i_c_max, i_h_max = sensible_loads.calc_capacity_heating_cooling_system(bpr.rc_model['Af'], bpr.hvac)
 
     # previous timestep data (we give a seed high enough to avoid doing a iteration for 2 years, Ta=21, Tm=16)
     temp_air_prev = tsd['Ta'][t-1] if t > 0 else gv.initial_temp_air_prev
@@ -257,22 +257,22 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
         h_ve_adj = calc_h_ve_adj(qm_ve_mech, qm_ve_nat, temp_ext, temp_ve_sup, temp_air_prev, gv)  # TODO
 
         # Htr1, Htr2, Htr3
-        h_tr_1, h_tr_2, h_tr_3 = functions.calc_Htr(h_ve_adj, h_tr_is, h_tr_ms, h_tr_w)
+        h_tr_1, h_tr_2, h_tr_3 = sensible_loads.calc_Htr(h_ve_adj, h_tr_is, h_tr_ms, h_tr_w)
 
         # TODO: adjust calc TL function to new way of losses calculation (adjust input parameters)
         Losses = True  # including emission and control losses for the iteration of air mass flow rate
 
-        # calc_TL()
+        # calc_Qhs_Qcs()
         temp_m_loss_true, \
         temp_a_loss_true, \
         q_hs_sen_loss_true, \
         q_cs_sen_loss_true, \
         uncomfort_loss_true, \
         temp_op_loss_true, \
-        i_m_tot_loss_true = functions.calc_TL(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
-                                              temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st,
-                                              h_ve_adj, h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr,
-                                              temp_cs_set_corr, i_c_max, i_h_max, flag_season)
+        i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
+                                                        temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st,
+                                                        h_ve_adj, h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr,
+                                                        temp_cs_set_corr, i_c_max, i_h_max, flag_season)
 
         # calculate sensible heat load
         Losses = False  # Losses are set to false for the calculation of the sensible heat load and actual temperatures
@@ -283,10 +283,10 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
         q_cs_sen, \
         uncomfort, \
         temp_op, \
-        i_m_tot = functions.calc_TL(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set, temp_cs_set,
-                                    h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve_adj, h_tr_w, i_ia,
-                                    i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max,
-                                    flag_season)
+        i_m_tot = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set, temp_cs_set,
+                                              h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve_adj, h_tr_w, i_ia,
+                                              i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max,
+                                              flag_season)
         # TODO: in the original calculation procedure this is calculated with another temp_m_prev (with and without losses), check if this is correct or not
 
         # ventilation losses
@@ -425,7 +425,7 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
     # model of losses in the emission and control system for space heating and cooling
     temp_hs_set_corr, temp_cs_set_corr = calc_tHC_corr(bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
 
-    i_c_max, i_h_max = functions.calc_capacity_heating_cooling_system(bpr.rc_model['Af'], bpr.hvac)
+    i_c_max, i_h_max = sensible_loads.calc_capacity_heating_cooling_system(bpr.rc_model['Af'], bpr.hvac)
 
     # previous timestep data (we give a seed high enough to avoid doing a iteration for 2 years, Ta=21, Tm=16)
     temp_air_prev = tsd['Ta'][t - 1] if t > 0 else gv.initial_temp_air_prev
@@ -448,20 +448,20 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
     h_ve = calc_h_ve_adj(qm_ve_mech, qm_ve_nat, temp_ext, temp_ve_sup, temp_air_prev, gv)
 
     # calc htr1, htr2, htr3
-    h_tr_1, h_tr_2, h_tr_3 = functions.calc_Htr(h_ve, h_tr_is, h_tr_ms, h_tr_w)
+    h_tr_1, h_tr_2, h_tr_3 = sensible_loads.calc_Htr(h_ve, h_tr_is, h_tr_ms, h_tr_w)
 
     Losses = False  # TODO: adjust calc TL function to new way of losses calculation (adjust input parameters)
 
-    # calc_TL()
+    # calc_Qhs_Qcs()
     temp_m, \
     temp_a, \
     q_hs_sen, \
     q_cs_sen, \
     uncomfort, \
     temp_op, \
-    i_m_tot = functions.calc_TL(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set, temp_cs_set,
-                                h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve, h_tr_w, i_ia, i_m, cm,
-                                area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max, flag_season)
+    i_m_tot = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set, temp_cs_set,
+                                          h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve, h_tr_w, i_ia, i_m, cm,
+                                          area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max, flag_season)
 
     # calculate emission losses
     Losses = True
@@ -471,10 +471,10 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
     q_cs_sen_loss_true, \
     uncomfort_loss_true, \
     temp_op_loss_true, \
-    i_m_tot_loss_true = functions.calc_TL(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
-                                          temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve,
-                                          h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr,
-                                          i_c_max, i_h_max, flag_season)
+    i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
+                                                    temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve,
+                                                    h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr,
+                                                    i_c_max, i_h_max, flag_season)
     # TODO: in the original calculation procedure this is calculated with another temp_m_prev (with and without losses), check if this is correct or not
 
     # calculate emission losses
@@ -624,10 +624,10 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     n50 = bpr.architecture['n50']
 
     # copied from original calc thermal loads
-    tsd = functions.calc_mixed_schedule(tsd, list_uses, schedules, bpr.occupancy)  # TODO: rename outputs
+    tsd = sensible_loads.calc_mixed_schedule(tsd, list_uses, schedules, bpr.occupancy)  # TODO: rename outputs
 
     # get internal loads
-    tsd = functions.get_internal_loads(tsd, bpr.internal_loads, bpr.architecture, bpr.rc_model['Af'])
+    tsd = sensible_loads.calc_Qint(tsd, bpr.internal_loads, bpr.architecture, bpr.rc_model['Af'])
 
 
     # ground water temperature in C during heating season (winter) according to norm
@@ -638,11 +638,11 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     if bpr.rc_model['Af'] > 0:  # building has conditioned area
 
         # get occupancy
-        tsd = functions.get_occupancy(tsd, bpr.architecture, bpr.rc_model['Af'])
+        tsd = sensible_loads.get_occupancy(tsd, bpr.architecture, bpr.rc_model['Af'])
 
         # get internal comfort properties
-        tsd = functions.get_internal_comfort(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
-                                             date.dayofweek)
+        tsd = sensible_loads.get_internal_comfort(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
+                                                  date.dayofweek)
 
         # minimum mass flow rate of ventilation according to schedule
         # with infiltration and overheating
@@ -657,19 +657,19 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         # sensible internal heat gains
         # copied from original calc thermal loads
-        tsd['I_int_sen'] = functions.calc_heat_gains_internal_sensible(tsd['people'].values, bpr.internal_loads['Qs_Wp'],
-                                                                       tsd['Ealf'].values, tsd['Eprof'].values,
-                                                                       tsd['Qcdata'].values, tsd['Qcrefri'].values)
+        tsd['I_int_sen'] = sensible_loads.calc_heat_gains_internal_sensible(tsd['people'].values, bpr.internal_loads['Qs_Wp'],
+                                                                            tsd['Ealf'].values, tsd['Eprof'].values,
+                                                                            tsd['Qcdata'].values, tsd['Qcrefri'].values)
 
         # components of internal heat gains for R-C-model
         # copied from original calc thermal loads
-        tsd = functions.calc_comp_heat_gains_sensible(tsd, bpr.rc_model['Am'], bpr.rc_model['Atot'], bpr.rc_model['Htr_w'])
+        tsd = sensible_loads.calc_comp_heat_gains_sensible(tsd, bpr.rc_model['Am'], bpr.rc_model['Atot'], bpr.rc_model['Htr_w'])
 
         # internal moisture gains
         # copied from original calc thermal loads
-        tsd['w_int'] = functions.calc_heat_gains_internal_latent(tsd['people'].values, bpr.internal_loads['X_ghp'],
-                                                                 bpr.hvac['type_cs'],
-                                                                 bpr.hvac['type_hs'])
+        tsd['w_int'] = sensible_loads.calc_heat_gains_internal_latent(tsd['people'].values, bpr.internal_loads['X_ghp'],
+                                                                      bpr.hvac['type_cs'],
+                                                                      bpr.hvac['type_hs'])
 
         # natural ventilation building propertiess
         # new
@@ -702,18 +702,18 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # Qcs_sen_incl_em_ls[Qcs_sen_incl_em_ls > 0] = 0
         Qhs_sen_incl_em_ls_0 = tsd['Qhs_sen_incl_em_ls'].max()
         Qcs_sen_incl_em_ls_0 = tsd['Qcs_sen_incl_em_ls'].min()  # cooling loads up to here in negative values
-        Qhs_d_ls, Qcs_d_ls = np.vectorize(functions.calc_Qdis_ls)(tsd['Ta'], tsd['T_ext'].values,
-                                                                  tsd['Qhs_sen_incl_em_ls'].values,
-                                                                  tsd['Qcs_sen_incl_em_ls'].values,
-                                                                  bpr.building_systems['Ths_sup_0'],
-                                                                  bpr.building_systems['Ths_re_0'],
-                                                                  bpr.building_systems['Tcs_sup_0'],
-                                                                  bpr.building_systems['Tcs_re_0'],
-                                                                  Qhs_sen_incl_em_ls_0,
-                                                                  Qcs_sen_incl_em_ls_0,
-                                                                  gv.D, bpr.building_systems['Y'][0], bpr.hvac['type_hs'],
-                                                                  bpr.hvac['type_cs'], gv.Bf,
-                                                                  bpr.building_systems['Lv'])
+        Qhs_d_ls, Qcs_d_ls = np.vectorize(sensible_loads.calc_Qhs_Qcs_dis_ls)(tsd['Ta'], tsd['T_ext'].values,
+                                                                              tsd['Qhs_sen_incl_em_ls'].values,
+                                                                              tsd['Qcs_sen_incl_em_ls'].values,
+                                                                              bpr.building_systems['Ths_sup_0'],
+                                                                              bpr.building_systems['Ths_re_0'],
+                                                                              bpr.building_systems['Tcs_sup_0'],
+                                                                              bpr.building_systems['Tcs_re_0'],
+                                                                              Qhs_sen_incl_em_ls_0,
+                                                                              Qcs_sen_incl_em_ls_0,
+                                                                              gv.D, bpr.building_systems['Y'][0], bpr.hvac['type_hs'],
+                                                                              bpr.hvac['type_cs'], gv.Bf,
+                                                                              bpr.building_systems['Lv'])
 
         # Calc requirements of generation systems (both cooling and heating do not have a storage):
         Qhs = tsd['Qhs_sen_incl_em_ls'] - tsd['Qhs_em_ls']
@@ -729,25 +729,25 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         Qcsf_0 = Qcsf.min()  # in W negative
 
         # Cal temperatures of all systems
-        Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs = functions.calc_temperatures_emission_systems(Qcsf, Qcsf_0,
-                                                                                                      Qhsf, Qhsf_0,
-                                                                                                      tsd['Ta'],
-                                                                                                      tsd['Ta_re_cs'],
-                                                                                                      tsd['Ta_re_hs'],
-                                                                                                      tsd['Ta_sup_cs'],
-                                                                                                      tsd['Ta_sup_hs'],
-                                                                                                      bpr.building_systems['Tcs_re_0'],
-                                                                                                      bpr.building_systems['Tcs_sup_0'],
-                                                                                                      bpr.building_systems['Ths_re_0'],
-                                                                                                      bpr.building_systems['Ths_sup_0'],
-                                                                                                      gv,
-                                                                                                      tsd['ma_sup_cs'],
-                                                                                                      tsd['ma_sup_hs'],
-                                                                                                      bpr.hvac['type_cs'],
-                                                                                                      bpr.hvac['type_hs'],
-                                                                                                      tsd['ta_hs_set'].values,
-                                                                                                      tsd['w_re'],
-                                                                                                      tsd['w_sup'])
+        Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs = sensible_loads.calc_temperatures_emission_systems(Qcsf, Qcsf_0,
+                                                                                                           Qhsf, Qhsf_0,
+                                                                                                           tsd['Ta'],
+                                                                                                           tsd['Ta_re_cs'],
+                                                                                                           tsd['Ta_re_hs'],
+                                                                                                           tsd['Ta_sup_cs'],
+                                                                                                           tsd['Ta_sup_hs'],
+                                                                                                           bpr.building_systems['Tcs_re_0'],
+                                                                                                           bpr.building_systems['Tcs_sup_0'],
+                                                                                                           bpr.building_systems['Ths_re_0'],
+                                                                                                           bpr.building_systems['Ths_sup_0'],
+                                                                                                           gv,
+                                                                                                           tsd['ma_sup_cs'],
+                                                                                                           tsd['ma_sup_hs'],
+                                                                                                           bpr.hvac['type_cs'],
+                                                                                                           bpr.hvac['type_hs'],
+                                                                                                           tsd['ta_hs_set'].values,
+                                                                                                           tsd['w_re'],
+                                                                                                           tsd['w_sup'])
         Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpww = cea.dem.hotwater_loads.calc_Qwwf(bpr.rc_model['Af'],
                                                                                                      bpr.building_systems['Lcww_dis'],
                                                                                                      bpr.building_systems['Lsww_dis'],
@@ -807,19 +807,19 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         bpr.rc_model['Aef'], tsd['Ealf'].values, Eauxf, tsd['Edataf'].values, tsd['Eprof'].values)
 
     # write results to csv
-    functions.results_to_csv(bpr.rc_model['GFA_m2'], bpr.rc_model['Af'], Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edataf,
-                             Edataf_tot,
-                             Eprof, Eprof_tot,
-                             building_name,
-                             Occupancy,
-                             Occupants, tsd['Qcdata'].values, tsd['Qcrefri'].values, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf,
-                             Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
-                             Tcs_re, bpr.building_systems['Tcs_re_0'], Tcs_sup,
-                             bpr.building_systems['Tcs_sup_0'], Ths_re, bpr.building_systems['Ths_re_0'], Ths_sup,
-                             bpr.building_systems['Ths_sup_0'], tsd['Tww_re'], Tww_st,
-                             bpr.building_systems['Tww_sup_0'], Waterconsumption, results_folder, mcpcs, mcphs, mcpww,
-                             temporary_folder,
-                             bpr.hvac['type_cs'], bpr.hvac['type_hs'], waterpeak, date)
+    sensible_loads.results_to_csv(bpr.rc_model['GFA_m2'], bpr.rc_model['Af'], Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edataf,
+                                  Edataf_tot,
+                                  Eprof, Eprof_tot,
+                                  building_name,
+                                  Occupancy,
+                                  Occupants, tsd['Qcdata'].values, tsd['Qcrefri'].values, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf,
+                                  Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
+                                  Tcs_re, bpr.building_systems['Tcs_re_0'], Tcs_sup,
+                                  bpr.building_systems['Tcs_sup_0'], Ths_re, bpr.building_systems['Ths_re_0'], Ths_sup,
+                                  bpr.building_systems['Ths_sup_0'], tsd['Tww_re'], Tww_st,
+                                  bpr.building_systems['Tww_sup_0'], Waterconsumption, results_folder, mcpcs, mcphs, mcpww,
+                                  temporary_folder,
+                                  bpr.hvac['type_cs'], bpr.hvac['type_hs'], waterpeak, date)
 
     gv.report('calc-thermal-loads', locals(), results_folder, building_name)
     return
