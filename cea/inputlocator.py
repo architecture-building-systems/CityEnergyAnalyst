@@ -128,7 +128,7 @@ class InputLocator(object):
     ##DEMAND
     def get_demand_results_folder(self):
         """scenario/2-results/2-dem/1-timeseries"""
-        demand_results_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'dem')
+        demand_results_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'demand')
         if not os.path.exists(demand_results_folder):
             os.makedirs(demand_results_folder)
         return demand_results_folder

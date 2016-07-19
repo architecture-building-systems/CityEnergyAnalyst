@@ -12,6 +12,7 @@ Input variables: V (tank size), U_tank (tank Insulation Property), AR (tank Aspe
 Output variables: Qww_ls_st(sensible heat loss from storage tank), Tww_st(storage tank temperature)
 """
 
+from __future__ import division
 import numpy as np
 from scipy.integrate import odeint
 import math

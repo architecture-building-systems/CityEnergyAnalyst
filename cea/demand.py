@@ -110,7 +110,7 @@ def write_totals_csv(building_properties, locator):
 
 def thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, usage_schedules,
                                 weather_data):
-    for i, building in enumerate(building_properties.list_building_names()):
+    for i, building in enumerate(building_properties.list_building_names()[262:]):
         bpr = building_properties[building]
         thermal_loads.calc_thermal_loads(
             building, bpr, weather_data, usage_schedules, date, gv,
