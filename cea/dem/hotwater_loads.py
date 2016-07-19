@@ -24,7 +24,7 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     # Refactored from CalcThermalLoads
     """
     This function calculates the distribution heat loss and final energy consumption of domestic hot water.
-    Final energy consumption of dhw includes dhw demand, sensible heat loss in hot water storage tank, and heat loss in the distribution network.
+    Final energy consumption of dhw includes dhw dem, sensible heat loss in hot water storage tank, and heat loss in the distribution network.
     :param Af: Conditioned floor area in m2.
     :param Lcww_dis: Length of dhw usage circulation pipeline in m.
     :param Lsww_dis: Length of dhw usage distribution pipeline in m.
@@ -40,7 +40,7 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
 
     """
 
-    # end-use demand
+    # end-use dem
     mww, Vww =  np.vectorize(calc_mww)(vww, Af, gv.Pwater)
     Qww, Qww_0 = np.vectorize(calc_Qww)(mww, Tww_sup_0, Tww_re, gv.Cpw)
 
@@ -54,7 +54,7 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     Qww_st_ls, Tww_st = np.vectorize(calc_Qww_st_ls)(Vww, gv.Tww_setpoint, Ta, gv.Bf, gv.Pwater, gv.Cpw, Qww_dis_ls_r,
                                                      Qww_dis_ls_nr, gv.U_dhwtank, gv.AR, gv, T_ext, Qww)
 
-    # final demand
+    # final dem
     Qwwf = Qww + Qww_dis_ls_r, Qww_dis_ls_nr + Qww_st_ls
     Qwwf_0 = Qwwf.max()
     mcpwwf = Qwwf / abs(Tww_st - Tww_re)

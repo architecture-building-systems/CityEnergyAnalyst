@@ -72,7 +72,7 @@ def VCC_LCOE(qcold):
     Parameters
     ----------
     qcolddot : float
-        cooling ENERGY demand in WATT-HOUR
+        cooling ENERGY dem in WATT-HOUR
     
     Returns
     -------

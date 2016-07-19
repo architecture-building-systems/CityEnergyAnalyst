@@ -173,7 +173,7 @@ def heating_hex_design(Q_heating_max, T_return_min_global, T_supply_max_global, 
     Parameters
     ----------
     Q_heating_max : float
-        Maximum heat demand for space heating [W]
+        Maximum heat dem for space heating [W]
         
     T_return_min_global : float
         lowest return temperature possible
@@ -259,7 +259,7 @@ def dhw_hex_design(Q_dhw_max, T_amb_max, hex_type, U, cp):
     Parameters
     ----------
     Q_dhw_max : float
-        Maximum heat demand for domestic hot water [W]
+        Maximum heat dem for domestic hot water [W]
         
     T_amb_max : float
         maximum ambient temperature in [K]

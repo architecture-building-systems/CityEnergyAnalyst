@@ -68,7 +68,7 @@ def lca_embodied(yearcalc, locator, gv):
     path_architecture_shp:
         path to building_architecture.shp
     path_results : string
-        path to demand results folder emissions
+        path to dem results folder emissions
 
     Returns
     -------
@@ -77,15 +77,15 @@ def lca_embodied(yearcalc, locator, gv):
     """
 
     # localvariables
-    architecture_df = gpdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1)
+    architecture_df = gpdf.from_file(locator.get_building_architecture()).drop('geom', axis=1)
     Area_df = pd.read_csv(locator.get_total_demand())[['GFA_m2']]
-    prop_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
+    prop_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geom', axis=1)
     occupancy_df = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
-    age_df = gpdf.from_file(locator.get_building_age()).drop('geometry', axis=1)
+    age_df = gpdf.from_file(locator.get_building_age()).drop('geom', axis=1)
     geometry_df = gpdf.from_file(locator.get_building_geometry())
     geometry_df['footprint'] = geometry_df.area
     geometry_df['perimeter'] = geometry_df.length
-    geometry_df = geometry_df.drop('geometry', axis=1)
+    geometry_df = geometry_df.drop('geom', axis=1)
 
     #get list of uses
     list_uses = list(occupancy_df.drop({'PFloor','Name'}, axis=1).columns)
@@ -96,7 +96,7 @@ def lca_embodied(yearcalc, locator, gv):
     # dataframe with jonned data for categories
     cat_df = occupancy_df.merge(age_df,on='Name').merge(geometry_df,on='Name').merge(architecture_df,on='Name')
 
-    # calculate building geometry
+    # calculate building geom
     cat_df['windows_ag'] = cat_df['win_wall']*cat_df['perimeter']*cat_df['height_ag']
     cat_df['area_walls_ext_ag'] = cat_df['perimeter']*cat_df['height_ag'] - cat_df['windows_ag']
     cat_df['area_walls_ext_bg'] = cat_df['perimeter'] * cat_df['height_bg']

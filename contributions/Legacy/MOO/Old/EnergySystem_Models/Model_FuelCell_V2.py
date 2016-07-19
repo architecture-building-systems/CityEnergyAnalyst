@@ -89,7 +89,7 @@ def FC_operation(Q_load, Q_design, phi_threshold, approach_call):
         electric efficiency of FC (Lower Heating Value), in abs. numbers
     
     Q_fuel : float
-        Heat demand from fuel (in Watt)
+        Heat dem from fuel (in Watt)
     
     
     

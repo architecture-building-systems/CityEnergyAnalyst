@@ -45,7 +45,7 @@ os.chdir(pathdata)
 
 # Pre-treatment of the data :
 # Extract the names of the buildings present in the district
-# and Calculate the constraints on the heating demand
+# and Calculate the constraints on the heating dem
 
 buildList = sFn.extractList(gV.buildListFile)
 nBuildings = len(buildList)

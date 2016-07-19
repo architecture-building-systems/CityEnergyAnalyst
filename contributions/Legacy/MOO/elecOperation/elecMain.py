@@ -15,7 +15,7 @@ import pandas as pd
 
 def elecOp(pathX, gV):
     """
-    Computes the parameters for the electrical demand
+    Computes the parameters for the electrical dem
     
     Parameters
     ----------

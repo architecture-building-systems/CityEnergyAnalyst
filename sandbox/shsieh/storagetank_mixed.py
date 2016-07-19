@@ -35,7 +35,7 @@ def calc_Qww_ls_st(Tww_st_0, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_nr ):
     tamb = tair - Bf*(tair-te)
 
     U= 0.225    # tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
-    AR= 3.3     # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), value taken from commercial tank geometry (jenni.ch)
+    AR= 3.3     # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), value taken from commercial tank geom (jenni.ch)
 
     h= (4*V*AR**2/math.pi)^(1/3)  # tank height in m, derived from tank AR
     r= (V/(math.pi*h))*(1/2) # tank radius in m, assuming tank shape is cylinder
@@ -64,12 +64,12 @@ def solve_ode_storage(Tww_st_0,ql,qd,qc,Pwater,Cpw,Vtank):
   #  Tww_st[k] = solve_ode_storage(Tww_st_0, Qww_ls_st[k], Qww, Qs, gv.Pwater, gv.Cpw)
    # Tww_st_0 = Tww_st[k]
 
-def calc_V_dhwtank(vww, vww_0):    # Calculate the storage size according to summation of peak demand in m^3.
+def calc_V_dhwtank(vww, vww_0):    # Calculate the storage size according to summation of peak dem in m^3.
     peakdraw = vww_0
     i = np.argmax(vww)
     j = i
     k = i
-    # summation of withdraw volume the peak demand period
+    # summation of withdraw volume the peak dem period
     while vww_0 - 0.1 * vww_0 <= vww[j - 1] <= vww_0 + 0.1 * vww_0:
         peakdraw = peakdraw + vww[j - 1]
         j = j - 1

@@ -19,7 +19,7 @@ import emissions
 import globalvar
 import heatmaps
 import properties
-from cea import demand
+from cea import dem
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -36,7 +36,7 @@ reload(heatmaps)
 reload(embodied)
 reload(properties)
 reload(emissions)
-reload(demand)
+reload(dem)
 
 gv = globalvar.GlobalVariables()
 
@@ -112,8 +112,8 @@ def multiple_scenarios(path_list_scenarios, path_LCA_embodied_energy, path_LCA_e
             path_results = paths_of_scenarios.path_scenario[x]+'\\'+r'103_final output\demand'  # noqa
             path_properties = paths_of_scenarios.path_scenario[x]+'\\'+r'102_intermediate output\building properties\properties.xls'  # noqa
             path_temporary_folder = tempfile.gettempdir()
-            demand.analytical(path_radiation, path_schedules, path_temporary_folder, path_weather,
-                              path_results, path_properties, gv)
+            dem.analytical(path_radiation, path_schedules, path_temporary_folder, path_weather,
+                           path_results, path_properties, gv)
 
             message = 'Demand scenario ' + str(x) + ' completed'
             arcpy.AddMessage(message)

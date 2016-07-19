@@ -76,7 +76,7 @@ def get_yearly_vectors(date, occ_schedules, el_schedules, dhw_schedules, pro_sch
 
 def test_schedule_maker():
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
-    prop_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index('Name')[:270]
+    prop_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geom', axis=1).set_index('Name')[:270]
     prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
     gv = globalvar.GlobalVariables()
     date = pd.date_range(gv.date_start, periods=8760, freq='H')

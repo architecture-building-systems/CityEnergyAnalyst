@@ -32,7 +32,7 @@ os.chdir(pathdata)
 
 
 ##################################
-# For one building, heating demand
+# For one building, heating dem
 ##################################
 
 buildName = "TH01_result.csv"

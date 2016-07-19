@@ -30,14 +30,14 @@ def lca_mobility(locator):
     Returns
     -------
     total_LCA_mobility:.csv
-        csv file of yearly primary energy demand and emissions due to mobility
+        csv file of yearly primary energy dem and emissions due to mobility
         for each building
 
     """
 
     # local files
     demand = pd.read_csv(locator.get_total_demand())
-    prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)#.set_index('Name')
+    prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geom', axis=1)#.set_index('Name')
     data_mobility = locator.get_data_mobility()
     factors_mobility = pd.read_excel(data_mobility, sheetname='2010')
 

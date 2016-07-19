@@ -199,7 +199,7 @@ def dhw_hex_design(Q_dhw_max, mdot_internal_dhw_design, T_amb_max, hex_type, U, 
     Parameters
     ----------
     Q_dhw_max : float
-        Maximum heat demand for domestic hot water [W]
+        Maximum heat dem for domestic hot water [W]
         
     T_amb_max : float
         maximum ambient temperature in [K]
@@ -291,7 +291,7 @@ def heating_hex_design(Q_heating_max, T_return_min_global, T_supply_max_global, 
     Parameters
     ----------
     Q_heating_max : float
-        Maximum heat demand for space heating [W]
+        Maximum heat dem for space heating [W]
         
     T_return_min_global : float
         lowest return temperature possible
@@ -592,7 +592,7 @@ def interface_hex_design(Q_finalheat_design, T_return_min_global, T_supply_max_g
     return temperature of the building (T_return_min_global)
     
     The maximum supply temperature is set by the maximum temperature of 
-    the heating requirement (J+) or hot water demand 
+    the heating requirement (J+) or hot water dem
     @ LT: 45Â°C + deltaT; @ HT: 60Â°C + deltaT 
     
     In addition, an exchanger-type (hex_type) can be defined (either "HT" or "LT")
@@ -601,7 +601,7 @@ def interface_hex_design(Q_finalheat_design, T_return_min_global, T_supply_max_g
     Parameters
     ----------
     Q_finalheat_design : float
-        Maximum heat demand for of the entire building [W]
+        Maximum heat dem for of the entire building [W]
         
     T_return_min_global : float
         lowest return temperature at maximum load [K]

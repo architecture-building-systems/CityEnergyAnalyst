@@ -82,7 +82,7 @@ def Boiler_operation(Q_load, Q_max, boiler_type):
         efficiency of Boiler (Lower Heating Value), in abs. numbers
     
     Q_fuel : float
-        Heat demand from fuel (in Watt)
+        Heat dem from fuel (in Watt)
     
     
     

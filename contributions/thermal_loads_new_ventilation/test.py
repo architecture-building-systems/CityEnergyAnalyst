@@ -1,6 +1,6 @@
-from cea import globalvar, thermal_loads, demand
+from cea import globalvar, thermal_loads, dem
 from cea import inputlocator
-from cea.demand import demand, thermal_loads
+from cea.dem import demand, thermal_loads
 
 
 def test_thermal_loads_new_ventilation():
@@ -23,8 +23,8 @@ def test_thermal_loads_new_ventilation():
     # plug in new thermal loads calculation
     gv.models['calc-thermal-loads'] = thermal_loads.calc_thermal_loads_new_ventilation
 
-    # run demand
-    demand.demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
+    # run dem
+    dem.demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
     print "test_thermal_loads_new_ventilation() succeeded"
 
 

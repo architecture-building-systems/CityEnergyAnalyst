@@ -27,7 +27,7 @@ def benchmark(locator_list, output_file):
 
     Returns
     -------
-    Graphs of the embodied and operational emissions and primary energy demand: .Pdf
+    Graphs of the embodied and operational emissions and primary energy dem: .Pdf
     """
 
     # setup-time
@@ -125,7 +125,7 @@ def calc_benchmark_targets(locator):
 
     # local files
     demand = pd.read_csv(locator.get_total_demand())
-    prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
+    prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geom', axis=1)
     data_benchmark = locator.get_data_benchmark()
     occupancy = prop_occupancy.merge(demand,on='Name')
 
@@ -168,7 +168,7 @@ def calc_benchmark_today(locator):
 
     # local files
     demand = pd.read_csv(locator.get_total_demand())
-    prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
+    prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geom', axis=1)
     data_benchmark_today = locator.get_data_benchmark_today()
     occupancy = prop_occupancy.merge(demand, on='Name')
 

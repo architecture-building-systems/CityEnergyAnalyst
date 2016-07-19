@@ -34,7 +34,7 @@ def addCosts(indCombi, buildList, pathX, dicoSupply, QUncoveredDesign, QUncovere
     dicoSupply : class context
         with the features of the specific individual
     QuncoveredDesign : float
-        hourly max of the heating uncovered demand
+        hourly max of the heating uncovered dem
     QuncoveredAnnual : float
         total heating uncovered
     solarFeat / ntwFeat : class solarFeatures / ntwFeatures

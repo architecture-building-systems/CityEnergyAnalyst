@@ -37,7 +37,7 @@ Zone = 'ZONE_3'
 
 database = r'c:\ArcGIS\EDM.gdb' 
 locationgem = r'C:\ArcGIS\EDMdata\DataFinal\GEM'+'\\'+Scenario+'\\'+Zone #GEM is the grey emissions model
-locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+Zone #EDM is the energy demand model
+locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+Zone #EDM is the energy dem model
 locationtemp1 = r'c:\ArcGIS\temp'
 locationFinal = r'C:\ArcGIS\EDMdata\DataFinal\2000watt'+'\\'+Scenario+'\\'+Zone #GEM is the grey emissions model
 
@@ -357,7 +357,7 @@ locationtemp1 = r'c:\ArcGIS\temp'
 
 for row in range(5):
     Scenario = sc[row]
-    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+Zone #EDM is the energy demand model
+    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+Zone #EDM is the energy dem model
     # Create the table or database of the CQ to generate the values
     CQ = database+'\\'+Scenario+'\\'+Scenario+Zone
     Database = pd.read_csv(locationedm+'\\'+'Total.csv')
@@ -392,7 +392,7 @@ locationtemp1 = r'c:\ArcGIS\temp'
 
 for row in range(5):
     Scenario = sc[row]
-    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+Zone #EDM is the energy demand model
+    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+Zone #EDM is the energy dem model
     # Create the table or database of the CQ to generate the values
     CQ = database+'\\'+Scenario+'\\'+Scenario+Zone
     Database = pd.read_csv(locationedm+'\\'+'Total.csv')
@@ -428,7 +428,7 @@ locationtemp1 = r'c:\ArcGIS\temp'
 
 for row in range(5):
     Scenario = sc[row]
-    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+Zone #EDM is the energy demand model
+    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+Zone #EDM is the energy dem model
     # Create the table or database of the CQ to generate the values
     CQ = database+'\\'+Scenario+'\\'+Scenario+Zone
     Database = pd.read_csv(locationedm+'\\'+'Total.csv')
@@ -467,7 +467,7 @@ for row in range(5):
     Scenario = sc[row]
     CQuarter1 = cq[row]
     CQuarter2 = cq2[row]
-    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+CQuarter2 #EDM is the energy demand model
+    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+CQuarter2 #EDM is the energy dem model
     # Create the table or database of the CQ to generate the values
     CQ = locationClusters+'\\'+CQuarter1
     OutTable = 'Database.dbf'
@@ -509,7 +509,7 @@ locationtemp1 = r'c:\ArcGIS\temp'
 
 for row in range(5):
     Scenario = sc[row]
-    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+Zone #EDM is the energy demand model
+    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+Zone #EDM is the energy dem model
     # Create the table or database of the CQ to generate the values
     CQ = database+'\\'+Scenario+'\\'+Scenario+Zone
     Database = pd.read_csv(locationedm+'\\'+'Total.csv')
@@ -544,7 +544,7 @@ locationtemp1 = r'c:\ArcGIS\temp'
 
 for row in range(5):
     Scenario = sc[row]
-    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+Zone #EDM is the energy demand model
+    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+Zone #EDM is the energy dem model
     # Create the table or database of the CQ to generate the values
     CQ = database+'\\'+Scenario+'\\'+Scenario+Zone
     Database = pd.read_csv(locationedm+'\\'+'Total.csv')
@@ -579,7 +579,7 @@ locationtemp1 = r'c:\ArcGIS\temp'
 
 for row in range(5):
     Scenario = sc[row]
-    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+Zone #EDM is the energy demand model
+    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+Zone #EDM is the energy dem model
     # Create the table or database of the CQ to generate the values
     CQ = database+'\\'+Scenario+'\\'+Scenario+Zone
     Database = pd.read_csv(locationedm+'\\'+'Total.csv')
@@ -615,7 +615,7 @@ locationtemp1 = r'c:\ArcGIS\temp'
 
 for row in range(5):
     Scenario = sc[row]
-    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+Zone #EDM is the energy demand model
+    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+Zone #EDM is the energy dem model
     # Create the table or database of the CQ to generate the values
     Database = pd.read_csv(locationedm+'\\'+'Total.csv')
     Af_tot = Database.Af.sum()
@@ -653,7 +653,7 @@ for row in range(5):
     Scenario = sc[row]
     CQuarter1 = cq[row]
     CQuarter2 = cq2[row]
-    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+CQuarter2 #EDM is the energy demand model
+    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+CQuarter2 #EDM is the energy dem model
     # Create the table or database of the CQ to generate the values
     CQ = locationClusters+'\\'+CQuarter1
     OutTable = 'Database.dbf'
@@ -699,7 +699,7 @@ for row in range(5):
     Scenario = sc[row]
     CQuarter1 = cq[row]
     CQuarter2 = cq2[row]
-    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+CQuarter2 #EDM is the energy demand model
+    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+CQuarter2 #EDM is the energy dem model
     # Create the table or database of the CQ to generate the values
     CQ = locationClusters+'\\'+CQuarter1
     OutTable = 'Database.dbf'
@@ -745,7 +745,7 @@ for row in range(5):
     Scenario = sc[row]
     CQuarter1 = cq[row]
     CQuarter2 = cq2[row]
-    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+CQuarter2 #EDM is the energy demand model
+    locationedm = r'C:\ArcGIS\EDMdata\DataFinal\EDM'+'\\'+Scenario+'\\'+CQuarter2 #EDM is the energy dem model
     # Create the table or database of the CQ to generate the values
     CQ = locationClusters+'\\'+CQuarter1
     OutTable = 'Database.dbf'

@@ -540,7 +540,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
 
         # we give a seed high enough to avoid doing a iteration for 2 years.
         tm_t0 = tm_t1 = 16
-        # end-use demand calculation
+        # end-use dem calculation
         t5_1 = 21# definition of first temperature to start calculation of air conditioning system
         for k in range(8760):
             #if it is in the season
@@ -684,7 +684,7 @@ def CalcThermalLoads(Name, prop_occupancy, prop_architecture, prop_thermal, prop
         Vw = vw*Af/1000    ## consumption of fresh water in m3/h = cold water + hot water
         Mww = Vww*gv.Pwater/3600 # in kg/s
         #Mw = Vw*Pwater/3600 # in kg/s
-        #2. Calculate hot water demand
+        #2. Calculate hot water dem
         mcpww = Mww*gv.Cpw
         Qww = mcpww*(Tww_sup_0-Tww_re)*1000 # in W
         #3. losses distribution of domestic hot water recoverable and not recoverable

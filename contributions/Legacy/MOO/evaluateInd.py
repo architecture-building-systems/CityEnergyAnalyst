@@ -42,7 +42,7 @@ def readInd(individual, Qmax, pathRaw, gV):
     individual : list
         configuration from the Master routine
     Qmax : float
-        peak heating demand
+        peak heating dem
     pathRaw : string
         path to raw files
     

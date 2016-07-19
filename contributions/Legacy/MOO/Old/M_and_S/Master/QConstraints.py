@@ -28,7 +28,7 @@ def Qmax_perBuild (pathdata, buildList):
     Returns
     -------
     Qmax_dico : dictionary
-        Keys are the buildings names and Values the maximum heating demand
+        Keys are the buildings names and Values the maximum heating dem
     
     """
     os.chdir(pathdata)
@@ -67,7 +67,7 @@ def Qmax_perCombi (pathdata, buildList):
     -------
     QmaxCombi_dico : dictionary
         Keys are strings "00011101010" to represent the combination
-        Values are the maximum heating demand
+        Values are the maximum heating dem
     
     """
     os.chdir(pathdata)

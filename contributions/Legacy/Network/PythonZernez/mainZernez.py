@@ -129,7 +129,7 @@ def main():
     
         # change TRq_n (required temprature of node), use Tsupply_array_fin and deltaT_array_fin 
 
-    td.c['TRq_n']   = (np.max(Tsupply_array_sorted) - 273.0 )*np.ones((ld.c['N'],1));# imput for temperature demand!  write here T_DH of time step t
+    td.c['TRq_n']   = (np.max(Tsupply_array_sorted) - 273.0 )*np.ones((ld.c['N'],1));# imput for temperature dem!  write here T_DH of time step t
     #change dT_n, temperature drop in node
     
     td.c['dT_n']    = deltaT_array_sorted - 273.0 #INCLUDE SHAPE OF NETWORK& NODES REQUIREMENT! # 20.*np.ones((ld.c['N'],1)); # input for temperature drop, recover this from substation main (return temperature) 

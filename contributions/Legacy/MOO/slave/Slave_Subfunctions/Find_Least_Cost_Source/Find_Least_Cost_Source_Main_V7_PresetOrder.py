@@ -463,7 +463,7 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gV):
         total cost in CHF used for operation 
         
     Q_source_data[:,7] : array 
-        uncovered demand
+        uncovered dem
     
     """
     
@@ -604,9 +604,9 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gV):
                             E_coldsource_Furnace, E_coldsource_Boiler,  E_coldsource_Backup = 0,0,0,0,0,0,0
     
 
-        #print "Slave has uncovered demand?", Q_therm_req, " (if zero then no)"
+        #print "Slave has uncovered dem?", Q_therm_req, " (if zero then no)"
         #print "else, the slave routine's while loop (PP Activation) will be started"
-        while Q_therm_req > 1E-1: # cover demand as long as the supply is lower than demand!
+        while Q_therm_req > 1E-1: # cover dem as long as the supply is lower than dem!
             #print Q_therm_req, "Wh will now be covered, hour:", hour
 
             if current_source == 'HP':# use heat pumps available!
@@ -623,7 +623,7 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gV):
                     
                     if Q_therm_req > MS_Var.HPSew_maxSize:
                         Q_therm_Sew = MS_Var.HPSew_maxSize
-                        mdot_DH_to_Sew = mdot_DH_req * Q_therm_Sew / Q_therm_req.copy() #scale down the mass flow if the thermal demand is lowered 
+                        mdot_DH_to_Sew = mdot_DH_req * Q_therm_Sew / Q_therm_req.copy() #scale down the mass flow if the thermal dem is lowered
                         #Q_therm_req -= MS_Var.HPSew_maxSize
                     
                     else:
@@ -663,7 +663,7 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gV):
                         mdot_DH_to_GHP = Q_max / (gV.cp *(tdhsup -tdhret_req))
                         Q_therm_req -= Q_max
     
-                    else: # regular operation possible, demand is covered
+                    else: # regular operation possible, dem is covered
                         mdot_DH_to_GHP = Q_therm_req.copy() / (gV.cp * (tdhsup -tdhret_req))
                         Q_therm_req = 0
                     
@@ -686,7 +686,7 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gV):
                     
                     if Q_therm_req > MS_Var.HPLake_maxSize: # Scale down Load, 100% load achieved
                         Q_therm_HPL = MS_Var.HPLake_maxSize
-                        mdot_DH_to_Lake = Q_therm_HPL / (gV.cp *(tdhsup - tdhret_req)) #scale down the mass flow if the thermal demand is lowered 
+                        mdot_DH_to_Lake = Q_therm_HPL / (gV.cp *(tdhsup - tdhret_req)) #scale down the mass flow if the thermal dem is lowered
                         Q_therm_req -=  MS_Var.HPLake_maxSize
     
                     else: # regular operation possible
@@ -741,7 +741,7 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gV):
                             #print "E_el_CC", np.shape(E_el_CC), E_el_CC
                             
 
-                        else: # Only part of the demand can be delivered as 100% load achieved
+                        else: # Only part of the dem can be delivered as 100% load achieved
                             cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_CC_max)
                             Q_used_prim_CC = Q_used_prim_CC_fn(Q_CC_max)
                             Q_CC_delivered = Q_CC_max
@@ -900,17 +900,17 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gV):
                 else:
                     Q_uncovered = Q_therm_req
                     """
-                    print "not covered demand: ", Q_remaining, "Wh"
+                    print "not covered dem: ", Q_remaining, "Wh"
                     print "last source tested: ", current_source
                     print "occured in hour: ", hour
-                    print "insufficient capacity installed! Cannot cover the network demand (check Slave code, find_least_cost_source_main"
+                    print "insufficient capacity installed! Cannot cover the network dem (check Slave code, find_least_cost_source_main"
                     #break
                     """
                     print "not sufficient capacity installed in hour : ", hour
                     print Q_therm_req, "Wh missing"
                     print "check least cost optimization (here the error comes from) but also the inputs: "
                     print "It is not sufficient capacity available to the slave in order to fulfull the thermal "
-                    print "demand of the network (think about the bands or gaps that occur when a system has a minimum load"
+                    print "dem of the network (think about the bands or gaps that occur when a system has a minimum load"
                     print "This is now covered by a boiler"
                     
                     print Q_therm_req_COPY, "Wh was required \n"
@@ -930,7 +930,7 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gV):
                 Q_therm_req = 0
                 #break
             else:
-                #print "\n all demand covered in Slave, Q_therm_req = ", Q_therm_req, "Wh, hour:", hour, "\n"
+                #print "\n all dem covered in Slave, Q_therm_req = ", Q_therm_req, "Wh, hour:", hour, "\n"
                 Q_therm_req = 0
         
         cost_data_centralPlant_op = costHPSew, costHPLake, costGHP, costCC, costFurnace, costBoiler, costBackup
@@ -976,7 +976,7 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gV):
     print np.round(elapsed, decimals=0), "seconds used for this optimization"
     #current_time = time.time()
     
-    #sum up the uncovered demand, get average and peak load
+    #sum up the uncovered dem, get average and peak load
     QUncovered = Q_source_data[:,7]
     QUncoveredDesign = np.amax(QUncovered)
     QUncoveredAnnual = np.sum(QUncovered)

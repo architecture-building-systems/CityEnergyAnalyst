@@ -9,7 +9,7 @@ import mobility
 import properties
 import radiation
 import scenario_plots
-from cea import demand
+from cea import dem
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -23,7 +23,7 @@ __status__ = "Production"
 
 properties.test_properties()
 radiation.test_solar_radiation()
-demand.run_as_script()
+dem.run_as_script()
 emissions.test_lca_operation()
 embodied.test_lca_embodied()
 graphs.test_graph_demand()

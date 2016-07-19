@@ -147,7 +147,7 @@ def source_activator(Q_therm_req, HOUR):
     Eprim4 = 0
     
     it_counter = 0 
-    while checkpoint == 0: # cover demand as long as the supply is lower than demand!
+    while checkpoint == 0: # cover dem as long as the supply is lower than dem!
         
         if current_source == 'HP':# use heat pumps available!
             quitter = 0
@@ -161,7 +161,7 @@ def source_activator(Q_therm_req, HOUR):
 
                 if Q_therm_req > MS_Var.HPSew_maxSize:
                     Q_therm_Sew = MS_Var.HPSew_maxSize
-                    mdot_DH_to_Sew = mdot_DH_req * Q_therm_Sew / Q_therm_req #scale down the mass flow if the thermal demand is lowered 
+                    mdot_DH_to_Sew = mdot_DH_req * Q_therm_Sew / Q_therm_req #scale down the mass flow if the thermal dem is lowered
                     quitter = 0
                     #print "Sewage Heat Pump at maximum capacity"  
                 
@@ -180,18 +180,18 @@ def source_activator(Q_therm_req, HOUR):
                 cost1[0]= C_HPSew_el_pure
                 Q_source1[0] = Q_therm_Sew
                 Eprim1[0] = Q_HPSew_therm - Q_HPSew_cold_primary 
-            if quitter == 1: # all the demand has been covered already, finish the loop
+            if quitter == 1: # all the dem has been covered already, finish the loop
                 Q_therm_req = 0
                 break
             else:
-                Q_therm_req -= Q_therm_Sew # calculates the remaining demand from another plant
+                Q_therm_req -= Q_therm_Sew # calculates the remaining dem from another plant
                            
             
             if (MS_Var.GHP_on) == 1 and HOUR > MS_Var.GHP_SEASON_ON and  HOUR <= MS_Var.GHP_SEASON_OFF: # activating GHP plant if possible
 
                 if Q_therm_req > MS_Var.GHP_max:
                     Q_therm_GHP = MS_Var.GHP_max
-                    mdot_DH_to_GHP = mdot_DH_req * Q_therm_GHP / Q_therm_req #scale down the mass flow if the thermal demand is lowered 
+                    mdot_DH_to_GHP = mdot_DH_req * Q_therm_GHP / Q_therm_req #scale down the mass flow if the thermal dem is lowered
                     #print "Geothermal Heat Pump at maximum capacity"
                     quitter = 0
                 else:
@@ -210,12 +210,12 @@ def source_activator(Q_therm_req, HOUR):
                 Q_source1[1] = Q_therm_GHP
                 
                 
-            if quitter == 1: # all the demand has been covered already, finish the loop
+            if quitter == 1: # all the dem has been covered already, finish the loop
                 Q_therm_req = 0
                 break
                 
             else:
-                Q_therm_req -= Q_therm_GHP # calculates the remaining demand from another plant
+                Q_therm_req -= Q_therm_GHP # calculates the remaining dem from another plant
             
 
             
@@ -223,7 +223,7 @@ def source_activator(Q_therm_req, HOUR):
                 
                 if Q_therm_req > MS_Var.HPLake_maxSize:
                     Q_therm_HPL = MS_Var.HPLake_maxSize
-                    mdot_DH_to_Lake = mdot_DH_req * Q_therm_HPL / Q_therm_req #scale down the mass flow if the thermal demand is lowered 
+                    mdot_DH_to_Lake = mdot_DH_req * Q_therm_HPL / Q_therm_req #scale down the mass flow if the thermal dem is lowered
                     quitter = 0
                 else:
                     Q_therm_HPL = Q_therm_req
@@ -238,11 +238,11 @@ def source_activator(Q_therm_req, HOUR):
                 cost1[2] = C_HPL_el
                 Q_source1[2] = Q_therm_HPL
 
-            if quitter == 1: # all the demand has been covered already, finish the loop
+            if quitter == 1: # all the dem has been covered already, finish the loop
                 Q_therm_req = 0
                 break
             else:
-                Q_therm_req -= Q_therm_HPL # calculates the remaining demand from another plant
+                Q_therm_req -= Q_therm_HPL # calculates the remaining dem from another plant
                 
             Q_remaining = Q_therm_req
             print Q_remaining
@@ -265,7 +265,7 @@ def source_activator(Q_therm_req, HOUR):
                         cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_therm_req)
                         Q_CC_delivered = Q_therm_req
                         quitter = 1
-                    else: # Only part of the demand can be delivered as 100% load achieved
+                    else: # Only part of the dem can be delivered as 100% load achieved
                         cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_CC_max)
                         Q_CC_delivered = Q_CC_max
                         quitter = 0
@@ -278,11 +278,11 @@ def source_activator(Q_therm_req, HOUR):
                     cost2 = Cost_CC
                     Q_source2 = Q_CC_delivered
                     
-                    if quitter == 1: # all the demand has been covered already, finish the loop
+                    if quitter == 1: # all the dem has been covered already, finish the loop
                         Q_therm_req = 0
                         break
                     else:
-                         Q_therm_req -= Q_CC_delivered # calculates the remaining demand from another plant
+                         Q_therm_req -= Q_CC_delivered # calculates the remaining dem from another plant
 
            
             if (MS_Var.Furnace_on) == 1: # Activate Furnace if its there. By definition, either ORC or NG-CC!
@@ -322,11 +322,11 @@ def source_activator(Q_therm_req, HOUR):
                     quitter = 0
                 
                     
-            if quitter == 1: # all the demand has been covered already, finish the loop
+            if quitter == 1: # all the dem has been covered already, finish the loop
                 Q_therm_req = 0
                 break
             else:
-                Q_therm_req -= Q_Furn_therm # calculates the remaining demand from another plant
+                Q_therm_req -= Q_Furn_therm # calculates the remaining dem from another plant
             
              
         elif current_source == 'Boiler':
@@ -357,11 +357,11 @@ def source_activator(Q_therm_req, HOUR):
                     quitter = 0
 
                 
-            if quitter == 1: # all the demand has been covered already, finish the loop
+            if quitter == 1: # all the dem has been covered already, finish the loop
                 Q_therm_req = 0
                 break
             else:
-                Q_therm_req -= Q_therm_boiler # calculates the remaining demand from another plant
+                Q_therm_req -= Q_therm_boiler # calculates the remaining dem from another plant
             
         elif current_source == 'BoilerPeak':
 
@@ -392,11 +392,11 @@ def source_activator(Q_therm_req, HOUR):
                     quitter = 0
 
                 
-            if quitter == 1: # all the demand has been covered already, finish the loop
+            if quitter == 1: # all the dem has been covered already, finish the loop
                 Q_therm_req = 0
                 break
             else:
-                Q_therm_req -= Q_therm_boiler # calculates the remaining demand from another plant
+                Q_therm_req -= Q_therm_boiler # calculates the remaining dem from another plant
             
         
             
@@ -411,8 +411,8 @@ def source_activator(Q_therm_req, HOUR):
             elif current_source == gV.act_third:
                 current_source = gV.act_fourth
             else:
-                print "not covered demand: ", Q_remaining, "Wh"
-                print "insufficient capacity installed! Cannot cover the network demand (check Slave code, find_least_cost_source_main"
+                print "not covered dem: ", Q_remaining, "Wh"
+                print "insufficient capacity installed! Cannot cover the network dem (check Slave code, find_least_cost_source_main"
                 #break
                 raise MS_VarError
                 
@@ -428,7 +428,7 @@ def source_activator(Q_therm_req, HOUR):
             checkpoint = 1
         
         if checkpoint == 1:
-            print "All demand covered"
+            print "All dem covered"
         else:
             print Q_remaining, "Wh not covered"
         

@@ -33,7 +33,7 @@ def heatmaps(locator, analysis_fields, path_results, file_to_analyze):
     file_to_analyze:
         path to the file with the variables to be mapped. This is used as the `in_rows` parameter
         to arcpy.CopyRows_management, so anything supported by that tool could, in theory, work, but
-        we use the csv files. Either the Total_Demand.csv file produced by the demand script or one of
+        we use the csv files. Either the Total_Demand.csv file produced by the dem script or one of
         the files in the emissions results folder.
     analysis_fields: array
         when the path variables is selected, an array of n variables 'string'

@@ -69,7 +69,7 @@ def VCC_InvC(qcold, gV):
     Parameters
     ----------
     qcolddot : float
-        COOLING PEAK demand in WATT-HOUR
+        COOLING PEAK dem in WATT-HOUR
     
     Returns
     -------

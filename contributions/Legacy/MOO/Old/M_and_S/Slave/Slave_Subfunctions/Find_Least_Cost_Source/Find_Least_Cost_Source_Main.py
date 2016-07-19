@@ -241,7 +241,7 @@ def find_minimum_cost(Q_therm_req):
         
         if Q_therm_req > MS_Var.GHP_max:
             Q_therm_GHP = MS_Var.GHP_max
-            mdot_GHP = mdot_DH_req * Q_therm_GHP / Q_therm_req #scale down the mass flow if the thermal demand is lowered 
+            mdot_GHP = mdot_DH_req * Q_therm_GHP / Q_therm_req #scale down the mass flow if the thermal dem is lowered
             print "Geothermal Heat Pump at maximum capacity"
         else:
             Q_therm_GHP = Q_therm_req
@@ -259,7 +259,7 @@ def find_minimum_cost(Q_therm_req):
         
         if Q_therm_req > MS_Var.HP_maxSize:
             Q_therm_Lake = MS_Var.HP_maxSize
-            mdot_Lake = mdot_DH_req * Q_therm_Lake / Q_therm_req #scale down the mass flow if the thermal demand is lowered 
+            mdot_Lake = mdot_DH_req * Q_therm_Lake / Q_therm_req #scale down the mass flow if the thermal dem is lowered
             print "Lake Heat Pump at maximum capacity"
             
         else:
@@ -277,7 +277,7 @@ def find_minimum_cost(Q_therm_req):
     
         if Q_therm_req > MS_Var.HP_maxSize:
             Q_therm_Sew = MS_Var.HP_maxSize
-            mdot_Sew = mdot_DH_req * Q_therm_Lake / Q_therm_req #scale down the mass flow if the thermal demand is lowered 
+            mdot_Sew = mdot_DH_req * Q_therm_Lake / Q_therm_req #scale down the mass flow if the thermal dem is lowered
             print "Sewage Heat Pump at maximum capacity"  
         else:
             Q_therm_GHP = Q_therm_req

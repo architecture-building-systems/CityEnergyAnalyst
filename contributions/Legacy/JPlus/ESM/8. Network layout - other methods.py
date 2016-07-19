@@ -101,8 +101,8 @@ heatingnet = "SQheatingnet_1"
 coolingnet = "SQcoolingnet_1"
 OutputDHGEOM = Database+'\\'+Scenario+'\\'+Scenario+'HeatingGEOMClust'
 OutputDCGEOM = Database+'\\'+Scenario+'\\'+Scenario+'coolingGEOMClust'
-Kheating =  0.65 #correaltion values of geometry of sample network
-Kcooling =  0.72 #correaltion values of geometry of sample network
+Kheating =  0.65 #correaltion values of geom of sample network
+Kcooling =  0.72 #correaltion values of geom of sample network
 
 #Import List of Cityquarters and Count them for iteration
 OutTable = 'Boundaries_CQ.dbf'

@@ -157,7 +157,7 @@ def discBuildOp(pathRaw, pathSubsRes, pathClustRes, pathDiscRes):
                         # 6 months / 6 months ? 
                         
                         if qhotdot_missing > 0:
-                            print "GHP unable to cover the whole demand, boiler activated!"
+                            print "GHP unable to cover the whole dem, boiler activated!"
                             BoilerEff = Boiler.Cond_Boiler_operation(qhotdot_missing, QnomBoiler, tsup2)
                             Qgas = qhotdot_missing / BoilerEff
                             
@@ -184,7 +184,7 @@ def discBuildOp(pathRaw, pathSubsRes, pathClustRes, pathDiscRes):
                         # 6 months / 6 months ? 
                         
                         if qhotdot_missing > 0:
-                            print "GHP unable to cover the whole demand, boiler activated!"
+                            print "GHP unable to cover the whole dem, boiler activated!"
                             BoilerEff = Boiler.Cond_Boiler_operation(qhotdot_missing, QnomBoiler, tsup2)
                             Qgas = qhotdot_missing / BoilerEff
                             
