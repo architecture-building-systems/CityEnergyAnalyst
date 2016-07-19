@@ -118,7 +118,6 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
         IH_nd_ac = 0
     return tm, ta, IH_nd_ac, IC_nd_ac, uncomfort, top, Im_tot
 
-
 def calc_Qhs_Qcs_dis_ls(tair, text, Qhs, Qcs, tsh, trh, tsc, trc, Qhs_max, Qcs_max, D, Y, SystemH, SystemC, Bf, Lv):
     """calculates distribution losses based on ISO 15316"""
     # Calculate tamb in basement according to EN
@@ -133,7 +132,6 @@ def calc_Qhs_Qcs_dis_ls(tair, text, Qhs, Qcs, tsh, trh, tsc, trc, Qhs_max, Qcs_m
         Qcs_d_ls = 0
 
     return Qhs_d_ls, Qcs_d_ls
-
 
 def calc_Qhs_Qcs_em_ls(SystemH, SystemC):
     """model of losses in the emission and control system for space heating and cooling.
@@ -159,6 +157,8 @@ def calc_Qhs_Qcs_em_ls(SystemH, SystemC):
         tHC_corr[1] = 0 + - 1.2
 
     return list(tHC_corr)
+
+def calc_Qhsf_Qcsf():
 
 
 
@@ -302,7 +302,7 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
                                        Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, gv, ma_sup_cs, ma_sup_hs,
                                        sys_e_cooling, sys_e_heating, ta_hs_set):
 
-    from cea.technologies import  radiators, heating_coils, tabs
+    from cea.tech import  radiators, heating_coils, tabs
     # local variables
     Ta_0 = ta_hs_set.max()
 
