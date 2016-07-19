@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-    Shading systems
-    ===========
+=========================================
+blinds
+=========================================
+
 """
+from __future__ import division
 
 def calc_blinds_reflection(radiation, shading_type, g_gl):
 

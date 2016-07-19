@@ -7,7 +7,7 @@ Heating and cooling coils of Air handling units
 """
 from __future__ import division
 import scipy.optimize as sopt
-from scipy import log, exp
+import scipy
 
 def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma_sup_hs, ma_sup_0,Ta_sup_0, Ta_re_0, Cpa):
 
@@ -20,21 +20,20 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
     # log mean temperature at nominal conditions
     TD10 = Ta_sup_0 - trh0
     TD20 = Ta_re_0 - tsh0
-    LMRT0 = (TD10 - TD20) / log(TD20 / TD10)
+    LMRT0 = (TD10 - TD20) / scipy.log(TD20 / TD10)
     UA0 = Qhsf_0 / LMRT0
-
     if Qhsf > 0 and ma_sup_hs > 0:
         AUa = UA0 * (ma_sup_hs / ma_sup_0) ** 0.77
         NTUc = AUa / (ma_sup_hs * Cpa * 1000)
-        ec = 1 - exp(-NTUc)
+        ec = 1 - scipy.exp(-NTUc)
         tc = (tare - tasup + tasup * ec) / ec  # contact temperature of coil
 
         # minimum
-        LMRT = (tsh0 - trh0) / log((tsh0 - tc) / (trh0 - tc))
+        LMRT = (tsh0 - trh0) / scipy.log((tsh0 - tc) / (trh0 - tc))
         k1 = 1 / mCw0
 
         def fh(x):
-            Eq = mCw0 * k2 - Qhsf_0 * (k2 / (log((x + k2 - tc) / (x - tc)) * LMRT))
+            Eq = mCw0 * k2 - Qhsf_0 * (k2 / (scipy.log((x + k2 - tc) / (x - tc)) * LMRT))
             return Eq
 
         k2 = Qhsf * k1
@@ -57,19 +56,19 @@ def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma
     # log mean temperature at nominal conditions
     TD10 = Ta_sup_0 - trc0
     TD20 = Ta_re_0 - tsc0
-    LMRT0 = (TD20 - TD10) / log(TD20 / TD10)
+    LMRT0 = (TD20 - TD10) / scipy.log(TD20 / TD10)
     UA0 = Qcsf_0 / LMRT0
-
-    if Qcsf < 0 and ma_sup_cs > 0:
+    print Qcsf, Ta_sup_cs, Ta_re_cs, ma_sup_cs,
+    if Qcsf < -0 and ma_sup_cs > 0:
         AUa = UA0 * (ma_sup_cs / ma_sup_0) ** 0.77
         NTUc = AUa / (ma_sup_cs * Cpa * 1000)
-        ec = 1 - exp(-NTUc)
+        ec = 1 - scipy.exp(-NTUc)
         tc = (tare - tasup + tasup * ec) / ec  # contact temperature of coil
 
         def fh(x):
             TD1 = tc - (k2 + x)
             TD2 = tc - x
-            LMRT = (TD2 - TD1) / log(TD2 / TD1)
+            LMRT = (TD2 - TD1) / scipy.log(TD2 / TD1)
             Eq = mCw0 * k2 - Qcsf_0 * (LMRT / LMRT0)
             return Eq
 

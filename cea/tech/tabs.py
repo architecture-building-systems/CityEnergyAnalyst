@@ -1,4 +1,12 @@
+# -*- coding: utf-8 -*-
+"""
+=========================================
+Termoactivated building surfaces (TABS)
+=========================================
 
+"""
+
+from __future__ import division
 import scipy
 import scipy.optimize as sopt
 
