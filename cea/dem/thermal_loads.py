@@ -697,9 +697,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # TODO: check this out with Shanshan :)
 
         # Calc of Qhs_dis_ls/Qcs_dis_ls - losses due to distribution of heating/cooling coils
-        # erase possible disruptions from dehumidification days
-        # Qhs_sen_incl_em_ls[Qhs_sen_incl_em_ls < 0] = 0
-        # Qcs_sen_incl_em_ls[Qcs_sen_incl_em_ls > 0] = 0
         Qhs_sen_incl_em_ls_0 = tsd['Qhs_sen_incl_em_ls'].max()
         Qcs_sen_incl_em_ls_0 = tsd['Qcs_sen_incl_em_ls'].min()  # cooling loads up to here in negative values
         Qhs_d_ls, Qcs_d_ls = np.vectorize(sensible_loads.calc_Qhs_Qcs_dis_ls)(tsd['Ta'], tsd['T_ext'].values,
@@ -717,8 +714,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         # Calc requirements of generation systems (both cooling and heating do not have a storage):
         Qhs = tsd['Qhs_sen_incl_em_ls'] - tsd['Qhs_em_ls']
-        Qhsf = tsd[
-                   'Qhs_sen_incl_em_ls'] + Qhs_d_ls  # no latent is considered because it is already added as electricity from the adiabatic system.
+        Qhsf = tsd['Qhs_sen_incl_em_ls'] + Qhs_d_ls  # no latent is considered because it is already added a
+                                                        # s electricity from the adiabatic system.
         Qcs = (tsd['Qcs_sen_incl_em_ls'] - tsd['Qcs_em_ls']) + tsd['Qcs_lat']
         Qcsf = Qcs + tsd['Qcs_em_ls'] + Qcs_d_ls
         Qcsf = -abs(Qcsf)
@@ -729,7 +726,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         Qcsf_0 = Qcsf.min()  # in W negative
 
         # Cal temperatures of all systems
-        Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs = sensible_loads.calc_temperatures_emission_systems(Qcsf, Qcsf_0,
+        Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs = cea.dem.sensible_loads.calc_temperatures_emission_systems(Qcsf, Qcsf_0,
                                                                                                            Qhsf, Qhsf_0,
                                                                                                            tsd['Ta'],
                                                                                                            tsd['Ta_re_cs'],
@@ -826,7 +823,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
 
 def calc_heat_gains_solar(bpr, gv):
-    import blinds
+    from cea.tech import  blinds
     solar_specific = bpr.solar / bpr.rc_model['Awall_all']  # array in W/m2
     blinds_reflection = np.vectorize(blinds.calc_blinds_reflection)(solar_specific, bpr.architecture['type_shade'], gv.g_gl)
     solar_effective_area = blinds_reflection * (1 - gv.F_f) * bpr.rc_model['Aw']  # Calculation of solar effective area per hour in m2
