@@ -5,9 +5,7 @@ Analytical energy demand model algorithm
 
 """
 from __future__ import division
-
 import multiprocessing as mp
-import math
 import pandas as pd
 import cea.globalvar
 import cea.inputlocator

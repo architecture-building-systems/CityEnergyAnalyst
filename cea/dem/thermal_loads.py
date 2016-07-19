@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Thermal loads
-
-
+=========================================
+Heating and cooling coils of Air handling units
+=========================================
 
 """
-# TODO: documentation
-
-
 from __future__ import division
-
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame

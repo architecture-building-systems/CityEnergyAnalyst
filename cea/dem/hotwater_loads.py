@@ -1,9 +1,15 @@
 """
 =========================================
-Hotwater demand
+Hotwater load
 =========================================
 
 """
+
+from __future__ import division
+import numpy as np
+from scipy import exp
+from math import pi
+from cea.tech import storagetank_mixed as sto_m
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -14,11 +20,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-
-import numpy as np
-import scipy
-import math
-from cea.tech import storagetank_mixed as sto_m
 
 def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, vww):
     # Refactored from CalcThermalLoads
@@ -45,7 +46,7 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     Qww = np.vectorize(calc_Qww)(mww, Tww_sup_0, Tww_re, gv.Cpw)
     Qww_0 = Qww.max()
     # distribution and circulation losses
-    Vol_ls = Lsww_dis * (gv.D / 1000) ** (2 / 4) * math.pi #volume per meter of pipe
+    Vol_ls = Lsww_dis * (gv.D / 1000) ** (2 / 4) * pi #volume per meter of pipe
     Qww_dis_ls_r = np.vectorize(calc_Qww_dis_ls_r)(Ta, Qww, Lsww_dis, Lcww_dis, Y[1], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
                                            gv.Cpw, gv.Pwater, gv)
     Qww_dis_ls_nr = np.vectorize(calc_Qww_dis_ls_nr)(Ta, Qww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
@@ -106,11 +107,11 @@ def calc_disls(tamb, hotw, Flowtap, V, twws, Lsww_dis, p, cpw, Y, gv):
         if t > 3600: t = 3600
         q = (twws - tamb) * Y
         try:
-            exponential = scipy.exp(-(q * Lsww_dis * t) / (p * cpw * V * (twws - tamb) * 1000))
+            exponential = exp(-(q * Lsww_dis * t) / (p * cpw * V * (twws - tamb) * 1000))
         except ZeroDivisionError:
             gv.log('twws: %(twws).2f, tamb: %(tamb).2f, p: %(p).2f, cpw: %(cpw).2f, V: %(V).2f',
                    twws=twws, tamb=tamb, p=p, cpw=cpw, V=V)
-            exponential = scipy.exp(-(q * Lsww_dis * t) / (p * cpw * V * (twws - tamb) * 1000))
+            exponential = exp(-(q * Lsww_dis * t) / (p * cpw * V * (twws - tamb) * 1000))
         tamb = tamb + (twws - tamb) * exponential
         losses = (twws - tamb) * V * cpw * p / 1000 * 278
     else:

@@ -5,6 +5,9 @@ Electrical loads
 =========================================
 
 """
+from __future__ import division
+import numpy as np
+
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca"]
@@ -15,7 +18,6 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-import numpy as np
 
 def calc_E_totals(Aef, Ealf, Eauxf, Edataf, Eprof):
     # TODO: Documentation
