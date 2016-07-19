@@ -7,10 +7,8 @@ Analytical energy demand model algorithm
 from __future__ import division
 
 import multiprocessing as mp
-
+import math
 import pandas as pd
-
-import cea.dem.sensible_loads as f
 import cea.globalvar
 import cea.inputlocator
 import cea.maker as m
@@ -26,10 +24,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
-
-
-reload(f)
-reload(cea.globalvar)
 
 
 def demand_calculation(locator, weather_path, gv):

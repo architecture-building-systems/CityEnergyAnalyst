@@ -42,8 +42,8 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
 
     # end-use dem
     mww, Vww =  np.vectorize(calc_mww)(vww, Af, gv.Pwater)
-    Qww, Qww_0 = np.vectorize(calc_Qww)(mww, Tww_sup_0, Tww_re, gv.Cpw)
-
+    Qww = np.vectorize(calc_Qww)(mww, Tww_sup_0, Tww_re, gv.Cpw)
+    Qww_0 = Qww.max()
     # distribution and circulation losses
     Vol_ls = Lsww_dis * (gv.D / 1000) ** (2 / 4) * math.pi #volume per meter of pipe
     Qww_dis_ls_r = np.vectorize(calc_Qww_dis_ls_r)(Ta, Qww, Lsww_dis, Lcww_dis, Y[1], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
@@ -51,15 +51,15 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     Qww_dis_ls_nr = np.vectorize(calc_Qww_dis_ls_nr)(Ta, Qww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
                                              gv.Cpw, gv.Pwater, gv.Bf, T_ext, gv)
     # storage losses
-    Qww_st_ls, Tww_st = np.vectorize(calc_Qww_st_ls)(Vww, gv.Tww_setpoint, Ta, gv.Bf, gv.Pwater, gv.Cpw, Qww_dis_ls_r,
+    Qww_st_ls, Tww_st = calc_Qww_st_ls(Vww, gv.Tww_setpoint, Ta, gv.Bf, gv.Pwater, gv.Cpw, Qww_dis_ls_r,
                                                      Qww_dis_ls_nr, gv.U_dhwtank, gv.AR, gv, T_ext, Qww)
 
     # final dem
-    Qwwf = Qww + Qww_dis_ls_r, Qww_dis_ls_nr + Qww_st_ls
+    Qwwf = Qww + Qww_dis_ls_r + Qww_dis_ls_nr + Qww_st_ls
     Qwwf_0 = Qwwf.max()
     mcpwwf = Qwwf / abs(Tww_st - Tww_re)
 
-    return mww, Qww, Qww_st_ls, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpwwf
+    return mww, Qww, Qww_st_ls, Qwwf, Qwwf_0, Tww_st, Vww, mcpwwf
 
 def calc_mww(vww, Af, Pwater):
 
@@ -71,9 +71,7 @@ def calc_mww(vww, Af, Pwater):
 def calc_Qww(mww, Tww_sup_0, Tww_re, Cpw):
     mcpww = mww * Cpw * 1000  # W/K
     Qww = mcpww * (Tww_sup_0 - Tww_re)  # heating for dhw in W
-    Qww_0 = Qww.max()
-
-    return Qww, Qww_0
+    return Qww
 
 def calc_Qww_dis_ls_r(Tair, Qww, lsww_dis, lcww_dis, Y, Qww_0, V, Flowtap, twws, Cpw, Pwater, gv):
     # Calculate tamb in basement according to EN

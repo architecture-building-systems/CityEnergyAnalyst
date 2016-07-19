@@ -13,12 +13,9 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame
-
-import cea.dem.electrical_loads
-import cea.dem.hotwater_loads
+from  cea.dem import sensible_loads, electrical_loads, hotwater_loads
 import cea.hvac_kaempf
 import contributions.thermal_loads_new_ventilation.ventilation
-from cea.dem import sensible_loads
 
 
 def calc_tHC_corr(SystemH, SystemC, sys_e_ctrl):
@@ -629,7 +626,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     # get internal loads
     tsd = sensible_loads.calc_Qint(tsd, bpr.internal_loads, bpr.architecture, bpr.rc_model['Af'])
 
-
     # ground water temperature in C during heating season (winter) according to norm
     tsd['Tww_re'] = bpr.building_systems['Tww_re_0']
     # ground water temperature in C during non-heating season (summer) according to norm
@@ -653,7 +649,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # heat flows in [W]
         # solar gains
         # copied from original calc thermal loads
-        tsd['I_sol'] = calc_heat_gains_solar(bpr, gv)
+        tsd['I_sol'] = sensible_loads.calc_Qsol(bpr, gv)
 
         # sensible internal heat gains
         # copied from original calc thermal loads
@@ -726,7 +722,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         Qcsf_0 = Qcsf.min()  # in W negative
 
         # Cal temperatures of all systems
-        Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs = cea.dem.sensible_loads.calc_temperatures_emission_systems(Qcsf, Qcsf_0,
+        Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs = sensible_loads.calc_temperatures_emission_systems(Qcsf, Qcsf_0,
                                                                                                            Qhsf, Qhsf_0,
                                                                                                            tsd['Ta'],
                                                                                                            tsd['Ta_re_cs'],
@@ -742,10 +738,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                                            tsd['ma_sup_hs'],
                                                                                                            bpr.hvac['type_cs'],
                                                                                                            bpr.hvac['type_hs'],
-                                                                                                           tsd['ta_hs_set'].values,
-                                                                                                           tsd['w_re'],
-                                                                                                           tsd['w_sup'])
-        Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpww = cea.dem.hotwater_loads.calc_Qwwf(bpr.rc_model['Af'],
+                                                                                                           tsd['ta_hs_set'].values)
+        Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vww, mcpww = hotwater_loads.calc_Qwwf(bpr.rc_model['Af'],
                                                                                                      bpr.building_systems['Lcww_dis'],
                                                                                                      bpr.building_systems['Lsww_dis'],
                                                                                                      bpr.building_systems['Lvww_c'],
@@ -758,8 +752,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                                      gv,
                                                                                                      tsd['vww'])
 
+        Waterconsumption = tsd['vw'] * bpr.rc_model['Af'] / 1000  # volume of water consumed in m3/h
         # calc auxiliary loads
-        Eauxf, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, = cea.dem.electrical_loads.calc_Eaux(bpr.rc_model['Af'],
+        Eauxf, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, = electrical_loads.calc_Eaux(bpr.rc_model['Af'],
                                                                                                  bpr.geometry['Blength'],
                                                                                                  bpr.geometry['Bwidth'],
                                                                                                  Mww, Qcsf, Qcsf_0,
@@ -767,21 +762,21 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                                  Qwwf_0,
                                                                                                  Tcs_re, Tcs_sup, Ths_re,
                                                                                                  Ths_sup,
-                                                                                                 Vw, bpr.age['built'],
+                                                                                                 Waterconsumption,
+                                                                                                 bpr.age['built'],
                                                                                                  bpr.building_systems['fforma'],
                                                                                                  gv,
                                                                                                  bpr.geometry['floors_ag'],
                                                                                                  bpr.occupancy['PFloor'],
                                                                                                  tsd['qv_req'].values,
                                                                                                  bpr.hvac['type_cs'],
-                                                                                                 bpr.hvac['type_hs'].
+                                                                                                 bpr.hvac['type_hs'],
                                                                                                tsd['Ehs_lat_aux'].values)
 
         # calculate other quantities
         # noinspection PyUnresolvedReferences
         Occupancy = np.floor(tsd['people'])
         Occupants = Occupancy.max()
-        Waterconsumption = tsd['vw'] * Af / 1000  # volume of water consumed in m3/h
         waterpeak = Waterconsumption.max()
 
     # Af = 0: no conditioned floor area
@@ -800,7 +795,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             8760)  # in C
 
     # Cacl totals and peaks electrical loads
-    Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot = cea.dem.electrical_loads.calc_E_totals(
+    Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot = electrical_loads.calc_E_totals(
         bpr.rc_model['Aef'], tsd['Ealf'].values, Eauxf, tsd['Edataf'].values, tsd['Eprof'].values)
 
     # write results to csv
@@ -820,15 +815,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     gv.report('calc-thermal-loads', locals(), results_folder, building_name)
     return
-
-
-def calc_heat_gains_solar(bpr, gv):
-    from cea.tech import  blinds
-    solar_specific = bpr.solar / bpr.rc_model['Awall_all']  # array in W/m2
-    blinds_reflection = np.vectorize(blinds.calc_blinds_reflection)(solar_specific, bpr.architecture['type_shade'], gv.g_gl)
-    solar_effective_area = blinds_reflection * (1 - gv.F_f) * bpr.rc_model['Aw']  # Calculation of solar effective area per hour in m2
-    net_solar_gains = solar_effective_area * solar_specific  # how much are the net solar gains in Wh per hour of the year.
-    return net_solar_gains.values
 
 
 class BuildingProperties(object):
@@ -872,6 +858,8 @@ class BuildingProperties(object):
         - get_building_comfort: C:\reference-case\baseline\inputs\building-properties\indoor_comfort.shp
         - get_building_internal: C:\reference-case\baseline\inputs\building-properties\internal_loads.shp
         """
+
+        from cea.geom import simple_window_generator
         self.gv = gv
         gv.log("reading input files")
         solar = pd.read_csv(locator.get_radiation()).set_index('Name')
@@ -879,18 +867,18 @@ class BuildingProperties(object):
         prop_geometry = GeoDataFrame.from_file(locator.get_building_geometry())
         prop_geometry['footprint'] = prop_geometry.area
         prop_geometry['perimeter'] = prop_geometry.length
-        prop_geometry = prop_geometry.drop('geom', axis=1).set_index('Name')
-        prop_hvac = GeoDataFrame.from_file(locator.get_building_hvac()).drop('geom', axis=1)
-        prop_thermal = GeoDataFrame.from_file(locator.get_building_thermal()).drop('geom', axis=1).set_index('Name')
-        prop_occupancy_df = GeoDataFrame.from_file(locator.get_building_occupancy()).drop('geom', axis=1).set_index(
+        prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
+        prop_hvac = GeoDataFrame.from_file(locator.get_building_hvac()).drop('geometry', axis=1)
+        prop_thermal = GeoDataFrame.from_file(locator.get_building_thermal()).drop('geometry', axis=1).set_index('Name')
+        prop_occupancy_df = GeoDataFrame.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index(
             'Name')
         prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(
             axis=0)]  # trick to erase occupancies that are not being used (it speeds up the code)
-        prop_architecture = GeoDataFrame.from_file(locator.get_building_architecture()).drop('geom',
+        prop_architecture = GeoDataFrame.from_file(locator.get_building_architecture()).drop('geometry',
                                                                                              axis=1).set_index('Name')
-        prop_age = GeoDataFrame.from_file(locator.get_building_age()).drop('geom', axis=1).set_index('Name')
-        prop_comfort = GeoDataFrame.from_file(locator.get_building_comfort()).drop('geom', axis=1).set_index('Name')
-        prop_internal_loads = GeoDataFrame.from_file(locator.get_building_internal()).drop('geom',
+        prop_age = GeoDataFrame.from_file(locator.get_building_age()).drop('geometry', axis=1).set_index('Name')
+        prop_comfort = GeoDataFrame.from_file(locator.get_building_comfort()).drop('geometry', axis=1).set_index('Name')
+        prop_internal_loads = GeoDataFrame.from_file(locator.get_building_internal()).drop('geometry',
                                                                                            axis=1).set_index('Name')
         # get temperatures of operation
         prop_HVAC_result = get_temperatures(locator, prop_hvac).set_index('Name')
