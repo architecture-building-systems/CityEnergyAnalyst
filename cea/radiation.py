@@ -35,7 +35,7 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     """
     algorithm to calculate the hourly solar isolation in vertical building surfaces.
     The algorithm is based on the Solar Analyst Engine of ArcGIS 10.
-    For more info check the integrated demand model of Fonseca et al. 2015. Appl. energy.
+    For more info check the integrated dem model of Fonseca et al. 2015. Appl. energy.
 
     Parameters
     ----------
@@ -100,7 +100,7 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
 
     #T_G_day.to_csv(r'C:\Users\Jimeno\Documents/test4.csv')
 
-    # Simplify building's geometry
+    # Simplify building's geom
     elevRaster = arcpy.sa.Raster(locator.get_terrain())
     dem_raster_extent = elevRaster.extent
     arcpy.SimplifyBuilding_cartography(locator.get_building_geometry(), Simple_CQ,

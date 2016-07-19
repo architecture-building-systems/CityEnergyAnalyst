@@ -5,7 +5,7 @@ Global variables
 ================
 
 """
-from cea.demand import thermal_loads
+from cea.dem import thermal_loads
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -42,7 +42,7 @@ class GlobalVariables(object):
         self.Cpv = 1.859  # specific heat capacity of water vapor in KJ/kgK
         self.Cpa = 1.008  # specific heat capacity of air in KJ/kgK
         self.U_dhwtank = 0.225  # tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
-        self.AR = 3.3  # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), taken from commercial tank geometry (jenni.ch)
+        self.AR = 3.3  # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), taken from commercial tank geom (jenni.ch)
         self.lvapor = 2257  # latent heat of air kJ/kg
         self.Tww_setpoint = 60  # dhw tank set point temperature in C
         # constant variables for pumping operation
@@ -79,7 +79,7 @@ class GlobalVariables(object):
         self.rhum_comf_max = 70  # (%)
 
         # ==============================================================================================================
-        # Initial temperatures for demand calculation
+        # Initial temperatures for dem calculation
         # ==============================================================================================================
         self.initial_temp_air_prev = 21
         self.initial_temp_m_prev = 16

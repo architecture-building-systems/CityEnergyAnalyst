@@ -10,12 +10,12 @@ import multiprocessing as mp
 
 import pandas as pd
 
-import cea.demand.functions as f
+import cea.dem.functions as f
 import cea.globalvar
 import cea.inputlocator
 import cea.maker as m
-from cea.demand import thermal_loads
-from cea.demand.thermal_loads import BuildingProperties
+from cea.dem import thermal_loads
+from cea.dem.thermal_loads import BuildingProperties
 from cea.utils import epwreader
 
 __author__ = "Jimeno A. Fonseca"
@@ -34,7 +34,7 @@ reload(cea.globalvar)
 
 def demand_calculation(locator, weather_path, gv):
     """
-    Algorithm to calculate the hourly demand of energy services in buildings
+    Algorithm to calculate the hourly dem of energy services in buildings
     using the integrated model of Fonseca et al. 2015. Applied energy.
     (http://dx.doi.org/10.1016/j.apenergy.2014.12.068)
 
@@ -60,19 +60,19 @@ def demand_calculation(locator, weather_path, gv):
     INPUT / OUTPUT FILES
     --------------------
 
-    - get_demand_results_folder: C:\reference-case\baseline\outputs\data\demand
+    - get_demand_results_folder: C:\reference-case\baseline\outputs\data\dem
     - get_temporary_folder: c:\users\darthoma\appdata\local\temp
     - get_temporary_file: c:\users\darthoma\appdata\local\temp\B153767T.csv (* for each building)
-    - get_total_demand: C:\reference-case\baseline\outputs\data\demand\Total_demand.csv
+    - get_total_demand: C:\reference-case\baseline\outputs\data\dem\Total_demand.csv
 
 
     SIDE EFFECTS
     ------------
 
-    Produces a demand file per building and a total demand file for the whole zone of interest.
+    Produces a dem file per building and a total dem file for the whole zone of interest.
 
-    B153767T.csv: csv file for every building with hourly demand data
-    Total_demand.csv: csv file of yearly demand data per buidling.
+    B153767T.csv: csv file for every building with hourly dem data
+    Total_demand.csv: csv file of yearly dem data per buidling.
     """
 
     # starting date
@@ -89,7 +89,7 @@ def demand_calculation(locator, weather_path, gv):
     schedules = m.schedule_maker(date, locator, list_uses)
     schedules_dict = {'list_uses': list_uses, 'schedules': schedules}
 
-    # demand model
+    # dem model
     num_buildings = len(building_properties)
     if gv.multiprocessing:
         thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, num_buildings,
@@ -152,8 +152,8 @@ def run_as_script(scenario_path=None, weather_path=None):
         if weather_path is None:
             weather_path = locator.get_default_weather()
         gv = cea.globalvar.GlobalVariables()
-        gv.log('Running demand calculation for scenario %(scenario)s', scenario=scenario_path)
-        gv.log('Running demand calculation with weather file %(weather)s', weather=weather_path)
+        gv.log('Running dem calculation for scenario %(scenario)s', scenario=scenario_path)
+        gv.log('Running dem calculation with weather file %(weather)s', weather=weather_path)
         demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
 
 

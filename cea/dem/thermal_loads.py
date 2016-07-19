@@ -14,11 +14,11 @@ import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame
 
-import cea.demand.electrical_loads
-import cea.demand.hotwater_loads
+import cea.dem.electrical_loads
+import cea.dem.hotwater_loads
 import cea.hvac_kaempf
 import contributions.thermal_loads_new_ventilation.ventilation
-from cea.demand import functions
+from cea.dem import functions
 
 
 def calc_tHC_corr(SystemH, SystemC, sys_e_ctrl):
@@ -546,14 +546,14 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :param gv: global variables / context
     :type gv: GlobalVariables
 
-    :param results_folder: path to results folder (sample value: 'C:\reference-case\baseline\outputs\data\demand')
-        obtained from inputlocator.InputLocator..get_demand_results_folder() in demand.demand_calculation
+    :param results_folder: path to results folder (sample value: 'C:\reference-case\baseline\outputs\data\dem')
+        obtained from inputlocator.InputLocator..get_demand_results_folder() in dem.demand_calculation
         used for writing the ${Name}.csv file and also the report file (${Name}-{yyyy-mm-dd-hh-MM-ss}.xls)
     :type results_folder: str
 
     :param temporary_folder: path to a temporary folder for intermediate results
         (sample value: c:\users\darthoma\appdata\local\temp')
-        obtained from inputlocator.InputLocator..get_temporary_folder() in demand.demand_calculation
+        obtained from inputlocator.InputLocator..get_temporary_folder() in dem.demand_calculation
         used for writing the ${Name}.csv file
     :type temporary_folder: str
 
@@ -682,7 +682,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['flag_season'] = np.zeros(8760, dtype=bool)  # default is heating season
         tsd.loc[gv.seasonhours[0] + 1:gv.seasonhours[1], 'flag_season'] = True  # True means cooling season
 
-        # end-use demand calculation
+        # end-use dem calculation
         for t in range(8760):
             if bpr.hvac['type_hs'] == 'T3' and gv.is_heating_season(t):
                 # case 1a: heating with hvac
@@ -748,36 +748,36 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                                       tsd['ta_hs_set'].values,
                                                                                                       tsd['w_re'],
                                                                                                       tsd['w_sup'])
-        Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpww = cea.demand.hotwater_loads.calc_Qwwf(bpr.rc_model['Af'],
-                                                                                                        bpr.building_systems['Lcww_dis'],
-                                                                                                        bpr.building_systems['Lsww_dis'],
-                                                                                                        bpr.building_systems['Lvww_c'],
-                                                                                                        bpr.building_systems['Lvww_dis'],
-                                                                                                        tsd['T_ext'],
-                                                                                                        tsd['Ta'],
-                                                                                                        tsd['Tww_re'],
-                                                                                                        bpr.building_systems['Tww_sup_0'],
-                                                                                                        bpr.building_systems['Y'],
-                                                                                                        gv,
-                                                                                                        tsd['vww'])
+        Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vw, Vww, mcpww = cea.dem.hotwater_loads.calc_Qwwf(bpr.rc_model['Af'],
+                                                                                                     bpr.building_systems['Lcww_dis'],
+                                                                                                     bpr.building_systems['Lsww_dis'],
+                                                                                                     bpr.building_systems['Lvww_c'],
+                                                                                                     bpr.building_systems['Lvww_dis'],
+                                                                                                     tsd['T_ext'],
+                                                                                                     tsd['Ta'],
+                                                                                                     tsd['Tww_re'],
+                                                                                                     bpr.building_systems['Tww_sup_0'],
+                                                                                                     bpr.building_systems['Y'],
+                                                                                                     gv,
+                                                                                                     tsd['vww'])
 
         # calc auxiliary loads
-        Eauxf, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, = cea.demand.electrical_loads.calc_Eaux(bpr.rc_model['Af'],
-                                                                                                    bpr.geometry['Blength'],
-                                                                                                    bpr.geometry['Bwidth'],
-                                                                                                    Mww, Qcsf, Qcsf_0,
-                                                                                                    Qhsf, Qhsf_0, Qww, Qwwf,
-                                                                                                    Qwwf_0,
-                                                                                                    Tcs_re, Tcs_sup, Ths_re,
-                                                                                                    Ths_sup,
-                                                                                                    Vw, bpr.age['built'],
-                                                                                                    bpr.building_systems['fforma'],
-                                                                                                    gv,
-                                                                                                    bpr.geometry['floors_ag'],
-                                                                                                    bpr.occupancy['PFloor'],
-                                                                                                    tsd['qv_req'].values,
-                                                                                                    bpr.hvac['type_cs'],
-                                                                                                    bpr.hvac['type_hs'].
+        Eauxf, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, = cea.dem.electrical_loads.calc_Eaux(bpr.rc_model['Af'],
+                                                                                                 bpr.geometry['Blength'],
+                                                                                                 bpr.geometry['Bwidth'],
+                                                                                                 Mww, Qcsf, Qcsf_0,
+                                                                                                 Qhsf, Qhsf_0, Qww, Qwwf,
+                                                                                                 Qwwf_0,
+                                                                                                 Tcs_re, Tcs_sup, Ths_re,
+                                                                                                 Ths_sup,
+                                                                                                 Vw, bpr.age['built'],
+                                                                                                 bpr.building_systems['fforma'],
+                                                                                                 gv,
+                                                                                                 bpr.geometry['floors_ag'],
+                                                                                                 bpr.occupancy['PFloor'],
+                                                                                                 tsd['qv_req'].values,
+                                                                                                 bpr.hvac['type_cs'],
+                                                                                                 bpr.hvac['type_hs'].
                                                                                                tsd['Ehs_lat_aux'].values)
 
         # calculate other quantities
@@ -803,7 +803,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             8760)  # in C
 
     # Cacl totals and peaks electrical loads
-    Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot = cea.demand.electrical_loads.calc_E_totals(
+    Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot = cea.dem.electrical_loads.calc_E_totals(
         bpr.rc_model['Aef'], tsd['Ealf'].values, Eauxf, tsd['Edataf'].values, tsd['Eprof'].values)
 
     # write results to csv
@@ -866,7 +866,7 @@ class BuildingProperties(object):
 
         - get_radiation: C:\reference-case\baseline\outputs\data\solar-radiation\radiation.csv
         - get_surface_properties: C:\reference-case\baseline\outputs\data\solar-radiation\properties_surfaces.csv
-        - get_building_geometry: C:\reference-case\baseline\inputs\building-geometry\zone.shp
+        - get_building_geometry: C:\reference-case\baseline\inputs\building-geom\zone.shp
         - get_building_hvac: C:\reference-case\baseline\inputs\building-properties\technical_systems.shp
         - get_building_thermal: C:\reference-case\baseline\inputs\building-properties\thermal_properties.shp
         - get_building_occupancy: C:\reference-case\baseline\inputs\building-properties\occupancy.shp
@@ -882,18 +882,18 @@ class BuildingProperties(object):
         prop_geometry = GeoDataFrame.from_file(locator.get_building_geometry())
         prop_geometry['footprint'] = prop_geometry.area
         prop_geometry['perimeter'] = prop_geometry.length
-        prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
-        prop_hvac = GeoDataFrame.from_file(locator.get_building_hvac()).drop('geometry', axis=1)
-        prop_thermal = GeoDataFrame.from_file(locator.get_building_thermal()).drop('geometry', axis=1).set_index('Name')
-        prop_occupancy_df = GeoDataFrame.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index(
+        prop_geometry = prop_geometry.drop('geom', axis=1).set_index('Name')
+        prop_hvac = GeoDataFrame.from_file(locator.get_building_hvac()).drop('geom', axis=1)
+        prop_thermal = GeoDataFrame.from_file(locator.get_building_thermal()).drop('geom', axis=1).set_index('Name')
+        prop_occupancy_df = GeoDataFrame.from_file(locator.get_building_occupancy()).drop('geom', axis=1).set_index(
             'Name')
         prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(
             axis=0)]  # trick to erase occupancies that are not being used (it speeds up the code)
-        prop_architecture = GeoDataFrame.from_file(locator.get_building_architecture()).drop('geometry',
+        prop_architecture = GeoDataFrame.from_file(locator.get_building_architecture()).drop('geom',
                                                                                              axis=1).set_index('Name')
-        prop_age = GeoDataFrame.from_file(locator.get_building_age()).drop('geometry', axis=1).set_index('Name')
-        prop_comfort = GeoDataFrame.from_file(locator.get_building_comfort()).drop('geometry', axis=1).set_index('Name')
-        prop_internal_loads = GeoDataFrame.from_file(locator.get_building_internal()).drop('geometry',
+        prop_age = GeoDataFrame.from_file(locator.get_building_age()).drop('geom', axis=1).set_index('Name')
+        prop_comfort = GeoDataFrame.from_file(locator.get_building_comfort()).drop('geom', axis=1).set_index('Name')
+        prop_internal_loads = GeoDataFrame.from_file(locator.get_building_internal()).drop('geom',
                                                                                            axis=1).set_index('Name')
         # get temperatures of operation
         prop_HVAC_result = get_temperatures(locator, prop_hvac).set_index('Name')
@@ -932,7 +932,7 @@ class BuildingProperties(object):
         return list(self._prop_occupancy.drop('PFloor', axis=1).columns)
 
     def get_prop_geometry(self, name_building):
-        """get geometry of a building by name"""
+        """get geom of a building by name"""
         return self._prop_geometry.ix[name_building].to_dict()
 
     def get_prop_architecture(self, name_building):
