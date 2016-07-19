@@ -1,7 +1,13 @@
+# -*- coding: utf-8 -*-
+"""
+=========================================
+Heating and cooling coils of Air handling units
+=========================================
 
-
+"""
+from __future__ import division
 import scipy.optimize as sopt
-from math import log, exp
+from scipy import log, exp
 
 def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma_sup_hs, ma_sup_0,Ta_sup_0, Ta_re_0, Cpa):
 

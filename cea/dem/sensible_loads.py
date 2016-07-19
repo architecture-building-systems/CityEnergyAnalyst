@@ -133,6 +133,7 @@ def calc_Qhs_Qcs_dis_ls(tair, text, Qhs, Qcs, tsh, trh, tsc, trc, Qhs_max, Qcs_m
 
     return Qhs_d_ls, Qcs_d_ls
 
+
 def calc_Qhs_Qcs_em_ls(SystemH, SystemC):
     """model of losses in the emission and control system for space heating and cooling.
     correction factor for the heating and cooling setpoints. extracted from SIA 2044 (replacing EN 15243)"""
