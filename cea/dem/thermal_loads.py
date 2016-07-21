@@ -762,24 +762,24 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         Waterconsumption = Vw
         # calc auxiliary loads
-        Eauxf, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, = electrical_loads.calc_Eaux(bpr.rc_model['Af'],
-                                                                                                 bpr.geometry['Blength'],
-                                                                                                 bpr.geometry['Bwidth'],
-                                                                                                 Mww, Qcsf, Qcsf_0,
-                                                                                                 Qhsf, Qhsf_0, Qww, Qwwf,
-                                                                                                 Qwwf_0,
-                                                                                                 Tcs_re, Tcs_sup, Ths_re,
-                                                                                                 Ths_sup,
-                                                                                                 Waterconsumption,
-                                                                                                 bpr.age['built'],
-                                                                                                 bpr.building_systems['fforma'],
-                                                                                                 gv,
-                                                                                                 bpr.geometry['floors_ag'],
-                                                                                                 bpr.occupancy['PFloor'],
-                                                                                                 tsd['qv_req'].values,
-                                                                                                 bpr.hvac['type_cs'],
-                                                                                                 bpr.hvac['type_hs'],
-                                                                                               tsd['Ehs_lat_aux'].values)
+        Eauxf, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, = electrical_loads.calc_Eauxf(bpr.rc_model['Af'],
+                                                                                          bpr.geometry['Blength'],
+                                                                                          bpr.geometry['Bwidth'],
+                                                                                          Mww, Qcsf, Qcsf_0,
+                                                                                          Qhsf, Qhsf_0, Qww, Qwwf,
+                                                                                          Qwwf_0,
+                                                                                          Tcs_re, Tcs_sup, Ths_re,
+                                                                                          Ths_sup,
+                                                                                          Waterconsumption,
+                                                                                          bpr.age['built'],
+                                                                                          bpr.building_systems['fforma'],
+                                                                                          gv,
+                                                                                          bpr.geometry['floors_ag'],
+                                                                                          bpr.occupancy['PFloor'],
+                                                                                          tsd['qv_req'].values,
+                                                                                          bpr.hvac['type_cs'],
+                                                                                          bpr.hvac['type_hs'],
+                                                                                          tsd['Ehs_lat_aux'].values)
 
         # calculate other quantities
         # noinspection PyUnresolvedReferences

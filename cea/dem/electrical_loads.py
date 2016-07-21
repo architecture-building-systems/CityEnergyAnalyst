@@ -18,6 +18,13 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
+"""
+=========================================
+final Internal electrical loads
+=========================================
+"""
+
+
 def calc_E_totals(Aef, Ealf, Eauxf, Edataf, Eprof):
     # TODO: Documentation
     # FIXME: is input `Ealf` ever non-zero for Aef <= 0? (also check the other values)
@@ -40,7 +47,7 @@ def calc_E_totals(Aef, Ealf, Eauxf, Edataf, Eprof):
 
 """
 =========================================
-Internal electrical loads
+final internal electrical loads
 =========================================
 """
 
@@ -48,15 +55,15 @@ def calc_Eint(tsd, prop_internal_loads, Af, list_uses, schedules, building_uses)
 
     # calculate schedules
     schedule_Ea_El_Edata_Eref = calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses)
-    schedule_pro = calc_Epro_schedule(list_uses, schedules, building_uses)
+    schedule_pro = calc_Eprof_schedule(list_uses, schedules, building_uses)
 
     # calculate loads
-    tsd['Eaf'] = calc_Ea(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ea_Wm2'], Af)
-    tsd['Elf'] = calc_El(schedule_Ea_El_Edata_Eref, prop_internal_loads['El_Wm2'], Af)
+    tsd['Eaf'] = calc_Eaf(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ea_Wm2'], Af)
+    tsd['Elf'] = calc_Elf(schedule_Ea_El_Edata_Eref, prop_internal_loads['El_Wm2'], Af)
     tsd['Ealf'] =  tsd['Elf']+ tsd['Eaf']
-    tsd['Edataf'] = calc_Edata(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ed_Wm2'], Af)  # in W
+    tsd['Edataf'] = calc_Edataf(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ed_Wm2'], Af)  # in W
     tsd['Eref'] = calc_Eref(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ere_Wm2'],  Af)  # in W
-    tsd['Eprof'] = calc_Epro(schedule_pro, prop_internal_loads['Epro_Wm2'], Af)  # in W
+    tsd['Eprof'] = calc_Eprof(schedule_pro, prop_internal_loads['Epro_Wm2'], Af)  # in W
 
     return tsd
 
@@ -74,17 +81,17 @@ def calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses):
     return el
 
 
-def calc_Ea(schedule, Ea_Wm2, Af):
+def calc_Eaf(schedule, Ea_Wm2, Af):
     Eaf = schedule * Ea_Wm2 * Af  # in W
     return Eaf
 
 
-def calc_El(schedule , El_Wm2, Af):
+def calc_Elf(schedule, El_Wm2, Af):
     Elf = schedule * El_Wm2 * Af  # in W
     return Elf
 
 
-def calc_Edata(schedule , Ed_Wm2, Af):
+def calc_Edataf(schedule, Ed_Wm2, Af):
     Edataf = schedule  * Ed_Wm2 * Af  # in W
     return Edataf
 
@@ -94,7 +101,7 @@ def calc_Eref(schedule , Ere_Wm2, Af):
     return Eref
 
 
-def calc_Epro_schedule(list_uses, schedules, building_uses):
+def calc_Eprof_schedule(list_uses, schedules, building_uses):
     # weighted average of schedules
     def calc_average(last, current, share_of_use):
         return last + current * share_of_use
@@ -107,18 +114,19 @@ def calc_Epro_schedule(list_uses, schedules, building_uses):
     return epro
 
 
-def calc_Epro(schedule , Epro_Wm2, Af):
+def calc_Eprof(schedule , Epro_Wm2, Af):
     Eprof = schedule  * Epro_Wm2 * Af  # in W
     return Eprof
+
 """
 =========================================
-Auxiliary loads
+final auxiliary loads
 =========================================
 """
 
-def calc_Eaux(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
-                  Ths_re, Ths_sup, Vw, Year, fforma, gv, nf_ag, nfp, qv_req, sys_e_cooling,
-                  sys_e_heating, Ehs_lat_aux):
+def calc_Eauxf(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
+               Ths_re, Ths_sup, Vw, Year, fforma, gv, nf_ag, nfp, qv_req, sys_e_cooling,
+               sys_e_heating, Ehs_lat_aux):
 
 
     Eaux_cs = np.zeros(8760)
@@ -131,22 +139,22 @@ def calc_Eaux(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tc
         b = 1
     else:
         b = 1.2
-    Eaux_ww = np.vectorize(calc_Eaux_ww)(Qww, Qwwf, Qwwf_0, Imax, deltaP_des, b, Mww)
+    Eaux_ww = np.vectorize(calc_Eauxf_ww)(Qww, Qwwf, Qwwf_0, Imax, deltaP_des, b, Mww)
     if sys_e_heating != "T0":
-        Eaux_hs = np.vectorize(calc_Eaux_hs_dis)(Qhsf, Qhsf_0, Imax, deltaP_des, b, Ths_sup, Ths_re, gv.Cpw)
+        Eaux_hs = np.vectorize(calc_Eauxf_hs_dis)(Qhsf, Qhsf_0, Imax, deltaP_des, b, Ths_sup, Ths_re, gv.Cpw)
     if sys_e_cooling != "T0":
-        Eaux_cs = np.vectorize(calc_Eaux_cs_dis)(Qcsf, Qcsf_0, Imax, deltaP_des, b, Tcs_sup, Tcs_re, gv.Cpw)
+        Eaux_cs = np.vectorize(calc_Eauxf_cs_dis)(Qcsf, Qcsf_0, Imax, deltaP_des, b, Tcs_sup, Tcs_re, gv.Cpw)
     if nf_ag > 5:  # up to 5th floor no pumping needs
-        Eaux_fw = calc_Eaux_fw(Vw, nf_ag, gv)
+        Eaux_fw = calc_Eauxf_fw(Vw, nf_ag, gv)
     if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
-        Eaux_ve = np.vectorize(calc_Eaux_ve)(Qhsf, Qcsf, gv.Pfan, qv_req, sys_e_heating, sys_e_cooling)
+        Eaux_ve = np.vectorize(calc_Eauxf_ve)(Qhsf, Qcsf, gv.Pfan, qv_req, sys_e_heating, sys_e_cooling)
 
     Eauxf = Eaux_hs + Eaux_cs + Eaux_ve + Eaux_ww + Eaux_fw + Ehs_lat_aux
 
     return Eauxf, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw
 
 
-def calc_Eaux_hs_dis(Qhsf, Qhsf0, Imax, deltaP_des, b, ts, tr, cpw):
+def calc_Eauxf_hs_dis(Qhsf, Qhsf0, Imax, deltaP_des, b, ts, tr, cpw):
     # the power of the pump in Watts
     if Qhsf > 0 and (ts - tr) != 0:
         fctr = 1.05
@@ -167,7 +175,7 @@ def calc_Eaux_hs_dis(Qhsf, Qhsf0, Imax, deltaP_des, b, ts, tr, cpw):
     return Eaux_hs  # in #W
 
 
-def calc_Eaux_cs_dis(Qcsf, Qcsf0, Imax, deltaP_des, b, ts, tr, cpw):
+def calc_Eauxf_cs_dis(Qcsf, Qcsf0, Imax, deltaP_des, b, ts, tr, cpw):
     # refrigerant R-22 1200 kg/m3
     # for Cooling system
     # the power of the pump in Watts
@@ -192,7 +200,7 @@ def calc_Eaux_cs_dis(Qcsf, Qcsf0, Imax, deltaP_des, b, ts, tr, cpw):
     return Eaux_cs  # in #W
 
 
-def calc_Eaux_ve(Qhsf, Qcsf, P_ve, qve, SystemH, SystemC):
+def calc_Eauxf_ve(Qhsf, Qcsf, P_ve, qve, SystemH, SystemC):
     if SystemH == 'T3':
         if Qhsf > 0:
             Eve_aux = P_ve * qve * 3600
@@ -209,7 +217,7 @@ def calc_Eaux_ve(Qhsf, Qcsf, P_ve, qve, SystemH, SystemC):
     return Eve_aux
 
 
-def calc_Eaux_ww(Qww, Qwwf, Qwwf0, Imax, deltaP_des, b, qV_des):
+def calc_Eauxf_ww(Qww, Qwwf, Qwwf0, Imax, deltaP_des, b, qV_des):
     if Qww > 0:
         # for domestichotwater
         # the power of the pump in Watts
@@ -230,7 +238,7 @@ def calc_Eaux_ww(Qww, Qwwf, Qwwf0, Imax, deltaP_des, b, qV_des):
     return Eaux_ww  # in #W
 
 
-def calc_Eaux_fw(freshw, nf, gv):
+def calc_Eauxf_fw(freshw, nf, gv):
     Eaux_fw = np.zeros(8760)
     # for domesticFreshwater
     # the power of the pump in Watts Assuming the best performance of the pump of 0.6 and an accumulation tank

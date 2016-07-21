@@ -53,11 +53,11 @@
                   - [calc_disls](#calc_disls)
                - [calc_Qww_ls_nr](#calc_qww_ls_nr)
             - [calc_pumping_systems_aux_loads](#calc_pumping_systems_aux_loads)
-               - [calc_Eaux_ww](#calc_eaux_ww)
-               - [calc_Eaux_hs_dis](#calc_eaux_hs_dis)
-               - [calc_Eaux_cs_dis](#calc_eaux_cs_dis)
-                  - [calc_Eaux_fw](#calc_eaux_fw)
-               - [calc_Eaux_ve](#calc_eaux_ve)
+               - [calc_Eauxf_ww](#calc_eaux_ww)
+               - [calc_Eauxf_hs_dis](#calc_eaux_hs_dis)
+               - [calc_Eauxf_cs_dis](#calc_eaux_cs_dis)
+                  - [calc_Eauxf_fw](#calc_eaux_fw)
+               - [calc_Eauxf_ve](#calc_eaux_ve)
             - [calc_loads_electrical](#calc_loads_electrical)
             - [results_to_csv](#results_to_csv)
 
@@ -480,7 +480,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_Eaux_cs_dis
+# calc_Eauxf_cs_dis
 - number of invocations: 1
 - max duration: 0.042 s
 - avg duration: 0.042 s
@@ -542,7 +542,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_Eaux_fw
+# calc_Eauxf_fw
 - number of invocations: 1
 - max duration: 0.043 s
 - avg duration: 0.043 s
@@ -584,7 +584,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_Eaux_hs_dis
+# calc_Eauxf_hs_dis
 - number of invocations: 1
 - max duration: 0.033 s
 - avg duration: 0.033 s
@@ -646,7 +646,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_Eaux_ve
+# calc_Eauxf_ve
 - number of invocations: 1
 - max duration: 0.046 s
 - avg duration: 0.046 s
@@ -704,7 +704,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_Eaux_ww
+# calc_Eauxf_ww
 - number of invocations: 1
 - max duration: 0.04 s
 - avg duration: 0.04 s
