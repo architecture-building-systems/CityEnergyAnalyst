@@ -27,16 +27,16 @@ The main variables introduced is `tsd`, which stands for "time step data".
 - `people` -> `tsd['people']`
   - from: `functions.calc_occ:people`
   - to: `functions.calc_simple_temp_control:people`
-  - to: `calc_qv_req:people`
+  - to: `calc_simple_ventilation_control:people`
   - to: `calc_Qgain_sen:people`
   - to: `calc_Qgain_lat:people`
 - `ve_schedule,  ta_hs_set,  ta_cs_set` -> `tsd[['ve',  'ta_hs_set',  'ta_cs_set']]`
   - from: `functions.calc_simple_temp_control:ve, ta_hs_set, ta_cs_set`
-  - to: `calc_qv_req:ve`
+  - to: `calc_simple_ventilation_control:ve`
   - to: `ThermalLoadsInput:temp_hs_set, temp_cs_set`
   - to: `calc_temperatures_emission_systems:ta_hs_set`
 - `qv_req` -> `tsd['qv_req']`
-  - from: `calc_qv_req`
+  - from: `calc_simple_ventilation_control`
   - to `calc_pumping_systems_aux_loads:qv_req`
 - `qm_ve_req` -> `tsd['qm_ve_req']`
   - from: `tsd['qv_req'] * gv.Pair`

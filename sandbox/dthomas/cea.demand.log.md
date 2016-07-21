@@ -15,7 +15,7 @@
             - [get_properties_building_systems](#get_properties_building_systems)
                - [calculate_pipe_transmittance_values](#calculate_pipe_transmittance_values)
                - [Calc_form](#calc_form)
-                  - [calc_qv_req](#calc_qv_req)
+                  - [calc_simple_ventilation_control](#calc_simple_ventilation_control)
             - [calc_I_sol](#calc_I_sol)
                - [Calc_Rf_sh](#calc_rf_sh)
                   - [calc_gl](#calc_gl)
@@ -31,7 +31,7 @@
                - [lookup_coeff_wind_pressure](#lookup_coeff_wind_pressure)
                - [calc_coeff_vent_zone](#calc_coeff_vent_zone)
                - [allocate_default_ventilation_openings](#allocate_default_ventilation_openings)
-            - [calc_tHC_corr](#calc_thc_corr)
+            - [calc_T_em_ls](#calc_thc_corr)
             - [calc_thermal_load_mechanical_and_natural_ventilation_timestep](#calc_thermal_load_mechanical_and_natural_ventilation_timestep)
                - [calc_h_ve_adj](#calc_h_ve_adj)
                - [calc_Htr](#calc_htr)
@@ -2352,7 +2352,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_qv_req
+# calc_simple_ventilation_control
 - number of invocations: 1
 - max duration: 0.034 s
 - avg duration: 0.034 s
@@ -2410,7 +2410,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_tHC_corr
+# calc_T_em_ls
 - number of invocations: 1
 - max duration: 0.028 s
 - avg duration: 0.028 s

@@ -17,130 +17,6 @@ import cea.hvac_kaempf
 import contributions.thermal_loads_new_ventilation.ventilation
 
 
-def calc_tHC_corr(SystemH, SystemC, sys_e_ctrl):
-    """
-    Model of losses in the emission and control system for space heating and cooling.
-
-    correction factor for the heating and cooling setpoints. extracted from EN 15316-2
-    Credits to: Shanshan
-
-    Parameters
-    ----------
-    SystemH
-    SystemC
-    sys_e_ctrl
-
-    Returns
-    -------
-
-    """
-
-    tHC_corr = [0, 0]
-    delta_ctrl = [0, 0]
-
-    # emission system room temperature control type
-    if sys_e_ctrl == 'T1':
-        delta_ctrl = [2.5, -2.5]
-    elif sys_e_ctrl == 'T2':
-        delta_ctrl = [1.2, -1.2]
-    elif sys_e_ctrl == 'T3':
-        delta_ctrl = [0.9, -0.9]
-    elif sys_e_ctrl == 'T4':
-        delta_ctrl = [1.8, -1.8]
-
-    # calculate temperature correction
-    if SystemH == 'T1':
-        tHC_corr[0] = delta_ctrl[0] + 0.15
-    elif SystemH == 'T2':
-        tHC_corr[0] = delta_ctrl[0] - 0.1
-    elif SystemH == 'T3':
-        tHC_corr[0] = delta_ctrl[0] - 1.1
-    elif SystemH == 'T4':
-        tHC_corr[0] = delta_ctrl[0] - 0.9
-    else:
-        tHC_corr[0] = 0
-
-    if SystemC == 'T1':
-        tHC_corr[1] = delta_ctrl[1] + 0.5
-    elif SystemC == 'T2':  # no emission losses but emissions for ventilation
-        tHC_corr[1] = delta_ctrl[1] + 0.7
-    elif SystemC == 'T3':
-        tHC_corr[1] = delta_ctrl[1] + 0.5
-    else:
-        tHC_corr[1] = 0
-
-    return tHC_corr[0], tHC_corr[1]
-
-
-def calc_h_ve_adj(q_m_mech, q_m_nat, temp_ext, temp_sup, temp_zone_set, gv):
-    """
-    calculate Hve,adj according to ISO 13790
-
-    Parameters
-    ----------
-    q_m_mech : air mass flow from mechanical ventilation (kg/s)
-    q_m_nat : air mass flow from windows and leakages and other natural ventilation (kg/s)
-    temp_ext : exterior air temperature (°C)
-    temp_sup : ventilation system supply air temperature (°C), e.g. after HEX
-    temp_zone_set : zone air temperature set point (°C)
-    gv : globalvars
-
-    Returns
-    -------
-    Hve,adj in (W/K)
-
-    """
-
-    c_p_air = gv.Cpa  # (kJ/(kg*K)) # TODO: maybe dynamic heat capacity of air f(temp)
-
-    if abs(temp_sup - temp_ext) == 0:
-        b_mech = 1
-
-    else:
-        eta_hru = (temp_sup - temp_ext) / (temp_zone_set - temp_ext)  # Eq. (28) in ISO 13970
-        frac_hru = 1
-        b_mech = (1 - frac_hru * eta_hru)  # Eq. (27) in ISO 13970
-
-    return (b_mech * q_m_mech + q_m_nat) * c_p_air * 1000  # (W/K), Eq. (21) in ISO 13970
-
-
-def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, n50):
-    """
-    Modified version of calc_qv_req from functions.
-    Fixed infiltration according to schedule is only considered for mechanically ventilated buildings.
-
-    Parameters
-    ----------
-    ve : required ventilation rate according to schedule (?)
-    people : occupancy schedules (pax?)
-    Af : conditioned floor area (m2)
-    gv : globalvars
-    hour_day : hour of the day [0..23]
-    hour_year : hour of the year [0..8760]
-    n50 : building envelope leakiness from archetypes
-
-    Returns
-    -------
-    q_req : required ventilation rate schedule (m3/s)
-    """
-    # TODO: check units
-
-    # 'flat rate' infiltration considered for all buildings
-    # estimation of infiltration air volume flow rate according to Eq. (3) in DIN 1946-6
-    n_inf = 0.5 * n50 * (gv.delta_p_dim/50) ** (2/3)  # [air changes per hour]
-
-    infiltration = gv.hf * n_inf  # m3/h.m2
-
-    if (21 < hour_day or hour_day < 7) and not gv.is_heating_season(hour_year):
-        q_req = (ve * 1.3 + (infiltration * Af)) / 3600
-        # free cooling during summer nights (1.3x required ventilation rate per pax plus infiltration)
-
-    else:
-        q_req = (ve + (infiltration * Af)) / 3600  # required ventilation rate per pax and infiltration
-
-    return q_req  # m3/s
-
-
 # FIXME: replace weather_data with tsd['T_ext'] and tsd['rh_ext']
 def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
     """
@@ -186,7 +62,7 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
     area_f = bpr.rc_model['Af']
 
     # model of losses in the emission and control system for space heating and cooling
-    temp_hs_set_corr, temp_cs_set_corr = calc_tHC_corr(bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
+    temp_hs_set_corr, temp_cs_set_corr = sensible_loads.calc_T_em_ls(bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
 
     # heating and cooling loads
     i_c_max, i_h_max = sensible_loads.calc_Qhs_Qcs_sys_max(bpr.rc_model['Af'], bpr.hvac)
@@ -250,7 +126,7 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
     while (abs_diff_qm_ve_mech > abs_tolerance) and (rel_diff_qm_ve_mech > rel_tolerance) and switch < 10:
 
         # Hve
-        h_ve_adj = calc_h_ve_adj(qm_ve_mech, qm_ve_nat, temp_ext, temp_ve_sup, temp_air_prev, gv)  # TODO
+        h_ve_adj = sensible_loads.calc_h_ve_adj(qm_ve_mech, qm_ve_nat, temp_ext, temp_ve_sup, temp_air_prev, gv)  # TODO
 
         # Htr1, Htr2, Htr3
         h_tr_1, h_tr_2, h_tr_3 = sensible_loads.calc_Htr(h_ve_adj, h_tr_is, h_tr_ms, h_tr_w)
@@ -419,7 +295,7 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
     area_f = bpr.rc_model['Af']
 
     # model of losses in the emission and control system for space heating and cooling
-    temp_hs_set_corr, temp_cs_set_corr = calc_tHC_corr(bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
+    temp_hs_set_corr, temp_cs_set_corr = sensible_loads.calc_T_em_ls(bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
 
     i_c_max, i_h_max = sensible_loads.calc_Qhs_Qcs_sys_max(bpr.rc_model['Af'], bpr.hvac)
 
@@ -441,7 +317,7 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
     temp_ve_sup = temp_ext  # mechanical ventilation without heat exchanger
 
     # calc hve
-    h_ve = calc_h_ve_adj(qm_ve_mech, qm_ve_nat, temp_ext, temp_ve_sup, temp_air_prev, gv)
+    h_ve = sensible_loads.calc_h_ve_adj(qm_ve_mech, qm_ve_nat, temp_ext, temp_ve_sup, temp_air_prev, gv)
 
     # calc htr1, htr2, htr3
     h_tr_1, h_tr_2, h_tr_3 = sensible_loads.calc_Htr(h_ve, h_tr_is, h_tr_ms, h_tr_w)
@@ -645,8 +521,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         # minimum mass flow rate of ventilation according to schedule
         # with infiltration and overheating
-        tsd['qv_req'] = np.vectorize(calc_qv_req)(tsd['ve'].values, tsd['people'].values, bpr.rc_model['Af'], gv,
-                                                  date.hour, range(8760), n50)
+        tsd['qv_req'] = np.vectorize(controllers.calc_simple_ventilation_control)(tsd['ve'].values, tsd['people'].values, bpr.rc_model['Af'], gv,
+                                                                      date.hour, range(8760), n50)
         tsd['qm_ve_req'] = tsd['qv_req'] * gv.Pair  # TODO:  use dynamic rho_air
 
         # heat flows in [W]
