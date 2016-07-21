@@ -178,6 +178,7 @@ def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, limit_inf_season, limit
 
 
 def calc_Qint(tsd, prop_internal_loads, prop_architecture, Af):
+
     from electrical_loads import calc_Ea,calc_El,calc_Edata, calc_Epro, calc_Eref
 
     tsd['Eaf'] = calc_Ea(tsd.el.values,prop_internal_loads['Ea_Wm2'], Af)
@@ -188,9 +189,6 @@ def calc_Qint(tsd, prop_internal_loads, prop_architecture, Af):
     tsd['Eref'] = calc_Eref(tsd.el.values, prop_internal_loads['Ere_Wm2'],  Af)  # in W
     tsd['Qcrefri'] = (tsd['Eref'] * 4)  # where 4 is the COP of the refrigeration unit   # in W
     tsd['Qcdata'] = (tsd['Edataf'] * 0.9)  # where 0.9 is assumed of heat dissipation # in W
-    tsd['vww'] = tsd.dhw.values * prop_internal_loads['Vww_lpd'] * prop_architecture[
-                                                                       'Occ_m2p'] ** -1 * Af / 24000  # m3/h
-    tsd['vw'] = tsd.dhw.values * prop_internal_loads['Vw_lpd'] * prop_architecture['Occ_m2p'] ** -1 * Af / 24000  # m3/h
 
     return tsd
 
