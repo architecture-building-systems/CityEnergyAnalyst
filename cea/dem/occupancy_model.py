@@ -19,7 +19,66 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
+"""
+=========================================
+Occupancy
+=========================================
+"""
+
+def calc_occ(list_uses, schedules, building_uses, Occ_m2p, Af):
+    schedule = calc_occ_schedule(list_uses, schedules, building_uses)
+    people = schedule * (Occ_m2p) ** -1 * Af  # in people
+    return people
+
+def calc_occ_schedule(list_uses, schedules, building_uses):
+    # weighted average of schedules
+    def calc_average(last, current, share_of_use):
+        return last + current * share_of_use
+
+    occ = np.zeros(8760)
+    num_profiles = len(list_uses)
+    for num in range(num_profiles):
+        current_share_of_use = building_uses[list_uses[num]]
+        occ = np.vectorize(calc_average)(occ, schedules[num][0], current_share_of_use)
+
+    return occ
+
+
+"""
+=========================================
+read schedules El, Qww and occupancy
+=========================================
+"""
+
 def schedule_maker(date, locator, list_uses):
+    def get_yearly_vectors(date, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule):
+        occ = []
+        el = []
+        dhw = []
+        pro = []
+        for hour in range(8760):
+            month_year = month_schedule[date[hour].month - 1]
+            hour_day = date[hour].hour
+            dayofweek = date[hour].dayofweek
+            if dayofweek is 0 or 1 or 2 or 3 or 4:  # weekday
+                occ.append(occ_schedules[0][hour_day] * month_year)
+                el.append(el_schedules[0][hour_day] * month_year)
+                dhw.append(dhw_schedules[0][hour_day] * month_year)
+                pro.append(pro_schedules[0][hour_day] * month_year)
+            elif dayofweek is 5:  # saturday
+                occ.append(occ_schedules[1][hour_day] * month_year)
+                el.append(el_schedules[1][hour_day] * month_year)
+                dhw.append(dhw_schedules[1][hour_day] * month_year)
+                pro.append(pro_schedules[1][hour_day] * month_year)
+            else:  # sunday
+                occ.append(occ_schedules[2][hour_day] * month_year)
+                el.append(el_schedules[2][hour_day] * month_year)
+                dhw.append(dhw_schedules[2][hour_day] * month_year)
+                pro.append(pro_schedules[2][hour_day] * month_year)
+
+        return occ, el, dhw, pro
+
+
     schedules = []
     for use in list_uses:
         # Read from archetypes_schedules
@@ -48,57 +107,3 @@ def read_schedules(use, x):
 
     return occ, el, dhw, pro, month
 
-
-def get_yearly_vectors(date, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule):
-    occ = []
-    el = []
-    dhw = []
-    pro = []
-    for hour in range(8760):
-        month_year = month_schedule[date[hour].month-1]
-        hour_day = date[hour].hour
-        dayofweek = date[hour].dayofweek
-        if dayofweek is 0 or 1 or 2 or 3 or 4: #weekday
-            occ.append(occ_schedules[0][hour_day] * month_year)
-            el.append(el_schedules[0][hour_day] * month_year)
-            dhw.append(dhw_schedules[0][hour_day] * month_year)
-            pro.append(pro_schedules[0][hour_day] * month_year)
-        elif dayofweek is 5: #saturday
-            occ.append(occ_schedules[1][hour_day] * month_year)
-            el.append(el_schedules[1][hour_day] * month_year)
-            dhw.append(dhw_schedules[1][hour_day] * month_year)
-            pro.append(pro_schedules[1][hour_day] * month_year)
-        else: # sunday
-            occ.append(occ_schedules[2][hour_day] * month_year)
-            el.append(el_schedules[2][hour_day] * month_year)
-            dhw.append(dhw_schedules[2][hour_day] * month_year)
-            pro.append(pro_schedules[2][hour_day] * month_year)
-
-    return occ, el, dhw, pro
-
-
-def calc_mixed_schedule(list_uses, schedules, building_uses):
-    # weighted average of schedules
-    def calc_average(last, current, share_of_use):
-        return last + current * share_of_use
-
-    occ = np.zeros(8760)
-    num_profiles = len(list_uses)
-    for num in range(num_profiles):
-        current_share_of_use = building_uses[list_uses[num]]
-        occ = np.vectorize(calc_average)(occ, schedules[num][0], current_share_of_use)
-
-    return occ
-
-
-def test_schedule_maker():
-    locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
-    prop_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index('Name')[:270]
-    prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
-    gv = cea.globalvar.GlobalVariables()
-    date = pd.date_range(gv.date_start, periods=8760, freq='H')
-    list_uses = list(prop_occupancy.drop('PFloor', axis=1).columns)
-    schedule_maker(date=date, locator=locator, list_uses=list_uses)
-
-if __name__ == '__main__':
-    test_schedule_maker()

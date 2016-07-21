@@ -16,16 +16,16 @@ The main variables introduced is `tsd`, which stands for "time step data".
   - from: `weather_data.relhum_percent.values`
 -  mixed_schedule -> `tsd[['occ', 'el', 'pro', 'dhw']]`
   - schedule data (occupancy, electric use, probability of occupancy, domestic hot water use
-  - from: `functions.calc_mixed_schedule`
+  - from: `functions.calc_occ_schedule`
   - to: `functions.calc_Qint`
-  - to: `functions.get_occupancy`
+  - to: `functions.calc_occ`
 - `Ealf`, `Edataf`,  `Eprof`,  `Eref`,  `Qcrefri`,  `Qcdata`,  `vww`, `vw` -> `tsd[['Ealf', 'Edataf', 'Eprof', 'Eref', 'Qcrefri', 'Qcdata', 'vww', 'vw']]`
   - from: `functions.calc_Qint:Ealf, Edataf, Eprof, Eref, Qcrefri, Qcdata, vww, vw`
   - to: `calc_heat_gains_internal_sensible:Eal_nove, Eprof, Qcdata, Qcrefri`
   - to: `calc_dhw_heating_demand:vw, vww`
   - to: `calc_loads_electrical:Ealf, Edataf, Eprof`
 - `people` -> `tsd['people']`
-  - from: `functions.get_occupancy:people`
+  - from: `functions.calc_occ:people`
   - to: `functions.get_internal_comfort:people`
   - to: `calc_qv_req:people`
   - to: `calc_heat_gains_internal_sensible:people`

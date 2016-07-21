@@ -21,6 +21,13 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
+
+"""
+=========================================
+end-use heating or cooling loads
+=========================================
+"""
+
 def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Htr_ms, Htr_is, Htr_1, Htr_2, Htr_3,
                  I_st, Hve, Htr_w, I_ia, I_m, Cm, Af, Losses, tHset_corr, tCset_corr, IC_max, IH_max, Flag):
 
@@ -115,47 +122,6 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
         IH_nd_ac = 0
     return tm, ta, IH_nd_ac, IC_nd_ac, uncomfort, top, Im_tot
 
-def calc_Qhs_Qcs_dis_ls(tair, text, Qhs, Qcs, tsh, trh, tsc, trc, Qhs_max, Qcs_max, D, Y, SystemH, SystemC, Bf, Lv):
-    """calculates distribution losses based on ISO 15316"""
-    # Calculate tamb in basement according to EN
-    tamb = tair - Bf * (tair - text)
-    if SystemH != 'T0' and Qhs > 0:
-        Qhs_d_ls = ((tsh + trh) / 2 - tamb) * (Qhs / Qhs_max) * (Lv * Y)
-    else:
-        Qhs_d_ls = 0
-    if SystemC != 'T0' and Qcs < 0:
-        Qcs_d_ls = ((tsc + trc) / 2 - tamb) * (Qcs / Qcs_max) * (Lv * Y)
-    else:
-        Qcs_d_ls = 0
-
-    return Qhs_d_ls, Qcs_d_ls
-
-
-def calc_Qhs_Qcs_em_ls(SystemH, SystemC):
-    """model of losses in the emission and control system for space heating and cooling.
-    correction factor for the heating and cooling setpoints. extracted from SIA 2044 (replacing EN 15243)"""
-    tHC_corr = [0, 0]
-    # values extracted from SIA 2044 - national standard replacing values suggested in EN 15243
-    if SystemH == 'T4' or 'T1':
-        tHC_corr[0] = 0.5 + 1.2
-    elif SystemH == 'T2':
-        tHC_corr[0] = 0 + 1.2
-    elif SystemH == 'T3':  # no emission losses but emissions for ventilation
-        tHC_corr[0] = 0.5 + 1  # regulation is not taking into account here
-    else:
-        tHC_corr[0] = 0.5 + 1.2
-
-    if SystemC == 'T4':
-        tHC_corr[1] = 0 - 1.2
-    elif SystemC == 'T5':
-        tHC_corr[1] = - 0.4 - 1.2
-    elif SystemC == 'T3':  # no emission losses but emissions for ventilation
-        tHC_corr[1] = 0 - 1  # regulation is not taking into account here
-    else:
-        tHC_corr[1] = 0 + - 1.2
-
-    return list(tHC_corr)
-
 
 def calc_Htr(Hve, Htr_is, Htr_ms, Htr_w):
     Htr_1 = 1 / (1 / Hve + 1 / Htr_is)
@@ -184,11 +150,6 @@ def calc_Qsol(bpr, gv):
     solar_effective_area = blinds_reflection * (1 - gv.F_f) * bpr.rc_model['Aw']  # Calculation of solar effective area per hour in m2
     net_solar_gains = solar_effective_area * solar_specific  # how much are the net solar gains in Wh per hour of the year.
     return net_solar_gains.values
-
-
-def get_occupancy(tsd, prop_architecture, Af):
-    tsd['people'] = tsd.occ.values * (prop_architecture['Occ_m2p']) ** -1 * Af  # in people
-    return tsd
 
 
 def get_internal_comfort(tsd, prop_comfort, limit_inf_season, limit_sup_season, weekday):
@@ -306,59 +267,50 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
 
     return Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs
 
-def results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot, Name,
-                   Occupancy,
-                   Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
-                   Tcs_re, Tcs_re_0, Tcs_sup, Tcs_sup_0, Ths_re, Ths_re_0, Ths_sup, Ths_sup_0, Tww_re, Tww_st,
-                   Tww_sup_0, Waterconsumption, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
-                   sys_e_cooling, sys_e_heating, waterpeak, date):
-    # TODO: Document
-    # Refactored from CalcThermalLoads
+"""
+=========================================
+space heating/cooling losses
+=========================================
+"""
 
-    # compute totals heating loads loads in MW
-    if sys_e_heating != 'T0':
-        Qhsf_tot = Qhsf.sum() / 1000000
-        Qhs_tot = Qhs.sum() / 1000000
-        Qwwf_tot = Qwwf.sum() / 1000000
-        Qww_tot = Qww.sum() / 1000000
+def calc_Qhs_Qcs_dis_ls(tair, text, Qhs, Qcs, tsh, trh, tsc, trc, Qhs_max, Qcs_max, D, Y, SystemH, SystemC, Bf, Lv):
+    """calculates distribution losses based on ISO 15316"""
+    # Calculate tamb in basement according to EN
+    tamb = tair - Bf * (tair - text)
+    if SystemH != 'T0' and Qhs > 0:
+        Qhs_d_ls = ((tsh + trh) / 2 - tamb) * (Qhs / Qhs_max) * (Lv * Y)
     else:
-        Qhsf_tot = Qhs_tot = Qwwf_tot = Qww_tot = 0
-
-    # compute totals cooling loads in MW
-    if sys_e_cooling != 'T0':
-        Qcs_tot = -Qcs.sum() / 1000000
-        Qcsf_tot = -Qcsf.sum() / 1000000
-        Qcrefri_tot = Qcrefri.sum() / 1000000
-        Qcdata_tot = Qcdata.sum() / 1000000
+        Qhs_d_ls = 0
+    if SystemC != 'T0' and Qcs < 0:
+        Qcs_d_ls = ((tsc + trc) / 2 - tamb) * (Qcs / Qcs_max) * (Lv * Y)
     else:
-        Qcs_tot = Qcsf_tot = Qcdata_tot = Qcrefri_tot = 0
+        Qcs_d_ls = 0
 
-    # print series all in kW, mcp in kW/h, cooling loads shown as positive, water consumption m3/h,
-    # temperature in Degrees celcious
-    pd.DataFrame(
-        {'DATE': date, 'Name': Name, 'Ealf_kWh': Ealf / 1000, 'Eauxf_kWh': Eauxf / 1000, 'Qwwf_kWh': Qwwf / 1000,
-         'Qww_kWh': Qww / 1000, 'Qww_tankloss_kWh': Qww_ls_st / 1000, 'Qhs_kWh': Qhs / 1000,
-         'Qhsf_kWh': Qhsf / 1000,
-         'Qcs_kWh': -1 * Qcs / 1000, 'Qcsf_kWh': -1 * Qcsf / 1000, 'occ_pax': Occupancy, 'Vw_m3': Waterconsumption,
-         'Tshs_C': Ths_sup, 'Trhs_C': Ths_re, 'mcphs_kWC': mcphs, 'mcpww_kWC': mcpww / 1000, 'Tscs_C': Tcs_sup,
-         'Trcs_C': Tcs_re, 'mcpcs_kWC': mcpcs, 'Qcdataf_kWh': Qcdata / 1000, 'Tsww_C': Tww_sup_0, 'Trww_C': Tww_re,
-         'Tww_tank_C': Tww_st, 'Ef_kWh': (Ealf + Eauxf + Epro) / 1000, 'Epro_kWh': Epro / 1000,
-         'Qcref_kWh': Qcrefri / 1000,
-         'Edataf_kWh': Edata / 1000, 'QHf_kWh': (Qwwf + Qhsf) / 1000,
-         'QCf_kWh': (-1 * Qcsf + Qcdata + Qcrefri) / 1000}).to_csv(locationFinal + '\\' + Name + '.csv',
-                                                                   index=False, float_format='%.2f')
-    # print peaks in kW and totals in MWh, temperature peaks in C
-    totals = pd.DataFrame(
-        {'Name': Name, 'GFA_m2': GFA_m2, 'Af_m2': Af, 'occ_pax': Occupants, 'Qwwf0_kW': Qwwf_0 / 1000,
-         'Ealf0_kW': Ealf_0 / 1000,
-         'Qhsf0_kW': Qhsf_0 / 1000, 'Qcsf0_kW': -Qcsf_0 / 1000, 'Vw0_m3': waterpeak, 'Tshs0_C': Ths_sup_0,
-         'Trhs0_C': Ths_re_0, 'mcphs0_kWC': mcphs.max(), 'Tscs0_C': Tcs_sup_0, 'Qcdataf_MWhyr': Qcdata_tot,
-         'Qcref_MWhyr': Qcrefri_tot, 'Trcs0_C': Tcs_re_0, 'mcpcs0_kWC': mcpcs.max(), 'Qwwf_MWhyr': Qwwf_tot,
-         'Qww_MWhyr': Qww_tot, 'Qhsf_MWhyr': Qhsf_tot, 'Qhs_MWhyr': Qhs_tot, 'Qcsf_MWhyr': Qcsf_tot,
-         'Qcs_MWhyr': Qcs_tot,
-         'Ealf_MWhyr': Ealf_tot, 'Eauxf_MWhyr': Eauxf_tot, 'Eprof_MWhyr': Epro_tot, 'Edataf_MWhyr': Edata_tot,
-         'Tsww0_C': Tww_sup_0, 'Vw_m3yr': Waterconsumption.sum(),
-         'Ef_MWhyr': (Ealf_tot + Eauxf_tot + Epro_tot + Edata_tot), 'QHf_MWhyr': (Qwwf_tot + Qhsf_tot),
-         'QCf_MWhyr': (Qcsf_tot + Qcdata_tot + Qcrefri_tot)}, index=[0])
-    totals.to_csv(os.path.join(path_temporary_folder, '%sT.csv' % Name), index=False, float_format='%.2f')
+    return Qhs_d_ls, Qcs_d_ls
+
+
+def calc_Qhs_Qcs_em_ls(SystemH, SystemC):
+    """model of losses in the emission and control system for space heating and cooling.
+    correction factor for the heating and cooling setpoints. extracted from SIA 2044 (replacing EN 15243)"""
+    tHC_corr = [0, 0]
+    # values extracted from SIA 2044 - national standard replacing values suggested in EN 15243
+    if SystemH == 'T4' or 'T1':
+        tHC_corr[0] = 0.5 + 1.2
+    elif SystemH == 'T2':
+        tHC_corr[0] = 0 + 1.2
+    elif SystemH == 'T3':  # no emission losses but emissions for ventilation
+        tHC_corr[0] = 0.5 + 1  # regulation is not taking into account here
+    else:
+        tHC_corr[0] = 0.5 + 1.2
+
+    if SystemC == 'T4':
+        tHC_corr[1] = 0 - 1.2
+    elif SystemC == 'T5':
+        tHC_corr[1] = - 0.4 - 1.2
+    elif SystemC == 'T3':  # no emission losses but emissions for ventilation
+        tHC_corr[1] = 0 - 1  # regulation is not taking into account here
+    else:
+        tHC_corr[1] = 0 + - 1.2
+
+    return list(tHC_corr)
 

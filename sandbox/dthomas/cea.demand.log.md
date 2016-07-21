@@ -7,9 +7,9 @@
          - [lookup_specific_heat_capacity](#lookup_specific_heat_capacity)
       - [create_windows](#create_windows)
          - [calc_thermal_loads_new_ventilation](#calc_thermal_loads_new_ventilation)
-            - [calc_mixed_schedule](#calc_mixed_schedule)
+            - [calc_occ_schedule](#calc_occ_schedule)
             - [calc_Qint](#calc_Qint)
-            - [get_occupancy](#get_occupancy)
+            - [calc_occ](#calc_occ)
             - [get_internal_comfort](#get_internal_comfort)
             - [get_properties_building_envelope](#get_properties_building_envelope)
             - [get_properties_building_systems](#get_properties_building_systems)
@@ -2136,7 +2136,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_mixed_schedule
+# calc_occ_schedule
 - number of invocations: 1
 - max duration: 0.545 s
 - avg duration: 0.545 s
@@ -3228,7 +3228,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# get_occupancy
+# calc_occ
 - number of invocations: 1
 - max duration: 0.039 s
 - avg duration: 0.039 s

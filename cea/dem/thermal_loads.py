@@ -8,6 +8,7 @@ Heating and cooling coils of Air handling units
 from __future__ import division
 import numpy as np
 import pandas as pd
+import os
 from geopandas import GeoDataFrame
 from  cea.dem import sensible_loads, electrical_loads, hotwater_loads
 from cea.dem import occupancy_model
@@ -617,8 +618,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     # get n50 value
     n50 = bpr.architecture['n50']
 
-    # copied from original calc thermal loads
-    tsd['occ'] = occupancy_model.calc_mixed_schedule(list_uses, schedules, bpr.occupancy)  # TODO: rename outputs
+    # get occupancy
+    tsd['people'] = occupancy_model.calc_occ(list_uses, schedules, bpr.occupancy, bpr.architecture['Qcc_m2p'],
+                                             bpr.rc_model['Af'])
 
     # get electrical loads (no auxiliary loads)
     tsd = electrical_loads.calc_Eint(tsd, bpr.internal_loads, bpr.rc_model['Af'], list_uses, schedules, bpr.occupancy)
@@ -635,9 +637,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd.loc[gv.seasonhours[0] + 1:gv.seasonhours[1] - 1, 'Tww_re'] = 14
 
     if bpr.rc_model['Af'] > 0:  # building has conditioned area
-
-        # get occupancy
-        tsd = sensible_loads.get_occupancy(tsd, bpr.architecture, bpr.rc_model['Af'])
 
         # get internal comfort properties
         tsd = sensible_loads.get_internal_comfort(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
@@ -807,7 +806,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         bpr.rc_model['Aef'], tsd['Ealf'].values, Eauxf, tsd['Edataf'].values, tsd['Eprof'].values)
 
     # write results to csv
-    sensible_loads.results_to_csv(bpr.rc_model['GFA_m2'], bpr.rc_model['Af'], Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edataf,
+    results_to_csv(bpr.rc_model['GFA_m2'], bpr.rc_model['Af'], Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edataf,
                                   Edataf_tot,
                                   Eprof, Eprof_tot,
                                   building_name,
@@ -824,6 +823,61 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     gv.report('calc-thermal-loads', locals(), results_folder, building_name)
     return
 
+
+def results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot, Name,
+                   Occupancy, Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf,
+                   Qwwf_0, Tcs_re, Tcs_re_0, Tcs_sup, Tcs_sup_0, Ths_re, Ths_re_0, Ths_sup, Ths_sup_0, Tww_re, Tww_st,
+                   Tww_sup_0, Waterconsumption, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
+                   sys_e_cooling, sys_e_heating, waterpeak, date):
+    # TODO: Document
+    # Refactored from CalcThermalLoads
+
+    # compute totals heating loads loads in MW
+    if sys_e_heating != 'T0':
+        Qhsf_tot = Qhsf.sum() / 1000000
+        Qhs_tot = Qhs.sum() / 1000000
+        Qwwf_tot = Qwwf.sum() / 1000000
+        Qww_tot = Qww.sum() / 1000000
+    else:
+        Qhsf_tot = Qhs_tot = Qwwf_tot = Qww_tot = 0
+
+    # compute totals cooling loads in MW
+    if sys_e_cooling != 'T0':
+        Qcs_tot = -Qcs.sum() / 1000000
+        Qcsf_tot = -Qcsf.sum() / 1000000
+        Qcrefri_tot = Qcrefri.sum() / 1000000
+        Qcdata_tot = Qcdata.sum() / 1000000
+    else:
+        Qcs_tot = Qcsf_tot = Qcdata_tot = Qcrefri_tot = 0
+
+    # print series all in kW, mcp in kW/h, cooling loads shown as positive, water consumption m3/h,
+    # temperature in Degrees celcious
+    pd.DataFrame(
+        {'DATE': date, 'Name': Name, 'Ealf_kWh': Ealf / 1000, 'Eauxf_kWh': Eauxf / 1000, 'Qwwf_kWh': Qwwf / 1000,
+         'Qww_kWh': Qww / 1000, 'Qww_tankloss_kWh': Qww_ls_st / 1000, 'Qhs_kWh': Qhs / 1000,
+         'Qhsf_kWh': Qhsf / 1000,
+         'Qcs_kWh': -1 * Qcs / 1000, 'Qcsf_kWh': -1 * Qcsf / 1000, 'occ_pax': Occupancy, 'Vw_m3': Waterconsumption,
+         'Tshs_C': Ths_sup, 'Trhs_C': Ths_re, 'mcphs_kWC': mcphs, 'mcpww_kWC': mcpww / 1000, 'Tscs_C': Tcs_sup,
+         'Trcs_C': Tcs_re, 'mcpcs_kWC': mcpcs, 'Qcdataf_kWh': Qcdata / 1000, 'Tsww_C': Tww_sup_0, 'Trww_C': Tww_re,
+         'Tww_tank_C': Tww_st, 'Ef_kWh': (Ealf + Eauxf + Epro) / 1000, 'Epro_kWh': Epro / 1000,
+         'Qcref_kWh': Qcrefri / 1000,
+         'Edataf_kWh': Edata / 1000, 'QHf_kWh': (Qwwf + Qhsf) / 1000,
+         'QCf_kWh': (-1 * Qcsf + Qcdata + Qcrefri) / 1000}).to_csv(locationFinal + '\\' + Name + '.csv',
+                                                                   index=False, float_format='%.2f')
+    # print peaks in kW and totals in MWh, temperature peaks in C
+    totals = pd.DataFrame(
+        {'Name': Name, 'GFA_m2': GFA_m2, 'Af_m2': Af, 'occ_pax': Occupants, 'Qwwf0_kW': Qwwf_0 / 1000,
+         'Ealf0_kW': Ealf_0 / 1000,
+         'Qhsf0_kW': Qhsf_0 / 1000, 'Qcsf0_kW': -Qcsf_0 / 1000, 'Vw0_m3': waterpeak, 'Tshs0_C': Ths_sup_0,
+         'Trhs0_C': Ths_re_0, 'mcphs0_kWC': mcphs.max(), 'Tscs0_C': Tcs_sup_0, 'Qcdataf_MWhyr': Qcdata_tot,
+         'Qcref_MWhyr': Qcrefri_tot, 'Trcs0_C': Tcs_re_0, 'mcpcs0_kWC': mcpcs.max(), 'Qwwf_MWhyr': Qwwf_tot,
+         'Qww_MWhyr': Qww_tot, 'Qhsf_MWhyr': Qhsf_tot, 'Qhs_MWhyr': Qhs_tot, 'Qcsf_MWhyr': Qcsf_tot,
+         'Qcs_MWhyr': Qcs_tot,
+         'Ealf_MWhyr': Ealf_tot, 'Eauxf_MWhyr': Eauxf_tot, 'Eprof_MWhyr': Epro_tot, 'Edataf_MWhyr': Edata_tot,
+         'Tsww0_C': Tww_sup_0, 'Vw_m3yr': Waterconsumption.sum(),
+         'Ef_MWhyr': (Ealf_tot + Eauxf_tot + Epro_tot + Edata_tot), 'QHf_MWhyr': (Qwwf_tot + Qhsf_tot),
+         'QCf_MWhyr': (Qcsf_tot + Qcdata_tot + Qcrefri_tot)}, index=[0])
+    totals.to_csv(os.path.join(path_temporary_folder, '%sT.csv' % Name), index=False, float_format='%.2f')
 
 class BuildingProperties(object):
     """
