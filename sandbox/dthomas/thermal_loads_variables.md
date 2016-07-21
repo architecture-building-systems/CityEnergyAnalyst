@@ -21,15 +21,15 @@ The main variables introduced is `tsd`, which stands for "time step data".
   - to: `functions.calc_occ`
 - `Ealf`, `Edataf`,  `Eprof`,  `Eref`,  `Qcrefri`,  `Qcdata`,  `vww`, `vw` -> `tsd[['Ealf', 'Edataf', 'Eprof', 'Eref', 'Qcrefri', 'Qcdata', 'vww', 'vw']]`
   - from: `functions.calc_Qint:Ealf, Edataf, Eprof, Eref, Qcrefri, Qcdata, vww, vw`
-  - to: `calc_heat_gains_internal_sensible:Eal_nove, Eprof, Qcdata, Qcrefri`
+  - to: `calc_Qint_sen:Eal_nove, Eprof, Qcdata, Qcrefri`
   - to: `calc_dhw_heating_demand:vw, vww`
   - to: `calc_loads_electrical:Ealf, Edataf, Eprof`
 - `people` -> `tsd['people']`
   - from: `functions.calc_occ:people`
   - to: `functions.get_internal_comfort:people`
   - to: `calc_qv_req:people`
-  - to: `calc_heat_gains_internal_sensible:people`
-  - to: `calc_heat_gains_internal_latent:people`
+  - to: `calc_Qint_sen:people`
+  - to: `calc_Qint_lat:people`
 - `ve_schedule,  ta_hs_set,  ta_cs_set` -> `tsd[['ve',  'ta_hs_set',  'ta_cs_set']]`
   - from: `functions.get_internal_comfort:ve, ta_hs_set, ta_cs_set`
   - to: `calc_qv_req:ve`
@@ -42,16 +42,16 @@ The main variables introduced is `tsd`, which stands for "time step data".
   - from: `tsd['qv_req'] * gv.Pair`
   - to: `ThermalLoadsInput:qm_ve_req`
 - `i_sol` -> `tsd['I_sol']`
-  - from: `calc_Qsol:I_sol`
+  - from: `calc_I_sol:I_sol`
   - to: `calc_comp_heat_gains_sensible:I_sol`
 - `i_int_sen` -> `tsd['I_int_sen']`
-  - from: `calc_heat_gains_internal_sensible:I_int_sen`
+  - from: `calc_Qint_sen:I_int_sen`
   - to: `functions.calc_comp_heat_gains_sensible:I_int_sen`
 - `i_ia, i_m, i_st` -> `tsd[['I_ia', 'I_m', 'I_st']]`
   - from: `functions.calc_comp_heat_gains_sensible:I_ia, I_m, I_st`
   - to: `ThermalLoadsInput:i_st, i_ia, i_m`
 - `w_int` -> `tsd['w_int']`
-  - from: `functions.calc_heat_gains_internal_latent:w_int`
+  - from: `functions.calc_Qint_lat:w_int`
   - to: `ThermalLoadsInput:w_int`
 - `uncomfort` -> `tsd['uncomfort']
   - from: `calc_thermal_load_hvac_timestep:uncomfort`

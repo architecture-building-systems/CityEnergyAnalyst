@@ -64,12 +64,12 @@ def solve_ode_storage(Tww_st_0,ql,qd,qc,Pwater,Cpw,Vtank):
   #  Tww_st[k] = solve_ode_storage(Tww_st_0, Qww_ls_st[k], Qww, Qs, gv.Pwater, gv.Cpw)
    # Tww_st_0 = Tww_st[k]
 
-def calc_V_dhwtank(vww, vww_0):    # Calculate the storage size according to summation of peak dem in m^3.
+def calc_V_dhwtank(vww, vww_0):    # Calculate the storage size according to summation of peak demand in m^3.
     peakdraw = vww_0
     i = np.argmax(vww)
     j = i
     k = i
-    # summation of withdraw volume the peak dem period
+    # summation of withdraw volume the peak demand period
     while vww_0 - 0.1 * vww_0 <= vww[j - 1] <= vww_0 + 0.1 * vww_0:
         peakdraw = peakdraw + vww[j - 1]
         j = j - 1

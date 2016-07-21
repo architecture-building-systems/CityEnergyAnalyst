@@ -27,7 +27,7 @@ def benchmark(locator_list, output_file):
 
     Returns
     -------
-    Graphs of the embodied and operational emissions and primary energy dem: .Pdf
+    Graphs of the embodied and operational emissions and primary energy demand: .Pdf
     """
 
     # setup-time

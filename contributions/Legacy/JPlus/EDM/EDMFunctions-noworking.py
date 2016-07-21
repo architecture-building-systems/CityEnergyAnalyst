@@ -5,7 +5,7 @@
 
 # #ENERGY DEMAND MODEL FUNCTIONS
 # - It Includes all the functions for computation of hourly radiation in a centroid of any vertical surface. For the calculation it uses the solar analyst extension included in ArcGIS 10.1.
-# - It also includes all the functions related to the estimation of end-uses of energy in buildings and related processes. These functions are part of the analytical and statistical modules for computation of energy dem
+# - It also includes all the functions related to the estimation of end-uses of energy in buildings and related processes. These functions are part of the analytical and statistical modules for computation of energy demand
 
 # <markdowncell>
 

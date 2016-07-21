@@ -36,7 +36,7 @@
 # - Height in meters.
 # - Factor of heated space (0-1): if unknown it is considered 0.9 = 90% of footprint area.
 # - Year of construction.
-# - Energy system for heating and cooling: ratio of energy dem currently supplied by a X energysystem between the categories of:.......
+# - Energy system for heating and cooling: ratio of energy demand currently supplied by a X energysystem between the categories of:.......
 # 
 # 
 # 2. For the Buildings inside the Main Cluster/Zone/Cityquarter of study:

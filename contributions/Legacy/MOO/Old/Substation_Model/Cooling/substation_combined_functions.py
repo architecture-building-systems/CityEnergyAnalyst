@@ -173,7 +173,7 @@ def heating_hex_design(Q_heating_design, T_return_min_global, T_supply_max_globa
     Parameters
     ----------
     Q_heating_max : float
-        Maximum heat dem for space heating [W]
+        Maximum heat demand for space heating [W]
         
     T_return_min_global : float
         lowest return temperature possible
@@ -272,7 +272,7 @@ def dhw_hex_design(Q_dhw_max, mdot_internal_dhw_design, hex_type, U, cp) :
     Parameters
     ----------
     Q_dhw_max : float
-        Maximum heat dem for domestic hot water [W]
+        Maximum heat demand for domestic hot water [W]
         
     mdot_internal_dhw_design : float
         massflow of Domestic Hot Water internal loop (receiver-side) at 
@@ -444,7 +444,7 @@ def design_inhouse_exchangers(Q_heating_design, Q_dhw_design, T_return_min_globa
         mass flow of space heating inner circuit at design conditions
         
     Q_cool_max : float
-        Maximum load for cooling dem [W]
+        Maximum load for cooling demand [W]
         
     T_cool_return_max_global : float
         highest return temperature allowed / possible [K]
@@ -758,7 +758,7 @@ def cooling_hex_design(Q_cool_max, T_cool_return_max_global, T_cool_supply_min_g
     Parameters 
     ----------
     Q_cool_max : float
-        Maximum load for cooling dem [W]
+        Maximum load for cooling demand [W]
         
     T_cool_return_max_global : float
         highest return temperature allowed / possible [K]

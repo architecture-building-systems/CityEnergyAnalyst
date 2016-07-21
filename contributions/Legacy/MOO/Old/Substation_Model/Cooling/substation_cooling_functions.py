@@ -178,7 +178,7 @@ def cooling_hex_design(Q_cool_max, T_cool_return_min_global, T_cool_supply_max_g
     Parameters
     ----------
     Q_heating_max : float
-        Maximum heat dem for space heating [W]
+        Maximum heat demand for space heating [W]
         
     T_return_min_global : float
         lowest return temperature possible

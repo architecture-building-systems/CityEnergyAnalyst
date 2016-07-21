@@ -21,6 +21,42 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
+
+"""
+=========================================
+water demand calculation
+=========================================
+"""
+
+def calc_mww(schedule, Vww_lpd, Occ_m2p, Af, Pwater):
+    """
+    Algorithm to calculate the hourly mass flow rate of domestic hot water
+
+    Parameters
+    ----------
+    schedule
+    Vww_lpd
+    Occ_m2p
+    Af
+    Pwater
+
+    Returns
+    -------
+
+    """
+    vww = schedule* Vww_lpd * (Occ_m2p ** -1) * Af / 24000 # m3/h
+    mww = vww * Pwater / 3600  # in kg/s
+
+    return mww, vww
+
+
+def calc_mw(schedule, Vw_lpd, Occ_m2p, Af, Pwater):
+    vw = schedule * Vw_lpd * (Occ_m2p ** -1) * Af / 24000 # m3/h
+    mw = vw * Pwater / 3600  # in kg/s
+
+    return mw, vw
+
+
 """
 =========================================
 final hot water demand calculation
@@ -33,7 +69,7 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     # Refactored from CalcThermalLoads
     """
     This function calculates the distribution heat loss and final energy consumption of domestic hot water.
-    Final energy consumption of dhw includes dhw dem, sensible heat loss in hot water storage tank, and heat loss in the distribution network.
+    Final energy consumption of dhw includes dhw demand, sensible heat loss in hot water storage tank, and heat loss in the distribution network.
     :param Af: Conditioned floor area in m2.
     :param Lcww_dis: Length of dhw usage circulation pipeline in m.
     :param Lsww_dis: Length of dhw usage distribution pipeline in m.
@@ -51,7 +87,7 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     # calc schedule of use:
     schedule = calc_Qww_schedule(list_uses, schedules, building_uses)
 
-    # end-use dem
+    # end-use demand
     mww, Vww =  np.vectorize(calc_mww)(schedule, Vww_lpd, Occ_m2p, Af, gv.Pwater)
     mw, Vw = np.vectorize(calc_mww)(schedule, Vw_lpd, Occ_m2p, Af, gv.Pwater)
     Qww = np.vectorize(calc_Qww)(mww, Tww_sup_0, Tww_re, gv.Cpw)
@@ -66,13 +102,12 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     Qww_st_ls, Tww_st = calc_Qww_st_ls(Vww, gv.Tww_setpoint, Ta, gv.Bf, gv.Pwater, gv.Cpw, Qww_dis_ls_r,
                                                      Qww_dis_ls_nr, gv.U_dhwtank, gv.AR, gv, T_ext, Qww)
 
-    # final dem
+    # final demand
     Qwwf = Qww + Qww_dis_ls_r + Qww_dis_ls_nr + Qww_st_ls
     Qwwf_0 = Qwwf.max()
     mcpwwf = Qwwf / abs(Tww_st - Tww_re)
 
     return mww, Qww, Qww_st_ls, Qwwf, Qwwf_0, Tww_st, Vww, Vw, mcpwwf
-
 
 """
 =========================================
@@ -105,35 +140,6 @@ def calc_Qww_schedule(list_uses, schedules, building_uses):
         dhw = np.vectorize(calc_average)(dhw, schedules[num][2], current_share_of_use)
 
     return dhw
-
-
-def calc_mww(schedule, Vww_lpd, Occ_m2p, Af, Pwater):
-    """
-    Algorithm to calculate the hourly mass flow rate of domestic hot water
-
-    Parameters
-    ----------
-    schedule
-    Vww_lpd
-    Occ_m2p
-    Af
-    Pwater
-
-    Returns
-    -------
-
-    """
-    vww = schedule* Vww_lpd * (Occ_m2p ** -1) * Af / 24000 # m3/h
-    mww = vww * Pwater / 3600  # in kg/s
-
-    return mww, vww
-
-
-def calc_mw(schedule, Vw_lpd, Occ_m2p, Af, Pwater):
-    vw = schedule * Vw_lpd * (Occ_m2p ** -1) * Af / 24000 # m3/h
-    mw = vw * Pwater / 3600  # in kg/s
-
-    return mw, vw
 
 
 def calc_Qww(mww, Tww_sup_0, Tww_re, Cpw):

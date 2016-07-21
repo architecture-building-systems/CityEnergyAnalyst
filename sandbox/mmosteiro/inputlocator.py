@@ -103,40 +103,40 @@ class InputLocator(object):
 
 
     def get_demand_results_folder(self):
-        """scenario/2-results/2-dem/1-timeseries"""
-        demand_results_folder = os.path.join(self.scenario_path, '2-results', '2-dem', '1-timeseries')
+        """scenario/2-results/2-demand/1-timeseries"""
+        demand_results_folder = os.path.join(self.scenario_path, '2-results', '2-demand', '1-timeseries')
         if not os.path.exists(demand_results_folder):
             os.makedirs(demand_results_folder)
         return demand_results_folder
 
     def get_demand_results_file(self, building_name):
-        """scenario/2-results/2-dem/1-timeseries/{building_name}.csv"""
+        """scenario/2-results/2-demand/1-timeseries/{building_name}.csv"""
         demand_results_folder = self.get_demand_results_folder()
         return os.path.join(demand_results_folder, '%s.csv' % building_name)
 
     def get_demand_plots_folder(self):
-        """scenario/2-results/2-dem/2-plots"""
-        demand_plots_folder = os.path.join(self.scenario_path, '2-results', '2-dem', '2-plots')
+        """scenario/2-results/2-demand/2-plots"""
+        demand_plots_folder = os.path.join(self.scenario_path, '2-results', '2-demand', '2-plots')
         if not os.path.exists(demand_plots_folder):
             os.makedirs(demand_plots_folder)
         return demand_plots_folder
 
     def get_demand_plots_file(self, building_name):
-        """scenario/2-results/2-dem/2-plots/{building_name}.pdf"""
+        """scenario/2-results/2-demand/2-plots/{building_name}.pdf"""
         demand_plots_folder = self.get_demand_plots_folder()
         return os.path.join(demand_plots_folder, '%s.pdf' % building_name)
 
     def get_total_demand(self):
-        """scenario/2-results/2-dem/1-timeseries/Total_demand.csv"""
-        return os.path.join(self.scenario_path, '2-results', '2-dem', '1-timeseries', 'Total_demand.csv')
+        """scenario/2-results/2-demand/1-timeseries/Total_demand.csv"""
+        return os.path.join(self.scenario_path, '2-results', '2-demand', '1-timeseries', 'Total_demand.csv')
 
     def get_lca_emissions_results_folder(self):
         """scenario/2-results/3-emissions/1-timeseries"""
         return os.path.join(self.scenario_path, '2-results', '3-emissions', '1-timeseries')
 
     def get_heatmaps_demand_folder(self):
-        """scenario/2-results/2-dem/3-heatmaps"""
-        heatmaps_demand_folder = os.path.join(self.scenario_path, '2-results', '2-dem', '3-heatmaps')
+        """scenario/2-results/2-demand/3-heatmaps"""
+        heatmaps_demand_folder = os.path.join(self.scenario_path, '2-results', '2-demand', '3-heatmaps')
         if not os.path.exists(heatmaps_demand_folder):
             os.makedirs(heatmaps_demand_folder)
         return heatmaps_demand_folder

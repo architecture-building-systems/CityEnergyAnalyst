@@ -16,12 +16,12 @@
                - [calculate_pipe_transmittance_values](#calculate_pipe_transmittance_values)
                - [Calc_form](#calc_form)
                   - [calc_qv_req](#calc_qv_req)
-            - [calc_Qsol](#calc_Qsol)
+            - [calc_I_sol](#calc_I_sol)
                - [Calc_Rf_sh](#calc_rf_sh)
                   - [calc_gl](#calc_gl)
-            - [calc_heat_gains_internal_sensible](#calc_heat_gains_internal_sensible)
+            - [calc_Qint_sen](#calc_Qint_sen)
             - [calc_comp_heat_gains_sensible](#calc_comp_heat_gains_sensible)
-            - [calc_heat_gains_internal_latent](#calc_heat_gains_internal_latent)
+            - [calc_Qint_lat](#calc_Qint_lat)
             - [calc_Qhs_Qcs_sys_max](#calc_Qhs_Qcs_sys_max)
             - [get_properties_natural_ventilation](#get_properties_natural_ventilation)
                - [calc_qv_delta_p_ref](#calc_qv_delta_p_ref)
@@ -1756,7 +1756,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_heat_gains_internal_latent
+# calc_Qint_lat
 - number of invocations: 1
 - max duration: 0.034 s
 - avg duration: 0.034 s
@@ -1802,7 +1802,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_heat_gains_internal_sensible
+# calc_Qint_sen
 - number of invocations: 1
 - max duration: 0.034 s
 - avg duration: 0.034 s
@@ -1858,7 +1858,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_Qsol
+# calc_I_sol
 - number of invocations: 1
 - max duration: 0.196 s
 - avg duration: 0.196 s

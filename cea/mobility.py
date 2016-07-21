@@ -30,7 +30,7 @@ def lca_mobility(locator):
     Returns
     -------
     total_LCA_mobility:.csv
-        csv file of yearly primary energy dem and emissions due to mobility
+        csv file of yearly primary energy demand and emissions due to mobility
         for each building
 
     """

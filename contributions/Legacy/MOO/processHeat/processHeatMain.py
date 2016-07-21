@@ -53,7 +53,7 @@ def Cond_Boiler_InvCost(Q_design, Q_annual, gV):
 
 def processHeatOp(pathX, gV):
     """
-    Computes the triplet for the process heat dem
+    Computes the triplet for the process heat demand
     
     Parameters
     ----------

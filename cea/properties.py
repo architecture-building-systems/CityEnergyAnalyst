@@ -25,7 +25,7 @@ def properties(locator, prop_thermal_flag, prop_architecture_flag,
                prop_hvac_flag, prop_comfort_flag, prop_internal_loads_flag, gv):
     """
     algorithm to query building properties from statistical database
-    Archetypes_HVAC_properties.csv. for more info check the integrated dem
+    Archetypes_HVAC_properties.csv. for more info check the integrated demand
     model of Fonseca et al. 2015. Appl. energy.
 
     Parameters

@@ -688,7 +688,7 @@ def CalcThermalLoads(i, AllProperties, locationFinal, Solar, Profiles,Profiles_n
         Occupancy6 =  calc_Aux_hscs(nf,nfpercent,Lw,Ll,footprint,Year,Qhs0,tsh0,trh0,Occupancy5,Qcs0,tsc0,trc0,
                                     str(SystemH),str(SystemC),twws,tw)
     
-        #Calculation of Electrical dem
+        #Calculation of Electrical demand
         if SystemC == 'Air conditioning' or SystemC == 'Ceiling cooling':
             for j in range(Num_Hours):  #mode = 0  
                 if Seasonhours[0] < j < Seasonhours[1]: #cooling season air conditioning 15 may -15sept

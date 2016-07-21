@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 import os
 from geopandas import GeoDataFrame
-from  cea.dem import sensible_loads, electrical_loads, hotwater_loads
-from cea.dem import occupancy_model
+from  cea.demand import sensible_loads, electrical_loads, hotwater_loads
+from cea.demand import occupancy_model
 import cea.hvac_kaempf
 import contributions.thermal_loads_new_ventilation.ventilation
 
@@ -541,14 +541,14 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :param gv: global variables / context
     :type gv: GlobalVariables
 
-    :param results_folder: path to results folder (sample value: 'C:\reference-case\baseline\outputs\data\dem')
-        obtained from inputlocator.InputLocator..get_demand_results_folder() in dem.demand_calculation
+    :param results_folder: path to results folder (sample value: 'C:\reference-case\baseline\outputs\data\demand')
+        obtained from inputlocator.InputLocator..get_demand_results_folder() in demand.demand_calculation
         used for writing the ${Name}.csv file and also the report file (${Name}-{yyyy-mm-dd-hh-MM-ss}.xls)
     :type results_folder: str
 
     :param temporary_folder: path to a temporary folder for intermediate results
         (sample value: c:\users\darthoma\appdata\local\temp')
-        obtained from inputlocator.InputLocator..get_temporary_folder() in dem.demand_calculation
+        obtained from inputlocator.InputLocator..get_temporary_folder() in demand.demand_calculation
         used for writing the ${Name}.csv file
     :type temporary_folder: str
 
@@ -649,25 +649,17 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['qm_ve_req'] = tsd['qv_req'] * gv.Pair  # TODO:  use dynamic rho_air
 
         # heat flows in [W]
-        # solar gains
-        # copied from original calc thermal loads
-        tsd['I_sol'] = sensible_loads.calc_Qsol(bpr, gv)
+        # sensible heat gains
+        tsd = sensible_loads.calc_Qint_sen(tsd['people'].values, bpr.internal_loads['Qs_Wp'],
+                                                        tsd['Ealf'].values, tsd['Eprof'].values,
+                                                        tsd['Qcdata'].values, tsd['Qcrefri'].values, tsd,
+                                                        bpr.rc_model['Am'], bpr.rc_model['Atot'], bpr.rc_model['Htr_w'],
+                                                        bpr, gv)
 
-        # sensible internal heat gains
-        # copied from original calc thermal loads
-        tsd['I_int_sen'] = sensible_loads.calc_heat_gains_internal_sensible(tsd['people'].values, bpr.internal_loads['Qs_Wp'],
-                                                                            tsd['Ealf'].values, tsd['Eprof'].values,
-                                                                            tsd['Qcdata'].values, tsd['Qcrefri'].values)
-
-        # components of internal heat gains for R-C-model
-        # copied from original calc thermal loads
-        tsd = sensible_loads.calc_comp_heat_gains_sensible(tsd, bpr.rc_model['Am'], bpr.rc_model['Atot'], bpr.rc_model['Htr_w'])
-
-        # internal moisture gains
-        # copied from original calc thermal loads
-        tsd['w_int'] = sensible_loads.calc_heat_gains_internal_latent(tsd['people'].values, bpr.internal_loads['X_ghp'],
-                                                                      bpr.hvac['type_cs'],
-                                                                      bpr.hvac['type_hs'])
+        # latent heat gains
+        tsd['w_int'] = sensible_loads.calc_Qint_lat(tsd['people'].values, bpr.internal_loads['X_ghp'],
+                                                    bpr.hvac['type_cs'],
+                                                    bpr.hvac['type_hs'])
 
         # natural ventilation building propertiess
         # new
@@ -680,7 +672,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['flag_season'] = np.zeros(8760, dtype=bool)  # default is heating season
         tsd.loc[gv.seasonhours[0] + 1:gv.seasonhours[1], 'flag_season'] = True  # True means cooling season
 
-        # end-use dem calculation
+        # end-use demand calculation
         for t in range(8760):
             if bpr.hvac['type_hs'] == 'T3' and gv.is_heating_season(t):
                 # case 1a: heating with hvac

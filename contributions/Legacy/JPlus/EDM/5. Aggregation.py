@@ -6,12 +6,12 @@
 # # 5. AGGREGATION OF MODELS + PROCESSES + PEAKS
 # ##INTRODUCTION
 # 
-# The objective of this script is to obtain all the heating, cooling and electricity dem calculated from the modules D-EDM, S-EDM and measured data. during this module the dynamics of processes are added to every building.
+# The objective of this script is to obtain all the heating, cooling and electricity demand calculated from the modules D-EDM, S-EDM and measured data. during this module the dynamics of processes are added to every building.
 # (depending on the cluster)
 # 
 # the expected output is:
 # 
-# A file with the specific heating, cooling, electrical dem per building and cluster (Average of results in all the modules)
+# A file with the specific heating, cooling, electrical demand per building and cluster (Average of results in all the modules)
 # A file with normalized dynamic patterns per building and cluster
 # - other results area peak capacities in an excelfile
 # 

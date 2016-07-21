@@ -12,7 +12,7 @@ import pandas as pd
 
 # <markdowncell>
 
-# Import files with the measured heating dem in buildings of the cityquarter to analyse
+# Import files with the measured heating demand in buildings of the cityquarter to analyse
 
 # <codecell>
 

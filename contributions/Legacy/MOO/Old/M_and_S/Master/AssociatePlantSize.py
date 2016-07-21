@@ -14,11 +14,11 @@ def setPlantSize(individual, buildList, Qmax_dico, QmaxCombi_dico):
     """
     Allocates nominal heating capacity to the plants in the district (in WATTS)
     
-    For Disconnected Buildings : nominal capacity is the maximum heating dem
+    For Disconnected Buildings : nominal capacity is the maximum heating demand
     with a safety margin (the latter is defined in EA_globalVar.py)
     
     For Connected Buildings : the sum of all the nominal capacities is the
-    maximum heating dem with a safety margin (same as before)
+    maximum heating demand with a safety margin (same as before)
     The repartition of the capacities between plants is made randomly
     
     Parameters

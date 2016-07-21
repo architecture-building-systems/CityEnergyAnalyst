@@ -21,7 +21,7 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     """
      algorithm to calculate the hourly solar isolation in vertical building surfaces.
      The algorithm is based on the Solar Analyst Engine of ArcGIS 10.
-     For more info check the integrated dem model of Fonseca et al. 2015. Appl. energy.
+     For more info check the integrated demand model of Fonseca et al. 2015. Appl. energy.
 
      Parameters
      ----------

@@ -5,7 +5,7 @@ Global variables
 ================
 
 """
-from cea.dem import thermal_loads
+from cea.demand import thermal_loads
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -79,7 +79,7 @@ class GlobalVariables(object):
         self.rhum_comf_max = 70  # (%)
 
         # ==============================================================================================================
-        # Initial temperatures for dem calculation
+        # Initial temperatures for demand calculation
         # ==============================================================================================================
         self.initial_temp_air_prev = 21
         self.initial_temp_m_prev = 16
@@ -89,7 +89,7 @@ class GlobalVariables(object):
         self.models = {'calc-thermal-loads': thermal_loads.calc_thermal_loads}  # functions.CalcThermalLoads
 
         # use multiprocessing / parallel execution if possible
-        self.multiprocessing = False
+        self.multiprocessing = True
 
         # here is where we decide whether full excel reports of the calculations are generated
         self.testing = False  # if true: reports are generated, if false: not

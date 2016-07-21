@@ -6,7 +6,7 @@
 # #  Analytical Energy Demand Model (A-EDM)
 # ###INTRODUCTION
 # 
-# This Routine calculates the thermal, Cooling and electrical hourly dem in buildings
+# This Routine calculates the thermal, Cooling and electrical hourly demand in buildings
 # the model is developed under the standard EN 13790:2007, 'SIMPLIFIED HOURLY MODEL' for heating and cooling loads,
 # Whereas Electrical loads are assumed to be distributed during the year according to the Standard SIA 2024 for different categories of use.
 # 

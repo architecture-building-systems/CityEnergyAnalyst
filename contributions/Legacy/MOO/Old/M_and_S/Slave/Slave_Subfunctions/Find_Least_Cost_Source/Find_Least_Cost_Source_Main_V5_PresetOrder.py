@@ -162,7 +162,7 @@ def source_activator(Q_therm_req, hour):
                         E_coldsource_Furnace, E_coldsource_Boiler,  E_coldsource_Backup = 0,0,0,0,0,0,0
 
     
-    while Q_therm_req > 0: # cover dem as long as the supply is lower than dem!
+    while Q_therm_req > 0: # cover demand as long as the supply is lower than demand!
 
         if current_source == 'HP':# use heat pumps available!
             
@@ -180,7 +180,7 @@ def source_activator(Q_therm_req, hour):
                 
                 if Q_therm_req > MS_Var.HPSew_maxSize:
                     Q_therm_Sew = MS_Var.HPSew_maxSize
-                    mdot_DH_to_Sew = mdot_DH_req * Q_therm_Sew / Q_therm_req.copy() #scale down the mass flow if the thermal dem is lowered
+                    mdot_DH_to_Sew = mdot_DH_req * Q_therm_Sew / Q_therm_req.copy() #scale down the mass flow if the thermal demand is lowered
                     Q_therm_req -= MS_Var.HPSew_maxSize
                     #print "Sewage Heat Pump at maximum capacity"  
                 
@@ -201,13 +201,13 @@ def source_activator(Q_therm_req, hour):
                 E_el_HPSew = C_HPSew_el_pure
                 E_coldsource_HPSew = Q_HPSew_cold_primary
                 
-            #if Q_therm_req == 0: # all the dem has been covered already, finish the loop
+            #if Q_therm_req == 0: # all the demand has been covered already, finish the loop
                 #continue
                 #break
                 #print hour
                 
             #else:
-            #    Q_therm_req -= Q_therm_Sew # calculates the remaining dem from another plant
+            #    Q_therm_req -= Q_therm_Sew # calculates the remaining demand from another plant
            
 
             if (MS_Var.GHP_on) == 1 and hour > MS_Var.GHP_SEASON_ON and  hour <= MS_Var.GHP_SEASON_OFF and Q_therm_req > 0: # activating GHP plant if possible
@@ -226,13 +226,13 @@ def source_activator(Q_therm_req, hour):
                     Q_therm_req -= Q_max
 
                     
-                #if Q_therm_req > MS_Var.GHP_max  : # 100% load, cannot go above (scale down the dem)
+                #if Q_therm_req > MS_Var.GHP_max  : # 100% load, cannot go above (scale down the demand)
                 #    Q_therm_GHP = MS_Var.GHP_max
-                #    mdot_DH_to_GHP = mdot_DH_req * Q_therm_GHP / Q_therm_req #scale down the mass flow if the thermal dem is lowered
+                #    mdot_DH_to_GHP = mdot_DH_req * Q_therm_GHP / Q_therm_req #scale down the mass flow if the thermal demand is lowered
                     #print "Geothermal Heat Pump at maximum capacity"
                     
                     
-                else: # regular operation possible, dem is covered
+                else: # regular operation possible, demand is covered
                     mdot_DH_to_GHP = Q_therm_req.copy() / (gV.cp * (tdhsup -tdhret_req))
                     Q_therm_req = 0
                     
@@ -258,7 +258,7 @@ def source_activator(Q_therm_req, hour):
                 
                 if Q_therm_req > MS_Var.HPLake_maxSize: # Scale down Load, 100% load achieved
                     Q_therm_HPL = MS_Var.HPLake_maxSize
-                    mdot_DH_to_Lake = Q_therm_HPL / (gV.cp *(tdhsup - tdhret_req)) #scale down the mass flow if the thermal dem is lowered
+                    mdot_DH_to_Lake = Q_therm_HPL / (gV.cp *(tdhsup - tdhret_req)) #scale down the mass flow if the thermal demand is lowered
                     Q_therm_req -=  MS_Var.HPLake_maxSize
 
                 else: # regular operation possible
@@ -302,7 +302,7 @@ def source_activator(Q_therm_req, hour):
                         Q_used_prim_CC = Q_used_prim_CC_fn(Q_therm_req)
                         Q_CC_delivered = Q_therm_req.copy()
                         Q_therm_req = 0
-                    else: # Only part of the dem can be delivered as 100% load achieved
+                    else: # Only part of the demand can be delivered as 100% load achieved
                         cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_CC_max)
                         Q_used_prim_CC = Q_used_prim_CC_fn(Q_CC_max)
                         Q_CC_delivered = Q_CC_max
@@ -358,12 +358,12 @@ def source_activator(Q_therm_req, hour):
                  #   quitter = 0
                 
                         
-                #if quitter == 1: # all the dem has been covered already, finish the loop
+                #if quitter == 1: # all the demand has been covered already, finish the loop
                 #    Q_therm_req = 0
                     #break
                 
                 #else:
-                #    Q_therm_req -= Q_Furn_therm # calculates the remaining dem from another plant
+                #    Q_therm_req -= Q_Furn_therm # calculates the remaining demand from another plant
                 #if Q_therm_req < 0:
                 #    print "SHIT AGAIN !!!!!!!!!!!!!!!!!!!!!!!!!!!!"
                     
@@ -397,10 +397,10 @@ def source_activator(Q_therm_req, hour):
                 #    quitter = 0
 
                 
-            #if Q_therm_req == 0: # all the dem has been covered already, finish the loop
+            #if Q_therm_req == 0: # all the demand has been covered already, finish the loop
                 #continue
             #else:
-            #    Q_therm_req -= Q_therm_boiler # calculates the remaining dem from another plant
+            #    Q_therm_req -= Q_therm_boiler # calculates the remaining demand from another plant
             
         if current_source == 'BoilerPeak' and Q_therm_req > 0:
 
@@ -441,10 +441,10 @@ def source_activator(Q_therm_req, hour):
                 current_source = gV.act_fourth
             else:
                 """
-                print "not covered dem: ", Q_remaining, "Wh"
+                print "not covered demand: ", Q_remaining, "Wh"
                 print "last source tested: ", current_source
                 print "occured in hour: ", hour
-                print "insufficient capacity installed! Cannot cover the network dem (check Slave code, find_least_cost_source_main"
+                print "insufficient capacity installed! Cannot cover the network demand (check Slave code, find_least_cost_source_main"
                 #break
                 """
                 print "not sufficient capacity installed in hour : ", hour
@@ -457,7 +457,7 @@ def source_activator(Q_therm_req, hour):
         elif Q_therm_req != 0:
             print "ERROR - TOO MUCH POWER! - ", -Q_therm_req/1000.0,"kWh in excess"
         #if checkpoint == 1:
-        #    print "All dem covered"
+        #    print "All demand covered"
         #else:
         #    print Q_remaining, "Wh not covered" 
     #print Q_remaining, "Wh not covered after completion"

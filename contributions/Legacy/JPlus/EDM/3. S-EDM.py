@@ -3,7 +3,7 @@
 
 # <markdowncell>
 
-# #Statistical Energy dem model (S-EDM)
+# #Statistical Energy demand model (S-EDM)
 
 # <markdowncell>
 

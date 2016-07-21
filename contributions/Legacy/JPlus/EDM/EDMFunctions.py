@@ -5,7 +5,7 @@
 
 # #ENERGY DEMAND MODEL FUNCTIONS
 # - It Includes all the functions for computation of hourly radiation in a centroid of any vertical surface. For the calculation it uses the solar analyst extension included in ArcGIS 10.1.
-# - It also includes all the functions related to the estimation of end-uses of energy in buildings and related processes. These functions are part of the analytical and statistical modules for computation of energy dem
+# - It also includes all the functions related to the estimation of end-uses of energy in buildings and related processes. These functions are part of the analytical and statistical modules for computation of energy demand
 
 # <markdowncell>
 
@@ -847,7 +847,7 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
             mcp = specific_flows[flow]*(Cpwg/1000) # mcp in kW/c
     
     for x in range(8760):
-        if supply_out_total[5][x] <= 0: # the dem is zero
+        if supply_out_total[5][x] <= 0: # the demand is zero
             supply_out_total[5][x] = 0
             Auxiliary[5][x] = 0  
             temperature_out[5][x] = 0
@@ -1845,7 +1845,7 @@ def CalcThermalLoads(k, prop, Solar, locationFinal, Profiles, Profiles_names, T_
         Vw = vw*Af/1000 ## consumption of fresh water in m3/h 
         Mww = Vww*Pwater/3600 # in kg/s
         Mw = Vw*Pwater/3600 # in kg/s
-        #2. Calculate water hot dem
+        #2. Calculate water hot demand
         Qww = Mww*Cpw*(Tww_sup_0-Tww_re)*1000 # in W
         #3. losses distribution of domestic hot water recoverable and not recoverable
         Qww_0 = Qww.max()
