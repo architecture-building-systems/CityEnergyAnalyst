@@ -123,6 +123,14 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
     return tm, ta, IH_nd_ac, IC_nd_ac, uncomfort, top, Im_tot
 
 
+
+"""
+=========================================
+ventilation and transmission losses
+=========================================
+"""
+
+
 def calc_Htr(Hve, Htr_is, Htr_ms, Htr_w):
     Htr_1 = 1 / (1 / Hve + 1 / Htr_is)
     Htr_2 = Htr_1 + Htr_w
@@ -130,17 +138,36 @@ def calc_Htr(Hve, Htr_is, Htr_ms, Htr_w):
     return Htr_1, Htr_2, Htr_3
 
 
-def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, limit_inf_season, limit_sup_season):
-    infiltration_occupied = gv.hf * gv.NACH_inf_occ  # m3/h.m2
-    infiltration_non_occupied = gv.hf * gv.NACH_inf_non_occ  # m3/h.m2
-    if people > 0:
-        q_req = (ve + (infiltration_occupied * Af)) / 3600  # m3/s
+def calc_h_ve_adj(q_m_mech, q_m_nat, temp_ext, temp_sup, temp_zone_set, gv):
+    """
+    calculate Hve,adj according to ISO 13790
+
+    Parameters
+    ----------
+    q_m_mech : air mass flow from mechanical ventilation (kg/s)
+    q_m_nat : air mass flow from windows and leakages and other natural ventilation (kg/s)
+    temp_ext : exterior air temperature (°C)
+    temp_sup : ventilation system supply air temperature (°C), e.g. after HEX
+    temp_zone_set : zone air temperature set point (°C)
+    gv : globalvars
+
+    Returns
+    -------
+    Hve,adj in (W/K)
+
+    """
+
+    c_p_air = gv.Cpa  # (kJ/(kg*K)) # TODO: maybe dynamic heat capacity of air f(temp)
+
+    if abs(temp_sup - temp_ext) == 0:
+        b_mech = 1
+
     else:
-        if (21 < hour_day or hour_day < 7) and (limit_inf_season < hour_year < limit_sup_season):
-            q_req = (ve * 1.3 + (infiltration_non_occupied * Af)) / 3600  # free cooling
-        else:
-            q_req = (ve + (infiltration_non_occupied * Af)) / 3600  #
-    return q_req  # m3/s
+        eta_hru = (temp_sup - temp_ext) / (temp_zone_set - temp_ext)  # Eq. (28) in ISO 13970
+        frac_hru = 1
+        b_mech = (1 - frac_hru * eta_hru)  # Eq. (27) in ISO 13970
+
+    return (b_mech * q_m_mech + q_m_nat) * c_p_air * 1000  # (W/K), Eq. (21) in ISO 13970
 
 
 """
@@ -299,4 +326,59 @@ def calc_Qhs_Qcs_em_ls(SystemH, SystemC):
         tHC_corr[1] = 0 + - 1.2
 
     return list(tHC_corr)
+
+
+def calc_T_em_ls(SystemH, SystemC, sys_e_ctrl):
+    """
+    Model of losses in the emission and control system for space heating and cooling.
+
+    correction factor for the heating and cooling setpoints. extracted from EN 15316-2
+    Credits to: Shanshan
+
+    Parameters
+    ----------
+    SystemH
+    SystemC
+    sys_e_ctrl
+
+    Returns
+    -------
+
+    """
+
+    tHC_corr = [0, 0]
+    delta_ctrl = [0, 0]
+
+    # emission system room temperature control type
+    if sys_e_ctrl == 'T1':
+        delta_ctrl = [2.5, -2.5]
+    elif sys_e_ctrl == 'T2':
+        delta_ctrl = [1.2, -1.2]
+    elif sys_e_ctrl == 'T3':
+        delta_ctrl = [0.9, -0.9]
+    elif sys_e_ctrl == 'T4':
+        delta_ctrl = [1.8, -1.8]
+
+    # calculate temperature correction
+    if SystemH == 'T1':
+        tHC_corr[0] = delta_ctrl[0] + 0.15
+    elif SystemH == 'T2':
+        tHC_corr[0] = delta_ctrl[0] - 0.1
+    elif SystemH == 'T3':
+        tHC_corr[0] = delta_ctrl[0] - 1.1
+    elif SystemH == 'T4':
+        tHC_corr[0] = delta_ctrl[0] - 0.9
+    else:
+        tHC_corr[0] = 0
+
+    if SystemC == 'T1':
+        tHC_corr[1] = delta_ctrl[1] + 0.5
+    elif SystemC == 'T2':  # no emission losses but emissions for ventilation
+        tHC_corr[1] = delta_ctrl[1] + 0.7
+    elif SystemC == 'T3':
+        tHC_corr[1] = delta_ctrl[1] + 0.5
+    else:
+        tHC_corr[1] = 0
+
+    return tHC_corr[0], tHC_corr[1]
 
