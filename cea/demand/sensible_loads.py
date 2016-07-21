@@ -143,50 +143,6 @@ def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, limit_inf_season, limit
     return q_req  # m3/s
 
 
-def calc_I_sol(bpr, gv):
-    from cea.tech import blinds
-    solar_specific = bpr.solar / bpr.rc_model['Awall_all']  # array in W/m2
-    blinds_reflection = np.vectorize(blinds.calc_blinds_reflection)(solar_specific, bpr.architecture['type_shade'], gv.g_gl)
-    solar_effective_area = blinds_reflection * (1 - gv.F_f) * bpr.rc_model['Aw']  # Calculation of solar effective area per hour in m2
-    net_solar_gains = solar_effective_area * solar_specific  # how much are the net solar gains in Wh per hour of the year.
-    return net_solar_gains.values
-
-
-def get_internal_comfort(tsd, prop_comfort, limit_inf_season, limit_sup_season, weekday):
-    def get_hsetpoint(a, b, Thset, Thsetback, weekday):
-        if (b < limit_inf_season or b >= limit_sup_season):
-            if a > 0:
-                if weekday >= 5:  # system is off on the weekend
-                    return -30  # huge so the system will be off
-                else:
-                    return Thset
-            else:
-                return Thsetback
-        else:
-            return -30  # huge so the system will be off
-
-    def get_csetpoint(a, b, Tcset, Tcsetback, weekday):
-        if limit_inf_season <= b < limit_sup_season:
-            if a > 0:
-                if weekday >= 5:  # system is off on the weekend
-                    return 50  # huge so the system will be off
-                else:
-                    return Tcset
-            else:
-                return Tcsetback
-        else:
-            return 50  # huge so the system will be off
-
-    tsd['ve'] = tsd['people'] * prop_comfort['Ve_lps'] * 3.6  # in m3/h
-    tsd['ta_hs_set'] = np.vectorize(get_hsetpoint)(tsd['people'], range(8760), prop_comfort['Ths_set_C'],
-                                                   prop_comfort['Ths_setb_C'], weekday)
-    tsd['ta_cs_set'] = np.vectorize(get_csetpoint)(tsd['people'], range(8760), prop_comfort['Tcs_set_C'],
-                                                   prop_comfort['Tcs_setb_C'], weekday)
-
-    return tsd
-
-
-
 """
 =========================================
 capacity of emission/control system
@@ -206,11 +162,11 @@ def calc_Qhs_Qcs_sys_max(Af, prop_HVAC):
 
 """
 =========================================
-solar and internal loads
+solar and heat gains
 =========================================
 """
 
-def calc_Qint_sen(people, Qs_Wp, Eal_nove, Eprof, Qcdata, Qcrefri, tsd, Am, Atot, Htr_w, bpr, gv):
+def calc_Qgain_sen(people, Qs_Wp, Eal_nove, Eprof, Qcdata, Qcrefri, tsd, Am, Atot, Htr_w, bpr, gv):
 
     # itnernal loads
     tsd['I_sol']= calc_I_sol(bpr, gv)
@@ -224,7 +180,7 @@ def calc_Qint_sen(people, Qs_Wp, Eal_nove, Eprof, Qcdata, Qcrefri, tsd, Am, Atot
     return tsd
 
 
-def calc_Qint_lat(people, X_ghp, sys_e_cooling, sys_e_heating):
+def calc_Qgain_lat(people, X_ghp, sys_e_cooling, sys_e_heating):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
     if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
@@ -233,6 +189,22 @@ def calc_Qint_lat(people, X_ghp, sys_e_cooling, sys_e_heating):
         w_int = 0
 
     return w_int
+
+
+def calc_I_sol(bpr, gv):
+    from cea.tech import blinds
+    solar_specific = bpr.solar / bpr.rc_model['Awall_all']  # array in W/m2
+    blinds_reflection = np.vectorize(blinds.calc_blinds_reflection)(solar_specific, bpr.architecture['type_shade'], gv.g_gl)
+    solar_effective_area = blinds_reflection * (1 - gv.F_f) * bpr.rc_model['Aw']  # Calculation of solar effective area per hour in m2
+    net_solar_gains = solar_effective_area * solar_specific  # how much are the net solar gains in Wh per hour of the year.
+    return net_solar_gains.values
+
+
+"""
+=========================================
+temperature of emission/control system
+=========================================
+"""
 
 
 def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs, Ta_re_hs, Ta_sup_cs, Ta_sup_hs,
