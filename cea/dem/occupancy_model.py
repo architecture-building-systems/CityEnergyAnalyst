@@ -4,10 +4,9 @@ Query schedules according to database
 ===========================
 J. Fonseca  script development          26.08.15
 """
+
 from __future__ import division
 import pandas as pd
-import cea.inputlocator
-from geopandas import GeoDataFrame as gpdf
 import numpy as np
 
 __author__ = "Jimeno A. Fonseca"
@@ -46,7 +45,7 @@ def calc_occ_schedule(list_uses, schedules, building_uses):
 
 """
 =========================================
-read schedules El, Qww and occupancy
+read schedules from excel file
 =========================================
 """
 

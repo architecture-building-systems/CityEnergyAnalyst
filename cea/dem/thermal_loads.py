@@ -619,7 +619,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     n50 = bpr.architecture['n50']
 
     # get occupancy
-    tsd['people'] = occupancy_model.calc_occ(list_uses, schedules, bpr.occupancy, bpr.architecture['Qcc_m2p'],
+    tsd['people'] = occupancy_model.calc_occ(list_uses, schedules, bpr.occupancy, bpr.architecture['Occ_m2p'],
                                              bpr.rc_model['Af'])
 
     # get electrical loads (no auxiliary loads)

@@ -20,10 +20,9 @@ __status__ = "Production"
 
 """
 =========================================
-final Internal electrical loads
+final Internal totals electrical loads
 =========================================
 """
-
 
 def calc_E_totals(Aef, Ealf, Eauxf, Edataf, Eprof):
     # TODO: Documentation
