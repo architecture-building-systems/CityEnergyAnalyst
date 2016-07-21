@@ -186,7 +186,7 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
     temp_hs_set_corr, temp_cs_set_corr = calc_tHC_corr(bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
 
     # heating and cooling loads
-    i_c_max, i_h_max = sensible_loads.calc_capacity_heating_cooling_system(bpr.rc_model['Af'], bpr.hvac)
+    i_c_max, i_h_max = sensible_loads.calc_Qhs_Qcs_sys_max(bpr.rc_model['Af'], bpr.hvac)
 
     # previous timestep data (we give a seed high enough to avoid doing a iteration for 2 years, Ta=21, Tm=16)
     temp_air_prev = tsd['Ta'][t-1] if t > 0 else gv.initial_temp_air_prev
@@ -418,7 +418,7 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
     # model of losses in the emission and control system for space heating and cooling
     temp_hs_set_corr, temp_cs_set_corr = calc_tHC_corr(bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
 
-    i_c_max, i_h_max = sensible_loads.calc_capacity_heating_cooling_system(bpr.rc_model['Af'], bpr.hvac)
+    i_c_max, i_h_max = sensible_loads.calc_Qhs_Qcs_sys_max(bpr.rc_model['Af'], bpr.hvac)
 
     # previous timestep data (we give a seed high enough to avoid doing a iteration for 2 years, Ta=21, Tm=16)
     temp_air_prev = tsd['Ta'][t - 1] if t > 0 else gv.initial_temp_air_prev

@@ -267,7 +267,7 @@ def get_internal_comfort(tsd, prop_comfort, limit_inf_season, limit_sup_season, 
     return tsd
 
 
-def calc_capacity_heating_cooling_system(Af, prop_HVAC):
+def calc_Qhs_Qcs_sys_max(Af, prop_HVAC):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
 
