@@ -18,6 +18,29 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
+def calc_Ea_El_schedule(list_uses, schedules, building_uses):
+    # weighted average of schedules
+    def calc_average(last, current, share_of_use):
+        return last + current * share_of_use
+
+    el = np.zeros(8760)
+    num_profiles = len(list_uses)
+    for num in range(num_profiles):
+        current_share_of_use = building_uses[list_uses[num]]
+        el = np.vectorize(calc_average)(el, schedules[num][1], current_share_of_use)
+    return el
+
+def calc_Epro_schedule(list_uses, schedules, building_uses):
+    # weighted average of schedules
+    def calc_average(last, current, share_of_use):
+        return last + current * share_of_use
+
+    pro = np.zeros(8760)
+    num_profiles = len(list_uses)
+    for num in range(num_profiles):
+        current_share_of_use = building_uses[list_uses[num]]
+        epro = np.vectorize(calc_average)(pro, schedules[num][3], current_share_of_use)
+    return epro
 
 def calc_E_totals(Aef, Ealf, Eauxf, Edataf, Eprof):
     # TODO: Documentation

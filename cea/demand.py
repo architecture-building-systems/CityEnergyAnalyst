@@ -5,11 +5,14 @@ Analytical energy demand model algorithm
 
 """
 from __future__ import division
+
 import multiprocessing as mp
+
 import pandas as pd
+
+import cea.dem.occupancy_profile as m
 import cea.globalvar
 import cea.inputlocator
-import cea.maker as m
 from cea.dem import thermal_loads
 from cea.dem.thermal_loads import BuildingProperties
 from cea.utils import epwreader

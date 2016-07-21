@@ -177,30 +177,6 @@ def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, limit_inf_season, limit
     return q_req  # m3/s
 
 
-def calc_mixed_schedule(tsd, list_uses, schedules, building_uses):
-    # weighted average of schedules
-    def calc_average(last, current, share_of_use):
-        return last + current * share_of_use
-
-    occ = np.zeros(8760)
-    el = np.zeros(8760)
-    dhw = np.zeros(8760)
-    pro = np.zeros(8760)
-    num_profiles = len(list_uses)
-    for num in range(num_profiles):
-        current_share_of_use = building_uses[list_uses[num]]
-        occ = np.vectorize(calc_average)(occ, schedules[num][0], current_share_of_use)
-        el = np.vectorize(calc_average)(el, schedules[num][1], current_share_of_use)
-        dhw = np.vectorize(calc_average)(dhw, schedules[num][2], current_share_of_use)
-        pro = np.vectorize(calc_average)(pro, schedules[num][3], current_share_of_use)
-
-    tsd['occ'] = occ
-    tsd['el'] = el
-    tsd['dhw'] = dhw
-    tsd['pro'] = pro
-    return tsd
-
-
 def calc_Qint(tsd, prop_internal_loads, prop_architecture, Af):
     from electrical_loads import calc_Ea,calc_El,calc_Edata, calc_Epro, calc_Eref
 
@@ -348,7 +324,6 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
 
     return Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs
 
-
 def results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot, Name,
                    Occupancy,
                    Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
@@ -404,133 +379,4 @@ def results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, 
          'Ef_MWhyr': (Ealf_tot + Eauxf_tot + Epro_tot + Edata_tot), 'QHf_MWhyr': (Qwwf_tot + Qhsf_tot),
          'QCf_MWhyr': (Qcsf_tot + Qcdata_tot + Qcrefri_tot)}, index=[0])
     totals.to_csv(os.path.join(path_temporary_folder, '%sT.csv' % Name), index=False, float_format='%.2f')
-
-
-def calc_HVAC(SystemH, SystemC, people, RH1, t1, tair, qv_req, Flag, Qsen, t5_1, wint, gv):
-    # State No. 5 # indoor air set point
-    t5 = tair + 1  # accounding for an increase in temperature
-    if Qsen != 0:
-        # sensiblea nd latennt loads
-        Qsen = Qsen * 0.001  # transform in kJ/s
-        # Properties of heat recovery and required air incl. Leakage
-        qv = qv_req * 1.0184  # in m3/s corrected taking into acocunt leakage
-        Veff = gv.Vmax * qv / qv_req  # max velocity effective
-        nrec = gv.nrec_N - gv.C1 * (Veff - 2)  # heat exchanger coefficient
-
-        # State No. 1
-        w1 = calc_w(t1, RH1)  # kg/kg
-
-        # State No. 2
-        t2 = t1 + nrec * (t5_1 - t1)
-        w2 = min(w1, calc_w(t2, 100))
-
-        # State No. 3
-        # Assuming thath AHU do not modify the air humidity
-        w3 = w2
-        if Qsen > 0:  # if heating
-            t3 = 30  # in C
-        elif Qsen < 0:  # if cooling
-            t3 = 16  # in C
-
-        # mass of the system
-        h_t5_w3 = calc_h(t5, w3)
-        h_t3_w3 = calc_h(t3, w3)
-        m1 = max(Qsen / ((t3 - t5) * gv.Cpa), (gv.Pair * qv))  # kg/s # from the point of view of internal loads
-        w5 = (wint + w3 * m1) / m1
-
-        # room supply moisture content:
-        liminf = calc_w(t5, 30)
-        limsup = calc_w(t5, 70)
-        if Qsen > 0:  # if heating
-            w3, Qhum, Qdhum = calc_w3_heating_case(t5, w2, w5, t3, t5_1, m1, gv.lvapor, liminf, limsup)
-        elif Qsen < 0:  # if cooling
-            w3, Qhum, Qdhum = calc_w3_cooling_case(w2, t3, w5, liminf, limsup, m1, gv.lvapor)
-
-        # State of Supply
-        ws = w3
-        ts = t3 - 0.5  # minus the expected delta T rise temperature in the ducts
-
-        # the new mass flow rate
-        h_t5_w3 = calc_h(t5, w3)
-        h_ts_ws = calc_h(t3, ws)
-        m = max(Qsen / ((ts - t2) * gv.Cpa), (gv.Pair * qv))  # kg/s # from the point of view of internal loads
-
-        # Total loads
-        h_t2_w2 = calc_h(t2, w2)
-        Qtot = m * (h_t3_w3 - h_t2_w2) * 1000  # in watts
-
-        # Adiabatic humidifier - computation of electrical auxiliary loads
-        if Qhum > 0:
-            Ehum_aux = 15 / 3600 * m  # assuming a performance of 15 W por Kg/h of humidified air source: bertagnolo 2012
-        else:
-            Ehum_aux = 0
-
-        if Qsen > 0:
-            Qhs_sen = Qtot - Qhum
-            ma_hs = m
-            ts_hs = ts
-            tr_hs = t2
-            Qcs_sen = 0
-            ma_cs = 0
-            ts_cs = 0
-            tr_cs = 0
-        elif Qsen < 0:
-            Qcs_sen = Qtot - Qdhum
-            ma_hs = 0
-            ts_hs = 0
-            tr_hs = 0
-            ma_cs = m
-            ts_cs = ts
-            tr_cs = t2
-            Qhs_sen = 0
-    else:
-        Qhum = 0
-        Qdhum = 0
-        Qtot = 0
-        Qhs_sen = 0
-        Qcs_sen = 0
-        w1 = w2 = w3 = w5 = t2 = t3 = ts = m = 0
-        Ehum_aux = 0
-        # Edhum_aux = 0
-        ma_hs = ts_hs = tr_hs = ts_cs = tr_cs = ma_cs = 0
-
-    return Qhs_sen, Qcs_sen, Qhum, Qdhum, Ehum_aux, ma_hs, ma_cs, ts_hs, ts_cs, tr_hs, tr_cs, w2, w3, t5
-
-
-def calc_w3_heating_case(t5, w2, w5, t3, t5_1, m, lvapor, liminf, limsup):
-    Qhum = 0
-    Qdhum = 0
-    if w5 < liminf:
-        # humidification
-        w3 = liminf - w5 + w2
-        Qhum = lvapor * m * (w3 - w2) * 1000  # in Watts
-    elif w5 < limsup and w5 < calc_w(35, 70):
-        # heating and no dehumidification
-        # delta_HVAC = calc_t(w5,70)-t5
-        w3 = w2
-    elif w5 > limsup:
-        # dehumidification
-        w3 = max(min(min(calc_w(35, 70) - w5 + w2, calc_w(t3, 100)), limsup - w5 + w2), 0)
-        Qdhum = lvapor * m * (w3 - w2) * 1000  # in Watts
-    else:
-        # no moisture control
-        w3 = w2
-    return w3, Qhum, Qdhum
-
-
-def calc_w3_cooling_case(w2, t3, w5, liminf, limsup, m, lvapor):
-    Qhum = 0
-    Qdhum = 0
-    if w5 > limsup:
-        # dehumidification
-        w3 = max(min(limsup - w5 + w2, calc_w(t3, 100)), 0)
-        Qdhum = lvapor * m * (w3 - w2) * 1000  # in Watts
-    elif w5 < liminf:
-        # humidification
-        w3 = liminf - w5 + w2
-        Qhum = lvapor * m * (w3 - w2) * 1000  # in Watts
-    else:
-        w3 = min(w2, calc_w(t3, 100))
-    return w3, Qhum, Qdhum
-
 
