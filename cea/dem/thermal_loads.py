@@ -620,8 +620,14 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     # copied from original calc thermal loads
     tsd['occ'] = occupancy_model.calc_mixed_schedule(list_uses, schedules, bpr.occupancy)  # TODO: rename outputs
 
-    # get internal loads
-    tsd = sensible_loads.calc_Qint(tsd, bpr.internal_loads, bpr.architecture, bpr.rc_model['Af'])
+    # get electrical loads (no auxiliary loads)
+    tsd = electrical_loads.calc_Eint(tsd, bpr.internal_loads, bpr.rc_model['Af'], list_uses, schedules, bpr.occupancy)
+
+    # get refrigeration loads
+    tsd['Qcrefri'] = (tsd['Eref'] * 4)  # where 4 is the COP of the refrigeration unit   # in W
+
+    # get server loads
+    tsd['Qcdata'] = (tsd['Edataf'] * 0.9)  # where 0.9 is assumed of heat dissipation # in W
 
     # ground water temperature in C during heating season (winter) according to norm
     tsd['Tww_re'] = bpr.building_systems['Tww_re_0']

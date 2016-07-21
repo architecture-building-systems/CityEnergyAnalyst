@@ -6,9 +6,9 @@ J. Fonseca  script development          26.08.15
 """
 from __future__ import division
 import pandas as pd
-import cea.globalvar
 import cea.inputlocator
 from geopandas import GeoDataFrame as gpdf
+import numpy as np
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -33,6 +33,7 @@ def schedule_maker(date, locator, list_uses):
 
     return schedules
 
+
 def read_schedules(use, x):
 
     occ = [x['Weekday_1'].values,x['Saturday_1'].values,x['Sunday_1'].values]
@@ -46,6 +47,7 @@ def read_schedules(use, x):
         pro = [[0]*24, [0]*24,[0]*24]
 
     return occ, el, dhw, pro, month
+
 
 def get_yearly_vectors(date, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule):
     occ = []
@@ -89,10 +91,9 @@ def calc_mixed_schedule(list_uses, schedules, building_uses):
     return occ
 
 
-
 def test_schedule_maker():
     locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
-    prop_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geom', axis=1).set_index('Name')[:270]
+    prop_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index('Name')[:270]
     prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
     gv = cea.globalvar.GlobalVariables()
     date = pd.date_range(gv.date_start, periods=8760, freq='H')

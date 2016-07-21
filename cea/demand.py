@@ -10,7 +10,7 @@ import multiprocessing as mp
 
 import pandas as pd
 
-import cea.dem.occupancy_model as m
+from cea.dem import occupancy_model
 import cea.globalvar
 import cea.inputlocator
 from cea.dem import thermal_loads
@@ -81,7 +81,7 @@ def demand_calculation(locator, weather_path, gv):
 
     # schedules model
     list_uses = list(building_properties._prop_occupancy.drop('PFloor', axis=1).columns)
-    schedules = m.schedule_maker(date, locator, list_uses)
+    schedules = occupancy_model.schedule_maker(date, locator, list_uses)
     schedules_dict = {'list_uses': list_uses, 'schedules': schedules}
 
     # dem model
