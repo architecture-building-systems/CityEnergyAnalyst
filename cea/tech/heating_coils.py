@@ -22,6 +22,7 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
     TD20 = Ta_re_0 - tsh0
     LMRT0 = (TD10 - TD20) / scipy.log(TD20 / TD10)
     UA0 = Qhsf_0 / LMRT0
+
     if Qhsf > 0 and ma_sup_hs > 0:
         AUa = UA0 * (ma_sup_hs / ma_sup_0) ** 0.77
         NTUc = AUa / (ma_sup_hs * Cpa * 1000)
@@ -58,7 +59,7 @@ def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma
     TD20 = Ta_re_0 - tsc0
     LMRT0 = (TD20 - TD10) / scipy.log(TD20 / TD10)
     UA0 = Qcsf_0 / LMRT0
-    print Qcsf, Ta_sup_cs, Ta_re_cs, ma_sup_cs,
+
     if Qcsf < -0 and ma_sup_cs > 0:
         AUa = UA0 * (ma_sup_cs / ma_sup_0) ** 0.77
         NTUc = AUa / (ma_sup_cs * Cpa * 1000)

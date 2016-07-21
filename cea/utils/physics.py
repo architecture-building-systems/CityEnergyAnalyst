@@ -1,11 +1,24 @@
 # -*- coding: utf-8 -*-
 """
-    Physiscal properties
-    ===========
-"""
+=========================================
+Physical functions
+=========================================
 
-from math import exp
+"""
+from __future__ import division
+import scipy.optimize as sopt
+import scipy
 import numpy as np
+
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca", "Gabriel Happle"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
 
 def calc_w(t, RH):
     """
@@ -21,7 +34,7 @@ def calc_w(t, RH):
     w : moisture content of air in (kg/kg dry air)
     """
     Pa = 100000  # Pa
-    Ps = 610.78 * exp(t / (t + 238.3) * 17.2694)
+    Ps = 610.78 * scipy.exp(t / (t + 238.3) * 17.2694)
     Pv = RH / 100 * Ps
     w = 0.62 * Pv / (Pa - Pv)
 
@@ -31,8 +44,6 @@ def calc_w(t, RH):
 def calc_h(t, w):
     """
     calculates enthalpy of moist air in kJ/kg
-
-    source: thesis Kaempf Eq.(4.30) extended to temperatures below -10°
 
     Parameters
     ----------
@@ -54,3 +65,30 @@ def calc_h(t, w):
         print(t)
 
     return h
+
+
+def calc_RH(w, t):  # Moisture content in kg/kg of dry air
+    Pa = 100000  # Pa
+
+    def Ps(x):
+        Eq = w * (Pa / (x / 100 * 610.78 * scipy.exp(t / (t + 238.3 * 17.2694))) - 1) - 0.62
+        return Eq
+
+    result = sopt.newton(Ps, 50, maxiter=100, tol=0.01)
+    RH = result.real
+    return RH
+
+
+def calc_t(w, RH):  # tempeature in C
+    Pa = 100000  # Pa
+
+    def Ps(x):
+        Eq = w * (Pa / (RH / 100 * 610.78 * scipy.exp(x / (x + 238.3 * 17.2694))) - 1) - 0.62
+        return Eq
+
+    result = sopt.newton(Ps, 19, maxiter=100, tol=0.01)
+    t = result.real
+    return t
+
+
+

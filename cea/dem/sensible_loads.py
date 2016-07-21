@@ -7,12 +7,9 @@ EN-13970
 
 """
 from __future__ import division
-import math
 import os
 import numpy as np
 import pandas as pd
-import scipy
-import scipy.optimize as sopt
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -336,6 +333,7 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
                                                                                Ta_sup_0, Ta_re_0, gv.Cpa)
 
     if sys_e_cooling == 'T3':  # air conditioning
+
         index = np.where(Qcsf == Qcsf_0)
         ma_sup_0 = ma_sup_cs[index[0][0]] + 273
         Ta_sup_0 = Ta_sup_cs[index[0][0]] + 273
@@ -534,54 +532,5 @@ def calc_w3_cooling_case(w2, t3, w5, liminf, limsup, m, lvapor):
     else:
         w3 = min(w2, calc_w(t3, 100))
     return w3, Qhum, Qdhum
-
-
-def calc_w(t, RH):  # Moisture content in kg/kg of dry air
-    Pa = 100000  # Pa
-    Ps = 610.78 * math.exp(t / (t + 238.3) * 17.2694)
-    Pv = RH / 100 * Ps
-    w = 0.62 * Pv / (Pa - Pv)
-    return w
-
-
-def calc_h(t, w):  # enthalpyh of most air in kJ/kg
-    if 0 < t < 60:
-        h = (1.007 * t - 0.026) + w * (2501 + 1.84 * t)
-    elif -100 < t <= 0:
-        h = (1.005 * t) + w * (2501 + 1.84 * t)
-        # else:
-    #    h = (1.007*t-0.026)+w*(2501+1.84*t)
-    return h
-
-
-def calc_RH(w, t):  # Moisture content in kg/kg of dry air
-    Pa = 100000  # Pa
-
-    def Ps(x):
-        Eq = w * (Pa / (x / 100 * 610.78 * scipy.exp(t / (t + 238.3 * 17.2694))) - 1) - 0.62
-        return Eq
-
-    result = sopt.newton(Ps, 50, maxiter=100, tol=0.01)
-    RH = result.real
-    return RH
-
-
-def calc_t(w, RH):  # tempeature in C
-    Pa = 100000  # Pa
-
-    def Ps(x):
-        Eq = w * (Pa / (RH / 100 * 610.78 * scipy.exp(x / (x + 238.3 * 17.2694))) - 1) - 0.62
-        return Eq
-
-    result = sopt.newton(Ps, 19, maxiter=100, tol=0.01)
-    t = result.real
-    return t
-
-
-
-
-
-
-
 
 
