@@ -12,6 +12,7 @@ import os
 from geopandas import GeoDataFrame
 from  cea.demand import sensible_loads, electrical_loads, hotwater_loads
 from cea.demand import occupancy_model
+from cea.tech import controllers
 import cea.hvac_kaempf
 import contributions.thermal_loads_new_ventilation.ventilation
 
@@ -639,8 +640,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     if bpr.rc_model['Af'] > 0:  # building has conditioned area
 
         # get internal comfort properties
-        tsd = sensible_loads.get_internal_comfort(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
-                                                  date.dayofweek)
+        tsd = controllers.calc_simple_temp_control(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
+                                                      date.dayofweek)
 
         # minimum mass flow rate of ventilation according to schedule
         # with infiltration and overheating
@@ -650,16 +651,16 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         # heat flows in [W]
         # sensible heat gains
-        tsd = sensible_loads.calc_Qint_sen(tsd['people'].values, bpr.internal_loads['Qs_Wp'],
-                                                        tsd['Ealf'].values, tsd['Eprof'].values,
-                                                        tsd['Qcdata'].values, tsd['Qcrefri'].values, tsd,
-                                                        bpr.rc_model['Am'], bpr.rc_model['Atot'], bpr.rc_model['Htr_w'],
-                                                        bpr, gv)
+        tsd = sensible_loads.calc_Qgain_sen(tsd['people'].values, bpr.internal_loads['Qs_Wp'],
+                                            tsd['Ealf'].values, tsd['Eprof'].values,
+                                            tsd['Qcdata'].values, tsd['Qcrefri'].values, tsd,
+                                            bpr.rc_model['Am'], bpr.rc_model['Atot'], bpr.rc_model['Htr_w'],
+                                            bpr, gv)
 
         # latent heat gains
-        tsd['w_int'] = sensible_loads.calc_Qint_lat(tsd['people'].values, bpr.internal_loads['X_ghp'],
-                                                    bpr.hvac['type_cs'],
-                                                    bpr.hvac['type_hs'])
+        tsd['w_int'] = sensible_loads.calc_Qgain_lat(tsd['people'].values, bpr.internal_loads['X_ghp'],
+                                                     bpr.hvac['type_cs'],
+                                                     bpr.hvac['type_hs'])
 
         # natural ventilation building propertiess
         # new

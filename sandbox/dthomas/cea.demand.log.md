@@ -10,7 +10,7 @@
             - [calc_occ_schedule](#calc_occ_schedule)
             - [calc_Qint](#calc_Qint)
             - [calc_occ](#calc_occ)
-            - [get_internal_comfort](#get_internal_comfort)
+            - [calc_simple_temp_control](#calc_simple_temp_control)
             - [get_properties_building_envelope](#get_properties_building_envelope)
             - [get_properties_building_systems](#get_properties_building_systems)
                - [calculate_pipe_transmittance_values](#calculate_pipe_transmittance_values)
@@ -19,9 +19,9 @@
             - [calc_I_sol](#calc_I_sol)
                - [Calc_Rf_sh](#calc_rf_sh)
                   - [calc_gl](#calc_gl)
-            - [calc_Qint_sen](#calc_Qint_sen)
+            - [calc_Qgain_sen](#calc_Qgain_sen)
             - [calc_comp_heat_gains_sensible](#calc_comp_heat_gains_sensible)
-            - [calc_Qint_lat](#calc_Qint_lat)
+            - [calc_Qgain_lat](#calc_Qgain_lat)
             - [calc_Qhs_Qcs_sys_max](#calc_Qhs_Qcs_sys_max)
             - [get_properties_natural_ventilation](#get_properties_natural_ventilation)
                - [calc_qv_delta_p_ref](#calc_qv_delta_p_ref)
@@ -1756,7 +1756,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_Qint_lat
+# calc_Qgain_lat
 - number of invocations: 1
 - max duration: 0.034 s
 - avg duration: 0.034 s
@@ -1802,7 +1802,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_Qint_sen
+# calc_Qgain_sen
 - number of invocations: 1
 - max duration: 0.034 s
 - avg duration: 0.034 s
@@ -3097,7 +3097,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# get_internal_comfort
+# calc_simple_temp_control
 - number of invocations: 1
 - max duration: 0.037 s
 - avg duration: 0.037 s
