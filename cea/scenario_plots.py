@@ -11,7 +11,7 @@ import pandas as pd
 
 def plot_scenarios(scenarios, output_file):
     """
-    List each scenario in the folder `scenario_root` and plot dem and lca (operations, embodied) data.
+    List each scenario in the folder `scenario_root` and plot demand and lca (operations, embodied) data.
 
     :param scenarios: A list of scenario folders.
     :param output_file: The filename (pdf) to save the results as.

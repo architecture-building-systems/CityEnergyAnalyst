@@ -35,7 +35,7 @@ def calc_Qww_ls_st(Tww_st, Tww_setpoint, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_
     ----------
     :param Tww_st_0: Initial tank temperature in C
     :param V: dhw tank size in m3
-    :param Qww: dhw dem in W
+    :param Qww: dhw demand in W
     :param Qww_ls_r: recoverable loss in distribution in W
     :param Qww_ls_nr: non-recoverable loss in distribution in W
     :param Utank: dhw tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385. global variable.
@@ -44,7 +44,7 @@ def calc_Qww_ls_st(Tww_st, Tww_setpoint, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_
     Returns
     -------
     :return ql: storage sensible heat loss in W.
-    :return qd: heat discharged from the tank in W, including dhw heating dem and distribution heat loss.
+    :return qd: heat discharged from the tank in W, including dhw heating demand and distribution heat loss.
     :return qc: heat charged into the tank in W.
     """
     tamb = tair - Bf * (tair - te)         # Calculate tamb in basement according to EN

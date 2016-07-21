@@ -143,7 +143,7 @@ def calc_qv_req(ve, people, Af, gv, hour_day, hour_year, limit_inf_season, limit
     return q_req  # m3/s
 
 
-def calc_Qsol(bpr, gv):
+def calc_I_sol(bpr, gv):
     from cea.tech import blinds
     solar_specific = bpr.solar / bpr.rc_model['Awall_all']  # array in W/m2
     blinds_reflection = np.vectorize(blinds.calc_blinds_reflection)(solar_specific, bpr.architecture['type_shade'], gv.g_gl)
@@ -186,6 +186,14 @@ def get_internal_comfort(tsd, prop_comfort, limit_inf_season, limit_sup_season, 
     return tsd
 
 
+
+"""
+=========================================
+capacity of emission/control system
+=========================================
+"""
+
+
 def calc_Qhs_Qcs_sys_max(Af, prop_HVAC):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
@@ -195,16 +203,28 @@ def calc_Qhs_Qcs_sys_max(Af, prop_HVAC):
     return IC_max, IH_max
 
 
-def calc_comp_heat_gains_sensible(tsd, Am, Atot, Htr_w):
-    # TODO: Documentation
-    # Refactored from CalcThermalLoads
+
+"""
+=========================================
+solar and internal loads
+=========================================
+"""
+
+def calc_Qint_sen(people, Qs_Wp, Eal_nove, Eprof, Qcdata, Qcrefri, tsd, Am, Atot, Htr_w, bpr, gv):
+
+    # itnernal loads
+    tsd['I_sol']= calc_I_sol(bpr, gv)
+    tsd['I_int_sen'] = people * Qs_Wp + 0.9 * (Eal_nove + Eprof) + Qcdata - Qcrefri  # here 0.9 is assumed
+
+    # divide into components for RC model
     tsd['I_ia'] = 0.5 * tsd['I_int_sen']
     tsd['I_m'] = (Am / Atot) * (tsd['I_ia'] + tsd['I_sol'])
     tsd['I_st'] = (1 - (Am / Atot) - (Htr_w / (9.1 * Atot))) * (tsd['I_ia'] + tsd['I_sol'])
+
     return tsd
 
 
-def calc_heat_gains_internal_latent(people, X_ghp, sys_e_cooling, sys_e_heating):
+def calc_Qint_lat(people, X_ghp, sys_e_cooling, sys_e_heating):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
     if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
@@ -213,12 +233,6 @@ def calc_heat_gains_internal_latent(people, X_ghp, sys_e_cooling, sys_e_heating)
         w_int = 0
 
     return w_int
-
-
-def calc_heat_gains_internal_sensible(people, Qs_Wp, Eal_nove, Eprof, Qcdata, Qcrefri):
-    # TODO: Documentation
-    I_int_sen = people * Qs_Wp + 0.9 * (Eal_nove + Eprof) + Qcdata - Qcrefri  # here 0.9 is assumed
-    return I_int_sen
 
 
 def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs, Ta_re_hs, Ta_sup_cs, Ta_sup_hs,

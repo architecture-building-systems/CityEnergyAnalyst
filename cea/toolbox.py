@@ -104,7 +104,7 @@ class PropertiesTool(object):
 
 
 class DemandTool(object):
-    """integrate the dem script with ArcGIS"""
+    """integrate the demand script with ArcGIS"""
 
     def __init__(self):
         self.label = 'Demand'
@@ -139,8 +139,8 @@ class DemandTool(object):
         return
 
     def execute(self, parameters, messages):
-        import cea.dem
-        reload(cea.dem)
+        import cea.demand
+        reload(cea.demand)
 
         scenario_path = parameters[0].valueAsText
         locator = inputlocator.InputLocator(scenario_path)
@@ -167,18 +167,18 @@ class DemandTool(object):
         gv.log("Using python: %(python_exe)s", python_exe=python_exe)
         assert os.path.exists(python_exe), 'Python interpreter (see above) not found.'
 
-        # find dem script
-        demand_py = cea.dem.__file__
+        # find demand script
+        demand_py = cea.demand.__file__
         if os.path.splitext(demand_py)[1].endswith('c'):
             demand_py = demand_py[:-1]
-        gv.log("Path to dem script: %(demand_py)s", demand_py=demand_py)
+        gv.log("Path to demand script: %(demand_py)s", demand_py=demand_py)
 
         # add root of CEAforArcGIS to python path
         cea_root_path = os.path.normpath(os.path.join(os.path.dirname(demand_py), '..'))
         gv.log("Adding path to PYTHONPATH: %(path)s", path=cea_root_path)
         sys.path.append(cea_root_path)
 
-        # run dem script in subprocess (for multiprocessing)
+        # run demand script in subprocess (for multiprocessing)
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         process = subprocess.Popen(['python', '-u', demand_py, '--scenario', scenario_path, '--weather', weather_path],

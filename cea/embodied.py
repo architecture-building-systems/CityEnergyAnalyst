@@ -68,7 +68,7 @@ def lca_embodied(yearcalc, locator, gv):
     path_architecture_shp:
         path to building_architecture.shp
     path_results : string
-        path to dem results folder emissions
+        path to demand results folder emissions
 
     Returns
     -------
