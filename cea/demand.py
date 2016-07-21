@@ -10,7 +10,7 @@ import multiprocessing as mp
 
 import pandas as pd
 
-import cea.dem.occupancy_profile as m
+import cea.dem.occupancy_model as m
 import cea.globalvar
 import cea.inputlocator
 from cea.dem import thermal_loads

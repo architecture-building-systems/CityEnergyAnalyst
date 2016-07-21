@@ -3,7 +3,7 @@ import unittest
 
 import pandas as pd
 
-from cea.dem.occupancy_profile import schedule_maker
+from cea.dem.occupancy_model import schedule_maker
 from cea.dem.thermal_loads import calc_thermal_loads_new_ventilation, BuildingProperties
 from cea.globalvar import GlobalVariables
 from cea.inputlocator import InputLocator
