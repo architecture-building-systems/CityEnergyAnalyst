@@ -735,20 +735,25 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                                            bpr.hvac['type_cs'],
                                                                                                            bpr.hvac['type_hs'],
                                                                                                            tsd['ta_hs_set'].values)
-        Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vww, mcpww = hotwater_loads.calc_Qwwf(bpr.rc_model['Af'],
-                                                                                                     bpr.building_systems['Lcww_dis'],
-                                                                                                     bpr.building_systems['Lsww_dis'],
-                                                                                                     bpr.building_systems['Lvww_c'],
-                                                                                                     bpr.building_systems['Lvww_dis'],
-                                                                                                     tsd['T_ext'],
-                                                                                                     tsd['Ta'],
-                                                                                                     tsd['Tww_re'],
-                                                                                                     bpr.building_systems['Tww_sup_0'],
-                                                                                                     bpr.building_systems['Y'],
-                                                                                                     gv,
-                                                                                                     tsd['vww'])
+        Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vww, Vw, mcpww = hotwater_loads.calc_Qwwf(bpr.rc_model['Af'],
+                                                                                             bpr.building_systems['Lcww_dis'],
+                                                                                             bpr.building_systems['Lsww_dis'],
+                                                                                             bpr.building_systems['Lvww_c'],
+                                                                                             bpr.building_systems['Lvww_dis'],
+                                                                                             tsd['T_ext'],
+                                                                                             tsd['Ta'],
+                                                                                             tsd['Tww_re'],
+                                                                                             bpr.building_systems['Tww_sup_0'],
+                                                                                             bpr.building_systems['Y'],
+                                                                                             gv,
+                                                                                             bpr.internal_loads['Vww_lpd'],
+                                                                                             bpr.internal_loads['Vww_lpd'],
+                                                                                             bpr.architecture['Occ_m2p'],
+                                                                                             list_uses,
+                                                                                             schedules,
+                                                                                             bpr.occupancy)
 
-        Waterconsumption = tsd['vw'] * bpr.rc_model['Af'] / 1000  # volume of water consumed in m3/h
+        Waterconsumption = Vw
         # calc auxiliary loads
         Eauxf, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, = electrical_loads.calc_Eaux(bpr.rc_model['Af'],
                                                                                                  bpr.geometry['Blength'],

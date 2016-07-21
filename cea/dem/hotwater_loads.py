@@ -21,19 +21,10 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_Qww_schedule(list_uses, schedules, building_uses):
-        # weighted average of schedules
-        def calc_average(last, current, share_of_use):
-            return last + current * share_of_use
 
-        dhw = np.zeros(8760)
-        num_profiles = len(list_uses)
-        for num in range(num_profiles):
-            current_share_of_use = building_uses[list_uses[num]]
-            dhw = np.vectorize(calc_average)(dhw, schedules[num][2], current_share_of_use)
-        return dhw
 
-def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, vww):
+def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, Vww_lpd, Vw_lpd, Occ_m2p,
+              list_uses, schedules, building_uses):
     # Refactored from CalcThermalLoads
     """
     This function calculates the distribution heat loss and final energy consumption of domestic hot water.
@@ -52,9 +43,12 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     :return:
 
     """
+    # calc schedule of use:
+    schedule = calc_Qww_schedule(list_uses, schedules, building_uses)
 
     # end-use dem
-    mww, Vww =  np.vectorize(calc_mww)(vww, Af, gv.Pwater)
+    mww, Vww =  np.vectorize(calc_mww)(schedule, Vww_lpd, Occ_m2p, Af, gv.Pwater)
+    mw, Vw = np.vectorize(calc_mww)(schedule, Vw_lpd, Occ_m2p, Af, gv.Pwater)
     Qww = np.vectorize(calc_Qww)(mww, Tww_sup_0, Tww_re, gv.Cpw)
     Qww_0 = Qww.max()
     # distribution and circulation losses
@@ -72,19 +66,42 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     Qwwf_0 = Qwwf.max()
     mcpwwf = Qwwf / abs(Tww_st - Tww_re)
 
-    return mww, Qww, Qww_st_ls, Qwwf, Qwwf_0, Tww_st, Vww, mcpwwf
+    return mww, Qww, Qww_st_ls, Qwwf, Qwwf_0, Tww_st, Vww, Vw, mcpwwf
 
-def calc_mww(vww, Af, Pwater):
 
-    Vww = vww * Af / 1000  ## consumption of hot water in m3/hour
-    mww = Vww * Pwater / 3600  # in kg/s
+def calc_Qww_schedule(list_uses, schedules, building_uses):
+    # weighted average of schedules
+    def calc_average(last, current, share_of_use):
+        return last + current * share_of_use
 
-    return mww, Vww
+    dhw = np.zeros(8760)
+    num_profiles = len(list_uses)
+    for num in range(num_profiles):
+        current_share_of_use = building_uses[list_uses[num]]
+        dhw = np.vectorize(calc_average)(dhw, schedules[num][2], current_share_of_use)
+
+    return dhw
+
+
+def calc_mww(schedule, Vww_lpd, Occ_m2p, Af, Pwater):
+    vww = schedule* Vww_lpd * (Occ_m2p ** -1) * Af / 24000 # m3/h
+    mww = vww * Pwater / 3600  # in kg/s
+
+    return mww, vww
+
+
+def calc_mw(schedule, Vw_lpd, Occ_m2p, Af, Pwater):
+    vw = schedule * Vw_lpd * (Occ_m2p ** -1) * Af / 24000 # m3/h
+    mw = vw * Pwater / 3600  # in kg/s
+
+    return mw, vw
+
 
 def calc_Qww(mww, Tww_sup_0, Tww_re, Cpw):
     mcpww = mww * Cpw * 1000  # W/K
     Qww = mcpww * (Tww_sup_0 - Tww_re)  # heating for dhw in W
     return Qww
+
 
 def calc_Qww_dis_ls_r(Tair, Qww, lsww_dis, lcww_dis, Y, Qww_0, V, Flowtap, twws, Cpw, Pwater, gv):
     # Calculate tamb in basement according to EN
@@ -100,6 +117,7 @@ def calc_Qww_dis_ls_r(Tair, Qww, lsww_dis, lcww_dis, Y, Qww_0, V, Flowtap, twws,
 
     return Qww_d_ls_r
 
+
 def calc_Qww_dis_ls_nr(tair, Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, Flowtap, twws, Cpw, Pwater, Bf, te, gv):
     # Calculate tamb in basement according to EN
     tamb = tair - Bf * (tair - te)
@@ -112,6 +130,7 @@ def calc_Qww_dis_ls_nr(tair, Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, Flowtap, twws, 
     Qww_d_ls_nr = d_dis_ls + d_circ_ls
 
     return Qww_d_ls_nr
+
 
 def calc_disls(tamb, hotw, Flowtap, V, twws, Lsww_dis, p, cpw, Y, gv):
     if hotw > 0:
@@ -129,6 +148,7 @@ def calc_disls(tamb, hotw, Flowtap, V, twws, Lsww_dis, p, cpw, Y, gv):
     else:
         losses = 0
     return losses
+
 
 def calc_Qww_st_ls(Vww, Tww_setpoint, Ta, Bf, Pwater, Cpw, Qww_dis_ls_r, Qww_dis_ls_nr, U_dhwtank, AR, gv, T_ext, Qww):
     Qwwf = np.zeros(8760)
