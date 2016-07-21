@@ -22,7 +22,7 @@
             - [calc_heat_gains_internal_sensible](#calc_heat_gains_internal_sensible)
             - [calc_comp_heat_gains_sensible](#calc_comp_heat_gains_sensible)
             - [calc_heat_gains_internal_latent](#calc_heat_gains_internal_latent)
-            - [calc_capacity_heating_cooling_system](#calc_capacity_heating_cooling_system)
+            - [calc_Qhs_Qcs_sys_max](#calc_Qhs_Qcs_sys_max)
             - [get_properties_natural_ventilation](#get_properties_natural_ventilation)
                - [calc_qv_delta_p_ref](#calc_qv_delta_p_ref)
                - [get_building_geometry_ventilation](#get_building_geometry_ventilation)
@@ -1254,7 +1254,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_capacity_heating_cooling_system
+# calc_Qhs_Qcs_sys_max
 - number of invocations: 1
 - max duration: 0.032 s
 - avg duration: 0.032 s
