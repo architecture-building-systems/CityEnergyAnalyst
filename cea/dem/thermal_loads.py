@@ -9,7 +9,7 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame
-from  cea.dem import sensible_loads, electrical_loads, hotwater_loads
+from  cea.dem import sensible_loads, electrical_loads, hotwater_loads, occupancy_profile
 import cea.hvac_kaempf
 import contributions.thermal_loads_new_ventilation.ventilation
 
@@ -617,7 +617,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     n50 = bpr.architecture['n50']
 
     # copied from original calc thermal loads
-    tsd = sensible_loads.calc_mixed_schedule(tsd, list_uses, schedules, bpr.occupancy)  # TODO: rename outputs
+    tsd['occ'] = occupancy_profile.calc_mixed_schedule(list_uses, schedules, bpr.occupancy)  # TODO: rename outputs
 
     # get internal loads
     tsd = sensible_loads.calc_Qint(tsd, bpr.internal_loads, bpr.architecture, bpr.rc_model['Af'])

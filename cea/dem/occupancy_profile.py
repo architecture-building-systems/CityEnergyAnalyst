@@ -4,7 +4,7 @@ Query schedules according to database
 ===========================
 J. Fonseca  script development          26.08.15
 """
-
+from __future__ import division
 import pandas as pd
 import cea.globalvar
 import cea.inputlocator
@@ -73,6 +73,22 @@ def get_yearly_vectors(date, occ_schedules, el_schedules, dhw_schedules, pro_sch
             pro.append(pro_schedules[2][hour_day] * month_year)
 
     return occ, el, dhw, pro
+
+
+def calc_mixed_schedule(list_uses, schedules, building_uses):
+    # weighted average of schedules
+    def calc_average(last, current, share_of_use):
+        return last + current * share_of_use
+
+    occ = np.zeros(8760)
+    num_profiles = len(list_uses)
+    for num in range(num_profiles):
+        current_share_of_use = building_uses[list_uses[num]]
+        occ = np.vectorize(calc_average)(occ, schedules[num][0], current_share_of_use)
+
+    return occ
+
+
 
 def test_schedule_maker():
     locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')

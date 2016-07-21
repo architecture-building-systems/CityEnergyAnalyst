@@ -21,6 +21,18 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
+def calc_Qww_schedule(list_uses, schedules, building_uses):
+        # weighted average of schedules
+        def calc_average(last, current, share_of_use):
+            return last + current * share_of_use
+
+        dhw = np.zeros(8760)
+        num_profiles = len(list_uses)
+        for num in range(num_profiles):
+            current_share_of_use = building_uses[list_uses[num]]
+            dhw = np.vectorize(calc_average)(dhw, schedules[num][2], current_share_of_use)
+        return dhw
+
 def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, vww):
     # Refactored from CalcThermalLoads
     """
