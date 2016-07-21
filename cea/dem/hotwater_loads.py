@@ -1,13 +1,13 @@
 """
 =========================================
-Hotwater load
+Hotwater load (it also calculates fresh water needs)
 =========================================
 
 """
 
 from __future__ import division
 import numpy as np
-from scipy import exp
+import scipy
 from math import pi
 from cea.tech import storagetank_mixed as sto_m
 
@@ -19,8 +19,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
-
-
 
 
 def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, Vww_lpd, Vw_lpd, Occ_m2p,
@@ -138,11 +136,11 @@ def calc_disls(tamb, hotw, Flowtap, V, twws, Lsww_dis, p, cpw, Y, gv):
         if t > 3600: t = 3600
         q = (twws - tamb) * Y
         try:
-            exponential = exp(-(q * Lsww_dis * t) / (p * cpw * V * (twws - tamb) * 1000))
+            exponential = scipy.exp(-(q * Lsww_dis * t) / (p * cpw * V * (twws - tamb) * 1000))
         except ZeroDivisionError:
             gv.log('twws: %(twws).2f, tamb: %(tamb).2f, p: %(p).2f, cpw: %(cpw).2f, V: %(V).2f',
                    twws=twws, tamb=tamb, p=p, cpw=cpw, V=V)
-            exponential = exp(-(q * Lsww_dis * t) / (p * cpw * V * (twws - tamb) * 1000))
+            exponential = scipy.exp(-(q * Lsww_dis * t) / (p * cpw * V * (twws - tamb) * 1000))
         tamb = tamb + (twws - tamb) * exponential
         losses = (twws - tamb) * V * cpw * p / 1000 * 278
     else:

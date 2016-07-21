@@ -18,30 +18,6 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_Ea_El_schedule(list_uses, schedules, building_uses):
-    # weighted average of schedules
-    def calc_average(last, current, share_of_use):
-        return last + current * share_of_use
-
-    el = np.zeros(8760)
-    num_profiles = len(list_uses)
-    for num in range(num_profiles):
-        current_share_of_use = building_uses[list_uses[num]]
-        el = np.vectorize(calc_average)(el, schedules[num][1], current_share_of_use)
-    return el
-
-def calc_Epro_schedule(list_uses, schedules, building_uses):
-    # weighted average of schedules
-    def calc_average(last, current, share_of_use):
-        return last + current * share_of_use
-
-    pro = np.zeros(8760)
-    num_profiles = len(list_uses)
-    for num in range(num_profiles):
-        current_share_of_use = building_uses[list_uses[num]]
-        epro = np.vectorize(calc_average)(pro, schedules[num][3], current_share_of_use)
-    return epro
-
 def calc_E_totals(Aef, Ealf, Eauxf, Edataf, Eprof):
     # TODO: Documentation
     # FIXME: is input `Ealf` ever non-zero for Aef <= 0? (also check the other values)
@@ -62,25 +38,83 @@ def calc_E_totals(Aef, Ealf, Eauxf, Edataf, Eprof):
         Edataf = np.zeros(8760)
     return Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edata_tot, Eprof, Epro_tot
 
+"""
+=========================================
+Internal electrical loads
+=========================================
+"""
+
+def calc_Eint(tsd, prop_internal_loads, Af, list_uses, schedules, building_uses):
+
+    # calculate schedules
+    schedule_Ea_El_Edata_Eref = calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses)
+    schedule_pro = calc_Epro_schedule(list_uses, schedules, building_uses)
+
+    # calculate loads
+    tsd['Eaf'] = calc_Ea(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ea_Wm2'], Af)
+    tsd['Elf'] = calc_El(schedule_Ea_El_Edata_Eref, prop_internal_loads['El_Wm2'], Af)
+    tsd['Ealf'] =  tsd['Elf']+ tsd['Eaf']
+    tsd['Edataf'] = calc_Edata(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ed_Wm2'], Af)  # in W
+    tsd['Eref'] = calc_Eref(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ere_Wm2'],  Af)  # in W
+    tsd['Eprof'] = calc_Epro(schedule_pro, prop_internal_loads['Epro_Wm2'], Af)  # in W
+
+    return tsd
+
+
+def calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses):
+    # weighted average of schedules
+    def calc_average(last, current, share_of_use):
+        return last + current * share_of_use
+
+    el = np.zeros(8760)
+    num_profiles = len(list_uses)
+    for num in range(num_profiles):
+        current_share_of_use = building_uses[list_uses[num]]
+        el = np.vectorize(calc_average)(el, schedules[num][1], current_share_of_use)
+    return el
+
+
 def calc_Ea(schedule, Ea_Wm2, Af):
     Eaf = schedule * Ea_Wm2 * Af  # in W
     return Eaf
+
 
 def calc_El(schedule , El_Wm2, Af):
     Elf = schedule * El_Wm2 * Af  # in W
     return Elf
 
-def calc_Epro(schedule , Epro_Wm2, Af):
-    Eprof = schedule  * Epro_Wm2 * Af  # in W
-    return Eprof
 
 def calc_Edata(schedule , Ed_Wm2, Af):
     Edataf = schedule  * Ed_Wm2 * Af  # in W
     return Edataf
 
+
 def calc_Eref(schedule , Ere_Wm2, Af):
     Eref = schedule * Ere_Wm2 * Af  # in W
     return Eref
+
+
+def calc_Epro_schedule(list_uses, schedules, building_uses):
+    # weighted average of schedules
+    def calc_average(last, current, share_of_use):
+        return last + current * share_of_use
+
+    pro = np.zeros(8760)
+    num_profiles = len(list_uses)
+    for num in range(num_profiles):
+        current_share_of_use = building_uses[list_uses[num]]
+        epro = np.vectorize(calc_average)(pro, schedules[num][3], current_share_of_use)
+    return epro
+
+
+def calc_Epro(schedule , Epro_Wm2, Af):
+    Eprof = schedule  * Epro_Wm2 * Af  # in W
+    return Eprof
+"""
+=========================================
+Auxiliary loads
+=========================================
+"""
 
 def calc_Eaux(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
                   Ths_re, Ths_sup, Vw, Year, fforma, gv, nf_ag, nfp, qv_req, sys_e_cooling,
@@ -110,6 +144,7 @@ def calc_Eaux(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tc
     Eauxf = Eaux_hs + Eaux_cs + Eaux_ve + Eaux_ww + Eaux_fw + Ehs_lat_aux
 
     return Eauxf, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw
+
 
 def calc_Eaux_hs_dis(Qhsf, Qhsf0, Imax, deltaP_des, b, ts, tr, cpw):
     # the power of the pump in Watts
