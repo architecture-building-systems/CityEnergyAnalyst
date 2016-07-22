@@ -135,7 +135,7 @@ class GlobalVariables(object):
         The template references self.report_variables. The destination_template may contain date format codes that
         will be updated with the current datetime."""
         if self.testing:
-            import reporting
+            from cea.utilities import reporting
             reporting.full_report_to_xls(template, variables, output_folder, basename, self)
 
 

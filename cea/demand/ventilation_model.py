@@ -18,12 +18,13 @@ Convention: all temperature inputs in (°C)
 """
 
 from __future__ import division
+
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
-from cea.utilities.physics import calc_rho_air
-from cea.geometry.geometry_reader import get_building_geometry_ventilation
 
+from cea.geometry.geometry_reader import get_building_geometry_ventilation
+from cea.utilities.physics import calc_rho_air
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -923,7 +924,7 @@ def testing():
     from geopandas import GeoDataFrame as gpdf
     import cea.globalvar
     gv = cea.globalvar.GlobalVariables()
-    from cea import inputlocator
+    from cea.GUI import inputlocator
     import time
     import simple_window_generator
 

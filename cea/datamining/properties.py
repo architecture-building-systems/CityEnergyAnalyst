@@ -7,10 +7,11 @@ J. A. Fonseca  script development          22.03.15
 
 """
 from __future__ import division
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 from geopandas import GeoDataFrame as gpdf
-import inputlocator
+from cea.GUI import inputlocator
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

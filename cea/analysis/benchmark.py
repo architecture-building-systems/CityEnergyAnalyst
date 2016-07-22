@@ -6,11 +6,14 @@ Benchmark graphs algorithm
 
 """
 from __future__ import division
+
+import os
+
 import matplotlib.pyplot as plt
 import pandas as pd
-from cea import inputlocator
 from geopandas import GeoDataFrame as gpdf
-import os
+
+from cea.GUI import inputlocator
 
 
 def benchmark(locator_list, output_file):

@@ -9,12 +9,13 @@ J. Fonseca  new development             13.04.16
 
 """
 from __future__ import division
-import pandas as pd
+
 import numpy as np
-import globalvar
-import inputlocator
+import pandas as pd
 from geopandas import GeoDataFrame as gpdf
 
+import cea.GUI.inputlocator
+import cea.globalvar
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -255,10 +256,10 @@ def calc_comparison(array_min, array_max):
 
 
 def test_lca_embodied():
-    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator = cea.GUI.inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
     yearcalc = 2050
 
-    gv = globalvar.GlobalVariables()
+    gv = cea.globalvar.GlobalVariables()
 
     lca_embodied(locator=locator, yearcalc=yearcalc, gv=gv)
     print "test_lca_embodied() succeeded"

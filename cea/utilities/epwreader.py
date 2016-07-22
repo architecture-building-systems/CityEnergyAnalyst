@@ -8,7 +8,8 @@ J. A. Fonseca  adaptation for CEA tool     18.05.16
 
 """
 import pandas as pd
-import cea.inputlocator
+
+import cea.GUI.inputlocator
 
 __author__ = "Clayton Miller"
 __copyright__ = "Copyright 2014, Architecture and Building Systems - ETH Zurich"
@@ -35,7 +36,7 @@ def epw_reader(weather_path):
 
 def test_reader():
 
-    locator = cea.inputlocator.InputLocator(r'C:\reference-case\baseline')
+    locator = cea.GUI.inputlocator.InputLocator(r'C:\reference-case\baseline')
     # for the interface, the user should pick a file out of of those in ...DB/Weather/...
     weather_path = locator.get_default_weather()
     epw_reader(weather_path=weather_path)

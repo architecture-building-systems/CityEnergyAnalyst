@@ -16,21 +16,21 @@ __status__ = "Production"
 class InputLocator(object):
     """The InputLocator locates files and folders for input to the scripts. This works, because we
     have a convention for the folder structure of a scenario.
-    It also provides locations of other files, such as those in the db folder (e.g. archetypes).
+    It also provides locations of other files, such as those in the databases folder (e.g. archetypes).
     """
     # SCENARIO
     def __init__(self, scenario_path):
         self.scenario_path = scenario_path
-        self.db_path = os.path.join(os.path.dirname(__file__), 'db', 'CH')
+        self.db_path = os.path.join(os.path.dirname(__file__), 'databases', 'CH')
 
     # DATABASES
     def get_default_weather(self):
-        """/cea/db/Weather/Zurich.epw
+        """/cea/databases/Weather/Zurich.epw
         path to database of archetypes file Archetypes_properties.xlsx"""
         return os.path.join(self.db_path, 'Weather', 'Zurich.epw')
 
     def get_weather(self, name):
-        """/cea/db/Weather/{name}.epw"""
+        """/cea/databases/Weather/{name}.epw"""
         weather_path = os.path.join(self.db_path, 'Weather', name + '.epw')
         if not os.path.exists(weather_path):
             return self.get_default_weather()
@@ -42,12 +42,12 @@ class InputLocator(object):
         return weather_names
 
     def get_archetypes_properties(self):
-        """/cea/db/Archetypes/Switzerland/Archetypes_properties.xlsx
+        """/cea/databases/Archetypes/Switzerland/Archetypes_properties.xlsx
         path to database of archetypes file Archetypes_properties.xlsx"""
         return os.path.join(self.db_path, 'Archetypes', 'Archetypes_properties.xlsx')
 
     def get_archetypes_schedules(self):
-        """/cea/db/Archetypes/Switzerland/Archetypes_schedules.xlsx
+        """/cea/databases/Archetypes/Switzerland/Archetypes_schedules.xlsx
         path to database of archetypes file Archetypes_HVAC_properties.xlsx"""
         return os.path.join(self.db_path, 'Archetypes', 'Archetypes_schedules.xlsx')
 
@@ -60,10 +60,10 @@ class InputLocator(object):
         return os.path.join(self.db_path, 'Systems',  'emission_systems.xls')
 
     def get_data_benchmark(self):
-        """cea/db/CH/Benchmarks/benchmark_targets.xls"""
+        """cea/databases/CH/Benchmarks/benchmark_targets.xls"""
         return os.path.join(self.db_path, 'Benchmarks', 'benchmark_targets.xls')
     def get_data_benchmark_today(self):
-        """cea/db/CH/Benchmarks/benchmark_today.xls"""
+        """cea/databases/CH/Benchmarks/benchmark_today.xls"""
         return os.path.join(self.db_path, 'Benchmarks', 'benchmark_today.xls')
 
     # INPUTS

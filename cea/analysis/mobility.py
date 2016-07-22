@@ -9,10 +9,13 @@ J. Fonseca  script redevelopment        19.04.16
 
 """
 from __future__ import division
+
+import os
+
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
-from cea import inputlocator
-import os
+
+from cea.GUI import inputlocator
 
 reload(inputlocator)
 
@@ -72,7 +75,7 @@ class ExtendInputLocator(inputlocator.InputLocator):
         super(ExtendInputLocator, self).__init__(scenario_path)
 
     def get_data_mobility(self):
-        """cea/db/CH/Benchmarks/mobility.xls"""
+        """cea/databases/CH/Benchmarks/mobility.xls"""
         return os.path.join(self.db_path, 'Benchmarks', 'mobility.xls')
 
     def get_lca_mobility(self):

@@ -4,9 +4,11 @@ scenario_plots.py
 Create a list of plots for comparing multiple scenarios.
 """
 import os
-import inputlocator
+
 import matplotlib.pyplot as plt
 import pandas as pd
+
+import cea.GUI.inputlocator
 
 
 def plot_scenarios(scenarios, output_file):
@@ -19,7 +21,7 @@ def plot_scenarios(scenarios, output_file):
     """
     from matplotlib.backends.backend_pdf import PdfPages
 
-    locators = [inputlocator.InputLocator(scenario) for scenario in scenarios]
+    locators = [cea.GUI.inputlocator.InputLocator(scenario) for scenario in scenarios]
     scenario_names = [os.path.basename(locator.scenario_path) for locator in locators]
 
     plot_config = {
