@@ -6,7 +6,7 @@ import tempfile
 
 import arcpy
 
-import cea.GUI.inputlocator
+import cea.inputlocator
 from cea import globalvar
 
 __author__ = "Daren Thomas"
@@ -18,7 +18,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-reload(cea.GUI.inputlocator)
+reload(cea.inputlocator)
 
 
 def add_message(msg, **kwargs):
@@ -88,7 +88,7 @@ class PropertiesTool(object):
         from cea.datamining.properties import properties
 
         scenario_path = parameters[0].valueAsText
-        locator = cea.GUI.inputlocator.InputLocator(scenario_path)
+        locator = cea.inputlocator.InputLocator(scenario_path)
 
         prop_thermal_flag = parameters[1]
         prop_architecture_flag = parameters[2]
@@ -124,7 +124,7 @@ class DemandTool(object):
             datatype="String",
             parameterType="Required",
             direction="Input")
-        locator = cea.GUI.inputlocator.InputLocator(None)
+        locator = cea.inputlocator.InputLocator(None)
         weather_name.filter.list = locator.get_weather_names()
 
         return [scenario_path, weather_name]
@@ -143,7 +143,7 @@ class DemandTool(object):
         reload(cea.demand)
 
         scenario_path = parameters[0].valueAsText
-        locator = cea.GUI.inputlocator.InputLocator(scenario_path)
+        locator = cea.inputlocator.InputLocator(scenario_path)
 
         weather_name = parameters[1].valueAsText
         if weather_name in locator.get_weather_names():
@@ -233,7 +233,7 @@ class EmbodiedEnergyTool(object):
         scenario_path = parameters[1].valueAsText
         gv = globalvar.GlobalVariables()
         gv.log = add_message
-        locator = cea.GUI.inputlocator.InputLocator(scenario_path=scenario_path)
+        locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
         lca_embodied(yearcalc=yearcalc, locator=locator, gv=gv)
 
 
@@ -328,9 +328,9 @@ class EmissionsTool(object):
 
     def execute(self, parameters, messages):
         from cea.analysis.emissions import lca_operation
-        import cea.GUI.inputlocator
+        import cea.inputlocator
         scenario_path = parameters[0].valueAsText
-        locator = cea.GUI.inputlocator.InputLocator(scenario_path)
+        locator = cea.inputlocator.InputLocator(scenario_path)
         Qww_flag = parameters[1].value
         Qhs_flag = parameters[2].value
         Qcs_flag = parameters[3].value
@@ -375,7 +375,7 @@ class GraphsDemandTool(object):
             parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
         analysis_fields = parameters[1]
-        locator = cea.GUI.inputlocator.InputLocator(scenario_path)
+        locator = cea.inputlocator.InputLocator(scenario_path)
         df_total_demand = pd.read_csv(locator.get_total_demand())
         first_building = df_total_demand['Name'][0]
         df_building = pd.read_csv(locator.get_demand_results_file(first_building))
@@ -389,7 +389,7 @@ class GraphsDemandTool(object):
         import cea.plots.graphs
         reload(cea.plots.graphs)
         scenario_path = parameters[0].valueAsText
-        locator = cea.GUI.inputlocator.InputLocator(scenario_path)
+        locator = cea.inputlocator.InputLocator(scenario_path)
         analysis_fields = parameters[1].valueAsText.split(';')[:4]  # max 4 fields for analysis
         gv = globalvar.GlobalVariables()
         gv.log = add_message
@@ -438,7 +438,7 @@ class HeatmapsTool(object):
             parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
         # path_variables
-        locator = cea.GUI.inputlocator.InputLocator(scenario_path)
+        locator = cea.inputlocator.InputLocator(scenario_path)
         file_names = [os.path.basename(locator.get_total_demand())]
         file_names.extend([f for f in os.listdir(locator.get_lca_emissions_results_folder()) if f.endswith('.csv')])
         path_variables = parameters[1]
@@ -500,7 +500,7 @@ class RadiationTool(object):
             datatype="String",
             parameterType="Required",
             direction="Input")
-        locator = cea.GUI.inputlocator.InputLocator(None)
+        locator = cea.inputlocator.InputLocator(None)
         weather_name.filter.list = locator.get_weather_names()
 
         year = arcpy.Parameter(
@@ -622,7 +622,7 @@ class GraphsBenchmarkTool(object):
 
         from cea.analysis import benchmark
         reload(benchmark)
-        locator_list = [cea.GUI.inputlocator.InputLocator(scenario_path=scenario) for scenario in scenarios]
+        locator_list = [cea.inputlocator.InputLocator(scenario_path=scenario) for scenario in scenarios]
         benchmark.benchmark(locator_list=locator_list, output_file=output_file)
         return
 
