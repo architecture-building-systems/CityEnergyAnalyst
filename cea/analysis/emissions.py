@@ -13,7 +13,7 @@ from __future__ import division
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
 
-import cea.GUI.inputlocator
+import cea.inputlocator
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -25,7 +25,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-reload(cea.GUI.inputlocator)
+reload(cea.inputlocator)
 
 
 def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_flag, Eal_flag, Eaux_flag, Epro_flag,
@@ -162,7 +162,7 @@ def test_lca_operation():
     Qww_flag = Qhs_flag = True
     Qcs_flag = Qcdata_flag = Qcrefri_flag = True
     Eal_flag = Eaux_flag = Epro_flag = Edata_flag = True
-    locator = cea.GUI.inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
     lca_operation(locator=locator, Qww_flag=Qww_flag, Qhs_flag=Qhs_flag, Qcs_flag=Qcs_flag, Qcdata_flag=Qcdata_flag,
                   Qcrefri_flag=Qcrefri_flag, Eal_flag=Eal_flag, Eaux_flag=Eaux_flag, Epro_flag=Epro_flag,
                   Edata_flag=Edata_flag)

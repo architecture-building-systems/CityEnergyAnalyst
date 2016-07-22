@@ -14,8 +14,8 @@ import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
 
-import cea.GUI.inputlocator
 import cea.globalvar
+import cea.inputlocator
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -256,7 +256,7 @@ def calc_comparison(array_min, array_max):
 
 
 def test_lca_embodied():
-    locator = cea.GUI.inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
     yearcalc = 2050
 
     gv = cea.globalvar.GlobalVariables()

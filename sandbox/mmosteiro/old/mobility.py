@@ -13,7 +13,7 @@ from __future__ import division
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
 
-from cea.GUI import inputlocator
+from cea import inputlocator
 
 reload(inputlocator)
 

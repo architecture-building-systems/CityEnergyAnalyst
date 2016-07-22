@@ -25,7 +25,7 @@ from sqlalchemy import create_engine, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 
-import cea.GUI.inputlocator
+import cea.inputlocator
 
 Base = declarative_base()
 Session = sessionmaker()
@@ -129,7 +129,7 @@ class _LogArgs(object):
                 args_dict, invocation = self.log_entry(func, args, kwargs)
                 # wrap the locators for logging
                 for key, value in args_dict.items():
-                    if isinstance(value, cea.GUI.inputlocator.InputLocator):
+                    if isinstance(value, cea.inputlocator.InputLocator):
                         args_dict[key] = LocatorDecorator(value, invocation)
                     elif isinstance(value, LocatorDecorator):
                         args_dict[key] = LocatorDecorator(value.locator, invocation)

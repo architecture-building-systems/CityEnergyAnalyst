@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
 
-from cea.GUI import inputlocator
+from cea import inputlocator
 
 
 def benchmark(locator_list, output_file):
