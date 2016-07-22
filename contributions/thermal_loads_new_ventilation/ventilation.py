@@ -21,9 +21,132 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
+from cea.utils.physics import calc_rho_air
+from cea.geom.geometry_reader import get_building_geometry_ventilation
 
 
-# ++++ GENERAL ++++
+__author__ = "Gabriel Happle"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Gabriel Happle"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
+
+
+"""
+=========================================
+ventilation calculation
+=========================================
+"""
+
+def calc_air_flows(temp_zone, u_wind, temp_ext, dict_props_nat_vent):
+    """
+    Minimization of variable air flows as a function of zone gauge
+
+    Parameters
+    ----------
+    temp_zone : zone indoor air temperature (°C)
+    u_wind : wind velocity (m/s)
+    temp_ext : exterior air temperature (°C)
+    dict_props_nat_vent : dictionary containing natural ventilation properties of zone
+
+    Returns
+    -------
+    qm_sum_in : total air mass flow rates into zone (kg/h)
+    qm_sum_out : total air mass flow rates out of zone (kg/h)
+    """
+
+    # Different solver options to try:
+    # --------------------------------
+    # solver_options_nelder_mead ={'disp': False, 'maxiter': 100, 'maxfev': None, 'xtol': 0.1, 'ftol': 0.1}
+    # solver_options_cg ={'disp': False, 'gtol': 1e-05, 'eps': 1.4901161193847656e-08, 'return_all': False,
+    #                     'maxiter': None, 'norm': -np.inf}
+    # solver_options_powell = {'disp': True, 'maxiter': None, 'direc': None, 'maxfev': None,
+    #            'xtol': 0.0001, 'ftol': 0.0001}
+    # solver_options_tnc = {'disp': True, 'minfev': 0, 'scale': None, 'rescale': -1, 'offset': None, 'gtol': -1,
+    #                       'eps': 1e-08, 'eta': -1, 'maxiter': None, 'maxCGit': -1, 'mesg_num': None,
+    #                       'ftol': -1, 'xtol': -1, 'stepmx': 0, 'accuracy': 0}
+    solver_options_cobyla = {'iprint': 1, 'disp': False, 'maxiter': 100, 'rhobeg': 1.0, 'tol': 0.001}
+
+    # solve air flow mass balance via iteration
+    p_zone_ref = 1  # (Pa) zone pressure, THE UNKNOWN VALUE
+    res = minimize(calc_air_flow_mass_balance, p_zone_ref,
+                   args=(temp_zone, u_wind, temp_ext, dict_props_nat_vent, 'minimize',),
+                   method='COBYLA',
+                   options=solver_options_cobyla)
+    # print(res)
+    # get zone pressure of air flow mass balance
+    p_zone = res.x
+
+    # calculate air flows at zone pressure
+    qm_sum_in, qm_sum_out = calc_air_flow_mass_balance(p_zone, temp_zone, u_wind,
+                                                       temp_ext, dict_props_nat_vent, 'calculate')
+
+    return qm_sum_in, qm_sum_out
+
+
+def get_properties_natural_ventilation(gdf_geometry_building, gdf_architecture_building, gv):
+    """
+
+    Parameters
+    ----------
+    gdf_geometry_building : GeoDataFrame containing geom properties of single building
+    gdf_architecture_building : GeoDataFrame containing architecture props of single building
+    gv : globalvars
+
+    Returns
+    -------
+    dict_props_nat_vent : dictionary containing natural ventilation properties of zone
+    """
+
+    n50 = gdf_architecture_building['n50']
+    vol_building = gdf_geometry_building['footprint'] * gdf_geometry_building['height_ag']
+    qv_delta_p_lea_ref_zone = calc_qv_delta_p_ref(n50, vol_building)
+    area_facade_zone,\
+    area_roof_zone,\
+    height_zone,\
+    slope_roof = get_building_geometry_ventilation(gdf_geometry_building)
+    class_shielding = gv.shielding_class
+    factor_cros = gdf_architecture_building['f_cros']
+    area_vent_zone = 0  # (cm2) area of ventilation openings # TODO: get from buildings properties
+
+    # calculate properties that remain constant in the minimization
+    # (a) LEAKAGES
+    coeff_lea_path,\
+    height_lea_path,\
+    orientation_lea_path = allocate_default_leakage_paths(calc_coeff_lea_zone(qv_delta_p_lea_ref_zone),
+                                                          area_facade_zone, area_roof_zone, height_zone)
+
+    coeff_wind_pressure_path_lea = lookup_coeff_wind_pressure(height_lea_path, class_shielding, orientation_lea_path,
+                                                              slope_roof, factor_cros)
+
+    # (b) VENTILATION OPENINGS
+    coeff_vent_path,\
+    height_vent_path,\
+    orientation_vent_path = allocate_default_ventilation_openings(calc_coeff_vent_zone(area_vent_zone), height_zone)
+    coeff_wind_pressure_path_vent = lookup_coeff_wind_pressure(height_vent_path, class_shielding, orientation_vent_path,
+                                                               slope_roof, factor_cros)
+
+    # make dict for output
+    dict_props_nat_vent = {'coeff_lea_path': coeff_lea_path,
+                           'height_lea_path': height_lea_path,
+                           'coeff_wind_pressure_path_lea': coeff_wind_pressure_path_lea,
+                           'coeff_vent_path': coeff_vent_path,
+                           'height_vent_path': height_vent_path,
+                           'coeff_wind_pressure_path_vent': coeff_wind_pressure_path_vent,
+                           'factor_cros': factor_cros}
+
+    return dict_props_nat_vent
+
+
+"""
+=========================================
+Wind pressure calculation
+=========================================
+"""
 
 def calc_u_wind_site(u_wind_10):
     """
@@ -49,32 +172,6 @@ def calc_u_wind_site(u_wind_10):
 
     # Equation (2) in [1]
     return f_wnd[ter_class] * u_wind_10
-
-
-def calc_rho_air(temp_air):
-    """
-    Calculation of density of air according to 6.4.2.1 in [1]
-
-    Parameters
-    ----------
-    temp_air : air temperature in (°C)
-
-    Returns
-    -------
-    rho_air : air density in (kg/m3)
-
-    """
-    # constants from Table 12 in [1]
-    # TODO import from global variables
-    # TODO implement dynamic air density in other functions
-    rho_air_ref = 1.23  # (kg/m3)
-    temp_air_ref = 283  # (K)
-    temp_air += 273  # conversion to (K)
-
-    # Equation (1) in [1]
-    rho_air = temp_air_ref / temp_air * rho_air_ref
-
-    return rho_air
 
 
 def lookup_coeff_wind_pressure(height_path, class_shielding, orientation_path, slope_roof, factor_cros):
@@ -216,7 +313,11 @@ def calc_delta_p_path(p_zone_ref, height_path, temp_zone, coeff_wind_pressure_pa
     return delta_p_path
 
 
-# ++++ LEAKAGES ++++
+"""
+=========================================
+leakages through the envelope
+=========================================
+"""
 
 
 def calc_qv_delta_p_ref(n_delta_p_ref, vol_building):
@@ -387,7 +488,11 @@ def calc_qm_lea(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_props_nat_ven
     return qm_lea_in, qm_lea_out
 
 
-# ++++ VENTILATION OPENINGS ++++
+"""
+=========================================
+operation of window openings
+=========================================
+"""
 
 
 def calc_qv_vent_path(coeff_vent_path, delta_p_vent_path):
@@ -532,7 +637,11 @@ def calc_qm_vent(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_props_nat_ve
     return qm_vent_in, qm_vent_out
 
 
-# ++++ WINDOW VENTILATION ++++
+"""
+=========================================
+windows ventilation
+=========================================
+"""
 
 def calc_area_window_free(area_window_max, r_window_arg):
     """
@@ -742,7 +851,11 @@ def calc_qm_arg(factor_cros, temp_ext, dict_windows_building, u_wind_10, temp_zo
     return qm_arg_in, qm_arg_out
 
 
-# ++++ MASS BALANCE ++++
+"""
+=========================================
+mass balance
+=========================================
+"""
 
 def calc_air_flow_mass_balance(p_zone_ref, temp_zone, u_wind_10, temp_ext, dict_props_nat_vent, option):
     """
@@ -800,129 +913,6 @@ def calc_air_flow_mass_balance(p_zone_ref, temp_zone, u_wind_10, temp_ext, dict_
         return qm_sum_in, qm_sum_out  # for the calculation the total air mass flows are output
 
 
-# ++++ HELPERS ++++
-
-def get_building_geometry_ventilation(gdf_building_geometry):
-    """
-
-    Parameters
-    ----------
-    gdf_building_geometry : GeoDataFrame contains single building
-
-    Returns
-    -------
-    building properties for natural ventilation calculation
-    """
-
-    # TODO: get real slope of roof in the future
-    slope_roof_default = 0
-
-    area_facade_zone = gdf_building_geometry['perimeter'] * gdf_building_geometry['height_ag']
-    area_roof_zone = gdf_building_geometry['footprint']
-    height_zone = gdf_building_geometry['height_ag']
-    slope_roof = slope_roof_default
-
-    return area_facade_zone, area_roof_zone, height_zone, slope_roof
-
-
-def get_properties_natural_ventilation(gdf_geometry_building, gdf_architecture_building, gv):
-    """
-
-    Parameters
-    ----------
-    gdf_geometry_building : GeoDataFrame containing geom properties of single building
-    gdf_architecture_building : GeoDataFrame containing architecture props of single building
-    gv : globalvars
-
-    Returns
-    -------
-    dict_props_nat_vent : dictionary containing natural ventilation properties of zone
-    """
-
-    n50 = gdf_architecture_building['n50']
-    vol_building = gdf_geometry_building['footprint'] * gdf_geometry_building['height_ag']
-    qv_delta_p_lea_ref_zone = calc_qv_delta_p_ref(n50, vol_building)
-    area_facade_zone,\
-    area_roof_zone,\
-    height_zone,\
-    slope_roof = get_building_geometry_ventilation(gdf_geometry_building)
-    class_shielding = gv.shielding_class
-    factor_cros = gdf_architecture_building['f_cros']
-    area_vent_zone = 0  # (cm2) area of ventilation openings # TODO: get from buildings properties
-
-    # calculate properties that remain constant in the minimization
-    # (a) LEAKAGES
-    coeff_lea_path,\
-    height_lea_path,\
-    orientation_lea_path = allocate_default_leakage_paths(calc_coeff_lea_zone(qv_delta_p_lea_ref_zone),
-                                                          area_facade_zone, area_roof_zone, height_zone)
-
-    coeff_wind_pressure_path_lea = lookup_coeff_wind_pressure(height_lea_path, class_shielding, orientation_lea_path,
-                                                              slope_roof, factor_cros)
-
-    # (b) VENTILATION OPENINGS
-    coeff_vent_path,\
-    height_vent_path,\
-    orientation_vent_path = allocate_default_ventilation_openings(calc_coeff_vent_zone(area_vent_zone), height_zone)
-    coeff_wind_pressure_path_vent = lookup_coeff_wind_pressure(height_vent_path, class_shielding, orientation_vent_path,
-                                                               slope_roof, factor_cros)
-
-    # make dict for output
-    dict_props_nat_vent = {'coeff_lea_path': coeff_lea_path,
-                           'height_lea_path': height_lea_path,
-                           'coeff_wind_pressure_path_lea': coeff_wind_pressure_path_lea,
-                           'coeff_vent_path': coeff_vent_path,
-                           'height_vent_path': height_vent_path,
-                           'coeff_wind_pressure_path_vent': coeff_wind_pressure_path_vent,
-                           'factor_cros': factor_cros}
-
-    return dict_props_nat_vent
-
-
-def calc_air_flows(temp_zone, u_wind, temp_ext, dict_props_nat_vent):
-    """
-    Minimization of variable air flows as a function of zone gauge
-
-    Parameters
-    ----------
-    temp_zone : zone indoor air temperature (°C)
-    u_wind : wind velocity (m/s)
-    temp_ext : exterior air temperature (°C)
-    dict_props_nat_vent : dictionary containing natural ventilation properties of zone
-
-    Returns
-    -------
-    qm_sum_in : total air mass flow rates into zone (kg/h)
-    qm_sum_out : total air mass flow rates out of zone (kg/h)
-    """
-
-    # Different solver options to try:
-    # --------------------------------
-    # solver_options_nelder_mead ={'disp': False, 'maxiter': 100, 'maxfev': None, 'xtol': 0.1, 'ftol': 0.1}
-    # solver_options_cg ={'disp': False, 'gtol': 1e-05, 'eps': 1.4901161193847656e-08, 'return_all': False,
-    #                     'maxiter': None, 'norm': -np.inf}
-    # solver_options_powell = {'disp': True, 'maxiter': None, 'direc': None, 'maxfev': None,
-    #            'xtol': 0.0001, 'ftol': 0.0001}
-    # solver_options_tnc = {'disp': True, 'minfev': 0, 'scale': None, 'rescale': -1, 'offset': None, 'gtol': -1,
-    #                       'eps': 1e-08, 'eta': -1, 'maxiter': None, 'maxCGit': -1, 'mesg_num': None,
-    #                       'ftol': -1, 'xtol': -1, 'stepmx': 0, 'accuracy': 0}
-    solver_options_cobyla = {'iprint': 1, 'disp': False, 'maxiter': 100, 'rhobeg': 1.0, 'tol': 0.001}
-
-    # solve air flow mass balance via iteration
-    p_zone_ref = 1  # (Pa) zone pressure, THE UNKNOWN VALUE
-    res = minimize(calc_air_flow_mass_balance, p_zone_ref,
-                   args=(temp_zone, u_wind, temp_ext, dict_props_nat_vent, 'minimize',),
-                   method='COBYLA',
-                   options=solver_options_cobyla)
-    # print(res)
-    # get zone pressure of air flow mass balance
-    p_zone = res.x
-
-    # calculate air flows at zone pressure
-    qm_sum_in, qm_sum_out = calc_air_flow_mass_balance(p_zone, temp_zone, u_wind,
-                                                       temp_ext, dict_props_nat_vent, 'calculate')
-
-    return qm_sum_in, qm_sum_out
 
 
 def testing():

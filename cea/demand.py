@@ -5,11 +5,8 @@ Analytical energy demand model algorithm
 
 """
 from __future__ import division
-
 import multiprocessing as mp
-
 import pandas as pd
-
 from cea.demand import occupancy_model
 import cea.globalvar
 import cea.inputlocator

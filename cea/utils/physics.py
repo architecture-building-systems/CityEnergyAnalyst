@@ -91,4 +91,30 @@ def calc_t(w, RH):  # tempeature in C
     return t
 
 
+def calc_rho_air(temp_air):
+    """
+    Calculation of density of air according to 6.4.2.1 in [1]
+
+    Parameters
+    ----------
+    temp_air : air temperature in (°C)
+
+    Returns
+    -------
+    rho_air : air density in (kg/m3)
+
+    """
+    # constants from Table 12 in [1]
+    # TODO import from global variables
+    # TODO implement dynamic air density in other functions
+    rho_air_ref = 1.23  # (kg/m3)
+    temp_air_ref = 283  # (K)
+    temp_air += 273  # conversion to (K)
+
+    # Equation (1) in [1]
+    rho_air = temp_air_ref / temp_air * rho_air_ref
+
+    return rho_air
+
+
 
