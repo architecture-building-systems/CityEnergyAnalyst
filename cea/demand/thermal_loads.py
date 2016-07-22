@@ -793,7 +793,7 @@ class BuildingProperties(object):
         - get_building_internal: C:\reference-case\baseline\inputs\building-properties\internal_loads.shp
         """
 
-        from cea.geom import simple_window_generator
+        from cea.geom import geometry_reader
         self.gv = gv
         gv.log("reading input files")
         solar = pd.read_csv(locator.get_radiation()).set_index('Name')
@@ -824,7 +824,7 @@ class BuildingProperties(object):
         gv.log("done")
 
         gv.log("creating windows")
-        df_windows = simple_window_generator.create_windows(surface_properties, prop_architecture)
+        df_windows = geometry_reader.create_windows(surface_properties, prop_architecture)
         gv.log("done")
 
         # save resulting data

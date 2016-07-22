@@ -1,18 +1,30 @@
 # -*- coding: utf-8 -*-
 """
-Simple window generator for buildings consisting of rectangular surfaces with unknown orientation generated with the
-radiation script.
-In the future windows will be properties of the geometric representation of buildings.
-
-G. Happle
+===========================
+algorithms for manipulation of building geometry
+===========================
 
 """
 
 from __future__ import division
 import pandas as pd
 
+__author__ = "Gabriel Happle"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Gabriel Happle"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
-# for now get geometric properties of exposed facades from the radiation file
+
+"""
+=========================================
+Windows
+=========================================
+"""
+
 def create_windows(df_prop_surfaces, gdf_building_architecture):
     """
     Creates windows on exposed building surfaces according to building win-wall-ratio
@@ -133,3 +145,33 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
                                'height_window_in_zone': col_height_window_in_zone})
 
     return df_windows
+
+
+"""
+=========================================
+surfaces for ventilation
+=========================================
+"""
+
+def get_building_geometry_ventilation(gdf_building_geometry):
+    """
+
+    Parameters
+    ----------
+    gdf_building_geometry : GeoDataFrame contains single building
+
+    Returns
+    -------
+    building properties for natural ventilation calculation
+    """
+
+    # TODO: get real slope of roof in the future
+    slope_roof_default = 0
+
+    area_facade_zone = gdf_building_geometry['perimeter'] * gdf_building_geometry['height_ag']
+    area_roof_zone = gdf_building_geometry['footprint']
+    height_zone = gdf_building_geometry['height_ag']
+    slope_roof = slope_roof_default
+
+    return area_facade_zone, area_roof_zone, height_zone, slope_roof
+
