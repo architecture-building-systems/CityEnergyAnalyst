@@ -4,7 +4,7 @@
     ===========
     contains debugged version of HVAC model of Kämpf [1]
     originally coded by J. Fonseca
-    debugged and moved out of sensible_loads.py script by G. Happle
+    debugged  by G. Happle
     Literature:
     [1] Kämpf, Jérôme Henri
         On the modelling and optimisation of urban energy fluxes
@@ -13,7 +13,23 @@
 
 from __future__ import division
 import numpy as np
-from utils.physics import calc_h, calc_w
+from cea.utils.physics import calc_h, calc_w
+
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca", "Gabriel Happle"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
+
+"""
+=========================================
+all outside air unit
+=========================================
+"""
 
 def calc_hvac(rhum_1, temp_1, temp_zone_set, qv_req, qe_sen, temp_5_prev, wint, gv, timestep):
     """
@@ -184,7 +200,11 @@ def calc_hvac(rhum_1, temp_1, temp_zone_set, qv_req, qe_sen, temp_5_prev, wint, 
     return qe_hs_sen, qe_cs_sen, qe_hum, qe_dehum, pel_hum_aux, ma_hs, ma_cs, ts_hs, ts_cs, tr_hs, tr_cs, w2, w3, t5
 
 
-# @numba.autojit
+"""
+=========================================
+air Heat exchanger unit
+=========================================
+"""
 def calc_hex(rel_humidity_ext, gv, temp_ext, temp_zone_prev, timestep):
     """
     Calculates air properties of mechanical ventilation system with heat exchanger
@@ -233,6 +253,12 @@ def calc_hex(rel_humidity_ext, gv, temp_ext, temp_zone_prev, timestep):
 
     return t2, w2
 
+
+"""
+=========================================
+Moisture balance
+=========================================
+"""
 
 def calc_w3_heating_case(t5, w2, w5, t3, gv):
     """
