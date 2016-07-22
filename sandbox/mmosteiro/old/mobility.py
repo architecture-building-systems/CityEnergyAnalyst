@@ -9,9 +9,11 @@ J. Fonseca  script redevelopment        19.04.16
 
 """
 from __future__ import division
+
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
-import inputlocator
+
+from cea.GUI import inputlocator
 
 reload(inputlocator)
 

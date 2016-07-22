@@ -1,4 +1,4 @@
-import cea.toolbox
+import cea.GUI.toolbox as toolbox
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -9,18 +9,18 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-reload(cea.toolbox)
+reload(cea.GUI.toolbox)
 
-DemandTool = cea.toolbox.DemandTool
-PropertiesTool = cea.toolbox.PropertiesTool
-EmissionsTool = cea.toolbox.EmissionsTool
-EmbodiedEnergyTool = cea.toolbox.EmbodiedEnergyTool
-HeatmapsTool = cea.toolbox.HeatmapsTool
-GraphsDemandTool = cea.toolbox.GraphsDemandTool
-RadiationTool = cea.toolbox.RadiationTool
-ScenarioPlotsTool = cea.toolbox.ScenarioPlotsTool
-GraphsBenchmarkTool = cea.toolbox.GraphsBenchmarkTool
-MobilityTool = cea.toolbox.MobilityTool
+DemandTool = toolbox.DemandTool
+PropertiesTool = toolbox.PropertiesTool
+EmissionsTool = toolbox.EmissionsTool
+EmbodiedEnergyTool = toolbox.EmbodiedEnergyTool
+HeatmapsTool = toolbox.HeatmapsTool
+GraphsDemandTool = toolbox.GraphsDemandTool
+RadiationTool = toolbox.RadiationTool
+ScenarioPlotsTool = toolbox.ScenarioPlotsTool
+GraphsBenchmarkTool = toolbox.GraphsBenchmarkTool
+MobilityTool = toolbox.MobilityTool
 
 class Toolbox(object):
     def __init__(self):

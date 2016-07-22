@@ -9,10 +9,11 @@ D. Thomas   integration in toolbox
 
 """
 from __future__ import division
+
 import matplotlib.pyplot as plt
 import pandas as pd
-import inputlocator
 
+import cea.GUI.inputlocator
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -107,7 +108,7 @@ def test_graph_demand():
     # the user can select a maximum of 4 of those column names to graph (analysis fields!
     analysis_fields = ["Ealf_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
 
-    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator = cea.GUI.inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
     import globalvar
     gv = globalvar.GlobalVariables()
     graphs_demand(locator=locator, analysis_fields=analysis_fields, gv=gv)

@@ -12,14 +12,14 @@ import os
 import tempfile
 
 import arcpy
+import embodied
 import pandas as pd
 
-import embodied
-import emissions
-import globalvar
-import heatmaps
-import properties
+import cea.datamining.properties
+import cea.globalvar
 from cea import demand
+from cea.analysis import emissions
+from cea.plots import heatmaps
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -31,14 +31,14 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-reload(globalvar)
+reload(cea.globalvar)
 reload(heatmaps)
 reload(embodied)
-reload(properties)
+reload(cea.datamining.properties)
 reload(emissions)
 reload(demand)
 
-gv = globalvar.GlobalVariables()
+gv = cea.globalvar.GlobalVariables()
 
 class MultipleTool(object):
 
@@ -68,10 +68,10 @@ class MultipleTool(object):
     
     def execute(self, parameters, messages):
         multiple_scenarios(path_list_scenarios=parameters[0].valueAsText,
-                            path_LCA_embodied_energy = os.path.join(os.path.dirname(__file__), 'db', 'Archetypes', 'Archetypes_embodied_energy.csv'),
-                            path_LCA_embodied_emissions = os.path.join(os.path.dirname(__file__), 'db', 'Archetypes', 'Archetypes_embodied_emissions.csv'),
-                            path_archetypes = os.path.join(os.path.dirname(__file__),'db', 'Archetypes', 'Archetypes_HVAC_properties.csv'),
-                            path_schedules=os.path.join(os.path.dirname(__file__), 'db', 'Schedules'),
+                            path_LCA_embodied_energy = os.path.join(os.path.dirname(__file__), 'databases', 'Archetypes', 'Archetypes_embodied_energy.csv'),
+                            path_LCA_embodied_emissions = os.path.join(os.path.dirname(__file__), 'databases', 'Archetypes', 'Archetypes_embodied_emissions.csv'),
+                            path_archetypes = os.path.join(os.path.dirname(__file__),'databases', 'Archetypes', 'Archetypes_HVAC_properties.csv'),
+                            path_schedules=os.path.join(os.path.dirname(__file__), 'databases', 'Schedules'),
                             path_temporary_folder = tempfile.gettempdir(),
                             gv=gv)
                     
@@ -100,9 +100,9 @@ def multiple_scenarios(path_list_scenarios, path_LCA_embodied_energy, path_LCA_e
             generate_envelope = True
             generate_systems = True
             generate_equipment = True
-            properties.properties(path_archetypes, path_buildings, path_generation, path_results, generate_uses,
-                        generate_envelope, generate_systems, generate_equipment,
-                        gv)
+            cea.datamining.properties.properties(path_archetypes, path_buildings, path_generation, path_results, generate_uses,
+                                                 generate_envelope, generate_systems, generate_equipment,
+                                                 gv)
             message = 'Properties scenario ' + str(x) + ' completed'
             arcpy.AddMessage(message)
             
@@ -178,10 +178,10 @@ def multiple_scenarios(path_list_scenarios, path_LCA_embodied_energy, path_LCA_e
                    
 def test_multiple_scenarios():
     path_list_scenarios = r'C:\CEA_FS2015_EXERCISE02\list_scenarios.xls'
-    path_LCA_embodied_energy = os.path.join(os.path.dirname(__file__), 'db', 'Archetypes', 'Archetypes_embodied_energy.csv')  # noqa
-    path_LCA_embodied_emissions = os.path.join(os.path.dirname(__file__), 'db', 'Archetypes', 'Archetypes_embodied_emissions.csv')  # noqa
-    path_archetypes = os.path.join(os.path.dirname(__file__),'db', 'Archetypes', 'Archetypes_HVAC_properties.csv')
-    path_schedules = os.path.join(os.path.dirname(__file__), 'db', 'Schedules') #noqa
+    path_LCA_embodied_energy = os.path.join(os.path.dirname(__file__), 'databases', 'Archetypes', 'Archetypes_embodied_energy.csv')  # noqa
+    path_LCA_embodied_emissions = os.path.join(os.path.dirname(__file__), 'databases', 'Archetypes', 'Archetypes_embodied_emissions.csv')  # noqa
+    path_archetypes = os.path.join(os.path.dirname(__file__),'databases', 'Archetypes', 'Archetypes_HVAC_properties.csv')
+    path_schedules = os.path.join(os.path.dirname(__file__), 'databases', 'Schedules') #noqa
     path_temporary_folder = tempfile.gettempdir()
     multiple_scenarios(path_list_scenarios, path_LCA_embodied_energy, path_LCA_embodied_emissions, path_archetypes, path_schedules, path_temporary_folder, gv)
 

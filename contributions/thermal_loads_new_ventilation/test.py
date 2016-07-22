@@ -1,5 +1,5 @@
 from cea import globalvar, thermal_loads, demand
-from cea import inputlocator
+from cea.GUI import inputlocator
 from cea.demand import demand, thermal_loads
 
 

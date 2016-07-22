@@ -8,24 +8,24 @@ import tempfile
 class InputLocator(object):
     """The InputLocator locates files and folders for input to the scripts. This works, because we
     have a convention for the folder structure of a scenario.
-    It also provides locations of other files, such as those in the db folder (e.g. archetypes).
+    It also provides locations of other files, such as those in the databases folder (e.g. archetypes).
     """
     def __init__(self, scenario_path):
         self.scenario_path = scenario_path
-        self.db_path = os.path.join(os.path.dirname(__file__), 'db')
+        self.db_path = os.path.join(os.path.dirname(__file__), 'databases')
 
     def get_default_weather(self):
-        """/cea/db/Weather/Zurich.epw
+        """/cea/databases/Weather/Zurich.epw
         path to database of archetypes file Archetypes_properties.xlsx"""
         return os.path.join(self.db_path, 'Weather', 'Zurich.epw')
 
     def get_archetypes_properties(self):
-        """/cea/db/Archetypes/Switzerland/Archetypes_properties.xlsx
+        """/cea/databases/Archetypes/Switzerland/Archetypes_properties.xlsx
         path to database of archetypes file Archetypes_properties.xlsx"""
         return os.path.join(self.db_path, 'Archetypes', 'Switzerland', 'Archetypes_properties.xlsx')
 
     def get_archetypes_schedules(self):
-        """/cea/db/Archetypes/Switzerland/Archetypes_schedules.xlsx
+        """/cea/databases/Archetypes/Switzerland/Archetypes_schedules.xlsx
         path to database of archetypes file Archetypes_HVAC_properties.xlsx"""
         return os.path.join(self.db_path, 'Archetypes', 'Switzerland', 'Archetypes_schedules.xlsx')
 
@@ -157,7 +157,7 @@ class InputLocator(object):
         return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_operation.csv')
 
     def get_schedule(self, schedule):
-        """cea/db/Schedules/Occupancy_%SCHEDULE%.csv"""
+        """cea/databases/Schedules/Occupancy_%SCHEDULE%.csv"""
         return os.path.join(self.db_path, 'Schedules', 'Occupancy_%s.csv' % schedule)
 
     def get_temporary_folder(self):
@@ -169,7 +169,7 @@ class InputLocator(object):
         return os.path.join(self.get_temporary_folder(), filename)
 
     def get_data_mobility(self):
-        """cea/db/Benchmarks/Switzerland/mobility.csv"""
+        """cea/databases/Benchmarks/Switzerland/mobility.csv"""
         return os.path.join(self.db_path, 'Benchmarks', 'Switzerland', 'mobility.csv')
 
     def get_lca_mobility(self):

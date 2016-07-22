@@ -10,23 +10,22 @@ Pandas Dataframe, Series and numpy arrays are handled specially.
 
 This can be used to reverse-engineer thorny code bases! Also, as a starting point for unit tests...
 """
-import numpy as np
-import pandas as pd
-import os
+import datetime
 import functools
 import inspect
+import itertools
+import os
 import pickle
 from collections import OrderedDict
 
-import itertools
-
-import datetime
+import numpy as np
+import pandas as pd
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Binary
+from sqlalchemy import create_engine, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
-from sqlalchemy import create_engine, ForeignKey
 
-import cea.inputlocator
+import cea.GUI.inputlocator
 
 Base = declarative_base()
 Session = sessionmaker()
@@ -130,7 +129,7 @@ class _LogArgs(object):
                 args_dict, invocation = self.log_entry(func, args, kwargs)
                 # wrap the locators for logging
                 for key, value in args_dict.items():
-                    if isinstance(value, cea.inputlocator.InputLocator):
+                    if isinstance(value, cea.GUI.inputlocator.InputLocator):
                         args_dict[key] = LocatorDecorator(value, invocation)
                     elif isinstance(value, LocatorDecorator):
                         args_dict[key] = LocatorDecorator(value.locator, invocation)
