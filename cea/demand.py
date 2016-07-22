@@ -12,7 +12,7 @@ import cea.globalvar
 import cea.inputlocator
 from cea.demand import thermal_loads
 from cea.demand.thermal_loads import BuildingProperties
-from cea.utils import epwreader
+from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

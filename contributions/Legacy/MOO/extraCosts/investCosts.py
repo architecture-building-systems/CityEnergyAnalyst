@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ==================================================
-Investment costs of the energy system tech
+Investment costs of the energy system technologies
 ==================================================
 
 """

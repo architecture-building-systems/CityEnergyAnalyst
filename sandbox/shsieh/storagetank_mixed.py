@@ -35,7 +35,7 @@ def calc_Qww_ls_st(Tww_st_0, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_nr ):
     tamb = tair - Bf*(tair-te)
 
     U= 0.225    # tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385
-    AR= 3.3     # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), value taken from commercial tank geom (jenni.ch)
+    AR= 3.3     # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), value taken from commercial tank geometry (jenni.ch)
 
     h= (4*V*AR**2/math.pi)^(1/3)  # tank height in m, derived from tank AR
     r= (V/(math.pi*h))*(1/2) # tank radius in m, assuming tank shape is cylinder

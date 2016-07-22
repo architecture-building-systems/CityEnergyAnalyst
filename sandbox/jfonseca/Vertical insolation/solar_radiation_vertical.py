@@ -84,7 +84,7 @@ def solar_radiation_vertical(path_geometry, path_boundary, path_arcgisDB, latitu
     arcpy.SelectLayerByLocation_management('lyr', 'intersect', path_boundary)
     arcpy.CopyFeatures_management('lyr', buildings_selection)
 
-    # Simplify building's geom
+    # Simplify building's geometry
     elevRaster = arcpy.sa.Raster(path_dem_raster)
     dem_raster_extent = elevRaster.extent
     arcpy.SimplifyBuilding_cartography(buildings_selection, Simple_CQ, simplification_tolerance=8, minimum_area=None)

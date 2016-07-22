@@ -68,7 +68,7 @@ class InputLocator(object):
 
     # INPUTS
     def get_building_geometry(self):
-        """scenario/inputs/building-geom/zone.shp"""
+        """scenario/inputs/building-geometry/zone.shp"""
         return os.path.join(self.scenario_path, 'inputs', 'building-geometry', 'zone.shp')
 
     def get_district(self):

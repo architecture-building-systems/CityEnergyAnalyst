@@ -21,8 +21,8 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
-from cea.utils.physics import calc_rho_air
-from cea.geom.geometry_reader import get_building_geometry_ventilation
+from cea.utilities.physics import calc_rho_air
+from cea.geometry.geometry_reader import get_building_geometry_ventilation
 
 
 __author__ = "Gabriel Happle"
@@ -93,7 +93,7 @@ def get_properties_natural_ventilation(gdf_geometry_building, gdf_architecture_b
 
     Parameters
     ----------
-    gdf_geometry_building : GeoDataFrame containing geom properties of single building
+    gdf_geometry_building : GeoDataFrame containing geometry properties of single building
     gdf_architecture_building : GeoDataFrame containing architecture props of single building
     gv : globalvars
 
@@ -923,21 +923,21 @@ def testing():
     import time
     import simple_window_generator
 
-    # generate windows based on geom of vertical surfaces in radiation file
+    # generate windows based on geometry of vertical surfaces in radiation file
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
 
     surface_properties = pd.read_csv(locator.get_surface_properties())
-    gdf_building_architecture = gpdf.from_file(locator.get_building_architecture()).drop('geom', axis=1).set_index('Name')
+    gdf_building_architecture = gpdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1).set_index('Name')
     prop_geometry = gpdf.from_file(locator.get_building_geometry())
     prop_geometry['footprint'] = prop_geometry.area
     prop_geometry['perimeter'] = prop_geometry.length
-    prop_geometry = prop_geometry.drop('geom', axis=1).set_index('Name')
+    prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
     df_windows = simple_window_generator.create_windows(surface_properties, gdf_building_architecture)
 
     building_test = 'B153737'  # 'B154767' this building doesn't have windows
     # get building windows
     df_windows_building_test = df_windows.loc[df_windows['name_building'] == building_test].to_dict('list')
-    # get building geom
+    # get building geometry
     gdf_building_test = prop_geometry.ix[building_test]
     gdf_building_architecture = gdf_building_architecture.ix[building_test]
 

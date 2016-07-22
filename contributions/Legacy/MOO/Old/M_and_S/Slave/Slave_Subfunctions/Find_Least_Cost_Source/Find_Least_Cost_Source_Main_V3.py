@@ -348,7 +348,7 @@ def find_minimum_cost(Q_therm_req, opt_round, used_source, HOUR):
         C_boil_per_Wh_it = [np.inf, np.inf]
         #print "Boiler not in System"
         
-    # compare all tech upon price:
+    # compare all technologies upon price:
     # Constant marginal Cost for all Heat Pumps, slight change expected at Furnace, Boiler and CHP
     
     if (MS_Var.Boiler_on) == 1:

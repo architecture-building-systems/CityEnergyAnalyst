@@ -6,7 +6,7 @@
 # #10. Grey emissions
 # 
 # This routine calculates the grey emissions for all buildings in the geodatabase
-# it is based on the geom of the buildings and standard properties of walls, windows, floors etc..
+# it is based on the geometry of the buildings and standard properties of walls, windows, floors etc..
 # it includes aall the vectors of grey energy related to building services, excavations, structure etc..
 
 # <markdowncell>

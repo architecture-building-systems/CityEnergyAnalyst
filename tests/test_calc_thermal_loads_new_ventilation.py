@@ -7,7 +7,7 @@ from cea.demand.occupancy_model import schedule_maker
 from cea.demand.thermal_loads import calc_thermal_loads_new_ventilation, BuildingProperties
 from cea.globalvar import GlobalVariables
 from cea.inputlocator import InputLocator
-from cea.utils import epwreader
+from cea.utilities import epwreader
 
 
 class TestCalcThermalLoadsNewVentilation(unittest.TestCase):

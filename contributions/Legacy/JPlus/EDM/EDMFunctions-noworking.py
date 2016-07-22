@@ -319,7 +319,7 @@ def CalcRadiationSurfaces(Observers, Radiationyearfinal, DataFactorsCentroids, D
 
 # <markdowncell>
 
-# 1. Estimation of thermal properties and geom of buildings
+# 1. Estimation of thermal properties and geometry of buildings
 
 # <codecell>
 

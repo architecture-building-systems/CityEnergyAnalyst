@@ -14,7 +14,7 @@ import cea.demand.airconditioning_model
 import cea.demand.ventilation_model as ventilation_model
 from cea.demand import occupancy_model
 from  cea.demand import sensible_loads, electrical_loads, hotwater_loads
-from cea.tech import controllers
+from cea.technologies import controllers
 
 
 """
@@ -811,7 +811,7 @@ class BuildingProperties(object):
 
         - get_radiation: C:\reference-case\baseline\outputs\data\solar-radiation\radiation.csv
         - get_surface_properties: C:\reference-case\baseline\outputs\data\solar-radiation\properties_surfaces.csv
-        - get_building_geometry: C:\reference-case\baseline\inputs\building-geom\zone.shp
+        - get_building_geometry: C:\reference-case\baseline\inputs\building-geometry\zone.shp
         - get_building_hvac: C:\reference-case\baseline\inputs\building-properties\technical_systems.shp
         - get_building_thermal: C:\reference-case\baseline\inputs\building-properties\thermal_properties.shp
         - get_building_occupancy: C:\reference-case\baseline\inputs\building-properties\occupancy.shp
@@ -821,7 +821,7 @@ class BuildingProperties(object):
         - get_building_internal: C:\reference-case\baseline\inputs\building-properties\internal_loads.shp
         """
 
-        from cea.geom import geometry_reader
+        from cea.geometry import geometry_reader
         self.gv = gv
         gv.log("reading input files")
         solar = pd.read_csv(locator.get_radiation()).set_index('Name')
@@ -879,7 +879,7 @@ class BuildingProperties(object):
         return list(self._prop_occupancy.drop('PFloor', axis=1).columns)
 
     def get_prop_geometry(self, name_building):
-        """get geom of a building by name"""
+        """get geometry of a building by name"""
         return self._prop_geometry.ix[name_building].to_dict()
 
     def get_prop_architecture(self, name_building):
