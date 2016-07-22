@@ -5,9 +5,7 @@ Global variables
 ================
 
 """
-import functions
-import thermal_loads
-
+from cea.demand import thermal_loads
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -88,7 +86,7 @@ class GlobalVariables(object):
 
 
         # here is where we plug in the models to use for calculations
-        self.models = {'calc-thermal-loads': thermal_loads.calc_thermal_loads_new_ventilation}  # functions.CalcThermalLoads
+        self.models = {'calc-thermal-loads': thermal_loads.calc_thermal_loads}  # functions.CalcThermalLoads
 
         # use multiprocessing / parallel execution if possible
         self.multiprocessing = True
@@ -137,7 +135,7 @@ class GlobalVariables(object):
         The template references self.report_variables. The destination_template may contain date format codes that
         will be updated with the current datetime."""
         if self.testing:
-            import reporting
+            from cea.utilities import reporting
             reporting.full_report_to_xls(template, variables, output_folder, basename, self)
 
 
