@@ -59,7 +59,7 @@ def properties(locator, prop_thermal_flag, prop_architecture_flag,
     """
 
     # get occupancy and age files
-    building_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geom', axis=1)
+    building_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
     list_uses = list(building_occupancy_df.drop(['PFloor','Name'], axis=1).columns) #parking excluded in U-Values
     building_age_df = gpdf.from_file(locator.get_building_age())
 

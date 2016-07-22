@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 from simpledbf import Dbf5
 
-from cea.utils import epwreader
+from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2013, Architecture and Building Systems - ETH Zurich"
@@ -100,7 +100,7 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
 
     #T_G_day.to_csv(r'C:\Users\Jimeno\Documents/test4.csv')
 
-    # Simplify building's geom
+    # Simplify building's geometry
     elevRaster = arcpy.sa.Raster(locator.get_terrain())
     dem_raster_extent = elevRaster.extent
     arcpy.SimplifyBuilding_cartography(locator.get_building_geometry(), Simple_CQ,

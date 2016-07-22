@@ -9,7 +9,7 @@ from __future__ import division
 import numpy as np
 import scipy
 from math import pi
-from cea.tech import storagetank_mixed as sto_m
+from cea.technologies import storagetank as sto_m
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"

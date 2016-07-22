@@ -39,7 +39,7 @@ def calc_Qww_ls_st(Tww_st, Tww_setpoint, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_
     :param Qww_ls_r: recoverable loss in distribution in W
     :param Qww_ls_nr: non-recoverable loss in distribution in W
     :param Utank: dhw tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385. global variable.
-    :param AR: # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), value taken from commercial tank geom (jenni.ch). global variable.
+    :param AR: # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), value taken from commercial tank geometry (jenni.ch). global variable.
 
     Returns
     -------

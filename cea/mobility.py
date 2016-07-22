@@ -37,7 +37,7 @@ def lca_mobility(locator):
 
     # local files
     demand = pd.read_csv(locator.get_total_demand())
-    prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geom', axis=1)#.set_index('Name')
+    prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)#.set_index('Name')
     data_mobility = locator.get_data_mobility()
     factors_mobility = pd.read_excel(data_mobility, sheetname='2010')
 

@@ -219,7 +219,7 @@ def calc_Qgain_lat(people, X_ghp, sys_e_cooling, sys_e_heating):
 
 
 def calc_I_sol(bpr, gv):
-    from cea.tech import blinds
+    from cea.technologies import blinds
     solar_specific = bpr.solar / bpr.rc_model['Awall_all']  # array in W/m2
     blinds_reflection = np.vectorize(blinds.calc_blinds_reflection)(solar_specific, bpr.architecture['type_shade'], gv.g_gl)
     solar_effective_area = blinds_reflection * (1 - gv.F_f) * bpr.rc_model['Aw']  # Calculation of solar effective area per hour in m2
@@ -238,7 +238,7 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
                                        Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, gv, ma_sup_cs, ma_sup_hs,
                                        sys_e_cooling, sys_e_heating, ta_hs_set):
 
-    from cea.tech import  radiators, heating_coils, tabs
+    from cea.technologies import  radiators, heating_coils, tabs
     # local variables
     Ta_0 = ta_hs_set.max()
     if sys_e_heating == 'T0':

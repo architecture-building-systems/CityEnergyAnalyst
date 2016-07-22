@@ -13,7 +13,7 @@
 
 from __future__ import division
 import numpy as np
-from cea.utils.physics import calc_h, calc_w
+from cea.utilities.physics import calc_h, calc_w
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
