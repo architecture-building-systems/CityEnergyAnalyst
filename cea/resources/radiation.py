@@ -487,9 +487,9 @@ def calc_sunrise(sunrise, Yearsimul, longitude, latitude, gv):
 
 
 def test_solar_radiation():
-    import cea.GUI.inputlocator
+    import cea.inputlocator
 
-    locator = cea.GUI.inputlocator.InputLocator(r'C:\reference-case\baseline')
+    locator = cea.inputlocator.InputLocator(r'C:\reference-case\baseline')
     # for the interface, the user should pick a file out of of those in ...DB/Weather/...
     weather_path = locator.get_default_weather()
     path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))

@@ -920,7 +920,7 @@ def testing():
     from geopandas import GeoDataFrame as gpdf
     import cea.globalvar
     gv = cea.globalvar.GlobalVariables()
-    from cea.GUI import inputlocator
+    from cea import inputlocator
     import time
     import simple_window_generator
 

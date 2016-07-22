@@ -8,7 +8,7 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 
-import cea.GUI.inputlocator
+import cea.inputlocator
 
 
 def plot_scenarios(scenarios, output_file):
@@ -21,7 +21,7 @@ def plot_scenarios(scenarios, output_file):
     """
     from matplotlib.backends.backend_pdf import PdfPages
 
-    locators = [cea.GUI.inputlocator.InputLocator(scenario) for scenario in scenarios]
+    locators = [cea.inputlocator.InputLocator(scenario) for scenario in scenarios]
     scenario_names = [os.path.basename(locator.scenario_path) for locator in locators]
 
     plot_config = {
