@@ -2,10 +2,13 @@
 ArcGIS Tool classes for integrating the CEA with ArcGIS.
 """
 import os
-import arcpy
 import tempfile
-from cea import globalvar
+
+import arcpy
+
 import inputlocator
+from cea import globalvar
+
 reload(inputlocator)
 
 
@@ -45,10 +48,10 @@ class GraphsBenchmarkTool(object):
 
         arcpy.AddMessage(scenarios)
 
-        import cea.benchmark
-        reload(cea.benchmark)
+        import cea.analysis.benchmark
+        reload(cea.analysis.benchmark)
         locator_list = [inputlocator.InputLocator(scenario) for scenario in scenarios]
-        cea.benchmark.benchmark(locator_list = locator_list, output_file = output_file)
+        cea.analysis.benchmark.benchmark(locator_list = locator_list, output_file = output_file)
         return
 
 class MobilityTool(object):

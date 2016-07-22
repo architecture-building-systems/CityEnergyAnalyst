@@ -7,22 +7,22 @@
          - [lookup_specific_heat_capacity](#lookup_specific_heat_capacity)
       - [create_windows](#create_windows)
          - [calc_thermal_loads_new_ventilation](#calc_thermal_loads_new_ventilation)
-            - [calc_mixed_schedule](#calc_mixed_schedule)
-            - [get_internal_loads](#get_internal_loads)
-            - [get_occupancy](#get_occupancy)
-            - [get_internal_comfort](#get_internal_comfort)
+            - [calc_occ_schedule](#calc_occ_schedule)
+            - [calc_Qint](#calc_Qint)
+            - [calc_occ](#calc_occ)
+            - [calc_simple_temp_control](#calc_simple_temp_control)
             - [get_properties_building_envelope](#get_properties_building_envelope)
             - [get_properties_building_systems](#get_properties_building_systems)
                - [calculate_pipe_transmittance_values](#calculate_pipe_transmittance_values)
                - [Calc_form](#calc_form)
-                  - [calc_qv_req](#calc_qv_req)
-            - [calc_heat_gains_solar](#calc_heat_gains_solar)
+                  - [calc_simple_ventilation_control](#calc_simple_ventilation_control)
+            - [calc_I_sol](#calc_I_sol)
                - [Calc_Rf_sh](#calc_rf_sh)
                   - [calc_gl](#calc_gl)
-            - [calc_heat_gains_internal_sensible](#calc_heat_gains_internal_sensible)
+            - [calc_Qgain_sen](#calc_Qgain_sen)
             - [calc_comp_heat_gains_sensible](#calc_comp_heat_gains_sensible)
-            - [calc_heat_gains_internal_latent](#calc_heat_gains_internal_latent)
-            - [calc_capacity_heating_cooling_system](#calc_capacity_heating_cooling_system)
+            - [calc_Qgain_lat](#calc_Qgain_lat)
+            - [calc_Qhs_Qcs_sys_max](#calc_Qhs_Qcs_sys_max)
             - [get_properties_natural_ventilation](#get_properties_natural_ventilation)
                - [calc_qv_delta_p_ref](#calc_qv_delta_p_ref)
                - [get_building_geometry_ventilation](#get_building_geometry_ventilation)
@@ -31,11 +31,11 @@
                - [lookup_coeff_wind_pressure](#lookup_coeff_wind_pressure)
                - [calc_coeff_vent_zone](#calc_coeff_vent_zone)
                - [allocate_default_ventilation_openings](#allocate_default_ventilation_openings)
-            - [calc_tHC_corr](#calc_thc_corr)
+            - [calc_T_em_ls](#calc_thc_corr)
             - [calc_thermal_load_mechanical_and_natural_ventilation_timestep](#calc_thermal_load_mechanical_and_natural_ventilation_timestep)
                - [calc_h_ve_adj](#calc_h_ve_adj)
                - [calc_Htr](#calc_htr)
-               - [calc_TL](#calc_tl)
+               - [calc_Qhs_Qcs](#calc_tl)
                   - [Calc_Im_tot](#calc_im_tot)
                   - [Calc_Tm](#calc_tm)
             - [calc_thermal_load_hvac_timestep](#calc_thermal_load_hvac_timestep)
@@ -44,7 +44,7 @@
                - [calc_hvac](#calc_hvac)
                   - [calc_h](#calc_h)
                   - [calc_w3_cooling_case](#calc_w3_cooling_case)
-                     - [calc_Qdis_ls](#calc_qdis_ls)
+                     - [calc_Qhs_Qcs_dis_ls](#calc_qdis_ls)
             - [calc_temperatures_emission_systems](#calc_temperatures_emission_systems)
                - [calc_RAD](#calc_rad)
                - [calc_Ccoil2](#calc_ccoil2)
@@ -53,11 +53,11 @@
                   - [calc_disls](#calc_disls)
                - [calc_Qww_ls_nr](#calc_qww_ls_nr)
             - [calc_pumping_systems_aux_loads](#calc_pumping_systems_aux_loads)
-               - [calc_Eaux_ww](#calc_eaux_ww)
-               - [calc_Eaux_hs_dis](#calc_eaux_hs_dis)
-               - [calc_Eaux_cs_dis](#calc_eaux_cs_dis)
-                  - [calc_Eaux_fw](#calc_eaux_fw)
-               - [calc_Eaux_ve](#calc_eaux_ve)
+               - [calc_Eauxf_ww](#calc_eaux_ww)
+               - [calc_Eauxf_hs_dis](#calc_eaux_hs_dis)
+               - [calc_Eauxf_cs_dis](#calc_eaux_cs_dis)
+                  - [calc_Eauxf_fw](#calc_eaux_fw)
+               - [calc_Eauxf_ve](#calc_eaux_ve)
             - [calc_loads_electrical](#calc_loads_electrical)
             - [results_to_csv](#results_to_csv)
 
@@ -480,7 +480,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_Eaux_cs_dis
+# calc_Eauxf_cs_dis
 - number of invocations: 1
 - max duration: 0.042 s
 - avg duration: 0.042 s
@@ -542,7 +542,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_Eaux_fw
+# calc_Eauxf_fw
 - number of invocations: 1
 - max duration: 0.043 s
 - avg duration: 0.043 s
@@ -584,7 +584,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_Eaux_hs_dis
+# calc_Eauxf_hs_dis
 - number of invocations: 1
 - max duration: 0.033 s
 - avg duration: 0.033 s
@@ -646,7 +646,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_Eaux_ve
+# calc_Eauxf_ve
 - number of invocations: 1
 - max duration: 0.046 s
 - avg duration: 0.046 s
@@ -704,7 +704,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_Eaux_ww
+# calc_Eauxf_ww
 - number of invocations: 1
 - max duration: 0.04 s
 - avg duration: 0.04 s
@@ -808,7 +808,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_Qdis_ls
+# calc_Qhs_Qcs_dis_ls
 - number of invocations: 1
 - max duration: 0.033 s
 - avg duration: 0.033 s
@@ -1124,7 +1124,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_TL
+# calc_Qhs_Qcs
 - number of invocations: 1
 - max duration: 0.146 s
 - avg duration: 0.146 s
@@ -1254,7 +1254,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_capacity_heating_cooling_system
+# calc_Qhs_Qcs_sys_max
 - number of invocations: 1
 - max duration: 0.032 s
 - avg duration: 0.032 s
@@ -1756,7 +1756,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_heat_gains_internal_latent
+# calc_Qgain_lat
 - number of invocations: 1
 - max duration: 0.034 s
 - avg duration: 0.034 s
@@ -1802,7 +1802,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_heat_gains_internal_sensible
+# calc_Qgain_sen
 - number of invocations: 1
 - max duration: 0.034 s
 - avg duration: 0.034 s
@@ -1858,7 +1858,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_heat_gains_solar
+# calc_I_sol
 - number of invocations: 1
 - max duration: 0.196 s
 - avg duration: 0.196 s
@@ -2136,7 +2136,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_mixed_schedule
+# calc_occ_schedule
 - number of invocations: 1
 - max duration: 0.545 s
 - avg duration: 0.545 s
@@ -2352,7 +2352,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_qv_req
+# calc_simple_ventilation_control
 - number of invocations: 1
 - max duration: 0.034 s
 - avg duration: 0.034 s
@@ -2410,7 +2410,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_tHC_corr
+# calc_T_em_ls
 - number of invocations: 1
 - max duration: 0.028 s
 - avg duration: 0.028 s
@@ -3097,7 +3097,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# get_internal_comfort
+# calc_simple_temp_control
 - number of invocations: 1
 - max duration: 0.037 s
 - avg duration: 0.037 s
@@ -3152,7 +3152,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# get_internal_loads
+# calc_Qint
 - number of invocations: 1
 - max duration: 0.04 s
 - avg duration: 0.04 s
@@ -3228,7 +3228,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# get_occupancy
+# calc_occ
 - number of invocations: 1
 - max duration: 0.039 s
 - avg duration: 0.039 s

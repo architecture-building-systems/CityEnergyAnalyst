@@ -1446,7 +1446,7 @@ def translate_J_plus_to_DH_requirements(DAYS_IN_YEAR, HOURS_IN_DAY, thermal_data
                     else:
                         #print (Q_dhw + Q_heating)  / (mdot_DH*gV.cp* (T_s1_DH-T_r1_DH))
                         """
-                        ISSUE HERE: demand and supply do not match! 
+                        ISSUE HERE: demand and supply do not match!
                         Q_dhw + Q_heating seem to be ok,
                         mdot is not correct somehow
                         """

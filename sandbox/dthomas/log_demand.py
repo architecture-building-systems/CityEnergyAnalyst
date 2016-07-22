@@ -4,12 +4,9 @@ run the radiation.py script with the functionlogger.
 import os
 
 import cea.demand
-import functionlogger
-import cea.thermal_loads
-import cea.maker
-import cea.hvac_kaempf
 import contributions.thermal_loads_new_ventilation.simple_window_generator
 import contributions.thermal_loads_new_ventilation.ventilation
+import functionlogger
 
 if __name__ == '__main__':
     path_to_log = os.path.join(os.path.dirname(__file__), 'cea.demand.log.sql')

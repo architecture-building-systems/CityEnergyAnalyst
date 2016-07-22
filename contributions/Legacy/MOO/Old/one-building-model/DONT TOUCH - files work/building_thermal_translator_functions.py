@@ -584,7 +584,7 @@ def interface_hex_design(Q_finalheat_design, T_return_min_global, T_supply_max_g
     return temperature of the building (T_return_min_global)
     
     The maximum supply temperature is set by the maximum temperature of 
-    the heating requirement (J+) or hot water demand 
+    the heating requirement (J+) or hot water demand
     @ LT: 45Â°C + deltaT; @ HT: 60Â°C + deltaT 
     
     In addition, an exchanger-type (hex_type) can be defined (either "HT" or "LT")

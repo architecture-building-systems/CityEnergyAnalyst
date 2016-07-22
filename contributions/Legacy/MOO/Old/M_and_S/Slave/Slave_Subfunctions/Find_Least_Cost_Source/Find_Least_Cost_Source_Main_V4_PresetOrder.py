@@ -177,7 +177,7 @@ def source_activator(Q_therm_req, hour):
                 if Q_therm_req > MS_Var.HPSew_maxSize:
                     
                     Q_therm_Sew = MS_Var.HPSew_maxSize
-                    mdot_DH_to_Sew = mdot_DH_req * Q_therm_Sew / Q_therm_req #scale down the mass flow if the thermal demand is lowered 
+                    mdot_DH_to_Sew = mdot_DH_req * Q_therm_Sew / Q_therm_req #scale down the mass flow if the thermal demand is lowered
                     Q_therm_req -= MS_Var.HPSew_maxSize
                     #print "Sewage Heat Pump at maximum capacity"  
                 
@@ -220,7 +220,7 @@ def source_activator(Q_therm_req, hour):
                     
                 #if Q_therm_req > MS_Var.GHP_max  : # 100% load, cannot go above (scale down the demand)
                 #    Q_therm_GHP = MS_Var.GHP_max
-                #    mdot_DH_to_GHP = mdot_DH_req * Q_therm_GHP / Q_therm_req #scale down the mass flow if the thermal demand is lowered 
+                #    mdot_DH_to_GHP = mdot_DH_req * Q_therm_GHP / Q_therm_req #scale down the mass flow if the thermal demand is lowered
                     #print "Geothermal Heat Pump at maximum capacity"
                     
                     
@@ -245,7 +245,7 @@ def source_activator(Q_therm_req, hour):
                 
                 if Q_therm_req > MS_Var.HPLake_maxSize: # Scale down Load, 100% load achieved
                     Q_therm_HPL = MS_Var.HPLake_maxSize
-                    mdot_DH_to_Lake = Q_therm_HPL / (gV.cp *(tdhsup - tdhret_req)) #scale down the mass flow if the thermal demand is lowered 
+                    mdot_DH_to_Lake = Q_therm_HPL / (gV.cp *(tdhsup - tdhret_req)) #scale down the mass flow if the thermal demand is lowered
                     Q_therm_req -=  MS_Var.HPLake_maxSize
 
                 else: # regular operation possible

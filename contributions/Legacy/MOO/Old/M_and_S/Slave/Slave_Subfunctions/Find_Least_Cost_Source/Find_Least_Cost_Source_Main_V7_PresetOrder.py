@@ -190,7 +190,7 @@ def Least_Cost_Optimization():
                     
                     if Q_therm_req > MS_Var.HPSew_maxSize:
                         Q_therm_Sew = MS_Var.HPSew_maxSize
-                        mdot_DH_to_Sew = mdot_DH_req * Q_therm_Sew / Q_therm_req.copy() #scale down the mass flow if the thermal demand is lowered 
+                        mdot_DH_to_Sew = mdot_DH_req * Q_therm_Sew / Q_therm_req.copy() #scale down the mass flow if the thermal demand is lowered
                         Q_therm_req -= MS_Var.HPSew_maxSize
                     
                     else:
@@ -246,7 +246,7 @@ def Least_Cost_Optimization():
                     
                     if Q_therm_req > MS_Var.HPLake_maxSize: # Scale down Load, 100% load achieved
                         Q_therm_HPL = MS_Var.HPLake_maxSize
-                        mdot_DH_to_Lake = Q_therm_HPL / (gV.cp *(tdhsup - tdhret_req)) #scale down the mass flow if the thermal demand is lowered 
+                        mdot_DH_to_Lake = Q_therm_HPL / (gV.cp *(tdhsup - tdhret_req)) #scale down the mass flow if the thermal demand is lowered
                         Q_therm_req -=  MS_Var.HPLake_maxSize
     
                     else: # regular operation possible
