@@ -6,15 +6,18 @@ Heating and cooling coils of Air handling units
 
 """
 from __future__ import division
+
+import os
+
 import numpy as np
 import pandas as pd
-import os
 from geopandas import GeoDataFrame
-from  cea.demand import sensible_loads, electrical_loads, hotwater_loads
-from cea.demand import occupancy_model
-from cea.tech import controllers
-import cea.hvac_kaempf
+
+import cea.demand.airconditioning_model
 import contributions.thermal_loads_new_ventilation.ventilation
+from cea.demand import occupancy_model
+from  cea.demand import sensible_loads, electrical_loads, hotwater_loads
+from cea.tech import controllers
 
 
 # FIXME: replace weather_data with tsd['T_ext'] and tsd['rh_ext']
@@ -109,7 +112,7 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
     qm_ve_mech = qm_ve_req  # required air mass flow rate
     qm_ve_nat = 0  # natural ventilation # TODO: this could be a fixed percentage of the mechanical ventilation (overpressure) as a function of n50
 
-    temp_ve_sup, _ = cea.hvac_kaempf.calc_hex(rh_ext, gv, temp_ext, temp_air_prev, t)
+    temp_ve_sup, _ = cea.demand.airconditioning_model.calc_hex(rh_ext, gv, temp_ext, temp_air_prev, t)
 
     # conversion to volume flow rate
     qv_ve_req = qm_ve_req / gv.Pair  # TODO: modify Kaempf model to accept mass flow rate instead of volume flow
@@ -195,8 +198,8 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
         temp_rec_c, \
         w_rec, \
         w_sup, \
-        temp_air = cea.hvac_kaempf.calc_hvac(rh_ext, temp_ext, t_air_set, qv_ve_req, q_sen_load_hvac, temp_air_prev,
-                                             w_int, gv, t)
+        temp_air = cea.demand.airconditioning_model.calc_hvac(rh_ext, temp_ext, t_air_set, qv_ve_req, q_sen_load_hvac, temp_air_prev,
+                                                              w_int, gv, t)
 
         # mass flow rate output for cooling or heating is zero if the hvac is used only for ventilation
         qm_ve_hvac = max(qm_ve_hvac_h, qm_ve_hvac_c, qm_ve_req)  # ventilation mass flow rate of hvac system

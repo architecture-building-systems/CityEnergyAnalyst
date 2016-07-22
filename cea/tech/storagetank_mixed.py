@@ -80,6 +80,7 @@ def ode(y, t, ql, qd, qc, Pwater, Cpw, Vtank):
     dydt = (qc-ql-qd)/(Pwater*Vtank*Cpw)
     return dydt
 
+
 def solve_ode_storage(Tww_st_0,ql,qd,qc,Pwater,Cpw,Vtank):
     """
     This algorithm solves the differential equation, ode.
