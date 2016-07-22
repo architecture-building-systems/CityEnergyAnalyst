@@ -22,7 +22,6 @@ sys.path.append(CodePath)
 
 #from __future__ import division
 import time
-import matplotlib.pyplot as plt
 import os
 from substation import substationMain as subsM
 from substation import substationModel as subsModel
@@ -36,9 +35,9 @@ import supportFn as sFn
 import ntwOpt.Python.NtwMain as ntwM
 import Rep3D as rep
 import globalVar as glob
-import sensitivity as sens
+from contributions.Legacy.MOO.analysis import sensitivity as sens
 import mcda
-import postProcessing as post
+import plots.graphs_optimization as plots
 
 
 reload(subsM)
@@ -150,7 +149,7 @@ print len(pop), "individuals after generation " + str(Generation) + "\n"
 #epsNorm = norm.epsIndicator(pathX, Generation)
 
 ## Plots the averaged number of connected buildings & the number of individuals
-#BuildCon, nInd = post.buildingConnection(Generation, pathX)
+#BuildCon, nInd = plots.buildingConnection(Generation, pathX)
 
 ## Sensitivity analysis
 ## WARNING : can be very long depending on the chosen sensibility step! (multiple days)
@@ -165,20 +164,20 @@ print len(pop), "individuals after generation " + str(Generation) + "\n"
 ### Bar chart for the relative savings compared to baseline
 #popRef, epsInd = mM.EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, manualCheck = 1)
 #indToCompare = mcda.mcda_differentWeights(pop, pathX)
-#reload(post)
-#post.compareRef(popRef[0], pop, indToCompare)
+#reload(plots)
+#plots.compareRef(popRef[0], pop, indToCompare)
 #
 ### intra-scenario MCDA to find the best individual
 #reload(mcda)
 #setWeights = mcda.mcda_criteria()
 #scoreArray, bestInd, indexBest, scoreBest = mcda.mcda_analysis(pop, setWeights, pathX)
 #
-#reload(post)
+#reload(plots)
 #indexBest = 147
 ### Pie charts for the best individual
-#post.configDesign(pop, indexBest)
-#post.connectedbuildings(pop,indexBest)
+#plots.configDesign(pop, indexBest)
+#plots.connectedbuildings(pop,indexBest)
 #reload(mcda)
 #specificCosts, shareLocal = mcda.mcda_indicators(pop[indexBest], pathX, plot = 1)
-#imp,exp = post.Elec_ImportExport(pop[indexBest], pathX)
-#costsDisc = post.decentralizeCosts(pop[indexBest], pathX, gV)
+#imp,exp = plots.Elec_ImportExport(pop[indexBest], pathX)
+#costsDisc = normalizeresults.decentralizeCosts(pop[indexBest], pathX, gV)

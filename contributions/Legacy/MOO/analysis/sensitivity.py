@@ -6,17 +6,22 @@ Sensitivity analysis
 """
 from __future__ import division
 import os
-import globalVar as glob
-import supportFn as sFn
-import evaluateInd as eI
+import contributions.Legacy.MOO.globalVar as glob
+import contributions.Legacy.MOO.supportFn as sFn
+import contributions.Legacy.MOO.evaluateInd as eI
 from deap import base
-import evolAlgo.Selection as sel
+import contributions.Legacy.MOO.evolAlgo.Selection as sel
 import numpy as np
 
-reload(glob)
-reload(sFn)
-reload(eI)
-reload(sel)
+
+__author__ = "Tim Vollrath"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Tim Vollrath"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
 
 class sensBandwidth(object):
@@ -36,8 +41,7 @@ class sensBandwidth(object):
         # Biogas
         self.minBG = -0.1
         self.maxBG = 0.1
-        
-        
+
 def sensAnalysis(step, pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gen, bandwidth):
 
     os.chdir(pathX.pathMasterRes)
@@ -92,4 +96,3 @@ def sensAnalysis(step, pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFea
         mostSensitive = 'BG price'
         
     return ParetoResults, FactorResults, mostSensitive
-    

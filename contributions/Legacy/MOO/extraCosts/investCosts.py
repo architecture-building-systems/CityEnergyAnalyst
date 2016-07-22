@@ -13,7 +13,7 @@ from scipy.interpolate import interp1d
 import numpy as np
 
 
-def StorageCosts(vol, gV):
+def calc_Cinv_storage(vol, gV):
     """
     vol in m3
     50y lifetime
@@ -26,7 +26,7 @@ def StorageCosts(vol, gV):
     return InvCa # CHF/a
 
 
-def Heatexch_Cost(Q_design, gV):
+def calc_Cinv_HEX(Q_design, gV):
     """
     Calculates the cost of a heat exchanger (based on A+W cost of oil boilers) [CHF / a]
     
@@ -67,7 +67,7 @@ def Heatexch_Cost(Q_design, gV):
     return InvCa
     
 
-def Cond_Boiler_InvCost(Q_design, Q_annual, gV):
+def calc_Cinv_boiler(Q_design, Q_annual, gV):
     """
     Calculates the annual cost of a boiler (based on A+W cost of oil boilers) [CHF / a]
     and Faz. 2012 data
@@ -111,7 +111,7 @@ def Cond_Boiler_InvCost(Q_design, Q_annual, gV):
     return InvCa
 
 
-def CC_InvC(CC_size, gV):
+def calc_Cinv_CCT(CC_size, gV):
     """
     Annualized investment costs for the Combined cycle
     
@@ -133,7 +133,7 @@ def CC_InvC(CC_size, gV):
     return InvCa
 
 
-def Furnace_InVCost(P_design, Q_annual, gV):
+def calc_Cinv_furnace(P_design, Q_annual, gV):
     """
     Calculates the cost of a Furnace
     based on Bioenergy 2020 (AFO) and POLYCITY Ostfildern 
@@ -169,7 +169,7 @@ def Furnace_InVCost(P_design, Q_annual, gV):
     return InvCa
 
 
-def HP_InvCost(HP_Size, gV):
+def calc_Cinv_HP(HP_Size, gV):
     """
     Calculates the annualized investment costs for the heat pump
     
@@ -195,7 +195,7 @@ def HP_InvCost(HP_Size, gV):
     return InvCa
 
 
-def GHP_InvCost(GHP_Size, gV):
+def calc_Cinv_GHP(GHP_Size, gV):
     """
     Calculates the annualized investment costs for the geothermal heat pump
     
@@ -230,7 +230,7 @@ def GHP_InvCost(GHP_Size, gV):
     return InvCa
     
 
-def Pump_Cost(deltaP, mdot, eta_pumping, gV):
+def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
     """
     calculates the cost of a pumping device. 
     if the nominal load (electric) is above 375kW, a second pump is assumed
@@ -303,8 +303,7 @@ def Pump_Cost(deltaP, mdot, eta_pumping, gV):
     return InvCa
 
 
-
-def PV_InvC(P_peak):
+def calc_Cinv_PV(P_peak):
     """
     P_peak in kW
     result in CHF
@@ -318,7 +317,7 @@ def PV_InvC(P_peak):
     return InvCa # [CHF/y]
 
 
-def SC_InvC(Area):
+def calc_Cinv_SC(Area):
     """
     Lifetime 35 years
     """
@@ -327,7 +326,7 @@ def SC_InvC(Area):
     return InvCa
 
 
-def PVT_InvC(P_peak):
+def calc_Cinv_PVT(P_peak):
     """
     P_peak in kW
     result in CHF
@@ -336,8 +335,9 @@ def PVT_InvC(P_peak):
     # 2sol
     
     return InvCa
-    
-def NetworkInvCost(LengthNetwork, gV):
+
+
+def calc_Cinv_network_linear(LengthNetwork, gV):
     """
     Length Network in meters of total length of network
     """
@@ -346,10 +346,11 @@ def NetworkInvCost(LengthNetwork, gV):
     InvCa =  InvC * gV.PipeInterestRate * (1+ gV.PipeInterestRate) ** gV.PipeLifeTime / ((1+gV.PipeInterestRate) ** gV.PipeLifeTime - 1) 
     
     return InvCa
-    
-def GasConnectionCost(PnomGas, gV):
+
+
+def calc_Cinv_gas(PnomGas, gV):
     """
-    PnomGas in Watt Peak Capacity of Gas supply
+    PnomGas in Watt Peak Capacity of Gas supply for connection to gas
     """
     InvCa = 0
     InvCa = gV.GasConnectionCost * PnomGas # from Energie360 - Zurich

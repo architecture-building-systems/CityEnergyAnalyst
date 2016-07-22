@@ -1,6 +1,6 @@
 """
 ==============================
-Normalize the results and plot
+Normalize results
 ==============================
 
 """
@@ -13,9 +13,8 @@ import evaluateInd as eI
 reload(sFn)
 reload(rep)
 reload(eI)
-
-
 toolbox = base.Toolbox()
+
 
 
 def normalizePop(pathX, Generation):
@@ -79,24 +78,8 @@ def normalizePop(pathX, Generation):
     return popFinal
 
 
-def plotScatter(pathX, Generation, IndicatorToShowPlot):
-    """
-    Plots Pareto front as scattered points
-    
-    """
-    popNorm = normalizePop(pathX, Generation)
-    rep.rep3Dscatter(popNorm, IndicatorToShowPlot)
 
-def plotSurf(pathX, Generation):
-    """
-    Plots Pareto front as a surface
-    
-    """
-    popNorm = normalizePop(pathX, Generation)
-    rep.rep3Dsurf(popNorm)
-    
-
-def epsIndicator(pathX, generation):
+def normalize_epsIndicator(pathX, generation):
     """
     Calculates the normalized epsilon indicator
     For all generations, the populations are normalized with regards to the
@@ -178,14 +161,25 @@ def epsIndicator(pathX, generation):
         frontNew = allPopNorm[i+1]
         epsAll.append(eI.epsIndicator(frontOld, frontNew))
     
-    # Plotting
-    #fig = plt.figure()
-    #ax = fig.add_subplot(111, xlim = (2,generation))
-    #xList = [ 2 + x for x in range(len(epsAll)) ]
-    #ax.plot(xList, epsAll)
-    #ax.set_ylabel('Normalized epsilon indicator')
-    #ax.set_xlabel('Generation')
-    #ax.set_xticks(np.arange(2,generation+1,2))
-    #plt.show()
-    
     return epsAll
+
+
+
+def decentralizeCosts(individual, pathX, gV):
+    indCombi = sFn.readCombi(individual, gV)
+    buildList = sFn.extractList(pathX.pathRaw + "/Total.csv")
+    costsDisc = 0
+
+    for i in range(len(indCombi)):
+        if indCombi[i] == "0": # Decentralized building
+            buildName = buildList[i]
+            DecentFile = pathX.pathDiscRes + "/DiscOp_" + buildName + "_result.csv"
+
+            df = pd.read_csv(DecentFile)
+            dfBest = df[df["Best configuration"] == 1]
+
+            costsDisc += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
+
+    print costsDisc, "costsDisc"
+    return costsDisc
+

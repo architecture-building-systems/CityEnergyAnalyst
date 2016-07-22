@@ -191,7 +191,7 @@ def mcda_indicators(individual, pathX, plot = 0):
     
     return specificCosts, shareLocal
     
-    
+
 
 def mcda_analysis(pop, setWeights, pathX):
     nCriteria = 5
@@ -260,6 +260,7 @@ def mcda_analysis(pop, setWeights, pathX):
                 extraIndicators[indexBest][1]
     
     return scoreArray, bestInd, indexBest, scoreBest
+
 
 
 def mcda_differentWeights(pop, pathX):

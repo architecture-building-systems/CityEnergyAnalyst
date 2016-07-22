@@ -16,23 +16,12 @@ from pickle import Pickler, Unpickler
 import supportFn as sFn
 import evaluateInd as eI
 import constrCheck as cCheck
-reload(sFn)
-reload(eI)
-reload(cCheck)
 
-    
 import globalVar as gV
 import evolAlgo.CreateInd as ci
 import evolAlgo.Mutations as mut
 import evolAlgo.CrossOver as cx
 import evolAlgo.Selection as sel
-
-reload(gV)
-reload(ci)
-reload(mut)
-reload(cx)
-reload(sel)
-
 
 
 def EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, genCP = 0, manualCheck = 0):

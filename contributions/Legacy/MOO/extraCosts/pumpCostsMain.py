@@ -92,7 +92,7 @@ def pumpCosts(dicoSupply, buildList, pathNtwRes, ntwFeat, gV):
         else: 
             deltaPmax = ntwFeat.DeltaP_DHN
             
-        investCosts = iC.Pump_Cost(deltaPmax, mdotnMax, gV.etaPump, gV) # investment of Machinery
+        investCosts = iC.calc_Cinv_pump(deltaPmax, mdotnMax, gV.etaPump, gV) # investment of Machinery
         pumpCosts += investCosts
         
     print pumpCosts, " CHF - pump costs in pumpCostsMain.py"

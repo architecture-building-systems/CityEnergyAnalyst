@@ -184,6 +184,7 @@ def calc_mainuse(uses_df, uses):
 
     return mainuse
 
+
 def get_database(path_database, sheet):
     database = pd.read_excel(path_database, sheet)
     return database
