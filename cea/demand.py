@@ -24,6 +24,13 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
+"""
+=========================================
+demand calculation
+=========================================
+"""
+
+
 def demand_calculation(locator, weather_path, gv):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
@@ -108,6 +115,12 @@ def write_totals_csv(building_properties, locator):
     df.to_csv(locator.get_total_demand(), index=False, float_format='%.2f')
 
 
+"""
+=========================================
+multiple or single core calculation
+=========================================
+"""
+
 def thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, usage_schedules,
                                 weather_data):
     for i, building in enumerate(building_properties.list_building_names()):
@@ -135,6 +148,11 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
         job.get(60)
         gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
 
+"""
+=========================================
+test
+=========================================
+"""
 
 def run_as_script(scenario_path=None, weather_path=None):
         if scenario_path is None:
