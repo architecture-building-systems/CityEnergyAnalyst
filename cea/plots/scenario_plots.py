@@ -129,6 +129,7 @@ def plot_lca_embodied(ax, locators, scenario_names, column, title, unit):
     plt.scatter(x, y, marker='D', color='g')
     ax2.set_ylabel('Per Scenario [%(unit)s]' % locals())
 
+
 def plot_lca_operation(ax, locators, scenario_names, column, title, unit):
     df = pd.DataFrame()
     afs = pd.DataFrame()
