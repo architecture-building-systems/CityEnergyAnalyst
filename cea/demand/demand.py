@@ -10,8 +10,8 @@ import multiprocessing as mp
 
 import pandas as pd
 
-import cea.GUI.inputlocator
 import cea.globalvar
+import cea.inputlocator
 from cea.demand import occupancy_model
 from cea.demand import thermal_loads
 from cea.demand.thermal_loads import BuildingProperties
@@ -160,7 +160,7 @@ test
 def run_as_script(scenario_path=None, weather_path=None):
         if scenario_path is None:
             scenario_path = r'c:\reference-case\baseline'
-        locator = cea.GUI.inputlocator.InputLocator(scenario_path=scenario_path)
+        locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
         # for the interface, the user should pick a file out of of those in ...DB/Weather/...
         if weather_path is None:
             weather_path = locator.get_default_weather()

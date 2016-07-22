@@ -11,7 +11,8 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
-from cea.GUI import inputlocator
+
+from cea import inputlocator
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
