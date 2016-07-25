@@ -4,12 +4,12 @@ Normalize results
 ==============================
 
 """
-from deap import base
-import numpy as np
-import matplotlib.pyplot as plt
-import supportFn as sFn
 import Rep3D as rep
-import evaluateInd as eI
+from deap import base
+
+import contributions.Legacy.MOO.supportFn as sFn
+from contributions.Legacy.MOO.optimization.evolAlgo import evaluateInd as eI
+
 reload(sFn)
 reload(rep)
 reload(eI)

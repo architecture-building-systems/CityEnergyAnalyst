@@ -27,15 +27,15 @@ from contributions.Legacy.MOO.technologies import substation as subsM
 from contributions.Legacy.MOO.discBuild import discBuildMain_noCluster as dbM
 from contributions.Legacy.MOO.elecOperation import elecMain
 from contributions.Legacy.MOO.LCA import processheat as hpMain
-import contributions.Legacy.MOO.masterMain as mM
+import contributions.Legacy.MOO.optimization.evolAlgo.masterMain as mM
 from contributions.Legacy.MOO.network import summarize_network_main as nM
-import contributions.Legacy.MOO.normalizeResults as norm
+import contributions.Legacy.MOO.optimization.normalizeResults as norm
 import contributions.Legacy.MOO.supportFn as sFn
 import contributions.Legacy.MOO.ntwOpt.Python.NtwMain as ntwM
 import Rep3D as rep
 import contributions.Legacy.MOO.globalVar as glob
 from contributions.Legacy.MOO.analysis import sensitivity as sens
-import contributions.Legacy.MOO.mcda
+import contributions.Legacy.MOO.analysis.mcda
 
 reload(subsM)
 reload(dbM)
@@ -49,7 +49,7 @@ reload(ntwM)
 reload(rep)
 reload(glob)
 reload(sens)
-reload(contributions.Legacy.MOO.mcda)
+reload(contributions.Legacy.MOO.analysis.mcda)
 reload(post)
 
 

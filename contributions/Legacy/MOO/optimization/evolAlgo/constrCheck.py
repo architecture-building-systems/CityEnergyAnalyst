@@ -12,8 +12,8 @@ import numpy as np
 import pandas as pd
 
 import contributions.Legacy.MOO.optimization.evolAlgo.CreateInd as ci
-import globalVar as gV
-import supportFn as sFn
+import contributions.Legacy.MOO.globalVar as gV
+import contributions.Legacy.MOO.supportFn as sFn
 
 reload(sFn)
 reload(gV)

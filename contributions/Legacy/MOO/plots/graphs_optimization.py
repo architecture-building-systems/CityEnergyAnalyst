@@ -6,14 +6,15 @@ plot results of optimization
 """
 
 from __future__ import division
-import matplotlib.pyplot as plt
-import contributions.Legacy.MOO.normalizeResults as norm
+
 import matplotlib
 import matplotlib.cm as cmx
-import contributions.Legacy.MOO.supportFn as sFn
-import pandas as pd
-import contributions.Legacy.MOO.mcda as mcda
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+
+import contributions.Legacy.MOO.optimization.normalizeResults as norm
+import contributions.Legacy.MOO.supportFn as sFn
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

@@ -11,9 +11,9 @@ import os
 import numpy as np
 from deap import base
 
-import contributions.Legacy.MOO.evaluateInd as eI
 import contributions.Legacy.MOO.globalVar as glob
 import contributions.Legacy.MOO.optimization.evolAlgo.Selection as sel
+import contributions.Legacy.MOO.optimization.evolAlgo.evaluateInd as eI
 import contributions.Legacy.MOO.supportFn as sFn
 
 __author__ = "Tim Vollrath"

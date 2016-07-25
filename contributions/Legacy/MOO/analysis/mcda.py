@@ -7,8 +7,8 @@ Post-processing: MCDA
 from __future__ import division
 import numpy as np
 import pandas as pd
-import globalVar as glob
-import supportFn as sFn
+import contributions.Legacy.MOO.globalVar as glob
+import contributions.Legacy.MOO.supportFn as sFn
 import matplotlib.pyplot as plt
 from pylab import pie
 
