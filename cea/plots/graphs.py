@@ -106,10 +106,10 @@ def test_graph_demand():
     # HINTS FOR ARCGIS INTERFACE:
     # the user should see all the column names of the total_demands.csv
     # the user can select a maximum of 4 of those column names to graph (analysis fields!
+    from cea import globalvar
     analysis_fields = ["Ealf_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
 
     locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
-    import globalvar
     gv = globalvar.GlobalVariables()
     graphs_demand(locator=locator, analysis_fields=analysis_fields, gv=gv)
     print 'test_graph_demand() succeeded'
