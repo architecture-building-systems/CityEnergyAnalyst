@@ -226,96 +226,9 @@ def Calc_optimal_spacing(teta_z,Sh,tilt_angle,module_lenght):
 
 # <codecell>
 
-def optimal_angle_and_tilt(observers_all,latitude,worst_sh, worst_Az, transmittivity, diffuseProp,
-                           grid_side, module_lenght,angle_north, Min_Isol, Max_Isol):
-    #calculate values for flat roofs Slope < 5 degrees.
-    optimal_angle_flat = Calc_optimal_angle(0,latitude,transmittivity)
-    optimal_spacing_flat = Calc_optimal_spacing(worst_sh,worst_Az,optimal_angle_flat,module_lenght)
-    arcpy.AddField_management(observers_all, "array_s", "DOUBLE")
-    arcpy.AddField_management(observers_all, "area_netpv", "DOUBLE")
-    arcpy.AddField_management(observers_all, "CATB", "SHORT")
-    arcpy.AddField_management(observers_all, "CATGB", "SHORT")
-    arcpy.AddField_management(observers_all, "CATteta_z", "SHORT")
-    fields = ('aspect','slope','GB',"array_s","area_netpv","CATB","CATGB","CATteta_z")
-    # go inside the database and perform the changes
-    with arcpy.da.UpdateCursor(observers_all,fields) as cursor:
-        for row in cursor:
-            aspect = row[0]
-            slope = row[1]
-            if slope > 5: # no t a flat roof.
-                B = slope
-                array_s = 0
-                if 180 <= aspect < 360:            # convert the aspect of arcgis to azimuth
-                    teta_z =   aspect -  180
-                elif 0 < aspect < 180:
-                    teta_z = aspect - 180 # negative in the east band
-                elif aspect == 0 or aspect == 360:
-                    teta_z = 180
-                if -angle_north <= teta_z <= angle_north  and row[2] > Min_Isol:
-                    row[0] = teta_z
-                    row[1] = B
-                    row[3] = array_s
-                    row[4] = (grid_side-array_s)/cos(radians(abs(B)))*grid_side
-                    row[5], row[6], row[7] = Calc_categoriesroof(teta_z,B,row[2],Max_Isol)
-                    cursor.updateRow(row)
-                else:
-                    cursor.deleteRow()
-            else:
-                teta_z = 0 # flat surface, all panels will be oriented towards south # optimal angle in degrees
-                B = optimal_angle_flat
-                array_s = optimal_spacing_flat
-                if row[2] > Min_Isol:
-                    row[0] = teta_z
-                    row[1] = B
-                    row[3] = array_s
-                    row[4] = (grid_side-array_s)/cos(radians(abs(B)))*grid_side
-                    row[5], row[6], row[7] = Calc_categoriesroof(teta_z,B,row[2],Max_Isol)
-                    cursor.updateRow(row)
-                else:
-                    cursor.deleteRow()
 
 # <codecell>
 
-def Calc_categoriesroof(teta_z,B,GB,Max_Isol):
-    if -122.5 < teta_z <= -67:
-        CATteta_z = 1     
-    elif -67 < teta_z <= -22.5:
-        CATteta_z = 3  
-    elif -22.5 < teta_z <= 22.5:
-        CATteta_z = 5  
-    elif 22.5 < teta_z <= 67:
-        CATteta_z = 4  
-    elif 67 <= teta_z <= 122.5:
-        CATteta_z = 2  
-
-
-        
-    if 0 < B <=5:
-        CATB = 1 # flat roof
-    elif  5 < B <= 15:
-        CATB = 2 #tilted 25 degrees
-    elif 15< B <= 25:
-        CATB = 3 #tilted 25 degrees
-    elif 25< B <= 40:  
-        CATB = 4 #tilted 25 degrees
-    elif 40< B <= 60:  
-        CATB = 5 #tilted 25 degrees
-    elif B > 60:  
-        CATB = 6 #tilted 25 degrees
-
-    GB_percent =  GB/Max_Isol     
-    if 0 < GB_percent <= 0.25:
-        CATGB = 1 # flat roof
-    elif  0.25 < GB_percent <= 0.50:
-        CATGB = 2 
-    elif 0.50< GB_percent <= 0.75:
-        CATGB = 3 
-    elif 0.75< GB_percent <= 0.90:  
-        CATGB = 4 
-    elif 0.90< GB_percent <= 1:  
-        CATGB = 5 
-    
-    return CATB, CATGB, CATteta_z
 
 # <codecell>
 
@@ -462,8 +375,6 @@ def Calc_incidenteangleB(g, lat, ha, tilt, teta_z):
     teta_B = acos(part1+part2+part3)
     return teta_B #in radains
 
-# <codecell>
-
 def calc_Teta_T(Az, Sz, teta_z, teta_B): #Az is the solar azimuth
     #calculate incident angles transversal
     teta_ta = sin(Sz)*sin(abs(teta_z-Az))
@@ -474,7 +385,6 @@ def calc_Teta_T(Az, Sz, teta_z, teta_B): #Az is the solar azimuth
         teta_T = 89.999
     return teta_T
 
-# <codecell>
 
 def calc_maxtetaL(teta_L):
     if teta_L < 0:
@@ -491,7 +401,7 @@ def Calc_incl_angle(x):
 
 # <codecell>
 
-def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, T_G_hour, latitude, Tin, height):    
+def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, T_G_hour, latitude, Tin, height):
     # get properties of the panel to evaluate
     n0,c1,c2, mB0_r, mB_max_r,mB_min_r,C_eff, t_max, IAM_d, Aratio, Apanel, dP1,dP2,dP3,dP4 = calc_propertiesSC(type_SCpanel)
     Area_a = Aratio*Apanel
@@ -513,29 +423,29 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, 
         Nseg = 100 # default number of subsdivisions for the calculation
     else:
         Nseg = 10 # default number of subsdivisions for the calculation
-    
-    for group in range(listgroups): 
+
+    for group in range(listgroups):
         teta_z = prop_observers.loc[group,'aspect'] #azimuth of paneles of group
         Area_group = prop_observers.loc[group,'area_netpv']*number_points[group]
         tilt_angle = prop_observers.loc[group,'slope'] #tilt angle of panels
         radiation = pd.DataFrame({'I_sol':group_radiation[group]}) #choose vector with all values of Isol
         radiation['I_diffuse'] = T_G_hour.ratio_diffhout*radiation.I_sol #calculate diffuse radiation
         radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']  #direct radaition
-        
-        #calculate angle modifiers              
+
+        #calculate angle modifiers
         T_G_hour['IAM_b']  = calc_anglemodifierSC(T_G_hour.Az,T_G_hour.g,T_G_hour.ha,teta_z,tilt_angle,type_SCpanel,latitude, T_G_hour.Sz) #direct angle modifier
-    
+
         listresults[group] = Calc_SC_module2(radiation,tilt_angle, T_G_hour.IAM_b, radiation.I_direct, radiation.I_diffuse,T_G_hour.te,
                                             n0,c1,c2, mB0_r, mB_max_r,mB_min_r,C_eff, t_max, IAM_d, Area_a, dP1,dP2,dP3,dP4, Tin, Leq, Le,Nseg)
-        
+
         K = Area_group/Apanel
         listresults[group][5] = listresults[group][5]*K
         listresults[group][0] = listresults[group][0]*K
         listresults[group][1] = listresults[group][1]*K
         listresults[group][2] = listresults[group][2]*K
-        
+
         listareasgroups[group] = Area_group
-    
+
     for group in range(listgroups):
         mcp_array = listresults[group][5]
         qloss_array = listresults[group][0]
@@ -545,14 +455,14 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, 
         Sum_Eaux = Sum_Eaux + Eaux_array
         Sum_qloss = Sum_qloss + qloss_array
         Sum_mcp = Sum_mcp + mcp_array
-    
+
     Tout_group = (Sum_qout/Sum_mcp) + Tin  # in C
     Final = pd.DataFrame({'Qsc_Kw':Sum_qout,'Tscs':Tin_array,'Tscr':Tout_group, 'mcp_kW/C': Sum_mcp,'Eaux_kW': Sum_Eaux,
-                          'Qsc_l_KWH': Sum_qloss, 'Area':sum(listareasgroups)},index = range(8760)) 
-          
+                          'Qsc_l_KWH': Sum_qloss, 'Area':sum(listareasgroups)},index = range(8760))
+
     return listresults, Final
 
-# <codecell>
+
 
 def Calc_pv_generation(type_panel, hourly_radiation, Number_groups, number_points, prop_observers, T_G_hour, latitude, misc_losses):
     lat = radians(latitude)
@@ -892,7 +802,7 @@ def Calc_SC_module2(radiation,tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
     #method with no condensaiton gains, no wind or long-wave dependency, sky factor set to zero.
     # calculate radiation part
     #local variables
-    Cpwg = 3680#J/kgK  water grlycol  specific heat  
+    Cpwg = 3680#J/kgK  water grlycol  specific heat
     maxmsc = mB_max_r*Area_a/3600
     #Do the calculation of every time step for every possible flow condition
     #get states where highly performing values are obtained.
@@ -917,7 +827,7 @@ def Calc_SC_module2(radiation,tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
     Flag2 = False
     for flow in range(6):
         Mo = 1
-        TIME0 = 0 
+        TIME0 = 0
         DELT = 1 #timestep 1 hour
         delts = DELT*3600 #convert time step in seconds
         Tfl = np.zeros([3, 1]) #create vector
@@ -929,16 +839,16 @@ def Calc_SC_module2(radiation,tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
         TabsB = np.zeros([600, 1])
         TabsA = np.zeros([600, 1])
         qgainSeg = np.zeros([100, 1])
-        for time in range(8760): 
+        for time in range(8760):
             Mfl = specific_flows[flow][time]
             if time < TIME0+DELT/2:
                 for Iseg in range(101, 501): #400 points with the data
                     STORED[Iseg] = Tin
-            else: 
+            else:
                 for Iseg in range(1, Nseg): #400 points with the data
                     STORED[100+Iseg] = STORED[200+Iseg]
                     STORED[300+Iseg] = STORED[400+Iseg]
-            
+
             #calculate stability criteria
             if Mfl > 0:
                 stabcrit = Mfl*Cpwg*Nseg*(DELT*3600)/(C_eff*Area_a)
@@ -947,7 +857,7 @@ def Calc_SC_module2(radiation,tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
             Te = Te_vector[time]
             qrad = qrad_vector[time]
             Tfl[1] = 0 #mean absorber temp
-            Tabs[1] = 0 #mean absorber initial tempr 
+            Tabs[1] = 0 #mean absorber initial tempr
             for Iseg in range(1,Nseg+1):
                 Tfl[1] = Tfl[1]+STORED[100+Iseg]/Nseg
                 Tabs[1] = Tabs[1]+STORED[300+Iseg]/Nseg
@@ -959,11 +869,11 @@ def Calc_SC_module2(radiation,tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
                 Tout = Te+qrad/(c1+0.5)
                 Tfl[2] = Tout #fluid temperature same as output
             DT[1] = Tfl[2] - Te
-            
+
             #calculate qgain with the guess
-                              
+
             qgain = calc_qgain(Tfl,Tabs,qrad,DT, Tin, Tout, Area_a, c1, c2, Mfl, delts,Cpwg, C_eff,Te)
-            
+
             Aseg= Area_a/Nseg
             for Iseg in range(1,Nseg+1):
                 TflA[Iseg] = STORED[100+Iseg]
@@ -987,10 +897,10 @@ def Calc_SC_module2(radiation,tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
                         ToutSeg = TflA[Iseg] + (qgain*Delts)/C_eff
                     else:
                         TflB[Iseg] = ToutSeg
-                    TflB[Iseg] = ToutSeg   
+                    TflB[Iseg] = ToutSeg
                     qfluid = (ToutSeg-TinSeg)*Mfl*Cpwg/Aseg
                     qmtherm = (TflB[Iseg]-TflA[Iseg])*C_eff/delts
-                    qbal = qgain-qfluid-qmtherm 
+                    qbal = qgain-qfluid-qmtherm
                     if abs(qbal) > 1:
                         time = time
                 qgainSeg[Iseg] = qgain #in W/m2
@@ -1002,13 +912,13 @@ def Calc_SC_module2(radiation,tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
                 STORED[200+Iseg] = TflB[Iseg]
                 STORED[400+Iseg] = TabsB[Iseg]
                 Tabs[2] = Tabs[2]+TabsB[Iseg]/Nseg
-            
+
             #outputs
             temperature_out[flow][time]= ToutSeg
             temperature_in[flow][time] = Tin
             supply_out[flow][time]  = qout/1000 #in kW
-            temperature_m[flow][time] = (Tin+ToutSeg)/2 #Mean absorber temperature at present 
-          
+            temperature_m[flow][time] = (Tin+ToutSeg)/2 #Mean absorber temperature at present
+
             qgain = 0
             TavgB = 0
             TavgA = 0
@@ -1016,11 +926,11 @@ def Calc_SC_module2(radiation,tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
                 qgain = qgain +qgainSeg*Aseg # W
                 TavgA = TavgA+TflA[Iseg]/Nseg
                 TavgB = TavgB+TflB[Iseg]/Nseg
-            
+
             #OUT[9] = qgain/Area_a # in W/m2
-            qmtherm = (TavgB-TavgA)*C_eff*Area_a/delts   
+            qmtherm = (TavgB-TavgA)*C_eff*Area_a/delts
             qbal = qgain-qmtherm-qout
-            
+
             #OUT[11] = qmtherm
             #OUT[12] = qbal
         if flow < 4:
@@ -1030,10 +940,10 @@ def Calc_SC_module2(radiation,tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
             q2 = supply_out[1]
             q3 = supply_out[2]
             q4 = supply_out[3]
-            E1 = Auxiliary[0] 
-            E2 = Auxiliary[1] 
-            E3 = Auxiliary[2] 
-            E4 = Auxiliary[3] 
+            E1 = Auxiliary[0]
+            E2 = Auxiliary[1]
+            E3 = Auxiliary[2]
+            E4 = Auxiliary[3]
             specific_flows[4], specific_pressurelosses[4] = SelectminimumenergySc(q1,q2,q3,q4,E1,E2,E3,E4, 0, mB0_r, mB_max_r,mB_min_r,0, dP2,dP3,dP4, Area_a)
         if flow == 4:
             Auxiliary[flow] = np.vectorize(Calc_EauxSC)(specific_flows[flow],specific_pressurelosses[flow], Leq, Area_a) #in kW
