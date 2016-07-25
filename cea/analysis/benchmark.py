@@ -53,9 +53,13 @@ def benchmark(locator_list, output_file):
     values_today = calc_benchmark_today(locator_list[0])
 
     # start graphs
-    fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, figsize=(16, 12))
+    fig, (ax1, ax2, ax3, ax4, ax5, ax6) = plt.subplots(6, figsize=(16, 12))
     fig.text(0.07, 0.5, 'Greenhouse Gas Emissions [kg CO$_2$-eq/m$^2$-yr]', va='center', rotation='vertical')
-    fig.text(0.5, 0.07, 'Primary Energy Demand [MJ/m$^2$-yr]', ha='center')  # , rotation='vertical')
+    fig.text(0.375, 0.04, 'Primary Energy Demand [MJ/m$^2$-yr]', ha='center')
+    #fig.text(0.5, 0.07, 'Primary Energy Demand [MJ/m$^2$-yr]', ha='center')
+    ax3.axis('off')
+    ax6.axis('off')
+    axes = [1, 2, 4, 5]
 
     # run for each locator
     for n in range(len(locator_list)):
@@ -82,9 +86,9 @@ def benchmark(locator_list, output_file):
                 if scenario_max[graph + fields[j+2]] < df_scenario[graph + fields[j+2]]:
                     scenario_max[graph + fields[j+2]] = df_scenario[graph + fields[j+2]]
 
-
+        # plot scenario results
         for i in range(len(graphs)):
-            plt.subplot(2,2,i+1)
+            plt.subplot(2, 3, axes[i])
             plt.plot(df_buildings[graphs[i]+fields[2]], df_buildings[graphs[i]+fields[3]],'o', color = color_palette[n])
             plt.plot(df_scenario[graphs[i]+fields[2]], df_scenario[graphs[i]+fields[3]], 'o', color = color_palette[n],
                      markersize = 15)
@@ -93,7 +97,7 @@ def benchmark(locator_list, output_file):
     plt.plot()
     for i in range(len(graphs)):
         # plot today and target values
-        plt.subplot(2, 2, i + 1)
+        plt.subplot(2, 3, axes[i])
         plt.plot([0,targets[graphs[i] + fields[2]],targets[graphs[i] + fields[2]]],
                  [targets[graphs[i] + fields[3]],targets[graphs[i] + fields[3]],0], color='k')
         plt.plot([0, values_today[graphs[i] + fields[2]], values_today[graphs[i] + fields[2]]],
@@ -108,8 +112,11 @@ def benchmark(locator_list, output_file):
         plt.title(graphs[i])
 
     legend.extend(['Benchmark targets','Present day values'])
-    plt.legend(legend, bbox_to_anchor=(-1.1, -0.2, 2, 0.102), loc=0, ncol=3 , mode="expand", borderaxespad=0,numpoints=1)
+    legend_y = 1.2 + 0.05 * (len(locator_list) - 2)
+    plt.legend(legend, bbox_to_anchor=(1.3, legend_y , 0.8, 0.102), loc=0, ncol=1 , mode="expand", borderaxespad=0,numpoints=1)
+    # plt.legend(legend, bbox_to_anchor=(1.3, 1.3 , 0.8, 0.102), loc=0, ncol=1 , mode="expand", borderaxespad=0,numpoints=1)
     '''
+    plt.legend(legend, bbox_to_anchor=(-1.1, -0.2, 2, 0.102), loc=0, ncol=3 , mode="expand", borderaxespad=0,numpoints=1)
         , bbox_to_anchor=(-1.1, -0.2, 2, 0.102), loc=0, ncol=4, mode="expand", borderaxespad=0,
                fontsize=15, numpoints=1)
     '''
@@ -204,11 +211,11 @@ def calc_benchmark_today(locator):
     return values_today
 
 def test_benchmark():
-    # HINTS FOR ARCGIS INTERFACE:
-    # the user can select a maximum of 2 scenarios to graph (analysis fields!)
     locator1 = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
-    locator2 = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
-    locator_list = [locator1, locator2]
+    locator2 = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline2')
+    locator3 = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline3')
+    locator4 = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline4')
+    locator_list = [locator1, locator2, locator3, locator4]
     output_file = os.path.expandvars(r'%TEMP%\test_benchmark.pdf')
     benchmark(locator_list=locator_list, output_file=output_file)
     print 'test_benchmark() succeeded'
