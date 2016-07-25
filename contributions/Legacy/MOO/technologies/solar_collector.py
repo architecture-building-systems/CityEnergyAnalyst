@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import ephem
 from math import radians, cos
+import re
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
@@ -36,7 +37,7 @@ def calc_SC(locator, sensors_data, radiation, latitude, longitude, year, gv, wea
     weather_data = epwreader.epw_reader(weather_path)[['dayofyear', 'exthorrad_Whm2',
                                                        'glohorrad_Whm2', 'difhorrad_Whm2']]
     weather_data['diff'] = weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
-    weather_data = weather_data[np.isfinite(weather_data['diff'])]
+    T_G_hour = weather_data[np.isfinite(weather_data['diff'])]
     T_G_day = np.round(weather_data.groupby(['dayofyear']).mean(), 2)
     T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
     T_G_day['trr'] = (1 - T_G_day['diff'])
@@ -44,7 +45,6 @@ def calc_SC(locator, sensors_data, radiation, latitude, longitude, year, gv, wea
     diffuseProp = T_G_day['diff'].mean()
     transmittivity = T_G_day['ttr'].mean()
 
-    T_G_hour = pd.ExcelFile.parse(WeatherData, 'Values_hour')  # temperature and radiation table
     worst_sh = T_G_hour.loc[gv.worst_hour, 'Sh']
     worst_Az = T_G_hour.loc[gv.worst_hour, 'Az']
 
@@ -54,6 +54,8 @@ def calc_SC(locator, sensors_data, radiation, latitude, longitude, year, gv, wea
     # get only those with production beyond min_production
     Max_Isol = hourly_data.total.max()
     Min_Isol = Max_Isol * gv.min_production  # 80% of the local average maximum in the area
+    radiation_clean
+    sensors_data_clean
 
     # Calculate the heights of all buildings
     height = buildings_data.height.sum()
@@ -61,13 +63,17 @@ def calc_SC(locator, sensors_data, radiation, latitude, longitude, year, gv, wea
     optimal_angle_and_tilt(sensors_data, latitude, worst_sh, worst_Az, transmittivity, diffuseProp, gv.grid_side,
                            gv.module_lenght, gv.angle_north, Min_Isol, Max_Isol)
 
-    number_points, hourlydata_groups, prop_observers =
+    number_points, hourlydata_groups, prop_observers = calc_groups(radiation_clean, sensors_data_clean)
+
     result, Final = SC_generation(gv.type_SCpanel, hourlydata_groups, prop_observers, number_points, T_G_hour, latitude,
                                   gv.Tin, height)
-    Final.to_csv(SC_gen, index=True, float_format='%.3f')
+
+    Final.to_csv(locator.solar_collectors_result(), index=True, float_format='%.2f')
+    return
 
 
 def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, T_G_hour, latitude, gv.Tin, height):
+
     # get properties of the panel to evaluate
     n0,c1,c2, mB0_r, mB_max_r,mB_min_r,C_eff, t_max, IAM_d, Aratio, Apanel, dP1,dP2,dP3,dP4 = calc_propertiesSC(type_SCpanel)
     Area_a = Aratio*Apanel
@@ -99,10 +105,13 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, 
         radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']  #direct radaition
 
         #calculate angle modifiers
-        T_G_hour['IAM_b']  = calc_anglemodifierSC(T_G_hour.Az,T_G_hour.g,T_G_hour.ha,teta_z,tilt_angle,type_SCpanel,latitude, T_G_hour.Sz) #direct angle modifier
+        T_G_hour['IAM_b']  = calc_anglemodifierSC(T_G_hour.Az,T_G_hour.g,T_G_hour.ha,teta_z,tilt_angle,type_SCpanel,
+                                                  latitude, T_G_hour.Sz) #direct angle modifier
 
-        listresults[group] = Calc_SC_module2(radiation,tilt_angle, T_G_hour.IAM_b, radiation.I_direct, radiation.I_diffuse,T_G_hour.te,
-                                            n0,c1,c2, mB0_r, mB_max_r,mB_min_r,C_eff, t_max, IAM_d, Area_a, dP1,dP2,dP3,dP4, Tin, Leq, Le,Nseg)
+        listresults[group] = Calc_SC_module2(radiation,tilt_angle, T_G_hour.IAM_b, radiation.I_direct,
+                                             radiation.I_diffuse,T_G_hour.te,
+                                             n0,c1,c2, mB0_r, mB_max_r,mB_min_r,C_eff, t_max, IAM_d, Area_a,
+                                             dP1,dP2,dP3,dP4, Tin, Leq, Le,Nseg)
 
         K = Area_group/Apanel
         listresults[group][5] = listresults[group][5]*K
@@ -123,40 +132,25 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, 
         Sum_mcp = Sum_mcp + mcp_array
 
     Tout_group = (Sum_qout/Sum_mcp) + Tin  # in C
+
     Final = pd.DataFrame({'Qsc_Kw':Sum_qout,'Tscs':Tin_array,'Tscr':Tout_group, 'mcp_kW/C': Sum_mcp,'Eaux_kW': Sum_Eaux,
                           'Qsc_l_KWH': Sum_qloss, 'Area':sum(listareasgroups)},index = range(8760))
 
     return listresults, Final
 
 
-def calc_groups():
 
-    # IMPORT OBSERVERS WITH FILTER AS DF
-    outpath = "observers.dbf"
-    arcpy.TableToTable_conversion(observers_data, locationtemp1, outpath)
-    observers_fin = dbf2df(locationtemp1 + '\\' + outpath)
-
-    # <codecell>
-
-    # take out the unnamed
-    Clean_hourly = hourly_data.drop({'Unnamed: 0'}, axis=1)
-    Clean_hourly['ID'] = hourly_data['ID']
-
-    # CONSERVE only matching points in Clean hourly data
-    Clean_hourly = Clean_hourly.merge(observers_fin, on='ID')
+def calc_groups(Clean_hourly, observers_fin):
 
     # calculate number of optima groups as number of optimal combiantions.
     groups_ob = Clean_hourly.groupby(['CATB', 'CATGB', 'CATteta_z'])
     hourlydata_groups = groups_ob.mean().reset_index()
     hourlydata_groups = pd.DataFrame(hourlydata_groups)
-    Number_pointsgroup = groups_ob.size().reset_index()
-    number_points = Number_pointsgroup[0]  # vector with number of points per group
 
     groups_ob = observers_fin.groupby(['CATB', 'CATGB', 'CATteta_z'])
     prop_observers = groups_ob.mean().reset_index()
     prop_observers = pd.DataFrame(prop_observers)
     Number_groups = groups_ob.size().count()
-    observers_fin = None  # Clear from memory
 
     hourlydata_groups = hourlydata_groups.drop({'ID', 'GB', 'grid_code', 'pointid', 'array_s', 'area_netpv', 'aspect',
                                                 'slope', 'CATB', 'CATGB', 'CATteta_z'}, axis=1).transpose().reindex(
