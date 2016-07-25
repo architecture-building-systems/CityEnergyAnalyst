@@ -5,23 +5,22 @@ Evolutionary algorithm main
 
 """
 from __future__ import division
+
 import os
 import time
+from pickle import Pickler, Unpickler
 
+import evolAlgo.CrossOver as cx
+import evolAlgo.Mutations as mut
+import evolAlgo.Selection as sel
 from deap import base
 from deap import creator
 from deap import tools
-from pickle import Pickler, Unpickler
 
-import supportFn as sFn
-import evaluateInd as eI
 import constrCheck as cCheck
-
-import globalVar as gV
-import evolAlgo.CreateInd as ci
-import evolAlgo.Mutations as mut
-import evolAlgo.CrossOver as cx
-import evolAlgo.Selection as sel
+import contributions.Legacy.MOO.optimization.evolAlgo.CreateInd as ci
+import evaluateInd as eI
+import supportFn as sFn
 
 
 def EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, genCP = 0, manualCheck = 0):

@@ -11,8 +11,9 @@ import os
 import globalVar as gV
 import numpy as np
 import pandas as pd
-from contributions.Legacy.MOO import resources
-from contributions.Legacy.MOO import technologies
+
+from contributions.Legacy import technologies
+from contributions.Legacy.MOO import resources, technologies
 
 reload(gV)
 reload(invC)

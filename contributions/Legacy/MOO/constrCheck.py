@@ -7,13 +7,14 @@ Modifies an individual to comply with all constraints
 
 """
 from __future__ import division
+
 import numpy as np
 import pandas as pd
 
-
-import supportFn as sFn
+import contributions.Legacy.MOO.optimization.evolAlgo.CreateInd as ci
 import globalVar as gV
-import evolAlgo.CreateInd as ci
+import supportFn as sFn
+
 reload(sFn)
 reload(gV)
 reload(ci)

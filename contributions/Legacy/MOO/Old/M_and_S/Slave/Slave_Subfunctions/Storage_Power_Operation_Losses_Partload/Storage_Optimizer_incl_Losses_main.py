@@ -45,7 +45,8 @@ import pylab as plt
 
 os.chdir(Functions_Path)
 
-import Import_Network_Data_functions as fn
+from contributions.Legacy.MOO.slave.Slave_Subfunctions.Find_Least_Cost_Source import \
+    Import_Network_Data_functions as fn
 
 import Storage_Design_And_Operation_2 as StDesOp
 os.chdir(Functions_Path)

@@ -27,7 +27,9 @@ os.chdir(Functions_Path)
 import Find_min_cost_functions as fn
 reload (fn)
 os.chdir(Functions_Path)
-import Import_Network_Data_functions as INDf
+from contributions.Legacy.MOO.slave.Slave_Subfunctions.Find_Least_Cost_Source import \
+    Import_Network_Data_functions as INDf
+
 reload (INDf)
 
 os.chdir(MS_Var_Path)

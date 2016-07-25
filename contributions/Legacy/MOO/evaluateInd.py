@@ -10,12 +10,12 @@ import numpy as np
 import pandas as pd
 
 import constrCheck as cCheck
+import contributions.Legacy.MOO.finances.cost_model as eM
 import contributions.Legacy.MOO.technologies.substation as sMain
 import cooling.coolingMain as coolMain
-import finances.cost_model as eM
 import globalVar as gV
 import network.summarize_network_main as nM
-import slave.Slave_main as sM
+import contributions.Legacy.MOO.optimization.slave.Slave_main as sM
 import supportFn as sFn
 
 reload(sFn)
