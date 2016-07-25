@@ -24,18 +24,18 @@ sys.path.append(CodePath)
 import time
 import os
 from contributions.Legacy.MOO.technologies import substation as subsM
-from discBuild import discBuildMain_noCluster as dbM
-from elecOperation import elecMain
+from contributions.Legacy.MOO.discBuild import discBuildMain_noCluster as dbM
+from contributions.Legacy.MOO.elecOperation import elecMain
 from contributions.Legacy.MOO.LCA import processheat as hpMain
-import masterMain as mM
-from network import summarize_network_main as nM
-import normalizeResults as norm
-import supportFn as sFn
-import ntwOpt.Python.NtwMain as ntwM
+import contributions.Legacy.MOO.masterMain as mM
+from contributions.Legacy.MOO.network import summarize_network_main as nM
+import contributions.Legacy.MOO.normalizeResults as norm
+import contributions.Legacy.MOO.supportFn as sFn
+import contributions.Legacy.MOO.ntwOpt.Python.NtwMain as ntwM
 import Rep3D as rep
-import globalVar as glob
+import contributions.Legacy.MOO.globalVar as glob
 from contributions.Legacy.MOO.analysis import sensitivity as sens
-import mcda
+import contributions.Legacy.MOO.mcda
 
 reload(subsM)
 reload(dbM)
@@ -49,7 +49,7 @@ reload(ntwM)
 reload(rep)
 reload(glob)
 reload(sens)
-reload(mcda)
+reload(contributions.Legacy.MOO.mcda)
 reload(post)
 
 

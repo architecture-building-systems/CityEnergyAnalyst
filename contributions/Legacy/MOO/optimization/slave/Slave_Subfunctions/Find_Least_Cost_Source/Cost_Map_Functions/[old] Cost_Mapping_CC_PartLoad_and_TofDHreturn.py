@@ -17,8 +17,14 @@ WORK IN PROCESS
 #import os
 import numpy as np
 #os.chdir(Energy_Models_path)
-import EnergySystem_Models.Model_CC as MCC
+import Model_CC as MCC
 import globalVar as gV
+
+from contributions.Legacy.MOO.optimization import MasterToSlaveVariables
+
+context = MasterToSlaveVariables.MasterSlaveVariables()
+MS_Var = context
+
 
 #os.chdir(M_to_S_Var_path)
 #import Master_to_Slave_Variables as MS_Var
@@ -26,13 +32,6 @@ import globalVar as gV
 #os.chdir(Energy_Models_path)
 
 #reload (gV)
-
-
-
-import MasterToSlaveVariables
-reload(MasterToSlaveVariables)
-context = MasterToSlaveVariables.MasterSlaveVariables()
-MS_Var = context
 reload (MCC)
 
 #TO BE ITERATED!

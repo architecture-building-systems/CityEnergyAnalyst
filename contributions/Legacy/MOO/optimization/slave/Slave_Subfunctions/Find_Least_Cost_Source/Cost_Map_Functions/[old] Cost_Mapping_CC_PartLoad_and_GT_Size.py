@@ -26,7 +26,8 @@ import globalVar as gV
 #os.chdir(Energy_Models_path)
 
 
-import MasterToSlaveVariables
+from contributions.Legacy.MOO.optimization import MasterToSlaveVariables
+
 context = MasterToSlaveVariables.MasterSlaveVariables()
 MS_Var = context
 

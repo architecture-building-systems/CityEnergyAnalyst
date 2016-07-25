@@ -18,21 +18,23 @@ WORK IN PROCESS
 import numpy as np
 #os.chdir(Energy_Models_path)
 import EnergySystem_Models.Model_CC as MCC
-reload (MCC)
-#os.chdir(Energy_Models_path)
 import globalVar as gV
-#reload(gV)
+
 #os.chdir(M_to_S_Var_path)
 #import Master_to_Slave_Variables as MS_Var
 #reload(MS_Var)
 #os.chdir(Energy_Models_path)
 
-import MasterToSlaveVariables
+#reload (gV)
+
+
+
+from contributions.Legacy.MOO.optimization import MasterToSlaveVariables
+
 reload(MasterToSlaveVariables)
 context = MasterToSlaveVariables.MasterSlaveVariables()
-MS_Var = context 
-
-
+MS_Var = context
+reload (MCC)
 
 #TO BE ITERATED!
 fuel = MS_Var.gt_fuel
@@ -46,7 +48,6 @@ phi_min = gV.GT_minload
 
 
 import matplotlib.pyplot as plt
-from scipy import interpolate
 
   
         
@@ -69,57 +70,45 @@ total_cost_per_kWh_th_incl_el = np.zeros( (it_len, it_len) )
 Q_loss = np.zeros( (it_len, it_len) )
 
 
-def CC_Find_Operation_Point(GT_SIZE, T_DH_Supply, fuel, Q_therm_request):
-    """
-    Retruns Cost Function and Operation Point of CC for a requested Q_therm
-    """
-    tDH = T_DH_Supply
-    it_len = 100
-    wdot_range = np.linspace(GT_SIZE*gV.GT_minload, GT_SIZE, it_len)
-    qdot = np.zeros(it_len)
+i = 0
+for tDH_it in range(len(tDH_range)):
+    tDH = tDH_range[tDH_it]
     
     for wdot_it in range(len(wdot_range)):
         wdot_in = wdot_range[wdot_it]
+        
+        if wdot_in <= phi_min * Q_design:
+            wdot_in = phi_min * Q_design + 0.001 
+            print "changed"
             
-        CC_OpInfo = MCC.CC_Op(wdot_in, GT_SIZE, fuel, tDH)
-    
-        qdot[wdot_it] = CC_OpInfo[1] # Thermal output
+        CC_OpInfo = MCC.CC_Op(wdot_in, Q_design, fuel, tDH)
+        
+        if wdot_in <= phi_min * Q_design:
+            CC_OpInfo = [0,0,0,0,0]
+        wdotfin[tDH_it, wdot_it] = CC_OpInfo[0]
+        qdot[tDH_it, wdot_it] = CC_OpInfo[1]
+        eta_elec[tDH_it, wdot_it] = CC_OpInfo[2]
+        eta_heat[tDH_it, wdot_it] = CC_OpInfo[3]
+        eta_all[tDH_it, wdot_it] = CC_OpInfo[4]
+        
+        Q_used_prim[tDH_it, wdot_it] = CC_OpInfo[1] / CC_OpInfo[3] # = qdot  / eta_heat  
+        Q_loss[tDH_it, wdot_it] = (1 - CC_OpInfo[4] )  
+        cost_per_kWh_th[tDH_it, wdot_it] = gV.NG_PRICE / CC_OpInfo[3] # = gV.NG_PRICE / eta_heat
+        cost_per_kWh_th_incl_el[tDH_it, wdot_it] = gV.NG_PRICE / CC_OpInfo[3] - CC_OpInfo[0] * gV.ELEC_PRICE / CC_OpInfo[1]  # gV.NG_PRICE / eta_heat - wdotfin * gV.ELEC_PRICE / qdot
+        total_cost_per_kWh_th_incl_el[tDH_it, wdot_it] = cost_per_kWh_th_incl_el[tDH_it, wdot_it] * CC_OpInfo[1]
+        
+        i += 1
+        print i
 
-    Q_therm_interpol = interpolate.interp1d(qdot, wdot_range, kind = "linear")
-    wdot_required = Q_therm_interpol(Q_therm_request)
-    """
-    wdot_possible_range = np.linspace(GT_SIZE*gV.GT_minload, wdot_required, it_len)
-    wdot_req_it = 0
-    
-    for wdot_req_it in range(it_len):
-        wdot_possible = wdot_possible_range[wdot_req_it]
-        
-        CC_OpInfo = MCC.CC_Op(wdot_possible, GT_SIZE, fuel, tDH)
-        
-        wdotfin= CC_OpInfo[0]
-        qdot = CC_OpInfo[1] # Thermal output
-        eta_elec = CC_OpInfo[2]
-        eta_heat = CC_OpInfo[3]
-        eta_all= CC_OpInfo[4]
-        
-        Q_used_prim = CC_OpInfo[1] / CC_OpInfo[3] # = qdot  / eta_heat  
-        Q_loss = (1 - CC_OpInfo[4] )  
-        cost_per_kWh_th= gV.NG_PRICE / CC_OpInfo[3] # = gV.NG_PRICE / eta_heat
-        cost_per_kWh_th_incl_el = gV.NG_PRICE / CC_OpInfo[3] - CC_OpInfo[0] * gV.ELEC_PRICE / CC_OpInfo[1]  # gV.NG_PRICE / eta_heat - wdotfin * gV.ELEC_PRICE / qdot
-        total_cost_per_kWh_th_incl_el = cost_per_kWh_th_incl_el* CC_OpInfo[1]
-    """
-        
-            
-    return wdot_required, Q_therm_interpol
-    
-
+        #print x,k
             
 
+from scipy import interpolate
 from mpl_toolkits.mplot3d import Axes3D
 
 
-f1 = interpolate.interp2d(tDH_range, wdot_range, wdotfin/10E3, kind = 'linear')
-f2 = interpolate.interp2d(tDH_range, wdot_range, qdot, kind = 'cubic')
+f1 = interpolate.interp2d(tDH_range, wdot_range, wdotfin/10E3, kind = 'cubic')
+f2 = interpolate.interp2d(tDH_range, wdot_range, qdot/10E3, kind = 'cubic')
 f3 = interpolate.interp2d(tDH_range, wdot_range, eta_elec, kind = 'cubic')
 f4 = interpolate.interp2d(tDH_range, wdot_range, eta_heat, kind = 'cubic')
 f5 = interpolate.interp2d(tDH_range, wdot_range, eta_all, kind = 'cubic')
