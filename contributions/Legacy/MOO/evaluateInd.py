@@ -5,17 +5,18 @@ Evaluation function of an individual
 
 """
 from __future__ import division
+
 import numpy as np
 import pandas as pd
 
-import supportFn as sFn
-import substation.substationMain as sMain
+import constrCheck as cCheck
+import contributions.Legacy.MOO.technologies.substation as sMain
+import cooling.coolingMain as coolMain
+import extraCosts.extraCostsMain as eM
+import globalVar as gV
 import network.summarize_network_main as nM
 import slave.Slave_main as sM
-import extraCosts.extraCostsMain as eM
-import cooling.coolingMain as coolMain
-import globalVar as gV
-import constrCheck as cCheck
+import supportFn as sFn
 
 reload(sFn)
 reload(nM)

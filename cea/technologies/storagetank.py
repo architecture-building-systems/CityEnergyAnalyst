@@ -2,14 +2,7 @@
 =========================================
 Sensible Heat Storage - Fully Mixed tank
 =========================================
-File history and credits:
-S. Hsieh script development          20.04.16
 
-This algorithm describes the energy conversion process of a fully mixed sensible heat storage tank (water based).
-Calculation refers to E+ documentation.
-
-Input variables: V (tank size), U_tank (tank Insulation Property), AR (tank Aspect Ratio)
-Output variables: Qww_ls_st(sensible heat loss from storage tank), Tww_st(storage tank temperature)
 """
 
 from __future__ import division

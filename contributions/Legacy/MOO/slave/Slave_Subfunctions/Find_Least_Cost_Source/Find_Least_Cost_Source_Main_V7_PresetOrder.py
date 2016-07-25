@@ -1296,7 +1296,7 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gV):
 
     if MS_Var.HPLake_maxSize > 0 and gV.HPLake_allowed == 0:
         """
-        Values & calculation after investCosts.py
+        Values & calculation after furnace.py
         """
         HP_Size = MS_Var.HPLake_maxSize
         InvC = (-493.53 * np.log(HP_Size * 1E-3) + 5484) * (HP_Size * 1E-3)
@@ -1309,7 +1309,7 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gV):
     
     if MS_Var.HPSew_maxSize > 0 and gV.HPSew_allowed == 0:
         """
-        Values & calculation after investCosts.py
+        Values & calculation after furnace.py
         """
         HP_Size = MS_Var.HPSew_maxSize
         InvC = (-493.53 * np.log(HP_Size * 1E-3) + 5484) * (HP_Size * 1E-3)

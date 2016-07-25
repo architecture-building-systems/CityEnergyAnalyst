@@ -23,8 +23,7 @@ sys.path.append(CodePath)
 #from __future__ import division
 import time
 import os
-from substation import substationMain as subsM
-from substation import substationModel as subsModel
+from contributions.Legacy.MOO.technologies import substation as subsM
 from discBuild import discBuildMain_noCluster as dbM
 from elecOperation import elecMain
 from processHeat import processHeatMain as hpMain
@@ -37,11 +36,8 @@ import Rep3D as rep
 import globalVar as glob
 from contributions.Legacy.MOO.analysis import sensitivity as sens
 import mcda
-import plots.graphs_optimization as plots
-
 
 reload(subsM)
-reload(subsModel)
 reload(dbM)
 reload(elecMain)
 reload(hpMain)
