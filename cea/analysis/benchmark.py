@@ -56,7 +56,6 @@ def benchmark(locator_list, output_file):
     fig, (ax1, ax2, ax3, ax4, ax5, ax6) = plt.subplots(6, figsize=(16, 12))
     fig.text(0.07, 0.5, 'Greenhouse Gas Emissions [kg CO$_2$-eq/m$^2$-yr]', va='center', rotation='vertical')
     fig.text(0.375, 0.04, 'Primary Energy Demand [MJ/m$^2$-yr]', ha='center')
-    #fig.text(0.5, 0.07, 'Primary Energy Demand [MJ/m$^2$-yr]', ha='center')
     ax3.axis('off')
     ax6.axis('off')
     axes = [1, 2, 4, 5]
@@ -114,12 +113,7 @@ def benchmark(locator_list, output_file):
     legend.extend(['Benchmark targets','Present day values'])
     legend_y = 1.2 + 0.05 * (len(locator_list) - 2)
     plt.legend(legend, bbox_to_anchor=(1.3, legend_y , 0.8, 0.102), loc=0, ncol=1 , mode="expand", borderaxespad=0,numpoints=1)
-    # plt.legend(legend, bbox_to_anchor=(1.3, 1.3 , 0.8, 0.102), loc=0, ncol=1 , mode="expand", borderaxespad=0,numpoints=1)
-    '''
-    plt.legend(legend, bbox_to_anchor=(-1.1, -0.2, 2, 0.102), loc=0, ncol=3 , mode="expand", borderaxespad=0,numpoints=1)
-        , bbox_to_anchor=(-1.1, -0.2, 2, 0.102), loc=0, ncol=4, mode="expand", borderaxespad=0,
-               fontsize=15, numpoints=1)
-    '''
+
     # save to disk
     plt.savefig(output_file)
     plt.clf()
@@ -211,11 +205,8 @@ def calc_benchmark_today(locator):
     return values_today
 
 def test_benchmark():
-    locator1 = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
-    locator2 = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline2')
-    locator3 = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline3')
-    locator4 = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline4')
-    locator_list = [locator1, locator2, locator3, locator4]
+    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator_list = [locator, locator, locator, locator]
     output_file = os.path.expandvars(r'%TEMP%\test_benchmark.pdf')
     benchmark(locator_list=locator_list, output_file=output_file)
     print 'test_benchmark() succeeded'
