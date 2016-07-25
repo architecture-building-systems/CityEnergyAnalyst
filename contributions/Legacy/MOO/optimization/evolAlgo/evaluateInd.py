@@ -10,13 +10,13 @@ import numpy as np
 import pandas as pd
 
 import constrCheck as cCheck
-import contributions.Legacy.MOO.finances.cost_model as eM
-import contributions.Legacy.MOO.optimization.slave.Slave_main as sM
-import contributions.Legacy.MOO.technologies.substation as sMain
 import contributions.Legacy.MOO.cooling.coolingMain as coolMain
+import contributions.Legacy.MOO.finances.cost_model as eM
 import contributions.Legacy.MOO.globalVar as gV
-import contributions.Legacy.MOO.network.summarize_network_main as nM
+import contributions.Legacy.MOO.optimization.slave.Slave_main as sM
+import contributions.Legacy.MOO.optimization.summarize_network_main as nM
 import contributions.Legacy.MOO.supportFn as sFn
+import contributions.Legacy.MOO.technologies.substation as sMain
 
 reload(sFn)
 reload(nM)

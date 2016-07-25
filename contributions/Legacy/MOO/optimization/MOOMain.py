@@ -25,8 +25,7 @@ import time
 import os
 from contributions.Legacy.MOO.technologies import substation as subsM
 from contributions.Legacy.MOO.optimization import individual_systems as dbM
-from contributions.Legacy.MOO.elecOperation import elecMain
-from contributions.Legacy.MOO.LCA import processheat as hpMain
+from contributions.Legacy.MOO.LCA import processheat as hpMain, electricity
 import contributions.Legacy.MOO.optimization.evolAlgo.masterMain as mM
 from contributions.Legacy.MOO.network import summarize_network_main as nM
 import contributions.Legacy.MOO.optimization.normalizeResults as norm
@@ -39,7 +38,7 @@ import contributions.Legacy.MOO.analysis.mcda
 
 reload(subsM)
 reload(dbM)
-reload(elecMain)
+reload(electricity)
 reload(hpMain)
 reload(mM)
 reload(nM)
@@ -98,7 +97,7 @@ ntwFeat = ntwM.ntwMain2(matlabDir, finalDir, Header)
 # NtwMain is calling the optimization routine
 
 print "Compute electricity needs for all buildings"
-elecCosts, elecCO2, elecPrim = elecMain.elecOp(pathX, gV)
+elecCosts, elecCO2, elecPrim = electricity.elecOp(pathX, gV)
 print elecCosts, elecCO2, elecPrim, "elecCosts, elecCO2, elecPrim \n"
 
 print "Process Heat Treatment"

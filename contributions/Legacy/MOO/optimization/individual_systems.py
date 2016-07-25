@@ -24,7 +24,6 @@ reload(HP)
 def discBuildOp(pathX, gV):
     """
     Computes the parameters for the operation of disconnected buildings
-    not using clustering
     output results in csv files
     
     Parameters

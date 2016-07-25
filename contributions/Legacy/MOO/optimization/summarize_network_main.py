@@ -1,20 +1,37 @@
 
-""" 
+"""
+============================
+Hydraulic - thermal network
+============================
 
-Network Summary:
-    this file summarizes the network demands and will give them as:
-        - absolute values (design values = extreme values)
-        - hourly operation scheme of input/output of network
-By J. Fonseca, based on T2           
 """
 from __future__ import division
 import time
 import numpy as np
 import pandas as pd
-import summarize_network_functions as fn
 import math
 
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
+
+
 def Network_Summary(data_path, path_to_path, substation_results_path, results_path, path_pipes, TotalNamefile, gv):
+    """
+
+    Network Summary:
+        this file summarizes the network demands and will give them as:
+            - absolute values (design values = extreme values)
+            - hourly operation scheme of input/output of network
+    By J. Fonseca, based on T2
+    """
+
     t0 = time.clock()
     # import total file names
     total_file = pd.read_csv(path_to_path+'//'+TotalNamefile)
@@ -87,7 +104,7 @@ def Network_Summary(data_path, path_to_path, substation_results_path, results_pa
     T_sst_cool_supply_netw_total_inclLosses = np.vectorize(calc_temp_withlosses)(T_sst_cool_supply_netw_total, Q_DC_losses_supply, mdot_cool_netw_all, gv.cp, "negative")
 
     day_of_max_heatmassflow_fin = np.zeros(8760)
-    day_of_max_heatmassflow = fn.find_index_of_max(mdot_heat_netw_all)
+    day_of_max_heatmassflow = find_index_of_max(mdot_heat_netw_all)
     day_of_max_heatmassflow_fin[:] = day_of_max_heatmassflow
 
     results = pd.DataFrame({"mdot_DH_netw_total":mdot_heat_netw_all,
@@ -117,7 +134,23 @@ def Network_Summary(data_path, path_to_path, substation_results_path, results_pa
     print "Results saved in :", results_path
     
     print time.clock() - t0, "seconds process time for Network summary for configuration", key, "\n"
-    
+
+
+"""
+============================
+supply and return temperatures
+============================
+
+"""
+def calc_temp_withlosses(t0,Q,m,cp, case):
+    if m > 0:
+        if case == "positive":
+            t1 = t0 + Q/(m*cp)
+        else:
+            t1 = t0 - Q/(m*cp)
+    else:
+        t1 = 0
+    return t1
 
 def calc_return_temp(sum_t_m, sum_m):
     if sum_m >0:
@@ -125,16 +158,6 @@ def calc_return_temp(sum_t_m, sum_m):
     else:
         tr = 0
     return tr
-
-def calc_temp_withlosses(t0,Q,m,cp, case):
-    if m > 0:
-        if case == "positive":
-            t1 = t0 + Q/(m*cp)
-        else:
-            t1 = t0 - Q/(m*cp) 
-    else:
-        t1 = 0
-    return t1
 
 def calc_supply_temp(tr,Q,m,cp, case):
     if m > 0:
@@ -146,6 +169,13 @@ def calc_supply_temp(tr,Q,m,cp, case):
         ts = 0
     return ts
 
+"""
+============================
+thermal losses
+============================
+
+"""
+
 def calc_piping_thermal_losses(Tnet, mmax, mmin, L, Tg, K, cp):
     if mmin != 1E6: # control variable see function fn.calc_min_flow
         mavg = (mmax+mmin)/2
@@ -155,6 +185,13 @@ def calc_piping_thermal_losses(Tnet, mmax, mmin, L, Tg, K, cp):
         Qloss = 0
     return Qloss
 
+"""
+============================
+mass flow rates
+============================
+
+"""
+
 def calc_min_flow(m0,m1):
     if m0 ==0:
         m0 = 1E6
@@ -163,3 +200,36 @@ def calc_min_flow(m0,m1):
     else:
         mmin = m0
     return mmin
+
+def find_index_of_max(array):
+    """
+    Returns the index of an array on which the maximum value is at.
+
+    Parameters
+    ----------
+    array : ndarray
+        Array of observations. Each row represents a day and each column the hourly data of that day
+
+
+    Returns
+    -------
+
+    max_index_hour : integer
+        max_index_hour : tells on what hour it happens (hour of the year)
+
+    to use: e.g. data_array[max_index_hour] will give the maximum data of the year
+
+    """
+
+    max_value = -abs(np.amax(array))
+
+    max_index_hour = 0
+
+    for k in range(len(array)):
+        if array[k] > max_value:
+            max_value = array[k]
+            max_index_hour = k
+
+
+    return  max_index_hour
+
