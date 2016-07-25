@@ -424,10 +424,10 @@ def test_graph_demand():
     # print "Solar features extraction \n"
     # solarFeat = sFn.solarRead(pathX, gV)
     #
-    # extraCosts = elecCosts + hpCosts
+    # finances = elecCosts + hpCosts
     # extraCO2 = elecCO2 + hpCO2
     # extraPrim = elecPrim + hpPrim
-    # popRef, epsInd = mM.EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, manualCheck = 1)
+    # popRef, epsInd = mM.EA_Main(pathX, finances, extraCO2, extraPrim, solarFeat, ntwFeat, gV, manualCheck = 1)
     #
     # reload(mcda)
     # indToCompare = mcda.mcda_differentWeights(pop, pathX)

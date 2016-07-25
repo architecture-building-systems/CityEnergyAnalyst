@@ -12,7 +12,7 @@ import pandas as pd
 import constrCheck as cCheck
 import contributions.Legacy.MOO.technologies.substation as sMain
 import cooling.coolingMain as coolMain
-import extraCosts.extraCostsMain as eM
+import finances.cost_model as eM
 import globalVar as gV
 import network.summarize_network_main as nM
 import slave.Slave_main as sM

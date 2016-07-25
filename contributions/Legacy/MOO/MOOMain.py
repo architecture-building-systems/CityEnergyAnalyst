@@ -151,14 +151,14 @@ print len(pop), "individuals after generation " + str(Generation) + "\n"
 ## WARNING : can be very long depending on the chosen sensibility step! (multiple days)
 #bandwidth = sens.sensBandwidth()
 #sensibilityStep = 2
-#paretoResults, FactorResults, mostSensitive = sens.sensAnalysis(sensibilityStep, pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, Generation, bandwidth)
+#paretoResults, FactorResults, mostSensitive = sens.sensAnalysis(sensibilityStep, pathX, finances, extraCO2, extraPrim, solarFeat, ntwFeat, Generation, bandwidth)
 #print 'Most sensitive factor :', mostSensitive
 #rep.rep3Dscatter_sensitivity(pop, ParetoResults)
 #reload(rep)
 #rep.rep2Dscatter_sensitivity(pop, ParetoResults, pathX)
 #
 ### Bar chart for the relative savings compared to baseline
-#popRef, epsInd = mM.EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, manualCheck = 1)
+#popRef, epsInd = mM.EA_Main(pathX, finances, extraCO2, extraPrim, solarFeat, ntwFeat, gV, manualCheck = 1)
 #indToCompare = mcda.mcda_differentWeights(pop, pathX)
 #reload(plots)
 #plots.compareRef(popRef[0], pop, indToCompare)

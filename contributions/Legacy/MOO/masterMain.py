@@ -32,7 +32,7 @@ def EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, genC
     ----------
     pathX : string
         paths to folders
-    extraCosts / CO2 / Prim : float
+    finances / CO2 / Prim : float
         costs [CHF] / emissions [kg CO2-eq] / primary energy needs [MJ oil] 
         previously calculated
     solarFeat : class solarFeatures
