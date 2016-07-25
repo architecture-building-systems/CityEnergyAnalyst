@@ -14,14 +14,13 @@ Modifications wrt previous version:
 
 """
 from __future__ import division
-import os
-import pandas as pd
 
 import globalVar as gV
-import clusterFn as cFn
-import findKopt as fk
+
 import clusterDay as cDay
+import clusterFn as cFn
 import combi
+import findKopt as fk
 
 reload(gV)
 reload(cFn)

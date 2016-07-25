@@ -13,9 +13,9 @@ import time
 import supportFn as sFn
 reload(sFn)
 
-import systModel.modelBoiler as Boiler
-import systModel.modelFC as FC
-import systModel.modelHP as HP
+import contributions.Legacy.MOO.technologies.boilers as Boiler
+import contributions.Legacy.MOO.technologies.cogeneration as FC
+import contributions.Legacy.MOO.technologies.heatpumps as HP
 reload(Boiler)
 reload(FC)
 reload(HP)
@@ -36,7 +36,7 @@ def discBuildOp(pathX, gV):
     print "Start Disconnected Building Routine \n"
     t0 = time.clock()
     
-    buildList = sFn.extractList(pathX.pathRaw + "/Total.csv")
+    buildList = extractList(pathX.pathRaw + "/Total.csv")
     BestData = {}  
     
     for buildName in buildList:
@@ -95,7 +95,7 @@ def discBuildOp(pathX, gV):
                 print "Error in discBuildMain, negative heat requirement at hour", hour, buildName
                 
             # Boiler NG
-            BoilerEff = Boiler.Cond_Boiler_operation(Qload, Qnom, Tret)
+            BoilerEff = Boiler.calc_Cop_boiler(Qload, Qnom, Tret)
             
             Qgas = Qload / BoilerEff
             
@@ -116,7 +116,7 @@ def discBuildOp(pathX, gV):
             resourcesRes[1][1] += Qload
                 
             # FC
-            (FC_Effel, FC_Effth) = FC.FC_operation(Qload, Qnom, 1,"B")
+            (FC_Effel, FC_Effth) = FC.calc_Cop_FC(Qload, Qnom, 1, "B")
             Qgas = Qload / (FC_Effth+FC_Effel)
             Qelec = Qgas * FC_Effel            
             
@@ -137,7 +137,7 @@ def discBuildOp(pathX, gV):
                 
                 if Qload <= QnomGHP:
                 
-                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.GHP_Op(mdot, TsupDH, Tret, gV.TGround, gV)
+                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot, TsupDH, Tret, gV.TGround, gV)
                     
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
@@ -151,7 +151,7 @@ def discBuildOp(pathX, gV):
                     
                     if qhotdot_missing > 0:
                         print "GHP unable to cover the whole demand, boiler activated!"
-                        BoilerEff = Boiler.Cond_Boiler_operation(qhotdot_missing, QnomBoiler, tsup2)
+                        BoilerEff = Boiler.calc_Cop_boiler(qhotdot_missing, QnomBoiler, tsup2)
                         Qgas = qhotdot_missing / BoilerEff
                         
                         result[3+i][4] += gV.NG_PRICE * Qgas   # CHF
@@ -169,7 +169,7 @@ def discBuildOp(pathX, gV):
                     #   print "GHP not allowed 2, set QnomGHP to zero"
                         
                     TexitGHP = QnomGHP / (mdot * gV.cp) + Tret
-                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.GHP_Op(mdot, TexitGHP, Tret, gV.TGround, gV)
+                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot, TexitGHP, Tret, gV.TGround, gV)
                     
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
@@ -183,7 +183,7 @@ def discBuildOp(pathX, gV):
                     
                     if qhotdot_missing > 0:
                         print "GHP unable to cover the whole demand, boiler activated!"
-                        BoilerEff = Boiler.Cond_Boiler_operation(qhotdot_missing, QnomBoiler, tsup2)
+                        BoilerEff = Boiler.calc_Cop_boiler(qhotdot_missing, QnomBoiler, tsup2)
                         Qgas = qhotdot_missing / BoilerEff
                         
                         result[3+i][4] += gV.NG_PRICE * Qgas   # CHF
@@ -196,7 +196,7 @@ def discBuildOp(pathX, gV):
                     QtoBoiler = Qload - QnomGHP
                     QannualB_GHP[i][0] += QtoBoiler
                     
-                    BoilerEff = Boiler.Cond_Boiler_operation(QtoBoiler, QnomBoiler, TexitGHP)
+                    BoilerEff = Boiler.calc_Cop_boiler(QtoBoiler, QnomBoiler, TexitGHP)
                     Qgas = QtoBoiler / BoilerEff
                     
                     result[3+i][4] += gV.NG_PRICE * Qgas   # CHF
@@ -207,11 +207,11 @@ def discBuildOp(pathX, gV):
         print time.clock() - t0, "seconds process time for the operation \n"
         
         # Investment Costs / CO2 / Prim
-        InvCaBoiler = Boiler.Cond_Boiler_InvCost(Qnom, Qannual, gV)
+        InvCaBoiler = Boiler.calc_Cinv_boiler(Qnom, Qannual, gV)
         InvCosts[0][0] = InvCaBoiler
         InvCosts[1][0] = InvCaBoiler
         
-        InvCosts[2][0] = FC.FuelCell_Cost(Qnom, gV)
+        InvCosts[2][0] = FC.calc_Cinv_FC(Qnom, gV)
         
         for i in range(10):
             result[3+i][0] = i/10
@@ -219,7 +219,7 @@ def discBuildOp(pathX, gV):
 
             QnomBoiler = i/10 * Qnom
             
-            InvCaBoiler = Boiler.Cond_Boiler_InvCost(QnomBoiler, QannualB_GHP[i][0], gV)
+            InvCaBoiler = Boiler.calc_Cinv_boiler(QnomBoiler, QannualB_GHP[i][0], gV)
             InvCosts[3+i][0] = InvCaBoiler
             
             InvCaGHP = HP.GHP_InvCost( Wel_GHP[i][0] , gV)
@@ -342,4 +342,26 @@ def discBuildOp(pathX, gV):
     print time.clock() - t0, "seconds process time for the Disconnected Building Routine \n"
     #print BestData
     #Store summary to CSV
-   
+
+
+
+def extractList(fName):
+    """
+    Extract the names of the buildings in the area
+
+    Parameters
+    ----------
+    fName : string
+        csv file with the names of the buildings
+
+    Returns
+    -------
+    namesList : list
+        List of strings with the names of the buildings
+
+    """
+    df = pd.read_csv(fName, usecols=["Name"])
+    namesList = df['Name'].values.tolist()
+
+    return namesList
+

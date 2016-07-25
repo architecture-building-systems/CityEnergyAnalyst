@@ -20,6 +20,68 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
+"""
+============================
+operation costs
+============================
+
+"""
+
+
+def calc_Cop_GHP(mdot, tsup, tret, tground, gV):
+    """
+    For the operation of a Geothermal Heat pump
+
+    Parameters
+    ----------
+    mdot : float
+        mass flow rate in the district heating network
+    tsup : float
+        temperature of supply to the DHN (hot)
+    tret : float
+        temperature of return from the DHN (cold)
+    tground : float
+        temperature of the ground
+
+    Returns
+    -------
+    wdot_el : float
+        total electric power needed (compressor and auxiliary)
+    qcolddot : float
+        cold power needed
+    qhotdot_missing : float
+        heating energy which cannot be provided by the HP
+    tsup2 : supply temperature after HP (to DHN)
+
+    """
+    tsup2 = tsup
+
+    tcond = tsup + gV.HP_deltaT_cond
+    if tcond > gV.HP_maxT_cond:
+        #raise ModelError
+        tcond = gV.HP_maxT_cond
+        tsup2 = tcond - gV.HP_deltaT_cond  # lower the supply temp if necessairy
+
+
+    tevap = tground - gV.HP_deltaT_evap
+    COP = gV.GHP_etaex / (1- tevap/tcond)
+
+    qhotdot = mdot * gV.cp * (tsup2 - tret)  # tsup2 = tsup, if all load can be provided by the HP
+                                             #  else: tsup2 < tsup if max load is not enough
+
+    qhotdot_missing = mdot * gV.cp * (tsup - tsup2) #calculate the missing energy if needed
+
+    wdot = qhotdot / COP
+    wdot_el = wdot / gV.GHP_Auxratio
+
+    qcolddot =  qhotdot - wdot
+
+    #if qcolddot > gV.GHP_CmaxSize:
+    #    raise ModelError
+
+
+    return wdot_el, qcolddot, qhotdot_missing, tsup2
+
 
 """
 ============================

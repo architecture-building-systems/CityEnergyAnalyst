@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 ==================================================
-Boilers
+condensing boilers
 ==================================================
 
 """
 
 
 from __future__ import division
+from scipy.interpolate import interp1d
 
 
 __author__ = "Thuy-An Nguyen"
@@ -19,6 +20,70 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
+"""
+============================
+operation costs
+============================
+
+"""
+
+def calc_Cop_boiler(Q_load, Q_design, T_return_to_boiler):
+
+    """
+    Efficiency for operation of condensing Boilers
+
+    Efficiencies based on LHV !
+
+    operational efficiency after:
+        http://www.greenshootscontrols.net/?p=153
+
+    Parameters
+    ----------
+    Q_load : float
+        Load of time step
+
+    Q_max : float
+        Design Load of Boiler
+
+    T_return_to_boiler : float
+        Return Temperature of the network to the boiler [K]
+
+    Returns
+    -------
+    eta_boiler : float
+        efficiency of Boiler (Lower Heating Value), in abs. numbers
+        accounts for boiler efficiency only (not plant efficiency!)
+
+    """
+
+    #Implement Curves provided by http://www.greenshootscontrols.net/?p=153
+    x = [0,15.5, 21, 26.7, 32.2, 37.7, 43.3, 49, 54.4, 60, 65.6, 71.1, 100] # Return Temperature Dependency
+    y = [96.8,96.8, 96.2, 95.5, 94.7, 93.2, 91.2, 88.9, 87.3, 86.3, 86.0, 85.9, 85.8] # Return Temperature Dependency
+    x1 = [0.0, 0.05, 0.25, 0.5, 0.75, 1.0] # Load Point dependency
+    y1 = [100.0, 99.3, 98.3, 97.6, 97.1, 96.8] # Load Point Dependency
+
+     # do the interpolation
+    eff_of_T_return = interp1d(x, y, kind='linear')
+    eff_of_phi = interp1d(x1, y1, kind='cubic')
+
+    # get input variables
+    if Q_design > 0:
+        phi = float(Q_load) / float(Q_design)
+
+    else:
+        phi = 0
+    #if phi < gV.Boiler_min:
+    #    print "Boiler at too low part load, see Model_Boiler_condensing, line 100"
+
+        #raise model error!!
+
+
+    T_return = T_return_to_boiler - 273
+    eff_score = eff_of_phi(phi) / eff_of_phi(1)
+    #print "T_return", T_return
+    boiler_eff = (eff_score * eff_of_T_return(T_return) )/ 100.0
+
+    return boiler_eff
 
 
 

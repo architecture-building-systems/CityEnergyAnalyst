@@ -24,7 +24,7 @@ sys.path.append(CodePath)
 import time
 import os
 from contributions.Legacy.MOO.technologies import substation as subsM
-from contributions.Legacy.MOO.discBuild import discBuildMain_noCluster as dbM
+from contributions.Legacy.MOO.optimization import individual_systems as dbM
 from contributions.Legacy.MOO.elecOperation import elecMain
 from contributions.Legacy.MOO.LCA import processheat as hpMain
 import contributions.Legacy.MOO.optimization.evolAlgo.masterMain as mM
