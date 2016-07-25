@@ -1,6 +1,6 @@
 """
 ============================
-multiobjective optimization
+multi-objective optimization
 ============================
 
 """
