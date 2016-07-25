@@ -1,6 +1,6 @@
 """
 ============================
-MOO - Multiobjective Urban Energy System Optimization
+multiobjective optimization
 ============================
 
 """
