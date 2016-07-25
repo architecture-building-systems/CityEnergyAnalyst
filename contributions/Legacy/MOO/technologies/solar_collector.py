@@ -10,7 +10,8 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 import ephem
-from math import radians, cos
+from math import *
+import datetime
 import re
 from cea.utilities import epwreader
 
@@ -26,7 +27,7 @@ __status__ = "Production"
 
 """
 ============================
-technical model
+heat generation
 ============================
 
 """
@@ -45,21 +46,25 @@ def calc_SC(locator, sensors_data, radiation, latitude, longitude, year, gv, wea
     diffuseProp = T_G_day['diff'].mean()
     transmittivity = T_G_day['ttr'].mean()
 
-    worst_sh = T_G_hour.loc[gv.worst_hour, 'Sh']
-    worst_Az = T_G_hour.loc[gv.worst_hour, 'Az']
+    # get other solar properties
+    date = pd.date_range(gv.date_start, periods=8760, freq='H')
+    sun_coords = pyephem(date, latitude, longitude)
+    worst_sh = sun_coords['apparent_elevation'].loc[gv.worst_hour, 'Sh']
+    worst_Az = sun_coords['apparent_azimuth'].loc[gv.worst_hour, 'Az']
 
     # read radiation file
     hourly_data = pd.read_csv(radiation)
 
-    # get only those with production beyond min_production
+    # get only datapoints with production beyond min_production
     Max_Isol = hourly_data.total.max()
     Min_Isol = Max_Isol * gv.min_production  # 80% of the local average maximum in the area
-    radiation_clean
-    sensors_data_clean
+    sensors_data_clean = sensors_data[sensors_data["total"] > Min_Isol]
+    radiation_clean =radiation.loc[radiation['sensor_id'].isin(sensors_data_clean.sensor_id)]
 
-    # Calculate the heights of all buildings
-    height = buildings_data.height.sum()
+    # Calculate the heights of all buildings for length of vertical pipes
+    height = locator.get_total_demand().height.sum()
 
+    # calculate optimal angle and tilt for panels
     optimal_angle_and_tilt(sensors_data, latitude, worst_sh, worst_Az, transmittivity, diffuseProp, gv.grid_side,
                            gv.module_lenght, gv.angle_north, Min_Isol, Max_Isol)
 
@@ -72,10 +77,10 @@ def calc_SC(locator, sensors_data, radiation, latitude, longitude, year, gv, wea
     return
 
 
-def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, T_G_hour, latitude, gv.Tin, height):
+def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, T_G_hour, latitude, Tin, height):
 
     # get properties of the panel to evaluate
-    n0,c1,c2, mB0_r, mB_max_r,mB_min_r,C_eff, t_max, IAM_d, Aratio, Apanel, dP1,dP2,dP3,dP4 = calc_propertiesSC(type_SCpanel)
+    n0,c1,c2, mB0_r, mB_max_r,mB_min_r,C_eff, t_max, IAM_d, Aratio, Apanel, dP1,dP2,dP3,dP4 = calc_properties_SC(type_SCpanel)
     Area_a = Aratio*Apanel
     listgroups = number_points.count() #counter from the vector with number of points
     listresults = [None]* listgroups
@@ -139,7 +144,6 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, 
     return listresults, Final
 
 
-
 def calc_groups(Clean_hourly, observers_fin):
 
     # calculate number of optima groups as number of optimal combiantions.
@@ -166,49 +170,6 @@ def calc_groups(Clean_hourly, observers_fin):
     hourlydata_groups.index = range(8760)
 
     return hourlydata_groups, Number_groups, prop_observers
-
-
-def calc_propertiesSC(type_SCpanel):
-    if type_SCpanel == 1:#     # Flat plate collector   SOLEX blu SFP, 2012
-        n0 = 0.775 # zero loss efficeincy
-        c1 = 3.91 #W/m2K
-        c2 = 0.0081 #W/m2K2
-        #specific mass flow rates
-        mB0_r = 57.98 # # in kg/h/m2   of aperture area
-        mB_max_r = 86.97 # in kg/h/m2   of aperture area
-        mB_min_r = 28.99 # in kg/h/m2   of aperture area
-        C_eff = 8000  #thermal capacitance of module J/m2K
-        t_max = 192 # stagnation temperature in C
-        IAM_d = 0.87 #diffuse incident angle considered at 50 degrees
-        Aratio = 0.888# the aperture/gross area ratio
-        Apanel = 2.023 #m2
-        dP1 = 0
-        dP2 = 170/(Aratio*Apanel)
-        dP3 = 270/(Aratio*Apanel)
-        dP4 = 80/(Aratio*Apanel)
-    if type_SCpanel == 2:#     # evacuated tube   Zewotherm SOL ZX-30 SFP, 2012
-        n0 = 0.721
-        c1 = 0.89 #W/m2K
-        c2 = 0.0199 #W/m2K2
-
-        #specific mass flow rates
-        mB0_r = 88.2  # in kg/h/m2   of aperture area
-        mB_max_r = 147.12 # in kg/h/m2
-        mB_min_r = 33.10 # in kg/h/m2
-        C_eff = 38000  #thermal capacitance of module anf fluid for Brine J/m2K
-        t_max = 196 # stagnation temperature in C
-        IAM_d = 0.91 #diffuse incident angle considered at 50 degrees
-        Aratio = 0.655 # the aperture/gross area ratio
-        Apanel = 4.322 #m2
-        dP1 = 0        # in Pa per m2
-        dP2 = 8000/(Aratio*Apanel)     # in Pa per m2
-        dP3 = 22000/(Aratio*Apanel)    # in Pa per m2
-        dP4 = 2000/(Aratio*Apanel)     #in Pa per m2
-        #Fluids Cp [kJ/kgK] Density [kg/m3] Used for
-        #Water-glyucol 33%  3.68            1044 Collector Loop
-        #Water 4.19             998 Secondary collector loop, store, loops for auxiliary
-
-    return n0,c1,c2, mB0_r, mB_max_r,mB_min_r,C_eff, t_max, IAM_d, Aratio, Apanel,dP1,dP2,dP3,dP4
 
 
 def Calc_SC_module2(radiation,tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,Te_vector, n0,c1,c2, mB0_r,
@@ -502,6 +463,62 @@ def calc_anglemodifierSC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, typ
 
     return  IAM_b_vector
 
+"""
+============================
+properties of module
+============================
+
+"""
+
+def calc_properties_SC(type_SCpanel):
+    if type_SCpanel == 1:#     # Flat plate collector   SOLEX blu SFP, 2012
+        n0 = 0.775 # zero loss efficeincy
+        c1 = 3.91 #W/m2K
+        c2 = 0.0081 #W/m2K2
+        #specific mass flow rates
+        mB0_r = 57.98 # # in kg/h/m2   of aperture area
+        mB_max_r = 86.97 # in kg/h/m2   of aperture area
+        mB_min_r = 28.99 # in kg/h/m2   of aperture area
+        C_eff = 8000  #thermal capacitance of module J/m2K
+        t_max = 192 # stagnation temperature in C
+        IAM_d = 0.87 #diffuse incident angle considered at 50 degrees
+        Aratio = 0.888# the aperture/gross area ratio
+        Apanel = 2.023 #m2
+        dP1 = 0
+        dP2 = 170/(Aratio*Apanel)
+        dP3 = 270/(Aratio*Apanel)
+        dP4 = 80/(Aratio*Apanel)
+    if type_SCpanel == 2:#     # evacuated tube   Zewotherm SOL ZX-30 SFP, 2012
+        n0 = 0.721
+        c1 = 0.89 #W/m2K
+        c2 = 0.0199 #W/m2K2
+
+        #specific mass flow rates
+        mB0_r = 88.2  # in kg/h/m2   of aperture area
+        mB_max_r = 147.12 # in kg/h/m2
+        mB_min_r = 33.10 # in kg/h/m2
+        C_eff = 38000  #thermal capacitance of module anf fluid for Brine J/m2K
+        t_max = 196 # stagnation temperature in C
+        IAM_d = 0.91 #diffuse incident angle considered at 50 degrees
+        Aratio = 0.655 # the aperture/gross area ratio
+        Apanel = 4.322 #m2
+        dP1 = 0        # in Pa per m2
+        dP2 = 8000/(Aratio*Apanel)     # in Pa per m2
+        dP3 = 22000/(Aratio*Apanel)    # in Pa per m2
+        dP4 = 2000/(Aratio*Apanel)     #in Pa per m2
+        #Fluids Cp [kJ/kgK] Density [kg/m3] Used for
+        #Water-glyucol 33%  3.68            1044 Collector Loop
+        #Water 4.19             998 Secondary collector loop, store, loops for auxiliary
+
+    return n0,c1,c2, mB0_r, mB_max_r,mB_min_r,C_eff, t_max, IAM_d, Aratio, Apanel,dP1,dP2,dP3,dP4
+
+
+"""
+============================
+auxiliary electricity solar collectort
+============================
+
+"""
 
 def calc_Eaux_SC(qV_des, Dp_collector, Leq, Aa):
     Ro = 1000  # kg/m3
@@ -511,6 +528,13 @@ def calc_Eaux_SC(qV_des, Dp_collector, Leq, Aa):
     Eaux = (qV_des/Ro)*(Dp_collector+Dp_friction)/0.6/10 #energy necesary in kW from pumps
     return Eaux # energy spent in kWh
 
+
+"""
+============================
+minimization of Eaux
+============================
+
+"""
 
 def SelectminimumenergySc(q1,q2,q3,q4,E1,E2,E3,E4,m1,m2,m3,m4,dP1,dP2,dP3,dP4,Area_a):
     mopt = np.empty(8760)
@@ -536,6 +560,13 @@ def Selectminimumenergy2(m, q, dp):
     return m, dp
 
 
+"""
+============================
+optimal angle and tilt
+============================
+
+"""
+
 def optimal_angle_and_tilt(observers_all, latitude, worst_sh, worst_Az, transmittivity, diffuseProp,
                            grid_side, module_lenght, angle_north, Min_Isol, Max_Isol):
 
@@ -554,10 +585,10 @@ def optimal_angle_and_tilt(observers_all, latitude, worst_sh, worst_Az, transmit
         b = atan((cos(a) * tan(l)) * (1 / (1 + ((Tad * gKt - Tar * Pg) / (2 * (1 - gKt))))))
         return degrees(b)
 
-    def Calc_optimal_spacing(teta_z, Sh, tilt_angle, module_lenght):
+    def Calc_optimal_spacing(Sh, Az, tilt_angle, module_lenght):
         h = module_lenght * sin(radians(tilt_angle))
         D1 = h / tan(radians(Sh))
-        D = max(D1 * cos(radians(180 - teta_z)), D1 * cos(radians(teta_z - 180)))
+        D = max(D1 * cos(radians(180 - Az)), D1 * cos(radians(Az - 180)))
         return D
 
     def Calc_categoriesroof(teta_z, B, GB, Max_Isol):
@@ -647,10 +678,7 @@ def optimal_angle_and_tilt(observers_all, latitude, worst_sh, worst_Az, transmit
 
 
 def calc_sunrise(sunrise, Yearsimul, longitude, latitude, gv):
-    o = ephem.Observer()
-    o.lat = str(latitude)
-    o.long = str(longitude)
-    s = ephem.Sun()
+    o, s = _ephem_setup(latitude, longitude, altitude=0, pressure=101325, temperature=12)
     for day in range(1, 366):  # Calculated according to NOAA website
         o.date = datetime.datetime(Yearsimul, 1, 1) + datetime.timedelta(day - 1)
         next_event = o.next_rising(s)
@@ -658,6 +686,68 @@ def calc_sunrise(sunrise, Yearsimul, longitude, latitude, gv):
     gv.log('complete calculating sunrise')
     return sunrise
 
+
+def _ephem_setup(latitude, longitude, altitude, pressure, temperature):
+    # observer
+    obs = ephem.Observer()
+    obs.lat = str(latitude)
+    obs.lon = str(longitude)
+    obs.elevation = altitude
+    obs.pressure = pressure / 100.
+    obs.temp = temperature
+
+    #sun
+    sun = ephem.Sun()
+    return obs, sun
+
+
+def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
+            temperature=12):
+
+    # Written by Will Holmgren (@wholmgren), University of Arizona, 2014
+
+    try:
+        time_utc = time.tz_convert('UTC')
+    except TypeError:
+        time_utc = time
+
+    sun_coords = pd.DataFrame(index=time)
+
+    obs, sun = _ephem_setup(latitude, longitude, altitude,
+                            pressure, temperature)
+
+    # make and fill lists of the sun's altitude and azimuth
+    # this is the pressure and temperature corrected apparent alt/az.
+    alts = []
+    azis = []
+    for thetime in time_utc:
+        obs.date = ephem.Date(thetime)
+        sun.compute(obs)
+        alts.append(sun.alt)
+        azis.append(sun.az)
+
+    sun_coords['apparent_elevation'] = alts
+    sun_coords['apparent_azimuth'] = azis
+
+    # redo it for p=0 to get no atmosphere alt/az
+    obs.pressure = 0
+    alts = []
+    azis = []
+    for thetime in time_utc:
+        obs.date = ephem.Date(thetime)
+        sun.compute(obs)
+        alts.append(sun.alt)
+        azis.append(sun.az)
+
+    sun_coords['elevation'] = alts
+    sun_coords['azimuth'] = azis
+
+    # convert to degrees. add zenith
+    sun_coords = np.rad2deg(sun_coords)
+    sun_coords['apparent_zenith'] = 90 - sun_coords['apparent_elevation']
+    sun_coords['zenith'] = 90 - sun_coords['elevation']
+
+    return sun_coords
 
 """
 ============================
