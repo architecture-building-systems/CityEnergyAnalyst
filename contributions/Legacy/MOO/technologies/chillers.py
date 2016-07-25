@@ -1,6 +1,6 @@
 """
 =========================================
-System Modeling: Vapor-compressor chiller
+Vapor-compressor chiller
 =========================================
 
 """
@@ -8,12 +8,23 @@ from __future__ import division
 import globalVar as gV
 reload (gV)
 
+__author__ = "Thuy-An Nguyen"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
-class ModelError(Exception):
-    pass
+"""
+============================
+technical model
+============================
 
+"""
 
-def VCC_Op(mdot, tsup, tret, gV):
+def calc_VCC(mdot, tsup, tret, gV):
     """
     For the operation of a Vapor-compressor chiller
     between a district cooling network and a condenser with fresh water
@@ -62,7 +73,15 @@ def VCC_Op(mdot, tsup, tret, gV):
     return wdot, qhotdot
 
 
-def VCC_InvC(qcold, gV):
+"""
+============================
+Investment costs
+============================
+
+"""
+
+
+def calc_Cinv_VCC(qcold, gV):
     """
     Annualized investment costs for the vapor compressor chiller
     

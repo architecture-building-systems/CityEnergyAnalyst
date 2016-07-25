@@ -10,17 +10,17 @@ import os
 import time
 from pickle import Pickler, Unpickler
 
-import evaluateInd as eI
+import contributions.Legacy.MOO.optimization.evolAlgo.CreateInd as ci
+import contributions.Legacy.MOO.optimization.evolAlgo.CrossOver as cx
 import evolAlgo.Mutations as mut
 import evolAlgo.Selection as sel
 from deap import base
 from deap import creator
 from deap import tools
 
-import contributions.Legacy.MOO.optimization.evolAlgo.CreateInd as ci
-import contributions.Legacy.MOO.optimization.evolAlgo.CrossOver as cx
-import contributions.Legacy.MOO.supportFn as sFn
-from contributions.Legacy.MOO.optimization.evolAlgo import constrCheck as cCheck
+import contributions.Legacy.MOO.optimization.supportFn as sFn
+import evaluateInd as eI
+from contributions.Legacy.MOO.optimization.master.evolAlgo import constrCheck as cCheck
 
 
 def EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, genCP = 0, manualCheck = 0):

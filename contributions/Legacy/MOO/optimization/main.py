@@ -23,36 +23,19 @@ sys.path.append(CodePath)
 #from __future__ import division
 import time
 import os
+
 from contributions.Legacy.MOO.technologies import substation as subsM
-from contributions.Legacy.MOO.optimization import individual_systems as dbM
-from contributions.Legacy.MOO.LCA import processheat as hpMain, electricity
-import contributions.Legacy.MOO.optimization.evolAlgo.masterMain as mM
-from contributions.Legacy.MOO.network import summarize_network_main as nM
-import contributions.Legacy.MOO.optimization.normalizeResults as norm
-import contributions.Legacy.MOO.supportFn as sFn
+from contributions.Legacy.MOO.optimization.preprocessing import decentralized_buildings as dbM
+from contributions.Legacy.MOO.optimization.preprocessing.processheat  as hpMain
+from contributions.Legacy.MOO.optimization.preprocessing import electricity
+import contributions.Legacy.MOO.optimization.master.evolAlgo.masterMain as mM
+from contributions.Legacy.MOO.optimization.master import summarize_network_main as nM
+from contributions.Legacy.MOO.resources.geothermal import calc_ground_temperature
+import contributions.Legacy.MOO.optimization.supportFn as sFn
 import contributions.Legacy.MOO.ntwOpt.Python.NtwMain as ntwM
-import Rep3D as rep
 import contributions.Legacy.MOO.globalVar as glob
-from contributions.Legacy.MOO.analysis import sensitivity as sens
-import contributions.Legacy.MOO.analysis.mcda
 
-reload(subsM)
-reload(dbM)
-reload(electricity)
-reload(hpMain)
-reload(mM)
-reload(nM)
-reload(norm)
-reload(sFn)
-reload(ntwM)
-reload(rep)
-reload(glob)
-reload(sens)
-reload(contributions.Legacy.MOO.analysis.mcda)
-reload(post)
-
-
-##########################  T2 code 
+##########################  T2 code
 
 outToFile = 0   # Do you want to save the print outs in an external file ?
                 # Warning : this would make sense if you evaluate few / a single individual
@@ -67,7 +50,7 @@ runEvol = 1     # Do you want to start an evolution ?
 t0 = time.clock()
 gV = glob.globalVariables()
 pathX = sFn.pathX(Header)
-gV.Tg = sFn.calc_ground_temperature(pathX.pathRaw, gV)
+gV.Tg = calc_ground_temperature(pathX.pathRaw, gV)
 gV.num_tot_buildings = sFn.calc_num_buildings(pathX.pathRaw, "Total.csv")
 
 if outToFile:
@@ -97,7 +80,7 @@ ntwFeat = ntwM.ntwMain2(matlabDir, finalDir, Header)
 # NtwMain is calling the optimization routine
 
 print "Compute electricity needs for all buildings"
-elecCosts, elecCO2, elecPrim = electricity.elecOp(pathX, gV)
+elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(pathX, gV)
 print elecCosts, elecCO2, elecPrim, "elecCosts, elecCO2, elecPrim \n"
 
 print "Process Heat Treatment"

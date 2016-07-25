@@ -54,32 +54,6 @@ def calc_Ctot_pump(dicoSupply, buildList, pathNtwRes, ntwFeat, gV):
     #ntot = len(buildList)
     
     os.chdir(pathNtwRes)
-    """
-    # Approximation developed for Zernez, not used here.
-    
-    if gV.ZernezFlag == :
-        df = pd.read_csv(dicoSupply.NETWORK_DATA_FILE, usecols=["Q_DH_building_netw_total"])
-        Q_DH_building_netw_total = np.array(df)
-        mdotdf = pd.read_csv(dicoSupply.NETWORK_DATA_FILE, usecols=["mdot_heat_netw_total"])
-    
-        mdotnMax =np.amax(np.array(mdotdf))
-        print mdotnMax
-        #mdot0Max = np.amax( np.array( pd.read_csv("Network_summary_result_all.csv", usecols=["mdot_heat_netw_total"]) ) )
-        
-            
-        for i in range(int(np.shape(Q_DH_building_netw_total)[0])):
-            #deltaP = 2* (gV.a * mdotA[i][0] + gV.b)        
-            #pumpCosts += deltaP * mdotA[i][0] / 1000 * gV.ELEC_PRICE / gV.etaPump
-            Epump = Q_DH_building_netw_total[i][0] * gV.PumpEnergyShare
-            pumpCosts += Epump * gV.ELEC_PRICE
-    
-        deltaPmax = np.max(Epump) / gV.etaPump * (1 + gV.PumpReliabilityMargin)
-        print deltaPmax, "deltaPmax"
-        investCosts = iC.Pump_Cost(deltaPmax, mdotnMax, gV.etaPump)
-        print investCosts, "investCosts from pumps.py"
-        pumpCosts += investCosts
-    else:
-    """
     if 1:
         pumpCosts = 0
         #nBuild = dicoSupply.nBuildingsConnected
@@ -104,6 +78,75 @@ def calc_Ctot_pump(dicoSupply, buildList, pathNtwRes, ntwFeat, gV):
     
     return pumpCosts
 
+
+def Pump_Cost(deltaP, mdot, eta_pumping, gV):
+    """
+    calculates the cost of a pumping device.
+    if the nominal load (electric) is above 375kW, a second pump is assumed
+    if the nominal load (electric) is below 500W, a pump with Pel_design = 500W is assumed
+
+    Investement costs are calculated upon the life time of a GHP ( 20y) and a GHP- related interest rate of 6%
+
+    Parameters
+    ----------
+    deltaP : float
+        Pressure drop that has to be overcome with the pump (nominal)
+
+    mdot : float
+        mass flow (nominal)
+
+    eta_pumping : float
+        pump efficiency (set 0.8 as standard value, eta = E_pumping / E_elec)
+
+    Returns
+    -------
+    InvC_return : float
+        total investment Cost in CHF
+
+    InvCa : float
+        annualized investment costs in CHF/year
+
+    """
+
+    E_pumping_required = mdot * deltaP /gV.rho_60
+    P_motor_tot = E_pumping_required / eta_pumping
+
+    PmaxPumpkW = 375.0
+    PpumpMinkW = 0.5
+
+    nPumps = int(ceil(P_motor_tot / 1000.0 / PmaxPumpkW))
+
+    PpumpArray = np.zeros((nPumps))
+    PpumpRemain = P_motor_tot
+
+    #if PpumpRemain < PpumpMinkW * 1000:
+     #   PpumpRemain = PpumpMinkW * 1000
+
+
+    x = [0.4999, 0.75, 1.1, 1.5, 2.2, 3, 4, 5.5, 7.5, 11, 15, 18.5, 22, 30, 37, 45, 55, 75, 90, 110, 132, 160, 200, 220, 260, 315, 335, 375] # Nominal load in kW
+    y = [630, 580, 500, 420, 350, 315, 285, 260, 240, 220, 210, 205, 195, 190, 185, 182, 180, 176, 175, 174, 173, 170, 169, 168, 167, 165, 162, 161.9] # efficiency in %
+        # do the interpolation
+    x1 = [0.4999, 0.75, 1.1, 1.5, 2.2, 3, 4, 5.5, 7.5, 11, 15, 18.5, 22, 30, 37, 45, 55, 75, 90, 110, 132, 160, 200, 220, 260, 315, 335, 375] # Nominal load in kW
+    y1 = [720, 680, 585, 425, 330, 275, 220, 195, 180, 150, 145, 143, 135, 120, 115, 114, 110, 100, 90, 88, 85, 80, 75, 74, 74, 73, 72, 71.9] # efficiency in %
+    InvC_mot= interp1d(x, y, kind='cubic')
+    InvC_VFC = interp1d(x1, y1, kind='cubic')
+
+    InvC = 0.0
+    InvCa = 0.0
+
+    for pump_i in range(nPumps):
+        # calculate pump nominal capacity
+
+        PpumpArray[pump_i] =  min(PpumpRemain, PmaxPumpkW*1000)
+        if PpumpArray[pump_i] < PpumpMinkW * 1000:
+            PpumpArray[pump_i] = PpumpMinkW * 1000
+        PpumpRemain -= PpumpArray[pump_i]
+
+        # Calculate cost
+        InvC += InvC_mot(PpumpArray[pump_i]/1000.0) + InvC_VFC(PpumpArray[pump_i]/1000.0)
+        InvCa +=  InvC * gV.GHP_i * (1+ gV.GHP_i) ** gV.GHP_nHP / ((1+gV.GHP_i) ** gV.GHP_nHP - 1)
+
+    return InvCa
 
 """
 ============================

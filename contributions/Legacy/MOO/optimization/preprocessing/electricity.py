@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 
-def elecOp(pathX, gV):
+def calc_pareto_electricity(pathX, gV):
     """
     Computes the parameters for the electrical demand
     

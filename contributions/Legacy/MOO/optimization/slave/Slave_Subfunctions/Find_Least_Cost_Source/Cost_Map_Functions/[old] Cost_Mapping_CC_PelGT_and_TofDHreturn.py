@@ -29,7 +29,7 @@ import globalVar as gV
 
 
 
-from contributions.Legacy.MOO.optimization import MasterToSlaveVariables
+from contributions.Legacy.MOO.optimization.master import MasterToSlaveVariables
 
 reload(MasterToSlaveVariables)
 context = MasterToSlaveVariables.MasterSlaveVariables()

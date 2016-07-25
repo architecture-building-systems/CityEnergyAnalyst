@@ -1,7 +1,7 @@
 import globalVar as gV
 import numpy as np
 
-from contributions.Legacy.MOO.optimization import MasterToSlaveVariables as MS_Var
+from contributions.Legacy.MOO.optimization.master import MasterToSlaveVariables as MS_Var
 
 StorageContentEndOfYear = 0 # Wh
 StorageContentStartOfYear = 100000

@@ -7,8 +7,8 @@ Normalize results
 import Rep3D as rep
 from deap import base
 
-import contributions.Legacy.MOO.supportFn as sFn
-from contributions.Legacy.MOO.optimization.evolAlgo import evaluateInd as eI
+import contributions.Legacy.MOO.optimization.supportFn as sFn
+from contributions.Legacy.MOO.optimization.master.evolAlgo import evaluateInd as eI
 
 reload(sFn)
 reload(rep)

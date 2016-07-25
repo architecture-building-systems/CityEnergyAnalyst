@@ -1,6 +1,6 @@
 """
 ================
-Cooling function
+Lake-cooling network connected to chiller and cooling tower
 ================
 
 Use free cooling from lake as long as possible (Qmax lake from gV and HP Lake operation from slave)
@@ -8,21 +8,33 @@ If lake exhausted, use VCC + CT operation
 
 """
 from __future__ import division
-import pandas as pd
-import numpy as np
+
 import os
 
 import globalVar as gV
-import coolingModel.Model_CT as CTModel
-import coolingModel.Model_VCC as VCCModel
-import coolingModel.Model_Pump as PumpModel
+import numpy as np
+import pandas as pd
 
-reload(gV)
-reload(CTModel)
-reload(VCCModel)
-reload(PumpModel)
+import contributions.Legacy.MOO.technologies.cooling_tower as CTModel
+import contributions.Legacy.MOO.technologies.chillers as VCCModel
+import contributions.Legacy.MOO.technologies.pumps as PumpModel
 
 
+__author__ = "Thuy-An Nguyen"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
+"""
+============================
+technical model
+============================
+
+"""
 
 def coolingMain(pathX, configKey, ntwFeat, HRdata, gV):
     """
@@ -133,7 +145,7 @@ def coolingMain(pathX, configKey, ntwFeat, HRdata, gV):
                 
             else:
                 print "Lake exhausted !"
-                wdot, qhotdot = VCCModel.VCC_Op(mdot, Tsup, Tret, gV)
+                wdot, qhotdot = VCCModel.calc_VCC(mdot, Tsup, Tret, gV)
                 if Qneed > VCCnomIni:
                     VCCnomIni = Qneed * (1+gV.Qmargin_Disc)
                 
@@ -236,7 +248,7 @@ def coolingMain(pathX, configKey, ntwFeat, HRdata, gV):
     costCopy = costs
     if CTnom > 0 :
         for i in range(nHour):
-            wdot = CTModel.CT_Op( CTLoad[i], CTnom, gV )
+            wdot = CTModel.calc_CT(CTLoad[i], CTnom, gV)
             
             costs += wdot * gV.ELEC_PRICE
             CO2 += wdot * gV.EL_TO_CO2 * 3600E-6
@@ -247,10 +259,10 @@ def coolingMain(pathX, configKey, ntwFeat, HRdata, gV):
     
     ########## Add investment costs  
     
-    costs += VCCModel.VCC_InvC(VCCnom, gV)
-    print VCCModel.VCC_InvC(VCCnom, gV), "InvC VCC"
-    costs += CTModel.CT_InvC(CTnom, gV)
-    print CTModel.CT_InvC(CTnom, gV), "InvC CT"
+    costs += VCCModel.calc_Cinv_VCC(VCCnom, gV)
+    print VCCModel.calc_Cinv_VCC(VCCnom, gV), "InvC VCC"
+    costs += CTModel.calc_Cinv_CT(CTnom, gV)
+    print CTModel.calc_Cinv_CT(CTnom, gV), "InvC CT"
     
 
     ########### Adjust and add the pumps for filtering and pre-treatment of the water

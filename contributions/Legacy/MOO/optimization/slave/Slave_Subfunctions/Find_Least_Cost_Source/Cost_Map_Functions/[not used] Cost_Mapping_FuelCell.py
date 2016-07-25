@@ -30,7 +30,7 @@ import globalVar as gV
 #reload (gV)
 reload (MFC)
 
-from contributions.Legacy.MOO.optimization import MasterToSlaveVariables
+from contributions.Legacy.MOO.optimization.master import MasterToSlaveVariables
 
 #reload(MasterToSlaveVariables)
 context = MasterToSlaveVariables.MasterSlaveVariables()

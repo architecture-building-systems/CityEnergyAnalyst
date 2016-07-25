@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 ============================
 Extra costs to an individual
@@ -12,7 +13,6 @@ import globalVar as gV
 import numpy as np
 import pandas as pd
 
-from contributions.Legacy import technologies
 from contributions.Legacy.MOO import resources, technologies
 
 reload(gV)

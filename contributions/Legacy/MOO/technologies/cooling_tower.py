@@ -10,11 +10,22 @@ import globalVar as gV
 reload (gV)
 
 
-class ModelError(Exception):
-    pass
+__author__ = "Thuy-An Nguyen"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
+"""
+============================
+technical model
+============================
 
-def CT_Op(qhotdot, Qdesign, gV):
+"""
+def calc_CT(qhotdot, Qdesign, gV):
     """
     For the operation of a water condenser + direct cooling tower
     
@@ -44,7 +55,14 @@ def CT_Op(qhotdot, Qdesign, gV):
     return wdot
     
 
-def CT_InvC(CT_size, gV):
+"""
+============================
+Investment costs
+============================
+
+"""
+
+def calc_Cinv_CT(CT_size, gV):
     """
     Annualized investment costs for the Combined cycle
     

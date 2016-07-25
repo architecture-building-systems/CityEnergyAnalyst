@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-import contributions.Legacy.MOO.optimization.normalizeResults as norm
-import contributions.Legacy.MOO.supportFn as sFn
+import contributions.Legacy.MOO.optimization.master.evolAlgo.normalization as norm
+import contributions.Legacy.MOO.optimization.supportFn as sFn
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

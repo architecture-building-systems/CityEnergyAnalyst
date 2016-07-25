@@ -20,7 +20,7 @@ import numpy as np
 import Model_CC as MCC
 import globalVar as gV
 
-from contributions.Legacy.MOO.optimization import MasterToSlaveVariables
+from contributions.Legacy.MOO.optimization.master import MasterToSlaveVariables
 
 context = MasterToSlaveVariables.MasterSlaveVariables()
 MS_Var = context

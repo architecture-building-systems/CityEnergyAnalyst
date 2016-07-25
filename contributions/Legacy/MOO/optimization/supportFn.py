@@ -151,11 +151,6 @@ def createTotalNtwCsv(indCombi, pathRaw, pathTotalNtw):
     return fName_result
     
 
-def dummyevaluate(individual):
-    [costs, CO2, eff] = random_sample(3)
-    return (costs, CO2, eff, 0, 0)
-
-
 def readCheckPoint(pathX, genCP, storeData):
     """
     Extracts data from the checkpoints created in the master routine
@@ -231,24 +226,6 @@ def readCheckPoint(pathX, genCP, storeData):
     return pop, eps, testedPop
 
 
-def printFit(pop):
-    """
-    Prints the triplet (costs, GHG emissions, Primary energy needs)
-    for every individual in pop
-    
-    """
-    for ind in pop:
-        print ind.fitness.values
-
-def printInd(pop):
-    """
-    Prints the individuals in pop
-    
-    """
-    for ind in pop:
-        print ind
-            
-
 class solarFeatures(object):
     def __init__(self):
         self.SolarArea = 35710     # [m2]
@@ -303,22 +280,11 @@ def solarRead(pathX, gV):
     
     return solarFeat
 
-def calc_ground_temperature(data_path, gv):
-    
-    T_ambient = pd.read_csv(data_path+'//'+"weather.csv", usecols = ['te']).te.values
-    T_max = max(T_ambient)+273 # to K
-    T_avg = np.mean(T_ambient)+273 # to K
-    e = gv.Z0*math.sqrt((math.pi*gv.Csl*gv.Psl)/(8760*gv.Bsl)) # soil constant
-    Tg = []
-    
-    for i in range(8760):
-        Tground_t = T_avg+(T_max-T_avg)*math.exp(-e)*math.cos((2*math.pi*(i+1)/8760)-e)
-        Tg.append(Tground_t)
-    return Tg #in K
 
 def calc_num_buildings(data_path, totalfilename):
     number = pd.read_csv(data_path+'//'+totalfilename, usecols=['Name']).Name.count()
     return number
+
 
 class pathX:
     def __init__(self, Header):

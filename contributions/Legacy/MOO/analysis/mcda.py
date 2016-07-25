@@ -5,12 +5,13 @@ Post-processing: MCDA
 
 """
 from __future__ import division
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
 import contributions.Legacy.MOO.globalVar as glob
-import contributions.Legacy.MOO.supportFn as sFn
-import matplotlib.pyplot as plt
-from pylab import pie
+import contributions.Legacy.MOO.optimization.supportFn as sFn
 
 
 class mcda_criteria(object):
