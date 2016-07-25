@@ -8,50 +8,10 @@ from __future__ import division
 import os
 import numpy as np
 import pandas as pd
+from contributions.Legacy.MOO import technologies
 
 
-def Cond_Boiler_InvCost(Q_design, Q_annual, gV):
-    """
-    Calculates the annual cost of a boiler (based on A+W cost of oil boilers) [CHF / a]
-    and Faz. 2012 data
-    
-    Parameters
-    ----------
-    Q_design : float
-        Design Load of Boiler [W_th]
-    
-    Q_annual : float
-        Annual thermal load required from Boiler [Wh]
-        
-    Returns
-    -------
-    InvCa : float
-        annualized investment costs in [CHF/a] including Maintainance Cost
-        
-    """
-    InvC = 28000 # after A+W 
-    
-    if Q_design <= 90000 and Q_design >= 28000:
-        InvC_exkl_MWST = 28000 + 0.275 * (Q_design - 28000) # linear interpolation of A+W data
-        InvC = (gV.MWST + 1) * InvC_exkl_MWST
-        
-    elif Q_design > 90000 and Q_design  <= 320000: # 320kW = maximum Power of conventional Gas Boiler, 
-        InvC = 45000 + 0.11 * (Q_design - 90000) 
-    
-    InvCa =  InvC * gV.Boiler_i * (1+ gV.Boiler_i) ** gV.Boiler_n / ((1+gV.Boiler_i) ** gV.Boiler_n - 1) 
-             
-    if Q_design > 320000: # 320kW = maximum Power of conventional Gas Boiler 
-        InvCa = gV.EURO_TO_CHF * (84000 + 14 * Q_design / 1000) # after Faz.2012
-    
-    Maint_C_annual = gV.Boiler_C_maintainance_faz * Q_annual / 1E6 * gV.EURO_TO_CHF # 3.5 euro per MWh_th FAZ 2013
-    Labour_C = gV.Boiler_C_labour * Q_annual / 1E6 * gV.EURO_TO_CHF # approx 4 euro per MWh_th
-    
-    InvCa += Maint_C_annual + Labour_C #CHF
-    
-    return InvCa
-
-
-def processHeatOp(pathX, gV):
+def calc_pareto_Qhp(pathX, gV):
     """
     Computes the triplet for the process heat demand
     
@@ -99,7 +59,7 @@ def processHeatOp(pathX, gV):
                 hpPrim += Qgas * 3600E-6 * gV.NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
             
             # Investment costs
-            hpCosts += Cond_Boiler_InvCost(Qnom, Qannual, gV)
+            hpCosts += technologies.boilers.calc_Cinv_boiler(Qnom, Qannual, gV)
     
     return hpCosts, hpCO2, hpPrim
 

@@ -26,7 +26,7 @@ import os
 from contributions.Legacy.MOO.technologies import substation as subsM
 from discBuild import discBuildMain_noCluster as dbM
 from elecOperation import elecMain
-from processHeat import processHeatMain as hpMain
+from contributions.Legacy.MOO.LCA import processheat as hpMain
 import masterMain as mM
 from network import summarize_network_main as nM
 import normalizeResults as norm
@@ -102,7 +102,7 @@ elecCosts, elecCO2, elecPrim = elecMain.elecOp(pathX, gV)
 print elecCosts, elecCO2, elecPrim, "elecCosts, elecCO2, elecPrim \n"
 
 print "Process Heat Treatment"
-hpCosts, hpCO2, hpPrim = hpMain.processHeatOp(pathX, gV)
+hpCosts, hpCO2, hpPrim = hpMain.calc_pareto_Qhp(pathX, gV)
 print hpCosts, hpCO2, hpPrim, "hpCosts, hpCO2, hpPrim \n"
 
 extraCosts = elecCosts + hpCosts

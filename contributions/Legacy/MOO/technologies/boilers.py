@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 ==================================================
 Boilers
@@ -62,9 +63,9 @@ def calc_Cinv_boiler(Q_design, Q_annual, gV):
             InvCa = gV.EURO_TO_CHF * (84000 + 14 * Q_design / 1000) # after Faz.2012
 
         Maint_C_annual = gV.Boiler_C_maintainance_faz * Q_annual / 1E6 * gV.EURO_TO_CHF # 3.5 euro per MWh_th FAZ 2013
-        #Labour_C = gV.Boiler_C_labour * Q_annual / 1E6 * gV.EURO_TO_CHF # approx 4 euro per MWh_th
+        Labour_C = gV.Boiler_C_labour * Q_annual / 1E6 * gV.EURO_TO_CHF # approx 4 euro per MWh_th
 
-        InvCa += Maint_C_annual #+ Labour_C
+        InvCa += Maint_C_annual + Labour_C
 
     else:
         InvCa = 0
