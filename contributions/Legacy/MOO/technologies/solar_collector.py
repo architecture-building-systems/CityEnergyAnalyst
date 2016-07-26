@@ -9,11 +9,11 @@ solar collectors
 from __future__ import division
 import numpy as np
 import pandas as pd
-import ephem
 from math import *
-import datetime
 import re
 from cea.utilities import epwreader
+from cea.utilities import solar_equations
+
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -27,7 +27,7 @@ __status__ = "Production"
 
 """
 ============================
-heat generation
+SC heat generation
 ============================
 
 """
@@ -35,22 +35,10 @@ heat generation
 def calc_SC(locator, sensors_data, radiation, latitude, longitude, year, gv, weather_path):
 
     # weather data
-    weather_data = epwreader.epw_reader(weather_path)[['dayofyear', 'exthorrad_Whm2',
-                                                       'glohorrad_Whm2', 'difhorrad_Whm2']]
-    weather_data['diff'] = weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
-    T_G_hour = weather_data[np.isfinite(weather_data['diff'])]
-    T_G_day = np.round(weather_data.groupby(['dayofyear']).mean(), 2)
-    T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
-    T_G_day['trr'] = (1 - T_G_day['diff'])
-    T_G_day['sunrise'] = calc_sunrise(range(1,366), year, longitude, latitude, gv)
-    diffuseProp = T_G_day['diff'].mean()
-    transmittivity = T_G_day['ttr'].mean()
+    weather_data = epwreader.epw_reader(weather_path)
 
-    # get other solar properties
-    date = pd.date_range(gv.date_start, periods=8760, freq='H')
-    sun_coords = pyephem(date, latitude, longitude)
-    worst_sh = sun_coords['apparent_elevation'].loc[gv.worst_hour, 'Sh']
-    worst_Az = sun_coords['apparent_azimuth'].loc[gv.worst_hour, 'Az']
+    # solar properties
+    g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude, longitude, weather_data, gv)
 
     # read radiation file
     hourly_data = pd.read_csv(radiation)
@@ -65,19 +53,19 @@ def calc_SC(locator, sensors_data, radiation, latitude, longitude, year, gv, wea
     height = locator.get_total_demand().height.sum()
 
     # calculate optimal angle and tilt for panels
-    optimal_angle_and_tilt(sensors_data, latitude, worst_sh, worst_Az, transmittivity, diffuseProp, gv.grid_side,
-                           gv.module_lenght, gv.angle_north, Min_Isol, Max_Isol)
+    optimal_angle_and_tilt(sensors_data, latitude, worst_sh, worst_Az, trr_mean, gv.grid_side,
+                           gv.module_lenght_SC, gv.angle_north, Min_Isol, Max_Isol)
 
-    number_points, hourlydata_groups, prop_observers = calc_groups(radiation_clean, sensors_data_clean)
+    Number_groups, hourlydata_groups, number_points, prop_observers = calc_groups(radiation_clean, sensors_data_clean)
 
-    result, Final = SC_generation(gv.type_SCpanel, hourlydata_groups, prop_observers, number_points, T_G_hour, latitude,
+    result, Final = SC_generation(gv.type_SCpanel, hourlydata_groups, prop_observers, number_points, g, Sz, Az, ha, latitude,
                                   gv.Tin, height)
 
     Final.to_csv(locator.solar_collectors_result(), index=True, float_format='%.2f')
     return
 
 
-def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, T_G_hour, latitude, Tin, height):
+def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, weather_data, g, Sz, Az, ha, latitude, Tin, height):
 
     # get properties of the panel to evaluate
     n0,c1,c2, mB0_r, mB_max_r,mB_min_r,C_eff, t_max, IAM_d, Aratio, Apanel, dP1,dP2,dP3,dP4 = calc_properties_SC(type_SCpanel)
@@ -106,15 +94,15 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, 
         Area_group = prop_observers.loc[group,'area_netpv']*number_points[group]
         tilt_angle = prop_observers.loc[group,'slope'] #tilt angle of panels
         radiation = pd.DataFrame({'I_sol':group_radiation[group]}) #choose vector with all values of Isol
-        radiation['I_diffuse'] = T_G_hour.ratio_diffhout*radiation.I_sol #calculate diffuse radiation
+        radiation['I_diffuse'] = weather_data.ratio_diffhout*radiation.I_sol #calculate diffuse radiation
         radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']  #direct radaition
 
-        #calculate angle modifiers
-        T_G_hour['IAM_b']  = calc_anglemodifierSC(T_G_hour.Az,T_G_hour.g,T_G_hour.ha,teta_z,tilt_angle,type_SCpanel,
-                                                  latitude, T_G_hour.Sz) #direct angle modifier
+        #calculate angle modifiers,
+        IAM_b = calc_anglemodifierSC(Az, g, ha, teta_z, tilt_angle, type_SCpanel,
+                                     latitude, Sz) #direct angle modifier
 
-        listresults[group] = Calc_SC_module2(radiation,tilt_angle, T_G_hour.IAM_b, radiation.I_direct,
-                                             radiation.I_diffuse,T_G_hour.te,
+        listresults[group] = Calc_SC_module2(radiation,tilt_angle, IAM_b, radiation.I_direct,
+                                             radiation.I_diffuse,weather_data.drybulb_C,
                                              n0,c1,c2, mB0_r, mB_max_r,mB_min_r,C_eff, t_max, IAM_d, Area_a,
                                              dP1,dP2,dP3,dP4, Tin, Leq, Le,Nseg)
 
@@ -150,6 +138,8 @@ def calc_groups(Clean_hourly, observers_fin):
     groups_ob = Clean_hourly.groupby(['CATB', 'CATGB', 'CATteta_z'])
     hourlydata_groups = groups_ob.mean().reset_index()
     hourlydata_groups = pd.DataFrame(hourlydata_groups)
+    Number_pointsgroup = groups_ob.size().reset_index()
+    number_points = Number_pointsgroup[0]
 
     groups_ob = observers_fin.groupby(['CATB', 'CATGB', 'CATteta_z'])
     prop_observers = groups_ob.mean().reset_index()
@@ -169,7 +159,7 @@ def calc_groups(Clean_hourly, observers_fin):
     hourlydata_groups.sort_index(inplace=True)
     hourlydata_groups.index = range(8760)
 
-    return hourlydata_groups, Number_groups, prop_observers
+    return Number_groups, hourlydata_groups, number_points, prop_observers
 
 
 def Calc_SC_module2(radiation,tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,Te_vector, n0,c1,c2, mB0_r,
@@ -403,15 +393,7 @@ def calc_anglemodifierSC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, typ
             teta_l = 89.999
         return teta_l  # in degrees
 
-    def Calc_incidenteangleB(g, lat, ha, tilt, teta_z):
-        # calculate incident angle beam radiation
-        part1 = sin(lat) * sin(g) * cos(tilt) - cos(lat) * sin(g) * sin(tilt) * cos(teta_z)
-        part2 = cos(lat) * cos(g) * cos(ha) * cos(tilt) + sin(lat) * cos(g) * cos(ha) * sin(tilt) * cos(teta_z)
-        part3 = cos(g) * sin(ha) * sin(tilt) * sin(teta_z)
-        teta_B = acos(part1 + part2 + part3)
-        return teta_B  # in radains
-
-    def calc_Teta_T(Az, Sz, teta_z, teta_B):  # Az is the solar azimuth
+    def calc_Teta_T(Az, Sz, teta_z):  # Az is the solar azimuth
         # calculate incident angles transversal
         teta_ta = sin(Sz) * sin(abs(teta_z - Az))
         teta_T = degrees(atan(teta_ta / cos(teta_ta)))  # transversal angle modifier
@@ -462,6 +444,15 @@ def calc_anglemodifierSC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, typ
     IAM_b_vector = np.vectorize(Calc_IAMb)(Teta_L,Teta_T, type_SCpanel)
 
     return  IAM_b_vector
+
+
+def Calc_incidenteangleB(g, lat, ha, tilt, teta_z):
+    # calculate incident angle beam radiation
+    part1 = sin(lat) * sin(g) * cos(tilt) - cos(lat) * sin(g) * sin(tilt) * cos(teta_z)
+    part2 = cos(lat) * cos(g) * cos(ha) * cos(tilt) + sin(lat) * cos(g) * cos(ha) * sin(tilt) * cos(teta_z)
+    part3 = cos(g) * sin(ha) * sin(tilt) * sin(teta_z)
+    teta_B = acos(part1 + part2 + part3)
+    return teta_B  # in radains
 
 """
 ============================
@@ -567,7 +558,7 @@ optimal angle and tilt
 
 """
 
-def optimal_angle_and_tilt(observers_all, latitude, worst_sh, worst_Az, transmittivity, diffuseProp,
+def optimal_angle_and_tilt(observers_all, latitude, worst_sh, worst_Az, transmittivity,
                            grid_side, module_lenght, angle_north, Min_Isol, Max_Isol):
 
     def Calc_optimal_angle(teta_z, latitude, transmissivity):
@@ -676,79 +667,6 @@ def optimal_angle_and_tilt(observers_all, latitude, worst_sh, worst_Az, transmit
                 else:
                     cursor.deleteRow()
 
-
-def calc_sunrise(sunrise, Yearsimul, longitude, latitude, gv):
-    o, s = _ephem_setup(latitude, longitude, altitude=0, pressure=101325, temperature=12)
-    for day in range(1, 366):  # Calculated according to NOAA website
-        o.date = datetime.datetime(Yearsimul, 1, 1) + datetime.timedelta(day - 1)
-        next_event = o.next_rising(s)
-        sunrise[day - 1] = next_event.datetime().hour
-    gv.log('complete calculating sunrise')
-    return sunrise
-
-
-def _ephem_setup(latitude, longitude, altitude, pressure, temperature):
-    # observer
-    obs = ephem.Observer()
-    obs.lat = str(latitude)
-    obs.lon = str(longitude)
-    obs.elevation = altitude
-    obs.pressure = pressure / 100.
-    obs.temp = temperature
-
-    #sun
-    sun = ephem.Sun()
-    return obs, sun
-
-
-def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
-            temperature=12):
-
-    # Written by Will Holmgren (@wholmgren), University of Arizona, 2014
-
-    try:
-        time_utc = time.tz_convert('UTC')
-    except TypeError:
-        time_utc = time
-
-    sun_coords = pd.DataFrame(index=time)
-
-    obs, sun = _ephem_setup(latitude, longitude, altitude,
-                            pressure, temperature)
-
-    # make and fill lists of the sun's altitude and azimuth
-    # this is the pressure and temperature corrected apparent alt/az.
-    alts = []
-    azis = []
-    for thetime in time_utc:
-        obs.date = ephem.Date(thetime)
-        sun.compute(obs)
-        alts.append(sun.alt)
-        azis.append(sun.az)
-
-    sun_coords['apparent_elevation'] = alts
-    sun_coords['apparent_azimuth'] = azis
-
-    # redo it for p=0 to get no atmosphere alt/az
-    obs.pressure = 0
-    alts = []
-    azis = []
-    for thetime in time_utc:
-        obs.date = ephem.Date(thetime)
-        sun.compute(obs)
-        alts.append(sun.alt)
-        azis.append(sun.az)
-
-    sun_coords['elevation'] = alts
-    sun_coords['azimuth'] = azis
-
-    # convert to degrees. add zenith
-    sun_coords = np.rad2deg(sun_coords)
-    sun_coords['apparent_zenith'] = 90 - sun_coords['apparent_elevation']
-    sun_coords['zenith'] = 90 - sun_coords['elevation']
-
-    return sun_coords
-
 """
 ============================
 investment and maintenance costs
@@ -786,3 +704,4 @@ def test_solar_collector():
 
 if __name__ == '__main__':
     test_solar_collector()
+
