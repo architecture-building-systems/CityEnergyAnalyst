@@ -165,48 +165,6 @@ def calc_groups(Clean_hourly, observers_fin):
 def Calc_SC_module2(radiation,tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,Te_vector, n0,c1,c2, mB0_r,
                     mB_max_r,mB_min_r,C_eff, t_max, IAM_d, Area_a, dP1,dP2,dP3,dP4, Tin, Leq, Le, Nseg):
 
-    def calc_qrad(n0, IAM_b, I_direct, IAM_d, I_diffuse, tilt):
-        qrad = n0 * IAM_b * I_direct + n0 * IAM_d * I_diffuse * (1 + cos(tilt)) / 2
-        return qrad
-
-    def calc_qgain(Tfl, Tabs, qrad, DT, TinSub, Tout, Aseg, c1, c2, Mfl, delts, Cpwg, C_eff, Te):
-        xgain = 1
-        xgainmax = 100
-        exit = False
-        while exit == False:
-            qgain = qrad - c1 * (DT[1]) - c2 * abs(DT[1]) * DT[1]
-            if Mfl > 0:
-                Tout = ((Mfl * Cpwg * TinSub) / Aseg - (C_eff * TinSub) / (2 * delts) + qgain + (
-                C_eff * Tfl[1]) / delts) / (Mfl * Cpwg / Aseg + C_eff / (2 * delts))
-                Tfl[2] = (TinSub + Tout) / 2
-                DT[2] = Tfl[2] - Te
-                qdiff = Mfl / Aseg * Cpwg * 2 * (DT[2] - DT[1])
-            else:
-                Tout = Tfl[1] + (qgain * delts) / C_eff
-                Tfl[2] = Tout
-                DT[2] = Tfl[2] - Te
-                qdiff = 5 * (DT[2] - DT[1])
-            if abs(qdiff < 0.1):
-                DT[1] = DT[2]
-                exit = True
-            else:
-                if xgain > 40:
-                    DT[1] = (DT[1] + DT[2]) / 2
-                    if xgain == xgainmax:
-                        exit = True
-                else:
-                    DT[1] = DT[2]
-        qout = Mfl * Cpwg * (Tout - TinSub) / Aseg
-        qmtherm = (Tfl[2] - Tfl[1]) * C_eff / delts
-        qbal = qgain - qout - qmtherm
-        if abs(qbal) > 1:
-            qbal = qbal
-        return qgain
-
-    def Calc_qloss_net(Mfl, Le, Area_a, Tm, Te, maxmsc):
-        qloss = 0.217 * Le * Area_a * (Tm - Te) * (Mfl / maxmsc) / 1000
-        return qloss  # in kW
-
     #panel to store the results per flow
     #method with no condensaiton gains, no wind or long-wave dependency, sky factor set to zero.
     # calculate radiation part
@@ -306,7 +264,7 @@ def Calc_SC_module2(radiation,tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
                     ToutSeg = Tout
                     if Mfl > 0:
                         TflB[Iseg] = (TinSeg+ToutSeg)/2
-                        ToutSeg = TflA[Iseg] + (qgain*Delts)/C_eff
+                        ToutSeg = TflA[Iseg] + (qgain*delts)/C_eff
                     else:
                         TflB[Iseg] = ToutSeg
                     TflB[Iseg] = ToutSeg
@@ -379,6 +337,51 @@ def Calc_SC_module2(radiation,tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
 
     result = [supply_losses[5], supply_out_total[5], Auxiliary[5], temperature_out[flow], temperature_in[flow], mcp]
     return result
+
+
+def calc_qrad(n0, IAM_b, I_direct, IAM_d, I_diffuse, tilt):
+    qrad = n0 * IAM_b * I_direct + n0 * IAM_d * I_diffuse * (1 + cos(tilt)) / 2
+    return qrad
+
+
+def calc_qgain(Tfl, Tabs, qrad, DT, TinSub, Tout, Aseg, c1, c2, Mfl, delts, Cpwg, C_eff, Te):
+    xgain = 1
+    xgainmax = 100
+    exit = False
+    while exit == False:
+        qgain = qrad - c1 * (DT[1]) - c2 * abs(DT[1]) * DT[1]
+        if Mfl > 0:
+            Tout = ((Mfl * Cpwg * TinSub) / Aseg - (C_eff * TinSub) / (2 * delts) + qgain + (
+                C_eff * Tfl[1]) / delts) / (Mfl * Cpwg / Aseg + C_eff / (2 * delts))
+            Tfl[2] = (TinSub + Tout) / 2
+            DT[2] = Tfl[2] - Te
+            qdiff = Mfl / Aseg * Cpwg * 2 * (DT[2] - DT[1])
+        else:
+            Tout = Tfl[1] + (qgain * delts) / C_eff
+            Tfl[2] = Tout
+            DT[2] = Tfl[2] - Te
+            qdiff = 5 * (DT[2] - DT[1])
+        if abs(qdiff < 0.1):
+            DT[1] = DT[2]
+            exit = True
+        else:
+            if xgain > 40:
+                DT[1] = (DT[1] + DT[2]) / 2
+                if xgain == xgainmax:
+                    exit = True
+            else:
+                DT[1] = DT[2]
+    qout = Mfl * Cpwg * (Tout - TinSub) / Aseg
+    qmtherm = (Tfl[2] - Tfl[1]) * C_eff / delts
+    qbal = qgain - qout - qmtherm
+    if abs(qbal) > 1:
+        qbal = qbal
+    return qgain
+
+
+def Calc_qloss_net(Mfl, Le, Area_a, Tm, Te, maxmsc):
+    qloss = 0.217 * Le * Area_a * (Tm - Te) * (Mfl / maxmsc) / 1000
+    return qloss  # in kW
 
 
 def calc_anglemodifierSC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, type_SCpanel, latitude, Sz_vector):

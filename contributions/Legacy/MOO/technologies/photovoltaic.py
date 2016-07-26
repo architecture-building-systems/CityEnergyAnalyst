@@ -16,7 +16,7 @@ from contributions.Legacy.MOO.technologies.solar_collector import optimal_angle_
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca", "Thuy-An Nguyen", "Tim Vollrath", ]
+__credits__ = ["Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -60,7 +60,7 @@ def calc_PV(locator, sensors_data, radiation, latitude, longitude, year, gv, wea
     results, Final = Calc_pv_generation(gv.type_PVpanel, hourlydata_groups, Number_groups, number_points,
                                             prop_observers, weather_data,g, Sz, Az, ha, latitude, gv.misc_losses)
 
-    Final.to_csv(locator.solar_collectors_result(), index=True, float_format='%.2f')
+    Final.to_csv(locator.PV_result(), index=True, float_format='%.2f')
     return
 
 def Calc_pv_generation(type_panel, hourly_radiation, Number_groups, number_points, prop_observers, weather_data,
@@ -79,7 +79,7 @@ def Calc_pv_generation(type_panel, hourly_radiation, Number_groups, number_point
     n = 1.526 #refractive index of galss
     Pg = 0.2 # ground reflectance
     K = 0.4 # extinction coefficien
-    eff_nom,NOCT,Bref,a0,a1,a2,a3,a4,L  = calc_propertiesPV(type_panel)
+    eff_nom,NOCT,Bref,a0,a1,a2,a3,a4,L  = calc_properties_PV(type_panel)
 
     for group in range(Number_groups):
         teta_z = prop_observers.loc[group,'aspect'] #azimuth of paneles of group
@@ -190,7 +190,7 @@ properties of module
 
 """
 
-def calc_propertiesPV(type_PVpanel):
+def calc_properties_PV(type_PVpanel):
     if type_PVpanel == 1:#     # assuming only monocrystalline panels.
         eff_nom = 0.16 # GTM 2014
         NOCT = 43.5 # Fanney et al.,
