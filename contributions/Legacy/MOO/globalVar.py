@@ -6,10 +6,17 @@ Global variables
 
 """
 
+from contributions.Legacy.MOO.resources.geothermal import calc_ground_temperature
+import contributions.Legacy.MOO.optimization.supportFn as sFn
+
 class globalVariables(object):
     def __init__(self):
-    
-    
+
+        Header = "C:\ArcGIS\ESMdata\DataFinal\MOO\HEB/"
+        self.pathX = sFn.pathX(Header)
+        self.Tg = calc_ground_temperature(self.pathX.pathRaw, self)
+        self.num_tot_buildings = sFn.calc_num_buildings(self.pathX.pathRaw, "Total.csv")
+        self.sensibilityStep = 2
         ########################### User inputs
         
         # Commands for the evolutionary algorithm

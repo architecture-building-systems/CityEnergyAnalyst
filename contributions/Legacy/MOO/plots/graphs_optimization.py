@@ -91,6 +91,7 @@ def plot_multicriteria_scenarios(indRef, SQ_area, pop, pathX, listIndex, saveloc
     plt.savefig(savelocation+"MCDA_multiweights.png")
     plt.clf()
 
+
 """
 =========================================
 plot pareto curves comparing all scenarios
@@ -447,6 +448,46 @@ def test_graph_demand():
 
     # Area_buildings = pd.read_csv(pathX.pathRaw+'//'+'Total.csv',usecols=['Af']).values.sum()
 
+
+    #print "Reading and Plotting the results of generation " + str(Generation)
+    #pop, eps, testedPop = sFn.readCheckPoint(pathX, Generation, 0)
+    #print len(pop), "individuals after generation " + str(Generation) + "\n"
+
+
+    ## Plots the normalized epsilon indicator
+    # epsNorm = norm.epsIndicator(pathX, Generation)
+
+    ## Plots the averaged number of connected buildings & the number of individuals
+    # BuildCon, nInd = plots.buildingConnection(Generation, pathX)
+
+    ## Sensitivity analysis
+    ## WARNING : can be very long depending on the chosen sensibility step! (multiple days)
+    # bandwidth = sens.sensBandwidth()
+    # sensibilityStep = 2
+    # paretoResults, FactorResults, mostSensitive = sens.sensAnalysis(sensibilityStep, pathX, finances, extraCO2, extraPrim, solarFeat, ntwFeat, Generation, bandwidth)
+    # print 'Most sensitive factor :', mostSensitive
+
+    #
+    ### Bar chart for the relative savings compared to baseline
+    # popRef, epsInd = mM.EA_Main(pathX, finances, extraCO2, extraPrim, solarFeat, ntwFeat, gV, manualCheck = 1)
+    # indToCompare = mcda.mcda_differentWeights(pop, pathX)
+    # reload(plots)
+    # plots.compareRef(popRef[0], pop, indToCompare)
+    #
+    ### intra-scenario MCDA to find the best individual
+    # reload(mcda)
+    # setWeights = mcda.mcda_criteria()
+    # scoreArray, bestInd, indexBest, scoreBest = mcda.mcda_analysis(pop, setWeights, pathX)
+    #
+    # reload(plots)
+    # indexBest = 147
+    ### Pie charts for the best individual
+    # plots.configDesign(pop, indexBest)
+    # plots.connectedbuildings(pop,indexBest)
+    # reload(mcda)
+    # specificCosts, shareLocal = mcda.mcda_indicators(pop[indexBest], pathX, plot = 1)
+    # imp,exp = plots.Elec_ImportExport(pop[indexBest], pathX)
+    # costsDisc = normalizeresults.decentralizeCosts(pop[indexBest], pathX, gV)
 
 if __name__ == '__main__':
     test_graph_demand()

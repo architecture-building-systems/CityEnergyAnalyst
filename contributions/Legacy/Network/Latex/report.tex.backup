@@ -469,7 +469,7 @@ These runtime results are obtained with an Intel Core i3-2100 processor.
 Furthermore, the runtime result for \texttt{intlinprog} is based on the execution of \texttt{mainNewYork.m}.
 However, based on \texttt{mainNewYork.py}, where we access \texttt{intlinprog} through Python wrappers, we obtain a run time of about $600\ \si{s}$.
 This is odd since the solution process of the hydraulic mixed integer program with \texttt{intlinprog} conducted through \texttt{mainNewYork.m} and \texttt{mainNewYork.py} only differs in slightly different, but up to machine precision identical, hydraulic data.
-Apparently, this slight difference in hydraulic data results in different \texttt{intlinprog} preprocessing cuts which seem to have a great impact on runtime.
+Apparently, this slight difference in hydraulic data results in different \texttt{intlinprog} preprocess cuts which seem to have a great impact on runtime.
 Such an enormous sensitivity is clearly undesirable.
 
 Please note that due to large demands in terms of $\dot{v}_n^{rq}$ and due to a large network in terms of $L_e$, high pressures $p_n$ and high temperatures $T_n^{spp}$, $T_n^{rtn}$ are characteristic for test case New York.
