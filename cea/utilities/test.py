@@ -5,7 +5,7 @@ import embodied
 
 from cea import demand
 from cea.analysis import emissions, mobility
-from cea.datamining import properties
+from cea.preprocessing import properties
 from cea.plots import graphs, benchmark, scenario_plots
 from cea.resources import radiation
 
