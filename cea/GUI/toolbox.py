@@ -139,8 +139,8 @@ class DemandTool(object):
         return
 
     def execute(self, parameters, messages):
-        import cea.demand
-        reload(cea.demand)
+        import cea.demand.demand_main
+        reload(cea.demand.demand_main)
 
         scenario_path = parameters[0].valueAsText
         locator = cea.inputlocator.InputLocator(scenario_path)
@@ -168,7 +168,7 @@ class DemandTool(object):
         assert os.path.exists(python_exe), 'Python interpreter (see above) not found.'
 
         # find demand script
-        demand_py = cea.demand.__file__
+        demand_py = cea.demand.demand_main.__file__
         if os.path.splitext(demand_py)[1].endswith('c'):
             demand_py = demand_py[:-1]
         gv.log("Path to demand script: %(demand_py)s", demand_py=demand_py)
@@ -653,7 +653,7 @@ class MobilityTool(object):
         return
 
     def execute(self, parameters, messages):
-        from mobility import lca_mobility, ExtendInputLocator
+        from cea.analysis.mobility import lca_mobility, ExtendInputLocator
 
         scenario_path = parameters[0].valueAsText
         gv = globalvar.GlobalVariables()
