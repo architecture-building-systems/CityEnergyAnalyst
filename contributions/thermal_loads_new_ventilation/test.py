@@ -1,6 +1,6 @@
 from cea import globalvar, thermal_loads, demand, inputlocator
 from cea.GUI import inputlocator
-from cea.demand import demand, thermal_loads
+from cea.demand import thermal_loads, globalvar
 
 
 def test_thermal_loads_new_ventilation():

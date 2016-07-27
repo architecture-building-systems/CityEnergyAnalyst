@@ -15,8 +15,8 @@ import arcpy
 import embodied
 import pandas as pd
 
-import cea.preprocessing.properties
 import cea.globalvar
+import cea.preprocessing.properties
 from cea import demand
 from cea.analysis import emissions
 from cea.plots import heatmaps
