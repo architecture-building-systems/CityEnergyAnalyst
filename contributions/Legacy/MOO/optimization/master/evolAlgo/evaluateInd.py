@@ -6,15 +6,14 @@ Evaluation function of an individual
 """
 from __future__ import division
 
+import contributions.Legacy.MOO.optimization.slave.slave_main as sM
 import numpy as np
 import pandas as pd
 
 import constrCheck as cCheck
-import contributions.Legacy.MOO.finances.cost_model as eM
-import contributions.Legacy.MOO.globalVar as gV
+import contributions.Legacy.MOO.optimization.master.cost_model as eM
 import contributions.Legacy.MOO.optimization.master.summarize_network_main as nM
 import contributions.Legacy.MOO.optimization.preprocessing.cooling_network as coolMain
-import contributions.Legacy.MOO.optimization.slave.slave_main as sM
 import contributions.Legacy.MOO.optimization.supportFn as sFn
 import contributions.Legacy.MOO.technologies.substation as sMain
 from contributions.Legacy.MOO.optimization.master import MasterToSlaveVariables as MSVar

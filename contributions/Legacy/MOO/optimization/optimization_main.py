@@ -17,7 +17,7 @@ sys.path.append(CodePath)
 
 from __future__ import division
 
-import contributions.Legacy.MOO.optimization.master.evolAlgo.masterMain as mM
+import contributions.Legacy.MOO.optimization.master.masterMain as mM
 from contributions.Legacy.MOO.optimization.preprocessing.preprocessing import preproccessing
 import contributions.Legacy.MOO.analysis.sensitivity as sens
 import contributions.Legacy.MOO.ntwOpt.Python.NtwMain as ntwM
