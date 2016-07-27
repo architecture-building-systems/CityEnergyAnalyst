@@ -27,6 +27,131 @@ operation costs
 
 """
 
+
+def Cond_Boiler_operation(Q_load, Q_design, T_return_to_boiler, gV):
+
+    """
+    Efficiency for operation of condensing Boilers
+
+    Efficiencies based on LHV !
+
+    operational efficiency after:
+        http://www.greenshootscontrols.net/?p=153
+
+    Parameters
+    ----------
+    Q_load : float
+        Load of time step
+
+    Q_max : float
+        Design Load of Boiler
+
+    T_return_to_boiler : float
+        Return Temperature of the network to the boiler [K]
+
+    Returns
+    -------
+    eta_boiler : float
+        efficiency of Boiler (Lower Heating Value), in abs. numbers
+        accounts for boiler efficiency only (not plant efficiency!)
+
+    """
+
+    #Implement Curves provided by http://www.greenshootscontrols.net/?p=153
+    x = [0,15.5, 21, 26.7, 32.2, 37.7, 43.3, 49, 54.4, 60, 65.6, 71.1, 100] # Return Temperature Dependency
+    y = [96.8,96.8, 96.2, 95.5, 94.7, 93.2, 91.2, 88.9, 87.3, 86.3, 86.0, 85.9, 85.8] # Return Temperature Dependency
+    #x1 = [0.05, 0.25, 0.5, 0.75, 1] # Load Point dependency
+    #y1 = [99.3, 98.3, 97.6, 97.1, 96.8] # Load Point Dependency
+
+    x1 = [0, 0.05, 0.25, 0.5, 0.75, 1] # Load Point dependency
+    y1 = [99.5, 99.3, 98.3, 97.6, 97.1, 96.8] # Load Point Dependency
+
+    # do the interpolation
+    eff_of_T_return = interp1d(x, y, kind='linear')
+    eff_of_phi = interp1d(x1, y1, kind='cubic')
+
+    # get input variables
+    if Q_design > 0:
+        phi = float(Q_load) / float(Q_design)
+    else:
+        phi = 0
+
+    #if phi < gV.Boiler_min:
+    #    print "Boiler at too low part load, see Model_Boiler_condensing, line 100"
+
+        #raise model error!!
+
+    if T_return_to_boiler == 0: # accounting with times with no flow
+        T_return = 0
+    else:
+        T_return = T_return_to_boiler - 273
+
+    eff_score = eff_of_phi(phi) / eff_of_phi(1)
+
+    boiler_eff = (eff_score * eff_of_T_return(T_return) )/ 100.0
+
+
+    return boiler_eff
+
+
+def BoilerCond_op_cost(Q_therm, Q_design, T_return_to_boiler, BoilerFuelType, ElectricityType, gV):
+    """
+    Calculates the operation cost of a Condensing Boiler (only operation, no annualized cost!)
+
+    Parameters
+    ----------
+    P_design : float
+        Design Power of Boiler Plant (Boiler Thermal power!!)
+
+    Q_annual : float
+        annual thermal Power output
+
+    T_return_to_boiler : float
+        return temperature to Boiler (from DH network)
+
+    Returns
+    -------
+    C_boil_therm : float
+        Total generation cost for required load (per hour) in CHF
+    maint
+    C_boil_per_Wh : float
+        cost per Wh in CHF / kWh
+
+    Q_primary : float
+        required thermal energy per hour (in Wh Natural Gas)
+    """
+
+    """ Iterating for efficiency as Q_thermal_required is given as input """
+
+    #if float(Q_therm) / float(Q_design) < gV.Boiler_min:
+    #    print "error expected in Boiler operation, below min part load!"
+
+    #print float(Q_therm) / float(Q_design)
+    eta_boiler = Cond_Boiler_operation(Q_therm, Q_design, T_return_to_boiler, gV)
+
+
+    if BoilerFuelType == 'BG':
+        GAS_PRICE = gV.BG_PRICE
+        #MaintananceCost = gV.Boiler_C_maintainance_fazBG
+    else:
+        GAS_PRICE = gV.NG_PRICE
+        #MaintananceCost = gV.Boiler_C_maintainance_fazNG
+
+
+    if ElectricityType == 'green':
+        ELEC_PRICE = gV.ELEC_PRICE_GREEN
+    else:
+        ELEC_PRICE = gV.ELEC_PRICE
+
+    C_boil_therm = Q_therm / eta_boiler * GAS_PRICE + (gV.Boiler_P_aux* ELEC_PRICE ) * Q_therm #  CHF / Wh - cost of thermal energy
+    C_boil_per_Wh = 1/ eta_boiler * GAS_PRICE + gV.Boiler_P_aux* ELEC_PRICE
+    E_aux_Boiler = gV.Boiler_P_aux * Q_therm
+
+    Q_primary = Q_therm / eta_boiler
+
+    return C_boil_therm, C_boil_per_Wh, Q_primary, E_aux_Boiler
+
+
 def calc_Cop_boiler(Q_load, Q_design, T_return_to_boiler):
 
     """
@@ -84,7 +209,6 @@ def calc_Cop_boiler(Q_load, Q_design, T_return_to_boiler):
     boiler_eff = (eff_score * eff_of_T_return(T_return) )/ 100.0
 
     return boiler_eff
-
 
 
 """

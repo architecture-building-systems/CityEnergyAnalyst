@@ -31,6 +31,41 @@ operation and total costs
 
 """
 
+def Pump_operation(P_design):
+
+    """
+    Modeled after:
+        05_merkblatt_wirtschaftlichkeit_14.pdf
+        23_merkblatt_pumpen_web.pdf
+        ER_2010_11_Heizungspumpen.pdf
+        MerkblattPreiseFU2010_2011.pdf
+        MerkblattPreiseMotoren2010_2011.pdf
+
+    Parameters
+    ----------
+    P_design : float
+        Load of time step
+
+    Returns
+    -------
+    eta_el : float
+        electric efficiency of Pumping operation in abs. numbers (e.g. 0.93)
+
+
+
+
+    """
+
+    x = [0.5, 0.75, 1.1, 1.5, 2.2, 3, 4, 5.5, 7.5, 11, 15, 18, 22, 30, 37, 45, 55, 75, 90, 110, 132, 160, 200, 220] # Nominal load in kW
+    y = [83, 83.5, 84, 85.2, 86.8, 87.8, 88.8, 89.5, 90.5, 91.5, 92.2, 92.6, 93, 93.6, 93.9, 94.3, 94.6, 95, 95.2, 95.4, 95.6, 95.9, 96,96] # efficiency in %
+        # do the interpolation
+    eff_of_Pmax = interp1d(x, y, kind='cubic')
+    eta_motor = eff_of_Pmax(float(P_design) / float(100))
+    eta_pump_fluid = 0.8
+    eta_pumping = eta_pump_fluid * eta_motor
+    return eta_pumping, eta_pump_fluid, eta_motor
+
+
 def calc_Ctot_pump(dicoSupply, buildList, pathNtwRes, ntwFeat, gV):
     """
     Computes the pumping costs

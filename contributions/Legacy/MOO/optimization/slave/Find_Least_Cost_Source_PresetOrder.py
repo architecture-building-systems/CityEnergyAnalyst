@@ -19,12 +19,12 @@ Find Least Cost Source Main :
 
 Cost_Maps_Path = "/Users/jimeno/Documents/Urben/MOO/slave/Slave_Subfunctions/Find_Least_Cost_Source/"
 
-
-
-import time
 import os
-import pandas as pd
+import time
+
 import numpy as np
+import pandas as pd
+
 #os.chdir(Functions_Path)
 #import Functions.Find_min_cost_functions as fn
 #reload(fn)
@@ -524,7 +524,7 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gV):
     #    Boiler
     if (MS_Var.Boiler_on) == 1 or (MS_Var.BoilerPeak_on) == 1 or 1: # always import boilers as the backup might be used in case of non-convergence
         #os.chdir(Cost_Maps_Path)
-        import Cost_Map_Functions.Cost_Mapping_Boiler as CMBoil
+        import contributions.Legacy.MOO.technologies.boilers as CMBoil
         #os.chdir(Cost_Maps_Path)
         reload(CMBoil)
         BoilerCond_op_cost = CMBoil.BoilerCond_op_cost
@@ -532,18 +532,15 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gV):
     #   Furnace
     if (MS_Var.Furnace_on) == 1:
         #os.chdir(Cost_Maps_Path)
-        import Cost_Map_Functions.Cost_Mapping_Furnace as CMFurn
+        import contributions.Legacy.MOO.technologies.furnace as CMFurn
         #os.chdir(Cost_Maps_Path)
         reload(CMFurn)
         Furnace_op_cost = CMFurn.Furnace_op_cost
     
     # Heat Pumps
     if (MS_Var.GHP_on) == 1 or (MS_Var.HP_Lake_on) == 1 or (MS_Var.HP_Sew_on) == 1 :
-        #os.chdir(Cost_Maps_Path)
-        import Cost_Map_Functions.Cost_Mapping_HP as CMHP
-        import Cost_Map_Functions.EnergySystem_Models.Model_HP as ESMHP
-        #os.chdir(Cost_Maps_Path)
-        reload(CMHP)
+        import contributions.Legacy.MOO.technologies.heatpumps as CMHP
+        import contributions.Legacy.MOO.technologies.heatpumps as ESMHP
         HPLake_op_cost = CMHP.HPLake_op_cost
         HPSew_op_cost = CMHP.HPSew_op_cost
         GHP_op_cost = CMHP.GHP_op_cost
@@ -551,21 +548,15 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gV):
             
     # CHP 
     if (MS_Var.CC_on) == 1:
-        #os.chdir(Cost_Maps_Path)
-        import Cost_Map_Functions.Cost_Mapping_CC as CMCC_fn
-        #os.chdir(Cost_Maps_Path)
-        reload(CMCC_fn)
-        CC_op_cost = CMCC_fn.CC_Find_Operation_Point_Functions
+        import contributions.Legacy.MOO.technologies.cogeneration as CMCC_fn
+        CC_op_cost = CMCC_fn.calc_Cop_CCT
         # How to use: for e.g. cost_per_Wh(Q_therm):
         # type cost_per_Wh_fn = CC_op_cost(10E6, 273+70.0, "NG")[2]
         # similar: Q_used_prim_fn = CC_op_cost(10E6, 273+70.0, "NG")[1]
         # then: ask for Q_therm_req: 
         # Q_used_prim = Q_used_prim_fn(Q_therm_req) OR cost_per_Wh = cost_per_Wh_fn(Q_therm_req)
     
-    
-    
-    
-    
+
     """ Fixed order COST ALGORITHM STARTS """ # Run the Centralized Plant Operation Scheme
     
     # Import Data - Sewage

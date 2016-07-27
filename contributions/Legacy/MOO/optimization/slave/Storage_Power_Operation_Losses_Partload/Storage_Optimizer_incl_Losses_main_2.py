@@ -38,21 +38,22 @@ It is possible to turn off the plots by setting Tempplot = 0 and Qplot = 0
 
 
 save_file = 1
-import pandas as pd
 import os
+
 import numpy as np
+import pandas as pd
 import pylab as plt
 
 #os.chdir(Functions_Path)
 
-import Functions.Import_Network_Data_functions as fn
-import Functions.Storage_Design_And_Operation_2 as StDesOp
+import contributions.Legacy.MOO.optimization.slave.Storage_Power_Operation_Losses_Partload.Import_Network_Data_functions as fn
+import contributions.Legacy.MOO.optimization.slave.Storage_Power_Operation_Losses_Partload.Storage_Design_And_Operation_2 as StDesOp
 reload(StDesOp)
 
 #os.chdir(Functions_Path)
 #reload(StDesOp)
 
-import Functions.SolarPowerHandler_incl_Losses as SPH_fn
+import contributions.Legacy.MOO.optimization.slave.Storage_Power_Operation_Losses_Partload.SolarPowerHandler_incl_Losses as SPH_fn
 
 #os.chdir(M_to_S_Var_path)
 #import Master_to_Slave_Variables as MS_Var

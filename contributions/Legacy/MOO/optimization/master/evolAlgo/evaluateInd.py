@@ -14,28 +14,14 @@ import contributions.Legacy.MOO.finances.cost_model as eM
 import contributions.Legacy.MOO.globalVar as gV
 import contributions.Legacy.MOO.optimization.master.summarize_network_main as nM
 import contributions.Legacy.MOO.optimization.preprocessing.cooling_network as coolMain
-import contributions.Legacy.MOO.optimization.slave.Slave_main as sM
+import contributions.Legacy.MOO.optimization.slave.slave_main as sM
 import contributions.Legacy.MOO.optimization.supportFn as sFn
 import contributions.Legacy.MOO.technologies.substation as sMain
-
-reload(sFn)
-reload(nM)
-reload(sM)
-reload(eM)
-reload(sMain)
-reload(gV)
-reload(coolMain)
-reload(cCheck)
-
 from contributions.Legacy.MOO.optimization.master import MasterToSlaveVariables as MSVar
-
-reload(MSVar)
-
 
 def readInd(individual, Qmax, pathRaw, gV):
     """
-    Reads the list encoding a configuration and implementes the corresponding 
-    
+    Reads the list encoding a configuration and implementes the corresponding
     for the slave routine's to use
     
     Parameters

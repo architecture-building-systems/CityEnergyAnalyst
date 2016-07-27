@@ -1,5 +1,5 @@
 
-import Slave_Subfunctions.Find_Least_Cost_Source.Find_Least_Cost_Source_Main_V7_PresetOrder as Least_Cost
+import contributions.Legacy.MOO.optimization.slave.Find_Least_Cost_Source_PresetOrder as Least_Cost
 reload(Least_Cost)
 
 #Least_Cost_Path =  "/Users/Tim/Desktop/ETH/Masterarbeit/Github_Files/urben/Masterarbeit/UESM/Slave/Slave_Subfunctions/Find_Least_Cost_Source"
@@ -11,7 +11,6 @@ reload(Least_Cost)
 #Network_Summary_Path = "/Users/Tim/Desktop/ETH/Masterarbeit/Github_Files/urben/Masterarbeit/UESM/Slave/Slave_Subfunctions/Summarize_Network_States/"
 
 import time
-import numpy as np
 
 #import os
 #os.chdir(Least_Cost_Path)
@@ -19,7 +18,7 @@ import numpy as np
 #reload(Least_Cost)
 
 #os.chdir(Storage_Optimization_Path)
-import Slave_Subfunctions.Storage_Power_Operation_Losses_Partload.Storage_Optimizer_incl_Losses_main_2 as Storage_Opt
+import contributions.Legacy.MOO.optimization.slave.Storage_Power_Operation_Losses_Partload.Storage_Optimizer_incl_Losses_main_2 as Storage_Opt
 reload(Storage_Opt)
 
 #os.chdir(Substation_Model_Path)

@@ -115,7 +115,7 @@ def discBuildOp(pathX, gV):
             resourcesRes[1][1] += Qload
                 
             # FC
-            (FC_Effel, FC_Effth) = FC.calc_Cop_FC(Qload, Qnom, 1, "B")
+            (FC_Effel, FC_Effth) = FC.calc_eta_FC(Qload, Qnom, 1, "B")
             Qgas = Qload / (FC_Effth+FC_Effel)
             Qelec = Qgas * FC_Effel            
             
