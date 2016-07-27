@@ -85,7 +85,7 @@ class PropertiesTool(object):
                 prop_internal_loads_flag]
 
     def execute(self, parameters, messages):
-        from cea.datamining.properties import properties
+        from cea.preprocessing.properties import properties
 
         scenario_path = parameters[0].valueAsText
         locator = cea.inputlocator.InputLocator(scenario_path)
