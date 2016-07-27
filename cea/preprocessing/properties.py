@@ -231,8 +231,8 @@ def test_properties():
     Run the properties script with input from the reference case and compare the results. This ensures that changes
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
     """
-    import globalvar
-    gv = globalvar.GlobalVariables()
+    import cea.globalvar
+    gv = cea.globalvar.GlobalVariables()
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
     properties(locator=locator, prop_thermal_flag=True, prop_architecture_flag=True, prop_hvac_flag=True,
                prop_comfort_flag=True, prop_internal_loads_flag=True, gv=gv)
