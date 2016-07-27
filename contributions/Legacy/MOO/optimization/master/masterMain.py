@@ -19,7 +19,7 @@ from deap import creator
 from deap import tools
 
 import contributions.Legacy.MOO.optimization.supportFn as sFn
-import evaluateInd as eI
+import contributions.Legacy.MOO.optimization.master.evolAlgo.evaluateInd as eI
 from contributions.Legacy.MOO.optimization.master.evolAlgo import constrCheck as cCheck
 
 
