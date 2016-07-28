@@ -158,16 +158,17 @@ test
 """
 
 def run_as_script(scenario_path=None, weather_path=None):
-        if scenario_path is None:
-            scenario_path = r'c:\reference-case\baseline'
-        locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-        # for the interface, the user should pick a file out of of those in ...DB/Weather/...
-        if weather_path is None:
-            weather_path = locator.get_default_weather()
-        gv = cea.globalvar.GlobalVariables()
-        gv.log('Running demand calculation for scenario %(scenario)s', scenario=scenario_path)
-        gv.log('Running demand calculation with weather file %(weather)s', weather=weather_path)
-        demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
+    gv = cea.globalvar.GlobalVariables()
+    if scenario_path is None:
+        scenario_path = gv.scenario_reference
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    # for the interface, the user should pick a file out of of those in ...DB/Weather/...
+    if weather_path is None:
+        weather_path = locator.get_default_weather()
+
+    gv.log('Running demand calculation for scenario %(scenario)s', scenario=scenario_path)
+    gv.log('Running demand calculation with weather file %(weather)s', weather=weather_path)
+    demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
 
 
 if __name__ == '__main__':
