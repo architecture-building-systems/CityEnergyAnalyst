@@ -1,7 +1,9 @@
 
 
 
-
+import pandas as pd
+import numpy as np
+import math
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

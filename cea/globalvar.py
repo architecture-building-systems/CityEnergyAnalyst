@@ -64,9 +64,8 @@ class GlobalVariables(object):
 
         Header = "C:\ArcGIS\ESMdata\DataFinal\MOO\HEB/"
         self.pathX = sFn.pathX(Header)
-        self.Tg = calc_ground_temperature(self.pathX.pathRaw, self)
         self.num_tot_buildings = sFn.calc_num_buildings(self.pathX.pathRaw, "Total.csv")
-        self.sensibilityStep = 2
+        self.sensibilityStep = 2 #the more, the longer the sensitibility analysis
         ########################### User inputs
 
         # Commands for the evolutionary algorithm
