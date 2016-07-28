@@ -74,7 +74,8 @@ def manualCheck(individual):
     while i < len(individual):
         individual[i] = 1
         i +=1
-        
+
+
 def manualCheck2(individual):
     """
     To use if you want to manually check a configuration
@@ -201,7 +202,7 @@ def manualCheck2(individual):
 
     for i in range(len(ref)):
         individual[i] = ref[i]
-    
+
 
 def putToRef(individual):
     """

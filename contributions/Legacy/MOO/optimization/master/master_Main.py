@@ -45,7 +45,7 @@ def EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, genC
     -------
     
     """          
-    print "Master / Slave optimization ready"
+    print("Master / Slave optimization ready")
     t0 = time.clock()
     
     # Extract the names of the buildings present in the district

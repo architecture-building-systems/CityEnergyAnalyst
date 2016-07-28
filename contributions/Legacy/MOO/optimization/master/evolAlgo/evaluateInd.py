@@ -16,7 +16,7 @@ import contributions.Legacy.MOO.optimization.master.summarize_network_main as nM
 import contributions.Legacy.MOO.optimization.preprocessing.cooling_network as coolMain
 import contributions.Legacy.MOO.optimization.supportFn as sFn
 import contributions.Legacy.MOO.technologies.substation as sMain
-from contributions.Legacy.MOO.optimization.master import MasterToSlaveVariables as MSVar
+from contributions.Legacy.MOO.optimization.master import master_to_slave as MSVar
 
 def readInd(individual, Qmax, pathRaw, gV):
     """
@@ -168,7 +168,7 @@ def checkNtw(individual, ntwList, pathX, gV):
     
     """
     indCombi = sFn.readCombi(individual, gV)
-    print indCombi
+    print(indCombi)
     
     if not (indCombi in ntwList) and indCombi.count("1") > 0:
         ntwList.append(indCombi)

@@ -5,7 +5,7 @@ Sensitivity analysis
 
 """
 from __future__ import division
-
+import contributions.Legacy.MOO.globalVar as glob
 import os
 
 import contributions.Legacy.MOO.optimization.evolAlgo.evaluateInd as eI
@@ -44,7 +44,12 @@ class sensBandwidth(object):
         self.minBG = -0.1
         self.maxBG = 0.1
 
-def sensAnalysis(step, pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gen, bandwidth):
+def sensAnalysis(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gen):
+
+    gV = glob.globalVariables()
+    step = gV.sensibilityStep
+
+    bandwidth = sensBandwidth()
 
     os.chdir(pathX.pathMasterRes)
     pop, eps, testedPop = sFn.readCheckPoint(pathX, gen, 0)
@@ -52,8 +57,7 @@ def sensAnalysis(step, pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFea
     
     os.chdir(pathX.pathRaw)
     buildList = sFn.extractList("Total.csv")
-    
-    gV = glob.globalVariables()
+
     ParetoResults = np.zeros( len(pop) )
     FactorResults = np.zeros((step + 1, bandwidth.nFactors * 2))
 
@@ -98,3 +102,11 @@ def sensAnalysis(step, pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFea
         mostSensitive = 'BG price'
         
     return ParetoResults, FactorResults, mostSensitive
+
+"""
+============================
+test
+============================
+
+"""
+gen = 24
