@@ -9,48 +9,12 @@ Storage Design And Operation
             
 """
 
-
-
-
-
-
-#STORE DATA?:
-
-
-
-# Modules Path
-#M_to_S_Var_path = "/Users/Tim/Desktop/ETH/Masterarbeit/Github_Files/urben/Masterarbeit/M_and_S/Slave"
-#SolarPowerHandler_Path = "/Users/Tim/Desktop/ETH/Masterarbeit/Github_Files/urben/Masterarbeit/M_and_S/Slave/\
-        #Slave_Subfunctions/Storage_Power_Operation_Losses_Partload/Functions"
-
-# Data Path
-#Network_Data_Path = "/Users/Tim/Desktop/ETH/Masterarbeit/Tools/Results/Network_loads"
-#Building_Data_Path = "/Users/Tim/Desktop/ETH/Masterarbeit/Tools/Python_Testcases/"
-#Solar_Data_Path = "/Users/Tim/Desktop/ETH/Masterarbeit/Github_Files/urben/Masterarbeit/Solar_potential/"
-#substation_results_path = "/Users/Tim/Desktop/ETH/Masterarbeit/Tools/NewNew"
-
-# Results Path
-#SolarPowerHandler_Results_Path = "/Users/Tim/Desktop/ETH/Masterarbeit/Github_Files/urben/Masterarbeit/M_and_S/Slave/\
-#        Slave_Subfunctions/Results_from_Subfunctions"
-
 import pandas as pd
 import os
 import numpy as np
 import Import_Network_Data_functions as fn
-reload(fn)
-#os.chdir(SolarPowerHandler_Path)
 import SolarPowerHandler_incl_Losses as SPH_fn
-reload(SPH_fn) 
-import globalVar as gV
-#os.chdir(M_to_S_Var_path)
-#import Master_to_Slave_Variables as MS_Var
-#reload(MS_Var)
 
-
-
-
-
-#os.chdir(Network_Data_Path)
 
 def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, Network_Data_Path, Solar_Data_Path, pathSlaveRes,\
                     STORAGE_SIZE, STORE_DATA, context, P_HP_max, gV):

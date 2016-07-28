@@ -11,14 +11,8 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 
-import cea.globalVar as gV
 import cea.optimization.master.evolAlgo.CreateInd as ci
 import cea.optimization.supportFn as sFn
-
-reload(sFn)
-reload(gV)
-reload(ci)
-
 
 
 def manualCheck(individual):
@@ -224,7 +218,7 @@ def putToRef(individual):
     individual[5] = 1   
 
 
-def GHPCheck(individual, pathRaw, Qnom, gV):
+def GHPCheck(individual, pathRaw, Qnom, gv):
     """
     Computes the geothermal availability and modifies the individual to 
     comply with it
@@ -248,7 +242,7 @@ def GHPCheck(individual, pathRaw, Qnom, gV):
     for index, buildName in zip(indCombi, buildList):
         if index == "1":
             areaAvail = areaArray[ np.where(buildArray == buildName)[0][0] ][0]
-            Qallowed += np.ceil(areaAvail/gV.GHP_A) * gV.GHP_HmaxSize #[W_th]    
+            Qallowed += np.ceil(areaAvail/gv.GHP_A) * gv.GHP_HmaxSize #[W_th]
     
     print Qallowed, "Qallowed"
     if Qallowed < individual[11] * Qnom:
@@ -267,7 +261,7 @@ def GHPCheck(individual, pathRaw, Qnom, gV):
         
         # Adapt the other shares
         nPlant = 0
-        for i in range(gV.nHeat - 1):
+        for i in range(gv.nHeat - 1):
             if individual[2*i] > 0:
                 nPlant += 1
                 individual[2*i+1] += individual[2*i+1] * shareLoss / (1-oldValue)
@@ -277,7 +271,7 @@ def GHPCheck(individual, pathRaw, Qnom, gV):
             individual[3] = 1-individual[11]
 
             
-def controlCheck(individual, nBuildings, gV):
+def controlCheck(individual, nBuildings, gv):
     """
     check the individual to make sure there are no errors
     
@@ -290,25 +284,25 @@ def controlCheck(individual, nBuildings, gV):
     """
     valid = True
     
-    for i in range(gV.nHeat):
+    for i in range(gv.nHeat):
         if individual[2*i] > 0 and individual[2*i+1] < 0.01:
             print "Share too low : modified"
             oldValue = individual[2*i+1]
             shareGain = oldValue - 0.01
             individual[2*i+1] = 0.01
             
-            for rank in range(gV.nHeat):
+            for rank in range(gv.nHeat):
                 if individual[2*rank] > 0 and i != rank:
                     individual[2*rank + 1] += individual[2*rank + 1] / (1-oldValue) * shareGain
             
-    frank = gV.nHeat *2 + gV.nHR
-    for i in range(gV.nSolar):
+    frank = gv.nHeat *2 + gv.nHR
+    for i in range(gv.nSolar):
         if individual[frank + 2*i+1] < 0:
             print individual[frank + 2*i+1], "Negative solar share ! Modified"
             individual[frank + 2*i+1] = 0
 
     sharePlants = 0
-    for i in range(gV.nHeat):
+    for i in range(gv.nHeat):
         sharePlants += individual[2*i+1]
     if abs(sharePlants - 1) > 1E-3:
         print "Wrong plant share !", sharePlants
@@ -316,7 +310,7 @@ def controlCheck(individual, nBuildings, gV):
     
     shareSolar = 0
     nSol = 0
-    for i in range(gV.nSolar):
+    for i in range(gv.nSolar):
         nSol += individual[frank + 2*i]
         shareSolar += individual[frank + 2*i+1]
     if nSol > 0 and abs(shareSolar - 1) > 1E-3:
@@ -325,8 +319,8 @@ def controlCheck(individual, nBuildings, gV):
     
     if not valid:       
         print "Non valid individual ! Replace by new one. \n"
-        newInd = ci.generateInd(nBuildings, gV)
+        newInd = ci.generateInd(nBuildings, gv)
         
-        L = (gV.nHeat + gV.nSolar) * 2 + gV.nHR
+        L = (gv.nHeat + gv.nSolar) * 2 + gv.nHR
         for i in range(L):
             individual[i] = newInd[i]
