@@ -8,11 +8,9 @@ pumps
 from __future__ import division
 import os
 import pandas as pd
-import cea.globalvar as gv
 from scipy.interpolate import interp1d
 import numpy as np
-reload(gv)
-reload(iC)
+
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

@@ -5,9 +5,6 @@ System Modeling: Cooling tower
 
 """
 from __future__ import division
-import os
-import globalVar as gV
-reload (gV)
 
 
 __author__ = "Thuy-An Nguyen"

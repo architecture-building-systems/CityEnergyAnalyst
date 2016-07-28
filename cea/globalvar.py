@@ -7,6 +7,7 @@ Global variables
 """
 from cea.demand import thermal_loads
 
+
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca", "Daren Thomas"]
@@ -18,6 +19,7 @@ __status__ = "Production"
 
 class GlobalVariables(object):
     def __init__(self):
+        self.scenario_reference = r'c:\reference-case-zug\baseline'
         self.date_start = '1/1/2016' #d/m/yyyy
         self.seasonhours = [3216, 6192]
         self.Z = 3  # height of basement for every building in m
@@ -62,9 +64,6 @@ class GlobalVariables(object):
         # optimization
         # ==============================================================================================================
 
-        Header = "C:\ArcGIS\ESMdata\DataFinal\MOO\HEB/"
-        self.pathX = sFn.pathX(Header)
-        self.num_tot_buildings = sFn.calc_num_buildings(self.pathX.pathRaw, "Total.csv")
         self.sensibilityStep = 2 #the more, the longer the sensitibility analysis
         ########################### User inputs
 

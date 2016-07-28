@@ -1,19 +1,26 @@
-"""Data required for Slave from Master"""
-
+# -*- coding: utf-8 -*-
 """
+============================
+Data required for Slave from Master
 This File sets all variables for the slave optimization, that have to be set by the Master
+============================
+
 """
-#import os
-#Energy_Models_path ="/Users/Tim/Desktop/ETH/Masterarbeit/Github_Files/urben/Masterarbeit/EnergySystem_Models"
-#Network_Raw_Data_Path = "/Users/Tim/Desktop/ETH/Masterarbeit/Tools/Results/Network_loads"
-#os.chdir(Energy_Models_path)
-import cea.globalVar as gV
+from __future__ import division
 import numpy as np
-reload(gV)
+
+__author__ = "Thuy-An Nguyen"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
 
 
-    
+
 
 class MasterSlaveVariables(object):
     def __init__(self):            
