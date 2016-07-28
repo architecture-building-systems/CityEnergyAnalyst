@@ -5,8 +5,7 @@ Vapor-compressor chiller
 
 """
 from __future__ import division
-import globalVar as gV
-reload (gV)
+
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

@@ -6,7 +6,7 @@ import tempfile
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Daren Thomas"]
+__credits__ = ["Daren Thomas", "Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -22,6 +22,34 @@ class InputLocator(object):
     def __init__(self, scenario_path):
         self.scenario_path = scenario_path
         self.db_path = os.path.join(os.path.dirname(__file__), 'databases', 'CH')
+        self.pathRaw = self.get_demand_results_folder() # Raw data from J+
+        self.pathSubsRes = os.path.join(self.get_optimization_results_folder(), "substations")  # Substation results for disconnected buildings
+        self.pathClustRes = os.path.join(self.get_optimization_results_folder(), "clustering") # Clustering results for disconnected buildings
+        self.pathDiscRes = os.path.join(self.get_optimization_results_folder(), "disconnected") # Operation pattern for disconnected buildings
+        self.pathNtwRes = os.path.join(self.get_optimization_results_folder(), "network")  # Ntw summary results
+        self.pathMasterRes = os.path.join(self.get_optimization_results_folder(), "master") # Master checkpoints
+        self.pathSlaveRes = os.path.join(self.get_optimization_results_folder(), "slave") # Slave results (storage + operation pattern)
+
+        self.pathTotalNtw = os.path.join(self.pathNtwRes, "totals") # Total files (inputs to substation + ntw in master)
+        self.pathNtwLayout = os.path.join(self.pathNtwRes, "layout") # Ntw layout files
+
+        self.pathSolarRaw = os.path.join(self.get_potentials_results_folder(), "solar") # Raw solar files
+
+    # optimization
+    def get_optimization_results_folder(self):
+        """scenario/2-results/2-demand/1-timeseries"""
+        folder = os.path.join(self.scenario_path, 'outputs', 'data', 'optimization')
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        return folder
+
+    # resource potential assessment
+    def get_potentials_results_folder(self):
+        """scenario/2-results/2-demand/1-timeseries"""
+        folder = os.path.join(self.scenario_path, 'outputs', 'data', 'potentials')
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        return folder
 
     # DATABASES
     def get_default_weather(self):
@@ -203,3 +231,5 @@ class InputLocator(object):
     def get_scenarios_plot_file(self):
         """scenario/2-results/2-demand/2-plots/{building_name}.pdf"""
         return os.path.join(self.scenario_path, 'outputs', 'plots', 'graphs', 'Boxplots_scenarios.pdf')
+
+    # Optimizaton

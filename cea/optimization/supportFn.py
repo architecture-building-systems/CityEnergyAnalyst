@@ -284,17 +284,3 @@ def solarRead(pathX, gV):
 def calc_num_buildings(data_path, totalfilename):
     number = pd.read_csv(data_path+'//'+totalfilename, usecols=['Name']).Name.count()
     return number
-
-
-class pathX:
-    def __init__(self, Header):
-        self.pathRaw = Header + "Raw"                    # Raw data from J+
-        self.pathSubsRes = Header + "SubsRes"            # Substation results for disconnected buildings
-        self.pathClustRes = Header + "ClustRes"          # Clustering results for disconnected buildings
-        self.pathDiscRes = Header + "DiscRes"            # Operation pattern for disconnected buildings
-        self.pathTotalNtw = Header + "TotalNtw"          # Total files (inputs to substation + ntw in master)
-        self.pathNtwRes = Header + "NtwRes"              # Ntw summary results
-        self.pathMasterRes = Header + "MasterRes"        # Master checkpoints
-        self.pathSolarRaw = Header + "SolarRaw"          # Raw solar files
-        self.pathSlaveRes = Header + "SlaveRes"          # Slave results (storage + operation pattern)
-        self.pathNtwLayout = Header + "NtwLayout"        # Ntw layout files

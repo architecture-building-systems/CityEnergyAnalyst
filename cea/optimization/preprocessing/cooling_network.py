@@ -3,7 +3,7 @@
 Lake-cooling network connected to chiller and cooling tower
 ================
 
-Use free cooling from lake as long as possible (Qmax lake from gV and HP Lake operation from slave)
+Use free cooling from lake as long as possible (Qmax lake from gv and HP Lake operation from slave)
 If lake exhausted, use VCC + CT operation
 
 """
@@ -11,7 +11,6 @@ from __future__ import division
 
 import os
 
-import globalVar as gV
 import numpy as np
 import pandas as pd
 
@@ -36,7 +35,7 @@ technical model
 
 """
 
-def coolingMain(pathX, configKey, ntwFeat, HRdata, gV):
+def coolingMain(pathX, configKey, ntwFeat, HRdata, gv):
     """
     Computes the parameters for the cooling of the complete DCN
     
@@ -61,7 +60,7 @@ def coolingMain(pathX, configKey, ntwFeat, HRdata, gV):
     # Space cooling previously aggregated in the substation routine
     df = pd.read_csv(pathX.pathNtwRes + "/Network_summary_result_all.csv", usecols=["T_sst_cool_return_netw_total", "mdot_cool_netw_total"])
     coolArray = np.nan_to_num( np.array(df) )
-    TsupCool = gV.TsupCool
+    TsupCool = gv.TsupCool
     
     # Data center cooling, (treated separately for each building)
     df = pd.read_csv(pathX.pathRaw + "/Total.csv", usecols=["Name", "Qcdataf"])
@@ -89,7 +88,7 @@ def coolingMain(pathX, configKey, ntwFeat, HRdata, gV):
     except:
         Qlake = 0
     
-    Qavail = gV.DeltaU + Qlake
+    Qavail = gv.DeltaU + Qlake
     print Qavail, "Qavail"
     
     
@@ -127,31 +126,31 @@ def coolingMain(pathX, configKey, ntwFeat, HRdata, gV):
             else:
                 Tsup = dataArray[i][-3] + 273
                 Tret = dataArray[i][-2] + 273
-                mdot = abs ( dataArray[i][-1] * 1E3 / gV.cp )
+                mdot = abs ( dataArray[i][-1] * 1E3 / gv.cp )
             
-            Qneed = abs( mdot * gV.cp * (Tret - Tsup) )                
+            Qneed = abs( mdot * gv.cp * (Tret - Tsup) )
             toTotalCool += Qneed
             
             if QavailCopy - Qneed >= 0: # Free cooling possible from the lake
                 QavailCopy -= Qneed
                 
                 # Delta P from linearization after network optimization
-                deltaP = 2* (gV.DeltaP_Coeff * mdot + gV.DeltaP_Origin)
+                deltaP = 2* (gv.DeltaP_Coeff * mdot + gv.DeltaP_Origin)
                 
-                toCalfactor += deltaP * mdot / 1000 / gV.etaPump
-                toCosts += deltaP * mdot / 1000 * gV.ELEC_PRICE / gV.etaPump
-                toCO2 += deltaP * mdot / 1000 * gV.EL_TO_CO2 / gV.etaPump * 0.0036
-                toPrim += deltaP * mdot / 1000 * gV.EL_TO_OIL_EQ / gV.etaPump * 0.0036
+                toCalfactor += deltaP * mdot / 1000 / gv.etaPump
+                toCosts += deltaP * mdot / 1000 * gv.ELEC_PRICE / gv.etaPump
+                toCO2 += deltaP * mdot / 1000 * gv.EL_TO_CO2 / gv.etaPump * 0.0036
+                toPrim += deltaP * mdot / 1000 * gv.EL_TO_OIL_EQ / gv.etaPump * 0.0036
                 
             else:
                 print "Lake exhausted !"
-                wdot, qhotdot = VCCModel.calc_VCC(mdot, Tsup, Tret, gV)
+                wdot, qhotdot = VCCModel.calc_VCC(mdot, Tsup, Tret, gv)
                 if Qneed > VCCnomIni:
-                    VCCnomIni = Qneed * (1+gV.Qmargin_Disc)
+                    VCCnomIni = Qneed * (1+gv.Qmargin_Disc)
                 
-                toCosts += wdot * gV.ELEC_PRICE
-                toCO2 += wdot * gV.EL_TO_CO2 * 3600E-6
-                toPrim += wdot * gV.EL_TO_OIL_EQ * 3600E-6
+                toCosts += wdot * gv.ELEC_PRICE
+                toCO2 += wdot * gv.EL_TO_CO2 * 3600E-6
+                toPrim += wdot * gv.EL_TO_OIL_EQ * 3600E-6
                 
                 CTLoad[i] += qhotdot
     
@@ -172,7 +171,7 @@ def coolingMain(pathX, configKey, ntwFeat, HRdata, gV):
     print Qavail, "Qavail after space cooling"
 
     mdotMax = np.amax(coolArray[:,1])
-    costs += PumpModel.Pump_Cost(2*ntwFeat.DeltaP_DCN, mdotMax, gV.etaPump, gV)
+    costs += PumpModel.Pump_Cost(2*ntwFeat.DeltaP_DCN, mdotMax, gv.etaPump, gv)
     
     if HRdata == 0:
         print "Data centers cooling operation"
@@ -183,8 +182,8 @@ def coolingMain(pathX, configKey, ntwFeat, HRdata, gV):
                 df = pd.read_csv(pathX.pathRaw + "/" + buildName + ".csv", usecols=["tsdata", "trdata", "mcpdata"])
                 arrayBuild = np.array(df)
                 
-                mdotMaxData = abs( np.amax(arrayBuild[:,-1]) / gV.cp * 1E3)
-                costs += PumpModel.Pump_Cost(2*ntwFeat.DeltaP_DCN, mdotMaxData, gV.etaPump, gV)
+                mdotMaxData = abs( np.amax(arrayBuild[:,-1]) / gv.cp * 1E3)
+                costs += PumpModel.Pump_Cost(2*ntwFeat.DeltaP_DCN, mdotMaxData, gv.etaPump, gv)
             
                 toCosts, toCO2, toPrim, toCalfactor, toTotalCool, QavailCopy, VCCnomIni = coolOperation(arrayBuild, nHour, Qavail)
                 costs += toCosts
@@ -204,8 +203,8 @@ def coolingMain(pathX, configKey, ntwFeat, HRdata, gV):
             df = pd.read_csv(pathX.pathRaw + "/" + buildName + ".csv", usecols=["tscp", "trcp", "mcpcp"])
             arrayBuild = np.array(df)
 
-            mdotMaxcp = abs( np.amax(arrayBuild[:,-1]) / gV.cp * 1E3)
-            costs += PumpModel.Pump_Cost(2*ntwFeat.DeltaP_DCN, mdotMaxcp, gV.etaPump, gV)
+            mdotMaxcp = abs( np.amax(arrayBuild[:,-1]) / gv.cp * 1E3)
+            costs += PumpModel.Pump_Cost(2*ntwFeat.DeltaP_DCN, mdotMaxcp, gv.etaPump, gv)
         
             toCosts, toCO2, toPrim, toCalfactor, toTotalCool, QavailCopy, VCCnomIni = coolOperation(arrayBuild, nHour, Qavail)
             costs += toCosts
@@ -225,8 +224,8 @@ def coolingMain(pathX, configKey, ntwFeat, HRdata, gV):
             df = pd.read_csv(pathX.pathRaw + "/" + buildName + ".csv", usecols=["tsice", "trice", "mcpice"])
             arrayBuild = np.array(df)
 
-            mdotMaxice = abs( np.amax(arrayBuild[:,-1]) / gV.cp * 1E3)
-            costs += PumpModel.Pump_Cost(2*ntwFeat.DeltaP_DCN, mdotMaxice, gV.etaPump, gV)
+            mdotMaxice = abs( np.amax(arrayBuild[:,-1]) / gv.cp * 1E3)
+            costs += PumpModel.Pump_Cost(2*ntwFeat.DeltaP_DCN, mdotMaxice, gv.etaPump, gv)
         
             toCosts, toCO2, toPrim, toCalfactor, toTotalCool, QavailCopy, VCCnomIni = coolOperation(arrayBuild, nHour, Qavail)
             costs += toCosts
@@ -248,21 +247,21 @@ def coolingMain(pathX, configKey, ntwFeat, HRdata, gV):
     costCopy = costs
     if CTnom > 0 :
         for i in range(nHour):
-            wdot = CTModel.calc_CT(CTLoad[i], CTnom, gV)
+            wdot = CTModel.calc_CT(CTLoad[i], CTnom, gv)
             
-            costs += wdot * gV.ELEC_PRICE
-            CO2 += wdot * gV.EL_TO_CO2 * 3600E-6
-            prim += wdot * gV.EL_TO_OIL_EQ * 3600E-6
+            costs += wdot * gv.ELEC_PRICE
+            CO2 += wdot * gv.EL_TO_CO2 * 3600E-6
+            prim += wdot * gv.EL_TO_OIL_EQ * 3600E-6
             
         print costs - costCopy, "costs after operation of CT"
     
     
     ########## Add investment costs  
     
-    costs += VCCModel.calc_Cinv_VCC(VCCnom, gV)
-    print VCCModel.calc_Cinv_VCC(VCCnom, gV), "InvC VCC"
-    costs += CTModel.calc_Cinv_CT(CTnom, gV)
-    print CTModel.calc_Cinv_CT(CTnom, gV), "InvC CT"
+    costs += VCCModel.calc_Cinv_VCC(VCCnom, gv)
+    print VCCModel.calc_Cinv_VCC(VCCnom, gv), "InvC VCC"
+    costs += CTModel.calc_Cinv_CT(CTnom, gv)
+    print CTModel.calc_Cinv_CT(CTnom, gv), "InvC CT"
     
 
     ########### Adjust and add the pumps for filtering and pre-treatment of the water
@@ -270,9 +269,9 @@ def coolingMain(pathX, configKey, ntwFeat, HRdata, gV):
     print calibration, "adjusting factor"
     
     extraElec = (127865400 + 85243600) * calibration
-    costs += extraElec * gV.ELEC_PRICE
-    CO2 += extraElec * gV.EL_TO_CO2 * 3600E-6
-    prim += extraElec * gV.EL_TO_OIL_EQ * 3600E-6
+    costs += extraElec * gv.ELEC_PRICE
+    CO2 += extraElec * gv.EL_TO_CO2 * 3600E-6
+    prim += extraElec * gv.EL_TO_OIL_EQ * 3600E-6
     
     
     return (costs, CO2, prim)

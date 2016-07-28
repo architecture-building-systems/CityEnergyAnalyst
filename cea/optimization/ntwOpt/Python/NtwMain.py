@@ -111,10 +111,9 @@ def ntwMain(matlabDir, finalDir, Header):
     return ntwFeat
 
 
-def ntwMain2(matlabDir, finalDir, Header):
+def ntwMain2():
     # WARNING : linearization on the complete network of SQ Data
     ntwFeat = ntwFeatures()
-    
     ntwFeat.pipesCosts_DHN = 58682
     ntwFeat.pipesCosts_DCN = 64017
     ntwFeat.DeltaP_DHN = 77158

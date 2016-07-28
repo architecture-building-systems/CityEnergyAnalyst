@@ -21,16 +21,16 @@ optimization
 """
 
 
-def moo_optimization(pathX, Header, matlabDir, finalDir, gV):
+def moo_optimization(pathX, gv):
 
     # call pre-processing
-    extraCosts, extraCO2, extraPrim, solarFeat = preproccessing(pathX, gV)
+    extraCosts, extraCO2, extraPrim, solarFeat = preproccessing(pathX, gv)
 
     # network optimization
-    ntwFeat = ntwM.ntwMain2(matlabDir, finalDir, Header)     #ntwMain2 -linear, #ntwMain - optimization
+    ntwFeat = ntwM.ntwMain2()     #ntwMain2 -linear, #ntwMain - optimization
 
     # main optimization routine
-    mM.EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV)
+    mM.EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gv)
 
 
 """
@@ -39,20 +39,22 @@ test
 ============================
 
 """
-def test_optimization_main():
+def test_optimization_main(scenario_path=None):
     """
-    Run the properties script with input from the reference case and compare the results. This ensures that changes
-    made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
+    run the whole optimization routine
     """
-    import cea.globalVar as glob
-    Header = "C:\ArcGIS\ESMdata\DataFinal\MOO\HEB/"  # path to the input / output folders
-    CodePath = "C:\urben\MOO/"  # path to this UESM_MainZug.py file
-    matlabDir = "C:/Program Files/MATLAB/R2014a/bin"  # path to the Matlab core files
-    finalDir = CodePath + "ntwOpt/"
-    gV = glob.globalVariables()
-    pathX = gV.pathX
-    moo_optimization(pathX=pathX, Header=Header, matlabDir=matlabDir, finalDir=finalDir, gV=gV)
-    print 'test_properties() succeeded'
+    import cea.globalvar
+    import cea.inputlocator
+
+    if scenario_path is None:
+        scenario_path = r'c:\reference-case\baseline'
+
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    gv = cea.globalvar.GlobalVariables()
+
+    moo_optimization(pathX=locator, gv=gv)
+
+    print 'test_optimization_main() succeeded'
 
 
 if __name__ == '__main__':

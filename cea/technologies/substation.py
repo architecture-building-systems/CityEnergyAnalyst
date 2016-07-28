@@ -27,10 +27,10 @@ substation model
 
 """
 
-def subsMain(data_path, path_to_path, results_path, TotalNamefile, disconected_buildings, gv):
+def subsMain(data_path, path_to_path, results_path, total_demand_file, disconected_buildings, gv):
     t0 = time.clock()
     # import total file data
-    total_file = pd.read_csv(path_to_path+'//'+TotalNamefile)
+    total_file = pd.read_csv(total_demand_file)
     # generate list of names
     names = total_file.Name.values
     # generate empty vectors
@@ -44,11 +44,13 @@ def subsMain(data_path, path_to_path, results_path, TotalNamefile, disconected_b
     iteration = 0
     for name in names:
         print name
-        buildings.append(pd.read_csv(data_path+'//'+name+".csv",usecols = ['tshs','trhs','tscs','trcs','tsww','trww','Qhsf','Qcsf','Qwwf','mcphs','mcpww','mcpcs','Ealf','Name',
-                                        'mcpdata','Ecaf','Qcdataf','Qcicef','Qcpf','mcpice','mcpcp','Eauxf','Epf']))
-        t_HS = np.vectorize(calc_DH_supply)(t_HS.copy(),buildings[iteration].tshs.values)
-        t_WW = np.vectorize(calc_DH_supply)(t_WW.copy(),buildings[iteration].tsww.values)
-        t_CS = np.vectorize(calc_DC_supply)(t_CS.copy(),buildings[iteration].tscs.values)
+        buildings.append(pd.read_csv(data_path+'//'+name+".csv", usecols = ['Tshs_C','Trhs_C','Tscs_C','Trcs_C','Tsww_C',
+                                                                            'Trww_C','Qhsf_kWh','Qcsf_kWh','Qwwf_kWh',
+                                                                            'mcphs_kWC','mcpww_kWC','mcpcs_kWC',
+                                                                            'Ealf_kWh','Name','Eauxf_kWh','Epro_kWh']))
+        t_HS = np.vectorize(calc_DH_supply)(t_HS.copy(),buildings[iteration].Tshs_C.values)
+        t_WW = np.vectorize(calc_DH_supply)(t_WW.copy(),buildings[iteration].Tsww_C.values)
+        t_CS = np.vectorize(calc_DC_supply)(t_CS.copy(),buildings[iteration].Tscs_C.values)
         iteration +=1
     t_DH = np.vectorize(calc_DH_supply)(t_HS,t_WW)
     t_DH_supply = np.where(t_DH>0,t_DH+gv.dT_heat,t_DH)
