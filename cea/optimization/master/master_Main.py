@@ -10,8 +10,8 @@ import os
 import time
 from pickle import Pickler, Unpickler
 
-import cea.optimization.evolAlgo.CreateInd as ci
-import cea.optimization.evolAlgo.CrossOver as cx
+import cea.optimization.master.evolAlgo.CreateInd as ci
+import cea.optimization.master.evolAlgo.CrossOver as cx
 import evolAlgo.Mutations as mut
 import evolAlgo.Selection as sel
 from deap import base

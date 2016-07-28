@@ -6,7 +6,6 @@ CrossOver routine
 """
 from __future__ import division
 import random
-import globalVar as gV
 from deap import base
 
 toolbox = base.Toolbox()

@@ -5,16 +5,16 @@ Sensitivity analysis
 
 """
 from __future__ import division
-import contributions.Legacy.MOO.globalVar as glob
+import contributions.Legacy.moo.globalVar as glob
 import os
 
-import contributions.Legacy.MOO.optimization.evolAlgo.evaluateInd as eI
+import contributions.Legacy.moo.optimization.evolAlgo.evaluateInd as eI
 import numpy as np
 from deap import base
 
-import contributions.Legacy.MOO.globalVar as glob
-import contributions.Legacy.MOO.optimization.master.evolAlgo.Selection as sel
-import contributions.Legacy.MOO.optimization.supportFn as sFn
+import contributions.Legacy.moo.globalVar as glob
+import contributions.Legacy.moo.optimization.master.evolAlgo.Selection as sel
+import contributions.Legacy.moo.optimization.supportFn as sFn
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

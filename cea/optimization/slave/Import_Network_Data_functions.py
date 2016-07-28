@@ -8,7 +8,6 @@ Import Network Data:
 """
 import pandas as pd
 import numpy as np
-import globalVar as gV
 
 
 def extract_csv(fName, colName, DAYS_IN_YEAR):
@@ -97,7 +96,7 @@ def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
                 HPpvt_designArray, HPCompAirDesignArray, HPScDesignArray, E_produced_solarAndHPforSolar,\
                 E_consumed_without_buildingdemand_solarAndHPforSolar
                 
-def import_solar_PeakPower(fNameTotalCSV, nBuildingsConnected, gV):
+def import_solar_PeakPower(fNameTotalCSV, nBuildingsConnected, gv):
     
     AreaAllowed = np.array(extract_csv(fNameTotalCSV, "Af", nBuildingsConnected)) 
     nFloors = np.array(extract_csv(fNameTotalCSV, "Floors", nBuildingsConnected)) 
@@ -107,7 +106,7 @@ def import_solar_PeakPower(fNameTotalCSV, nBuildingsConnected, gV):
     for building in range(nBuildingsConnected):
         AreaRoof[building] = AreaAllowed[building] / (nFloors[building] * 0.9) 
         
-    PeakPowerAvgkW = np.sum(AreaRoof) * gV.eta_area_to_peak / nBuildingsConnected
+    PeakPowerAvgkW = np.sum(AreaRoof) * gv.eta_area_to_peak / nBuildingsConnected
     
     if nBuildingsConnected == 0:
         PeakPowerAvgkW = 0

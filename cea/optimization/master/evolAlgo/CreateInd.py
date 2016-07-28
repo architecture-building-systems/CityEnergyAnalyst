@@ -8,11 +8,9 @@ from __future__ import division
 import random
 from numpy.random import random_sample
 from itertools import izip
-import globalVar as gV
-reload(gV)
 
 
-def generateInd(nBuildings, gV):
+def generateInd(nBuildings, gv):
     """
     Creates an individual for the evolutionary algorithm
     
@@ -27,13 +25,13 @@ def generateInd(nBuildings, gV):
     
     """
     # Individual represented as a list
-    individual = [0] * ( (gV.nHeat + gV.nSolar) * 2 + gV.nHR + nBuildings + 1 )
+    individual = [0] * ( (gv.nHeat + gv.nSolar) * 2 + gv.nHR + nBuildings + 1 )
 
     # Count the number of GUs (makes sure there's at least one heating system in the central hub)
     countDHN = 0
     countSolar = 0
     
-    if gV.nHeat == 0:
+    if gv.nHeat == 0:
         countDHN = 1
     
     # Choice of the GUs for the DHN
@@ -49,7 +47,7 @@ def generateInd(nBuildings, gV):
         index += 2
         
         # Other GUs for the DHN
-        for GU in range(1,gV.nHeat):
+        for GU in range(1,gv.nHeat):
             choice_GU = random.randint(0,1)
             if choice_GU == 1:
                 countDHN += 1
@@ -65,13 +63,13 @@ def generateInd(nBuildings, gV):
             individual[4] = choice_GU
     
     # Heat Recovery units
-    for HR in range(gV.nHR):
+    for HR in range(gv.nHR):
         choice_HR = random.randint(0,1)
         individual[index] = choice_HR
         index += 1
     
     # Solar units
-    for Solar in range(gV.nSolar):
+    for Solar in range(gv.nSolar):
         choice_Solar = random.randint(0,1)
         if choice_Solar == 1:
             countSolar += 1
@@ -103,7 +101,7 @@ def generateInd(nBuildings, gV):
     cuts(individual, countDHN, 0)
 
     if countSolar > 0:
-        cuts(individual, countSolar, gV.nHeat * 2 + gV.nHR)
+        cuts(individual, countSolar, gv.nHeat * 2 + gv.nHR)
 
     # Connection of the buildings
     for building in range(nBuildings):

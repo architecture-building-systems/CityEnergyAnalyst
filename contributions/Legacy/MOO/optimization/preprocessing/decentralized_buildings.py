@@ -13,9 +13,9 @@ import time
 import supportFn as sFn
 reload(sFn)
 
-import contributions.Legacy.MOO.technologies.boilers as Boiler
-import contributions.Legacy.MOO.technologies.cogeneration as FC
-import contributions.Legacy.MOO.technologies.heatpumps as HP
+import contributions.Legacy.moo.technologies.boilers as Boiler
+import contributions.Legacy.moo.technologies.cogeneration as FC
+import contributions.Legacy.moo.technologies.heatpumps as HP
 reload(Boiler)
 reload(FC)
 reload(HP)

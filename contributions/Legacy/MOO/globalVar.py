@@ -6,8 +6,8 @@ Global variables
 
 """
 
-from contributions.Legacy.MOO.resources.geothermal import calc_ground_temperature
-import contributions.Legacy.MOO.optimization.supportFn as sFn
+from contributions.Legacy.moo.resources.geothermal import calc_ground_temperature
+import contributions.Legacy.moo.optimization.supportFn as sFn
 
 class globalVariables(object):
     def __init__(self):

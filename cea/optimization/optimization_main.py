@@ -11,7 +11,7 @@ from __future__ import division
 
 import cea.optimization.master.master_Main as mM
 from cea.optimization.preprocessing.preprocessing import preproccessing
-import cea.ntwOpt.Python.NtwMain as ntwM
+import cea.optimization.ntwOpt.Python.NtwMain as ntwM
 
 """
 ============================

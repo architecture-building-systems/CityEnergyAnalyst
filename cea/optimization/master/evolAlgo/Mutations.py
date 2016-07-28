@@ -6,13 +6,12 @@ Mutation routines
 """
 from __future__ import division
 import random
-import globalVar as gV
 from deap import base
 
 toolbox = base.Toolbox()
 
 
-def mutFlip(individual, proba, gV):
+def mutFlip(individual, proba, gv):
     """
     For all integer parameters of individual except the connection integers, 
     flip the value with probability *proba*
@@ -49,10 +48,10 @@ def mutFlip(individual, proba, gV):
     # Flip the HR units
     for HR in [0,1]:
         if random.random() < proba:
-            mutant[gV.nHeat * 2 + HR] = (individual[gV.nHeat * 2 + HR]+1) % 2
+            mutant[gv.nHeat * 2 + HR] = (individual[gv.nHeat * 2 + HR]+1) % 2
 
     # Flip the buildings' connection
-    frank = (gV.nHeat + gV.nSolar) * 2 + gV.nHR + 1
+    frank = (gv.nHeat + gv.nSolar) * 2 + gv.nHR + 1
     nBuildings = len(individual) - frank
     for building in range(nBuildings):
         if random.random() < proba:
@@ -63,7 +62,7 @@ def mutFlip(individual, proba, gV):
     return mutant
 
 
-def mutShuffle(individual, proba, gV):
+def mutShuffle(individual, proba, gv):
     """
     Swap with probability *proba*
     
@@ -92,11 +91,11 @@ def mutShuffle(individual, proba, gV):
                     mutant[irank:irank+2], mutant[rank:rank+2]
     
     # Swap
-    swap(gV.nHeat,0)
-    swap(gV.nSolar, gV.nHeat * 2 + gV.nHR)
+    swap(gv.nHeat,0)
+    swap(gv.nSolar, gv.nHeat * 2 + gv.nHR)
 
     # Swap buildings
-    frank = (gV.nHeat + gV.nSolar) * 2 + gV.nHR + 1
+    frank = (gv.nHeat + gv.nSolar) * 2 + gv.nHR + 1
     nBuildings = len(individual) - frank
     
     for i in xrange(nBuildings):
@@ -109,7 +108,7 @@ def mutShuffle(individual, proba, gV):
             mutant[rank], mutant[irank] = mutant[irank], mutant[rank]
     
     # Repair the system types
-    for i in range(gV.nHeat):
+    for i in range(gv.nHeat):
         if i == 0:
             pass
         elif i == 1 or i == 2:
@@ -124,7 +123,7 @@ def mutShuffle(individual, proba, gV):
     return mutant   
 
 
-def mutGaussCap(individual, sigmap, gV):
+def mutGaussCap(individual, sigmap, gv):
     """
     Change the continuous variables with a gaussian distribution of mean the
     old value and so that there is 95% change (-2 to 2 sigma) to stay within
@@ -170,17 +169,17 @@ def mutGaussCap(individual, sigmap, gV):
                         mutant[irank + 2*rank + 1] += - mutant[irank + 2*rank + 1] / (1-oldShare) * ShareChange
 
     # Modify the shares
-    shareFluct(gV.nHeat, 0)
-    shareFluct(gV.nSolar, gV.nHeat * 2 + gV.nHR)
+    shareFluct(gv.nHeat, 0)
+    shareFluct(gv.nSolar, gv.nHeat * 2 + gv.nHR)
     
     # Gauss on the overall solar
     sigma = sigmap / 4
-    newOS = random.gauss( individual[(gV.nHeat+gV.nSolar) * 2 + gV.nHR], sigma )
+    newOS = random.gauss( individual[(gv.nHeat+gv.nSolar) * 2 + gv.nHR], sigma )
     if newOS < 0:
         newOS = 0
     elif newOS > 1:
         newOS = 1
-    mutant[(gV.nHeat+gV.nSolar) * 2 + gV.nHR] = newOS
+    mutant[(gv.nHeat+gv.nSolar) * 2 + gv.nHR] = newOS
 
 
     del mutant.fitness.values
@@ -188,7 +187,7 @@ def mutGaussCap(individual, sigmap, gV):
     return mutant
 
 
-def mutUniformCap(individual, gV):
+def mutUniformCap(individual, gv):
     """
     Change the continuous variables with a uniform distribution
     
@@ -220,13 +219,13 @@ def mutUniformCap(individual, gV):
                         mutant[irank + 2*rank + 1] / (1-oldShare) * ShareChange
 
     # Modify the shares
-    shareFluct(gV.nHeat, 0)
-    shareFluct(gV.nSolar, gV.nHeat * 2 + gV.nHR)
+    shareFluct(gv.nHeat, 0)
+    shareFluct(gv.nSolar, gv.nHeat * 2 + gv.nHR)
 
     # Change of Overall Solar
-    oldValue = individual[(gV.nHeat+gV.nSolar) * 2 + gV.nHR]
+    oldValue = individual[(gv.nHeat+gv.nSolar) * 2 + gv.nHR]
     deltaS = random.uniform(- oldValue, 1 - oldValue)
-    mutant[(gV.nHeat+gV.nSolar) * 2 + gV.nHR] += deltaS
+    mutant[(gv.nHeat+gv.nSolar) * 2 + gv.nHR] += deltaS
 
 
     del mutant.fitness.values
@@ -234,7 +233,7 @@ def mutUniformCap(individual, gV):
     return mutant
 
 
-def mutGU(individual, proba, gV):
+def mutGU(individual, proba, gv):
     """
     Flip the presence of the Generation units with probability *proba*
     
@@ -289,8 +288,8 @@ def mutGU(individual, proba, gV):
                         if mutant[irank + 2*i] > 0 and i != rank:
                             mutant[irank + 2*i + 1] = mutant[irank + 2*i + 1] *(1-share)
     
-    flip(gV.nHeat, 0)
-    flip(gV.nSolar, gV.nHeat * 2 + gV.nHR)
+    flip(gv.nHeat, 0)
+    flip(gv.nSolar, gv.nHeat * 2 + gv.nHR)
     
     del mutant.fitness.values
     

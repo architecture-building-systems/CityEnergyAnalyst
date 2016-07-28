@@ -11,9 +11,9 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 
-import contributions.Legacy.MOO.globalVar as gV
-import contributions.Legacy.MOO.optimization.master.evolAlgo.CreateInd as ci
-import contributions.Legacy.MOO.optimization.supportFn as sFn
+import contributions.Legacy.moo.globalVar as gV
+import contributions.Legacy.moo.optimization.master.evolAlgo.CreateInd as ci
+import contributions.Legacy.moo.optimization.supportFn as sFn
 
 reload(sFn)
 reload(gV)

@@ -46,14 +46,14 @@ import pylab as plt
 
 #os.chdir(Functions_Path)
 
-import contributions.Legacy.MOO.optimization.slave.Storage_Power_Operation_Losses_Partload.Import_Network_Data_functions as fn
-import contributions.Legacy.MOO.optimization.slave.Storage_Power_Operation_Losses_Partload.Storage_Design_And_Operation_2 as StDesOp
+import contributions.Legacy.moo.optimization.slave.Storage_Power_Operation_Losses_Partload.Import_Network_Data_functions as fn
+import contributions.Legacy.moo.optimization.slave.Storage_Power_Operation_Losses_Partload.Storage_Design_And_Operation_2 as StDesOp
 reload(StDesOp)
 
 #os.chdir(Functions_Path)
 #reload(StDesOp)
 
-import contributions.Legacy.MOO.optimization.slave.Storage_Power_Operation_Losses_Partload.SolarPowerHandler_incl_Losses as SPH_fn
+import contributions.Legacy.moo.optimization.slave.Storage_Power_Operation_Losses_Partload.SolarPowerHandler_incl_Losses as SPH_fn
 
 #os.chdir(M_to_S_Var_path)
 #import Master_to_Slave_Variables as MS_Var

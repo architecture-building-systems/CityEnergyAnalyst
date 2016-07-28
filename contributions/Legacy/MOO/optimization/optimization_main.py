@@ -9,9 +9,9 @@ multi-objective optimization
 
 from __future__ import division
 
-import contributions.Legacy.MOO.optimization.master.master_Main as mM
-from contributions.Legacy.MOO.optimization.preprocessing.preprocessing import preproccessing
-import contributions.Legacy.MOO.ntwOpt.Python.NtwMain as ntwM
+import contributions.Legacy.moo.optimization.master.master_Main as mM
+from contributions.Legacy.moo.optimization.preprocessing.preprocessing import preproccessing
+import contributions.Legacy.moo.ntwOpt.Python.NtwMain as ntwM
 
 """
 ============================
@@ -44,7 +44,7 @@ def test_optimization_main():
     Run the properties script with input from the reference case and compare the results. This ensures that changes
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
     """
-    import contributions.Legacy.MOO.globalVar as glob
+    import contributions.Legacy.moo.globalVar as glob
     Header = "C:\ArcGIS\ESMdata\DataFinal\MOO\HEB/"  # path to the input / output folders
     CodePath = "C:\urben\MOO/"  # path to this UESM_MainZug.py file
     matlabDir = "C:/Program Files/MATLAB/R2014a/bin"  # path to the Matlab core files

@@ -12,10 +12,10 @@ import pandas as pd
 from math import *
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
-from contributions.Legacy.MOO.technologies.solar_collector import optimal_angle_and_tilt, \
+from contributions.Legacy.moo.technologies.solar_collector import optimal_angle_and_tilt, \
     calc_groups, Calc_incidenteangleB, calc_properties_SC, calc_anglemodifierSC, calc_qrad, calc_qgain, calc_Eaux_SC,\
     SelectminimumenergySc, Selectminimumenergy2, Calc_qloss_net
-from contributions.Legacy.MOO.technologies.photovoltaic import calc_properties_PV, Calc_PV_power, Calc_diffuseground_comp, Calc_Sm_PV
+from contributions.Legacy.moo.technologies.photovoltaic import calc_properties_PV, Calc_PV_power, Calc_diffuseground_comp, Calc_Sm_PV
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
