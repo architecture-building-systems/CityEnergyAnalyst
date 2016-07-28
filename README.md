@@ -11,8 +11,8 @@ The city energy analyst (CEA) is an urban simulation engine created to assess mu
 
 ## Documentation and style guide
 
-Documentation is still a work-in-progress and is available in [here](https://architecture-building-systems.gitbooks.io/cea-toolbox-for-arcgis-manual/content/)
-to start with a new project and get a sample data, please contact us
+Documentation is still a work-in-progress and is available in [here](https://architecture-building-systems.gitbooks.io/cea-toolbox-for-arcgis-manual/content/).
+To start with a new project and get a sample data, please contact us
 
 ##Check me out on Video
 
