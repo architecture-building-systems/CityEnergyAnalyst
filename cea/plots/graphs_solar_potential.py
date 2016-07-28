@@ -1,21 +1,35 @@
+"""
+====================
+Solar graphs
+====================
 
+"""
 
 import matplotlib.pyplot as plt
 
-# <codecell>
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
 
 isolation = hourlydata_groups.rename(columns={0:'Group 1',1:'Group 3',2:'Group 2'})
 
-# <codecell>
 
-fig, axes = plt.subplots(nrows = 2, ncols = 2, figsize=(32, 16), dpi=4200)
-ax1 = axes[0,0]; ax2 = axes[0,1]; ax3 = axes[1,0]; ax4 = axes[1,1]
-isolation.plot(ax = ax1); ax1.set_title('Year',fontsize=25); ax1.set_ylabel('Solar isolation (W/m2)',fontsize=20);ax1.set_xlabel('Hour of the year',fontsize=20);ax1.tick_params(axis='x', labelsize=20);ax1.tick_params(axis='y', labelsize=20);ax1.legend(fontsize=20)
-isolation[4000:4200].plot(ax = ax2, legend =False, antialiased=True); ax2.set_title('Summer',fontsize=25); ax2.set_ylabel('Solar isolation (W/m2)',fontsize=20);ax2.set_xlabel('Hour of the year',fontsize=20);ax2.tick_params(axis='x', labelsize=20);ax2.tick_params(axis='y', labelsize=20)
-isolation[1600:1800].plot(ax = ax3, legend =False, antialiased=True); ax3.set_title('Intermediate season',fontsize=25); ax3.set_ylabel('Solar isolation (W/m2)',fontsize=20);ax3.set_xlabel('Hour of the year',fontsize=20);ax3.tick_params(axis='x', labelsize=20);ax3.tick_params(axis='y', labelsize=20)
-isolation[8300:8500].plot(ax = ax4, legend =False, antialiased=True); ax4.set_title('Winter',fontsize=25); ax4.set_ylabel('Solar isolation (W/m2)',fontsize=20);ax4.set_xlabel('Hour of the year',fontsize=20);ax4.tick_params(axis='x', labelsize=20);ax4.tick_params(axis='y', labelsize=20)
+def calc_graph_solar_isolation():
 
-# <headingcell level=3>
+    fig, axes = plt.subplots(nrows = 2, ncols = 2, figsize=(32, 16), dpi=4200)
+    ax1 = axes[0,0]; ax2 = axes[0,1]; ax3 = axes[1,0]; ax4 = axes[1,1]
+    isolation.plot(ax = ax1); ax1.set_title('Year',fontsize=25); ax1.set_ylabel('Solar isolation (W/m2)',fontsize=20);ax1.set_xlabel('Hour of the year',fontsize=20);ax1.tick_params(axis='x', labelsize=20);ax1.tick_params(axis='y', labelsize=20);ax1.legend(fontsize=20)
+    isolation[4000:4200].plot(ax = ax2, legend =False, antialiased=True); ax2.set_title('Summer',fontsize=25); ax2.set_ylabel('Solar isolation (W/m2)',fontsize=20);ax2.set_xlabel('Hour of the year',fontsize=20);ax2.tick_params(axis='x', labelsize=20);ax2.tick_params(axis='y', labelsize=20)
+    isolation[1600:1800].plot(ax = ax3, legend =False, antialiased=True); ax3.set_title('Intermediate season',fontsize=25); ax3.set_ylabel('Solar isolation (W/m2)',fontsize=20);ax3.set_xlabel('Hour of the year',fontsize=20);ax3.tick_params(axis='x', labelsize=20);ax3.tick_params(axis='y', labelsize=20)
+    isolation[8300:8500].plot(ax = ax4, legend =False, antialiased=True); ax4.set_title('Winter',fontsize=25); ax4.set_ylabel('Solar isolation (W/m2)',fontsize=20);ax4.set_xlabel('Hour of the year',fontsize=20);ax4.tick_params(axis='x', labelsize=20);ax4.tick_params(axis='y', labelsize=20)
+
+    return
 
 # PLOTTING PV POTENTIAL
 
@@ -105,7 +119,7 @@ SC_Tout.plot(ax = ax4, legend =False, antialiased=True); ax4.set_title('Return t
 # <codecell>
 
 %matplotlib inline
-import matplotlib.pyplot as plt
+
 
 # <codecell>
 
