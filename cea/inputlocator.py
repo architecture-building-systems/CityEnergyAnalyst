@@ -55,7 +55,7 @@ class InputLocator(object):
     def get_default_weather(self):
         """/cea/databases/Weather/Zurich.epw
         path to database of archetypes file Archetypes_properties.xlsx"""
-        return os.path.join(self.db_path, 'Weather', 'Zurich.epw')
+        return os.path.join(self.db_path, 'Weather', 'Zug-2010.epw')
 
     def get_weather(self, name):
         """/cea/databases/Weather/{name}.epw"""
