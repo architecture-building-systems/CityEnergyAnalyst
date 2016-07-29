@@ -20,7 +20,7 @@ __status__ = "Production"
 class GlobalVariables(object):
     def __init__(self):
         self.scenario_reference = r'c:\reference-case-zug\baseline'
-        self.date_start = '1/1/2016' #d/m/yyyy
+        self.date_start = '1/1/2010' #d/m/yyyy
         self.seasonhours = [3216, 6192]
         self.Z = 3  # height of basement for every building in m
         self.Bf = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
