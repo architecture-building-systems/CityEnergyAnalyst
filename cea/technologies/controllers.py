@@ -56,7 +56,6 @@ def calc_simple_temp_control(tsd, prop_comfort, limit_inf_season, limit_sup_seas
 
     return tsd
 
-
 """
 =========================================
 ventilation controllers
@@ -85,16 +84,16 @@ def calc_simple_ventilation_control(ve, people, Af, gv, hour_day, hour_year, n50
 
     # 'flat rate' infiltration considered for all buildings
     # estimation of infiltration air volume flow rate according to Eq. (3) in DIN 1946-6
-    n_inf = 0.5 * n50 * (gv.delta_p_dim/50) ** (2/3)  # [air changes per hour]
-
-    infiltration = gv.hf * n_inf  # m3/h.m2
+    n_inf = 0.5 * n50 * (gv.delta_p_dim/50) ** (2/3)  # [air changes per hour] m3/h.m2
+    infiltration = gv.hf * Af * n_inf * 0.000277778 # m3/h
 
     if (21 < hour_day or hour_day < 7) and not gv.is_heating_season(hour_year):
-        q_req = (ve * 1.3 + (infiltration * Af)) / 3600
+        q_req = (ve * 1.3) * 0.000277778
         # free cooling during summer nights (1.3x required ventilation rate per pax plus infiltration)
-
     else:
-        q_req = (ve + (infiltration * Af)) / 3600  # required ventilation rate per pax and infiltration
+        q_req = (ve) * 0.000277778 # required ventilation rate per pax and infiltration
 
-    return q_req  # m3/s
+    if q_req == 0:
+        q_req = infiltration
+    return q_req   # m3/s
 

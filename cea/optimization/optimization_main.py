@@ -9,7 +9,7 @@ multi-objective optimization
 
 from __future__ import division
 
-import cea.optimization.master.master_Main as mM
+import cea.optimization.master.master_main as mM
 from cea.optimization.preprocessing.preprocessing import preproccessing
 import cea.optimization.ntwOpt.Python.NtwMain as ntwM
 

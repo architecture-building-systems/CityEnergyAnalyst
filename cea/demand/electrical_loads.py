@@ -50,19 +50,19 @@ final internal electrical loads
 =========================================
 """
 
-def calc_Eint(tsd, prop_internal_loads, Af, list_uses, schedules, building_uses):
+def calc_Eint(tsd, prop_internal_loads, Aef, list_uses, schedules, building_uses):
 
     # calculate schedules
     schedule_Ea_El_Edata_Eref = calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses)
     schedule_pro = calc_Eprof_schedule(list_uses, schedules, building_uses)
 
     # calculate loads
-    tsd['Eaf'] = calc_Eaf(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ea_Wm2'], Af)
-    tsd['Elf'] = calc_Elf(schedule_Ea_El_Edata_Eref, prop_internal_loads['El_Wm2'], Af)
+    tsd['Eaf'] = calc_Eaf(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ea_Wm2'], Aef)
+    tsd['Elf'] = calc_Elf(schedule_Ea_El_Edata_Eref, prop_internal_loads['El_Wm2'], Aef)
     tsd['Ealf'] =  tsd['Elf']+ tsd['Eaf']
-    tsd['Edataf'] = calc_Edataf(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ed_Wm2'], Af)  # in W
-    tsd['Eref'] = calc_Eref(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ere_Wm2'],  Af)  # in W
-    tsd['Eprof'] = calc_Eprof(schedule_pro, prop_internal_loads['Epro_Wm2'], Af)  # in W
+    tsd['Edataf'] = calc_Edataf(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ed_Wm2'], Aef)  # in W
+    tsd['Eref'] = calc_Eref(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ere_Wm2'],  Aef)  # in W
+    tsd['Eprof'] = calc_Eprof(schedule_pro, prop_internal_loads['Epro_Wm2'], Aef)  # in W
 
     return tsd
 
@@ -80,23 +80,23 @@ def calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses):
     return el
 
 
-def calc_Eaf(schedule, Ea_Wm2, Af):
-    Eaf = schedule * Ea_Wm2 * Af  # in W
+def calc_Eaf(schedule, Ea_Wm2, Aef):
+    Eaf = schedule * Ea_Wm2 * Aef  # in W
     return Eaf
 
 
-def calc_Elf(schedule, El_Wm2, Af):
-    Elf = schedule * El_Wm2 * Af  # in W
+def calc_Elf(schedule, El_Wm2, Aef):
+    Elf = schedule * El_Wm2 * Aef  # in W
     return Elf
 
 
-def calc_Edataf(schedule, Ed_Wm2, Af):
-    Edataf = schedule  * Ed_Wm2 * Af  # in W
+def calc_Edataf(schedule, Ed_Wm2, Aef):
+    Edataf = schedule  * Ed_Wm2 * Aef  # in W
     return Edataf
 
 
-def calc_Eref(schedule , Ere_Wm2, Af):
-    Eref = schedule * Ere_Wm2 * Af  # in W
+def calc_Eref(schedule , Ere_Wm2, Aef):
+    Eref = schedule * Ere_Wm2 * Aef  # in W
     return Eref
 
 
@@ -113,8 +113,8 @@ def calc_Eprof_schedule(list_uses, schedules, building_uses):
     return epro
 
 
-def calc_Eprof(schedule , Epro_Wm2, Af):
-    Eprof = schedule  * Epro_Wm2 * Af  # in W
+def calc_Eprof(schedule , Epro_Wm2, Aef):
+    Eprof = schedule  * Epro_Wm2 * Aef  # in W
     return Eprof
 
 """
@@ -123,7 +123,7 @@ final auxiliary loads
 =========================================
 """
 
-def calc_Eauxf(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
+def calc_Eauxf(Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
                Ths_re, Ths_sup, Vw, Year, fforma, gv, nf_ag, nfp, qv_req, sys_e_cooling,
                sys_e_heating, Ehs_lat_aux):
 
