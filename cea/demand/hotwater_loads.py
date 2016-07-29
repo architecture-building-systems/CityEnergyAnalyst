@@ -154,31 +154,35 @@ losess hot water demand calculation
 """
 
 def calc_Qww_dis_ls_r(Tair, Qww, lsww_dis, lcww_dis, Y, Qww_0, V, Flowtap, twws, Cpw, Pwater, gv):
-    # Calculate tamb in basement according to EN
-    tamb = Tair
+    if Qww > 0:
+        # Calculate tamb in basement according to EN
+        tamb = Tair
 
-    # Circulation circuit losses
-    circ_ls = (twws - tamb) * Y * lcww_dis * (Qww / Qww_0)
+        # Circulation circuit losses
+        circ_ls = (twws - tamb) * Y * lcww_dis * (Qww / Qww_0)
 
-    # Distribtution circuit losses
-    dis_ls = calc_disls(tamb, Qww, Flowtap, V, twws, lsww_dis, Pwater, Cpw, Y, gv)
+        # Distribtution circuit losses
+        dis_ls = calc_disls(tamb, Qww, Flowtap, V, twws, lsww_dis, Pwater, Cpw, Y, gv)
 
-    Qww_d_ls_r = circ_ls + dis_ls
-
+        Qww_d_ls_r = circ_ls + dis_ls
+    else:
+        Qww_d_ls_r = 0
     return Qww_d_ls_r
 
 
 def calc_Qww_dis_ls_nr(tair, Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, Flowtap, twws, Cpw, Pwater, Bf, te, gv):
-    # Calculate tamb in basement according to EN
-    tamb = tair - Bf * (tair - te)
+    if Qww > 0:
+        # Calculate tamb in basement according to EN
+        tamb = tair - Bf * (tair - te)
 
-    # CIRUCLATION LOSSES
-    d_circ_ls = (twws - tamb) * Y * (Lvww_c) * (Qww / Qww_0)
+        # CIRUCLATION LOSSES
+        d_circ_ls = (twws - tamb) * Y * (Lvww_c) * (Qww / Qww_0)
 
-    # DISTRIBUTION LOSSEs
-    d_dis_ls = calc_disls(tamb, Qww, Flowtap, V, twws, Lvww_dis, Pwater, Cpw, Y, gv)
-    Qww_d_ls_nr = d_dis_ls + d_circ_ls
-
+        # DISTRIBUTION LOSSEs
+        d_dis_ls = calc_disls(tamb, Qww, Flowtap, V, twws, Lvww_dis, Pwater, Cpw, Y, gv)
+        Qww_d_ls_nr = d_dis_ls + d_circ_ls
+    else:
+        Qww_d_ls_nr = 0
     return Qww_d_ls_nr
 
 
