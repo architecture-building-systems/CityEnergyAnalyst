@@ -45,13 +45,12 @@ def test_optimization_main(scenario_path=None):
     """
     import cea.globalvar
     import cea.inputlocator
-
-    if scenario_path is None:
-        scenario_path = r'c:\reference-case\baseline'
-
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     gv = cea.globalvar.GlobalVariables()
 
+    if scenario_path is None:
+        scenario_path = gv.scenario_reference
+
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     moo_optimization(pathX=locator, gv=gv)
 
     print 'test_optimization_main() succeeded'

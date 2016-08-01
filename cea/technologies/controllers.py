@@ -85,15 +85,66 @@ def calc_simple_ventilation_control(ve, people, Af, gv, hour_day, hour_year, n50
     # 'flat rate' infiltration considered for all buildings
     # estimation of infiltration air volume flow rate according to Eq. (3) in DIN 1946-6
     n_inf = 0.5 * n50 * (gv.delta_p_dim/50) ** (2/3)  # [air changes per hour] m3/h.m2
-    infiltration = gv.hf * Af * n_inf * 0.000277778 # m3/h
+    infiltration = gv.hf * Af * n_inf * 0.000277778 # m3/s
 
     if (21 < hour_day or hour_day < 7) and not gv.is_heating_season(hour_year):
-        q_req = (ve * 1.3) * 0.000277778
+        if ve < infiltration:
+            q_req = infiltration
+
+        else:
+            q_req = (ve * 1.3) * 0.000277778 # m3/s
         # free cooling during summer nights (1.3x required ventilation rate per pax plus infiltration)
     else:
-        q_req = (ve) * 0.000277778 # required ventilation rate per pax and infiltration
+        if ve < infiltration:
+            q_req = infiltration
 
-    if q_req == 0:
-        q_req = infiltration
+        else:
+            q_req = ve * 0.000277778  # m3/s
+
     return q_req   # m3/s
+
+
+def calc_ventialtion_HVAC_buildings(area_envelope, HVAC_on, Tin, Tout, ws, method):
+    """
+    infiltration according to energy plus, blast, or DOE2 tools
+
+    """
+    def calc_F_schedule(HVAC_on): #according to (SSPC 90.1 Envelope Subcommittee
+        if HVAC_on:
+            F_schedule = 0.25
+        else:
+            F_schedule = 1
+        return F_schedule
+
+    def calc_Idesign(ws, area_envelope):
+        I_75pa = 0.00914400602372 * area_envelope # known leakage rate(1.8cfm/sf2) at 75pa per area of building envelope in m/s
+        n = 0.65 # air flow exponent
+        Cs = 0.1617  # average surface presure coefficient
+        rho = 1.18  #kg/m3
+        alpha_terrain = 0.22 # urban terrain constant
+        I_design = (alpha_terrain+1)*I_75pa*(0.5*Cs*rho*(ws**2))**n # m3/s
+        return I_design
+
+    if method is "BLAST":
+        A = 0.606
+        B = 0.03636
+        C = 0.1177
+    elif method is "EPLUS":
+        A = 1
+        B = 0
+        C = 0
+    elif method is "DOE2":
+        A = 1
+        B = 0
+        C = 0.224
+    else:
+        A = 1
+        B = 0
+        C = 0.224
+
+    I_design = calc_Idesign(ws, area_envelope)
+    F_schedule = calc_F_schedule(HVAC_on)
+    ventilation = I_design + F_schedule *(A+B*abs(Tin-Tout)+C*ws)
+
+    return ventilation
 

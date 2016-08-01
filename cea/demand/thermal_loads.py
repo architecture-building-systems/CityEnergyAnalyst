@@ -757,7 +757,7 @@ def results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, 
          'Qcref_kWh': Qcrefri / 1000,
          'Edataf_kWh': Edata / 1000, 'QHf_kWh': (Qwwf + Qhsf) / 1000,
          'QCf_kWh': (-1 * Qcsf + Qcdata + Qcrefri) / 1000}).to_csv(locationFinal + '\\' + Name + '.csv',
-                                                                   index=False, float_format='%.2f')
+                                                                   index=False, float_format='%.3f')
     # print peaks in kW and totals in MWh, temperature peaks in C
     totals = pd.DataFrame(
         {'Name': Name, 'GFA_m2': GFA_m2, 'Af_m2': Af, 'occ_pax': Occupants, 'Qwwf0_kW': Qwwf_0 / 1000,
@@ -771,7 +771,7 @@ def results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, 
          'Tsww0_C': Tww_sup_0, 'Vw_m3yr': Waterconsumption.sum(),
          'Ef_MWhyr': (Ealf_tot + Eauxf_tot + Epro_tot + Edata_tot), 'QHf_MWhyr': (Qwwf_tot + Qhsf_tot),
          'QCf_MWhyr': (Qcsf_tot + Qcdata_tot + Qcrefri_tot)}, index=[0])
-    totals.to_csv(os.path.join(path_temporary_folder, '%sT.csv' % Name), index=False, float_format='%.2f')
+    totals.to_csv(os.path.join(path_temporary_folder, '%sT.csv' % Name), index=False, float_format='%.3f')
 
 
 """

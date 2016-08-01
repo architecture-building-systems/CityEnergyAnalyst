@@ -8,6 +8,7 @@ from __future__ import division
 import pandas as pd
 import time
 import numpy as np
+import scipy
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -27,70 +28,67 @@ substation model
 
 """
 
-def subsMain(data_path, path_to_path, results_path, total_demand_file, disconected_buildings, gv):
+def subsMain(data_path, results_path, total_demand_file, disconected_buildings, gv):
     t0 = time.clock()
     # import total file data
     total_file = pd.read_csv(total_demand_file)
     # generate list of names
     names = total_file.Name.values
     # generate empty vectors
-    t_HS = np.zeros(8760)
-    t_WW = np.zeros(8760)
-    t_DC = np.zeros(8760)
-    t_DH = np.zeros(8760)
-    t_CS = np.zeros(8760)+1E6
-    buildings = []
+    Ths = np.zeros(8760)
+    Tww = np.zeros(8760)
+    Tcs = np.zeros(8760)+1E6
+    T_DCS = np.zeros(8760)
+    T_DHS = np.zeros(8760)
+
     # determine grid target temperatures at costumer side.
     iteration = 0
+    buildings = []
     for name in names:
-        print name
         buildings.append(pd.read_csv(data_path+'//'+name+".csv", usecols = ['Tshs_C','Trhs_C','Tscs_C','Trcs_C','Tsww_C',
                                                                             'Trww_C','Qhsf_kWh','Qcsf_kWh','Qwwf_kWh',
                                                                             'mcphs_kWC','mcpww_kWC','mcpcs_kWC',
                                                                             'Ealf_kWh','Name','Eauxf_kWh','Epro_kWh']))
-        t_HS = np.vectorize(calc_DH_supply)(t_HS.copy(),buildings[iteration].Tshs_C.values)
-        t_WW = np.vectorize(calc_DH_supply)(t_WW.copy(),buildings[iteration].Tsww_C.values)
-        t_CS = np.vectorize(calc_DC_supply)(t_CS.copy(),buildings[iteration].Tscs_C.values)
+        Ths = np.vectorize(calc_DH_supply)(Ths.copy(),buildings[iteration].Tshs_C.values)
+        Tww = np.vectorize(calc_DH_supply)(Tww.copy(),buildings[iteration].Tsww_C.values)
+        Tcs = np.vectorize(calc_DC_supply)(Tcs.copy(),buildings[iteration].Tscs_C.values)
         iteration +=1
-    t_DH = np.vectorize(calc_DH_supply)(t_HS,t_WW)
-    t_DH_supply = np.where(t_DH>0,t_DH+gv.dT_heat,t_DH)
-    t_DC_supply = np.where(t_CS!=1E6,t_CS-gv.dT_cool,0)
+    T_DHS = np.vectorize(calc_DH_supply)(Ths,Tww)
+    T_DHS_supply = np.where(T_DHS>0,T_DHS+gv.dT_heat,T_DHS)
+    t_DCS_supply = np.where(Tcs!=1E6,Tcs-gv.dT_cool,0)
+
     # Calculate disconnected buildings files and substation operation.
+    index = 0
     if disconected_buildings == 1:
-        index = 0
         combi = [0]*len(names)
         for name in names:
-            print name
-            # calculate file for disconnected building buildings
-            dfTemp = total_file[(total_file.Name == name)]
-            dfRes = dfTemp.drop(['Unnamed: 0'], axis =1 )
+            dfRes = total_file[(total_file.Name == name)]
             combi[index] = 1
             key = "".join(str(e) for e in combi)
             fName_result = "Total_" + key + ".csv"
-            dfRes.to_csv(results_path+'//'+fName_result, sep= ',')
-            combi[index] = 0
+            dfRes.to_csv(results_path+'//'+fName_result, sep= ',', index=False, float_format='%.3f')
+            print name
             # calculate substation parameters per building
-            subsModel(path_to_path, results_path, gv, buildings[index],t_DH,t_DH_supply,t_DC_supply,t_HS,t_WW,t_CS)
+            subsModel(results_path, gv, buildings[index],T_DHS,T_DHS_supply,t_DCS_supply,Ths,Tww,Tcs)
             index +=1
     else:
-        index = 0
         # calculate substation parameters per building
         for name in names:
-            subsModel(path_to_path, results_path, gv, buildings[index],t_DH,t_DH_supply,t_DC_supply,t_HS,t_WW,t_CS)
-            index +=1
+            subsModel(results_path, gv, buildings[index],T_DHS,T_DHS_supply,t_DCS_supply,Ths,Tww,Tcs)
+
     print time.clock() - t0, "seconds process time for the Substation Routine \n"
 
 
-def subsModel(data_path,results_path, gv, building,t_DH,t_DH_supply,t_DC_supply,t_HS,t_WW,t_CS):
+def subsModel(results_path, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS, t_WW, t_CS):
 
     #calculate temperatures and massflow rates HEX for space heating costumers.
     thi = t_DH_supply + 273 # In k
-    Qhsf = building.Qhsf.values*1000 # in W
+    Qhsf = building.Qhsf_kWh.values*1000 # in W
     Qnom = max(Qhsf) #in W
     if Qnom> 0:
-        tco = building.tshs.values+273 #in K
-        tci = building.trhs.values+273 #in K
-        cc = building.mcphs.values*1000 #in W/K
+        tco = building.Tshs_C.values+273 #in K
+        tci = building.Trhs_C.values+273 #in K
+        cc = building.mcphs_kWC.values*1000 #in W/K
         index = np.where(Qhsf==Qnom)[0][0]
         thi_0 = thi[index]
         tci_0 = tci[index]
@@ -104,12 +102,12 @@ def subsModel(data_path,results_path, gv, building,t_DH,t_DH_supply,t_DC_supply,
         A_hex_hs = 0
 
     #calculate temperatures and massflow rates HEX for dhW costumers.
-    Qwwf = building.Qwwf.values*1000  # in W
+    Qwwf = building.Qwwf_kWh.values*1000  # in W
     Qnom = max(Qwwf) #in W
     if Qnom> 0:
-        tco = building.tsww.values+273  #in K
-        tci = building.trww.values+273  #in K
-        cc = building.mcpww.values*1000  #in W/K
+        tco = building.Tsww_C.values+273  #in K
+        tci = building.Trww_C.values+273  #in K
+        cc = building.mcpww_kWC.values*1000  #in W/K
         index = np.where(Qwwf==Qnom)[0][0]
         thi_0 = thi[index]
         tci_0 = tci[index]
@@ -186,7 +184,7 @@ def subsModel(data_path,results_path, gv, building,t_DH,t_DH_supply,t_DC_supply,
 
     fName_result = building.Name.values[0]+"_result.csv"
     result_substation = results_path+'\\'+fName_result
-    results.to_csv(result_substation, sep= ',')
+    results.to_csv(result_substation, sep= ',', index=False, float_format='%.3f')
 
     print "Results saved in :", results_path
     print "Substation model complete \n"
@@ -241,7 +239,7 @@ Heat exchanger model
 
 def calc_HEX_cooling(Q, UA,thi,tho,tci,ch):
     def calc_plate_HEX(NTU, cr):
-        eff = 1 - exp((1 / cr) * (NTU ** 0.22) * (exp(-cr * (NTU) ** 0.78) - 1))
+        eff = 1 - scipy.exp((1 / cr) * (NTU ** 0.22) * (scipy.exp(-cr * (NTU) ** 0.78) - 1))
         return eff
     if ch>0:
         eff = [0.1,0]
@@ -282,7 +280,7 @@ def calc_HEX_mix(Q1,Q2, t1,m1,t2, m2):
 def calc_HEX_heating(Q, UA,thi,tco,tci,cc):
     def calc_shell_HEX(NTU, cr):
         eff = 2 * ((1 + cr + (1 + cr ** 2) ** (1 / 2)) * (
-        (1 + exp(-(NTU) * (1 + cr ** 2))) / (1 - exp(-(NTU) * (1 + cr ** 2))))) ** -1
+        (1 + scipy.exp(-(NTU) * (1 + cr ** 2))) / (1 - scipy.exp(-(NTU) * (1 + cr ** 2))))) ** -1
         return eff
     if Q>0:
         eff = [0.1,0]
@@ -300,6 +298,7 @@ def calc_HEX_heating(Q, UA,thi,tco,tci,cc):
                 ch = cmin
                 cmax = cmin
                 cmin = cc
+            print Q, ch, cmin, cc, cmax
             cr =  cmin/cmax
             NTU = UA/cmin
             eff[1] =  calc_shell_HEX(NTU,cr)
@@ -317,9 +316,9 @@ def calc_dTm_HEX(thi,tho,tci,tco, flag):
     dT1 = thi-tco
     dT2 = tho-tci
     if flag == 'heat':
-        dTm = (dT1-dT2)/log(dT1/dT2)
+        dTm = (dT1-dT2)/scipy.log(dT1/dT2)
     else:
-        dTm = (dT2-dT1)/log(dT2/dT1)
+        dTm = (dT2-dT1)/scipy.log(dT2/dT1)
     return dTm
 
 def calc_area_HEX(Qnom,dTm_0, U):
