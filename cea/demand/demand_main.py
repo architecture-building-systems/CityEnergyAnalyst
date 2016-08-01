@@ -115,7 +115,7 @@ def write_totals_csv(building_properties, locator):
         else:
             df2 = pd.read_csv(temporary_file)
             df = df.append(df2, ignore_index=True)
-    df.to_csv(locator.get_total_demand(), index=False, float_format='%.2f')
+    df.to_csv(locator.get_total_demand(), index=False, float_format='%.3f')
 
 
 """

@@ -25,7 +25,7 @@ __status__ = "Production"
 def preproccessing(locator, gV):
 
     print "Run substation model for each building separately"
-    subsM.subsMain(locator.pathRaw, locator.pathRaw, locator.pathSubsRes, locator.get_total_demand(), 1, gV) # 1 if disconected buildings are calculated
+    subsM.subsMain(locator.pathRaw, locator.pathSubsRes, locator.get_total_demand(), 1, gV) # 1 if disconected buildings are calculated
 
     print "Heating operation pattern for disconnected buildingsn"
     dbM.discBuildOp(locator, gV)

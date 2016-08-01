@@ -7,9 +7,7 @@ EN-13970
 
 """
 from __future__ import division
-import os
 import numpy as np
-import pandas as pd
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
