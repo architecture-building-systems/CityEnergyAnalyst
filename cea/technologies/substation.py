@@ -29,6 +29,19 @@ substation model
 """
 
 def subsMain(data_path, results_path, total_demand_file, disconected_buildings, gv):
+    """
+    this calculates the temperatures and mass flow rates of the network (plant side)
+    at every customer. the temperature of operation of the network will be that required by the
+    customer with the highest temperature. This temperature will be updated to account for thermal losses.
+    these thermal losses are case specific and depend on the network configuration.
+
+    :param data_path:
+    :param results_path:
+    :param total_demand_file:
+    :param disconected_buildings:
+    :param gv:
+    :return:
+    """
     t0 = time.clock()
     # import total file data
     total_file = pd.read_csv(total_demand_file)
@@ -38,17 +51,15 @@ def subsMain(data_path, results_path, total_demand_file, disconected_buildings, 
     Ths = np.zeros(8760)
     Tww = np.zeros(8760)
     Tcs = np.zeros(8760)+1E6
-    T_DCS = np.zeros(8760)
-    T_DHS = np.zeros(8760)
 
     # determine grid target temperatures at costumer side.
     iteration = 0
     buildings = []
     for name in names:
-        buildings.append(pd.read_csv(data_path+'//'+name+".csv", usecols = ['Tshs_C','Trhs_C','Tscs_C','Trcs_C','Tsww_C',
+        buildings.append(pd.read_csv(data_path+'//'+name+".csv", usecols = ['Name','Tshs_C','Trhs_C','Tscs_C','Trcs_C','Tsww_C',
                                                                             'Trww_C','Qhsf_kWh','Qcsf_kWh','Qwwf_kWh',
                                                                             'mcphs_kWC','mcpww_kWC','mcpcs_kWC',
-                                                                            'Ealf_kWh','Name','Eauxf_kWh','Epro_kWh']))
+                                                                            'Ef_kWh']))
         Ths = np.vectorize(calc_DH_supply)(Ths.copy(),buildings[iteration].Tshs_C.values)
         Tww = np.vectorize(calc_DH_supply)(Tww.copy(),buildings[iteration].Tsww_C.values)
         Tcs = np.vectorize(calc_DC_supply)(Tcs.copy(),buildings[iteration].Tscs_C.values)
@@ -67,8 +78,8 @@ def subsMain(data_path, results_path, total_demand_file, disconected_buildings, 
             key = "".join(str(e) for e in combi)
             fName_result = "Total_" + key + ".csv"
             dfRes.to_csv(results_path+'//'+fName_result, sep= ',', index=False, float_format='%.3f')
-            print name
             # calculate substation parameters per building
+            print name
             subsModel(results_path, gv, buildings[index],T_DHS,T_DHS_supply,t_DCS_supply,Ths,Tww,Tcs)
             index +=1
     else:
@@ -125,13 +136,13 @@ def subsModel(results_path, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS, 
     mcp_DH = (mcp_DH_ww + mcp_DH_hs)
 
     #calculate temperatures and massflow rates HEX for cooling costumers incl refrigeration and processes
-    Qcf = (abs(building.Qcsf.values))*1000  # in W
+    Qcf = (abs(building.Qcsf_kWh.values))*1000  # in W
     Qnom = max(Qcf) #in W
     if Qnom> 0:
         tci = t_DC_supply+273 # in K
-        tho = building.tscs.values+273 #in K
-        thi = building.trcs.values+273 #in K
-        ch = (abs(building.mcpcs.values))*1000 #in W/K
+        tho = building.Tscs_C.values+273 #in K
+        thi = building.Trcs_C.values+273 #in K
+        ch = (abs(building.mcpcs_kWC.values))*1000 #in W/K
         index = np.where(Qcf==Qnom)[0][0]
         tci_0 = tci[index] # in K
         thi_0 = thi[index]
@@ -158,7 +169,7 @@ def subsModel(results_path, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS, 
     T_supply_max_all_buildings_flat = t_DH+273 #convert to K
     T_hotwater_max_all_buildings_flat = t_WW+273 #convert to K
     T_heating_sup_max_all_buildings_flat = t_HS+273 #convert to K
-    Electr_array_all_flat = (building.Ealf.values+building.Eauxf.values+building.Epf.values)*1000 #convert to #to W
+    Electr_array_all_flat = building.Ef_kWh.values*1000 #convert to #to W
 
     # save the results into a .csv file
     results = pd.DataFrame({"mdot_DH_result":mdot_DH_result_flat,
@@ -185,9 +196,6 @@ def subsModel(results_path, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS, 
     fName_result = building.Name.values[0]+"_result.csv"
     result_substation = results_path+'\\'+fName_result
     results.to_csv(result_substation, sep= ',', index=False, float_format='%.3f')
-
-    print "Results saved in :", results_path
-    print "Substation model complete \n"
     return results
 
 
@@ -298,7 +306,6 @@ def calc_HEX_heating(Q, UA,thi,tco,tci,cc):
                 ch = cmin
                 cmax = cmin
                 cmin = cc
-            print Q, ch, cmin, cc, cmax
             cr =  cmin/cmax
             NTU = UA/cmin
             eff[1] =  calc_shell_HEX(NTU,cr)
