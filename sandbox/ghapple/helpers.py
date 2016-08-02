@@ -241,6 +241,49 @@ def check_doy(doy):
         return False
 
 
+def is_nighttime_hoy(hoy):
+    """
+    Check if a certain hour of year is during night or not
+
+    Parameters
+    ----------
+    hoy: hour of year
+
+    Returns
+    -------
+    bool
+
+    """
+    start_night = 21  # 21:00 # TODO: make dynamic (e.g. as function of location/country)
+    stop_night = 7  # 07:00 # TODO: make dynamic (e.g. as function of location/country)
+
+    if start_night <= hoy_2_hod(hoy) or stop_night >= hoy_2_hod(hoy):
+        return True
+    else:
+        return False
+
+
+def is_daytime_hoy(hoy):
+    """
+    Check if a certain hour of the year is during the daytime or not
+
+    Parameters
+    ----------
+    hoy : hour of year
+
+    Returns
+    -------
+    bool
+
+    """
+
+    if not is_nighttime_hoy(hoy):
+        return True
+    else:
+        return False
+
+
+
 def test_helpers():
     """
     test helpers
