@@ -7,6 +7,7 @@ pre-processing algorithm
 
 from __future__ import division
 import cea.optimization.preprocessing.processheat as hpMain
+import pandas as pd
 from cea.technologies import substation as subsM
 from cea.optimization.preprocessing import decentralized_buildings as dbM
 from cea.optimization.master import summarize_network_main as nM
@@ -24,11 +25,15 @@ __status__ = "Production"
 
 def preproccessing(locator, gv):
 
+    # read total demand file and names of buildings
+    total_demand = pd.read_csv(locator.get_total_demand())
+    building_names = total_demand.Name.values
+
     print "Run substation model for each building separately"
-    subsM.subsMain(locator.pathRaw, locator.pathSubsRes, locator.get_total_demand(), 1, gv) # 1 if disconected buildings are calculated
+    subsM.subsMain(locator.pathRaw, locator.pathSubsRes, total_demand, building_names, 1, gv) # 1 if disconected buildings are calculated
 
     print "Heating operation pattern for disconnected buildings"
-    dbM.discBuildOp(locator, gv)
+    dbM.discBuildOp(locator, building_names, gv)
 
     print "Create network file with all buildings connected"
     nM.Network_Summary(locator.pathRaw, locator.pathRaw, locator.pathSubsRes, locator.pathNtwRes, locator.pathNtwLayout, "Total.csv", gv)

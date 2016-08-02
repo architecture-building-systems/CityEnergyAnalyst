@@ -21,7 +21,7 @@ reload(FC)
 reload(HP)
 
 
-def discBuildOp(pathX, gV):
+def discBuildOp(pathX,  building_names, gV):
     """
     Computes the parameters for the operation of disconnected buildings
     output results in csv files
@@ -34,11 +34,8 @@ def discBuildOp(pathX, gV):
     """
     print "Start Disconnected Building Routine \n"
     t0 = time.clock()
-    
-    buildList = extractList(pathX.pathRaw + "/Total.csv")
-    BestData = {}  
-    
-    for buildName in buildList:
+    BestData = {}
+    for buildName in building_names:
         fName = pathX.pathSubsRes + "/" + buildName + "_result.csv"
         
         # Extract the data
