@@ -148,7 +148,7 @@ def createTotalNtwCsv(indCombi, pathRaw, pathTotalNtw):
     fName_result = "Total_" + indCombi + ".csv"
     dfRes.to_csv(pathTotalNtw+'//'+fName_result, sep= ',')
     
-    return fName_result
+    return dfRes
     
 
 def readCheckPoint(pathX, genCP, storeData):

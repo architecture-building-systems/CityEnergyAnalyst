@@ -22,7 +22,8 @@ class InputLocator(object):
     def __init__(self, scenario_path):
         self.scenario_path = scenario_path
         self.db_path = os.path.join(os.path.dirname(__file__), 'databases', 'CH')
-        self.pathRaw = self.get_demand_results_folder() # Raw data from J+
+        self.get_geothermal_potential = os.path.join(self.get_potentials_results_folder(), "geothermal.csv")
+
         self.pathSubsRes = os.path.join(self.get_optimization_results_folder(), "substations")  # Substation results for disconnected buildings
         self.pathClustRes = os.path.join(self.get_optimization_results_folder(), "clustering") # Clustering results for disconnected buildings
         self.pathDiscRes = os.path.join(self.get_optimization_results_folder(), "disconnected") # Operation pattern for disconnected buildings
@@ -32,7 +33,7 @@ class InputLocator(object):
 
         self.pathTotalNtw = os.path.join(self.pathNtwRes, "totals") # Total files (inputs to substation + ntw in master)
         self.pathNtwLayout = os.path.join(self.pathNtwRes, "layout") # Ntw layout files
-
+        self.get_pipes_DH_network = os.path.join(self.pathNtwLayout, "PipesData_DH.csv")
         self.pathSolarRaw = os.path.join(self.get_potentials_results_folder(), "solar") # Raw solar files
 
     # optimization

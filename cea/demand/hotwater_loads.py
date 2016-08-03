@@ -103,7 +103,7 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
                                                      Qww_dis_ls_nr, gv.U_dhwtank, gv.AR, gv, T_ext, Qww)
 
     # final demand
-    Qwwf = Qww + Qww_dis_ls_r + Qww_dis_ls_nr + Qww_st_ls
+    Qwwf = Qww + Qww_dis_ls_r + Qww_dis_ls_nr #+ Qww_st_ls
     Qwwf_0 = Qwwf.max()
     mcpwwf = Qwwf / abs(Tww_st - Tww_re)
 

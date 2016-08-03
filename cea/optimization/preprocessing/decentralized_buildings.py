@@ -21,22 +21,23 @@ reload(FC)
 reload(HP)
 
 
-def discBuildOp(pathX,  building_names, gV):
+def discBuildOp(locator, building_names, gv):
     """
     Computes the parameters for the operation of disconnected buildings
     output results in csv files
     
     Parameters
     ----------
-    pathX : string
+    locator : string
         path to folders    
     
     """
     print "Start Disconnected Building Routine \n"
     t0 = time.clock()
+    geothermal_potential = pd.read_csv(locator.get_geothermal_potential, index_col="Name")
     BestData = {}
     for buildName in building_names:
-        fName = pathX.pathSubsRes + "/" + buildName + "_result.csv"
+        fName = locator.pathSubsRes + "/" + buildName + "_result.csv"
         
         # Extract the data
         TsupArray = np.array( pd.read_csv( fName, usecols=["T_supply_DH_result"] ) )
@@ -47,19 +48,19 @@ def discBuildOp(pathX,  building_names, gV):
         Qmax = 0
         Qannual = 0
 
-        for hour in range(gV.DAYS_IN_YEAR * gV.HOURS_IN_DAY):
+        for hour in range(8760):
             mdot = mdotArray[hour][0]
             Tret = TretArray[hour][0]
             TsupDH = TsupArray[hour][0]
             if Tret == 0: # prevent from upstream errors
                 Tret = TsupDH
             
-            Qnew = mdot * gV.cp * (TsupDH - Tret) * (1 + gV.Qloss_Disc) # 5% heat losses
+            Qnew = mdot * gv.cp * (TsupDH - Tret) * (1 + gv.Qloss_Disc) # 5% heat losses
             Qannual += Qnew
             if Qnew > Qmax:
                 Qmax = Qnew
 
-        Qnom = Qmax * (1+gV.Qmargin_Disc) # 1% reliability margin on installed capacity
+        Qnom = Qmax * (1+gv.Qmargin_Disc) # 1% reliability margin on installed capacity
         
         # Results
         result = np.zeros((13,7))
@@ -77,13 +78,13 @@ def discBuildOp(pathX,  building_names, gV):
         # Supply with the Boiler / FC / GHP
         print "Operation with the Boiler / FC / GHP"
                 
-        for hour in range(gV.DAYS_IN_YEAR * gV.HOURS_IN_DAY):
+        for hour in range(gv.DAYS_IN_YEAR * gv.HOURS_IN_DAY):
             mdot = mdotArray[hour][0]
             Tret = TretArray[hour][0]
             if Tret == 0:
                 Tret = TsupDH
             
-            Qload = mdot * gV.cp * (TsupDH - Tret) * (1 + gV.Qloss_Disc) # [Wh]
+            Qload = mdot * gv.cp * (TsupDH - Tret) * (1 + gv.Qloss_Disc) # [Wh]
             if Qload < 0:
                 Qload = 0
 
@@ -95,20 +96,20 @@ def discBuildOp(pathX,  building_names, gV):
             
             Qgas = Qload / BoilerEff
             
-            result[0][4] += gV.NG_PRICE * Qgas # CHF
-            result[0][5] += gV.NG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6 # kgCO2
-            result[0][6] += gV.NG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6 # MJ-oil-eq              
+            result[0][4] += gv.NG_PRICE * Qgas # CHF
+            result[0][5] += gv.NG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6 # kgCO2
+            result[0][6] += gv.NG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6 # MJ-oil-eq
             resourcesRes[0][0] += Qload
             
-            if gV.DiscBioGasFlag == 1:
-                result[0][4] += gV.BG_PRICE * Qgas # CHF
-                result[0][5] += gV.BG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6 # kgCO2
-                result[0][6] += gV.BG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6 # MJ-oil-eq  
+            if gv.DiscBioGasFlag == 1:
+                result[0][4] += gv.BG_PRICE * Qgas # CHF
+                result[0][5] += gv.BG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6 # kgCO2
+                result[0][6] += gv.BG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6 # MJ-oil-eq
                 
             # Boiler BG
-            result[1][4] += gV.BG_PRICE * Qgas # CHF
-            result[1][5] += gV.BG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6 # kgCO2
-            result[1][6] += gV.BG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6 # MJ-oil-eq 
+            result[1][4] += gv.BG_PRICE * Qgas # CHF
+            result[1][5] += gv.BG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6 # kgCO2
+            result[1][6] += gv.BG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6 # MJ-oil-eq
             resourcesRes[1][1] += Qload
                 
             # FC
@@ -116,11 +117,11 @@ def discBuildOp(pathX,  building_names, gV):
             Qgas = Qload / (FC_Effth+FC_Effel)
             Qelec = Qgas * FC_Effel            
             
-            result[2][4] += gV.NG_PRICE * Qgas - gV.ELEC_PRICE * Qelec # CHF, extra electricity sold to grid
-            result[2][5] += 0.0874 * Qgas * 3600E-6 + 773 * 0.45 * Qelec * 1E-6 - gV.EL_TO_CO2 * Qelec * 3600E-6 # kgCO2
+            result[2][4] += gv.NG_PRICE * Qgas - gv.ELEC_PRICE * Qelec # CHF, extra electricity sold to grid
+            result[2][5] += 0.0874 * Qgas * 3600E-6 + 773 * 0.45 * Qelec * 1E-6 - gv.EL_TO_CO2 * Qelec * 3600E-6 # kgCO2
             # Bloom box emissions within the FC: 773 lbs / MWh_el (and 1 lbs = 0.45 kg)
             # http://www.carbonlighthouse.com/2011/09/16/bloom-box/
-            result[2][6] += 1.51 * Qgas * 3600E-6 - gV.EL_TO_OIL_EQ * Qelec * 3600E-6 # MJ-oil-eq 
+            result[2][6] += 1.51 * Qgas * 3600E-6 - gv.EL_TO_OIL_EQ * Qelec * 3600E-6 # MJ-oil-eq
             
             resourcesRes[2][0] += Qload
             resourcesRes[2][2] += Qelec
@@ -133,14 +134,14 @@ def discBuildOp(pathX,  building_names, gV):
                 
                 if Qload <= QnomGHP:
                 
-                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot, TsupDH, Tret, gV.TGround, gV)
+                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot, TsupDH, Tret, gv.TGround, gv)
                     
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
                     
-                    result[3+i][4] += gV.ELEC_PRICE * wdot_el   # CHF
-                    result[3+i][5] += gV.SMALL_GHP_TO_CO2_STD  * wdot_el   * 3600E-6 # kgCO2
-                    result[3+i][6] += gV.SMALL_GHP_TO_OIL_STD  * wdot_el   * 3600E-6 # MJ-oil-eq 
+                    result[3+i][4] += gv.ELEC_PRICE * wdot_el   # CHF
+                    result[3+i][5] += gv.SMALL_GHP_TO_CO2_STD  * wdot_el   * 3600E-6 # kgCO2
+                    result[3+i][6] += gv.SMALL_GHP_TO_OIL_STD  * wdot_el   * 3600E-6 # MJ-oil-eq
                     
                     resourcesRes[3+i][2] -= wdot_el
                     resourcesRes[3+i][3] += Qload - qhotdot_missing
@@ -150,29 +151,29 @@ def discBuildOp(pathX,  building_names, gV):
                         BoilerEff = Boiler.calc_Cop_boiler(qhotdot_missing, QnomBoiler, tsup2)
                         Qgas = qhotdot_missing / BoilerEff
                         
-                        result[3+i][4] += gV.NG_PRICE * Qgas   # CHF
-                        result[3+i][5] += gV.NG_BACKUPBOILER_TO_CO2_STD * Qgas   * 3600E-6 # kgCO2
-                        result[3+i][6] += gV.NG_BACKUPBOILER_TO_OIL_STD * Qgas   * 3600E-6 # MJ-oil-eq   
+                        result[3+i][4] += gv.NG_PRICE * Qgas   # CHF
+                        result[3+i][5] += gv.NG_BACKUPBOILER_TO_CO2_STD * Qgas   * 3600E-6 # kgCO2
+                        result[3+i][6] += gv.NG_BACKUPBOILER_TO_OIL_STD * Qgas   * 3600E-6 # MJ-oil-eq
                         
                         QannualB_GHP[i][0] += qhotdot_missing
                         resourcesRes[3+i][0] += qhotdot_missing
     
                 else:
                     #print "Boiler activated to compensate GHP", i
-                    #if gV.DiscGHPFlag == 0:
+                    #if gv.DiscGHPFlag == 0:
                     #    print QnomGHP
                     #   QnomGHP = 0 
                     #   print "GHP not allowed 2, set QnomGHP to zero"
                         
-                    TexitGHP = QnomGHP / (mdot * gV.cp) + Tret
-                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot, TexitGHP, Tret, gV.TGround, gV)
+                    TexitGHP = QnomGHP / (mdot * gv.cp) + Tret
+                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot, TexitGHP, Tret, gv.TGround, gv)
                     
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
                         
-                    result[3+i][4] += gV.ELEC_PRICE * wdot_el   # CHF
-                    result[3+i][5] += gV.SMALL_GHP_TO_CO2_STD  * wdot_el   * 3600E-6 # kgCO2
-                    result[3+i][6] += gV.SMALL_GHP_TO_OIL_STD  * wdot_el   * 3600E-6 # MJ-oil-eq 
+                    result[3+i][4] += gv.ELEC_PRICE * wdot_el   # CHF
+                    result[3+i][5] += gv.SMALL_GHP_TO_CO2_STD  * wdot_el   * 3600E-6 # kgCO2
+                    result[3+i][6] += gv.SMALL_GHP_TO_OIL_STD  * wdot_el   * 3600E-6 # MJ-oil-eq
                     
                     resourcesRes[3+i][2] -= wdot_el
                     resourcesRes[3+i][3] += QnomGHP - qhotdot_missing
@@ -182,9 +183,9 @@ def discBuildOp(pathX,  building_names, gV):
                         BoilerEff = Boiler.calc_Cop_boiler(qhotdot_missing, QnomBoiler, tsup2)
                         Qgas = qhotdot_missing / BoilerEff
                         
-                        result[3+i][4] += gV.NG_PRICE * Qgas   # CHF
-                        result[3+i][5] += gV.NG_BACKUPBOILER_TO_CO2_STD * Qgas   * 3600E-6 # kgCO2
-                        result[3+i][6] += gV.NG_BACKUPBOILER_TO_OIL_STD * Qgas   * 3600E-6 # MJ-oil-eq 
+                        result[3+i][4] += gv.NG_PRICE * Qgas   # CHF
+                        result[3+i][5] += gv.NG_BACKUPBOILER_TO_CO2_STD * Qgas   * 3600E-6 # kgCO2
+                        result[3+i][6] += gv.NG_BACKUPBOILER_TO_OIL_STD * Qgas   * 3600E-6 # MJ-oil-eq
                         
                         QannualB_GHP[i][0] += qhotdot_missing
                         resourcesRes[3+i][0] += qhotdot_missing
@@ -195,19 +196,19 @@ def discBuildOp(pathX,  building_names, gV):
                     BoilerEff = Boiler.calc_Cop_boiler(QtoBoiler, QnomBoiler, TexitGHP)
                     Qgas = QtoBoiler / BoilerEff
                     
-                    result[3+i][4] += gV.NG_PRICE * Qgas   # CHF
-                    result[3+i][5] += gV.NG_BACKUPBOILER_TO_CO2_STD * Qgas   * 3600E-6 # kgCO2
-                    result[3+i][6] += gV.NG_BACKUPBOILER_TO_OIL_STD * Qgas   * 3600E-6 # MJ-oil-eq
+                    result[3+i][4] += gv.NG_PRICE * Qgas   # CHF
+                    result[3+i][5] += gv.NG_BACKUPBOILER_TO_CO2_STD * Qgas   * 3600E-6 # kgCO2
+                    result[3+i][6] += gv.NG_BACKUPBOILER_TO_OIL_STD * Qgas   * 3600E-6 # MJ-oil-eq
                     resourcesRes[3+i][0] += QtoBoiler
 
         print time.clock() - t0, "seconds process time for the operation \n"
         
         # Investment Costs / CO2 / Prim
-        InvCaBoiler = Boiler.calc_Cinv_boiler(Qnom, Qannual, gV)
+        InvCaBoiler = Boiler.calc_Cinv_boiler(Qnom, Qannual, gv)
         InvCosts[0][0] = InvCaBoiler
         InvCosts[1][0] = InvCaBoiler
         
-        InvCosts[2][0] = FC.calc_Cinv_FC(Qnom, gV)
+        InvCosts[2][0] = FC.calc_Cinv_FC(Qnom, gv)
         
         for i in range(10):
             result[3+i][0] = i/10
@@ -215,11 +216,11 @@ def discBuildOp(pathX,  building_names, gV):
 
             QnomBoiler = i/10 * Qnom
             
-            InvCaBoiler = Boiler.calc_Cinv_boiler(QnomBoiler, QannualB_GHP[i][0], gV)
+            InvCaBoiler = Boiler.calc_Cinv_boiler(QnomBoiler, QannualB_GHP[i][0], gv)
             InvCosts[3+i][0] = InvCaBoiler
             
-            InvCaGHP = HP.GHP_InvCost( Wel_GHP[i][0] , gV)
-            InvCosts[3+i][0] += InvCaGHP * gV.EURO_TO_CHF        
+            InvCaGHP = HP.GHP_InvCost( Wel_GHP[i][0] , gv)
+            InvCosts[3+i][0] += InvCaGHP * gv.EURO_TO_CHF
         
 
         # Best configuration
@@ -252,18 +253,10 @@ def discBuildOp(pathX,  building_names, gV):
         indexBest = 0
         
         # Check the GHP area constraint
-        areaArray = np.array( pd.read_csv( pathX.pathRaw + "/Geothermal.csv", usecols=["Area_geo"] ) )
-        buildArray = np.array( pd.read_csv( pathX.pathRaw + "/Geothermal.csv", usecols=["Name"] ) )
-
         for i in range(10):
             QGHP = (1-i/10) * Qnom
-            areaAvail = areaArray[ np.where(buildArray == buildName)[0][0] ][0]
-            if gV.DiscGHPFlag == 0:
-                areaAvail = 0.0                
-                print "GHP not allowed 1"
-
-            
-            Qallowed = np.ceil(areaAvail/gV.GHP_A) * gV.GHP_HmaxSize #[W_th]
+            areaAvail = geothermal_potential.ix[buildName,"Area_geo"]
+            Qallowed = np.ceil(areaAvail/gv.GHP_A) * gv.GHP_HmaxSize #[W_th]
             
             if Qallowed < QGHP:
                 optsearch[i+3] += 1
@@ -305,7 +298,7 @@ def discBuildOp(pathX,  building_names, gV):
         dico[ "EforGHP" ] = resourcesRes[:,2]
         dico[ "QfromGHP" ] = resourcesRes[:,3]
 
-        os.chdir(pathX.pathDiscRes)
+        os.chdir(locator.pathDiscRes)
         fName = buildName + "_result.csv"
         results_to_csv = pd.DataFrame(dico)
         fName_result = "DiscOp_" + fName[0:(len(fName)-4)] + ".csv"
@@ -328,7 +321,7 @@ def discBuildOp(pathX,  building_names, gV):
         BestData[buildName] = BestComb
 
     if 0:
-        os.chdir(pathX.pathDiscRes)
+        os.chdir(locator.pathDiscRes)
         fName = "DiscOpSummary.csv"
         results_to_csv = pd.DataFrame(BestData)
         results_to_csv.to_csv(fName, sep= ',')

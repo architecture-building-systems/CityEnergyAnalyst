@@ -28,7 +28,7 @@ substation model
 
 """
 
-def subsMain(data_path, results_path, total_file, building_names, disconected_buildings, gv):
+def subsMain(locator, total_file, building_names, gv, Flag):
     """
     this calculates the temperatures and mass flow rates of the network (plant side)
     at every customer. the temperature of operation of the network will be that required by the
@@ -38,7 +38,7 @@ def subsMain(data_path, results_path, total_file, building_names, disconected_bu
     :param data_path:
     :param results_path:
     :param total_demand_file:
-    :param disconected_buildings:
+    :param Flag:
     :param gv:
     :return:
     """
@@ -52,7 +52,7 @@ def subsMain(data_path, results_path, total_file, building_names, disconected_bu
     iteration = 0
     buildings = []
     for name in building_names:
-        buildings.append(pd.read_csv(data_path+'//'+name+".csv", usecols = ['Name','Tshs_C','Trhs_C','Tscs_C','Trcs_C','Tsww_C',
+        buildings.append(pd.read_csv(locator.get_demand_results_folder()+'//'+name+".csv", usecols = ['Name','Tshs_C','Trhs_C','Tscs_C','Trcs_C','Tsww_C',
                                                                             'Trww_C','Qhsf_kWh','Qcsf_kWh','Qwwf_kWh',
                                                                             'mcphs_kWC','mcpww_kWC','mcpcs_kWC',
                                                                             'Ef_kWh']))
@@ -66,27 +66,26 @@ def subsMain(data_path, results_path, total_file, building_names, disconected_bu
 
     # Calculate disconnected buildings files and substation operation.
     index = 0
-    if disconected_buildings == 1:
+    if Flag:
         combi = [0]*len(building_names)
         for name in building_names:
             dfRes = total_file[(total_file.Name == name)]
             combi[index] = 1
             key = "".join(str(e) for e in combi)
             fName_result = "Total_" + key + ".csv"
-            dfRes.to_csv(results_path+'//'+fName_result, sep= ',', index=False, float_format='%.3f')
+            dfRes.to_csv(locator.pathSubsRes+'//'+fName_result, sep= ',', index=False, float_format='%.3f')
             # calculate substation parameters per building
-            print combi, index
-            subsModel(results_path, gv, buildings[index],T_DHS,T_DHS_supply,t_DCS_supply,Ths,Tww,Tcs)
+            subsModel(locator, gv, buildings[index],T_DHS,T_DHS_supply,t_DCS_supply,Ths,Tww)
             index +=1
     else:
         # calculate substation parameters per building
         for name in building_names:
-            subsModel(results_path, gv, buildings[index],T_DHS,T_DHS_supply,t_DCS_supply,Ths,Tww,Tcs)
-
+            subsModel(locator, gv, buildings[index],T_DHS,T_DHS_supply,t_DCS_supply,Ths,Tww)
+            index += 1
     print time.clock() - t0, "seconds process time for the Substation Routine \n"
 
 
-def subsModel(results_path, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS, t_WW, t_CS):
+def subsModel(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS, t_WW):
 
     #calculate temperatures and massflow rates HEX for space heating costumers.
     thi = t_DH_supply + 273 # In k
@@ -188,7 +187,7 @@ def subsModel(results_path, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS, 
                             "Electr_array_all_flat":Electr_array_all_flat})
 
     fName_result = building.Name.values[0]+"_result.csv"
-    result_substation = results_path+'\\'+fName_result
+    result_substation = locator.pathSubsRes+'\\'+fName_result
     results.to_csv(result_substation, sep= ',', index=False, float_format='%.3f')
     return results
 
@@ -205,7 +204,7 @@ def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_
     #nominal conditions network side
     cc_0 = ch_0*(thi_0-tho_0)/((thi_0-tci_0)*0.9)
     tco_0 = Qnom/cc_0+tci_0
-    dTm_0 = abs(calc_dTm_HEX(thi_0,tho_0,tci_0,tco_0,'cool').real)
+    dTm_0 = calc_dTm_HEX(thi_0,tho_0,tci_0,tco_0,'cool')
     #Area heat exchange and UA_heating
     Area_HEX_cooling, UA_cooling = calc_area_HEX(Qnom,dTm_0,gv.U_cool)
     tco, cc = np.vectorize(calc_HEX_cooling)(Q, UA_cooling, thi, tho, tci, ch)
@@ -224,7 +223,7 @@ def calc_substation_heating(Q,thi,tco,tci,cc,cc_0,Qnom,thi_0,tci_0,tco_0,gv):
     #nominal conditions network side
     ch_0 = cc_0*(tco_0-tci_0)/((thi_0-tci_0)*0.9)
     tho_0 = thi_0-Qnom/ch_0
-    dTm_0 = abs(calc_dTm_HEX(thi_0,tho_0,tci_0,tco_0,'heat').real)
+    dTm_0 = calc_dTm_HEX(thi_0,tho_0,tci_0,tco_0,'heat')
     #Area heat excahnge and UA_heating
     Area_HEX_heating, UA_heating = calc_area_HEX(Qnom,dTm_0,gv.U_heat)
     tho, ch = np.vectorize(calc_HEX_heating)(Q, UA_heating,thi,tco,tci,cc)
@@ -320,7 +319,7 @@ def calc_dTm_HEX(thi,tho,tci,tco, flag):
         dTm = (dT1-dT2)/scipy.log(dT1/dT2)
     else:
         dTm = (dT2-dT1)/scipy.log(dT2/dT1)
-    return dTm
+    return abs(dTm.real)
 
 def calc_area_HEX(Qnom,dTm_0, U):
     area = Qnom/(dTm_0*U) #Qnom in W
