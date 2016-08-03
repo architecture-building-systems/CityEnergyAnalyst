@@ -22,7 +22,7 @@ __status__ = "Production"
 
 
 
-def Network_Summary(data_path, path_to_path, substation_results_path, results_path, path_pipes, TotalNamefile, gv):
+def Network_Summary(locator, total_demand, building_names, gv, Flag):
     """
 
     Network Summary:
@@ -33,13 +33,10 @@ def Network_Summary(data_path, path_to_path, substation_results_path, results_pa
     """
 
     t0 = time.clock()
-    # import total file names
-    total_file = pd.read_csv(path_to_path+'//'+TotalNamefile)
-    names = total_file.Name.values
-    
+
     # import properties of network
-    num_buildings_network = total_file.Name.count()
-    pipes_tot_length = pd.read_csv(path_pipes+'//'+"PipesData_DH.csv", usecols = ['LENGTH'])
+    num_buildings_network = total_demand.Name.count()
+    pipes_tot_length = pd.read_csv(locator.get_pipes_DH_network, usecols = ['LENGTH'])
     ntwk_length = pipes_tot_length.sum()*num_buildings_network/gv.num_tot_buildings
     
     # empty vectors
@@ -58,9 +55,9 @@ def Network_Summary(data_path, path_to_path, substation_results_path, results_pa
     mdot_heat_netw_min = np.zeros(8760)+1E6
     mdot_cool_netw_min = np.zeros(8760)+1E6
     iteration = 0
-    for name in names:
-        buildings.append(pd.read_csv(data_path+'//'+name+".csv",usecols = ['mcpdata','Ecaf','Qcdataf']))
-        substations.append(pd.read_csv(substation_results_path+'//'+name+'_result'+".csv",usecols = ['Electr_array_all_flat','mdot_DH_result','mdot_DC_result','Q_heating','Q_dhw','Q_cool',
+    for name in building_names:
+        buildings.append(pd.read_csv(locator.get_demand_results_folder()+ '//' + name + ".csv", usecols = ['mcpdata', 'Ecaf', 'Qcdataf']))
+        substations.append(pd.read_csv(locator.pathSubsRes+'//'+name+'_result'+".csv",usecols = ['Electr_array_all_flat','mdot_DH_result','mdot_DC_result','Q_heating','Q_dhw','Q_cool',
                                         'T_return_DH_result','T_return_DC_result','T_supply_DH_result']))
 
         Qcdata_netw_total += buildings[iteration].Qcdataf.values
@@ -122,16 +119,16 @@ def Network_Summary(data_path, path_to_path, substation_results_path, results_pa
                             "Electr_netw_total":Electr_netw_total,
                             "Q_DH_losses":Q_DH_losses,
                             "Q_DC_losses":Q_DC_losses})
-    
-    temp = TotalNamefile.replace("Total", "")
-    key = temp.replace(".csv", "")
-    
-    if key == "":
-        key = "_all"    
+
+    # this flag depicts weather this is the network of all customers or a network of a gorup of them.
+    if Flag:
+        key = "_all"
+    else:
+        key = ""
     fName_result = "Network_summary_result" + key + ".csv"    
-    results.to_csv(results_path+'//'+fName_result, sep= ',')
+    results.to_csv(locator.pathNtwRes+'//'+fName_result, sep= ',')
     
-    print "Results saved in :", results_path
+    print "Results saved in :", locator.pathNtwRes
     
     print time.clock() - t0, "seconds process time for Network summary for configuration", key, "\n"
 
