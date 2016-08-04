@@ -31,7 +31,7 @@ def preproccessing(locator, gv):
     gv.num_tot_buildings = total_demand.Name.count()
 
     print "Run substation model for each building separately"
-    subsM.subsMain(locator, total_demand, building_names, gv, Flag = True) # 1 if disconected buildings are calculated
+    #subsM.subsMain(locator, total_demand, building_names, gv, Flag = True) # 1 if disconected buildings are calculated
 
     print "Heating operation pattern for disconnected buildings"
     dbM.discBuildOp(locator, building_names, gv)
