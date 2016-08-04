@@ -13,7 +13,7 @@ from geopandas import GeoDataFrame
 import cea.demand.airconditioning_model
 import cea.demand.ventilation_model as ventilation_model
 from cea.demand import occupancy_model
-from  cea.demand import sensible_loads, electrical_loads, hotwater_loads
+from  cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.technologies import controllers
 
 
@@ -148,10 +148,11 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd = electrical_loads.calc_Eint(tsd, bpr.internal_loads, bpr.rc_model['Af'], list_uses, schedules, bpr.occupancy)
 
     # get refrigeration loads
-    tsd['Qcrefri'] = (tsd['Eref'] * 4)  # where 4 is the COP of the refrigeration unit   # in W
+    Qcrefrif, mcpref, Tcref_re, Tcref_sup = refrigeration_loads.calc_Qcref(tsd['Eref'].values)
 
     # get server loads
-    tsd['Qcdata'] = (tsd['Edataf'] * 0.9)  # where 0.9 is assumed of heat dissipation # in W
+    Qcdataf, mcpdataf, Tcdataf_re, Tcdataf_sup = refrigeration_loads.calc_Qcref(tsd['Edataf'].values)
+
 
     # ground water temperature in C during heating season (winter) according to norm
     tsd['Tww_re'] = bpr.building_systems['Tww_re_0']
@@ -275,7 +276,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                                  schedules,
                                                                                                  bpr.occupancy)
 
-        Waterconsumption = Vw
         # calc auxiliary loads
         Eauxf, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, = electrical_loads.calc_Eauxf(bpr.geometry['Blength'],
                                                                                           bpr.geometry['Bwidth'],
@@ -284,7 +284,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                           Qwwf_0,
                                                                                           Tcs_re, Tcs_sup, Ths_re,
                                                                                           Ths_sup,
-                                                                                          Waterconsumption,
+                                                                                          Vw,
                                                                                           bpr.age['built'],
                                                                                           bpr.building_systems['fforma'],
                                                                                           gv,
@@ -299,7 +299,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # noinspection PyUnresolvedReferences
         Occupancy = np.floor(tsd['people'])
         Occupants = Occupancy.max()
-        waterpeak = Waterconsumption.max()
+        waterpeak = Vw.max()
 
     # Af = 0: no conditioned floor area
     else:
@@ -308,7 +308,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         Qwwf_0 = Ealf_0 = Qhsf_0 = Qcsf_0 = 0
         Ths_sup_0 = Ths_re_0 = Tcs_re_0 = Tcs_sup_0 = Tww_sup_0 = 0
         # arrays
-        Occupancy = Eauxf = Waterconsumption = np.zeros(8760)
+        Occupancy = Eauxf = Vw = np.zeros(8760)
         Qwwf = Qww = Qhs_sen = Qhsf = Qcs_sen = Qcs = Qcsf = Qcdata = Qcrefri = Qd = Qc = Qhs = Qww_ls_st = np.zeros(
             8760)
 
@@ -326,14 +326,15 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                   Eprof, Eprof_tot,
                                   building_name,
                                   Occupancy,
-                                  Occupants, tsd['Qcdata'].values, tsd['Qcrefri'].values, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf,
+                                  Occupants, Qcdataf, Qcrefrif, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf,
                                   Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
                                   Tcs_re, bpr.building_systems['Tcs_re_0'], Tcs_sup,
                                   bpr.building_systems['Tcs_sup_0'], Ths_re, bpr.building_systems['Ths_re_0'], Ths_sup,
                                   bpr.building_systems['Ths_sup_0'], tsd['Tww_re'], Tww_st,
-                                  bpr.building_systems['Tww_sup_0'], Waterconsumption, results_folder, mcpcs, mcphs, mcpww,
+                                  bpr.building_systems['Tww_sup_0'], Vw, results_folder, mcpcs, mcphs, mcpww,
                                   temporary_folder,
-                                  bpr.hvac['type_cs'], bpr.hvac['type_hs'], waterpeak, date)
+                                  bpr.hvac['type_cs'], bpr.hvac['type_hs'], waterpeak, date,  mcpdataf, Tcdataf_re,
+                                  Tcdataf_sup,  mcpref, Tcref_re, Tcref_sup)
 
     gv.report('calc-thermal-loads', locals(), results_folder, building_name)
     return
@@ -722,7 +723,8 @@ def results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, 
                    Occupancy, Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf,
                    Qwwf_0, Tcs_re, Tcs_re_0, Tcs_sup, Tcs_sup_0, Ths_re, Ths_re_0, Ths_sup, Ths_sup_0, Tww_re, Tww_st,
                    Tww_sup_0, Waterconsumption, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
-                   sys_e_cooling, sys_e_heating, waterpeak, date):
+                   sys_e_cooling, sys_e_heating, waterpeak, date, mcpdataf, Tcdataf_re, Tcdataf_sup,
+                   mcpref, Tcref_re, Tcref_sup):
     # TODO: Document
     # Refactored from CalcThermalLoads
 
@@ -751,12 +753,13 @@ def results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, 
          'Qww_kWh': Qww / 1000, 'Qww_tankloss_kWh': Qww_ls_st / 1000, 'Qhs_kWh': Qhs / 1000,
          'Qhsf_kWh': Qhsf / 1000,
          'Qcs_kWh': -1 * Qcs / 1000, 'Qcsf_kWh': -1 * Qcsf / 1000, 'occ_pax': Occupancy, 'Vw_m3': Waterconsumption,
-         'Tshs_C': Ths_sup, 'Trhs_C': Ths_re, 'mcphs_kWC': mcphs, 'mcpww_kWC': mcpww / 1000, 'Tscs_C': Tcs_sup,
-         'Trcs_C': Tcs_re, 'mcpcs_kWC': mcpcs, 'Qcdataf_kWh': Qcdata / 1000, 'Tsww_C': Tww_sup_0, 'Trww_C': Tww_re,
+         'Tshs_C': Ths_sup, 'Trhs_C': Ths_re, 'mcphs_kWC': mcphs/1000, 'mcpww_kWC': mcpww / 1000, 'Tscs_C': Tcs_sup,
+         'Trcs_C': Tcs_re, 'mcpcs_kWC': mcpcs/1000, 'Qcdataf_kWh': Qcdata / 1000, 'Tsww_C': Tww_sup_0, 'Trww_C': Tww_re,
          'Tww_tank_C': Tww_st, 'Ef_kWh': (Ealf + Eauxf + Epro) / 1000, 'Epro_kWh': Epro / 1000,
          'Qcref_kWh': Qcrefri / 1000,
          'Edataf_kWh': Edata / 1000, 'QHf_kWh': (Qwwf + Qhsf) / 1000,
-         'QCf_kWh': (-1 * Qcsf + Qcdata + Qcrefri) / 1000}).to_csv(locationFinal + '\\' + Name + '.csv',
+         'QCf_kWh': (-1 * Qcsf + Qcdata + Qcrefri) / 1000, "mcpdata_kWC": mcpdataf, "Trdata_C": Tcdataf_re,
+         'Tsdata_C': Tcdataf_sup,'mcpref_kWC': mcpref/1000, 'Trref_C': Tcref_re, 'Tsref_C':Tcref_sup}).to_csv(locationFinal + '\\' + Name + '.csv',
                                                                    index=False, float_format='%.3f')
     # print peaks in kW and totals in MWh, temperature peaks in C
     totals = pd.DataFrame(
