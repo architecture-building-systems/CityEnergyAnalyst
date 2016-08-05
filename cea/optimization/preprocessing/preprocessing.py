@@ -51,8 +51,11 @@ def preproccessing(locator, weather_file, gv):
     print "electricity"
     elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(locator, gv)
 
-    extraCosts = elecCosts
-    extraCO2 = elecCO2
-    extraPrim = elecPrim
+    print "Process Heat "
+    hpCosts, hpCO2, hpPrim = hpMain.calc_pareto_Qhp(locator, total_demand, gv)
+
+    extraCosts = elecCosts + hpCosts
+    extraCO2 = elecCO2 + hpCO2
+    extraPrim = elecPrim + hpPrim
 
     return extraCosts, extraCO2, extraPrim, solarFeat
