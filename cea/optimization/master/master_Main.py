@@ -44,8 +44,7 @@ def EA_Main(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, ge
     Returns
     -------
     
-    """          
-    print("Master / Slave optimization ready")
+    """
     t0 = time.clock()
     
     # Extract the names of the buildings present in the district
@@ -59,8 +58,7 @@ def EA_Main(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, ge
     
     toolbox = base.Toolbox()
     toolbox.register("generate", ci.generateInd, nBuildings, gV)
-    toolbox.register("individual", tools.initIterate, creator.Individual,
-                    toolbox.generate)
+    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
     
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
