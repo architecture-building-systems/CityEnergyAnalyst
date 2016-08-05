@@ -14,7 +14,7 @@ import pandas as pd
 from cea import technologies
 
 
-def calc_pareto_Qhp(locator, gV):
+def calc_pareto_Qhp(locator, total_demand, gv):
     """
     Computes the triplet for the process heat demand
     
@@ -32,38 +32,33 @@ def calc_pareto_Qhp(locator, gV):
     hpCO2 = 0
     hpPrim = 0
 
-    os.chdir(locator.pathRaw)
-    dfTotal = pd.read_csv("Total.csv", usecols=["Name", "Qhpf"])
-    arrayTotal = np.array(dfTotal)
-    nBuild = int(np.shape(arrayTotal)[0])
-    
-    for i in range(nBuild):
-        if arrayTotal[i][1] > 0:
-            
+
+
+    if total_demand["Qhprof_MWhyr"].sum()>0:
+        df = total_demand[total_demand.Qhprof_kWh != 0]
+
+        for name in df.Name :
             # Extract process heat needs
-            buildName = arrayTotal[i][0]
-            print buildName
-            df = pd.read_csv(buildName + ".csv", usecols=["Qhpf"])
-            arrayBuild = np.array(df)
-    
-            Qnom = 0    
+            Qhprof = pd.read_csv(locator.get_demand_results_file(name), usecols=["Qhprof_kWh"]).Qhprof_kWh.values
+
+            Qnom = 0
             Qannual = 0
-            
             # Operation costs / CO2 / Prim
-            for i in range( np.shape(arrayBuild)[0] ):
-                Qgas = arrayBuild[i][0] * 1E3 / gV.Boiler_eta_hp # [Wh] Assumed 0.9 efficiency
-                
+            for i in range(8760):
+                Qgas = Qhprof[i] * 1E3 / gv.Boiler_eta_hp # [Wh] Assumed 0.9 efficiency
+
                 if Qgas < Qnom:
-                    Qnom = Qgas * (1+gV.Qmargin_Disc)
+                    Qnom = Qgas * (1+gv.Qmargin_Disc)
+
                 Qannual += Qgas
-                
-                hpCosts += Qgas * gV.NG_PRICE # [CHF]
-                hpCO2 += Qgas * 3600E-6 * gV.NG_BACKUPBOILER_TO_CO2_STD # [kg CO2]
-                hpPrim += Qgas * 3600E-6 * gV.NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
-            
+                hpCosts += Qgas * gv.NG_PRICE # [CHF]
+                hpCO2 += Qgas * 3600E-6 * gv.NG_BACKUPBOILER_TO_CO2_STD # [kg CO2]
+                hpPrim += Qgas * 3600E-6 * gv.NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
+
             # Investment costs
-            hpCosts += technologies.boilers.calc_Cinv_boiler(Qnom, Qannual, gV)
-    
+            hpCosts += technologies.boilers.calc_Cinv_boiler(Qnom, Qannual, gv)
+    else:
+        hpCosts = hpCO2 = hpPrim = 0
     return hpCosts, hpCO2, hpPrim
 
 

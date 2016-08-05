@@ -319,6 +319,11 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot = electrical_loads.calc_E_totals(
         bpr.rc_model['Aef'], tsd['Ealf'].values, Eauxf, tsd['Edataf'].values, tsd['Eprof'].values)
 
+    # calc process heat and compressed air needs for optimization routine
+    Qhprof = np.zeros(8760)
+    Ecaf = np.zeros(8760)
+    Qhprof_tot = 0
+    Ecaf_tot = 0
     # write results to csv
     results_to_csv(bpr.rc_model['GFA_m2'], bpr.rc_model['Af'], Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edataf,
                                   Edataf_tot,
@@ -333,7 +338,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                   bpr.building_systems['Tww_sup_0'], Vw, results_folder, mcpcs, mcphs, mcpww,
                                   temporary_folder,
                                   bpr.hvac['type_cs'], bpr.hvac['type_hs'], waterpeak, date,  mcpdataf, Tcdataf_re,
-                                  Tcdataf_sup,  mcpref, Tcref_re, Tcref_sup)
+                                  Tcdataf_sup,  mcpref, Tcref_re, Tcref_sup, Qhprof, Ecaf, Qhprof_tot, Ecaf_tot)
 
     gv.report('calc-thermal-loads', locals(), results_folder, building_name)
     return
@@ -723,7 +728,7 @@ def results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, 
                    Qwwf_0, Tcs_re, Tcs_re_0, Tcs_sup, Tcs_sup_0, Ths_re, Ths_re_0, Ths_sup, Ths_sup_0, Tww_re, Tww_st,
                    Tww_sup_0, Waterconsumption, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
                    sys_e_cooling, sys_e_heating, waterpeak, date, mcpdataf, Tcdataf_re, Tcdataf_sup,
-                   mcpref, Tcref_re, Tcref_sup):
+                   mcpref, Tcref_re, Tcref_sup, Qhprof, Ecaf, Qhprof_tot, Ecaf_tot):
     # TODO: Document
     # Refactored from CalcThermalLoads
 
@@ -750,7 +755,7 @@ def results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, 
     pd.DataFrame(
         {'DATE': date, 'Name': Name, 'Ealf_kWh': Ealf / 1000, 'Eauxf_kWh': Eauxf / 1000, 'Qwwf_kWh': Qwwf / 1000,
          'Qww_kWh': Qww / 1000, 'Qww_tankloss_kWh': Qww_ls_st / 1000, 'Qhs_kWh': Qhs / 1000,
-         'Qhsf_kWh': Qhsf / 1000,
+         'Qhsf_kWh': Qhsf / 1000, 'Qhprof_kWh':Qhprof, 'Ecaf_kWh':Ecaf,
          'Qcs_kWh': -1 * Qcs / 1000, 'Qcsf_kWh': -1 * Qcsf / 1000, 'occ_pax': Occupancy, 'Vw_m3': Waterconsumption,
          'Tshs_C': Ths_sup, 'Trhs_C': Ths_re, 'mcphs_kWC': mcphs/1000, 'mcpww_kWC': mcpww / 1000, 'Tscs_C': Tcs_sup,
          'Trcs_C': Tcs_re, 'mcpcs_kWC': mcpcs/1000, 'Qcdataf_kWh': Qcdata / 1000, 'Tsww_C': Tww_sup_0, 'Trww_C': Tww_re,
@@ -768,10 +773,10 @@ def results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, 
          'Trhs0_C': Ths_re_0, 'mcphs0_kWC': mcphs.max(), 'Tscs0_C': Tcs_sup_0, 'Qcdataf_MWhyr': Qcdata_tot,
          'Qcref_MWhyr': Qcrefri_tot, 'Trcs0_C': Tcs_re_0, 'mcpcs0_kWC': mcpcs.max(), 'Qwwf_MWhyr': Qwwf_tot,
          'Qww_MWhyr': Qww_tot, 'Qhsf_MWhyr': Qhsf_tot, 'Qhs_MWhyr': Qhs_tot, 'Qcsf_MWhyr': Qcsf_tot,
-         'Qcs_MWhyr': Qcs_tot,
+         'Qcs_MWhyr': Qcs_tot, 'Qhprof_MWhyr':Qhprof_tot, 'Ecaf_MWhyr':Ecaf_tot,
          'Ealf_MWhyr': Ealf_tot, 'Eauxf_MWhyr': Eauxf_tot, 'Eprof_MWhyr': Epro_tot, 'Edataf_MWhyr': Edata_tot,
          'Tsww0_C': Tww_sup_0, 'Vw_m3yr': Waterconsumption.sum(),
-         'Ef_MWhyr': (Ealf_tot + Eauxf_tot + Epro_tot + Edata_tot), 'QHf_MWhyr': (Qwwf_tot + Qhsf_tot),
+         'Ef_MWhyr': (Ealf_tot + Eauxf_tot + Epro_tot + Edata_tot + Ecaf_tot), 'QHf_MWhyr': (Qwwf_tot + Qhsf_tot+ Qhprof_tot),
          'QCf_MWhyr': (Qcsf_tot + Qcdata_tot + Qcrefri_tot)}, index=[0])
     totals.to_csv(os.path.join(path_temporary_folder, '%sT.csv' % Name), index=False, float_format='%.3f')
 
