@@ -34,7 +34,7 @@ def preproccessing(locator, weather_file, gv):
 
     # read weather and calculate ground temperature
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
-    ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
+    gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
 
     print "Run substation model for each building separately"
     #subsM.subsMain(locator, total_demand, building_names, gv, Flag = True) # 1 if disconected buildings are calculated
@@ -43,15 +43,13 @@ def preproccessing(locator, weather_file, gv):
     #dbM.discBuildOp(locator, building_names, gv)
 
     print "Create network file with all buildings connected"
-    #nM.Network_Summary(locator, total_demand, building_names, gv, ground_temperature, Flag = True)
+    #nM.Network_Summary(locator, total_demand, building_names, gv Flag = True)
 
     print "Solar features extraction"
     solarFeat = sFn.solarRead(locator, gv)
 
     print "electricity"
     elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(locator, gv)
-    print elecCosts, elecCO2, elecPrim, "elecCosts, elecCO2, elecPrim \n"
-
 
     extraCosts = elecCosts
     extraCO2 = elecCO2

@@ -22,7 +22,7 @@ __status__ = "Production"
 
 
 
-def Network_Summary(locator, total_demand, building_names, gv, ground_temperature, Flag):
+def Network_Summary(locator, total_demand, building_names, gv, Flag):
     """
 
     Network Summary:
@@ -83,14 +83,14 @@ def Network_Summary(locator, total_demand, building_names, gv, ground_temperatur
     T_sst_cool_return_netw_total = np.vectorize(calc_return_temp)(sum_tret_mdot_cool, mdot_cool_netw_all)
     T_sst_cool_supply_netw_total = np.vectorize(calc_supply_temp)(T_sst_cool_return_netw_total, Q_DC_building_netw_total, mdot_cool_netw_all, gv.cp, "DC")
        
-    Q_DH_losses_supply = np.vectorize(calc_piping_thermal_losses)(T_sst_heat_supply_netw_total, mdot_heat_netw_all, mdot_heat_netw_min, ntwk_length, ground_temperature, gv.K_DH, gv.cp)
-    Q_DH_losses_return = np.vectorize(calc_piping_thermal_losses)(T_sst_heat_return_netw_total, mdot_heat_netw_all, mdot_heat_netw_min, ntwk_length, ground_temperature, gv.K_DH, gv.cp)
+    Q_DH_losses_supply = np.vectorize(calc_piping_thermal_losses)(T_sst_heat_supply_netw_total, mdot_heat_netw_all, mdot_heat_netw_min, ntwk_length, gv.ground_temperature, gv.K_DH, gv.cp)
+    Q_DH_losses_return = np.vectorize(calc_piping_thermal_losses)(T_sst_heat_return_netw_total, mdot_heat_netw_all, mdot_heat_netw_min, ntwk_length, gv.ground_temperature, gv.K_DH, gv.cp)
     Q_DH_losses = Q_DH_losses_supply + Q_DH_losses_return
     Q_DH_building_netw_total_inclLosses = Q_DH_building_netw_total + Q_DH_losses
 
     print mdot_cool_netw_min
-    Q_DC_losses_supply = np.vectorize(calc_piping_thermal_losses)(T_sst_cool_supply_netw_total, mdot_cool_netw_all, mdot_cool_netw_min, ntwk_length, ground_temperature, gv.K_DH, gv.cp)
-    Q_DC_losses_return = np.vectorize(calc_piping_thermal_losses)(T_sst_heat_return_netw_total, mdot_cool_netw_all, mdot_cool_netw_min, ntwk_length, ground_temperature, gv.K_DH, gv.cp)
+    Q_DC_losses_supply = np.vectorize(calc_piping_thermal_losses)(T_sst_cool_supply_netw_total, mdot_cool_netw_all, mdot_cool_netw_min, ntwk_length, gv.ground_temperature, gv.K_DH, gv.cp)
+    Q_DC_losses_return = np.vectorize(calc_piping_thermal_losses)(T_sst_heat_return_netw_total, mdot_cool_netw_all, mdot_cool_netw_min, ntwk_length, gv.ground_temperature, gv.K_DH, gv.cp)
     Q_DC_losses = Q_DC_losses_supply + Q_DC_losses_return
     Q_DC_building_netw_total_inclLosses = Q_DC_building_netw_total + Q_DC_losses
 
