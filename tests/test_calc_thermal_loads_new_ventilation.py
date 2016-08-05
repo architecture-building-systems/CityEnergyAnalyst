@@ -4,7 +4,7 @@ import unittest
 import pandas as pd
 
 from cea.demand.occupancy_model import schedule_maker
-from cea.demand.thermal_loads import calc_thermal_loads_new_ventilation, BuildingProperties
+from cea.demand.thermal_loads import calc_thermal_loads, BuildingProperties
 from cea.globalvar import GlobalVariables
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
@@ -29,7 +29,7 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
     def test_calc_thermal_loads_new_ventilation(self):
         # FIXME: the usage_schedules bit needs to be fixed!!
         bpr = self.building_properties['B140577']
-        result = calc_thermal_loads_new_ventilation('B140577', bpr, self.weather_data,
+        result = calc_thermal_loads('B140577', bpr, self.weather_data,
                                                     self.usage_schedules, self.date, self.gv,
                                                     self.locator.get_temporary_folder(),
                                                     self.locator.get_temporary_folder())
@@ -101,7 +101,7 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
 
 
 def run_for_single_building(building, bpr, weather_data, usage_schedules, date, gv, temporary_folder, temporary_file):
-    calc_thermal_loads_new_ventilation(building, bpr, weather_data,
+    calc_thermal_loads(building, bpr, weather_data,
                                        usage_schedules, date, gv,
                                        temporary_folder,
                                        temporary_folder)
