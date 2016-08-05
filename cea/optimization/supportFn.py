@@ -113,7 +113,7 @@ def readCombi(individual, gV):
     return indCombi
 
 
-def createTotalNtwCsv(indCombi, pathRaw, pathTotalNtw):
+def createTotalNtwCsv(indCombi, locator):
     """
     Create and saves the total file for a specific DHN configuration
     to make the network routine possible
@@ -122,7 +122,7 @@ def createTotalNtwCsv(indCombi, pathRaw, pathTotalNtw):
     ----------
     indCombi : string
         string of 0 and 1: 0 of the building is disconnected, 1 if connected
-    pathRaw: string
+    locator: string
         path to raw files
     pathTotalNtw :string
         path to were to store the csv Total file
@@ -133,7 +133,7 @@ def createTotalNtwCsv(indCombi, pathRaw, pathTotalNtw):
         name of the Total file
     
     """
-    df = pd.read_csv(pathRaw+'//'+"Total.csv")
+    df = pd.read_csv(locator.get_total_demand())
     
     index = []
     rank = 0
@@ -142,11 +142,10 @@ def createTotalNtwCsv(indCombi, pathRaw, pathTotalNtw):
             index.append(rank)
         rank += 1
     
-    dfMod = df.drop(df.index[index])
-    dfRes = dfMod.drop(["Unnamed: 0"], axis = 1)
+    dfRes = df.drop(df.index[index])
     
     fName_result = "Total_" + indCombi + ".csv"
-    dfRes.to_csv(pathTotalNtw+'//'+fName_result, sep= ',')
+    dfRes.to_csv(locator.pathTotalNtw+'//'+fName_result, sep= ',')
     
     return dfRes
     

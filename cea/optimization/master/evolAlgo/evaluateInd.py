@@ -180,12 +180,12 @@ def checkNtw(individual, ntwList, locator, gv):
             nM.Network_Summary(locator, total_demand, building_names, gv, Flag= False)
 
         else:
-            total_demand = sFn.createTotalNtwCsv(indCombi, locator.pathRaw, locator.pathTotalNtw)
+            total_demand = sFn.createTotalNtwCsv(indCombi, locator)
             building_names = total_demand.Name.values
 
             # Run the substation and network routines
             print "Re-run the substation routine for new network configuration", indCombi
-            sMain.subsMain(locator.pathRaw, locator.pathTotalNtw, locator.pathTotalNtw, total_demand, 0, gv)
+            sMain.subsMain(locator, total_demand, building_names, gv, Flag = False)
             
             print "Launch network summary routine"
             nM.Network_Summary(locator, total_demand, building_names, gv, Flag= False)

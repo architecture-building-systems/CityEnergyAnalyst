@@ -23,13 +23,13 @@ import cea.optimization.master.evolAlgo.evaluateInd as eI
 from cea.optimization.master.evolAlgo import constrCheck as cCheck
 
 
-def EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, genCP = 0, manualCheck = 0):
+def EA_Main(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, genCP = 0, manualCheck = 0):
     """
     Evolutionary algorithm to optimize the district energy system's design
     
     Parameters
     ----------
-    pathX : string
+    locator : string
         paths to folders
     finances / CO2 / Prim : float
         costs [CHF] / emissions [kg CO2-eq] / primary energy needs [MJ oil] 
@@ -49,7 +49,7 @@ def EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, genC
     t0 = time.clock()
     
     # Extract the names of the buildings present in the district
-    buildList = sFn.extractList(pathX.pathRaw+'//'+"Total.csv")
+    buildList = sFn.extractList(locator.get_total_demand())
     nBuildings = len(buildList)
     
     # Set the DEAP toolbox
@@ -69,7 +69,7 @@ def EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, genC
     invalid_ind = []
     
     def evalConfig(ind):
-        (costs, CO2, prim) = eI.evalInd(ind, buildList, pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV)
+        (costs, CO2, prim) = eI.evalInd(ind, buildList, locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV)
         return (costs, CO2, prim)
         
     toolbox.register("evaluate", evalConfig)
@@ -79,7 +79,7 @@ def EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, genC
 
     if genCP > 0:
         print "Recover from CP "+ str(genCP) + "\n"
-        os.chdir(pathX.pathMasterRes)
+        os.chdir(locator.pathMasterRes)
     
         with open("CheckPoint" + str(genCP),"rb") as CPread:
             CPunpick = Unpickler(CPread)
@@ -105,7 +105,7 @@ def EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, genC
         # Check network
         print "Update Network list \n"
         for ind in pop:
-            eI.checkNtw(ind, ntwList, pathX, gV)
+            eI.checkNtw(ind, ntwList, locator, gV)
         
         # Evaluate the initial population
         print "Evaluate initial population \n"
@@ -119,7 +119,7 @@ def EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, genC
         
         # Save initial population
         print "Save Initial population \n"
-        os.chdir(pathX.pathMasterRes)
+        os.chdir(locator.pathMasterRes)
         with open("CheckPointInitial","wb") as CPwrite:
             CPpickle = Pickler(CPwrite)
             cp = dict(population=pop, generation=0, networkList = ntwList, epsIndicator = epsInd, testedPop = invalid_ind)
@@ -175,7 +175,7 @@ def EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, genC
         
         print "Update Network list \n"
         for ind in invalid_ind:
-            eI.checkNtw(ind, ntwList, pathX, gV)
+            eI.checkNtw(ind, ntwList, locator, gV)
         
         print "Re-evaluate the population" 
         fitnesses = map(toolbox.evaluate, invalid_ind)
@@ -208,7 +208,7 @@ def EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, genC
         
         # Create Checkpoint if necessary
         if g % gV.fCheckPoint == 0:
-            os.chdir(pathX.pathMasterRes)
+            os.chdir(locator.pathMasterRes)
             
             print "Create CheckPoint", g, "\n"
             with open("CheckPoint" + str(g),"wb") as CPwrite:
@@ -225,7 +225,7 @@ def EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, genC
     # Saving the final results
     print "Save final results. " + str(len(pop)) + " individuals in final population"
     print "Epsilon indicator", epsInd, "\n"
-    os.chdir(pathX.pathMasterRes)
+    os.chdir(locator.pathMasterRes)
     
     with open("CheckPointFinal","wb") as CPwrite:
         CPpickle = Pickler(CPwrite)
