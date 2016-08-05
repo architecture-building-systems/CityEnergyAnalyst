@@ -153,7 +153,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     # get server loads
     Qcdataf, mcpdataf, Tcdataf_re, Tcdataf_sup = refrigeration_loads.calc_Qcref(tsd['Edataf'].values)
 
-
     # ground water temperature in C during heating season (winter) according to norm
     tsd['Tww_re'] = bpr.building_systems['Tww_re_0']
     # ground water temperature in C during non-heating season (summer) according to norm
@@ -175,7 +174,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # sensible heat gains
         tsd = sensible_loads.calc_Qgain_sen(tsd['people'].values, bpr.internal_loads['Qs_Wp'],
                                             tsd['Ealf'].values, tsd['Eprof'].values,
-                                            tsd['Qcdata'].values, tsd['Qcrefri'].values, tsd,
+                                            Qcdataf, Qcrefrif, tsd,
                                             bpr.rc_model['Am'], bpr.rc_model['Atot'], bpr.rc_model['Htr_w'],
                                             bpr, gv)
 
