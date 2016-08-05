@@ -54,14 +54,14 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
                          u'Qcdataf_kWh', u'Qcref_kWh', u'Qcs_kWh', u'Qcsf_kWh', u'Qhs_kWh', u'Qhsf_kWh', u'Qww_kWh',
                          u'Qww_tankloss_kWh', u'Qwwf_kWh', u'Trcs_C', u'Trhs_C', u'Trww_C', u'Tscs_C', u'Tshs_C',
                          u'Tsww_C', u'Tww_tank_C', u'Vw_m3', u'mcpcs_kWC', u'mcphs_kWC', u'mcpww_kWC', u'occ_pax']
-        values = [2335522.029999916, 51283.209999999264, 0.0, 2386803.5299999011, 0.0, 1600579.3699999989,
-                  10583959.84999999, 0.0, 0.0, 969342.64000000141, 1600579.3699999989, 917820.5499999997,
-                  1598211.1199999996, 8964857.8500000071, 9976.2799999999643, 8985748.6999999825, 16116, 52842, 99500.0,
-                  11376, 63853, 525600, 525426.29999996931, 476000.19000000018, 319634, 148190, 184502.95000000024,
+        values = [2335522.029999916, 43789.870000000548, 0.0, 2379312.5899999058, 0.0, 1600579.3699999989,
+                  1770906.7300002526, 0.0, 0.0, 969342.64000000141, 1600579.3699999989, 917820.5499999997,
+                  1598211.1199999996, 160784.15999999773, 683.88000000006332, 172695.66000000233, 16116, 52842, 99500,
+                  11376, 63853, 525600, 524925.68999998318, 2850.3999999999828, 319634, 148190, 3539.4199999999482,
                   6827181.0]
         for i, column in enumerate(value_columns):
             try:
-                self.assertAlmostEqual(values[i], df[column].sum(), msg='Sum of column %s differs' % column)
+                self.assertAlmostEqual(values[i], df[column].sum(), msg='Sum of column %s differs' % column, places=3)
             except:
                 raise
 
@@ -70,12 +70,12 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
         import multiprocessing as mp
         pool = mp.Pool()
         # randomly selected except for B302006716, which has `Af == 0`
-        buildings = {'B140571': (87082.27, 173418.77),
-                     'B140557': (67011.74, 141896.5),
-                     'B140577': (1600579.37, 10583959.85),
-                     'B302040335': (1525.49, 8443.68),
-                     'B2372467': (33608.18, 76675.11),
-                     'B302006716': (0.0, 0.0)}
+        buildings = {'B302006716': (0.00, 0.00),
+                     'B140557': (67011.74, 134480.79),
+                     'B140577': (1600579.37, 1770906.73),
+                     'B2372467': (33608.18, 76985.25),
+                     'B302040335': (1525.49, 8523.46),
+                     'B140571': (87082.27, 161073.10)}
         if self.gv.multiprocessing:
             joblist = []
             for building in buildings.keys():
@@ -87,8 +87,8 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
                 joblist.append(job)
             for job in joblist:
                 b, qcf_kwh, qhf_kwh = job.get(20)
-                self.assertAlmostEqual(buildings[b][0], qcf_kwh)
-                self.assertAlmostEqual(buildings[b][1], qhf_kwh)
+                self.assertAlmostEqual(buildings[b][0], qcf_kwh, places=3)
+                self.assertAlmostEqual(buildings[b][1], qhf_kwh, places=3)
         else:
             for building in buildings.keys():
                 bpr = self.building_properties[building]
@@ -96,8 +96,8 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
                                                               self.date, self.gv,
                                                               self.locator.get_temporary_folder(),
                                                               self.locator.get_temporary_file('%s.csv' % building))
-                self.assertAlmostEqual(buildings[b][0], qcf_kwh)
-                self.assertAlmostEqual(buildings[b][1], qhf_kwh)
+                self.assertAlmostEqual(buildings[b][0], qcf_kwh, places=3)
+                self.assertAlmostEqual(buildings[b][1], qhf_kwh, places=3)
 
 
 def run_for_single_building(building, bpr, weather_data, usage_schedules, date, gv, temporary_folder, temporary_file):
