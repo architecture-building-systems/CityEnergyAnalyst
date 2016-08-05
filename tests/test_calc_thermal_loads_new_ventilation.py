@@ -61,7 +61,7 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
                   6827181.0]
         for i, column in enumerate(value_columns):
             try:
-                self.assertAlmostEqual(values[i], df[column].sum(), msg='Sum of column %s differs' % column)
+                self.assertAlmostEqual(values[i], df[column].sum(), msg='Sum of column %s differs' % column, places=3)
             except:
                 raise
 
