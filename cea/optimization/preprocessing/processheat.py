@@ -14,7 +14,7 @@ import pandas as pd
 from cea import technologies
 
 
-def calc_pareto_Qhp(pathX, gV):
+def calc_pareto_Qhp(locator, gV):
     """
     Computes the triplet for the process heat demand
     
@@ -31,8 +31,8 @@ def calc_pareto_Qhp(pathX, gV):
     hpCosts = 0
     hpCO2 = 0
     hpPrim = 0
-    
-    os.chdir(pathX.pathRaw)
+
+    os.chdir(locator.pathRaw)
     dfTotal = pd.read_csv("Total.csv", usecols=["Name", "Qhpf"])
     arrayTotal = np.array(dfTotal)
     nBuild = int(np.shape(arrayTotal)[0])

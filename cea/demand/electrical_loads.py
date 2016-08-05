@@ -52,18 +52,30 @@ final internal electrical loads
 
 def calc_Eint(tsd, prop_internal_loads, Aef, list_uses, schedules, building_uses):
 
-    # calculate schedules
-    schedule_Ea_El_Edata_Eref = calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses)
-    schedule_pro = calc_Eprof_schedule(list_uses, schedules, building_uses)
-
-    # calculate loads
-    tsd['Eaf'] = calc_Eaf(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ea_Wm2'], Aef)
-    tsd['Elf'] = calc_Elf(schedule_Ea_El_Edata_Eref, prop_internal_loads['El_Wm2'], Aef)
+    # typical loads
+    schedule_Ea_El = calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses)
+    tsd['Eaf'] = calc_Eaf(schedule_Ea_El, prop_internal_loads['Ea_Wm2'], Aef)
+    tsd['Elf'] = calc_Elf(schedule_Ea_El, prop_internal_loads['El_Wm2'], Aef)
     tsd['Ealf'] =  tsd['Elf']+ tsd['Eaf']
-    tsd['Edataf'] = calc_Edataf(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ed_Wm2'], Aef)  # in W
-    tsd['Eref'] = calc_Eref(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ere_Wm2'],  Aef)  # in W
-    tsd['Eprof'] = calc_Eprof(schedule_pro, prop_internal_loads['Epro_Wm2'], Aef)  # in W
 
+    # calculate other loads
+    if 'COOLROOM' in building_uses:
+        schedule_Eref = calc_Ea_El_Edata_Eref_schedule(['COOLROOM'], schedules, building_uses)
+        tsd['Eref'] = calc_Eref(schedule_Eref, prop_internal_loads['Ere_Wm2'], Aef, building_uses['COOLROOM'])  # in W
+    else:
+        tsd['Eref'] = 0
+
+    if 'SERVERROOM' in building_uses:
+        schedule_Edata = calc_Ea_El_Edata_Eref_schedule(['SERVERROOM'], schedules, building_uses)
+        tsd['Edataf'] = calc_Edataf(schedule_Edata, prop_internal_loads['Ed_Wm2'], Aef, building_uses['SERVERROOM'])  # in W
+    else:
+        tsd['Edataf'] = 0
+
+    if 'INDUSTRY' in building_uses:
+        schedule_pro = calc_Eprof_schedule(list_uses, schedules, building_uses)
+        tsd['Eprof'] = calc_Eprof(schedule_pro, prop_internal_loads['Epro_Wm2'], Aef, building_uses['INDUSTRY'])  # in W
+    else:
+        tsd['Eprof'] = 0
     return tsd
 
 
@@ -75,7 +87,11 @@ def calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses):
     el = np.zeros(8760)
     num_profiles = len(list_uses)
     for num in range(num_profiles):
-        current_share_of_use = building_uses[list_uses[num]]
+        if list_uses[num] not in building_uses:
+            current_share_of_use = 0
+        else:
+            current_share_of_use = building_uses[list_uses[num]]
+
         el = np.vectorize(calc_average)(el, schedules[num][1], current_share_of_use)
     return el
 
@@ -90,13 +106,13 @@ def calc_Elf(schedule, El_Wm2, Aef):
     return Elf
 
 
-def calc_Edataf(schedule, Ed_Wm2, Aef):
-    Edataf = schedule  * Ed_Wm2 * Aef  # in W
+def calc_Edataf(schedule, Ed_Wm2, Aef, share):
+    Edataf = schedule  * Ed_Wm2 * Aef * share  # in W
     return Edataf
 
 
-def calc_Eref(schedule , Ere_Wm2, Aef):
-    Eref = schedule * Ere_Wm2 * Aef  # in W
+def calc_Eref(schedule , Ere_Wm2, Aef, share):
+    Eref = schedule * Ere_Wm2 * Aef * share # in W
     return Eref
 
 
@@ -113,8 +129,8 @@ def calc_Eprof_schedule(list_uses, schedules, building_uses):
     return epro
 
 
-def calc_Eprof(schedule , Epro_Wm2, Aef):
-    Eprof = schedule  * Epro_Wm2 * Aef  # in W
+def calc_Eprof(schedule , Epro_Wm2, Aef, share):
+    Eprof = schedule  * Epro_Wm2 * Aef * share  # in W
     return Eprof
 
 """
