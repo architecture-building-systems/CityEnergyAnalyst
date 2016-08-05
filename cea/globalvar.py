@@ -492,7 +492,6 @@ class GlobalVariables(object):
         self.initial_temp_air_prev = 21
         self.initial_temp_m_prev = 16
 
-
         # here is where we plug in the models to use for calculations
         self.models = {'calc-thermal-loads': thermal_loads.calc_thermal_loads}  # functions.CalcThermalLoads
 
