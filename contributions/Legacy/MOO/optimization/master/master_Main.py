@@ -12,7 +12,7 @@ from pickle import Pickler, Unpickler
 
 import contributions.Legacy.moo.optimization.evolAlgo.CreateInd as ci
 import contributions.Legacy.moo.optimization.evolAlgo.CrossOver as cx
-import evolAlgo.Mutations as mut
+import evolAlgo.mutations as mut
 import evolAlgo.Selection as sel
 from deap import base
 from deap import creator

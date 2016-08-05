@@ -23,12 +23,13 @@ optimization
 
 def moo_optimization(locator, weather_file, gv):
 
-    # call pre-processing
+    print "PREPROCESSING + SINGLE BUILDING OPTIMIZATION"
     extraCosts, extraCO2, extraPrim, solarFeat = preproccessing(locator, weather_file, gv)
 
-    # network optimization
+    print "NETWORK OPTIMIZATION"
     ntwFeat = ntwM.ntwMain2()     #ntwMain2 -linear, #ntwMain - optimization
 
+    print "CONVERSION AND STORAGE OPTIMIZATION"
     # main optimization routine
     mM.EA_Main(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gv)
 
