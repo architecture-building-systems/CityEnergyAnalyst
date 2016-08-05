@@ -15,9 +15,8 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_ground_temperature(data_path, gv):
+def calc_ground_temperature(T_ambient, gv):
 
-    T_ambient = pd.read_csv(data_path+'//'+"weather.csv", usecols = ['te']).te.values
     T_max = max(T_ambient)+273 # to K
     T_avg = np.mean(T_ambient)+273 # to K
     e = gv.Z0*math.sqrt((math.pi*gv.Csl*gv.Psl)/(8760*gv.Bsl)) # soil constant

@@ -148,10 +148,10 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd = electrical_loads.calc_Eint(tsd, bpr.internal_loads, bpr.rc_model['Af'], list_uses, schedules, bpr.occupancy)
 
     # get refrigeration loads
-    Qcrefrif, mcpref, Tcref_re, Tcref_sup = refrigeration_loads.calc_Qcref(tsd['Eref'].values)
+    Qcrefrif, mcpref, Tcref_re, Tcref_sup = np.vectorize(refrigeration_loads.calc_Qcref)(tsd['Eref'].values)
 
     # get server loads
-    Qcdataf, mcpdataf, Tcdataf_re, Tcdataf_sup = refrigeration_loads.calc_Qcref(tsd['Edataf'].values)
+    Qcdataf, mcpdataf, Tcdataf_re, Tcdataf_sup = np.vectorize(refrigeration_loads.calc_Qcref)(tsd['Edataf'].values)
 
     # ground water temperature in C during heating season (winter) according to norm
     tsd['Tww_re'] = bpr.building_systems['Tww_re_0']
@@ -308,7 +308,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         Ths_sup_0 = Ths_re_0 = Tcs_re_0 = Tcs_sup_0 = Tww_sup_0 = 0
         # arrays
         Occupancy = Eauxf = Vw = np.zeros(8760)
-        Qwwf = Qww = Qhs_sen = Qhsf = Qcs_sen = Qcs = Qcsf = Qcdata = Qcrefri = Qd = Qc = Qhs = Qww_ls_st = np.zeros(
+        Qwwf = Qww = Qhs_sen = Qhsf = Qcs_sen = Qcs = Qcsf = Qcdataf = Qcrefrif = Qd = Qc = Qhs = Qww_ls_st = np.zeros(
             8760)
 
         # FIXME: this is a bug (all the variables are being set to the same array)

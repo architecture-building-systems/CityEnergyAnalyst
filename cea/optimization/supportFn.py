@@ -236,13 +236,13 @@ class solarFeatures(object):
         self.SC_Qnom = 17359E3   # [W_th]
             
             
-def solarRead(pathX, gV):
+def solarRead(locator, gV):
     """
     Extract the appropriate solar features
     
     Parameters
     ----------
-    pathSolarRaw : string
+    locator : string
         path to raw solar files
     
     Returns
@@ -257,25 +257,25 @@ def solarRead(pathX, gV):
     """
     solarFeat = solarFeatures()
     
-    PVarray = extractDemand(pathX.pathSolarRaw + "/Pv.csv", ["PV_kWh"], gV.DAYS_IN_YEAR)
+    PVarray = extractDemand(locator.pathSolarRaw + "/Pv.csv", ["PV_kWh"], gV.DAYS_IN_YEAR)
     solarFeat.PV_Peak = np.amax(PVarray)
 
-    PVarray = extractDemand(pathX.pathSolarRaw + "/Pv.csv", ["Area"], gV.DAYS_IN_YEAR)
+    PVarray = extractDemand(locator.pathSolarRaw + "/Pv.csv", ["Area"], gV.DAYS_IN_YEAR)
     solarFeat.SolarAreaPV = PVarray[0][0]
     
-    PVTarray = extractDemand(pathX.pathSolarRaw + "/PVT_35.csv", ["PV_kWh"], gV.DAYS_IN_YEAR)
+    PVTarray = extractDemand(locator.pathSolarRaw + "/PVT_35.csv", ["PV_kWh"], gV.DAYS_IN_YEAR)
     solarFeat.PVT_Peak = np.amax(PVTarray)
 
-    PVTarray = extractDemand(pathX.pathSolarRaw + "/PVT_35.csv", ["Qsc_KWh"], gV.DAYS_IN_YEAR)
+    PVTarray = extractDemand(locator.pathSolarRaw + "/PVT_35.csv", ["Qsc_KWh"], gV.DAYS_IN_YEAR)
     solarFeat.PVT_Qnom = np.amax(PVTarray) * 1000
 
-    PVTarray = extractDemand(pathX.pathSolarRaw + "/PVT_35.csv", ["Area"], gV.DAYS_IN_YEAR)
+    PVTarray = extractDemand(locator.pathSolarRaw + "/PVT_35.csv", ["Area"], gV.DAYS_IN_YEAR)
     solarFeat.SolarAreaPVT = PVTarray[0][0]
     
-    SCarray = extractDemand(pathX.pathSolarRaw + "/SC_75.csv", ["Qsc_Kw"], gV.DAYS_IN_YEAR)
+    SCarray = extractDemand(locator.pathSolarRaw + "/SC_75.csv", ["Qsc_Kw"], gV.DAYS_IN_YEAR)
     solarFeat.SC_Qnom = np.amax(SCarray) * 1000
 
-    SCarray = extractDemand(pathX.pathSolarRaw + "/SC_75.csv", ["Area"], gV.DAYS_IN_YEAR)
+    SCarray = extractDemand(locator.pathSolarRaw + "/SC_75.csv", ["Area"], gV.DAYS_IN_YEAR)
     solarFeat.SolarAreaSC = SCarray[0][0]
     
     return solarFeat

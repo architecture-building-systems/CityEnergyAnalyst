@@ -21,16 +21,16 @@ optimization
 """
 
 
-def moo_optimization(pathX, gv):
+def moo_optimization(locator, weather_file, gv):
 
     # call pre-processing
-    extraCosts, extraCO2, extraPrim, solarFeat = preproccessing(pathX, gv)
+    extraCosts, extraCO2, extraPrim, solarFeat = preproccessing(locator, weather_file, gv)
 
     # network optimization
     ntwFeat = ntwM.ntwMain2()     #ntwMain2 -linear, #ntwMain - optimization
 
     # main optimization routine
-    mM.EA_Main(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gv)
+    mM.EA_Main(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gv)
 
 
 """
@@ -51,7 +51,8 @@ def test_optimization_main(scenario_path=None):
         scenario_path = gv.scenario_reference
 
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    moo_optimization(pathX=locator, gv=gv)
+    weather_file = locator.get_default_weather()
+    moo_optimization(locator=locator, weather_file= weather_file, gv=gv)
 
     print 'test_optimization_main() succeeded'
 
