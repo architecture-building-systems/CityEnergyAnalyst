@@ -1,3 +1,5 @@
+import cea
+import cea.GUI
 import cea.GUI.toolbox
 
 __author__ = "Daren Thomas"
@@ -9,6 +11,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
+reload(cea)
+reload(cea.GUI)
 reload(cea.GUI.toolbox)
 
 DemandTool = cea.GUI.toolbox.DemandTool
