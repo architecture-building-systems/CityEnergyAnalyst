@@ -239,6 +239,7 @@ Heat exchanger model
 """
 
 def calc_HEX_cooling(Q, UA,thi,tho,tci,ch):
+
     def calc_plate_HEX(NTU, cr):
         eff = 1 - scipy.exp((1 / cr) * (NTU ** 0.22) * (scipy.exp(-cr * (NTU) ** 0.78) - 1))
         return eff

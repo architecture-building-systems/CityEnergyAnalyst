@@ -87,24 +87,24 @@ def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma
         tsc = result.real
         trc = tsc + k2
 
-        # Control system check - close to optimal flow
-        # min_AT = 5  # Its equal to 10% of the mass flowrate
-        # tsc_min = 7  # to consider coolest source possible
-        # trc_max = 17
-        # tsc_max = 12
-        # AT = tsc - trc
-        # if AT < min_AT:
-        #     if tsc < tsc_min:
-        #         tsc = tsc_min
-        #         trc = tsc_min + min_AT
-        #     if tsc > tsc_max:
-        #         tsc = tsc_max
-        #         trc = tsc_max + min_AT
-        #     else:
-        #         trc = tsc + min_AT
-        # elif tsc > tsc_max or trc > trc_max or tsc < tsc_min:
-        #     trc = trc_max
-        #     tsc = tsc_max
+        #Control system check - close to optimal flow
+        min_AT = 5  # Its equal to 10% of the mass flowrate
+        tsc_min = 7  # to consider coolest source possible
+        trc_max = 17
+        tsc_max = 12
+        AT = tsc - trc
+        if AT < min_AT:
+            if tsc < tsc_min:
+                tsc = tsc_min
+                trc = tsc_min + min_AT
+            if tsc > tsc_max:
+                tsc = tsc_max
+                trc = tsc_max + min_AT
+            else:
+                trc = tsc + min_AT
+        elif tsc > tsc_max or trc > trc_max or tsc < tsc_min:
+            trc = trc_max
+            tsc = tsc_max
 
         mcpcs = Qcsf / (tsc - trc)
     else:
