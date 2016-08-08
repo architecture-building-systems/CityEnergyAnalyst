@@ -35,13 +35,13 @@ technical model
 
 """
 
-def coolingMain(pathX, configKey, ntwFeat, HRdata, gv):
+def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
     """
     Computes the parameters for the cooling of the complete DCN
     
     Parameters
     ----------
-    pathX : string
+    locator : string
         path to res folder
     configKey : string
         configuration key for the DHN
@@ -58,26 +58,22 @@ def coolingMain(pathX, configKey, ntwFeat, HRdata, gv):
     ############# Recover the cooling needs
     
     # Space cooling previously aggregated in the substation routine
-    df = pd.read_csv(pathX.pathNtwRes + "/Network_summary_result_all.csv", usecols=["T_sst_cool_return_netw_total", "mdot_cool_netw_total"])
+    df = pd.read_csv(locator.pathNtwRes + "/Network_summary_result_all.csv", usecols=["T_sst_cool_return_netw_total", "mdot_cool_netw_total"])
     coolArray = np.nan_to_num( np.array(df) )
     TsupCool = gv.TsupCool
     
     # Data center cooling, (treated separately for each building)
-    df = pd.read_csv(pathX.pathRaw + "/Total.csv", usecols=["Name", "Qcdataf"])
+    df = pd.read_csv(locator.get_total_demand(), usecols=["Name", "Qcdataf_MWhyr"])
     arrayData = np.array(df)
     
-    # Process cooling, (treated separately for each building)
-    df = pd.read_csv(pathX.pathRaw + "/Total.csv", usecols=["Name", "Qcpf"])
-    arrayQcp = np.array(df)
-    
     # Ice hockey rings, (treated separately for each building)
-    df = pd.read_csv(pathX.pathRaw + "/Total.csv", usecols=["Name", "Qcicef"])
+    df = pd.read_csv(locator.get_total_demand(), usecols=["Name", "Qcref_MWhyr"])
     arrayQice = np.array(df)
     
     
     ############# Recover the heat already taken from the lake by the heat pumps
     try:
-        os.chdir(pathX.pathSlaveRes)
+        os.chdir(locator.pathSlaveRes)
         fNameSlaveRes = configKey + "PPActivationPattern.csv"
         
         dfSlave = pd.read_csv(fNameSlaveRes, usecols=["Qcold_HPLake"])
@@ -179,7 +175,7 @@ def coolingMain(pathX, configKey, ntwFeat, HRdata, gv):
             if arrayData[i][1] > 0:
                 buildName = arrayData[i][0]
                 print buildName
-                df = pd.read_csv(pathX.pathRaw + "/" + buildName + ".csv", usecols=["tsdata", "trdata", "mcpdata"])
+                df = pd.read_csv(locator.get_demand_results_file(buildName), usecols=["Tsdata_C", "Trdata_C", "mcpdata_kWC"])
                 arrayBuild = np.array(df)
                 
                 mdotMaxData = abs( np.amax(arrayBuild[:,-1]) / gv.cp * 1E3)
@@ -195,33 +191,12 @@ def coolingMain(pathX, configKey, ntwFeat, HRdata, gv):
                 Qavail = QavailCopy
                 print Qavail, "Qavail after data center"
 
-    print "Process cooling operation"
-    for i in range(nBuild):
-        if arrayQcp[i][1] > 0:
-            buildName = arrayQcp[i][0]
-            print buildName
-            df = pd.read_csv(pathX.pathRaw + "/" + buildName + ".csv", usecols=["tscp", "trcp", "mcpcp"])
-            arrayBuild = np.array(df)
-
-            mdotMaxcp = abs( np.amax(arrayBuild[:,-1]) / gv.cp * 1E3)
-            costs += PumpModel.Pump_Cost(2*ntwFeat.DeltaP_DCN, mdotMaxcp, gv.etaPump, gv)
-        
-            toCosts, toCO2, toPrim, toCalfactor, toTotalCool, QavailCopy, VCCnomIni = coolOperation(arrayBuild, nHour, Qavail)
-            costs += toCosts
-            CO2 += toCO2
-            prim += toPrim
-            calFactor += toCalfactor
-            TotalCool += toTotalCool
-            VCCnom = max(VCCnom, VCCnomIni)
-            Qavail = QavailCopy
-            print Qavail, "Qavail after cp"
-    
-    print "Ice rinks cooling operation"
+    print "refrigeration cooling operation"
     for i in range(nBuild):
         if arrayQice[i][1] > 0:
             buildName = arrayQice[i][0]
             print buildName
-            df = pd.read_csv(pathX.pathRaw + "/" + buildName + ".csv", usecols=["tsice", "trice", "mcpice"])
+            df = pd.read_csv(locator.pathRaw + "/" + buildName + ".csv", usecols=["Tsref_C", "Trref_C", "mcpref_kWC"])
             arrayBuild = np.array(df)
 
             mdotMaxice = abs( np.amax(arrayBuild[:,-1]) / gv.cp * 1E3)
