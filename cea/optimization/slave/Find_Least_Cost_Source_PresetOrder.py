@@ -408,7 +408,7 @@ def calculate_emissions_and_CO2(Q_source_data,Q_coldsource_data, E_PP_el_data,\
 
 
 
-def Least_Cost_Optimization(pathX, context, solarFeat, gv):
+def Least_Cost_Optimization(locator, context, solarFeat, gv):
     """
     This function runs the least cost optimization code and returns cost, co2 and primary energy required. \
     On the go, it saves the operation pattern
@@ -445,7 +445,7 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gv):
     MS_Var = context 
     
     t = time.time()
-    Network_Raw_Data_Path = pathX.pathNtwRes
+    Network_Raw_Data_Path = locator.pathNtwRes
     
     #class MS_VarError(Exception):
      #   """Base class for exceptions in this module."""
@@ -459,7 +459,7 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gv):
     """ IMPORT DATA """
     
     # Import Demand Data:
-    os.chdir(pathX.pathSlaveRes)
+    os.chdir(locator.pathSlaveRes)
     CSV_NAME =  MS_Var.configKey + "StorageOperationData.csv"
     Centralized_Plant_Requirements = INDf.import_CentralizedPlant_data(CSV_NAME, gv.DAYS_IN_YEAR, gv.HOURS_IN_DAY)
     Q_DH_networkload, E_aux_ch,E_aux_dech, Q_missing, Q_storage_content_Wh, Q_to_storage, Q_from_storage, \
@@ -537,8 +537,8 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gv):
     #mdotsew = 0.0
     #tsupsew = 20 + 273.0
     if gv.HPSew_allowed == 1:
-        QcoldsewArray = np.array( pd.read_csv( pathX.pathRaw + "/SWP.csv", usecols=["Qsw_kW"] ) ) * 1E3
-        TretsewArray = np.array( pd.read_csv( pathX.pathRaw + "/SWP.csv", usecols=["ts_C"] ) ) + 273
+        QcoldsewArray = np.array(pd.read_csv(locator.get_sewageheat_potential , usecols=["Qsw_kW"])) * 1E3
+        TretsewArray = np.array(pd.read_csv(locator.get_sewageheat_potential , usecols=["ts_C"])) + 273
     
     
     def source_activator(Q_therm_req, hour, context):
@@ -1038,10 +1038,9 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gv):
                                 })
                                 
         Name = MS_Var.configKey + "PPActivationPattern.csv"
-        os.chdir(pathX.pathSlaveRes)
-        results.to_csv(Name, sep= ',')
+        results.to_csv(locator.pathSlaveRes + '//'+ Name, sep= ',')
         
-        print "PP Activation Results saved in : ", pathX.pathSlaveRes
+        print "PP Activation Results saved in : ", locator.pathSlaveRes
         print " as : ", Name
         
         
@@ -1050,10 +1049,10 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gv):
     #print "Q_source_data", Q_source_data
     
          
-    CO2_emitted, Eprim_used = calculate_emissions_and_CO2(Q_source_data, E_coldsource_data, E_PP_el_data,\
-                            E_gas_data, E_wood_data, Q_primaryAddBackupSum, np.sum(E_aux_AddBoiler), \
-                            np.sum(ESolarProduced), np.sum(Q_SCandPVT), HP_operation_Data_sum_array, Q_storage_content_Wh,\
-                            context, pathX.pathSlaveRes, E_HP_SolarAndHeatRecoverySum, E_aux_storage_operation_sum, gv)
+    CO2_emitted, Eprim_used = calculate_emissions_and_CO2(Q_source_data, E_coldsource_data, E_PP_el_data, \
+                                                          E_gas_data, E_wood_data, Q_primaryAddBackupSum, np.sum(E_aux_AddBoiler), \
+                                                          np.sum(ESolarProduced), np.sum(Q_SCandPVT), HP_operation_Data_sum_array, Q_storage_content_Wh, \
+                                                          context, locator.pathSlaveRes, E_HP_SolarAndHeatRecoverySum, E_aux_storage_operation_sum, gv)
                             
                             
                             
@@ -1170,9 +1169,8 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gv):
                             "cost_HP_storage_operation":[cost_HP_storage_operation]
                             })
         Name = MS_Var.configKey + "_SlaveCostData.csv"
-        os.chdir(pathX.pathSlaveRes)
-        results.to_csv(Name, sep= ',')
-        print "Slave to Master Variables saved in : ", pathX.pathSlaveRes
+        results.to_csv(locator.pathSlaveRes+ '//'+ Name, sep= ',')
+        print "Slave to Master Variables saved in : ", locator.pathSlaveRes
         print " as : ", Name
    
    
@@ -1211,10 +1209,9 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gv):
                                 })
                                 
         Name = MS_Var.configKey + "AveragedCostData.csv"
-        os.chdir(pathX.pathSlaveRes)
-        results.to_csv(Name, sep= ',')
+        results.to_csv(locator.pathSlaveRes+'//'+ Name, sep= ',')
         
-        print "Averaged Cost Results saved in : ", pathX.pathSlaveRes
+        print "Averaged Cost Results saved in : ", locator.pathSlaveRes
         print " as : ", Name
         
     #print E_oil_eq_MJ, CO2_kg_eq, cost_sum
@@ -1231,9 +1228,9 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gv):
     if save_file == 1:
         results = pd.DataFrame({"E_oil_eq_MJ":[E_oil_eq_MJ], "CO2_kg_eq":[CO2_kg_eq],"cost_sum":[cost_sum]})
         Name = MS_Var.configKey + "_SlaveToMasterCostEmissionsPrimE.csv"
-        os.chdir(pathX.pathSlaveRes)
+        os.chdir(locator.pathSlaveRes)
         results.to_csv(Name, sep= ',')
-        print "Slave to Master Variables saved in : ", pathX.pathSlaveRes
+        print "Slave to Master Variables saved in : ", locator.pathSlaveRes
         print " as : ", Name
     printcost = 0
     if printcost == 1:
@@ -1299,10 +1296,10 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gv):
                             "costBenefitNotUsedHPs":[costBenefitNotUsedHPs]
                             })
                             
-    Name = pathX.pathSlaveRes + "/" + MS_Var.configKey + "PrimaryEnergyBySource.csv"
+    Name = locator.pathSlaveRes + "/" + MS_Var.configKey + "PrimaryEnergyBySource.csv"
     results.to_csv(Name, sep= ',')
     
-    print "Averaged Cost Results saved in : ", pathX.pathSlaveRes
+    print "Averaged Cost Results saved in : ", locator.pathSlaveRes
     print " as : ", Name
     
     cost_sum -= costBenefitNotUsedHPs                             

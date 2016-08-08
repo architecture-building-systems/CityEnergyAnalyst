@@ -22,7 +22,7 @@ __status__ = "Production"
 
 
 
-def Network_Summary(locator, total_demand, building_names, gv, Flag):
+def Network_Summary(locator, total_demand, building_names, gv, key):
     """
 
     Network Summary:
@@ -56,13 +56,13 @@ def Network_Summary(locator, total_demand, building_names, gv, Flag):
     mdot_cool_netw_min = np.zeros(8760)+1E6
     iteration = 0
     for name in building_names:
-        buildings.append(pd.read_csv(locator.get_demand_results_folder()+ '//' + name + ".csv", usecols = ['mcpdata_kWC', 'Qcdataf_kWh']))
+        buildings.append(pd.read_csv(locator.get_demand_results_folder()+ '//' + name + ".csv", usecols = ['mcpdata_kWC', 'Qcdataf_kWh', 'Ecaf_kWh']))
         substations.append(pd.read_csv(locator.pathSubsRes+'//'+name+'_result'+".csv",usecols = ['Electr_array_all_flat','mdot_DH_result','mdot_DC_result','Q_heating','Q_dhw','Q_cool',
                                         'T_return_DH_result','T_return_DC_result','T_supply_DH_result']))
 
         Qcdata_netw_total += buildings[iteration].Qcdataf_kWh.values
         mdotdata_netw_total += buildings[iteration].mcpdata_kWC.values
-        #Ecaf_netw_total += buildings[iteration].Ecaf.values
+        Ecaf_netw_total += buildings[iteration].Ecaf_kWh.values
         Electr_netw_total += substations[iteration].Electr_array_all_flat.values
         mdot_heat_netw_all += substations[iteration].mdot_DH_result.values
         mdot_cool_netw_all += substations[iteration].mdot_DC_result.values
@@ -88,7 +88,6 @@ def Network_Summary(locator, total_demand, building_names, gv, Flag):
     Q_DH_losses = Q_DH_losses_supply + Q_DH_losses_return
     Q_DH_building_netw_total_inclLosses = Q_DH_building_netw_total + Q_DH_losses
 
-    print mdot_cool_netw_min
     Q_DC_losses_supply = np.vectorize(calc_piping_thermal_losses)(T_sst_cool_supply_netw_total, mdot_cool_netw_all, mdot_cool_netw_min, ntwk_length, gv.ground_temperature, gv.K_DH, gv.cp)
     Q_DC_losses_return = np.vectorize(calc_piping_thermal_losses)(T_sst_heat_return_netw_total, mdot_cool_netw_all, mdot_cool_netw_min, ntwk_length, gv.ground_temperature, gv.K_DH, gv.cp)
     Q_DC_losses = Q_DC_losses_supply + Q_DC_losses_return
@@ -113,23 +112,17 @@ def Network_Summary(locator, total_demand, building_names, gv, Flag):
                             "T_sst_heat_supply_netw_total":T_sst_heat_supply_netw_total_inclLosses,
                             "T_sst_cool_supply_netw_total":T_sst_cool_supply_netw_total_inclLosses,
                             "Qcdata_netw_total":Qcdata_netw_total,
-                            #"Ecaf_netw_total":Ecaf_netw_total,
+                            "Ecaf_netw_total":Ecaf_netw_total,
                             "day_of_max_heatmassflow":day_of_max_heatmassflow,
                             "mdotdata_netw_total":mdotdata_netw_total,
                             "Electr_netw_total":Electr_netw_total,
                             "Q_DH_losses":Q_DH_losses,
                             "Q_DC_losses":Q_DC_losses})
 
-    # this flag depicts weather this is the network of all customers or a network of a gorup of them.
-    if Flag:
-        key = "_all"
-    else:
-        key = ""
-    fName_result = "Network_summary_result" + key + ".csv"    
+    # the key depicts weather this is the network of all customers or a network of a gorup of them.
+    fName_result = "Network_summary_result_" + key + ".csv"
     results.to_csv(locator.pathNtwRes+'//'+fName_result, sep= ',')
-    
-    print "Results saved in :", locator.pathNtwRes
-    
+
     print time.clock() - t0, "seconds process time for Network summary for configuration", key, "\n"
 
 

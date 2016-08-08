@@ -23,7 +23,24 @@ import cea.optimization.master.evolAlgo.evaluateInd as eI
 from cea.optimization.master.evolAlgo import constrCheck as cCheck
 
 
-def EA_Main(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, genCP = 0, manualCheck = 0):
+def calc_ea_setup(nBuildings, gv):
+    """
+    This sets-up the evolutionary algorithm of the library DEAp in python
+    :return:
+    """
+    # import evaluation routine
+
+    # Contains 3 Fitnesses : Costs, CO2 emissions, Primary Energy Needs
+    creator.create("Fitness", base.Fitness, weights=(-1.0, -1.0, -1.0))
+    creator.create("Individual", list, fitness=creator.Fitness)
+    toolbox = base.Toolbox()
+    toolbox.register("generate", ci.generateInd, nBuildings, gv)
+    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+    return creator, toolbox
+
+def EA_Main(locator, building_names, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gv, genCP = 0):
     """
     Evolutionary algorithm to optimize the district energy system's design
     
@@ -46,91 +63,67 @@ def EA_Main(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, ge
     
     """
     t0 = time.clock()
-    
-    # Extract the names of the buildings present in the district
-    buildList = sFn.extractList(locator.get_total_demand())
-    nBuildings = len(buildList)
-    
-    # Set the DEAP toolbox
-    creator.create("Fitness", base.Fitness, weights=(-1.0, -1.0, -1.0))
-    # Contains 3 Fitnesses : Costs, CO2 emissions, Primary Energy Needs
-    creator.create("Individual", list, fitness=creator.Fitness)
-    
-    toolbox = base.Toolbox()
-    toolbox.register("generate", ci.generateInd, nBuildings, gV)
-    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
-    
-    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+    # get number of buildings
+    nBuildings = len(building_names)
+
+    # set-up toolbox of DEAp library in python (containing the evolutionary algotirhtm
+    creator, toolbox = calc_ea_setup(nBuildings, gv)
+
+    # define objective function and register into toolbox
+    def evalConfig(ind):
+        (costs, CO2, prim) = eI.evalInd(ind, building_names, locator, extraCosts, extraCO2, extraPrim, solarFeat,
+                                        ntwFeat, gv)
+        return (costs, CO2, prim)
+
+    toolbox.register("evaluate", evalConfig)
 
     ntwList = ["1"*nBuildings]
     epsInd = []
     invalid_ind = []
-    
-    def evalConfig(ind):
-        (costs, CO2, prim) = eI.evalInd(ind, buildList, locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV)
-        return (costs, CO2, prim)
-        
-    toolbox.register("evaluate", evalConfig)
-    
-    # Evolutionary strategy
-    # Recover from the last checkpoint or start from scratch
 
-    if genCP > 0:
-        print "Recover from CP "+ str(genCP) + "\n"
-        os.chdir(locator.pathMasterRes)
-    
-        with open("CheckPoint" + str(genCP),"rb") as CPread:
-            CPunpick = Unpickler(CPread)
-            cp = CPunpick.load()
-            pop = cp["population"]
-            ntwList = cp["networkList"]
-            epsInd = cp["epsIndicator"]
-        
-    else:
-        
-        if manualCheck == 1:
-            print "Manual Check \n"
-            pop = toolbox.population(n=1)
-            gV.NGEN = 0
-            map(cCheck.putToRef, pop)
-            #map(cCheck.manualCheck, pop)
-            #map(cCheck.manualCheck2, pop)
-            
-        else:
-            print "Creation of a population \n"
-            pop = toolbox.population(n=gV.initialInd)
+    # Evolutionary strategy
+    if genCP is 0:
+        # create population
+        pop = toolbox.population(n=gv.initialInd)
 
         # Check network
-        print "Update Network list \n"
         for ind in pop:
-            eI.checkNtw(ind, ntwList, locator, gV)
+            eI.checkNtw(ind, ntwList, locator, gv)
         
         # Evaluate the initial population
-        print "Evaluate initial population \n"
+        print "Evaluate initial population"
         fitnesses = map(toolbox.evaluate, pop)
-        
-        print "......................................."       
+
         for ind, fit in zip(pop, fitnesses):
             ind.fitness.values = fit
             print ind.fitness.values, "fit"
-        print "....................................... \n"
         
         # Save initial population
         print "Save Initial population \n"
         os.chdir(locator.pathMasterRes)
         with open("CheckPointInitial","wb") as CPwrite:
             CPpickle = Pickler(CPwrite)
-            cp = dict(population=pop, generation=0, networkList = ntwList, epsIndicator = epsInd, testedPop = invalid_ind)
+            cp = dict(population=pop, generation=0, networkList = ntwList, epsIndicator = [], testedPop = [])
             CPpickle.dump(cp)
+    else:
+        print "Recover from CP " + str(genCP) + "\n"
+        os.chdir(locator.pathMasterRes)
+
+        with open("CheckPoint" + str(genCP), "rb") as CPread:
+            CPunpick = Unpickler(CPread)
+            cp = CPunpick.load()
+            pop = cp["population"]
+            ntwList = cp["networkList"]
+            epsInd = cp["epsIndicator"]
     
-    
-    PROBA, SIGMAP = gV.PROBA, gV.SIGMAP
+    PROBA, SIGMAP = gv.PROBA, gv.SIGMAP
     
     # Evolution starts !
     g = genCP
     stopCrit = False # Threshold for the Epsilon indictor, Not used
 	
-    while g < gV.NGEN and not stopCrit and ( time.clock() - t0 ) < gV.maxTime :
+    while g < gv.NGEN and not stopCrit and ( time.clock() - t0 ) < gv.maxTime :
         
         g += 1
         print "Generation", g
@@ -140,30 +133,30 @@ def EA_Main(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, ge
         # Apply crossover and mutation on the pop
         print "CrossOver"
         for ind1, ind2 in zip(pop[::2], pop[1::2]):
-            child1, child2 = cx.cxUniform(ind1, ind2, PROBA, gV)
+            child1, child2 = cx.cxUniform(ind1, ind2, PROBA, gv)
             offspring += [child1, child2]
 
         # First half of the EA: create new un-collerated configurations
-        if g < gV.NGEN/2:
+        if g < gv.NGEN/2:
             for mutant in pop:
                 print "Mutation Flip"
-                offspring.append(mut.mutFlip(mutant, PROBA, gV))
+                offspring.append(mut.mutFlip(mutant, PROBA, gv))
                 print "Mutation Shuffle"
-                offspring.append(mut.mutShuffle(mutant, PROBA, gV))
+                offspring.append(mut.mutShuffle(mutant, PROBA, gv))
                 print "Mutation GU \n"
-                offspring.append(mut.mutGU(mutant, PROBA, gV))
+                offspring.append(mut.mutGU(mutant, PROBA, gv))
                 
         # Third quarter of the EA: keep the good individuals but modify the shares uniformly
-        elif g < gV.NGEN * 3/4:
+        elif g < gv.NGEN * 3/4:
             for mutant in pop:
                 print "Mutation Uniform"
-                offspring.append(mut.mutUniformCap(mutant, gV))
+                offspring.append(mut.mutUniformCap(mutant, gv))
         
         # Last quarter: keep the very good individuals and modify the shares with Gauss distribution
         else:
             for mutant in pop:
                 print "Mutation Gauss"
-                offspring.append(mut.mutGaussCap(mutant, SIGMAP, gV))
+                offspring.append(mut.mutGaussCap(mutant, SIGMAP, gv))
 
 
         # Evaluate the individuals with an invalid fitness
@@ -173,7 +166,7 @@ def EA_Main(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, ge
         
         print "Update Network list \n"
         for ind in invalid_ind:
-            eI.checkNtw(ind, ntwList, locator, gV)
+            eI.checkNtw(ind, ntwList, locator, gv)
         
         print "Re-evaluate the population" 
         fitnesses = map(toolbox.evaluate, invalid_ind)
@@ -192,7 +185,7 @@ def EA_Main(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, ge
         epsInd.append(eI.epsIndicator(pop, selection))
         #if len(epsInd) >1:
         #    eta = (epsInd[-1] - epsInd[-2]) / epsInd[-2]
-        #    if eta < gV.epsMargin:
+        #    if eta < gv.epsMargin:
         #        stopCrit = True
 
         # The population is entirely replaced by the best individuals
@@ -205,7 +198,7 @@ def EA_Main(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, ge
         print "....................................... \n"
         
         # Create Checkpoint if necessary
-        if g % gV.fCheckPoint == 0:
+        if g % gv.fCheckPoint == 0:
             os.chdir(locator.pathMasterRes)
             
             print "Create CheckPoint", g, "\n"
@@ -215,7 +208,7 @@ def EA_Main(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gV, ge
                 CPpickle.dump(cp)
 
 
-    if g == gV.NGEN:
+    if g == gv.NGEN:
         print "Final Generation reached"
     else:
         print "Stopping criteria reached"

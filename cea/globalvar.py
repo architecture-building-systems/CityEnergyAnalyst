@@ -307,11 +307,8 @@ class GlobalVariables(object):
         self.TLake = 5 + 273.0  # K
 
         # Geothermal heat pump
-        if self.ZernezFlag == 1:
-            self.TGround = 8.0 + 273.0
 
-        else:
-            self.TGround = 6.5 + 273.0
+        self.TGround = 6.5 + 273.0
 
         self.COPScalingFactorGroundWater = 3.4 / 3.9  # Scaling factor according to EcoBau, take GroundWater Heat pump into account
 

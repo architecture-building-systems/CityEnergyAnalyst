@@ -18,7 +18,7 @@ import cea.optimization.supportFn as sFn
 import cea.technologies.substation as sMain
 from cea.optimization.master import master_to_slave as MSVar
 
-def readInd(individual, Qmax, pathRaw, gv):
+def readInd(individual, Qmax, locator, gv):
     """
     Reads the list encoding a configuration and implementes the corresponding
     for the slave routine's to use
@@ -29,7 +29,7 @@ def readInd(individual, Qmax, pathRaw, gv):
         configuration from the Master routine
     Qmax : float
         peak heating demand
-    pathRaw : string
+    locator : string
         path to raw files
     
     Returns
@@ -128,18 +128,16 @@ def readInd(individual, Qmax, pathRaw, gv):
     dicoSupply.WasteCompressorHeatRecovery = individual[irank + 1]
     
     # Solar systems
-    
-    area = np.array( pd.read_csv(pathRaw + "/Total.csv", usecols=["Af"]) )
-    floors = np.array( pd.read_csv(pathRaw + "/Total.csv", usecols=["Floors"]) )
+    roof_area = np.array(pd.read_csv(locator.get_total_demand(), usecols=["Aroof_m2"]))
     
     areaAvail = 0
     totalArea = 0
     for i in range( len(indCombi) ):
         index = indCombi[i]
         if index == "1":
-            areaAvail += area[i][0] / (0.9 * floors[i][0])
-        totalArea += area[i][0] / (0.9 * floors[i][0])
-    
+            areaAvail += roof_area[i][0]
+        totalArea += roof_area[i][0]
+
     shareAvail = areaAvail / totalArea    
     
     irank = gv.nHeat * 2 + gv.nHR
@@ -177,7 +175,7 @@ def checkNtw(individual, ntwList, locator, gv):
             total_demand = pd.read_csv(locator.pathNtwRes + "//" +  "Total_" + indCombi + ".csv")
             building_names = total_demand.Name.values
             print "Direct launch of network summary routine for", indCombi
-            nM.Network_Summary(locator, total_demand, building_names, gv, Flag= False)
+            nM.Network_Summary(locator, total_demand, building_names, gv, indCombi)
 
         else:
             total_demand = sFn.createTotalNtwCsv(indCombi, locator)
@@ -185,13 +183,13 @@ def checkNtw(individual, ntwList, locator, gv):
 
             # Run the substation and network routines
             print "Re-run the substation routine for new network configuration", indCombi
-            sMain.subsMain(locator, total_demand, building_names, gv, Flag = False)
+            sMain.subsMain(locator, total_demand, building_names, gv, indCombi)
             
             print "Launch network summary routine"
-            nM.Network_Summary(locator, total_demand, building_names, gv, Flag= False)
-        
-        
-def evalInd(individual, buildList, pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gv):
+            nM.Network_Summary(locator, total_demand, building_names, gv, indCombi)
+
+
+def evalInd(individual, buildList, locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gv):
     """
     Evaluates an individual
     
@@ -222,6 +220,9 @@ def evalInd(individual, buildList, pathX, extraCosts, extraCO2, extraPrim, solar
     prim = extraPrim
     QUncoveredDesign = 0
     QUncoveredAnnual = 0
+
+    print indCombi.count("0")
+    print indCombi.count("1")
     
     if indCombi.count("0") == 0:
         fNameNtw = "Network_summary_result_all.csv"
@@ -229,7 +230,7 @@ def evalInd(individual, buildList, pathX, extraCosts, extraCO2, extraPrim, solar
         fNameNtw = "Network_summary_result_" + indCombi + ".csv"
     
     if indCombi.count("1") > 0:    
-        Qheatmax = sFn.calcQmax(fNameNtw, pathX.pathNtwRes, gv)
+        Qheatmax = sFn.calcQmax(fNameNtw, locator.pathNtwRes, gv)
     else:
         Qheatmax = 0
     
@@ -238,31 +239,31 @@ def evalInd(individual, buildList, pathX, extraCosts, extraCO2, extraPrim, solar
     
     # Modify the individual with the extra GHP constraint
     try:
-        cCheck.GHPCheck(individual, pathX.pathRaw, Qnom, gv)
+        cCheck.GHPCheck(individual, locator.pathRaw, Qnom, gv)
         print "GHP constraint checked \n"
     except:
         print "No GHP constraint check possible \n"
 
     
     # Export to context
-    dicoSupply = readInd(individual, Qheatmax, pathX.pathRaw, gv)
+    dicoSupply = readInd(individual, Qheatmax, locator, gv)
     dicoSupply.NETWORK_DATA_FILE = fNameNtw
     
     
     if dicoSupply.nBuildingsConnected > 1:
         if indCombi.count("0") == 0:
-            dicoSupply.fNameTotalCSV = pathX.pathRaw + "/Total.csv"
+            dicoSupply.fNameTotalCSV = locator.pathRaw + "/Total.csv"
         else:
-            dicoSupply.fNameTotalCSV = pathX.pathTotalNtw + "/Total_" + indCombi + ".csv"
+            dicoSupply.fNameTotalCSV = locator.pathTotalNtw + "/Total_" + indCombi + ".csv"
     else:
-        dicoSupply.fNameTotalCSV = pathX.pathSubsRes + "/Total_" + indCombi + ".csv"
+        dicoSupply.fNameTotalCSV = locator.pathSubsRes + "/Total_" + indCombi + ".csv"
     
     if indCombi.count("1") > 0:
         #print "Dummy evaluation of", dicoSupply.configKey
         #(slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sFn.dummyevaluate(individual)
         
         print "Slave routine on", dicoSupply.configKey
-        (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slaveMain(pathX, fNameNtw, dicoSupply, solarFeat, gv)
+        (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slaveMain(locator, fNameNtw, dicoSupply, solarFeat, gv)
         print slaveCosts, slaveCO2, slavePrim, "slaveCosts, slaveCO2, slavePrim \n"
         
         costs += slaveCosts
@@ -274,13 +275,13 @@ def evalInd(individual, buildList, pathX, extraCosts, extraCO2, extraPrim, solar
 
 
     print "Add extra costs"
-    (addCosts, addCO2, addPrim) = eM.addCosts(indCombi, buildList, pathX, dicoSupply, QUncoveredDesign, QUncoveredAnnual, solarFeat, ntwFeat, gv)
+    (addCosts, addCO2, addPrim) = eM.addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncoveredAnnual, solarFeat, ntwFeat, gv)
     print addCosts, addCO2, addPrim, "addCosts, addCO2, addPrim \n"
     
     if gv.ZernezFlag == 1:
          coolCosts, coolCO2, coolPrim = 0,0,0
     else:
-        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(pathX, dicoSupply.configKey, ntwFeat, dicoSupply.WasteServersHeatRecovery, gv)
+        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, dicoSupply.configKey, ntwFeat, dicoSupply.WasteServersHeatRecovery, gv)
         
     print coolCosts, coolCO2, coolPrim, "coolCosts, coolCO2, coolPrim \n"
     

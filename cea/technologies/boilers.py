@@ -205,7 +205,6 @@ def calc_Cop_boiler(Q_load, Q_design, T_return_to_boiler):
 
     T_return = T_return_to_boiler - 273
     eff_score = eff_of_phi(phi) / eff_of_phi(1)
-    #print "T_return", T_return
     boiler_eff = (eff_score * eff_of_T_return(T_return) )/ 100.0
 
     return boiler_eff

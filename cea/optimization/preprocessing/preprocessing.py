@@ -25,12 +25,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def preproccessing(locator, weather_file, gv):
 
-    # read total demand file and names and number of all buildings
-    total_demand = pd.read_csv(locator.get_total_demand())
-    building_names = total_demand.Name.values
-    gv.num_tot_buildings = total_demand.Name.count()
+def preproccessing(locator, total_demand, building_names, weather_file, gv):
 
     # read weather and calculate ground temperature
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
@@ -43,7 +39,7 @@ def preproccessing(locator, weather_file, gv):
     #dbM.discBuildOp(locator, building_names, gv)
 
     print "Create network file with all buildings connected"
-    #nM.Network_Summary(locator, total_demand, building_names, gv Flag = True)
+    #nM.Network_Summary(locator, total_demand, building_names, gv, "all") #"_all" key for all buildings
 
     print "Solar features extraction"
     solarFeat = sFn.solarRead(locator, gv)

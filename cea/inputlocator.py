@@ -23,6 +23,7 @@ class InputLocator(object):
         self.scenario_path = scenario_path
         self.db_path = os.path.join(os.path.dirname(__file__), 'databases', 'CH')
         self.get_geothermal_potential = os.path.join(self.get_potentials_results_folder(), "geothermal.csv")
+        self.get_sewageheat_potential = os.path.join(self.get_potentials_results_folder(), "SWP.csv")
 
         self.pathSubsRes = os.path.join(self.get_optimization_results_folder(), "substations")  # Substation results for disconnected buildings
         self.pathClustRes = os.path.join(self.get_optimization_results_folder(), "clustering") # Clustering results for disconnected buildings
