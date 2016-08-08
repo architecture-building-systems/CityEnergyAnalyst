@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Find Least Cost Source Main :
-    This file is able to find the least cost source for power generation upon the 
-    limitations given. In the current version, it uses a pre-set order to do this job.
+FIND LEAST COST FUNCTION
+USING PRESET ORDER
     
 """
 
@@ -522,8 +521,8 @@ def Least_Cost_Optimization(locator, context, solarFeat, gv):
             
     # CHP 
     if (MS_Var.CC_on) == 1:
-        import cea.technologies.cogeneration as CMCC_fn
-        CC_op_cost = CMCC_fn.calc_Cop_CCT
+        import cea.technologies.cogeneration as chp
+        CC_op_cost = chp.calc_Cop_CCT
         # How to use: for e.g. cost_per_Wh(Q_therm):
         # type cost_per_Wh_fn = CC_op_cost(10E6, 273+70.0, "NG")[2]
         # similar: Q_used_prim_fn = CC_op_cost(10E6, 273+70.0, "NG")[1]
