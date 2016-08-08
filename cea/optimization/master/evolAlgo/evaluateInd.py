@@ -136,7 +136,7 @@ def readInd(individual, Qmax, locator, gv):
         index = indCombi[i]
         if index == "1":
             areaAvail += roof_area[i][0]
-        totalArea += roof_area[i][0]
+        totalArea += roof_area[i][0] /
 
     shareAvail = areaAvail / totalArea    
     

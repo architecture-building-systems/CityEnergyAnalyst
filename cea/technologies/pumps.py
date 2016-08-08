@@ -147,7 +147,7 @@ def Pump_Cost(deltaP, mdot, eta_pumping, gV):
     PmaxPumpkW = 375.0
     PpumpMinkW = 0.5
 
-    nPumps = int(ceil(P_motor_tot / 1000.0 / PmaxPumpkW))
+    nPumps = int(np.ceil(P_motor_tot / 1000.0 / PmaxPumpkW))
 
     PpumpArray = np.zeros((nPumps))
     PpumpRemain = P_motor_tot
@@ -224,7 +224,7 @@ def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
     PpumpMinkW = 0.5
     print P_motor_tot
     print PmaxPumpkW
-    nPumps = int(ceil(P_motor_tot / 1000.0 / PmaxPumpkW))
+    nPumps = int(np.ceil(P_motor_tot / 1000.0 / PmaxPumpkW))
 
     print nPumps," nPumps"
 
