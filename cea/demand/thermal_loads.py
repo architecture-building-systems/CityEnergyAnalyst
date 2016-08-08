@@ -151,7 +151,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     Qcrefrif, mcpref, Tcref_re, Tcref_sup = np.vectorize(refrigeration_loads.calc_Qcref)(tsd['Eref'].values)
 
     # get server loads
-    Qcdataf, mcpdataf, Tcdataf_re, Tcdataf_sup = np.vectorize(refrigeration_loads.calc_Qcref)(tsd['Edataf'].values)
+    Qcdataf, mcpdataf, Tcdataf_re, Tcdataf_sup = np.vectorize(datacenter_loads.calc_Qcdataf)(tsd['Edataf'].values)
 
     # ground water temperature in C during heating season (winter) according to norm
     tsd['Tww_re'] = bpr.building_systems['Tww_re_0']
@@ -325,13 +325,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     Qhprof_tot = 0
     Ecaf_tot = 0
     # write results to csv
-    results_to_csv(bpr.rc_model['GFA_m2'], bpr.rc_model['Af'], Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edataf,
-                                  Edataf_tot,
-                                  Eprof, Eprof_tot,
-                                  building_name,
-                                  Occupancy,
-                                  Occupants, Qcdataf, Qcrefrif, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf,
-                                  Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
+    results_to_csv(bpr.rc_model['GFA_m2'], bpr.rc_model['Af'], bpr.rc_model['Aroof'], Ealf, Ealf_0, Ealf_tot, Eauxf,
+                   Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot, building_name, Occupancy, Occupants, Qcdataf,
+                   Qcrefrif, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0,
                                   Tcs_re, bpr.building_systems['Tcs_re_0'], Tcs_sup,
                                   bpr.building_systems['Tcs_sup_0'], Ths_re, bpr.building_systems['Ths_re_0'], Ths_sup,
                                   bpr.building_systems['Ths_sup_0'], tsd['Tww_re'], Tww_st,
@@ -723,7 +719,7 @@ writer of results
 """
 
 
-def results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot, Name,
+def results_to_csv(GFA_m2, Af, Aroof, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot, Name,
                    Occupancy, Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf,
                    Qwwf_0, Tcs_re, Tcs_re_0, Tcs_sup, Tcs_sup_0, Ths_re, Ths_re_0, Ths_sup, Ths_sup_0, Tww_re, Tww_st,
                    Tww_sup_0, Waterconsumption, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
@@ -768,7 +764,7 @@ def results_to_csv(GFA_m2, Af, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, 
     # print peaks in kW and totals in MWh, temperature peaks in C
     totals = pd.DataFrame(
         {'Name': Name, 'GFA_m2': GFA_m2, 'Af_m2': Af, 'occ_pax': Occupants, 'Qwwf0_kW': Qwwf_0 / 1000,
-         'Ealf0_kW': Ealf_0 / 1000,
+         'Ealf0_kW': Ealf_0 / 1000, 'Aroof_m2':Aroof,
          'Qhsf0_kW': Qhsf_0 / 1000, 'Qcsf0_kW': -Qcsf_0 / 1000, 'Vw0_m3': waterpeak, 'Tshs0_C': Ths_sup_0,
          'Trhs0_C': Ths_re_0, 'mcphs0_kWC': mcphs.max(), 'Tscs0_C': Tcs_sup_0, 'Qcdataf_MWhyr': Qcdata_tot,
          'Qcref_MWhyr': Qcrefri_tot, 'Trcs0_C': Tcs_re_0, 'mcpcs0_kWC': mcpcs.max(), 'Qwwf_MWhyr': Qwwf_tot,
@@ -1025,7 +1021,8 @@ class BuildingProperties(object):
         df['Aop_bel'] = df['height_bg'] * df['perimeter'] + df['footprint']
 
         # total area of the building envelope in [m2], the roof is considered to be flat
-        df['Atot'] = df[['Aw', 'Aop_sup', 'footprint', 'Aop_bel']].sum(axis=1) + (df['footprint'] * (df['floors'] - 1))
+        df['Aroof'] = df['footprint']
+        df['Atot'] = df[['Aw', 'Aop_sup', 'footprint', 'Aop_bel']].sum(axis=1) + (df['Aroof'] * (df['floors'] - 1))
 
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated
@@ -1047,7 +1044,7 @@ class BuildingProperties(object):
         df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df['Af']  # Internal heat capacity in J/K
 
         fields = ['Awall_all', 'Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',
-                  'HD',
+                  'HD', 'Aroof',
                   'Htr_w', 'GFA_m2']
         result = df[fields]
         return result

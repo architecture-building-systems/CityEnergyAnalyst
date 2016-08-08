@@ -5,9 +5,10 @@ multi-objective optimization
 
 """
 
-########################### Import modules
 
 from __future__ import division
+
+import pandas as pd
 
 import cea.optimization.master.master_main as mM
 from cea.optimization.preprocessing.preprocessing import preproccessing
@@ -23,15 +24,20 @@ optimization
 
 def moo_optimization(locator, weather_file, gv):
 
+    # read total demand file and names and number of all buildings
+    total_demand = pd.read_csv(locator.get_total_demand())
+    building_names = total_demand.Name.values
+    gv.num_tot_buildings = total_demand.Name.count()
+
     print "PREPROCESSING + SINGLE BUILDING OPTIMIZATION"
-    extraCosts, extraCO2, extraPrim, solarFeat = preproccessing(locator, weather_file, gv)
+    extraCosts, extraCO2, extraPrim, solarFeat = preproccessing(locator, total_demand, building_names, weather_file, gv)
 
     print "NETWORK OPTIMIZATION"
     ntwFeat = ntwM.ntwMain2()     #ntwMain2 -linear, #ntwMain - optimization
 
     print "CONVERSION AND STORAGE OPTIMIZATION"
     # main optimization routine
-    mM.EA_Main(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gv)
+    mM.EA_Main(locator, building_names, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gv)
 
 
 """

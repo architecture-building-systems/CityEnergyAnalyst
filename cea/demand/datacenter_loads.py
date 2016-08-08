@@ -24,9 +24,14 @@ final datacenter loads
 """
 
 def calc_Qcdataf(Edataf):
-    Tcdataf_re_0 = 15
-    Tcdataf_sup_0 = 7
-    Qcdataf = Edataf * 0.9
-    mcpref = Qcdataf/(Tcdataf_re_0-Tcdataf_sup_0)
-
+    if Edataf > 0:
+        Tcdataf_re_0 = 15
+        Tcdataf_sup_0 = 7
+        Qcdataf = Edataf * 0.9
+        mcpref = Qcdataf/(Tcdataf_re_0-Tcdataf_sup_0)
+    else:
+        Qcdataf  = 0
+        Tcdataf_re_0 = 0
+        Tcdataf_sup_0 = 0
+        mcpref = 0
     return Qcdataf, mcpref, Tcdataf_re_0, Tcdataf_sup_0
