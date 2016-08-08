@@ -9,6 +9,7 @@ cogeneration (combined heat and power)
 from __future__ import division
 import numpy as np
 from scipy import interpolate
+import scipy
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -134,7 +135,7 @@ def GT_fullLoadParam(gt_size, fuel, gV):
     if gt_size == 0:
         eta0 = 0.01
     else:
-        eta0 = 0.0196 * log(gt_size * 1E-3) + 0.1317
+        eta0 = 0.0196 * scipy.log(gt_size * 1E-3) + 0.1317
 
     if fuel == 'NG':
         LHV = gV.LHV_NG
