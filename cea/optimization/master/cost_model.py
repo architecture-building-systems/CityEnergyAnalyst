@@ -12,7 +12,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from cea import resources
+import cea.resources.natural_gas as ngas
 import cea.technologies.photovoltaic as pv
 import cea.technologies.heatpumps as hp
 import cea.technologies.furnace as furnace
@@ -348,7 +348,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         #print float(np.array(EgasPrimaryDataframe))
         
         EgasPrimaryPeakPower = float(np.array(EgasPrimaryDataframe))
-        GasConnectionInvCost = resources.natural_gas.calc_Cinv_gas(EgasPrimaryPeakPower, gv)
+        GasConnectionInvCost = ngas.calc_Cinv_gas(EgasPrimaryPeakPower, gv)
     else:
         GasConnectionInvCost = 0.0
         

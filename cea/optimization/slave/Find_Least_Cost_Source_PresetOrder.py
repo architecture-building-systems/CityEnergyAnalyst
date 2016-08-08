@@ -657,7 +657,7 @@ def Least_Cost_Optimization(locator, context, solarFeat, gv):
                         Q_therm_HPL = Q_therm_req.copy()
                         mdot_DH_to_Lake = Q_therm_HPL / (gv.cp *(tdhsup - tdhret_req))
                         Q_therm_req = 0
-                    
+                    print tdhsup
                     HP_Lake_Cost_Data = HPLake_op_cost(mdot_DH_to_Lake, tdhsup, tdhret_req, gv.TLake, gv)
                     C_HPL_el, Wdot_HPLake, Q_HPL_cold_primary, Q_HPL_therm = HP_Lake_Cost_Data
                     
@@ -684,14 +684,14 @@ def Least_Cost_Optimization(locator, context, solarFeat, gv):
                 
                 if (MS_Var.CC_on) == 1 and Q_therm_req > 0 and gv.CC_allowed == 1: # only operate if the plant is available
                     CC_op_cost_data = CC_op_cost(MS_Var.CC_GT_SIZE, tdhsup, MS_Var.gt_fuel, gv) # create cost information
+                    Q_used_prim_CC_fn  = CC_op_cost_data[1]
                     cost_per_Wh_CC_fn = CC_op_cost_data[2] #gets interpolated cost function
-                    Q_used_prim_CC_fn  = CC_op_cost_data[1] 
                     Q_CC_min = CC_op_cost_data[3]
                     Q_CC_max = CC_op_cost_data[4]
                     eta_elec_interpol= CC_op_cost_data[5]
                     
                     if Q_therm_req > Q_CC_min: # operation Possible if above minimal load
-                        
+                        print MS_Var.CC_GT_SIZE, MS_Var.gt_fuel, tdhsup, Q_therm_req, Q_CC_min, Q_CC_max
                         if Q_therm_req < Q_CC_max:# Normal operation Possible within partload regime
                             cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_therm_req)
                             Q_used_prim_CC = Q_used_prim_CC_fn(Q_therm_req)

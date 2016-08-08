@@ -147,6 +147,7 @@ def HPLake_Op(mdot, tsup, tret, tlake, gV):
 
     """
     tcond = tsup + gV.HP_deltaT_cond
+    print tcond
     if tcond > gV.HP_maxT_cond:
         raise ModelError
 
