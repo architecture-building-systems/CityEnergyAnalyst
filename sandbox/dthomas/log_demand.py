@@ -3,9 +3,14 @@ run the radiation.py script with the functionlogger.
 """
 import os
 
-import cea.demand
-import contributions.thermal_loads_new_ventilation.simple_window_generator
-import contributions.thermal_loads_new_ventilation.ventilation
+import cea.demand.demand_main
+import cea.demand.occupancy_model
+import cea.demand.thermal_loads
+import cea.demand.ventilation_model
+import cea.demand.airconditioning_model
+import cea.demand.electrical_loads
+import cea.demand.hotwater_loads
+import cea.demand.sensible_loads
 import functionlogger
 
 if __name__ == '__main__':
@@ -16,15 +21,16 @@ if __name__ == '__main__':
         os.remove(path_to_log)
 
     functionlogger.connect_to(path_to_log)
-    functionlogger.wrap_module(cea.demand, first_only=True)
-    #functionlogger.wrap_module(cea.maker, first_only=True)
-    functionlogger.wrap_module(cea.demand.f, first_only=True)
-    functionlogger.wrap_module(cea.thermal_loads, first_only=True)
-    functionlogger.wrap_module(cea.hvac_kaempf, first_only=True)
-    functionlogger.wrap_module(contributions.thermal_loads_new_ventilation.simple_window_generator, first_only=True)
-    functionlogger.wrap_module(contributions.thermal_loads_new_ventilation.ventilation, first_only=True)
+    functionlogger.wrap_module(cea.demand.demand_main, first_only=True)
+    functionlogger.wrap_module(cea.demand.occupancy_model, first_only=True)
+    functionlogger.wrap_module(cea.demand.thermal_loads, first_only=True)
+    functionlogger.wrap_module(cea.demand.ventilation_model, first_only=True)
+    functionlogger.wrap_module(cea.demand.airconditioning_model, first_only=True)
+    functionlogger.wrap_module(cea.demand.electrical_loads, first_only=True)
+    functionlogger.wrap_module(cea.demand.hotwater_loads, first_only=True)
+    functionlogger.wrap_module(cea.demand.sensible_loads, first_only=True)
 
-    cea.demand.run_as_script()
+    cea.demand.demand_main.run_as_script()
 
     with open(path_to_md, 'w') as writer:
         functionlogger.generate_output(path_to_log, writer)
