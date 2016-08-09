@@ -24,9 +24,35 @@ Occupancy
 =========================================
 """
 
-def calc_occ(list_uses, schedules, building_uses, Occ_m2p, Af):
-    schedule = calc_occ_schedule(list_uses, schedules, building_uses)
-    people = schedule * (Occ_m2p) ** -1 * Af  # in people
+
+def calc_occ(list_uses, schedules, bpr):
+    """
+    Calculate the occupancy in number of people for the whole building per timestep.
+
+    PARAMETERS
+    ----------
+
+    :param list_uses: The list of uses used in the project
+    :type list_uses: list
+
+    :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
+    :type schedules: list
+
+    :param building_uses: for each use in `list_uses`, the percentage of that use for this building.
+        Sum of values is 1.0
+    :type building_uses: dict
+
+    :param bpr: The properties of the building to calculate
+    :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
+
+    RETURNS
+    -------
+
+    :returns: Occupancy as number of persons per timestep for the whole building
+    :rtype: ndarray
+    """
+    schedule = calc_occ_schedule(list_uses, schedules, bpr.occupancy)
+    people = schedule * bpr.rc_model['Af'] / bpr.architecture['Occ_m2p']  # in people
     return people
 
 def calc_occ_schedule(list_uses, schedules, building_uses):
