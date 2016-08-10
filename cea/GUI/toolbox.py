@@ -178,7 +178,7 @@ class DemandTool(object):
         # run demand script in subprocess (for multiprocessing)
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        process = subprocess.Popen(['python', '-u', demand_py, '--scenario', scenario_path, '--weather', weather_path],
+        process = subprocess.Popen([python_exe, '-u', demand_py, '--scenario', scenario_path, '--weather', weather_path],
                                    startupinfo=startupinfo,
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE, env=dict(os.environ, PYTHONPATH=cea_root_path))
