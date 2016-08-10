@@ -63,19 +63,19 @@ def calc_Eint(tsd, prop_internal_loads, Aef, list_uses, schedules, building_uses
         schedule_Eref = calc_Ea_El_Edata_Eref_schedule(['COOLROOM'], schedules, building_uses)
         tsd['Eref'] = calc_Eref(schedule_Eref, prop_internal_loads['Ere_Wm2'], Aef, building_uses['COOLROOM'])  # in W
     else:
-        tsd['Eref'] = 0
+        tsd['Eref'] = np.zeros(8760)
 
     if 'SERVERROOM' in building_uses:
         schedule_Edata = calc_Ea_El_Edata_Eref_schedule(['SERVERROOM'], schedules, building_uses)
         tsd['Edataf'] = calc_Edataf(schedule_Edata, prop_internal_loads['Ed_Wm2'], Aef, building_uses['SERVERROOM'])  # in W
     else:
-        tsd['Edataf'] = 0
+        tsd['Edataf'] = np.zeros(8760)
 
     if 'INDUSTRY' in building_uses:
         schedule_pro = calc_Eprof_schedule(list_uses, schedules, building_uses)
         tsd['Eprof'] = calc_Eprof(schedule_pro, prop_internal_loads['Epro_Wm2'], Aef, building_uses['INDUSTRY'])  # in W
     else:
-        tsd['Eprof'] = 0
+        tsd['Eprof'] = np.zeros(8760)
     return tsd
 
 

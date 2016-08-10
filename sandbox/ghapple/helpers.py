@@ -241,6 +241,114 @@ def check_doy(doy):
         return False
 
 
+def is_nighttime_hoy(hoy):
+    """
+    Check if a certain hour of year is during night or not
+
+    Parameters
+    ----------
+    hoy: hour of year
+
+    Returns
+    -------
+    bool
+
+    """
+    if check_hoy(hoy):
+
+        location = 'CH'  # TODO get location
+
+        start_night = 21  # 21:00 # TODO: make dynamic (e.g. as function of location/country)
+        stop_night = 7  # 07:00 # TODO: make dynamic (e.g. as function of location/country)
+
+        if start_night <= hoy_2_hod(hoy) or stop_night >= hoy_2_hod(hoy):
+            return True
+        else:
+            return False
+    else:
+        return
+
+
+def is_daytime_hoy(hoy):
+    """
+    Check if a certain hour of the year is during the daytime or not
+
+    Parameters
+    ----------
+    hoy : hour of year
+
+    Returns
+    -------
+    bool
+
+    """
+    if check_hoy(hoy):
+
+        if not is_nighttime_hoy(hoy):
+            return True
+        else:
+            return False
+    else:
+        return
+
+
+def is_heatingseason_hoy(hoy):
+    """
+    checks if a certain hour of the year is part of the heating season or not
+
+    Parameters
+    ----------
+    hoy : hour of year
+
+    Returns
+    -------
+    bool
+
+    """
+
+    if check_hoy(hoy):
+
+        #TODO: get location from (?)
+        location = 'CH'
+
+        #TODO: get start heating season f(location)
+        seasonhours = [3216, 6192]
+
+        if hoy > seasonhours[1] or hoy < seasonhours[0]:
+            return True
+        else:
+            return False
+
+    else:
+        return
+
+
+def is_coolingseason_hoy(hoy):
+    """
+    checks if a certain hour of the year is part of the cooling season or not
+
+    Parameters
+    ----------
+    hoy : hour of year
+
+    Returns
+    -------
+    bool
+
+    """
+
+    if check_hoy(hoy):
+        if not is_heatingseason_hoy(hoy):
+            return True
+        else:
+            return False
+
+    else:
+        return
+
+
+
+
 def test_helpers():
     """
     test helpers
