@@ -3,11 +3,11 @@ ArcGIS Tool classes for integrating the CEA with ArcGIS.
 """
 import os
 import tempfile
-
 import arcpy
-
+import cea
 import cea.inputlocator
-from cea import globalvar
+import cea.globalvar
+
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -17,8 +17,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
-
-reload(cea.inputlocator)
 
 
 def add_message(msg, **kwargs):
@@ -95,7 +93,7 @@ class PropertiesTool(object):
         prop_HVAC_flag = parameters[3]
         prop_comfort_flag = parameters[3]
         prop_internal_loads_flag = parameters[3]
-        gv = globalvar.GlobalVariables()
+        gv = cea.globalvar.GlobalVariables()
         gv.log = add_message
         properties(locator=locator, prop_thermal_flag=prop_thermal_flag.value,
                    prop_architecture_flag=prop_architecture_flag.value, prop_hvac_flag=prop_HVAC_flag.value,
@@ -140,7 +138,6 @@ class DemandTool(object):
 
     def execute(self, parameters, messages):
         import cea.demand.demand_main
-        reload(cea.demand.demand_main)
 
         scenario_path = parameters[0].valueAsText
         locator = cea.inputlocator.InputLocator(scenario_path)
@@ -153,7 +150,7 @@ class DemandTool(object):
         else:
             weather_path = locator.get_default_weather()
 
-        gv = globalvar.GlobalVariables()
+        gv = cea.globalvar.GlobalVariables()
         gv.log = add_message
 
         # find the version of python to use:
@@ -174,7 +171,7 @@ class DemandTool(object):
         gv.log("Path to demand script: %(demand_py)s", demand_py=demand_py)
 
         # add root of CEAforArcGIS to python path
-        cea_root_path = os.path.normpath(os.path.join(os.path.dirname(demand_py), '..'))
+        cea_root_path = os.path.normpath(os.path.join(os.path.dirname(demand_py), '..', '..'))
         gv.log("Adding path to PYTHONPATH: %(path)s", path=cea_root_path)
         sys.path.append(cea_root_path)
 
@@ -231,7 +228,7 @@ class EmbodiedEnergyTool(object):
 
         yearcalc = int(parameters[0].valueAsText)
         scenario_path = parameters[1].valueAsText
-        gv = globalvar.GlobalVariables()
+        gv = cea.globalvar.GlobalVariables()
         gv.log = add_message
         locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
         lca_embodied(yearcalc=yearcalc, locator=locator, gv=gv)
@@ -391,7 +388,7 @@ class GraphsDemandTool(object):
         scenario_path = parameters[0].valueAsText
         locator = cea.inputlocator.InputLocator(scenario_path)
         analysis_fields = parameters[1].valueAsText.split(';')[:4]  # max 4 fields for analysis
-        gv = globalvar.GlobalVariables()
+        gv = cea.globalvar.GlobalVariables()
         gv.log = add_message
         cea.plots.graphs.graphs_demand(locator=locator, analysis_fields=analysis_fields, gv=gv)
 
@@ -466,6 +463,7 @@ class HeatmapsTool(object):
         file_to_analyze = parameters[1].valueAsText
         analysis_fields = parameters[2].valueAsText.split(';')
 
+        import cea.inputlocator
         locator = cea.inputlocator.InputLocator(scenario_path)
         if file_to_analyze == os.path.basename(locator.get_total_demand()):
             file_to_analyze = locator.get_total_demand()
@@ -514,6 +512,8 @@ class RadiationTool(object):
         return [scenario_path, weather_name, year]
 
     def execute(self, parameters, messages):
+        import cea
+
         scenario_path = parameters[0].valueAsText
         weather_name = parameters[1].valueAsText
         year = parameters[2].value
@@ -536,7 +536,7 @@ class RadiationTool(object):
 
         import cea.resources.radiation
         reload(cea.resources.radiation)
-        gv = globalvar.GlobalVariables()
+        gv = cea.globalvar.GlobalVariables()
         gv.log = add_message
         cea.resources.radiation.solar_radiation_vertical(locator=locator, path_arcgis_db=path_arcgis_db, latitude=latitude,
                                                          longitude=longitude, year=year, gv=gv, weather_path=weather_path)
@@ -656,7 +656,7 @@ class MobilityTool(object):
         from cea.analysis.mobility import lca_mobility, ExtendInputLocator
 
         scenario_path = parameters[0].valueAsText
-        gv = globalvar.GlobalVariables()
+        gv = cea.globalvar.GlobalVariables()
         gv.log = add_message
         locator = ExtendInputLocator(scenario_path=scenario_path)
         lca_mobility(locator=locator)
