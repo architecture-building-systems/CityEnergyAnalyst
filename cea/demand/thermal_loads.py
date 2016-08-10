@@ -142,7 +142,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd['people'] = occupancy_model.calc_occ(list_uses, schedules, bpr)
 
     # get electrical loads (no auxiliary loads)
-    tsd = electrical_loads.calc_Eint(tsd, bpr.internal_loads, bpr.rc_model['Af'], list_uses, schedules, bpr.occupancy)
+    tsd = electrical_loads.calc_Eint(tsd, bpr, list_uses, schedules)
 
     # get refrigeration loads
     tsd['Qcrefri'] = (tsd['Eref'] * 4)  # where 4 is the COP of the refrigeration unit   # in W
