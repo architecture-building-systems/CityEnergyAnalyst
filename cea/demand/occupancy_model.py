@@ -2,7 +2,8 @@
 ===========================
 Query schedules according to database
 ===========================
-J. Fonseca  script development          26.08.15
+J. Fonseca  script development          26.08.2015
+D. Thomas   documentation               10.08.2016
 """
 
 from __future__ import division
@@ -36,11 +37,7 @@ def calc_occ(list_uses, schedules, bpr):
     :type list_uses: list
 
     :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
-    :type schedules: list
-
-    :param building_uses: for each use in `list_uses`, the percentage of that use for this building.
-        Sum of values is 1.0
-    :type building_uses: dict
+    :type schedules: list[ndarray[float]]
 
     :param bpr: The properties of the building to calculate
     :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
@@ -55,7 +52,31 @@ def calc_occ(list_uses, schedules, bpr):
     people = schedule * bpr.rc_model['Af'] / bpr.architecture['Occ_m2p']  # in people
     return people
 
+
 def calc_occ_schedule(list_uses, schedules, building_uses):
+    """
+    Given schedule data for archetypical building uses, `calc_occ_schedule` calculates the schedule for a building
+    with possibly a mixed schedule as defined in `building_uses` using a weighted average approach.
+
+    PARAMETERS
+    ----------
+
+    :param list_uses: The list of uses used in the project
+    :type list_uses: list
+
+    :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
+    :type schedules: list[ndarray[float]]
+
+    :param building_uses: for each use in `list_uses`, the percentage of that use for this building.
+        Sum of values is 1.0
+    :type building_uses: dict[str, float]
+
+    RETURNS
+    -------
+
+    :returns:
+    :rtype: ndarray
+    """
     # weighted average of schedules
     def calc_average(last, current, share_of_use):
         return last + current * share_of_use
@@ -74,6 +95,7 @@ def calc_occ_schedule(list_uses, schedules, building_uses):
 read schedules from excel file
 =========================================
 """
+
 
 def schedule_maker(date, locator, list_uses):
     def get_yearly_vectors(date, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule):
@@ -103,7 +125,6 @@ def schedule_maker(date, locator, list_uses):
 
         return occ, el, dhw, pro
 
-
     schedules = []
     for use in list_uses:
         # Read from archetypes_schedules
@@ -119,8 +140,7 @@ def schedule_maker(date, locator, list_uses):
 
 
 def read_schedules(use, x):
-
-    occ = [x['Weekday_1'].values,x['Saturday_1'].values,x['Sunday_1'].values]
+    occ = [x['Weekday_1'].values, x['Saturday_1'].values, x['Sunday_1'].values]
     el = [x['Weekday_2'].values, x['Saturday_2'].values, x['Sunday_2'].values]
     dhw = [x['Weekday_3'].values, x['Saturday_3'].values, x['Sunday_3'].values]
     month = x['month'].values
@@ -128,7 +148,6 @@ def read_schedules(use, x):
     if use is "INDUSTRIAL":
         pro = [x['Weekday_4'].values, x['Saturday_4'].values, x['Sunday_4'].values]
     else:
-        pro = [[0]*24, [0]*24,[0]*24]
+        pro = [[0] * 24, [0] * 24, [0] * 24]
 
     return occ, el, dhw, pro, month
-
