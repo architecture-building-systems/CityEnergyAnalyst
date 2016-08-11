@@ -111,6 +111,15 @@ def calc_Eint(tsd, bpr, list_uses, schedules):
 
 
 def calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses):
+    """
+    Calculate the schedule to use for lighting and appliances based on the building uses from the schedules
+    defined for the project.
+
+    :param list_uses:
+    :param schedules:
+    :param building_uses:
+    :return:
+    """
     # weighted average of schedules
     def calc_average(last, current, share_of_use):
         return last + current * share_of_use
