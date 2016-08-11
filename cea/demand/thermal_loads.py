@@ -139,11 +139,10 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     n50 = bpr.architecture['n50']
 
     # get occupancy
-    tsd['people'] = occupancy_model.calc_occ(list_uses, schedules, bpr.occupancy, bpr.architecture['Occ_m2p'],
-                                             bpr.rc_model['Af'])
+    tsd['people'] = occupancy_model.calc_occ(list_uses, schedules, bpr)
 
     # get electrical loads (no auxiliary loads)
-    tsd = electrical_loads.calc_Eint(tsd, bpr.internal_loads, bpr.rc_model['Af'], list_uses, schedules, bpr.occupancy)
+    tsd = electrical_loads.calc_Eint(tsd, bpr, list_uses, schedules)
 
     # get refrigeration loads
     Qcrefrif, mcpref, Tcref_re, Tcref_sup = np.vectorize(refrigeration_loads.calc_Qcref)(tsd['Eref'])
@@ -1114,7 +1113,7 @@ class BuildingPropertiesRow(object):
         Each of the arguments is a pandas Series object representing a row in the corresponding DataFrame."""
         self.geometry = geometry
         self.architecture = architecture
-        self.occupancy = occupancy
+        self.occupancy = occupancy   # FIXME: rename to uses!
         self.hvac = hvac
         self.rc_model = rc_model
         self.comfort = comfort
