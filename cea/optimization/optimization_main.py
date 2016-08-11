@@ -5,14 +5,13 @@ multi-objective optimization
 
 """
 
-
 from __future__ import division
 
+import cea.optimization.master.master_main as mM
 import pandas as pd
 
-import cea.optimization.master.master_main as mM
+import cea.optimization.ntwOpt.NtwMain as ntwM
 from cea.optimization.preprocessing.preprocessing import preproccessing
-import cea.optimization.ntwOpt.Python.NtwMain as ntwM
 
 """
 ============================
@@ -50,7 +49,6 @@ def test_optimization_main(scenario_path=None):
     """
     run the whole optimization routine
     """
-    import cea.globalvar
     import cea.inputlocator
     gv = cea.globalvar.GlobalVariables()
 

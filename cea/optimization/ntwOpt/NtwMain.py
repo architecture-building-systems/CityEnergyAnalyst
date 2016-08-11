@@ -9,13 +9,13 @@ import os
 import subprocess
 import numpy as np
 
-import LayoutData
-import HydraulicData
-import Solution
-import NtwRead
+import cea.optimization.ntwOpt.Python.LayoutData
+import cea.optimization.ntwOpt.Python.HydraulicData
+import cea.optimization.ntwOpt.Python.Solution
+import cea.optimization.ntwOpt.Python.NtwRead
 
-reload(HydraulicData)
-reload(NtwRead)
+reload(cea.optimization.ntwOpt.Python.HydraulicData)
+reload(cea.optimization.ntwOpt.Python.NtwRead)
 
 
 class ntwFeatures(object):
@@ -35,18 +35,18 @@ def ntwOpt(matlabDir, finalDir, Header, Ntw):
     
     
     #################################################### Set the Layout
-    ld = LayoutData.LayoutData()
+    ld = cea.optimization.ntwOpt.Python.LayoutData.LayoutData()
     ld.setNewYork()
-    NtwRead.modifyLayout(ld, Header, Ntw)
+    cea.optimization.ntwOpt.Python.NtwRead.modifyLayout(ld, Header, Ntw)
     ld.writeToMat(matDir+'ld')
     
     
     #################################################### Design phase
     
     # Design the pipes to the buildings
-    hd = HydraulicData.HydraulicData()
+    hd = cea.optimization.ntwOpt.Python.HydraulicData.HydraulicData()
     hd.setNewYork(ld)
-    NtwRead.modifyHydraulicBuild(hd, ld, Header, Ntw)
+    cea.optimization.ntwOpt.Python.NtwRead.modifyHydraulicBuild(hd, ld, Header, Ntw)
     hd.writeToMat(matDir+'hd')
     
     if 1:
@@ -63,14 +63,14 @@ def ntwOpt(matlabDir, finalDir, Header, Ntw):
     
         subprocess.call([os.path.join(matlabDir, 'matlab.exe'), '-wait', '-nosplash', '-nodesktop', '-r', mCode], shell=True)
     
-    hsBuild = Solution.Solution()
+    hsBuild = cea.optimization.ntwOpt.Python.Solution.Solution()
     hsBuild.setFromMat(matDir+'hs')
     
     
     # Design the pipes in the network
-    hd = HydraulicData.HydraulicData()
+    hd = cea.optimization.ntwOpt.Python.HydraulicData.HydraulicData()
     hd.setNewYork(ld)
-    NtwRead.modifyHydraulicNtw(hd, ld, Header, Ntw)
+    cea.optimization.ntwOpt.Python.NtwRead.modifyHydraulicNtw(hd, ld, Header, Ntw)
     hd.writeToMat(matDir+'hd')
     
     if 1:
@@ -87,12 +87,12 @@ def ntwOpt(matlabDir, finalDir, Header, Ntw):
     
         subprocess.call([os.path.join(matlabDir, 'matlab.exe'), '-wait', '-nosplash', '-nodesktop', '-r', mCode], shell=True)
     
-    hsNtw = Solution.Solution()
+    hsNtw = cea.optimization.ntwOpt.Python.Solution.Solution()
     hsNtw.setFromMat(matDir+'hs')
     DeltaP = np.amax(hsNtw.c["p_n"])
     
     # Calculate annualized pipe investment costs
-    pipesCosts = NtwRead.InvCostsPipes(ld, hd, hsBuild, hsNtw, Header, Ntw)
+    pipesCosts = cea.optimization.ntwOpt.Python.NtwRead.InvCostsPipes(ld, hd, hsBuild, hsNtw, Header, Ntw)
     print pipesCosts, "[CHF/y] Pipes Investment Costs"
     
     return pipesCosts, DeltaP

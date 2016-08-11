@@ -16,7 +16,6 @@ Modifications wrt previous version:
 from __future__ import division
 
 import cea.globalvar as gv
-
 import clusterDay as cDay
 import clusterFn as cFn
 import combi
