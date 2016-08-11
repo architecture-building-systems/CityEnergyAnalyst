@@ -96,15 +96,23 @@ def calc_Eint(tsd, bpr, list_uses, schedules):
 
 
 def calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses):
+    """
+    Calculate the schedule to use for lighting and appliances based on the building uses from the schedules
+    defined for the project.
+
+    4:param list_uses:
+    :param schedules:
+    :param building_uses:
+    :return:
+    """
     # weighted average of schedules
     def calc_average(last, current, share_of_use):
         return last + current * share_of_use
 
     el = np.zeros(8760)
-    num_profiles = len(list_uses)
-    for num in range(num_profiles):
-        current_share_of_use = building_uses[list_uses[num]]
-        el = np.vectorize(calc_average)(el, schedules[num][1], current_share_of_use)
+    for i in range(len(list_uses)):
+        current_share_of_use = building_uses[list_uses[i]]
+        el = np.vectorize(calc_average)(el, schedules[i][1], current_share_of_use)
     return el
 
 
