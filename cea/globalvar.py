@@ -464,6 +464,19 @@ class GlobalVariables(object):
         self.misc_losses = 0.1 #cabling, resistances etc..
 
         # ==============================================================================================================
+        # sewage potential
+        # ==============================================================================================================
+
+        self.SW_ratio = 0.95  # ratio of waste water to fresh water production.
+        self.width_HEX = 0.40  # in m
+        self.Vel_flow = 3  # in m/s
+        self.min_flow = 9  # in lps
+        self.tmin = 8  # tmin of extraction
+        self.h0 = 1.5  # kW/m2K # heat trasnfer coefficient/
+        self.AT_HEX = 5
+        self.ATmin = 2
+
+        # ==============================================================================================================
         # ventilation
         # ==============================================================================================================
         self.shielding_class = 2  # according to ISO 16798-7, 0 = open terrain, 1 = partly shielded from wind,
