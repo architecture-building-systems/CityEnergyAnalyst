@@ -62,10 +62,16 @@ def demand_calculation(locator, weather_path, gv):
     INPUT / OUTPUT FILES
     --------------------
 
-    - get_demand_results_folder: C:\reference-case\baseline\outputs\data\demand
-    - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-    - get_temporary_file: c:\users\darthoma\appdata\local\temp\B153767T.csv (* for each building)
-    - get_total_demand: C:\reference-case\baseline\outputs\data\demand\Total_demand.csv
+    - get_radiation: c:\reference-case\baseline\outputs\data\solar-radiation\radiation.csv
+    - get_surface_properties: c:\reference-case\baseline\outputs\data\solar-radiation\properties_surfaces.csv
+    - get_building_geometry: c:\reference-case\baseline\inputs\building-geometry\zone.shp
+    - get_building_hvac: c:\reference-case\baseline\inputs\building-properties\technical_systems.shp
+    - get_building_thermal: c:\reference-case\baseline\inputs\building-properties\thermal_properties.shp
+    - get_building_occupancy: c:\reference-case\baseline\inputs\building-properties\occupancy.shp
+    - get_building_architecture: c:\reference-case\baseline\inputs\building-properties\architecture.shp
+    - get_building_age: c:\reference-case\baseline\inputs\building-properties\age.shp
+    - get_building_comfort: c:\reference-case\baseline\inputs\building-properties\indoor_comfort.shp
+    - get_building_internal: c:\reference-case\baseline\inputs\building-properties\internal_loads.shp
 
 
     SIDE EFFECTS

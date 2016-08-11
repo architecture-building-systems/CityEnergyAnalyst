@@ -50,30 +50,61 @@ final internal electrical loads
 =========================================
 """
 
-def calc_Eint(tsd, prop_internal_loads, Aef, list_uses, schedules, building_uses):
+def calc_Eint(tsd, bpr, list_uses, schedules):
+    """
+    Calculate final internal electrical loads (without auxiliary loads)
 
-    # typical loads
-    schedule_Ea_El = calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses)
-    tsd['Eaf'] = calc_Eaf(schedule_Ea_El, prop_internal_loads['Ea_Wm2'], Aef)
-    tsd['Elf'] = calc_Elf(schedule_Ea_El, prop_internal_loads['El_Wm2'], Aef)
-    tsd['Ealf'] =  tsd['Elf']+ tsd['Eaf']
+    PARAMETERS
+    ----------
+
+    :param tsd: Timestep data
+    :type tsd: dict[ndarray]
+
+    :param bpr:
+    :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
+
+    :param list_uses: The list of uses used in the project
+    :type list_uses: list
+
+    :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
+    :type schedules: list[ndarray]
+
+    :param building_uses: for each use in `list_uses`, the percentage of that use for this building.
+        Sum of values is 1.0
+    :type building_uses: dict[str, ndarray]
+
+    RETURNS
+    -------
+
+    :returns: `tsd` with new keys: `['Eaf', 'Elf', 'Ealf', 'Edataf', 'Eref', 'Eprof']`
+    :rtype: dict[ndarray]
+    """
+
+    # calculate schedules
+    schedule_Ea_El_Edata_Eref = calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, bpr.occupancy)
+    schedule_pro = calc_Eprof_schedule(list_uses, schedules, bpr.occupancy)
+
+    # calculate loads
+    tsd['Eaf'] = calc_Eaf(schedule_Ea_El_Edata_Eref, bpr.internal_loads['Ea_Wm2'], bpr.rc_model['Af'])
+    tsd['Elf'] = calc_Elf(schedule_Ea_El_Edata_Eref, bpr.internal_loads['El_Wm2'], bpr.rc_model['Af'])
+    tsd['Ealf'] = tsd['Elf'] + tsd['Eaf']
 
     # calculate other loads
-    if 'COOLROOM' in building_uses:
-        schedule_Eref = calc_Ea_El_Edata_Eref_schedule(['COOLROOM'], schedules, building_uses)
-        tsd['Eref'] = calc_Eref(schedule_Eref, prop_internal_loads['Ere_Wm2'], Aef, building_uses['COOLROOM'])  # in W
+    if 'COOLROOM' in bpr.occupancy:
+        schedule_Eref = calc_Ea_El_Edata_Eref_schedule(['COOLROOM'], schedules, bpr.occupancy)
+        tsd['Eref'] = calc_Eref(schedule_Eref, bpr.internal_loads['Ere_Wm2'], bpr.rc_model['Aef'], bpr.occupancy['COOLROOM'])  # in W
     else:
         tsd['Eref'] = np.zeros(8760)
 
-    if 'SERVERROOM' in building_uses:
-        schedule_Edata = calc_Ea_El_Edata_Eref_schedule(['SERVERROOM'], schedules, building_uses)
-        tsd['Edataf'] = calc_Edataf(schedule_Edata, prop_internal_loads['Ed_Wm2'], Aef, building_uses['SERVERROOM'])  # in W
+    if 'SERVERROOM' in bpr.occupancy:
+        schedule_Edata = calc_Ea_El_Edata_Eref_schedule(['SERVERROOM'], schedules, bpr.occupancy)
+        tsd['Edataf'] = calc_Edataf(schedule_Edata, bpr.internal_loads['Ed_Wm2'], bpr.rc_model['Aef'], bpr.occupancy['SERVERROOM'])  # in W
     else:
         tsd['Edataf'] = np.zeros(8760)
 
-    if 'INDUSTRY' in building_uses:
-        schedule_pro = calc_Eprof_schedule(list_uses, schedules, building_uses)
-        tsd['Eprof'] = calc_Eprof(schedule_pro, prop_internal_loads['Epro_Wm2'], Aef, building_uses['INDUSTRY'])  # in W
+    if 'INDUSTRY' in bpr.occupancy:
+        schedule_pro = calc_Eprof_schedule(list_uses, schedules, bpr.occupancy)
+        tsd['Eprof'] = calc_Eprof(schedule_pro, bpr.internal_loads['Epro_Wm2'], bpr.rc_model['Aef'], bpr.occupancy['INDUSTRY'])  # in W
     else:
         tsd['Eprof'] = np.zeros(8760)
     return tsd
