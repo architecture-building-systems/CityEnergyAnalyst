@@ -10,6 +10,7 @@ from __future__ import division
 import cea.optimization.master.master_main as mM
 import pandas as pd
 
+import cea.globalvar
 import cea.optimization.ntwOpt.NtwMain as ntwM
 from cea.optimization.preprocessing.preprocessing import preproccessing
 
