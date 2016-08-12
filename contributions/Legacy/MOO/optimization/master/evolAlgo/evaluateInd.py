@@ -6,17 +6,17 @@ Evaluation function of an individual
 """
 from __future__ import division
 
-import contributions.Legacy.MOO.optimization.slave.slave_main as sM
+import contributions.Legacy.moo.optimization.slave.slave_main as sM
 import numpy as np
 import pandas as pd
 
 import constrCheck as cCheck
-import contributions.Legacy.MOO.optimization.master.cost_model as eM
-import contributions.Legacy.MOO.optimization.master.summarize_network_main as nM
-import contributions.Legacy.MOO.optimization.preprocessing.cooling_network as coolMain
-import contributions.Legacy.MOO.optimization.supportFn as sFn
-import contributions.Legacy.MOO.technologies.substation as sMain
-from contributions.Legacy.MOO.optimization.master import master_to_slave as MSVar
+import contributions.Legacy.moo.optimization.master.cost_model as eM
+import contributions.Legacy.moo.optimization.master.summarize_network_main as nM
+import contributions.Legacy.moo.optimization.preprocessing.cooling_network as coolMain
+import contributions.Legacy.moo.optimization.supportFn as sFn
+import contributions.Legacy.moo.technologies.substation as sMain
+from contributions.Legacy.moo.optimization.master import master_to_slave as MSVar
 
 def readInd(individual, Qmax, pathRaw, gV):
     """

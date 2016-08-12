@@ -6,8 +6,8 @@ Global variables
 
 """
 
-from contributions.Legacy.MOO.resources.geothermal import calc_ground_temperature
-import contributions.Legacy.MOO.optimization.supportFn as sFn
+from contributions.Legacy.moo.resources.geothermal import calc_ground_temperature
+import contributions.Legacy.moo.optimization.supportFn as sFn
 
 class globalVariables(object):
     def __init__(self):
@@ -22,7 +22,7 @@ class globalVariables(object):
         # Commands for the evolutionary algorithm
         
         self.initialInd = 3         # number of initial individuals
-        self.NGEN = 3000            # number of total generations
+        self.NGEN = 2         # number of total generations
         self.fCheckPoint = 1             # frequency for the saving of checkpoints
         self.maxTime = 7*24 * 3600         # maximum computional time [seconds]
         

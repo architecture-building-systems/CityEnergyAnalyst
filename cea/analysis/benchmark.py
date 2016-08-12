@@ -16,6 +16,8 @@ from geopandas import GeoDataFrame as gpdf
 from cea import inputlocator
 
 
+
+
 def benchmark(locator_list, output_file):
     """
     algorithm to print graphs in PDF concerning the 2000 Watt society benchmark 

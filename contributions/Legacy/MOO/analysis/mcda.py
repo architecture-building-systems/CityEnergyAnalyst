@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-import contributions.Legacy.MOO.globalVar as glob
-import contributions.Legacy.MOO.optimization.supportFn as sFn
+import contributions.Legacy.moo.globalVar as glob
+import contributions.Legacy.moo.optimization.supportFn as sFn
 
 
 class mcda_criteria(object):

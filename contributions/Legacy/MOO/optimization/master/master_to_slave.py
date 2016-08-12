@@ -7,7 +7,7 @@ This File sets all variables for the slave optimization, that have to be set by 
 #Energy_Models_path ="/Users/Tim/Desktop/ETH/Masterarbeit/Github_Files/urben/Masterarbeit/EnergySystem_Models"
 #Network_Raw_Data_Path = "/Users/Tim/Desktop/ETH/Masterarbeit/Tools/Results/Network_loads"
 #os.chdir(Energy_Models_path)
-import contributions.Legacy.MOO.globalVar as gV
+import contributions.Legacy.moo.globalVar as gV
 import numpy as np
 reload(gV)
 
