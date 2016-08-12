@@ -488,17 +488,16 @@ def calc_sunrise(sunrise, Yearsimul, longitude, latitude, gv):
 
 def test_solar_radiation():
     import cea.inputlocator
-
-    locator = cea.inputlocator.InputLocator(r'C:\reference-case\baseline')
-    # for the interface, the user should pick a file out of of those in ...DB/Weather/...
+    import cea.globalvar
+    gv = cea.globalvar.GlobalVariables()
+    scenario_path = gv.scenario_reference
+    locator = cea.inputlocator.InputLocator(scenario_path)
     weather_path = locator.get_default_weather()
     path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
-    gv = cea.globalvar.GlobalVariables()
 
     solar_radiation_vertical(locator=locator, path_arcgis_db=path_default_arcgis_db,
-                             latitude=46.95240555555556, longitude=7.439583333333333, year=2014, gv=gv,
+                             latitude=47.1628017306431, longitude=8.31, year=2010, gv=gv,
                              weather_path=weather_path)
-
 
 if __name__ == '__main__':
     test_solar_radiation()

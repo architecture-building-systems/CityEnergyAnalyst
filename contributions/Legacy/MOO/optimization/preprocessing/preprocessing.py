@@ -6,12 +6,12 @@ pre-processing algorithm
 """
 
 from __future__ import division
-import contributions.Legacy.MOO.optimization.preprocessing.processheat as hpMain
-from contributions.Legacy.MOO.technologies import substation as subsM
-from contributions.Legacy.MOO.optimization.preprocessing import decentralized_buildings as dbM
-from contributions.Legacy.MOO.optimization.master import summarize_network_main as nM
-from contributions.Legacy.MOO.optimization.preprocessing import electricity
-import contributions.Legacy.MOO.optimization.supportFn as sFn
+import contributions.Legacy.moo.optimization.preprocessing.processheat as hpMain
+from contributions.Legacy.moo.technologies import substation as subsM
+from contributions.Legacy.moo.optimization.preprocessing import decentralized_buildings as dbM
+from contributions.Legacy.moo.optimization.master import summarize_network_main as nM
+from contributions.Legacy.moo.optimization.preprocessing import electricity
+import contributions.Legacy.moo.optimization.supportFn as sFn
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

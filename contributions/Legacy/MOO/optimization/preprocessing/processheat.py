@@ -11,7 +11,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from contributions.Legacy.MOO import technologies
+from contributions.Legacy.moo import technologies
 
 
 def calc_pareto_Qhp(pathX, gV):

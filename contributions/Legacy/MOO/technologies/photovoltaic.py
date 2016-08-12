@@ -12,7 +12,7 @@ import pandas as pd
 from math import *
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
-from contributions.Legacy.MOO.technologies.solar_collector import optimal_angle_and_tilt, calc_groups, Calc_incidenteangleB
+from contributions.Legacy.moo.technologies.solar_collector import optimal_angle_and_tilt, calc_groups, Calc_incidenteangleB
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
