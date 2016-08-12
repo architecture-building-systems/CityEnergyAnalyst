@@ -15,8 +15,8 @@ import arcpy
 import embodied
 import pandas as pd
 
+import cea.demand.preprocessing.properties
 import cea.globalvar
-import cea.preprocessing.properties
 from cea import demand
 from cea.analysis import emissions
 from cea.plots import heatmaps
@@ -34,7 +34,7 @@ __status__ = "Production"
 reload(cea.globalvar)
 reload(heatmaps)
 reload(embodied)
-reload(cea.preprocessing.properties)
+reload(cea.demand.preprocessing.properties)
 reload(emissions)
 reload(demand)
 
@@ -100,9 +100,9 @@ def multiple_scenarios(path_list_scenarios, path_LCA_embodied_energy, path_LCA_e
             generate_envelope = True
             generate_systems = True
             generate_equipment = True
-            cea.preprocessing.properties.properties(path_archetypes, path_buildings, path_generation, path_results, generate_uses,
-                                                    generate_envelope, generate_systems, generate_equipment,
-                                                    gv)
+            cea.demand.preprocessing.properties.properties(path_archetypes, path_buildings, path_generation, path_results, generate_uses,
+                                                           generate_envelope, generate_systems, generate_equipment,
+                                                           gv)
             message = 'Properties scenario ' + str(x) + ' completed'
             arcpy.AddMessage(message)
             

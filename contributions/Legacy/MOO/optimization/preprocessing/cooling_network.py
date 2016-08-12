@@ -15,9 +15,9 @@ import globalVar as gV
 import numpy as np
 import pandas as pd
 
-import contributions.Legacy.MOO.technologies.cooling_tower as CTModel
-import contributions.Legacy.MOO.technologies.chillers as VCCModel
-import contributions.Legacy.MOO.technologies.pumps as PumpModel
+import contributions.Legacy.moo.technologies.cooling_tower as CTModel
+import contributions.Legacy.moo.technologies.chillers as VCCModel
+import contributions.Legacy.moo.technologies.pumps as PumpModel
 
 
 __author__ = "Thuy-An Nguyen"

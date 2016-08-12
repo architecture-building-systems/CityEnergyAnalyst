@@ -31,9 +31,9 @@ def calc_floorheating(Qh, tair, Qh0, tair0, tsh0, trh0):
         result = sopt.newton(fh, trh0, maxiter=1000, tol=0.1) - 273
         trh = result.real
         tsh = trh + k2
-        mCw = Qh / (tsh - trh) / 1000
+        mCw = Qh / (tsh - trh)
     else:
         mCw = 0
         tsh = 0
         trh = 0
-    return tsh, trh, mCw
+    return tsh, trh, mCw # C,C, W/C

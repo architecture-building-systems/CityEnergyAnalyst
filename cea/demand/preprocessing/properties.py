@@ -233,7 +233,7 @@ def test_properties():
     """
     import cea.globalvar
     gv = cea.globalvar.GlobalVariables()
-    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator = inputlocator.InputLocator(scenario_path=gv.scenario_reference)
     properties(locator=locator, prop_thermal_flag=True, prop_architecture_flag=True, prop_hvac_flag=True,
                prop_comfort_flag=True, prop_internal_loads_flag=True, gv=gv)
     print 'test_properties() succeeded'

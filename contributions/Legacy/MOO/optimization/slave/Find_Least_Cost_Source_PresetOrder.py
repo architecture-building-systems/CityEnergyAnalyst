@@ -524,7 +524,7 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gV):
     #    Boiler
     if (MS_Var.Boiler_on) == 1 or (MS_Var.BoilerPeak_on) == 1 or 1: # always import boilers as the backup might be used in case of non-convergence
         #os.chdir(Cost_Maps_Path)
-        import contributions.Legacy.MOO.technologies.boilers as CMBoil
+        import contributions.Legacy.moo.technologies.boilers as CMBoil
         #os.chdir(Cost_Maps_Path)
         reload(CMBoil)
         BoilerCond_op_cost = CMBoil.BoilerCond_op_cost
@@ -532,15 +532,15 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gV):
     #   Furnace
     if (MS_Var.Furnace_on) == 1:
         #os.chdir(Cost_Maps_Path)
-        import contributions.Legacy.MOO.technologies.furnace as CMFurn
+        import contributions.Legacy.moo.technologies.furnace as CMFurn
         #os.chdir(Cost_Maps_Path)
         reload(CMFurn)
         Furnace_op_cost = CMFurn.Furnace_op_cost
     
     # Heat Pumps
     if (MS_Var.GHP_on) == 1 or (MS_Var.HP_Lake_on) == 1 or (MS_Var.HP_Sew_on) == 1 :
-        import contributions.Legacy.MOO.technologies.heatpumps as CMHP
-        import contributions.Legacy.MOO.technologies.heatpumps as ESMHP
+        import contributions.Legacy.moo.technologies.heatpumps as CMHP
+        import contributions.Legacy.moo.technologies.heatpumps as ESMHP
         HPLake_op_cost = CMHP.HPLake_op_cost
         HPSew_op_cost = CMHP.HPSew_op_cost
         GHP_op_cost = CMHP.GHP_op_cost
@@ -548,7 +548,7 @@ def Least_Cost_Optimization(pathX, context, solarFeat, gV):
             
     # CHP 
     if (MS_Var.CC_on) == 1:
-        import contributions.Legacy.MOO.technologies.cogeneration as CMCC_fn
+        import contributions.Legacy.moo.technologies.cogeneration as CMCC_fn
         CC_op_cost = CMCC_fn.calc_Cop_CCT
         # How to use: for e.g. cost_per_Wh(Q_therm):
         # type cost_per_Wh_fn = CC_op_cost(10E6, 273+70.0, "NG")[2]
