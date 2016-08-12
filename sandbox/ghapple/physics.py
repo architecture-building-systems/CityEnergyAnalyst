@@ -164,7 +164,7 @@ def has_cooling_demand(building_thermal_prop, setpoints):
         return True
 
 
-def procedure_1(hoy, bpr):
+def procedure_1(hoy, bpr, building_thermal_prop, setpoints):
 
     # building thermal properties at previous time step
     # +++++++++++++++++++++++++++++++++++++++++++++++++
@@ -259,6 +259,13 @@ def procedure_1(hoy, bpr):
             # cooling with radiative system
             # calculate loads and emission losses
             # --> rc_model_function_2(...)
+
+    else:
+        print('Error: Unknown HVAC system status')
+        return
+
+    return
+
 
 
 
