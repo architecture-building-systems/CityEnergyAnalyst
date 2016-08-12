@@ -88,10 +88,25 @@ def calc_Eint(tsd, bpr, list_uses, schedules):
     tsd['Eaf'] = calc_Eaf(schedule_Ea_El_Edata_Eref, bpr.internal_loads['Ea_Wm2'], bpr.rc_model['Af'])
     tsd['Elf'] = calc_Elf(schedule_Ea_El_Edata_Eref, bpr.internal_loads['El_Wm2'], bpr.rc_model['Af'])
     tsd['Ealf'] = tsd['Elf'] + tsd['Eaf']
-    tsd['Edataf'] = calc_Edataf(schedule_Ea_El_Edata_Eref, bpr.internal_loads['Ed_Wm2'], bpr.rc_model['Af'])  # in W
-    tsd['Eref'] = calc_Eref(schedule_Ea_El_Edata_Eref, bpr.internal_loads['Ere_Wm2'], bpr.rc_model['Af'])  # in W
-    tsd['Eprof'] = calc_Eprof(schedule_pro, bpr.internal_loads['Epro_Wm2'], bpr.rc_model['Af'])  # in W
 
+    # calculate other loads
+    if 'COOLROOM' in bpr.occupancy:
+        schedule_Eref = calc_Ea_El_Edata_Eref_schedule(['COOLROOM'], schedules, bpr.occupancy)
+        tsd['Eref'] = calc_Eref(schedule_Eref, bpr.internal_loads['Ere_Wm2'], bpr.rc_model['Aef'], bpr.occupancy['COOLROOM'])  # in W
+    else:
+        tsd['Eref'] = np.zeros(8760)
+
+    if 'SERVERROOM' in bpr.occupancy:
+        schedule_Edata = calc_Ea_El_Edata_Eref_schedule(['SERVERROOM'], schedules, bpr.occupancy)
+        tsd['Edataf'] = calc_Edataf(schedule_Edata, bpr.internal_loads['Ed_Wm2'], bpr.rc_model['Aef'], bpr.occupancy['SERVERROOM'])  # in W
+    else:
+        tsd['Edataf'] = np.zeros(8760)
+
+    if 'INDUSTRY' in bpr.occupancy:
+        schedule_pro = calc_Eprof_schedule(list_uses, schedules, bpr.occupancy)
+        tsd['Eprof'] = calc_Eprof(schedule_pro, bpr.internal_loads['Epro_Wm2'], bpr.rc_model['Aef'], bpr.occupancy['INDUSTRY'])  # in W
+    else:
+        tsd['Eprof'] = np.zeros(8760)
     return tsd
 
 
@@ -100,7 +115,7 @@ def calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses):
     Calculate the schedule to use for lighting and appliances based on the building uses from the schedules
     defined for the project.
 
-    4:param list_uses:
+    :param list_uses:
     :param schedules:
     :param building_uses:
     :return:
@@ -110,29 +125,34 @@ def calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses):
         return last + current * share_of_use
 
     el = np.zeros(8760)
-    for i in range(len(list_uses)):
-        current_share_of_use = building_uses[list_uses[i]]
-        el = np.vectorize(calc_average)(el, schedules[i][1], current_share_of_use)
+    num_profiles = len(list_uses)
+    for num in range(num_profiles):
+        if list_uses[num] not in building_uses:
+            current_share_of_use = 0
+        else:
+            current_share_of_use = building_uses[list_uses[num]]
+
+        el = np.vectorize(calc_average)(el, schedules[num][1], current_share_of_use)
     return el
 
 
-def calc_Eaf(schedule, Ea_Wm2, Af):
-    Eaf = schedule * Ea_Wm2 * Af  # in W
+def calc_Eaf(schedule, Ea_Wm2, Aef):
+    Eaf = schedule * Ea_Wm2 * Aef  # in W
     return Eaf
 
 
-def calc_Elf(schedule, El_Wm2, Af):
-    Elf = schedule * El_Wm2 * Af  # in W
+def calc_Elf(schedule, El_Wm2, Aef):
+    Elf = schedule * El_Wm2 * Aef  # in W
     return Elf
 
 
-def calc_Edataf(schedule, Ed_Wm2, Af):
-    Edataf = schedule  * Ed_Wm2 * Af  # in W
+def calc_Edataf(schedule, Ed_Wm2, Aef, share):
+    Edataf = schedule  * Ed_Wm2 * Aef * share  # in W
     return Edataf
 
 
-def calc_Eref(schedule , Ere_Wm2, Af):
-    Eref = schedule * Ere_Wm2 * Af  # in W
+def calc_Eref(schedule , Ere_Wm2, Aef, share):
+    Eref = schedule * Ere_Wm2 * Aef * share # in W
     return Eref
 
 
@@ -149,8 +169,8 @@ def calc_Eprof_schedule(list_uses, schedules, building_uses):
     return epro
 
 
-def calc_Eprof(schedule , Epro_Wm2, Af):
-    Eprof = schedule  * Epro_Wm2 * Af  # in W
+def calc_Eprof(schedule , Epro_Wm2, Aef, share):
+    Eprof = schedule  * Epro_Wm2 * Aef * share  # in W
     return Eprof
 
 """
@@ -159,7 +179,7 @@ final auxiliary loads
 =========================================
 """
 
-def calc_Eauxf(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
+def calc_Eauxf(Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
                Ths_re, Ths_sup, Vw, Year, fforma, gv, nf_ag, nfp, qv_req, sys_e_cooling,
                sys_e_heating, Ehs_lat_aux):
 
