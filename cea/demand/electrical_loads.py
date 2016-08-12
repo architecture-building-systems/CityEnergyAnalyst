@@ -50,24 +50,76 @@ final internal electrical loads
 =========================================
 """
 
-def calc_Eint(tsd, prop_internal_loads, Af, list_uses, schedules, building_uses):
+def calc_Eint(tsd, bpr, list_uses, schedules):
+    """
+    Calculate final internal electrical loads (without auxiliary loads)
+
+    PARAMETERS
+    ----------
+
+    :param tsd: Timestep data
+    :type tsd: dict[ndarray]
+
+    :param bpr:
+    :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
+
+    :param list_uses: The list of uses used in the project
+    :type list_uses: list
+
+    :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
+    :type schedules: list[ndarray]
+
+    :param building_uses: for each use in `list_uses`, the percentage of that use for this building.
+        Sum of values is 1.0
+    :type building_uses: dict[str, ndarray]
+
+    RETURNS
+    -------
+
+    :returns: `tsd` with new keys: `['Eaf', 'Elf', 'Ealf', 'Edataf', 'Eref', 'Eprof']`
+    :rtype: dict[ndarray]
+    """
 
     # calculate schedules
-    schedule_Ea_El_Edata_Eref = calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses)
-    schedule_pro = calc_Eprof_schedule(list_uses, schedules, building_uses)
+    schedule_Ea_El_Edata_Eref = calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, bpr.occupancy)
+    schedule_pro = calc_Eprof_schedule(list_uses, schedules, bpr.occupancy)
 
     # calculate loads
-    tsd['Eaf'] = calc_Eaf(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ea_Wm2'], Af)
-    tsd['Elf'] = calc_Elf(schedule_Ea_El_Edata_Eref, prop_internal_loads['El_Wm2'], Af)
-    tsd['Ealf'] =  tsd['Elf']+ tsd['Eaf']
-    tsd['Edataf'] = calc_Edataf(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ed_Wm2'], Af)  # in W
-    tsd['Eref'] = calc_Eref(schedule_Ea_El_Edata_Eref, prop_internal_loads['Ere_Wm2'],  Af)  # in W
-    tsd['Eprof'] = calc_Eprof(schedule_pro, prop_internal_loads['Epro_Wm2'], Af)  # in W
+    tsd['Eaf'] = calc_Eaf(schedule_Ea_El_Edata_Eref, bpr.internal_loads['Ea_Wm2'], bpr.rc_model['Af'])
+    tsd['Elf'] = calc_Elf(schedule_Ea_El_Edata_Eref, bpr.internal_loads['El_Wm2'], bpr.rc_model['Af'])
+    tsd['Ealf'] = tsd['Elf'] + tsd['Eaf']
 
+    # calculate other loads
+    if 'COOLROOM' in bpr.occupancy:
+        schedule_Eref = calc_Ea_El_Edata_Eref_schedule(['COOLROOM'], schedules, bpr.occupancy)
+        tsd['Eref'] = calc_Eref(schedule_Eref, bpr.internal_loads['Ere_Wm2'], bpr.rc_model['Aef'], bpr.occupancy['COOLROOM'])  # in W
+    else:
+        tsd['Eref'] = np.zeros(8760)
+
+    if 'SERVERROOM' in bpr.occupancy:
+        schedule_Edata = calc_Ea_El_Edata_Eref_schedule(['SERVERROOM'], schedules, bpr.occupancy)
+        tsd['Edataf'] = calc_Edataf(schedule_Edata, bpr.internal_loads['Ed_Wm2'], bpr.rc_model['Aef'], bpr.occupancy['SERVERROOM'])  # in W
+    else:
+        tsd['Edataf'] = np.zeros(8760)
+
+    if 'INDUSTRY' in bpr.occupancy:
+        schedule_pro = calc_Eprof_schedule(list_uses, schedules, bpr.occupancy)
+        tsd['Eprof'] = calc_Eprof(schedule_pro, bpr.internal_loads['Epro_Wm2'], bpr.rc_model['Aef'], bpr.occupancy['INDUSTRY'])  # in W
+    else:
+        tsd['Eprof'] = np.zeros(8760)
     return tsd
 
 
 def calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses):
+    """
+    Calculate the schedule to use for lighting and appliances based on the building uses from the schedules
+    defined for the project.
+
+    :param list_uses:
+    :param schedules:
+    :param building_uses:
+    :return:
+    """
     # weighted average of schedules
     def calc_average(last, current, share_of_use):
         return last + current * share_of_use
@@ -75,28 +127,32 @@ def calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses):
     el = np.zeros(8760)
     num_profiles = len(list_uses)
     for num in range(num_profiles):
-        current_share_of_use = building_uses[list_uses[num]]
+        if list_uses[num] not in building_uses:
+            current_share_of_use = 0
+        else:
+            current_share_of_use = building_uses[list_uses[num]]
+
         el = np.vectorize(calc_average)(el, schedules[num][1], current_share_of_use)
     return el
 
 
-def calc_Eaf(schedule, Ea_Wm2, Af):
-    Eaf = schedule * Ea_Wm2 * Af  # in W
+def calc_Eaf(schedule, Ea_Wm2, Aef):
+    Eaf = schedule * Ea_Wm2 * Aef  # in W
     return Eaf
 
 
-def calc_Elf(schedule, El_Wm2, Af):
-    Elf = schedule * El_Wm2 * Af  # in W
+def calc_Elf(schedule, El_Wm2, Aef):
+    Elf = schedule * El_Wm2 * Aef  # in W
     return Elf
 
 
-def calc_Edataf(schedule, Ed_Wm2, Af):
-    Edataf = schedule  * Ed_Wm2 * Af  # in W
+def calc_Edataf(schedule, Ed_Wm2, Aef, share):
+    Edataf = schedule  * Ed_Wm2 * Aef * share  # in W
     return Edataf
 
 
-def calc_Eref(schedule , Ere_Wm2, Af):
-    Eref = schedule * Ere_Wm2 * Af  # in W
+def calc_Eref(schedule , Ere_Wm2, Aef, share):
+    Eref = schedule * Ere_Wm2 * Aef * share # in W
     return Eref
 
 
@@ -113,8 +169,8 @@ def calc_Eprof_schedule(list_uses, schedules, building_uses):
     return epro
 
 
-def calc_Eprof(schedule , Epro_Wm2, Af):
-    Eprof = schedule  * Epro_Wm2 * Af  # in W
+def calc_Eprof(schedule , Epro_Wm2, Aef, share):
+    Eprof = schedule  * Epro_Wm2 * Aef * share  # in W
     return Eprof
 
 """
@@ -123,7 +179,7 @@ final auxiliary loads
 =========================================
 """
 
-def calc_Eauxf(Af, Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
+def calc_Eauxf(Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
                Ths_re, Ths_sup, Vw, Year, fforma, gv, nf_ag, nfp, qv_req, sys_e_cooling,
                sys_e_heating, Ehs_lat_aux):
 

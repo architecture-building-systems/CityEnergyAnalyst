@@ -61,10 +61,16 @@ def demand_calculation(locator, weather_path, gv):
     INPUT / OUTPUT FILES
     --------------------
 
-    - get_demand_results_folder: C:\reference-case\baseline\outputs\data\demand
-    - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-    - get_temporary_file: c:\users\darthoma\appdata\local\temp\B153767T.csv (* for each building)
-    - get_total_demand: C:\reference-case\baseline\outputs\data\demand\Total_demand.csv
+    - get_radiation: c:\reference-case\baseline\outputs\data\solar-radiation\radiation.csv
+    - get_surface_properties: c:\reference-case\baseline\outputs\data\solar-radiation\properties_surfaces.csv
+    - get_building_geometry: c:\reference-case\baseline\inputs\building-geometry\zone.shp
+    - get_building_hvac: c:\reference-case\baseline\inputs\building-properties\technical_systems.shp
+    - get_building_thermal: c:\reference-case\baseline\inputs\building-properties\thermal_properties.shp
+    - get_building_occupancy: c:\reference-case\baseline\inputs\building-properties\occupancy.shp
+    - get_building_architecture: c:\reference-case\baseline\inputs\building-properties\architecture.shp
+    - get_building_age: c:\reference-case\baseline\inputs\building-properties\age.shp
+    - get_building_comfort: c:\reference-case\baseline\inputs\building-properties\indoor_comfort.shp
+    - get_building_internal: c:\reference-case\baseline\inputs\building-properties\internal_loads.shp
 
 
     SIDE EFFECTS
@@ -114,7 +120,7 @@ def write_totals_csv(building_properties, locator):
         else:
             df2 = pd.read_csv(temporary_file)
             df = df.append(df2, ignore_index=True)
-    df.to_csv(locator.get_total_demand(), index=False, float_format='%.2f')
+    df.to_csv(locator.get_total_demand(), index=False, float_format='%.3f')
 
 
 """
@@ -157,16 +163,17 @@ test
 """
 
 def run_as_script(scenario_path=None, weather_path=None):
-        if scenario_path is None:
-            scenario_path = r'c:\reference-case\baseline'
-        locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-        # for the interface, the user should pick a file out of of those in ...DB/Weather/...
-        if weather_path is None:
-            weather_path = locator.get_default_weather()
-        gv = cea.globalvar.GlobalVariables()
-        gv.log('Running demand calculation for scenario %(scenario)s', scenario=scenario_path)
-        gv.log('Running demand calculation with weather file %(weather)s', weather=weather_path)
-        demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
+    gv = cea.globalvar.GlobalVariables()
+    if scenario_path is None:
+        scenario_path = gv.scenario_reference
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    # for the interface, the user should pick a file out of of those in ...DB/Weather/...
+    if weather_path is None:
+        weather_path = locator.get_default_weather()
+
+    gv.log('Running demand calculation for scenario %(scenario)s', scenario=scenario_path)
+    gv.log('Running demand calculation with weather file %(weather)s', weather=weather_path)
+    demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
 
 
 if __name__ == '__main__':
