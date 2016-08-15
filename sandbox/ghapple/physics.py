@@ -204,6 +204,31 @@ def calc_phi_hc_ac(building_thermal_prop):
         phi_hc_nd_ac = phi_hc_nd_un
         theta_air_ac = theta_air_set
 
+    # Step 4:
+    elif phi_hc_nd_un > phi_h_max: # necessary heating power exceeds maximum available power
+
+        phi_hc_nd_ac = phi_h_max
+
+    elif phi_hc_nd_un < phi_c_max: # necessary cooling power exceeds maximum available power
+
+        phi_hc_nd_ac = phi_c_max
+
+    else: # unknown situation
+
+        phi_hc_nd_ac = 0
+        print('ERROR: unknown radiative heating/cooling system status')
+
+
+    # calculate system temperatures for Step 3/Step 4
+    temp_ac = calc_temperatures_crank_nicholson(phi_hc_nd_ac, building_thermal_prop)
+
+    theta_m_t_ac = temp_ac[0]
+    theta_air_ac = temp_ac[1]  # should be the same as theta_air_set in the first case
+    theta_op_ac = temp_ac[2]
+
+    # exit calculation
+    return theta_m_t_ac, theta_air_ac, theta_op_ac, phi_hc_nd_ac
+
 
 
 
@@ -290,8 +315,8 @@ def procedure_1(hoy, bpr, building_thermal_prop, setpoints):
             q_cs_sen_incl_em_loss = 0
             em_loss_cs = 0
 
+            # return # TODO: check speed with and without return here
             # return
-            return
 
         elif control.is_heating_active(hoy, bpr) and control.heating_system_is_ac(bpr):
 
@@ -300,12 +325,20 @@ def procedure_1(hoy, bpr, building_thermal_prop, setpoints):
             # --> r_c_model_function_3(...)
             # --> kaempf_ac(...)
             # --> (iteration of air flows)
+            # TODO: HVAC model
 
         elif control.is_heating_active(hoy, bpr) and control.heating_system_is_radiative(bpr):
 
             # heating with radiative system
             # calculate loads and emission losses
             # --> rc_model_function_2(...)
+            theta_m_t_ac,\
+            theta_air_ac,\
+            theta_op_ac,\
+            phi_hc_nd_ac = calc_phi_hc_ac(building_thermal_prop)
+
+            # TODO: losses
+            # TODO: how to calculate losses if phi_h_ac is phi_h_max ???
 
     elif has_cooling_demand(building_thermal_prop, setpoints):
 
@@ -317,6 +350,20 @@ def procedure_1(hoy, bpr, building_thermal_prop, setpoints):
             # no cooling
             # calculate temperatures of R-C-model and exit
             # --> rc_model_function_1(...)
+            phi_hc_nd = 0
+            temp_rc = calc_temperatures_crank_nicholson(phi_hc_nd, building_thermal_prop)
+
+            theta_m_t = temp_rc[0]
+            theta_air = temp_rc[1]
+            theta_op = temp_rc[2]
+
+            q_hs_sen_incl_em_loss = 0
+            em_loss_hs = 0
+            q_cs_sen_incl_em_loss = 0
+            em_loss_cs = 0
+
+            # return # TODO: check speed with and without return here
+            # return
 
         elif control.is_cooling_active(hoy, bpr) and control.cooling_system_is_ac(bpr):
 
@@ -325,12 +372,19 @@ def procedure_1(hoy, bpr, building_thermal_prop, setpoints):
             # --> r_c_model_function_3(...)
             # --> kaempf_ac(...)
             # --> (iteration of air flows)
+            # TODO: HVAC model
 
         elif control.is_cooling_active(hoy, bpr) and control.cooling_system_is_radiative(bpr):
 
             # cooling with radiative system
             # calculate loads and emission losses
             # --> rc_model_function_2(...)
+            theta_m_t_ac, \
+            theta_air_ac, \
+            theta_op_ac, \
+            phi_hc_nd_ac = calc_phi_hc_ac(building_thermal_prop)
+
+            # TODO: losses
 
     else:
         print('Error: Unknown HVAC system status')
