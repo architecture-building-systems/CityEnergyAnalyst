@@ -5,8 +5,6 @@ Global variables
 ================
 
 """
-from cea.demand import thermal_loads
-
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -501,9 +499,6 @@ class GlobalVariables(object):
         # ==============================================================================================================
         self.initial_temp_air_prev = 21
         self.initial_temp_m_prev = 16
-
-        # here is where we plug in the models to use for calculations
-        self.models = {'calc-thermal-loads': thermal_loads.calc_thermal_loads}  # functions.CalcThermalLoads
 
         # use multiprocessing / parallel execution if possible
         self.multiprocessing = True
