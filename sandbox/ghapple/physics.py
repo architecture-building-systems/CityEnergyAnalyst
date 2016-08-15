@@ -164,6 +164,50 @@ def has_cooling_demand(building_thermal_prop, setpoints):
         return True
 
 
+def calc_phi_hc_nd_un(phi_hc_nd_10, theta_air_set, theta_air_0, theta_air_10):
+
+    # calculates unrestricted heating power
+    # (C.13) in [C.3 ISO 13790]
+
+    phi_hc_nd_un = phi_hc_nd_10*(theta_air_set - theta_air_0)/(theta_air_10 - theta_air_0)
+
+    return phi_hc_nd_un
+
+
+def calc_phi_hc_ac(building_thermal_prop):
+
+    # Crank-Nicholson calculation procedure if heating/cooling system is active
+    # Step 1 - Step 4 in Section C.4.2 in [C.3 ISO 13790]
+
+    # Step 1:
+    phi_hc_nd_0 = 0
+    temp_rc_0 = calc_temperatures_crank_nicholson(phi_hc_nd_0, building_thermal_prop)
+    theta_air_0 = temp_rc_0[1]
+
+    # Step 2:
+    theta_int_set = 20 # TODO: get setpoint
+    af = 100 # TODO: get A_f
+
+    theta_air_set = theta_int_set
+    phi_hc_nd_10 = 10 * af
+
+    temp_rc_10 = calc_temperatures_crank_nicholson(phi_hc_nd_10, building_thermal_prop)
+    theta_air_10 = temp_rc_10[1]
+    phi_hc_nd_un = calc_phi_hc_nd_un(phi_hc_nd_10,theta_air_set, theta_air_0, theta_air_10)
+
+    # Step 3:
+    phi_c_max = 100 # TODO: get max cooling power
+    phi_h_max = 100 # TODO: get max heating power
+
+    if phi_c_max <= phi_hc_nd_un <= phi_h_max:
+
+        phi_hc_nd_ac = phi_hc_nd_un
+        theta_air_ac = theta_air_set
+
+
+
+
+
 def procedure_1(hoy, bpr, building_thermal_prop, setpoints):
 
     # building thermal properties at previous time step
@@ -209,6 +253,20 @@ def procedure_1(hoy, bpr, building_thermal_prop, setpoints):
         # no heating or cooling demand
         # calculate temperatures of building R-C-model and exit
         # --> rc_model_function_1(...)
+        phi_hc_nd = 0
+        temp_rc = calc_temperatures_crank_nicholson( phi_hc_nd, building_thermal_prop )
+
+        theta_m_t = temp_rc[0]
+        theta_air = temp_rc[1]
+        theta_op = temp_rc[2]
+
+        q_hs_sen_incl_em_loss = 0
+        em_loss_hs = 0
+        q_cs_sen_incl_em_loss = 0
+        em_loss_cs = 0
+
+        # return
+        return
 
     elif has_heating_demand (building_thermal_prop, setpoints):
 
@@ -220,6 +278,20 @@ def procedure_1(hoy, bpr, building_thermal_prop, setpoints):
             # no heating
             # calculate temperatures of building R-C-model and exit
             # --> rc_model_function_1(...)
+            phi_hc_nd = 0
+            temp_rc = calc_temperatures_crank_nicholson(phi_hc_nd, building_thermal_prop)
+
+            theta_m_t = temp_rc[0]
+            theta_air = temp_rc[1]
+            theta_op = temp_rc[2]
+
+            q_hs_sen_incl_em_loss = 0
+            em_loss_hs = 0
+            q_cs_sen_incl_em_loss = 0
+            em_loss_cs = 0
+
+            # return
+            return
 
         elif control.is_heating_active(hoy, bpr) and control.heating_system_is_ac(bpr):
 
