@@ -32,7 +32,8 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
     def calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0):
         tm_t = (tm_t0 * ((Cm / 3600) - 0.5 * (Htr_3 + Htr_em)) + Im_tot) / ((Cm / 3600) + 0.5 * (Htr_3 + Htr_em))
         tm = (tm_t + tm_t0) / 2
-        return tm
+        # Here the temperature that is actually needed for the next time step is tm_t
+        return tm_t, tm
 
     def calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm):
         ts = (Htr_ms * tm + I_st + Htr_w * te_t + Htr_1 * (te_t + (I_ia + IHC_nd) / Hve)) / (Htr_ms + Htr_w + Htr_1)
@@ -60,7 +61,7 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
     IHC_nd = IC_nd_ac = IH_nd_ac = 0
     Im_tot = Calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd, Hve, Htr_2)
 
-    tm = calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0)
+    tm_t, tm = calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0)
     ts = calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm)
     tair_case0 = calc_ta(Htr_is, Hve, IHC_nd, I_ia, te_t, ts)
     top_case0 = calc_top(tair_case0, ts)
@@ -79,15 +80,24 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
         IHC_nd = IHC_nd_10 = 10 * Af
         Im_tot = Calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd_10, Hve, Htr_2)
 
-        tm = calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0)
+        tm_t, tm = calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0)
         ts = calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd_10, I_ia, I_st, te_t, tm)
         tair10 = calc_ta(Htr_is, Hve, IHC_nd_10, I_ia, te_t, ts)
 
         IHC_nd_un = IHC_nd_10 * (tair_set - tair_case0) / (tair10 - tair_case0)  # - I_TABS
         if IC_max < IHC_nd_un < IH_max:
+
             ta = tair_set
-            top = 0.31 * ta + 0.69 * ts
             IHC_nd_ac = IHC_nd_un
+
+            # Heating/Cooling with power between zero and the maximum
+            # Here we have to calculate the actual temperatures with the IHC_nd_un heating/cooling power
+            Im_tot = Calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd_ac, Hve, Htr_2)
+            tm_t, tm = calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0)
+            ts = calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm)
+            # ta = calc_ta(Htr_is, Hve, IHC_nd, I_ia, te_t, ts) # this should be the same as tair_set
+            top = calc_top(ta, ts)
+
         else:
             if IHC_nd_un > 0:
                 IHC_nd_ac = IH_max
@@ -96,7 +106,7 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
             # Case 3 when the maxiFmum power is exceeded
             Im_tot = Calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd_ac, Hve, Htr_2)
 
-            tm = calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0)
+            tm_t, tm = calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0)
             ts = calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd_ac, I_ia, I_st, te_t, tm)
             ta = calc_ta(Htr_is, Hve, IHC_nd_ac, I_ia, te_t, ts)
             top = calc_top(ta, ts)
@@ -118,7 +128,9 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
         IC_nd_ac = 0
     if SystemH == "T0":
         IH_nd_ac = 0
-    return tm, ta, IH_nd_ac, IC_nd_ac, uncomfort, top, Im_tot
+
+    # here we have to return tm_t for the next time step and not tm
+    return tm_t, ta, IH_nd_ac, IC_nd_ac, uncomfort, top, Im_tot
 
 
 
