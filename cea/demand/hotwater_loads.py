@@ -99,11 +99,10 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     Qww_dis_ls_nr = np.vectorize(calc_Qww_dis_ls_nr)(Ta, Qww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
                                              gv.Cpw, gv.Pwater, gv.Bf, T_ext, gv)
     # storage losses
-    Qww_st_ls, Tww_st = calc_Qww_st_ls(Vww, gv.Tww_setpoint, Ta, gv.Bf, gv.Pwater, gv.Cpw, Qww_dis_ls_r,
+    Qww_st_ls, Tww_st, Qwwf = calc_Qww_st_ls(Vww, gv.Tww_setpoint, Ta, gv.Bf, gv.Pwater, gv.Cpw, Qww_dis_ls_r,
                                                      Qww_dis_ls_nr, gv.U_dhwtank, gv.AR, gv, T_ext, Qww)
 
     # final demand
-    Qwwf = Qww + Qww_dis_ls_r + Qww_dis_ls_nr #+ Qww_st_ls
     Qwwf_0 = Qwwf.max()
     mcpwwf = Qwwf / abs(Tww_st - Tww_re)
 
@@ -218,5 +217,5 @@ def calc_Qww_st_ls(Vww, Tww_setpoint, Ta, Bf, Pwater, Cpw, Qww_dis_ls_r, Qww_dis
         Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_st_ls[k], Qd[k], Qwwf[k], Pwater, Cpw, Vww_0)
         Tww_st_0 = Tww_st[k]
 
-    return Qww_st_ls, Tww_st
+    return Qww_st_ls, Tww_st, Qwwf
 
