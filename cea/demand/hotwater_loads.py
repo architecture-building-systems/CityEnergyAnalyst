@@ -34,24 +34,24 @@ def calc_mww(schedule, Vww_lpd, Occ_m2p, Af, Pwater):
 
     Parameters
     ----------
-    schedule
-    Vww_lpd
-    Occ_m2p
-    Af
-    Pwater
+    schedule: hourly DHW demand profile [1/h]
+    Vww_lpd: DHW demand per person per day in [L/person/day]
+    Occ_m2p: Occupant density in [m2/person]
+    Af: Total floor area per building [m2]
+    Pwater: water density [kg/m3]
 
     Returns
     -------
 
     """
-    vww = schedule* Vww_lpd * (Occ_m2p ** -1) * Af / 24000 # m3/h
+    vww = schedule* Vww_lpd * (Occ_m2p ** -1) * Af / 1000 # m3/h
     mww = vww * Pwater / 3600  # in kg/s
 
     return mww, vww
 
 
 def calc_mw(schedule, Vw_lpd, Occ_m2p, Af, Pwater):
-    vw = schedule * Vw_lpd * (Occ_m2p ** -1) * Af / 24000 # m3/h
+    vw = schedule * Vw_lpd * (Occ_m2p ** -1) * Af / 1000 # m3/h
     mw = vw * Pwater / 3600  # in kg/s
 
     return mw, vw
