@@ -328,7 +328,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                    bpr.building_systems['Tcs_re_0'], Tcs_sup,
                    bpr.building_systems['Tcs_sup_0'], Ths_re, bpr.building_systems['Ths_re_0'], Ths_sup,
                    bpr.building_systems['Ths_sup_0'], tsd['Tww_re'], Tww_st,
-                   bpr.building_systems['Tww_sup_0'], Vw, results_folder, mcpcs, mcphs, mcpww,temporary_folder,
+                   bpr.building_systems['Tww_sup_0'], Vw, Vww, results_folder, mcpcs, mcphs, mcpww,temporary_folder,
                    bpr.hvac['type_cs'], bpr.hvac['type_hs'], waterpeak, date,  mcpdataf, Tcdataf_re,
                    Tcdataf_sup,  mcpref, Tcref_re, Tcref_sup, Qhprof, Ecaf, Qhprof_tot, Ecaf_tot)
 
@@ -718,7 +718,7 @@ writer of results
 def results_to_csv(GFA_m2, Af, Aroof, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot, Name,
                    Occupancy, Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf,
                    Qwwf_0, Tcs_re, Tcs_re_0, Tcs_sup, Tcs_sup_0, Ths_re, Ths_re_0, Ths_sup, Ths_sup_0, Tww_re, Tww_st,
-                   Tww_sup_0, Waterconsumption, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
+                   Tww_sup_0, Waterconsumption, Vww, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
                    sys_e_cooling, sys_e_heating, waterpeak, date, mcpdataf, Tcdataf_re, Tcdataf_sup,
                    mcpref, Tcref_re, Tcref_sup, Qhprof, Ecaf, Qhprof_tot, Ecaf_tot):
     # TODO: Document
@@ -749,6 +749,7 @@ def results_to_csv(GFA_m2, Af, Aroof, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, 
          'Qww_kWh': Qww / 1000, 'Qww_tankloss_kWh': Qww_ls_st / 1000, 'Qhs_kWh': Qhs / 1000,
          'Qhsf_kWh': Qhsf / 1000, 'Qhprof_kWh':Qhprof, 'Ecaf_kWh':Ecaf,
          'Qcs_kWh': -1 * Qcs / 1000, 'Qcsf_kWh': -1 * Qcsf / 1000, 'occ_pax': Occupancy, 'Vw_m3': Waterconsumption,
+         'Vww_m3': Vww,
          'Tshs_C': Ths_sup, 'Trhs_C': Ths_re, 'mcphs_kWC': mcphs/1000, 'mcpww_kWC': mcpww / 1000, 'Tscs_C': Tcs_sup,
          'Trcs_C': Tcs_re, 'mcpcs_kWC': mcpcs/1000, 'Qcdataf_kWh': Qcdata / 1000, 'Tsww_C': Tww_sup_0, 'Trww_C': Tww_re,
          'Tww_tank_C': Tww_st, 'Ef_kWh': (Ealf + Eauxf + Epro) / 1000, 'Epro_kWh': Epro / 1000,
@@ -767,7 +768,7 @@ def results_to_csv(GFA_m2, Af, Aroof, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, 
          'Qww_MWhyr': Qww_tot, 'Qhsf_MWhyr': Qhsf_tot, 'Qhs_MWhyr': Qhs_tot, 'Qcsf_MWhyr': Qcsf_tot,
          'Qcs_MWhyr': Qcs_tot, 'Qhprof_MWhyr':Qhprof_tot, 'Ecaf_MWhyr':Ecaf_tot,
          'Ealf_MWhyr': Ealf_tot, 'Eauxf_MWhyr': Eauxf_tot, 'Eprof_MWhyr': Epro_tot, 'Edataf_MWhyr': Edata_tot,
-         'Tsww0_C': Tww_sup_0, 'Vw_m3yr': Waterconsumption.sum(),
+         'Tsww0_C': Tww_sup_0, 'Vw_m3yr': Waterconsumption.sum(), 'Vww_m3yr': Vww.sum(),
          'Ef_MWhyr': (Ealf_tot + Eauxf_tot + Epro_tot + Edata_tot + Ecaf_tot), 'QHf_MWhyr': (Qwwf_tot + Qhsf_tot+ Qhprof_tot),
          'QCf_MWhyr': (Qcsf_tot + Qcdata_tot + Qcrefri_tot)}, index=[0])
     totals.to_csv(os.path.join(path_temporary_folder, '%sT.csv' % Name), index=False, float_format='%.3f')
