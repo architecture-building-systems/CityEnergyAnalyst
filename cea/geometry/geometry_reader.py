@@ -68,7 +68,7 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
 
     # sort dataframe for name of building for default orientation generation
     # FIXME remove this in the future
-    df_prop_surfaces.sort(['Name'])
+    df_prop_surfaces.sort_values('Name')
 
     # default values
     # FIXME use real window angle in the future
