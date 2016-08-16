@@ -762,7 +762,7 @@ def results_to_csv(GFA_m2, Af, Aroof, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, 
     totals = pd.DataFrame(
         {'Name': Name, 'GFA_m2': GFA_m2, 'Af_m2': Af, 'occ_pax': Occupants, 'Qwwf0_kW': Qwwf_0 / 1000,
          'Ealf0_kW': Ealf_0 / 1000, 'Aroof_m2':Aroof, 'mcpww0_kWC':  mcpww.max()/ 1000,
-         'Qhsf0_kW': Qhsf_0 / 1000, 'Qcsf0_kW': -Qcsf_0 / 1000, 'Vw0_m3': waterpeak, 'Tshs0_C': Ths_sup_0,
+         'Qhsf0_kW': Qhsf_0 / 1000, 'Qcsf0_kW': -Qcsf_0 / 1000, 'Vww0_m3': Vww.max(), 'Tshs0_C': Ths_sup_0,
          'Trhs0_C': Ths_re_0, 'mcphs0_kWC': mcphs.max()/1000, 'Tscs0_C': Tcs_sup_0, 'Qcdataf_MWhyr': Qcdata_tot,
          'Qcref_MWhyr': Qcrefri_tot, 'Trcs0_C': Tcs_re_0, 'mcpcs0_kWC': mcpcs.max()/1000, 'Qwwf_MWhyr': Qwwf_tot,
          'Qww_MWhyr': Qww_tot, 'Qhsf_MWhyr': Qhsf_tot, 'Qhs_MWhyr': Qhs_tot, 'Qcsf_MWhyr': Qcsf_tot,
