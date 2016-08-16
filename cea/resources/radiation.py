@@ -108,26 +108,26 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     arcpy.SimplifyBuilding_cartography(locator.get_district(), Simple_context,
                                        simplification_tolerance=8, minimum_area=None)
 
-    # burn buildings into raster
-    Burn(Simple_context, locator.get_terrain(), dem_rasterfinal, locator.get_temporary_folder(), dem_raster_extent, gv)
-
-    # Calculate boundaries of buildings
-    CalcBoundaries(Simple_CQ, locator.get_temporary_folder(), path_arcgis_db,
-                   DataFactorsCentroids, DataFactorsBoundaries, gv)
-
-    # calculate observers
-    CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgis_db, gv)
+    # # burn buildings into raster
+    # Burn(Simple_context, locator.get_terrain(), dem_rasterfinal, locator.get_temporary_folder(), dem_raster_extent, gv)
+    #
+    # # Calculate boundaries of buildings
+    # CalcBoundaries(Simple_CQ, locator.get_temporary_folder(), path_arcgis_db,
+    #                DataFactorsCentroids, DataFactorsBoundaries, gv)
+    #
+    # # calculate observers
+    # CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgis_db, gv)
 
     # Calculate radiation
-    for day in range(1, 366):
-        result = None
-        while result is None:  # trick to avoid that arcgis stops calculating the days and tries again.
-            try:
-                result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
-                                       locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
-            except arcgisscripting.ExecuteError:
-                # redo the calculation
-                pass
+    # for day in range(1, 366):
+    #     result = None
+    #     while result is None:  # trick to avoid that arcgis stops calculating the days and tries again.
+    #         try:
+    #             result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
+    #                                    locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
+    #         except arcgisscripting.ExecuteError:
+    #             # redo the calculation
+    #             pass
 
     gv.log('complete raw radiation files')
 
