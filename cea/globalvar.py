@@ -501,7 +501,7 @@ class GlobalVariables(object):
         self.initial_temp_m_prev = 16
 
         # use multiprocessing / parallel execution if possible
-        self.multiprocessing = False
+        self.multiprocessing = True
 
         # here is where we decide whether full excel reports of the calculations are generated
         self.testing = False  # if true: reports are generated, if false: not
