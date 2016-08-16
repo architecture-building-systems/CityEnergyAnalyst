@@ -121,10 +121,10 @@ def schedule_maker(date, locator, list_uses):
             hour_day = date[hour].hour
             dayofweek = date[hour].dayofweek
             if dayofweek is 0 or 1 or 2 or 3 or 4:  # weekday
-                    occ.append(occ_schedules[0][hour_day] * month_year)
-                    el.append(el_schedules[0][hour_day] * month_year)
-                    dhw.append(dhw_schedules[0][hour_day] * month_year * dhw_weekday_sum) # normalized dhw demand flow rates
-                    pro.append(pro_schedules[0][hour_day] * month_year)
+                occ.append(occ_schedules[0][hour_day] * month_year)
+                el.append(el_schedules[0][hour_day] * month_year)
+                dhw.append(dhw_schedules[0][hour_day] * month_year * dhw_weekday_sum) # normalized dhw demand flow rates
+                pro.append(pro_schedules[0][hour_day] * month_year)
             elif dayofweek is 5:  # saturday
                 occ.append(occ_schedules[1][hour_day] * month_year)
                 el.append(el_schedules[1][hour_day] * month_year)
