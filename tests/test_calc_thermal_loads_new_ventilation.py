@@ -46,9 +46,9 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
                             u'Qhsf_kWh', u'Qww_kWh', u'Qww_tankloss_kWh', u'Qwwf_kWh', u'Trcs_C', u'Trhs_C', u'Trww_C',
                             u'Tscs_C', u'Tshs_C', u'Tsww_C', u'Tww_tank_C', u'Vw_m3', u'mcpcs_kWC', u'mcphs_kWC',
                             u'mcpww_kWC', u'occ_pax', u'Trdata_C', u'mcpdata_kWC', u'Tsdata_C', u'Ecaf_kWh', u'Tsref_C',
-                            u'mcpref_kWC', u'Trref_C', u'Qhprof_kWh']
+                            u'mcpref_kWC', u'Trref_C', u'Qhprof_kWh', u'Vww_m3']
         self.assertEqual(set(expected_columns), set(df.columns),
-                         'Column list of building csv does not match' + str(
+                         'Column list of building csv does not match: ' + str(
                              set(expected_columns).symmetric_difference(set(df.columns))))
         self.assertEqual(df.shape[0], 8760, 'Expected one row per hour in the year')
 
@@ -56,10 +56,11 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
                          u'Qcdataf_kWh', u'Qcref_kWh', u'Qcs_kWh', u'Qcsf_kWh', u'Qhs_kWh', u'Qhsf_kWh', u'Qww_kWh',
                          u'Qww_tankloss_kWh', u'Qwwf_kWh', u'Trcs_C', u'Trhs_C', u'Trww_C', u'Tscs_C', u'Tshs_C',
                          u'Tsww_C', u'Tww_tank_C', u'Vw_m3', u'mcpcs_kWC', u'mcphs_kWC', u'mcpww_kWC', u'occ_pax']
-        values = [2335513.9709999999, 16132.642, 0.0, 2351646.9420000003, 0.0, 833988.99100000015, 1198724.7879999999,
-                  0.0, 0.0, 534623.03300000005, 833988.99100000015, 436750.40000000002, 1026801.674, 160764.21799999999,
-                  687.72799999999995, 171923.133, 8160, 45926, 99496.0, 5760, 54797, 525600, 524920.64199999999,
-                  2846.172, 166797.55699999997, 108052.59199999999, 3532.1520000000005, 6827181.0]
+        values = [1922835.4550000001, 15278.067000000001, 0.0, 1938113.9879999999, 0.0, 723364.51800000004,
+                  1677242.0319999999, 0.0, 0.0, 459706.84299999999, 723364.51800000004, 538793.33499999996,
+                  1206283.5489999999, 461305.10200000001, 1740.904, 470958.48099999997, 7378, 49460, 99496.0, 5208,
+                  58407, 525600, 524375.5290000001, 16328.606, 144672.679, 142264.63999999998, 9676.2890000000007,
+                  4897049.0]
         # print [df[column].sum() for column in value_columns]
         for i, column in enumerate(value_columns):
             try:
@@ -73,11 +74,11 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
         pool = mp.Pool()
         # randomly selected except for B302006716, which has `Af == 0`
         buildings = {'B302006716': (0.00, 0.00),
-                     'B140557': (38105.60400, 83680.78100),
-                     'B140577': (833988.99100, 1198724.78800),
-                     'B2372467': (21011.72200, 47482.54200),
-                     'B302040335': (1065.10400, 4713.41100),
-                     'B140571': (49886.00300, 101318.02500)}
+                     'B140557': (34676.65400, 101545.94000),
+                     'B140577': (723364.51800, 1677242.03200),
+                     'B2372467': (19956.91200, 51728.25000),
+                     'B302040335': (1015.01700, 4237.12900),
+                     'B140571': (46063.59700, 121389.13100)}
         if self.gv.multiprocessing:
             joblist = []
             for building in buildings.keys():
@@ -100,8 +101,10 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
                                                               self.date, self.gv,
                                                               self.locator.get_temporary_folder(),
                                                               self.locator.get_temporary_file('%s.csv' % building))
-                self.assertAlmostEqual(buildings[b][0], qcf_kwh, places=3)
-                self.assertAlmostEqual(buildings[b][1], qhf_kwh, places=3)
+                self.assertAlmostEqual(buildings[b][0], qcf_kwh,
+                                       msg="qcf_kwh for %(b)s should be: %(qcf_kwh).5f" % locals(), places=3)
+                self.assertAlmostEqual(buildings[b][1], qhf_kwh,
+                                       msg="qhf_kwh for %(b)s should be: %(qhf_kwh).5f" % locals(), places=3)
 
 
 def run_for_single_building(building, bpr, weather_data, usage_schedules, date, gv, temporary_folder, temporary_file):

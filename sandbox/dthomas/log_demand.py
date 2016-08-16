@@ -11,6 +11,7 @@ import cea.demand.airconditioning_model
 import cea.demand.electrical_loads
 import cea.demand.hotwater_loads
 import cea.demand.sensible_loads
+import cea.technologies.radiators
 import functionlogger
 
 if __name__ == '__main__':
@@ -29,6 +30,7 @@ if __name__ == '__main__':
     functionlogger.wrap_module(cea.demand.electrical_loads, first_only=True)
     functionlogger.wrap_module(cea.demand.hotwater_loads, first_only=True)
     functionlogger.wrap_module(cea.demand.sensible_loads, first_only=True)
+    functionlogger.wrap_module(cea.technologies.radiators, first_only=True)
 
     cea.demand.demand_main.run_as_script()
 
