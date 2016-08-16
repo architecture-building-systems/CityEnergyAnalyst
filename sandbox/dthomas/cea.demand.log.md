@@ -14,8 +14,6 @@
                   - [calc_Eaf](#calc_eaf)
                   - [calc_Elf](#calc_elf)
                   - [calc_Edataf](#calc_edataf)
-                  - [calc_Eref](#calc_eref)
-                  - [calc_Eprof](#calc_eprof)
                - [calc_Qgain_sen](#calc_qgain_sen)
                   - [calc_I_sol](#calc_i_sol)
                - [calc_Qgain_lat](#calc_qgain_lat)
@@ -33,6 +31,11 @@
                   - [calc_h_ve_adj](#calc_h_ve_adj)
                   - [calc_Htr](#calc_htr)
                   - [calc_Qhs_Qcs](#calc_qhs_qcs)
+                     - [Calc_Im_tot](#calc_im_tot)
+                     - [calc_tm](#calc_tm)
+                     - [calc_ts](#calc_ts)
+                     - [calc_ta](#calc_ta)
+                     - [calc_top](#calc_top)
                - [calc_thermal_load_hvac_timestep](#calc_thermal_load_hvac_timestep)
                   - [calc_hex](#calc_hex)
                      - [calc_w](#calc_w)
@@ -57,26 +60,99 @@
                - [calc_E_totals](#calc_e_totals)
                - [results_to_csv](#results_to_csv)
                   - [calc_Eauxf_fw](#calc_eauxf_fw)
-                     - [calc_w3_heating_case](#calc_w3_heating_case)
          - [write_totals_csv](#write_totals_csv)
 
-# allocate_default_leakage_paths
+# Calc_Im_tot
 - number of invocations: 1
-- max duration: 0.029 s
-- avg duration: 0.029 s
-- min duration: 0.029 s
-- total duration: 0.029 s
+- max duration: 0.031 s
+- avg duration: 0.031 s
+- min duration: 0.031 s
+- total duration: 0.031 s
 
 ### Input
-- **coeff_lea_zone** `['float64']`: *2130.2643780536373*
-- **area_facade_zone** `['float64']`: *1237.0067791693345*
-- **area_roof_zone** `['float64']`: *402.0814169172408*
-- **height_zone** `['float64']`: *12.0*
+- **I_m** `['float64']`: *1148.3982451468542*
+- **Htr_em** `['float64']`: *601.8673589723943*
+- **te_t** `['float64']`: *1.1000000000000001*
+- **Htr_3** `['float64']`: *876.41925301753997*
+- **I_st** `['float64']`: *2487.6752097710209*
+- **Htr_w** `['float64']`: *344.20598175023116*
+- **Htr_1** `['float64']`: *545.74852531251054*
+- **I_ia** `['float64']`: *3642.9330365502524*
+- **IHC_nd** `['int']`: *0*
+- **Hve** `['float64']`: *550.080331446635*
+- **Htr_2** `['float64']`: *889.95450706274164*
 
 
 ### Output
-- `['tuple']`: (array([ 401.92338084,  401.92338084,  401.92338084,  401.92338084,
-        522.57085469]), array([  3.,   3.,   9.,   9.,  12.]), array([ 0.,  1.,  0.,  1.,  2.]))
+- `['float64']`: 8783.6305013901547
+
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param I_m:
+:type I_m: float64
+
+:param Htr_em:
+:type Htr_em: float64
+
+:param te_t:
+:type te_t: float64
+
+:param Htr_3:
+:type Htr_3: float64
+
+:param I_st:
+:type I_st: float64
+
+:param Htr_w:
+:type Htr_w: float64
+
+:param Htr_1:
+:type Htr_1: float64
+
+:param I_ia:
+:type I_ia: float64
+
+:param IHC_nd:
+:type IHC_nd: int
+
+:param Hve:
+:type Hve: float64
+
+:param Htr_2:
+:type Htr_2: float64
+
+RETURNS
+-------
+
+:returns:
+:rtype: float64
+
+```
+
+[TOC](#table-of-contents)
+---
+
+# allocate_default_leakage_paths
+- number of invocations: 1
+- max duration: 0.03 s
+- avg duration: 0.03 s
+- min duration: 0.03 s
+- total duration: 0.03 s
+
+### Input
+- **coeff_lea_zone** `['float64']`: *7572.0292843945435*
+- **area_facade_zone** `['float64']`: *4572.7925135561345*
+- **area_roof_zone** `['float64']`: *2638.5217028738552*
+- **height_zone** `['float64']`: *19.5*
+
+
+### Output
+- `['tuple']`: (array([ 1200.38171216,  1200.38171216,  1200.38171216,  1200.38171216,
+        2770.50243576]), array([  4.875,   4.875,  14.625,  14.625,  19.5  ]), array([ 0.,  1.,  0.,  1.,  2.]))
 
 ### Docstring template
 
@@ -109,18 +185,18 @@ RETURNS
 
 # allocate_default_ventilation_openings
 - number of invocations: 1
-- max duration: 0.03 s
-- avg duration: 0.03 s
-- min duration: 0.03 s
-- total duration: 0.03 s
+- max duration: 0.033 s
+- avg duration: 0.033 s
+- min duration: 0.033 s
+- total duration: 0.033 s
 
 ### Input
 - **coeff_vent_zone** `['float']`: *0.0*
-- **height_zone** `['float64']`: *12.0*
+- **height_zone** `['float64']`: *19.5*
 
 
 ### Output
-- `['tuple']`: (array([ 0.,  0.,  0.,  0.]), array([ 3.,  3.,  9.,  9.]), array([ 0.,  1.,  0.,  1.]))
+- `['tuple']`: (array([ 0.,  0.,  0.,  0.]), array([  4.875,   4.875,  14.625,  14.625]), array([ 0.,  1.,  0.,  1.]))
 
 ### Docstring template
 
@@ -147,24 +223,24 @@ RETURNS
 
 # calc_E_totals
 - number of invocations: 1
-- max duration: 0.03 s
-- avg duration: 0.03 s
-- min duration: 0.03 s
-- total duration: 0.03 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
-- **Aef** `['float64']`: *2171.2396513531003*
-- **Ealf** `['ndarray']`: *array([ 3977.71104128,  3977.71104128,  3977.71104128, ...,  2983.28328096,
-        2983.28328096,  2983.28328096])*
-- **Eauxf** `['ndarray']`: *array([  0.        ,   0.        ,   0.        , ...,  12.38944692,
-        12.42892359,  12.46955796])*
+- **Aef** `['float64']`: *2532.980834758901*
+- **Ealf** `['ndarray']`: *array([  8095.40674789,   8095.40674789,   8095.40674789, ...,
+        15907.4742596 ,  13478.85223524,   9168.04814198])*
+- **Eauxf** `['ndarray']`: *array([  0.        ,   0.        ,   0.        , ...,  17.95868095,
+        22.11860536,  18.71487712])*
 - **Edataf** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **Eprof** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 
 
 ### Output
-- `['tuple']`: (array([ 3977.71104128,  3977.71104128,  3977.71104128, ...,  2983.28328096,
-        2983.28328096,  2983.28328096]), 39777.110412788796, 90.946385247798304, 2.0123670800422278, array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 0.0, array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 0.0)
+- `['tuple']`: (array([  8095.40674789,   8095.40674789,   8095.40674789, ...,
+        15907.4742596 ,  13478.85223524,   9168.04814198]), 74680.127249280165, 223.26888948476659, 6.4981343193058683, array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 0.0, array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 0.0)
 
 ### Docstring template
 
@@ -200,19 +276,19 @@ RETURNS
 
 # calc_Ea_El_Edata_Eref_schedule
 - number of invocations: 1
-- max duration: 0.512 s
-- avg duration: 0.512 s
-- min duration: 0.512 s
-- total duration: 0.512 s
+- max duration: 0.309 s
+- avg duration: 0.309 s
+- min duration: 0.309 s
+- total duration: 0.309 s
 
 ### Input
-- **list_uses** `['list']`: *[u'GYM', u'HOSPITAL', u'HOTEL', u'INDUSTRIAL', u'MULTI_RES', u'OFFICE', u'PARKING', u'RETAIL']*
-- **schedules** `['list']`: *[([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.64000*
-- **building_uses** `['dict']`: *{u'INDUSTRIAL': 0.0, u'OFFICE': 1.0, u'GYM': 0.0, u'HOTEL': 0.0, u'PFloor': 1.0, u'PARKING': 0.0, u'MULTI_RES': 0.0, u'RETAIL': 0.0, u'HOSPITAL': 0.0}*
+- **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
+- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.640*
+- **building_uses** `['dict']`: *{u'INDUSTRIAL': 0.0, u'OFFICE': 0.0, u'RESTAURANT': 0.20000000000000001, u'PFloor': 0.20000000000000001, u'PARKING': 0.80000000000000004, u'SERVERROOM': 0.0}*
 
 
 ### Output
-- `['ndarray']`: array([ 0.08,  0.08,  0.08, ...,  0.06,  0.06,  0.06])
+- `['ndarray']`: array([ 0.08  ,  0.08  ,  0.08  , ...,  0.1572,  0.1332,  0.0906])
 
 ### Docstring template
 
@@ -242,20 +318,20 @@ RETURNS
 
 # calc_Eaf
 - number of invocations: 1
-- max duration: 0.044 s
-- avg duration: 0.044 s
-- min duration: 0.044 s
-- total duration: 0.044 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
-- **schedule** `['ndarray']`: *array([ 0.08,  0.08,  0.08, ...,  0.06,  0.06,  0.06])*
-- **Ea_Wm2** `['float64']`: *7.0*
-- **Af** `['float64']`: *2171.2396513531003*
+- **schedule** `['ndarray']`: *array([ 0.08  ,  0.08  ,  0.08  , ...,  0.1572,  0.1332,  0.0906])*
+- **Ea_Wm2** `['float64']`: *31.699999999999999*
+- **Aef** `['float64']`: *2532.980834758901*
 
 
 ### Output
-- `['ndarray']`: array([ 1215.89420476,  1215.89420476,  1215.89420476, ...,   911.92065357,
-         911.92065357,   911.92065357])
+- `['ndarray']`: array([  6423.63939695,   6423.63939695,   6423.63939695, ...,
+        12622.451415  ,  10695.35959592,   7274.77161704])
 
 ### Docstring template
 
@@ -269,8 +345,8 @@ PARAMETERS
 :param Ea_Wm2:
 :type Ea_Wm2: float64
 
-:param Af:
-:type Af: float64
+:param Aef:
+:type Aef: float64
 
 RETURNS
 -------
@@ -285,55 +361,55 @@ RETURNS
 
 # calc_Eauxf
 - number of invocations: 1
-- max duration: 0.292 s
-- avg duration: 0.292 s
-- min duration: 0.292 s
-- total duration: 0.292 s
+- max duration: 0.298 s
+- avg duration: 0.298 s
+- min duration: 0.298 s
+- total duration: 0.298 s
 
 ### Input
-- **Af** `['float64']`: *2171.2396513531003*
-- **Ll** `['float64']`: *32.648092418099999*
-- **Lw** `['float64']`: *16.008581384100001*
-- **Mww** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
+- **Ll** `['float64']`: *87.0*
+- **Lw** `['float64']`: *30.0*
+- **Mww** `['ndarray']`: *array([ 0.        ,  0.        ,  0.        , ...,  0.01039254,
+        0.00280879,  0.00238748])*
 - **Qcsf** `['ndarray']`: *array([-0., -0., -0., ..., -0., -0., -0.])*
-- **Qcsf_0** `['float64']`: *-281104.46918348083*
+- **Qcsf_0** `['float64']`: *-488411.89619418682*
 - **Qhsf** `['ndarray']`: *array([     0.        ,      0.        ,      0.        , ...,
-        93991.5268617 ,  94591.45409877,  95210.96830999])*
-- **Qhsf_0** `['float64']`: *296485.76361481688*
-- **Qww** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
-- **Qwwf** `['ndarray']`: *array([  9.73533082,   9.75835448,   9.78142295, ...,  11.14941905,
-        11.16687292,  11.18431081])*
-- **Qwwf_0** `['float64']`: *5419.7627526345404*
+        54776.24524343,  44440.48177405,  47516.38542795])*
+- **Qhsf_0** `['float64']`: *336657.37528759934*
+- **Qww** `['ndarray']`: *array([    0.        ,     0.        ,     0.        , ...,  2174.11914263,
+         587.59976828,   499.45980304])*
+- **Qwwf** `['ndarray']`: *array([    0.        ,     0.        ,     0.        , ...,  4624.11914263,
+        1600.59976828,  1483.45980304])*
+- **Qwwf_0** `['float64']`: *9040.2317305902616*
 - **Tcs_re** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
 - **Tcs_sup** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
-- **Ths_re** `['ndarray']`: *array([ 0,  0,  0, ..., 32, 32, 32])*
-- **Ths_sup** `['ndarray']`: *array([ 0,  0,  0, ..., 39, 39, 39])*
-- **Vw** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
-- **Year** `['int64']`: *1993*
-- **fforma** `['float64']`: *0.76931348014904022*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C972E10>*
-- **nf_ag** `['float64']`: *4.0*
-- **nfp** `['float64']`: *1.0*
-- **qv_req** `['ndarray']`: *array([ 1.16944851,  1.16944851,  1.16944851, ...,  1.16944851,
-        1.16944851,  1.16944851])*
+- **Ths_re** `['ndarray']`: *array([ 0,  0,  0, ..., 33, 32, 32])*
+- **Ths_sup** `['ndarray']`: *array([ 0,  0,  0, ..., 37, 34, 35])*
+- **Vw** `['ndarray']`: *array([ 0.        ,  0.        ,  0.        , ...,  0.03748812,
+        0.01013192,  0.00861213])*
+- **Year** `['int64']`: *2010*
+- **fforma** `['float64']`: *1.0109278555072243*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x151AD690>*
+- **nf_ag** `['float64']`: *5.0*
+- **nfp** `['float64']`: *0.20000000000000001*
+- **qv_req** `['ndarray']`: *array([ 0.45476218,  0.45476218,  0.45476218, ...,  0.89971551,
+        0.24316635,  0.2066914 ])*
 - **sys_e_cooling** `['unicode']`: *u'T3'*
 - **sys_e_heating** `['unicode']`: *u'T1'*
 - **Ehs_lat_aux** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 
 
 ### Output
-- `['tuple']`: (array([  0.        ,   0.        ,   0.        , ...,  12.38944692,
-        12.42892359,  12.46955796]), array([  0.        ,   0.        ,   0.        , ...,  12.38944692,
-        12.42892359,  12.46955796]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]))
+- `['tuple']`: (array([  0.        ,   0.        ,   0.        , ...,  17.95868095,
+        22.11860536,  18.71487712]), array([  0.        ,   0.        ,   0.        , ...,  16.95392464,
+        21.59625743,  18.23329612]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.        ,  0.        ,  0.        , ...,  1.00475631,
+        0.52234793,  0.481581  ]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]))
 
 ### Docstring template
 
 ```
 PARAMETERS
 ----------
-
-:param Af:
-:type Af: float64
 
 :param Ll:
 :type Ll: float64
@@ -420,17 +496,17 @@ RETURNS
 
 # calc_Eauxf_cs_dis
 - number of invocations: 1
-- max duration: 0.033 s
-- avg duration: 0.033 s
-- min duration: 0.033 s
-- total duration: 0.033 s
+- max duration: 0.037 s
+- avg duration: 0.037 s
+- min duration: 0.037 s
+- total duration: 0.037 s
 
 ### Input
-- **Qcsf** `['float64']`: *-0*
-- **Qcsf0** `['float64']`: *-281104.46918348083*
-- **Imax** `['float64']`: *88.705510978710478*
-- **deltaP_des** `['float64']`: *11.531716427232364*
-- **b** `['float64']`: *1.2*
+- **Qcsf** `['float64']`: *-0.0*
+- **Qcsf0** `['float64']`: *-488411.89619418682*
+- **Imax** `['float64']`: *234.53526247767604*
+- **deltaP_des** `['float64']`: *30.489584122097888*
+- **b** `['int32']`: *1*
 - **ts** `['int32']`: *0*
 - **tr** `['int32']`: *0*
 - **cpw** `['float64']`: *4.1840000000000002*
@@ -458,7 +534,7 @@ PARAMETERS
 :type deltaP_des: float64
 
 :param b:
-:type b: float64
+:type b: int32
 
 :param ts:
 :type ts: int32
@@ -482,16 +558,15 @@ RETURNS
 
 # calc_Eauxf_fw
 - number of invocations: 1
-- max duration: 0.036 s
-- avg duration: 0.036 s
-- min duration: 0.036 s
-- total duration: 0.036 s
+- max duration: 0.037 s
+- avg duration: 0.037 s
+- min duration: 0.037 s
+- total duration: 0.037 s
 
 ### Input
-- **freshw** `['ndarray']`: *array([ 0.00874946,  0.00437473,  0.00109368, ...,  0.0369118 ,
-        0.02050655,  0.01558498])*
-- **nf** `['float64']`: *7.0*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C2CC4B0>*
+- **freshw** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
+- **nf** `['float64']`: *6.0*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1507A2B0>*
 
 
 ### Output
@@ -525,17 +600,17 @@ RETURNS
 
 # calc_Eauxf_hs_dis
 - number of invocations: 1
-- max duration: 0.03 s
-- avg duration: 0.03 s
-- min duration: 0.03 s
-- total duration: 0.03 s
+- max duration: 0.033 s
+- avg duration: 0.033 s
+- min duration: 0.033 s
+- total duration: 0.033 s
 
 ### Input
 - **Qhsf** `['float64']`: *0.0*
-- **Qhsf0** `['float64']`: *296485.76361481688*
-- **Imax** `['float64']`: *88.705510978710478*
-- **deltaP_des** `['float64']`: *11.531716427232364*
-- **b** `['float64']`: *1.2*
+- **Qhsf0** `['float64']`: *336657.37528759934*
+- **Imax** `['float64']`: *234.53526247767604*
+- **deltaP_des** `['float64']`: *30.489584122097888*
+- **b** `['int32']`: *1*
 - **ts** `['int32']`: *0*
 - **tr** `['int32']`: *0*
 - **cpw** `['float64']`: *4.1840000000000002*
@@ -563,7 +638,7 @@ PARAMETERS
 :type deltaP_des: float64
 
 :param b:
-:type b: float64
+:type b: int32
 
 :param ts:
 :type ts: int32
@@ -587,16 +662,16 @@ RETURNS
 
 # calc_Eauxf_ve
 - number of invocations: 1
-- max duration: 0.029 s
-- avg duration: 0.029 s
-- min duration: 0.029 s
-- total duration: 0.029 s
+- max duration: 0.03 s
+- avg duration: 0.03 s
+- min duration: 0.03 s
+- total duration: 0.03 s
 
 ### Input
 - **Qhsf** `['float64']`: *0.0*
-- **Qcsf** `['float64']`: *-0*
+- **Qcsf** `['float64']`: *-0.0*
 - **P_ve** `['float64']`: *0.55000000000000004*
-- **qve** `['float64']`: *1.1694485063119631*
+- **qve** `['float64']`: *0.45476217877532665*
 - **SystemH** `['unicode_']`: *u'T1'*
 - **SystemC** `['unicode_']`: *u'T3'*
 
@@ -641,18 +716,18 @@ RETURNS
 
 # calc_Eauxf_ww
 - number of invocations: 1
-- max duration: 0.03 s
-- avg duration: 0.03 s
-- min duration: 0.03 s
-- total duration: 0.03 s
+- max duration: 0.028 s
+- avg duration: 0.028 s
+- min duration: 0.028 s
+- total duration: 0.028 s
 
 ### Input
 - **Qww** `['float64']`: *0.0*
-- **Qwwf** `['float64']`: *9.7353308233326086*
-- **Qwwf0** `['float64']`: *5419.7627526345404*
-- **Imax** `['float64']`: *88.705510978710478*
-- **deltaP_des** `['float64']`: *11.531716427232364*
-- **b** `['float64']`: *1.2*
+- **Qwwf** `['float64']`: *0.0*
+- **Qwwf0** `['float64']`: *9040.2317305902616*
+- **Imax** `['float64']`: *234.53526247767604*
+- **deltaP_des** `['float64']`: *30.489584122097888*
+- **b** `['int32']`: *1*
 - **qV_des** `['float64']`: *0.0*
 
 
@@ -681,7 +756,7 @@ PARAMETERS
 :type deltaP_des: float64
 
 :param b:
-:type b: float64
+:type b: int32
 
 :param qV_des:
 :type qV_des: float64
@@ -699,15 +774,16 @@ RETURNS
 
 # calc_Edataf
 - number of invocations: 1
-- max duration: 0.034 s
-- avg duration: 0.034 s
-- min duration: 0.034 s
-- total duration: 0.034 s
+- max duration: 0.033 s
+- avg duration: 0.033 s
+- min duration: 0.033 s
+- total duration: 0.033 s
 
 ### Input
-- **schedule** `['ndarray']`: *array([ 0.08,  0.08,  0.08, ...,  0.06,  0.06,  0.06])*
+- **schedule** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **Ed_Wm2** `['float64']`: *0.0*
-- **Af** `['float64']`: *2171.2396513531003*
+- **Aef** `['float64']`: *2532.980834758901*
+- **share** `['float64']`: *0.0*
 
 
 ### Output
@@ -725,8 +801,11 @@ PARAMETERS
 :param Ed_Wm2:
 :type Ed_Wm2: float64
 
-:param Af:
-:type Af: float64
+:param Aef:
+:type Aef: float64
+
+:param share:
+:type share: float64
 
 RETURNS
 -------
@@ -741,23 +820,23 @@ RETURNS
 
 # calc_Eint
 - number of invocations: 1
-- max duration: 1.907 s
-- avg duration: 1.907 s
-- min duration: 1.907 s
-- total duration: 1.907 s
+- max duration: 1.249 s
+- avg duration: 1.249 s
+- min duration: 1.249 s
+- total duration: 1.249 s
 
 ### Input
-- **tsd** `['dict']`: *{'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'people': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Tww_re': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Tm': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Qcs_sen_incl_em_ls': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Ta': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Ta_re_cs'*
-- **prop_internal_loads** `['dict']`: *{u'El_Wm2': 15.9, u'Qs_Wp': 70.0, u'Ed_Wm2': 0.0, u'Ea_Wm2': 7.0, u'Ere_Wm2': 0.0, u'Epro_Wm2': 0.0, u'Vww_lpd': 10.0, u'Vw_lpd': 20.0, u'X_ghp': 80.0}*
-- **Af** `['float64']`: *2171.2396513531003*
-- **list_uses** `['list']`: *[u'GYM', u'HOSPITAL', u'HOTEL', u'INDUSTRIAL', u'MULTI_RES', u'OFFICE', u'PARKING', u'RETAIL']*
-- **schedules** `['list']`: *[([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.64000*
-- **building_uses** `['dict']`: *{u'INDUSTRIAL': 0.0, u'OFFICE': 1.0, u'GYM': 0.0, u'HOTEL': 0.0, u'PFloor': 1.0, u'PARKING': 0.0, u'MULTI_RES': 0.0, u'RETAIL': 0.0, u'HOSPITAL': 0.0}*
+- **tsd** `['dict']`: *{'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
+         30.39577002,   25.83640451]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Tww_re': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Tm': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Qcs_sen_incl_em_ls': array([ 0.,  0.,  0., ...,  0.,  0., *
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x15061070>*
+- **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
+- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.640*
 
 
 ### Output
-- `['dict']`: {'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'people': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Tww_re': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Ealf': array([ 3977.71104128,  3977.71104128,  3977.71104128, ...,  2983.28328096,
-        2983.28328096,  2983.28328096]), 'Tm': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), '
+- `['dict']`: {'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
+         30.39577002,   25.83640451]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Tww_re': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Ealf': array([  8095.40674789,   8095.40674789,   8095.40674789, ...,
+        15907.4742596 ,  13478.8522352
 
 ### Docstring template
 
@@ -768,20 +847,14 @@ PARAMETERS
 :param tsd:
 :type tsd: dict
 
-:param prop_internal_loads:
-:type prop_internal_loads: dict
-
-:param Af:
-:type Af: float64
+:param bpr:
+:type bpr: BuildingPropertiesRow
 
 :param list_uses:
 :type list_uses: list
 
 :param schedules:
 :type schedules: list
-
-:param building_uses:
-:type building_uses: dict
 
 RETURNS
 -------
@@ -796,20 +869,20 @@ RETURNS
 
 # calc_Elf
 - number of invocations: 1
-- max duration: 0.032 s
-- avg duration: 0.032 s
-- min duration: 0.032 s
-- total duration: 0.032 s
+- max duration: 0.031 s
+- avg duration: 0.031 s
+- min duration: 0.031 s
+- total duration: 0.031 s
 
 ### Input
-- **schedule** `['ndarray']`: *array([ 0.08,  0.08,  0.08, ...,  0.06,  0.06,  0.06])*
-- **El_Wm2** `['float64']`: *15.9*
-- **Af** `['float64']`: *2171.2396513531003*
+- **schedule** `['ndarray']`: *array([ 0.08  ,  0.08  ,  0.08  , ...,  0.1572,  0.1332,  0.0906])*
+- **El_Wm2** `['float64']`: *8.25*
+- **Aef** `['float64']`: *2532.980834758901*
 
 
 ### Output
-- `['ndarray']`: array([ 2761.81683652,  2761.81683652,  2761.81683652, ...,  2071.36262739,
-        2071.36262739,  2071.36262739])
+- `['ndarray']`: array([ 1671.76735094,  1671.76735094,  1671.76735094, ...,  3285.0228446 ,
+        2783.49263932,  1893.27652494])
 
 ### Docstring template
 
@@ -823,50 +896,8 @@ PARAMETERS
 :param El_Wm2:
 :type El_Wm2: float64
 
-:param Af:
-:type Af: float64
-
-RETURNS
--------
-
-:returns:
-:rtype: ndarray
-
-```
-
-[TOC](#table-of-contents)
----
-
-# calc_Eprof
-- number of invocations: 1
-- max duration: 0.03 s
-- avg duration: 0.03 s
-- min duration: 0.03 s
-- total duration: 0.03 s
-
-### Input
-- **schedule** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
-- **Epro_Wm2** `['float64']`: *0.0*
-- **Af** `['float64']`: *2171.2396513531003*
-
-
-### Output
-- `['ndarray']`: array([ 0.,  0.,  0., ...,  0.,  0.,  0.])
-
-### Docstring template
-
-```
-PARAMETERS
-----------
-
-:param schedule:
-:type schedule: ndarray
-
-:param Epro_Wm2:
-:type Epro_Wm2: float64
-
-:param Af:
-:type Af: float64
+:param Aef:
+:type Aef: float64
 
 RETURNS
 -------
@@ -881,15 +912,15 @@ RETURNS
 
 # calc_Eprof_schedule
 - number of invocations: 1
-- max duration: 0.531 s
-- avg duration: 0.531 s
-- min duration: 0.531 s
-- total duration: 0.531 s
+- max duration: 0.32 s
+- avg duration: 0.32 s
+- min duration: 0.32 s
+- total duration: 0.32 s
 
 ### Input
-- **list_uses** `['list']`: *[u'GYM', u'HOSPITAL', u'HOTEL', u'INDUSTRIAL', u'MULTI_RES', u'OFFICE', u'PARKING', u'RETAIL']*
-- **schedules** `['list']`: *[([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.64000*
-- **building_uses** `['dict']`: *{u'INDUSTRIAL': 0.0, u'OFFICE': 1.0, u'GYM': 0.0, u'HOTEL': 0.0, u'PFloor': 1.0, u'PARKING': 0.0, u'MULTI_RES': 0.0, u'RETAIL': 0.0, u'HOSPITAL': 0.0}*
+- **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
+- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.640*
+- **building_uses** `['dict']`: *{u'INDUSTRIAL': 0.0, u'OFFICE': 0.0, u'RESTAURANT': 0.20000000000000001, u'PFloor': 0.20000000000000001, u'PARKING': 0.80000000000000004, u'SERVERROOM': 0.0}*
 
 
 ### Output
@@ -921,7 +952,7 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_Eref
+# calc_Htr
 - number of invocations: 1
 - max duration: 0.03 s
 - avg duration: 0.03 s
@@ -929,56 +960,14 @@ RETURNS
 - total duration: 0.03 s
 
 ### Input
-- **schedule** `['ndarray']`: *array([ 0.08,  0.08,  0.08, ...,  0.06,  0.06,  0.06])*
-- **Ere_Wm2** `['float64']`: *0.0*
-- **Af** `['float64']`: *2171.2396513531003*
+- **Hve** `['float64']`: *550.080331446635*
+- **Htr_is** `['float64']`: *69302.623523592818*
+- **Htr_ms** `['float64']`: *57625.313990764997*
+- **Htr_w** `['float64']`: *344.20598175023116*
 
 
 ### Output
-- `['ndarray']`: array([ 0.,  0.,  0., ...,  0.,  0.,  0.])
-
-### Docstring template
-
-```
-PARAMETERS
-----------
-
-:param schedule:
-:type schedule: ndarray
-
-:param Ere_Wm2:
-:type Ere_Wm2: float64
-
-:param Af:
-:type Af: float64
-
-RETURNS
--------
-
-:returns:
-:rtype: ndarray
-
-```
-
-[TOC](#table-of-contents)
----
-
-# calc_Htr
-- number of invocations: 1
-- max duration: 0.029 s
-- avg duration: 0.029 s
-- min duration: 0.029 s
-- total duration: 0.029 s
-
-### Input
-- **Hve** `['float64']`: *1414.5649132349504*
-- **Htr_is** `['float64']`: *15748.652178585824*
-- **Htr_ms** `['float64']`: *63226.498647402281*
-- **Htr_w** `['float64']`: *1403.3742289273969*
-
-
-### Output
-- `['tuple']`: (1297.9787346036153, 2701.3529635310124, 2590.6666958115343)
+- `['tuple']`: (545.74852531251054, 889.95450706274164, 876.41925301753997)
 
 ### Docstring template
 
@@ -1011,14 +1000,14 @@ RETURNS
 
 # calc_I_sol
 - number of invocations: 1
-- max duration: 0.079 s
-- avg duration: 0.079 s
-- min duration: 0.079 s
-- total duration: 0.079 s
+- max duration: 0.085 s
+- avg duration: 0.085 s
+- min duration: 0.085 s
+- total duration: 0.085 s
 
 ### Input
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x0C2C0830>*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0CA6BB10>*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x151AD030>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x151AD030>*
 
 
 ### Output
@@ -1049,20 +1038,22 @@ RETURNS
 
 # calc_Qgain_lat
 - number of invocations: 1
-- max duration: 0.032 s
-- avg duration: 0.032 s
-- min duration: 0.032 s
-- total duration: 0.032 s
+- max duration: 0.041 s
+- avg duration: 0.041 s
+- min duration: 0.041 s
+- total duration: 0.041 s
 
 ### Input
-- **people** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
-- **X_ghp** `['float64']`: *80.0*
+- **people** `['ndarray']`: *array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
+         30.39577002,   25.83640451])*
+- **X_ghp** `['float64']`: *85.0*
 - **sys_e_cooling** `['unicode']`: *u'T3'*
 - **sys_e_heating** `['unicode']`: *u'T1'*
 
 
 ### Output
-- `['ndarray']`: array([ 0.,  0.,  0., ...,  0.,  0.,  0.])
+- `['ndarray']`: array([ 0.        ,  0.        ,  0.        , ...,  0.00265541,
+        0.00071768,  0.00061003])
 
 ### Docstring template
 
@@ -1095,31 +1086,34 @@ RETURNS
 
 # calc_Qgain_sen
 - number of invocations: 1
-- max duration: 0.205 s
-- avg duration: 0.205 s
-- min duration: 0.205 s
-- total duration: 0.205 s
+- max duration: 0.226 s
+- avg duration: 0.226 s
+- min duration: 0.226 s
+- total duration: 0.226 s
 
 ### Input
-- **people** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
-- **Qs_Wp** `['float64']`: *70.0*
-- **Eal_nove** `['ndarray']`: *array([ 3977.71104128,  3977.71104128,  3977.71104128, ...,  2983.28328096,
-        2983.28328096,  2983.28328096])*
+- **people** `['ndarray']`: *array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
+         30.39577002,   25.83640451])*
+- **Qs_Wp** `['float64']`: *73.0*
+- **Eal_nove** `['ndarray']`: *array([  8095.40674789,   8095.40674789,   8095.40674789, ...,
+        15907.4742596 ,  13478.85223524,   9168.04814198])*
 - **Eprof** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
-- **Qcdata** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
-- **Qcrefri** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
-- **tsd** `['dict']`: *{'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 've': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'people': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Elf': array([ 2761.81683652,  2761.81683652,  2761.81683652, ...,  2071.36262739,
-        2071.36262739,  2071.36262739]), 'Ealf': array([ 3977.71104128,  3977.71104128,  3977.711*
-- **Am** `['float64']`: *6947.9668843299214*
-- **Atot** `['float64']`: *4564.8267184306733*
-- **Htr_w** `['float64']`: *1403.3742289273969*
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x0C204F70>*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0BEF75F0>*
+- **Qcdata** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
+- **Qcrefri** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
+- **tsd** `['dict']`: *{'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 've': array([    0.        ,     0.        ,     0.        , ...,  3238.97325302,
+         875.39817649,   744.08845002]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
+         30.39577002,   25.83640451]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Elf': array([ 1671.76735094,  1671.7673*
+- **Am** `['float64']`: *6332.4520868972522*
+- **Atot** `['float64']`: *20087.716963360235*
+- **Htr_w** `['float64']`: *344.20598175023116*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x15061610>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x15061610>*
 
 
 ### Output
-- `['dict']`: {'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 've': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'people': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Elf': array([ 2761.81683652,  2761.81683652,  2761.81683652, ...,  2071.36262739,
-        2071.36262739,  2071.36262739]), 'I_st': array([-994.95409443, -994.95409443, -994.954094
+- `['dict']`: {'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 've': array([    0.        ,     0.        ,     0.        , ...,  3238.97325302,
+         875.39817649,   744.08845002]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
+         30.39577002,   25.83640451]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Elf': array([ 1671.76735094,  1671.7673
 
 ### Docstring template
 
@@ -1176,41 +1170,41 @@ RETURNS
 
 # calc_Qhs_Qcs
 - number of invocations: 1
-- max duration: 0.034 s
-- avg duration: 0.034 s
-- min duration: 0.034 s
-- total duration: 0.034 s
+- max duration: 0.312 s
+- avg duration: 0.312 s
+- min duration: 0.312 s
+- total duration: 0.312 s
 
 ### Input
 - **SystemH** `['unicode']`: *u'T1'*
 - **SystemC** `['unicode']`: *u'T3'*
 - **tm_t0** `['int']`: *16*
-- **te_t** `['float64']`: *8.8000000000000007*
+- **te_t** `['float64']`: *1.1000000000000001*
 - **tintH_set** `['float64']`: *12.0*
 - **tintC_set** `['int32']`: *50*
-- **Htr_em** `['float64']`: *582.9963349687813*
-- **Htr_ms** `['float64']`: *63226.498647402281*
-- **Htr_is** `['float64']`: *15748.652178585824*
-- **Htr_1** `['float64']`: *1297.9787346036153*
-- **Htr_2** `['float64']`: *2701.3529635310124*
-- **Htr_3** `['float64']`: *2590.6666958115343*
-- **I_st** `['float64']`: *-994.95409442637424*
-- **Hve** `['float64']`: *1414.5649132349504*
-- **Htr_w** `['float64']`: *1403.3742289273969*
-- **I_ia** `['float64']`: *1789.9699685754963*
-- **I_m** `['float64']`: *2724.4521715126953*
-- **Cm** `['float64']`: *651371895.40593004*
-- **Af** `['float64']`: *2171.2396513531003*
+- **Htr_em** `['float64']`: *601.8673589723943*
+- **Htr_ms** `['float64']`: *57625.313990764997*
+- **Htr_is** `['float64']`: *69302.623523592818*
+- **Htr_1** `['float64']`: *545.74852531251054*
+- **Htr_2** `['float64']`: *889.95450706274164*
+- **Htr_3** `['float64']`: *876.41925301753997*
+- **I_st** `['float64']`: *2487.6752097710209*
+- **Hve** `['float64']`: *550.080331446635*
+- **Htr_w** `['float64']`: *344.20598175023116*
+- **I_ia** `['float64']`: *3642.9330365502524*
+- **I_m** `['float64']`: *1148.3982451468542*
+- **Cm** `['float64']`: *417941837.73521864*
+- **Af** `['float64']`: *2532.980834758901*
 - **Losses** `['bool']`: *False*
-- **tHset_corr** `['float']`: *2.65*
-- **tCset_corr** `['float']`: *-2.0*
-- **IC_max** `['float64']`: *-1085619.8256765502*
-- **IH_max** `['float64']`: *1085619.8256765502*
+- **tHset_corr** `['float']`: *1.3499999999999999*
+- **tCset_corr** `['float']`: *-0.7*
+- **IC_max** `['float64']`: *-1266490.4173794505*
+- **IH_max** `['float64']`: *1266490.4173794505*
 - **Flag** `['bool_']`: *False*
 
 
 ### Output
-- `['tuple']`: (15.946568617146644, 15.202170683665049, 0, 0, 0, 15.520531773681475, 31273.645775067431)
+- `['tuple']`: (15.872734454107169, 15.751274156536283, 0, 0, 0, 15.795245750875733, 8783.6305013901547)
 
 ### Docstring template
 
@@ -1306,28 +1300,28 @@ RETURNS
 
 # calc_Qhs_Qcs_dis_ls
 - number of invocations: 1
-- max duration: 0.04 s
-- avg duration: 0.04 s
-- min duration: 0.04 s
-- total duration: 0.04 s
+- max duration: 0.039 s
+- avg duration: 0.039 s
+- min duration: 0.039 s
+- total duration: 0.039 s
 
 ### Input
-- **tair** `['float64']`: *15.202170683665049*
-- **text** `['float64']`: *8.8000000000000007*
+- **tair** `['float64']`: *15.751274156536283*
+- **text** `['float64']`: *1.1000000000000001*
 - **Qhs** `['float64']`: *0.0*
 - **Qcs** `['float64']`: *0.0*
 - **tsh** `['int64']`: *90*
 - **trh** `['int64']`: *70*
 - **tsc** `['int64']`: *7*
 - **trc** `['int64']`: *15*
-- **Qhs_max** `['float64']`: *294916.76361481688*
-- **Qcs_max** `['float64']`: *-152740.15924554263*
+- **Qhs_max** `['float64']`: *332396.37528759934*
+- **Qcs_max** `['float64']`: *-182647.30721147865*
 - **D** `['int32']`: *20*
-- **Y** `['float64']`: *0.29999999999999999*
+- **Y** `['float64']`: *0.20000000000000001*
 - **SystemH** `['unicode_']`: *u'T1'*
 - **SystemC** `['unicode_']`: *u'T3'*
 - **Bf** `['float64']`: *0.69999999999999996*
-- **Lv** `['float64']`: *67.916762127496582*
+- **Lv** `['float64']`: *267.71896933470066*
 
 
 ### Output
@@ -1400,18 +1394,18 @@ RETURNS
 
 # calc_Qhs_Qcs_sys_max
 - number of invocations: 1
-- max duration: 0.028 s
-- avg duration: 0.028 s
-- min duration: 0.028 s
-- total duration: 0.028 s
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
-- **Af** `['float64']`: *2171.2396513531003*
-- **prop_HVAC** `['dict']`: *{u'Qcsmax_Wm2': 500, u'dTcs0_C': 8, u'type_ctrl': u'T1', u'type_cs': u'T3', u'dThs0_C': 20, u'Qhsmax_Wm2': 500, u'Tscs0_C': 7, u'type_hs': u'T1', u'Tsww0_C': 60, u'Qwwmax_Wm2': 500, u'dTww0_C': 50, u'Tshs0_C': 90, u'type_dhw': u'T1'}*
+- **Af** `['float64']`: *2532.980834758901*
+- **prop_HVAC** `['dict']`: *{u'Qcsmax_Wm2': 500, u'dTcs0_C': 8, u'type_ctrl': u'T2', u'type_cs': u'T3', u'dThs0_C': 20, u'Qhsmax_Wm2': 500, u'Tscs0_C': 7, u'type_hs': u'T1', u'Tsww0_C': 60, u'Qwwmax_Wm2': 500, u'dTww0_C': 50, u'Tshs0_C': 90, u'type_dhw': u'T1'}*
 
 
 ### Output
-- `['tuple']`: (-1085619.8256765502, 1085619.8256765502)
+- `['tuple']`: (-1266490.4173794505, 1266490.4173794505)
 
 ### Docstring template
 
@@ -1438,10 +1432,10 @@ RETURNS
 
 # calc_Qww
 - number of invocations: 1
-- max duration: 0.028 s
-- avg duration: 0.028 s
-- min duration: 0.028 s
-- total duration: 0.028 s
+- max duration: 0.037 s
+- avg duration: 0.037 s
+- min duration: 0.037 s
+- total duration: 0.037 s
 
 ### Input
 - **mww** `['float64']`: *0.0*
@@ -1484,30 +1478,30 @@ RETURNS
 
 # calc_Qww_dis_ls_nr
 - number of invocations: 1
-- max duration: 0.033 s
-- avg duration: 0.033 s
-- min duration: 0.033 s
-- total duration: 0.033 s
+- max duration: 0.034 s
+- avg duration: 0.034 s
+- min duration: 0.034 s
+- total duration: 0.034 s
 
 ### Input
-- **tair** `['float64']`: *15.202170683665049*
+- **tair** `['float64']`: *15.751274156536283*
 - **Qww** `['float64']`: *0.0*
-- **Lvww_dis** `['float64']`: *50.246706155723558*
-- **Lvww_c** `['float64']`: *55.259252908257515*
-- **Y** `['float64']`: *0.29999999999999999*
-- **Qww_0** `['float64']`: *2998.114341223164*
-- **V** `['float64']`: *81.45987041393002*
+- **Lvww_dis** `['float64']`: *252.85832985874447*
+- **Lvww_c** `['float64']`: *208.88296814418021*
+- **Y** `['float64']`: *0.20000000000000001*
+- **Qww_0** `['float64']`: *4064.2317305902625*
+- **V** `['float64']`: *133.63813083451046*
 - **Flowtap** `['float64']`: *0.035999999999999997*
 - **twws** `['int64']`: *60*
 - **Cpw** `['float64']`: *4.1840000000000002*
 - **Pwater** `['int32']`: *998*
 - **Bf** `['float64']`: *0.69999999999999996*
-- **te** `['float64']`: *8.8000000000000007*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0D0092F0>*
+- **te** `['float64']`: *1.1000000000000001*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1507A810>*
 
 
 ### Output
-- `['float64']`: 0.0
+- `['int']`: 0
 
 ### Docstring template
 
@@ -1561,7 +1555,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: float64
+:rtype: int
 
 ```
 
@@ -1570,28 +1564,28 @@ RETURNS
 
 # calc_Qww_dis_ls_r
 - number of invocations: 1
-- max duration: 0.086 s
-- avg duration: 0.086 s
-- min duration: 0.086 s
-- total duration: 0.086 s
+- max duration: 0.034 s
+- avg duration: 0.034 s
+- min duration: 0.034 s
+- total duration: 0.034 s
 
 ### Input
-- **Tair** `['float64']`: *15.202170683665049*
+- **Tair** `['float64']`: *15.751274156536283*
 - **Qww** `['float64']`: *0.0*
-- **lsww_dis** `['float64']`: *183.34912611426176*
-- **lcww_dis** `['float64']`: *72.543326121114177*
-- **Y** `['float64']`: *0.40000000000000002*
-- **Qww_0** `['float64']`: *2998.114341223164*
-- **V** `['float64']`: *81.45987041393002*
+- **lsww_dis** `['float64']`: *300.79147412761955*
+- **lcww_dis** `['float64']`: *187.0216532688365*
+- **Y** `['float64']`: *0.29999999999999999*
+- **Qww_0** `['float64']`: *4064.2317305902625*
+- **V** `['float64']`: *133.63813083451046*
 - **Flowtap** `['float64']`: *0.035999999999999997*
 - **twws** `['int64']`: *60*
 - **Cpw** `['float64']`: *4.1840000000000002*
 - **Pwater** `['int32']`: *998*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0559B870>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x15063B90>*
 
 
 ### Output
-- `['float64']`: 0.0
+- `['int']`: 0
 
 ### Docstring template
 
@@ -1639,7 +1633,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: float64
+:rtype: int
 
 ```
 
@@ -1648,19 +1642,19 @@ RETURNS
 
 # calc_Qww_schedule
 - number of invocations: 1
-- max duration: 0.481 s
-- avg duration: 0.481 s
-- min duration: 0.481 s
-- total duration: 0.481 s
+- max duration: 0.314 s
+- avg duration: 0.314 s
+- min duration: 0.314 s
+- total duration: 0.314 s
 
 ### Input
-- **list_uses** `['list']`: *[u'GYM', u'HOSPITAL', u'HOTEL', u'INDUSTRIAL', u'MULTI_RES', u'OFFICE', u'PARKING', u'RETAIL']*
-- **schedules** `['list']`: *[([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.64000*
-- **building_uses** `['dict']`: *{u'INDUSTRIAL': 0.0, u'OFFICE': 1.0, u'GYM': 0.0, u'HOTEL': 0.0, u'PFloor': 1.0, u'PARKING': 0.0, u'MULTI_RES': 0.0, u'RETAIL': 0.0, u'HOSPITAL': 0.0}*
+- **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
+- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.640*
+- **building_uses** `['dict']`: *{u'INDUSTRIAL': 0.0, u'OFFICE': 0.0, u'RESTAURANT': 0.20000000000000001, u'PFloor': 0.20000000000000001, u'PARKING': 0.80000000000000004, u'SERVERROOM': 0.0}*
 
 
 ### Output
-- `['ndarray']`: array([ 0.,  0.,  0., ...,  0.,  0.,  0.])
+- `['ndarray']`: array([ 0.    ,  0.    ,  0.    , ...,  0.0888,  0.024 ,  0.0204])
 
 ### Docstring template
 
@@ -1690,32 +1684,34 @@ RETURNS
 
 # calc_Qww_st_ls
 - number of invocations: 1
-- max duration: 0.389 s
-- avg duration: 0.389 s
-- min duration: 0.389 s
-- total duration: 0.389 s
+- max duration: 0.27 s
+- avg duration: 0.27 s
+- min duration: 0.27 s
+- total duration: 0.27 s
 
 ### Input
-- **Vww** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
+- **Vww** `['ndarray']`: *array([ 0.        ,  0.        ,  0.        , ...,  0.03748812,
+        0.01013192,  0.00861213])*
 - **Tww_setpoint** `['int']`: *60*
-- **Ta** `['ndarray']`: *array([ 15.20217068,  15.13002744,  15.05677264, ...,  12.        ,
-        12.        ,  12.        ])*
+- **Ta** `['ndarray']`: *array([ 15.75127416,  15.62771779,  15.50281024, ...,  21.        ,
+        21.        ,  21.        ])*
 - **Bf** `['float']`: *0.7*
 - **Pwater** `['int']`: *998*
 - **Cpw** `['float']`: *4.184*
-- **Qww_dis_ls_r** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
-- **Qww_dis_ls_nr** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
+- **Qww_dis_ls_r** `['ndarray']`: *array([   0,    0,    0, ..., 1228,  532,  522])*
+- **Qww_dis_ls_nr** `['ndarray']`: *array([   0,    0,    0, ..., 1222,  481,  462])*
 - **U_dhwtank** `['float']`: *0.225*
 - **AR** `['float']`: *3.3*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C12D390>*
-- **T_ext** `['ndarray']`: *array([ 8.8,  8.6,  8.4, ..., -0.3, -0.5, -0.7])*
-- **Qww** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1550F3F0>*
+- **T_ext** `['ndarray']`: *array([ 1.1,  1.1,  1. , ...,  1.4,  1.4,  1.4])*
+- **Qww** `['ndarray']`: *array([    0.        ,     0.        ,     0.        , ...,  2174.11914263,
+         587.59976828,   499.45980304])*
 
 
 ### Output
-- `['tuple']`: (array([  9.73533082,   9.75835448,   9.78142295, ...,  11.14941905,
-        11.16687292,  11.18431081]), array([ 59.95490068,  59.9096947 ,  59.86438185, ...,  59.77568316,
-        59.72395215,  59.67214037]))
+- `['tuple']`: (array([ 13.18881873,  13.18688198,  13.20198326, ...,  12.74161393,
+        12.74588333,  12.74896678]), array([ 59.95492923,  59.90986509,  59.86474933, ...,  59.95412594,
+        59.96686873,  59.97607186]))
 
 ### Docstring template
 
@@ -1775,37 +1771,38 @@ RETURNS
 
 # calc_Qwwf
 - number of invocations: 1
-- max duration: 1.803 s
-- avg duration: 1.803 s
-- min duration: 1.803 s
-- total duration: 1.803 s
+- max duration: 1.33 s
+- avg duration: 1.33 s
+- min duration: 1.33 s
+- total duration: 1.33 s
 
 ### Input
-- **Af** `['float64']`: *2171.2396513531003*
-- **Lcww_dis** `['float64']`: *72.543326121114177*
-- **Lsww_dis** `['float64']`: *183.34912611426176*
-- **Lvww_c** `['float64']`: *55.259252908257515*
-- **Lvww_dis** `['float64']`: *50.246706155723558*
-- **T_ext** `['ndarray']`: *array([ 8.8,  8.6,  8.4, ..., -0.3, -0.5, -0.7])*
-- **Ta** `['ndarray']`: *array([ 15.20217068,  15.13002744,  15.05677264, ...,  12.        ,
-        12.        ,  12.        ])*
+- **Af** `['float64']`: *2532.980834758901*
+- **Lcww_dis** `['float64']`: *187.0216532688365*
+- **Lsww_dis** `['float64']`: *300.79147412761955*
+- **Lvww_c** `['float64']`: *208.88296814418021*
+- **Lvww_dis** `['float64']`: *252.85832985874447*
+- **T_ext** `['ndarray']`: *array([ 1.1,  1.1,  1. , ...,  1.4,  1.4,  1.4])*
+- **Ta** `['ndarray']`: *array([ 15.75127416,  15.62771779,  15.50281024, ...,  21.        ,
+        21.        ,  21.        ])*
 - **Tww_re** `['ndarray']`: *array([ 10.,  10.,  10., ...,  10.,  10.,  10.])*
 - **Tww_sup_0** `['int64']`: *60*
-- **Y** `['list']`: *[0.3, 0.4, 0.4]*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C2B0410>*
-- **Vww_lpd** `['float64']`: *10.0*
-- **Vw_lpd** `['float64']`: *10.0*
-- **Occ_m2p** `['float64']`: *14.0*
-- **list_uses** `['list']`: *[u'GYM', u'HOSPITAL', u'HOTEL', u'INDUSTRIAL', u'MULTI_RES', u'OFFICE', u'PARKING', u'RETAIL']*
-- **schedules** `['list']`: *[([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.64000*
-- **building_uses** `['dict']`: *{u'INDUSTRIAL': 0.0, u'OFFICE': 1.0, u'GYM': 0.0, u'HOTEL': 0.0, u'PFloor': 1.0, u'PARKING': 0.0, u'MULTI_RES': 0.0, u'RETAIL': 0.0, u'HOSPITAL': 0.0}*
+- **Y** `['list']`: *[0.2, 0.3, 0.3]*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1507ABB0>*
+- **Vww_lpd** `['float64']`: *8.0*
+- **Vw_lpd** `['float64']`: *8.0*
+- **Occ_m2p** `['float64']`: *2.0*
+- **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
+- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.640*
+- **building_uses** `['dict']`: *{u'INDUSTRIAL': 0.0, u'OFFICE': 0.0, u'RESTAURANT': 0.20000000000000001, u'PFloor': 0.20000000000000001, u'PARKING': 0.80000000000000004, u'SERVERROOM': 0.0}*
 
 
 ### Output
-- `['tuple']`: (array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([  9.73533082,   9.75835448,   9.78142295, ...,  11.14941905,
-        11.16687292,  11.18431081]), array([  9.73533082,   9.75835448,   9.78142295, ...,  11.14941905,
-        11.16687292,  11.18431081]), 5419.7627526345404, array([ 59.95490068,  59.9096947 ,  59.86438185, ...,  59.77568316,
-        59.72395215,  59.67214037]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0., 
+- `['tuple']`: (array([ 0.        ,  0.        ,  0.        , ...,  0.01039254,
+        0.00280879,  0.00238748]), array([    0.        ,     0.        ,     0.        , ...,  2174.11914263,
+         587.59976828,   499.45980304]), array([ 13.18881873,  13.18688198,  13.20198326, ...,  12.74161393,
+        12.74588333,  12.74896678]), array([    0.        ,     0.        ,     0.        , ...,  4624.11914263,
+        1600.59976828,  1483.45980304]), 9040.2317305902616, array([ 59.95492923,  59.90986509,  59.86
 
 ### Docstring template
 
@@ -1877,19 +1874,19 @@ RETURNS
 
 # calc_T_em_ls
 - number of invocations: 1
-- max duration: 0.029 s
-- avg duration: 0.029 s
-- min duration: 0.029 s
-- total duration: 0.029 s
+- max duration: 0.034 s
+- avg duration: 0.034 s
+- min duration: 0.034 s
+- total duration: 0.034 s
 
 ### Input
 - **SystemH** `['unicode']`: *u'T1'*
 - **SystemC** `['unicode']`: *u'T3'*
-- **sys_e_ctrl** `['unicode']`: *u'T1'*
+- **sys_e_ctrl** `['unicode']`: *u'T2'*
 
 
 ### Output
-- `['tuple']`: (2.65, -2.0)
+- `['tuple']`: (1.3499999999999999, -0.7)
 
 ### Docstring template
 
@@ -1925,11 +1922,11 @@ RETURNS
 - total duration: 0.028 s
 
 ### Input
-- **qv_delta_p_lea_ref** `['float64']`: *28949.862018041335*
+- **qv_delta_p_lea_ref** `['float64']`: *102902.34641208035*
 
 
 ### Output
-- `['float64']`: 2130.2643780536373
+- `['float64']`: 7572.0292843945435
 
 ### Docstring template
 
@@ -1953,10 +1950,10 @@ RETURNS
 
 # calc_coeff_vent_zone
 - number of invocations: 1
-- max duration: 0.028 s
-- avg duration: 0.028 s
-- min duration: 0.028 s
-- total duration: 0.028 s
+- max duration: 0.031 s
+- avg duration: 0.031 s
+- min duration: 0.031 s
+- total duration: 0.031 s
 
 ### Input
 - **area_vent_zone** `['int']`: *0*
@@ -1987,26 +1984,26 @@ RETURNS
 
 # calc_disls
 - number of invocations: 1
-- max duration: 0.031 s
-- avg duration: 0.031 s
-- min duration: 0.031 s
-- total duration: 0.031 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
-- **tamb** `['float64']`: *15.202170683665049*
-- **hotw** `['float64']`: *0.0*
-- **Flowtap** `['float64']`: *0.035999999999999997*
-- **V** `['float64']`: *81.45987041393002*
-- **twws** `['int64']`: *60*
-- **Lsww_dis** `['float64']`: *183.34912611426176*
-- **p** `['int32']`: *998*
-- **cpw** `['float64']`: *4.1840000000000002*
-- **Y** `['float64']`: *0.40000000000000002*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C2B01F0>*
+- **tamb** `['float']`: *21.0*
+- **hotw** `['float']`: *900.9863113597689*
+- **Flowtap** `['float']`: *0.036*
+- **V** `['float']`: *133.63813083451046*
+- **twws** `['long']`: *60L*
+- **Lsww_dis** `['float']`: *300.79147412761955*
+- **p** `['int']`: *998*
+- **cpw** `['float']`: *4.184*
+- **Y** `['float']`: *0.3*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1550FF90>*
 
 
 ### Output
-- `['int']`: 0
+- `['float64']`: 140.72716460811631
 
 ### Docstring template
 
@@ -2015,31 +2012,31 @@ PARAMETERS
 ----------
 
 :param tamb:
-:type tamb: float64
+:type tamb: float
 
 :param hotw:
-:type hotw: float64
+:type hotw: float
 
 :param Flowtap:
-:type Flowtap: float64
+:type Flowtap: float
 
 :param V:
-:type V: float64
+:type V: float
 
 :param twws:
-:type twws: int64
+:type twws: long
 
 :param Lsww_dis:
-:type Lsww_dis: float64
+:type Lsww_dis: float
 
 :param p:
-:type p: int32
+:type p: int
 
 :param cpw:
-:type cpw: float64
+:type cpw: float
 
 :param Y:
-:type Y: float64
+:type Y: float
 
 :param gv:
 :type gv: GlobalVariables
@@ -2048,7 +2045,7 @@ RETURNS
 -------
 
 :returns:
-:rtype: int
+:rtype: float64
 
 ```
 
@@ -2057,18 +2054,18 @@ RETURNS
 
 # calc_h
 - number of invocations: 1
-- max duration: 0.03 s
-- avg duration: 0.03 s
-- min duration: 0.03 s
-- total duration: 0.03 s
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
-- **t** `['int32']`: *24*
-- **w** `['float64']`: *0.0090625183347139426*
+- **t** `['int32']`: *28*
+- **w** `['float64']`: *0.0058498530729252374*
 
 
 ### Output
-- `['float64']`: 47.207559164780534
+- `['float64']`: 43.101866965703124
 
 ### Docstring template
 
@@ -2095,22 +2092,22 @@ RETURNS
 
 # calc_h_ve_adj
 - number of invocations: 1
-- max duration: 0.03 s
-- avg duration: 0.03 s
-- min duration: 0.03 s
-- total duration: 0.03 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
-- **q_m_mech** `['float64']`: *1.4033382075743557*
+- **q_m_mech** `['float64']`: *0.54571461453039194*
 - **q_m_nat** `['int']`: *0*
-- **temp_ext** `['float64']`: *8.8000000000000007*
-- **temp_sup** `['float64']`: *8.8000000000000007*
+- **temp_ext** `['float64']`: *1.1000000000000001*
+- **temp_sup** `['float64']`: *1.1000000000000001*
 - **temp_zone_set** `['int']`: *21*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C2B0710>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x151829F0>*
 
 
 ### Output
-- `['float64']`: 1414.5649132349504
+- `['float64']`: 550.080331446635
 
 ### Docstring template
 
@@ -2149,21 +2146,21 @@ RETURNS
 
 # calc_hex
 - number of invocations: 1
-- max duration: 0.099 s
-- avg duration: 0.099 s
-- min duration: 0.099 s
-- total duration: 0.099 s
+- max duration: 0.092 s
+- avg duration: 0.092 s
+- min duration: 0.092 s
+- total duration: 0.092 s
 
 ### Input
-- **rel_humidity_ext** `['int64']`: *73*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C12D710>*
-- **temp_ext** `['float64']`: *8.1999999999999993*
-- **temp_zone_prev** `['float64']`: *18.759995042815788*
+- **rel_humidity_ext** `['int64']`: *85*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x151B2250>*
+- **temp_ext** `['float64']`: *8.4000000000000004*
+- **temp_zone_prev** `['float64']`: *29.564381831684884*
 - **timestep** `['int']`: *3217*
 
 
 ### Output
-- `['tuple']`: (8.1999999999999993, 0.0049493200522193461)
+- `['tuple']`: (8.4000000000000004, 0.0058498530729252374)
 
 ### Docstring template
 
@@ -2199,25 +2196,25 @@ RETURNS
 
 # calc_hvac
 - number of invocations: 1
-- max duration: 0.031 s
-- avg duration: 0.031 s
-- min duration: 0.031 s
-- total duration: 0.031 s
+- max duration: 0.148 s
+- avg duration: 0.148 s
+- min duration: 0.148 s
+- total duration: 0.148 s
 
 ### Input
-- **rhum_1** `['int64']`: *73*
-- **temp_1** `['float64']`: *8.1999999999999993*
-- **temp_zone_set** `['float64']`: *18.639283464540256*
-- **qv_req** `['float64']`: *1.1694485063119631*
-- **qe_sen** `['int']`: *0*
-- **temp_5_prev** `['float64']`: *18.759995042815788*
+- **rhum_1** `['int64']`: *85*
+- **temp_1** `['float64']`: *8.4000000000000004*
+- **temp_zone_set** `['int32']`: *28*
+- **qv_req** `['float64']`: *0.45476217877532665*
+- **qe_sen** `['float64']`: *-57907.787205514789*
+- **temp_5_prev** `['float64']`: *29.564381831684884*
 - **wint** `['float64']`: *0.0*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C967510>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1507AF50>*
 - **timestep** `['int']`: *3217*
 
 
 ### Output
-- `['tuple']`: (0, 0, 0, 0, 0, 0, 0, nan, nan, 8.1999999999999993, 8.1999999999999993, 0, 0, 18.639283464540256)
+- `['tuple']`: (0, 7355.0450612046816, 8832.2845307331172, 0, 0.012069029387780849, 0, 2.8965670530674039, nan, 7.9000000000000004, nan, 8.4000000000000004, 0.0058498530729252374, 0.0070615670671675748, 28)
 
 ### Docstring template
 
@@ -2232,13 +2229,13 @@ PARAMETERS
 :type temp_1: float64
 
 :param temp_zone_set:
-:type temp_zone_set: float64
+:type temp_zone_set: int32
 
 :param qv_req:
 :type qv_req: float64
 
 :param qe_sen:
-:type qe_sen: int
+:type qe_sen: float64
 
 :param temp_5_prev:
 :type temp_5_prev: float64
@@ -2272,9 +2269,9 @@ RETURNS
 
 ### Input
 - **schedule** `['float64']`: *0.0*
-- **Vww_lpd** `['float64']`: *10.0*
-- **Occ_m2p** `['float64']`: *14.0*
-- **Af** `['float64']`: *2171.2396513531003*
+- **Vww_lpd** `['float64']`: *8.0*
+- **Occ_m2p** `['float64']`: *2.0*
+- **Af** `['float64']`: *2532.980834758901*
 - **Pwater** `['int32']`: *998*
 
 
@@ -2315,21 +2312,20 @@ RETURNS
 
 # calc_occ
 - number of invocations: 1
-- max duration: 1.042 s
-- avg duration: 1.042 s
-- min duration: 1.042 s
-- total duration: 1.042 s
+- max duration: 0.691 s
+- avg duration: 0.691 s
+- min duration: 0.691 s
+- total duration: 0.691 s
 
 ### Input
-- **list_uses** `['list']`: *[u'GYM', u'HOSPITAL', u'HOTEL', u'INDUSTRIAL', u'MULTI_RES', u'OFFICE', u'PARKING', u'RETAIL']*
-- **schedules** `['list']`: *[([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.64000*
-- **building_uses** `['dict']`: *{u'INDUSTRIAL': 0.0, u'OFFICE': 1.0, u'GYM': 0.0, u'HOTEL': 0.0, u'PFloor': 1.0, u'PARKING': 0.0, u'MULTI_RES': 0.0, u'RETAIL': 0.0, u'HOSPITAL': 0.0}*
-- **Occ_m2p** `['float64']`: *14.0*
-- **Af** `['float64']`: *2171.2396513531003*
+- **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
+- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.640*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x151B2310>*
 
 
 ### Output
-- `['ndarray']`: array([ 0.,  0.,  0., ...,  0.,  0.,  0.])
+- `['ndarray']`: array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
+         30.39577002,   25.83640451])
 
 ### Docstring template
 
@@ -2343,14 +2339,8 @@ PARAMETERS
 :param schedules:
 :type schedules: list
 
-:param building_uses:
-:type building_uses: dict
-
-:param Occ_m2p:
-:type Occ_m2p: float64
-
-:param Af:
-:type Af: float64
+:param bpr:
+:type bpr: BuildingPropertiesRow
 
 RETURNS
 -------
@@ -2365,19 +2355,19 @@ RETURNS
 
 # calc_occ_schedule
 - number of invocations: 1
-- max duration: 0.508 s
-- avg duration: 0.508 s
-- min duration: 0.508 s
-- total duration: 0.508 s
+- max duration: 0.309 s
+- avg duration: 0.309 s
+- min duration: 0.309 s
+- total duration: 0.309 s
 
 ### Input
-- **list_uses** `['list']`: *[u'GYM', u'HOSPITAL', u'HOTEL', u'INDUSTRIAL', u'MULTI_RES', u'OFFICE', u'PARKING', u'RETAIL']*
-- **schedules** `['list']`: *[([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.64000*
-- **building_uses** `['dict']`: *{u'INDUSTRIAL': 0.0, u'OFFICE': 1.0, u'GYM': 0.0, u'HOTEL': 0.0, u'PFloor': 1.0, u'PARKING': 0.0, u'MULTI_RES': 0.0, u'RETAIL': 0.0, u'HOSPITAL': 0.0}*
+- **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
+- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.640*
+- **building_uses** `['dict']`: *{u'INDUSTRIAL': 0.0, u'OFFICE': 0.0, u'RESTAURANT': 0.20000000000000001, u'PFloor': 0.20000000000000001, u'PARKING': 0.80000000000000004, u'SERVERROOM': 0.0}*
 
 
 ### Output
-- `['ndarray']`: array([ 0.,  0.,  0., ...,  0.,  0.,  0.])
+- `['ndarray']`: array([ 0.    ,  0.    ,  0.    , ...,  0.0888,  0.024 ,  0.0204])
 
 ### Docstring template
 
@@ -2407,18 +2397,18 @@ RETURNS
 
 # calc_qv_delta_p_ref
 - number of invocations: 1
-- max duration: 0.03 s
-- avg duration: 0.03 s
-- min duration: 0.03 s
-- total duration: 0.03 s
+- max duration: 0.027 s
+- avg duration: 0.027 s
+- min duration: 0.027 s
+- total duration: 0.027 s
 
 ### Input
-- **n_delta_p_ref** `['int64']`: *6*
-- **vol_building** `['float64']`: *4824.9770030068894*
+- **n_delta_p_ref** `['int64']`: *2*
+- **vol_building** `['float64']`: *51451.173206040177*
 
 
 ### Output
-- `['float64']`: 28949.862018041335
+- `['float64']`: 102902.34641208035
 
 ### Docstring template
 
@@ -2443,21 +2433,75 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
+# calc_ta
+- number of invocations: 1
+- max duration: 0.038 s
+- avg duration: 0.038 s
+- min duration: 0.038 s
+- total duration: 0.038 s
+
+### Input
+- **Htr_is** `['float64']`: *69302.623523592818*
+- **Hve** `['float64']`: *550.080331446635*
+- **IHC_nd** `['int']`: *0*
+- **I_ia** `['float64']`: *3642.9330365502524*
+- **te_t** `['float64']`: *1.1000000000000001*
+- **ts** `['float64']`: *15.815001104854327*
+
+
+### Output
+- `['float64']`: 15.751274156536283
+
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Htr_is:
+:type Htr_is: float64
+
+:param Hve:
+:type Hve: float64
+
+:param IHC_nd:
+:type IHC_nd: int
+
+:param I_ia:
+:type I_ia: float64
+
+:param te_t:
+:type te_t: float64
+
+:param ts:
+:type ts: float64
+
+RETURNS
+-------
+
+:returns:
+:rtype: float64
+
+```
+
+[TOC](#table-of-contents)
+---
+
 # calc_temperatures_emission_systems
 - number of invocations: 1
-- max duration: 0.602 s
-- avg duration: 0.602 s
-- min duration: 0.602 s
-- total duration: 0.602 s
+- max duration: 0.318 s
+- avg duration: 0.318 s
+- min duration: 0.318 s
+- total duration: 0.318 s
 
 ### Input
 - **Qcsf** `['ndarray']`: *array([-0., -0., -0., ..., -0., -0., -0.])*
-- **Qcsf_0** `['float64']`: *-281104.46918348083*
+- **Qcsf_0** `['float64']`: *-488411.89619418682*
 - **Qhsf** `['ndarray']`: *array([     0.        ,      0.        ,      0.        , ...,
-        93991.5268617 ,  94591.45409877,  95210.96830999])*
-- **Qhsf_0** `['float64']`: *296485.76361481688*
-- **Ta** `['ndarray']`: *array([ 15.20217068,  15.13002744,  15.05677264, ...,  12.        ,
-        12.        ,  12.        ])*
+        54776.24524343,  44440.48177405,  47516.38542795])*
+- **Qhsf_0** `['float64']`: *336657.37528759934*
+- **Ta** `['ndarray']`: *array([ 15.75127416,  15.62771779,  15.50281024, ...,  21.        ,
+        21.        ,  21.        ])*
 - **Ta_re_cs** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **Ta_re_hs** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **Ta_sup_cs** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
@@ -2466,16 +2510,16 @@ RETURNS
 - **Tcs_sup_0** `['int64']`: *7*
 - **Ths_re_0** `['int64']`: *70*
 - **Ths_sup_0** `['int64']`: *90*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0564ABF0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x15194A90>*
 - **ma_sup_cs** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **ma_sup_hs** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **sys_e_cooling** `['unicode']`: *u'T3'*
 - **sys_e_heating** `['unicode']`: *u'T1'*
-- **ta_hs_set** `['ndarray']`: *array([ 12.,  12.,  12., ...,  12.,  12.,  12.])*
+- **ta_hs_set** `['ndarray']`: *array([ 12.,  12.,  12., ...,  21.,  21.,  21.])*
 
 
 ### Output
-- `['tuple']`: (array([0, 0, 0, ..., 0, 0, 0]), array([0, 0, 0, ..., 0, 0, 0]), array([ 0,  0,  0, ..., 32, 32, 32]), array([ 0,  0,  0, ..., 39, 39, 39]), array([0, 0, 0, ..., 0, 0, 0]), array([ 0,  0,  0, ..., 14, 14, 14]))
+- `['tuple']`: (array([0, 0, 0, ..., 0, 0, 0]), array([0, 0, 0, ..., 0, 0, 0]), array([ 0,  0,  0, ..., 33, 32, 32]), array([ 0,  0,  0, ..., 37, 34, 35]), array([0, 0, 0, ..., 0, 0, 0]), array([    0,     0,     0, ..., 16832, 16832, 16832]))
 
 ### Docstring template
 
@@ -2553,24 +2597,28 @@ RETURNS
 
 # calc_thermal_load_hvac_timestep
 - number of invocations: 1
-- max duration: 0.294 s
-- avg duration: 0.294 s
-- min duration: 0.294 s
-- total duration: 0.294 s
+- max duration: 0.411 s
+- avg duration: 0.411 s
+- min duration: 0.411 s
+- total duration: 0.411 s
 
 ### Input
 - **t** `['int']`: *3217*
-- **tsd** `['dict']`: *{'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Im_tot': array([ 31273.64577507,  30638.91316891,  30004.18056276, ...,
-            0.        ,      0.        ,      0.        ]), 've': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'people': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 15.52053177,  15.45631268,  15.39091312, ...,   0.        ,
-         0.        ,   0.        ]), 'Elf': array([ 2761.81683652,  2761.8168*
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x0C9672D0>*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0CA6BB10>*
+- **tsd** `['dict']`: *{'w_int': array([ 0.        ,  0.        ,  0.        , ...,  0.00265541,
+        0.00071768,  0.00061003]), 'Im_tot': array([ 8783.63050139,  8783.63050139,  8635.80184019, ...,     0.        ,
+           0.        ,     0.        ]), 've': array([    0.        ,     0.        ,     0.        , ...,  3238.97325302,
+         875.39817649,   744.08845002]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
+         30.39577002,   25.83640451]), 'Ta_sup_cs': array([*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x151A9870>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x151AD250>*
 
 
 ### Output
-- `['dict']`: {'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Im_tot': array([ 31273.64577507,  30638.91316891,  30004.18056276, ...,
-            0.        ,      0.        ,      0.        ]), 've': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'people': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 15.52053177,  15.45631268,  15.39091312, ...,   0.        ,
-         0.        ,   0.        ]), 'Elf': array([ 2761.81683652,  2761.8168
+- `['dict']`: {'w_int': array([ 0.        ,  0.        ,  0.        , ...,  0.00265541,
+        0.00071768,  0.00061003]), 'Im_tot': array([ 8783.63050139,  8783.63050139,  8635.80184019, ...,     0.        ,
+           0.        ,     0.        ]), 've': array([    0.        ,     0.        ,     0.        , ...,  3238.97325302,
+         875.39817649,   744.08845002]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
+         30.39577002,   25.83640451]), 'Ta_sup_cs': array([
 
 ### Docstring template
 
@@ -2603,23 +2651,27 @@ RETURNS
 
 # calc_thermal_load_mechanical_and_natural_ventilation_timestep
 - number of invocations: 1
-- max duration: 0.374 s
-- avg duration: 0.374 s
-- min duration: 0.374 s
-- total duration: 0.374 s
+- max duration: 0.67 s
+- avg duration: 0.67 s
+- min duration: 0.67 s
+- total duration: 0.67 s
 
 ### Input
 - **t** `['int']`: *0*
-- **tsd** `['dict']`: *{'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 've': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'people': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Elf': array([ 2761.81683652,  2761.81683652,  2761.81683652, ...,  2071.36262739,
-        2071.36262739,  2071.36262739]), 'I_st': array([-994.95409443, -994.95409443, -994.954094*
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x0C9D83F0>*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C12AD70>*
+- **tsd** `['dict']`: *{'w_int': array([ 0.        ,  0.        ,  0.        , ...,  0.00265541,
+        0.00071768,  0.00061003]), 'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 've': array([    0.        ,     0.        ,     0.        , ...,  3238.97325302,
+         875.39817649,   744.08845002]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
+         30.39577002,   25.83640451]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x1519A6D0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1519A6D0>*
 
 
 ### Output
-- `['dict']`: {'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Im_tot': array([ 31273.64577507,      0.        ,      0.        , ...,
-            0.        ,      0.        ,      0.        ]), 've': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'people': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 15.52053177,   0.        ,   0.        , ...,   0.        ,
-         0.        ,   0.        ]), 'Elf': array([ 2761.81683652,  2761.8168
+- `['dict']`: {'w_int': array([ 0.        ,  0.        ,  0.        , ...,  0.00265541,
+        0.00071768,  0.00061003]), 'Im_tot': array([ 8783.63050139,     0.        ,     0.        , ...,     0.        ,
+           0.        ,     0.        ]), 've': array([    0.        ,     0.        ,     0.        , ...,  3238.97325302,
+         875.39817649,   744.08845002]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
+         30.39577002,   25.83640451]), 'Ta_sup_cs': array([
 
 ### Docstring template
 
@@ -2652,36 +2704,40 @@ RETURNS
 
 # calc_thermal_loads
 - number of invocations: 1
-- max duration: 10.009 s
-- avg duration: 10.009 s
-- min duration: 10.009 s
-- total duration: 10.009 s
+- max duration: 8.46 s
+- avg duration: 8.46 s
+- min duration: 8.46 s
+- total duration: 8.46 s
 
 ### Input
-- **building_name** `['str']`: *'B153767'*
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x0C22D330>*
+- **building_name** `['str']`: *'Bau A'*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x16AF62F0>*
 - **weather_data** `['DataFrame']`: *(8760, 3)*
-- **usage_schedules** `['dict']`: *{'list_uses': [u'GYM', u'HOSPITAL', u'HOTEL', u'INDUSTRIAL', u'MULTI_RES', u'OFFICE', u'PARKING', u'RETAIL'], 'schedules': [([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4,*
-- **date** `['DatetimeIndex']`: *<class 'pandas.tseries.index.DatetimeIndex'>
-[2016-01-01 00:00:00, ..., 2016-12-30 23:00:00]
-Length: 8760, Freq: H, Timezone: None*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C2B01F0>*
-- **results_folder** `['str']`: *'c:\\reference-case\\baseline\\outputs\\data\\demand'*
+- **usage_schedules** `['dict']`: *{'list_uses': [u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM'], 'schedules': [([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.1600000000000*
+- **date** `['DatetimeIndex']`: *DatetimeIndex(['2010-01-01 00:00:00', '2010-01-01 01:00:00',
+               '2010-01-01 02:00:00', '2010-01-01 03:00:00',
+               '2010-01-01 04:00:00', '2010-01-01 05:00:00',
+               '2010-01-01 06:00:00', '2010-01-01 07:00:00',
+               '2010-01-01 08:00:00', '2010-01-01 09:00:00',
+               ...
+               '2010-12-31 14:00:00', '2010-12-31 15:00:00',
+               '2010-12-31 16:00:00', '2010-12-31 17:00:00',
+               '2010-12-31 18:00:00', '2010-12-31 19:0*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x15063570>*
+- **results_folder** `['str']`: *'c:\\reference-case-zug\\baseline\\outputs\\data\\demand'*
 - **temporary_folder** `['str']`: *'c:\\users\\darthoma\\appdata\\local\\temp'*
 
 #### weather_data:
 ```
          drybulb_C  relhum_percent   windspd_ms
 count  8760.000000     8760.000000  8760.000000
-mean     10.840890       71.675799     1.008390
-std       7.885023       16.270003     1.047616
-min      -8.900000       25.000000     0.000000
-25%       4.800000       60.000000     0.300000
-50%      10.700000       74.000000     0.700000
-75%      16.900000       84.000000     1.400000
-max      32.500000      100.000000     9.400000
-
-[8 rows x 3 columns]
+mean     10.150000       73.861644     1.838094
+std       8.022269       15.889964     1.847214
+min     -10.300000       28.000000     0.000000
+25%       3.700000       62.000000     0.500000
+50%      10.400000       77.000000     1.300000
+75%      16.100000       86.000000     2.500000
+max      32.300000      100.000000    15.300000
 ```
 
 ### Output
@@ -2728,7 +2784,95 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_w
+# calc_tm
+- number of invocations: 1
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
+
+### Input
+- **Cm** `['float64']`: *417941837.73521864*
+- **Htr_3** `['float64']`: *876.41925301753997*
+- **Htr_em** `['float64']`: *601.8673589723943*
+- **Im_tot** `['float64']`: *8783.6305013901547*
+- **tm_t0** `['int']`: *16*
+
+
+### Output
+- `['tuple']`: (15.872734454107169, 15.936367227053584)
+
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Cm:
+:type Cm: float64
+
+:param Htr_3:
+:type Htr_3: float64
+
+:param Htr_em:
+:type Htr_em: float64
+
+:param Im_tot:
+:type Im_tot: float64
+
+:param tm_t0:
+:type tm_t0: int
+
+RETURNS
+-------
+
+:returns:
+:rtype: tuple
+
+```
+
+[TOC](#table-of-contents)
+---
+
+# calc_top
+- number of invocations: 1
+- max duration: 0.028 s
+- avg duration: 0.028 s
+- min duration: 0.028 s
+- total duration: 0.028 s
+
+### Input
+- **ta** `['float64']`: *15.751274156536283*
+- **ts** `['float64']`: *15.815001104854327*
+
+
+### Output
+- `['float64']`: 15.795245750875733
+
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param ta:
+:type ta: float64
+
+:param ts:
+:type ts: float64
+
+RETURNS
+-------
+
+:returns:
+:rtype: float64
+
+```
+
+[TOC](#table-of-contents)
+---
+
+# calc_ts
 - number of invocations: 1
 - max duration: 0.031 s
 - avg duration: 0.031 s
@@ -2736,12 +2880,78 @@ RETURNS
 - total duration: 0.031 s
 
 ### Input
-- **t** `['float64']`: *8.1999999999999993*
-- **RH** `['int64']`: *73*
+- **Htr_1** `['float64']`: *545.74852531251054*
+- **Htr_ms** `['float64']`: *57625.313990764997*
+- **Htr_w** `['float64']`: *344.20598175023116*
+- **Hve** `['float64']`: *550.080331446635*
+- **IHC_nd** `['int']`: *0*
+- **I_ia** `['float64']`: *3642.9330365502524*
+- **I_st** `['float64']`: *2487.6752097710209*
+- **te_t** `['float64']`: *1.1000000000000001*
+- **tm** `['float64']`: *15.936367227053584*
 
 
 ### Output
-- `['float64']`: 0.0049493200522193461
+- `['float64']`: 15.815001104854327
+
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Htr_1:
+:type Htr_1: float64
+
+:param Htr_ms:
+:type Htr_ms: float64
+
+:param Htr_w:
+:type Htr_w: float64
+
+:param Hve:
+:type Hve: float64
+
+:param IHC_nd:
+:type IHC_nd: int
+
+:param I_ia:
+:type I_ia: float64
+
+:param I_st:
+:type I_st: float64
+
+:param te_t:
+:type te_t: float64
+
+:param tm:
+:type tm: float64
+
+RETURNS
+-------
+
+:returns:
+:rtype: float64
+
+```
+
+[TOC](#table-of-contents)
+---
+
+# calc_w
+- number of invocations: 1
+- max duration: 0.028 s
+- avg duration: 0.028 s
+- min duration: 0.028 s
+- total duration: 0.028 s
+
+### Input
+- **t** `['float64']`: *8.4000000000000004*
+- **RH** `['int64']`: *85*
+
+
+### Output
+- `['float64']`: 0.0058498530729252374
 
 ### Docstring template
 
@@ -2774,14 +2984,14 @@ RETURNS
 - total duration: 0.029 s
 
 ### Input
-- **t5** `['int32']`: *24*
-- **w2** `['float64']`: *0.0090625183347139426*
-- **t3** `['int']`: *16*
-- **w5** `['float64']`: *0.0094873786628507113*
+- **t5** `['int32']`: *28*
+- **w2** `['float64']`: *0.0058498530729252374*
+- **t3** `['float64']`: *8.4000000000000004*
+- **w5** `['float64']`: *0.0058498530729252374*
 
 
 ### Output
-- `['float64']`: 0.0090625183347139426
+- `['float64']`: 0.0070615670671675748
 
 ### Docstring template
 
@@ -2796,60 +3006,10 @@ PARAMETERS
 :type w2: float64
 
 :param t3:
-:type t3: int
+:type t3: float64
 
 :param w5:
 :type w5: float64
-
-RETURNS
--------
-
-:returns:
-:rtype: float64
-
-```
-
-[TOC](#table-of-contents)
----
-
-# calc_w3_heating_case
-- number of invocations: 1
-- max duration: 0.041 s
-- avg duration: 0.041 s
-- min duration: 0.041 s
-- total duration: 0.041 s
-
-### Input
-- **t5** `['float64']`: *20.0*
-- **w2** `['float64']`: *0.0041699403233700994*
-- **w5** `['float64']`: *0.0045258958486444414*
-- **t3** `['int']`: *36*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0CFFB590>*
-
-
-### Output
-- `['float64']`: 0.0041699403233700994
-
-### Docstring template
-
-```
-PARAMETERS
-----------
-
-:param t5:
-:type t5: float64
-
-:param w2:
-:type w2: float64
-
-:param w5:
-:type w5: float64
-
-:param t3:
-:type t3: int
-
-:param gv:
-:type gv: GlobalVariables
 
 RETURNS
 -------
@@ -2864,15 +3024,15 @@ RETURNS
 
 # demand_calculation
 - number of invocations: 1
-- max duration: 812.509 s
-- avg duration: 812.509 s
-- min duration: 812.509 s
-- total duration: 812.509 s
+- max duration: 58.949 s
+- avg duration: 58.949 s
+- min duration: 58.949 s
+- total duration: 58.949 s
 
 ### Input
-- **locator** `['InputLocator']`: *<cea.inputlocator.InputLocator object at 0x0C135370>*
-- **weather_path** `['str']`: *'C:\\Users\\darthoma\\Documents\\GitHub\\CEAforArcGIS\\cea\\databases\\CH\\Weather\\Zurich.epw'*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C135370>*
+- **locator** `['InputLocator']`: *<cea.inputlocator.InputLocator object at 0x1507A2B0>*
+- **weather_path** `['str']`: *'C:\\Users\\darthoma\\Documents\\GitHub\\CEAforArcGIS\\cea\\databases\\CH\\Weather\\Zug-2010.epw'*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1507A2B0>*
 
 
 ### Output
@@ -2902,16 +3062,16 @@ RETURNS
 INPUT / OUTPUT FILES
 --------------------
 
-- get_radiation: c:\reference-case\baseline\outputs\data\solar-radiation\radiation.csv
-- get_surface_properties: c:\reference-case\baseline\outputs\data\solar-radiation\properties_surfaces.csv
-- get_building_geometry: c:\reference-case\baseline\inputs\building-geometry\zone.shp
-- get_building_hvac: c:\reference-case\baseline\inputs\building-properties\technical_systems.shp
-- get_building_thermal: c:\reference-case\baseline\inputs\building-properties\thermal_properties.shp
-- get_building_occupancy: c:\reference-case\baseline\inputs\building-properties\occupancy.shp
-- get_building_architecture: c:\reference-case\baseline\inputs\building-properties\architecture.shp
-- get_building_age: c:\reference-case\baseline\inputs\building-properties\age.shp
-- get_building_comfort: c:\reference-case\baseline\inputs\building-properties\indoor_comfort.shp
-- get_building_internal: c:\reference-case\baseline\inputs\building-properties\internal_loads.shp
+- get_radiation: c:\reference-case-zug\baseline\outputs\data\solar-radiation\radiation.csv
+- get_surface_properties: c:\reference-case-zug\baseline\outputs\data\solar-radiation\properties_surfaces.csv
+- get_building_geometry: c:\reference-case-zug\baseline\inputs\building-geometry\zone.shp
+- get_building_hvac: c:\reference-case-zug\baseline\inputs\building-properties\technical_systems.shp
+- get_building_thermal: c:\reference-case-zug\baseline\inputs\building-properties\thermal_properties.shp
+- get_building_occupancy: c:\reference-case-zug\baseline\inputs\building-properties\occupancy.shp
+- get_building_architecture: c:\reference-case-zug\baseline\inputs\building-properties\architecture.shp
+- get_building_age: c:\reference-case-zug\baseline\inputs\building-properties\age.shp
+- get_building_comfort: c:\reference-case-zug\baseline\inputs\building-properties\indoor_comfort.shp
+- get_building_internal: c:\reference-case-zug\baseline\inputs\building-properties\internal_loads.shp
 ```
 
 [TOC](#table-of-contents)
@@ -2919,17 +3079,17 @@ INPUT / OUTPUT FILES
 
 # get_building_geometry_ventilation
 - number of invocations: 1
-- max duration: 0.03 s
-- avg duration: 0.03 s
-- min duration: 0.03 s
-- total duration: 0.03 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
-- **gdf_building_geometry** `['dict']`: *{'perimeter': 103.08389826411121, u'Blength': 32.648092418099999, u'height_bg': 6.0, u'floors_bg': 2.0, u'height_ag': 12.0, u'floors_ag': 4.0, u'Bwidth': 16.008581384100001, 'footprint': 402.0814169172408}*
+- **gdf_building_geometry** `['dict']`: *{'perimeter': 234.50218018236586, u'Blength': 87.0, u'height_bg': 3.0, u'floors_bg': 1.0, u'height_ag': 19.5, u'floors_ag': 5.0, u'Bwidth': 30.0, 'footprint': 2638.5217028738552}*
 
 
 ### Output
-- `['tuple']`: (1237.0067791693345, 402.0814169172408, 12.0, 0)
+- `['tuple']`: (4572.7925135561345, 2638.5217028738552, 19.5, 0)
 
 ### Docstring template
 
@@ -2953,20 +3113,20 @@ RETURNS
 
 # get_properties_natural_ventilation
 - number of invocations: 1
-- max duration: 0.428 s
-- avg duration: 0.428 s
-- min duration: 0.428 s
-- total duration: 0.428 s
+- max duration: 0.43 s
+- avg duration: 0.43 s
+- min duration: 0.43 s
+- total duration: 0.43 s
 
 ### Input
-- **gdf_geometry_building** `['dict']`: *{'perimeter': 103.08389826411121, u'Blength': 32.648092418099999, u'height_bg': 6.0, u'floors_bg': 2.0, u'height_ag': 12.0, u'floors_ag': 4.0, u'Bwidth': 16.008581384100001, 'footprint': 402.0814169172408}*
-- **gdf_architecture_building** `['dict']`: *{u'Occ_m2p': 14.0, u'f_cros': 0, u'n50': 6, u'win_op': 0.5, u'win_wall': 0.40000000000000002, u'type_shade': u'T1'}*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C135890>*
+- **gdf_geometry_building** `['dict']`: *{'perimeter': 234.50218018236586, u'Blength': 87.0, u'height_bg': 3.0, u'floors_bg': 1.0, u'height_ag': 19.5, u'floors_ag': 5.0, u'Bwidth': 30.0, 'footprint': 2638.5217028738552}*
+- **gdf_architecture_building** `['dict']`: *{u'Occ_m2p': 2.0, u'f_cros': 0, u'n50': 2, u'win_op': 0.5, u'win_wall': 0.28950999999999999, u'type_shade': u'T1'}*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1550FF90>*
 
 
 ### Output
-- `['dict']`: {'coeff_wind_pressure_path_vent': array([ 0.05, -0.05,  0.05, -0.05]), 'coeff_vent_path': array([ 0.,  0.,  0.,  0.]), 'height_vent_path': array([ 3.,  3.,  9.,  9.]), 'coeff_lea_path': array([ 401.92338084,  401.92338084,  401.92338084,  401.92338084,
-        522.57085469]), 'factor_cros': 0, 'height_lea_path': array([  3.,   3.,   9.,   9.,  12.]), 'coeff_wind_pressure_path_lea': array([ 0.05, -0.05,  0.05, -0.05,  0.  ])}
+- `['dict']`: {'coeff_wind_pressure_path_vent': array([ 0.05, -0.05,  0.05, -0.05]), 'coeff_vent_path': array([ 0.,  0.,  0.,  0.]), 'height_vent_path': array([  4.875,   4.875,  14.625,  14.625]), 'coeff_lea_path': array([ 1200.38171216,  1200.38171216,  1200.38171216,  1200.38171216,
+        2770.50243576]), 'factor_cros': 0, 'height_lea_path': array([  4.875,   4.875,  14.625,  14.625,  19.5  ]), 'coeff_wind_pressure_path_lea': array([ 0.05, -0.05,  0.05, -0.05,  0.  ])}
 
 ### Docstring template
 
@@ -2996,28 +3156,26 @@ RETURNS
 
 # get_temperatures
 - number of invocations: 1
-- max duration: 0.181 s
-- avg duration: 0.181 s
-- min duration: 0.181 s
-- total duration: 0.181 s
+- max duration: 0.141 s
+- avg duration: 0.141 s
+- min duration: 0.141 s
+- total duration: 0.141 s
 
 ### Input
 - **locator** `['LocatorDecorator']`: *???*
-- **prop_HVAC** `['GeoDataFrame']`: *(1482, 5)*
+- **prop_HVAC** `['GeoDataFrame']`: *(24, 5)*
 
 #### prop_HVAC:
 ```
-              Name type_cs type_ctrl type_dhw type_hs
-count         1482    1482      1482     1482    1482
-unique        1482       2         3        2       5
-top     B302034519      T0        T1       T1      T1
-freq             1     988      1377     1403    1368
-
-[4 rows x 5 columns]
+          Name type_cs type_ctrl type_dhw type_hs
+count       24      24        24       24      24
+unique      24       2         3        2       2
+top     Bau 03      T3        T1       T1      T1
+freq         1      20        14       23      23
 ```
 
 ### Output
-- `['DataFrame']`: (1482, 14)
+- `['DataFrame']`: (24, 14)
 
 ### Docstring template
 
@@ -3050,13 +3208,13 @@ INPUT / OUTPUT FILES
 
 # lookup_coeff_wind_pressure
 - number of invocations: 1
-- max duration: 0.041 s
-- avg duration: 0.041 s
-- min duration: 0.041 s
-- total duration: 0.041 s
+- max duration: 0.034 s
+- avg duration: 0.034 s
+- min duration: 0.034 s
+- total duration: 0.034 s
 
 ### Input
-- **height_path** `['ndarray']`: *array([  3.,   3.,   9.,   9.,  12.])*
+- **height_path** `['ndarray']`: *array([  4.875,   4.875,  14.625,  14.625,  19.5  ])*
 - **class_shielding** `['int']`: *2*
 - **orientation_path** `['ndarray']`: *array([ 0.,  1.,  0.,  1.,  2.])*
 - **slope_roof** `['int']`: *0*
@@ -3100,25 +3258,49 @@ RETURNS
 
 # read_schedules
 - number of invocations: 1
-- max duration: 0.035 s
-- avg duration: 0.035 s
-- min duration: 0.035 s
-- total duration: 0.035 s
+- max duration: 0.038 s
+- avg duration: 0.038 s
+- min duration: 0.038 s
+- total duration: 0.038 s
 
 ### Input
-- **use** `['unicode']`: *u'GYM'*
-- **x** `['DataFrame']`: *(24, 41)*
+- **use** `['unicode']`: *u'INDUSTRIAL'*
+- **x** `['DataFrame']`: *(24, 37)*
 
 #### x:
 ```
-Index([nan, u'Weekday_1', u'Saturday_1', u'Sunday_1', nan, nan, nan, u'Weekday_2', u'Saturday_2', u'Sunday_2', nan, nan, nan, u'Weekday_3', u'Saturday_3', u'Sunday_3', nan, nan, nan, u'month', nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan], dtype='object')
+        NaN  Weekday_1  Saturday_1  Sunday_1  NaN  \
+count    24       24.0          24        24    0   
+unique   24        4.0           1         1    0   
+top      24        0.2           0         0  NaN   
+freq      1        7.0          24        24  NaN   
+
+                                                      NaN  NaN  Weekday_2  \
+count                                                   1   24       24.0   
+unique                                                  1   24        4.0   
+top     Probability of use of lighting and appliances ...   24        0.2   
+freq                                                    1    1        7.0   
+
+        Saturday_2  Sunday_2  ...         NaN  NaN  NaN    NaN  NaN  NaN  \
+count         24.0      24.0  ...   24.000000    0    0      1    0    0   
+unique         1.0       1.0  ...    1.000000    0    0      1    0    0   
+top            0.2       0.2  ...    0.034267  NaN  NaN  month  NaN  NaN   
+freq          24.0      24.0  ...   24.000000  NaN  NaN      1  NaN  NaN   
+
+         NaN  NaN  NaN   NaN  
+count      1    0    0     1  
+unique     1    0    0     1  
+top     data  NaN  NaN  data  
+freq       1  NaN  NaN     1  
+
+[4 rows x 37 columns]
 ```
 
 ### Output
-- `['tuple']`: ([array([0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.8, 1.0, 1.0, 0.8, 0.0, 0.8,
-       1.0, 1.0, 0.8, 0.5, 0.8, 0.8, 0.8, 0.5, 0.5, 0.0], dtype=object), array([0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.8, 1.0, 1.0, 0.8, 0.0, 0.8,
-       1.0, 1.0, 0.8, 0.5, 0.8, 0.8, 0.8, 0.5, 0.5, 0.0], dtype=object), array([0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.8, 1.0, 1.0, 0.8, 0.0, 0.8,
-       1.0, 1.0, 0.8, 0.5, 0.8, 0.8, 0.8, 0.5, 0.5, 0.0], dtype=object)], [array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.5, 0.8, 
+- `['tuple']`: ([array([0.2, 0.2, 0.2, 0.2, 0.2, 0.5, 0.8, 1.0, 1.0, 0.8, 1.0, 0.5, 0.8,
+       1.0, 1.0, 0.8, 0.8, 0.8, 0.5, 0.5, 0.5, 0.5, 0.2, 0.2], dtype=object), array([0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+       0.0, 0.0, 0.0, 0.0, 0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=object), array([0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+       0.0, 0.0, 0.0, 0.0, 0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=object)], [array([0.2, 0.2, 0.2, 0.2, 0.2, 0.5, 0.8, 1.0, 1.0, 0.
 
 ### Docstring template
 
@@ -3145,69 +3327,88 @@ RETURNS
 
 # results_to_csv
 - number of invocations: 1
-- max duration: 0.217 s
-- avg duration: 0.217 s
-- min duration: 0.217 s
-- total duration: 0.217 s
+- max duration: 0.257 s
+- avg duration: 0.257 s
+- min duration: 0.257 s
+- total duration: 0.257 s
 
 ### Input
-- **GFA_m2** `['float64']`: *2412.4885015034447*
-- **Af** `['float64']`: *2171.2396513531003*
-- **Ealf** `['ndarray']`: *array([ 3977.71104128,  3977.71104128,  3977.71104128, ...,  2983.28328096,
-        2983.28328096,  2983.28328096])*
-- **Ealf_0** `['float64']`: *39777.110412788796*
-- **Ealf_tot** `['float64']`: *90.946385247798304*
-- **Eauxf** `['ndarray']`: *array([  0.        ,   0.        ,   0.        , ...,  12.38944692,
-        12.42892359,  12.46955796])*
-- **Eauxf_tot** `['float64']`: *2.0123670800422278*
+- **GFA_m2** `['float64']`: *15831.130217243131*
+- **Af** `['float64']`: *2532.980834758901*
+- **Aroof** `['float64']`: *2638.5217028738552*
+- **Ealf** `['ndarray']`: *array([  8095.40674789,   8095.40674789,   8095.40674789, ...,
+        15907.4742596 ,  13478.85223524,   9168.04814198])*
+- **Ealf_0** `['float64']`: *74680.127249280165*
+- **Ealf_tot** `['float64']`: *223.26888948476659*
+- **Eauxf** `['ndarray']`: *array([  0.        ,   0.        ,   0.        , ...,  17.95868095,
+        22.11860536,  18.71487712])*
+- **Eauxf_tot** `['float64']`: *6.4981343193058683*
 - **Edata** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **Edata_tot** `['float64']`: *0.0*
 - **Epro** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **Epro_tot** `['float64']`: *0.0*
-- **Name** `['str']`: *'B153767'*
-- **Occupancy** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
-- **Occupants** `['float64']`: *124.0*
-- **Qcdata** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
-- **Qcrefri** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
+- **Name** `['str']`: *'Bau A'*
+- **Occupancy** `['ndarray']`: *array([   0.,    0.,    0., ...,  112.,   30.,   25.])*
+- **Occupants** `['float64']`: *891.0*
+- **Qcdata** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
+- **Qcrefri** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
 - **Qcs** `['ndarray']`: *array([-0., -0., -0., ..., -0., -0., -0.])*
 - **Qcsf** `['ndarray']`: *array([-0., -0., -0., ..., -0., -0., -0.])*
-- **Qcsf_0** `['float64']`: *-281104.46918348083*
+- **Qcsf_0** `['float64']`: *-488411.89619418682*
 - **Qhs** `['ndarray']`: *array([     0.        ,      0.        ,      0.        , ...,
-        57273.71555088,  57869.64278795,  58484.15699917])*
+        15087.9633225 ,   5944.31836552,   9043.784159  ])*
 - **Qhsf** `['ndarray']`: *array([     0.        ,      0.        ,      0.        , ...,
-        93991.5268617 ,  94591.45409877,  95210.96830999])*
-- **Qhsf_0** `['float64']`: *296485.76361481688*
-- **Qww** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
-- **Qww_ls_st** `['ndarray']`: *array([  9.73533082,   9.75835448,   9.78142295, ...,  11.14941905,
-        11.16687292,  11.18431081])*
-- **Qwwf** `['ndarray']`: *array([  9.73533082,   9.75835448,   9.78142295, ...,  11.14941905,
-        11.16687292,  11.18431081])*
-- **Qwwf_0** `['float64']`: *5419.7627526345404*
+        54776.24524343,  44440.48177405,  47516.38542795])*
+- **Qhsf_0** `['float64']`: *336657.37528759934*
+- **Qww** `['ndarray']`: *array([    0.        ,     0.        ,     0.        , ...,  2174.11914263,
+         587.59976828,   499.45980304])*
+- **Qww_ls_st** `['ndarray']`: *array([ 13.18881873,  13.18688198,  13.20198326, ...,  12.74161393,
+        12.74588333,  12.74896678])*
+- **Qwwf** `['ndarray']`: *array([    0.        ,     0.        ,     0.        , ...,  4624.11914263,
+        1600.59976828,  1483.45980304])*
+- **Qwwf_0** `['float64']`: *9040.2317305902616*
 - **Tcs_re** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
 - **Tcs_re_0** `['int64']`: *15*
 - **Tcs_sup** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
 - **Tcs_sup_0** `['int64']`: *7*
-- **Ths_re** `['ndarray']`: *array([ 0,  0,  0, ..., 32, 32, 32])*
+- **Ths_re** `['ndarray']`: *array([ 0,  0,  0, ..., 33, 32, 32])*
 - **Ths_re_0** `['int64']`: *70*
-- **Ths_sup** `['ndarray']`: *array([ 0,  0,  0, ..., 39, 39, 39])*
+- **Ths_sup** `['ndarray']`: *array([ 0,  0,  0, ..., 37, 34, 35])*
 - **Ths_sup_0** `['int64']`: *90*
 - **Tww_re** `['ndarray']`: *array([ 10.,  10.,  10., ...,  10.,  10.,  10.])*
-- **Tww_st** `['ndarray']`: *array([ 59.95490068,  59.9096947 ,  59.86438185, ...,  59.77568316,
-        59.72395215,  59.67214037])*
+- **Tww_st** `['ndarray']`: *array([ 59.95492923,  59.90986509,  59.86474933, ...,  59.95412594,
+        59.96686873,  59.97607186])*
 - **Tww_sup_0** `['int64']`: *60*
-- **Waterconsumption** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
-- **locationFinal** `['str']`: *'c:\\reference-case\\baseline\\outputs\\data\\demand'*
+- **Waterconsumption** `['ndarray']`: *array([ 0.        ,  0.        ,  0.        , ...,  0.03748812,
+        0.01013192,  0.00861213])*
+- **locationFinal** `['str']`: *'c:\\reference-case-zug\\baseline\\outputs\\data\\demand'*
 - **mcpcs** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
-- **mcphs** `['ndarray']`: *array([ 0,  0,  0, ..., 14, 14, 14])*
-- **mcpww** `['ndarray']`: *array([ 0.1948824 ,  0.19552022,  0.19616052, ...,  0.22399329,
-        0.22457734,  0.22516265])*
+- **mcphs** `['ndarray']`: *array([    0,     0,     0, ..., 16832, 16832, 16832])*
+- **mcpww** `['ndarray']`: *array([  0.        ,   0.        ,   0.        , ...,  92.56731162,
+        32.03322139,  29.68340143])*
 - **path_temporary_folder** `['str']`: *'c:\\users\\darthoma\\appdata\\local\\temp'*
 - **sys_e_cooling** `['unicode']`: *u'T3'*
 - **sys_e_heating** `['unicode']`: *u'T1'*
-- **waterpeak** `['float64']`: *0.05169618217507381*
-- **date** `['DatetimeIndex']`: *<class 'pandas.tseries.index.DatetimeIndex'>
-[2016-01-01 00:00:00, ..., 2016-12-30 23:00:00]
-Length: 8760, Freq: H, Timezone: None*
+- **waterpeak** `['float64']`: *0.070079136428329608*
+- **date** `['DatetimeIndex']`: *DatetimeIndex(['2010-01-01 00:00:00', '2010-01-01 01:00:00',
+               '2010-01-01 02:00:00', '2010-01-01 03:00:00',
+               '2010-01-01 04:00:00', '2010-01-01 05:00:00',
+               '2010-01-01 06:00:00', '2010-01-01 07:00:00',
+               '2010-01-01 08:00:00', '2010-01-01 09:00:00',
+               ...
+               '2010-12-31 14:00:00', '2010-12-31 15:00:00',
+               '2010-12-31 16:00:00', '2010-12-31 17:00:00',
+               '2010-12-31 18:00:00', '2010-12-31 19:0*
+- **mcpdataf** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
+- **Tcdataf_re** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
+- **Tcdataf_sup** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
+- **mcpref** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
+- **Tcref_re** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
+- **Tcref_sup** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
+- **Qhprof** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
+- **Ecaf** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
+- **Qhprof_tot** `['int']`: *0*
+- **Ecaf_tot** `['int']`: *0*
 
 
 ### Output
@@ -3224,6 +3425,9 @@ PARAMETERS
 
 :param Af:
 :type Af: float64
+
+:param Aroof:
+:type Aroof: float64
 
 :param Ealf:
 :type Ealf: ndarray
@@ -3360,6 +3564,36 @@ PARAMETERS
 :param date:
 :type date: DatetimeIndex
 
+:param mcpdataf:
+:type mcpdataf: ndarray
+
+:param Tcdataf_re:
+:type Tcdataf_re: ndarray
+
+:param Tcdataf_sup:
+:type Tcdataf_sup: ndarray
+
+:param mcpref:
+:type mcpref: ndarray
+
+:param Tcref_re:
+:type Tcref_re: ndarray
+
+:param Tcref_sup:
+:type Tcref_sup: ndarray
+
+:param Qhprof:
+:type Qhprof: ndarray
+
+:param Ecaf:
+:type Ecaf: ndarray
+
+:param Qhprof_tot:
+:type Qhprof_tot: int
+
+:param Ecaf_tot:
+:type Ecaf_tot: int
+
 RETURNS
 -------
 
@@ -3373,10 +3607,10 @@ RETURNS
 
 # run_as_script
 - number of invocations: 1
-- max duration: 812.603 s
-- avg duration: 812.603 s
-- min duration: 812.603 s
-- total duration: 812.603 s
+- max duration: 59.05 s
+- avg duration: 59.05 s
+- min duration: 59.05 s
+- total duration: 59.05 s
 
 ### Input
 
@@ -3403,21 +3637,27 @@ RETURNS
 
 # schedule_maker
 - number of invocations: 1
-- max duration: 1.846 s
-- avg duration: 1.846 s
-- min duration: 1.846 s
-- total duration: 1.846 s
+- max duration: 1.225 s
+- avg duration: 1.225 s
+- min duration: 1.225 s
+- total duration: 1.225 s
 
 ### Input
-- **date** `['DatetimeIndex']`: *<class 'pandas.tseries.index.DatetimeIndex'>
-[2016-01-01 00:00:00, ..., 2016-12-30 23:00:00]
-Length: 8760, Freq: H, Timezone: None*
+- **date** `['DatetimeIndex']`: *DatetimeIndex(['2010-01-01 00:00:00', '2010-01-01 01:00:00',
+               '2010-01-01 02:00:00', '2010-01-01 03:00:00',
+               '2010-01-01 04:00:00', '2010-01-01 05:00:00',
+               '2010-01-01 06:00:00', '2010-01-01 07:00:00',
+               '2010-01-01 08:00:00', '2010-01-01 09:00:00',
+               ...
+               '2010-12-31 14:00:00', '2010-12-31 15:00:00',
+               '2010-12-31 16:00:00', '2010-12-31 17:00:00',
+               '2010-12-31 18:00:00', '2010-12-31 19:0*
 - **locator** `['LocatorDecorator']`: *???*
-- **list_uses** `['list']`: *[u'GYM', u'HOSPITAL', u'HOTEL', u'INDUSTRIAL', u'MULTI_RES', u'OFFICE', u'PARKING', u'RETAIL']*
+- **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
 
 
 ### Output
-- `['list']`: [([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.64000
+- `['list']`: [([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.640
 
 ### Docstring template
 
@@ -3448,9 +3688,6 @@ INPUT / OUTPUT FILES
 - get_archetypes_schedules: C:\Users\darthoma\Documents\GitHub\CEAforArcGIS\cea\databases\CH\Archetypes\Archetypes_schedules.xlsx
 - get_archetypes_schedules: C:\Users\darthoma\Documents\GitHub\CEAforArcGIS\cea\databases\CH\Archetypes\Archetypes_schedules.xlsx
 - get_archetypes_schedules: C:\Users\darthoma\Documents\GitHub\CEAforArcGIS\cea\databases\CH\Archetypes\Archetypes_schedules.xlsx
-- get_archetypes_schedules: C:\Users\darthoma\Documents\GitHub\CEAforArcGIS\cea\databases\CH\Archetypes\Archetypes_schedules.xlsx
-- get_archetypes_schedules: C:\Users\darthoma\Documents\GitHub\CEAforArcGIS\cea\databases\CH\Archetypes\Archetypes_schedules.xlsx
-- get_archetypes_schedules: C:\Users\darthoma\Documents\GitHub\CEAforArcGIS\cea\databases\CH\Archetypes\Archetypes_schedules.xlsx
 ```
 
 [TOC](#table-of-contents)
@@ -3458,35 +3695,39 @@ INPUT / OUTPUT FILES
 
 # thermal_loads_all_buildings
 - number of invocations: 1
-- max duration: 795.96 s
-- avg duration: 795.96 s
-- min duration: 795.96 s
-- total duration: 795.96 s
+- max duration: 55.605 s
+- avg duration: 55.605 s
+- min duration: 55.605 s
+- total duration: 55.605 s
 
 ### Input
-- **building_properties** `['BuildingProperties']`: *<cea.demand.thermal_loads.BuildingProperties object at 0x0C97C870>*
-- **date** `['DatetimeIndex']`: *<class 'pandas.tseries.index.DatetimeIndex'>
-[2016-01-01 00:00:00, ..., 2016-12-30 23:00:00]
-Length: 8760, Freq: H, Timezone: None*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x0C2296B0>*
+- **building_properties** `['BuildingProperties']`: *<cea.demand.thermal_loads.BuildingProperties object at 0x151891D0>*
+- **date** `['DatetimeIndex']`: *DatetimeIndex(['2010-01-01 00:00:00', '2010-01-01 01:00:00',
+               '2010-01-01 02:00:00', '2010-01-01 03:00:00',
+               '2010-01-01 04:00:00', '2010-01-01 05:00:00',
+               '2010-01-01 06:00:00', '2010-01-01 07:00:00',
+               '2010-01-01 08:00:00', '2010-01-01 09:00:00',
+               ...
+               '2010-12-31 14:00:00', '2010-12-31 15:00:00',
+               '2010-12-31 16:00:00', '2010-12-31 17:00:00',
+               '2010-12-31 18:00:00', '2010-12-31 19:0*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x14DB34B0>*
 - **locator** `['LocatorDecorator']`: *???*
-- **num_buildings** `['int']`: *274*
-- **usage_schedules** `['dict']`: *{'list_uses': [u'GYM', u'HOSPITAL', u'HOTEL', u'INDUSTRIAL', u'MULTI_RES', u'OFFICE', u'PARKING', u'RETAIL'], 'schedules': [([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.0, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.4,*
+- **num_buildings** `['int']`: *24*
+- **usage_schedules** `['dict']`: *{'list_uses': [u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM'], 'schedules': [([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.1600000000000*
 - **weather_data** `['DataFrame']`: *(8760, 3)*
 
 #### weather_data:
 ```
          drybulb_C  relhum_percent   windspd_ms
 count  8760.000000     8760.000000  8760.000000
-mean     10.840890       71.675799     1.008390
-std       7.885023       16.270003     1.047616
-min      -8.900000       25.000000     0.000000
-25%       4.800000       60.000000     0.300000
-50%      10.700000       74.000000     0.700000
-75%      16.900000       84.000000     1.400000
-max      32.500000      100.000000     9.400000
-
-[8 rows x 3 columns]
+mean     10.150000       73.861644     1.838094
+std       8.022269       15.889964     1.847214
+min     -10.300000       28.000000     0.000000
+25%       3.700000       62.000000     0.500000
+50%      10.400000       77.000000     1.300000
+75%      16.100000       86.000000     2.500000
+max      32.300000      100.000000    15.300000
 ```
 
 ### Output
@@ -3528,553 +3769,53 @@ RETURNS
 INPUT / OUTPUT FILES
 --------------------
 
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case\baseline\outputs\data\demand
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 - get_temporary_folder: c:\users\darthoma\appdata\local\temp
 ```
 
@@ -4083,13 +3824,13 @@ INPUT / OUTPUT FILES
 
 # write_totals_csv
 - number of invocations: 1
-- max duration: 10.489 s
-- avg duration: 10.489 s
-- min duration: 10.489 s
-- total duration: 10.489 s
+- max duration: 0.894 s
+- avg duration: 0.894 s
+- min duration: 0.894 s
+- total duration: 0.894 s
 
 ### Input
-- **building_properties** `['BuildingProperties']`: *<cea.demand.thermal_loads.BuildingProperties object at 0x0559B870>*
+- **building_properties** `['BuildingProperties']`: *<cea.demand.thermal_loads.BuildingProperties object at 0x1518ED10>*
 - **locator** `['LocatorDecorator']`: *???*
 
 
@@ -4117,281 +3858,31 @@ RETURNS
 INPUT / OUTPUT FILES
 --------------------
 
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153767T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B9001534T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B3169241T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153737T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302006714T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302006719T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153759T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153735T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302006695T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153748T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153747T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2368544T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153746T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153745T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153734T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153700T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302006694T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153749T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153750T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153724T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153725T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153723T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153721T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153692T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153744T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153693T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153691T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2368514T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153718T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153697T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153696T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153695T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153694T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153729T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302049558T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153719T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153728T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153722T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302006646T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007056aT.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302006839T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302049656T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153742T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153715T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2368562T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153716T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2368593T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153753T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153743T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153717T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2368599T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302023067T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007075T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153731T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153730T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153727T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153752T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153751T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153738T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153741T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153740T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153739T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2372539T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153733T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153732T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153726T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007704T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007086T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007093T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007412T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007413T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2368754T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153701T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302006827T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302006683T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302023104T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302049659T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007081T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007701T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007744T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007064T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302023054T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153766T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B3169932T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007073T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007089T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302023103T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302006713T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302049650T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302049632T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007063T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007868T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155054T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2367127T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007317T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007331T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302049821T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B11515811T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007876T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007487T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007719T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007720T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007320T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302024340T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140556T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B3169408T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140567T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155061T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302049800T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007726T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007697T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007700T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302061510T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B3169552T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2372281T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140560T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140564T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140559T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B3169526T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040175T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140562T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140561T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B3169989T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040203T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155060T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2372564T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007163T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007529T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040205T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B9011127T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040207T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140577T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140571T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2372467T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040197T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040204T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140570T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140568T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2372562T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140557T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040335T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140558T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140580T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140581T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040296T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140582T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040295T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140576T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B9011691T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040263T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140575T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2372547T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140574T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140573T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2372522T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302049837T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007878T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155194T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007873T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155193T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007721T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007385T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007869T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2367084T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007864T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007184T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155053T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007454T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007387T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007714T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007724T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007710T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007712T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007383T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2367115T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007715T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302023178T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007585T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2367248T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155128T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155084T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B9083954T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2367087T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155082T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155068T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155069T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155083T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155080T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2367183T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155067T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155073T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155072T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155071T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B3169251T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155066T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155065T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2368214T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302008404T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155989T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007685T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007199T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155992T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155990T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155991T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2368215T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2372508T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140578T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140583T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2372478T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040303T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040308T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040311T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040224T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040222T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040315T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2372472T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140584T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140585T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140586T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2372458T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040194T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040269T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040217T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040213T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040272T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2372475T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140588T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040229T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040249T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140590T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140589T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B140591T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B2368754aT.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B153690T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007056T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302006716T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302022981T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302006812T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302006718T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302006717T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302020948T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007057T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302020839T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007087T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302020840T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007068T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302024358T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040176T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040285T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302019757T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007894T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040323T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040195T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302019572T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302007201T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B155192T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302022730T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302022729T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302040218T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302020916T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302020945T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302019271T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302022767T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302021376T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302024464T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302022768T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302019954T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302006890T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302034111T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B9011701T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302021637T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302020123T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302021377T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\B302024465T.csv
-- get_total_demand: c:\reference-case\baseline\outputs\data\demand\Total_demand.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau AT.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau DT.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau ET.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau FT.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 17T.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 22T.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 19T.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 06T.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 02T.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 05T.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 03T.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 16T.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 14T.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau CT.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau BT.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau IT.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau HT.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau GT.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 07T.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 17hT.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 02hT.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 06hT.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 26T.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 04T.csv
+- get_total_demand: c:\reference-case-zug\baseline\outputs\data\demand\Total_demand.csv
 ```
 
 [TOC](#table-of-contents)
