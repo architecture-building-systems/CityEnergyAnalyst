@@ -97,8 +97,8 @@ read schedules from excel file
 """
 
 
-def schedule_maker(date, locator, list_uses):
-    def get_yearly_vectors(date, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule):
+def schedule_maker(dates, locator, list_uses):
+    def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule):
         occ = []
         el = []
         dhw = []
@@ -116,11 +116,11 @@ def schedule_maker(date, locator, list_uses):
             dhw_sun_sum = dhw_schedules[2].sum() ** -1
         else: dhw_sun_sum = 0
 
-        for hour in range(8760):
-            month_year = month_schedule[date[hour].month - 1]
-            hour_day = date[hour].hour
-            dayofweek = date[hour].dayofweek
-            if dayofweek is 0 or 1 or 2 or 3 or 4:  # weekday
+        for date in dates:
+            month_year = month_schedule[date.month - 1]
+            hour_day = date.hour
+            dayofweek = date.dayofweek
+            if 0 <= dayofweek < 5:  # weekday
                 occ.append(occ_schedules[0][hour_day] * month_year)
                 el.append(el_schedules[0][hour_day] * month_year)
                 dhw.append(dhw_schedules[0][hour_day] * month_year * dhw_weekday_sum) # normalized dhw demand flow rates
@@ -146,7 +146,7 @@ def schedule_maker(date, locator, list_uses):
         # read lists of every daily profile
         occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule = read_schedules(use, x)
 
-        schedule = get_yearly_vectors(date, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule)
+        schedule = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule)
         schedules.append(schedule)
 
     return schedules
@@ -161,6 +161,6 @@ def read_schedules(use, x):
     if use is "INDUSTRIAL":
         pro = [x['Weekday_4'].values, x['Saturday_4'].values, x['Sunday_4'].values]
     else:
-        pro = [[0] * 24, [0] * 24, [0] * 24]
+        pro = [np.zeros(24), np.zeros(24), np.zeros(24)]
 
     return occ, el, dhw, pro, month
