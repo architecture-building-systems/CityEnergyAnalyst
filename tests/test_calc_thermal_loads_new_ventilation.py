@@ -41,24 +41,26 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
         # test the building csv file
         df = pd.read_csv(self.locator.get_temporary_file('B140577.csv'))
 
-        #
         expected_columns = [u'DATE', u'Ealf_kWh', u'Eauxf_kWh', u'Edataf_kWh', u'Ef_kWh', u'Epro_kWh', u'Name',
                             u'QCf_kWh', u'QHf_kWh', u'Qcdataf_kWh', u'Qcref_kWh', u'Qcs_kWh', u'Qcsf_kWh', u'Qhs_kWh',
                             u'Qhsf_kWh', u'Qww_kWh', u'Qww_tankloss_kWh', u'Qwwf_kWh', u'Trcs_C', u'Trhs_C', u'Trww_C',
                             u'Tscs_C', u'Tshs_C', u'Tsww_C', u'Tww_tank_C', u'Vw_m3', u'mcpcs_kWC', u'mcphs_kWC',
-                            u'mcpww_kWC', u'occ_pax']
-        self.assertEqual(set(expected_columns), set(df.columns), 'Column list of building csv does not match')
+                            u'mcpww_kWC', u'occ_pax', u'Trdata_C', u'mcpdata_kWC', u'Tsdata_C', u'Ecaf_kWh', u'Tsref_C',
+                            u'mcpref_kWC', u'Trref_C', u'Qhprof_kWh']
+        self.assertEqual(set(expected_columns), set(df.columns),
+                         'Column list of building csv does not match' + str(
+                             set(expected_columns).symmetric_difference(set(df.columns))))
         self.assertEqual(df.shape[0], 8760, 'Expected one row per hour in the year')
 
         value_columns = [u'Ealf_kWh', u'Eauxf_kWh', u'Edataf_kWh', u'Ef_kWh', u'Epro_kWh', u'QCf_kWh', u'QHf_kWh',
                          u'Qcdataf_kWh', u'Qcref_kWh', u'Qcs_kWh', u'Qcsf_kWh', u'Qhs_kWh', u'Qhsf_kWh', u'Qww_kWh',
                          u'Qww_tankloss_kWh', u'Qwwf_kWh', u'Trcs_C', u'Trhs_C', u'Trww_C', u'Tscs_C', u'Tshs_C',
                          u'Tsww_C', u'Tww_tank_C', u'Vw_m3', u'mcpcs_kWC', u'mcphs_kWC', u'mcpww_kWC', u'occ_pax']
-        values = [2335522.029999916, 43789.870000000548, 0.0, 2379312.5899999058, 0.0, 1600579.3699999989,
-                  1770906.7300002526, 0.0, 0.0, 969342.64000000141, 1600579.3699999989, 917820.5499999997,
-                  1598211.1199999996, 160784.15999999773, 683.88000000006332, 172695.66000000233, 16116, 52842, 99496.0,
-                  11376, 63853, 525600, 524925.68999998318, 2850.3999999999828, 319634, 148190, 3539.4199999999482,
-                  6827181.0]
+        values = [2335513.9709999999, 16132.642, 0.0, 2351646.9420000003, 0.0, 833988.99100000015, 1198724.7879999999,
+                  0.0, 0.0, 534623.03300000005, 833988.99100000015, 436750.40000000002, 1026801.674, 160764.21799999999,
+                  687.72799999999995, 171923.133, 8160, 45926, 99496.0, 5760, 54797, 525600, 524920.64199999999,
+                  2846.172, 166797.55699999997, 108052.59199999999, 3532.1520000000005, 6827181.0]
+        # print [df[column].sum() for column in value_columns]
         for i, column in enumerate(value_columns):
             try:
                 self.assertAlmostEqual(values[i], df[column].sum(), msg='Sum of column %s differs' % column, places=3)
@@ -71,11 +73,11 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
         pool = mp.Pool()
         # randomly selected except for B302006716, which has `Af == 0`
         buildings = {'B302006716': (0.00, 0.00),
-                     'B140557': (67011.74, 134480.79),
-                     'B140577': (1600579.37, 1770906.73),
-                     'B2372467': (33608.18, 76985.25),
-                     'B302040335': (1525.49, 8523.46),
-                     'B140571': (87082.27, 161073.10)}
+                     'B140557': (38105.60400, 83680.78100),
+                     'B140577': (833988.99100, 1198724.78800),
+                     'B2372467': (21011.72200, 47482.54200),
+                     'B302040335': (1065.10400, 4713.41100),
+                     'B140571': (49886.00300, 101318.02500)}
         if self.gv.multiprocessing:
             joblist = []
             for building in buildings.keys():
@@ -87,8 +89,10 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
                 joblist.append(job)
             for job in joblist:
                 b, qcf_kwh, qhf_kwh = job.get(20)
-                self.assertAlmostEqual(buildings[b][0], qcf_kwh, places=3)
-                self.assertAlmostEqual(buildings[b][1], qhf_kwh, places=3)
+                self.assertAlmostEqual(buildings[b][0], qcf_kwh,
+                                       msg="qcf_kwh for %(b)s should be: %(qcf_kwh).5f" % locals(), places=3)
+                self.assertAlmostEqual(buildings[b][1], qhf_kwh,
+                                       msg="qhf_kwh for %(b)s should be: %(qhf_kwh).5f" % locals(), places=3)
         else:
             for building in buildings.keys():
                 bpr = self.building_properties[building]
