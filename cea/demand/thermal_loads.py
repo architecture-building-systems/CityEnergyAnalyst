@@ -1135,8 +1135,8 @@ class BuildingPropertiesRow(object):
         phi_pipes = self._calculate_pipe_transmittance_values()
 
         # nominal temperatures
-        Ths_sup_0 = self.hvac['Tshs0_C']
-        Ths_re_0 = Ths_sup_0 - self.hvac['dThs0_C']
+        Ths_sup_0 = float(self.hvac['Tshs0_C'])
+        Ths_re_0 = float(Ths_sup_0 - self.hvac['dThs0_C'])
         Tcs_sup_0 = self.hvac['Tscs0_C']
         Tcs_re_0 = Tcs_sup_0 + self.hvac['dTcs0_C']
         Tww_sup_0 = self.hvac['Tsww0_C']
