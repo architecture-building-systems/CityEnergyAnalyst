@@ -29,27 +29,6 @@ end-use heating or cooling loads
 def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Htr_ms, Htr_is, Htr_1, Htr_2, Htr_3,
                  I_st, Hve, Htr_w, I_ia, I_m, Cm, Af, Losses, tHset_corr, tCset_corr, IC_max, IH_max, Flag):
 
-    def calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0):
-        tm_t = (tm_t0 * ((Cm / 3600) - 0.5 * (Htr_3 + Htr_em)) + Im_tot) / ((Cm / 3600) + 0.5 * (Htr_3 + Htr_em))
-        tm = (tm_t + tm_t0) / 2
-        # Here the temperature that is actually needed for the next time step is tm_t
-        return tm_t, tm
-
-    def calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm):
-        ts = (Htr_ms * tm + I_st + Htr_w * te_t + Htr_1 * (te_t + (I_ia + IHC_nd) / Hve)) / (Htr_ms + Htr_w + Htr_1)
-        return ts
-
-    def calc_ta(Htr_is, Hve, IHC_nd, I_ia, te_t, ts):
-        ta = (Htr_is * ts + Hve * te_t + I_ia + IHC_nd) / (Htr_is + Hve)
-        return ta
-
-    def calc_top(ta, ts):
-        top = 0.31 * ta + 0.69 * ts
-        return top
-
-    def Calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd, Hve, Htr_2):
-        return I_m + Htr_em * te_t + Htr_3 * (I_st + Htr_w * te_t + Htr_1 * (((I_ia + IHC_nd) / Hve) + te_t)) / Htr_2
-
     if Losses:
         # Losses due to emission and control of systems
         tintH_set = tintH_set + tHset_corr
@@ -59,7 +38,7 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
     uncomfort = 0
     # Case 0 or 1
     IHC_nd = IC_nd_ac = IH_nd_ac = 0
-    Im_tot = Calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd, Hve, Htr_2)
+    Im_tot = calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd, Hve, Htr_2)
 
     tm_t, tm = calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0)
     ts = calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm)
@@ -78,7 +57,7 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
             tair_set = tintH_set
         # Case 2
         IHC_nd = IHC_nd_10 = 10 * Af
-        Im_tot = Calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd_10, Hve, Htr_2)
+        Im_tot = calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd_10, Hve, Htr_2)
 
         tm_t, tm = calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0)
         ts = calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd_10, I_ia, I_st, te_t, tm)
@@ -92,7 +71,7 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
 
             # Heating/Cooling with power between zero and the maximum
             # Here we have to calculate the actual temperatures with the IHC_nd_un heating/cooling power
-            Im_tot = Calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd_ac, Hve, Htr_2)
+            Im_tot = calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd_ac, Hve, Htr_2)
             tm_t, tm = calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0)
             ts = calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm)
             # ta = calc_ta(Htr_is, Hve, IHC_nd, I_ia, te_t, ts) # this should be the same as tair_set
@@ -104,7 +83,7 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
             else:
                 IHC_nd_ac = IC_max
             # Case 3 when the maxiFmum power is exceeded
-            Im_tot = Calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd_ac, Hve, Htr_2)
+            Im_tot = calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd_ac, Hve, Htr_2)
 
             tm_t, tm = calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0)
             ts = calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd_ac, I_ia, I_st, te_t, tm)
@@ -132,6 +111,46 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
     # here we have to return tm_t for the next time step and not tm
     return tm_t, ta, IH_nd_ac, IC_nd_ac, uncomfort, top, Im_tot
 
+
+from numba.pycc import CC
+
+cc = CC('calc_tm_aot')
+
+@cc.export('calc_tm', "UniTuple(f8, 2)(f8, f8, f8, f8, f8)")
+def calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0):
+    tm_t = (tm_t0 * ((Cm / 3600) - 0.5 * (Htr_3 + Htr_em)) + Im_tot) / ((Cm / 3600) + 0.5 * (Htr_3 + Htr_em))
+    tm = (tm_t + tm_t0) / 2
+    # Here the temperature that is actually needed for the next time step is tm_t
+    return tm_t, tm
+
+
+@cc.export('calc_ts', "f8(f8, f8, f8, f8, i4, f8, f8, f8, f8)")
+def calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm):
+    ts = (Htr_ms * tm + I_st + Htr_w * te_t + Htr_1 * (te_t + (I_ia + IHC_nd) / Hve)) / (Htr_ms + Htr_w + Htr_1)
+    return ts
+
+
+@cc.export('calc_ta', "f8(f8, f8, i4, f8, f8, f8)")
+def calc_ta(Htr_is, Hve, IHC_nd, I_ia, te_t, ts):
+    ta = (Htr_is * ts + Hve * te_t + I_ia + IHC_nd) / (Htr_is + Hve)
+    return ta
+
+@cc.export('calc_top', "f8(f8, f8)")
+def calc_top(ta, ts):
+    top = 0.31 * ta + 0.69 * ts
+    return top
+
+@cc.export('calc_Im_tot', "f8(f8, f8, f8, f8, f8, f8, f8, f8, i4, f8, f8)")
+def calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd, Hve, Htr_2):
+    return I_m + Htr_em * te_t + Htr_3 * (I_st + Htr_w * te_t + Htr_1 * (((I_ia + IHC_nd) / Hve) + te_t)) / Htr_2
+
+try:
+    # import Numba AOT versions of the functions above
+    from calc_tm_aot import calc_tm, calc_ts, calc_ta, calc_top, calc_Im_tot
+except ImportError:
+    # fall back to using the python version
+    print 'failed to import from calc_tm_aot, falling back to python functions'
+    pass
 
 
 """
@@ -392,3 +411,6 @@ def calc_T_em_ls(SystemH, SystemC, sys_e_ctrl):
 
     return tHC_corr[0], tHC_corr[1]
 
+
+if __name__ == '__main__':
+    cc.compile()
