@@ -31,6 +31,11 @@
                   - [calc_h_ve_adj](#calc_h_ve_adj)
                   - [calc_Htr](#calc_htr)
                   - [calc_Qhs_Qcs](#calc_qhs_qcs)
+                     - [Calc_Im_tot](#calc_im_tot)
+                     - [calc_tm](#calc_tm)
+                     - [calc_ts](#calc_ts)
+                     - [calc_ta](#calc_ta)
+                     - [calc_top](#calc_top)
                - [calc_thermal_load_hvac_timestep](#calc_thermal_load_hvac_timestep)
                   - [calc_hex](#calc_hex)
                      - [calc_w](#calc_w)
@@ -39,8 +44,6 @@
                      - [calc_w3_cooling_case](#calc_w3_cooling_case)
                         - [calc_Qhs_Qcs_dis_ls](#calc_qhs_qcs_dis_ls)
                - [calc_temperatures_emission_systems](#calc_temperatures_emission_systems)
-                  - [calc_radiator](#calc_radiator)
-                     - [newton](#newton)
                - [calc_Qwwf](#calc_qwwf)
                   - [calc_Qww_schedule](#calc_qww_schedule)
                      - [calc_mww](#calc_mww)
@@ -59,12 +62,86 @@
                   - [calc_Eauxf_fw](#calc_eauxf_fw)
          - [write_totals_csv](#write_totals_csv)
 
-# allocate_default_leakage_paths
+# Calc_Im_tot
 - number of invocations: 1
 - max duration: 0.031 s
 - avg duration: 0.031 s
 - min duration: 0.031 s
 - total duration: 0.031 s
+
+### Input
+- **I_m** `['float64']`: *1148.3982451468542*
+- **Htr_em** `['float64']`: *601.8673589723943*
+- **te_t** `['float64']`: *1.1000000000000001*
+- **Htr_3** `['float64']`: *876.41925301753997*
+- **I_st** `['float64']`: *2487.6752097710209*
+- **Htr_w** `['float64']`: *344.20598175023116*
+- **Htr_1** `['float64']`: *545.74852531251054*
+- **I_ia** `['float64']`: *3642.9330365502524*
+- **IHC_nd** `['int']`: *0*
+- **Hve** `['float64']`: *550.080331446635*
+- **Htr_2** `['float64']`: *889.95450706274164*
+
+
+### Output
+- `['float64']`: 8783.6305013901547
+
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param I_m:
+:type I_m: float64
+
+:param Htr_em:
+:type Htr_em: float64
+
+:param te_t:
+:type te_t: float64
+
+:param Htr_3:
+:type Htr_3: float64
+
+:param I_st:
+:type I_st: float64
+
+:param Htr_w:
+:type Htr_w: float64
+
+:param Htr_1:
+:type Htr_1: float64
+
+:param I_ia:
+:type I_ia: float64
+
+:param IHC_nd:
+:type IHC_nd: int
+
+:param Hve:
+:type Hve: float64
+
+:param Htr_2:
+:type Htr_2: float64
+
+RETURNS
+-------
+
+:returns:
+:rtype: float64
+
+```
+
+[TOC](#table-of-contents)
+---
+
+# allocate_default_leakage_paths
+- number of invocations: 1
+- max duration: 0.03 s
+- avg duration: 0.03 s
+- min duration: 0.03 s
+- total duration: 0.03 s
 
 ### Input
 - **coeff_lea_zone** `['float64']`: *7572.0292843945435*
@@ -108,10 +185,10 @@ RETURNS
 
 # allocate_default_ventilation_openings
 - number of invocations: 1
-- max duration: 0.027 s
-- avg duration: 0.027 s
-- min duration: 0.027 s
-- total duration: 0.027 s
+- max duration: 0.033 s
+- avg duration: 0.033 s
+- min duration: 0.033 s
+- total duration: 0.033 s
 
 ### Input
 - **coeff_vent_zone** `['float']`: *0.0*
@@ -146,10 +223,10 @@ RETURNS
 
 # calc_E_totals
 - number of invocations: 1
-- max duration: 0.035 s
-- avg duration: 0.035 s
-- min duration: 0.035 s
-- total duration: 0.035 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **Aef** `['float64']`: *2532.980834758901*
@@ -199,10 +276,10 @@ RETURNS
 
 # calc_Ea_El_Edata_Eref_schedule
 - number of invocations: 1
-- max duration: 0.351 s
-- avg duration: 0.351 s
-- min duration: 0.351 s
-- total duration: 0.351 s
+- max duration: 0.309 s
+- avg duration: 0.309 s
+- min duration: 0.309 s
+- total duration: 0.309 s
 
 ### Input
 - **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
@@ -241,10 +318,10 @@ RETURNS
 
 # calc_Eaf
 - number of invocations: 1
-- max duration: 0.033 s
-- avg duration: 0.033 s
-- min duration: 0.033 s
-- total duration: 0.033 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **schedule** `['ndarray']`: *array([ 0.08  ,  0.08  ,  0.08  , ...,  0.1572,  0.1332,  0.0906])*
@@ -284,10 +361,10 @@ RETURNS
 
 # calc_Eauxf
 - number of invocations: 1
-- max duration: 0.289 s
-- avg duration: 0.289 s
-- min duration: 0.289 s
-- total duration: 0.289 s
+- max duration: 0.298 s
+- avg duration: 0.298 s
+- min duration: 0.298 s
+- total duration: 0.298 s
 
 ### Input
 - **Ll** `['float64']`: *87.0*
@@ -312,7 +389,7 @@ RETURNS
         0.01013192,  0.00861213])*
 - **Year** `['int64']`: *2010*
 - **fforma** `['float64']`: *1.0109278555072243*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x13BB3990>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x151AD690>*
 - **nf_ag** `['float64']`: *5.0*
 - **nfp** `['float64']`: *0.20000000000000001*
 - **qv_req** `['ndarray']`: *array([ 0.45476218,  0.45476218,  0.45476218, ...,  0.89971551,
@@ -419,10 +496,10 @@ RETURNS
 
 # calc_Eauxf_cs_dis
 - number of invocations: 1
-- max duration: 0.029 s
-- avg duration: 0.029 s
-- min duration: 0.029 s
-- total duration: 0.029 s
+- max duration: 0.037 s
+- avg duration: 0.037 s
+- min duration: 0.037 s
+- total duration: 0.037 s
 
 ### Input
 - **Qcsf** `['float64']`: *-0.0*
@@ -481,15 +558,15 @@ RETURNS
 
 # calc_Eauxf_fw
 - number of invocations: 1
-- max duration: 0.046 s
-- avg duration: 0.046 s
-- min duration: 0.046 s
-- total duration: 0.046 s
+- max duration: 0.037 s
+- avg duration: 0.037 s
+- min duration: 0.037 s
+- total duration: 0.037 s
 
 ### Input
 - **freshw** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **nf** `['float64']`: *6.0*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x14B12B70>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1507A2B0>*
 
 
 ### Output
@@ -523,10 +600,10 @@ RETURNS
 
 # calc_Eauxf_hs_dis
 - number of invocations: 1
-- max duration: 0.031 s
-- avg duration: 0.031 s
-- min duration: 0.031 s
-- total duration: 0.031 s
+- max duration: 0.033 s
+- avg duration: 0.033 s
+- min duration: 0.033 s
+- total duration: 0.033 s
 
 ### Input
 - **Qhsf** `['float64']`: *0.0*
@@ -639,10 +716,10 @@ RETURNS
 
 # calc_Eauxf_ww
 - number of invocations: 1
-- max duration: 0.029 s
-- avg duration: 0.029 s
-- min duration: 0.029 s
-- total duration: 0.029 s
+- max duration: 0.028 s
+- avg duration: 0.028 s
+- min duration: 0.028 s
+- total duration: 0.028 s
 
 ### Input
 - **Qww** `['float64']`: *0.0*
@@ -697,10 +774,10 @@ RETURNS
 
 # calc_Edataf
 - number of invocations: 1
-- max duration: 0.031 s
-- avg duration: 0.031 s
-- min duration: 0.031 s
-- total duration: 0.031 s
+- max duration: 0.033 s
+- avg duration: 0.033 s
+- min duration: 0.033 s
+- total duration: 0.033 s
 
 ### Input
 - **schedule** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
@@ -743,15 +820,15 @@ RETURNS
 
 # calc_Eint
 - number of invocations: 1
-- max duration: 1.251 s
-- avg duration: 1.251 s
-- min duration: 1.251 s
-- total duration: 1.251 s
+- max duration: 1.249 s
+- avg duration: 1.249 s
+- min duration: 1.249 s
+- total duration: 1.249 s
 
 ### Input
 - **tsd** `['dict']`: *{'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
          30.39577002,   25.83640451]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Tww_re': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Tm': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Qcs_sen_incl_em_ls': array([ 0.,  0.,  0., ...,  0.,  0., *
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x13C5DD70>*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x15061070>*
 - **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
 - **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.640*
 
@@ -792,10 +869,10 @@ RETURNS
 
 # calc_Elf
 - number of invocations: 1
-- max duration: 0.029 s
-- avg duration: 0.029 s
-- min duration: 0.029 s
-- total duration: 0.029 s
+- max duration: 0.031 s
+- avg duration: 0.031 s
+- min duration: 0.031 s
+- total duration: 0.031 s
 
 ### Input
 - **schedule** `['ndarray']`: *array([ 0.08  ,  0.08  ,  0.08  , ...,  0.1572,  0.1332,  0.0906])*
@@ -835,10 +912,10 @@ RETURNS
 
 # calc_Eprof_schedule
 - number of invocations: 1
-- max duration: 0.311 s
-- avg duration: 0.311 s
-- min duration: 0.311 s
-- total duration: 0.311 s
+- max duration: 0.32 s
+- avg duration: 0.32 s
+- min duration: 0.32 s
+- total duration: 0.32 s
 
 ### Input
 - **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
@@ -923,14 +1000,14 @@ RETURNS
 
 # calc_I_sol
 - number of invocations: 1
-- max duration: 0.08 s
-- avg duration: 0.08 s
-- min duration: 0.08 s
-- total duration: 0.08 s
+- max duration: 0.085 s
+- avg duration: 0.085 s
+- min duration: 0.085 s
+- total duration: 0.085 s
 
 ### Input
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x13BCC870>*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x13BCC870>*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x151AD030>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x151AD030>*
 
 
 ### Output
@@ -961,10 +1038,10 @@ RETURNS
 
 # calc_Qgain_lat
 - number of invocations: 1
-- max duration: 0.035 s
-- avg duration: 0.035 s
-- min duration: 0.035 s
-- total duration: 0.035 s
+- max duration: 0.041 s
+- avg duration: 0.041 s
+- min duration: 0.041 s
+- total duration: 0.041 s
 
 ### Input
 - **people** `['ndarray']`: *array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
@@ -1009,10 +1086,10 @@ RETURNS
 
 # calc_Qgain_sen
 - number of invocations: 1
-- max duration: 0.215 s
-- avg duration: 0.215 s
-- min duration: 0.215 s
-- total duration: 0.215 s
+- max duration: 0.226 s
+- avg duration: 0.226 s
+- min duration: 0.226 s
+- total duration: 0.226 s
 
 ### Input
 - **people** `['ndarray']`: *array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
@@ -1029,8 +1106,8 @@ RETURNS
 - **Am** `['float64']`: *6332.4520868972522*
 - **Atot** `['float64']`: *20087.716963360235*
 - **Htr_w** `['float64']`: *344.20598175023116*
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x068FAC30>*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x068FAC30>*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x15061610>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x15061610>*
 
 
 ### Output
@@ -1093,10 +1170,10 @@ RETURNS
 
 # calc_Qhs_Qcs
 - number of invocations: 1
-- max duration: 0.034 s
-- avg duration: 0.034 s
-- min duration: 0.034 s
-- total duration: 0.034 s
+- max duration: 0.312 s
+- avg duration: 0.312 s
+- min duration: 0.312 s
+- total duration: 0.312 s
 
 ### Input
 - **SystemH** `['unicode']`: *u'T1'*
@@ -1223,18 +1300,18 @@ RETURNS
 
 # calc_Qhs_Qcs_dis_ls
 - number of invocations: 1
-- max duration: 0.034 s
-- avg duration: 0.034 s
-- min duration: 0.034 s
-- total duration: 0.034 s
+- max duration: 0.039 s
+- avg duration: 0.039 s
+- min duration: 0.039 s
+- total duration: 0.039 s
 
 ### Input
 - **tair** `['float64']`: *15.751274156536283*
 - **text** `['float64']`: *1.1000000000000001*
 - **Qhs** `['float64']`: *0.0*
 - **Qcs** `['float64']`: *0.0*
-- **tsh** `['float64']`: *90.0*
-- **trh** `['float64']`: *70.0*
+- **tsh** `['int64']`: *90*
+- **trh** `['int64']`: *70*
 - **tsc** `['int64']`: *7*
 - **trc** `['int64']`: *15*
 - **Qhs_max** `['float64']`: *332396.37528759934*
@@ -1269,10 +1346,10 @@ PARAMETERS
 :type Qcs: float64
 
 :param tsh:
-:type tsh: float64
+:type tsh: int64
 
 :param trh:
-:type trh: float64
+:type trh: int64
 
 :param tsc:
 :type tsc: int64
@@ -1355,10 +1432,10 @@ RETURNS
 
 # calc_Qww
 - number of invocations: 1
-- max duration: 0.03 s
-- avg duration: 0.03 s
-- min duration: 0.03 s
-- total duration: 0.03 s
+- max duration: 0.037 s
+- avg duration: 0.037 s
+- min duration: 0.037 s
+- total duration: 0.037 s
 
 ### Input
 - **mww** `['float64']`: *0.0*
@@ -1401,10 +1478,10 @@ RETURNS
 
 # calc_Qww_dis_ls_nr
 - number of invocations: 1
-- max duration: 0.033 s
-- avg duration: 0.033 s
-- min duration: 0.033 s
-- total duration: 0.033 s
+- max duration: 0.034 s
+- avg duration: 0.034 s
+- min duration: 0.034 s
+- total duration: 0.034 s
 
 ### Input
 - **tair** `['float64']`: *15.751274156536283*
@@ -1420,7 +1497,7 @@ RETURNS
 - **Pwater** `['int32']`: *998*
 - **Bf** `['float64']`: *0.69999999999999996*
 - **te** `['float64']`: *1.1000000000000001*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x14B0DB50>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1507A810>*
 
 
 ### Output
@@ -1487,10 +1564,10 @@ RETURNS
 
 # calc_Qww_dis_ls_r
 - number of invocations: 1
-- max duration: 0.033 s
-- avg duration: 0.033 s
-- min duration: 0.033 s
-- total duration: 0.033 s
+- max duration: 0.034 s
+- avg duration: 0.034 s
+- min duration: 0.034 s
+- total duration: 0.034 s
 
 ### Input
 - **Tair** `['float64']`: *15.751274156536283*
@@ -1504,7 +1581,7 @@ RETURNS
 - **twws** `['int64']`: *60*
 - **Cpw** `['float64']`: *4.1840000000000002*
 - **Pwater** `['int32']`: *998*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x15C2CAD0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x15063B90>*
 
 
 ### Output
@@ -1565,10 +1642,10 @@ RETURNS
 
 # calc_Qww_schedule
 - number of invocations: 1
-- max duration: 0.379 s
-- avg duration: 0.379 s
-- min duration: 0.379 s
-- total duration: 0.379 s
+- max duration: 0.314 s
+- avg duration: 0.314 s
+- min duration: 0.314 s
+- total duration: 0.314 s
 
 ### Input
 - **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
@@ -1607,10 +1684,10 @@ RETURNS
 
 # calc_Qww_st_ls
 - number of invocations: 1
-- max duration: 0.261 s
-- avg duration: 0.261 s
-- min duration: 0.261 s
-- total duration: 0.261 s
+- max duration: 0.27 s
+- avg duration: 0.27 s
+- min duration: 0.27 s
+- total duration: 0.27 s
 
 ### Input
 - **Vww** `['ndarray']`: *array([ 0.        ,  0.        ,  0.        , ...,  0.03748812,
@@ -1625,7 +1702,7 @@ RETURNS
 - **Qww_dis_ls_nr** `['ndarray']`: *array([   0,    0,    0, ..., 1222,  481,  462])*
 - **U_dhwtank** `['float']`: *0.225*
 - **AR** `['float']`: *3.3*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x13D20C10>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1550F3F0>*
 - **T_ext** `['ndarray']`: *array([ 1.1,  1.1,  1. , ...,  1.4,  1.4,  1.4])*
 - **Qww** `['ndarray']`: *array([    0.        ,     0.        ,     0.        , ...,  2174.11914263,
          587.59976828,   499.45980304])*
@@ -1694,10 +1771,10 @@ RETURNS
 
 # calc_Qwwf
 - number of invocations: 1
-- max duration: 1.456 s
-- avg duration: 1.456 s
-- min duration: 1.456 s
-- total duration: 1.456 s
+- max duration: 1.33 s
+- avg duration: 1.33 s
+- min duration: 1.33 s
+- total duration: 1.33 s
 
 ### Input
 - **Af** `['float64']`: *2532.980834758901*
@@ -1711,7 +1788,7 @@ RETURNS
 - **Tww_re** `['ndarray']`: *array([ 10.,  10.,  10., ...,  10.,  10.,  10.])*
 - **Tww_sup_0** `['int64']`: *60*
 - **Y** `['list']`: *[0.2, 0.3, 0.3]*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x13D2AA30>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1507ABB0>*
 - **Vww_lpd** `['float64']`: *8.0*
 - **Vw_lpd** `['float64']`: *8.0*
 - **Occ_m2p** `['float64']`: *2.0*
@@ -1839,10 +1916,10 @@ RETURNS
 
 # calc_coeff_lea_zone
 - number of invocations: 1
-- max duration: 0.026 s
-- avg duration: 0.026 s
-- min duration: 0.026 s
-- total duration: 0.026 s
+- max duration: 0.028 s
+- avg duration: 0.028 s
+- min duration: 0.028 s
+- total duration: 0.028 s
 
 ### Input
 - **qv_delta_p_lea_ref** `['float64']`: *102902.34641208035*
@@ -1873,10 +1950,10 @@ RETURNS
 
 # calc_coeff_vent_zone
 - number of invocations: 1
-- max duration: 0.028 s
-- avg duration: 0.028 s
-- min duration: 0.028 s
-- total duration: 0.028 s
+- max duration: 0.031 s
+- avg duration: 0.031 s
+- min duration: 0.031 s
+- total duration: 0.031 s
 
 ### Input
 - **area_vent_zone** `['int']`: *0*
@@ -1907,10 +1984,10 @@ RETURNS
 
 # calc_disls
 - number of invocations: 1
-- max duration: 0.033 s
-- avg duration: 0.033 s
-- min duration: 0.033 s
-- total duration: 0.033 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **tamb** `['float']`: *21.0*
@@ -1922,7 +1999,7 @@ RETURNS
 - **p** `['int']`: *998*
 - **cpw** `['float']`: *4.184*
 - **Y** `['float']`: *0.3*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x147C6790>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1550FF90>*
 
 
 ### Output
@@ -2015,10 +2092,10 @@ RETURNS
 
 # calc_h_ve_adj
 - number of invocations: 1
-- max duration: 0.031 s
-- avg duration: 0.031 s
-- min duration: 0.031 s
-- total duration: 0.031 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **q_m_mech** `['float64']`: *0.54571461453039194*
@@ -2026,7 +2103,7 @@ RETURNS
 - **temp_ext** `['float64']`: *1.1000000000000001*
 - **temp_sup** `['float64']`: *1.1000000000000001*
 - **temp_zone_set** `['int']`: *21*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x14B0DC90>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x151829F0>*
 
 
 ### Output
@@ -2069,14 +2146,14 @@ RETURNS
 
 # calc_hex
 - number of invocations: 1
-- max duration: 0.082 s
-- avg duration: 0.082 s
-- min duration: 0.082 s
-- total duration: 0.082 s
+- max duration: 0.092 s
+- avg duration: 0.092 s
+- min duration: 0.092 s
+- total duration: 0.092 s
 
 ### Input
 - **rel_humidity_ext** `['int64']`: *85*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x13BCC890>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x151B2250>*
 - **temp_ext** `['float64']`: *8.4000000000000004*
 - **temp_zone_prev** `['float64']`: *29.564381831684884*
 - **timestep** `['int']`: *3217*
@@ -2119,10 +2196,10 @@ RETURNS
 
 # calc_hvac
 - number of invocations: 1
-- max duration: 0.142 s
-- avg duration: 0.142 s
-- min duration: 0.142 s
-- total duration: 0.142 s
+- max duration: 0.148 s
+- avg duration: 0.148 s
+- min duration: 0.148 s
+- total duration: 0.148 s
 
 ### Input
 - **rhum_1** `['int64']`: *85*
@@ -2132,7 +2209,7 @@ RETURNS
 - **qe_sen** `['float64']`: *-57907.787205514789*
 - **temp_5_prev** `['float64']`: *29.564381831684884*
 - **wint** `['float64']`: *0.0*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x13BBDE30>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1507AF50>*
 - **timestep** `['int']`: *3217*
 
 
@@ -2185,10 +2262,10 @@ RETURNS
 
 # calc_mww
 - number of invocations: 1
-- max duration: 0.034 s
-- avg duration: 0.034 s
-- min duration: 0.034 s
-- total duration: 0.034 s
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **schedule** `['float64']`: *0.0*
@@ -2235,15 +2312,15 @@ RETURNS
 
 # calc_occ
 - number of invocations: 1
-- max duration: 0.717 s
-- avg duration: 0.717 s
-- min duration: 0.717 s
-- total duration: 0.717 s
+- max duration: 0.691 s
+- avg duration: 0.691 s
+- min duration: 0.691 s
+- total duration: 0.691 s
 
 ### Input
 - **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
 - **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.640*
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x14B0DEF0>*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x151B2310>*
 
 
 ### Output
@@ -2278,10 +2355,10 @@ RETURNS
 
 # calc_occ_schedule
 - number of invocations: 1
-- max duration: 0.307 s
-- avg duration: 0.307 s
-- min duration: 0.307 s
-- total duration: 0.307 s
+- max duration: 0.309 s
+- avg duration: 0.309 s
+- min duration: 0.309 s
+- total duration: 0.309 s
 
 ### Input
 - **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
@@ -2356,24 +2433,24 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_radiator
+# calc_ta
 - number of invocations: 1
-- max duration: 0.029 s
-- avg duration: 0.029 s
-- min duration: 0.029 s
-- total duration: 0.029 s
+- max duration: 0.038 s
+- avg duration: 0.038 s
+- min duration: 0.038 s
+- total duration: 0.038 s
 
 ### Input
-- **Qh** `['float64']`: *0.0*
-- **tair** `['float64']`: *15.751274156536283*
-- **Qh0** `['float64']`: *336657.37528759934*
-- **tair0** `['float64']`: *21.0*
-- **tsh0** `['float64']`: *90.0*
-- **trh0** `['float64']`: *70.0*
+- **Htr_is** `['float64']`: *69302.623523592818*
+- **Hve** `['float64']`: *550.080331446635*
+- **IHC_nd** `['int']`: *0*
+- **I_ia** `['float64']`: *3642.9330365502524*
+- **te_t** `['float64']`: *1.1000000000000001*
+- **ts** `['float64']`: *15.815001104854327*
 
 
 ### Output
-- `['tuple']`: (0, 0, 0)
+- `['float64']`: 15.751274156536283
 
 ### Docstring template
 
@@ -2381,29 +2458,29 @@ RETURNS
 PARAMETERS
 ----------
 
-:param Qh:
-:type Qh: float64
+:param Htr_is:
+:type Htr_is: float64
 
-:param tair:
-:type tair: float64
+:param Hve:
+:type Hve: float64
 
-:param Qh0:
-:type Qh0: float64
+:param IHC_nd:
+:type IHC_nd: int
 
-:param tair0:
-:type tair0: float64
+:param I_ia:
+:type I_ia: float64
 
-:param tsh0:
-:type tsh0: float64
+:param te_t:
+:type te_t: float64
 
-:param trh0:
-:type trh0: float64
+:param ts:
+:type ts: float64
 
 RETURNS
 -------
 
 :returns:
-:rtype: tuple
+:rtype: float64
 
 ```
 
@@ -2412,10 +2489,10 @@ RETURNS
 
 # calc_temperatures_emission_systems
 - number of invocations: 1
-- max duration: 0.449 s
-- avg duration: 0.449 s
-- min duration: 0.449 s
-- total duration: 0.449 s
+- max duration: 0.318 s
+- avg duration: 0.318 s
+- min duration: 0.318 s
+- total duration: 0.318 s
 
 ### Input
 - **Qcsf** `['ndarray']`: *array([-0., -0., -0., ..., -0., -0., -0.])*
@@ -2431,9 +2508,9 @@ RETURNS
 - **Ta_sup_hs** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **Tcs_re_0** `['int64']`: *15*
 - **Tcs_sup_0** `['int64']`: *7*
-- **Ths_re_0** `['float']`: *70.0*
-- **Ths_sup_0** `['float']`: *90.0*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x15C2E4F0>*
+- **Ths_re_0** `['int64']`: *70*
+- **Ths_sup_0** `['int64']`: *90*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x15194A90>*
 - **ma_sup_cs** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **ma_sup_hs** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **sys_e_cooling** `['unicode']`: *u'T3'*
@@ -2484,10 +2561,10 @@ PARAMETERS
 :type Tcs_sup_0: int64
 
 :param Ths_re_0:
-:type Ths_re_0: float
+:type Ths_re_0: int64
 
 :param Ths_sup_0:
-:type Ths_sup_0: float
+:type Ths_sup_0: int64
 
 :param gv:
 :type gv: GlobalVariables
@@ -2520,10 +2597,10 @@ RETURNS
 
 # calc_thermal_load_hvac_timestep
 - number of invocations: 1
-- max duration: 0.409 s
-- avg duration: 0.409 s
-- min duration: 0.409 s
-- total duration: 0.409 s
+- max duration: 0.411 s
+- avg duration: 0.411 s
+- min duration: 0.411 s
+- total duration: 0.411 s
 
 ### Input
 - **t** `['int']`: *3217*
@@ -2532,8 +2609,8 @@ RETURNS
            0.        ,     0.        ]), 've': array([    0.        ,     0.        ,     0.        , ...,  3238.97325302,
          875.39817649,   744.08845002]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
          30.39577002,   25.83640451]), 'Ta_sup_cs': array([*
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x13BD7890>*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x13BD7890>*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x151A9870>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x151AD250>*
 
 
 ### Output
@@ -2574,10 +2651,10 @@ RETURNS
 
 # calc_thermal_load_mechanical_and_natural_ventilation_timestep
 - number of invocations: 1
-- max duration: 0.393 s
-- avg duration: 0.393 s
-- min duration: 0.393 s
-- total duration: 0.393 s
+- max duration: 0.67 s
+- avg duration: 0.67 s
+- min duration: 0.67 s
+- total duration: 0.67 s
 
 ### Input
 - **t** `['int']`: *0*
@@ -2585,8 +2662,8 @@ RETURNS
         0.00071768,  0.00061003]), 'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 've': array([    0.        ,     0.        ,     0.        , ...,  3238.97325302,
          875.39817649,   744.08845002]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
          30.39577002,   25.83640451]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0*
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x147C6810>*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x14B12610>*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x1519A6D0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1519A6D0>*
 
 
 ### Output
@@ -2627,14 +2704,14 @@ RETURNS
 
 # calc_thermal_loads
 - number of invocations: 1
-- max duration: 8.185 s
-- avg duration: 8.185 s
-- min duration: 8.185 s
-- total duration: 8.185 s
+- max duration: 8.46 s
+- avg duration: 8.46 s
+- min duration: 8.46 s
+- total duration: 8.46 s
 
 ### Input
 - **building_name** `['str']`: *'Bau A'*
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x13BB3A70>*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x16AF62F0>*
 - **weather_data** `['DataFrame']`: *(8760, 3)*
 - **usage_schedules** `['dict']`: *{'list_uses': [u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM'], 'schedules': [([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.1600000000000*
 - **date** `['DatetimeIndex']`: *DatetimeIndex(['2010-01-01 00:00:00', '2010-01-01 01:00:00',
@@ -2646,7 +2723,7 @@ RETURNS
                '2010-12-31 14:00:00', '2010-12-31 15:00:00',
                '2010-12-31 16:00:00', '2010-12-31 17:00:00',
                '2010-12-31 18:00:00', '2010-12-31 19:0*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x13BCC2B0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x15063570>*
 - **results_folder** `['str']`: *'c:\\reference-case-zug\\baseline\\outputs\\data\\demand'*
 - **temporary_folder** `['str']`: *'c:\\users\\darthoma\\appdata\\local\\temp'*
 
@@ -2707,12 +2784,166 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
+# calc_tm
+- number of invocations: 1
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
+
+### Input
+- **Cm** `['float64']`: *417941837.73521864*
+- **Htr_3** `['float64']`: *876.41925301753997*
+- **Htr_em** `['float64']`: *601.8673589723943*
+- **Im_tot** `['float64']`: *8783.6305013901547*
+- **tm_t0** `['int']`: *16*
+
+
+### Output
+- `['tuple']`: (15.872734454107169, 15.936367227053584)
+
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Cm:
+:type Cm: float64
+
+:param Htr_3:
+:type Htr_3: float64
+
+:param Htr_em:
+:type Htr_em: float64
+
+:param Im_tot:
+:type Im_tot: float64
+
+:param tm_t0:
+:type tm_t0: int
+
+RETURNS
+-------
+
+:returns:
+:rtype: tuple
+
+```
+
+[TOC](#table-of-contents)
+---
+
+# calc_top
+- number of invocations: 1
+- max duration: 0.028 s
+- avg duration: 0.028 s
+- min duration: 0.028 s
+- total duration: 0.028 s
+
+### Input
+- **ta** `['float64']`: *15.751274156536283*
+- **ts** `['float64']`: *15.815001104854327*
+
+
+### Output
+- `['float64']`: 15.795245750875733
+
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param ta:
+:type ta: float64
+
+:param ts:
+:type ts: float64
+
+RETURNS
+-------
+
+:returns:
+:rtype: float64
+
+```
+
+[TOC](#table-of-contents)
+---
+
+# calc_ts
+- number of invocations: 1
+- max duration: 0.031 s
+- avg duration: 0.031 s
+- min duration: 0.031 s
+- total duration: 0.031 s
+
+### Input
+- **Htr_1** `['float64']`: *545.74852531251054*
+- **Htr_ms** `['float64']`: *57625.313990764997*
+- **Htr_w** `['float64']`: *344.20598175023116*
+- **Hve** `['float64']`: *550.080331446635*
+- **IHC_nd** `['int']`: *0*
+- **I_ia** `['float64']`: *3642.9330365502524*
+- **I_st** `['float64']`: *2487.6752097710209*
+- **te_t** `['float64']`: *1.1000000000000001*
+- **tm** `['float64']`: *15.936367227053584*
+
+
+### Output
+- `['float64']`: 15.815001104854327
+
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param Htr_1:
+:type Htr_1: float64
+
+:param Htr_ms:
+:type Htr_ms: float64
+
+:param Htr_w:
+:type Htr_w: float64
+
+:param Hve:
+:type Hve: float64
+
+:param IHC_nd:
+:type IHC_nd: int
+
+:param I_ia:
+:type I_ia: float64
+
+:param I_st:
+:type I_st: float64
+
+:param te_t:
+:type te_t: float64
+
+:param tm:
+:type tm: float64
+
+RETURNS
+-------
+
+:returns:
+:rtype: float64
+
+```
+
+[TOC](#table-of-contents)
+---
+
 # calc_w
 - number of invocations: 1
-- max duration: 0.03 s
-- avg duration: 0.03 s
-- min duration: 0.03 s
-- total duration: 0.03 s
+- max duration: 0.028 s
+- avg duration: 0.028 s
+- min duration: 0.028 s
+- total duration: 0.028 s
 
 ### Input
 - **t** `['float64']`: *8.4000000000000004*
@@ -2793,15 +3024,15 @@ RETURNS
 
 # demand_calculation
 - number of invocations: 1
-- max duration: 54.894 s
-- avg duration: 54.894 s
-- min duration: 54.894 s
-- total duration: 54.894 s
+- max duration: 58.949 s
+- avg duration: 58.949 s
+- min duration: 58.949 s
+- total duration: 58.949 s
 
 ### Input
-- **locator** `['InputLocator']`: *<cea.inputlocator.InputLocator object at 0x14B1E730>*
+- **locator** `['InputLocator']`: *<cea.inputlocator.InputLocator object at 0x1507A2B0>*
 - **weather_path** `['str']`: *'C:\\Users\\darthoma\\Documents\\GitHub\\CEAforArcGIS\\cea\\databases\\CH\\Weather\\Zug-2010.epw'*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x14B1E730>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1507A2B0>*
 
 
 ### Output
@@ -2848,10 +3079,10 @@ INPUT / OUTPUT FILES
 
 # get_building_geometry_ventilation
 - number of invocations: 1
-- max duration: 0.028 s
-- avg duration: 0.028 s
-- min duration: 0.028 s
-- total duration: 0.028 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
 - **gdf_building_geometry** `['dict']`: *{'perimeter': 234.50218018236586, u'Blength': 87.0, u'height_bg': 3.0, u'floors_bg': 1.0, u'height_ag': 19.5, u'floors_ag': 5.0, u'Bwidth': 30.0, 'footprint': 2638.5217028738552}*
@@ -2882,15 +3113,15 @@ RETURNS
 
 # get_properties_natural_ventilation
 - number of invocations: 1
-- max duration: 0.412 s
-- avg duration: 0.412 s
-- min duration: 0.412 s
-- total duration: 0.412 s
+- max duration: 0.43 s
+- avg duration: 0.43 s
+- min duration: 0.43 s
+- total duration: 0.43 s
 
 ### Input
 - **gdf_geometry_building** `['dict']`: *{'perimeter': 234.50218018236586, u'Blength': 87.0, u'height_bg': 3.0, u'floors_bg': 1.0, u'height_ag': 19.5, u'floors_ag': 5.0, u'Bwidth': 30.0, 'footprint': 2638.5217028738552}*
 - **gdf_architecture_building** `['dict']`: *{u'Occ_m2p': 2.0, u'f_cros': 0, u'n50': 2, u'win_op': 0.5, u'win_wall': 0.28950999999999999, u'type_shade': u'T1'}*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x13BBD830>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1550FF90>*
 
 
 ### Output
@@ -2925,10 +3156,10 @@ RETURNS
 
 # get_temperatures
 - number of invocations: 1
-- max duration: 0.14 s
-- avg duration: 0.14 s
-- min duration: 0.14 s
-- total duration: 0.14 s
+- max duration: 0.141 s
+- avg duration: 0.141 s
+- min duration: 0.141 s
+- total duration: 0.141 s
 
 ### Input
 - **locator** `['LocatorDecorator']`: *???*
@@ -2977,10 +3208,10 @@ INPUT / OUTPUT FILES
 
 # lookup_coeff_wind_pressure
 - number of invocations: 1
-- max duration: 0.028 s
-- avg duration: 0.028 s
-- min duration: 0.028 s
-- total duration: 0.028 s
+- max duration: 0.034 s
+- avg duration: 0.034 s
+- min duration: 0.034 s
+- total duration: 0.034 s
 
 ### Input
 - **height_path** `['ndarray']`: *array([  4.875,   4.875,  14.625,  14.625,  19.5  ])*
@@ -3025,58 +3256,12 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# newton
-- number of invocations: 1
-- max duration: 0.029 s
-- avg duration: 0.029 s
-- min duration: 0.029 s
-- total duration: 0.029 s
-
-### Input
-- **func** `['function']`: *???*
-- **x0** `['float']`: *343.0*
-- **tol** `['float']`: *0.01*
-- **maxiter** `['int']`: *100*
-
-
-### Output
-- `['float64']`: 330.13952888032293
-
-### Docstring template
-
-```
-PARAMETERS
-----------
-
-:param func:
-:type func: function
-
-:param x0:
-:type x0: float
-
-:param tol:
-:type tol: float
-
-:param maxiter:
-:type maxiter: int
-
-RETURNS
--------
-
-:returns:
-:rtype: float64
-
-```
-
-[TOC](#table-of-contents)
----
-
 # read_schedules
 - number of invocations: 1
-- max duration: 0.034 s
-- avg duration: 0.034 s
-- min duration: 0.034 s
-- total duration: 0.034 s
+- max duration: 0.038 s
+- avg duration: 0.038 s
+- min duration: 0.038 s
+- total duration: 0.038 s
 
 ### Input
 - **use** `['unicode']`: *u'INDUSTRIAL'*
@@ -3142,10 +3327,10 @@ RETURNS
 
 # results_to_csv
 - number of invocations: 1
-- max duration: 0.258 s
-- avg duration: 0.258 s
-- min duration: 0.258 s
-- total duration: 0.258 s
+- max duration: 0.257 s
+- avg duration: 0.257 s
+- min duration: 0.257 s
+- total duration: 0.257 s
 
 ### Input
 - **GFA_m2** `['float64']`: *15831.130217243131*
@@ -3187,9 +3372,9 @@ RETURNS
 - **Tcs_sup** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
 - **Tcs_sup_0** `['int64']`: *7*
 - **Ths_re** `['ndarray']`: *array([ 0,  0,  0, ..., 33, 32, 32])*
-- **Ths_re_0** `['float']`: *70.0*
+- **Ths_re_0** `['int64']`: *70*
 - **Ths_sup** `['ndarray']`: *array([ 0,  0,  0, ..., 37, 34, 35])*
-- **Ths_sup_0** `['float']`: *90.0*
+- **Ths_sup_0** `['int64']`: *90*
 - **Tww_re** `['ndarray']`: *array([ 10.,  10.,  10., ...,  10.,  10.,  10.])*
 - **Tww_st** `['ndarray']`: *array([ 59.95492923,  59.90986509,  59.86474933, ...,  59.95412594,
         59.96686873,  59.97607186])*
@@ -3332,13 +3517,13 @@ PARAMETERS
 :type Ths_re: ndarray
 
 :param Ths_re_0:
-:type Ths_re_0: float
+:type Ths_re_0: int64
 
 :param Ths_sup:
 :type Ths_sup: ndarray
 
 :param Ths_sup_0:
-:type Ths_sup_0: float
+:type Ths_sup_0: int64
 
 :param Tww_re:
 :type Tww_re: ndarray
@@ -3422,10 +3607,10 @@ RETURNS
 
 # run_as_script
 - number of invocations: 1
-- max duration: 54.993 s
-- avg duration: 54.993 s
-- min duration: 54.993 s
-- total duration: 54.993 s
+- max duration: 59.05 s
+- avg duration: 59.05 s
+- min duration: 59.05 s
+- total duration: 59.05 s
 
 ### Input
 
@@ -3452,10 +3637,10 @@ RETURNS
 
 # schedule_maker
 - number of invocations: 1
-- max duration: 1.205 s
-- avg duration: 1.205 s
-- min duration: 1.205 s
-- total duration: 1.205 s
+- max duration: 1.225 s
+- avg duration: 1.225 s
+- min duration: 1.225 s
+- total duration: 1.225 s
 
 ### Input
 - **date** `['DatetimeIndex']`: *DatetimeIndex(['2010-01-01 00:00:00', '2010-01-01 01:00:00',
@@ -3510,13 +3695,13 @@ INPUT / OUTPUT FILES
 
 # thermal_loads_all_buildings
 - number of invocations: 1
-- max duration: 51.552 s
-- avg duration: 51.552 s
-- min duration: 51.552 s
-- total duration: 51.552 s
+- max duration: 55.605 s
+- avg duration: 55.605 s
+- min duration: 55.605 s
+- total duration: 55.605 s
 
 ### Input
-- **building_properties** `['BuildingProperties']`: *<cea.demand.thermal_loads.BuildingProperties object at 0x14933850>*
+- **building_properties** `['BuildingProperties']`: *<cea.demand.thermal_loads.BuildingProperties object at 0x151891D0>*
 - **date** `['DatetimeIndex']`: *DatetimeIndex(['2010-01-01 00:00:00', '2010-01-01 01:00:00',
                '2010-01-01 02:00:00', '2010-01-01 03:00:00',
                '2010-01-01 04:00:00', '2010-01-01 05:00:00',
@@ -3526,7 +3711,7 @@ INPUT / OUTPUT FILES
                '2010-12-31 14:00:00', '2010-12-31 15:00:00',
                '2010-12-31 16:00:00', '2010-12-31 17:00:00',
                '2010-12-31 18:00:00', '2010-12-31 19:0*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x14B182B0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x14DB34B0>*
 - **locator** `['LocatorDecorator']`: *???*
 - **num_buildings** `['int']`: *24*
 - **usage_schedules** `['dict']`: *{'list_uses': [u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM'], 'schedules': [([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.1600000000000*
@@ -3639,13 +3824,13 @@ INPUT / OUTPUT FILES
 
 # write_totals_csv
 - number of invocations: 1
-- max duration: 0.941 s
-- avg duration: 0.941 s
-- min duration: 0.941 s
-- total duration: 0.941 s
+- max duration: 0.894 s
+- avg duration: 0.894 s
+- min duration: 0.894 s
+- total duration: 0.894 s
 
 ### Input
-- **building_properties** `['BuildingProperties']`: *<cea.demand.thermal_loads.BuildingProperties object at 0x068FAC30>*
+- **building_properties** `['BuildingProperties']`: *<cea.demand.thermal_loads.BuildingProperties object at 0x1518ED10>*
 - **locator** `['LocatorDecorator']`: *???*
 
 
