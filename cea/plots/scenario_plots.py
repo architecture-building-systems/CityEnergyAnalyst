@@ -86,7 +86,7 @@ def plot_demand(ax, locators, scenario_names, column, title):
         df[scenario] = scenario_data[column] * 1000 / scenario_data['GFA_m2']
         afs[scenario] = scenario_data['GFA_m2']
     ax2 = ax.twinx()
-    df.boxplot(ax=ax, sym='')
+    df.boxplot(ax=ax, sym='', return_type='axes')
     ax.set_title(title)
     ax.set_ylabel('Per Building [KWh/m2]')
     y = pd.DataFrame({scenario: df[scenario] * afs[scenario] / afs[scenario].sum()
@@ -113,7 +113,7 @@ def plot_lca_embodied(ax, locators, scenario_names, column, title, unit):
         df[scenario] = scenario_data[column] * 1000 / scenario_data['GFA_m2']
         afs[scenario] = scenario_data['GFA_m2']
     ax2 = ax.twinx()
-    df.boxplot(ax=ax, sym='')
+    df.boxplot(ax=ax, sym='', return_type='axes')
     ax.set_title(title)
     ax.set_ylabel('Per Building [%(unit)s]' % locals())
     y = pd.DataFrame({scenario: df[scenario] * afs[scenario] / afs[scenario].sum()
@@ -140,7 +140,7 @@ def plot_lca_operation(ax, locators, scenario_names, column, title, unit):
         df[scenario] = scenario_data[column] * 1000 / scenario_data['GFA_m2']
         afs[scenario] = scenario_data['GFA_m2']
     ax2 = ax.twinx()
-    df.boxplot(ax=ax, sym='')
+    df.boxplot(ax=ax, sym='', return_type='axes')
     ax.set_title(title)
     ax.set_ylabel('Per Building [%(unit)s]' % locals())
     y = pd.DataFrame({scenario: df[scenario] * afs[scenario] / afs[scenario].sum()
