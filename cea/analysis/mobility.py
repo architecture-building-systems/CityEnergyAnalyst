@@ -65,7 +65,7 @@ def lca_mobility(locator):
     mobility[fields_to_plot].to_csv(locator.get_lca_mobility(), index=False, float_format='%.2f')
 
 def test_mobility():
-    locator = ExtendInputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator = ExtendInputLocator(scenario_path=r'C:\reference-case-zug\baseline')
     lca_mobility(locator=locator)
 
     print 'test_mobility() succeeded'
