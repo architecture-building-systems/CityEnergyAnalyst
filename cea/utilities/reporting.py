@@ -47,13 +47,14 @@ def full_report_to_xls(template, variables, output_folder, basename, gv):
         # try to add them from the `tds` variable:
         if 'tsd' in variables:
             for key in missing_variables:
-                if key in variables['tsd'].columns:
+                if key in variables['tsd'].keys():
                     variables[key] = variables['tsd'][key]
         missing_variables = [v for v in report_template[sheet] if v not in variables]
         if missing_variables:
             gv.log("cannot report following variables: %s" % ', '.join(missing_variables))
 
-        df = pd.DataFrame({v: variables[v] for v in report_template[sheet] if v in variables})
+        df = pd.DataFrame({v: variables[v] for v in report_template[sheet] if v in variables},
+                          index=pd.date_range(gv.date_start, periods=8760, freq='H'))
         # write data frames to excel work sheet
         df.to_excel(writer, sheet_name=sheet, na_rep='NaN')
 
