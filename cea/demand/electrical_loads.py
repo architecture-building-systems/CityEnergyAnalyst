@@ -41,7 +41,7 @@ def calc_E_totals(Aef, Ealf, Eauxf, Edataf, Eprof, Eaf, Elf):
         Epro_tot = Eprof.sum() / 1e6
         Edata_tot = Edataf.sum() / 1e6
     else:
-        Ealf_tot = Eauxf_tot = Ealf_0 = Eaf_0 = Elf_0 = 0
+        Ealf_tot = Eauxf_tot = Ealf_0 = Eaf_0 = Elf_0 = Eaf_tot = Elf_tot = 0
         Epro_tot = Edata_tot = 0
         Ealf = np.zeros(8760)
         Eprof = np.zeros(8760)
