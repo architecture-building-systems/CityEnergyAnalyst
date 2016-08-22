@@ -109,7 +109,7 @@ def test_graph_demand():
     from cea import globalvar
     analysis_fields = ["Ealf_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
 
-    locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case-zug\baseline')
     gv = globalvar.GlobalVariables()
     graphs_demand(locator=locator, analysis_fields=analysis_fields, gv=gv)
     print 'test_graph_demand() succeeded'
