@@ -307,7 +307,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         Qwwf_0 = Ealf_0 = Qhsf_0 = Qcsf_0 = 0
         Ths_sup_0 = Ths_re_0 = Tcs_re_0 = Tcs_sup_0 = Tww_sup_0 = 0
         # arrays
-        Occupancy = Eauxf = Vw = np.zeros(8760)
+        Occupancy = Eauxf = Vw = Eaux_hs = Eaux_cs = Eaux_ve = Eaux_ww = Eaux_fw = np.zeros(8760)
         Qwwf = Qww = Qhs_sen = Qhsf = Qcs_sen = Qcs = Qcsf = Qcdataf = Qcrefrif = Qd = Qc = Qhs = Qww_ls_st = np.zeros(
             8760)
 
