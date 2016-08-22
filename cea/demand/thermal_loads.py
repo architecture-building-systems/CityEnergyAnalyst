@@ -15,6 +15,7 @@ import cea.demand.ventilation_model as ventilation_model
 from cea.demand import occupancy_model
 from  cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.technologies import controllers
+from cea.utilities import helpers
 
 
 """
@@ -100,8 +101,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd = {'T_ext': weather_data.drybulb_C.values,
            'rh_ext': weather_data.relhum_percent.values,
            'uncomfort': np.zeros(8760),
-           'Ta': np.zeros(8760),
-           'Tm': np.zeros(8760),
+           'Ta': np.empty(8760) * np.nan,
+           'Tm': np.empty(8760) * np.nan,
            'Qhs_sen': np.zeros(8760),
            'Qcs_sen': np.zeros(8760),
            'Qhs_lat': np.zeros(8760),
@@ -192,16 +193,19 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['flag_season'][gv.seasonhours[0] + 1:gv.seasonhours[1]] = True  # True means cooling season
 
         # end-use demand calculation
-        for t in range(8760):
-            if bpr.hvac['type_hs'] == 'T3' and gv.is_heating_season(t):
+        for t in range(-30, 8760):
+
+            hoy = helpers.seasonhour_2_hoy(t)
+
+            if bpr.hvac['type_hs'] == 'T3' and gv.is_heating_season(hoy):
                 # case 1a: heating with hvac
-                tsd = calc_thermal_load_hvac_timestep(t, tsd, bpr, gv)
-            elif bpr.hvac['type_cs'] == 'T3' and not gv.is_heating_season(t):
+                tsd = calc_thermal_load_hvac_timestep(hoy, tsd, bpr, gv)
+            elif bpr.hvac['type_cs'] == 'T3' and not gv.is_heating_season(hoy):
                 # case 1a: cooling with hvac
-                tsd = calc_thermal_load_hvac_timestep(t, tsd, bpr, gv)
+                tsd = calc_thermal_load_hvac_timestep(hoy, tsd, bpr, gv)
             else:
                 # case 1b: mechanical ventilation
-                tsd = calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, gv)
+                tsd = calc_thermal_load_mechanical_and_natural_ventilation_timestep(hoy, tsd, bpr, gv)
 
         # TODO: check this out with Shanshan :)
 
@@ -390,8 +394,8 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
     i_c_max, i_h_max = sensible_loads.calc_Qhs_Qcs_sys_max(bpr.rc_model['Af'], bpr.hvac)
 
     # previous timestep data (we give a seed high enough to avoid doing a iteration for 2 years, Ta=21, Tm=16)
-    temp_air_prev = tsd['Ta'][t-1] if t > 0 else gv.initial_temp_air_prev
-    temp_m_prev = tsd['Tm'][t-1] if t > 0 else gv.initial_temp_m_prev
+    temp_air_prev = tsd['Ta'][t-1] if not np.isnan(tsd['Ta'][t-1]) else tsd['T_ext'][t-1] #gv.initial_temp_air_prev
+    temp_m_prev = tsd['Tm'][t-1] if not  np.isnan(tsd['Tm'][t-1]) else tsd['T_ext'][t-1] #gv.initial_temp_m_prev
 
     # get constant properties of building R-C-model
     h_tr_is = bpr.rc_model['Htr_is']
@@ -628,8 +632,8 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
     i_c_max, i_h_max = sensible_loads.calc_Qhs_Qcs_sys_max(bpr.rc_model['Af'], bpr.hvac)
 
     # previous timestep data (we give a seed high enough to avoid doing a iteration for 2 years, Ta=21, Tm=16)
-    temp_air_prev = tsd['Ta'][t - 1] if t > 0 else gv.initial_temp_air_prev
-    temp_m_prev = tsd['Tm'][t - 1] if t > 0 else gv.initial_temp_m_prev
+    temp_air_prev = tsd['Ta'][t - 1] if not np.isnan(tsd['Ta'][t - 1]) else tsd['T_ext'][t-1] # gv.initial_temp_air_prev
+    temp_m_prev = tsd['Tm'][t - 1] if not np.isnan(tsd['Tm'][t - 1]) else tsd['T_ext'][t-1] # gv.initial_temp_m_prev
 
     # get constant properties of building R-C-model
     h_tr_is = bpr.rc_model['Htr_is']
