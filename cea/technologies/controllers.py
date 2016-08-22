@@ -88,18 +88,12 @@ def calc_simple_ventilation_control(ve, people, Af, gv, hour_day, hour_year, n50
     infiltration = gv.hf * Af * n_inf * 0.000277778 # m3/s
 
     if (21 < hour_day or hour_day < 7) and not gv.is_heating_season(hour_year):
-        if ve < infiltration:
-            q_req = infiltration
 
-        else:
-            q_req = (ve * 1.3) * 0.000277778 # m3/s
+        q_req = max(ve * 0.000277778, infiltration) * 1.3  # m3/s
         # free cooling during summer nights (1.3x required ventilation rate per pax plus infiltration)
     else:
-        if ve < infiltration:
-            q_req = infiltration
 
-        else:
-            q_req = ve * 0.000277778  # m3/s
+        q_req = max(ve * 0.000277778, infiltration)  # m3/s
 
     return q_req   # m3/s
 
