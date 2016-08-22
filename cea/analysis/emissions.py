@@ -162,7 +162,7 @@ def test_lca_operation():
     Qww_flag = Qhs_flag = True
     Qcs_flag = Qcdata_flag = Qcrefri_flag = True
     Eal_flag = Eaux_flag = Epro_flag = Edata_flag = True
-    locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case-zug\baseline')
     lca_operation(locator=locator, Qww_flag=Qww_flag, Qhs_flag=Qhs_flag, Qcs_flag=Qcs_flag, Qcdata_flag=Qcdata_flag,
                   Qcrefri_flag=Qcrefri_flag, Eal_flag=Eal_flag, Eaux_flag=Eaux_flag, Epro_flag=Epro_flag,
                   Edata_flag=Edata_flag)
