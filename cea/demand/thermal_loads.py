@@ -586,7 +586,7 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
 
 """
 =========================================
-demand model for buildings wih mechanical ventilation
+demand model for buildings with mechanical ventilation
 =========================================
 """
 
@@ -982,11 +982,11 @@ class BuildingProperties(object):
         Aef          2.171240e+03   (floor area with electricity in [m2])
         Af           2.171240e+03   (conditioned floor area (heated/cooled) in [m2])
         Cm           6.513719e+08   (internal heat capacity in [J/K])
-        Htr_is       1.574865e+04   FIXME: some heat transfer coefficient
-        Htr_em       5.829963e+02   FIXME: some heat transfer coefficient
-        Htr_ms       6.322650e+04   FIXME: some heat transfer coefficient
-        Htr_op       5.776698e+02   FIXME: some heat transfer coefficient
-        Hg           2.857637e+02   (steady-state Thermal transmission coefficient to the ground in [W/K])
+        Htr_is       1.574865e+04   (thermal transmission coefficient between air and surface nodes in RC-model in [W/K])
+        Htr_em       5.829963e+02   (thermal transmission coefficient between exterior and thermal mass nodes in RC-model in [W/K])
+        Htr_ms       6.322650e+04   (thermal transmission coefficient between surface and thermal mass nodes in RC-model in [W/K])
+        Htr_op       5.776698e+02   (thermal transmission coefficient for opaque surfaces in [W/K])
+        Hg           2.857637e+02   (steady-state thermal transmission coefficient to the ground in [W/K])
         HD           2.919060e+02   (direct thermal transmission coefficient to the external environment in [W/K])
         Htr_w        1.403374e+03   (thermal transmission coefficient for windows and glazing in [W/K])
         GFA_m2       2.412489e+03   (gross floor area [m2])
