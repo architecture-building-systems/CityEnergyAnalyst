@@ -102,19 +102,15 @@ def graphs_demand(locator, analysis_fields, gv):
         counter += 1
 
 
-def test_graph_demand(scenario_path=None):
+def test_graph_demand():
     # HINTS FOR ARCGIS INTERFACE:
     # the user should see all the column names of the total_demands.csv
     # the user can select a maximum of 4 of those column names to graph (analysis fields!
     from cea import globalvar
-    gv = globalvar.GlobalVariables()
     analysis_fields = ["Ealf_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
 
-    if scenario_path is None:
-        scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-
-
+    locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case-zug\baseline')
+    gv = globalvar.GlobalVariables()
     graphs_demand(locator=locator, analysis_fields=analysis_fields, gv=gv)
     print 'test_graph_demand() succeeded'
 
