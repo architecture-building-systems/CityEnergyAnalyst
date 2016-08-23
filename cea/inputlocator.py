@@ -98,6 +98,10 @@ class InputLocator(object):
         """cea/databases/CH/Benchmarks/benchmark_today.xls"""
         return os.path.join(self.db_path, 'Benchmarks', 'benchmark_today.xls')
 
+    def get_data_mobility(self):
+        """cea/databases/CH/Benchmarks/mobility.xls"""
+        return os.path.join(self.db_path, 'Benchmarks', 'mobility.xls')
+
     # INPUTS
     def get_building_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
