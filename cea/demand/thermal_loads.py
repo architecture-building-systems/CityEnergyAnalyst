@@ -717,11 +717,11 @@ writer of results
 """
 
 
-def results_to_csv(bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot,
+def results_to_csv(bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Eprof, Eprof_tot,
                    building_name, Occupancy, Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww,
-                    Qwwf, Qwwf_0, Tcs_re, Tcs_sup, Ths_re, Ths_sup, Vw, Vww, path_results_folder, mcpcs, mcphs,
-                   mcpww, path_temporary_folder, date,  mcpdataf, Tcdataf_re, Tcdataf_sup,  mcpref, Tcref_re,
-                   Tcref_sup, Qhprof, Ecaf, Qhprof_tot, Ecaf_tot, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, Eaf_0, Elf_0, Eaf_tot, Elf_tot ):
+                   Qwwf, Qwwf_0, Tcs_re, Tcs_sup, Ths_re, Ths_sup, Vw, Vww, path_results_folder, mcpcs, mcphs,
+                   mcpww, path_temporary_folder, date, mcpdataf, Tcdataf_re, Tcdataf_sup, mcpref, Tcref_re,
+                   Tcref_sup, Qhprof, Ecaf, Qhprof_tot, Ecaf_tot, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, Eaf_0, Elf_0, Eaf_tot, Elf_tot):
 
     # TODO: Document
     # Refactored from CalcThermalLoads
@@ -754,7 +754,7 @@ def results_to_csv(bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Ed
          'Vww_m3': Vww,
          'Tshs_C': Ths_sup, 'Trhs_C': Ths_re, 'mcphs_kWC': mcphs/1000, 'mcpww_kWC': mcpww / 1000, 'Tscs_C': Tcs_sup,
          'Trcs_C': Tcs_re, 'mcpcs_kWC': mcpcs/1000, 'Qcdataf_kWh': Qcdata / 1000, 'Tsww_C': bpr.building_systems['Tww_sup_0'], 'Trww_C': tsd['Tww_re'],
-         'Ef_kWh': (Ealf + Eauxf + Epro) / 1000, 'Epro_kWh': Epro / 1000,
+         'Ef_kWh': (Ealf + Eauxf + Eprof) / 1000, 'Eprof_kWh': Eprof / 1000,
          'Qcref_kWh': Qcrefri / 1000,
          'Edataf_kWh': Edata / 1000, 'QHf_kWh': (Qwwf + Qhsf) / 1000,
          'QCf_kWh': (-1 * Qcsf + Qcdata + Qcrefri) / 1000, "mcpdata_kWC": mcpdataf/1000, "Trdata_C": Tcdataf_re,
@@ -772,9 +772,9 @@ def results_to_csv(bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Ed
          'Qcref_MWhyr': Qcrefri_tot, 'Trcs0_C': bpr.building_systems['Tcs_re_0'], 'mcpcs0_kWC': mcpcs.max()/1000, 'Qwwf_MWhyr': Qwwf_tot,
          'Qww_MWhyr': Qww_tot, 'Qhsf_MWhyr': Qhsf_tot, 'Qhs_MWhyr': Qhs_tot, 'Qcsf_MWhyr': Qcsf_tot,
          'Qcs_MWhyr': Qcs_tot, 'Qhprof_MWhyr':Qhprof_tot, 'Ecaf_MWhyr':Ecaf_tot,
-         'Ealf_MWhyr': Ealf_tot, 'Eauxf_MWhyr': Eauxf_tot, 'Eprof_MWhyr': Epro_tot, 'Edataf_MWhyr': Edata_tot,
+         'Ealf_MWhyr': Ealf_tot, 'Eauxf_MWhyr': Eauxf_tot, 'Eprof_MWhyr': Eprof_tot, 'Edataf_MWhyr': Edata_tot,
          'Tsww0_C': bpr.building_systems['Tww_sup_0'], 'Vw_m3yr': Vw.sum(), 'Vww_m3yr': Vww.sum(),
-         'Ef_MWhyr': (Ealf_tot + Eauxf_tot + Epro_tot + Edata_tot + Ecaf_tot), 'QHf_MWhyr': (Qwwf_tot + Qhsf_tot+ Qhprof_tot),
+         'Ef_MWhyr': (Ealf_tot + Eauxf_tot + Eprof_tot + Edata_tot + Ecaf_tot), 'QHf_MWhyr': (Qwwf_tot + Qhsf_tot + Qhprof_tot),
          'QCf_MWhyr': (Qcsf_tot + Qcdata_tot + Qcrefri_tot), 'Eaf0_kW' : Eaf_0 / 1000, 'Elf0_kW' : Elf_0 / 1000, 'Eaf_MWhyr' : Eaf_tot, 'Elf_MWhyr' : Elf_tot,
          }, index=[0])
     totals.to_csv(os.path.join(path_temporary_folder, '%sT.csv' %  building_name), index=False, float_format='%.3f')
