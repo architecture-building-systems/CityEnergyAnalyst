@@ -308,7 +308,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         Ths_sup_0 = Ths_re_0 = Tcs_re_0 = Tcs_sup_0 = Tww_sup_0 = 0
         # arrays
         Occupancy = Eauxf = Vw = Eaux_hs = Eaux_cs = Eaux_ve = Eaux_ww = Eaux_fw = np.zeros(8760)
-        Qwwf = Qww = Qhs_sen = Qhsf = Qcs_sen = Qcs = Qcsf = Qcdataf = Qcrefrif = Qd = Qc = Qhs = Qww_ls_st = np.zeros(
+        Qwwf = Qww = Qhs_sen = Qhsf = Qcs_sen = Qcs = Qcsf = Qcdataf = Qcrefrif = Qd = Qc = Qhs = np.zeros(
             8760)
 
         # FIXME: this is a bug (all the variables are being set to the same array)
@@ -328,7 +328,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     results_to_csv(bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf,
                    Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot, building_name, Occupancy, Occupants, Qcdataf,
-                   Qcrefrif, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
+                   Qcrefrif, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
                    Ths_re, Ths_sup, Tww_st, Vw, Vww, results_folder, mcpcs, mcphs, mcpww,temporary_folder,
                    date,  mcpdataf, Tcdataf_re,
                    Tcdataf_sup,  mcpref, Tcref_re, Tcref_sup, Qhprof, Ecaf, Qhprof_tot, Ecaf_tot,
@@ -719,7 +719,7 @@ writer of results
 
 def results_to_csv(bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot,
                    building_name, Occupancy, Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww,
-                   Qww_ls_st, Qwwf, Qwwf_0, Tcs_re, Tcs_sup, Ths_re, Ths_sup, Tww_st, Vw, Vww, path_results_folder, mcpcs, mcphs,
+                    Qwwf, Qwwf_0, Tcs_re, Tcs_sup, Ths_re, Ths_sup, Tww_st, Vw, Vww, path_results_folder, mcpcs, mcphs,
                    mcpww, path_temporary_folder, date,  mcpdataf, Tcdataf_re, Tcdataf_sup,  mcpref, Tcref_re,
                    Tcref_sup, Qhprof, Ecaf, Qhprof_tot, Ecaf_tot, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, Eaf_0, Elf_0, Eaf_tot, Elf_tot ):
 
@@ -748,7 +748,7 @@ def results_to_csv(bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Ed
     # temperature in Degrees celcious
     pd.DataFrame(
         {'DATE': date, 'Name': building_name, 'Ealf_kWh': Ealf / 1000, 'Eauxf_kWh': Eauxf / 1000, 'Qwwf_kWh': Qwwf / 1000,
-         'Qww_kWh': Qww / 1000, 'Qww_tankloss_kWh': Qww_ls_st / 1000, 'Qhs_kWh': Qhs / 1000,
+         'Qww_kWh': Qww / 1000, 'Qhs_kWh': Qhs / 1000,
          'Qhsf_kWh': Qhsf / 1000, 'Qhprof_kWh':Qhprof, 'Ecaf_kWh':Ecaf,
          'Qcs_kWh': -1 * Qcs / 1000, 'Qcsf_kWh': -1 * Qcsf / 1000, 'occ_pax': Occupancy, 'Vw_m3': Vw,
          'Vww_m3': Vww,
