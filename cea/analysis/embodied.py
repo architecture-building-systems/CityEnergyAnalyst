@@ -256,7 +256,7 @@ def calc_comparison(array_min, array_max):
 
 
 def test_lca_embodied():
-    locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case-zug\baseline')
     yearcalc = 2050
 
     gv = cea.globalvar.GlobalVariables()
