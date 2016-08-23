@@ -20,6 +20,7 @@ class GlobalVariables(object):
         self.scenario_reference = r'c:\reference-case-zug\baseline'
         self.date_start = '1/1/2010' #d/m/yyyy
         self.seasonhours = [3216, 6192]
+        self.multiprocessing = True
         self.Z = 3  # height of basement for every building in m
         self.Bf = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
         self.his = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
@@ -501,7 +502,7 @@ class GlobalVariables(object):
         self.initial_temp_m_prev = 16
 
         # use multiprocessing / parallel execution if possible
-        self.multiprocessing = True
+
 
         # here is where we decide whether full excel reports of the calculations are generated
         self.testing = False  # if true: reports are generated, if false: not
