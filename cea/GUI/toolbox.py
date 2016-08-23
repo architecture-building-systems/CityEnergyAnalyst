@@ -374,11 +374,17 @@ class GraphsDemandTool(object):
         analysis_fields = parameters[1]
         locator = cea.inputlocator.InputLocator(scenario_path)
         df_total_demand = pd.read_csv(locator.get_total_demand())
+        total_fields = set(df_total_demand.columns.tolist())
         first_building = df_total_demand['Name'][0]
         df_building = pd.read_csv(locator.get_demand_results_file(first_building))
         fields = set(df_building.columns.tolist())
         fields.remove('DATE')
         fields.remove('Name')
+
+        # remove fields in demand results files that do not have a corresponding field in the totals file
+        bad_fields = set(field for field in fields if not field.split('_')[0] + "_MWhyr" in total_fields)
+        fields = fields - bad_fields
+
         analysis_fields.filter.list = list(fields)
         return
 
