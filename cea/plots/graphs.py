@@ -59,7 +59,7 @@ def graphs_demand(locator, analysis_fields, gv):
     # create figure for every name
     counter = 0
     from matplotlib.backends.backend_pdf import PdfPages
-    for name in building_names[:2]:
+    for name in building_names:
         # CREATE PDF FILE
         pdf = PdfPages(locator.get_demand_plots_file(name))
 
