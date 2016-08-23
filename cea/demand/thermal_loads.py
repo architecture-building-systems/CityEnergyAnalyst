@@ -312,7 +312,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             8760)
 
         # FIXME: this is a bug (all the variables are being set to the same array)
-        Ths_sup = Ths_re = Tcs_re = Tcs_sup = mcphs = mcpcs = mcpww = Vww = Tww_re = Tww_st = np.zeros(
+        Ths_sup = Ths_re = Tcs_re = Tcs_sup = mcphs = mcpcs = mcpww = Vww = Tww_re = np.zeros(
             8760)  # in C
 
     # Cacl totals and peaks electrical loads
@@ -329,7 +329,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     results_to_csv(bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf,
                    Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot, building_name, Occupancy, Occupants, Qcdataf,
                    Qcrefrif, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
-                   Ths_re, Ths_sup, Tww_st, Vw, Vww, results_folder, mcpcs, mcphs, mcpww,temporary_folder,
+                   Ths_re, Ths_sup, Vw, Vww, results_folder, mcpcs, mcphs, mcpww,temporary_folder,
                    date,  mcpdataf, Tcdataf_re,
                    Tcdataf_sup,  mcpref, Tcref_re, Tcref_sup, Qhprof, Ecaf, Qhprof_tot, Ecaf_tot,
                    Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, Eaf_0, Elf_0, Eaf_tot, Elf_tot)
@@ -719,7 +719,7 @@ writer of results
 
 def results_to_csv(bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot,
                    building_name, Occupancy, Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww,
-                    Qwwf, Qwwf_0, Tcs_re, Tcs_sup, Ths_re, Ths_sup, Tww_st, Vw, Vww, path_results_folder, mcpcs, mcphs,
+                    Qwwf, Qwwf_0, Tcs_re, Tcs_sup, Ths_re, Ths_sup, Vw, Vww, path_results_folder, mcpcs, mcphs,
                    mcpww, path_temporary_folder, date,  mcpdataf, Tcdataf_re, Tcdataf_sup,  mcpref, Tcref_re,
                    Tcref_sup, Qhprof, Ecaf, Qhprof_tot, Ecaf_tot, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, Eaf_0, Elf_0, Eaf_tot, Elf_tot ):
 
@@ -754,7 +754,7 @@ def results_to_csv(bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Ed
          'Vww_m3': Vww,
          'Tshs_C': Ths_sup, 'Trhs_C': Ths_re, 'mcphs_kWC': mcphs/1000, 'mcpww_kWC': mcpww / 1000, 'Tscs_C': Tcs_sup,
          'Trcs_C': Tcs_re, 'mcpcs_kWC': mcpcs/1000, 'Qcdataf_kWh': Qcdata / 1000, 'Tsww_C': bpr.building_systems['Tww_sup_0'], 'Trww_C': tsd['Tww_re'],
-         'Tww_tank_C': Tww_st, 'Ef_kWh': (Ealf + Eauxf + Epro) / 1000, 'Epro_kWh': Epro / 1000,
+         'Ef_kWh': (Ealf + Eauxf + Epro) / 1000, 'Epro_kWh': Epro / 1000,
          'Qcref_kWh': Qcrefri / 1000,
          'Edataf_kWh': Edata / 1000, 'QHf_kWh': (Qwwf + Qhsf) / 1000,
          'QCf_kWh': (-1 * Qcsf + Qcdata + Qcrefri) / 1000, "mcpdata_kWC": mcpdataf/1000, "Trdata_C": Tcdataf_re,
