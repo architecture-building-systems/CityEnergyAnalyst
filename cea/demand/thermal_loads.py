@@ -193,7 +193,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['flag_season'][gv.seasonhours[0] + 1:gv.seasonhours[1]] = True  # True means cooling season
 
         # end-use demand calculation
-        for t in range(-30, 8760):
+        for t in range(-720, 8760):
 
             hoy = helpers.seasonhour_2_hoy(t)
 
