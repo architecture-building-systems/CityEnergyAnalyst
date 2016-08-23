@@ -29,6 +29,31 @@ end-use heating or cooling loads
 def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Htr_ms, Htr_is, Htr_1, Htr_2, Htr_3,
                  I_st, Hve, Htr_w, I_ia, I_m, Cm, Af, Losses, tHset_corr, tCset_corr, IC_max, IH_max, Flag):
 
+    def temperature_control_tabs(Htr_1, Htr_2, Htr_3, Htr_ms, Htr_w, Htr_em, Htr_is, Hve, IHC_nd, I_ia, I_st, I_m,
+                                 te_t, tm_t0, Cm, control):
+        if control == 'max_ts':
+            #if the calculated surface temperature exceeds the maximum, set ts = ts_max and calculate maximum power
+            # and all other temperatures
+            ts_max = 27
+            a = np.array([[(Hve+Htr_is), (-Htr_is),              0,                      (-0.5)],
+                         [(-Htr_is),       (Htr_w+Htr_ms+Htr_is),  (-Htr_ms),              (-0.5)],
+                         [0,            (-Htr_ms),              ((Htr_ms+Htr_em)/2+Cm), (-0.5)],
+                         [0,            1,                      0,                      0]])
+            b = np.array([(Hve * te_t + I_ia), (Htr_w * te_t + I_st + Htr_ms/2 * tm_t0), (Htr_em * te_t + (-(Htr_ms + Htr_em)/2 + Cm) * tm_t0 + I_m), ts_max])
+            [ta, ts, tm_t, IH_max] = np.linalg.solve(a,b)
+        if control == 'max_ts-ta':
+            # if the calculated temperature difference between the surface and inside air exceeds the maximum,
+            # set ts - ta = dt_max and calculate maximum power and other temperatures
+            dt_max = 9
+            a = np.array([[(Hve + Htr_is), (-Htr_is), 0, (-0.5)],
+                         [(-Htr_is), (Htr_w + Htr_ms + Htr_is), (-Htr_ms), (-0.5)],
+                         [0, (-Htr_ms), ((Htr_ms + Htr_em) / 2 + Cm), (-0.5)],
+                         [-1, 1, 0, 0]])
+            b = np.array([(Hve * te_t + I_ia), (Htr_w * te_t + I_st + Htr_ms / 2 * tm_t0),
+                          (Htr_em * te_t + (-(Htr_ms + Htr_em) / 2 + Cm) * tm_t0 + I_m), dt_max])
+            [ta, ts, tm_t, IH_max] = np.linalg.solve(a, b)
+        return ta, ts, tm_t, IH_max
+
     if Losses:
         # Losses due to emission and control of systems
         tintH_set = tintH_set + tHset_corr
@@ -53,15 +78,26 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
     else:
         if tair_case0 > tintC_set:
             tair_set = tintC_set
+            calc_Im_tot_eff = calc_Im_tot
+            calc_ts_eff = calc_ts
+            calc_ta_eff = calc_ta
         else:
             tair_set = tintH_set
+            if SystemH == 'T4':
+                calc_Im_tot_eff = calc_Im_tot_tabs
+                calc_ts_eff = calc_ts_tabs
+                calc_ta_eff = calc_ta_tabs
+            else:
+                calc_Im_tot_eff = calc_Im_tot
+                calc_ts_eff = calc_ts
+                calc_ta_eff = calc_ta
         # Case 2
         IHC_nd = IHC_nd_10 = 10 * Af
-        Im_tot = calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd_10, Hve, Htr_2)
+        Im_tot = calc_Im_tot_eff(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd_10, Hve, Htr_2)
 
         tm_t, tm = calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0)
-        ts = calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd_10, I_ia, I_st, te_t, tm)
-        tair10 = calc_ta(Htr_is, Hve, IHC_nd_10, I_ia, te_t, ts)
+        ts = calc_ts_eff(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd_10, I_ia, I_st, te_t, tm)
+        tair10 = calc_ta_eff(Htr_is, Hve, IHC_nd_10, I_ia, te_t, ts)
 
         IHC_nd_un = IHC_nd_10 * (tair_set - tair_case0) / (tair10 - tair_case0)  # - I_TABS
         if IC_max < IHC_nd_un < IH_max:
@@ -71,10 +107,10 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
 
             # Heating/Cooling with power between zero and the maximum
             # Here we have to calculate the actual temperatures with the IHC_nd_un heating/cooling power
-            Im_tot = calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd_ac, Hve, Htr_2)
+            Im_tot = calc_Im_tot_eff(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd_ac, Hve, Htr_2)
             tm_t, tm = calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0)
-            ts = calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm)
-            # ta = calc_ta(Htr_is, Hve, IHC_nd, I_ia, te_t, ts) # this should be the same as tair_set
+            ts = calc_ts_eff(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm)
+            # ta = calc_ta_eff(Htr_is, Hve, IHC_nd, I_ia, te_t, ts) # this should be the same as tair_set
             top = calc_top(ta, ts)
 
         else:
@@ -83,14 +119,32 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
             else:
                 IHC_nd_ac = IC_max
             # Case 3 when the maxiFmum power is exceeded
-            Im_tot = calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd_ac, Hve, Htr_2)
+            Im_tot = calc_Im_tot_eff(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd_ac, Hve, Htr_2)
 
             tm_t, tm = calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0)
-            ts = calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd_ac, I_ia, I_st, te_t, tm)
-            ta = calc_ta(Htr_is, Hve, IHC_nd_ac, I_ia, te_t, ts)
+            ts = calc_ts_eff(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd_ac, I_ia, I_st, te_t, tm)
+            ta = calc_ta_eff(Htr_is, Hve, IHC_nd_ac, I_ia, te_t, ts)
             top = calc_top(ta, ts)
 
             uncomfort = 1
+
+        # temperature controls for case with TABS
+        if IHC_nd_un > 0 and SystemH == 'T4':
+            if (ts - ta) > 9:
+                # design condition: maximum temperature asymmetry for radiant floors/ceilings is 9ºC
+                tm, ts, tair10, IHC_nd_un = temperature_control_tabs(Htr_1, Htr_2, Htr_3, Htr_ms, Htr_w, Htr_em, Htr_is,
+                                                                     Hve, IHC_nd, I_ia, I_st, I_m, te_t, tm_t0, Cm,
+                                                                     'max_ts-ta')
+                uncomfort = 1
+                IHC_nd_ac = IHC_nd_un
+
+            if ts > 27:
+                # design condition: maximum surface temperature for radiant floors/ceilings is 27ºC
+                tm, ts, tair10, IHC_nd_un = temperature_control_tabs(Htr_1, Htr_2, Htr_3, Htr_ms, Htr_w, Htr_em, Htr_is,
+                                                                     Hve, IHC_nd, I_ia, I_st, I_m, te_t, tm_t0, Cm,
+                                                                     'max_ts')
+                uncomfort = 1
+                IHC_nd_ac = IHC_nd_un
 
         if IHC_nd_un > 0:
             if Flag == True:
@@ -123,16 +177,27 @@ def calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0):
     # Here the temperature that is actually needed for the next time step is tm_t
     return tm_t, tm
 
-
 @cc.export('calc_ts', "f8(f8, f8, f8, f8, i4, f8, f8, f8, f8)")
 def calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm):
     ts = (Htr_ms * tm + I_st + Htr_w * te_t + Htr_1 * (te_t + (I_ia + IHC_nd) / Hve)) / (Htr_ms + Htr_w + Htr_1)
     return ts
 
+@cc.export('calc_ts_tabs', "f8(f8, f8, f8, f8, i4, f8, f8, f8, f8)")
+def calc_ts_tabs(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm):
+    # if the system is a floor heating system, then the heat input is split between all three nodes
+    ts = (Htr_ms * tm + I_st + Htr_w * te_t + Htr_1 * (te_t + I_ia / Hve) + (Htr_1 / Hve + 1) * IHC_nd * 0.5) / (
+        Htr_ms + Htr_w + Htr_1)
+    return ts
 
 @cc.export('calc_ta', "f8(f8, f8, i4, f8, f8, f8)")
 def calc_ta(Htr_is, Hve, IHC_nd, I_ia, te_t, ts):
     ta = (Htr_is * ts + Hve * te_t + I_ia + IHC_nd) / (Htr_is + Hve)
+    return ta
+
+@cc.export('calc_ta_tabs', "f8(f8, f8, i4, f8, f8, f8)")
+def calc_ta_tabs(Htr_is, Hve, IHC_nd, I_ia, te_t, ts):
+    # if the system is a floor heating system, then the heat input is split between all three nodes
+    ta = (Htr_is * ts + Hve * te_t + I_ia + 0.5 * IHC_nd) / (Htr_is + Hve)
     return ta
 
 @cc.export('calc_top', "f8(f8, f8)")
@@ -140,9 +205,17 @@ def calc_top(ta, ts):
     top = 0.31 * ta + 0.69 * ts
     return top
 
-@cc.export('calc_Im_tot', "f8(f8, f8, f8, f8, f8, f8, f8, f8, i4, f8, f8)")
+@cc.export('calc_Im_tot', "f8(f8, f8, f8, f8, f8, f8, f8, f8, i4, f8, f8, )")
 def calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd, Hve, Htr_2):
-    return I_m + Htr_em * te_t + Htr_3 * (I_st + Htr_w * te_t + Htr_1 * (((I_ia + IHC_nd) / Hve) + te_t)) / Htr_2
+    Im_tot = I_m + Htr_em * te_t + Htr_3 * (I_st + Htr_w * te_t + Htr_1 * (((I_ia + IHC_nd) / Hve) + te_t)) / Htr_2
+    return Im_tot
+
+@cc.export('calc_Im_tot_tabs', "f8(f8, f8, f8, f8, f8, f8, f8, f8, i4, f8, f8)")
+def calc_Im_tot_tabs(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd, Hve, Htr_2):
+    # if the system is a floor heating system, then the heat input is split between all three nodes
+    Im_tot = I_m + Htr_em * te_t + Htr_3 * (I_st + Htr_w * te_t + Htr_1 * ((I_ia / Hve) + te_t)) / Htr_2 + \
+             IHC_nd * 0.5 * (1 + Htr_3 / Htr_2 * (1 + Htr_1 / Hve))
+    return Im_tot
 
 try:
     # import Numba AOT versions of the functions above
@@ -224,7 +297,7 @@ solar and heat gains
 
 def calc_Qgain_sen(people, Qs_Wp, Eal_nove, Eprof, Qcdata, Qcrefri, tsd, Am, Atot, Htr_w, bpr, gv):
 
-    # itnernal loads
+    # internal loads
     tsd['I_sol']= calc_I_sol(bpr, gv)
     tsd['I_int_sen'] = people * Qs_Wp + 0.9 * (Eal_nove + Eprof) + Qcdata - Qcrefri  # here 0.9 is assumed
 
