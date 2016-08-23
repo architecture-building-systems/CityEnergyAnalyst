@@ -653,10 +653,10 @@ class MobilityTool(object):
         return
 
     def execute(self, parameters, messages):
-        from cea.analysis.mobility import lca_mobility, ExtendInputLocator
+        from cea.analysis.mobility import lca_mobility
 
         scenario_path = parameters[0].valueAsText
         gv = cea.globalvar.GlobalVariables()
         gv.log = add_message
-        locator = ExtendInputLocator(scenario_path=scenario_path)
+        locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
         lca_mobility(locator=locator)
