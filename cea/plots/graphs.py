@@ -45,8 +45,8 @@ def graphs_demand(locator, analysis_fields, gv):
     color_palette = ['g', 'r', 'y', 'c']
     total_file = pd.read_csv(locator.get_total_demand()).set_index('Name')
     building_names = list(total_file.index)
-    fields2 = [x.split('_')[0] + "_MWhyr" for x in analysis_fields]
-    total_demand = total_file[fields2]
+    fields_MWhyr = [field.split('_')[0] + "_MWhyr" for field in analysis_fields]
+    total_demand = total_file[fields_MWhyr]
     area_df = total_file['GFA_m2']
     fields_date = analysis_fields.append('DATE')
     num_buildings = len(building_names)
