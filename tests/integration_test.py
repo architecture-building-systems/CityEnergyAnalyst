@@ -3,7 +3,7 @@ Test all the main scripts in one go - drink coffee while you wait :)
 """
 
 from cea.demand import demand_main
-from cea.analysis import emissions, mobility, embodied
+from cea.analysis import operation, mobility, embodied
 from cea.demand.preprocessing import properties
 from cea.plots import graphs, scenario_plots
 from cea.resources import radiation
@@ -22,7 +22,7 @@ if __name__ == '__main__':
     properties.test_properties()
     # radiation.test_solar_radiation()
     demand_main.run_as_script()
-    emissions.test_lca_operation()
+    operation.test_lca_operation()
     embodied.test_lca_embodied()
     graphs.test_graph_demand()
     mobility.test_mobility()
