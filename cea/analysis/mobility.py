@@ -65,22 +65,10 @@ def lca_mobility(locator):
     mobility[fields_to_plot].to_csv(locator.get_lca_mobility(), index=False, float_format='%.2f')
 
 def test_mobility():
-    locator = ExtendInputLocator(scenario_path=r'C:\reference-case-zug\baseline')
+    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case-zug\baseline')
     lca_mobility(locator=locator)
 
     print 'test_mobility() succeeded'
-
-class ExtendInputLocator(inputlocator.InputLocator):
-    def __init__(self, scenario_path):
-        super(ExtendInputLocator, self).__init__(scenario_path)
-
-    def get_data_mobility(self):
-        """cea/databases/CH/Benchmarks/mobility.xls"""
-        return os.path.join(self.db_path, 'Benchmarks', 'mobility.xls')
-
-    def get_lca_mobility(self):
-        """scenario/outputs/data/emissions/Total_LCA_mobility.csv"""
-        return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_mobility.csv')
 
 if __name__ == '__main__':
     test_mobility()

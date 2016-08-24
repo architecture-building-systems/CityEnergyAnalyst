@@ -193,7 +193,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['flag_season'][gv.seasonhours[0] + 1:gv.seasonhours[1]] = True  # True means cooling season
 
         # end-use demand calculation
-        for t in range(-30, 8760):
+        for t in range(-720, 8760):
 
             hoy = helpers.seasonhour_2_hoy(t)
 
@@ -307,17 +307,17 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         Qwwf_0 = Ealf_0 = Qhsf_0 = Qcsf_0 = 0
         Ths_sup_0 = Ths_re_0 = Tcs_re_0 = Tcs_sup_0 = Tww_sup_0 = 0
         # arrays
-        Occupancy = Eauxf = Vw = np.zeros(8760)
-        Qwwf = Qww = Qhs_sen = Qhsf = Qcs_sen = Qcs = Qcsf = Qcdataf = Qcrefrif = Qd = Qc = Qhs = Qww_ls_st = np.zeros(
+        Occupancy = Eauxf = Vw = Eaux_hs = Eaux_cs = Eaux_ve = Eaux_ww = Eaux_fw = np.zeros(8760)
+        Qwwf = Qww = Qhs_sen = Qhsf = Qcs_sen = Qcs = Qcsf = Qcdataf = Qcrefrif = Qd = Qc = Qhs = np.zeros(
             8760)
 
         # FIXME: this is a bug (all the variables are being set to the same array)
-        Ths_sup = Ths_re = Tcs_re = Tcs_sup = mcphs = mcpcs = mcpww = Vww = Tww_re = Tww_st = np.zeros(
+        Ths_sup = Ths_re = Tcs_re = Tcs_sup = mcphs = mcpcs = mcpww = Vww = Tww_re = np.zeros(
             8760)  # in C
 
     # Cacl totals and peaks electrical loads
-    Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot = electrical_loads.calc_E_totals(
-        bpr.rc_model['Aef'], tsd['Ealf'], Eauxf, tsd['Edataf'], tsd['Eprof'])
+    Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot, Eaf_0, Elf_0, Eaf_tot, Elf_tot = electrical_loads.calc_E_totals(
+        bpr.rc_model['Aef'], tsd['Ealf'], Eauxf, tsd['Edataf'], tsd['Eprof'], tsd['Eaf'], tsd['Elf'])
 
     # calc process heat and compressed air needs for optimization routine
     Qhprof = np.zeros(8760)
@@ -326,15 +326,13 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     Ecaf_tot = 0
     # write results to csv
 
-    results_to_csv(bpr.rc_model['GFA_m2'], bpr.rc_model['Af'], bpr.rc_model['Aroof'], Ealf, Ealf_0, Ealf_tot, Eauxf,
+    results_to_csv(bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf,
                    Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot, building_name, Occupancy, Occupants, Qcdataf,
-                   Qcrefrif, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tcs_re,
-                   bpr.building_systems['Tcs_re_0'], Tcs_sup,
-                   bpr.building_systems['Tcs_sup_0'], Ths_re, bpr.building_systems['Ths_re_0'], Ths_sup,
-                   bpr.building_systems['Ths_sup_0'], tsd['Tww_re'], Tww_st,
-                   bpr.building_systems['Tww_sup_0'], Vw, Vww, results_folder, mcpcs, mcphs, mcpww,temporary_folder,
-                   bpr.hvac['type_cs'], bpr.hvac['type_hs'], waterpeak, date,  mcpdataf, Tcdataf_re,
-                   Tcdataf_sup,  mcpref, Tcref_re, Tcref_sup, Qhprof, Ecaf, Qhprof_tot, Ecaf_tot)
+                   Qcrefrif, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
+                   Ths_re, Ths_sup, Vw, Vww, results_folder, mcpcs, mcphs, mcpww,temporary_folder,
+                   date,  mcpdataf, Tcdataf_re,
+                   Tcdataf_sup,  mcpref, Tcref_re, Tcref_sup, Qhprof, Ecaf, Qhprof_tot, Ecaf_tot,
+                   Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, Eaf_0, Elf_0, Eaf_tot, Elf_tot)
 
     gv.report('calc-thermal-loads', locals(), results_folder, building_name)
     return
@@ -460,20 +458,6 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
         h_tr_1, h_tr_2, h_tr_3 = sensible_loads.calc_Htr(h_ve_adj, h_tr_is, h_tr_ms, h_tr_w)
 
         # TODO: adjust calc TL function to new way of losses calculation (adjust input parameters)
-        Losses = True  # including emission and control losses for the iteration of air mass flow rate
-
-        # calc_Qhs_Qcs()
-        temp_m_loss_true, \
-        temp_a_loss_true, \
-        q_hs_sen_loss_true, \
-        q_cs_sen_loss_true, \
-        uncomfort_loss_true, \
-        temp_op_loss_true, \
-        i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
-                                                        temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st,
-                                                        h_ve_adj, h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr,
-                                                        temp_cs_set_corr, i_c_max, i_h_max, flag_season)
-
         # calculate sensible heat load
         Losses = False  # Losses are set to false for the calculation of the sensible heat load and actual temperatures
 
@@ -487,6 +471,30 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
                                               h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve_adj, h_tr_w, i_ia,
                                               i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max,
                                               flag_season)
+
+        if q_hs_sen !=0 or q_cs_sen !=0:
+            Losses = True
+            # calc_Qhs_Qcs()
+            temp_m_loss_true, \
+            temp_a_loss_true, \
+            q_hs_sen_loss_true, \
+            q_cs_sen_loss_true, \
+            uncomfort_loss_true, \
+            temp_op_loss_true, \
+            i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
+                                                            temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st,
+                                                            h_ve_adj, h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr,
+                                                            temp_cs_set_corr, i_c_max, i_h_max, flag_season)
+        else:
+            temp_m_loss_true = temp_m
+            temp_a_loss_true = temp_a
+            q_hs_sen_loss_true = q_hs_sen
+            q_cs_sen_loss_true = q_cs_sen
+            uncomfort_loss_true = uncomfort
+            temp_op_loss_true = temp_op
+            i_m_tot_loss_true = i_m_tot
+
+
         # TODO: in the original calculation procedure this is calculated with another temp_m_prev (with and without losses), check if this is correct or not
 
         # ventilation losses
@@ -586,7 +594,7 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
 
 """
 =========================================
-demand model for buildings wih mechanical ventilation
+demand model for buildings with mechanical ventilation
 =========================================
 """
 
@@ -670,17 +678,26 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
                                           area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max, flag_season)
 
     # calculate emission losses
-    Losses = True
-    temp_m_loss_true, \
-    temp_a_loss_true, \
-    q_hs_sen_loss_true, \
-    q_cs_sen_loss_true, \
-    uncomfort_loss_true, \
-    temp_op_loss_true, \
-    i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
-                                                    temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve,
-                                                    h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr,
-                                                    i_c_max, i_h_max, flag_season)
+    if q_hs_sen != 0 or q_cs_sen != 0:
+        Losses = True
+        temp_m_loss_true, \
+        temp_a_loss_true, \
+        q_hs_sen_loss_true, \
+        q_cs_sen_loss_true, \
+        uncomfort_loss_true, \
+        temp_op_loss_true, \
+        i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
+                                                        temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve,
+                                                        h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr,
+                                                        i_c_max, i_h_max, flag_season)
+    else:
+        temp_m_loss_true = temp_m
+        temp_a_loss_true = temp_a
+        q_hs_sen_loss_true = q_hs_sen
+        q_cs_sen_loss_true = q_cs_sen
+        uncomfort_loss_true = uncomfort
+        temp_op_loss_true = temp_op
+        i_m_tot_loss_true = i_m_tot
     # TODO: in the original calculation procedure this is calculated with another temp_m_prev (with and without losses), check if this is correct or not
 
     # calculate emission losses
@@ -719,17 +736,17 @@ writer of results
 """
 
 
-def results_to_csv(GFA_m2, Af, Aroof, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Epro, Epro_tot, Name,
-                   Occupancy, Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qww_ls_st, Qwwf,
-                   Qwwf_0, Tcs_re, Tcs_re_0, Tcs_sup, Tcs_sup_0, Ths_re, Ths_re_0, Ths_sup, Ths_sup_0, Tww_re, Tww_st,
-                   Tww_sup_0, Waterconsumption, Vww, locationFinal, mcpcs, mcphs, mcpww, path_temporary_folder,
-                   sys_e_cooling, sys_e_heating, waterpeak, date, mcpdataf, Tcdataf_re, Tcdataf_sup,
-                   mcpref, Tcref_re, Tcref_sup, Qhprof, Ecaf, Qhprof_tot, Ecaf_tot):
+def results_to_csv(bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Eprof, Eprof_tot,
+                   building_name, Occupancy, Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww,
+                   Qwwf, Qwwf_0, Tcs_re, Tcs_sup, Ths_re, Ths_sup, Vw, Vww, path_results_folder, mcpcs, mcphs,
+                   mcpww, path_temporary_folder, date, mcpdataf, Tcdataf_re, Tcdataf_sup, mcpref, Tcref_re,
+                   Tcref_sup, Qhprof, Ecaf, Qhprof_tot, Ecaf_tot, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, Eaf_0, Elf_0, Eaf_tot, Elf_tot):
+
     # TODO: Document
     # Refactored from CalcThermalLoads
 
     # compute totals heating loads loads in MW
-    if sys_e_heating != 'T0':
+    if bpr.hvac['type_hs'] != 'T0':
         Qhsf_tot = Qhsf.sum() / 1000000
         Qhs_tot = Qhs.sum() / 1000000
         Qwwf_tot = Qwwf.sum() / 1000000
@@ -738,7 +755,7 @@ def results_to_csv(GFA_m2, Af, Aroof, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, 
         Qhsf_tot = Qhs_tot = Qwwf_tot = Qww_tot = 0
 
     # compute totals cooling loads in MW
-    if sys_e_cooling != 'T0':
+    if bpr.hvac['type_cs'] != 'T0':
         Qcs_tot = -Qcs.sum() / 1000000
         Qcsf_tot = -Qcsf.sum() / 1000000
         Qcrefri_tot = Qcrefri.sum() / 1000000
@@ -749,33 +766,37 @@ def results_to_csv(GFA_m2, Af, Aroof, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, 
     # print series all in kW, mcp in kW/h, cooling loads shown as positive, water consumption m3/h,
     # temperature in Degrees celcious
     pd.DataFrame(
-        {'DATE': date, 'Name': Name, 'Ealf_kWh': Ealf / 1000, 'Eauxf_kWh': Eauxf / 1000, 'Qwwf_kWh': Qwwf / 1000,
-         'Qww_kWh': Qww / 1000, 'Qww_tankloss_kWh': Qww_ls_st / 1000, 'Qhs_kWh': Qhs / 1000,
+        {'DATE': date, 'Name': building_name, 'Ealf_kWh': Ealf / 1000, 'Eauxf_kWh': Eauxf / 1000, 'Qwwf_kWh': Qwwf / 1000,
+         'Qww_kWh': Qww / 1000, 'Qhs_kWh': Qhs / 1000,
          'Qhsf_kWh': Qhsf / 1000, 'Qhprof_kWh':Qhprof, 'Ecaf_kWh':Ecaf,
-         'Qcs_kWh': -1 * Qcs / 1000, 'Qcsf_kWh': -1 * Qcsf / 1000, 'occ_pax': Occupancy, 'Vw_m3': Waterconsumption,
+         'Qcs_kWh': -1 * Qcs / 1000, 'Qcsf_kWh': -1 * Qcsf / 1000, 'occ_pax': Occupancy, 'Vw_m3': Vw,
          'Vww_m3': Vww,
          'Tshs_C': Ths_sup, 'Trhs_C': Ths_re, 'mcphs_kWC': mcphs/1000, 'mcpww_kWC': mcpww / 1000, 'Tscs_C': Tcs_sup,
-         'Trcs_C': Tcs_re, 'mcpcs_kWC': mcpcs/1000, 'Qcdataf_kWh': Qcdata / 1000, 'Tsww_C': Tww_sup_0, 'Trww_C': Tww_re,
-         'Tww_tank_C': Tww_st, 'Ef_kWh': (Ealf + Eauxf + Epro) / 1000, 'Epro_kWh': Epro / 1000,
+         'Trcs_C': Tcs_re, 'mcpcs_kWC': mcpcs/1000, 'Qcdataf_kWh': Qcdata / 1000, 'Tsww_C': bpr.building_systems['Tww_sup_0'], 'Trww_C': tsd['Tww_re'],
+         'Ef_kWh': (Ealf + Eauxf + Eprof) / 1000, 'Eprof_kWh': Eprof / 1000,
          'Qcref_kWh': Qcrefri / 1000,
          'Edataf_kWh': Edata / 1000, 'QHf_kWh': (Qwwf + Qhsf) / 1000,
          'QCf_kWh': (-1 * Qcsf + Qcdata + Qcrefri) / 1000, "mcpdata_kWC": mcpdataf/1000, "Trdata_C": Tcdataf_re,
-         'Tsdata_C': Tcdataf_sup,'mcpref_kWC': mcpref/1000, 'Trref_C': Tcref_re, 'Tsref_C':Tcref_sup}).to_csv(locationFinal + '\\' + Name + '.csv',
+         'Tsdata_C': Tcdataf_sup,'mcpref_kWC': mcpref/1000, 'Trref_C': Tcref_re, 'Tsref_C':Tcref_sup,
+         'Eaux_hs_kWh': Eaux_hs/1000,'Eaux_cs_kWh': Eaux_cs/1000,'Eaux_ve_kWh': Eaux_ve/1000,'Eaux_ww_kWh': Eaux_ww/1000, 'Eaux_fw_kWh': Eaux_fw/1000,
+         'Eaf_kWh': tsd['Eaf']/1000, 'Elf_kWh' : tsd['Elf']/1000,
+         }).to_csv(path_results_folder + '\\' + building_name + '.csv',
                                                                    index=False, float_format='%.3f')
     # print peaks in kW and totals in MWh, temperature peaks in C
     totals = pd.DataFrame(
-        {'Name': Name, 'GFA_m2': GFA_m2, 'Af_m2': Af, 'occ_pax': Occupants, 'Qwwf0_kW': Qwwf_0 / 1000,
-         'Ealf0_kW': Ealf_0 / 1000, 'Aroof_m2':Aroof, 'mcpww0_kWC':  mcpww.max()/ 1000,
-         'Qhsf0_kW': Qhsf_0 / 1000, 'Qcsf0_kW': -Qcsf_0 / 1000, 'Vww0_m3': Vww.max(), 'Tshs0_C': Ths_sup_0,
-         'Trhs0_C': Ths_re_0, 'mcphs0_kWC': mcphs.max()/1000, 'Tscs0_C': Tcs_sup_0, 'Qcdataf_MWhyr': Qcdata_tot,
-         'Qcref_MWhyr': Qcrefri_tot, 'Trcs0_C': Tcs_re_0, 'mcpcs0_kWC': mcpcs.max()/1000, 'Qwwf_MWhyr': Qwwf_tot,
+        {'Name': building_name, 'GFA_m2': bpr.rc_model['GFA_m2'], 'Af_m2': bpr.rc_model['Af'], 'occ_pax': Occupants, 'Qwwf0_kW': Qwwf_0 / 1000,
+         'Ealf0_kW': Ealf_0 / 1000, 'Aroof_m2':bpr.rc_model['Aroof'], 'mcpww0_kWC':  mcpww.max()/ 1000,
+         'Qhsf0_kW': Qhsf_0 / 1000, 'Qcsf0_kW': -Qcsf_0 / 1000, 'Vww0_m3': Vww.max(), 'Tshs0_C': bpr.building_systems['Ths_sup_0'],
+         'Trhs0_C': bpr.building_systems['Ths_re_0'], 'mcphs0_kWC': mcphs.max()/1000, 'Tscs0_C': bpr.building_systems['Tcs_sup_0'], 'Qcdataf_MWhyr': Qcdata_tot,
+         'Qcref_MWhyr': Qcrefri_tot, 'Trcs0_C': bpr.building_systems['Tcs_re_0'], 'mcpcs0_kWC': mcpcs.max()/1000, 'Qwwf_MWhyr': Qwwf_tot,
          'Qww_MWhyr': Qww_tot, 'Qhsf_MWhyr': Qhsf_tot, 'Qhs_MWhyr': Qhs_tot, 'Qcsf_MWhyr': Qcsf_tot,
          'Qcs_MWhyr': Qcs_tot, 'Qhprof_MWhyr':Qhprof_tot, 'Ecaf_MWhyr':Ecaf_tot,
-         'Ealf_MWhyr': Ealf_tot, 'Eauxf_MWhyr': Eauxf_tot, 'Eprof_MWhyr': Epro_tot, 'Edataf_MWhyr': Edata_tot,
-         'Tsww0_C': Tww_sup_0, 'Vw_m3yr': Waterconsumption.sum(), 'Vww_m3yr': Vww.sum(),
-         'Ef_MWhyr': (Ealf_tot + Eauxf_tot + Epro_tot + Edata_tot + Ecaf_tot), 'QHf_MWhyr': (Qwwf_tot + Qhsf_tot+ Qhprof_tot),
-         'QCf_MWhyr': (Qcsf_tot + Qcdata_tot + Qcrefri_tot)}, index=[0])
-    totals.to_csv(os.path.join(path_temporary_folder, '%sT.csv' % Name), index=False, float_format='%.3f')
+         'Ealf_MWhyr': Ealf_tot, 'Eauxf_MWhyr': Eauxf_tot, 'Eprof_MWhyr': Eprof_tot, 'Edataf_MWhyr': Edata_tot,
+         'Tsww0_C': bpr.building_systems['Tww_sup_0'], 'Vw_m3yr': Vw.sum(), 'Vww_m3yr': Vww.sum(),
+         'Ef_MWhyr': (Ealf_tot + Eauxf_tot + Eprof_tot + Edata_tot + Ecaf_tot), 'QHf_MWhyr': (Qwwf_tot + Qhsf_tot + Qhprof_tot),
+         'QCf_MWhyr': (Qcsf_tot + Qcdata_tot + Qcrefri_tot), 'Eaf0_kW' : Eaf_0 / 1000, 'Elf0_kW' : Elf_0 / 1000, 'Eaf_MWhyr' : Eaf_tot, 'Elf_MWhyr' : Elf_tot,
+         }, index=[0])
+    totals.to_csv(os.path.join(path_temporary_folder, '%sT.csv' %  building_name), index=False, float_format='%.3f')
 
 
 """
@@ -982,11 +1003,11 @@ class BuildingProperties(object):
         Aef          2.171240e+03   (floor area with electricity in [m2])
         Af           2.171240e+03   (conditioned floor area (heated/cooled) in [m2])
         Cm           6.513719e+08   (internal heat capacity in [J/K])
-        Htr_is       1.574865e+04   FIXME: some heat transfer coefficient
-        Htr_em       5.829963e+02   FIXME: some heat transfer coefficient
-        Htr_ms       6.322650e+04   FIXME: some heat transfer coefficient
-        Htr_op       5.776698e+02   FIXME: some heat transfer coefficient
-        Hg           2.857637e+02   (steady-state Thermal transmission coefficient to the ground in [W/K])
+        Htr_is       1.574865e+04   (thermal transmission coefficient between air and surface nodes in RC-model in [W/K])
+        Htr_em       5.829963e+02   (thermal transmission coefficient between exterior and thermal mass nodes in RC-model in [W/K])
+        Htr_ms       6.322650e+04   (thermal transmission coefficient between surface and thermal mass nodes in RC-model in [W/K])
+        Htr_op       5.776698e+02   (thermal transmission coefficient for opaque surfaces in [W/K])
+        Hg           2.857637e+02   (steady-state thermal transmission coefficient to the ground in [W/K])
         HD           2.919060e+02   (direct thermal transmission coefficient to the external environment in [W/K])
         Htr_w        1.403374e+03   (thermal transmission coefficient for windows and glazing in [W/K])
         GFA_m2       2.412489e+03   (gross floor area [m2])
