@@ -24,7 +24,7 @@ if __name__ == '__main__':
     demand_main.run_as_script()
     emissions.test_lca_operation()
     embodied.test_lca_embodied()
-    graphs.test_graph_demand()
+    graphs.run_as_script()
     mobility.test_mobility()
     scenario_plots.test_plot_scenarios()
 

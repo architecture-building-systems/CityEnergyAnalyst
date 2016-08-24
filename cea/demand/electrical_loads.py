@@ -24,25 +24,29 @@ final Internal totals electrical loads
 =========================================
 """
 
-def calc_E_totals(Aef, Ealf, Eauxf, Edataf, Eprof):
+def calc_E_totals(Aef, Ealf, Eauxf, Edataf, Eprof, Eaf, Elf):
     # TODO: Documentation
     # FIXME: is input `Ealf` ever non-zero for Aef <= 0? (also check the other values)
     # Refactored from CalcThermalLoads
     if Aef > 0:
         Ealf_0 = Ealf.max()
+        Eaf_0 = Eaf.max()
+        Elf_0 = Elf.max()
 
         # compute totals electrical loads in MWh
         Ealf_tot = Ealf.sum() / 1e6
+        Eaf_tot = Eaf.sum() / 1e6
+        Elf_tot = Elf.sum() / 1e6
         Eauxf_tot = Eauxf.sum() / 1e6
         Epro_tot = Eprof.sum() / 1e6
         Edata_tot = Edataf.sum() / 1e6
     else:
-        Ealf_tot = Eauxf_tot = Ealf_0 = 0
+        Ealf_tot = Eauxf_tot = Ealf_0 = Eaf_0 = Elf_0 = Eaf_tot = Elf_tot = 0
         Epro_tot = Edata_tot = 0
         Ealf = np.zeros(8760)
         Eprof = np.zeros(8760)
         Edataf = np.zeros(8760)
-    return Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edata_tot, Eprof, Epro_tot
+    return Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edata_tot, Eprof, Epro_tot, Eaf_0, Elf_0, Eaf_tot, Elf_tot
 
 """
 =========================================
