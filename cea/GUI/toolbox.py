@@ -324,7 +324,7 @@ class EmissionsTool(object):
         return
 
     def execute(self, parameters, messages):
-        from cea.analysis.emissions import lca_operation
+        from cea.analysis.operation import lca_operation
         import cea.inputlocator
         scenario_path = parameters[0].valueAsText
         locator = cea.inputlocator.InputLocator(scenario_path)
