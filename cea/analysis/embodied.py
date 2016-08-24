@@ -191,8 +191,8 @@ def lca_embodied(yearcalc, locator, gv):
             result[1] = built_df[['Name','CO2_ton', 'CO2_kgm2']]
         counter += 1
 
-    fields_to_plot = ['Name', 'GFA_m2', 'E_pen_GJ', 'E_pen_MJm2', 'E_ghg_ton', 'E_ghg_kgm2']
-    pd.DataFrame({'Name': result[0].Name, 'E_pen_GJ': result[0].GEN_GJ, 'E_pen_MJm2': result[0].GEN_MJm2,
+    fields_to_plot = ['Name', 'GFA_m2', 'E_nre_pen_GJ', 'E_nre_pen_MJm2', 'E_ghg_ton', 'E_ghg_kgm2']
+    pd.DataFrame({'Name': result[0].Name, 'E_nre_pen_GJ': result[0].GEN_GJ, 'E_nre_pen_MJm2': result[0].GEN_MJm2,
                   'E_ghg_ton': result[1].CO2_ton, 'E_ghg_kgm2': result[1].CO2_kgm2,'GFA_m2': result[0].total_area}).to_csv(locator.get_lca_embodied(),
                                         columns = fields_to_plot, index=False, float_format='%.2f')
     print 'done!'

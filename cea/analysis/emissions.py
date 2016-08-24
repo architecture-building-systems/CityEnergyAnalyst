@@ -150,11 +150,11 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
 
     result = heating.merge(dhw, on='Name', suffixes=['_a','_b']).merge(cooling, on='Name',suffixes=['a','_b']).merge(electricity, on='Name')
     result.rename(columns={'GFA_m2_x':'GFA_m2'}, inplace=True)
-    result['O_pen_GJ'] = result['Qhsf_pen_GJ'] + result['Qwwf_pen_GJ'] + result['QCf_pen_GJ'] + result['Ef_pen_GJ']
+    result['O_nre_pen_GJ'] = result['Qhsf_pen_GJ'] + result['Qwwf_pen_GJ'] + result['QCf_pen_GJ'] + result['Ef_pen_GJ']
     result['O_ghg_ton'] = result['Qhsf_ghg_ton'] + result['Qwwf_ghg_ton'] +result['QCf_ghg_ton'] + result['Ef_ghg_ton']
-    result['O_pen_MJm2'] = result['Qhsf_pen_MJm2'] + result['Qwwf_pen_MJm2'] + result['QCf_pen_MJm2'] + result['Ef_pen_MJm2']
+    result['O_nre_pen_MJm2'] = result['Qhsf_pen_MJm2'] + result['Qwwf_pen_MJm2'] + result['QCf_pen_MJm2'] + result['Ef_pen_MJm2']
     result['O_ghg_kgm2'] = result['Qhsf_ghg_kgm2'] + result['Qwwf_ghg_kgm2'] + result['QCf_ghg_kgm2'] + result['Ef_ghg_kgm2']
-    fields_to_plot = ['Name', 'GFA_m2', 'O_pen_GJ', 'O_ghg_ton', 'O_pen_MJm2', 'O_ghg_kgm2']
+    fields_to_plot = ['Name', 'GFA_m2', 'O_nre_pen_GJ', 'O_ghg_ton', 'O_nre_pen_MJm2', 'O_ghg_kgm2']
     result[fields_to_plot].to_csv(locator.get_lca_operation(), index=False, float_format='%.2f')
 
 
