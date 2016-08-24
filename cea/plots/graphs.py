@@ -128,7 +128,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    parser.add_argument('-a', '--analysis_fields', help='Fields to analyse (separated by ";")')
+    parser.add_argument('-a', '--analysis_fields', default='Ealf_kWh;Qhsf_kWh;Qwwf_kWh;Qcsf_kWh',
+                        help='Fields to analyse (separated by ";")')
     args = parser.parse_args()
     run_as_script(scenario_path=args.scenario, analysis_fields=args.analysis_fields.split(';')[:4])
 
