@@ -14,6 +14,7 @@ import os
 import arcpy
 
 import cea.inputlocator
+import cea.globalvar
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -102,9 +103,11 @@ def get_gis_field(csv_field, gis_field_lookup):
     return gis_field
 
 
-def test_heatmaps():
-
-    locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+def test_heatmaps(scenario_path=None):
+    gv = cea.globalvar.GlobalVariables()
+    if scenario_path is None:
+        scenario_path = gv.scenario_reference
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     path_variables = locator.get_total_demand()
     path_results = locator.get_heatmaps_demand_folder()
     analysis_field_variables = ["Qhsf_MWhyr", "Qcsf_MWhyr"]  # noqa
