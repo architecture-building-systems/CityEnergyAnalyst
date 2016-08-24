@@ -39,7 +39,7 @@ def benchmark(locator_list, output_file):
     color_palette = ['g', 'r', 'y', 'c', 'b', 'm', 'k']
     legend = []
     graphs = ['embodied', 'operation', 'mobility', 'total']
-    old_fields = ['pen_GJ', 'ghg_ton', 'pen_MJm2', 'ghg_kgm2']
+    old_fields = ['nre_pen_GJ', 'ghg_ton', 'nre_pen_MJm2', 'ghg_kgm2']
     old_prefix = ['E_', 'O_', 'M_']
     fields = ['_GJ', '_ton', '_MJm2', '_kgm2']
     new_cols = {}
