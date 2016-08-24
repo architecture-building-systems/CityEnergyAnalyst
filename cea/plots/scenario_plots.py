@@ -159,7 +159,7 @@ def plot_lca_operation(ax, locators, scenario_names, column, title, unit):
 
 def test_plot_scenarios():
     output_file = os.path.expandvars(r'%TEMP%\scenario_plots.pdf')
-    scenarios_root = r'c:\reference-case'
+    scenarios_root = r'c:\reference-case-zug'
     scenarios = [os.path.join(scenarios_root, scenario) for scenario in os.listdir(scenarios_root)
                  if os.path.isdir(os.path.join(scenarios_root, scenario))]
     plot_scenarios(scenarios, output_file)
