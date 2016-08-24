@@ -458,20 +458,6 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
         h_tr_1, h_tr_2, h_tr_3 = sensible_loads.calc_Htr(h_ve_adj, h_tr_is, h_tr_ms, h_tr_w)
 
         # TODO: adjust calc TL function to new way of losses calculation (adjust input parameters)
-        Losses = True  # including emission and control losses for the iteration of air mass flow rate
-
-        # calc_Qhs_Qcs()
-        temp_m_loss_true, \
-        temp_a_loss_true, \
-        q_hs_sen_loss_true, \
-        q_cs_sen_loss_true, \
-        uncomfort_loss_true, \
-        temp_op_loss_true, \
-        i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
-                                                        temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st,
-                                                        h_ve_adj, h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr,
-                                                        temp_cs_set_corr, i_c_max, i_h_max, flag_season)
-
         # calculate sensible heat load
         Losses = False  # Losses are set to false for the calculation of the sensible heat load and actual temperatures
 
@@ -485,6 +471,30 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
                                               h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve_adj, h_tr_w, i_ia,
                                               i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max,
                                               flag_season)
+
+        if q_hs_sen !=0 or q_cs_sen !=0:
+            Losses = True
+            # calc_Qhs_Qcs()
+            temp_m_loss_true, \
+            temp_a_loss_true, \
+            q_hs_sen_loss_true, \
+            q_cs_sen_loss_true, \
+            uncomfort_loss_true, \
+            temp_op_loss_true, \
+            i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
+                                                            temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st,
+                                                            h_ve_adj, h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr,
+                                                            temp_cs_set_corr, i_c_max, i_h_max, flag_season)
+        else:
+            temp_m_loss_true = temp_m
+            temp_a_loss_true = temp_a
+            q_hs_sen_loss_true = q_hs_sen
+            q_cs_sen_loss_true = q_cs_sen
+            uncomfort_loss_true = uncomfort
+            temp_op_loss_true = temp_op
+            i_m_tot_loss_true = i_m_tot
+
+
         # TODO: in the original calculation procedure this is calculated with another temp_m_prev (with and without losses), check if this is correct or not
 
         # ventilation losses
@@ -668,17 +678,26 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
                                           area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max, flag_season)
 
     # calculate emission losses
-    Losses = True
-    temp_m_loss_true, \
-    temp_a_loss_true, \
-    q_hs_sen_loss_true, \
-    q_cs_sen_loss_true, \
-    uncomfort_loss_true, \
-    temp_op_loss_true, \
-    i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
-                                                    temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve,
-                                                    h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr,
-                                                    i_c_max, i_h_max, flag_season)
+    if q_hs_sen != 0 or q_cs_sen != 0:
+        Losses = True
+        temp_m_loss_true, \
+        temp_a_loss_true, \
+        q_hs_sen_loss_true, \
+        q_cs_sen_loss_true, \
+        uncomfort_loss_true, \
+        temp_op_loss_true, \
+        i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
+                                                        temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve,
+                                                        h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr,
+                                                        i_c_max, i_h_max, flag_season)
+    else:
+        temp_m_loss_true = temp_m
+        temp_a_loss_true = temp_a
+        q_hs_sen_loss_true = q_hs_sen
+        q_cs_sen_loss_true = q_cs_sen
+        uncomfort_loss_true = uncomfort
+        temp_op_loss_true = temp_op
+        i_m_tot_loss_true = i_m_tot
     # TODO: in the original calculation procedure this is calculated with another temp_m_prev (with and without losses), check if this is correct or not
 
     # calculate emission losses
