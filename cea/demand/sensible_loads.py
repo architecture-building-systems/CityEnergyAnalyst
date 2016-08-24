@@ -8,6 +8,7 @@ EN-13970
 """
 from __future__ import division
 import numpy as np
+from cea.technologies.controllers import temperature_control_tabs
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -28,31 +29,6 @@ end-use heating or cooling loads
 
 def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Htr_ms, Htr_is, Htr_1, Htr_2, Htr_3,
                  I_st, Hve, Htr_w, I_ia, I_m, Cm, Af, Losses, tHset_corr, tCset_corr, IC_max, IH_max, Flag):
-
-    def temperature_control_tabs(Htr_1, Htr_2, Htr_3, Htr_ms, Htr_w, Htr_em, Htr_is, Hve, IHC_nd, I_ia, I_st, I_m,
-                                 te_t, tm_t0, Cm, control):
-        if control == 'max_ts':
-            #if the calculated surface temperature exceeds the maximum, set ts = ts_max and calculate maximum power
-            # and all other temperatures
-            ts_max = 27
-            a = np.array([[(Hve+Htr_is), (-Htr_is),              0,                      (-0.5)],
-                         [(-Htr_is),       (Htr_w+Htr_ms+Htr_is),  (-Htr_ms),              (-0.5)],
-                         [0,            (-Htr_ms),              ((Htr_ms+Htr_em)/2+Cm), (-0.5)],
-                         [0,            1,                      0,                      0]])
-            b = np.array([(Hve * te_t + I_ia), (Htr_w * te_t + I_st + Htr_ms/2 * tm_t0), (Htr_em * te_t + (-(Htr_ms + Htr_em)/2 + Cm) * tm_t0 + I_m), ts_max])
-            [ta, ts, tm_t, IH_max] = np.linalg.solve(a,b)
-        if control == 'max_ts-ta':
-            # if the calculated temperature difference between the surface and inside air exceeds the maximum,
-            # set ts - ta = dt_max and calculate maximum power and other temperatures
-            dt_max = 9
-            a = np.array([[(Hve + Htr_is), (-Htr_is), 0, (-0.5)],
-                         [(-Htr_is), (Htr_w + Htr_ms + Htr_is), (-Htr_ms), (-0.5)],
-                         [0, (-Htr_ms), ((Htr_ms + Htr_em) / 2 + Cm), (-0.5)],
-                         [-1, 1, 0, 0]])
-            b = np.array([(Hve * te_t + I_ia), (Htr_w * te_t + I_st + Htr_ms / 2 * tm_t0),
-                          (Htr_em * te_t + (-(Htr_ms + Htr_em) / 2 + Cm) * tm_t0 + I_m), dt_max])
-            [ta, ts, tm_t, IH_max] = np.linalg.solve(a, b)
-        return ta, ts, tm_t, IH_max
 
     if Losses:
         # Losses due to emission and control of systems
