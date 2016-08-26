@@ -224,14 +224,15 @@ class EmbodiedEnergyTool(object):
         return
 
     def execute(self, parameters, messages):
-        from cea.analysis.embodied import lca_embodied
+        import cea.analysis.embodied
+        reload(cea.analysis.embodied)
 
         yearcalc = int(parameters[0].valueAsText)
         scenario_path = parameters[1].valueAsText
         gv = cea.globalvar.GlobalVariables()
         gv.log = add_message
         locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-        lca_embodied(yearcalc=yearcalc, locator=locator, gv=gv)
+        cea.analysis.embodied.lca_embodied(yearcalc=yearcalc, locator=locator, gv=gv)
 
 
 class EmissionsTool(object):
