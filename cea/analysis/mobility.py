@@ -53,14 +53,14 @@ def lca_mobility(locator):
     gt = factors_mobility['CO2']
 
     mobility = prop_occupancy.merge(demand,on='Name')
-    fields_to_plot = ['Name', 'pen_GJ', 'ghg_ton', 'pen_MJm2', 'ghg_kgm2']
+    fields_to_plot = ['Name', 'GFA_m2', 'M_nre_pen_GJ', 'M_nre_pen_MJm2', 'M_ghg_ton', 'M_ghg_kgm2']
     mobility[fields_to_plot[3]] = 0
-    mobility[fields_to_plot[4]] = 0
+    mobility[fields_to_plot[5]] = 0
     for i in range(len(vt)):
         mobility[fields_to_plot[3]] += mobility[vt[i]] * pt[i]
-        mobility[fields_to_plot[4]] += mobility[vt[i]] * gt[i]
-    mobility[fields_to_plot[1]] = mobility['Af_m2'] * mobility[fields_to_plot[3]] / 1000
-    mobility[fields_to_plot[2]] = mobility['Af_m2'] * mobility[fields_to_plot[4]] / 1000
+        mobility[fields_to_plot[5]] += mobility[vt[i]] * gt[i]
+    mobility[fields_to_plot[2]] = mobility['GFA_m2'] * mobility[fields_to_plot[3]] / 1000
+    mobility[fields_to_plot[4]] = mobility['GFA_m2'] * mobility[fields_to_plot[5]] / 1000
 
     mobility[fields_to_plot].to_csv(locator.get_lca_mobility(), index=False, float_format='%.2f')
 
