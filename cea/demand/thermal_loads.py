@@ -13,7 +13,7 @@ from geopandas import GeoDataFrame
 import cea.demand.airconditioning_model
 import cea.demand.ventilation_model as ventilation_model
 from cea.demand import occupancy_model
-from  cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
+from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.technologies import controllers
 from cea.utilities import helpers
 
