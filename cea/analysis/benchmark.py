@@ -39,14 +39,14 @@ def benchmark(locator_list, output_file):
     color_palette = ['g', 'r', 'y', 'c', 'b', 'm', 'k']
     legend = []
     graphs = ['embodied', 'operation', 'mobility', 'total']
-    old_fields = ['pen_GJ', 'ghg_ton', 'pen_MJm2', 'ghg_kgm2']
-    old_suffix = ['_x', '_y', '']
+    old_fields = ['nre_pen_GJ', 'ghg_ton', 'nre_pen_MJm2', 'ghg_kgm2']
+    old_prefix = ['E_', 'O_', 'M_']
     fields = ['_GJ', '_ton', '_MJm2', '_kgm2']
     new_cols = {}
     scenario_max = {}
     for i in range(4):
         for j in range(3):
-            new_cols[old_fields[i] + old_suffix[j]] = graphs[j] + fields[i]
+            new_cols[old_prefix[j] + old_fields[i]] = graphs[j] + fields[i]
         scenario_max[graphs[i] + fields[2]] = scenario_max[graphs[i] + fields[3]] = 0
 
     # calculate target values - THIS IS ASSUMING THE FIRST SCENARIO IS ALWAYS THE BASELINE! Need to confirm.
@@ -73,7 +73,6 @@ def benchmark(locator_list, output_file):
             (pd.read_csv(locator.get_lca_operation()),on = 'Name').merge\
             (pd.read_csv(locator.get_lca_mobility()),on = 'Name')
         df_buildings = df_buildings.rename(columns=new_cols)
-        df_buildings = df_buildings.merge(demand[['Name','Af_m2']],on = 'Name')
 
         for i in range(4):
             col_list = [graphs[0] + fields[i], graphs[1] + fields[i], graphs[2] + fields[i]]
@@ -83,7 +82,7 @@ def benchmark(locator_list, output_file):
         df_scenario = df_buildings.drop('Name',axis=1).sum(axis=0)
         for graph in graphs:
             for j in range(2):
-                df_scenario[graph + fields[j+2]] = df_scenario[graph + fields[j]] / df_scenario['Af_m2'] * 1000
+                df_scenario[graph + fields[j+2]] = df_scenario[graph + fields[j]] / df_scenario['GFA_m2'] * 1000
                 if scenario_max[graph + fields[j+2]] < df_scenario[graph + fields[j+2]]:
                     scenario_max[graph + fields[j+2]] = df_scenario[graph + fields[j+2]]
 
@@ -145,7 +144,7 @@ def calc_benchmark_targets(locator):
     for i in range(len(factors['code'])):
         if factors['code'][i] in occupancy:
             if factors['PEN'][i] > 0 and factors['CO2'][i] > 0:
-                area_study += (occupancy['Af_m2'] * occupancy[factors['code'][i]]).sum()
+                area_study += (occupancy['GFA_m2'] * occupancy[factors['code'][i]]).sum()
 
     for category in categories:
         factors = pd.read_excel(data_benchmark, sheetname = category)
@@ -156,8 +155,8 @@ def calc_benchmark_targets(locator):
         for j in range(len(suffix)):
             targets[category + suffix[j]] = 0
         for i in range(len(vt)):
-            targets[category+suffix[0]] += (occupancy['Af_m2'] * occupancy[vt[i]] * pt[i]).sum() / 1000
-            targets[category+suffix[1]] += (occupancy['Af_m2'] * occupancy[vt[i]] * gt[i]).sum() / 1000
+            targets[category+suffix[0]] += (occupancy['GFA_m2'] * occupancy[vt[i]] * pt[i]).sum() / 1000
+            targets[category+suffix[1]] += (occupancy['GFA_m2'] * occupancy[vt[i]] * gt[i]).sum() / 1000
         targets[category + suffix[2]] += targets[category+suffix[0]] / area_study * 1000
         targets[category + suffix[3]] += targets[category + suffix[1]] / area_study * 1000
 
@@ -188,7 +187,7 @@ def calc_benchmark_today(locator):
     for i in range(len(factors['code'])):
         if factors['code'][i] in occupancy:
             if factors['PEN'][i] > 0 and factors['CO2'][i] > 0:
-                area_study += (occupancy['Af_m2'] * occupancy[factors['code'][i]]).sum()
+                area_study += (occupancy['GFA_m2'] * occupancy[factors['code'][i]]).sum()
 
     for category in categories:
         factors = pd.read_excel(data_benchmark_today, sheetname=category)
@@ -199,8 +198,8 @@ def calc_benchmark_today(locator):
         for j in range(len(suffix)):
             values_today[category + suffix[j]] = 0
         for i in range(len(vt)):
-            values_today[category + suffix[0]] += (occupancy['Af_m2'] * occupancy[vt[i]] * pt[i]).sum() / 1000
-            values_today[category + suffix[1]] += (occupancy['Af_m2'] * occupancy[vt[i]] * gt[i]).sum() / 1000
+            values_today[category + suffix[0]] += (occupancy['GFA_m2'] * occupancy[vt[i]] * pt[i]).sum() / 1000
+            values_today[category + suffix[1]] += (occupancy['GFA_m2'] * occupancy[vt[i]] * gt[i]).sum() / 1000
         values_today[category + suffix[2]] += values_today[category + suffix[0]] / area_study * 1000
         values_today[category + suffix[3]] += values_today[category + suffix[1]] / area_study * 1000
 
@@ -214,7 +213,7 @@ def test_benchmark():
     print 'test_benchmark() succeeded'
 
 def test_benchmark_targets():
-    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case-zug\baseline')
     calc_benchmark_targets(locator)
 
 if __name__ == '__main__':
