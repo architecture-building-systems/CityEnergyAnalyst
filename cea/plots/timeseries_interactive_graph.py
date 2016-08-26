@@ -87,7 +87,7 @@ def create_demand_graph_for_building(analysis_fields, fields_date, locator, name
 
     # Plot and embed in ipython notebook!
     fig = dict(data=data, layout=layout)
-    plot(fig,  auto_open=False, filename=locator.get_demand_plots_file(name))
+    plot(fig,  auto_open=False, filename=locator.get_timeseries_plots_file(name))
 
 def run_as_script(scenario_path=None, analysis_fields=["Ealf_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]):
     # HINTS FOR ARCGIS INTERFACE:

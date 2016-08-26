@@ -206,6 +206,11 @@ class InputLocator(object):
     def get_demand_plots_file(self, building_name):
         """scenario/2-results/2-demand/2-plots/{building_name}.pdf"""
         demand_plots_folder = self.get_demand_plots_folder()
+        return os.path.join(demand_plots_folder, '%s.pdf' % building_name)
+
+    def get_timeseries_plots_file(self, building_name):
+        """scenario/2-results/2-demand/2-plots/{building_name}.pdf"""
+        demand_plots_folder = self.get_demand_plots_folder()
         return os.path.join(demand_plots_folder, '%s.html' % building_name)
 
     def get_benchmark_plots_file(self):
