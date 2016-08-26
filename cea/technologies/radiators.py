@@ -20,16 +20,10 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-from numba.pycc import CC
-cc = CC('calc_radiator')
-
-
-@cc.export('fh', "f8(f8, f8, f8, f8, f8, f8, f8)")
 def fh(x, mCw0, k2, Qh0, tair, LMRT, nh):
     Eq = mCw0 * k2 - Qh0 * (k2 / (math.log((x + k2 - tair) / (x - tair)) * LMRT)) ** (nh + 1)
     return Eq
 
-@cc.export('lmrt', "f8(f8, f8, f8)")
 def lmrt(tair0, trh0, tsh0):
     LMRT = (tsh0 - trh0) / math.log((tsh0 - tair0) / (trh0 - tair0))
     return LMRT
@@ -57,14 +51,9 @@ def calc_radiator(Qh, tair, Qh0, tair0, tsh0, trh0):
     return tsh, trh, mCw # C, C, W/C
 
 try:
-    # import Numba AOT versions of the functions above
+    # import Numba AOT versions of the functions above, overwriting them
     from calc_radiator import fh, lmrt
 except ImportError:
     # fall back to using the python version
-    print 'failed to import from calc_radiator, falling back to python functions'
+    print('failed to import from calc_radiator.pyd, falling back to pure python functions')
     pass
-
-
-
-if __name__ == '__main__':
-    cc.compile()
