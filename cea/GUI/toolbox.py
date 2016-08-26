@@ -390,6 +390,9 @@ class GraphsDemandTool(object):
         return
 
     def execute(self, parameters, messages):
+        import cea.plots.graphs
+        reload(cea.plots.graphs)
+        
         scenario_path = parameters[0].valueAsText
         analysis_fields = parameters[1].valueAsText.split(';')[:4]  # max 4 fields for analysis
         gv = cea.globalvar.GlobalVariables()
