@@ -142,51 +142,46 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
     return tm_t, ta, IH_nd_ac, IC_nd_ac, uncomfort, top, Im_tot
 
 
-from numba.pycc import CC
-
-cc = CC('calc_tm_aot')
-
-@cc.export('calc_tm', "UniTuple(f8, 2)(f8, f8, f8, f8, f8)")
 def calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0):
     tm_t = (tm_t0 * ((Cm / 3600) - 0.5 * (Htr_3 + Htr_em)) + Im_tot) / ((Cm / 3600) + 0.5 * (Htr_3 + Htr_em))
     tm = (tm_t + tm_t0) / 2
     # Here the temperature that is actually needed for the next time step is tm_t
     return tm_t, tm
 
-@cc.export('calc_ts', "f8(f8, f8, f8, f8, i4, f8, f8, f8, f8)")
+
 def calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm):
     ts = (Htr_ms * tm + I_st + Htr_w * te_t + Htr_1 * (te_t + (I_ia + IHC_nd) / Hve)) / (Htr_ms + Htr_w + Htr_1)
     return ts
 
-@cc.export('calc_ts_tabs', "f8(f8, f8, f8, f8, i4, f8, f8, f8, f8)")
+
 def calc_ts_tabs(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm):
     # if the system is a floor heating system, then the heat input is split between all three nodes
     ts = (Htr_ms * tm + I_st + Htr_w * te_t + Htr_1 * (te_t + I_ia / Hve) + (Htr_1 / Hve + 1) * IHC_nd * 0.5) / (
         Htr_ms + Htr_w + Htr_1)
     return ts
 
-@cc.export('calc_ta', "f8(f8, f8, i4, f8, f8, f8)")
+
 def calc_ta(Htr_is, Hve, IHC_nd, I_ia, te_t, ts):
     ta = (Htr_is * ts + Hve * te_t + I_ia + IHC_nd) / (Htr_is + Hve)
     return ta
 
-@cc.export('calc_ta_tabs', "f8(f8, f8, i4, f8, f8, f8)")
+
 def calc_ta_tabs(Htr_is, Hve, IHC_nd, I_ia, te_t, ts):
     # if the system is a floor heating system, then the heat input is split between all three nodes
     ta = (Htr_is * ts + Hve * te_t + I_ia + 0.5 * IHC_nd) / (Htr_is + Hve)
     return ta
 
-@cc.export('calc_top', "f8(f8, f8)")
+
 def calc_top(ta, ts):
     top = 0.31 * ta + 0.69 * ts
     return top
 
-@cc.export('calc_Im_tot', "f8(f8, f8, f8, f8, f8, f8, f8, f8, i4, f8, f8, )")
+
 def calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd, Hve, Htr_2):
     Im_tot = I_m + Htr_em * te_t + Htr_3 * (I_st + Htr_w * te_t + Htr_1 * (((I_ia + IHC_nd) / Hve) + te_t)) / Htr_2
     return Im_tot
 
-@cc.export('calc_Im_tot_tabs', "f8(f8, f8, f8, f8, f8, f8, f8, f8, i4, f8, f8)")
+
 def calc_Im_tot_tabs(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd, Hve, Htr_2):
     # if the system is a floor heating system, then the heat input is split between all three nodes
     Im_tot = I_m + Htr_em * te_t + Htr_3 * (I_st + Htr_w * te_t + Htr_1 * ((I_ia / Hve) + te_t)) / Htr_2 + \
@@ -194,11 +189,11 @@ def calc_Im_tot_tabs(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd,
     return Im_tot
 
 try:
-    # import Numba AOT versions of the functions above
-    from calc_tm_aot import calc_tm, calc_ts, calc_ta, calc_top, calc_Im_tot
+    # import Numba AOT versions of the functions above, overwriting them
+    from calc_tm import calc_tm, calc_ts, calc_ta, calc_top, calc_Im_tot
 except ImportError:
     # fall back to using the python version
-    print 'failed to import from calc_tm_aot, falling back to python functions'
+    print('failed to import from calc_tm.pyd, falling back to pure python functions')
     pass
 
 
@@ -459,7 +454,3 @@ def calc_T_em_ls(SystemH, SystemC, sys_e_ctrl):
         tHC_corr[1] = 0
 
     return tHC_corr[0], tHC_corr[1]
-
-
-if __name__ == '__main__':
-    cc.compile()
