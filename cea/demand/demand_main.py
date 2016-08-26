@@ -107,7 +107,7 @@ def demand_calculation(locator, weather_path, gv):
         thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, schedules_dict,
                                     weather_data)
     write_totals_csv(building_properties, locator)
-    gv.log('done after '+ str(time.clock()-t0) + ' seconds' )
+
 
 def write_totals_csv(building_properties, locator):
     """read in the temporary results files and append them to the Totals.csv file."""
