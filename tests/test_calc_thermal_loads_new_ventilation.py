@@ -45,14 +45,14 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
                              set(expected_columns).symmetric_difference(set(df.columns))))
         self.assertEqual(df.shape[0], 8760, 'Expected one row per hour in the year')
 
-        value_columns = [u'Ealf_kWh', u'Eauxf_kWh', u'Edataf_kWh', u'Ef_kWh', u'Epro_kWh', u'QCf_kWh', u'QHf_kWh',
+        value_columns = [u'Ealf_kWh', u'Eauxf_kWh', u'Edataf_kWh', u'Ef_kWh', u'QCf_kWh', u'QHf_kWh',
                          u'Qcdataf_kWh', u'Qcref_kWh', u'Qcs_kWh', u'Qcsf_kWh', u'Qhs_kWh', u'Qhsf_kWh', u'Qww_kWh',
-                         u'Qww_tankloss_kWh', u'Qwwf_kWh', u'Trcs_C', u'Trhs_C', u'Trww_C', u'Tscs_C', u'Tshs_C',
-                         u'Tsww_C', u'Tww_tank_C', u'Vw_m3', u'mcpcs_kWC', u'mcphs_kWC', u'mcpww_kWC', u'occ_pax']
-        values = [1922835.4550000001, 15731.976999999997, 0.0, 1938567.872, 0.0, 702758.23200000008, 1701735.5929999999,
-                  0.0, 0.0, 443536.64399999997, 702758.23200000008, 551522.93500000006, 1230763.581, 461305.10200000001,
-                  1742.3009999999999, 470971.99499999994, 7308, 48833, 99496.0, 5158, 57313, 525600, 524374.49099999992,
-                  16328.606, 140551.42799999999, 155476.35000000003, 9676.5699999999997, 4897049.0]
+                         u'Qwwf_kWh', u'Trcs_C', u'Trhs_C', u'Trww_C', u'Tscs_C', u'Tshs_C',
+                         u'Tsww_C', u'Vw_m3', u'mcpcs_kWC', u'mcphs_kWC', u'mcpww_kWC', u'occ_pax']
+        values = [1922835.4550000001, 15731.608999999999, 0.0, 1938567.5050000001, 702758.23200000008,
+                  1697665.7930000001, 0.0, 0.0, 443536.64399999997, 702758.23200000008, 550670.00699999998, 1226702.186,
+                  461305.10200000001, 470963.58999999991, 7308, 48631, 99496.0, 5158, 57083, 525600, 16328.606,
+                  140551.42799999999, 154749.82500000001, 9676.4099999999999, 4897049.0]
         for i, column in enumerate(value_columns):
             try:
                 self.assertAlmostEqual(values[i], df[column].sum(), msg='Sum of column %s differs' % column, places=3)
@@ -65,11 +65,11 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
         pool = mp.Pool()
         # randomly selected except for B302006716, which has `Af == 0`
         buildings = {'B302006716': (0.00000, 0.00000),
-                     'B140557': (34021.10900, 102784.97300),
-                     'B140577': (702758.23200, 1701735.59300),
-                     'B2372467': (19642.20900, 52134.43700),
-                     'B302040335': (1011.03300, 4258.15800),
-                     'B140571': (45059.22600, 122634.75000),}
+                     'B140557': (34021.10900, 102499.92500),
+                     'B140577': (702758.23200, 1697665.79300),
+                     'B2372467': (19642.20900, 52082.64500),
+                     'B302040335': (1011.03300, 4257.88100),
+                     'B140571': (45059.22600, 122441.17700),}
         if self.gv.multiprocessing:
             joblist = []
             for building in buildings.keys():
