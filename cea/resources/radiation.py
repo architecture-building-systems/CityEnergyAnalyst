@@ -109,25 +109,25 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
                                        simplification_tolerance=8, minimum_area=None)
 
     # # burn buildings into raster
-    # Burn(Simple_context, locator.get_terrain(), dem_rasterfinal, locator.get_temporary_folder(), dem_raster_extent, gv)
-    #
-    # # Calculate boundaries of buildings
-    # CalcBoundaries(Simple_CQ, locator.get_temporary_folder(), path_arcgis_db,
-    #                DataFactorsCentroids, DataFactorsBoundaries, gv)
-    #
-    # # calculate observers
-    # CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgis_db, gv)
+    Burn(Simple_context, locator.get_terrain(), dem_rasterfinal, locator.get_temporary_folder(), dem_raster_extent, gv)
 
-    # Calculate radiation
-    # for day in range(1, 366):
-    #     result = None
-    #     while result is None:  # trick to avoid that arcgis stops calculating the days and tries again.
-    #         try:
-    #             result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
-    #                                    locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
-    #         except arcgisscripting.ExecuteError:
-    #             # redo the calculation
-    #             pass
+    # Calculate boundaries of buildings
+    CalcBoundaries(Simple_CQ, locator.get_temporary_folder(), path_arcgis_db,
+                   DataFactorsCentroids, DataFactorsBoundaries, gv)
+
+    # calculate observers
+    CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgis_db, gv)
+
+    #Calculate radiation
+    for day in range(1, 366):
+        result = None
+        while result is None:  # trick to avoid that arcgis stops calculating the days and tries again.
+            try:
+                result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
+                                       locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
+            except arcgisscripting.ExecuteError:
+                # redo the calculation
+                pass
 
     gv.log('complete raw radiation files')
 
@@ -354,7 +354,7 @@ def CalcObservers(Simple_CQ, Observers, DataFactorsBoundaries, locationtemporal2
     # Import Overlaptable from function CalcBoundaries containing the data about buildings overlaping, eliminate duplicades, chose only those ones no overlaped and reindex
     DataNear = pd.read_csv(DataFactorsBoundaries)
     CleanDataNear = DataNear[DataNear['FactorShade'] == 1]
-    CleanDataNear.drop_duplicates(cols='Name_x', inplace=True)
+    CleanDataNear.drop_duplicates(subset='Name_x', inplace=True)
     CleanDataNear.reset_index(inplace=True)
     rows = CleanDataNear.Name_x.count()
     for row in range(rows):
@@ -444,7 +444,7 @@ def CalcBoundaries(Simple_CQ, locationtemp1, locationtemp2, DataFactorsCentroids
     # Update table Datacentroids with the Fields Freeheight and Factor Shade. for those buildings without
     # shading boundaries these factors are equal to 1 and the field 'height' respectively.
     DataCentroids['FactorShade'] = 1
-    DataCentroids['Freeheight'] = DataCentroids['height_ag']
+    DataCentroids['Freeheight'] = DataCentroids.height_ag
     Results = DataCentroids.merge(SecondaryJoin, left_on='ORIG_FID', right_on='ORIG_FID_x', how='outer')
     Results.FactorShade_y.fillna(Results['FactorShade_x'], inplace=True)
     Results.Freeheight_y.fillna(Results['Freeheight_x'], inplace=True)
