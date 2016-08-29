@@ -8,6 +8,7 @@ from __future__ import division
 
 import multiprocessing as mp
 import pandas as pd
+import time
 
 import cea.globalvar
 import cea.inputlocator
@@ -81,7 +82,7 @@ def demand_calculation(locator, weather_path, gv):
     B153767T.csv: csv file for every building with hourly demand data
     Total_demand.csv: csv file of yearly demand data per buidling.
     """
-
+    t0 = time.clock()
     # starting date
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
 
@@ -106,7 +107,7 @@ def demand_calculation(locator, weather_path, gv):
         thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, schedules_dict,
                                     weather_data)
     write_totals_csv(building_properties, locator)
-    gv.log('done')
+    gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
 
 def write_totals_csv(building_properties, locator):
@@ -153,7 +154,7 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
                                 locator.get_temporary_folder()])
         joblist.append(job)
     for i, job in enumerate(joblist):
-        job.get(60)
+        job.get(240)
         gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
 
 """
