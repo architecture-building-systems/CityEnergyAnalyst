@@ -24,8 +24,7 @@ demand model of thermal and electrical loads
 =========================================
 """
 
-def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv,
-                                       results_folder, temporary_folder):
+def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
@@ -89,7 +88,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     A number of files in two folders:
     - results_folder
       - ${Name}.csv for each building
-      - Total_demand.csv
     - temporary_folder
       - ${Name}T.csv for each building
 
@@ -326,15 +324,15 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     Ecaf_tot = 0
     # write results to csv
 
-    results_to_csv(bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf,
+    results_to_csv(gv, locator, bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf,
                    Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot, building_name, Occupancy, Occupants, Qcdataf,
                    Qcrefrif, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
-                   Ths_re, Ths_sup, Vw, Vww, results_folder, mcpcs, mcphs, mcpww,temporary_folder,
+                   Ths_re, Ths_sup, Vw, Vww, mcpcs, mcphs, mcpww,
                    date,  mcpdataf, Tcdataf_re,
                    Tcdataf_sup,  mcpref, Tcref_re, Tcref_sup, Qhprof, Ecaf, Qhprof_tot, Ecaf_tot,
                    Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, Eaf_0, Elf_0, Eaf_tot, Elf_tot)
 
-    gv.report('calc-thermal-loads', locals(), results_folder, building_name)
+    gv.report('calc-thermal-loads', locals(), locator.get_demand_results_folder(), building_name)
     return
 
 
@@ -738,8 +736,8 @@ writer of results
 
 def results_to_csv(gv, locator, bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_tot, Edata, Edata_tot, Eprof, Eprof_tot,
                    building_name, Occupancy, Occupants, Qcdata, Qcrefri, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww,
-                   Qwwf, Qwwf_0, Tcs_re, Tcs_sup, Ths_re, Ths_sup, Vw, Vww, path_results_folder, mcpcs, mcphs,
-                   mcpww, path_temporary_folder, date, mcpdataf, Tcdataf_re, Tcdataf_sup, mcpref, Tcref_re,
+                   Qwwf, Qwwf_0, Tcs_re, Tcs_sup, Ths_re, Ths_sup, Vw, Vww, mcpcs, mcphs,
+                   mcpww, date, mcpdataf, Tcdataf_re, Tcdataf_sup, mcpref, Tcref_re,
                    Tcref_sup, Qhprof, Ecaf, Qhprof_tot, Ecaf_tot, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, Eaf_0, Elf_0, Eaf_tot, Elf_tot):
 
     # TODO: Document
@@ -783,7 +781,8 @@ def results_to_csv(gv, locator, bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_t
          'Eaux_hs_kWh': Eaux_hs / 1000, 'Eaux_cs_kWh': Eaux_cs / 1000, 'Eaux_ve_kWh': Eaux_ve / 1000,
          'Eaux_ww_kWh': Eaux_ww / 1000, 'Eaux_fw_kWh': Eaux_fw / 1000,
          'Eaf_kWh': tsd['Eaf'] / 1000, 'Elf_kWh': tsd['Elf'] / 1000,
-         }).to_csv(locator.get_demand_results_file(building_name), columns=gv. index=False, float_format='%.3f')
+         }).to_csv(locator.get_demand_results_file(building_name), columns=gv.demand_building_csv_columns, index=False,
+                   float_format='%.3f')
 
     # print peaks in kW and totals in MWh, temperature peaks in C
     totals = pd.DataFrame(
