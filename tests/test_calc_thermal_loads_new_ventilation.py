@@ -30,24 +30,16 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
         # FIXME: the usage_schedules bit needs to be fixed!!
         bpr = self.building_properties['B140577']
         result = calc_thermal_loads('B140577', bpr, self.weather_data,
-                                                    self.usage_schedules, self.date, self.gv,
-                                                    self.locator.get_temporary_folder(),
-                                                    self.locator.get_temporary_folder())
+                                                    self.usage_schedules, self.date, self.gv, self.locator)
         self.assertIsNone(result)
-        self.assertTrue(os.path.exists(self.locator.get_temporary_file('B140577.csv')), 'Building csv not produced')
+        self.assertTrue(os.path.exists(self.locator.get_demand_results_file('B140577')), 'Building csv not produced')
         self.assertTrue(os.path.exists(self.locator.get_temporary_file('B140577T.csv')),
                         'Building temp file not produced')
 
         # test the building csv file
-        df = pd.read_csv(self.locator.get_temporary_file('B140577.csv'))
+        df = pd.read_csv(self.locator.get_demand_results_file('B140577'))
 
-        expected_columns = expected_columns = ['DATE', 'Ealf_kWh', 'Eauxf_kWh', 'Ecaf_kWh', 'Edataf_kWh', 'Ef_kWh',
-                                               'Epro_kWh', 'Name', 'QCf_kWh', 'QHf_kWh', 'Qcdataf_kWh', 'Qcref_kWh',
-                                               'Qcs_kWh', 'Qcsf_kWh', 'Qhprof_kWh', 'Qhs_kWh', 'Qhsf_kWh', 'Qww_kWh',
-                                               'Qww_tankloss_kWh', 'Qwwf_kWh', 'Trcs_C', 'Trdata_C', 'Trhs_C',
-                                               'Trref_C', 'Trww_C', 'Tscs_C', 'Tsdata_C', 'Tshs_C', 'Tsref_C', 'Tsww_C',
-                                               'Tww_tank_C', 'Vw_m3', 'Vww_m3', 'mcpcs_kWC', 'mcpdata_kWC', 'mcphs_kWC',
-                                               'mcpref_kWC', 'mcpww_kWC', 'occ_pax']
+        expected_columns = self.gv.demand_building_csv_columns
         self.assertEqual(set(expected_columns), set(df.columns),
                          'Column list of building csv does not match: ' + str(
                              set(expected_columns).symmetric_difference(set(df.columns))))
@@ -84,8 +76,7 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
                 bpr = self.building_properties[building]
                 job = pool.apply_async(run_for_single_building,
                                        [building, bpr, self.weather_data, self.usage_schedules, self.date, self.gv,
-                                        self.locator.get_temporary_folder(),
-                                        self.locator.get_temporary_file('%s.csv' % building)])
+                                        self.locator])
                 joblist.append(job)
             for job in joblist:
                 b, qcf_kwh, qhf_kwh = job.get(20)
@@ -97,21 +88,16 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
             for building in buildings.keys():
                 bpr = self.building_properties[building]
                 b, qcf_kwh, qhf_kwh = run_for_single_building(building, bpr, self.weather_data, self.usage_schedules,
-                                                              self.date, self.gv,
-                                                              self.locator.get_temporary_folder(),
-                                                              self.locator.get_temporary_file('%s.csv' % building))
+                                                              self.date, self.gv, self.locator)
                 self.assertAlmostEqual(buildings[b][0], qcf_kwh,
                                        msg="qcf_kwh for %(b)s should be: %(qcf_kwh).5f" % locals(), places=3)
                 self.assertAlmostEqual(buildings[b][1], qhf_kwh,
                                        msg="qhf_kwh for %(b)s should be: %(qhf_kwh).5f" % locals(), places=3)
 
 
-def run_for_single_building(building, bpr, weather_data, usage_schedules, date, gv, temporary_folder, temporary_file):
-    calc_thermal_loads(building, bpr, weather_data,
-                                       usage_schedules, date, gv,
-                                       temporary_folder,
-                                       temporary_folder)
-    df = pd.read_csv(temporary_file)
+def run_for_single_building(building, bpr, weather_data, usage_schedules, date, gv, locator):
+    calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, gv, locator)
+    df = pd.read_csv(locator.get_demand_results_file(building))
     return building, df['QCf_kWh'].sum(), df['QHf_kWh'].sum()
 
 if __name__ == "__main__":
