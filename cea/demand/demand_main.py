@@ -84,7 +84,7 @@ def demand_calculation(locator, weather_path, gv):
     """
     t0 = time.clock()
 
-    time_steps = pd.date_range(gv.date_start, periods=8760, freq='H')
+    date = pd.date_range(gv.date_start, periods=8760, freq='H')
 
     # weather model
     weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms']]
@@ -94,17 +94,17 @@ def demand_calculation(locator, weather_path, gv):
 
     # schedules model
     list_uses = list(building_properties._prop_occupancy.drop('PFloor', axis=1).columns)
-    schedules = occupancy_model.schedule_maker(time_steps, locator, list_uses)
+    schedules = occupancy_model.schedule_maker(date, locator, list_uses)
     schedules_dict = {'list_uses': list_uses, 'schedules': schedules}
 
     # demand model
     num_buildings = len(building_properties)
     if gv.multiprocessing:
-        thermal_loads_all_buildings_multiprocessing(building_properties, time_steps, gv, locator, num_buildings,
+        thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, num_buildings,
                                                     schedules_dict,
                                                     weather_data)
     else:
-        thermal_loads_all_buildings(building_properties, time_steps, gv, locator, num_buildings, schedules_dict,
+        thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, schedules_dict,
                                     weather_data)
     write_totals_csv(building_properties, locator)
     gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
