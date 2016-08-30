@@ -56,8 +56,8 @@ def plot_scenarios(scenarios, output_file):
     fig, axes = plt.subplots(nrows=2, figsize=(8.27, 11.69))
     plt.suptitle('LCA Embodied')
 
-    plot_lca_embodied(axes[0], locators, scenario_names, column='pen_MJm2', title='Primary Energy', unit='MJ/m2')
-    plot_lca_embodied(axes[1], locators, scenario_names, column='ghg_kgm2', title='Greenhouse Gas', unit='kg/m2')
+    plot_lca_embodied(axes[0], locators, scenario_names, column='E_nre_pen_MJm2', title='Primary Energy', unit='MJ/m2')
+    plot_lca_embodied(axes[1], locators, scenario_names, column='E_ghg_kgm2', title='Greenhouse Gas', unit='kg/m2')
 
     fig.subplots_adjust(hspace=0.5)
     pdf.savefig()
