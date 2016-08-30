@@ -515,7 +515,7 @@ class GlobalVariables(object):
                                             'Qhs_kWh', 'Qhprof_kWh', 'Qwwf_kWh', 'Qww_kWh', 'Qww_tankloss_kWh',
                                             'Qcsf_kWh', 'Qcs_kWh', 'Qcref_kWh', 'Qcdataf_kWh', 'Ealf_kWh', 'Eauxf_kWh',
                                             'Ecaf_kWh', 'Edataf_kWh', 'Epro_kWh', 'Tshs_C', 'Trhs_C', 'Tscs_C',
-                                            'Trcs_C', 'Tsww_C', 'Trww_C', 'Tww_tank_C', 'Tsref_C', 'Trref_C',
+                                            'Trcs_C', 'Tsww_C', 'Trww_C', 'Tsref_C', 'Trref_C',
                                             'Tsdata_C', 'Trdata_C', 'Vw_m3', 'mcphs_kWC', 'mcpww_kWC', 'mcpcs_kWC',
                                             'mcpref_kWC', 'mcpdata_kWC']
 
