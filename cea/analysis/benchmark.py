@@ -207,7 +207,7 @@ def calc_benchmark_today(locator):
     return values_today
 
 def test_benchmark():
-    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
+    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case-zug\baseline')
     locator_list = [locator, locator, locator, locator]
     output_file = os.path.expandvars(r'%TEMP%\test_benchmark.pdf')
     benchmark(locator_list=locator_list, output_file=output_file)
