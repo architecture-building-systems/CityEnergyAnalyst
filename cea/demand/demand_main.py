@@ -83,7 +83,7 @@ def demand_calculation(locator, weather_path, gv):
     Total_demand.csv: csv file of yearly demand data per buidling.
     """
     t0 = time.clock()
-    # starting date
+
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
 
     # weather model
