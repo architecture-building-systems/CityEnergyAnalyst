@@ -18,7 +18,7 @@ __status__ = "Production"
 class GlobalVariables(object):
     def __init__(self):
         self.scenario_reference = r'c:\reference-case-zug\baseline'
-        self.date_start = '1/1/2010' #d/m/yyyy
+        self.date_start = '2010-01-01'  # format: yyyy-mm-dd
         self.seasonhours = [3216, 6192]
         self.multiprocessing = True  # use multiprocessing / parallel execution if possible
         self.Z = 3  # height of basement for every building in m

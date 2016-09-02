@@ -57,7 +57,7 @@ def benchmark(locator_list, output_file):
     # start graphs
     fig, (ax1, ax2, ax3, ax4, ax5, ax6) = plt.subplots(6, figsize=(16, 12))
     fig.text(0.07, 0.5, 'Greenhouse Gas Emissions [kg CO$_2$-eq/m$^2$-yr]', va='center', rotation='vertical')
-    fig.text(0.375, 0.04, 'Primary Energy Demand [MJ/m$^2$-yr]', ha='center')
+    fig.text(0.375, 0.04, 'Non-Renewable Primary Energy Demand [MJ/m$^2$-yr]', ha='center')
     ax3.axis('off')
     ax6.axis('off')
     axes = [1, 2, 4, 5]
