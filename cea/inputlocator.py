@@ -161,6 +161,37 @@ class InputLocator(object):
         """scenario/outputs/data/solar-radiation/properties_surfaces.csv"""
         return os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation', 'properties_surfaces.csv')
 
+    def get_radiation_metadata(self, building_name):
+        """scenario/2-results/2-demand/1-timeseries/{building_name}.csv"""
+        radiation_results_folder = self.get_radiation_folder()
+        return os.path.join(radiation_results_folder, '%s_id_df.csv' % building_name)
+
+    def get_radiation_building(self, building_name):
+        """scenario/2-results/2-demand/1-timeseries/{building_name}.csv"""
+        radiation_results_folder = self.get_radiation_folder()
+        return os.path.join(radiation_results_folder, '%s.csv' % building_name)
+
+    def get_building_list(self, name):
+        """scenario/2-results/2-demand/1-timeseries/{building_name}.csv"""
+        radiation_results_folder = self.get_radiation_folder()
+        return os.path.join(radiation_results_folder, '%s.csv' % name)
+
+    def get_radiation_folder(self):
+        """scenario/outputs/data/solar-radiation/radiation.csv"""
+        return os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+
+
+    ## POTENTIALS
+    def get_solar_potential_folder(self):
+        """scenario/outputs/data/potentials/solar"""
+        return os.path.join(self.scenario_path, 'outputs', 'data', 'potentials', 'solar')
+
+    def PV_results(self, building_name):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        solar_potential_folder = self.get_solar_potential_folder()
+        return os.path.join(solar_potential_folder, '%s_PV.csv' % building_name)
+
+
     ##DEMAND
     def get_demand_results_folder(self):
         """scenario/2-results/2-demand/1-timeseries"""
