@@ -174,6 +174,14 @@ def Calc_pv_generation(type_panel, hourly_radiation, number_groups, number_point
     Final = pd.DataFrame({'PV_kWh':Sum_PV,'Area':total_area})
     return result, Final
 
+def Calc_incidenteangleB(g, lat, ha, tilt, teta_z):
+    # calculate incident angle beam radiation
+    part1 = sin(lat) * sin(g) * cos(tilt) - cos(lat) * sin(g) * sin(tilt) * cos(teta_z)
+    part2 = cos(lat) * cos(g) * cos(ha) * cos(tilt) + sin(lat) * cos(g) * cos(ha) * sin(tilt) * cos(teta_z)
+    part3 = cos(g) * sin(ha) * sin(tilt) * sin(teta_z)
+    teta_B = acos(part1 + part2 + part3)
+    return teta_B  # in radains
+
 
 def Calc_diffuseground_comp(tilt_radians):
     """
@@ -545,7 +553,7 @@ def test_photovoltaic():
     list_buildings_names = pd.read_csv(locator.get_building_list(name='bui_vol')).columns.values
     gv = cea.globalvar.GlobalVariables()
     for building in list_buildings_names:
-        radiation = locator.get_radiation(building_name= building)
+        radiation = locator.get_radiation_building(building_name= building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
         calc_PV(locator=locator, radiation_csv= radiation, metadata_csv= radiation_metadata, latitude=46.95240555555556,
                 longitude=7.439583333333333, year=2014, gv=gv, weather_path=weather_path, building_name = building)
