@@ -83,7 +83,7 @@ def demand_calculation(locator, weather_path, gv):
     Total_demand.csv: csv file of yearly demand data per buidling.
     """
     t0 = time.clock()
-    # starting date
+
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
 
     # weather model
@@ -106,11 +106,11 @@ def demand_calculation(locator, weather_path, gv):
     else:
         thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, schedules_dict,
                                     weather_data)
-    write_totals_csv(building_properties, locator)
+    write_totals_csv(building_properties, locator, gv)
     gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
 
-def write_totals_csv(building_properties, locator):
+def write_totals_csv(building_properties, locator, gv):
     """read in the temporary results files and append them to the Totals.csv file."""
     counter = 0
     for name in building_properties.list_building_names():
@@ -121,7 +121,7 @@ def write_totals_csv(building_properties, locator):
         else:
             df2 = pd.read_csv(temporary_file)
             df = df.append(df2, ignore_index=True)
-    df.to_csv(locator.get_total_demand(), index=False, float_format='%.3f')
+    df.to_csv(locator.get_total_demand(), columns=gv.demand_totals_csv_columns, index=False, float_format='%.3f')
 
 
 """
@@ -135,9 +135,7 @@ def thermal_loads_all_buildings(building_properties, date, gv, locator, num_buil
     for i, building in enumerate(building_properties.list_building_names()):
         bpr = building_properties[building]
         thermal_loads.calc_thermal_loads(
-            building, bpr, weather_data, usage_schedules, date, gv,
-            locator.get_demand_results_folder(),
-            locator.get_temporary_folder())
+            building, bpr, weather_data, usage_schedules, date, gv, locator)
         gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
 
 
@@ -149,9 +147,7 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
     for building in building_properties.list_building_names():
         bpr = building_properties[building]
         job = pool.apply_async(thermal_loads.calc_thermal_loads,
-                               [building, bpr, weather_data, usage_schedules, date, gv,
-                                locator.get_demand_results_folder(),
-                                locator.get_temporary_folder()])
+                               [building, bpr, weather_data, usage_schedules, date, gv, locator])
         joblist.append(job)
     for i, job in enumerate(joblist):
         job.get(240)

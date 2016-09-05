@@ -24,20 +24,6 @@ def plot_scenarios(scenarios, output_file):
     locators = [cea.inputlocator.InputLocator(scenario) for scenario in scenarios]
     scenario_names = [os.path.basename(locator.scenario_path) for locator in locators]
 
-    plot_config = {
-        '_pages': ['Demand', 'LCA Embodied', 'LCA Operation'],
-        'Demand': {'columns': ['Ef_MWhyr', 'QHf_MWhyr', 'QCf_MWhyr'],
-                   'titles': ['Ef_KWhm2', 'QHf_KWhm2', 'QCf_KWhm2'],
-                   'locator_method': 'get_total_demand',
-                   'conversion-column': 'GFA_m2'},
-        'LCA Embodied': {'columns': ['pen_MJm2', 'ghg_kgm2'],
-                         'titles': ['pen_MJm2', 'ghg_kgm2'],
-                         'locator_method': 'get_lca_embodied'},
-        'LCA Operation': {'columns': ['pen_MJm2', 'ghg_kgm2'],
-                         'titles': ['pen_MJm2', 'ghg_kgm2'],
-                         'locator_method': 'get_lca_operation'},
-    }
-
     pdf = PdfPages(output_file)
 
     # Page one: Demand
@@ -56,8 +42,8 @@ def plot_scenarios(scenarios, output_file):
     fig, axes = plt.subplots(nrows=2, figsize=(8.27, 11.69))
     plt.suptitle('LCA Embodied')
 
-    plot_lca_embodied(axes[0], locators, scenario_names, column='pen_MJm2', title='Primary Energy', unit='MJ/m2')
-    plot_lca_embodied(axes[1], locators, scenario_names, column='ghg_kgm2', title='Greenhouse Gas', unit='kg/m2')
+    plot_lca_embodied(axes[0], locators, scenario_names, column='E_nre_pen_MJm2', title='Non-Renewable Primary Energy', unit='MJ/m2')
+    plot_lca_embodied(axes[1], locators, scenario_names, column='E_ghg_kgm2', title='Greenhouse Gas', unit='kg/m2')
 
     fig.subplots_adjust(hspace=0.5)
     pdf.savefig()
@@ -67,8 +53,8 @@ def plot_scenarios(scenarios, output_file):
     fig, axes = plt.subplots(nrows=2, figsize=(8.27, 11.69))
     plt.suptitle('LCA Operation')
 
-    plot_lca_operation(axes[0], locators, scenario_names, column='pen_MJm2', title='Primary Energy', unit='MJ/m2')
-    plot_lca_operation(axes[1], locators, scenario_names, column='ghg_kgm2', title='Greenhouse Gas', unit='kg/m2')
+    plot_lca_operation(axes[0], locators, scenario_names, column='O_nre_pen_MJm2', title='Non-Renewable Primary Energy', unit='MJ/m2')
+    plot_lca_operation(axes[1], locators, scenario_names, column='O_ghg_kgm2', title='Greenhouse Gas', unit='kg/m2')
 
     fig.subplots_adjust(hspace=0.5)
     pdf.savefig()
