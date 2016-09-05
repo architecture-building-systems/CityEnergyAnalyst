@@ -9,14 +9,14 @@ photovoltaic
 from __future__ import division
 import numpy as np
 import pandas as pd
-import arcpy
 from math import *
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
+import time
 
 __author__ = "Jimeno A. Fonseca"
-__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca, Shanshan Hsieh"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -30,34 +30,43 @@ PV electricity generation
 
 """
 
-def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, year, gv, weather_path, building_name):
+def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, gv, weather_path, building_name):
 
+    t0 = time.clock()
     # weather data
     weather_data = epwreader.epw_reader(weather_path)
+    gv.log('reading weather data done')
 
     # solar properties
     g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
                                                                          gv)
+    gv.log('calculating solar properties done')
+
     # select sensor point with sufficient solar radiation
     max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
-        calc_radiation_sensor_selection_weatherdata(weather_data, radiation_csv, metadata_csv, gv)
+        filter_low_potential(weather_data, radiation_csv, metadata_csv, gv)
+
+    gv.log('filtering low potential sensor points done')
 
     if not sensors_metadata_clean.empty:
         # calculate optimal angle and tilt for panels
         sensors_metadata_cat = optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az, trr_mean,
-                                                      gv.grid_side,gv.module_length_PV, gv.angle_north,
-                                                      min_yearly_production, max_yearly_radiation)
+                                                      gv.module_length_PV, max_yearly_radiation)
+        gv.log('calculating optimal tile angle and separation done')
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
         Number_groups, hourlydata_groups, number_points, prop_observers = calc_groups(sensors_rad_clean, sensors_metadata_cat)
+
+        gv.log('generating groups of sensor points done')
 
         results, Final = Calc_pv_generation(gv.type_PVpanel, hourlydata_groups, Number_groups, number_points,
                                              prop_observers, weather_data,g, Sz, Az, ha, latitude, gv.misc_losses)
 
         Final.to_csv(locator.PV_results(building_name= building_name), index=True, float_format='%.2f')
+        gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
     return
 
-def calc_radiation_sensor_selection_weatherdata(weather_data, radiation_csv, metadata_csv, gv):
+def filter_low_potential(weather_data, radiation_csv, metadata_csv, gv):
     # get max radiation potential from global horizontal radiation
     yearly_horizontal_rad = weather_data.glohorrad_Whm2.sum()  # [Wh/m2/year]
 
@@ -78,9 +87,6 @@ def calc_radiation_sensor_selection_weatherdata(weather_data, radiation_csv, met
 
     # delete sensors facing downwards, FIXME: this should be cleaned up in the radiation script, but not possible at this point (08/2016)
     sensors_metadata = sensors_metadata[sensors_metadata.tilt <= 91]
-    # delete sensors facing north
-    sensors_metadata = sensors_metadata[sensors_metadata.orientation <= gv.angle_north]    # orientation = teta_z
-    sensors_metadata = sensors_metadata[sensors_metadata.orientation >= -gv.angle_north]
 
     # keep sensors above min production in sensors_rad
     sensors_metadata = sensors_metadata.set_index('bui_fac_sen')
@@ -93,41 +99,6 @@ def calc_radiation_sensor_selection_weatherdata(weather_data, radiation_csv, met
     sensors_rad_clean[sensors_rad_clean[:] <= 50] = 0   # eliminate points when hourly production < 50 W/m2
 
     return max_yearly_radiation, min_yearly_radiation, sensors_rad_clean, sensors_metadata_clean
-
-def calc_radiation_sensor_selection(weather_data, radiation_csv, metadata_csv, gv):
-    # read radiation file
-    sensors_rad = pd.read_csv(radiation_csv)
-    sensors_metadata = pd.read_csv(metadata_csv)
-
-    # join total radiation to sensor_metadata
-    sensors_rad_sum = sensors_rad.sum(0).values  # add new row with yearly radiation
-    sensors_metadata['total_rad'] = sensors_rad_sum
-
-    # keep sensors if allow pv installation on walls or on roofs
-    sensors_metadata['fac_type'] = np.where(sensors_metadata['tilt'] >= 89, 'wall', 'roof')
-    if gv.pvonroof is False:
-        sensors_metadata = sensors_metadata[sensors_metadata.fac_type != 'roof']
-    if gv.pvonwall is False:
-        sensors_metadata = sensors_metadata[sensors_metadata.fac_type != 'wall']
-
-    # delete sensors facing downwards, FIXME: this should be cleaned up in the radiation script, but not possible at this point (08/2016)
-    sensors_metadata = sensors_metadata[sensors_metadata.tilt <= 91]
-    # delete sensors facing north
-    sensors_metadata = sensors_metadata[sensors_metadata.orientation <= gv.angle_north]  # orientation = teta_z
-    sensors_metadata = sensors_metadata[sensors_metadata.orientation >= -gv.angle_north]
-
-    # keep sensors above min production in sensors_rad
-    sensors_metadata = sensors_metadata.set_index('bui_fac_sen')
-    max_yearly_radiation_sensor = sensors_rad_sum.max()                    # Maximum solar radiation at each building [Wh/m2/year]
-    min_yearly_radiation = max_yearly_radiation_sensor * gv.min_radiation  # set min yearly radiation threshold for sensor selection
-
-    sensors_metadata_clean = sensors_metadata[sensors_metadata.total_rad >= min_yearly_radiation]
-    sensors_rad_clean = sensors_rad[sensors_metadata_clean.index.tolist()]  # keep sensors above min radiation
-
-    sensors_rad_clean[sensors_rad_clean[:] <= 50] = 0  # eliminate points when hourly production < 50 W/m2
-
-    return max_yearly_radiation_sensor, min_yearly_radiation, sensors_rad_clean, sensors_metadata_clean
-
 
 def Calc_pv_generation(type_panel, hourly_radiation, number_groups, number_points, prop_observers, weather_data,
                        g, Sz, Az, ha, latitude, misc_losses):
@@ -333,92 +304,93 @@ optimal angle and tilt
 
 """
 
+
+def Calc_optimal_angle(teta_z, latitude, transmissivity):
+    """
+
+    Parameters
+    ----------
+    teta_z: surface azimuth, 0 degree south (east negative, west positive)
+    latitude
+    transmissivity
+
+    Returns
+    -------
+    S.W.Quinn, B.Lehman.A simple formula for estimating the optimum tilt angles of photovoltaic panels.
+    2013 IEEE 14th Work Control Model Electron, Jun, 2013, pp.1-8
+    """
+    if transmissivity <= 0.15:
+        gKt = 0.977
+    elif 0.15 < transmissivity <= 0.7:
+        gKt = 1.237 - 1.361 * transmissivity
+    else:
+        gKt = 0.273
+    Tad = 0.98
+    Tar = 0.97
+    Pg = 0.2  # ground reflectance of 0.2
+    l = radians(latitude)
+    a = radians(teta_z)  # this is surface azimuth
+    b = atan((cos(a) * tan(l)) * (1 / (1 + ((Tad * gKt - Tar * Pg) / (2 * (1 - gKt))))))
+    return b  # radians
+
+
+def Calc_optimal_spacing(Sh, Az, tilt_angle, module_length):
+    h = module_length * sin(tilt_angle)
+    D1 = h / tan(radians(Sh))
+    D = max(D1 * cos(radians(180 - Az)), D1 * cos(radians(Az - 180)))
+    return D
+
+
+def Calc_categoriesroof(teta_z, B, GB, Max_Isol):
+    # FIXME: different ways to categorize teta_z at location other than Zurich
+    if -122.5 < teta_z <= -67:
+        CATteta_z = 1
+    elif -67 < teta_z <= -22.5:
+        CATteta_z = 3
+    elif -22.5 < teta_z <= 22.5:
+        CATteta_z = 5
+    elif 22.5 < teta_z <= 67:
+        CATteta_z = 4
+    elif 67 <= teta_z <= 122.5:
+        CATteta_z = 2
+    else:
+        CATteta_z = 6
+    B = degrees(B)
+    if 0 < B <= 5:
+        CATB = 1  # flat roof
+    elif 5 < B <= 15:
+        CATB = 2  # tilted 5-15 degrees
+    elif 15 < B <= 25:
+        CATB = 3  # tilted 15-25 degrees
+    elif 25 < B <= 40:
+        CATB = 4  # tilted 25-40 degrees
+    elif 40 < B <= 60:
+        CATB = 5  # tilted 40-60 degrees
+    elif B > 60:
+        CATB = 6  # tilted >60 degrees
+    else:
+        CATB = None
+        print('B not in expected range')
+
+    GB_percent = GB / Max_Isol
+    if 0 < GB_percent <= 0.25:
+        CATGB = 1
+    elif 0.25 < GB_percent <= 0.50:
+        CATGB = 2
+    elif 0.50 < GB_percent <= 0.75:
+        CATGB = 3
+    elif 0.75 < GB_percent <= 0.90:
+        CATGB = 4
+    elif 0.90 < GB_percent:
+        CATGB = 5
+    else:
+        CATGB = None
+        print('GB not in expected range')
+
+    return CATteta_z, CATB, CATGB
+
 def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az, transmissivity,
-                           grid_side, module_length, angle_north, Min_Isol, Max_Isol):
-
-    def Calc_optimal_angle(teta_z, latitude, transmissivity):
-        """
-
-        Parameters
-        ----------
-        teta_z: surface azimuth, 0 degree south (east negative, west positive)
-        latitude
-        transmissivity
-
-        Returns
-        -------
-        S.W.Quinn, B.Lehman.A simple formula for estimating the optimum tilt angles of photovoltaic panels.
-        2013 IEEE 14th Work Control Model Electron, Jun, 2013, pp.1-8
-        """
-        if transmissivity <= 0.15:
-            gKt = 0.977
-        elif 0.15 < transmissivity <= 0.7:
-            gKt = 1.237 - 1.361 * transmissivity
-        else:
-            gKt = 0.273
-        Tad = 0.98
-        Tar = 0.97
-        Pg = 0.2  # ground reflectance of 0.2
-        l = radians(latitude)
-        a = radians(teta_z)  # this is surface azimuth
-        b = atan((cos(a) * tan(l)) * (1 / (1 + ((Tad * gKt - Tar * Pg) / (2 * (1 - gKt))))))
-        return b                      # radians
-
-    def Calc_optimal_spacing(Sh, Az, tilt_angle, module_length):
-        h = module_length * sin(tilt_angle)
-        D1 = h / tan(radians(Sh))
-        D = max(D1 * cos(radians(180 - Az)), D1 * cos(radians(Az - 180)))
-        return D
-
-    def Calc_categoriesroof(teta_z, B, GB, Max_Isol):
-
-        # FIXME: different ways to categorize teta_z at location other than Zurich
-        if -122.5 < teta_z <= -67:
-            CATteta_z = 1
-        elif -67 < teta_z <= -22.5:
-            CATteta_z = 3
-        elif -22.5 < teta_z <= 22.5:
-            CATteta_z = 5
-        elif 22.5 < teta_z <= 67:
-            CATteta_z = 4
-        elif 67 <= teta_z <= 122.5:
-            CATteta_z = 2
-        else:
-            CATteta_z = None
-            print('teta_z not in expected range')
-        B = degrees(B)
-        if 0 < B <= 5:
-            CATB = 1  # flat roof
-        elif 5 < B <= 15:
-            CATB = 2  # tilted 5-15 degrees
-        elif 15 < B <= 25:
-            CATB = 3  # tilted 15-25 degrees
-        elif 25 < B <= 40:
-            CATB = 4  # tilted 25-40 degrees
-        elif 40 < B <= 60:
-            CATB = 5  # tilted 40-60 degrees
-        elif B > 60:
-            CATB = 6  # tilted >60 degrees
-        else:
-            CATB = None
-            print('B not in expected range')
-
-        GB_percent = GB / Max_Isol
-        if 0 < GB_percent <= 0.25:
-            CATGB = 1
-        elif 0.25 < GB_percent <= 0.50:
-            CATGB = 2
-        elif 0.50 < GB_percent <= 0.75:
-            CATGB = 3
-        elif 0.75 < GB_percent <= 0.90:
-            CATGB = 4
-        elif 0.90 < GB_percent :
-            CATGB = 5
-        else:
-            CATGB = None
-            print('GB not in expected range')
-
-        return CATteta_z, CATB, CATGB
+                           module_length, Max_Isol):
 
     # calculate tilt angle for flat roofs (tilt < 5 degrees).
     optimal_angle_flat = Calc_optimal_angle(0, latitude, transmissivity)
@@ -435,8 +407,8 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     # TODO: improve calculation.
     # sensors_metadata_clean['area_netpv'] = (grid_side - sensors_metadata_clean.array_s) / [cos(x) for x in sensors_metadata_clean.B] * grid_side
     # calculate the surface area to install one pv panel on flat roofs with defined tilt angle and array spacing
-    surface_area_flat = module_length*(sensors_metadata_clean.array_s/2 +
-                                       module_length*[cos(radians(x)) for x in sensors_metadata_clean.B])
+    surface_area_flat = module_length*(sensors_metadata_clean.array_s/2 + module_length*[cos(radians(x)) for x in sensors_metadata_clean.B])
+
     # calculate the pv module area for each sensor
     sensors_metadata_clean['area_netpv'] = np.where(sensors_metadata_clean['tilt'] >= 5, sensors_metadata_clean.sen_area,
                                                     module_length**2 * (sensors_metadata_clean.sen_area / surface_area_flat))
@@ -556,7 +528,7 @@ def test_photovoltaic():
         radiation = locator.get_radiation_building(building_name= building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
         calc_PV(locator=locator, radiation_csv= radiation, metadata_csv= radiation_metadata, latitude=46.95240555555556,
-                longitude=7.439583333333333, year=2014, gv=gv, weather_path=weather_path, building_name = building)
+                longitude=7.439583333333333, gv=gv, weather_path=weather_path, building_name = building)
 
 
 if __name__ == '__main__':
