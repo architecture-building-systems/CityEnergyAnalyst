@@ -512,10 +512,10 @@ class GlobalVariables(object):
                                           'Trcs0_C', 'Tsww0_C', 'Vw_m3yr', 'Vww0_m3', 'Vww_m3yr', 'mcphs0_kWC',
                                           'mcpww0_kWC', 'mcpcs0_kWC']
         self.demand_building_csv_columns = ['DATE', 'Name', 'occ_pax', 'QHf_kWh', 'QCf_kWh', 'Ef_kWh', 'Qhsf_kWh',
-                                            'Qhs_kWh', 'Qhprof_kWh', 'Qwwf_kWh', 'Qww_kWh', 'Qww_tankloss_kWh',
+                                            'Qhs_kWh', 'Qhprof_kWh', 'Qwwf_kWh', 'Qww_kWh',
                                             'Qcsf_kWh', 'Qcs_kWh', 'Qcref_kWh', 'Qcdataf_kWh', 'Ealf_kWh', 'Eauxf_kWh',
-                                            'Ecaf_kWh', 'Edataf_kWh', 'Epro_kWh', 'Tshs_C', 'Trhs_C', 'Tscs_C',
-                                            'Trcs_C', 'Tsww_C', 'Trww_C', 'Tww_tank_C', 'Tsref_C', 'Trref_C',
+                                            'Ecaf_kWh', 'Edataf_kWh', 'Eprof_kWh', 'Tshs_C', 'Trhs_C', 'Tscs_C',
+                                            'Trcs_C', 'Tsww_C', 'Trww_C', 'Tsref_C', 'Trref_C',
                                             'Tsdata_C', 'Trdata_C', 'Vw_m3', 'mcphs_kWC', 'mcpww_kWC', 'mcpcs_kWC',
                                             'mcpref_kWC', 'mcpdata_kWC']
 
