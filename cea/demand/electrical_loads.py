@@ -151,12 +151,12 @@ def calc_Elf(schedule, El_Wm2, Aef):
 
 
 def calc_Edataf(schedule, Ed_Wm2, Aef, share):
-    Edataf = schedule  * Ed_Wm2 * Aef * share  # in W
+    Edataf = schedule * Ed_Wm2 * Aef * share  # in W
     return Edataf
 
 
 def calc_Eref(schedule , Ere_Wm2, Aef, share):
-    Eref = schedule * Ere_Wm2 * Aef * share # in W
+    Eref = schedule * Ere_Wm2 * Aef * share  # in W
     return Eref
 
 
@@ -173,8 +173,8 @@ def calc_Eprof_schedule(list_uses, schedules, building_uses):
     return epro
 
 
-def calc_Eprof(schedule , Epro_Wm2, Aef, share):
-    Eprof = schedule  * Epro_Wm2 * Aef * share  # in W
+def calc_Eprof(schedule, Epro_Wm2, Aef, share):
+    Eprof = schedule * Epro_Wm2 * Aef * share  # in W
     return Eprof
 
 """
