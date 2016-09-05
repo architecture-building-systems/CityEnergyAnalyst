@@ -25,25 +25,22 @@
                   - [lookup_coeff_wind_pressure](#lookup_coeff_wind_pressure)
                   - [calc_coeff_vent_zone](#calc_coeff_vent_zone)
                   - [allocate_default_ventilation_openings](#allocate_default_ventilation_openings)
-               - [calc_thermal_load_mechanical_and_natural_ventilation_timestep](#calc_thermal_load_mechanical_and_natural_ventilation_timestep)
+               - [calc_thermal_load_hvac_timestep](#calc_thermal_load_hvac_timestep)
                   - [calc_T_em_ls](#calc_t_em_ls)
                   - [calc_Qhs_Qcs_sys_max](#calc_qhs_qcs_sys_max)
+                  - [calc_hex](#calc_hex)
+                     - [calc_w](#calc_w)
                   - [calc_h_ve_adj](#calc_h_ve_adj)
                   - [calc_Htr](#calc_htr)
                   - [calc_Qhs_Qcs](#calc_qhs_qcs)
-                     - [Calc_Im_tot](#calc_im_tot)
-                     - [calc_tm](#calc_tm)
-                     - [calc_ts](#calc_ts)
-                     - [calc_ta](#calc_ta)
-                     - [calc_top](#calc_top)
-               - [calc_thermal_load_hvac_timestep](#calc_thermal_load_hvac_timestep)
-                  - [calc_hex](#calc_hex)
-                     - [calc_w](#calc_w)
                   - [calc_hvac](#calc_hvac)
                      - [calc_h](#calc_h)
                      - [calc_w3_cooling_case](#calc_w3_cooling_case)
-                        - [calc_Qhs_Qcs_dis_ls](#calc_qhs_qcs_dis_ls)
+               - [calc_thermal_load_mechanical_and_natural_ventilation_timestep](#calc_thermal_load_mechanical_and_natural_ventilation_timestep)
+                  - [calc_Qhs_Qcs_dis_ls](#calc_qhs_qcs_dis_ls)
                - [calc_temperatures_emission_systems](#calc_temperatures_emission_systems)
+                  - [calc_radiator](#calc_radiator)
+                     - [newton](#newton)
                - [calc_Qwwf](#calc_qwwf)
                   - [calc_Qww_schedule](#calc_qww_schedule)
                      - [calc_mww](#calc_mww)
@@ -62,86 +59,12 @@
                   - [calc_Eauxf_fw](#calc_eauxf_fw)
          - [write_totals_csv](#write_totals_csv)
 
-# Calc_Im_tot
-- number of invocations: 1
-- max duration: 0.031 s
-- avg duration: 0.031 s
-- min duration: 0.031 s
-- total duration: 0.031 s
-
-### Input
-- **I_m** `['float64']`: *1148.3982451468542*
-- **Htr_em** `['float64']`: *601.8673589723943*
-- **te_t** `['float64']`: *1.1000000000000001*
-- **Htr_3** `['float64']`: *876.41925301753997*
-- **I_st** `['float64']`: *2487.6752097710209*
-- **Htr_w** `['float64']`: *344.20598175023116*
-- **Htr_1** `['float64']`: *545.74852531251054*
-- **I_ia** `['float64']`: *3642.9330365502524*
-- **IHC_nd** `['int']`: *0*
-- **Hve** `['float64']`: *550.080331446635*
-- **Htr_2** `['float64']`: *889.95450706274164*
-
-
-### Output
-- `['float64']`: 8783.6305013901547
-
-### Docstring template
-
-```
-PARAMETERS
-----------
-
-:param I_m:
-:type I_m: float64
-
-:param Htr_em:
-:type Htr_em: float64
-
-:param te_t:
-:type te_t: float64
-
-:param Htr_3:
-:type Htr_3: float64
-
-:param I_st:
-:type I_st: float64
-
-:param Htr_w:
-:type Htr_w: float64
-
-:param Htr_1:
-:type Htr_1: float64
-
-:param I_ia:
-:type I_ia: float64
-
-:param IHC_nd:
-:type IHC_nd: int
-
-:param Hve:
-:type Hve: float64
-
-:param Htr_2:
-:type Htr_2: float64
-
-RETURNS
--------
-
-:returns:
-:rtype: float64
-
-```
-
-[TOC](#table-of-contents)
----
-
 # allocate_default_leakage_paths
 - number of invocations: 1
-- max duration: 0.03 s
-- avg duration: 0.03 s
-- min duration: 0.03 s
-- total duration: 0.03 s
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **coeff_lea_zone** `['float64']`: *7572.0292843945435*
@@ -185,10 +108,10 @@ RETURNS
 
 # allocate_default_ventilation_openings
 - number of invocations: 1
-- max duration: 0.033 s
-- avg duration: 0.033 s
-- min duration: 0.033 s
-- total duration: 0.033 s
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **coeff_vent_zone** `['float']`: *0.0*
@@ -223,24 +146,28 @@ RETURNS
 
 # calc_E_totals
 - number of invocations: 1
-- max duration: 0.032 s
-- avg duration: 0.032 s
-- min duration: 0.032 s
-- total duration: 0.032 s
+- max duration: 0.037 s
+- avg duration: 0.037 s
+- min duration: 0.037 s
+- total duration: 0.037 s
 
 ### Input
-- **Aef** `['float64']`: *2532.980834758901*
-- **Ealf** `['ndarray']`: *array([  8095.40674789,   8095.40674789,   8095.40674789, ...,
-        15907.4742596 ,  13478.85223524,   9168.04814198])*
-- **Eauxf** `['ndarray']`: *array([  0.        ,   0.        ,   0.        , ...,  17.95868095,
-        22.11860536,  18.71487712])*
+- **Aef** `['float64']`: *14248.017195518818*
+- **Ealf** `['ndarray']`: *array([ 45536.66295688,  45536.66295688,  45536.66295688, ...,
+        89479.54271027,  75818.5438232 ,  51570.27079866])*
+- **Eauxf** `['ndarray']`: *array([  0.        ,   0.        ,   0.        , ...,  65.74432788,
+         2.8770457 ,   2.65250507])*
 - **Edataf** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **Eprof** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
+- **Eaf** `['ndarray']`: *array([ 36132.97160784,  36132.97160784,  36132.97160784, ...,
+        71001.2892094 ,  60161.39772705,  40920.59034587])*
+- **Elf** `['ndarray']`: *array([  9403.69134904,   9403.69134904,   9403.69134904, ...,
+        18478.25350087,  15657.14609616,  10649.68045279])*
 
 
 ### Output
-- `['tuple']`: (array([  8095.40674789,   8095.40674789,   8095.40674789, ...,
-        15907.4742596 ,  13478.85223524,   9168.04814198]), 74680.127249280165, 223.26888948476659, 6.4981343193058683, array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 0.0, array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 0.0)
+- `['tuple']`: (array([ 45536.66295688,  45536.66295688,  45536.66295688, ...,
+        89479.54271027,  75818.5438232 ,  51570.27079866]), 420075.71577720094, 1255.887503351812, 40.055689107389043, array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 0.0, array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 0.0, 333326.66308228462, 86749.052694916332, 996.536517052627, 259.35098629918525)
 
 ### Docstring template
 
@@ -263,6 +190,12 @@ PARAMETERS
 :param Eprof:
 :type Eprof: ndarray
 
+:param Eaf:
+:type Eaf: ndarray
+
+:param Elf:
+:type Elf: ndarray
+
 RETURNS
 -------
 
@@ -276,14 +209,14 @@ RETURNS
 
 # calc_Ea_El_Edata_Eref_schedule
 - number of invocations: 1
-- max duration: 0.309 s
-- avg duration: 0.309 s
-- min duration: 0.309 s
-- total duration: 0.309 s
+- max duration: 1.126 s
+- avg duration: 1.126 s
+- min duration: 1.126 s
+- total duration: 1.126 s
 
 ### Input
 - **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
-- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.640*
+- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, *
 - **building_uses** `['dict']`: *{u'INDUSTRIAL': 0.0, u'OFFICE': 0.0, u'RESTAURANT': 0.20000000000000001, u'PFloor': 0.20000000000000001, u'PARKING': 0.80000000000000004, u'SERVERROOM': 0.0}*
 
 
@@ -318,20 +251,20 @@ RETURNS
 
 # calc_Eaf
 - number of invocations: 1
-- max duration: 0.032 s
-- avg duration: 0.032 s
-- min duration: 0.032 s
-- total duration: 0.032 s
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **schedule** `['ndarray']`: *array([ 0.08  ,  0.08  ,  0.08  , ...,  0.1572,  0.1332,  0.0906])*
 - **Ea_Wm2** `['float64']`: *31.699999999999999*
-- **Aef** `['float64']`: *2532.980834758901*
+- **Aef** `['float64']`: *14248.017195518818*
 
 
 ### Output
-- `['ndarray']`: array([  6423.63939695,   6423.63939695,   6423.63939695, ...,
-        12622.451415  ,  10695.35959592,   7274.77161704])
+- `['ndarray']`: array([ 36132.97160784,  36132.97160784,  36132.97160784, ...,
+        71001.2892094 ,  60161.39772705,  40920.59034587])
 
 ### Docstring template
 
@@ -361,49 +294,49 @@ RETURNS
 
 # calc_Eauxf
 - number of invocations: 1
-- max duration: 0.298 s
-- avg duration: 0.298 s
-- min duration: 0.298 s
-- total duration: 0.298 s
+- max duration: 0.337 s
+- avg duration: 0.337 s
+- min duration: 0.337 s
+- total duration: 0.337 s
 
 ### Input
 - **Ll** `['float64']`: *87.0*
 - **Lw** `['float64']`: *30.0*
-- **Mww** `['ndarray']`: *array([ 0.        ,  0.        ,  0.        , ...,  0.01039254,
-        0.00280879,  0.00238748])*
+- **Mww** `['ndarray']`: *array([ 0.        ,  0.        ,  0.        , ...,  0.31527927,
+        0.08521061,  0.07242902])*
 - **Qcsf** `['ndarray']`: *array([-0., -0., -0., ..., -0., -0., -0.])*
-- **Qcsf_0** `['float64']`: *-488411.89619418682*
-- **Qhsf** `['ndarray']`: *array([     0.        ,      0.        ,      0.        , ...,
-        54776.24524343,  44440.48177405,  47516.38542795])*
-- **Qhsf_0** `['float64']`: *336657.37528759934*
-- **Qww** `['ndarray']`: *array([    0.        ,     0.        ,     0.        , ...,  2174.11914263,
-         587.59976828,   499.45980304])*
-- **Qwwf** `['ndarray']`: *array([    0.        ,     0.        ,     0.        , ...,  4624.11914263,
-        1600.59976828,  1483.45980304])*
-- **Qwwf_0** `['float64']`: *9040.2317305902616*
+- **Qcsf_0** `['float64']`: *-3824434.2215403998*
+- **Qhsf** `['ndarray']`: *array([      0.        ,       0.        ,       0.        , ...,
+        345431.70390049,       0.        ,       0.        ])*
+- **Qhsf_0** `['float64']`: *3592302.7665316463*
+- **Qww** `['ndarray']`: *array([     0.        ,      0.        ,      0.        , ...,
+        65956.42342807,  17826.06038597,  15152.15132807])*
+- **Qwwf** `['ndarray']`: *array([     0.        ,      0.        ,      0.        , ...,
+        68481.67061934,  18630.23145399,  15853.22938387])*
+- **Qwwf_0** `['float64']`: *128049.69313257416*
 - **Tcs_re** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
 - **Tcs_sup** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
-- **Ths_re** `['ndarray']`: *array([ 0,  0,  0, ..., 33, 32, 32])*
-- **Ths_sup** `['ndarray']`: *array([ 0,  0,  0, ..., 37, 34, 35])*
-- **Vw** `['ndarray']`: *array([ 0.        ,  0.        ,  0.        , ...,  0.03748812,
-        0.01013192,  0.00861213])*
+- **Ths_re** `['ndarray']`: *array([ 0,  0,  0, ..., 29,  0,  0])*
+- **Ths_sup** `['ndarray']`: *array([ 0,  0,  0, ..., 31,  0,  0])*
+- **Vw** `['ndarray']`: *array([ 0.        ,  0.        ,  0.        , ...,  2.27455987,
+        0.61474591,  0.52253402])*
 - **Year** `['int64']`: *2010*
 - **fforma** `['float64']`: *1.0109278555072243*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x151AD690>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x143D28B0>*
 - **nf_ag** `['float64']`: *5.0*
 - **nfp** `['float64']`: *0.20000000000000001*
-- **qv_req** `['ndarray']`: *array([ 0.45476218,  0.45476218,  0.45476218, ...,  0.89971551,
-        0.24316635,  0.2066914 ])*
+- **qv_req** `['ndarray']`: *array([  2.55803726,   2.55803726,   2.55803726, ...,  15.91020361,
+         4.30005503,   3.65504678])*
 - **sys_e_cooling** `['unicode']`: *u'T3'*
 - **sys_e_heating** `['unicode']`: *u'T1'*
 - **Ehs_lat_aux** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 
 
 ### Output
-- `['tuple']`: (array([  0.        ,   0.        ,   0.        , ...,  17.95868095,
-        22.11860536,  18.71487712]), array([  0.        ,   0.        ,   0.        , ...,  16.95392464,
-        21.59625743,  18.23329612]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.        ,  0.        ,  0.        , ...,  1.00475631,
-        0.52234793,  0.481581  ]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]))
+- `['tuple']`: (array([  0.        ,   0.        ,   0.        , ...,  65.74432788,
+         2.8770457 ,   2.65250507]), array([  0.        ,   0.        ,   0.        , ...,  60.21021997,
+         0.        ,   0.        ]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.        ,  0.        ,  0.        , ...,  5.5341079 ,
+        2.8770457 ,  2.65250507]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]))
 
 ### Docstring template
 
@@ -496,14 +429,14 @@ RETURNS
 
 # calc_Eauxf_cs_dis
 - number of invocations: 1
-- max duration: 0.037 s
-- avg duration: 0.037 s
-- min duration: 0.037 s
-- total duration: 0.037 s
+- max duration: 0.03 s
+- avg duration: 0.03 s
+- min duration: 0.03 s
+- total duration: 0.03 s
 
 ### Input
 - **Qcsf** `['float64']`: *-0.0*
-- **Qcsf0** `['float64']`: *-488411.89619418682*
+- **Qcsf0** `['float64']`: *-3824434.2215403998*
 - **Imax** `['float64']`: *234.53526247767604*
 - **deltaP_des** `['float64']`: *30.489584122097888*
 - **b** `['int32']`: *1*
@@ -558,15 +491,15 @@ RETURNS
 
 # calc_Eauxf_fw
 - number of invocations: 1
-- max duration: 0.037 s
-- avg duration: 0.037 s
-- min duration: 0.037 s
-- total duration: 0.037 s
+- max duration: 0.038 s
+- avg duration: 0.038 s
+- min duration: 0.038 s
+- total duration: 0.038 s
 
 ### Input
 - **freshw** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **nf** `['float64']`: *6.0*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1507A2B0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x140A18D0>*
 
 
 ### Output
@@ -600,14 +533,14 @@ RETURNS
 
 # calc_Eauxf_hs_dis
 - number of invocations: 1
-- max duration: 0.033 s
-- avg duration: 0.033 s
-- min duration: 0.033 s
-- total duration: 0.033 s
+- max duration: 0.039 s
+- avg duration: 0.039 s
+- min duration: 0.039 s
+- total duration: 0.039 s
 
 ### Input
 - **Qhsf** `['float64']`: *0.0*
-- **Qhsf0** `['float64']`: *336657.37528759934*
+- **Qhsf0** `['float64']`: *3592302.7665316463*
 - **Imax** `['float64']`: *234.53526247767604*
 - **deltaP_des** `['float64']`: *30.489584122097888*
 - **b** `['int32']`: *1*
@@ -662,16 +595,16 @@ RETURNS
 
 # calc_Eauxf_ve
 - number of invocations: 1
-- max duration: 0.03 s
-- avg duration: 0.03 s
-- min duration: 0.03 s
-- total duration: 0.03 s
+- max duration: 0.031 s
+- avg duration: 0.031 s
+- min duration: 0.031 s
+- total duration: 0.031 s
 
 ### Input
 - **Qhsf** `['float64']`: *0.0*
 - **Qcsf** `['float64']`: *-0.0*
 - **P_ve** `['float64']`: *0.55000000000000004*
-- **qve** `['float64']`: *0.45476217877532665*
+- **qve** `['float64']`: *2.5580372556112119*
 - **SystemH** `['unicode_']`: *u'T1'*
 - **SystemC** `['unicode_']`: *u'T3'*
 
@@ -716,15 +649,15 @@ RETURNS
 
 # calc_Eauxf_ww
 - number of invocations: 1
-- max duration: 0.028 s
-- avg duration: 0.028 s
-- min duration: 0.028 s
-- total duration: 0.028 s
+- max duration: 0.042 s
+- avg duration: 0.042 s
+- min duration: 0.042 s
+- total duration: 0.042 s
 
 ### Input
 - **Qww** `['float64']`: *0.0*
 - **Qwwf** `['float64']`: *0.0*
-- **Qwwf0** `['float64']`: *9040.2317305902616*
+- **Qwwf0** `['float64']`: *128049.69313257416*
 - **Imax** `['float64']`: *234.53526247767604*
 - **deltaP_des** `['float64']`: *30.489584122097888*
 - **b** `['int32']`: *1*
@@ -774,15 +707,15 @@ RETURNS
 
 # calc_Edataf
 - number of invocations: 1
-- max duration: 0.033 s
-- avg duration: 0.033 s
-- min duration: 0.033 s
-- total duration: 0.033 s
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **schedule** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **Ed_Wm2** `['float64']`: *0.0*
-- **Aef** `['float64']`: *2532.980834758901*
+- **Aef** `['float64']`: *14248.017195518818*
 - **share** `['float64']`: *0.0*
 
 
@@ -820,23 +753,23 @@ RETURNS
 
 # calc_Eint
 - number of invocations: 1
-- max duration: 1.249 s
-- avg duration: 1.249 s
-- min duration: 1.249 s
-- total duration: 1.249 s
+- max duration: 3.583 s
+- avg duration: 3.583 s
+- min duration: 3.583 s
+- total duration: 3.583 s
 
 ### Input
-- **tsd** `['dict']`: *{'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
-         30.39577002,   25.83640451]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Tww_re': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Tm': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Qcs_sen_incl_em_ls': array([ 0.,  0.,  0., ...,  0.,  0., *
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x15061070>*
+- **tsd** `['dict']`: *{'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'people': array([   0.        ,    0.        ,    0.        , ...,  632.61196348,
+        170.97620635,  145.32977539]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Tww_re': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Tm': array([ nan,  nan,  nan, ...,  nan,  nan,  nan]), 'Qcs_sen_incl_em_ls': array([ 0.,  0.,  0., ...,  0.,*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x140AFF70>*
 - **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
-- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.640*
+- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, *
 
 
 ### Output
-- `['dict']`: {'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
-         30.39577002,   25.83640451]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Tww_re': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Ealf': array([  8095.40674789,   8095.40674789,   8095.40674789, ...,
-        15907.4742596 ,  13478.8522352
+- `['dict']`: {'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'people': array([   0.        ,    0.        ,    0.        , ...,  632.61196348,
+        170.97620635,  145.32977539]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Tww_re': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Ealf': array([ 45536.66295688,  45536.66295688,  45536.66295688, ...,
+        89479.54271027,  75818.5438232
 
 ### Docstring template
 
@@ -869,20 +802,20 @@ RETURNS
 
 # calc_Elf
 - number of invocations: 1
-- max duration: 0.031 s
-- avg duration: 0.031 s
-- min duration: 0.031 s
-- total duration: 0.031 s
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **schedule** `['ndarray']`: *array([ 0.08  ,  0.08  ,  0.08  , ...,  0.1572,  0.1332,  0.0906])*
 - **El_Wm2** `['float64']`: *8.25*
-- **Aef** `['float64']`: *2532.980834758901*
+- **Aef** `['float64']`: *14248.017195518818*
 
 
 ### Output
-- `['ndarray']`: array([ 1671.76735094,  1671.76735094,  1671.76735094, ...,  3285.0228446 ,
-        2783.49263932,  1893.27652494])
+- `['ndarray']`: array([  9403.69134904,   9403.69134904,   9403.69134904, ...,
+        18478.25350087,  15657.14609616,  10649.68045279])
 
 ### Docstring template
 
@@ -912,14 +845,14 @@ RETURNS
 
 # calc_Eprof_schedule
 - number of invocations: 1
-- max duration: 0.32 s
-- avg duration: 0.32 s
-- min duration: 0.32 s
-- total duration: 0.32 s
+- max duration: 1.116 s
+- avg duration: 1.116 s
+- min duration: 1.116 s
+- total duration: 1.116 s
 
 ### Input
 - **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
-- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.640*
+- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, *
 - **building_uses** `['dict']`: *{u'INDUSTRIAL': 0.0, u'OFFICE': 0.0, u'RESTAURANT': 0.20000000000000001, u'PFloor': 0.20000000000000001, u'PARKING': 0.80000000000000004, u'SERVERROOM': 0.0}*
 
 
@@ -954,20 +887,20 @@ RETURNS
 
 # calc_Htr
 - number of invocations: 1
-- max duration: 0.03 s
-- avg duration: 0.03 s
-- min duration: 0.03 s
-- total duration: 0.03 s
+- max duration: 0.028 s
+- avg duration: 0.028 s
+- min duration: 0.028 s
+- total duration: 0.028 s
 
 ### Input
-- **Hve** `['float64']`: *550.080331446635*
+- **Hve** `['float64']`: *4022.4624237035187*
 - **Htr_is** `['float64']`: *69302.623523592818*
-- **Htr_ms** `['float64']`: *57625.313990764997*
-- **Htr_w** `['float64']`: *344.20598175023116*
+- **Htr_ms** `['float64']`: *414902.26073350798*
+- **Htr_w** `['float64']`: *297.23151337624876*
 
 
 ### Output
-- `['tuple']`: (545.74852531251054, 889.95450706274164, 876.41925301753997)
+- `['tuple']`: (3801.7984620992102, 4099.0299754754587, 4058.9297487878134)
 
 ### Docstring template
 
@@ -1000,14 +933,14 @@ RETURNS
 
 # calc_I_sol
 - number of invocations: 1
-- max duration: 0.085 s
-- avg duration: 0.085 s
-- min duration: 0.085 s
-- total duration: 0.085 s
+- max duration: 0.111 s
+- avg duration: 0.111 s
+- min duration: 0.111 s
+- total duration: 0.111 s
 
 ### Input
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x151AD030>*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x151AD030>*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x1432FB30>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1432FB30>*
 
 
 ### Output
@@ -1038,22 +971,22 @@ RETURNS
 
 # calc_Qgain_lat
 - number of invocations: 1
-- max duration: 0.041 s
-- avg duration: 0.041 s
-- min duration: 0.041 s
-- total duration: 0.041 s
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
-- **people** `['ndarray']`: *array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
-         30.39577002,   25.83640451])*
+- **people** `['ndarray']`: *array([   0.        ,    0.        ,    0.        , ...,  632.61196348,
+        170.97620635,  145.32977539])*
 - **X_ghp** `['float64']`: *85.0*
 - **sys_e_cooling** `['unicode']`: *u'T3'*
 - **sys_e_heating** `['unicode']`: *u'T1'*
 
 
 ### Output
-- `['ndarray']`: array([ 0.        ,  0.        ,  0.        , ...,  0.00265541,
-        0.00071768,  0.00061003])
+- `['ndarray']`: array([ 0.        ,  0.        ,  0.        , ...,  0.01493667,
+        0.00403694,  0.0034314 ])
 
 ### Docstring template
 
@@ -1086,34 +1019,34 @@ RETURNS
 
 # calc_Qgain_sen
 - number of invocations: 1
-- max duration: 0.226 s
-- avg duration: 0.226 s
-- min duration: 0.226 s
-- total duration: 0.226 s
+- max duration: 0.255 s
+- avg duration: 0.255 s
+- min duration: 0.255 s
+- total duration: 0.255 s
 
 ### Input
-- **people** `['ndarray']`: *array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
-         30.39577002,   25.83640451])*
+- **people** `['ndarray']`: *array([   0.        ,    0.        ,    0.        , ...,  632.61196348,
+        170.97620635,  145.32977539])*
 - **Qs_Wp** `['float64']`: *73.0*
-- **Eal_nove** `['ndarray']`: *array([  8095.40674789,   8095.40674789,   8095.40674789, ...,
-        15907.4742596 ,  13478.85223524,   9168.04814198])*
+- **Eal_nove** `['ndarray']`: *array([ 45536.66295688,  45536.66295688,  45536.66295688, ...,
+        89479.54271027,  75818.5438232 ,  51570.27079866])*
 - **Eprof** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **Qcdata** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
 - **Qcrefri** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
-- **tsd** `['dict']`: *{'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 've': array([    0.        ,     0.        ,     0.        , ...,  3238.97325302,
-         875.39817649,   744.08845002]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
-         30.39577002,   25.83640451]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Elf': array([ 1671.76735094,  1671.7673*
-- **Am** `['float64']`: *6332.4520868972522*
+- **tsd** `['dict']`: *{'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 've': array([     0.        ,      0.        ,      0.        , ...,
+        57276.68717357,  15480.18572259,  13158.1578642 ]), 'people': array([   0.        ,    0.        ,    0.        , ...,  632.61196348,
+        170.97620635,  145.32977539]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Elf': array([  9403.69134904,   9*
+- **Am** `['float64']`: *45593.65502566022*
 - **Atot** `['float64']`: *20087.716963360235*
-- **Htr_w** `['float64']`: *344.20598175023116*
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x15061610>*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x15061610>*
+- **Htr_w** `['float64']`: *297.23151337624876*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x14DD2BB0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1409C8D0>*
 
 
 ### Output
-- `['dict']`: {'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 've': array([    0.        ,     0.        ,     0.        , ...,  3238.97325302,
-         875.39817649,   744.08845002]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
-         30.39577002,   25.83640451]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Elf': array([ 1671.76735094,  1671.7673
+- `['dict']`: {'w_int': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 've': array([     0.        ,      0.        ,      0.        , ...,
+        57276.68717357,  15480.18572259,  13158.1578642 ]), 'people': array([   0.        ,    0.        ,    0.        , ...,  632.61196348,
+        170.97620635,  145.32977539]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Elf': array([  9403.69134904,   9
 
 ### Docstring template
 
@@ -1170,41 +1103,41 @@ RETURNS
 
 # calc_Qhs_Qcs
 - number of invocations: 1
-- max duration: 0.312 s
-- avg duration: 0.312 s
-- min duration: 0.312 s
-- total duration: 0.312 s
+- max duration: 0.033 s
+- avg duration: 0.033 s
+- min duration: 0.033 s
+- total duration: 0.033 s
 
 ### Input
 - **SystemH** `['unicode']`: *u'T1'*
 - **SystemC** `['unicode']`: *u'T3'*
-- **tm_t0** `['int']`: *16*
-- **te_t** `['float64']`: *1.1000000000000001*
-- **tintH_set** `['float64']`: *12.0*
-- **tintC_set** `['int32']`: *50*
-- **Htr_em** `['float64']`: *601.8673589723943*
-- **Htr_ms** `['float64']`: *57625.313990764997*
+- **tm_t0** `['float64']`: *13.699999999999999*
+- **te_t** `['float64']`: *13.699999999999999*
+- **tintH_set** `['float64']`: *-30.0*
+- **tintC_set** `['int32']`: *28*
+- **Htr_em** `['float64']`: *1324.1381230121124*
+- **Htr_ms** `['float64']`: *414902.26073350798*
 - **Htr_is** `['float64']`: *69302.623523592818*
-- **Htr_1** `['float64']`: *545.74852531251054*
-- **Htr_2** `['float64']`: *889.95450706274164*
-- **Htr_3** `['float64']`: *876.41925301753997*
-- **I_st** `['float64']`: *2487.6752097710209*
-- **Hve** `['float64']`: *550.080331446635*
-- **Htr_w** `['float64']`: *344.20598175023116*
-- **I_ia** `['float64']`: *3642.9330365502524*
-- **I_m** `['float64']`: *1148.3982451468542*
-- **Cm** `['float64']`: *417941837.73521864*
-- **Af** `['float64']`: *2532.980834758901*
+- **Htr_1** `['float64']`: *3801.7984620992102*
+- **Htr_2** `['float64']`: *4099.0299754754587*
+- **Htr_3** `['float64']`: *4058.9297487878134*
+- **I_st** `['float64']`: *-19538.962465169036*
+- **Hve** `['float64']`: *4022.4624237035187*
+- **Htr_w** `['float64']`: *297.23151337624876*
+- **I_ia** `['float64']`: *15368.623747946371*
+- **I_m** `['float64']`: *34882.596696335684*
+- **Cm** `['float64']`: *4274405158.6556454*
+- **Af** `['float64']`: *14248.017195518818*
 - **Losses** `['bool']`: *False*
 - **tHset_corr** `['float']`: *1.3499999999999999*
 - **tCset_corr** `['float']`: *-0.7*
-- **IC_max** `['float64']`: *-1266490.4173794505*
-- **IH_max** `['float64']`: *1266490.4173794505*
-- **Flag** `['bool_']`: *False*
+- **IC_max** `['float64']`: *-7124008.5977594089*
+- **IH_max** `['float64']`: *7124008.5977594089*
+- **Flag** `['bool_']`: *True*
 
 
 ### Output
-- `['tuple']`: (15.872734454107169, 15.751274156536283, 0, 0, 0, 15.795245750875733, 8783.6305013901547)
+- `['tuple']`: (13.725140799625523, 13.910051496030922, 0, 0, 0, 13.765448706927408, 103666.2426068261)
 
 ### Docstring template
 
@@ -1219,7 +1152,7 @@ PARAMETERS
 :type SystemC: unicode
 
 :param tm_t0:
-:type tm_t0: int
+:type tm_t0: float64
 
 :param te_t:
 :type te_t: float64
@@ -1300,22 +1233,22 @@ RETURNS
 
 # calc_Qhs_Qcs_dis_ls
 - number of invocations: 1
-- max duration: 0.039 s
-- avg duration: 0.039 s
-- min duration: 0.039 s
-- total duration: 0.039 s
+- max duration: 0.035 s
+- avg duration: 0.035 s
+- min duration: 0.035 s
+- total duration: 0.035 s
 
 ### Input
-- **tair** `['float64']`: *15.751274156536283*
+- **tair** `['float64']`: *21.498396740500983*
 - **text** `['float64']`: *1.1000000000000001*
 - **Qhs** `['float64']`: *0.0*
 - **Qcs** `['float64']`: *0.0*
-- **tsh** `['int64']`: *90*
-- **trh** `['int64']`: *70*
+- **tsh** `['float64']`: *90.0*
+- **trh** `['float64']`: *70.0*
 - **tsc** `['int64']`: *7*
 - **trc** `['int64']`: *15*
-- **Qhs_max** `['float64']`: *332396.37528759934*
-- **Qcs_max** `['float64']`: *-182647.30721147865*
+- **Qhs_max** `['float64']`: *3588218.7665316463*
+- **Qcs_max** `['float64']`: *-722028.32221596281*
 - **D** `['int32']`: *20*
 - **Y** `['float64']`: *0.20000000000000001*
 - **SystemH** `['unicode_']`: *u'T1'*
@@ -1346,10 +1279,10 @@ PARAMETERS
 :type Qcs: float64
 
 :param tsh:
-:type tsh: int64
+:type tsh: float64
 
 :param trh:
-:type trh: int64
+:type trh: float64
 
 :param tsc:
 :type tsc: int64
@@ -1400,12 +1333,12 @@ RETURNS
 - total duration: 0.029 s
 
 ### Input
-- **Af** `['float64']`: *2532.980834758901*
+- **Af** `['float64']`: *14248.017195518818*
 - **prop_HVAC** `['dict']`: *{u'Qcsmax_Wm2': 500, u'dTcs0_C': 8, u'type_ctrl': u'T2', u'type_cs': u'T3', u'dThs0_C': 20, u'Qhsmax_Wm2': 500, u'Tscs0_C': 7, u'type_hs': u'T1', u'Tsww0_C': 60, u'Qwwmax_Wm2': 500, u'dTww0_C': 50, u'Tshs0_C': 90, u'type_dhw': u'T1'}*
 
 
 ### Output
-- `['tuple']`: (-1266490.4173794505, 1266490.4173794505)
+- `['tuple']`: (-7124008.5977594089, 7124008.5977594089)
 
 ### Docstring template
 
@@ -1432,10 +1365,10 @@ RETURNS
 
 # calc_Qww
 - number of invocations: 1
-- max duration: 0.037 s
-- avg duration: 0.037 s
-- min duration: 0.037 s
-- total duration: 0.037 s
+- max duration: 0.03 s
+- avg duration: 0.03 s
+- min duration: 0.03 s
+- total duration: 0.03 s
 
 ### Input
 - **mww** `['float64']`: *0.0*
@@ -1478,18 +1411,18 @@ RETURNS
 
 # calc_Qww_dis_ls_nr
 - number of invocations: 1
-- max duration: 0.034 s
-- avg duration: 0.034 s
-- min duration: 0.034 s
-- total duration: 0.034 s
+- max duration: 0.035 s
+- avg duration: 0.035 s
+- min duration: 0.035 s
+- total duration: 0.035 s
 
 ### Input
-- **tair** `['float64']`: *15.751274156536283*
+- **tair** `['float64']`: *21.498396740500983*
 - **Qww** `['float64']`: *0.0*
 - **Lvww_dis** `['float64']`: *252.85832985874447*
 - **Lvww_c** `['float64']`: *208.88296814418021*
 - **Y** `['float64']`: *0.20000000000000001*
-- **Qww_0** `['float64']`: *4064.2317305902625*
+- **Qww_0** `['float64']`: *123296.91766959219*
 - **V** `['float64']`: *133.63813083451046*
 - **Flowtap** `['float64']`: *0.035999999999999997*
 - **twws** `['int64']`: *60*
@@ -1497,7 +1430,7 @@ RETURNS
 - **Pwater** `['int32']`: *998*
 - **Bf** `['float64']`: *0.69999999999999996*
 - **te** `['float64']`: *1.1000000000000001*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1507A810>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x143C4E90>*
 
 
 ### Output
@@ -1564,24 +1497,24 @@ RETURNS
 
 # calc_Qww_dis_ls_r
 - number of invocations: 1
-- max duration: 0.034 s
-- avg duration: 0.034 s
-- min duration: 0.034 s
-- total duration: 0.034 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
-- **Tair** `['float64']`: *15.751274156536283*
+- **Tair** `['float64']`: *21.498396740500983*
 - **Qww** `['float64']`: *0.0*
 - **lsww_dis** `['float64']`: *300.79147412761955*
 - **lcww_dis** `['float64']`: *187.0216532688365*
 - **Y** `['float64']`: *0.29999999999999999*
-- **Qww_0** `['float64']`: *4064.2317305902625*
+- **Qww_0** `['float64']`: *123296.91766959219*
 - **V** `['float64']`: *133.63813083451046*
 - **Flowtap** `['float64']`: *0.035999999999999997*
 - **twws** `['int64']`: *60*
 - **Cpw** `['float64']`: *4.1840000000000002*
 - **Pwater** `['int32']`: *998*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x15063B90>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x143D2F30>*
 
 
 ### Output
@@ -1642,19 +1575,20 @@ RETURNS
 
 # calc_Qww_schedule
 - number of invocations: 1
-- max duration: 0.314 s
-- avg duration: 0.314 s
-- min duration: 0.314 s
-- total duration: 0.314 s
+- max duration: 1.315 s
+- avg duration: 1.315 s
+- min duration: 1.315 s
+- total duration: 1.315 s
 
 ### Input
 - **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
-- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.640*
+- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, *
 - **building_uses** `['dict']`: *{u'INDUSTRIAL': 0.0, u'OFFICE': 0.0, u'RESTAURANT': 0.20000000000000001, u'PFloor': 0.20000000000000001, u'PARKING': 0.80000000000000004, u'SERVERROOM': 0.0}*
 
 
 ### Output
-- `['ndarray']`: array([ 0.    ,  0.    ,  0.    , ...,  0.0888,  0.024 ,  0.0204])
+- `['ndarray']`: array([ 0.        ,  0.        ,  0.        , ...,  0.01995506,
+        0.00539326,  0.00458427])
 
 ### Docstring template
 
@@ -1684,34 +1618,35 @@ RETURNS
 
 # calc_Qww_st_ls
 - number of invocations: 1
-- max duration: 0.27 s
-- avg duration: 0.27 s
-- min duration: 0.27 s
-- total duration: 0.27 s
+- max duration: 0.284 s
+- avg duration: 0.284 s
+- min duration: 0.284 s
+- total duration: 0.284 s
 
 ### Input
-- **Vww** `['ndarray']`: *array([ 0.        ,  0.        ,  0.        , ...,  0.03748812,
-        0.01013192,  0.00861213])*
+- **Vww** `['ndarray']`: *array([ 0.        ,  0.        ,  0.        , ...,  1.13727993,
+        0.30737296,  0.26126701])*
 - **Tww_setpoint** `['int']`: *60*
-- **Ta** `['ndarray']`: *array([ 15.75127416,  15.62771779,  15.50281024, ...,  21.        ,
-        21.        ,  21.        ])*
+- **Ta** `['ndarray']`: *array([ 21.49839674,  21.45330512,  21.40318426, ...,  21.        ,
+        21.20261801,  21.24546211])*
 - **Bf** `['float']`: *0.7*
 - **Pwater** `['int']`: *998*
 - **Cpw** `['float']`: *4.184*
-- **Qww_dis_ls_r** `['ndarray']`: *array([   0,    0,    0, ..., 1228,  532,  522])*
-- **Qww_dis_ls_nr** `['ndarray']`: *array([   0,    0,    0, ..., 1222,  481,  462])*
+- **Qww_dis_ls_r** `['ndarray']`: *array([   0,    0,    0, ..., 1172,  321,  275])*
+- **Qww_dis_ls_nr** `['ndarray']`: *array([   0,    0,    0, ..., 1179,  323,  276])*
 - **U_dhwtank** `['float']`: *0.225*
 - **AR** `['float']`: *3.3*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1550F3F0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x142D3C90>*
 - **T_ext** `['ndarray']`: *array([ 1.1,  1.1,  1. , ...,  1.4,  1.4,  1.4])*
-- **Qww** `['ndarray']`: *array([    0.        ,     0.        ,     0.        , ...,  2174.11914263,
-         587.59976828,   499.45980304])*
+- **Qww** `['ndarray']`: *array([     0.        ,      0.        ,      0.        , ...,
+        65956.42342807,  17826.06038597,  15152.15132807])*
 
 
 ### Output
-- `['tuple']`: (array([ 13.18881873,  13.18688198,  13.20198326, ...,  12.74161393,
-        12.74588333,  12.74896678]), array([ 59.95492923,  59.90986509,  59.86474933, ...,  59.95412594,
-        59.96686873,  59.97607186]))
+- `['tuple']`: (array([ 124.23056187,  124.22946369,  124.39667754, ...,  124.04028432,
+        123.91052412,  123.8898852 ]), array([ 59.98600594,  59.972012  ,  59.95799923, ...,  59.98529544,
+        59.98938004,  59.99233003]), array([     0.        ,      0.        ,      0.        , ...,
+        68481.67061934,  18630.23145399,  15853.22938387]))
 
 ### Docstring template
 
@@ -1771,38 +1706,38 @@ RETURNS
 
 # calc_Qwwf
 - number of invocations: 1
-- max duration: 1.33 s
-- avg duration: 1.33 s
-- min duration: 1.33 s
-- total duration: 1.33 s
+- max duration: 3.398 s
+- avg duration: 3.398 s
+- min duration: 3.398 s
+- total duration: 3.398 s
 
 ### Input
-- **Af** `['float64']`: *2532.980834758901*
+- **Af** `['float64']`: *14248.017195518818*
 - **Lcww_dis** `['float64']`: *187.0216532688365*
 - **Lsww_dis** `['float64']`: *300.79147412761955*
 - **Lvww_c** `['float64']`: *208.88296814418021*
 - **Lvww_dis** `['float64']`: *252.85832985874447*
 - **T_ext** `['ndarray']`: *array([ 1.1,  1.1,  1. , ...,  1.4,  1.4,  1.4])*
-- **Ta** `['ndarray']`: *array([ 15.75127416,  15.62771779,  15.50281024, ...,  21.        ,
-        21.        ,  21.        ])*
+- **Ta** `['ndarray']`: *array([ 21.49839674,  21.45330512,  21.40318426, ...,  21.        ,
+        21.20261801,  21.24546211])*
 - **Tww_re** `['ndarray']`: *array([ 10.,  10.,  10., ...,  10.,  10.,  10.])*
 - **Tww_sup_0** `['int64']`: *60*
 - **Y** `['list']`: *[0.2, 0.3, 0.3]*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1507ABB0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1432F510>*
 - **Vww_lpd** `['float64']`: *8.0*
-- **Vw_lpd** `['float64']`: *8.0*
+- **Vw_lpd** `['float64']`: *16.0*
 - **Occ_m2p** `['float64']`: *2.0*
 - **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
-- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.640*
+- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, *
 - **building_uses** `['dict']`: *{u'INDUSTRIAL': 0.0, u'OFFICE': 0.0, u'RESTAURANT': 0.20000000000000001, u'PFloor': 0.20000000000000001, u'PARKING': 0.80000000000000004, u'SERVERROOM': 0.0}*
 
 
 ### Output
-- `['tuple']`: (array([ 0.        ,  0.        ,  0.        , ...,  0.01039254,
-        0.00280879,  0.00238748]), array([    0.        ,     0.        ,     0.        , ...,  2174.11914263,
-         587.59976828,   499.45980304]), array([ 13.18881873,  13.18688198,  13.20198326, ...,  12.74161393,
-        12.74588333,  12.74896678]), array([    0.        ,     0.        ,     0.        , ...,  4624.11914263,
-        1600.59976828,  1483.45980304]), 9040.2317305902616, array([ 59.95492923,  59.90986509,  59.86
+- `['tuple']`: (array([ 0.        ,  0.        ,  0.        , ...,  0.31527927,
+        0.08521061,  0.07242902]), array([     0.        ,      0.        ,      0.        , ...,
+        65956.42342807,  17826.06038597,  15152.15132807]), array([ 124.23056187,  124.22946369,  124.39667754, ...,  124.04028432,
+        123.91052412,  123.8898852 ]), array([     0.        ,      0.        ,      0.        , ...,
+        68481.67061934,  18630.23145399,  15853.22938387]), 128049.69313257416, array([ 59.98600594,  5
 
 ### Docstring template
 
@@ -1874,10 +1809,10 @@ RETURNS
 
 # calc_T_em_ls
 - number of invocations: 1
-- max duration: 0.034 s
-- avg duration: 0.034 s
-- min duration: 0.034 s
-- total duration: 0.034 s
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **SystemH** `['unicode']`: *u'T1'*
@@ -1916,10 +1851,10 @@ RETURNS
 
 # calc_coeff_lea_zone
 - number of invocations: 1
-- max duration: 0.028 s
-- avg duration: 0.028 s
-- min duration: 0.028 s
-- total duration: 0.028 s
+- max duration: 0.029 s
+- avg duration: 0.029 s
+- min duration: 0.029 s
+- total duration: 0.029 s
 
 ### Input
 - **qv_delta_p_lea_ref** `['float64']`: *102902.34641208035*
@@ -1950,10 +1885,10 @@ RETURNS
 
 # calc_coeff_vent_zone
 - number of invocations: 1
-- max duration: 0.031 s
-- avg duration: 0.031 s
-- min duration: 0.031 s
-- total duration: 0.031 s
+- max duration: 0.027 s
+- avg duration: 0.027 s
+- min duration: 0.027 s
+- total duration: 0.027 s
 
 ### Input
 - **area_vent_zone** `['int']`: *0*
@@ -1991,7 +1926,7 @@ RETURNS
 
 ### Input
 - **tamb** `['float']`: *21.0*
-- **hotw** `['float']`: *900.9863113597689*
+- **hotw** `['float']`: *27333.29259181321*
 - **Flowtap** `['float']`: *0.036*
 - **V** `['float']`: *133.63813083451046*
 - **twws** `['long']`: *60L*
@@ -1999,11 +1934,11 @@ RETURNS
 - **p** `['int']`: *998*
 - **cpw** `['float']`: *4.184*
 - **Y** `['float']`: *0.3*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1550FF90>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x14DA37F0>*
 
 
 ### Output
-- `['float64']`: 140.72716460811631
+- `['float64']`: 4.6388364867218721
 
 ### Docstring template
 
@@ -2060,12 +1995,12 @@ RETURNS
 - total duration: 0.029 s
 
 ### Input
-- **t** `['int32']`: *28*
-- **w** `['float64']`: *0.0058498530729252374*
+- **t** `['int32']`: *27*
+- **w** `['float64']`: *0.0096304911158184934*
 
 
 ### Output
-- `['float64']`: 43.101866965703124
+- `['float64']`: 51.727301079295913
 
 ### Docstring template
 
@@ -2098,16 +2033,16 @@ RETURNS
 - total duration: 0.032 s
 
 ### Input
-- **q_m_mech** `['float64']`: *0.54571461453039194*
+- **q_m_mech** `['float64']`: *3.9905381187534905*
 - **q_m_nat** `['int']`: *0*
-- **temp_ext** `['float64']`: *1.1000000000000001*
-- **temp_sup** `['float64']`: *1.1000000000000001*
-- **temp_zone_set** `['int']`: *21*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x151829F0>*
+- **temp_ext** `['float64']`: *13.699999999999999*
+- **temp_sup** `['float64']`: *13.699999999999999*
+- **temp_zone_set** `['float64']`: *13.699999999999999*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x143D2830>*
 
 
 ### Output
-- `['float64']`: 550.080331446635
+- `['float64']`: 4022.4624237035187
 
 ### Docstring template
 
@@ -2128,7 +2063,7 @@ PARAMETERS
 :type temp_sup: float64
 
 :param temp_zone_set:
-:type temp_zone_set: int
+:type temp_zone_set: float64
 
 :param gv:
 :type gv: GlobalVariables
@@ -2146,21 +2081,21 @@ RETURNS
 
 # calc_hex
 - number of invocations: 1
-- max duration: 0.092 s
-- avg duration: 0.092 s
-- min duration: 0.092 s
-- total duration: 0.092 s
+- max duration: 0.085 s
+- avg duration: 0.085 s
+- min duration: 0.085 s
+- total duration: 0.085 s
 
 ### Input
-- **rel_humidity_ext** `['int64']`: *85*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x151B2250>*
-- **temp_ext** `['float64']`: *8.4000000000000004*
-- **temp_zone_prev** `['float64']`: *29.564381831684884*
-- **timestep** `['int']`: *3217*
+- **rel_humidity_ext** `['int64']`: *93*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x143D2830>*
+- **temp_ext** `['float64']`: *13.699999999999999*
+- **temp_zone_prev** `['float64']`: *13.699999999999999*
+- **timestep** `['int']`: *5472*
 
 
 ### Output
-- `['tuple']`: (8.4000000000000004, 0.0058498530729252374)
+- `['tuple']`: (13.699999999999999, 0.0091380190832960652)
 
 ### Docstring template
 
@@ -2196,25 +2131,25 @@ RETURNS
 
 # calc_hvac
 - number of invocations: 1
-- max duration: 0.148 s
-- avg duration: 0.148 s
-- min duration: 0.148 s
-- total duration: 0.148 s
+- max duration: 0.033 s
+- avg duration: 0.033 s
+- min duration: 0.033 s
+- total duration: 0.033 s
 
 ### Input
-- **rhum_1** `['int64']`: *85*
-- **temp_1** `['float64']`: *8.4000000000000004*
-- **temp_zone_set** `['int32']`: *28*
-- **qv_req** `['float64']`: *0.45476217877532665*
-- **qe_sen** `['float64']`: *-57907.787205514789*
-- **temp_5_prev** `['float64']`: *29.564381831684884*
+- **rhum_1** `['int64']`: *93*
+- **temp_1** `['float64']`: *13.699999999999999*
+- **temp_zone_set** `['float']`: *13.910051496030922*
+- **qv_req** `['float64']`: *3.3254484322945754*
+- **qe_sen** `['int']`: *0*
+- **temp_5_prev** `['float64']`: *13.699999999999999*
 - **wint** `['float64']`: *0.0*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1507AF50>*
-- **timestep** `['int']`: *3217*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x142EA8B0>*
+- **timestep** `['int']`: *5472*
 
 
 ### Output
-- `['tuple']`: (0, 7355.0450612046816, 8832.2845307331172, 0, 0.012069029387780849, 0, 2.8965670530674039, nan, 7.9000000000000004, nan, 8.4000000000000004, 0.0058498530729252374, 0.0070615670671675748, 28)
+- `['tuple']`: (0, 0, 0, 0, 0, 0, 0, nan, nan, 13.699999999999999, 13.699999999999999, 0, 0, 13.910051496030922)
 
 ### Docstring template
 
@@ -2229,13 +2164,13 @@ PARAMETERS
 :type temp_1: float64
 
 :param temp_zone_set:
-:type temp_zone_set: int32
+:type temp_zone_set: float
 
 :param qv_req:
 :type qv_req: float64
 
 :param qe_sen:
-:type qe_sen: float64
+:type qe_sen: int
 
 :param temp_5_prev:
 :type temp_5_prev: float64
@@ -2262,16 +2197,16 @@ RETURNS
 
 # calc_mww
 - number of invocations: 1
-- max duration: 0.029 s
-- avg duration: 0.029 s
-- min duration: 0.029 s
-- total duration: 0.029 s
+- max duration: 0.054 s
+- avg duration: 0.054 s
+- min duration: 0.054 s
+- total duration: 0.054 s
 
 ### Input
 - **schedule** `['float64']`: *0.0*
 - **Vww_lpd** `['float64']`: *8.0*
 - **Occ_m2p** `['float64']`: *2.0*
-- **Af** `['float64']`: *2532.980834758901*
+- **Af** `['float64']`: *14248.017195518818*
 - **Pwater** `['int32']`: *998*
 
 
@@ -2312,20 +2247,20 @@ RETURNS
 
 # calc_occ
 - number of invocations: 1
-- max duration: 0.691 s
-- avg duration: 0.691 s
-- min duration: 0.691 s
-- total duration: 0.691 s
+- max duration: 2.71 s
+- avg duration: 2.71 s
+- min duration: 2.71 s
+- total duration: 2.71 s
 
 ### Input
 - **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
-- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.640*
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x151B2310>*
+- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, *
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x1432FF10>*
 
 
 ### Output
-- `['ndarray']`: array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
-         30.39577002,   25.83640451])
+- `['ndarray']`: array([   0.        ,    0.        ,    0.        , ...,  632.61196348,
+        170.97620635,  145.32977539])
 
 ### Docstring template
 
@@ -2355,14 +2290,14 @@ RETURNS
 
 # calc_occ_schedule
 - number of invocations: 1
-- max duration: 0.309 s
-- avg duration: 0.309 s
-- min duration: 0.309 s
-- total duration: 0.309 s
+- max duration: 1.361 s
+- avg duration: 1.361 s
+- min duration: 1.361 s
+- total duration: 1.361 s
 
 ### Input
 - **list_uses** `['list']`: *[u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM']*
-- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.640*
+- **schedules** `['list']`: *[([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, *
 - **building_uses** `['dict']`: *{u'INDUSTRIAL': 0.0, u'OFFICE': 0.0, u'RESTAURANT': 0.20000000000000001, u'PFloor': 0.20000000000000001, u'PARKING': 0.80000000000000004, u'SERVERROOM': 0.0}*
 
 
@@ -2397,10 +2332,10 @@ RETURNS
 
 # calc_qv_delta_p_ref
 - number of invocations: 1
-- max duration: 0.027 s
-- avg duration: 0.027 s
-- min duration: 0.027 s
-- total duration: 0.027 s
+- max duration: 0.026 s
+- avg duration: 0.026 s
+- min duration: 0.026 s
+- total duration: 0.026 s
 
 ### Input
 - **n_delta_p_ref** `['int64']`: *2*
@@ -2433,24 +2368,24 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
-# calc_ta
+# calc_radiator
 - number of invocations: 1
-- max duration: 0.038 s
-- avg duration: 0.038 s
-- min duration: 0.038 s
-- total duration: 0.038 s
+- max duration: 0.035 s
+- avg duration: 0.035 s
+- min duration: 0.035 s
+- total duration: 0.035 s
 
 ### Input
-- **Htr_is** `['float64']`: *69302.623523592818*
-- **Hve** `['float64']`: *550.080331446635*
-- **IHC_nd** `['int']`: *0*
-- **I_ia** `['float64']`: *3642.9330365502524*
-- **te_t** `['float64']`: *1.1000000000000001*
-- **ts** `['float64']`: *15.815001104854327*
+- **Qh** `['float64']`: *0.0*
+- **tair** `['float64']`: *21.498396740500983*
+- **Qh0** `['float64']`: *3592302.7665316463*
+- **tair0** `['float64']`: *21.0*
+- **tsh0** `['float64']`: *90.0*
+- **trh0** `['float64']`: *70.0*
 
 
 ### Output
-- `['float64']`: 15.751274156536283
+- `['tuple']`: (0, 0, 0)
 
 ### Docstring template
 
@@ -2458,29 +2393,29 @@ RETURNS
 PARAMETERS
 ----------
 
-:param Htr_is:
-:type Htr_is: float64
+:param Qh:
+:type Qh: float64
 
-:param Hve:
-:type Hve: float64
+:param tair:
+:type tair: float64
 
-:param IHC_nd:
-:type IHC_nd: int
+:param Qh0:
+:type Qh0: float64
 
-:param I_ia:
-:type I_ia: float64
+:param tair0:
+:type tair0: float64
 
-:param te_t:
-:type te_t: float64
+:param tsh0:
+:type tsh0: float64
 
-:param ts:
-:type ts: float64
+:param trh0:
+:type trh0: float64
 
 RETURNS
 -------
 
 :returns:
-:rtype: float64
+:rtype: tuple
 
 ```
 
@@ -2489,28 +2424,28 @@ RETURNS
 
 # calc_temperatures_emission_systems
 - number of invocations: 1
-- max duration: 0.318 s
-- avg duration: 0.318 s
-- min duration: 0.318 s
-- total duration: 0.318 s
+- max duration: 0.333 s
+- avg duration: 0.333 s
+- min duration: 0.333 s
+- total duration: 0.333 s
 
 ### Input
 - **Qcsf** `['ndarray']`: *array([-0., -0., -0., ..., -0., -0., -0.])*
-- **Qcsf_0** `['float64']`: *-488411.89619418682*
-- **Qhsf** `['ndarray']`: *array([     0.        ,      0.        ,      0.        , ...,
-        54776.24524343,  44440.48177405,  47516.38542795])*
-- **Qhsf_0** `['float64']`: *336657.37528759934*
-- **Ta** `['ndarray']`: *array([ 15.75127416,  15.62771779,  15.50281024, ...,  21.        ,
-        21.        ,  21.        ])*
+- **Qcsf_0** `['float64']`: *-3824434.2215403998*
+- **Qhsf** `['ndarray']`: *array([      0.        ,       0.        ,       0.        , ...,
+        345431.70390049,       0.        ,       0.        ])*
+- **Qhsf_0** `['float64']`: *3592302.7665316463*
+- **Ta** `['ndarray']`: *array([ 21.49839674,  21.45330512,  21.40318426, ...,  21.        ,
+        21.20261801,  21.24546211])*
 - **Ta_re_cs** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **Ta_re_hs** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **Ta_sup_cs** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **Ta_sup_hs** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **Tcs_re_0** `['int64']`: *15*
 - **Tcs_sup_0** `['int64']`: *7*
-- **Ths_re_0** `['int64']`: *70*
-- **Ths_sup_0** `['int64']`: *90*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x15194A90>*
+- **Ths_re_0** `['float']`: *70.0*
+- **Ths_sup_0** `['float']`: *90.0*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x143C4E90>*
 - **ma_sup_cs** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **ma_sup_hs** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **sys_e_cooling** `['unicode']`: *u'T3'*
@@ -2519,7 +2454,7 @@ RETURNS
 
 
 ### Output
-- `['tuple']`: (array([0, 0, 0, ..., 0, 0, 0]), array([0, 0, 0, ..., 0, 0, 0]), array([ 0,  0,  0, ..., 33, 32, 32]), array([ 0,  0,  0, ..., 37, 34, 35]), array([0, 0, 0, ..., 0, 0, 0]), array([    0,     0,     0, ..., 16832, 16832, 16832]))
+- `['tuple']`: (array([0, 0, 0, ..., 0, 0, 0]), array([0, 0, 0, ..., 0, 0, 0]), array([ 0,  0,  0, ..., 29,  0,  0]), array([ 0,  0,  0, ..., 31,  0,  0]), array([0, 0, 0, ..., 0, 0, 0]), array([     0,      0,      0, ..., 179615,      0,      0]))
 
 ### Docstring template
 
@@ -2561,10 +2496,10 @@ PARAMETERS
 :type Tcs_sup_0: int64
 
 :param Ths_re_0:
-:type Ths_re_0: int64
+:type Ths_re_0: float
 
 :param Ths_sup_0:
-:type Ths_sup_0: int64
+:type Ths_sup_0: float
 
 :param gv:
 :type gv: GlobalVariables
@@ -2597,28 +2532,26 @@ RETURNS
 
 # calc_thermal_load_hvac_timestep
 - number of invocations: 1
-- max duration: 0.411 s
-- avg duration: 0.411 s
-- min duration: 0.411 s
-- total duration: 0.411 s
+- max duration: 0.563 s
+- avg duration: 0.563 s
+- min duration: 0.563 s
+- total duration: 0.563 s
 
 ### Input
-- **t** `['int']`: *3217*
-- **tsd** `['dict']`: *{'w_int': array([ 0.        ,  0.        ,  0.        , ...,  0.00265541,
-        0.00071768,  0.00061003]), 'Im_tot': array([ 8783.63050139,  8783.63050139,  8635.80184019, ...,     0.        ,
-           0.        ,     0.        ]), 've': array([    0.        ,     0.        ,     0.        , ...,  3238.97325302,
-         875.39817649,   744.08845002]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
-         30.39577002,   25.83640451]), 'Ta_sup_cs': array([*
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x151A9870>*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x151AD250>*
+- **t** `['int']`: *5472*
+- **tsd** `['dict']`: *{'w_int': array([ 0.        ,  0.        ,  0.        , ...,  0.01493667,
+        0.00403694,  0.0034314 ]), 'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 've': array([     0.        ,      0.        ,      0.        , ...,
+        57276.68717357,  15480.18572259,  13158.1578642 ]), 'people': array([   0.        ,    0.        ,    0.        , ...,  632.61196348,
+        170.97620635,  145.32977539]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., .*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x143D2450>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x14B5C6B0>*
 
 
 ### Output
-- `['dict']`: {'w_int': array([ 0.        ,  0.        ,  0.        , ...,  0.00265541,
-        0.00071768,  0.00061003]), 'Im_tot': array([ 8783.63050139,  8783.63050139,  8635.80184019, ...,     0.        ,
-           0.        ,     0.        ]), 've': array([    0.        ,     0.        ,     0.        , ...,  3238.97325302,
-         875.39817649,   744.08845002]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
-         30.39577002,   25.83640451]), 'Ta_sup_cs': array([
+- `['dict']`: {'w_int': array([ 0.        ,  0.        ,  0.        , ...,  0.01493667,
+        0.00403694,  0.0034314 ]), 'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 've': array([     0.        ,      0.        ,      0.        , ...,
+        57276.68717357,  15480.18572259,  13158.1578642 ]), 'people': array([   0.        ,    0.        ,    0.        , ...,  632.61196348,
+        170.97620635,  145.32977539]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., .
 
 ### Docstring template
 
@@ -2651,27 +2584,26 @@ RETURNS
 
 # calc_thermal_load_mechanical_and_natural_ventilation_timestep
 - number of invocations: 1
-- max duration: 0.67 s
-- avg duration: 0.67 s
-- min duration: 0.67 s
-- total duration: 0.67 s
+- max duration: 0.119 s
+- avg duration: 0.119 s
+- min duration: 0.119 s
+- total duration: 0.119 s
 
 ### Input
-- **t** `['int']`: *0*
-- **tsd** `['dict']`: *{'w_int': array([ 0.        ,  0.        ,  0.        , ...,  0.00265541,
-        0.00071768,  0.00061003]), 'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 've': array([    0.        ,     0.        ,     0.        , ...,  3238.97325302,
-         875.39817649,   744.08845002]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
-         30.39577002,   25.83640451]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., ...,  0*
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x1519A6D0>*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1519A6D0>*
+- **t** `['int']`: *6192*
+- **tsd** `['dict']`: *{'w_int': array([ 0.        ,  0.        ,  0.        , ...,  0.01493667,
+        0.00403694,  0.0034314 ]), 'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 've': array([     0.        ,      0.        ,      0.        , ...,
+        57276.68717357,  15480.18572259,  13158.1578642 ]), 'people': array([   0.        ,    0.        ,    0.        , ...,  632.61196348,
+        170.97620635,  145.32977539]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., .*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x143D2450>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1432F670>*
 
 
 ### Output
-- `['dict']`: {'w_int': array([ 0.        ,  0.        ,  0.        , ...,  0.00265541,
-        0.00071768,  0.00061003]), 'Im_tot': array([ 8783.63050139,     0.        ,     0.        , ...,     0.        ,
-           0.        ,     0.        ]), 've': array([    0.        ,     0.        ,     0.        , ...,  3238.97325302,
-         875.39817649,   744.08845002]), 'people': array([   0.        ,    0.        ,    0.        , ...,  112.46434906,
-         30.39577002,   25.83640451]), 'Ta_sup_cs': array([
+- `['dict']`: {'w_int': array([ 0.        ,  0.        ,  0.        , ...,  0.01493667,
+        0.00403694,  0.0034314 ]), 'Im_tot': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 've': array([     0.        ,      0.        ,      0.        , ...,
+        57276.68717357,  15480.18572259,  13158.1578642 ]), 'people': array([   0.        ,    0.        ,    0.        , ...,  632.61196348,
+        170.97620635,  145.32977539]), 'Ta_sup_cs': array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 'Top': array([ 0.,  0.,  0., .
 
 ### Docstring template
 
@@ -2704,16 +2636,16 @@ RETURNS
 
 # calc_thermal_loads
 - number of invocations: 1
-- max duration: 8.46 s
-- avg duration: 8.46 s
-- min duration: 8.46 s
-- total duration: 8.46 s
+- max duration: 15.312 s
+- avg duration: 15.312 s
+- min duration: 15.312 s
+- total duration: 15.312 s
 
 ### Input
 - **building_name** `['str']`: *'Bau A'*
-- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x16AF62F0>*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x143C4F10>*
 - **weather_data** `['DataFrame']`: *(8760, 3)*
-- **usage_schedules** `['dict']`: *{'list_uses': [u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM'], 'schedules': [([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.1600000000000*
+- **usage_schedules** `['dict']`: *{'list_uses': [u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM'], 'schedules': [([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0*
 - **date** `['DatetimeIndex']`: *DatetimeIndex(['2010-01-01 00:00:00', '2010-01-01 01:00:00',
                '2010-01-01 02:00:00', '2010-01-01 03:00:00',
                '2010-01-01 04:00:00', '2010-01-01 05:00:00',
@@ -2723,9 +2655,8 @@ RETURNS
                '2010-12-31 14:00:00', '2010-12-31 15:00:00',
                '2010-12-31 16:00:00', '2010-12-31 17:00:00',
                '2010-12-31 18:00:00', '2010-12-31 19:0*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x15063570>*
-- **results_folder** `['str']`: *'c:\\reference-case-zug\\baseline\\outputs\\data\\demand'*
-- **temporary_folder** `['str']`: *'c:\\users\\darthoma\\appdata\\local\\temp'*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x142D3C90>*
+- **locator** `['LocatorDecorator']`: *???*
 
 #### weather_data:
 ```
@@ -2767,11 +2698,8 @@ PARAMETERS
 :param gv:
 :type gv: GlobalVariables
 
-:param results_folder:
-:type results_folder: str
-
-:param temporary_folder:
-:type temporary_folder: str
+:param locator:
+:type locator: LocatorDecorator
 
 RETURNS
 -------
@@ -2779,160 +2707,10 @@ RETURNS
 :returns:
 :rtype: NoneType
 
-```
+INPUT / OUTPUT FILES
+--------------------
 
-[TOC](#table-of-contents)
----
-
-# calc_tm
-- number of invocations: 1
-- max duration: 0.029 s
-- avg duration: 0.029 s
-- min duration: 0.029 s
-- total duration: 0.029 s
-
-### Input
-- **Cm** `['float64']`: *417941837.73521864*
-- **Htr_3** `['float64']`: *876.41925301753997*
-- **Htr_em** `['float64']`: *601.8673589723943*
-- **Im_tot** `['float64']`: *8783.6305013901547*
-- **tm_t0** `['int']`: *16*
-
-
-### Output
-- `['tuple']`: (15.872734454107169, 15.936367227053584)
-
-### Docstring template
-
-```
-PARAMETERS
-----------
-
-:param Cm:
-:type Cm: float64
-
-:param Htr_3:
-:type Htr_3: float64
-
-:param Htr_em:
-:type Htr_em: float64
-
-:param Im_tot:
-:type Im_tot: float64
-
-:param tm_t0:
-:type tm_t0: int
-
-RETURNS
--------
-
-:returns:
-:rtype: tuple
-
-```
-
-[TOC](#table-of-contents)
----
-
-# calc_top
-- number of invocations: 1
-- max duration: 0.028 s
-- avg duration: 0.028 s
-- min duration: 0.028 s
-- total duration: 0.028 s
-
-### Input
-- **ta** `['float64']`: *15.751274156536283*
-- **ts** `['float64']`: *15.815001104854327*
-
-
-### Output
-- `['float64']`: 15.795245750875733
-
-### Docstring template
-
-```
-PARAMETERS
-----------
-
-:param ta:
-:type ta: float64
-
-:param ts:
-:type ts: float64
-
-RETURNS
--------
-
-:returns:
-:rtype: float64
-
-```
-
-[TOC](#table-of-contents)
----
-
-# calc_ts
-- number of invocations: 1
-- max duration: 0.031 s
-- avg duration: 0.031 s
-- min duration: 0.031 s
-- total duration: 0.031 s
-
-### Input
-- **Htr_1** `['float64']`: *545.74852531251054*
-- **Htr_ms** `['float64']`: *57625.313990764997*
-- **Htr_w** `['float64']`: *344.20598175023116*
-- **Hve** `['float64']`: *550.080331446635*
-- **IHC_nd** `['int']`: *0*
-- **I_ia** `['float64']`: *3642.9330365502524*
-- **I_st** `['float64']`: *2487.6752097710209*
-- **te_t** `['float64']`: *1.1000000000000001*
-- **tm** `['float64']`: *15.936367227053584*
-
-
-### Output
-- `['float64']`: 15.815001104854327
-
-### Docstring template
-
-```
-PARAMETERS
-----------
-
-:param Htr_1:
-:type Htr_1: float64
-
-:param Htr_ms:
-:type Htr_ms: float64
-
-:param Htr_w:
-:type Htr_w: float64
-
-:param Hve:
-:type Hve: float64
-
-:param IHC_nd:
-:type IHC_nd: int
-
-:param I_ia:
-:type I_ia: float64
-
-:param I_st:
-:type I_st: float64
-
-:param te_t:
-:type te_t: float64
-
-:param tm:
-:type tm: float64
-
-RETURNS
--------
-
-:returns:
-:rtype: float64
-
+- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
 ```
 
 [TOC](#table-of-contents)
@@ -2940,18 +2718,18 @@ RETURNS
 
 # calc_w
 - number of invocations: 1
-- max duration: 0.028 s
-- avg duration: 0.028 s
-- min duration: 0.028 s
-- total duration: 0.028 s
+- max duration: 0.031 s
+- avg duration: 0.031 s
+- min duration: 0.031 s
+- total duration: 0.031 s
 
 ### Input
-- **t** `['float64']`: *8.4000000000000004*
-- **RH** `['int64']`: *85*
+- **t** `['float64']`: *13.699999999999999*
+- **RH** `['int64']`: *93*
 
 
 ### Output
-- `['float64']`: 0.0058498530729252374
+- `['float64']`: 0.0091380190832960652
 
 ### Docstring template
 
@@ -2978,20 +2756,20 @@ RETURNS
 
 # calc_w3_cooling_case
 - number of invocations: 1
-- max duration: 0.029 s
-- avg duration: 0.029 s
-- min duration: 0.029 s
-- total duration: 0.029 s
+- max duration: 0.032 s
+- avg duration: 0.032 s
+- min duration: 0.032 s
+- total duration: 0.032 s
 
 ### Input
-- **t5** `['int32']`: *28*
-- **w2** `['float64']`: *0.0058498530729252374*
-- **t3** `['float64']`: *8.4000000000000004*
-- **w5** `['float64']`: *0.0058498530729252374*
+- **t5** `['int32']`: *27*
+- **w2** `['float64']`: *0.0096304911158184934*
+- **t3** `['int']`: *16*
+- **w5** `['float64']`: *0.010412833469106675*
 
 
 ### Output
-- `['float64']`: 0.0070615670671675748
+- `['float64']`: 0.0096304911158184934
 
 ### Docstring template
 
@@ -3006,7 +2784,7 @@ PARAMETERS
 :type w2: float64
 
 :param t3:
-:type t3: float64
+:type t3: int
 
 :param w5:
 :type w5: float64
@@ -3024,15 +2802,15 @@ RETURNS
 
 # demand_calculation
 - number of invocations: 1
-- max duration: 58.949 s
-- avg duration: 58.949 s
-- min duration: 58.949 s
-- total duration: 58.949 s
+- max duration: 73.876 s
+- avg duration: 73.876 s
+- min duration: 73.876 s
+- total duration: 73.876 s
 
 ### Input
-- **locator** `['InputLocator']`: *<cea.inputlocator.InputLocator object at 0x1507A2B0>*
+- **locator** `['InputLocator']`: *<cea.inputlocator.InputLocator object at 0x143CC990>*
 - **weather_path** `['str']`: *'C:\\Users\\darthoma\\Documents\\GitHub\\CEAforArcGIS\\cea\\databases\\CH\\Weather\\Zug-2010.epw'*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1507A2B0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x143CC990>*
 
 
 ### Output
@@ -3079,10 +2857,10 @@ INPUT / OUTPUT FILES
 
 # get_building_geometry_ventilation
 - number of invocations: 1
-- max duration: 0.032 s
-- avg duration: 0.032 s
-- min duration: 0.032 s
-- total duration: 0.032 s
+- max duration: 0.024 s
+- avg duration: 0.024 s
+- min duration: 0.024 s
+- total duration: 0.024 s
 
 ### Input
 - **gdf_building_geometry** `['dict']`: *{'perimeter': 234.50218018236586, u'Blength': 87.0, u'height_bg': 3.0, u'floors_bg': 1.0, u'height_ag': 19.5, u'floors_ag': 5.0, u'Bwidth': 30.0, 'footprint': 2638.5217028738552}*
@@ -3113,15 +2891,15 @@ RETURNS
 
 # get_properties_natural_ventilation
 - number of invocations: 1
-- max duration: 0.43 s
-- avg duration: 0.43 s
-- min duration: 0.43 s
-- total duration: 0.43 s
+- max duration: 0.403 s
+- avg duration: 0.403 s
+- min duration: 0.403 s
+- total duration: 0.403 s
 
 ### Input
 - **gdf_geometry_building** `['dict']`: *{'perimeter': 234.50218018236586, u'Blength': 87.0, u'height_bg': 3.0, u'floors_bg': 1.0, u'height_ag': 19.5, u'floors_ag': 5.0, u'Bwidth': 30.0, 'footprint': 2638.5217028738552}*
-- **gdf_architecture_building** `['dict']`: *{u'Occ_m2p': 2.0, u'f_cros': 0, u'n50': 2, u'win_op': 0.5, u'win_wall': 0.28950999999999999, u'type_shade': u'T1'}*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x1550FF90>*
+- **gdf_architecture_building** `['dict']`: *{u'Occ_m2p': 2.0, u'f_cros': 0, u'n50': 2, u'win_op': 0.5, u'win_wall': 0.25, u'type_shade': u'T1'}*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x14B5C650>*
 
 
 ### Output
@@ -3156,10 +2934,10 @@ RETURNS
 
 # get_temperatures
 - number of invocations: 1
-- max duration: 0.141 s
-- avg duration: 0.141 s
-- min duration: 0.141 s
-- total duration: 0.141 s
+- max duration: 0.149 s
+- avg duration: 0.149 s
+- min duration: 0.149 s
+- total duration: 0.149 s
 
 ### Input
 - **locator** `['LocatorDecorator']`: *???*
@@ -3169,9 +2947,9 @@ RETURNS
 ```
           Name type_cs type_ctrl type_dhw type_hs
 count       24      24        24       24      24
-unique      24       2         3        2       2
+unique      24       1         2        1       2
 top     Bau 03      T3        T1       T1      T1
-freq         1      20        14       23      23
+freq         1      24        15       24      16
 ```
 
 ### Output
@@ -3208,10 +2986,10 @@ INPUT / OUTPUT FILES
 
 # lookup_coeff_wind_pressure
 - number of invocations: 1
-- max duration: 0.034 s
-- avg duration: 0.034 s
-- min duration: 0.034 s
-- total duration: 0.034 s
+- max duration: 0.031 s
+- avg duration: 0.031 s
+- min duration: 0.031 s
+- total duration: 0.031 s
 
 ### Input
 - **height_path** `['ndarray']`: *array([  4.875,   4.875,  14.625,  14.625,  19.5  ])*
@@ -3256,12 +3034,62 @@ RETURNS
 [TOC](#table-of-contents)
 ---
 
+# newton
+- number of invocations: 1
+- max duration: 0.031 s
+- avg duration: 0.031 s
+- min duration: 0.031 s
+- total duration: 0.031 s
+
+### Input
+- **func** `['builtin_function_or_method']`: *???*
+- **x0** `['float']`: *343.0*
+- **args** `['tuple']`: *(179615.13832658232, 3.0633147541017403, 3592302.7665316463, 294.0, 58.430633840867486, 0.3)*
+- **tol** `['float']`: *0.01*
+- **maxiter** `['int']`: *100*
+
+
+### Output
+- `['float']`: 306.32378406013896
+
+### Docstring template
+
+```
+PARAMETERS
+----------
+
+:param func:
+:type func: builtin_function_or_method
+
+:param x0:
+:type x0: float
+
+:param args:
+:type args: tuple
+
+:param tol:
+:type tol: float
+
+:param maxiter:
+:type maxiter: int
+
+RETURNS
+-------
+
+:returns:
+:rtype: float
+
+```
+
+[TOC](#table-of-contents)
+---
+
 # read_schedules
 - number of invocations: 1
-- max duration: 0.038 s
-- avg duration: 0.038 s
-- min duration: 0.038 s
-- total duration: 0.038 s
+- max duration: 0.036 s
+- avg duration: 0.036 s
+- min duration: 0.036 s
+- total duration: 0.036 s
 
 ### Input
 - **use** `['unicode']`: *u'INDUSTRIAL'*
@@ -3327,69 +3155,61 @@ RETURNS
 
 # results_to_csv
 - number of invocations: 1
-- max duration: 0.257 s
-- avg duration: 0.257 s
-- min duration: 0.257 s
-- total duration: 0.257 s
+- max duration: 0.424 s
+- avg duration: 0.424 s
+- min duration: 0.424 s
+- total duration: 0.424 s
 
 ### Input
-- **GFA_m2** `['float64']`: *15831.130217243131*
-- **Af** `['float64']`: *2532.980834758901*
-- **Aroof** `['float64']`: *2638.5217028738552*
-- **Ealf** `['ndarray']`: *array([  8095.40674789,   8095.40674789,   8095.40674789, ...,
-        15907.4742596 ,  13478.85223524,   9168.04814198])*
-- **Ealf_0** `['float64']`: *74680.127249280165*
-- **Ealf_tot** `['float64']`: *223.26888948476659*
-- **Eauxf** `['ndarray']`: *array([  0.        ,   0.        ,   0.        , ...,  17.95868095,
-        22.11860536,  18.71487712])*
-- **Eauxf_tot** `['float64']`: *6.4981343193058683*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x142CE0B0>*
+- **locator** `['LocatorDecorator']`: *???*
+- **bpr** `['BuildingPropertiesRow']`: *<cea.demand.thermal_loads.BuildingPropertiesRow object at 0x068762B0>*
+- **tsd** `['dict']`: *{'w_int': array([ 0.        ,  0.        ,  0.        , ...,  0.01493667,
+        0.00403694,  0.0034314 ]), 'Im_tot': array([  45137.76324783,   45137.76324783,   44681.97079396, ...,
+        318310.72756437,   86958.62143588,   63388.61365678]), 've': array([     0.        ,      0.        ,      0.        , ...,
+        57276.68717357,  15480.18572259,  13158.1578642 ]), 'people': array([   0.        ,    0.        ,    0.        , ...,  632.61196348,
+        170.97620635,  145.32977539]), 'T*
+- **Ealf** `['ndarray']`: *array([ 45536.66295688,  45536.66295688,  45536.66295688, ...,
+        89479.54271027,  75818.5438232 ,  51570.27079866])*
+- **Ealf_0** `['float64']`: *420075.71577720094*
+- **Ealf_tot** `['float64']`: *1255.887503351812*
+- **Eauxf** `['ndarray']`: *array([  0.        ,   0.        ,   0.        , ...,  65.74432788,
+         2.8770457 ,   2.65250507])*
+- **Eauxf_tot** `['float64']`: *40.055689107389043*
 - **Edata** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **Edata_tot** `['float64']`: *0.0*
-- **Epro** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
-- **Epro_tot** `['float64']`: *0.0*
-- **Name** `['str']`: *'Bau A'*
-- **Occupancy** `['ndarray']`: *array([   0.,    0.,    0., ...,  112.,   30.,   25.])*
-- **Occupants** `['float64']`: *891.0*
+- **Eprof** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
+- **Eprof_tot** `['float64']`: *0.0*
+- **building_name** `['str']`: *'Bau A'*
+- **Occupancy** `['ndarray']`: *array([   0.,    0.,    0., ...,  632.,  170.,  145.])*
+- **Occupants** `['float64']`: *5015.0*
 - **Qcdata** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
 - **Qcrefri** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
 - **Qcs** `['ndarray']`: *array([-0., -0., -0., ..., -0., -0., -0.])*
 - **Qcsf** `['ndarray']`: *array([-0., -0., -0., ..., -0., -0., -0.])*
-- **Qcsf_0** `['float64']`: *-488411.89619418682*
-- **Qhs** `['ndarray']`: *array([     0.        ,      0.        ,      0.        , ...,
-        15087.9633225 ,   5944.31836552,   9043.784159  ])*
-- **Qhsf** `['ndarray']`: *array([     0.        ,      0.        ,      0.        , ...,
-        54776.24524343,  44440.48177405,  47516.38542795])*
-- **Qhsf_0** `['float64']`: *336657.37528759934*
-- **Qww** `['ndarray']`: *array([    0.        ,     0.        ,     0.        , ...,  2174.11914263,
-         587.59976828,   499.45980304])*
-- **Qww_ls_st** `['ndarray']`: *array([ 13.18881873,  13.18688198,  13.20198326, ...,  12.74161393,
-        12.74588333,  12.74896678])*
-- **Qwwf** `['ndarray']`: *array([    0.        ,     0.        ,     0.        , ...,  4624.11914263,
-        1600.59976828,  1483.45980304])*
-- **Qwwf_0** `['float64']`: *9040.2317305902616*
+- **Qcsf_0** `['float64']`: *-3824434.2215403998*
+- **Qhs** `['ndarray']`: *array([      0.        ,       0.        ,       0.        , ...,
+        240853.03377428,       0.        ,       0.        ])*
+- **Qhsf** `['ndarray']`: *array([      0.        ,       0.        ,       0.        , ...,
+        345431.70390049,       0.        ,       0.        ])*
+- **Qhsf_0** `['float64']`: *3592302.7665316463*
+- **Qww** `['ndarray']`: *array([     0.        ,      0.        ,      0.        , ...,
+        65956.42342807,  17826.06038597,  15152.15132807])*
+- **Qwwf** `['ndarray']`: *array([     0.        ,      0.        ,      0.        , ...,
+        68481.67061934,  18630.23145399,  15853.22938387])*
+- **Qwwf_0** `['float64']`: *128049.69313257416*
 - **Tcs_re** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
-- **Tcs_re_0** `['int64']`: *15*
 - **Tcs_sup** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
-- **Tcs_sup_0** `['int64']`: *7*
-- **Ths_re** `['ndarray']`: *array([ 0,  0,  0, ..., 33, 32, 32])*
-- **Ths_re_0** `['int64']`: *70*
-- **Ths_sup** `['ndarray']`: *array([ 0,  0,  0, ..., 37, 34, 35])*
-- **Ths_sup_0** `['int64']`: *90*
-- **Tww_re** `['ndarray']`: *array([ 10.,  10.,  10., ...,  10.,  10.,  10.])*
-- **Tww_st** `['ndarray']`: *array([ 59.95492923,  59.90986509,  59.86474933, ...,  59.95412594,
-        59.96686873,  59.97607186])*
-- **Tww_sup_0** `['int64']`: *60*
-- **Waterconsumption** `['ndarray']`: *array([ 0.        ,  0.        ,  0.        , ...,  0.03748812,
-        0.01013192,  0.00861213])*
-- **locationFinal** `['str']`: *'c:\\reference-case-zug\\baseline\\outputs\\data\\demand'*
+- **Ths_re** `['ndarray']`: *array([ 0,  0,  0, ..., 29,  0,  0])*
+- **Ths_sup** `['ndarray']`: *array([ 0,  0,  0, ..., 31,  0,  0])*
+- **Vw** `['ndarray']`: *array([ 0.        ,  0.        ,  0.        , ...,  2.27455987,
+        0.61474591,  0.52253402])*
+- **Vww** `['ndarray']`: *array([ 0.        ,  0.        ,  0.        , ...,  1.13727993,
+        0.30737296,  0.26126701])*
 - **mcpcs** `['ndarray']`: *array([0, 0, 0, ..., 0, 0, 0])*
-- **mcphs** `['ndarray']`: *array([    0,     0,     0, ..., 16832, 16832, 16832])*
-- **mcpww** `['ndarray']`: *array([  0.        ,   0.        ,   0.        , ...,  92.56731162,
-        32.03322139,  29.68340143])*
-- **path_temporary_folder** `['str']`: *'c:\\users\\darthoma\\appdata\\local\\temp'*
-- **sys_e_cooling** `['unicode']`: *u'T3'*
-- **sys_e_heating** `['unicode']`: *u'T1'*
-- **waterpeak** `['float64']`: *0.070079136428329608*
+- **mcphs** `['ndarray']`: *array([     0,      0,      0, ..., 179615,      0,      0])*
+- **mcpww** `['ndarray']`: *array([    0.        ,     0.        ,     0.        , ...,  1370.03632807,
+         372.68378683,   317.11323267])*
 - **date** `['DatetimeIndex']`: *DatetimeIndex(['2010-01-01 00:00:00', '2010-01-01 01:00:00',
                '2010-01-01 02:00:00', '2010-01-01 03:00:00',
                '2010-01-01 04:00:00', '2010-01-01 05:00:00',
@@ -3409,6 +3229,17 @@ RETURNS
 - **Ecaf** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
 - **Qhprof_tot** `['int']`: *0*
 - **Ecaf_tot** `['int']`: *0*
+- **Eaux_hs** `['ndarray']`: *array([  0.        ,   0.        ,   0.        , ...,  60.21021997,
+         0.        ,   0.        ])*
+- **Eaux_cs** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
+- **Eaux_ve** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
+- **Eaux_ww** `['ndarray']`: *array([ 0.        ,  0.        ,  0.        , ...,  5.5341079 ,
+        2.8770457 ,  2.65250507])*
+- **Eaux_fw** `['ndarray']`: *array([ 0.,  0.,  0., ...,  0.,  0.,  0.])*
+- **Eaf_0** `['float64']`: *333326.66308228462*
+- **Elf_0** `['float64']`: *86749.052694916332*
+- **Eaf_tot** `['float64']`: *996.536517052627*
+- **Elf_tot** `['float64']`: *259.35098629918525*
 
 
 ### Output
@@ -3420,14 +3251,17 @@ RETURNS
 PARAMETERS
 ----------
 
-:param GFA_m2:
-:type GFA_m2: float64
+:param gv:
+:type gv: GlobalVariables
 
-:param Af:
-:type Af: float64
+:param locator:
+:type locator: LocatorDecorator
 
-:param Aroof:
-:type Aroof: float64
+:param bpr:
+:type bpr: BuildingPropertiesRow
+
+:param tsd:
+:type tsd: dict
 
 :param Ealf:
 :type Ealf: ndarray
@@ -3450,14 +3284,14 @@ PARAMETERS
 :param Edata_tot:
 :type Edata_tot: float64
 
-:param Epro:
-:type Epro: ndarray
+:param Eprof:
+:type Eprof: ndarray
 
-:param Epro_tot:
-:type Epro_tot: float64
+:param Eprof_tot:
+:type Eprof_tot: float64
 
-:param Name:
-:type Name: str
+:param building_name:
+:type building_name: str
 
 :param Occupancy:
 :type Occupancy: ndarray
@@ -3492,9 +3326,6 @@ PARAMETERS
 :param Qww:
 :type Qww: ndarray
 
-:param Qww_ls_st:
-:type Qww_ls_st: ndarray
-
 :param Qwwf:
 :type Qwwf: ndarray
 
@@ -3504,41 +3335,20 @@ PARAMETERS
 :param Tcs_re:
 :type Tcs_re: ndarray
 
-:param Tcs_re_0:
-:type Tcs_re_0: int64
-
 :param Tcs_sup:
 :type Tcs_sup: ndarray
-
-:param Tcs_sup_0:
-:type Tcs_sup_0: int64
 
 :param Ths_re:
 :type Ths_re: ndarray
 
-:param Ths_re_0:
-:type Ths_re_0: int64
-
 :param Ths_sup:
 :type Ths_sup: ndarray
 
-:param Ths_sup_0:
-:type Ths_sup_0: int64
+:param Vw:
+:type Vw: ndarray
 
-:param Tww_re:
-:type Tww_re: ndarray
-
-:param Tww_st:
-:type Tww_st: ndarray
-
-:param Tww_sup_0:
-:type Tww_sup_0: int64
-
-:param Waterconsumption:
-:type Waterconsumption: ndarray
-
-:param locationFinal:
-:type locationFinal: str
+:param Vww:
+:type Vww: ndarray
 
 :param mcpcs:
 :type mcpcs: ndarray
@@ -3548,18 +3358,6 @@ PARAMETERS
 
 :param mcpww:
 :type mcpww: ndarray
-
-:param path_temporary_folder:
-:type path_temporary_folder: str
-
-:param sys_e_cooling:
-:type sys_e_cooling: unicode
-
-:param sys_e_heating:
-:type sys_e_heating: unicode
-
-:param waterpeak:
-:type waterpeak: float64
 
 :param date:
 :type date: DatetimeIndex
@@ -3594,12 +3392,44 @@ PARAMETERS
 :param Ecaf_tot:
 :type Ecaf_tot: int
 
+:param Eaux_hs:
+:type Eaux_hs: ndarray
+
+:param Eaux_cs:
+:type Eaux_cs: ndarray
+
+:param Eaux_ve:
+:type Eaux_ve: ndarray
+
+:param Eaux_ww:
+:type Eaux_ww: ndarray
+
+:param Eaux_fw:
+:type Eaux_fw: ndarray
+
+:param Eaf_0:
+:type Eaf_0: float64
+
+:param Elf_0:
+:type Elf_0: float64
+
+:param Eaf_tot:
+:type Eaf_tot: float64
+
+:param Elf_tot:
+:type Elf_tot: float64
+
 RETURNS
 -------
 
 :returns:
 :rtype: NoneType
 
+INPUT / OUTPUT FILES
+--------------------
+
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau A.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau AT.csv
 ```
 
 [TOC](#table-of-contents)
@@ -3607,10 +3437,10 @@ RETURNS
 
 # run_as_script
 - number of invocations: 1
-- max duration: 59.05 s
-- avg duration: 59.05 s
-- min duration: 59.05 s
-- total duration: 59.05 s
+- max duration: 73.98 s
+- avg duration: 73.98 s
+- min duration: 73.98 s
+- total duration: 73.98 s
 
 ### Input
 
@@ -3637,13 +3467,13 @@ RETURNS
 
 # schedule_maker
 - number of invocations: 1
-- max duration: 1.225 s
-- avg duration: 1.225 s
-- min duration: 1.225 s
-- total duration: 1.225 s
+- max duration: 0.735 s
+- avg duration: 0.735 s
+- min duration: 0.735 s
+- total duration: 0.735 s
 
 ### Input
-- **date** `['DatetimeIndex']`: *DatetimeIndex(['2010-01-01 00:00:00', '2010-01-01 01:00:00',
+- **dates** `['DatetimeIndex']`: *DatetimeIndex(['2010-01-01 00:00:00', '2010-01-01 01:00:00',
                '2010-01-01 02:00:00', '2010-01-01 03:00:00',
                '2010-01-01 04:00:00', '2010-01-01 05:00:00',
                '2010-01-01 06:00:00', '2010-01-01 07:00:00',
@@ -3657,7 +3487,7 @@ RETURNS
 
 
 ### Output
-- `['list']`: [([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.640
+- `['list']`: [([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
 
 ### Docstring template
 
@@ -3665,8 +3495,8 @@ RETURNS
 PARAMETERS
 ----------
 
-:param date:
-:type date: DatetimeIndex
+:param dates:
+:type dates: DatetimeIndex
 
 :param locator:
 :type locator: LocatorDecorator
@@ -3695,13 +3525,13 @@ INPUT / OUTPUT FILES
 
 # thermal_loads_all_buildings
 - number of invocations: 1
-- max duration: 55.605 s
-- avg duration: 55.605 s
-- min duration: 55.605 s
-- total duration: 55.605 s
+- max duration: 70.157 s
+- avg duration: 70.157 s
+- min duration: 70.157 s
+- total duration: 70.157 s
 
 ### Input
-- **building_properties** `['BuildingProperties']`: *<cea.demand.thermal_loads.BuildingProperties object at 0x151891D0>*
+- **building_properties** `['BuildingProperties']`: *<cea.demand.thermal_loads.BuildingProperties object at 0x143CCBD0>*
 - **date** `['DatetimeIndex']`: *DatetimeIndex(['2010-01-01 00:00:00', '2010-01-01 01:00:00',
                '2010-01-01 02:00:00', '2010-01-01 03:00:00',
                '2010-01-01 04:00:00', '2010-01-01 05:00:00',
@@ -3711,10 +3541,10 @@ INPUT / OUTPUT FILES
                '2010-12-31 14:00:00', '2010-12-31 15:00:00',
                '2010-12-31 16:00:00', '2010-12-31 17:00:00',
                '2010-12-31 18:00:00', '2010-12-31 19:0*
-- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x14DB34B0>*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x143CC9F0>*
 - **locator** `['LocatorDecorator']`: *???*
 - **num_buildings** `['int']`: *24*
-- **usage_schedules** `['dict']`: *{'list_uses': [u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM'], 'schedules': [([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.1600000000000*
+- **usage_schedules** `['dict']`: *{'list_uses': [u'INDUSTRIAL', u'OFFICE', u'PARKING', u'RESTAURANT', u'SERVERROOM'], 'schedules': [([0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.16000000000000003, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.8, 0.4, 0.6400000000000001, 0.8, 0.8, 0.6400000000000001, 0.6400000000000001, 0.6400000000000001, 0.4, 0.4, 0.4, 0.4, 0.16000000000000003, 0.16000000000000003, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0*
 - **weather_data** `['DataFrame']`: *(8760, 3)*
 
 #### weather_data:
@@ -3769,54 +3599,75 @@ RETURNS
 INPUT / OUTPUT FILES
 --------------------
 
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau 17.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 17T.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau 22.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 22T.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau 19.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 19T.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau 06.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 06T.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau 02.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 02T.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau 05.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 05T.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau 03.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 03T.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau 04.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 04T.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau 16.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 16T.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau 14.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 14T.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau 07.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 07T.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau 17h.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 17hT.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau 02h.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 02hT.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau 06h.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 06hT.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau 26.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 26T.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau D.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau DT.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau E.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau ET.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau F.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau FT.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau C.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau CT.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau B.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau BT.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau I.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau IT.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau H.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau HT.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
+- get_demand_results_file: c:\reference-case-zug\baseline\outputs\data\demand\Bau G.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau GT.csv
 - get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
-- get_demand_results_folder: c:\reference-case-zug\baseline\outputs\data\demand
-- get_temporary_folder: c:\users\darthoma\appdata\local\temp
 ```
 
 [TOC](#table-of-contents)
@@ -3824,14 +3675,15 @@ INPUT / OUTPUT FILES
 
 # write_totals_csv
 - number of invocations: 1
-- max duration: 0.894 s
-- avg duration: 0.894 s
-- min duration: 0.894 s
-- total duration: 0.894 s
+- max duration: 0.973 s
+- avg duration: 0.973 s
+- min duration: 0.973 s
+- total duration: 0.973 s
 
 ### Input
-- **building_properties** `['BuildingProperties']`: *<cea.demand.thermal_loads.BuildingProperties object at 0x1518ED10>*
+- **building_properties** `['BuildingProperties']`: *<cea.demand.thermal_loads.BuildingProperties object at 0x067D95B0>*
 - **locator** `['LocatorDecorator']`: *???*
+- **gv** `['GlobalVariables']`: *<cea.globalvar.GlobalVariables object at 0x06890530>*
 
 
 ### Output
@@ -3849,6 +3701,9 @@ PARAMETERS
 :param locator:
 :type locator: LocatorDecorator
 
+:param gv:
+:type gv: GlobalVariables
+
 RETURNS
 -------
 
@@ -3859,9 +3714,6 @@ INPUT / OUTPUT FILES
 --------------------
 
 - get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau AT.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau DT.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau ET.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau FT.csv
 - get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 17T.csv
 - get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 22T.csv
 - get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 19T.csv
@@ -3869,19 +3721,22 @@ INPUT / OUTPUT FILES
 - get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 02T.csv
 - get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 05T.csv
 - get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 03T.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 04T.csv
 - get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 16T.csv
 - get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 14T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau CT.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau BT.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau IT.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau HT.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau GT.csv
 - get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 07T.csv
 - get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 17hT.csv
 - get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 02hT.csv
 - get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 06hT.csv
 - get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 26T.csv
-- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau 04T.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau DT.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau ET.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau FT.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau CT.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau BT.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau IT.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau HT.csv
+- get_temporary_file: c:\users\darthoma\appdata\local\temp\Bau GT.csv
 - get_total_demand: c:\reference-case-zug\baseline\outputs\data\demand\Total_demand.csv
 ```
 
