@@ -62,7 +62,8 @@ def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, gv, weath
         results, Final = Calc_pv_generation(gv.type_PVpanel, hourlydata_groups, Number_groups, number_points,
                                              prop_observers, weather_data,g, Sz, Az, ha, latitude, gv.misc_losses)
 
-        Final.to_csv(locator.PV_results(building_name= building_name), index=True, float_format='%.2f')
+        Final.to_csv(locator.PV_results(building_name= building_name), index=True, float_format='%.2f')  # print PV generation potential
+        sensors_metadata_cat.to_csv(locator.metadata_results(building_name= building_name), index=True, float_format='%.2f')  # print selected metadata of the selected sensors
         gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
     return
 
@@ -123,8 +124,8 @@ def Calc_pv_generation(type_panel, hourly_radiation, number_groups, number_point
         area_per_group = prop_observers.loc[group,'total_area_pv']
         tilt_angle = prop_observers.loc[group,'tilt'] #tilt angle of panels
         radiation = pd.DataFrame({'I_sol':hourly_radiation[group]}) #choose vector with all values of Isol
-        radiation['I_diffuse'] = weather_data.ratio_diffhout*radiation.I_sol #calculate diffuse radiation
-        radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']  #direct radaition
+        radiation['I_diffuse'] = weather_data.ratio_diffhout.fillna(0)*radiation.I_sol      #calculate diffuse radiation
+        radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']   #direct radaition
 
         #to radians of properties - solar position and tilt angle
         tilt = radians(tilt_angle) #slope of panel
