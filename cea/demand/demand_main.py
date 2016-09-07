@@ -99,7 +99,7 @@ def demand_calculation(locator, weather_path, gv):
 
     # demand model
     num_buildings = len(building_properties)
-    if gv.multiprocessing:
+    if gv.multiprocessing and mp.cpu_count() > 1:
         thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, num_buildings,
                                                     schedules_dict,
                                                     weather_data)
