@@ -101,6 +101,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
            'uncomfort': np.zeros(8760),
            'Ta': np.empty(8760) * np.nan,
            'Tm': np.empty(8760) * np.nan,
+           'Tm_loss': np.empty(8760) * np.nan,
            'Qhs_sen': np.zeros(8760),
            'Qcs_sen': np.zeros(8760),
            'Qhs_lat': np.zeros(8760),
@@ -394,6 +395,7 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
     # previous timestep data (we give a seed high enough to avoid doing a iteration for 2 years, Ta=21, Tm=16)
     temp_air_prev = tsd['Ta'][t-1] if not np.isnan(tsd['Ta'][t-1]) else tsd['T_ext'][t-1] #gv.initial_temp_air_prev
     temp_m_prev = tsd['Tm'][t-1] if not  np.isnan(tsd['Tm'][t-1]) else tsd['T_ext'][t-1] #gv.initial_temp_m_prev
+    temp_m_prev_losses = tsd['Tm_loss'][t - 1] if not np.isnan(tsd['Tm_loss'][t - 1]) else tsd['T_ext'][t - 1]  # gv.initial_temp_m_prev
 
     # get constant properties of building R-C-model
     h_tr_is = bpr.rc_model['Htr_is']
@@ -470,27 +472,18 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
                                               i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max,
                                               flag_season)
 
-        if q_hs_sen !=0 or q_cs_sen !=0:
-            Losses = True
-            # calc_Qhs_Qcs()
-            temp_m_loss_true, \
-            temp_a_loss_true, \
-            q_hs_sen_loss_true, \
-            q_cs_sen_loss_true, \
-            uncomfort_loss_true, \
-            temp_op_loss_true, \
-            i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
-                                                            temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st,
-                                                            h_ve_adj, h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr,
-                                                            temp_cs_set_corr, i_c_max, i_h_max, flag_season)
-        else:
-            temp_m_loss_true = temp_m
-            temp_a_loss_true = temp_a
-            q_hs_sen_loss_true = q_hs_sen
-            q_cs_sen_loss_true = q_cs_sen
-            uncomfort_loss_true = uncomfort
-            temp_op_loss_true = temp_op
-            i_m_tot_loss_true = i_m_tot
+        Losses = True
+        # calc_Qhs_Qcs()
+        temp_m_loss_true, \
+        temp_a_loss_true, \
+        q_hs_sen_loss_true, \
+        q_cs_sen_loss_true, \
+        uncomfort_loss_true, \
+        temp_op_loss_true, \
+        i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev_losses, temp_ext, temp_hs_set,
+                                                        temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st,
+                                                        h_ve_adj, h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr,
+                                                        temp_cs_set_corr, i_c_max, i_h_max, flag_season)
 
 
         # TODO: in the original calculation procedure this is calculated with another temp_m_prev (with and without losses), check if this is correct or not
@@ -562,6 +555,7 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
         qcs_em_ls = 0
 
     tsd['Tm'][t] = temp_m
+    tsd['Tm_loss'][t] = temp_m_loss_true
     tsd['Ta'][t] = temp_a
     tsd['Qhs_sen_incl_em_ls'][t] = q_hs_sen_loss_true
     tsd['Qcs_sen_incl_em_ls'][t] = q_cs_sen_loss_true
@@ -642,6 +636,7 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
     # previous timestep data (we give a seed high enough to avoid doing a iteration for 2 years, Ta=21, Tm=16)
     temp_air_prev = tsd['Ta'][t - 1] if not np.isnan(tsd['Ta'][t - 1]) else tsd['T_ext'][t-1] # gv.initial_temp_air_prev
     temp_m_prev = tsd['Tm'][t - 1] if not np.isnan(tsd['Tm'][t - 1]) else tsd['T_ext'][t-1] # gv.initial_temp_m_prev
+    temp_m_prev_losses = tsd['Tm_loss'][t - 1] if not np.isnan(tsd['Tm_loss'][t - 1]) else tsd['T_ext'][ t - 1]  # gv.initial_temp_m_prev
 
     # get constant properties of building R-C-model
     h_tr_is = bpr.rc_model['Htr_is']
@@ -676,26 +671,18 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
                                           area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max, flag_season)
 
     # calculate emission losses
-    if q_hs_sen != 0 or q_cs_sen != 0:
-        Losses = True
-        temp_m_loss_true, \
-        temp_a_loss_true, \
-        q_hs_sen_loss_true, \
-        q_cs_sen_loss_true, \
-        uncomfort_loss_true, \
-        temp_op_loss_true, \
-        i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
-                                                        temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve,
-                                                        h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr,
-                                                        i_c_max, i_h_max, flag_season)
-    else:
-        temp_m_loss_true = temp_m
-        temp_a_loss_true = temp_a
-        q_hs_sen_loss_true = q_hs_sen
-        q_cs_sen_loss_true = q_cs_sen
-        uncomfort_loss_true = uncomfort
-        temp_op_loss_true = temp_op
-        i_m_tot_loss_true = i_m_tot
+    Losses = True
+    temp_m_loss_true, \
+    temp_a_loss_true, \
+    q_hs_sen_loss_true, \
+    q_cs_sen_loss_true, \
+    uncomfort_loss_true, \
+    temp_op_loss_true, \
+    i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev_losses, temp_ext, temp_hs_set,
+                                                    temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve,
+                                                    h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr,
+                                                    i_c_max, i_h_max, flag_season)
+
     # TODO: in the original calculation procedure this is calculated with another temp_m_prev (with and without losses), check if this is correct or not
 
     # calculate emission losses
@@ -712,6 +699,7 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
         qcs_em_ls = 0
 
     tsd['Tm'][t] = temp_m
+    tsd['Tm_loss'][t] = temp_m_loss_true
     tsd['Ta'][t] = temp_a
     tsd['Qhs_sen_incl_em_ls'][t] = q_hs_sen_loss_true
     tsd['Qcs_sen_incl_em_ls'][t] = q_cs_sen_loss_true
