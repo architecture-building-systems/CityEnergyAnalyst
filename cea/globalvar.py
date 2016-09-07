@@ -457,10 +457,12 @@ class GlobalVariables(object):
         # PV panel
         # ==============================================================================================================
 
-        self.module_lenght_PV = 1 # m # 1 for PV and 2 for solar collectors
-        self.min_production = 0.75  # points are selected with at least a minimum production of this % from the maximum in the area.
+        self.module_length_PV = 1 # m # 1 for PV and 2 for solar collectors
+        self.min_radiation = 0.9  # points are selected with at least a minimum radiation of this % from the maximum in the building or global horizontal radiation.
         self.type_PVpanel = 1  # monocrystalline
         self.misc_losses = 0.1 #cabling, resistances etc..
+        self.pvonroof = True  # flag for pv installation on roofs
+        self.pvonwall = True  # flag for pv installation on walls
 
         # ==============================================================================================================
         # sewage potential
@@ -501,6 +503,23 @@ class GlobalVariables(object):
         self.initial_temp_air_prev = 21
         self.initial_temp_m_prev = 16
 
+        # ==============================================================================================================
+        # Columns to write for the demand calculation
+        # ==============================================================================================================
+        self.demand_totals_csv_columns = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'occ_pax', 'QHf_MWhyr', 'QCf_MWhyr',
+                                          'Ef_MWhyr', 'Qhsf0_kW', 'Qhsf_MWhyr', 'Qhs_MWhyr', 'Qwwf0_kW', 'Qwwf_MWhyr',
+                                          'Qww_MWhyr', 'Qhprof_MWhyr', 'Qcsf0_kW', 'Qcsf_MWhyr', 'Qcs_MWhyr',
+                                          'Qcref_MWhyr', 'Qcdataf_MWhyr', 'Ealf0_kW', 'Ealf_MWhyr', 'Eauxf_MWhyr',
+                                          'Ecaf_MWhyr', 'Edataf_MWhyr', 'Eprof_MWhyr', 'Tshs0_C', 'Trhs0_C', 'Tscs0_C',
+                                          'Trcs0_C', 'Tsww0_C', 'Vw_m3yr', 'Vww0_m3', 'Vww_m3yr', 'mcphs0_kWC',
+                                          'mcpww0_kWC', 'mcpcs0_kWC']
+        self.demand_building_csv_columns = ['DATE', 'Name', 'occ_pax', 'QHf_kWh', 'QCf_kWh', 'Ef_kWh', 'Qhsf_kWh',
+                                            'Qhs_kWh', 'Qhprof_kWh', 'Qwwf_kWh', 'Qww_kWh',
+                                            'Qcsf_kWh', 'Qcs_kWh', 'Qcref_kWh', 'Qcdataf_kWh', 'Ealf_kWh', 'Eauxf_kWh',
+                                            'Ecaf_kWh', 'Edataf_kWh', 'Eprof_kWh', 'Tshs_C', 'Trhs_C', 'Tscs_C',
+                                            'Trcs_C', 'Tsww_C', 'Trww_C', 'Tsref_C', 'Trref_C',
+                                            'Tsdata_C', 'Trdata_C', 'Vw_m3', 'mcphs_kWC', 'mcpww_kWC', 'mcpcs_kWC',
+                                            'mcpref_kWC', 'mcpdata_kWC']
 
         # here is where we decide whether full excel reports of the calculations are generated
         self.testing = False  # if true: reports are generated, if false: not
