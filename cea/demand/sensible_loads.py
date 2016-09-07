@@ -12,7 +12,7 @@ from cea.technologies.controllers import temperature_control_tabs
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__credits__ = ["Jimeno A. Fonseca", "Shanshan Hsieh"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -401,56 +401,88 @@ def calc_Qhs_Qcs_em_ls(SystemH, SystemC):
     return list(tHC_corr)
 
 
-def calc_T_em_ls(SystemH, SystemC, sys_e_ctrl):
+def calc_T_em_ls(heating_system, cooling_system, control_system):
     """
     Model of losses in the emission and control system for space heating and cooling.
 
-    correction factor for the heating and cooling setpoints. extracted from EN 15316-2
-    Credits to: Shanshan
+    Correction factor for the heating and cooling setpoints. Extracted from EN 15316-2
 
-    Parameters
+    (see cea\databases\CH\Systems\emission_systems.xls for valid values for the heating and cooling system values)
+
+    PARAMETERS
     ----------
-    SystemH
-    SystemC
-    sys_e_ctrl
 
-    Returns
+    :param heating_system: The heating system used. Valid values: T0, T1, T2, T3, T4
+    :type heating_system: unicode
+
+    :param cooling_system: The cooling system used. Valid values: T0, T1, T2, T3
+    :type cooling_system: unicode
+
+    :param control_system: The control system used. Valid values: T0, T1, T2, T3 - as defined in the
+        contributors manual under Databases / Archetypes / Building Properties / Mechanical systems.
+        T0 for none, T1 for partly controlled, T2 for PID controller, and T3 for PID controller optimized.
+    :type control_system: unicode
+
+    RETURNS
     -------
 
+    :returns: two delta T to correct the set point temperature, dT_heating, dT_cooling
+    :rtype: tuple(double, double)
     """
+    __author__ = "Shanshan Hsieh"
+    __credits__ = ["Shanshan Hsieh"]
 
     tHC_corr = [0, 0]
     delta_ctrl = [0, 0]
 
     # emission system room temperature control type
-    if sys_e_ctrl == 'T1':
+    if control_system == 'T1':
         delta_ctrl = [2.5, -2.5]
-    elif sys_e_ctrl == 'T2':
+    elif control_system == 'T2':
         delta_ctrl = [1.2, -1.2]
-    elif sys_e_ctrl == 'T3':
+    elif control_system == 'T3':
         delta_ctrl = [0.9, -0.9]
-    elif sys_e_ctrl == 'T4':
+    elif control_system == 'T4':
         delta_ctrl = [1.8, -1.8]
 
     # calculate temperature correction
-    if SystemH == 'T1':
+    if heating_system == 'T1':
         tHC_corr[0] = delta_ctrl[0] + 0.15
-    elif SystemH == 'T2':
+    elif heating_system == 'T2':
         tHC_corr[0] = delta_ctrl[0] - 0.1
-    elif SystemH == 'T3':
+    elif heating_system == 'T3':
         tHC_corr[0] = delta_ctrl[0] - 1.1
-    elif SystemH == 'T4':
+    elif heating_system == 'T4':
         tHC_corr[0] = delta_ctrl[0] - 0.9
     else:
         tHC_corr[0] = 0
 
-    if SystemC == 'T1':
+    if cooling_system == 'T1':
         tHC_corr[1] = delta_ctrl[1] + 0.5
-    elif SystemC == 'T2':  # no emission losses but emissions for ventilation
+    elif cooling_system == 'T2':  # no emission losses but emissions for ventilation
         tHC_corr[1] = delta_ctrl[1] + 0.7
-    elif SystemC == 'T3':
+    elif cooling_system == 'T3':
         tHC_corr[1] = delta_ctrl[1] + 0.5
     else:
         tHC_corr[1] = 0
 
     return tHC_corr[0], tHC_corr[1]
+
+def calc_t_em_ls_2(heating_system, cooling_system, control_system):
+    control_delta_heating = {'T1': 2.5, 'T2': 1.2, 'T3': 0.9, 'T4': 1.8}
+    control_delta_cooling = {'T1': -2.5, 'T2': -1.2, 'T3': -0.9, 'T4': -1.8}
+    temperature_correction_heating = {'T1': 0.15, 'T2': -0.1, 'T3': -1.1, 'T4': -0.9}
+    temperature_correction_cooling = {'T1': 0.5, 'T2': 0.7, 'T3': 0.5}
+
+    try:
+        result_heating = control_delta_heating[control_system] + temperature_correction_heating[heating_system]
+    except KeyError:
+        result_heating = 0.0
+
+    try:
+        result_cooling = control_delta_cooling[control_system] + temperature_correction_cooling[cooling_system]
+    except KeyError:
+        result_cooling = 0.0
+
+    return result_heating, result_cooling
+
