@@ -69,7 +69,7 @@ def timeseries_graph(locator, analysis_fields, gv):
             gv.log('Building No. %(bno)i completed out of %(btot)i', bno=i + 1, btot=num_buildings)
     else:
         for i, name in enumerate(building_names):
-            create_demand_graph_for_building(analysis_fields, fields_date, locator, name)
+            create_demand_graph_for_building(analysis_fields, fields_date, locator, name, layout)
             gv.log('Building No. %(bno)i completed out of %(btot)i', bno=i+1, btot=num_buildings)
 
 def create_demand_graph_for_building(analysis_fields, fields_date, locator, name, layout):
@@ -89,14 +89,16 @@ def create_demand_graph_for_building(analysis_fields, fields_date, locator, name
     fig = dict(data=data, layout=layout)
     plot(fig,  auto_open=False, filename=locator.get_timeseries_plots_file(name))
 
-def run_as_script(scenario_path=None, analysis_fields=["Ealf_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]):
+def run_as_script(scenario_path=None, analysis_fields=["Ealf_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh", "Qcs_lat_kWh",
+                                                       "Qhs_lat_kWh"]):
     # HINTS FOR ARCGIS INTERFACE:
     # the user should see all the column names of the total_demands.csv
     # the user can select a maximum of 4 of those column names to graph (analysis fields!
     import cea.globalvar
     import cea.inputlocator
     gv = cea.globalvar.GlobalVariables()
-
+    analysis_fields = ["Ealf_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh", "Qcs_lat_kWh",
+                       "Qhs_lat_kWh"]
     if scenario_path is None:
         scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
@@ -109,7 +111,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    parser.add_argument('-a', '--analysis_fields', default='Ealf_kWh;Qhsf_kWh;Qwwf_kWh;Qcsf_kWh',
+    parser.add_argument('-a', '--analysis_fields', default='Ealf_kWh;Qhsf_kWh;Qwwf_kWh;Qcsf_kWh;Qcs_lat_kWh;Qhs_lat_kWh',
                         help='Fields to analyse (separated by ";")')
     args = parser.parse_args()
     run_as_script(scenario_path=args.scenario, analysis_fields=args.analysis_fields.split(';')[:4])
