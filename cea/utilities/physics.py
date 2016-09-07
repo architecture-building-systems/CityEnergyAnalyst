@@ -67,6 +67,33 @@ def calc_h(t, w):
     return h
 
 
+def calc_t_from_h(h, w):
+    """
+    calculates temperature in (°C) from enthalpy (kJ/kg) of moist air with know moisture content
+    inverse equation of calc_h(t,w)
+
+    :param h: enthalpy of moist air in (kJ/kg)
+    :param w: moisture content of air in (kg/kg dry air)
+    :return: temperature in (°C)
+    """
+
+    t1 = (-1359.24*(w-3.998e-4*(h+0.026)))/(w+0.547283)
+
+    t2 = (-1359.24*(w-3.998e-4*h))/(w+0.546196)
+
+    # choose appropriate result based on temperature range
+    if 0 < t1 < 60:
+        t = t1
+    elif -100 < t2 <= 0:
+        t = t2
+    else:
+        t = np.nan
+    #    print('Warning: Temperature out of bounds (>60°C or <-100°C)')
+     #   print(t1,t2)
+
+    return t
+
+
 def calc_RH(w, t):  # Moisture content in kg/kg of dry air
     Pa = 100000  # Pa
 
