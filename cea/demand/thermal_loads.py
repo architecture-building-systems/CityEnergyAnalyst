@@ -1272,7 +1272,7 @@ def get_temperatures(locator, prop_HVAC):
     INPUT / OUTPUT FILES
     --------------------
 
-    - get_technical_emission_systems: cea\db\CH\Systems\emission_systems.xls
+    - get_technical_emission_systems: cea\databases\CH\Systems\emission_systems.xls
     """
     prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(), 'heating')
     prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')
