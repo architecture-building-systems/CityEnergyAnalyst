@@ -51,7 +51,7 @@ def graphs_demand(locator, analysis_fields, gv):
     fields_date = analysis_fields.append('DATE')
     num_buildings = len(building_names)
 
-    if gv.multiprocessing:
+    if gv.multiprocessing and mp.cpu_count() > 1:
         pool = mp.Pool()
         gv.log("Using %i CPU's" % mp.cpu_count())
         joblist = []
