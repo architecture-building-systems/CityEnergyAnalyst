@@ -24,20 +24,69 @@ def main():
     baseline_properties = BuildingProperties(baseline_locator, gv)
     masterplan_properties = BuildingProperties(masterplan_locator, gv)
 
-    common_buildings = set(baseline_demand.index).intersection(set(masterplan_demand.index))
-    print(common_buildings)
+    main_buildings = ['B9011701', 'B3169989']
 
-    for building in common_buildings:
+    print ('-' * 80)
+    for building in main_buildings:
+        print('Checking building %s' % building)
         # compare building properties
         baseline_bpr = baseline_properties[building]
         masterplan_bpr = masterplan_properties[building]
 
+        # architecture
+        print('testing architecture')
         for column in baseline_bpr.architecture.keys():
             baseline_value = baseline_bpr.architecture[column]
             masterplan_value = masterplan_bpr.architecture[column]
             if baseline_value != masterplan_value:
                 print('architecture difference: %s @ %s (baseline=%s, masterplan=%s)'
                       % (building, column, baseline_value, masterplan_value))
+
+        # building systems
+        print('testing building systems')
+        for column in baseline_bpr.building_systems.keys():
+            baseline_value = baseline_bpr.building_systems[column]
+            masterplan_value = masterplan_bpr.building_systems[column]
+            if baseline_value != masterplan_value:
+                print('building system difference: %s @ %s (baseline=%s, masterplan=%s)'
+                      % (building, column, baseline_value, masterplan_value))
+
+        # hvac
+        print('testing hvac')
+        for column in baseline_bpr.hvac.keys():
+            baseline_value = baseline_bpr.hvac[column]
+            masterplan_value = masterplan_bpr.hvac[column]
+            if baseline_value != masterplan_value:
+                print('hvac difference: %s @ %s (baseline=%s, masterplan=%s)'
+                      % (building, column, baseline_value, masterplan_value))
+
+        # age
+        print('testing age')
+        for column in baseline_bpr.age.keys():
+            baseline_value = baseline_bpr.age[column]
+            masterplan_value = masterplan_bpr.age[column]
+            if baseline_value != masterplan_value:
+                print('age difference: %s @ %s (baseline=%s, masterplan=%s)'
+                      % (building, column, baseline_value, masterplan_value))
+
+        # age
+        print('testing rc_model')
+        for column in baseline_bpr.rc_model.keys():
+            baseline_value = baseline_bpr.rc_model[column]
+            masterplan_value = masterplan_bpr.rc_model[column]
+            if baseline_value != masterplan_value:
+                print('rc_model difference: %s @ %s (baseline=%s, masterplan=%s)'
+                      % (building, column, baseline_value, masterplan_value))
+
+
+
+
+        print('QHf: baseline=%.2f, masterp0lan=%.2f' % (baseline_demand['QHf_MWhyr'][building],
+                                                        masterplan_demand['QHf_MWhyr'][building]))
+        print('QCf: baseline=%.2f, masterp0lan=%.2f' % (baseline_demand['QCf_MWhyr'][building],
+                                                        masterplan_demand['QCf_MWhyr'][building]))
+        print ('-' * 80)
+
 
 
 if __name__ == '__main__':
