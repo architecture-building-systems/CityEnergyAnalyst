@@ -24,6 +24,8 @@ def main():
     baseline_properties = BuildingProperties(baseline_locator, gv)
     masterplan_properties = BuildingProperties(masterplan_locator, gv)
 
+    prop_thermal = GeoDataFrame.from_file(locator.get_building_thermal()).drop('geometry', axis=1).set_index('Name')
+
     main_buildings = ['B9011701', 'B3169989']
 
     print ('-' * 80)
@@ -69,7 +71,7 @@ def main():
                 print('age difference: %s @ %s (baseline=%s, masterplan=%s)'
                       % (building, column, baseline_value, masterplan_value))
 
-        # age
+        # rc_model
         print('testing rc_model')
         for column in baseline_bpr.rc_model.keys():
             baseline_value = baseline_bpr.rc_model[column]
@@ -78,7 +80,14 @@ def main():
                 print('rc_model difference: %s @ %s (baseline=%s, masterplan=%s)'
                       % (building, column, baseline_value, masterplan_value))
 
-
+        # rc_model
+        print('testing geometry')
+        for column in baseline_bpr.geometry.keys():
+            baseline_value = baseline_bpr.geometry[column]
+            masterplan_value = masterplan_bpr.geometry[column]
+            if baseline_value != masterplan_value:
+                print('geometry difference: %s @ %s (baseline=%s, masterplan=%s)'
+                      % (building, column, baseline_value, masterplan_value))
 
 
         print('QHf: baseline=%.2f, masterp0lan=%.2f' % (baseline_demand['QHf_MWhyr'][building],
