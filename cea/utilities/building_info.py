@@ -12,7 +12,7 @@ def main(scenario_path, output_path, buildings=None):
     gv = GlobalVariables()
     bp = BuildingProperties(locator, gv)
     if not buildings:
-        buildings = list(bp._prop_architecture.index)
+        buildings = list(bp._prop_RC_model.index)
     row_index = []
     row_index.extend(bp._prop_thermal.columns)
     row_index.extend(bp._prop_geometry.columns)
