@@ -13,6 +13,7 @@ def main(scenario_path, output_path, buildings=None):
     bp = BuildingProperties(locator, gv)
     if not buildings:
         buildings = list(bp._prop_architecture.index)
+    row_index = []
     row_index.extend(bp._prop_thermal.columns)
     row_index.extend(bp._prop_geometry.columns)
     row_index.extend(bp._prop_architecture.columns)
@@ -47,6 +48,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder', default=r"C:\reference-case-zug\baseline")
     parser.add_argument('-o', '--output', help='Path to output file', default='building_info.csv')
-    parser.add_argument('-b', '--buildings', nargs='+', help='list of buildings to print', default=["Bau A"])
+    parser.add_argument('-b', '--buildings', nargs='+', help='list of buildings to print', default=None)
     args = parser.parse_args()
     main(scenario_path=args.scenario, buildings=args.buildings, output_path=args.output)
