@@ -283,8 +283,11 @@ def calc_Qgain_sen(people, Qs_Wp, Eal_nove, Eprof, Qcdata, Qcrefri, tsd, Am, Ato
 def calc_Qgain_lat(people, X_ghp, sys_e_cooling, sys_e_heating):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
+
+    # X_ghp is the humidity gain from people in g/h
+
     if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
-        w_int = people * X_ghp / (1000 * 3600)  # kg/kg.s
+        w_int = people * X_ghp / (1000 * 3600)  # kg/s
     else:
         w_int = 0
 
