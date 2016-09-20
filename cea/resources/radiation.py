@@ -70,6 +70,10 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
         solar radiation file in vertical surfaces of buildings stored in path_output
     """
 
+    if year == 1800: #only for brussels case study
+        latitude = 49.8333339
+        longitude = 4.36748667
+
     # Set environment settings
     arcpy.env.workspace = path_arcgis_db
     arcpy.env.overwriteOutput = True
