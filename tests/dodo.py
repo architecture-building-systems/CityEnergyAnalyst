@@ -11,6 +11,7 @@ import os
 def task_download_reference_case_zug():
     """Download the (current) state of the reference-case-zug"""
     def download_reference_case_zug():
+        r = requests.get(requests.get("https://github.com/architecture-building-systems/cea-reference-case/archive/master.zip", auth=('daren-thomas', 'blahblahblah')))
         with open(os.path.expandvars(r'%TEMP%\cea-reference-case.zip')) as f:
             f.write(r.content, 'wb')
 
