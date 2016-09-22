@@ -91,8 +91,8 @@ def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma
             result = sopt.bisect(fh, 0, 350, xtol=0.01, maxiter=500) - 273
 
 
-        if Ta_sup_cs == Ta_re_cs:
-            print 'Ta_sup_cs == Ta_re_cs:', Ta_sup_cs
+        #if Ta_sup_cs == Ta_re_cs:
+        #    print 'Ta_sup_cs == Ta_re_cs:', Ta_sup_cs
         tsc = result.real
         trc = tsc + k2
 
