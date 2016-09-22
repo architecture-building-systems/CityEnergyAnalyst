@@ -8,6 +8,7 @@ Heating and cooling coils of Air handling units
 from __future__ import division
 import scipy.optimize as sopt
 import scipy
+import numpy as np
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -83,7 +84,15 @@ def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma
             return Eq
 
         k2 = -Qcsf / mCw0
-        result = sopt.newton(fh, trc0, maxiter=100, tol=0.01) - 273
+        try:
+            result = sopt.newton(fh, trc0, maxiter=100, tol=0.01) - 273
+        except RuntimeError:
+            print('Newton optimization failed, using slower bisect algorithm...')
+            result = sopt.bisect(fh, 0, 350, xtol=0.01, maxiter=500) - 273
+
+
+        #if Ta_sup_cs == Ta_re_cs:
+        #    print 'Ta_sup_cs == Ta_re_cs:', Ta_sup_cs
         tsc = result.real
         trc = tsc + k2
 
