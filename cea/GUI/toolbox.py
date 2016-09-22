@@ -21,10 +21,12 @@ __status__ = "Production"
 
 def add_message(msg, **kwargs):
     """Log to arcpy.AddMessage() instead of print to STDOUT"""
-    arcpy.AddMessage(msg % kwargs)
+    if len(kwargs):
+        msg = msg % kwargs
+    arcpy.AddMessage(msg)
     log_file = os.path.join(tempfile.gettempdir(), 'cea.log')
     with open(log_file, 'a') as log:
-        log.write(msg % kwargs)
+        log.write(msg)
 
 
 class PropertiesTool(object):
