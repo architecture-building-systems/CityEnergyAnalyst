@@ -8,36 +8,43 @@ import os
 import shutil
 import zipfile
 
+reference_case_folder = os.path.expandvars(r'%TEMP%\cea-reference-case')
 
-def task_download_reference_case_zug():
+
+def get_github_auth():
+    """
+    get the username / password for github from a file in the home directory
+    called "github.auth". The first line contains the user, the second line
+    the password.
+
+    :return: (user, password)
+    """
+    with open(os.path.expanduser('~/github.auth')) as f:
+        user, password = map(str.strip, f.readlines())
+    return user, password
+
+
+def task_download_reference_cases():
     """Download the (current) state of the reference-case-zug"""
+    archive_path = os.path.expandvars(r'%TEMP%\cea-reference-case.zip')
 
-    def download_reference_case_zug():
-        dest_folder = os.path.expandvars(r'%TEMP%\cea-reference-case')
-        dest_file = os.path.expandvars(r'%TEMP%\cea-reference-case.zip')
-
-        # get the username / password for github
-        with open(os.path.expanduser('~/github.auth')) as f:
-            user, password = map(str.strip, f.readlines())
-
-        # download the zip file
-        if os.path.exists(dest_file):
-            os.remove(dest_file)
+    def download_reference_cases():
+        if os.path.exists(archive_path):
+            os.remove(archive_path)
         r = requests.get("https://github.com/architecture-building-systems/cea-reference-case/archive/master.zip",
-                         auth=(user, password))
+                         auth=get_github_auth())
         assert r.ok, 'could not download the reference case'
-        with open(dest_file, 'wb') as f:
+        with open(archive_path, 'wb') as f:
             f.write(r.content)
 
         # extract the reference cases to the temp folder
-        if os.path.exists(dest_folder):
-            shutil.rmtree(dest_folder)
-        archive = zipfile.ZipFile(dest_file)
-        archive.extractall(dest_folder)
-
+        if os.path.exists(reference_case_folder):
+            shutil.rmtree(reference_case_folder)
+        archive = zipfile.ZipFile(archive_path)
+        archive.extractall(reference_case_folder)
 
     return {
-        'actions': [download_reference_case_zug],
+        'actions': [download_reference_cases],
         'targets': [r'c:\reference-case-zug\baseline\input']
     }
 
