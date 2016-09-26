@@ -72,3 +72,4 @@ demand.prof
 demand_numba.prof
 *.prof
 building_info.csv
+tests/.doit.db
