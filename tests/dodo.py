@@ -8,7 +8,8 @@ import os
 import shutil
 import zipfile
 
-reference_case_folder = os.path.expandvars(r'%TEMP%\cea-reference-case')
+ARCHIVE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case.zip')
+REFERENCE_CASE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case')
 
 
 def get_github_auth():
@@ -26,27 +27,35 @@ def get_github_auth():
 
 def task_download_reference_cases():
     """Download the (current) state of the reference-case-zug"""
-    archive_path = os.path.expandvars(r'%TEMP%\cea-reference-case.zip')
-
     def download_reference_cases():
-        if os.path.exists(archive_path):
-            os.remove(archive_path)
+        if os.path.exists(ARCHIVE_PATH):
+            os.remove(ARCHIVE_PATH)
         r = requests.get("https://github.com/architecture-building-systems/cea-reference-case/archive/master.zip",
                          auth=get_github_auth())
         assert r.ok, 'could not download the reference case'
-        with open(archive_path, 'wb') as f:
+        with open(ARCHIVE_PATH, 'wb') as f:
             f.write(r.content)
 
         # extract the reference cases to the temp folder
-        if os.path.exists(reference_case_folder):
-            shutil.rmtree(reference_case_folder)
-        archive = zipfile.ZipFile(archive_path)
-        archive.extractall(reference_case_folder)
+        if os.path.exists(REFERENCE_CASE_PATH):
+            shutil.rmtree(REFERENCE_CASE_PATH)
+        archive = zipfile.ZipFile(ARCHIVE_PATH)
+        archive.extractall(REFERENCE_CASE_PATH)
 
     return {
-        'actions': [download_reference_cases],
-        'targets': [r'c:\reference-case-zug\baseline\input']
+        'actions': [download_reference_cases]
     }
+
+
+def task_run_data_helper_zug():
+    """Run the data helper for the zug reference case"""
+
+    return {
+        'actions': ["python", "..\cea\demand\preprocessing\properties.py",  "-s",
+                    "%s\cea-reference-case-master\reference-case-zug\baseline" % REFERENCE_CASE_PATH],
+        'verbosity': 2,
+    }
+
 
 
 if __name__ == '__main__':
