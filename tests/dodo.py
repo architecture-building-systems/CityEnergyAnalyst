@@ -8,9 +8,14 @@ import os
 import shutil
 import zipfile
 
+
 ARCHIVE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case.zip')
 REFERENCE_CASE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case')
 
+REFERENCE_CASES = {
+    'zug/baseline': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-master", "reference-case-zug", "baseline"),
+    'hq/baseline': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-master", "reference-case (HQ)", "baseline"),
+    'hq/masterplan': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-master", "reference-case (HQ)", "baseline")}
 
 def get_github_auth():
     """
@@ -51,13 +56,14 @@ def task_download_reference_cases():
 def task_run_data_helper_zug():
     """Run the data helper for the zug reference case"""
     import cea.demand.preprocessing.properties
-    return {
-        'actions': [
-            (cea.demand.preprocessing.properties.run_as_script, [], {
-                'scenario_path': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-master", "reference-case-zug",
-                                              "baseline")})],
-        'verbosity': 2,
-    }
+    for reference_case, scenario_path in REFERENCE_CASES.items():
+        yield {
+            'name': reference_case,
+            'actions': [
+                (cea.demand.preprocessing.properties.run_as_script, [], {
+                    'scenario_path': scenario_path})],
+            'verbosity': 2,
+        }
 
 
 
