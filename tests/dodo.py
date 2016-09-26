@@ -43,7 +43,8 @@ def task_download_reference_cases():
         archive.extractall(REFERENCE_CASE_PATH)
 
     return {
-        'actions': [download_reference_cases]
+        'actions': [download_reference_cases],
+        'verbosity': 2,
     }
 
 
@@ -52,7 +53,7 @@ def task_run_data_helper_zug():
 
     return {
         'actions': ["python", "..\cea\demand\preprocessing\properties.py",  "-s",
-                    "%s\cea-reference-case-master\reference-case-zug\baseline" % REFERENCE_CASE_PATH],
+                    os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-master", "reference-case-zug", "baseline")],
         'verbosity': 2,
     }
 
