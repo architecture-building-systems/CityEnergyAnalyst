@@ -50,10 +50,12 @@ def task_download_reference_cases():
 
 def task_run_data_helper_zug():
     """Run the data helper for the zug reference case"""
-
+    import cea.demand.preprocessing.properties
     return {
-        'actions': ["python", "..\cea\demand\preprocessing\properties.py",  "-s",
-                    os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-master", "reference-case-zug", "baseline")],
+        'actions': [
+            (cea.demand.preprocessing.properties.run_as_script, [], {
+                'scenario_path': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-master", "reference-case-zug",
+                                              "baseline")})],
         'verbosity': 2,
     }
 
