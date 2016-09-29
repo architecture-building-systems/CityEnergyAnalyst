@@ -15,7 +15,7 @@ REFERENCE_CASE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case')
 REFERENCE_CASES = {
     'zug/baseline': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-master", "reference-case-zug", "baseline"),
     'hq/baseline': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-master", "reference-case (HQ)", "baseline"),
-    'hq/masterplan': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-master", "reference-case (HQ)", "baseline")}
+    'hq/masterplan': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-master", "reference-case (HQ)", "masterplan")}
 
 def get_github_auth():
     """
@@ -53,8 +53,8 @@ def task_download_reference_cases():
     }
 
 
-def task_run_data_helper_zug():
-    """Run the data helper for the zug reference case"""
+def task_run_data_helper():
+    """Run the data helper for each reference case"""
     import cea.demand.preprocessing.properties
     for reference_case, scenario_path in REFERENCE_CASES.items():
         yield {
@@ -64,6 +64,23 @@ def task_run_data_helper_zug():
                     'scenario_path': scenario_path})],
             'verbosity': 2,
         }
+
+
+def task_run_demand():
+    """run the demand script for each reference cases and weather file"""
+    import cea.demand.demand_main
+    import cea.inputlocator
+    for reference_case, scenario_path in REFERENCE_CASES.items():
+        locator = cea.inputlocator.InputLocator(scenario_path)
+        for weather in locator.get_weather_names():
+            yield {
+                'name': '%(reference_case)s@%(weather)s' % locals(),
+                'actions': [(cea.demand.demand_main.run_as_script, [], {
+                    'scenario_path': scenario_path,
+                    'weather_path': locator.get_weather(weather)
+                })],
+                'verbosity': 2,
+            }
 
 
 
