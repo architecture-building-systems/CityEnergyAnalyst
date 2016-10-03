@@ -87,18 +87,18 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     DataradiationLocation = locator.get_temporary_file('RadiationYear.csv')
 
     # calculate sunrise
-    sunrise = calc_sunrise(range(1,366), year, longitude, latitude, gv)
+    sunrise = calc_sunrise(range(1, 366), year, longitude, latitude, gv)
 
     # calcuate daily transmissivity and daily diffusivity
     weather_data = epwreader.epw_reader(weather_path)[['dayofyear', 'exthorrad_Whm2',
                                                        'glohorrad_Whm2', 'difhorrad_Whm2']]
-    weather_data['diff'] = weather_data.difhorrad_Whm2 /weather_data.glohorrad_Whm2
+    weather_data['diff'] = weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
     weather_data = weather_data[np.isfinite(weather_data['diff'])]
-    T_G_day = np.round(weather_data.groupby(['dayofyear']).mean(),2)
-    T_G_day['diff'] = T_G_day['diff'].replace(1,0.90)
+    T_G_day = np.round(weather_data.groupby(['dayofyear']).mean(), 2)
+    T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
     T_G_day['trr'] = (1 - T_G_day['diff'])
 
-    #T_G_day.to_csv(r'C:\Users\Jimeno\Documents/test4.csv')
+    # T_G_day.to_csv(r'C:\Users\Jimeno\Documents/test4.csv')
 
     # Simplify building's geometry
     elevRaster = arcpy.sa.Raster(locator.get_terrain())
@@ -118,7 +118,7 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     # calculate observers
     CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgis_db, gv)
 
-    #Calculate radiation
+    # Calculate radiation
     for day in range(1, 366):
         result = None
         while result is None:  # trick to avoid that arcgis stops calculating the days and tries again.
@@ -180,7 +180,7 @@ def CalcIncidentRadiation(path_radiation_data, path_radiation_year_final, surfac
     for column in column_names:
         radiation_load[column] = grouped_data_frames[column][column]
 
-    incident_radiation = np.round(radiation_load[column_names],2)
+    incident_radiation = np.round(radiation_load[column_names], 2)
     incident_radiation.to_csv(path_radiation_year_final)
 
     return  # total solar radiation in areas exposed to radiation in Watts
@@ -221,7 +221,7 @@ def CalcRadiationSurfaces(Observers, DataFactorsCentroids, DataradiationLocation
 
 
 def calc_radiation_day(day, sunrise, route):
-    radiation_sunnyhours = np.round(Dbf5(route + '\\' + 'Day_' + str(day) + '.dbf').to_dataframe(),2)
+    radiation_sunnyhours = np.round(Dbf5(route + '\\' + 'Day_' + str(day) + '.dbf').to_dataframe(), 2)
 
     # Obtain the number of points modeled to do the iterations
     radiation_sunnyhours['ID'] = 0
@@ -273,15 +273,16 @@ def calc_radiation_day(day, sunrise, route):
     return Table
 
 
-def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, locationtemp1, aspect_slope, heightoffset, gv):
+def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, locationtemp1, aspect_slope,
+                  heightoffset, gv):
     # Local Variables
     Latitude = str(latitude)
-    skySize = '1400' #max 10000
+    skySize = '1400'  # max 10000
     dayInterval = '1'
     hourInterval = '1'
     calcDirections = '32'
     zenithDivisions = '600'  # max 1200cor hlaf the skysize
-    azimuthDivisions = '80' #max 160
+    azimuthDivisions = '80'  # max 160
     diffuseProp = str(T_G_day.loc[day, 'diff'])
     transmittivity = str(T_G_day.loc[day, 'trr'])
     heightoffset = str(heightoffset)
@@ -486,18 +487,38 @@ def calc_sunrise(sunrise, Yearsimul, longitude, latitude, gv):
     return sunrise
 
 
-def test_solar_radiation():
-    import cea.inputlocator
+def run_as_script(scenario_path=None, weather_path=None, latitude=None, longitude=None, year=None):
     import cea.globalvar
+    import cea.inputlocator
     gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
+    if scenario_path is None:
+        scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path)
-    weather_path = locator.get_default_weather()
+    if weather_path is None:
+        weather_path = locator.get_default_weather()
+    if latitude is None:
+        latitude = 47.1628017306431
+    if longitude is None:
+        longitude = 8.31
+    if year is None:
+        year = 2010
     path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
 
     solar_radiation_vertical(locator=locator, path_arcgis_db=path_default_arcgis_db,
-                             latitude=47.1628017306431, longitude=8.31, year=2010, gv=gv,
+                             latitude=latitude, longitude=longitude, year=year, gv=gv,
                              weather_path=weather_path)
 
+
 if __name__ == '__main__':
-    test_solar_radiation()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
+    parser.add_argument('-w', '--weather', help='Path to the weather file')
+    parser.add_argument('--latitude', help='Latitutde', default=47.1628017306431)
+    parser.add_argument('--longitude', help='Longitude', default=8.31)
+    parser.add_argument('--year', help='Year', default=2010)
+    args = parser.parse_args()
+
+    run_as_script(scenario_path=args.scenario, weather_path=args.weather, latitude=args.latitude,
+                  longitude=args.longitude, year=args.year)
