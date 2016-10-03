@@ -84,13 +84,13 @@ def task_run_radiation():
         data = REFERENCE_CASES_DATA[reference_case]
         yield {
             'name': reference_case,
-            'actions': [(cea.resources.radiation.run_as_script, [] {
+            'actions': [(cea.resources.radiation.run_as_script, [], {
                 'scenario_path': scenario_path,
                 'weather_path': locator.get_weather(data['weather']),
                 'latitude': data['latitude'],
                 'longitude': data['longitude'],
                 'year': 2010,
-            }]
+            })]
         }
 
 
