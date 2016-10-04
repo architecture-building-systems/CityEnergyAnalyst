@@ -23,9 +23,16 @@ REFERENCE_CASES = {
     'hq/masterplan': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME, "reference-case (HQ)",
                                   "masterplan")}
 
-REFERENCE_CASES_DATA = {'zug/baseline': {'weather': 'Zug', 'latitude': 47.1628017306431, 'longitude': 8.31},
-                        'hq/baseline': {'weather': 'Zurich', 'latitude': 46.9524055556, 'longitude': 7.43958333333},
-                        'hq/masterplan': {'weather': 'Zurich', 'latitude': 46.9524055556, 'longitude': 7.43958333333}}
+REFERENCE_CASES_DATA = {
+    'zug/baseline': {'weather': 'Zug', 'latitude': 47.1628017306431, 'longitude': 8.31,
+                     'radiation': 'https://shared.ethz.ch/owncloud/s/qgra4F2RJfKXzOp/download',
+                     'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/9w5ueJbXWSKaxvF/download'},
+    'hq/baseline': {'weather': 'Zurich', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
+                    'radiation': 'https://shared.ethz.ch/owncloud/s/8PNp6U1jpR0HnzC/download',
+                    'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/tYLGZcBGLO9Wpy9/download'},
+    'hq/masterplan': {'weather': 'Zurich', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
+                      'radiation': 'https://shared.ethz.ch/owncloud/s/MG3FeiSMVnIekwp/download',
+                      'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/HFHttennomZSbSf/download'}}
 
 def get_github_auth():
     """
@@ -58,7 +65,7 @@ def task_download_reference_cases():
 
     return {
         'actions': [download_reference_cases],
-        'verbosity': 2,
+        'verbosity': 1,
     }
 
 
@@ -71,26 +78,33 @@ def task_run_data_helper():
             'actions': [
                 (cea.demand.preprocessing.properties.run_as_script, [], {
                     'scenario_path': scenario_path})],
-            'verbosity': 2,
+            'verbosity': 1,
         }
 
 
-def task_run_radiation():
-    """Run radiation for each reference case"""
-    import cea.resources.radiation
-    import cea.inputlocator
-    for reference_case, scenario_path in REFERENCE_CASES.items():
+def task_download_radiation():
+    """For some reference cases, the radiation and properties_surfaces.csv files are too big for git and are stored
+    with git lfs... For these cases we download a known good version from a url"""
+    def download_radiation(scenario_path, reference_case):
+        import cea.inputlocator
         locator = cea.inputlocator.InputLocator(scenario_path)
         data = REFERENCE_CASES_DATA[reference_case]
+        if os.path.getsize(locator.get_surface_properties()) < 500:
+            r = requests.get(data['properties_surfaces'])
+            assert r.ok, 'could not download the properties_surfaces.csv file'
+            with open(locator.get_surface_properties(), 'w') as f:
+                f.write(r.content)
+        if os.path.getsize(locator.get_radiation()) < 500:
+            r = requests.get(data['radiation'])
+            assert r.ok, 'could not download the radiation.csv file'
+            with open(locator.get_radiation(), 'w') as f:
+                f.write(r.content)
+    for reference_case, scenario_path in REFERENCE_CASES.items():
         yield {
             'name': reference_case,
-            'actions': [(cea.resources.radiation.run_as_script, [], {
+            'actions': [(download_radiation, [], {
                 'scenario_path': scenario_path,
-                'weather_path': locator.get_weather(data['weather']),
-                'latitude': data['latitude'],
-                'longitude': data['longitude'],
-                'year': 2010,
-            })]
+                'reference_case': reference_case})]
         }
 
 
@@ -107,7 +121,7 @@ def task_run_demand():
                 'scenario_path': scenario_path,
                 'weather_path': locator.get_weather(weather)
             })],
-            'verbosity': 2,
+            'verbosity': 1,
         }
 
 
