@@ -12,6 +12,8 @@ from __future__ import division
 
 import matplotlib.pyplot as plt
 import pandas as pd
+
+import cea
 import cea.inputlocator
 import multiprocessing as mp
 
@@ -133,3 +135,17 @@ if __name__ == '__main__':
     args = parser.parse_args()
     run_as_script(scenario_path=args.scenario, analysis_fields=args.analysis_fields.split(';')[:4])
 
+
+def demand_graph_fields(scenario_path):
+    locator = cea.inputlocator.InputLocator(scenario_path)
+    df_total_demand = pd.read_csv(locator.get_total_demand())
+    total_fields = set(df_total_demand.columns.tolist())
+    first_building = df_total_demand['Name'][0]
+    df_building = pd.read_csv(locator.get_demand_results_file(first_building))
+    fields = set(df_building.columns.tolist())
+    fields.remove('DATE')
+    fields.remove('Name')
+    # remove fields in demand results files that do not have a corresponding field in the totals file
+    bad_fields = set(field for field in fields if not field.split('_')[0] + "_MWhyr" in total_fields)
+    fields = fields - bad_fields
+    return list(fields)

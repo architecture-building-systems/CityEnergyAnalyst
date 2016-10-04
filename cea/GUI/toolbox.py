@@ -3,11 +3,13 @@ ArcGIS Tool classes for integrating the CEA with ArcGIS.
 """
 import os
 import tempfile
-import arcpy
-import cea
-import cea.inputlocator
-import cea.globalvar
 
+import arcpy
+
+import cea
+import cea.globalvar
+import cea.inputlocator
+from cea.plots.graphs import demand_graph_fields
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -369,24 +371,12 @@ class GraphsDemandTool(object):
         return [scenario_path, analysis_fields]
 
     def updateParameters(self, parameters):
-        import pandas as pd
         scenario_path = parameters[0].valueAsText
         if not os.path.exists(scenario_path):
             parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
         analysis_fields = parameters[1]
-        locator = cea.inputlocator.InputLocator(scenario_path)
-        df_total_demand = pd.read_csv(locator.get_total_demand())
-        total_fields = set(df_total_demand.columns.tolist())
-        first_building = df_total_demand['Name'][0]
-        df_building = pd.read_csv(locator.get_demand_results_file(first_building))
-        fields = set(df_building.columns.tolist())
-        fields.remove('DATE')
-        fields.remove('Name')
-
-        # remove fields in demand results files that do not have a corresponding field in the totals file
-        bad_fields = set(field for field in fields if not field.split('_')[0] + "_MWhyr" in total_fields)
-        fields = fields - bad_fields
+        fields = demand_graph_fields(scenario_path)
 
         analysis_fields.filter.list = list(fields)
         return
