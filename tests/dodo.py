@@ -129,14 +129,16 @@ def task_run_demand_graphs():
     """try graphing all the demand variables for each reference case"""
     import cea.plots.graphs
     import cea.inputlocator
+    import random
     for reference_case, scenario_path in REFERENCE_CASES.items():
         locator = cea.inputlocator.InputLocator(scenario_path)
         all_fields = cea.plots.graphs.demand_graph_fields(scenario_path)
+        fields = random.choice(all_fields, 4)
         yield {
-            'name': '%(reference_case)s@%(weather)s' % locals(),
+            'name': '%(reference_case)s@%(fields)s' % locals(),
             'actions': [(cea.plots.graphs.run_as_script, [], {
                 'scenario_path': scenario_path,
-                'weather_path': locator.get_weather(weather)
+                'analysis_fields': fields
             })],
             'verbosity': 1,
         }
