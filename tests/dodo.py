@@ -161,9 +161,8 @@ def task_run_emissions_operation():
     for reference_case, scenario_path in REFERENCE_CASES.items():
         yield {
             'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.analysis.embodied.run_as_script, [], {
-                'scenario_path': scenario_path,
-                'year_to_calculate': 2050
+            'actions': [(cea.analysis.operation.run_as_script, [], {
+                'scenario_path': scenario_path
             })],
             'verbosity': 1,
         }
@@ -190,6 +189,20 @@ def task_run_heatmaps():
             'name': '%(reference_case)s' % locals(),
             'actions': [(cea.plots.heatmaps.run_as_script, [], {
                 'scenario_path': scenario_path
+            })],
+            'verbosity': 1,
+        }
+
+
+def task_run_scenario_plots():
+    """run the scenario plots script for each reference case"""
+    import cea.plots.scenario_plots
+    for reference_case, scenario_path in REFERENCE_CASES.items():
+        yield {
+            'name': '%(reference_case)s' % locals(),
+            'actions': [(cea.plots.scenario_plots.run_as_script, [], {
+                'scenario_folders': [scenario_path],
+                'output_file': None  # use default
             })],
             'verbosity': 1,
         }
