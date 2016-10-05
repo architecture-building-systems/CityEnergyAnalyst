@@ -182,6 +182,19 @@ def task_run_emissions_mobility():
         }
 
 
+def task_run_heatmaps():
+    """run the heat maps script for each reference case"""
+    import cea.plots.heatmaps
+    for reference_case, scenario_path in REFERENCE_CASES.items():
+        yield {
+            'name': '%(reference_case)s' % locals(),
+            'actions': [(cea.plots.heatmaps.run_as_script, [], {
+                'scenario_path': scenario_path
+            })],
+            'verbosity': 1,
+        }
+
+
 if __name__ == '__main__':
     import doit
 
