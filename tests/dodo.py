@@ -169,6 +169,19 @@ def task_run_emissions_operation():
         }
 
 
+def task_run_emissions_mobility():
+    """run the emissions mobility script for each reference case"""
+    import cea.analysis.mobility
+    for reference_case, scenario_path in REFERENCE_CASES.items():
+        yield {
+            'name': '%(reference_case)s' % locals(),
+            'actions': [(cea.analysis.mobility.run_as_script, [], {
+                'scenario_path': scenario_path
+            })],
+            'verbosity': 1,
+        }
+
+
 if __name__ == '__main__':
     import doit
 
