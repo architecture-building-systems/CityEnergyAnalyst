@@ -125,16 +125,6 @@ def run_as_script(scenario_path=None, analysis_fields=["Ealf_kWh", "Qhsf_kWh", "
     graphs_demand(locator=locator, analysis_fields=analysis_fields, gv=gv)
     print('done.')
 
-if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    parser.add_argument('-a', '--analysis_fields', default='Ealf_kWh;Qhsf_kWh;Qwwf_kWh;Qcsf_kWh',
-                        help='Fields to analyse (separated by ";")')
-    args = parser.parse_args()
-    run_as_script(scenario_path=args.scenario, analysis_fields=args.analysis_fields.split(';')[:4])
-
 
 def demand_graph_fields(scenario_path):
     locator = cea.inputlocator.InputLocator(scenario_path)
@@ -149,3 +139,15 @@ def demand_graph_fields(scenario_path):
     bad_fields = set(field for field in fields if not field.split('_')[0] + "_MWhyr" in total_fields)
     fields = fields - bad_fields
     return list(fields)
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
+    parser.add_argument('-a', '--analysis_fields', default='Ealf_kWh;Qhsf_kWh;Qwwf_kWh;Qcsf_kWh',
+                        help='Fields to analyse (separated by ";")')
+    args = parser.parse_args()
+    run_as_script(scenario_path=args.scenario, analysis_fields=args.analysis_fields.split(';')[:4])
+
+
