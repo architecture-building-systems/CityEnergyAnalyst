@@ -126,14 +126,12 @@ def task_run_demand():
 
 
 def task_run_demand_graphs():
-    """try graphing all the demand variables for each reference case"""
+    """graph random demand variables for each reference case"""
     import cea.plots.graphs
-    import cea.inputlocator
     import random
     for reference_case, scenario_path in REFERENCE_CASES.items():
-        locator = cea.inputlocator.InputLocator(scenario_path)
         all_fields = cea.plots.graphs.demand_graph_fields(scenario_path)
-        fields = random.choice(all_fields, 4)
+        fields = random.sample(all_fields, 4)
         yield {
             'name': '%(reference_case)s@%(fields)s' % locals(),
             'actions': [(cea.plots.graphs.run_as_script, [], {
@@ -142,6 +140,20 @@ def task_run_demand_graphs():
             })],
             'verbosity': 1,
         }
+
+def task_run_embodied_energy():
+    """Run the embodied energy script for each reference case"""
+    import cea.analysis.embodied
+    for reference_case, scenario_path in REFERENCE_CASES.items():
+        yield {
+            'name': '%(reference_case)s' % locals(),
+            'actions': [(cea.analysis.embodied.run_as_script, [], {
+                'scenario_path': scenario_path,
+                'year_to_calculate': 2050
+            })],
+            'verbosity': 1,
+        }
+
 
 
 if __name__ == '__main__':

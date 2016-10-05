@@ -236,7 +236,7 @@ class EmbodiedEnergyTool(object):
         gv = cea.globalvar.GlobalVariables()
         gv.log = add_message
         locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-        cea.analysis.embodied.lca_embodied(yearcalc=yearcalc, locator=locator, gv=gv)
+        cea.analysis.embodied.lca_embodied(year_to_calculate=yearcalc, locator=locator, gv=gv)
 
 
 class EmissionsTool(object):
