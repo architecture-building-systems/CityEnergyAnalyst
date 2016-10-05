@@ -155,6 +155,19 @@ def task_run_embodied_energy():
         }
 
 
+def task_run_emissions_operation():
+    """run the emissions operation script for each reference case"""
+    import cea.analysis.operation
+    for reference_case, scenario_path in REFERENCE_CASES.items():
+        yield {
+            'name': '%(reference_case)s' % locals(),
+            'actions': [(cea.analysis.embodied.run_as_script, [], {
+                'scenario_path': scenario_path,
+                'year_to_calculate': 2050
+            })],
+            'verbosity': 1,
+        }
+
 
 if __name__ == '__main__':
     import doit

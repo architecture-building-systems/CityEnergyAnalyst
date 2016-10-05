@@ -29,8 +29,8 @@ __status__ = "Production"
 reload(cea.inputlocator)
 
 
-def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_flag, Eal_flag, Eaux_flag, Epro_flag,
-                  Edata_flag):
+def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_flag=True, Qcrefri_flag=True,
+                  Eal_flag=True, Eaux_flag=True, Epro_flag=True, Edata_flag=True):
     """
     algorithm to calculate the primary energy and CO2 emissions of buildings
     according to the method used in the integrated model of
@@ -159,16 +159,18 @@ def lca_operation(locator, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_fl
     result[fields_to_plot].to_csv(locator.get_lca_operation(), index=False, float_format='%.2f')
 
 
-def test_lca_operation():
-    Qww_flag = Qhs_flag = True
-    Qcs_flag = Qcdata_flag = Qcrefri_flag = True
-    Eal_flag = Eaux_flag = Epro_flag = Edata_flag = True
-    locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case-zug\baseline')
-    lca_operation(locator=locator, Qww_flag=Qww_flag, Qhs_flag=Qhs_flag, Qcs_flag=Qcs_flag, Qcdata_flag=Qcdata_flag,
-                  Qcrefri_flag=Qcrefri_flag, Eal_flag=Eal_flag, Eaux_flag=Eaux_flag, Epro_flag=Epro_flag,
-                  Edata_flag=Edata_flag)
-
-    print('test_lca_operation() succeeded')
+def run_as_script(scenario_path=None):
+    import cea.globalvar
+    gv = cea.globalvar.GlobalVariables()
+    if not scenario_path:
+        scenario_path = gv.scenario_reference
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    lca_operation(locator=locator)
 
 if __name__ == '__main__':
-    test_lca_operation()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
+    args = parser.parse_args()
+    run_as_script(scenario_path=args.scenario)
