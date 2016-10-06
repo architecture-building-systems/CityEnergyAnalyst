@@ -9,8 +9,8 @@ import shutil
 import zipfile
 
 REPOSITORY_URL = "https://github.com/architecture-building-systems/cea-reference-case/archive/%s.zip"
-# REPOSITORY_NAME = "master"
-REPOSITORY_NAME = "i346-Radiation-data-missing-from-reference-case-zug"
+REPOSITORY_NAME = "master"
+#REPOSITORY_NAME = "i346-Radiation-data-missing-from-reference-case-zug"
 
 ARCHIVE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case.zip')
 REFERENCE_CASE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case')
@@ -18,9 +18,9 @@ REFERENCE_CASE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case')
 REFERENCE_CASES = {
     'zug/baseline': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME, "reference-case-zug",
                                  "baseline"),
-    'hq/baseline': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME, "reference-case (HQ)",
+    'hq/baseline': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME, "reference-case-zurich",
                                 "baseline"),
-    'hq/masterplan': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME, "reference-case (HQ)",
+    'hq/masterplan': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME, "reference-case-zurich",
                                   "masterplan")}
 
 REFERENCE_CASES_DATA = {
@@ -89,16 +89,14 @@ def task_download_radiation():
         import cea.inputlocator
         locator = cea.inputlocator.InputLocator(scenario_path)
         data = REFERENCE_CASES_DATA[reference_case]
-        if os.path.getsize(locator.get_surface_properties()) < 500:
-            r = requests.get(data['properties_surfaces'])
-            assert r.ok, 'could not download the properties_surfaces.csv file'
-            with open(locator.get_surface_properties(), 'w') as f:
-                f.write(r.content)
-        if os.path.getsize(locator.get_radiation()) < 500:
-            r = requests.get(data['radiation'])
-            assert r.ok, 'could not download the radiation.csv file'
-            with open(locator.get_radiation(), 'w') as f:
-                f.write(r.content)
+        r = requests.get(data['properties_surfaces'])
+        assert r.ok, 'could not download the properties_surfaces.csv file'
+        with open(locator.get_surface_properties(), 'w') as f:
+            f.write(r.content)
+        r = requests.get(data['radiation'])
+        assert r.ok, 'could not download the radiation.csv file'
+        with open(locator.get_radiation(), 'w') as f:
+            f.write(r.content)
     for reference_case, scenario_path in REFERENCE_CASES.items():
         yield {
             'name': reference_case,
@@ -126,17 +124,13 @@ def task_run_demand():
 
 
 def task_run_demand_graphs():
-    """graph random demand variables for each reference case"""
+    """graph default demand variables for each reference case"""
     import cea.plots.graphs
-    import random
     for reference_case, scenario_path in REFERENCE_CASES.items():
-        all_fields = cea.plots.graphs.demand_graph_fields(scenario_path)
-        fields = random.sample(all_fields, 4)
         yield {
-            'name': '%(reference_case)s@%(fields)s' % locals(),
+            'name': '%(reference_case)s' % locals(),
             'actions': [(cea.plots.graphs.run_as_script, [], {
-                'scenario_path': scenario_path,
-                'analysis_fields': fields
+                'scenario_path': scenario_path
             })],
             'verbosity': 1,
         }
