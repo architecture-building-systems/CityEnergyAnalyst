@@ -102,6 +102,14 @@ class InputLocator(object):
         """cea/databases/CH/Benchmarks/mobility.xls"""
         return os.path.join(self.db_path, 'Benchmarks', 'mobility.xls')
 
+    def get_data_mobility(self):
+        """cea/databases/CH/Uncertainty/mobility.xls"""
+        return os.path.join(self.db_path, 'Benchmarks', 'mobility.xls')
+
+    def get_uncertainty_db(self):
+        """cea/databases/CH/Benchmarks/mobility.xls"""
+        return os.path.join(self.db_path, 'Uncertainty', 'uncertainty_distributions.xls')
+
     # INPUTS
     def get_building_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
