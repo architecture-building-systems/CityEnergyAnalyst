@@ -18,19 +18,19 @@ REFERENCE_CASE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case')
 REFERENCE_CASES = {
     'zug/baseline': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME, "reference-case-zug",
                                  "baseline"),
-    'hq/baseline': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME, "reference-case-zurich",
+    'zurich/baseline': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME, "reference-case-zurich",
                                 "baseline"),
-    'hq/masterplan': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME, "reference-case-zurich",
+    'zurich/masterplan': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME, "reference-case-zurich",
                                   "masterplan")}
 
 REFERENCE_CASES_DATA = {
     'zug/baseline': {'weather': 'Zug', 'latitude': 47.1628017306431, 'longitude': 8.31,
                      'radiation': 'https://shared.ethz.ch/owncloud/s/qgra4F2RJfKXzOp/download',
                      'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/9w5ueJbXWSKaxvF/download'},
-    'hq/baseline': {'weather': 'Zurich', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
+    'zurich/baseline': {'weather': 'Zurich', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
                     'radiation': 'https://shared.ethz.ch/owncloud/s/8PNp6U1jpR0HnzC/download',
                     'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/tYLGZcBGLO9Wpy9/download'},
-    'hq/masterplan': {'weather': 'Zurich', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
+    'zurich/masterplan': {'weather': 'Zurich', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
                       'radiation': 'https://shared.ethz.ch/owncloud/s/MG3FeiSMVnIekwp/download',
                       'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/HFHttennomZSbSf/download'}}
 
@@ -200,6 +200,19 @@ def task_run_scenario_plots():
             })],
             'verbosity': 1,
         }
+
+
+def task_run_unit_tests():
+    """run the unittests"""
+    import tests.test_calc_thermal_loads_new_ventilation
+    def run_unit_tests():
+        import unittest
+        tests.test_calc_thermal_loads_new_ventilation.REFERENCE_CASE = REFERENCE_CASES['zurich/baseline']
+        unittest.main(module=tests.test_calc_thermal_loads_new_ventilation, exit=False)
+    return {
+        'actions': [run_unit_tests],
+        'verbosity': 1
+    }
 
 
 if __name__ == '__main__':
