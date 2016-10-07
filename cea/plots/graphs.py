@@ -50,7 +50,7 @@ def graphs_demand(locator, analysis_fields, gv):
     fields_MWhyr = [field.split('_')[0] + "_MWhyr" for field in analysis_fields]
     total_demand = total_file[fields_MWhyr]
     area_df = total_file['GFA_m2']
-    fields_date = analysis_fields.append('DATE')
+    fields_date = analysis_fields + ['DATE']
     num_buildings = len(building_names)
 
     if gv.multiprocessing and mp.cpu_count() > 1:
