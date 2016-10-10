@@ -71,3 +71,5 @@ test/reference-case/Radiation2000-2009.csv
 demand.prof
 demand_numba.prof
 *.prof
+building_info.csv
+tests/.doit.db

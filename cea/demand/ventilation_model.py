@@ -409,7 +409,7 @@ def allocate_default_leakage_paths(coeff_lea_zone, area_facade_zone, area_roof_z
 
     coeff_lea_path = np.zeros(5)
     height_lea_path = np.zeros(5)
-    orientation_lea_path = np.zeros(5)
+    orientation_lea_path = [0, 1, 0, 1, 2]
 
     # Table B.10 in [1]
     # default leakage path 1
@@ -565,7 +565,7 @@ def allocate_default_ventilation_openings(coeff_vent_zone, height_zone):
     # initialize
     coeff_vent_path = np.zeros(4)
     height_vent_path = np.zeros(4)
-    orientation_vent_path = np.zeros(4)
+    orientation_vent_path = [0, 1, 0, 1]
 
     # Table B.9 in [1]
     # default leakage path 1
