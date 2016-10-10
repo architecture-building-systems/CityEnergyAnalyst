@@ -8,9 +8,18 @@ import os
 import shutil
 import zipfile
 
+__author__ = "Daren Thomas"
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Daren Thomas"]
+__license__ = "MIT"
+__version__ = "0.1"
+
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
 REPOSITORY_URL = "https://github.com/architecture-building-systems/cea-reference-case/archive/%s.zip"
 REPOSITORY_NAME = "master"
-#REPOSITORY_NAME = "i346-Radiation-data-missing-from-reference-case-zug"
 
 ARCHIVE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case.zip')
 REFERENCE_CASE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case')
