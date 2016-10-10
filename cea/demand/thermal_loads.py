@@ -878,6 +878,8 @@ class BuildingProperties(object):
         gv.log("done")
 
         # save resulting data
+        self._prop_surface = surface_properties
+        self._prop_thermal = prop_thermal
         self._prop_geometry = prop_geometry
         self._prop_architecture = prop_architecture
         self._prop_occupancy = prop_occupancy
