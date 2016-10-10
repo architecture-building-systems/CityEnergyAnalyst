@@ -26,9 +26,6 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-reload(cea.inputlocator)
-
-
 def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_flag=True, Qcrefri_flag=True,
                   Eal_flag=True, Eaux_flag=True, Epro_flag=True, Edata_flag=True):
     """
