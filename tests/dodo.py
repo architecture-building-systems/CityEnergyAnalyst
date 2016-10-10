@@ -214,6 +214,7 @@ def task_run_scenario_plots():
 def task_run_unit_tests():
     """run the unittests"""
     import tests.test_calc_thermal_loads_new_ventilation
+    
     def run_unit_tests():
         import unittest
         tests.test_calc_thermal_loads_new_ventilation.REFERENCE_CASE = REFERENCE_CASES['zurich/baseline']
