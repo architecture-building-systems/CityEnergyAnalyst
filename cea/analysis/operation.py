@@ -14,8 +14,6 @@ import pandas as pd
 from geopandas import GeoDataFrame as gpdf
 import os
 
-import cea.inputlocator
-
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca"]
