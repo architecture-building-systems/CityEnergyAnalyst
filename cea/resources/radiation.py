@@ -474,13 +474,13 @@ def Burn(Buildings, DEM, DEMfinal, locationtemp1, DEM_extent, gv):
     return arcpy.GetMessages()
 
 
-def calc_sunrise(sunrise, Yearsimul, longitude, latitude, gv):
+def calc_sunrise(sunrise, year_to_simulate, longitude, latitude, gv):
     o = ephem.Observer()
     o.lat = str(latitude)
     o.long = str(longitude)
     s = ephem.Sun()
     for day in range(1, 366):  # Calculated according to NOAA website
-        o.date = datetime.datetime(Yearsimul, 1, 1) + datetime.timedelta(day - 1)
+        o.date = datetime.datetime(year_to_simulate, 1, 1) + datetime.timedelta(day - 1)
         next_event = o.next_rising(s)
         sunrise[day - 1] = next_event.datetime().hour
     gv.log('complete calculating sunrise')
