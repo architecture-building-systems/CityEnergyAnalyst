@@ -59,6 +59,13 @@ class GlobalVariables(object):
         # constant variables for air conditioning fan
         self.Pfan = 0.55 # specific fan consumption in W/m3/h
 
+
+        # ==============================================================================================================
+        # sensitivity morris method
+        # ==============================================================================================================
+
+        self.samples = False # keep as false, cea.analysis.morris change this to a value if active
+
         # ==============================================================================================================
         # optimization
         # ==============================================================================================================
@@ -505,7 +512,8 @@ class GlobalVariables(object):
         # Columns to write for the demand calculation
         # ==============================================================================================================
         self.demand_totals_csv_columns = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'occ_pax', 'QHf_MWhyr', 'QCf_MWhyr',
-                                          'Ef_MWhyr', 'Qhsf0_kW', 'Qhsf_MWhyr', 'Qhs_MWhyr', 'Qhs_lat_MWhyr', 'Qwwf0_kW', 'Qwwf_MWhyr',
+                                          'Ef_MWhyr','QHf_MWhyr', 'QCf_MWhyr','Ef0_kW', 'QHf0_kW', 'QCf0_kW',
+                                          'Qhs_MWhyr', 'Qhs_lat_MWhyr', 'Qwwf0_kW', 'Qwwf_MWhyr',
                                           'Qww_MWhyr', 'Qhprof_MWhyr', 'Qcsf0_kW', 'Qcsf_MWhyr', 'Qcs_MWhyr', 'Qcs_lat_MWhyr',
                                           'Qcref_MWhyr', 'Qcdataf_MWhyr', 'Ealf0_kW', 'Ealf_MWhyr', 'Eauxf_MWhyr',
                                           'Ecaf_MWhyr', 'Edataf_MWhyr', 'Eprof_MWhyr', 'Tshs0_C', 'Trhs0_C', 'Tscs0_C',
