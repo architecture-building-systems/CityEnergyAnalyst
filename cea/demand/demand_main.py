@@ -113,7 +113,7 @@ def demand_calculation(locator, weather_path, gv):
 def write_totals_csv(building_properties, locator, gv):
     """read in the temporary results files and append them to the Totals.csv file."""
     counter = 0
-    for name in building_properties.list_building_names():
+    for name in building_properties.list_building_names()[:2]:
         temporary_file = locator.get_temporary_file('%(name)sT.csv' % locals())
         if counter == 0:
             df = pd.read_csv(temporary_file)
@@ -133,7 +133,7 @@ multiple or single core calculation
 
 def thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, usage_schedules,
                                 weather_data):
-    for i, building in enumerate(building_properties.list_building_names()):
+    for i, building in enumerate(building_properties.list_building_names()[:2]):
         bpr = building_properties[building]
         thermal_loads.calc_thermal_loads(
             building, bpr, weather_data, usage_schedules, date, gv, locator)
@@ -162,6 +162,14 @@ test
 =========================================
 """
 
+#function to change values in the cea for sensitivity analysis
+def shifter(samples, bpr):
+    for key, value in samples.iteritems():
+        bpr._prop_thermal[key] = value
+
+    bpr.calc_prop_rc_model(bpr._prop_occupancy, bpr._prop_architecture, bpr._prop_thermal, bpr._prop_geometry,
+                           bpr._prop_HVAC_result, bpr._surface_properties, bpr.gv)
+    return bpr
 
 def run_as_script(scenario_path=None, weather_path=None):
     gv = cea.globalvar.GlobalVariables()

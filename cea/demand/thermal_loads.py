@@ -9,7 +9,7 @@ from __future__ import division
 import os
 import numpy as np
 import pandas as pd
-from geopandas import GeoDataFrame
+from geopandas import GeoDataFrame as Gdf
 import cea.demand.airconditioning_model
 import cea.demand.ventilation_model as ventilation_model
 from cea.demand import occupancy_model
@@ -761,9 +761,9 @@ def results_to_csv(gv, locator, bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_t
          'Tshs_C': Ths_sup, 'Trhs_C': Ths_re, 'mcphs_kWC': mcphs / 1000, 'mcpww_kWC': mcpww / 1000, 'Tscs_C': Tcs_sup,
          'Trcs_C': Tcs_re, 'mcpcs_kWC': mcpcs / 1000, 'Qcdataf_kWh': Qcdata / 1000,
          'Tsww_C': bpr.building_systems['Tww_sup_0'], 'Trww_C': tsd['Tww_re'],
-         'Ef_kWh': (Ealf + Eauxf + Eprof) / 1000, 'Eprof_kWh': Eprof / 1000,
+         'Ef_kWh': (Ealf + Eauxf + Eprof + Edata + Ecaf) / 1000, 'Eprof_kWh': Eprof / 1000,
          'Qcref_kWh': Qcrefri / 1000, 'Qhs_lat_kWh':tsd['Qhs_lat']/1000, 'Qcs_lat_kWh':-tsd['Qcs_lat']/1000,
-         'Edataf_kWh': Edata / 1000, 'QHf_kWh': (Qwwf + Qhsf) / 1000,
+         'Edataf_kWh': Edata / 1000, 'QHf_kWh': (Qwwf + Qhsf + Qhprof) / 1000,
          'QCf_kWh': (-1 * Qcsf + Qcdata + Qcrefri) / 1000, "mcpdata_kWC": mcpdataf / 1000, "Trdata_C": Tcdataf_re,
          'Tsdata_C': Tcdataf_sup, 'mcpref_kWC': mcpref / 1000, 'Trref_C': Tcref_re, 'Tsref_C': Tcref_sup,
          'Eaux_hs_kWh': Eaux_hs / 1000, 'Eaux_cs_kWh': Eaux_cs / 1000, 'Eaux_ve_kWh': Eaux_ve / 1000,
@@ -788,7 +788,8 @@ def results_to_csv(gv, locator, bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_t
          'Ealf_MWhyr': Ealf_tot, 'Eauxf_MWhyr': Eauxf_tot, 'Eprof_MWhyr': Eprof_tot, 'Edataf_MWhyr': Edata_tot,
          'Tsww0_C': bpr.building_systems['Tww_sup_0'], 'Vw_m3yr': Vw.sum(), 'Vww_m3yr': Vww.sum(),
          'Ef_MWhyr': (Ealf_tot + Eauxf_tot + Eprof_tot + Edata_tot + Ecaf_tot),
-         'QHf_MWhyr': (Qwwf_tot + Qhsf_tot + Qhprof_tot),
+         'QHf_MWhyr': (Qwwf_tot + Qhsf_tot + Qhprof_tot), 'Ef0_kW': (Ealf + Eauxf + Eprof + Edata + Ecaf).max()/1000,
+         'QHf0_kW':(Qwwf + Qhsf + Qhprof).max()/1000, 'QCf0_kW': (-1 * Qcsf + Qcdata + Qcrefri).max()/1000,
          'QCf_MWhyr': (Qcsf_tot + Qcdata_tot + Qcrefri_tot), 'Eaf0_kW': Eaf_0 / 1000, 'Elf0_kW': Elf_0 / 1000,
          'Eaf_MWhyr': Eaf_tot, 'Elf_MWhyr': Elf_tot,
          }, index=[0])
@@ -845,35 +846,34 @@ class BuildingProperties(object):
 
         from cea.geometry import geometry_reader
         self.gv = gv
-        gv.log("reading input files")
+        gv.log("read input files")
         solar = pd.read_csv(locator.get_radiation()).set_index('Name')
         surface_properties = pd.read_csv(locator.get_surface_properties())
-        prop_geometry = GeoDataFrame.from_file(locator.get_building_geometry())
+        prop_geometry = Gdf.from_file(locator.get_building_geometry())
         prop_geometry['footprint'] = prop_geometry.area
         prop_geometry['perimeter'] = prop_geometry.length
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
-        prop_hvac = GeoDataFrame.from_file(locator.get_building_hvac()).drop('geometry', axis=1)
-        prop_thermal = GeoDataFrame.from_file(locator.get_building_thermal()).drop('geometry', axis=1).set_index('Name')
-        prop_occupancy_df = GeoDataFrame.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index(
-            'Name')
-        prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(
-            axis=0)]  # trick to erase occupancies that are not being used (it speeds up the code)
-        prop_architecture = GeoDataFrame.from_file(locator.get_building_architecture()).drop('geometry',
-                                                                                             axis=1).set_index('Name')
-        prop_age = GeoDataFrame.from_file(locator.get_building_age()).drop('geometry', axis=1).set_index('Name')
-        prop_comfort = GeoDataFrame.from_file(locator.get_building_comfort()).drop('geometry', axis=1).set_index('Name')
-        prop_internal_loads = GeoDataFrame.from_file(locator.get_building_internal()).drop('geometry',
-                                                                                           axis=1).set_index('Name')
+        prop_hvac = Gdf.from_file(locator.get_building_hvac()).drop('geometry', axis=1)
+        prop_thermal = Gdf.from_file(locator.get_building_thermal()).drop('geometry', axis=1).set_index('Name')
+        prop_occupancy_df = Gdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index('Name')
+        prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
+        prop_architecture = Gdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1).set_index('Name')
+        prop_age = Gdf.from_file(locator.get_building_age()).drop('geometry', axis=1).set_index('Name')
+        prop_comfort = Gdf.from_file(locator.get_building_comfort()).drop('geometry', axis=1).set_index('Name')
+        prop_internal_loads = Gdf.from_file(locator.get_building_internal()).drop('geometry',axis=1).set_index('Name')
+
+        if gv.samples:  # if sensitivity analysis is on and there are samples
+            for key, value in gv.samples.iteritems():
+                prop_thermal[key] = value
+
         # get temperatures of operation
         prop_HVAC_result = get_temperatures(locator, prop_hvac).set_index('Name')
-        gv.log('done')
 
-        gv.log("calculating thermal properties")
-        prop_rc_model = self.calc_prop_rc_model(prop_occupancy, prop_architecture, prop_thermal, prop_geometry,
-                                                prop_HVAC_result, surface_properties, gv)
-        gv.log("done")
+        # get properties of rc demand model
+        prop_rc_model = self.calc_prop_rc_model(prop_occupancy, prop_architecture, prop_thermal,
+                                                prop_geometry, prop_HVAC_result, surface_properties,
+                                                gv)
 
-        gv.log("creating windows")
         df_windows = geometry_reader.create_windows(surface_properties, prop_architecture)
         gv.log("done")
 
@@ -884,12 +884,12 @@ class BuildingProperties(object):
         self._prop_architecture = prop_architecture
         self._prop_occupancy = prop_occupancy
         self._prop_HVAC_result = prop_HVAC_result
-        self._prop_RC_model = prop_rc_model
         self._prop_comfort = prop_comfort
         self._prop_internal_loads = prop_internal_loads
         self._prop_age = prop_age
         self._solar = solar
         self._prop_windows = df_windows
+        self._prop_RC_model = prop_rc_model
 
     def __len__(self):
         return len(self.list_building_names())
@@ -956,24 +956,24 @@ class BuildingProperties(object):
             occupancy type (GYM, HOSPITAL, HOTEL, INDUSTRIAL, MULTI_RES, OFFICE, PARKING, etc.) except for the
             "PFloor" column which is a fraction of heated floor area.
             The occupancy types must add up to 1.0.
-        :type occupancy: GeoDataFrame
+        :type occupancy: Gdf
 
         :param architecture: The contents of the `architecture.shp` file, indexed by building name. It contains the
             following fields: Occ_m2p, f_cros, n50, type_shade, win_op, win_wall. Only `win_wall` (window to wall ratio) is
             used.
-        :type architecture: GeoDataFrame
+        :type architecture: Gdf
 
         :param thermal_properties: The contents of the `thermal_properties.shp` file, indexed by building name. It
             contains the following fields: Es, Hs, U_base, U_roof, U_wall, U_win, th_mass.
             - Es: fraction of gross floor area that has electricity {0 <= Es <= 1}
             - Hs: fraction of gross floor area that is heated/cooled {0 <= Hs <= 1}
             - th_mass: type of building construction {T1: light, T2: medium, T3: heavy}
-        :type thermal_properties: GeoDataFrame
+        :type thermal_properties: Gdf
 
         :param geometry: The contents of the `zone.shp` file indexed by building name - the list of buildings, their floor
             counts, heights etc.
             Includes additional fields "footprint" and "perimeter" as calculated in `read_building_properties`.
-        :type geometry: GeoDataFrame
+        :type geometry: Gdf
 
         :param hvac_temperatures: The return value of `get_temperatures`.
         :type hvac_temperatures: DataFrame
@@ -1223,7 +1223,7 @@ def get_temperatures(locator, prop_HVAC):
                       system and heating system.
                       The values can be looked up in the contributors manual:
                       https://architecture-building-systems.gitbooks.io/cea-toolbox-for-arcgis-manual/content/building_properties.html#mechanical-systems
-    :type prop_HVAC: GeoDataFrame
+    :type prop_HVAC: Gdf
 
     Sample data (first 5 rows):
                  Name type_cs type_ctrl type_dhw type_hs
