@@ -26,7 +26,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-
 """
 =========================================
 demand calculation
@@ -130,13 +129,15 @@ multiple or single core calculation
 =========================================
 """
 
+
 def thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, usage_schedules,
                                 weather_data):
     for i, building in enumerate(building_properties.list_building_names()):
         bpr = building_properties[building]
         thermal_loads.calc_thermal_loads(
             building, bpr, weather_data, usage_schedules, date, gv, locator)
-        gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
+        gv.log('Building No. %(bno)i completed out of %(num_buildings)i: %(building)s', bno=i + 1,
+               num_buildings=num_buildings, building=building)
 
 
 def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, num_buildings, usage_schedules,
@@ -153,11 +154,13 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
         job.get(240)
         gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
 
+
 """
 =========================================
 test
 =========================================
 """
+
 
 def run_as_script(scenario_path=None, weather_path=None):
     gv = cea.globalvar.GlobalVariables()
@@ -175,9 +178,10 @@ def run_as_script(scenario_path=None, weather_path=None):
 
 if __name__ == '__main__':
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
     parser.add_argument('-w', '--weather', help='Path to the weather file')
     args = parser.parse_args()
-    run_as_script(scenario_path=args.scenario, weather_path=args.weather)
 
+    run_as_script(scenario_path=args.scenario, weather_path=args.weather)

@@ -314,7 +314,7 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
                                        Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, gv, ma_sup_cs, ma_sup_hs,
                                        sys_e_cooling, sys_e_heating, ta_hs_set):
 
-    from cea.technologies import  radiators, heating_coils, tabs
+    from cea.technologies import radiators, heating_coils, tabs
     # local variables
     Ta_0 = ta_hs_set.max()
     if sys_e_heating == 'T0':
