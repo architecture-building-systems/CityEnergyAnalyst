@@ -1047,7 +1047,8 @@ class BuildingProperties(object):
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated
         df['Aef'] = df['GFA_m2'] * df['Es']  # conditioned area only those for electricity
-        df['Am'] = df['th_mass'].apply(self.lookup_effective_mass_area_factor) * df['Af']  # Effective mass area in [m2]
+        df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df['Af']  # Internal heat capacity in J/K
+        df['Am'] = df['Cm'].apply(self.lookup_effective_mass_area_factor) * df['Af']  # Effective mass area in [m2]
 
         # Steady-state Thermal transmittance coefficients and Internal heat Capacity
         df['Htr_w'] = df['Aw'] * df['U_win']  # Thermal transmission coefficient for windows and glazing in [W/K]
@@ -1061,7 +1062,7 @@ class BuildingProperties(object):
         df['Htr_ms'] = gv.hms * df['Am']  # Coupling conductance 1 in W/K
         df['Htr_em'] = 1 / (1 / df['Htr_op'] - 1 / df['Htr_ms'])  # Coupling conductance 2 in W/K
         df['Htr_is'] = gv.his * df['Atot']
-        df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df['Af']  # Internal heat capacity in J/K
+
 
         fields = ['Awall_all', 'Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',
                   'HD', 'Aroof',
@@ -1104,14 +1105,12 @@ class BuildingProperties(object):
         :param th_mass: the type of building construction (origin: thermal_properties.shp)
         :return: effective mass area factor
         """
-        if th_mass == 'T2':
-            return 2.5
-        elif th_mass == 'T3':
-            return 3.2
-        elif th_mass == 'T1':
+        if cm == 0:
+            return 0
+        elif 0 < cm <= 165000.0:
             return 2.5
         else:
-            return 2.5
+            return 3.2
 
     def __getitem__(self, building_name):
         """return a (read-only) BuildingPropertiesRow for the building"""
