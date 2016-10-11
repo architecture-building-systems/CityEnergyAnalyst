@@ -25,8 +25,8 @@ import numpy as np
 def screening_main(locator, weather_path, gv, output_parameters):
 
     #Model constants
-    gv.multiprocessing = False # default false
-    population = 1 #generally 1000
+    gv.multiprocessing = True # default false
+    population = 10 #generally 1000
     confidence = 0.95 # generally 0.95
     grid = 2   # generally 2
     levels = 4 # generally 4
@@ -69,13 +69,20 @@ def screening_main(locator, weather_path, gv, output_parameters):
 # function to call cea
 def screening_cea_multiprocessing(samples, names, output_parameters, locator, weather_path, gv):
 
-    out_q = mp.Queue()
-    jobs = [mp.Process(target=screening_cea, args=(out_q, sample, names, output_parameters, locator, weather_path,
-                                            gv)) for sample in samples]
-    for job in jobs: job.start()
-    for job in jobs: job.join()
+    manager = mp.Manager()
+    out_q = manager.Queue()
+    pool = mp.Pool()
+    gv.log("Using %i CPU's" % mp.cpu_count())
+    gv.multiprocessing = False  # demand_main checks this value and we can't have it using a pool!
+    jobs = []
+    for sample in samples:
+        job = pool.apply_async(screening_cea, [out_q, sample, names, output_parameters, locator, weather_path, gv])
+        jobs.append(job)
 
-    results = [out_q.get() for job in jobs]
+    for job in jobs:
+        job.get()
+
+    results = [out_q.get() for _ in jobs]
     return results
 
 
