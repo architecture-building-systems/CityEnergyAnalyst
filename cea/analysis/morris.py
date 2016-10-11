@@ -16,20 +16,19 @@ from __future__ import division
 from cea.demand import demand_main
 
 import multiprocessing as mp
-from SALib.analyze import morris
-from SALib.sample.morris import sample as sampler
+from SALib.analyze import sobol
+from SALib.sample.saltelli import sample as sampler
 import pandas as pd
 import numpy as np
-
+import time
 # main
 def screening_main(locator, weather_path, gv, output_parameters):
-
+    t0 = time.clock()
     #Model constants
     gv.multiprocessing = False # default false
-    population = 1 #generally 1000
+    num_samples = 1000 #generally 100
     confidence = 0.95 # generally 0.95
-    grid = 2   # generally 2
-    levels = 4 # generally 4
+    calc_second_order = False
 
     #Define the model inputs
     variables = pd.read_excel(locator.get_uncertainty_db(), "THERMAL")
@@ -44,50 +43,60 @@ def screening_main(locator, weather_path, gv, output_parameters):
     problem = {'num_vars': num_vars,'names': names, 'bounds': bounds, 'groups': None}
 
     #create samples (combinations of variables)
-    samples = sampler(problem, N=population, num_levels=levels, grid_jump=grid)
-    print len(samples), samples
+    samples = sampler(problem, N=num_samples, calc_second_order=calc_second_order)
 
     #call the CEA for building demand and store the results of every sample in a vector
+    gv.log("Running %i samples" % len(samples))
     simulations = screening_cea_multiprocessing(samples, names, output_parameters, locator, weather_path, gv)
-    print simulations
 
-    #do morris analysis
+    #do morris analysis and output to excel
     buildings_num = simulations[0].shape[0]
-    parameter_results = []
+    writer = pd.ExcelWriter(locator.get_sobol_sensitivity_output())
     for parameter in output_parameters:
-        morris_results = []
+        sensitivity_results = []
         for building in range(buildings_num):
             simulations_parameter = np.array([x.loc[building, parameter] for x in simulations])
-            morris_results.append(morris.analyze(problem, samples, simulations_parameter, conf_level=confidence,
-                                            num_levels=levels, grid_jump=grid))
-
-        parameter_results.append(pd.DataFrame(morris_results))
-    print parameter_results
-
-    return  #returns dict ranked
+            sensitivity_results.append(sobol.analyze(problem, simulations_parameter, conf_level=confidence,
+                                        calc_second_order=calc_second_order)['ST'])
+        pd.DataFrame(sensitivity_results, columns = problem['names']).to_excel(writer,parameter)
+    writer.save()
+    gv.log('Sensitivity Sobol method done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
 # function to call cea
 def screening_cea_multiprocessing(samples, names, output_parameters, locator, weather_path, gv):
 
-    out_q = mp.Queue()
-    jobs = [mp.Process(target=screening_cea, args=(out_q, sample, names, output_parameters, locator, weather_path,
-                                            gv)) for sample in samples]
-    for job in jobs: job.start()
-    for job in jobs: job.join()
+    #out_q = mp.Queue()
+    #jobs = [mp.Process(target=screening_cea, args=(out_q, sample, names, output_parameters, locator, weather_path,
+    #                                        gv)) for sample in samples]
+    #for job in jobs: job.start()
+    #for job in jobs: job.join()
 
-    results = [out_q.get() for job in jobs]
+    #results = [out_q.get() for job in jobs]
+    #return results
+    pool = mp.Pool()
+    gv.log("Using %i CPU's" % mp.cpu_count())
+    joblist = [pool.apply_async(screening_cea, [counter, sample,  names, output_parameters, locator, weather_path, gv])
+               for sample, counter in zip(samples, range(len(samples)))]
+    results = [job.get() for job in joblist]
+    # return in order
+    results = sorted(results, key=lambda tup: tup[0])
+    results = [x[1] for x in results]
     return results
 
-
-def screening_cea(out_q, sample,  var_names, output_parameters, locator, weather_path, gv):
+def screening_cea(counter, sample,  var_names, output_parameters, locator, weather_path, gv):
 
     #create a dict with the new input vatiables form the sample and pass in gv
     gv.samples = dict(zip(var_names, sample))
     print gv.samples
-    #demadn calculation and return the total file
-    totals_output_parameters = demand_main.demand_calculation(locator, weather_path, gv)[output_parameters]
+    result = None
+    while result is None:  # trick to avoid that arcgis stops calculating the days and tries again.
+        try:
+            result = demand_main.demand_calculation(locator, weather_path, gv)[output_parameters]
+        except Exception, e:
+            print e, result
+            pass
 
-    return out_q.put(totals_output_parameters)
+    return (counter,result)
 
 def run_as_script():
     import cea.globalvar as gv
