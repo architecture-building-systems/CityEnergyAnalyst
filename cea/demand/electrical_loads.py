@@ -119,12 +119,18 @@ def calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses):
     Calculate the schedule to use for lighting and appliances based on the building uses from the schedules
     defined for the project.
 
+    PARAMETERS
+    ----------
+
     :param list_uses: the schedule names for the `schedules` parameter
     :type list_uses: list of str
     :param schedules: the schedules, one for each name in `list_uses`. Each schedule is a list of 8760 floats...
     :type schedules: list of list of float
     :param building_uses: A set of weights for the schedules as they apply to this particular building.
     :type building_uses: dict of (str, float)
+
+    RETURNS
+    -------
 
     :return: A weighted average of the schedules for a specific building.
     :rtype: list of float
@@ -166,7 +172,26 @@ def calc_Eref(schedule , Ere_Wm2, Aef, share):
 
 
 def calc_Eprof_schedule(list_uses, schedules, building_uses):
-    # weighted average of schedules
+    """
+    Calculate a weighted average of the schedules as defined in `list_uses` and `schedules`, using the weights
+    in `building_uses` (which is taken from `bpr.occupancy`).
+
+    PARAMETERS
+    ----------
+
+    :param list_uses: the schedule names for the `schedules` parameter
+    :type list_uses: list of str
+    :param schedules: the schedules, one for each name in `list_uses`. Each schedule is a list of 8760 floats...
+    :type schedules: list of list of float
+    :param building_uses: A set of weights for the schedules as they apply to this particular building.
+    :type building_uses: dict of (str, float)
+
+    RETURNS
+    -------
+
+    :return: A weighted average of the schedules for a specific building.
+    :rtype: list of float
+    """
     def calc_average(last, current, share_of_use):
         return last + current * share_of_use
 
