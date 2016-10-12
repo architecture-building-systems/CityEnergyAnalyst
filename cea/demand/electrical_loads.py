@@ -185,6 +185,29 @@ def calc_Eaf(schedule, Ea_Wm2, Aef):
 
 
 def calc_Elf(schedule, El_Wm2, Aef):
+    """
+    Calculate the final electrical consumption due to lights for a building.
+
+    PARAMETERS
+    ----------
+
+    :param schedule: The appliances and lighting schedule as calculated by `calc_Ea_El_Edata_Eref_schedule`
+    :type schedule: ndarray
+
+    :param El_Wm2: The maximum electrical consumption due to lights per unit of gross floor area (as taken from the
+                   building properties / internal loads file)
+    :type El_Wm2: float64
+
+    :param Aef: The floor area with electricity in [m2]
+    :type Aef: float64
+
+    RETURNS
+    -------
+
+    :returns: final electrical consumption due to lights per hour in [W]
+    :rtype: ndarray
+    """
+    # FIXME: see issue #360
     Elf = schedule * El_Wm2 * Aef  # in W
     return Elf
 
