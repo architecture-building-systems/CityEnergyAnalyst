@@ -64,11 +64,19 @@ def lca_mobility(locator):
 
     mobility[fields_to_plot].to_csv(locator.get_lca_mobility(), index=False, float_format='%.2f')
 
-def test_mobility():
-    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case-zug\baseline')
+
+def run_as_script(scenario_path=None):
+    import cea.globalvar
+    gv = cea.globalvar.GlobalVariables()
+    if not scenario_path:
+        scenario_path = gv.scenario_reference
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     lca_mobility(locator=locator)
 
-    print 'test_mobility() succeeded'
-
 if __name__ == '__main__':
-    test_mobility()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
+    args = parser.parse_args()
+    run_as_script(scenario_path=args.scenario)
