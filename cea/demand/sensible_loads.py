@@ -266,16 +266,17 @@ solar and heat gains
 =========================================
 """
 
-def calc_Qgain_sen(people, Qs_Wp, Eal_nove, Eprof, Qcdata, Qcrefri, tsd, Am, Atot, Htr_w, bpr, gv):
+def calc_Qgain_sen(Qcdata, Qcrefri, tsd, bpr, gv):
 
     # internal loads
     tsd['I_sol']= calc_I_sol(bpr, gv)
-    tsd['I_int_sen'] = people * Qs_Wp + 0.9 * (Eal_nove + Eprof) + Qcdata - Qcrefri  # here 0.9 is assumed
+    tsd['I_int_sen'] = tsd['people'] * bpr.internal_loads['Qs_Wp'] + 0.9 * (tsd['Ealf'] + tsd['Eprof']) + Qcdata - Qcrefri  # FIXME: here 0.9 is assumed
 
     # divide into components for RC model
     tsd['I_ia'] = 0.5 * tsd['I_int_sen']
-    tsd['I_m'] = (Am / Atot) * (tsd['I_ia'] + tsd['I_sol'])
-    tsd['I_st'] = (1 - (Am / Atot) - (Htr_w / (9.1 * Atot))) * (tsd['I_ia'] + tsd['I_sol'])
+    tsd['I_m'] = (bpr.rc_model['Am'] / bpr.rc_model['Atot']) * (tsd['I_ia'] + tsd['I_sol'])
+    # FIXME: why 9.1?
+    tsd['I_st'] = (1 - (bpr.rc_model['Am'] / bpr.rc_model['Atot']) - (bpr.rc_model['Htr_w'] / (9.1 * bpr.rc_model['Atot']))) * (tsd['I_ia'] + tsd['I_sol'])
 
     return tsd
 
