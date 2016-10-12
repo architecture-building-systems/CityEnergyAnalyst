@@ -170,10 +170,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         # heat flows in [W]
         # sensible heat gains
-        tsd = sensible_loads.calc_Qgain_sen(tsd['people'], bpr.internal_loads['Qs_Wp'],
-                                            tsd['Ealf'], tsd['Eprof'],
-                                            Qcdataf, Qcrefrif, tsd, bpr.rc_model['Am'], bpr.rc_model['Atot'],
-                                            bpr.rc_model['Htr_w'],bpr, gv)
+        tsd = sensible_loads.calc_Qgain_sen(Qcdataf, Qcrefrif, tsd, bpr, gv)
 
         # latent heat gains
         tsd['w_int'] = sensible_loads.calc_Qgain_lat(tsd['people'], bpr.internal_loads['X_ghp'],
