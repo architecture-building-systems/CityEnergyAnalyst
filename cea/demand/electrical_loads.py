@@ -86,7 +86,6 @@ def calc_Eint(tsd, bpr, list_uses, schedules):
 
     # calculate schedules
     schedule_Ea_El_Edata_Eref = calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, bpr.occupancy)
-    schedule_pro = calc_Eprof_schedule(list_uses, schedules, bpr.occupancy)
 
     # calculate loads
     tsd['Eaf'] = calc_Eaf(schedule_Ea_El_Edata_Eref, bpr.internal_loads['Ea_Wm2'], bpr.rc_model['Af'])
