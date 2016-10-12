@@ -129,7 +129,7 @@ def calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses):
     :param list_uses: the schedule names for the `schedules` parameter
     :type list_uses: list of str
     :param schedules: the schedules, one for each name in `list_uses`. Each schedule is a list of 8760 floats...
-    :type schedules: list of list of float
+    :type schedules: list of list of list of float
     :param building_uses: A set of weights for the schedules as they apply to this particular building.
     :type building_uses: dict of (str, float)
 
@@ -213,6 +213,33 @@ def calc_Elf(schedule, El_Wm2, Aef):
 
 
 def calc_Edataf(schedule, Ed_Wm2, Aef, share):
+    """
+    Calculates the final electricity consumption in data centers.
+
+    PARAMETERS
+    ----------
+
+    :param schedule: The data center schedule as calculated by `calc_Ea_El_Edata_Eref_schedule` but just for the
+                     SERVERROOM portion of the occupancy.
+    :type schedule: ndarray
+
+    :param Ed_Wm2: The maximum electrical consumption due to servers per unit of gross floor area (as taken from the
+                   building properties / internal loads file)
+    :type Ed_Wm2: float64
+
+    :param Aef: The floor area with electricity in [m2]
+    :type Aef: float64
+
+    :param share: The fraction of the building occupancy that is related to SERVERROOM.
+    :type share: float64
+
+    RETURNS
+    -------
+
+    :returns: final electricity consumption in data centers per hour in [W]
+    :rtype: ndarray
+    """
+    # FIXME: see bug #362 (I don't understand the share parameter in calc_Edataf)
     Edataf = schedule * Ed_Wm2 * Aef * share  # in W
     return Edataf
 
