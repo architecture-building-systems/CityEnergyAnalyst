@@ -103,16 +103,22 @@ def get_gis_field(csv_field, gis_field_lookup):
     return gis_field
 
 
-def test_heatmaps(scenario_path=None):
+def run_as_script(scenario_path=None):
     gv = cea.globalvar.GlobalVariables()
     if scenario_path is None:
         scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     path_variables = locator.get_total_demand()
     path_results = locator.get_heatmaps_demand_folder()
-    analysis_field_variables = ["Qhsf_MWhyr", "Qcsf_MWhyr"]  # noqa
+    analysis_field_variables = ["Qhsf_MWhyr", "Qcsf_MWhyr"]
     heatmaps(locator=locator, analysis_fields=analysis_field_variables,
              path_results=path_results, file_to_analyze=path_variables)
 
+
 if __name__ == '__main__':
-    test_heatmaps()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
+    args = parser.parse_args()
+    run_as_script(scenario_path=args.scenario)

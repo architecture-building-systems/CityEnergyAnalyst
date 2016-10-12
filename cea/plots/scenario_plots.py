@@ -143,13 +143,21 @@ def plot_lca_operation(ax, locators, scenario_names, column, title, unit):
     ax2.set_ylabel('Per Scenario [%(unit)s]' % locals())
 
 
-def test_plot_scenarios():
-    output_file = os.path.expandvars(r'%TEMP%\scenario_plots.pdf')
-    scenarios_root = r'c:\reference-case-zug'
-    scenarios = [os.path.join(scenarios_root, scenario) for scenario in os.listdir(scenarios_root)
-                 if os.path.isdir(os.path.join(scenarios_root, scenario))]
-    plot_scenarios(scenarios, output_file)
-    print 'plot_scenarios succeeded.'
+def run_as_script(scenario_folders=None, output_file=None):
+    if not scenario_folders:
+        import cea.globalvar
+        gv = cea.globalvar.GlobalVariables()
+        scenario_folders = [gv.scenario_reference]
+    if not output_file:
+        output_file = os.path.expandvars(r'%TEMP%\scenario_plots.pdf')
+    plot_scenarios(scenario_folders, output_file)
+
 
 if __name__ == '__main__':
-    test_plot_scenarios()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--scenarios', nargs='+', help='List of scenario folders', default=None)
+    parser.add_argument('-o', '--output', help='Output file', default=os.path.expandvars(r'%TEMP%\scenario_plots.pdf'))
+    args = parser.parse_args()
+    run_as_script(scenario_folders=args.scenarios, output_file=args.output)
