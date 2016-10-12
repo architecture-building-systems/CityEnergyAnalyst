@@ -172,7 +172,7 @@ class InputLocator(object):
             os.makedirs(solar_radiation_folder)
         return os.path.join(solar_radiation_folder, 'properties_surfaces.csv')
 
-    def get_sobol_sensitivity_output(self):
+    def get_sensitivity_output(self):
         """scenario/2-results/.......v"""
         return os.path.join(self.scenario_path, 'outputs', 'data', 'analysis', 'sobol_sensitivity.xls')
 

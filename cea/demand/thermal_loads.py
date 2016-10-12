@@ -1047,7 +1047,12 @@ class BuildingProperties(object):
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated
         df['Aef'] = df['GFA_m2'] * df['Es']  # conditioned area only those for electricity
-        df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df['Af']  # Internal heat capacity in J/K
+
+
+        if gv.samples:  # if sensitivity analysis is on and there are samples
+            df['Cm'] = df['Cm'] # Internal heat capacity in J/K
+        else:
+            df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df['Af']  # Internal heat capacity in J/K
         df['Am'] = df['Cm'].apply(self.lookup_effective_mass_area_factor) * df['Af']  # Effective mass area in [m2]
 
         # Steady-state Thermal transmittance coefficients and Internal heat Capacity
@@ -1091,7 +1096,7 @@ class BuildingProperties(object):
         else:
             return 165000.0
 
-    def lookup_effective_mass_area_factor(self, th_mass):
+    def lookup_effective_mass_area_factor(self, cm):
         """
         Look up the factor to multiply the conditioned floor area by to get the effective mass area by building construction
         type. This is used for the calculation of the effective mass area "Am" in `get_prop_RC_model`.

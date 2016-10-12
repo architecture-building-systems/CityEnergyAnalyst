@@ -496,7 +496,7 @@ def test_solar_radiation():
     path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
 
     solar_radiation_vertical(locator=locator, path_arcgis_db=path_default_arcgis_db,
-                             latitude=47.1628017306431, longitude=8.31, year=2010, gv=gv,
+                             latitude=47.1628017306431, longitude=8.31, year=2016, gv=gv,
                              weather_path=weather_path)
 
 if __name__ == '__main__':
