@@ -81,7 +81,7 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
                                         self.locator])
                 joblist.append(job)
             for job in joblist:
-                b, qcf_kwh, qhf_kwh = job.get(20)
+                b, qcf_kwh, qhf_kwh = job.get(120)
                 b0 = buildings[b][0]
                 b1 = buildings[b][1]
                 self.assertAlmostEqual(b0, qcf_kwh,
