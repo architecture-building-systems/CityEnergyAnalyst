@@ -153,6 +153,7 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
     for i, job in enumerate(joblist):
         job.get(240)
         gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
+    pool.close()
 
 
 """
