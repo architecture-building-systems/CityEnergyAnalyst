@@ -338,7 +338,7 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
         Ta_re_0 = Ta_re_hs[index[0][0]] + 273
         Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_heating_coil)(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs,
                                                                                Ths_sup_0, Ths_re_0, ma_sup_hs,ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, gv.Cpa)
+                                                                               Ta_sup_0, Ta_re_0, gv.Cpa, gv)
 
     if sys_e_cooling == 'T3':  # air conditioning
 
@@ -348,7 +348,7 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
         Ta_re_0 = Ta_re_cs[index[0][0]] + 273
         Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs,
                                                                                Tcs_sup_0, Tcs_re_0, ma_sup_cs, ma_sup_0,
-                                                                               Ta_sup_0, Ta_re_0, gv.Cpa)
+                                                                               Ta_sup_0, Ta_re_0, gv.Cpa, gv)
 
     if sys_e_heating == 'T4':  # floor heating
 
