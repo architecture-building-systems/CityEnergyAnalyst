@@ -352,6 +352,7 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
 
     if sys_e_heating == 'T4':  # floor heating
 
+        Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(Qhsf, Tm, Qhsf_0, Ths_sup_0, Ths_re_0, Af)
 
     return Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs # C,C, C,C, W/C, W/C
 
