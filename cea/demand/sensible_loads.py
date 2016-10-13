@@ -311,49 +311,46 @@ temperature of emission/control system
 """
 
 
-def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs, Ta_re_hs, Ta_sup_cs, Ta_sup_hs,
-                                       Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, gv, ma_sup_cs, ma_sup_hs,
-                                       sys_e_cooling, sys_e_heating, ta_hs_set):
-
+def calc_temperatures_emission_systems(tsd, bpr, Qcsf_0, Qhsf_0, gv):
     from cea.technologies import radiators, heating_coils, tabs
     # local variables
-    Ta_0 = ta_hs_set.max()
-    if sys_e_heating == 'T0':
+    Ta_0 = tsd['ta_hs_set'].max()
+    if bpr.hvac['type_hs'] == 'T0':
         Ths_sup = np.zeros(8760)  # in C
         Ths_re = np.zeros(8760)  # in C
         mcphs = np.zeros(8760)  # in KW/C
 
-    if sys_e_cooling == 'T0':
+    if bpr.hvac['type_cs'] == 'T0':
         Tcs_re = np.zeros(8760)  # in C
         Tcs_sup = np.zeros(8760)  # in C
         mcpcs = np.zeros(8760)  # in KW/C
 
-    if sys_e_heating == 'T1' or sys_e_heating == 'T2':  # radiators
+    if bpr.hvac['type_hs'] == 'T1' or bpr.hvac['type_hs'] == 'T2':  # radiators
 
-        Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(Qhsf, Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0)
+        Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(tsd['Qhsf'], tsd['Ta'], Qhsf_0, Ta_0, bpr.building_systems['Ths_sup_0'], bpr.building_systems['Ths_re_0'])
 
-    if sys_e_heating == 'T3':  # air conditioning
-        index = np.where(Qhsf == Qhsf_0)
-        ma_sup_0 = ma_sup_hs[index[0][0]]
-        Ta_sup_0 = Ta_sup_hs[index[0][0]] + 273
-        Ta_re_0 = Ta_re_hs[index[0][0]] + 273
-        Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_heating_coil)(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs,
-                                                                               Ths_sup_0, Ths_re_0, ma_sup_hs,ma_sup_0,
+    if bpr.hvac['type_hs'] == 'T3':  # air conditioning
+        index = np.where(tsd['Qhsf'] == Qhsf_0)
+        ma_sup_0 = tsd['ma_sup_hs'][index[0][0]]
+        Ta_sup_0 = tsd['Ta_sup_hs'][index[0][0]] + 273
+        Ta_re_0 = tsd['Ta_re_hs'][index[0][0]] + 273
+        Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_heating_coil)(tsd['Qhsf'], Qhsf_0, tsd['Ta_sup_hs'], tsd['Ta_re_hs'],
+                                                                               bpr.building_systems['Ths_sup_0'], bpr.building_systems['Ths_re_0'], tsd['ma_sup_hs'],ma_sup_0,
                                                                                Ta_sup_0, Ta_re_0, gv.Cpa)
 
-    if sys_e_cooling == 'T3':  # air conditioning
+    if bpr.hvac['type_cs'] == 'T3':  # air conditioning
 
-        index = np.where(Qcsf == Qcsf_0)
-        ma_sup_0 = ma_sup_cs[index[0][0]] + 273
-        Ta_sup_0 = Ta_sup_cs[index[0][0]] + 273
-        Ta_re_0 = Ta_re_cs[index[0][0]] + 273
-        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs,
-                                                                               Tcs_sup_0, Tcs_re_0, ma_sup_cs, ma_sup_0,
+        index = np.where(tsd['Qcsf'] == Qcsf_0)
+        ma_sup_0 = tsd['ma_sup_cs'][index[0][0]] + 273
+        Ta_sup_0 = tsd['Ta_sup_cs'][index[0][0]] + 273
+        Ta_re_0 = tsd['Ta_re_cs'][index[0][0]] + 273
+        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(tsd['Qcsf'], Qcsf_0, tsd['Ta_sup_cs'], tsd['Ta_re_cs'],
+                                                                               bpr.building_systems['Tcs_sup_0'], bpr.building_systems['Tcs_re_0'], tsd['ma_sup_cs'], ma_sup_0,
                                                                                Ta_sup_0, Ta_re_0, gv.Cpa)
 
-    if sys_e_heating == 'T4':  # floor heating
+    if bpr.hvac['type_hs'] == 'T4':  # floor heating
 
-        Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(Qhsf, Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0)
+        Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(tsd['Qhsf'], tsd['Ta'], Qhsf_0, Ta_0, bpr.building_systems['Ths_sup_0'], bpr.building_systems['Ths_re_0'])
 
     return Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs # C,C, C,C, W/C, W/C
 
