@@ -312,7 +312,7 @@ temperature of emission/control system
 
 def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs, Ta_re_hs, Ta_sup_cs, Ta_sup_hs,
                                        Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, gv, ma_sup_cs, ma_sup_hs,
-                                       sys_e_cooling, sys_e_heating, ta_hs_set):
+                                       sys_e_cooling, sys_e_heating, ta_hs_set, Af, Tm):
 
     from cea.technologies import radiators, heating_coils, tabs
     # local variables
@@ -352,7 +352,6 @@ def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs,
 
     if sys_e_heating == 'T4':  # floor heating
 
-        Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(Qhsf, Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0)
 
     return Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs # C,C, C,C, W/C, W/C
 

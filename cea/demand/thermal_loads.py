@@ -156,6 +156,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     # ground water temperature in C during non-heating season (summer) according to norm  -  FIXME: which norm?
     tsd['Tww_re'][gv.seasonhours[0] + 1:gv.seasonhours[1] - 1] = 14
 
+
     if bpr.rc_model['Af'] > 0:  # building has conditioned area
 
         # get internal comfort properties
@@ -254,7 +255,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                                            tsd['ma_sup_hs'],
                                                                                                            bpr.hvac['type_cs'],
                                                                                                            bpr.hvac['type_hs'],
-                                                                                                           tsd['ta_hs_set'])
+                                                                                                           tsd['ta_hs_set'],
+                                                                                                           bpr.rc_model['Af'],
+                                                                                                           tsd['Tm'])
 
         if bpr.hvac['type_dhw'] != 'T0':
             Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vww, Vw, mcpww = hotwater_loads.calc_Qwwf(bpr.rc_model['Af'],
