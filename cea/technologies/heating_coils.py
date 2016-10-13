@@ -52,7 +52,7 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
         try:
             result = sopt.newton(fh, trh0, maxiter=1000, tol=0.01) - 273
         except RuntimeError:
-            print('Newton optimization failed, using slower bisect algorithm...')
+            print('Newton optimization failed in heating coil, using slower bisect algorithm...')
             try:
                 result = sopt.bisect(fh, 0, 350, xtol=0.01, maxiter=500) - 273
             except RuntimeError:
@@ -97,10 +97,11 @@ def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma
         try:
             result = sopt.newton(fh, trc0, maxiter=1000, tol=0.01) - 273
         except RuntimeError:
+            print('Newton optimization failed in cooling coil, using slower bisect algorithm...')
             try:
                 result = sopt.bisect(fh, 0, 350, xtol=0.01, maxiter=500) - 273
             except RuntimeError:
-                print ('Bisect optimization also failed in cooling coil, using sample:'), gv.sample
+                print ('Bisect optimization also failed in cooing coil, using sample:'), gv.sample
 
 
         #if Ta_sup_cs == Ta_re_cs:
