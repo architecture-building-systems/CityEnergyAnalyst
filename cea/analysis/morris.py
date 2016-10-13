@@ -28,7 +28,7 @@ def screening_main(locator, weather_path, gv, output_parameters, screenning_meth
 
     #Model constants
     gv.multiprocessing = False # default false
-    num_samples = 100 #generally 100
+    num_samples = 1000 #generally 100
     #Define the model inputs
     variables = pd.read_excel(locator.get_uncertainty_db(), "THERMAL")
     num_vars = variables.name.count() #integer with number of variables
@@ -95,15 +95,14 @@ def screening_cea(counter, sample,  var_names, output_parameters, locator, weath
 
     #create a dict with the new input vatiables form the sample and pass in gv
     gv.samples = dict(zip(var_names, sample))
-    print gv.samples
     result = demand_main.demand_calculation(locator, weather_path, gv)[output_parameters]
     #result = None
-    #while result is None:  # trick to avoid that arcgis stops calculating the days and tries again.
-    #    try:
-    #        result = demand_main.demand_calculation(locator, weather_path, gv)[output_parameters]
-    #    except Exception, e:
-    #        print e, result
-    #        pass
+    while result is None:  # trick to avoid that arcgis stops calculating the days and tries again.
+        try:
+            result = demand_main.demand_calculation(locator, weather_path, gv)[output_parameters]
+        except Exception, e:
+            print e, result
+            pass
 
     return (counter,result)
 
