@@ -28,7 +28,7 @@ def screening_main(locator, weather_path, gv, output_parameters, screenning_meth
 
     #Model constants
     gv.multiprocessing = False # default false
-    num_samples = 1000 #generally 100
+    num_samples = 100 #generally 100
     #Define the model inputs
     variables = pd.read_excel(locator.get_uncertainty_db(), "THERMAL")
     num_vars = variables.name.count() #integer with number of variables
@@ -66,6 +66,7 @@ def screening_main(locator, weather_path, gv, output_parameters, screenning_meth
             simulations_parameter = np.array([x.loc[building, parameter] for x in simulations])
             if screenning_method is 'sobol':
                 sensitivity_results_1.append(sobol.analyze(problem, simulations_parameter, calc_second_order=second_order))
+
             else:
                 Morris_result = morris.analyze(problem, samples, simulations_parameter, grid_jump=grid, num_levels=levels)
                 sigmas = Morris_result['mu_star']
@@ -80,21 +81,6 @@ def screening_main(locator, weather_path, gv, output_parameters, screenning_meth
 
 # function to call cea
 def screening_cea_multiprocessing(samples, names, output_parameters, locator, weather_path, gv):
-
-    #manager = mp.Manager()
-    #out_q = manager.Queue()
-    #pool = mp.Pool()
-    #gv.log("Using %i CPU's" % mp.cpu_count())
-    #gv.multiprocessing = False  # demand_main checks this value and we can't have it using a pool!
-    #jobs = []
-    #for sample in samples:
-    #    job = pool.apply_async(screening_cea, [out_q, sample, names, output_parameters, locator, weather_path, gv])
-    #    jobs.append(job)
-
-    #for job in jobs:
-    #    job.get()
-
-    #results = [out_q.get() for _ in jobs]
     pool = mp.Pool()
     gv.log("Using %i CPU's" % mp.cpu_count())
     joblist = [pool.apply_async(screening_cea, [counter, sample,  names, output_parameters, locator, weather_path, gv])
@@ -109,13 +95,15 @@ def screening_cea(counter, sample,  var_names, output_parameters, locator, weath
 
     #create a dict with the new input vatiables form the sample and pass in gv
     gv.samples = dict(zip(var_names, sample))
-    result = None
-    while result is None:  # trick to avoid that arcgis stops calculating the days and tries again.
-        try:
-            result = demand_main.demand_calculation(locator, weather_path, gv)[output_parameters]
-        except Exception, e:
-            print e, result
-            pass
+    print gv.samples
+    result = demand_main.demand_calculation(locator, weather_path, gv)[output_parameters]
+    #result = None
+    #while result is None:  # trick to avoid that arcgis stops calculating the days and tries again.
+    #    try:
+    #        result = demand_main.demand_calculation(locator, weather_path, gv)[output_parameters]
+    #    except Exception, e:
+    #        print e, result
+    #        pass
 
     return (counter,result)
 
