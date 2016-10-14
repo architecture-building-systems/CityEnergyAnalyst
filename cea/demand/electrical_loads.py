@@ -87,23 +87,23 @@ def calc_Eint(tsd, bpr, list_uses, schedules):
     """
 
     # calculate schedules
-    schedule_Ea_El_Edata_Eref = calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, bpr.occupancy)
+    schedule_applicances_lighting = average_appliances_lighting_schedule(list_uses, schedules, bpr.occupancy)
 
-    # calculate loads
-    tsd['Eaf'] = calc_Eaf(schedule_Ea_El_Edata_Eref, bpr.internal_loads['Ea_Wm2'], bpr.rc_model['Aef'])
-    tsd['Elf'] = calc_Elf(schedule_Ea_El_Edata_Eref, bpr.internal_loads['El_Wm2'], bpr.rc_model['Aef'])
+    # calculate final electrical consumption due to appliances and lights
+    tsd['Eaf'] = schedule_applicances_lighting * bpr.internal_loads['Ea_Wm2'] * bpr.rc_model['Aef']
+    tsd['Elf'] = schedule_applicances_lighting * bpr.internal_loads['El_Wm2'] * bpr.rc_model['Aef']
     tsd['Ealf'] = tsd['Elf'] + tsd['Eaf']
 
     # calculate other loads
     if 'COOLROOM' in bpr.occupancy:
-        schedule_Eref = calc_Ea_El_Edata_Eref_schedule(['COOLROOM'], schedules, bpr.occupancy)
+        schedule_Eref = average_appliances_lighting_schedule(['COOLROOM'], schedules, bpr.occupancy)
         tsd['Eref'] = calc_Eref(schedule_Eref, bpr.internal_loads['Ere_Wm2'], bpr.rc_model['Aef'],
                                 bpr.occupancy['COOLROOM'])  # in W
     else:
         tsd['Eref'] = np.zeros(8760)
 
     if 'SERVERROOM' in bpr.occupancy:
-        schedule_Edata = calc_Ea_El_Edata_Eref_schedule(['SERVERROOM'], schedules, bpr.occupancy)
+        schedule_Edata = average_appliances_lighting_schedule(['SERVERROOM'], schedules, bpr.occupancy)
         tsd['Edataf'] = calc_Edataf(schedule_Edata, bpr.internal_loads['Ed_Wm2'], bpr.rc_model['Aef'],
                                     bpr.occupancy['SERVERROOM'])  # in W
     else:
@@ -118,10 +118,10 @@ def calc_Eint(tsd, bpr, list_uses, schedules):
     return tsd
 
 
-def calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses):
+def average_appliances_lighting_schedule(list_uses, schedules, building_uses):
     """
     Calculate the schedule to use for lighting and appliances based on the building uses from the schedules
-    defined for the project.
+    defined for the project unsing a weighted average.
 
     PARAMETERS
     ----------
@@ -154,62 +154,6 @@ def calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses):
 
         el = np.vectorize(calc_average)(el, schedules[num][1], current_share_of_use)
     return el
-
-
-def calc_Eaf(schedule, Ea_Wm2, Aef):
-    """
-    Calculate the final electrical consumption due to appliances for a building.
-
-    PARAMETERS
-    ----------
-
-    :param schedule: The appliances and lighting schedule as calculated by `calc_Ea_El_Edata_Eref_schedule`
-    :type schedule: ndarray
-
-    :param Ea_Wm2: The maximum electrical consumption due to appliances per unit of gross floor area (as taken from the
-                   building properties / internal loads file)
-    :type Ea_Wm2: float64
-
-    :param Aef: The floor area with electricity in [m2]
-    :type Aef: float64
-
-    RETURNS
-    -------
-
-    :returns: final electrical consumption due to appliances per hour in [W]
-    :rtype: ndarray
-    """
-    # FIXME: see issue #360
-    Eaf = schedule * Ea_Wm2 * Aef  # in W
-    return Eaf
-
-
-def calc_Elf(schedule, El_Wm2, Aef):
-    """
-    Calculate the final electrical consumption due to lights for a building.
-
-    PARAMETERS
-    ----------
-
-    :param schedule: The appliances and lighting schedule as calculated by `calc_Ea_El_Edata_Eref_schedule`
-    :type schedule: ndarray
-
-    :param El_Wm2: The maximum electrical consumption due to lights per unit of gross floor area (as taken from the
-                   building properties / internal loads file)
-    :type El_Wm2: float64
-
-    :param Aef: The floor area with electricity in [m2]
-    :type Aef: float64
-
-    RETURNS
-    -------
-
-    :returns: final electrical consumption due to lights per hour in [W]
-    :rtype: ndarray
-    """
-    # FIXME: see issue #360
-    Elf = schedule * El_Wm2 * Aef  # in W
-    return Elf
 
 
 def calc_Edataf(schedule, Ed_Wm2, Aef, share):
