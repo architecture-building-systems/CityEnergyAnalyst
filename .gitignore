@@ -76,3 +76,5 @@ tests/.doit.db
 cea/demand/calc_tm.pyd
 cea/technologies/calc_radiator.pyd
 tests/.doit.db
+tests/.doit.db
+tests/.doit.db
