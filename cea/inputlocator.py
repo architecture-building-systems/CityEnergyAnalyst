@@ -176,6 +176,11 @@ class InputLocator(object):
         """scenario/2-results/.......v"""
         return os.path.join(self.scenario_path, 'outputs', 'data', 'analysis', 'sobol_sensitivity.xls')
 
+    def get_sensitivity_plots_file(self, parameter):
+        """scenario/2-results/.......v"""
+        return os.path.join(self.scenario_path, 'outputs', 'plots', 'sensitivity', '%s.html' % parameter)
+
+
     ##DEMAND
     def get_demand_results_folder(self):
         """scenario/2-results/2-demand/1-timeseries"""

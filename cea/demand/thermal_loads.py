@@ -862,6 +862,10 @@ class BuildingProperties(object):
         if gv.samples:  # if sensitivity analysis is on and there are samples
             for key, value in gv.samples.iteritems():
                 prop_thermal[key] = value
+            #    prop_occupancy_df[key] = value
+            #list_uses = list(prop_occupancy.drop('PFloor', axis=1).columns)
+            #prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
+           # prop_occupancy[list_uses] = prop_occupancy[list_uses].div(prop_occupancy[list_uses].sum(axis=1), axis=0)
 
         # get temperatures of operation
         prop_HVAC_result = get_temperatures(locator, prop_hvac).set_index('Name')
