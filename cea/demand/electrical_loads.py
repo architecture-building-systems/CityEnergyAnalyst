@@ -90,8 +90,8 @@ def calc_Eint(tsd, bpr, list_uses, schedules):
     schedule_Ea_El_Edata_Eref = calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, bpr.occupancy)
 
     # calculate loads
-    tsd['Eaf'] = calc_Eaf(schedule_Ea_El_Edata_Eref, bpr.internal_loads['Ea_Wm2'], bpr.rc_model['Af'])
-    tsd['Elf'] = calc_Elf(schedule_Ea_El_Edata_Eref, bpr.internal_loads['El_Wm2'], bpr.rc_model['Af'])
+    tsd['Eaf'] = calc_Eaf(schedule_Ea_El_Edata_Eref, bpr.internal_loads['Ea_Wm2'], bpr.rc_model['Aef'])
+    tsd['Elf'] = calc_Elf(schedule_Ea_El_Edata_Eref, bpr.internal_loads['El_Wm2'], bpr.rc_model['Aef'])
     tsd['Ealf'] = tsd['Elf'] + tsd['Eaf']
 
     # calculate other loads
