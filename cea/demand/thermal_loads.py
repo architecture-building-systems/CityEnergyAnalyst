@@ -171,10 +171,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         # heat flows in [W]
         # sensible heat gains
-        tsd = sensible_loads.calc_Qgain_sen(tsd['people'], bpr.internal_loads['Qs_Wp'],
-                                            tsd['Ealf'], tsd['Eprof'],
-                                            Qcdataf, Qcrefrif, tsd, bpr.rc_model['Am'], bpr.rc_model['Atot'],
-                                            bpr.rc_model['Htr_w'],bpr, gv)
+        tsd = sensible_loads.calc_Qgain_sen(Qcdataf, Qcrefrif, tsd, bpr, gv)
 
         # latent heat gains
         tsd['w_int'] = sensible_loads.calc_Qgain_lat(tsd['people'], bpr.internal_loads['X_ghp'],
@@ -1265,7 +1262,7 @@ def get_temperatures(locator, prop_HVAC):
     INPUT / OUTPUT FILES
     --------------------
 
-    - get_technical_emission_systems: cea\db\CH\Systems\emission_systems.xls
+    - get_technical_emission_systems: cea\databases\CH\Systems\emission_systems.xls
     """
     prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(), 'heating')
     prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')
