@@ -65,6 +65,10 @@ def bubbles(parameters, locator):
     from matplotlib import cm
     import numpy as np
 
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from matplotlib.collections import EllipseCollection
+
     for parameter in parameters:
         #read the mustar of morris analysis
         data_mu = pd.read_excel(locator.get_sensitivity_output(), parameter+'mu')
@@ -85,36 +89,53 @@ def bubbles(parameters, locator):
         y = range(len (y_names))
 
         X, Y = np.meshgrid(x,y)
-        print X, Y
+        XY = np.hstack((X.ravel()[:, np.newaxis], Y.ravel()[:, np.newaxis]))
+        ww = data_mu.values.tolist()
+        hh = data_sigma.values.tolist()
+        aa = X*0
 
-        # get ellipses
-        ells = [Ellipse(xy=(i,j), width=data_mu.ix[j, i], height=data_sigma.ix[j, i], angle=0) for i in x for j in y]
-        fig = plt.figure(0)
-        ax = fig.add_subplot(111, aspect='equal')
-        for e in ells:
-            ax.add_artist(e)
-            e.set_clip_box(ax.bbox)
-            e.set_linewidth(1)
-
-            if e.width > 0.8:
-                e.set_alpha(1)
-            elif 0.6 < e.width <= 0.8:
-                e.set_alpha(0.8)
-            elif 0.4 < e.width <= 0.6:
-                e.set_alpha(0.6)
-            elif 0.2 < e.width <= 0.4:
-                e.set_alpha(0.4)
-            else:
-                e.set_alpha(0.2)
-
-        ax.set_xlim(-1, len(x_names))
-        ax.set_ylim(-1, len(y_names))
-        ax.set_xlabel('Variables')
-        ax.set_ylabel('Configuration')
+        fig, ax = plt.subplots()
+        ec = EllipseCollection(ww, hh, aa, units='x', offsets=XY, transOffset=ax.transData)
+        ec.set_array(np.array(ww).ravel())
+        ec.set_alpha(0.9)
+        ax.add_collection(ec)
+        ax.autoscale_view()
+        plt.xticks(np.arange(-1, max(x) + 1, 1.0))
+        plt.yticks(np.arange(-1, max(y) + 1, 1.0))
+        ax.set_xlabel('variables')
+        ax.set_ylabel('configurations')
+        ax.set_xticklabels([""]+x_names)
+        ax.set_yticklabels([""]+y_names)
         cbar = plt.colorbar(ec)
-        cbar.set_label('X+Y')
-
+        cbar.set_label('mu_star')
         plt.show()
+
+        # #get ellipses
+        # ells = [Ellipse(xy=(i,j), width=data_mu.ix[j, i], height=data_sigma.ix[j, i], angle=0) for i in x for j in y]
+        # fig = plt.figure(0)
+        # ax = fig.add_subplot(111, aspect='equal')
+        # for e in ells:
+        #     ax.add_artist(e)
+        #     e.set_clip_box(ax.bbox)
+        #     e.set_linewidth(1)
+        #
+        #     if e.width > 0.8:
+        #         e.set_alpha(1)
+        #     elif 0.6 < e.width <= 0.8:
+        #         e.set_alpha(0.8)
+        #     elif 0.4 < e.width <= 0.6:
+        #         e.set_alpha(0.6)
+        #     elif 0.2 < e.width <= 0.4:
+        #         e.set_alpha(0.4)
+        #     else:
+        #         e.set_alpha(0.2)
+        #
+        # ax.set_xlim(-1, len(x_names))
+        # ax.set_ylim(-1, len(y_names))
+        # ax.set_xlabel('Variables')
+        # ax.set_ylabel('Configuration')
+        #
+        # plt.show()
 
 def heatmap(parameters, locator):
     for parameter in parameters:
