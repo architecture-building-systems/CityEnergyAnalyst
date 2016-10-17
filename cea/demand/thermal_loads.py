@@ -170,10 +170,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         # heat flows in [W]
         # sensible heat gains
-        tsd = sensible_loads.calc_Qgain_sen(tsd['people'], bpr.internal_loads['Qs_Wp'],
-                                            tsd['Ealf'], tsd['Eprof'],
-                                            Qcdataf, Qcrefrif, tsd, bpr.rc_model['Am'], bpr.rc_model['Atot'],
-                                            bpr.rc_model['Htr_w'],bpr, gv)
+        tsd = sensible_loads.calc_Qgain_sen(Qcdataf, Qcrefrif, tsd, bpr, gv)
 
         # latent heat gains
         tsd['w_int'] = sensible_loads.calc_Qgain_lat(tsd['people'], bpr.internal_loads['X_ghp'],
@@ -225,36 +222,20 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                               bpr.building_systems['Lv'])
 
         # Calc requirements of generation systems (both cooling and heating do not have a storage):
-        Qhs = tsd['Qhs_sen_incl_em_ls'] - tsd['Qhs_em_ls']
-        Qhsf = tsd['Qhs_sen_incl_em_ls'] + Qhs_d_ls  # no latent is considered because it is already added a
+        tsd['Qhs'] = tsd['Qhs_sen_incl_em_ls'] - tsd['Qhs_em_ls']
+        tsd['Qhsf'] = tsd['Qhs_sen_incl_em_ls'] + Qhs_d_ls  # no latent is considered because it is already added a
                                                         # s electricity from the adiabatic system.
-        Qcs = (tsd['Qcs_sen_incl_em_ls'] - tsd['Qcs_em_ls']) + tsd['Qcs_lat']
-        Qcsf = Qcs + tsd['Qcs_em_ls'] + Qcs_d_ls
-        Qcsf = -abs(Qcsf)
-        Qcs = -abs(Qcs)
+        tsd['Qcs'] = (tsd['Qcs_sen_incl_em_ls'] - tsd['Qcs_em_ls']) + tsd['Qcs_lat']
+        tsd['Qcsf'] = tsd['Qcs'] + tsd['Qcs_em_ls'] + Qcs_d_ls
+        tsd['Qcsf'] = -abs(tsd['Qcsf'])
+        tsd['Qcs'] = -abs(tsd['Qcs'])
 
         # Calc nomincal temperatures of systems
-        Qhsf_0 = Qhsf.max()  # in W
-        Qcsf_0 = Qcsf.min()  # in W negative
+        Qhsf_0 = tsd['Qhsf'].max()  # in W
+        Qcsf_0 = tsd['Qcsf'].min()  # in W negative
 
         # Cal temperatures of all systems
-        Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs = sensible_loads.calc_temperatures_emission_systems(Qcsf, Qcsf_0,
-                                                                                                           Qhsf, Qhsf_0,
-                                                                                                           tsd['Ta'],
-                                                                                                           tsd['Ta_re_cs'],
-                                                                                                           tsd['Ta_re_hs'],
-                                                                                                           tsd['Ta_sup_cs'],
-                                                                                                           tsd['Ta_sup_hs'],
-                                                                                                           bpr.building_systems['Tcs_re_0'],
-                                                                                                           bpr.building_systems['Tcs_sup_0'],
-                                                                                                           bpr.building_systems['Ths_re_0'],
-                                                                                                           bpr.building_systems['Ths_sup_0'],
-                                                                                                           gv,
-                                                                                                           tsd['ma_sup_cs'],
-                                                                                                           tsd['ma_sup_hs'],
-                                                                                                           bpr.hvac['type_cs'],
-                                                                                                           bpr.hvac['type_hs'],
-                                                                                                           tsd['ta_hs_set'])
+        Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs = sensible_loads.calc_temperatures_emission_systems(tsd, bpr, Qcsf_0, Qhsf_0, gv)
 
         if bpr.hvac['type_dhw'] != 'T0':
             Mww, Qww, Qww_ls_st, Qwwf, Qwwf_0, Tww_st, Vww, Vw, mcpww = hotwater_loads.calc_Qwwf(bpr.rc_model['Af'],
@@ -277,8 +258,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # calc auxiliary loads
         Eauxf, Eaux_hs, Eaux_cs, Eaux_ve, Eaux_ww, Eaux_fw, = electrical_loads.calc_Eauxf(bpr.geometry['Blength'],
                                                                                           bpr.geometry['Bwidth'],
-                                                                                          Mww, Qcsf, Qcsf_0,
-                                                                                          Qhsf, Qhsf_0, Qww, Qwwf,
+                                                                                          Mww, tsd['Qcsf'], Qcsf_0,
+                                                                                          tsd['Qhsf'], Qhsf_0, Qww, Qwwf,
                                                                                           Qwwf_0,
                                                                                           Tcs_re, Tcs_sup, Ths_re,
                                                                                           Ths_sup,
@@ -307,8 +288,12 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         Ths_sup_0 = Ths_re_0 = Tcs_re_0 = Tcs_sup_0 = Tww_sup_0 = 0
         # arrays
         Occupancy = Eauxf = Vw = Eaux_hs = Eaux_cs = Eaux_ve = Eaux_ww = Eaux_fw = np.zeros(8760)
-        Qwwf = Qww = Qhs_sen = Qhsf = Qcs_sen = Qcs = Qcsf = Qcdataf = Qcrefrif = Qd = Qc = Qhs = np.zeros(
+        Qwwf = Qww = Qhs_sen = Qcs_sen = Qcdataf = Qcrefrif = Qd = Qc = np.zeros(
             8760)
+        tsd['Qhs'] = np.zeros(8760)
+        tsd['Qhsf'] = np.zeros(8760)
+        tsd['Qcs'] = np.zeros(8760)
+        tsd['Qcsf'] = np.zeros(8760)
 
         # FIXME: this is a bug (all the variables are being set to the same array)
         Ths_sup = Ths_re = Tcs_re = Tcs_sup = mcphs = mcpcs = mcpww = Vww = Tww_re = np.zeros(
@@ -327,7 +312,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     results_to_csv(gv, locator, bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf,
                    Eauxf_tot, Edataf, Edataf_tot, Eprof, Eprof_tot, building_name, Occupancy, Occupants, Qcdataf,
-                   Qcrefrif, Qcs, Qcsf, Qcsf_0, Qhs, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
+                   Qcrefrif, tsd['Qcs'], tsd['Qcsf'], Qcsf_0, tsd['Qhs'], tsd['Qhsf'], Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
                    Ths_re, Ths_sup, Vw, Vww, mcpcs, mcphs, mcpww,
                    date,  mcpdataf, Tcdataf_re,
                    Tcdataf_sup,  mcpref, Tcref_re, Tcref_sup, Qhprof, Ecaf, Qhprof_tot, Ecaf_tot,
@@ -1262,7 +1247,7 @@ def get_temperatures(locator, prop_HVAC):
     INPUT / OUTPUT FILES
     --------------------
 
-    - get_technical_emission_systems: cea\db\CH\Systems\emission_systems.xls
+    - get_technical_emission_systems: cea\databases\CH\Systems\emission_systems.xls
     """
     prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(), 'heating')
     prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')

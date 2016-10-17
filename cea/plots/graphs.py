@@ -12,6 +12,8 @@ from __future__ import division
 
 import matplotlib.pyplot as plt
 import pandas as pd
+
+import cea
 import cea.inputlocator
 import multiprocessing as mp
 
@@ -48,7 +50,7 @@ def graphs_demand(locator, analysis_fields, gv):
     fields_MWhyr = [field.split('_')[0] + "_MWhyr" for field in analysis_fields]
     total_demand = total_file[fields_MWhyr]
     area_df = total_file['GFA_m2']
-    fields_date = analysis_fields.append('DATE')
+    fields_date = analysis_fields + ['DATE']
     num_buildings = len(building_names)
 
     if gv.multiprocessing and mp.cpu_count() > 1:
@@ -123,6 +125,21 @@ def run_as_script(scenario_path=None, analysis_fields=["Ealf_kWh", "Qhsf_kWh", "
     graphs_demand(locator=locator, analysis_fields=analysis_fields, gv=gv)
     print('done.')
 
+
+def demand_graph_fields(scenario_path):
+    locator = cea.inputlocator.InputLocator(scenario_path)
+    df_total_demand = pd.read_csv(locator.get_total_demand())
+    total_fields = set(df_total_demand.columns.tolist())
+    first_building = df_total_demand['Name'][0]
+    df_building = pd.read_csv(locator.get_demand_results_file(first_building))
+    fields = set(df_building.columns.tolist())
+    fields.remove('DATE')
+    fields.remove('Name')
+    # remove fields in demand results files that do not have a corresponding field in the totals file
+    bad_fields = set(field for field in fields if not field.split('_')[0] + "_MWhyr" in total_fields)
+    fields = fields - bad_fields
+    return list(fields)
+
 if __name__ == '__main__':
     import argparse
 
@@ -132,4 +149,5 @@ if __name__ == '__main__':
                         help='Fields to analyse (separated by ";")')
     args = parser.parse_args()
     run_as_script(scenario_path=args.scenario, analysis_fields=args.analysis_fields.split(';')[:4])
+
 
