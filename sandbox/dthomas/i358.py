@@ -1,6 +1,7 @@
 """
 Compare the alternative function for `calc_t_em_ls` as described in #358 with the status quo.
 """
+import timeit
 import cea.demand.sensible_loads
 
 
@@ -35,3 +36,16 @@ if __name__ == '__main__':
                 refactored = calc_t_em_ls(heating_system, cooling_system, control_system)
                 if original != refactored:
                     print "difference found for inputs:", heating_system, cooling_system, control_system, original, refactored
+
+    # speed test
+    NUMBER = 10000
+    original = 0.0
+    refactored = 0.0
+    for heating_system in heating_systems:
+        for cooling_system in cooling_systems:
+            for control_system in control_systems:
+                original += timeit.timeit("cea.demand.sensible_loads.calc_T_em_ls(%s, %s, %s)" % tuple(map(repr, (heating_system, cooling_system, control_system))),
+                                          setup='import cea.demand.sensible_loads', number=NUMBER)
+                refactored += timeit.timeit("calc_t_em_ls(%s, %s, %s)" % tuple(map(repr, (heating_system, cooling_system, control_system))),
+                                            setup='from i358 import calc_t_em_ls', number=NUMBER)
+    print original, refactored
