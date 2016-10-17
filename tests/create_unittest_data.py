@@ -44,8 +44,6 @@ def main():
     print("values = %s " % repr([df[column].sum() for column in value_columns]))
 
     print("data for test_calc_thermal_loads_other_buildings:")
-    import multiprocessing as mp
-    pool = mp.Pool()
     # randomly selected except for B302006716, which has `Af == 0`
     buildings = {'B140557': (29135.67200, 73340.08100),
                  'B302024465': (0.00000, 51530.83800),

@@ -65,6 +65,7 @@ def graphs_demand(locator, analysis_fields, gv):
         for i, job in enumerate(joblist):
             job.get(60)
             gv.log('Building No. %(bno)i completed out of %(btot)i', bno=i + 1, btot=num_buildings)
+        pool.close()
     else:
         for i, name in enumerate(building_names):
             create_demand_graph_for_building(analysis_fields, area_df, color_palette, fields_date, locator, name,
