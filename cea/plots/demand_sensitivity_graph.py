@@ -27,59 +27,99 @@ __status__ = "Production"
 def graph(locator, parameters, type):
 
     # create figure in plotlib with subplots
-    num_parameters = len(parameters)
-    if num_parameters > 1:
-        if 2 <= num_parameters < 4:
-            rows, columns = 1, num_parameters
-        elif 4 <= num_parameters < 7:
-            rows, columns = 2, int(num_parameters/2)
-        fig = tools.make_subplots(rows=rows, cols=columns, print_grid=False , subplot_titles=parameters)
 
     if type is 'heatmap':
-        fig = heatmap(parameters, locator, rows, columns, fig, num_parameters)
+        heatmap(parameters, locator)
     else:
-        fig = bubbles(parameters, locator, rows, columns, fig, num_parameters)
+        bubbles(parameters, locator)
 
-    plot(fig, auto_open=False, filename=locator.get_sensitivity_plots_file('sensitivity_anlaysis'))
+def bubbles2(parameters, locator):
 
-
-def bubbles(parameters, locator, rows, columns, fig, num_parameters):
-    counter = 0
-    for row in range(1, rows+1):
-        for column in range(1, columns+1):
-            traces = []
-        for parameter in parameters:
-            #read the mustar of morris analysis
-            data = pd.read_excel(locator.get_sensitivity_output(), parameter+'mu')
-            var_names = data.columns.values
-
-            #notmalize to max
-            data[var_names] = data[var_names].div(data[var_names].max(axis=1), axis=0)
-            # print each diagram
-            y = ['opt '+str(x) for x in list(data.index+1)]
-            x = list(data.columns)
-
-            counter2 = 0
-            for index, datarow in data.iterrows():
-                values = list(datarow)
-                traces = go.Scatter(x =x, y=y[counter2], mode='markers',
-                                         marker = dict(size=values, sizeref=0.2, sizemode='area',))
-
-                fig.append_trace(traces, row, columns)
-                print y[counter2], counter, counter2
-                counter2 +=1
-
-                fig['layout']['xaxis' + str(counter + 1)].update(title='Variables')
-                fig['layout']['yaxis' + str(counter + 1)].update(title='Options')
-            counter = +1
-            if counter is num_parameters:
-                break
-
-    return fig
-
-def heatmap(parameters, locator, rows, columns, fig, num_parameters):
-    traces = []
     for parameter in parameters:
+        #read the mustar of morris analysis
+        data = pd.read_excel(locator.get_sensitivity_output(), parameter+'mu')
+        var_names = data.columns.values
+
+        #notmalize to max
+        data[var_names] = data[var_names].div(data[var_names].max(axis=1), axis=0)*1000
+        # print each diagram
+        y = ['opt '+str(x) for x in list(data.index+1)]
+        x = list(data.columns)
+
+        counter2 = 0
+        traces = []
+        for index, datarow in data.iterrows():
+            z = list(datarow)
+            print z
+            y_trace = [y[counter2]]*len(z)
+            traces.append(go.Scatter(x =x, y= y_trace, mode='markers',
+                                     marker = dict(size=z, sizeref=0.1, sizemode='area',
+                                                   colorscale='Viridis', showscale= True)))
+            counter2 +=1
+        print 'end'
+        plot(traces, auto_open=False, filename=locator.get_sensitivity_plots_file(parameter))
+
+def bubbles(parameters, locator):
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Ellipse
+    from matplotlib import cm
+    import numpy as np
+
+    for parameter in parameters:
+        #read the mustar of morris analysis
+        data_mu = pd.read_excel(locator.get_sensitivity_output(), parameter+'mu')
+        data_sigma = pd.read_excel(locator.get_sensitivity_output(), parameter + 's')
+        var_names = data_mu.columns.values
+
+        # normalize data to maximum value
+        data_mu[var_names] = data_mu[var_names].div(data_mu[var_names].max(axis=1), axis=0)
+        data_sigma[var_names] = data_sigma[var_names].div(data_sigma[var_names].max(axis=1), axis=0)
+        # get x_names and y_names
+        # columns
+        x_names = data_mu.columns.tolist()
+        # rows
+        y_names = ['opt '+str(i) for i in list(data_mu.index+1)]
+
+        # get counter (integer to create the graph)
+        x = range(len(x_names))
+        y = range(len (y_names))
+
+        X, Y = np.meshgrid(x,y)
+        print X, Y
+
+        # get ellipses
+        ells = [Ellipse(xy=(i,j), width=data_mu.ix[j, i], height=data_sigma.ix[j, i], angle=0) for i in x for j in y]
+        fig = plt.figure(0)
+        ax = fig.add_subplot(111, aspect='equal')
+        for e in ells:
+            ax.add_artist(e)
+            e.set_clip_box(ax.bbox)
+            e.set_linewidth(1)
+
+            if e.width > 0.8:
+                e.set_alpha(1)
+            elif 0.6 < e.width <= 0.8:
+                e.set_alpha(0.8)
+            elif 0.4 < e.width <= 0.6:
+                e.set_alpha(0.6)
+            elif 0.2 < e.width <= 0.4:
+                e.set_alpha(0.4)
+            else:
+                e.set_alpha(0.2)
+
+        ax.set_xlim(-1, len(x_names))
+        ax.set_ylim(-1, len(y_names))
+        ax.set_xlabel('Variables')
+        ax.set_ylabel('Configuration')
+        cbar = plt.colorbar(ec)
+        cbar.set_label('X+Y')
+
+        plt.show()
+
+def heatmap(parameters, locator):
+    for parameter in parameters:
+        traces = []
+
         #read the mustar of morris analysis
         data = pd.read_excel(locator.get_sensitivity_output(), parameter+'mu')
         var_names = data.columns.values
@@ -91,21 +131,10 @@ def heatmap(parameters, locator, rows, columns, fig, num_parameters):
         y = ['opt '+str(x) for x in list(data.index+1)]
         x = list(data.columns)
         matrix = data.values.tolist()
+
         traces.append(go.Heatmap(z = matrix, x =x, y=y, colorscale = 'Viridis'))
 
-    # check layout
-    counter = 0
-    for row in range(1, rows+1):
-        for column in range(1, columns+1):
-            fig.append_trace(traces[counter], row, column)
-            fig['layout']['xaxis'+str(counter+1)].update(title='Variables')
-            fig['layout']['yaxis' + str(counter + 1)].update(title='Options')
-            counter = +1
-            if counter is num_parameters:
-                break
-    fig['layout'].update(title='sensitivity_analysis')
-
-    return fig
+        plot(traces, auto_open=False, filename=locator.get_sensitivity_plots_file(parameter))
 
 def run_as_script():
     import cea.globalvar as gv
@@ -114,7 +143,7 @@ def run_as_script():
     scenario_path = gv.scenario_reference
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
     output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'Ef0_kW', 'QHf0_kW', 'QCf0_kW']
-    type = 'bubbles' # heatmpa of bubbles
+    type = 'bubbles'  # heatmap of bubbles
     graph(locator, output_parameters, type)
 
 if __name__ == '__main__':
