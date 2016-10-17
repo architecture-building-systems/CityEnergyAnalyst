@@ -4,13 +4,13 @@ Compare the alternative function for `calc_t_em_ls` as described in #358 with th
 import timeit
 import cea.demand.sensible_loads
 
+control_delta_heating = {'T1': 2.5, 'T2': 1.2, 'T3': 0.9, 'T4': 1.8}
+control_delta_cooling = {'T1': -2.5, 'T2': -1.2, 'T3': -0.9, 'T4': -1.8}
+temperature_correction_heating = {'T1': 0.15, 'T2': -0.1, 'T3': -1.1, 'T4': -0.9}
+temperature_correction_cooling = {'T1': 0.5, 'T2': 0.7, 'T3': 0.5}
+
 
 def calc_t_em_ls(heating_system, cooling_system, control_system):
-    control_delta_heating = {'T1': 2.5, 'T2': 1.2, 'T3': 0.9, 'T4': 1.8}
-    control_delta_cooling = {'T1': -2.5, 'T2': -1.2, 'T3': -0.9, 'T4': -1.8}
-    temperature_correction_heating = {'T1': 0.15, 'T2': -0.1, 'T3': -1.1, 'T4': -0.9}
-    temperature_correction_cooling = {'T1': 0.5, 'T2': 0.7, 'T3': 0.5}
-
     try:
         result_heating = control_delta_heating[control_system] + temperature_correction_heating[heating_system]
     except KeyError:
