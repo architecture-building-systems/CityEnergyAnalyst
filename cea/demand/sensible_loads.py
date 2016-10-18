@@ -416,6 +416,11 @@ def calc_Qhs_Qcs_em_ls(SystemH, SystemC):
     return list(tHC_corr)
 
 
+control_delta_heating = {'T0': 0.0, 'T1': 2.5, 'T2': 1.2, 'T3': 0.9, 'T4': 1.8}
+control_delta_cooling = {'T0': 0.0, 'T1': -2.5, 'T2': -1.2, 'T3': -0.9, 'T4': -1.8}
+system_delta_heating = {'T0': 0.0, 'T1': 0.15, 'T2': -0.1, 'T3': -1.1, 'T4': -0.9}
+system_delta_cooling = {'T0': 0.0, 'T1': 0.5, 'T2': 0.7, 'T3': 0.5}
+
 def calc_t_em_ls(heating_system, cooling_system, control_system):
     """
     Model of losses in the emission and control system for space heating and cooling.
@@ -446,11 +451,6 @@ def calc_t_em_ls(heating_system, cooling_system, control_system):
     """
     __author__ = "Shanshan Hsieh"
     __credits__ = ["Shanshan Hsieh", "Daren Thomas"]
-
-    control_delta_heating = {'T0': 0.0, 'T1': 2.5, 'T2': 1.2, 'T3': 0.9, 'T4': 1.8}
-    control_delta_cooling = {'T0': 0.0, 'T1': -2.5, 'T2': -1.2, 'T3': -0.9, 'T4': -1.8}
-    system_delta_heating = {'T0': 0.0, 'T1': 0.15, 'T2': -0.1, 'T3': -1.1, 'T4': -0.9}
-    system_delta_cooling = {'T0': 0.0, 'T1': 0.5, 'T2': 0.7, 'T3': 0.5}
 
     try:
         result_heating = control_delta_heating[control_system] + system_delta_heating[heating_system]
