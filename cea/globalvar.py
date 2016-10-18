@@ -511,7 +511,7 @@ class GlobalVariables(object):
         # ==============================================================================================================
         # Columns to write for the demand calculation
         # ==============================================================================================================
-        self.demand_totals_csv_columns = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'occ_pax', 'QHf_MWhyr', 'QCf_MWhyr',
+        self.demand_totals_csv_columns = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'occ_pax', 'Total_MWhyr','QHf_MWhyr', 'QCf_MWhyr',
                                           'Ef_MWhyr','QHf_MWhyr', 'QCf_MWhyr','Ef0_kW', 'QHf0_kW', 'QCf0_kW',
                                           'Qhs_MWhyr', 'Qhs_lat_MWhyr', 'Qwwf0_kW', 'Qwwf_MWhyr',
                                           'Qww_MWhyr', 'Qhprof_MWhyr', 'Qcsf0_kW', 'Qcsf_MWhyr', 'Qcs_MWhyr', 'Qcs_lat_MWhyr',

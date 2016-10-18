@@ -758,6 +758,9 @@ def results_to_csv(gv, locator, bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_t
                    float_format='%.3f')
 
     # print peaks in kW and totals in MWh, temperature peaks in C
+    Ef = (Ealf_tot + Eauxf_tot + Eprof_tot + Edata_tot + Ecaf_tot)
+    QHf = (Qwwf_tot + Qhsf_tot + Qhprof_tot)
+    QCf = (Qcsf_tot + Qcdata_tot + Qcrefri_tot)
     totals = pd.DataFrame(
         {'Name': building_name, 'GFA_m2': bpr.rc_model['GFA_m2'], 'Af_m2': bpr.rc_model['Af'], 'occ_pax': Occupants,
          'Qwwf0_kW': Qwwf_0 / 1000,
@@ -772,10 +775,10 @@ def results_to_csv(gv, locator, bpr, tsd, Ealf, Ealf_0, Ealf_tot, Eauxf, Eauxf_t
          'Qcs_MWhyr': Qcs_tot, 'Qhprof_MWhyr': Qhprof_tot, 'Ecaf_MWhyr': Ecaf_tot,
          'Ealf_MWhyr': Ealf_tot, 'Eauxf_MWhyr': Eauxf_tot, 'Eprof_MWhyr': Eprof_tot, 'Edataf_MWhyr': Edata_tot,
          'Tsww0_C': bpr.building_systems['Tww_sup_0'], 'Vw_m3yr': Vw.sum(), 'Vww_m3yr': Vww.sum(),
-         'Ef_MWhyr': (Ealf_tot + Eauxf_tot + Eprof_tot + Edata_tot + Ecaf_tot),
-         'QHf_MWhyr': (Qwwf_tot + Qhsf_tot + Qhprof_tot), 'Ef0_kW': (Ealf + Eauxf + Eprof + Edata + Ecaf).max()/1000,
+         'Ef_MWhyr': Ef, 'QHf_MWhyr': QHf, 'Ef0_kW': (Ealf + Eauxf + Eprof + Edata + Ecaf).max()/1000,
          'QHf0_kW':(Qwwf + Qhsf + Qhprof).max()/1000, 'QCf0_kW': (-1 * Qcsf + Qcdata + Qcrefri).max()/1000,
-         'QCf_MWhyr': (Qcsf_tot + Qcdata_tot + Qcrefri_tot), 'Eaf0_kW': Eaf_0 / 1000, 'Elf0_kW': Elf_0 / 1000,
+         'Total_MWhyr': Ef+QHf+QCf,
+         'QCf_MWhyr': QCf, 'Eaf0_kW': Eaf_0 / 1000, 'Elf0_kW': Elf_0 / 1000,
          'Eaf_MWhyr': Eaf_tot, 'Elf_MWhyr': Elf_tot,
          }, index=[0])
     totals.to_csv(locator.get_temporary_file('%(building_name)sT.csv' % locals()), index=False, float_format='%.3f')
