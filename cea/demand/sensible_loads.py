@@ -454,11 +454,6 @@ def calc_t_em_ls(heating_system, cooling_system, control_system):
 
     try:
         result_heating = control_delta_heating[control_system] + system_delta_heating[heating_system]
-    except KeyError:
-        raise ValueError(
-            'Invalid system / control combination: %s, %s, %s' % (heating_system, cooling_system, control_system))
-
-    try:
         result_cooling = control_delta_cooling[control_system] + system_delta_cooling[cooling_system]
     except KeyError:
         raise ValueError(
