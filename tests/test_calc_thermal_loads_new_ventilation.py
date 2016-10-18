@@ -63,16 +63,18 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
 
     def test_calc_thermal_loads_other_buildings(self):
         """Test some other buildings just to make sure we have the proper data"""
-        import multiprocessing as mp
-        pool = mp.Pool()
         # randomly selected except for B302006716, which has `Af == 0`
-        buildings = {'B302006716': (0.00000, 0.00000),
-                     'B140557': (29135.67200, 73340.08100),
+        buildings = {'B140557': (29135.67200, 73340.08100),
+                     'B302024465': (0.00000, 51530.83800),
+                     'B302021377': (0.00000, 51338.21100),
                      'B140577': (630724.96700, 1198505.68500),
-                     'B2372467': (17589.66500, 39710.08500),
+                     'B140571': (39940.50300, 89749.36800),
+                     'B302006716': (0.00000, 0.00000),
                      'B302040335': (816.02400, 3339.33600),
-                     'B140571': (39940.50300, 89749.36800), }
+                     'B2372467': (17589.66500, 39710.08500), }
         if self.gv.multiprocessing:
+            import multiprocessing as mp
+            pool = mp.Pool()
             joblist = []
             for building in buildings.keys():
                 bpr = self.building_properties[building]
@@ -90,6 +92,7 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
                 self.assertAlmostEqual(b1, qhf_kwh,
                                        msg="qhf_kwh for %(b)s should be: %(qhf_kwh).5f, was %(b1).5f" % locals(),
                                        places=3)
+            pool.close()
         else:
             for building in buildings.keys():
                 bpr = self.building_properties[building]
