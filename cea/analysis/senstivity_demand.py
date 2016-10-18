@@ -29,7 +29,7 @@ def sensitivity_main(locator, weather_path, gv, output_parameters, method):
 
     #Model constants
     gv.multiprocessing = False # default false
-    num_samples = 1 #generally 1000
+    num_samples = 1000 #generally 1000
 
     #Define the model inputs
     variables = pd.read_excel(locator.get_uncertainty_db(), "THERMAL")
@@ -77,8 +77,8 @@ def sensitivity_main(locator, weather_path, gv, output_parameters, method):
                 results_1.append(morris_result['mu_star'])
                 results_2.append(morris_result['sigma'])
                 results_3.append(morris_result['mu_star_conf'])
-        pd.DataFrame(results_1, columns = problem['names']).to_excel(writer,parameter+'mu')
-        pd.DataFrame(results_2, columns=problem['names']).to_excel(writer, parameter+'st')
+        pd.DataFrame(results_1, columns = problem['names']).to_excel(writer,parameter+'S1')
+        pd.DataFrame(results_2, columns=problem['names']).to_excel(writer, parameter+'ST')
         pd.DataFrame(results_3, columns=problem['names']).to_excel(writer, parameter + 'conf')
 
     writer.save()
