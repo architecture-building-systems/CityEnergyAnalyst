@@ -172,13 +172,13 @@ class InputLocator(object):
             os.makedirs(solar_radiation_folder)
         return os.path.join(solar_radiation_folder, 'properties_surfaces.csv')
 
-    def get_sensitivity_output(self):
+    def get_sensitivity_output(self, method, samples):
         """scenario/2-results/.......v"""
-        return os.path.join(self.scenario_path, 'outputs', 'data', 'analysis', 'sobol_sensitivity.xls')
+        return os.path.join(self.scenario_path, 'outputs', 'data', 'analysis', 'sensitivity_'+ method + '%s.pdf' % samples)
 
     def get_sensitivity_plots_file(self, parameter):
         """scenario/2-results/.......v"""
-        return os.path.join(self.scenario_path, 'outputs', 'plots', 'sensitivity', '%s.html' % parameter)
+        return os.path.join(self.scenario_path, 'outputs', 'plots', 'sensitivity', '%s.pdf' % parameter)
 
 
     ##DEMAND

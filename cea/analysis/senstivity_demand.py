@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 ===========================
-Variable-screening
+Sensitivity of demand_main.py
 
-This script uses the morris algorithm (morris 1991)(campologo 2011)
+This script uses the morris algorithm (morris 1991)(campologo 2011) and Sobol Algorithm Sltalli 20110
 to screen the most sensitive variables of a selection of parameters of the CEA.
-The method allows to rank each one of this parameters and select the top
-most sensitive. This script is used as part of the calibration of the CEA to
-measured data.
+Th morris method serves to basic screening o finput variables and it is base on OAT
+The Sobol method serves for a complete sensitivity analysis of input vatiables. It is based on variance methods.
+
 ===========================
 
 """
@@ -22,13 +22,15 @@ from SALib.sample.morris import sample as sampler_morris
 import pandas as pd
 import numpy as np
 import time
+
 # main
-def screening_main(locator, weather_path, gv, output_parameters, screenning_method):
+def sensitivity_main(locator, weather_path, gv, output_parameters, method):
     t0 = time.clock()
 
     #Model constants
     gv.multiprocessing = False # default false
-    num_samples = 1000 #generally 100
+    num_samples = 1 #generally 1000
+
     #Define the model inputs
     variables = pd.read_excel(locator.get_uncertainty_db(), "THERMAL")
     num_vars = variables.name.count() #integer with number of variables
@@ -42,7 +44,7 @@ def screening_main(locator, weather_path, gv, output_parameters, screenning_meth
     problem = {'num_vars': num_vars,'names': names, 'bounds': bounds, 'groups': None}
 
     #create samples (combinations of variables)
-    if screenning_method is 'sobol':
+    if method is 'sobol':
         second_order = False
         samples = sampler_sobol(problem, N=num_samples, calc_second_order=second_order)
     else:
@@ -58,13 +60,13 @@ def screening_main(locator, weather_path, gv, output_parameters, screenning_meth
 
     #do morris analysis and output to excel
     buildings_num = simulations[0].shape[0]
-    writer = pd.ExcelWriter(locator.get_sensitivity_output())
+    writer = pd.ExcelWriter(locator.get_sensitivity_output(method, num_samples))
     for parameter in output_parameters:
         sensitivity_results_1 = []
         sensitivity_results_2 = []
         for building in range(buildings_num):
             simulations_parameter = np.array([x.loc[building, parameter] for x in simulations])
-            if screenning_method is 'sobol':
+            if method is 'sobol':
                 sensitivity_results_1.append(sobol.analyze(problem, simulations_parameter, calc_second_order=second_order))
 
             else:
@@ -114,8 +116,8 @@ def run_as_script():
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
     weather_path = locator.get_default_weather()
     output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'Ef0_kW', 'QHf0_kW', 'QCf0_kW']
-    screenning_method = 'morris'
-    screening_main(locator, weather_path, gv, output_parameters,screenning_method)
+    method = 'morris'
+    sensitivity_main(locator, weather_path, gv, output_parameters, method)
 
 if __name__ == '__main__':
     run_as_script()
