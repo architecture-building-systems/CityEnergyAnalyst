@@ -174,7 +174,7 @@ class InputLocator(object):
 
     def get_sensitivity_output(self, method, samples):
         """scenario/2-results/.......v"""
-        return os.path.join(self.scenario_path, 'outputs', 'data', 'analysis', 'sensitivity_'+ method + '%s.pdf' % samples)
+        return os.path.join(self.scenario_path, 'outputs', 'data', 'analysis', 'sensitivity_'+ method + '_%s.xls' % samples)
 
     def get_sensitivity_plots_file(self, parameter):
         """scenario/2-results/.......v"""

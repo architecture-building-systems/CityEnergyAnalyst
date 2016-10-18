@@ -62,21 +62,24 @@ def sensitivity_main(locator, weather_path, gv, output_parameters, method):
     buildings_num = simulations[0].shape[0]
     writer = pd.ExcelWriter(locator.get_sensitivity_output(method, num_samples))
     for parameter in output_parameters:
-        sensitivity_results_1 = []
-        sensitivity_results_2 = []
+        results_1 = []
+        results_2 = []
+        results_3 = []
         for building in range(buildings_num):
             simulations_parameter = np.array([x.loc[building, parameter] for x in simulations])
             if method is 'sobol':
-                sensitivity_results_1.append(sobol.analyze(problem, simulations_parameter, calc_second_order=second_order))
-
+                sobol_result = sobol.analyze(problem, simulations_parameter, calc_second_order=second_order)
+                results_1.append(sobol_result['S1'])
+                results_2.append(sobol_result['ST'])
+                results_3.append(sobol_result['ST_conf'])
             else:
-                Morris_result = morris.analyze(problem, samples, simulations_parameter, grid_jump=grid, num_levels=levels)
-                sigmas = Morris_result['mu_star']
-                means = Morris_result['sigma']
-                sensitivity_results_1.append(means)
-                sensitivity_results_2.append(sigmas)
-        pd.DataFrame(sensitivity_results_1, columns = problem['names']).to_excel(writer,parameter+'mu')
-        pd.DataFrame(sensitivity_results_2, columns=problem['names']).to_excel(writer, parameter+'s')
+                morris_result = morris.analyze(problem, samples, simulations_parameter, grid_jump=grid, num_levels=levels)
+                results_1.append(morris_result['mu_star'])
+                results_2.append(morris_result['sigma'])
+                results_3.append(morris_result['mu_star_conf'])
+        pd.DataFrame(results_1, columns = problem['names']).to_excel(writer,parameter+'mu')
+        pd.DataFrame(results_2, columns=problem['names']).to_excel(writer, parameter+'st')
+        pd.DataFrame(results_3, columns=problem['names']).to_excel(writer, parameter + 'conf')
 
     writer.save()
     gv.log('Sensitivity Sobol method done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
