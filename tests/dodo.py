@@ -218,7 +218,9 @@ def task_run_unit_tests():
     def run_unit_tests():
         import unittest
         tests.test_calc_thermal_loads_new_ventilation.REFERENCE_CASE = REFERENCE_CASES['zurich/baseline']
-        unittest.main(module=tests.test_calc_thermal_loads_new_ventilation, exit=False)
+        testsuite = unittest.defaultTestLoader.discover('.')
+        result = unittest.TextTestRunner(verbosity=1).run(testsuite)
+        return result.wasSuccessful()
     return {
         'actions': [run_unit_tests],
         'verbosity': 1

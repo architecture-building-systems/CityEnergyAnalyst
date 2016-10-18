@@ -350,7 +350,10 @@ def calc_temperatures_emission_systems(tsd, bpr, Qcsf_0, Qhsf_0, gv):
 
     if bpr.hvac['type_hs'] == 'T4':  # floor heating
 
-        Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(tsd['Qhsf'], tsd['Ta'], Qhsf_0, Ta_0, bpr.building_systems['Ths_sup_0'], bpr.building_systems['Ths_re_0'])
+        Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(tsd['Qhsf'], tsd['Tm'], Qhsf_0,
+                                                                      bpr.building_systems['Ths_sup_0'],
+                                                                      bpr.building_systems['Ths_re_0'],
+                                                                      bpr.rc_model['Af'])
 
     return Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs # C,C, C,C, W/C, W/C
 
