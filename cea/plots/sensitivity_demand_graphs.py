@@ -79,7 +79,7 @@ def run_as_script():
     gv = gv.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
-    output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'Ef0_kW', 'QHf0_kW', 'QCf0_kW']
+    output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr']
     method = 'morris' # method
     samples = 500
     graph(locator, output_parameters, method, samples)
