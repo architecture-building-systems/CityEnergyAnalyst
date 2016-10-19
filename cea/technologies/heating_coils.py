@@ -41,7 +41,7 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
         tc = (tare - tasup + tasup * ec) / ec  # contact temperature of coil
 
         # minimum
-        LMRT = (tsh0 - trh0) / scipy.log((tsh0 - tc) / (trh0 - tc))
+        LMRT = abs((tsh0 - trh0) / scipy.log((tsh0 - tc) / (trh0 - tc)))
         k1 = 1 / mCw0
 
         def fh(x):
@@ -50,16 +50,13 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
 
         k2 = Qhsf * k1
         try:
-            result = sopt.newton(fh, trh0, maxiter=1000, tol=0.01) - 273
+            result = sopt.newton(fh, trh0, maxiter=1000, tol=0.01).real - 273
         except RuntimeError:
-            print('Newton optimization failed in heating coil, using slower bisect algorithm...')
+            print (Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma_sup_hs, ma_sup_0,Ta_sup_0, Ta_re_0)
             print gv.samples
-            try:
-                result = sopt.bisect(fh, 0, 350, xtol=0.01, maxiter=500) - 273
-            except RuntimeError:
-                print ('Bisect optimization also failed in heating coil, using sample:')
+            result = sopt.bisect(fh, 0, 350, xtol=0.01, maxiter=500).real - 273
 
-        trh = result.real
+        trh = result
         tsh = trh + k2
         mcphs = Qhsf / (tsh - trh)
     else:
