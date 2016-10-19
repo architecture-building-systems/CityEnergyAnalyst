@@ -101,14 +101,7 @@ def screening_cea(counter, sample,  var_names, output_parameters, locator, weath
     #create a dict with the new input vatiables form the sample and pass in gv
     gv.samples = dict(zip(var_names, sample))
     result = demand_main.demand_calculation(locator, weather_path, gv)[output_parameters]
-    #result = None
-    while result is None:  # trick to avoid that arcgis stops calculating the days and tries again.
-        try:
-            result = demand_main.demand_calculation(locator, weather_path, gv)[output_parameters]
-        except Exception, e:
-            print e, result
-            pass
-
+    gv.log('Sample No. %s finished' %(counter+1))
     return (counter,result)
 
 def run_as_script():

@@ -341,7 +341,7 @@ def calc_temperatures_emission_systems(tsd, bpr, Qcsf_0, Qhsf_0, gv):
     if bpr.hvac['type_cs'] == 'T3':  # air conditioning
 
         index = np.where(tsd['Qcsf'] == Qcsf_0)
-        ma_sup_0 = tsd['ma_sup_cs'][index[0][0]] + 273
+        ma_sup_0 = tsd['ma_sup_cs'][index[0][0]]
         Ta_sup_0 = tsd['Ta_sup_cs'][index[0][0]] + 273
         Ta_re_0 = tsd['Ta_re_cs'][index[0][0]] + 273
         Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(tsd['Qcsf'], Qcsf_0, tsd['Ta_sup_cs'], tsd['Ta_re_cs'],
