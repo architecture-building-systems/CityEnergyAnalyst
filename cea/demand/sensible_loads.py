@@ -416,8 +416,8 @@ def calc_Qhs_Qcs_em_ls(SystemH, SystemC):
     return list(tHC_corr)
 
 
-control_delta_heating = {'T0': 0.0, 'T1': 2.5, 'T2': 1.2, 'T3': 0.9, 'T4': 1.8}
-control_delta_cooling = {'T0': 0.0, 'T1': -2.5, 'T2': -1.2, 'T3': -0.9, 'T4': -1.8}
+control_delta_heating = {'T1': 2.5, 'T2': 1.2, 'T3': 0.9, 'T4': 1.8}
+control_delta_cooling = {'T1': -2.5, 'T2': -1.2, 'T3': -0.9, 'T4': -1.8}
 system_delta_heating = {'T0': 0.0, 'T1': 0.15, 'T2': -0.1, 'T3': -1.1, 'T4': -0.9}
 system_delta_cooling = {'T0': 0.0, 'T1': 0.5, 'T2': 0.7, 'T3': 0.5}
 
@@ -445,9 +445,10 @@ def calc_t_em_ls(heating_system, cooling_system, control_system):
     :param cooling_system: The cooling system used. Valid values: T0, T1, T2, T3
     :type cooling_system: str
 
-    :param control_system: The control system used. Valid values: T0, T1, T2, T3 - as defined in the
+    :param control_system: The control system used. Valid values: T1, T2, T3, T4 - as defined in the
         contributors manual under Databases / Archetypes / Building Properties / Mechanical systems.
-        T0 for none, T1 for partly controlled, T2 for PID controller, and T3 for PID controller optimized.
+        T1 for none, T2 for PI control, T3 for PI control with optimum tuning, and T4 for room temperature control
+        (electromagnetically/electronically).
     :type control_system: str
 
     RETURNS
