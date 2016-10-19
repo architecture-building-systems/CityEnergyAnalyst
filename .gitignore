@@ -77,3 +77,4 @@ cea/demand/calc_tm.pyd
 cea/technologies/calc_radiator.pyd
 setup/site-packages/*
 setup/Output/Setup_CEAforArcGIS10.4.exe
+setup/Output/mysetup.exe
