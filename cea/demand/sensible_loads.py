@@ -429,6 +429,13 @@ def calc_t_em_ls(heating_system, cooling_system, control_system):
 
     (see cea\databases\CH\Systems\emission_systems.xls for valid values for the heating and cooling system values)
 
+    T0 means there's no heating/cooling systems installed, therefore, also no control systems for heating/cooling.
+    In short, when the input system is T0, the output set point correction should be 0.0.
+    So if there is no cooling systems, the calc_t_em_ls function input: (T1, T0, T1) (type_hs, type_cs, type_ctrl),
+    return should be (2.65, 0.0), the control system is only specified for the heating system.
+    In another case with no heating systems: input: (T0, T3, T1) return: (0.0, -2.0), the control system is only
+    specified for the heating system.
+
     PARAMETERS
     ----------
 
@@ -453,8 +460,10 @@ def calc_t_em_ls(heating_system, cooling_system, control_system):
     __credits__ = ["Shanshan Hsieh", "Daren Thomas"]
 
     try:
-        result_heating = control_delta_heating[control_system] + system_delta_heating[heating_system]
-        result_cooling = control_delta_cooling[control_system] + system_delta_cooling[cooling_system]
+        result_heating = 0.0 if heating_system == 'T0' else (control_delta_heating[control_system] +
+                                                             system_delta_heating[heating_system])
+        result_cooling = 0.0 if cooling_system == 'T0' else (control_delta_cooling[control_system] +
+                                                             system_delta_cooling[cooling_system])
     except KeyError:
         raise ValueError(
             'Invalid system / control combination: %s, %s, %s' % (heating_system, cooling_system, control_system))
