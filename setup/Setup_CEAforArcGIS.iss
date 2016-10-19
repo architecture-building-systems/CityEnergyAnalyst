@@ -6,6 +6,7 @@ DefaultDirName={pf}\CEAforArcGIS
 [Files]
 Source: "site-packages\*"; DestDir: "{app}\site-packages"; Flags: ignoreversion recursesubdirs
 Source: "..\cea\*"; DestDir: "{userappdata}\ESRI\Desktop10.4\ArcToolbox\My Toolboxes\cea"; Flags: ignoreversion recursesubdirs
+Source: "..\City Energy Analyst.pyt"; DestDir: "{userappdata}\ESRI\Desktop10.4\ArcToolbox\My Toolboxes"; Flags: ignoreversion 
 Source: "cealib.pth"; DestDir: "C:\Python27\ArcGIS10.4\Lib\site-packages"; Flags: ignoreversion; AfterInstall: WriteCealibPth
 
 [PreCompile]
