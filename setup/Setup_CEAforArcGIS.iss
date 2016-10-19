@@ -2,6 +2,9 @@
 AppName=CEAforArcGIS
 AppVersion=1.5
 DefaultDirName={pf}\CEAforArcGIS
+AppPublisher=Architecture and Building Systems / ITA / ETH Zurich
+AppPublisherURL=http://www.systems.ethz.ch
+OutputBaseFilename=Setup_CEAforArcGIS10.4
 
 [Files]
 Source: "site-packages\*"; DestDir: "{app}\site-packages"; Flags: ignoreversion recursesubdirs
