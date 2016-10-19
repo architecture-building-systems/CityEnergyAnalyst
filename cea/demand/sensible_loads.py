@@ -421,7 +421,7 @@ control_delta_cooling = {'T1': -2.5, 'T2': -1.2, 'T3': -0.9, 'T4': -1.8}
 system_delta_heating = {'T0': 0.0, 'T1': 0.15, 'T2': -0.1, 'T3': -1.1, 'T4': -0.9}
 system_delta_cooling = {'T0': 0.0, 'T1': 0.5, 'T2': 0.7, 'T3': 0.5}
 
-def calc_t_em_ls(heating_system, cooling_system, control_system):
+def setpoint_correction_for_space_emission_systems(heating_system, cooling_system, control_system):
     """
     Model of losses in the emission and control system for space heating and cooling.
 
@@ -431,7 +431,7 @@ def calc_t_em_ls(heating_system, cooling_system, control_system):
 
     T0 means there's no heating/cooling systems installed, therefore, also no control systems for heating/cooling.
     In short, when the input system is T0, the output set point correction should be 0.0.
-    So if there is no cooling systems, the calc_t_em_ls function input: (T1, T0, T1) (type_hs, type_cs, type_ctrl),
+    So if there is no cooling systems, the setpoint_correction_for_space_emission_systems function input: (T1, T0, T1) (type_hs, type_cs, type_ctrl),
     return should be (2.65, 0.0), the control system is only specified for the heating system.
     In another case with no heating systems: input: (T0, T3, T1) return: (0.0, -2.0), the control system is only
     specified for the heating system.
