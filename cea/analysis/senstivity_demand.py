@@ -29,7 +29,7 @@ def sensitivity_main(locator, weather_path, gv, output_parameters, method):
 
     #Model constants
     gv.multiprocessing = False # default false
-    num_samples = 1000 #generally 1000
+    num_samples = 1 #generally 1000
 
     #Define the model inputs
     variables = pd.read_excel(locator.get_uncertainty_db(), "THERMAL")
@@ -100,7 +100,13 @@ def screening_cea(counter, sample,  var_names, output_parameters, locator, weath
 
     #create a dict with the new input vatiables form the sample and pass in gv
     gv.samples = dict(zip(var_names, sample))
-    result = demand_main.demand_calculation(locator, weather_path, gv)[output_parameters]
+    result = None
+    while result is None:  # trick to avoid that arcgis stops calculating the days and tries again.
+       try:
+           result = demand_main.demand_calculation(locator, weather_path, gv)[output_parameters]
+       except Exception, e:
+           print e, result
+           pass
     gv.log('Sample No. %s finished' %(counter+1))
     return (counter,result)
 
@@ -112,7 +118,7 @@ def run_as_script():
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
     weather_path = locator.get_default_weather()
     output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'Total_MWhyr']
-    method = 'morris'
+    method = 'sobol'
     sensitivity_main(locator, weather_path, gv, output_parameters, method)
 
 if __name__ == '__main__':

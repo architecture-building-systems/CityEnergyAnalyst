@@ -98,8 +98,11 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     tsd = {'T_ext': weather_data.drybulb_C.values,
            'rh_ext': weather_data.relhum_percent.values,
+           'T_sky' :weather_data.skytemp_C.values,
            'uncomfort': np.zeros(8760),
            'Ta': np.empty(8760) * np.nan,
+           'Ts': np.empty(8760) * np.nan,
+           'Ts_loss': np.empty(8760) * np.nan,
            'Tm': np.empty(8760) * np.nan,
            'Tm_loss': np.empty(8760) * np.nan,
            'Qhs_sen': np.zeros(8760),
@@ -168,9 +171,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                       date.hour, range(8760), n50)
         tsd['qm_ve_req'] = tsd['qv_req'] * gv.Pair  # TODO:  use dynamic rho_air
 
-        # heat flows in [W]
-        # sensible heat gains
-        tsd = sensible_loads.calc_Qgain_sen(Qcdataf, Qcrefrif, tsd, bpr, gv)
 
         # latent heat gains
         tsd['w_int'] = sensible_loads.calc_Qgain_lat(tsd['people'], bpr.internal_loads['X_ghp'],
@@ -190,8 +190,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         # end-use demand calculation
         for t in range(-720, 8760):
-
             hoy = helpers.seasonhour_2_hoy(t)
+            tsd = sensible_loads.calc_Qgain_sen(hoy, Qcdataf, Qcrefrif, tsd, bpr, gv)
 
             if bpr.hvac['type_hs'] == 'T3' and gv.is_heating_season(hoy):
                 # case 1a: heating with hvac
@@ -448,6 +448,7 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
 
         temp_m, \
         temp_a, \
+        temp_s,\
         q_hs_sen, \
         q_cs_sen, \
         uncomfort, \
@@ -461,6 +462,7 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
         # calc_Qhs_Qcs()
         temp_m_loss_true, \
         temp_a_loss_true, \
+        temp_s_loss_true, \
         q_hs_sen_loss_true, \
         q_cs_sen_loss_true, \
         uncomfort_loss_true, \
@@ -541,6 +543,8 @@ def calc_thermal_load_hvac_timestep(t, tsd, bpr, gv):
 
     tsd['Tm'][t] = temp_m
     tsd['Tm_loss'][t] = temp_m_loss_true
+    tsd['Ts_loss'][t] = temp_s_loss_true
+    tsd['Ts'][t] = temp_s
     tsd['Ta'][t] = temp_a
     tsd['Qhs_sen_incl_em_ls'][t] = q_hs_sen_loss_true
     tsd['Qcs_sen_incl_em_ls'][t] = q_cs_sen_loss_true
@@ -646,7 +650,8 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
 
     # calc_Qhs_Qcs()
     temp_m, \
-    temp_a, \
+    temp_a,\
+    temp_s, \
     q_hs_sen, \
     q_cs_sen, \
     uncomfort, \
@@ -659,6 +664,7 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
     Losses = True
     temp_m_loss_true, \
     temp_a_loss_true, \
+    temp_s_loss_true,  \
     q_hs_sen_loss_true, \
     q_cs_sen_loss_true, \
     uncomfort_loss_true, \
@@ -685,6 +691,8 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
 
     tsd['Tm'][t] = temp_m
     tsd['Tm_loss'][t] = temp_m_loss_true
+    tsd['Ts_loss'][t] = temp_s_loss_true
+    tsd['Ts'][t] = temp_s
     tsd['Ta'][t] = temp_a
     tsd['Qhs_sen_incl_em_ls'][t] = q_hs_sen_loss_true
     tsd['Qcs_sen_incl_em_ls'][t] = q_cs_sen_loss_true
@@ -835,7 +843,6 @@ class BuildingProperties(object):
         from cea.geometry import geometry_reader
         self.gv = gv
         gv.log("read input files")
-        solar = pd.read_csv(locator.get_radiation()).set_index('Name')
         surface_properties = pd.read_csv(locator.get_surface_properties())
         prop_geometry = Gdf.from_file(locator.get_building_geometry())
         prop_geometry['footprint'] = prop_geometry.area
@@ -845,7 +852,7 @@ class BuildingProperties(object):
         prop_thermal = Gdf.from_file(locator.get_building_thermal()).drop('geometry', axis=1).set_index('Name')
         prop_occupancy_df = Gdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index('Name')
         prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
-        prop_architecture = Gdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1).set_index('Name')
+        prop_architectures = Gdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1)
         prop_age = Gdf.from_file(locator.get_building_age()).drop('geometry', axis=1).set_index('Name')
         prop_comfort = Gdf.from_file(locator.get_building_comfort()).drop('geometry', axis=1).set_index('Name')
         prop_internal_loads = Gdf.from_file(locator.get_building_internal()).drop('geometry',axis=1).set_index('Name')
@@ -858,8 +865,14 @@ class BuildingProperties(object):
             #prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
            # prop_occupancy[list_uses] = prop_occupancy[list_uses].div(prop_occupancy[list_uses].sum(axis=1), axis=0)
 
+        # get solar properties
+        solar = get_prop_solar(locator).set_index('Name')
+
         # get temperatures of operation
         prop_HVAC_result = get_temperatures(locator, prop_hvac).set_index('Name')
+
+        # get envelope properties
+        prop_architecture = get_envelope_properties(locator, prop_architectures).set_index('Name')
 
         # get properties of rc demand model
         prop_rc_model = self.calc_prop_rc_model(prop_occupancy, prop_architecture, prop_thermal,
@@ -1045,6 +1058,7 @@ class BuildingProperties(object):
             df['Cm'] = df['Cm'] # Internal heat capacity in J/K
         else:
             df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df['Af']  # Internal heat capacity in J/K
+
         df['Am'] = df['Cm'].apply(self.lookup_effective_mass_area_factor) * df['Af']  # Effective mass area in [m2]
 
         # Steady-state Thermal transmittance coefficients and Internal heat Capacity
@@ -1275,3 +1289,37 @@ def get_temperatures(locator, prop_HVAC):
     result = df[fields].merge(df2[fields2], on='Name').merge(df3[fields3], on='Name')
     return result
 
+def get_envelope_properties(locator, prop):
+
+    prop_roof = pd.read_excel(locator.get_envelope_systems(), 'ROOF')
+    prop_wall = pd.read_excel(locator.get_envelope_systems(), 'WALL')
+    prop_win= pd.read_excel(locator.get_envelope_systems(), 'WINDOW')
+    prop_shading= pd.read_excel(locator.get_envelope_systems(), 'SHADING')
+
+    df = prop.merge(prop_roof, left_on='type_roof', right_on='code')
+    df2 = prop.merge(prop_wall, left_on='type_wall', right_on='code')
+    df3 = prop.merge(prop_win, left_on='type_win', right_on='code')
+    df4 = prop.merge(prop_shading, left_on='type_shade', right_on='code')
+
+    fields = ['Name', 'win_wall', 'Occ_m2p', 'n50', 'n50', 'win_op', 'f_cros', 'e_roof', 'a_roof']
+    fields2 = ['Name', 'e_wall', 'a_wall']
+    fields3 = ['Name', 'e_win', 'G_win']
+    fields4 = ['Name', 'rf_sh']
+
+    result = df[fields].merge(df2[fields2], on='Name').merge(df3[fields3], on='Name').merge(df4[fields4], on='Name')
+    return result
+
+def get_prop_solar(locator):
+
+    solar = pd.read_csv(locator.get_radiation()).set_index('Name')
+    solar_list = solar.values.tolist()
+    surface_properties = pd.read_csv(locator.get_surface_properties())
+    surface_properties['Awall']= (surface_properties['Shape_Leng'] * surface_properties['FactorShade'] * surface_properties['Freeheight'])
+    sum_surface = surface_properties[['Awall', 'Name']].groupby(['Name']).sum().values
+
+    I_sol = I_roof = I_win = [a/b for a,b in zip(solar_list,sum_surface)]
+
+    result = pd.DataFrame({'Name': solar.index, 'I_win': I_sol, 'I_roof':I_roof , 'I_wall':I_win})
+    print result
+
+    return result

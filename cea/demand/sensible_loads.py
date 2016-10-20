@@ -139,7 +139,7 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
         IH_nd_ac = 0
 
     # here we have to return tm_t for the next time step and not tm
-    return tm_t, ta, IH_nd_ac, IC_nd_ac, uncomfort, top, Im_tot
+    return tm_t, ta, ts, IH_nd_ac, IC_nd_ac, uncomfort, top, Im_tot
 
 
 def calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0):
@@ -266,17 +266,18 @@ solar and heat gains
 =========================================
 """
 
-def calc_Qgain_sen(Qcdata, Qcrefri, tsd, bpr, gv):
+def calc_Qgain_sen(t, Qcdata, Qcrefri, tsd, bpr, gv):
 
     # internal loads
-    tsd['I_sol']= calc_I_sol(bpr, gv)
-    tsd['I_int_sen'] = tsd['people'] * bpr.internal_loads['Qs_Wp'] + 0.9 * (tsd['Ealf'] + tsd['Eprof']) + Qcdata - Qcrefri  # FIXME: here 0.9 is assumed
+    tsd['I_sol'][t]= calc_I_sol(t, bpr, tsd, gv)
+
+    tsd['I_int_sen'][t] = tsd['people'][t] * bpr.internal_loads['Qs_Wp'] + 0.9 * (tsd['Ealf'][t] + tsd['Eprof'][t]) + Qcdata[t] - Qcrefri[t]  # FIXME: here 0.9 is assumed
 
     # divide into components for RC model
-    tsd['I_ia'] = 0.5 * tsd['I_int_sen']
-    tsd['I_m'] = (bpr.rc_model['Am'] / bpr.rc_model['Atot']) * (tsd['I_ia'] + tsd['I_sol'])
+    tsd['I_ia'][t] = 0.5 * tsd['I_int_sen'][t]
+    tsd['I_m'][t] = (bpr.rc_model['Am'] / bpr.rc_model['Atot']) * (tsd['I_ia'][t] + tsd['I_sol'][t])
     # FIXME: why 9.1?
-    tsd['I_st'] = (1 - (bpr.rc_model['Am'] / bpr.rc_model['Atot']) - (bpr.rc_model['Htr_w'] / (9.1 * bpr.rc_model['Atot']))) * (tsd['I_ia'] + tsd['I_sol'])
+    tsd['I_st'][t] = (1 - (bpr.rc_model['Am'] / bpr.rc_model['Atot']) - (bpr.rc_model['Htr_w'] / (9.1 * bpr.rc_model['Atot']))) * (tsd['I_ia'][t] + tsd['I_sol'][t])
 
     return tsd
 
@@ -294,16 +295,37 @@ def calc_Qgain_lat(people, X_ghp, sys_e_cooling, sys_e_heating):
 
     return w_int
 
+def calc_I_sol(t, bpr, tsd, gv):
 
-def calc_I_sol(bpr, gv):
+    Asol_wall, Asol_roof, Asol_win = calc_Asol(t, bpr, gv)
+    I_rad = calc_I_rad(t, tsd, bpr, gv)
+    I_sol_net = bpr.solar['I_roof'][t] * Asol_wall + bpr.solar['I_win'][t]*Asol_win + bpr.solar['I_wall'][t]*Asol_wall - I_rad
+
+    return I_sol_net # vector in W
+
+def calc_I_rad(t, tsd, bpr, gv):
+    temp_s_prev = tsd['Ts'][t - 1] if not np.isnan(tsd['Ts'][t - 1]) else tsd['T_ext'][t-1]
+    theta_ss = temp_s_prev - tsd['T_sky'][t]
+    print theta_ss, temp_s_prev
+    Fform_wall, Fform_win, Fform_roof = 0.5,0.5,1
+    I_rad_win = gv.Rse * bpr.rc_model['U_win']*calc_hr(bpr.architecture['e_win'], theta_ss, gv) * bpr.rc_model['Awin'] * theta_ss
+    I_rad_roof = gv.Rse * bpr.rc_model['U_roof']*calc_hr(bpr.architecture['e_roof'], theta_ss, gv) * bpr.rc_model['Aroof'] * theta_ss
+    I_rad_wall = gv.Rse * bpr.rc_model['U_wall']*calc_hr(bpr.architecture['e_wall'], theta_ss, gv) * bpr.rc_model['Awall_all'] * theta_ss
+    I_rad = Fform_wall*I_rad_wall + Fform_win*I_rad_win + Fform_roof*I_rad_roof
+
+    return I_rad
+
+def calc_hr(eminssivity, theta_ss, gv):
+    return 4*eminssivity*gv.blotzman*(theta_ss+273)**3
+
+def calc_Asol(t, bpr, gv):
     from cea.technologies import blinds
-    solar_specific = bpr.solar / bpr.rc_model['Awall_all']  # array in W/m2
-    blinds_reflection = np.vectorize(blinds.calc_blinds_reflection)(solar_specific, bpr.architecture['type_shade'], gv.g_gl)
-    solar_effective_area = blinds_reflection * (1 - gv.F_f) * bpr.rc_model['Aw']  # Calculation of solar effective area per hour in m2
-    net_solar_gains = solar_effective_area * solar_specific  # how much are the net solar gains in Wh per hour of the year.
-    return net_solar_gains.values
+    Fsh_win = blinds.calc_blinds_activation(bpr.solar['I_win'][t], bpr.architecture['G_win'], bpr.architecture['rf_sh'])
+    Asol_wall = bpr.rc_model['Awall_all'] * bpr.architecture['a_wall'] * gv.Rse * bpr.rc_model['U_wall']
+    Asol_roof = bpr.rc_model['Aroof'] * bpr.architecture['a_roof'] * gv.Rse * bpr.rc_model['U_roof']
+    Asol_win = Fsh_win * bpr.rc_model['Aw'] * (1 - gv.F_f)
 
-
+    return Asol_wall, Asol_roof, Asol_win
 """
 =========================================
 temperature of emission/control system

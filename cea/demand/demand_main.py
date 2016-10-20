@@ -86,7 +86,7 @@ def demand_calculation(locator, weather_path, gv):
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
 
     # weather model
-    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms']]
+    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
     # building properties model
     building_properties = BuildingProperties(locator, gv)
