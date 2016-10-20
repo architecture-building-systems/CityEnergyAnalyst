@@ -157,11 +157,10 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
 def CalcIncidentRadiation(path_radiation_data, path_radiation_year_final, surface_properties, gv):
     radiation = pd.read_csv(path_radiation_data)
     # export surfaces properties
-    radiation[['Name', 'Freeheight', 'FactorShade', 'height_ag', 'Shape_Leng']].to_csv(surface_properties, index=False)
+    radiation['Awall_all'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
+    radiation[['Name', 'Freeheight', 'FactorShade', 'height_ag', 'Shape_Leng', 'Awall_all']].to_csv(surface_properties, index=False)
 
     # Import Radiation table and compute the Irradiation in W in every building's surface
-    radiation['Awall_all'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
-
     hours_in_year = 8760
     column_names = ['T%i' % (i + 1) for i in range(hours_in_year)]
     for column in column_names:

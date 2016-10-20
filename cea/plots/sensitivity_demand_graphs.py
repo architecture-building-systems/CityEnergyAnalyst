@@ -81,7 +81,7 @@ def run_as_script():
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
     output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr']
     method = 'morris' # method
-    samples = 500
+    samples = 1000
     graph(locator, output_parameters, method, samples)
 
 if __name__ == '__main__':

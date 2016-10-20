@@ -91,6 +91,10 @@ class InputLocator(object):
         """scenario/1-inputs/4-technical/emission_systems.csv"""
         return os.path.join(self.db_path, 'Systems',  'emission_systems.xls')
 
+    def get_envelope_systems(self):
+        """scenario/1-inputs/4-technical/emission_systems.csv"""
+        return os.path.join(self.db_path, 'Systems',  'envelope_systems.xls')
+
     def get_data_benchmark(self):
         """cea/databases/CH/Benchmarks/benchmark_targets.xls"""
         return os.path.join(self.db_path, 'Benchmarks', 'benchmark_targets.xls')
