@@ -305,18 +305,17 @@ def calc_I_sol(t, bpr, tsd, gv):
 
 def calc_I_rad(t, tsd, bpr, gv):
     temp_s_prev = tsd['Ts'][t - 1] if not np.isnan(tsd['Ts'][t - 1]) else tsd['T_ext'][t-1]
-    theta_ss = temp_s_prev - tsd['T_sky'][t]
-    print theta_ss, temp_s_prev
+    theta_ss = tsd['T_sky'][t] - temp_s_prev
     Fform_wall, Fform_win, Fform_roof = 0.5,0.5,1
-    I_rad_win = gv.Rse * bpr.rc_model['U_win']*calc_hr(bpr.architecture['e_win'], theta_ss, gv) * bpr.rc_model['Awin'] * theta_ss
+    I_rad_win = gv.Rse * bpr.rc_model['U_win']*calc_hr(bpr.architecture['e_win'], theta_ss, gv) * bpr.rc_model['Aw'] * theta_ss
     I_rad_roof = gv.Rse * bpr.rc_model['U_roof']*calc_hr(bpr.architecture['e_roof'], theta_ss, gv) * bpr.rc_model['Aroof'] * theta_ss
     I_rad_wall = gv.Rse * bpr.rc_model['U_wall']*calc_hr(bpr.architecture['e_wall'], theta_ss, gv) * bpr.rc_model['Awall_all'] * theta_ss
     I_rad = Fform_wall*I_rad_wall + Fform_win*I_rad_win + Fform_roof*I_rad_roof
 
     return I_rad
 
-def calc_hr(eminssivity, theta_ss, gv):
-    return 4*eminssivity*gv.blotzman*(theta_ss+273)**3
+def calc_hr(emisivity, theta_ss, gv):
+    return 4 * emisivity * gv.blotzman * (theta_ss + 273) ** 3
 
 def calc_Asol(t, bpr, gv):
     from cea.technologies import blinds
