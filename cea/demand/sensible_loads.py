@@ -266,12 +266,13 @@ solar and heat gains
 =========================================
 """
 
-def calc_Qgain_sen(t, Qcdata, Qcrefri, tsd, bpr, gv):
+def calc_Qgain_sen(t, tsd, bpr, gv):
 
     # internal loads
     tsd['I_sol'][t], tsd['I_rad'][t]= calc_I_sol(t, bpr, tsd, gv)
 
-    tsd['I_int_sen'][t] = tsd['people'][t] * bpr.internal_loads['Qs_Wp'] + 0.9 * (tsd['Ealf'][t] + tsd['Eprof'][t]) + Qcdata[t] - Qcrefri[t]
+    tsd['I_int_sen'][t] = tsd['people'][t] * bpr.internal_loads['Qs_Wp'] + 0.9 * (tsd['Ealf'][t] + tsd['Eprof'][t])\
+                          + tsd['Qcdataf'][t] - tsd['Qcref'][t]
 
     # divide into components for RC model
     tsd['I_ia'][t] = 0.5 * tsd['I_int_sen'][t]

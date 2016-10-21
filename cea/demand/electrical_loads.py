@@ -45,8 +45,7 @@ def calc_E_totals(Aef, Ealf, Eauxf, Edataf, Eprof, Eaf, Elf):
         Epro_tot = Edata_tot = 0
         Ealf = np.zeros(8760)
         Eprof = np.zeros(8760)
-        Edataf = np.zeros(8760)
-    return Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edata_tot, Eprof, Epro_tot, Eaf_0, Elf_0, Eaf_tot, Elf_tot
+    return Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edata_tot, Eprof, Epro_tot, Eaf_0, Elf_0, Eaf_tot, Elf_tot
 
 
 """
@@ -115,6 +114,7 @@ def calc_Eint(tsd, bpr, list_uses, schedules):
                                   bpr.occupancy['INDUSTRY'])  # in W
     else:
         tsd['Eprof'] = np.zeros(8760)
+        tsd['Ecaf'] = np.zeros(8760) # not used in the current version but in the optimization part
     return tsd
 
 

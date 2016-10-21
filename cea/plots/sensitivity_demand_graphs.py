@@ -27,11 +27,19 @@ __status__ = "Production"
 
 
 def graph(locator, parameters, method, samples):
+    if method is 'sobol':
+        result_1 = 'ST'
+        result_2 = 'conf'
+        result_3 = 'S1'
+    else:
+        result_1 = 'mu_star'
+        result_2 = 'sigma'
+        result_3 = 'mu_star_conf'
     for parameter in parameters:
         pdf = PdfPages(locator.get_sensitivity_plots_file(parameter))
         #read the mustar of morris analysis
-        data_mu = pd.read_excel(locator.get_sensitivity_output(method, samples), parameter+'s')
-        data_sigma = pd.read_excel(locator.get_sensitivity_output(method, samples), parameter + 'mu')
+        data_mu = pd.read_excel(locator.get_sensitivity_output(method, samples), parameter + result_1)
+        data_sigma = pd.read_excel(locator.get_sensitivity_output(method, samples), parameter + result_2)
         var_names = data_mu.columns.values
 
         # normalize data to maximum value
@@ -66,7 +74,7 @@ def graph(locator, parameters, method, samples):
         ax.set_xticklabels([""]+x_names)
         ax.set_yticklabels([""]+y_names)
         cbar = plt.colorbar(ec)
-        cbar.set_label('mu_star')
+        cbar.set_label(result_1)
         plt.title('GRAPH OF '+parameter+' PARAMETER', fontsize=14, fontstyle='italic', fontweight='bold')
         pdf.savefig()
         plt.close()
@@ -79,9 +87,9 @@ def run_as_script():
     gv = gv.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
-    output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr']
-    method = 'morris' # method
-    samples = 1000
+    output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'Total_MWhyr']
+    method = 'sobol' # method
+    samples = 10
     graph(locator, output_parameters, method, samples)
 
 if __name__ == '__main__':
