@@ -24,15 +24,17 @@ import numpy as np
 import time
 
 # main
-def sensitivity_main(locator, weather_path, gv, output_parameters, method):
+def sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, num_samples, method):
     t0 = time.clock()
 
     #Model constants
-    gv.multiprocessing = False # default false
-    num_samples = 1 #generally 1000
+    gv.multiprocessing = False # false to deactivate the multiprocessing in the demand algorithm
+                               # multiprocessing will be activated in this algorithm.
 
     #Define the model inputs
-    variables = pd.read_excel(locator.get_uncertainty_db(), "THERMAL")
+    for group in groups_var:
+        variables = pd.read_excel(locator.get_uncertainty_db(), group)
+
     num_vars = variables.name.count() #integer with number of variables
     names = variables.name.values # [,,] with names of each variable
     bounds = []
@@ -119,7 +121,9 @@ def run_as_script():
     weather_path = locator.get_default_weather()
     output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'Total_MWhyr']
     method = 'sobol'
-    sensitivity_main(locator, weather_path, gv, output_parameters, method)
+    groups_var =  ['THERMAL']
+    num_samples = 10 #generally 1000 or until it converges
+    sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, num_samples, method)
 
 if __name__ == '__main__':
     run_as_script()
