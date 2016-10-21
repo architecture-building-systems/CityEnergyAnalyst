@@ -400,7 +400,7 @@ def calc_thermal_load_hvac(t, tsd, bpr, gv):
     area_f = bpr.rc_model['Af']
 
     # model of losses in the emission and control system for space heating and cooling
-    temp_hs_set_corr, temp_cs_set_corr = sensible_loads.calc_T_em_ls(bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
+    temp_hs_set_corr, temp_cs_set_corr = sensible_loads.setpoint_correction_for_space_emission_systems(bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
 
     # heating and cooling loads
     i_c_max, i_h_max = sensible_loads.calc_Qhs_Qcs_sys_max(bpr.rc_model['Af'], bpr.hvac)
@@ -646,7 +646,7 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
     area_f = bpr.rc_model['Af']
 
     # model of losses in the emission and control system for space heating and cooling
-    temp_hs_set_corr, temp_cs_set_corr = sensible_loads.calc_T_em_ls(bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
+    temp_hs_set_corr, temp_cs_set_corr = sensible_loads.setpoint_correction_for_space_emission_systems(bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
 
     i_c_max, i_h_max = sensible_loads.calc_Qhs_Qcs_sys_max(bpr.rc_model['Af'], bpr.hvac)
 

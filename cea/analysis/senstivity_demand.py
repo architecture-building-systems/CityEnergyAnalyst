@@ -124,7 +124,7 @@ def run_as_script():
     output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'Total_MWhyr']
     method = 'sobol'
     groups_var =  ['THERMAL']
-    num_samples = 1000 #generally 1000 or until it converges
+    num_samples = 10 #generally 1000 or until it converges
     sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, num_samples, method)
 
 if __name__ == '__main__':
