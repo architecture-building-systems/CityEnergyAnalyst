@@ -132,7 +132,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
            'qm_ve_req': np.zeros(8760),
            'I_sol': np.zeros(8760),
            'I_int_sen': np.zeros(8760),
-           'w_int': np.zeros(8760)}
+           'I_ia': np.zeros(8760),
+           'I_m': np.zeros(8760),
+           'I_st': np.zeros(8760)}
 
     # get schedules
     list_uses = usage_schedules['list_uses']
@@ -1076,8 +1078,7 @@ class BuildingProperties(object):
 
 
         fields = ['Awall_all', 'Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',
-                  'HD', 'Aroof',
-                  'Htr_w', 'GFA_m2']
+                  'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'Htr_w', 'GFA_m2']
         result = df[fields]
         return result
 
@@ -1320,6 +1321,5 @@ def get_prop_solar(locator):
     I_sol = I_roof = I_win = [a/b for a,b in zip(solar_list,sum_surface)]
 
     result = pd.DataFrame({'Name': solar.index, 'I_win': I_sol, 'I_roof':I_roof , 'I_wall':I_win})
-    print result
 
     return result
