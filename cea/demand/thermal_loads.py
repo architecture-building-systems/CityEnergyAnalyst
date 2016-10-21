@@ -134,7 +134,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
            'I_int_sen': np.zeros(8760),
            'I_ia': np.zeros(8760),
            'I_m': np.zeros(8760),
-           'I_st': np.zeros(8760)}
+           'I_st': np.zeros(8760),
+           'I_rad': np.zeros(8760)}
 
     # get schedules
     list_uses = usage_schedules['list_uses']
@@ -281,7 +282,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         Occupancy = np.floor(tsd['people'])
         Occupants = Occupancy.max()
         waterpeak = Vw.max()
-
     # Af = 0: no conditioned floor area
     else:
         # scalars
