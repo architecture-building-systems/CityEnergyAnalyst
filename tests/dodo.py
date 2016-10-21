@@ -21,8 +21,13 @@ __status__ = "Production"
 REPOSITORY_URL = "https://github.com/architecture-building-systems/cea-reference-case/archive/%s.zip"
 REPOSITORY_NAME = "master"
 
-ARCHIVE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case.zip')
-REFERENCE_CASE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case')
+if 'JOB_NAME' in os.environ:
+    # this script is being run as part of a Jenkins job
+    ARCHIVE_PATH = os.path.expandvars(r'%TEMP%\%JOB_NAME%\cea-reference-case.zip')
+    REFERENCE_CASE_PATH = os.path.expandvars(r'%TEMP%\%JOB_NAME%\cea-reference-case')
+else:
+    ARCHIVE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case.zip')
+    REFERENCE_CASE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case')
 
 REFERENCE_CASES = {
     'zug/baseline': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME, "reference-case-zug",
