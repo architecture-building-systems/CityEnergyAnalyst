@@ -18,9 +18,13 @@ __status__ = "Production"
 class GlobalVariables(object):
     def __init__(self):
         self.scenario_reference = r'c:\reference-case-open\baseline'
+        self.print_partial = 'hourly' # hourly or monthly for the deamnd script
+        self.print_yearly = True # print yearly values
+        self.print_yearly_peak = True # print peak values
+        self.output_type = 'default' # dafault or sensitivity for the demand script
         self.date_start = '2016-01-01'  # format: yyyy-mm-dd
         self.seasonhours = [3216, 6192]
-        self.multiprocessing = True # use multiprocessing / parallel execution if possible
+        self.multiprocessing = True# use multiprocessing / parallel execution if possible
         self.Z = 3  # height of basement for every building in m
         self.Bf = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
         self.his = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
@@ -513,21 +517,12 @@ class GlobalVariables(object):
         # ==============================================================================================================
         # Columns to write for the demand calculation
         # ==============================================================================================================
-        self.demand_totals_csv_columns = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'occ_pax', 'Total_MWhyr','QHf_MWhyr', 'QCf_MWhyr',
-                                          'Ef_MWhyr','QHf_MWhyr', 'QCf_MWhyr','Ef0_kW', 'QHf0_kW', 'QCf0_kW',
-                                          'Qhs_MWhyr', 'Qhs_lat_MWhyr', 'Qwwf0_kW', 'Qwwf_MWhyr',
-                                          'Qww_MWhyr', 'Qhprof_MWhyr', 'Qcsf0_kW', 'Qcsf_MWhyr', 'Qcs_MWhyr', 'Qcs_lat_MWhyr',
-                                          'Qcref_MWhyr', 'Qcdataf_MWhyr', 'Ealf0_kW', 'Ealf_MWhyr', 'Eauxf_MWhyr',
-                                          'Ecaf_MWhyr', 'Edataf_MWhyr', 'Eprof_MWhyr', 'Tshs0_C', 'Trhs0_C', 'Tscs0_C',
-                                          'Trcs0_C', 'Tsww0_C', 'Vw_m3yr', 'Vww0_m3', 'Vww_m3yr', 'mcphs0_kWC',
-                                          'mcpww0_kWC', 'mcpcs0_kWC']
-        self.demand_building_csv_columns = ['DATE', 'Name', 'occ_pax', 'QHf_kWh', 'QCf_kWh', 'Ef_kWh', 'Qhsf_kWh',
-                                            'Qhs_kWh', 'Qhs_lat_kWh', 'Qhprof_kWh', 'Qwwf_kWh', 'Qww_kWh',
-                                            'Qcsf_kWh', 'Qcs_kWh', 'Qcs_lat_kWh', 'Qcref_kWh', 'Qcdataf_kWh', 'Ealf_kWh', 'Eauxf_kWh',
-                                            'Ecaf_kWh', 'Edataf_kWh', 'Eprof_kWh', 'Tshs_C', 'Trhs_C', 'Tscs_C',
-                                            'Trcs_C', 'Tsww_C', 'Trww_C', 'Tsref_C', 'Trref_C',
-                                            'Tsdata_C', 'Trdata_C', 'Vw_m3', 'mcphs_kWC', 'mcpww_kWC', 'mcpcs_kWC',
-                                            'mcpref_kWC', 'mcpdata_kWC']
+        self.demand_building_csv_columns = [['QEf','QHf', 'QCf', 'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Qwwf', 'Qww', 'Qcsf',
+                                             'Qcs','Qcsf_lat', 'Qcdataf','Qcref','Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
+                                             'Eref', 'Eauxf', 'Eauxf_ve','Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
+                                             'Eprof', 'Ecaf'],['mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf','mcpref'],['Twwf_sup',
+                                             'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup','Tcsf_re', 'Tcdataf_re',
+                                             'Tcdataf_sup','Tcref_re', 'Tcref_sup']]
         # here is where we decide whether full excel reports of the calculations are generated
         self.testing = False  # if true: reports are generated, if false: not
 
