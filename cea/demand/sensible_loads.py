@@ -269,14 +269,13 @@ solar and heat gains
 def calc_Qgain_sen(t, Qcdata, Qcrefri, tsd, bpr, gv):
 
     # internal loads
-    tsd['I_sol'][t]= calc_I_sol(t, bpr, tsd, gv)
+    tsd['I_sol'][t], tsd['I_rad'][t]= calc_I_sol(t, bpr, tsd, gv)
 
-    tsd['I_int_sen'][t] = tsd['people'][t] * bpr.internal_loads['Qs_Wp'] + 0.9 * (tsd['Ealf'][t] + tsd['Eprof'][t]) + Qcdata[t] - Qcrefri[t]  # FIXME: here 0.9 is assumed
+    tsd['I_int_sen'][t] = tsd['people'][t] * bpr.internal_loads['Qs_Wp'] + 0.9 * (tsd['Ealf'][t] + tsd['Eprof'][t]) + Qcdata[t] - Qcrefri[t]
 
     # divide into components for RC model
     tsd['I_ia'][t] = 0.5 * tsd['I_int_sen'][t]
     tsd['I_m'][t] = (bpr.rc_model['Am'] / bpr.rc_model['Atot']) * (tsd['I_ia'][t] + tsd['I_sol'][t])
-    # FIXME: why 9.1?
     tsd['I_st'][t] = (1 - (bpr.rc_model['Am'] / bpr.rc_model['Atot']) - (bpr.rc_model['Htr_w'] / (9.1 * bpr.rc_model['Atot']))) * (tsd['I_ia'][t] + tsd['I_sol'][t])
 
     return tsd
@@ -299,9 +298,10 @@ def calc_I_sol(t, bpr, tsd, gv):
 
     Asol_wall, Asol_roof, Asol_win = calc_Asol(t, bpr, gv)
     I_rad = calc_I_rad(t, tsd, bpr, gv)
-    I_sol_net = bpr.solar['I_roof'][t] * Asol_wall + bpr.solar['I_win'][t]*Asol_win + bpr.solar['I_wall'][t]*Asol_wall - I_rad
+    I_sol = bpr.solar['I_roof'][t] * Asol_roof + bpr.solar['I_win'][t]*Asol_win + bpr.solar['I_wall'][t]*Asol_wall
+    I_sol_net = I_sol - I_rad
 
-    return I_sol_net # vector in W
+    return I_sol_net, I_rad # vector in W
 
 def calc_I_rad(t, tsd, bpr, gv):
     temp_s_prev = tsd['Ts'][t - 1] if not np.isnan(tsd['Ts'][t - 1]) else tsd['T_ext'][t-1]
