@@ -183,9 +183,9 @@ def run_as_script():
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
     weather_path = locator.get_default_weather()
     output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr',]
-    method = 'morris'
+    method = 'sobol'
     groups_var =  ['THERMAL']
-    num_samples = 1000 #generally 1000 or until it converges
+    num_samples = 100 #generally 1000 or until it converges
     sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, num_samples, method)
 
 if __name__ == '__main__':

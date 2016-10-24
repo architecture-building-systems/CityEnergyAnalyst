@@ -99,7 +99,7 @@ def run_as_script():
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
     output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'Total_MWhyr']
     method = 'sobol' # method
-    samples = 10
+    samples = 100
     graph(locator, output_parameters, method, samples)
 
 if __name__ == '__main__':
