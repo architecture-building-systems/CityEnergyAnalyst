@@ -6,7 +6,7 @@ Sensitivity of demand_main.py
 This script uses the morris algorithm (morris 1991)(campologo 2011) and Sobol Algorithm Sltalli 20110
 to screen the most sensitive variables of a selection of parameters of the CEA.
 Th morris method serves to basic screening o finput variables and it is base on OAT
-The Sobol method serves for a complete sensitivity analysis of input vatiables. It is based on variance methods.
+The Sobol method serves for a complete sensitivity analysis of input variables. It is based on variance methods.
 
 ===========================
 
@@ -22,6 +22,15 @@ from SALib.sample.morris import sample as sampler_morris
 import pandas as pd
 import numpy as np
 import time
+
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
 # main
 def sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, num_samples, method):

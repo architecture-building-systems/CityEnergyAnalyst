@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 ===========================
-Dynamic demand graphs algorithm
+Graphs for sensitivity_demand.py
 ===========================
-J. Fonseca  script development          25.08.15
 
 """
 from __future__ import division
@@ -27,6 +26,15 @@ __status__ = "Production"
 
 
 def graph(locator, parameters, method, samples):
+    """
+
+    :param locator: locator class
+    :param parameters: list of output parameters to analyse
+    :param method: 'morris' or 'sobol' methods
+    :param samples: number of samples to calculate
+    :return: .pdf file per output_parameter stored in locator.get_sensitivity_plots_file()
+
+    """
     if method is 'sobol':
         result_1 = 'ST'
         result_2 = 'conf'
@@ -35,9 +43,11 @@ def graph(locator, parameters, method, samples):
         result_1 = 'mu_star'
         result_2 = 'sigma'
         result_3 = 'mu_star_conf'
+
     for parameter in parameters:
         pdf = PdfPages(locator.get_sensitivity_plots_file(parameter))
-        #read the mustar of morris analysis
+
+        # read the mustar of morris analysis
         data_mu = pd.read_excel(locator.get_sensitivity_output(method, samples), parameter + result_1)
         data_sigma = pd.read_excel(locator.get_sensitivity_output(method, samples), parameter + result_2)
         var_names = data_mu.columns.values
