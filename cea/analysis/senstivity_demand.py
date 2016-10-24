@@ -25,6 +25,32 @@ import time
 
 # main
 def sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, num_samples, method):
+    """
+    This function creates the sensitivity analysis problem for either sobol or morris methods.
+    It calculates the number of samples for the analysis and calls the CEA to run every sample.
+
+
+    :param locator: locator class
+    :param weather_path: path to weather file
+    :param gv: global variables class
+    :param output_parameters: list of output parameters to analyse
+    :param groups_var: list with group names of variables to analyse. it relates the database of
+    uncertaintity variables of the CEA:  locator.get_uncertainty_db()
+    :param num_samples: number of samples to calculate
+    :param method: 'morris' or 'sobol' methods
+    :return: .xls file stored in locator.get_sensitivity_output(). every spreadsheet of the workbook
+    stores a matrix whose content is the output of one sensitivity parameter and one output_parameter:
+
+    - columns: groups of variables to anlyse.
+    - rows: number of buildings of the case study under analysis.
+    - content: sensitivity parameter per output parameter
+
+    every sensitivity parameter depends on the method:
+
+    - sobol: S1, ST and ST_conf >>for more information refereto SaBil documentation
+    - morris: mu_star, sigma and mu_star_conf >> for more information refereto SaBil documentation
+
+    """
     t0 = time.clock()
 
     #Model constants
@@ -90,6 +116,19 @@ def sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, n
 
 # function to call cea
 def screening_cea_multiprocessing(samples, names, output_parameters, locator, weather_path, gv):
+    """
+    This functions calls the simulation of samples in the CEA using multiprocessing
+
+    :param samples: list of lists of samples to simulate
+    :param names: names of buildings to simulate
+    :param output_parameters: list of output parameters to analyse
+    :param locator: path to locator class
+    :param weather_path:  path to weather file
+    :param gv: global variables class
+    :return: List of Dataframes with output of simulation. It relates the results
+    of every outputparameter per building simulated.
+
+    """
     pool = mp.Pool()
     gv.log("Using %i CPU's" % mp.cpu_count())
     joblist = [pool.apply_async(screening_cea, [counter, sample,  names, output_parameters, locator, weather_path, gv])
@@ -101,6 +140,19 @@ def screening_cea_multiprocessing(samples, names, output_parameters, locator, we
     return results
 
 def screening_cea(counter, sample,  var_names, output_parameters, locator, weather_path, gv):
+    """
+
+    :param counter: counter keepin gth enumber of samples analyzed. it serves to sort the results from asynchronous
+    multiprocessing in order
+    :param sample: sample to simulate
+    :param var_names: names of variables to analyze
+    :param output_parameters: list of output parameters to analyse
+    :param locator: path to locator class
+    :param weather_path: path to weather file
+    :param gv: global variables class
+    :return: Dataframes with output of simulation of a building. It relates the results
+    of every outputparameter.
+    """
 
     #create a dict with the new input vatiables form the sample and pass in gv
     gv.samples = dict(zip(var_names, sample))
@@ -121,10 +173,10 @@ def run_as_script():
     scenario_path = gv.scenario_reference
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
     weather_path = locator.get_default_weather()
-    output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'Total_MWhyr']
-    method = 'sobol'
+    output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr',]
+    method = 'morris'
     groups_var =  ['THERMAL']
-    num_samples = 10 #generally 1000 or until it converges
+    num_samples = 1000 #generally 1000 or until it converges
     sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, num_samples, method)
 
 if __name__ == '__main__':
