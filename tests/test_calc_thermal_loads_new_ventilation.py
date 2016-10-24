@@ -9,7 +9,7 @@ from cea.globalvar import GlobalVariables
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
 
-REFERENCE_CASE = r'C:\reference-case\baseline'
+REFERENCE_CASE = r'C:\reference-case-open\baseline'
 
 
 class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
