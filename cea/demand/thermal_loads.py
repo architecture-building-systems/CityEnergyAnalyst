@@ -1058,6 +1058,7 @@ class BuildingProperties(object):
         """
         Look up the factor to multiply the conditioned floor area by to get the effective mass area by building construction
         type. This is used for the calculation of the effective mass area "Am" in `get_prop_RC_model`.
+        Standard values can be found in the Annex G of ISO EN13790
 
         `th_mass` is one of the following values:
 
