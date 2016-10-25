@@ -5,7 +5,8 @@ Sensitivity of demand_main.py
 
 This script uses the morris algorithm (morris 1991)(campologo 2011) and Sobol Algorithm Sltalli 20110
 to screen the most sensitive variables of a selection of parameters of the CEA.
-Th morris method serves to basic screening o finput variables and it is base on OAT
+Th morris method serves to basic screening o input variables and it is based on the family of One-at-a-time
+screening methods (OAT). morris provides a ranking but not a quantitative measure of the importance of each parameter.
 The Sobol method serves for a complete sensitivity analysis of input variables. It is based on variance methods.
 
 ===========================
