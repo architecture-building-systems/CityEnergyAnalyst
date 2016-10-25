@@ -41,11 +41,22 @@ def main():
 
     value_columns = [u'Ealf_kWh', u'Eauxf_kWh', u'Edataf_kWh', u'Ef_kWh', u'QCf_kWh', u'QHf_kWh',
                      u'Qcdataf_kWh', u'Qcref_kWh', u'Qcs_kWh', u'Qcsf_kWh', u'Qhs_kWh', u'Qhsf_kWh', u'Qww_kWh',
+                     u'Qwwf_kWh', u'Tcsf_re_C', u'Thsf_re_C', u'Twwf_re_C', u'Tcsf_sup_C', u'Thsf_sup_C',
+                     u'Twwf_sup_C']
 
     print("values = %s " % repr([df[column].sum() for column in value_columns]))
 
     print("data for test_calc_thermal_loads_other_buildings:")
     # randomly selected except for B302006716, which has `Af == 0`
+    buildings = {'B01': (81124.39400, 150471.05200),
+                 'B03': (81255.09200, 150520.01000),
+                 'B02': (82176.15300, 150604.85100),
+                 'B05': (84058.72400, 150841.56200),
+                 'B04': (82356.22600, 150598.43400),
+                 'B07': (81052.19000, 150490.94800),
+                 'B06': (83108.45600, 150657.24900),
+                 'B09': (84491.58100, 150853.54000),
+                 'B08': (88572.59000, 151020.09300), }
 
     for building in buildings.keys():
         bpr = building_properties[building]
