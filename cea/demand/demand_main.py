@@ -162,16 +162,6 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
 test
 =========================================
 """
-
-#function to change values in the cea for sensitivity analysis
-def shifter(samples, bpr):
-    for key, value in samples.iteritems():
-        bpr._prop_thermal[key] = value
-
-    bpr.calc_prop_rc_model(bpr._prop_occupancy, bpr._prop_architecture, bpr._prop_thermal, bpr._prop_geometry,
-                           bpr._prop_HVAC_result, bpr._surface_properties, bpr.gv)
-    return bpr
-
 def run_as_script(scenario_path=None, weather_path=None):
     gv = cea.globalvar.GlobalVariables()
     if scenario_path is None:
