@@ -17,12 +17,12 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.technologies import controllers
 from cea.utilities import helpers
 
-
 """
 =========================================
 demand model of thermal and electrical loads
 =========================================
 """
+
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator):
     """
@@ -99,7 +99,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd = {'Twwf_sup': bpr.building_systems['Tww_sup_0'],
            'T_ext': weather_data.drybulb_C.values,
            'rh_ext': weather_data.relhum_percent.values,
-           'T_sky' :weather_data.skytemp_C.values,
+           'T_sky': weather_data.skytemp_C.values,
            'uncomfort': np.zeros(8760),
            'Ta': np.empty(8760) * np.nan,
            'Ts': np.empty(8760) * np.nan,
@@ -153,11 +153,11 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd = electrical_loads.calc_Eint(tsd, bpr, list_uses, schedules)
 
     # get refrigeration loads
-    tsd['Qcref'], tsd['mcpref'],\
+    tsd['Qcref'], tsd['mcpref'], \
     tsd['Tcref_re'], tsd['Tcref_sup'] = np.vectorize(refrigeration_loads.calc_Qcref)(tsd['Eref'])
 
     # get server loads
-    tsd['Qcdataf'],tsd['mcpdataf'],\
+    tsd['Qcdataf'], tsd['mcpdataf'], \
     tsd['Tcdataf_re'], tsd['Tcdataf_sup'] = np.vectorize(datacenter_loads.calc_Qcdataf)(tsd['Edataf'])
 
     # ground water temperature in C during heating season (winter) according to norm
@@ -170,15 +170,14 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         # get internal comfort properties
         tsd = controllers.calc_simple_temp_control(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
-                                                      date.dayofweek)
+                                                   date.dayofweek)
 
         # minimum mass flow rate of ventilation according to schedule
         # with infiltration and overheating
         tsd['qv_req'] = np.vectorize(controllers.calc_simple_ventilation_control)(tsd['ve'], tsd['people'],
                                                                                   bpr.rc_model['Af'], gv,
-                                                                                    date.hour, range(8760), n50)
+                                                                                  date.hour, range(8760), n50)
         tsd['qm_ve_req'] = tsd['qv_req'] * gv.Pair  # TODO:  use dynamic rho_air
-
 
         # latent heat gains
         tsd['w_int'] = sensible_loads.calc_Qgain_lat(tsd['people'], bpr.internal_loads['X_ghp'], bpr.hvac['type_cs'],
@@ -223,7 +222,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # Calc requirements of generation systems (both cooling and heating do not have a storage):
         tsd['Qhs'] = tsd['Qhs_sen_incl_em_ls'] - tsd['Qhs_em_ls']
         tsd['Qhsf'] = tsd['Qhs_sen_incl_em_ls'] + Qhs_d_ls  # no latent is considered because it is already added a
-                                                        # s electricity from the adiabatic system.
+        # s electricity from the adiabatic system.
         tsd['Qcs'] = (tsd['Qcs_sen_incl_em_ls'] - tsd['Qcs_em_ls']) + tsd['Qcsf_lat']
         tsd['Qcsf'] = tsd['Qcs'] + tsd['Qcs_em_ls'] + Qcs_d_ls
         tsd['Qcsf'] = -abs(tsd['Qcsf'])
@@ -234,48 +233,53 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         Qcsf_0 = tsd['Qcsf'].min()  # in W negative
 
         # Cal temperatures of all systems
-        tsd['Tcsf_re'], tsd['Tcsf_sup'], tsd['Thsf_re'],\
+        tsd['Tcsf_re'], tsd['Tcsf_sup'], tsd['Thsf_re'], \
         tsd['Thsf_sup'], tsd['mcpcsf'], tsd['mcphsf'] = sensible_loads.calc_temperatures_emission_systems(tsd, bpr,
-                                                                                                        Qcsf_0, Qhsf_0,
-                                                                                                        gv)
+                                                                                                          Qcsf_0,
+                                                                                                          Qhsf_0,
+                                                                                                          gv)
 
         if bpr.hvac['type_dhw'] != 'T0':
-            Mww, tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(bpr.rc_model['Af'],
-                                                                                                 bpr.building_systems['Lcww_dis'],
-                                                                                                 bpr.building_systems['Lsww_dis'],
-                                                                                                 bpr.building_systems['Lvww_c'],
-                                                                                                 bpr.building_systems['Lvww_dis'],
-                                                                                                 tsd['T_ext'],
-                                                                                                 tsd['Ta'],
-                                                                                                 tsd['Twwf_re'],
-                                                                                                 bpr.building_systems['Tww_sup_0'],
-                                                                                                 bpr.building_systems['Y'],
-                                                                                                 gv,
-                                                                                                 bpr.internal_loads['Vww_lpd'],
-                                                                                                 bpr.internal_loads['Vw_lpd'],
-                                                                                                 bpr.architecture['Occ_m2p'],
-                                                                                                 list_uses,
-                                                                                                 schedules,
-                                                                                                 bpr.occupancy)
+            Mww, tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(
+                bpr.rc_model['Af'],
+                bpr.building_systems['Lcww_dis'],
+                bpr.building_systems['Lsww_dis'],
+                bpr.building_systems['Lvww_c'],
+                bpr.building_systems['Lvww_dis'],
+                tsd['T_ext'],
+                tsd['Ta'],
+                tsd['Twwf_re'],
+                bpr.building_systems['Tww_sup_0'],
+                bpr.building_systems['Y'],
+                gv,
+                bpr.internal_loads['Vww_lpd'],
+                bpr.internal_loads['Vw_lpd'],
+                bpr.architecture['Occ_m2p'],
+                list_uses,
+                schedules,
+                bpr.occupancy)
         # calc auxiliary loads
-        tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'],\
+        tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'], \
         tsd['Eauxf_ve'], tsd['Eauxf_ww'], tsd['Eauxf_fw'], = electrical_loads.calc_Eauxf(bpr.geometry['Blength'],
-                                                                                          bpr.geometry['Bwidth'],
-                                                                                          Mww, tsd['Qcsf'], Qcsf_0,
-                                                                                          tsd['Qhsf'], Qhsf_0, tsd['Qww'],
-                                                                                          tsd['Qwwf'], Qwwf_0,
-                                                                                          tsd['Tcsf_re'], tsd['Tcsf_sup'],
-                                                                                          tsd['Thsf_re'], tsd['Thsf_sup'],
-                                                                                          Vw,
-                                                                                          bpr.age['built'],
-                                                                                          bpr.building_systems['fforma'],
-                                                                                          gv,
-                                                                                          bpr.geometry['floors_ag'],
-                                                                                          bpr.occupancy['PFloor'],
-                                                                                          tsd['qv_req'],
-                                                                                          bpr.hvac['type_cs'],
-                                                                                          bpr.hvac['type_hs'],
-                                                                                          tsd['Ehs_lat_aux'])
+                                                                                         bpr.geometry['Bwidth'],
+                                                                                         Mww, tsd['Qcsf'], Qcsf_0,
+                                                                                         tsd['Qhsf'], Qhsf_0,
+                                                                                         tsd['Qww'],
+                                                                                         tsd['Qwwf'], Qwwf_0,
+                                                                                         tsd['Tcsf_re'],
+                                                                                         tsd['Tcsf_sup'],
+                                                                                         tsd['Thsf_re'],
+                                                                                         tsd['Thsf_sup'],
+                                                                                         Vw,
+                                                                                         bpr.age['built'],
+                                                                                         bpr.building_systems['fforma'],
+                                                                                         gv,
+                                                                                         bpr.geometry['floors_ag'],
+                                                                                         bpr.occupancy['PFloor'],
+                                                                                         tsd['qv_req'],
+                                                                                         bpr.hvac['type_cs'],
+                                                                                         bpr.hvac['type_hs'],
+                                                                                         tsd['Ehs_lat_aux'])
 
         # calculate other quantities
         tsd['Qcsf_lat'] = -tsd['Qcsf_lat']
@@ -295,46 +299,48 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
 
 def results_to_csv(gv, tsd, bpr, locator, date, building_name):
-
     if gv.output_type is 'sensitivity':
-        vars_to_print = [['QEf','QHf', 'QCf', 'Ef'],[],[]]
+        vars_to_print = [['QEf', 'QHf', 'QCf', 'Ef'], [], []]
     else:
         vars_to_print = gv.demand_building_csv_columns
 
+    LOADS, MASS_FLOWS, TEMPERATURES = (0, 1, 2)
     # treating timeseries data from W to kW
-    data  = dict((x + '_kWh', tsd[x] / 1000) for x in vars_to_print[0])
+    data = dict((x + '_kWh', tsd[x] / 1000) for x in vars_to_print[LOADS])
 
     # treating time series data of mass_flows from W/C to kW/C
-    data.update(dict((x + '_kWC', tsd[x] / 1000) for x in vars_to_print[1]))
+    data.update(dict((x + '_kWC', tsd[x] / 1000) for x in vars_to_print[MASS_FLOWS]))
 
     # treating time series data of mass_flows from W/C to kW/C
-    data.update(dict((x + '_C', tsd[x]) for x in vars_to_print[2]))
+    data.update(dict((x + '_C', tsd[x]) for x in vars_to_print[TEMPERATURES]))
 
     # get order of columns
-    keys = data.keys()
-    columns = ['Name', 'people']
-    columns.extend(keys)
+    columns = ['Date', 'Name', 'people']
+    columns.extend([x + '_kWh' for x in vars_to_print[LOADS]])
+    columns.extend([x + '_kWC' for x in vars_to_print[MASS_FLOWS]])
+    columns.extend([x + '_C' for x in vars_to_print[TEMPERATURES]])
 
     # add other default elements
-    data.update({'Date':date, 'Name': building_name, 'people': tsd['people']})
+    data.update({'Date': date, 'Name': building_name, 'people': tsd['people']})
 
     # create dataframe with hourly values of selected data
     hourly_data = pd.DataFrame(data).set_index('Date')
 
-    if gv.print_partial is 'monthly': # only for loads
-        monthly_data = hourly_data[[x+'_kWh' for x in vars_to_print[0]]].groupby(by=[hourly_data.index.month]).sum()/1000
-        monthly_data = monthly_data.rename(columns=dict((x+'_kWh', x+'_MWhyr') for x in vars_to_print[0]))
+    if gv.print_partial is 'monthly':  # only for loads
+        monthly_data = hourly_data[[x + '_kWh' for x in vars_to_print[0]]].groupby(
+            by=[hourly_data.index.month]).sum() / 1000
+        monthly_data = monthly_data.rename(columns=dict((x + '_kWh', x + '_MWhyr') for x in vars_to_print[0]))
         monthly_data['Name'] = building_name
-        monthly_data.to_csv(locator.get_demand_results_file(building_name),index=False, float_format='%.3f')
+        monthly_data.to_csv(locator.get_demand_results_file(building_name), index=False, float_format='%.3f')
     else:
         hourly_data.to_csv(locator.get_demand_results_file(building_name), columns=columns, float_format='%.3f')
 
     if gv.print_yearly:
         # treating timeseries data from W to MWh
-        data = dict((x + '_MWhyr', tsd[x].sum() / 1000000) for x in vars_to_print[0])
+        data = dict((x + '_MWhyr', tsd[x].sum() / 1000000) for x in vars_to_print[LOADS])
 
         if gv.print_yearly_peak:
-            data.update(dict((x + '0_kW', tsd[x].max() / 1000) for x in vars_to_print[0]))
+            data.update(dict((x + '0_kW', tsd[x].max() / 1000) for x in vars_to_print[LOADS]))
 
         # get order of columns
         # get order of columns
@@ -347,7 +353,7 @@ def results_to_csv(gv, tsd, bpr, locator, date, building_name):
                      'GFA_m2': bpr.rc_model['GFA_m2'], 'people0': tsd['people'].max()})
         yearly_data = pd.DataFrame(data, index=[0]).to_csv(
             locator.get_temporary_file('%(building_name)sT.csv' % locals()),
-            index=False, columns = columns, float_format='%.3f')
+            index=False, columns=columns, float_format='%.3f')
 
 
 """
@@ -355,6 +361,7 @@ def results_to_csv(gv, tsd, bpr, locator, date, building_name):
 demand model for buildings wih air conditioning
 =========================================
 """
+
 
 def calc_thermal_load_hvac(t, tsd, bpr, gv):
     """
@@ -400,15 +407,18 @@ def calc_thermal_load_hvac(t, tsd, bpr, gv):
     area_f = bpr.rc_model['Af']
 
     # model of losses in the emission and control system for space heating and cooling
-    temp_hs_set_corr, temp_cs_set_corr = sensible_loads.setpoint_correction_for_space_emission_systems(bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
+    temp_hs_set_corr, temp_cs_set_corr = sensible_loads.setpoint_correction_for_space_emission_systems(
+        bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
 
     # heating and cooling loads
     i_c_max, i_h_max = sensible_loads.calc_Qhs_Qcs_sys_max(bpr.rc_model['Af'], bpr.hvac)
 
     # previous timestep data (we give a seed high enough to avoid doing a iteration for 2 years, Ta=21, Tm=16)
-    temp_air_prev = tsd['Ta'][t-1] if not np.isnan(tsd['Ta'][t-1]) else tsd['T_ext'][t-1] #gv.initial_temp_air_prev
-    temp_m_prev = tsd['Tm'][t-1] if not  np.isnan(tsd['Tm'][t-1]) else tsd['T_ext'][t-1] #gv.initial_temp_m_prev
-    temp_m_prev_losses = tsd['Tm_loss'][t - 1] if not np.isnan(tsd['Tm_loss'][t - 1]) else tsd['T_ext'][t - 1]  # gv.initial_temp_m_prev
+    temp_air_prev = tsd['Ta'][t - 1] if not np.isnan(tsd['Ta'][t - 1]) else tsd['T_ext'][
+        t - 1]  # gv.initial_temp_air_prev
+    temp_m_prev = tsd['Tm'][t - 1] if not np.isnan(tsd['Tm'][t - 1]) else tsd['T_ext'][t - 1]  # gv.initial_temp_m_prev
+    temp_m_prev_losses = tsd['Tm_loss'][t - 1] if not np.isnan(tsd['Tm_loss'][t - 1]) else tsd['T_ext'][
+        t - 1]  # gv.initial_temp_m_prev
 
     # get constant properties of building R-C-model
     h_tr_is = bpr.rc_model['Htr_is']
@@ -476,14 +486,17 @@ def calc_thermal_load_hvac(t, tsd, bpr, gv):
 
         temp_m, \
         temp_a, \
-        temp_s,\
+        temp_s, \
         q_hs_sen, \
         q_cs_sen, \
         uncomfort, \
         temp_op, \
-        i_m_tot = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set, temp_cs_set,
-                                              h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve_adj, h_tr_w, i_ia,
-                                              i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max,
+        i_m_tot = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
+                                              temp_cs_set,
+                                              h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve_adj, h_tr_w,
+                                              i_ia,
+                                              i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max,
+                                              i_h_max,
                                               flag_season)
 
         Losses = True
@@ -495,11 +508,13 @@ def calc_thermal_load_hvac(t, tsd, bpr, gv):
         q_cs_sen_loss_true, \
         uncomfort_loss_true, \
         temp_op_loss_true, \
-        i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev_losses, temp_ext, temp_hs_set,
-                                                        temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st,
-                                                        h_ve_adj, h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr,
+        i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev_losses, temp_ext,
+                                                        temp_hs_set,
+                                                        temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3,
+                                                        i_st,
+                                                        h_ve_adj, h_tr_w, i_ia, i_m, cm, area_f, Losses,
+                                                        temp_hs_set_corr,
                                                         temp_cs_set_corr, i_c_max, i_h_max, flag_season)
-
 
         # TODO: in the original calculation procedure this is calculated with another temp_m_prev (with and without losses), check if this is correct or not
 
@@ -537,7 +552,8 @@ def calc_thermal_load_hvac(t, tsd, bpr, gv):
         temp_rec_c, \
         w_rec, \
         w_sup, \
-        temp_air = cea.demand.airconditioning_model.calc_hvac(rh_ext, temp_ext, t_air_set, qv_ve_req, q_sen_load_hvac, temp_air_prev,
+        temp_air = cea.demand.airconditioning_model.calc_hvac(rh_ext, temp_ext, t_air_set, qv_ve_req, q_sen_load_hvac,
+                                                              temp_air_prev,
                                                               w_int, gv, t)
 
         # mass flow rate output for cooling or heating is zero if the hvac is used only for ventilation
@@ -607,6 +623,7 @@ demand model for buildings with mechanical ventilation
 =========================================
 """
 
+
 def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, gv):
     """
     This function is executed for the case of mechanical ventilation with outdoor air
@@ -646,14 +663,17 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
     area_f = bpr.rc_model['Af']
 
     # model of losses in the emission and control system for space heating and cooling
-    temp_hs_set_corr, temp_cs_set_corr = sensible_loads.setpoint_correction_for_space_emission_systems(bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
+    temp_hs_set_corr, temp_cs_set_corr = sensible_loads.setpoint_correction_for_space_emission_systems(
+        bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
 
     i_c_max, i_h_max = sensible_loads.calc_Qhs_Qcs_sys_max(bpr.rc_model['Af'], bpr.hvac)
 
     # previous timestep data (we give a seed high enough to avoid doing a iteration for 2 years, Ta=21, Tm=16)
-    temp_air_prev = tsd['Ta'][t - 1] if not np.isnan(tsd['Ta'][t - 1]) else tsd['T_ext'][t-1] # gv.initial_temp_air_prev
-    temp_m_prev = tsd['Tm'][t - 1] if not np.isnan(tsd['Tm'][t - 1]) else tsd['T_ext'][t-1] # gv.initial_temp_m_prev
-    temp_m_prev_losses = tsd['Tm_loss'][t - 1] if not np.isnan(tsd['Tm_loss'][t - 1]) else tsd['T_ext'][ t - 1]  # gv.initial_temp_m_prev
+    temp_air_prev = tsd['Ta'][t - 1] if not np.isnan(tsd['Ta'][t - 1]) else tsd['T_ext'][
+        t - 1]  # gv.initial_temp_air_prev
+    temp_m_prev = tsd['Tm'][t - 1] if not np.isnan(tsd['Tm'][t - 1]) else tsd['T_ext'][t - 1]  # gv.initial_temp_m_prev
+    temp_m_prev_losses = tsd['Tm_loss'][t - 1] if not np.isnan(tsd['Tm_loss'][t - 1]) else tsd['T_ext'][
+        t - 1]  # gv.initial_temp_m_prev
 
     # get constant properties of building R-C-model
     h_tr_is = bpr.rc_model['Htr_is']
@@ -678,28 +698,34 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
 
     # calc_Qhs_Qcs()
     temp_m, \
-    temp_a,\
+    temp_a, \
     temp_s, \
     q_hs_sen, \
     q_cs_sen, \
     uncomfort, \
     temp_op, \
-    i_m_tot = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set, temp_cs_set,
-                                          h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve, h_tr_w, i_ia, i_m, cm,
-                                          area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max, flag_season)
+    i_m_tot = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
+                                          temp_cs_set,
+                                          h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve, h_tr_w, i_ia,
+                                          i_m, cm,
+                                          area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max,
+                                          flag_season)
 
     # calculate emission losses
     Losses = True
     temp_m_loss_true, \
     temp_a_loss_true, \
-    temp_s_loss_true,  \
+    temp_s_loss_true, \
     q_hs_sen_loss_true, \
     q_cs_sen_loss_true, \
     uncomfort_loss_true, \
     temp_op_loss_true, \
-    i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev_losses, temp_ext, temp_hs_set,
-                                                    temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve,
-                                                    h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr,
+    i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev_losses, temp_ext,
+                                                    temp_hs_set,
+                                                    temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3,
+                                                    i_st, h_ve,
+                                                    h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr,
+                                                    temp_cs_set_corr,
                                                     i_c_max, i_h_max, flag_season)
 
     # TODO: in the original calculation procedure this is calculated with another temp_m_prev (with and without losses), check if this is correct or not
@@ -742,14 +768,12 @@ writer of results
 =========================================
 """
 
-
-
-
 """
 =========================================
 object to gather all properties from buidings
 =========================================
 """
+
 
 class BuildingProperties(object):
     """
@@ -808,15 +832,15 @@ class BuildingProperties(object):
         prop_architectures = Gdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1)
         prop_age = Gdf.from_file(locator.get_building_age()).drop('geometry', axis=1).set_index('Name')
         prop_comfort = Gdf.from_file(locator.get_building_comfort()).drop('geometry', axis=1).set_index('Name')
-        prop_internal_loads = Gdf.from_file(locator.get_building_internal()).drop('geometry',axis=1).set_index('Name')
+        prop_internal_loads = Gdf.from_file(locator.get_building_internal()).drop('geometry', axis=1).set_index('Name')
 
         if gv.samples:  # if sensitivity analysis is on and there are samples
             for key, value in gv.samples.iteritems():
                 prop_thermal[key] = value
-            #    prop_occupancy_df[key] = value
-            #list_uses = list(prop_occupancy.drop('PFloor', axis=1).columns)
-            #prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
-           # prop_occupancy[list_uses] = prop_occupancy[list_uses].div(prop_occupancy[list_uses].sum(axis=1), axis=0)
+                #    prop_occupancy_df[key] = value
+                # list_uses = list(prop_occupancy.drop('PFloor', axis=1).columns)
+                # prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
+                # prop_occupancy[list_uses] = prop_occupancy[list_uses].div(prop_occupancy[list_uses].sum(axis=1), axis=0)
 
         # get solar properties
         solar = get_prop_solar(locator).set_index('Name')
@@ -900,7 +924,8 @@ class BuildingProperties(object):
         """get windows and their properties of a building by name"""
         return self._prop_windows.loc[self._prop_windows['name_building'] == name_building].to_dict('list')
 
-    def calc_prop_rc_model(self, occupancy, architecture, thermal_properties, geometry, hvac_temperatures, surface_properties,
+    def calc_prop_rc_model(self, occupancy, architecture, thermal_properties, geometry, hvac_temperatures,
+                           surface_properties,
                            gv):
         """
         Return the RC model properties for all buildings. The RC model used is described in ISO 13790:2008, Annex C (Full
@@ -1006,11 +1031,11 @@ class BuildingProperties(object):
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated
         df['Aef'] = df['GFA_m2'] * df['Es']  # conditioned area only those for electricity
 
-
         if gv.samples:  # if sensitivity analysis is on and there are samples
-            df['Cm'] = df['Cm'] # Internal heat capacity in J/K
+            df['Cm'] = df['Cm']  # Internal heat capacity in J/K
         else:
-            df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df['Af']  # Internal heat capacity in J/K
+            df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df[
+                'Af']  # Internal heat capacity in J/K
 
         df['Am'] = df['Cm'].apply(self.lookup_effective_mass_area_factor) * df['Af']  # Effective mass area in [m2]
 
@@ -1026,7 +1051,6 @@ class BuildingProperties(object):
         df['Htr_ms'] = gv.hms * df['Am']  # Coupling conductance 1 in W/K
         df['Htr_em'] = 1 / (1 / df['Htr_op'] - 1 / df['Htr_ms'])  # Coupling conductance 2 in W/K
         df['Htr_is'] = gv.his * df['Atot']
-
 
         fields = ['Awall_all', 'Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',
                   'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'Htr_w', 'GFA_m2']
@@ -1100,7 +1124,7 @@ class BuildingPropertiesRow(object):
         Each of the arguments is a pandas Series object representing a row in the corresponding DataFrame."""
         self.geometry = geometry
         self.architecture = architecture
-        self.occupancy = occupancy   # FIXME: rename to uses!
+        self.occupancy = occupancy  # FIXME: rename to uses!
         self.hvac = hvac
         self.rc_model = rc_model
         self.comfort = comfort
@@ -1127,7 +1151,8 @@ class BuildingPropertiesRow(object):
         Tcs_sup_0 = self.hvac['Tscs0_C']
         Tcs_re_0 = Tcs_sup_0 + self.hvac['dTcs0_C']
         Tww_sup_0 = self.hvac['Tsww0_C']
-        Tww_re_0 = Tww_sup_0 - self.hvac['dTww0_C']  # Ground water temperature in heating(winter) season, according to norm #TODO: check norm
+        Tww_re_0 = Tww_sup_0 - self.hvac[
+            'dTww0_C']  # Ground water temperature in heating(winter) season, according to norm #TODO: check norm
         # Identification of equivalent lenghts
         fforma = self._calc_form()  # factor form comparison real surface and rectangular
         Lv = (2 * Ll + 0.0325 * Ll * Lw + 6) * fforma  # length vertical lines
@@ -1242,12 +1267,12 @@ def get_temperatures(locator, prop_HVAC):
     result = df[fields].merge(df2[fields2], on='Name').merge(df3[fields3], on='Name')
     return result
 
-def get_envelope_properties(locator, prop):
 
+def get_envelope_properties(locator, prop):
     prop_roof = pd.read_excel(locator.get_envelope_systems(), 'ROOF')
     prop_wall = pd.read_excel(locator.get_envelope_systems(), 'WALL')
-    prop_win= pd.read_excel(locator.get_envelope_systems(), 'WINDOW')
-    prop_shading= pd.read_excel(locator.get_envelope_systems(), 'SHADING')
+    prop_win = pd.read_excel(locator.get_envelope_systems(), 'WINDOW')
+    prop_shading = pd.read_excel(locator.get_envelope_systems(), 'SHADING')
 
     df = prop.merge(prop_roof, left_on='type_roof', right_on='code')
     df2 = prop.merge(prop_wall, left_on='type_wall', right_on='code')
@@ -1262,16 +1287,17 @@ def get_envelope_properties(locator, prop):
     result = df[fields].merge(df2[fields2], on='Name').merge(df3[fields3], on='Name').merge(df4[fields4], on='Name')
     return result
 
-def get_prop_solar(locator):
 
+def get_prop_solar(locator):
     solar = pd.read_csv(locator.get_radiation()).set_index('Name')
     solar_list = solar.values.tolist()
     surface_properties = pd.read_csv(locator.get_surface_properties())
-    surface_properties['Awall']= (surface_properties['Shape_Leng'] * surface_properties['FactorShade'] * surface_properties['Freeheight'])
+    surface_properties['Awall'] = (
+    surface_properties['Shape_Leng'] * surface_properties['FactorShade'] * surface_properties['Freeheight'])
     sum_surface = surface_properties[['Awall', 'Name']].groupby(['Name']).sum().values
 
-    I_sol = I_roof = I_win = [a/b for a,b in zip(solar_list,sum_surface)]
+    I_sol = I_roof = I_win = [a / b for a, b in zip(solar_list, sum_surface)]
 
-    result = pd.DataFrame({'Name': solar.index, 'I_win': I_sol, 'I_roof':I_roof , 'I_wall':I_win})
+    result = pd.DataFrame({'Name': solar.index, 'I_win': I_sol, 'I_roof': I_roof, 'I_wall': I_win})
 
     return result
