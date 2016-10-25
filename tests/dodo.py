@@ -139,11 +139,11 @@ def task_run_demand():
 
 def task_run_demand_graphs():
     """graph default demand variables for each reference case"""
-    import cea.plots.graphs
+    import cea.plots.graphs_demand
     for reference_case, scenario_path in REFERENCE_CASES.items():
         yield {
             'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.plots.graphs.run_as_script, [], {
+            'actions': [(cea.plots.graphs_demand.run_as_script, [], {
                 'scenario_path': scenario_path
             })],
             'verbosity': 1,
