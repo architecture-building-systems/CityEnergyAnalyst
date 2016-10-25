@@ -6,10 +6,11 @@ Demand model of thermal loads
 
 """
 from __future__ import division
-import os
+
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
+
 import cea.demand.airconditioning_model
 import cea.demand.ventilation_model as ventilation_model
 from cea.demand import occupancy_model
@@ -191,7 +192,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         # end-use demand calculation
         for t in range(-720, 8760):
-            hoy = helpers.seasonhour_2_hoy(t)
+            hoy = helpers.seasonhour_2_hoy(t, gv)
             tsd = sensible_loads.calc_Qgain_sen(hoy, tsd, bpr, gv)
 
             if bpr.hvac['type_hs'] == 'T3' and gv.is_heating_season(hoy):
@@ -292,68 +293,10 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['QEf'] = tsd['QHf'] + tsd['QCf'] + tsd['Ef']
 
     # write results to csv
-    results_to_csv(gv, tsd, bpr, locator, date, building_name)
+    gv.demand_writer.results_to_csv(tsd, bpr, locator, date, building_name)
     # write report
     gv.report('calc-thermal-loads', locals(), locator.get_demand_results_folder(), building_name)
     return
-
-
-def results_to_csv(gv, tsd, bpr, locator, date, building_name):
-    if gv.output_type is 'sensitivity':
-        vars_to_print = [['QEf', 'QHf', 'QCf', 'Ef'], [], []]
-    else:
-        vars_to_print = gv.demand_building_csv_columns
-
-    LOADS, MASS_FLOWS, TEMPERATURES = (0, 1, 2)
-    # treating timeseries data from W to kW
-    data = dict((x + '_kWh', tsd[x] / 1000) for x in vars_to_print[LOADS])
-
-    # treating time series data of mass_flows from W/C to kW/C
-    data.update(dict((x + '_kWC', tsd[x] / 1000) for x in vars_to_print[MASS_FLOWS]))
-
-    # treating time series data of mass_flows from W/C to kW/C
-    data.update(dict((x + '_C', tsd[x]) for x in vars_to_print[TEMPERATURES]))
-
-    # get order of columns
-    columns = ['Date', 'Name', 'people']
-    columns.extend([x + '_kWh' for x in vars_to_print[LOADS]])
-    columns.extend([x + '_kWC' for x in vars_to_print[MASS_FLOWS]])
-    columns.extend([x + '_C' for x in vars_to_print[TEMPERATURES]])
-
-    # add other default elements
-    data.update({'Date': date, 'Name': building_name, 'people': tsd['people']})
-
-    # create dataframe with hourly values of selected data
-    hourly_data = pd.DataFrame(data).set_index('Date')
-
-    if gv.print_partial is 'monthly':  # only for loads
-        monthly_data = hourly_data[[x + '_kWh' for x in vars_to_print[0]]].groupby(
-            by=[hourly_data.index.month]).sum() / 1000
-        monthly_data = monthly_data.rename(columns=dict((x + '_kWh', x + '_MWhyr') for x in vars_to_print[0]))
-        monthly_data['Name'] = building_name
-        monthly_data.to_csv(locator.get_demand_results_file(building_name), index=False, float_format='%.3f')
-    else:
-        hourly_data.to_csv(locator.get_demand_results_file(building_name), columns=columns, float_format='%.3f')
-
-    if gv.print_yearly:
-        # treating timeseries data from W to MWh
-        data = dict((x + '_MWhyr', tsd[x].sum() / 1000000) for x in vars_to_print[LOADS])
-
-        if gv.print_yearly_peak:
-            data.update(dict((x + '0_kW', tsd[x].max() / 1000) for x in vars_to_print[LOADS]))
-
-        # get order of columns
-        # get order of columns
-        keys = data.keys()
-        columns = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'people0']
-        columns.extend(keys)
-
-        # add other default elements
-        data.update({'Name': building_name, 'Af_m2': bpr.rc_model['Af'], 'Aroof_m2': bpr.rc_model['Aroof'],
-                     'GFA_m2': bpr.rc_model['GFA_m2'], 'people0': tsd['people'].max()})
-        yearly_data = pd.DataFrame(data, index=[0]).to_csv(
-            locator.get_temporary_file('%(building_name)sT.csv' % locals()),
-            index=False, columns=columns, float_format='%.3f')
 
 
 """
