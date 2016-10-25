@@ -91,12 +91,15 @@ def sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, n
         levels = 4
         optimal_trajects = int(0.04*num_samples)
         samples = sampler_morris(problem, N=num_samples, grid_jump=grid, num_levels=levels,
+
                                  optimal_trajectories=optimal_trajects, local_optimization=True)
+    gv.log('Sampling done, time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
+    gv.log('Running %i samples' %len(samples))
 
     #call the CEA for building demand and store the results of every sample in a vector
-    gv.log("Running %i samples" % len(samples))
     simulations = screening_cea_multiprocessing(samples, names, output_parameters, locator, weather_path, gv)
 
+    gv.log('Simulations done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
     #do morris analysis and output to excel
     buildings_num = simulations[0].shape[0]
     writer = pd.ExcelWriter(locator.get_sensitivity_output(method, num_samples))
@@ -121,7 +124,7 @@ def sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, n
         pd.DataFrame(results_3, columns=problem['names']).to_excel(writer, parameter + 'conf')
 
     writer.save()
-    gv.log('Sensitivity Sobol method done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
+    gv.log('Sensitivity analysis done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
 # function to call cea
 def screening_cea_multiprocessing(samples, names, output_parameters, locator, weather_path, gv):
