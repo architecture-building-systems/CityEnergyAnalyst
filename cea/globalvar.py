@@ -5,6 +5,8 @@ Global variables
 ================
 
 """
+import cea.demand.demand_writers
+from cea.demand import thermal_loads
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -21,7 +23,6 @@ class GlobalVariables(object):
         self.print_partial = 'hourly' # hourly or monthly for the deamnd script
         self.print_yearly = True # print yearly values
         self.print_yearly_peak = True # print peak values
-        self.output_type = 'default' # dafault or sensitivity for the demand script
         self.date_start = '2016-01-01'  # format: yyyy-mm-dd
         self.seasonhours = [3216, 6192]
         self.multiprocessing = True# use multiprocessing / parallel execution if possible
@@ -567,6 +568,8 @@ class GlobalVariables(object):
             'other-module-that-needs-logging': {'worksheet1': ['v1', 'v2', 'v3'],
                                                 #'worksheet2': [('v4', 'm'), ('v5', 'Mwh'), ('v6', 'MJ')]}}
                                                 'worksheet2': ['v4', 'v5', 'v6']}}
+
+        self.demand_writer = cea.demand.demand_writers.HourlyDemandWriter(self)
 
     def report(self, template, variables, output_folder, basename):
         """Use vars to fill worksheets in an excel file $destination_template based on the template.

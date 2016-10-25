@@ -15,7 +15,7 @@ The Sobol method serves for a complete sensitivity analysis of input variables. 
 from __future__ import division
 
 from cea.demand import demand_main
-
+import cea.demand.demand_writers
 import multiprocessing as mp
 from SALib.analyze import sobol, morris
 from SALib.sample.saltelli import sample as sampler_sobol
@@ -67,8 +67,7 @@ def sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, n
     # Model constants
     gv.multiprocessing = False  # false to deactivate the multiprocessing in the demand algorithm
     # multiprocessing will be activated in this algorithm.
-    gv.resol = 'monthly'
-    gv.output_type = 'sensitivity'
+    gv.demand_writer = cea.demand.demand_writers.MonthlyDemandWriter(gv)
 
     # Define the model inputs
     for group in groups_var:
