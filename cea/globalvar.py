@@ -517,12 +517,18 @@ class GlobalVariables(object):
         # ==============================================================================================================
         # Columns to write for the demand calculation
         # ==============================================================================================================
-        self.demand_building_csv_columns = [['QEf','QHf', 'QCf', 'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Qwwf', 'Qww', 'Qcsf',
-                                             'Qcs','Qcsf_lat', 'Qcdataf','Qcref','Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
-                                             'Eref', 'Eauxf', 'Eauxf_ve','Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
-                                             'Eprof', 'Ecaf'],['mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf','mcpref'],['Twwf_sup',
-                                             'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup','Tcsf_re', 'Tcdataf_re',
-                                             'Tcdataf_sup','Tcref_re', 'Tcref_sup']]
+        self.demand_building_csv_columns = [
+            ['QEf', 'QHf', 'QCf', 'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Qwwf', 'Qww', 'Qcsf',
+             'Qcs', 'Qcsf_lat', 'Qcdataf', 'Qcref', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
+             'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
+             'Eprof', 'Ecaf'],
+            ['mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf', 'mcpref'],
+            ['Twwf_sup',
+             'Twwf_re', 'Thsf_sup', 'Thsf_re',
+             'Tcsf_sup', 'Tcsf_re',
+             'Tcdataf_re',
+             'Tcdataf_sup', 'Tcref_re',
+             'Tcref_sup']]
         # here is where we decide whether full excel reports of the calculations are generated
         self.testing = False  # if true: reports are generated, if false: not
 
