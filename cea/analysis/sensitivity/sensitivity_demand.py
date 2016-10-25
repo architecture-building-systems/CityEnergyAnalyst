@@ -39,15 +39,15 @@ def sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, n
     This function creates the sensitivity analysis problem for either sobol or morris methods.
     It calculates the number of samples for the analysis and calls the CEA to run every sample.
 
-
     :param locator: locator class
     :param weather_path: path to weather file
     :param gv: global variables class
     :param output_parameters: list of output parameters to analyse
-    :param groups_var: list with group names of variables to analyse. it relates the database of
-    uncertaintity variables of the CEA:  locator.get_uncertainty_db()
+    :param groups_var: list of names of groups of variables to analyse. Possible  values are:
+    'THERMAL', 'ARCHITECTURE', 'INDOOR_COMFORT', 'INTERNAL_LOADS'. This list links to the probability density functions
+    of the variables contained in locator.get_uncertainty_db().
     :param num_samples: number of samples to calculate
-    :param method: 'morris' or 'sobol' methods
+    :param method: 'morris' or 'sobol' method
     :return: .xls file stored in locator.get_sensitivity_output(). every spreadsheet of the workbook
     stores a matrix whose content is the output of one sensitivity parameter and one output_parameter:
 
