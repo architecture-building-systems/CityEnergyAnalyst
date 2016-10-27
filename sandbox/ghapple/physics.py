@@ -1,4 +1,21 @@
+# -*- coding: utf-8 -*-
+
+
+from __future__ import division
+import numpy as np
+from sandbox.ghapple import helpers as h
 import control
+
+__author__ = "Gabriel Happle"
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Gabriel Happle"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
+
 
 
 
@@ -6,7 +23,7 @@ def calc_theta_m_t(theta_m_prev, c_m, h_tr_3, h_tr_em, phi_m_tot):
 
     # (C.4) in [C.3 ISO 13790]
 
-    theta_m_t = (theta_m_prev((c_m/3600)-0.5*(h_tr_3+h_tr_em))) + phi_m_tot / ((c_m/3600)+0.5*(h_tr_3+h_tr_em))
+    theta_m_t = ((theta_m_prev*((c_m/3600)-0.5*(h_tr_3+h_tr_em))) + phi_m_tot) / ((c_m/3600)+0.5*(h_tr_3+h_tr_em))
 
     return theta_m_t
 
