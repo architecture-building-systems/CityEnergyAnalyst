@@ -94,24 +94,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     daren-thomas: as far as I can tell, these are the only side-effects.
     """
-
-    # Initialize dict with weather variables
-    tsd = {'Twwf_sup': bpr.building_systems['Tww_sup_0'],
-           'T_ext': weather_data.drybulb_C.values,
-           'rh_ext': weather_data.relhum_percent.values,
-           'T_sky': weather_data.skytemp_C.values}
-
-    # fill data with nan values
-    fields_to_fill = ['Ta', 'Ts', 'Ts_loss', 'Tm', 'Tm_loss']
-    tsd.update(dict((x, np.zeros(8760)* np.nan) for x in fields_to_fill))
-
-    # fill data with zero values
-    fields_to_fill = ['uncomfort', 'Qhprof', 'Qhs_sen', 'Qhsf_lat', 'Qhs_sen_incl_em_ls', 'Qcs_sen_incl_em_ls',
-                      'Qcsf_lat', 'Top','q_hs_sen_hvac', 'q_cs_sen_hvac', 'Ehs_lat_aux', 'qm_ve_mech', 'Qhs_em_ls',
-                      'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs', 'Ta_sup_hs', 'Ta_sup_cs','Ta_re_hs', 'Ta_re_cs',
-                      'w_re', 'w_sup', 'Twwf_re', 'qv_req', 'qm_ve_req',
-                      'I_sol', 'Im_tot', 'I_int_sen', 'I_ia', 'I_m', 'I_st', 'I_rad']
-    tsd.update(dict((x, np.zeros(8760)) for x in fields_to_fill))
+    tsd = initialize_timestep_data(bpr, weather_data)
 
     # get schedules
     list_uses = usage_schedules['list_uses']
@@ -278,6 +261,34 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     # write report
     gv.report('calc-thermal-loads', locals(), locator.get_demand_results_folder(), building_name)
     return
+
+
+def initialize_timestep_data(bpr, weather_data):
+    """
+    initializes the timestep data with the weather data and the minimum set of variables needed for computation.
+    :param bpr:
+    :param weather_data:
+    :return: returns the `tsd` variable, a dictionary of timestep data mapping variable names to ndarrays for each
+    hour of the year.
+    """
+    # Initialize dict with weather variables
+    tsd = {'Twwf_sup': bpr.building_systems['Tww_sup_0'],
+           'T_ext': weather_data.drybulb_C.values,
+           'rh_ext': weather_data.relhum_percent.values,
+           'T_sky': weather_data.skytemp_C.values}
+    # fill data with nan values
+    nan_fields = ['Ta', 'Ts', 'Ts_loss', 'Tm', 'Tm_loss']
+    tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))
+
+    # fill data with zero values
+    zeroes_fields = ['uncomfort', 'Qhprof', 'Qhs_sen', 'Qhsf_lat', 'Qhs_sen_incl_em_ls', 'Qcs_sen',
+                     'Qcs_sen_incl_em_ls', 'Qwwf', 'Qww',
+                     'Qcsf_lat', 'Top', 'q_hs_sen_hvac', 'q_cs_sen_hvac', 'Ehs_lat_aux', 'qm_ve_mech', 'Qhs_em_ls',
+                     'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs', 'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs',
+                     'w_re', 'w_sup', 'Twwf_re', 'qv_req', 'qm_ve_req',
+                     'I_sol', 'Im_tot', 'I_int_sen', 'I_ia', 'I_m', 'I_st', 'I_rad']
+    tsd.update(dict((x, np.zeros(8760)) for x in zeroes_fields))
+    return tsd
 
 
 """
