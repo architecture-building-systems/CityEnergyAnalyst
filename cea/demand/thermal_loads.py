@@ -95,50 +95,23 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     daren-thomas: as far as I can tell, these are the only side-effects.
     """
 
-    # get weather
-
+    # Initialize dict with weather variables
     tsd = {'Twwf_sup': bpr.building_systems['Tww_sup_0'],
            'T_ext': weather_data.drybulb_C.values,
            'rh_ext': weather_data.relhum_percent.values,
-           'T_sky': weather_data.skytemp_C.values,
-           'uncomfort': np.zeros(8760),
-           'Ta': np.empty(8760) * np.nan,
-           'Ts': np.empty(8760) * np.nan,
-           'Ts_loss': np.empty(8760) * np.nan,
-           'Tm': np.empty(8760) * np.nan,
-           'Tm_loss': np.empty(8760) * np.nan,
-           'Qhprof': np.zeros(8760),
-           'Qhs_sen': np.zeros(8760),
-           'Qcs_sen': np.zeros(8760),
-           'Qhsf_lat': np.zeros(8760),
-           'Qhs_sen_incl_em_ls': np.zeros(8760),
-           'Qcs_sen_incl_em_ls': np.zeros(8760),
-           'Qcsf_lat': np.zeros(8760),
-           'Top': np.zeros(8760),
-           'Im_tot': np.zeros(8760),
-           'q_hs_sen_hvac': np.zeros(8760),
-           'q_cs_sen_hvac': np.zeros(8760),
-           'Ehs_lat_aux': np.zeros(8760),
-           'qm_ve_mech': np.zeros(8760),
-           'Qhs_em_ls': np.zeros(8760),
-           'Qcs_em_ls': np.zeros(8760),
-           'ma_sup_hs': np.zeros(8760),
-           'ma_sup_cs': np.zeros(8760),
-           'Ta_sup_hs': np.zeros(8760),
-           'Ta_sup_cs': np.zeros(8760),
-           'Ta_re_hs': np.zeros(8760),
-           'Ta_re_cs': np.zeros(8760),
-           'w_re': np.zeros(8760),
-           'w_sup': np.zeros(8760),
-           'Twwf_re': np.zeros(8760),
-           'qv_req': np.zeros(8760),
-           'qm_ve_req': np.zeros(8760),
-           'I_sol': np.zeros(8760),
-           'I_int_sen': np.zeros(8760),
-           'I_ia': np.zeros(8760),
-           'I_m': np.zeros(8760),
-           'I_st': np.zeros(8760),
-           'I_rad': np.zeros(8760)}
+           'T_sky': weather_data.skytemp_C.values}
+
+    # fill data with nan values
+    fields_to_fill = ['Ta', 'Ts', 'Ts_loss', 'Tm', 'Tm_loss']
+    tsd.update(dict((x, np.zeros(8760)* np.nan) for x in fields_to_fill))
+
+    # fill data with zero values
+    fields_to_fill = ['uncomfort', 'Qhprof', 'Qhs_sen', 'Qhsf_lat', 'Qhs_sen_incl_em_ls', 'Qcs_sen_incl_em_ls',
+                      'Qcsf_lat', 'Top','q_hs_sen_hvac', 'q_cs_sen_hvac', 'Ehs_lat_aux', 'qm_ve_mech', 'Qhs_em_ls',
+                      'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs', 'Ta_sup_hs', 'Ta_sup_cs','Ta_re_hs', 'Ta_re_cs',
+                      'w_re', 'w_sup', 'Twwf_re', 'qv_req', 'qm_ve_req',
+                      'I_sol', 'Im_tot', 'I_int_sen', 'I_ia', 'I_m', 'I_st', 'I_rad']
+    tsd.update(dict((x, np.zeros(8760)) for x in fields_to_fill))
 
     # get schedules
     list_uses = usage_schedules['list_uses']
@@ -240,28 +213,28 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                                           Qhsf_0,
                                                                                                           gv)
 
-        if bpr.hvac['type_dhw'] != 'T0':
-            Mww, tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(
-                bpr.rc_model['Af'],
-                bpr.building_systems['Lcww_dis'],
-                bpr.building_systems['Lsww_dis'],
-                bpr.building_systems['Lvww_c'],
-                bpr.building_systems['Lvww_dis'],
-                tsd['T_ext'],
-                tsd['Ta'],
-                tsd['Twwf_re'],
-                bpr.building_systems['Tww_sup_0'],
-                bpr.building_systems['Y'],
-                gv,
-                bpr.internal_loads['Vww_lpd'],
-                bpr.internal_loads['Vw_lpd'],
-                bpr.architecture['Occ_m2p'],
-                list_uses,
-                schedules,
-                bpr.occupancy)
+        Mww, tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(
+            bpr.rc_model['Af'],
+            bpr.building_systems['Lcww_dis'],
+            bpr.building_systems['Lsww_dis'],
+            bpr.building_systems['Lvww_c'],
+            bpr.building_systems['Lvww_dis'],
+            tsd['T_ext'],
+            tsd['Ta'],
+            tsd['Twwf_re'],
+            bpr.building_systems['Tww_sup_0'],
+            bpr.building_systems['Y'],
+            gv,
+            bpr.internal_loads['Vww_lpd'],
+            bpr.internal_loads['Vw_lpd'],
+            bpr.architecture['Occ_m2p'],
+            list_uses,
+            schedules,
+            bpr.occupancy)
+
         # calc auxiliary loads
         tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'], \
-        tsd['Eauxf_ve'], tsd['Eauxf_ww'], tsd['Eauxf_fw'], = electrical_loads.calc_Eauxf(bpr.geometry['Blength'],
+        tsd['Eauxf_ve'], tsd['Eauxf_ww'], tsd['Eauxf_fw'] = electrical_loads.calc_Eauxf(bpr.geometry['Blength'],
                                                                                          bpr.geometry['Bwidth'],
                                                                                          Mww, tsd['Qcsf'], Qcsf_0,
                                                                                          tsd['Qhsf'], Qhsf_0,
@@ -292,7 +265,15 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['Ef'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref']
         tsd['QEf'] = tsd['QHf'] + tsd['QCf'] + tsd['Ef']
 
-    # write results to csv
+    else:
+        # fill data for buildings with zero heating demand
+        fields_to_fill = ['Qcsf', 'Qcs', 'Qhsf', 'Qhs', 'QHf', 'QCf', 'Ef','QEf', 'Eauxf', 'Eauxf_hs', 'Eauxf_cs',
+                          'Eauxf_ve', 'Eauxf_ww', 'Eauxf_fw','mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf', 'mcpref',
+                          'Twwf_sup', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re','Tcdataf_re','Tcdataf_sup',
+                          'Tcref_re','Tcref_sup']
+        tsd.update(dict((x, np.zeros(8760)) for x in fields_to_fill))
+
+    #write results to csv
     gv.demand_writer.results_to_csv(tsd, bpr, locator, date, building_name)
     # write report
     gv.report('calc-thermal-loads', locals(), locator.get_demand_results_folder(), building_name)
