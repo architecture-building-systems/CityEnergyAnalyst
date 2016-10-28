@@ -241,18 +241,21 @@ class InputLocator(object):
 
     def get_benchmark_plots_file(self):
         """scenario/outputs/plots/graphs/{building_name}.pdf"""
-        return os.path.join(self.scenario_path, 'outputs', 'plots', 'graphs', 'Benchmark_scenarios.pdf')
+        benchmark_plots_folder = os.path.join(self.scenario_path, 'outputs', 'plots', 'graphs')
+        if not os.path.exists(benchmark_plots_folder):
+            os.makedirs(benchmark_plots_folder)
+        return os.path.join(benchmark_plots_folder, 'Benchmark_scenarios.pdf')
 
     ##HEATMAPS
     def get_heatmaps_demand_folder(self):
-        """scenario/2-results/2-demand/3-heatmaps"""
+        """scenario/outputs/plots/heatmaps"""
         heatmaps_demand_folder = os.path.join(self.scenario_path, 'outputs', 'plots', 'heatmaps')
         if not os.path.exists(heatmaps_demand_folder):
             os.makedirs(heatmaps_demand_folder)
         return heatmaps_demand_folder
 
     def get_heatmaps_emission_folder(self):
-        """scenario/2-results/3-emissions/3-heatmaps"""
+        """scenario/outputs/plots/heatmaps"""
         heatmaps_emissions_folder = os.path.join(self.scenario_path, 'outputs', 'plots', 'heatmaps')
         if not os.path.exists(heatmaps_emissions_folder):
             os.makedirs(heatmaps_emissions_folder)
@@ -268,7 +271,7 @@ class InputLocator(object):
         return os.path.join(self.get_temporary_folder(), filename)
 
     def get_scenarios_plot_file(self):
-        """scenario/outputs/plots/timeseries/{building_name}.pdf"""
+        """scenario/outputs/plots/graphs/Boxplots_scenarios.pdf"""
         return os.path.join(self.scenario_path, 'outputs', 'plots', 'graphs', 'Boxplots_scenarios.pdf')
 
     # Optimizaton
