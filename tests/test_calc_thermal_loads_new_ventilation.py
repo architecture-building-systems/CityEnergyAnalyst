@@ -15,7 +15,10 @@ REFERENCE_CASE = r'C:\reference-case-open\baseline'
 class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.locator = InputLocator(REFERENCE_CASE)
+        if os.environ.has_key('REFERENCE_CASE'):
+            cls.locator = InputLocator(os.environ['REFERENCE_CASE'])
+        else:
+            cls.locator = InputLocator(REFERENCE_CASE)
         cls.gv = GlobalVariables()
 
         weather_path = cls.locator.get_default_weather()
