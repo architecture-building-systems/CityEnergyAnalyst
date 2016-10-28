@@ -71,14 +71,13 @@ def sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, n
     gv.demand_writer = cea.demand.demand_writers.MonthlyDemandWriter(gv)
 
     # Define the model inputs
-    for group in groups_var:
-        variables = pd.read_excel(locator.get_uncertainty_db(), group)
+    pdf = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1) for group in groups_var])
 
-    num_vars = variables.name.count()  # integer with number of variables
-    names = variables.name.values  # [,,] with names of each variable
+    num_vars = pdf.name.count()  # integer with number of variables
+    names = pdf.name.values  # [,,] with names of each variable
     bounds = []
     for var in range(num_vars):
-        limits = [variables.loc[var, 'min'], variables.loc[var, 'max']]
+        limits = [pdf.loc[var, 'min'], pdf.loc[var, 'max']]
         bounds.append(limits)
 
     # define the problem

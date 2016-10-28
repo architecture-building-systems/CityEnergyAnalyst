@@ -247,7 +247,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['QCf'] = tsd['Qcsf'] + tsd['Qcdataf'] + tsd['Qcref']
         tsd['Ef'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref']
         tsd['QEf'] = tsd['QHf'] + tsd['QCf'] + tsd['Ef']
-
     else:
         # fill data for buildings with zero heating demand
         fields_to_fill = ['Qcsf', 'Qcs', 'Qhsf', 'Qhs', 'QHf', 'QCf', 'Ef','QEf', 'Eauxf', 'Eauxf_hs', 'Eauxf_cs',
