@@ -8,6 +8,7 @@ the `MonthlyDemandWriter`.
 import pandas as pd
 
 # index into the `vars_to_print` structure, that corresponds to `gv.demand_building_csv_columns`
+FLOAT_FORMAT = '%.3f'
 LOAD_VARS = 0
 MASS_FLOW_VARS = 1
 TEMPERATURE_VARS = 2
@@ -38,17 +39,16 @@ class DemandWriter(object):
         data.update(dict((x + '_C', tsd[x]) for x in self.vars_to_print[TEMPERATURE_VARS]))
 
         # get order of columns
-        columns = ['Date', 'Name', 'people']
+        columns = ['Name', 'people']
         columns.extend([x + '_kWh' for x in self.vars_to_print[LOAD_VARS]])
         columns.extend([x + '_kWC' for x in self.vars_to_print[MASS_FLOW_VARS]])
         columns.extend([x + '_C' for x in self.vars_to_print[TEMPERATURE_VARS]])
 
         # add other default elements
-        data.update({'Date': date, 'Name': building_name, 'people': tsd['people']})
+        data.update({'DATE': date, 'Name': building_name, 'people': tsd['people']})
 
         # create dataframe with hourly values of selected data
-        hourly_data = pd.DataFrame(data).set_index('Date')
-
+        hourly_data = pd.DataFrame(data).set_index('DATE')
 
         self.write_to_csv(building_name, columns, hourly_data, locator)
 
@@ -82,7 +82,7 @@ class HourlyDemandWriter(DemandWriter):
         super(HourlyDemandWriter, self).__init__(gv)
 
     def write_to_csv(self, building_name, columns, hourly_data, locator):
-        hourly_data.to_csv(locator.get_demand_results_file(building_name), columns=columns, float_format='%.3f')
+        hourly_data.to_csv(locator.get_demand_results_file(building_name), columns=columns, float_format=FLOAT_FORMAT)
 
 
 class MonthlyDemandWriter(DemandWriter):
@@ -96,4 +96,4 @@ class MonthlyDemandWriter(DemandWriter):
         monthly_data = monthly_data.rename(
             columns=dict((x + '_kWh', x + '_MWhyr') for x in self.vars_to_print[LOAD_VARS]))
         monthly_data['Name'] = building_name
-        monthly_data.to_csv(locator.get_demand_results_file(building_name), index=False, float_format='%.3f')
+        monthly_data.to_csv(locator.get_demand_results_file(building_name), index=False, float_format=FLOAT_FORMAT)
