@@ -41,7 +41,7 @@ class InputLocator(object):
 
     # optimization
     def get_optimization_results_folder(self):
-        """scenario/2-results/2-demand/1-timeseries"""
+        """scenario/outputs/data/demand"""
         folder = os.path.join(self.scenario_path, 'outputs', 'data', 'optimization')
         if not os.path.exists(folder):
             os.makedirs(folder)
@@ -49,7 +49,7 @@ class InputLocator(object):
 
     # resource potential assessment
     def get_potentials_results_folder(self):
-        """scenario/2-results/2-demand/1-timeseries"""
+        """scenario/outputs/data/demand"""
         folder = os.path.join(self.scenario_path, 'outputs', 'data', 'potentials')
         if not os.path.exists(folder):
             os.makedirs(folder)
@@ -187,18 +187,18 @@ class InputLocator(object):
 
     ##DEMAND
     def get_demand_results_folder(self):
-        """scenario/2-results/2-demand/1-timeseries"""
+        """scenario/outputs/data/demand"""
         demand_results_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'demand')
         if not os.path.exists(demand_results_folder):
             os.makedirs(demand_results_folder)
         return demand_results_folder
 
     def get_total_demand(self):
-        """scenario/2-results/2-demand/1-timeseries/Total_demand.csv"""
+        """scenario/outputs/data/demand/Total_demand.csv"""
         return os.path.join(self.get_demand_results_folder(), 'Total_demand.csv')
 
     def get_demand_results_file(self, building_name):
-        """scenario/2-results/2-demand/1-timeseries/{building_name}.csv"""
+        """scenario/outputs/data/demand/{building_name}.csv"""
         demand_results_folder = self.get_demand_results_folder()
         return os.path.join(demand_results_folder, '%s.csv' % building_name)
 
@@ -221,24 +221,24 @@ class InputLocator(object):
 
     ##GRAPHS
     def get_demand_plots_folder(self):
-        """scenario/2-results/2-demand/2-plots"""
+        """scenario/outputs/plots/timeseries"""
         demand_plots_folder = os.path.join(self.scenario_path, 'outputs', 'plots', 'timeseries')
         if not os.path.exists(demand_plots_folder):
             os.makedirs(demand_plots_folder)
         return demand_plots_folder
 
     def get_demand_plots_file(self, building_name):
-        """scenario/2-results/2-demand/2-plots/{building_name}.pdf"""
+        """scenario/outputs/plots/timeseries/{building_name}.pdf"""
         demand_plots_folder = self.get_demand_plots_folder()
         return os.path.join(demand_plots_folder, '%s.pdf' % building_name)
 
     def get_timeseries_plots_file(self, building_name):
-        """scenario/2-results/2-demand/2-plots/{building_name}.pdf"""
+        """scenario/outputs/plots/timeseries/{building_name}.pdf"""
         demand_plots_folder = self.get_demand_plots_folder()
         return os.path.join(demand_plots_folder, '%s.html' % building_name)
 
     def get_benchmark_plots_file(self):
-        """scenario/2-results/2-demand/2-plots/{building_name}.pdf"""
+        """scenario/outputs/plots/timeseries/{building_name}.pdf"""
         return os.path.join(self.scenario_path, 'outputs', 'plots', 'graphs', 'Benchmark_scenarios.pdf')
 
     ##HEATMAPS
@@ -266,7 +266,7 @@ class InputLocator(object):
         return os.path.join(self.get_temporary_folder(), filename)
 
     def get_scenarios_plot_file(self):
-        """scenario/2-results/2-demand/2-plots/{building_name}.pdf"""
+        """scenario/outputs/plots/timeseries/{building_name}.pdf"""
         return os.path.join(self.scenario_path, 'outputs', 'plots', 'graphs', 'Boxplots_scenarios.pdf')
 
     # Optimizaton
