@@ -4,12 +4,16 @@ Energyplus file reader
 ===========================
 File history and credits:
 C. Miller script development               10.08.14
-J. A. Fonseca  adaptation for CEA tool     18.05.16
-
+J. A. Fonseca  adaptation for CEA tool      18.05.16
+J. A. Fonseca  adding sky temperature Epuls model     20.10.16
 """
 import pandas as pd
 
 import cea.inputlocator
+import cea.globalvar as globalvar
+import numpy as np
+gv = globalvar.GlobalVariables()
+
 
 __author__ = "Clayton Miller"
 __copyright__ = "Copyright 2014, Architecture and Building Systems - ETH Zurich"
@@ -32,8 +36,17 @@ def epw_reader(weather_path):
     result = pd.read_csv(weather_path, skiprows=8, header=None, names=epw_labels).drop('datasource', axis=1)
     result['dayofyear'] = pd.date_range('1/1/2010', periods=8760, freq='H').dayofyear
     result['ratio_diffhout'] = result['difhorrad_Whm2']/result['glohorrad_Whm2']
+    result['skycover'] = result['ratio_diffhout'].fillna(1)
+    result['skytemp_C']  = np.vectorize(calc_skytemp)(result['drybulb_C'], result['dewpoint_C'], result['skycover'] )
 
     return result
+
+def calc_skytemp(Tdrybulb, Tdewpoint, N):
+    sky_e = (0.787 + 0.764 *((Tdewpoint+273)/273))*1+0.0224*N+0.0035*N**2+0.00025*N**3
+    hor_IR = sky_e * gv.blotzman * (Tdrybulb+273)**4
+    sky_T = ((hor_IR/gv.blotzman)**0.25)-273
+
+    return sky_T # sky temperature in C
 
 def test_reader():
 
