@@ -66,18 +66,18 @@ def sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, n
 
     # Model constants
     gv.multiprocessing = False  # false to deactivate the multiprocessing in the demand algorithm
-    # multiprocessing will be activated in this algorithm.
+
+    # write only monthly instead of hourly values
     gv.demand_writer = cea.demand.demand_writers.MonthlyDemandWriter(gv)
 
     # Define the model inputs
-    for group in groups_var:
-        variables = pd.read_excel(locator.get_uncertainty_db(), group)
+    pdf = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1) for group in groups_var])
 
-    num_vars = variables.name.count()  # integer with number of variables
-    names = variables.name.values  # [,,] with names of each variable
+    num_vars = pdf.name.count()  # integer with number of variables
+    names = pdf.name.values  # [,,] with names of each variable
     bounds = []
     for var in range(num_vars):
-        limits = [variables.loc[var, 'min'], variables.loc[var, 'max']]
+        limits = [pdf.loc[var, 'min'], pdf.loc[var, 'max']]
         bounds.append(limits)
 
     # define the problem
@@ -91,9 +91,8 @@ def sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, n
         grid = 2
         levels = 4
         optimal_trajects = int(0.04 * num_samples)
-        samples = sampler_morris(problem, N=num_samples, grid_jump=grid, num_levels=levels,
-
-                                 optimal_trajectories=optimal_trajects, local_optimization=True)
+        samples = sampler_morris(problem, N=num_samples, grid_jump=grid, num_levels=levels)
+                                 #optimal_trajectories=optimal_trajects, local_optimization=True)
     gv.log('Sampling done, time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
     gv.log('Running %i samples' %len(samples))
 
@@ -112,19 +111,20 @@ def sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, n
         for building in range(buildings_num):
             simulations_parameter = np.array([x.loc[building, parameter] for x in simulations])
             if method is 'sobol':
+                VAR1, VAR2, VAR3 = 'S1', 'ST', 'ST_conf'
                 sobol_result = sobol.analyze(problem, simulations_parameter, calc_second_order=second_order)
                 results_1.append(sobol_result['S1'])
                 results_2.append(sobol_result['ST'])
                 results_3.append(sobol_result['ST_conf'])
             else:
-                morris_result = morris.analyze(problem, samples, simulations_parameter, grid_jump=grid,
-                                               num_levels=levels)
+                VAR1, VAR2, VAR3 = 'mu_star', 'sigma', 'mu_star_conf'
+                morris_result = morris.analyze(problem, samples, simulations_parameter, grid_jump=grid, num_levels=levels)
                 results_1.append(morris_result['mu_star'])
                 results_2.append(morris_result['sigma'])
                 results_3.append(morris_result['mu_star_conf'])
-        pd.DataFrame(results_1, columns=problem['names']).to_excel(writer, parameter + 'S1')
-        pd.DataFrame(results_2, columns=problem['names']).to_excel(writer, parameter + 'ST')
-        pd.DataFrame(results_3, columns=problem['names']).to_excel(writer, parameter + 'conf')
+        pd.DataFrame(results_1, columns=problem['names']).to_excel(writer, parameter + VAR1)
+        pd.DataFrame(results_2, columns=problem['names']).to_excel(writer, parameter + VAR2)
+        pd.DataFrame(results_3, columns=problem['names']).to_excel(writer, parameter + VAR3)
 
     writer.save()
     gv.log('Sensitivity analysis done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
@@ -191,10 +191,10 @@ def run_as_script():
     scenario_path = gv.scenario_reference
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
     weather_path = locator.get_default_weather()
-    output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', ]
-    method = 'sobol'
+    output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'QEf_MWhyr']
+    method = 'morris'
     groups_var = ['THERMAL']
-    num_samples = 100  # generally 1000 or until it converges
+    num_samples = 1000  # generally 1000 or until it converges
     sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, num_samples, method)
 
 
