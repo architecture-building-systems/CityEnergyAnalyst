@@ -4,12 +4,8 @@ Some helper functions that could be useful
 """
 
 from __future__ import division
-
 import math
-
 import numpy as np
-
-import cea.globalvar as globalvar
 
 
 def hoy_2_doy(hoy):
@@ -122,7 +118,7 @@ def hoy_2_dom(hoy):
         return None
 
 
-def hoy_2_seasonhour(hoy):
+def hoy_2_seasonhour(hoy, gv):
     """
     hour of year to hour relative to start of heating season
     Parameters
@@ -133,7 +129,7 @@ def hoy_2_seasonhour(hoy):
     seasonhour: hour relative to start of heating season
     """
 
-    hoy_heat_stop, hoy_heat_start = globalvar.GlobalVariables().seasonhours
+    hoy_heat_stop, hoy_heat_start = gv.seasonhours
 
     if check_hoy(hoy):
         if hoy > hoy_heat_start - 1:
@@ -147,7 +143,7 @@ def hoy_2_seasonhour(hoy):
         return None
 
 
-def seasonhour_2_hoy(seasonhour):
+def seasonhour_2_hoy(seasonhour, gv):
     """
     hour relative to start of heating season to hour of year
     Parameters
@@ -158,7 +154,7 @@ def seasonhour_2_hoy(seasonhour):
     hoy: hour of year
     """
 
-    hoy_heat_stop, hoy_heat_start = globalvar.GlobalVariables().seasonhours
+    hoy_heat_stop, hoy_heat_start = gv.seasonhours
 
     # convert negative seasonhours to positive (for heating up phase consideration)
     if seasonhour < 0:
@@ -307,19 +303,18 @@ def is_coolingseason_hoy(hoy):
         return
 
 
-
-
 def test_helpers():
     """
     test helpers
     Returns
     -------
     """
-
+    import cea.globalvar
+    gv = cea.globalvar.GlobalVariables()
     # translate hours of year to hours relative to start of heating season
-    a = np.vectorize(hoy_2_seasonhour)(range(8760))
+    a = np.vectorize(hoy_2_seasonhour)(range(8760), gv)
     # translate back
-    b = np.vectorize(seasonhour_2_hoy)(a)
+    b = np.vectorize(seasonhour_2_hoy)(a, gv)
     # compare
     print(np.array_equal(range(8760), b))
 
