@@ -24,8 +24,10 @@ __status__ = "Production"
 
 
 class Clustering(object):
-    def __init__(self, building_name, building_load):
-        
+    def __init__(self, locator, building_name, building_load):
+
+        timeseries = pd.read_csv(locator.get_demand_results_file(building_name))[building_load].set_index('DATE')
+
 
 def run_as_script():
     import cea.globalvar as gv
@@ -33,11 +35,9 @@ def run_as_script():
     gv = gv.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
-    group_var = ['THERMAL']
     building_name = 'B01'
     building_load = 'Qhsf_kWh'
-    weather_path = locator.get_default_weather()
-    Clustering(building_name, building_load)
+    Clustering(locator, building_name, building_load)
 
 if __name__ == '__main__':
     run_as_script()
