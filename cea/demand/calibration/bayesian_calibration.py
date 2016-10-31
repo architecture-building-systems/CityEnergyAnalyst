@@ -1,7 +1,9 @@
 """
 ===========================
 Bayesian calibration routine
-
+##check this for timeseries calculation https://arxiv.org/abs/1206.5015
+##https: // www.ncbi.nlm.nih.gov / pubmed / 10985202
+#http://www.map.ox.ac.uk/media/PDF/Patil_et_al_2010.pdf
 ===========================
 J. Fonseca  script development          27.10.16
 
@@ -48,13 +50,11 @@ def calibration_main(locator, gv, group_var, building_name, building_load, weath
 
         print phi
         # expected value of outcome
-        mu = demand_calculation(gv, locator, weather_path, building_load, phi, err, var_names, priors)
+        mu = pm.Deterministic(demand_calculation(gv, locator, weather_path, building_load, phi, err, var_names, priors)
 
         # Likelihood (sampling distribution) of observations
         y_obs = pm.Normal('y_obs', mu=mu, sd=sigma, observed=obs_data)
 
-        ##check this for timeseries calculation https://arxiv.org/abs/1206.5015
-        ##https: // www.ncbi.nlm.nih.gov / pubmed / 10985202
 
     with building_demand_model:
         #call NUTS - MCMC process:
