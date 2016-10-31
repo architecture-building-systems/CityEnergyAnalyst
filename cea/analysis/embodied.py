@@ -172,7 +172,7 @@ def lca_embodied(year_to_calculate, locator, gv):
                                   basement_df['confirm']/gv.sl_materials
 
         # contributions due to HVAC_df
-        HVAC_df['delta_year'] = (HVAC_df['basement'] - year_to_calculate) * -1
+        HVAC_df['delta_year'] = (HVAC_df['HVAC'] - year_to_calculate) * -1
         HVAC_df['confirm'] = HVAC_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_materials),axis=1)
         HVAC_df['contrib'] = ((HVAC_df['floor_area_ag']+HVAC_df['footprint']) * HVAC_df['Services'])*HVAC_df['confirm'] \
                              /gv.sl_services
