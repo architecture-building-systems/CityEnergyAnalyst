@@ -1,7 +1,7 @@
 """
 ===========================
 Clustering
-This scripts clusters typical days for a building and for a
+This script clusters typical days for a building and for a
 
 ===========================
 J. Fonseca  script development          27.10.16
@@ -23,10 +23,13 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-class Clustering(object):
-    def __init__(self, locator, building_name, building_load):
+def clustering(locator, building_name, building_load, how):
 
-        timeseries = pd.read_csv(locator.get_demand_results_file(building_name))[building_load].set_index('DATE')
+    # import data
+    data = pd.read_csv(locator.get_demand_results_file(building_name))[building_load]
+    print data
+   if how is 'daily': # cluster daily
+
 
 
 def run_as_script():
@@ -35,9 +38,7 @@ def run_as_script():
     gv = gv.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
-    building_name = 'B01'
-    building_load = 'Qhsf_kWh'
-    Clustering(locator, building_name, building_load)
+    clustering(locator, building_name = 'B01', building_load = 'Qhsf_kWh', how='daily')
 
 if __name__ == '__main__':
     run_as_script()
