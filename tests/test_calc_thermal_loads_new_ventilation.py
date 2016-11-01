@@ -15,7 +15,10 @@ REFERENCE_CASE = r'C:\reference-case-open\baseline'
 class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.locator = InputLocator(REFERENCE_CASE)
+        if os.environ.has_key('REFERENCE_CASE'):
+            cls.locator = InputLocator(os.environ['REFERENCE_CASE'])
+        else:
+            cls.locator = InputLocator(REFERENCE_CASE)
         cls.gv = GlobalVariables()
 
         weather_path = cls.locator.get_default_weather()
@@ -71,7 +74,7 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
                      'B05': (84058.72400, 150841.56200),
                      'B04': (82356.22600, 150598.43400),
                      'B07': (81052.19000, 150490.94800),
-                     'B06': (83108.45600, 150657.24900),
+                     'B06': (0.00000, 0.00000),
                      'B09': (84491.58100, 150853.54000),
                      'B08': (88572.59000, 151020.09300), }
         if self.gv.multiprocessing:
