@@ -98,8 +98,8 @@ def lca_embodied(year_to_calculate, locator, gv):
     cat_df = occupancy_df.merge(age_df,on='Name').merge(geometry_df,on='Name').merge(architecture_df,on='Name')
 
     # calculate building geometry
-    cat_df['windows_ag'] = cat_df['win_wall']*cat_df['perimeter']*cat_df['height_ag']
-    cat_df['area_walls_ext_ag'] = cat_df['perimeter']*cat_df['height_ag'] - cat_df['windows_ag']
+    cat_df['windows_ag'] = cat_df['win_wall']*cat_df['perimeter']*(cat_df['height_ag']*cat_df['PFloor'])
+    cat_df['area_walls_ext_ag'] = cat_df['perimeter']*(cat_df['height_ag']*cat_df['PFloor']) - cat_df['windows_ag']
     cat_df['area_walls_ext_bg'] = cat_df['perimeter'] * cat_df['height_bg']
     cat_df['floor_area_ag'] = cat_df['footprint'] * cat_df['floors_ag']
     cat_df['floor_area_bg'] = cat_df['footprint'] * cat_df['floors_bg']
