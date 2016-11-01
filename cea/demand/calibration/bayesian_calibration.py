@@ -1,22 +1,24 @@
 """
 ===========================
 Bayesian calibration routine
-##check this for timeseries calculation https://arxiv.org/abs/1206.5015
-##https: // www.ncbi.nlm.nih.gov / pubmed / 10985202
-#http://www.map.ox.ac.uk/media/PDF/Patil_et_al_2010.pdf
+
+based on work of (Patil_et_al, 2010 - #http://www.map.ox.ac.uk/media/PDF/Patil_et_al_2010.pdf) in MCMC in pyMC3
+and the works of bayesian calibration of (Kennedy and O'Hagan, 2001)
 ===========================
 J. Fonseca  script development          27.10.16
 
 
 """
+
 from __future__ import division
 
 import pandas as pd
-import numpy as np
 import pymc3 as pm
+from pymc3.backends import SQLite
 import theano.tensor as tt
 import theano
 from cea.demand import demand_main
+import matplotlib.pyplot as plt
 
 import cea.globalvar as gv
 gv = gv.GlobalVariables()
@@ -36,14 +38,15 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calibration_main(group_var, building_name, building_load):
+def calibration_main(group_var, building_name, building_load, retrieve_results, niter):
 
     #import arguments of probability density functions (PDF) of variables and create priors:
-    pdf_arg = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1) for group in group_var]).set_index('name')
+    pdf_arg = pd.concat([pd.read_excel(locator.get_uncertainty_db(),
+                                       group, axis=1) for group in group_var]).set_index('name')
     var_names = pdf_arg.index
 
     #import measured data for building and building load:
-    obs_data = pd.read_csv(locator.get_demand_results_file(building_name))[building_load].values
+    obs_data = pd.read_csv(locator.get_demand_measured_file(building_name))[building_load].values
 
     # create funcitionf of demand calaculation and send to theano
     @theano.compile.ops.as_op(itypes=[tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar], otypes=[tt.dvector])
@@ -53,6 +56,7 @@ def calibration_main(group_var, building_name, building_load):
         demand_main.demand_calculation(locator, weather_path, gv) # simulation
         result = pd.read_csv(locator.get_demand_results_file(building_name), usecols=[building_load])*(1 + phi + err)
         out = result[building_load].values
+        print out, phi, err
         return out
 
     with pm.Model() as basic_model:
@@ -74,21 +78,17 @@ def calibration_main(group_var, building_name, building_load):
         # Likelihood (sampling distribution) of observations
         y_obs = pm.Normal('y_obs', mu=mu, sd=sigma, observed=obs_data)
 
-    with basic_model:
-        #call NUTS - MCMC process:
-        # the start point:
-        #mu, sds, elbo = pm.variational.advi(n=100000)
-        #import scipy
-        #start = pm.find_MAP(fmin=scipy.optimize.fmin_powell)
+    if retrieve_results:
+        with basic_model:
+            trace = pm.backends.text.load(locator.get_calibration_folder()+'//'+'a.csv')
+            pm.traceplot(trace)
+            plt.show()
+    else:
 
-        # the step
-        step = pm.Metropolis()#pm.NUTS(scaling = basic_model.dict_to_array(sds)**2,is_cov=True)
-
-        # the traces
-        trace = pm.sample(100, step=step)#pm.sample(10, step, start = mu, progressbar=True)
-
-    pm.traceplot(trace)
-
+        with basic_model:
+            step = pm.Metropolis()#pm.NUTS(scaling = basic_model.dict_to_array(sds)**2,is_cov=True)
+            trace = pm.sample(niter, step=step)
+            pm.backends.text.dump(locator.get_calibration_folder() + '//' + 'a.csv', trace)
     return
 
 
@@ -97,7 +97,7 @@ def run_as_script():
     group_var = ['THERMAL']
     building_name = 'B01'
     building_load = 'Qhsf_kWh'
-    calibration_main(group_var, building_name, building_load )
-
+    retrieve_results = True #flag to retrieve and analyze results from calibration
+    calibration_main(group_var, building_name, building_load, retrieve_results, niter = 100)
 if __name__ == '__main__':
     run_as_script()
