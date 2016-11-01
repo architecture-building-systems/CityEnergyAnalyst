@@ -14,7 +14,7 @@ __credits__ = ["Jimeno A. Fonseca", "Daren Thomas"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
-__email__ = "thomas@arch.ethz.ch"
+__email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 class GlobalVariables(object):
@@ -71,7 +71,7 @@ class GlobalVariables(object):
         # sensitivity morris method
         # ==============================================================================================================
 
-        self.samples = False # keep as false, cea.analysis.morris change this to a value if active
+        self.samples = None # keep as false, cea.analysis.morris change this to a value if active
 
         # ==============================================================================================================
         # optimization
