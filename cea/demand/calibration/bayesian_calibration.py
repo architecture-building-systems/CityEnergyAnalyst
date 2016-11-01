@@ -56,7 +56,7 @@ def calibration_main(group_var, building_name, building_load, retrieve_results, 
         demand_main.demand_calculation(locator, weather_path, gv) # simulation
         result = pd.read_csv(locator.get_demand_results_file(building_name), usecols=[building_load])*(1 + phi + err)
         out = result[building_load].values
-        print out, phi, err
+        print out, phi, err, u_win, u_wall
         return out
 
     with pm.Model() as basic_model:
@@ -80,7 +80,7 @@ def calibration_main(group_var, building_name, building_load, retrieve_results, 
 
     if retrieve_results:
         with basic_model:
-            trace = pm.backends.text.load(locator.get_calibration_folder()+'//'+'a.csv')
+            trace = pm.backends.text.load(locator.get_calibration_folder())
             pm.traceplot(trace)
             plt.show()
     else:
@@ -88,7 +88,7 @@ def calibration_main(group_var, building_name, building_load, retrieve_results, 
         with basic_model:
             step = pm.Metropolis()#pm.NUTS(scaling = basic_model.dict_to_array(sds)**2,is_cov=True)
             trace = pm.sample(niter, step=step)
-            pm.backends.text.dump(locator.get_calibration_folder() + '//' + 'a.csv', trace)
+            pm.backends.text.dump(locator.get_calibration_folder(), trace)
     return
 
 
@@ -97,7 +97,7 @@ def run_as_script():
     group_var = ['THERMAL']
     building_name = 'B01'
     building_load = 'Qhsf_kWh'
-    retrieve_results = True #flag to retrieve and analyze results from calibration
-    calibration_main(group_var, building_name, building_load, retrieve_results, niter = 100)
+    retrieve_results = False #flag to retrieve and analyze results from calibration
+    calibration_main(group_var, building_name, building_load, retrieve_results, niter = 1000)
 if __name__ == '__main__':
     run_as_script()
