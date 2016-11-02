@@ -41,9 +41,9 @@ __status__ = "Production"
 def calibration_main(group_var, building_name, building_load, retrieve_results, niter):
 
     #import arguments of probability density functions (PDF) of variables and create priors:
-    pdf_arg = pd.concat([pd.read_excel(locator.get_uncertainty_db(),
-                                       group, axis=1) for group in group_var]).set_index('name')
-    var_names = pdf_arg.index
+    #pdf_arg = pd.concat([pd.read_excel(locator.get_uncertainty_db(),
+    #                                   group, axis=1) for group in group_var]).set_index('name')
+    #var_names = pdf_arg.index
 
     #import measured data for building and building load:
     obs_data = pd.read_csv(locator.get_demand_measured_file(building_name))[building_load].values
@@ -86,11 +86,10 @@ def calibration_main(group_var, building_name, building_load, retrieve_results, 
     else:
 
         with basic_model:
-            step = pm.Metropolis()#pm.NUTS(scaling = basic_model.dict_to_array(sds)**2,is_cov=True)
+            step = pm.Metropolis()
             trace = pm.sample(niter, step=step)
             pm.backends.text.dump(locator.get_calibration_folder(), trace)
     return
-
 
 
 def run_as_script():
@@ -98,6 +97,6 @@ def run_as_script():
     building_name = 'B01'
     building_load = 'Qhsf_kWh'
     retrieve_results = False #flag to retrieve and analyze results from calibration
-    calibration_main(group_var, building_name, building_load, retrieve_results, niter = 1000)
+    calibration_main(group_var, building_name, building_load, retrieve_results, niter = 800)
 if __name__ == '__main__':
     run_as_script()
