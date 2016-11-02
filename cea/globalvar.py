@@ -5,6 +5,8 @@ Global variables
 ================
 
 """
+import cea.demand.demand_writers
+from cea.demand import thermal_loads
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -17,16 +19,21 @@ __status__ = "Production"
 
 class GlobalVariables(object):
     def __init__(self):
-        self.scenario_reference = r'c:\reference-case-zug\baseline'
-        self.date_start = '2010-01-01'  # format: yyyy-mm-dd
+        self.scenario_reference = r'c:\reference-case-open\baseline'
+        self.print_partial = 'hourly' # hourly or monthly for the deamnd script
+        self.print_yearly = True # print yearly values
+        self.print_yearly_peak = True # print peak values
+        self.date_start = '2016-01-01'  # format: yyyy-mm-dd
         self.seasonhours = [3216, 6192]
-        self.multiprocessing = True # use multiprocessing / parallel execution if possible
+        self.multiprocessing = True  # use multiprocessing / parallel execution if possible
         self.Z = 3  # height of basement for every building in m
         self.Bf = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
         self.his = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
         self.hms = 9.1  # heat transfer coefficient between nodes m and s in W/m2K
-        self.g_gl = 0.9 * 0.75  # solar energy transmittance assuming a reduction factor of 0.9 and most of the windows due to double glazing (0.75)
-        self.F_f = 0.3  # Frame area faction coefficient
+        self.theta_ss = 10 # difference between surface of building and sky temperature in C. 10 for temperate climates
+        self.blotzman = 0.0000000567 #stefan-blotzmann constant W/m2K4
+        self.F_f = 0.2  # Frame area faction coefficient
+        self.Rse = 0.04# thermal resistance of external surfaces according to ISO 6946
         self.D = 20  # in mm the diameter of the pipe to calculate losses
         self.hf = 3  # average height per floor in m
         self.Pwater = 998  # water density kg/m3
@@ -58,6 +65,13 @@ class GlobalVariables(object):
         self.sl_services = 40  # service life of technical instalations
         # constant variables for air conditioning fan
         self.Pfan = 0.55 # specific fan consumption in W/m3/h
+
+
+        # ==============================================================================================================
+        # sensitivity morris method
+        # ==============================================================================================================
+
+        self.samples = False # keep as false, cea.analysis.morris change this to a value if active
 
         # ==============================================================================================================
         # optimization
@@ -504,20 +518,18 @@ class GlobalVariables(object):
         # ==============================================================================================================
         # Columns to write for the demand calculation
         # ==============================================================================================================
-        self.demand_totals_csv_columns = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'occ_pax', 'QHf_MWhyr', 'QCf_MWhyr',
-                                          'Ef_MWhyr', 'Qhsf0_kW', 'Qhsf_MWhyr', 'Qhs_MWhyr', 'Qhs_lat_MWhyr', 'Qwwf0_kW', 'Qwwf_MWhyr',
-                                          'Qww_MWhyr', 'Qhprof_MWhyr', 'Qcsf0_kW', 'Qcsf_MWhyr', 'Qcs_MWhyr', 'Qcs_lat_MWhyr',
-                                          'Qcref_MWhyr', 'Qcdataf_MWhyr', 'Ealf0_kW', 'Ealf_MWhyr', 'Eauxf_MWhyr',
-                                          'Ecaf_MWhyr', 'Edataf_MWhyr', 'Eprof_MWhyr', 'Tshs0_C', 'Trhs0_C', 'Tscs0_C',
-                                          'Trcs0_C', 'Tsww0_C', 'Vw_m3yr', 'Vww0_m3', 'Vww_m3yr', 'mcphs0_kWC',
-                                          'mcpww0_kWC', 'mcpcs0_kWC']
-        self.demand_building_csv_columns = ['DATE', 'Name', 'occ_pax', 'QHf_kWh', 'QCf_kWh', 'Ef_kWh', 'Qhsf_kWh',
-                                            'Qhs_kWh', 'Qhs_lat_kWh', 'Qhprof_kWh', 'Qwwf_kWh', 'Qww_kWh',
-                                            'Qcsf_kWh', 'Qcs_kWh', 'Qcs_lat_kWh', 'Qcref_kWh', 'Qcdataf_kWh', 'Ealf_kWh', 'Eauxf_kWh',
-                                            'Ecaf_kWh', 'Edataf_kWh', 'Eprof_kWh', 'Tshs_C', 'Trhs_C', 'Tscs_C',
-                                            'Trcs_C', 'Tsww_C', 'Trww_C', 'Tsref_C', 'Trref_C',
-                                            'Tsdata_C', 'Trdata_C', 'Vw_m3', 'mcphs_kWC', 'mcpww_kWC', 'mcpcs_kWC',
-                                            'mcpref_kWC', 'mcpdata_kWC']
+        self.demand_building_csv_columns = [
+            ['QEf', 'QHf', 'QCf', 'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Qwwf', 'Qww', 'Qcsf',
+             'Qcs', 'Qcsf_lat', 'Qcdataf', 'Qcref', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
+             'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
+             'Eprof', 'Ecaf'],
+            ['mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf', 'mcpref'],
+            ['Twwf_sup',
+             'Twwf_re', 'Thsf_sup', 'Thsf_re',
+             'Tcsf_sup', 'Tcsf_re',
+             'Tcdataf_re',
+             'Tcdataf_sup', 'Tcref_re',
+             'Tcref_sup']]
         # here is where we decide whether full excel reports of the calculations are generated
         self.testing = False  # if true: reports are generated, if false: not
 
@@ -556,6 +568,8 @@ class GlobalVariables(object):
             'other-module-that-needs-logging': {'worksheet1': ['v1', 'v2', 'v3'],
                                                 #'worksheet2': [('v4', 'm'), ('v5', 'Mwh'), ('v6', 'MJ')]}}
                                                 'worksheet2': ['v4', 'v5', 'v6']}}
+
+        self.demand_writer = cea.demand.demand_writers.HourlyDemandWriter(self)
 
     def report(self, template, variables, output_folder, basename):
         """Use vars to fill worksheets in an excel file $destination_template based on the template.

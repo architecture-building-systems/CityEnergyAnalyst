@@ -73,7 +73,6 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
         df_prop_surfaces.sort(['Name'])
     else:
         df_prop_surfaces.sort_values('Name')
-
     # default values
     # FIXME use real window angle in the future
     angle_window_default = 90  # (deg), 90° = vertical, 0° = horizontal
