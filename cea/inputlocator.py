@@ -41,7 +41,7 @@ class InputLocator(object):
 
     # optimization
     def get_optimization_results_folder(self):
-        """scenario/2-results/2-demand/1-timeseries"""
+        """scenario/outputs/data/demand"""
         folder = os.path.join(self.scenario_path, 'outputs', 'data', 'optimization')
         if not os.path.exists(folder):
             os.makedirs(folder)
@@ -49,7 +49,7 @@ class InputLocator(object):
 
     # resource potential assessment
     def get_potentials_results_folder(self):
-        """scenario/2-results/2-demand/1-timeseries"""
+        """scenario/outputs/data/demand"""
         folder = os.path.join(self.scenario_path, 'outputs', 'data', 'potentials')
         if not os.path.exists(folder):
             os.makedirs(folder)
@@ -57,12 +57,12 @@ class InputLocator(object):
 
     # DATABASES
     def get_default_weather(self):
-        """/cea/databases/Weather/Zurich.epw
+        """db/Weather/Zurich.epw
         path to database of archetypes file Archetypes_properties.xlsx"""
         return os.path.join(self.db_path, 'Weather', 'Zug-2010.epw')
 
     def get_weather(self, name):
-        """/cea/databases/Weather/{name}.epw"""
+        """db/Weather/{name}.epw"""
         weather_path = os.path.join(self.db_path, 'Weather', name + '.epw')
         if not os.path.exists(weather_path):
             return self.get_default_weather()
@@ -74,33 +74,41 @@ class InputLocator(object):
         return weather_names
 
     def get_archetypes_properties(self):
-        """/cea/databases/Archetypes/Switzerland/Archetypes_properties.xlsx
+        """db/Archetypes/Archetypes_properties.xlsx
         path to database of archetypes file Archetypes_properties.xlsx"""
         return os.path.join(self.db_path, 'Archetypes', 'Archetypes_properties.xlsx')
 
     def get_archetypes_schedules(self):
-        """/cea/databases/Archetypes/Switzerland/Archetypes_schedules.xlsx
+        """db/Archetypes/Archetypes_schedules.xlsx
         path to database of archetypes file Archetypes_HVAC_properties.xlsx"""
         return os.path.join(self.db_path, 'Archetypes', 'Archetypes_schedules.xlsx')
 
     def get_life_cycle_inventory_supply_systems(self):
-        """scenario/1-inputs/4-technical/supply_systems.csv"""
+        """db/Systems/supply_systems.csv"""
         return os.path.join(self.db_path, 'Systems', 'supply_systems.xls')
 
     def get_technical_emission_systems(self):
-        """scenario/1-inputs/4-technical/emission_systems.csv"""
+        """db/Systems/emission_systems.csv"""
         return os.path.join(self.db_path, 'Systems',  'emission_systems.xls')
 
+    def get_envelope_systems(self):
+        """db/Systemsl/emission_systems.csv"""
+        return os.path.join(self.db_path, 'Systems',  'envelope_systems.xls')
+
     def get_data_benchmark(self):
-        """cea/databases/CH/Benchmarks/benchmark_targets.xls"""
+        """db/Benchmarks/benchmark_targets.xls"""
         return os.path.join(self.db_path, 'Benchmarks', 'benchmark_targets.xls')
     def get_data_benchmark_today(self):
-        """cea/databases/CH/Benchmarks/benchmark_today.xls"""
+        """db/Benchmarks/benchmark_today.xls"""
         return os.path.join(self.db_path, 'Benchmarks', 'benchmark_today.xls')
 
     def get_data_mobility(self):
-        """cea/databases/CH/Benchmarks/mobility.xls"""
+        """db/Benchmarks/mobility.xls"""
         return os.path.join(self.db_path, 'Benchmarks', 'mobility.xls')
+
+    def get_uncertainty_db(self):
+        """db/Uncertainty/uncertainty_distributions.xls"""
+        return os.path.join(self.db_path, 'Uncertainty', 'uncertainty_distributions.xls')
 
     # INPUTS
     def get_building_geometry(self):
@@ -108,7 +116,7 @@ class InputLocator(object):
         return os.path.join(self.scenario_path, 'inputs', 'building-geometry', 'zone.shp')
 
     def get_district(self):
-        """scenario/1-inputs/1-buildings/district.shp"""
+        """scenario/inputs/building-geometry/district.shp"""
         return os.path.join(self.scenario_path, 'inputs', 'building-geometry', 'district.shp')
 
     def get_building_age(self):
@@ -116,11 +124,11 @@ class InputLocator(object):
         return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'age.shp')
 
     def get_building_occupancy(self):
-        """scenario/1-inputs/1-buildings/building_occupancy.shp"""
+        """scenario/inputs/building-properties/building_occupancy.shp"""
         return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'occupancy.shp')
 
     def get_building_supply(self):
-        """scenario/1-inputs/1-buildings/building_supply.shp"""
+        """scenario/inputs/building-properties/building_supply.shp"""
         return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'supply_systems.shp')
 
     def get_building_thermal(self):
@@ -147,7 +155,7 @@ class InputLocator(object):
         return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'architecture.shp')
 
     def get_terrain(self):
-        """scenario/1-inputs/2-terrain/terrain - (path to Digital Elevation Map)"""
+        """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain.tif')
 
     # OUTPUTS
@@ -155,7 +163,10 @@ class InputLocator(object):
     ##SOLAR-RADIATION
     def get_radiation(self):
         """scenario/outputs/data/solar-radiation/radiation.csv"""
-        return os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation', 'radiation.csv')
+        solar_radiation_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+        if not os.path.exists(solar_radiation_folder):
+            os.makedirs(solar_radiation_folder)
+        return os.path.join(solar_radiation_folder, 'radiation.csv')
 
     def get_surface_properties(self):
         """scenario/outputs/data/solar-radiation/properties_surfaces.csv"""
@@ -164,34 +175,46 @@ class InputLocator(object):
             os.makedirs(solar_radiation_folder)
         return os.path.join(solar_radiation_folder, 'properties_surfaces.csv')
 
+    def get_sensitivity_output(self, method, samples):
+        """scenario/outputs/data/sensitivity-analysis/sensitivity_${METHOD}_${SAMPLES}.xls"""
+        return os.path.join(self.scenario_path, 'outputs', 'data', 'sensitivity-analysis', 'sensitivity_'+ method + '_%s.xls' % samples)
+
+    def get_sensitivity_plots_file(self, parameter):
+        """scenario/outputs/plots/sensitivity/${PARAMETER}.pdf"""
+        return os.path.join(self.scenario_path, 'outputs', 'plots', 'sensitivity', '%s.pdf' % parameter)
+
+
     ##DEMAND
     def get_demand_results_folder(self):
-        """scenario/2-results/2-demand/1-timeseries"""
+        """scenario/outputs/data/demand"""
         demand_results_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'demand')
         if not os.path.exists(demand_results_folder):
             os.makedirs(demand_results_folder)
         return demand_results_folder
 
     def get_total_demand(self):
-        """scenario/2-results/2-demand/1-timeseries/Total_demand.csv"""
+        """scenario/outputs/data/demand/Total_demand.csv"""
         return os.path.join(self.get_demand_results_folder(), 'Total_demand.csv')
 
     def get_demand_results_file(self, building_name):
-        """scenario/2-results/2-demand/1-timeseries/{building_name}.csv"""
+        """scenario/outputs/data/demand/{building_name}.csv"""
         demand_results_folder = self.get_demand_results_folder()
         return os.path.join(demand_results_folder, '%s.csv' % building_name)
 
     ##EMISSIONS
     def get_lca_emissions_results_folder(self):
-        """scenario/2-results/3-emissions/1-timeseries"""
-        return os.path.join(self.scenario_path, 'outputs', 'data', 'emissions')
+        """scenario/outputs/data/emissions"""
+        lca_emissions_results_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'emissions')
+        if not os.path.exists(lca_emissions_results_folder):
+            os.makedirs(lca_emissions_results_folder)
+        return lca_emissions_results_folder
 
     def get_lca_embodied(self):
-        """scenario/2-results/3-emissions/1-timeseries/Total_LCA_embodied.csv"""
+        """cenario/outputs/data/emissions/Total_LCA_embodied.csv"""
         return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_embodied.csv')
 
     def get_lca_operation(self):
-        """scenario/2-results/3-emissions/1-timeseries/Total_LCA_operation.csv"""
+        """cenario/outputs/data/emissions/Total_LCA_operation.csv"""
         return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_operation.csv')
 
     def get_lca_mobility(self):
@@ -200,36 +223,39 @@ class InputLocator(object):
 
     ##GRAPHS
     def get_demand_plots_folder(self):
-        """scenario/2-results/2-demand/2-plots"""
+        """scenario/outputs/plots/timeseries"""
         demand_plots_folder = os.path.join(self.scenario_path, 'outputs', 'plots', 'timeseries')
         if not os.path.exists(demand_plots_folder):
             os.makedirs(demand_plots_folder)
         return demand_plots_folder
 
     def get_demand_plots_file(self, building_name):
-        """scenario/2-results/2-demand/2-plots/{building_name}.pdf"""
+        """scenario/outputs/plots/timeseries/{building_name}.pdf"""
         demand_plots_folder = self.get_demand_plots_folder()
         return os.path.join(demand_plots_folder, '%s.pdf' % building_name)
 
     def get_timeseries_plots_file(self, building_name):
-        """scenario/2-results/2-demand/2-plots/{building_name}.pdf"""
+        """scenario/outputs/plots/timeseries/{building_name}.pdf"""
         demand_plots_folder = self.get_demand_plots_folder()
         return os.path.join(demand_plots_folder, '%s.html' % building_name)
 
     def get_benchmark_plots_file(self):
-        """scenario/2-results/2-demand/2-plots/{building_name}.pdf"""
-        return os.path.join(self.scenario_path, 'outputs', 'plots', 'graphs', 'Benchmark_scenarios.pdf')
+        """scenario/outputs/plots/graphs/{building_name}.pdf"""
+        benchmark_plots_folder = os.path.join(self.scenario_path, 'outputs', 'plots', 'graphs')
+        if not os.path.exists(benchmark_plots_folder):
+            os.makedirs(benchmark_plots_folder)
+        return os.path.join(benchmark_plots_folder, 'Benchmark_scenarios.pdf')
 
     ##HEATMAPS
     def get_heatmaps_demand_folder(self):
-        """scenario/2-results/2-demand/3-heatmaps"""
+        """scenario/outputs/plots/heatmaps"""
         heatmaps_demand_folder = os.path.join(self.scenario_path, 'outputs', 'plots', 'heatmaps')
         if not os.path.exists(heatmaps_demand_folder):
             os.makedirs(heatmaps_demand_folder)
         return heatmaps_demand_folder
 
     def get_heatmaps_emission_folder(self):
-        """scenario/2-results/3-emissions/3-heatmaps"""
+        """scenario/outputs/plots/heatmaps"""
         heatmaps_emissions_folder = os.path.join(self.scenario_path, 'outputs', 'plots', 'heatmaps')
         if not os.path.exists(heatmaps_emissions_folder):
             os.makedirs(heatmaps_emissions_folder)
@@ -244,8 +270,5 @@ class InputLocator(object):
         """Returns the path to a file in the temporary folder with the name `filename`"""
         return os.path.join(self.get_temporary_folder(), filename)
 
-    def get_scenarios_plot_file(self):
-        """scenario/2-results/2-demand/2-plots/{building_name}.pdf"""
-        return os.path.join(self.scenario_path, 'outputs', 'plots', 'graphs', 'Boxplots_scenarios.pdf')
 
     # Optimizaton

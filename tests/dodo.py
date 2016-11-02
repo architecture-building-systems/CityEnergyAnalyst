@@ -21,27 +21,39 @@ __status__ = "Production"
 REPOSITORY_URL = "https://github.com/architecture-building-systems/cea-reference-case/archive/%s.zip"
 REPOSITORY_NAME = "master"
 
-ARCHIVE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case.zip')
-REFERENCE_CASE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case')
+if 'JOB_NAME' in os.environ:
+    # this script is being run as part of a Jenkins job
+    ARCHIVE_PATH = os.path.expandvars(r'%TEMP%\%JOB_NAME%\cea-reference-case.zip')
+    REFERENCE_CASE_PATH = os.path.expandvars(r'%TEMP%\%JOB_NAME%\cea-reference-case')
+else:
+    ARCHIVE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case.zip')
+    REFERENCE_CASE_PATH = os.path.expandvars(r'%TEMP%\cea-reference-case')
 
 REFERENCE_CASES = {
+    'open': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME, "reference-case-open",
+                         "baseline"),
     'zug/baseline': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME, "reference-case-zug",
                                  "baseline"),
-    'zurich/baseline': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME, "reference-case-zurich",
-                                "baseline"),
-    'zurich/masterplan': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME, "reference-case-zurich",
-                                  "masterplan")}
+    'zurich/baseline': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME,
+                                    "reference-case-zurich",
+                                    "baseline"),
+    'zurich/masterplan': os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME,
+                                      "reference-case-zurich",
+                                      "masterplan")}
 
 REFERENCE_CASES_DATA = {
+    'open': {'weather': 'Zug', 'latitude': 47.1628017306431, 'longitude': 8.31,
+             'radiation': 'https://shared.ethz.ch/owncloud/s/uF6f4EWhPF31ko4/download',
+             'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/NALgN4Tlhho6QEC/download'},
     'zug/baseline': {'weather': 'Zug', 'latitude': 47.1628017306431, 'longitude': 8.31,
                      'radiation': 'https://shared.ethz.ch/owncloud/s/qgra4F2RJfKXzOp/download',
                      'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/9w5ueJbXWSKaxvF/download'},
     'zurich/baseline': {'weather': 'Zurich', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
-                    'radiation': 'https://shared.ethz.ch/owncloud/s/8PNp6U1jpR0HnzC/download',
-                    'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/tYLGZcBGLO9Wpy9/download'},
+                        'radiation': 'https://shared.ethz.ch/owncloud/s/8PNp6U1jpR0HnzC/download',
+                        'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/tYLGZcBGLO9Wpy9/download'},
     'zurich/masterplan': {'weather': 'Zurich', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
-                      'radiation': 'https://shared.ethz.ch/owncloud/s/MG3FeiSMVnIekwp/download',
-                      'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/HFHttennomZSbSf/download'}}
+                          'radiation': 'https://shared.ethz.ch/owncloud/s/MG3FeiSMVnIekwp/download',
+                          'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/HFHttennomZSbSf/download'}}
 
 def get_github_auth():
     """
@@ -134,11 +146,11 @@ def task_run_demand():
 
 def task_run_demand_graphs():
     """graph default demand variables for each reference case"""
-    import cea.plots.graphs
+    import cea.plots.graphs_demand
     for reference_case, scenario_path in REFERENCE_CASES.items():
         yield {
             'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.plots.graphs.run_as_script, [], {
+            'actions': [(cea.plots.graphs_demand.run_as_script, [], {
                 'scenario_path': scenario_path
             })],
             'verbosity': 1,
@@ -213,11 +225,10 @@ def task_run_scenario_plots():
 
 def task_run_unit_tests():
     """run the unittests"""
-    import tests.test_calc_thermal_loads_new_ventilation
-    
     def run_unit_tests():
         import unittest
-        tests.test_calc_thermal_loads_new_ventilation.REFERENCE_CASE = REFERENCE_CASES['zurich/baseline']
+        import os
+        os.environ['REFERENCE_CASE'] = REFERENCE_CASES['open']
         testsuite = unittest.defaultTestLoader.discover('.')
         result = unittest.TextTestRunner(verbosity=1).run(testsuite)
         return result.wasSuccessful()
