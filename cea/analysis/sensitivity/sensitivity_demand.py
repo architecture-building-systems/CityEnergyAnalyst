@@ -171,7 +171,7 @@ def screening_cea(counter, sample, var_names, output_parameters, locator, weathe
     of every outputparameter.
     """
 
-    # create a dict with the new input vatiables form the sample and pass in gv
+    # create a dict with the new input variables form the sample and pass in gv
     gv.samples = dict(zip(var_names, sample))
     result = None
     while result is None:  # trick to avoid that arcgis stops calculating the days and tries again.
