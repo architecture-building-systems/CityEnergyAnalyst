@@ -184,19 +184,36 @@ def screening_cea(counter, sample, var_names, output_parameters, locator, weathe
     return (counter, result)
 
 
-def run_as_script():
+def run_as_script(scenario_path=None, weather_path=None, method='morris', num_samples=1000):
     import cea.globalvar as gv
     import cea.inputlocator as inputlocator
+
     gv = gv.GlobalVariables()
-    scenario_path = gv.scenario_reference
+
+    if not scenario_path:
+        scenario_path = gv.scenario_reference
+
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
-    weather_path = locator.get_default_weather()
+
+    if not weather_path:
+        weather_path = locator.get_default_weather()
+
+    # hardwire these for the moment
     output_parameters = ['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'QEf_MWhyr']
-    method = 'morris'
     groups_var = ['THERMAL']
-    num_samples = 1000  # generally 1000 or until it converges
+
     sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, num_samples, method)
 
 
 if __name__ == '__main__':
-    run_as_script()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--scenario', help='Path to the scenario folder (omit for default)')
+    parser.add_argument('-w', '--weather', help='Path to the weather file (omit for default)')
+    parser.add_argument('-m', '--method', help='Method to use {morris, sobol}', default='morris')
+    parser.add_argument('-n', '--num-samples', help='number of samples (generally 1000 or until it converges',
+                        default=1000)
+    args = parser.parse_args()
+    run_as_script(scenario_path=args.scenario, weather_path=args.weather, method=args.method,
+                  num_samples=args.num_samples)
