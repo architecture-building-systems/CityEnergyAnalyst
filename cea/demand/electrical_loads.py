@@ -17,12 +17,12 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-
 """
 =========================================
 final Internal totals electrical loads
 =========================================
 """
+
 
 def calc_E_totals(Aef, Ealf, Eauxf, Edataf, Eprof, Eaf, Elf):
     # TODO: Documentation
@@ -48,11 +48,13 @@ def calc_E_totals(Aef, Ealf, Eauxf, Edataf, Eprof, Eaf, Elf):
         Edataf = np.zeros(8760)
     return Ealf, Ealf_0, Ealf_tot, Eauxf_tot, Edataf, Edata_tot, Eprof, Epro_tot, Eaf_0, Elf_0, Eaf_tot, Elf_tot
 
+
 """
 =========================================
 final internal electrical loads
 =========================================
 """
+
 
 def calc_Eint(tsd, bpr, list_uses, schedules):
     """
@@ -85,45 +87,59 @@ def calc_Eint(tsd, bpr, list_uses, schedules):
     """
 
     # calculate schedules
-    schedule_Ea_El_Edata_Eref = calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, bpr.occupancy)
-    schedule_pro = calc_Eprof_schedule(list_uses, schedules, bpr.occupancy)
+    schedule_applicances_lighting = average_appliances_lighting_schedule(list_uses, schedules, bpr.occupancy)
 
-    # calculate loads
-    tsd['Eaf'] = calc_Eaf(schedule_Ea_El_Edata_Eref, bpr.internal_loads['Ea_Wm2'], bpr.rc_model['Af'])
-    tsd['Elf'] = calc_Elf(schedule_Ea_El_Edata_Eref, bpr.internal_loads['El_Wm2'], bpr.rc_model['Af'])
+    # calculate final electrical consumption due to appliances and lights
+    tsd['Eaf'] = schedule_applicances_lighting * bpr.internal_loads['Ea_Wm2'] * bpr.rc_model['Aef']
+    tsd['Elf'] = schedule_applicances_lighting * bpr.internal_loads['El_Wm2'] * bpr.rc_model['Aef']
     tsd['Ealf'] = tsd['Elf'] + tsd['Eaf']
 
     # calculate other loads
     if 'COOLROOM' in bpr.occupancy:
-        schedule_Eref = calc_Ea_El_Edata_Eref_schedule(['COOLROOM'], schedules, bpr.occupancy)
-        tsd['Eref'] = calc_Eref(schedule_Eref, bpr.internal_loads['Ere_Wm2'], bpr.rc_model['Aef'], bpr.occupancy['COOLROOM'])  # in W
+        schedule_Eref = average_appliances_lighting_schedule(['COOLROOM'], schedules, bpr.occupancy)
+        tsd['Eref'] = calc_Eref(schedule_Eref, bpr.internal_loads['Ere_Wm2'], bpr.rc_model['Aef'],
+                                bpr.occupancy['COOLROOM'])  # in W
     else:
         tsd['Eref'] = np.zeros(8760)
 
     if 'SERVERROOM' in bpr.occupancy:
-        schedule_Edata = calc_Ea_El_Edata_Eref_schedule(['SERVERROOM'], schedules, bpr.occupancy)
-        tsd['Edataf'] = calc_Edataf(schedule_Edata, bpr.internal_loads['Ed_Wm2'], bpr.rc_model['Aef'], bpr.occupancy['SERVERROOM'])  # in W
+        schedule_Edata = average_appliances_lighting_schedule(['SERVERROOM'], schedules, bpr.occupancy)
+        tsd['Edataf'] = calc_Edataf(schedule_Edata, bpr.internal_loads['Ed_Wm2'], bpr.rc_model['Aef'],
+                                    bpr.occupancy['SERVERROOM'])  # in W
     else:
         tsd['Edataf'] = np.zeros(8760)
 
     if 'INDUSTRY' in bpr.occupancy:
         schedule_pro = calc_Eprof_schedule(list_uses, schedules, bpr.occupancy)
-        tsd['Eprof'] = calc_Eprof(schedule_pro, bpr.internal_loads['Epro_Wm2'], bpr.rc_model['Aef'], bpr.occupancy['INDUSTRY'])  # in W
+        tsd['Eprof'] = calc_Eprof(schedule_pro, bpr.internal_loads['Epro_Wm2'], bpr.rc_model['Aef'],
+                                  bpr.occupancy['INDUSTRY'])  # in W
     else:
         tsd['Eprof'] = np.zeros(8760)
     return tsd
 
 
-def calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses):
+def average_appliances_lighting_schedule(list_uses, schedules, building_uses):
     """
     Calculate the schedule to use for lighting and appliances based on the building uses from the schedules
-    defined for the project.
+    defined for the project unsing a weighted average.
 
-    :param list_uses:
-    :param schedules:
-    :param building_uses:
-    :return:
+    PARAMETERS
+    ----------
+
+    :param list_uses: the schedule names for the `schedules` parameter
+    :type list_uses: list of str
+    :param schedules: the schedules, one for each name in `list_uses`. Each schedule is a list of 8760 floats...
+    :type schedules: list of list of list of float
+    :param building_uses: A set of weights for the schedules as they apply to this particular building.
+    :type building_uses: dict of (str, float)
+
+    RETURNS
+    -------
+
+    :return: A weighted average of the schedules for a specific building.
+    :rtype: list of float
     """
+
     # weighted average of schedules
     def calc_average(last, current, share_of_use):
         return last + current * share_of_use
@@ -140,28 +156,65 @@ def calc_Ea_El_Edata_Eref_schedule(list_uses, schedules, building_uses):
     return el
 
 
-def calc_Eaf(schedule, Ea_Wm2, Aef):
-    Eaf = schedule * Ea_Wm2 * Aef  # in W
-    return Eaf
-
-
-def calc_Elf(schedule, El_Wm2, Aef):
-    Elf = schedule * El_Wm2 * Aef  # in W
-    return Elf
-
-
 def calc_Edataf(schedule, Ed_Wm2, Aef, share):
-    Edataf = schedule  * Ed_Wm2 * Aef * share  # in W
+    """
+    Calculates the final electricity consumption in data centers.
+
+    PARAMETERS
+    ----------
+
+    :param schedule: The data center schedule as calculated by `calc_Ea_El_Edata_Eref_schedule` but just for the
+                     SERVERROOM portion of the occupancy.
+    :type schedule: ndarray
+
+    :param Ed_Wm2: The maximum electrical consumption due to servers per unit of gross floor area (as taken from the
+                   building properties / internal loads file)
+    :type Ed_Wm2: float64
+
+    :param Aef: The floor area with electricity in [m2]
+    :type Aef: float64
+
+    :param share: The fraction of the building occupancy that is related to SERVERROOM.
+    :type share: float64
+
+    RETURNS
+    -------
+
+    :returns: final electricity consumption in data centers per hour in [W]
+    :rtype: ndarray
+    """
+    # FIXME: see bug #362 (I don't understand the share parameter in calc_Edataf)
+    Edataf = schedule * Ed_Wm2 * Aef * share  # in W
     return Edataf
 
 
-def calc_Eref(schedule , Ere_Wm2, Aef, share):
-    Eref = schedule * Ere_Wm2 * Aef * share # in W
+def calc_Eref(schedule, Ere_Wm2, Aef, share):
+    Eref = schedule * Ere_Wm2 * Aef * share  # in W
     return Eref
 
 
 def calc_Eprof_schedule(list_uses, schedules, building_uses):
-    # weighted average of schedules
+    """
+    Calculate a weighted average of the schedules as defined in `list_uses` and `schedules`, using the weights
+    in `building_uses` (which is taken from `bpr.occupancy`).
+
+    PARAMETERS
+    ----------
+
+    :param list_uses: the schedule names for the `schedules` parameter
+    :type list_uses: list of str
+    :param schedules: the schedules, one for each name in `list_uses`. Each schedule is a list of 8760 floats...
+    :type schedules: list of list of float
+    :param building_uses: A set of weights for the schedules as they apply to this particular building.
+    :type building_uses: dict of (str, float)
+
+    RETURNS
+    -------
+
+    :return: A weighted average of the schedules for a specific building.
+    :rtype: list of float
+    """
+
     def calc_average(last, current, share_of_use):
         return last + current * share_of_use
 
@@ -173,9 +226,10 @@ def calc_Eprof_schedule(list_uses, schedules, building_uses):
     return epro
 
 
-def calc_Eprof(schedule , Epro_Wm2, Aef, share):
-    Eprof = schedule  * Epro_Wm2 * Aef * share  # in W
+def calc_Eprof(schedule, Epro_Wm2, Aef, share):
+    Eprof = schedule * Epro_Wm2 * Aef * share  # in W
     return Eprof
+
 
 """
 =========================================
@@ -183,11 +237,10 @@ final auxiliary loads
 =========================================
 """
 
+
 def calc_Eauxf(Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
                Ths_re, Ths_sup, Vw, Year, fforma, gv, nf_ag, nfp, qv_req, sys_e_cooling,
                sys_e_heating, Ehs_lat_aux):
-
-
     Eaux_cs = np.zeros(8760)
     Eaux_ve = np.zeros(8760)
     Eaux_fw = np.zeros(8760)

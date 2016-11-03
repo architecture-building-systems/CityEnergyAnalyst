@@ -12,14 +12,12 @@ from cea.technologies.controllers import temperature_control_tabs
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__credits__ = ["Jimeno A. Fonseca", "Shanshan Hsieh", "Daren Thomas"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
-
-
 
 """
 =========================================
@@ -27,9 +25,9 @@ end-use heating or cooling loads
 =========================================
 """
 
+
 def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Htr_ms, Htr_is, Htr_1, Htr_2, Htr_3,
                  I_st, Hve, Htr_w, I_ia, I_m, Cm, Af, Losses, tHset_corr, tCset_corr, IC_max, IH_max, Flag):
-
     if Losses:
         # Losses due to emission and control of systems
         tintH_set = tintH_set + tHset_corr
@@ -188,6 +186,7 @@ def calc_Im_tot_tabs(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd,
              IHC_nd * 0.5 * (1 + Htr_3 / Htr_2 * (1 + Htr_1 / Hve))
     return Im_tot
 
+
 try:
     # import Numba AOT versions of the functions above, overwriting them
     from calc_tm import calc_tm, calc_ts, calc_ta, calc_top, calc_Im_tot
@@ -195,7 +194,6 @@ except ImportError:
     # fall back to using the python version
     print('failed to import from calc_tm.pyd, falling back to pure python functions')
     pass
-
 
 """
 =========================================
@@ -259,23 +257,25 @@ def calc_Qhs_Qcs_sys_max(Af, prop_HVAC):
     return IC_max, IH_max
 
 
-
 """
 =========================================
 solar and heat gains
 =========================================
 """
 
-def calc_Qgain_sen(people, Qs_Wp, Eal_nove, Eprof, Qcdata, Qcrefri, tsd, Am, Atot, Htr_w, bpr, gv):
 
+def calc_Qgain_sen(Qcdata, Qcrefri, tsd, bpr, gv):
     # internal loads
-    tsd['I_sol']= calc_I_sol(bpr, gv)
-    tsd['I_int_sen'] = people * Qs_Wp + 0.9 * (Eal_nove + Eprof) + Qcdata - Qcrefri  # here 0.9 is assumed
+    tsd['I_sol'] = calc_I_sol(bpr, gv)
+    tsd['I_int_sen'] = tsd['people'] * bpr.internal_loads['Qs_Wp'] + 0.9 * (
+    tsd['Ealf'] + tsd['Eprof']) + Qcdata - Qcrefri  # FIXME: here 0.9 is assumed
 
     # divide into components for RC model
     tsd['I_ia'] = 0.5 * tsd['I_int_sen']
-    tsd['I_m'] = (Am / Atot) * (tsd['I_ia'] + tsd['I_sol'])
-    tsd['I_st'] = (1 - (Am / Atot) - (Htr_w / (9.1 * Atot))) * (tsd['I_ia'] + tsd['I_sol'])
+    tsd['I_m'] = (bpr.rc_model['Am'] / bpr.rc_model['Atot']) * (tsd['I_ia'] + tsd['I_sol'])
+    # FIXME: why 9.1?
+    tsd['I_st'] = (1 - (bpr.rc_model['Am'] / bpr.rc_model['Atot']) - (
+    bpr.rc_model['Htr_w'] / (9.1 * bpr.rc_model['Atot']))) * (tsd['I_ia'] + tsd['I_sol'])
 
     return tsd
 
@@ -283,8 +283,11 @@ def calc_Qgain_sen(people, Qs_Wp, Eal_nove, Eprof, Qcdata, Qcrefri, tsd, Am, Ato
 def calc_Qgain_lat(people, X_ghp, sys_e_cooling, sys_e_heating):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
+
+    # X_ghp is the humidity gain from people in g/h
+
     if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
-        w_int = people * X_ghp / (1000 * 3600)  # kg/kg.s
+        w_int = people * X_ghp / (1000 * 3600)  # kg/s
     else:
         w_int = 0
 
@@ -294,8 +297,10 @@ def calc_Qgain_lat(people, X_ghp, sys_e_cooling, sys_e_heating):
 def calc_I_sol(bpr, gv):
     from cea.technologies import blinds
     solar_specific = bpr.solar / bpr.rc_model['Awall_all']  # array in W/m2
-    blinds_reflection = np.vectorize(blinds.calc_blinds_reflection)(solar_specific, bpr.architecture['type_shade'], gv.g_gl)
-    solar_effective_area = blinds_reflection * (1 - gv.F_f) * bpr.rc_model['Aw']  # Calculation of solar effective area per hour in m2
+    blinds_reflection = np.vectorize(blinds.calc_blinds_reflection)(solar_specific, bpr.architecture['type_shade'],
+                                                                    gv.g_gl)
+    solar_effective_area = blinds_reflection * (1 - gv.F_f) * bpr.rc_model[
+        'Aw']  # Calculation of solar effective area per hour in m2
     net_solar_gains = solar_effective_area * solar_specific  # how much are the net solar gains in Wh per hour of the year.
     return net_solar_gains.values
 
@@ -307,57 +312,67 @@ temperature of emission/control system
 """
 
 
-def calc_temperatures_emission_systems(Qcsf, Qcsf_0, Qhsf, Qhsf_0, Ta, Ta_re_cs, Ta_re_hs, Ta_sup_cs, Ta_sup_hs,
-                                       Tcs_re_0, Tcs_sup_0, Ths_re_0, Ths_sup_0, gv, ma_sup_cs, ma_sup_hs,
-                                       sys_e_cooling, sys_e_heating, ta_hs_set):
-
-    from cea.technologies import  radiators, heating_coils, tabs
+def calc_temperatures_emission_systems(tsd, bpr, Qcsf_0, Qhsf_0, gv):
+    from cea.technologies import radiators, heating_coils, tabs
     # local variables
-    Ta_0 = ta_hs_set.max()
-    if sys_e_heating == 'T0':
+    Ta_0 = tsd['ta_hs_set'].max()
+    if bpr.hvac['type_hs'] == 'T0':
         Ths_sup = np.zeros(8760)  # in C
         Ths_re = np.zeros(8760)  # in C
         mcphs = np.zeros(8760)  # in KW/C
 
-    if sys_e_cooling == 'T0':
+    if bpr.hvac['type_cs'] == 'T0':
         Tcs_re = np.zeros(8760)  # in C
         Tcs_sup = np.zeros(8760)  # in C
         mcpcs = np.zeros(8760)  # in KW/C
 
-    if sys_e_heating == 'T1' or sys_e_heating == 'T2':  # radiators
+    if bpr.hvac['type_hs'] == 'T1' or bpr.hvac['type_hs'] == 'T2':  # radiators
 
-        Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(Qhsf, Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0)
+        Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(tsd['Qhsf'], tsd['Ta'], Qhsf_0, Ta_0,
+                                                                       bpr.building_systems['Ths_sup_0'],
+                                                                       bpr.building_systems['Ths_re_0'])
 
-    if sys_e_heating == 'T3':  # air conditioning
-        index = np.where(Qhsf == Qhsf_0)
-        ma_sup_0 = ma_sup_hs[index[0][0]]
-        Ta_sup_0 = Ta_sup_hs[index[0][0]] + 273
-        Ta_re_0 = Ta_re_hs[index[0][0]] + 273
-        Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_heating_coil)(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs,
-                                                                               Ths_sup_0, Ths_re_0, ma_sup_hs,ma_sup_0,
+    if bpr.hvac['type_hs'] == 'T3':  # air conditioning
+        index = np.where(tsd['Qhsf'] == Qhsf_0)
+        ma_sup_0 = tsd['ma_sup_hs'][index[0][0]]
+        Ta_sup_0 = tsd['Ta_sup_hs'][index[0][0]] + 273
+        Ta_re_0 = tsd['Ta_re_hs'][index[0][0]] + 273
+        Ths_sup, Ths_re, mcphs = np.vectorize(heating_coils.calc_heating_coil)(tsd['Qhsf'], Qhsf_0, tsd['Ta_sup_hs'],
+                                                                               tsd['Ta_re_hs'],
+                                                                               bpr.building_systems['Ths_sup_0'],
+                                                                               bpr.building_systems['Ths_re_0'],
+                                                                               tsd['ma_sup_hs'], ma_sup_0,
                                                                                Ta_sup_0, Ta_re_0, gv.Cpa)
 
-    if sys_e_cooling == 'T3':  # air conditioning
+    if bpr.hvac['type_cs'] == 'T3':  # air conditioning
 
-        index = np.where(Qcsf == Qcsf_0)
-        ma_sup_0 = ma_sup_cs[index[0][0]] + 273
-        Ta_sup_0 = Ta_sup_cs[index[0][0]] + 273
-        Ta_re_0 = Ta_re_cs[index[0][0]] + 273
-        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs,
-                                                                               Tcs_sup_0, Tcs_re_0, ma_sup_cs, ma_sup_0,
+        index = np.where(tsd['Qcsf'] == Qcsf_0)
+        ma_sup_0 = tsd['ma_sup_cs'][index[0][0]] + 273
+        Ta_sup_0 = tsd['Ta_sup_cs'][index[0][0]] + 273
+        Ta_re_0 = tsd['Ta_re_cs'][index[0][0]] + 273
+        Tcs_sup, Tcs_re, mcpcs = np.vectorize(heating_coils.calc_cooling_coil)(tsd['Qcsf'], Qcsf_0, tsd['Ta_sup_cs'],
+                                                                               tsd['Ta_re_cs'],
+                                                                               bpr.building_systems['Tcs_sup_0'],
+                                                                               bpr.building_systems['Tcs_re_0'],
+                                                                               tsd['ma_sup_cs'], ma_sup_0,
                                                                                Ta_sup_0, Ta_re_0, gv.Cpa)
 
-    if sys_e_heating == 'T4':  # floor heating
+    if bpr.hvac['type_hs'] == 'T4':  # floor heating
 
-        Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(Qhsf, Ta, Qhsf_0, Ta_0, Ths_sup_0, Ths_re_0)
+        Ths_sup, Ths_re, mcphs = np.vectorize(tabs.calc_floorheating)(tsd['Qhsf'], tsd['Tm'], Qhsf_0,
+                                                                      bpr.building_systems['Ths_sup_0'],
+                                                                      bpr.building_systems['Ths_re_0'],
+                                                                      bpr.rc_model['Af'])
 
-    return Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs # C,C, C,C, W/C, W/C
+    return Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs  # C,C, C,C, W/C, W/C
+
 
 """
 =========================================
 space heating/cooling losses
 =========================================
 """
+
 
 def calc_Qhs_Qcs_dis_ls(tair, text, Qhs, Qcs, tsh, trh, tsc, trc, Qhs_max, Qcs_max, D, Y, SystemH, SystemC, Bf, Lv):
     """calculates distribution losses based on ISO 15316"""
@@ -401,56 +416,57 @@ def calc_Qhs_Qcs_em_ls(SystemH, SystemC):
     return list(tHC_corr)
 
 
-def calc_T_em_ls(SystemH, SystemC, sys_e_ctrl):
+control_delta_heating = {'T1': 2.5, 'T2': 1.2, 'T3': 0.9, 'T4': 1.8}
+control_delta_cooling = {'T1': -2.5, 'T2': -1.2, 'T3': -0.9, 'T4': -1.8}
+system_delta_heating = {'T0': 0.0, 'T1': 0.15, 'T2': -0.1, 'T3': -1.1, 'T4': -0.9}
+system_delta_cooling = {'T0': 0.0, 'T1': 0.5, 'T2': 0.7, 'T3': 0.5}
+
+def setpoint_correction_for_space_emission_systems(heating_system, cooling_system, control_system):
     """
     Model of losses in the emission and control system for space heating and cooling.
 
-    correction factor for the heating and cooling setpoints. extracted from EN 15316-2
-    Credits to: Shanshan
+    Correction factor for the heating and cooling setpoints. Extracted from EN 15316-2
 
-    Parameters
+    (see cea\databases\CH\Systems\emission_systems.xls for valid values for the heating and cooling system values)
+
+    T0 means there's no heating/cooling systems installed, therefore, also no control systems for heating/cooling.
+    In short, when the input system is T0, the output set point correction should be 0.0.
+    So if there is no cooling systems, the setpoint_correction_for_space_emission_systems function input: (T1, T0, T1) (type_hs, type_cs, type_ctrl),
+    return should be (2.65, 0.0), the control system is only specified for the heating system.
+    In another case with no heating systems: input: (T0, T3, T1) return: (0.0, -2.0), the control system is only
+    specified for the heating system.
+
+    PARAMETERS
     ----------
-    SystemH
-    SystemC
-    sys_e_ctrl
 
-    Returns
+    :param heating_system: The heating system used. Valid values: T0, T1, T2, T3, T4
+    :type heating_system: str
+
+    :param cooling_system: The cooling system used. Valid values: T0, T1, T2, T3
+    :type cooling_system: str
+
+    :param control_system: The control system used. Valid values: T1, T2, T3, T4 - as defined in the
+        contributors manual under Databases / Archetypes / Building Properties / Mechanical systems.
+        T1 for none, T2 for PI control, T3 for PI control with optimum tuning, and T4 for room temperature control
+        (electromagnetically/electronically).
+    :type control_system: str
+
+    RETURNS
     -------
 
+    :returns: two delta T to correct the set point temperature, dT_heating, dT_cooling
+    :rtype: tuple(double, double)
     """
+    __author__ = "Shanshan Hsieh"
+    __credits__ = ["Shanshan Hsieh", "Daren Thomas"]
 
-    tHC_corr = [0, 0]
-    delta_ctrl = [0, 0]
+    try:
+        result_heating = 0.0 if heating_system == 'T0' else (control_delta_heating[control_system] +
+                                                             system_delta_heating[heating_system])
+        result_cooling = 0.0 if cooling_system == 'T0' else (control_delta_cooling[control_system] +
+                                                             system_delta_cooling[cooling_system])
+    except KeyError:
+        raise ValueError(
+            'Invalid system / control combination: %s, %s, %s' % (heating_system, cooling_system, control_system))
 
-    # emission system room temperature control type
-    if sys_e_ctrl == 'T1':
-        delta_ctrl = [2.5, -2.5]
-    elif sys_e_ctrl == 'T2':
-        delta_ctrl = [1.2, -1.2]
-    elif sys_e_ctrl == 'T3':
-        delta_ctrl = [0.9, -0.9]
-    elif sys_e_ctrl == 'T4':
-        delta_ctrl = [1.8, -1.8]
-
-    # calculate temperature correction
-    if SystemH == 'T1':
-        tHC_corr[0] = delta_ctrl[0] + 0.15
-    elif SystemH == 'T2':
-        tHC_corr[0] = delta_ctrl[0] - 0.1
-    elif SystemH == 'T3':
-        tHC_corr[0] = delta_ctrl[0] - 1.1
-    elif SystemH == 'T4':
-        tHC_corr[0] = delta_ctrl[0] - 0.9
-    else:
-        tHC_corr[0] = 0
-
-    if SystemC == 'T1':
-        tHC_corr[1] = delta_ctrl[1] + 0.5
-    elif SystemC == 'T2':  # no emission losses but emissions for ventilation
-        tHC_corr[1] = delta_ctrl[1] + 0.7
-    elif SystemC == 'T3':
-        tHC_corr[1] = delta_ctrl[1] + 0.5
-    else:
-        tHC_corr[1] = 0
-
-    return tHC_corr[0], tHC_corr[1]
+    return result_heating, result_cooling
