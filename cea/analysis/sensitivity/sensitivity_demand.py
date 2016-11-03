@@ -148,11 +148,11 @@ def screening_cea_multiprocessing(samples, names, output_parameters, locator, we
     pool = mp.Pool()
     gv.log("Using %i CPU's" % mp.cpu_count())
     joblist = [pool.apply_async(screening_cea, [counter, sample, names, output_parameters, locator, weather_path, gv])
-               for sample, counter in zip(samples, range(len(samples)))]
+               for counter, sample in enumerate(samples)]
     results = [job.get() for job in joblist]
     # return in order
     results = sorted(results, key=lambda tup: tup[0])
-    results = [x[1] for x in results]
+    results = [result for counter, result in results]
     return results
 
 
