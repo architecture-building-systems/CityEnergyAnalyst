@@ -40,15 +40,15 @@ def create_demand_samples(method='morris', num_samples=1000, variable_groups=('T
     # define the problem
     problem = {'num_vars': num_vars, 'names': names, 'bounds': bounds, 'groups': None}
 
-    return sampler(method, problem, num_samples, **sampler_parameters), problem
+    return sampler(method, problem, num_samples, sampler_parameters), problem
 
 
 # create samples (combinations of variables)
-def sampler(method, problem, num_samples, **sampler_params):
+def sampler(method, problem, num_samples, sampler_parameters):
     if method is 'sobol':
-        return sampler_sobol(problem, N=num_samples, **sampler_params)
+        return sampler_sobol(problem, N=num_samples, **sampler_parameters)
     else:
-        return sampler_morris(problem, N=num_samples, **sampler_params)
+        return sampler_morris(problem, N=num_samples, **sampler_parameters)
 
 
 if __name__ == '__main__':
@@ -56,7 +56,8 @@ if __name__ == '__main__':
     import pickle
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-m', '--method', help='Method to use {morris, sobol}', default='morris')
+    parser.add_argument('-m', '--method', help='Method to use valid values: "morris" (default), "sobol"',
+                        default='morris')
     parser.add_argument('-n', '--num-samples', help='number of samples (generally 1000 or until it converges',
                         default=1000)
     parser.add_argument('--calc-second-order', help='(sobol) calc_second_order parameter',
@@ -72,16 +73,18 @@ if __name__ == '__main__':
                               'INDOOR_COMFORT, INTERNAL_LOADS'))
     args = parser.parse_args()
 
-    sampler_params = {}
+    sampler_parameters = {}
     if args.method == 'morris':
-        sampler_params['grid_jump'] = args.grid_jump
-        sampler_params['num_levels'] = args.num_levels
+        sampler_parameters['grid_jump'] = args.grid_jump
+        sampler_parameters['num_levels'] = args.num_levels
     elif args.method == 'sobol':
-        sampler_params['calc_second_order'] = args.calc_second_order
+        sampler_parameters['calc_second_order'] = args.calc_second_order
 
     samples, problem = create_demand_samples(method=args.method, num_samples=args.num_samples,
-                                             variable_groups=args.variable_groups)
+                                             variable_groups=args.variable_groups,
+                                             sampler_parameters=sampler_parameters)
 
     # save out to disk
     np.save(os.path.join(args.samples_folder, 'samples.npy'), samples)
-    pickle.dump(os.path.join(args.samples_folder, 'problem.pickle', problem))
+    with open(os.path.join(args.samples_folder, 'problem.pickle'), 'w') as f:
+        pickle.dump(problem, f)

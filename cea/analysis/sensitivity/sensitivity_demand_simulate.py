@@ -26,10 +26,13 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
     :param simulation_path: a (temporary) path for simulating a scenario that has been patched with a sample
     :return: InputLocator that can be used to simulate the demand in the `simulation_path`
     """
+    if os.path.exists(simulation_path):
+        shutil.rmtree(simulation_path)
     shutil.copytree(scenario_path, simulation_path)
     locator = InputLocator(scenario_path=simulation_path)
 
-    problem = pickle.load(os.path.join(args.samples_folder, 'problem.pickle'))
+    with open(os.path.join(args.samples_folder, 'problem.pickle'), 'r') as f:
+        problem = pickle.load(f)
     sample = np.load(os.path.join(samples_path, 'samples.npy'))[sample_index]
 
     # FIXME: add other variable groups here
@@ -50,6 +53,10 @@ def simulate_demand_sample(locator, weather_path, output_parameters):
     result = demand_main.demand_calculation(locator, weather_path, gv)
     return result[output_parameters]
 
+
+class SensitivityInputLocator(InputLocator):
+    """Overrides `InputLocator` to work with """
+
 if __name__ == '__main__':
     import argparse
 
@@ -64,8 +71,8 @@ if __name__ == '__main__':
                         default=['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'QEf_MWhyr'])
     args = parser.parse_args()
 
-    locator = apply_sample_parameters(args.sample_index, args.samples_path, args.scenario_path, args.simulation_path)
+    locator = apply_sample_parameters(args.sample_index, args.samples_folder, args.scenario, args.simulation_folder)
     result = simulate_demand_sample(locator, args.weather, args.output_parameters)
-    print result
+    result.to_csv(os.path.join(args.samples_folder, 'result.%i.csv' % args.sample_index))
 
 
