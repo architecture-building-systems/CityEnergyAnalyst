@@ -138,12 +138,8 @@ def lca_embodied(year_to_calculate, locator, gv):
                                 built_df['footprint'] * built_df['Wall_int_nosup']*gv.fwratio)+
                                (basement_df['footprint'] * basement_df['Floor_g'] +
                                 basement_df['Wall_ext_bg'] * basement_df['area_walls_ext_bg']) +
-                                (built_df['footprint'] * built_df['Excavation'])) * built_df['confirm'] + \
-                               ((HVAC_df['floor_area_ag'] + HVAC_df['footprint']) * HVAC_df['Services'] * built_df['confirm2']))
-        '''
                                 (built_df['footprint'] * built_df['Excavation'])) /gv.sl_materials + \
                                ((HVAC_df['floor_area_ag']+HVAC_df['footprint']) * HVAC_df['Services'])/gv.sl_services) * built_df['confirm']
-        '''
 
         # contributions due to envelope retrofit
         envelope_df['delta_year'] = year_to_calculate - envelope_df['envelope']
@@ -202,9 +198,9 @@ def lca_embodied(year_to_calculate, locator, gv):
 
 def calc_if_existing(x, y):
     if x <= y:
-        return 1/y
+        return 1
     else:
-        return 1/x #0
+        return 0
 
 def calc_category_construction(a, x):
     if 0 <= x <= 1920:
