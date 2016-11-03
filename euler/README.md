@@ -14,6 +14,7 @@ These are the steps to be performed for running the demand sensitivity analysis:
 - run a demand simulation for each sample and store the output to the samples folder (see below)
   - copy reference case folder to simulation reference case folder
   - apply sample parameters to the reference case
+- merge output data back to a single dataset
 - run analysis on the output data
 
 ## File locations
@@ -31,6 +32,8 @@ Due to the way the simulation tasks are split up, the simulation uses the follow
   home folder or personal scratch storage.
   - home folder: `/cluster/home/username` (backed up, permanent)
   - personal scratch storage: `/cluster/scratch/username` (not backed up, deleted after 15 days)
+  
+- the weather path: the path to the *.epw file used for simulation. This can be kept in the home folder.
   
 - the samples folder contains the inputs (list of samples and the problem statement) and the final outputs of the
   analysis. This should be stored in your personal scratch folder (as the home folder has a limit to 100k files).

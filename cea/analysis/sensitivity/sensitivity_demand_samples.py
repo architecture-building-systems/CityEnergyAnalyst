@@ -10,10 +10,10 @@ from SALib.sample.morris import sample as sampler_morris
 from cea.inputlocator import InputLocator
 
 
-def create_demand_samples(method='morris', num_samples=1000, variable_groups=('THERMAL'), sampler_params={}):
+def create_demand_samples(method='morris', num_samples=1000, variable_groups=('THERMAL',), sampler_parameters={}):
     """
 
-    :param sampler_params: additional, sampler-specific parameters. For `method='morris'` these are: [grid_jump,
+    :param sampler_parameters: additional, sampler-specific parameters. For `method='morris'` these are: [grid_jump,
                            num_levels], for `method='sobol'` these are: [calc_second_order]
     :param output_folder: Folder to place the output file 'samples.npy' (FIXME: should this be part of the
                           InputLocator?)
@@ -40,14 +40,15 @@ def create_demand_samples(method='morris', num_samples=1000, variable_groups=('T
     # define the problem
     problem = {'num_vars': num_vars, 'names': names, 'bounds': bounds, 'groups': None}
 
-    # create samples (combinations of variables)
-    def sampler(**kwargs):
-        if method is 'sobol':
-            return sampler_sobol(problem, N=num_samples, **kwargs)
-        else:
-            return sampler_morris(problem, N=num_samples, **kwargs)
+    return sampler(method, problem, num_samples, **sampler_parameters), problem
 
-    return sampler(), problem
+
+# create samples (combinations of variables)
+def sampler(method, problem, num_samples, **sampler_params):
+    if method is 'sobol':
+        return sampler_sobol(problem, N=num_samples, **sampler_params)
+    else:
+        return sampler_morris(problem, N=num_samples, **sampler_params)
 
 
 if __name__ == '__main__':
@@ -64,8 +65,11 @@ if __name__ == '__main__':
                         default=2)
     parser.add_argument('--num-levels', help='(morris) num_levels parameter',
                         default=4)
-    parser.add_argument('-s', '--samples-folder', default='.',
+    parser.add_argument('-S', '--samples-folder', default='.',
                         help='folder to place the output files (samples.npy, problem.pickle) in')
+    parser.add_argument('-V', '--variable-groups', default=['THERMAL'], nargs='+',
+                        help=('list of variable groups. Valid values: THERMAL, ARCHITECTURE, ' +
+                              'INDOOR_COMFORT, INTERNAL_LOADS'))
     args = parser.parse_args()
 
     sampler_params = {}
@@ -75,7 +79,8 @@ if __name__ == '__main__':
     elif args.method == 'sobol':
         sampler_params['calc_second_order'] = args.calc_second_order
 
-    samples, problem = create_demand_samples(method=args.method, num_samples=args.num_samples)
+    samples, problem = create_demand_samples(method=args.method, num_samples=args.num_samples,
+                                             variable_groups=args.variable_groups)
 
     # save out to disk
     np.save(os.path.join(args.samples_folder, 'samples.npy'), samples)
