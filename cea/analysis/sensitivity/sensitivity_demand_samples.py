@@ -64,7 +64,7 @@ if __name__ == '__main__':
                         default=2)
     parser.add_argument('--num-levels', help='(morris) num_levels parameter',
                         default=4)
-    parser.add_argument('-o', '--output-folder', default='.',
+    parser.add_argument('-s', '--samples-folder', default='.',
                         help='folder to place the output files (samples.npy, problem.pickle) in')
     args = parser.parse_args()
 
@@ -78,5 +78,5 @@ if __name__ == '__main__':
     samples, problem = create_demand_samples(method=args.method, num_samples=args.num_samples)
 
     # save out to disk
-    np.save(os.path.join(args.output_folder, 'samples.npy'), samples)
-    pickle.dump(os.path.join(args.output_folder, 'problem.pickle', problem))
+    np.save(os.path.join(args.samples_folder, 'samples.npy'), samples)
+    pickle.dump(os.path.join(args.samples_folder, 'problem.pickle', problem))
