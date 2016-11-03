@@ -44,3 +44,95 @@ Due to the way the simulation tasks are split up, the simulation uses the follow
   - local scratch storage: `/scratch` 
   - (actually, we will use the `$TMPDIR` function to ensure simultaneous simulations on the same node don't step on 
     each other's feet)
+    
+## Running the scripts
+
+### On Windows
+
+Here is an example of running the scripts on windows. Replace paths according to your setup.
+
+```bash
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
+> set PYTHONPATH=C:\Users\darthoma\Documents\GitHub\CEAforArcGIS;%PYTHONPATH%
+
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
+> md %TEMP%\samples
+                                               
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
+> python cea\analysis\sensitivity\sensitivity_demand_samples.py --samples-folder "%TEMP%\samples"
+
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
+> dir %TEMP%\samples
+ Volume in drive C has no label.
+ Volume Serial Number is C84C-1BEB
+
+ Directory of C:\Users\darthoma\AppData\Local\Temp\samples
+
+03.11.2016  17:11    <DIR>          .
+03.11.2016  17:11    <DIR>          ..
+03.11.2016  17:11             1'943 problem.pickle
+03.11.2016  17:11         1'056'080 samples.npy
+               2 File(s)      1'058'023 bytes
+               2 Dir(s)  528'840'749'056 bytes free
+                                                                                         
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS       
+> md %TEMP%\simulations
+
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
+> python cea\analysis\sensitivity\sensitivity_demand_simulate.py -i 0 --scenario "C:\reference-case-open\baseline" --samples-folder %TEMP%\samples --simulation-folder %TEMP%\simulation --weather .\cea\databases\CH\Weather\Zurich.epw
+read input files
+done
+Using 8 CPU's
+Building No. 1 completed out of 9
+Building No. 2 completed out of 9
+Building No. 3 completed out of 9
+Building No. 4 completed out of 9
+Building No. 5 completed out of 9
+Building No. 6 completed out of 9
+Building No. 7 completed out of 9
+Building No. 8 completed out of 9
+Building No. 9 completed out of 9
+done - time elapsed: 5.32 seconds
+
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
+> dir %TEMP%\simulation
+ Volume in drive C has no label.
+ Volume Serial Number is C84C-1BEB
+
+ Directory of C:\Users\darthoma\AppData\Local\Temp\simulation
+
+28.10.2016  09:35    <DIR>          .
+28.10.2016  09:35    <DIR>          ..
+28.10.2016  09:35    <DIR>          inputs
+28.10.2016  09:35    <DIR>          outputs
+               0 File(s)              0 bytes
+               4 Dir(s)  528'803'373'056 bytes free
+
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
+> dir %temp%\samples
+ Volume in drive C has no label.
+ Volume Serial Number is C84C-1BEB
+
+ Directory of C:\Users\darthoma\AppData\Local\Temp\samples
+
+03.11.2016  17:23    <DIR>          .
+03.11.2016  17:23    <DIR>          ..
+03.11.2016  17:11             1'943 problem.pickle
+03.11.2016  17:23               327 result.0.csv
+03.11.2016  17:11         1'056'080 samples.npy
+               3 File(s)      1'058'350 bytes
+               2 Dir(s)  528'802'414'592 bytes free
+
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
+> type %TEMP%\samples\result.0.csv
+,QHf_MWhyr,QCf_MWhyr,Ef_MWhyr,QEf_MWhyr
+0,381.043,18.824,156.259,556.126
+1,381.21,19.017,156.256,556.482
+2,381.068,18.86,156.256,556.184
+3,381.175,19.12,156.256,556.551
+4,381.338,19.943,156.249,557.53
+5,380.992,18.899,156.249,556.14
+6,381.998,21.714,156.336,560.048
+7,381.367,20.169,156.255,557.792
+8,0.0,0.0,0.0,0.0
+```
