@@ -88,3 +88,4 @@ if __name__ == '__main__':
     np.save(os.path.join(args.samples_folder, 'samples.npy'), samples)
     with open(os.path.join(args.samples_folder, 'problem.pickle'), 'w') as f:
         pickle.dump(problem, f)
+    print('created %i samples in %s' % (samples.shape[0], args.samples_folder))
