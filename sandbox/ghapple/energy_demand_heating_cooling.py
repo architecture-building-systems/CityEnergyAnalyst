@@ -13,8 +13,9 @@ from __future__ import division
 import numpy as np
 from sandbox.ghapple import helpers as h
 from sandbox.ghapple import control
-from sandbox.ghapple import rc_model_iso13790 as rc
+from sandbox.ghapple import rc_model as rc
 from sandbox.ghapple import ventilation_xx as v
+from sandbox.ghapple import space_emission_systems as ses
 
 
 __author__ = "Gabriel Happle"
@@ -102,6 +103,13 @@ def procedure_1(hoy, bpr, tsd):
             q_cs_sen_incl_em_loss = 0
             em_loss_cs = 0
 
+            # write to tsd
+            tsd['Tm'][hoy] = theta_m_t
+            tsd['Ta'][hoy] = theta_air
+            tsd['Top'][hoy] = theta_op
+            tsd['Qhs_sen'][hoy] = 0
+            tsd['Qhs_em_ls'][hoy] = 0
+
             # return # TODO: check speed with and without return here
             # return
 
@@ -125,6 +133,16 @@ def procedure_1(hoy, bpr, tsd):
             theta_air_ac,\
             theta_op_ac,\
             phi_hc_nd_ac = rc.calc_phi_hc_ac(bpr, tsd, hoy)
+
+            # write to tsd
+            tsd['Tm'][hoy] = theta_m_t_ac
+            tsd['Ta'][hoy] = theta_air_ac
+            tsd['Top'][hoy] = theta_op_ac
+            tsd['Qhs_sen'][hoy] = phi_hc_nd_ac
+
+            q_em_ls_heating = ses.calc_q_em_ls_heating(bpr, tsd, hoy)
+
+            tsd['Qhs_em_ls'][hoy] = q_em_ls_heating
 
             # TODO: losses
             # TODO: how to calculate losses if phi_h_ac is phi_h_max ???

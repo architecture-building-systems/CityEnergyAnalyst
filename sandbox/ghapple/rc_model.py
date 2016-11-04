@@ -239,7 +239,7 @@ def calc_phi_hc_ac(bpr, tsd, hoy):
 
     # Step 2:
     theta_int_set = 20 # TODO: get setpoint
-    af = 100 # TODO: get A_f
+    af = bpr.rc_model['Af'] # TODO: get A_f, check wether Aef??
 
     theta_air_set = theta_int_set
     phi_hc_nd_10 = 10 * af
@@ -249,8 +249,8 @@ def calc_phi_hc_ac(bpr, tsd, hoy):
     phi_hc_nd_un = calc_phi_hc_nd_un(phi_hc_nd_10,theta_air_set, theta_air_0, theta_air_10)
 
     # Step 3:
-    phi_c_max = 100 # TODO: get max cooling power
-    phi_h_max = 100 # TODO: get max heating power
+    phi_c_max = 1000000 # TODO: get max cooling power
+    phi_h_max = 1000000 # TODO: get max heating power
 
     if phi_c_max <= phi_hc_nd_un <= phi_h_max:
 
