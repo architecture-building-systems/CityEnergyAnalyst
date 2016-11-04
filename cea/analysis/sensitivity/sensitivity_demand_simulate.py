@@ -47,6 +47,7 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
 
     return InputLocator(scenario_path=simulation_path)
 
+
 def simulate_demand_sample(locator, weather_path, output_parameters):
     gv = cea.globalvar.GlobalVariables()
     gv.demand_writer = cea.demand.demand_writers.MonthlyDemandWriter(gv)
@@ -57,22 +58,25 @@ def simulate_demand_sample(locator, weather_path, output_parameters):
 class SensitivityInputLocator(InputLocator):
     """Overrides `InputLocator` to work with """
 
+
 if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--sample-index', help='Zero-based index into the samples list', type=int)
+    parser.add_argument('-i', '--sample-index', help='Zero-based index into the samples list so simulate', type=int)
+    parser.add_argument('-n', '--number-of-simulations', type=int, default=1,
+                        help='number of simulations to perform, default 1')
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder (omit for default)')
     parser.add_argument('-S', '--samples-folder', default='.',
                         help='folder to place the output files (samples.npy, problem.pickle) in')
-    parser.add_argument('-t', '--simulation-folder', help='folder to copy the reference case to for simulation')
+    parser.add_argument('-t', '--simulation-folder',
+                        help='folder to copy the reference case to for simulation')
     parser.add_argument('-w', '--weather', help='Path to the weather file (omit for default)')
     parser.add_argument('-o', '--output-parameters', help='output parameters to use', nargs='+',
                         default=['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'QEf_MWhyr'])
     args = parser.parse_args()
 
-    locator = apply_sample_parameters(args.sample_index, args.samples_folder, args.scenario, args.simulation_folder)
-    result = simulate_demand_sample(locator, args.weather, args.output_parameters)
-    result.to_csv(os.path.join(args.samples_folder, 'result.%i.csv' % args.sample_index))
-
-
+    for i in range(args.sample_index, args.sample_index + args.number_of_simulations):
+        locator = apply_sample_parameters(i, args.samples_folder, args.scenario, args.simulation_folder)
+        result = simulate_demand_sample(locator, args.weather, args.output_parameters)
+        result.to_csv(os.path.join(args.samples_folder, 'result.%i.csv' % i))
