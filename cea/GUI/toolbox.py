@@ -9,7 +9,7 @@ import arcpy
 import cea
 import cea.globalvar
 import cea.inputlocator
-from cea.plots.graphs import demand_graph_fields
+from cea.plots.graphs_demand import demand_graph_fields
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -382,8 +382,8 @@ class GraphsDemandTool(object):
         return
 
     def execute(self, parameters, messages):
-        import cea.plots.graphs
-        reload(cea.plots.graphs)
+        import cea.plots.graphs_demand
+        reload(cea.plots.graphs_demand)
         
         scenario_path = parameters[0].valueAsText
         analysis_fields = parameters[1].valueAsText.split(';')[:4]  # max 4 fields for analysis
@@ -402,7 +402,7 @@ class GraphsDemandTool(object):
         assert os.path.exists(python_exe), 'Python interpreter (see above) not found.'
 
         # find demand script
-        graphs_py = cea.plots.graphs.__file__
+        graphs_py = cea.plots.graphs_demand.__file__
         if os.path.splitext(graphs_py)[1].endswith('c'):
             graphs_py = graphs_py[:-1]
         gv.log("Path to demand script: %(graphs_py)s", graphs_py=graphs_py)
