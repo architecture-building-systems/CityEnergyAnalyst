@@ -7,6 +7,6 @@ SIMULATION_FOLDER=$TMPDIR
 
 
 # create the samples
-python cea\analysis\sensitivity\sensitivity_demand_samples.py --samples-folder $SAMPLES_FOLDER -n $N \
+python -m cea.analysis.sensitivity.sensitivity_demand_samples.py --samples-folder $SAMPLES_FOLDER -n $N \
    --simulation-folder $SIMULATION_FOLDER
 
