@@ -59,7 +59,7 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--method', help='Method to use valid values: "morris" (default), "sobol"',
                         default='morris')
     parser.add_argument('-n', '--num-samples', help='number of samples (generally 1000 or until it converges',
-                        default=1000)
+                        default=1000, type=int)
     parser.add_argument('--calc-second-order', help='(sobol) calc_second_order parameter',
                         default=False)
     parser.add_argument('--grid-jump', help='(morris) grid_jump parameter',
