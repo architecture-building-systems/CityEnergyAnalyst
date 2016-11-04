@@ -13,7 +13,7 @@
 
 from __future__ import division
 import numpy as np
-from cea.utilities.physics import calc_h, calc_w
+from cea.utilities.physics import calc_h, calc_w, calc_t_from_h
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -31,6 +31,7 @@ all outside air unit
 =========================================
 """
 
+
 def calc_hvac(rhum_1, temp_1, temp_zone_set, qv_req, qe_sen, temp_5_prev, wint, gv, timestep):
     """
     HVAC model of Kämpf [1]
@@ -43,7 +44,7 @@ def calc_hvac(rhum_1, temp_1, temp_zone_set, qv_req, qe_sen, temp_5_prev, wint, 
     qv_req : ventilation requirements at time step t according to the mixed occupancy schedule of the building (m3/s)
     qe_sen : sensible heating or cooling load to be supplied by the HVAC system at time step t in [W]
     temp_5_prev : zone air temperature at time step t-1 (°C)
-    wint : internal moisture gains at time step t according to the mixed occupancy schedule of the building
+    wint : internal moisture gains at time step t according to the mixed occupancy schedule of the building (kg/s)
     gv : object of class globalvar
     timestep : hour of the year [0..8760]
 
@@ -69,7 +70,7 @@ def calc_hvac(rhum_1, temp_1, temp_zone_set, qv_req, qe_sen, temp_5_prev, wint, 
     t5_prime = temp_zone_set
 
     # state after heat exchanger
-    t2, w2 = calc_hex(rhum_1, gv, temp_1, temp_5_prev, timestep)
+    t2, w2 = calc_hex(rhum_1, gv, temp_1, temp_5_prev, timestep)  # (°C), (kg/kg)
 
     # print(t5_prime)
     if abs(qe_sen) != 0:  # to account for the bug of possible -0.0
@@ -78,15 +79,28 @@ def calc_hvac(rhum_1, temp_1, temp_zone_set, qv_req, qe_sen, temp_5_prev, wint, 
 
         # State No. 3
         # Assuming that AHU does not modify the air humidity
-        w3 = w2
+        w3v = w2 # virtual moisture content at state 3
+
+        # MODIFICATIONS OF FONSECA, HSIEH and HAPPLE to the model
+        # *******************************************************
+        # first we guess the temperature of supply based on the sensible heating load and the required vetilation mass flow rate
+        h_t5_prime_w3v = calc_h(t5_prime, w3v)  # for enthalpy change in first assumption, see Eq.(4.31) in [1]
+
+        h_t3v_w3v = h_t5_prime_w3v + qe_sen/(gv.Pair * qv_req)  # needed enthalpy of virtual supply air with no change in w3 humidity
+
+        t3v = calc_t_from_h(h_t3v_w3v, w3v)  # virtual supply temperature
+
+        # evaluate t3v
         if qe_sen > 0:  # if heating
-            t3 = max(gv.temp_sup_heat_hvac,
-                     t2)  # heating system supply temperature in (°C) # TODO: document choose t2 if higher
+            t3 = np.nanmax([t2, np.nanmin([t3v, gv.temp_sup_heat_hvac])])
+                     # heating system supply temperature in (°C) # TODO: document choose t2 if higher
+            # choose higher temperature of heated air and HEX air, which is lower than maximal supply temperature
             # modification by Happle and Hsieh: HVAC supplies at inlet temperature if higher than supply temperature
 
         elif qe_sen < 0:  # if cooling
-            t3 = min(gv.temp_sup_cool_hvac,
-                     t2)  # cooling system supply temperature in (°C)  # TODO: document choose t2 if lower
+            t3 = np.nanmin([t2, np.nanmax([t3v, gv.temp_sup_cool_hvac])])  # cooling system supply temperature in (°C)  # TODO: document choose t2 if lower
+            # choose lower temperature of cooled air and HEX air, which is higher than the minimal supply temperature
+
             # modification by Happle and Hsieh: HVAC supplies at inlet temperature if lower than supply temperature
         else:
             t3 = np.nan
@@ -94,26 +108,27 @@ def calc_hvac(rhum_1, temp_1, temp_zone_set, qv_req, qe_sen, temp_5_prev, wint, 
             print(qe_sen)
 
         # initial guess of mass flow rate
-        h_t5_prime_w3 = calc_h(t5_prime, w3)  # for enthalpy change in first assumption, see Eq.(4.31) in [1]
-        h_t3_w3 = calc_h(t3, w3)  # for enthalpy change in first assumption, see Eq.(4.31) in [1]
+        h_t5_prime_w3v = calc_h(t5_prime, w3v)  # for enthalpy change in first assumption, see Eq.(4.31) in [1]
+        h_t3_w3v = calc_h(t3, w3v)  # for enthalpy change in first assumption, see Eq.(4.31) in [1]
         # Eq. (4.34) in [1] for first prediction of mass flow rater in (kg/s)
-        m1 = max(-qe_sen / (h_t5_prime_w3 - h_t3_w3), (gv.Pair * qv_req))  # TODO: use dynamic air density
+        m1 = -qe_sen / (h_t5_prime_w3v - h_t3_w3v)  # TODO: use dynamic air density
 
         # determine virtual state in the zone without moisture conditioning
         # moisture balance accounting for internal moisture load, see also Eq. (4.32) in [1]
-        w5_prime = (wint + w3 * m1) / m1
+        w5_prime = (wint + w3v * m1) / m1
 
         # room supply moisture content:
         if qe_sen > 0:  # if heating
             # algorithm for heating case
             w3 = calc_w3_heating_case(t5_prime, w2, w5_prime, t3, gv)
-            ts = t3 + 0.5  # plus expected delta T drop in the ducts TODO: check and document value of temp increase
+            ts = t3 # plus expected delta T drop in the ducts TODO: check and document value of temp increase
         elif qe_sen < 0:  # if cooling
             # algorithm for cooling case
             w3 = calc_w3_cooling_case(t5_prime, w2, t3, w5_prime)
-            ts = t3 - 0.5  # minus expected delta T rise in the ducts TODO: check and document value of temp decrease
+            ts = t3 # minus expected delta T rise in the ducts TODO: check and document value of temp decrease
         else:
             ts = np.nan
+            w3 = np.nan
             print('Warning: Entered HVAC calculation without sensible heat load')
             print(qe_sen)
 
@@ -123,7 +138,7 @@ def calc_hvac(rhum_1, temp_1, temp_zone_set, qv_req, qe_sen, temp_5_prev, wint, 
         # the new mass flow rate
         h_t5_prime_w3 = calc_h(t5_prime, w3)
         h_t3_w3 = calc_h(t3, w3)
-        m = max(-qe_sen / (h_t5_prime_w3 - h_t3_w3), (gv.Pair * qv_req))
+        m = -qe_sen / (h_t5_prime_w3 - h_t3_w3)
 
         # TODO: now the energy of humidification and dehumidification can be calculated
         h_t2_ws = calc_h(t2, ws)
@@ -145,6 +160,9 @@ def calc_hvac(rhum_1, temp_1, temp_zone_set, qv_req, qe_sen, temp_5_prev, wint, 
         h_t2_w2 = calc_h(t2, w2)
         h_ts_ws = calc_h(ts, ws)
         qe_tot = m * (h_ts_ws - h_t2_w2) * 1000  # TODO: document
+
+        # qe_free = - m * (h_t5_prime_w3 - calc_h(temp_1, calc_w(temp_1,rhum_1))) * 1000
+        # q_sen_tot = qe_tot + qe_free - qe_hum_dehum
 
         # Adiabatic humidifier - computation of electrical auxiliary loads
         if qe_hum > 0:

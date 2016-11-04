@@ -26,7 +26,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-
 """
 =========================================
 demand calculation
@@ -87,7 +86,7 @@ def demand_calculation(locator, weather_path, gv):
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
 
     # weather model
-    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms']]
+    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
     # building properties model
     building_properties = BuildingProperties(locator, gv)
@@ -99,16 +98,17 @@ def demand_calculation(locator, weather_path, gv):
 
     # demand model
     num_buildings = len(building_properties)
-    if gv.multiprocessing:
+    if gv.multiprocessing and mp.cpu_count() > 1:
         thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, num_buildings,
                                                     schedules_dict,
                                                     weather_data)
     else:
         thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, schedules_dict,
                                     weather_data)
-    write_totals_csv(building_properties, locator, gv)
+    totals = write_totals_csv(building_properties, locator, gv)
     gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
+    return totals
 
 def write_totals_csv(building_properties, locator, gv):
     """read in the temporary results files and append them to the Totals.csv file."""
@@ -121,14 +121,15 @@ def write_totals_csv(building_properties, locator, gv):
         else:
             df2 = pd.read_csv(temporary_file)
             df = df.append(df2, ignore_index=True)
-    df.to_csv(locator.get_total_demand(), columns=gv.demand_totals_csv_columns, index=False, float_format='%.3f')
+    df.to_csv(locator.get_total_demand(), index=False, float_format='%.3f')
 
-
+    return df
 """
 =========================================
 multiple or single core calculation
 =========================================
 """
+
 
 def thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, usage_schedules,
                                 weather_data):
@@ -136,7 +137,8 @@ def thermal_loads_all_buildings(building_properties, date, gv, locator, num_buil
         bpr = building_properties[building]
         thermal_loads.calc_thermal_loads(
             building, bpr, weather_data, usage_schedules, date, gv, locator)
-        gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
+        gv.log('Building No. %(bno)i completed out of %(num_buildings)i: %(building)s', bno=i + 1,
+               num_buildings=num_buildings, building=building)
 
 
 def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, num_buildings, usage_schedules,
@@ -152,13 +154,14 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
     for i, job in enumerate(joblist):
         job.get(240)
         gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
+    pool.close()
+
 
 """
 =========================================
 test
 =========================================
 """
-
 def run_as_script(scenario_path=None, weather_path=None):
     gv = cea.globalvar.GlobalVariables()
     if scenario_path is None:
@@ -175,9 +178,10 @@ def run_as_script(scenario_path=None, weather_path=None):
 
 if __name__ == '__main__':
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
     parser.add_argument('-w', '--weather', help='Path to the weather file')
     args = parser.parse_args()
-    run_as_script(scenario_path=args.scenario, weather_path=args.weather)
 
+    run_as_script(scenario_path=args.scenario, weather_path=args.weather)

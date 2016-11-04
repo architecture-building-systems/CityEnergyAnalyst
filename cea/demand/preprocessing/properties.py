@@ -122,7 +122,7 @@ def properties(locator, prop_thermal_flag, prop_architecture_flag,
 
         # write to shapefile
         prop_architecture_df_merged = names_shp.merge(prop_architecture_df, on="Name")
-        fields = ['win_wall', 'type_shade', 'Occ_m2p', 'n50', 'win_op', 'f_cros']  # added ventilation properties to architecture
+        fields = ['win_wall', 'type_shade', 'Occ_m2p', 'n50', 'win_op', 'f_cros', 'type_roof', 'type_wall', 'type_win']
         prop_architecture_shp = names_shp.copy()
         for field in fields:
             prop_architecture_shp[field] = prop_architecture_df_merged[field].copy()
@@ -226,22 +226,25 @@ def calc_category(a, x, y):
     category = a+result
     return category
 
-def test_properties():
+def run_as_script(scenario_path=None):
     """
     Run the properties script with input from the reference case and compare the results. This ensures that changes
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
     """
     import cea.globalvar
     gv = cea.globalvar.GlobalVariables()
-    locator = inputlocator.InputLocator(scenario_path=gv.scenario_reference)
+    if not scenario_path:
+        scenario_path = gv.scenario_reference
+    locator = inputlocator.InputLocator(scenario_path=scenario_path)
     properties(locator=locator, prop_thermal_flag=True, prop_architecture_flag=True, prop_hvac_flag=True,
                prop_comfort_flag=True, prop_internal_loads_flag=True, gv=gv)
-    print 'test_properties() succeeded'
 
-
-def is_dataframe_equal(dfa, dfb):
-    comparison = dfa == dfb
-    return all((comparison[c].all() for c in comparison.columns))
 
 if __name__ == '__main__':
-    test_properties()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
+    args = parser.parse_args()
+
+    run_as_script(scenario_path=args.scenario)

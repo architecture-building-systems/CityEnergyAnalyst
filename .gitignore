@@ -71,3 +71,12 @@ test/reference-case/Radiation2000-2009.csv
 demand.prof
 demand_numba.prof
 *.prof
+building_info.csv
+cea/demand/calc_tm.pyd
+cea/technologies/calc_radiator.pyd
+tests/.doit.db
+setup/Output/*
+setup/site-packages/*
+
+# euler batch job output files
+lsf.o*

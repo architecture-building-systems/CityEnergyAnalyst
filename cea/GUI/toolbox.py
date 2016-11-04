@@ -3,11 +3,13 @@ ArcGIS Tool classes for integrating the CEA with ArcGIS.
 """
 import os
 import tempfile
-import arcpy
-import cea
-import cea.inputlocator
-import cea.globalvar
 
+import arcpy
+
+import cea
+import cea.globalvar
+import cea.inputlocator
+from cea.plots.graphs_demand import demand_graph_fields
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -21,10 +23,12 @@ __status__ = "Production"
 
 def add_message(msg, **kwargs):
     """Log to arcpy.AddMessage() instead of print to STDOUT"""
-    arcpy.AddMessage(msg % kwargs)
+    if len(kwargs):
+        msg = msg % kwargs
+    arcpy.AddMessage(msg)
     log_file = os.path.join(tempfile.gettempdir(), 'cea.log')
     with open(log_file, 'a') as log:
-        log.write(msg % kwargs)
+        log.write(msg)
 
 
 class PropertiesTool(object):
@@ -232,7 +236,7 @@ class EmbodiedEnergyTool(object):
         gv = cea.globalvar.GlobalVariables()
         gv.log = add_message
         locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-        cea.analysis.embodied.lca_embodied(yearcalc=yearcalc, locator=locator, gv=gv)
+        cea.analysis.embodied.lca_embodied(year_to_calculate=yearcalc, locator=locator, gv=gv)
 
 
 class EmissionsTool(object):
@@ -325,7 +329,7 @@ class EmissionsTool(object):
         return
 
     def execute(self, parameters, messages):
-        from cea.analysis.emissions import lca_operation
+        from cea.analysis.operation import lca_operation
         import cea.inputlocator
         scenario_path = parameters[0].valueAsText
         locator = cea.inputlocator.InputLocator(scenario_path)
@@ -367,31 +371,19 @@ class GraphsDemandTool(object):
         return [scenario_path, analysis_fields]
 
     def updateParameters(self, parameters):
-        import pandas as pd
         scenario_path = parameters[0].valueAsText
         if not os.path.exists(scenario_path):
             parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
         analysis_fields = parameters[1]
-        locator = cea.inputlocator.InputLocator(scenario_path)
-        df_total_demand = pd.read_csv(locator.get_total_demand())
-        total_fields = set(df_total_demand.columns.tolist())
-        first_building = df_total_demand['Name'][0]
-        df_building = pd.read_csv(locator.get_demand_results_file(first_building))
-        fields = set(df_building.columns.tolist())
-        fields.remove('DATE')
-        fields.remove('Name')
-
-        # remove fields in demand results files that do not have a corresponding field in the totals file
-        bad_fields = set(field for field in fields if not field.split('_')[0] + "_MWhyr" in total_fields)
-        fields = fields - bad_fields
+        fields = demand_graph_fields(scenario_path)
 
         analysis_fields.filter.list = list(fields)
         return
 
     def execute(self, parameters, messages):
-        import cea.plots.graphs
-        reload(cea.plots.graphs)
+        import cea.plots.graphs_demand
+        reload(cea.plots.graphs_demand)
         
         scenario_path = parameters[0].valueAsText
         analysis_fields = parameters[1].valueAsText.split(';')[:4]  # max 4 fields for analysis
@@ -410,7 +402,7 @@ class GraphsDemandTool(object):
         assert os.path.exists(python_exe), 'Python interpreter (see above) not found.'
 
         # find demand script
-        graphs_py = cea.plots.graphs.__file__
+        graphs_py = cea.plots.graphs_demand.__file__
         if os.path.splitext(graphs_py)[1].endswith('c'):
             graphs_py = graphs_py[:-1]
         gv.log("Path to demand script: %(graphs_py)s", graphs_py=graphs_py)

@@ -27,7 +27,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def lca_embodied(yearcalc, locator, gv):
+def lca_embodied(year_to_calculate, locator, gv):
     """
     algorithm to calculate the embodied energy and grey energy of buildings
     according to the method of Fonseca et al 2015. CISBAT 2015. and Thoma et al
@@ -36,10 +36,10 @@ def lca_embodied(yearcalc, locator, gv):
     Parameters
     ----------
 
-    :param yearcalc:  year between 1900 and 2100 indicating when embodied energy is evaluated
+    :param year_to_calculate:  year between 1900 and 2100 indicating when embodied energy is evaluated
         to account for emissions already offset from building construction
         and retrofits more than 60 years ago.
-    :type yearcalc: int
+    :type year_to_calculate: int
 
     :param locator: an instance of InputLocator set to the scenario
     :type locator: inputlocator.InputLocator
@@ -127,7 +127,7 @@ def lca_embodied(yearcalc, locator, gv):
         HVAC_df = cat_df.merge(database_df, left_on='cat_HVAC', right_on='Code')
 
         # contributions due to construction
-        built_df['delta_year'] =  (built_df['envelope']-yearcalc)*-1
+        built_df['delta_year'] = (built_df['envelope'] - year_to_calculate) * -1
         built_df['confirm'] = built_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_materials), axis=1)
         built_df['contrib'] = ((built_df['Wall_ext_ag']*built_df['area_walls_ext_ag'])+
                                (built_df['Roof']*built_df['footprint'])+
@@ -141,22 +141,22 @@ def lca_embodied(yearcalc, locator, gv):
                                ((HVAC_df['floor_area_ag']+HVAC_df['footprint']) * HVAC_df['Services'])/gv.sl_services
 
         # contributions due to envelope retrofit
-        envelope_df['delta_year'] =  (envelope_df['envelope']-yearcalc)*-1
+        envelope_df['delta_year'] = (envelope_df['envelope'] - year_to_calculate) * -1
         envelope_df['confirm'] = envelope_df.apply(lambda x: calc_if_existing(x['delta_year'],gv.sl_materials), axis=1)
         envelope_df['contrib'] = (envelope_df['Wall_ext_ag']*envelope_df['area_walls_ext_ag']*(envelope_df['PFloor']-1))*envelope_df['confirm']/(gv.sl_materials)
 
         # contributions due to roof retrofit
-        roof_df['delta_year'] =  (roof_df['roof']-yearcalc)*-1
+        roof_df['delta_year'] = (roof_df['roof'] - year_to_calculate) * -1
         roof_df['confirm'] = roof_df.apply(lambda x: calc_if_existing(x['delta_year'],gv.sl_materials), axis=1)
         roof_df['contrib'] = roof_df['Roof']*roof_df['footprint']*roof_df['confirm']/gv.sl_materials
 
         # contributions due to windows retrofit
-        windows_df['delta_year'] =  (windows_df['windows']-yearcalc)*-1
+        windows_df['delta_year'] = (windows_df['windows'] - year_to_calculate) * -1
         windows_df['confirm'] = windows_df.apply(lambda x: calc_if_existing(x['delta_year'],gv.sl_materials), axis=1)
         windows_df['contrib'] = windows_df['windows_ag']*windows_df['Win_ext']*(windows_df['PFloor']-1)*windows_df['confirm']/gv.sl_materials
 
         # contributions due to partitions retrofit
-        partitions_df['delta_year'] =  (partitions_df['partitions']-yearcalc)*-1
+        partitions_df['delta_year'] = (partitions_df['partitions'] - year_to_calculate) * -1
         partitions_df['confirm'] = partitions_df.apply(lambda x: calc_if_existing(x['delta_year'],gv.sl_materials), axis=1)
         partitions_df['contrib'] = (partitions_df['floor_area_ag']*partitions_df['Floor_int']+
                                     partitions_df['floor_area_ag']*partitions_df['Wall_int_sup']*gv.fwratio +
@@ -164,7 +164,7 @@ def lca_embodied(yearcalc, locator, gv):
                                     partitions_df['confirm']/gv.sl_materials
 
         # contributions due to basement_df
-        basement_df['delta_year'] = (basement_df['basement'] - yearcalc) * -1
+        basement_df['delta_year'] = (basement_df['basement'] - year_to_calculate) * -1
         basement_df['confirm'] = basement_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_materials),
                                                        axis=1)
         basement_df['contrib'] = (basement_df['footprint'] * basement_df['Floor_g'] +
@@ -172,7 +172,7 @@ def lca_embodied(yearcalc, locator, gv):
                                   basement_df['confirm']/gv.sl_materials
 
         # contributions due to HVAC_df
-        HVAC_df['delta_year'] = (HVAC_df['basement'] - yearcalc) * -1
+        HVAC_df['delta_year'] = (HVAC_df['HVAC'] - year_to_calculate) * -1
         HVAC_df['confirm'] = HVAC_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_materials),axis=1)
         HVAC_df['contrib'] = ((HVAC_df['floor_area_ag']+HVAC_df['footprint']) * HVAC_df['Services'])*HVAC_df['confirm'] \
                              /gv.sl_services
@@ -256,14 +256,19 @@ def calc_comparison(array_min, array_max):
     return array_max
 
 
-def test_lca_embodied():
-    locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case-zug\baseline')
-    yearcalc = 2050
-
+def run_as_script(scenario_path=None, year_to_calculate=2050):
     gv = cea.globalvar.GlobalVariables()
+    if not scenario_path:
+        scenario_path = gv.scenario_reference
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    lca_embodied(locator=locator, year_to_calculate=year_to_calculate, gv=gv)
 
-    lca_embodied(locator=locator, yearcalc=yearcalc, gv=gv)
-    print "test_lca_embodied() succeeded"
 
 if __name__ == '__main__':
-    test_lca_embodied()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
+    parser.add_argument('-y', '--year', default=2050, help='Year to calculate')
+    args = parser.parse_args()
+    run_as_script(scenario_path=args.scenario, year_to_calculate=args.year)
