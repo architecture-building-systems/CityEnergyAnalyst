@@ -163,3 +163,9 @@ reduces the overhead of waiting for a node to pick up the job, so we will need t
 experiment a bit here...
 
 The next step is to run the analysis on the results. This is done in a single process.
+
+```
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
+> python cea\analysis\sensitivity\sensitivity_demand_analyze.py --samples-folder %TEMP%\samples
+```
+

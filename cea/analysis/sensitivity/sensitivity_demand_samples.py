@@ -12,11 +12,8 @@ from cea.inputlocator import InputLocator
 
 def create_demand_samples(method='morris', num_samples=1000, variable_groups=('THERMAL',), sampler_parameters={}):
     """
-
     :param sampler_parameters: additional, sampler-specific parameters. For `method='morris'` these are: [grid_jump,
                            num_levels], for `method='sobol'` these are: [calc_second_order]
-    :param output_folder: Folder to place the output file 'samples.npy' (FIXME: should this be part of the
-                          InputLocator?)
     :param method: The method to use. Valid values are 'morris' (default) and 'sobol'.
     :param num_samples: The number of samples `N` to make
     :param variable_groups: list of names of groups of variables to analyse. Possible values are:
@@ -73,19 +70,19 @@ if __name__ == '__main__':
                               'INDOOR_COMFORT, INTERNAL_LOADS'))
     args = parser.parse_args()
 
-    sampler_parameters = {}
+    sampler_params = {}
     if args.method == 'morris':
-        sampler_parameters['grid_jump'] = args.grid_jump
-        sampler_parameters['num_levels'] = args.num_levels
+        sampler_params['grid_jump'] = args.grid_jump
+        sampler_params['num_levels'] = args.num_levels
     elif args.method == 'sobol':
-        sampler_parameters['calc_second_order'] = args.calc_second_order
+        sampler_params['calc_second_order'] = args.calc_second_order
 
-    samples, problem = create_demand_samples(method=args.method, num_samples=args.num_samples,
-                                             variable_groups=args.variable_groups,
-                                             sampler_parameters=sampler_parameters)
+    samples, problem_dict = create_demand_samples(method=args.method, num_samples=args.num_samples,
+                                                  variable_groups=args.variable_groups,
+                                                  sampler_parameters=sampler_params)
 
     # save out to disk
     np.save(os.path.join(args.samples_folder, 'samples.npy'), samples)
     with open(os.path.join(args.samples_folder, 'problem.pickle'), 'w') as f:
-        pickle.dump(problem, f)
+        pickle.dump(problem_dict, f)
     print('created %i samples in %s' % (samples.shape[0], args.samples_folder))
