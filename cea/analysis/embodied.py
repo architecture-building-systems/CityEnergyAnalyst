@@ -127,7 +127,7 @@ def lca_embodied(year_to_calculate, locator, gv):
         HVAC_df = cat_df.merge(database_df, left_on='cat_HVAC', right_on='Code')
 
         # contributions due to construction
-        built_df['delta_year'] = year_to_calculate - built_df['envelope']
+        built_df['delta_year'] = year_to_calculate - built_df['built']
         built_df['confirm'] = built_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_materials), axis=1)
         built_df['contrib'] = (((built_df['Wall_ext_ag']*built_df['area_walls_ext_ag'])+
                                (built_df['Roof']*built_df['footprint'])+
@@ -267,6 +267,6 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    parser.add_argument('-y', '--year', default=2050, help='Year to calculate')
+    parser.add_argument('-y', '--year', default=2020, help='Year to calculate')
     args = parser.parse_args()
     run_as_script(scenario_path=args.scenario, year_to_calculate=args.year)
