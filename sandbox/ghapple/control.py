@@ -99,7 +99,7 @@ def has_cooling_system(bpr):
 
     """
 
-    if bpr.havc['type_cs'] in {'T1', 'T2', 'T3'}:
+    if bpr.hvac['type_cs'] in {'T1', 'T2', 'T3'}:
         return True
     elif bpr.hvac['type_cs'] in {'T0'}:
         return False
@@ -207,7 +207,7 @@ def has_mech_ventilation():
 
     # check building properties
     # TODO: code
-    return False
+    return True
 
 def has_night_flushing():
 
@@ -219,7 +219,7 @@ def has_window_ventilation():
 
     # check building properties
     # TODO: code
-    return False
+    return True
 
 def has_hex():
 
@@ -233,13 +233,13 @@ def is_mech_ventilation_active():
     if has_mech_ventilation():
         # check for clock time, season, temperature and occupancy constraints
         # TODO: code
-        return False
+        return True
 
     elif not has_mech_ventilation():
         return False
 
 
-def is_night_flushing_active(hoy, tsd, bpr, weather_data):
+def is_night_flushing_active(bpr, tsd, hoy):
     """
     determines system status (active/inactive) of night flushing system
 
@@ -248,7 +248,6 @@ def is_night_flushing_active(hoy, tsd, bpr, weather_data):
     hoy : hour of year
     tsd : data frame with thermal loads simulation results
     bpr : building properties row object
-    weather_data : weather data
 
     Returns
     -------
@@ -268,7 +267,7 @@ def is_night_flushing_active(hoy, tsd, bpr, weather_data):
             temp_zone_control = 28  # TODO: make dynamic
             temp_ext_control = 26 # TODO: make dynamic (as function of zone air temperature, e.g. Ta - 2°C)
 
-            if tsd['Ta'].values[hoy] > temp_zone_control and weather_data.drybulb_C.values[hoy] < temp_ext_control:  # temperature condition
+            if tsd['Ta'][hoy] > temp_zone_control and tsd['T_ext'][hoy] < temp_ext_control:  # temperature condition
 
                 return True
             else:
