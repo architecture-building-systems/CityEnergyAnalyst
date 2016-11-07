@@ -86,7 +86,7 @@ def demand_calculation(locator, weather_path, gv):
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
 
     # weather model
-    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms']]
+    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
     # building properties model
     building_properties = BuildingProperties(locator, gv)
@@ -105,9 +105,10 @@ def demand_calculation(locator, weather_path, gv):
     else:
         thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, schedules_dict,
                                     weather_data)
-    write_totals_csv(building_properties, locator, gv)
+    totals = write_totals_csv(building_properties, locator, gv)
     gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
+    return totals
 
 def write_totals_csv(building_properties, locator, gv):
     """read in the temporary results files and append them to the Totals.csv file."""
@@ -120,9 +121,9 @@ def write_totals_csv(building_properties, locator, gv):
         else:
             df2 = pd.read_csv(temporary_file)
             df = df.append(df2, ignore_index=True)
-    df.to_csv(locator.get_total_demand(), columns=gv.demand_totals_csv_columns, index=False, float_format='%.3f')
+    df.to_csv(locator.get_total_demand(), index=False, float_format='%.3f')
 
-
+    return df
 """
 =========================================
 multiple or single core calculation
@@ -161,8 +162,6 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
 test
 =========================================
 """
-
-
 def run_as_script(scenario_path=None, weather_path=None):
     gv = cea.globalvar.GlobalVariables()
     if scenario_path is None:

@@ -77,3 +77,6 @@ cea/technologies/calc_radiator.pyd
 tests/.doit.db
 setup/Output/*
 setup/site-packages/*
+
+# euler batch job output files
+lsf.o*
