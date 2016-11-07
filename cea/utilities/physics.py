@@ -38,6 +38,8 @@ def calc_w(t, RH):
     Pv = RH / 100 * Ps
     w = 0.62 * Pv / (Pa - Pv)
 
+    # TODO: source?
+
     return w
 
 
@@ -63,6 +65,8 @@ def calc_h(t, w):
         h = np.nan
         print('Warning: Temperature out of bounds (>60°C or <-100°C)')
         print(t)
+
+    # TODO: source?
 
     return h
 

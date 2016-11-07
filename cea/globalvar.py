@@ -19,7 +19,7 @@ __status__ = "Production"
 
 class GlobalVariables(object):
     def __init__(self):
-        self.scenario_reference = r'c:\reference-case-open\baseline'
+        self.scenario_reference = r'c:\cea-reference-case\reference-case-open\baseline'
         self.print_partial = 'hourly' # hourly or monthly for the deamnd script
         self.print_yearly = True # print yearly values
         self.print_yearly_peak = True # print peak values
@@ -531,7 +531,7 @@ class GlobalVariables(object):
              'Tcdataf_sup', 'Tcref_re',
              'Tcref_sup']]
         # here is where we decide whether full excel reports of the calculations are generated
-        self.testing = False  # if true: reports are generated, if false: not
+        self.testing = False # if true: reports are generated, if false: not
 
 
         self.report_variables = {
