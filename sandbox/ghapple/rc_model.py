@@ -227,7 +227,7 @@ def calc_phi_hc_nd_un(phi_hc_nd_10, theta_air_set, theta_air_0, theta_air_10):
     return phi_hc_nd_un
 
 
-def calc_phi_hc_ac(bpr, tsd, hoy):
+def calc_phi_hc_ac_heating(bpr, tsd, hoy):
 
     # Crank-Nicholson calculation procedure if heating/cooling system is active
     # Step 1 - Step 4 in Section C.4.2 in [C.3 ISO 13790]
@@ -238,7 +238,7 @@ def calc_phi_hc_ac(bpr, tsd, hoy):
     theta_air_0 = temp_rc_0[1]
 
     # Step 2:
-    theta_int_set = 20 # TODO: get setpoint
+    theta_int_set = tsd['ta_hs_set'][hoy] # TODO: get setpoint
     af = bpr.rc_model['Af'] # TODO: get A_f, check wether Aef??
 
     theta_air_set = theta_int_set
@@ -249,10 +249,9 @@ def calc_phi_hc_ac(bpr, tsd, hoy):
     phi_hc_nd_un = calc_phi_hc_nd_un(phi_hc_nd_10,theta_air_set, theta_air_0, theta_air_10)
 
     # Step 3:
-    phi_c_max = 1000000 # TODO: get max cooling power
     phi_h_max = 1000000 # TODO: get max heating power
 
-    if phi_c_max <= phi_hc_nd_un <= phi_h_max:
+    if phi_hc_nd_un <= phi_h_max:
 
         phi_hc_nd_ac = phi_hc_nd_un
         theta_air_ac = theta_air_set
@@ -262,6 +261,53 @@ def calc_phi_hc_ac(bpr, tsd, hoy):
 
         phi_hc_nd_ac = phi_h_max
 
+    else: # unknown situation
+
+        phi_hc_nd_ac = 0
+        print('ERROR: unknown radiative heating/cooling system status')
+
+
+    # calculate system temperatures for Step 3/Step 4
+    temp_ac = calc_temperatures_crank_nicholson(phi_hc_nd_ac, bpr, tsd, hoy)
+
+    theta_m_t_ac = temp_ac[0]
+    theta_air_ac = temp_ac[1]  # should be the same as theta_air_set in the first case
+    theta_op_ac = temp_ac[2]
+
+    # exit calculation
+    return theta_m_t_ac, theta_air_ac, theta_op_ac, phi_hc_nd_ac
+
+
+def calc_phi_hc_ac_cooling(bpr, tsd, hoy):
+
+    # Crank-Nicholson calculation procedure if cooling system is active
+    # Step 1 - Step 4 in Section C.4.2 in [C.3 ISO 13790]
+
+    # Step 1:
+    phi_hc_nd_0 = 0
+    temp_rc_0 = calc_temperatures_crank_nicholson(phi_hc_nd_0, bpr, tsd, hoy)
+    theta_air_0 = temp_rc_0[1]
+
+    # Step 2:
+    theta_int_set = tsd['ta_cs_set']
+    af = bpr.rc_model['Af'] # TODO: get A_f, check wether Aef??
+
+    theta_air_set = theta_int_set
+    phi_hc_nd_10 = 10 * af
+
+    temp_rc_10 = calc_temperatures_crank_nicholson(phi_hc_nd_10, bpr, tsd, hoy)
+    theta_air_10 = temp_rc_10[1]
+    phi_hc_nd_un = calc_phi_hc_nd_un(phi_hc_nd_10,theta_air_set, theta_air_0, theta_air_10)
+
+    # Step 3:
+    phi_c_max = -1000000 # TODO: get max cooling power
+
+    if phi_c_max <= phi_hc_nd_un:
+
+        phi_hc_nd_ac = phi_hc_nd_un
+        theta_air_ac = theta_air_set
+
+    # Step 4:
     elif phi_hc_nd_un < phi_c_max: # necessary cooling power exceeds maximum available power
 
         phi_hc_nd_ac = phi_c_max
@@ -270,7 +316,6 @@ def calc_phi_hc_ac(bpr, tsd, hoy):
 
         phi_hc_nd_ac = 0
         print('ERROR: unknown radiative heating/cooling system status')
-
 
     # calculate system temperatures for Step 3/Step 4
     temp_ac = calc_temperatures_crank_nicholson(phi_hc_nd_ac, bpr, tsd, hoy)

@@ -64,27 +64,28 @@ def procedure_1(hoy, bpr, tsd):
         theta_air = temp_rc[1]
         theta_op = temp_rc[2]
 
-        q_hs_sen_incl_em_loss = 0
-        em_loss_hs = 0
-        q_cs_sen_incl_em_loss = 0
-        em_loss_cs = 0
-
         # write to tsd
         tsd['Tm'][hoy] = theta_m_t
         tsd['Ta'][hoy] = theta_air
         tsd['Top'][hoy] = theta_op
-        tsd['Qhs_sen'][hoy] = 0
-        tsd['Qhs_em_ls'][hoy] = 0
+        tsd['Qhs_sen'][hoy] = 0  # no energy demand for heating (temperature ok)
+        tsd['Qhs_em_ls'][hoy] = 0  # no emission loss of heating space emission systems
+        tsd['Qcs_sen'][hoy] = 0  # no energy demand for cooling
+        tsd['Qcs_em_ls'][hoy] = 0  # no losses of cooling space emission systems
 
         # return
         print('Building has no heating or cooling demand at hour', hoy)
         return
 
-    elif rc.has_heating_demand (bpr, tsd, hoy):
+    elif rc.has_heating_demand(bpr, tsd, hoy):
 
         # has heating demand
         print('Building has heating demand at hour', hoy)
         # check if heating system is turned on
+
+        # no cooling energy demand in any case
+        tsd['Qcs_sen'][hoy] = 0  # no energy demand for cooling
+        tsd['Qcs_em_ls'][hoy] = 0  # no losses of cooling space emission systems
 
         if not control.is_heating_active(hoy, bpr):
 
@@ -98,23 +99,17 @@ def procedure_1(hoy, bpr, tsd):
             theta_air = temp_rc[1]
             theta_op = temp_rc[2]
 
-            q_hs_sen_incl_em_loss = 0
-            em_loss_hs = 0
-            q_cs_sen_incl_em_loss = 0
-            em_loss_cs = 0
-
             # write to tsd
             tsd['Tm'][hoy] = theta_m_t
             tsd['Ta'][hoy] = theta_air
             tsd['Top'][hoy] = theta_op
-            tsd['Qhs_sen'][hoy] = 0
-            tsd['Qhs_em_ls'][hoy] = 0
+            tsd['Qhs_sen'][hoy] = 0  # no heating energy demand (system off)
+            tsd['Qhs_em_ls'][hoy] = 0  # no losses of heating space emission systems
 
             # return # TODO: check speed with and without return here
             # return
 
         elif control.is_heating_active(hoy, bpr) and control.heating_system_is_ac(bpr):
-
 
             # heating with AC
             # calculate loads and enter AC calculation
@@ -132,7 +127,7 @@ def procedure_1(hoy, bpr, tsd):
             theta_m_t_ac,\
             theta_air_ac,\
             theta_op_ac,\
-            phi_hc_nd_ac = rc.calc_phi_hc_ac(bpr, tsd, hoy)
+            phi_hc_nd_ac = rc.calc_phi_hc_ac_heating(bpr, tsd, hoy)
 
             # write to tsd
             tsd['Tm'][hoy] = theta_m_t_ac
@@ -140,6 +135,7 @@ def procedure_1(hoy, bpr, tsd):
             tsd['Top'][hoy] = theta_op_ac
             tsd['Qhs_sen'][hoy] = phi_hc_nd_ac
 
+            # space emission system losses
             q_em_ls_heating = ses.calc_q_em_ls_heating(bpr, tsd, hoy)
 
             tsd['Qhs_em_ls'][hoy] = q_em_ls_heating
@@ -152,6 +148,9 @@ def procedure_1(hoy, bpr, tsd):
         # has cooling demand
         print('Building has cooling demand at hour', hoy)
         # check if cooling system is turned on
+        # no heating demand in any case:
+        tsd['Qhs_sen'][hoy] = 0  # no heating energy demand (system off)
+        tsd['Qhs_em_ls'][hoy] = 0  # no losses of heating space emission systems
 
         if not control.is_cooling_active(hoy, bpr):
 
@@ -165,10 +164,12 @@ def procedure_1(hoy, bpr, tsd):
             theta_air = temp_rc[1]
             theta_op = temp_rc[2]
 
-            q_hs_sen_incl_em_loss = 0
-            em_loss_hs = 0
-            q_cs_sen_incl_em_loss = 0
-            em_loss_cs = 0
+            # write to tsd
+            tsd['Tm'][hoy] = theta_m_t
+            tsd['Ta'][hoy] = theta_air
+            tsd['Top'][hoy] = theta_op
+            tsd['Qcs_sen'][hoy] = 0  # no heating energy demand (system off)
+            tsd['Qcs_em_ls'][hoy] = 0  # no losses of heating space emission systems
 
             # return # TODO: check speed with and without return here
             # return
@@ -191,9 +192,18 @@ def procedure_1(hoy, bpr, tsd):
             theta_m_t_ac, \
             theta_air_ac, \
             theta_op_ac, \
-            phi_hc_nd_ac = rc.calc_phi_hc_ac(building_thermal_prop)
+            phi_hc_nd_ac = rc.calc_phi_hc_ac_cooling(bpr, tsd, hoy)
 
-            # TODO: losses
+            # write to tsd
+            tsd['Tm'][hoy] = theta_m_t_ac
+            tsd['Ta'][hoy] = theta_air_ac
+            tsd['Top'][hoy] = theta_op_ac
+            tsd['Qcs_sen'][hoy] = phi_hc_nd_ac
+
+            # space emission system losses
+            q_em_ls_heating = ses.calc_q_em_ls_heating(bpr, tsd, hoy)
+
+            tsd['Qcs_em_ls'][hoy] = q_em_ls_heating
 
     else:
         print('Error: Unknown HVAC system status')

@@ -7,6 +7,7 @@ from sandbox.ghapple import helpers as h
 from cea.demand import sensible_loads as sl
 from cea import globalvar
 from sandbox.ghapple import control as c
+from cea.utilities import physics as p
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -69,10 +70,23 @@ def calc_m_ve_leakage():
     return
 
 
-def calc_m_ve_leakage_simple():
+def calc_m_ve_leakage_simple(bpr, tsd, hoy, gv):
     # TODO: code
     # TODO: documentation
-    return
+
+
+
+    # 'flat rate' infiltration considered for all buildings
+
+    # get properties
+    n50 = bpr.architecture['n50']
+    area_f = bpr.rc_model['Af']
+
+    # estimation of infiltration air volume flow rate according to Eq. (3) in DIN 1946-6
+    n_inf = 0.5 * n50 * (gv.delta_p_dim/50) ** (2/3)  # [air changes per hour] m3/h.m2
+    infiltration = gv.hf * area_f * n_inf * 0.000277778  # m3/s
+
+    return infiltration * p.calc_rho_air(tsd['T_ext'][hoy])  # (kg/s)
 
 
 def calc_theta_ve_mech():
