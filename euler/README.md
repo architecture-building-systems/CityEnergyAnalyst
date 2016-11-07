@@ -169,3 +169,55 @@ The next step is to run the analysis on the results. This is done in a single pr
 > python cea\analysis\sensitivity\sensitivity_demand_analyze.py --samples-folder %TEMP%\samples
 ```
 
+### Running on Euler
+
+#### Instllation of SALib on Euler
+
+FIXME: move this to the dev docs
+
+I can't get SALib to install with `pip install SALib` because the version of setuptools is just too old.
+Instead do this:
+
+```
+[darthoma@euler06 ~]$ git clone https://github.com/SALib/SALib.git
+Initialized empty Git repository in /cluster/home/darthoma/SALib/.git/
+remote: Counting objects: 2769, done.
+Receiving objects: 100% (2769/2769), 2.56 MiB | 1.34 MiB/s, done.
+remote: Total 2769 (delta 0), reused 0 (delta 0), pack-reused 2769
+Resolving deltas: 100% (1748/1748), done.
+```
+
+And update your `$PYTHONPATH` to include that folder.
+
+- I cloned the reference case project to my home folder.
+- run the data helper script:
+
+```
+[darthoma@euler05 ~]$ python -m cea.demand.preprocessing.properties -s /cluster/home/darthoma/cea-reference-case/reference -case-open/baseline/
+[darthoma@euler05 ~]$ sh CEAforArcGIS/euler/create-samples.sh
+created 12 samples in /cluster/scratch/darthoma/samples_morris_1
+[darthoma@euler05 ~]$ sh CEAforArcGIS/euler/run-demand.sh
+Generic job.
+Job <31205729> is submitted to queue <normal.4h>.
+```
+
+This sets up the demand calculation to run in batch mode. You can use the command `bjobs` to view the list of jobs
+still open - read up in the [Euler wiki](https://scicomp.ethz.ch/wiki/Using_the_batch_system) on how that works.
+
+NOTE: the git lfs system is not installed on the cluster. I'm not going to bother installing it, instead, we copy
+the radiation files manually using `scp` as [described in the cluster documentation](https://scicomp.ethz.ch/wiki/FAQ#What_is_the_recommended_way_to_transfer_files_from.2Fto_the_cluster.3F):
+
+```
+[esri104] C:\reference-case-open\baseline\outputs\data\solar-radiation>scp radiation.csv darthoma@euler.ethz.ch:~/cea-reference-case/reference-case-open/baseline/outputs/data/solar-radiation
+[esri104] C:\reference-case-open\baseline\outputs\data\solar-radiation>scp properties_surfaces.csv darthoma@euler.ethz.ch:~/cea-reference-case/reference-case-open/baseline/outputs/data/solar-radiation
+```
+
+Then, run the demand script:
+
+
+
+#### compiling the `calc_tm.pyd` files...
+
+I'm leaving this for another day...
+
+
