@@ -20,7 +20,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma_sup_hs, ma_sup_0,Ta_sup_0, Ta_re_0, Cpa):
+def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma_sup_hs, ma_sup_0,Ta_sup_0, Ta_re_0, Cpa, gv):
 
     tasup = Ta_sup_hs + 273
     tare = Ta_re_hs + 273
@@ -41,7 +41,7 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
         tc = (tare - tasup + tasup * ec) / ec  # contact temperature of coil
 
         # minimum
-        LMRT = (tsh0 - trh0) / scipy.log((tsh0 - tc) / (trh0 - tc))
+        LMRT = abs((tsh0 - trh0) / scipy.log((tsh0 - tc) / (trh0 - tc)))
         k1 = 1 / mCw0
 
         def fh(x):
@@ -49,8 +49,14 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
             return Eq
 
         k2 = Qhsf * k1
-        result = sopt.newton(fh, trh0, maxiter=100, tol=0.01) - 273
-        trh = result.real
+        try:
+            result = sopt.newton(fh, trh0, maxiter=1000, tol=0.01).real - 273
+        except RuntimeError:
+            print (Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma_sup_hs, ma_sup_0,Ta_sup_0, Ta_re_0)
+            print gv.samples
+            result = sopt.bisect(fh, 0, 350, xtol=0.01, maxiter=500).real - 273
+
+        trh = result
         tsh = trh + k2
         mcphs = Qhsf / (tsh - trh)
     else:
@@ -58,7 +64,7 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
     return tsh, trh, mcphs # C,C, W/C
 
 
-def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma_sup_cs, ma_sup_0, Ta_sup_0, Ta_re_0,Cpa):
+def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma_sup_cs, ma_sup_0, Ta_sup_0, Ta_re_0,Cpa, gv):
     # Initialize temperatures
     tasup = Ta_sup_cs + 273
     tare = Ta_re_cs + 273
@@ -87,10 +93,13 @@ def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma
 
         k2 = -Qcsf / mCw0
         try:
-            result = sopt.newton(fh, trc0, maxiter=100, tol=0.01) - 273
+            result = sopt.newton(fh, trc0, maxiter=1000, tol=0.01) - 273
         except RuntimeError:
-            print('Newton optimization failed, using slower bisect algorithm...')
-            result = sopt.bisect(fh, 0, 350, xtol=0.01, maxiter=500) - 273
+            print('Newton optimization failed in cooling coil, using slower bisect algorithm...')
+            try:
+                result = sopt.bisect(fh, 0, 350, xtol=0.01, maxiter=500) - 273
+            except RuntimeError:
+                print ('Bisect optimization also failed in cooing coil, using sample:')
 
 
         #if Ta_sup_cs == Ta_re_cs:
