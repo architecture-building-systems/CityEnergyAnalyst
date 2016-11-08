@@ -1,6 +1,11 @@
-# Notes on running the sensitivity analysis on the Euler cluster
+# Running the sensitivity analysis on the Euler cluster
 
-*NOTE*: You need to be an ETH Zurich affiliated person and own a nethz-account for access to the Euler cluster.
+**NOTE**: You need to be an ETH Zurich affiliated person and own a nethz-account for access to the Euler cluster.
+
+This guide shows you how to run the sensitivity analysis for the demand simulations on the Euler cluster. 
+The Euler cluster is a high performance computing (HPC) cluster that uses the IBM Load Sharing Facility (LSF) 
+batch system. If your cluster is similar, maybe this guide can also work for you or provide some hints on how to
+get it to work...
 
 ## Installation
 
@@ -10,18 +15,21 @@ See the contributor's manual for information on installing the software on Euler
 
 These are the steps to be performed for running the demand sensitivity analysis:
 
-- create a set of "samples", i. e. a set of parameter configurations that are to be simulated
-- run a demand simulation for each sample and store the output to the samples folder (see below)
-  - copy reference case folder to simulation reference case folder
+- create a set of "samples" in the samples folder, i. e. a set of parameter configurations that are to be simulated
+- run a demand simulation for each sample and store the output to the samples folder
+  - copy the reference case folder to the simulation folder
   - apply sample parameters to the reference case
-- merge output data back to a single dataset
-- run analysis on the output data
+- merge the output data back to a single dataset
+- run analysis on the output data, generating the output file "analysis.xls" in the samples folder
 
 ## File locations
 
 The bash scripts make some assumptions on the installation of the CEA:
 
 - the CEAforArcGIS repository is cloned to `$HOME/CEAforArcGIS`
+- the default reference case is found in `$HOME/cea-reference-case/reference-case-open/baseline`
+  - note: since git-lfs is not installed on Euler, you will need to manually copy the radiation files to the cluster 
+    (`radiation.csv`, `properties_surfaces.csv`)
 
 
 The Euler cluster has [different filesystems](https://scicomp.ethz.ch/wiki/Data_management) for different purposes. 
@@ -30,22 +38,29 @@ Due to the way the simulation tasks are split up, the simulation uses the follow
 - the reference case (`--scenario-path`) is used as a copy of the original reference case - each 
   sample is created from this case as a copy. You can keep the reference case anywhere you like in your 
   home folder or personal scratch storage.
-  - home folder: `/cluster/home/username` (backed up, permanent)
-  - personal scratch storage: `/cluster/scratch/username` (not backed up, deleted after 15 days)
+  - home folder: `/cluster/home/username` (backed up, permanent, alias: `$HOME`)
+  - personal scratch storage: `/cluster/scratch/username` (not backed up, deleted after 15 days, alias: `$SCRATCH`)
   
 - the weather path: the path to the *.epw file used for simulation. This can be kept in the home folder.
+    - the default weather file used by the bash scripts is `$HOME/CEAforArcGIS/cea/databases/CH/Weather/Zurich.epw`
   
 - the samples folder contains the inputs (list of samples and the problem statement) and the final outputs of the
   analysis. This should be stored in your personal scratch folder (as the home folder has a limit to 100k files).
+    - the samples folder used by the bash scripts is `${SCRATCH}/samples_${METHOD}_${N}` (e.g. 
+      `/cluster/scratch/darthoma/samples_morris_100`)    
   
 - the simulation reference case is a copy of the original reference case with the variables from the sampling method
   applied to the input data. This folder is created by the demand simulation script and is stored in the local
   scratch folder of the node running the demand simulation.
   - local scratch storage: `/scratch` 
-  - (actually, we will use the `$TMPDIR` function to ensure simultaneous simulations on the same node don't step on 
+  - (actually, the bash scripts use the `$TMPDIR` variable to ensure simultaneous simulations on the same node don't step on 
     each other's feet)
     
 ## Running the scripts
+
+There are two ways to run the scripts. The first way is with the python modules as shown for the Windows case. On
+Euler, the scripts in the `euler` folder of the `CEAforArcGIS` repository contains a set of handy bash scripts that
+simplify running the scripts.
 
 ### On Windows
 
@@ -151,7 +166,7 @@ done - time elapsed: 5.32 seconds
 8,0.0,0.0,0.0,0.0
 ```
 
-The above steps run morris sampling with N=1, grid_jump=2 and num_levels=4, simulates
+The above steps run morris sampling (the default) with N=1, grid_jump=2 (default) and num_levels=4 (default), simulates
 all the samples and stores the results back into the sampling directory.
 
 On the Euler cluster, we can set N to a much higher number, say, 1000 and we would then
@@ -160,7 +175,8 @@ parameter by `--number-of-simulations` each time. We need to choose `--number-of
 to fit the simulation count in the time slot of the node as the Euler cluster will kill
 any process that runs longer than a fixed amount of time. Keeping it as large as possible
 reduces the overhead of waiting for a node to pick up the job, so we will need to
-experiment a bit here...
+experiment a bit here... The bash scripts for the euler cluster do this automatically and have a batch size of 100,
+which works well for the `reference-cas-open`.
 
 The next step is to run the analysis on the results. This is done in a single process.
 
@@ -171,31 +187,42 @@ The next step is to run the analysis on the results. This is done in a single pr
 
 ### Running on Euler
 
-#### Instllation of SALib on Euler
-
-FIXME: move this to the dev docs
-
-I can't get SALib to install with `pip install SALib` because the version of setuptools is just too old.
-Instead do this:
-
-```
-[darthoma@euler06 ~]$ git clone https://github.com/SALib/SALib.git
-Initialized empty Git repository in /cluster/home/darthoma/SALib/.git/
-remote: Counting objects: 2769, done.
-Receiving objects: 100% (2769/2769), 2.56 MiB | 1.34 MiB/s, done.
-remote: Total 2769 (delta 0), reused 0 (delta 0), pack-reused 2769
-Resolving deltas: 100% (1748/1748), done.
-```
-
-And update your `$PYTHONPATH` to include that folder.
-
 - I cloned the reference case project to my home folder.
-- run the data helper script:
+- I copied the `radiation.csv` and `properties_surfaces.csv` files to the `reference-case-open` 
+  [using scp](https://scicomp.ethz.ch/wiki/Data_management#File_transfer).
+
+```
+# on windows
+[esri104] C:\reference-case-open\baseline\outputs\data\solar-radiation>scp radiation.csv darthoma@euler.ethz.ch:~/cea-reference-case/reference-case-open/baseline/outputs/data/solar-radiation
+[esri104] C:\reference-case-open\baseline\outputs\data\solar-radiation>scp properties_surfaces.csv darthoma@euler.ethz.ch:~/cea-reference-case/reference-case-open/baseline/outputs/data/solar-radiation
+```
+
+
+#### Run the data helper script:
 
 ```
 [darthoma@euler05 ~]$ python -m cea.demand.preprocessing.properties -s /cluster/home/darthoma/cea-reference-case/reference -case-open/baseline/
+```
+
+#### Create the samples
+
+To create the samples, you need to set up the parameters of the analysis first. These are used by the three scripts 
+`create-samples.sh`, `run-demand.sh` and `analyze-simulations.sh` bash scripts found in the euler folder 
+(`$HOME/CEAforArcGIS/euler`):
+
+```
+[darthoma@euler05 ~]$ export N=10
+[darthoma@euler05 ~]$ export METHOD=morris
 [darthoma@euler05 ~]$ sh CEAforArcGIS/euler/create-samples.sh
 created 12 samples in /cluster/scratch/darthoma/samples_morris_1
+```
+
+Check the scripts for a list of valid variables to export. They refer to the input parameters to the python scripts,
+but are uppercase and with underscores.
+
+#### Run the simulations
+
+```
 [darthoma@euler05 ~]$ sh CEAforArcGIS/euler/run-demand.sh
 Generic job.
 Job <31205729> is submitted to queue <normal.4h>.
@@ -203,34 +230,30 @@ Job <31205729> is submitted to queue <normal.4h>.
 
 This sets up the demand calculation to run in batch mode. You can use the command `bjobs` to view the list of jobs
 still open - read up in the [Euler wiki](https://scicomp.ethz.ch/wiki/Using_the_batch_system) on how that works.
+The variable `NUM_SIMULATIONS` (default: 100) determines how many samples are simulated per job.
 
-NOTE: the git lfs system is not installed on the cluster. I'm not going to bother installing it, instead, we copy
-the radiation files manually using `scp` as [described in the cluster documentation](https://scicomp.ethz.ch/wiki/FAQ#What_is_the_recommended_way_to_transfer_files_from.2Fto_the_cluster.3F):
-
-```
-[esri104] C:\reference-case-open\baseline\outputs\data\solar-radiation>scp radiation.csv darthoma@euler.ethz.ch:~/cea-reference-case/reference-case-open/baseline/outputs/data/solar-radiation
-[esri104] C:\reference-case-open\baseline\outputs\data\solar-radiation>scp properties_surfaces.csv darthoma@euler.ethz.ch:~/cea-reference-case/reference-case-open/baseline/outputs/data/solar-radiation
-```
-
-Then, run the demand script:
-
-Running the whole thing using the euler scripts:
-
-```
-export N=100
-export METHOD=sobol
-sh euler/create-samples.sh
-sh euler/run-demand.sh
-# wait for all the jobs to complete
-sh euler/analyze-simulations.sh
-```
-
-
-You can use this command to see how many simulations a job batch has done (`31300468` is the jobid, get that from `bjobs` or `bbjobs`):
+Wait for all the jobs to complete by checking `bjobs` until there are no more jobs in the queue. You can use this command to see how many simulations a job batch has done (`31300468` is the jobid, get that from `bjobs` or `bbjobs`):
 
 ```
 bpeek 31300468 | grep elapsed | wc
 ```
+
+#### Analyze the output
+
+Assuming you still have the same variables exported as you had when you ran the samples script:
+
+```
+[darthoma@euler05 ~]$ sh euler/analyze-simulations.sh
+```
+
+This will produce the file `analysis.xls` in the samples folder. Use `scp` to copy that back to your windows machine:
+
+```
+# on windows
+[esri104] C:\Users\darthoma\Dropbox\tmp>scp darthoma@euler.ethz.ch:/cluster/scratch/darthoma/samples_sobol_100/analysis.xls analysis_sobol_100.xls
+```
+
+(Replace with your actual paths and username)
 
 
 #### compiling the `calc_tm.pyd` files...
