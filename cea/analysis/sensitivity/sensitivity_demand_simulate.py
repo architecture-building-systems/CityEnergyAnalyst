@@ -85,5 +85,6 @@ if __name__ == '__main__':
         if not locator:
             # past end of simulations, stop simulating
             break
+        print("Running demand simulation for sample %i" % i)
         result = simulate_demand_sample(locator, args.weather, args.output_parameters)
         result.to_csv(os.path.join(args.samples_folder, 'result.%i.csv' % i))
