@@ -83,7 +83,7 @@ if __name__ == '__main__':
     for i in range(args.sample_index, args.sample_index + args.number_of_simulations):
         locator = apply_sample_parameters(i, args.samples_folder, args.scenario, args.simulation_folder)
         if not locator:
-            # past end of simulations
+            # past end of simulations, stop simulating
             break
         result = simulate_demand_sample(locator, args.weather, args.output_parameters)
         result.to_csv(os.path.join(args.samples_folder, 'result.%i.csv' % i))
