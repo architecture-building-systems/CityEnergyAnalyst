@@ -214,6 +214,23 @@ the radiation files manually using `scp` as [described in the cluster documentat
 
 Then, run the demand script:
 
+Running the whole thing using the euler scripts:
+
+```
+export N=100
+export METHOD=sobol
+sh euler/create-samples.sh
+sh euler/run-demand.sh
+# wait for all the jobs to complete
+sh euler/analyze-simulations.sh
+```
+
+
+You can use this command to see how many simulations a job batch has done (`31300468` is the jobid, get that from `bjobs` or `bbjobs`):
+
+```
+bpeek 31300468 | grep elapsed | wc
+```
 
 
 #### compiling the `calc_tm.pyd` files...
