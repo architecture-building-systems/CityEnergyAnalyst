@@ -33,7 +33,11 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
 
     with open(os.path.join(args.samples_folder, 'problem.pickle'), 'r') as f:
         problem = pickle.load(f)
-    sample = np.load(os.path.join(samples_path, 'samples.npy'))[sample_index]
+    samples = np.load(os.path.join(samples_path, 'samples.npy'))
+    try:
+        sample = samples[sample_index]
+    except IndexError:
+        return None
 
     # FIXME: add other variable groups here
     prop_thermal = Gdf.from_file(locator.get_building_thermal())
@@ -78,5 +82,8 @@ if __name__ == '__main__':
 
     for i in range(args.sample_index, args.sample_index + args.number_of_simulations):
         locator = apply_sample_parameters(i, args.samples_folder, args.scenario, args.simulation_folder)
+        if not locator:
+            # past end of simulations
+            break
         result = simulate_demand_sample(locator, args.weather, args.output_parameters)
         result.to_csv(os.path.join(args.samples_folder, 'result.%i.csv' % i))
