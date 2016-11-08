@@ -12,6 +12,7 @@ VARIABLE_GROUPS=${VARIABLE_GROUPS:-THERMAL}
 mkdir -p $SAMPLES_FOLDER
 
 # create the samples
+echo "Creating samples $METHOD $N"
 python -m cea.analysis.sensitivity.sensitivity_demand_samples --samples-folder $SAMPLES_FOLDER -n $N \
           --method $METHOD --calc-second-order $CALC_SECOND_ORDER --grid-jump $GRID_JUMP --num-levels $NUM_LEVELS \
           --variable-groups $VARIABLE_GROUPS
