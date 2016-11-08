@@ -12,7 +12,6 @@ mkdir -p $SAMPLES_FOLDER
 # submit the simulation jobs (batched to NUM_SIMULATIONS per job)
 SAMPLES_COUNT=$(python -m cea.analysis.sensitivity.sensitivity_demand_count -S $SAMPLES_FOLDER)
 for ((i=0;i<=SAMPLES_COUNT;i+=NUM_SIMULATIONS)) do
-    echo $i
-    bsub python -m cea.analysis.sensitivity.sensitivity_demand_simulate -i $i -n $NUM_SIMULATIONS --scenario $SCENARIO \
-         --samples-folder $SAMPLES_FOLDER --simulation-folder \$TMPDIR --weather $WEATHER
+    echo "Submitting batch starting at sample $i with size $NUM_SIMULATIONS"
+    bsub sh $HOME/CEAforArcGIS/euler/run-demand-bsub.sh
 done
