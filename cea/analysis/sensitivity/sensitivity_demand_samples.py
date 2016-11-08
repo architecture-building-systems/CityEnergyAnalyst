@@ -42,10 +42,12 @@ def create_demand_samples(method='morris', num_samples=1000, variable_groups=('T
 
 # create samples (combinations of variables)
 def sampler(method, problem, num_samples, sampler_parameters):
-    if method is 'sobol':
+    if method == 'sobol':
         return sampler_sobol(problem, N=num_samples, **sampler_parameters)
-    else:
+    elif method == 'morris':
         return sampler_morris(problem, N=num_samples, **sampler_parameters)
+    else:
+        raise ValueError("Sampler method unknown: %s" % method)
 
 
 if __name__ == '__main__':
