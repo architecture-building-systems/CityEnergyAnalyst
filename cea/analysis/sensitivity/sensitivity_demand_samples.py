@@ -57,11 +57,11 @@ if __name__ == '__main__':
                         default='morris')
     parser.add_argument('-n', '--num-samples', help='number of samples (generally 1000 or until it converges',
                         default=1000, type=int)
-    parser.add_argument('--calc-second-order', help='(sobol) calc_second_order parameter',
+    parser.add_argument('--calc-second-order', help='(sobol) calc_second_order parameter', type=bool,
                         default=False)
-    parser.add_argument('--grid-jump', help='(morris) grid_jump parameter',
+    parser.add_argument('--grid-jump', help='(morris) grid_jump parameter', type=int,
                         default=2)
-    parser.add_argument('--num-levels', help='(morris) num_levels parameter',
+    parser.add_argument('--num-levels', help='(morris) num_levels parameter', type=int,
                         default=4)
     parser.add_argument('-S', '--samples-folder', default='.',
                         help='folder to place the output files (samples.npy, problem.pickle) in')

@@ -2,10 +2,16 @@
 
 # parameters
 N=${N:-1}
-SAMPLES_FOLDER=$SCRATCH/samples_morris_$N
-SIMULATION_FOLDER=$TMPDIR
+METHOD=${METHOD:-morris}
+SAMPLES_FOLDER=${SAMPLES_FOLDER:-${SCRATCH}/samples_${METHOD}_${N}}
+CALC_SECOND_ORDER=${CALC_SECOND_ORDER:-0}
+GRID_JUMP=${GRID_JUMP:-2}
+NUM_LEVELS=${NUM_LEVELS:-4}
+VARIABLE_GROUPS=${VARIABLE_GROUPS:-THERMAL}
 
-mkdir $SAMPLES_FOLDER
+mkdir -p $SAMPLES_FOLDER
 
 # create the samples
-python -m cea.analysis.sensitivity.sensitivity_demand_samples --samples-folder $SAMPLES_FOLDER -n $N 
+python -m cea.analysis.sensitivity.sensitivity_demand_samples --samples-folder $SAMPLES_FOLDER -n $N \
+          --method $METHOD --calc-second-order $CALC_SECOND_ORDER --grid-jump $GRID_JUMP --num-levels $NUM_LEVELS \
+          --variable-groups $VARIABLE_GROUPS
