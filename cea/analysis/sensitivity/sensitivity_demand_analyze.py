@@ -73,11 +73,11 @@ if __name__ == '__main__':
                         help='folder to place the output files (samples.npy, problem.pickle) in')
     parser.add_argument('-m', '--method', help='Method to use valid values: "morris" (default), "sobol"',
                         default='morris')
-    parser.add_argument('--calc-second-order', help='(sobol) calc_second_order parameter',
+    parser.add_argument('--calc-second-order', help='(sobol) calc_second_order parameter', type=bool,
                         default=False)
-    parser.add_argument('--grid-jump', help='(morris) grid_jump parameter',
+    parser.add_argument('--grid-jump', help='(morris) grid_jump parameter', type=int,
                         default=2)
-    parser.add_argument('--num-levels', help='(morris) num_levels parameter',
+    parser.add_argument('--num-levels', help='(morris) num_levels parameter', type=int,
                         default=4)
     args = parser.parse_args()
 
