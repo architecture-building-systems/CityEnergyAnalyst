@@ -15,6 +15,12 @@ SAMPLES_COUNT=$(python -m cea.analysis.sensitivity.sensitivity_demand_count -S $
 echo "Submitting LSF jobs for $SAMPLES_COUNT simulations"
 
 for ((i=0;i<=SAMPLES_COUNT;i+=NUM_SIMULATIONS)) do
+    export i
+    export NUM_SIMULATIONS
+    export N
+    export SCENARIO
+    export SAMPLES_FOLDER
+    export WEATHER
     echo "Submitting batch starting at sample $i with size $NUM_SIMULATIONS"
     bsub sh $HOME/CEAforArcGIS/euler/run-demand-bsub.sh
 done
