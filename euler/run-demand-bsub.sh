@@ -3,5 +3,5 @@
 
 echo "Simulating batch $i with size $NUM_SIMULATIONS"
 
-bsub python -m cea.analysis.sensitivity.sensitivity_demand_simulate -i $i -n $NUM_SIMULATIONS --scenario $SCENARIO \
-         --samples-folder $SAMPLES_FOLDER --simulation-folder $TMPDIR --weather $WEATHER
+python -m cea.analysis.sensitivity.sensitivity_demand_simulate -i $i -n $NUM_SIMULATIONS --scenario $SCENARIO \
+       --samples-folder $SAMPLES_FOLDER --simulation-folder $TMPDIR --weather $WEATHER
