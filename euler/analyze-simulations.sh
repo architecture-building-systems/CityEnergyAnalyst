@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 # parameters
-N=1
+N=${N:-1}
 SAMPLES_FOLDER=$SCRATCH/samples_morris_$N
 SIMULATION_FOLDER=$TMPDIR
 
