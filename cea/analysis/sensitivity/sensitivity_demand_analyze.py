@@ -33,14 +33,14 @@ def analyze_sensitivity(samples_path, method, parameters):
         results_3 = []
         for building in range(buildings_num):
             simulations_parameter = np.array([x.loc[building, parameter] for x in simulations])
-            if method is 'sobol':
+            if method == 'sobol':
                 VAR1, VAR2, VAR3 = 'S1', 'ST', 'ST_conf'
                 sobol_result = sobol.analyze(problem, simulations_parameter,
                                              calc_second_order=parameters['calc_second_order'])
                 results_1.append(sobol_result['S1'])
                 results_2.append(sobol_result['ST'])
                 results_3.append(sobol_result['ST_conf'])
-            else:
+            elif method == 'morris':
                 VAR1, VAR2, VAR3 = 'mu_star', 'sigma', 'mu_star_conf'
                 morris_result = morris.analyze(problem, samples, simulations_parameter,
                                                grid_jump=parameters['grid_jump'],
@@ -48,6 +48,8 @@ def analyze_sensitivity(samples_path, method, parameters):
                 results_1.append(morris_result['mu_star'])
                 results_2.append(morris_result['sigma'])
                 results_3.append(morris_result['mu_star_conf'])
+            else:
+                raise ValueError('Invalid sampler method: %s' %s)
         pd.DataFrame(results_1, columns=problem['names']).to_excel(writer, parameter + VAR1)
         pd.DataFrame(results_2, columns=problem['names']).to_excel(writer, parameter + VAR2)
         pd.DataFrame(results_3, columns=problem['names']).to_excel(writer, parameter + VAR3)
