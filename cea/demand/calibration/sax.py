@@ -8,9 +8,17 @@ Adapted from work og N. Hoffman published under MIT license.
 """
 from __future__ import division
 
-import numpy as np
 import math
 import scipy.stats as stats
+
+import numpy as np
+from numpy import random
+
+from deap import base, creator, tools
+from sklearn.metrics import silhouette_score
+from sklearn import metrics
+
+import matplotlib.pyplot as plt
 
 __author__ = "Nathan Hoffman"
 __copyright__ = "Copyright (c) 2013 Nathan Hoffman"
@@ -128,7 +136,7 @@ class SAX(object):
         and will have identical values.
         """
 
-        number_rep = range(0,self.alphabetSize)
+        number_rep = range(0,int(self.alphabetSize))
         letters = [chr(x + self.aOffset) for x in number_rep]
         self.compareDict = {}
         for i in range(0, len(letters)):
@@ -170,3 +178,145 @@ class SAX(object):
 
     def set_window_size(self, windowSize):
         self.windowSize = windowSize
+
+def SAX_opt(data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB):
+
+    """
+    A multi-objective problem.
+
+    """
+
+    # set-up deap library for optimization with 1 objective to minimize and 2 objectives to be maximized
+    creator.create("Fitness", base.Fitness, weights=(-1.0, 1.0))  # maximize shilluette and calinski
+    creator.create("Individual", list, fitness=creator.Fitness)
+
+    # set-up problem
+    NDIM = 2
+
+    def discrete_uniform(low, up, size=None):
+        try:
+            return [random.randint(a, b) for a, b in zip(low, up)]
+        except TypeError:
+            return [random.randint(a, b) for a, b in zip([low] * size, [up] * size)]
+
+    toolbox = base.Toolbox()
+    toolbox.register("attr_float", discrete_uniform, BOUND_LOW, BOUND_UP, NDIM)
+    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+    def evaluation(ind):
+        print ind
+        s = SAX(ind[0], ind[1])
+        sax = [s.to_letter_rep(array)[0] for array in data]
+        accurracy = calc_entropy(sax)
+        complexity = calc_complexity(sax)
+        compression = calc_num_cutpoints(ind[0], time_series_len)
+        f1 = 0.9009*accurracy+0.09*complexity+0.0009*compression
+        f2 = silhouette_score(data, sax)
+        #f3 = metrics.calinski_harabaz_score(data, sax)
+        print accurracy, complexity, compression
+        return f1, f2#, f3
+
+    toolbox.register("evaluate", evaluation)
+    toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
+    toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM)
+    toolbox.register("select", tools.selNSGA2)
+
+    # run optimization
+    pop, stats = main_opt(toolbox, NGEN, MU, CXPB)
+
+    # plot pareto curve
+    optimal_front = np.array([list(ind.fitness.values) for ind in pop])
+    n = [str(ind) for ind in pop]
+    print len(n)
+    print n, optimal_front
+    fig, ax = plt.subplots()
+    ax.scatter(optimal_front[:, 0], optimal_front[:, 1], c="r")
+    for i, txt in enumerate(n):
+        ax.annotate(txt, (optimal_front[i][0], optimal_front[i][1]))
+    plt.axis("tight")
+    plt.show()
+
+    return
+
+
+def main_opt(toolbox, NGEN = 100, MU = 100, CXPB = 0.9, seed=None):
+
+    random.seed(seed)
+    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register("avg", np.mean, axis=0)
+    stats.register("std", np.std, axis=0)
+    stats.register("min", np.min, axis=0)
+    stats.register("max", np.max, axis=0)
+
+    logbook = tools.Logbook()
+    logbook.header = "gen", "evals", "std", "min", "avg", "max"
+
+    pop = toolbox.population(n=MU)
+
+    # Evaluate the individuals with an invalid fitness
+    invalid_ind = [ind for ind in pop if not ind.fitness.valid]
+    fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+    for ind, fit in zip(invalid_ind, fitnesses):
+        ind.fitness.values = fit
+
+    # This is just to assign the crowding distance to the individuals
+    # no actual selection is done
+    pop = toolbox.select(pop, len(pop))
+
+    record = stats.compile(pop)
+    logbook.record(gen=0, evals=len(invalid_ind), **record)
+    print(logbook.stream)
+
+    # Begin the generational process
+    for gen in range(1, NGEN):
+        # Vary the population
+        offspring = tools.selTournamentDCD(pop, len(pop))
+        offspring = [toolbox.clone(ind) for ind in offspring]
+
+        for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
+            if random.random() <= CXPB:
+                toolbox.mate(ind1, ind2)
+
+            toolbox.mutate(ind1)
+            toolbox.mutate(ind2)
+            del ind1.fitness.values, ind2.fitness.values
+
+        # Evaluate the individuals with an invalid fitness
+        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+        fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+        for ind, fit in zip(invalid_ind, fitnesses):
+            ind.fitness.values = fit
+
+        # Select the next generation population
+        pop = toolbox.select(pop + offspring, MU)
+        record = stats.compile(pop)
+        logbook.record(gen=gen, evals=len(invalid_ind), **record)
+        print(logbook.stream)
+
+    return pop, stats
+
+def calc_complexity(clusters_names):
+    single_words_length = len(set(clusters_names))
+    m = len(clusters_names) # number of observations
+    C = 1 # number of classes is 1
+    result = (single_words_length - C)/ (m+ C)
+    return result
+
+def calc_num_cutpoints(wordSize, time_series_len=24):
+    result = wordSize/(2*time_series_len) # 24 hours
+    return result
+
+def calc_entropy(clusters_names):
+    single_words = list(set(clusters_names))
+    n_clusters = len(clusters_names)
+    entropy = 0
+    for single_word in single_words:
+        pi = clusters_names.count(single_word)/n_clusters
+        entropy += -pi*math.log(pi, 2)
+        entropy_values = 0
+        # for letter in cluster:
+        #     pi = cluster.count(letter)/n_values
+        #     entropy_values += - pi* math.log(pi, 2)
+        # gain += entropy_class - entropy_values
+    return entropy
