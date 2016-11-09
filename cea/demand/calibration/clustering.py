@@ -51,7 +51,7 @@ def clustering(locator, gv, wordSize, alphabetSize, building_name, building_load
 
     # set optimization problem for wordzise and alpha number
     if optimize:
-        SAX_opt(arrays, time_series_len=24, BOUND_LOW = 3, BOUND_UP = 12, NGEN = 4, MU = 120, CXPB = 0.9)
+        SAX_opt(arrays, time_series_len=24, BOUND_LOW = 3, BOUND_UP = 24, NGEN = 50, MU = 400, CXPB = 0.9)
     else:
         s = SAX(wordSize, alphabetSize)
         sax = [s.to_letter_rep(array)[0] for array in arrays]
