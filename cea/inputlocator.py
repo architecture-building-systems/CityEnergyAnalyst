@@ -204,7 +204,7 @@ class InputLocator(object):
     ## CALIBRATION
 
     def get_calibration_folder(self):
-        """scenario/outputs/data/emissions"""
+        """scenario/outputs/data/calibration"""
         calibration_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'calibration')
         if not os.path.exists(calibration_folder):
             os.makedirs(calibration_folder)
@@ -221,6 +221,16 @@ class InputLocator(object):
         """scenario/outputs/data/demand/{building_name}.csv"""
         demand_measured_file = self.get_demand_measured_folder()
         return os.path.join(demand_measured_file, '%s.csv' % building_name)
+
+    def get_clustering_calibration_file(self, sax_name):
+        """scenario/outputs/data/demand/{sax_name}.csv"""
+        file = self.get_calibration_folder()
+        return os.path.join(file, 'clustering', '%s.csv' % sax_name)
+
+    def get_clustering_calibration_sax_names_file(self):
+        """scenario/outputs/data/demand/{sax_name}.csv"""
+        file = self.get_calibration_folder()
+        return os.path.join(file, 'clustering', 'sax_names.csv')
 
     ##EMISSIONS
     def get_lca_emissions_results_folder(self):
