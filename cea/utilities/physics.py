@@ -139,11 +139,11 @@ def calc_rho_air(temp_air):
     # TODO import from global variables
     # TODO implement dynamic air density in other functions
     rho_air_ref = 1.23  # (kg/m3)
-    temp_air_ref = 283  # (K)
-    temp_air += 273  # conversion to (K)
+    temp_air_ref_K = 283  # (K)
+    temp_air_K = temp_air + 273  # conversion to (K)
 
     # Equation (1) in [1]
-    rho_air = temp_air_ref / temp_air * rho_air_ref
+    rho_air = temp_air_ref_K / temp_air_K * rho_air_ref
 
     return rho_air
 
