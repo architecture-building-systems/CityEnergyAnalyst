@@ -4,12 +4,6 @@
 Clustering
 This script clusters typical days for a building
 using SAX method for timeseries.
-Discretization of Time Series Dataset
-with a Genetic Search
-Daniel-Alejandro Garc ia lopezand Hector-Gabriel Acosta-Mesa
-Application of time series discretization using evolutionary programming for classification of precancerous cervical lesions
-Héctor-Gabriel Acosta-Mesa, Fernando Rechy-Ramírez, Efrén Mezura-Montes, Nicandro Cruz-Ramírez, Rodolfo Hernández JiménezJournal of Biomedical Informatics
-2014
 
 ===========================
 J. Fonseca  script development          27.10.16
@@ -19,9 +13,8 @@ J. Fonseca  script development          27.10.16
 from __future__ import division
 
 from cea.demand.calibration.sax import SAX
-from cea.demand.calibration.sax import SAX_opt
+from cea.demand.calibration.sax_optimization import SAX_opt
 import pandas as pd
-import math
 
 import time
 import matplotlib.pyplot as plt
@@ -37,6 +30,21 @@ __status__ = "Production"
 
 
 def clustering(locator, gv, wordSize, alphabetSize, building_name, building_load, optimize, plot_clusters):
+    """
+    Function to cluster different days of the year following the SAX method (see class for more info)
+    :param locator: locator class
+    :param gv: global variables class
+    :param wordSize: estimated wordsize, after optimization
+    :param alphabetSize: estimated alphabet size. after optimization
+    :param building_name: building name to make the cluster of its time series
+    :param building_load: name of time_series to use form the building demand i.e., Qhsf_kWh, Qcsf_kWh, Qwwf_kWh etc.
+    :param optimize: Boolan: true to run the optimization. you will first run the optimization,
+    choose the wordsize and alphabetsize. from there, run the program with the optimize = flase
+    :param plot_clusters: when optimize if false, decide weather you would like to see the data in each defined cluster
+    :return: timeseries per cluster  in locator.get_clustering_calibration_file(cluster_name). .csv file
+        dataframe with ID of every cluster per day of the year in locator.get_clustering_calibration_sax_names_file()
+
+    """
     t0 = time.clock()
 
     # import data
@@ -80,7 +88,6 @@ def clustering(locator, gv, wordSize, alphabetSize, building_name, building_load
     gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
 def run_as_script():
-    """"""
     import cea.globalvar as gv
     import cea.inputlocator as inputlocator
     gv = gv.GlobalVariables()
