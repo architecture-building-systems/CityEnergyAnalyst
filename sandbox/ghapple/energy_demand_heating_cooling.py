@@ -17,6 +17,7 @@ from sandbox.ghapple import rc_model as rc
 from sandbox.ghapple import ventilation_xx as v
 from sandbox.ghapple import space_emission_systems as ses
 from cea.demand import sensible_loads
+from cea.demand import airconditioning_model as ac
 
 
 __author__ = "Gabriel Happle"
@@ -183,6 +184,13 @@ def procedure_1(bpr, tsd, hoy, gv):
 
         elif control.is_cooling_active(hoy, bpr) and control.cooling_system_is_ac(bpr):
 
+            # calculate cooling load without mechanical ventilation
+            tsd['m_ve_mech'][hoy] = 0
+            # recalculate rc-model properties for ventilation
+            tsd['theta_ve_mech'][hoy] = 16
+            rc.calc_h_ve_adj(tsd, hoy, gv)
+
+
             # cooling with AC
             # calculate load and enter AC calculation
             # --> r_c_model_function_3(...)
@@ -194,7 +202,12 @@ def procedure_1(bpr, tsd, hoy, gv):
             theta_op_ac, \
             phi_hc_nd_ac = rc.calc_phi_hc_ac_cooling(bpr, tsd, hoy)
 
+            tsd['Tm'][hoy] = theta_m_t_ac
+            tsd['Ta'][hoy] = theta_air_ac
+            tsd['Top'][hoy] = theta_op_ac
+            tsd['Qcs_sen'][hoy] = phi_hc_nd_ac  # no heating energy demand (system off)
 
+            ac.calc_hvac_cooling(bpr, tsd, hoy, gv)
 
             print('HVAC')
 

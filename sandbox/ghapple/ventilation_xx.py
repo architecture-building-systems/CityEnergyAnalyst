@@ -32,13 +32,13 @@ def calc_m_ve_mech(bpr, tsd, hoy):
 
     if c.is_mech_ventilation_active() and not c.is_night_flushing_active(bpr, tsd, hoy):
 
-        m_ve_mech = max(tsd['m_ve_required'][hoy] - tsd['m_ve_inf_simple'][hoy], 0)  # mechanical ventilation fulfills requirement (similar to CO2 sensor)
+        m_ve_mech = tsd['m_ve_required'][hoy] + tsd['m_ve_inf_simple'][hoy]  # mechanical ventilation fulfills requirement + replaces leakages (similar to CO2 sensor)
         # TODO: check mech ventilation rule - maybe: required + infiltration
 
     elif c.is_mech_ventilation_active() and c.is_night_flushing_active(bpr, tsd, hoy):
 
         # night flushing according to strategy
-        m_ve_mech = (tsd['m_ve_required'][hoy] - tsd['m_ve_inf_simple'][hoy]) * 1.3  # TODO: some night flushing rule
+        m_ve_mech = (tsd['m_ve_required'][hoy] + tsd['m_ve_inf_simple'][hoy]) * 1.3  # TODO: some night flushing rule
 
     elif not c.is_mech_ventilation_active():
 

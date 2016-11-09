@@ -50,12 +50,19 @@ def calc_h_ve_adj(tsd, hoy, gv):
     if abs(temp_sup - temp_ext) == 0:
         b_mech = 1
 
+    elif (temp_zone_set - temp_ext) == 0:
+        b_mech = 1 # prevent division by zero for room temperature = room temperature (heat recovery has no effect)
+
     else:
         eta_hru = (temp_sup - temp_ext) / (temp_zone_set - temp_ext)  # Eq. (28) in ISO 13970
         frac_hru = 1
         b_mech = (1 - frac_hru * eta_hru)  # Eq. (27) in ISO 13970
 
     tsd['h_ve_adj'][hoy] = (b_mech * q_m_mech + q_m_nat) * c_p_air * 1000  # (W/K), Eq. (21) in ISO 13970
+
+    if np.isnan(tsd['h_ve_adj'][hoy]):
+        tsd['h_ve_adj'][hoy]
+
     return
 
 def calc_theta_m_t(theta_m_prev, c_m, h_tr_3, h_tr_em, phi_m_tot):
@@ -192,6 +199,9 @@ def calc_temperatures_crank_nicholson( phi_hc_nd, bpr, tsd, hoy ):
 
     theta_op = calc_theta_op(theta_air, theta_s)
 
+    if np.isnan(theta_m_t):
+        theta_m_t
+
     return theta_m_t, theta_air, theta_op
 
 
@@ -309,7 +319,7 @@ def calc_phi_hc_ac_cooling(bpr, tsd, hoy):
     theta_air_0 = temp_rc_0[1]
 
     # Step 2:
-    theta_int_set = tsd['ta_cs_set']
+    theta_int_set = tsd['ta_cs_set'][hoy]
     af = bpr.rc_model['Af'] # TODO: get A_f, check wether Aef??
 
     theta_air_set = theta_int_set

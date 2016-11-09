@@ -8,7 +8,8 @@ import numpy as np
 from cea.demand import thermal_loads as tl
 from cea.technologies import controllers
 from cea.demand import sensible_loads
-from cea.demand import ventilation_model
+from cea.demand import electrical_loads
+from cea.demand import hotwater_loads
 from cea.demand import refrigeration_loads
 from cea.demand import datacenter_loads
 from cea.utilities import helpers
@@ -121,7 +122,7 @@ def testing_gabriel(locator, weather_path, gv):
              'Tcsf_sup': np.empty(8760) * np.nan, 'Tcsf_re': np.empty(8760) * np.nan,
              'Tcdataf_re': np.empty(8760) * np.nan,
              'Tcdataf_sup': np.empty(8760) * np.nan, 'Tcref_re': np.empty(8760) * np.nan,
-             'Tcref_sup': np.empty(8760) * np.nan, 'theta_ve_mech': np.empty(8760) * np.nan, 'h_ve_adj': np.empty(8760) * np.nan}  # TODO: initialize refrigeration loads, etc.
+             'Tcref_sup': np.empty(8760) * np.nan, 'theta_ve_mech': np.empty(8760) * np.nan, 'h_ve_adj': np.empty(8760) * np.nan, 'Qcs_lat_HVAC':  np.empty(8760) * np.nan, 'Qcs_sen_HVAC':  np.empty(8760) * np.nan}  # TODO: initialize refrigeration loads, etc.
 
     # get schedules
     list_uses = usage_schedules['list_uses']
@@ -191,6 +192,94 @@ def testing_gabriel(locator, weather_path, gv):
             # --> moved to inside of procedure
 
             edhc.procedure_1(bpr, tsd, hoy, gv)
+
+        # Calc of Qhs_dis_ls/Qcs_dis_ls - losses due to distribution of heating/cooling coils
+        Qhs_d_ls, Qcs_d_ls = np.vectorize(sensible_loads.calc_Qhs_Qcs_dis_ls)(tsd['Ta'], tsd['T_ext'],
+                                                                                  tsd['Qhs_sen_incl_em_ls'],
+                                                                                  tsd['Qcs_sen_incl_em_ls'],
+                                                                                  bpr.building_systems['Ths_sup_0'],
+                                                                                  bpr.building_systems['Ths_re_0'],
+                                                                                  bpr.building_systems['Tcs_sup_0'],
+                                                                                  bpr.building_systems['Tcs_re_0'],
+                                                                                  np.nanmax(tsd['Qhs_sen_incl_em_ls']),
+                                                                                  np.nanmin(tsd['Qcs_sen_incl_em_ls']),
+                                                                                  gv.D, bpr.building_systems['Y'][0],
+                                                                                  bpr.hvac['type_hs'],
+                                                                                  bpr.hvac['type_cs'], gv.Bf,
+                                                                                  bpr.building_systems['Lv'])
+
+        # Calc requirements of generation systems (both cooling and heating do not have a storage):
+        #tsd['Qhs'] = tsd['Qhs_sen_incl_em_ls'] - tsd['Qhs_em_ls']
+        tsd['Qhsf'] = tsd['Qhs'] + tsd['Qhs_em_ls'] + Qhs_d_ls  # no latent is considered because it is already added a
+        # s electricity from the adiabatic system.
+        tsd['Qcs'] = (tsd['Qcs_sen_incl_em_ls'] - tsd['Qcs_em_ls']) + tsd['Qcsf_lat']
+        tsd['Qcsf'] = tsd['Qcs'] + tsd['Qcs_em_ls'] + Qcs_d_ls
+        tsd['Qcsf'] = -abs(tsd['Qcsf'])
+        tsd['Qcs'] = -abs(tsd['Qcs'])
+
+        # Calc nomincal temperatures of systems
+        Qhsf_0 = np.nanmax(tsd['Qhsf'])  # in W
+        Qcsf_0 = np.nanmin(tsd['Qcsf'])  # in W negative
+
+        # Cal temperatures of all systems
+        tsd['Tcsf_re'], tsd['Tcsf_sup'], tsd['Thsf_re'], \
+        tsd['Thsf_sup'], tsd['mcpcsf'], tsd['mcphsf'] = sensible_loads.calc_temperatures_emission_systems(tsd, bpr,
+                                                                                                              Qcsf_0,
+                                                                                                              Qhsf_0,
+                                                                                                              gv)
+
+        Mww, tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(
+            bpr.rc_model['Af'],
+            bpr.building_systems['Lcww_dis'],
+            bpr.building_systems['Lsww_dis'],
+            bpr.building_systems['Lvww_c'],
+            bpr.building_systems['Lvww_dis'],
+            tsd['T_ext'],
+            tsd['Ta'],
+            tsd['Twwf_re'],
+            bpr.building_systems['Tww_sup_0'],
+            bpr.building_systems['Y'],
+            gv,
+            bpr.internal_loads['Vww_lpd'],
+            bpr.internal_loads['Vw_lpd'],
+            bpr.architecture['Occ_m2p'],
+            list_uses,
+            schedules,
+            bpr.occupancy)
+
+        # calc auxiliary loads
+        tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'], \
+            tsd['Eauxf_ve'], tsd['Eauxf_ww'], tsd['Eauxf_fw'] = electrical_loads.calc_Eauxf(bpr.geometry['Blength'],
+                                                                                            bpr.geometry['Bwidth'],
+                                                                                            Mww, tsd['Qcsf'], Qcsf_0,
+                                                                                            tsd['Qhsf'], Qhsf_0,
+                                                                                            tsd['Qww'],
+                                                                                            tsd['Qwwf'], Qwwf_0,
+                                                                                            tsd['Tcsf_re'],
+                                                                                            tsd['Tcsf_sup'],
+                                                                                            tsd['Thsf_re'],
+                                                                                            tsd['Thsf_sup'],
+                                                                                            Vw,
+                                                                                            bpr.age['built'],
+                                                                                            bpr.building_systems[
+                                                                                                'fforma'],
+                                                                                            gv,
+                                                                                            bpr.geometry['floors_ag'],
+                                                                                            bpr.occupancy['PFloor'],
+                                                                                            tsd['qv_req'],
+                                                                                            bpr.hvac['type_cs'],
+                                                                                            bpr.hvac['type_hs'],
+                                                                                            tsd['Ehs_lat_aux'])
+
+        # calculate other quantities
+        tsd['Qcsf_lat'] = -tsd['Qcsf_lat']
+        tsd['Qcsf'] = -tsd['Qcsf']
+        tsd['Qcs'] = -tsd['Qcs']
+        tsd['people'] = np.floor(tsd['people'])
+        tsd['QHf'] = tsd['Qhsf'] + tsd['Qwwf'] + tsd['Qhprof']
+        tsd['QCf'] = tsd['Qcsf'] + tsd['Qcdataf'] + tsd['Qcref']
+        tsd['Ef'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref']
+        tsd['QEf'] = tsd['QHf'] + tsd['QCf'] + tsd['Ef']
 
         # write results to csv
         gv.demand_writer.results_to_csv(tsd, bpr, locator, date, 'B01-G')
