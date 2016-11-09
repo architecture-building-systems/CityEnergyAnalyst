@@ -13,6 +13,8 @@ from cea.demand import refrigeration_loads
 from cea.demand import datacenter_loads
 from cea.utilities import helpers
 from sandbox.ghapple import energy_demand_heating_cooling as edhc
+from sandbox.ghapple import ventilation_xx as v
+
 
 import cea.globalvar
 import cea.inputlocator
@@ -87,6 +89,7 @@ def testing_gabriel(locator, weather_path, gv):
            'I_int_sen': np.empty(8760) * np.nan,
            'w_int': np.empty(8760) * np.nan,
            'm_ve_mech': np.empty(8760) * np.nan,
+           'm_ve_window': np.empty(8760) * np.nan,
            'I_rad': np.empty(8760) * np.nan,
            'I_ia': np.empty(8760) * np.nan,
            'I_m': np.empty(8760) * np.nan,
@@ -118,7 +121,7 @@ def testing_gabriel(locator, weather_path, gv):
              'Tcsf_sup': np.empty(8760) * np.nan, 'Tcsf_re': np.empty(8760) * np.nan,
              'Tcdataf_re': np.empty(8760) * np.nan,
              'Tcdataf_sup': np.empty(8760) * np.nan, 'Tcref_re': np.empty(8760) * np.nan,
-             'Tcref_sup': np.empty(8760) * np.nan}  # TODO: initialize refrigeration loads, etc.
+             'Tcref_sup': np.empty(8760) * np.nan, 'theta_ve_mech': np.empty(8760) * np.nan, 'h_ve_adj': np.empty(8760) * np.nan}  # TODO: initialize refrigeration loads, etc.
 
     # get schedules
     list_uses = usage_schedules['list_uses']
@@ -149,15 +152,18 @@ def testing_gabriel(locator, weather_path, gv):
 
     if bpr.rc_model['Af'] > 0:  # building has conditioned area
 
+        v.calc_m_ve_required(bpr, tsd)
+        v.calc_m_ve_leakage_simple(bpr, tsd, gv)
+
         # get internal comfort properties
         tsd = controllers.calc_simple_temp_control(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
                                                       date.dayofweek)
 
         # minimum mass flow rate of ventilation according to schedule
         # with infiltration and overheating
-        tsd['qv_req'] = np.vectorize(controllers.calc_simple_ventilation_control)(tsd['ve'], tsd['people'], bpr.rc_model['Af'], gv,
-                                                                      date.hour, range(8760), n50)
-        tsd['qm_ve_req'] = tsd['qv_req'] * gv.Pair  # TODO:  use dynamic rho_air
+        #tsd['qv_req'] = np.vectorize(controllers.calc_simple_ventilation_control)(tsd['ve'], tsd['people'], bpr.rc_model['Af'], gv,
+               #                                                       date.hour, range(8760), n50)
+        #tsd['qm_ve_req'] = tsd['qv_req'] * gv.Pair  # TODO:  use dynamic rho_air
 
         # latent heat gains
         tsd['w_int'] = sensible_loads.calc_Qgain_lat(tsd['people'], bpr.internal_loads['X_ghp'],
@@ -166,9 +172,9 @@ def testing_gabriel(locator, weather_path, gv):
 
         # natural ventilation building propertiess
         # new
-        dict_props_nat_vent = ventilation_model.get_properties_natural_ventilation(
-            bpr.geometry,
-            bpr.architecture, gv)
+        #dict_props_nat_vent = ventilation_model.get_properties_natural_ventilation(
+           # bpr.geometry,
+          #  bpr.architecture, gv)
 
         # create flag season FIXME: rename, e.g. "is_not_heating_season" or something like that...
         # FIXME: or work with gv.is_heating_season(t)?
@@ -183,9 +189,8 @@ def testing_gabriel(locator, weather_path, gv):
             # heat flows in [W]
             # sensible heat gains
             # --> moved to inside of procedure
-            tsd = sensible_loads.calc_Qgain_sen(hoy, tsd, bpr, gv)
 
-            edhc.procedure_1(hoy, bpr, tsd)
+            edhc.procedure_1(bpr, tsd, hoy, gv)
 
         # write results to csv
         gv.demand_writer.results_to_csv(tsd, bpr, locator, date, 'B01-G')

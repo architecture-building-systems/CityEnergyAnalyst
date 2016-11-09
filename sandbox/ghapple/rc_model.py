@@ -18,8 +18,45 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
+def calc_h_ve_adj(tsd, hoy, gv):
+    """
+    calculate Hve,adj according to ISO 13790
+
+    Parameters
+    ----------
+    q_m_mech : air mass flow from mechanical ventilation (kg/s)
+    q_m_nat : air mass flow from windows and leakages and other natural ventilation (kg/s)
+    temp_ext : exterior air temperature (°C)
+    temp_sup : ventilation system supply air temperature (°C), e.g. after HEX
+    temp_zone_set : zone air temperature set point (°C)
+    gv : globalvars
+
+    Returns
+    -------
+    Hve,adj in (W/K)
+
+    """
+
+    # get parameters
+    temp_ext = tsd['T_ext'][hoy]
+    temp_sup = tsd['theta_ve_mech'][hoy]
+    temp_zone_set = tsd['Ta'][hoy - 1] if not tsd['Ta'][hoy - 1] else tsd['T_ext'][hoy - 1]  # get zone set point
+    q_m_mech = tsd['m_ve_mech'][hoy]
+    q_m_nat = tsd['m_ve_inf_simple'][hoy] + tsd['m_ve_window'][hoy]
 
 
+    c_p_air = gv.Cpa  # (kJ/(kg*K)) # TODO: maybe dynamic heat capacity of air f(temp)
+
+    if abs(temp_sup - temp_ext) == 0:
+        b_mech = 1
+
+    else:
+        eta_hru = (temp_sup - temp_ext) / (temp_zone_set - temp_ext)  # Eq. (28) in ISO 13970
+        frac_hru = 1
+        b_mech = (1 - frac_hru * eta_hru)  # Eq. (27) in ISO 13970
+
+    tsd['h_ve_adj'][hoy] = (b_mech * q_m_mech + q_m_nat) * c_p_air * 1000  # (W/K), Eq. (21) in ISO 13970
+    return
 
 def calc_theta_m_t(theta_m_prev, c_m, h_tr_3, h_tr_em, phi_m_tot):
 
@@ -120,22 +157,6 @@ def calc_temperatures_crank_nicholson( phi_hc_nd, bpr, tsd, hoy ):
     # ++++++++++++++++++++++++
     theta_e = np.float64(tsd['T_ext'][hoy])
 
-    # air flows
-    # +++++++++
-    m_ve_mech = tsd['qm_ve_req'][hoy]  # TODO this is actually a function of temperatures, etc.  --> calc_m_ve_mech()
-    m_ve_window = None  # TODO --> calc_m_ve_window()
-    m_ve_leakage = None  # TODO --> calc_m_ve_leakage(m_ve_mech, m_ve_window), or simplified
-
-    # air supply temperatures (HEX)
-    # +++++++++++++++++++++++++++++
-    temp_ve_mech = None
-
-    # set point temperatures of heating and cooling systems
-    # +++++++++++++++++++++++++++++++++++++++++++++++++++++
-    ta_cs_set = np.float64(tsd['ta_cs_set'][hoy])  # TODO: rename
-    ta_hs_set = np.float64(tsd['ta_hs_set'][hoy])  # TODO: rename
-    setpoints = {'ta_cs_set': ta_cs_set, 'ta_hs_set': ta_hs_set}  # TODO: rename
-
     # R-C-model properties
     # ++++++++++++++++++++
     phi_m = np.float64(tsd['I_m'][hoy])
@@ -146,8 +167,7 @@ def calc_temperatures_crank_nicholson( phi_hc_nd, bpr, tsd, hoy ):
 
     h_tr_em = np.float64(bpr.rc_model['Htr_em'])
     h_tr_w = np.float64(bpr.rc_model['Htr_w'])
-    h_ve_adj = sl.calc_h_ve_adj(m_ve_mech,0,theta_e,theta_e,np.float64(tsd['Ta'][hoy - 1]) if not np.isnan(tsd['Ta'][hoy - 1]) else np.float64(
-        tsd['T_ext'][hoy - 1]),globalvar.GlobalVariables())
+    h_ve_adj = tsd['h_ve_adj'][hoy]
     h_tr_ms = np.float64(bpr.rc_model['Htr_ms'])
     h_tr_is = np.float64(bpr.rc_model['Htr_is'])
 

@@ -30,14 +30,15 @@ def calc_m_ve_mech(bpr, tsd, hoy):
     # TODO: code
     # TODO: documentation
 
-    if c.is_mech_ventilation_active() and not c.is_night_flushing_active(hoy, tsd, bpr):
+    if c.is_mech_ventilation_active() and not c.is_night_flushing_active(bpr, tsd, hoy):
 
-        m_ve_mech = tsd['qm_ve_req'][hoy]  # mechanical ventilation fulfills requirement (similar to CO2 sensor) # TODO: remove infiltration from schedule
+        m_ve_mech = max(tsd['m_ve_required'][hoy] - tsd['m_ve_inf_simple'][hoy], 0)  # mechanical ventilation fulfills requirement (similar to CO2 sensor)
+        # TODO: check mech ventilation rule - maybe: required + infiltration
 
-    elif c.is_mech_ventilation_active() and c.is_night_flushing_active(hoy, tsd, bpr):
+    elif c.is_mech_ventilation_active() and c.is_night_flushing_active(bpr, tsd, hoy):
 
         # night flushing according to strategy
-        m_ve_mech = tsd['qm_ve_req'][hoy] * 1.3 # TODO: some night flushing rule
+        m_ve_mech = (tsd['m_ve_required'][hoy] - tsd['m_ve_inf_simple'][hoy]) * 1.3  # TODO: some night flushing rule
 
     elif not c.is_mech_ventilation_active():
 
@@ -55,11 +56,30 @@ def calc_m_ve_mech(bpr, tsd, hoy):
     return
 
 
-def calc_m_ve_window():
+def calc_m_ve_window(bpr, tsd, hoy):
     # input is schedule
     # if has window ventilation and not special control : m_ve_window = m_ve_schedule
     # TODO: code
     # TODO: documentation
+    if c.is_window_ventilation_active() and not c.is_night_flushing_active(bpr, tsd, hoy):
+
+        m_ve_window = max(tsd['m_ve_required'][hoy] - tsd['m_ve_inf_simple'][hoy], 0)  # window ventilation fulfills requirement (control by occupnats similar to CO2 sensor)
+
+    elif c.is_window_ventilation_active() and c.is_night_flushing_active(bpr, tsd, hoy):
+
+        m_ve_window = 999  # TODO: implement some night flushing rule
+
+    elif not c.is_window_ventilation_active():
+
+        m_ve_window = 0
+
+    else:
+        # unknown window ventilation status
+        m_ve_window = np.nan()
+        print('Warning! Unknown window ventilation status')
+
+    tsd['m_ve_window'][hoy] = m_ve_window
+
     return
 
 
@@ -70,7 +90,7 @@ def calc_m_ve_leakage():
     return
 
 
-def calc_m_ve_leakage_simple(bpr, tsd, hoy, gv):
+def calc_m_ve_leakage_simple(bpr, tsd, gv):
     # TODO: code
     # TODO: documentation
 
@@ -86,11 +106,35 @@ def calc_m_ve_leakage_simple(bpr, tsd, hoy, gv):
     n_inf = 0.5 * n50 * (gv.delta_p_dim/50) ** (2/3)  # [air changes per hour] m3/h.m2
     infiltration = gv.hf * area_f * n_inf * 0.000277778  # m3/s
 
-    return infiltration * p.calc_rho_air(tsd['T_ext'][hoy])  # (kg/s)
+    tsd['m_ve_inf_simple'] = infiltration * p.calc_rho_air(tsd['T_ext'][:])  # (kg/s)
+
+    return
 
 
-def calc_theta_ve_mech():
+def calc_theta_ve_mech(bpr, tsd, hoy):
     # if no heat recovery: theta_ve_mech = theta_ext
     # TODO: code
     # TODO: documentation
+    if c.is_hex_active():
+
+        theta_ve_mech = tsd['T_ext'][hoy] # TODO: some HEX formula
+
+    elif not c.is_hex_active():
+
+        theta_ve_mech = tsd['T_ext'][hoy]
+
+    else:
+
+        theta_ve_mech = np.nan
+        print('Warning! Unknown HEX  status')
+
+    tsd['theta_ve_mech'][hoy] = theta_ve_mech
+
+    return
+
+
+def calc_m_ve_required(bpr, tsd):
+
+    tsd['m_ve_required'] = tsd['people'] * bpr.comfort['Ve_lps'] * p.calc_rho_air(tsd['T_ext'][:]) * 0.001  # kg/s
+
     return

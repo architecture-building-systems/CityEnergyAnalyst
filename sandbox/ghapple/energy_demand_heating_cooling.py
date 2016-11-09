@@ -16,6 +16,7 @@ from sandbox.ghapple import control
 from sandbox.ghapple import rc_model as rc
 from sandbox.ghapple import ventilation_xx as v
 from sandbox.ghapple import space_emission_systems as ses
+from cea.demand import sensible_loads
 
 
 __author__ = "Gabriel Happle"
@@ -29,7 +30,7 @@ __status__ = "Production"
 
 
 
-def procedure_1(hoy, bpr, tsd):
+def procedure_1(bpr, tsd, hoy, gv):
 
     """
 
@@ -39,10 +40,16 @@ def procedure_1(hoy, bpr, tsd):
     :return:
     """
 
+    tsd = sensible_loads.calc_Qgain_sen(hoy, tsd, bpr, gv)
+
+
     # +++++++++++++++++++++++++++++++
     # VENTILATION FOR HOUR
     # +++++++++++++++++++++++++++++++
     v.calc_m_ve_mech(bpr, tsd, hoy)
+    v.calc_m_ve_window(bpr, tsd, hoy)
+    v.calc_theta_ve_mech(bpr, tsd, hoy)
+    rc.calc_h_ve_adj(tsd, hoy, gv)
 
 
 
@@ -182,6 +189,13 @@ def procedure_1(hoy, bpr, tsd):
             # --> kaempf_ac(...)
             # --> (iteration of air flows)
             # TODO: HVAC model
+            theta_m_t_ac, \
+            theta_air_ac, \
+            theta_op_ac, \
+            phi_hc_nd_ac = rc.calc_phi_hc_ac_cooling(bpr, tsd, hoy)
+
+
+
             print('HVAC')
 
         elif control.is_cooling_active(hoy, bpr) and control.cooling_system_is_radiative(bpr):
