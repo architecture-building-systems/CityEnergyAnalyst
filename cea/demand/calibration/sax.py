@@ -180,20 +180,39 @@ class SAX(object):
         self.windowSize = windowSize
 
 def SAX_opt(data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB):
-
     """
-    A multi-objective problem.
+    A multi-objective problem set for three objectives to maximize using the DEAP library and NSGAII algorithm:
+    1. Compound function of accurracy, complexity and compression based on the work of
+    D. Garcia-Lopez1 and H. Acosta-Mesa 2009
+    2. Classic Shiluette and
+    3. Carlinski indicators of clustering.
 
+    The variables to maximize are wordsize and alphabet size.
+
+    :param data: list of lists containing the real values of the discretized timeseries (hourly values for every day).
+    :param time_series_len: length of discretized timeseries.
+    :param BOUND_LOW: lower bound
+    :param BOUND_UP: upper bound
+    :param NGEN: maximum number of generation
+    :param MU: initial number of individuals (it has to be a multiple of 4 for this problem)
+    :param CXPB: confidence
+    :return: Plot with pareto front
     """
-
     # set-up deap library for optimization with 1 objective to minimize and 2 objectives to be maximized
-    creator.create("Fitness", base.Fitness, weights=(-1.0, 1.0))  # maximize shilluette and calinski
+    creator.create("Fitness", base.Fitness, weights=(1.0, 1.0, 1.0))  # maximize shilluette and calinski
     creator.create("Individual", list, fitness=creator.Fitness)
 
     # set-up problem
     NDIM = 2
 
     def discrete_uniform(low, up, size=None):
+        """
+        This function creates a random distribution of the individuals
+        :param low: low bound
+        :param up: up bound
+        :param size: none
+        :return: vector with random generation of the individuals
+        """
         try:
             return [random.randint(a, b) for a, b in zip(low, up)]
         except TypeError:
@@ -205,21 +224,24 @@ def SAX_opt(data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB):
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
     def evaluation(ind):
-        print ind
+        """
+        Evaluation Function for optimization
+        :param ind: individual
+        :return: resulting fitness value for the three objectives of the analysis.
+        """
         s = SAX(ind[0], ind[1])
         sax = [s.to_letter_rep(array)[0] for array in data]
-        accurracy = calc_entropy(sax)
+        accurracy = calc_gain(sax)
         complexity = calc_complexity(sax)
         compression = calc_num_cutpoints(ind[0], time_series_len)
-        f1 = 0.9009*accurracy+0.09*complexity+0.0009*compression
+        f1 = 0.9009*accurracy - 0.09*complexity - 0.0009*compression
         f2 = silhouette_score(data, sax)
-        #f3 = metrics.calinski_harabaz_score(data, sax)
-        print accurracy, complexity, compression
-        return f1, f2#, f3
+        f3 = metrics.calinski_harabaz_score(data, sax)
+        return f1, f2, f3
 
     toolbox.register("evaluate", evaluation)
-    toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
-    toolbox.register("mutate", tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM)
+    toolbox.register("mate", tools.cxTwoPoint)#tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
+    toolbox.register("mutate", tools.mutUniformInt ,low=BOUND_LOW, up=BOUND_UP, indpb=1.0/NDIM)#tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM)
     toolbox.register("select", tools.selNSGA2)
 
     # run optimization
@@ -241,6 +263,17 @@ def SAX_opt(data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB):
 
 
 def main_opt(toolbox, NGEN = 100, MU = 100, CXPB = 0.9, seed=None):
+    """
+    main optimization call which provides the cross-over and mutation generation after generation
+    this script is based on the example of the library DEAP of python and the algortighm NSGA-II
+    :param toolbox: toolbox generated with evaluation, selection, mutation and crossover functions
+    :param NGEN: number of maximum generations
+    :param MU: number of initial individuals
+    :param CXPB: level of confidence
+    :param seed: seed.
+    :return: pop = population with fitness values and individuals, stats = statistics of the population for the last
+                    generation
+    """
 
     random.seed(seed)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -297,6 +330,12 @@ def main_opt(toolbox, NGEN = 100, MU = 100, CXPB = 0.9, seed=None):
     return pop, stats
 
 def calc_complexity(clusters_names):
+    """
+    Calculated according to 'Application of time series discretization using evolutionary programming for classification
+    of precancerous cervical lesions' by H. Acosta-Mesa et al., 2014
+    :param clusters_names: list containing a word which clusters the time series. e.g., ['abcffs', dddddd'...'svfdab']
+    :return: level of complexity which penalizes the objective function
+    """
     single_words_length = len(set(clusters_names))
     m = len(clusters_names) # number of observations
     C = 1 # number of classes is 1
@@ -304,19 +343,54 @@ def calc_complexity(clusters_names):
     return result
 
 def calc_num_cutpoints(wordSize, time_series_len=24):
+    """
+    Calculated according to 'Application of time series discretization using evolutionary programming for classification
+    of precancerous cervical lesions' by H. Acosta-Mesa et al., 2014
+    :param wordSize: wordsize chossen for the SAX algorithm. integer.
+    :param time_series_len: length of time_series group. integer
+    :return: level of compression which penalizes the objective function
+    """
     result = wordSize/(2*time_series_len) # 24 hours
     return result
 
 def calc_entropy(clusters_names):
+    """
+    Calculated according to 'Application of time series discretization using evolutionary programming for classification
+    of precancerous cervical lesions' by H. Acosta-Mesa et al., 2014
+    :param clusters_names: list containing a word which clusters the time series. e.g., ['abcffs', dddddd'...'svfdab']
+    :return:
+    """
     single_words = list(set(clusters_names))
     n_clusters = len(clusters_names)
     entropy = 0
     for single_word in single_words:
         pi = clusters_names.count(single_word)/n_clusters
         entropy += -pi*math.log(pi, 2)
-        entropy_values = 0
-        # for letter in cluster:
-        #     pi = cluster.count(letter)/n_values
-        #     entropy_values += - pi* math.log(pi, 2)
-        # gain += entropy_class - entropy_values
     return entropy
+
+def calc_gain(clusters_names):
+    """
+    Calculated according to the value of information gain of "Discretization of Time Series Dataset
+    with a Genetic Search' by D. Garcia-Lopez1 and H. Acosta-Mesa 2009.
+    :param clusters_names: list containing a word which clusters the time series. e.g., ['abcffs', dddddd'...'svfdab']
+    :return: gain = information gain [real]
+    """
+    single_words = list(set(clusters_names))
+    n_clusters = len(clusters_names)
+    entropy = 0
+
+    for single_word in single_words:
+        pi = clusters_names.count(single_word)/n_clusters
+        entropy += -pi*math.log(pi, 2)
+
+    entropy_values = 0
+    all_values = ''.join(clusters_names)
+    all_values_len = len(all_values)
+    single_letters = list(set(all_values))
+
+    for value in single_letters:
+        value_in_clusters = len([s for s in clusters_names if value in s])
+        pi = all_values.count(value)/ all_values_len
+        entropy_values +=  value_in_clusters/n_clusters * -pi*math.log(pi, 2)
+    gain = entropy - entropy_values
+    return gain
