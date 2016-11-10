@@ -42,6 +42,7 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
     # FIXME: add other variable groups here
     prop_thermal = Gdf.from_file(locator.get_building_thermal())
     for i, key in enumerate(problem['names']):
+        print("Setting prop_thermal[%s] to %s" % (key, sample[i]))
         prop_thermal[key] = sample[i]
         # prop_occupancy_df[key] = value
         # list_uses = list(prop_occupancy.drop('PFloor', axis=1).columns)
