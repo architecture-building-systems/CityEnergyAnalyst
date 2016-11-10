@@ -279,7 +279,7 @@ def calc_phi_hc_ac_heating(bpr, tsd, hoy):
     phi_hc_nd_un = calc_phi_hc_nd_un(phi_hc_nd_10,theta_air_set, theta_air_0, theta_air_10)
 
     # Step 3:
-    phi_h_max = 1000000 # TODO: get max heating power
+    phi_h_max = bpr.hvac['Qhsmax_Wm2'] * af # TODO: get max heating power
 
     if phi_hc_nd_un <= phi_h_max:
 
@@ -330,7 +330,7 @@ def calc_phi_hc_ac_cooling(bpr, tsd, hoy):
     phi_hc_nd_un = calc_phi_hc_nd_un(phi_hc_nd_10,theta_air_set, theta_air_0, theta_air_10)
 
     # Step 3:
-    phi_c_max = -1000000 # TODO: get max cooling power
+    phi_c_max = -bpr.hvac['Qcsmax_Wm2'] * af # TODO: get max cooling power
 
     if phi_c_max <= phi_hc_nd_un:
 

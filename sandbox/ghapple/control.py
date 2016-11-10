@@ -179,7 +179,7 @@ def is_heating_active(hoy, bpr):
         False
 
 
-def is_cooling_active(hoy, bpr):
+def is_cooling_active(bpr, tsd, hoy, gv):
     """
     determines whether the cooling system of a building is active or not at a certain hour of the year
 
@@ -196,7 +196,13 @@ def is_cooling_active(hoy, bpr):
 
     if has_cooling_system(bpr):
         if h.is_coolingseason_hoy(hoy):
-            return True
+            if cooling_system_is_radiative(bpr):
+                return True
+            elif cooling_system_is_ac(bpr) and tsd['T_ext'][hoy] >= gv.temp_sup_cool_hvac + 2:
+                return True
+            elif cooling_system_is_ac(bpr) and tsd['T_ext'][hoy] < gv.temp_sup_cool_hvac + 2:
+                return False
+
         else:
             return False
     else:

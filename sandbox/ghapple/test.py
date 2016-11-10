@@ -137,10 +137,10 @@ def testing_gabriel(locator, weather_path, gv):
     tsd['Tcdataf_re'], tsd['Tcdataf_sup'] = np.vectorize(datacenter_loads.calc_Qcdataf)(tsd['Edataf'])
 
     # ground water temperature in C during heating season (winter) according to norm
-    tsd['Tww_re'][:] = bpr.building_systems['Tww_re_0']
+    tsd['Twwf_re'][:] = bpr.building_systems['Tww_re_0']
 
     # ground water temperature in C during non-heating season (summer) according to norm  -  FIXME: which norm?
-    tsd['Tww_re'][gv.seasonhours[0] + 1:gv.seasonhours[1] - 1] = 14
+    tsd['Twwf_re'][gv.seasonhours[0] + 1:gv.seasonhours[1] - 1] = 14
 
     if bpr.rc_model['Af'] > 0:  # building has conditioned area
 
@@ -183,6 +183,9 @@ def testing_gabriel(locator, weather_path, gv):
             # --> moved to inside of procedure
 
             edhc.procedure_1(bpr, tsd, hoy, gv)
+
+        tsd['Qhs_sen_incl_em_ls'] = tsd['Qhs_sen'] + tsd['Qhs_em_ls']
+        tsd['Qcs_sen_incl_em_ls'] = tsd['Qcs_sen'] + tsd['Qcs_em_ls']
 
         # Calc of Qhs_dis_ls/Qcs_dis_ls - losses due to distribution of heating/cooling coils
         Qhs_d_ls, Qcs_d_ls = np.vectorize(sensible_loads.calc_Qhs_Qcs_dis_ls)(tsd['Ta'], tsd['T_ext'],
@@ -259,7 +262,7 @@ def testing_gabriel(locator, weather_path, gv):
                                                                                             gv,
                                                                                             bpr.geometry['floors_ag'],
                                                                                             bpr.occupancy['PFloor'],
-                                                                                            tsd['qv_req'],
+                                                                                            tsd['m_ve_mech'],
                                                                                             bpr.hvac['type_cs'],
                                                                                             bpr.hvac['type_hs'],
                                                                                             tsd['Ehs_lat_aux'])
@@ -276,6 +279,8 @@ def testing_gabriel(locator, weather_path, gv):
 
         # write results to csv
         gv.demand_writer.results_to_csv(tsd, bpr, locator, date, 'B01-G')
+        # write report
+        gv.report('calc-thermal-loads', locals(), locator.get_demand_results_folder(), 'B01-G')
 
 
 

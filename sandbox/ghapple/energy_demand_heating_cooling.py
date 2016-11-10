@@ -136,13 +136,26 @@ def procedure_1(bpr, tsd, hoy, gv):
 
         elif control.is_heating_active(hoy, bpr) and control.heating_system_is_ac(bpr):
 
-            # heating with AC
-            # calculate loads and enter AC calculation
+            tsd['theta_ve_mech'][hoy] = tsd['T_ext'][hoy]
+            rc.calc_h_ve_adj(tsd, hoy, gv)
+
+            # cooling with AC
+            # calculate load and enter AC calculation
             # --> r_c_model_function_3(...)
             # --> kaempf_ac(...)
             # --> (iteration of air flows)
             # TODO: HVAC model
-            print('HVAC')
+            theta_m_t_ac, \
+            theta_air_ac, \
+            theta_op_ac, \
+            phi_hc_nd_ac = rc.calc_phi_hc_ac_cooling(bpr, tsd, hoy)
+
+            tsd['Tm'][hoy] = theta_m_t_ac
+            tsd['Ta'][hoy] = theta_air_ac
+            tsd['Top'][hoy] = theta_op_ac
+            tsd['Qcs_sen'][hoy] = phi_hc_nd_ac  # no heating energy demand (system off)
+
+            ac.calc_hvac_heating(bpr, tsd, hoy, gv)
 
         elif control.is_heating_active(hoy, bpr) and control.heating_system_is_radiative(bpr):
 
@@ -188,7 +201,7 @@ def procedure_1(bpr, tsd, hoy, gv):
         tsd['Ta_sup_hs'][hoy] = 0
         tsd['Ta_re_hs'][hoy] = 0
 
-        if not control.is_cooling_active(hoy, bpr):
+        if not control.is_cooling_active(bpr, tsd, hoy, gv):
 
             # no cooling
             # calculate temperatures of R-C-model and exit
@@ -215,12 +228,11 @@ def procedure_1(bpr, tsd, hoy, gv):
             tsd['Ta_sup_cs'][hoy] = 0
             tsd['Ta_re_cs'][hoy] = 0
 
-        elif control.is_cooling_active(hoy, bpr) and control.cooling_system_is_ac(bpr):
+        elif control.is_cooling_active(bpr, tsd, hoy, gv) and control.cooling_system_is_ac(bpr):
 
             # calculate cooling load without mechanical ventilation
-            tsd['m_ve_mech'][hoy] = 0
             # recalculate rc-model properties for ventilation
-            tsd['theta_ve_mech'][hoy] = 16
+            tsd['theta_ve_mech'][hoy] = gv.temp_sup_cool_hvac
             rc.calc_h_ve_adj(tsd, hoy, gv)
 
 
@@ -244,7 +256,7 @@ def procedure_1(bpr, tsd, hoy, gv):
 
             print('HVAC')
 
-        elif control.is_cooling_active(hoy, bpr) and control.cooling_system_is_radiative(bpr):
+        elif control.is_cooling_active(bpr, tsd, hoy, gv) and control.cooling_system_is_radiative(bpr):
 
             # cooling with radiative system
             # calculate loads and emission losses
