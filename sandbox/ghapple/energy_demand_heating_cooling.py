@@ -80,6 +80,14 @@ def procedure_1(bpr, tsd, hoy, gv):
         tsd['Qhs_em_ls'][hoy] = 0  # no emission loss of heating space emission systems
         tsd['Qcs_sen'][hoy] = 0  # no energy demand for cooling
         tsd['Qcs_em_ls'][hoy] = 0  # no losses of cooling space emission systems
+        tsd['Qcs_lat_HVAC'][hoy] = 0
+        tsd['Qcs_sen_HVAC'][hoy] = 0
+        tsd['ma_sup_cs'][hoy] = 0
+        tsd['Ta_sup_cs'][hoy] = 0
+        tsd['Ta_re_cs'][hoy] = 0
+        tsd['ma_sup_hs'][hoy] = 0
+        tsd['Ta_sup_hs'][hoy] = 0
+        tsd['Ta_re_hs'][hoy] = 0
 
         # return
         print('Building has no heating or cooling demand at hour', hoy)
@@ -113,6 +121,15 @@ def procedure_1(bpr, tsd, hoy, gv):
             tsd['Top'][hoy] = theta_op
             tsd['Qhs_sen'][hoy] = 0  # no heating energy demand (system off)
             tsd['Qhs_em_ls'][hoy] = 0  # no losses of heating space emission systems
+            tsd['Qcs_lat_HVAC'][hoy] = 0
+            tsd['Qcs_sen_HVAC'][hoy] = 0
+            tsd['ma_sup_cs'][hoy] = 0
+            tsd['Ta_sup_cs'][hoy] = 0
+            tsd['Ta_re_cs'][hoy] = 0
+            tsd['ma_sup_hs'][hoy] = 0
+            tsd['Ta_sup_hs'][hoy] = 0
+            tsd['Ta_re_hs'][hoy] = 0
+
 
             # return # TODO: check speed with and without return here
             # return
@@ -150,6 +167,14 @@ def procedure_1(bpr, tsd, hoy, gv):
 
             # TODO: losses
             # TODO: how to calculate losses if phi_h_ac is phi_h_max ???
+            tsd['Qcs_lat_HVAC'][hoy] = 0
+            tsd['Qcs_sen_HVAC'][hoy] = 0
+            tsd['ma_sup_cs'][hoy] = 0
+            tsd['Ta_sup_cs'][hoy] = 0
+            tsd['Ta_re_cs'][hoy] = 0
+            tsd['ma_sup_hs'][hoy] = 0
+            tsd['Ta_sup_hs'][hoy] = 0
+            tsd['Ta_re_hs'][hoy] = 0
 
     elif rc.has_cooling_demand(bpr, tsd, hoy):
 
@@ -159,6 +184,9 @@ def procedure_1(bpr, tsd, hoy, gv):
         # no heating demand in any case:
         tsd['Qhs_sen'][hoy] = 0  # no heating energy demand (system off)
         tsd['Qhs_em_ls'][hoy] = 0  # no losses of heating space emission systems
+        tsd['ma_sup_hs'][hoy] = 0
+        tsd['Ta_sup_hs'][hoy] = 0
+        tsd['Ta_re_hs'][hoy] = 0
 
         if not control.is_cooling_active(hoy, bpr):
 
@@ -181,6 +209,11 @@ def procedure_1(bpr, tsd, hoy, gv):
 
             # return # TODO: check speed with and without return here
             # return
+            tsd['Qcs_lat_HVAC'][hoy] = 0
+            tsd['Qcs_sen_HVAC'][hoy] = 0
+            tsd['ma_sup_cs'][hoy] = 0
+            tsd['Ta_sup_cs'][hoy] = 0
+            tsd['Ta_re_cs'][hoy] = 0
 
         elif control.is_cooling_active(hoy, bpr) and control.cooling_system_is_ac(bpr):
 
@@ -231,6 +264,12 @@ def procedure_1(bpr, tsd, hoy, gv):
             q_em_ls_heating = ses.calc_q_em_ls_heating(bpr, tsd, hoy)
 
             tsd['Qcs_em_ls'][hoy] = q_em_ls_heating
+
+            tsd['Qcs_lat_HVAC'][hoy] = 0
+            tsd['Qcs_sen_HVAC'][hoy] = 0
+            tsd['ma_sup_cs'][hoy] = 0
+            tsd['Ta_sup_cs'][hoy] = 0
+            tsd['Ta_re_cs'][hoy] = 0
 
     else:
         print('Error: Unknown HVAC system status')

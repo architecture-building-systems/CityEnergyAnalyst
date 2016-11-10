@@ -56,23 +56,16 @@ def testing_gabriel(locator, weather_path, gv):
     tsd = {'T_ext': weather_data.drybulb_C.values,
            'rh_ext': weather_data.relhum_percent.values,
            'T_sky': weather_data.skytemp_C.values,
-           'uncomfort': np.empty(8760) * np.nan,
            'Ts' : np.empty(8760) * np.nan,
            'Ta': np.empty(8760) * np.nan,
            'Tm': np.empty(8760) * np.nan,
-           'Tm_loss': np.empty(8760) * np.nan,
            'Qhs_sen': np.empty(8760) * np.nan,
            'Qcs_sen': np.empty(8760) * np.nan,
            'Qhs_lat': np.empty(8760) * np.nan,
-           'Qhs_sen_incl_em_ls': np.empty(8760) * np.nan,
-           'Qcs_sen_incl_em_ls': np.empty(8760) * np.nan,
            'Qcs_lat': np.empty(8760) * np.nan,
            'Top': np.empty(8760) * np.nan,
            'Im_tot': np.empty(8760) * np.nan,
-           'q_hs_sen_hvac': np.empty(8760) * np.nan,
-           'q_cs_sen_hvac': np.empty(8760) * np.nan,
            'Ehs_lat_aux': np.empty(8760) * np.nan,
-           'qm_ve_mech': np.empty(8760) * np.nan,
            'Qhs_em_ls': np.empty(8760) * np.nan,
            'Qcs_em_ls': np.empty(8760) * np.nan,
            'ma_sup_hs': np.empty(8760) * np.nan,
@@ -84,8 +77,6 @@ def testing_gabriel(locator, weather_path, gv):
            'w_re': np.empty(8760) * np.nan,
            'w_sup': np.empty(8760) * np.nan,
            'Tww_re': np.empty(8760) * np.nan,
-           'qv_req': np.empty(8760) * np.nan,
-           'qm_ve_req': np.empty(8760) * np.nan,
            'I_sol': np.empty(8760) * np.nan,
            'I_int_sen': np.empty(8760) * np.nan,
            'w_int': np.empty(8760) * np.nan,
@@ -208,11 +199,13 @@ def testing_gabriel(locator, weather_path, gv):
                                                                                   bpr.hvac['type_cs'], gv.Bf,
                                                                                   bpr.building_systems['Lv'])
 
+        tsd['Qcsf_lat'] = tsd['Qcs_lat_HVAC']
+
         # Calc requirements of generation systems (both cooling and heating do not have a storage):
-        #tsd['Qhs'] = tsd['Qhs_sen_incl_em_ls'] - tsd['Qhs_em_ls']
+        tsd['Qhs'] = tsd['Qhs_sen']
         tsd['Qhsf'] = tsd['Qhs'] + tsd['Qhs_em_ls'] + Qhs_d_ls  # no latent is considered because it is already added a
         # s electricity from the adiabatic system.
-        tsd['Qcs'] = (tsd['Qcs_sen_incl_em_ls'] - tsd['Qcs_em_ls']) + tsd['Qcsf_lat']
+        tsd['Qcs'] = (tsd['Qcs_sen']) + tsd['Qcsf_lat']
         tsd['Qcsf'] = tsd['Qcs'] + tsd['Qcs_em_ls'] + Qcs_d_ls
         tsd['Qcsf'] = -abs(tsd['Qcsf'])
         tsd['Qcs'] = -abs(tsd['Qcs'])
