@@ -2,6 +2,7 @@
 
 # parameters
 N=${N:-1}
+METHOD=${METHOD:-morris}
 SCENARIO=${SCENARIO:-$HOME/cea-reference-case/reference-case-open/baseline}
 SAMPLES_FOLDER=${SAMPLES_FOLDER:-${SCRATCH}/samples_${METHOD}_${N}}
 WEATHER=${WEATHER:-$HOME/CEAforArcGIS/cea/databases/CH/Weather/Zurich.epw}
@@ -21,6 +22,7 @@ for ((i=0;i<=SAMPLES_COUNT;i+=NUM_SIMULATIONS)) do
     export SCENARIO
     export SAMPLES_FOLDER
     export WEATHER
+    export PYTHONUNBUFFERED=1
     echo "Submitting batch starting at sample $i with size $NUM_SIMULATIONS"
     bsub sh $HOME/CEAforArcGIS/euler/run-demand-bsub.sh
 done
