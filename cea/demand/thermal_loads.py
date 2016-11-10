@@ -965,6 +965,7 @@ class BuildingProperties(object):
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated
         df['Aef'] = df['GFA_m2'] * df['Es']  # conditioned area only those for electricity
 
+        # FIXME: why are we hard-coding 'Cm' here? and can we do without it?
         if gv.samples:  # if sensitivity analysis is on and there are samples
             df['Cm'] = df['Cm']  # Internal heat capacity in J/K
         else:
