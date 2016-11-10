@@ -98,8 +98,8 @@ def lca_embodied(year_to_calculate, locator, gv):
     cat_df = occupancy_df.merge(age_df,on='Name').merge(geometry_df,on='Name').merge(architecture_df,on='Name')
 
     # calculate building geometry
-    cat_df['windows_ag'] = cat_df['win_wall']*cat_df['perimeter']*cat_df['height_ag']
-    cat_df['area_walls_ext_ag'] = cat_df['perimeter']*cat_df['height_ag'] - cat_df['windows_ag']
+    cat_df['windows_ag'] = cat_df['win_wall']*cat_df['perimeter']*(cat_df['height_ag']*cat_df['PFloor'])
+    cat_df['area_walls_ext_ag'] = cat_df['perimeter']*(cat_df['height_ag']*cat_df['PFloor']) - cat_df['windows_ag']
     cat_df['area_walls_ext_bg'] = cat_df['perimeter'] * cat_df['height_bg']
     cat_df['floor_area_ag'] = cat_df['footprint'] * cat_df['floors_ag']
     cat_df['floor_area_bg'] = cat_df['footprint'] * cat_df['floors_bg']
@@ -127,36 +127,36 @@ def lca_embodied(year_to_calculate, locator, gv):
         HVAC_df = cat_df.merge(database_df, left_on='cat_HVAC', right_on='Code')
 
         # contributions due to construction
-        built_df['delta_year'] = (built_df['envelope'] - year_to_calculate) * -1
+        built_df['delta_year'] = year_to_calculate - built_df['built']
         built_df['confirm'] = built_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_materials), axis=1)
-        built_df['contrib'] = ((built_df['Wall_ext_ag']*built_df['area_walls_ext_ag'])+
+        built_df['contrib'] = (((built_df['Wall_ext_ag']*built_df['area_walls_ext_ag'])+
                                (built_df['Roof']*built_df['footprint'])+
-                               (built_df['windows_ag']*built_df['Win_ext']*(built_df['PFloor']-1)) +
+                               (built_df['windows_ag']*built_df['Win_ext']) +
                                (built_df['floor_area_ag']*built_df['Floor_int']+
-                                built_df['floor_area_ag']*built_df['Wall_int_sup']*(built_df['PFloor']-1)*gv.fwratio +
+                                built_df['floor_area_ag']*built_df['Wall_int_sup']*gv.fwratio +
                                 built_df['footprint'] * built_df['Wall_int_nosup']*gv.fwratio)+
                                (basement_df['footprint'] * basement_df['Floor_g'] +
                                 basement_df['Wall_ext_bg'] * basement_df['area_walls_ext_bg']) +
-                               (built_df['footprint'] * built_df['Excavation']))/gv.sl_materials + \
-                               ((HVAC_df['floor_area_ag']+HVAC_df['footprint']) * HVAC_df['Services'])/gv.sl_services
+                                (built_df['footprint'] * built_df['Excavation'])) /gv.sl_materials + \
+                               ((HVAC_df['floor_area_ag']+HVAC_df['footprint']) * HVAC_df['Services'])/gv.sl_services) * built_df['confirm']
 
         # contributions due to envelope retrofit
-        envelope_df['delta_year'] = (envelope_df['envelope'] - year_to_calculate) * -1
+        envelope_df['delta_year'] = year_to_calculate - envelope_df['envelope']
         envelope_df['confirm'] = envelope_df.apply(lambda x: calc_if_existing(x['delta_year'],gv.sl_materials), axis=1)
-        envelope_df['contrib'] = (envelope_df['Wall_ext_ag']*envelope_df['area_walls_ext_ag']*(envelope_df['PFloor']-1))*envelope_df['confirm']/(gv.sl_materials)
+        envelope_df['contrib'] = (envelope_df['Wall_ext_ag']*envelope_df['area_walls_ext_ag'])*envelope_df['confirm']/(gv.sl_materials)
 
         # contributions due to roof retrofit
-        roof_df['delta_year'] = (roof_df['roof'] - year_to_calculate) * -1
+        roof_df['delta_year'] = year_to_calculate - roof_df['roof']
         roof_df['confirm'] = roof_df.apply(lambda x: calc_if_existing(x['delta_year'],gv.sl_materials), axis=1)
         roof_df['contrib'] = roof_df['Roof']*roof_df['footprint']*roof_df['confirm']/gv.sl_materials
 
         # contributions due to windows retrofit
-        windows_df['delta_year'] = (windows_df['windows'] - year_to_calculate) * -1
+        windows_df['delta_year'] = year_to_calculate - windows_df['windows']
         windows_df['confirm'] = windows_df.apply(lambda x: calc_if_existing(x['delta_year'],gv.sl_materials), axis=1)
-        windows_df['contrib'] = windows_df['windows_ag']*windows_df['Win_ext']*(windows_df['PFloor']-1)*windows_df['confirm']/gv.sl_materials
+        windows_df['contrib'] = windows_df['windows_ag']*windows_df['Win_ext']*windows_df['confirm']/gv.sl_materials
 
         # contributions due to partitions retrofit
-        partitions_df['delta_year'] = (partitions_df['partitions'] - year_to_calculate) * -1
+        partitions_df['delta_year'] = year_to_calculate - partitions_df['partitions']
         partitions_df['confirm'] = partitions_df.apply(lambda x: calc_if_existing(x['delta_year'],gv.sl_materials), axis=1)
         partitions_df['contrib'] = (partitions_df['floor_area_ag']*partitions_df['Floor_int']+
                                     partitions_df['floor_area_ag']*partitions_df['Wall_int_sup']*gv.fwratio +
@@ -164,18 +164,16 @@ def lca_embodied(year_to_calculate, locator, gv):
                                     partitions_df['confirm']/gv.sl_materials
 
         # contributions due to basement_df
-        basement_df['delta_year'] = (basement_df['basement'] - year_to_calculate) * -1
-        basement_df['confirm'] = basement_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_materials),
-                                                       axis=1)
+        basement_df['delta_year'] = year_to_calculate - basement_df['basement']
+        basement_df['confirm'] = basement_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_materials),axis=1)
         basement_df['contrib'] = (basement_df['footprint'] * basement_df['Floor_g'] +
                                   basement_df['Wall_ext_bg'] * basement_df['area_walls_ext_bg'])* \
                                   basement_df['confirm']/gv.sl_materials
 
         # contributions due to HVAC_df
-        HVAC_df['delta_year'] = (HVAC_df['HVAC'] - year_to_calculate) * -1
-        HVAC_df['confirm'] = HVAC_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_materials),axis=1)
-        HVAC_df['contrib'] = ((HVAC_df['floor_area_ag']+HVAC_df['footprint']) * HVAC_df['Services'])*HVAC_df['confirm'] \
-                             /gv.sl_services
+        HVAC_df['delta_year'] = year_to_calculate - HVAC_df['HVAC']
+        HVAC_df['confirm'] = HVAC_df.apply(lambda x: calc_if_existing(x['delta_year'], gv.sl_services),axis=1)
+        HVAC_df['contrib'] = ((HVAC_df['floor_area_ag']+HVAC_df['footprint']) * HVAC_df['Services'])*HVAC_df['confirm']/gv.sl_services
 
         if counter is 0:
             built_df['GEN_GJ'] = (HVAC_df['contrib']+basement_df['contrib']+ partitions_df['contrib']+built_df['contrib']+
@@ -269,6 +267,6 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    parser.add_argument('-y', '--year', default=2050, help='Year to calculate')
+    parser.add_argument('-y', '--year', default=2020, help='Year to calculate')
     args = parser.parse_args()
     run_as_script(scenario_path=args.scenario, year_to_calculate=args.year)
