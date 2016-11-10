@@ -333,7 +333,7 @@ temperature of emission/control system
 def calc_temperatures_emission_systems(tsd, bpr, Qcsf_0, Qhsf_0, gv):
     from cea.technologies import radiators, heating_coils, tabs
     # local variables
-    Ta_0 = tsd['ta_hs_set'].max()
+    Ta_0 = np.nanmax(tsd['ta_hs_set'])
     if bpr.hvac['type_hs'] == 'T0':
         Ths_sup = np.zeros(8760)  # in C
         Ths_re = np.zeros(8760)  # in C
