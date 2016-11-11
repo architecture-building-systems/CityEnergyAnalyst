@@ -1185,15 +1185,18 @@ def get_temperatures(locator, prop_HVAC):
     prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')
     prop_emission_dhw = pd.read_excel(locator.get_technical_emission_systems(), 'dhw')
 
-    df = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
-    df2 = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
-    df3 = prop_HVAC.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
+    df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
+    df_emission_cooling = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
+    df_emission_dhw = prop_HVAC.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
 
-    fields = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'Tshs0_C', 'dThs0_C', 'Qhsmax_Wm2']
-    fields2 = ['Name', 'Tscs0_C', 'dTcs0_C', 'Qcsmax_Wm2']
-    fields3 = ['Name', 'Tsww0_C', 'dTww0_C', 'Qwwmax_Wm2']
+    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'Tshs0_C', 'dThs0_C',
+                               'Qhsmax_Wm2']
+    fields_emission_cooling = ['Name', 'Tscs0_C', 'dTcs0_C', 'Qcsmax_Wm2']
+    fields_emission_dhw = ['Name', 'Tsww0_C', 'dTww0_C', 'Qwwmax_Wm2']
 
-    result = df[fields].merge(df2[fields2], on='Name').merge(df3[fields3], on='Name')
+    result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
+                                                                on='Name').merge(df_emission_dhw[fields_emission_dhw],
+                                                                                 on='Name')
     return result
 
 
