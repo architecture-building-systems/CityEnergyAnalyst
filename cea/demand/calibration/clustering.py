@@ -13,7 +13,7 @@ J. Fonseca  script development          27.10.16
 from __future__ import division
 
 from cea.demand.calibration.sax import SAX
-from cea.demand.calibration.sax_optimization import SAX_opt
+from cea.demand.calibration.sax_optimization import SAX_opt, print_pareto
 import pandas as pd
 
 import time
@@ -59,7 +59,11 @@ def clustering(locator, gv, wordSize, alphabetSize, building_name, building_load
 
     # set optimization problem for wordzise and alpha number
     if optimize:
-        SAX_opt(arrays, time_series_len=24, BOUND_LOW = 3, BOUND_UP = 24, NGEN = 50, MU = 400, CXPB = 0.9)
+        pop, halloffame, paretofrontier, stats = SAX_opt(locator, arrays, time_series_len=24, BOUND_LOW = 4,
+                                                         BOUND_UP = 24, NGEN = 2, MU = 100, CXPB = 0.9,
+                                                         start_gen = None)
+        if plot_clusters:
+            print_pareto(pop, paretofrontier)
     else:
         s = SAX(wordSize, alphabetSize)
         sax = [s.to_letter_rep(array)[0] for array in arrays]
@@ -73,13 +77,13 @@ def clustering(locator, gv, wordSize, alphabetSize, building_name, building_load
 
         # save all names and days of occurrence of each profile
         df = pd.DataFrame(dict_data)
-        df[['sax', 'day']].to_csv(locator.get_clustering_calibration_sax_names_file())
+        df[['sax', 'day']].to_csv(locator.get_calibration_clusters_names())
 
         # save individual results to disk # create group by pattern
         grouped_sax = df.groupby('sax')
         for name, group in grouped_sax:
             result = group.T.drop(['sax', 'day'], axis=0)
-            result.to_csv(locator.get_clustering_calibration_file(name))
+            result.to_csv(locator.get_calibration_cluster(name))
             if plot_clusters:
                 result.plot()
                 plt.show()
@@ -93,9 +97,8 @@ def run_as_script():
     gv = gv.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
-    clustering(locator=locator, gv=gv, wordSize=4, alphabetSize=4, building_name='B01', building_load='Qhsf_kWh',
-               optimize=True, plot_clusters = True)
-
+    clustering(locator=locator, gv=gv, wordSize=4, alphabetSize=9, building_name='B01', building_load='Qhsf_kWh',
+               optimize=True, plot_clusters = False)
 
 if __name__ == '__main__':
     run_as_script()
