@@ -50,13 +50,13 @@ def SAX_opt(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB,
     :return: Plot with pareto front
     """
     # set-up deap library for optimization with 1 objective to minimize and 2 objectives to be maximized
-    creator.create("Fitness", base.Fitness, weights=(1.0, 1.0))  # maximize shilluette and calinski
+    creator.create("Fitness", base.Fitness, weights=(1.0, 1.0, -0.1))  # maximize shilluette and calinski
     creator.create("Individual", list, fitness=creator.Fitness)
 
     # set-up problem
     NDIM = 2
 
-    def discrete_uniform(low, up, size=None):
+    def generation(low, up, size=None):
         """
         This function creates a random distribution of the individuals
         :param low: low bound
@@ -65,12 +65,12 @@ def SAX_opt(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB,
         :return: vector with random generation of the individuals
         """
         try:
-            return [random.randint(a, b) for a, b in zip(low, up)]
+            return [random.randint(a, b) for a, b, in zip(low, up)]
         except TypeError:
-            return [random.randint(a, b) for a, b in zip([low] * size, [up] * size)]
+            return [random.randint(a, b) for a, b, in zip([low] * size, [up] * size)]
 
     toolbox = base.Toolbox()
-    toolbox.register("attr_float", discrete_uniform, BOUND_LOW, BOUND_UP, NDIM)
+    toolbox.register("attr_float", generation, BOUND_LOW, BOUND_UP, NDIM)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
@@ -87,7 +87,8 @@ def SAX_opt(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB,
         compression = calc_num_cutpoints(ind[0], time_series_len)
         f1 = 0.7*accurracy - 0.2*complexity - 0.1*compression
         f2 = silhouette_score(data, sax) #metrics.calinski_harabaz_score(data, sax)
-        return f1, f2
+        f3= len(set(sax))
+        return f1, f2, f3
 
     toolbox.register("evaluate", evaluation)
     toolbox.register("mate", tools.cxTwoPoint)#tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)#
@@ -99,33 +100,6 @@ def SAX_opt(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB,
 
     return pop, halloffame, paretofrontier, stats
 
-
-#++++++++++++++++++++++++++
-#Printing option
-#++++++++++++++++++++++++++
-
-
-def print_pareto(pop, paretofrontier):
-    """
-    plot front and pareto-optimal forntier
-    :param pop: population of generation to check
-    :param paretoprontier:
-    :return:
-    """
-    #forntiers
-    front = np.array([list(ind.fitness.values) for ind in pop])
-    optimal_front = np.array([list(ind.fitness.values) for ind in paretofrontier])
-
-    # text
-    n = [str(ind) for ind in paretofrontier]
-    fig, ax = plt.subplots()
-    ax.scatter(optimal_front[:, 0], optimal_front[:, 1], c="r")
-    ax.scatter(front[:,0], front[:,1], c="b")
-    for i, txt in enumerate(n):
-        ax.annotate(txt, (optimal_front[i][0], optimal_front[i][1]))
-    plt.axis("tight")
-    plt.show()
-    return
 
 #++++++++++++++++++++++++++++
 # Main optimizaiton routine
@@ -224,18 +198,16 @@ def main_opt(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_gen=None,
             with open(locator.get_calibration_cluster_opt_checkpoint(gen), "wb") as cp_file:
                 pickle.dump(cp, cp_file)
 
-        print("hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
+        #print("hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
         print("Convergence: ", convergence(pop, paretofrontier))
         print("Diversity: ", diversity(pop, paretofrontier[0], paretofrontier[-1]))
 
     return pop, halloffame, paretofrontier, stats
 
 
-
 #++++++++++++++++++++++++++++
 # Evaluation functions
 # ++++++++++++++++++++++++++++
-
 
 def calc_complexity(clusters_names):
     """
@@ -302,3 +274,32 @@ def calc_gain(clusters_names):
         entropy_values +=  value_in_clusters/n_clusters * -pi*math.log(pi, 2)
     gain = entropy - entropy_values
     return gain
+
+
+#++++++++++++++++++++++++++
+#Printing option
+#++++++++++++++++++++++++++
+
+
+def print_pareto(pop, paretofrontier):
+    """
+    plot front and pareto-optimal forntier
+    :param pop: population of generation to check
+    :param paretoprontier:
+    :return:
+    """
+    #frontiers
+    front = np.array([list(ind.fitness.values) for ind in pop])
+    optimal_front = np.array([list(ind.fitness.values) for ind in paretofrontier])
+
+    # text
+    n = [str(ind) for ind in paretofrontier]
+    fig, ax = plt.subplots()
+    print optimal_front
+    ax.scatter(optimal_front[:, 0], optimal_front[:, 1], c='b', s = optimal_front[:, 2],  marker='o')
+    ax.scatter(front[:,0], front[:,1], s=optimal_front[:, 2], c='r', marker='v')
+    for i, txt in enumerate(n):
+        ax.annotate(txt, (optimal_front[i][0], optimal_front[i][2]))
+    plt.axis("tight")
+    plt.show()
+    return
