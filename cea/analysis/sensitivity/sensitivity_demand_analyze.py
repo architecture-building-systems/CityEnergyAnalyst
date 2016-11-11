@@ -22,9 +22,10 @@ def analyze_sensitivity(samples_path, method, parameters):
         problem = pickle.load(f)
     samples = np.load(os.path.join(samples_path, 'samples.npy'))
 
-    simulations = read_results(samples_path, len(samples))
+    samples_count = len(samples)
+    simulations = read_results(samples_path, samples_count)
     buildings_num = simulations[0].shape[0]
-    writer = pd.ExcelWriter(os.path.join(samples_path, 'analysis.xls'))
+    writer = pd.ExcelWriter(os.path.join(samples_path, 'analysis_%s_%i.xls' % (method, samples_count)))
 
     output_parameters = list(simulations[0].columns[1:])
     for parameter in output_parameters:
