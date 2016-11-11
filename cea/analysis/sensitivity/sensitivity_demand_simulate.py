@@ -58,6 +58,7 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
 def simulate_demand_sample(locator, weather_path, output_parameters):
     gv = cea.globalvar.GlobalVariables()
     gv.demand_writer = cea.demand.demand_writers.MonthlyDemandWriter(gv)
+    # force simulation to be sequential
     gv.multiprocessing = False
     result = demand_main.demand_calculation(locator, weather_path, gv)
     return result[output_parameters]
