@@ -31,7 +31,7 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
     shutil.copytree(scenario_path, simulation_path)
     locator = InputLocator(scenario_path=simulation_path)
 
-    with open(os.path.join(args.samples_folder, 'problem.pickle'), 'r') as f:
+    with open(os.path.join(samples_path, 'problem.pickle'), 'r') as f:
         problem = pickle.load(f)
     samples = np.load(os.path.join(samples_path, 'samples.npy'))
     try:
@@ -40,17 +40,17 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
         return None
 
     # FIXME: add other variable groups here
-    prop_thermal = Gdf.from_file(locator.get_building_thermal())
+    prop_thermal = Gdf.from_file(locator.get_building_thermal()).set_index('Name')
+    prop_overrides = pd.DataFrame(index=prop_thermal.index)
     for i, key in enumerate(problem['names']):
-        print("Setting prop_thermal[%s] to %s" % (key, sample[i]))
-        prop_thermal[key] = sample[i]
+        print("Setting prop_overrides['%s'] to %s" % (key, sample[i]))
+        prop_overrides[key] = sample[i]
         # prop_occupancy_df[key] = value
         # list_uses = list(prop_occupancy.drop('PFloor', axis=1).columns)
         # prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
         # prop_occupancy[list_uses] = prop_occupancy[list_uses].div(prop_occupancy[list_uses].sum(axis=1), axis=0)
     sample_locator = InputLocator(scenario_path=simulation_path)
-    prop_thermal.to_file(sample_locator.get_building_thermal())
-
+    prop_overrides.to_csv(sample_locator.get_building_overrides())
 
     return sample_locator
 
@@ -67,9 +67,8 @@ class SensitivityInputLocator(InputLocator):
     """Overrides `InputLocator` to work with """
 
 
-if __name__ == '__main__':
+def main():
     import argparse
-
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--sample-index', help='Zero-based index into the samples list so simulate', type=int)
     parser.add_argument('-n', '--number-of-simulations', type=int, default=1,
@@ -83,7 +82,6 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output-parameters', help='output parameters to use', nargs='+',
                         default=['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'QEf_MWhyr'])
     args = parser.parse_args()
-
     for i in range(args.sample_index, args.sample_index + args.number_of_simulations):
         locator = apply_sample_parameters(i, args.samples_folder, args.scenario, args.simulation_folder)
         if not locator:
@@ -94,3 +92,7 @@ if __name__ == '__main__':
         print("Running demand simulation for sample %i" % i)
         result = simulate_demand_sample(locator, args.weather, args.output_parameters)
         result.to_csv(os.path.join(args.samples_folder, 'result.%i.csv' % i))
+
+
+if __name__ == '__main__':
+    main()

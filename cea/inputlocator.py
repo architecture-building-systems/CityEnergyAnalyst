@@ -154,6 +154,13 @@ class InputLocator(object):
         and the demand script (cea/demand_main.py)"""
         return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'architecture.shp')
 
+    def get_building_overrides(self):
+        """scenario/inputs/building-properties/overrides.csv
+        This file contains overrides to the building properties input files. They are applied after reading
+        those files and are matched by column name.
+        """
+        return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'overrides.csv')
+
     def get_terrain(self):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain.tif')
