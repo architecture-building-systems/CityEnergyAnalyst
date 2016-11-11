@@ -12,8 +12,10 @@ import numpy as np
 from numpy import random
 from cea.demand.calibration.sax import SAX
 from deap import base, creator, tools
+from deap.benchmarks.tools import diversity, convergence, hypervolume
 from sklearn.metrics import silhouette_score
 from sklearn import metrics
+import pickle
 
 import matplotlib.pyplot as plt
 
@@ -27,7 +29,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def SAX_opt(data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB):
+
+def SAX_opt(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB, start_gen):
     """
     A multi-objective problem set for three objectives to maximize using the DEAP library and NSGAII algorithm:
     1. Compound function of accurracy, complexity and compression based on the work of
@@ -47,7 +50,7 @@ def SAX_opt(data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB):
     :return: Plot with pareto front
     """
     # set-up deap library for optimization with 1 objective to minimize and 2 objectives to be maximized
-    creator.create("Fitness", base.Fitness, weights=(1.0, 1.0, 1.0))  # maximize shilluette and calinski
+    creator.create("Fitness", base.Fitness, weights=(1.0, 1.0))  # maximize shilluette and calinski
     creator.create("Individual", list, fitness=creator.Fitness)
 
     # set-up problem
@@ -82,35 +85,53 @@ def SAX_opt(data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB):
         accurracy = calc_gain(sax)
         complexity = calc_complexity(sax)
         compression = calc_num_cutpoints(ind[0], time_series_len)
-        f1 = 0.9009*accurracy - 0.09*complexity - 0.0009*compression
-        f2 = silhouette_score(data, sax)
-        f3 = metrics.calinski_harabaz_score(data, sax)
-        return f1, f2, f3
+        f1 = 0.7*accurracy - 0.2*complexity - 0.1*compression
+        f2 = silhouette_score(data, sax) #metrics.calinski_harabaz_score(data, sax)
+        return f1, f2
 
     toolbox.register("evaluate", evaluation)
-    toolbox.register("mate", tools.cxTwoPoint)#tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)
-    toolbox.register("mutate", tools.mutUniformInt ,low=BOUND_LOW, up=BOUND_UP, indpb=1.0/NDIM)#tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM)
+    toolbox.register("mate", tools.cxTwoPoint)#tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)#
+    toolbox.register("mutate", tools.mutUniformInt ,low=BOUND_LOW, up=BOUND_UP, indpb=1.0/NDIM)#tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM)#
     toolbox.register("select", tools.selNSGA2)
 
     # run optimization
-    pop, stats = main_opt(toolbox, NGEN, MU, CXPB)
+    pop, halloffame, paretofrontier, stats = main_opt(locator, toolbox, NGEN, MU, CXPB, start_gen)
 
-    # plot pareto curve
-    optimal_front = np.array([list(ind.fitness.values) for ind in pop])
-    n = [str(ind) for ind in pop]
-    print len(n)
-    print n, optimal_front
+    return pop, halloffame, paretofrontier, stats
+
+
+#++++++++++++++++++++++++++
+#Printing option
+#++++++++++++++++++++++++++
+
+
+def print_pareto(pop, paretofrontier):
+    """
+    plot front and pareto-optimal forntier
+    :param pop: population of generation to check
+    :param paretoprontier:
+    :return:
+    """
+    #forntiers
+    front = np.array([list(ind.fitness.values) for ind in pop])
+    optimal_front = np.array([list(ind.fitness.values) for ind in paretofrontier])
+
+    # text
+    n = [str(ind) for ind in paretofrontier]
     fig, ax = plt.subplots()
     ax.scatter(optimal_front[:, 0], optimal_front[:, 1], c="r")
+    ax.scatter(front[:,0], front[:,1], c="b")
     for i, txt in enumerate(n):
         ax.annotate(txt, (optimal_front[i][0], optimal_front[i][1]))
     plt.axis("tight")
     plt.show()
-
     return
 
+#++++++++++++++++++++++++++++
+# Main optimizaiton routine
+# ++++++++++++++++++++++++++++
 
-def main_opt(toolbox, NGEN = 100, MU = 100, CXPB = 0.9, seed=None):
+def main_opt(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_gen=None, seed = None):
     """
     main optimization call which provides the cross-over and mutation generation after generation
     this script is based on the example of the library DEAP of python and the algortighm NSGA-II
@@ -122,18 +143,32 @@ def main_opt(toolbox, NGEN = 100, MU = 100, CXPB = 0.9, seed=None):
     :return: pop = population with fitness values and individuals, stats = statistics of the population for the last
                     generation
     """
-
     random.seed(seed)
+    if start_gen:
+        print start_gen
+        # A file name has been given, then load the data from the file
+        with open(locator.get_calibration_cluster_opt_checkpoint(start_gen), "rb") as cp_file:
+            cp = pickle.load(cp_file)
+            pop = cp["population"]
+            start_gen = cp["generation"]
+            halloffame = cp["halloffame"]
+            paretofrontier = cp["paretofrontier"]
+            logbook = cp["logbook"]
+            random.set_state(cp["rndstate"])
+    else:
+        # Start a new evolution
+        pop = toolbox.population(n=MU)
+        start_gen = 1
+        halloffame = tools.HallOfFame(maxsize=3)
+        paretofrontier = tools.ParetoFront()
+        logbook = tools.Logbook()
+        logbook.header = "gen", "evals", "std", "min", "avg", "max"
+
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", np.mean, axis=0)
     stats.register("std", np.std, axis=0)
     stats.register("min", np.min, axis=0)
     stats.register("max", np.max, axis=0)
-
-    logbook = tools.Logbook()
-    logbook.header = "gen", "evals", "std", "min", "avg", "max"
-
-    pop = toolbox.population(n=MU)
 
     # Evaluate the individuals with an invalid fitness
     invalid_ind = [ind for ind in pop if not ind.fitness.valid]
@@ -150,7 +185,7 @@ def main_opt(toolbox, NGEN = 100, MU = 100, CXPB = 0.9, seed=None):
     print(logbook.stream)
 
     # Begin the generational process
-    for gen in range(1, NGEN):
+    for gen in range(start_gen, NGEN+1):
         # Vary the population
         offspring = tools.selTournamentDCD(pop, len(pop))
         offspring = [toolbox.clone(ind) for ind in offspring]
@@ -169,13 +204,38 @@ def main_opt(toolbox, NGEN = 100, MU = 100, CXPB = 0.9, seed=None):
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
 
+        # update the hall of fame and pareto
+        halloffame.update(pop)
+        paretofrontier.update(pop)
+
         # Select the next generation population
         pop = toolbox.select(pop + offspring, MU)
         record = stats.compile(pop)
         logbook.record(gen=gen, evals=len(invalid_ind), **record)
         print(logbook.stream)
 
-    return pop, stats
+        FREQ = 1 # frequence of storage
+        if gen % FREQ == 0:
+
+            # Fill the dictionary using the dict(key=value[, ...]) constructor
+            cp = dict(population=pop, generation=gen, halloffame=halloffame, paretofrontier=paretofrontier,
+                      logbook=logbook, rndstate=random.get_state())
+
+            with open(locator.get_calibration_cluster_opt_checkpoint(gen), "wb") as cp_file:
+                pickle.dump(cp, cp_file)
+
+        print("hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
+        print("Convergence: ", convergence(pop, paretofrontier))
+        print("Diversity: ", diversity(pop, paretofrontier[0], paretofrontier[-1]))
+
+    return pop, halloffame, paretofrontier, stats
+
+
+
+#++++++++++++++++++++++++++++
+# Evaluation functions
+# ++++++++++++++++++++++++++++
+
 
 def calc_complexity(clusters_names):
     """
