@@ -92,7 +92,7 @@ class InputLocator(object):
         return os.path.join(self.db_path, 'Systems',  'emission_systems.xls')
 
     def get_envelope_systems(self):
-        """db/Systemsl/emission_systems.csv"""
+        """db/Systems/emission_systems.csv"""
         return os.path.join(self.db_path, 'Systems',  'envelope_systems.xls')
 
     def get_data_benchmark(self):

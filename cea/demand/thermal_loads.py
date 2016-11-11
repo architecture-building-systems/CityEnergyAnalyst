@@ -768,14 +768,6 @@ class BuildingProperties(object):
         prop_comfort = Gdf.from_file(locator.get_building_comfort()).drop('geometry', axis=1).set_index('Name')
         prop_internal_loads = Gdf.from_file(locator.get_building_internal()).drop('geometry', axis=1).set_index('Name')
 
-        if gv.samples:  # if sensitivity analysis is on and there are samples
-            for key, value in gv.samples.iteritems():
-                prop_thermal[key] = value
-                #    prop_occupancy_df[key] = value
-                # list_uses = list(prop_occupancy.drop('PFloor', axis=1).columns)
-                # prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
-                # prop_occupancy[list_uses] = prop_occupancy[list_uses].div(prop_occupancy[list_uses].sum(axis=1), axis=0)
-
         # get solar properties
         solar = get_prop_solar(locator).set_index('Name')
 
@@ -789,6 +781,7 @@ class BuildingProperties(object):
         prop_rc_model = self.calc_prop_rc_model(prop_occupancy, prop_architecture, prop_thermal,
                                                 prop_geometry, prop_HVAC_result, surface_properties,
                                                 gv)
+        print prop_rc_model
 
         df_windows = geometry_reader.create_windows(surface_properties, prop_architecture)
         gv.log("done")
@@ -949,7 +942,10 @@ class BuildingProperties(object):
         df['Aop_sup'] = df['Awall_all'] * df['PFloor'] - df['Aw']
 
         # Areas below ground
-        df = df.merge(thermal_properties, left_index=True, right_index=True)
+        df = df.merge(thermal_properties, left_index=True, right_index=True,
+                      # allow thermal_properties to override automatically generated columns
+                      # (G_win, Cm, e_wall, e_win, e_roof, a_wall, a_roof)
+                      suffixes=('_auto', ''))
         df = df.merge(geometry, left_index=True, right_index=True)
         df = df.merge(hvac_temperatures, left_index=True, right_index=True)
         df['floors'] = df['floors_bg'] + df['floors_ag']
@@ -966,11 +962,9 @@ class BuildingProperties(object):
         df['Aef'] = df['GFA_m2'] * df['Es']  # conditioned area only those for electricity
 
         # FIXME: why are we hard-coding 'Cm' here? and can we do without it?
-        if gv.samples:  # if sensitivity analysis is on and there are samples
-            df['Cm'] = df['Cm']  # Internal heat capacity in J/K
-        else:
-            df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df[
-                'Af']  # Internal heat capacity in J/K
+        if 'Cm' not in df:
+            # Internal heat capacity is not part of input, calculate [J/K]
+            df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df['Af']
 
         df['Am'] = df['Cm'].apply(self.lookup_effective_mass_area_factor) * df['Af']  # Effective mass area in [m2]
 
@@ -1203,23 +1197,24 @@ def get_temperatures(locator, prop_HVAC):
     return result
 
 
-def get_envelope_properties(locator, prop):
+def get_envelope_properties(locator, prop_architecture):
     prop_roof = pd.read_excel(locator.get_envelope_systems(), 'ROOF')
     prop_wall = pd.read_excel(locator.get_envelope_systems(), 'WALL')
     prop_win = pd.read_excel(locator.get_envelope_systems(), 'WINDOW')
     prop_shading = pd.read_excel(locator.get_envelope_systems(), 'SHADING')
 
-    df = prop.merge(prop_roof, left_on='type_roof', right_on='code')
-    df2 = prop.merge(prop_wall, left_on='type_wall', right_on='code')
-    df3 = prop.merge(prop_win, left_on='type_win', right_on='code')
-    df4 = prop.merge(prop_shading, left_on='type_shade', right_on='code')
+    df_roof = prop_architecture.merge(prop_roof, left_on='type_roof', right_on='code')
+    df_wall = prop_architecture.merge(prop_wall, left_on='type_wall', right_on='code')
+    df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code')
+    df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code')
 
-    fields = ['Name', 'win_wall', 'Occ_m2p', 'n50', 'n50', 'win_op', 'f_cros', 'e_roof', 'a_roof']
-    fields2 = ['Name', 'e_wall', 'a_wall']
-    fields3 = ['Name', 'e_win', 'G_win']
-    fields4 = ['Name', 'rf_sh']
+    fields_roof = ['Name', 'win_wall', 'Occ_m2p', 'n50', 'n50', 'win_op', 'f_cros', 'e_roof', 'a_roof']
+    fields_wall = ['Name', 'e_wall', 'a_wall']
+    fields_win = ['Name', 'e_win', 'G_win']
+    fields_shading = ['Name', 'rf_sh']
 
-    result = df[fields].merge(df2[fields2], on='Name').merge(df3[fields3], on='Name').merge(df4[fields4], on='Name')
+    result = df_roof[fields_roof].merge(df_wall[fields_wall], on='Name').merge(df_win[fields_win], on='Name').merge(
+        df_shading[fields_shading], on='Name')
     return result
 
 
