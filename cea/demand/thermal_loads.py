@@ -7,6 +7,7 @@ Demand model of thermal loads
 """
 from __future__ import division
 
+import os
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
@@ -777,11 +778,16 @@ class BuildingProperties(object):
         # get envelope properties
         prop_architecture = get_envelope_properties(locator, prop_architectures).set_index('Name')
 
+        # apply overrides
+        if os.path.exists(locator.get_building_overrides()):
+            self._overrides = pd.read_csv(locator.get_building_overrides()).set_index('Name')
+            prop_thermal = self.apply_overrides(prop_thermal)
+            prop_architecture = self.apply_overrides(prop_architecture)
+
         # get properties of rc demand model
         prop_rc_model = self.calc_prop_rc_model(prop_occupancy, prop_architecture, prop_thermal,
                                                 prop_geometry, prop_HVAC_result, surface_properties,
                                                 gv)
-        print prop_rc_model
 
         df_windows = geometry_reader.create_windows(surface_properties, prop_architecture)
         gv.log("done")
@@ -799,6 +805,16 @@ class BuildingProperties(object):
         self._solar = solar
         self._prop_windows = df_windows
         self._prop_RC_model = prop_rc_model
+
+    def apply_overrides(self, df):
+        """Apply the overrides to `df`. This works by checking each column in the `self._overrides` dataframe
+        and overwriting any columns in `df` with the same name.
+        `self._overrides` and `df` are assumed to have the same index.
+        """
+        shared_columns = set(self._overrides.columns) & set(df.columns)
+        for column in shared_columns:
+            df[column] = self._overrides[column]
+        return df
 
     def __len__(self):
         return len(self.list_building_names())
@@ -942,10 +958,7 @@ class BuildingProperties(object):
         df['Aop_sup'] = df['Awall_all'] * df['PFloor'] - df['Aw']
 
         # Areas below ground
-        df = df.merge(thermal_properties, left_index=True, right_index=True,
-                      # allow thermal_properties to override automatically generated columns
-                      # (G_win, Cm, e_wall, e_win, e_roof, a_wall, a_roof)
-                      suffixes=('_auto', ''))
+        df = df.merge(thermal_properties, left_index=True, right_index=True)
         df = df.merge(geometry, left_index=True, right_index=True)
         df = df.merge(hvac_temperatures, left_index=True, right_index=True)
         df['floors'] = df['floors_bg'] + df['floors_ag']
@@ -962,7 +975,9 @@ class BuildingProperties(object):
         df['Aef'] = df['GFA_m2'] * df['Es']  # conditioned area only those for electricity
 
         # FIXME: why are we hard-coding 'Cm' here? and can we do without it?
-        if 'Cm' not in df:
+        if 'Cm' in self._overrides.columns:
+            df['Cm'] = self._overrides['Cm']
+        else:
             # Internal heat capacity is not part of input, calculate [J/K]
             df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df['Af']
 
