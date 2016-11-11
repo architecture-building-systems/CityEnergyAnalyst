@@ -58,6 +58,7 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
 def simulate_demand_sample(locator, weather_path, output_parameters):
     gv = cea.globalvar.GlobalVariables()
     gv.demand_writer = cea.demand.demand_writers.MonthlyDemandWriter(gv)
+    gv.multiprocessing = False
     result = demand_main.demand_calculation(locator, weather_path, gv)
     return result[output_parameters]
 
@@ -73,7 +74,7 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--sample-index', help='Zero-based index into the samples list so simulate', type=int)
     parser.add_argument('-n', '--number-of-simulations', type=int, default=1,
                         help='number of simulations to perform, default 1')
-    parser.add_argument('-s', '--scenario', help='Path to the scenario folder (omit for default)')
+    parser.add_argument('-s', '--scenario', help='Path to the scenario folder (required)', required=True)
     parser.add_argument('-S', '--samples-folder', default='.',
                         help='folder to place the output files (samples.npy, problem.pickle) in')
     parser.add_argument('-t', '--simulation-folder',
@@ -88,6 +89,8 @@ if __name__ == '__main__':
         if not locator:
             # past end of simulations, stop simulating
             break
+        if not args.weather:
+            args.weather = locator.get_default_weather()
         print("Running demand simulation for sample %i" % i)
         result = simulate_demand_sample(locator, args.weather, args.output_parameters)
         result.to_csv(os.path.join(args.samples_folder, 'result.%i.csv' % i))
