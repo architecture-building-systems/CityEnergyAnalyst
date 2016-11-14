@@ -24,6 +24,7 @@ def discBuildOp(locator, building_names, gv):
     :param building_names: list with names of buildings
     :param gv: global variables class
     :return:
+        results of operation of buildings lcoated in locator.pathDiscRes
 
     '''
     print "Start Disconnected Building Routine \n"
