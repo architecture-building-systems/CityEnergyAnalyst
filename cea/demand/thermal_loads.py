@@ -975,7 +975,7 @@ class BuildingProperties(object):
         df['Aef'] = df['GFA_m2'] * df['Es']  # conditioned area only those for electricity
 
         # FIXME: why are we hard-coding 'Cm' here? and can we do without it?
-        if 'Cm' in self._overrides.columns:
+        if 'Cm' in self.get_overrides_columns():
             df['Cm'] = self._overrides['Cm']
         else:
             # Internal heat capacity is not part of input, calculate [J/K]
@@ -1056,6 +1056,13 @@ class BuildingProperties(object):
                                      age=self.get_prop_age(building_name),
                                      solar=self.get_solar(building_name),
                                      windows=self.get_prop_windows(building_name), gv=self.gv)
+
+    def get_overrides_columns(self):
+        """Return the list of column names in the `overrides.csv` file or an empty list if no such file
+        is present."""
+        if hasattr(self, '_overrides'):
+            return list(self._overrides.columns)
+        return []
 
 
 class BuildingPropertiesRow(object):
