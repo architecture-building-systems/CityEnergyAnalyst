@@ -102,28 +102,27 @@ def putToRef(individual):
     individual[5] = 1   
 
 
-def GHPCheck(individual, pathRaw, Qnom, gv):
+def GHPCheck(individual, locator, Qnom, gv):
     """
     Computes the geothermal availability and modifies the individual to 
     comply with it
     
     Parameters
     ----------
-    individual : list
-    pathRaw : float
-    Qnom : float
-        Nominal installed capacity in the district heating plant
+    individual : list with variables included in each individual.
+    locator : path to demand folder
+    Qnom : float, Nominal installed capacity in the district heating plant
     
     """
-    areaArray = np.array( pd.read_csv( pathRaw + "/Geothermal.csv", usecols=["Area_geo"] ) )
-    buildArray = np.array( pd.read_csv( pathRaw + "/Geothermal.csv", usecols=["Name"] ) )
+    areaArray = np.array( pd.read_csv(locator.get_geothermal_potential(), usecols=["Area_geo"] ) )
+    buildArray = np.array( pd.read_csv(locator.get_geothermal_potential(), usecols=["Name"] ) )
     
-    buildList = sFn.extractList(pathRaw + "/Total.csv")
-    indCombi = sFn.readCombi(individual)
+    buildList = sFn.extractList(locator.get_total_demand())
+    barcode = sFn.individual_to_barcode(individual)
     
     Qallowed = 0
 
-    for index, buildName in zip(indCombi, buildList):
+    for index, buildName in zip(barcode, buildList):
         if index == "1":
             areaAvail = areaArray[ np.where(buildArray == buildName)[0][0] ][0]
             Qallowed += np.ceil(areaAvail/gv.GHP_A) * gv.GHP_HmaxSize #[W_th]
