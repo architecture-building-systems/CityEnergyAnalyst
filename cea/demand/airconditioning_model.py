@@ -268,7 +268,9 @@ def calc_hvac_cooling(bpr, tsd, hoy, gv):
     q_cs_sen_ventilation = -m_ve_hvac_req*(h_t5_prime_w3v-h_t3_w3v)
 
     # calculate the part of the sensible load that is supplied by conditioning the recirculation air
-    q_cs_sen_recirculation = qe_sen - q_cs_sen_ventilation
+    q_cs_sen_recirculation = min(qe_sen - q_cs_sen_ventilation, 0) # additional load can not be smaller than 0, overcooling situation
+    if q_cs_sen_recirculation > 0:
+        q_cs_sen_recirculation
 
     # calculate mass flow rate of recirculation air
     m_ve_hvac_recirculation = -q_cs_sen_recirculation / (h_t5_prime_w3v - h_t3_w3v)

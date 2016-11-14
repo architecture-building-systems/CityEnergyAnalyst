@@ -232,7 +232,7 @@ def procedure_1(bpr, tsd, hoy, gv):
 
             # calculate cooling load without mechanical ventilation
             # recalculate rc-model properties for ventilation
-            tsd['theta_ve_mech'][hoy] = gv.temp_sup_cool_hvac
+            tsd['theta_ve_mech'][hoy] = tsd['T_ext'][hoy]
             rc.calc_h_ve_adj(tsd, hoy, gv)
 
 

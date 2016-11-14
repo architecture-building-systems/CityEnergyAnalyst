@@ -23,6 +23,8 @@ from cea.demand import occupancy_model
 from cea.demand import thermal_loads
 from cea.demand.thermal_loads import BuildingProperties
 from cea.utilities import epwreader
+import xlwt
+import os
 
 def testing_gabriel(locator, weather_path, gv):
 
@@ -280,7 +282,20 @@ def testing_gabriel(locator, weather_path, gv):
         # write results to csv
         gv.demand_writer.results_to_csv(tsd, bpr, locator, date, 'B01-G')
         # write report
-        gv.report('calc-thermal-loads', locals(), locator.get_demand_results_folder(), 'B01-G')
+        #gv.report('calc-thermal-loads', locals(), locator.get_demand_results_folder(), 'B01-G')
+
+        df = pd.DataFrame(tsd)
+
+        # Create a Pandas Excel writer using XlsxWriter as the engine.
+        output_path = os.path.join(locator.get_demand_results_folder(), "B01-G.xls")
+        wb = xlwt.Workbook()
+        writer = pd.ExcelWriter(output_path, engine='xlwt')
+
+        df.to_excel(writer, na_rep='NaN')
+
+        # Close the Pandas Excel writer and output the Excel file.
+        writer.save()
+        writer.close()
 
 
 
