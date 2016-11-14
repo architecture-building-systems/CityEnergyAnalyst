@@ -7,17 +7,16 @@ Optimization of wordsize and alphabtsize for Symbolic Aggregate approXimation in
 from __future__ import division
 
 import math
-
-import numpy as np
-from numpy import random
-from cea.demand.calibration.sax import SAX
-from deap import base, creator, tools
-from deap.benchmarks.tools import diversity, convergence, hypervolume
-from sklearn.metrics import silhouette_score
-from sklearn import metrics
 import pickle
 
 import matplotlib.pyplot as plt
+import numpy as np
+from deap import base, creator, tools
+from deap.benchmarks.tools import diversity, convergence
+from numpy import random
+from sklearn.metrics import silhouette_score
+
+from cea.demand.calibration.clustering.sax import SAX
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -87,7 +86,7 @@ def SAX_opt(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB,
         compression = calc_num_cutpoints(ind[0], time_series_len)
         f1 = 0.7*accurracy - 0.2*complexity - 0.1*compression
         f2 = silhouette_score(data, sax) #metrics.calinski_harabaz_score(data, sax)
-        f3= len(set(sax))
+        f3 = len(set(sax))
         return f1, f2, f3
 
     toolbox.register("evaluate", evaluation)
@@ -289,17 +288,16 @@ def print_pareto(pop, paretofrontier):
     :return:
     """
     #frontiers
-    front = np.array([list(ind.fitness.values) for ind in pop])
+    #front = np.array([list(ind.fitness.values) for ind in pop])
     optimal_front = np.array([list(ind.fitness.values) for ind in paretofrontier])
 
     # text
     n = [str(ind) for ind in paretofrontier]
     fig, ax = plt.subplots()
-    print optimal_front
     ax.scatter(optimal_front[:, 0], optimal_front[:, 1], c='b', s = optimal_front[:, 2],  marker='o')
-    ax.scatter(front[:,0], front[:,1], s=optimal_front[:, 2], c='r', marker='v')
+    #ax.scatter(front[:,0], front[:,1], s=front[:, 2], c='r', marker='v')
     for i, txt in enumerate(n):
-        ax.annotate(txt, (optimal_front[i][0], optimal_front[i][2]))
+        ax.annotate(txt, (optimal_front[i][0], optimal_front[i][1]))
     plt.axis("tight")
     plt.show()
     return

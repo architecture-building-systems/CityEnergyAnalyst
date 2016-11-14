@@ -12,12 +12,13 @@ J. Fonseca  script development          27.10.16
 """
 from __future__ import division
 
-from cea.demand.calibration.sax import SAX
-from cea.demand.calibration.sax_optimization import SAX_opt, print_pareto
+import time
+
+import matplotlib.pyplot as plt
 import pandas as pd
 
-import time
-import matplotlib.pyplot as plt
+from cea.demand.calibration.clustering.sax import SAX
+from cea.demand.calibration.clustering.sax_optimization import SAX_opt, print_pareto
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -60,7 +61,7 @@ def clustering(locator, gv, wordSize, alphabetSize, building_name, building_load
     # set optimization problem for wordzise and alpha number
     if optimize:
         pop, halloffame, paretofrontier, stats = SAX_opt(locator, arrays, time_series_len=24, BOUND_LOW = 4,
-                                                         BOUND_UP = 24, NGEN = 1, MU = 20, CXPB = 0.9,
+                                                         BOUND_UP = 24, NGEN = 50, MU = 8, CXPB = 0.9,
                                                          start_gen = None)
         if plot_clusters:
             print_pareto(pop, paretofrontier)
@@ -97,7 +98,7 @@ def run_as_script():
     gv = gv.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
-    clustering(locator=locator, gv=gv, wordSize=4, alphabetSize=9, building_name='B01', building_load='Qhsf_kWh',
+    clustering(locator=locator, gv=gv, wordSize=4, alphabetSize=24, building_name='B01', building_load='Qhsf_kWh',
                optimize=True, plot_clusters = True)
 
 if __name__ == '__main__':
