@@ -4,6 +4,17 @@ Selection of Pareto Optimal individuals
 =======================================
 
 """
+
+__author__ =  "Thuy-An Nguyen"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = [ "Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
+
 def selectPareto(pop):
     """
     Select Pareto Optimal individuals in the population
