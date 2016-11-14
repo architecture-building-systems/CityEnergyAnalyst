@@ -14,12 +14,24 @@ import pandas as pd
 import cea.optimization.master.ea.generation as ci
 import cea.optimization.supportFn as sFn
 
+__author__ =  "Thuy-An Nguyen"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = [ "Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
 def manualCheck(individual):
-    """
-    To use if you want to manually check a configuration
-    
-    """
+    '''
+    Function to manually check the results of a cerain configuration.
+
+    :param individual: list with variables included in each individual.
+
+    :return:
+    '''
+
     # CHP
     individual[0] = 0
     individual[1] = 0
@@ -68,134 +80,6 @@ def manualCheck(individual):
     while i < len(individual):
         individual[i] = 1
         i +=1
-
-
-def manualCheck2(individual):
-    """
-    To use if you want to manually check a configuration
-    
-    """    
-    ref = [0,
- 0,
- 0,
- 0,
- 2,
- 0.16137852664338467,
- 1,
- 0.83862147335656212,
- 0,
- 0,
- 0,
- 0,
- 1,
- 1,
- 1,
- 1.0,
- 0,
- 0,
- 0,
- 0,
- 0.9868385829075472,
- 0,
- 1,
- 1,
- 1,
- 1,
- 1,
- 0,
- 1,
- 0,
- 1,
- 1,
- 1,
- 1,
- 1,
- 0,
- 0,
- 0,
- 1,
- 1,
- 1,
- 1,
- 1,
- 1,
- 0,
- 1,
- 1,
- 1,
- 1,
- 1,
- 0,
- 0,
- 1,
- 1,
- 1,
- 1,
- 1,
- 0,
- 1,
- 1,
- 0,
- 0,
- 1,
- 1,
- 1,
- 1,
- 0,
- 1,
- 1,
- 1,
- 1,
- 1,
- 0,
- 1,
- 1,
- 1,
- 1,
- 1,
- 1,
- 1,
- 0,
- 1,
- 1,
- 1,
- 1,
- 1,
- 1,
- 0,
- 0,
- 0,
- 1,
- 1,
- 1,
- 1,
- 1,
- 0,
- 1,
- 1,
- 1,
- 1,
- 0,
- 1,
- 0,
- 1,
- 1,
- 1,
- 1,
- 1,
- 1,
- 1,
- 1,
- 1,
- 0,
- 1,
- 1,
- 1]
-
-
-
-    for i in range(len(ref)):
-        individual[i] = ref[i]
 
 
 def putToRef(individual):

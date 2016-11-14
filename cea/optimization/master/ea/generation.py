@@ -9,6 +9,14 @@ import random
 from numpy.random import random_sample
 from itertools import izip
 
+__author__ =  "Thuy-An Nguyen"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = [ "Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
 def generateInd(nBuildings, gv):
     """

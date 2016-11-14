@@ -10,18 +10,27 @@ import os
 import time
 from pickle import Pickler, Unpickler
 
-import cea.optimization.master.evolAlgo.CreateInd as ci
-import cea.optimization.master.evolAlgo.CrossOver as cx
-import evolAlgo.Mutations as mut
-import evolAlgo.Selection as sel
+import cea.optimization.master.ea.generation as ci
+import cea.optimization.master.ea.crossover as cx
+import ea.mutations as mut
+import ea.selection as sel
 from deap import base
 from deap import creator
 from deap import tools
 
 import cea.optimization.supportFn as sFn
-import cea.optimization.master.evolAlgo.evaluateInd as eI
-from cea.optimization.master.evolAlgo import constrCheck as cCheck
+import cea.optimization.master.ea.evaluation as eI
+from cea.optimization.master.ea import check as cCheck
 
+
+__author__ =  "Thuy-An Nguyen"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = [ "Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
 def calc_ea_setup(nBuildings, gv):
     """
@@ -40,7 +49,7 @@ def calc_ea_setup(nBuildings, gv):
 
     return creator, toolbox
 
-def EA_Main(locator, building_names, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gv, genCP = 0):
+def evolutionary_algo_main(locator, building_names, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gv, genCP = 0):
     """
     Evolutionary algorithm to optimize the district energy system's design
     
