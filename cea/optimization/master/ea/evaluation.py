@@ -40,7 +40,7 @@ def readInd(individual, Qmax, locator, gv):
     dicoSupply = MSVar.MasterSlaveVariables()
     dicoSupply.configKey = "".join(str(e)[0:4] for e in individual)
     
-    indCombi = sFn.readCombi(individual, gv)
+    indCombi = sFn.individual_to_barcode(individual, gv)
     dicoSupply.nBuildingsConnected = indCombi.count("1") # counting the number of buildings connected
     
     Qnom = Qmax * (1+gv.Qmargin_ntw)
@@ -165,7 +165,7 @@ def checkNtw(individual, ntwList, locator, gv):
         path to folders
     
     """
-    indCombi = sFn.readCombi(individual, gv)
+    indCombi = sFn.individual_to_barcode(individual, gv)
     print(indCombi)
     
     if not (indCombi in ntwList) and indCombi.count("1") > 0:
@@ -214,7 +214,7 @@ def evalInd(individual, buildList, locator, extraCosts, extraCO2, extraPrim, sol
     nBuildings = len(buildList)
     cCheck.controlCheck(individual, nBuildings, gv)
     
-    indCombi = sFn.readCombi(individual, gv)
+    indCombi = sFn.individual_to_barcode(individual, gv)
     costs = extraCosts
     CO2 = extraCO2
     prim = extraPrim
@@ -239,7 +239,7 @@ def evalInd(individual, buildList, locator, extraCosts, extraCO2, extraPrim, sol
     
     # Modify the individual with the extra GHP constraint
     try:
-        cCheck.GHPCheck(individual, locator.pathRaw, Qnom, gv)
+        cCheck.GHPCheck(individual, locator, Qnom, gv)
         print "GHP constraint checked \n"
     except:
         print "No GHP constraint check possible \n"

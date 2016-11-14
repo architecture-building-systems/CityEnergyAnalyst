@@ -26,14 +26,12 @@ class InputLocator(object):
         if scenario_path:
             self.get_geothermal_potential = os.path.join(self.get_potentials_results_folder(), "geothermal.csv")
             self.get_sewageheat_potential = os.path.join(self.get_potentials_results_folder(), "SWP.csv")
-
             self.pathSubsRes = os.path.join(self.get_optimization_results_folder(), "substations")  # Substation results for disconnected buildings
             self.pathClustRes = os.path.join(self.get_optimization_results_folder(), "clustering") # Clustering results for disconnected buildings
             self.pathDiscRes = os.path.join(self.get_optimization_results_folder(), "disconnected") # Operation pattern for disconnected buildings
             self.pathNtwRes = os.path.join(self.get_optimization_results_folder(), "network")  # Ntw summary results
             self.pathMasterRes = os.path.join(self.get_optimization_results_folder(), "master") # Master checkpoints
             self.pathSlaveRes = os.path.join(self.get_optimization_results_folder(), "slave") # Slave results (storage + operation pattern)
-
             self.pathTotalNtw = os.path.join(self.pathNtwRes, "totals") # Total files (inputs to substation + ntw in master)
             self.pathNtwLayout = os.path.join(self.pathNtwRes, "layout") # Ntw layout files
             self.get_pipes_DH_network = os.path.join(self.pathNtwLayout, "PipesData_DH.csv")

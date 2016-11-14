@@ -166,7 +166,7 @@ def normalize_epsIndicator(pathX, generation):
 
 
 def decentralizeCosts(individual, pathX, gV):
-    indCombi = sFn.readCombi(individual, gV)
+    indCombi = sFn.individual_to_barcode(individual, gV)
     buildList = sFn.extractList(pathX.pathRaw + "/Total.csv")
     costsDisc = 0
 

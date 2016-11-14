@@ -10,28 +10,22 @@ import pandas as pd
 import numpy as np
 import time
 
-import supportFn as sFn
-reload(sFn)
-
 import cea.technologies.boilers as Boiler
 import cea.technologies.cogeneration as FC
 import cea.technologies.heatpumps as HP
-reload(Boiler)
-reload(FC)
-reload(HP)
 
 
 def discBuildOp(locator, building_names, gv):
-    """
+    '''
     Computes the parameters for the operation of disconnected buildings
     output results in csv files
-    
-    Parameters
-    ----------
-    locator : string
-        path to folders    
-    
-    """
+
+    :param locator: locator class
+    :param building_names: list with names of buildings
+    :param gv: global variables class
+    :return:
+
+    '''
     print "Start Disconnected Building Routine \n"
     t0 = time.clock()
     geothermal_potential = pd.read_csv(locator.get_geothermal_potential, index_col="Name")

@@ -87,10 +87,10 @@ def calcQmax(fName, filepath, gV):
     return Qmax
     
 
-def readCombi(individual, gV):
+def individual_to_barcode(individual, gV):
     """
     Reads the 0-1 combination of connected/disconnected buildings
-    and creates a lsit of strings type barcode i.e. ("12311111123012")
+    and creates a list of strings type barcode i.e. ("12311111123012")
     
     Parameters
     ----------
@@ -203,7 +203,7 @@ def readCheckPoint(pathX, genCP, storeData):
             
             key = pop[ind_counter]
             
-            indCombi = readCombi(ind)
+            indCombi = individual_to_barcode(ind)
 
             if indCombi.count("0") == 0:
                 fNameNtw = "Network_summary_result_all.csv"
