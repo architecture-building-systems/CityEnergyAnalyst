@@ -10,7 +10,7 @@ import cea.optimization.slave.slave_main as sM
 import numpy as np
 import pandas as pd
 
-import constrCheck as cCheck
+import check as cCheck
 import cea.optimization.master.cost_model as eM
 import cea.optimization.master.summarize_network_main as nM
 import cea.optimization.preprocessing.cooling_network as coolMain

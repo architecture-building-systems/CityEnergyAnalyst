@@ -11,7 +11,7 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 
-import cea.optimization.master.evolAlgo.CreateInd as ci
+import cea.optimization.master.ea.generation as ci
 import cea.optimization.supportFn as sFn
 
 

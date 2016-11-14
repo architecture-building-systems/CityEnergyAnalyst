@@ -8,7 +8,7 @@ import Rep3D as rep
 from deap import base
 
 import cea.optimization.supportFn as sFn
-from cea.optimization.master.evolAlgo import evaluateInd as eI
+from cea.optimization.master.ea import evaluation as eI
 
 reload(sFn)
 reload(rep)
