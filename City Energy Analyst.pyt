@@ -1,5 +1,4 @@
-import cea
-import cea.GUI
+import cea.GUI.radiation_tool
 import cea.GUI.toolbox
 
 __author__ = "Daren Thomas"
@@ -11,9 +10,9 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-reload(cea)
-reload(cea.GUI)
 reload(cea.GUI.toolbox)
+reload(cea.GUI.radiation_tool)
+
 
 DemandTool = cea.GUI.toolbox.DemandTool
 PropertiesTool = cea.GUI.toolbox.PropertiesTool
@@ -21,7 +20,7 @@ EmissionsTool = cea.GUI.toolbox.EmissionsTool
 EmbodiedEnergyTool = cea.GUI.toolbox.EmbodiedEnergyTool
 HeatmapsTool = cea.GUI.toolbox.HeatmapsTool
 GraphsDemandTool = cea.GUI.toolbox.GraphsDemandTool
-RadiationTool = cea.GUI.toolbox.RadiationTool
+RadiationTool = cea.GUI.radiation_tool.RadiationTool
 ScenarioPlotsTool = cea.GUI.toolbox.ScenarioPlotsTool
 GraphsBenchmarkTool = cea.GUI.toolbox.GraphsBenchmarkTool
 MobilityTool = cea.GUI.toolbox.MobilityTool
