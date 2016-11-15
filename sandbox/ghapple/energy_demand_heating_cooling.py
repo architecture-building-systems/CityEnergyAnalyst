@@ -252,6 +252,25 @@ def procedure_1(bpr, tsd, hoy, gv):
             tsd['Top'][hoy] = theta_op_ac
             tsd['Qcs_sen'][hoy] = phi_hc_nd_ac  # no heating energy demand (system off)
 
+            # check if over cooling is happening at this hour
+            q_sen_hvac_ve = ac.calc_hvac_sensible_cooling_ventilaiton_air(bpr, tsd, hoy, gv)
+            if q_sen_hvac_ve < phi_hc_nd_ac: # over cooling
+
+                # update temperatures with over cooling
+                phi_hc_nd = q_sen_hvac_ve
+                temp_rc = rc.calc_temperatures_crank_nicholson(phi_hc_nd, bpr, tsd, hoy)
+
+                theta_m_t = temp_rc[0]
+                theta_air = temp_rc[1]
+                theta_op = temp_rc[2]
+
+                # write to tsd
+                tsd['Tm'][hoy] = theta_m_t
+                tsd['Ta'][hoy] = theta_air
+                tsd['Top'][hoy] = theta_op
+                tsd['Qcs_sen'][hoy] = phi_hc_nd
+
+            # calc ac incl. latent load
             ac.calc_hvac_cooling(bpr, tsd, hoy, gv)
 
             print('HVAC')

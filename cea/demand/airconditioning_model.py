@@ -230,7 +230,7 @@ def calc_hvac_cooling(bpr, tsd, hoy, gv):
 
     temp_5_prev = tsd['Ta'][hoy-1]
     timestep = hoy
-    qe_sen = tsd['Qcs_sen'][hoy] # get the total sensible load from the RC model, in this case without any mechanical ventilation losses???
+    qe_sen = tsd['Qcs_sen'][hoy] # get the total sensible load from the RC model, in this case without any mechanical ventilation losses??? NO!
 
     m_ve_hvac_req = tsd['m_ve_mech'][hoy]   # mechanical ventilation flow rate according to ventilation control
 
@@ -266,6 +266,8 @@ def calc_hvac_cooling(bpr, tsd, hoy, gv):
 
     # calculate the part of the sensible load that can be supplied by conditioning the ventilation air
     q_cs_sen_ventilation = -m_ve_hvac_req*(h_t5_prime_w3v-h_t3_w3v)
+    if q_cs_sen_ventilation < qe_sen:
+        print("OVERCOOLING - TEMPERATURES HAVE TO BE RECALCULATED")
 
     # calculate the part of the sensible load that is supplied by conditioning the recirculation air
     q_cs_sen_recirculation = min(qe_sen - q_cs_sen_ventilation, 0) # additional load can not be smaller than 0, overcooling situation
@@ -300,9 +302,9 @@ def calc_hvac_cooling(bpr, tsd, hoy, gv):
 
     # the new mass flow rate
     # why is this needed?
-    h_t5_prime_w3 = calc_h(t5_prime, w3)
-    h_t3_w3 = calc_h(t3, w3)
-    m = -qe_sen / (h_t5_prime_w3 - h_t3_w3)
+    #h_t5_prime_w3 = calc_h(t5_prime, w3)
+    #h_t3_w3 = calc_h(t3, w3)
+    #m = -qe_sen / (h_t5_prime_w3 - h_t3_w3)
 
     # TODO: now the energy of humidification and dehumidification can be calculated
     h_t2_ws = calc_h(t2, ws)
@@ -324,7 +326,10 @@ def calc_hvac_cooling(bpr, tsd, hoy, gv):
     h_t2_w2 = calc_h(t2, w2)
     h_ts_ws = calc_h(ts, ws)
     qe_tot_ventilation_air = m_ve_hvac_req * (h_ts_ws - h_t2_w2)  # TODO: document
-    qe_tot_recirculated_air = m_ve_hvac_recirculation * (h_ts_ws - h_w5_t5prime)
+
+    h_ts_w5 = calc_h(ts, w5)
+
+    m_ve_hvac_recirculation = q_cs_sen_recirculation / (h_ts_w5 - h_w5_t5prime)
 
     # qe_free = - m * (h_t5_prime_w3 - calc_h(temp_1, calc_w(temp_1,rhum_1))) * 1000
     # q_sen_tot = qe_tot + qe_free - qe_hum_dehum
@@ -336,13 +341,65 @@ def calc_hvac_cooling(bpr, tsd, hoy, gv):
         pel_hum_aux = 0
 
 
-    tsd['Qcs_sen_HVAC'][hoy] = (qe_tot_ventilation_air + qe_tot_recirculated_air) * 1000
+    tsd['Qcs_sen_HVAC'][hoy] = (qe_tot_ventilation_air + q_cs_sen_recirculation) * 1000
     tsd['Qcs_lat_HVAC'][hoy] = qe_dehum * 1000
     tsd['ma_sup_cs'][hoy] = m_ve_hvac_req + m_ve_hvac_recirculation
     tsd['Ta_sup_cs'][hoy] = ts
     tsd['Ta_re_cs'][hoy] = (m_ve_hvac_req * t2 + m_ve_hvac_recirculation * t5_prime) / tsd['ma_sup_cs'][hoy]  # temperature mixing proportional to mass flow rates
 
+    if m_ve_hvac_req + m_ve_hvac_recirculation < 0:
+        print("OOPS!")
+
     return
+
+
+def calc_hvac_sensible_cooling_ventilaiton_air(bpr, tsd, hoy, gv):
+
+
+    temp_zone_set = tsd['Ta'][hoy]
+    rhum_1 = tsd['rh_ext'][hoy]
+    temp_1 = tsd['T_ext'][hoy]
+
+    temp_5_prev = tsd['Ta'][hoy - 1]
+    timestep = hoy
+    qe_sen = tsd['Qcs_sen'][
+        hoy]  # get the total sensible load from the RC model, in this case without any mechanical ventilation losses??? NO!
+
+    m_ve_hvac_req = tsd['m_ve_mech'][hoy]  # mechanical ventilation flow rate according to ventilation control
+
+    wint = tsd['w_int'][hoy]
+
+    if qe_sen < -(1000000.0):
+        qe_sen
+
+    # State No. 5 # indoor air set point
+    t5_prime = temp_zone_set
+
+    # state after heat exchanger
+    # TODO: temperature could come from ventilation heat exchanger...
+    t2, w2 = calc_hex(rhum_1, gv, temp_1, temp_5_prev, timestep)  # (°C), (kg/kg)
+
+    # sensible and latent loads
+    qe_sen = qe_sen * 0.001  # transform in kJ/s
+
+    # State No. 3
+    # Assuming that AHU does not modify the air humidity
+    w3v = w2  # virtual moisture content at state 3
+
+    # MODIFICATIONS HAPPLE to the model
+    # *******************************************************
+    # first we guess the temperature of supply based on the sensible heating load and the required vetilation mass flow rate
+    h_t5_prime_w3v = calc_h(t5_prime, w3v)  # for enthalpy change in first assumption, see Eq.(4.31) in [1]
+
+    t3 = gv.temp_sup_cool_hvac
+    h_t3_w3v = calc_h(t3, w3v)  # for enthalpy change in first assumption, see Eq.(4.31) in [1]
+
+    # calculate the part of the sensible load that can be supplied by conditioning the ventilation air
+    q_cs_sen_ventilation = -m_ve_hvac_req * (h_t5_prime_w3v - h_t3_w3v)
+
+    return q_cs_sen_ventilation * 1000 # convert from (kW) back to (W)
+
+
 
 
 def calc_hvac_heating(bpr, tsd, hoy, gv):
@@ -509,13 +566,13 @@ def calc_hex(rel_humidity_ext, gv, temp_ext, temp_zone_prev, timestep):
 
     # TODO: document
     # bypass heat exchanger if use is not beneficial
-    if temp_zone_prev > temp_ext and not gv.is_heating_season(timestep):
-        t2 = temp_ext
-        w2 = w1
+    #if temp_zone_prev > temp_ext and not gv.is_heating_season(timestep):
+        #t2 = temp_ext
+        #w2 = w1
         # print('bypass HEX cooling')
-    elif temp_zone_prev < temp_ext and gv.is_heating_season(timestep):
-        t2 = temp_ext
-        w2 = w1
+    #elif temp_zone_prev < temp_ext and gv.is_heating_season(timestep):
+        #t2 = temp_ext
+        #w2 = w1
         # print('bypass HEX heating')
 
     return t2, w2
