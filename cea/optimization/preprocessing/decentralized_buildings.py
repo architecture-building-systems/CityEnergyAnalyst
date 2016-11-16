@@ -1,6 +1,6 @@
 """
 ====================================
-Operation for disconnected buildings
+Operation for diecentralized buildings
 ====================================
 
 """
@@ -15,10 +15,13 @@ import cea.technologies.cogeneration as FC
 import cea.technologies.heatpumps as HP
 
 
-def discBuildOp(locator, building_names, gv):
-    '''
-    Computes the parameters for the operation of disconnected buildings
-    output results in csv files
+def decentralized_main(locator, building_names, gv):
+    """
+        Computes the parameters for the operation of disconnected buildings
+    output results in csv files.
+
+    There is not optimizaiton at this point. The different technologies are calculated and compared 1 to 1 to
+    each technology. it is a calsiscal combinatorial problem.
 
     :param locator: locator class
     :param building_names: list with names of buildings
@@ -26,7 +29,7 @@ def discBuildOp(locator, building_names, gv):
     :return:
         results of operation of buildings lcoated in locator.pathDiscRes
 
-    '''
+    """
     print "Start Disconnected Building Routine \n"
     t0 = time.clock()
     geothermal_potential = pd.read_csv(locator.get_geothermal_potential, index_col="Name")

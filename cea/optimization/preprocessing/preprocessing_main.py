@@ -7,8 +7,8 @@ pre-processing algorithm
 
 from __future__ import division
 import cea.optimization.preprocessing.processheat as process_heat
-from cea.technologies import substation as subsM
-from cea.optimization.preprocessing import decentralized_buildings as dbM
+from cea.technologies import substation
+from cea.optimization.preprocessing import decentralized_buildings
 from cea.optimization.master import summarize_network_main as nM
 from cea.optimization.preprocessing import electricity
 from cea.utilities import  epwreader
@@ -44,21 +44,22 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     solarFeat: extraction of solar features form the results of the solar technologies calculation.
     '''
 
-    # read weather and calculate ground temperature from geothermal model
+    # read weather and calculate ground temperature from geothermal model.
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
     gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
 
     # run substation model for every building. this will calculate temperatures of supply and return at the grid side.
     print "Run substation model for each building separately"
-    subsM.substation_main(locator, total_demand, building_names, gv, Flag = True) # True if disconected buildings are calculated
+    substation.substation_main(locator, total_demand, building_names, gv, Flag = True) # True if disconected buildings are calculated
 
-    # estimate what would be the operation of single buildings only for heating
+    # estimate what would be the operation of single buildings only for heating.
+    # For cooling all buildings are assumed to be connected to the cooling network on site.
     print "Heating operation pattern for single buildings"
-    dbM.discBuildOp(locator, building_names, gv)
+    decentralized_buildings.decentralized_main(locator, building_names, gv)
 
     # at first estimate a network with all the buildings connected at it.
     print "Create network file with all buildings connected"
-    nM.Network_Summary(locator, total_demand, building_names, gv, "all") #"_all" key for all buildings
+    nM.network_main(locator, total_demand, building_names, gv, "all") #"_all" key for all buildings
 
     # extraction of solar features form the results of the solar technologies calculation.
     print "Solar features extraction"
