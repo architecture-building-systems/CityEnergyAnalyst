@@ -22,6 +22,30 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
+def calc_q_em_ls_cooling(bpr, tsd, hoy):
+    """
+    calculation procedure for space emissions losses in the cooling case [prEN 15316-2:2014]
+
+    :return:
+    """
+
+    # get properties
+    cooling_system = bpr.hvac['type_cs']
+    control_system = bpr.hvac['type_ctrl']
+
+    theta_e = tsd['T_ext'][hoy]
+    theta_int_ini = tsd['Ta'][hoy]
+    q_em_out = tsd['Qcs_sen'][hoy]
+
+    delta_theta_int_inc = calc_delta_theta_int_inc_cooling(cooling_system, control_system)
+
+    theta_int_inc = calc_theta_int_inc(theta_int_ini, delta_theta_int_inc)
+
+    theta_e_comb = calc_theta_e_comb_cooling(theta_e, bpr)
+
+    return calc_q_em_ls(q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb)
+
+
 def calc_q_em_ls_heating(bpr, tsd, hoy):
     """
     calculation procedure for space emissions losses in the heating case [prEN 15316-2:2014]
@@ -59,7 +83,13 @@ def calc_q_em_ls(q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb):
     :return:
     """
 
-    q_em_ls = q_em_out * (delta_theta_int_inc / (theta_int_inc-theta_e_comb))
+    if theta_int_inc-theta_e_comb == 0.0:
+        q_em_ls = 0.0  # prevent division by zero
+    else:
+        q_em_ls = q_em_out * (delta_theta_int_inc / (theta_int_inc-theta_e_comb))
+
+        if not np.sign(q_em_ls) == np.sign(q_em_out):
+            q_em_ls = 0.0  # prevent form negative emission losses
 
     return q_em_ls
 

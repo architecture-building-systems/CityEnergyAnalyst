@@ -115,7 +115,7 @@ def testing_gabriel(locator, weather_path, gv):
              'Tcsf_sup': np.empty(8760) * np.nan, 'Tcsf_re': np.empty(8760) * np.nan,
              'Tcdataf_re': np.empty(8760) * np.nan,
              'Tcdataf_sup': np.empty(8760) * np.nan, 'Tcref_re': np.empty(8760) * np.nan,
-             'Tcref_sup': np.empty(8760) * np.nan, 'theta_ve_mech': np.empty(8760) * np.nan, 'h_ve_adj': np.empty(8760) * np.nan, 'Qcs_lat_HVAC':  np.empty(8760) * np.nan, 'Qcs_sen_HVAC':  np.empty(8760) * np.nan}  # TODO: initialize refrigeration loads, etc.
+             'Tcref_sup': np.empty(8760) * np.nan, 'theta_ve_mech': np.empty(8760) * np.nan, 'h_ve_adj': np.empty(8760) * np.nan, 'Qcs_lat_HVAC':  np.empty(8760) * np.nan, 'Qcs_sen_HVAC':  np.empty(8760) * np.nan, 'Qhs_lat_HVAC':  np.empty(8760) * np.nan, 'Qhs_sen_HVAC':  np.empty(8760) * np.nan}  # TODO: initialize refrigeration loads, etc.
 
     # get schedules
     list_uses = usage_schedules['list_uses']

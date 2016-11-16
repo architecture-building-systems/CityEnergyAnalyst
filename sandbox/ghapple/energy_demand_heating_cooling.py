@@ -148,14 +148,42 @@ def procedure_1(bpr, tsd, hoy, gv):
             theta_m_t_ac, \
             theta_air_ac, \
             theta_op_ac, \
-            phi_hc_nd_ac = rc.calc_phi_hc_ac_cooling(bpr, tsd, hoy)
+            phi_hc_nd_ac = rc.calc_phi_hc_ac_heating(bpr, tsd, hoy)
 
             tsd['Tm'][hoy] = theta_m_t_ac
             tsd['Ta'][hoy] = theta_air_ac
             tsd['Top'][hoy] = theta_op_ac
-            tsd['Qcs_sen'][hoy] = phi_hc_nd_ac  # no heating energy demand (system off)
+            tsd['Qhs_sen'][hoy] = phi_hc_nd_ac  # sensible demand to reach set point temperature or maximum capacity
 
-            ac.calc_hvac_heating(bpr, tsd, hoy, gv)
+            # check if over heating is happening at this hour
+            q_sen_hvac_ve = ac.calc_hvac_sensible_heating_ventilaiton_air(bpr, tsd, hoy, gv)
+            if q_sen_hvac_ve > phi_hc_nd_ac:  # over heating due to conditioning of required ventilation air
+
+                # update temperatures with over heating
+                phi_hc_nd = q_sen_hvac_ve
+                temp_rc = rc.calc_temperatures_crank_nicholson(phi_hc_nd, bpr, tsd, hoy)
+
+                theta_m_t = temp_rc[0]
+                theta_air = temp_rc[1]
+                theta_op = temp_rc[2]
+
+                # write to tsd
+                tsd['Tm'][hoy] = theta_m_t
+                tsd['Ta'][hoy] = theta_air
+                tsd['Top'][hoy] = theta_op
+                tsd['Qhs_sen'][hoy] = phi_hc_nd
+
+            # calc ac incl. latent load
+            ac.calc_hvac_heating(bpr, tsd, hoy, gv)  # calculate air mass flows and latent energy demand
+
+            # space emission system losses
+            q_em_ls_heating = ses.calc_q_em_ls_heating(bpr, tsd, hoy)
+            tsd['Qhs_em_ls'][hoy] = q_em_ls_heating
+
+            tsd['Qcs_em_ls'][hoy] = 0
+            tsd['ma_sup_cs'][hoy] = 0
+            tsd['Ta_sup_cs'][hoy] = 0
+            tsd['Ta_re_cs'][hoy] = 0
 
         elif control.is_heating_active(hoy, bpr) and control.heating_system_is_radiative(bpr):
 
@@ -188,6 +216,23 @@ def procedure_1(bpr, tsd, hoy, gv):
             tsd['ma_sup_hs'][hoy] = 0
             tsd['Ta_sup_hs'][hoy] = 0
             tsd['Ta_re_hs'][hoy] = 0
+
+        elif control.is_heating_active(hoy, bpr) and control.heating_system_is_tabs(bpr):
+
+            # heating with radiative system
+            # calculate loads and emission losses
+            # --> rc_model_function_2(...)
+            theta_m_t_ac, \
+            theta_air_ac, \
+            theta_op_ac, \
+            phi_hc_nd_ac = rc.calc_phi_hc_ac_heating(bpr, tsd, hoy)
+
+            # write to tsd
+            tsd['Tm'][hoy] = theta_m_t_ac
+            tsd['Ta'][hoy] = theta_air_ac
+            tsd['Top'][hoy] = theta_op_ac
+            tsd['Qhs_sen'][hoy] = phi_hc_nd_ac
+
 
     elif rc.has_cooling_demand(bpr, tsd, hoy):
 
@@ -250,11 +295,11 @@ def procedure_1(bpr, tsd, hoy, gv):
             tsd['Tm'][hoy] = theta_m_t_ac
             tsd['Ta'][hoy] = theta_air_ac
             tsd['Top'][hoy] = theta_op_ac
-            tsd['Qcs_sen'][hoy] = phi_hc_nd_ac  # no heating energy demand (system off)
+            tsd['Qcs_sen'][hoy] = phi_hc_nd_ac  # sensible demand to reach set point temperature or maximum capacity
 
             # check if over cooling is happening at this hour
             q_sen_hvac_ve = ac.calc_hvac_sensible_cooling_ventilaiton_air(bpr, tsd, hoy, gv)
-            if q_sen_hvac_ve < phi_hc_nd_ac: # over cooling
+            if q_sen_hvac_ve < phi_hc_nd_ac:  # over cooling due to conditioning of required ventilation air
 
                 # update temperatures with over cooling
                 phi_hc_nd = q_sen_hvac_ve
@@ -272,6 +317,12 @@ def procedure_1(bpr, tsd, hoy, gv):
 
             # calc ac incl. latent load
             ac.calc_hvac_cooling(bpr, tsd, hoy, gv)
+            # space emission system losses
+            q_em_ls_cooling = ses.calc_q_em_ls_cooling(bpr, tsd, hoy)
+            if q_em_ls_cooling > 0:
+                print("OOPS!")
+
+            tsd['Qcs_em_ls'][hoy] = q_em_ls_cooling
 
             print('HVAC')
 

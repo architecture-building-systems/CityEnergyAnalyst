@@ -76,13 +76,32 @@ def heating_system_is_radiative(bpr):
 
     """
 
-    if bpr.hvac['type_hs'] in {'T1', 'T2', 'T4'}:
+    if bpr.hvac['type_hs'] in {'T1', 'T2'}:
         return True
-    elif bpr.hvac['type_hs'] in {'T0', 'T3'}:
+    elif bpr.hvac['type_hs'] in {'T0', 'T3', 'T4'}:
         return False
     else:
         print('Error: Unknown heating system')
         return False
+
+
+def heating_system_is_tabs(bpr):
+    """
+
+
+    :param bpr:
+    :return:
+    """
+
+    if bpr.hvac['type_hs'] in {'T4'}:
+        return True
+    elif bpr.hvac['type_hs'] in {'T0', 'T1', 'T2', 'T3'}:
+        return False
+    else:
+        print('Error: Unknown heating system')
+        return False
+
+
 
 
 def has_cooling_system(bpr):
