@@ -183,7 +183,7 @@ def checkNtw(individual, ntwList, locator, gv):
 
             # Run the substation and network routines
             print "Re-run the substation routine for new network configuration", indCombi
-            sMain.subsMain(locator, total_demand, building_names, gv, indCombi)
+            sMain.substation_main(locator, total_demand, building_names, gv, indCombi)
             
             print "Launch network summary routine"
             nM.Network_Summary(locator, total_demand, building_names, gv, indCombi)
