@@ -293,6 +293,17 @@ def calc_Qgain_lat(people, X_ghp, sys_e_cooling, sys_e_heating):
     return w_int
 
 def calc_I_sol(t, bpr, tsd, gv):
+    """
+    This function calculates the net solar radiation (incident -reflected - re-irradiated) according to ISO 13790
+
+    :param t: hour of the year
+    :param bpr: building properties object
+    :param tsd: time series dataframe
+    :param gv: global variables class
+    :return:
+        I_sol: vector of net solar radiation to the building
+        I_rad: vector solar radiation re-irradiated to the sky.
+    """
 
     Asol_wall, Asol_roof, Asol_win = calc_Asol(t, bpr, gv)
     I_rad = calc_I_rad(t, tsd, bpr, gv)
@@ -302,9 +313,20 @@ def calc_I_sol(t, bpr, tsd, gv):
     return I_sol_net, I_rad # vector in W
 
 def calc_I_rad(t, tsd, bpr, gv):
+    """
+    This function calculates the solar radiation re-irradiated from a building to the sky according to ISO 13790
+
+    :param t: hour of the year
+    :param tsd: time series dataframe
+    :param bpr:  building properties object
+    :param gv: global variables class
+    :return:
+        I_rad: vector solar radiation re-irradiated to the sky.
+    """
+
     temp_s_prev = tsd['Ts'][t - 1] if not np.isnan(tsd['Ts'][t - 1]) else tsd['T_ext'][t-1]
     theta_ss = tsd['T_sky'][t] - temp_s_prev
-    Fform_wall, Fform_win, Fform_roof = 0.5,0.5,1
+    Fform_wall, Fform_win, Fform_roof = 0.5,0.5,1 # 50% reiradiated by vertical surfaces and 100% by horizontal.
     I_rad_win = gv.Rse * bpr.rc_model['U_win']*calc_hr(bpr.architecture['e_win'], theta_ss, gv) * bpr.rc_model['Aw'] * theta_ss
     I_rad_roof = gv.Rse * bpr.rc_model['U_roof']*calc_hr(bpr.architecture['e_roof'], theta_ss, gv) * bpr.rc_model['Aroof'] * theta_ss
     I_rad_wall = gv.Rse * bpr.rc_model['U_wall']*calc_hr(bpr.architecture['e_wall'], theta_ss, gv) * bpr.rc_model['Awall_all'] * theta_ss
@@ -312,10 +334,29 @@ def calc_I_rad(t, tsd, bpr, gv):
 
     return I_rad
 
-def calc_hr(emisivity, theta_ss, gv):
-    return 4 * emisivity * gv.blotzman * (theta_ss + 273) ** 3
+def calc_hr(emissivity, theta_ss, gv):
+    """
+    This function calculates the external radiative heat transfer coefficient according to ISO 13790
+
+    :param emissivity: emissivity of the considered surface
+    :param theta_ss: delta of temperature between building surface and the sky.
+    :param gv: global variables class
+    :return:
+        hr:
+
+    """
+    return 4 * emissivity * gv.blotzman * (theta_ss + 273) ** 3
 
 def calc_Asol(t, bpr, gv):
+    """
+    This function calculates the effective collecting solar area accounting for use of blinds according to ISO 13790,
+    for the sake of simplicity and to avoid iterations, the delta is calculated based on the last time step.
+
+    :param t: time of the year
+    :param bpr: building properties object
+    :param gv: global variables class
+    :return:
+    """
     from cea.technologies import blinds
     Fsh_win = blinds.calc_blinds_activation(bpr.solar['I_win'][t], bpr.architecture['G_win'], bpr.architecture['rf_sh'])
     Asol_wall = bpr.rc_model['Awall_all'] * bpr.architecture['a_wall'] * gv.Rse * bpr.rc_model['U_wall']
