@@ -17,11 +17,11 @@ import cea.technologies.heatpumps as HP
 
 def decentralized_main(locator, building_names, gv):
     """
-        Computes the parameters for the operation of disconnected buildings
+    Computes the parameters for the operation of disconnected buildings
     output results in csv files.
 
-    There is not optimizaiton at this point. The different technologies are calculated and compared 1 to 1 to
-    each technology. it is a calsiscal combinatorial problem.
+    There is not optimization at this point. The different technologies are calculated and compared 1 to 1 to
+    each technology. it is a classical combinatorial problem.
 
     :param locator: locator class
     :param building_names: list with names of buildings
@@ -36,6 +36,16 @@ def decentralized_main(locator, building_names, gv):
     BestData = {}
 
     def calc_new_load(mdot, TsupDH, Tret, gv):
+        """
+        This function calculates the load network side of the district heating network.
+
+        :param mdot: mass flow
+        :param TsupDH: supply temeperature
+        :param Tret: return temperature
+        :param gv: global variables class
+        :return:
+            Qload: load of the network
+        """
         Qload = mdot * gv.cp * (TsupDH - Tret) * (1 + gv.Qloss_Disc)
         if Qload < 0:
             Qload = 0
@@ -47,7 +57,8 @@ def decentralized_main(locator, building_names, gv):
         fName = locator.pathSubsRes + "/" + buildName + "_result.csv"
 
         loads = pd.read_csv(fName, usecols=["T_supply_DH_result", "T_return_DH_result", "mdot_DH_result"])
-        Qload = np.vectorize(calc_new_load)(loads["mdot_DH_result"], loads["T_supply_DH_result"], loads["T_return_DH_result"], gv)
+        Qload = np.vectorize(calc_new_load)(loads["mdot_DH_result"], loads["T_supply_DH_result"],
+                                            loads["T_return_DH_result"], gv)
         Qannual = Qload.sum()
         Qnom = Qload.max()* (1+gv.Qmargin_Disc) # 1% reliability margin on installed capacity
 
@@ -115,7 +126,8 @@ def decentralized_main(locator, building_names, gv):
                 
                 if Qload[hour] <= QnomGHP:
                 
-                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TsupDH[hour], Tret[hour], gv.TGround, gv)
+                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TsupDH[hour], Tret[hour],
+                                                                                  gv.TGround, gv)
                     
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
@@ -312,7 +324,6 @@ def decentralized_main(locator, building_names, gv):
     print time.clock() - t0, "seconds process time for the Disconnected Building Routine \n"
     #print BestData
     #Store summary to CSV
-
 
 
 def extractList(fName):
