@@ -16,6 +16,12 @@ __status__ = "Production"
 
 
 def calc_ground_temperature(T_ambient, gv):
+    '''
+
+    :param T_ambient:
+    :param gv:
+    :return:
+    '''
 
     T_max = max(T_ambient)+273 # to K
     T_avg = np.mean(T_ambient)+273 # to K
