@@ -50,7 +50,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
 
     # run substation model for every building. this will calculate temperatures of supply and return at the grid side.
     print "Run substation model for each building separately"
-    subsM.subsMain(locator, total_demand, building_names, gv, Flag = True) # True if disconected buildings are calculated
+    subsM.substation_main(locator, total_demand, building_names, gv, Flag = True) # True if disconected buildings are calculated
 
     # estimate what would be the operation of single buildings only for heating
     print "Heating operation pattern for single buildings"

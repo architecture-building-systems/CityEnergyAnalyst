@@ -6,12 +6,9 @@ Boiler Pre-treatment for Heat Processing
 """
 from __future__ import division
 
-import os
-
-import numpy as np
 import pandas as pd
 
-from cea import technologies
+from cea.technologies import boilers
 
 
 def calc_pareto_Qhp(locator, total_demand, gv):
@@ -56,7 +53,7 @@ def calc_pareto_Qhp(locator, total_demand, gv):
                 hpPrim += Qgas * 3600E-6 * gv.NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
 
             # Investment costs
-            hpCosts += technologies.boilers.calc_Cinv_boiler(Qnom, Qannual, gv)
+            hpCosts += boilers.calc_Cinv_boiler(Qnom, Qannual, gv)
     else:
         hpCosts = hpCO2 = hpPrim = 0
     return hpCosts, hpCO2, hpPrim

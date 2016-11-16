@@ -18,14 +18,9 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-
-
-"""
-============================
-investment and maintenance costs
-============================
-
-"""
+#============================
+#investment and maintenance costs
+#============================
 
 
 def calc_Cinv_HEX(Q_design, gV):

@@ -12,7 +12,7 @@ import cea.optimization.master.master_main as master
 import pandas as pd
 
 import cea.optimization.network.network_opt_main as network_opt
-from cea.optimization.preprocessing.preprocessing import preproccessing
+from cea.optimization.preprocessing.preprocessing_main import preproccessing
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
