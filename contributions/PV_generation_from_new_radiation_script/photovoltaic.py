@@ -31,6 +31,26 @@ PV electricity generation
 """
 
 def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, gv, weather_path, building_name):
+    """
+    This function first determine the surface area with sufficient solar radiation, and then decide the optimal tilt
+    angles of panels at each surface location. The panels are categorized by their azimuths and tilt angles into groups
+    of panels. The energy generation from PV panels of each group is then calculated.
+
+    Parameters
+    ----------
+    locator
+    radiation_csv
+    metadata_csv
+    latitude
+    longitude
+    gv
+    weather_path
+    building_name
+
+    Returns
+    -------
+
+    """
 
     t0 = time.clock()
     # weather data
@@ -206,18 +226,18 @@ def Calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg,
 
     Parameters
     ----------
-    te
+    te: Dry bulb temperature
     I_sol
     I_direct
     I_diffuse
-    tilt
-    Sz
-    teta
-    tetaed
+    tilt: Tilt angle [degree]
+    Sz: Zenith angle [degree]
+    teta: Incident angle [degree]
+    tetaed: hour angle
     tetaeg
-    n
-    Pg
-    K
+    n: refractive index of glass
+    Pg: ground reflectance
+    K: extinction coefficient
     NOCT
     a0
     a1
@@ -334,7 +354,7 @@ def Calc_optimal_angle(teta_z, latitude, transmissivity):
     ----------
     teta_z: surface azimuth, 0 degree south (east negative, west positive)
     latitude
-    transmissivity
+    transmissivity: mean hourly transmissivity of the sensor point.
 
     Returns
     -------
@@ -362,14 +382,14 @@ def Calc_optimal_spacing(Sh, Az, tilt_angle, module_length):
 
     Parameters
     ----------
-    Sh
-    Az
-    tilt_angle
-    module_length
+    Sh: Solar elevation at the worst hour [degree]
+    Az: Azimuth [degree]
+    tilt_angle: optimal tilt angle for panels on flat surfaces [degree]
+    module_length: [m]
 
     Returns
     -------
-
+    D: optimal distance in [m]
     """
     h = module_length * sin(tilt_angle)
     D1 = h / tan(radians(Sh))
