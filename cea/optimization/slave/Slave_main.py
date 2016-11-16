@@ -27,8 +27,8 @@ reload(Storage_Opt)
 #reload(Substation_Model)
 
 #os.chdir(Network_Summary_Path)
-#import summarize_network_main as Network_Summary
-#reload(Network_Summary)
+#import summarize_network_main as network_main
+#reload(network_main)
 
 # run Substation Model 
 #Substation_Model.Substation_Calculation()

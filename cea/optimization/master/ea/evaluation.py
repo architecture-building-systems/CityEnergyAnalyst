@@ -175,7 +175,7 @@ def checkNtw(individual, ntwList, locator, gv):
             total_demand = pd.read_csv(locator.pathNtwRes + "//" +  "Total_" + indCombi + ".csv")
             building_names = total_demand.Name.values
             print "Direct launch of network summary routine for", indCombi
-            nM.Network_Summary(locator, total_demand, building_names, gv, indCombi)
+            nM.network_main(locator, total_demand, building_names, gv, indCombi)
 
         else:
             total_demand = sFn.createTotalNtwCsv(indCombi, locator)
@@ -186,7 +186,7 @@ def checkNtw(individual, ntwList, locator, gv):
             sMain.substation_main(locator, total_demand, building_names, gv, indCombi)
             
             print "Launch network summary routine"
-            nM.Network_Summary(locator, total_demand, building_names, gv, indCombi)
+            nM.network_main(locator, total_demand, building_names, gv, indCombi)
 
 
 def evalInd(individual, buildList, locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gv):

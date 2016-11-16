@@ -22,7 +22,7 @@ __status__ = "Production"
 
 
 
-def Network_Summary(locator, total_demand, building_names, gv, key):
+def network_main(locator, total_demand, building_names, gv, key):
     """
 
     Network Summary:
