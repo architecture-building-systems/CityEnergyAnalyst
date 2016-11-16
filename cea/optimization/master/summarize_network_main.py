@@ -12,7 +12,7 @@ import math
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
+__credits__ = ["Jimeno A. Fonseca", "Thuy-An Nguyen", "Tim Vollrath", ]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -22,12 +22,20 @@ __status__ = "Production"
 
 def network_main(locator, total_demand, building_names, gv, key):
     """
+    This function summarizes the network demands and will give them as:
+    - absolute values (design values = extreme values)
+    - hourly operation scheme of input/output of network
 
-    Network Summary:
-        this file summarizes the network demands and will give them as:
-            - absolute values (design values = extreme values)
-            - hourly operation scheme of input/output of network
-    By J. Fonseca, based on T2
+    :param locator: locator class
+    :param total_demand: dataframe with total demand of buildings
+    :param building_names: vector with names of buildings
+    :param gv: gloval variables class
+    :param key: when called by the optimization, a key will provide an identification for the individual
+     and the generation.
+    :return:
+        csv file stored in locator.pathNtwRes + '//' + fName_result
+        where
+        fName_result:
 
     """
 
@@ -159,16 +167,22 @@ def network_main(locator, total_demand, building_names, gv, key):
 
     print time.clock() - t0, "seconds process time for Network summary for configuration", key, "\n"
 
-
-"""
-============================
-supply and return temperatures
-============================
-
-"""
-
+#============================
+# Supply and return temperatures
+# ============================
 
 def calc_temp_withlosses(t0, Q, m, cp, case):
+    """
+    This function calculates the new temperature of the network including losses
+
+    :param t0: current network temperature
+    :param Q: load including thermal losses
+    :param m: mass flow rate
+    :param cp: heat capacity
+    :param case: "positive": if there is an addition to the losses, :negative" otherwise
+    :return:
+        t1: new temperature of the network accounting for thermal losses in the grid
+    """
     if m > 0:
         if case == "positive":
             t1 = t0 + Q / (m * cp)
@@ -178,8 +192,14 @@ def calc_temp_withlosses(t0, Q, m, cp, case):
         t1 = 0
     return t1
 
-
 def calc_return_temp(sum_t_m, sum_m):
+    """
+    This function calculates the return termperature of the network
+
+    :param sum_t_m:
+    :param sum_m:
+    :return:
+    """
     if sum_m > 0:
         tr = sum_t_m / sum_m
     else:
@@ -197,14 +217,9 @@ def calc_supply_temp(tr, Q, m, cp, case):
         ts = 0
     return ts
 
-
-"""
-============================
-thermal losses
-============================
-
-"""
-
+#============================
+# Thermal losses
+#============================
 
 def calc_piping_thermal_losses(Tnet, mmax, mmin, L, Tg, K, cp):
     if mmin != 1E6:  # control variable see function fn.calc_min_flow
@@ -215,14 +230,9 @@ def calc_piping_thermal_losses(Tnet, mmax, mmin, L, Tg, K, cp):
         Qloss = 0
     return Qloss
 
-
-"""
-============================
-mass flow rates
-============================
-
-"""
-
+#============================
+# Mass flow rates
+#============================
 
 def calc_min_flow(m0, m1):
     if m0 == 0:
@@ -232,7 +242,6 @@ def calc_min_flow(m0, m1):
     else:
         mmin = m0
     return mmin
-
 
 def find_index_of_max(array):
     """
