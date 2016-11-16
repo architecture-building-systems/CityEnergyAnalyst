@@ -9,7 +9,7 @@ from __future__ import division
 
 class ntwFeatures(object):
     def __init__(self):
-        self.pipesCosts_DHN = 58310     # CHF
+        self.pipesCosts_DHN = 58310     # CHF  #TODO: generate the costs and pressure difference
         self.pipesCosts_DCN = 64017     # CHF
         self.DeltaP_DHN = 77743         # Pa
         self.DeltaP_DCN = 77743         # Pa

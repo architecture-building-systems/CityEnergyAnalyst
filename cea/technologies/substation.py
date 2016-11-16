@@ -52,10 +52,9 @@ def subsMain(locator, total_file, building_names, gv, Flag):
     iteration = 0
     buildings = []
     for name in building_names:
-        buildings.append(pd.read_csv(locator.get_demand_results_folder()+'//'+name+".csv", usecols = ['Name','Tshs_C','Trhs_C','Tscs_C','Trcs_C','Tsww_C',
-                                                                            'Trww_C','Qhsf_kWh','Qcsf_kWh','Qwwf_kWh',
-                                                                            'mcphs_kWC','mcpww_kWC','mcpcs_kWC',
-                                                                            'Ef_kWh']))
+        buildings.append(pd.read_csv(locator.get_demand_results_folder()+'//'+name+".csv",
+                                     usecols = ['Name','Tshs_C','Trhs_C','Tscs_C','Trcs_C','Tsww_C','Trww_C','Qhsf_kWh',
+                                                'Qcsf_kWh','Qwwf_kWh','mcphs_kWC','mcpww_kWC','mcpcs_kWC','Ef_kWh']))
         Ths = np.vectorize(calc_DH_supply)(Ths.copy(),buildings[iteration].Tshs_C.values)
         Tww = np.vectorize(calc_DH_supply)(Tww.copy(),buildings[iteration].Tsww_C.values)
         Tcs = np.vectorize(calc_DC_supply)(Tcs.copy(),buildings[iteration].Tscs_C.values)

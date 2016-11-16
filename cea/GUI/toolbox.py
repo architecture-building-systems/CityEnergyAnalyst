@@ -5,11 +5,10 @@ import os
 import tempfile
 
 import arcpy
-
 import cea
 import cea.globalvar
 import cea.inputlocator
-from cea.plots.graphs import demand_graph_fields
+from cea.plots.graphs_demand import demand_graph_fields
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -382,8 +381,8 @@ class GraphsDemandTool(object):
         return
 
     def execute(self, parameters, messages):
-        import cea.plots.graphs
-        reload(cea.plots.graphs)
+        import cea.plots.graphs_demand
+        reload(cea.plots.graphs_demand)
         
         scenario_path = parameters[0].valueAsText
         analysis_fields = parameters[1].valueAsText.split(';')[:4]  # max 4 fields for analysis
@@ -402,7 +401,7 @@ class GraphsDemandTool(object):
         assert os.path.exists(python_exe), 'Python interpreter (see above) not found.'
 
         # find demand script
-        graphs_py = cea.plots.graphs.__file__
+        graphs_py = cea.plots.graphs_demand.__file__
         if os.path.splitext(graphs_py)[1].endswith('c'):
             graphs_py = graphs_py[:-1]
         gv.log("Path to demand script: %(graphs_py)s", graphs_py=graphs_py)
@@ -513,79 +512,6 @@ class HeatmapsTool(object):
         cea.plots.heatmaps.heatmaps(locator=locator, analysis_fields=analysis_fields,
                                     path_results=path_results, file_to_analyze=file_to_analyze)
         return
-
-
-class RadiationTool(object):
-    def __init__(self):
-        self.label = 'Radiation'
-        self.description = 'Create radiation file'
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        scenario_path = arcpy.Parameter(
-            displayName="Path to the scenario",
-            name="scenario_path",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-
-        weather_name = arcpy.Parameter(
-            displayName="Weather file (choose from list or enter full path to .epw file)",
-            name="weather_name",
-            datatype="String",
-            parameterType="Required",
-            direction="Input")
-        locator = cea.inputlocator.InputLocator(None)
-        weather_name.filter.list = locator.get_weather_names()
-
-        year = arcpy.Parameter(
-            displayName="Year",
-            name="year",
-            datatype="GPLong",
-            parameterType="Required",
-            direction="Input")
-        year.value = 2014
-
-        return [scenario_path, weather_name, year]
-
-    def execute(self, parameters, messages):
-        import cea
-
-        scenario_path = parameters[0].valueAsText
-        weather_name = parameters[1].valueAsText
-        year = parameters[2].value
-
-        locator = cea.inputlocator.InputLocator(scenario_path)
-        if weather_name in locator.get_weather_names():
-            weather_path = locator.get_weather(weather_name)
-        elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
-            weather_path = weather_name
-        else:
-            weather_path = locator.get_default_weather()
-
-        # FIXME: use current arcgis databases...
-        path_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
-
-        locator = cea.inputlocator.InputLocator(scenario_path)
-        latitude, longitude = self.get_location(locator)
-        arcpy.AddMessage('longitude: %s' % longitude)
-        arcpy.AddMessage('latitude: %s' % latitude)
-
-        import cea.resources.radiation
-        reload(cea.resources.radiation)
-        gv = cea.globalvar.GlobalVariables()
-        gv.log = add_message
-        cea.resources.radiation.solar_radiation_vertical(locator=locator, path_arcgis_db=path_arcgis_db, latitude=latitude,
-                                                         longitude=longitude, year=year, gv=gv, weather_path=weather_path)
-        return
-
-    def get_location(self, locator):
-        """returns (latitude, longitude) for a given scenario."""
-        import fiona
-        with fiona.open(locator.get_building_geometry()) as shp:
-            longitude = shp.crs['lon_0']
-            latitude = shp.crs['lat_0']
-        return latitude, longitude
 
 
 class ScenarioPlotsTool(object):

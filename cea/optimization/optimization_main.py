@@ -23,6 +23,19 @@ optimization
 
 
 def moo_optimization(locator, weather_file, gv):
+    """
+    This function performs the multi-objective optimization of the entire district.
+
+    Parameters
+    ----------
+    locator
+    weather_file
+    gv
+
+    Returns
+    -------
+
+    """
 
     # read total demand file and names and number of all buildings
     total_demand = pd.read_csv(locator.get_total_demand())

@@ -33,7 +33,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
 
     print "Run substation model for each building separately"
-    subsM.subsMain(locator, total_demand, building_names, gv, Flag = True) # 1 if disconected buildings are calculated
+    subsM.subsMain(locator, total_demand, building_names, gv, Flag = True) # 1 if disconnected buildings are calculated
 
     print "Heating operation pattern for disconnected buildings"
     dbM.discBuildOp(locator, building_names, gv)
