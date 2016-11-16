@@ -35,6 +35,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     :param weather_file: path to wather file
     :param gv: path to global variables class
     :return:
+
     extraCosts: extra pareto optimal costs due to electricity and process heat (
     these are treated separately and not considered inside the optimization)
     extraCO2: extra pareto optimal emissions due to electricity and process heat (
