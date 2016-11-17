@@ -51,11 +51,11 @@ def moo_optimization(locator, weather_file, gv):
 
     # optimize the network and linearalize the results (at the moment, there is only a linearilization of values in Zug)
     print "NETWORK OPTIMIZATION"
-    ntwFeat = network_opt.network_opt_main()
+    network_features = network_opt.network_opt_main()
 
     # optimize conversion systems
     print "CONVERSION AND STORAGE OPTIMIZATION"
-    master.evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_prim, solarFeat, ntwFeat, gv)
+    master.evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_prim, solarFeat, network_features, gv)
 
 
 #============================
