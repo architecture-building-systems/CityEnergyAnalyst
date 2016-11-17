@@ -10,7 +10,7 @@ from __future__ import division
 
 import pandas as pd
 
-import cea.optimization.conversion_storage.master.master_main as master
+import cea.optimization.conversion_storage.master.evol_algo_main as master
 import cea.optimization.distribution.network_opt_main as network_opt
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
 

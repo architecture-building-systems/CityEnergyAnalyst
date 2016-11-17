@@ -13,7 +13,7 @@ import cea.optimization.evolAlgo.evaluateInd as eI
 import numpy as np
 from deap import base
 
-import cea.optimization.conversion_storage.master.ea.selection as sel
+import cea.optimization.conversion_storage.master.selection as sel
 import cea.optimization.supportFn as sFn
 
 __author__ = "Tim Vollrath"

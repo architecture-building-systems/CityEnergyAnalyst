@@ -170,7 +170,7 @@ def readCheckPoint(pathX, genCP, storeData):
     pop : list
         list of individuals in the Pareto front at that generation
     eps : list
-        UN-NORMALIZED epsilon indicator from the beginning of the EA to this
+        UN-NORMALIZED epsilon indicator from the beginning of the master to this
         generation
     testedPop : list
         list of individuals tested in that generation

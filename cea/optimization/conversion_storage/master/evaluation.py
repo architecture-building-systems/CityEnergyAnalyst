@@ -13,7 +13,7 @@ import pandas as pd
 from cea.optimization.master import master_to_slave as MSVar
 
 import cea.optimization.conversion_storage.master.cost_model as eM
-import cea.optimization.preprocessing.extra_networks.cooling_network as coolMain
+import cea.optimization.preprocessing.other_networks.cooling_network as coolMain
 import cea.optimization.supportFn as sFn
 import cea.technologies.substation as sMain
 import check as cCheck
@@ -160,7 +160,7 @@ def checkNtw(individual, ntwList, locator, gv):
     individual : list
         configuration considered
     ntwList : list
-        list of DHN configuration previously encountered in the EA
+        list of DHN configuration previously encountered in the master
     locator : string
         path to folders
     

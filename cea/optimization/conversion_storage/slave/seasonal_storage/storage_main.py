@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 import pylab as plt
 
-import cea.optimization.conversion_storage.slave.Storage_Power_Operation_Losses_Partload.Storage_Design_And_Operation_2 as StDesOp
+import cea.optimization.conversion_storage.slave.seasonal_storage.design_operation as StDesOp
 reload(StDesOp)
 
 def Storage_Optimization(pathX, fName_NetworkData, context, gV):
