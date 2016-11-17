@@ -130,7 +130,7 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
             if QavailCopy - Qneed >= 0: # Free cooling possible from the lake
                 QavailCopy -= Qneed
                 
-                # Delta P from linearization after network optimization
+                # Delta P from linearization after distribution optimization
                 deltaP = 2* (gv.DeltaP_Coeff * mdot + gv.DeltaP_Origin)
                 
                 toCalfactor += deltaP * mdot / 1000 / gv.etaPump

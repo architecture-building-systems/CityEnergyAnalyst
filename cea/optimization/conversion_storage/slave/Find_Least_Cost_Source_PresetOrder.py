@@ -867,14 +867,14 @@ def Least_Cost_Optimization(locator, context, solarFeat, gv):
                     print "not covered demand: ", Q_remaining, "Wh"
                     print "last source tested: ", current_source
                     print "occured in hour: ", hour
-                    print "insufficient capacity installed! Cannot cover the network demand (check Slave code, find_least_cost_source_main"
+                    print "insufficient capacity installed! Cannot cover the distribution demand (check Slave code, find_least_cost_source_main"
                     #break
                     """
                     print "not sufficient capacity installed in hour : ", hour
                     print Q_therm_req, "Wh missing"
                     print "check least cost optimization (here the error comes from) but also the inputs: "
                     print "It is not sufficient capacity available to the slave in order to fulfull the thermal "
-                    print "demand of the network (think about the bands or gaps that occur when a system has a minimum load"
+                    print "demand of the distribution (think about the bands or gaps that occur when a system has a minimum load"
                     print "This is now covered by a boiler"
                     
                     print Q_therm_req_COPY, "Wh was required \n"

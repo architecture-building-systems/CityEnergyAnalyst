@@ -37,14 +37,14 @@ def decentralized_main(locator, building_names, gv):
 
     def calc_new_load(mdot, TsupDH, Tret, gv):
         """
-        This function calculates the load network side of the district heating network.
+        This function calculates the load distribution side of the district heating distribution.
 
         :param mdot: mass flow
         :param TsupDH: supply temeperature
         :param Tret: return temperature
         :param gv: global variables class
         :return:
-            Qload: load of the network
+            Qload: load of the distribution
         """
         Qload = mdot * gv.cp * (TsupDH - Tret) * (1 + gv.Qloss_Disc)
         if Qload < 0:

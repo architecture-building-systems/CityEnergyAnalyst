@@ -38,7 +38,7 @@ def extract_csv(fName, colName, DAYS_IN_YEAR):
 def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     ''' 
     
-    importing and preparing network data for analysis of the Centralized Plant Choice 
+    importing and preparing distribution data for analysis of the Centralized Plant Choice
         
     Parameters
     ----------

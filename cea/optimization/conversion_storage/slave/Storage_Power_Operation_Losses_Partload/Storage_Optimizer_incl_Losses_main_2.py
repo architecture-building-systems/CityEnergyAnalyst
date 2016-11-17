@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 import pylab as plt
 
-import cea.optimization.slave.Storage_Power_Operation_Losses_Partload.Storage_Design_And_Operation_2 as StDesOp
+import cea.optimization.conversion_storage.slave.Storage_Power_Operation_Losses_Partload.Storage_Design_And_Operation_2 as StDesOp
 reload(StDesOp)
 
 def Storage_Optimization(pathX, fName_NetworkData, context, gV):
@@ -35,7 +35,7 @@ def Storage_Optimization(pathX, fName_NetworkData, context, gV):
     Parameters
     ----------
     pathNtwRes : string
-         path where the network data is saved
+         path where the distribution data is saved
     
     pathSlaveRes : string
         path where all slave results should be saved
@@ -44,7 +44,7 @@ def Storage_Optimization(pathX, fName_NetworkData, context, gV):
         path where the raw solar data is saved
         
     fName_NetworkData : string
-        name of network data file (in pathNtwRes)
+        name of distribution data file (in pathNtwRes)
 
     
     Returns

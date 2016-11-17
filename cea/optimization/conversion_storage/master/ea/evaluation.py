@@ -6,17 +6,17 @@ Evaluation function of an individual
 """
 from __future__ import division
 
-import cea.optimization.slave.slave_main as sM
+import cea.optimization.conversion_storage.slave.slave_main as sM
+import cea.optimization.master.summarize_network_main as nM
 import numpy as np
 import pandas as pd
+from cea.optimization.master import master_to_slave as MSVar
 
-import check as cCheck
-import cea.optimization.master.cost_model as eM
-import cea.optimization.master.summarize_network_main as nM
-import cea.optimization.preprocessing.cooling_network as coolMain
+import cea.optimization.conversion_storage.master.cost_model as eM
+import cea.optimization.preprocessing.extra_networks.cooling_network as coolMain
 import cea.optimization.supportFn as sFn
 import cea.technologies.substation as sMain
-from cea.optimization.master import master_to_slave as MSVar
+import check as cCheck
 
 def readInd(individual, Qmax, locator, gv):
     """
@@ -153,7 +153,7 @@ def readInd(individual, Qmax, locator, gv):
 
 def checkNtw(individual, ntwList, locator, gv):
     """
-    Calls the network routine if necessary
+    Calls the distribution routine if necessary
     
     Parameters
     ----------
@@ -174,18 +174,18 @@ def checkNtw(individual, ntwList, locator, gv):
         if indCombi.count("1") == 1:
             total_demand = pd.read_csv(locator.pathNtwRes + "//" +  "Total_" + indCombi + ".csv")
             building_names = total_demand.Name.values
-            print "Direct launch of network summary routine for", indCombi
+            print "Direct launch of distribution summary routine for", indCombi
             nM.network_main(locator, total_demand, building_names, gv, indCombi)
 
         else:
             total_demand = sFn.createTotalNtwCsv(indCombi, locator)
             building_names = total_demand.Name.values
 
-            # Run the substation and network routines
-            print "Re-run the substation routine for new network configuration", indCombi
+            # Run the substation and distribution routines
+            print "Re-run the substation routine for new distribution configuration", indCombi
             sMain.substation_main(locator, total_demand, building_names, gv, indCombi)
             
-            print "Launch network summary routine"
+            print "Launch distribution summary routine"
             nM.network_main(locator, total_demand, building_names, gv, indCombi)
 
 
@@ -234,7 +234,7 @@ def evalInd(individual, buildList, locator, extraCosts, extraCO2, extraPrim, sol
     else:
         Qheatmax = 0
     
-    print Qheatmax, "Qheatmax in network"
+    print Qheatmax, "Qheatmax in distribution"
     Qnom = Qheatmax * (1+gv.Qmargin_ntw)
     
     # Modify the individual with the extra GHP constraint
@@ -271,7 +271,7 @@ def evalInd(individual, buildList, locator, extraCosts, extraCO2, extraPrim, sol
         prim += slavePrim
     
     else:
-        print "No buildings connected to network \n"
+        print "No buildings connected to distribution \n"
 
 
     print "Add extra costs"

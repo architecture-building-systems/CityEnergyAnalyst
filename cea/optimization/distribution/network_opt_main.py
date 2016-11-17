@@ -17,7 +17,7 @@ __status__ = "Production"
 
 class network_opt_main(object):
     """
-    This class just sets-ip constants of the linear model of the network.
+    This class just sets-ip constants of the linear model of the distribution.
     These results are extracted form the work of Florian a the chair.
     Unfortunately his work only worked for this case study and could not be used else were
     See the paper of Fonseca et al 2015 fo the city energy analyst for more info on how that procedure used to work.

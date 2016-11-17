@@ -1,5 +1,5 @@
 
-import cea.optimization.slave.Find_Least_Cost_Source_PresetOrder as Least_Cost
+import cea.optimization.conversion_storage.slave.Find_Least_Cost_Source_PresetOrder as Least_Cost
 reload(Least_Cost)
 
 #Least_Cost_Path =  "/Users/Tim/Desktop/ETH/Masterarbeit/Github_Files/urben/Masterarbeit/UESM/Slave/Slave_Subfunctions/Find_Least_Cost_Source"
@@ -18,7 +18,7 @@ import time
 #reload(Least_Cost)
 
 #os.chdir(Storage_Optimization_Path)
-import cea.optimization.slave.Storage_Power_Operation_Losses_Partload.Storage_Optimizer_incl_Losses_main_2 as Storage_Opt
+import cea.optimization.conversion_storage.slave.Storage_Power_Operation_Losses_Partload.Storage_Optimizer_incl_Losses_main_2 as Storage_Opt
 reload(Storage_Opt)
 
 #os.chdir(Substation_Model_Path)
