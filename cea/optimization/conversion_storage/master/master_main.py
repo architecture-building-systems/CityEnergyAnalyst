@@ -10,8 +10,8 @@ import os
 import time
 from pickle import Pickler, Unpickler
 
-import cea.optimization.master.ea.evaluation as eI
-import cea.optimization.master.ea.generation as ci
+import cea.optimization.conversion_storage.master.ea.evaluation as evaluation_function
+import cea.optimization.conversion_storage.master.ea.generation as generation_function
 from deap import base
 from deap import creator
 from deap import tools
@@ -66,8 +66,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
     # DEFINE OBJECTIVE FUNCTION
     def evalConfig(ind):
-        (costs, CO2, prim) = eI.evalInd(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                                        network_features, gv)
+        (costs, CO2, prim) = evaluation_function.evalInd(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+                                                         network_features, gv)
         return (costs, CO2, prim)
 
     # SET-UP EVOLUTIONARY ALGORITHM
@@ -75,11 +75,10 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     creator.create("Fitness", base.Fitness, weights=(-1.0, -1.0, -1.0))
     creator.create("Individual", list, fitness=creator.Fitness)
     toolbox = base.Toolbox()
-    toolbox.register("generate", ci.generateInd, nBuildings, gv)
+    toolbox.register("generate", generation_function.generateInd, nBuildings, gv)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", evalConfig)
-
 
     ntwList = ["1"*nBuildings]
     epsInd = []
@@ -92,7 +91,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         # Check distribution
         for ind in pop:
-            eI.checkNtw(ind, ntwList, locator, gv)
+            evaluation_function.checkNtw(ind, ntwList, locator, gv)
         
         # Evaluate the initial population
         print "Evaluate initial population"
@@ -169,7 +168,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         
         print "Update Network list \n"
         for ind in invalid_ind:
-            eI.checkNtw(ind, ntwList, locator, gv)
+            evaluation_function.checkNtw(ind, ntwList, locator, gv)
         
         print "Re-evaluate the population" 
         fitnesses = map(toolbox.evaluate, invalid_ind)
@@ -185,7 +184,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         selection = sel.selectPareto(offspring)
         
         # Compute the epsilon criteria [and check the stopping criteria]
-        epsInd.append(eI.epsIndicator(pop, selection))
+        epsInd.append(evaluation_function.epsIndicator(pop, selection))
         #if len(epsInd) >1:
         #    eta = (epsInd[-1] - epsInd[-2]) / epsInd[-2]
         #    if eta < gv.epsMargin:

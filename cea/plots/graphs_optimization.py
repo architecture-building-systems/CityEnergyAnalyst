@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-import cea.optimization.master.ea.normalization as norm
+import cea.optimization.conversion_storage.master.ea.normalization as norm
 import cea.optimization.supportFn as sFn
 
 __author__ = "Jimeno A. Fonseca"
@@ -412,7 +412,7 @@ def test_graph_demand():
     # pop, eps, testedPop = sFn.readCheckPoint(pathX, Generation, 0)
     #
     # print "Network Optimization \n"
-    # finalDir = CodePath + "network/"
+    # finalDir = CodePath + "distribution/"
     # ntwFeat = ntwM.ntwMain2(matlabDir, finalDir, header)
     # gV = glob.globalVariables()
     # print "Compute electricity needs for all buildings"

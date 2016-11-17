@@ -116,7 +116,7 @@ def individual_to_barcode(individual, gV):
 def createTotalNtwCsv(indCombi, locator):
     """
     Create and saves the total file for a specific DHN configuration
-    to make the network routine possible
+    to make the distribution routine possible
     
     Parameters
     ----------
@@ -161,7 +161,7 @@ def readCheckPoint(pathX, genCP, storeData):
     genCP : int
         generation from whom to extract data
     pathNtwRes : string
-        path to folder where the files from the network routine are stored
+        path to folder where the files from the distribution routine are stored
     storeData : int
         0 if no, 1 if yes
     
@@ -192,7 +192,6 @@ def readCheckPoint(pathX, genCP, storeData):
 
     if storeData == 1:
         data_container = [['Cost', 'CO2', 'Eprim_i','Qmax', 'key']]
-        #frame = pd.DataFrame()
         ind_counter = 0
         for ind in pop:
             
@@ -223,61 +222,6 @@ def readCheckPoint(pathX, genCP, storeData):
         results.to_csv(Name, sep= ',')
 
     return pop, eps, testedPop
-
-
-class solarFeatures(object):
-    def __init__(self):
-        self.SolarArea = 35710     # [m2]
-        
-        self.PV_Peak = 5680.8      # [kW_el]
-        self.PVT_Peak = 849        # [kW_el]
-        self.PVT_Qnom = 24512E3    # [W_th]
-        self.SC_Qnom = 17359E3   # [W_th]
-            
-            
-def solarRead(locator, gV):
-    """
-    Extract the appropriate solar features
-    
-    Parameters
-    ----------
-    locator : string
-        path to raw solar files
-    
-    Returns
-    -------
-    solarFeat : solarFeatures
-        includes : the total solar area
-        the PV electrical peak production [kW]
-        the PVT electrical peak production [kW]
-        the PVT heating peak production [Wth]
-        the SC heating peak production [Wth]
-    
-    """
-    solarFeat = solarFeatures()
-    
-    PVarray = extractDemand(locator.pathSolarRaw + "/Pv.csv", ["PV_kWh"], gV.DAYS_IN_YEAR)
-    solarFeat.PV_Peak = np.amax(PVarray)
-
-    PVarray = extractDemand(locator.pathSolarRaw + "/Pv.csv", ["Area"], gV.DAYS_IN_YEAR)
-    solarFeat.SolarAreaPV = PVarray[0][0]
-    
-    PVTarray = extractDemand(locator.pathSolarRaw + "/PVT_35.csv", ["PV_kWh"], gV.DAYS_IN_YEAR)
-    solarFeat.PVT_Peak = np.amax(PVTarray)
-
-    PVTarray = extractDemand(locator.pathSolarRaw + "/PVT_35.csv", ["Qsc_KWh"], gV.DAYS_IN_YEAR)
-    solarFeat.PVT_Qnom = np.amax(PVTarray) * 1000
-
-    PVTarray = extractDemand(locator.pathSolarRaw + "/PVT_35.csv", ["Area"], gV.DAYS_IN_YEAR)
-    solarFeat.SolarAreaPVT = PVTarray[0][0]
-    
-    SCarray = extractDemand(locator.pathSolarRaw + "/SC_75.csv", ["Qsc_Kw"], gV.DAYS_IN_YEAR)
-    solarFeat.SC_Qnom = np.amax(SCarray) * 1000
-
-    SCarray = extractDemand(locator.pathSolarRaw + "/SC_75.csv", ["Area"], gV.DAYS_IN_YEAR)
-    solarFeat.SolarAreaSC = SCarray[0][0]
-    
-    return solarFeat
 
 
 def calc_num_buildings(data_path, totalfilename):
