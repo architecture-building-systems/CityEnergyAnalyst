@@ -10,17 +10,15 @@ import os
 import time
 from pickle import Pickler, Unpickler
 
+import cea.optimization.master.ea.evaluation as eI
 import cea.optimization.master.ea.generation as ci
-import cea.optimization.master.ea.crossover as cx
-import ea.mutations as mut
-import ea.selection as sel
 from deap import base
 from deap import creator
 from deap import tools
 
-import cea.optimization.supportFn as sFn
-import cea.optimization.master.ea.evaluation as eI
-from cea.optimization.master.ea import check as cCheck
+import cea.optimization.conversion_storage.master.ea.crossover as cx
+import ea.mutations as mut
+import ea.selection as sel
 
 
 __author__ =  "Thuy-An Nguyen"
@@ -32,60 +30,56 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def calc_ea_setup(nBuildings, gv):
+
+def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+                           network_features, gv, genCP = 0):
     """
-    This sets-up the evolutionary algorithm of the library DEAp in python
+    Evolutionary algorithm to optimize the district energy system's design.
+    This algortihm optimizaes the size and operation of technologies for a district heating netowrk.
+    electrical netowrk are not considered but their burdens in terms electricity costs, efficiency and emissions
+    is added on top of the optimization
+    The equipment for Cooling networks is not optimized as it is assumed that all customer with cooling needs will be
+    connected to a lake. in case there is not enough cvapacity form the lake a chiller and cooling tower is used to cover
+    the extra needs.
+
+    :param locator: locator class
+    :param building_names: vector with building names
+    :param extra_costs: costs calculated before optimization ofr specific energy services
+     (process heat and electricity)
+    :param extra_CO2: green house gas emissions calculated before optimization ofr specific energy services
+     (process heat and electricity)
+    :param extra_primary_energy: primary energy calculated before optimization ofr specific energy services
+     (process heat and electricity)
+    :param solar_features: object class with vectors and values of interest for the integration of solar potentials
+    :param network_features: object class with linear coefficients of the netowrk obtained after its optimization
+    :param gv: global variables class
+    :param genCP:
     :return:
-    """
-    # import evaluation routine
+        for every generation 'g': it stores the results of every generation of the genetic algorithm in the subfolders
+        locator.pathMasterRes as a pyhton pickle file.
 
-    # Contains 3 Fitnesses : Costs, CO2 emissions, Primary Energy Needs
-    creator.create("Fitness", base.Fitness, weights=(-1.0, -1.0, -1.0))
-    creator.create("Individual", list, fitness=creator.Fitness)
-    toolbox = base.Toolbox()
-    toolbox.register("generate", ci.generateInd, nBuildings, gv)
-    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
-    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-
-    return creator, toolbox
-
-def evolutionary_algo_main(locator, building_names, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gv, genCP = 0):
-    """
-    Evolutionary algorithm to optimize the district energy system's design
-    
-    Parameters
-    ----------
-    locator : string
-        paths to folders
-    finances / CO2 / Prim : float
-        costs [CHF] / emissions [kg CO2-eq] / primary energy needs [MJ oil] 
-        previously calculated
-    solarFeat : class solarFeatures
-        includes data from solar files
-    ntwFeat : class ntwFeatures
-        includes data from the ntw optimization
-    genCP : int
-        generation to start the EA from (eg if there was a crash of the code)
-    
-    Returns
-    -------
-    
     """
     t0 = time.clock()
 
     # get number of buildings
     nBuildings = len(building_names)
 
-    # set-up toolbox of DEAp library in python (containing the evolutionary algotirhtm
-    creator, toolbox = calc_ea_setup(nBuildings, gv)
-
-    # define objective function and register into toolbox
+    # DEFINE OBJECTIVE FUNCTION
     def evalConfig(ind):
-        (costs, CO2, prim) = eI.evalInd(ind, building_names, locator, extraCosts, extraCO2, extraPrim, solarFeat,
-                                        ntwFeat, gv)
+        (costs, CO2, prim) = eI.evalInd(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+                                        network_features, gv)
         return (costs, CO2, prim)
 
+    # SET-UP EVOLUTIONARY ALGORITHM
+    # Contains 3 minimization objectives : Costs, CO2 emissions, Primary Energy Needs
+    creator.create("Fitness", base.Fitness, weights=(-1.0, -1.0, -1.0))
+    creator.create("Individual", list, fitness=creator.Fitness)
+    toolbox = base.Toolbox()
+    toolbox.register("generate", ci.generateInd, nBuildings, gv)
+    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", evalConfig)
+
 
     ntwList = ["1"*nBuildings]
     epsInd = []
@@ -96,7 +90,7 @@ def evolutionary_algo_main(locator, building_names, extraCosts, extraCO2, extraP
         # create population
         pop = toolbox.population(n=gv.initialInd)
 
-        # Check network
+        # Check distribution
         for ind in pop:
             eI.checkNtw(ind, ntwList, locator, gv)
         

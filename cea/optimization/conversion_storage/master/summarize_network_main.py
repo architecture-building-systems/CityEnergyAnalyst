@@ -22,9 +22,9 @@ __status__ = "Production"
 
 def network_main(locator, total_demand, building_names, gv, key):
     """
-    This function summarizes the network demands and will give them as:
+    This function summarizes the distribution demands and will give them as:
     - absolute values (design values = extreme values)
-    - hourly operation scheme of input/output of network
+    - hourly operation scheme of input/output of distribution
 
     :param locator: locator class
     :param total_demand: dataframe with total demand of buildings
@@ -41,7 +41,7 @@ def network_main(locator, total_demand, building_names, gv, key):
 
     t0 = time.clock()
 
-    # import properties of network
+    # import properties of distribution
     num_buildings_network = total_demand.Name.count()
     pipes_tot_length = pd.read_csv(locator.get_pipes_DH_network, usecols=['LENGTH'])
     ntwk_length = pipes_tot_length.sum() * num_buildings_network / gv.num_tot_buildings
@@ -92,7 +92,7 @@ def network_main(locator, total_demand, building_names, gv, key):
                                                          substations[iteration].mdot_DC_result.values)
         iteration += 1
 
-    # calculate thermal losses of network
+    # calculate thermal losses of distribution
     T_sst_heat_return_netw_total = np.vectorize(calc_return_temp)(sum_tret_mdot_heat, mdot_heat_netw_all)
 
     T_sst_heat_supply_netw_total = np.vectorize(calc_supply_temp)(T_sst_heat_return_netw_total,
@@ -162,7 +162,7 @@ def network_main(locator, total_demand, building_names, gv, key):
                             "Q_DH_losses": Q_DH_losses,
                             "Q_DC_losses": Q_DC_losses})
 
-    # the key depicts weather this is the network of all customers or a network of a gorup of them.
+    # the key depicts weather this is the distribution of all customers or a distribution of a gorup of them.
     fName_result = "Network_summary_result_" + key + ".csv"
     results.to_csv(locator.pathNtwRes + '//' + fName_result, sep=',')
 
@@ -174,15 +174,15 @@ def network_main(locator, total_demand, building_names, gv, key):
 
 def calc_temp_withlosses(t0, Q, m, cp, case):
     """
-    This function calculates the new temperature of the network including losses
+    This function calculates the new temperature of the distribution including losses
 
-    :param t0: current network temperature
+    :param t0: current distribution temperature
     :param Q: load including thermal losses
     :param m: mass flow rate
     :param cp: specific heat capacity
     :param case: "positive": if there is an addition to the losses, :negative" otherwise
     :return:
-        t1: new temperature of the network accounting for thermal losses in the grid
+        t1: new temperature of the distribution accounting for thermal losses in the grid
     """
     if m > 0:
         if case == "positive":
@@ -195,7 +195,7 @@ def calc_temp_withlosses(t0, Q, m, cp, case):
 
 def calc_return_temp(sum_t_m, sum_m):
     """
-    This function calculates the return temperature of the network for a time step
+    This function calculates the return temperature of the distribution for a time step
 
     :param sum_t_m: sum of temperature times mass flow rate
     :param sum_m: sum of mass flow rate
@@ -211,7 +211,7 @@ def calc_return_temp(sum_t_m, sum_m):
 
 def calc_supply_temp(tr, Q, m, cp, case):
     """
-    This function calculates the supply temperature of the network for a time step.
+    This function calculates the supply temperature of the distribution for a time step.
 
     :param tr: current return temperature
     :param Q: load including thermal losses
@@ -219,7 +219,7 @@ def calc_supply_temp(tr, Q, m, cp, case):
     :param cp: specific heat capacity
     :param case:
     :return:
-        ts: new temperature of the network accounting for thermal losses in the grid
+        ts: new temperature of the distribution accounting for thermal losses in the grid
     """
     if m > 0:
         if case == "DH":
@@ -236,7 +236,7 @@ def calc_supply_temp(tr, Q, m, cp, case):
 
 def calc_piping_thermal_losses(Tnet, mmax, mmin, L, Tg, K, cp):
     """
-    This function estimates the average thermal losses of a network for an hour of the year
+    This function estimates the average thermal losses of a distribution for an hour of the year
 
     :param Tnet: current temperature of the pipe
     :param mmax: maximum mass flow rate in the pipe
@@ -262,7 +262,7 @@ def calc_piping_thermal_losses(Tnet, mmax, mmin, L, Tg, K, cp):
 
 def calc_min_flow(m0, m1):
     """
-    This fucntion calculates the minimum flow of a network by comparison of two vectors.
+    This fucntion calculates the minimum flow of a distribution by comparison of two vectors.
     this is useful when lookig up at multiple buildings in a for loop.
 
     :param m0: last minimum mass flow rate

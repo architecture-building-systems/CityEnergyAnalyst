@@ -101,7 +101,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
     addCO2 += CO2DiscBuild
     addPrim += PrimDiscBuild
     
-    # Add the features for the network
+    # Add the features for the distribution
 
     if indCombi.count("1") > 0:
         os.chdir(locator.pathSlaveRes)
@@ -281,7 +281,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         print storage.calc_Cinv_storage(StorageVol, gv), "Storage Costs"
         
         
-        # Costs from network configuration
+        # Costs from distribution configuration
         print "\n COSTS FROM NETWORK CONFIGURATION"
         if gv.ZernezFlag == 1:
             NetworkCost += network.calc_Cinv_network_linear(gv.NetworkLengthZernez, gv) * nBuildinNtw / len(buildList)
