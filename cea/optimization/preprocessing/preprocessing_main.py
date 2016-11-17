@@ -45,33 +45,38 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     solarFeat: extraction of solar features form the results of the solar technologies calculation.
     '''
 
-    # read weather and calculate ground temperature from geothermal model.
+    # GET ENERGY POTENTIALS
+    # geothermal
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
     gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
 
-    # run substation model for every building. this will calculate temperatures of supply and return at the grid side.
+    # solar
+    print "Solar features extraction"
+    solarFeat = sFn.solarRead(locator, gv)
+
+    # GET LOADS IN SUBSTATIONS
+    # prepocess space heating, domestic hot water and space cooling to substation.
     print "Run substation model for each building separately"
     substation.substation_main(locator, total_demand, building_names, gv, Flag = True) # True if disconected buildings are calculated
 
+    # GET COMPETITIVE ALTERNATIVES TO A NETWORK
     # estimate what would be the operation of single buildings only for heating.
     # For cooling all buildings are assumed to be connected to the cooling network on site.
     print "Heating operation pattern for single buildings"
     decentralized_buildings.decentralized_main(locator, building_names, gv)
 
+    # GET DH NETWORK
     # at first estimate a network with all the buildings connected at it.
     print "Create network file with all buildings connected"
     nM.network_main(locator, total_demand, building_names, gv, "all") #"_all" key for all buildings
 
-    # extraction of solar features form the results of the solar technologies calculation.
-    print "Solar features extraction"
-    solarFeat = sFn.solarRead(locator, gv)
-
+    # GET EXTRAS
     # estimate the extra costs, emissions and primary energy of electricity.
     print "electricity"
     elecCosts, elecCO2, elecPrim = electricity.calc_pareto_electricity(locator, gv)
 
     # estimate the extra costs, emissions and primary energy for process heat
-    print "Process Heat "
+    print "Process-heat"
     hpCosts, hpCO2, hpPrim = process_heat.calc_pareto_Qhp(locator, total_demand, gv)
 
     extraCosts = elecCosts + hpCosts
