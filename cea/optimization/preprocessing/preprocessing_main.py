@@ -42,7 +42,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     these are treated separately and not considered inside the optimization)
     extraPrim: extra pareto optimal primary energy due to electricity and process heat (
     these are treated separately and not considered inside the optimization)
-    solarFeat: extraction of solar features form the results of the solar technologies calculation.
+    solar_features: extraction of solar features form the results of the solar technologies calculation.
     '''
 
     # GET ENERGY POTENTIALS
@@ -52,7 +52,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
 
     # solar
     print "Solar features extraction"
-    solarFeat = sFn.solarRead(locator, gv)
+    solar_features = sFn.solarRead(locator, gv)
 
     # GET LOADS IN SUBSTATIONS
     # prepocess space heating, domestic hot water and space cooling to substation.
@@ -83,4 +83,4 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     extraCO2 = elecCO2 + hpCO2
     extraPrim = elecPrim + hpPrim
 
-    return extraCosts, extraCO2, extraPrim, solarFeat
+    return extraCosts, extraCO2, extraPrim, solar_features
