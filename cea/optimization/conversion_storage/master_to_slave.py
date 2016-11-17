@@ -20,7 +20,7 @@ __status__ = "Production"
 
 
 
-class MasterSlaveVariables(object):
+class MastertoSlave(object):
     def __init__(self):            
         
         # Name the file which should be loaded:
