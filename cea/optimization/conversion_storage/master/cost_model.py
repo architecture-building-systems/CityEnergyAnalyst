@@ -201,9 +201,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         # Solar technologies
 
         PV_peak = dicoSupply.SOLAR_PART_PV * solarFeat.SolarAreaPV * gv.nPV #kW
-        PVInvC = pv.calc_Cinv_PV(PV_peak)
+        PVInvC = pv.calc_Cinv_pv(PV_peak)
         addCosts += PVInvC
-        print pv.calc_Cinv_PV(PV_peak), "PV peak"
+        print pv.calc_Cinv_pv(PV_peak), "PV peak"
         
         SC_area = dicoSupply.SOLAR_PART_SC * solarFeat.SolarAreaSC
         SCInvC = stc.calc_Cinv_SC(SC_area)

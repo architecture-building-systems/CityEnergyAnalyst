@@ -6,7 +6,7 @@ Mixed-integer algorithm main
 """
 
 import time
-import cea.optimization.conversion_storage.slave.least_cost as Least_Cost
+import cea.optimization.conversion_storage.slave.least_cost as least_cost
 import cea.optimization.conversion_storage.slave.seasonal_storage.storage_main as storage_main
 
 __author__ = "Tim Vollrath"
@@ -44,8 +44,8 @@ def slave_main(locator, master_to_slave_vars, solar_features, gv):
     
     # run activation pattern
     E_oil_eq_MJ, CO2_kg_eq, cost_sum,\
-    QUncoveredDesign, QUncoveredAnnual = Least_Cost.Least_Cost_Optimization(locator, master_to_slave_vars,
-                                                                            solar_features, gv)
+    QUncoveredDesign, QUncoveredAnnual = least_cost.least_cost_main(locator, master_to_slave_vars,
+                                                                    solar_features, gv)
 
     print " Slave Optimization done (", round(time.time()-t0,1)," seconds used for this task)"
 
