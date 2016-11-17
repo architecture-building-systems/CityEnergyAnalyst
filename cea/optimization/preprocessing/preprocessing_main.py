@@ -9,7 +9,7 @@ from __future__ import division
 import cea.optimization.preprocessing.processheat as process_heat
 from cea.technologies import substation
 from cea.optimization.preprocessing import decentralized_buildings
-from cea.optimization.master import summarize_network_main as nM
+from cea.optimization.master import summarize_network_main
 from cea.optimization.preprocessing import electricity
 from cea.utilities import  epwreader
 from cea.resources import geothermal
@@ -68,7 +68,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     # GET DH NETWORK
     # at first estimate a network with all the buildings connected at it.
     print "Create network file with all buildings connected"
-    nM.network_main(locator, total_demand, building_names, gv, "all") #"_all" key for all buildings
+    summarize_network_main.network_main(locator, total_demand, building_names, gv, "all") #"_all" key for all buildings
 
     # GET EXTRAS
     # estimate the extra costs, emissions and primary energy of electricity.
