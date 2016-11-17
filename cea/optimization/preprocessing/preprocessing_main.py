@@ -7,10 +7,10 @@ pre-processing algorithm
 
 from __future__ import division
 
-import cea.optimization.preprocessing.extra_services.processheat as process_heat
-from cea.optimization.conversion_storage.master import summarize_network_main
-from cea.optimization.preprocessing.baseline import decentralized_buildings
-from cea.optimization.preprocessing.extra_services import electricity
+import cea.optimization.preprocessing.other_services.processheat as process_heat
+from cea.optimization.conversion_storage.master import summarize_network
+from cea.optimization.preprocessing.decentralized_buildings import decentralized_buildings
+from cea.optimization.preprocessing.other_services import electricity
 from cea.resources import geothermal
 from cea.technologies import substation
 from cea.utilities import  epwreader
@@ -68,7 +68,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     # GET DH NETWORK
     # at first estimate a distribution with all the buildings connected at it.
     print "Create distribution file with all buildings connected"
-    summarize_network_main.network_main(locator, total_demand, building_names, gv, "all") #"_all" key for all buildings
+    summarize_network.network_main(locator, total_demand, building_names, gv, "all") #"_all" key for all buildings
 
     # GET EXTRAS
     # estimate the extra costs, emissions and primary energy of electricity.

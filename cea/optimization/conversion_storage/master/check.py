@@ -11,7 +11,7 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 
-import cea.optimization.conversion_storage.master.ea.generation as ci
+import cea.optimization.conversion_storage.master.generation as ci
 import cea.optimization.supportFn as sFn
 
 __author__ =  "Thuy-An Nguyen"

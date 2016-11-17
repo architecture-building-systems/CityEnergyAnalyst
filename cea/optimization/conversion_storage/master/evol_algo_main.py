@@ -10,15 +10,15 @@ import os
 import time
 from pickle import Pickler, Unpickler
 
-import cea.optimization.conversion_storage.master.ea.evaluation as evaluation_function
-import cea.optimization.conversion_storage.master.ea.generation as generation_function
+import cea.optimization.conversion_storage.master.evaluation as evaluation_function
+import cea.optimization.conversion_storage.master.generation as generation_function
+import mutations as mut
+import selection as sel
 from deap import base
 from deap import creator
 from deap import tools
 
-import cea.optimization.conversion_storage.master.ea.crossover as cx
-import ea.mutations as mut
-import ea.selection as sel
+import cea.optimization.conversion_storage.master.crossover as cx
 
 
 __author__ =  "Thuy-An Nguyen"
@@ -138,7 +138,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             child1, child2 = cx.cxUniform(ind1, ind2, PROBA, gv)
             offspring += [child1, child2]
 
-        # First half of the EA: create new un-collerated configurations
+        # First half of the master: create new un-collerated configurations
         if g < gv.NGEN/2:
             for mutant in pop:
                 print "Mutation Flip"
@@ -148,7 +148,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                 print "Mutation GU \n"
                 offspring.append(mut.mutGU(mutant, PROBA, gv))
                 
-        # Third quarter of the EA: keep the good individuals but modify the shares uniformly
+        # Third quarter of the master: keep the good individuals but modify the shares uniformly
         elif g < gv.NGEN * 3/4:
             for mutant in pop:
                 print "Mutation Uniform"

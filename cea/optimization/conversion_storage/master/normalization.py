@@ -8,7 +8,7 @@ import Rep3D as rep
 from deap import base
 
 import cea.optimization.supportFn as sFn
-from cea.optimization.conversion_storage.master.ea import evaluation as eI
+from cea.optimization.conversion_storage.master import evaluation as eI
 
 reload(sFn)
 reload(rep)
@@ -97,7 +97,7 @@ def normalize_epsIndicator(pathX, generation):
     Returns
     -------
     epsAll : list
-        normalized epsilon indicator from the beginning of the EA to generation
+        normalized epsilon indicator from the beginning of the master to generation
     
     """
     epsAll = []

@@ -20,8 +20,6 @@ __status__ = "Production"
 
 
 
-
-
 class MasterSlaveVariables(object):
     def __init__(self):            
         

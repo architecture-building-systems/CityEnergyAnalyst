@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-import cea.optimization.conversion_storage.master.ea.normalization as norm
+import cea.optimization.conversion_storage.master.normalization as norm
 import cea.optimization.supportFn as sFn
 
 __author__ = "Jimeno A. Fonseca"
@@ -405,7 +405,7 @@ def test_graph_demand():
     plot_pareto_scenarios(generations, headers, True, savelocation)
     plot_pareto_scenarios(generations, headers, False, savelocation)
 
-    # run graphs of multi-criteria assement and comparison to baseline Intra-scenario
+    # run graphs of multi-criteria assement and comparison to decentralized_buildings Intra-scenario
     # header = headers[0]
     # pathX = sFn.pathX(headers[0])
     # Generation = generations[0]
@@ -436,7 +436,7 @@ def test_graph_demand():
     # plot_comparison_MCDA(popRef[0], 0, pop, indToCompare,savelocation, "intra")
 
 
-    # run graphs of multi-criteria assement and comparison to baseline Interscenario
+    # run graphs of multi-criteria assement and comparison to decentralized_buildings Interscenario
     # SQ_values = [2900000,6106734.8,230330106] # cost,CO2,prim
     # SQ_area = 132274.8
     # header = headers[3]
@@ -468,7 +468,7 @@ def test_graph_demand():
     # print 'Most sensitive factor :', mostSensitive
 
     #
-    ### Bar chart for the relative savings compared to baseline
+    ### Bar chart for the relative savings compared to decentralized_buildings
     # popRef, epsInd = mM.EA_Main(pathX, finances, extraCO2, extraPrim, solarFeat, ntwFeat, gV, manualCheck = 1)
     # indToCompare = mcda.mcda_differentWeights(pop, pathX)
     # reload(plots)
