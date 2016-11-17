@@ -1,70 +1,35 @@
+"""
+===========================
+Mixed-integer algorithm main
+===========================
 
-import cea.optimization.conversion_storage.slave.Find_Least_Cost_Source_PresetOrder as Least_Cost
-reload(Least_Cost)
-
-#Least_Cost_Path =  "/Users/Tim/Desktop/ETH/Masterarbeit/Github_Files/urben/Masterarbeit/UESM/Slave/Slave_Subfunctions/Find_Least_Cost_Source"
-
-#Storage_Optimization_Path = "/Users/Tim/Desktop/ETH/Masterarbeit/Github_Files/urben/Masterarbeit/UESM/Slave/Slave_Subfunctions/Storage_Power_Operation_Losses_Partload/"
-
-#Substation_Model_Path = "/Users/Tim/Desktop/ETH/Masterarbeit/Github_Files/urben/Masterarbeit/UESM/Slave/Slave_Subfunctions/Substation_Model/"
-
-#Network_Summary_Path = "/Users/Tim/Desktop/ETH/Masterarbeit/Github_Files/urben/Masterarbeit/UESM/Slave/Slave_Subfunctions/Summarize_Network_States/"
+"""
 
 import time
+import cea.optimization.conversion_storage.slave.least_cost as Least_Cost
+import cea.optimization.conversion_storage.slave.seasonal_storage.storage_main as Storage_Opt
 
-#import os
-#os.chdir(Least_Cost_Path)
-#import Find_Least_Cost_Source_Main_V7_PresetOrder as Least_Cost
-#reload(Least_Cost)
-
-#os.chdir(Storage_Optimization_Path)
-import cea.optimization.conversion_storage.slave.Storage_Power_Operation_Losses_Partload.Storage_Optimizer_incl_Losses_main_2 as Storage_Opt
-reload(Storage_Opt)
-
-#os.chdir(Substation_Model_Path)
-#import substation_combined_main_V4_NOhextype_NewNames as Substation_Model
-#os.chdir(Substation_Model_Path)
-#reload(Substation_Model)
-
-#os.chdir(Network_Summary_Path)
-#import summarize_network_main as network_main
-#reload(network_main)
-
-# run Substation Model 
-#Substation_Model.Substation_Calculation()
-
-# run Network Summary 
-
-
-#import MasterToSlaveVariables
-#reload(MasterToSlaveVariables)
-#import os
-#import pandas as pd
-#import globalVar as gV
-#context = MasterToSlaveVariables.MasterSlaveVariables()
-
-
-# run storage optimization
-def slaveMain(pathX, fName_NetworkData, context, solarFeat, gV):
+def slave_main(pathX, fName_NetworkData, context, solarFeat, gV):
     """
-    Main Slave Function, calls storage optimization and least cost optimization
-    
-    
+    This function calls the optimization storage and a least cost optimization fucntion.
+    Both functions aim at selecting the dispatch pattern of the technologies selected by the evolutionary algorithm.
+
+    :param pathX:
+    :param fName_NetworkData:
+    :param context:
+    :param solarFeat:
+    :param gV:
+    :return:
     """
-    t_zero = time.time()
+    t0 = time.time()
     
-    # run Storage Optimization
+    # run storage optimization
     Storage_Opt.Storage_Optimization(pathX, fName_NetworkData, context, gV)
     
-    # run PP activation
+    # run activation pattern
     E_oil_eq_MJ, CO2_kg_eq, cost_sum, QUncoveredDesign, QUncoveredAnnual = Least_Cost.Least_Cost_Optimization(pathX, context, solarFeat, gV)
-    
-    #read Q_uncovered and design a PP for this, run it and cost it!
-        
-        
-    t_end = time.time()
-    print " ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----"
-    print " Slave Optimization done (", round(t_end-t_zero,1)," seconds used for this task)"
+
+    print " Slave Optimization done (", round(time.time()-t0,1)," seconds used for this task)"
 
     return E_oil_eq_MJ, CO2_kg_eq, cost_sum, QUncoveredDesign, QUncoveredAnnual
     
