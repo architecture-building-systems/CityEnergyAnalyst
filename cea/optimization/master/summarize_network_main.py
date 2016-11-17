@@ -30,7 +30,7 @@ def network_main(locator, total_demand, building_names, gv, key):
     :param total_demand: dataframe with total demand of buildings
     :param building_names: vector with names of buildings
     :param gv: gloval variables class
-    :param key: when called by the optimization, a key will provide an identification for the individual
+    :param key: when called by the optimization, a key will provide an id for the individual
      and the generation.
     :return:
         csv file stored in locator.pathNtwRes + '//' + fName_result
@@ -94,6 +94,7 @@ def network_main(locator, total_demand, building_names, gv, key):
 
     # calculate thermal losses of network
     T_sst_heat_return_netw_total = np.vectorize(calc_return_temp)(sum_tret_mdot_heat, mdot_heat_netw_all)
+
     T_sst_heat_supply_netw_total = np.vectorize(calc_supply_temp)(T_sst_heat_return_netw_total,
                                                                   Q_DH_building_netw_total,
                                                                   mdot_heat_netw_all,
@@ -178,7 +179,7 @@ def calc_temp_withlosses(t0, Q, m, cp, case):
     :param t0: current network temperature
     :param Q: load including thermal losses
     :param m: mass flow rate
-    :param cp: heat capacity
+    :param cp: specific heat capacity
     :param case: "positive": if there is an addition to the losses, :negative" otherwise
     :return:
         t1: new temperature of the network accounting for thermal losses in the grid
@@ -194,11 +195,12 @@ def calc_temp_withlosses(t0, Q, m, cp, case):
 
 def calc_return_temp(sum_t_m, sum_m):
     """
-    This function calculates the return termperature of the network
+    This function calculates the return temperature of the network for a time step
 
-    :param sum_t_m:
-    :param sum_m:
+    :param sum_t_m: sum of temperature times mass flow rate
+    :param sum_m: sum of mass flow rate
     :return:
+        tr: vector return temperature
     """
     if sum_m > 0:
         tr = sum_t_m / sum_m
@@ -208,6 +210,17 @@ def calc_return_temp(sum_t_m, sum_m):
 
 
 def calc_supply_temp(tr, Q, m, cp, case):
+    """
+    This function calculates the supply temperature of the network for a time step.
+
+    :param tr: current return temperature
+    :param Q: load including thermal losses
+    :param m: mass flow rate
+    :param cp: specific heat capacity
+    :param case:
+    :return:
+        ts: new temperature of the network accounting for thermal losses in the grid
+    """
     if m > 0:
         if case == "DH":
             ts = tr + Q / (m * cp)
@@ -222,6 +235,19 @@ def calc_supply_temp(tr, Q, m, cp, case):
 #============================
 
 def calc_piping_thermal_losses(Tnet, mmax, mmin, L, Tg, K, cp):
+    """
+    This function estimates the average thermal losses of a network for an hour of the year
+
+    :param Tnet: current temperature of the pipe
+    :param mmax: maximum mass flow rate in the pipe
+    :param mmin: minimum mass flow rate in the pipe
+    :param L: length of the pipe
+    :param Tg: ground temperature
+    :param K: linear transmittance coefficient (it accounts for insulation and pipe diameter)
+    :param cp: specific heat capacity
+    :return:
+        Qloss: thermal lossess in the pipe.
+    """
     if mmin != 1E6:  # control variable see function fn.calc_min_flow
         mavg = (mmax + mmin) / 2
         Tx = Tg + (Tnet - Tg) * math.exp(-K * L / (mavg * cp))
@@ -235,6 +261,15 @@ def calc_piping_thermal_losses(Tnet, mmax, mmin, L, Tg, K, cp):
 #============================
 
 def calc_min_flow(m0, m1):
+    """
+    This fucntion calculates the minimum flow of a network by comparison of two vectors.
+    this is useful when lookig up at multiple buildings in a for loop.
+
+    :param m0: last minimum mass flow rate
+    :param m1: current minimum mass flow rate
+    :return:
+        mmin: new minimum mass flow rate
+    """
     if m0 == 0:
         m0 = 1E6
     if m1 > 0:
