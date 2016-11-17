@@ -25,6 +25,15 @@ import cea.technologies.thermal_storage as storage
 import cea.technologies.thermal_network as network
 import cea.technologies.pumps as pumps
 
+__author__ = "Tim Vollrath"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Tim Vollrath", "Thuy-An Nguyen", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
 def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncoveredAnnual, solarFeat, ntwFeat, gv):
     """
     Computes additional costs / GHG emisions / primary energy needs

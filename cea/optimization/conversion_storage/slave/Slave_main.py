@@ -7,7 +7,7 @@ Mixed-integer algorithm main
 
 import time
 import cea.optimization.conversion_storage.slave.least_cost as Least_Cost
-import cea.optimization.conversion_storage.slave.seasonal_storage.storage_main as Storage_Opt
+import cea.optimization.conversion_storage.slave.seasonal_storage.storage_main as storage_main
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -18,7 +18,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def slave_main(locator, network_file_name, master_to_slave_vars, solar_features, gV):
+def slave_main(locator, master_to_slave_vars, solar_features, gv):
     """
     This function calls the optimization storage and a least cost optimization fucntion.
     Both functions aim at selecting the dispatch pattern of the technologies selected by the evolutionary algorithm.
@@ -28,7 +28,7 @@ def slave_main(locator, network_file_name, master_to_slave_vars, solar_features,
     :param master_to_slave_vars: class MastertoSlaveVars containing the value of variables to be passed to the slave optimization
     for each individual
     :param solar_features: class solar_features
-    :param gV: global variables class
+    :param gv: global variables class
     :return:
         E_oil_eq_MJ: primary energy
         CO2_kg_eq: co2 emissions
@@ -40,12 +40,12 @@ def slave_main(locator, network_file_name, master_to_slave_vars, solar_features,
     t0 = time.time()
     
     # run storage optimization
-    Storage_Opt.Storage_Optimization(locator, network_file_name, master_to_slave_vars, gV)
+    storage_main.storage_optimization(locator, master_to_slave_vars, gv)
     
     # run activation pattern
     E_oil_eq_MJ, CO2_kg_eq, cost_sum,\
     QUncoveredDesign, QUncoveredAnnual = Least_Cost.Least_Cost_Optimization(locator, master_to_slave_vars,
-                                                                            solar_features, gV)
+                                                                            solar_features, gv)
 
     print " Slave Optimization done (", round(time.time()-t0,1)," seconds used for this task)"
 
