@@ -7,6 +7,8 @@ pre-processing algorithm
 
 from __future__ import division
 
+import pandas as pd
+
 import cea.optimization.preprocessing.other_services.processheat as process_heat
 from cea.optimization.conversion_storage.master import summarize_network
 from cea.optimization.preprocessing.decentralized_buildings import decentralized_buildings
@@ -52,7 +54,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
 
     # solar
     print "Solar features extraction"
-    solar_features = solarRead(locator, gv)
+    solar_features = SolarFeatures(locator)
 
     # GET LOADS IN SUBSTATIONS
     # prepocess space heating, domestic hot water and space cooling to substation.
@@ -86,56 +88,12 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     return extraCosts, extraCO2, extraPrim, solar_features
 
 
-class solarFeatures(object):
-    def __init__(self):
-        self.SolarArea = 35710  # [m2]
-
-        self.PV_Peak = 5680.8  # [kW_el]
-        self.PVT_Peak = 849  # [kW_el]
-        self.PVT_Qnom = 24512E3  # [W_th]
-        self.SC_Qnom = 17359E3  # [W_th]
-
-
-def solarRead(locator, gV):
-    """
-    Extract the appropriate solar features
-
-    Parameters
-    ----------
-    locator : string
-        path to raw solar files
-
-    Returns
-    -------
-    solarFeat : solarFeatures
-        includes : the total solar area
-        the PV electrical peak production [kW]
-        the PVT electrical peak production [kW]
-        the PVT heating peak production [Wth]
-        the SC heating peak production [Wth]
-
-    """
-    solarFeat = solarFeatures()
-
-    PVarray = extractDemand(locator.pathSolarRaw + "/Pv.csv", ["PV_kWh"], gV.DAYS_IN_YEAR)
-    solarFeat.PV_Peak = np.amax(PVarray)
-
-    PVarray = extractDemand(locator.pathSolarRaw + "/Pv.csv", ["Area"], gV.DAYS_IN_YEAR)
-    solarFeat.SolarAreaPV = PVarray[0][0]
-
-    PVTarray = extractDemand(locator.pathSolarRaw + "/PVT_35.csv", ["PV_kWh"], gV.DAYS_IN_YEAR)
-    solarFeat.PVT_Peak = np.amax(PVTarray)
-
-    PVTarray = extractDemand(locator.pathSolarRaw + "/PVT_35.csv", ["Qsc_KWh"], gV.DAYS_IN_YEAR)
-    solarFeat.PVT_Qnom = np.amax(PVTarray) * 1000
-
-    PVTarray = extractDemand(locator.pathSolarRaw + "/PVT_35.csv", ["Area"], gV.DAYS_IN_YEAR)
-    solarFeat.SolarAreaPVT = PVTarray[0][0]
-
-    SCarray = extractDemand(locator.pathSolarRaw + "/SC_75.csv", ["Qsc_Kw"], gV.DAYS_IN_YEAR)
-    solarFeat.SC_Qnom = np.amax(SCarray) * 1000
-
-    SCarray = extractDemand(locator.pathSolarRaw + "/SC_75.csv", ["Area"], gV.DAYS_IN_YEAR)
-    solarFeat.SolarAreaSC = SCarray[0][0]
-
-    return solarFeat
+class SolarFeatures(object):
+    def __init__(self, locator):
+        self.PV_Peak = pd.read_csv(locator.pathSolarRaw + "/Pv.csv", usecols="PV_kWh").max()
+        self.SolarAreaPV = pd.read_csv(locator.pathSolarRaw + "/Pv.csv", usecols="Area").max()
+        self.PVT_Peak = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols="PV_kWh").max()
+        self.PVT_Qnom = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols="Qsc_KWh") * 1000
+        self.SolarAreaPVT = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols="Area").max()
+        self.SC_Qnom = pd.read_csv(locator.pathSolarRaw + "/SC_75.csv", usecols="Qsc_Kw") * 1000
+        self.SolarAreaSC = pd.read_csv(locator.pathSolarRaw + "/SC_75.csv", usecols="Area").max()

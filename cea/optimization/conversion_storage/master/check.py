@@ -202,7 +202,7 @@ def controlCheck(individual, nBuildings, gv):
     
     if not valid:       
         print "Non valid individual ! Replace by new one. \n"
-        newInd = ci.generateInd(nBuildings, gv)
+        newInd = ci.generate_main(nBuildings, gv)
         
         L = (gv.nHeat + gv.nSolar) * 2 + gv.nHR
         for i in range(L):
