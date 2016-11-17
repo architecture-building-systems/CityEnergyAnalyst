@@ -95,9 +95,9 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     if individual_barcode.count("1") > 0:
 
         print "Slave routine on", master_to_slave_vars.configKey
-        (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator, network_file_name,
-                                                                                             master_to_slave_vars, solar_features,
-                                                                                             gv)
+        (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator,
+                                                                                              master_to_slave_vars,
+                                                                                              solar_features, gv)
         costs += slaveCosts
         CO2 += slaveCO2
         prim += slavePrim
