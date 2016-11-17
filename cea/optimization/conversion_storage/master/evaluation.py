@@ -11,7 +11,7 @@ import cea.optimization.conversion_storage.master.summarize_network as nM
 import numpy as np
 import pandas as pd
 
-from cea.optimization.conversion_storage import master_to_slave as MSVar
+from cea.optimization.conversion_storage import master_to_slave
 import cea.optimization.conversion_storage.master.generation as generation
 
 import cea.optimization.conversion_storage.master.cost_model as eM
@@ -47,30 +47,26 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
     """
     # Check the consistency of the individual or create a new one
-    reject_invalid(individual, len(building_names), gv)
-
-    # Create the string representation of the individual
-    indCombi = sFn.individual_to_barcode(individual, gv)
+    individual = check_invalid(individual, len(building_names), gv)
 
     # Initialize objective functions costs, CO2 and primary energy
     costs = extraCosts
     CO2 = extraCO2
     prim = extraPrim
 
-
     QUncoveredDesign = 0
     QUncoveredAnnual = 0
 
-    print indCombi.count("0")
-    print indCombi.count("1")
+    # Create the string representation of the individual
+    individual_barcode = sFn.individual_to_barcode(individual, gv)
 
-    if indCombi.count("0") == 0:
-        fNameNtw = "Network_summary_result_all.csv"
+    if individual_barcode.count("0") == 0:
+        network_file_name = "Network_summary_result_all.csv"
     else:
-        fNameNtw = "Network_summary_result_" + indCombi + ".csv"
+        network_file_name = "Network_summary_result_" + individual_barcode + ".csv"
 
-    if indCombi.count("1") > 0:
-        Qheatmax = sFn.calcQmax(fNameNtw, locator.pathNtwRes, gv)
+    if individual_barcode.count("1") > 0:
+        Qheatmax = sFn.calcQmax(network_file_name, locator.pathNtwRes, gv)
     else:
         Qheatmax = 0
 
@@ -85,27 +81,23 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         print "No GHP constraint check possible \n"
 
     # Export to context
-    dicoSupply = readInd(individual, Qheatmax, locator, gv)
-    dicoSupply.NETWORK_DATA_FILE = fNameNtw
+    master_to_slave_vars = calc_master_to_slave_variables(individual, Qheatmax, locator, gv)
+    master_to_slave_vars.NETWORK_DATA_FILE = network_file_name
 
-    if dicoSupply.nBuildingsConnected > 1:
-        if indCombi.count("0") == 0:
-            dicoSupply.fNameTotalCSV = locator.pathRaw + "/Total.csv"
+    if master_to_slave_vars.nBuildingsConnected > 1:
+        if individual_barcode.count("0") == 0:
+            master_to_slave_vars.fNameTotalCSV = locator.pathRaw + "/Total.csv"
         else:
-            dicoSupply.fNameTotalCSV = locator.pathTotalNtw + "/Total_" + indCombi + ".csv"
+            master_to_slave_vars.fNameTotalCSV = locator.pathTotalNtw + "/Total_" + individual_barcode + ".csv"
     else:
-        dicoSupply.fNameTotalCSV = locator.pathSubsRes + "/Total_" + indCombi + ".csv"
+        master_to_slave_vars.fNameTotalCSV = locator.pathSubsRes + "/Total_" + individual_barcode + ".csv"
 
-    if indCombi.count("1") > 0:
-        # print "Dummy evaluation of", dicoSupply.configKey
-        # (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sFn.dummyevaluate(individual)
+    if individual_barcode.count("1") > 0:
 
-        print "Slave routine on", dicoSupply.configKey
-        (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slaveMain(locator, fNameNtw,
-                                                                                             dicoSupply, solar_features,
+        print "Slave routine on", master_to_slave_vars.configKey
+        (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator, network_file_name,
+                                                                                             master_to_slave_vars, solar_features,
                                                                                              gv)
-        print slaveCosts, slaveCO2, slavePrim, "slaveCosts, slaveCO2, slavePrim \n"
-
         costs += slaveCosts
         CO2 += slaveCO2
         prim += slavePrim
@@ -114,15 +106,15 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         print "No buildings connected to distribution \n"
 
     print "Add extra costs"
-    (addCosts, addCO2, addPrim) = eM.addCosts(indCombi, building_names, locator, dicoSupply, QUncoveredDesign,
+    (addCosts, addCO2, addPrim) = eM.addCosts(individual_barcode, building_names, locator, master_to_slave_vars, QUncoveredDesign,
                                               QUncoveredAnnual, solar_features, network_features, gv)
     print addCosts, addCO2, addPrim, "addCosts, addCO2, addPrim \n"
 
     if gv.ZernezFlag == 1:
         coolCosts, coolCO2, coolPrim = 0, 0, 0
     else:
-        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, dicoSupply.configKey, network_features,
-                                                              dicoSupply.WasteServersHeatRecovery, gv)
+        (coolCosts, coolCO2, coolPrim) = coolMain.coolingMain(locator, master_to_slave_vars.configKey, network_features,
+                                                              master_to_slave_vars.WasteServersHeatRecovery, gv)
 
     print coolCosts, coolCO2, coolPrim, "coolCosts, coolCO2, coolPrim \n"
 
@@ -130,7 +122,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     CO2 += addCO2 + coolCO2
     prim += addPrim + coolPrim
 
-    print "Evaluation of", dicoSupply.configKey, "done"
+    print "Evaluation of", master_to_slave_vars.configKey, "done"
     print costs, CO2, prim, " = costs, CO2, prim \n"
 
     return costs, CO2, prim
@@ -140,7 +132,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 #+++++++++++++++++++++++++++++
 
 
-def reject_invalid(individual, nBuildings, gv):
+def check_invalid(individual, nBuildings, gv):
     """
     This function rejects individuals out of the bounds of the problem
 
@@ -193,31 +185,27 @@ def reject_invalid(individual, nBuildings, gv):
         for i in range(L):
             individual[i] = newInd[i]
 
+    return individual
 
-def readInd(individual, Qmax, locator, gv):
+
+def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     """
-    Reads the list encoding a configuration and implementes the corresponding
+        Reads the list encoding a configuration and implementes the corresponding
     for the slave routine's to use
-    
-    Parameters
-    ----------
-    individual : list
-        configuration from the Master routine
-    Qmax : float
-        peak heating demand
-    locator : string
-        path to raw files
-    
-    Returns
-    -------
-    dicoSupply : class MasterSlaveVariables
-    
+
+    :param individual: list with inidividual
+    :param Qmax:  peak heating demand
+    :param locator: locator class
+    :param gv: global variables class
+    :return:
+         master_to_slave_vars : class MasterSlaveVariables
     """
-    dicoSupply = MSVar.MasterSlaveVariables()
-    dicoSupply.configKey = "".join(str(e)[0:4] for e in individual)
+    # initialise class storing dynamic variables transfered from master to slave optimization
+    master_to_slave_vars = master_to_slave.MastertoSlave()
+    master_to_slave_vars.configKey = "".join(str(e)[0:4] for e in individual)
     
-    indCombi = sFn.individual_to_barcode(individual, gv)
-    dicoSupply.nBuildingsConnected = indCombi.count("1") # counting the number of buildings connected
+    individual_barcode = sFn.individual_to_barcode(individual, gv)
+    master_to_slave_vars.nBuildingsConnected = individual_barcode.count("1") # counting the number of buildings connected
     
     Qnom = Qmax * (1+gv.Qmargin_ntw)
     
@@ -226,90 +214,90 @@ def readInd(individual, Qmax, locator, gv):
     #CHP units with NG & furnace with biomass wet
     if individual[0] == 1 or individual[0] == 3:
         if gv.Furnace_allowed == 1:
-            dicoSupply.Furnace_on = 1
-            dicoSupply.Furnace_Q_max = max(individual[1] * Qnom, gv.QminShare * Qnom)
-            print dicoSupply.Furnace_Q_max, "Furnace wet"
-            dicoSupply.Furn_Moist_type = "wet"
+            master_to_slave_vars.Furnace_on = 1
+            master_to_slave_vars.Furnace_Q_max = max(individual[1] * Qnom, gv.QminShare * Qnom)
+            print master_to_slave_vars.Furnace_Q_max, "Furnace wet"
+            master_to_slave_vars.Furn_Moist_type = "wet"
         elif gv.CC_allowed == 1:
-            dicoSupply.CC_on = 1
-            dicoSupply.CC_GT_SIZE = max(individual[1] * Qnom * 1.3, gv.QminShare * Qnom * 1.3)
+            master_to_slave_vars.CC_on = 1
+            master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Qnom * 1.3, gv.QminShare * Qnom * 1.3)
             #1.3 is the conversion factor between the GT_Elec_size NG and Q_DHN
-            print dicoSupply.CC_GT_SIZE, "CC NG"
-            dicoSupply.gt_fuel = "NG"
+            print master_to_slave_vars.CC_GT_SIZE, "CC NG"
+            master_to_slave_vars.gt_fuel = "NG"
      
     #CHP units with BG& furnace with biomass dry       
     if individual[0] == 2 or individual[0] == 4:
         if gv.Furnace_allowed == 1:
-            dicoSupply.Furnace_on = 1
-            dicoSupply.Furnace_Q_max = max(individual[1] * Qnom, gv.QminShare * Qnom)
-            print dicoSupply.Furnace_Q_max, "Furnace dry"
-            dicoSupply.Furn_Moist_type = "dry"
+            master_to_slave_vars.Furnace_on = 1
+            master_to_slave_vars.Furnace_Q_max = max(individual[1] * Qnom, gv.QminShare * Qnom)
+            print master_to_slave_vars.Furnace_Q_max, "Furnace dry"
+            master_to_slave_vars.Furn_Moist_type = "dry"
         elif gv.CC_allowed == 1:
-            dicoSupply.CC_on = 1
-            dicoSupply.CC_GT_SIZE = max(individual[1] * Qnom * 1.5, gv.QminShare * Qnom * 1.5)
+            master_to_slave_vars.CC_on = 1
+            master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Qnom * 1.5, gv.QminShare * Qnom * 1.5)
             #1.5 is the conversion factor between the GT_Elec_size BG and Q_DHN
-            print dicoSupply.CC_GT_SIZE, "CC BG"
-            dicoSupply.gt_fuel = "BG"
+            print master_to_slave_vars.CC_GT_SIZE, "CC BG"
+            master_to_slave_vars.gt_fuel = "BG"
 
     # Base boiler NG 
     if individual[2] == 1:
-        dicoSupply.Boiler_on = 1
-        dicoSupply.Boiler_Q_max = max(individual[3] * Qnom, gv.QminShare * Qnom)
-        print dicoSupply.Boiler_Q_max, "Boiler base NG"
-        dicoSupply.BoilerType = "NG"
+        master_to_slave_vars.Boiler_on = 1
+        master_to_slave_vars.Boiler_Q_max = max(individual[3] * Qnom, gv.QminShare * Qnom)
+        print master_to_slave_vars.Boiler_Q_max, "Boiler base NG"
+        master_to_slave_vars.BoilerType = "NG"
     
     # Base boiler BG    
     if individual[2] == 2:
-        dicoSupply.Boiler_on = 1
-        dicoSupply.Boiler_Q_max = max(individual[3] * Qnom, gv.QminShare * Qnom)
-        print dicoSupply.Boiler_Q_max, "Boiler base BG"
-        dicoSupply.BoilerType = "BG"
+        master_to_slave_vars.Boiler_on = 1
+        master_to_slave_vars.Boiler_Q_max = max(individual[3] * Qnom, gv.QminShare * Qnom)
+        print master_to_slave_vars.Boiler_Q_max, "Boiler base BG"
+        master_to_slave_vars.BoilerType = "BG"
     
     # peak boiler NG         
     if individual[4] == 1:
-        dicoSupply.BoilerPeak_on = 1
-        dicoSupply.BoilerPeak_Q_max = max(individual[5] * Qnom, gv.QminShare * Qnom)
-        print dicoSupply.BoilerPeak_Q_max, "Boiler peak NG"
-        dicoSupply.BoilerPeakType = "NG"
+        master_to_slave_vars.BoilerPeak_on = 1
+        master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Qnom, gv.QminShare * Qnom)
+        print master_to_slave_vars.BoilerPeak_Q_max, "Boiler peak NG"
+        master_to_slave_vars.BoilerPeakType = "NG"
     
     # peak boiler BG   
     if individual[4] == 2:
-        dicoSupply.BoilerPeak_on = 1
-        dicoSupply.BoilerPeak_Q_max = max(individual[5] * Qnom, gv.QminShare * Qnom)
-        print dicoSupply.BoilerPeak_Q_max, "Boiler peak BG"
-        dicoSupply.BoilerPeakType = "BG"
+        master_to_slave_vars.BoilerPeak_on = 1
+        master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Qnom, gv.QminShare * Qnom)
+        print master_to_slave_vars.BoilerPeak_Q_max, "Boiler peak BG"
+        master_to_slave_vars.BoilerPeakType = "BG"
     
     # lake - heat pump
     if individual[6] == 1  and gv.HPLake_allowed == 1:
-        dicoSupply.HP_Lake_on = 1
-        dicoSupply.HPLake_maxSize = max(individual[7] * Qnom, gv.QminShare * Qnom)
-        print dicoSupply.HPLake_maxSize, "Lake"
+        master_to_slave_vars.HP_Lake_on = 1
+        master_to_slave_vars.HPLake_maxSize = max(individual[7] * Qnom, gv.QminShare * Qnom)
+        print master_to_slave_vars.HPLake_maxSize, "Lake"
     
     # sewage - heatpump    
     if individual[8] == 1 and gv.HPSew_allowed == 1:
-        dicoSupply.HP_Sew_on = 1
-        dicoSupply.HPSew_maxSize = max(individual[9] * Qnom, gv.QminShare * Qnom)
-        print dicoSupply.HPSew_maxSize, "Sewage"
+        master_to_slave_vars.HP_Sew_on = 1
+        master_to_slave_vars.HPSew_maxSize = max(individual[9] * Qnom, gv.QminShare * Qnom)
+        print master_to_slave_vars.HPSew_maxSize, "Sewage"
     
     # Gwound source- heatpump
     if individual[10] == 1 and gv.GHP_allowed == 1:
-        dicoSupply.GHP_on = 1
+        master_to_slave_vars.GHP_on = 1
         GHP_Qmax = max(individual[11] * Qnom, gv.QminShare * Qnom)
-        dicoSupply.GHP_number = GHP_Qmax / gv.GHP_HmaxSize
+        master_to_slave_vars.GHP_number = GHP_Qmax / gv.GHP_HmaxSize
         print GHP_Qmax, "GHP"
     
     # heat recovery servers and compresor
     irank = gv.nHeat * 2
-    dicoSupply.WasteServersHeatRecovery = individual[irank]
-    dicoSupply.WasteCompressorHeatRecovery = individual[irank + 1]
+    master_to_slave_vars.WasteServersHeatRecovery = individual[irank]
+    master_to_slave_vars.WasteCompressorHeatRecovery = individual[irank + 1]
     
     # Solar systems
     roof_area = np.array(pd.read_csv(locator.get_total_demand(), usecols=["Aroof_m2"]))
     
     areaAvail = 0
     totalArea = 0
-    for i in range( len(indCombi) ):
-        index = indCombi[i]
+    for i in range( len(individual_barcode) ):
+        index = individual_barcode[i]
         if index == "1":
             areaAvail += roof_area[i][0]
         totalArea += roof_area[i][0]
@@ -317,14 +305,14 @@ def readInd(individual, Qmax, locator, gv):
     shareAvail = areaAvail / totalArea    
     
     irank = gv.nHeat * 2 + gv.nHR
-    dicoSupply.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * individual[irank + 6] * shareAvail,0)
-    print dicoSupply.SOLAR_PART_PV, "PV"
-    dicoSupply.SOLAR_PART_PVT = max(individual[irank + 2] * individual[irank + 3] * individual[irank + 6] * shareAvail,0)
-    print dicoSupply.SOLAR_PART_PVT, "PVT"
-    dicoSupply.SOLAR_PART_SC = max(individual[irank + 4] * individual[irank + 5] * individual[irank + 6] * shareAvail,0)
-    print dicoSupply.SOLAR_PART_SC, "SC"
+    master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * individual[irank + 6] * shareAvail,0)
+    print master_to_slave_vars.SOLAR_PART_PV, "PV"
+    master_to_slave_vars.SOLAR_PART_PVT = max(individual[irank + 2] * individual[irank + 3] * individual[irank + 6] * shareAvail,0)
+    print master_to_slave_vars.SOLAR_PART_PVT, "PVT"
+    master_to_slave_vars.SOLAR_PART_SC = max(individual[irank + 4] * individual[irank + 5] * individual[irank + 6] * shareAvail,0)
+    print master_to_slave_vars.SOLAR_PART_SC, "SC"
     
-    return dicoSupply
+    return master_to_slave_vars
 
 
 def checkNtw(individual, ntwList, locator, gv):
