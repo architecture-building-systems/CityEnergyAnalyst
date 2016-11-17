@@ -65,9 +65,9 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     nBuildings = len(building_names)
 
     # DEFINE OBJECTIVE FUNCTION
-    def evalConfig(ind):
-        (costs, CO2, prim) = evaluation_function.evalInd(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                                                         network_features, gv)
+    def objective_function(ind):
+        (costs, CO2, prim) = evaluation_function.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+                                                                 network_features, gv)
         return (costs, CO2, prim)
 
     # SET-UP EVOLUTIONARY ALGORITHM
@@ -78,7 +78,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     toolbox.register("generate", generation_function.generate_main, nBuildings, gv)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-    toolbox.register("evaluate", evalConfig)
+    toolbox.register("evaluate", objective_function)
 
     ntwList = ["1"*nBuildings]
     epsInd = []
