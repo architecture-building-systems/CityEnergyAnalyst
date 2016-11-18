@@ -35,7 +35,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                            network_features, gv, genCP = 0):
     """
     Evolutionary algorithm to optimize the district energy system's design.
-    This algortihm optimizaes the size and operation of technologies for a district heating netowrk.
+    This algortihm optimizes the size and operation of technologies for a district heating netowrk.
     electrical netowrk are not considered but their burdens in terms electricity costs, efficiency and emissions
     is added on top of the optimization
     The equipment for Cooling networks is not optimized as it is assumed that all customer with cooling needs will be

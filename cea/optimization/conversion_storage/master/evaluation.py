@@ -190,7 +190,7 @@ def check_invalid(individual, nBuildings, gv):
 
 def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     """
-        Reads the list encoding a configuration and implementes the corresponding
+    This function reads the list encoding a configuration and implementes the corresponding
     for the slave routine's to use
 
     :param individual: list with inidividual
@@ -317,7 +317,7 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
 
 def checkNtw(individual, ntwList, locator, gv):
     """
-    Calls the distribution routine if necessary
+    This function calls the distribution routine if necessary
     
     Parameters
     ----------
@@ -355,7 +355,7 @@ def checkNtw(individual, ntwList, locator, gv):
 
 def epsIndicator(frontOld, frontNew):
     """
-    Computes the epsilon indicator
+    This function computes the epsilon indicator
     
     Parameters
     ----------
