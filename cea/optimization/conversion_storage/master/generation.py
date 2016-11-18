@@ -18,21 +18,17 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def generateInd(nBuildings, gv):
+def generate_main(nBuildings, gv):
     """
     Creates an individual for the evolutionary algorithm
-    
-    Parameters
-    ----------
-    nBuildings : int
-        Number of buildings in the district
-    
-    Returns
-    -------
-    individual : list
-    
+
+    :param nBuildings: number of buildings
+    :param gv: global variables class
+    :return:
+        individual: representation of values taken by the individual
     """
-    # Individual represented as a list
+
+    # create list to store values of inidividual
     individual = [0] * ( (gv.nHeat + gv.nSolar) * 2 + gv.nHR + nBuildings + 1 )
 
     # Count the number of GUs (makes sure there's at least one heating system in the central hub)

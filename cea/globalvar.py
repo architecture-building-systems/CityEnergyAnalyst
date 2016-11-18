@@ -420,8 +420,8 @@ class GlobalVariables(object):
 
         # Data for Evolutionary algorithm
         self.nHeat = 6  # number of heating
-        self.nHR = 2
-        self.nSolar = 3
+        self.nHR = 2 # number of heat recovry options
+        self.nSolar = 3 # number of solar technologies
 
         self.PROBA = 0.5
         self.SIGMAP = 0.2
