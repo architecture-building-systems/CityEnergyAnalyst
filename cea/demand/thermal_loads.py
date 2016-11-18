@@ -1148,12 +1148,12 @@ def get_temperatures(locator, prop_HVAC):
     :type prop_HVAC: Gdf
 
     Sample data (first 5 rows):
-                 Name type_cs type_ctrl type_dhw type_hs
-    0     B154862      T0        T1       T1      T1
-    1     B153604      T0        T1       T1      T1
-    2     B153831      T0        T1       T1      T1
-    3  B302022960      T0        T0       T0      T0
-    4  B302034063      T0        T0       T0      T0
+                 Name type_cs type_ctrl type_dhw type_hs MECH_VENT WIN_VENT HEAT_REC NIGHT_FLSH ECONOMIZER
+    0     B154862      T0        T1       T1      T1       MVE0      WVE1     HRE1       NFL1      ECO0
+    1     B153604      T0        T1       T1      T1       MVE0      WVE1     HRE1       NFL1      ECO0
+    2     B153831      T0        T1       T1      T1       MVE0      WVE1     HRE1       NFL1      ECO0
+    3  B302022960      T0        T0       T0      T0       MVE0      WVE1     HRE1       NFL1      ECO0
+    4  B302034063      T0        T0       T0      T0       MVE0      WVE1     HRE1       NFL1      ECO0
 
 
     RETURNS
@@ -1170,6 +1170,11 @@ def get_temperatures(locator, prop_HVAC):
     type_cs            T0   (copied from input)
     type_dhw           T1   (copied from input)
     type_ctrl          T1   (copied from input)
+    MECH_VENT        MVE0   (copied from input)
+    WIN_VENT         WVE0   (copied from input)
+    HEAT_REC         HRE0   (copied from input)
+    NIGHT_FLSH       NFL0   (copied from input)
+    ECONOMIZER       ECO0   (copied from input)
     Tshs0_C            90   (heating system supply temperature at nominal conditions [C])
     dThs0_C            20   (delta of heating system temperature at nominal conditions [C])
     Qhsmax_Wm2        500   (maximum heating system power capacity per unit of gross built area [W/m2])
@@ -1194,7 +1199,8 @@ def get_temperatures(locator, prop_HVAC):
     df2 = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
     df3 = prop_HVAC.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
 
-    fields = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'Tshs0_C', 'dThs0_C', 'Qhsmax_Wm2']
+    fields = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl',
+              'MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER', 'Tshs0_C', 'dThs0_C', 'Qhsmax_Wm2']
     fields2 = ['Name', 'Tscs0_C', 'dTcs0_C', 'Qcsmax_Wm2']
     fields3 = ['Name', 'Tsww0_C', 'dTww0_C', 'Qwwmax_Wm2']
 
