@@ -111,6 +111,9 @@ class InputLocator(object):
         return os.path.join(self.db_path, 'Uncertainty', 'uncertainty_distributions.xls')
 
     # INPUTS
+
+
+
     def get_building_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
         return os.path.join(self.scenario_path, 'inputs', 'building-geometry', 'zone.shp')
@@ -161,12 +164,31 @@ class InputLocator(object):
     # OUTPUTS
 
     ##SOLAR-RADIATION
-    def get_radiation(self):
+    def get_radiation(self):  #todo: delete if not used
         """scenario/outputs/data/solar-radiation/radiation.csv"""
         solar_radiation_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
         if not os.path.exists(solar_radiation_folder):
             os.makedirs(solar_radiation_folder)
         return os.path.join(solar_radiation_folder, 'radiation.csv')
+
+    def get_radiation_building(self, building_name):
+        """scenario/outputs/data/solar-radiation/radiation.csv"""
+        solar_radiation_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+        if not os.path.exists(solar_radiation_folder):
+            os.makedirs(solar_radiation_folder)
+        return os.path.join(solar_radiation_folder, '%s.csv' %building_name)
+
+    def get_radiation_metadata(self, building_name):
+        """scenario/outputs/data/solar-radiation/radiation.csv"""
+        solar_radiation_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+        if not os.path.exists(solar_radiation_folder):
+            os.makedirs(solar_radiation_folder)
+        return os.path.join(solar_radiation_folder, '%s_id_df.csv' %building_name)
+
+    def get_building_list(self):
+        """scenario/outputs/data/solar-radiation/radiation.csv"""
+        solar_radiation_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+        return os.path.join(solar_radiation_folder, 'bui_vol.csv')
 
     def get_surface_properties(self):
         """scenario/outputs/data/solar-radiation/properties_surfaces.csv"""
