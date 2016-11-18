@@ -111,7 +111,7 @@ def Storage_DeCharger(T_storage_old, Q_from_storage_req, T_DH_sup, Q_in_storage_
     de charging of the storage, no outside thermal losses  in the model 
     """
     MS_Var = context
-    if T_DH_sup > T_storage_old: # using a heat pump if the storage temperature is below the desired network temperature
+    if T_DH_sup > T_storage_old: # using a heat pump if the storage temperature is below the desired distribution temperature
 
         COP_th = T_DH_sup / (T_DH_sup-T_storage_old ) # take average temp of old and new as low temp
         COP = gv.HP_etaex * COP_th
@@ -123,7 +123,7 @@ def Storage_DeCharger(T_storage_old, Q_from_storage_req, T_DH_sup, Q_in_storage_
     
         
         
-    else:  # assume perfect heat exchanger that provides the heat to the network
+    else:  # assume perfect heat exchanger that provides the heat to the distribution
         Q_from_storage_used = Q_from_storage_req * (1 + MS_Var.Storage_conv_loss)
         E_aux = 0.0
         COP = 0.0
