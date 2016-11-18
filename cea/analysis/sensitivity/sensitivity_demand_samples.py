@@ -26,6 +26,7 @@ def create_demand_samples(method='morris', num_samples=1000, variable_groups=('T
     """
     locator = InputLocator(None)
 
+    # get probability density functions of all variable_groups
     pdf = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1) for group in variable_groups])
     num_vars = pdf.name.count()  # integer with number of variables
     names = pdf.name.values  # [,,] with names of each variable
@@ -39,7 +40,6 @@ def create_demand_samples(method='morris', num_samples=1000, variable_groups=('T
 
     return sampler(method, problem, num_samples, sampler_parameters), problem
 
-
 # create samples (combinations of variables)
 def sampler(method, problem, num_samples, sampler_parameters):
     if method == 'sobol':
@@ -48,7 +48,6 @@ def sampler(method, problem, num_samples, sampler_parameters):
         return sampler_morris(problem, N=num_samples, **sampler_parameters)
     else:
         raise ValueError("Sampler method unknown: %s" % method)
-
 
 if __name__ == '__main__':
     import argparse

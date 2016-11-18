@@ -15,7 +15,8 @@ See the contributor's manual for information on installing the software on Euler
 
 These are the steps to be performed for running the demand sensitivity analysis:
 
-- create a set of "samples" in the samples folder, i. e. a set of parameter configurations that are to be simulated
+- create a set of "samples" in the samples folder inside euler, i. e. a set of parameter configurations that are to be
+ simulated.
 - run a demand simulation for each sample and store the output to the samples folder
   - copy the reference case folder to the simulation folder
   - apply sample parameters to the reference case
