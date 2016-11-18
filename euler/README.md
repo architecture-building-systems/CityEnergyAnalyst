@@ -190,15 +190,14 @@ The next step is to run the analysis on the results. This is done in a single pr
 
 - I cloned the reference case project to my home folder.
 - I copied the `radiation.csv` and `properties_surfaces.csv` files to the `reference-case-open` 
-  [using scp](https://scicomp.ethz.ch/wiki/Data_management#File_transfer).
+  [using scp](ethz).
 
 ```
 # on windows
 [esri104] C:\reference-case-open\baseline\outputs\data\solar-radiation>scp radiation.csv darthoma@euler.ethz.ch:~/cea-reference-case/reference-case-open/baseline/outputs/data/solar-radiation
 [esri104] C:\reference-case-open\baseline\outputs\data\solar-radiation>scp properties_surfaces.csv darthoma@euler.ethz.ch:~/cea-reference-case/reference-case-open/baseline/outputs/data/solar-radiation
 ```
-
-
+sh
 #### Run the data helper script:
 
 ```

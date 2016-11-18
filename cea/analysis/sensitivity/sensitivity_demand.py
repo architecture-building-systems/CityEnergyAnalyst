@@ -60,13 +60,11 @@ def sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, n
     """
     t0 = time.clock()
 
-    # Model constants
+    # Configure global variables to call the demand script of CEA.
     gv.multiprocessing = False  # false to deactivate the multiprocessing in the demand algorithm
+    gv.demand_writer = cea.demand.demand_writers.MonthlyDemandWriter(gv) # tell cea to write only monthly instead of hourly values
 
-    # write only monthly instead of hourly values
-    gv.demand_writer = cea.demand.demand_writers.MonthlyDemandWriter(gv)
-
-    # Define the model inputs
+    # Get the probability density functions (for these samplin methods, min and max values will e enough)
     pdf = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1) for group in groups_var])
 
     num_vars = pdf.name.count()  # integer with number of variables
@@ -76,10 +74,8 @@ def sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, n
         limits = [pdf.loc[var, 'min'], pdf.loc[var, 'max']]
         bounds.append(limits)
 
-    # define the problem
-    problem = {'num_vars': num_vars, 'names': names, 'bounds': bounds, 'groups': None}
-
-    # create samples (combinations of variables)
+    # Do Sampling of all variables
+    problem = {'num_vars': num_vars, 'names': names, 'bounds': bounds, 'groups': None} # define the problem according to the SAlib python library
     if method is 'sobol':
         second_order = False
         samples = sampler_sobol(problem, N=num_samples, calc_second_order=second_order)
@@ -89,22 +85,26 @@ def sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, n
         optimal_trajects = int(0.04 * num_samples)
         samples = sampler_morris(problem, N=num_samples, grid_jump=grid, num_levels=levels)
                                  #optimal_trajectories=optimal_trajects, local_optimization=True)
+        print len(samples)
     gv.log('Sampling done, time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
     gv.log('Running %i samples' %len(samples))
 
-    #call the CEA for building demand and store the results of every sample in a vector
+    # Call the CEA to calculate the demand in buildings and store the results of every sample in a vector
+    # The vector needs to have the same length as samples.
     simulations = screening_cea_multiprocessing(samples, names, output_parameters, locator, weather_path, gv)
-
     gv.log('Simulations done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
-    #do morris analysis and output to excel
 
-    buildings_num = simulations[0].shape[0]
-    writer = pd.ExcelWriter(locator.get_sensitivity_output(method, num_samples))
+    # Do sensitivty analysis and plot to excel
+    buildings_num = simulations[0].shape[0] # number of buildings
+    writer = pd.ExcelWriter(locator.get_sensitivity_output(method, num_samples)) #create excel writer
     for parameter in output_parameters:
+        # create arrays were to temporarily store the results
         results_1 = []
         results_2 = []
         results_3 = []
         for building in range(buildings_num):
+            # read a parameter form the output of simulations to do sensistivity analysis (SA) on
+            # The cea outputs several parameters such as Qhsf, Qcsf, Elf etc.. we do SA in each one.
             simulations_parameter = np.array([x.loc[building, parameter] for x in simulations])
             if method is 'sobol':
                 VAR1, VAR2, VAR3 = 'S1', 'ST', 'ST_conf'
@@ -122,6 +122,7 @@ def sensitivity_main(locator, weather_path, gv, output_parameters, groups_var, n
         pd.DataFrame(results_2, columns=problem['names']).to_excel(writer, parameter + VAR2)
         pd.DataFrame(results_3, columns=problem['names']).to_excel(writer, parameter + VAR3)
 
+    # save results to disc
     writer.save()
     gv.log('Sensitivity analysis done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
