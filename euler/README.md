@@ -197,7 +197,7 @@ The next step is to run the analysis on the results. This is done in a single pr
 [esri104] C:\reference-case-open\baseline\outputs\data\solar-radiation>scp radiation.csv darthoma@euler.ethz.ch:~/cea-reference-case/reference-case-open/baseline/outputs/data/solar-radiation
 [esri104] C:\reference-case-open\baseline\outputs\data\solar-radiation>scp properties_surfaces.csv darthoma@euler.ethz.ch:~/cea-reference-case/reference-case-open/baseline/outputs/data/solar-radiation
 ```
-sh
+
 #### Run the data helper script:
 
 ```
