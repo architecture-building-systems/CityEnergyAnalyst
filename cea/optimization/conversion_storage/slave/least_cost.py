@@ -18,7 +18,7 @@ import copy
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Tim Vollrath", "Thuy-An Nguyen", "Jimeno A. Fonseca"]
+__credits__ = ["Tim Vollrath", "Thuy-An Nguyen"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -73,12 +73,12 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     # Import Demand Data:
     os.chdir(locator.pathSlaveRes)
     CSV_NAME = MS_Var.configKey + "StorageOperationData.csv"
-    Centralized_Plant_Requirements = import_CentralizedPlant_data(CSV_NAME, gv.DAYS_IN_YEAR, gv.HOURS_IN_DAY)
+
     Q_DH_networkload, E_aux_ch, E_aux_dech, Q_missing, Q_storage_content_Wh, Q_to_storage, Q_from_storage, \
     Q_uncontrollable, E_PV_Wh, E_PVT_Wh, E_aux_HP_uncontrollable, Q_SCandPVT, HPServerHeatDesignArray, \
     HPpvt_designArray, HPCompAirDesignArray, HPScDesignArray, E_produced_solarAndHPforSolar, \
-    E_consumed_without_buildingdemand_solarAndHPforSolar \
-        = Centralized_Plant_Requirements
+    E_consumed_without_buildingdemand_solarAndHPforSolar  = import_CentralizedPlant_data(CSV_NAME,
+                                                                                         gv.DAYS_IN_YEAR, gv.HOURS_IN_DAY)
 
     Q_StorageToDHNpipe_sum = np.sum(E_aux_dech) + np.sum(Q_from_storage)
 
@@ -107,16 +107,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     """ LOAD MODULES """
 
-    #    Boiler
-    if (MS_Var.Boiler_on) == 1 or (
-    MS_Var.BoilerPeak_on) == 1 or 1:  # always import boilers as the backup might be used in case of non-convergence
-        # os.chdir(Cost_Maps_Path)
-        import cea.technologies.boilers as CMBoil
-        # os.chdir(Cost_Maps_Path)
-        reload(CMBoil)
-        BoilerCond_op_cost = CMBoil.BoilerCond_op_cost
-
-    # Furnace
     if (MS_Var.Furnace_on) == 1:
         # os.chdir(Cost_Maps_Path)
         import cea.technologies.furnace as CMFurn
@@ -648,12 +638,11 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
         print " as : ", Name
 
 
-    CO2_emitted, Eprim_used = calc_primary_energy_and_CO2(Q_source_data, E_coldsource_data, E_PP_el_data, \
+    CO2_emitted, Eprim_used = calc_primary_energy_and_CO2(Q_source_data, E_coldsource_data, E_PP_el_data,
                                                           E_gas_data, E_wood_data, Q_primaryAddBackupSum,
-                                                          np.sum(E_aux_AddBoiler), \
-                                                          np.sum(ESolarProduced), np.sum(Q_SCandPVT),
-                                                          HP_operation_Data_sum_array, Q_storage_content_Wh, \
-                                                          master_to_slave_vars, locator.pathSlaveRes, E_HP_SolarAndHeatRecoverySum,
+                                                          np.sum(E_aux_AddBoiler),
+                                                          np.sum(ESolarProduced), np.sum(Q_SCandPVT), Q_storage_content_Wh,
+                                                          master_to_slave_vars, locator, E_HP_SolarAndHeatRecoverySum,
                                                           E_aux_storage_operation_sum, gv)
 
     # sum up results from PP Activation
@@ -905,29 +894,30 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
 def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
                                 Q_gas_data, Q_wood_data, Q_gas_AdduncoveredBoilerSum, E_aux_AddBoilerSum,
-                                ESolarProduced, Q_SCandPVT, HP_operation_Data_sum_array, Q_storage_content_Wh,
-                                master_to_slave_vars, pathSlaveRes, E_HP_SolarAndHeatRecoverySum,
+                                ESolarProduced, Q_SCandPVT, Q_storage_content_Wh,
+                                master_to_slave_vars, locator, E_HP_SolarAndHeatRecoverySum,
                                 E_aux_storage_operation_sum, gv):
     """
-    This function calcualtes the emissions
+    This function calculates the emissions and primary energy consumption
+
     :param Q_source_data: array with loads of different units for heating
     :param Q_coldsource_data: array with loads of different units for cooling
     :param E_PP_el_data: array with data of pattern activation for electrical loads
     :param Q_gas_data: array with cconsumption of eergy due to gas
     :param Q_wood_data: array with consumption of energy with wood..
-    :param Q_gas_AdduncoveredBoilerSum:
-    :param E_aux_AddBoilerSum:
-    :param ESolarProduced:
+    :param Q_gas_AdduncoveredBoilerSum: load to be covered by auxiliary unit.
+    :param E_aux_AddBoilerSum: electricity needed by auxiliary unit
+    :param ESolarProduced: electricity produced from solar
     :param Q_SCandPVT: thermal load of solar collector and pvt units.
-    :param HP_operation_Data_sum_array:
     :param Q_storage_content_Wh: thermal load stored in seasonal storage
     :param master_to_slave_vars: class MastertoSlaveVars containing the value of variables to be passed to
     the slave optimization for each individual
-    :param pathSlaveRes:
-    :param E_HP_SolarAndHeatRecoverySum:
-    :param E_aux_storage_operation_sum:
+    :param locator: path to results
+    :param E_HP_SolarAndHeatRecoverySum: auxiliary electricity of heat pump
+    :param E_aux_storage_operation_sum: auxiliary electricity of operation of storage
     :param gv:  global variables class
     :return:
+        CO2_emitted, Eprim_used
     """
     
     MS_Var = master_to_slave_vars
@@ -1131,8 +1121,7 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
                             "CO2_from_HP_StorageOperationChDeCh":[CO2_from_HP_StorageOperationChDeCh]
                             })
     Name = MS_Var.configKey + "_SlaveDetailedEmissionData.csv"
-    os.chdir(pathSlaveRes)
-    results.to_csv(Name, sep= ',')
+    results.to_csv(locator.pathSlaveRes + '//' + Name, sep= ',')
 
     #CO2_from_AuxElectricity= (E_aux_AddBoilerSum + E_el_Backup + E_el_BoilerBase) * Electricity_to_CO2 # Not used as the conversion factors
     #                                                                                           of the machinery takes into account final energy
@@ -1208,8 +1197,7 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
                             "Eprim_from_HP_StorageOperationChDeCh":[Eprim_from_HP_StorageOperationChDeCh]
                             })
     Name = MS_Var.configKey + "_SlaveDetailedEprimData.csv"
-    os.chdir(pathSlaveRes)
-    results.to_csv(Name, sep= ',')
+    results.to_csv(locator.pathSlaveRes + '//' + Name, sep= ',')
     
     
     ######### Summed up results    
