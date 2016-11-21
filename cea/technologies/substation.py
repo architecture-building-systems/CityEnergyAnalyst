@@ -133,9 +133,9 @@ def substation_model(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS
     Qwwf = building.Qwwf_kWh.values * 1000  # in W
     Qnom = max(Qwwf)  # in W
     if Qnom > 0:
-        tco = building.Tsww_C.values + 273  # in K
-        tci = building.Trww_C.values + 273  # in K
-        cc = building.mcpww_kWC.values * 1000  # in W/K
+        tco = building.Twwf_sup_C.values + 273  # in K
+        tci = building.Twwf_re_C.values + 273  # in K
+        cc = building.mcpwwf_kWC.values * 1000  # in W/K
         index = np.where(Qwwf == Qnom)[0][0]
         thi_0 = thi[index]
         tci_0 = tci[index]
@@ -156,9 +156,9 @@ def substation_model(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS
     Qnom = max(Qcf)  # in W
     if Qnom > 0:
         tci = t_DC_supply + 273  # in K
-        tho = building.Tscs_C.values + 273  # in K
-        thi = building.Trcs_C.values + 273  # in K
-        ch = (abs(building.mcpcs_kWC.values)) * 1000  # in W/K
+        tho = building.Tcsf_sup_C.values + 273  # in K
+        thi = building.Tcsf_re_C.values + 273  # in K
+        ch = (abs(building.mcpcsf_kWC.values)) * 1000  # in W/K
         index = np.where(Qcf == Qnom)[0][0]
         tci_0 = tci[index]  # in K
         thi_0 = thi[index]
@@ -412,7 +412,6 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
     '''
 
     if Q > 0:
-        print Q
         eff = [0.1, 0]
         Flag = False
         tol = 0.00000001
@@ -428,7 +427,6 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
                 ch = cmin
                 cmax = cmin
                 cmin = cc
-            print tco, tci, thi, tci
             cr = cmin / cmax
             NTU = UA / cmin
             eff[1] = calc_shell_HEX(NTU, cr)

@@ -238,12 +238,9 @@ def Storage_Operator(Q_solar_available, Q_network_demand, T_storage_old, T_DH_su
                 """
                     
                 Q_in_storage_new = Q_in_storage_old - Q_loss - Q_from_storage_used
-                #print "currently Decharging with :", Q_loss + Q_from_storage_used, "Wh"
-                #print "Q_in_storage_old", Q_in_storage_old
-                #print "Q_in_storage_new", Q_in_storage_new
                 T_storage_new -= T_loss
                 
-                mdot_DH_missing = mdot_DH * (Q_missing)/ Q_network_demand
+                mdot_DH_missing = mdot_DH * Q_missing/ Q_network_demand
             
         else: # neither storage  charging nor decharging
             E_aux_ch = 0
