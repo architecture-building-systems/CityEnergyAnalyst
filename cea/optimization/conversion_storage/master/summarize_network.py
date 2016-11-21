@@ -44,7 +44,7 @@ def network_main(locator, total_demand, building_names, gv, key):
     # import properties of distribution
     num_buildings_network = total_demand.Name.count()
     pipes_tot_length = pd.read_csv(locator.get_pipes_DH_network, usecols=['LENGTH'])
-    ntwk_length = pipes_tot_length.sum() * num_buildings_network / gv.num_tot_buildings
+    ntwk_length = pipes_tot_length.sum() * num_buildings_network / len(building_names) #gv.num_tot_buildings
 
     # empty vectors
     buildings = []
@@ -63,7 +63,7 @@ def network_main(locator, total_demand, building_names, gv, key):
     mdot_cool_netw_min = np.zeros(8760) + 1E6
     iteration = 0
     for name in building_names:
-        buildings.append(pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv", usecols=['mcpdataf_kWC',
+        buildings.append(pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv", usecols=['mcpdata_kWC',
                                                                                                           'Qcdataf_kWh',
                                                                                                           'Ecaf_kWh']))
         substations.append(pd.read_csv(locator.pathSubsRes + '//' + name + '_result' + ".csv",
@@ -73,7 +73,7 @@ def network_main(locator, total_demand, building_names, gv, key):
                                                 'T_supply_DH_result']))
 
         Qcdata_netw_total += buildings[iteration].Qcdataf_kWh.values
-        mdotdata_netw_total += buildings[iteration].mcpdataf_kWC.values
+        mdotdata_netw_total += buildings[iteration].mcpdata_kWC.values
         Ecaf_netw_total += buildings[iteration].Ecaf_kWh.values
         Electr_netw_total += substations[iteration].Electr_array_all_flat.values
         mdot_heat_netw_all += substations[iteration].mdot_DH_result.values

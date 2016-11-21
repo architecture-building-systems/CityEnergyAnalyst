@@ -133,7 +133,7 @@ class GlobalVariables(object):
 
         # pipes location properties
         self.Z0 = 1.5  # location of pipe underground in m
-        self.Psl = 1600  # heat capacity of ground in kg/m3
+        self.Psl = 1600  # heat capacity of ground in kg/m3 => should be density?
         self.Csl = 1300  # heat capacity of ground in J/kg K
         self.Bsl = 1.5  # thermal conductivity of ground in W/m.K
 

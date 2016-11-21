@@ -97,3 +97,32 @@ class SolarFeatures(object):
         self.SolarAreaPVT = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols=["Area"]).values.max()
         self.SC_Qnom = pd.read_csv(locator.pathSolarRaw + "/SC_75.csv", usecols=["Qsc_Kw"]).values.max()* 1000
         self.SolarAreaSC = pd.read_csv(locator.pathSolarRaw + "/SC_75.csv", usecols=["Area"]).values.max()
+
+#============================
+#test
+#============================
+
+
+def run_as_script(scenario_path=None):
+    """
+    run the whole preprocessing routine
+    """
+    import cea.globalvar
+    from geopandas import GeoDataFrame as gpdf
+
+    gv = cea.globalvar.GlobalVariables()
+
+    if scenario_path is None:
+        scenario_path = gv.scenario_reference
+
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    total_demand = pd.read_csv(locator.get_total_demand())
+    building_names = pd.read_csv(locator.get_total_demand())['Name']
+    weather_file = locator.get_default_weather()
+    preproccessing(locator, total_demand, building_names, weather_file, gv)
+
+    print 'test_preprocessing_main() succeeded'
+
+if __name__ == '__main__':
+    run_as_script()
+

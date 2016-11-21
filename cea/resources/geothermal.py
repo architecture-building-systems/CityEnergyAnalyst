@@ -17,6 +17,7 @@ __status__ = "Production"
 
 def calc_ground_temperature(T_ambient, gv):
     '''
+    SOURCE?
     This function calculates the ground temperature in an hourly basis.
     :param T_ambient: vector with outdoor temperature
     :param gv: global variables class
