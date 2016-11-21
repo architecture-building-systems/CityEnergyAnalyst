@@ -104,7 +104,7 @@ def individual_to_barcode(individual, gV):
     irank = (gV.nHeat + gV.nSolar) * 2 + gV.nHR + 1
     frank = len(individual)
     indCombi = ""
-    
+    print irank, frank
     while irank < frank:
 
         indCombi += str(individual[irank])

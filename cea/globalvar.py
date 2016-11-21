@@ -25,7 +25,7 @@ class GlobalVariables(object):
         self.print_yearly_peak = True # print peak values
         self.date_start = '2016-01-01'  # format: yyyy-mm-dd
         self.seasonhours = [3216, 6192]
-        self.multiprocessing = True  # use multiprocessing / parallel execution if possible
+        self.multiprocessing = False  # use multiprocessing / parallel execution if possible
         self.Z = 3  # height of basement for every building in m
         self.Bf = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
         self.his = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)

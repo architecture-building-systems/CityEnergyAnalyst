@@ -8,6 +8,7 @@ heating radiators
 from __future__ import division
 from scipy.optimize import newton
 import math
+import numpy as np
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -48,7 +49,8 @@ def calc_radiator(Qh, tair, Qh0, tair0, tsh0, trh0):
         mCw = 0
         tsh = 0
         trh = 0
-    return tsh, trh, mCw # C, C, W/C
+    # return floats with numpy function. Needed when np.vectorize is use to call this function
+    return np.float(tsh), np.float(trh), np.float(mCw) # C, C, W/C
 
 try:
     # import Numba AOT versions of the functions above, overwriting them

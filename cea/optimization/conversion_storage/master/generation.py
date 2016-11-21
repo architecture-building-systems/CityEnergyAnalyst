@@ -30,7 +30,6 @@ def generate_main(nBuildings, gv):
 
     # create list to store values of inidividual
     individual = [0] * ( (gv.nHeat + gv.nSolar) * 2 + gv.nHR + nBuildings + 1 )
-
     # Count the number of GUs (makes sure there's at least one heating system in the central hub)
     countDHN = 0
     countSolar = 0
