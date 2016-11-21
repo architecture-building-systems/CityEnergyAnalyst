@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 
-# Runs the script `cea/analysis/sensitivity/sensitivity_demand_analyze.py`.
+# Runs the script `cea/analysis/sensitivity/sensitivity_demand_analyze.py` to analyze the output of the sensitivity
+# simulations.
 # Provides a handy interface using environment variables and default values tailored to the Euler cluster.
 
 # Each parameter is set to the environment variable of the same name or the default value if not set.
@@ -16,7 +17,8 @@
 # NUM_LEVELS           | --num-levels
 # VARIABLE_GROUPS      | FIXME: not implemented yet
 
-# parameters
+# parameters (the syntax used can be learnt here: http://stackoverflow.com/a/2013589/2260
+# and here: http://wiki.bash-hackers.org/syntax/pe)
 N=${N:-1}
 METHOD=${METHOD:-morris}
 SAMPLES_FOLDER=${SAMPLES_FOLDER:-${SCRATCH}/samples_${METHOD}_${N}}
