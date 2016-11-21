@@ -5,13 +5,41 @@ Termoactivated building surfaces (TABS)
 =========================================
 
 """
+__author__ = "Martin Mosteiro"
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Martin Mosteiro"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = ""
 
 from __future__ import division
 import scipy
 import scipy.optimize as sopt
 
 def calc_floorheating(Qh, tm, Qh0, tsh0, trh0, Af):
-    nh =0.2
+    '''
+    Calculates the operating conditions of the TABS system based on existing radiator model, replacing the radiator
+    equation with the simple calculation for TABS from SIA 2044, which in turn is based on Koschenz & Lehmann
+    "Thermoaktive Bauteilsysteme (TABS)".
+
+    Parameters
+    ----------
+    :param Qh: heating demand
+    :param tm: Temperature of the thermal mass
+    :param Qh0: nominal heating power of the heating system
+    :param tsh0: nominal supply temperature to the TABS system
+    :param trh0: nominal return temperature from the TABS system
+    :param Af: heated area
+
+    Returns
+    -------
+    :return: tsh: supply temperature to the TABS system
+    ;return: trh: return temperature from the TABS system
+    ;return: mCw: flow rate in the TABS system
+    '''
+
     if Qh > 0:
         tsh0 = tsh0 + 273
         trh0 = trh0 + 273
@@ -20,7 +48,6 @@ def calc_floorheating(Qh, tm, Qh0, tsh0, trh0, Af):
         # minimum
         k1 = 1 / mCw0
 
-        # simple calculation based on SIA 2044, which in turn is based on EMPA's book on TABS
         R_tabs = 0.08       # m2-K/W from SIA 2044
         A_tabs = 0.8 * Af   # m2
         H_tabs = A_tabs / R_tabs

@@ -516,6 +516,13 @@ class GlobalVariables(object):
         self.initial_temp_m_prev = 16
 
         # ==============================================================================================================
+        # TABS
+        # ==============================================================================================================
+        self.max_temperature_difference_tabs = 9 # (°C) from Koschenz & Lehmann "Thermoaktive Bauteilsysteme (TABS)"
+        self.max_surface_temperature_tabs = 27 # (°C) from Koschenz & Lehmann "Thermoaktive Bauteilsysteme (TABS)"
+
+
+        # ==============================================================================================================
         # Columns to write for the demand calculation
         # ==============================================================================================================
         self.demand_building_csv_columns = [
