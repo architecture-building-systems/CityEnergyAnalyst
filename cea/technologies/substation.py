@@ -338,7 +338,7 @@ def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
     else:
         tco = 0
         cc = 0
-    return tco, cc / 1000
+    return np.float(tco), np.float(cc / 1000)
 
 
 def calc_plate_HEX(NTU, cr):
@@ -388,7 +388,7 @@ def calc_HEX_mix(Q1, Q2, t1, m1, t2, m2):
         tavg = (t1 * m1 + t2 * m2) / (m1 + m2)
     else:
         tavg = 0
-    return tavg
+    return np.float(tavg)
 
 
 def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
@@ -440,7 +440,7 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
     else:
         tho = 0
         ch = 0
-    return tho, ch / 1000
+    return np.float(tho), np.float(ch / 1000)
 
 
 def calc_dTm_HEX(thi, tho, tci, tco, flag):
