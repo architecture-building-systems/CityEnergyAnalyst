@@ -179,7 +179,8 @@ if __name__ == '__main__':
                         default=4)
     args = parser.parse_args()
 
-    # valid parameters to pass to the sampler method vary between methods...
+    # valid parameters to pass to the sampler method vary between methods, based on the method used, create
+    # a dictionary with the parameters.
     sampler_params = {}
     if args.method == 'morris':
         sampler_params['grid_jump'] = args.grid_jump
