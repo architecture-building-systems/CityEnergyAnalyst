@@ -5,6 +5,10 @@ Termoactivated building surfaces (TABS)
 =========================================
 
 """
+
+from __future__ import division
+import scipy.optimize
+
 __author__ = "Martin Mosteiro"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Martin Mosteiro"]
@@ -12,11 +16,8 @@ __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
-__status__ = ""
+__status__ = "Production"
 
-from __future__ import division
-import scipy
-import scipy.optimize as sopt
 
 def calc_floorheating(Qh, tm, Qh0, tsh0, trh0, Af):
     '''
@@ -57,7 +58,7 @@ def calc_floorheating(Qh, tm, Qh0, tsh0, trh0, Af):
             return Eq
 
         k2 = Qh * k1
-        result = sopt.newton(fh, trh0, maxiter=1000, tol=0.1) - 273
+        result = scipy.optimize.newton(fh, trh0, maxiter=1000, tol=0.1) - 273
         trh = result.real
         tsh = trh + k2
         mCw = Qh / (tsh - trh)
