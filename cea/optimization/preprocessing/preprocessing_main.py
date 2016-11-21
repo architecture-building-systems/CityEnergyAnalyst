@@ -90,10 +90,10 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
 
 class SolarFeatures(object):
     def __init__(self, locator):
-        self.PV_Peak = pd.read_csv(locator.pathSolarRaw + "/Pv.csv", usecols="PV_kWh").max()
-        self.SolarAreaPV = pd.read_csv(locator.pathSolarRaw + "/Pv.csv", usecols="Area").max()
-        self.PVT_Peak = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols="PV_kWh").max()
-        self.PVT_Qnom = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols="Qsc_KWh") * 1000
-        self.SolarAreaPVT = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols="Area").max()
-        self.SC_Qnom = pd.read_csv(locator.pathSolarRaw + "/SC_75.csv", usecols="Qsc_Kw") * 1000
-        self.SolarAreaSC = pd.read_csv(locator.pathSolarRaw + "/SC_75.csv", usecols="Area").max()
+        self.PV_Peak = pd.read_csv(locator.pathSolarRaw + "/Pv.csv", usecols=["PV_kWh"]).values.max()
+        self.SolarAreaPV = pd.read_csv(locator.pathSolarRaw + "/Pv.csv", usecols=["Area"]).values.max()
+        self.PVT_Peak = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols=["PV_kWh"]).values.max()
+        self.PVT_Qnom = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols=["Qsc_KWh"]).values.max()*1000
+        self.SolarAreaPVT = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols=["Area"]).values.max()
+        self.SC_Qnom = pd.read_csv(locator.pathSolarRaw + "/SC_75.csv", usecols=["Qsc_Kw"]).values.max()* 1000
+        self.SolarAreaSC = pd.read_csv(locator.pathSolarRaw + "/SC_75.csv", usecols=["Area"]).values.max()

@@ -61,7 +61,8 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
         mcphs = Qhsf / (tsh - trh)
     else:
         tsh = trh = mcphs = 0
-    return tsh, trh, mcphs # C,C, W/C
+    # return floats with numpy function. Needed when np.vectorize is use to call this function
+    return np.float(tsh), np.float(trh), np.float(mcphs) # C,C, W/C
 
 
 def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma_sup_cs, ma_sup_0, Ta_sup_0, Ta_re_0,Cpa, gv):
@@ -129,4 +130,5 @@ def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma
         mcpcs = Qcsf / (tsc - trc)
     else:
         tsc = trc = mcpcs = 0
-    return tsc, trc, mcpcs  # C,C, W/C
+    # return floats with numpy function. Needed when np.vectorize is use to call this function
+    return np.float(tsc), np.float(trc), np.float(mcpcs)  # C,C, W/C

@@ -38,6 +38,8 @@ class InputLocator(object):
             self.pathSolarRaw = os.path.join(self.get_potentials_results_folder(), "solar") # Raw solar files
 
     # optimization
+
+
     def get_optimization_results_folder(self):
         """scenario/outputs/data/demand"""
         folder = os.path.join(self.scenario_path, 'outputs', 'data', 'optimization')
