@@ -84,20 +84,25 @@ class InputLocator(object):
         return os.path.join(self.db_path, 'Archetypes', 'Archetypes_schedules.xlsx')
 
     def get_life_cycle_inventory_supply_systems(self):
-        """db/Systems/supply_systems.csv"""
+        """db/Systems/supply_systems.xls"""
         return os.path.join(self.db_path, 'Systems', 'supply_systems.xls')
 
     def get_technical_emission_systems(self):
-        """db/Systems/emission_systems.csv"""
+        """db/Systems/emission_systems.xls"""
         return os.path.join(self.db_path, 'Systems',  'emission_systems.xls')
 
     def get_envelope_systems(self):
-        """db/Systems/emission_systems.csv"""
+        """db/Systems/envelope_systems.xls"""
         return os.path.join(self.db_path, 'Systems',  'envelope_systems.xls')
+
+    def get_thermal_networks(self):
+        """db/Systems/thermal_networks.xls"""
+        return os.path.join(self.db_path, 'Systems',  'thermal_networks.xls')
 
     def get_data_benchmark(self):
         """db/Benchmarks/benchmark_targets.xls"""
         return os.path.join(self.db_path, 'Benchmarks', 'benchmark_targets.xls')
+
     def get_data_benchmark_today(self):
         """db/Benchmarks/benchmark_today.xls"""
         return os.path.join(self.db_path, 'Benchmarks', 'benchmark_today.xls')
