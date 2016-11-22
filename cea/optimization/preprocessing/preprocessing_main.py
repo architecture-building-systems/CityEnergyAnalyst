@@ -59,13 +59,13 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     # GET LOADS IN SUBSTATIONS
     # prepocess space heating, domestic hot water and space cooling to substation.
     print "Run substation model for each building separately"
-    substation.substation_main(locator, total_demand, building_names, gv, Flag = True) # True if disconected buildings are calculated
+    #substation.substation_main(locator, total_demand, building_names, gv, Flag = True) # True if disconected buildings are calculated
 
     # GET COMPETITIVE ALTERNATIVES TO A NETWORK
     # estimate what would be the operation of single buildings only for heating.
     # For cooling all buildings are assumed to be connected to the cooling distribution on site.
-    print "Heating operation pattern for single buildings"
-    decentralized_buildings.decentralized_main(locator, building_names, gv)
+    print "Run decentralized model for buildings"
+    #decentralized_buildings.decentralized_main(locator, building_names, gv)
 
     # GET DH NETWORK
     # at first estimate a distribution with all the buildings connected at it.
@@ -90,10 +90,39 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
 
 class SolarFeatures(object):
     def __init__(self, locator):
-        self.PV_Peak = pd.read_csv(locator.pathSolarRaw + "/Pv.csv", usecols="PV_kWh").max()
-        self.SolarAreaPV = pd.read_csv(locator.pathSolarRaw + "/Pv.csv", usecols="Area").max()
-        self.PVT_Peak = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols="PV_kWh").max()
-        self.PVT_Qnom = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols="Qsc_KWh") * 1000
-        self.SolarAreaPVT = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols="Area").max()
-        self.SC_Qnom = pd.read_csv(locator.pathSolarRaw + "/SC_75.csv", usecols="Qsc_Kw") * 1000
-        self.SolarAreaSC = pd.read_csv(locator.pathSolarRaw + "/SC_75.csv", usecols="Area").max()
+        self.PV_Peak = pd.read_csv(locator.pathSolarRaw + "/Pv.csv", usecols=["PV_kWh"]).values.max()
+        self.SolarAreaPV = pd.read_csv(locator.pathSolarRaw + "/Pv.csv", usecols=["Area"]).values.max()
+        self.PVT_Peak = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols=["PV_kWh"]).values.max()
+        self.PVT_Qnom = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols=["Qsc_KWh"]).values.max()*1000
+        self.SolarAreaPVT = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols=["Area"]).values.max()
+        self.SC_Qnom = pd.read_csv(locator.pathSolarRaw + "/SC_75.csv", usecols=["Qsc_Kw"]).values.max()* 1000
+        self.SolarAreaSC = pd.read_csv(locator.pathSolarRaw + "/SC_75.csv", usecols=["Area"]).values.max()
+
+#============================
+#test
+#============================
+
+
+def run_as_script(scenario_path=None):
+    """
+    run the whole preprocessing routine
+    """
+    import cea.globalvar
+    from geopandas import GeoDataFrame as gpdf
+
+    gv = cea.globalvar.GlobalVariables()
+
+    if scenario_path is None:
+        scenario_path = gv.scenario_reference
+
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    total_demand = pd.read_csv(locator.get_total_demand())
+    building_names = pd.read_csv(locator.get_total_demand())['Name']
+    weather_file = locator.get_default_weather()
+    preproccessing(locator, total_demand, building_names, weather_file, gv)
+
+    print 'test_preprocessing_main() succeeded'
+
+if __name__ == '__main__':
+    run_as_script()
+

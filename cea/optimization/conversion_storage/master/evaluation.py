@@ -86,7 +86,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
     if master_to_slave_vars.nBuildingsConnected > 1:
         if individual_barcode.count("0") == 0:
-            master_to_slave_vars.fNameTotalCSV = locator.pathRaw + "/Total.csv"
+            master_to_slave_vars.fNameTotalCSV = locator.get_total_demand()
         else:
             master_to_slave_vars.fNameTotalCSV = locator.pathTotalNtw + "/Total_" + individual_barcode + ".csv"
     else:
@@ -330,7 +330,7 @@ def checkNtw(individual, ntwList, locator, gv):
     
     """
     indCombi = sFn.individual_to_barcode(individual, gv)
-    print(indCombi)
+    print indCombi,2
     
     if not (indCombi in ntwList) and indCombi.count("1") > 0:
         ntwList.append(indCombi)

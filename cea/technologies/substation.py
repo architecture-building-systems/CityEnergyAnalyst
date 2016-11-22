@@ -53,32 +53,35 @@ def substation_main(locator, total_demand, building_names, gv, Flag):
     buildings = []
     for name in building_names:
         buildings.append(pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
-                                     usecols=['Name', 'Tshs_C', 'Trhs_C', 'Tscs_C', 'Trcs_C', 'Tsww_C',
-                                              'Trww_C', 'Qhsf_kWh', 'Qcsf_kWh', 'Qwwf_kWh',
-                                              'mcphs_kWC', 'mcpww_kWC', 'mcpcs_kWC',
+                                     usecols=['Name', 'Thsf_sup_C', 'Thsf_re_C', 'Tcsf_sup_C', 'Tcsf_re_C',
+                                              'Twwf_sup_C', 'Twwf_re_C', 'Qhsf_kWh', 'Qcsf_kWh', 'Qwwf_kWh',
+                                              'mcphsf_kWC', 'mcpwwf_kWC', 'mcpcsf_kWC',
                                               'Ef_kWh']))
-        Ths = np.vectorize(calc_DH_supply)(Ths.copy(), buildings[iteration].Tshs_C.values)
-        Tww = np.vectorize(calc_DH_supply)(Tww.copy(), buildings[iteration].Tsww_C.values)
-        Tcs = np.vectorize(calc_DC_supply)(Tcs.copy(), buildings[iteration].Tscs_C.values)
+        Ths = np.vectorize(calc_DH_supply)(Ths.copy(), buildings[iteration].Thsf_sup_C.values)
+        Tww = np.vectorize(calc_DH_supply)(Tww.copy(), buildings[iteration].Twwf_sup_C.values)
+        Tcs = np.vectorize(calc_DC_supply)(Tcs.copy(), buildings[iteration].Tcsf_sup_C.values)
         iteration += 1
     T_DHS = np.vectorize(calc_DH_supply)(Ths, Tww)
     T_DHS_supply = np.where(T_DHS > 0, T_DHS + gv.dT_heat, T_DHS)
     T_DCS_supply = np.where(Tcs != 1E6, Tcs - gv.dT_cool, 0)
 
     # Calculate disconnected buildings files and substation operation.
-    index = 0
     if Flag:
+        index = 0
         combi = [0] * len(building_names)
         for name in building_names:
+            print name
             dfRes = total_demand[(total_demand.Name == name)]
             combi[index] = 1
             key = "".join(str(e) for e in combi)
             fName_result = "Total_" + key + ".csv"
-            dfRes.to_csv(locator.pathSubsRes + '//' + fName_result, sep=',', index=False, float_format='%.3f')
+            dfRes.to_csv(locator.pathSubsRes + '//' + fName_result, sep=',', float_format='%.3f')
+            combi[index] = 0
             # calculate substation parameters per building
             substation_model(locator, gv, buildings[index], T_DHS, T_DHS_supply, T_DCS_supply, Ths, Tww)
             index += 1
     else:
+        index =0
         # calculate substation parameters per building
         for name in building_names:
             substation_model(locator, gv, buildings[index], T_DHS, T_DHS_supply, T_DCS_supply, Ths, Tww)
@@ -112,9 +115,9 @@ def substation_model(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS
     Qhsf = building.Qhsf_kWh.values * 1000  # in W
     Qnom = max(Qhsf)  # in W
     if Qnom > 0:
-        tco = building.Tshs_C.values + 273  # in K
-        tci = building.Trhs_C.values + 273  # in K
-        cc = building.mcphs_kWC.values * 1000  # in W/K
+        tco = building.Thsf_sup_C.values + 273  # in K
+        tci = building.Thsf_re_C.values + 273  # in K
+        cc = building.mcphsf_kWC.values * 1000  # in W/K
         index = np.where(Qhsf == Qnom)[0][0]
         thi_0 = thi[index]
         tci_0 = tci[index]
@@ -130,9 +133,9 @@ def substation_model(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS
     Qwwf = building.Qwwf_kWh.values * 1000  # in W
     Qnom = max(Qwwf)  # in W
     if Qnom > 0:
-        tco = building.Tsww_C.values + 273  # in K
-        tci = building.Trww_C.values + 273  # in K
-        cc = building.mcpww_kWC.values * 1000  # in W/K
+        tco = building.Twwf_sup_C.values + 273  # in K
+        tci = building.Twwf_re_C.values + 273  # in K
+        cc = building.mcpwwf_kWC.values * 1000  # in W/K
         index = np.where(Qwwf == Qnom)[0][0]
         thi_0 = thi[index]
         tci_0 = tci[index]
@@ -153,9 +156,9 @@ def substation_model(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS
     Qnom = max(Qcf)  # in W
     if Qnom > 0:
         tci = t_DC_supply + 273  # in K
-        tho = building.Tscs_C.values + 273  # in K
-        thi = building.Trcs_C.values + 273  # in K
-        ch = (abs(building.mcpcs_kWC.values)) * 1000  # in W/K
+        tho = building.Tcsf_sup_C.values + 273  # in K
+        thi = building.Tcsf_re_C.values + 273  # in K
+        ch = (abs(building.mcpcsf_kWC.values)) * 1000  # in W/K
         index = np.where(Qcf == Qnom)[0][0]
         tci_0 = tci[index]  # in K
         thi_0 = thi[index]
@@ -169,19 +172,19 @@ def substation_model(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS
         A_hex_cs = 0
 
     # converting units and quantities:
-    T_return_DH_result_flat = t_DH_return + 273  # convert to K
-    T_supply_DH_result_flat = t_DH_supply + 273  # convert to K
+    T_return_DH_result_flat = t_DH_return + 273.0  # convert to K
+    T_supply_DH_result_flat = t_DH_supply + 273.0  # convert to K
     mdot_DH_result_flat = mcp_DH * 1000 / gv.cp  # convert from kW/K to kg/s
     mdot_heating_result_flat = mcp_DH_hs * 1000 / gv.cp  # convert from kW/K to kg/s
     mdot_dhw_result_flat = mcp_DH_ww * 1000 / gv.cp  # convert from kW/K to kg/s
     mdot_cool_result_flat = mcp_DC_cs * 1000 / gv.cp  # convert from kW/K to kg/s
-    T_r1_dhw_result_flat = t_DH_return_ww + 273  # convert to K
-    T_r1_heating_result_flat = t_DH_return_hs + 273  # convert to K
-    T_r1_cool_result_flat = t_DC_return_cs + 273  # convert to K
-    T_supply_DC_result_flat = t_DC_supply + 273  # convert to K
-    T_supply_max_all_buildings_flat = t_DH + 273  # convert to K
-    T_hotwater_max_all_buildings_flat = t_WW + 273  # convert to K
-    T_heating_sup_max_all_buildings_flat = t_HS + 273  # convert to K
+    T_r1_dhw_result_flat = t_DH_return_ww + 273.0  # convert to K
+    T_r1_heating_result_flat = t_DH_return_hs + 273.0  # convert to K
+    T_r1_cool_result_flat = t_DC_return_cs + 273.0  # convert to K
+    T_supply_DC_result_flat = t_DC_supply + 273.0  # convert to K
+    T_supply_max_all_buildings_flat = t_DH + 273.0  # convert to K
+    T_hotwater_max_all_buildings_flat = t_WW + 273.0  # convert to K
+    T_heating_sup_max_all_buildings_flat = t_HS + 273.0  # convert to K
     Electr_array_all_flat = building.Ef_kWh.values * 1000  # convert to #to W
 
     # save the results into a .csv file
@@ -335,7 +338,7 @@ def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
     else:
         tco = 0
         cc = 0
-    return tco, cc / 1000
+    return np.float(tco), np.float(cc / 1000)
 
 
 def calc_plate_HEX(NTU, cr):
@@ -385,7 +388,7 @@ def calc_HEX_mix(Q1, Q2, t1, m1, t2, m2):
         tavg = (t1 * m1 + t2 * m2) / (m1 + m2)
     else:
         tavg = 0
-    return tavg
+    return np.float(tavg)
 
 
 def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
@@ -435,7 +438,7 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
     else:
         tho = 0
         ch = 0
-    return tho, ch / 1000
+    return np.float(tho), np.float(ch / 1000)
 
 
 def calc_dTm_HEX(thi, tho, tci, tco, flag):
