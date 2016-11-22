@@ -136,8 +136,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     """ Fixed order COST ALGORITHM STARTS """  # Run the Centralized Plant Operation Scheme
 
     # Import Data - Sewage
-    # mdotsew = 0.0
-    # tsupsew = 20 + 273.0
     if gv.HPSew_allowed == 1:
         QcoldsewArray = np.array(pd.read_csv(locator.get_sewageheat_potential, usecols=["Qsw_kW"])) * 1E3
         TretsewArray = np.array(pd.read_csv(locator.get_sewageheat_potential, usecols=["ts_C"])) + 273
@@ -301,12 +299,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                             Q_used_prim_CC = Q_used_prim_CC_fn(Q_therm_req)
                             Q_CC_delivered = Q_therm_req.copy()
                             Q_therm_req = 0
-                            # print Q_used_prim_CC, "Q_used_prim_CC"
-                            # print Q_CC_delivered, "Q_CC_delivered"
                             E_el_CC_produced = np.float(eta_elec_interpol(Q_used_prim_CC)) * Q_used_prim_CC
-                            # print "CC electric efficiency:", np.float(eta_elec_interpol(Q_CC_max))
-                            # print "Q_CC_delivered", Q_CC_delivered
-                            # print "E_el_CC", np.shape(E_el_CC), E_el_CC
 
 
                         else:  # Only part of the demand can be delivered as 100% load achieved
@@ -472,7 +465,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                 else:
                     Q_uncovered = Q_therm_req
 
-                    print "not covered demand: ", Q_remaining, "Wh"
                     print "last source tested: ", current_source
                     print "occured in hour: ", hour
                     print "insufficient capacity installed! Cannot cover the distribution demand (check Slave code, find_least_cost_source_main"
@@ -486,13 +478,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                     print "This is now covered by a boiler"
 
                     print Q_therm_req_COPY, "Wh was required \n"
-                    # print sHPSew, sHPLake,  srcGHP,  sorcCC, sorcFurnace, sBoiler,  sBackup, "sHPSew, sHPLake,  srcGHP,  sorcCC,\
-                    # sorcFurnace, sBoiler,  sBackup"
-                    # print "Q_HPSew, Q_HPLake, Q_GHP, Q_CC, Q_Furnace, Q_Boiler, Q_Backup ", Q_HPSew, Q_HPLake, Q_GHP, Q_CC, \
-                    # Q_Furnace, Q_Boiler, Q_Backup
-                    # print MS_Var.Boiler_on, MS_Var.BoilerPeak_on, MS_Var.Furnace_on, MS_Var.GHP_on, MS_Var.HP_Lake_on,
-                    # MS_Var.HP_Sew_on, MS_Var.CC_on, "MS_Var.Boiler_on, MS_Var.BoilerPeak_on, MS_Var.Furnace_on, MS_Var.GHP_on,\
-                    # MS_Var.HP_Lake_on, MS_Var.HP_Sew_on, MS_Var.CC_on, "
+
                     break
 
             elif round(Q_therm_req, 0) != 0:
@@ -651,36 +637,16 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     print "np.sum(E_PP_and_storage)", np.sum(E_PP_and_storage)
     print "np.sum(E_aux_HP_uncontrollable)", np.sum(E_aux_HP_uncontrollable)
 
-    # E_el_sum_generated = np.sum(ESolarProduced) # CC and Furnace are already taken into account in the models
-    # E_gas_sum = np.sum(E_gas_data)
-    # E_el_sum = E_el_sum_generated - E_el_sum_consumed
-    # E_wood_sum = np.sum(E_wood_data)
-    # E_coldsource_sum = np.sum(E_coldsource_data)
-
     # Differenciate between Normal and green electricity for
     if MS_Var.EL_TYPE == 'green':
         ELEC_PRICE = gv.ELEC_PRICE_GREEN
-        # el_to_oil = gv.EL_TO_OIL_EQ_GREEN
-        # el_to_co2 = gv.EL_TO_CO2_GREEN
 
     else:
         ELEC_PRICE = gv.ELEC_PRICE
-        # el_to_oil = gv.EL_TO_OIL_EQ
-        # el_to_co2 = gv.EL_TO_CO2
 
-    # determine KEV remuneration, weighted average by capacity installed
-
-    # P_PV_installed = gv.PV_Peak * MS_Var.SOLAR_PART_PV
-    # P_PVT_installed_electric = gv.PVT_Peak * MS_Var.SOLAR_PART_PVT
-
-    # P_PVavgPerInstalltaion = P_PV_installed / MS_Var.nPV_installations
-    # P_PVTavgPerInstalltaion = P_PVT_installed_electric / MS_Var.nPVT_installations
-
-
-    # PeakPowerAvgkW      = INDf.import_solar_PeakPower(MS_Var.fNameTotalCSV, MS_Var.nBuildingsConnected, gv)
     # Area available in NEtwork
-    Area_AvailablePV = solar_features.SolarArea * MS_Var.SOLAR_PART_PV
-    Area_AvailablePVT = solar_features.SolarArea * MS_Var.SOLAR_PART_PVT
+    Area_AvailablePV = solar_features.SolarAreaPV * MS_Var.SOLAR_PART_PV
+    Area_AvailablePVT = solar_features.SolarAreaPVT * MS_Var.SOLAR_PART_PVT
     print "MS_Var.SOLAR_PART_PVT = ", MS_Var.SOLAR_PART_PVT
     print "MS_Var.SOLAR_PART_PV = ", MS_Var.SOLAR_PART_PV
     #    import from master
@@ -704,12 +670,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     print "E_el_sum_consumed (excl. AddBoiler)", E_el_sum_consumed
     print "ELEC_PRICE", ELEC_PRICE
-    # cost_electricity_thermalneeds = E_el_sum_consumed * ELEC_PRICE
-    # print "cost_electricity_thermalneeds", cost_electricity_thermalneeds
-    # cost_electricity_total = cost_electricity_thermalneeds - price_obtained_from_KEV_for_PVandPVT
-    # print np.shape(cost_electricity_thermalneeds)
-    # print "price_obtained_from_KEV_for_PVandPVT", np.shape(price_obtained_from_KEV_for_PVandPVT)
-    # E_PP_el_data[:,3] = electricity produced in Wh from a CC
+
     cost_CC_maintenance = np.sum(E_PP_el_data[:, 3]) * gv.CC_Maintenance_per_kWhel / 1000.0
 
     # Fill up storage if end-of-season energy is lower than beginning of season
@@ -723,16 +684,9 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     else:
         cost_Boiler_for_Storage_reHeat_at_seasonend = 0
 
-    # print "cost_CC_maintenance", cost_CC_maintenance
-    # cost_sum = np.sum(cost_data) + cost_electricity_total + costAddBackup_total + cost_CC_maintenance + \
-    #                       cost_Boiler_for_Storage_reHeat_at_seasonend
     # CHANGED AS THE COST_DATA INCLUDES COST_ELECTRICITY_TOTAL ALREADY! (= double accounting)
     cost_HP_aux_uncontrollable = np.sum(E_aux_HP_uncontrollable) * ELEC_PRICE
     cost_HP_storage_operation = np.sum(E_aux_storage_operation) * ELEC_PRICE
-
-    # cost_data_centralPlant_op contains information about :
-    #                     costHPSew, costHPLake, costGHP, costCC, costFurnace, costBoiler, costBackup
-    #                     in 8760h operation
 
     cost_sum = np.sum(
         cost_data_centralPlant_op) - price_obtained_from_KEV_for_PVandPVT + costAddBackup_total + cost_CC_maintenance + \
@@ -1319,6 +1273,15 @@ def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
 
 
 def import_solar_PeakPower(fNameTotalCSV, nBuildingsConnected, gv):
+    """
+    This function estimates the amount of solar installed for a certain configuration
+    based on the number of buildings connected to the grid.
+
+    :param fNameTotalCSV:
+    :param nBuildingsConnected:
+    :param gv:
+    :return:
+    """
     AreaAllowed = np.array(extract_csv(fNameTotalCSV, "Af", nBuildingsConnected))
     nFloors = np.array(extract_csv(fNameTotalCSV, "Floors", nBuildingsConnected))
 
