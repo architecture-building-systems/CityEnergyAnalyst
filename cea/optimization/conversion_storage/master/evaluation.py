@@ -6,7 +6,7 @@ Evaluation function of an individual
 """
 from __future__ import division
 
-import cea.optimization.conversion_storage.slave.slave_main as sM
+import cea.optimization.conversion_storage.slave.Slave_main as sM
 import cea.optimization.conversion_storage.master.summarize_network as nM
 import numpy as np
 import pandas as pd

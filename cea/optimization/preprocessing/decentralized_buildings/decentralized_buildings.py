@@ -20,7 +20,7 @@ def decentralized_main(locator, building_names, gv):
     Computes the parameters for the operation of disconnected buildings
     output results in csv files.
 
-    There is not optimization at this point. The different technologies are calculated and compared 1 to 1 to
+    There is no optimization at this point. The different technologies are calculated and compared 1 to 1 to
     each technology. it is a classical combinatorial problem.
 
     :param locator: locator class

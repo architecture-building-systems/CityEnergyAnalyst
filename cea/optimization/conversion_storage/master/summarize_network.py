@@ -29,7 +29,7 @@ def network_main(locator, total_demand, building_names, gv, key):
     :param locator: locator class
     :param total_demand: dataframe with total demand of buildings
     :param building_names: vector with names of buildings
-    :param gv: gloval variables class
+    :param gv: global variables class
     :param key: when called by the optimization, a key will provide an id for the individual
      and the generation.
     :return:
