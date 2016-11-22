@@ -90,6 +90,7 @@ def create_demand_samples(method='morris', num_samples=1000, variable_groups=('T
     # define the problem
     problem = {'num_vars': num_vars, 'names': names, 'bounds': bounds, 'groups': None, 'N': num_samples,
                'method': method}
+    problem.update(sampler_parameters)
 
     return sampler(method, problem, num_samples, sampler_parameters), problem
 
