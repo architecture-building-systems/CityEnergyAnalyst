@@ -72,7 +72,9 @@ def create_demand_samples(method='morris', num_samples=1000, variable_groups=('T
     :return: (samples, problem) - samples is a list of configurations for each simulation to run, a configuration being
         a list of values for each variable in the problem. The problem is a dictionary with the keys 'num_vars',
         'names' and 'bounds' and describes the variables being sampled: 'names' is list of variable names of length
-        'num_vars' and 'bounds' is a list of tuples(lower-bound, upper-bound) for each of these variables.
+        'num_vars' and 'bounds' is a list of tuples(lower-bound, upper-bound) for each of these variables. Further,
+        the keys 'N' (`num_samples`) and 'method' (`method`) are set and the sampler_parameters are also added to
+        `problem`.
     """
     locator = InputLocator(None)
 
@@ -86,7 +88,8 @@ def create_demand_samples(method='morris', num_samples=1000, variable_groups=('T
         bounds.append(limits)
 
     # define the problem
-    problem = {'num_vars': num_vars, 'names': names, 'bounds': bounds, 'groups': None}
+    problem = {'num_vars': num_vars, 'names': names, 'bounds': bounds, 'groups': None, 'N': num_samples,
+               'method': method}
 
     return sampler(method, problem, num_samples, sampler_parameters), problem
 
