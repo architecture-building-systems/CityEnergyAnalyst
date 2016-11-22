@@ -17,6 +17,17 @@
 # NUM_LEVELS           | --num-levels
 # VARIABLE_GROUPS      | FIXME: not implemented yet
 
+# ---
+# author: Daren Thomas
+# copyright: Copyright 2016, Architecture and Building Systems - ETH Zurich
+# credits: Daren Thomas
+# license: MIT
+# version:  0.1
+# maintainer: Daren Thomas
+# email: thomas@arch.ethz.ch
+# status: Production
+# ---
+
 # parameters (the syntax used can be learnt here: http://stackoverflow.com/a/2013589/2260
 # and here: http://wiki.bash-hackers.org/syntax/pe)
 N=${N:-1}
