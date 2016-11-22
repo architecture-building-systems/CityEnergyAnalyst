@@ -79,7 +79,7 @@ def analyze_sensitivity(samples_path):
         for building in range(buildings_num):
             # `Y` is a NumPy array containing the model outputs as used in the SALib analyze functions
             Y = np.array([result.loc[building, output_parameter] for result in simulation_results])
-            result = analysis_function(problem, samples, Y, problem)
+            result = analysis_function(problem, samples, Y)
             analysis_results.append(result)
 
         # write out a worksheet for each analysis result (e.g. 'S1', 'ST', 'ST_conf' for method == 'sobol')
@@ -90,7 +90,7 @@ def analyze_sensitivity(samples_path):
     writer.save()
 
 
-def sobol_analyze_function(problem, _, Y, parameters):
+def sobol_analyze_function(problem, _, Y):
     """
     Use the SALib.analyze.sobol method to analyze the simulation results.
 
@@ -104,11 +104,11 @@ def sobol_analyze_function(problem, _, Y, parameters):
              containing the indices in the same order as the parameter file. If calc_second_order is True, the
              dictionary also contains keys `S2` and `S2_conf`.)
     """
-    assert 'calc_second_order' in parameters, 'sobol method requires the `calc_second_order` parameter to be set (bool)'
-    return sobol.analyze(problem, Y, calc_second_order=parameters['calc_second_order'])
+    assert 'calc_second_order' in problem, 'sobol method requires the `calc_second_order` parameter to be set (bool)'
+    return sobol.analyze(problem, Y, calc_second_order=problem['calc_second_order'])
 
 
-def morris_analyze_function(problem, X, Y, parameters):
+def morris_analyze_function(problem, X, Y):
     """
     Use the SALib.analyze.morris method to analyze the simulation results.
 
@@ -121,10 +121,10 @@ def morris_analyze_function(problem, X, Y, parameters):
              `mu`, `mu_star`, `sigma`, and `mu_star_conf`, where each entry is a list of size D (the number of eters) 
              containing the indices in the same order as the parameter file.)
     """
-    assert 'grid_jump' in parameters, 'morris method requires the `grid_jump` parameter to be set (int)'
-    assert 'num_levels' in parameters, 'morris method requires the `num_levels` parameter to be set (int)'
+    assert 'grid_jump' in problem, 'morris method requires the `grid_jump` parameter to be set (int)'
+    assert 'num_levels' in problem, 'morris method requires the `num_levels` parameter to be set (int)'
     return morris.analyze(problem, X, Y,
-                          grid_jump=parameters['grid_jump'], num_levels=parameters['num_levels'])
+                          grid_jump=problem['grid_jump'], num_levels=problem['num_levels'])
 
 
 def read_results(samples_folder, samples_count):
