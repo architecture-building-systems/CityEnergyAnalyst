@@ -22,6 +22,16 @@ from cea.demand import demand_main
 from cea.inputlocator import InputLocator
 
 
+__author__ = "Jimeno A. Fonseca; Daren Thomas"
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca", "Daren Thomas"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
+
 def apply_sample_parameters(sample_index, samples_path, scenario_path, simulation_path):
     """
     Copy the scenario from the `scenario_path` to the `simulation_path`. Patch the parameters from

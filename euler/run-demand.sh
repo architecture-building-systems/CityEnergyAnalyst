@@ -33,7 +33,7 @@
 # license: MIT
 # version:  0.1
 # maintainer: Daren Thomas
-# email: thomas@arch.ethz.ch
+# email: cea@arch.ethz.ch
 # status: Production
 # ---
 
