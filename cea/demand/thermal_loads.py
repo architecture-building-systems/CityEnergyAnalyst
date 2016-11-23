@@ -771,10 +771,6 @@ class BuildingProperties(object):
         if gv.samples:  # if sensitivity analysis is on and there are samples
             for key, value in gv.samples.iteritems():
                 prop_thermal[key] = value
-                #    prop_occupancy_df[key] = value
-                # list_uses = list(prop_occupancy.drop('PFloor', axis=1).columns)
-                # prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
-                # prop_occupancy[list_uses] = prop_occupancy[list_uses].div(prop_occupancy[list_uses].sum(axis=1), axis=0)
 
         # get solar properties
         solar = get_prop_solar(locator).set_index('Name')
@@ -965,11 +961,9 @@ class BuildingProperties(object):
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated
         df['Aef'] = df['GFA_m2'] * df['Es']  # conditioned area only those for electricity
 
-        if gv.samples:  # if sensitivity analysis is on and there are samples
-            df['Cm'] = df['Cm']  # Internal heat capacity in J/K
-        else:
-            df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df[
-                'Af']  # Internal heat capacity in J/K
+        # if sensitivity analysis is on do do not overwrite
+        if 'Cm' not in gv.samples:
+            df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df['Af']# Internal heat capacity in J/K
 
         df['Am'] = df['Cm'].apply(self.lookup_effective_mass_area_factor) * df['Af']  # Effective mass area in [m2]
 

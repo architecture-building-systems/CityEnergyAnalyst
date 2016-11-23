@@ -14,12 +14,12 @@ __credits__ = ["Jimeno A. Fonseca", "Daren Thomas"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
-__email__ = "thomas@arch.ethz.ch"
+__email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 class GlobalVariables(object):
     def __init__(self):
-        self.scenario_reference = r'c:\reference-case-open\baseline'
+        self.scenario_reference = r'c:\reference-case-SA\baseline'
         self.print_partial = 'hourly' # hourly or monthly for the deamnd script
         self.print_yearly = True # print yearly values
         self.print_yearly_peak = True # print peak values
@@ -71,7 +71,7 @@ class GlobalVariables(object):
         # sensitivity morris method
         # ==============================================================================================================
 
-        self.samples = False # keep as false, cea.analysis.morris change this to a value if active
+        self.samples = None # keep as false, cea.analysis.morris change this to a value if active
 
         # ==============================================================================================================
         # optimization
