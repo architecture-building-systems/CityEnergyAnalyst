@@ -7,6 +7,7 @@ Demand model of thermal loads
 """
 from __future__ import division
 
+import os
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
@@ -768,10 +769,6 @@ class BuildingProperties(object):
         prop_comfort = Gdf.from_file(locator.get_building_comfort()).drop('geometry', axis=1).set_index('Name')
         prop_internal_loads = Gdf.from_file(locator.get_building_internal()).drop('geometry', axis=1).set_index('Name')
 
-        if gv.samples:  # if sensitivity analysis is on and there are samples
-            for key, value in gv.samples.iteritems():
-                prop_thermal[key] = value
-
         # get solar properties
         solar = get_prop_solar(locator).set_index('Name')
 
@@ -780,6 +777,12 @@ class BuildingProperties(object):
 
         # get envelope properties
         prop_architecture = get_envelope_properties(locator, prop_architectures).set_index('Name')
+
+        # apply overrides
+        if os.path.exists(locator.get_building_overrides()):
+            self._overrides = pd.read_csv(locator.get_building_overrides()).set_index('Name')
+            prop_thermal = self.apply_overrides(prop_thermal)
+            prop_architecture = self.apply_overrides(prop_architecture)
 
         # get properties of rc demand model
         prop_rc_model = self.calc_prop_rc_model(prop_occupancy, prop_architecture, prop_thermal,
@@ -802,6 +805,16 @@ class BuildingProperties(object):
         self._solar = solar
         self._prop_windows = df_windows
         self._prop_RC_model = prop_rc_model
+
+    def apply_overrides(self, df):
+        """Apply the overrides to `df`. This works by checking each column in the `self._overrides` dataframe
+        and overwriting any columns in `df` with the same name.
+        `self._overrides` and `df` are assumed to have the same index.
+        """
+        shared_columns = set(self._overrides.columns) & set(df.columns)
+        for column in shared_columns:
+            df[column] = self._overrides[column]
+        return df
 
     def __len__(self):
         return len(self.list_building_names())
@@ -961,9 +974,9 @@ class BuildingProperties(object):
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated
         df['Aef'] = df['GFA_m2'] * df['Es']  # conditioned area only those for electricity
 
-        # if sensitivity analysis is on do do not overwrite
-        if 'Cm' not in gv.samples:
-            df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df['Af']# Internal heat capacity in J/K
+        if 'Cm' not in self.get_overrides_columns():
+            # Internal heat capacity is not part of input, calculate [J/K]
+            df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df['Af']
 
         df['Am'] = df['Cm'].apply(self.lookup_effective_mass_area_factor) * df['Af']  # Effective mass area in [m2]
 
@@ -1040,6 +1053,13 @@ class BuildingProperties(object):
                                      age=self.get_prop_age(building_name),
                                      solar=self.get_solar(building_name),
                                      windows=self.get_prop_windows(building_name), gv=self.gv)
+
+    def get_overrides_columns(self):
+        """Return the list of column names in the `overrides.csv` file or an empty list if no such file
+        is present."""
+        if hasattr(self, '_overrides'):
+            return list(self._overrides.columns)
+        return []
 
 
 class BuildingPropertiesRow(object):
@@ -1184,35 +1204,39 @@ def get_temperatures(locator, prop_HVAC):
     prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')
     prop_emission_dhw = pd.read_excel(locator.get_technical_emission_systems(), 'dhw')
 
-    df = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
-    df2 = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
-    df3 = prop_HVAC.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
+    df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
+    df_emission_cooling = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
+    df_emission_dhw = prop_HVAC.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
 
-    fields = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'Tshs0_C', 'dThs0_C', 'Qhsmax_Wm2']
-    fields2 = ['Name', 'Tscs0_C', 'dTcs0_C', 'Qcsmax_Wm2']
-    fields3 = ['Name', 'Tsww0_C', 'dTww0_C', 'Qwwmax_Wm2']
+    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'Tshs0_C', 'dThs0_C',
+                               'Qhsmax_Wm2']
+    fields_emission_cooling = ['Name', 'Tscs0_C', 'dTcs0_C', 'Qcsmax_Wm2']
+    fields_emission_dhw = ['Name', 'Tsww0_C', 'dTww0_C', 'Qwwmax_Wm2']
 
-    result = df[fields].merge(df2[fields2], on='Name').merge(df3[fields3], on='Name')
+    result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
+                                                                on='Name').merge(df_emission_dhw[fields_emission_dhw],
+                                                                                 on='Name')
     return result
 
 
-def get_envelope_properties(locator, prop):
+def get_envelope_properties(locator, prop_architecture):
     prop_roof = pd.read_excel(locator.get_envelope_systems(), 'ROOF')
     prop_wall = pd.read_excel(locator.get_envelope_systems(), 'WALL')
     prop_win = pd.read_excel(locator.get_envelope_systems(), 'WINDOW')
     prop_shading = pd.read_excel(locator.get_envelope_systems(), 'SHADING')
 
-    df = prop.merge(prop_roof, left_on='type_roof', right_on='code')
-    df2 = prop.merge(prop_wall, left_on='type_wall', right_on='code')
-    df3 = prop.merge(prop_win, left_on='type_win', right_on='code')
-    df4 = prop.merge(prop_shading, left_on='type_shade', right_on='code')
+    df_roof = prop_architecture.merge(prop_roof, left_on='type_roof', right_on='code')
+    df_wall = prop_architecture.merge(prop_wall, left_on='type_wall', right_on='code')
+    df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code')
+    df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code')
 
-    fields = ['Name', 'win_wall', 'Occ_m2p', 'n50', 'n50', 'win_op', 'f_cros', 'e_roof', 'a_roof']
-    fields2 = ['Name', 'e_wall', 'a_wall']
-    fields3 = ['Name', 'e_win', 'G_win']
-    fields4 = ['Name', 'rf_sh']
+    fields_roof = ['Name', 'win_wall', 'Occ_m2p', 'n50', 'n50', 'win_op', 'f_cros', 'e_roof', 'a_roof']
+    fields_wall = ['Name', 'e_wall', 'a_wall']
+    fields_win = ['Name', 'e_win', 'G_win']
+    fields_shading = ['Name', 'rf_sh']
 
-    result = df[fields].merge(df2[fields2], on='Name').merge(df3[fields3], on='Name').merge(df4[fields4], on='Name')
+    result = df_roof[fields_roof].merge(df_wall[fields_wall], on='Name').merge(df_win[fields_win], on='Name').merge(
+        df_shading[fields_shading], on='Name')
     return result
 
 
