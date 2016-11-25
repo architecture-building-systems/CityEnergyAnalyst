@@ -75,7 +75,8 @@ def SAX_opt(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB,
 
     def evaluation(ind):
         """
-        Evaluation Function for optimization
+        This function evaluates each individual according to each objective function f1...fn
+        
         :param ind: individual
         :return: resulting fitness value for the three objectives of the analysis.
         """
