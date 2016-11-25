@@ -66,18 +66,12 @@ class GlobalVariables(object):
         # constant variables for air conditioning fan
         self.Pfan = 0.55 # specific fan consumption in W/m3/h
 
-
-        # ==============================================================================================================
-        # sensitivity morris method
-        # ==============================================================================================================
-
-        self.samples = None # keep as false, cea.analysis.morris change this to a value if active
-
         # ==============================================================================================================
         # optimization
         # ==============================================================================================================
 
         self.sensibilityStep = 2 #the more, the longer the sensitibility analysis
+        
         ########################### User inputs
 
         # Commands for the evolutionary algorithm
