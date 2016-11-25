@@ -91,9 +91,9 @@ def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, 
         return f1, f2, f3
 
     toolbox.register("evaluate", evaluation)
-    toolbox.register("mate", tools.cxTwoPoint)#tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)#
-    toolbox.register("mutate", tools.mutUniformInt ,low=BOUND_LOW, up=BOUND_UP, indpb=1.0/NDIM)#tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM)#
-    toolbox.register("select", tools.selNSGA2)
+    toolbox.register("mate", deap.tools.cxTwoPoint)#tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)#
+    toolbox.register("mutate", deap.tools.mutUniformInt ,low=BOUND_LOW, up=BOUND_UP, indpb=1.0/NDIM)#tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM)#
+    toolbox.register("select", deap.tools.selNSGA2)
 
     # run optimization
     pop, halloffame, paretofrontier, stats = optimization_main(locator, toolbox, NGEN, MU, CXPB, start_gen)
@@ -105,7 +105,7 @@ def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, 
 # Main optimizaiton routine
 # ++++++++++++++++++++++++++++
 
-def optimization_main(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_gen=None, seed = None):
+def optimization_main(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_generation=None, seed = None):
     """
     main optimization call which provides the cross-over and mutation generation after generation
     this script is based on the example of the library DEAP of python and the algortighm NSGA-II
@@ -118,13 +118,13 @@ def optimization_main(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_
                     generation
     """
     random.seed(seed)
-    if start_gen:
-        print start_gen
+    if start_generation:
+        print start_generation
         # A file name has been given, then load the data from the file
-        with open(locator.get_calibration_cluster_opt_checkpoint(start_gen), "rb") as cp_file:
+        with open(locator.get_calibration_cluster_opt_checkpoint(start_generation), "rb") as cp_file:
             cp = pickle.load(cp_file)
             pop = cp["population"]
-            start_gen = cp["generation"]
+            start_generation = cp["generation"]
             hall_of_fame = cp["hall_of_fame"]
             pareto_frontier = cp["pareto_frontier"]
             log_book = cp["log_book"] #this registers
@@ -132,7 +132,7 @@ def optimization_main(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_
     else:
         # Start a new evolution
         pop = toolbox.population(n=MU)
-        start_gen = 1
+        start_generation = 1
         hall_of_fame = deap.tools.HallOfFame(maxsize=3)
         pareto_frontier = deap.tools.ParetoFront()
         log_book = deap.tools.Logbook()
@@ -159,7 +159,7 @@ def optimization_main(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_
     print(log_book.stream)
 
     # Begin the generational process
-    for gen in range(start_gen, NGEN+1):
+    for generation in range(start_generation, NGEN+1):
         # Vary the population
         offspring = deap.tools.selTournamentDCD(pop, len(pop))
         offspring = [toolbox.clone(ind) for ind in offspring]
@@ -185,17 +185,17 @@ def optimization_main(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_
         # Select the next generation population
         pop = toolbox.select(pop + offspring, MU)
         record = stats.compile(pop)
-        log_book.record(gen=gen, evals=len(invalid_individuals), **record)
+        log_book.record(gen=generation, evals=len(invalid_individuals), **record)
         print(log_book.stream)
 
         FREQ = 1 # frequence of storage
-        if gen % FREQ == 0:
+        if generation % FREQ == 0:
 
             # Fill the dictionary using the dict(key=value[, ...]) constructor
-            cp = dict(population=pop, generation=gen, halloffame=hall_of_fame, paretofrontier=pareto_frontier,
+            cp = dict(population=pop, generation=generation, halloffame=hall_of_fame, paretofrontier=pareto_frontier,
                       logbook=log_book, rndstate=random.get_state())
 
-            with open(locator.get_calibration_cluster_opt_checkpoint(gen), "wb") as cp_file:
+            with open(locator.get_calibration_cluster_opt_checkpoint(generation), "wb") as cp_file:
                 pickle.dump(cp, cp_file)
 
         #print("hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
@@ -281,7 +281,7 @@ def calc_gain(clusters_names):
 #++++++++++++++++++++++++++
 
 
-def print_pareto(pop, paretofrontier):
+def print_pareto(pop, pareto_frontier):
     """
     plot front and pareto-optimal forntier
     :param pop: population of generation to check
@@ -290,10 +290,10 @@ def print_pareto(pop, paretofrontier):
     """
     #frontiers
     #front = np.array([list(ind.fitness.values) for ind in pop])
-    optimal_front = np.array([list(ind.fitness.values) for ind in paretofrontier])
+    optimal_front = np.array([list(ind.fitness.values) for ind in pareto_frontier])
 
     # text
-    n = [str(ind) for ind in paretofrontier]
+    n = [str(ind) for ind in pareto_frontier]
     fig, ax = plt.subplots()
     ax.scatter(optimal_front[:, 0], optimal_front[:, 1], c='b', s = optimal_front[:, 2],  marker='o')
     #ax.scatter(front[:,0], front[:,1], s=front[:, 2], c='r', marker='v')
