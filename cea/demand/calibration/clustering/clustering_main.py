@@ -56,25 +56,27 @@ def clustering(locator, gv, word_size, alphabet_size, building_name, building_lo
 
     # transform into dicts where key = day and value = 24 h array
     groups = data.groupby(data.day)
-    arrays = [group[1][building_load].values for group in groups]
+    list_of_timeseries = [group[1][building_load].values for group in groups]
 
-    # set optimization problem for wordzise and alpha number
+
     if optimize:
-        pop, halloffame, paretofrontier, stats = SAX_opt(locator, arrays, time_series_len=24, BOUND_LOW = 4,
+        # set optimization problem for wordzise and alpha number
+        pop, halloffame, paretofrontier, stats = SAX_opt(locator, list_of_timeseries, time_series_len=24, BOUND_LOW = 4,
                                                          BOUND_UP = 24, NGEN = 50, MU = 8, CXPB = 0.9,
                                                          start_gen = None)
         if plot_clusters:
             print_pareto(pop, paretofrontier)
     else:
+        # calculate sax for timesieries data
         s = SAX(word_size, alphabet_size)
-        sax = [s.to_letter_rep(array)[0] for array in arrays]
+        sax = [s.to_letter_rep(x)[0] for x in list_of_timeseries]
 
         # calculate dict with data per hour for the whole year and create groups per pattern
-        array_hours = range(24)
-        array_days = range(365)
-        arrays_T = [list(x) for x in zip(*arrays)]
-        dict_data = dict((group, x) for group, x in zip(array_hours, arrays_T))
-        dict_data.update({'sax': sax, 'day': array_days})
+        hours_of_day = range(24)
+        days_of_year = range(365)
+        list_of_timeseries_transposed = [list(x) for x in zip(*list_of_timeseries)]
+        dict_data = dict((group, x) for group, x in zip(hours_of_day, list_of_timeseries_transposed))
+        dict_data.update({'sax': sax, 'day': days_of_year})
 
         # save all names and days of occurrence of each profile
         df = pd.DataFrame(dict_data)
