@@ -145,9 +145,9 @@ def optimization_main(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_
     stats.register("max", np.max, axis=0)
 
     # Evaluate the individuals with an invalid fitness
-    invalid_ind = [ind for ind in pop if not ind.fitness.valid]
-    fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
-    for ind, fit in zip(invalid_ind, fitnesses):
+    invalid_individuals = [ind for ind in pop if not ind.fitness.valid]
+    fitnesses = toolbox.map(toolbox.evaluate, invalid_individuals)
+    for ind, fit in zip(invalid_individuals, fitnesses):
         ind.fitness.values = fit
 
     # This is just to assign the crowding distance to the individuals
@@ -155,7 +155,7 @@ def optimization_main(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_
     pop = toolbox.select(pop, len(pop))
 
     record = stats.compile(pop)
-    log_book.record(gen=0, evals=len(invalid_ind), **record)
+    log_book.record(gen=0, evals=len(invalid_individuals), **record)
     print(log_book.stream)
 
     # Begin the generational process
@@ -173,9 +173,9 @@ def optimization_main(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_
             del ind1.fitness.values, ind2.fitness.values
 
         # Evaluate the individuals with an invalid fitness
-        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-        fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
-        for ind, fit in zip(invalid_ind, fitnesses):
+        invalid_individuals = [ind for ind in offspring if not ind.fitness.valid]
+        fitnesses = toolbox.map(toolbox.evaluate, invalid_individuals)
+        for ind, fit in zip(invalid_individuals, fitnesses):
             ind.fitness.values = fit
 
         # update the hall of fame and pareto
@@ -185,7 +185,7 @@ def optimization_main(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_
         # Select the next generation population
         pop = toolbox.select(pop + offspring, MU)
         record = stats.compile(pop)
-        log_book.record(gen=gen, evals=len(invalid_ind), **record)
+        log_book.record(gen=gen, evals=len(invalid_individuals), **record)
         print(log_book.stream)
 
         FREQ = 1 # frequence of storage
