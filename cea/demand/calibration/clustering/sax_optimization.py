@@ -1,6 +1,7 @@
 """
 ===========================
-Optimization of wordsize and alphabtsize for Symbolic Aggregate approXimation in python.
+Multiobjective optimization of the variables wordsize and alphabtsize for SAX in clustering_main.py
+Step required to get the right number of clusters in a semi - non-supervised manner.
 ===========================
 
 """
