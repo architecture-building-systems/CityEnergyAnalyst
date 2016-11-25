@@ -29,7 +29,7 @@ __status__ = "Production"
 
 
 
-def SAX_opt(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB, start_gen):
+def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB, start_gen):
     """
     A multi-objective problem set for three objectives to maximize using the DEAP library and NSGAII algorithm:
     1. Compound function of accurracy, complexity and compression based on the work of
@@ -76,7 +76,7 @@ def SAX_opt(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB,
     def evaluation(ind):
         """
         This function evaluates each individual according to each objective function f1...fn
-        
+
         :param ind: individual
         :return: resulting fitness value for the three objectives of the analysis.
         """
@@ -96,7 +96,7 @@ def SAX_opt(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB,
     toolbox.register("select", tools.selNSGA2)
 
     # run optimization
-    pop, halloffame, paretofrontier, stats = main_opt(locator, toolbox, NGEN, MU, CXPB, start_gen)
+    pop, halloffame, paretofrontier, stats = optimization_main(locator, toolbox, NGEN, MU, CXPB, start_gen)
 
     return pop, halloffame, paretofrontier, stats
 
@@ -105,7 +105,7 @@ def SAX_opt(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB,
 # Main optimizaiton routine
 # ++++++++++++++++++++++++++++
 
-def main_opt(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_gen=None, seed = None):
+def optimization_main(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_gen=None, seed = None):
     """
     main optimization call which provides the cross-over and mutation generation after generation
     this script is based on the example of the library DEAP of python and the algortighm NSGA-II
@@ -125,18 +125,18 @@ def main_opt(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_gen=None,
             cp = pickle.load(cp_file)
             pop = cp["population"]
             start_gen = cp["generation"]
-            halloffame = cp["halloffame"]
-            paretofrontier = cp["paretofrontier"]
-            logbook = cp["logbook"]
+            hall_of_fame = cp["hall_of_fame"]
+            pareto_frontier = cp["pareto_frontier"]
+            log_book = cp["log_book"] #this registers
             random.set_state(cp["rndstate"])
     else:
         # Start a new evolution
         pop = toolbox.population(n=MU)
         start_gen = 1
-        halloffame = deap.tools.HallOfFame(maxsize=3)
-        paretofrontier = deap.tools.ParetoFront()
-        logbook = deap.tools.Logbook()
-        logbook.header = "gen", "evals", "std", "min", "avg", "max"
+        hall_of_fame = deap.tools.HallOfFame(maxsize=3)
+        pareto_frontier = deap.tools.ParetoFront()
+        log_book = deap.tools.Logbook()
+        log_book.header = "gen", "evals", "std", "min", "avg", "max"
 
     stats = deap.tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", np.mean, axis=0)
@@ -155,8 +155,8 @@ def main_opt(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_gen=None,
     pop = toolbox.select(pop, len(pop))
 
     record = stats.compile(pop)
-    logbook.record(gen=0, evals=len(invalid_ind), **record)
-    print(logbook.stream)
+    log_book.record(gen=0, evals=len(invalid_ind), **record)
+    print(log_book.stream)
 
     # Begin the generational process
     for gen in range(start_gen, NGEN+1):
@@ -179,30 +179,30 @@ def main_opt(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_gen=None,
             ind.fitness.values = fit
 
         # update the hall of fame and pareto
-        halloffame.update(pop)
-        paretofrontier.update(pop)
+        hall_of_fame.update(pop)
+        pareto_frontier.update(pop)
 
         # Select the next generation population
         pop = toolbox.select(pop + offspring, MU)
         record = stats.compile(pop)
-        logbook.record(gen=gen, evals=len(invalid_ind), **record)
-        print(logbook.stream)
+        log_book.record(gen=gen, evals=len(invalid_ind), **record)
+        print(log_book.stream)
 
         FREQ = 1 # frequence of storage
         if gen % FREQ == 0:
 
             # Fill the dictionary using the dict(key=value[, ...]) constructor
-            cp = dict(population=pop, generation=gen, halloffame=halloffame, paretofrontier=paretofrontier,
-                      logbook=logbook, rndstate=random.get_state())
+            cp = dict(population=pop, generation=gen, halloffame=hall_of_fame, paretofrontier=pareto_frontier,
+                      logbook=log_book, rndstate=random.get_state())
 
             with open(locator.get_calibration_cluster_opt_checkpoint(gen), "wb") as cp_file:
                 pickle.dump(cp, cp_file)
 
         #print("hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
-        print("Convergence: ", deap.benchmarks.tools.convergence(pop, paretofrontier))
-        print("Diversity: ", deap.benchmarks.tools.diversity(pop, paretofrontier[0], paretofrontier[-1]))
+        print("Convergence: ", deap.benchmarks.tools.convergence(pop, pareto_frontier))
+        print("Diversity: ", deap.benchmarks.tools.diversity(pop, pareto_frontier[0], pareto_frontier[-1]))
 
-    return pop, halloffame, paretofrontier, stats
+    return pop, hall_of_fame, pareto_frontier, stats
 
 
 #++++++++++++++++++++++++++++
