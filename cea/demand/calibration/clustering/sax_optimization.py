@@ -1,6 +1,6 @@
 """
 ===========================
-Multiobjective optimization of the variables wordsize and alphabtsize for SAX in clustering_main.py
+Multiobjective optimization of the variables word_size and alphabet_size for SAX in clustering_main.py
 Step required to get the right number of clusters in a semi - non-supervised manner.
 ===========================
 
@@ -28,7 +28,6 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-
 def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB, start_gen):
     """
     A multi-objective problem set for three objectives to maximize using the DEAP library and NSGAII algorithm:
@@ -50,7 +49,7 @@ def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, 
     """
     # set-up deap library for optimization with 1 objective to minimize and 2 objectives to be maximized
     deap.creator.create("Fitness", deap.base.Fitness, weights=(1.0, 1.0, -0.1))  # maximize shilluette and calinski
-    deap.creator.create("Individual", list, fitness= deap.creator.Fitness)
+    deap.creator.create("Individual", list, fitness=deap.creator.Fitness)
 
     # set-up problem
     NDIM = 2
@@ -85,14 +84,16 @@ def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, 
         accurracy = calc_gain(sax)
         complexity = calc_complexity(sax)
         compression = calc_num_cutpoints(ind[0], time_series_len)
-        f1 = 0.7*accurracy - 0.2*complexity - 0.1*compression
-        f2 = silhouette_score(data, sax) #metrics.calinski_harabaz_score(data, sax)
+        f1 = 0.7 * accurracy - 0.2 * complexity - 0.1 * compression
+        f2 = silhouette_score(data, sax)  # metrics.calinski_harabaz_score(data, sax)
         f3 = len(set(sax))
         return f1, f2, f3
 
     toolbox.register("evaluate", evaluation)
-    toolbox.register("mate", deap.tools.cxTwoPoint)#tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)#
-    toolbox.register("mutate", deap.tools.mutUniformInt ,low=BOUND_LOW, up=BOUND_UP, indpb=1.0/NDIM)#tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM)#
+    toolbox.register("mate",
+                     deap.tools.cxTwoPoint)  # tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)#
+    toolbox.register("mutate", deap.tools.mutUniformInt, low=BOUND_LOW, up=BOUND_UP,
+                     indpb=1.0 / NDIM)  # tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM)#
     toolbox.register("select", deap.tools.selNSGA2)
 
     # run optimization
@@ -101,11 +102,11 @@ def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, 
     return pop, halloffame, paretofrontier, stats
 
 
-#++++++++++++++++++++++++++++
+# ++++++++++++++++++++++++++++
 # Main optimizaiton routine
 # ++++++++++++++++++++++++++++
 
-def optimization_main(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_generation=None, seed = None):
+def optimization_main(locator, toolbox, NGEN=100, MU=100, CXPB=0.9, start_generation=None, seed=None):
     """
     main optimization call which provides the cross-over and mutation generation after generation
     this script is based on the example of the library DEAP of python and the algortighm NSGA-II
@@ -127,7 +128,7 @@ def optimization_main(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_
             start_generation = cp["generation"]
             hall_of_fame = cp["hall_of_fame"]
             pareto_frontier = cp["pareto_frontier"]
-            log_book = cp["log_book"] #this registers
+            log_book = cp["log_book"]  # this registers
             random.set_state(cp["rndstate"])
     else:
         # Start a new evolution
@@ -159,7 +160,7 @@ def optimization_main(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_
     print(log_book.stream)
 
     # Begin the generational process
-    for generation in range(start_generation, NGEN+1):
+    for generation in range(start_generation, NGEN + 1):
         # Vary the population
         offspring = deap.tools.selTournamentDCD(pop, len(pop))
         offspring = [toolbox.clone(ind) for ind in offspring]
@@ -188,9 +189,8 @@ def optimization_main(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_
         log_book.record(gen=generation, evals=len(invalid_individuals), **record)
         print(log_book.stream)
 
-        FREQ = 1 # frequence of storage
+        FREQ = 1  # frequence of storage
         if generation % FREQ == 0:
-
             # Fill the dictionary using the dict(key=value[, ...]) constructor
             cp = dict(population=pop, generation=generation, halloffame=hall_of_fame, paretofrontier=pareto_frontier,
                       logbook=log_book, rndstate=random.get_state())
@@ -198,14 +198,14 @@ def optimization_main(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_
             with open(locator.get_calibration_cluster_opt_checkpoint(generation), "wb") as cp_file:
                 pickle.dump(cp, cp_file)
 
-        #print("hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
+        # print("hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
         print("Convergence: ", deap.benchmarks.tools.convergence(pop, pareto_frontier))
         print("Diversity: ", deap.benchmarks.tools.diversity(pop, pareto_frontier[0], pareto_frontier[-1]))
 
     return pop, hall_of_fame, pareto_frontier, stats
 
 
-#++++++++++++++++++++++++++++
+# ++++++++++++++++++++++++++++
 # Evaluation functions
 # ++++++++++++++++++++++++++++
 
@@ -217,10 +217,11 @@ def calc_complexity(names_of_clusters):
     :return: level of complexity which penalizes the objective function
     """
     single_words_length = len(set(names_of_clusters))
-    m = len(names_of_clusters) # number of observations
-    C = 1 # number of classes is 1
-    result = (single_words_length - C)/ (m+ C)
+    m = len(names_of_clusters)  # number of observations
+    C = 1  # number of classes is 1
+    result = (single_words_length - C) / (m + C)
     return result
+
 
 def calc_num_cutpoints(word_size, time_series_len=24):
     """
@@ -230,8 +231,9 @@ def calc_num_cutpoints(word_size, time_series_len=24):
     :param time_series_len: length of time_series group. integer
     :return: level of compression which penalizes the objective function
     """
-    result = word_size / (2 * time_series_len) # 24 hours
+    result = word_size / (2 * time_series_len)  # 24 hours
     return result
+
 
 def calc_entropy(names_of_clusters):
     """
@@ -245,8 +247,9 @@ def calc_entropy(names_of_clusters):
     entropy = 0
     for single_word in single_words:
         pi = names_of_clusters.count(single_word) / n_clusters
-        entropy += -pi*math.log(pi, 2)
+        entropy += -pi * math.log(pi, 2)
     return entropy
+
 
 def calc_gain(names_of_clusters):
     """
@@ -261,7 +264,7 @@ def calc_gain(names_of_clusters):
 
     for single_word in single_words:
         pi = names_of_clusters.count(single_word) / n_clusters
-        entropy += -pi*math.log(pi, 2)
+        entropy += -pi * math.log(pi, 2)
 
     entropy_values = 0
     all_values = ''.join(names_of_clusters)
@@ -270,15 +273,15 @@ def calc_gain(names_of_clusters):
 
     for value in single_letters:
         value_in_clusters = len([s for s in names_of_clusters if value in s])
-        pi = all_values.count(value)/ all_values_len
-        entropy_values +=  value_in_clusters/n_clusters * -pi*math.log(pi, 2)
+        pi = all_values.count(value) / all_values_len
+        entropy_values += value_in_clusters / n_clusters * -pi * math.log(pi, 2)
     gain = entropy - entropy_values
     return gain
 
 
-#++++++++++++++++++++++++++
-#Printing option
-#++++++++++++++++++++++++++
+# ++++++++++++++++++++++++++
+# Printing option
+# ++++++++++++++++++++++++++
 
 
 def print_pareto(pop, pareto_frontier):
@@ -288,15 +291,15 @@ def print_pareto(pop, pareto_frontier):
     :param paretoprontier:
     :return:
     """
-    #frontiers
-    #front = np.array([list(ind.fitness.values) for ind in pop])
+    # frontiers
+    # front = np.array([list(ind.fitness.values) for ind in pop])
     optimal_front = np.array([list(ind.fitness.values) for ind in pareto_frontier])
 
     # text
     n = [str(ind) for ind in pareto_frontier]
     fig, ax = plt.subplots()
-    ax.scatter(optimal_front[:, 0], optimal_front[:, 1], c='b', s = optimal_front[:, 2],  marker='o')
-    #ax.scatter(front[:,0], front[:,1], s=front[:, 2], c='r', marker='v')
+    ax.scatter(optimal_front[:, 0], optimal_front[:, 1], c='b', s=optimal_front[:, 2], marker='o')
+    # ax.scatter(front[:,0], front[:,1], s=front[:, 2], c='r', marker='v')
     for i, txt in enumerate(n):
         ax.annotate(txt, (optimal_front[i][0], optimal_front[i][1]))
     plt.axis("tight")
