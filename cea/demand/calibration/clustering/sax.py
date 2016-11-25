@@ -4,7 +4,8 @@ Symbolic Aggregate approximation (SAX) in python.
 Based on the paper "A Symbolic Representation of Time Series, with Implications for Streaming Algorithms"
 by J. Lin,  E, Keogh,  S. Lonardi & B. Chiu. 2003.
 
-Adapted from work og N. Hoffman published under MIT license.
+Adapted from work og N. Hoffman published under MIT license. The original
+code can be found in https://github.com/nphoff/saxpy
 
 The MIT License (MIT)
 Copyright (c) 2013 Nathan Hoffman
@@ -50,7 +51,7 @@ class SAX(object):
     def __init__(self, word_size=8, alphabet_size=7, epsilon=1e-6):
 
         if alphabet_size < 3:
-            raise "do not do that"
+            raise "Error: The Alphabet Size Is Too Small"
         self.aOffset = ord('a')
         self.wordSize = word_size
         self.alphabetSize = alphabet_size
@@ -123,7 +124,7 @@ class SAX(object):
         Requires that both strings are the same length
         """
         if len(sA) != len(sB):
-            raise StringsAreDifferentLength()
+            raise "Error: String Are Different Length"
         list_letters_a = [x for x in sA]
         list_letters_b = [x for x in sB]
         mindist = 0.0
@@ -166,7 +167,7 @@ class SAX(object):
         overlap = self.windowSize * overlappingFraction
         moveSize = int(self.windowSize - overlap)
         if moveSize < 1:
-            raise OverlapSpecifiedIsNotSmallerThanWindowSize()
+            raise " Error: Overlap Specified Is Not Smaller Than WindowSize"
         ptr = 0
         n = len(x)
         windowIndices = []
