@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-===========================
 Clustering
 This script clusters typical days for a building
 using SAX method for timeseries.
 
-===========================
 J. Fonseca  script development          27.10.16
-
 
 """
 from __future__ import division

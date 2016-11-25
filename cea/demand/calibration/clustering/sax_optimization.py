@@ -1,8 +1,6 @@
 """
-===========================
 Multiobjective optimization of the variables word_size and alphabet_size for SAX in clustering_main.py
 Step required to get the right number of clusters in a semi - non-supervised manner.
-===========================
 
 """
 from __future__ import division
