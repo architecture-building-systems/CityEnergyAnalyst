@@ -209,15 +209,15 @@ def optimization_main(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_
 # Evaluation functions
 # ++++++++++++++++++++++++++++
 
-def calc_complexity(clusters_names):
+def calc_complexity(cluster_names):
     """
     Calculated according to 'Application of time series discretization using evolutionary programming for classification
     of precancerous cervical lesions' by H. Acosta-Mesa et al., 2014
-    :param clusters_names: list containing a word which clusters the time series. e.g., ['abcffs', dddddd'...'svfdab']
+    :param cluster_names: list containing a word which clusters the time series. e.g., ['abcffs', dddddd'...'svfdab']
     :return: level of complexity which penalizes the objective function
     """
-    single_words_length = len(set(clusters_names))
-    m = len(clusters_names) # number of observations
+    single_words_length = len(set(cluster_names))
+    m = len(cluster_names) # number of observations
     C = 1 # number of classes is 1
     result = (single_words_length - C)/ (m+ C)
     return result
