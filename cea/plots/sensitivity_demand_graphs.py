@@ -36,7 +36,7 @@ def graph(locator, parameters, method, samples):
 
     """
     if method is 'sobol':
-        result = ['ST', 'conf', 'S1']
+        result = ['ST', 'ST_conf', 'S1']
     else:
         result = ['mu_star', 'sigma', 'mu_star_conf']
 
