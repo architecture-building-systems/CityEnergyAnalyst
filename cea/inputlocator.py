@@ -92,7 +92,7 @@ class InputLocator(object):
         return os.path.join(self.db_path, 'Systems',  'emission_systems.xls')
 
     def get_envelope_systems(self):
-        """db/Systemsl/emission_systems.csv"""
+        """db/Systems/emission_systems.csv"""
         return os.path.join(self.db_path, 'Systems',  'envelope_systems.xls')
 
     def get_data_benchmark(self):
@@ -153,6 +153,13 @@ class InputLocator(object):
         This file is used in the embodied energy script (cea/embodied.py)
         and the demand script (cea/demand_main.py)"""
         return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'architecture.shp')
+
+    def get_building_overrides(self):
+        """scenario/inputs/building-properties/overrides.csv
+        This file contains overrides to the building properties input files. They are applied after reading
+        those files and are matched by column name.
+        """
+        return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'overrides.csv')
 
     def get_terrain(self):
         """scenario/inputs/topography/terrain.tif"""
