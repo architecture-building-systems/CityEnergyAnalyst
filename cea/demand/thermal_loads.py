@@ -974,11 +974,10 @@ class BuildingProperties(object):
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated
         df['Aef'] = df['GFA_m2'] * df['Es']  # conditioned area only those for electricity
 
-        # FIXME: why are we hard-coding 'Cm' here? and can we do without it?
         if 'Cm' in self.get_overrides_columns():
+            # Internal heat capacity is not part of input, calculate [J/K]
             df['Cm'] = self._overrides['Cm']
         else:
-            # Internal heat capacity is not part of input, calculate [J/K]
             df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df['Af']
 
         df['Am'] = df['Cm'].apply(self.lookup_effective_mass_area_factor) * df['Af']  # Effective mass area in [m2]

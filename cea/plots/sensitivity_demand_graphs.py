@@ -21,7 +21,7 @@ __credits__ = ["Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
-__email__ = "thomas@arch.ethz.ch"
+__email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
@@ -36,7 +36,7 @@ def graph(locator, parameters, method, samples):
 
     """
     if method is 'sobol':
-        result = ['ST', 'conf', 'S1']
+        result = ['ST', 'ST_conf', 'S1']
     else:
         result = ['mu_star', 'sigma', 'mu_star_conf']
 
