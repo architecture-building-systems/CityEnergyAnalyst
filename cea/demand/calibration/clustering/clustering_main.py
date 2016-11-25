@@ -30,13 +30,13 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def clustering(locator, gv, wordSize, alphabetSize, building_name, building_load, optimize, plot_clusters):
+def clustering(locator, gv, word_size, alphabet_size, building_name, building_load, optimize, plot_clusters):
     """
     Function to cluster different days of the year following the SAX method (see class for more info)
     :param locator: locator class
     :param gv: global variables class
-    :param wordSize: estimated wordsize, after optimization
-    :param alphabetSize: estimated alphabet size. after optimization
+    :param word_size: estimated wordsize, after optimization
+    :param alphabet_size: estimated alphabet size. after optimization
     :param building_name: building name to make the cluster of its time series
     :param building_load: name of time_series to use form the building demand i.e., Qhsf_kWh, Qcsf_kWh, Qwwf_kWh etc.
     :param optimize: Boolan: true to run the optimization. you will first run the optimization,
@@ -66,7 +66,7 @@ def clustering(locator, gv, wordSize, alphabetSize, building_name, building_load
         if plot_clusters:
             print_pareto(pop, paretofrontier)
     else:
-        s = SAX(wordSize, alphabetSize)
+        s = SAX(word_size, alphabet_size)
         sax = [s.to_letter_rep(array)[0] for array in arrays]
 
         # calculate dict with data per hour for the whole year and create groups per pattern
@@ -98,7 +98,7 @@ def run_as_script():
     gv = gv.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
-    clustering(locator=locator, gv=gv, wordSize=4, alphabetSize=24, building_name='B01', building_load='Qhsf_kWh',
+    clustering(locator=locator, gv=gv, word_size=4, alphabet_size=24, building_name='B01', building_load='Qhsf_kWh',
                optimize=True, plot_clusters = True)
 
 if __name__ == '__main__':

@@ -30,13 +30,13 @@ class SAX(object):
     such strings using a lookup table.
     """
 
-    def __init__(self, wordSize = 8, alphabetSize = 7, epsilon = 1e-6):
+    def __init__(self, word_size = 8, alphabet_size = 7, epsilon = 1e-6):
 
-        if alphabetSize < 3:
+        if alphabet_size < 3:
             raise "do not do that"
         self.aOffset = ord('a')
-        self.wordSize = wordSize
-        self.alphabetSize = alphabetSize
+        self.wordSize = word_size
+        self.alphabetSize = alphabet_size
         self.eps = epsilon
         self.beta = list(stats.norm().ppf(np.linspace(0.01, 0.99, self.alphabetSize+1))[1:-1])
         self.build_letter_compare_dict()
