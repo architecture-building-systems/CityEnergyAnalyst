@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from cea.demand.calibration.clustering.sax import SAX
-from cea.demand.calibration.clustering.sax_optimization import SAX_opt, print_pareto
+from cea.demand.calibration.clustering.sax_optimization import sax_optimization, print_pareto
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -61,9 +61,9 @@ def clustering(locator, gv, word_size, alphabet_size, building_name, building_lo
 
     if optimize:
         # set optimization problem for wordzise and alpha number
-        pop, hall_of_fame, pareto_frontier, stats = SAX_opt(locator, list_of_timeseries, time_series_len=24, BOUND_LOW = 4,
-                                                         BOUND_UP = 24, NGEN = 50, MU = 8, CXPB = 0.9,
-                                                         start_gen = None)
+        pop, hall_of_fame, pareto_frontier, stats = sax_optimization(locator, list_of_timeseries, time_series_len=24, BOUND_LOW = 4,
+                                                                     BOUND_UP = 24, NGEN = 50, MU = 8, CXPB = 0.9,
+                                                                     start_gen = None)
         if plot_clusters:
             print_pareto(pop, pareto_frontier)
     else:
