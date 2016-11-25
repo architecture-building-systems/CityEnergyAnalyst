@@ -61,11 +61,11 @@ def clustering(locator, gv, word_size, alphabet_size, building_name, building_lo
 
     if optimize:
         # set optimization problem for wordzise and alpha number
-        pop, halloffame, paretofrontier, stats = SAX_opt(locator, list_of_timeseries, time_series_len=24, BOUND_LOW = 4,
+        pop, hall_of_fame, pareto_frontier, stats = SAX_opt(locator, list_of_timeseries, time_series_len=24, BOUND_LOW = 4,
                                                          BOUND_UP = 24, NGEN = 50, MU = 8, CXPB = 0.9,
                                                          start_gen = None)
         if plot_clusters:
-            print_pareto(pop, paretofrontier)
+            print_pareto(pop, pareto_frontier)
     else:
         # calculate sax for timesieries data
         s = SAX(word_size, alphabet_size)
