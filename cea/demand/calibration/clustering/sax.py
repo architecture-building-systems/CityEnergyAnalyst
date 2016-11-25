@@ -53,19 +53,19 @@ class SAX(object):
         if alphabet_size < 3:
             raise "Error: The Alphabet Size Is Too Small"
         self.aOffset = ord('a')
-        self.wordSize = word_size
-        self.alphabetSize = alphabet_size
+        self.word_size = word_size
+        self.alphabet_size = alphabet_size
         self.eps = epsilon
-        self.beta = list(stats.norm().ppf(np.linspace(0.01, 0.99, self.alphabetSize + 1))[1:-1])
+        self.beta = list(stats.norm().ppf(np.linspace(0.01, 0.99, self.alphabet_size + 1))[1:-1])
         self.build_letter_compare_dict()
-        self.scalingFactor = 1
+        self.scaling_factor = 1
 
     def to_letter_rep(self, x):
         """
         Function takes a series of data, x, and transforms it to a string representation
         """
         (paaX, indices) = self.to_PAA(self.normalize(x))
-        self.scalingFactor = np.sqrt((len(x) * 1.0) / (self.wordSize * 1.0))
+        self.scaling_factor = np.sqrt((len(x) * 1.0) / (self.word_size * 1.0))
         return self.alphabetize(paaX), indices
 
     def normalize(self, x):
@@ -88,18 +88,18 @@ class SAX(object):
         data for each reduced dimension
         """
         n = len(x)
-        stepFloat = n / float(self.wordSize)
+        stepFloat = n / float(self.word_size)
         step = int(math.ceil(stepFloat))
-        frameStart = 0
+        frame_start = 0
         approximation = []
         indices = []
         i = 0
-        while frameStart <= n - step:
-            thisFrame = np.array(x[frameStart:int(frameStart + step)])
+        while frame_start <= n - step:
+            thisFrame = np.array(x[frame_start:int(frame_start + step)])
             approximation.append(np.mean(thisFrame))
-            indices.append((frameStart, int(frameStart + step)))
+            indices.append((frame_start, int(frame_start + step)))
             i += 1
-            frameStart = int(i * stepFloat)
+            frame_start = int(i * stepFloat)
         return (np.array(approximation), indices)
 
     def alphabetize(self, paaX):
@@ -130,7 +130,7 @@ class SAX(object):
         mindist = 0.0
         for i in range(0, len(list_letters_a)):
             mindist += self.compare_letters(list_letters_a[i], list_letters_b[i]) ** 2
-        mindist = self.scalingFactor * np.sqrt(mindist)
+        mindist = self.scaling_factor * np.sqrt(mindist)
         return mindist
 
     def compare_letters(self, la, lb):
@@ -146,7 +146,7 @@ class SAX(object):
         and will have identical values.
         """
 
-        number_rep = range(0, int(self.alphabetSize))
+        number_rep = range(0, int(self.alphabet_size))
         letters = [chr(x + self.aOffset) for x in number_rep]
         self.compareDict = {}
         for i in range(0, len(letters)):
@@ -158,33 +158,33 @@ class SAX(object):
                     low_num = np.min([number_rep[i], number_rep[j]])
                     self.compareDict[letters[i] + letters[j]] = self.beta[high_num] - self.beta[low_num]
 
-    def sliding_window(self, x, numSubsequences=None, overlappingFraction=None):
-        if not numSubsequences:
-            numSubsequences = 20
-        self.windowSize = int(len(x) / numSubsequences)
-        if not overlappingFraction:
-            overlappingFraction = 0.9
-        overlap = self.windowSize * overlappingFraction
-        moveSize = int(self.windowSize - overlap)
-        if moveSize < 1:
+    def sliding_window(self, x, num_subsequences=None, overlapping_fraction=None):
+        if not num_subsequences:
+            num_subsequences = 20
+        self.window_size = int(len(x) / num_subsequences)
+        if not overlapping_fraction:
+            overlapping_fraction = 0.9
+        overlap = self.window_size * overlapping_fraction
+        move_size = int(self.window_size - overlap)
+        if move_size < 1:
             raise " Error: Overlap Specified Is Not Smaller Than WindowSize"
         ptr = 0
         n = len(x)
         windowIndices = []
         stringRep = []
-        while ptr < n - self.windowSize + 1:
-            thisSubRange = x[ptr:ptr + self.windowSize]
+        while ptr < n - self.window_size + 1:
+            thisSubRange = x[ptr:ptr + self.window_size]
             (thisStringRep, indices) = self.to_letter_rep(thisSubRange)
             stringRep.append(thisStringRep)
-            windowIndices.append((ptr, ptr + self.windowSize))
-            ptr += moveSize
+            windowIndices.append((ptr, ptr + self.window_size))
+            ptr += move_size
         return (stringRep, windowIndices)
 
     def batch_compare(self, xStrings, refString):
         return [self.compare_strings(x, refString) for x in xStrings]
 
     def set_scaling_factor(self, scalingFactor):
-        self.scalingFactor = scalingFactor
+        self.scaling_factor = scalingFactor
 
     def set_window_size(self, windowSize):
-        self.windowSize = windowSize
+        self.window_size = windowSize
