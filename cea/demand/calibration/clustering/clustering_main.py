@@ -58,12 +58,12 @@ def clustering(locator, gv, word_size, alphabet_size, building_name, building_lo
     groups = data.groupby(data.day)
     list_of_timeseries = [group[1][building_load].values for group in groups]
 
-
     if optimize:
         # set optimization problem for wordzise and alpha number
-        pop, hall_of_fame, pareto_frontier, stats = sax_optimization(locator, list_of_timeseries, time_series_len=24, BOUND_LOW = 4,
-                                                                     BOUND_UP = 24, NGEN = 50, MU = 8, CXPB = 0.9,
-                                                                     start_gen = None)
+        pop, hall_of_fame, pareto_frontier, stats = sax_optimization(locator, list_of_timeseries, time_series_len=24,
+                                                                     BOUND_LOW=4,
+                                                                     BOUND_UP=24, NGEN=50, MU=8, CXPB=0.9,
+                                                                     start_gen=None)
         if plot_clusters:
             print_pareto(pop, pareto_frontier)
     else:
@@ -94,6 +94,7 @@ def clustering(locator, gv, word_size, alphabet_size, building_name, building_lo
 
     gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
+
 def run_as_script():
     import cea.globalvar as gv
     import cea.inputlocator as inputlocator
@@ -101,7 +102,8 @@ def run_as_script():
     scenario_path = gv.scenario_reference
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
     clustering(locator=locator, gv=gv, word_size=4, alphabet_size=24, building_name='B01', building_load='Qhsf_kWh',
-               optimize=True, plot_clusters = True)
+               optimize=True, plot_clusters=True)
+
 
 if __name__ == '__main__':
     run_as_script()
