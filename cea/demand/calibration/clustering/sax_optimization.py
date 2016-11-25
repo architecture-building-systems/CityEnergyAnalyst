@@ -209,67 +209,67 @@ def optimization_main(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_
 # Evaluation functions
 # ++++++++++++++++++++++++++++
 
-def calc_complexity(cluster_names):
+def calc_complexity(names_of_clusters):
     """
     Calculated according to 'Application of time series discretization using evolutionary programming for classification
     of precancerous cervical lesions' by H. Acosta-Mesa et al., 2014
-    :param cluster_names: list containing a word which clusters the time series. e.g., ['abcffs', dddddd'...'svfdab']
+    :param names_of_clusters: list containing a word which clusters the time series. e.g., ['abcffs', dddddd'...'svfdab']
     :return: level of complexity which penalizes the objective function
     """
-    single_words_length = len(set(cluster_names))
-    m = len(cluster_names) # number of observations
+    single_words_length = len(set(names_of_clusters))
+    m = len(names_of_clusters) # number of observations
     C = 1 # number of classes is 1
     result = (single_words_length - C)/ (m+ C)
     return result
 
-def calc_num_cutpoints(wordSize, time_series_len=24):
+def calc_num_cutpoints(word_size, time_series_len=24):
     """
     Calculated according to 'Application of time series discretization using evolutionary programming for classification
     of precancerous cervical lesions' by H. Acosta-Mesa et al., 2014
-    :param wordSize: wordsize chossen for the SAX algorithm. integer.
+    :param word_size: wordsize chosen for the SAX algorithm. integer.
     :param time_series_len: length of time_series group. integer
     :return: level of compression which penalizes the objective function
     """
-    result = wordSize/(2*time_series_len) # 24 hours
+    result = word_size / (2 * time_series_len) # 24 hours
     return result
 
-def calc_entropy(clusters_names):
+def calc_entropy(names_of_clusters):
     """
     Calculated according to 'Application of time series discretization using evolutionary programming for classification
     of precancerous cervical lesions' by H. Acosta-Mesa et al., 2014
-    :param clusters_names: list containing a word which clusters the time series. e.g., ['abcffs', dddddd'...'svfdab']
+    :param names_of_clusters: list containing a word which clusters the time series. e.g., ['abcffs', dddddd'...'svfdab']
     :return:
     """
-    single_words = list(set(clusters_names))
-    n_clusters = len(clusters_names)
+    single_words = list(set(names_of_clusters))
+    n_clusters = len(names_of_clusters)
     entropy = 0
     for single_word in single_words:
-        pi = clusters_names.count(single_word)/n_clusters
+        pi = names_of_clusters.count(single_word) / n_clusters
         entropy += -pi*math.log(pi, 2)
     return entropy
 
-def calc_gain(clusters_names):
+def calc_gain(names_of_clusters):
     """
     Calculated according to the value of information gain of "Discretization of Time Series Dataset
     with a Genetic Search' by D. Garcia-Lopez1 and H. Acosta-Mesa 2009.
-    :param clusters_names: list containing a word which clusters the time series. e.g., ['abcffs', dddddd'...'svfdab']
+    :param names_of_clusters: list containing a word which clusters the time series. e.g., ['abcffs', dddddd'...'svfdab']
     :return: gain = information gain [real]
     """
-    single_words = list(set(clusters_names))
-    n_clusters = len(clusters_names)
+    single_words = list(set(names_of_clusters))
+    n_clusters = len(names_of_clusters)
     entropy = 0
 
     for single_word in single_words:
-        pi = clusters_names.count(single_word)/n_clusters
+        pi = names_of_clusters.count(single_word) / n_clusters
         entropy += -pi*math.log(pi, 2)
 
     entropy_values = 0
-    all_values = ''.join(clusters_names)
+    all_values = ''.join(names_of_clusters)
     all_values_len = len(all_values)
     single_letters = list(set(all_values))
 
     for value in single_letters:
-        value_in_clusters = len([s for s in clusters_names if value in s])
+        value_in_clusters = len([s for s in names_of_clusters if value in s])
         pi = all_values.count(value)/ all_values_len
         entropy_values +=  value_in_clusters/n_clusters * -pi*math.log(pi, 2)
     gain = entropy - entropy_values
