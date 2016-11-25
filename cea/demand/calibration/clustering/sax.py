@@ -60,7 +60,7 @@ class SAX(object):
         self.build_letter_compare_dict()
         self.scaling_factor = 1
 
-    def to_letter_rep(self, x):
+    def to_letter_representation(self, x):
         """
         Function takes a series of data, x, and transforms it to a string representation
         """
@@ -174,7 +174,7 @@ class SAX(object):
         stringRep = []
         while ptr < n - self.window_size + 1:
             thisSubRange = x[ptr:ptr + self.window_size]
-            (thisStringRep, indices) = self.to_letter_rep(thisSubRange)
+            (thisStringRep, indices) = self.to_letter_representation(thisSubRange)
             stringRep.append(thisStringRep)
             windowIndices.append((ptr, ptr + self.window_size))
             ptr += move_size

@@ -80,7 +80,7 @@ def SAX_opt(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB,
         :return: resulting fitness value for the three objectives of the analysis.
         """
         s = SAX(ind[0], ind[1])
-        sax = [s.to_letter_rep(array)[0] for array in data]
+        sax = [s.to_letter_representation(array)[0] for array in data]
         accurracy = calc_gain(sax)
         complexity = calc_complexity(sax)
         compression = calc_num_cutpoints(ind[0], time_series_len)

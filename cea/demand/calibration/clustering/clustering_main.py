@@ -69,7 +69,7 @@ def clustering(locator, gv, word_size, alphabet_size, building_name, building_lo
     else:
         # calculate sax for timesieries data
         s = SAX(word_size, alphabet_size)
-        sax = [s.to_letter_rep(x)[0] for x in list_of_timeseries]
+        sax = [s.to_letter_representation(x)[0] for x in list_of_timeseries]
 
         # calculate dict with data per hour for the whole year and create groups per pattern
         hours_of_day = range(24)
