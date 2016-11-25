@@ -1,8 +1,25 @@
 """
 ===========================
-Symbolic Aggregate approXimation in python.
-Based on the paper A Symbolic Representation of Time Series, with Implications for Streaming Algorithms
+Symbolic Aggregate approximation (SAX) in python.
+Based on the paper "A Symbolic Representation of Time Series, with Implications for Streaming Algorithms"
+by J. Lin,  E, Keogh,  S. Lonardi & B. Chiu. 2003.
+
 Adapted from work og N. Hoffman published under MIT license.
+
+The MIT License (MIT)
+Copyright (c) 2013 Nathan Hoffman
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ===========================
 
 """
@@ -30,7 +47,7 @@ class SAX(object):
     such strings using a lookup table.
     """
 
-    def __init__(self, word_size = 8, alphabet_size = 7, epsilon = 1e-6):
+    def __init__(self, word_size=8, alphabet_size=7, epsilon=1e-6):
 
         if alphabet_size < 3:
             raise "do not do that"
@@ -38,7 +55,7 @@ class SAX(object):
         self.wordSize = word_size
         self.alphabetSize = alphabet_size
         self.eps = epsilon
-        self.beta = list(stats.norm().ppf(np.linspace(0.01, 0.99, self.alphabetSize+1))[1:-1])
+        self.beta = list(stats.norm().ppf(np.linspace(0.01, 0.99, self.alphabetSize + 1))[1:-1])
         self.build_letter_compare_dict()
         self.scalingFactor = 1
 
@@ -60,7 +77,7 @@ class SAX(object):
         X = np.asanyarray(x)
         if X.std() < self.eps:
             return [0 for entry in X]
-        return (X-X.mean())/X.std()
+        return (X - X.mean()) / X.std()
 
     def to_PAA(self, x):
         """
@@ -70,21 +87,21 @@ class SAX(object):
         data for each reduced dimension
         """
         n = len(x)
-        stepFloat = n/float(self.wordSize)
+        stepFloat = n / float(self.wordSize)
         step = int(math.ceil(stepFloat))
         frameStart = 0
         approximation = []
         indices = []
         i = 0
-        while frameStart <= n-step:
+        while frameStart <= n - step:
             thisFrame = np.array(x[frameStart:int(frameStart + step)])
             approximation.append(np.mean(thisFrame))
             indices.append((frameStart, int(frameStart + step)))
             i += 1
-            frameStart = int(i*stepFloat)
+            frameStart = int(i * stepFloat)
         return (np.array(approximation), indices)
 
-    def alphabetize(self,paaX):
+    def alphabetize(self, paaX):
         """
         Converts the Piecewise Aggregate Approximation of x to a series of letters.
         """
@@ -111,15 +128,15 @@ class SAX(object):
         list_letters_b = [x for x in sB]
         mindist = 0.0
         for i in range(0, len(list_letters_a)):
-            mindist += self.compare_letters(list_letters_a[i], list_letters_b[i])**2
-        mindist = self.scalingFactor* np.sqrt(mindist)
+            mindist += self.compare_letters(list_letters_a[i], list_letters_b[i]) ** 2
+        mindist = self.scalingFactor * np.sqrt(mindist)
         return mindist
 
     def compare_letters(self, la, lb):
         """
         Compare two letters based on letter distance return distance between
         """
-        return self.compareDict[la+lb]
+        return self.compareDict[la + lb]
 
     def build_letter_compare_dict(self):
         """
@@ -128,25 +145,25 @@ class SAX(object):
         and will have identical values.
         """
 
-        number_rep = range(0,int(self.alphabetSize))
+        number_rep = range(0, int(self.alphabetSize))
         letters = [chr(x + self.aOffset) for x in number_rep]
         self.compareDict = {}
         for i in range(0, len(letters)):
             for j in range(0, len(letters)):
-                if np.abs(number_rep[i]-number_rep[j]) <=1:
-                    self.compareDict[letters[i]+letters[j]] = 0
+                if np.abs(number_rep[i] - number_rep[j]) <= 1:
+                    self.compareDict[letters[i] + letters[j]] = 0
                 else:
-                    high_num = np.max([number_rep[i], number_rep[j]])-1
+                    high_num = np.max([number_rep[i], number_rep[j]]) - 1
                     low_num = np.min([number_rep[i], number_rep[j]])
-                    self.compareDict[letters[i]+letters[j]] = self.beta[high_num] - self.beta[low_num]
+                    self.compareDict[letters[i] + letters[j]] = self.beta[high_num] - self.beta[low_num]
 
-    def sliding_window(self, x, numSubsequences = None, overlappingFraction = None):
+    def sliding_window(self, x, numSubsequences=None, overlappingFraction=None):
         if not numSubsequences:
             numSubsequences = 20
-        self.windowSize = int(len(x)/numSubsequences)
+        self.windowSize = int(len(x) / numSubsequences)
         if not overlappingFraction:
             overlappingFraction = 0.9
-        overlap = self.windowSize*overlappingFraction
+        overlap = self.windowSize * overlappingFraction
         moveSize = int(self.windowSize - overlap)
         if moveSize < 1:
             raise OverlapSpecifiedIsNotSmallerThanWindowSize()
@@ -154,13 +171,13 @@ class SAX(object):
         n = len(x)
         windowIndices = []
         stringRep = []
-        while ptr < n-self.windowSize+1:
-            thisSubRange = x[ptr:ptr+self.windowSize]
-            (thisStringRep,indices) = self.to_letter_rep(thisSubRange)
+        while ptr < n - self.windowSize + 1:
+            thisSubRange = x[ptr:ptr + self.windowSize]
+            (thisStringRep, indices) = self.to_letter_rep(thisSubRange)
             stringRep.append(thisStringRep)
-            windowIndices.append((ptr, ptr+self.windowSize))
+            windowIndices.append((ptr, ptr + self.windowSize))
             ptr += moveSize
-        return (stringRep,windowIndices)
+        return (stringRep, windowIndices)
 
     def batch_compare(self, xStrings, refString):
         return [self.compare_strings(x, refString) for x in xStrings]
