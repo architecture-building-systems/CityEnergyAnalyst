@@ -234,7 +234,7 @@ def task_run_unit_tests():
         return result.wasSuccessful()
     return {
         'actions': [run_unit_tests],
-        'task_dep': ['download_reference_cases', 'download_radiation'],
+        'task_dep': ['download_reference_cases', 'download_radiation', 'run_data_helper'],
         'verbosity': 1
     }
 
