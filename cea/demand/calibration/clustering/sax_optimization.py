@@ -12,8 +12,7 @@ import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
-from deap import base, creator, tools
-from deap.benchmarks.tools import diversity, convergence
+import deap
 from numpy import random
 from sklearn.metrics import silhouette_score
 
@@ -50,8 +49,8 @@ def SAX_opt(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB,
     :return: Plot with pareto front
     """
     # set-up deap library for optimization with 1 objective to minimize and 2 objectives to be maximized
-    creator.create("Fitness", base.Fitness, weights=(1.0, 1.0, -0.1))  # maximize shilluette and calinski
-    creator.create("Individual", list, fitness=creator.Fitness)
+    deap.creator.create("Fitness", deap.base.Fitness, weights=(1.0, 1.0, -0.1))  # maximize shilluette and calinski
+    deap.creator.create("Individual", list, fitness= deap.creator.Fitness)
 
     # set-up problem
     NDIM = 2
@@ -69,10 +68,10 @@ def SAX_opt(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB,
         except TypeError:
             return [random.randint(a, b) for a, b, in zip([low] * size, [up] * size)]
 
-    toolbox = base.Toolbox()
+    toolbox = deap.base.Toolbox()
     toolbox.register("attr_float", generation, BOUND_LOW, BOUND_UP, NDIM)
-    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.attr_float)
-    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+    toolbox.register("individual", deap.tools.initIterate, deap.creator.Individual, toolbox.attr_float)
+    toolbox.register("population", deap.tools.initRepeat, list, toolbox.individual)
 
     def evaluation(ind):
         """
@@ -133,12 +132,12 @@ def main_opt(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_gen=None,
         # Start a new evolution
         pop = toolbox.population(n=MU)
         start_gen = 1
-        halloffame = tools.HallOfFame(maxsize=3)
-        paretofrontier = tools.ParetoFront()
-        logbook = tools.Logbook()
+        halloffame = deap.tools.HallOfFame(maxsize=3)
+        paretofrontier = deap.tools.ParetoFront()
+        logbook = deap.tools.Logbook()
         logbook.header = "gen", "evals", "std", "min", "avg", "max"
 
-    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats = deap.tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", np.mean, axis=0)
     stats.register("std", np.std, axis=0)
     stats.register("min", np.min, axis=0)
@@ -161,7 +160,7 @@ def main_opt(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_gen=None,
     # Begin the generational process
     for gen in range(start_gen, NGEN+1):
         # Vary the population
-        offspring = tools.selTournamentDCD(pop, len(pop))
+        offspring = deap.tools.selTournamentDCD(pop, len(pop))
         offspring = [toolbox.clone(ind) for ind in offspring]
 
         for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
@@ -199,8 +198,8 @@ def main_opt(locator, toolbox, NGEN = 100, MU = 100, CXPB = 0.9, start_gen=None,
                 pickle.dump(cp, cp_file)
 
         #print("hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
-        print("Convergence: ", convergence(pop, paretofrontier))
-        print("Diversity: ", diversity(pop, paretofrontier[0], paretofrontier[-1]))
+        print("Convergence: ", deap.benchmarks.tools.convergence(pop, paretofrontier))
+        print("Diversity: ", deap.benchmarks.tools.diversity(pop, paretofrontier[0], paretofrontier[-1]))
 
     return pop, halloffame, paretofrontier, stats
 
