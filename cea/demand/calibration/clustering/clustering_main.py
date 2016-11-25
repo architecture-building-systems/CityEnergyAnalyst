@@ -32,16 +32,18 @@ def clustering(locator, gv, word_size, alphabet_size, building_name, building_lo
     Function to cluster different days of the year following the SAX method (see class for more info)
     :param locator: locator class
     :param gv: global variables class
-    :param word_size: estimated wordsize, after optimization
+    :param word_size: estimated word size, after optimization
     :param alphabet_size: estimated alphabet size. after optimization
     :param building_name: building name to make the cluster of its time series
     :param building_load: name of time_series to use form the building demand i.e., Qhsf_kWh, Qcsf_kWh, Qwwf_kWh etc.
-    :param optimize: Boolan: true to run the optimization. you will first run the optimization,
-    choose the wordsize and alphabetsize. from there, run the program with the optimize = flase
-    :param plot_clusters: when optimize if false, decide weather you would like to see the data in each defined cluster
-    :return: timeseries per cluster  in locator.get_clustering_calibration_file(cluster_name). .csv file
-        dataframe with ID of every cluster per day of the year in locator.get_clustering_calibration_sax_names_file()
+    :param optimize: Boolean: true to run the optimization. you will first run the optimization,
+    choose the word size and alphabet size. from there, run the program with the optimize = false
+    :param plot_clusters: when optimize is false, decide whether you would like to see the data in each defined cluster
+    :return: timeseries per cluster  in locator.get_clustering_calibration_file(cluster_name).
 
+    INPUT / OUTPUT FILES:
+
+    -  .csv file: dataframe with ID of every cluster per day of the year in locator.get_calibration_cluster(name)
     """
     t0 = time.clock()
 
