@@ -10,7 +10,10 @@ import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
-import deap
+import deap.base
+import deap.creator
+import deap.tools
+import deap.benchmarks.tools
 from numpy import random
 from sklearn.metrics import silhouette_score
 
