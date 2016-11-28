@@ -821,7 +821,7 @@ def calc_radiation(scenario_path, case, scenario_name, params_mod):
     #nr_runs = 50
     #scenario_path = 'C:/reference-case_HQ'
 
-    cea_path = 'C:\Users\Assistenz\Documents\GitHub\CEAforArcGIS\cea'
+    cea_path = 'C:\\Users\\fcl2\\AppData\\Roaming\\ESRI\\Desktop10.4\\ArcToolbox\\My Toolboxes\\cea'
     current_path = os.path.dirname(__file__)
 
     # input path
@@ -1211,7 +1211,7 @@ def calc_radiation(scenario_path, case, scenario_name, params_mod):
 
 if __name__ == '__main__':
 
-    path = r'C:\Users\Assistenz\Desktop\161117_Radiaiton_code_paul_neitzel'
+    path = r'C:\161117_Radiaiton_code_paul_neitzel'
     case = 'case_study'
     scenario_name = 'base'
     geometry_folder = 'LoD2'
