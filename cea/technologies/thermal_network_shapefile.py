@@ -23,7 +23,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def network_shapefile_main(locator):
+def get_thermal_network_from_shapefile(locator):
     """
     This function reads the existing node and pipe network from a shapefile (using a road shapefile from the Zurich
     reference case as a template) and produces an edge-node incidence matrix (as defined by Oppelt et al. "Dynamic
@@ -46,21 +46,22 @@ def network_shapefile_main(locator):
     # get node and pipe information
     node_df, pipe_df = extract_network(network_df)
 
-    # create edge-node matrix
-    edge_node_matrix = np.zeros((len(node_df),len(pipe_df)))
+    # create edge and node connection matrix
+    # this matrix specifies which edges are connected to which nodes, NOT the direction of flow
+    edge_node_connections = np.zeros((len(node_df),len(pipe_df)))
     node_names = []
     pipe_names = []
     for j in range(len(pipe_df)):
-        edge_node_matrix[pipe_df['end node'][j]][j] = 1
-        edge_node_matrix[pipe_df['start node'][j]][j] = -1
+        edge_node_connections[pipe_df['end node'][j]][j] = 1
+        edge_node_connections[pipe_df['start node'][j]][j] = 1
         pipe_names.append('Pipe'+str(j))
     for i in range(len(node_df)):
         node_names.append('Node'+str(i))
-    edge_node_df = pd.DataFrame(data=edge_node_matrix, index = node_names, columns = pipe_names)
+    connections_df = pd.DataFrame(data=edge_node_connections, index = node_names, columns = pipe_names)
 
     node_df.to_csv(locator.pathNtwLayout + '//' + 'Node_DF_DH.csv')
     pipe_df.to_csv(locator.pathNtwLayout + '//' + 'Pipe_DF_DH.csv')
-    edge_node_df.to_csv(locator.pathNtwLayout + '//' + 'EdgeNode_DH.csv')
+    connections_df.to_csv(locator.pathNtwLayout + '//' + 'EdgeNode_Connection_DH.csv')
 
     print time.clock() - t0, "seconds process time for Network summary\n"
 
@@ -124,9 +125,9 @@ def run_as_script(scenario_path=None):
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
     gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
 
-    network_shapefile_main(locator)
+    get_thermal_network_from_shapefile(locator)
 
-    print 'test_network_shapefile_main() succeeded'
+    print 'test get_thermal_network_from_shapefile() succeeded'
 
 if __name__ == '__main__':
     run_as_script()
