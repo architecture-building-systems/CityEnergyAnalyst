@@ -19,7 +19,7 @@ __status__ = "Production"
 
 class GlobalVariables(object):
     def __init__(self):
-        self.scenario_reference = r'c:\reference-case-SA\baseline'
+        self.scenario_reference = r'c:\reference-case-open\baseline'
         self.print_partial = 'hourly' # hourly or monthly for the deamnd script
         self.print_yearly = True # print yearly values
         self.print_yearly_peak = True # print peak values
@@ -66,18 +66,12 @@ class GlobalVariables(object):
         # constant variables for air conditioning fan
         self.Pfan = 0.55 # specific fan consumption in W/m3/h
 
-
-        # ==============================================================================================================
-        # sensitivity morris method
-        # ==============================================================================================================
-
-        self.samples = None # keep as false, cea.analysis.morris change this to a value if active
-
         # ==============================================================================================================
         # optimization
         # ==============================================================================================================
 
         self.sensibilityStep = 2 #the more, the longer the sensitibility analysis
+        
         ########################### User inputs
 
         # Commands for the evolutionary algorithm
@@ -514,6 +508,13 @@ class GlobalVariables(object):
         # ==============================================================================================================
         self.initial_temp_air_prev = 21
         self.initial_temp_m_prev = 16
+
+        # ==============================================================================================================
+        # TABS
+        # ==============================================================================================================
+        self.max_temperature_difference_tabs = 9 # (°C) from Koschenz & Lehmann "Thermoaktive Bauteilsysteme (TABS)"
+        self.max_surface_temperature_tabs = 27 # (°C) from Koschenz & Lehmann "Thermoaktive Bauteilsysteme (TABS)"
+
 
         # ==============================================================================================================
         # Columns to write for the demand calculation
