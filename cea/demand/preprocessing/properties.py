@@ -140,7 +140,8 @@ def properties(locator, prop_thermal_flag, prop_architecture_flag,
 
         # write to shapefile
         prop_HVAC_df_merged = names_shp.merge(prop_HVAC_df, on="Name")
-        fields = ['type_cs', 'type_hs', 'type_dhw', 'type_ctrl']
+        fields = ['type_cs', 'type_hs', 'type_dhw', 'type_ctrl',
+                  'ECONOMIZER', 'MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH']
         prop_HVAC_shp = names_shp.copy()
         for field in fields:
             prop_HVAC_shp[field] = prop_HVAC_df_merged[field].copy()
