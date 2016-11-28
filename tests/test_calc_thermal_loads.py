@@ -12,7 +12,7 @@ from cea.utilities import epwreader
 REFERENCE_CASE = r'C:\reference-case-open\baseline'
 
 
-class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
+class TestCalcThermalLoads(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         if os.environ.has_key('REFERENCE_CASE'):
@@ -31,7 +31,7 @@ class TestCalcThermalLoadsNewVentilation(unittest.TestCase):
         cls.usage_schedules = {'list_uses': cls.list_uses,
                                'schedules': cls.schedules}
 
-    def test_calc_thermal_loads_new_ventilation(self):
+    def test_calc_thermal_loads(self):
         # FIXME: the usage_schedules bit needs to be fixed!!
         bpr = self.building_properties['B01']
         result = calc_thermal_loads('B01', bpr, self.weather_data,
