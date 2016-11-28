@@ -10,7 +10,7 @@ import numpy as np
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca", "Gabriel Happle"]
+__credits__ = ["Jimeno A. Fonseca", "Gabriel Happle", "Martin Mosteiro"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -60,10 +60,18 @@ def calc_simple_temp_control(tsd, prop_comfort, limit_inf_season, limit_sup_seas
 
 def temperature_control_tabs(Htr_1, Htr_2, Htr_3, Htr_ms, Htr_w, Htr_em, Htr_is, Hve, IHC_nd, I_ia, I_st, I_m,
                              te_t, tm_t0, Cm, control):
+    """
+    Controls for TABS operating temperature based on the operating parameters defined by Koschenz and Lehmann
+    "Thermoaktive Bauteilsysteme (TABS)" (2000), that is: maximum surface temperature and maximum temperature difference
+    between TABS surface and air. If either of these is exceeded, they are set to the maximum and all temperatures are
+    recalculated.
+    The formulas below are simply reformulations of the calculations in the R-C model.
+    """
+
     if control == 'max_ts':
         # if the calculated surface temperature exceeds the maximum, set ts = ts_max and calculate maximum power
         # and all other temperatures
-        ts_max = 27
+        ts_max = gv.max_surface_temperature_tabs
         a = np.array([[(Hve + Htr_is), (-Htr_is), 0, (-0.5)],
                       [(-Htr_is), (Htr_w + Htr_ms + Htr_is), (-Htr_ms), (-0.5)],
                       [0, (-Htr_ms), ((Htr_ms + Htr_em) / 2 + Cm), (-0.5)],
@@ -74,7 +82,7 @@ def temperature_control_tabs(Htr_1, Htr_2, Htr_3, Htr_ms, Htr_w, Htr_em, Htr_is,
     if control == 'max_ts-ta':
         # if the calculated temperature difference between the surface and inside air exceeds the maximum,
         # set ts - ta = dt_max and calculate maximum power and other temperatures
-        dt_max = 9
+        dt_max = gv.max_temperature_difference_tabs
         a = np.array([[(Hve + Htr_is), (-Htr_is), 0, (-0.5)],
                       [(-Htr_is), (Htr_w + Htr_ms + Htr_is), (-Htr_ms), (-0.5)],
                       [0, (-Htr_ms), ((Htr_ms + Htr_em) / 2 + Cm), (-0.5)],
