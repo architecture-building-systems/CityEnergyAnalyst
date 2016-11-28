@@ -21,7 +21,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def network_matrix_main(locator):
+def get_themal_network_from_csv(locator):
     """
     This function reads the existing node and pipe network from csv files (as provided for the Zug reference case) and
     produces an edge-node incidence matrix (as defined by Oppelt et al. "Dynamic thermo-hydraulic model of district
@@ -84,9 +84,9 @@ def run_as_script(scenario_path=None):
     gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
 
     key = 'all'
-    network_matrix_main(locator)
+    get_themal_network_from_csv(locator)
 
-    print 'test_network_matrix_main() succeeded'
+    print 'test get_themal_network_from_csv() succeeded'
 
 if __name__ == '__main__':
     run_as_script()
