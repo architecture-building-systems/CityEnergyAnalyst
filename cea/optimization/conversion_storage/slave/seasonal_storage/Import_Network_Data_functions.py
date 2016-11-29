@@ -39,7 +39,7 @@ def extract_csv(fName, colName, DAYS_IN_YEAR):
 def import_network_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     ''' 
     
-    importing and preparing raw data for analysis of the district network 
+    importing and preparing raw data for analysis of the district distribution
 
         
     Parameters
@@ -92,7 +92,7 @@ def import_network_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
 def import_solar_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     ''' 
     
-    importing and preparing raw data for analysis of the district network 
+    importing and preparing raw data for analysis of the district distribution
 
         
     Parameters
