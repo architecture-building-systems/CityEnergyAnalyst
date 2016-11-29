@@ -16,13 +16,18 @@ __status__ = "Production"
 
 
 def calc_ground_temperature(T_ambient, gv):
+    '''
+    SOURCE?
+    This function calculates the ground temperature in an hourly basis.
+    :param T_ambient: vector with outdoor temperature
+    :param gv: global variables class
+    :return:
+        Tg: vector with ground temperatures in K
+    '''
 
     T_max = max(T_ambient)+273 # to K
     T_avg = np.mean(T_ambient)+273 # to K
-    e = gv.Z0*math.sqrt((math.pi*gv.Csl*gv.Psl)/(8760*gv.Bsl)) # soil constant
-    Tg = []
+    e = gv.Z0*math.sqrt((math.pi*gv.Csl*gv.Psl)/(8760*gv.Bsl)) # soil constants
+    Tg = [T_avg+(T_max-T_avg)*math.exp(-e)*math.cos((2*math.pi*(i+1)/8760)-e) for i in range(8760)]
 
-    for i in range(8760):
-        Tground_t = T_avg+(T_max-T_avg)*math.exp(-e)*math.cos((2*math.pi*(i+1)/8760)-e)
-        Tg.append(Tground_t)
     return Tg #in K

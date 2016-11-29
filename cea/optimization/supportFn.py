@@ -87,10 +87,10 @@ def calcQmax(fName, filepath, gV):
     return Qmax
     
 
-def readCombi(individual, gV):
+def individual_to_barcode(individual, gV):
     """
     Reads the 0-1 combination of connected/disconnected buildings
-    and creates a lsit of strings type barcode i.e. ("12311111123012")
+    and creates a list of strings type barcode i.e. ("12311111123012")
     
     Parameters
     ----------
@@ -104,7 +104,7 @@ def readCombi(individual, gV):
     irank = (gV.nHeat + gV.nSolar) * 2 + gV.nHR + 1
     frank = len(individual)
     indCombi = ""
-    
+    print irank, frank
     while irank < frank:
 
         indCombi += str(individual[irank])
@@ -116,7 +116,7 @@ def readCombi(individual, gV):
 def createTotalNtwCsv(indCombi, locator):
     """
     Create and saves the total file for a specific DHN configuration
-    to make the network routine possible
+    to make the distribution routine possible
     
     Parameters
     ----------
@@ -161,7 +161,7 @@ def readCheckPoint(pathX, genCP, storeData):
     genCP : int
         generation from whom to extract data
     pathNtwRes : string
-        path to folder where the files from the network routine are stored
+        path to folder where the files from the distribution routine are stored
     storeData : int
         0 if no, 1 if yes
     
@@ -170,7 +170,7 @@ def readCheckPoint(pathX, genCP, storeData):
     pop : list
         list of individuals in the Pareto front at that generation
     eps : list
-        UN-NORMALIZED epsilon indicator from the beginning of the EA to this
+        UN-NORMALIZED epsilon indicator from the beginning of the master to this
         generation
     testedPop : list
         list of individuals tested in that generation
@@ -192,7 +192,6 @@ def readCheckPoint(pathX, genCP, storeData):
 
     if storeData == 1:
         data_container = [['Cost', 'CO2', 'Eprim_i','Qmax', 'key']]
-        #frame = pd.DataFrame()
         ind_counter = 0
         for ind in pop:
             
@@ -203,7 +202,7 @@ def readCheckPoint(pathX, genCP, storeData):
             
             key = pop[ind_counter]
             
-            indCombi = readCombi(ind)
+            indCombi = individual_to_barcode(ind)
 
             if indCombi.count("0") == 0:
                 fNameNtw = "Network_summary_result_all.csv"
@@ -223,61 +222,6 @@ def readCheckPoint(pathX, genCP, storeData):
         results.to_csv(Name, sep= ',')
 
     return pop, eps, testedPop
-
-
-class solarFeatures(object):
-    def __init__(self):
-        self.SolarArea = 35710     # [m2]
-        
-        self.PV_Peak = 5680.8      # [kW_el]
-        self.PVT_Peak = 849        # [kW_el]
-        self.PVT_Qnom = 24512E3    # [W_th]
-        self.SC_Qnom = 17359E3   # [W_th]
-            
-            
-def solarRead(locator, gV):
-    """
-    Extract the appropriate solar features
-    
-    Parameters
-    ----------
-    locator : string
-        path to raw solar files
-    
-    Returns
-    -------
-    solarFeat : solarFeatures
-        includes : the total solar area
-        the PV electrical peak production [kW]
-        the PVT electrical peak production [kW]
-        the PVT heating peak production [Wth]
-        the SC heating peak production [Wth]
-    
-    """
-    solarFeat = solarFeatures()
-    
-    PVarray = extractDemand(locator.pathSolarRaw + "/Pv.csv", ["PV_kWh"], gV.DAYS_IN_YEAR)
-    solarFeat.PV_Peak = np.amax(PVarray)
-
-    PVarray = extractDemand(locator.pathSolarRaw + "/Pv.csv", ["Area"], gV.DAYS_IN_YEAR)
-    solarFeat.SolarAreaPV = PVarray[0][0]
-    
-    PVTarray = extractDemand(locator.pathSolarRaw + "/PVT_35.csv", ["PV_kWh"], gV.DAYS_IN_YEAR)
-    solarFeat.PVT_Peak = np.amax(PVTarray)
-
-    PVTarray = extractDemand(locator.pathSolarRaw + "/PVT_35.csv", ["Qsc_KWh"], gV.DAYS_IN_YEAR)
-    solarFeat.PVT_Qnom = np.amax(PVTarray) * 1000
-
-    PVTarray = extractDemand(locator.pathSolarRaw + "/PVT_35.csv", ["Area"], gV.DAYS_IN_YEAR)
-    solarFeat.SolarAreaPVT = PVTarray[0][0]
-    
-    SCarray = extractDemand(locator.pathSolarRaw + "/SC_75.csv", ["Qsc_Kw"], gV.DAYS_IN_YEAR)
-    solarFeat.SC_Qnom = np.amax(SCarray) * 1000
-
-    SCarray = extractDemand(locator.pathSolarRaw + "/SC_75.csv", ["Area"], gV.DAYS_IN_YEAR)
-    solarFeat.SolarAreaSC = SCarray[0][0]
-    
-    return solarFeat
 
 
 def calc_num_buildings(data_path, totalfilename):
