@@ -10,73 +10,75 @@ import os
 import time
 from pickle import Pickler, Unpickler
 
-import cea.optimization.master.evolAlgo.CreateInd as ci
-import cea.optimization.master.evolAlgo.CrossOver as cx
-import evolAlgo.Mutations as mut
-import evolAlgo.Selection as sel
+import cea.optimization.conversion_storage.master.evaluation as evaluation_function
+import cea.optimization.conversion_storage.master.generation as generation_function
+import mutations as mut
+import selection as sel
 from deap import base
 from deap import creator
 from deap import tools
 
-import cea.optimization.supportFn as sFn
-import cea.optimization.master.evolAlgo.evaluateInd as eI
-from cea.optimization.master.evolAlgo import constrCheck as cCheck
+import cea.optimization.conversion_storage.master.crossover as cx
 
 
-def calc_ea_setup(nBuildings, gv):
+__author__ =  "Thuy-An Nguyen"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = [ "Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
+
+def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+                           network_features, gv, genCP = 0):
     """
-    This sets-up the evolutionary algorithm of the library DEAp in python
+    Evolutionary algorithm to optimize the district energy system's design.
+    This algortihm optimizes the size and operation of technologies for a district heating netowrk.
+    electrical netowrk are not considered but their burdens in terms electricity costs, efficiency and emissions
+    is added on top of the optimization
+    The equipment for Cooling networks is not optimized as it is assumed that all customer with cooling needs will be
+    connected to a lake. in case there is not enough cvapacity form the lake a chiller and cooling tower is used to cover
+    the extra needs.
+
+    :param locator: locator class
+    :param building_names: vector with building names
+    :param extra_costs: costs calculated before optimization ofr specific energy services
+     (process heat and electricity)
+    :param extra_CO2: green house gas emissions calculated before optimization ofr specific energy services
+     (process heat and electricity)
+    :param extra_primary_energy: primary energy calculated before optimization ofr specific energy services
+     (process heat and electricity)
+    :param solar_features: object class with vectors and values of interest for the integration of solar potentials
+    :param network_features: object class with linear coefficients of the netowrk obtained after its optimization
+    :param gv: global variables class
+    :param genCP:
     :return:
-    """
-    # import evaluation routine
+        for every generation 'g': it stores the results of every generation of the genetic algorithm in the subfolders
+        locator.pathMasterRes as a pyhton pickle file.
 
-    # Contains 3 Fitnesses : Costs, CO2 emissions, Primary Energy Needs
-    creator.create("Fitness", base.Fitness, weights=(-1.0, -1.0, -1.0))
-    creator.create("Individual", list, fitness=creator.Fitness)
-    toolbox = base.Toolbox()
-    toolbox.register("generate", ci.generateInd, nBuildings, gv)
-    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
-    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-
-    return creator, toolbox
-
-def EA_Main(locator, building_names, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gv, genCP = 0):
-    """
-    Evolutionary algorithm to optimize the district energy system's design
-    
-    Parameters
-    ----------
-    locator : string
-        paths to folders
-    finances / CO2 / Prim : float
-        costs [CHF] / emissions [kg CO2-eq] / primary energy needs [MJ oil] 
-        previously calculated
-    solarFeat : class solarFeatures
-        includes data from solar files
-    ntwFeat : class ntwFeatures
-        includes data from the ntw optimization
-    genCP : int
-        generation to start the EA from (eg if there was a crash of the code)
-    
-    Returns
-    -------
-    
     """
     t0 = time.clock()
 
     # get number of buildings
     nBuildings = len(building_names)
 
-    # set-up toolbox of DEAp library in python (containing the evolutionary algotirhtm
-    creator, toolbox = calc_ea_setup(nBuildings, gv)
-
-    # define objective function and register into toolbox
-    def evalConfig(ind):
-        (costs, CO2, prim) = eI.evalInd(ind, building_names, locator, extraCosts, extraCO2, extraPrim, solarFeat,
-                                        ntwFeat, gv)
+    # DEFINE OBJECTIVE FUNCTION
+    def objective_function(ind):
+        (costs, CO2, prim) = evaluation_function.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+                                                                 network_features, gv)
         return (costs, CO2, prim)
 
-    toolbox.register("evaluate", evalConfig)
+    # SET-UP EVOLUTIONARY ALGORITHM
+    # Contains 3 minimization objectives : Costs, CO2 emissions, Primary Energy Needs
+    creator.create("Fitness", base.Fitness, weights=(-1.0, -1.0, -1.0))
+    creator.create("Individual", list, fitness=creator.Fitness)
+    toolbox = base.Toolbox()
+    toolbox.register("generate", generation_function.generate_main, nBuildings, gv)
+    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+    toolbox.register("evaluate", objective_function)
 
     ntwList = ["1"*nBuildings]
     epsInd = []
@@ -87,9 +89,9 @@ def EA_Main(locator, building_names, extraCosts, extraCO2, extraPrim, solarFeat,
         # create population
         pop = toolbox.population(n=gv.initialInd)
 
-        # Check network
+        # Check distribution
         for ind in pop:
-            eI.checkNtw(ind, ntwList, locator, gv)
+            evaluation_function.checkNtw(ind, ntwList, locator, gv)
         
         # Evaluate the initial population
         print "Evaluate initial population"
@@ -136,7 +138,7 @@ def EA_Main(locator, building_names, extraCosts, extraCO2, extraPrim, solarFeat,
             child1, child2 = cx.cxUniform(ind1, ind2, PROBA, gv)
             offspring += [child1, child2]
 
-        # First half of the EA: create new un-collerated configurations
+        # First half of the master: create new un-collerated configurations
         if g < gv.NGEN/2:
             for mutant in pop:
                 print "Mutation Flip"
@@ -146,7 +148,7 @@ def EA_Main(locator, building_names, extraCosts, extraCO2, extraPrim, solarFeat,
                 print "Mutation GU \n"
                 offspring.append(mut.mutGU(mutant, PROBA, gv))
                 
-        # Third quarter of the EA: keep the good individuals but modify the shares uniformly
+        # Third quarter of the master: keep the good individuals but modify the shares uniformly
         elif g < gv.NGEN * 3/4:
             for mutant in pop:
                 print "Mutation Uniform"
@@ -166,7 +168,7 @@ def EA_Main(locator, building_names, extraCosts, extraCO2, extraPrim, solarFeat,
         
         print "Update Network list \n"
         for ind in invalid_ind:
-            eI.checkNtw(ind, ntwList, locator, gv)
+            evaluation_function.checkNtw(ind, ntwList, locator, gv)
         
         print "Re-evaluate the population" 
         fitnesses = map(toolbox.evaluate, invalid_ind)
@@ -182,7 +184,7 @@ def EA_Main(locator, building_names, extraCosts, extraCO2, extraPrim, solarFeat,
         selection = sel.selectPareto(offspring)
         
         # Compute the epsilon criteria [and check the stopping criteria]
-        epsInd.append(eI.epsIndicator(pop, selection))
+        epsInd.append(evaluation_function.epsIndicator(pop, selection))
         #if len(epsInd) >1:
         #    eta = (epsInd[-1] - epsInd[-2]) / epsInd[-2]
         #    if eta < gv.epsMargin:
