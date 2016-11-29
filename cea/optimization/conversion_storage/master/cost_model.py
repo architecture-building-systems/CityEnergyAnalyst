@@ -25,6 +25,15 @@ import cea.technologies.thermal_storage as storage
 import cea.technologies.thermal_network as network
 import cea.technologies.pumps as pumps
 
+__author__ = "Tim Vollrath"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Tim Vollrath", "Thuy-An Nguyen", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
+
 def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncoveredAnnual, solarFeat, ntwFeat, gv):
     """
     Computes additional costs / GHG emisions / primary energy needs
@@ -101,7 +110,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
     addCO2 += CO2DiscBuild
     addPrim += PrimDiscBuild
     
-    # Add the features for the network
+    # Add the features for the distribution
 
     if indCombi.count("1") > 0:
         os.chdir(locator.pathSlaveRes)
@@ -192,9 +201,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         # Solar technologies
 
         PV_peak = dicoSupply.SOLAR_PART_PV * solarFeat.SolarAreaPV * gv.nPV #kW
-        PVInvC = pv.calc_Cinv_PV(PV_peak)
+        PVInvC = pv.calc_Cinv_pv(PV_peak)
         addCosts += PVInvC
-        print pv.calc_Cinv_PV(PV_peak), "PV peak"
+        print pv.calc_Cinv_pv(PV_peak), "PV peak"
         
         SC_area = dicoSupply.SOLAR_PART_SC * solarFeat.SolarAreaSC
         SCInvC = stc.calc_Cinv_SC(SC_area)
@@ -281,7 +290,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         print storage.calc_Cinv_storage(StorageVol, gv), "Storage Costs"
         
         
-        # Costs from network configuration
+        # Costs from distribution configuration
         print "\n COSTS FROM NETWORK CONFIGURATION"
         if gv.ZernezFlag == 1:
             NetworkCost += network.calc_Cinv_network_linear(gv.NetworkLengthZernez, gv) * nBuildinNtw / len(buildList)
