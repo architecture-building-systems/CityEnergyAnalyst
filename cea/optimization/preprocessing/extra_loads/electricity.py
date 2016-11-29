@@ -15,17 +15,13 @@ import pandas as pd
 
 def calc_pareto_electricity(locator, gv):
     """
-    Computes the parameters for the electrical demand
-    
-    Parameters
-    ----------
-    pathRaw : string
-        path to raw foldes
-    
-    Returns
-    -------
-    (elecCosts, elecCO2, elecPrim) : tuple
-    
+    This function computes the parameters for the electrical demand contributing to the pareto optimal alternatives.
+    in the future, this aspect should be included in the optimization itself.
+
+    :param locator: locator class
+    :param gv: global variables class
+    :return:
+         (elecCosts, elecCO2, elecPrim) : tuple
     """
     df = pd.read_csv(locator.get_total_demand(), usecols=["Ef_MWhyr"])
     arrayTotal = np.array(df)

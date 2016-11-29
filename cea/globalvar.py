@@ -19,13 +19,13 @@ __status__ = "Production"
 
 class GlobalVariables(object):
     def __init__(self):
-        self.scenario_reference = r'c:\reference-case-open\baseline'
+        self.scenario_reference = r'c:\reference-case-zug\baseline'
         self.print_partial = 'hourly' # hourly or monthly for the deamnd script
         self.print_yearly = True # print yearly values
         self.print_yearly_peak = True # print peak values
         self.date_start = '2016-01-01'  # format: yyyy-mm-dd
         self.seasonhours = [3216, 6192]
-        self.multiprocessing = True  # use multiprocessing / parallel execution if possible
+        self.multiprocessing = False  # use multiprocessing / parallel execution if possible
         self.Z = 3  # height of basement for every building in m
         self.Bf = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
         self.his = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
@@ -127,7 +127,7 @@ class GlobalVariables(object):
 
         # pipes location properties
         self.Z0 = 1.5  # location of pipe underground in m
-        self.Psl = 1600  # heat capacity of ground in kg/m3
+        self.Psl = 1600  # heat capacity of ground in kg/m3 => should be density?
         self.Csl = 1300  # heat capacity of ground in J/kg K
         self.Bsl = 1.5  # thermal conductivity of ground in W/m.K
 
@@ -414,8 +414,8 @@ class GlobalVariables(object):
 
         # Data for Evolutionary algorithm
         self.nHeat = 6  # number of heating
-        self.nHR = 2
-        self.nSolar = 3
+        self.nHR = 2 # number of heat recovry options
+        self.nSolar = 3 # number of solar technologies
 
         self.PROBA = 0.5
         self.SIGMAP = 0.2
