@@ -14,7 +14,7 @@ __credits__ = ["Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
-__email__ = "thomas@arch.ethz.ch"
+__email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 """
@@ -65,22 +65,19 @@ def calc_Eint(tsd, bpr, list_uses, schedules):
     # calculate other loads
     if 'COOLROOM' in bpr.occupancy:
         schedule_Eref = average_appliances_lighting_schedule(['COOLROOM'], schedules, bpr.occupancy)
-        tsd['Eref'] = calc_Eref(schedule_Eref, bpr.internal_loads['Ere_Wm2'], bpr.rc_model['Aef'],
-                                bpr.occupancy['COOLROOM'])  # in W
+        tsd['Eref'] = calc_Eref(schedule_Eref, bpr.internal_loads['Ere_Wm2'], bpr.rc_model['Aef'])  # in W
     else:
         tsd['Eref'] = np.zeros(8760)
 
     if 'SERVERROOM' in bpr.occupancy:
         schedule_Edata = average_appliances_lighting_schedule(['SERVERROOM'], schedules, bpr.occupancy)
-        tsd['Edataf'] = calc_Edataf(schedule_Edata, bpr.internal_loads['Ed_Wm2'], bpr.rc_model['Aef'],
-                                    bpr.occupancy['SERVERROOM'])  # in W
+        tsd['Edataf'] = calc_Edataf(schedule_Edata, bpr.internal_loads['Ed_Wm2'], bpr.rc_model['Aef'])  # in W
     else:
         tsd['Edataf'] = np.zeros(8760)
 
     if 'INDUSTRY' in bpr.occupancy:
         schedule_pro = calc_Eprof_schedule(list_uses, schedules, bpr.occupancy)
-        tsd['Eprof'] = calc_Eprof(schedule_pro, bpr.internal_loads['Epro_Wm2'], bpr.rc_model['Aef'],
-                                  bpr.occupancy['INDUSTRY'])  # in W
+        tsd['Eprof'] = calc_Eprof(schedule_pro, bpr.internal_loads['Epro_Wm2'], bpr.rc_model['Aef'])  # in W
     else:
         tsd['Eprof'] = np.zeros(8760)
         tsd['Ecaf'] = np.zeros(8760) # not used in the current version but in the optimization part
@@ -125,7 +122,7 @@ def average_appliances_lighting_schedule(list_uses, schedules, building_uses):
     return el
 
 
-def calc_Edataf(schedule, Ed_Wm2, Aef, share):
+def calc_Edataf(schedule, Ed_Wm2, Aef):
     """
     Calculates the final electricity consumption in data centers.
 
@@ -143,22 +140,18 @@ def calc_Edataf(schedule, Ed_Wm2, Aef, share):
     :param Aef: The floor area with electricity in [m2]
     :type Aef: float64
 
-    :param share: The fraction of the building occupancy that is related to SERVERROOM.
-    :type share: float64
-
     RETURNS
     -------
 
     :returns: final electricity consumption in data centers per hour in [W]
     :rtype: ndarray
     """
-    # FIXME: see bug #362 (I don't understand the share parameter in calc_Edataf)
-    Edataf = schedule * Ed_Wm2 * Aef * share  # in W
+    Edataf = schedule * Ed_Wm2 * Aef   # in W
     return Edataf
 
 
-def calc_Eref(schedule, Ere_Wm2, Aef, share):
-    Eref = schedule * Ere_Wm2 * Aef * share  # in W
+def calc_Eref(schedule, Ere_Wm2, Aef):
+    Eref = schedule * Ere_Wm2 * Aef  # in W
     return Eref
 
 
@@ -195,8 +188,8 @@ def calc_Eprof_schedule(list_uses, schedules, building_uses):
     return epro
 
 
-def calc_Eprof(schedule, Epro_Wm2, Aef, share):
-    Eprof = schedule * Epro_Wm2 * Aef * share  # in W
+def calc_Eprof(schedule, Epro_Wm2, Aef):
+    Eprof = schedule * Epro_Wm2 * Aef  # in W
     return Eprof
 
 

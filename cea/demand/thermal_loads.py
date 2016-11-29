@@ -432,7 +432,7 @@ def calc_thermal_load_hvac(t, tsd, bpr, gv):
                                               i_ia,
                                               i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max,
                                               i_h_max,
-                                              flag_season)
+                                              flag_season, gv)
 
         Losses = True
         # calc_Qhs_Qcs()
@@ -449,7 +449,7 @@ def calc_thermal_load_hvac(t, tsd, bpr, gv):
                                                         i_st,
                                                         h_ve_adj, h_tr_w, i_ia, i_m, cm, area_f, Losses,
                                                         temp_hs_set_corr,
-                                                        temp_cs_set_corr, i_c_max, i_h_max, flag_season)
+                                                        temp_cs_set_corr, i_c_max, i_h_max, flag_season, gv)
 
         # TODO: in the original calculation procedure this is calculated with another temp_m_prev (with and without losses), check if this is correct or not
 
@@ -644,7 +644,7 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
                                           h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve, h_tr_w, i_ia,
                                           i_m, cm,
                                           area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max,
-                                          flag_season)
+                                          flag_season, gv)
 
     # calculate emission losses
     Losses = True
@@ -661,7 +661,7 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
                                                     i_st, h_ve,
                                                     h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr,
                                                     temp_cs_set_corr,
-                                                    i_c_max, i_h_max, flag_season)
+                                                    i_c_max, i_h_max, flag_season, gv)
 
     # TODO: in the original calculation procedure this is calculated with another temp_m_prev (with and without losses), check if this is correct or not
 
@@ -974,11 +974,10 @@ class BuildingProperties(object):
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated
         df['Aef'] = df['GFA_m2'] * df['Es']  # conditioned area only those for electricity
 
-        # FIXME: why are we hard-coding 'Cm' here? and can we do without it?
         if 'Cm' in self.get_overrides_columns():
+            # Internal heat capacity is not part of input, calculate [J/K]
             df['Cm'] = self._overrides['Cm']
         else:
-            # Internal heat capacity is not part of input, calculate [J/K]
             df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df['Af']
 
         df['Am'] = df['Cm'].apply(self.lookup_effective_mass_area_factor) * df['Af']  # Effective mass area in [m2]
