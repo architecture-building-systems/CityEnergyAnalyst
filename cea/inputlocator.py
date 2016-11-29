@@ -37,6 +37,7 @@ class InputLocator(object):
             self.pathTotalNtw = os.path.join(self.pathNtwRes, "totals") # Total files (inputs to substation + ntw in master)
             self.pathNtwLayout = os.path.join(self.pathNtwRes, "layout") # Ntw layout files
             self.get_pipes_DH_network = os.path.join(self.pathNtwLayout, "PipesData_DH.csv")
+            self.get_nodes_DH_network = os.path.join(self.pathNtwLayout, "NodesData_DH.csv")
             self.pathSolarRaw = os.path.join(self.get_potentials_results_folder(), "solar") # Raw solar files
 
     # optimization
