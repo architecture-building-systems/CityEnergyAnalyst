@@ -56,13 +56,15 @@ class TestCalcThermalLoads(unittest.TestCase):
                          u'Qcdataf_kWh', u'Qcref_kWh', u'Qcs_kWh', u'Qcsf_kWh', u'Qhs_kWh', u'Qhsf_kWh', u'Qww_kWh',
                          u'Qwwf_kWh', u'Tcsf_re_C', u'Thsf_re_C', u'Twwf_re_C', u'Tcsf_sup_C', u'Thsf_sup_C',
                          u'Twwf_sup_C']
-        values = [155102.61600000001, 2786.3400000000001, 0.0, 157888.95600000001, 81124.394, 150471.052, 0.0, 0.0,
+        values = [155102.61600000001, 2786.4370000000004, 0.0, 157889.05300000001, 81124.394, 150471.052, 0, 0,
                   73314.964999999997, 81124.394, 99848.559000000008, 110534.87899999999, 37198.886999999995, 39936.178,
-                  16826, 43329, 99496.0, 11866, 49218, 525600]
+                  16840.622000000003, 43927.460999999996, 99496.0, 11880.622000000001, 49832.514000000003, 525600]
         for i, column in enumerate(value_columns):
             try:
-                self.assertAlmostEqual(values[i], df[column].sum(), msg='Sum of column %s differs' % column, places=3)
+                self.assertAlmostEqual(values[i], df[column].sum(), msg='Sum of column %s differs, %f != %f' % (
+                    column, values[i], df[column].sum()), places=3)
             except:
+                print 'values:', [df[column].sum() for column in value_columns]  # make it easier to update changes
                 raise
 
     def test_calc_thermal_loads_other_buildings(self):
