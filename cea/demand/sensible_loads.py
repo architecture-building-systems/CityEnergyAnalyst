@@ -12,11 +12,11 @@ from cea.technologies.controllers import temperature_control_tabs
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca", "Shanshan Hsieh", "Daren Thomas"]
+__credits__ = ["Jimeno A. Fonseca", "Shanshan Hsieh", "Daren Thomas", "Martin Mosteiro"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
-__email__ = "thomas@arch.ethz.ch"
+__email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 """
@@ -27,7 +27,7 @@ end-use heating or cooling loads
 
 
 def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Htr_ms, Htr_is, Htr_1, Htr_2, Htr_3,
-                 I_st, Hve, Htr_w, I_ia, I_m, Cm, Af, Losses, tHset_corr, tCset_corr, IC_max, IH_max, Flag):
+                 I_st, Hve, Htr_w, I_ia, I_m, Cm, Af, Losses, tHset_corr, tCset_corr, IC_max, IH_max, Flag, gv):
     if Losses:
         # Losses due to emission and control of systems
         tintH_set = tintH_set + tHset_corr
@@ -104,16 +104,16 @@ def calc_Qhs_Qcs(SystemH, SystemC, tm_t0, te_t, tintH_set, tintC_set, Htr_em, Ht
 
         # temperature controls for case with TABS
         if IHC_nd_un > 0 and SystemH == 'T4':
-            if (ts - ta) > 9:
-                # design condition: maximum temperature asymmetry for radiant floors/ceilings is 9ºC
+            if (ts - ta) > gv.max_temperature_difference_tabs:
+                # design condition: maximum temperature asymmetry for radiant floors/ceilings
                 tm, ts, tair10, IHC_nd_un = temperature_control_tabs(Htr_1, Htr_2, Htr_3, Htr_ms, Htr_w, Htr_em, Htr_is,
                                                                      Hve, IHC_nd, I_ia, I_st, I_m, te_t, tm_t0, Cm,
                                                                      'max_ts-ta')
                 uncomfort = 1
                 IHC_nd_ac = IHC_nd_un
 
-            if ts > 27:
-                # design condition: maximum surface temperature for radiant floors/ceilings is 27ºC
+            if ts > gv.max_surface_temperature_tabs:
+                # design condition: maximum surface temperature for radiant floors/ceilings
                 tm, ts, tair10, IHC_nd_un = temperature_control_tabs(Htr_1, Htr_2, Htr_3, Htr_ms, Htr_w, Htr_em, Htr_is,
                                                                      Hve, IHC_nd, I_ia, I_st, I_m, te_t, tm_t0, Cm,
                                                                      'max_ts')
@@ -152,21 +152,8 @@ def calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm):
     return ts
 
 
-def calc_ts_tabs(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm):
-    # if the system is a floor heating system, then the heat input is split between all three nodes
-    ts = (Htr_ms * tm + I_st + Htr_w * te_t + Htr_1 * (te_t + I_ia / Hve) + (Htr_1 / Hve + 1) * IHC_nd * 0.5) / (
-        Htr_ms + Htr_w + Htr_1)
-    return ts
-
-
 def calc_ta(Htr_is, Hve, IHC_nd, I_ia, te_t, ts):
     ta = (Htr_is * ts + Hve * te_t + I_ia + IHC_nd) / (Htr_is + Hve)
-    return ta
-
-
-def calc_ta_tabs(Htr_is, Hve, IHC_nd, I_ia, te_t, ts):
-    # if the system is a floor heating system, then the heat input is split between all three nodes
-    ta = (Htr_is * ts + Hve * te_t + I_ia + 0.5 * IHC_nd) / (Htr_is + Hve)
     return ta
 
 
@@ -180,8 +167,20 @@ def calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd, Hve,
     return Im_tot
 
 
+# R-C model calculation adapted for TABS based on SIA 2044
+# if the system is a floor heating system, then the heat input is split between all three nodes
+def calc_ts_tabs(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm):
+    ts = (Htr_ms * tm + I_st + Htr_w * te_t + Htr_1 * (te_t + I_ia / Hve) + (Htr_1 / Hve + 1) * IHC_nd * 0.5) / (
+        Htr_ms + Htr_w + Htr_1)
+    return ts
+
+
+def calc_ta_tabs(Htr_is, Hve, IHC_nd, I_ia, te_t, ts):
+    ta = (Htr_is * ts + Hve * te_t + I_ia + 0.5 * IHC_nd) / (Htr_is + Hve)
+    return ta
+
+
 def calc_Im_tot_tabs(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd, Hve, Htr_2):
-    # if the system is a floor heating system, then the heat input is split between all three nodes
     Im_tot = I_m + Htr_em * te_t + Htr_3 * (I_st + Htr_w * te_t + Htr_1 * ((I_ia / Hve) + te_t)) / Htr_2 + \
              IHC_nd * 0.5 * (1 + Htr_3 / Htr_2 * (1 + Htr_1 / Hve))
     return Im_tot
