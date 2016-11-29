@@ -85,7 +85,8 @@ def create_demand_samples(method='morris', num_samples=1000, variable_groups=('T
     print pdf
 
     # define the problem
-    problem = {'num_vars': pdf.name.count(), 'names': pdf.name.values, 'bounds': bounds, 'groups': None}
+    problem = {'num_vars': pdf.name.count(), 'names': pdf.name.values, 'bounds': bounds, 'groups': None,
+               'N': num_samples, 'method': method}
     problem.update(sampler_parameters)
 
     return sampler(method, problem, num_samples, sampler_parameters), problem
