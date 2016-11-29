@@ -71,11 +71,9 @@ def subsMain(data_path, path_to_path, results_path, TotalNamefile, disconected_b
             subsModel(path_to_path, results_path, gv, buildings[index],t_DH,t_DH_supply,t_DC_supply,t_HS,t_WW,t_CS)
             index +=1
     else:
-        index = 0
         # calculate substation parameters per building
-        for name in names:
+        for index, name in enumerate(names):
             subsModel(path_to_path, results_path, gv, buildings[index],t_DH,t_DH_supply,t_DC_supply,t_HS,t_WW,t_CS)
-            index +=1
     print time.clock() - t0, "seconds process time for the Substation Routine \n"
 
 
