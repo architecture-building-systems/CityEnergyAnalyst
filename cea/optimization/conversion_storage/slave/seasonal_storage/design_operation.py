@@ -170,7 +170,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, Netwo
         
         # check if each source needs a heat-pump, calculate the final energy 
         if T_DH_sup > gV.TElToHeatSup - gV.dT_heat: #and checkpoint_ElToHeat == 1:
-            #use a heat pump to bring it to network temp
+            #use a heat pump to bring it to distribution temp
             COP_th = T_DH_sup / (T_DH_sup - (gV.TElToHeatSup - gV.dT_heat)) 
             COP = gV.HP_etaex * COP_th
             E_aux_Server = QServerHeat * (1/COP) # assuming the losses occur after the heat pump
@@ -182,7 +182,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, Netwo
             E_aux_Server = 0.0
             
         if T_DH_sup > gV.TfromServer - gV.dT_heat:# and checkpoint_QfromServer == 1: 
-            #use a heat pump to bring it to network temp
+            #use a heat pump to bring it to distribution temp
             COP_th = T_DH_sup / (T_DH_sup - (gV.TfromServer - gV.dT_heat)) 
             COP = gV.HP_etaex * COP_th
             E_aux_CAH = QCompAirHeat * (1/COP) # assuming the losses occur after the heat pump
@@ -193,7 +193,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, Netwo
             E_aux_CAH = 0.0
 
         if T_DH_sup > Solar_Tscr_th_PVT[HOUR] - gV.dT_heat:# and checkpoint_PVT == 1:
-            #use a heat pump to bring it to network temp
+            #use a heat pump to bring it to distribution temp
             COP_th = T_DH_sup / (T_DH_sup - (Solar_Tscr_th_PVT[HOUR] - gV.dT_heat)) 
             COP = gV.HP_etaex * COP_th
             E_aux_PVT = Qpvt * (1/COP) # assuming the losses occur after the heat pump
@@ -205,7 +205,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, Netwo
             E_aux_PVT = 0.0
             
         if T_DH_sup > Solar_Tscr_th_SC[HOUR] - gV.dT_heat:# and checkpoint_SC == 1:
-            #use a heat pump to bring it to network temp
+            #use a heat pump to bring it to distribution temp
             COP_th = T_DH_sup / (T_DH_sup - (Solar_Tscr_th_SC[HOUR] - gV.dT_heat)) 
             #print Solar_Tscr_th_SC[HOUR], "Solar_Tscr_th_SC[HOUR]"
             COP = gV.HP_etaex * COP_th

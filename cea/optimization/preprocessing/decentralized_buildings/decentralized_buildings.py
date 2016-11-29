@@ -1,6 +1,6 @@
 """
 ====================================
-Operation for disconnected buildings
+Operation for diecentralized buildings
 ====================================
 
 """
@@ -10,34 +10,41 @@ import pandas as pd
 import numpy as np
 import time
 
-import supportFn as sFn
-reload(sFn)
-
 import cea.technologies.boilers as Boiler
 import cea.technologies.cogeneration as FC
 import cea.technologies.heatpumps as HP
-reload(Boiler)
-reload(FC)
-reload(HP)
 
 
-def discBuildOp(locator, building_names, gv):
+def decentralized_main(locator, building_names, gv):
     """
     Computes the parameters for the operation of disconnected buildings
-    output results in csv files
-    
-    Parameters
-    ----------
-    locator : string
-        path to folders    
-    
+    output results in csv files.
+
+    There is no optimization at this point. The different technologies are calculated and compared 1 to 1 to
+    each technology. it is a classical combinatorial problem.
+
+    :param locator: locator class
+    :param building_names: list with names of buildings
+    :param gv: global variables class
+    :return:
+        results of operation of buildings lcoated in locator.pathDiscRes
+
     """
-    print "Start Disconnected Building Routine \n"
     t0 = time.clock()
     geothermal_potential = pd.read_csv(locator.get_geothermal_potential, index_col="Name")
     BestData = {}
 
     def calc_new_load(mdot, TsupDH, Tret, gv):
+        """
+        This function calculates the load distribution side of the district heating distribution.
+
+        :param mdot: mass flow
+        :param TsupDH: supply temeperature
+        :param Tret: return temperature
+        :param gv: global variables class
+        :return:
+            Qload: load of the distribution
+        """
         Qload = mdot * gv.cp * (TsupDH - Tret) * (1 + gv.Qloss_Disc)
         if Qload < 0:
             Qload = 0
@@ -46,10 +53,12 @@ def discBuildOp(locator, building_names, gv):
         return Qload
 
     for buildName in building_names:
+        print buildName
         fName = locator.pathSubsRes + "/" + buildName + "_result.csv"
 
         loads = pd.read_csv(fName, usecols=["T_supply_DH_result", "T_return_DH_result", "mdot_DH_result"])
-        Qload = np.vectorize(calc_new_load)(loads["mdot_DH_result"], loads["T_supply_DH_result"], loads["T_return_DH_result"], gv)
+        Qload = np.vectorize(calc_new_load)(loads["mdot_DH_result"], loads["T_supply_DH_result"],
+                                            loads["T_return_DH_result"], gv)
         Qannual = Qload.sum()
         Qnom = Qload.max()* (1+gv.Qmargin_Disc) # 1% reliability margin on installed capacity
 
@@ -64,8 +73,6 @@ def discBuildOp(locator, building_names, gv):
         Wel_GHP = np.zeros((10,1)) # For the investment costs of the GHP
         
         # Supply with the Boiler / FC / GHP
-        print "Operation with the Boiler / FC / GHP"
-
         Tret = loads["T_return_DH_result"].values
         TsupDH = loads["T_supply_DH_result"].values
         mdot = loads["mdot_DH_result"].values
@@ -117,7 +124,8 @@ def discBuildOp(locator, building_names, gv):
                 
                 if Qload[hour] <= QnomGHP:
                 
-                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TsupDH[hour], Tret[hour], gv.TGround, gv)
+                    (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TsupDH[hour], Tret[hour],
+                                                                                  gv.TGround, gv)
                     
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
@@ -184,8 +192,6 @@ def discBuildOp(locator, building_names, gv):
                     result[3+i][6] += gv.NG_BACKUPBOILER_TO_OIL_STD * Qgas   * 3600E-6 # MJ-oil-eq
                     resourcesRes[3+i][0] += QtoBoiler
 
-        print time.clock() - t0, "seconds process time for the operation \n"
-        
         # Investment Costs / CO2 / Prim
         InvCaBoiler = Boiler.calc_Cinv_boiler(Qnom, Qannual, gv)
         InvCosts[0][0] = InvCaBoiler
@@ -207,8 +213,6 @@ def discBuildOp(locator, building_names, gv):
         
 
         # Best configuration
-        print "Find the best configuration"
-        
         Best = np.zeros((13,1))
         indexBest = 0
 
@@ -243,7 +247,7 @@ def discBuildOp(locator, building_names, gv):
             
             if Qallowed < QGHP:
                 optsearch[i+3] += 1
-                Best[i+3][0] = -1
+                Best[i+3][0] = - 1
         
         while not Bestfound and rank<el:
             
@@ -257,13 +261,11 @@ def discBuildOp(locator, building_names, gv):
                 
             rank += 1
 
+        # get the best option according to the ranking.
         Best[indexBest][0] = 1
-        print indexBest, "Best"
         Qnom_array = np.ones(len(Best[:,0])) * Qnom
 
         # Save results in csv file
-        print "Save the results for", buildName, "\n"
-        
         dico = {}
         dico[ "BoilerNG Share" ] = result[:,0]
         dico[ "BoilerBG Share" ] = result[:,1]
@@ -308,32 +310,5 @@ def discBuildOp(locator, building_names, gv):
         fName = "DiscOpSummary.csv"
         results_to_csv = pd.DataFrame(BestData)
         results_to_csv.to_csv(fName, sep= ',')
-        
-        
-    print "Disconnected Building Routine Completed"
+
     print time.clock() - t0, "seconds process time for the Disconnected Building Routine \n"
-    #print BestData
-    #Store summary to CSV
-
-
-
-def extractList(fName):
-    """
-    Extract the names of the buildings in the area
-
-    Parameters
-    ----------
-    fName : string
-        csv file with the names of the buildings
-
-    Returns
-    -------
-    namesList : list
-        List of strings with the names of the buildings
-
-    """
-    df = pd.read_csv(fName, usecols=["Name"])
-    namesList = df['Name'].values.tolist()
-
-    return namesList
-

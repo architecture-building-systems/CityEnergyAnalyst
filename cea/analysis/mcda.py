@@ -67,7 +67,7 @@ def mcda_indicators(individual, pathX, plot = 0):
 
 
     # Recover heating needs for decentralized buildings
-    indCombi = sFn.readCombi(individual, gV)
+    indCombi = sFn.individual_to_barcode(individual, gV)
     QfromNG = 0
     QfromBG = 0
     QfromGHP = 0

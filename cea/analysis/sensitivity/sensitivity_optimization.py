@@ -5,15 +5,15 @@ Sensitivity analysis
 
 """
 from __future__ import division
-import cea.globalVar as glob
+
 import os
 
+import cea.globalVar as glob
 import cea.optimization.evolAlgo.evaluateInd as eI
 import numpy as np
 from deap import base
 
-import cea.globalVar as glob
-import cea.optimization.master.evolAlgo.Selection as sel
+import cea.optimization.conversion_storage.master.selection as sel
 import cea.optimization.supportFn as sFn
 
 __author__ = "Tim Vollrath"

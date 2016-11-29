@@ -8,7 +8,7 @@ import Rep3D as rep
 from deap import base
 
 import cea.optimization.supportFn as sFn
-from cea.optimization.master.evolAlgo import evaluateInd as eI
+from cea.optimization.conversion_storage.master import evaluation as eI
 
 reload(sFn)
 reload(rep)
@@ -97,7 +97,7 @@ def normalize_epsIndicator(pathX, generation):
     Returns
     -------
     epsAll : list
-        normalized epsilon indicator from the beginning of the EA to generation
+        normalized epsilon indicator from the beginning of the master to generation
     
     """
     epsAll = []
@@ -166,7 +166,7 @@ def normalize_epsIndicator(pathX, generation):
 
 
 def decentralizeCosts(individual, pathX, gV):
-    indCombi = sFn.readCombi(individual, gV)
+    indCombi = sFn.individual_to_barcode(individual, gV)
     buildList = sFn.extractList(pathX.pathRaw + "/Total.csv")
     costsDisc = 0
 
