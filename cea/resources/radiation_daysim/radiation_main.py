@@ -523,7 +523,7 @@ def generate_sensor_points(an_core, aresults_path, awrite_log, abui_name_list, f
             # the domain of f
             a_sensor_srfs, a_sensor_pts, a_sensor_dirs = gml3dmodel.generate_sensor_surfaces(f, axdim, aydim, aoffset,
                                                                                              normal)
-            fac_area = cea.resources.Daysim_Radiation.py3dmodel.calculate.face_area(f)
+            fac_area = py3dmodel.calculate.face_area(f)
             # generate dataframe with building, face and sensor ID
             sen_int = 0
             for sen_dir in a_sensor_dirs:
