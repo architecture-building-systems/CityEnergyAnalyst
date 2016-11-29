@@ -40,7 +40,7 @@
 # parameters (the syntax used can be learnt here: http://stackoverflow.com/a/2013589/2260
 # and here: http://wiki.bash-hackers.org/syntax/pe)
 N=${N:-1}
-METHOD=${METHOD:-morris}
+METHOD=${METHOD:-sobol}
 SCENARIO=${SCENARIO:-$HOME/cea-reference-case/reference-case-open/baseline}
 SAMPLES_FOLDER=${SAMPLES_FOLDER:-${SCRATCH}/samples_${METHOD}_${N}}
 WEATHER=${WEATHER:-$HOME/CEAforArcGIS/cea/databases/CH/Weather/Zurich.epw}
