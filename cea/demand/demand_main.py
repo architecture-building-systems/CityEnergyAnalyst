@@ -23,7 +23,7 @@ __credits__ = ["Jimeno A. Fonseca", "Daren Thomas", "Gabriel Happle"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
-__email__ = "thomas@arch.ethz.ch"
+__email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 """
@@ -124,11 +124,10 @@ def write_totals_csv(building_properties, locator, gv):
     df.to_csv(locator.get_total_demand(), index=False, float_format='%.3f')
 
     return df
-"""
-=========================================
-multiple or single core calculation
-=========================================
-"""
+
+#=========================================
+#multiple or single core calculation
+#=========================================
 
 
 def thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, usage_schedules,
@@ -157,11 +156,11 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
     pool.close()
 
 
-"""
-=========================================
-test
-=========================================
-"""
+#=========================================
+#test
+#=========================================
+
+
 def run_as_script(scenario_path=None, weather_path=None):
     gv = cea.globalvar.GlobalVariables()
     if scenario_path is None:

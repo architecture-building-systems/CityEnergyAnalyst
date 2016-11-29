@@ -14,7 +14,7 @@ __credits__ = ["Jimeno A. Fonseca", "Daren Thomas"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
-__email__ = "thomas@arch.ethz.ch"
+__email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 class GlobalVariables(object):
@@ -66,18 +66,12 @@ class GlobalVariables(object):
         # constant variables for air conditioning fan
         self.Pfan = 0.55 # specific fan consumption in W/m3/h
 
-
-        # ==============================================================================================================
-        # sensitivity morris method
-        # ==============================================================================================================
-
-        self.samples = False # keep as false, cea.analysis.morris change this to a value if active
-
         # ==============================================================================================================
         # optimization
         # ==============================================================================================================
 
         self.sensibilityStep = 2 #the more, the longer the sensitibility analysis
+        
         ########################### User inputs
 
         # Commands for the evolutionary algorithm
@@ -514,6 +508,13 @@ class GlobalVariables(object):
         # ==============================================================================================================
         self.initial_temp_air_prev = 21
         self.initial_temp_m_prev = 16
+
+        # ==============================================================================================================
+        # TABS
+        # ==============================================================================================================
+        self.max_temperature_difference_tabs = 9 # (°C) from Koschenz & Lehmann "Thermoaktive Bauteilsysteme (TABS)"
+        self.max_surface_temperature_tabs = 27 # (°C) from Koschenz & Lehmann "Thermoaktive Bauteilsysteme (TABS)"
+
 
         # ==============================================================================================================
         # Columns to write for the demand calculation
