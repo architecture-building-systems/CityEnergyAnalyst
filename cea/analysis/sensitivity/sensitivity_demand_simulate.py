@@ -6,6 +6,7 @@ import shutil
 import pickle
 import numpy as np
 import pandas as pd
+import simpledbf
 from geopandas import GeoDataFrame as Gdf
 
 import cea.demand.demand_writers
@@ -26,10 +27,12 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
     :param simulation_path: a (temporary) path for simulating a scenario that has been patched with a sample
     :return: InputLocator that can be used to simulate the demand in the `simulation_path`
     """
+
+    # get problem and samples
     if os.path.exists(simulation_path):
         shutil.rmtree(simulation_path)
     shutil.copytree(scenario_path, simulation_path)
-    locator = InputLocator(scenario_path=simulation_path)
+    sample_locator = InputLocator(scenario_path=simulation_path)
 
     with open(os.path.join(samples_path, 'problem.pickle'), 'r') as f:
         problem = pickle.load(f)
@@ -39,34 +42,28 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
     except IndexError:
         return None
 
-    # FIXME: add other variable groups here
-    prop_thermal = Gdf.from_file(locator.get_building_thermal()).set_index('Name')
+    # create dataframe with length equal to all buildings
+    prop_thermal = simpledbf.Dbf5(sample_locator.get_building_thermal()).to_dataframe().set_index('Name')
     prop_overrides = pd.DataFrame(index=prop_thermal.index)
+
     for i, key in enumerate(problem['names']):
         print("Setting prop_overrides['%s'] to %s" % (key, sample[i]))
         prop_overrides[key] = sample[i]
-        # prop_occupancy_df[key] = value
-        # list_uses = list(prop_occupancy.drop('PFloor', axis=1).columns)
-        # prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
-        # prop_occupancy[list_uses] = prop_occupancy[list_uses].div(prop_occupancy[list_uses].sum(axis=1), axis=0)
-    sample_locator = InputLocator(scenario_path=simulation_path)
+
+    # save in disc
     prop_overrides.to_csv(sample_locator.get_building_overrides())
 
     return sample_locator
 
 
 def simulate_demand_sample(locator, weather_path, output_parameters):
+    # force simulation to be sequential
     gv = cea.globalvar.GlobalVariables()
     gv.demand_writer = cea.demand.demand_writers.MonthlyDemandWriter(gv)
-    # force simulation to be sequential
     gv.multiprocessing = False
+    gv.sensitivity_analysis = True
     result = demand_main.demand_calculation(locator, weather_path, gv)
     return result[output_parameters]
-
-
-class SensitivityInputLocator(InputLocator):
-    """Overrides `InputLocator` to work with """
-
 
 def main():
     import argparse
