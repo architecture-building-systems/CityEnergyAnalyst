@@ -20,13 +20,9 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-"""
-============================
-operation costs
-============================
-
-"""
-
+#============================
+#operation costs
+#============================
 
 def Cond_Boiler_operation(Q_load, Q_design, T_return_to_boiler, gV):
 
