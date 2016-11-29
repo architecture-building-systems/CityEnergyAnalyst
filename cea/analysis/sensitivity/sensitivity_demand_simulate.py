@@ -78,7 +78,7 @@ def main():
                         help='folder to copy the reference case to for simulation')
     parser.add_argument('-w', '--weather', help='Path to the weather file (omit for default)')
     parser.add_argument('-o', '--output-parameters', help='output parameters to use', nargs='+',
-                        default=['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'QEf_MWhyr'])
+                                 'Ef0_kW'])
     args = parser.parse_args()
     for i in range(args.sample_index, args.sample_index + args.number_of_simulations):
         locator = apply_sample_parameters(i, args.samples_folder, args.scenario, args.simulation_folder)
