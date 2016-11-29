@@ -10,7 +10,7 @@ from SALib.sample.morris import sample as sampler_morris
 from cea.inputlocator import InputLocator
 
 
-def create_demand_samples(method='morris', num_samples=1000, variable_groups=('THERMAL',), sampler_parameters={}):
+def create_demand_samples(method='sobol', num_samples=1000, variable_groups=('THERMAL',), sampler_parameters={}):
     """
     :param sampler_parameters: additional, sampler-specific parameters. For `method='morris'` these are: [grid_jump,
                            num_levels], for `method='sobol'` these are: [calc_second_order]
@@ -30,6 +30,7 @@ def create_demand_samples(method='morris', num_samples=1000, variable_groups=('T
     pdf = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1) for group in variable_groups])
     # a list of tupples containing the lower-bound and upper-bound of each variable
     bounds = list(zip(pdf['min'], pdf['max']))
+    print pdf
 
     # define the problem
     problem = {'num_vars': pdf.name.count(), 'names': pdf.name.values, 'bounds': bounds, 'groups': None}
@@ -62,7 +63,7 @@ if __name__ == '__main__':
                         default=4)
     parser.add_argument('-S', '--samples-folder', default='.',
                         help='folder to place the output files (samples.npy, problem.pickle) in')
-    parser.add_argument('-V', '--variable-groups', default=['THERMAL','ARCHITECTURE', 'INDOOR_COMFORT', 'INTERNAL_LOADS'], nargs='+',
+    parser.add_argument('-V', '--variable-groups', default=['THERMAL', 'ARCHITECTURE', 'INDOOR_COMFORT', 'INTERNAL_LOADS'], nargs='+',
                         help=('list of variable groups. Valid values: THERMAL, ARCHITECTURE, ' +
                               'INDOOR_COMFORT, INTERNAL_LOADS'))
     args = parser.parse_args()
