@@ -82,7 +82,6 @@ def create_demand_samples(method='morris', num_samples=1000, variable_groups=('T
     pdf = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1) for group in variable_groups])
     # a list of tupples containing the lower-bound and upper-bound of each variable
     bounds = list(zip(pdf['min'], pdf['max']))
-    print pdf
 
     # define the problem
     problem = {'num_vars': pdf.name.count(), 'names': pdf.name.values, 'bounds': bounds, 'groups': None,
