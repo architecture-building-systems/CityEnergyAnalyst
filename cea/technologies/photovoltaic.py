@@ -341,6 +341,7 @@ optimal angle and tilt
 
 def Calc_optimal_angle(teta_z, latitude, transmissivity):
     """
+    To calculate the optimal tilt angle of the solar panels.
 
     Parameters
     ----------
@@ -371,12 +372,14 @@ def Calc_optimal_angle(teta_z, latitude, transmissivity):
 def Calc_optimal_spacing(Sh, Az, tilt_angle, module_length):
     """
     To calculate the optimal spacing between each panel to avoid shading.
+
     Parameters
     ----------
     Sh: Solar elevation at the worst hour [degree]
     Az: Azimuth [degree]
     tilt_angle: optimal tilt angle for panels on flat surfaces [degree]
     module_length: [m]
+
     Returns
     -------
     D: optimal distance in [m]
@@ -390,12 +393,14 @@ def Calc_optimal_spacing(Sh, Az, tilt_angle, module_length):
 def Calc_categoriesroof(teta_z, B, GB, Max_Isol):
     """
     To categorize solar panels by the surface azimuth, tilt angle and yearly radiation.
+
     Parameters
     ----------
     teta_z: surface azimuth, 0 degree south (east negative, west positive)
     B: solar panel tile angle
     GB: yearly radiation of sensors
     Max_Isol: yearly global horizontal radiation
+
     Returns
     -------
     """
@@ -453,6 +458,7 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     Secondly, the total PV module area is calculated.
     And then all the modules are categorized with its surface azimuth, tilt angle, and yearly radiation to calculate the
     absorbed radiation.
+
     Parameters
     ----------
     sensors_metadata_clean
@@ -462,6 +468,7 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     transmissivity
     module_length
     Max_Isol
+
     Returns
     -------
     Assumptions
