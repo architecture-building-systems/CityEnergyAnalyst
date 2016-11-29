@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
 
 # parameters
-N=${N:-1}
-METHOD=${METHOD:-morris}
+N=${N:-1000}
+METHOD=${METHOD:-sobol}
 SCENARIO=${SCENARIO:-$HOME/cea-reference-case/reference-case-open/baseline}
 SAMPLES_FOLDER=${SAMPLES_FOLDER:-${SCRATCH}/samples_${METHOD}_${N}}
 WEATHER=${WEATHER:-$HOME/CEAforArcGIS/cea/databases/CH/Weather/Zurich.epw}
