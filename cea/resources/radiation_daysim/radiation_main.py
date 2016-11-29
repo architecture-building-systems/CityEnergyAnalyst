@@ -685,7 +685,7 @@ def faces2pointlist(filename, abui_name_list, geo_name, faces, atype):
         #  angle smaller than 90 degrees the face is reversed
         if atype == "building":
             for j in range(len(face_list_up)):
-                fac_centroid = np.array(cea.resources.Daysim_Radiation.py3dmodel.calculate.face_midpt(face_list_up[j]))
+                fac_centroid = np.array(py3dmodel.calculate.face_midpt(face_list_up[j]))
                 fac_vec = np.array(normal_list_up[j])
                 vec = bui_centroid - fac_centroid
                 angle = np.arccos(np.dot(fac_vec, vec) / (np.linalg.norm(vec) * np.linalg.norm(fac_vec))) * 180 / np.pi
