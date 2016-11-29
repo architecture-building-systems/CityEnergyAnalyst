@@ -29,7 +29,6 @@ def face_normal(occface):
     normal = (normal_dir.X(), normal_dir.Y(), normal_dir.Z())
     return normal
 
-
 def add_rad_mat(aresults_path, an_core, names, values):
     file_path = os.path.join(aresults_path, 'daysim_data' + str(an_core) + '\\rad\\daysim_data' + str(an_core) +
                              "_material")
@@ -47,7 +46,6 @@ def add_rad_mat(aresults_path, an_core, names, values):
         write_file.close()
     os.rename(file_name_txt, file_name_rad.replace(".txt", ".rad"))
 
-
 def percentage(task, now, total):
     percent = round((float(now)/float(total))*100, 0)
     division = 5
@@ -58,7 +56,6 @@ def percentage(task, now, total):
         print "\r", str(task), bar, percent, "%",
     else:
         print "\r", str(task),bar, percent, "%",
-
 
 def bui_id_df_per_building_one(an_core, aresults_path):
     abui_id_df = pd.read_csv(os.path.join(aresults_path, "temp", 'bui_id_df_' + str(an_core) + '.csv'))
@@ -75,8 +72,6 @@ def bui_id_df_per_building_one(an_core, aresults_path):
         one_bui_id_df.drop(one_bui_id_df.index[drop_list], axis=0, inplace=True)
         one_bui_id_df['sen_area'] = one_bui_id_df['sen_area'] * 2
         one_bui_id_df.to_csv(os.path.join(aresults_path, 'buildings', bui + '_id_df.csv'), index=None)
-
-
 
 def bui_id_df_per_building(an_core, aresults_path):
     abui_id_df = pd.read_csv(os.path.join(aresults_path, "temp", 'bui_id_df_' + str(an_core) + '.csv'))
@@ -101,8 +96,6 @@ def bui_id_df_per_building(an_core, aresults_path):
             one_bui_id_df_chunk['sen_area']=one_bui_id_df_chunk['sen_area']*2
             one_bui_id_df_chunk.to_csv(os.path.join(aresults_path, 'buildings', bui + '_' + str(row_chunk) + '_id_df.csv'),
                                        index=None)
-
-
 
 def hourly_file_per_building_one(an_core, an_cores, aresults_path, achunk_size_bui):
     # get sensors per building
@@ -145,7 +138,6 @@ def hourly_file_per_building_one(an_core, an_cores, aresults_path, achunk_size_b
             # aheader = pd.concat([aheader, chunk], axis=0)
             iterator += 1
         results_file.close()
-
 
 def hourly_file_per_building(an_core, an_cores, aresults_path, achunk_size_bui):
     # get sensors per building
@@ -215,8 +207,6 @@ def hourly_file_per_building(an_core, an_cores, aresults_path, achunk_size_bui):
         for col_chunk in range(int(split)):
             results_files[col_chunk].close()
 
-
-
 def sensors_per_building_face_area1(an_core, an_cores, aresults_path, acol_key):
     abui_id_df = pd.read_csv(os.path.join(aresults_path, "temp", 'bui_id_df_' + str(an_core) + '.csv'))
     abui_id_df_batch = abui_id_df[acol_key].values.tolist()
@@ -242,7 +232,6 @@ def sensors_per_building_face_area1(an_core, an_cores, aresults_path, acol_key):
 
     return sen_interval, face_area, header, bool_facade, sen_area
 
-
 def concat_results(atime_sum, aspatial_sum, an_cores, aresults_path, achunk_size, awrite_log):
     with open(os.path.join(aresults_path, aspatial_sum + "_" + atime_sum + ".csv"), 'w') as results_file:
         lines = True
@@ -262,7 +251,6 @@ def concat_results(atime_sum, aspatial_sum, an_cores, aresults_path, achunk_size
             iterator += 1
     log(("coacenated", result.shape[1], aspatial_sum, "for", atime_sum), '', awrite_log, aresults_path)
     results_file.close()
-
 
 def time_sums(an_core, aresults_path):
     illum_file_path = os.path.join(aresults_path, 'daysim_data' + str(an_core), 'res', 'daysim_data' + str(an_core))
@@ -329,7 +317,6 @@ def time_sums(an_core, aresults_path):
     np.savetxt(os.path.join(aresults_path, "temp", "sen_day_" + str(an_core)+".csv"), days, fmt='%1.1f', delimiter=",")
     np.savetxt(os.path.join(aresults_path, "temp", "sen_month_" + str(an_core)+".csv"), months, fmt='%1.1f',
                delimiter=",")
-
 
 def sen_average(an_core, atime_sum, aspatial_sum, an_cores, aresults_path, awrite_log):
     if aspatial_sum == "sen":
@@ -398,7 +385,6 @@ def sen_average(an_core, atime_sum, aspatial_sum, an_cores, aresults_path, awrit
 
     log(("batch ", an_core, len(sen_interval) - 1, aspatial_sum, atime_sum), '', awrite_log, aresults_path)
 
-
 def log(message, wordwrap, awrite_log, aresults_path):
 
     file_name = "log.txt"
@@ -410,7 +396,6 @@ def log(message, wordwrap, awrite_log, aresults_path):
             log_file.close()
 
     print message, wordwrap
-
 
 def multiprocess(nr_lists, function, arguments, lists):
     # TODO delete nr_lists
@@ -450,7 +435,6 @@ def multiprocess(nr_lists, function, arguments, lists):
     for process in processes:
         process.join()
 
-
 def get_list(folder, ending):
     geo_name_list = []
     for afile in os.listdir(folder):
@@ -459,18 +443,15 @@ def get_list(folder, ending):
             geo_name_list.append(root)
     return geo_name_list
 
-
 def make_unique(original_list):
     unique_list = []
     [unique_list.append(obj) for obj in original_list if obj not in unique_list]
     return unique_list
 
-
 def write_points(out_file, points_list):
     for point in points_list:
         s = str(point[0])+','+str(point[1])+','+str(point[2])
         out_file.write("%s\n" % s)
-
 
 def geometry2radiance(arad, building_solids_lists, abui_mat_list):
     # parameters for the radiance
@@ -491,7 +472,6 @@ def geometry2radiance(arad, building_solids_lists, abui_mat_list):
             bcnt += 1
         core_count += 1
 
-
 def terrain2radiance(arad, geo_solids, geo_faces, geo_mat_list, geo_name_list):
     geo_int = 0
     for geo_solid in geo_solids:
@@ -502,7 +482,6 @@ def terrain2radiance(arad, geo_solids, geo_faces, geo_mat_list, geo_name_list):
             srfmat = geo_mat_list[geo_int]
             py2radiance.RadSurface(srfname, tface_pts, srfmat, arad)
             fac_int += 1
-
 
 def generate_sensor_points(an_core, aresults_path, awrite_log, abui_name_list, face_list, normal_list, axdim, aydim, aoffset,
                            aroof_resolution_increase, amax_roof_angle):
@@ -544,7 +523,7 @@ def generate_sensor_points(an_core, aresults_path, awrite_log, abui_name_list, f
             # the domain of f
             a_sensor_srfs, a_sensor_pts, a_sensor_dirs = gml3dmodel.generate_sensor_surfaces(f, axdim, aydim, aoffset,
                                                                                              normal)
-            fac_area = py3dmodel.calculate.face_area(f)
+            fac_area = cea.resources.Daysim_Radiation.py3dmodel.calculate.face_area(f)
             # generate dataframe with building, face and sensor ID
             sen_int = 0
             for sen_dir in a_sensor_dirs:
@@ -576,7 +555,6 @@ def generate_sensor_points(an_core, aresults_path, awrite_log, abui_name_list, f
                                        'sen_area', 'sen_x', 'sen_y',
                                        'sen_z', 'sen_dir_x', 'sen_dir_y', 'sen_dir_z', 'orientation', 'tilt'])
     abui_id_df.to_csv(os.path.join(aresults_path, "temp", 'bui_id_df_'+str(an_core)+'.csv'), index=None)
-
 
 def execute_daysim(an_core, aresults_path, awrite_log, arad, aweatherfilepath, arad_n, arad_af, arad_ab, arad_ad,
                    arad_as, arad_ar, arad_aa, arad_lr, arad_st, arad_sj, arad_lw, arad_dj, arad_ds, arad_dr, arad_dp,
@@ -622,7 +600,6 @@ def execute_daysim(an_core, aresults_path, awrite_log, arad, aweatherfilepath, a
     base_file, ext = os.path.splitext(filename)
     os.rename(filename, base_file + ".txt")
 
-
 def create_geometry_lists(an_cores, dimension, geometry_path, list_name, arta, geometry_name_list_ranges):
     geometry_name_list_path = os.path.join(geometry_path, list_name+".csv")
     if not os.path.exists(geometry_name_list_path):
@@ -666,7 +643,6 @@ def create_geometry_lists(an_cores, dimension, geometry_path, list_name, arta, g
 
     return geometry_name_list, geometry_mat_list
 
-
 def faces2pointlist(filename, abui_name_list, geo_name, faces, atype):
 
     with open(filename, 'a') as results_file:
@@ -709,7 +685,7 @@ def faces2pointlist(filename, abui_name_list, geo_name, faces, atype):
         #  angle smaller than 90 degrees the face is reversed
         if atype == "building":
             for j in range(len(face_list_up)):
-                fac_centroid = np.array(py3dmodel.calculate.face_midpt(face_list_up[j]))
+                fac_centroid = np.array(cea.resources.Daysim_Radiation.py3dmodel.calculate.face_midpt(face_list_up[j]))
                 fac_vec = np.array(normal_list_up[j])
                 vec = bui_centroid - fac_centroid
                 angle = np.arccos(np.dot(fac_vec, vec) / (np.linalg.norm(vec) * np.linalg.norm(fac_vec))) * 180 / np.pi
@@ -797,7 +773,6 @@ def import_stl(an_core, geo_name_list, geo_path, atype):
     return geo_list, face_list, normal_list, bui_vol
 
 
-
 def mod_rad_params(params, rad_param_name, rad_param_value):
 
     previous_value = params[rad_param_name][0]
@@ -805,7 +780,6 @@ def mod_rad_params(params, rad_param_name, rad_param_value):
     params[rad_param_name] = rad_param_value
     log(('changed', rad_param_name, 'from', previous_value, 'to', rad_param_value), '\n', write_log, results_path)
     return params
-
 
 # ========================================================================= #
 # main script
@@ -817,9 +791,6 @@ def calc_radiation(scenario_path, case, scenario_name, params_mod):
     time0 = time.clock()
     global write_log
     global results_path
-
-    #nr_runs = 50
-    #scenario_path = 'C:/reference-case_HQ'
 
     cea_path = 'C:\\Users\\fcl2\\AppData\\Roaming\\ESRI\\Desktop10.4\\ArcToolbox\\My Toolboxes\\cea'
     current_path = os.path.dirname(__file__)
@@ -1209,8 +1180,7 @@ def calc_radiation(scenario_path, case, scenario_name, params_mod):
             shutil.rmtree(os.path.join(results_path, 'temp'))
 
 
-if __name__ == '__main__':
-
+def run_as_script():
     path = r'C:\161117_Radiaiton_code_paul_neitzel'
     case = 'case_study'
     scenario_name = 'base'
@@ -1226,3 +1196,7 @@ if __name__ == '__main__':
                                 'rad_ar': rad_ar}
 
     calc_radiation(path, case, scenario_name, run_params)
+
+if __name__ == '__main__':
+    run_as_script()
+

@@ -8,7 +8,7 @@ import gml3dmodel
 import interface2py3d
 
 #=========================================================================================================================================
-#map osm to citygml functions
+# map osm to citygml functions
 #=========================================================================================================================================
 def map_osm2citygml_landuse_function(landuse):
     if landuse == "residential":
@@ -321,7 +321,7 @@ def buildings_on_plot(plot_rec, building_list):
         for building in building_list:
             geometry_list = building["geometry"]
             for building_face in geometry_list:
-                if py3dmodel.calculate.face_is_inside(building_face, luse_face):
+                if cea.resources.Daysim_Radiation.py3dmodel.calculate.face_is_inside(building_face, luse_face):
                     buildings_on_plot_list.append(building)
                     
     return buildings_on_plot_list
@@ -332,7 +332,7 @@ def get_plot_area(plot_rec):
     for part in part_list:
         ptlist3d = point_list2d_2_3d(part,0.0)
         luse_face = py3dmodel.construct.make_polygon(ptlist3d)
-        plot_area = plot_area + py3dmodel.calculate.face_area(luse_face)
+        plot_area = plot_area + cea.resources.Daysim_Radiation.py3dmodel.calculate.face_area(luse_face)
     return plot_area
 
 
@@ -408,7 +408,7 @@ def terrain2d23d_tin(terrain_shpfile, elev_attrib_name):
         for part in part_list:
             point_list = point_list2d_2_3d(part, elev)
             face = py3dmodel.construct.make_polygon(point_list)
-            face_midpt = py3dmodel.calculate.face_midpt(face)
+            face_midpt = cea.resources.Daysim_Radiation.py3dmodel.calculate.face_midpt(face)
             elev_pts.append(face_midpt)
             
     occtriangles = py3dmodel.construct.delaunay3d(elev_pts)
@@ -491,7 +491,7 @@ def building2d23d(building_shpfile, height_attrib_name, terrain_surface_list):
                 bbox_faces = py3dmodel.fetch.topos_frm_compound(bbox_terrain)["face"]
                 midpt_zs = []
                 for bbox_face in bbox_faces:
-                    bbox_face_midptz = py3dmodel.calculate.face_midpt(bbox_face)[2]
+                    bbox_face_midptz = cea.resources.Daysim_Radiation.py3dmodel.calculate.face_midpt(bbox_face)[2]
                     midpt_zs.append(bbox_face_midptz)
                 belev = max(midpt_zs)
             else:
