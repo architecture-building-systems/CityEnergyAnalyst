@@ -9,24 +9,27 @@ import random
 from numpy.random import random_sample
 from itertools import izip
 
+__author__ =  "Thuy-An Nguyen"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = [ "Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
-def generateInd(nBuildings, gv):
+def generate_main(nBuildings, gv):
     """
     Creates an individual for the evolutionary algorithm
-    
-    Parameters
-    ----------
-    nBuildings : int
-        Number of buildings in the district
-    
-    Returns
-    -------
-    individual : list
-    
-    """
-    # Individual represented as a list
-    individual = [0] * ( (gv.nHeat + gv.nSolar) * 2 + gv.nHR + nBuildings + 1 )
 
+    :param nBuildings: number of buildings
+    :param gv: global variables class
+    :return:
+        individual: representation of values taken by the individual
+    """
+
+    # create list to store values of inidividual
+    individual = [0] * ( (gv.nHeat + gv.nSolar) * 2 + gv.nHR + nBuildings + 1 )
     # Count the number of GUs (makes sure there's at least one heating system in the central hub)
     countDHN = 0
     countSolar = 0
