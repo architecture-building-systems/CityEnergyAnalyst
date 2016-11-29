@@ -27,10 +27,10 @@
 
 # parameters (the syntax used can be learnt here: http://stackoverflow.com/a/2013589/2260
 # and here: http://wiki.bash-hackers.org/syntax/pe)
-N=${N:-1000}
-METHOD=${METHOD:-sobol}
+N=${N:-1}
+METHOD=${METHOD:-morris}
 SAMPLES_FOLDER=${SAMPLES_FOLDER:-${SCRATCH}/samples_${METHOD}_${N}}
-VARIABLE_GROUPS=${VARIABLE_GROUPS:-VARIABLE_GROUPS=${VARIABLE_GROUPS:-THERMAL ARCHITECTURE INDOOR_COMFORT INTERNAL_LOADS}}   # FIXME: not implemented yet
+VARIABLE_GROUPS=${VARIABLE_GROUPS:-VARIABLE_GROUPS=${VARIABLE_GROUPS:-THERMAL}}   # FIXME: not implemented yet
 
 mkdir -p $SAMPLES_FOLDER
 
