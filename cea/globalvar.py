@@ -66,8 +66,6 @@ class GlobalVariables(object):
         # constant variables for air conditioning fan
         self.Pfan = 0.55 # specific fan consumption in W/m3/h
 
-        self.sensitivity_analysis = False # true if the sensitivity analysis is carried out
-
         # ==============================================================================================================
         # optimization
         # ==============================================================================================================
