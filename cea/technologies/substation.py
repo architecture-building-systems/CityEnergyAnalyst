@@ -51,14 +51,15 @@ def subsMain(locator, total_file, building_names, gv, Flag):
     # determine grid target temperatures at costumer side.
     iteration = 0
     buildings = []
+
     for name in building_names:
-        buildings.append(pd.read_csv(locator.get_demand_results_folder()+'//'+name+".csv", usecols = ['Name','Tshs_C','Trhs_C','Tscs_C','Trcs_C','Tsww_C',
-                                                                            'Trww_C','Qhsf_kWh','Qcsf_kWh','Qwwf_kWh',
-                                                                            'mcphs_kWC','mcpww_kWC','mcpcs_kWC',
-                                                                            'Ef_kWh']))
-        Ths = np.vectorize(calc_DH_supply)(Ths.copy(),buildings[iteration].Tshs_C.values)
-        Tww = np.vectorize(calc_DH_supply)(Tww.copy(),buildings[iteration].Tsww_C.values)
-        Tcs = np.vectorize(calc_DC_supply)(Tcs.copy(),buildings[iteration].Tscs_C.values)
+        buildings.append(pd.read_csv(locator.get_demand_results_folder()+'//'+name+".csv", usecols = ['Name', 'Thsf_sup_C',
+                                                                  'Thsf_re_C',  'Tcsf_sup_C', 'Tcsf_re_C',  'Twwf_sup_C',
+                                                                  'Twwf_re_C', 'Qhsf_kWh', 'Qcsf_kWh', 'Qwwf_kWh',
+                                                                  'mcphsf_kWC', 'mcpwwf_kWC', 'mcpcsf_kWC', 'Ef_kWh']))
+        Ths = np.vectorize(calc_DH_supply)(Ths.copy(),buildings[iteration].Thsf_sup_C.values)
+        Tww = np.vectorize(calc_DH_supply)(Tww.copy(),buildings[iteration].Twwf_sup_C.values)
+        Tcs = np.vectorize(calc_DC_supply)(Tcs.copy(),buildings[iteration].Tcsf_sup_C.values)
         iteration +=1
     T_DHS = np.vectorize(calc_DH_supply)(Ths,Tww)
     T_DHS_supply = np.where(T_DHS>0,T_DHS+gv.dT_heat,T_DHS)
@@ -92,9 +93,9 @@ def subsModel(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS, t_WW)
     Qhsf = building.Qhsf_kWh.values*1000 # in W
     Qnom = max(Qhsf) #in W
     if Qnom> 0:
-        tco = building.Tshs_C.values+273 #in K
-        tci = building.Trhs_C.values+273 #in K
-        cc = building.mcphs_kWC.values*1000 #in W/K
+        tco = building.Thsf_sup_C.values+273 #in K
+        tci = building.Thsf_re_C.values+273 #in K
+        cc = building.mcphsf_kWC.values*1000 #in W/K
         index = np.where(Qhsf==Qnom)[0][0]
         thi_0 = thi[index]
         tci_0 = tci[index]
@@ -110,9 +111,9 @@ def subsModel(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS, t_WW)
     Qwwf = building.Qwwf_kWh.values*1000  # in W
     Qnom = max(Qwwf) #in W
     if Qnom> 0:
-        tco = building.Tsww_C.values+273  #in K
-        tci = building.Trww_C.values+273  #in K
-        cc = building.mcpww_kWC.values*1000  #in W/K
+        tco = building.Twwf_sup_C.values+273  #in K
+        tci = building.Twwf_re_C.values+273  #in K
+        cc = building.mcpwwf_kWC.values*1000  #in W/K
         index = np.where(Qwwf==Qnom)[0][0]
         thi_0 = thi[index]
         tci_0 = tci[index]
@@ -133,9 +134,9 @@ def subsModel(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS, t_WW)
     Qnom = max(Qcf) #in W
     if Qnom> 0:
         tci = t_DC_supply+273 # in K
-        tho = building.Tscs_C.values+273 #in K
-        thi = building.Trcs_C.values+273 #in K
-        ch = (abs(building.mcpcs_kWC.values))*1000 #in W/K
+        tho = building.Tcsf_sup_C.values+273 #in K
+        thi = building.Tcsf_re_C.values+273 #in K
+        ch = (abs(building.mcpcsf_kWC.values))*1000 #in W/K
         index = np.where(Qcf==Qnom)[0][0]
         tci_0 = tci[index] # in K
         thi_0 = thi[index]
@@ -293,6 +294,11 @@ def calc_HEX_heating(Q, UA,thi,tco,tci,cc):
                 eff[0] = eff[1]
             else:
                 cmin = cc*(tco-tci)/((thi-tci)*eff[0])
+
+            # assign arbitrary value to cmin to avoid division by 0. TODO: fix script so it doesn't depend on this hack
+            if cmin == 0:
+                cmin = 0.01
+
             if cmin < cc:
                 ch = cmin
                 cmax = cc
@@ -301,8 +307,10 @@ def calc_HEX_heating(Q, UA,thi,tco,tci,cc):
                 cmax = cmin
                 cmin = cc
             cr =  cmin/cmax
+
             NTU = UA/cmin
-            eff[1] =  calc_shell_HEX(NTU,cr)
+
+            eff[1] = calc_shell_HEX(NTU,cr)
             cmin = cc*(tco-tci)/((thi-tci)*eff[1])
             tho = thi-eff[1]*cmin*(thi-tci)/ch
             Flag = True
