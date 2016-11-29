@@ -1,9 +1,10 @@
 import os
 
 import arcpy
+
 import cea
-import cea.inputlocator
 import cea.globalvar
+import cea.inputlocator
 import cea.resources
 from cea.GUI.toolbox import add_message
 
@@ -113,12 +114,12 @@ class RadiationTool(object):
         arcpy.AddMessage('longitude: %s' % longitude)
         arcpy.AddMessage('latitude: %s' % latitude)
 
-        import cea.resources.radiation
-        reload(cea.resources.radiation)
+        import cea.resources.radiation_arcgis.radiation
+        reload(cea.resources.radiation_arcgis.radiation)
         gv = cea.globalvar.GlobalVariables()
         gv.log = add_message
-        cea.resources.radiation.solar_radiation_vertical(locator=locator, path_arcgis_db=path_arcgis_db, latitude=latitude,
-                                                         longitude=longitude, year=year, gv=gv, weather_path=weather_path)
+        cea.resources.radiation_arcgis.radiation.solar_radiation_vertical(locator=locator, path_arcgis_db=path_arcgis_db, latitude=latitude,
+                                                                          longitude=longitude, year=year, gv=gv, weather_path=weather_path)
         return
 
     def get_location(self, locator):
