@@ -219,25 +219,25 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # calc auxiliary loads
         tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'], \
         tsd['Eauxf_ve'], tsd['Eauxf_ww'], tsd['Eauxf_fw'] = electrical_loads.calc_Eauxf(bpr.geometry['Blength'],
-                                                                                         bpr.geometry['Bwidth'],
-                                                                                         Mww, tsd['Qcsf'], Qcsf_0,
-                                                                                         tsd['Qhsf'], Qhsf_0,
-                                                                                         tsd['Qww'],
-                                                                                         tsd['Qwwf'], Qwwf_0,
-                                                                                         tsd['Tcsf_re'],
-                                                                                         tsd['Tcsf_sup'],
-                                                                                         tsd['Thsf_re'],
-                                                                                         tsd['Thsf_sup'],
-                                                                                         Vw,
-                                                                                         bpr.age['built'],
-                                                                                         bpr.building_systems['fforma'],
-                                                                                         gv,
-                                                                                         bpr.geometry['floors_ag'],
-                                                                                         bpr.occupancy['PFloor'],
-                                                                                         tsd['qv_req'],
-                                                                                         bpr.hvac['type_cs'],
-                                                                                         bpr.hvac['type_hs'],
-                                                                                         tsd['Ehs_lat_aux'])
+                                                                                        bpr.geometry['Bwidth'],
+                                                                                        Mww, tsd['Qcsf'], Qcsf_0,
+                                                                                        tsd['Qhsf'], Qhsf_0,
+                                                                                        tsd['Qww'],
+                                                                                        tsd['Qwwf'], Qwwf_0,
+                                                                                        tsd['Tcsf_re'],
+                                                                                        tsd['Tcsf_sup'],
+                                                                                        tsd['Thsf_re'],
+                                                                                        tsd['Thsf_sup'],
+                                                                                        Vw,
+                                                                                        bpr.age['built'],
+                                                                                        bpr.building_systems['fforma'],
+                                                                                        gv,
+                                                                                        bpr.geometry['floors_ag'],
+                                                                                        bpr.occupancy['PFloor'],
+                                                                                        tsd['qv_req'],
+                                                                                        bpr.hvac['type_cs'],
+                                                                                        bpr.hvac['type_hs'],
+                                                                                        tsd['Ehs_lat_aux'])
 
         # calculate other quantities
         tsd['Qcsf_lat'] = -tsd['Qcsf_lat']
@@ -250,13 +250,14 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['QEf'] = tsd['QHf'] + tsd['QCf'] + tsd['Ef']
     else:
         # fill data for buildings with zero heating demand
-        fields_to_fill = ['Qcsf', 'Qcs', 'Qhsf', 'Qhs', 'QHf', 'QCf', 'Ef','QEf', 'Eauxf', 'Eauxf_hs', 'Eauxf_cs',
-                          'Eauxf_ve', 'Eauxf_ww', 'Eauxf_fw','mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf', 'mcpref',
-                          'Twwf_sup', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re','Tcdataf_re','Tcdataf_sup',
-                          'Tcref_re','Tcref_sup']
+        fields_to_fill = ['Qcsf', 'Qcs', 'Qhsf', 'Qhs', 'QHf', 'QCf', 'Ef', 'QEf', 'Eauxf', 'Eauxf_hs', 'Eauxf_cs',
+                          'Eauxf_ve', 'Eauxf_ww', 'Eauxf_fw', 'mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf', 'mcpref',
+                          'Twwf_sup', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re', 'Tcdataf_re',
+                          'Tcdataf_sup',
+                          'Tcref_re', 'Tcref_sup']
         tsd.update(dict((x, np.zeros(8760)) for x in fields_to_fill))
 
-    #write results to csv
+    # write results to csv
     gv.demand_writer.results_to_csv(tsd, bpr, locator, date, building_name)
     # write report
     gv.report('calc-thermal-loads', locals(), locator.get_demand_results_folder(), building_name)
@@ -779,10 +780,12 @@ class BuildingProperties(object):
         prop_architecture = get_envelope_properties(locator, prop_architectures).set_index('Name')
 
         # apply overrides
-        if os.path.exists(locator.get_building_overrides()):
+        if os.path.exists(locator.get_building_overrides()) and gv.sensitivity_analysis:
             self._overrides = pd.read_csv(locator.get_building_overrides()).set_index('Name')
             prop_thermal = self.apply_overrides(prop_thermal)
             prop_architecture = self.apply_overrides(prop_architecture)
+            prop_internal_loads = self.apply_overrides(prop_internal_loads)
+            prop_comfort = self.apply_overrides(prop_comfort)
 
         # get properties of rc demand model
         prop_rc_model = self.calc_prop_rc_model(prop_occupancy, prop_architecture, prop_thermal,
@@ -948,8 +951,8 @@ class BuildingProperties(object):
         df = pd.DataFrame({'Name': surface_properties['Name'],
                            'Awall_all': surface_properties['Awall']}).groupby(by='Name').sum()
 
-        df = df.merge(architecture, left_index=True, right_index=True)
-        df = df.merge(occupancy, left_index=True, right_index=True)
+        df = df.merge(architecture, left_index=True, right_index=True).merge(occupancy, left_index=True,
+                                                                             right_index=True)
 
         # area of windows
         df['Aw'] = df['Awall_all'] * df['win_wall'] * df['PFloor']
@@ -1232,7 +1235,7 @@ def get_envelope_properties(locator, prop_architecture):
     df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code')
     df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code')
 
-    fields_roof = ['Name', 'win_wall', 'Occ_m2p', 'n50', 'n50', 'win_op', 'f_cros', 'e_roof', 'a_roof']
+    fields_roof = ['Name', 'win_wall', 'Occ_m2p', 'n50', 'win_op', 'f_cros', 'e_roof', 'a_roof']
     fields_wall = ['Name', 'e_wall', 'a_wall']
     fields_win = ['Name', 'e_win', 'G_win']
     fields_shading = ['Name', 'rf_sh']
@@ -1247,7 +1250,7 @@ def get_prop_solar(locator):
     solar_list = solar.values.tolist()
     surface_properties = pd.read_csv(locator.get_surface_properties())
     surface_properties['Awall'] = (
-    surface_properties['Shape_Leng'] * surface_properties['FactorShade'] * surface_properties['Freeheight'])
+        surface_properties['Shape_Leng'] * surface_properties['FactorShade'] * surface_properties['Freeheight'])
     sum_surface = surface_properties[['Awall', 'Name']].groupby(['Name']).sum().values
 
     I_sol = I_roof = I_win = [a / b for a, b in zip(solar_list, sum_surface)]
