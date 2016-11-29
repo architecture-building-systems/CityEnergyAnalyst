@@ -780,7 +780,7 @@ class BuildingProperties(object):
         prop_architecture = get_envelope_properties(locator, prop_architectures).set_index('Name')
 
         # apply overrides
-        if os.path.exists(locator.get_building_overrides()) and gv.sensitivity_analysis:
+        if os.path.exists(locator.get_building_overrides()):
             self._overrides = pd.read_csv(locator.get_building_overrides()).set_index('Name')
             prop_thermal = self.apply_overrides(prop_thermal)
             prop_architecture = self.apply_overrides(prop_architecture)
