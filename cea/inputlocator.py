@@ -24,7 +24,6 @@ class InputLocator(object):
         self.db_path = os.path.join(os.path.dirname(__file__), 'databases', 'CH')
 
         if scenario_path:
-            self.pathDiscRes = os.path.join(self.get_optimization_results_folder(), "disconnected") # Operation pattern for disconnected buildings
             self.pathNtwRes = os.path.join(self.get_optimization_results_folder(), "network")  # Ntw summary results
             self.pathMasterRes = os.path.join(self.get_optimization_results_folder(), "master") # Master checkpoints
             self.pathSlaveRes = os.path.join(self.get_optimization_results_folder(), "slave") # Slave results (storage + operation pattern)
@@ -44,6 +43,16 @@ class InputLocator(object):
     def get_optimization_results_folder(self):
         """scenario/outputs/data/optimization"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'optimization')
+
+    def get_optimization_disconnected_folder(self):
+        """scenario/outputs/data/optimization/disconnected
+        Operation pattern for disconnected buildings"""
+        return self._ensure_folder(self.get_optimization_results_folder(), "disconnected")
+
+    def get_optimization_disconnected_result_file(self, building_name):
+        """scenario/outputs/data/optimization/disconnected/DiscOp_${building_name}_result.csv"""
+        return os.path.join(self.get_optimization_disconnected_folder(),
+                            "DiscOp_%(building_name)s_result.csv" % locals())
 
     def get_optimization_substations_folder(self):
         """scenario/outputs/data/optimization/substations

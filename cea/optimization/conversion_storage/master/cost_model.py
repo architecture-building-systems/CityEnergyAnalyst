@@ -69,7 +69,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
     
     # Add the features from the disconnected buildings
     print "\n COSTS FROM DISCONNECTED BUILDINGS"
-    os.chdir(locator.pathDiscRes)
+    os.chdir(locator.get_optimization_disconnected_folder())
     CostDiscBuild = 0
     CO2DiscBuild = 0
     PrimDiscBuild = 0

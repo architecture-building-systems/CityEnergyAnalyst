@@ -34,18 +34,18 @@ class mcda_criteria(object):
         self.wLocal = 1
     
 
-def mcda_indicators(individual, pathX, plot = 0):
+def mcda_indicators(individual, locator, plot = 0):
     """
     Computes the specific operational costs and the share of local resources
     
     """
     configKey = "".join(str(e)[0:4] for e in individual)
     print configKey
-    buildList = sFn.extractList(pathX.pathRaw + "/Total.csv")
+    buildList = sFn.extractList(locator.pathRaw + "/Total.csv")
     gV = glob.globalVariables()
     
     # Recover data from the PP activation file
-    resourcesFile = pathX.pathSlaveRes + "/" + configKey + "PPActivationPattern.csv"
+    resourcesFile = locator.pathSlaveRes + "/" + configKey + "PPActivationPattern.csv"
     resourcesdf = pd.read_csv(resourcesFile, usecols=["ESolarProducedPVandPVT", "Q_AddBoiler", "Q_BoilerBase", "Q_BoilerPeak", "Q_CC", "Q_GHP", \
                                                         "Q_HPLake", "Q_HPSew", "Q_primaryAddBackupSum", "Q_uncontrollable"])
                                                         
@@ -61,7 +61,7 @@ def mcda_indicators(individual, pathX, plot = 0):
     Q_uncontrollable = resourcesdf.Q_uncontrollable.sum()
 
     # Recover data from the Storage Operation file
-    resourcesFile = pathX.pathSlaveRes + "/" + configKey + "StorageOperationData.csv"
+    resourcesFile = locator.pathSlaveRes + "/" + configKey + "StorageOperationData.csv"
     resourcesdf = pd.read_csv(resourcesFile, usecols=["Q_SCandPVT_coldstream"])
     Q_fromSolar = resourcesdf.Q_SCandPVT_coldstream.sum()
 
@@ -74,10 +74,8 @@ def mcda_indicators(individual, pathX, plot = 0):
     
     for i in range(len(indCombi)):
         if indCombi[i] == "0": # Decentralized building
-            buildName = buildList[i]
-            DescentFile = pathX.pathDiscRes + "/DiscOp_" + buildName + "_result.csv"
-        
-            df = pd.read_csv(DescentFile)
+            building_name = buildList[i]
+            df = pd.read_csv(locator.get_optimization_disconnected_result_file(building_name))
             dfBest = df[ df["Best configuration"] == 1 ]
                
             QfromNG += dfBest["QfromNG"].iloc[0]
@@ -85,7 +83,7 @@ def mcda_indicators(individual, pathX, plot = 0):
             QfromGHP += dfBest["QfromGHP"].iloc[0]
 
     # Recover electricity and cooling needs
-    totalFile = pathX.pathRaw + "/Total.csv"
+    totalFile = locator.pathRaw + "/Total.csv"
     df = pd.read_csv(totalFile, usecols=["Ealf", "Eauxf", "Ecaf", "Edataf", "Epf"])
     arrayTotal = np.array(df)
     totalElec = np.sum(arrayTotal) * 1E6 # [Wh]
