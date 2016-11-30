@@ -175,7 +175,7 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
             if arrayData[i][1] > 0:
                 buildName = arrayData[i][0]
                 print buildName
-                df = pd.read_csv(locator.get_demand_results_file(buildName), usecols=["Tsdata_C", "Trdata_C", "mcpdata_kWC"])
+                df = pd.read_csv(locator.get_demand_results_file(buildName), usecols=["Tcdataf_sup_C", "Tcdataf_re_C", "mcpdataf_kWC"])
                 arrayBuild = np.array(df)
                 
                 mdotMaxData = abs( np.amax(arrayBuild[:,-1]) / gv.cp * 1E3)
