@@ -24,7 +24,6 @@ class InputLocator(object):
         self.db_path = os.path.join(os.path.dirname(__file__), 'databases', 'CH')
 
         if scenario_path:
-            self.pathClustRes = os.path.join(self.get_optimization_results_folder(), "clustering") # Clustering results for disconnected buildings
             self.pathDiscRes = os.path.join(self.get_optimization_results_folder(), "disconnected") # Operation pattern for disconnected buildings
             self.pathNtwRes = os.path.join(self.get_optimization_results_folder(), "network")  # Ntw summary results
             self.pathMasterRes = os.path.join(self.get_optimization_results_folder(), "master") # Master checkpoints
@@ -58,6 +57,11 @@ class InputLocator(object):
     def get_optimization_substations_total_file(self, genome):
         """scenario/outputs/data/optimization/substations/Total_${genome}.csv"""
         return os.path.join(self.get_optimization_substations_folder(),  "Total_%(genome)s.csv" % locals())
+
+    def get_optimization_clustering_folder(self):
+        """scenario/outputs/data/optimization/clustering
+        Clustering results for disconnected buildings"""
+        return self._ensure_folder(self.get_optimization_results_folder(), "clustering")
 
     def get_potentials_results_folder(self):
         """scenario/outputs/data/potentials"""
