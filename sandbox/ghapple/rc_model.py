@@ -303,9 +303,10 @@ def calc_phi_hc_ac_heating(bpr, tsd, hoy):
     theta_m_t_ac = temp_ac[0]
     theta_air_ac = temp_ac[1]  # should be the same as theta_air_set in the first case
     theta_op_ac = temp_ac[2]
+    theta_s_ac = temp_ac[3]
 
     # exit calculation
-    return theta_m_t_ac, theta_air_ac, theta_op_ac, phi_hc_nd_ac
+    return theta_m_t_ac, theta_air_ac, theta_op_ac, theta_s_ac, phi_hc_nd_ac
 
 
 def calc_phi_hc_ac_cooling(bpr, tsd, hoy):
@@ -353,9 +354,10 @@ def calc_phi_hc_ac_cooling(bpr, tsd, hoy):
     theta_m_t_ac = temp_ac[0]
     theta_air_ac = temp_ac[1]  # should be the same as theta_air_set in the first case
     theta_op_ac = temp_ac[2]
+    theta_s_ac = temp_ac[3]
 
     # exit calculation
-    return theta_m_t_ac, theta_air_ac, theta_op_ac, phi_hc_nd_ac
+    return theta_m_t_ac, theta_air_ac, theta_op_ac, theta_s_ac, phi_hc_nd_ac
 
 
 

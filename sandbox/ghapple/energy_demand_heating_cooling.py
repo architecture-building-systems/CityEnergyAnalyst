@@ -72,6 +72,7 @@ def procedure_1(bpr, tsd, hoy, gv):
         theta_m_t = temp_rc[0]
         theta_air = temp_rc[1]
         theta_op = temp_rc[2]
+        theta_s = temp_rc[3]
 
         # write to tsd
         tsd['Tm'][hoy] = theta_m_t
@@ -115,6 +116,7 @@ def procedure_1(bpr, tsd, hoy, gv):
             theta_m_t = temp_rc[0]
             theta_air = temp_rc[1]
             theta_op = temp_rc[2]
+            theta_s = temp_rc[3]
 
             # write to tsd
             tsd['Tm'][hoy] = theta_m_t
@@ -149,6 +151,7 @@ def procedure_1(bpr, tsd, hoy, gv):
             theta_m_t_ac, \
             theta_air_ac, \
             theta_op_ac, \
+            theta_s_ac, \
             phi_hc_nd_ac = rc.calc_phi_hc_ac_heating(bpr, tsd, hoy)
 
             tsd['Tm'][hoy] = theta_m_t_ac
@@ -167,6 +170,7 @@ def procedure_1(bpr, tsd, hoy, gv):
                 theta_m_t = temp_rc[0]
                 theta_air = temp_rc[1]
                 theta_op = temp_rc[2]
+                theta_s = temp_rc[3]
 
                 # write to tsd
                 tsd['Tm'][hoy] = theta_m_t
@@ -193,7 +197,8 @@ def procedure_1(bpr, tsd, hoy, gv):
             # --> rc_model_function_2(...)
             theta_m_t_ac,\
             theta_air_ac,\
-            theta_op_ac,\
+            theta_op_ac, \
+            theta_s_ac, \
             phi_hc_nd_ac = rc.calc_phi_hc_ac_heating(bpr, tsd, hoy)
 
             # write to tsd
@@ -228,6 +233,7 @@ def procedure_1(bpr, tsd, hoy, gv):
             theta_m_t_ac, \
             theta_air_ac, \
             theta_op_ac, \
+            theta_s_ac, \
             phi_hc_nd_ac = rc.calc_phi_hc_ac_heating(bpr, tsd, hoy)
 
             # write to tsd
@@ -236,10 +242,12 @@ def procedure_1(bpr, tsd, hoy, gv):
             tsd['Top'][hoy] = theta_op_ac
             tsd['Qhs_sen'][hoy] = phi_hc_nd_ac
 
+
+            ts = theta_s_ac
+            ta = theta_air_ac
             # ++++++
             # copied from sensible_loads.py
             # ++++++
-
             # TODO: remove double if statement (outside and inside of function)
             if (ts - ta) > gv.max_temperature_difference_tabs:
                 # design condition: maximum temperature asymmetry for radiant floors/ceilings
@@ -315,6 +323,7 @@ def procedure_1(bpr, tsd, hoy, gv):
             theta_m_t_ac, \
             theta_air_ac, \
             theta_op_ac, \
+            theta_s_ac, \
             phi_hc_nd_ac = rc.calc_phi_hc_ac_cooling(bpr, tsd, hoy)
 
             tsd['Tm'][hoy] = theta_m_t_ac
