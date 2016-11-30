@@ -58,8 +58,7 @@ def calc_simple_temp_control(tsd, prop_comfort, limit_inf_season, limit_sup_seas
 
 
 
-def temperature_control_tabs(Htr_1, Htr_2, Htr_3, Htr_ms, Htr_w, Htr_em, Htr_is, Hve, IHC_nd, I_ia, I_st, I_m,
-                             te_t, tm_t0, Cm, control):
+def temperature_control_tabs(bpr, tsd, hoy, gv, control):
     """
     Controls for TABS operating temperature based on the operating parameters defined by Koschenz and Lehmann
     "Thermoaktive Bauteilsysteme (TABS)" (2000), that is: maximum surface temperature and maximum temperature difference
@@ -67,6 +66,26 @@ def temperature_control_tabs(Htr_1, Htr_2, Htr_3, Htr_ms, Htr_w, Htr_em, Htr_is,
     recalculated.
     The formulas below are simply reformulations of the calculations in the R-C model.
     """
+
+    # TODO: add documentation of input
+    # TODO: add credits
+    # TODO: add source and numbers of equations in standard
+
+    # get values from bpr
+    Htr_ms = bpr.rc_model['Htr_ms']
+    Htr_w = bpr.rc_model['Htr_w']
+    Htr_em = bpr.rc_model['Htr_em']
+    Htr_is = bpr.rc_model['Htr_is']
+    Cm = bpr.rc_model['Cm']
+    # get values from tsd
+    Hve = tsd['h_ve_adj'][hoy]
+    I_ia = tsd['I_ia'][hoy]
+    I_st = tsd['I_st'][hoy]
+    I_m = tsd['I_m'][hoy]
+    te_t = tsd['T_ext'][hoy]
+    tm_t0 = tsd['Tm'][hoy-1]  # assuming that tm_t0 means mass temperature at previous time step
+
+
 
     if control == 'max_ts':
         # if the calculated surface temperature exceeds the maximum, set ts = ts_max and calculate maximum power

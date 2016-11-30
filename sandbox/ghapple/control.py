@@ -195,7 +195,7 @@ def is_heating_active(hoy, bpr):
         else:
             return False
     else:
-        False
+        return False
 
 
 def is_cooling_active(bpr, tsd, hoy, gv):
@@ -217,9 +217,9 @@ def is_cooling_active(bpr, tsd, hoy, gv):
         if h.is_coolingseason_hoy(hoy):
             if cooling_system_is_radiative(bpr):
                 return True
-            elif cooling_system_is_ac(bpr) and tsd['T_ext'][hoy] >= gv.temp_sup_cool_hvac + 2:
+            elif cooling_system_is_ac(bpr) and tsd['T_ext'][hoy] >= gv.temp_sup_cool_hvac + 2:  # TODO: HVAC control
                 return True
-            elif cooling_system_is_ac(bpr) and tsd['T_ext'][hoy] < gv.temp_sup_cool_hvac + 2:
+            elif cooling_system_is_ac(bpr) and tsd['T_ext'][hoy] < gv.temp_sup_cool_hvac + 2:  # TODO: HVAC control
                 return False
 
         else:
@@ -302,8 +302,6 @@ def is_night_flushing_active(bpr, tsd, hoy):
 
     elif not has_night_flushing():
         return False
-
-
 
 
 def is_window_ventilation_active():

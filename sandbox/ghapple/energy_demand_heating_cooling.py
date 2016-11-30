@@ -18,6 +18,7 @@ from sandbox.ghapple import ventilation_xx as v
 from sandbox.ghapple import space_emission_systems as ses
 from cea.demand import sensible_loads
 from cea.demand import airconditioning_model as ac
+from cea.technologies.controllers import temperature_control_tabs
 
 
 __author__ = "Gabriel Happle"
@@ -219,7 +220,9 @@ def procedure_1(bpr, tsd, hoy, gv):
 
         elif control.is_heating_active(hoy, bpr) and control.heating_system_is_tabs(bpr):
 
-            # heating with radiative system
+            print('TABS')
+
+            # heating with tabs
             # calculate loads and emission losses
             # --> rc_model_function_2(...)
             theta_m_t_ac, \
@@ -232,6 +235,28 @@ def procedure_1(bpr, tsd, hoy, gv):
             tsd['Ta'][hoy] = theta_air_ac
             tsd['Top'][hoy] = theta_op_ac
             tsd['Qhs_sen'][hoy] = phi_hc_nd_ac
+
+            # ++++++
+            # copied from sensible_loads.py
+            # ++++++
+
+            # TODO: remove double if statement (outside and inside of function)
+            if (ts - ta) > gv.max_temperature_difference_tabs:
+                # design condition: maximum temperature asymmetry for radiant floors/ceilings
+                tm, ts, tair10, IHC_nd_un = temperature_control_tabs(bpr, tsd, hoy, gv,
+                                                                     'max_ts-ta')
+                uncomfort = 1
+                IHC_nd_ac = IHC_nd_un
+
+            if ts > gv.max_surface_temperature_tabs:
+                # design condition: maximum surface temperature for radiant floors/ceilings
+                tm, ts, tair10, IHC_nd_un = temperature_control_tabs(bpr, tsd, hoy, gv,
+                                                                     'max_ts')
+                uncomfort = 1
+                IHC_nd_ac = IHC_nd_un
+
+
+
 
 
     elif rc.has_cooling_demand(bpr, tsd, hoy):
