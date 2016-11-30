@@ -1,32 +1,28 @@
 """
 ========================================
 Boiler Pre-treatment for Heat Processing
+At The moment, process heet is excluded form the optimization process.
+It is considered that whenever the case, the most competitive alterantive is to have a dedicated natural gas boiler
+
 ========================================
 
 """
 from __future__ import division
 
-import os
-
-import numpy as np
 import pandas as pd
 
-from cea import technologies
+from cea.technologies import boilers
 
 
 def calc_pareto_Qhp(locator, total_demand, gv):
     """
-    Computes the triplet for the process heat demand
-    
-    Parameters
-    ----------
-    pathRaw : string
-        path to raw folder
-    
-    Returns
-    -------
-    hpCosts, hpCO2, hpPrim : tuple
-    
+    This function calculates the contribution to the pareto opptimal results of process heating,
+
+    :param locator: locator class
+    :param total_demand: dataframe with building demand
+    :param gv: global variables
+    :return:
+        (hpCosts, hpCO2, hpPrim) : tuple
     """
     hpCosts = 0
     hpCO2 = 0
@@ -56,7 +52,7 @@ def calc_pareto_Qhp(locator, total_demand, gv):
                 hpPrim += Qgas * 3600E-6 * gv.NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
 
             # Investment costs
-            hpCosts += technologies.boilers.calc_Cinv_boiler(Qnom, Qannual, gv)
+            hpCosts += boilers.calc_Cinv_boiler(Qnom, Qannual, gv)
     else:
         hpCosts = hpCO2 = hpPrim = 0
     return hpCosts, hpCO2, hpPrim
