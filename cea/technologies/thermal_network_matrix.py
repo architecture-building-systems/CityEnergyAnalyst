@@ -8,7 +8,7 @@ from __future__ import division
 import time
 import numpy as np
 import pandas as pd
-from cea.technologies.substation import subsMain
+from cea.technologies.substation import substation_main
 import math
 import cea.globalvar as gv
 
@@ -57,7 +57,13 @@ def calc_hydraulic_network(locator, gv):
     mass_flow_df.to_csv(locator.pathNtwLayout + '//' + 'MassFlow_DH.csv')
     '''
     mass_flow_df = pd.read_csv(locator.pathNtwLayout + '//' + 'MassFlow_DH.csv', usecols=edge_node_df.columns.values)
+    print np.inner(edge_node_df,mass_flow_df)-np.transpose(mass_flow_substation_df.values)
 
+    pipe_properties_df = assign_pipes_to_edges(mass_flow_df, locator, gv)
+
+    reynolds_df = pd.DataFrame(data=None, index = range(8760), columns = mass_flow_df)
+    for node in mass_flow_substation_df:
+        reynolds_df['node'] = 1
 
 
 def get_thermal_network_from_csv(locator):
@@ -106,6 +112,35 @@ def get_thermal_network_from_csv(locator):
 
     return edge_node_df, pd.DataFrame(data=[consumer_nodes[1][:], plant_nodes[1][:]], index = ['consumer','plant'], columns = consumer_nodes[0][:])
 
+def assign_pipes_to_edges(mass_flow_df, locator, gv):
+    '''
+    This function assigns pipes from the catalog to the network for a network with unspecified pipe properties.
+    Pipes are assigned based on each edge's minimum and maximum required flow rate (for now)
+
+    :param mass_flow_df: dataframe containing the mass flow rate for each pipe at each moment of the year
+
+    :return: pipe_properties_df: dataframe containing the pipe properties for each edge in the network
+    '''
+
+    # import pipe catalog from Excel file (catalog based on Fonseca et al. 2016)
+    pipe_catalog = pd.read_excel(locator.get_thermal_networks())
+    pipe_catalog['Vdot_min'] = pipe_catalog['Vdot_min'] * gv.Pwater
+    pipe_catalog['Vdot_max'] = pipe_catalog['Vdot_max'] * gv.Pwater
+    pipe_properties_df = pd.DataFrame(data=None,index=pipe_catalog.columns.values, columns = mass_flow_df.columns.values)
+    for pipe in mass_flow_df:
+        pipe_found = False
+        i = 0
+        t0 = time.clock()
+        while pipe_found == False:
+            if np.amax(np.absolute(mass_flow_df[pipe].values)) <= pipe_catalog['Vdot_max'][i] or i == len(pipe_catalog):
+                pipe_properties_df[pipe] = np.transpose(pipe_catalog[:][i:i+1].values)
+                pipe_found = True
+            else:
+                i += 1
+
+    return pipe_properties_df
+
+
 #============================
 #test
 #============================
@@ -133,6 +168,7 @@ def run_as_script(scenario_path=None):
     # add geothermal part of preprocessing
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
     gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
+    #substation_main(locator, total_demand, total_demand['Name'], gv, False)
 
     calc_hydraulic_network(locator, gv)
 
