@@ -165,17 +165,15 @@ def normalize_epsIndicator(pathX, generation):
 
 
 
-def decentralizeCosts(individual, pathX, gV):
+def decentralizeCosts(individual, locator, gV):
     indCombi = sFn.individual_to_barcode(individual, gV)
-    buildList = sFn.extractList(pathX.pathRaw + "/Total.csv")
+    buildList = sFn.extractList(locator.pathRaw + "/Total.csv")
     costsDisc = 0
 
     for i in range(len(indCombi)):
         if indCombi[i] == "0": # Decentralized building
-            buildName = buildList[i]
-            DecentFile = pathX.pathDiscRes + "/DiscOp_" + buildName + "_result.csv"
-
-            df = pd.read_csv(DecentFile)
+            building_name = buildList[i]
+            df = pd.read_csv(locator.get_optimization_disconnected_result_file(building_name))
             dfBest = df[df["Best configuration"] == 1]
 
             costsDisc += dfBest["Annualized Investment Costs [CHF]"].iloc[0]

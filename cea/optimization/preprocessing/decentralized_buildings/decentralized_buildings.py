@@ -27,7 +27,7 @@ def decentralized_main(locator, building_names, gv):
     :param building_names: list with names of buildings
     :param gv: global variables class
     :return:
-        results of operation of buildings lcoated in locator.pathDiscRes
+        results of operation of buildings located in locator.get_optimization_disconnected_folder
 
     """
     t0 = time.clock()
@@ -282,7 +282,7 @@ def decentralized_main(locator, building_names, gv):
         dico[ "EforGHP" ] = resourcesRes[:,2]
         dico[ "QfromGHP" ] = resourcesRes[:,3]
 
-        os.chdir(locator.pathDiscRes)
+        os.chdir(locator.get_optimization_disconnected_folder())
         fName = building_name + "_result.csv"
         results_to_csv = pd.DataFrame(dico)
         fName_result = "DiscOp_" + fName[0:(len(fName)-4)] + ".csv"
@@ -305,7 +305,7 @@ def decentralized_main(locator, building_names, gv):
         BestData[building_name] = BestComb
 
     if 0:
-        os.chdir(locator.pathDiscRes)
+        os.chdir(locator.get_optimization_disconnected_folder())
         fName = "DiscOpSummary.csv"
         results_to_csv = pd.DataFrame(BestData)
         results_to_csv.to_csv(fName, sep= ',')
