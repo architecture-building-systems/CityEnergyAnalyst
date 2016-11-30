@@ -34,6 +34,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
+
 def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncoveredAnnual, solarFeat, ntwFeat, gv):
     """
     Computes additional costs / GHG emisions / primary energy needs
@@ -45,8 +46,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         with 0 if disconnected building, 1 if connected
     buildList : list
         list of buildings in the district
-    locator : string
-        path to folders
+    :param locator: InputLocator set to scenario
+    :type locator: cea.inputlocator.InputLocator
+
     dicoSupply : class context
         with the features of the specific individual
     QuncoveredDesign : float
@@ -92,16 +94,16 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
     pumpCosts = 0
     GasConnectionInvCost = 0 
     
-    for (index, buildName) in zip(indCombi, buildList):
+    for (index, building_name) in zip(indCombi, buildList):
         if index == "0":
-            discFileName = "DiscOp_" + buildName + "_result.csv"
+            discFileName = "DiscOp_" + building_name + "_result.csv"
             df = pd.read_csv(discFileName)
             dfBest = df[df["Best configuration"] == 1]
             CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
             CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
             PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
 
-            print  dfBest["Total Costs [CHF]"].iloc[0], buildName, "disconnected"
+            print  dfBest["Total Costs [CHF]"].iloc[0], building_name, "disconnected"
 
         else:
             nBuildinNtw += 1
@@ -300,16 +302,15 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         print ntwFeat.pipesCosts_DHN * nBuildinNtw / len(buildList), "Pipes Costs"
     
         # HEX (1 per building in ntw)
-        for (index, buildName) in zip(indCombi, buildList):
+        for (index, building_name) in zip(indCombi, buildList):
             if index == "1":
-                
-                subsFileName = buildName + "_result.csv"
-                df = pd.read_csv(locator.pathSubsRes + "/" + subsFileName, usecols = ["Q_dhw", "Q_heating"])
+                df = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
+                                 usecols=["Q_dhw", "Q_heating"])
                 subsArray = np.array(df)
                 
                 Qmax = np.amax( subsArray[:,0] + subsArray[:,1] )
                 SubstHEXCost += hex.calc_Cinv_HEX(Qmax, gv)
-                print hex.calc_Cinv_HEX(Qmax, gv), "Hex", buildName
+                print hex.calc_Cinv_HEX(Qmax, gv), "Hex", building_name
         addCosts += SubstHEXCost
 
         # HEX for solar

@@ -49,14 +49,13 @@ def decentralized_main(locator, building_names, gv):
         if Qload < 0:
             Qload = 0
         if Qload < -1E-5:
-            print "Error in discBuildMain, negative heat requirement at hour", hour, buildName
+            print "Error in discBuildMain, negative heat requirement at hour", hour, building_name
         return Qload
 
-    for buildName in building_names:
-        print buildName
-        fName = locator.pathSubsRes + "/" + buildName + "_result.csv"
-
-        loads = pd.read_csv(fName, usecols=["T_supply_DH_result", "T_return_DH_result", "mdot_DH_result"])
+    for building_name in building_names:
+        print building_name
+        loads = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
+                            usecols=["T_supply_DH_result", "T_return_DH_result", "mdot_DH_result"])
         Qload = np.vectorize(calc_new_load)(loads["mdot_DH_result"], loads["T_supply_DH_result"],
                                             loads["T_return_DH_result"], gv)
         Qannual = Qload.sum()
@@ -242,7 +241,7 @@ def decentralized_main(locator, building_names, gv):
         # Check the GHP area constraint
         for i in range(10):
             QGHP = (1-i/10) * Qnom
-            areaAvail = geothermal_potential.ix[buildName,"Area_geo"]
+            areaAvail = geothermal_potential.ix[building_name,"Area_geo"]
             Qallowed = np.ceil(areaAvail/gv.GHP_A) * gv.GHP_HmaxSize #[W_th]
             
             if Qallowed < QGHP:
@@ -284,7 +283,7 @@ def decentralized_main(locator, building_names, gv):
         dico[ "QfromGHP" ] = resourcesRes[:,3]
 
         os.chdir(locator.pathDiscRes)
-        fName = buildName + "_result.csv"
+        fName = building_name + "_result.csv"
         results_to_csv = pd.DataFrame(dico)
         fName_result = "DiscOp_" + fName[0:(len(fName)-4)] + ".csv"
         results_to_csv.to_csv(fName_result, sep= ',')
@@ -303,7 +302,7 @@ def decentralized_main(locator, building_names, gv):
         BestComb[ "Best configuration" ] = Best[indexBest,0]
         BestComb[ "Nominal Power" ] = Qnom
         
-        BestData[buildName] = BestComb
+        BestData[building_name] = BestComb
 
     if 0:
         os.chdir(locator.pathDiscRes)
