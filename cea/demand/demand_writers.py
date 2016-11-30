@@ -60,7 +60,6 @@ class DemandWriter(object):
                 data.update(dict((x + '0_kW', tsd[x].max() / 1000) for x in self.vars_to_print[LOAD_VARS]))
 
             # get order of columns
-            # get order of columns
             keys = data.keys()
             columns = ['Name', 'Af_m2', 'Aroof_m2', 'GFA_m2', 'people0']
             columns.extend(keys)
@@ -68,7 +67,9 @@ class DemandWriter(object):
             # add other default elements
             data.update({'Name': building_name, 'Af_m2': bpr.rc_model['Af'], 'Aroof_m2': bpr.rc_model['Aroof'],
                          'GFA_m2': bpr.rc_model['GFA_m2'], 'people0': tsd['people'].max()})
-            yearly_data = pd.DataFrame(data, index=[0]).to_csv(
+
+            #safe to disc
+            pd.DataFrame(data, index=[0]).to_csv(
                 locator.get_temporary_file('%(building_name)sT.csv' % locals()),
                 index=False, columns=columns, float_format='%.3f')
 
@@ -84,6 +85,25 @@ class HourlyDemandWriter(DemandWriter):
     def write_to_csv(self, building_name, columns, hourly_data, locator):
         hourly_data.to_csv(locator.get_demand_results_file(building_name), columns=columns, float_format=FLOAT_FORMAT)
 
+    def write_totals_csv(self, building_properties, locator):
+        """read in the temporary results files and append them to the Totals.csv file."""
+        counter = 0
+        for name in building_properties.list_building_names():
+            temporary_file = locator.get_temporary_file('%(name)sT.csv' % locals())
+            if counter == 0:
+                df = pd.read_csv(temporary_file)
+                counter += 1
+            else:
+                df2 = pd.read_csv(temporary_file)
+                df = df.append(df2, ignore_index=True)
+        df.to_csv(locator.get_total_demand(), index=False, float_format='%.3f')
+        
+        """read saved data of hourly values and return as totals"""
+        hourly_data_buildings = [pd.read_csv(locator.get_demand_results_file(building_name)) for building_name in
+                                  building_properties.list_building_names()]
+        return df, hourly_data_buildings
+
+        return df
 
 class MonthlyDemandWriter(DemandWriter):
     def __init__(self, gv):
@@ -97,3 +117,22 @@ class MonthlyDemandWriter(DemandWriter):
             columns=dict((x + '_kWh', x + '_MWhyr') for x in self.vars_to_print[LOAD_VARS]))
         monthly_data['Name'] = building_name
         monthly_data.to_csv(locator.get_demand_results_file(building_name), index=False, float_format=FLOAT_FORMAT)
+
+    def write_totals_csv(self, building_properties, locator):
+        
+        """read in the temporary results files and append them to the Totals.csv file."""
+        counter = 0
+        for name in building_properties.list_building_names():
+            temporary_file = locator.get_temporary_file('%(name)sT.csv' % locals())
+            if counter == 0:
+                df = pd.read_csv(temporary_file)
+                counter += 1
+            else:
+                df2 = pd.read_csv(temporary_file)
+                df = df.append(df2, ignore_index=True)
+        df.to_csv(locator.get_total_demand(), index=False, float_format='%.3f')
+
+        """read saved data of monthly values and return as totals"""
+        monthly_data_buildings = [pd.read_csv(locator.get_demand_results_file(building_name)) for building_name in
+                                  building_properties.list_building_names()]
+        return df, monthly_data_buildings
