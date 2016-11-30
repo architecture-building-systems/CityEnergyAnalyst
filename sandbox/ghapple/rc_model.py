@@ -202,7 +202,7 @@ def calc_temperatures_crank_nicholson( phi_hc_nd, bpr, tsd, hoy ):
     if np.isnan(theta_m_t):
         theta_m_t
 
-    return theta_m_t, theta_air, theta_op
+    return theta_m_t, theta_air, theta_op, theta_s
 
 
 
