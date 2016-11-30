@@ -44,7 +44,7 @@ def calc_sewage_heat_exchanger(locator, Length_HEX_available, gv):
     Q_source, t_source, t_out, tin_e, tout_e  = np.vectorize(calc_sewageheat)(mcpwaste_zone,twaste_zone, gv.width_HEX,
                                                                               gv.Vel_flow, gv.Cpw, gv.h0, gv.min_flow,
                                                                               Length_HEX_available, gv.tmin ,gv.ATmin)
-    SW_gen = locator.get_sewageheat_potential()
+    SW_gen = locator.get_sewage_heat_potential()
     pd.DataFrame({"Qsw_kW":Q_source, "ts_C":t_source, "tout_sw_C":t_out, "tin_sw_C":twaste_zone,"tout_HP_C":tout_e,
                   "tin_HP_C":tin_e}).to_csv(SW_gen, index=False, float_format='%.3f')
 

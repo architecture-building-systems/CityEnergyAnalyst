@@ -137,8 +137,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     # Import Data - Sewage
     if gv.HPSew_allowed == 1:
-        QcoldsewArray = np.array(pd.read_csv(locator.get_sewageheat_potential, usecols=["Qsw_kW"])) * 1E3
-        TretsewArray = np.array(pd.read_csv(locator.get_sewageheat_potential, usecols=["ts_C"])) + 273
+        QcoldsewArray = np.array(pd.read_csv(locator.get_sewage_heat_potential(), usecols=["Qsw_kW"])) * 1E3
+        TretsewArray = np.array(pd.read_csv(locator.get_sewage_heat_potential(), usecols=["ts_C"])) + 273
 
     def source_activator(Q_therm_req, hour, context):
         Q_therm_req_COPY = copy.copy(Q_therm_req)

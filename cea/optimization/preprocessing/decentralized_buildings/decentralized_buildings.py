@@ -31,7 +31,7 @@ def decentralized_main(locator, building_names, gv):
 
     """
     t0 = time.clock()
-    geothermal_potential = pd.read_csv(locator.get_geothermal_potential, index_col="Name")
+    geothermal_potential = pd.read_csv(locator.get_geothermal_potential(), index_col="Name")
     BestData = {}
 
     def calc_new_load(mdot, TsupDH, Tret, gv):
