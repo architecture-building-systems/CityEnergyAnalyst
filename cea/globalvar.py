@@ -19,8 +19,12 @@ __status__ = "Production"
 
 class GlobalVariables(object):
     def __init__(self):
+<<<<<<< HEAD
 
         self.scenario_reference = r'c:\cea-reference-case\reference-case-open\baseline'
+=======
+        self.scenario_reference = r'c:\reference-case-open\baseline'
+>>>>>>> refs/remotes/origin/master
         self.print_partial = 'hourly' # hourly or monthly for the deamnd script
         self.print_yearly = True # print yearly values
         self.print_yearly_peak = True # print peak values
