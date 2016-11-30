@@ -62,11 +62,10 @@ def network_main(locator, total_demand, building_names, gv, key):
     mdot_heat_netw_min = np.zeros(8760) + 1E6
     mdot_cool_netw_min = np.zeros(8760) + 1E6
     iteration = 0
-    for name in building_names:
-        buildings.append(pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv", usecols=['mcpdataf_kWC',
-                                                                                                          'Qcdataf_kWh',
-                                                                                                          'Ecaf_kWh']))
-        substations.append(pd.read_csv(locator.pathSubsRes + '//' + name + '_result' + ".csv",
+    for building_name in building_names:
+        buildings.append(pd.read_csv(locator.get_demand_results_file(building_name),
+                                     usecols=['mcpdataf_kWC', 'Qcdataf_kWh', 'Ecaf_kWh']))
+        substations.append(pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                                        usecols=['Electr_array_all_flat', 'mdot_DH_result', 'mdot_DC_result',
                                                 'Q_heating',
                                                 'Q_dhw', 'Q_cool', 'T_return_DH_result', 'T_return_DC_result',

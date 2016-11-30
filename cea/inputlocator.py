@@ -24,7 +24,6 @@ class InputLocator(object):
         self.db_path = os.path.join(os.path.dirname(__file__), 'databases', 'CH')
 
         if scenario_path:
-            self.pathSubsRes = os.path.join(self.get_optimization_results_folder(), "substations")  # Substation results for disconnected buildings
             self.pathClustRes = os.path.join(self.get_optimization_results_folder(), "clustering") # Clustering results for disconnected buildings
             self.pathDiscRes = os.path.join(self.get_optimization_results_folder(), "disconnected") # Operation pattern for disconnected buildings
             self.pathNtwRes = os.path.join(self.get_optimization_results_folder(), "network")  # Ntw summary results
@@ -46,6 +45,19 @@ class InputLocator(object):
     def get_optimization_results_folder(self):
         """scenario/outputs/data/optimization"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'optimization')
+
+    def get_optimization_substations_folder(self):
+        """scenario/outputs/data/optimization/substations
+        Substation results for disconnected buildings"""
+        return self._ensure_folder(self.get_optimization_results_folder(), "substations")
+
+    def get_optimization_substations_results_file(self, building_name):
+        """scenario/outputs/data/optimization/substations/${building_name}_result.csv"""
+        return os.path.join(self.get_optimization_substations_folder(),  "%(building_name)s_result.csv" % locals())
+
+    def get_optimization_substations_total_file(self, genome):
+        """scenario/outputs/data/optimization/substations/Total_${genome}.csv"""
+        return os.path.join(self.get_optimization_substations_folder(),  "Total_%(genome)s.csv" % locals())
 
     def get_potentials_results_folder(self):
         """scenario/outputs/data/potentials"""

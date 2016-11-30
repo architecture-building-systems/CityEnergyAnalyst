@@ -90,7 +90,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         else:
             master_to_slave_vars.fNameTotalCSV = locator.pathTotalNtw + "/Total_" + individual_barcode + ".csv"
     else:
-        master_to_slave_vars.fNameTotalCSV = locator.pathSubsRes + "/Total_" + individual_barcode + ".csv"
+        master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(individual_barcode)
 
     if individual_barcode.count("1") > 0:
 
