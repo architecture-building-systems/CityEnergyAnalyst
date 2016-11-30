@@ -1211,14 +1211,14 @@ def get_temperatures(locator, prop_HVAC):
     prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(), 'heating')
     prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')
     prop_emission_dhw = pd.read_excel(locator.get_technical_emission_systems(), 'dhw')
-    prop_system_vent = pd.read_excel(locator.get_technical_emission_systems(), 'ventilation')
-    prop_system_vent_ctrl = pd.read_excel(locator.get_technical_emission_systems(), 'ventilation_control')
+    prop_ventilation_system = pd.read_excel(locator.get_technical_emission_systems(), 'ventilation')
+    prop_ventilation_system_control = pd.read_excel(locator.get_technical_emission_systems(), 'ventilation_control')
 
     df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
     df_emission_cooling = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
     df_emission_dhw = prop_HVAC.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
-    df_system_ctrl_vent = prop_system_vent.merge(prop_system_vent_ctrl,left_on='code_ctrl', right_on='code', suffixes={'_v','_c'})
-    df_system_ctrl_vent = prop_HVAC.merge(df_system_ctrl_vent, left_on='type_vent', right_on='code_v')
+    df_ventilation_system_and_control = prop_ventilation_system.merge(prop_ventilation_system_control,left_on='code_ctrl', right_on='code', suffixes={'_v','_c'})
+    df_ventilation_system_and_control = prop_HVAC.merge(df_ventilation_system_and_control, left_on='type_vent', right_on='code_v')
 
 
     fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'Tshs0_C', 'dThs0_C', 'Qhsmax_Wm2']
@@ -1228,7 +1228,7 @@ def get_temperatures(locator, prop_HVAC):
 
     result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
                                                                 on='Name').merge(df_emission_dhw[fields_emission_dhw],
-                                                                                 on='Name').merge(df_system_ctrl_vent[fields_system_ctrl_vent], on='Name')
+                                                                                 on='Name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='Name')
     return result
 
 
