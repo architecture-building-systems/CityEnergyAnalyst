@@ -979,7 +979,7 @@ class BuildingProperties(object):
 
         if 'Cm' in self.get_overrides_columns():
             # Internal heat capacity is not part of input, calculate [J/K]
-            df['Cm'] = self._overrides['Cm']
+            df['Cm'] = self._overrides['Cm'] * df['Af']
         else:
             df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df['Af']
 
