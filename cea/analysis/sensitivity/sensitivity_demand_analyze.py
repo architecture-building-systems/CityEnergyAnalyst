@@ -151,8 +151,8 @@ def read_results(samples_folder, samples_count, output_parameter):
     - `$samples_folder/result.$i.csv` for i in range(samples_count)
     """
     iterable_samples_count = range(samples_count)
-    results = [pd.read_csv(os.path.join(samples_folder, 'result.%i.csv' % i))[output_parameter].values for i in
-               iterable_samples_count].T
+    results = np.array([pd.read_csv(os.path.join(samples_folder, 'result.%i.csv' % i))[output_parameter].values for i in
+               iterable_samples_count]).T
     return results
 
 
