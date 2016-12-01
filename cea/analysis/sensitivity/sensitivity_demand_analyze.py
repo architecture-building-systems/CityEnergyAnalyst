@@ -68,7 +68,7 @@ def analyze_sensitivity(samples_path):
     for output_parameter in output_parameters:
         # create excel writer
         writer = pd.ExcelWriter(
-            os.path.join(samples_path, 'analysis_%s_%i_%s.xls' % (method, problem['N'], output_parameter)))
+            os.path.join(samples_path, 'results', 'analysis_%s_%i_%s.xls' % (method, problem['N'], output_parameter)))
 
         # read the results and get back a matrix m = buildings, n = samples.
         simulation_results = read_results(samples_path, samples_count, output_parameter)
