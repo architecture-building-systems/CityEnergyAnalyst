@@ -150,7 +150,7 @@ def createTotalNtwCsv(indCombi, locator):
     return dfRes
     
 
-def readCheckPoint(pathX, genCP, storeData):
+def readCheckPoint(locator, genCP, storeData):
     """
     Extracts data from the checkpoints created in the master routine
     
@@ -160,8 +160,10 @@ def readCheckPoint(pathX, genCP, storeData):
         path to folder where CPs are stored
     genCP : int
         generation from whom to extract data
-    pathNtwRes : string
-        path to folder where the files from the distribution routine are stored
+
+    :param locator: InputLocator set to scenario
+    :type locator: cea.inputlocator.InputLocator
+
     storeData : int
         0 if no, 1 if yes
     
@@ -176,7 +178,7 @@ def readCheckPoint(pathX, genCP, storeData):
         list of individuals tested in that generation
     
     """    
-    os.chdir(pathX.pathMasterRes)
+    os.chdir(locator.pathMasterRes)
 
     # Set the DEAP toolbox
     creator.create("Fitness", base.Fitness, weights=(-1.0, -1.0, -1.0))
@@ -209,7 +211,7 @@ def readCheckPoint(pathX, genCP, storeData):
             else:
                 fNameNtw = "Network_summary_result_" + indCombi + ".csv"
             
-            Qmax = calcQmax(fNameNtw, pathX.pathNtwRes)
+            Qmax = calcQmax(fNameNtw, locator.get_optimization_network_results_folder())
             print fNameNtw
             #print indCombi
             print Qmax
@@ -218,7 +220,7 @@ def readCheckPoint(pathX, genCP, storeData):
             data_container.append(features)
             ind_counter += 1
         results = pd.DataFrame(data_container)
-        Name = pathX.pathMasterRes + "/ParetoValuesAndKeysGeneration" + genCP+".csv"
+        Name = locator.pathMasterRes + "/ParetoValuesAndKeysGeneration" + genCP + ".csv"
         results.to_csv(Name, sep= ',')
 
     return pop, eps, testedPop
