@@ -202,6 +202,7 @@ def simulate_demand_batch(sample_index, batch_size, samples_folder, scenario, si
         totals.to_csv(os.path.join(samples_folder, 'result.%i.csv' % i))
         for j, item in enumerate(time_series):
             item.to_csv(os.path.join(samples_folder, 'result.%i.%i.csv' % (i , j)))
+
 def main():
     """
     Parse the arguments passed to the script and run `simulate_demand_sample` for each sample in the current
@@ -232,7 +233,9 @@ def main():
                           samples_folder=args.samples_folder, scenario=args.scenario,
                           simulation_folder=args.simulation_folder, weather=args.weather,
                           output_parameters=args.output_parameters)
-
+    
+    # save output parameters
+    np.save(os.path.join(args.samples_folder, 'output_parameters.npy'), args.output_parameters)
 
 if __name__ == '__main__':
     main()
