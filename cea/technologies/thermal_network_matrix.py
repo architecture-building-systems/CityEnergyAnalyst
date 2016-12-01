@@ -27,9 +27,11 @@ def calc_hydraulic_network(locator, gv):
     rate on each edge.
 
     :param locator: locator class
-    :param mass_flow_substation: mass flow rate enter/exit from the supply side at each substation
+    :param gv: globalvariables class
 
-    :return: mass_flow: vector specifying the mass flow rate at each edge e
+    :return: mass_flow: (t x e) matrix specifying the mass flow rate at each edge e at each time step t
+    :return: pressure_loss_node: (t x n) matrix specifying the mass flow rate at each edge e at each time step t
+    :return: pressure_loss_system: vector specifying the total pressure losses in the system at each time step t
     '''
 
     # get mass flow matrix from substation.py
@@ -60,14 +62,15 @@ def calc_hydraulic_network(locator, gv):
     mass_flow_df = pd.read_csv(locator.pathNtwLayout + '//' + 'MassFlow_DH.csv', usecols=edge_node_df.columns.values)
     mass_flow_df = np.absolute(mass_flow_df)    # added this hack to make sure code runs TODO: make sure you don't get negative flows!
     pipe_properties_df = assign_pipes_to_edges(mass_flow_df, locator, gv)
-    temperature_matrix = np.ones([8760,len(edge_node_df.columns)])*323   # assigning a dummy temperature to each edge for now
+    temperature_matrix = np.ones(mass_flow_df.shape)*323   # assigning a dummy temperature to each edge for now
 
-    pressure_loss_pipes = pd.DataFrame(data=calc_pressure_loss_pipe(pipe_properties_df[:]['DN':'DN'].values, pipe_length_df.values,
-                                    mass_flow_df.values, temperature_matrix, gv), index = range(8760), columns = mass_flow_df.columns.values)
+    pressure_loss_nodes_df = pd.DataFrame(data=calc_pressure_loss_nodes(edge_node_df.values, pipe_properties_df[:]['DN':'DN'].values,
+                                       pipe_length_df.values, mass_flow_df.values, temperature_matrix, gv),
+                                       index = range(8760), columns = edge_node_df.index.values)
 
-    pressure_loss_system = 2 * [sum(pressure_loss_pipes.values[i] for i in range(len(pressure_loss_pipes.values[0])))]
+    pressure_loss_system = 2 * [sum(pressure_loss_nodes_df.values[i] for i in range(len(pressure_loss_nodes_df.values[0])))]
 
-return mass_flow_df, pressure_loss_system
+    return mass_flow_df, pressure_loss_system
 
 
 
@@ -81,7 +84,7 @@ def get_thermal_network_from_csv(locator):
 
     :return:
         edge_node_matrix: matrix consisting of n rows (number of nodes) and e columns (number of edges) and indicating
-        direction of flow of each edge e at node n
+        direction of flow of each edge e at node n: if e points to n, value is 1; if e leaves node n, -1; else, 0.
         consumer_nodes: vector that defines which vectors correspond to consumers (if node n is a consumer node,
          then consumer_nodes[n] = (Name), else consumer_nodes[n] = 0)
         plant_nodes: vector that defines which vectors correspond to plants (if node n is a plant node, then
@@ -123,12 +126,14 @@ def assign_pipes_to_edges(mass_flow_df, locator, gv):
     This function assigns pipes from the catalog to the network for a network with unspecified pipe properties.
     Pipes are assigned based on each edge's minimum and maximum required flow rate (for now)
 
-    :param mass_flow_df: dataframe containing the mass flow rate for each pipe at each moment of the year
+    :param: mass_flow_df: dataframe containing the mass flow rate for each edge e at each time of the year t
+    :param: locator: locator class
+    :param: gv: globalvars
 
     :return: pipe_properties_df: dataframe containing the pipe properties for each edge in the network
     '''
 
-    # import pipe catalog from Excel file (catalog based on Fonseca et al. 2016)
+    # import pipe catalog from Excel file
     pipe_catalog = pd.read_excel(locator.get_thermal_networks())
     pipe_catalog['Vdot_min'] = pipe_catalog['Vdot_min'] * gv.Pwater
     pipe_catalog['Vdot_max'] = pipe_catalog['Vdot_max'] * gv.Pwater
@@ -146,7 +151,47 @@ def assign_pipes_to_edges(mass_flow_df, locator, gv):
 
     return pipe_properties_df
 
+def calc_pressure_loss_nodes(edge_node, pipe_diameter, pipe_length, mass_flow_rate, temperature, gv):
+    ''' calculates the pressure losses at each node as the sum of the pressure losses in all edges that point to each
+     node
+        edge_node: matrix consisting of n rows (number of nodes) and e columns (number of edges) and indicating
+direction of flow of each edge e at node n: if e points to n, value is 1; if e leaves node n, -1; else, 0.  (n x e)
+        :param: pipe_diameter: vector containing the pipe diameter in m for each edge e in the network      (e x 1)
+        :param: pipe_length: vector containing the length in m of each edge e in the network                (e x 1)
+        :param: mass_flow_rate: matrix containing the mass flow rate in each edge e at time t               (t x e)
+        :param: temperature: matrix containing the temperature of the water in each edge e at time t        (t x e)
+        :param: gv: globalvars
+
+     :return: pressure loss at each node for each time t                                                    (t x n)
+     '''
+
+    # get the pressure through each edge
+    pressure_loss_pipe = calc_pressure_loss_pipe(pipe_diameter, pipe_length, mass_flow_rate, temperature, gv)
+
+    # get a matrix showing which edges point to each node n
+    edge_node = edge_node.transpose()
+    for i in range(len(edge_node)):
+        for j in range(len(edge_node[0])):
+            if edge_node[i][j] < 0:
+                edge_node[i][j] = 0
+
+    # the pressure losses at time t are calculated as the sum of the pressure losses from all edges pointing to node n
+    return np.dot(pressure_loss_pipe, edge_node)
+
+
 def calc_pressure_loss_pipe(pipe_diameter, pipe_length, mass_flow_rate, temperature, gv):
+    ''' calculates the pressure losses throughout a pipe based on the Darcy-Weisbach equation and the Swamee-Jain
+    solution for the Darcy friction factor
+
+     :param: pipe_diameter: vector containing the pipe diameter in m for each edge e in the network (e x 1)
+     :param: pipe_length: vector containing the length in m of each edge e in the network           (e x 1)
+     :param: mass_flow_rate: matrix containing the mass flow rate in each edge e at time t          (t x e)
+     :param: temperature: matrix containing the temperature of the water in each edge e at time t   (t x e)
+     :param: gv: globalvars
+
+     :return: pressure loss through each edge
+     '''
+
     kinematic_viscosity = calc_kinematic_viscosity(temperature)
     reynolds = 4*mass_flow_rate/(math.pi * kinematic_viscosity * pipe_diameter)
     pipe_roughness = 0.02    # assumed from Li & Svendsen for now
@@ -156,6 +201,12 @@ def calc_pressure_loss_pipe(pipe_diameter, pipe_length, mass_flow_rate, temperat
     return pressure_loss_edge
 
 def calc_kinematic_viscosity(temperature):
+    ''' calculates the kinematic viscosity of water as a function of temperature based on a simple fit from data from the
+     engineering toolbox
+     :param: temperature: in K
+
+     :return: kinematic viscosity in m2/s
+     '''
     return 2.652623e-8*math.e**(557.5447*(temperature-140)**-1)
 
 
