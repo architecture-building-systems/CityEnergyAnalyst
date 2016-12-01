@@ -74,8 +74,7 @@ def analyze_sensitivity(samples_path):
         simulation_results = read_results(samples_path, samples_count, output_parameter)
 
         # run the analysis for every building and store it in a list
-        analysis_results = [analysis_function(problem, samples, simulation_result) for simulation_result in
-                            simulation_results]
+        analysis_results = [analysis_function(problem, samples, simulation_result) for simulation_result in simulation_results]
 
         # write out a worksheet for each analysis result (e.g. 'S1', 'ST', 'ST_conf' for method == 'sobol')
         for analysis_variable in analysis_variables:
@@ -152,9 +151,8 @@ def read_results(samples_folder, samples_count, output_parameter):
     - `$samples_folder/result.$i.csv` for i in range(samples_count)
     """
     iterable_samples_count = range(samples_count)
-    results = np.vectorize(
-        lambda i: pd.read_csv(os.path.join(samples_folder, 'result.%i.csv' % i))[output_parameter].values)(
-        iterable_samples_count).T
+    results = np.array([pd.read_csv(os.path.join(samples_folder, 'result.%i.csv' % i))[output_parameter].values for i in
+               iterable_samples_count]).T
     return results
 
 
