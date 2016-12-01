@@ -11,7 +11,6 @@ ISO 13790 [DIN EN ISO 13790:2008-9]
 
 from __future__ import division
 import numpy as np
-from sandbox.ghapple import helpers as h
 from sandbox.ghapple import control
 from sandbox.ghapple import rc_model as rc
 from sandbox.ghapple import ventilation_xx as v
@@ -66,34 +65,9 @@ def procedure_1(bpr, tsd, hoy, gv):
         # no heating or cooling demand
         # calculate temperatures of building R-C-model and exit
         # --> rc_model_function_1(...)
-        phi_hc_nd = 0
-        temp_rc = rc.calc_temperatures_crank_nicholson( phi_hc_nd, bpr, tsd, hoy )
+        update_temperatures_and_loads_no_heating_or_cooling_active(bpr, hoy, tsd)
 
-        theta_m_t = temp_rc[0]
-        theta_air = temp_rc[1]
-        theta_op = temp_rc[2]
-        theta_s = temp_rc[3]
-
-        # write to tsd
-        tsd['Tm'][hoy] = theta_m_t
-        tsd['Ta'][hoy] = theta_air
-        tsd['Top'][hoy] = theta_op
-        tsd['Qhs_sen'][hoy] = 0  # no energy demand for heating (temperature ok)
-        tsd['Qhs_em_ls'][hoy] = 0  # no emission loss of heating space emission systems
-        tsd['Qcs_sen'][hoy] = 0  # no energy demand for cooling
-        tsd['Qcs_em_ls'][hoy] = 0  # no losses of cooling space emission systems
-        tsd['Qcs_lat_HVAC'][hoy] = 0
-        tsd['Qcs_sen_HVAC'][hoy] = 0
-        tsd['ma_sup_cs'][hoy] = 0
-        tsd['Ta_sup_cs'][hoy] = 0
-        tsd['Ta_re_cs'][hoy] = 0
-        tsd['ma_sup_hs'][hoy] = 0
-        tsd['Ta_sup_hs'][hoy] = 0
-        tsd['Ta_re_hs'][hoy] = 0
-
-        # return
         print('Building has no heating or cooling demand at hour', hoy)
-        return
 
     elif rc.has_heating_demand(bpr, tsd, hoy):
 
@@ -110,32 +84,7 @@ def procedure_1(bpr, tsd, hoy, gv):
             # no heating
             # calculate temperatures of building R-C-model and exit
             # --> rc_model_function_1(...)
-            phi_hc_nd = 0
-            temp_rc = rc.calc_temperatures_crank_nicholson(phi_hc_nd, bpr, tsd, hoy)
-
-            theta_m_t = temp_rc[0]
-            theta_air = temp_rc[1]
-            theta_op = temp_rc[2]
-            theta_s = temp_rc[3]
-
-            # write to tsd
-            tsd['Tm'][hoy] = theta_m_t
-            tsd['Ta'][hoy] = theta_air
-            tsd['Top'][hoy] = theta_op
-            tsd['Qhs_sen'][hoy] = 0  # no heating energy demand (system off)
-            tsd['Qhs_em_ls'][hoy] = 0  # no losses of heating space emission systems
-            tsd['Qcs_lat_HVAC'][hoy] = 0
-            tsd['Qcs_sen_HVAC'][hoy] = 0
-            tsd['ma_sup_cs'][hoy] = 0
-            tsd['Ta_sup_cs'][hoy] = 0
-            tsd['Ta_re_cs'][hoy] = 0
-            tsd['ma_sup_hs'][hoy] = 0
-            tsd['Ta_sup_hs'][hoy] = 0
-            tsd['Ta_re_hs'][hoy] = 0
-
-
-            # return # TODO: check speed with and without return here
-            # return
+            update_temperatures_and_loads_no_heating_or_cooling_active(bpr, hoy, tsd)
 
         elif control.is_heating_active(hoy, bpr) and control.heating_system_is_ac(bpr):
 
@@ -405,3 +354,28 @@ def procedure_1(bpr, tsd, hoy, gv):
 
 
 # TODO: night flushing: 9.3.3.10 in ISO 13790
+
+
+def update_temperatures_and_loads_no_heating_or_cooling_active(bpr, hoy, tsd):
+    phi_hc_nd = 0
+    temp_rc = rc.calc_temperatures_crank_nicholson(phi_hc_nd, bpr, tsd, hoy)
+    theta_m_t = temp_rc[0]
+    theta_air = temp_rc[1]
+    theta_op = temp_rc[2]
+    theta_s = temp_rc[3]
+    # write to tsd
+    tsd['Tm'][hoy] = theta_m_t
+    tsd['Ta'][hoy] = theta_air
+    tsd['Top'][hoy] = theta_op
+    tsd['Qhs_sen'][hoy] = 0  # no energy demand for heating (temperature ok)
+    tsd['Qhs_em_ls'][hoy] = 0  # no emission loss of heating space emission systems
+    tsd['Qcs_sen'][hoy] = 0  # no energy demand for cooling
+    tsd['Qcs_em_ls'][hoy] = 0  # no losses of cooling space emission systems
+    tsd['Qcs_lat_HVAC'][hoy] = 0
+    tsd['Qcs_sen_HVAC'][hoy] = 0
+    tsd['ma_sup_cs'][hoy] = 0
+    tsd['Ta_sup_cs'][hoy] = 0
+    tsd['Ta_re_cs'][hoy] = 0
+    tsd['ma_sup_hs'][hoy] = 0
+    tsd['Ta_sup_hs'][hoy] = 0
+    tsd['Ta_re_hs'][hoy] = 0

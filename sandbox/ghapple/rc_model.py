@@ -139,6 +139,7 @@ def calc_theta_air(h_tr_is, theta_s, h_ve_adj, theta_e, phi_ia, phi_hc_nd):
 
     return theta_air
 
+
 def calc_theta_op(theta_air, theta_s):
 
     # (C.12) in [C.3 ISO 13790]

@@ -98,8 +98,7 @@ def heating_system_is_tabs(bpr):
     elif bpr.hvac['type_hs'] in {'T0', 'T1', 'T2', 'T3'}:
         return False
     else:
-        print('Error: Unknown heating system')
-        return False
+        raise ValueError('Error: Unknown heating system')
 
 
 
