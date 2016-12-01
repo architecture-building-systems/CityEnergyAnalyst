@@ -29,10 +29,12 @@
 # and here: http://wiki.bash-hackers.org/syntax/pe)
 N=${N:-1}
 METHOD=${METHOD:-sobol}
+TEMPORAL_SCALE=${TEMPORAL_SCALE:-yearly}
 SAMPLES_FOLDER=${SAMPLES_FOLDER:-${SCRATCH}/samples_${METHOD}_${N}}
 VARIABLE_GROUPS=${VARIABLE_GROUPS:-VARIABLE_GROUPS=${VARIABLE_GROUPS:-THERMAL ARCHITECTURE INDOOR_COMFORT INTERNAL_LOADS}}
 
 mkdir -p $SAMPLES_FOLDER
 
 # create the samples
-python -m cea.analysis.sensitivity.sensitivity_demand_analyze --samples-folder $SAMPLES_FOLDER
+python -m cea.analysis.sensitivity.sensitivity_demand_analyze --samples-folder $SAMPLES_FOLDER \
+           --temporal-scale $TEMPORAL_SCALE

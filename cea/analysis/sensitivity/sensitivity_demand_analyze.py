@@ -26,7 +26,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def analyze_sensitivity(samples_path):
+def analyze_sensitivity(samples_path,  temporal_scale):
     """
     Run the analysis for each output parameter. The exact function to use is selected by the `method` parameter:
     Use "morris" for `SALib.analyze.morris` and "sobol" for `SALib.analyze.sobol`.
@@ -70,21 +70,45 @@ def analyze_sensitivity(samples_path):
         folder = os.path.join(samples_path, 'results')
         if not os.path.exists(folder):
             os.makedirs(folder)
-        writer = pd.ExcelWriter(
-            os.path.join(samples_path, 'results', 'analysis_%s_%i_%s.xls' % (method, problem['N'], output_parameter)))
 
-        # read the results and get back a matrix m = buildings, n = samples.
-        simulation_results = read_results(samples_path, samples_count, output_parameter)
+        if method is 'yearly':
+            writer = pd.ExcelWriter(
+                os.path.join(samples_path, 'results',
+                             'analysis_%s_%i_%s.xls' % (method, problem['N'], output_parameter)))
 
-        # run the analysis for every building and store it in a list
-        analysis_results = [analysis_function(problem, samples, simulation_result) for simulation_result in simulation_results]
+            # read the results and get back a matrix m = buildings, n = samples.
+            simulation_results = read_results(samples_path, samples_count, output_parameter, temporal_scale, month=0)
 
-        # write out a worksheet for each analysis result (e.g. 'S1', 'ST', 'ST_conf' for method == 'sobol')
-        for analysis_variable in analysis_variables:
-            worksheet_name = analysis_variable
-            building_results = [result[analysis_variable] for result in analysis_results]
-            pd.DataFrame(building_results, columns=problem['names']).to_excel(writer, worksheet_name)
-        writer.save()
+            # run the analysis for every building and store it in a list
+            analysis_results = [analysis_function(problem, samples, simulation_result) for simulation_result in
+                                simulation_results]
+
+            # write out a worksheet for each analysis result (e.g. 'S1', 'ST', 'ST_conf' for method == 'sobol')
+            for analysis_variable in analysis_variables:
+                worksheet_name = analysis_variable
+                building_results = [result[analysis_variable] for result in analysis_results]
+                pd.DataFrame(building_results, columns=problem['names']).to_excel(writer, worksheet_name)
+            writer.save()
+        else:
+            #method = monthly
+            writer = pd.ExcelWriter(
+                os.path.join(samples_path, 'results',
+                             'analysis_%s_%i_%s_%s.xls' % (method, problem['N'], output_parameter, method)))
+            for month in range(12):
+
+                # read the results and get back a matrix m = buildings, n = samples.
+                simulation_results = read_results(samples_path, samples_count, output_parameter,  temporal_scale, month)
+
+                # run the analysis for every building and store it in a list
+                analysis_results = [analysis_function(problem, samples, simulation_result) for simulation_result in
+                                    simulation_results]
+
+                # write out a worksheet for each analysis result (e.g. 'S1', 'ST', 'ST_conf' for method == 'sobol')
+                for analysis_variable in analysis_variables:
+                    worksheet_name = str(month+1) + '_' + analysis_variable # for every month of the year
+                    building_results = [result[analysis_variable] for result in analysis_results]
+                    pd.DataFrame(building_results, columns=problem['names']).to_excel(writer, worksheet_name)
+            writer.save()
 
 
 def sobol_analyze_function(problem, _, Y):
@@ -124,7 +148,7 @@ def morris_analyze_function(problem, X, Y):
                           grid_jump=problem['grid_jump'], num_levels=problem['num_levels'])
 
 
-def read_results(samples_folder, samples_count, output_parameter):
+def read_results(samples_folder, samples_count, output_parameter, temporal_scale, month):
     """
     Read each `results.%i.csv` file from the samples folder into a DataFrame and return them as a list. Each such
     csv file has a column for each output parameter specified for the simulation runs and a row for each building.
@@ -154,8 +178,16 @@ def read_results(samples_folder, samples_count, output_parameter):
     - `$samples_folder/result.$i.csv` for i in range(samples_count)
     """
     iterable_samples_count = range(samples_count)
-    results = np.array([pd.read_csv(os.path.join(samples_folder, 'result.%i.csv' % i))[output_parameter].values for i in
-               iterable_samples_count]).T
+    if temporal_scale is 'yearly':
+        results = np.array(
+            [pd.read_csv(os.path.join(samples_folder, 'result.%i.csv' % i))[output_parameter].values for i in
+             iterable_samples_count]).T
+    else:
+        # monthly
+        results = np.array(
+            [pd.read_csv(os.path.join(samples_folder, 'result.%i.%i.csv' % (i, month)))[output_parameter].values for i in
+             iterable_samples_count]).T
+
     return results
 
 
@@ -165,5 +197,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-S', '--samples-folder', default='.',
                         help='folder to place the output files (samples.npy, problem.pickle) in')
+    parser.add_argument('-t', '--temporal-scale', default='yearly',
+                        help='temporal scale of analysis (monthly or yearly)')
     args = parser.parse_args()
-    analyze_sensitivity(samples_path=args.samples_folder)
+    analyze_sensitivity(samples_path=args.samples_folder, method=args.method)
