@@ -56,6 +56,7 @@ def calc_hydraulic_network(locator, gv):
     print time.clock() - t0, "seconds process time for total mass flow calculation\n"
     mass_flow_df.to_csv(locator.pathNtwLayout + '//' + 'MassFlow_DH.csv')
     '''
+
     mass_flow_df = pd.read_csv(locator.pathNtwLayout + '//' + 'MassFlow_DH.csv', usecols=edge_node_df.columns.values)
     mass_flow_df = np.absolute(mass_flow_df)    # added this hack to make sure code runs TODO: make sure you don't get negative flows!
     pipe_properties_df = assign_pipes_to_edges(mass_flow_df, locator, gv)
@@ -64,9 +65,10 @@ def calc_hydraulic_network(locator, gv):
     pressure_loss_pipes = pd.DataFrame(data=calc_pressure_loss_pipe(pipe_properties_df[:]['DN':'DN'].values, pipe_length_df.values,
                                     mass_flow_df.values, temperature_matrix, gv), index = range(8760), columns = mass_flow_df.columns.values)
 
-    pressure_loss_pump = calc_pressure_loss_pump
+    pressure_loss_system = 2 * [sum(pressure_loss_pipes.values[i] for i in range(len(pressure_loss_pipes.values[0])))]
 
-    print pressure_loss_pipes
+return mass_flow_df, pressure_loss_system
+
 
 
 def get_thermal_network_from_csv(locator):
