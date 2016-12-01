@@ -61,7 +61,7 @@ def analyze_sensitivity(samples_path):
 
     # import The NumPy matrix containing the model inputs or samples
     samples = np.load(os.path.join(samples_path, 'samples.npy'))
-    output_parameters = np.load(os.path.join(samples_path, 'output_parameters.pickle'))
+    output_parameters = np.load(os.path.join(samples_path, 'output_parameters.npy'))
     samples_count = len(samples)
 
     # run the analysis for every input parameter
@@ -78,7 +78,7 @@ def analyze_sensitivity(samples_path):
 
         # write out a worksheet for each analysis result (e.g. 'S1', 'ST', 'ST_conf' for method == 'sobol')
         for analysis_variable in analysis_variables:
-            worksheet_name = "%(output_parameter)s_%(analysis_variable)s" % locals()
+            worksheet_name = analysis_variable
             building_results = [result[analysis_variable] for result in analysis_results]
             pd.DataFrame(building_results, columns=problem['names']).to_excel(writer, worksheet_name)
         writer.save()
