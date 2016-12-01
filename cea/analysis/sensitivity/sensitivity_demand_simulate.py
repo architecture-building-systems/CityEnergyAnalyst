@@ -128,7 +128,7 @@ def simulate_demand_sample(locator, weather_path, output_parameters):
     gv.multiprocessing = False
     totals, time_series = demand_main.demand_calculation(locator, weather_path, gv)
     return totals[output_parameters], time_series
-
+CEA
 
 def simulate_demand_batch(sample_index, batch_size, samples_folder, scenario, simulation_folder, weather,
                           output_parameters):
@@ -233,7 +233,7 @@ def main():
                           samples_folder=args.samples_folder, scenario=args.scenario,
                           simulation_folder=args.simulation_folder, weather=args.weather,
                           output_parameters=args.output_parameters)
-    
+
     # save output parameters
     np.save(os.path.join(args.samples_folder, 'output_parameters.npy'), args.output_parameters)
 
