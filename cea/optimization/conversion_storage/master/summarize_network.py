@@ -6,6 +6,7 @@ Hydraulic - thermal network
 """
 from __future__ import division
 import time
+import os
 import numpy as np
 import pandas as pd
 import math
@@ -33,9 +34,9 @@ def network_main(locator, total_demand, building_names, gv, key):
     :param key: when called by the optimization, a key will provide an id for the individual
      and the generation.
     :return:
-        csv file stored in locator.pathNtwRes + '//' + fName_result
+        csv file stored in locator.get_optimization_network_results_folder() as fName_result
         where
-        fName_result:
+        fName_result: FIXME: what?
 
     """
 
@@ -163,7 +164,7 @@ def network_main(locator, total_demand, building_names, gv, key):
 
     # the key depicts weather this is the distribution of all customers or a distribution of a gorup of them.
     fName_result = "Network_summary_result_" + key + ".csv"
-    results.to_csv(locator.pathNtwRes + '//' + fName_result, sep=',')
+    results.to_csv(os.path.join(locator.get_optimization_network_results_folder(), fName_result), sep=',')
 
     print time.clock() - t0, "seconds process time for Network summary for configuration", key, "\n"
 

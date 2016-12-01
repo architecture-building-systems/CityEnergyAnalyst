@@ -57,8 +57,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     MS_Var = master_to_slave_vars
 
     t = time.time()
-    Network_Raw_Data_Path = locator.pathNtwRes
-
     # class MS_VarError(Exception):
     #   """Base class for exceptions in this module."""
     #  pass
@@ -95,7 +93,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     # Import Temperatures from Network Summary:
 
-    os.chdir(Network_Raw_Data_Path)
+    os.chdir(locator.get_optimization_network_results_folder())
     tdhret = np.array(pd.read_csv(NETWORK_DATA_FILE, usecols=["T_sst_heat_return_netw_total"],
                                   nrows=gv.DAYS_IN_YEAR * gv.HOURS_IN_DAY))
     mdot_DH = np.array(

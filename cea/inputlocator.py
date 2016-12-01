@@ -24,15 +24,15 @@ class InputLocator(object):
         self.db_path = os.path.join(os.path.dirname(__file__), 'databases', 'CH')
 
         if scenario_path:
-            self.pathNtwRes = os.path.join(self.get_optimization_results_folder(), "network")  # Ntw summary results
             self.pathMasterRes = os.path.join(self.get_optimization_results_folder(), "master") # Master checkpoints
             self.pathSlaveRes = os.path.join(self.get_optimization_results_folder(), "slave") # Slave results (storage + operation pattern)
-            self.pathTotalNtw = os.path.join(self.pathNtwRes, "totals") # Total files (inputs to substation + ntw in master)
-            self.pathNtwLayout = os.path.join(self.pathNtwRes, "layout") # Ntw layout files
+            self.pathTotalNtw = os.path.join(self.get_optimization_network_results_folder(), "totals") # Total files (inputs to substation + ntw in master)
+            self.pathNtwLayout = os.path.join(self.get_optimization_network_results_folder(), "layout") # Ntw layout files
             self.get_pipes_DH_network = os.path.join(self.pathNtwLayout, "PipesData_DH.csv")
             self.pathSolarRaw = os.path.join(self.get_potentials_results_folder(), "solar") # Raw solar files
 
-    def _ensure_folder(self, *components):
+    @staticmethod
+    def _ensure_folder(*components):
         """Return the `*components` joined together as a path to a folder and ensure that that folder exists on disc.
         If it doesn't exist yet, attempt to make it with `os.makedirs`."""
         folder = os.path.join(*components)
@@ -43,6 +43,12 @@ class InputLocator(object):
     def get_optimization_results_folder(self):
         """scenario/outputs/data/optimization"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'optimization')
+
+    def get_optimization_network_results_folder(self):
+        """scenario/outputs/data/optimization/network
+        Network summary results
+        """
+        return os.path.join(self.get_optimization_results_folder(), "network")
 
     def get_optimization_disconnected_folder(self):
         """scenario/outputs/data/optimization/disconnected

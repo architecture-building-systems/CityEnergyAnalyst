@@ -227,7 +227,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         # Hex and HP for Heat recovery
         print "\n STORAGE PART COSTS"
         if dicoSupply.WasteServersHeatRecovery == 1:
-            df = pd.read_csv(locator.pathNtwRes + "/" + dicoSupply.NETWORK_DATA_FILE, usecols = ["Qcdata_netw_total"])
+            df = pd.read_csv(
+                os.path.join(locator.get_optimization_network_results_folder(), dicoSupply.NETWORK_DATA_FILE),
+                usecols=["Qcdata_netw_total"])
             array = np.array(df)
             QhexMax = np.amax(array)
             StorageHEXCost += hex.calc_Cinv_HEX(QhexMax, gv)
@@ -241,7 +243,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
             print hp.calc_Cinv_HP(QhpMax, gv), "HP for data center"
             
         if dicoSupply.WasteCompressorHeatRecovery == 1:
-            df = pd.read_csv(locator.pathNtwRes + "/" + dicoSupply.NETWORK_DATA_FILE, usecols = ["Ecaf_netw_total"])
+            df = pd.read_csv(
+                os.path.join(locator.get_optimization_network_results_folder(), dicoSupply.NETWORK_DATA_FILE),
+                usecols=["Ecaf_netw_total"])
             array = np.array(df)
             QhexMax = np.amax(array)
         
@@ -340,7 +344,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         
         print addCosts,"addCosts in extraCostsMain"
         # Pump operation costs
-        pumpCosts = pumps.calc_Ctot_pump(dicoSupply, buildList, locator.pathNtwRes, ntwFeat, gv)
+        pumpCosts = pumps.calc_Ctot_pump(dicoSupply, buildList, locator.get_optimization_network_results_folder(), ntwFeat, gv)
         addCosts += pumpCosts
         print pumpCosts, "Pump Operation costs in extraCostsMain\n"
     
