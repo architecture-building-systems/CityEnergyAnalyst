@@ -233,8 +233,5 @@ def main():
                           simulation_folder=args.simulation_folder, weather=args.weather,
                           output_parameters=args.output_parameters)
 
-    # save output parameters
-    #np.save(os.path.join(args.samples_folder, 'output_parameters.npy'), np.array(args.output_parameters))
-
 if __name__ == '__main__':
     main()
