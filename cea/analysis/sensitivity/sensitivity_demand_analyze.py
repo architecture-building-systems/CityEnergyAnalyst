@@ -61,8 +61,7 @@ def analyze_sensitivity(samples_path):
 
     # import The NumPy matrix containing the model inputs or samples
     samples = np.load(os.path.join(samples_path, 'samples.npy'))
-    output_parameters = pd.read_csv(os.path.join(samples_path, 'result.0.csv')).columns
-    print output_parameters
+    output_parameters = np.load(os.path.join(samples_path, 'output_parameters.npy'))
     samples_count = len(samples)
 
     # run the analysis for every input parameter
