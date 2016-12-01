@@ -67,6 +67,9 @@ def analyze_sensitivity(samples_path):
     # run the analysis for every input parameter
     for output_parameter in output_parameters:
         # create excel writer
+        folder = os.path.join(samples_path, 'results')
+        if not os.path.exists(folder):
+            os.makedirs(folder)
         writer = pd.ExcelWriter(
             os.path.join(samples_path, 'results', 'analysis_%s_%i_%s.xls' % (method, problem['N'], output_parameter)))
 
