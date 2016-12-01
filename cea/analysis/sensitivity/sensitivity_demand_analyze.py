@@ -44,25 +44,11 @@ def analyze_sensitivity(samples_path):
     :param samples_path: the path to the samples folder as created by `sensitivity_demand_samples.py`
     :type samples_path: str
     """
+    # do checks
     with open(os.path.join(args.samples_folder, 'problem.pickle'), 'r') as f:
         problem = pickle.load(f)
     method = problem['method']
     assert method in ('sobol', 'morris'), "Invalid analysis method: %s" % method
-
-    # this refers to `X` in the morris method: The NumPy matrix containing the model inputs
-    samples = np.load(os.path.join(samples_path, 'samples.npy'))
-    samples_count = len(samples)
-
-    simulation_results = read_results(samples_path, samples_count)
-
-    # each results file has the same shape, with one building per row. get the row count from the first result
-    buildings_num = simulation_results[0].shape[0]
-
-    writer = pd.ExcelWriter(os.path.join(samples_path, 'analysis_%s_%i.xls' % (method, problem['N'])))
-
-    # each results file has the same shape, with one output parameter per column. get the output parameters from the
-    # first result
-    output_parameters = list(simulation_results[0].columns[1:])
 
     # choose which analysis function to use and the list of keys in the analysis output to store
     if method == 'sobol':
@@ -73,21 +59,29 @@ def analyze_sensitivity(samples_path):
         analysis_variables = ['mu_star', 'sigma', 'mu_star_conf']
         analysis_function = morris_analyze_function
 
+    # import The NumPy matrix containing the model inputs or samples
+    samples = np.load(os.path.join(samples_path, 'samples.npy'))
+    output_parameters = np.load(os.path.join(samples_path, 'output_parameters.pickle'))
+    samples_count = len(samples)
+
+    # run the analysis for every input parameter
     for output_parameter in output_parameters:
-        # run the analysis for the given output parameter and write a worksheet for each analysis variable
-        analysis_results = []
-        for building in range(buildings_num):
-            # `Y` is a NumPy array containing the model outputs as used in the SALib analyze functions
-            Y = np.array([result.loc[building, output_parameter] for result in simulation_results])
-            result = analysis_function(problem, samples, Y)
-            analysis_results.append(result)
+        # create excel writer
+        writer = pd.ExcelWriter(
+            os.path.join(samples_path, 'analysis_%s_%i_%s.xls' % (method, problem['N'], output_parameter)))
+
+        # read the results and get back a matrix m = buildings, n = samples.
+        simulation_results = read_results(samples_path, samples_count, output_parameter)
+
+        # run the analysis for every building and store it in a list
+        analysis_results = [analysis_function(problem, samples, simulation_result) for simulation_result in simulation_results]
 
         # write out a worksheet for each analysis result (e.g. 'S1', 'ST', 'ST_conf' for method == 'sobol')
         for analysis_variable in analysis_variables:
             worksheet_name = "%(output_parameter)s_%(analysis_variable)s" % locals()
             building_results = [result[analysis_variable] for result in analysis_results]
             pd.DataFrame(building_results, columns=problem['names']).to_excel(writer, worksheet_name)
-    writer.save()
+        writer.save()
 
 
 def sobol_analyze_function(problem, _, Y):
@@ -127,7 +121,7 @@ def morris_analyze_function(problem, X, Y):
                           grid_jump=problem['grid_jump'], num_levels=problem['num_levels'])
 
 
-def read_results(samples_folder, samples_count):
+def read_results(samples_folder, samples_count, output_parameter):
     """
     Read each `results.%i.csv` file from the samples folder into a DataFrame and return them as a list. Each such
     csv file has a column for each output parameter specified for the simulation runs and a row for each building.
@@ -142,10 +136,13 @@ def read_results(samples_folder, samples_count):
                           `sensitivity_demand_count.py` to calculate this for a given samples folder.
     :type samples_count: int
 
+    :param output_parameter: output parameter of the simualation e.g., Qhsf, Ef
+    :type samples_count: str
+
     RETURNS
     -------
 
-    :returns: A list of DataFram objects representing each result of a simulation.
+    :returns: matrix of lenght mxn where m: samples_count, n: buildings, content: result for output_parameter
     :rtype: list of DataFrame
 
     INPUT / OUTPUT FILES
@@ -153,11 +150,9 @@ def read_results(samples_folder, samples_count):
 
     - `$samples_folder/result.$i.csv` for i in range(samples_count)
     """
-    results = []
-    for i in range(samples_count):
-        result_file = os.path.join(samples_folder, 'result.%i.csv' % i)
-        df = pd.read_csv(result_file)
-        results.append(df)
+    iterable_samples_count = range(samples_count)
+    results = [pd.read_csv(os.path.join(samples_folder, 'result.%i.csv' % i))[output_parameter].values for i in
+               iterable_samples_count].T
     return results
 
 
