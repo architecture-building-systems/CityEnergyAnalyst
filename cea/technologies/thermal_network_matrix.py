@@ -33,7 +33,7 @@ def calc_hydraulic_network(locator, gv):
     '''
 
     # get mass flow matrix from substation.py
-    edge_node_df, all_nodes = get_thermal_network_from_csv(locator)
+    edge_node_df, all_nodes_df, pipe_length_df = get_thermal_network_from_csv(locator)
     '''# edge_node_matrix needs to be expanded to include return pipes
     for pipe in edge_node_df:
         edge_node_df['-'+pipe] = -edge_node_df[pipe]'''
@@ -42,9 +42,9 @@ def calc_hydraulic_network(locator, gv):
     building_names = total_demand['Name']
     mass_flow_substation_df = pd.DataFrame()
     iteration = 0
-    for node in all_nodes:   #consumer_nodes+plant_nodes:    #name in building_names:
-        if (all_nodes[node]['consumer']+all_nodes[node]['plant']) != '':
-            mass_flow_substation_df[node] = pd.read_csv(locator.pathSubsRes + '//' + (all_nodes[node]['consumer']+all_nodes[node]['plant']) + "_result.csv", usecols=['mdot_DH_result'])  #name] = pd.read_csv(locator.pathSubsRes + '//' + name + "_result.csv", usecols=['mdot_DH_result'])
+    for node in all_nodes_df:   #consumer_nodes+plant_nodes:    #name in building_names:
+        if (all_nodes_df[node]['consumer']+all_nodes_df[node]['plant']) != '':
+            mass_flow_substation_df[node] = pd.read_csv(locator.pathSubsRes + '//' + (all_nodes_df[node]['consumer']+all_nodes_df[node]['plant']) + "_result.csv", usecols=['mdot_DH_result'])  #name] = pd.read_csv(locator.pathSubsRes + '//' + name + "_result.csv", usecols=['mdot_DH_result'])
         else:
             mass_flow_substation_df[node] = np.zeros(8760)
 
@@ -57,13 +57,16 @@ def calc_hydraulic_network(locator, gv):
     mass_flow_df.to_csv(locator.pathNtwLayout + '//' + 'MassFlow_DH.csv')
     '''
     mass_flow_df = pd.read_csv(locator.pathNtwLayout + '//' + 'MassFlow_DH.csv', usecols=edge_node_df.columns.values)
-    print np.inner(edge_node_df,mass_flow_df)-np.transpose(mass_flow_substation_df.values)
-
+    mass_flow_df = np.absolute(mass_flow_df)    # added this hack to make sure code runs TODO: make sure you don't get negative flows!
     pipe_properties_df = assign_pipes_to_edges(mass_flow_df, locator, gv)
+    temperature_matrix = np.ones([8760,len(edge_node_df.columns)])*323   # assigning a dummy temperature to each edge for now
 
-    reynolds_df = pd.DataFrame(data=None, index = range(8760), columns = mass_flow_df)
-    for node in mass_flow_substation_df:
-        reynolds_df['node'] = 1
+    pressure_loss_pipes = pd.DataFrame(data=calc_pressure_loss_pipe(pipe_properties_df[:]['DN':'DN'].values, pipe_length_df.values,
+                                    mass_flow_df.values, temperature_matrix, gv), index = range(8760), columns = mass_flow_df.columns.values)
+
+    pressure_loss_pump = calc_pressure_loss_pump
+
+    print pressure_loss_pipes
 
 
 def get_thermal_network_from_csv(locator):
@@ -95,6 +98,7 @@ def get_thermal_network_from_csv(locator):
 
     # get pipe data and create edge-node matrix
     pipe_data_df = pd.read_csv(locator.get_pipes_DH_network)
+    pipe_data_df = pipe_data_df.set_index(pipe_data_df['DC_ID'].values, drop=True)
     list_pipes = pipe_data_df['DC_ID']
     list_nodes = sorted(set(pipe_data_df['NODE1']).union(set(pipe_data_df['NODE2'])))
     edge_node_matrix = np.zeros((len(list_nodes),len(list_pipes)))
@@ -110,7 +114,7 @@ def get_thermal_network_from_csv(locator):
 
     print time.clock() - t0, "seconds process time for Network summary\n"
 
-    return edge_node_df, pd.DataFrame(data=[consumer_nodes[1][:], plant_nodes[1][:]], index = ['consumer','plant'], columns = consumer_nodes[0][:])
+    return edge_node_df, pd.DataFrame(data=[consumer_nodes[1][:], plant_nodes[1][:]], index = ['consumer','plant'], columns = consumer_nodes[0][:]),pipe_data_df['LENGTH']
 
 def assign_pipes_to_edges(mass_flow_df, locator, gv):
     '''
@@ -139,6 +143,18 @@ def assign_pipes_to_edges(mass_flow_df, locator, gv):
                 i += 1
 
     return pipe_properties_df
+
+def calc_pressure_loss_pipe(pipe_diameter, pipe_length, mass_flow_rate, temperature, gv):
+    kinematic_viscosity = calc_kinematic_viscosity(temperature)
+    reynolds = 4*mass_flow_rate/(math.pi * kinematic_viscosity * pipe_diameter)
+    pipe_roughness = 0.02    # assumed from Li & Svendsen for now
+    darcy = 1.325 * np.log(pipe_roughness / (3.7 * pipe_diameter) + 5.74 / reynolds ** 0.9) ** (-2)  # Swamee-Jain equation to calculate the Darcy-Weisbach friction factor
+    pressure_loss_edge = darcy*8/(math.pi*gv.gr)*kinematic_viscosity**2/pipe_diameter**5*pipe_length
+
+    return pressure_loss_edge
+
+def calc_kinematic_viscosity(temperature):
+    return 2.652623e-8*math.e**(557.5447*(temperature-140)**-1)
 
 
 #============================
