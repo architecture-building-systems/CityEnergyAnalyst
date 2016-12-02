@@ -24,8 +24,6 @@ class InputLocator(object):
         self.db_path = os.path.join(os.path.dirname(__file__), 'databases', 'CH')
 
         if scenario_path:
-            self.pathNtwLayout = os.path.join(self.get_optimization_network_results_folder(), "layout") # Ntw layout files
-            self.get_pipes_DH_network = os.path.join(self.pathNtwLayout, "PipesData_DH.csv")
             self.pathSolarRaw = os.path.join(self.get_potentials_results_folder(), "solar") # Raw solar files
 
     @staticmethod
@@ -59,11 +57,23 @@ class InputLocator(object):
         """
         return self._ensure_folder(self.get_optimization_results_folder(), "network")
 
+    def get_optimization_network_layout_folder(self):
+        """scenario/outputs/data/optimization/network/layout
+        Network layout files
+        """
+        return self._ensure_folder(self.get_optimization_network_results_folder(), "layout")
+
+    def get_optimization_network_layout_pipes_file(self):
+        """scenario/outputs/data/optimization/network/layout/PipesData_DH.csv
+        Network layout files for pipes of district heat networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "PipesData_DH.csv")
+
     def get_optimization_network_totals_folder(self):
         """scenario/outputs/data/optimization/network/totals
         Total files (inputs to substation + network in master)
         """
-        return os.path.join(self.get_optimization_network_results_folder(), "totals")
+        return self._ensure_folder(self.get_optimization_network_results_folder(), "totals")
 
     def get_optimization_disconnected_folder(self):
         """scenario/outputs/data/optimization/disconnected
