@@ -23,9 +23,6 @@ class InputLocator(object):
         self.scenario_path = scenario_path
         self.db_path = os.path.join(os.path.dirname(__file__), 'databases', 'CH')
 
-        if scenario_path:
-            self.pathSolarRaw = os.path.join(self.get_potentials_results_folder(), "solar") # Raw solar files
-
     @staticmethod
     def _ensure_folder(*components):
         """Return the `*components` joined together as a path to a folder and ensure that that folder exists on disc.
@@ -106,6 +103,12 @@ class InputLocator(object):
     def get_potentials_results_folder(self):
         """scenario/outputs/data/potentials"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'potentials')
+
+    def get_potentials_solar_folder(self):
+        """scenario/outputs/data/potentials/solar
+        Contains raw solar files
+        """
+        return self._ensure_folder(self.get_potentials_results_folder(), "solar")
 
     # optimization
     def get_sewage_heat_potential(self):
