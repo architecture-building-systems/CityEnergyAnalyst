@@ -124,8 +124,6 @@ def createTotalNtwCsv(indCombi, locator):
         string of 0 and 1: 0 of the building is disconnected, 1 if connected
     locator: string
         path to raw files
-    pathTotalNtw :string
-        path to were to store the csv Total file
     
     Returns
     -------
@@ -143,10 +141,7 @@ def createTotalNtwCsv(indCombi, locator):
         rank += 1
     
     dfRes = df.drop(df.index[index])
-    
-    fName_result = "Total_" + indCombi + ".csv"
-    dfRes.to_csv(locator.pathTotalNtw+'//'+fName_result, sep= ',')
-    
+    dfRes.to_csv(os.path.join(locator.get_optimization_network_totals_folder(), "Total_" + indCombi + ".csv"), sep=',')
     return dfRes
     
 
