@@ -24,7 +24,6 @@ class InputLocator(object):
         self.db_path = os.path.join(os.path.dirname(__file__), 'databases', 'CH')
 
         if scenario_path:
-            self.pathSlaveRes = os.path.join(self.get_optimization_results_folder(), "slave") # Slave results (storage + operation pattern)
             self.pathTotalNtw = os.path.join(self.get_optimization_network_results_folder(), "totals") # Total files (inputs to substation + ntw in master)
             self.pathNtwLayout = os.path.join(self.get_optimization_network_results_folder(), "layout") # Ntw layout files
             self.get_pipes_DH_network = os.path.join(self.pathNtwLayout, "PipesData_DH.csv")
@@ -48,6 +47,12 @@ class InputLocator(object):
         Master checkpoints
         """
         return self._ensure_folder(self.get_optimization_results_folder(), "master")
+
+    def get_optimization_slave_results_folder(self):
+        """scenario/outputs/data/optimization/slave
+        Slave results folder (storage + operation pattern)
+        """
+        return self._ensure_folder(self.get_optimization_results_folder(), "slave")
 
     def get_optimization_network_results_folder(self):
         """scenario/outputs/data/optimization/network

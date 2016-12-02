@@ -16,9 +16,9 @@ import Import_Network_Data_functions as fn
 import SolarPowerHandler_incl_Losses as SPH_fn
 
 
-def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, Network_Data_Path, Solar_Data_Path, pathSlaveRes,\
-                    STORAGE_SIZE, STORE_DATA, context, P_HP_max, gV):
-    os.chdir(Network_Data_Path)
+def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locator, Solar_Data_Path,
+                   STORAGE_SIZE, STORE_DATA, context, P_HP_max, gV):
+    os.chdir(locator.get_optimization_network_results_folder())
     MS_Var = context
     HOURS_IN_DAY = 24
     DAYS_IN_YEAR = 365
@@ -357,10 +357,10 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, Netwo
              "P_HPCharge_max":P_HP_max
             })
         Name = MS_Var.configKey + "StorageOperationData.csv"
-        os.chdir(pathSlaveRes)
+        os.chdir(locator.get_optimization_slave_results_folder())
         results.to_csv(Name, sep= ',')
         
-        print "Results saved in :", pathSlaveRes
+        print "Results saved in :", locator.get_optimization_slave_results_folder()
         print " as : ", Name 
     
     Q_stored_max = np.amax(Q_storage_content_fin)

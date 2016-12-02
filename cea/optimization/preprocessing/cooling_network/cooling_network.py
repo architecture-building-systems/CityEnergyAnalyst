@@ -74,7 +74,7 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
     
     ############# Recover the heat already taken from the lake by the heat pumps
     try:
-        os.chdir(locator.pathSlaveRes)
+        os.chdir(locator.get_optimization_slave_results_folder())
         fNameSlaveRes = configKey + "PPActivationPattern.csv"
         
         dfSlave = pd.read_csv(fNameSlaveRes, usecols=["Qcold_HPLake"])
