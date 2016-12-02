@@ -16,7 +16,7 @@ import Import_Network_Data_functions as fn
 import SolarPowerHandler_incl_Losses as SPH_fn
 
 
-def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locator, Solar_Data_Path,
+def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locator,
                    STORAGE_SIZE, STORE_DATA, context, P_HP_max, gV):
     os.chdir(locator.get_optimization_network_results_folder())
     MS_Var = context
@@ -53,7 +53,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locat
     PV_kWh_PV = Solar_Data_PV[:,5]
     
     # Import Solar Data
-    os.chdir(Solar_Data_Path)
+    os.chdir(locator.get_potentials_solar_folder())
     
     fNameArray = [MS_Var.SOLCOL_TYPE_PVT, MS_Var.SOLCOL_TYPE_SC, MS_Var.SOLCOL_TYPE_PV]
     
