@@ -156,8 +156,6 @@ def readCheckPoint(locator, genCP, storeData):
     
     Parameters
     ----------
-    pathMasterRes : string
-        path to folder where CPs are stored
     genCP : int
         generation from whom to extract data
 
@@ -178,7 +176,7 @@ def readCheckPoint(locator, genCP, storeData):
         list of individuals tested in that generation
     
     """    
-    os.chdir(locator.pathMasterRes)
+    os.chdir(locator.get_optimization_master_results_folder())
 
     # Set the DEAP toolbox
     creator.create("Fitness", base.Fitness, weights=(-1.0, -1.0, -1.0))
@@ -193,14 +191,14 @@ def readCheckPoint(locator, genCP, storeData):
         testedPop = cp["testedPop"]
 
     if storeData == 1:
-        data_container = [['Cost', 'CO2', 'Eprim_i','Qmax', 'key']]
+        data_container = [['Cost', 'CO2', 'Eprim_i', 'Qmax', 'key']]
         ind_counter = 0
         for ind in pop:
-            
+            # FIXME: possibly refactor a: inline, also, this construction is weird...
             a = [ind.fitness.values]
-            CO2      = [int(i[0]) for i in a]
-            cost     = [int(i[1]) for i in a]
-            Eprim    = [int(i[2]) for i in a]
+            CO2 = [int(i[0]) for i in a]
+            cost = [int(i[1]) for i in a]
+            Eprim = [int(i[2]) for i in a]
             
             key = pop[ind_counter]
             
@@ -220,8 +218,9 @@ def readCheckPoint(locator, genCP, storeData):
             data_container.append(features)
             ind_counter += 1
         results = pd.DataFrame(data_container)
-        Name = locator.pathMasterRes + "/ParetoValuesAndKeysGeneration" + genCP + ".csv"
-        results.to_csv(Name, sep= ',')
+        pareto_results_file = os.path.join(locator.get_optimization_master_results_folder(),
+                                           "ParetoValuesAndKeysGeneration%(genCP)s.csv" % locals())
+        results.to_csv(pareto_results_file, sep=',')
 
     return pop, eps, testedPop
 
