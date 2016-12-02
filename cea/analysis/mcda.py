@@ -9,6 +9,7 @@ from __future__ import division
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import os
 
 import cea.globalVar as glob
 import cea.optimization.supportFn as sFn
@@ -45,7 +46,7 @@ def mcda_indicators(individual, locator, plot = 0):
     gV = glob.globalVariables()
     
     # Recover data from the PP activation file
-    resourcesFile = locator.pathSlaveRes + "/" + configKey + "PPActivationPattern.csv"
+    resourcesFile = os.path.join(locator.get_optimization_slave_results_folder(), "%(configKey)sPPActivationPattern.csv" % locals())
     resourcesdf = pd.read_csv(resourcesFile, usecols=["ESolarProducedPVandPVT", "Q_AddBoiler", "Q_BoilerBase", "Q_BoilerPeak", "Q_CC", "Q_GHP", \
                                                         "Q_HPLake", "Q_HPSew", "Q_primaryAddBackupSum", "Q_uncontrollable"])
                                                         
@@ -61,7 +62,8 @@ def mcda_indicators(individual, locator, plot = 0):
     Q_uncontrollable = resourcesdf.Q_uncontrollable.sum()
 
     # Recover data from the Storage Operation file
-    resourcesFile = locator.pathSlaveRes + "/" + configKey + "StorageOperationData.csv"
+    resourcesFile = os.path.join(locator.get_optimization_slave_results_folder(),
+                                 "%(configKey)sStorageOperationData.csv" % locals())
     resourcesdf = pd.read_csv(resourcesFile, usecols=["Q_SCandPVT_coldstream"])
     Q_fromSolar = resourcesdf.Q_SCandPVT_coldstream.sum()
 
