@@ -24,7 +24,6 @@ class InputLocator(object):
         self.db_path = os.path.join(os.path.dirname(__file__), 'databases', 'CH')
 
         if scenario_path:
-            self.pathMasterRes = os.path.join(self.get_optimization_results_folder(), "master") # Master checkpoints
             self.pathSlaveRes = os.path.join(self.get_optimization_results_folder(), "slave") # Slave results (storage + operation pattern)
             self.pathTotalNtw = os.path.join(self.get_optimization_network_results_folder(), "totals") # Total files (inputs to substation + ntw in master)
             self.pathNtwLayout = os.path.join(self.get_optimization_network_results_folder(), "layout") # Ntw layout files
@@ -44,11 +43,17 @@ class InputLocator(object):
         """scenario/outputs/data/optimization"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'optimization')
 
+    def get_optimization_master_results_folder(self):
+        """scenario/outputs/data/optimization/master
+        Master checkpoints
+        """
+        return self._ensure_folder(self.get_optimization_results_folder(), "master")
+
     def get_optimization_network_results_folder(self):
         """scenario/outputs/data/optimization/network
         Network summary results
         """
-        return os.path.join(self.get_optimization_results_folder(), "network")
+        return self._ensure_folder(self.get_optimization_results_folder(), "network")
 
     def get_optimization_disconnected_folder(self):
         """scenario/outputs/data/optimization/disconnected

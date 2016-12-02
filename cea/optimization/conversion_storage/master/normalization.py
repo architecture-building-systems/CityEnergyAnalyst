@@ -24,8 +24,6 @@ def normalizePop(locator, Generation):
     
     Parameters
     ----------
-    pathMasterRes : string
-        path to folder where checkpoints are stored
     Generation : int
         generation to extract
 
@@ -88,8 +86,6 @@ def normalize_epsIndicator(locator, generation):
     
     Parameters
     ----------
-    pathMasterRes : string
-        path to folder where checkpoints are stored
     generation : int
         generation up to which data are extracted
 
