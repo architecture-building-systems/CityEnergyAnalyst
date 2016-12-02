@@ -968,7 +968,7 @@ class BuildingProperties(object):
 
         # total area of the building envelope in [m2], the roof is considered to be flat
         df['Aroof'] = df['footprint']
-        df['Atot'] = df[['Aw', 'Aop_sup', 'footprint', 'Aop_bel']].sum(axis=1) + (df['Aroof'] * (df['floors'] - 1))
+        df['Atot'] = df[['Aw', 'Aop_sup', 'footprint', 'Aop_bel']].sum(axis=1) + (df['Aroof'] * (df['floors'] - 1))  # TODO: check! why is roof counted multiple times (inner walls are not contributing to heat transfer)
 
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated
