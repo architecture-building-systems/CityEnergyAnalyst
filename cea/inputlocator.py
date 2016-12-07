@@ -171,6 +171,14 @@ class InputLocator(object):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain.tif')
 
+    def get_heating_network_edges(self):
+        """scenario/inputs/network/heating-edges.shp"""
+        return os.path.join(self.scenario_path, 'inputs', 'network', 'network-edges.shp')
+
+    def get_heating_network_nodes(self):
+        """scenario/inputs/network/heating-nodes.shp"""
+        return os.path.join(self.scenario_path, 'inputs', 'network', 'network-nodes.shp')
+
     # OUTPUTS
 
     ##SOLAR-RADIATION
