@@ -41,10 +41,11 @@ def get_thermal_network_from_shapefile(locator):
     t0 = time.clock()
 
     # import network properties from shapefile
-    network_df = gpd.read_file(locator.pathNtwLayout + '//' + 'roads.shp')
+    network_edges_df = gpd.read_file(locator.get_heating_network_edges())
+    network_nodes_df = gpd.read_file(locator.get_heating_network_nodes())
 
     # get node and pipe information
-    node_df, pipe_df = extract_network(network_df)
+    node_df, pipe_df = extract_network_edges(network_edges_df)
 
     # create edge and node connection matrix
     # this matrix specifies which edges are connected to which nodes, NOT the direction of flow
@@ -59,6 +60,7 @@ def get_thermal_network_from_shapefile(locator):
         node_names.append('Node'+str(i))
     connections_df = pd.DataFrame(data=edge_node_connections, index = node_names, columns = pipe_names)
 
+    network_nodes_df.to_csv(locator.pathNtwLayout + '//' + 'Node_DF_DH_2.csv')
     node_df.to_csv(locator.pathNtwLayout + '//' + 'Node_DF_DH.csv')
     pipe_df.to_csv(locator.pathNtwLayout + '//' + 'Pipe_DF_DH.csv')
     connections_df.to_csv(locator.pathNtwLayout + '//' + 'EdgeNode_Connection_DH.csv')
@@ -69,7 +71,7 @@ def get_thermal_network_from_shapefile(locator):
 # Utility
 #=============================
 
-def extract_network(shapefile):
+def extract_network_edges(shapefile):
     '''
     extracts network data into dataframes for pipes and nodes in the network
     :param shapefile: network shapefile
@@ -93,7 +95,7 @@ def extract_network(shapefile):
                 end_node.append(i)
 
     node_df = pd.DataFrame(data=nodes, columns=['coordinates'])
-    pipe_df = pd.DataFrame(data=np.column_stack((shapefile['DB2GSE_Sde'].tolist(),start_node,end_node)), columns = ['pipe length','start node','end node'])
+    pipe_df = pd.DataFrame(data=np.column_stack((shapefile['Shape_Leng'].tolist(),start_node,end_node)), columns = ['pipe length','start node','end node'])
 
     return node_df, pipe_df
 
