@@ -71,7 +71,7 @@ def analyze_sensitivity(samples_path, temporal_scale):
         if not os.path.exists(folder):
             os.makedirs(folder)
 
-        if method is 'yearly':
+        if temporal_scale is 'yearly':
             writer = pd.ExcelWriter(
                 os.path.join(samples_path, 'results',
                              'analysis_%s_%i_%s.xls' % (method, problem['N'], output_parameter)))
@@ -89,26 +89,26 @@ def analyze_sensitivity(samples_path, temporal_scale):
                 building_results = [result[analysis_variable] for result in analysis_results]
                 pd.DataFrame(building_results, columns=problem['names']).to_excel(writer, worksheet_name)
             writer.save()
-        else:
-            # method = monthly
-            writer = pd.ExcelWriter(
-                os.path.join(samples_path, 'results',
-                             'analysis_%s_%i_%s_%s.xls' % (method, problem['N'], output_parameter, temporal_scale)))
-            for month in range(12):
-
-                # read the results and get back a matrix m = buildings, n = samples.
-                simulation_results = read_results(samples_path, samples_count, output_parameter, temporal_scale, month)
-
-                # run the analysis for every building and store it in a list
-                analysis_results = [analysis_function(problem, samples, simulation_result) for simulation_result in
-                                    simulation_results]
-
-                # write out a worksheet for each analysis result (e.g. 'S1', 'ST', 'ST_conf' for method == 'sobol')
-                for analysis_variable in analysis_variables:
-                    worksheet_name = str(month + 1) + '_' + analysis_variable  # for every month of the year
-                    building_results = [result[analysis_variable] for result in analysis_results]
-                    pd.DataFrame(building_results, columns=problem['names']).to_excel(writer, worksheet_name)
-            writer.save()
+        # else:
+        #     # temporal_scale = monthly
+        #     writer = pd.ExcelWriter(
+        #         os.path.join(samples_path, 'results',
+        #                      'analysis_%s_%i_%s_%s.xls' % (method, problem['N'], output_parameter, temporal_scale)))
+        #     for month in range(12):
+        #
+        #         # read the results and get back a matrix m = buildings, n = samples.
+        #         simulation_results = read_results(samples_path, samples_count, output_parameter, temporal_scale, month)
+        #
+        #         # run the analysis for every building and store it in a list
+        #         analysis_results = [analysis_function(problem, samples, simulation_result) for simulation_result in
+        #                             simulation_results]
+        #
+        #         # write out a worksheet for each analysis result (e.g. 'S1', 'ST', 'ST_conf' for method == 'sobol')
+        #         for analysis_variable in analysis_variables:
+        #             worksheet_name = str(month + 1) + '_' + analysis_variable  # for every month of the year
+        #             building_results = [result[analysis_variable] for result in analysis_results]
+        #             pd.DataFrame(building_results, columns=problem['names']).to_excel(writer, worksheet_name)
+        #     writer.save()
 
 
 def sobol_analyze_function(problem, _, Y):
@@ -182,15 +182,15 @@ def read_results(samples_folder, samples_count, output_parameter, temporal_scale
         results = np.array(
             [pd.read_csv(os.path.join(samples_folder, 'result.%i.csv' % item))[output_parameter].values for item in
              iterable_samples_count]).T
-    else:
-        # monthly
-        num_buildings = pd.read_csv(os.path.join(samples_folder, 'result.%i.csv')).output_parameter.count()
-        results = np.zeros(samples_count)
-        for sample in iterable_samples_count:
-            results[sample] = np.array([pd.read_csv(
-                os.path.join(samples_folder, 'result.%i.%i.csv' % (sample, building))).loc(month, output_parameter) for
-                                        building in num_buildings])
-        results = results.T
+    # else:
+    #     # monthly
+    #     num_buildings = pd.read_csv(os.path.join(samples_folder, 'result.%i.csv')).output_parameter.count()
+    #     results = np.zeros(samples_count)
+    #     for sample in iterable_samples_count:
+    #         results[sample] = np.array([pd.read_csv(
+    #             os.path.join(samples_folder, 'result.%i.%i.csv' % (sample, building))).loc(month, output_parameter) for
+    #                                     building in num_buildings])
+    #     results = results.T
     return results
 
 
