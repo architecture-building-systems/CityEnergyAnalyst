@@ -72,6 +72,7 @@ def analyze_sensitivity(samples_path, temporal_scale):
             os.makedirs(folder)
 
         if temporal_scale is 'yearly':
+            print 'yessssss'
             writer = pd.ExcelWriter(
                 os.path.join(samples_path, 'analysis_%s_%i_%s.xls' % (method, problem['N'], output_parameter)))
 
