@@ -74,8 +74,7 @@ def substation_main(locator, total_demand, building_names, gv, Flag):
             dfRes = total_demand[(total_demand.Name == name)]
             combi[index] = 1
             key = "".join(str(e) for e in combi)
-            fName_result = "Total_" + key + ".csv"
-            dfRes.to_csv(locator.pathSubsRes + '//' + fName_result, sep=',', float_format='%.3f')
+            dfRes.to_csv(locator.get_optimization_substations_total_file(key), sep=',', float_format='%.3f')
             combi[index] = 0
             # calculate substation parameters per building
             substation_model(locator, gv, buildings[index], T_DHS, T_DHS_supply, T_DCS_supply, Ths, Tww)
@@ -103,8 +102,6 @@ def substation_model(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS
     :return:
         Dataframe stored for every building with the mass flow rates and temperatures district heating and cooling
         side in:
-
-        locator.pathSubsRes+'\\'+fName_result.
 
         where fName_result: ID of the building accounting for the individual at which it belongs to.
 
@@ -209,9 +206,8 @@ def substation_model(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS
                             "T_heating_max_all_buildings_intern": T_heating_sup_max_all_buildings_flat,
                             "Electr_array_all_flat": Electr_array_all_flat})
 
-    fName_result = building.Name.values[0] + "_result.csv"
-    result_substation = locator.pathSubsRes + '\\' + fName_result
-    results.to_csv(result_substation, sep=',', index=False, float_format='%.3f')
+    results.to_csv(locator.get_optimization_substations_results_file(building.Name.values[0]), sep=',', index=False,
+                   float_format='%.3f')
     return results
 
 

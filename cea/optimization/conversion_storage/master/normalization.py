@@ -17,19 +17,18 @@ toolbox = base.Toolbox()
 
 
 
-def normalizePop(pathX, Generation):
+def normalizePop(locator, Generation):
     """
     Normalizes the population with the min / max IN THAT GENERATION
     All 3 objectives are normalized to [0,1] 
     
     Parameters
     ----------
-    pathMasterRes : string
-        path to folder where checkpoints are stored
     Generation : int
         generation to extract
-    pathNtwRes : string
-        path to ntw result folder
+
+    :param locator: InputLocator set to scenario
+    :type locator: cea.inputlocator.InputLocator
     
     Returns
     -------
@@ -37,7 +36,7 @@ def normalizePop(pathX, Generation):
         normalized population
     
     """
-    popFinal, eps, testedPop = sFn.readCheckPoint(pathX, Generation, storeData = 0)
+    popFinal, eps, testedPop = sFn.readCheckPoint(locator, Generation, storeData = 0)
 
     maxCosts =0
     minCosts =0
@@ -79,7 +78,7 @@ def normalizePop(pathX, Generation):
 
 
 
-def normalize_epsIndicator(pathX, generation):
+def normalize_epsIndicator(locator, generation):
     """
     Calculates the normalized epsilon indicator
     For all generations, the populations are normalized with regards to the
@@ -87,12 +86,11 @@ def normalize_epsIndicator(pathX, generation):
     
     Parameters
     ----------
-    pathMasterRes : string
-        path to folder where checkpoints are stored
     generation : int
         generation up to which data are extracted
-    pathNtwRes : string
-        path to ntw result folder
+
+    :param locator: InputLocator set to scenario
+    :type locator: cea.inputlocator.InputLocator
     
     Returns
     -------
@@ -107,7 +105,7 @@ def normalize_epsIndicator(pathX, generation):
     # Load the populations
     i = 1
     while i < generation+1:
-        pop, eps, testedPop = sFn.readCheckPoint(pathX, i, storeData = 0)
+        pop, eps, testedPop = sFn.readCheckPoint(locator, i, storeData = 0)
         i+=1
         allPop.append(pop)
         
@@ -165,17 +163,15 @@ def normalize_epsIndicator(pathX, generation):
 
 
 
-def decentralizeCosts(individual, pathX, gV):
+def decentralizeCosts(individual, locator, gV):
     indCombi = sFn.individual_to_barcode(individual, gV)
-    buildList = sFn.extractList(pathX.pathRaw + "/Total.csv")
+    buildList = sFn.extractList(locator.pathRaw + "/Total.csv")
     costsDisc = 0
 
     for i in range(len(indCombi)):
         if indCombi[i] == "0": # Decentralized building
-            buildName = buildList[i]
-            DecentFile = pathX.pathDiscRes + "/DiscOp_" + buildName + "_result.csv"
-
-            df = pd.read_csv(DecentFile)
+            building_name = buildList[i]
+            df = pd.read_csv(locator.get_optimization_disconnected_result_file(building_name))
             dfBest = df[df["Best configuration"] == 1]
 
             costsDisc += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
