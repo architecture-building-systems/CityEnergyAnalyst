@@ -73,8 +73,7 @@ def analyze_sensitivity(samples_path, temporal_scale):
 
         if temporal_scale is 'yearly':
             writer = pd.ExcelWriter(
-                os.path.join(samples_path, 'results',
-                             'analysis_%s_%i_%s.xls' % (method, problem['N'], output_parameter)))
+                os.path.join(folder, 'analysis_%s_%i_%s.xls' % (method, problem['N'], output_parameter)))
 
             # read the results and get back a matrix m = buildings, n = samples.
             simulation_results = read_results(samples_path, samples_count, output_parameter, temporal_scale, month=0)
@@ -92,8 +91,7 @@ def analyze_sensitivity(samples_path, temporal_scale):
         # else:
         #     # temporal_scale = monthly
         #     writer = pd.ExcelWriter(
-        #         os.path.join(samples_path, 'results',
-        #                      'analysis_%s_%i_%s_%s.xls' % (method, problem['N'], output_parameter, temporal_scale)))
+        #         os.path.join(folder, 'analysis_%s_%i_%s_%s.xls' % (method, problem['N'], output_parameter, temporal_scale)))
         #     for month in range(12):
         #
         #         # read the results and get back a matrix m = buildings, n = samples.
