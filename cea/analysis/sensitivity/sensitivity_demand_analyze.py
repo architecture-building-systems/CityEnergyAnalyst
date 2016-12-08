@@ -71,24 +71,24 @@ def analyze_sensitivity(samples_path, temporal_scale):
         if not os.path.exists(folder):
             os.makedirs(folder)
 
-        if temporal_scale is 'yearly':
-            print 'yessssss'
-            writer = pd.ExcelWriter(
-                os.path.join(samples_path, 'analysis_%s_%i_%s.xls' % (method, problem['N'], output_parameter)))
+        #if temporal_scale is 'yearly':
+        #    print 'yessssss'
+        writer = pd.ExcelWriter(
+            os.path.join(samples_path, 'analysis_%s_%i_%s.xls' % (method, problem['N'], output_parameter)))
 
-            # read the results and get back a matrix m = buildings, n = samples.
-            simulation_results = read_results(samples_path, samples_count, output_parameter, temporal_scale, month=0)
+        # read the results and get back a matrix m = buildings, n = samples.
+        simulation_results = read_results(samples_path, samples_count, output_parameter, temporal_scale, month=0)
 
-            # run the analysis for every building and store it in a list
-            analysis_results = [analysis_function(problem, samples, simulation_result) for simulation_result in
-                                simulation_results]
+        # run the analysis for every building and store it in a list
+        analysis_results = [analysis_function(problem, samples, simulation_result) for simulation_result in
+                            simulation_results]
 
-            # write out a worksheet for each analysis result (e.g. 'S1', 'ST', 'ST_conf' for method == 'sobol')
-            for analysis_variable in analysis_variables:
-                worksheet_name = analysis_variable
-                building_results = [result[analysis_variable] for result in analysis_results]
-                pd.DataFrame(building_results, columns=problem['names']).to_excel(writer, worksheet_name)
-            writer.save()
+        # write out a worksheet for each analysis result (e.g. 'S1', 'ST', 'ST_conf' for method == 'sobol')
+        for analysis_variable in analysis_variables:
+            worksheet_name = analysis_variable
+            building_results = [result[analysis_variable] for result in analysis_results]
+            pd.DataFrame(building_results, columns=problem['names']).to_excel(writer, worksheet_name)
+        writer.save()
         # else:
         #     # temporal_scale = monthly
         #     writer = pd.ExcelWriter(
@@ -177,10 +177,10 @@ def read_results(samples_folder, samples_count, output_parameter, temporal_scale
     - `$samples_folder/result.$i.csv` for i in range(samples_count)
     """
     iterable_samples_count = range(samples_count)
-    if temporal_scale is 'yearly':
-        results = np.array(
-            [pd.read_csv(os.path.join(samples_folder, 'result.%i.csv' % item))[output_parameter].values for item in
-             iterable_samples_count]).T
+    #if temporal_scale is 'yearly':
+    results = np.array(
+        [pd.read_csv(os.path.join(samples_folder, 'result.%i.csv' % item))[output_parameter].values for item in
+         iterable_samples_count]).T
     # else:
     #     # monthly
     #     num_buildings = pd.read_csv(os.path.join(samples_folder, 'result.%i.csv')).output_parameter.count()
