@@ -12,6 +12,7 @@ import matplotlib.cm as cmx
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import os
 
 import cea.optimization.conversion_storage.master.normalization as norm
 import cea.optimization.supportFn as sFn
@@ -338,15 +339,15 @@ plot electricity imports and exports
 =========================================
 """
 
-def Elec_ImportExport(individual, pathX):
+def Elec_ImportExport(individual, locator):
 
     # Extract Electricity needs
-    buildList = sFn.extractList(pathX.pathRaw + "/Total.csv")
+    buildList = sFn.extractList(locator.pathRaw + "/Total.csv")
 
     allElec = np.zeros((8760,1))
 
     for build in buildList:
-        buildFileRaw = pathX.pathRaw + "/" + build + ".csv"
+        buildFileRaw = locator.pathRaw + "/" + build + ".csv"
         builddf = pd.read_csv(buildFileRaw, usecols = ["Ealf", "Eauxf", "Ecaf", "Edataf", "Epf"])
         buildarray = np.array(builddf)
 
@@ -356,8 +357,8 @@ def Elec_ImportExport(individual, pathX):
 
     # Extract electricity produced form solar
     configKey = "".join(str(e)[0:4] for e in individual)
-    PPactivationFile = pathX.pathSlaveRes + '/' + configKey + 'PPActivationPattern.csv'
-    ESolardf = pd.read_csv(PPactivationFile, usecols = ['ESolarProducedPVandPVT'])
+    ESolardf = pd.read_csv(os.path.join(locator.get_optimization_slave_results_folder(),
+                                        configKey + 'PPActivationPattern.csv'), usecols=['ESolarProducedPVandPVT'])
     EsolarArray = np.array(ESolardf)
 
     # Compute Import / Export
@@ -380,10 +381,11 @@ test
 =========================================
 """
 
-def test_graph_demand():
+def test_graphs_optimization():
+    import cea.inputlocator
+    import cea.globalvar
     locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
-    import globalvar
-    gv = globalvar.GlobalVariables()
+    gv = cea.globalvar.GlobalVariables()
     # define scenarios and headers
     scenarios = ['BAU', 'CAMP', 'HEB', 'UC']
     generations = [24, 24, 5, 24]
@@ -490,4 +492,4 @@ def test_graph_demand():
     # costsDisc = normalizeresults.decentralizeCosts(pop[indexBest], pathX, gV)
 
 if __name__ == '__main__':
-    test_graph_demand()
+    test_graphs_optimization()

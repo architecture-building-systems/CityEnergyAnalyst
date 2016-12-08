@@ -8,7 +8,7 @@ pre-processing algorithm
 from __future__ import division
 
 import pandas as pd
-
+import os
 import cea.optimization.preprocessing.extra_loads.processheat as process_heat
 from cea.optimization.conversion_storage.master import summarize_network
 from cea.optimization.preprocessing.decentralized_buildings import decentralized_buildings
@@ -90,13 +90,13 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
 
 class SolarFeatures(object):
     def __init__(self, locator):
-        self.PV_Peak = pd.read_csv(locator.pathSolarRaw + "/Pv.csv", usecols=["PV_kWh"]).values.max()
-        self.SolarAreaPV = pd.read_csv(locator.pathSolarRaw + "/Pv.csv", usecols=["Area"]).values.max()
-        self.PVT_Peak = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols=["PV_kWh"]).values.max()
-        self.PVT_Qnom = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols=["Qsc_KWh"]).values.max()*1000
-        self.SolarAreaPVT = pd.read_csv(locator.pathSolarRaw + "/PVT_35.csv", usecols=["Area"]).values.max()
-        self.SC_Qnom = pd.read_csv(locator.pathSolarRaw + "/SC_75.csv", usecols=["Qsc_Kw"]).values.max()* 1000
-        self.SolarAreaSC = pd.read_csv(locator.pathSolarRaw + "/SC_75.csv", usecols=["Area"]).values.max()
+        self.PV_Peak = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "Pv.csv"), usecols=["PV_kWh"]).values.max()
+        self.SolarAreaPV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "Pv.csv"), usecols=["Area"]).values.max()
+        self.PVT_Peak = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "PVT_35.csv"), usecols=["PV_kWh"]).values.max()
+        self.PVT_Qnom = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "PVT_35.csv"), usecols=["Qsc_KWh"]).values.max()*1000
+        self.SolarAreaPVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "PVT_35.csv"), usecols=["Area"]).values.max()
+        self.SC_Qnom = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "SC_75.csv"), usecols=["Qsc_Kw"]).values.max()* 1000
+        self.SolarAreaSC = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "SC_75.csv"), usecols=["Area"]).values.max()
 
 #============================
 #test

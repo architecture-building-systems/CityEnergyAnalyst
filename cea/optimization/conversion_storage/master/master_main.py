@@ -56,7 +56,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     :param genCP:
     :return:
         for every generation 'g': it stores the results of every generation of the genetic algorithm in the subfolders
-        locator.pathMasterRes as a pyhton pickle file.
+        locator.get_optimization_master_results_folder() as a python pickle file.
 
     """
     t0 = time.clock()
@@ -103,14 +103,14 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         
         # Save initial population
         print "Save Initial population \n"
-        os.chdir(locator.pathMasterRes)
+        os.chdir(locator.get_optimization_master_results_folder())
         with open("CheckPointInitial","wb") as CPwrite:
             CPpickle = Pickler(CPwrite)
             cp = dict(population=pop, generation=0, networkList = ntwList, epsIndicator = [], testedPop = [])
             CPpickle.dump(cp)
     else:
         print "Recover from CP " + str(genCP) + "\n"
-        os.chdir(locator.pathMasterRes)
+        os.chdir(locator.get_optimization_master_results_folder())
 
         with open("CheckPoint" + str(genCP), "rb") as CPread:
             CPunpick = Unpickler(CPread)
@@ -201,7 +201,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         
         # Create Checkpoint if necessary
         if g % gv.fCheckPoint == 0:
-            os.chdir(locator.pathMasterRes)
+            os.chdir(locator.get_optimization_master_results_folder())
             
             print "Create CheckPoint", g, "\n"
             with open("CheckPoint" + str(g),"wb") as CPwrite:
@@ -218,7 +218,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     # Saving the final results
     print "Save final results. " + str(len(pop)) + " individuals in final population"
     print "Epsilon indicator", epsInd, "\n"
-    os.chdir(locator.pathMasterRes)
+    os.chdir(locator.get_optimization_master_results_folder())
     
     with open("CheckPointFinal","wb") as CPwrite:
         CPpickle = Pickler(CPwrite)
