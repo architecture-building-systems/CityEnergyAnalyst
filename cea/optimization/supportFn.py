@@ -124,8 +124,6 @@ def createTotalNtwCsv(indCombi, locator):
         string of 0 and 1: 0 of the building is disconnected, 1 if connected
     locator: string
         path to raw files
-    pathTotalNtw :string
-        path to were to store the csv Total file
     
     Returns
     -------
@@ -143,25 +141,22 @@ def createTotalNtwCsv(indCombi, locator):
         rank += 1
     
     dfRes = df.drop(df.index[index])
-    
-    fName_result = "Total_" + indCombi + ".csv"
-    dfRes.to_csv(locator.pathTotalNtw+'//'+fName_result, sep= ',')
-    
+    dfRes.to_csv(os.path.join(locator.get_optimization_network_totals_folder(), "Total_" + indCombi + ".csv"), sep=',')
     return dfRes
     
 
-def readCheckPoint(pathX, genCP, storeData):
+def readCheckPoint(locator, genCP, storeData):
     """
     Extracts data from the checkpoints created in the master routine
     
     Parameters
     ----------
-    pathMasterRes : string
-        path to folder where CPs are stored
     genCP : int
         generation from whom to extract data
-    pathNtwRes : string
-        path to folder where the files from the distribution routine are stored
+
+    :param locator: InputLocator set to scenario
+    :type locator: cea.inputlocator.InputLocator
+
     storeData : int
         0 if no, 1 if yes
     
@@ -176,7 +171,7 @@ def readCheckPoint(pathX, genCP, storeData):
         list of individuals tested in that generation
     
     """    
-    os.chdir(pathX.pathMasterRes)
+    os.chdir(locator.get_optimization_master_results_folder())
 
     # Set the DEAP toolbox
     creator.create("Fitness", base.Fitness, weights=(-1.0, -1.0, -1.0))
@@ -191,14 +186,14 @@ def readCheckPoint(pathX, genCP, storeData):
         testedPop = cp["testedPop"]
 
     if storeData == 1:
-        data_container = [['Cost', 'CO2', 'Eprim_i','Qmax', 'key']]
+        data_container = [['Cost', 'CO2', 'Eprim_i', 'Qmax', 'key']]
         ind_counter = 0
         for ind in pop:
-            
+            # FIXME: possibly refactor a: inline, also, this construction is weird...
             a = [ind.fitness.values]
-            CO2      = [int(i[0]) for i in a]
-            cost     = [int(i[1]) for i in a]
-            Eprim    = [int(i[2]) for i in a]
+            CO2 = [int(i[0]) for i in a]
+            cost = [int(i[1]) for i in a]
+            Eprim = [int(i[2]) for i in a]
             
             key = pop[ind_counter]
             
@@ -209,7 +204,7 @@ def readCheckPoint(pathX, genCP, storeData):
             else:
                 fNameNtw = "Network_summary_result_" + indCombi + ".csv"
             
-            Qmax = calcQmax(fNameNtw, pathX.pathNtwRes)
+            Qmax = calcQmax(fNameNtw, locator.get_optimization_network_results_folder())
             print fNameNtw
             #print indCombi
             print Qmax
@@ -218,8 +213,9 @@ def readCheckPoint(pathX, genCP, storeData):
             data_container.append(features)
             ind_counter += 1
         results = pd.DataFrame(data_container)
-        Name = pathX.pathMasterRes + "/ParetoValuesAndKeysGeneration" + genCP+".csv"
-        results.to_csv(Name, sep= ',')
+        pareto_results_file = os.path.join(locator.get_optimization_master_results_folder(),
+                                           "ParetoValuesAndKeysGeneration%(genCP)s.csv" % locals())
+        results.to_csv(pareto_results_file, sep=',')
 
     return pop, eps, testedPop
 
