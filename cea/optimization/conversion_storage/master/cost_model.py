@@ -34,6 +34,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
+
 def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncoveredAnnual, solarFeat, ntwFeat, gv):
     """
     Computes additional costs / GHG emisions / primary energy needs
@@ -45,8 +46,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         with 0 if disconnected building, 1 if connected
     buildList : list
         list of buildings in the district
-    locator : string
-        path to folders
+    :param locator: InputLocator set to scenario
+    :type locator: cea.inputlocator.InputLocator
+
     dicoSupply : class context
         with the features of the specific individual
     QuncoveredDesign : float
@@ -67,7 +69,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
     
     # Add the features from the disconnected buildings
     print "\n COSTS FROM DISCONNECTED BUILDINGS"
-    os.chdir(locator.pathDiscRes)
+    os.chdir(locator.get_optimization_disconnected_folder())
     CostDiscBuild = 0
     CO2DiscBuild = 0
     PrimDiscBuild = 0
@@ -92,16 +94,16 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
     pumpCosts = 0
     GasConnectionInvCost = 0 
     
-    for (index, buildName) in zip(indCombi, buildList):
+    for (index, building_name) in zip(indCombi, buildList):
         if index == "0":
-            discFileName = "DiscOp_" + buildName + "_result.csv"
+            discFileName = "DiscOp_" + building_name + "_result.csv"
             df = pd.read_csv(discFileName)
             dfBest = df[df["Best configuration"] == 1]
             CostDiscBuild += dfBest["Total Costs [CHF]"].iloc[0] # [CHF]
             CO2DiscBuild += dfBest["CO2 Emissions [kgCO2-eq]"].iloc[0] # [kg CO2]
             PrimDiscBuild += dfBest["Primary Energy Needs [MJoil-eq]"].iloc[0] # [MJ-oil-eq]
 
-            print  dfBest["Total Costs [CHF]"].iloc[0], buildName, "disconnected"
+            print  dfBest["Total Costs [CHF]"].iloc[0], building_name, "disconnected"
 
         else:
             nBuildinNtw += 1
@@ -113,7 +115,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
     # Add the features for the distribution
 
     if indCombi.count("1") > 0:
-        os.chdir(locator.pathSlaveRes)
+        os.chdir(locator.get_optimization_slave_results_folder())
         
         print " \n MACHINERY COSTS"
         # Add the investment costs of the energy systems
@@ -225,28 +227,36 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         # Hex and HP for Heat recovery
         print "\n STORAGE PART COSTS"
         if dicoSupply.WasteServersHeatRecovery == 1:
-            df = pd.read_csv(locator.pathNtwRes + "/" + dicoSupply.NETWORK_DATA_FILE, usecols = ["Qcdata_netw_total"])
+            df = pd.read_csv(
+                os.path.join(locator.get_optimization_network_results_folder(), dicoSupply.NETWORK_DATA_FILE),
+                usecols=["Qcdata_netw_total"])
             array = np.array(df)
             QhexMax = np.amax(array)
             StorageHEXCost += hex.calc_Cinv_HEX(QhexMax, gv)
             
             print hex.calc_Cinv_HEX(QhexMax, gv), "Hex for data center"
-            
-            df = pd.read_csv(locator.pathSlaveRes + "/" + dicoSupply.configKey + "StorageOperationData.csv", usecols = ["HPServerHeatDesignArray"])
+
+            df = pd.read_csv(os.path.join(locator.get_optimization_slave_results_folder(),
+                                          dicoSupply.configKey + "StorageOperationData.csv"),
+                             usecols=["HPServerHeatDesignArray"])
             array = np.array(df)
             QhpMax = np.amax(array)
             StorageHEXCost += hp.calc_Cinv_HP(QhpMax, gv)
             print hp.calc_Cinv_HP(QhpMax, gv), "HP for data center"
             
         if dicoSupply.WasteCompressorHeatRecovery == 1:
-            df = pd.read_csv(locator.pathNtwRes + "/" + dicoSupply.NETWORK_DATA_FILE, usecols = ["Ecaf_netw_total"])
+            df = pd.read_csv(
+                os.path.join(locator.get_optimization_network_results_folder(), dicoSupply.NETWORK_DATA_FILE),
+                usecols=["Ecaf_netw_total"])
             array = np.array(df)
             QhexMax = np.amax(array)
         
             StorageHEXCost += hex.calc_Cinv_HEX(QhexMax, gv)
             print hex.calc_Cinv_HEX(QhexMax, gv), "Hex for compressed air"
-            
-            df = pd.read_csv(locator.pathSlaveRes + "/" + dicoSupply.configKey + "StorageOperationData.csv", usecols = ["HPCompAirDesignArray"])
+
+            df = pd.read_csv(os.path.join(locator.get_optimization_slave_results_folder(),
+                                          dicoSupply.configKey + "StorageOperationData.csv"),
+                             usecols=["HPCompAirDesignArray"])
             array = np.array(df)
             QhpMax = np.amax(array)
 
@@ -255,7 +265,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         addCosts += StorageHEXCost
         
         # Heat pump solar to storage
-        df = pd.read_csv(locator.pathSlaveRes + "/" + dicoSupply.configKey + "StorageOperationData.csv", usecols = ["HPScDesignArray", "HPpvt_designArray"])
+        df = pd.read_csv(os.path.join(locator.get_optimization_slave_results_folder(),
+                                      dicoSupply.configKey + "StorageOperationData.csv"),
+                         usecols=["HPScDesignArray", "HPpvt_designArray"])
         array = np.array(df)
         QhpMax_PVT = np.amax(array[:,1])
         QhpMax_SC = np.amax(array[:,0])
@@ -267,7 +279,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         print hp.calc_Cinv_HP(QhpMax_SC, gv), "HP for SC"
         
         # HP for storage operation
-        df = pd.read_csv(locator.pathSlaveRes + "/" + dicoSupply.configKey + "StorageOperationData.csv", usecols = ["E_aux_ch", "E_aux_dech", "Q_from_storage_used", "Q_to_storage"])
+        df = pd.read_csv(os.path.join(locator.get_optimization_slave_results_folder(),
+                                      dicoSupply.configKey + "StorageOperationData.csv"),
+                         usecols=["E_aux_ch", "E_aux_dech", "Q_from_storage_used", "Q_to_storage"])
         array = np.array(df)
         QmaxHPStorage = 0
         for i in range(gv.DAYS_IN_YEAR * gv.HOURS_IN_DAY):
@@ -283,7 +297,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         
         
         # Storage
-        df = pd.read_csv(locator.pathSlaveRes + "/" + dicoSupply.configKey + "StorageOperationData.csv", usecols = ["Storage_Size"], nrows = 1)
+        df = pd.read_csv(os.path.join(locator.get_optimization_slave_results_folder(),
+                                      dicoSupply.configKey + "StorageOperationData.csv"),
+                         usecols=["Storage_Size"], nrows=1)
         StorageVol = np.array(df)[0][0]
         StorageInvC += storage.calc_Cinv_storage(StorageVol, gv)
         addCosts += StorageInvC
@@ -300,16 +316,15 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         print ntwFeat.pipesCosts_DHN * nBuildinNtw / len(buildList), "Pipes Costs"
     
         # HEX (1 per building in ntw)
-        for (index, buildName) in zip(indCombi, buildList):
+        for (index, building_name) in zip(indCombi, buildList):
             if index == "1":
-                
-                subsFileName = buildName + "_result.csv"
-                df = pd.read_csv(locator.pathSubsRes + "/" + subsFileName, usecols = ["Q_dhw", "Q_heating"])
+                df = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
+                                 usecols=["Q_dhw", "Q_heating"])
                 subsArray = np.array(df)
                 
                 Qmax = np.amax( subsArray[:,0] + subsArray[:,1] )
                 SubstHEXCost += hex.calc_Cinv_HEX(Qmax, gv)
-                print hex.calc_Cinv_HEX(Qmax, gv), "Hex", buildName
+                print hex.calc_Cinv_HEX(Qmax, gv), "Hex", building_name
         addCosts += SubstHEXCost
 
         # HEX for solar
@@ -339,7 +354,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         
         print addCosts,"addCosts in extraCostsMain"
         # Pump operation costs
-        pumpCosts = pumps.calc_Ctot_pump(dicoSupply, buildList, locator.pathNtwRes, ntwFeat, gv)
+        pumpCosts = pumps.calc_Ctot_pump(dicoSupply, buildList, locator.get_optimization_network_results_folder(), ntwFeat, gv)
         addCosts += pumpCosts
         print pumpCosts, "Pump Operation costs in extraCostsMain\n"
     
@@ -347,10 +362,11 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
 
     if indCombi.count("1") > 0:
         # import gas consumption data from:
-        
-        FileName = locator.pathSlaveRes + "/" + dicoSupply.configKey + "PrimaryEnergyBySource.csv"
-        colName = "EgasPrimaryPeakPower"
-        EgasPrimaryDataframe = pd.read_csv(FileName, usecols=[colName])
+
+        EgasPrimaryDataframe = pd.read_csv(
+            os.path.join(locator.get_optimization_slave_results_folder(),
+                         dicoSupply.configKey + "PrimaryEnergyBySource.csv"),
+            usecols=["EgasPrimaryPeakPower"])
         #print EgasPrimaryDataframe
         #print np.array(EgasPrimaryDataframe)
         
@@ -388,8 +404,8 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
                             "SumInvestCost":[addCosts],
                             "GasConnectionInvCa":[GasConnectionInvCost]
                             })
-    Name = "/" + dicoSupply.configKey + "_InvestmentCostDetailed.csv"
-    results.to_csv(locator.pathSlaveRes + Name, sep=',')
+    results.to_csv(os.path.join(locator.get_optimization_slave_results_folder(),
+                                dicoSupply.configKey + "_InvestmentCostDetailed.csv"), sep=',')
      
       
     return (addCosts, addCO2, addPrim)
