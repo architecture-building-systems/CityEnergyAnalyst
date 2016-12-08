@@ -6,6 +6,7 @@ Hydraulic - thermal network
 """
 from __future__ import division
 import time
+import os
 import numpy as np
 import pandas as pd
 import math
@@ -33,9 +34,9 @@ def network_main(locator, total_demand, building_names, gv, key):
     :param key: when called by the optimization, a key will provide an id for the individual
      and the generation.
     :return:
-        csv file stored in locator.pathNtwRes + '//' + fName_result
+        csv file stored in locator.get_optimization_network_results_folder() as fName_result
         where
-        fName_result:
+        fName_result: FIXME: what?
 
     """
 
@@ -43,7 +44,7 @@ def network_main(locator, total_demand, building_names, gv, key):
 
     # import properties of distribution
     num_buildings_network = total_demand.Name.count()
-    pipes_tot_length = pd.read_csv(locator.get_pipes_DH_network, usecols=['LENGTH'])
+    pipes_tot_length = pd.read_csv(locator.get_optimization_network_layout_pipes_file(), usecols=['LENGTH'])
     ntwk_length = pipes_tot_length.sum() * num_buildings_network / len(building_names) #gv.num_tot_buildings
 
     # empty vectors
@@ -62,11 +63,10 @@ def network_main(locator, total_demand, building_names, gv, key):
     mdot_heat_netw_min = np.zeros(8760) + 1E6
     mdot_cool_netw_min = np.zeros(8760) + 1E6
     iteration = 0
-    for name in building_names:
-        buildings.append(pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv", usecols=['mcpdataf_kWC',
-                                                                                                          'Qcdataf_kWh',
-                                                                                                          'Ecaf_kWh']))
-        substations.append(pd.read_csv(locator.pathSubsRes + '//' + name + '_result' + ".csv",
+    for building_name in building_names:
+        buildings.append(pd.read_csv(locator.get_demand_results_file(building_name),
+                                     usecols=['mcpdataf_kWC', 'Qcdataf_kWh', 'Ecaf_kWh']))
+        substations.append(pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                                        usecols=['Electr_array_all_flat', 'mdot_DH_result', 'mdot_DC_result',
                                                 'Q_heating',
                                                 'Q_dhw', 'Q_cool', 'T_return_DH_result', 'T_return_DC_result',
@@ -164,7 +164,7 @@ def network_main(locator, total_demand, building_names, gv, key):
 
     # the key depicts weather this is the distribution of all customers or a distribution of a gorup of them.
     fName_result = "Network_summary_result_" + key + ".csv"
-    results.to_csv(locator.pathNtwRes + '//' + fName_result, sep=',')
+    results.to_csv(os.path.join(locator.get_optimization_network_results_folder(), fName_result), sep=',')
 
     print time.clock() - t0, "seconds process time for Network summary for configuration", key, "\n"
 

@@ -58,7 +58,8 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
     ############# Recover the cooling needs
     
     # Space cooling previously aggregated in the substation routine
-    df = pd.read_csv(locator.pathNtwRes + "/Network_summary_result_all.csv", usecols=["T_sst_cool_return_netw_total", "mdot_cool_netw_total"])
+    df = pd.read_csv(os.path.join(locator.get_optimization_network_results_folder(), "Network_summary_result_all.csv"),
+                     usecols=["T_sst_cool_return_netw_total", "mdot_cool_netw_total"])
     coolArray = np.nan_to_num( np.array(df) )
     TsupCool = gv.TsupCool
     
@@ -73,7 +74,7 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
     
     ############# Recover the heat already taken from the lake by the heat pumps
     try:
-        os.chdir(locator.pathSlaveRes)
+        os.chdir(locator.get_optimization_slave_results_folder())
         fNameSlaveRes = configKey + "PPActivationPattern.csv"
         
         dfSlave = pd.read_csv(fNameSlaveRes, usecols=["Qcold_HPLake"])
