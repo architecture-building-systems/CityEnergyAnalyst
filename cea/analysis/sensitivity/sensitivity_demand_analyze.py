@@ -194,7 +194,7 @@ def read_results(samples_folder, samples_count, output_parameter, temporal_scale
             results[sample] = [pd.read_csv(
                 os.path.join(samples_folder, 'result.%i.%i.csv' % (sample, building))).loc[month, output_parameter] for
                                         building in iterable_num_buildings]
-        results = results.
+        results = results.T
     return results
 
 
