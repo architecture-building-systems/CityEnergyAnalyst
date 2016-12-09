@@ -122,12 +122,15 @@ class MonthlyDemandWriter(DemandWriter):
         monthly_data = monthly_data.rename(
             columns=dict((x + '_kWh', x + '_MWhyr') for x in self.vars_to_print[LOAD_VARS]))
 
-        peaks = hourly_data[[x + '0_kW' for x in self.vars_to_print[LOAD_VARS]]].groupby(
-                   by=[hourly_data.index.month]).max() / 1000
-        monthly_data.merge(peaks, left_index=True, right_index=True)
+        peaks = hourly_data[[x + '_kWh' for x in self.vars_to_print[LOAD_VARS]]].groupby(
+                   by=[hourly_data.index.month]).max()
+        peaks = peaks.rename(
+            columns=dict((x + '_kWh', x + '0_kW') for x in self.vars_to_print[LOAD_VARS]))
 
-        monthly_data['Name'] = building_name
-        monthly_data.to_csv(locator.get_demand_results_file(building_name), index=False, float_format=FLOAT_FORMAT)
+        monthly_data_new = monthly_data.merge(peaks, left_index=True, right_index=True)
+
+        monthly_data_new['Name'] = building_name
+        monthly_data_new.to_csv(locator.get_demand_results_file(building_name), index=False, float_format=FLOAT_FORMAT)
 
 
     def write_totals_csv(self, building_properties, locator):
