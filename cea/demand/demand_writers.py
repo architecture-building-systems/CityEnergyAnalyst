@@ -115,6 +115,9 @@ class MonthlyDemandWriter(DemandWriter):
             by=[hourly_data.index.month]).sum() / 1000
         monthly_data = monthly_data.rename(
             columns=dict((x + '_kWh', x + '_MWhyr') for x in self.vars_to_print[LOAD_VARS]))
+
+        if self.gv.print_yearly_peak:
+            monthly_data.update(dict((x + '0_kW', hourly_data[x].max() / 1000) for x in self.vars_to_print[LOAD_VARS]))
         monthly_data['Name'] = building_name
         monthly_data.to_csv(locator.get_demand_results_file(building_name), index=False, float_format=FLOAT_FORMAT)
 
