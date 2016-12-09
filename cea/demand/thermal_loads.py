@@ -258,7 +258,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd.update(dict((x, np.zeros(8760)) for x in fields_to_fill))
 
     # write results to csv
-    gv.demand_writer = cea.demand.demand_writers.MonthlyDemandWriter(gv)
     gv.demand_writer.results_to_csv(tsd, bpr, locator, date, building_name)
     # write report
     gv.report('calc-thermal-loads', locals(), locator.get_demand_results_folder(), building_name)
