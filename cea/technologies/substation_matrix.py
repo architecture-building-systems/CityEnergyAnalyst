@@ -54,7 +54,6 @@ def substation_HEX_design_main(locator, total_demand, building_names, gv):
     buildings = []
     Tsupply_all_bui_df = pd.DataFrame()
     Tsupply_bui_df = pd.DataFrame()
-    A = []
     for name in building_names:
         buildings.append(pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
                                      usecols=['Name', 'Thsf_sup_C', 'Thsf_re_C', 'Tcsf_sup_C', 'Tcsf_re_C',
