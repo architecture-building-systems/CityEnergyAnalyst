@@ -123,7 +123,7 @@ class MonthlyDemandWriter(DemandWriter):
             columns=dict((x + '_kWh', x + '_MWhyr') for x in self.vars_to_print[LOAD_VARS]))
 
         # get peak values
-        monthly_data.update(hourly_data[[x + '0_kW' for x in self.vars_to_print[LOAD_VARS]]].groupby(
+        monthly_data.append(hourly_data[[x + '0_kW' for x in self.vars_to_print[LOAD_VARS]]].groupby(
             by=[hourly_data.index.month]).max() / 1000)
 
         monthly_data['Name'] = building_name
