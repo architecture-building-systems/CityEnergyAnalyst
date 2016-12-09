@@ -45,7 +45,7 @@ def get_thermal_network_from_shapefile(locator):
     network_nodes_df = gpd.read_file(locator.get_heating_network_nodes())
 
     # get node and pipe information
-    node_df, pipe_df = extract_network_edges(network_edges_df)
+    node_df, pipe_df = extract_network(network_edges_df, network_nodes_df, locator)
 
     # create edge and node connection matrix
     # this matrix specifies which edges are connected to which nodes, NOT the direction of flow
@@ -71,7 +71,7 @@ def get_thermal_network_from_shapefile(locator):
 # Utility
 #=============================
 
-def extract_network_edges(shapefile):
+def extract_network(edges_df, end_nodes_df, locator):
     '''
     extracts network data into dataframes for pipes and nodes in the network
     :param shapefile: network shapefile
@@ -80,22 +80,63 @@ def extract_network_edges(shapefile):
     '''
     import numpy as np
 
+    # import consumer and plant nodes
+    end_nodes = []
+    for node in end_nodes_df['geometry']:
+        end_nodes.append(node.coords[0])
+    end_nodes_df['geometry'] = end_nodes
+    end_nodes_df = end_nodes_df.drop(['Af','AncillaryR','Enabled','Floors','Hs','ID','Qc','Qh','Year','height'],axis=1)
+    end_nodes_df['consumer'] = np.ones(len(end_nodes_df['Plant']))-end_nodes_df['Plant'].values
+    #end_nodes_df = end_nodes_df.set_index(end_nodes_df['geometry'])
+
+    # import network shapefile and extract all edge and node information
     nodes = []
+    node_names = []
+    counter = 0
     start_node = []
     end_node = []
-    for pipe in shapefile['geometry']:
-        if [pipe.coords[0]] not in nodes:
-            nodes.append([pipe.coords[0]])
-        if [pipe.coords[1]] not in nodes:
-            nodes.append([pipe.coords[1]])
+    for pipe in edges_df['geometry']:
+        if pipe.coords[0] not in nodes:
+            nodes.append(pipe.coords[0])
+            node_names.append('NODE' + str(counter))
+            counter +=1
+        if pipe.coords[1] not in nodes:
+            nodes.append(pipe.coords[1])
+            node_names.append('NODE' + str(counter))
+            counter +=1
         for i in range(len(nodes)):
-            if [pipe.coords[0]] == nodes[i]:
+            if pipe.coords[0] == nodes[i]:
                 start_node.append(i)
-            if [pipe.coords[1]] == nodes[i]:
+            if pipe.coords[1] == nodes[i]:
                 end_node.append(i)
+    '''
+    node_df = pd.DataFrame(data = np.zeros([len(nodes),len(end_nodes_df.columns)]), columns = end_nodes_df.columns)# nodes, columns=['coordinates'])#, index=nodes)
+    node_df['geometry'] = nodes
+    end_nodes_df = end_nodes_df.merge(total_demand[['Name','QHf_MWhyr']], left_on = 'Name', right_on = 'Name')
+    '''
 
-    node_df = pd.DataFrame(data=nodes, columns=['coordinates'])
-    pipe_df = pd.DataFrame(data=np.column_stack((shapefile['Shape_Leng'].tolist(),start_node,end_node)), columns = ['pipe length','start node','end node'])
+    node_df = pd.DataFrame(data = None, columns = ['geometry'])#, index = nodes)
+    node_df['geometry'] = nodes
+    print node_df
+
+    print type(node_df['geometry'])
+    print type(end_nodes_df['geometry'])
+    total_demand = pd.read_csv(locator.get_total_demand())
+
+    #nodes_df = nodes_df.set_index(nodes_df['geometry'])
+
+
+
+    tee = 0
+    for i in range(len(nodes)):
+        node_df['geometry'][i] = nodes[i]
+        if nodes[i] not in nodes_df['geometry']:
+            node_df['Name'][i] = 'TEE'+str(tee)
+            node_df['Plant'][i] = 0
+            node_df['']
+            tee += 1
+    print node_df
+    pipe_df = pd.DataFrame(data=np.column_stack((edges_df['Shape_Leng'].tolist(),start_node,end_node)), columns = ['pipe length','start node','end node'])
 
     return node_df, pipe_df
 
@@ -120,7 +161,6 @@ def run_as_script(scenario_path=None):
         scenario_path = gv.scenario_reference
 
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
-    total_demand = pd.read_csv(locator.get_total_demand())
     building_names = pd.read_csv(locator.get_total_demand())['Name']
     weather_file = locator.get_default_weather()
     # add geothermal part of preprocessing
