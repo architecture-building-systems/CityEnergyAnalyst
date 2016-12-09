@@ -190,9 +190,9 @@ def read_results(samples_folder, samples_count, output_parameter, temporal_scale
         num_buildings = pd.read_csv(os.path.join(samples_folder, 'result.0.csv')).shape[0]
         results = np.zeros(samples_count)
         for sample in iterable_samples_count:
-            results[sample] = np.array([pd.read_csv(
-                os.path.join(samples_folder, 'result.%i.%i.csv' % (sample, building))).loc[month, output_parameter] for
-                                        building in range(num_buildings)])
+            results[sample] = [pd.read_csv(
+                os.path.join(samples_folder, 'result.%i.%i.csv' % (sample, building))).iloc[month, output_parameter] for
+                                        building in range(num_buildings)]
         results = results.T
     return results
 
