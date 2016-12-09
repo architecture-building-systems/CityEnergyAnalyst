@@ -122,24 +122,28 @@ class MonthlyDemandWriter(DemandWriter):
         monthly_data = monthly_data.rename(
             columns=dict((x + '_kWh', x + '_MWhyr') for x in self.vars_to_print[LOAD_VARS]))
 
+        peaks = hourly_data[[x + '0_kW' for x in self.vars_to_print[LOAD_VARS]]].groupby(
+                   by=[hourly_data.index.month]).max() / 1000
+        monthly_data.merge(peaks, left_index=True, right_index=True)
+
         monthly_data['Name'] = building_name
         monthly_data.to_csv(locator.get_demand_results_file(building_name), index=False, float_format=FLOAT_FORMAT)
 
 
-def write_totals_csv(self, building_properties, locator):
-    """read in the temporary results files and append them to the Totals.csv file."""
-    counter = 0
-    for name in building_properties.list_building_names():
-        temporary_file = locator.get_temporary_file('%(name)sT.csv' % locals())
-        if counter == 0:
-            df = pd.read_csv(temporary_file)
-            counter += 1
-        else:
-            df2 = pd.read_csv(temporary_file)
-            df = df.append(df2, ignore_index=True)
-    df.to_csv(locator.get_total_demand(), index=False, float_format='%.3f')
+    def write_totals_csv(self, building_properties, locator):
+        """read in the temporary results files and append them to the Totals.csv file."""
+        counter = 0
+        for name in building_properties.list_building_names():
+            temporary_file = locator.get_temporary_file('%(name)sT.csv' % locals())
+            if counter == 0:
+                df = pd.read_csv(temporary_file)
+                counter += 1
+            else:
+                df2 = pd.read_csv(temporary_file)
+                df = df.append(df2, ignore_index=True)
+        df.to_csv(locator.get_total_demand(), index=False, float_format='%.3f')
 
-    """read saved data of monthly values and return as totals"""
-    monthly_data_buildings = [pd.read_csv(locator.get_demand_results_file(building_name)) for building_name in
-                              building_properties.list_building_names()]
-    return df, monthly_data_buildings
+        """read saved data of monthly values and return as totals"""
+        monthly_data_buildings = [pd.read_csv(locator.get_demand_results_file(building_name)) for building_name in
+                                  building_properties.list_building_names()]
+        return df, monthly_data_buildings
