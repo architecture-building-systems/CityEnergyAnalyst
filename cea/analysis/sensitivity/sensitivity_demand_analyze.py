@@ -187,7 +187,7 @@ def read_results(samples_folder, samples_count, output_parameter, temporal_scale
             [pd.read_csv(os.path.join(samples_folder, 'result.%i.csv' % item))[output_parameter].values for item in
              iterable_samples_count]).T
     else:
-        num_buildings = pd.read_csv(os.path.join(samples_folder, 'result.%i.csv')).shape[0]
+        num_buildings = pd.read_csv(os.path.join(samples_folder, 'result.0.csv')).shape[0]
         results = np.zeros(samples_count)
         for sample in iterable_samples_count:
             results[sample] = np.array([pd.read_csv(
