@@ -12,7 +12,6 @@
 # N                    | (not used, except for calculating the default $SAMPLES_FOLDER value)
 # METHOD               | (not used, except for calculating the default $SAMPLES_FOLDER value)
 # SAMPLES_FOLDER       | --samples-folder
-# VARIABLE_GROUPS      | FIXME: not implemented yet
 
 # ---
 # author: Daren Thomas
@@ -31,7 +30,6 @@ N=${N:-1}
 METHOD=${METHOD:-sobol}
 TEMPORAL_SCALE=${TEMPORAL_SCALE:-yearly}
 SAMPLES_FOLDER=${SAMPLES_FOLDER:-${SCRATCH}/samples_${METHOD}_${N}}
-VARIABLE_GROUPS=${VARIABLE_GROUPS:-VARIABLE_GROUPS=${VARIABLE_GROUPS:-THERMAL ARCHITECTURE INDOOR_COMFORT INTERNAL_LOADS}}
 
 mkdir -p $SAMPLES_FOLDER
 
