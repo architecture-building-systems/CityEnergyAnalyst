@@ -87,7 +87,7 @@ def extract_network(edges_df, end_nodes_df, locator):
     end_nodes_df['geometry'] = end_nodes
     end_nodes_df = end_nodes_df.drop(['Af','AncillaryR','Enabled','Floors','Hs','ID','Qc','Qh','Year','height'],axis=1)
     end_nodes_df['consumer'] = np.ones(len(end_nodes_df['Plant']))-end_nodes_df['Plant'].values
-    #end_nodes_df = end_nodes_df.set_index(end_nodes_df['geometry'])
+    end_nodes_df = end_nodes_df.set_index(end_nodes_df['geometry'])
 
     # import network shapefile and extract all edge and node information
     nodes = []
@@ -115,8 +115,8 @@ def extract_network(edges_df, end_nodes_df, locator):
     end_nodes_df = end_nodes_df.merge(total_demand[['Name','QHf_MWhyr']], left_on = 'Name', right_on = 'Name')
     '''
 
-    node_df = pd.DataFrame(data = None, columns = ['geometry'])#, index = nodes)
-    node_df['geometry'] = nodes
+    node_df = pd.DataFrame(data = None, columns = ['geometry'], index = nodes)
+    node_df['coordinates'] = nodes
     print node_df
 
     print type(node_df['geometry'])
