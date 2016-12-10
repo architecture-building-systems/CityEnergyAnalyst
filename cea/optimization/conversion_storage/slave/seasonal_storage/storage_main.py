@@ -6,7 +6,7 @@ storage sizing
 This script sizes the storage and in a second part, it will plot the results of iteration.
 Finally, the storage operation is performed with the parameters found in the storage optimization
 
-All results are saved in the folder of "pathSlaveRes".
+All results are saved in the folder of "locator.get_optimization_slave_results_folder()".
 - Data_with_Storage_applied.csv : Hourly Operation of Storage, especially Q_missing and E_aux is important for further usage
 - Storage_Sizing_Parameters.csv : Saves the parameters found in the storage optimization
 
@@ -44,7 +44,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
     for each individual
     :param gv: global variables class
     :return:
-        The function saves all files when it's done in the location locator.pathSolarRaw
+        The function saves all files when it's done in the location locator.get_potentials_solar_folder()
 
     """
     print "Storage Optimization Ready"
@@ -68,8 +68,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
     V0 = V_storage_initial
     STORE_DATA = "no"
     Q_stored_max0, Q_rejected_fin, Q_disc_seasonstart, T_st_max, T_st_min, Q_storage_content_fin, T_storage_fin, Q_loss0, mdot_DH_fin0, \
-    Q_uncontrollable_fin = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old,
-                                                  locator.pathNtwRes, locator.pathSolarRaw, locator.pathSlaveRes, \
+    Q_uncontrollable_fin = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locator,
                                                   V_storage_initial, STORE_DATA, master_to_slave_vars, 1e12, gv)
 
     # Design HP for storage uptake - limit the maximum thermal power, Criterial: 2000h operation average of a year 
@@ -86,8 +85,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
         T_initial = T_ST_MIN + Q_initial * gv.Wh_to_J / (gv.rho_60 * gv.cp * V_storage_initial)
 
         # assume unlimited uptake to storage during first round optimisation (P_HP_max = 1e12)
-        Optimized_Data = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator.pathNtwRes,
-                                                locator.pathSolarRaw, locator.pathSlaveRes, \
+        Optimized_Data = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
                                                 V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max,
                                                 gv)
         Q_stored_max_opt, Q_rejected_fin_opt, Q_disc_seasonstart_opt, T_st_max_op, T_st_min_op, Q_storage_content_fin_op, \
@@ -104,8 +102,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
         V2 = V_storage_possible_needed
         Q_initial = min(Q_disc_seasonstart_opt[0], Q_storage_content_fin_op[-1])
         T_initial = T_ST_MIN + Q_initial * gv.Wh_to_J / (gv.rho_60 * gv.cp * V_storage_possible_needed)
-        Optimized_Data2 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator.pathNtwRes,
-                                                 locator.pathSolarRaw, locator.pathSlaveRes, \
+        Optimized_Data2 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
                                                  V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max,
                                                  gv)
         Q_stored_max_opt2, Q_rejected_fin_opt2, Q_disc_seasonstart_opt2, T_st_max_op2, T_st_min_op2, \
@@ -121,8 +118,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
 
         T_initial = T_ST_MIN + Q_initial * gv.Wh_to_J / (gv.rho_60 * gv.cp * V_storage_initial)
 
-        Optimized_Data3 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator.pathNtwRes,
-                                                 locator.pathSolarRaw, locator.pathSlaveRes, \
+        Optimized_Data3 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
                                                  V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max,
                                                  gv)
         Q_stored_max_opt3, Q_rejected_fin_opt3, Q_disc_seasonstart_opt3, T_st_max_op3, T_st_min_op3, \
@@ -135,8 +131,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
         Q_initial = min(Q_disc_seasonstart_opt3[0], Q_storage_content_fin_op3[-1])
         T_initial = T_ST_MIN + Q_initial * gv.Wh_to_J / (gv.rho_60 * gv.cp * V_storage_initial)
 
-        Optimized_Data4 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator.pathNtwRes,
-                                                 locator.pathSolarRaw, locator.pathSlaveRes, \
+        Optimized_Data4 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
                                                  V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max,
                                                  gv)
         Q_stored_max_opt4, Q_rejected_fin_opt4, Q_disc_seasonstart_opt4, T_st_max_op4, T_st_min_op4, \
@@ -159,8 +154,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
             T_initial = T_ST_MIN + Q_initial * gv.Wh_to_J / (gv.rho_60 * gv.cp * V_storage_initial)
 
         STORE_DATA = "yes"
-        Optimized_Data5 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator.pathNtwRes,
-                                                 locator.pathSolarRaw, locator.pathSlaveRes, \
+        Optimized_Data5 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
                                                  V_storage_possible_needed, STORE_DATA, master_to_slave_vars, P_HP_max,
                                                  gv)
         Q_stored_max_opt5, Q_rejected_fin_opt5, Q_disc_seasonstart_opt5, T_st_max_op5, T_st_min_op5, \
@@ -198,8 +192,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
             # leave initial values as we adjust the final outcome only, give back values from 5th round
 
 
-            Optimized_Data6 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator.pathNtwRes,
-                                                     locator.pathSolarRaw, locator.pathSlaveRes, \
+            Optimized_Data6 = StDesOp.Storage_Design(CSV_NAME, SOLCOL_TYPE, T_initial, Q_initial, locator,
                                                      V_storage_possible_needed, STORE_DATA, master_to_slave_vars,
                                                      P_HP_max, gv)
             Q_stored_max_opt5, Q_rejected_fin_opt5, Q_disc_seasonstart_opt5, T_st_max_op5, T_st_min_op5, Q_storage_content_fin_op5, \
@@ -218,7 +211,9 @@ def storage_optimization(locator, master_to_slave_vars, gv):
 
             if 0.05 < InitialStorageContent / abs(InitialStorageContent - FinalStorageContent):
                 result = pd.DataFrame([storageDeviation6, InitialStorageContent, FinalStorageContent])
-                result.to_csv(locator.pathSlaveRes + "/" + MS_Var.configKey + "_StorageFlag.csv", sep=',')
+                result.to_csv(
+                    os.path.join(locator.get_optimization_slave_results_folder, MS_Var.configKey + "_StorageFlag.csv"),
+                    sep=',')
 
 
     """ EVALUATION AND FURTHER PROCESSING """
@@ -258,7 +253,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
     if save_file == 1:
         results = pd.DataFrame({"Storage_Size_opt": [V5], "T_initial": [T_initial], "Q_initial": [Q_initial]})
         Name = MS_Var.configKey + "Storage_Sizing_Parameters.csv"
-        os.chdir(locator.pathSlaveRes)
+        os.chdir(locator.get_optimization_slave_results_folder())
         results.to_csv(Name, sep=',')
-        print "results saved in : ", locator.pathSlaveRes
+        print "results saved in : ", locator.get_optimization_slave_results_folder()
         print " as : ", Name, "\n"
