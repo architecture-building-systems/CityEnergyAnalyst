@@ -12,10 +12,12 @@ from cea.technologies.substation import substation_main
 import cea.technologies.substation_matrix as substation
 import math
 import cea.globalvar as gv
+from cea.utilities import epwreader
+from cea.resources import geothermal
 
-__author__ = "Martin Mosteiro"
+__author__ = "Martin Mosteiro, Shanshan Hsieh"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Martin Mosteiro" ]
+__credits__ = ["Martin Mosteiro", "Shanshan Hsieh" ]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -29,8 +31,11 @@ def thermal_network_main(locator,gv):
     :param gv:
     :return:
     """
+
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand['Name']
+    weather_file = locator.get_default_weather()
+
 
     # substation HEX design
     substations_HEX_specs, buildings = substation.substation_HEX_design_main(locator, total_demand, building_names, gv)
@@ -38,28 +43,39 @@ def thermal_network_main(locator,gv):
     # get edge-node matrix from defined network
     edge_node_df, all_nodes = get_thermal_network_from_csv(locator)
 
-    # set initial substation mass flow
-    T_return_all_0, mass_flow_substation_0 = substation.substation_return_model_main(locator, building_names, gv, buildings,
+    # set initial substation mass flow for all consumers
+    T_return_all_0, mass_flow_substations_0 = substation.substation_return_model_main(locator, building_names, gv, buildings,
                                                                        substations_HEX_specs, T_DH=60, t=0)
-    substation_mass_flow_matrix = match_substation_to_nodes(all_nodes, building_names, mass_flow_substation_0)
-    #fixme: match bui name to pipe/node
+    # substation_mass_flow_matrix = match_substation_to_nodes(all_nodes, building_names, mass_flow_substation_0)
+    # FIXME: assign substation mass flow at each building to the corresponding node
+
 
     # Start solving hydraulic and thermal equations at each time-steps
+    # FIXME: Make sure all variables are in matrix form
     for t in range(8760):
         if t == 0:
-            mass_flow_substation_df = mdot_DH_all_0
-            T_node_df.ix[0] = 60  # assume initial supply temperature in the network #fixme: change
-        else:
-            # with the temperature of previous time-step, solve for substation flow rate at current time-step
-            T_node = T_node_df.ix[t-1]
-            T_return_all, mdot_DH_all = substation.substation_return_model_main(locator, building_names, gv, buildings,
+            T_node = buildings.T_supply_DC   # assume substation target supply T as initial supply temperature in the network
+            T_return_all, mass_flow_substations = substation.substation_return_model_main(locator, building_names, gv, buildings,
                                                                        substations_HEX_specs, T_node, t)
 
             # solve hydraulic equations
             calc_hydraulic_network()
 
-            # solve thermal equations
-            T_node = pipe_thermal_calculation(locator, gv, weather_file, edge_node_df, mass_flow_df, substation_mass_flow_df)
+            # solve thermal equations, with mass_flow_df from hydraulic calculation as input
+            T_node = pipe_thermal_calculation(locator, gv, weather_file, edge_node_df, mass_flow_df, mass_flow_substations)
+            # FIXME: save T_node at each time-step
+
+        else:
+            # with the temperature of previous time-step, solve for substation flow rates at current time-step
+            T_node = T_node[t-1]
+            T_return_all, mass_flow_substations = substation.substation_return_model_main(locator, building_names, gv, buildings,
+                                                                       substations_HEX_specs, T_node, t)
+
+            # solve hydraulic equations
+            calc_hydraulic_network()
+
+            # solve thermal equations, with mass_flow_df from hydraulic calculation as input
+            T_node = pipe_thermal_calculation(locator, gv, weather_file, edge_node_df, mass_flow_df, mass_flow_substations)
 
 
 def get_thermal_network_from_csv(locator):
@@ -307,22 +323,36 @@ def calc_kinematic_viscosity(temperature):
 #===========================
 
 def pipe_thermal_calculation(locator, gv, weather_file, edge_node_df, mass_flow_df, substation_mass_flow_df):
+    """
+    This function solve for the node temperature with known mass flow rate in pipes and substation mass flow rate
+
+    :param locator:
+    :param gv:
+    :param weather_file:
+    :param edge_node_df:
+    :param mass_flow_df:
+    :param substation_mass_flow_df:
+    :return:
+
+    Reference
+    ==========
+    J. Wang, A method for the steady-state thermal simulation of district heating systems and model parameters
+    calibration. Energy Conversion and Management, 2016
+    """
     Z = edge_node_df.as_matrix()   #edge-node matrix
     Z_minus = -Z
     Z_minus_T = Z_minus.transpose()
     M_d = np.diag(mass_flow_df[1])  #mass flow diagonal matrix
-    K = calc_aggregated_heat_conduction_coefficient(locator,gv,L_pipe=10)  # aggregated heat condumtion coef matrix #TODO: import pipe property (length and diameter)
-    M_sub = substation_mass_flow_df     # substation mass flow matrix #todo: import substation mass flow
+    K = calc_aggregated_heat_conduction_coefficient(locator,gv,L_pipe=10)  # aggregated heat condumtion coef matrix #TODO: [SH] import pipe property (length and diameter)
+    M_sub = substation_mass_flow_df     # substation mass flow matrix
 
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
     T_ground = geothermal.calc_ground_temperature(T_ambient.values, gv)
-    network_depth = 1 #todo: add to gv
+    network_depth = 1 #TODO: [SH] add to gv
 
     T_in, T_out = calc_pipe_temperature(Z, M_d, K, Z_minus, Z_minus_T, M_sub, T_ground, network_depth)
 
     return T_out
-
-
 
 def calc_pipe_temperature(Z, M_d, K, Z_minus, Z_minus_T, M_sub, T_ground, network_depth):
 
@@ -366,6 +396,8 @@ def match_substation_to_nodes(all_nodes, building_names, bui_df):
         else:
             node_df[node] = 0
     return node_df
+
+# TODO: [SH] do the pipe thermal calculation for return line
 
 #============================
 #test

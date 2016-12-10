@@ -44,18 +44,18 @@ class sensBandwidth(object):
         self.minBG = -0.1
         self.maxBG = 0.1
 
-def sensAnalysis(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gen):
+def sensAnalysis(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gen):
 
     gV = glob.globalVariables()
     step = gV.sensibilityStep
 
     bandwidth = sensBandwidth()
 
-    os.chdir(pathX.pathMasterRes)
-    pop, eps, testedPop = sFn.readCheckPoint(pathX, gen, 0)
+    os.chdir(locator.get_optimization_master_results_folder())
+    pop, eps, testedPop = sFn.readCheckPoint(locator, gen, 0)
     toolbox = base.Toolbox()
     
-    os.chdir(pathX.pathRaw)
+    os.chdir(locator.pathRaw)
     buildList = sFn.extractList("Total.csv")
 
     ParetoResults = np.zeros( len(pop) )
@@ -74,7 +74,7 @@ def sensAnalysis(pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gen
                 for ind in pop:
                     newInd = toolbox.clone(ind)
                     newpop.append(newInd)
-                    (costs, CO2, prim) = eI.evalInd(newInd, buildList, pathX, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, obj)
+                    (costs, CO2, prim) = eI.evalInd(newInd, buildList, locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, obj)
                     newInd.fitness.values = (costs, CO2, prim)
                 
                 selection = sel.selectPareto(newpop)
