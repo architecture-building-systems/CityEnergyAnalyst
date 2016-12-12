@@ -66,6 +66,18 @@ class InputLocator(object):
         """
         return os.path.join(self.get_optimization_network_layout_folder(), "PipesData_DH.csv")
 
+    def get_optimization_network_layout_nodes_file(self):
+        """scenario/outputs/data/optimization/network/layout/PipesData_DH.csv
+        Network layout files for pipes of district heat networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "NodesData_DH.csv")
+
+    def get_optimization_network_layout_massflow_file(self):
+        """scenario/outputs/data/optimization/network/layout/PipesData_DH.csv
+        Network layout files for pipes of district heat networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "MassFlow_DH.csv")
+
     def get_optimization_network_totals_folder(self):
         """scenario/outputs/data/optimization/network/totals
         Total files (inputs to substation + network in master)
