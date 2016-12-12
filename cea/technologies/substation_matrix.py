@@ -60,10 +60,14 @@ def substation_HEX_design_main(locator, total_demand, building_names, gv):
                                               'Twwf_sup_C', 'Twwf_re_C', 'Qhsf_kWh', 'Qcsf_kWh', 'Qwwf_kWh',
                                               'mcphsf_kWC', 'mcpwwf_kWC', 'mcpcsf_kWC', 'Ef_kWh']))
         Q_substation_heating = buildings[iteration].Qhsf_kWh + buildings[iteration].Qwwf_kWh
-        T_supply_heating = np.vectorize(calc_DH_supply)(buildings[iteration].Thsf_sup_C.values, buildings[iteration].Twwf_sup_C.values)
+        T_supply_heating = np.vectorize(calc_DH_supply)(buildings[iteration].Thsf_sup_C.values,
+                                                        np.where(buildings[iteration].Qwwf_kWh > 0,
+                                                                 buildings[iteration].Twwf_sup_C.values, np.nan))
         T_supply_cooling = buildings[iteration].Tcsf_sup_C.values
         T_supply_DH = np.where(Q_substation_heating > 0, T_supply_heating + gv.dT_heat, 0)
         T_supply_DC = np.where(abs(buildings[iteration].Qcsf_kWh) > 0, T_supply_cooling - gv.dT_cool, 0)
+
+        buildings[iteration]['Q_substation_heating'] = Q_substation_heating
         buildings[iteration]['T_sup_target_DH'] = T_supply_DH
         buildings[iteration]['T_sup_target_DC'] = T_supply_DC
 
@@ -96,11 +100,12 @@ def substation_HEX_design_main(locator, total_demand, building_names, gv):
     substations_HEX_specs = pd.DataFrame(columns=['HEX_area_SH', 'HEX_area_DHW','HEX_area_SC', 'HEX_UA_SH', 'HEX_UA_DHW', 'HEX_UA_SC'])
     for name in building_names:
         print name
-        dfRes = total_demand[(total_demand.Name == name)]
-        combi[index] = 1
-        key = "".join(str(e) for e in combi)
-        fName_result = "Total_" + key + ".csv"
-        dfRes.to_csv(locator.pathSubsRes + '//' + fName_result, sep=',', float_format='%.3f')
+        # dfRes = total_demand[(total_demand.Name == name)]
+        # combi[index] = 1
+        # key = "".join(str(e) for e in combi)
+        # fName_result = "Total_" + key + ".csv"
+        # dfRes.to_csv(locator.get_optimization_substations_folder + '//' + fName_result, sep=',', float_format='%.3f')
+        # dfRes.to_csv(locator.get_optimization_substations_results_file + '//' + fName_result, sep=',', float_format='%.3f')
         combi[index] = 0
 
         # calculate substation parameters (A,UA) per building and store to .csv (target)
@@ -234,7 +239,8 @@ def substation_HEX_sizing(locator, gv, building):
 
 def substation_return_model_main(locator, building_names, gv, buildings, substations_HEX_specs, T_DH, t):
     """
-    calculate all substation return temperature and required flow rate
+    calculate all substation return temperature and required flow rate at each time-step.
+
     :param locator:
     :param building_names:
     :param gv:
@@ -247,42 +253,41 @@ def substation_return_model_main(locator, building_names, gv, buildings, substat
     """
     index = 0
     combi = [0] * len(building_names)
-    T_DH_return_all = []
-    mdot_DH_all = []
+    T_DH_return_all = pd.DataFrame()
+    mdot_DH_all = pd.DataFrame()
     for name in building_names:
         print name
-        building = buildings[index]
-        building_i = building.loc[[t]]
-        t_DH_return, mcp_DH = calc_substation_return_DH(locator, gv, building_i, T_DH, substations_HEX_specs.ix[name])
-        T_DH_return_all.append(t_DH_return)
-        mdot_DH_all.append(mcp_DH/gv.Cpw)
-        # t_DC_return, mcp_DC = calc_substation_return_DC(locator, gv, buildings[index], T_DC, substation_HEX_specs)
+        building = buildings[index].loc[[t]]
+        t_DH_return, mcp_DH = calc_substation_return_DH(locator, gv, building, T_DH[name], substations_HEX_specs.ix[name])
+        T_DH_return_all[name] = [t_DH_return]
+        mdot_DH_all[name] = [mcp_DH/gv.Cpw]
         index += 1
     return T_DH_return_all, mdot_DH_all
 
-def calc_substation_return_DH(locator, gv, building, T_DH_supply_matrix, substation_HEX_specs):
+def calc_substation_return_DH(locator, gv, building, T_DH_supply, substation_HEX_specs):
     """
-    calculate substation return temperature and required flow rate a one time step
+    calculate individual substation return temperature and required flow rate at each time step
 
     :param locator:
     :param gv:
     :param building:
-    :param T_DH_supply_matrix:
+    :param T_DH_supply:
     :param substation_HEX_specs:
     :return:
     """
     UA_heating_hs = substation_HEX_specs.HEX_UA_SH
     UA_heating_ww = substation_HEX_specs.HEX_UA_DHW
 
-    thi = T_DH_supply_matrix + 273  # In k  #todo: replace with supply temperature at node
+    thi = T_DH_supply + 273  # In k
     Qhsf = building.Qhsf_kWh.values * 1000  # in W
     if Qhsf.max > 0:
         tco = building.Thsf_sup_C.values + 273  # in K
         tci = building.Thsf_re_C.values + 273  # in K
         cc = building.mcphsf_kWC.values * 1000  # in W/K
-        t_DH_return_hs, mcp_DH_hs = calc_required_flow_and_t_return(Qhsf, UA_heating_hs, thi, tco, tci, cc)
+        t_DH_return_hs, mcp_DH_hs = calc_HEX_heating(Qhsf, UA_heating_hs, thi, tco, tci, cc)
+            # calc_required_flow_and_t_return(Qhsf, UA_heating_hs, thi, tco, tci, cc)
     else:
-        t_DH_return_hs = T_DH_supply_matrix
+        t_DH_return_hs = T_DH_supply
         mcp_DH_hs = 0
 
     Qwwf = building.Qwwf_kWh.values * 1000  # in W
@@ -292,7 +297,7 @@ def calc_substation_return_DH(locator, gv, building, T_DH_supply_matrix, substat
         cc = building.mcpwwf_kWC.values * 1000  # in W/K
         t_DH_return_ww, mcp_DH_ww = calc_required_flow_and_t_return(Qwwf, UA_heating_ww, thi, tco, tci, cc)
     else:
-        t_DH_return_ww = T_DH_supply_matrix
+        t_DH_return_ww = T_DH_supply
         mcp_DH_ww = 0
 
     # calculate mix temperature of return DH
@@ -658,7 +663,11 @@ def run_as_script(scenario_path=None):
     gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
     #substation_main(locator, total_demand, total_demand['Name'], gv, False)
 
-    substation_HEX_design_main(locator, total_demand, building_names, gv, Flag = True)
+    t = 1000
+    T_DH = 60
+    substations_HEX_specs, buildings = substation_HEX_design_main(locator, total_demand, building_names, gv)
+    substation_return_model_main(locator, building_names, gv, buildings, substations_HEX_specs, T_DH, t)
+
 
     print 'substation_main() succeeded'
 
