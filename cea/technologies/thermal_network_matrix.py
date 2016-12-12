@@ -65,17 +65,18 @@ def thermal_network_main(locator,gv):
             T_DH_return_all, mdot_DH_all = substation.substation_return_model_main(locator, building_names, gv,
                                                                                    buildings, substations_HEX_specs,
                                                                                    T_DH_0, t=0)
+
+            # write consumer substation return T and required flow to nodes
             T_DH_return_nodes_df = write_df_value_to_nodes_df(all_nodes_df, T_DH_return_all)  # (1xn)
             mass_flow_substations_nodes_df = write_df_value_to_nodes_df(all_nodes_df, mdot_DH_all)  # (1xn)
-            # FIXME: [1] since Bau 04 is the plant, are the demands from Bau 04 part of the network?
-            # TODO: [SH] make sure the plant flow is the sum of all consumer flows
+            # write plant substation required flow to nodes
+            mass_flow_substations_nodes_df[(all_nodes_df.ix['plant']!= '').argmax()]= mass_flow_substations_nodes_df.sum(axis=1)  # (1xn) # assume only one plant supply all consumer flow rate #FIXME: 1] all the flow rates are positive now, feel free to adjust
 
             # solve hydraulic equations
             # mass_flow_df = calc_hydraulic_network()
 
             mass_flow_df = pd.read_csv(locator.get_optimization_network_layout_massflow_file())
             mass_flow_df = np.absolute(mass_flow_df)  # added this hack to make sure code runs # FIXME: [2] there should be 66 pipes instead of 67?
-
             # solve thermal equations, with mass_flow_df from hydraulic calculation as input
             T_node = pipe_thermal_calculation(locator, gv, T_ground[t], edge_node_df, all_nodes_df, mass_flow_df.ix[t],
                                               consumer_heat_requirement.ix[t], mass_flow_substations_nodes_df,
@@ -95,61 +96,13 @@ def thermal_network_main(locator,gv):
             # solve thermal equations, with mass_flow_df from hydraulic calculation as input
             T_node = pipe_thermal_calculation(locator, gv, weather_file, edge_node_df, mass_flow_df, mass_flow_substations)
 
-
-def get_thermal_network_from_csv(locator):
-            """
-            This function reads the existing node and pipe network from csv files (as provided for the Zug reference case) and
-            produces an edge-node incidence matrix (as defined by Oppelt et al. "Dynamic thermo-hydraulic model of district
-            cooling networks," Applied Thermal Engineering, 2016) as well as the length of each edge.
-
-            :param locator: locator class
-
-            :return:
-                edge_node_matrix: matrix consisting of n rows (number of nodes) and e columns (number of edges) and indicating
-                direction of flow of each edge e at node n
-                consumer_nodes: vector that defines which vectors correspond to consumers (if node n is a consumer node,
-                 then consumer_nodes[n] = (Name), else consumer_nodes[n] = 0)
-                plant_nodes: vector that defines which vectors correspond to plants (if node n is a plant node, then
-                 plant_nodes[n] = (Name), else plant_nodes[n] = 0)
-                csv file stored in locator.pathNtwRes + '//' + EdgeNode_DH
-
-            """
-
-            t0 = time.clock()
-
-            # get node data and create consumer and plant node vectors
-            node_data_df = pd.read_csv(locator.get_optimization_network_layout_nodes_file)
-            node_names = node_data_df['DC_ID'].values
-            consumer_nodes = np.vstack((node_names, (node_data_df['Sink'] * node_data_df['Name']).values))
-            plant_nodes = np.vstack((node_names, (node_data_df['Plant'] * node_data_df['Name']).values))
-
-            # get pipe data and create edge-node matrix
-            pipe_data_df = pd.read_csv(locator.get_pipes_DH_network)
-            list_pipes = pipe_data_df['DC_ID']
-            list_nodes = sorted(set(pipe_data_df['NODE1']).union(set(pipe_data_df['NODE2'])))
-            edge_node_matrix = np.zeros((len(list_nodes), len(list_pipes)))
-            for j in range(len(list_pipes)):
-                for i in range(len(list_nodes)):
-                    if pipe_data_df['NODE2'][j] == list_nodes[i]:
-                        edge_node_matrix[i][j] = 1
-                    elif pipe_data_df['NODE1'][j] == list_nodes[i]:
-                        edge_node_matrix[i][j] = -1
-            edge_node_df = pd.DataFrame(data=edge_node_matrix, index=list_nodes, columns=list_pipes)
-
-            edge_node_df.to_csv(locator.pathNtwLayout + '//' + 'EdgeNode_DH.csv')
-
-            print time.clock() - t0, "seconds process time for Network summary\n"
-
-            return edge_node_df, pd.DataFrame(data=[consumer_nodes[1][:], plant_nodes[1][:]],
-                                              index=['consumer', 'plant'], columns=consumer_nodes[0][:])
-
 def write_df_value_to_nodes_df(all_nodes_df, df_value):
     nodes_df = pd.DataFrame()
     for node in all_nodes_df:  # consumer_nodes+plant_nodes:    #name in building_names:
         if all_nodes_df[node]['consumer'] != '':
             nodes_df[node] = df_value[all_nodes_df[node]['consumer']]
-        elif all_nodes_df[node]['plant'] != '':
-            nodes_df[node] = df_value[all_nodes_df[node]['plant']]
+        # elif all_nodes_df[node]['plant'] != '':
+        #     nodes_df[node] = df_value[all_nodes_df[node]['plant']]
         else:
             nodes_df[node] = np.nan
     return nodes_df
@@ -208,8 +161,6 @@ def calc_hydraulic_network(locator, gv):
     pressure_loss_system = 2 * [sum(pressure_loss_nodes_df.values[i] for i in range(len(pressure_loss_nodes_df.values[0])))]
 
     return mass_flow_df, pressure_loss_system
-
-
 
 def get_thermal_network_from_csv(locator):
     """
@@ -315,7 +266,6 @@ direction of flow of each edge e at node n: if e points to n, value is 1; if e l
 
     # the pressure losses at time t are calculated as the sum of the pressure losses from all edges pointing to node n
     return np.dot(pressure_loss_pipe, edge_node)
-
 
 def calc_pressure_loss_pipe(pipe_diameter, pipe_length, mass_flow_rate, temperature, gv):
     ''' calculates the pressure losses throughout a pipe based on the Darcy-Weisbach equation and the Swamee-Jain
@@ -496,11 +446,11 @@ def run_as_script(scenario_path=None):
     gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
     #substation_main(locator, total_demand, total_demand['Name'], gv, False)
 
-    calc_hydraulic_network(locator, gv)
+    #calc_hydraulic_network(locator, gv)
     print 'test calc_hydraulic_network() succeeded'
 
-    # thermal_network_main(locator,gv)
-    # print 'test thermal_network_main() succeeded'
+    thermal_network_main(locator,gv)
+    print 'test thermal_network_main() succeeded'
 
 if __name__ == '__main__':
     run_as_script()
