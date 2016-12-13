@@ -72,7 +72,7 @@ def thermal_network_main(locator,gv):
             # write plant substation required flow to nodes
             mass_flow_substations_nodes_df[(all_nodes_df.ix['plant']!= '').argmax()]= mass_flow_substations_nodes_df.sum(axis=1)  # (1xn) # assume only one plant supply all consumer flow rate #FIXME: 1] all the flow rates are positive now, feel free to adjust
 
-            # solve hydraulic equations
+            # solve hydraulic equations # FIXME? calc_mass_flow_edges now consists of just one line of code! should we just move it here?
             # mass_flow_df = calc_mass_flow_edges(edge_node_df, all_nodes_df, pipe_length_df, mass_flow_substations_nodes_df, locator, gv)
 
             mass_flow_df = pd.read_csv(locator.get_optimization_network_layout_massflow_file())
@@ -102,9 +102,17 @@ def thermal_network_main(locator,gv):
     # assign pipe properties to each edge in the network (since we don't have this information for the current network at the moment)
     pipe_properties_df = assign_pipes_to_edges(mass_flow_df, locator, gv)
 
-    # calculate pressure losses at each node
-    pressure_loss_system, pressure_loss_nodes = calc_pressure_losses(edge_node_df, all_nodes_df, pipe_length_df, mass_flow_df, pipe_properties_df, locator, gv)
+    # assigning a dummy temperature matrix that defines the temperature at each edge at each timestem #TODO: incorporate results of real temperature calculation
+    temperature_matrix = np.ones(mass_flow_df.shape)*323   # assigning a dummy temperature to each edge for now
 
+    # calculate pressure losses at each node
+    pressure_loss_nodes_df = pd.DataFrame(
+        data=calc_pressure_loss_nodes(edge_node_df.values, pipe_properties_df[:]['DN':'DN'].values,
+                                      pipe_length_df.values, mass_flow_df.values, temperature_matrix, gv),
+        index=range(8760), columns=edge_node_df.index.values)
+
+    #calculate total pressure loss in the system #TODO: [MM] add return path pressure loss instead of doubling pressure loss in supply path
+    pressure_loss_system = 2 * [sum(pressure_loss_nodes_df.values[i] for i in range(len(pressure_loss_nodes_df.values[0])))]
 
 def write_df_value_to_nodes_df(all_nodes_df, df_value):
     nodes_df = pd.DataFrame()
@@ -177,28 +185,6 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df):
     '''
 
     return mass_flow
-
-def calc_pressure_losses(edge_node_df, pipe_length_df, mass_flow_df, pipe_properties_df, gv):
-    '''
-    This function carries out the pressure loss calculation at each node for a predefined network with predefined
-    mass flow rates on each edge.
-
-    :param locator: locator class
-    :param gv: globalvariables class
-
-    :return: pressure_loss_node: (t x n) matrix specifying the mass flow rate at each edge e at each time step t
-    :return: pressure_loss_system: vector specifying the total pressure losses in the system at each time step t
-    '''
-
-    temperature_matrix = np.ones(mass_flow_df.shape)*323   # assigning a dummy temperature to each edge for now
-
-    pressure_loss_nodes_df = pd.DataFrame(data=calc_pressure_loss_nodes(edge_node_df.values, pipe_properties_df[:]['DN':'DN'].values,
-                                       pipe_length_df.values, mass_flow_df.values, temperature_matrix, gv),
-                                       index = range(8760), columns = edge_node_df.index.values)
-
-    pressure_loss_system = 2 * [sum(pressure_loss_nodes_df.values[i] for i in range(len(pressure_loss_nodes_df.values[0])))]
-
-    return pressure_loss_system
 
 def get_thermal_network_from_csv(locator):
     """
