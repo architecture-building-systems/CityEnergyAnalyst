@@ -73,7 +73,7 @@ def thermal_network_main(locator,gv):
             mass_flow_substations_nodes_df[(all_nodes_df.ix['plant']!= '').argmax()]= mass_flow_substations_nodes_df.sum(axis=1)  # (1xn) # assume only one plant supply all consumer flow rate #FIXME: 1] all the flow rates are positive now, feel free to adjust
 
             # solve hydraulic equations
-            # mass_flow_df = calc_hydraulic_network()
+            # mass_flow_df = calc_mass_flow_edges(edge_node_df, all_nodes_df, pipe_length_df, mass_flow_substations_nodes_df, locator, gv)
 
             mass_flow_df = pd.read_csv(locator.get_optimization_network_layout_massflow_file())
             mass_flow_df = np.absolute(mass_flow_df)  # added this hack to make sure code runs # FIXME: [2] there should be 66 pipes instead of 67?
@@ -91,10 +91,20 @@ def thermal_network_main(locator,gv):
                                                                        substations_HEX_specs, T_supply_consumer, t)
 
             # solve hydraulic equations
-            mass_flow_df = calc_hydraulic_network()
+            mass_flow_df[:][t:t+1] = calc_mass_flow_edges(edge_node_df, all_nodes_df, pipe_length_df, mass_flow_substations_nodes_df, locator, gv)
 
             # solve thermal equations, with mass_flow_df from hydraulic calculation as input
             T_node = pipe_thermal_calculation(locator, gv, weather_file, edge_node_df, mass_flow_df, mass_flow_substations)
+
+    # this was included in the calc_hydraulic_network in order to check the results. its use in the future optional, though.
+    mass_flow_df.to_csv(locator.pathNtwLayout + '//' + 'MassFlow_DH.csv')
+
+    # assign pipe properties to each edge in the network (since we don't have this information for the current network at the moment)
+    pipe_properties_df = assign_pipes_to_edges(mass_flow_df, locator, gv)
+
+    # calculate pressure losses at each node
+    pressure_loss_system, pressure_loss_nodes = calc_pressure_losses(edge_node_df, all_nodes_df, pipe_length_df, mass_flow_df, pipe_properties_df, locator, gv)
+
 
 def write_df_value_to_nodes_df(all_nodes_df, df_value):
     nodes_df = pd.DataFrame()
@@ -110,25 +120,37 @@ def write_df_value_to_nodes_df(all_nodes_df, df_value):
 #===========================
 # Hydraulic calculation
 #===========================
-
-def calc_hydraulic_network(locator, gv):
+def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df):
     '''
-    This function carries out the steady-state hydraulic calculation for a predefined network with predefined mass flow
-    rate on each edge.
+    This function carries out the steady-state mass flow rate calculation for a predefined network with predefined mass
+    flow rates at each substation.
 
     :param locator: locator class
     :param gv: globalvariables class
 
-    :return: mass_flow: (t x e) matrix specifying the mass flow rate at each edge e at each time step t
-    :return: pressure_loss_node: (t x n) matrix specifying the mass flow rate at each edge e at each time step t
-    :return: pressure_loss_system: vector specifying the total pressure losses in the system at each time step t
+    :return: mass_flow: (1 x e) vector specifying the mass flow rate at each edge e at the given time step t
     '''
+
+    '''
+    ============
+    This part of the code is obsolete since the edge_node_matrix is already imported before the time step calculation.
+    Preserved since I cannot test the function now, but could be deleted as soon as I can verify this.
+    ============
 
     # get mass flow matrix from substation.py
     edge_node_df, all_nodes_df, pipe_length_df = get_thermal_network_from_csv(locator)
-    '''# edge_node_matrix needs to be expanded to include return pipes
-    for pipe in edge_node_df:
-        edge_node_df['-'+pipe] = -edge_node_df[pipe]'''
+        #
+        # edge_node_matrix needs to be expanded to include return pipes
+        for pipe in edge_node_df:
+            edge_node_df['-'+pipe] = -edge_node_df[pipe]
+        #
+    '''
+
+    '''
+    ============
+    This part of the code is obsolete since we now have the correct edge flow calculation.
+    Preserved since I cannot test the function now, but could be deleted as soon as I can verify this.
+    ============
     # get substation flow vector
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand['Name']
@@ -139,19 +161,35 @@ def calc_hydraulic_network(locator, gv):
             mass_flow_substation_df[node] = pd.read_csv(locator.pathSubsRes + '//' + (all_nodes_df[node]['consumer']+all_nodes_df[node]['plant']) + "_result.csv", usecols=['mdot_DH_result'])  #name] = pd.read_csv(locator.pathSubsRes + '//' + name + "_result.csv", usecols=['mdot_DH_result'])
         else:
             mass_flow_substation_df[node] = np.zeros(8760)
-
-    '''
-    t0 = time.clock()
-    mass_flow_df = pd.DataFrame(data=None, index=range(8760), columns=edge_node_df.columns.values)
-    for i in range(len(mass_flow_substation_df)):
-        mass_flow_df[:][i:i+1] = np.transpose(np.linalg.lstsq(edge_node_df.values, np.transpose(-mass_flow_substation_df[:][i:i + 1].values))[0])
-    print time.clock() - t0, "seconds process time for total mass flow calculation\n"
-    mass_flow_df.to_csv(locator.pathNtwLayout + '//' + 'MassFlow_DH.csv')
     '''
 
+    # t0 = time.clock()
+    mass_flow = np.transpose(np.linalg.lstsq(edge_node_df.values, np.transpose(-mass_flow_substation_df[:][i:i + 1].values))[0])
+    # print time.clock() - t0, "seconds process time for total mass flow calculation\n"
+
+    '''
+    ============
+    This part of the code imports previously exported results in order to speed up the calculation during testing.
+    Preserved in case we need it again for testing later, but can be deleted otherwise.
+    ============
     mass_flow_df = pd.read_csv(locator.pathNtwLayout + '//' + 'MassFlow_DH.csv', usecols=edge_node_df.columns.values)
     mass_flow_df = np.absolute(mass_flow_df)    # added this hack to make sure code runs TODO: make sure you don't get negative flows!
-    pipe_properties_df = assign_pipes_to_edges(mass_flow_df, locator, gv)
+    '''
+
+    return mass_flow
+
+def calc_pressure_losses(edge_node_df, pipe_length_df, mass_flow_df, pipe_properties_df, gv):
+    '''
+    This function carries out the pressure loss calculation at each node for a predefined network with predefined
+    mass flow rates on each edge.
+
+    :param locator: locator class
+    :param gv: globalvariables class
+
+    :return: pressure_loss_node: (t x n) matrix specifying the mass flow rate at each edge e at each time step t
+    :return: pressure_loss_system: vector specifying the total pressure losses in the system at each time step t
+    '''
+
     temperature_matrix = np.ones(mass_flow_df.shape)*323   # assigning a dummy temperature to each edge for now
 
     pressure_loss_nodes_df = pd.DataFrame(data=calc_pressure_loss_nodes(edge_node_df.values, pipe_properties_df[:]['DN':'DN'].values,
@@ -160,7 +198,7 @@ def calc_hydraulic_network(locator, gv):
 
     pressure_loss_system = 2 * [sum(pressure_loss_nodes_df.values[i] for i in range(len(pressure_loss_nodes_df.values[0])))]
 
-    return mass_flow_df, pressure_loss_system
+    return pressure_loss_system
 
 def get_thermal_network_from_csv(locator):
     """
