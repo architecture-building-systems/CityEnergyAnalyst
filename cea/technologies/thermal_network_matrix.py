@@ -73,10 +73,10 @@ def thermal_network_main(locator,gv):
             mass_flow_substations_nodes_df[(all_nodes_df.ix['plant']!= '').argmax()]= mass_flow_substations_nodes_df.sum(axis=1)  # (1xn) # assume only one plant supply all consumer flow rate #FIXME: 1] all the flow rates are positive now, feel free to adjust
 
             # solve hydraulic equations # FIXME? calc_mass_flow_edges now consists of just one line of code! should we just move it here?
-            # mass_flow_df = calc_mass_flow_edges(edge_node_df, all_nodes_df, pipe_length_df, mass_flow_substations_nodes_df, locator, gv)
+            mass_flow_df = pd.DataFrame(data=np.zeros((8760,len(edge_node_df.columns.values))), columns=edge_node_df.columns.values)
+            mass_flow_df[:][t:t+1] = calc_mass_flow_edges(edge_node_df, mass_flow_substations_nodes_df)
 
-            mass_flow_df = pd.read_csv(locator.get_optimization_network_layout_massflow_file())
-            mass_flow_df = np.absolute(mass_flow_df)  # added this hack to make sure code runs # FIXME: [2] there should be 66 pipes instead of 67?
+            #mass_flow_df = np.absolute(mass_flow_df)  # added this hack to make sure code runs # FIXME: [2] there should be 66 pipes instead of 67?
             # solve thermal equations, with mass_flow_df from hydraulic calculation as input
             T_node = pipe_thermal_calculation(locator, gv, T_ground[t], edge_node_df, all_nodes_df, mass_flow_df.ix[t],
                                               consumer_heat_requirement.ix[t], mass_flow_substations_nodes_df,
@@ -172,7 +172,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df):
     '''
 
     # t0 = time.clock()
-    mass_flow = np.transpose(np.linalg.lstsq(edge_node_df.values, np.transpose(-mass_flow_substation_df[:][i:i + 1].values))[0])
+    mass_flow = np.transpose(np.linalg.lstsq(edge_node_df.values, np.transpose(-mass_flow_substation_df.values))[0])
     # print time.clock() - t0, "seconds process time for total mass flow calculation\n"
 
     '''
