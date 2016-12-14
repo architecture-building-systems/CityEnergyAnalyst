@@ -21,7 +21,8 @@ class InputLocator(object):
     # SCENARIO
     def __init__(self, scenario_path):
         self.scenario_path = scenario_path
-        self.db_path = os.path.join(os.path.dirname(__file__), 'databases', 'CH')
+        self.db_path = os.path.join(os.path.dirname(__file__), 'databases', 'CH')  # FIXME: add country code parameter
+        self.weather_path = os.path.join(os.path.dirname(__file__), 'databases', 'weather')
 
     @staticmethod
     def _ensure_folder(*components):
@@ -121,20 +122,20 @@ class InputLocator(object):
 
     # DATABASES
     def get_default_weather(self):
-        """db/Weather/Zurich.epw
+        """weather/Zug-2010.epw
         path to database of archetypes file Archetypes_properties.xlsx"""
-        return os.path.join(self.db_path, 'Weather', 'Zug-2010.epw')
+        return os.path.join(self.weather_path, 'Zug-2010.epw')
 
     def get_weather(self, name):
-        """db/Weather/{name}.epw"""
-        weather_path = os.path.join(self.db_path, 'Weather', name + '.epw')
-        if not os.path.exists(weather_path):
+        """weather/{name}.epw"""
+        weather_file = os.path.join(self.weather_path, name + '.epw')
+        if not os.path.exists(weather_file):
             return self.get_default_weather()
-        return weather_path
+        return weather_file
 
     def get_weather_names(self):
         """Return a list of all installed epw files in the system"""
-        weather_names = [os.path.splitext(f)[0] for f in os.listdir(os.path.join(self.db_path, 'Weather'))]
+        weather_names = [os.path.splitext(f)[0] for f in os.listdir(self.weather_path)]
         return weather_names
 
     def get_archetypes_properties(self):
