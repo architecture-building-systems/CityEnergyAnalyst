@@ -135,15 +135,13 @@ class MonthlyDemandWriter(DemandWriter):
 
     def write_totals_csv(self, building_properties, locator):
         """read in the temporary results files and append them to the Totals.csv file."""
-        counter = 0
+        df = None
         for name in building_properties.list_building_names():
             temporary_file = locator.get_temporary_file('%(name)sT.csv' % locals())
-            if counter == 0:
+            if df is None:
                 df = pd.read_csv(temporary_file)
-                counter += 1
             else:
-                df2 = pd.read_csv(temporary_file)
-                df = df.append(df2, ignore_index=True)
+                df = df.append(pd.read_csv(temporary_file), ignore_index=True)
         df.to_csv(locator.get_total_demand(), index=False, float_format='%.3f')
 
         """read saved data of monthly values and return as totals"""
