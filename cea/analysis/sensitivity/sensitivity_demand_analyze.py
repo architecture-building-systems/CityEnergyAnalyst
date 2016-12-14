@@ -184,7 +184,7 @@ def read_results(samples_folder, samples_count, output_parameter, temporal_scale
     iterable_samples_count = range(samples_count)
     if temporal_scale is 'yearly':
         results = np.array(
-            [pd.read_csv(os.path.join(samples_folder, 'result.%i.csv' % item))[output_parameter].values for item in
+            [pd.read_csv(os.path.join(samples_folder, 'result.%i.csv' % i))[output_parameter].values for i in
              iterable_samples_count]).T
     else:
         iterable_num_buildings = range(pd.read_csv(os.path.join(samples_folder, 'result.0.csv')).shape[0])
