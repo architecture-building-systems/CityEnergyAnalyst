@@ -70,7 +70,7 @@ class DemandWriter(object):
             data.update({'Name': building_name, 'Af_m2': bpr.rc_model['Af'], 'Aroof_m2': bpr.rc_model['Aroof'],
                          'GFA_m2': bpr.rc_model['GFA_m2'], 'people0': tsd['people'].max()})
 
-            # safe to disc
+            # save to disc
             pd.DataFrame(data, index=[0]).to_csv(
                 locator.get_temporary_file('%(building_name)sT.csv' % locals()),
                 index=False, columns=columns, float_format='%.3f')
