@@ -71,7 +71,28 @@ def analyze_sensitivity(samples_path, temporal_scale):
         if not os.path.exists(folder):
             os.makedirs(folder)
 
-        if temporal_scale is 'yearly':
+        if temporal_scale is 'monthly':
+            # temporal_scale = monthly
+            writer = pd.ExcelWriter(
+                os.path.join(folder,
+                             'analysis_%s_%i_%s_%s.xls' % (method, problem['N'], output_parameter, temporal_scale)))
+
+            for month in range(12):
+
+                # read the results and get back a matrix m = buildings, n = samples.
+                simulation_results = read_results(samples_path, samples_count, output_parameter, temporal_scale, month)
+
+                # run the analysis for every building and store it in a list
+                analysis_results = [analysis_function(problem, samples, simulation_result) for simulation_result in
+                                    simulation_results]
+
+                # write out a worksheet for each analysis result (e.g. 'S1', 'ST', 'ST_conf' for method == 'sobol')
+                for analysis_variable in analysis_variables:
+                    worksheet_name = str(month + 1) + '_' + analysis_variable  # for every building
+                    building_results = [result[analysis_variable] for result in analysis_results]
+                    pd.DataFrame(building_results, columns=problem['names']).to_excel(writer, worksheet_name)
+            writer.save()
+        else: #run default
             writer = pd.ExcelWriter(
                 os.path.join(folder, 'analysis_%s_%i_%s.xls' % (method, problem['N'], output_parameter)))
 
@@ -90,27 +111,6 @@ def analyze_sensitivity(samples_path, temporal_scale):
                 building_results = [result[analysis_variable] for result in analysis_results]
                 pd.DataFrame(building_results, columns=problem['names']).to_excel(writer, worksheet_name)
             writer.save()
-        else:
-            # temporal_scale = monthly
-            writer = pd.ExcelWriter(
-                os.path.join(folder, 'analysis_%s_%i_%s_%s.xls' % (method, problem['N'], output_parameter, temporal_scale)))
-
-            for month in range(12):
-
-                # read the results and get back a matrix m = buildings, n = samples.
-                simulation_results = read_results(samples_path, samples_count, output_parameter, temporal_scale, month)
-
-                # run the analysis for every building and store it in a list
-                analysis_results = [analysis_function(problem, samples, simulation_result) for simulation_result in
-                                    simulation_results]
-
-                # write out a worksheet for each analysis result (e.g. 'S1', 'ST', 'ST_conf' for method == 'sobol')
-                for analysis_variable in analysis_variables:
-                    worksheet_name = str(month+1) + '_' + analysis_variable  # for every building
-                    building_results = [result[analysis_variable] for result in analysis_results]
-                    pd.DataFrame(building_results, columns=problem['names']).to_excel(writer, worksheet_name)
-            writer.save()
-
 
 def sobol_analyze_function(problem, _, Y):
     """
