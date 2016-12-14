@@ -90,15 +90,13 @@ class HourlyDemandWriter(DemandWriter):
 
     def write_totals_csv(self, building_properties, locator):
         """read in the temporary results files and append them to the Totals.csv file."""
-        counter = 0
+        df = None
         for name in building_properties.list_building_names():
             temporary_file = locator.get_temporary_file('%(name)sT.csv' % locals())
-            if counter == 0:
+            if df is None:
                 df = pd.read_csv(temporary_file)
-                counter += 1
             else:
-                df2 = pd.read_csv(temporary_file)
-                df = df.append(df2, ignore_index=True)
+                df = df.append(pd.read_csv(temporary_file), ignore_index=True)
         df.to_csv(locator.get_total_demand(), index=False, float_format='%.3f')
 
         """read saved data of hourly values and return as totals"""
@@ -110,6 +108,7 @@ class HourlyDemandWriter(DemandWriter):
 
 
 class MonthlyDemandWriter(DemandWriter):
+    """Write out the monthly demand results"""
     def __init__(self, gv):
         super(MonthlyDemandWriter, self).__init__(gv)
         self.vars_to_print = [['QEf', 'QHf', 'QCf', 'Ef'], [], []]
@@ -131,7 +130,6 @@ class MonthlyDemandWriter(DemandWriter):
 
         monthly_data_new['Name'] = building_name
         monthly_data_new.to_csv(locator.get_demand_results_file(building_name), index=False, float_format=FLOAT_FORMAT)
-
 
     def write_totals_csv(self, building_properties, locator):
         """read in the temporary results files and append them to the Totals.csv file."""
