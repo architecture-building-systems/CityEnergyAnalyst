@@ -71,7 +71,7 @@ def get_thermal_network_from_shapefile(locator):
 # Utility
 #=============================
 
-def extract_network(edges_df, end_nodes_df, locator):
+def extract_network(edges_df, nodes_df, locator):
     '''
     extracts network data into dataframes for pipes and nodes in the network
     :param shapefile: network shapefile
@@ -83,12 +83,14 @@ def extract_network(edges_df, end_nodes_df, locator):
 
     # import consumer and plant nodes
     end_nodes = []
-    for node in end_nodes_df['geometry']:
+    for node in nodes_df['geometry']:
         end_nodes.append(node.coords[0])
-    end_nodes_df['geometry'] = end_nodes
-    end_nodes_df = end_nodes_df.drop(['Af','AncillaryR','Enabled','Floors','Hs','ID','Qc','Qh','Year','height'],axis=1)
-    end_nodes_df['consumer'] = np.ones(len(end_nodes_df['Plant']))-end_nodes_df['Plant'].values
-    end_nodes_df = end_nodes_df.set_index(end_nodes_df['geometry'])
+    nodes_df['geometry'] = end_nodes
+    nodes_df = nodes_df.drop(['Af','AncillaryR','Enabled','Floors','Hs','ID','Qc','Qh','Year','height'],axis=1)
+    nodes_df['consumer'] = np.ones(len(nodes_df['Plant']))-nodes_df['Plant'].values
+    #nodes_df = nodes_df.set_index(nodes_df['geometry'])
+
+    end_node_set = set(nodes_df['geometry'])
 
     # import network shapefile and extract all edge and node information
     nodes = []
@@ -105,26 +107,31 @@ def extract_network(edges_df, end_nodes_df, locator):
             nodes.append(pipe.coords[1])
             node_names.append('NODE' + str(counter))
             counter +=1
+        start_node.append(pipe.coords[0])
+        end_node.append(pipe.coords[1])
+        '''
         for i in range(len(nodes)):
             if pipe.coords[0] == nodes[i]:
                 start_node.append(i)
             if pipe.coords[1] == nodes[i]:
                 end_node.append(i)
+        '''
+    for node in end_node_set:
+        if node not in nodes:
+            nodes.append(node)
+            node_names.append('NODE'+str(counter))
     '''
     node_df = pd.DataFrame(data = np.zeros([len(nodes),len(end_nodes_df.columns)]), columns = end_nodes_df.columns)# nodes, columns=['coordinates'])#, index=nodes)
     node_df['geometry'] = nodes
     end_nodes_df = end_nodes_df.merge(total_demand[['Name','QHf_MWhyr']], left_on = 'Name', right_on = 'Name')
     '''
+    for node in nodes:
+        if node not in end_node_set:
+            nodes_df.loc[len(nodes_df)] = [0,0,node,0]
+    nodes_df.to_csv(os.path.expandvars(r'%TEMP%\Node_DF_DH.csv'))
 
-    for node in end_nodes_df['geometry']:
-        if node not in nodes:
-            nodes.append(node)
-            node_names.append('NODE'+str(counter))
-            counter += 1
 
     node_df = pd.DataFrame(data = None, columns = None, index = nodes)
-
-    node_df.append(end_nodes_df).to_csv(os.path.expandvars(r'%TEMP%\Node_DF_DH.csv'))
 
     '''i = 0
     for node in nodes:
@@ -135,10 +142,7 @@ def extract_network(edges_df, end_nodes_df, locator):
     '''
 
     node_df['coordinates'] = nodes
-    print node_df
 
-    print type(node_df['geometry'])
-    print type(end_nodes_df['geometry'])
     total_demand = pd.read_csv(locator.get_total_demand())
 
     #nodes_df = nodes_df.set_index(nodes_df['geometry'])
