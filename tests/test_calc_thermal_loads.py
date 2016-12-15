@@ -15,7 +15,7 @@ REFERENCE_CASE = r'C:\reference-case-open\baseline'
 class TestCalcThermalLoads(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        if os.environ.has_key('REFERENCE_CASE'):
+        if 'REFERENCE_CASE' in os.environ:
             cls.locator = InputLocator(os.environ['REFERENCE_CASE'])
         else:
             cls.locator = InputLocator(REFERENCE_CASE)
