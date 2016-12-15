@@ -98,7 +98,10 @@ def extract_network(edges_df, nodes_df, locator):
     counter = 0
     start_node = []
     end_node = []
-    for pipe in edges_df['geometry']:
+    pipes_df = pd.DataFrame(data = None, columns = ['pipe length', 'start node', 'end node'])
+    #for pipe in edges_df['geometry']:
+    for i in range(len(edges_df)):
+        pipe = edges_df['geometry'][i]
         if pipe.coords[0] not in nodes:
             nodes.append(pipe.coords[0])
             node_names.append('NODE' + str(counter))
@@ -107,8 +110,11 @@ def extract_network(edges_df, nodes_df, locator):
             nodes.append(pipe.coords[1])
             node_names.append('NODE' + str(counter))
             counter +=1
+        pipes_df.loc[len(pipes_df)] = [edges_df['Shape_Leng'][i], pipe.coords[0], pipe.coords[1]]
+        '''
         start_node.append(pipe.coords[0])
         end_node.append(pipe.coords[1])
+        '''
         '''
         for i in range(len(nodes)):
             if pipe.coords[0] == nodes[i]:
@@ -116,51 +122,28 @@ def extract_network(edges_df, nodes_df, locator):
             if pipe.coords[1] == nodes[i]:
                 end_node.append(i)
         '''
+    # append tee nodes to node dataframe
     for node in end_node_set:
         if node not in nodes:
             nodes.append(node)
             node_names.append('NODE'+str(counter))
-    '''
-    node_df = pd.DataFrame(data = np.zeros([len(nodes),len(end_nodes_df.columns)]), columns = end_nodes_df.columns)# nodes, columns=['coordinates'])#, index=nodes)
-    node_df['geometry'] = nodes
-    end_nodes_df = end_nodes_df.merge(total_demand[['Name','QHf_MWhyr']], left_on = 'Name', right_on = 'Name')
-    '''
     for node in nodes:
         if node not in end_node_set:
             nodes_df.loc[len(nodes_df)] = [0,0,node,0]
-    nodes_df.to_csv(os.path.expandvars(r'%TEMP%\Node_DF_DH.csv'))
-
-
-    node_df = pd.DataFrame(data = None, columns = None, index = nodes)
-
-    '''i = 0
-    for node in nodes:
-        if node in end_nodes_df['geometry'].values:
-            print len(node_df[:][i])
-            print len(end_nodes_df[:][i:i+1])
-    #print node_df
-    '''
-
-    node_df['coordinates'] = nodes
-
-    total_demand = pd.read_csv(locator.get_total_demand())
-
-    #nodes_df = nodes_df.set_index(nodes_df['geometry'])
-
-
 
     tee = 0
-    for i in range(len(nodes)):
-        node_df['geometry'][i] = nodes[i]
-        if nodes[i] not in nodes_df['geometry']:
-            node_df['Name'][i] = 'TEE'+str(tee)
-            node_df['Plant'][i] = 0
-            node_df['']
-            tee += 1
-    print node_df
-    pipe_df = pd.DataFrame(data=np.column_stack((edges_df['Shape_Leng'].tolist(),start_node,end_node)), columns = ['pipe length','start node','end node'])
+    for i in range(len(nodes_df)):
+        if nodes_df['Name'][i] == 0:
+            nodes_df['Name'][i] = 'TEE'+str(tee)
+            tee +=1
 
-    return node_df, pipe_df
+    # TODO: remove these tests as soon as it's confirmed it works
+    nodes_df.to_csv(os.path.expandvars(r'%TEMP%\Node_DF_DH.csv'))
+    pipes_df.to_csv(os.path.expandvars(r'%TEMP%\Pipe_DF_DH.csv'))
+
+    #pipe_df = pd.DataFrame(data=np.column_stack((edges_df['Shape_Leng'].tolist(),start_node,end_node)))#, columns = ['pipe length','start node','end node'])
+
+    return nodes_df, pipes_df
 
 #============================
 #test
