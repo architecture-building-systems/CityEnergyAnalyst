@@ -7,6 +7,15 @@ import cea.globalvar
 import cea.resources
 from cea.GUI.toolbox import add_message
 
+__author__ = "Daren Thomas"
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Daren Thomas"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 
 class RadiationTool(object):
     def __init__(self):

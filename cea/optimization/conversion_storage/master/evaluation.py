@@ -19,6 +19,7 @@ import cea.optimization.preprocessing.cooling_network.cooling_network as coolMai
 import cea.optimization.supportFn as sFn
 import cea.technologies.substation as sMain
 import check as cCheck
+import os
 
 
 # +++++++++++++++++++++++++++++++++++++
@@ -66,7 +67,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         network_file_name = "Network_summary_result_" + individual_barcode + ".csv"
 
     if individual_barcode.count("1") > 0:
-        Qheatmax = sFn.calcQmax(network_file_name, locator.pathNtwRes, gv)
+        Qheatmax = sFn.calcQmax(network_file_name, locator.get_optimization_network_results_folder(), gv)
     else:
         Qheatmax = 0
 
@@ -88,9 +89,10 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
         if individual_barcode.count("0") == 0:
             master_to_slave_vars.fNameTotalCSV = locator.get_total_demand()
         else:
-            master_to_slave_vars.fNameTotalCSV = locator.pathTotalNtw + "/Total_" + individual_barcode + ".csv"
+            master_to_slave_vars.fNameTotalCSV = os.path.join(locator.get_optimization_network_totals_folder(),
+                                                              "Total_%(individual_barcode)s.csv" % locals())
     else:
-        master_to_slave_vars.fNameTotalCSV = locator.pathSubsRes + "/Total_" + individual_barcode + ".csv"
+        master_to_slave_vars.fNameTotalCSV = locator.get_optimization_substations_total_file(individual_barcode)
 
     if individual_barcode.count("1") > 0:
 
@@ -336,7 +338,8 @@ def checkNtw(individual, ntwList, locator, gv):
         ntwList.append(indCombi)
         
         if indCombi.count("1") == 1:
-            total_demand = pd.read_csv(locator.pathNtwRes + "//" +  "Total_" + indCombi + ".csv")
+            total_demand = pd.read_csv(
+                os.path.join(locator.get_optimization_network_results_folder(), "Total_%(indCombi)s.csv" % locals()))
             building_names = total_demand.Name.values
             print "Direct launch of distribution summary routine for", indCombi
             nM.network_main(locator, total_demand, building_names, gv, indCombi)
