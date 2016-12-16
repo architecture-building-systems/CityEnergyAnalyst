@@ -45,7 +45,7 @@ def get_thermal_network_from_shapefile(locator):
     network_nodes_df = gpd.read_file(locator.get_heating_network_nodes())
 
     # get node and pipe information
-    node_df, pipe_df = extract_network(network_edges_df, network_nodes_df, locator)
+    node_df, pipe_df = extract_network(network_edges_df, network_nodes_df)
 
     # create edge and node connection matrix
     # this matrix specifies which edges are connected to which nodes, NOT the direction of flow
@@ -71,7 +71,7 @@ def get_thermal_network_from_shapefile(locator):
 # Utility
 #=============================
 
-def extract_network(edges_df, nodes_df, locator):
+def extract_network(edges_df, nodes_df):
     '''
     extracts network data into dataframes for pipes and nodes in the network
     :param shapefile: network shapefile
@@ -81,35 +81,24 @@ def extract_network(edges_df, nodes_df, locator):
     import numpy as np
     import os
 
-    # import consumer and plant nodes
-    end_nodes = []
-    for node in nodes_df['geometry']:
-        end_nodes.append(node.coords[0])
-    nodes_df['geometry'] = end_nodes
-    nodes_df = nodes_df.drop(['Af','AncillaryR','Enabled','Floors','Hs','ID','Qc','Qh','Year','height'],axis=1)
-    nodes_df['consumer'] = np.ones(len(nodes_df['Plant']))-nodes_df['Plant'].values
-    #nodes_df = nodes_df.set_index(nodes_df['geometry'])
-
-    end_node_set = set(nodes_df['geometry'])
-
     # import network shapefile and extract all edge and node information
     nodes = []
-    node_names = []
-    counter = 0
-    start_node = []
-    end_node = []
+    #node_names = []
+    #counter = 0
+    #start_node = []
+    #end_node = []
     pipes_df = pd.DataFrame(data = None, columns = ['pipe length', 'start node', 'end node'])
     #for pipe in edges_df['geometry']:
     for i in range(len(edges_df)):
         pipe = edges_df['geometry'][i]
         if pipe.coords[0] not in nodes:
             nodes.append(pipe.coords[0])
-            node_names.append('NODE' + str(counter))
-            counter +=1
+            #node_names.append('NODE' + str(counter))
+            #counter +=1
         if pipe.coords[1] not in nodes:
             nodes.append(pipe.coords[1])
-            node_names.append('NODE' + str(counter))
-            counter +=1
+            #node_names.append('NODE' + str(counter))
+            #counter +=1
         pipes_df.loc[len(pipes_df)] = [edges_df['Shape_Leng'][i], pipe.coords[0], pipe.coords[1]]
         '''
         start_node.append(pipe.coords[0])
@@ -122,11 +111,12 @@ def extract_network(edges_df, nodes_df, locator):
             if pipe.coords[1] == nodes[i]:
                 end_node.append(i)
         '''
+
     # append tee nodes to node dataframe
     for node in end_node_set:
         if node not in nodes:
             nodes.append(node)
-            node_names.append('NODE'+str(counter))
+            #node_names.append('NODE'+str(counter))
     for node in nodes:
         if node not in end_node_set:
             nodes_df.loc[len(nodes_df)] = [0,0,node,0]
@@ -137,9 +127,26 @@ def extract_network(edges_df, nodes_df, locator):
             nodes_df['Name'][i] = 'TEE'+str(tee)
             tee +=1
 
-    # TODO: remove these tests as soon as it's confirmed it works
-    nodes_df.to_csv(os.path.expandvars(r'%TEMP%\Node_DF_DH.csv'))
-    pipes_df.to_csv(os.path.expandvars(r'%TEMP%\Pipe_DF_DH.csv'))
+    # set node and pipe names
+    pipes_id = ['EDGE'+str(i) for i in range(len(pipes_df))]
+    pipes_df = pipes_df.set_index([pipes_id])
+    print len(pipes_id)
+    nodes_id = ['NODE'+str(i) for i in range(len(nodes_df))]
+    nodes_df = nodes_df.set_index([nodes_id])
+    print len(nodes_id)
+
+    for i in range(len(pipes_df)):
+        found_start = found_end = False
+        for j in range(len(edges_df)):
+            if pipes_df['start node'][i] == nodes_df['geometry'][j]:
+                pipes_df['start node'][i] = nodes_id[j]
+                found_start = True
+            elif pipes_df['end node'][i] == nodes_df['geometry'][j]:
+                pipes_df['end node'][i] = nodes_id[j]
+                found_end = True
+        if found_start or found_end == False:
+            print str(pipes_df.index.values[i])+' is missing a node'
+
 
     #pipe_df = pd.DataFrame(data=np.column_stack((edges_df['Shape_Leng'].tolist(),start_node,end_node)))#, columns = ['pipe length','start node','end node'])
 
