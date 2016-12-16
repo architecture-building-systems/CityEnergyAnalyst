@@ -79,6 +79,7 @@ def extract_network(edges_df, end_nodes_df, locator):
              pipe_df: list of pipes and their corresponding lengths and start and end nodes
     '''
     import numpy as np
+    import os
 
     # import consumer and plant nodes
     end_nodes = []
@@ -115,7 +116,24 @@ def extract_network(edges_df, end_nodes_df, locator):
     end_nodes_df = end_nodes_df.merge(total_demand[['Name','QHf_MWhyr']], left_on = 'Name', right_on = 'Name')
     '''
 
-    node_df = pd.DataFrame(data = None, columns = ['geometry'], index = nodes)
+    for node in end_nodes_df['geometry']:
+        if node not in nodes:
+            nodes.append(node)
+            node_names.append('NODE'+str(counter))
+            counter += 1
+
+    node_df = pd.DataFrame(data = None, columns = None, index = nodes)
+
+    node_df.append(end_nodes_df).to_csv(os.path.expandvars(r'%TEMP%\Node_DF_DH.csv'))
+
+    '''i = 0
+    for node in nodes:
+        if node in end_nodes_df['geometry'].values:
+            print len(node_df[:][i])
+            print len(end_nodes_df[:][i:i+1])
+    #print node_df
+    '''
+
     node_df['coordinates'] = nodes
     print node_df
 
