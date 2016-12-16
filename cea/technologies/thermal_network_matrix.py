@@ -108,16 +108,22 @@ def thermal_network_main(locator,gv):
     pipe_properties_df = assign_pipes_to_edges(mass_flow_df, locator, gv)
 
     # assigning a dummy temperature matrix that defines the temperature at each edge at each timestem #TODO: incorporate results of real temperature calculation
-    temperature_matrix = np.ones(mass_flow_df.shape)*323   # assigning a dummy temperature to each edge for now
+    temperature_matrix_supply = np.ones(mass_flow_df.shape)*323   # assigning a dummy temperature to each edge for now
+    temperature_matrix_return = np.ones(mass_flow_df.shape) * 303  # assigning a dummy temperature to each edge for now
 
     # calculate pressure losses at each node
-    pressure_loss_nodes_df = pd.DataFrame(
+    pressure_loss_nodes_supply_df = pd.DataFrame(
         data=calc_pressure_loss_nodes(edge_node_df.values, pipe_properties_df[:]['DN':'DN'].values,
                                       pipe_length_df.values, mass_flow_df.values, temperature_matrix, gv),
         index=range(8760), columns=edge_node_df.index.values)
+    pressure_loss_nodes_return_df = pd.DataFrame(
+        data=calc_pressure_loss_nodes(-(edge_node_df.values), pipe_properties_df[:]['DN':'DN'].values,
+                                      pipe_length_df.values, mass_flow_df.values, temperature_matrix, gv),
+        index=range(8760), columns=edge_node_df.index.values)
 
-    #calculate total pressure loss in the system #TODO: [MM] add return path pressure loss instead of doubling pressure loss in supply path
-    pressure_loss_system = 2 * [sum(pressure_loss_nodes_df.values[i] for i in range(len(pressure_loss_nodes_df.values[0])))]
+    #calculate total pressure loss in the system
+    pressure_loss_system = [sum(pressure_loss_nodes_supply_df.values[i] for i in range(len(pressure_loss_nodes_supply_df.values[0])))] + \
+                           [sum(pressure_loss_nodes_return_df.values[i] for i in range(len(pressure_loss_nodes_return_df.values[0])))]
 
 def write_df_to_consumer_nodes_df(all_nodes_df, df_value, flag):
     nodes_df = pd.DataFrame()
