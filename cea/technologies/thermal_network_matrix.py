@@ -360,33 +360,34 @@ direction of flow of each edge e at node n: if e points to n, value is 1; if e l
     """
     Z = edge_node_df.as_matrix()   # (nxe) edge-node matrix
     Z_pipe_out = Z.clip(min=0)
-    Z_pipe_in = Z.clip(max=0)
+    Z_pipe_in = np.dot(-1,Z.clip(max=0)) #TODO: [SH] check if this is correct: I added a negative sign to this because I think based on Wang both matrices need to be greater than 0, no?
+    
     # Z_minus = np.dot(-1,Z)         # (nxe)
     # Z_minus_T = np.transpose(Z_minus)  # (exn)
     M_sub = np.diag(mass_flow_substation_df.as_matrix()[0])  # (nxn)  [kg/s] # substation mass flow rate matrix
     M_sub_cp = np.dot(gv.Cpw, M_sub)   #[kW/K]
 
-    consumer_node = np.where(all_nodes_df.ix['consumer']!='', 1, 0)      # make (nx1) consumer node matrix
-    plant_node = np.where(all_nodes_df.ix['plant'] != '', 1, 0)      # make (nx1) plant node matrix
+    consumer_node = np.where(all_nodes_df.ix['consumer']!='', 1, 0)      # make (n x 1) consumer node matrix
+    plant_node = np.where(all_nodes_df.ix['plant'] != '', 1, 0)      # make (n x 1) plant node matrix
 
     M_d_cp = np.diag(mass_flow_df.as_matrix())  # (exe) pipe mass flow diagonal matrix #TODO: check unit is [kg/s]
     K = calc_aggregated_heat_conduction_coefficient(locator,gv, pipe_length_df)/1000 # (exe) # aggregated heat condumtion coef matrix [kW/K] #TODO: [SH] import pipe property (length and diameter)
 
     T_ground_matrix = pd.Series([i*0+T_ground for i in range(len(pipe_length_df))])  # (ex1) [K]
-    T_required = np.dot(273 + 65, consumer_node)
+    T_required = np.dot(273 + 65, consumer_node)    # (nx1) [K]
 
     # preparing matrices for calculation
-    M_d_cp = M_d_cp*gv.Cpw
-    Zout_mcp = np.dot(Z_pipe_out,M_d_cp)
-    Zin_mcp = np.dot(Z_pipe_in,M_d_cp)
-    Zout_Zin = np.hstack((Zout_mcp,Zin_mcp))
-    Zout_Zin_M_sub = np.hstack((Zout_Zin, M_sub_cp))  #(m x (2e+n))
+    M_d_cp = M_d_cp*gv.Cpw  # (e x e)
+    Zout_mcp = np.dot(Z_pipe_out,M_d_cp)    # (n x e)
+    Zin_mcp = np.dot(Z_pipe_in,M_d_cp)  # (n x e)
+    Zout_Zin = np.hstack((Zout_mcp,Zin_mcp))    # (n x 2e)
+    Zout_Zin_M_sub = np.hstack((Zout_Zin, M_sub_cp))  #(n x (2e+n))
 
-    Md_cp_K_1 = M_d_cp-K/2
-    Md_cp_K_2 = (-1)*( M_d_cp + K / 2)
-    Md_cp_K = np.hstack((Md_cp_K_1, Md_cp_K_2))
+    Md_cp_K_1 = M_d_cp-K/2  # (e x e)
+    Md_cp_K_2 = (-1)*( M_d_cp + K / 2)  # (e x e)
+    Md_cp_K = np.hstack((Md_cp_K_1, Md_cp_K_2)) # (e x 2e)
     zeros = np.zeros((edge_node_df.shape[1], edge_node_df.shape[0]))
-    Md_cp_K_zeros = np.hstack((Md_cp_K, zeros))
+    Md_cp_K_zeros = np.hstack((Md_cp_K, zeros)) # (e x (2e+n))
 
     zeros = np.zeros((edge_node_df.shape[1], edge_node_df.shape[1]))
     I = np.zeros((edge_node_df.shape[1], edge_node_df.shape[1]))
