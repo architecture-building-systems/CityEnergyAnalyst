@@ -81,7 +81,7 @@ def thermal_network_main(locator,gv):
             mass_flow_df[:][t:t+1] = calc_mass_flow_edges(edge_node_df, mass_flow_substations_nodes_df)
 
             #mass_flow_df = np.absolute(mass_flow_df)  # added this hack to make sure code runs
-            
+
             # solve thermal equations, with mass_flow_df from hydraulic calculation as input
             T_node = pipe_thermal_calculation(locator, gv, T_ground[t], edge_node_df, all_nodes_df, mass_flow_df.ix[t],
                                               consumer_heat_requirement_nodes_df.ix[t], mass_flow_substations_nodes_df,
@@ -101,9 +101,6 @@ def thermal_network_main(locator,gv):
             # solve thermal equations, with mass_flow_df from hydraulic calculation as input
             T_node = pipe_thermal_calculation(locator, gv, weather_file, edge_node_df, mass_flow_df, mass_flow_substations)
 
-<<<<<<< HEAD
-def write_df_to_consumer_nodes_df(all_nodes_df, df_value, flag):
-=======
     # this was included in the calc_hydraulic_network in order to check the results. its use in the future optional, though.
     mass_flow_df.to_csv(locator.pathNtwLayout + '//' + 'MassFlow_DH.csv')
 
@@ -122,8 +119,7 @@ def write_df_to_consumer_nodes_df(all_nodes_df, df_value, flag):
     #calculate total pressure loss in the system #TODO: [MM] add return path pressure loss instead of doubling pressure loss in supply path
     pressure_loss_system = 2 * [sum(pressure_loss_nodes_df.values[i] for i in range(len(pressure_loss_nodes_df.values[0])))]
 
-def write_df_value_to_nodes_df(all_nodes_df, df_value):
->>>>>>> origin/i412-DHC-network-path
+def write_df_to_consumer_nodes_df(all_nodes_df, df_value, flag):
     nodes_df = pd.DataFrame()
     for node in all_nodes_df:  # consumer_nodes+plant_nodes:    #name in building_names:
         if all_nodes_df[node]['consumer'] != '':
