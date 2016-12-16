@@ -30,6 +30,10 @@ f_r_p = 0.5 # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 20
 f_r_a = 0.2 # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
 
 
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# 2.1.3
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 def calc_h_mc():
 
     # (7) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
@@ -84,6 +88,8 @@ def calc_h_ec():
     # e.g. adiabatic building elements with U = 0
     # TODO: can incorporate point or linear thermal bridges
 
+    return h_ec
+
 
 
 def calc_h_ea():
@@ -93,6 +99,11 @@ def calc_h_ea():
     h_ea = (m_v_sys + m_v_w + m_v_inf) * cp
 
     return h_ea
+
+
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# 2.1.4
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 def calc_phi_a():
@@ -200,6 +211,10 @@ def calc_f_sm(bpr):
 
     return f_sm
 
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# 2.1.5
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 
 def calc_theta_ea():
 
@@ -236,3 +251,181 @@ def calc_theta_em():
     # e.g. adiabatic building elements with U = 0
 
     # TODO: theta_e_j is depending on adjacent space to surface (outdoor, adiabatic, ground, etc.)
+
+    return theta_em
+
+
+def calc_theta_e_star():
+
+    # (24) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+    #
+
+    # standard values for calculation
+    h_e_load_and_temp = 13.5  # (W/m2K) for load and temperature calculation
+    h_e_energy = 23  # (W/m2K) for energy demand calculation
+
+    f_r_roof = 1  # (-)
+    f_r_wall = 0.5  # (-)
+    h_r = 5.5  # (-)
+    delta_t_er = 11  # (K)
+
+    if is_roof(surface):
+        f_r = f_r_roof
+    elif is_wall(surface):
+        f_r = f_r_wall
+    else:
+        raise()
+
+    if is_energy_calculation(calculation):
+        h_e = h_e_energy
+    elif is_load_or_temp_calculation(calculation):
+        h_e = h_e_load_and_temp
+    else:
+        raise()
+
+
+    theta_e_star = theta_e + (alpha_s * i_s_i) / h_e - (f_r * h_r * epsilon_0 * delta_t_er) / h_e
+
+    return theta_e_star
+
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# 2.1.6
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+def calc_theta_m_t():
+
+    # (25) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+
+    theta_m_t = (theta_m_t_1 * (c_m - 0.5 * (h_3 + h_em)) + phi_m_tot) / (c_m + 0.5 * (h_3 + h_em))
+
+    return theta_m_t
+
+
+def calc_h_1():
+
+    # (26) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+
+    h_1 = 1 / (1 / h_ea + 1 / h_ac)
+
+    return h_1
+
+
+def calc_h_2():
+
+    # (27) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+
+    h_2 = h_1 + h_ec
+
+    return h_2
+
+
+def calc_h_3():
+
+    # (28) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+
+    h_3 = 1 / (1 / h_2 + 1 / h_mc)
+
+    return h_3
+
+
+def calc_phi_m_tot():
+
+    # (29) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+
+    phi_m_tot = phi_m + h_em * theta_em + (h_3 * (phi_c + h_ec * theta_ec + h_1 * (phi_a / h_ea + theta_ea))) / h_2
+
+    return phi_m_tot
+
+
+def calc_theta_m():
+
+    # (30) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+
+    theta_m = (theta_m_t + theta_m_t_1) / 2
+
+    return theta_m
+
+
+def calc_theta_c():
+
+    # (31) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+
+    theta_c = (h_mc * theta_m + phi_c + h_ec * theta_ec + h_1 * (phi_a / h_ea + theta_ea)) / (h_mc + h_ec + h_1)
+
+    return theta_c
+
+
+def calc_theta_a():
+
+    # (32) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+
+    theta_a = (h_ac * theta_c + h_ea * theta_ea + phi_a) / (h_ac + h_ea)
+
+    return theta_a
+
+
+def calc_theta_o():
+
+    # (33) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+
+    theta_o = theta_a * 0.31 + theta_c * 0.69
+
+    return theta_o
+
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# 2.2.7
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+def calc_phi_hc_cv():
+
+    # (58) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+    phi_hc_cv = f_hc_cv * phi_hc
+
+    return phi_hc_cv
+
+
+def calc_phi_hc_r():
+
+    # (59) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+    phi_hc_r = (1 - f_hc_cv) * phi_hc
+
+    return phi_hc_r
+
+
+def calc_theta_tabs_su():
+
+    # (60) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+    theta_tabs_su = theta_tabs_su_max - (theta_tabs_su_max - theta_tabs_su_min) * (theta_e -  theta_e_min)/(theta_e_max - theta_e_min)
+
+    return theta_tabs_su
+
+
+def calc_phi_tabs():
+
+    # (61) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+    phi_tabs = h_tabs * (theta_tabs_su - theta_m_t_1)
+
+    return phi_tabs
+
+
+def calc_h_tabs():
+
+    # (62) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+
+    # typical values
+    a_tabs = 0.8 * a_ngf
+    r_tabs = 0.08  # (m2K/W)
+
+    h_tabs = a_tabs / r_tabs
+
+    return h_tabs
+
+
+def calc_phi_m_tot_tabs():
+
+    # (63) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+
+    phi_m_tot = calc_phi_m_tot() + phi_tabs
+
+    return phi_m_tot
+
