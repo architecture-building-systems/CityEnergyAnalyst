@@ -260,7 +260,7 @@ def substation_return_model_main(locator, building_names, gv, buildings, substat
         building = buildings[index].loc[[t]]
         t_DH_return, mcp_DH = calc_substation_return_DH(locator, gv, building, T_DH[name], substations_HEX_specs.ix[name])
         T_DH_return_all[name] = [t_DH_return]
-        mdot_DH_all[name] = [mcp_DH/gv.Cpw]
+        mdot_DH_all[name] = [mcp_DH/gv.Cpw]   # [kg/s]
         index += 1
     return T_DH_return_all, mdot_DH_all
 
@@ -295,14 +295,14 @@ def calc_substation_return_DH(locator, gv, building, T_DH_supply, substation_HEX
         tco = building.Twwf_sup_C.values + 273  # in K
         tci = building.Twwf_re_C.values + 273  # in K
         cc = building.mcpwwf_kWC.values * 1000  # in W/K
-        t_DH_return_ww, mcp_DH_ww = calc_required_flow_and_t_return(Qwwf, UA_heating_ww, thi, tco, tci, cc)
+        t_DH_return_ww, mcp_DH_ww = calc_required_flow_and_t_return(Qwwf, UA_heating_ww, thi, tco, tci, cc)   #[kW/K]
     else:
         t_DH_return_ww = T_DH_supply
         mcp_DH_ww = 0
 
     # calculate mix temperature of return DH
     t_DH_return = calc_HEX_mix(Qhsf, Qwwf, t_DH_return_ww, mcp_DH_ww, t_DH_return_hs, mcp_DH_hs)
-    mcp_DH = mcp_DH_ww + mcp_DH_hs
+    mcp_DH = mcp_DH_ww + mcp_DH_hs  #[kW/K]
 
     return t_DH_return, mcp_DH
 
