@@ -359,8 +359,8 @@ direction of flow of each edge e at node n: if e points to n, value is 1; if e l
     calibration. Energy Conversion and Management, 2016
     """
     Z = edge_node_df.as_matrix()   # (nxe) edge-node matrix
-    Z_pipe_out = Z.clip(min=0)
-    Z_pipe_in = np.dot(-1,Z.clip(max=0))
+    Z_pipe_out = np.dot(-1,Z.clip(max=0))
+    Z_pipe_in = Z.clip(min=0)
     Z_pipe_out_T = np.transpose(Z_pipe_out)
     M_sub = np.diag(mass_flow_substation_df.as_matrix()[0])  # (nxn)  [kg/s] # substation mass flow rate matrix
     M_sub_cp = np.dot(gv.Cpw, M_sub)   #[kW/K]
@@ -414,6 +414,18 @@ direction of flow of each edge e at node n: if e points to n, value is 1; if e l
     print 'start calculating T_node...'
     flag = 0
     T_H = max(t_target_supply)+273 #[K] # determine min T_source
+
+    print "start test calculation"
+    H = np.dot(M_sub_cp, plant_node).dot(T_H).dot(-1)  # (n x 1)# calculate heat input matrix [kW]
+    M_d_cp = np.dot(gv.Cpw, M_d)   #[kW/K]
+    # A = Z_pipe_in * M_d_cp * np.linalg.inv(M_d_cp + K / 2) * (M_d_cp * Z_pipe_out_T - K / 2 * Z_pipe_out_T) - Z_pipe_out * M_d_cp * Z_pipe_out_T
+    A = np.dot(np.dot(Z_pipe_in, M_d_cp), np.dot(np.linalg.inv(M_d_cp + K / 2), (np.dot(M_d_cp, Z_pipe_out_T) - np.dot(K / 2, Z_pipe_out_T)))) - np.dot(np.dot(Z_pipe_out, M_d_cp), Z_pipe_out_T)
+    # B = U - Z_pipe_in * M_d_cp * np.linalg.inv(M_d_cp + K / 2) * K * T_ground_matrix - H
+    B = U - np.dot(np.dot(np.dot(Z_pipe_in, M_d_cp), np.linalg.inv(M_d_cp + K / 2)), np.dot(K, T_ground_matrix)) - H
+    print A.shape, B.shape
+    T_node = np.linalg.solve(A,B)
+    print "end test calculation"
+
     while flag == 0:
         H = np.dot(M_sub_cp, plant_node).dot(T_H).dot(-1)  #(n x 1)# calculate heat input matrix [kW]
         # cp* Z_pipe_out * M_d * T_pipe_out + H = cp* Z_pipe_in * M_d * T_pipe_in + U
@@ -431,7 +443,7 @@ direction of flow of each edge e at node n: if e points to n, value is 1; if e l
             T_H = T_H + 0.1
         else:
             flag = 1
-            return T_node
+    return T_node
 
 def calc_pipe_temperature(gv, Z_pipe_in, M_d, K, Z_pipe_out, Z_pipe_out_T, U, H, T_ground):
 
