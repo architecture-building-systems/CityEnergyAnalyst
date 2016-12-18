@@ -245,6 +245,91 @@ def write_value_to_nodes(all_nodes_df, building_names, value_list):
 # # substation = (U - H).values
 # # b = np.hstack((substation,T_g_K)).T # (n+e)x1
 
+def pipe_thermal_calculation(locator, gv, T_ground, edge_node_df, all_nodes_df, mass_flow_df, consumer_heat_requiremt, mass_flow_substation_df, pipe_length_df, t_target_supply):
+    """
+    This function solve for the node temperature with known mass flow rate in pipes and substation mass flow rate at each time-step.
+
+    :param locator:
+    :param gv:
+    :param weather_file:
+    :param edge_node_df: matrix consisting of n rows (number of nodes) and e columns (number of edges) and indicating
+direction of flow of each edge e at node n: if e points to n, value is 1; if e leaves node n, -1; else, 0.  (n x e)
+    :param mass_flow_df: matrix containing the mass flow rate in each edge e at time t               (1 x e)
+    :param mass_flow_substation_df: mass flow rate through each node (1 x n)
+    :return:
+
+    Reference
+    ==========
+    J. Wang, A method for the steady-state thermal simulation of district heating systems and model parameters
+    calibration. Energy Conversion and Management, 2016
+    """
+    Z = edge_node_df.as_matrix()   # (nxe) edge-node matrix
+    Z_pipe_out = Z.clip(min=0)
+    # Z_pipe_in = np.dot(-1,Z.clip(max=0)) #TODO: [SH] check if this is correct: I added a negative sign to this because I think based on Wang both matrices need to be greater than 0, no?
+    Z_pipe_in = Z.clip(max=0)
+    # Z_minus = np.dot(-1,Z)         # (nxe)
+    # Z_minus_T = np.transpose(Z_minus)  # (exn)
+    M_sub = np.diag(mass_flow_substation_df.as_matrix()[0])  # (nxn)  [kg/s] # substation mass flow rate matrix
+    M_sub_cp = np.dot(gv.Cpw, M_sub)   #[kW/K]
+
+    consumer_node = np.where(all_nodes_df.ix['consumer']!='', 1, 0)      # make (n x 1) consumer node matrix
+    plant_node = np.where(all_nodes_df.ix['plant'] != '', 1, 0)      # make (n x 1) plant node matrix
+
+    M_d_cp = np.diag(mass_flow_df.as_matrix())  # (exe) pipe mass flow diagonal matrix #TODO: check unit is [kg/s]
+    K = calc_aggregated_heat_conduction_coefficient(locator,gv, pipe_length_df)/1000 # (exe) # aggregated heat condumtion coef matrix [kW/K] #TODO: [SH] import pipe property (length and diameter)
+
+    T_ground_matrix = pd.Series([i*0+T_ground for i in range(len(pipe_length_df))])  # (ex1) [K]
+    T_required = np.dot(273 + 65, consumer_node)    # (nx1) [K]
+
+    # preparing matrices for calculation
+    M_d_cp = M_d_cp*gv.Cpw  # (e x e)
+    Zout_mcp = np.dot(Z_pipe_out,M_d_cp)    # (n x e)
+    Zin_mcp = np.dot(Z_pipe_in,M_d_cp)  # (n x e)
+    Zout_Zin = np.hstack((Zout_mcp,Zin_mcp))    # (n x 2e)
+    Zout_Zin_M_sub = np.hstack((Zout_Zin, M_sub_cp))  #(n x (2e+n))
+
+    Md_cp_K_1 = M_d_cp-K/2  # (e x e)
+    Md_cp_K_2 = (-1)*( M_d_cp + K / 2)  # (e x e)
+    Md_cp_K = np.hstack((Md_cp_K_1, Md_cp_K_2)) # (e x 2e)
+    zeros = np.zeros((edge_node_df.shape[1], edge_node_df.shape[0]))
+    Md_cp_K_zeros = np.hstack((Md_cp_K, zeros)) # (e x (2e+n))
+
+    zeros = np.zeros((edge_node_df.shape[1], edge_node_df.shape[1]))
+    I = np.zeros((edge_node_df.shape[1], edge_node_df.shape[1]))
+    np.fill_diagonal(I,1)
+    Z_pipe_in_T = Z_pipe_in.T
+    zeros_I = np.hstack((zeros, I))
+    zeros_I_Zpipe_in = np.hstack((zeros_I, Z_pipe_in_T))
+
+    zeros_array = np.zeros((edge_node_df.shape[1]))
+    T_g_K = (np.dot(T_ground_matrix, K).dot(-1))
+
+    # start solving node and pipe outlet temperatures
+    print 'start calculating T_node...'
+    flag = 0
+    T_H = max(t_target_supply)+273 #[K] # determine min T_source
+    while flag == 0:
+        H = np.dot(M_sub_cp, plant_node).dot(T_H).dot(-1)  #(n x 1)# calculate heat input matrix [kW]
+        # cp* Z_pipe_out * M_d * T_pipe_out + H = cp* Z_pipe_in * M_d * T_pipe_in + U
+
+        a_12 = np.vstack((Zout_Zin_M_sub, Md_cp_K_zeros))
+        a = np.vstack((a_12, zeros_I_Zpipe_in))
+        b_12 = np.hstack((H, T_g_K))
+        b = np.hstack((b_12, zeros_array)).T
+        # check if matrix is linear independent
+        pl, u =  scipy.linalg.lu(a, permute_l=True)
+
+        # T_all = np.linalg.solve(a,b) #FIXME: [SH] error singular matrix
+        # T_all = scipy.sparse.linalg.spsolve(a,b) # another solver
+
+        # try to solve with least square method
+        T_out_in, residual, rank, s = np.linalg.lstsq(a, b)
+        if T_out_in[:] <= 338*199:
+            T_H = T_H + 0.1
+        else:
+            flag = 1
+            return T_out_in
+
 
 def run_as_script(scenario_path=None):
     """
