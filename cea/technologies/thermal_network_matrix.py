@@ -415,17 +415,6 @@ direction of flow of each edge e at node n: if e points to n, value is 1; if e l
     flag = 0
     T_H = max(t_target_supply)+273 #[K] # determine min T_source
 
-    print "start test calculation"
-    H = np.dot(M_sub_cp, plant_node).dot(T_H).dot(-1)  # (n x 1)# calculate heat input matrix [kW]
-    M_d_cp = np.dot(gv.Cpw, M_d)   #[kW/K]
-    # A = Z_pipe_in * M_d_cp * np.linalg.inv(M_d_cp + K / 2) * (M_d_cp * Z_pipe_out_T - K / 2 * Z_pipe_out_T) - Z_pipe_out * M_d_cp * Z_pipe_out_T
-    A = np.dot(np.dot(Z_pipe_in, M_d_cp), np.dot(np.linalg.inv(M_d_cp + K / 2), (np.dot(M_d_cp, Z_pipe_out_T) - np.dot(K / 2, Z_pipe_out_T)))) - np.dot(np.dot(Z_pipe_out, M_d_cp), Z_pipe_out_T)
-    # B = U - Z_pipe_in * M_d_cp * np.linalg.inv(M_d_cp + K / 2) * K * T_ground_matrix - H
-    B = U - np.dot(np.dot(np.dot(Z_pipe_in, M_d_cp), np.linalg.inv(M_d_cp + K / 2)), np.dot(K, T_ground_matrix)) - H
-    print A.shape, B.shape
-    T_node = np.linalg.solve(A,B)
-    print "end test calculation"
-
     while flag == 0:
         H = np.dot(M_sub_cp, plant_node).dot(T_H).dot(-1)  #(n x 1)# calculate heat input matrix [kW]
         # cp* Z_pipe_out * M_d * T_pipe_out + H = cp* Z_pipe_in * M_d * T_pipe_in + U
