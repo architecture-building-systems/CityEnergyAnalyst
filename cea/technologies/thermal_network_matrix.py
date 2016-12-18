@@ -360,44 +360,55 @@ direction of flow of each edge e at node n: if e points to n, value is 1; if e l
     """
     Z = edge_node_df.as_matrix()   # (nxe) edge-node matrix
     Z_pipe_out = Z.clip(min=0)
-    Z_pipe_in = np.dot(-1,Z.clip(max=0)) #TODO: [SH] check if this is correct: I added a negative sign to this because I think based on Wang both matrices need to be greater than 0, no?
-    
-    # Z_minus = np.dot(-1,Z)         # (nxe)
-    # Z_minus_T = np.transpose(Z_minus)  # (exn)
+    Z_pipe_in = np.dot(-1,Z.clip(max=0))
+    Z_pipe_out_T = np.transpose(Z_pipe_out)
     M_sub = np.diag(mass_flow_substation_df.as_matrix()[0])  # (nxn)  [kg/s] # substation mass flow rate matrix
     M_sub_cp = np.dot(gv.Cpw, M_sub)   #[kW/K]
 
     consumer_node = np.where(all_nodes_df.ix['consumer']!='', 1, 0)      # make (n x 1) consumer node matrix
     plant_node = np.where(all_nodes_df.ix['plant'] != '', 1, 0)      # make (n x 1) plant node matrix
 
-    M_d_cp = np.diag(mass_flow_df.as_matrix())  # (exe) pipe mass flow diagonal matrix #TODO: check unit is [kg/s]
+    M_d = np.diag(mass_flow_df.as_matrix())  # (exe) pipe mass flow diagonal matrix #TODO: check unit is [kg/s]
     K = calc_aggregated_heat_conduction_coefficient(locator,gv, pipe_length_df)/1000 # (exe) # aggregated heat condumtion coef matrix [kW/K] #TODO: [SH] import pipe property (length and diameter)
 
     T_ground_matrix = pd.Series([i*0+T_ground for i in range(len(pipe_length_df))])  # (ex1) [K]
     T_required = np.dot(273 + 65, consumer_node)    # (nx1) [K]
 
     # preparing matrices for calculation
-    M_d_cp = M_d_cp*gv.Cpw  # (e x e)
-    Zout_mcp = np.dot(Z_pipe_out,M_d_cp)    # (n x e)
-    Zin_mcp = np.dot(Z_pipe_in,M_d_cp)  # (n x e)
-    Zout_Zin = np.hstack((Zout_mcp,Zin_mcp))    # (n x 2e)
-    Zout_Zin_M_sub = np.hstack((Zout_Zin, M_sub_cp))  #(n x (2e+n))
+    # Z_out_in = np.hstack((Z_pipe_out, Z_pipe_in))
+    # M_d_2 = block_diag(M_d*gv.Cpw , M_d*gv.Cpw)  # (2e x 2e) [kW/K]
+    # Z_M_d_2 = np.dot(Z_out_in,M_d_2)   # (n x 2e) [kW/K]
+    U = consumer_heat_requiremt/3600   #(nx1) [kW]   #TODO: maybe don't fix?
+    # M_d_cp_1 = np.dot(M_d, gv.Cpw)- np.dot(K,1/2)   # (exe)  [kW/K]
+    # M_d_cp_2 = -1*(np.dot(M_d, gv.Cpw) + np.dot(K, 1 / 2))  # (exe)  [kW/K]
+    # M_d_cp_K = np.hstack((M_d_cp_1, M_d_cp_2))  # (e x 2e) [kW/K]
+    # T_g_K = (np.dot(T_ground_matrix,K).dot(-1))
+    # # substation = (U - H).values
+    # # b = np.hstack((substation,T_g_K)).T # (n+e)x1
 
-    Md_cp_K_1 = M_d_cp-K/2  # (e x e)
-    Md_cp_K_2 = (-1)*( M_d_cp + K / 2)  # (e x e)
-    Md_cp_K = np.hstack((Md_cp_K_1, Md_cp_K_2)) # (e x 2e)
-    zeros = np.zeros((edge_node_df.shape[1], edge_node_df.shape[0]))
-    Md_cp_K_zeros = np.hstack((Md_cp_K, zeros)) # (e x (2e+n))
 
-    zeros = np.zeros((edge_node_df.shape[1], edge_node_df.shape[1]))
-    I = np.zeros((edge_node_df.shape[1], edge_node_df.shape[1]))
-    np.fill_diagonal(I,1)
-    Z_pipe_in_T = Z_pipe_in.T
-    zeros_I = np.hstack((zeros, I))
-    zeros_I_Zpipe_in = np.hstack((zeros_I, Z_pipe_in_T))
-
-    zeros_array = np.zeros((edge_node_df.shape[1]))
-    T_g_K = (np.dot(T_ground_matrix, K).dot(-1))
+    # preparing matrices for calculation
+    # M_d_cp = M_d_cp*gv.Cpw  # (e x e)
+    # Zout_mcp = np.dot(Z_pipe_out,M_d_cp)    # (n x e)
+    # Zin_mcp = np.dot(Z_pipe_in,M_d_cp)  # (n x e)
+    # Zout_Zin = np.hstack((Zout_mcp,Zin_mcp))    # (n x 2e)
+    # Zout_Zin_M_sub = np.hstack((Zout_Zin, M_sub_cp))  #(n x (2e+n))
+    #
+    # Md_cp_K_1 = M_d_cp-K/2  # (e x e)
+    # Md_cp_K_2 = (-1)*( M_d_cp + K / 2)  # (e x e)
+    # Md_cp_K = np.hstack((Md_cp_K_1, Md_cp_K_2)) # (e x 2e)
+    # zeros = np.zeros((edge_node_df.shape[1], edge_node_df.shape[0]))
+    # Md_cp_K_zeros = np.hstack((Md_cp_K, zeros)) # (e x (2e+n))
+    #
+    # zeros = np.zeros((edge_node_df.shape[1], edge_node_df.shape[1]))
+    # I = np.zeros((edge_node_df.shape[1], edge_node_df.shape[1]))
+    # np.fill_diagonal(I,1)
+    # Z_pipe_in_T = Z_pipe_in.T
+    # zeros_I = np.hstack((zeros, I))
+    # zeros_I_Zpipe_in = np.hstack((zeros_I, Z_pipe_in_T))
+    #
+    # zeros_array = np.zeros((edge_node_df.shape[1]))
+    # T_g_K = (np.dot(T_ground_matrix, K).dot(-1))
 
     # start solving node and pipe outlet temperatures
     print 'start calculating T_node...'
@@ -406,31 +417,29 @@ direction of flow of each edge e at node n: if e points to n, value is 1; if e l
     while flag == 0:
         H = np.dot(M_sub_cp, plant_node).dot(T_H).dot(-1)  #(n x 1)# calculate heat input matrix [kW]
         # cp* Z_pipe_out * M_d * T_pipe_out + H = cp* Z_pipe_in * M_d * T_pipe_in + U
-        a_12 = np.vstack((Zout_Zin_M_sub, Md_cp_K_zeros))
-        a = np.vstack((a_12, zeros_I_Zpipe_in))
-        b_12 = np.hstack((H, T_g_K))
-        b = np.hstack((b_12, zeros_array)).T
+
+        T_node = calc_pipe_temperature(gv, Z_pipe_in, M_d, K, Z_pipe_out, Z_pipe_out_T, U, H, T_ground_matrix )
         # check if matrix is linear independent
-        pl, u =  scipy.linalg.lu(a, permute_l=True)
+        # pl, u =  scipy.linalg.lu(a, permute_l=True)
 
         # T_all = np.linalg.solve(a,b) #FIXME: [SH] error singular matrix
         # T_all = scipy.sparse.linalg.spsolve(a,b) # another solver
 
         # try to solve with least square method
-        T_out_in, residual, rank, s = np.linalg.lstsq(a, b)
-        if residual >= 100:
+        # T_out_in, residual, rank, s = np.linalg.lstsq(a, b)
+        if T_node[:]:
             T_H = T_H + 0.1
         else:
             flag = 1
-            return T_out_in
+            return T_node
 
-def calc_pipe_temperature(gv, Z, M_d, K, Z_minus, Z_minus_T, U, H, T_ground):
+def calc_pipe_temperature(gv, Z_pipe_in, M_d, K, Z_pipe_out, Z_pipe_out_T, U, H, T_ground):
 
-    a1 = np.dot(gv.Cpw, Z).dot(M_d).dot(np.linalg.inv(np.dot(gv.Cpw, M_d) + np.dot( K, 1/2 )))
-    a2 = np.dot(gv.Cpw, M_d).dot(Z_minus_T) - np.dot( K, 1/2 ).dot(Z_minus_T)
-    a3 = np.dot(gv.Cpw,Z_minus).dot(M_d).dot(Z_minus_T)
+    a1 = np.dot(gv.Cpw, Z_pipe_in).dot(M_d).dot(np.linalg.inv(np.dot(gv.Cpw, M_d) + np.dot( K, 1/2 )))
+    a2 = np.dot(gv.Cpw, M_d).dot(Z_pipe_out_T) - np.dot( K, 1/2 ).dot(Z_pipe_out_T)
+    a3 = np.dot(gv.Cpw,Z_pipe_out).dot(M_d).dot(Z_pipe_out_T)
     a4 = U - np.dot(a1, K).dot(T_ground) - H
-    T_node = np.dot(np.linalg.inv(np.dot(a1, a2) - a3), a4)
+    T_node = np.dot(np.linalg.inv(np.dot(a1, a2) - a3), a4)  #FIXME: The inverse is singular matrix
 
     # b1 = 1/(gv.Cpw*M_d + K/2)
     # b2 = a2*T_node + K*T_ground
