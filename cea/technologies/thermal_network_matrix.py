@@ -435,6 +435,17 @@ direction of flow of each edge e at node n: if e points to n, value is 1; if e l
     return T_node
 
 def calc_pipe_temperature(gv, Z_pipe_in, M_d, K, Z_pipe_out, Z_pipe_out_T, U, H, T_ground):
+    '''
+    Calculates the node temperature based on Wang et al. equation 12
+    T_Node = [c * Z_pipe_in * M_d * (c * M_d + K/2)^-1 * (c * M_d * Z_pipe_out_T - K/2 * Z_pipe_out_T) - c * Z_pipe_out * M_d * Z_pipe_out_T]^-1
+                * [U - c * Z_pipe_in * M_d * (c * M_d + K/2)^-1 * K * T_ground - H]
+    a1 = c * Z_pipe_in * M_d * (c * M_d + K/2)^-1
+    a2 = c * M_d * Z_pipe_out_T - K/2 * Z_pipe_out_T
+    a3 = c * Z_pipe_out * M_d * Z_pipe_out_T
+    a4 = U - c * Z_pipe_in * M_d * (c * M_d + K/2)^-1 * K * T_ground - H
+
+    T_Node = [(a1 * a2) - a3]^-1 * a4
+    '''
 
     a1 = np.dot(gv.Cpw, Z_pipe_in).dot(M_d).dot(np.linalg.inv(np.dot(gv.Cpw, M_d) + np.dot( K, 1/2 )))
     a2 = np.dot(gv.Cpw, M_d).dot(Z_pipe_out_T) - np.dot( K, 1/2 ).dot(Z_pipe_out_T)
