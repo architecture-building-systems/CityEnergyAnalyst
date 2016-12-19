@@ -8,6 +8,7 @@ import math
 import cea.globalvar as gv
 from cea.utilities import epwreader
 from cea.resources import geothermal
+import scipy
 
 
 # trial 1=========================================================
@@ -245,7 +246,7 @@ def write_value_to_nodes(all_nodes_df, building_names, value_list):
 # # substation = (U - H).values
 # # b = np.hstack((substation,T_g_K)).T # (n+e)x1
 
-def pipe_thermal_calculation(locator, gv, T_ground, edge_node_df, all_nodes_df, mass_flow_df, consumer_heat_requiremt, mass_flow_substation_df, pipe_length_df, t_target_supply):
+def pipe_thermal_calculation_2(locator, gv, T_ground, edge_node_df, mass_flow_df, consumer_heat_requiremt, mass_flow_substation_df, pipe_length_df, t_target_supply):
     """
     This function solve for the node temperature with known mass flow rate in pipes and substation mass flow rate at each time-step.
 
@@ -263,26 +264,33 @@ direction of flow of each edge e at node n: if e points to n, value is 1; if e l
     J. Wang, A method for the steady-state thermal simulation of district heating systems and model parameters
     calibration. Energy Conversion and Management, 2016
     """
-    Z = edge_node_df.as_matrix()   # (nxe) edge-node matrix
+    Z = np.asarray(edge_node_df)   # (nxe) edge-node matrix
     Z_pipe_out = Z.clip(min=0)
     # Z_pipe_in = np.dot(-1,Z.clip(max=0)) #TODO: [SH] check if this is correct: I added a negative sign to this because I think based on Wang both matrices need to be greater than 0, no?
     Z_pipe_in = Z.clip(max=0)
     # Z_minus = np.dot(-1,Z)         # (nxe)
     # Z_minus_T = np.transpose(Z_minus)  # (exn)
-    M_sub = np.diag(mass_flow_substation_df.as_matrix()[0])  # (nxn)  [kg/s] # substation mass flow rate matrix
-    M_sub_cp = np.dot(gv.Cpw, M_sub)   #[kW/K]
+    M_sub_d = mass_flow_substation_df
+    M_sub = np.zeros((7,7))
+    np.fill_diagonal(M_sub, M_sub_d)
+    # M_sub = np.diag(M_sub_d[0])  # (nxn)  [kg/s] # substation mass flow rate matrix
+    M_sub_cp = np.dot(gv.Cpw, M_sub).dot(-1)   #[kW/K]
 
-    consumer_node = np.where(all_nodes_df.ix['consumer']!='', 1, 0)      # make (n x 1) consumer node matrix
-    plant_node = np.where(all_nodes_df.ix['plant'] != '', 1, 0)      # make (n x 1) plant node matrix
+    # consumer_node = np.where(all_nodes_df.ix['consumer']!='', 1, 0)      # make (n x 1) consumer node matrix
+    # plant_node = np.where(all_nodes_df.ix['plant'] != '', 1, 0)      # make (n x 1) plant node matrix
 
-    M_d_cp = np.diag(mass_flow_df.as_matrix())  # (exe) pipe mass flow diagonal matrix #TODO: check unit is [kg/s]
+    pipe = mass_flow_df
+    M_d = np.zeros((6,6))
+    np.fill_diagonal(M_d,pipe)
+    # M_d_cp = np.diag(mass_flow_df.as_matrix())  # (exe) pipe mass flow diagonal matrix #TODO: check unit is [kg/s]
     K = calc_aggregated_heat_conduction_coefficient(locator,gv, pipe_length_df)/1000 # (exe) # aggregated heat condumtion coef matrix [kW/K] #TODO: [SH] import pipe property (length and diameter)
 
-    T_ground_matrix = pd.Series([i*0+T_ground for i in range(len(pipe_length_df))])  # (ex1) [K]
-    T_required = np.dot(273 + 65, consumer_node)    # (nx1) [K]
+    T_ground_matrix = [T_ground, T_ground, T_ground, T_ground, T_ground, T_ground]
+    # T_ground_matrix = pd.Series([i*0+T_ground for i in range(len(pipe_length_df))])  # (ex1) [K]
+    # T_required = np.dot(273 + 65, consumer_node)    # (nx1) [K]
 
     # preparing matrices for calculation
-    M_d_cp = M_d_cp*gv.Cpw  # (e x e)
+    M_d_cp = M_d*gv.Cpw  # (e x e)
     Zout_mcp = np.dot(Z_pipe_out,M_d_cp)    # (n x e)
     Zin_mcp = np.dot(Z_pipe_in,M_d_cp)  # (n x e)
     Zout_Zin = np.hstack((Zout_mcp,Zin_mcp))    # (n x 2e)
@@ -291,35 +299,36 @@ direction of flow of each edge e at node n: if e points to n, value is 1; if e l
     Md_cp_K_1 = M_d_cp-K/2  # (e x e)
     Md_cp_K_2 = (-1)*( M_d_cp + K / 2)  # (e x e)
     Md_cp_K = np.hstack((Md_cp_K_1, Md_cp_K_2)) # (e x 2e)
-    zeros = np.zeros((edge_node_df.shape[1], edge_node_df.shape[0]))
+    zeros = np.zeros((Z.shape[1], Z.shape[0]))
     Md_cp_K_zeros = np.hstack((Md_cp_K, zeros)) # (e x (2e+n))
 
-    zeros = np.zeros((edge_node_df.shape[1], edge_node_df.shape[1]))
-    I = np.zeros((edge_node_df.shape[1], edge_node_df.shape[1]))
+    zeros = np.zeros((Z.shape[1], Z.shape[1]))
+    I = np.zeros((Z.shape[1], Z.shape[1]))
     np.fill_diagonal(I,1)
     Z_pipe_in_T = Z_pipe_in.T
     zeros_I = np.hstack((zeros, I))
     zeros_I_Zpipe_in = np.hstack((zeros_I, Z_pipe_in_T))
 
-    zeros_array = np.zeros((edge_node_df.shape[1]))
+    zeros_array_edge = np.zeros((Z.shape[1]))
+    zeros_array_node = np.zeros((Z.shape[0]))
     T_g_K = (np.dot(T_ground_matrix, K).dot(-1))
 
     # start solving node and pipe outlet temperatures
     print 'start calculating T_node...'
     flag = 0
-    T_H = max(t_target_supply)+273 #[K] # determine min T_source
+    # T_H = max(t_target_supply)+273 #[K] # determine min T_source
     while flag == 0:
-        H = np.dot(M_sub_cp, plant_node).dot(T_H).dot(-1)  #(n x 1)# calculate heat input matrix [kW]
+        # H = np.dot(M_sub_cp, plant_node).dot(T_H).dot(-1)  #(n x 1)# calculate heat input matrix [kW]
         # cp* Z_pipe_out * M_d * T_pipe_out + H = cp* Z_pipe_in * M_d * T_pipe_in + U
 
         a_12 = np.vstack((Zout_Zin_M_sub, Md_cp_K_zeros))
         a = np.vstack((a_12, zeros_I_Zpipe_in))
-        b_12 = np.hstack((H, T_g_K))
-        b = np.hstack((b_12, zeros_array)).T
+        b_12 = np.hstack((zeros_array_node, T_g_K))
+        b = np.hstack((b_12, zeros_array_edge)).T
         # check if matrix is linear independent
         pl, u =  scipy.linalg.lu(a, permute_l=True)
 
-        # T_all = np.linalg.solve(a,b) #FIXME: [SH] error singular matrix
+        T_all = np.linalg.solve(a,b) #FIXME: [SH] error singular matrix
         # T_all = scipy.sparse.linalg.spsolve(a,b) # another solver
 
         # try to solve with least square method
@@ -329,6 +338,61 @@ direction of flow of each edge e at node n: if e points to n, value is 1; if e l
         else:
             flag = 1
             return T_out_in
+
+def pipe_try(locator, gv, T_ground, edge_node_df, mass_flow_df, consumer_heat_requiremt, mass_flow_substation_df, pipe_length_df, t_target_supply):
+    Z = np.asarray(edge_node_df)   # (nxe) edge-node matrix
+    print Z
+    Z_pipe_out = Z.clip(min=0)
+    # Z_pipe_in = np.dot(-1,Z.clip(max=0)) #TODO: [SH] check if this is correct: I added a negative sign to this because I think based on Wang both matrices need to be greater than 0, no?
+    Z_pipe_in = Z.clip(max=0)
+    # Z_minus = np.dot(-1,Z)         # (nxe)
+    # Z_minus_T = np.transpose(Z_minus)  # (exn)
+    M_sub_d = mass_flow_substation_df
+    M_sub = np.zeros((7,7))
+    np.fill_diagonal(M_sub, M_sub_d)
+    # M_sub = np.diag(M_sub_d[0])  # (nxn)  [kg/s] # substation mass flow rate matrix
+    M_sub_cp = np.dot(gv.Cpw, M_sub).dot(-1)   #[kW/K]
+
+    # consumer_node = np.where(all_nodes_df.ix['consumer']!='', 1, 0)      # make (n x 1) consumer node matrix
+    # plant_node = np.where(all_nodes_df.ix['plant'] != '', 1, 0)      # make (n x 1) plant node matrix
+
+    pipe = mass_flow_df
+    M_d = np.zeros((6,6))
+    np.fill_diagonal(M_d,pipe)
+    # M_d_cp = np.diag(mass_flow_df.as_matrix())  # (exe) pipe mass flow diagonal matrix #TODO: check unit is [kg/s]
+    K = calc_aggregated_heat_conduction_coefficient(locator,gv, pipe_length_df)/1000 # (exe) # aggregated heat condumtion coef matrix [kW/K] #TODO: [SH] import pipe property (length and diameter)
+
+    T_ground_matrix = [T_ground, T_ground, T_ground, T_ground, T_ground, T_ground]
+    # T_ground_matrix = pd.Series([i*0+T_ground for i in range(len(pipe_length_df))])  # (ex1) [K]
+    # T_required = np.dot(273 + 65, consumer_node)    # (nx1) [K]
+
+    T_e_out = Z_pipe_out
+    T_e_in = Z_pipe_in.dot(-1)
+    T_node = np.zeros(Z.shape[0])
+    Z_new = Z
+
+    for n in range(Z.shape[0]):
+        if np.count_nonzero(Z[n]==0) == (Z.shape[1]-1) and Z[n].sum() == -1:
+            T_node[n] = 313
+            e_index = np.argmax(np.where(T_e_in[n]!=0))
+            T_e_in[n] = T_e_in[n]*T_node[n]
+            # e_index = np.argmax(np.where(T_e_in[n]!=0))
+            k = K[e_index][e_index]
+            m = M_d[e_index][e_index]
+            out_node_index = np.where(Z[:,e_index]==1)
+            T_e_out[out_node_index,e_index] = (T_e_in[n][e_index]*(k/2-m*gv.Cpw)-k*T_ground)/(-m*gv.Cpw-k/2)
+            Z_new[:,e_index]=0
+
+    for n in range(Z.shape[0]):
+         if np.count_nonzero(Z[n]==1) == 0:
+             T_node[n]=np.dot(M_d,T_e_out[n]).sum()/np.dot(M_d,Z_pipe_out[n]).sum()
+
+
+
+    print Z, T_e_in
+    return Z
+
+
 
 
 def run_as_script(scenario_path=None):
@@ -351,19 +415,23 @@ def run_as_script(scenario_path=None):
     building_names = pd.read_csv(locator.get_total_demand())['Name']
     weather_file = locator.get_default_weather()
     # add geothermal part of preprocessing
-    T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
-    T_ground = geothermal.calc_ground_temperature(T_ambient.values, gv)
+    # T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
+    # T_ground = geothermal.calc_ground_temperature(T_ambient.values, gv)
     #substation_main(locator, total_demand, total_demand['Name'], gv, False)
-
-    edge_node_df = [[-1,0],[1,-1],[0,1]]
-    mass_flow_df = [0.3,0.2]
-    mass_flow_substation_df = [-0.3,0.1,0.2]
-    pipe_length_df = [1,2]
+    T_ground = 283
+    edge_node_df = [[-1,0,0,0,0,0],[1,-1,0,0,0,0],[0,1,-1,-1,0,0],[0,0,1,0,0,0],[0,0,0,1,-1,-1],[0,0,0,0,0,1],[0,0,0,0,1,0]]
+    mass_flow_df = [7,6,1,4,1,2]
+    mass_flow_substation_df = [-7,1,1,1,1,2,1]
+    pipe_length_df = [1,1,1,1,1,1]
     consumer_heat_requiremt = [0, 100, 200]
     t = 500
-    pipe_thermal_calculation(locator, gv, T_ground[t], edge_node_df, mass_flow_df, consumer_heat_requiremt, mass_flow_substation_df, pipe_length_df)
-
-    print 'test calc_hydraulic_network() succeeded'
+    t_target_supply = 65
+    # pipe_thermal_calculation(locator, gv, T_ground[t], edge_node_df, mass_flow_df, consumer_heat_requiremt, mass_flow_substation_df, pipe_length_df)
+    # pipe_thermal_calculation_2(locator, gv, T_ground, edge_node_df, mass_flow_df, consumer_heat_requiremt,
+    #                            mass_flow_substation_df, pipe_length_df, t_target_supply)
+    pipe_try(locator, gv, T_ground, edge_node_df, mass_flow_df, consumer_heat_requiremt,
+                               mass_flow_substation_df, pipe_length_df, t_target_supply)
+print 'test calc_hydraulic_network() succeeded'
 
 if __name__ == '__main__':
     run_as_script()
