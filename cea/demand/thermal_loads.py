@@ -1164,12 +1164,12 @@ def get_temperatures(locator, prop_HVAC):
     :type prop_HVAC: Gdf
 
     Sample data (first 5 rows):
-                 Name type_cs type_ctrl type_dhw type_hs
-    0     B154862      T0        T1       T1      T1
-    1     B153604      T0        T1       T1      T1
-    2     B153831      T0        T1       T1      T1
-    3  B302022960      T0        T0       T0      T0
-    4  B302034063      T0        T0       T0      T0
+                 Name type_cs type_ctrl type_dhw type_hs type_vent
+    0     B154862      T0        T1       T1      T1       T0
+    1     B153604      T0        T1       T1      T1       T0
+    2     B153831      T0        T1       T1      T1       T0
+    3  B302022960      T0        T0       T0      T0       T0
+    4  B302034063      T0        T0       T0      T0       T0
 
 
     RETURNS
@@ -1186,6 +1186,12 @@ def get_temperatures(locator, prop_HVAC):
     type_cs            T0   (copied from input)
     type_dhw           T1   (copied from input)
     type_ctrl          T1   (copied from input)
+    type_vent          T1   (copied from input)
+    MECH_VENT        True   (copied from input, ventilation system configuration)
+    WIN_VENT         False  (copied from input, ventilation system configuration)
+    HEAT_REC         True   (copied from input, ventilation system configuration)
+    NIGHT_FLSH       True   (copied from input, ventilation system control strategy)
+    ECONOMIZER       False  (copied from input, ventilation system control strategy)
     Tshs0_C            90   (heating system supply temperature at nominal conditions [C])
     dThs0_C            20   (delta of heating system temperature at nominal conditions [C])
     Qhsmax_Wm2        500   (maximum heating system power capacity per unit of gross built area [W/m2])
@@ -1205,19 +1211,24 @@ def get_temperatures(locator, prop_HVAC):
     prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(), 'heating')
     prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')
     prop_emission_dhw = pd.read_excel(locator.get_technical_emission_systems(), 'dhw')
+    prop_ventilation_system = pd.read_excel(locator.get_technical_emission_systems(), 'ventilation')
+    prop_ventilation_system_control = pd.read_excel(locator.get_technical_emission_systems(), 'ventilation_control')
 
     df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
     df_emission_cooling = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
     df_emission_dhw = prop_HVAC.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
+    df_ventilation_system_and_control = prop_ventilation_system.merge(prop_ventilation_system_control,left_on='code_ctrl', right_on='code', suffixes={'_v','_c'})
+    df_ventilation_system_and_control = prop_HVAC.merge(df_ventilation_system_and_control, left_on='type_vent', right_on='code_v')
 
-    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'Tshs0_C', 'dThs0_C',
-                               'Qhsmax_Wm2']
+
+    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'Tshs0_C', 'dThs0_C', 'Qhsmax_Wm2']
     fields_emission_cooling = ['Name', 'Tscs0_C', 'dTcs0_C', 'Qcsmax_Wm2']
     fields_emission_dhw = ['Name', 'Tsww0_C', 'dTww0_C', 'Qwwmax_Wm2']
+    fields_system_ctrl_vent = ['Name', 'MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']
 
     result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
                                                                 on='Name').merge(df_emission_dhw[fields_emission_dhw],
-                                                                                 on='Name')
+                                                                                 on='Name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='Name')
     return result
 
 
@@ -1232,7 +1243,7 @@ def get_envelope_properties(locator, prop_architecture):
     df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code')
     df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code')
 
-    fields_roof = ['Name', 'win_wall', 'Occ_m2p', 'n50', 'n50', 'win_op', 'f_cros', 'e_roof', 'a_roof']
+    fields_roof = ['Name', 'win_wall', 'Occ_m2p', 'n50', 'win_op', 'f_cros', 'e_roof', 'a_roof']
     fields_wall = ['Name', 'e_wall', 'a_wall']
     fields_win = ['Name', 'e_win', 'G_win']
     fields_shading = ['Name', 'rf_sh']

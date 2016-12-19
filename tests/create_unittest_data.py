@@ -27,7 +27,7 @@ def main():
     usage_schedules = {'list_uses': list_uses,
                             'schedules': schedules}
 
-    print("data for test_calc_thermal_loads_new_ventilation:")
+    print("data for test_calc_thermal_loads:")
     print building_properties.list_building_names()
 
     bpr = building_properties['B01']

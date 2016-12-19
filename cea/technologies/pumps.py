@@ -64,7 +64,7 @@ def Pump_operation(P_design):
     return eta_pumping, eta_pump_fluid, eta_motor
 
 
-def calc_Ctot_pump(dicoSupply, buildList, pathNtwRes, ntwFeat, gV):
+def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV):
     """
     Computes the pumping costs
     
@@ -73,8 +73,8 @@ def calc_Ctot_pump(dicoSupply, buildList, pathNtwRes, ntwFeat, gV):
     dicoSupply : class context
     buildList : list
         list of buildings in the district
-    pathNtwRes : string
-        path to ntw results folder
+    network_results_folder : string
+        path to network results folder
     ntwFeat : class ntwFeatures
     
     Returns
@@ -86,13 +86,13 @@ def calc_Ctot_pump(dicoSupply, buildList, pathNtwRes, ntwFeat, gV):
     #nBuild = dicoSupply.nBuildingsConnected
     #ntot = len(buildList)
     
-    os.chdir(pathNtwRes)
+    os.chdir(network_results_folder)
     if 1:
         pumpCosts = 0
         #nBuild = dicoSupply.nBuildingsConnected
         #ntot = len(buildList)
         
-        os.chdir(pathNtwRes)
+        os.chdir(network_results_folder)
         df = pd.read_csv(dicoSupply.NETWORK_DATA_FILE, usecols=["mdot_DH_netw_total"])
         mdotA = np.array(df)
         mdotnMax = np.amax(mdotA)

@@ -10,6 +10,9 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from math import *
+
+from scipy import interpolate
+
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 import time
@@ -23,12 +26,11 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-"""
-============================
-PV electricity generation
-============================
 
-"""
+#============================
+#PV electricity generation
+#============================
+
 
 def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, gv, weather_path, building_name):
     """
@@ -49,6 +51,7 @@ def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, gv, weath
     -------
     """
     t0 = time.clock()
+
     # weather data
     weather_data = epwreader.epw_reader(weather_path)
     gv.log('reading weather data done')
@@ -75,8 +78,9 @@ def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, gv, weath
 
         gv.log('generating groups of sensor points done')
 
-        results, Final = Calc_pv_generation(gv.type_PVpanel, hourlydata_groups, Number_groups, number_points,
-                                             prop_observers, weather_data,g, Sz, Az, ha, latitude, gv.misc_losses)
+        results, Final = calc_pv_generation(gv.type_PVpanel, hourlydata_groups, Number_groups, number_points,
+                                        prop_observers, weather_data, g, Sz, Az, ha, latitude, gv.misc_losses)
+
 
         Final.to_csv(locator.PV_results(building_name= building_name), index=True, float_format='%.2f')  # print PV generation potential
         sensors_metadata_cat.to_csv(locator.metadata_results(building_name= building_name), index=True, float_format='%.2f')  # print selected metadata of the selected sensors
@@ -133,7 +137,8 @@ def filter_low_potential(weather_data, radiation_csv, metadata_csv, gv):
 
     return max_yearly_radiation, min_yearly_radiation, sensors_rad_clean, sensors_metadata_clean
 
-def Calc_pv_generation(type_panel, hourly_radiation, number_groups, number_points, prop_observers, weather_data,
+  
+def calc_pv_generation(type_panel, hourly_radiation, Number_groups, number_points, prop_observers, weather_data,
                        g, Sz, Az, ha, latitude, misc_losses):
 
 
@@ -532,12 +537,11 @@ def calc_groups(sensors_rad_clean, sensors_metadata_cat):
 
     return number_groups, hourlydata_groups, number_points, prop_observers
 
-"""
-============================
-properties of module
-============================
+#============================
+#properties of module
+#============================
 
-"""
+
 
 def calc_properties_PV(type_PVpanel):
     if type_PVpanel == 1:#     # assuming only monocrystalline panels.
@@ -573,17 +577,11 @@ def calc_properties_PV(type_PVpanel):
 
     return eff_nom,NOCT,Bref,a0,a1,a2,a3,a4,L
 
+# ============================
+# investment and maintenance costs
+# ============================
 
-"""
-============================
-investment and maintenance costs
-============================
-
-"""
-
-
-
-def calc_Cinv_PV(P_peak):
+def calc_Cinv_pv(P_peak):
     """
     P_peak in kW
     result in CHF
@@ -596,12 +594,79 @@ def calc_Cinv_PV(P_peak):
 
     return InvCa # [CHF/y]
 
-"""
-============================
-test
-============================
 
-"""
+# ============================
+# remuneration scheeme
+# ============================
+
+
+def calc_Crem_pv(E_nom):
+    """
+    Calculates KEV (Kostendeckende Einspeise - Verguetung) for solar PV and PVT.
+    Therefore, input the nominal capacity of EACH installation and get the according KEV as return in Rp/kWh
+
+    :param E_nom: Nominal Capacity of solar panels (PV or PVT) in Wh
+    :return:
+        KEV_obtained_in_RpPerkWh : float
+        KEV remuneration in Rp / kWh
+    """
+
+    KEV_regime = [0,
+                  0,
+                  20.4,
+                  20.4,
+                  20.4,
+                  20.4,
+                  20.4,
+                  20.4,
+                  19.7,
+                  19.3,
+                  19,
+                  18.9,
+                  18.7,
+                  18.6,
+                  18.5,
+                  18.1,
+                  17.9,
+                  17.8,
+                  17.8,
+                  17.7,
+                  17.7,
+                  17.7,
+                  17.6,
+                  17.6]
+    P_installed_in_kW = [0,
+                         9.99,
+                         10,
+                         12,
+                         15,
+                         20,
+                         29,
+                         30,
+                         40,
+                         50,
+                         60,
+                         70,
+                         80,
+                         90,
+                         100,
+                         200,
+                         300,
+                         400,
+                         500,
+                         750,
+                         1000,
+                         1500,
+                         2000,
+                         1000000]
+    KEV_interpolated_kW = interpolate.interp1d(P_installed_in_kW, KEV_regime, kind="linear")
+    KEV_obtained_in_RpPerkWh = KEV_interpolated_kW(E_nom / 1000.0)
+    return KEV_obtained_in_RpPerkWh
+
+
+#============================
+#test
+#============================
 
 def test_photovoltaic():
     import cea.inputlocator
@@ -617,6 +682,10 @@ def test_photovoltaic():
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
         calc_PV(locator=locator, radiation_csv= radiation, metadata_csv= radiation_metadata, latitude=46.95240555555556,
                 longitude=7.439583333333333, gv=gv, weather_path=weather_path, building_name = building)
+
+#         calc_pv_main(locator=locator, radiation = radiation, latitude=46.95240555555556, longitude=7.439583333333333, year=2014, gv=gv,
+#                  weather_path=weather_path) #FIXME: check naming convention
+
 
 
 if __name__ == '__main__':
