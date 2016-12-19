@@ -435,3 +435,46 @@ print 'test calc_hydraulic_network() succeeded'
 
 if __name__ == '__main__':
     run_as_script()
+
+
+def run_as_script_2(scenario_path=None):
+    """
+    run the whole network summary routine
+    """
+    import cea.globalvar
+    import cea.inputlocator as inputlocator
+    from geopandas import GeoDataFrame as gpdf
+    from cea.utilities import epwreader
+    from cea.resources import geothermal
+
+    gv = cea.globalvar.GlobalVariables()
+
+    if scenario_path is None:
+        scenario_path = gv.scenario_reference
+
+    locator = inputlocator.InputLocator(scenario_path=scenario_path)
+    total_demand = pd.read_csv(locator.get_total_demand())
+    building_names = pd.read_csv(locator.get_total_demand())['Name']
+    weather_file = locator.get_default_weather()
+    T_ground = 283
+    A_in = np.array(
+        [[0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0], [0, 0, 0, 1, 1, 0]])
+    A_out = np.array(
+        [[1, 0, 0, 0, 0, 0], [0, 1, 1, 0, 0, 0], [0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 1]])
+    m = [5, 2, 3, 2, 3, 5]   # pipe flow rate
+    pipe_length = [1, 1, 1, 1, 1, 1]
+    U = [0, 0, 200, 200, 0]
+    H = [405, 0, 0, 0, 0]  # assumption
+    t = 500
+    t_target_supply = 65
+
+    pipe_try(locator, gv, T_ground, edge_node_df, mass_flow_df, consumer_heat_requiremt,
+             mass_flow_substation_df, pipe_length_df, t_target_supply)
+
+
+print 'test calc_hydraulic_network() succeeded'
+
+
+
+
+
