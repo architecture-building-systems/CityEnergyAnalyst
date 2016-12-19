@@ -14,94 +14,91 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-class SIA2044RCModel:
+'''
+RC model calculations according to sia 2044
 
-    ''' RC model calculations according to sia 2044
-    Merkblatt 2044 Kilimatisierte Gebauede - Standard-Berechnungsverfahren fuer den Leistungs-und Energiebedarf '''
+Merkblatt 2044 Kilimatisierte Gebauede - Standard-Berechnungsverfahren fuer den Leistungs-und Energiebedarf
+'''
 
-
-    def ___init___(self):
-
-        # SIA 2044 constants
-        self.h_cv_i = 2.5 # (W/m2K) (4) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-        self.h_r_i = 5.5 # (W/m2K) (5) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-        self.h_ic  = 9.1 # (W/m2K) (6) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-        self.f_sa = 0.1 # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-        self.f_r_l = 0.7 # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-        self.f_r_p = 0.5 # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-        self.f_r_a = 0.2 # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-
-        # default values
-        self.f_hc_cv = 1 # (-) convective fraction of heating system, section 3.1.8
-
-        # calculate parameters
-        self.h_mc = self.calc_h_mc()
-        self.h_ac = self.calc_h_ac()
-        self.h_op = self.calc_h_op()
-        self.h_em = self.calc_h_em()
-
-    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    # 2.1.3
-    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-    def calc_h_mc(self):
-
-        # (7) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-        h_mc = self.h_ic * a_m
-        return h_mc
+# SIA 2044 constants
+h_cv_i = 2.5 # (W/m2K) (4) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+h_r_i = 5.5 # (W/m2K) (5) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+h_ic  = 9.1 # (W/m2K) (6) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+f_sa = 0.1 # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+f_r_l = 0.7 # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+f_r_p = 0.5 # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+f_r_a = 0.2 # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
 
 
-    def calc_h_ac(self):
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# 2.1.3
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-        # (8) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-        h_ac = a_t / (1 / self.h_cv_i - 1 / self.h_ic)
-        return h_ac
+def calc_h_mc():
 
+    # (7) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
 
-    def calc_h_op_m(self):
+    h_mc = h_ic * a_m
 
-        # (9) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-        h_op_m = a_j_m * u_j
-        # TODO: this formula in the future should take specific properties of the location of the building into account
-        # e.g. adiabatic building elements with U = 0
+    return h_mc
 
-        return h_op_m
+def calc_h_ac():
 
+    # (8) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
 
-    def calc_h_em(self):
+    h_ac = a_t / (1/h_cv_i - 1/h_ic)
 
-        # (10) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-        h_em = 1 / (1 / self.h_op_m - 1 / self.h_mc)
-        return h_em
+    return h_ac
 
 
-    def calc_h_j_em(self):
+def calc_h_op_m():
 
-        # (11) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-        h_j_em = (self.h_em * a_j_m * u_j) / self.h_op_m
+    # (9) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+    h_op_m = a_j_m * u_j
+    # TODO: this formula in the future should take specific properties of the location of the building into account
+    # e.g. adiabatic building elements with U = 0
 
-        # TODO: this formula in the future should take specific properties of the location of the building into account
-        # e.g. adiabatic building elements with U = 0
-
-        return h_j_em
+    return h_op_m
 
 
-    def calc_h_ec(self):
+def calc_h_em():
 
-        h_ec = a_j_l * u_j
-        # TODO: this formula in the future should take specific properties of the location of the building into account
-        # e.g. adiabatic building elements with U = 0
-        # TODO: can incorporate point or linear thermal bridges
+    # (10) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+    h_em = 1 / (1 / h_op_m - 1 / h_mc)
 
-        return h_ec
+    return h_em
 
-    def calc_h_ea(self):
 
-        # (13) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-        # adapted for mass flows instead of volume flows
-        h_ea = (m_v_sys + m_v_w + m_v_inf) * cp
+def calc_h_j_em():
 
-        return h_ea
+    # (11) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+    h_j_em = (h_em * a_j_m * u_j) / h_op_m
+
+    # TODO: this formula in the future should take specific properties of the location of the building into account
+    # e.g. adiabatic building elements with U = 0
+
+    return h_j_em
+
+
+def calc_h_ec():
+
+
+    h_ec = a_j_l * u_j
+    # TODO: this formula in the future should take specific properties of the location of the building into account
+    # e.g. adiabatic building elements with U = 0
+    # TODO: can incorporate point or linear thermal bridges
+
+    return h_ec
+
+
+
+def calc_h_ea():
+
+    # (13) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+    # adapted for mass flows instead of volume flows
+    h_ea = (m_v_sys + m_v_w + m_v_inf) * cp
+
+    return h_ea
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
