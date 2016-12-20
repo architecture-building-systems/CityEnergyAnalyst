@@ -168,7 +168,7 @@ def checkNtw(individual, ntwList, pathX, gV):
     
     """
     indCombi = sFn.readCombi(individual, gV)
-    print(indCombi)
+    print indCombi
     
     if not (indCombi in ntwList) and indCombi.count("1") > 0:
         ntwList.append(indCombi)

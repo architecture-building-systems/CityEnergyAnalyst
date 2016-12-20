@@ -25,43 +25,72 @@ def plot_scenarios(scenarios, output_file):
     scenario_names = [os.path.basename(locator.scenario_path) for locator in locators]
 
     pdf = PdfPages(output_file)
-
-    # Page one: Demand
-    fig, axes = plt.subplots(nrows=3, figsize=(8.27, 11.69))
-    plt.suptitle('Demand')
-
-    plot_demand(axes[0], locators, scenario_names, column='Ef_MWhyr', title='Ef')
-    plot_demand(axes[1], locators, scenario_names, column='QHf_MWhyr', title='QH')
-    plot_demand(axes[2], locators, scenario_names, column='QCf_MWhyr', title='QC')
-
-    fig.subplots_adjust(hspace=0.5)
-    pdf.savefig()
-    plt.close()
-
-    # Page Two: LCA Embodied
-    fig, axes = plt.subplots(nrows=2, figsize=(8.27, 11.69))
-    plt.suptitle('LCA Embodied')
-
-    plot_lca_embodied(axes[0], locators, scenario_names, column='E_nre_pen_MJm2', title='Non-Renewable Primary Energy', unit='MJ/m2')
-    plot_lca_embodied(axes[1], locators, scenario_names, column='E_ghg_kgm2', title='Greenhouse Gas', unit='kg/m2')
-
-    fig.subplots_adjust(hspace=0.5)
-    pdf.savefig()
-    plt.close()
-
-    # Page Three: LCA Operation
-    fig, axes = plt.subplots(nrows=2, figsize=(8.27, 11.69))
-    plt.suptitle('LCA Operation')
-
-    plot_lca_operation(axes[0], locators, scenario_names, column='O_nre_pen_MJm2', title='Non-Renewable Primary Energy', unit='MJ/m2')
-    plot_lca_operation(axes[1], locators, scenario_names, column='O_ghg_kgm2', title='Greenhouse Gas', unit='kg/m2')
-
-    fig.subplots_adjust(hspace=0.5)
-    pdf.savefig()
-    plt.close()
+    try:
+        create_page_demand(locators, pdf, scenario_names)
+        create_page_lca_embodied(locators, pdf, scenario_names)
+        create_page_lca_operation(locators, pdf, scenario_names)
+    finally:
+        pdf.close()
 
 
-    pdf.close()
+def create_page_lca_operation(locators, pdf, scenario_names):
+    """
+    Create Page Three: LCA Operation
+    :param locators: list of InputLocators, one for each scenario
+    :param pdf:  the PdfFile to write the page to
+    :param scenario_names: list of scenario names
+    :return: None
+    """
+    try:
+        fig, axes = plt.subplots(nrows=2, figsize=(8.27, 11.69))
+        plt.suptitle('LCA Operation')
+        plot_lca_operation(axes[0], locators, scenario_names, column='O_nre_pen_MJm2',
+                           title='Non-Renewable Primary Energy', unit='MJ/m2')
+        plot_lca_operation(axes[1], locators, scenario_names, column='O_ghg_kgm2', title='Greenhouse Gas', unit='kg/m2')
+        fig.subplots_adjust(hspace=0.5)
+        pdf.savefig()
+    finally:
+        plt.close()
+
+
+def create_page_lca_embodied(locators, pdf, scenario_names):
+    """
+    Create Page Two: LCA Embodied
+    :param locators: list of InputLocators, one for each scenario
+    :param pdf:  the PdfFile to write the page to
+    :param scenario_names: list of scenario names
+    :return: None
+    """
+    try:
+        fig, axes = plt.subplots(nrows=2, figsize=(8.27, 11.69))
+        plt.suptitle('LCA Embodied')
+        plot_lca_embodied(axes[0], locators, scenario_names, column='E_nre_pen_MJm2',
+                          title='Non-Renewable Primary Energy', unit='MJ/m2')
+        plot_lca_embodied(axes[1], locators, scenario_names, column='E_ghg_kgm2', title='Greenhouse Gas', unit='kg/m2')
+        fig.subplots_adjust(hspace=0.5)
+        pdf.savefig()
+    finally:
+        plt.close()
+
+
+def create_page_demand(locators, pdf, scenario_names):
+    """
+    Create Page one: Demand
+    :param locators: list of InputLocators, one for each scenario
+    :param pdf:  the PdfFile to write the page to
+    :param scenario_names: list of scenario names
+    :return: None
+    """
+    try:
+        fig, axes = plt.subplots(nrows=3, figsize=(8.27, 11.69))
+        plt.suptitle('Demand')
+        plot_demand(axes[0], locators, scenario_names, column='Ef_MWhyr', title='Ef')
+        plot_demand(axes[1], locators, scenario_names, column='QHf_MWhyr', title='QH')
+        plot_demand(axes[2], locators, scenario_names, column='QCf_MWhyr', title='QC')
+        fig.subplots_adjust(hspace=0.5)
+        pdf.savefig()
+    finally:
+        plt.close()
 
 
 def plot_demand(ax, locators, scenario_names, column, title):
