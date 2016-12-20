@@ -44,6 +44,7 @@ def analyze_sensitivity(samples_path, temporal_scale):
     :param samples_path: the path to the samples folder as created by `sensitivity_demand_samples.py`
     :type samples_path: str
     """
+    print("analyzing sensitivity in %(samples_path)s for temporal_scale=%(temporal_scale)s" % locals())
     # do checks
     with open(os.path.join(args.samples_folder, 'problem.pickle'), 'r') as f:
         problem = pickle.load(f)
