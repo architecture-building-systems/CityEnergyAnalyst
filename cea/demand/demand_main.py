@@ -7,6 +7,8 @@ Analytical energy demand model algorithm
 from __future__ import division
 
 import multiprocessing as mp
+import os
+
 import pandas as pd
 import time
 
@@ -42,13 +44,13 @@ def demand_calculation(locator, weather_path, gv):
     PARAMETERS
     ----------
     :param locator: An InputLocator to locate input files
-    :type locator: inputlocator.InputLocator
+    :type locator: cea.inputlocator.InputLocator
 
     :param weather_path: A path to the EnergyPlus weather data file (.epw)
     :type weather_path: str
 
     :param gv: A GlobalVariable (context) instance
-    :type gv: globalvar.GlobalVariable
+    :type gv: cea.globalvar.GlobalVariable
 
 
     RETURNS
@@ -81,6 +83,9 @@ def demand_calculation(locator, weather_path, gv):
     B153767T.csv: csv file for every building with hourly demand data
     Total_demand.csv: csv file of yearly demand data per buidling.
     """
+    if not os.path.exists(locator.get_radiation()) or not os.path.exists(locator.get_surface_properties()):
+        raise ValueError("No radiation file found in scenario. Consider running radiation script first.")
+
     t0 = time.clock()
 
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
