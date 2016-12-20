@@ -72,7 +72,7 @@ def analyze_sensitivity(samples_path, temporal_scale):
         if not os.path.exists(folder):
             os.makedirs(folder)
 
-        if temporal_scale is 'monthly':
+        if temporal_scale == 'monthly':
             # temporal_scale = monthly
             writer = pd.ExcelWriter(
                 os.path.join(folder,
