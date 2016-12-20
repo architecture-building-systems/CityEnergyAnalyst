@@ -12,7 +12,7 @@ ISO 13790 [DIN EN ISO 13790:2008-9]
 from __future__ import division
 import numpy as np
 from sandbox.ghapple import control
-from sandbox.ghapple import rc_model as rc
+from sandbox.ghapple import rc_model_ISO as rc
 from sandbox.ghapple import ventilation_xx as v
 from sandbox.ghapple import space_emission_systems as ses
 from cea.demand import sensible_loads
