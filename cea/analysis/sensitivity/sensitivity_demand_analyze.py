@@ -181,18 +181,17 @@ def read_results(samples_folder, samples_count, output_parameter, temporal_scale
 
     - `$samples_folder/result.$i.csv` for i in range(samples_count)
     """
-    iterable_samples_count = range(samples_count)
-    if temporal_scale is 'yearly':
+    if temporal_scale == 'yearly':
         results = np.array(
             [pd.read_csv(os.path.join(samples_folder, 'result.%i.csv' % i))[output_parameter].values for i in
-             iterable_samples_count]).T
+             (range(samples_count))]).T
     else:
-        iterable_num_buildings = range(pd.read_csv(os.path.join(samples_folder, 'result.0.csv')).shape[0])
-        results = iterable_samples_count
-        for sample in iterable_samples_count:
+        num_buildings = len(pd.read_csv(os.path.join(samples_folder, 'result.0.csv')).shape[0])
+        results = range(samples_count)
+        for sample in range(samples_count):
             results[sample] = [pd.read_csv(
                 os.path.join(samples_folder, 'result.%i.%i.csv' % (sample, building))).loc[month, output_parameter] for
-                                        building in iterable_num_buildings]
+                               building in range(num_buildings)]
         results = np.array(results).T
     return results
 
