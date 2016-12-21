@@ -15,7 +15,7 @@ from cea.demand import datacenter_loads
 from cea.utilities import helpers
 from sandbox.ghapple import energy_demand_heating_cooling as edhc
 from sandbox.ghapple import ventilation_xx as v
-
+from sandbox.ghapple import rc_model_crank_nicholson_procedure
 
 import cea.globalvar
 import cea.inputlocator
@@ -183,6 +183,8 @@ def testing_gabriel(locator, weather_path, gv):
             # heat flows in [W]
             # sensible heat gains
             # --> moved to inside of procedure
+
+            rc_model_crank_nicholson_procedure.calc_rc_model_demand_heating_cooling(bpr, tsd, hoy)
 
             edhc.procedure_1(bpr, tsd, hoy, gv)
 

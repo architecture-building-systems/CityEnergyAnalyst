@@ -2,7 +2,7 @@
 
 
 from __future__ import division
-import numpy as np
+
 
 
 __author__ = "Gabriel Happle"
@@ -23,7 +23,7 @@ Merkblatt 2044 Kilimatisierte Gebauede - Standard-Berechnungsverfahren fuer den 
 # SIA 2044 constants
 h_cv_i = 2.5 # (W/m2K) (4) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
 h_r_i = 5.5 # (W/m2K) (5) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
-h_ic  = 9.1 # (W/m2K) (6) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
+h_ic = 9.1 # (W/m2K) (6) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
 f_sa = 0.1 # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
 f_r_l = 0.7 # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
 f_r_p = 0.5 # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011
@@ -44,6 +44,7 @@ def calc_h_mc(bpr):
     h_mc = h_ic * a_m
 
     return h_mc
+
 
 def calc_h_ac(bpr):
 
@@ -94,7 +95,7 @@ def calc_h_j_em():
     # TODO: this formula in the future should take specific properties of the location of the building into account
     # e.g. adiabatic building elements with U = 0
 
-    #return h_j_em
+    return None
 
 
 def calc_h_ec(bpr):
@@ -146,10 +147,10 @@ def calc_phi_a(phi_hc_cv, bpr, tsd, t):
     phi_s = tsd['I_sol'][t]  # solar gains
 
     # standard assumptions
-    f_sa = 0.1
-    f_r_l = 0.7
-    f_r_p = 0.5
-    f_r_a = 0.2
+    #f_sa = 0.1
+    #f_r_l = 0.7
+    #f_r_p = 0.5
+    #f_r_a = 0.2
 
     phi_a = f_sa * phi_s + (1-f_r_l)*phi_i_l + (1-f_r_p) * phi_i_p +(1-f_r_a)*phi_i_a + phi_hc_cv
 
@@ -173,14 +174,15 @@ def calc_phi_c(phi_hc_r, bpr, tsd, t):
     f_sc = calc_f_sc(bpr)
 
     # standard assumptions
-    f_sa = 0.1
-    f_r_l = 0.7
-    f_r_p = 0.5
-    f_r_a = 0.2
+    #f_sa = 0.1
+    #f_r_l = 0.7
+    #f_r_p = 0.5
+    #f_r_a = 0.2
 
     phi_c = f_ic * (f_r_l*phi_i_l+f_r_p*phi_i_p+f_r_a*phi_i_a + phi_hc_r) + (1-f_sa)*f_sc*phi_s
 
     return phi_c
+
 
 def calc_phi_m(phi_hc_r, bpr, tsd, t):
 
@@ -202,10 +204,10 @@ def calc_phi_m(phi_hc_r, bpr, tsd, t):
     f_sm = calc_f_sm(bpr)
 
     # standard assumption
-    f_sa = 0.1
-    f_r_l = 0.7
-    f_r_p = 0.5
-    f_r_a = 0.2
+    #f_sa = 0.1
+    #f_r_l = 0.7
+    #f_r_p = 0.5
+    #f_r_a = 0.2
     phi_m = f_im * (f_r_l*phi_i_l+f_r_p*phi_i_p+f_r_a*phi_i_a + phi_hc_r) + (1-f_sa)*f_sm*phi_s
 
     return phi_m
@@ -220,7 +222,7 @@ def calc_f_ic(bpr):
     a_t = bpr.rc_model['Atot']
     a_m = bpr.rc_model['Am']
     h_ec = calc_h_ec(bpr)
-    h_ic = 9.1  # in (W/m2K) from (8) in SIA 2044
+    #h_ic = 9.1  # in (W/m2K) from (8) in SIA 2044
 
     f_ic = (a_t - a_m - h_ec / h_ic) / a_t
 
@@ -237,7 +239,7 @@ def calc_f_sc(bpr):
     a_m = bpr.rc_model['Am']
     a_w = bpr.rc_model['Aw']
     h_ec = bpr.rc_model['Htr_w']
-    h_ic = 9.1  # in (W/m2K) from (8) in SIA 2044
+    #h_ic = 9.1  # in (W/m2K) from (8) in SIA 2044
 
     f_sc = (a_t-a_m-a_w-h_ec/h_ic) / (a_t - a_w)
 
@@ -256,6 +258,7 @@ def calc_f_im(bpr):
     f_im = a_m / a_t
 
     return f_im
+
 
 def calc_f_sm(bpr):
 
@@ -367,7 +370,14 @@ def calc_theta_e_star():
 # 2.1.6
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-def calc_theta_m_t():
+def calc_theta_m_t(phi_hc_cv, phi_hc_r, bpr, tsd, t):
+
+    # get values
+    theta_m_t_1 = tsd['Tm'][t-1]
+    c_m = bpr.rc_model['Cm']
+    h_3 = calc_h_3(bpr, tsd, t)
+    h_em = calc_h_em(bpr)
+    phi_m_tot = calc_phi_m_tot(phi_hc_cv, phi_hc_r, bpr, tsd, t)
 
     # (25) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -376,7 +386,11 @@ def calc_theta_m_t():
     return theta_m_t
 
 
-def calc_h_1():
+def calc_h_1(bpr, tsd, t):
+
+    # get values
+    h_ea = calc_h_ea(tsd, t)
+    h_ac = calc_h_ac(bpr)
 
     # (26) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -385,7 +399,11 @@ def calc_h_1():
     return h_1
 
 
-def calc_h_2():
+def calc_h_2(bpr, tsd, t):
+
+    # get values
+    h_1 = calc_h_1(bpr, tsd, t)
+    h_ec = calc_h_ec(bpr)
 
     # (27) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -394,7 +412,11 @@ def calc_h_2():
     return h_2
 
 
-def calc_h_3():
+def calc_h_3(bpr, tsd, t):
+
+    # get values
+    h_2 = calc_h_2(bpr, tsd, t)
+    h_mc = calc_h_mc(bpr)
 
     # (28) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -403,7 +425,22 @@ def calc_h_3():
     return h_3
 
 
-def calc_phi_m_tot():
+def calc_phi_m_tot(phi_hc_cv, phi_hc_r, bpr, tsd, t):
+
+    # get values
+    phi_m = calc_phi_m(phi_hc_r, bpr, tsd, t)
+    h_em = calc_h_em(bpr)
+    theta_em = calc_theta_em(tsd, t)
+    h_3 = calc_h_3(bpr, tsd, t)
+    phi_c = calc_phi_c(phi_hc_r, bpr, tsd, t)
+    h_ec = calc_h_ec(bpr)
+    theta_ec = calc_theta_ec(tsd, t)
+    h_1 = calc_h_1(bpr, tsd, t)
+    phi_a = calc_phi_a(phi_hc_cv, bpr, tsd, t)
+    h_ea = calc_h_ea(tsd, t)
+    theta_ea = calc_theta_ea(tsd, t)
+    h_2 = calc_h_2(bpr, tsd, t)
+
 
     # (29) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -412,7 +449,11 @@ def calc_phi_m_tot():
     return phi_m_tot
 
 
-def calc_theta_m():
+def calc_theta_m(phi_hc_cv, phi_hc_r, bpr, tsd, t):
+
+    # get values
+    theta_m_t = calc_theta_m_t(phi_hc_cv, phi_hc_r, bpr, tsd, t)
+    theta_m_t_1 = tsd['theta_m'][t-1]
 
     # (30) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -421,7 +462,18 @@ def calc_theta_m():
     return theta_m
 
 
-def calc_theta_c():
+def calc_theta_c(phi_hc_cv, phi_hc_r, bpr, tsd, t):
+
+    # get values
+    h_mc = calc_h_mc(bpr)
+    theta_m = calc_theta_m(phi_hc_cv, phi_hc_r, bpr, tsd, t)
+    phi_c = calc_phi_c(phi_hc_r, bpr, tsd, t)
+    h_ec = calc_h_ec(bpr)
+    theta_ec = calc_theta_ec(tsd, t)
+    h_1 = calc_h_1(bpr, tsd, t)
+    phi_a = calc_phi_a(phi_hc_cv, bpr, tsd, t)
+    h_ea = calc_h_ea(tsd, t)
+    theta_ea = calc_theta_ea(tsd, t)
 
     # (31) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -430,7 +482,14 @@ def calc_theta_c():
     return theta_c
 
 
-def calc_theta_a():
+def calc_theta_a(phi_hc_cv, phi_hc_r, bpr, tsd, t):
+
+    # get values
+    h_ac = calc_h_ac(bpr)
+    theta_c = calc_theta_c(phi_hc_cv, phi_hc_r, bpr, tsd, t)
+    h_ea = calc_h_ea(tsd, t)
+    theta_ea = calc_theta_ea(tsd, t)
+    phi_a = calc_phi_a(phi_hc_cv, bpr, tsd, t)
 
     # (32) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -439,7 +498,11 @@ def calc_theta_a():
     return theta_a
 
 
-def calc_theta_o():
+def calc_theta_o(phi_hc_cv, phi_hc_r, bpr, tsd, t):
+
+    # get values
+    theta_a = calc_theta_a(phi_hc_cv, phi_hc_r, bpr, tsd, t)
+    theta_c = calc_theta_c(phi_hc_cv, phi_hc_r, bpr, tsd, t)
 
     # (33) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -451,10 +514,7 @@ def calc_theta_o():
 # 2.2.7
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-def calc_phi_hc_cv(phi_hc, bpr, tsd, t):
-
-    # lookup convection factor for heating/cooling system
-    f_hc_cv = lookup_f_hc_cv(bpr, tsd, t)
+def calc_phi_hc_cv(phi_hc, f_hc_cv):
 
     # (58) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     phi_hc_cv = f_hc_cv * phi_hc
@@ -462,10 +522,7 @@ def calc_phi_hc_cv(phi_hc, bpr, tsd, t):
     return phi_hc_cv
 
 
-def calc_phi_hc_r(phi_hc, bpr, tsd, t):
-
-    # lookup convection factor for heating/cooling system
-    f_hc_cv = lookup_f_hc_cv(bpr, tsd, t)
+def calc_phi_hc_r(phi_hc, f_hc_cv):
 
     # (59) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     phi_hc_r = (1 - f_hc_cv) * phi_hc
@@ -523,25 +580,90 @@ def calc_phi_m_tot_tabs():
 # 2.3.2
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-def calc_rc_model_temperatures(phi_hc, bpr, tsd, t):
-
-    # convective and radiative fraction of heating/cooling energy
-    phi_hc_cv = calc_phi_hc_cv(phi_hc, bpr, tsd, t)
-    phi_hc_r = calc_phi_hc_r(phi_hc, bpr, tsd, t)
-
-    # internal gains to temperature nodes
-    phi_a = calc_phi_a(phi_hc_cv, bpr, tsd, t)
-    phi_c = calc_phi_c(phi_hc_r, bpr, tsd, t)
-    phi_m = calc_phi_m(phi_hc_r, bpr, tsd, t)
-
-    # external temperature nodes of RC model
-    theta_ea = calc_theta_ea(tsd, t)
-    theta_ec = calc_theta_ec(tsd, t)
-    theta_em = calc_theta_em(tsd, t)
 
 
 
-def has_heating_demand():
+def calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t):
+
+    # no heating or cooling
+    phi_hc_cv = 0
+    phi_hc_r = 0
+
+    rc_model_temp = calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t)
+
+    return rc_model_temp
+
+
+def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
+    # calculate node temperatures of RC model
+    theta_m = calc_theta_m(phi_hc_cv, phi_hc_r, bpr, tsd, t)
+    theta_c = calc_theta_c(phi_hc_cv, phi_hc_r, bpr, tsd, t)
+    theta_a = calc_theta_a(phi_hc_cv, phi_hc_r, bpr, tsd, t)
+    theta_o = calc_theta_o(phi_hc_cv, phi_hc_r, bpr, tsd, t)
+    rc_model_temp = {'theta_m': theta_m, 'theta_c': theta_c, 'theta_a': theta_a, 'theta_o': theta_o}
+    return rc_model_temp
+
+
+def calc_rc_model_temperatures_heating(phi_hc, bpr, tsd, t):
+
+    # lookup convection factor for heating/cooling system
+    f_hc_cv = lookup_f_hc_cv_heating(bpr)
+
+    # convective and radiative fractions of heating system
+    phi_hc_cv = calc_phi_hc_cv(phi_hc, f_hc_cv)
+    phi_hc_r = calc_phi_hc_r(phi_hc, f_hc_cv)
+
+    rc_model_temp = calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t)
+
+    return rc_model_temp
+
+
+def calc_rc_model_temperatures_cooling(phi_hc, bpr, tsd, t):
+    # lookup convection factor for heating/cooling system
+    f_hc_cv = lookup_f_hc_cv_cooling(bpr)
+
+    # convective and radiative fractions of heating system
+    phi_hc_cv = calc_phi_hc_cv(phi_hc, f_hc_cv)
+    phi_hc_r = calc_phi_hc_r(phi_hc, f_hc_cv)
+
+    rc_model_temp = calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t)
+
+    return rc_model_temp
+
+
+def has_heating_demand(bpr, tsd, t):
+
+    # calculate temperatures
+    rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
+
+    # check temperatures
+    if rc_model_temp['theta_a'] >= tsd['ta_hs_set'][t]:
+        # if temperature w/o conditioning is higher
+        return False
+    elif rc_model_temp['theta_a'] < tsd['ta_hs_set'][t]:
+        # if temperature w/o conditioning is lower than heating temperature set point
+        return True
+    else:
+        raise
+
+
+def has_cooling_demand(bpr, tsd, t):
+
+    # set cooling power to zero
+    phi_hc = 0
+
+    # calculate temperatures
+    rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
+
+    # calculate temperatures
+    if rc_model_temp['theta_a'] <= tsd['ta_cs_set'][t]:
+        # if temperature w/o conditioning is lower than cooling set point temperature
+        return False
+    elif rc_model_temp['theta_a'] > tsd['ta_cs_set'][t]:
+        # if temperature w/o conditioning is higher than cooling set point temperature
+        return True
+    else:
+        raise
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -551,20 +673,22 @@ def has_heating_demand():
 f_hc_cv_heating_system = {'T1' : 1, 'T2' : 1, 'T3' : 1, 'T4' : 0.5} # T1 = radiator, T2 = radiator, T3 = AC, T4 = floor heating #TODO: add heating ceiling
 f_hc_cv_cooling_system = {'T1' : 0.5, 'T2' : 1, 'T3' : 1} # T1 = ceiling cooling, T2 mini-split AC, T3 = AC #TODO: add floor cooling
 
-def lookup_f_hc_cv(bpr, tsd, t):
+
+def lookup_f_hc_cv_heating(bpr):
 
     # 3.1.8.1 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
     # look up factor
-    if not heating_is_active() and not cooling_is_active():
-        f_hc_cv = 0
-    elif heating_is_active() and not cooling_is_active():
-        # heating system turned on
-        f_hc_cv = f_hc_cv_heating_system[bpr.hvac['type_hs']]
-    elif cooling_is_active() and not heating_is_active():
-        # cooling system is turned on
-        f_hc_cv = f_hc_cv_cooling_system[bpr.hvac['type_cs']]
-    else:
-        raise #TODO raise appropriate Error
+    f_hc_cv = f_hc_cv_heating_system[bpr.hvac['type_hs']]
+
+    return f_hc_cv
+
+
+def lookup_f_hc_cv_cooling(bpr):
+
+    # 3.1.8.1 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
+
+    # look up factor
+    f_hc_cv = f_hc_cv_cooling_system[bpr.hvac['type_cs']]
 
     return f_hc_cv
