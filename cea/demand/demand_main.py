@@ -110,25 +110,11 @@ def demand_calculation(locator, weather_path, gv):
     else:
         thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, schedules_dict,
                                     weather_data)
-    totals = write_totals_csv(building_properties, locator, gv)
+
+    totals, time_series = gv.demand_writer.write_totals_csv(building_properties, locator)
     gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
-    return totals
-
-def write_totals_csv(building_properties, locator, gv):
-    """read in the temporary results files and append them to the Totals.csv file."""
-    counter = 0
-    for name in building_properties.list_building_names():
-        temporary_file = locator.get_temporary_file('%(name)sT.csv' % locals())
-        if counter == 0:
-            df = pd.read_csv(temporary_file)
-            counter += 1
-        else:
-            df2 = pd.read_csv(temporary_file)
-            df = df.append(df2, ignore_index=True)
-    df.to_csv(locator.get_total_demand(), index=False, float_format='%.3f')
-
-    return df
+    return totals, time_series
 
 #=========================================
 #multiple or single core calculation
