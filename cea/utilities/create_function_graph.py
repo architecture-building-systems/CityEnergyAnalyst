@@ -16,6 +16,22 @@ import tempfile
 import zipfile
 import sys
 
+import requests
+
+
+def download_radiation(locator):
+    """Download radiation and surface properties for running the demand on the nincubes samples"""
+    data = {'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/NALgN4Tlhho6QEC/download',
+            'radiation': 'https://shared.ethz.ch/owncloud/s/uF6f4EWhPF31ko4/download'}
+    r = requests.get(data['properties_surfaces'])
+    assert r.ok, 'could not download the properties_surfaces.csv file'
+    with open(locator.get_surface_properties(), 'w') as f:
+        f.write(r.content)
+    r = requests.get(data['radiation'])
+    assert r.ok, 'could not download the radiation.csv file'
+    with open(locator.get_radiation(), 'w') as f:
+        f.write(r.content)
+
 
 def trace_demand():
     """Extract the ninecubes.zip reference-case to a temporary directory and run the demand script on it
@@ -50,33 +66,26 @@ def trace_demand():
         return
 
     try:
-        scenario_path = extract_ninecubes()
-        print(scenario_path)
-        sys.settrace(trace_calls)
-
         import cea.demand.demand_main
         import cea.inputlocator
         import cea.globalvar
 
+        scenario_path = extract_ninecubes()
         locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+        download_radiation(locator)
         weather_path = locator.get_default_weather()
         gv = cea.globalvar.GlobalVariables()
         gv.multiprocessing = False
 
+        sys.settrace(trace_calls)
         cea.demand.demand_main.demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
-
         sys.settrace(None)
+
     finally:
         # make sure we clean up after ourselves...
-        #remove_ninecubes()
+        remove_ninecubes()
         pass
     return caller_callee_pairs
-
-def a():
-    b()
-
-def b():
-    print('hello, world')
 
 
 def extract_ninecubes():
@@ -90,7 +99,6 @@ def extract_ninecubes():
     return scenario_path
 
 
-
 def remove_ninecubes():
     """delete the ninecubes stuff from the temp directory"""
     os.remove(os.path.join(tempfile.gettempdir(), 'ninecubes.zip'))
@@ -98,8 +106,12 @@ def remove_ninecubes():
 
 
 def print_digraph(caller_callee_pairs):
-    pprint.pprint(caller_callee_pairs)
-
+    with open(os.path.join(tempfile.gettempdir(), 'demand_function_graph.gv'), 'w') as f:
+        f.write('digraph demand_function_graph {\n')
+        for cn, cf, fn, ff in caller_callee_pairs:
+            if 'CEAforArcGIS' in cf and 'CEAforArcGIS' in ff:
+                f.write('  %(cn)s -> %(fn)s;\n' % locals())
+        f.write('}\n')
 
 def create_function_graph():
     caller_callee_pairs = trace_demand()
