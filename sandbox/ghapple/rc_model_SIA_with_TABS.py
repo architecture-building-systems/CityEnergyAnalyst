@@ -36,7 +36,7 @@ f_r_a = 0.2 # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 20
 
 def calc_h_mc(bpr):
 
-    # get properties from bpr
+    # get properties from bpr # TODO: to be addressed in issue #443
     a_m = bpr.rc_model['Am']
 
     # (7) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
@@ -45,7 +45,10 @@ def calc_h_mc(bpr):
 
     return h_mc
 
-def calc_h_ac():
+def calc_h_ac(bpr):
+
+    # get properties from bpr # TODO: to be addressed in issue #443
+    a_t = bpr.rc_model['Atot']
 
     # (8) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -54,17 +57,26 @@ def calc_h_ac():
     return h_ac
 
 
-def calc_h_op_m():
+def calc_h_op_m(bpr):
+
+    # work around # TODO: to be addressed in issue #443
+    # get h_op from ISO model (with basement factor)
+    h_op_m = bpr.rc_model['Htr_op']
+    # TODO: This formula should be adjusted to be compatible with SIA2044
 
     # (9) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-    h_op_m = a_j_m * u_j
+    # h_op_m = a_j_m * u_j  # summation
     # TODO: this formula in the future should take specific properties of the location of the building into account
     # e.g. adiabatic building elements with U = 0
 
     return h_op_m
 
 
-def calc_h_em():
+def calc_h_em(bpr):
+
+    # calculate values
+    h_op_m = calc_h_op_m(bpr)
+    h_mc = calc_h_mc(bpr)
 
     # (10) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     h_em = 1 / (1 / h_op_m - 1 / h_mc)
@@ -74,13 +86,15 @@ def calc_h_em():
 
 def calc_h_j_em():
 
+    # TODO: to be addressed in issue #443
+
     # (11) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-    h_j_em = (h_em * a_j_m * u_j) / h_op_m
+    #h_j_em = (h_em * a_j_m * u_j) / h_op_m
 
     # TODO: this formula in the future should take specific properties of the location of the building into account
     # e.g. adiabatic building elements with U = 0
 
-    return h_j_em
+    #return h_j_em
 
 
 def calc_h_ec(bpr):
@@ -97,7 +111,12 @@ def calc_h_ec(bpr):
 
 
 
-def calc_h_ea():
+def calc_h_ea(tsd, t):
+
+    # get values
+    m_v_sys = tsd['m_ve_mech'][t]  # mass flow rate mechanical ventilation
+    m_v_w = tsd['m_ve_window'][t]  # mass flow rate window ventilation
+    m_v_inf = tsd['m_ve_inf_simple'][t]  # mass flow rate infiltration
 
     # (13) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     # adapted for mass flows instead of volume flows
@@ -275,11 +294,14 @@ def calc_theta_ea(tsd, t):
     return theta_ea
 
 
-def calc_theta_ec():
+def calc_theta_ec(tsd, t):
+
+    # WORKAROUND
+    theta_ec = tsd['T_ext'][t]  # TODO: adjust to actual calculation
 
     # (22) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
-    theta_ec = a_j_l * u_j * theta_e_j / h_ec
+    # theta_ec = a_j_l * u_j * theta_e_j / h_ec
 
     # TODO: this formula in the future should take specific properties of the location of the building into account
     # e.g. adiabatic building elements with U = 0
@@ -289,11 +311,14 @@ def calc_theta_ec():
     return theta_ec
 
 
-def calc_theta_em():
+def calc_theta_em(tsd, t):
+
+    # WORKAROUND
+    theta_em = tsd['T_ext'][t]  # TODO: adjust to actual calculation
 
     # (23) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
-    theta_em = h_j_em * theta_e_j / h_em
+    # theta_em = h_j_em * theta_e_j / h_em
 
     # TODO: this formula in the future should take specific properties of the location of the building into account
     # e.g. adiabatic building elements with U = 0
@@ -304,6 +329,8 @@ def calc_theta_em():
 
 
 def calc_theta_e_star():
+
+    # TODO: To be addressed in issue #446
 
     # (24) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     #
@@ -317,24 +344,24 @@ def calc_theta_e_star():
     h_r = 5.5  # (-)
     delta_t_er = 11  # (K)
 
-    if is_roof(surface):
-        f_r = f_r_roof
-    elif is_wall(surface):
-        f_r = f_r_wall
-    else:
-        raise()
+    # if is_roof(surface):
+        #f_r = f_r_roof
+    #elif is_wall(surface):
+        #f_r = f_r_wall
+    #else:
+        #raise()
 
-    if is_energy_calculation(calculation):
-        h_e = h_e_energy
-    elif is_load_or_temp_calculation(calculation):
-        h_e = h_e_load_and_temp
-    else:
-        raise()
+    #if is_energy_calculation(calculation):
+       # h_e = h_e_energy
+    #elif is_load_or_temp_calculation(calculation):
+       # h_e = h_e_load_and_temp
+    #else:
+        #raise()
 
 
-    theta_e_star = theta_e + (alpha_s * i_s_i) / h_e - (f_r * h_r * epsilon_0 * delta_t_er) / h_e
+    #theta_e_star = theta_e + (alpha_s * i_s_i) / h_e - (f_r * h_r * epsilon_0 * delta_t_er) / h_e
 
-    return theta_e_star
+    #return theta_e_star
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # 2.1.6
@@ -448,40 +475,48 @@ def calc_phi_hc_r(phi_hc, bpr, tsd, t):
 
 def calc_theta_tabs_su():
 
-    # (60) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-    theta_tabs_su = theta_tabs_su_max - (theta_tabs_su_max - theta_tabs_su_min) * (theta_e -  theta_e_min)/(theta_e_max - theta_e_min)
+    # TODO: to be addressed in issue #444
 
-    return theta_tabs_su
+    # (60) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
+    # theta_tabs_su = theta_tabs_su_max - (theta_tabs_su_max - theta_tabs_su_min) * (theta_e -  theta_e_min)/(theta_e_max - theta_e_min)
+
+    return None
 
 
 def calc_phi_tabs():
 
-    # (61) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-    phi_tabs = h_tabs * (theta_tabs_su - theta_m_t_1)
+    # TODO: to be addressed in issue #444
 
-    return phi_tabs
+    # (61) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
+    # phi_tabs = h_tabs * (theta_tabs_su - theta_m_t_1)
+
+    return None
 
 
 def calc_h_tabs():
 
+    # TODO: to be addressed in issue #444
+
     # (62) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
     # typical values
-    a_tabs = 0.8 * a_ngf
-    r_tabs = 0.08  # (m2K/W)
+    # a_tabs = 0.8 * a_ngf
+    # r_tabs = 0.08  # (m2K/W)
 
-    h_tabs = a_tabs / r_tabs
+    # h_tabs = a_tabs / r_tabs
 
-    return h_tabs
+    return None
 
 
 def calc_phi_m_tot_tabs():
 
+    # TODO: to be addressed in issue #444
+
     # (63) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
-    phi_m_tot = calc_phi_m_tot() + phi_tabs
+    # phi_m_tot = calc_phi_m_tot() + phi_tabs
 
-    return phi_m_tot
+    return None
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -501,8 +536,8 @@ def calc_rc_model_temperatures(phi_hc, bpr, tsd, t):
 
     # external temperature nodes of RC model
     theta_ea = calc_theta_ea(tsd, t)
-    theta_ec = calc_theta_ec()
-    theta_em = calc_theta_em()
+    theta_ec = calc_theta_ec(tsd, t)
+    theta_em = calc_theta_em(tsd, t)
 
 
 
