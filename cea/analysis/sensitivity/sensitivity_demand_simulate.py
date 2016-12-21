@@ -82,16 +82,12 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
     except IndexError:
         return None
 
-    # FIXME: add other variable groups here
     prop_thermal = Gdf.from_file(locator.get_building_thermal()).set_index('Name')
     prop_overrides = pd.DataFrame(index=prop_thermal.index)
     for i, key in enumerate(problem['names']):
         print("Setting prop_overrides['%s'] to %s" % (key, sample[i]))
         prop_overrides[key] = sample[i]
-        # prop_occupancy_df[key] = value
-        # list_uses = list(prop_occupancy.drop('PFloor', axis=1).columns)
-        # prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
-        # prop_occupancy[list_uses] = prop_occupancy[list_uses].div(prop_occupancy[list_uses].sum(axis=1), axis=0)
+
     sample_locator = InputLocator(scenario_path=simulation_path)
     prop_overrides.to_csv(sample_locator.get_building_overrides())
 
@@ -130,9 +126,8 @@ def simulate_demand_sample(locator, weather_path, output_parameters):
     gv.demand_writer = cea.demand.demand_writers.MonthlyDemandWriter(gv)
     # force simulation to be sequential
     gv.multiprocessing = False
-    result = demand_main.demand_calculation(locator, weather_path, gv)
-    return result[output_parameters]
-
+    totals, time_series = demand_main.demand_calculation(locator, weather_path, gv)
+    return totals[output_parameters], time_series
 
 def simulate_demand_batch(sample_index, batch_size, samples_folder, scenario, simulation_folder, weather,
                           output_parameters):
@@ -200,9 +195,12 @@ def simulate_demand_batch(sample_index, batch_size, samples_folder, scenario, si
         if not weather:
             weather = locator.get_default_weather()
         print("Running demand simulation for sample %i" % i)
-        result = simulate_demand_sample(locator, weather, output_parameters)
-        result.to_csv(os.path.join(samples_folder, 'result.%i.csv' % i))
+        totals, time_series = simulate_demand_sample(locator, weather, output_parameters)
 
+        # save results in samples folder
+        totals.to_csv(os.path.join(samples_folder, 'result.%i.csv' % i))
+        for j, item in enumerate(time_series):
+            item.to_csv(os.path.join(samples_folder, 'result.%i.%i.csv' % (i , j)))
 
 def main():
     """
@@ -226,13 +224,18 @@ def main():
                         help='folder to copy the reference case to for simulation')
     parser.add_argument('-w', '--weather', help='Path to the weather file (omit for default)')
     parser.add_argument('-o', '--output-parameters', help='output parameters to use', nargs='+',
-                        default=['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'QEf_MWhyr'])
+                        default=['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'QEf_MWhyr', 'QHf0_kW', 'QCf0_kW',
+                                 'Ef0_kW'])
     args = parser.parse_args()
+
+    # save output parameters
+    np.save(os.path.join(args.samples_folder, 'output_parameters.npy'), np.array(args.output_parameters))
 
     simulate_demand_batch(sample_index=args.sample_index, batch_size=args.number_of_simulations,
                           samples_folder=args.samples_folder, scenario=args.scenario,
                           simulation_folder=args.simulation_folder, weather=args.weather,
                           output_parameters=args.output_parameters)
+
 
 
 if __name__ == '__main__':
