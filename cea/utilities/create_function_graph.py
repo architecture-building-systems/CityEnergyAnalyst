@@ -5,16 +5,15 @@ In a first step, this only runs on the demand script and just logs which functio
 
 The strategy used is to provide a handler for `sys.settrace` and log the "call" events as a tuple in a set:
 
-    (caller-function-name, caller-file, callee-function-name, callee-file)
+    (caller, callee)
 
-This tuple is then used to produce a GraphViz digraph.
+This tuple is then used to produce a GraphViz digraph that is saved to the filie "%TEMP%\demand_function_graph.gv"
 """
 import os
-import pprint
 import shutil
+import sys
 import tempfile
 import zipfile
-import sys
 
 import requests
 
@@ -37,6 +36,8 @@ def trace_demand():
     """Extract the ninecubes.zip reference-case to a temporary directory and run the demand script on it
     with a default weather file, collecting trace information of each function called."""
     caller_callee_pairs = set()
+    root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    print(root)
 
     def trace_calls(frame, event, arg):
         """handle trace events and update the caller_callee_pairs set of tuples"""
@@ -45,24 +46,28 @@ def trace_demand():
         if hasattr(frame, 'f_code'):
             co = frame.f_code
             func_filename = co.co_filename
+            if not 'CEAforArcGIS' in func_filename:
+                return
             func_name = co.co_name
+            callee = os.path.join(os.path.relpath(func_filename, root), func_name)
         else:
-            func_name = '<undefined>'
-            func_filename = '<undefined>'
+            return
 
         if hasattr(frame, 'f_back'):
-            caller = frame.f_back
-            caller_name = caller.f_code.co_name
-            caller_filename = caller.f_code.co_filename
+            caller_frame = frame.f_back
+            caller_name = caller_frame.f_code.co_name
+            caller_filename = caller_frame.f_code.co_filename
+            if not 'CEAforArcGIS' in func_filename:
+                return
+            caller = os.path.join(os.path.relpath(caller_filename, root), caller_name)
         else:
-            caller_name = '<undefined>'
-            caller_filename = '<undefined>'
+            return
 
         if func_name == 'write':
             # Ignore write() calls from print statements
             return
 
-        caller_callee_pairs.add((caller_name, caller_filename, func_name, func_filename))
+        caller_callee_pairs.add((caller, callee))
         return
 
     try:
@@ -108,9 +113,12 @@ def remove_ninecubes():
 def print_digraph(caller_callee_pairs):
     with open(os.path.join(tempfile.gettempdir(), 'demand_function_graph.gv'), 'w') as f:
         f.write('digraph demand_function_graph {\n')
-        for cn, cf, fn, ff in caller_callee_pairs:
-            if 'CEAforArcGIS' in cf and 'CEAforArcGIS' in ff:
-                f.write('  %(cn)s -> %(fn)s;\n' % locals())
+        f.write('  node [shape=box]\n')
+        f.write('  rankdir=LR\n')
+        for caller, callee in caller_callee_pairs:
+            caller = caller.replace('\\', '.')
+            callee = callee.replace('\\', '.')
+            f.write('  "%(caller)s" -> "%(callee)s";\n' % locals())
         f.write('}\n')
 
 def create_function_graph():
