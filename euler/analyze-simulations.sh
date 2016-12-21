@@ -12,7 +12,6 @@
 # N                    | (not used, except for calculating the default $SAMPLES_FOLDER value)
 # METHOD               | (not used, except for calculating the default $SAMPLES_FOLDER value)
 # SAMPLES_FOLDER       | --samples-folder
-# VARIABLE_GROUPS      | FIXME: not implemented yet
 
 # ---
 # author: Daren Thomas
@@ -28,11 +27,12 @@
 # parameters (the syntax used can be learnt here: http://stackoverflow.com/a/2013589/2260
 # and here: http://wiki.bash-hackers.org/syntax/pe)
 N=${N:-1}
-METHOD=${METHOD:-morris}
+METHOD=${METHOD:-sobol}
+TEMPORAL_SCALE=${TEMPORAL_SCALE:-yearly}
 SAMPLES_FOLDER=${SAMPLES_FOLDER:-${SCRATCH}/samples_${METHOD}_${N}}
-VARIABLE_GROUPS=${VARIABLE_GROUPS:-THERMAL}   # FIXME: not implemented yet
 
 mkdir -p $SAMPLES_FOLDER
 
 # create the samples
-python -m cea.analysis.sensitivity.sensitivity_demand_analyze --samples-folder $SAMPLES_FOLDER
+python -m cea.analysis.sensitivity.sensitivity_demand_analyze --samples-folder $SAMPLES_FOLDER \
+           --temporal-scale $TEMPORAL_SCALE
