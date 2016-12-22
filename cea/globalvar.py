@@ -22,8 +22,9 @@ class GlobalVariables(object):
 
         self.scenario_reference = r'c:\cea-reference-case\reference-case-open\baseline'
         self.print_partial = 'hourly' # hourly or monthly for the deamnd script
-        self.print_yearly = True # print yearly values
+        self.print_totals = True # print yearly values
         self.print_yearly_peak = True # print peak values
+        self.simulate_building_list = None # fill it with a list of names of buildings in case not all the data set needs to be run
         self.date_start = '2016-01-01'  # format: yyyy-mm-dd
         self.seasonhours = [3216, 6192]
         self.multiprocessing = False  # use multiprocessing / parallel execution if possible
@@ -580,7 +581,6 @@ class GlobalVariables(object):
         if self.testing:
             from cea.utilities import reporting
             reporting.full_report_to_xls(template, variables, output_folder, basename, self)
-
 
 
     def log(self, msg, **kwargs):

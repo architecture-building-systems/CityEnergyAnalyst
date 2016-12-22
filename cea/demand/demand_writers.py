@@ -52,9 +52,11 @@ class DemandWriter(object):
         # create dataframe with hourly values of selected data
         hourly_data = pd.DataFrame(data).set_index('DATE')
 
+        # save results in disc
         self.write_to_csv(building_name, columns, hourly_data, locator)
 
-        if self.gv.print_yearly:
+        # if printing total values is necessary
+        if self.gv.print_totals:
             # treating timeseries data from W to MWh
             data = dict((x + '_MWhyr', tsd[x].sum() / 1000000) for x in self.vars_to_print[LOAD_VARS])
 
@@ -74,10 +76,6 @@ class DemandWriter(object):
             pd.DataFrame(data, index=[0]).to_csv(
                 locator.get_temporary_file('%(building_name)sT.csv' % locals()),
                 index=False, columns=columns, float_format='%.3f')
-
-    def write_to_csv(self, building_name, columns, hourly_data, locator):
-        raise NotImplementedError('Use a subclass of DemandWriter instead')
-
 
 class HourlyDemandWriter(DemandWriter):
     """Write out the hourly demand results"""
@@ -99,12 +97,13 @@ class HourlyDemandWriter(DemandWriter):
                 df = df.append(pd.read_csv(temporary_file), ignore_index=True)
         df.to_csv(locator.get_total_demand(), index=False, float_format='%.3f')
 
+        print building_properties.list_building_names()
+
         """read saved data of hourly values and return as totals"""
         hourly_data_buildings = [pd.read_csv(locator.get_demand_results_file(building_name)) for building_name in
                                  building_properties.list_building_names()]
-        return df, hourly_data_buildings
 
-        return df
+        return df, hourly_data_buildings
 
 
 class MonthlyDemandWriter(DemandWriter):
