@@ -61,6 +61,53 @@ def has_cooling_system(bpr):
         raise
 
 
+def heating_system_is_ac(bpr):
+    """
+    determines whether a building's heating system is ac or not
+
+    Parameters
+    ----------
+    bpr : building properties row object
+
+    Returns
+    -------
+    bool
+
+    """
+
+    if bpr.hvac['type_hs'] in {'T3'}:  # central ac
+        return True
+    elif bpr.hvac['type_hs'] in {'T0', 'T1', 'T2', 'T4'}:
+        return False
+    else:
+        print('Error: Unknown heating system')
+        return False
+
+
+def cooling_system_is_ac(bpr):
+    """
+    determines whether a building's heating system is ac or not
+
+    Parameters
+    ----------
+    bpr : building properties row object
+
+    Returns
+    -------
+    bool
+
+    """
+
+    if bpr.hvac['type_cs'] in {'T2', 'T3'}:  # mini-split ac and central ac
+        return True
+    elif bpr.hvac['type_cs'] in {'T0', 'T1'}:
+        return False
+    else:
+        print('Error: Unknown cooling system')
+        return False
+
+
+
 def is_active_heating_system(bpr, tsd, t):
 
     # check for heating system in building
@@ -87,3 +134,6 @@ def is_active_cooling_system(bpr, tsd, t):
         return True
     else:
         return False
+
+
+

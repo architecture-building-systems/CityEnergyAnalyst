@@ -21,14 +21,33 @@ __status__ = "Production"
 def is_mechanical_ventilation_active(bpr, tsd, t):
 
     # TODO: check for ventilation schedule
-    if has_mechanical_ventilation(bpr):
+    if has_mechanical_ventilation(bpr) \
+            and tsd['m_ve_required'][t] > 0:
+
+        # mechanical ventilation is active if there is a ventilation demand
         return True
+
+    elif has_mechanical_ventilation(bpr) \
+            and is_night_flushing_active(bpr, tsd, t):
+
+        # mechanical ventilation for night flushing
+        return True
+
     else:
         return False
 
 
 def is_window_ventilation_active(bpr, tsd, t):
-    return None
+
+    if has_window_ventilation(bpr) \
+            and not is_mechanical_ventilation_active(bpr, tsd, t):
+
+        # window ventilation in case of non-active mechanical ventilation
+        return True
+
+    else:
+        return False
+
 
 def is_mechanical_ventilation_heat_recovery_active(bpr, tsd, t):
 

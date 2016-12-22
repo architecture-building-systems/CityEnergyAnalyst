@@ -224,10 +224,10 @@ def calc_hvac_cooling(bpr, tsd, hoy, gv):
 
     """
 
-    temp_zone_set = tsd['Ta'][hoy]
+    temp_zone_set = tsd['theta_a'][hoy]
     rhum_1 = tsd['rh_ext'][hoy]
     temp_1 = tsd['T_ext'][hoy]
-    temp_5_prev = tsd['Ta'][hoy-1]
+    temp_5_prev = tsd['theta_a'][hoy-1]
     qe_sen = tsd['Qcs_sen'][hoy] # get the total sensible load from the RC model, in this case without any mechanical ventilation losses??? NO!
     m_ve_hvac_req = tsd['m_ve_mech'][hoy]   # mechanical ventilation flow rate according to ventilation control
     wint = tsd['w_int'][hoy]
@@ -302,26 +302,39 @@ def calc_hvac_cooling(bpr, tsd, hoy, gv):
     else:
         pel_hum_aux = 0
 
-    tsd['Qcs_sen_HVAC'][hoy] = (q_cs_sen_hvac + q_cs_sen_recirculation) * 1000
-    tsd['Qcs_lat_HVAC'][hoy] = qe_dehum * 1000
-    tsd['ma_sup_cs'][hoy] = m_ve_hvac_req + m_ve_hvac_recirculation
-    tsd['Ta_sup_cs'][hoy] = ts
-    tsd['Ta_re_cs'][hoy] = (m_ve_hvac_req * t2 + m_ve_hvac_recirculation * t5) / tsd['ma_sup_cs'][hoy]  # temperature mixing proportional to mass flow rates
-    tsd['Ehs_lat_aux'] = pel_hum_aux
+
+    q_cs_sen_hvac = (q_cs_sen_hvac + q_cs_sen_recirculation) * 1000
+    q_cs_lat_hvac = qe_dehum * 1000
+    ma_sup_cs = m_ve_hvac_req + m_ve_hvac_recirculation
+    ta_sup_cs = ts
+    ta_re_cs = (m_ve_hvac_req * t2 + m_ve_hvac_recirculation * t5) / tsd['ma_sup_cs'][hoy]  # temperature mixing proportional to mass flow rates
+
+
+    air_con_model_loads_flows_temperatures = {'q_cs_sen_hvac': q_cs_sen_hvac, \
+                                              'q_cs_lat_hvac' : q_cs_lat_hvac, \
+                                              'ma_sup_cs' : ma_sup_cs, \
+                                              'ta_sup_cs' : ta_sup_cs, 'ta_re_cs' : ta_re_cs}
+
+    #tsd['Qcs_sen_HVAC'][hoy] = (q_cs_sen_hvac + q_cs_sen_recirculation) * 1000
+    #tsd['Qcs_lat_HVAC'][hoy] = qe_dehum * 1000
+    #tsd['ma_sup_cs'][hoy] = m_ve_hvac_req + m_ve_hvac_recirculation
+    #tsd['Ta_sup_cs'][hoy] = ts
+    #tsd['Ta_re_cs'][hoy] = (m_ve_hvac_req * t2 + m_ve_hvac_recirculation * t5) / tsd['ma_sup_cs'][hoy]  # temperature mixing proportional to mass flow rates
+    #tsd['Ehs_lat_aux'] = pel_hum_aux
 
     if m_ve_hvac_req + m_ve_hvac_recirculation < 0:
-        print("OOPS!")
+        raise ValueError
 
-    return
+    return air_con_model_loads_flows_temperatures
 
 
 def calc_hvac_sensible_cooling_ventilaiton_air(bpr, tsd, hoy, gv):
 
 
-    temp_zone_set = tsd['Ta'][hoy]
+    temp_zone_set = tsd['theta_a'][hoy]
     rhum_1 = tsd['rh_ext'][hoy]
     temp_1 = tsd['T_ext'][hoy]
-    temp_5_prev = tsd['Ta'][hoy - 1]
+    temp_5_prev = tsd['theta_a'][hoy - 1]
     m_ve_hvac_req = tsd['m_ve_mech'][hoy]  # mechanical ventilation flow rate according to ventilation control
 
     # State No. 5 # indoor air set point

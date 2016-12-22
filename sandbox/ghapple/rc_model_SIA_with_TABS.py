@@ -118,9 +118,9 @@ def calc_h_ea(tsd, t):
     # TODO: check units of air flow
 
     # get values
-    m_v_sys = tsd['m_ve_mech'][t]  # mass flow rate mechanical ventilation
-    m_v_w = tsd['m_ve_window'][t]  # mass flow rate window ventilation
-    m_v_inf = tsd['m_ve_inf_simple'][t]  # mass flow rate infiltration
+    m_v_sys = tsd['m_ve_mech'][t] * 3600  # mass flow rate mechanical ventilation
+    m_v_w = tsd['m_ve_window'][t] * 3600  # mass flow rate window ventilation
+    m_v_inf = tsd['m_ve_inf_simple'][t] * 3600  # mass flow rate infiltration
 
     # (13) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     # adapted for mass flows instead of volume flows
@@ -378,7 +378,7 @@ def calc_theta_m_t(phi_hc_cv, phi_hc_r, bpr, tsd, t):
 
     # get values
     theta_m_t_1 = tsd['theta_m'][t-1] if not np.isnan(tsd['theta_m'][t - 1]) else tsd['T_ext'][t - 1]
-    c_m = bpr.rc_model['Cm']
+    c_m = bpr.rc_model['Cm'] / 3600  # (Wh/K) SIA 2044 unit is Wh/K, ISO unit is J/K
     h_3 = calc_h_3(bpr, tsd, t)
     h_em = calc_h_em(bpr)
     phi_m_tot = calc_phi_m_tot(phi_hc_cv, phi_hc_r, bpr, tsd, t)
