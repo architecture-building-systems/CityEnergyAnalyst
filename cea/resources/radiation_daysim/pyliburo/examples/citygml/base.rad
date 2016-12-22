@@ -1,0 +1,1908 @@
+#########################################################
+# Material description file for RADIANCE models         #
+#                                                       #
+# This file is provided with PLINK version 1.2 (Feb 92) #
+#########################################################
+
+#
+# RAL9010 :  pur white paint / peinture  Blanc pur
+#
+void plastic RAL9010_pur_white_paint
+0
+0
+5 0.923 0.808 0.761     0     0
+
+#
+#  2K216 :      beige paint / peinture      Beige
+#
+void plastic  2K216_beige_paint
+0
+0
+5 0.741 0.716 0.557     0     0
+
+#
+#  2K218 :      beige paint / peinture      Beige
+#
+void plastic  2K218_beige_paint
+0
+0
+5 0.751 0.704 0.456     0     0
+
+#
+#  1K117 :  off-white paint / peinture Blanc casse
+#
+void plastic  1K117_off_white_paint
+0
+0
+5 0.691 0.696 0.615     0     0
+
+#
+#  2K217 :  yellowish paint / peinture   Jaunatre
+#
+void plastic  2K217_yellowish_paint
+0
+0
+5 0.743 0.684  0.48     0     0
+
+#
+#  2K205 :  off-white paint / peinture Blanc casse
+#
+void plastic  2K205_off_white_paint
+0
+0
+5 0.719 0.672 0.558     0     0
+
+#
+#  6K605 : light gray paint / peinture Gris clair
+#
+void plastic  6K605_light_gray_paint
+0
+0
+5 0.662 0.687 0.613     0     0
+
+#
+#  4E400 : sulfur-yellow paint / peinture Jaune-soufre
+#
+void plastic  4E400_sulfur_yellow_paint
+0
+0
+5 0.895 0.653 0.114  0.03  0.02
+
+#
+# RAL1016 : sulfur-yellow paint / peinture Jaune-soufre
+#
+void plastic RAL1016_sulfur_yellow_paint
+0
+0
+5 0.895 0.653 0.114     0     0
+
+#
+#  1K105 : light gray paint / peinture Gris clair
+#
+void plastic  1K105_light_gray_paint
+0
+0
+5 0.687 0.665  0.62     0     0
+
+#
+#  1E101 : white-gray paint / peinture Gris-blanc
+#
+void plastic  1E101_white_gray_paint
+0
+0
+5 0.737 0.646 0.602  0.03  0.02
+
+#
+# RAL9002 : white-gray paint / peinture Gris-blanc
+#
+void plastic RAL9002_white_gray_paint
+0
+0
+5 0.737 0.646 0.602     0     0
+
+#
+#  1K101 : light gray paint / peinture Gris clair
+#
+void plastic  1K101_light_gray_paint
+0
+0
+5 0.683 0.668 0.585     0     0
+
+#
+#  2K206 :      cream paint / peinture      Creme
+#
+void plastic  2K206_cream_paint
+0
+0
+5 0.743 0.659 0.456     0     0
+
+#
+#  2K201 :      beige paint / peinture      Beige
+#
+void plastic  2K201_beige_paint
+0
+0
+5 0.689 0.669 0.544     0     0
+
+#
+#  2K208 :      beige paint / peinture      Beige
+#
+void plastic  2K208_beige_paint
+0
+0
+5 0.756  0.65 0.417     0     0
+
+#
+#  7K701 : pastel green paint / peinture Vert pastel
+#
+void plastic  7K701_pastel_green_paint
+0
+0
+5 0.635 0.672 0.594     0     0
+
+#
+#  1K122 : light gray paint / peinture Gris clair
+#
+void plastic  1K122_light_gray_paint
+0
+0
+5 0.679  0.64 0.597     0     0
+
+#
+#  2K219 :      ivory paint / peinture     Ivoire
+#
+void plastic  2K219_ivory_paint
+0
+0
+5 0.676 0.652 0.475     0     0
+
+#
+#  4K403 :      beige paint / peinture      Beige
+#
+void plastic  4K403_beige_paint
+0
+0
+5  0.76 0.627 0.358     0     0
+
+#
+#  7K707 : pastel green paint / peinture Vert pastel
+#
+void plastic  7K707_pastel_green_paint
+0
+0
+5 0.642 0.646 0.509     0     0
+
+#
+#  1K109 : light gray paint / peinture Gris clair
+#
+void plastic  1K109_light_gray_paint
+0
+0
+5 0.636 0.633 0.626     0     0
+
+#
+#  4K401 : light yellow paint / peinture Jaune clair
+#
+void plastic  4K401_light_yellow_paint
+0
+0
+5 0.702 0.638 0.319     0     0
+
+#
+#  1K113 : light gray paint / peinture Gris clair
+#
+void plastic  1K113_light_gray_paint
+0
+0
+5 0.613 0.634 0.627     0     0
+
+#
+#  7K709 : greenish-white paint / peinture Blanc-verdatre
+#
+void plastic  7K709_greenish_white_paint
+0
+0
+5 0.635 0.632 0.514     0     0
+
+#
+#  4K402 :     yellow paint / peinture      Jaune
+#
+void plastic  4K402_yellow_paint
+0
+0
+5 0.758 0.619 0.191     0     0
+
+#
+#  8K801 : yellow-green paint / peinture Vert-jaune
+#
+void plastic  8K801_yellow_green_paint
+0
+0
+5 0.651 0.664 0.176     0     0
+
+#
+#  2K202 :      beige paint / peinture      Beige
+#
+void plastic  2K202_beige_paint
+0
+0
+5 0.636 0.597 0.444     0     0
+
+#
+#  6K601 : light blue paint / peinture Bleu clair
+#
+void plastic  6K601_light_blue_paint
+0
+0
+5  0.55 0.601 0.593     0     0
+
+#
+#  2K209 :      beige paint / peinture      Beige
+#
+void plastic  2K209_beige_paint
+0
+0
+5 0.675 0.566 0.434     0     0
+
+#
+#  2K220 :      cream paint / peinture      Creme
+#
+void plastic  2K220_cream_paint
+0
+0
+5 0.641 0.581 0.348     0     0
+
+#
+#  4K407 :     yellow paint / peinture      Jaune
+#
+void plastic  4K407_yellow_paint
+0
+0
+5 0.682 0.559 0.323     0     0
+
+#
+#  7K710 : light green paint / peinture Vert clair
+#
+void plastic  7K710_light_green_paint
+0
+0
+5 0.538 0.602 0.445     0     0
+
+#
+#  1K102 : light gray paint / peinture Gris clair
+#
+void plastic  1K102_light_gray_paint
+0
+0
+5 0.583 0.573 0.507     0     0
+
+#
+#  4K405 :     yellow paint / peinture      Jaune
+#
+void plastic  4K405_yellow_paint
+0
+0
+5 0.687 0.557 0.268     0     0
+
+#
+#  7K702 :      green paint / peinture       Vert
+#
+void plastic  7K702_green_paint
+0
+0
+5 0.473 0.607 0.525     0     0
+
+#
+#  1K106 : light gray paint / peinture Gris clair
+#
+void plastic  1K106_light_gray_paint
+0
+0
+5  0.57 0.562 0.546     0     0
+
+#
+#  4K404 :     yellow paint / peinture      Jaune
+#
+void plastic  4K404_yellow_paint
+0
+0
+5 0.697 0.546 0.227     0     0
+
+#
+#  7K704 :      green paint / peinture       Vert
+#
+void plastic  7K704_green_paint
+0
+0
+5 0.532 0.564 0.498     0     0
+
+#
+#  6K608 : light blue paint / peinture Bleu clair
+#
+void plastic  6K608_light_blue_paint
+0
+0
+5  0.51 0.556 0.605     0     0
+
+#
+#  8K804 :     yellow paint / peinture      Jaune
+#
+void plastic  8K804_yellow_paint
+0
+0
+5 0.805  0.51  0.02     0     0
+
+#
+#  1K119 : green-gray paint / peinture  Gris-vert
+#
+void plastic  1K119_green_gray_paint
+0
+0
+5  0.52 0.567 0.466     0     0
+
+#
+#  6K609 :  blue-gray paint / peinture  Gris-bleu
+#
+void plastic  6K609_blue_gray_paint
+0
+0
+5 0.511 0.547  0.59     0     0
+
+#
+# RAL1023 : traffic-yellow paint / peinture Jaune-trafic
+#
+void plastic RAL1023_traffic_yellow_paint
+0
+0
+5 0.827 0.488 0.042     0     0
+
+#
+#  1K114 :       gray paint / peinture       Gris
+#
+void plastic  1K114_gray_paint
+0
+0
+5 0.503 0.543 0.552     0     0
+
+#
+#  4K408 :     yellow paint / peinture      Jaune
+#
+void plastic  4K408_yellow_paint
+0
+0
+5 0.673 0.509 0.263     0     0
+
+#
+#  1K110 : light gray paint / peinture Gris clair
+#
+void plastic  1K110_light_gray_paint
+0
+0
+5  0.52 0.536 0.525     0     0
+
+#
+#  2K203 :      cream paint / peinture      Creme
+#
+void plastic  2K203_cream_paint
+0
+0
+5 0.588 0.525 0.347     0     0
+
+#
+#  2K222 :      beige paint / peinture      Beige
+#
+void plastic  2K222_beige_paint
+0
+0
+5 0.578 0.522 0.321     0     0
+
+#
+#  4K406 : ochre-yellow paint / peinture Jaune-ocre
+#
+void plastic  4K406_ochre_yellow_paint
+0
+0
+5 0.686 0.482 0.192     0     0
+
+#
+#  6K602 : light blue-gray paint / peinture Gris-bleu clair
+#
+void plastic  6K602_light_blue_gray_paint
+0
+0
+5 0.466 0.523 0.569     0     0
+
+#
+#  1K111 : light gray paint / peinture Gris clair
+#
+void plastic  1K111_light_gray_paint
+0
+0
+5 0.495 0.509 0.508     0     0
+
+#
+#  7K708 :      green paint / peinture       Vert
+#
+void plastic  7K708_green_paint
+0
+0
+5 0.472 0.528 0.331     0     0
+
+#
+#  1K103 : light gray paint / peinture Gris clair
+#
+void plastic  1K103_light_gray_paint
+0
+0
+5 0.511 0.498 0.431     0     0
+
+#
+#  1K125 : beige-gray paint / peinture Gris-beige
+#
+void plastic  1K125_beige_gray_paint
+0
+0
+5 0.518 0.467 0.351     0     0
+
+#
+#  3K305 : beige-gray paint / peinture Gris-beige
+#
+void plastic  3K305_beige_gray_paint
+0
+0
+5 0.478 0.467 0.396     0     0
+
+#
+#  1K120 : green-gray paint / peinture  Gris-vert
+#
+void plastic  1K120_green_gray_paint
+0
+0
+5 0.446 0.476 0.403     0     0
+
+#
+#  8K802 :      green paint / peinture       Vert
+#
+void plastic  8K802_green_paint
+0
+0
+5 0.473 0.505 0.079     0     0
+
+#
+#  4K409 :     yellow paint / peinture      Jaune
+#
+void plastic  4K409_yellow_paint
+0
+0
+5 0.569 0.459 0.119     0     0
+
+#
+#  2K221 : greenish-yellow paint / peinture Jaune-verdatre
+#
+void plastic  2K221_greenish_yellow_paint
+0
+0
+5 0.528 0.461 0.219     0     0
+
+#
+#  3K301 : light gray paint / peinture Gris clair
+#
+void plastic  3K301_light_gray_paint
+0
+0
+5 0.489 0.445 0.377     0     0
+
+#
+#  2K204 :      beige paint / peinture      Beige
+#
+void plastic  2K204_beige_paint
+0
+0
+5 0.506 0.449 0.279     0     0
+
+#
+#  2K210 :      beige paint / peinture      Beige
+#
+void plastic  2K210_beige_paint
+0
+0
+5  0.54 0.425 0.277     0     0
+
+#
+#  1E123 : pebble-gray paint / peinture Gris-caillou
+#
+void plastic  1E123_pebble_gray_paint
+0
+0
+5 0.492 0.418 0.351  0.03  0.02
+
+#
+# RAL7032 : pebble-gray paint / peinture Gris-caillou
+#
+void plastic RAL7032_pebble_gray_paint
+0
+0
+5 0.492 0.418 0.351     0     0
+
+#
+#  1K107 : light gray paint / peinture Gris clair
+#
+void plastic  1K107_light_gray_paint
+0
+0
+5 0.433 0.435 0.405     0     0
+
+#
+#  1K104 : light gray paint / peinture Gris clair
+#
+void plastic  1K104_light_gray_paint
+0
+0
+5 0.451  0.43 0.365     0     0
+
+#
+#  2K213 :      beige paint / peinture      Beige
+#
+void plastic  2K213_beige_paint
+0
+0
+5 0.516 0.416 0.243     0     0
+
+#
+#  3K308 :      beige paint / peinture      Beige
+#
+void plastic  3K308_beige_paint
+0
+0
+5  0.48 0.421 0.302     0     0
+
+#
+#  7K705 : green-blue paint / peinture  Bleu-vert
+#
+void plastic  7K705_green_blue_paint
+0
+0
+5 0.383 0.442 0.386     0     0
+
+#
+#  1K115 :  blue-gray paint / peinture  Gris-bleu
+#
+void plastic  1K115_blue_gray_paint
+0
+0
+5 0.383 0.426 0.468     0     0
+
+#
+#  2K223 :     yellow paint / peinture      Jaune
+#
+void plastic  2K223_yellow_paint
+0
+0
+5 0.464 0.416 0.222     0     0
+
+#
+#  7K711 :      green paint / peinture       Vert
+#
+void plastic  7K711_green_paint
+0
+0
+5 0.346 0.452 0.306     0     0
+
+#
+#  6K603 : light blue paint / peinture Bleu clair
+#
+void plastic  6K603_light_blue_paint
+0
+0
+5  0.33 0.428 0.488     0     0
+
+#
+#  2K214 :     yellow paint / peinture      Jaune
+#
+void plastic  2K214_yellow_paint
+0
+0
+5 0.504 0.395 0.175     0     0
+
+#
+#  2K212 : brownish-beige paint / peinture Beige-brunatre
+#
+void plastic  2K212_brownish_beige_paint
+0
+0
+5 0.529 0.369 0.205     0     0
+
+#
+#  1K124 :       gray paint / peinture       Gris
+#
+void plastic  1K124_gray_paint
+0
+0
+5  0.42 0.389  0.36     0     0
+
+#
+#  1K112 :       gray paint / peinture       Gris
+#
+void plastic  1K112_gray_paint
+0
+0
+5 0.379 0.396 0.419     0     0
+
+#
+#  1K108 : light gray paint / peinture Gris clair
+#
+void plastic  1K108_light_gray_paint
+0
+0
+5 0.391  0.39 0.367     0     0
+
+#
+#  2K215 :     yellow paint / peinture      Jaune
+#
+void plastic  2K215_yellow_paint
+0
+0
+5 0.461 0.373 0.162     0     0
+
+#
+#  1K116 :  blue-gray paint / peinture  Gris-bleu
+#
+void plastic  1K116_blue_gray_paint
+0
+0
+5 0.344 0.386 0.427     0     0
+
+#
+#  4E404 : chrome-yellow paint / peinture Jaune-chrome
+#
+void plastic  4E404_chrome_yellow_paint
+0
+0
+5 0.636 0.316 0.029  0.03  0.02
+
+#
+# RAL1007 : chrome-yellow paint / peinture Jaune-chrome
+#
+void plastic RAL1007_chrome_yellow_paint
+0
+0
+5 0.636 0.316 0.029     0     0
+
+#
+#  2K225 :      brown paint / peinture       Brun
+#
+void plastic  2K225_brown_paint
+0
+0
+5 0.467 0.363 0.171     0     0
+
+#
+#  4K410 :     yellow paint / peinture      Jaune
+#
+void plastic  4K410_yelloe_paint
+0
+0
+5 0.584 0.326 0.084     0     0
+
+#
+#  1K126 :       gray paint / peinture       Gris
+#
+void plastic  1K126_gray_paint
+0
+0
+5 0.396 0.368 0.283     0     0
+
+#
+#  1K127 :      beige paint / peinture      Beige
+#
+void plastic  1K127_beige_paint
+0
+0
+5 0.408 0.365  0.25     0     0
+
+#
+#  4K411 :      ochre paint / peinture       Ocre
+#
+void plastic  4K411_ochre_paint
+0
+0
+5 0.576  0.29 0.117     0     0
+
+#
+#  2K211 : brownish-yellow paint / peinture Jaune-brunatre
+#
+void plastic  2K211_brownish_yellow_paint
+0
+0
+5 0.421 0.323  0.18     0     0
+
+#
+#  7K713 : light green paint / peinture Vert clair
+#
+void plastic  7K713_light_green_paint
+0
+0
+5 0.361 0.346  0.15     0     0
+
+#
+#  6K604 :       blue paint / peinture       Bleu
+#
+void plastic  6K604_blue_paint
+0
+0
+5 0.256 0.344  0.41     0     0
+
+#
+# RAL2008 : light red-orange paint / peinture Orange-rouge clair
+#
+void plastic RAL2008_light_red_orange_paint
+0
+0
+5 0.606 0.242 0.052     0     0
+
+#
+#  7K712 :      green paint / peinture       Vert
+#
+void plastic  7K712_green_paint
+0
+0
+5 0.304 0.335 0.191     0     0
+
+#
+#  3K306 :       gray paint / peinture       Gris
+#
+void plastic  3K306_gray_paint
+0
+0
+5 0.317 0.316 0.265     0     0
+
+#
+#  4K412 : orange-beige paint / peinture Beige-orange
+#
+void plastic  4K412_orange_beige_paint
+0
+0
+5 0.497 0.257 0.095     0     0
+
+#
+#  7K706 : green-blue paint / peinture  Bleu-vert
+#
+void plastic  7K706_green_blue_paint
+0
+0
+5 0.262 0.327 0.264     0     0
+
+#
+#  3K309 :       gray paint / peinture       Gris
+#
+void plastic  3K309_gray_paint
+0
+0
+5 0.322 0.297 0.255     0     0
+
+#
+#  1E121 : silver-gray paint / peinture Gris-argent
+#
+void plastic  1E121_silver_gray_paint
+0
+0
+5 0.305 0.293 0.319  0.03  0.02
+
+#
+# RAL7001 : silver-gray paint / peinture Gris-argent
+#
+void plastic RAL7001_silver_gray_paint
+0
+0
+5 0.305 0.293 0.319     0     0
+
+#
+#  2K224 :      olive paint / peinture      Olive
+#
+void plastic  2K224_olive_paint
+0
+0
+5 0.331 0.297 0.128     0     0
+
+#
+#  7E712 : pale green paint / peinture  Vert pale
+#
+void plastic  7E712_pale_green_paint
+0
+0
+5 0.308  0.29 0.198  0.03  0.02
+
+#
+# RAL6021 : pale green paint / peinture  Vert pale
+#
+void plastic RAL6021_pale_green_paint
+0
+0
+5 0.308  0.29 0.198     0     0
+
+#
+#  2K229 :      green paint / peinture       Vert
+#
+void plastic  2K229_green_paint
+0
+0
+5 0.311 0.285 0.165     0     0
+
+#
+#  2K228 :      brown paint / peinture       Brun
+#
+void plastic  2K228_brown_paint
+0
+0
+5  0.37 0.262 0.134     0     0
+
+#
+#  1K128 :      beige paint / peinture      Beige
+#
+void plastic  1K128_beige_paint
+0
+0
+5 0.308 0.277 0.192     0     0
+
+#
+#  2K227 :      brown paint / peinture       Brun
+#
+void plastic  2K227_brown_paint
+0
+0
+5  0.37  0.26 0.126     0     0
+
+#
+#  2K226 :      brown paint / peinture       Brun
+#
+void plastic  2K226_brown_paint
+0
+0
+5 0.358 0.244 0.123     0     0
+
+#
+#  1E122 : stone-gray paint / peinture Gris-pierre
+#
+void plastic  1E122_stone_gray_paint
+0
+0
+5 0.291 0.251 0.224  0.03  0.02
+
+#
+# RAL7030 : stone-gray paint / peinture Gris-pierre
+#
+void plastic RAL7030_stone_gray_paint
+0
+0
+5 0.291 0.251 0.224     0     0
+
+#
+#  4K413 : orange-brown paint / peinture Brun-orange
+#
+void plastic  4K413_orange_brown_paint
+0
+0
+5 0.446 0.198 0.075     0     0
+
+#
+#  8K803 :      olive paint / peinture      Olive
+#
+void plastic  8K803_olive_paint
+0
+0
+5 0.275  0.27 0.023     0     0
+
+#
+#  1K129 :       gray paint / peinture       Gris
+#
+void plastic  1K129_gray_paint
+0
+0
+5 0.264 0.252 0.177     0     0
+
+#
+#  3K302 : light gray paint / peinture Gris clair
+#
+void plastic  3K302_light_gray_paint
+0
+0
+5 0.247 0.249  0.22     0     0
+
+#
+#  3K311 :       gray paint / peinture       Gris
+#
+void plastic  3K311_gray_paint
+0
+0
+5 0.257 0.244 0.212     0     0
+
+#
+#  4K414 : light brown paint / peinture Brun clair
+#
+void plastic  4K414_light_brown_paint
+0
+0
+5 0.385 0.187 0.087     0     0
+
+#
+#  5K505 :  red-brown paint / peinture Brun-rouge
+#
+void plastic  5K505_red_brown_paint
+0
+0
+5 0.364 0.187 0.143     0     0
+
+#
+#  7K714 :      green paint / peinture       Vert
+#
+void plastic  7K714_green_paint
+0
+0
+5 0.216 0.237 0.094     0     0
+
+#
+# RAL6018 : yellow-green paint / peinture Vert-jaune
+#
+void plastic RAL6018_yellow_green_paint
+0
+0
+5 0.213 0.241 0.045     0     0
+
+#
+#  3K303 :       gray paint / peinture       Gris
+#
+void plastic  3K303_gray_paint
+0
+0
+5 0.218  0.22 0.191     0     0
+
+#
+#  8K806 :       blue paint / peinture       Bleu
+#
+void plastic  8K806_blue_paint
+0
+0
+5 0.121 0.222 0.391     0     0
+
+#
+#  1E105 : concrete-gray paint / peinture Gris-beton
+#
+void plastic  1E105_concrete_gray_paint
+0
+0
+5 0.224 0.196 0.173  0.03  0.02
+
+#
+# RAL7023 : concrete-gray paint / peinture Gris-beton
+#
+void plastic RAL7023_concrete_gray_paint
+0
+0
+5 0.224 0.196 0.173     0     0
+
+#
+#  8K805 : orange-red paint / peinture Rouge-orange
+#
+void plastic  8K805_orange_red__paint
+0
+0
+5 0.433 0.118 0.073     0     0
+
+#
+#  3K310 :       gray paint / peinture       Gris
+#
+void plastic  3K310_gray_paint
+0
+0
+5 0.199 0.182 0.153     0     0
+
+#
+#  3K312 : brown-gray paint / peinture  Gris-brun
+#
+void plastic  3K312_brown_gray_paint
+0
+0
+5  0.21 0.173 0.129     0     0
+
+#
+#  3K313 : beige-brown paint / peinture Brun-beige
+#
+void plastic  3K313_beige_brown_paint
+0
+0
+5  0.21 0.173 0.125     0     0
+
+#
+#  7E704 : reseda-green paint / peinture Vert-reseda
+#
+void plastic  7E704_reseda_green_paint
+0
+0
+5 0.181 0.173 0.099  0.03  0.02
+
+#
+# RAL6011 : reseda-green paint / peinture Vert-reseda
+#
+void plastic RAL6011_reseda_green_paint
+0
+0
+5 0.181 0.173 0.099     0     0
+
+#
+#  5E520 : lilac-blue paint / peinture  Bleu-lila
+#
+void plastic  5E520_lilac_blue_paint
+0
+0
+5 0.168 0.154 0.292  0.03  0.02
+
+#
+# RAL4005 : lilac-blue paint / peinture  Bleu-lila
+#
+void plastic RAL4005_lilac_blue_paint
+0
+0
+5 0.168 0.154 0.292     0     0
+
+#
+#  3K307 :       gray paint / peinture       Gris
+#
+void plastic  3K307_gray_paint
+0
+0
+5 0.174 0.171 0.137     0     0
+
+#
+# RAL2002 : blood-orange paint / peinture Orange-sang
+#
+void plastic RAL2002_blood_orange_paint
+0
+0
+5 0.341 0.106  0.03     0     0
+
+#
+#  3K304 :  dark gray paint / peinture Gris fonce
+#
+void plastic  3K304_dark_gray_paint
+0
+0
+5 0.158 0.148 0.124     0     0
+
+#
+#  1K130 :       gray paint / peinture       Gris
+#
+void plastic  1K130_gray_paint
+0
+0
+5 0.134 0.153 0.141     0     0
+
+#
+#  1K134 :  dark gray paint / peinture Gris fonce
+#
+void plastic  1K134_dark_gray_paint
+0
+0
+5 0.133 0.137 0.158     0     0
+
+#
+# RAL6024 : traffic-green paint / peinture Vert-trafic
+#
+void plastic RAL6024_traffic_green_paint
+0
+0
+5 0.099 0.154 0.076     0     0
+
+#
+#  1E119 :  blue-gray paint / peinture  Gris-bleu
+#
+void plastic  1E119_blue_gray_paint
+0
+0
+5 0.118 0.121 0.136  0.03  0.02
+
+#
+# RAL7031 :  blue-gray paint / peinture  Gris-bleu
+#
+void plastic RAL7031_blue_gray_paint
+0
+0
+5 0.118 0.121 0.136     0     0
+
+#
+#  5E509 :   fire-red paint / peinture  Rouge-feu
+#
+void plastic  5E509_fire_red_paint
+0
+0
+5  0.25 0.078 0.031  0.03  0.02
+
+#
+# RAL3000 :   fire-red paint / peinture  Rouge-feu
+#
+void plastic RAL3000_fire_red_paint
+0
+0
+5  0.25 0.078 0.031     0     0
+
+#
+#  7E706 : emerald-green paint / peinture Vert-emeraude
+#
+void plastic  7E706_emerald_green_paint
+0
+0
+5 0.077 0.097  0.03  0.03  0.02
+
+#
+# RAL6001 : emerald-green paint / peinture Vert-eemeraude
+#
+void plastic RAL6001_emerald_green_paint
+0
+0
+5 0.077 0.097  0.03     0     0
+
+#
+# RAL6016 : turquoise-green paint / peinture Vert-turquoise
+#
+void plastic RAL6016_turquoise_green_paint
+0
+0
+5 0.047 0.094 0.066     0     0
+
+#
+#  7E711 : olive-green paint / peinture Vert-olive
+#
+void plastic  7E711_olive_green_paint
+0
+0
+5 0.082  0.07 0.039  0.03  0.02
+
+#
+# RAL6003 : olive-green paint / peinture Vert-olive
+#
+void plastic RAL6003_olive_green_paint
+0
+0
+5 0.082  0.07 0.039     0     0
+
+#
+# RAL5017 : traffic-blue paint / peinture Bleu-trafic
+#
+void plastic RAL5017_traffic_blue_paint
+0
+0
+5     0 0.079 0.225     0     0
+
+#
+#  5E504 :   ruby-red paint / peinture Rouge-rubis
+#
+void plastic  5E504_ruby_red_paint
+0
+0
+5 0.147 0.038 0.016  0.03  0.02
+
+#
+# RAL3003 :   ruby-red paint / peinture Rouge-rubis
+#
+void plastic RAL3003_ruby_red_paint
+0
+0
+5 0.147 0.038 0.016     0     0
+
+#
+#  6E610 : gentian-blue paint / peinture Bleu-gentiane
+#
+void plastic  6E610_gentian_blue_paint
+0
+0
+5 0.004 0.057 0.173  0.03  0.02
+
+#
+# RAL5010 : gentian-blue paint / peinture Bleu-gentiane
+#
+void plastic RAL5010_gentian_blue_paint
+0
+0
+5 0.004 0.057 0.173     0     0
+
+#
+# RAL4004 : bordeaux-violet paint / peinture Violet-bordeaux
+#
+void plastic RAL4004_bordeaux_violet_paint
+0
+0
+5 0.084 0.027 0.033     0     0
+
+#
+#  5E505 : purple-red paint / peinture Rouge-pourpre
+#
+void plastic  5E505_purple_red_paint
+0
+0
+5  0.09 0.026 0.014  0.03  0.02
+
+#
+# RAL3004 : purple-red paint / peinture Rouge-pourpre
+#
+void plastic RAL3004_purple_red_paint
+0
+0
+5  0.09 0.026 0.014     0     0
+
+#
+# RAL5002 : ultramarine paint / peinture Bleu d'outremer
+#
+void plastic RAL5002_ultramarine_paint
+0
+0
+5     0 0.038  0.17     0     0
+
+#
+#  3E311 : mahogany-brown paint / peinture Brun-acajou
+#
+void plastic  3E311_mahogany_brown_paint
+0
+0
+5 0.052 0.027 0.013  0.03  0.02
+
+#
+# RAL8016 : mahogany-brown paint / peinture Brun-acajou
+#
+void plastic RAL8016_mahogany_brown_paint
+0
+0
+5 0.052 0.027 0.013     0     0
+
+#
+#  5E506 :   wine-red paint / peinture  Rouge-vin
+#
+void plastic  5E506_wine_red_paint
+0
+0
+5 0.059 0.018 0.012  0.03  0.02
+
+#
+# RAL3005 :   wine-red paint / peinture  Rouge-vin
+#
+void plastic RAL3005_wine_red_paint
+0
+0
+5 0.059 0.018 0.012     0     0
+
+#
+# RAL4007 : purple-violet paint / peinture Violet-pourpre
+#
+void plastic RAL4007_purple_violet_paint
+0
+0
+5 0.042  0.02 0.033     0     0
+
+#
+#  6E605 : sapphire-blue paint / peinture Bleu-saphir
+#
+void plastic  6E605_sapphire_blue_paint
+0
+0
+5 0.008 0.027 0.077  0.03  0.02
+
+#
+# RAL5003 : sapphire-blue paint / peinture Bleu-saphir
+#
+void plastic RAL5003_sapphire_blue_paint
+0
+0
+5 0.008 0.027 0.077     0     0
+
+#
+# RAL5022 : midnight-blue paint / peinture  Bleu-nuit
+#
+void plastic RAL5022_midnight_blue_paint
+0
+0
+5 0.008 0.022 0.081     0     0
+
+#
+# white_roughcast / Crepi_blanc
+#
+void plastic white_roughcast
+0
+0
+5 0.726 0.706 0.633     0     0
+void alias Crepi_blanc white_roughcast
+
+#
+# new_galvanised_sheet_metal / Tole_galvanisee_jeune
+#
+void metal new_galvanised_sheet_metal
+0
+0
+5 0.623 0.672 0.692   0.5   0.1
+void alias Tole_galvanisee_jeune new_galvanised_sheet_metal
+
+#
+# greenish-white_ALBA / ALBA_blanc-verdatre
+#
+void plastic greenish-white_ALBA
+0
+0
+5 0.612 0.683 0.628     0     0
+void alias ALBA_blanc-verdatre greenish-white_ALBA
+
+#
+# cellular_concrete_YTONG / Beton_cellulaire_YTONG
+#
+void plastic cellular_concrete_YTONG
+0
+0
+5 0.576 0.549  0.53     0     0
+void alias Beton_cellulaire_YTONG cellular_concrete_YTONG
+
+#
+# maple_wood / Bois_Erable
+#
+void plastic maple_wood
+0
+0
+5 0.689 0.511 0.298     0     0
+void alias Bois_Erable maple_wood
+
+#
+# poplar_wood / Bois_Peuplier
+#
+void plastic poplar_wood
+0
+0
+5 0.653 0.497 0.291     0     0
+void alias Bois_Peuplier poplar_wood
+
+#
+# white_pine_wood / Bois_Sapin_blanc
+#
+void plastic white_pine_wood
+0
+0
+5 0.683 0.477  0.26     0     0
+void alias Bois_Sapin_blanc white_pine_wood
+
+#
+# light_painted_concrete / Beton_couche_dispersion
+#
+void plastic light_painted_concrete
+0
+0
+5 0.493  0.51 0.499     0     0
+void alias Beton_couche_dispersion light_painted_concrete
+
+#
+# hornbeam_wood / Bois_Charme
+#
+void plastic hornbeam_wood
+0
+0
+5 0.619 0.473 0.286     0     0
+void alias Bois_Charme hornbeam_wood
+
+#
+# red_pine_wood / Bois_Sapin_rouge
+#
+void plastic red_pine_wood
+0
+0
+5 0.667 0.452 0.231     0     0
+void alias Bois_Sapin_rouge red_pine_wood
+
+#
+# chalky_silicate_brick / Brique_silico-calcaire
+#
+void plastic chalky_silicate_brick
+0
+0
+5 0.499 0.487 0.458     0     0
+void alias Brique_silico-calcaire chalky_silicate_brick
+
+#
+# oxidized_aluminium /  Alu_oxyde
+#
+void metal oxidized_aluminium
+0
+0
+5 0.487 0.481 0.436   0.3   0.2
+void alias  Alu_oxyde oxidized_aluminium
+
+#
+# dirty-white_ALBA / ALBA_blanc-sale
+#
+void plastic dirty-white_ALBA
+0
+0
+5  0.51 0.473 0.412     0     0
+void alias ALBA_blanc-sale dirty-white_ALBA
+
+#
+# Scots_pine_wood / Bois_Pin_sylvestre
+#
+void plastic Scots_pine_wood
+0
+0
+5  0.64 0.415 0.195     0     0
+void alias Bois_Pin_sylvestre Scots_pine_wood
+
+#
+# arolle_wood / Bois_Arolle
+#
+void plastic arolle_wood
+0
+0
+5 0.645 0.374 0.162     0     0
+void alias Bois_Arolle arolle_wood
+
+#
+# linden_wood / Bois_Tilleul
+#
+void plastic linden_wood
+0
+0
+5 0.591 0.382 0.196     0     0
+void alias Bois_Tilleul linden_wood
+
+#
+# light_concrete / Beton_clair
+#
+void plastic light_concrete
+0
+0
+5  0.47 0.403 0.337     0     0
+void alias Beton_clair light_concrete
+
+#
+#   ash_wood / Bois_Frene
+#
+void plastic   ash_wood
+0
+0
+5 0.544 0.362 0.208     0     0
+void alias Bois_Frene   ash_wood
+
+#
+# blue-gray_ETERNIT / ETERNIT_gris-bleu
+#
+void plastic blue-gray_ETERNIT
+0
+0
+5 0.287 0.429 0.372     0     0
+void alias ETERNIT_gris-bleu blue-gray_ETERNIT
+
+#
+# Oregon_pine_wood / Bois_Pin_d'Oregon
+#
+void plastic Oregon_pine_wood
+0
+0
+5 0.588 0.329 0.154     0     0
+void alias Bois_Pin_d'Oregon Oregon_pine_wood
+
+#
+# cream-white_gravel / Gravier_chemin_blanc-creme
+#
+void plastic cream-white_gravel
+0
+0
+5 0.452 0.369 0.259     0     0
+void alias Gravier_chemin_blanc-creme cream-white_gravel
+
+#
+# chesnut_wood / Bois_Chataignier
+#
+void plastic chesnut_wood
+0
+0
+5 0.525 0.344  0.19     0     0
+void alias Bois_Chataignier chesnut_wood
+
+#
+# limba_wood / Bois_Limba
+#
+void plastic limba_wood
+0
+0
+5 0.485 0.344  0.17     0     0
+void alias Bois_Limba limba_wood
+
+#
+# light_Simplon_granite / Granit_Simplon_clair
+#
+void plastic light_Simplon_granite
+0
+0
+5 0.355 0.361 0.348     0     0
+void alias Granit_Simplon_clair light_Simplon_granite
+
+#
+# birch_wood / Bois_Bouleau
+#
+void plastic birch_wood
+0
+0
+5 0.494 0.313 0.181     0     0
+void alias Bois_Bouleau birch_wood
+
+#
+# hemlock_wood / Bois_Hemlock
+#
+void plastic hemlock_wood
+0
+0
+5 0.503 0.309 0.168     0     0
+void alias Bois_Hemlock hemlock_wood
+
+#
+# larch_wood / Bois_Meleze
+#
+void plastic larch_wood
+0
+0
+5 0.528 0.294  0.14     0     0
+void alias Bois_Meleze larch_wood
+
+#
+# pink_ETERNIT / ETERNIT_rose
+#
+void plastic pink_ETERNIT
+0
+0
+5 0.473 0.287 0.259     0     0
+void alias ETERNIT_rose pink_ETERNIT
+
+#
+#   elm_wood /  Bois_Orme
+#
+void plastic   elm_wood
+0
+0
+5  0.46 0.271 0.134     0     0
+void alias  Bois_Orme   elm_wood
+
+#
+# light_blue_ETERNIT / ETERNIT_bleu-clair
+#
+void plastic light_blue_ETERNIT
+0
+0
+5 0.249   0.3 0.332     0     0
+void alias ETERNIT_bleu-clair light_blue_ETERNIT
+
+#
+# cement_brick_2 / Briques_ciment_2
+#
+void plastic cement_brick_2
+0
+0
+5 0.356 0.269 0.225     0     0
+void alias Briques_ciment_2 cement_brick_2
+
+#
+# light_terra_cotta_brick / Brique_terre_cuite_claire
+#
+void plastic light_terra_cotta_brick
+0
+0
+5 0.427 0.242 0.146     0     0
+void alias Brique_terre_cuite_claire light_terra_cotta_brick
+
+#
+# old_galvanised_sheet_metal / Tole_galvanisee_vieille
+#
+void metal old_galvanised_sheet_metal
+0
+0
+5 0.259 0.276  0.27   0.3   0.2
+void alias Tole_galvanisee_vieille old_galvanised_sheet_metal
+
+#
+# beech_wood / Bois_Hetre
+#
+void plastic beech_wood
+0
+0
+5 0.413 0.214 0.125     0     0
+void alias Bois_Hetre beech_wood
+
+#
+# blue_ETERNIT / ETERNIT_bleu
+#
+void plastic blue_ETERNIT
+0
+0
+5 0.234 0.251  0.26     0     0
+void alias ETERNIT_bleu blue_ETERNIT
+
+#
+# cement_block / Plots_ciment
+#
+void plastic cement_block
+0
+0
+5  0.27 0.226 0.203     0     0
+void alias Plots_ciment cement_block
+
+#
+#   oak_wood / Bois_Chene
+#
+void plastic   oak_wood
+0
+0
+5 0.329 0.199   0.1     0     0
+void alias Bois_Chene   oak_wood
+
+#
+# textured_dark_terra_cotta_brick / Brique_terre_cuite_structuree_claire
+#
+void plastic textured_dark_terra_cotta_brick
+0
+0
+5 0.392 0.163 0.087     0     0
+void alias Brique_terre_cuite_structuree_claire textured_dark_terra_cotta_brick
+
+#
+# dark_terra_cotta_brick / Brique_terre_cuite_foncee
+#
+void plastic dark_terra_cotta_brick
+0
+0
+5 0.364 0.155 0.097     0     0
+void alias Brique_terre_cuite_foncee dark_terra_cotta_brick
+
+#
+# medium_concrete / Beton_moyen
+#
+void plastic medium_concrete
+0
+0
+5 0.244 0.194 0.145     0     0
+void alias Beton_moyen medium_concrete
+
+#
+# cherry_wood / Bois_Cerisier
+#
+void plastic cherry_wood
+0
+0
+5 0.334  0.16 0.077     0     0
+void alias Bois_Cerisier cherry_wood
+
+#
+# cement_brick_1 / Briques_ciment_1
+#
+void plastic cement_brick_1
+0
+0
+5 0.196   0.2 0.189     0     0
+void alias Briques_ciment_1 cement_brick_1
+
+#
+# auburn_ETERNIT / ETERNIT_brun-roux
+#
+void plastic auburn_ETERNIT
+0
+0
+5 0.341 0.148 0.113     0     0
+void alias ETERNIT_brun-roux auburn_ETERNIT
+
+#
+# parquet_wood / Bois_parquet
+#
+void plastic parquet_wood
+0
+0
+5 0.309 0.165 0.083     0     0
+void alias Bois_parquet parquet_wood
+
+#
+#  teak_wood /  Bois_Teck
+#
+void plastic  teak_wood
+0
+0
+5  0.28 0.153 0.071     0     0
+void alias  Bois_Teck  teak_wood
+
+#
+# textured_light_terra_cotta_brick / Brique_terre_cuite_structuree_foncee
+#
+void plastic textured_light_terra_cotta_brick
+0
+0
+5 0.252 0.145 0.097     0     0
+void alias Brique_terre_cuite_structuree_foncee textured_light_terra_cotta_brick
+
+#
+# violet_ETERNIT / ETERNIT_violet
+#
+void plastic violet_ETERNIT
+0
+0
+5 0.189 0.155 0.159     0     0
+void alias ETERNIT_violet violet_ETERNIT
+
+#
+# dark_concrete / Beton_fonce
+#
+void plastic dark_concrete
+0
+0
+5 0.216 0.145 0.106     0     0
+void alias Beton_fonce dark_concrete
+
+#
+# dark_Ticino_granite / Granit_Tessin_fonce
+#
+void plastic dark_Ticino_granite
+0
+0
+5 0.194 0.143 0.123     0     0
+void alias Granit_Tessin_fonce dark_Ticino_granite
+
+#
+# agglomerate_wood_fiber / Laine_bois_agglomere
+#
+void plastic agglomerate_wood_fiber
+0
+0
+5  0.17 0.147 0.107     0     0
+void alias Laine_bois_agglomere agglomerate_wood_fiber
+
+#
+#  pear_wood / Bois_Poirier
+#
+void plastic  pear_wood
+0
+0
+5 0.246   0.1 0.068     0     0
+void alias Bois_Poirier  pear_wood
+
+#
+# oxidized_copper / Cuivre_oxyde
+#
+void metal oxidized_copper
+0
+0
+5 0.136 0.102 0.083   0.3   0.2
+void alias Cuivre_oxyde oxidized_copper
+
+#
+# walnut_wood / Bois_Noyer
+#
+void plastic walnut_wood
+0
+0
+5 0.156 0.093 0.068     0     0
+void alias Bois_Noyer walnut_wood
+
+#
+# shiny_black_granite / Granit_noir_brillant
+#
+void plastic shiny_black_granite
+0
+0
+5 0.101 0.098 0.103  0.03  0.01
+void alias Granit_noir_brillant shiny_black_granite
+
+#
+# clear_glass_4 / Verre_clair_4
+#
+void glass clear_glass_4
+0
+0
+3      1      1      1
+void alias Verre_clair_4 clear_glass_4
+
+#
+# float_glass_3 / Verre_Float_3
+#
+void glass float_glass_3
+0
+0
+3 0.989889      1 0.984464
+void alias Verre_Float_3 float_glass_3
+
+#
+# float_glass_6 / Verre_Float_6
+#
+void glass float_glass_6
+0
+0
+3 0.982293      1 0.987719
+void alias Verre_Float_6 float_glass_6
+
+#
+# granular_glass_6 / Verre_granule_6
+#
+void texfunc gran_tex
+4 gran_dx gran_dy gran_dz plink.cal
+0
+0
+gran_tex glass granular_glass_6
+0
+0
+3 0.982293      1 0.987719
+gran_tex alias Verre_granule_6 granular_glass_6
+
+#
+# hammered_glass_4 / Verre_martele_4
+#
+void texfunc mar_tex
+4 mar_dx mar_dy mar_dz plink.cal
+0
+0
+mar_tex glass hammered_glass_4
+0
+0
+3 0.999655 0.999655 0.999655
+mar_tex alias Verre_martele_4 hammered_glass_4
+
+#
+# safety_glass_8 / Verre_feuillete_8
+#
+void glass safety_glass_8
+0
+0
+3 0.982293      1 0.987719
+void alias Verre_feuillete_8 safety_glass_8
+
+#
+# rough_wire-reinforced_glass_7 / Verre_arme_7
+#
+void brightfunc arm_pat
+2 arm_wire plink.cal
+0
+0
+arm_pat glass rough_wire-reinforced_glass_7
+0
+0
+3 0.90304 0.97144 0.918244
+arm_pat alias Verre_arme_7 rough_wire-reinforced_glass_7
+
+#
+# smooth_wire-reinforced_glass_6.5 / Verre_glace_armee_6.5
+#
+void glass smooth_wire-reinforced_glass_6.5
+0
+0
+3 0.804159 0.99857 0.866106
+void alias Verre_glace_armee_6.5 smooth_wire-reinforced_glass_6.5
+
+#
+# DIAPLUS_glass_6 / Verre_DIAPLUS_6
+#
+void glass DIAPLUS_glass_6
+0
+0
+3 0.868279 0.883488 0.834593
+void alias Verre_DIAPLUS_6 DIAPLUS_glass_6
+
+#
+# light_gray_tinted_glass_6 / Verre_Antelio_gris-clair_6
+#
+void glass light_gray_tinted_glass_6
+0
+0
+3 0.453656 0.500507 0.456925
+void alias Verre_Antelio_gris-clair_6 light_gray_tinted_glass_6
+
+#
+# light_brown_tinted_glass_6 / Verre_Antelio_brun-clair_6
+#
+void glass light_brown_tinted_glass_6
+0
+0
+3 0.480896 0.467821 0.362101
+void alias Verre_Antelio_brun-clair_6 light_brown_tinted_glass_6
+
+#
+# bronze_tinted_glass_10 / Verre_Parsol_bronze_10
+#
+void glass bronze_tinted_glass_10
+0
+0
+3 0.400253 0.390443 0.290142
+void alias Verre_Parsol_bronze_10 bronze_tinted_glass_10
+

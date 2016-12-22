@@ -1,0 +1,20 @@
+project_name daysim_data
+project_directory F:\kianwee_work\spyder_workspace\pyliburo\examples\punggol_case_study\citygml\daysim_data\
+bin_directory c:/daysim\bin\
+tmp_directory tmp\
+material_directory c:/daysim\
+ies_directory c:/daysim\
+
+place SINGAPORE_SGP
+latitude 1.37
+longitude -103.98
+time_zone -120
+site_elevation 16.0
+weather_data_file_units 1
+ground_reflectance 0.2
+wea_data_file F:\kianwee_work\spyder_workspace\pyliburo\examples\punggol_case_study\weatherfile\SGP_Singapore.486980_IWEC_60min.wea
+time_step 60
+wea_data_short_file wea\SGP_Singapore.486980_IWEC_60min.wea
+wea_data_short_file_units 1
+lower_direct_threshold 2
+lower_diffuse_threshold 2

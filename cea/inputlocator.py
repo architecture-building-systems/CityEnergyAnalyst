@@ -175,6 +175,14 @@ class InputLocator(object):
             os.makedirs(solar_radiation_folder)
         return os.path.join(solar_radiation_folder, 'radiation.csv')
 
+    def get_3D_geometry_folder(self):
+        """scenario/inputs/3D_geometries"""
+        return os.path.join(self.scenario_path, 'inputs', '3D_geometries')
+
+    def get_solar_radiation_folder(self):
+        """scenario/outputs/data/solar-radiation"""
+        return os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+
     def get_surface_properties(self):
         """scenario/outputs/data/solar-radiation/properties_surfaces.csv"""
         solar_radiation_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
