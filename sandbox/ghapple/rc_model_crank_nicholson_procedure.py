@@ -16,6 +16,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
+
 def calc_rc_model_demand_heating_cooling(bpr, tsd, t):
 
     # following the procedure in 2.3.2 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
@@ -31,7 +32,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t):
         # write to tsd
         tsd['theta_a'][t] = rc_model_temperatures['theta_a']
         tsd['theta_m'][t] = rc_model_temperatures['theta_m']
-        tsd['theta_t'][t] = rc_model_temperatures['theta_t']
+        tsd['theta_c'][t] = rc_model_temperatures['theta_c']
         tsd['theta_o'][t] = rc_model_temperatures['theta_o']
         tsd['Qcs'][t] = 0
         tsd['Qcs_em_ls'][t] = 0
@@ -96,7 +97,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t):
         # set temperatures to tsd for heating
         tsd['theta_a'][t] = rc_model_temperatures['theta_a']
         tsd['theta_m'][t] = rc_model_temperatures['theta_m']
-        tsd['theta_t'][t] = rc_model_temperatures['theta_t']
+        tsd['theta_c'][t] = rc_model_temperatures['theta_c']
         tsd['theta_o'][t] = rc_model_temperatures['theta_o']
         tsd['Qcs'][t] = 0
         tsd['Qcs_em_ls'][t] = 0
@@ -162,7 +163,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t):
         # set temperatures to tsd for heating
         tsd['theta_a'][t] = rc_model_temperatures['theta_a']
         tsd['theta_m'][t] = rc_model_temperatures['theta_m']
-        tsd['theta_t'][t] = rc_model_temperatures['theta_t']
+        tsd['theta_c'][t] = rc_model_temperatures['theta_c']
         tsd['theta_o'][t] = rc_model_temperatures['theta_o']
         tsd['Qcs'][t] = 0
         tsd['Qcs_em_ls'][t] = 0
@@ -178,3 +179,13 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t):
         tsd['Qhsf'][t] = 0
         tsd['Qhsf_lat'][t] = 0
         # TODO: losses
+
+
+def update_tsd_no_heating(tsd, t):
+
+    tsd['phi_h_act'][t] = 0
+
+
+def update_tsd_no_cooling(tsd, t):
+
+    tsd['phi_c_act'][t] = 0

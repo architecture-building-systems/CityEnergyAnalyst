@@ -2,6 +2,7 @@
 
 
 from __future__ import division
+import numpy as np
 
 
 
@@ -111,8 +112,10 @@ def calc_h_ec(bpr):
     return h_ec
 
 
-
 def calc_h_ea(tsd, t):
+
+    cp = 1.005 / 3.6  # (Wh/kg/K)
+    # TODO: check units of air flow
 
     # get values
     m_v_sys = tsd['m_ve_mech'][t]  # mass flow rate mechanical ventilation
@@ -155,6 +158,7 @@ def calc_phi_a(phi_hc_cv, bpr, tsd, t):
     phi_a = f_sa * phi_s + (1-f_r_l)*phi_i_l + (1-f_r_p) * phi_i_p +(1-f_r_a)*phi_i_a + phi_hc_cv
 
     return phi_a
+
 
 def calc_phi_c(phi_hc_r, bpr, tsd, t):
 
@@ -373,7 +377,7 @@ def calc_theta_e_star():
 def calc_theta_m_t(phi_hc_cv, phi_hc_r, bpr, tsd, t):
 
     # get values
-    theta_m_t_1 = tsd['Tm'][t-1]
+    theta_m_t_1 = tsd['theta_m'][t-1] if not np.isnan(tsd['theta_m'][t - 1]) else tsd['T_ext'][t - 1]
     c_m = bpr.rc_model['Cm']
     h_3 = calc_h_3(bpr, tsd, t)
     h_em = calc_h_em(bpr)
@@ -441,7 +445,6 @@ def calc_phi_m_tot(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     theta_ea = calc_theta_ea(tsd, t)
     h_2 = calc_h_2(bpr, tsd, t)
 
-
     # (29) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
     phi_m_tot = phi_m + h_em * theta_em + (h_3 * (phi_c + h_ec * theta_ec + h_1 * (phi_a / h_ea + theta_ea))) / h_2
@@ -453,7 +456,7 @@ def calc_theta_m(phi_hc_cv, phi_hc_r, bpr, tsd, t):
 
     # get values
     theta_m_t = calc_theta_m_t(phi_hc_cv, phi_hc_r, bpr, tsd, t)
-    theta_m_t_1 = tsd['theta_m'][t-1]
+    theta_m_t_1 = tsd['theta_m'][t-1] if not np.isnan(tsd['theta_m'][t - 1]) else tsd['T_ext'][t - 1]
 
     # (30) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -513,6 +516,7 @@ def calc_theta_o(phi_hc_cv, phi_hc_r, bpr, tsd, t):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # 2.2.7
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 
 def calc_phi_hc_cv(phi_hc, f_hc_cv):
 
@@ -581,8 +585,6 @@ def calc_phi_m_tot_tabs():
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-
-
 def calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t):
 
     # no heating or cooling
@@ -633,45 +635,54 @@ def calc_rc_model_temperatures_cooling(phi_hc, bpr, tsd, t):
 
 def has_heating_demand(bpr, tsd, t):
 
-    # calculate temperatures
-    rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
-
-    # check temperatures
-    if rc_model_temp['theta_a'] >= tsd['ta_hs_set'][t]:
-        # if temperature w/o conditioning is higher
+    if np.isnan(tsd['ta_hs_set'][t]):
+        # no set point = system off
         return False
-    elif rc_model_temp['theta_a'] < tsd['ta_hs_set'][t]:
-        # if temperature w/o conditioning is lower than heating temperature set point
-        return True
-    else:
-        raise
+
+    elif not np.isnan(tsd['ta_hs_set'][t]):
+
+        # calculate temperatures
+        rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
+
+        # check temperatures
+        if rc_model_temp['theta_a'] >= tsd['ta_hs_set'][t]:
+            # if temperature w/o conditioning is higher
+            return False
+        elif rc_model_temp['theta_a'] < tsd['ta_hs_set'][t]:
+            # if temperature w/o conditioning is lower than heating temperature set point
+            return True
+        else:
+            raise ValueError(rc_model_temp['theta_a'], tsd['ta_hs_set'][t])
 
 
 def has_cooling_demand(bpr, tsd, t):
 
-    # set cooling power to zero
-    phi_hc = 0
-
-    # calculate temperatures
-    rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
-
-    # calculate temperatures
-    if rc_model_temp['theta_a'] <= tsd['ta_cs_set'][t]:
-        # if temperature w/o conditioning is lower than cooling set point temperature
+    if np.isnan(tsd['ta_cs_set'][t]):
+        # no set point = system off
         return False
-    elif rc_model_temp['theta_a'] > tsd['ta_cs_set'][t]:
-        # if temperature w/o conditioning is higher than cooling set point temperature
-        return True
-    else:
-        raise
+
+    elif not np.isnan(tsd['ta_cs_set'][t]):
+
+        # calculate temperatures
+        rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
+
+        # calculate temperatures
+        if rc_model_temp['theta_a'] <= tsd['ta_cs_set'][t]:
+            # if temperature w/o conditioning is lower than cooling set point temperature
+            return False
+        elif rc_model_temp['theta_a'] > tsd['ta_cs_set'][t]:
+            # if temperature w/o conditioning is higher than cooling set point temperature
+            return True
+        else:
+            raise
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # 3.8.1
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-f_hc_cv_heating_system = {'T1' : 1, 'T2' : 1, 'T3' : 1, 'T4' : 0.5} # T1 = radiator, T2 = radiator, T3 = AC, T4 = floor heating #TODO: add heating ceiling
-f_hc_cv_cooling_system = {'T1' : 0.5, 'T2' : 1, 'T3' : 1} # T1 = ceiling cooling, T2 mini-split AC, T3 = AC #TODO: add floor cooling
+f_hc_cv_heating_system = {'T1' : 1, 'T2' : 1, 'T3' : 1, 'T4' : 0.5}  # T1 = radiator, T2 = radiator, T3 = AC, T4 = floor heating #TODO: add heating ceiling
+f_hc_cv_cooling_system = {'T1' : 0.5, 'T2' : 1, 'T3' : 1}  # T1 = ceiling cooling, T2 mini-split AC, T3 = AC #TODO: add floor cooling
 
 
 def lookup_f_hc_cv_heating(bpr):

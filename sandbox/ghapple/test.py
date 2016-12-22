@@ -16,6 +16,7 @@ from cea.utilities import helpers
 from sandbox.ghapple import energy_demand_heating_cooling as edhc
 from sandbox.ghapple import ventilation_xx as v
 from sandbox.ghapple import rc_model_crank_nicholson_procedure
+from sandbox.ghapple import control_ventilation_systems
 
 import cea.globalvar
 import cea.inputlocator
@@ -55,7 +56,11 @@ def testing_gabriel(locator, weather_path, gv):
 
 
     # thermal loads
-    tsd = {'T_ext': weather_data.drybulb_C.values,
+    tsd = {'theta_a' : np.empty(8760) * np.nan,
+    'theta_m': np.empty(8760) * np.nan,
+    'theta_c' : np.empty(8760) * np.nan,
+    'theta_o' : np.empty(8760) * np.nan,
+        'T_ext': weather_data.drybulb_C.values,
            'rh_ext': weather_data.relhum_percent.values,
            'T_sky': weather_data.skytemp_C.values,
            'Ts' : np.empty(8760) * np.nan,
@@ -116,6 +121,12 @@ def testing_gabriel(locator, weather_path, gv):
              'Tcdataf_re': np.empty(8760) * np.nan,
              'Tcdataf_sup': np.empty(8760) * np.nan, 'Tcref_re': np.empty(8760) * np.nan,
              'Tcref_sup': np.empty(8760) * np.nan, 'theta_ve_mech': np.empty(8760) * np.nan, 'h_ve_adj': np.empty(8760) * np.nan, 'Qcs_lat_HVAC':  np.empty(8760) * np.nan, 'Qcs_sen_HVAC':  np.empty(8760) * np.nan, 'Qhs_lat_HVAC':  np.empty(8760) * np.nan, 'Qhs_sen_HVAC':  np.empty(8760) * np.nan}  # TODO: initialize refrigeration loads, etc.
+
+
+    tsd['m_ve_window'] = np.zeros(8760)
+    tsd['m_ve_mech'] = np.zeros(8760)
+    tsd['theta_ve_mech'] = tsd['T_ext']
+
 
     # get schedules
     list_uses = usage_schedules['list_uses']
@@ -184,6 +195,11 @@ def testing_gabriel(locator, weather_path, gv):
             # sensible heat gains
             # --> moved to inside of procedure
 
+            print(control_ventilation_systems.is_mechanical_ventilation_active(bpr, tsd, hoy))
+            print(control_ventilation_systems.is_mechanical_ventilation_heat_recovery_active(bpr, tsd, hoy))
+            print(control_ventilation_systems.is_night_flushing_active(bpr, tsd, hoy))
+
+            tsd = sensible_loads.calc_Qgain_sen(hoy, tsd, bpr, gv)
             rc_model_crank_nicholson_procedure.calc_rc_model_demand_heating_cooling(bpr, tsd, hoy)
 
             edhc.procedure_1(bpr, tsd, hoy, gv)
