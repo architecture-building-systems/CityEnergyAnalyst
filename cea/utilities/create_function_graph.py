@@ -9,7 +9,9 @@ The strategy used is to provide a handler for `sys.settrace` and log the "call" 
 
 This tuple is then used to produce a GraphViz digraph that is saved to the filie "%TEMP%\demand_function_graph.gv"
 """
+import inspect
 import os
+import pickle
 import shutil
 import sys
 import tempfile
@@ -32,42 +34,58 @@ def download_radiation(locator):
         f.write(r.content)
 
 
+class TraceDataInfo(object):
+    """Collects data about a trace event's frame"""
+    def __init__(self, frame):
+        code = frame.f_code
+        self.path = code.co_filename
+        self.name = code.co_name
+        self.module = ''
+
+        # figure out fully qualified name (fqname)
+        fqname_parts = []
+        module = inspect.getmodule(code)
+        if module:
+            fqname_parts.append(module.__name__)
+            self.module = module.__name__
+
+        try:
+            fqname_parts.append(frame.f_locals['self'].__class__.__name__)
+        except (KeyError, AttributeError):
+            pass
+
+        fqname_parts.append(self.name)
+        self.fqname = '.'.join(fqname_parts)
+
+    def is_cea(self):
+        return self.fqname.startswith('cea.')
+
+    def __repr__(self):
+        return self.fqname
+
+
 def trace_demand():
     """Extract the ninecubes.zip reference-case to a temporary directory and run the demand script on it
     with a default weather file, collecting trace information of each function called."""
-    caller_callee_pairs = set()
-    root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    print(root)
+    trace_data = []
+    uniques = set()  # of (src.fqname, dst.fqname)
 
     def trace_calls(frame, event, arg):
-        """handle trace events and update the caller_callee_pairs set of tuples"""
+        """handle trace events and update the trace_data with information of the source and destination of the call"""
         if event != 'call':
             return
-        if hasattr(frame, 'f_code'):
-            co = frame.f_code
-            func_filename = co.co_filename
-            if not 'CEAforArcGIS' in func_filename:
-                return
-            func_name = co.co_name
-            callee = os.path.join(os.path.relpath(func_filename, root), func_name)
-        else:
-            return
 
-        if hasattr(frame, 'f_back'):
-            caller_frame = frame.f_back
-            caller_name = caller_frame.f_code.co_name
-            caller_filename = caller_frame.f_code.co_filename
-            if not 'CEAforArcGIS' in func_filename:
-                return
-            caller = os.path.join(os.path.relpath(caller_filename, root), caller_name)
-        else:
+        call_dst = TraceDataInfo(frame)
+        if not call_dst.is_cea():
             return
+        #print('call_dst: %s' % call_dst)
 
-        if func_name == 'write':
-            # Ignore write() calls from print statements
-            return
-
-        caller_callee_pairs.add((caller, callee))
+        call_src = find_last_cea(frame)
+        #print ('call_src: %s -- %s' % (call_src, trace_data))
+        if call_src and not (call_src.fqname, call_dst.fqname) in uniques:
+            trace_data.append((call_src, call_dst))
+            uniques.add((call_src.fqname, call_dst.fqname))
+            print(call_src, call_dst)
         return
 
     try:
@@ -90,7 +108,25 @@ def trace_demand():
         # make sure we clean up after ourselves...
         remove_ninecubes()
         pass
-    return caller_callee_pairs
+    return trace_data
+
+
+def find_last_cea(frame):
+    """"Search through the stack frame for the last origination of a call from cea code"""
+    if not hasattr(frame, 'f_back'):
+        #print('frame has no attr f_back')
+        return None
+    call_src = TraceDataInfo(frame.f_back)
+    if call_src.name == 'trace_demand':
+        #print('call_src.name == trace_demand')
+        return None
+
+    if call_src.is_cea():
+        return call_src
+    else:
+        #print('call_src is not cea: %s' % call_src)
+        return find_last_cea(frame.f_back)
+
 
 
 def extract_ninecubes():
@@ -110,21 +146,54 @@ def remove_ninecubes():
     shutil.rmtree(os.path.join(tempfile.gettempdir(), 'ninecubes'))
 
 
-def print_digraph(caller_callee_pairs):
+def package_names(trace_data):
+    """Extract the names of the packages from the (filtered?) trace_data."""
+    return ('a', 'b')
+
+def edge_names(trace_data_item):
+    return ('a', 'b')
+
+
+def print_digraph(trace_data):
+    template_file = """
+    digraph demand_function_graph {
+      node [shape=box];
+      rankdir=LR;
+      %(packages)s
+      %(edges)s
+    }
+    """
+    template_packages = 'subgraph cluster_%s {}';
+    template_edges = '  "%(ffqname)s" -> "%(cfqname)s";'
+
+    edges = '\n'.join(template_edges % edge_names(tdi) for tdi in trace_data)
+    packages = '\n'.join(template_packages % pname for pname in package_names(trace_data))
+
     with open(os.path.join(tempfile.gettempdir(), 'demand_function_graph.gv'), 'w') as f:
-        f.write('digraph demand_function_graph {\n')
-        f.write('  node [shape=box]\n')
-        f.write('  rankdir=LR\n')
-        for caller, callee in caller_callee_pairs:
-            caller = caller.replace('\\', '.')
-            callee = callee.replace('\\', '.')
-            f.write('  "%(caller)s" -> "%(callee)s";\n' % locals())
-        f.write('}\n')
+        f.write(template_file % locals())
+
 
 def create_function_graph():
-    caller_callee_pairs = trace_demand()
-    print_digraph(caller_callee_pairs)
+    import argparse
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--save-trace-data', help='Save trace data to file', default=None)
+    parser.add_argument('-i', '--input', help='Load trace data from file', default=None)
+    parser.add_argument('-o', '--output', help='Save graphviz output to this file', default=None)
+    args = parser.parse_args()
+
+    if args.save_trace_data:
+        trace_data = trace_demand()
+        with open(args.save_trace_data, 'w') as f:
+            pickle.dump(trace_data, f)
+    elif args.input:
+        with open(args.input, 'r') as f:
+            trace_data = pickle.load(f)
+        with open(args.output, 'w') as f:
+            print_digraph(trace_data, f)
+    else:
+        with open(args.output, 'w') as f:
+            print_digraph(trace_demand(), f)
 
 if __name__ == '__main__':
     create_function_graph()
