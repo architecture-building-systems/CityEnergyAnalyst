@@ -187,9 +187,9 @@ def print_digraph(trace_data, f):
     f.writelines([
         "digraph demand_function_graph {\n",
         "  rankdir=LR;\n",
-        "  nodesep=0.5;\n",
-        "  ranksep=0.5;\n",
-        "  node [shape=box];\n",
+        "  ratio=0.7072135785007072;\n",
+        "  edge[weight=1.2];\n",
+        "  node [shape=plaintext, ranksep=0.2, nodesep=0.2, fontsize=10, fontname=monospace, color=none];\n",
     ])
 
     for namespace in namespaces:

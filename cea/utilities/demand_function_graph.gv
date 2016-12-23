@@ -1,8 +1,8 @@
 digraph demand_function_graph {
   rankdir=LR;
-  nodesep=0.5;
-  ranksep=0.5;
-  node [shape=box];
+  ratio=0.7072135785007072;
+  edge[weight=1.2];
+  node [shape=plaintext, ranksep=0.2, nodesep=0.2, fontsize=10, fontname=monospace, color=none];
   subgraph "cluster_cea.demand.thermal_loads" {
     "initialize_timestep_data";
     "<genexpr>";
