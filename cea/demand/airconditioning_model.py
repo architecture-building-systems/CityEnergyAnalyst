@@ -245,7 +245,7 @@ def calc_hvac_cooling(bpr, tsd, hoy, gv):
     t5 = temp_zone_set
 
     # ventilation air properties after heat exchanger
-    t2, w2 = calc_hex(rhum_1, gv, temp_1, temp_5_prev, hoy)  # (°C), (kg/kg)
+    t2, w2 = calc_hex(tsd, hoy, gv)  # (°C), (kg/kg)
 
     # State No. 3
     # Assuming that AHU does not modify the air humidity
@@ -307,7 +307,7 @@ def calc_hvac_cooling(bpr, tsd, hoy, gv):
     q_cs_lat_hvac = qe_dehum * 1000
     ma_sup_cs = m_ve_hvac_req + m_ve_hvac_recirculation
     ta_sup_cs = ts
-    ta_re_cs = (m_ve_hvac_req * t2 + m_ve_hvac_recirculation * t5) / tsd['ma_sup_cs'][hoy]  # temperature mixing proportional to mass flow rates
+    ta_re_cs = (m_ve_hvac_req * t2 + m_ve_hvac_recirculation * t5) / ma_sup_cs  # temperature mixing proportional to mass flow rates
 
 
     air_con_model_loads_flows_temperatures = {'q_cs_sen_hvac': q_cs_sen_hvac, \
@@ -342,7 +342,7 @@ def calc_hvac_sensible_cooling_ventilaiton_air(bpr, tsd, hoy, gv):
 
     # state after heat exchanger
     # TODO: temperature could come from ventilation heat exchanger...
-    t2, w2 = calc_hex(rhum_1, gv, temp_1, temp_5_prev, hoy)  # (°C), (kg/kg)
+    t2, w2 = calc_hex(tsd, hoy, gv)  # (°C), (kg/kg)
 
     # State No. 3
     # Assuming that AHU does not modify the air humidity
@@ -499,7 +499,7 @@ def calc_hvac_heating(bpr, tsd, hoy, gv):
 air Heat exchanger unit
 =========================================
 """
-def calc_hex(rel_humidity_ext, gv, temp_ext, temp_zone_prev, timestep):
+def calc_hex(tsd, hoy, gv):
     """
     Calculates air properties of mechanical ventilation system with heat exchanger
     Modeled after 2.4.2 in SIA 2044
@@ -519,6 +519,9 @@ def calc_hex(rel_humidity_ext, gv, temp_ext, temp_zone_prev, timestep):
     """
     # TODO add literature
 
+    rel_humidity_ext = tsd['rh_ext'][hoy]
+    temp_ext = tsd['T_ext'][hoy]
+
     # FIXME: dynamic HEX efficiency
     # Properties of heat recovery and required air incl. Leakage
     # qv_mech = qv_mech * 1.0184  # in m3/s corrected taking into account leakage # TODO: add source
@@ -531,7 +534,7 @@ def calc_hex(rel_humidity_ext, gv, temp_ext, temp_zone_prev, timestep):
 
     # State No. 2
     # inlet air temperature after HEX calculated from zone air temperature at time step t-1 (°C)
-    t2 = temp_ext + nrec * (temp_zone_prev - temp_ext)
+    t2 = tsd['theta_ve_mech'][hoy]
     w2 = min(w1, calc_w(t2, 100))  # inlet air moisture (kg/kg), Eq. (4.24) in [1]
 
     # TODO: document

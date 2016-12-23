@@ -57,7 +57,7 @@ def testing_gabriel(locator, weather_path, gv):
 
 
     # thermal loads
-    tsd = {'theta_a' : np.empty(8760) * np.nan,
+    tsd = {'Qhs_lat_sys': np.empty(8760) * np.nan,'Qhs_sen_sys': np.empty(8760) * np.nan,'Qcs_lat_sys': np.empty(8760) * np.nan,'Qcs_sen_sys': np.empty(8760) * np.nan, 'theta_a' : np.empty(8760) * np.nan,
     'theta_m': np.empty(8760) * np.nan,
     'theta_c' : np.empty(8760) * np.nan,
     'theta_o' : np.empty(8760) * np.nan,
@@ -198,7 +198,7 @@ def testing_gabriel(locator, weather_path, gv):
         tsd['Qcs_sen_incl_em_ls'] = tsd['Qcs_sen'] + tsd['Qcs_em_ls']
 
         # Calc of Qhs_dis_ls/Qcs_dis_ls - losses due to distribution of heating/cooling coils
-        Qhs_d_ls, Qcs_d_ls = np.vectorize(sensible_loads.calc_Qhs_Qcs_dis_ls)(tsd['Ta'], tsd['T_ext'],
+        Qhs_d_ls, Qcs_d_ls = np.vectorize(sensible_loads.calc_Qhs_Qcs_dis_ls)(tsd['theta_a'], tsd['T_ext'],
                                                                                   tsd['Qhs_sen_incl_em_ls'],
                                                                                   tsd['Qcs_sen_incl_em_ls'],
                                                                                   bpr.building_systems['Ths_sup_0'],
@@ -212,7 +212,7 @@ def testing_gabriel(locator, weather_path, gv):
                                                                                   bpr.hvac['type_cs'], gv.Bf,
                                                                                   bpr.building_systems['Lv'])
 
-        tsd['Qcsf_lat'] = tsd['Qcs_lat_HVAC']
+        tsd['Qcsf_lat'] = tsd['Qcs_lat_sys']
 
         # Calc requirements of generation systems (both cooling and heating do not have a storage):
         tsd['Qhs'] = tsd['Qhs_sen']
@@ -241,7 +241,7 @@ def testing_gabriel(locator, weather_path, gv):
             bpr.building_systems['Lvww_c'],
             bpr.building_systems['Lvww_dis'],
             tsd['T_ext'],
-            tsd['Ta'],
+            tsd['theta_a'],
             tsd['Twwf_re'],
             bpr.building_systems['Tww_sup_0'],
             bpr.building_systems['Y'],
