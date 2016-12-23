@@ -154,23 +154,59 @@ def edge_names(trace_data_item):
     return ('a', 'b')
 
 
-def print_digraph(trace_data):
-    template_file = """
-    digraph demand_function_graph {
-      node [shape=box];
-      rankdir=LR;
-      %(packages)s
-      %(edges)s
-    }
+def extract_namespace(fqname):
+    return fqname.rsplit('.', 1)[0]
+
+
+def extract_function_name(fqname):
+    return fqname.rsplit('.', 1)[1]
+
+
+def filter_trace_data(trace_data):
+    """remove calls to (and from) the namespaces in the stoplist.
+    This should make the output easier to read.
     """
-    template_packages = 'subgraph cluster_%s {}';
-    template_edges = '  "%(ffqname)s" -> "%(cfqname)s";'
+    stoplist = ['cea.inputlocator.InputLocator',
+                'cea.utilities.helpers',
+                'cea.demand.thermal_loads.BuildingProperties',
+                'cea.globalvar.GlobalVariables',
+                'cea.demand.demand_writers.HourlyDemandWriter']
+    for tdi_src, tdi_dst in trace_data:
+        if extract_namespace(tdi_src.fqname) in stoplist:
+            continue
+        elif extract_namespace(tdi_dst.fqname) in stoplist:
+            continue
+        yield (tdi_src, tdi_dst)
 
-    edges = '\n'.join(template_edges % edge_names(tdi) for tdi in trace_data)
-    packages = '\n'.join(template_packages % pname for pname in package_names(trace_data))
 
-    with open(os.path.join(tempfile.gettempdir(), 'demand_function_graph.gv'), 'w') as f:
-        f.write(template_file % locals())
+def print_digraph(trace_data, f):
+    trace_data = list(filter_trace_data(trace_data))
+    all_nodes = set(tdi.fqname for td in trace_data for tdi in td)
+    namespaces = set(extract_namespace(node) for node in all_nodes)
+
+    f.writelines([
+        "digraph demand_function_graph {\n",
+        "  rankdir=LR;\n",
+        "  nodesep=0.5;\n",
+        "  ranksep=0.5;\n",
+        "  node [shape=box];\n",
+    ])
+
+    for namespace in namespaces:
+        node_names = '\n'.join('    "%s";' % extract_function_name(node) for node in all_nodes if
+                               extract_namespace(node) == namespace)
+        f.writelines([
+            '  subgraph "cluster_%(namespace)s" {\n' % locals(),
+            node_names,
+            '\n',
+            '    label="%(namespace)s";\n' % locals(),
+            '  }\n',
+        ])
+
+    for src, dst in trace_data:
+        f.write('  "%s" -> "%s";\n' % (extract_function_name(src.fqname), extract_function_name(dst.fqname)))
+
+    f.write('}\n')
 
 
 def create_function_graph():
