@@ -64,7 +64,7 @@ def thermal_network_main(locator,gv):
     mass_flow_substations_nodes_df = []
     T_DH_return_nodes_df = []
     T_DH_supply_nodes_df = []
-    dT_plant_df = []
+    plant_heat_requiremnt = []
 
     for t in range(8760):
         if t == 0:
@@ -78,7 +78,8 @@ def thermal_network_main(locator,gv):
             T_DH_substation_return_df = write_df_to_consumer_nodes_df(all_nodes_df, T_DH_return_all, flag = True)  # (1xn)
             mass_flow_substations_nodes_df = write_df_to_consumer_nodes_df(all_nodes_df, mdot_DH_all, flag = False)  # (1xn)
             # write plant substation required flow to nodes
-            mass_flow_substations_nodes_df[(all_nodes_df.ix['plant']!= '').argmax()]= mass_flow_substations_nodes_df.sum(axis=1)  # (1xn) # assume only one plant supply all consumer flow rate #FIXME: 1] all the flow rates are positive now, feel free to adjust
+            mass_flow_substations_nodes_df[(all_nodes_df.ix['plant']!= '').argmax()]= mass_flow_substations_nodes_df.sum(axis=1)  # (1xn) # assume only one plant supply all consumer flow rate
+
 
             # solve hydraulic equations # FIXME? calc_mass_flow_edges now consists of just one line of code! should we just move it here?
             mass_flow_df = pd.DataFrame(data=np.zeros((8760,len(edge_node_df.columns.values))), columns=edge_node_df.columns.values)
@@ -93,13 +94,12 @@ def thermal_network_main(locator,gv):
             T_return_nodes = calc_return_temperatures(locator, gv, T_ground, edge_node_df, mass_flow_df,
                                                      mass_flow_substations_nodes_df, pipe_length_df, T_DH_substation_return_df)
 
-            dT_plant = T_supply_nodes - T_return_nodes  # TODO: find plant node
+            plant_heat_requiremnt = gv.Cpw(T_supply_nodes - T_return_nodes)*mass_flow_substations_nodes_df
+            # FIXME: [1] Find plant node [2] find which timestep should we take for T_return_nodes and M_sub
 
             T_DH_supply_nodes_df.append(T_supply_nodes)
             T_DH_return_nodes_df.append(T_return_nodes)
-            dT_plant_df.append(dT_plant)
-
-            # FIXME: calculate return temperature according to the supply of current time-step
+            plant_heat_requiremnt.append(plant_heat_requiremnt)
 
         else:
             # with the temperature of previous time-step, solve for substation flow rates at current time-step
@@ -111,7 +111,7 @@ def thermal_network_main(locator,gv):
             T_DH_substation_return_df = write_df_to_consumer_nodes_df(all_nodes_df, T_DH_return_all, flag = True)  # (1xn)
             mass_flow_substations_nodes_df = write_df_to_consumer_nodes_df(all_nodes_df, mdot_DH_all, flag = False)  # (1xn)
             # write plant substation required flow to nodes
-            mass_flow_substations_nodes_df[(all_nodes_df.ix['plant']!= '').argmax()]= mass_flow_substations_nodes_df.sum(axis=1)  # (1xn) # assume only one plant supply all consumer flow rate #FIXME: 1] all the flow rates are positive now, feel free to adjust
+            mass_flow_substations_nodes_df[(all_nodes_df.ix['plant']!= '').argmax()]= mass_flow_substations_nodes_df.sum(axis=1)  # (1xn) # assume only one plant supply all consumer flow rate
 
             # solve hydraulic equations
             mass_flow_df[:][t:t+1] = calc_mass_flow_edges(edge_node_df, all_nodes_df, pipe_length_df, mass_flow_substations_nodes_df, locator, gv)
@@ -418,7 +418,7 @@ def calc_supply_temperatures(locator, gv, T_ground, edge_node_df, mass_flow_df, 
                     T_node[j] = T_e_out[j].max()   # FIXME: negative temperature due to negative flow rate
         if 2<1:
                 all(T_node <= t_target_supply) #FIXME: try out when negative temperature is fixed
-                T_H = T_H + 1  # TODO: global variable
+                T_H = T_H + 1  # TODO: add to global variable
                 Z_new = Z.copy()
                 T_e_out = Z_pipe_out.copy()
                 T_e_in = Z_pipe_in.copy().dot(-1)
