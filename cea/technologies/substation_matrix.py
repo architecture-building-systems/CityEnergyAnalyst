@@ -256,7 +256,6 @@ def substation_return_model_main(locator, building_names, gv, buildings, substat
     T_DH_return_all = pd.DataFrame()
     mdot_DH_all = pd.DataFrame()
     for name in building_names:
-        print name
         building = buildings[index].loc[[t]]
         t_DH_return, mcp_DH = calc_substation_return_DH(locator, gv, building, T_DH[name], substations_HEX_specs.ix[name])
         T_DH_return_all[name] = [t_DH_return]
