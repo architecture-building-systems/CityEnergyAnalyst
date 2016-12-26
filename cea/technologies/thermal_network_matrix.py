@@ -76,7 +76,7 @@ def thermal_network_main(locator,gv):
 
             # write consumer substation return T and required flow rate to nodes
             T_DH_substation_return_df = write_df_to_consumer_nodes_df(all_nodes_df, T_DH_return_all, flag = True)  # (1xn)
-            mass_flow_substations_nodes_df = write_df_to_consumer_nodes_df(all_nodes_df, mdot_DH_all, flag = False)  # (1xn)
+            mass_flow_substations_nodes_df = write_substations_to_consumer_nodes_df(all_nodes_df, mdot_DH_all, flag = False)  # (1xn)
             # write plant substation required flow to nodes
             mass_flow_substations_nodes_df[(all_nodes_df.ix['plant']!= '').argmax()]= mass_flow_substations_nodes_df.sum(axis=1)  # (1xn) # assume only one plant supply all consumer flow rate
 
