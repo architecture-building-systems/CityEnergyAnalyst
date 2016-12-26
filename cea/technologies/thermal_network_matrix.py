@@ -72,14 +72,13 @@ def thermal_network_main(locator,gv):
 
             # write consumer substation return T and required flow to nodes
             T_DH_return_nodes_df = write_df_to_consumer_nodes_df(all_nodes_df, T_DH_return_all, flag = True)  # (1xn)
-            mass_flow_substations_nodes_df = write_df_to_consumer_nodes_df(all_nodes_df, mdot_DH_all, flag = False)  # (1xn)
+            mass_flow_substations_nodes_df = write_substations_to_consumer_nodes_df(all_nodes_df, mdot_DH_all, flag = False)  # (1xn)
             # write plant substation required flow to nodes
             mass_flow_substations_nodes_df[(all_nodes_df.ix['plant']!= '').argmax()]= mass_flow_substations_nodes_df.sum(axis=1)  # (1xn) # assume only one plant supply all consumer flow rate #FIXME: 1] all the flow rates are positive now, feel free to adjust
 
             # solve hydraulic equations # FIXME? calc_mass_flow_edges now consists of just one line of code! should we just move it here?
             mass_flow_df = pd.DataFrame(data=np.zeros((8760,len(edge_node_df.columns.values))), columns=edge_node_df.columns.values)
             mass_flow_df[:][t:t+1] = calc_mass_flow_edges(edge_node_df, mass_flow_substations_nodes_df)
-
             #mass_flow_df = np.absolute(mass_flow_df)  # added this hack to make sure code runs
 
             # solve thermal equations, with mass_flow_df from hydraulic calculation as input
@@ -130,7 +129,24 @@ def write_df_to_consumer_nodes_df(all_nodes_df, df_value, flag):
     for node in all_nodes_df:  # consumer_nodes+plant_nodes:    #name in building_names:
         if all_nodes_df[node]['consumer'] != '':
             nodes_df[node] = df_value[all_nodes_df[node]['consumer']]
-        # elif all_nodes_df[node]['plant'] != '':
+        #elif all_nodes_df[node]['plant'] != '':
+        #     nodes_df[node] = df_value[all_nodes_df[node]['plant']]
+        else:
+            if flag== True:
+                nodes_df[node] = np.nan
+            else:
+                nodes_df[node] = 0
+    return nodes_df
+
+def write_substations_to_consumer_nodes_df(all_nodes_df, df_value, flag):
+    nodes_df = pd.DataFrame()
+    for node in all_nodes_df:  # consumer_nodes+plant_nodes:    #name in building_names:
+        if all_nodes_df[node]['consumer'] != '':
+            nodes_df[node] = df_value[all_nodes_df[node]['consumer']]
+        # adapt plant mass flow rate values
+        elif all_nodes_df[node]['plant'] != '':
+            # the mass flow rate required in a plant node is its own mass flow required minus the sum of the mass flow required by all other consumers
+            nodes_df[node] = df_value[all_nodes_df[node]['plant']] - (df_value.sum(axis=1) - df_value[all_nodes_df[node]['plant']])
         #     nodes_df[node] = df_value[all_nodes_df[node]['plant']]
         else:
             if flag== True:
@@ -186,7 +202,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df):
     '''
 
     # t0 = time.clock()
-    mass_flow = np.transpose(np.linalg.lstsq(edge_node_df.values, np.transpose(-mass_flow_substation_df.values))[0])
+    mass_flow = np.transpose(np.linalg.lstsq(edge_node_df.values, np.transpose(mass_flow_substation_df.values))[0])
     # print time.clock() - t0, "seconds process time for total mass flow calculation\n"
 
     '''
@@ -240,13 +256,14 @@ def get_thermal_network_from_csv(locator):
             elif pipe_data_df['NODE1'][j] == list_nodes[i]:
                 edge_node_matrix[i][j] = -1
     edge_node_df = pd.DataFrame(data=edge_node_matrix, index = list_nodes, columns = list_pipes)
-
     edge_node_df.to_csv(os.path.join(locator.get_optimization_network_layout_folder(), "EdgeNode_DH.csv"))
-
+    all_nodes_df = pd.DataFrame(data=[consumer_nodes[1][:], plant_nodes[1][:]], index = ['consumer','plant'], columns = consumer_nodes[0][:])
+    all_nodes_df = all_nodes_df[edge_node_df.index.tolist()]
+    all_nodes_df.to_csv(os.path.join(locator.get_optimization_network_layout_folder(), "AllNodes_DH.csv"))
 
     print time.clock() - t0, "seconds process time for Network summary\n"
 
-    return edge_node_df, pd.DataFrame(data=[consumer_nodes[1][:], plant_nodes[1][:]], index = ['consumer','plant'], columns = consumer_nodes[0][:]),pipe_data_df['LENGTH']
+    return edge_node_df, all_nodes_df, pipe_data_df['LENGTH']
 
 def assign_pipes_to_edges(mass_flow_df, locator, gv):
     '''
