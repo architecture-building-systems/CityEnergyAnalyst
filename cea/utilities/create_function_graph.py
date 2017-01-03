@@ -170,7 +170,8 @@ def filter_trace_data(trace_data):
                 'cea.utilities.helpers',
                 'cea.demand.thermal_loads.BuildingProperties',
                 'cea.globalvar.GlobalVariables',
-                'cea.demand.demand_writers.HourlyDemandWriter']
+                'cea.demand.demand_writers.HourlyDemandWriter',
+                'cea.demand.thermal_loads.BuildingPropertiesRow']
     for tdi_src, tdi_dst in trace_data:
         if extract_namespace(tdi_src.fqname) in stoplist:
             continue
@@ -189,7 +190,7 @@ def print_digraph(trace_data, f):
         "  rankdir=LR;\n",
         "  ratio=0.7072135785007072;\n",
         "  edge[weight=1.2];\n",
-        "  node [shape=plaintext, ranksep=0.2, nodesep=0.2, fontsize=10, fontname=monospace, color=none];\n",
+        "  node [shape=plaintext, ranksep=0.7, nodesep=0.7, fontsize=10, fontname=monospace, color=none];\n",
     ])
 
     for namespace in namespaces:
@@ -209,6 +210,27 @@ def print_digraph(trace_data, f):
     f.write('}\n')
 
 
+def create_module_overview(trace_data):
+    """Compress the list of connections in the trace_data to only the modules. So instead of tracing function
+    calls, trace module-to-module calls. This can give more overview of the code as it is higher level.
+    """
+    class OverviewTraceDataInfo(object):
+        """Imitate a TDI, but only sets the fqname attribute"""
+        def __init__(self, fqname):
+            self.fqname = fqname
+
+    module_calls = set()  # list of (src_module, dst_module)
+    for tdi_src, tdi_dst in filter_trace_data(trace_data):
+        src_module = extract_namespace(tdi_src.fqname)
+        dst_module = extract_namespace(tdi_dst.fqname)
+        if src_module == dst_module:
+            # skip self-references
+            continue
+        module_calls.add((src_module, dst_module))
+    return [(OverviewTraceDataInfo(src_module), OverviewTraceDataInfo(dst_module))
+            for src_module, dst_module in module_calls]
+
+
 def create_function_graph():
     import argparse
 
@@ -216,6 +238,7 @@ def create_function_graph():
     parser.add_argument('-s', '--save-trace-data', help='Save trace data to file', default=None)
     parser.add_argument('-i', '--input', help='Load trace data from file', default=None)
     parser.add_argument('-o', '--output', help='Save graphviz output to this file', default=None)
+    parser.add_argument('-m', '--module-overview', help='Create a module overview', action='store_true')
     args = parser.parse_args()
 
     if args.save_trace_data:
@@ -225,6 +248,10 @@ def create_function_graph():
     elif args.input:
         with open(args.input, 'r') as f:
             trace_data = pickle.load(f)
+
+        if args.module_overview:
+            trace_data = create_module_overview(trace_data)
+
         with open(args.output, 'w') as f:
             print_digraph(trace_data, f)
     else:
