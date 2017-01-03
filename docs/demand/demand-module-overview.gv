@@ -1,0 +1,56 @@
+digraph demand_function_graph {
+  rankdir=LR;
+  ratio=0.7072135785007072;
+  edge[weight=1.2];
+  node [shape=plaintext, ranksep=0.7, nodesep=0.7, fontsize=10, fontname=monospace, color=none];
+  subgraph "cluster_cea.demand" {
+    "thermal_loads";
+    "sensible_loads";
+    "ventilation_model";
+    "refrigeration_loads";
+    "datacenter_loads";
+    "airconditioning_model";
+    "hotwater_loads";
+    "occupancy_model";
+    "electrical_loads";
+    "demand_main";
+    label="cea.demand";
+  }
+  subgraph "cluster_cea.geometry" {
+    "geometry_reader";
+    label="cea.geometry";
+  }
+  subgraph "cluster_cea.utilities" {
+    "physics";
+    "epwreader";
+    label="cea.utilities";
+  }
+  subgraph "cluster_cea.technologies" {
+    "storagetank";
+    "heating_coils";
+    "radiators";
+    "blinds";
+    "controllers";
+    "tabs";
+    label="cea.technologies";
+  }
+  "thermal_loads" -> "occupancy_model";
+  "thermal_loads" -> "hotwater_loads";
+  "sensible_loads" -> "radiators";
+  "thermal_loads" -> "electrical_loads";
+  "ventilation_model" -> "geometry_reader";
+  "thermal_loads" -> "controllers";
+  "sensible_loads" -> "blinds";
+  "thermal_loads" -> "airconditioning_model";
+  "thermal_loads" -> "datacenter_loads";
+  "airconditioning_model" -> "physics";
+  "thermal_loads" -> "refrigeration_loads";
+  "thermal_loads" -> "sensible_loads";
+  "sensible_loads" -> "tabs";
+  "demand_main" -> "epwreader";
+  "hotwater_loads" -> "storagetank";
+  "demand_main" -> "occupancy_model";
+  "sensible_loads" -> "heating_coils";
+  "thermal_loads" -> "ventilation_model";
+  "demand_main" -> "thermal_loads";
+}
