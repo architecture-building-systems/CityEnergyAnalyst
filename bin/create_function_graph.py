@@ -130,7 +130,7 @@ def find_last_cea(frame):
 
 
 def extract_ninecubes():
-    ninecubes_src = os.path.join(os.path.dirname(__file__), '..', '..', 'examples', 'ninecubes.zip')
+    ninecubes_src = os.path.join(os.path.dirname(__file__), '..', 'examples', 'ninecubes.zip')
     ninecubes_dst = os.path.join(tempfile.gettempdir(), 'ninecubes.zip')
     shutil.copyfile(ninecubes_src, ninecubes_dst)
     archive = zipfile.ZipFile(ninecubes_dst)
@@ -142,8 +142,13 @@ def extract_ninecubes():
 
 def remove_ninecubes():
     """delete the ninecubes stuff from the temp directory"""
-    os.remove(os.path.join(tempfile.gettempdir(), 'ninecubes.zip'))
-    shutil.rmtree(os.path.join(tempfile.gettempdir(), 'ninecubes'))
+    ninecubes_zip = os.path.join(tempfile.gettempdir(), 'ninecubes.zip')
+    if os.path.exists(ninecubes_zip):
+        os.remove(ninecubes_zip)
+
+    ninecubes_dir = os.path.join(tempfile.gettempdir(), 'ninecubes')
+    if os.path.exists(ninecubes_dir):
+        shutil.rmtree(ninecubes_dir)
 
 
 def package_names(trace_data):
@@ -256,7 +261,12 @@ def create_function_graph():
             print_digraph(trace_data, f)
     else:
         with open(args.output, 'w') as f:
-            print_digraph(trace_demand(), f)
+            trace_data = trace_demand()
+
+            if args.module_overview:
+                trace_data = create_module_overview(trace_data)
+
+            print_digraph(trace_data, f)
 
 if __name__ == '__main__':
     create_function_graph()
