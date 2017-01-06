@@ -1,19 +1,5 @@
 """
-Installation:
-
-Install Daysim (Daysim/bin and Daysim/lib as environment varaibales)
-
-Libaries
-- create environment with (conda create -n "libary name" python=2.7 numpy=1.9.2)
-- conda install lxml
-- pip install pyshp
-- conda install -c https://conda.anaconda.org/dlr-sc pythonocc-core=1.6.5
-- copy paste occutils (https://github.com/tpaviot/pythonocc-utils/tree/master/OCCUtils) into site-packages
-- copy paste pyliburo (https://github.com/chenkianwee/pyliburo) into site-packages
-- conda install numpy
-- conda install scipy
-- easy_install pycollada
-- pip install networkx
+Radiation engine and geometry handler for CEA
 """
 
 import os
@@ -38,7 +24,7 @@ from geopandas import GeoDataFrame as Gdf
 
 __author__ = "Paul Neitzel"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Paul Neitzel"]
+__credits__ = ["Paul Neitzel", "Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
