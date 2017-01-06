@@ -792,7 +792,7 @@ class BuildingProperties(object):
                                                 prop_geometry, prop_HVAC_result, surface_properties,
                                                 gv)
 
-        df_windows = geometry_reader.create_windows(surface_properties, prop_architecture)
+        df_windows = geometry_reader.load_windows(locator)
         gv.log("done")
 
         # save resulting data
@@ -946,8 +946,7 @@ class BuildingProperties(object):
 
         # Areas above ground
         # get the area of each wall in the buildings
-        surface_properties['Awall'] = (surface_properties['Shape_Leng'] * surface_properties['Freeheight'] *
-                                       surface_properties['FactorShade'])
+        surface_properties['Awall'] = (surface_properties['exposed'] * surface_properties['facade_area'])
         df = pd.DataFrame({'Name': surface_properties['Name'],
                            'Awall_all': surface_properties['Awall']}).groupby(by='Name').sum()
 
@@ -1257,11 +1256,11 @@ def get_envelope_properties(locator, prop_architecture):
 
 
 def get_prop_solar(locator):
+
     solar = pd.read_csv(locator.get_radiation()).set_index('Name')
     solar_list = solar.values.tolist()
     surface_properties = pd.read_csv(locator.get_surface_properties())
-    surface_properties['Awall'] = (
-        surface_properties['Shape_Leng'] * surface_properties['FactorShade'] * surface_properties['Freeheight'])
+    surface_properties['Awall'] = (surface_properties['exposed'] * surface_properties['facade_area'])
     sum_surface = surface_properties[['Awall', 'Name']].groupby(['Name']).sum().values
 
     I_sol = I_roof = I_win = [a / b for a, b in zip(solar_list, sum_surface)]
