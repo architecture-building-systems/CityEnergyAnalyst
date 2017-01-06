@@ -1,4 +1,4 @@
-import py3dmodel
+from cea.resources.radiation_daysim.pyliburo import py3dmodel
 
 #==============================================================================================================================
 #general functions

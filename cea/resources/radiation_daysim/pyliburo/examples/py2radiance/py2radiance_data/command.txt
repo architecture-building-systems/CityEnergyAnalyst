@@ -1,0 +1,6 @@
+epw2wea F:\kianwee_work\spyder_workspace\pylibudo\examples\punggol_case_study\weatherfile\SGP_Singapore.486980_IWEC.epw F:/kianwee_work/spyder_workspace/pylibudo/examples/py2radiance\daysim_data\wea\SGP_Singapore.486980_IWEC_60min.wea
+radfiles2daysim F:/kianwee_work/spyder_workspace/pylibudo/examples/py2radiance\daysim_data\daysim_data.hea -g -m -d
+gen_dc F:/kianwee_work/spyder_workspace/pylibudo/examples/py2radiance\daysim_data\tmp\daysim_datatemp.hea -dir
+gen_dc F:/kianwee_work/spyder_workspace/pylibudo/examples/py2radiance\daysim_data\tmp\daysim_datatemp.hea -dif
+gen_dc F:/kianwee_work/spyder_workspace/pylibudo/examples/py2radiance\daysim_data\tmp\daysim_datatemp.hea -paste
+ds_illum F:/kianwee_work/spyder_workspace/pylibudo/examples/py2radiance\daysim_data\daysim_data.hea
