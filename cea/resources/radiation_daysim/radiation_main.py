@@ -785,7 +785,6 @@ def mod_rad_params(params, rad_param_name, rad_param_value):
 # main script
 # ========================================================================= #
 
-#if __name__ == '__main__':
 def calc_radiation(scenario_path, case, scenario_name, params_mod):
     # =============================== parameters =============================== #
     time0 = time.clock()
