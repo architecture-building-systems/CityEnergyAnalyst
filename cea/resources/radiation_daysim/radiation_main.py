@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import math
 import multiprocessing
+from cea.resources.radiation_daysim import settings
 
 from OCC import BRepGProp, GProp, BRep, TopoDS
 from OCC.StlAPI import StlAPI_Reader
@@ -151,7 +152,7 @@ def get_bui_props(face_list, aresults_path, abui):
     bui_props.to_csv(os.path.join(aresults_path, abui+'_props.csv'), index=None)
 
 
-def calc_sensors(aresults_path, abui, ainput_path, axdim, aydim, min_z_dir):
+def calc_sensors(aresults_path, abui, ainput_path):
 
     bui_vol = []
     sen_df = []
@@ -182,14 +183,14 @@ def calc_sensors(aresults_path, abui, ainput_path, axdim, aydim, min_z_dir):
     for face in face_list:
         normal = face_normal(face)
 
-        if min_z_dir < normal[2]:
+        if settings.SEN_PARMS['MIN_Z_DIR'] < normal[2]:
 
             # calculate pts of each face
             fps = points_from_face(face)
             fps_df.append([val for sublist in fps for val in sublist])
 
             sensor_srfs, sensor_pts, sensor_dirs = \
-                gml3dmodel.generate_sensor_surfaces(face, axdim, aydim)
+                gml3dmodel.generate_sensor_surfaces(face, settings.SEN_PARMS['X_DIM'], settings.SEN_PARMS['Y_DIM'])
             fac_area = py3dmodel.calculate.face_area(face)
             # generate dataframe with building, face and sensor ID
             sen_int = 0
@@ -345,31 +346,6 @@ def calc_radiation(geometry_table_name, weatherfile_path, sensor_geometries_name
     input_path = locator.get_3D_geometry_folder()
     results_path = locator.get_solar_radiation_folder()
 
-    # Sensor parameters
-    xdim = 5
-    ydim = 5
-    min_z_dir = -0.85
-    max_z_dir = 0.05
-
-    # Daysim simulation parameters
-    rad_params = {
-        'rad_n': 2,
-        'rad_af': 'file',
-        'rad_ab': 4,
-        'rad_ad': 512,
-        'rad_as': 256,
-        'rad_ar': 128,
-        'rad_aa': 0.15,
-        'rad_lr': 8,
-        'rad_st': 0.15,
-        'rad_sj': 0.7,
-        'rad_lw': 0.002,
-        'rad_dj': 0.7,
-        'rad_ds': 0.15,
-        'rad_dr': 3,
-        'rad_dp': 512,
-        }
-
     # =============================== Preface =============================== #
     rad = py2radiance.Rad(os.path.join(results_path, 'base.rad'), results_path)
 
@@ -387,14 +363,14 @@ def calc_radiation(geometry_table_name, weatherfile_path, sensor_geometries_name
     # calculate sensor points
     pool = multiprocessing.Pool()  # use all available cores, otherwise specify the number you want as an argument
     for bui in sensor_geometries.index.values:
-        pool.apply_async(calc_sensors, args=(results_path, bui, input_path, xdim, ydim, min_z_dir,))
+        pool.apply_async(calc_sensors, args=(results_path, bui, input_path))
     pool.close()
     pool.join()
 
     # execute daysim
     processes = []
     for bui in sensor_geo_list:
-        process = multiprocessing.Process(target=execute_daysim, args=(bui, results_path, rad, weatherfile_path, rad_params, geometry_table,))
+        process = multiprocessing.Process(target=execute_daysim, args=(bui, results_path, rad, weatherfile_path, settings.RAD_PARMS, geometry_table,))
         process.start()
         processes.append(process)
     for process in processes:
@@ -403,7 +379,7 @@ def calc_radiation(geometry_table_name, weatherfile_path, sensor_geometries_name
     # calculate total irradiance of each stl file
     pool = multiprocessing.Pool()
     for bui in sensor_geo_list:
-        pool.apply_async(execute_sum, args=(results_path, bui, max_z_dir,))
+        pool.apply_async(execute_sum, args=(results_path, bui, settings.SEN_PARMS['MAX_Z_DIR'],))
     pool.close()
     pool.join()
 
