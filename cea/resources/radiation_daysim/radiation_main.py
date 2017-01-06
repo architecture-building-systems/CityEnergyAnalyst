@@ -339,12 +339,11 @@ def calculate_windows(results_path, bui):
     df_windows.to_csv(os.path.join(results_path, bui + '_window_props.csv'), index=None)
 
 
-def calc_radiation(geometry_table_name, sensor_geometries_name, locator):
+def calc_radiation(geometry_table_name, weatherfile_path, sensor_geometries_name, locator):
 
     # file paths
     input_path = locator.get_3D_geometry_folder()
     results_path = locator.get_solar_radiation_folder()
-    weatherfile_path = locator.get_default_weather()
 
     # Sensor parameters
     xdim = 5
@@ -442,8 +441,8 @@ if __name__ == '__main__':
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-
+    weatherfile_path = locator.get_default_weather()
     geometry_table_name = 'background_geometries'
     sensor_geometries_name = 'sensor_geometries'
 
-    calc_radiation(geometry_table_name, sensor_geometries_name, locator)
+    calc_radiation(geometry_table_name, weatherfile_path, sensor_geometries_name, locator)
