@@ -101,43 +101,34 @@ def demand_calculation(locator, weather_path, gv):
     schedules = occupancy_model.schedule_maker(date, locator, list_uses)
     schedules_dict = {'list_uses': list_uses, 'schedules': schedules}
 
-    # demand model
-    num_buildings = len(building_properties)
-    if gv.multiprocessing and mp.cpu_count() > 1:
-        thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, num_buildings,
-                                                    schedules_dict,
-                                                    weather_data)
+    # in case gv passes a list of specific buildings to simulate.
+    if gv.simulate_building_list:
+        list_building_names = gv.simulate_building_list
     else:
-        thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, schedules_dict,
+        list_building_names = building_properties.list_building_names()
+
+    # demand
+    if gv.multiprocessing and mp.cpu_count() > 1:
+        thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, list_building_names,
+                                                    schedules_dict, weather_data)
+    else:
+        thermal_loads_all_buildings(building_properties, date, gv, locator, list_building_names, schedules_dict,
                                     weather_data)
-    totals = write_totals_csv(building_properties, locator, gv)
-    gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
-    return totals
-
-def write_totals_csv(building_properties, locator, gv):
-    """read in the temporary results files and append them to the Totals.csv file."""
-    counter = 0
-    for name in building_properties.list_building_names():
-        temporary_file = locator.get_temporary_file('%(name)sT.csv' % locals())
-        if counter == 0:
-            df = pd.read_csv(temporary_file)
-            counter += 1
-        else:
-            df2 = pd.read_csv(temporary_file)
-            df = df.append(df2, ignore_index=True)
-    df.to_csv(locator.get_total_demand(), index=False, float_format='%.3f')
-
-    return df
+    if gv.print_totals:
+        totals, time_series = gv.demand_writer.write_totals_csv(building_properties, locator)
+        gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
+        return totals, time_series
 
 #=========================================
 #multiple or single core calculation
 #=========================================
 
 
-def thermal_loads_all_buildings(building_properties, date, gv, locator, num_buildings, usage_schedules,
+def thermal_loads_all_buildings(building_properties, date, gv, locator, list_building_names, usage_schedules,
                                 weather_data):
-    for i, building in enumerate(building_properties.list_building_names()):
+    num_buildings = len(list_building_names)
+    for i, building in enumerate(list_building_names):
         bpr = building_properties[building]
         thermal_loads.calc_thermal_loads(
             building, bpr, weather_data, usage_schedules, date, gv, locator)
@@ -145,12 +136,13 @@ def thermal_loads_all_buildings(building_properties, date, gv, locator, num_buil
                num_buildings=num_buildings, building=building)
 
 
-def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, num_buildings, usage_schedules,
+def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, list_building_names, usage_schedules,
                                                 weather_data):
     pool = mp.Pool()
     gv.log("Using %i CPU's" % mp.cpu_count())
     joblist = []
-    for building in building_properties.list_building_names():
+    num_buildings = len(list_building_names)
+    for building in list_building_names:
         bpr = building_properties[building]
         job = pool.apply_async(thermal_loads.calc_thermal_loads,
                                [building, bpr, weather_data, usage_schedules, date, gv, locator])

@@ -78,18 +78,14 @@ def create_demand_samples(method='morris', num_samples=1000, variable_groups=('T
     """
     locator = InputLocator(None)
 
-    # get probability density functions of all variable_groups from the uncertainty database
+    # get probability density functions (pdf) of all variable_groups from the uncertainty database
     pdf = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1) for group in variable_groups])
-    num_vars = pdf.name.count()  # integer with number of variables
-    names = pdf.name.values  # list of str - with the names of each variable to sample
-    bounds = []  # a list of (min, max) - contains the lower-bound and upper-bound of each variable to sample
-    for var in range(num_vars):
-        limits = [pdf.loc[var, 'min'], pdf.loc[var, 'max']]
-        bounds.append(limits)
+    # a list of tupples containing the lower-bound and upper-bound of each variable
+    bounds = list(zip(pdf['min'], pdf['max']))
 
     # define the problem
-    problem = {'num_vars': num_vars, 'names': names, 'bounds': bounds, 'groups': None, 'N': num_samples,
-               'method': method}
+    problem = {'num_vars': pdf.name.count(), 'names': pdf.name.values, 'bounds': bounds, 'groups': None,
+               'N': num_samples, 'method': method}
     problem.update(sampler_parameters)
 
     return sampler(method, problem, num_samples, sampler_parameters), problem
@@ -138,7 +134,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', '--method', help='Method to use valid values: "morris" (default), "sobol"',
-                        default='morris')
+                        default='sobol', choices=['sobol', 'morris'])
     parser.add_argument('-n', '--num-samples', help='number of samples (generally 1000 or until it converges',
                         default=1000, type=int)
     parser.add_argument('--calc-second-order', help='(sobol) calc_second_order parameter', type=bool,
@@ -149,7 +145,7 @@ if __name__ == '__main__':
                         default=4)
     parser.add_argument('-S', '--samples-folder', default='.',
                         help='folder to place the output files (samples.npy, problem.pickle) in')
-    parser.add_argument('-V', '--variable-groups', default=['THERMAL'], nargs='+',
+    parser.add_argument('-V', '--variable-groups', default=['THERMAL', 'ARCHITECTURE', 'INDOOR_COMFORT', 'INTERNAL_LOADS'], nargs='+',
                         help=('list of variable groups. Valid values: THERMAL, ARCHITECTURE, ' +
                               'INDOOR_COMFORT, INTERNAL_LOADS'))
     args = parser.parse_args()
