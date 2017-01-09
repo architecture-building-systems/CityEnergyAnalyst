@@ -8,6 +8,7 @@ import pandas as pd
 import math
 import multiprocessing
 from cea.resources.radiation_daysim import settings
+from geopandas import GeoDataFrame as gpdf
 
 from OCC import BRepGProp, GProp, BRep, TopoDS
 from OCC.StlAPI import StlAPI_Reader
@@ -340,7 +341,7 @@ def calculate_windows(results_path, bui):
     df_windows.to_csv(os.path.join(results_path, bui + '_window_props.csv'), index=None)
 
 
-def calc_radiation(geometry_table_name, weatherfile_path, sensor_geometries_name, locator):
+def calc_radiation(geometry_table_name, weatherfile_path, locator):
 
     # file paths
     input_path = locator.get_3D_geometry_folder()
@@ -357,8 +358,8 @@ def calc_radiation(geometry_table_name, weatherfile_path, sensor_geometries_name
     geometry2radiance(rad, geometry_table, input_path)
     rad.create_rad_input_file()
 
-    sensor_geometries = pd.read_csv(os.path.join(input_path,sensor_geometries_name + '.csv'), index_col='name')
-    sensor_geo_list = sensor_geometries.index.values
+    sensor_geometries = gpdf.from_file(locator.get_building_occupancy())
+    sensor_geo_list = sensor_geometries.Name.values
 
     # calculate sensor points
     pool = multiprocessing.Pool()  # use all available cores, otherwise specify the number you want as an argument
@@ -421,4 +422,4 @@ if __name__ == '__main__':
     geometry_table_name = 'background_geometries'
     sensor_geometries_name = 'sensor_geometries'
 
-    calc_radiation(geometry_table_name, weatherfile_path, sensor_geometries_name, locator)
+    calc_radiation(geometry_table_name, weatherfile_path, locator)
