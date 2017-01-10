@@ -346,7 +346,6 @@ def calc_radiation(geometry_table_name, weatherfile_path, locator):
     input_path = locator.get_3D_geometry_folder()
     results_path = locator.get_solar_radiation_folder()
 
-
     # =============================== Preface =============================== #
     rad = py2radiance.Rad(os.path.join(results_path, 'base.rad'), results_path)
 
@@ -360,10 +359,10 @@ def calc_radiation(geometry_table_name, weatherfile_path, locator):
 
     sensor_geometries = gpdf.from_file(locator.get_building_occupancy())
     sensor_geo_list = sensor_geometries.Name.values
-    '''
+
     # calculate sensor points
     pool = multiprocessing.Pool()  # use all available cores, otherwise specify the number you want as an argument
-    for bui in sensor_geometries.index.values:
+    for bui in sensor_geo_list:
         pool.apply_async(calc_sensors, args=(results_path, bui, input_path))
     pool.close()
     pool.join()
@@ -383,7 +382,7 @@ def calc_radiation(geometry_table_name, weatherfile_path, locator):
         pool.apply_async(execute_sum, args=(results_path, bui, settings.SEN_PARMS['MAX_Z_DIR'],))
     pool.close()
     pool.join()
-    '''
+
     # create radiaiton file
     radiation = pd.DataFrame(columns=sensor_geo_list)
     print radiation
