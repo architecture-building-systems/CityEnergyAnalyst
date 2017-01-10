@@ -11,3 +11,6 @@ to run radiation_main.py:
 3.) additional information about py3dmodel/py2radiance
     https://github.com/chenkianwee/pyliburo
     https://chenkianwee.wordpress.com/low-exergy-design-method-environment/
+
+4.) known issues: If the error message is: 'rtrace_dc: fatal - ("path"): truncated octree. It might be that daysim has
+ problems with the scenario path. either because it is to long, includes twice the same folder name or spaces.
