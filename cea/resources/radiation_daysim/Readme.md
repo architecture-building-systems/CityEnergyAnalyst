@@ -1,4 +1,4 @@
-to run radiation.py:
+to run radiation_main.py:
 
 1.) install Daysim
 
@@ -6,7 +6,7 @@ to run radiation.py:
     a.) conda install -c https://conda.anaconda.org/dlr-sc pythonocc-core=0.16  (compatible with py3dmodel)
     b.) install occutils: https://github.com/tpaviot/pythonocc-utils (store it to site-packages)
     c.) pip install pyshp
-    d.) conda install lxml
+    d.) conda install lxml, networkx, pycollada
 
 3.) additional information about py3dmodel/py2radiance
     https://github.com/chenkianwee/pyliburo
