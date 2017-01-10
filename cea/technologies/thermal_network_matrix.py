@@ -36,15 +36,19 @@ def thermal_network_main(locator,gv):
     :return:
     """
 
+    ## prepare data for calculation
+
+    # read building names
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand['Name']
+
     # calculate ground temperature
     weather_file = locator.get_default_weather()
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
     T_ground = geothermal.calc_ground_temperature(T_ambient.values, gv)
 
     # substation HEX design
-    substations_HEX_specs, buildings = substation.substation_HEX_design_main(locator, total_demand, building_names, gv)
+    substations_HEX_specs, buildings_demands = substation.substation_HEX_design_main(locator, total_demand, building_names, gv)
 
     # get edge-node matrix from defined network
     edge_node_df, all_nodes_df, pipe_length_df = get_thermal_network_from_csv(locator)
@@ -56,9 +60,9 @@ def thermal_network_main(locator,gv):
     # annual_time_step = 8760*3600/max_time_step  #
 
     # get hourly heat requirement and target supply temperature from each substation
-    # consumer_heat_requirement = read_from_buildings(building_names, buildings, 'Q_substation_heating')   # [kWh]
+    # consumer_heat_requirement = read_from_buildings(building_names, buildings_demands, 'Q_substation_heating')   # [kWh]
     # consumer_heat_requirement_nodes_df = write_df_to_consumer_nodes_df(all_nodes_df, consumer_heat_requirement, flag = False)
-    t_target_supply = read_from_buildings(building_names, buildings, 'T_sup_target_DH')
+    t_target_supply = read_from_buildings(building_names, buildings_demands, 'T_sup_target_DH')
     t_target_supply_df = write_df_to_consumer_nodes_df(all_nodes_df, t_target_supply, flag= True)
 
     mass_flow_substations_nodes_df = []
@@ -71,7 +75,7 @@ def thermal_network_main(locator,gv):
             # set initial substation mass flow for all consumers
             T_DH_0 = t_target_supply.ix[t]
             T_DH_return_all, mdot_DH_all = substation.substation_return_model_main(locator, building_names, gv,
-                                                                                   buildings, substations_HEX_specs,
+                                                                                   buildings_demands, substations_HEX_specs,
                                                                                    T_DH_0, t=0)  #[C], [kg/s]
 
             # write consumer substation return T and required flow rate to nodes
@@ -104,7 +108,7 @@ def thermal_network_main(locator,gv):
         else:
             # with the temperature of previous time-step, solve for substation flow rates at current time-step
             T_supply_consumer = T_DH_supply_nodes_df[t-1]
-            T_DH_return_all, mass_flow_substations = substation.substation_return_model_main(locator, building_names, gv, buildings,
+            T_DH_return_all, mass_flow_substations = substation.substation_return_model_main(locator, building_names, gv, buildings_demands,
                                                                        substations_HEX_specs, T_supply_consumer, t)
 
             # write consumer substation return T and required flow rate to nodes
