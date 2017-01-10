@@ -12,8 +12,9 @@ import matplotlib.cm as cmx
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import os
 
-import cea.optimization.master.evolAlgo.normalization as norm
+import cea.optimization.conversion_storage.master.normalization as norm
 import cea.optimization.supportFn as sFn
 
 __author__ = "Jimeno A. Fonseca"
@@ -338,15 +339,15 @@ plot electricity imports and exports
 =========================================
 """
 
-def Elec_ImportExport(individual, pathX):
+def Elec_ImportExport(individual, locator):
 
     # Extract Electricity needs
-    buildList = sFn.extractList(pathX.pathRaw + "/Total.csv")
+    buildList = sFn.extractList(locator.pathRaw + "/Total.csv")
 
     allElec = np.zeros((8760,1))
 
     for build in buildList:
-        buildFileRaw = pathX.pathRaw + "/" + build + ".csv"
+        buildFileRaw = locator.pathRaw + "/" + build + ".csv"
         builddf = pd.read_csv(buildFileRaw, usecols = ["Ealf", "Eauxf", "Ecaf", "Edataf", "Epf"])
         buildarray = np.array(builddf)
 
@@ -356,8 +357,8 @@ def Elec_ImportExport(individual, pathX):
 
     # Extract electricity produced form solar
     configKey = "".join(str(e)[0:4] for e in individual)
-    PPactivationFile = pathX.pathSlaveRes + '/' + configKey + 'PPActivationPattern.csv'
-    ESolardf = pd.read_csv(PPactivationFile, usecols = ['ESolarProducedPVandPVT'])
+    ESolardf = pd.read_csv(os.path.join(locator.get_optimization_slave_results_folder(),
+                                        configKey + 'PPActivationPattern.csv'), usecols=['ESolarProducedPVandPVT'])
     EsolarArray = np.array(ESolardf)
 
     # Compute Import / Export
@@ -380,10 +381,11 @@ test
 =========================================
 """
 
-def test_graph_demand():
+def test_graphs_optimization():
+    import cea.inputlocator
+    import cea.globalvar
     locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
-    import globalvar
-    gv = globalvar.GlobalVariables()
+    gv = cea.globalvar.GlobalVariables()
     # define scenarios and headers
     scenarios = ['BAU', 'CAMP', 'HEB', 'UC']
     generations = [24, 24, 5, 24]
@@ -405,14 +407,14 @@ def test_graph_demand():
     plot_pareto_scenarios(generations, headers, True, savelocation)
     plot_pareto_scenarios(generations, headers, False, savelocation)
 
-    # run graphs of multi-criteria assement and comparison to baseline Intra-scenario
+    # run graphs of multi-criteria assement and comparison to decentralized_buildings Intra-scenario
     # header = headers[0]
     # pathX = sFn.pathX(headers[0])
     # Generation = generations[0]
     # pop, eps, testedPop = sFn.readCheckPoint(pathX, Generation, 0)
     #
     # print "Network Optimization \n"
-    # finalDir = CodePath + "ntwOpt/"
+    # finalDir = CodePath + "distribution/"
     # ntwFeat = ntwM.ntwMain2(matlabDir, finalDir, header)
     # gV = glob.globalVariables()
     # print "Compute electricity needs for all buildings"
@@ -436,7 +438,7 @@ def test_graph_demand():
     # plot_comparison_MCDA(popRef[0], 0, pop, indToCompare,savelocation, "intra")
 
 
-    # run graphs of multi-criteria assement and comparison to baseline Interscenario
+    # run graphs of multi-criteria assement and comparison to decentralized_buildings Interscenario
     # SQ_values = [2900000,6106734.8,230330106] # cost,CO2,prim
     # SQ_area = 132274.8
     # header = headers[3]
@@ -468,7 +470,7 @@ def test_graph_demand():
     # print 'Most sensitive factor :', mostSensitive
 
     #
-    ### Bar chart for the relative savings compared to baseline
+    ### Bar chart for the relative savings compared to decentralized_buildings
     # popRef, epsInd = mM.EA_Main(pathX, finances, extraCO2, extraPrim, solarFeat, ntwFeat, gV, manualCheck = 1)
     # indToCompare = mcda.mcda_differentWeights(pop, pathX)
     # reload(plots)
@@ -490,4 +492,4 @@ def test_graph_demand():
     # costsDisc = normalizeresults.decentralizeCosts(pop[indexBest], pathX, gV)
 
 if __name__ == '__main__':
-    test_graph_demand()
+    test_graphs_optimization()

@@ -80,3 +80,4 @@ setup/site-packages/*
 
 # euler batch job output files
 lsf.o*
+cea/globalvar.py
