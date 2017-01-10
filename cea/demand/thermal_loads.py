@@ -19,11 +19,10 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.technologies import controllers
 from cea.utilities import helpers
 
-"""
-=========================================
-demand model of thermal and electrical loads
-=========================================
-"""
+
+#=========================================
+#demand model of thermal and electrical loads
+#=========================================
 
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator):
@@ -292,11 +291,11 @@ def initialize_timestep_data(bpr, weather_data):
     return tsd
 
 
-"""
-=========================================
-demand model for buildings wih air conditioning
-=========================================
-"""
+
+#================================================
+#demand model for buildings wih air conditioning
+#================================================
+
 
 
 def calc_thermal_load_hvac(t, tsd, bpr, gv):
@@ -553,11 +552,11 @@ def calc_thermal_load_hvac(t, tsd, bpr, gv):
     return tsd
 
 
-"""
-=========================================
-demand model for buildings with mechanical ventilation
-=========================================
-"""
+
+#=====================================================
+#demand model for buildings with mechanical ventilation
+#======================================================
+
 
 
 def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, gv):
@@ -698,18 +697,9 @@ def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, g
     return tsd
 
 
-"""
-=========================================
-writer of results
-=========================================
-"""
-
-"""
-=========================================
-object to gather all properties from buidings
-=========================================
-"""
-
+#=============================================
+#object to gather all properties from buidings
+#===============================================
 
 class BuildingProperties(object):
     """
