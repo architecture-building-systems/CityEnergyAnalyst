@@ -28,17 +28,20 @@ __status__ = "Production"
 def substation_HEX_design_main(locator, total_demand, building_names, gv):
     '''
     this function calculates the temperatures and mass flow rates of the district heating network
-    at every costumer. Based onthis, the script calculates the hourly temperature of the network at the plant.
+    at every costumer. Based on this, the script calculates the hourly temperature of the network at the plant.
     This temperature needs to be equal to that of the customer with the highest temperature requirement plus thermal
     losses in the network.
 
     :param locator: path to locator function
     :param total_demand: dataframe with total demand and names of all building in the area
-    :param building_names:  dataframe with names of all buildings in the area
+    :param building_names:  dataframe with names of all buildings_demands in the area
     :param gv: path to global variables class
     :param Flag: boolean, True if the function is called by the master optimizaiton. False if the fucntion is
     called during preprocessing
+
     :return:
+    substations_HEX_specs: dataframe with substation heat exchanger specs at each building.
+    buildings_demands: lists of heating demand/flowrate/supply temperature of all buildings connected to the network
 
     '''
 
@@ -51,25 +54,25 @@ def substation_HEX_design_main(locator, total_demand, building_names, gv):
 
     # determine thermal network target temperatures (T_supply_DH,T_supply_DC) at costumer side.
     iteration = 0
-    buildings = []
+    buildings_demands = []
     Tsupply_all_bui_df = pd.DataFrame()
     Tsupply_bui_df = pd.DataFrame()
     for name in building_names:
-        buildings.append(pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
+        buildings_demands.append(pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
                                      usecols=['Name', 'Thsf_sup_C', 'Thsf_re_C', 'Tcsf_sup_C', 'Tcsf_re_C',
                                               'Twwf_sup_C', 'Twwf_re_C', 'Qhsf_kWh', 'Qcsf_kWh', 'Qwwf_kWh',
                                               'mcphsf_kWC', 'mcpwwf_kWC', 'mcpcsf_kWC', 'Ef_kWh']))
-        Q_substation_heating = buildings[iteration].Qhsf_kWh + buildings[iteration].Qwwf_kWh
-        T_supply_heating = np.vectorize(calc_DH_supply)(buildings[iteration].Thsf_sup_C.values,
-                                                        np.where(buildings[iteration].Qwwf_kWh > 0,
-                                                                 buildings[iteration].Twwf_sup_C.values, np.nan))
-        T_supply_cooling = buildings[iteration].Tcsf_sup_C.values
+        Q_substation_heating = buildings_demands[iteration].Qhsf_kWh + buildings_demands[iteration].Qwwf_kWh
+        T_supply_heating = np.vectorize(calc_DH_supply)(buildings_demands[iteration].Thsf_sup_C.values,
+                                                        np.where(buildings_demands[iteration].Qwwf_kWh > 0,
+                                                                 buildings_demands[iteration].Twwf_sup_C.values, np.nan))
+        T_supply_cooling = buildings_demands[iteration].Tcsf_sup_C.values
         T_supply_DH = np.where(Q_substation_heating > 0, T_supply_heating + gv.dT_heat, 0)
-        T_supply_DC = np.where(abs(buildings[iteration].Qcsf_kWh) > 0, T_supply_cooling - gv.dT_cool, 0)
+        T_supply_DC = np.where(abs(buildings_demands[iteration].Qcsf_kWh) > 0, T_supply_cooling - gv.dT_cool, 0)
 
-        buildings[iteration]['Q_substation_heating'] = Q_substation_heating
-        buildings[iteration]['T_sup_target_DH'] = T_supply_DH
-        buildings[iteration]['T_sup_target_DC'] = T_supply_DC
+        buildings_demands[iteration]['Q_substation_heating'] = Q_substation_heating
+        buildings_demands[iteration]['T_sup_target_DH'] = T_supply_DH
+        buildings_demands[iteration]['T_sup_target_DC'] = T_supply_DC
 
         # Tsupply_bui_df['T_DH'] = T_supply_DH
         # Tsupply_bui_df['T_DC'] = T_supply_DC
@@ -78,13 +81,13 @@ def substation_HEX_design_main(locator, total_demand, building_names, gv):
         # Tsupply_all_bui_df[Tsupply_bui_df.columns]=Tsupply_bui_df.iloc[:]
         # Tsupply_all_bui_df = pd.concat([Tsupply_all_bui_df,Tsupply_bui_df], axis=1)
 
-        # Ths = np.vectorize(calc_DH_supply)(Ths.copy(), buildings[iteration].Thsf_sup_C.values)
-        # Tww = np.vectorize(calc_DH_supply)(Tww.copy(), buildings[iteration].Twwf_sup_C.values)
-        # Tcs = np.vectorize(calc_DC_supply)(Tcs.copy(), buildings[iteration].Tcsf_sup_C.values)
-        #Q_all_substations = calc_total_network_flow(Q_all_substations, buildings[iteration].mcphsf_kWC)
+        # Ths = np.vectorize(calc_DH_supply)(Ths.copy(), buildings_demands[iteration].Thsf_sup_C.values)
+        # Tww = np.vectorize(calc_DH_supply)(Tww.copy(), buildings_demands[iteration].Twwf_sup_C.values)
+        # Tcs = np.vectorize(calc_DC_supply)(Tcs.copy(), buildings_demands[iteration].Tcsf_sup_C.values)
+        #Q_all_substations = calc_total_network_flow(Q_all_substations, buildings_demands[iteration].mcphsf_kWC)
         iteration += 1
 
-    # buildings[0].Qwwf_kWh[0]
+    # buildings_demands[0].Qwwf_kWh[0]
 
     # substation design
     # T_DCS_supply = np.where(Tcs != 1E6, Tcs - gv.dT_cool, 0)
@@ -94,7 +97,7 @@ def substation_HEX_design_main(locator, total_demand, building_names, gv):
     #Q_max_network_flow = max(Q_all_substations)
     #index_max_network_flow =  np.where(Q_all_substations >= Q_max_network_flow)
 
-    # Calculate disconnected buildings files and substation operation.
+    # Calculate disconnected buildings_demands files and substation operation.
     index = 0
     combi = [0] * len(building_names)
     substations_HEX_specs = pd.DataFrame(columns=['HEX_area_SH', 'HEX_area_DHW','HEX_area_SC', 'HEX_UA_SH', 'HEX_UA_DHW', 'HEX_UA_SC'])
@@ -109,13 +112,13 @@ def substation_HEX_design_main(locator, total_demand, building_names, gv):
         combi[index] = 0
 
         # calculate substation parameters (A,UA) per building and store to .csv (target)
-        substation_HEX = substation_HEX_sizing(locator, gv, buildings[index])
+        substation_HEX = substation_HEX_sizing(locator, gv, buildings_demands[index])
         # write into dataframe
         substations_HEX_specs.ix[name]= substation_HEX
         index += 1
 
     print time.clock() - t0, "seconds process time for the Substation Routine \n"
-    return substations_HEX_specs, buildings
+    return substations_HEX_specs, buildings_demands
 
 def substation_HEX_sizing(locator, gv, building):
     '''
