@@ -276,8 +276,8 @@ def create_function_graph(input=None, output=None, save_trace_data=None, module_
         # write out a GraphViz graph to this file
         if module_overview:
             trace_data = create_module_overview(trace_data)
-
-        print_digraph(trace_data, f)
+        with open(output, 'w') as f:
+            print_digraph(trace_data, f)
 
 
 def parse_arguments(argv):
