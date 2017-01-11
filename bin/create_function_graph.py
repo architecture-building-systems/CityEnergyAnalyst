@@ -81,69 +81,61 @@ def trace_function(function_to_trace):
         call_dst = TraceDataInfo(frame)
         if not call_dst.is_cea():
             return
-        #print('call_dst: %s' % call_dst)
+        # print('call_dst: %s' % call_dst)
 
         call_src = find_last_cea(frame)
-        #print ('call_src: %s -- %s' % (call_src, trace_data))
+        # print ('call_src: %s -- %s' % (call_src, trace_data))
         if call_src and not (call_src.fqname, call_dst.fqname) in uniques:
             trace_data.append((call_src, call_dst))
             uniques.add((call_src.fqname, call_dst.fqname))
             print(call_src, call_dst)
         return
 
-    try:
-        import cea.inputlocator
-        import cea.globalvar
+    import cea.inputlocator
+    import cea.globalvar
 
-        scenario_path = extract_ninecubes()
-        locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-        gv = cea.globalvar.GlobalVariables()
-        gv.multiprocessing = False
-        download_radiation(locator)
-        weather_path = locator.get_default_weather()
+    scenario_path = extract_ninecubes()
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    gv = cea.globalvar.GlobalVariables()
+    gv.multiprocessing = False
+    download_radiation(locator)
+    weather_path = locator.get_default_weather()
 
-        sys.settrace(trace_calls)
-        function_to_trace(gv, locator, weather_path)
-        sys.settrace(None)
+    sys.settrace(trace_calls)
+    function_to_trace(gv, locator, weather_path)
+    sys.settrace(None)
 
-    finally:
-        # make sure we clean up after ourselves...
-        remove_ninecubes()
-        pass
     return trace_data
-
-
-def run_demand(gv, locator, weather_path):
-    import cea.demand.demand_main
-    cea.demand.demand_main.demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
 
 
 def find_last_cea(frame):
     """"Search through the stack frame for the last origination of a call from cea code"""
-    if not hasattr(frame, 'f_back'):
-        #print('frame has no attr f_back')
+    if not hasattr(frame, 'f_back') or frame.f_back is None:
+        # print('frame has no attr f_back')
         return None
     call_src = TraceDataInfo(frame.f_back)
     if call_src.name == 'trace_demand':
-        #print('call_src.name == trace_demand')
+        # print('call_src.name == trace_demand')
         return None
 
     if call_src.is_cea():
         return call_src
     else:
-        #print('call_src is not cea: %s' % call_src)
+        # print('call_src is not cea: %s' % call_src)
+        # print('  frame.f_back: %s' % frame.f_back)
         return find_last_cea(frame.f_back)
 
 
-
 def extract_ninecubes():
-    ninecubes_src = os.path.join(os.path.dirname(__file__), '..', 'examples', 'ninecubes.zip')
-    ninecubes_dst = os.path.join(tempfile.gettempdir(), 'ninecubes.zip')
-    shutil.copyfile(ninecubes_src, ninecubes_dst)
-    archive = zipfile.ZipFile(ninecubes_dst)
     extraction_location = os.path.join(tempfile.gettempdir(), 'ninecubes')
-    archive.extractall(extraction_location)
     scenario_path = os.path.join(extraction_location, 'nine cubes', 'baseline')
+
+    if not os.path.exists(scenario_path):
+        ninecubes_src = os.path.join(os.path.dirname(__file__), '..', 'examples', 'ninecubes.zip')
+        ninecubes_dst = os.path.join(tempfile.gettempdir(), 'ninecubes.zip')
+        shutil.copyfile(ninecubes_src, ninecubes_dst)
+        archive = zipfile.ZipFile(ninecubes_dst)
+        archive.extractall(extraction_location)
     return scenario_path
 
 
@@ -158,9 +150,11 @@ def remove_ninecubes():
         shutil.rmtree(ninecubes_dir)
 
 
+
 def package_names(trace_data):
     """Extract the names of the packages from the (filtered?) trace_data."""
     return ('a', 'b')
+
 
 def edge_names(trace_data_item):
     return ('a', 'b')
@@ -168,7 +162,6 @@ def edge_names(trace_data_item):
 
 def extract_namespace(fqname):
     return fqname.rsplit('.', 1)[0]
-
 
 def extract_function_name(fqname):
     return fqname.rsplit('.', 1)[1]
@@ -245,7 +238,7 @@ def create_module_overview(trace_data):
 
 def get_function_to_trace(function):
     functions = {
-        "benchmark_graphs": None,
+        "benchmark_graphs": run_benchmark_graphs,
         "data_helper": None,
         "demand_graphs": None,
         "demand": run_demand,
@@ -256,6 +249,18 @@ def get_function_to_trace(function):
         "radiation": None,
         "scenario_plots": None}
     return functions[function]
+
+
+def run_benchmark_graphs(gv, locator, weather_path):
+    import cea.analysis.benchmark
+    locator_list = [locator]
+    output_file = tempfile.mktemp(suffix='.pdf')
+    cea.analysis.benchmark.benchmark(locator_list=locator_list, output_file=output_file)
+
+
+def run_demand(gv, locator, weather_path):
+    import cea.demand.demand_main
+    cea.demand.demand_main.demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
 
 
 def create_function_graph(input=None, output=None, save_trace_data=None, module_overview=False, function_name='demand'):
