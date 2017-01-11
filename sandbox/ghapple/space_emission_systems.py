@@ -34,8 +34,10 @@ def calc_q_em_ls_cooling(bpr, tsd, hoy):
     control_system = bpr.hvac['type_ctrl']
 
     theta_e = tsd['T_ext'][hoy]
-    theta_int_ini = tsd['Ta'][hoy]
+    theta_int_ini = tsd['theta_a'][hoy]
     q_em_out = tsd['Qcs_sen'][hoy]
+
+    q_em_max = -bpr.hvac['Qcsmax_Wm2'] * bpr.rc_model['Af']
 
     delta_theta_int_inc = calc_delta_theta_int_inc_cooling(cooling_system, control_system)
 
@@ -43,7 +45,7 @@ def calc_q_em_ls_cooling(bpr, tsd, hoy):
 
     theta_e_comb = calc_theta_e_comb_cooling(theta_e, bpr)
 
-    return calc_q_em_ls(q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb)
+    return calc_q_em_ls(q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb, q_em_max)
 
 
 def calc_q_em_ls_heating(bpr, tsd, hoy):
@@ -58,8 +60,10 @@ def calc_q_em_ls_heating(bpr, tsd, hoy):
     control_system = bpr.hvac['type_ctrl']
 
     theta_e = tsd['T_ext'][hoy]
-    theta_int_ini = tsd['Ta'][hoy]
+    theta_int_ini = tsd['theta_a'][hoy]
     q_em_out = tsd['Qhs_sen'][hoy]
+
+    q_em_max = bpr.hvac['Qhsmax_Wm2'] * bpr.rc_model['Af']
 
     delta_theta_int_inc = calc_delta_theta_int_inc_heating(heating_system, control_system)
 
@@ -67,14 +71,15 @@ def calc_q_em_ls_heating(bpr, tsd, hoy):
 
     theta_e_comb = calc_theta_e_comb_heating(theta_e)
 
-    return calc_q_em_ls(q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb)
+    return calc_q_em_ls(q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb, q_em_max)
 
 
-
-def calc_q_em_ls(q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb):
+def calc_q_em_ls(q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb, q_em_max):
 
     """
     Eq. (8) in [prEN 15316-2:2014]
+
+    With modification of capping emission losses at system capacity [Happle 01/2017]
 
     :param q_em_out: heating power of emission system (W)
     :param delta_theta_int_inc: delta temperature caused by all losses (K)
@@ -83,10 +88,14 @@ def calc_q_em_ls(q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb):
     :return:
     """
 
-    if theta_int_inc-theta_e_comb == 0.0:
+    if abs(theta_int_inc-theta_e_comb) < 1e-6:
         q_em_ls = 0.0  # prevent division by zero
     else:
         q_em_ls = q_em_out * (delta_theta_int_inc / (theta_int_inc-theta_e_comb))
+
+        # cap emission losses at absolute capacity
+        if abs(q_em_ls + q_em_out) > abs(q_em_max):
+            q_em_ls = q_em_max - q_em_out
 
         if not np.sign(q_em_ls) == np.sign(q_em_out):
             q_em_ls = 0.0  # prevent form negative emission losses

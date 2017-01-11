@@ -13,7 +13,6 @@ from cea.demand import hotwater_loads
 from cea.demand import refrigeration_loads
 from cea.demand import datacenter_loads
 from cea.utilities import helpers
-from sandbox.ghapple import energy_demand_heating_cooling as edhc
 from sandbox.ghapple import ventilation_xx as v
 from sandbox.ghapple import rc_model_crank_nicholson_procedure
 from sandbox.ghapple import control_ventilation_systems
@@ -64,14 +63,10 @@ def testing_gabriel(locator, weather_path, gv):
         'T_ext': weather_data.drybulb_C.values,
            'rh_ext': weather_data.relhum_percent.values,
            'T_sky': weather_data.skytemp_C.values,
-           'Ts' : np.empty(8760) * np.nan,
-           'Ta': np.empty(8760) * np.nan,
-           'Tm': np.empty(8760) * np.nan,
            'Qhs_sen': np.empty(8760) * np.nan,
            'Qcs_sen': np.empty(8760) * np.nan,
            'Qhs_lat': np.empty(8760) * np.nan,
            'Qcs_lat': np.empty(8760) * np.nan,
-           'Top': np.empty(8760) * np.nan,
            'Im_tot': np.empty(8760) * np.nan,
            'Ehs_lat_aux': np.empty(8760) * np.nan,
            'Qhs_em_ls': np.empty(8760) * np.nan,
@@ -121,7 +116,7 @@ def testing_gabriel(locator, weather_path, gv):
              'Tcsf_sup': np.empty(8760) * np.nan, 'Tcsf_re': np.empty(8760) * np.nan,
              'Tcdataf_re': np.empty(8760) * np.nan,
              'Tcdataf_sup': np.empty(8760) * np.nan, 'Tcref_re': np.empty(8760) * np.nan,
-             'Tcref_sup': np.empty(8760) * np.nan, 'theta_ve_mech': np.empty(8760) * np.nan, 'h_ve_adj': np.empty(8760) * np.nan, 'Qcs_lat_HVAC':  np.empty(8760) * np.nan, 'Qcs_sen_HVAC':  np.empty(8760) * np.nan, 'Qhs_lat_HVAC':  np.empty(8760) * np.nan, 'Qhs_sen_HVAC':  np.empty(8760) * np.nan}  # TODO: initialize refrigeration loads, etc.
+             'Tcref_sup': np.empty(8760) * np.nan, 'theta_ve_mech': np.empty(8760) * np.nan, 'h_ve_adj': np.empty(8760) * np.nan, 'system_status' : np.chararray((8760), itemsize=20)}  # TODO: initialize refrigeration loads, etc.
 
 
     tsd['m_ve_window'] = np.zeros(8760)

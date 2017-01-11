@@ -45,17 +45,16 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         tsd['Qhs_lat'][t] = 0
         tsd['Qhs_em_ls'][t] = 0
         tsd['Qhs_lat'][t] = 0
-        tsd['Qhs_lat_HVAC'][t] = 0
         tsd['Qhs_sen'][t] = 0
-        tsd['Qhs_sen_HVAC'][t] = 0
         tsd['Qhsf'][t] = 0
         tsd['Qhsf_lat'][t] = 0
         update_tsd_no_cooling(tsd, t)
         update_tsd_no_heating(tsd, t)
-        #tsd['system_status'][t] = 'systems off'
+        tsd['system_status'][t] = 'systems off'
 
     elif control_heating_cooling_systems.is_active_heating_system(bpr, tsd, t):
         # case for heating
+        tsd['system_status'][t] = 'Radiative heating'
 
         # STEP 1
         # ******
@@ -99,11 +98,47 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         # STEP 4
         # ******
         rc_model_temperatures = rc_model_SIA_with_TABS.calc_rc_model_temperatures_heating(phi_h_act, bpr, tsd, t)
+        # write necessary parameters for AC calculation to tsd
+        tsd['theta_a'][t] = rc_model_temperatures['theta_a']
+        tsd['theta_m'][t] = rc_model_temperatures['theta_m']
+        tsd['theta_c'][t] = rc_model_temperatures['theta_c']
+        tsd['theta_o'][t] = rc_model_temperatures['theta_o']
+        tsd['Qhs_sen'][t] = phi_h_act
+        tsd['Qhs_sen_sys'][t] = phi_h_act
 
         # STEP 5 - latent heat demand of AC systems
         # ******
         if control_heating_cooling_systems.heating_system_is_ac(bpr):
-            airconditioning_model.calc_hvac_heating(bpr, tsd, t, gv)
+            air_con_model_loads_flows_temperatures = airconditioning_model.calc_hvac_heating(bpr, tsd, t, gv)
+
+            tsd['system_status'][t] = 'AC heating'
+
+            #update temperatures for over heating case
+            if air_con_model_loads_flows_temperatures['q_hs_sen_hvac'] > phi_h_act:
+                print('AC over heating')
+                phi_h_act_over_heating = air_con_model_loads_flows_temperatures['q_hs_sen_hvac']
+                rc_model_temperatures = rc_model_SIA_with_TABS.calc_rc_model_temperatures_cooling(
+                    phi_h_act_over_heating, bpr, tsd,
+                    t)
+
+                # update temperatures
+                tsd['theta_a'][t] = rc_model_temperatures['theta_a']
+                tsd['theta_m'][t] = rc_model_temperatures['theta_m']
+                tsd['theta_c'][t] = rc_model_temperatures['theta_c']
+                tsd['theta_o'][t] = rc_model_temperatures['theta_o']
+                tsd['system_status'][t] = 'AC over heating'
+
+            else:
+                print(phi_h_act, air_con_model_loads_flows_temperatures['q_hs_sen_hvac'])
+
+            # update AC energy demand
+            tsd['Qhs_sen_sys'][t] = air_con_model_loads_flows_temperatures['q_hs_sen_hvac']
+            tsd['Qhs_lat'][t] = air_con_model_loads_flows_temperatures['q_hs_lat_hvac']
+            tsd['Qhs_lat_sys'][t] = air_con_model_loads_flows_temperatures['q_hs_lat_hvac']
+            tsd['ma_sup_hs'][t] = air_con_model_loads_flows_temperatures['ma_sup_hs']
+            tsd['Ta_sup_hs'][t] = air_con_model_loads_flows_temperatures['ta_sup_hs']
+            tsd['Ta_re_hs'][t] = air_con_model_loads_flows_temperatures['ta_re_hs']
+            tsd['Ehs_lat_aux'][t] = air_con_model_loads_flows_temperatures['e_hs_lat_aux']
 
             # TODO: SEE COOLING
             # TODO: ADJUST AIRCON MODEL (SEE COOLING)
@@ -131,9 +166,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         tsd['Qhs_lat'][t] = 0
         tsd['Qhs_em_ls'][t] = q_em_ls_heating
         tsd['Qhs_lat'][t] = 0
-        tsd['Qhs_lat_HVAC'][t] = 0
         tsd['Qhs_sen'][t] = phi_h_act
-        tsd['Qhs_sen_HVAC'][t] = 0
         tsd['Qhsf'][t] = 0
         tsd['Qhsf_lat'][t] = 0
         # TODO: losses
@@ -143,6 +176,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
 
         # case for cooling
         print('COOLING')
+        tsd['system_status'][t] = 'Radiative cooling'
 
         # STEP 1
         # ******
@@ -178,7 +212,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         elif 0 > phi_hc_ul < phi_c_max:
             # case heating with max power available
             # calculate temperatures with this power
-            phi_h_act = phi_c_max
+            phi_c_act = phi_c_max
 
         else:
             raise
@@ -199,7 +233,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         # ******
         if control_heating_cooling_systems.cooling_system_is_ac(bpr):
 
-            #tsd['system_status'][t] = {'AC cooling'}
+            tsd['system_status'][t] = 'AC cooling'
 
             air_con_model_loads_flows_temperatures = airconditioning_model.calc_hvac_cooling(bpr, tsd, t, gv)
 
@@ -215,6 +249,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
                 tsd['theta_m'][t] = rc_model_temperatures['theta_m']
                 tsd['theta_c'][t] = rc_model_temperatures['theta_c']
                 tsd['theta_o'][t] = rc_model_temperatures['theta_o']
+                tsd['system_status'][t] = 'AC over cooling'
 
             else:
                 print(phi_c_act, air_con_model_loads_flows_temperatures['q_cs_sen_hvac'])
@@ -222,6 +257,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
             # update AC energy demand
 
             tsd['Qcs_sen_sys'][t] = air_con_model_loads_flows_temperatures['q_cs_sen_hvac']
+            tsd['Qcs_lat'][t] = air_con_model_loads_flows_temperatures['q_cs_lat_hvac']
             tsd['Qcs_lat_sys'][t] = air_con_model_loads_flows_temperatures['q_cs_lat_hvac']
             tsd['ma_sup_cs'][t] = air_con_model_loads_flows_temperatures['ma_sup_cs']
             tsd['Ta_sup_cs'][t] = air_con_model_loads_flows_temperatures['ta_sup_cs']
@@ -251,9 +287,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         tsd['Qhs_lat'][t] = 0
         tsd['Qhs_em_ls'][t] = 0
         tsd['Qhs_lat'][t] = 0
-        tsd['Qhs_lat_HVAC'][t] = 0
         tsd['Qhs_sen'][t] = 0
-        tsd['Qhs_sen_HVAC'][t] = 0
         tsd['Qhsf'][t] = 0
         tsd['Qhsf_lat'][t] = 0
         # TODO: losses
@@ -263,6 +297,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
 def update_tsd_no_heating(tsd, t):
 
     tsd['Qhs_sen'][t] = 0
+    tsd['Qhs_lat'][t] = 0
     tsd['Qhs_sen_sys'][t] = 0
     tsd['Qhs_lat_sys'][t] = 0
     tsd['Qhs_em_ls'][t] = 0
@@ -274,6 +309,7 @@ def update_tsd_no_heating(tsd, t):
 def update_tsd_no_cooling(tsd, t):
 
     tsd['Qcs_sen'][t] = 0
+    tsd['Qcs_lat'][t] = 0
     tsd['Qcs_sen_sys'][t] = 0
     tsd['Qcs_lat_sys'][t] = 0
     tsd['Qcs_em_ls'][t] = 0
