@@ -19,6 +19,9 @@ import zipfile
 
 import requests
 
+FUNCTIONS = ["benchmark_graphs", "data_helper", "demand_graphs", "demand", "embodied_energy", "emissions", "heatmaps",
+          "mobility", "radiation", "scenario_plots"]
+
 
 def download_radiation(locator):
     """Download radiation and surface properties for running the demand on the nincubes samples"""
@@ -236,37 +239,41 @@ def create_module_overview(trace_data):
             for src_module, dst_module in module_calls]
 
 
-def create_function_graph():
-    import argparse
+def create_function_graph(input=None, output=None, save_trace_data=None, module_overview=False, function='demand'):
+    if input:
+        # create a graph using trace data that was previously saved to a file
+        with open(input, 'r') as f:
+            trace_data = pickle.load(f)
+    else:
+        # run function to create trace data
+        trace_data = trace_demand()
 
+    if save_trace_data:
+        # save a copy of the trace data to a file for later retrieval
+        with open(save_trace_data, 'w') as f:
+            pickle.dump(trace_data, f)
+
+    if output:
+        # write out a GraphViz graph to this file
+        if module_overview:
+            trace_data = create_module_overview(trace_data)
+
+        print_digraph(trace_data, f)
+
+
+def parse_arguments(argv):
+    import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--save-trace-data', help='Save trace data to file', default=None)
     parser.add_argument('-i', '--input', help='Load trace data from file', default=None)
     parser.add_argument('-o', '--output', help='Save graphviz output to this file', default=None)
     parser.add_argument('-m', '--module-overview', help='Create a module overview', action='store_true')
-    args = parser.parse_args()
+    parser.add_argument('-f', '--function', help='Function to run', default="demand", choices=FUNCTIONS)
+    args = parser.parse_args(argv)
+    return args
 
-    if args.save_trace_data:
-        trace_data = trace_demand()
-        with open(args.save_trace_data, 'w') as f:
-            pickle.dump(trace_data, f)
-    elif args.input:
-        with open(args.input, 'r') as f:
-            trace_data = pickle.load(f)
-
-        if args.module_overview:
-            trace_data = create_module_overview(trace_data)
-
-        with open(args.output, 'w') as f:
-            print_digraph(trace_data, f)
-    else:
-        with open(args.output, 'w') as f:
-            trace_data = trace_demand()
-
-            if args.module_overview:
-                trace_data = create_module_overview(trace_data)
-
-            print_digraph(trace_data, f)
 
 if __name__ == '__main__':
-    create_function_graph()
+    args = parse_arguments(sys.argv)
+    create_function_graph(input=args.input, output=args.output, save_trace_data=args.save_trace_data,
+                          module_overview=args.module_overview, function=args.function)
