@@ -351,26 +351,26 @@ def calc_radiation(geometry_table_name, weatherfile_path, locator):
 
     # =============================== Import =============================== #
 
-    geometry_table = pd.read_csv(os.path.join(input_path, geometry_table_name+".csv"), index_col='name')
+    materials_surfaces = pd.read_csv(os.path.join(input_path, geometry_table_name+".csv"), index_col='name')
 
     # =============================== Simulation =============================== #
-    geometry2radiance(rad, geometry_table, input_path)
+    geometry2radiance(rad, materials_surfaces, input_path)
     rad.create_rad_input_file()
 
-    sensor_geometries = gpdf.from_file(locator.get_building_occupancy())
-    sensor_geo_list = sensor_geometries.Name.values
+    building_names_df = gpdf.from_file(locator.get_building_occupancy())
+    building_names = building_names_df.Name.values
 
     # calculate sensor points
     pool = multiprocessing.Pool()  # use all available cores, otherwise specify the number you want as an argument
-    for bui in sensor_geo_list:
+    for bui in building_names:
         pool.apply_async(calc_sensors, args=(results_path, bui, input_path))
     pool.close()
     pool.join()
 
     # execute daysim
     processes = []
-    for bui in sensor_geo_list:
-        process = multiprocessing.Process(target=execute_daysim, args=(bui, results_path, rad, weatherfile_path, settings.RAD_PARMS, geometry_table,))
+    for bui in building_names:
+        process = multiprocessing.Process(target=execute_daysim, args=(bui, results_path, rad, weatherfile_path, settings.RAD_PARMS, materials_surfaces,))
         process.start()
         processes.append(process)
     for process in processes:
@@ -378,15 +378,15 @@ def calc_radiation(geometry_table_name, weatherfile_path, locator):
 
     # calculate total irradiance of each stl file
     pool = multiprocessing.Pool()
-    for bui in sensor_geo_list:
+    for bui in building_names:
         pool.apply_async(execute_sum, args=(results_path, bui, settings.SEN_PARMS['MAX_Z_DIR'],))
     pool.close()
     pool.join()
 
     # create radiaiton file
-    radiation = pd.DataFrame(columns=sensor_geo_list)
+    radiation = pd.DataFrame(columns=building_names)
     print radiation
-    for bui in sensor_geo_list:
+    for bui in building_names:
         res = pd.read_csv(os.path.join(results_path, bui, 'res', bui + '.csv'), header=None).ix[:, 0].values.tolist()
         radiation[bui] = res
     col_list = radiation.columns.tolist()
@@ -397,16 +397,16 @@ def calc_radiation(geometry_table_name, weatherfile_path, locator):
     radiation.to_csv(os.path.join(results_path, 'radiation.csv'), index=None)
 
     # update sensor and building props with exposed value
-    for bui in sensor_geo_list:
+    for bui in building_names:
         execute_frac_exposed(results_path, bui)
 
     # calculate windows
-    for bui in sensor_geo_list:
+    for bui in building_names:
         calculate_windows(results_path, bui)
 
     # create properties file
     props = pd.DataFrame(columns=['roof_area', 'facade_area', 'roof_angle', 'bui_height', 'bui_min_z', 'exposed'])
-    for bui in sensor_geo_list:
+    for bui in building_names:
         bui_props = pd.read_csv(os.path.join(results_path, bui + '_props.csv'))
         props.loc[bui] = bui_props.ix[0, :]
     props['Name'] = props.index.values
