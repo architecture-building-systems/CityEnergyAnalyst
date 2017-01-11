@@ -67,8 +67,8 @@ class TraceDataInfo(object):
         return self.fqname
 
 
-def trace_demand():
-    """Extract the ninecubes.zip reference-case to a temporary directory and run the demand script on it
+def trace_function(function_to_trace):
+    """Extract the ninecubes.zip reference-case to a temporary directory and run the script 'function_to_trace' on it
     with a default weather file, collecting trace information of each function called."""
     trace_data = []
     uniques = set()  # of (src.fqname, dst.fqname)
@@ -92,19 +92,18 @@ def trace_demand():
         return
 
     try:
-        import cea.demand.demand_main
         import cea.inputlocator
         import cea.globalvar
 
         scenario_path = extract_ninecubes()
         locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-        download_radiation(locator)
-        weather_path = locator.get_default_weather()
         gv = cea.globalvar.GlobalVariables()
         gv.multiprocessing = False
+        download_radiation(locator)
+        weather_path = locator.get_default_weather()
 
         sys.settrace(trace_calls)
-        cea.demand.demand_main.demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
+        function_to_trace(gv, locator, weather_path)
         sys.settrace(None)
 
     finally:
@@ -112,6 +111,11 @@ def trace_demand():
         remove_ninecubes()
         pass
     return trace_data
+
+
+def run_demand(gv, locator, weather_path):
+    import cea.demand.demand_main
+    cea.demand.demand_main.demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
 
 
 def find_last_cea(frame):
@@ -239,14 +243,29 @@ def create_module_overview(trace_data):
             for src_module, dst_module in module_calls]
 
 
-def create_function_graph(input=None, output=None, save_trace_data=None, module_overview=False, function='demand'):
+def get_function_to_trace(function):
+    functions = {
+        "benchmark_graphs": None,
+        "data_helper": None,
+        "demand_graphs": None,
+        "demand": run_demand,
+        "embodied_energy": None,
+        "emissions": None,
+        "heatmaps": None,
+        "mobility": None,
+        "radiation": None,
+        "scenario_plots": None}
+    return functions[function]
+
+
+def create_function_graph(input=None, output=None, save_trace_data=None, module_overview=False, function_name='demand'):
     if input:
         # create a graph using trace data that was previously saved to a file
         with open(input, 'r') as f:
             trace_data = pickle.load(f)
     else:
         # run function to create trace data
-        trace_data = trace_demand()
+        trace_data = trace_function(get_function_to_trace(function_name))
 
     if save_trace_data:
         # save a copy of the trace data to a file for later retrieval
@@ -274,6 +293,6 @@ def parse_arguments(argv):
 
 
 if __name__ == '__main__':
-    args = parse_arguments(sys.argv)
+    args = parse_arguments(sys.argv[1:])
     create_function_graph(input=args.input, output=args.output, save_trace_data=args.save_trace_data,
-                          module_overview=args.module_overview, function=args.function)
+                          module_overview=args.module_overview, function_name=args.function)
