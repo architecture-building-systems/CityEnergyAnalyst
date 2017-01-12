@@ -105,6 +105,8 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         tsd['theta_o'][t] = rc_model_temperatures['theta_o']
         tsd['Qhs_sen'][t] = phi_h_act
         tsd['Qhs_sen_sys'][t] = phi_h_act
+        tsd['Qhs_lat_sys'][t] = 0
+        tsd['Ehs_lat_aux'][t] = 0
 
         # STEP 5 - latent heat demand of AC systems
         # ******
@@ -173,7 +175,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
     elif control_heating_cooling_systems.is_active_cooling_system(bpr, tsd, t):
 
         # case for cooling
-        print('COOLING')
+       # print('COOLING')
         tsd['system_status'][t] = 'Radiative cooling'
 
         # STEP 1
@@ -226,6 +228,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         tsd['theta_o'][t] = rc_model_temperatures['theta_o']
         tsd['Qcs_sen'][t] = phi_c_act
         tsd['Qcs_sen_sys'][t] = phi_c_act
+        tsd['Qcs_lat_sys'][t] = 0
 
         # STEP 5 - latent and sensible heat demand of AC systems
         # ******
@@ -237,7 +240,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
 
             # update temperatures for over cooling case
             if air_con_model_loads_flows_temperatures['q_cs_sen_hvac'] < phi_c_act:
-                print('AC over cooling')
+               # print('AC over cooling')
                 phi_c_act_over_cooling = air_con_model_loads_flows_temperatures['q_cs_sen_hvac']
                 rc_model_temperatures = rc_model_SIA_with_TABS.calc_rc_model_temperatures_heating(phi_c_act_over_cooling, bpr, tsd,
                                                                                                   t)

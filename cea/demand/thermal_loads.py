@@ -8,13 +8,12 @@ Demand model of thermal loads
 from __future__ import division
 
 import os
+
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
 
-import cea.demand.airconditioning_model
-import cea.demand.ventilation_model as ventilation_model
-from cea.demand import occupancy_model
+from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, ventilation_air_flows_simple
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.technologies import controllers
 from cea.utilities import helpers
@@ -101,7 +100,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     schedules = usage_schedules['schedules']
 
     # get n50 value
-    n50 = bpr.architecture['n50']
+    # n50 = bpr.architecture['n50']
 
     # get occupancy
     tsd['people'] = occupancy_model.calc_occ(list_uses, schedules, bpr)
@@ -125,69 +124,74 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     if bpr.rc_model['Af'] > 0:  # building has conditioned area
 
+        ventilation_air_flows_simple.calc_m_ve_required(bpr, tsd)
+        ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd, gv)
+
         # get internal comfort properties
         tsd = controllers.calc_simple_temp_control(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
                                                    date.dayofweek)
 
-        # minimum mass flow rate of ventilation according to schedule
-        # with infiltration and overheating
-        tsd['qv_req'] = np.vectorize(controllers.calc_simple_ventilation_control)(tsd['ve'], tsd['people'],
-                                                                                  bpr.rc_model['Af'], gv,
-                                                                                  date.hour, range(8760), n50)
-        tsd['qm_ve_req'] = tsd['qv_req'] * gv.Pair  # TODO:  use dynamic rho_air
-
         # latent heat gains
-        tsd['w_int'] = sensible_loads.calc_Qgain_lat(tsd['people'], bpr.internal_loads['X_ghp'], bpr.hvac['type_cs'],
+        tsd['w_int'] = sensible_loads.calc_Qgain_lat(tsd['people'], bpr.internal_loads['X_ghp'],
+                                                     bpr.hvac['type_cs'],
                                                      bpr.hvac['type_hs'])
-
-        # natural ventilation building propertiess
-        dict_props_nat_vent = ventilation_model.get_properties_natural_ventilation(bpr.geometry, bpr.architecture, gv)
-
-        tsd['flag_season'] = np.zeros(8760, dtype=bool)  # default is heating season
-        tsd['flag_season'][gv.seasonhours[0] + 1:gv.seasonhours[1]] = True  # True means cooling season
 
         # end-use demand calculation
         for t in range(-720, 8760):
             hoy = helpers.seasonhour_2_hoy(t, gv)
-            tsd = sensible_loads.calc_Qgain_sen(hoy, tsd, bpr, gv)
 
-            if bpr.hvac['type_hs'] == 'T3' and gv.is_heating_season(hoy):
-                # case 1a: heating with hvac
-                tsd = calc_thermal_load_hvac(hoy, tsd, bpr, gv)
-            elif bpr.hvac['type_cs'] == 'T3' and not gv.is_heating_season(hoy):
-                # case 1a: cooling with hvac
-                tsd = calc_thermal_load_hvac(hoy, tsd, bpr, gv)
-            else:
-                # case 1b: mechanical ventilation
-                tsd = calc_thermal_load_mechanical_and_natural_ventilation_timestep(hoy, tsd, bpr, gv)
+            # heat flows in [W]
+            # sensible heat gains
+            # --> moved to inside of procedure
+
+            #print(control_ventilation_systems.is_mechanical_ventilation_active(bpr, tsd, hoy))
+            #print(control_ventilation_systems.is_mechanical_ventilation_heat_recovery_active(bpr, tsd, hoy))
+            #print(control_ventilation_systems.is_night_flushing_active(bpr, tsd, hoy))
+
+            tsd = sensible_loads.calc_Qgain_sen(hoy, tsd, bpr, gv)
+            ventilation_air_flows_simple.calc_air_mass_flow_mechanical_ventilation(bpr, tsd, hoy)
+            ventilation_air_flows_simple.calc_air_mass_flow_window_ventilation(bpr, tsd, hoy)
+            #print(tsd['m_ve_mech'][hoy])
+            #print(tsd['m_ve_window'][hoy])
+            ventilation_air_flows_simple.calc_theta_ve_mech(bpr, tsd, hoy)
+            #print(tsd['theta_ve_mech'][hoy])
+            #print(tsd['T_ext'][hoy])
+
+            rc_model_crank_nicholson_procedure.calc_rc_model_demand_heating_cooling(bpr, tsd, hoy, gv)
+
+        tsd['Qhs_sen_incl_em_ls'] = tsd['Qhs_sen_sys'] + tsd['Qhs_em_ls']
+        tsd['Qcs_sen_incl_em_ls'] = tsd['Qcs_sen_sys'] + tsd['Qcs_em_ls']
 
         # Calc of Qhs_dis_ls/Qcs_dis_ls - losses due to distribution of heating/cooling coils
-        Qhs_d_ls, Qcs_d_ls = np.vectorize(sensible_loads.calc_Qhs_Qcs_dis_ls)(tsd['Ta'], tsd['T_ext'],
+        Qhs_d_ls, Qcs_d_ls = np.vectorize(sensible_loads.calc_Qhs_Qcs_dis_ls)(tsd['theta_a'], tsd['T_ext'],
                                                                               tsd['Qhs_sen_incl_em_ls'],
                                                                               tsd['Qcs_sen_incl_em_ls'],
                                                                               bpr.building_systems['Ths_sup_0'],
                                                                               bpr.building_systems['Ths_re_0'],
                                                                               bpr.building_systems['Tcs_sup_0'],
                                                                               bpr.building_systems['Tcs_re_0'],
-                                                                              tsd['Qhs_sen_incl_em_ls'].max(),
-                                                                              tsd['Qcs_sen_incl_em_ls'].min(),
+                                                                              np.nanmax(tsd['Qhs_sen_incl_em_ls']),
+                                                                              np.nanmin(tsd['Qcs_sen_incl_em_ls']),
                                                                               gv.D, bpr.building_systems['Y'][0],
                                                                               bpr.hvac['type_hs'],
                                                                               bpr.hvac['type_cs'], gv.Bf,
                                                                               bpr.building_systems['Lv'])
 
+        tsd['Qcsf_lat'] = tsd['Qcs_lat_sys']
+        tsd['Qhsf_lat'] = tsd['Qhs_lat_sys']
+
         # Calc requirements of generation systems (both cooling and heating do not have a storage):
-        tsd['Qhs'] = tsd['Qhs_sen_incl_em_ls'] - tsd['Qhs_em_ls']
-        tsd['Qhsf'] = tsd['Qhs_sen_incl_em_ls'] + Qhs_d_ls  # no latent is considered because it is already added a
+        tsd['Qhs'] = tsd['Qhs_sen_sys']
+        tsd['Qhsf'] = tsd['Qhs'] + tsd['Qhs_em_ls'] + Qhs_d_ls  # no latent is considered because it is already added a
         # s electricity from the adiabatic system.
-        tsd['Qcs'] = (tsd['Qcs_sen_incl_em_ls'] - tsd['Qcs_em_ls']) + tsd['Qcsf_lat']
+        tsd['Qcs'] = (tsd['Qcs_sen_sys']) + tsd['Qcsf_lat']
         tsd['Qcsf'] = tsd['Qcs'] + tsd['Qcs_em_ls'] + Qcs_d_ls
         tsd['Qcsf'] = -abs(tsd['Qcsf'])
         tsd['Qcs'] = -abs(tsd['Qcs'])
 
         # Calc nomincal temperatures of systems
-        Qhsf_0 = tsd['Qhsf'].max()  # in W
-        Qcsf_0 = tsd['Qcsf'].min()  # in W negative
+        Qhsf_0 = np.nanmax(tsd['Qhsf'])  # in W
+        Qcsf_0 = np.nanmin(tsd['Qcsf'])  # in W negative
 
         # Cal temperatures of all systems
         tsd['Tcsf_re'], tsd['Tcsf_sup'], tsd['Thsf_re'], \
@@ -203,7 +207,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             bpr.building_systems['Lvww_c'],
             bpr.building_systems['Lvww_dis'],
             tsd['T_ext'],
-            tsd['Ta'],
+            tsd['theta_a'],
             tsd['Twwf_re'],
             bpr.building_systems['Tww_sup_0'],
             bpr.building_systems['Y'],
@@ -229,14 +233,18 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                         tsd['Thsf_sup'],
                                                                                         Vw,
                                                                                         bpr.age['built'],
-                                                                                        bpr.building_systems['fforma'],
+                                                                                        bpr.building_systems[
+                                                                                            'fforma'],
                                                                                         gv,
                                                                                         bpr.geometry['floors_ag'],
                                                                                         bpr.occupancy['PFloor'],
-                                                                                        tsd['qv_req'],
+                                                                                        tsd['m_ve_mech'],
                                                                                         bpr.hvac['type_cs'],
                                                                                         bpr.hvac['type_hs'],
                                                                                         tsd['Ehs_lat_aux'])
+
+        # TODO: calculate process heat - this seems to be somehow forgotten
+        tsd['Qhprof'][:] = 0
 
         # calculate other quantities
         tsd['Qcsf_lat'] = -tsd['Qcsf_lat']
@@ -259,7 +267,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     # write results to csv
     gv.demand_writer.results_to_csv(tsd, bpr, locator, date, building_name)
     # write report
-    gv.report('calc-thermal-loads', locals(), locator.get_demand_results_folder(), building_name)
+    gv.report(tsd, locator.get_demand_results_folder(), building_name)
     return
 
 
@@ -277,424 +285,15 @@ def initialize_timestep_data(bpr, weather_data):
            'rh_ext': weather_data.relhum_percent.values,
            'T_sky': weather_data.skytemp_C.values}
     # fill data with nan values
-    nan_fields = ['Ta', 'Ts', 'Ts_loss', 'Tm', 'Tm_loss']
+    nan_fields = ['Qhs_lat_sys','Qhs_sen_sys','Qcs_lat_sys','Qcs_sen_sys', 'theta_a', 'theta_m', 'theta_c', 'theta_o', 'Qhs_sen', 'Qcs_sen', 'Im_tot','Ehs_lat_aux', 'Qhs_em_ls', 'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs','Ta_sup_hs','Ta_sup_cs','Ta_re_hs','Ta_re_cs','I_sol','I_int_sen','w_int','m_ve_mech','m_ve_window','I_rad', 'I_ia','I_m','I_st','QEf','QHf','QCf','Ef','Qhsf','Qhs','Qhsf_lat', 'Qwwf', 'Qww', 'Qcsf','Qcs','Qcsf_lat','Qhprof','Eauxf','Eauxf_ve','Eauxf_hs','Eauxf_cs','Eauxf_ww','Eauxf_fw','mcphsf','mcpcsf','mcpwwf','Twwf_re','Thsf_sup','Thsf_re','Tcsf_sup','Tcsf_re','Tcdataf_re','Tcdataf_sup','Tcref_re','Tcref_sup','theta_ve_mech','m_ve_window','m_ve_mech']
     tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))
 
-    # fill data with zero values
-    zeroes_fields = ['uncomfort', 'Qhprof', 'Qhs_sen', 'Qhsf_lat', 'Qhs_sen_incl_em_ls', 'Qcs_sen',
-                     'Qcs_sen_incl_em_ls', 'Qwwf', 'Qww',
-                     'Qcsf_lat', 'Top', 'q_hs_sen_hvac', 'q_cs_sen_hvac', 'Ehs_lat_aux', 'qm_ve_mech', 'Qhs_em_ls',
-                     'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs', 'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs',
-                     'w_re', 'w_sup', 'Twwf_re', 'qv_req', 'qm_ve_req',
-                     'I_sol', 'Im_tot', 'I_int_sen', 'I_ia', 'I_m', 'I_st', 'I_rad']
-    tsd.update(dict((x, np.zeros(8760)) for x in zeroes_fields))
-    return tsd
-
-
-
-#================================================
-#demand model for buildings wih air conditioning
-#================================================
-
-
-
-def calc_thermal_load_hvac(t, tsd, bpr, gv):
-    """
-    This function is executed for the case of heating or cooling with a HVAC system
-    by coupling the R-C model of ISO 13790 with the HVAC model of Kaempf
-
-    For this case natural ventilation is not considered
-
-    Author: Gabriel Happle
-    Date: May 2016
-
-    Parameters
-    ----------
-    t : time step, hour of year [0..8760]
-    thermal_loads_input : object of type ThermalLoadsInput
-    weather_data : data from epw weather file
-    state_prev : dict containing air and mass temperatures of previous calculation time step
-    gv : globalvars
-
-    Returns
-    -------
-    temp_m, temp_a, q_hs_sen_loss_true, q_cs_sen_loss_true, uncomfort, temp_op, i_m_tot, q_hs_sen_hvac, q_cs_sen_hvac,
-    q_hum_hvac, q_dhum_hvac, e_hum_aux_hvac, q_ve_loss, qm_ve_mech, q_hs_sen, q_cs_sen, qhs_em_ls, qcs_em_ls
-    """
-
-    # get arguments from inputs
-    temp_ext = tsd['T_ext'][t]
-    rh_ext = tsd['rh_ext'][t]
-
-    # TODO: replace by getter methods
-    qm_ve_req = tsd['qm_ve_req'][t]
-    temp_hs_set = tsd['ta_hs_set'][t]
-    temp_cs_set = tsd['ta_cs_set'][t]
-    i_st = tsd['I_st'][t]
-    i_ia = tsd['I_ia'][t]
-    i_m = tsd['I_m'][t]
-    flag_season = tsd['flag_season'][t]
-    w_int = tsd['w_int'][t]
-
-    system_heating = bpr.hvac['type_hs']
-    system_cooling = bpr.hvac['type_cs']
-    cm = bpr.rc_model['Cm']
-    area_f = bpr.rc_model['Af']
-
-    # model of losses in the emission and control system for space heating and cooling
-    temp_hs_set_corr, temp_cs_set_corr = sensible_loads.setpoint_correction_for_space_emission_systems(
-        bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
-
-    # heating and cooling loads
-    i_c_max, i_h_max = sensible_loads.calc_Qhs_Qcs_sys_max(bpr.rc_model['Af'], bpr.hvac)
-
-    # previous timestep data (we give a seed high enough to avoid doing a iteration for 2 years, Ta=21, Tm=16)
-    temp_air_prev = tsd['Ta'][t - 1] if not np.isnan(tsd['Ta'][t - 1]) else tsd['T_ext'][
-        t - 1]  # gv.initial_temp_air_prev
-    temp_m_prev = tsd['Tm'][t - 1] if not np.isnan(tsd['Tm'][t - 1]) else tsd['T_ext'][t - 1]  # gv.initial_temp_m_prev
-    temp_m_prev_losses = tsd['Tm_loss'][t - 1] if not np.isnan(tsd['Tm_loss'][t - 1]) else tsd['T_ext'][
-        t - 1]  # gv.initial_temp_m_prev
-
-    # get constant properties of building R-C-model
-    h_tr_is = bpr.rc_model['Htr_is']
-    h_tr_ms = bpr.rc_model['Htr_ms']
-    h_tr_w = bpr.rc_model['Htr_w']
-    h_tr_em = bpr.rc_model['Htr_em']
-
-    # initialize output
-    q_hs_sen = None
-    q_cs_sen = None
-    q_hs_sen_loss_true = None
-    q_cs_sen_loss_true = None
-    temp_m = None
-    temp_a = None
-    uncomfort = None
-    temp_op = None
-    i_m_tot = None
-    q_hs_sen_hvac = None
-    q_cs_sen_hvac = None
-    q_hum_hvac = None
-    q_dhum_hvac = None
-    e_hum_aux_hvac = None
-    qm_ve_hvac_h = None
-    qm_ve_hvac_c = None
-    temp_sup_h = None
-    temp_sup_c = None
-    temp_rec_h = None
-    temp_rec_c = None
-    w_rec = None
-    w_sup = None
-
-    # ==================================================================================================================
-    # ITERATION
-    # ==================================================================================================================
-
-    # first guess of mechanical ventilation mass flow rate and supply temperature for ventilation losses
-    qm_ve_mech = qm_ve_req  # required air mass flow rate
-    qm_ve_nat = 0  # natural ventilation # TODO: this could be a fixed percentage of the mechanical ventilation (overpressure) as a function of n50
-
-    temp_ve_sup, _ = cea.demand.airconditioning_model.calc_hex(rh_ext, gv, temp_ext, temp_air_prev, t)
-
-    # conversion to volume flow rate
-    qv_ve_req = qm_ve_req / gv.Pair  # TODO: modify Kaempf model to accept mass flow rate instead of volume flow
-
-    # TODO: review iteration parameters
-    rel_diff_qm_ve_mech = 1  # initialisation of difference for while loop
-    abs_diff_qm_ve_mech = 1
-    rel_tolerance = 0.05  # 5% change  # TODO review tolerance
-    abs_tolerance = 0.01  # 10g/s air flow  # TODO  review tolerance
-    hvac_status_prev = 0  # system is turned OFF
-    switch = 0  # number of 'ON'/'OFF' switches of HVAC system during iteration to prevent an infinite loop
-
-    # iterative loop to determine air mass flows and supply temperatures of the hvac system
-    while (abs_diff_qm_ve_mech > abs_tolerance) and (rel_diff_qm_ve_mech > rel_tolerance) and switch < 10:
-
-        # Hve
-        h_ve_adj = sensible_loads.calc_h_ve_adj(qm_ve_mech, qm_ve_nat, temp_ext, temp_ve_sup, temp_air_prev, gv)  # TODO
-
-        # Htr1, Htr2, Htr3
-        h_tr_1, h_tr_2, h_tr_3 = sensible_loads.calc_Htr(h_ve_adj, h_tr_is, h_tr_ms, h_tr_w)
-
-        # TODO: adjust calc TL function to new way of losses calculation (adjust input parameters)
-        # calculate sensible heat load
-        Losses = False  # Losses are set to false for the calculation of the sensible heat load and actual temperatures
-
-        temp_m, \
-        temp_a, \
-        temp_s, \
-        q_hs_sen, \
-        q_cs_sen, \
-        uncomfort, \
-        temp_op, \
-        i_m_tot = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
-                                              temp_cs_set,
-                                              h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve_adj, h_tr_w,
-                                              i_ia,
-                                              i_m, cm, area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max,
-                                              i_h_max,
-                                              flag_season, gv)
-
-        Losses = True
-        # calc_Qhs_Qcs()
-        temp_m_loss_true, \
-        temp_a_loss_true, \
-        temp_s_loss_true, \
-        q_hs_sen_loss_true, \
-        q_cs_sen_loss_true, \
-        uncomfort_loss_true, \
-        temp_op_loss_true, \
-        i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev_losses, temp_ext,
-                                                        temp_hs_set,
-                                                        temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3,
-                                                        i_st,
-                                                        h_ve_adj, h_tr_w, i_ia, i_m, cm, area_f, Losses,
-                                                        temp_hs_set_corr,
-                                                        temp_cs_set_corr, i_c_max, i_h_max, flag_season, gv)
-
-        # TODO: in the original calculation procedure this is calculated with another temp_m_prev (with and without losses), check if this is correct or not
-
-        # ventilation losses
-        q_ve_loss = h_ve_adj * (temp_a - temp_ext)  # not used in calculation
-
-        # HVAC supplies load if zone has load
-        if q_hs_sen > 0:
-            hvac_status = 1  # system is ON
-            # print('HVAC ON')
-            q_sen_load_hvac = q_hs_sen_loss_true  #
-        elif q_cs_sen < 0:
-            hvac_status = 1  # system is ON
-            # print('HVAC ON')
-            q_sen_load_hvac = q_cs_sen_loss_true  #
-        else:
-            hvac_status = 0  # system is OFF
-            # print('HVAC OFF')
-            q_sen_load_hvac = 0
-
-        # temperature set point
-        t_air_set = temp_a
-
-        # calc_HVAC()
-        q_hs_sen_hvac, \
-        q_cs_sen_hvac, \
-        q_hum_hvac, \
-        q_dhum_hvac, \
-        e_hum_aux_hvac, \
-        qm_ve_hvac_h, \
-        qm_ve_hvac_c, \
-        temp_sup_h, \
-        temp_sup_c, \
-        temp_rec_h, \
-        temp_rec_c, \
-        w_rec, \
-        w_sup, \
-        temp_air = cea.demand.airconditioning_model.calc_hvac(rh_ext, temp_ext, t_air_set, qv_ve_req, q_sen_load_hvac,
-                                                              temp_air_prev,
-                                                              w_int, gv, t)
-
-        # mass flow rate output for cooling or heating is zero if the hvac is used only for ventilation
-        qm_ve_hvac = max(qm_ve_hvac_h, qm_ve_hvac_c, qm_ve_req)  # ventilation mass flow rate of hvac system
-
-        # calculate thermal loads with hvac mass flow rate in next iteration
-        qm_ve_nat = 0  # natural ventilation
-        temp_ve_sup = np.nanmax([temp_rec_h, temp_rec_c])
-
-        # compare mass flow rates
-        # evaluate while statement of loop
-        abs_diff_qm_ve_mech = abs(qm_ve_hvac - qm_ve_mech)
-        rel_diff_qm_ve_mech = abs_diff_qm_ve_mech / qm_ve_mech
-        if hvac_status_prev != hvac_status:
-            switch += 1
-        qm_ve_mech = qm_ve_hvac
-        hvac_status_prev = hvac_status
-
-    # calculate emission losses
-    # emission losses only if heating system or cooling system is in operation (q_hs_sen > 0 or q_cs_sen < 0)
-    if q_hs_sen > 0:
-        qhs_em_ls = q_hs_sen_loss_true - q_hs_sen
-    else:
-        q_hs_sen_loss_true = 0
-        qhs_em_ls = 0
-    if q_cs_sen < 0:
-        qcs_em_ls = q_cs_sen_loss_true - q_cs_sen
-    else:
-        q_cs_sen_loss_true = 0
-        qcs_em_ls = 0
-
-    tsd['Tm'][t] = temp_m
-    tsd['Tm_loss'][t] = temp_m_loss_true
-    tsd['Ts_loss'][t] = temp_s_loss_true
-    tsd['Ts'][t] = temp_s
-    tsd['Ta'][t] = temp_a
-    tsd['Qhs_sen_incl_em_ls'][t] = q_hs_sen_loss_true
-    tsd['Qcs_sen_incl_em_ls'][t] = q_cs_sen_loss_true
-    tsd['uncomfort'][t] = uncomfort
-    tsd['Top'][t] = temp_op
-    tsd['Im_tot'][t] = i_m_tot
-    tsd['q_hs_sen_hvac'][t] = q_hs_sen_hvac
-    tsd['q_cs_sen_hvac'][t] = q_cs_sen_hvac
-    tsd['Qhsf_lat'][t] = q_hum_hvac
-    tsd['Qcsf_lat'][t] = q_dhum_hvac
-    tsd['Ehs_lat_aux'][t] = e_hum_aux_hvac
-    tsd['qm_ve_mech'][t] = qm_ve_mech
-    tsd['Qhs_sen'][t] = q_hs_sen
-    tsd['Qcs_sen'][t] = q_cs_sen
-    tsd['Qhs_em_ls'][t] = qhs_em_ls
-    tsd['Qcs_em_ls'][t] = qcs_em_ls
-    tsd['ma_sup_hs'][t] = qm_ve_hvac_h
-    tsd['ma_sup_cs'][t] = qm_ve_hvac_c
-    tsd['Ta_sup_hs'][t] = temp_sup_h
-    tsd['Ta_sup_cs'][t] = temp_sup_c
-    tsd['Ta_re_hs'][t] = temp_rec_h
-    tsd['Ta_re_cs'][t] = temp_rec_c
-    tsd['w_re'][t] = w_rec
-    tsd['w_sup'][t] = w_sup
+    # initialize system status log
+    tsd['system_status'] = np.chararray((8760), itemsize=20)
 
     return tsd
 
 
-
-#=====================================================
-#demand model for buildings with mechanical ventilation
-#======================================================
-
-
-
-def calc_thermal_load_mechanical_and_natural_ventilation_timestep(t, tsd, bpr, gv):
-    """
-    This function is executed for the case of mechanical ventilation with outdoor air
-
-    Assumptions:
-    - Mechanical ventilation is controlled in a way that required ventilation rates are always met (CO2-sensor based
-        or similar control)
-    - No natural ventilation
-
-    Parameters
-    ----------
-    t : time step, hour of year [0..8760]
-    thermal_loads_input : object of type ThermalLoadsInput
-    weather_data : data from epw weather file
-    state_prev : dict containing air and mass temperatures of previous calculation time step
-    gv : globalvars
-
-    Returns
-    -------
-    temp_m, temp_a, q_hs_sen, q_cs_sen, uncomfort, temp_op, i_m_tot, qm_ve_mech
-    """
-
-    # get arguments from input
-    temp_ext = tsd['T_ext'][t]
-
-    qm_ve_req = tsd['qm_ve_req'][t]
-    temp_hs_set = tsd['ta_hs_set'][t]
-    temp_cs_set = tsd['ta_cs_set'][t]
-    i_st = tsd['I_st'][t]
-    i_ia = tsd['I_ia'][t]
-    i_m = tsd['I_m'][t]
-    flag_season = tsd['flag_season'][t]
-
-    system_heating = bpr.hvac['type_hs']
-    system_cooling = bpr.hvac['type_cs']
-    cm = bpr.rc_model['Cm']
-    area_f = bpr.rc_model['Af']
-
-    # model of losses in the emission and control system for space heating and cooling
-    temp_hs_set_corr, temp_cs_set_corr = sensible_loads.setpoint_correction_for_space_emission_systems(
-        bpr.hvac['type_hs'], bpr.hvac['type_cs'], bpr.hvac['type_ctrl'])
-
-    i_c_max, i_h_max = sensible_loads.calc_Qhs_Qcs_sys_max(bpr.rc_model['Af'], bpr.hvac)
-
-    # previous timestep data (we give a seed high enough to avoid doing a iteration for 2 years, Ta=21, Tm=16)
-    temp_air_prev = tsd['Ta'][t - 1] if not np.isnan(tsd['Ta'][t - 1]) else tsd['T_ext'][
-        t - 1]  # gv.initial_temp_air_prev
-    temp_m_prev = tsd['Tm'][t - 1] if not np.isnan(tsd['Tm'][t - 1]) else tsd['T_ext'][t - 1]  # gv.initial_temp_m_prev
-    temp_m_prev_losses = tsd['Tm_loss'][t - 1] if not np.isnan(tsd['Tm_loss'][t - 1]) else tsd['T_ext'][
-        t - 1]  # gv.initial_temp_m_prev
-
-    # get constant properties of building R-C-model
-    h_tr_is = bpr.rc_model['Htr_is']
-    h_tr_ms = bpr.rc_model['Htr_ms']
-    h_tr_w = bpr.rc_model['Htr_w']
-    h_tr_em = bpr.rc_model['Htr_em']
-
-    # mass flow rate of mechanical ventilation
-    qm_ve_mech = qm_ve_req  # required air mass flow rate
-
-    qm_ve_nat = 0  # natural ventilation
-
-    temp_ve_sup = temp_ext  # mechanical ventilation without heat exchanger
-
-    # calc hve
-    h_ve = sensible_loads.calc_h_ve_adj(qm_ve_mech, qm_ve_nat, temp_ext, temp_ve_sup, temp_air_prev, gv)
-
-    # calc htr1, htr2, htr3
-    h_tr_1, h_tr_2, h_tr_3 = sensible_loads.calc_Htr(h_ve, h_tr_is, h_tr_ms, h_tr_w)
-
-    Losses = False  # TODO: adjust calc TL function to new way of losses calculation (adjust input parameters)
-
-    # calc_Qhs_Qcs()
-    temp_m, \
-    temp_a, \
-    temp_s, \
-    q_hs_sen, \
-    q_cs_sen, \
-    uncomfort, \
-    temp_op, \
-    i_m_tot = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev, temp_ext, temp_hs_set,
-                                          temp_cs_set,
-                                          h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3, i_st, h_ve, h_tr_w, i_ia,
-                                          i_m, cm,
-                                          area_f, Losses, temp_hs_set_corr, temp_cs_set_corr, i_c_max, i_h_max,
-                                          flag_season, gv)
-
-    # calculate emission losses
-    Losses = True
-    temp_m_loss_true, \
-    temp_a_loss_true, \
-    temp_s_loss_true, \
-    q_hs_sen_loss_true, \
-    q_cs_sen_loss_true, \
-    uncomfort_loss_true, \
-    temp_op_loss_true, \
-    i_m_tot_loss_true = sensible_loads.calc_Qhs_Qcs(system_heating, system_cooling, temp_m_prev_losses, temp_ext,
-                                                    temp_hs_set,
-                                                    temp_cs_set, h_tr_em, h_tr_ms, h_tr_is, h_tr_1, h_tr_2, h_tr_3,
-                                                    i_st, h_ve,
-                                                    h_tr_w, i_ia, i_m, cm, area_f, Losses, temp_hs_set_corr,
-                                                    temp_cs_set_corr,
-                                                    i_c_max, i_h_max, flag_season, gv)
-
-    # TODO: in the original calculation procedure this is calculated with another temp_m_prev (with and without losses), check if this is correct or not
-
-    # calculate emission losses
-    # emission losses only if heating system or cooling system is in operation (q_hs_sen > 0 or q_cs_sen < 0)
-    if q_hs_sen > 0:
-        qhs_em_ls = q_hs_sen_loss_true - q_hs_sen
-    else:
-        q_hs_sen_loss_true = 0
-        qhs_em_ls = 0
-    if q_cs_sen < 0:
-        qcs_em_ls = q_cs_sen_loss_true - q_cs_sen
-    else:
-        q_cs_sen_loss_true = 0
-        qcs_em_ls = 0
-
-    tsd['Tm'][t] = temp_m
-    tsd['Tm_loss'][t] = temp_m_loss_true
-    tsd['Ts_loss'][t] = temp_s_loss_true
-    tsd['Ts'][t] = temp_s
-    tsd['Ta'][t] = temp_a
-    tsd['Qhs_sen_incl_em_ls'][t] = q_hs_sen_loss_true
-    tsd['Qcs_sen_incl_em_ls'][t] = q_cs_sen_loss_true
-    tsd['uncomfort'][t] = uncomfort
-    tsd['Top'][t] = temp_op
-    tsd['Im_tot'][t] = i_m_tot
-    tsd['qm_ve_mech'][t] = qm_ve_mech
-    tsd['Qhs_sen'][t] = q_hs_sen
-    tsd['Qcs_sen'][t] = q_cs_sen
-    tsd['Qhs_em_ls'][t] = qhs_em_ls
-    tsd['Qcs_em_ls'][t] = qcs_em_ls
-
-    return tsd
 
 
 #=============================================

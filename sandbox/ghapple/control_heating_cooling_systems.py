@@ -129,9 +129,17 @@ def is_active_cooling_system(bpr, tsd, t):
     # check for cooling demand
     if has_cooling_system(bpr) \
             and helpers.is_coolingseason_hoy(t) \
-            and rc_model_SIA_with_TABS.has_cooling_demand(bpr, tsd, t):
+            and rc_model_SIA_with_TABS.has_cooling_demand(bpr, tsd, t) \
+            and tsd['T_ext'][t] >= tsd['ta_cs_set'][t]:
 
         return True
+
+    elif has_cooling_system(bpr) \
+            and helpers.is_coolingseason_hoy(t) \
+            and rc_model_SIA_with_TABS.has_cooling_demand(bpr, tsd, t) \
+            and tsd['T_ext'][t] < tsd['ta_cs_set'][t]:  # Cooling system turned off if outside is cooler than set point
+        return False
+
     else:
         return False
 

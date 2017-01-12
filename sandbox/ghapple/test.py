@@ -1,31 +1,30 @@
 ""
 from __future__ import division
 
-import multiprocessing as mp
-import pandas as pd
+import os
 import time
+
 import numpy as np
-from cea.demand import thermal_loads as tl
-from cea.technologies import controllers
-from cea.demand import sensible_loads
-from cea.demand import electrical_loads
-from cea.demand import hotwater_loads
-from cea.demand import refrigeration_loads
-from cea.demand import datacenter_loads
-from cea.utilities import helpers
-from sandbox.ghapple import ventilation_xx as v
-from sandbox.ghapple import rc_model_crank_nicholson_procedure
-from sandbox.ghapple import control_ventilation_systems
-from sandbox.ghapple import ventilation_air_flows_simple
+import pandas as pd
+import xlwt
 
 import cea.globalvar
 import cea.inputlocator
+from cea.demand import datacenter_loads, ventilation_air_flows_simple
+from cea.demand import electrical_loads
+from cea.demand import hotwater_loads
 from cea.demand import occupancy_model
+from cea.demand import refrigeration_loads
+from cea.demand import sensible_loads
 from cea.demand import thermal_loads
+from cea.demand import thermal_loads as tl, rc_model_crank_nicholson_procedure
 from cea.demand.thermal_loads import BuildingProperties
+from cea.technologies import controllers
 from cea.utilities import epwreader
-import xlwt
-import os
+from cea.utilities import helpers
+from sandbox.ghapple import control_ventilation_systems
+from sandbox.ghapple import rc_model_crank_nicholson_procedure
+from sandbox.ghapple import ventilation_air_flows_simple
 
 def testing_gabriel(locator, weather_path, gv):
 
@@ -145,8 +144,8 @@ def testing_gabriel(locator, weather_path, gv):
 
     if bpr.rc_model['Af'] > 0:  # building has conditioned area
 
-        v.calc_m_ve_required(bpr, tsd)
-        v.calc_m_ve_leakage_simple(bpr, tsd, gv)
+        ventilation_air_flows_simple.calc_m_ve_required(bpr, tsd)
+        ventilation_air_flows_simple.calc_m_ve_leakage_simple(bpr, tsd, gv)
 
         # get internal comfort properties
         tsd = controllers.calc_simple_temp_control(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
