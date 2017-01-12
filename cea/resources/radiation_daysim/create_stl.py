@@ -51,9 +51,9 @@ if __name__ == '__main__':
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    geometry_folder = locator.get_3D_geometry_folder()
-    building_geometry = os.path.join(locator.get_building_geometry_with_elevation())
-    building_solids = building2d23d(building_geometry, geometry_folder,height_col='height_ag', name_col='Name', elev_col='DN')
+    output_folder = locator.get_3D_geometry_folder()
+    input_shapefile= locator.get_building_geometry_with_elevation()
+    building_solids = building2d23d(input_shapefile, output_folder, height_col='height_ag', name_col='Name', elev_col='DN')
 
 
 
