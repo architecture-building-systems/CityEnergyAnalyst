@@ -1,4 +1,6 @@
 import os
+import pyliburo.py3dmodel.construct as construct
+import pyliburo.py3dmodel.fetch as fetch
 import pyliburo.shp2citygml
 import shapefile
 import pyliburo.shp2citygml as one
@@ -16,7 +18,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def building2d23d(shapefilepath, out_path, height_col, elev_col, name_col):
+def building2d23d(shapefilepath, out_path, height_col, elev_col, name_col,nfloor_col):
     sf = shapefile.Reader(shapefilepath)
 
     shapeRecs = sf.shapeRecords()
@@ -24,6 +26,7 @@ def building2d23d(shapefilepath, out_path, height_col, elev_col, name_col):
     height_index = field_name_list.index(height_col) - 1
     name_index = field_name_list.index(name_col) - 1
     elev_index = field_name_list.index(elev_col) - 1
+    floor_index = field_name_list.index(nfloor_col) - 1
 
     solid_list = []
 
@@ -32,7 +35,8 @@ def building2d23d(shapefilepath, out_path, height_col, elev_col, name_col):
         height = float(poly_attribs[height_index])
         elev = float(poly_attribs[elev_index])
         name = str(poly_attribs[name_index])
-        print name, height, elev
+        nfloors = int(poly_attribs[floor_index])
+        print name, height, elev,nfloors
 
         part_list = one.get_geometry(rec)
         # if it is a close the first and the last vertex is the same
@@ -40,8 +44,12 @@ def building2d23d(shapefilepath, out_path, height_col, elev_col, name_col):
             # create a bounding box to boolean the terrain
             point_list = one.point_list2d_2_3d(part, elev)
             face = pyliburo.py3dmodel.construct.make_polygon(point_list)
-            bbox = pyliburo.py3dmodel.construct.extrude(face, (0, 0, 1), height)
-            building_extrude_solid = pyliburo.py3dmodel.fetch.shape2shapetype(bbox)
+            flr2flr_height = height/nfloors
+            for flrcnt in range(nfloors):
+                bbox = construct.extrude(face, (0, 0, 1), flr2flr_height)
+                building_extrude_solid = pyliburo.py3dmodel.fetch.shape2shapetype(bbox)
+                construct.
+
             solid_list.append(building_extrude_solid)
 
             StlAPI_Writer().Write(building_extrude_solid, os.path.join(out_path, name+'new.stl'), False)
@@ -53,7 +61,7 @@ if __name__ == '__main__':
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     output_folder = locator.get_3D_geometry_folder()
     input_shapefile= locator.get_building_geometry_with_elevation()
-    building_solids = building2d23d(input_shapefile, output_folder, height_col='height_ag', name_col='Name', elev_col='DN')
+    building_solids = building2d23d(input_shapefile, output_folder, height_col='height_ag', name_col='Name', elev_col='DN', nfloor_col = "floors_ag")
 
 
 
