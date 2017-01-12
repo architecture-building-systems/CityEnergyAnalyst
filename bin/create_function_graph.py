@@ -20,7 +20,7 @@ import zipfile
 import requests
 
 FUNCTIONS = ["benchmark_graphs", "data_helper", "demand_graphs", "demand", "embodied_energy", "emissions", "heatmaps",
-          "mobility", "radiation", "scenario_plots"]
+             "mobility", "radiation", "scenario_plots"]
 
 
 def download_radiation(locator):
@@ -39,6 +39,7 @@ def download_radiation(locator):
 
 class TraceDataInfo(object):
     """Collects data about a trace event's frame"""
+
     def __init__(self, frame):
         code = frame.f_code
         self.path = code.co_filename
@@ -150,7 +151,6 @@ def remove_ninecubes():
         shutil.rmtree(ninecubes_dir)
 
 
-
 def package_names(trace_data):
     """Extract the names of the packages from the (filtered?) trace_data."""
     return ('a', 'b')
@@ -162,6 +162,7 @@ def edge_names(trace_data_item):
 
 def extract_namespace(fqname):
     return fqname.rsplit('.', 1)[0]
+
 
 def extract_function_name(fqname):
     return fqname.rsplit('.', 1)[1]
@@ -219,8 +220,10 @@ def create_module_overview(trace_data):
     """Compress the list of connections in the trace_data to only the modules. So instead of tracing function
     calls, trace module-to-module calls. This can give more overview of the code as it is higher level.
     """
+
     class OverviewTraceDataInfo(object):
         """Imitate a TDI, but only sets the fqname attribute"""
+
         def __init__(self, fqname):
             self.fqname = fqname
 
@@ -239,7 +242,7 @@ def create_module_overview(trace_data):
 def get_function_to_trace(function):
     functions = {
         "benchmark_graphs": run_benchmark_graphs,
-        "data_helper": None,
+        "data_helper": run_data_helper,
         "demand_graphs": None,
         "demand": run_demand,
         "embodied_energy": None,
@@ -256,6 +259,13 @@ def run_benchmark_graphs(gv, locator, weather_path):
     locator_list = [locator]
     output_file = tempfile.mktemp(suffix='.pdf')
     cea.analysis.benchmark.benchmark(locator_list=locator_list, output_file=output_file)
+
+
+def run_data_helper(gv, locator, weather_path):
+    import cea.demand.preprocessing.properties
+    cea.demand.preprocessing.properties.properties(locator=locator, prop_thermal_flag=True, prop_architecture_flag=True,
+                                                   prop_hvac_flag=True, prop_comfort_flag=True,
+                                                   prop_internal_loads_flag=True, gv=gv)
 
 
 def run_demand(gv, locator, weather_path):
