@@ -6,7 +6,7 @@ Global variables
 
 """
 import cea.demand.demand_writers
-from cea.demand import thermal_loads
+#from cea.demand import thermal_loads
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -574,13 +574,13 @@ class GlobalVariables(object):
 
         self.demand_writer = cea.demand.demand_writers.HourlyDemandWriter(self)
 
-    def report(self, template, variables, output_folder, basename):
+    def report(self, tsd, output_folder, basename):
         """Use vars to fill worksheets in an excel file $destination_template based on the template.
         The template references self.report_variables. The destination_template may contain date format codes that
         will be updated with the current datetime."""
         if self.testing:
             from cea.utilities import reporting
-            reporting.full_report_to_xls(template, variables, output_folder, basename, self)
+            reporting.full_report_to_xls(tsd, output_folder, basename, self)
 
 
     def log(self, msg, **kwargs):
