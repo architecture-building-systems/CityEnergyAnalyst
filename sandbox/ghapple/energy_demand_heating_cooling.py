@@ -109,7 +109,7 @@ def procedure_1(bpr, tsd, hoy, gv):
             tsd['Qhs_sen'][hoy] = phi_hc_nd_ac  # sensible demand to reach set point temperature or maximum capacity
 
             # check if over heating is happening at this hour
-            q_sen_hvac_ve = ac.calc_hvac_sensible_heating_ventilaiton_air(bpr, tsd, hoy, gv)
+            q_sen_hvac_ve = ac.calc_hvac_sensible_heating_ventilation_air(bpr, tsd, hoy, gv)
             if q_sen_hvac_ve > phi_hc_nd_ac:  # over heating due to conditioning of required ventilation air
 
                 # update temperatures with over heating
@@ -281,7 +281,7 @@ def procedure_1(bpr, tsd, hoy, gv):
             tsd['Qcs_sen'][hoy] = phi_hc_nd_ac  # sensible demand to reach set point temperature or maximum capacity
 
             # check if over cooling is happening at this hour
-            q_sen_hvac_ve = ac.calc_hvac_sensible_cooling_ventilaiton_air(bpr, tsd, hoy, gv)
+            q_sen_hvac_ve = ac.calc_hvac_sensible_cooling_ventilation_air(bpr, tsd, hoy, gv)
             if q_sen_hvac_ve < phi_hc_nd_ac:  # over cooling due to conditioning of required ventilation air
 
                 # update temperatures with over cooling

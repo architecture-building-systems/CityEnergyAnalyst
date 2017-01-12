@@ -65,8 +65,6 @@ def testing_gabriel(locator, weather_path, gv):
            'T_sky': weather_data.skytemp_C.values,
            'Qhs_sen': np.empty(8760) * np.nan,
            'Qcs_sen': np.empty(8760) * np.nan,
-           'Qhs_lat': np.empty(8760) * np.nan,
-           'Qcs_lat': np.empty(8760) * np.nan,
            'Im_tot': np.empty(8760) * np.nan,
            'Ehs_lat_aux': np.empty(8760) * np.nan,
            'Qhs_em_ls': np.empty(8760) * np.nan,
@@ -77,9 +75,6 @@ def testing_gabriel(locator, weather_path, gv):
            'Ta_sup_cs': np.empty(8760) * np.nan,
            'Ta_re_hs': np.empty(8760) * np.nan,
            'Ta_re_cs': np.empty(8760) * np.nan,
-           'w_re': np.empty(8760) * np.nan,
-           'w_sup': np.empty(8760) * np.nan,
-           'Tww_re': np.empty(8760) * np.nan,
            'I_sol': np.empty(8760) * np.nan,
            'I_int_sen': np.empty(8760) * np.nan,
            'w_int': np.empty(8760) * np.nan,
@@ -111,12 +106,12 @@ def testing_gabriel(locator, weather_path, gv):
            'mcphsf': np.empty(8760) * np.nan,
            'mcpcsf': np.empty(8760) * np.nan,
            'mcpwwf': np.empty(8760) * np.nan,
-           'Twwf_sup': np.empty(8760) * np.nan,
+           'Twwf_sup': bpr.building_systems['Tww_sup_0'],
              'Twwf_re': np.empty(8760) * np.nan, 'Thsf_sup': np.empty(8760) * np.nan, 'Thsf_re': np.empty(8760) * np.nan,
              'Tcsf_sup': np.empty(8760) * np.nan, 'Tcsf_re': np.empty(8760) * np.nan,
              'Tcdataf_re': np.empty(8760) * np.nan,
              'Tcdataf_sup': np.empty(8760) * np.nan, 'Tcref_re': np.empty(8760) * np.nan,
-             'Tcref_sup': np.empty(8760) * np.nan, 'theta_ve_mech': np.empty(8760) * np.nan, 'h_ve_adj': np.empty(8760) * np.nan, 'system_status' : np.chararray((8760), itemsize=20)}  # TODO: initialize refrigeration loads, etc.
+             'Tcref_sup': np.empty(8760) * np.nan, 'theta_ve_mech': np.empty(8760) * np.nan, 'system_status' : np.chararray((8760), itemsize=20)}  # TODO: initialize refrigeration loads, etc.
 
 
     tsd['m_ve_window'] = np.zeros(8760)
@@ -189,8 +184,8 @@ def testing_gabriel(locator, weather_path, gv):
 
             # edhc.procedure_1(bpr, tsd, hoy, gv)
 
-        tsd['Qhs_sen_incl_em_ls'] = tsd['Qhs_sen'] + tsd['Qhs_em_ls']
-        tsd['Qcs_sen_incl_em_ls'] = tsd['Qcs_sen'] + tsd['Qcs_em_ls']
+        tsd['Qhs_sen_incl_em_ls'] = tsd['Qhs_sen_sys'] + tsd['Qhs_em_ls']
+        tsd['Qcs_sen_incl_em_ls'] = tsd['Qcs_sen_sys'] + tsd['Qcs_em_ls']
 
         # Calc of Qhs_dis_ls/Qcs_dis_ls - losses due to distribution of heating/cooling coils
         Qhs_d_ls, Qcs_d_ls = np.vectorize(sensible_loads.calc_Qhs_Qcs_dis_ls)(tsd['theta_a'], tsd['T_ext'],
@@ -208,12 +203,13 @@ def testing_gabriel(locator, weather_path, gv):
                                                                                   bpr.building_systems['Lv'])
 
         tsd['Qcsf_lat'] = tsd['Qcs_lat_sys']
+        tsd['Qhsf_lat'] = tsd['Qhs_lat_sys']
 
         # Calc requirements of generation systems (both cooling and heating do not have a storage):
-        tsd['Qhs'] = tsd['Qhs_sen']
+        tsd['Qhs'] = tsd['Qhs_sen_sys']
         tsd['Qhsf'] = tsd['Qhs'] + tsd['Qhs_em_ls'] + Qhs_d_ls  # no latent is considered because it is already added a
         # s electricity from the adiabatic system.
-        tsd['Qcs'] = (tsd['Qcs_sen']) + tsd['Qcsf_lat']
+        tsd['Qcs'] = (tsd['Qcs_sen_sys']) + tsd['Qcsf_lat']
         tsd['Qcsf'] = tsd['Qcs'] + tsd['Qcs_em_ls'] + Qcs_d_ls
         tsd['Qcsf'] = -abs(tsd['Qcsf'])
         tsd['Qcs'] = -abs(tsd['Qcs'])
@@ -271,6 +267,9 @@ def testing_gabriel(locator, weather_path, gv):
                                                                                             bpr.hvac['type_cs'],
                                                                                             bpr.hvac['type_hs'],
                                                                                             tsd['Ehs_lat_aux'])
+
+        # TODO: calculate process heat - this seems to be somehow forgotten
+        tsd['Qhprof'][:] = 0
 
         # calculate other quantities
         tsd['Qcsf_lat'] = -tsd['Qcsf_lat']
