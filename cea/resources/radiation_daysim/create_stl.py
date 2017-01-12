@@ -52,8 +52,7 @@ if __name__ == '__main__':
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     geometry_folder = locator.get_3D_geometry_folder()
-    building_geometry = locator.get_building_geometry()
-    building_geometry = r'C:\Users\lensa\Desktop\case_study\baseline\inputs\building-geometry\zone_with_terrain_level.shp'
+    building_geometry = os.path.join(locator.get_building_geometry_with_elevation())
     building_solids = building2d23d(building_geometry, geometry_folder,height_col='height_ag', name_col='Name', elev_col='DN')
 
 
