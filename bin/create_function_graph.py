@@ -245,8 +245,8 @@ def get_function_to_trace(function):
         "data_helper": run_data_helper,
         "demand_graphs": run_demand_graphs,
         "demand": run_demand,
-        "embodied_energy": None,
-        "emissions": None,
+        "embodied_energy": run_embodied_energy,
+        "emissions": run_emissions,
         "heatmaps": None,
         "mobility": None,
         "radiation": None,
@@ -277,6 +277,18 @@ def run_data_helper(gv, locator, weather_path):
 def run_demand(gv, locator, weather_path):
     import cea.demand.demand_main
     cea.demand.demand_main.demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
+
+
+def run_embodied_energy(gv, locator, weather_path):
+    import cea.analysis.embodied
+    cea.analysis.embodied.lca_embodied(year_to_calculate=2014, locator=locator, gv=gv)
+
+
+def run_emissions(gv, locator, weather_path):
+    import cea.analysis.operation
+    cea.analysis.operation.lca_operation(locator=locator, Qww_flag=(True), Qhs_flag=(True), Qcs_flag=(True),
+                                         Qcdata_flag=(True), Qcrefri_flag=(True), Eal_flag=(True), Eaux_flag=(True),
+                                         Epro_flag=(True), Edata_flag=(True))
 
 
 def create_function_graph(input=None, output=None, save_trace_data=None, module_overview=False, function_name='demand'):
