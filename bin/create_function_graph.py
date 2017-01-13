@@ -247,8 +247,8 @@ def get_function_to_trace(function):
         "demand": run_demand,
         "embodied_energy": run_embodied_energy,
         "emissions": run_emissions,
-        "heatmaps": None,
-        "mobility": None,
+        "heatmaps": run_heatmaps,
+        "mobility": run_mobility,
         "radiation": None,
         "scenario_plots": None}
     return functions[function]
@@ -289,6 +289,20 @@ def run_emissions(gv, locator, weather_path):
     cea.analysis.operation.lca_operation(locator=locator, Qww_flag=(True), Qhs_flag=(True), Qcs_flag=(True),
                                          Qcdata_flag=(True), Qcrefri_flag=(True), Eal_flag=(True), Eaux_flag=(True),
                                          Epro_flag=(True), Edata_flag=(True))
+
+
+def run_heatmaps(gv, locator, weather_path):
+    import cea.plots.heatmaps
+    file_to_analyze = locator.get_total_demand()
+    analysis_fields = ["Qhsf_MWhyr", "Qcsf_MWhyr"]
+    path_results = locator.get_heatmaps_demand_folder()
+    cea.plots.heatmaps.heatmaps(locator=locator, analysis_fields=analysis_fields, path_results=path_results,
+                                file_to_analyze=file_to_analyze)
+
+
+def run_mobility(gv, locator, weather_path):
+    import cea.analysis.mobility
+    cea.analysis.mobility.lca_mobility(locator=locator)
 
 
 def create_function_graph(input=None, output=None, save_trace_data=None, module_overview=False, function_name='demand'):
