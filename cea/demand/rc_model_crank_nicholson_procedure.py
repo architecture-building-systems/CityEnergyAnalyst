@@ -2,13 +2,9 @@
 
 
 from __future__ import division
-from sandbox.ghapple import rc_model_SIA_with_TABS
-from sandbox.ghapple import control_heating_cooling_systems
-from cea.demand import airconditioning_model
-from sandbox.ghapple import space_emission_systems
-import numpy as np
 
-
+from cea.demand import airconditioning_model, rc_model_SIA_with_TABS, control_heating_cooling_systems, \
+    space_emission_systems
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -107,6 +103,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         tsd['Qhs_sen_sys'][t] = phi_h_act
         tsd['Qhs_lat_sys'][t] = 0
         tsd['Ehs_lat_aux'][t] = 0
+        tsd['ma_sup_hs'][t] = 0
 
         # STEP 5 - latent heat demand of AC systems
         # ******
@@ -229,6 +226,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         tsd['Qcs_sen'][t] = phi_c_act
         tsd['Qcs_sen_sys'][t] = phi_c_act
         tsd['Qcs_lat_sys'][t] = 0
+        tsd['ma_sup_cs'][t] = 0
 
         # STEP 5 - latent and sensible heat demand of AC systems
         # ******

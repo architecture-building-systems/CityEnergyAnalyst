@@ -2,9 +2,8 @@
 
 
 from __future__ import division
-from sandbox.ghapple import rc_model_SIA_with_TABS
 
-import numpy as np
+from cea.demand import rc_model_SIA_with_TABS
 from sandbox.ghapple import helpers
 
 __author__ = "Gabriel Happle"

@@ -43,6 +43,7 @@ ventilation calculation
 =========================================
 """
 
+
 def calc_air_flows(temp_zone, u_wind, temp_ext, dict_props_nat_vent):
     """
     Minimization of variable air flows as a function of zone gauge
@@ -89,7 +90,7 @@ def calc_air_flows(temp_zone, u_wind, temp_ext, dict_props_nat_vent):
     return qm_sum_in, qm_sum_out
 
 
-def get_properties_natural_ventilation(gdf_geometry_building, gdf_architecture_building, gv):
+def get_properties_natural_ventilation(bpr, gv):
     """
 
     Parameters
@@ -103,15 +104,15 @@ def get_properties_natural_ventilation(gdf_geometry_building, gdf_architecture_b
     dict_props_nat_vent : dictionary containing natural ventilation properties of zone
     """
 
-    n50 = gdf_architecture_building['n50']
-    vol_building = gdf_geometry_building['footprint'] * gdf_geometry_building['height_ag']
+    n50 = bpr.architecture['n50']
+    vol_building = bpr.geometry['footprint'] * bpr.geometry['height_ag']
     qv_delta_p_lea_ref_zone = calc_qv_delta_p_ref(n50, vol_building)
     area_facade_zone,\
     area_roof_zone,\
     height_zone,\
-    slope_roof = get_building_geometry_ventilation(gdf_geometry_building)
+    slope_roof = get_building_geometry_ventilation(bpr.geometry)
     class_shielding = gv.shielding_class
-    factor_cros = gdf_architecture_building['f_cros']
+    factor_cros = bpr.architecture['f_cros']
     area_vent_zone = 0  # (cm2) area of ventilation openings # TODO: get from buildings properties
 
     # calculate properties that remain constant in the minimization
@@ -148,6 +149,7 @@ def get_properties_natural_ventilation(gdf_geometry_building, gdf_architecture_b
 Wind pressure calculation
 =========================================
 """
+
 
 def calc_u_wind_site(u_wind_10):
     """
@@ -643,6 +645,7 @@ def calc_qm_vent(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_props_nat_ve
 windows ventilation
 =========================================
 """
+
 
 def calc_area_window_free(area_window_max, r_window_arg):
     """

@@ -44,15 +44,30 @@ def calc_mww(schedule, Vww_lpd, Occ_m2p, Af, Pwater):
     -------
 
     """
-    vww = schedule* Vww_lpd * (Occ_m2p ** -1) * Af / 1000 # m3/h
-    mww = vww * Pwater / 3600  # in kg/s
+
+    if Occ_m2p > 0:
+
+        vww = schedule* Vww_lpd * (Occ_m2p ** -1) * Af / 1000 # m3/h
+        mww = vww * Pwater / 3600  # in kg/s
+
+    else:
+
+        vww = 0
+        mww = 0
 
     return mww, vww
 
 
 def calc_mw(schedule, Vw_lpd, Occ_m2p, Af, Pwater):
-    vw = schedule * Vw_lpd * (Occ_m2p ** -1) * Af / 1000 # m3/h
-    mw = vw * Pwater / 3600  # in kg/s
+    if Occ_m2p > 0:
+
+        vw = schedule * Vw_lpd * (Occ_m2p ** -1) * Af / 1000 # m3/h
+        mw = vw * Pwater / 3600  # in kg/s
+
+    else:
+
+        vw = 0
+        mw = 0
 
     return mw, vw
 

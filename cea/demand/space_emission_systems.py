@@ -102,6 +102,7 @@ def calc_q_em_ls(q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb, q_e
 
         if abs(q_em_ls) > abs(q_em_out):
             print('not good')
+            #TODO clean up code
 
     return q_em_ls
 
