@@ -243,7 +243,7 @@ def get_function_to_trace(function):
     functions = {
         "benchmark_graphs": run_benchmark_graphs,
         "data_helper": run_data_helper,
-        "demand_graphs": None,
+        "demand_graphs": run_demand_graphs,
         "demand": run_demand,
         "embodied_energy": None,
         "emissions": None,
@@ -259,6 +259,12 @@ def run_benchmark_graphs(gv, locator, weather_path):
     locator_list = [locator]
     output_file = tempfile.mktemp(suffix='.pdf')
     cea.analysis.benchmark.benchmark(locator_list=locator_list, output_file=output_file)
+
+
+def run_demand_graphs(gv, locator, weather_path):
+    import cea.plots.graphs_demand
+    analysis_fields = ["Ealf_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
+    cea.plots.graphs_demand.graphs_demand(locator=locator, analysis_fields=analysis_fields, gv=gv)
 
 
 def run_data_helper(gv, locator, weather_path):
