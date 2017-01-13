@@ -240,14 +240,14 @@ def substation_HEX_sizing(locator, gv, building):
     # results.to_csv(result_substation, sep=',', index=False, float_format='%.3f')
     return [A_hex_hs, A_hex_ww, A_hex_cs, UA_heating_hs, UA_heating_ww, UA_cooling_cs]
 
-def substation_return_model_main(locator, building_names, gv, buildings, substations_HEX_specs, T_DH, t):
+def substation_return_model_main(locator, gv, building_names, buildings_demands, substations_HEX_specs, T_DH, t):
     """
     calculate all substation return temperature and required flow rate at each time-step.
 
     :param locator:
     :param building_names:
     :param gv:
-    :param buildings:
+    :param buildings_demands:
     :param substation_HEX_specs:
     :param T_DH:
     :param t:
@@ -255,18 +255,24 @@ def substation_return_model_main(locator, building_names, gv, buildings, substat
 
     """
     index = 0
-    combi = [0] * len(building_names)
+    # combi = [0] * len(building_names)
     T_DH_return_all = pd.DataFrame()
     mdot_DH_all = pd.DataFrame()
+
     for name in building_names:
-        building = buildings[index].loc[[t]]
-        t_DH_return, mcp_DH = calc_substation_return_DH(locator, gv, building, T_DH[name], substations_HEX_specs.ix[name])
+        building = buildings_demands[index].loc[[t]]
+        if T_DH.size == 1: # for the initialization step
+            T_supply = T_DH
+        else:
+            # find substation supply temperature
+            T_supply = T_DH.loc['T_supply', name]
+        t_DH_return, mcp_DH = calc_substation_return_DH(building, T_supply, substations_HEX_specs.ix[name])
         T_DH_return_all[name] = [t_DH_return]
         mdot_DH_all[name] = [mcp_DH/gv.Cpw]   # [kg/s]
         index += 1
     return T_DH_return_all, mdot_DH_all
 
-def calc_substation_return_DH(locator, gv, building, T_DH_supply, substation_HEX_specs):
+def calc_substation_return_DH(building, T_DH_supply, substation_HEX_specs):
     """
     calculate individual substation return temperature and required flow rate at each time step
 
@@ -282,7 +288,7 @@ def calc_substation_return_DH(locator, gv, building, T_DH_supply, substation_HEX
 
     thi = T_DH_supply + 273  # In k
     Qhsf = building.Qhsf_kWh.values * 1000  # in W
-    if Qhsf.max > 0:
+    if Qhsf.max() > 0:
         tco = building.Thsf_sup_C.values + 273  # in K
         tci = building.Thsf_re_C.values + 273  # in K
         cc = building.mcphsf_kWC.values * 1000  # in W/K
@@ -293,7 +299,7 @@ def calc_substation_return_DH(locator, gv, building, T_DH_supply, substation_HEX
         mcp_DH_hs = 0
 
     Qwwf = building.Qwwf_kWh.values * 1000  # in W
-    if Qwwf.max > 0:
+    if Qwwf.max() > 0:
         tco = building.Twwf_sup_C.values + 273  # in K
         tci = building.Twwf_re_C.values + 273  # in K
         cc = building.mcpwwf_kWC.values * 1000  # in W/K
@@ -502,17 +508,17 @@ def calc_HEX_mix(Q1, Q2, t1, m1, t2, m2):
     :param Q1: load heating
     :param Q2: load domestic hot water
     :param t1: out temperature of heat exchanger for space heating
-    :param m1: mas flow rate secondary side of heat exchanger for space heating
+    :param m1: mass flow rate secondary side of heat exchanger for space heating
     :param t2: out temperature of heat exchanger for domestic hot water
-    :param m2: mas flow rate secondary side of heat exchanger for domestic hot water
+    :param m2: mass flow rate secondary side of heat exchanger for domestic hot water
     :return:
         tavg: average out temperature.
     '''
-    if Q1 > 0 or Q2 > 0:
+    if Q1.max() > 0 or Q2.max() > 0:
         tavg = (t1 * m1 + t2 * m2) / (m1 + m2)
     else:
-        tavg = 0
-    return np.float(tavg)  #FIXME:change back to float
+        tavg = (t1+t2)/2  # if there is no flow rate, tavg = t1 = t2
+    return np.float(tavg)
 
 
 def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
