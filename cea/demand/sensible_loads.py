@@ -139,60 +139,60 @@ end-use heating or cooling loads
 #     # here we have to return tm_t for the next time step and not tm
 #     return tm_t, ta, ts, IH_nd_ac, IC_nd_ac, uncomfort, top, Im_tot
 
-
-def calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0):
-    tm_t = (tm_t0 * ((Cm / 3600) - 0.5 * (Htr_3 + Htr_em)) + Im_tot) / ((Cm / 3600) + 0.5 * (Htr_3 + Htr_em))
-    tm = (tm_t + tm_t0) / 2
-    # Here the temperature that is actually needed for the next time step is tm_t
-    return tm_t, tm
-
-
-def calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm):
-    ts = (Htr_ms * tm + I_st + Htr_w * te_t + Htr_1 * (te_t + (I_ia + IHC_nd) / Hve)) / (Htr_ms + Htr_w + Htr_1)
-    return ts
-
-
-def calc_ta(Htr_is, Hve, IHC_nd, I_ia, te_t, ts):
-    ta = (Htr_is * ts + Hve * te_t + I_ia + IHC_nd) / (Htr_is + Hve)
-    return ta
-
-
-def calc_top(ta, ts):
-    top = 0.31 * ta + 0.69 * ts
-    return top
-
-
-def calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd, Hve, Htr_2):
-    Im_tot = I_m + Htr_em * te_t + Htr_3 * (I_st + Htr_w * te_t + Htr_1 * (((I_ia + IHC_nd) / Hve) + te_t)) / Htr_2
-    return Im_tot
-
-
-# R-C model calculation adapted for TABS based on SIA 2044
-# if the system is a floor heating system, then the heat input is split between all three nodes
-def calc_ts_tabs(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm):
-    ts = (Htr_ms * tm + I_st + Htr_w * te_t + Htr_1 * (te_t + I_ia / Hve) + (Htr_1 / Hve + 1) * IHC_nd * 0.5) / (
-        Htr_ms + Htr_w + Htr_1)
-    return ts
-
-
-def calc_ta_tabs(Htr_is, Hve, IHC_nd, I_ia, te_t, ts):
-    ta = (Htr_is * ts + Hve * te_t + I_ia + 0.5 * IHC_nd) / (Htr_is + Hve)
-    return ta
-
-
-def calc_Im_tot_tabs(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd, Hve, Htr_2):
-    Im_tot = I_m + Htr_em * te_t + Htr_3 * (I_st + Htr_w * te_t + Htr_1 * ((I_ia / Hve) + te_t)) / Htr_2 + \
-             IHC_nd * 0.5 * (1 + Htr_3 / Htr_2 * (1 + Htr_1 / Hve))
-    return Im_tot
-
-
-try:
-    # import Numba AOT versions of the functions above, overwriting them
-    from calc_tm import calc_tm, calc_ts, calc_ta, calc_top, calc_Im_tot
-except ImportError:
-    # fall back to using the python version
-    print('failed to import from calc_tm.pyd, falling back to pure python functions')
-    pass
+#
+# def calc_tm(Cm, Htr_3, Htr_em, Im_tot, tm_t0):
+#     tm_t = (tm_t0 * ((Cm / 3600) - 0.5 * (Htr_3 + Htr_em)) + Im_tot) / ((Cm / 3600) + 0.5 * (Htr_3 + Htr_em))
+#     tm = (tm_t + tm_t0) / 2
+#     # Here the temperature that is actually needed for the next time step is tm_t
+#     return tm_t, tm
+#
+#
+# def calc_ts(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm):
+#     ts = (Htr_ms * tm + I_st + Htr_w * te_t + Htr_1 * (te_t + (I_ia + IHC_nd) / Hve)) / (Htr_ms + Htr_w + Htr_1)
+#     return ts
+#
+#
+# def calc_ta(Htr_is, Hve, IHC_nd, I_ia, te_t, ts):
+#     ta = (Htr_is * ts + Hve * te_t + I_ia + IHC_nd) / (Htr_is + Hve)
+#     return ta
+#
+#
+# def calc_top(ta, ts):
+#     top = 0.31 * ta + 0.69 * ts
+#     return top
+#
+#
+# def calc_Im_tot(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd, Hve, Htr_2):
+#     Im_tot = I_m + Htr_em * te_t + Htr_3 * (I_st + Htr_w * te_t + Htr_1 * (((I_ia + IHC_nd) / Hve) + te_t)) / Htr_2
+#     return Im_tot
+#
+#
+# # R-C model calculation adapted for TABS based on SIA 2044
+# # if the system is a floor heating system, then the heat input is split between all three nodes
+# def calc_ts_tabs(Htr_1, Htr_ms, Htr_w, Hve, IHC_nd, I_ia, I_st, te_t, tm):
+#     ts = (Htr_ms * tm + I_st + Htr_w * te_t + Htr_1 * (te_t + I_ia / Hve) + (Htr_1 / Hve + 1) * IHC_nd * 0.5) / (
+#         Htr_ms + Htr_w + Htr_1)
+#     return ts
+#
+#
+# def calc_ta_tabs(Htr_is, Hve, IHC_nd, I_ia, te_t, ts):
+#     ta = (Htr_is * ts + Hve * te_t + I_ia + 0.5 * IHC_nd) / (Htr_is + Hve)
+#     return ta
+#
+#
+# def calc_Im_tot_tabs(I_m, Htr_em, te_t, Htr_3, I_st, Htr_w, Htr_1, I_ia, IHC_nd, Hve, Htr_2):
+#     Im_tot = I_m + Htr_em * te_t + Htr_3 * (I_st + Htr_w * te_t + Htr_1 * ((I_ia / Hve) + te_t)) / Htr_2 + \
+#              IHC_nd * 0.5 * (1 + Htr_3 / Htr_2 * (1 + Htr_1 / Hve))
+#     return Im_tot
+#
+#
+# try:
+#     # import Numba AOT versions of the functions above, overwriting them
+#     from calc_tm import calc_tm, calc_ts, calc_ta, calc_top, calc_Im_tot
+# except ImportError:
+#     # fall back to using the python version
+#     print('failed to import from calc_tm.pyd, falling back to pure python functions')
+#     pass
 
 """
 =========================================
@@ -201,43 +201,43 @@ ventilation and transmission losses
 """
 
 
-def calc_Htr(Hve, Htr_is, Htr_ms, Htr_w):
-    Htr_1 = 1 / (1 / Hve + 1 / Htr_is)
-    Htr_2 = Htr_1 + Htr_w
-    Htr_3 = 1 / (1 / Htr_2 + 1 / Htr_ms)
-    return Htr_1, Htr_2, Htr_3
+# def calc_Htr(Hve, Htr_is, Htr_ms, Htr_w):
+#     Htr_1 = 1 / (1 / Hve + 1 / Htr_is)
+#     Htr_2 = Htr_1 + Htr_w
+#     Htr_3 = 1 / (1 / Htr_2 + 1 / Htr_ms)
+#     return Htr_1, Htr_2, Htr_3
 
 
-def calc_h_ve_adj(q_m_mech, q_m_nat, temp_ext, temp_sup, temp_zone_set, gv):
-    """
-    calculate Hve,adj according to ISO 13790
-
-    Parameters
-    ----------
-    q_m_mech : air mass flow from mechanical ventilation (kg/s)
-    q_m_nat : air mass flow from windows and leakages and other natural ventilation (kg/s)
-    temp_ext : exterior air temperature (°C)
-    temp_sup : ventilation system supply air temperature (°C), e.g. after HEX
-    temp_zone_set : zone air temperature set point (°C)
-    gv : globalvars
-
-    Returns
-    -------
-    Hve,adj in (W/K)
-
-    """
-
-    c_p_air = gv.Cpa  # (kJ/(kg*K)) # TODO: maybe dynamic heat capacity of air f(temp)
-
-    if abs(temp_sup - temp_ext) == 0:
-        b_mech = 1
-
-    else:
-        eta_hru = (temp_sup - temp_ext) / (temp_zone_set - temp_ext)  # Eq. (28) in ISO 13970
-        frac_hru = 1
-        b_mech = (1 - frac_hru * eta_hru)  # Eq. (27) in ISO 13970
-
-    return (b_mech * q_m_mech + q_m_nat) * c_p_air * 1000  # (W/K), Eq. (21) in ISO 13970
+# def calc_h_ve_adj(q_m_mech, q_m_nat, temp_ext, temp_sup, temp_zone_set, gv):
+#     """
+#     calculate Hve,adj according to ISO 13790
+#
+#     Parameters
+#     ----------
+#     q_m_mech : air mass flow from mechanical ventilation (kg/s)
+#     q_m_nat : air mass flow from windows and leakages and other natural ventilation (kg/s)
+#     temp_ext : exterior air temperature (°C)
+#     temp_sup : ventilation system supply air temperature (°C), e.g. after HEX
+#     temp_zone_set : zone air temperature set point (°C)
+#     gv : globalvars
+#
+#     Returns
+#     -------
+#     Hve,adj in (W/K)
+#
+#     """
+#
+#     c_p_air = gv.Cpa  # (kJ/(kg*K)) # TODO: maybe dynamic heat capacity of air f(temp)
+#
+#     if abs(temp_sup - temp_ext) == 0:
+#         b_mech = 1
+#
+#     else:
+#         eta_hru = (temp_sup - temp_ext) / (temp_zone_set - temp_ext)  # Eq. (28) in ISO 13970
+#         frac_hru = 1
+#         b_mech = (1 - frac_hru * eta_hru)  # Eq. (27) in ISO 13970
+#
+#     return (b_mech * q_m_mech + q_m_nat) * c_p_air * 1000  # (W/K), Eq. (21) in ISO 13970
 
 
 """
