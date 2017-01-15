@@ -67,8 +67,8 @@ def substation_HEX_design_main(locator, total_demand, building_names, gv):
                                                         np.where(buildings_demands[iteration].Qwwf_kWh > 0,
                                                                  buildings_demands[iteration].Twwf_sup_C.values, np.nan))
         T_supply_cooling = buildings_demands[iteration].Tcsf_sup_C.values
-        T_supply_DH = np.where(Q_substation_heating > 0, T_supply_heating + gv.dT_heat, 0)
-        T_supply_DC = np.where(abs(buildings_demands[iteration].Qcsf_kWh) > 0, T_supply_cooling - gv.dT_cool, 0)
+        T_supply_DH = np.where(Q_substation_heating > 0, T_supply_heating + gv.dT_heat, np.nan)
+        T_supply_DC = np.where(abs(buildings_demands[iteration].Qcsf_kWh) > 0, T_supply_cooling - gv.dT_cool, np.nan)
 
         buildings_demands[iteration]['Q_substation_heating'] = Q_substation_heating
         buildings_demands[iteration]['T_sup_target_DH'] = T_supply_DH
