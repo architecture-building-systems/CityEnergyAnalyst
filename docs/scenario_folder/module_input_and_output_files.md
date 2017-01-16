@@ -4,16 +4,34 @@
 
 ### Input files
 
+* `db/Benchmarks/benchmark_targets.xls`
+* `db/Benchmarks/benchmark_today.xls`
 * `scenario/inputs/building-properties/building_occupancy.shp`
-* `scenario/inputs/building-properties/architecture.shp`
-* `scenario/inputs/building-properties/age.shp`
-* `scenario/inputs/building-geometry/zone.shp`
-* `db/Archetypes/Archetypes_properties.xlsx`
+* `scenario/outputs/data/demand/Total_demand.csv`
 * `scenario/outputs/data/emissions/Total_LCA_embodied.csv`
+* `scenario/outputs/data/emissions/Total_LCA_operation.csv`
+* `scenario/outputs/data/emissions/Total_LCA_mobility.csv`
 
 ### Output files
 
 * (user defined pdf file)
+
+## Data helper
+
+### Input files
+
+* `scenario/inputs/building-properties/building_occupancy.shp`
+* `scenario/inputs/building-properties/age.shp`
+* `db/Archetypes/Archetypes_properties.xlsx`
+
+## Output files
+
+* `scenario/inputs/building-properties/indoor_comfort.shp`
+* `scenario/inputs/building-properties/technical_systems.shp`
+* `scenario/inputs/building-properties/architecture.shp`
+* `scenario/inputs/building-properties/thermal_properties.shp`
+* `scenario/inputs/building-properties/internal_loads.shp`
+
 
 ## Emissions
 
