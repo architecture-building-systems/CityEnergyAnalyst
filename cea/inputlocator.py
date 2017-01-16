@@ -205,7 +205,7 @@ class InputLocator(object):
         return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'internal_loads.shp')
 
     def get_building_comfort(self):
-        """scenario/inputs/building-properties/indoor_comfort.shp'"""
+        """scenario/inputs/building-properties/indoor_comfort.shp"""
         return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'indoor_comfort.shp')
 
     def get_building_hvac(self):

@@ -45,7 +45,31 @@
 * `scenario/outputs/plots/timeseries/{building_name}.pdf`
   * (one for each building in the scenario)
   
+## Demand
 
+### Input files
+
+* `scenario/outputs/data/solar-radiation/radiation.csv`
+* `scenario/outputs/data/solar-radiation/properties_surfaces.csv`
+* `scenario/inputs/building-properties/overrides.csv`
+* `scenario/inputs/building-properties/thermal_properties.shp`
+* `scenario/inputs/building-geometry/zone.shp`
+* `scenario/inputs/building-properties/building_occupancy.shp`
+* `scenario/inputs/building-properties/age.shp`
+* `scenario/inputs/building-properties/internal_loads.shp`
+* `scenario/inputs/building-properties/indoor_comfort.shp`
+* `scenario/inputs/building-properties/architecture.shp`
+* `scenario/inputs/building-properties/technical_systems.shp`
+* `db/Systems/emission_systems.csv`
+* `db/Archetypes/Archetypes_schedules.xlsx`
+
+### Output files
+
+* `TEMPDIR/{building_name}T.csv`
+    * (one per building in the scenario)
+* `scenario/outputs/data/demand/{building_name}.csv`
+  * (one per building in the scenario)
+* `scenario/outputs/data/demand/Total_demand.csv`
 
 ## Emissions
 
