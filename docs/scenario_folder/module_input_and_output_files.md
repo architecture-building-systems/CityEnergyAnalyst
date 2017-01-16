@@ -107,3 +107,15 @@
 ### Output files
 
 * `scenario/outputs/data/emissions/Total_LCA_embodied.csv`
+
+## Mobility
+
+### Input files
+
+* `scenario/inputs/building-properties/building_occupancy.shp`
+* `db/Benchmarks/mobility.xls`
+* `scenario/outputs/data/demand/Total_demand.csv`
+
+### Output files
+
+* `scenario/outputs/data/emissions/Total_LCA_mobility.csv`
