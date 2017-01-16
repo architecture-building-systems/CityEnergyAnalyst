@@ -57,101 +57,16 @@ def thermal_network_main(locator,gv):
     # get hourly heat requirement and target supply temperature from each substation
     t_target_supply = read_properties_from_buildings(building_names, buildings_demands, 'T_sup_target_DH')
     t_target_supply_df = write_substations_to_nodes_df(all_nodes_df, t_target_supply, flag= True)  #(1xn)
-
-
-    ## assign pipe properties
-
-    # create empty dataframes to store results
-    node_mass_flow_df = pd.DataFrame(data=np.zeros((8760, edge_node_df.shape[0])), columns=all_nodes_df.columns)
-    edge_mass_flow_df = pd.DataFrame(data=np.zeros((8760, len(edge_node_df.columns.values))),
-                                columns=edge_node_df.columns.values)
-
-    print('start calculating edge mass flow...')
-    t0 = time.clock()
-    # for t in range(8760):
-    #     print('calculating edge mass flow... timestep'),t
-    #
-    #     # set to the highest value in the network and assume no loss within the network
-    #     T_substation_supply = t_target_supply.ix[t].max() + 273.15 # in [K]
-    #
-    #     # calculate substation flow rates and return temperatures
-    #     T_DH_return_all, \
-    #     mdot_DH_all = substation.substation_return_model_main(locator, gv, building_names, buildings_demands,
-    #                                                           substations_HEX_specs, T_substation_supply, t, flag = True) # flag = True: same temperature for all nodes
-    #
-    #     # write consumer substation required flow rate to nodes
-    #     df = write_substations_to_nodes_df(all_nodes_df, mdot_DH_all, flag=False)  # (1xn) #flag = True: writing temperature
-    #     node_mass_flow_df.loc[t] = df.loc[0]
-    #
-    #     # solve mass flow rates on edges
-    #     edge_mass_flow_df[:][t:t+1] = calc_mass_flow_edges(edge_node_df, df)
-    #
-    # edge_mass_flow_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'NominalEdgeMassFlow_DH.csv')
-    edge_mass_flow_df = pd.read_csv(locator.get_optimization_network_layout_folder() + '//' + 'NominalEdgeMassFlow_DH.csv')
-
-    print time.clock() - t0, "seconds process time for edge mass flow calculation\n"
-
-    # assign pipe properties based on max flow on edges
-    max_edge_mass_flow = edge_mass_flow_df.max(asix=0)
-    #max_edge_mass_flow = calc_mass_flow_edges(edge_node_df, max_mass_flow_substations_nodes_df)
-    max_edge_mass_flow_df = pd.DataFrame(data=[max_edge_mass_flow], columns=edge_node_df.columns)
-    pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv)
-    K = calc_aggregated_heat_conduction_coefficient(locator, gv, pipe_length_df, pipe_properties_df) / 1000
-    # (exe) #  aggregated heat conduction coef matrix [kW/K]
-
-
-    ## Start solving hydraulic and thermal equations at each time-step
-    t0 = time.clock()
-    # create empty lists to write results
-    T_DH_return_nodes = []
-    T_DH_supply_nodes = []
-    plant_heat_requiremnts = []
-
-    for t in range(8760):
-        print('calculating network thermal hydraulic properties... timestep'),t
-        timer = time.clock()
-
-        ## solve network temperatures
-        T_supply_nodes, \
-        T_return_nodes, \
-        plant_heat_requirement = solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df,
-                                                             edge_mass_flow_df.loc[t], K, t_target_supply_df,
-                                                             building_names, buildings_demands, substations_HEX_specs, t)
-
-        # store node temperatures and plant heat requirement at each time-step
-        T_DH_supply_nodes.append(T_supply_nodes)
-        T_DH_return_nodes.append(T_return_nodes)
-        plant_heat_requiremnts.append(plant_heat_requirement)
-
-        print time.clock() - timer, "seconds process time for timestep \n",t
-
-    # save results
-    pd.DataFrame(T_DH_supply_nodes, columns=edge_node_df.index).\
-        to_csv(locator.get_optimization_network_layout_supply_temperature_file(), index=False, float_format='%.3f')
-    pd.DataFrame(T_DH_return_nodes, columns=edge_node_df.index).\
-        to_csv(locator.get_optimization_network_layout_return_temperature_file(), index=False, float_format='%.3f')
-    # pd.DataFrame(plant_heat_requiremnts).\
-    #     to_csv(locator.get_optimization_network_layout_plant_heat_requirement_file(), index=False, float_format='%.3f') #FIXME[SH]: save to csv
-
+    print
 
     ## calculate pressure losses at each node  # TODO[MM]: refactor into a one function
-    temperature_supply_edges = calc_edge_temperatures(T_DH_supply_nodes)
-    temperature_return_edges = calc_edge_temperatures(T_DH_return_nodes)
-    pressure_loss_nodes_supply_df = pd.DataFrame(
-        data=calc_pressure_loss_nodes(edge_node_df.values, pipe_properties_df[:]['DN':'DN'].values,
-                                      pipe_length_df.values, edge_mass_flow_df.values, temperature_matrix_supply, gv),
-        index=range(8760), columns=edge_node_df.index.values)
-    pressure_loss_nodes_return_df = pd.DataFrame(
-        data=calc_pressure_loss_nodes(-(edge_node_df.values), pipe_properties_df[:]['DN':'DN'].values,
-                                      pipe_length_df.values, edge_mass_flow_df.values, temperature_matrix_return, gv),
-        index=range(8760), columns=edge_node_df.index.values)
-
-    #calculate total pressure loss in the system
-    pressure_loss_system = [sum(pressure_loss_nodes_supply_df.values[i] for i in range(len(pressure_loss_nodes_supply_df.values[0])))] + \
-                           [sum(pressure_loss_nodes_return_df.values[i] for i in range(len(pressure_loss_nodes_return_df.values[0])))]
-
-    print time.clock() - t0, "seconds process time for network thermal-hydraulic calculation \n"
-
+    # assigning a dummy temperature matrix that defines the temperature at each edge at each timestem
+    # FIXME[MM]: get pipe temperature or use other approximations
+    temperature_matrix_supply = np.ones([8760,all_nodes_df.shape[1]]) * 323  # assigning a dummy temperature to each edge for now
+    temperature_matrix_return = np.ones([8760,all_nodes_df.shape[1]]) * 303  # assigning a dummy temperature to each edge for now
+    for i in range(temperature_matrix_supply.shape[1]):
+        temperature_matrix_supply[:][i] = 313 + 2 * i
+    print
 
 #===========================
 # Hydraulic calculation
@@ -582,12 +497,7 @@ def calc_aggregated_heat_conduction_coefficient(locator, gv, L_pipe, pipe_proper
     K_all = np.diag(K_all)
     return K_all
 
-def calc_edge_temperatures(temperature_node, edge_node_df):
-    '''
-    calculates the temperature at each edge assuming T_edge = (T_node_1 + T_node_2)/2 as done, for example, by Wang et al.
-    '''
-    temperature_edge = np.dot(temperature_node,abs(edge_node_df.values)/2)
-    return temperature_edge
+
 
 #============================
 #other functions
@@ -604,19 +514,12 @@ def write_substations_to_nodes_df(all_nodes_df, df_value, flag):
                 nodes_df[node] = np.nan  # set temperature value to nan for non-substation nodes
 
     else:
-        # calculate mass flow and write all flow rates into nodes dataframe
+        # calculate plant mass flow and write all flow rates into nodes dataframe
         for node in all_nodes_df:
-            # for each node, mass_edge_in + mass_supply = mass_edge_out + mass_demand
-            #                mass_edge_in - mass_edge_out = mass_demand - mass_supply
-            #                edge_node * mass_flow_edge = mass_demand - mass_supply
-            #                edge_node * mass_flow_edge = mass_flow_node
-            # so mass_flow_node[node] = mass_flow_demand[node] for consumer nodes and
-            #    mass_flow_node[node] = mass_flow_demand[node] - mass_flow_supply[node] for plant nodes
-            # assuming only one plant node, the mass flow on the supply side needs to equal the mass flow from consumers
-            # so mass_flow_supply = sum(mass_flow_deman[node]) for all nodes
             if all_nodes_df[node]['consumer'] != '':
                 nodes_df[node] = df_value[all_nodes_df[node]['consumer']]
             elif all_nodes_df[node]['plant'] != '':
+                # the mass flow rate required in a plant node is its own mass flow required minus the sum of the mass flow required by all other consumers
                 # nodes_df[node] = df_value[all_nodes_df[node]['plant']] - (df_value.sum(axis=1) - df_value[all_nodes_df[node]['plant']])
                 nodes_df[node] = - (df_value.sum(axis=1) - df_value[all_nodes_df[node]['plant']])
             else:
