@@ -32,6 +32,20 @@
 * `scenario/inputs/building-properties/thermal_properties.shp`
 * `scenario/inputs/building-properties/internal_loads.shp`
 
+## Demand graphs
+
+### Input files
+
+* `scenario/outputs/data/demand/Total_demand.csv`
+* `scenario/outputs/data/demand/{building_name}.csv`
+  * (one for each building in the scenario)
+
+### Output files
+
+* `scenario/outputs/plots/timeseries/{building_name}.pdf`
+  * (one for each building in the scenario)
+  
+
 
 ## Emissions
 
