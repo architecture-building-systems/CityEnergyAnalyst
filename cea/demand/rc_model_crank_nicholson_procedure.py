@@ -116,7 +116,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
 
             #update temperatures for over heating case
             if air_con_model_loads_flows_temperatures['q_hs_sen_hvac'] > phi_h_act:
-                print('AC over heating')
+                # print('AC over heating')
                 phi_h_act_over_heating = air_con_model_loads_flows_temperatures['q_hs_sen_hvac']
                 rc_model_temperatures = rc_model_SIA_with_TABS.calc_rc_model_temperatures_cooling(
                     phi_h_act_over_heating, bpr, tsd,
