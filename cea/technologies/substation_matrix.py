@@ -240,7 +240,7 @@ def substation_HEX_sizing(locator, gv, building):
     # results.to_csv(result_substation, sep=',', index=False, float_format='%.3f')
     return [A_hex_hs, A_hex_ww, A_hex_cs, UA_heating_hs, UA_heating_ww, UA_cooling_cs]
 
-def substation_return_model_main(locator, gv, building_names, buildings_demands, substations_HEX_specs, T_DH, t):
+def substation_return_model_main(locator, gv, building_names, buildings_demands, substations_HEX_specs, T_DH, t, flag):
     """
     calculate all substation return temperature and required flow rate at each time-step.
 
@@ -261,7 +261,7 @@ def substation_return_model_main(locator, gv, building_names, buildings_demands,
 
     for name in building_names:
         building = buildings_demands[index].loc[[t]]
-        if T_DH.size == 1: # for the initialization step
+        if flag is True: # for the initialization step
             T_supply = T_DH
         else:
             # find substation supply temperature
@@ -286,7 +286,7 @@ def calc_substation_return_DH(building, T_DH_supply, substation_HEX_specs):
     UA_heating_hs = substation_HEX_specs.HEX_UA_SH
     UA_heating_ww = substation_HEX_specs.HEX_UA_DHW
 
-    thi = T_DH_supply + 273  # In k
+    thi = T_DH_supply  # In [K]
     Qhsf = building.Qhsf_kWh.values * 1000  # in W
     if Qhsf.max() > 0:
         tco = building.Thsf_sup_C.values + 273  # in K
@@ -329,19 +329,6 @@ def calc_substation_return_DC(locator, gv, building, T_DC_supply_matrix, substat
         mcp_DC_cs = 0
 
     return t_DC_return_cs, mcp_DC_cs
-
-def calc_max_network_flowrate(locator, total_demand, building_names, gv):
-    for name in building_names:
-        print name
-        dfRes = total_demand[(total_demand.Name == name)]
-        combi[index] = 1
-        key = "".join(str(e) for e in combi)
-        fName_result = "Total_" + key + ".csv"
-        dfRes.to_csv(locator.pathSubsRes + '//' + fName_result, sep=',', float_format='%.3f')
-        combi[index] = 0
-        # calculate substation parameters per building
-        substation_model(locator, gv, buildings[index], T_DHS, T_DHS_supply, T_DCS_supply, Ths, Tww)
-        index += 1
 
 # ============================
 # substation cooling
@@ -564,7 +551,6 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
             tho = thi - eff[1] * cmin * (thi - tci) / ch
             Flag = True
 
-        tho = tho - 273
     else:
         tho = 0
         ch = 0
