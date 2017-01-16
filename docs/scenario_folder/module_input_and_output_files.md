@@ -119,3 +119,15 @@
 ### Output files
 
 * `scenario/outputs/data/emissions/Total_LCA_mobility.csv`
+
+## Heatmaps
+
+### Input files
+
+* `scenario/inputs/building-geometry/zone.shp`
+* csv file to analyze
+
+### Output files
+
+* `scenario/outputs/plots/heatmaps/{field}/*`
+  * an ArcGIS heatmap for each field in the csv file to analyze 
