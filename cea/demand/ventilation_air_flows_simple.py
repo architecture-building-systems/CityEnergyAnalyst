@@ -2,9 +2,10 @@
 
 
 from __future__ import division
+
 import numpy as np
 
-from sandbox.ghapple import control_ventilation_systems
+from cea.demand import control_ventilation_systems
 from cea.utilities import physics
 
 __author__ = "Gabriel Happle"
