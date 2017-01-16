@@ -6,7 +6,7 @@ import os
 import cea.demand.demand_main
 import cea.demand.occupancy_model
 import cea.demand.thermal_loads
-import cea.demand.ventilation_model
+import cea.demand.ventilation_air_flows_detailed
 import cea.demand.airconditioning_model
 import cea.demand.electrical_loads
 import cea.demand.hotwater_loads
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     functionlogger.wrap_module(cea.demand.demand_main, first_only=True)
     functionlogger.wrap_module(cea.demand.occupancy_model, first_only=True)
     functionlogger.wrap_module(cea.demand.thermal_loads, first_only=True)
-    functionlogger.wrap_module(cea.demand.ventilation_model, first_only=True)
+    functionlogger.wrap_module(cea.demand.ventilation_air_flows_detailed, first_only=True)
     functionlogger.wrap_module(cea.demand.airconditioning_model, first_only=True)
     functionlogger.wrap_module(cea.demand.electrical_loads, first_only=True)
     functionlogger.wrap_module(cea.demand.hotwater_loads, first_only=True)

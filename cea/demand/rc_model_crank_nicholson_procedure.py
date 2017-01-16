@@ -104,6 +104,8 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         tsd['Qhs_lat_sys'][t] = 0
         tsd['Ehs_lat_aux'][t] = 0
         tsd['ma_sup_hs'][t] = 0
+        tsd['Ta_sup_hs'][t] = 0
+        tsd['Ta_re_hs'][t] = 0
 
         # STEP 5 - latent heat demand of AC systems
         # ******
@@ -127,8 +129,8 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
                 tsd['theta_o'][t] = rc_model_temperatures['theta_o']
                 tsd['system_status'][t] = 'AC over heating'
 
-            else:
-                print(phi_h_act, air_con_model_loads_flows_temperatures['q_hs_sen_hvac'])
+            # else:
+            #     print(phi_h_act, air_con_model_loads_flows_temperatures['q_hs_sen_hvac'])
 
             # update AC energy demand
             tsd['Qhs_sen_sys'][t] = air_con_model_loads_flows_temperatures['q_hs_sen_hvac']
@@ -250,8 +252,8 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
                 tsd['theta_o'][t] = rc_model_temperatures['theta_o']
                 tsd['system_status'][t] = 'AC over cooling'
 
-            else:
-                print(phi_c_act, air_con_model_loads_flows_temperatures['q_cs_sen_hvac'])
+            # else:
+                # print(phi_c_act, air_con_model_loads_flows_temperatures['q_cs_sen_hvac'])
 
             # update AC energy demand
 

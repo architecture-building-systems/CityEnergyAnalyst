@@ -10,7 +10,7 @@ import xlwt
 
 import cea.globalvar
 import cea.inputlocator
-from cea.demand import datacenter_loads, ventilation_air_flows_simple
+from cea.demand import datacenter_loads, ventilation_air_flows_simple, control_ventilation_systems
 from cea.demand import electrical_loads
 from cea.demand import hotwater_loads
 from cea.demand import occupancy_model
