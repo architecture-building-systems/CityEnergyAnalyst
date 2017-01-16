@@ -152,10 +152,10 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             ventilation_air_flows_simple.calc_air_mass_flow_mechanical_ventilation(bpr, tsd, hoy)
             ventilation_air_flows_simple.calc_air_mass_flow_window_ventilation(bpr, tsd, hoy)
 
-            dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
-            qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(tsd['theta_a'][hoy - 1] if not tsd['theta_a'][hoy - 1] else tsd['T_ext'][hoy - 1], tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
-            tsd['qm_sum_in'][hoy] = qm_sum_in
-            tsd['qm_sum_out'][hoy] = qm_sum_out
+            # dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
+            # qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(tsd['theta_a'][hoy - 1] if not tsd['theta_a'][hoy - 1] else tsd['T_ext'][hoy - 1], tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
+            # tsd['qm_sum_in'][hoy] = qm_sum_in
+            # tsd['qm_sum_out'][hoy] = qm_sum_out
 
             #print(tsd['m_ve_mech'][hoy])
             #print(tsd['m_ve_window'][hoy])
@@ -206,6 +206,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                                           Qhsf_0,
                                                                                                           gv)
 
+        # Hot water loads -> TODO: is it not possible to have water loads without conditioned area (Af == 0)?
         Mww, tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(
             bpr.rc_model['Af'],
             bpr.building_systems['Lcww_dis'],
@@ -249,19 +250,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                         bpr.hvac['type_hs'],
                                                                                         tsd['Ehs_lat_aux'])
 
-        # TODO: calculate process heat - this seems to be somehow forgotten
-        tsd['Qhprof'][:] = 0
-
-        # calculate other quantities
-        tsd['Qcsf_lat'] = -tsd['Qcsf_lat']
-        tsd['Qcsf'] = -tsd['Qcsf']
-        tsd['Qcs'] = -tsd['Qcs']
-        tsd['people'] = np.floor(tsd['people'])
-        tsd['QHf'] = tsd['Qhsf'] + tsd['Qwwf'] + tsd['Qhprof']
-        tsd['QCf'] = tsd['Qcsf'] + tsd['Qcdataf'] + tsd['Qcref']
-        tsd['Ef'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref']
-        tsd['QEf'] = tsd['QHf'] + tsd['QCf'] + tsd['Ef']
-
     elif bpr.rc_model['Af'] == 0: # if building does not have conditioned area
 
         tsd = update_timestep_data_no_conditioned_area(tsd)
@@ -269,10 +257,24 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     else:
         raise
 
+    # TODO: calculate process heat - this seems to be somehow forgotten
+    tsd['Qhprof'][:] = 0
+
+    # calculate other quantities
+    tsd['Qcsf_lat'] = abs(tsd['Qcsf_lat'])
+    tsd['Qcsf'] = abs(tsd['Qcsf'])
+    tsd['Qcs'] = abs(tsd['Qcs'])
+    tsd['people'] = np.floor(tsd['people'])
+    tsd['QHf'] = tsd['Qhsf'] + tsd['Qwwf'] + tsd['Qhprof']
+    tsd['QCf'] = tsd['Qcsf'] + tsd['Qcdataf'] + tsd['Qcref']
+    tsd['Ef'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref']
+    tsd['QEf'] = tsd['QHf'] + tsd['QCf'] + tsd['Ef']
+
     # write results to csv
     gv.demand_writer.results_to_csv(tsd, bpr, locator, date, building_name)
     # write report
     gv.report(tsd, locator.get_demand_results_folder(), building_name)
+
     return
 
 
@@ -291,11 +293,18 @@ def initialize_timestep_data(bpr, weather_data):
            'T_sky': weather_data.skytemp_C.values,
            'u_wind': weather_data.windspd_ms}
     # fill data with nan values
-    nan_fields = ['Qhs_lat_sys','Qhs_sen_sys','Qcs_lat_sys','Qcs_sen_sys', 'theta_a', 'theta_m', 'theta_c', 'theta_o', 'Qhs_sen', 'Qcs_sen', 'Im_tot','Ehs_lat_aux', 'Qhs_em_ls', 'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs','Ta_sup_hs','Ta_sup_cs','Ta_re_hs','Ta_re_cs','I_sol','I_int_sen','w_int','m_ve_mech','m_ve_window','I_rad', 'I_ia','I_m','I_st','QEf','QHf','QCf','Ef','Qhsf','Qhs','Qhsf_lat', 'Qwwf', 'Qww', 'Qcsf','Qcs','Qcsf_lat','Qhprof','Eauxf','Eauxf_ve','Eauxf_hs','Eauxf_cs','Eauxf_ww','Eauxf_fw','mcphsf','mcpcsf','mcpwwf','Twwf_re','Thsf_sup','Thsf_re','Tcsf_sup','Tcsf_re','Tcdataf_re','Tcdataf_sup','Tcref_re','Tcref_sup','theta_ve_mech','m_ve_window','m_ve_mech']
+    nan_fields = ['Qhs_lat_sys','Qhs_sen_sys','Qcs_lat_sys','Qcs_sen_sys', 'theta_a', 'theta_m', 'theta_c', 'theta_o',
+                  'Qhs_sen', 'Qcs_sen','Ehs_lat_aux', 'Qhs_em_ls', 'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs',
+                  'Ta_sup_hs','Ta_sup_cs','Ta_re_hs','Ta_re_cs','I_sol','I_int_sen','w_int','m_ve_mech','m_ve_window',
+                  'I_rad', 'I_ia','I_m','I_st','QEf','QHf','QCf','Ef','Qhsf','Qhs','Qhsf_lat', 'Qwwf', 'Qww', 'Qcsf',
+                  'Qcs','Qcsf_lat','Qhprof','Eauxf','Eauxf_ve','Eauxf_hs','Eauxf_cs','Eauxf_ww','Eauxf_fw','mcphsf',
+                  'mcpcsf','mcpwwf','Twwf_re','Thsf_sup','Thsf_re','Tcsf_sup','Tcsf_re','Tcdataf_re','Tcdataf_sup',
+                  'Tcref_re','Tcref_sup','theta_ve_mech','m_ve_window','m_ve_mech']
     tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))
 
     # initialize system status log
     tsd['system_status'] = np.chararray((8760), itemsize=20)
+    tsd['system_status'][:] = 'unknown'
 
     tsd['qm_sum_in'] = np.zeros(8760) * np.nan
     tsd['qm_sum_out'] = np.zeros(8760) * np.nan
@@ -305,7 +314,13 @@ def initialize_timestep_data(bpr, weather_data):
 
 def update_timestep_data_no_conditioned_area(tsd):
 
-    zero_fields = ['Qhs_lat_sys','Qhs_sen_sys','Qcs_lat_sys','Qcs_sen_sys', 'Qhs_sen', 'Qcs_sen', 'Ehs_lat_aux', 'Qhs_em_ls', 'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs', 'Ta_sup_hs', 'Ta_sup_cs','Ta_re_hs','Ta_re_cs', 'Qhsf','Qhs','Qhsf_lat', 'Qcsf','Qcs','Qcsf_lat']
+    zero_fields = ['Qhs_lat_sys','Qhs_sen_sys','Qcs_lat_sys','Qcs_sen_sys', 'Qhs_sen', 'Qcs_sen', 'Ehs_lat_aux',
+                   'Qhs_em_ls', 'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs', 'Ta_sup_hs', 'Ta_sup_cs','Ta_re_hs','Ta_re_cs',
+                   'Qhsf','Qhs','Qhsf_lat', 'Qcsf','Qcs','Qcsf_lat', 'Qcsf', 'Qcs', 'Qhsf', 'Qhs', 'Eauxf', 'Eauxf_hs',
+                   'Eauxf_cs', 'Eauxf_ve', 'Eauxf_ww', 'Eauxf_fw', 'mcphsf', 'mcpcsf',
+                   'mcpwwf', 'mcpdataf', 'mcpref', 'Twwf_sup', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re',
+                   'Tcdataf_re','Tcdataf_sup', 'Tcref_re', 'Tcref_sup','Qwwf', 'Qww']
+
     tsd.update(dict((x, np.zeros(8760)) for x in zero_fields))
 
     return tsd
