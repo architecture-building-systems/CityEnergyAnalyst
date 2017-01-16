@@ -1,5 +1,20 @@
 # Module input and output files
 
+## Benchmark graphs
+
+### Input files
+
+* `scenario/inputs/building-properties/building_occupancy.shp`
+* `scenario/inputs/building-properties/architecture.shp`
+* `scenario/inputs/building-properties/age.shp`
+* `scenario/inputs/building-geometry/zone.shp`
+* `db/Archetypes/Archetypes_properties.xlsx`
+* `scenario/outputs/data/emissions/Total_LCA_embodied.csv`
+
+### Output files
+
+* (user defined pdf file)
+
 ## Emissions
 
 ### Input files
@@ -22,3 +37,17 @@
 * `scenario/outputs/data/emissions/QCf_LCA_operation.csv`
 * `scenario/outputs/data/emissions/Qwwf_LCA_operation.csv`
 * `scenario/outputs/data/emissions/Qhsf_LCA_operation.csv`
+
+## Embodied energy
+
+### Input files
+
+* `scenario/inputs/building-properties/building_occupancy.shp`
+* `scenario/inputs/building-properties/architecture.shp`
+* `scenario/inputs/building-properties/age.shp`
+* `scenario/inputs/building-geometry/zone.shp`
+* `db/Archetypes/Archetypes_properties.xlsx`
+
+### Output files
+
+* `scenario/outputs/data/emissions/Total_LCA_embodied.csv`
