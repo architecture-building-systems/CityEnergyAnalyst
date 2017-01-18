@@ -155,7 +155,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             # tsd['qm_sum_out'][hoy] = qm_sum_out
 
             # ventilation air temperature
-            ventilation_air_flows_simple.calc_theta_ve_mech(bpr, tsd, hoy)
+            ventilation_air_flows_simple.calc_theta_ve_mech(bpr, tsd, hoy, gv)
 
             # heating / cooling demand of building
             rc_model_crank_nicholson_procedure.calc_rc_model_demand_heating_cooling(bpr, tsd, hoy, gv)
