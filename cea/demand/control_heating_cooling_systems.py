@@ -3,7 +3,7 @@
 
 from __future__ import division
 
-from cea.demand import rc_model_SIA_with_TABS
+from cea.demand import rc_model_SIA
 from cea.utilities import helpers
 
 __author__ = "Gabriel Happle"
@@ -114,7 +114,7 @@ def is_active_heating_system(bpr, tsd, t):
     # check for heating demand
     if has_heating_system(bpr) \
             and helpers.is_heatingseason_hoy(t) \
-            and rc_model_SIA_with_TABS.has_heating_demand(bpr, tsd, t):
+            and rc_model_SIA.has_heating_demand(bpr, tsd, t):
 
         return True
     else:
@@ -128,14 +128,14 @@ def is_active_cooling_system(bpr, tsd, t):
     # check for cooling demand
     if has_cooling_system(bpr) \
             and helpers.is_coolingseason_hoy(t) \
-            and rc_model_SIA_with_TABS.has_cooling_demand(bpr, tsd, t) \
+            and rc_model_SIA.has_cooling_demand(bpr, tsd, t) \
             and tsd['T_ext'][t] >= tsd['ta_cs_set'][t]:
 
         return True
 
     elif has_cooling_system(bpr) \
             and helpers.is_coolingseason_hoy(t) \
-            and rc_model_SIA_with_TABS.has_cooling_demand(bpr, tsd, t) \
+            and rc_model_SIA.has_cooling_demand(bpr, tsd, t) \
             and tsd['T_ext'][t] < tsd['ta_cs_set'][t]:  # Cooling system turned off if outside is cooler than set point
         return False
 
