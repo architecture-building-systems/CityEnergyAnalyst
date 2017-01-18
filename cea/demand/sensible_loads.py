@@ -41,18 +41,12 @@ solar and heat gains
 =========================================
 """
 
+
 def calc_Qgain_sen(t, tsd, bpr, gv):
+    # TODO
 
     # internal loads
-    tsd['I_sol'][t], tsd['I_rad'][t]= calc_I_sol(t, bpr, tsd, gv)
-
-    tsd['I_int_sen'][t] = tsd['people'][t] * bpr.internal_loads['Qs_Wp'] + 0.9 * (tsd['Ealf'][t] + tsd['Eprof'][t])\
-                          + tsd['Qcdataf'][t] - tsd['Qcref'][t]
-
-    # divide into components for RC model
-    tsd['I_ia'][t] = 0.5 * tsd['I_int_sen'][t]
-    tsd['I_m'][t] = (bpr.rc_model['Am'] / bpr.rc_model['Atot']) * (tsd['I_ia'][t] + tsd['I_sol'][t])
-    tsd['I_st'][t] = (1 - (bpr.rc_model['Am'] / bpr.rc_model['Atot']) - (bpr.rc_model['Htr_w'] / (9.1 * bpr.rc_model['Atot']))) * (tsd['I_ia'][t] + tsd['I_sol'][t])
+    tsd['I_sol'][t], tsd['I_rad'][t] = calc_I_sol(t, bpr, tsd, gv)
 
     return tsd
 
