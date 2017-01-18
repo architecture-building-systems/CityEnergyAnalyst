@@ -10,7 +10,6 @@ prEN 15316-2:2014
 
 from __future__ import division
 import numpy as np
-from sandbox.ghapple import helpers as h
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
