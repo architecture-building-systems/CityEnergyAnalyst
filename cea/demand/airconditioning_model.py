@@ -9,11 +9,12 @@
     [1] Kämpf, Jérôme Henri
         On the modelling and optimisation of urban energy fluxes
         http://dx.doi.org/10.5075/epfl-thesis-4548
+
 """
+#TODO: this is not really true anymore. The procedure now is just loosely based on Kaempf.
 
 from __future__ import division
-import numpy as np
-from cea.utilities.physics import calc_h, calc_w, calc_t_from_h
+from cea.utilities.physics import calc_h, calc_w
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -33,15 +34,20 @@ ventilation demand controlled unit
 
 
 def calc_hvac_cooling(tsd, hoy, gv):
-    """
-
 
     """
+    Calculate AC air mass flows, energy demand and temperatures for the cooling case
 
-    temp_zone_set = tsd['theta_a'][hoy]
-    qe_sen = tsd['Qcs_sen'][hoy] # get the total sensible load from the RC model, in this case without any mechanical ventilation losses??? NO!
-    m_ve_hvac_req = tsd['m_ve_mech'][hoy]   # mechanical ventilation flow rate according to ventilation control
-    wint = tsd['w_int'][hoy]
+    :param tsd: time series data dict
+    :param hoy: time step
+    :param gv: globalvars
+    :return:
+    """
+
+    temp_zone_set = tsd['theta_a'][hoy]  # zone set temperature according to scheduled set points
+    qe_sen = tsd['Qcs_sen'][hoy]  # get the total sensible load from the RC model, in this case without any mechanical ventilation losses??? NO!
+    m_ve_hvac_req = tsd['m_ve_mech'][hoy] # mechanical ventilation flow rate according to ventilation control
+    wint = tsd['w_int'][hoy] # internal moisture gains from occupancy
 
     # sensible cooling load provided by conditioning of ventilation air
     #  = enthalpy difference in air mass flow between supply and room temperature
@@ -56,7 +62,7 @@ def calc_hvac_cooling(tsd, hoy, gv):
     t5 = temp_zone_set
 
     # ventilation air properties after heat exchanger
-    t2, w2 = calc_hex(tsd, hoy, gv)  # (°C), (kg/kg)
+    t2, w2 = calc_hex(tsd, hoy)  # (°C), (kg/kg)
 
     # State No. 3
     # Assuming that AHU does not modify the air humidity
@@ -107,24 +113,18 @@ def calc_hvac_cooling(tsd, hoy, gv):
     h_ts_w5 = calc_h(ts, w5)
     m_ve_hvac_recirculation = q_cs_sen_recirculation / (h_ts_w5 - h_w5_t5)
 
-    # Adiabatic humidifier - computation of electrical auxiliary loads
-    if qe_hum > 0:
-        pel_hum_aux = 15 / 3600 * m_ve_hvac_req  # assuming a performance of 15 W por Kg/h of humidified air source: bertagnolo 2012
-    else:
-        pel_hum_aux = 0
-
-
     q_cs_sen_hvac = (q_cs_sen_hvac + q_cs_sen_recirculation) * 1000
     q_cs_lat_hvac = qe_dehum * 1000
     ma_sup_cs = m_ve_hvac_req + m_ve_hvac_recirculation
     ta_sup_cs = ts
     ta_re_cs = (m_ve_hvac_req * t2 + m_ve_hvac_recirculation * t5) / ma_sup_cs  # temperature mixing proportional to mass flow rates
 
-
-    air_con_model_loads_flows_temperatures = {'q_cs_sen_hvac': q_cs_sen_hvac, \
-                                              'q_cs_lat_hvac' : q_cs_lat_hvac, \
-                                              'ma_sup_cs' : ma_sup_cs, \
-                                              'ta_sup_cs' : ta_sup_cs, 'ta_re_cs' : ta_re_cs}
+    # construct output dict
+    air_con_model_loads_flows_temperatures = {'q_cs_sen_hvac': q_cs_sen_hvac,
+                                              'q_cs_lat_hvac': q_cs_lat_hvac,
+                                              'ma_sup_cs': ma_sup_cs,
+                                              'ta_sup_cs': ta_sup_cs,
+                                              'ta_re_cs': ta_re_cs}
 
     if m_ve_hvac_req + m_ve_hvac_recirculation < 0:
         raise ValueError
@@ -143,7 +143,7 @@ def calc_hvac_sensible_cooling_ventilation_air(tsd, hoy, gv):
 
     # state after heat exchanger
     # TODO: temperature could come from ventilation heat exchanger...
-    t2, w2 = calc_hex(tsd, hoy, gv)  # (°C), (kg/kg)
+    t2, w2 = calc_hex(tsd, hoy)  # (°C), (kg/kg)
 
     # State No. 3
     # Assuming that AHU does not modify the air humidity
@@ -174,7 +174,7 @@ def calc_hvac_sensible_heating_ventilation_air(tsd, hoy, gv):
 
     # state after heat exchanger
     # TODO: temperature could come from ventilation heat exchanger...
-    t2, w2 = calc_hex(tsd, hoy, gv)  # (°C), (kg/kg)
+    t2, w2 = calc_hex(tsd, hoy)  # (°C), (kg/kg)
 
     # State No. 3
     # Assuming that AHU does not modify the air humidity
@@ -216,7 +216,7 @@ def calc_hvac_heating(tsd, hoy, gv):
     t5 = temp_zone_set
 
     # state after heat exchanger
-    t2, w2 = calc_hex(tsd, hoy, gv)  # (°C), (kg/kg)
+    t2, w2 = calc_hex(tsd, hoy)  # (°C), (kg/kg)
 
     # State No. 3
     # Assuming that AHU does not modify the air humidity
@@ -283,10 +283,12 @@ def calc_hvac_heating(tsd, hoy, gv):
     ta_re_hs = (
                m_ve_hvac_req * t2 + m_ve_hvac_recirculation * t5) / ma_sup_hs  # temperature mixing proportional to mass flow rates
 
-    air_con_model_loads_flows_temperatures = {'q_hs_sen_hvac': q_hs_sen_hvac, \
-                                              'q_hs_lat_hvac': q_hs_lat_hvac, \
-                                              'ma_sup_hs': ma_sup_hs, \
-                                              'ta_sup_hs': ta_sup_hs, 'ta_re_hs': ta_re_hs, 'e_hs_lat_aux': pel_hum_aux}
+    air_con_model_loads_flows_temperatures = {'q_hs_sen_hvac': q_hs_sen_hvac,
+                                              'q_hs_lat_hvac': q_hs_lat_hvac,
+                                              'ma_sup_hs': ma_sup_hs,
+                                              'ta_sup_hs': ta_sup_hs,
+                                              'ta_re_hs': ta_re_hs,
+                                              'e_hs_lat_aux': pel_hum_aux}
 
     if m_ve_hvac_req + m_ve_hvac_recirculation < 0:
         raise ValueError
@@ -299,35 +301,22 @@ def calc_hvac_heating(tsd, hoy, gv):
 air Heat exchanger unit
 =========================================
 """
-def calc_hex(tsd, hoy, gv):
+
+
+def calc_hex(tsd, hoy):
     """
     Calculates air properties of mechanical ventilation system with heat exchanger
     Modeled after 2.4.2 in SIA 2044
 
-    Parameters
-    ----------
-    rel_humidity_ext : (%)
-    gv : globalvar
-    qv_mech : required air volume flow (kg/s)
-    temp_ext : external temperature at time t (°C)
-    temp_zone_prev : ventilation zone air temperature at time t-1 (°C)
-
-    Returns
-    -------
-    t2, w2 : temperature and moisture content of inlet air after heat exchanger
-
+    :param tsd: time series data dict
+    :param hoy: time step [0...8760]
+    :return: t2, w2 : temperature and moisture content of inlet air after heat exchanger
     """
+
     # TODO add literature
 
     rel_humidity_ext = tsd['rh_ext'][hoy]
     temp_ext = tsd['T_ext'][hoy]
-
-    # FIXME: dynamic HEX efficiency
-    # Properties of heat recovery and required air incl. Leakage
-    # qv_mech = qv_mech * 1.0184  # in m3/s corrected taking into account leakage # TODO: add source
-    # Veff = gv.Vmax * qv_mech / qv_mech_dim  # Eq. (85) in SIA 2044
-    # nrec = gv.nrec_N - gv.C1 * (Veff - 2)  # heat exchanger coefficient # TODO: add source
-    nrec = gv.nrec_N  # for now use constant efficiency for heat recovery
 
     # State No. 1
     w1 = calc_w(temp_ext, rel_humidity_ext)  # outdoor moisture (kg/kg)
@@ -336,17 +325,6 @@ def calc_hex(tsd, hoy, gv):
     # inlet air temperature after HEX calculated from zone air temperature at time step t-1 (°C)
     t2 = tsd['theta_ve_mech'][hoy]
     w2 = min(w1, calc_w(t2, 100))  # inlet air moisture (kg/kg), Eq. (4.24) in [1]
-
-    # TODO: document
-    # bypass heat exchanger if use is not beneficial
-    #if temp_zone_prev > temp_ext and not gv.is_heating_season(timestep):
-        #t2 = temp_ext
-        #w2 = w1
-        # print('bypass HEX cooling')
-    #elif temp_zone_prev < temp_ext and gv.is_heating_season(timestep):
-        #t2 = temp_ext
-        #w2 = w1
-        # print('bypass HEX heating')
 
     return t2, w2
 

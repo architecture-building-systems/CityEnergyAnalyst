@@ -141,7 +141,7 @@ def calc_m_ve_leakage_simple(bpr, tsd, gv):
     return
 
 
-def calc_theta_ve_mech(bpr, tsd, t):
+def calc_theta_ve_mech(bpr, tsd, t, gv):
     """
     Calculates supply temperature of mechanical ventilation system according to ventilation control options and
      building systems properties
@@ -152,11 +152,11 @@ def calc_theta_ve_mech(bpr, tsd, t):
     :param bpr: Building properties row object
     :param tsd: Time series data dict
     :param t: time step [0..8760]
+    :param gv: globalvars
     :return: updates tsd
     """
 
-    # TODO: add to gv or other appropriate location
-    eta_rec = 0.75  # constant efficiency of Heat recovery
+    eta_rec = gv.nrec_N  # constant efficiency of Heat recovery
 
     if control_ventilation_systems.is_mechanical_ventilation_heat_recovery_active(bpr, tsd, t):
 
