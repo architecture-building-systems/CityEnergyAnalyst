@@ -17,6 +17,7 @@ from cea.resources import geothermal
 import os
 from scipy.linalg import block_diag
 import scipy
+import geopandas as gpd
 
 
 __author__ = "Martin Mosteiro, Shanshan Hsieh"
@@ -28,11 +29,12 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def thermal_network_main(locator,gv):
+def thermal_network_main(locator, gv, shapefile_flag):
     """
     See Thermo-hydraulic modelling procedures for DHC Networks
     :param locator:
     :param gv:
+    :param shapefile_flag: Boolean set to True if the source for the data is a shapefile, False if it is a csv
     :return:
     """
 
@@ -52,7 +54,10 @@ def thermal_network_main(locator,gv):
                                                                                      building_names, gv)
 
     # get edge-node matrix from defined network
-    edge_node_df, all_nodes_df, pipe_length_df = get_thermal_network_from_csv(locator)
+    if shapefile_flag == False:
+        edge_node_df, all_nodes_df, pipe_length_df = get_thermal_network_from_csv(locator)
+    else:
+        edge_node_df, all_nodes_df, pipe_length_df = get_thermal_network_from_shapefile(locator)
 
     # get hourly heat requirement and target supply temperature from each substation
     t_target_supply = read_properties_from_buildings(building_names, buildings_demands, 'T_sup_target_DH')
@@ -179,56 +184,6 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df):
     '''
 
     return mass_flow_edge
-
-def get_thermal_network_from_csv(locator):
-    """
-    This function reads the existing node and pipe network from csv files (as provided for the Zug reference case) and
-    produces an edge-node incidence matrix (as defined by Oppelt et al. "Dynamic thermo-hydraulic model of district
-    cooling networks," Applied Thermal Engineering, 2016) as well as the length of each edge.
-
-    :param locator: locator class
-
-    :return:
-        edge_node_matrix: matrix consisting of n rows (number of nodes) and e columns (number of edges) and indicating
-        direction of flow of each edge e at node n: if e points to n, value is 1; if e leaves node n, -1; else, 0.
-        consumer_nodes: vector that defines which vectors correspond to consumers (if node n is a consumer node,
-         then consumer_nodes[n] = (Name), else consumer_nodes[n] = 0)
-        plant_nodes: vector that defines which vectors correspond to plants (if node n is a plant node, then
-         plant_nodes[n] = (Name), else plant_nodes[n] = 0)
-        csv file stored in locator.pathNtwRes + '//' + EdgeNode_DH
-
-    """
-
-    t0 = time.clock()
-
-    # get node data and create consumer and plant node vectors
-    node_data_df = pd.read_csv(locator.get_optimization_network_layout_nodes_file())
-    node_names = node_data_df['DC_ID'].values
-    consumer_nodes = np.vstack((node_names,(node_data_df['Sink']*node_data_df['Name']).values))
-    plant_nodes = np.vstack((node_names,(node_data_df['Plant']*node_data_df['Name']).values))
-
-    # get pipe data and create edge-node matrix
-    pipe_data_df = pd.read_csv(locator.get_optimization_network_layout_pipes_file())
-    pipe_data_df = pipe_data_df.set_index(pipe_data_df['DC_ID'].values, drop=True)
-    list_pipes = pipe_data_df['DC_ID']
-    list_nodes = sorted(set(pipe_data_df['NODE1']).union(set(pipe_data_df['NODE2'])))
-    edge_node_matrix = np.zeros((len(list_nodes),len(list_pipes)))
-    for j in range(len(list_pipes)):
-        for i in range(len(list_nodes)):
-            if pipe_data_df['NODE2'][j] == list_nodes[i]:
-                edge_node_matrix[i][j] = 1
-            elif pipe_data_df['NODE1'][j] == list_nodes[i]:
-                edge_node_matrix[i][j] = -1
-    edge_node_df = pd.DataFrame(data=edge_node_matrix, index = list_nodes, columns = list_pipes)
-
-    edge_node_df.to_csv(os.path.join(locator.get_optimization_network_layout_folder(), "EdgeNode_DH.csv"))
-    all_nodes_df = pd.DataFrame(data=[consumer_nodes[1][:], plant_nodes[1][:]], index = ['consumer','plant'], columns = consumer_nodes[0][:])
-    all_nodes_df = all_nodes_df[edge_node_df.index.tolist()]
-    all_nodes_df.to_csv(os.path.join(locator.get_optimization_network_layout_folder(), "AllNodes_DH.csv"))
-
-    print time.clock() - t0, "seconds process time for Network summary\n"
-
-    return edge_node_df, all_nodes_df, pipe_data_df['LENGTH']
 
 def assign_pipes_to_edges(mass_flow_df, locator, gv):
     '''
@@ -363,6 +318,179 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
 #===========================
 # Thermal calculation
 #===========================
+
+def get_thermal_network_from_csv(locator):
+    """
+    This function reads the existing node and pipe network from csv files (as provided for the Zug reference case) and
+    produces an edge-node incidence matrix (as defined by Oppelt et al. "Dynamic thermo-hydraulic model of district
+    cooling networks," Applied Thermal Engineering, 2016) as well as the length of each edge.
+
+    :param locator: locator class
+
+    :return:
+        edge_node_df: dataframe consisting of n rows (number of nodes) and e columns (number of edges) and indicating
+    direction of flow of each edge e at node n: if e points to n, value is 1; if e leaves node n, -1; else, 0.  (n x e)
+        all_nodes_df: dataframe that contains all nodes and whether a node is a consumer, plant or neither      (2 x n)
+        pipe_data_df['LENGTH']: vector containing the length of each edge in the network                             (1 x e)
+
+        csv files stored in:
+            -edge_node_df:  locator.get_optimization_network_layout_folder() + '//' + 'EdgeNode_DH.csv'
+            -all_nodes_df:       locator.get_optimization_network_layout_folder() + '//' + 'AllNodes_DH.csv'
+    """
+
+    t0 = time.clock()
+
+    # get node data and create consumer and plant node vectors
+    node_data_df = pd.read_csv(locator.get_optimization_network_layout_nodes_file())
+    node_names = node_data_df['DC_ID'].values
+    consumer_nodes = np.vstack((node_names,(node_data_df['Sink']*node_data_df['Name']).values))
+    plant_nodes = np.vstack((node_names,(node_data_df['Plant']*node_data_df['Name']).values))
+
+    # get pipe data and create edge-node matrix
+    pipe_data_df = pd.read_csv(locator.get_optimization_network_layout_pipes_file())
+    pipe_data_df = pipe_data_df.set_index(pipe_data_df['DC_ID'].values, drop=True)
+    list_pipes = pipe_data_df['DC_ID']
+    list_nodes = sorted(set(pipe_data_df['NODE1']).union(set(pipe_data_df['NODE2'])))
+    edge_node_matrix = np.zeros((len(list_nodes),len(list_pipes)))
+    for j in range(len(list_pipes)):
+        for i in range(len(list_nodes)):
+            if pipe_data_df['NODE2'][j] == list_nodes[i]:
+                edge_node_matrix[i][j] = 1
+            elif pipe_data_df['NODE1'][j] == list_nodes[i]:
+                edge_node_matrix[i][j] = -1
+    edge_node_df = pd.DataFrame(data=edge_node_matrix, index = list_nodes, columns = list_pipes)
+
+    edge_node_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'EdgeNode_DH.csv')
+    all_nodes_df = pd.DataFrame(data=[consumer_nodes[1][:], plant_nodes[1][:]], index = ['consumer','plant'], columns = consumer_nodes[0][:])
+    all_nodes_df = all_nodes_df[edge_node_df.index.tolist()]
+    all_nodes_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'AllNodes_DH.csv')
+
+    print time.clock() - t0, "seconds process time for Network summary\n"
+
+    return edge_node_df, all_nodes_df, pipe_data_df['LENGTH']
+
+def get_thermal_network_from_shapefile(locator):
+    """
+    This function reads the existing node and pipe network from a shapefile (using a road shapefile from the Zurich
+    reference case as a template) and produces an edge-node incidence matrix (as defined by Oppelt et al. "Dynamic
+    thermo-hydraulic model of district cooling networks," Applied Thermal Engineering, 2016) as well as the pipe
+    properties (length, start node, and end node) and node coordinates.
+
+    :param locator: locator class
+
+    :return:
+        edge_node_df: dataframe consisting of n rows (number of nodes) and e columns (number of edges) and indicating
+    direction of flow of each edge e at node n: if e points to n, value is 1; if e leaves node n, -1; else, 0.  (n x e)
+        all_nodes_df: dataframe that contains all nodes and whether a node is a consumer, plant or neither      (2 x n)
+        pipe_df: dataframe containing the length, start node and end node of each edge in the network           (1 x e)
+
+        csv files stored in:
+            -edge_node_df:  locator.get_optimization_network_layout_folder() + '//' + 'EdgeNode_DH.csv'
+            -node_df:       locator.get_optimization_network_layout_folder() + '//' + 'Node_DF_DH.csv'
+            -pipe_df:       locator.get_optimization_network_layout_folder() + '//' + 'Pipe_DF_DH.csv'
+    """
+
+    t0 = time.clock()
+
+    # import network properties from shapefile
+    network_edges_df = gpd.read_file(locator.get_heating_network_edges())
+    network_nodes_df = gpd.read_file(locator.get_heating_network_nodes())
+
+    # get node and pipe information
+    node_df, pipe_df = extract_network_from_shapefile(network_edges_df, network_nodes_df)
+
+    # create consumer and plant node vectors
+    node_names = node_df.index.values
+    consumer_nodes = [] #np.zeros(len(node_names))#np.vstack((node_names, (node_df['consumer'] * node_df['Node']).values))
+    plant_nodes = [] #np.zeros(len(node_names))#np.vstack((node_names, (node_df['plant'] * node_df['Node']).values))
+    for node in node_names:
+        if node_df['consumer'][node] == 1:
+            consumer_nodes.append(node)
+        else:
+            consumer_nodes.append('')
+        if node_df['plant'][node] == 1:
+            plant_nodes.append(node)
+        else:
+            plant_nodes.append('')
+
+    # create edge-node matrix
+    list_pipes = pipe_df.index.values
+    list_nodes = sorted(set(pipe_df['start node']).union(set(pipe_df['end node'])))
+    edge_node_matrix = np.zeros((len(list_nodes), len(list_pipes)))
+    for j in range(len(list_pipes)):
+        for i in range(len(list_nodes)):
+            if pipe_df['end node'][j] == list_nodes[i]:
+                edge_node_matrix[i][j] = 1
+            elif pipe_df['start node'][j] == list_nodes[i]:
+                edge_node_matrix[i][j] = -1
+    edge_node_df = pd.DataFrame(data=edge_node_matrix, index=list_nodes, columns=list_pipes)
+
+    edge_node_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + "EdgeNode_DH.csv")
+    pipe_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'Pipe_DF_DH.csv')
+    all_nodes_df = pd.DataFrame(data=[node_df['consumer'], node_df['plant']], index = ['consumer','plant'], columns = node_df.index)
+    for node in all_nodes_df:
+        if all_nodes_df[node]['consumer'] == 1:
+            all_nodes_df[node]['consumer'] = node_df['Name'][node]
+        if all_nodes_df[node]['plant'] == 1:
+            all_nodes_df[node]['plant'] = node_df['Name'][node]
+    all_nodes_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'Node_DF_DH.csv')
+
+    print time.clock() - t0, "seconds process time for Network summary\n"
+
+    return edge_node_df, all_nodes_df, pipe_df['pipe length']
+
+def extract_network_from_shapefile(edges_df, nodes_df):
+    '''
+    extracts network data into dataframes for pipes and nodes in the network
+    :param shapefile: network shapefile
+    :return: node_df: list of nodes and their corresponding coordinates
+             pipe_df: list of pipes and their corresponding lengths and start and end nodes
+    '''
+    import numpy as np
+    import os
+
+    # import consumer and plant nodes
+    end_nodes = []
+    for node in nodes_df['geometry']:
+        end_nodes.append(node.coords[0])
+    nodes_df['geometry'] = end_nodes
+    nodes_df['consumer'] = np.ones(len(nodes_df['Plant'])) - nodes_df['Plant'].values
+
+    # create node dictionary with plant and consumer nodes
+    node_dict = {}
+    node_columns = ['Node', 'Name', 'plant', 'consumer', 'coordinates']
+    for i in range(len(nodes_df)):
+        node_dict[nodes_df['geometry'][i]] = ['NODE'+str(i), nodes_df['Name'][i], nodes_df['Plant'][i],
+                                              nodes_df['consumer'][i], nodes_df['geometry'][i]]
+
+    # create edge dictionary with pipe lengths and start and end nodes
+    # complete node dictionary with missing nodes (i.e., tees)
+    edge_dict = {}
+    edge_columns = ['pipe length', 'start node', 'end node']
+    for j in range(len(edges_df)):
+        pipe = edges_df['geometry'][j]
+        start_node = pipe.coords[0]
+        end_node = pipe.coords[1]
+        if start_node not in node_dict.keys():
+            i += 1
+            node_dict[start_node] = ['NODE'+str(i), 'TEE' + str(i - len(nodes_df)), 0, 0, start_node]
+        if end_node not in node_dict.keys():
+            i += 1
+            node_dict[end_node] = ['NODE'+str(i), 'TEE' + str(i - len(nodes_df)), 0, 0, end_node]
+        edge_dict['EDGE' + str(j)] = [edges_df['Shape_Leng'][j], node_dict[start_node][0], node_dict[end_node][0]]
+
+    # create dataframes containing all nodes and edges
+    node_df = pd.DataFrame.from_dict(node_dict, orient='index')
+    node_df.columns = node_columns
+    node_df = node_df.set_index(node_df['Node']).drop(['Node'], axis = 1)
+    edge_df = pd.DataFrame.from_dict(edge_dict, orient='index')
+    edge_df.columns = edge_columns
+
+    # TODO: remove these tests as soon as it's confirmed it works
+    node_df.to_csv(os.path.expandvars(r'%TEMP%\Node_DF_DH.csv'))
+    edge_df.to_csv(os.path.expandvars(r'%TEMP%\Pipe_DF_DH.csv'))
+
+    return node_df, edge_df
 
 def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df, edge_mass_flow_df, K, t_target_supply_df,
                                building_names, buildings_demands, substations_HEX_specs, t):
@@ -672,18 +800,17 @@ def run_as_script(scenario_path=None):
         scenario_path = gv.scenario_reference
 
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
-    total_demand = pd.read_csv(locator.get_total_demand())
-    building_names = pd.read_csv(locator.get_total_demand())['Name']
     weather_file = locator.get_default_weather()
+
     # add geothermal part of preprocessing
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
     gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
-    #substation_main(locator, total_demand, total_demand['Name'], gv, False)
 
-    #calc_hydraulic_network(locator, gv)
-    # print 'test calc_hydraulic_network() succeeded'
+    # add a way to test for either a csv source for the network or a shapefile
+    ## shapefile_flag is true if source of data is a shapefile, false if it is a csv
+    shapefile_flag = False
 
-    thermal_network_main(locator,gv)
+    thermal_network_main(locator, gv, shapefile_flag)
     print 'test thermal_network_main() succeeded'
 
 if __name__ == '__main__':
