@@ -2,9 +2,7 @@
 
 
 from __future__ import division
-
 import numpy as np
-
 from cea.demand import control_ventilation_systems
 from cea.utilities import physics
 
@@ -23,16 +21,26 @@ __status__ = "Production"
 
 
 def calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t):
-    # input is schedule
-    # if has mechanical ventilation and not night flushing : m_ve_mech = m_ve_schedule
-    #
-    # TODO: code
-    # TODO: documentation
+    """
+    Calculates mass flow rate of mechanical ventilation at time step t according to ventilation control options and
+     building systems properties
 
+    Author: Gabriel Happle
+    Date: 01/2017
+
+    :param bpr: Building properties row object
+    :param tsd: Time series data dict
+    :param t: time step [0..8760]
+    :return: updates tsd
+    """
+
+    # if has mechanical ventilation and not night flushing : m_ve_mech = m_ve_schedule
     if control_ventilation_systems.is_mechanical_ventilation_active(bpr, tsd, t) \
             and not control_ventilation_systems.is_night_flushing_active(bpr, tsd, t):
 
-        m_ve_mech = tsd['m_ve_required'][t] + tsd['m_ve_inf_simple'][t]  # mechanical ventilation fulfills requirement + replaces leakages (similar to CO2 sensor)
+        # mechanical ventilation fulfills requirement + replaces leakages (similar to CO2 sensor)
+
+        m_ve_mech = tsd['m_ve_required'][t] + tsd['m_ve_inf_simple'][t]
         # TODO: check mech ventilation rule - maybe: required + infiltration
 
     elif control_ventilation_systems.has_mechanical_ventilation(bpr) \
@@ -49,9 +57,6 @@ def calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t):
 
     else:
         raise ValueError
-        # unknown mechanical ventilation status
-        # m_ve_mech = np.nan()
-        # print('Warning! Unknown mechanical ventilation status')
 
     tsd['m_ve_mech'][t] = m_ve_mech
 
@@ -59,14 +64,25 @@ def calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t):
 
 
 def calc_air_mass_flow_window_ventilation(bpr, tsd, t):
-    # input is schedule
+    """
+    Calculates mass flow rate of window ventilation at time step t according to ventilation control options and
+     building systems properties
+
+    Author: Gabriel Happle
+    Date: 01/2017
+
+    :param bpr: Building properties row object
+    :param tsd: Time series data dict
+    :param t: time step [0..8760]
+    :return: updates tsd
+    """
+
     # if has window ventilation and not special control : m_ve_window = m_ve_schedule
-    # TODO: code
-    # TODO: documentation
     if control_ventilation_systems.is_window_ventilation_active(bpr, tsd, t) \
             and not control_ventilation_systems.is_night_flushing_active(bpr, tsd, t):
 
-        m_ve_window = max(tsd['m_ve_required'][t] - tsd['m_ve_inf_simple'][t], 0)  # window ventilation fulfills requirement (control by occupnats similar to CO2 sensor)
+        # window ventilation fulfills requirement (control by occupants similar to CO2 sensor)
+        m_ve_window = max(tsd['m_ve_required'][t] - tsd['m_ve_inf_simple'][t], 0)
         # TODO: check window ventilation calculation, there are some methods in SIA2044
 
     elif control_ventilation_systems.is_window_ventilation_active(bpr, tsd, t) \
@@ -81,9 +97,6 @@ def calc_air_mass_flow_window_ventilation(bpr, tsd, t):
 
     else:
         raise ValueError
-        # unknown window ventilation status
-        # m_ve_window = np.nan()
-        #print('Warning! Unknown window ventilation status')
 
     tsd['m_ve_window'][t] = m_ve_window
 
@@ -98,8 +111,20 @@ def calc_m_ve_leakage():
 
 
 def calc_m_ve_leakage_simple(bpr, tsd, gv):
-    # TODO: code
-    # TODO: documentation
+    """
+    Calculates mass flow rate of leakage at time step t according to ventilation control options and
+     building systems properties
+
+    Estimation of infiltration air volume flow rate according to Eq. (3) in DIN 1946-6
+
+    Author: Gabriel Happle
+    Date: 01/2017
+
+    :param bpr: Building properties row object
+    :param tsd: Time series data dict
+    :param gv: globalvars
+    :return: updates tsd
+    """
 
     # 'flat rate' infiltration considered for all buildings
 
@@ -117,18 +142,29 @@ def calc_m_ve_leakage_simple(bpr, tsd, gv):
 
 
 def calc_theta_ve_mech(bpr, tsd, t):
-    # if no heat recovery: theta_ve_mech = theta_ext
-    # TODO: code
-    # TODO: documentation
-    eta_rec = 0.75
+    """
+    Calculates supply temperature of mechanical ventilation system according to ventilation control options and
+     building systems properties
 
+    Author: Gabriel Happle
+    Date: 01/2017
+
+    :param bpr: Building properties row object
+    :param tsd: Time series data dict
+    :param t: time step [0..8760]
+    :return: updates tsd
+    """
+
+    # TODO: add to gv or other appropriate location
+    eta_rec = 0.75  # constant efficiency of Heat recovery
 
     if control_ventilation_systems.is_mechanical_ventilation_heat_recovery_active(bpr, tsd, t):
 
         theta_eta_rec = tsd['theta_a'][t-1] if not np.isnan(tsd['theta_a'][t-1]) else tsd['T_ext'][t-1]
 
-        theta_ve_mech = tsd['T_ext'][t] + eta_rec * (theta_eta_rec - tsd['T_ext'][t]) # TODO: some HEX formula
+        theta_ve_mech = tsd['T_ext'][t] + eta_rec * (theta_eta_rec - tsd['T_ext'][t])  # TODO: some HEX formula
 
+    # if no heat recovery: theta_ve_mech = theta_ext
     elif not control_ventilation_systems.is_mechanical_ventilation_heat_recovery_active(bpr, tsd, t):
 
         theta_ve_mech = tsd['T_ext'][t]
@@ -144,6 +180,16 @@ def calc_theta_ve_mech(bpr, tsd, t):
 
 
 def calc_m_ve_required(bpr, tsd):
+    """
+    Calculate required outdoor air ventilation rate according to occupancy
+
+    Author: Legacy
+    Date: old
+
+    :param bpr: Building properties row object
+    :param tsd: Time series data dict
+    :return: updates tsd
+    """
 
     tsd['m_ve_required'] = tsd['people'] * bpr.comfort['Ve_lps'] * physics.calc_rho_air(tsd['T_ext'][:]) * 0.001  # kg/s
 
