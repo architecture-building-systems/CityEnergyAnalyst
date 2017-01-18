@@ -4,7 +4,7 @@
 from __future__ import division
 
 from cea.demand import rc_model_SIA_with_TABS
-from sandbox.ghapple import helpers
+from cea.utilities import helpers
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"

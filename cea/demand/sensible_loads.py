@@ -64,6 +64,7 @@ def calc_Qgain_lat(people, X_ghp, sys_e_cooling, sys_e_heating):
 
     return w_int
 
+
 def calc_I_sol(t, bpr, tsd, gv):
     """
     This function calculates the net solar radiation (incident -reflected - re-irradiated) according to ISO 13790
@@ -83,6 +84,7 @@ def calc_I_sol(t, bpr, tsd, gv):
     I_sol_net = I_sol - I_rad
 
     return I_sol_net, I_rad # vector in W
+
 
 def calc_I_rad(t, tsd, bpr, gv):
     """
@@ -106,6 +108,7 @@ def calc_I_rad(t, tsd, bpr, gv):
 
     return I_rad
 
+
 def calc_hr(emissivity, theta_ss, gv):
     """
     This function calculates the external radiative heat transfer coefficient according to ISO 13790
@@ -118,6 +121,7 @@ def calc_hr(emissivity, theta_ss, gv):
 
     """
     return 4 * emissivity * gv.blotzman * (theta_ss + 273) ** 3
+
 
 def calc_Asol(t, bpr, gv):
     """
@@ -136,6 +140,7 @@ def calc_Asol(t, bpr, gv):
     Asol_win = Fsh_win * bpr.rc_model['Aw'] * (1 - gv.F_f)
 
     return Asol_wall, Asol_roof, Asol_win
+
 """
 =========================================
 temperature of emission/control system
@@ -213,85 +218,3 @@ def calc_Qhs_Qcs_dis_ls(tair, text, Qhs, Qcs, tsh, trh, tsc, trc, Qhs_max, Qcs_m
         Qcs_d_ls = 0
 
     return Qhs_d_ls, Qcs_d_ls
-
-
-def calc_Qhs_Qcs_em_ls(SystemH, SystemC):
-    """model of losses in the emission and control system for space heating and cooling.
-    correction factor for the heating and cooling setpoints. extracted from SIA 2044 (replacing EN 15243)"""
-    tHC_corr = [0, 0]
-    # values extracted from SIA 2044 - national standard replacing values suggested in EN 15243
-    if SystemH == 'T4' or 'T1':
-        tHC_corr[0] = 0.5 + 1.2
-    elif SystemH == 'T2':
-        tHC_corr[0] = 0 + 1.2
-    elif SystemH == 'T3':  # no emission losses but emissions for ventilation
-        tHC_corr[0] = 0.5 + 1  # regulation is not taking into account here
-    else:
-        tHC_corr[0] = 0.5 + 1.2
-
-    if SystemC == 'T4':
-        tHC_corr[1] = 0 - 1.2
-    elif SystemC == 'T5':
-        tHC_corr[1] = - 0.4 - 1.2
-    elif SystemC == 'T3':  # no emission losses but emissions for ventilation
-        tHC_corr[1] = 0 - 1  # regulation is not taking into account here
-    else:
-        tHC_corr[1] = 0 + - 1.2
-
-    return list(tHC_corr)
-
-
-control_delta_heating = {'T1': 2.5, 'T2': 1.2, 'T3': 0.9, 'T4': 1.8}
-control_delta_cooling = {'T1': -2.5, 'T2': -1.2, 'T3': -0.9, 'T4': -1.8}
-system_delta_heating = {'T0': 0.0, 'T1': 0.15, 'T2': -0.1, 'T3': -1.1, 'T4': -0.9}
-system_delta_cooling = {'T0': 0.0, 'T1': 0.5, 'T2': 0.7, 'T3': 0.5}
-
-def setpoint_correction_for_space_emission_systems(heating_system, cooling_system, control_system):
-    """
-    Model of losses in the emission and control system for space heating and cooling.
-
-    Correction factor for the heating and cooling setpoints. Extracted from EN 15316-2
-
-    (see cea\databases\CH\Systems\emission_systems.xls for valid values for the heating and cooling system values)
-
-    T0 means there's no heating/cooling systems installed, therefore, also no control systems for heating/cooling.
-    In short, when the input system is T0, the output set point correction should be 0.0.
-    So if there is no cooling systems, the setpoint_correction_for_space_emission_systems function input: (T1, T0, T1) (type_hs, type_cs, type_ctrl),
-    return should be (2.65, 0.0), the control system is only specified for the heating system.
-    In another case with no heating systems: input: (T0, T3, T1) return: (0.0, -2.0), the control system is only
-    specified for the heating system.
-
-    PARAMETERS
-    ----------
-
-    :param heating_system: The heating system used. Valid values: T0, T1, T2, T3, T4
-    :type heating_system: str
-
-    :param cooling_system: The cooling system used. Valid values: T0, T1, T2, T3
-    :type cooling_system: str
-
-    :param control_system: The control system used. Valid values: T1, T2, T3, T4 - as defined in the
-        contributors manual under Databases / Archetypes / Building Properties / Mechanical systems.
-        T1 for none, T2 for PI control, T3 for PI control with optimum tuning, and T4 for room temperature control
-        (electromagnetically/electronically).
-    :type control_system: str
-
-    RETURNS
-    -------
-
-    :returns: two delta T to correct the set point temperature, dT_heating, dT_cooling
-    :rtype: tuple(double, double)
-    """
-    __author__ = "Shanshan Hsieh"
-    __credits__ = ["Shanshan Hsieh", "Daren Thomas"]
-
-    try:
-        result_heating = 0.0 if heating_system == 'T0' else (control_delta_heating[control_system] +
-                                                             system_delta_heating[heating_system])
-        result_cooling = 0.0 if cooling_system == 'T0' else (control_delta_cooling[control_system] +
-                                                             system_delta_cooling[cooling_system])
-    except KeyError:
-        raise ValueError(
-            'Invalid system / control combination: %s, %s, %s' % (heating_system, cooling_system, control_system))
-
-    return result_heating, result_cooling
