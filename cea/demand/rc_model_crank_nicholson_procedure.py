@@ -2,7 +2,7 @@
 
 
 from __future__ import division
-from cea.demand import airconditioning_model, rc_model_SIA_with_TABS, control_heating_cooling_systems, \
+from cea.demand import airconditioning_model, rc_model_SIA, control_heating_cooling_systems, \
     space_emission_systems
 
 __author__ = "Gabriel Happle"
@@ -45,7 +45,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         # STEP 1
         # ******
         # calculate temperatures
-        rc_model_temperatures = rc_model_SIA_with_TABS.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
+        rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
 
         # write to tsd
         tsd['theta_a'][t] = rc_model_temperatures['theta_a']
@@ -66,7 +66,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         # STEP 1
         # ******
         # calculate temperatures with 0 heating power
-        rc_model_temperatures_0 = rc_model_SIA_with_TABS.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
+        rc_model_temperatures_0 = rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
 
         theta_a_0 = rc_model_temperatures_0['theta_a']
 
@@ -74,7 +74,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         # ******
         # calculate temperatures with 10 W/m2 heating power
         phi_hc_10 = 10 * bpr.rc_model['Af']
-        rc_model_temperatures_10 = rc_model_SIA_with_TABS.calc_rc_model_temperatures_heating(phi_hc_10, bpr, tsd, t)
+        rc_model_temperatures_10 = rc_model_SIA.calc_rc_model_temperatures_heating(phi_hc_10, bpr, tsd, t)
 
         theta_a_10 = rc_model_temperatures_10['theta_a']
 
@@ -104,7 +104,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
 
         # STEP 4
         # ******
-        rc_model_temperatures = rc_model_SIA_with_TABS.calc_rc_model_temperatures_heating(phi_h_act, bpr, tsd, t)
+        rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_heating(phi_h_act, bpr, tsd, t)
         # write necessary parameters for AC calculation to tsd
         tsd['theta_a'][t] = rc_model_temperatures['theta_a']
         tsd['theta_m'][t] = rc_model_temperatures['theta_m']
@@ -128,7 +128,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
             # update temperatures for over heating case
             if air_con_model_loads_flows_temperatures['q_hs_sen_hvac'] > phi_h_act:
                 phi_h_act_over_heating = air_con_model_loads_flows_temperatures['q_hs_sen_hvac']
-                rc_model_temperatures = rc_model_SIA_with_TABS.calc_rc_model_temperatures_cooling(
+                rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_cooling(
                     phi_h_act_over_heating, bpr, tsd,
                     t)
 
@@ -174,7 +174,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         # STEP 1
         # ******
         # calculate temperatures with 0 heating power
-        rc_model_temperatures_0 = rc_model_SIA_with_TABS.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
+        rc_model_temperatures_0 = rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
 
         theta_a_0 = rc_model_temperatures_0['theta_a']
 
@@ -182,7 +182,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         # ******
         # calculate temperatures with 10 W/m2 cooling power
         phi_hc_10 = 10 * bpr.rc_model['Af']
-        rc_model_temperatures_10 = rc_model_SIA_with_TABS.calc_rc_model_temperatures_cooling(phi_hc_10, bpr, tsd, t)
+        rc_model_temperatures_10 = rc_model_SIA.calc_rc_model_temperatures_cooling(phi_hc_10, bpr, tsd, t)
 
         theta_a_10 = rc_model_temperatures_10['theta_a']
 
@@ -212,7 +212,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
 
         # STEP 4
         # ******
-        rc_model_temperatures = rc_model_SIA_with_TABS.calc_rc_model_temperatures_heating(phi_c_act, bpr, tsd, t)
+        rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_heating(phi_c_act, bpr, tsd, t)
 
         # write necessary parameters for AC calculation to tsd
         tsd['theta_a'][t] = rc_model_temperatures['theta_a']
@@ -236,8 +236,8 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
             if air_con_model_loads_flows_temperatures['q_cs_sen_hvac'] < phi_c_act:
 
                 phi_c_act_over_cooling = air_con_model_loads_flows_temperatures['q_cs_sen_hvac']
-                rc_model_temperatures = rc_model_SIA_with_TABS.calc_rc_model_temperatures_heating(phi_c_act_over_cooling, bpr, tsd,
-                                                                                                  t)
+                rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_heating(phi_c_act_over_cooling, bpr, tsd,
+                                                                                        t)
                 # update temperatures
                 tsd['theta_a'][t] = rc_model_temperatures['theta_a']
                 tsd['theta_m'][t] = rc_model_temperatures['theta_m']
