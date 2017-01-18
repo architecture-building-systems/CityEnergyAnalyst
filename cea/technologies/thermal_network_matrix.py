@@ -87,7 +87,7 @@ def thermal_network_main(locator,gv):
     #     edge_mass_flow_df[:][t:t+1] = calc_mass_flow_edges(edge_node_df, df)
     #
     # edge_mass_flow_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'NominalEdgeMassFlow_DH.csv')
-    edge_mass_flow_df = pd.read_csv(locator.get_optimization_network_layout_folder() + '//' + 'NominalEdgeMassFlow_DH.csv')
+    edge_mass_flow_df = pd.read_csv(locator.get_optimization_network_layout_folder() + '//' + 'NominalEdgeMassFlow_DH.csv').drop('Unnamed: 0',axis=1)
 
     print time.clock() - t0, "seconds process time for edge mass flow calculation\n"
 
@@ -135,7 +135,7 @@ def thermal_network_main(locator,gv):
 
     # calculate pressure losses
     ## pressure losses at each node
-    pressure_loss_nodes_supply_df, pressure_loss_nodes_return_df = calc_pressure_loss_nodes(edge_node_df.values,
+    pressure_loss_nodes_supply_df, pressure_loss_nodes_return_df = calc_pressure_loss_nodes(edge_node_df,
                                     pipe_properties_df[:]['DN':'DN'].values, pipe_length_df.values,
                                     edge_mass_flow_df.values, T_DH_supply_nodes, T_DH_return_nodes, gv)
 
@@ -287,10 +287,10 @@ def assign_pipes_to_edges(mass_flow_df, locator, gv):
 
     return pipe_properties_df
 
-def calc_pressure_loss_nodes(edge_node, pipe_diameter, pipe_length, mass_flow_rate, T_supply_node, T_return_node, gv):
+def calc_pressure_loss_nodes(edge_node_df, pipe_diameter, pipe_length, mass_flow_rate, T_supply_node, T_return_node, gv):
     ''' calculates the pressure losses at each node as the sum of the pressure losses in all edges that point to each
      node
-        edge_node: matrix consisting of n rows (number of nodes) and e columns (number of edges) and indicating
+        edge_node_df: dataframe consisting of n rows (number of nodes) and e columns (number of edges) and indicating
 direction of flow of each edge e at node n: if e points to n, value is 1; if e leaves node n, -1; else, 0.  (n x e)
         :param: pipe_diameter: vector containing the pipe diameter in m for each edge e in the network      (e x 1)
         :param: pipe_length: vector containing the length in m of each edge e in the network                (e x 1)
@@ -303,15 +303,15 @@ direction of flow of each edge e at node n: if e points to n, value is 1; if e l
      '''
 
     # get the temperatures at each supply and return edge
-    temperature_supply_edges = calc_edge_temperatures(T_supply_node)
-    temperature_return_edges = calc_edge_temperatures(T_return_node)
+    temperature_supply_edges = calc_edge_temperatures(T_supply_node, edge_node_df.values)
+    temperature_return_edges = calc_edge_temperatures(T_return_node, edge_node_df.values)
 
     # get the pressure through each edge
     pressure_loss_pipe_supply = calc_pressure_loss_pipe(pipe_diameter, pipe_length, mass_flow_rate, temperature_supply_edges, gv)
     pressure_loss_pipe_return = calc_pressure_loss_pipe(pipe_diameter, pipe_length, mass_flow_rate, temperature_return_edges, gv)
 
     # get a matrix showing which edges point to each node n
-    edge_node = edge_node.transpose()
+    edge_node = edge_node_df.values.transpose()
     for i in range(len(edge_node)):
         for j in range(len(edge_node[0])):
             if edge_node[i][j] < 0:
@@ -584,11 +584,11 @@ def calc_aggregated_heat_conduction_coefficient(locator, gv, L_pipe, pipe_proper
     K_all = np.diag(K_all)
     return K_all
 
-def calc_edge_temperatures(temperature_node, edge_node_df):
+def calc_edge_temperatures(temperature_node, edge_node):
     '''
     calculates the temperature at each edge assuming T_edge = (T_node_1 + T_node_2)/2 as done, for example, by Wang et al.
     '''
-    temperature_edge = np.dot(temperature_node,abs(edge_node_df.values)/2)
+    temperature_edge = np.dot(temperature_node,abs(edge_node)/2)
     return temperature_edge
 
 #============================
