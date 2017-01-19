@@ -649,7 +649,20 @@ def get_thermal_network_from_shapefile(locator):
         else:
             plant_nodes.append('')
 
-    # create edge-node matrix
+    # create node catalogue indicating which nodes are plants and which consumers
+    all_nodes_df = pd.DataFrame(data=[node_df['consumer'], node_df['plant']], index = ['consumer','plant'], columns = node_df.index)
+    for node in all_nodes_df:
+        if all_nodes_df[node]['consumer'] == 1:
+            all_nodes_df[node]['consumer'] = node_df['Name'][node]
+        else:
+            all_nodes_df[node]['consumer'] = ''
+        if all_nodes_df[node]['plant'] == 1:
+            all_nodes_df[node]['plant'] = node_df['Name'][node]
+        else:
+            all_nodes_df[node]['plant'] = ''
+    all_nodes_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'Node_DF_DH.csv')
+
+    # create first edge-node matrix
     list_pipes = pipe_df.index.values
     list_nodes = sorted(set(pipe_df['start node']).union(set(pipe_df['end node'])))
     edge_node_matrix = np.zeros((len(list_nodes), len(list_pipes)))
@@ -661,15 +674,30 @@ def get_thermal_network_from_shapefile(locator):
                 edge_node_matrix[i][j] = -1
     edge_node_df = pd.DataFrame(data=edge_node_matrix, index=list_nodes, columns=list_pipes)
 
+    # Since dataframe doesn't indicate the direction of flow, an edge node matrix is generated as a first guess and
+    # the mass flow at t = 0 is calculated with it. The direction of flow is then corrected by inverting negative flows.
+    substation_mass_flows_df = pd.DataFrame(data = np.zeros([1,len(edge_node_df.index)]), columns = edge_node_df.index)
+    total_flow = 0
+    for node in consumer_nodes:
+        if node != '':
+            substation_mass_flows_df[node] = 1
+            total_flow += 1
+    for plant in plant_nodes:
+        if plant != '':
+            substation_mass_flows_df[plant] = -total_flow
+    mass_flow_guess = calc_mass_flow_edges(edge_node_df, substation_mass_flows_df)[0]
+
+    for i in range(len(mass_flow_guess)):
+        if mass_flow_guess[i] < 0:
+            mass_flow_guess[i] = abs(mass_flow_guess[i])
+            edge_node_df[edge_node_df.columns[i]] = -edge_node_df[edge_node_df.columns[i]]
+            new_nodes = [pipe_df['end node'][i], pipe_df['start node'][i]]
+            pipe_df['start node'][i] = new_nodes[0]
+            pipe_df['end node'][i] = new_nodes[1]
+
+
     edge_node_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + "EdgeNode_DH.csv")
     pipe_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'Pipe_DF_DH.csv')
-    all_nodes_df = pd.DataFrame(data=[node_df['consumer'], node_df['plant']], index = ['consumer','plant'], columns = node_df.index)
-    for node in all_nodes_df:
-        if all_nodes_df[node]['consumer'] == 1:
-            all_nodes_df[node]['consumer'] = node_df['Name'][node]
-        if all_nodes_df[node]['plant'] == 1:
-            all_nodes_df[node]['plant'] = node_df['Name'][node]
-    all_nodes_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'Node_DF_DH.csv')
 
     print time.clock() - t0, "seconds process time for Network summary\n"
 
@@ -690,7 +718,10 @@ def extract_network_from_shapefile(edges_df, nodes_df):
     for node in nodes_df['geometry']:
         end_nodes.append(node.coords[0])
     nodes_df['geometry'] = end_nodes
-    nodes_df['consumer'] = np.ones(len(nodes_df['Plant'])) - nodes_df['Plant'].values
+    nodes_df['consumer'] = np.zeros(len(nodes_df['Plant']))
+    for node in range(len(nodes_df['consumer'])):
+        if nodes_df['Qh'][node] > 0:
+            nodes_df['consumer'][node] = 1
 
     # create node dictionary with plant and consumer nodes
     node_dict = {}
@@ -703,10 +734,13 @@ def extract_network_from_shapefile(edges_df, nodes_df):
     # complete node dictionary with missing nodes (i.e., tees)
     edge_dict = {}
     edge_columns = ['pipe length', 'start node', 'end node']
+    pipe_nodes = []
     for j in range(len(edges_df)):
         pipe = edges_df['geometry'][j]
         start_node = pipe.coords[0]
-        end_node = pipe.coords[1]
+        end_node = pipe.coords[len(pipe.coords)-1]
+        pipe_nodes.append(pipe.coords[0])
+        pipe_nodes.append(pipe.coords[len(pipe.coords)-1])
         if start_node not in node_dict.keys():
             i += 1
             node_dict[start_node] = ['NODE'+str(i), 'TEE' + str(i - len(nodes_df)), 0, 0, start_node]
@@ -715,16 +749,25 @@ def extract_network_from_shapefile(edges_df, nodes_df):
             node_dict[end_node] = ['NODE'+str(i), 'TEE' + str(i - len(nodes_df)), 0, 0, end_node]
         edge_dict['EDGE' + str(j)] = [edges_df['Shape_Leng'][j], node_dict[start_node][0], node_dict[end_node][0]]
 
+    # # if a consumer node is not connected to the network, find the closest node and connect them with a new edge
+    # for node in node_dict:
+    #     if node not in pipe_nodes:
+    #         min_dist = 1000
+    #         closest_node = pipe_nodes[0]
+    #         for pipe_node in pipe_nodes:
+    #             dist = ((node[0] - pipe_node[0])**2 + (node[1] - pipe_node[1])**2)**.5
+    #             if dist < min_dist:
+    #                 min_dist = dist
+    #                 closest_node = pipe_node
+    #         j += 1
+    #         edge_dict['EDGE' + str(j)] = [min_dist, node_dict[closest_node][0], node_dict[node][0]]
+
     # create dataframes containing all nodes and edges
     node_df = pd.DataFrame.from_dict(node_dict, orient='index')
     node_df.columns = node_columns
     node_df = node_df.set_index(node_df['Node']).drop(['Node'], axis = 1)
     edge_df = pd.DataFrame.from_dict(edge_dict, orient='index')
     edge_df.columns = edge_columns
-
-    # TODO: remove these tests as soon as it's confirmed it works
-    node_df.to_csv(os.path.expandvars(r'%TEMP%\Node_DF_DH.csv'))
-    edge_df.to_csv(os.path.expandvars(r'%TEMP%\Pipe_DF_DH.csv'))
 
     return node_df, edge_df
 

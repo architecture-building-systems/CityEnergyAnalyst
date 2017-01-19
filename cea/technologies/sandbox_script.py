@@ -631,8 +631,7 @@ def get_thermal_network_from_csv(locator):
 
     return edge_node_df, all_nodes_df, pipe_data_df['LENGTH']
 
-def get_thermal_network_from_shapefile(locator, gv, t_target_supply, building_names, buildings_demands,
-    substations_HEX_specs):
+def get_thermal_network_from_shapefile(locator):
     """
     This function reads the existing node and pipe network from a shapefile (using a road shapefile from the Zurich
     reference case as a template) and produces an edge-node incidence matrix (as defined by Oppelt et al. "Dynamic
@@ -703,16 +702,25 @@ def get_thermal_network_from_shapefile(locator, gv, t_target_supply, building_na
 
     # Since dataframe doesn't indicate the direction of flow, an edge node matrix is generated as a first guess and
     # the mass flow at t = 0 is calculated with it. The direction of flow is then corrected by inverting negative flows.
-    t = 0
-    mass_flow_guess = calc_one_timestep(t_target_supply, locator, gv, building_names, buildings_demands,
-                                        substations_HEX_specs, t, all_nodes_df, edge_node_df)
+    substation_mass_flows_df = pd.DataFrame(data = np.zeros([1,len(edge_node_df.index)]), columns = edge_node_df.index)
+    total_flow = 0
+    for node in consumer_nodes:
+        if node != '':
+            substation_mass_flows_df[node] = 1
+            total_flow += 1
+    for plant in plant_nodes:
+        if plant != '':
+            substation_mass_flows_df[plant] = -total_flow
+    mass_flow_guess = calc_mass_flow_edges(edge_node_df, substation_mass_flows_df)[0]
+
     for i in range(len(mass_flow_guess)):
-        if mass_flow_guess[0][i] < 0:
-            mass_flow_guess[0][i] = abs(mass_flow_guess[0][i])
+        if mass_flow_guess[i] < 0:
+            mass_flow_guess[i] = abs(mass_flow_guess[i])
             edge_node_df[edge_node_df.columns[i]] = -edge_node_df[edge_node_df.columns[i]]
             new_nodes = [pipe_df['end node'][i], pipe_df['start node'][i]]
             pipe_df['start node'][i] = new_nodes[0]
             pipe_df['end node'][i] = new_nodes[1]
+
 
     edge_node_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + "EdgeNode_DH.csv")
     pipe_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'Pipe_DF_DH.csv')
