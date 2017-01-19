@@ -211,14 +211,14 @@ def storage_optimization(locator, master_to_slave_vars, gv):
 
             if 0.05 < InitialStorageContent / abs(InitialStorageContent - FinalStorageContent):
                 result = pd.DataFrame([storageDeviation6, InitialStorageContent, FinalStorageContent])
-                print "aa\n"
-                print locator.get_optimization_slave_results_folder
-                print MS_Var.configKey
-                print result
-                print os.path.join(locator.get_optimization_slave_results_folder, MS_Var.configKey + "_StorageFlag.csv")
-                print "aa\n"
+                # print "aa\n"
+                # print locator.get_optimization_slave_results_folder
+                # print MS_Var.configKey
+                # print result
+                # print os.path.join(locator.get_optimization_slave_results_folder, MS_Var.configKey + "_StorageFlag.csv")
+                # print "aa\n"
                 result.to_csv(
-                    os.path.join(locator.get_optimization_slave_results_folder, MS_Var.configKey + "_StorageFlag.csv"),
+                    os.path.join(locator.get_optimization_slave_results_folder(), MS_Var.configKey + "_StorageFlag.csv"),
                     sep=',')
 
 
