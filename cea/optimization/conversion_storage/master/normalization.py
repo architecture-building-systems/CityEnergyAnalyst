@@ -4,14 +4,14 @@ Normalize results
 ==============================
 
 """
-import Rep3D as rep
+#import Rep3D as rep
 from deap import base
 
 import cea.optimization.supportFn as sFn
 from cea.optimization.conversion_storage.master import evaluation as eI
 
 reload(sFn)
-reload(rep)
+#reload(rep)
 reload(eI)
 toolbox = base.Toolbox()
 

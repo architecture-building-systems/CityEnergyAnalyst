@@ -339,6 +339,11 @@ class InputLocator(object):
         return os.path.join(self._ensure_folder(self.scenario_path, 'outputs', 'plots', 'graphs'),
                             'Benchmark_scenarios.pdf')
 
+    def get_optimization_plots_folder(self):
+        """scenario/outputs/plots/graphs/Benchmark_scenarios.pdf"""
+        return os.path.join(self._ensure_folder(self.scenario_path, 'outputs', 'plots', 'graphs'))
+
+
     # HEATMAPS
     def get_heatmaps_demand_folder(self):
         """scenario/outputs/plots/heatmaps"""
