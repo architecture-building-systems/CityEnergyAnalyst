@@ -39,6 +39,29 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
     """
     Computes additional costs / GHG emisions / primary energy needs
     for the individual
+
+    Parameters
+    ----------
+    :param indCombi:
+    :param buildList:
+    :param locator:
+    :param dicoSupply:
+    :param QUncoveredDesign:
+    :param QUncoveredAnnual:
+    :param solarFeat:
+    :param ntwFeat:
+    :param gv:
+    :type indCombi: string
+    :type buildList: list
+    :type locator:
+    :type dicoSupply:
+    :type QUncoveredDesign:
+    :type QUncoveredAnnual:
+    :type solarFeat:
+    :type ntwFeat:
+    :type gv:
+    :return:
+    :rtype:
     
     Parameters
     ----------
