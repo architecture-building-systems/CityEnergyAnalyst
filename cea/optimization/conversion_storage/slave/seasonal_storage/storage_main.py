@@ -39,13 +39,17 @@ def storage_optimization(locator, master_to_slave_vars, gv):
     """
     This function performs the storage optimization and stores the results in the designated folders
 
+    Parameters
+    ----------
     :param locator: locator class
     :param master_to_slave_vars: class MastertoSlaveVars containing the value of variables to be passed to the slave optimization
     for each individual
     :param gv: global variables class
-    :return:
-        The function saves all files when it's done in the location locator.get_potentials_solar_folder()
-
+    :type locator: class
+    :type master_to_slave_vars: class
+    :type gv: class
+    :return: The function saves all files when it's done in the location locator.get_potentials_solar_folder()
+    :rtype: Nonetype
     """
     print "Storage Optimization Ready"
     MS_Var = master_to_slave_vars
