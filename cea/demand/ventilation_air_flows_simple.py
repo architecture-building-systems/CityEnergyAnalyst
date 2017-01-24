@@ -48,7 +48,7 @@ def calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t):
 
         # night flushing according to strategy
         # ventilation with maximum capacity = maximum required ventilation rate
-        m_ve_mech = max(tsd['m_ve_required'])  # TODO: some night flushing rule
+        m_ve_mech = tsd['m_ve_required'].max()  # TODO: some night flushing rule
 
     elif not control_ventilation_systems.is_mechanical_ventilation_active(bpr, tsd, t):
 
