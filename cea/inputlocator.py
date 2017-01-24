@@ -205,7 +205,7 @@ class InputLocator(object):
         return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'internal_loads.shp')
 
     def get_building_comfort(self):
-        """scenario/inputs/building-properties/indoor_comfort.shp'"""
+        """scenario/inputs/building-properties/indoor_comfort.shp"""
         return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'indoor_comfort.shp')
 
     def get_building_hvac(self):
@@ -310,11 +310,11 @@ class InputLocator(object):
         return lca_emissions_results_folder
 
     def get_lca_embodied(self):
-        """cenario/outputs/data/emissions/Total_LCA_embodied.csv"""
+        """scenario/outputs/data/emissions/Total_LCA_embodied.csv"""
         return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_embodied.csv')
 
     def get_lca_operation(self):
-        """cenario/outputs/data/emissions/Total_LCA_operation.csv"""
+        """scenario/outputs/data/emissions/Total_LCA_operation.csv"""
         return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_operation.csv')
 
     def get_lca_mobility(self):
