@@ -31,11 +31,28 @@ __status__ = "Production"
 
 def thermal_network_main(locator, gv, shapefile_flag):
     """
-    See Thermo-hydraulic modelling procedures for DHC Networks
+    This function performs thermal and hydraulic calculation of a "well-defined" network, namely, the plant/consumer
+    substations, piping routes and the pipe properties (length/diameter/heat transfer coefficient) are already specified.
+
+    Firstly, the consumer substation heat exchanger designs are calculated according to the consumer demands at each
+    substation. Secondly, the piping network is imported as a node-edge matrix (NxE), which indicates the connections
+    of all nodes and edges and the direction of flow between them following graph theory [Ikonen, E., et al, 2016]_ .
+    Nodes represent points in the network, which could be the consumers, plants or joint points. Edges represent the
+    pipes in the network. For example, (n1,e1) = 1 denotes the flow enters edge "e1" at node "n1", while when
+    (n2,e2) = -1 denotes the flow leave edge "e2" at node "n2". Following, a steady-state hydraulic calculation is
+    carried out at each time-step to solve for the edge mass flow rates according to mass conservation equations.
+
+    Finally, we enter the hydraulic thermal calculation routine.
+
     :param locator:
     :param gv:
-    :param shapefile_flag: Boolean set to True if the source for the data is a shapefile, False if it is a csv
+    :param shapefile_flag: Boolean set to True if the source for the data is a shapefile, False if it is a csv.
     :return:
+
+    ..[Ikonen, E., et al, 2016] Ikonen, E., et al. Examination of Operational Optimization at Kemi District Heating Network.
+    Thermal Science. 2016, Vol. 20, No.2, pp.667-678.
+
+
     """
 
     ## prepare data for calculation
@@ -54,7 +71,7 @@ def thermal_network_main(locator, gv, shapefile_flag):
                                                                                      building_names, gv)
 
     # get edge-node matrix from defined network
-    if shapefile_flag == False:
+    if shapefile_flag == False: #TODO[MM]: is that possible to move the flag inside the function thermal_network_main?
         edge_node_df, all_nodes_df, pipe_length_df = get_thermal_network_from_csv(locator)
     else:
         edge_node_df, all_nodes_df, pipe_length_df = get_thermal_network_from_shapefile(locator)
@@ -320,16 +337,35 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
 #===========================
 def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df, edge_mass_flow_df, K, t_target_supply_df,
                                building_names, buildings_demands, substations_HEX_specs, t):
+    """
+    This function calculates the node temperatures at time-step t accounting for heat losses throughout the network.
 
-    # # delete neglegible flowrates dur to inaccuracy of least square solver
-    # edge_mass_flow_df[edge_mass_flow_df < 0.00001] = 0
-    # NOTE: this is now done as part of the edge_mas_flow_df calculation
+    Parameters
+    ----------
+    locator
+    gv
+    T_ground
+    edge_node_df
+    all_nodes_df
+    edge_mass_flow_df
+    K
+    t_target_supply_df
+    building_names
+    buildings_demands
+    substations_HEX_specs
+    t
+
+    Returns
+    -------
+
+    """
 
     if edge_mass_flow_df.values.sum()!= 0:
-        T_supply_nodes, plant_node = calc_supply_temperatures(locator, gv, T_ground[t], edge_node_df, edge_mass_flow_df, K,
-                                                              t_target_supply_df.loc[t])
+        # calculate node temperatures on the supply network accounting losses in the network.
+        T_supply_nodes, plant_node = calc_supply_temperatures(locator, gv, T_ground[t], edge_node_df, edge_mass_flow_df,
+                                                              K, t_target_supply_df.loc[t])
 
-        # write node supply temperatures to substations
+        # write supply temperatures to substation nodes
         T_substation_supply = all_nodes_df.copy().drop('plant')
         T_substation_supply.loc['T_supply'] = T_supply_nodes
         T_substation_supply.columns = T_substation_supply.loc['consumer']
@@ -371,8 +407,6 @@ def calc_supply_temperatures(locator, gv, T_ground, edge_node_df, mass_flow_df, 
 
     M_d = np.zeros((Z.shape[1],Z.shape[1]))   # (exe) pipe mass flow rate matrix
     np.fill_diagonal(M_d,mass_flow_df)
-
-    #K = calc_aggregated_heat_conduction_coefficient(locator, gv, pipe_length_df, pipe_properties_df)/1000# (exe) # aggregated heat conduction coef matrix [kW/K]
 
     # matrices to store results
     T_e_out = Z_pipe_out.copy()
