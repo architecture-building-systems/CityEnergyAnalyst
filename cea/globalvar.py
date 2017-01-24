@@ -6,7 +6,8 @@ Global variables
 
 """
 import cea.demand.demand_writers
-#from cea.demand import thermal_loads
+
+# from cea.demand import thermal_loads
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -17,14 +18,14 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 class GlobalVariables(object):
     def __init__(self):
 
         self.scenario_reference = r'c:\reference-case-open\baseline'
-        self.print_partial = 'hourly' # hourly or monthly for the deamnd script
-        self.print_totals = True # print yearly values
-        self.print_yearly_peak = True # print peak values
-        self.simulate_building_list = None # fill it with a list of names of buildings in case not all the data set needs to be run
+        self.print_partial = 'hourly'  # hourly or monthly for the demand script
+        self.print_totals = True  # print yearly values
+        self.print_yearly_peak = True  # print peak values
         self.date_start = '2016-01-01'  # format: yyyy-mm-dd
         self.seasonhours = [3216, 6192]
         self.multiprocessing = False  # use multiprocessing / parallel execution if possible
@@ -32,10 +33,10 @@ class GlobalVariables(object):
         self.Bf = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
         self.his = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
         self.hms = 9.1  # heat transfer coefficient between nodes m and s in W/m2K
-        self.theta_ss = 10 # difference between surface of building and sky temperature in C. 10 for temperate climates
-        self.blotzman = 0.0000000567 #stefan-blotzmann constant W/m2K4
+        self.theta_ss = 10  # difference between surface of building and sky temperature in C. 10 for temperate climates
+        self.blotzman = 0.0000000567  # stefan-blotzmann constant W/m2K4
         self.F_f = 0.2  # Frame area faction coefficient
-        self.Rse = 0.04# thermal resistance of external surfaces according to ISO 6946
+        self.Rse = 0.04  # thermal resistance of external surfaces according to ISO 6946
         self.D = 20  # in mm the diameter of the pipe to calculate losses
         self.hf = 3  # average height per floor in m
         self.Pwater = 998  # water density kg/m3
@@ -66,14 +67,14 @@ class GlobalVariables(object):
         self.sl_materials = 60  # service life of standard building components and materials
         self.sl_services = 40  # service life of technical instalations
         # constant variables for air conditioning fan
-        self.Pfan = 0.55 # specific fan consumption in W/m3/h
+        self.Pfan = 0.55  # specific fan consumption in W/m3/h
 
         # ==============================================================================================================
         # optimization
         # ==============================================================================================================
 
-        self.sensibilityStep = 2 #the more, the longer the sensitibility analysis
-        
+        self.sensibilityStep = 2  # the more, the longer the sensitibility analysis
+
         ########################### User inputs
 
         # Commands for the evolutionary algorithm
@@ -156,27 +157,27 @@ class GlobalVariables(object):
         self.CC_sigma = 4 / 5
 
         self.NG_CC_TO_CO2_STD = (0.0353 + 0.186) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-        1 + self.CC_sigma)  # kg_CO2 / MJ_useful
+            1 + self.CC_sigma)  # kg_CO2 / MJ_useful
         self.NG_CC_TO_OIL_STD = (0.6 + 2.94) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-        1 + self.CC_sigma)  # MJ_oil / MJ_useful
+            1 + self.CC_sigma)  # MJ_oil / MJ_useful
 
         if self.FlagBioGasFromAgriculture == 1:
             self.BG_CC_TO_CO2_STD = (0.00592 + 0.0495) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-            1 + self.CC_sigma)  # kg_CO2 / MJ_useful
+                1 + self.CC_sigma)  # kg_CO2 / MJ_useful
             self.BG_CC_TO_OIL_STD = (0.0703 + 0.156) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-            1 + self.CC_sigma)  # MJ_oil / MJ_useful
+                1 + self.CC_sigma)  # MJ_oil / MJ_useful
 
         else:
             self.BG_CC_TO_CO2_STD = (0.0223 + 0.114) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-            1 + self.CC_sigma)  # kg_CO2 / MJ_useful
+                1 + self.CC_sigma)  # kg_CO2 / MJ_useful
             self.BG_CC_TO_OIL_STD = (0.214 + 0.851) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-            1 + self.CC_sigma)  # kg_CO2 / MJ_useful
+                1 + self.CC_sigma)  # kg_CO2 / MJ_useful
 
         # Furnace
         self.FURNACE_TO_CO2_STD = (0.0104 + 0.0285) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-        1 + self.CC_sigma)  # kg_CO2 / MJ_useful
+            1 + self.CC_sigma)  # kg_CO2 / MJ_useful
         self.FURNACE_TO_OIL_STD = (0.0956 + 0.141) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-        1 + self.CC_sigma)  # MJ_oil / MJ_useful
+            1 + self.CC_sigma)  # MJ_oil / MJ_useful
 
         # Boiler
         self.NG_BOILER_TO_CO2_STD = 0.0874 * 0.87 / self.ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
@@ -184,9 +185,9 @@ class GlobalVariables(object):
 
         if self.FlagBioGasFromAgriculture == 1:
             self.BG_BOILER_TO_CO2_STD = 0.339 * 0.87 * self.NormalBGToAgriBG_CO2 / (
-            1 + self.DHNetworkLoss) / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
+                1 + self.DHNetworkLoss) / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
             self.BG_BOILER_TO_OIL_STD = 0.04 * 0.87 * self.NormalBGToAgriBG_Eprim / (
-            1 + self.DHNetworkLoss) / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
+                1 + self.DHNetworkLoss) / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
 
         else:
             self.BG_BOILER_TO_CO2_STD = self.NG_BOILER_TO_CO2_STD * 0.04 / 0.0691  # kg_CO2 / MJ_useful
@@ -416,8 +417,8 @@ class GlobalVariables(object):
 
         # Data for Evolutionary algorithm
         self.nHeat = 6  # number of heating
-        self.nHR = 2 # number of heat recovry options
-        self.nSolar = 3 # number of solar technologies
+        self.nHR = 2  # number of heat recovry options
+        self.nSolar = 3  # number of solar technologies
 
         self.PROBA = 0.5
         self.SIGMAP = 0.2
@@ -467,10 +468,10 @@ class GlobalVariables(object):
         # PV panel
         # ==============================================================================================================
 
-        self.module_lenght_PV = 1 # m # 1 for PV and 2 for solar collectors
+        self.module_lenght_PV = 1  # m # 1 for PV and 2 for solar collectors
         self.min_production = 0.75  # points are selected with at least a minimum production of this % from the maximum in the area.
         self.type_PVpanel = 1  # monocrystalline
-        self.misc_losses = 0.1 #cabling, resistances etc..
+        self.misc_losses = 0.1  # cabling, resistances etc..
 
         # ==============================================================================================================
         # sewage potential
@@ -508,9 +509,8 @@ class GlobalVariables(object):
         # ==============================================================================================================
         # TABS
         # ==============================================================================================================
-        self.max_temperature_difference_tabs = 9 # (°C) from Koschenz & Lehmann "Thermoaktive Bauteilsysteme (TABS)"
-        self.max_surface_temperature_tabs = 27 # (°C) from Koschenz & Lehmann "Thermoaktive Bauteilsysteme (TABS)"
-
+        self.max_temperature_difference_tabs = 9  # (°C) from Koschenz & Lehmann "Thermoaktive Bauteilsysteme (TABS)"
+        self.max_surface_temperature_tabs = 27  # (°C) from Koschenz & Lehmann "Thermoaktive Bauteilsysteme (TABS)"
 
         # ==============================================================================================================
         # Columns to write for the demand calculation
@@ -540,14 +540,12 @@ class GlobalVariables(object):
             from cea.utilities import reporting
             reporting.full_report_to_xls(tsd, output_folder, basename, self)
 
-
     def log(self, msg, **kwargs):
         print msg % kwargs
 
-
     def is_heating_season(self, timestep):
 
-        if self.seasonhours[0]+1 <= timestep < self.seasonhours[1]:
+        if self.seasonhours[0] + 1 <= timestep < self.seasonhours[1]:
             return False
         else:
             return True
