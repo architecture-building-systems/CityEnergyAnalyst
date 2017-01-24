@@ -188,14 +188,11 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['Qhs'] = tsd['Qhs_sen_sys']
         tsd['Qhsf'] = tsd['Qhs'] + tsd['Qhs_em_ls'] + Qhs_d_ls  # no latent is considered because it is already added a
         # s electricity from the adiabatic system.
-        tsd['Qcs'] = (tsd['Qcs_sen_sys']) + tsd['Qcsf_lat']
+        tsd['Qcs'] = tsd['Qcs_sen_sys'] + tsd['Qcsf_lat']
         tsd['Qcsf'] = tsd['Qcs'] + tsd['Qcs_em_ls'] + Qcs_d_ls
-        tsd['Qcsf'] = -abs(tsd['Qcsf'])
-        tsd['Qcs'] = -abs(tsd['Qcs'])
-
         # Calc nominal temperatures of systems
         Qhsf_0 = np.nanmax(tsd['Qhsf'])  # in W
-        Qcsf_0 = np.nanmin(tsd['Qcsf'])  # in W negative
+        Qcsf_0 = np.nanmin(tsd['Qcsf'])  # in W in negative
 
         # Cal temperatures of all systems
         tsd['Tcsf_re'], tsd['Tcsf_sup'], tsd['Thsf_re'], \
