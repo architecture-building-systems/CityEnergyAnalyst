@@ -26,6 +26,7 @@ class GlobalVariables(object):
         self.print_partial = 'hourly'  # hourly or monthly for the demand script
         self.print_totals = True  # print yearly values
         self.print_yearly_peak = True  # print peak values
+        self.simulate_building_list = None  # fill it with a list of names of buildings in case not all the data set needs to be run
         self.date_start = '2016-01-01'  # format: yyyy-mm-dd
         self.seasonhours = [3216, 6192]
         self.multiprocessing = False  # use multiprocessing / parallel execution if possible
