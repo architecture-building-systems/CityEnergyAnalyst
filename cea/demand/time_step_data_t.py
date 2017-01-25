@@ -4,7 +4,8 @@ import rc_model_SIA
 class TimeStepDataT(object):
     __slots__ = ['m_ve_mech', 'm_ve_window', 'm_ve_inf_simple', 'Elf', 'Eaf', 'Qcdataf', 'Qcref', 'people', 'I_sol',
                  'T_ext', 'theta_ve_mech',
-                 'h_ea', 'f_sc', 'f_ic', 'h_op_m', 'h_em', 'h_mc', 'f_im', 'f_sm', 'h_ac', 'h_ec']
+                 'h_ea', 'f_sc', 'f_ic', 'h_op_m', 'h_em', 'h_mc', 'f_im', 'f_sm', 'h_ac', 'h_ec',
+                 'phi_i_l', 'phi_i_a', 'phi_i_p']
 
     def __init__(self, tsd, t, bpr):
         self.m_ve_mech = tsd['m_ve_mech'][t]
@@ -36,4 +37,8 @@ class TimeStepDataT(object):
         self.h_em = rc_model_SIA.calc_h_em(self.h_op_m, self.h_mc)
         self.f_im = rc_model_SIA.calc_f_im(a_t, a_m)
         self.f_sm = rc_model_SIA.calc_f_sm(a_t, a_m, a_w)
+
+        self.phi_i_l = rc_model_SIA.calc_phi_i_l(self)
+        self.phi_i_a = rc_model_SIA.calc_phi_i_a(self)
+        self.phi_i_p = rc_model_SIA.calc_phi_i_p(bpr, self)
 

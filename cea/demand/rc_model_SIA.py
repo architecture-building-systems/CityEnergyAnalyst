@@ -145,9 +145,9 @@ def calc_phi_a(phi_hc_cv, bpr, tsdt):
     # Gabriel Happle 01.12.2016
 
     # get internal loads
-    phi_i_l = 0.9 * tsdt.Elf  # internal gains from lighting, factor of 0.9 taken from old method calc_Qgain_sen() #TODO make function and dynamic, check factor
-    phi_i_a = 0.9 * tsdt.Eaf + tsdt.Qcdataf - tsdt.Qcref  # internal gains from appliances, factor of 0.9 taken from old method calc_Qgain_sen() #TODO make function and dynamic, check factor
-    phi_i_p = tsdt.people * bpr.internal_loads['Qs_Wp']  # internal gains from people
+    phi_i_l = tsdt.phi_i_l
+    phi_i_a = tsdt.phi_i_a
+    phi_i_p = tsdt.phi_i_p
 
     # solar gains
     phi_s = tsdt.I_sol  # solar gains
@@ -169,9 +169,9 @@ def calc_phi_c(phi_hc_r, bpr, tsdt):
     # Gabriel Happle 01.12.2016
 
     # get internal loads
-    phi_i_l = 0.9 * tsdt.Elf  # internal gains from lighting, factor of 0.9 taken from old method calc_Qgain_sen() #TODO make function and dynamic, check factor
-    phi_i_a = 0.9 * tsdt.Eaf + tsdt.Qcdataf - tsdt.Qcref  # internal gains from appliances, factor of 0.9 taken from old method calc_Qgain_sen() #TODO make function and dynamic, check factor
-    phi_i_p = tsdt.people * bpr.internal_loads['Qs_Wp'] # internal gains from people
+    phi_i_l = tsdt.phi_i_l
+    phi_i_a = tsdt.phi_i_a
+    phi_i_p = tsdt.phi_i_p
 
     # solar gains
     phi_s = tsdt.I_sol  # solar gains
@@ -191,15 +191,30 @@ def calc_phi_c(phi_hc_r, bpr, tsdt):
     return phi_c
 
 
+def calc_phi_i_p(bpr, tsdt):
+    phi_i_p = tsdt.people * bpr.internal_loads['Qs_Wp']  # internal gains from people
+    return phi_i_p
+
+
+def calc_phi_i_a(tsdt):
+    phi_i_a = 0.9 * tsdt.Eaf + tsdt.Qcdataf - tsdt.Qcref  # internal gains from appliances, factor of 0.9 taken from old method calc_Qgain_sen() #TODO make function and dynamic, check factor
+    return phi_i_a
+
+
+def calc_phi_i_l(tsdt):
+    phi_i_l = 0.9 * tsdt.Elf  # internal gains from lighting, factor of 0.9 taken from old method calc_Qgain_sen() #TODO make function and dynamic, check factor
+    return phi_i_l
+
+
 def calc_phi_m(phi_hc_r, bpr, tsdt):
 
     # (16) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     # Gabriel Happle 01.12.2016
 
     # get internal loads
-    phi_i_l = 0.9 * tsdt.Elf  # internal gains from lighting, factor of 0.9 taken from old method calc_Qgain_sen() #TODO make function and dynamic, check factor
-    phi_i_a = 0.9 * tsdt.Eaf + tsdt.Qcdataf - tsdt.Qcref  # internal gains from appliances, factor of 0.9 taken from old method calc_Qgain_sen() #TODO make function and dynamic, check factor
-    phi_i_p = tsdt.people * bpr.internal_loads['Qs_Wp']  # internal gains from people
+    phi_i_l = tsdt.phi_i_l
+    phi_i_a = tsdt.phi_i_a
+    phi_i_p = tsdt.phi_i_p
 
     # solar gains
     phi_s = tsdt.I_sol  # solar gains
