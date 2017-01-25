@@ -1,4 +1,6 @@
 class TimeStepDataT(object):
+    __slots__ = ['m_ve_mech', 'm_ve_window', 'm_ve_inf_simple', 'Elf', 'Eaf', 'Qcdataf', 'Qcref', 'people', 'I_sol',
+                 'T_ext', 'theta_ve_mech']
     def __init__(self, tsd, t):
         self.m_ve_mech = tsd['m_ve_mech'][t]
         self.m_ve_window = tsd['m_ve_window'][t]
