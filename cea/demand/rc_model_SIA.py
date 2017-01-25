@@ -418,7 +418,7 @@ def calc_h_2(bpr, tsdt):
 
     # get values
     h_1 = calc_h_1(bpr, tsdt)
-    h_ec = calc_h_ec(bpr)
+    h_ec = tsdt.h_ec
 
     # (27) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -448,7 +448,7 @@ def calc_phi_m_tot(phi_hc_cv, phi_hc_r, bpr, tsdt):
     theta_em = calc_theta_em(tsdt)
     h_3 = calc_h_3(bpr, tsdt)
     phi_c = calc_phi_c(phi_hc_r, bpr, tsdt)
-    h_ec = calc_h_ec(bpr)
+    h_ec = tsdt.h_ec
     theta_ec = calc_theta_ec(tsdt)
     h_1 = calc_h_1(bpr, tsdt)
     phi_a = calc_phi_a(phi_hc_cv, bpr, tsdt)
@@ -480,7 +480,7 @@ def calc_theta_c(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m):
     # get values
     h_mc = tsdt.h_mc
     phi_c = calc_phi_c(phi_hc_r, bpr, tsdt)
-    h_ec = calc_h_ec(bpr)
+    h_ec = tsdt.h_ec
     theta_ec = calc_theta_ec(tsdt)
     h_1 = calc_h_1(bpr, tsdt)
     phi_a = calc_phi_a(phi_hc_cv, bpr, tsdt)
