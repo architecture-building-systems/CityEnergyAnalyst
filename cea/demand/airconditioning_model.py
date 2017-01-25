@@ -37,87 +37,100 @@ def calc_hvac_cooling(tsd, hoy, gv):
 
     """
     Calculate AC air mass flows, energy demand and temperatures for the cooling case
+    For AC system with demand controlled ventilation air flows (mechanical ventilation) and conditioning of recirculated
+    air (outdoor air flows are not modified)
 
     :param tsd: time series data dict
     :param hoy: time step
     :param gv: globalvars
-    :return:
+    :return: AC air mass flows, energy demand and temperatures for the cooling case
     """
 
     temp_zone_set = tsd['theta_a'][hoy]  # zone set temperature according to scheduled set points
-    qe_sen = tsd['Qcs_sen'][hoy]  # get the total sensible load from the RC model, in this case without any mechanical ventilation losses??? NO!
-    m_ve_hvac_req = tsd['m_ve_mech'][hoy] # mechanical ventilation flow rate according to ventilation control
-    wint = tsd['w_int'][hoy] # internal moisture gains from occupancy
-
-    # sensible cooling load provided by conditioning of ventilation air
-    #  = enthalpy difference in air mass flow between supply and room temperature
-    q_cs_sen_ventilation = calc_hvac_sensible_cooling_ventilation_air(tsd, hoy, gv)
-
-    # calculate the part of the sensible load that is supplied by conditioning the recirculation air
-    # = additional load that has to be covered by conditioning room air through recirculation
-    # additional load can not be smaller than 0, over cooling situation
-    q_cs_sen_recirculation = min(qe_sen - q_cs_sen_ventilation, 0) / 1000  # (kW)
+    qe_sen = tsd['Qcs_sen'][hoy] / 1000  # get the total sensible load from the RC model in [W]
+    m_ve_mech = tsd['m_ve_mech'][hoy]  # mechanical ventilation flow rate according to ventilation control
+    wint = tsd['w_int'][hoy]  # internal moisture gains from occupancy
+    rel_humidity_ext = tsd['rh_ext'][hoy]  # exterior relative humidity
+    temp_ext = tsd['T_ext'][hoy]  # exterior air temperature
+    temp_mech_vent = tsd['theta_ve_mech'][hoy]  # air temperature of mechanical ventilation air
 
     # indoor air set point
     t5 = temp_zone_set
 
-    # ventilation air properties after heat exchanger
-    t2, w2 = calc_hex(tsd, hoy)  # (°C), (kg/kg)
+    if m_ve_mech > 0:  # mechanical ventilation system is active, ventilation air and recirculation air gets conditioned
 
-    # State No. 3
-    # Assuming that AHU does not modify the air humidity
-    w3v = w2  # virtual moisture content at state 3
+        # State No. 1
+        w1 = calc_w(temp_ext, rel_humidity_ext)  # outdoor moisture (kg/kg)
 
-    # determine virtual state in the zone without moisture conditioning
-    # moisture balance accounting for internal moisture load, see also Eq. (4.32) in [1]
-    w5_prime = (wint + w3v * m_ve_hvac_req) / m_ve_hvac_req
+        # ventilation air properties
+        # State No. 2
+        t2 = temp_mech_vent
+        w2 = min(w1, calc_w(t2, 100))  # inlet air moisture (kg/kg), Eq. (4.24) in [1]
 
-    # supply air condition
-    t3 = gv.temp_sup_cool_hvac
+        # State No. 3
+        # Assuming that AHU does not modify the air humidity
+        w3v = w2  # virtual moisture content at state 3
 
-    # room supply moisture content:
-    # algorithm for cooling case
-    w3 = calc_w3_cooling_case(t5, w2, t3, w5_prime)
+        # determine virtual state in the zone without moisture conditioning
+        # moisture balance accounting for internal moisture load, see also Eq. (4.32) in [1]
+        w5_prime = (wint + w3v * m_ve_mech) / m_ve_mech
 
-    # State of Supply
-    ts = t3  # minus expected delta T rise in the ducts TODO: check and document value of temp decrease
-    ws = w3
+        # supply air condition
+        t3 = gv.temp_sup_cool_hvac
 
-    # actual room condition
-    w5 = (wint + w3 * m_ve_hvac_req) / m_ve_hvac_req
-    h_w5_t5 = calc_h(t5, w5)
+        # room supply moisture content:
+        # algorithm for cooling case
+        w3 = calc_w3_cooling_case(t5, w2, t3, w5_prime)
 
-    # TODO: now the energy of humidification and dehumidification can be calculated
-    h_t2_ws = calc_h(t2, ws)
-    h_t2_w2 = calc_h(t2, w2)
-    qe_hum_dehum = m_ve_hvac_req * (h_t2_ws - h_t2_w2) # (kW) TODO: document energy for (de)humidification
+        # State of Supply
+        ts = t3  # minus expected delta T rise in the ducts TODO: check and document value of temp decrease
+        ws = w3
 
-    # TODO: could be replaced by min() and max() functions
-    if qe_hum_dehum > 0:  # humidification
-        qe_hum = qe_hum_dehum
+        # actual room condition
+        w5 = (wint + w3 * m_ve_mech) / m_ve_mech
+        h_w5_t5 = calc_h(t5, w5)
+
+        # now the energy of dehumidification can be calculated
+        h_t2_ws = calc_h(t2, ws)
+        h_t2_w2 = calc_h(t2, w2)
+        qe_dehum = m_ve_mech * (h_t2_ws - h_t2_w2)  # (kW) # (kW) energy for dehumidification / latent cooling demand
+
+        # cooling load provided by conditioning ventilation air
+        h_t2_w2 = calc_h(t2, w2)
+        h_ts_w2 = calc_h(ts, w2)
+        q_cs_sen_mech_vent = m_ve_mech * (h_ts_w2 - h_t2_w2)
+
+    elif m_ve_mech == 0:  # mechanical ventilation system is not active, only recirculation air gets conditioned
+
+        # supply air condition
+        t3 = gv.temp_sup_cool_hvac
+
+        # State of Supply
+        ts = t3  # minus expected delta T rise in the ducts TODO: check and document value of temp decrease
+        w5 = wint
+        h_w5_t5 = calc_h(t5, w5)
+
+        # No dehumidification of recirculation air as there is no model yet for internal humidity assessment
         qe_dehum = 0
-    elif qe_hum_dehum < 0:  # dehumidification
-        qe_hum = 0
-        qe_dehum = qe_hum_dehum
+        q_cs_sen_mech_vent = 0
+        t2 = temp_mech_vent
+
     else:
-        qe_hum = 0
-        qe_dehum = 0
+        raise
 
-    # Total loads
-    h_t2_w2 = calc_h(t2, w2)
-    # h_ts_ws = calc_h(ts, ws)
-    h_ts_w2 = calc_h(ts, w2)
-    # qe_tot_ventilation_air = m_ve_hvac_req * (h_ts_ws - h_t2_w2)  # TODO: document
-    q_cs_sen_hvac = m_ve_hvac_req * (h_ts_w2 - h_t2_w2)
-
+    # calculate the part of the sensible load that is supplied by conditioning the recirculation air
+    # = additional load that has to be covered by conditioning room air through recirculation
+    # additional load can not be smaller than 0, over cooling situation
+    q_cs_sen_recirculation = min(qe_sen - q_cs_sen_mech_vent, 0)  # (kW)
     h_ts_w5 = calc_h(ts, w5)
     m_ve_hvac_recirculation = q_cs_sen_recirculation / (h_ts_w5 - h_w5_t5)
 
-    q_cs_sen_hvac = (q_cs_sen_hvac + q_cs_sen_recirculation) * 1000
+    # output parameters
+    q_cs_sen_hvac = (q_cs_sen_mech_vent + q_cs_sen_recirculation) * 1000
     q_cs_lat_hvac = qe_dehum * 1000
-    ma_sup_cs = m_ve_hvac_req + m_ve_hvac_recirculation
+    ma_sup_cs = m_ve_mech + m_ve_hvac_recirculation
     ta_sup_cs = ts
-    ta_re_cs = (m_ve_hvac_req * t2 + m_ve_hvac_recirculation * t5) / ma_sup_cs  # temperature mixing proportional to mass flow rates
+    ta_re_cs = (m_ve_mech * t2 + m_ve_hvac_recirculation * t5) / ma_sup_cs  # temperature mixing proportional to mass flow rates
 
     # construct output dict
     air_con_model_loads_flows_temperatures = {'q_cs_sen_hvac': q_cs_sen_hvac,
@@ -126,207 +139,126 @@ def calc_hvac_cooling(tsd, hoy, gv):
                                               'ta_sup_cs': ta_sup_cs,
                                               'ta_re_cs': ta_re_cs}
 
-    if m_ve_hvac_req + m_ve_hvac_recirculation < 0:
+    if m_ve_mech + m_ve_hvac_recirculation < 0:
         raise ValueError
 
     return air_con_model_loads_flows_temperatures
 
 
-def calc_hvac_sensible_cooling_ventilation_air(tsd, hoy, gv):
-
-
-    temp_zone_set = tsd['theta_a'][hoy]
-    m_ve_hvac_req = tsd['m_ve_mech'][hoy]  # mechanical ventilation flow rate according to ventilation control
-
-    # State No. 5 # indoor air set point
-    t5_prime = temp_zone_set
-
-    # state after heat exchanger
-    # TODO: temperature could come from ventilation heat exchanger...
-    t2, w2 = calc_hex(tsd, hoy)  # (°C), (kg/kg)
-
-    # State No. 3
-    # Assuming that AHU does not modify the air humidity
-    w3v = w2  # virtual moisture content at state 3
-
-    # MODIFICATIONS HAPPLE to the model
-    # *******************************************************
-    # first we guess the temperature of supply based on the sensible heating load and the required vetilation mass flow rate
-    h_t5_prime_w3v = calc_h(t5_prime, w3v)  # for enthalpy change in first assumption, see Eq.(4.31) in [1]
-
-    t3 = gv.temp_sup_cool_hvac
-    h_t3_w3v = calc_h(t3, w3v)  # for enthalpy change in first assumption, see Eq.(4.31) in [1]
-
-    # calculate the part of the sensible load that can be supplied by conditioning the ventilation air
-    q_cs_sen_ventilation = -m_ve_hvac_req * (h_t5_prime_w3v - h_t3_w3v)
-
-    return q_cs_sen_ventilation * 1000 # convert from (kW) back to (W)
-
-
-def calc_hvac_sensible_heating_ventilation_air(tsd, hoy, gv):
-
-
-    temp_zone_set = tsd['theta_a'][hoy]
-    m_ve_hvac_req = tsd['m_ve_mech'][hoy]  # (kg/s) mechanical ventilation flow rate according to ventilation control
-
-    # State No. 5 # indoor air set point
-    t5_prime = temp_zone_set
-
-    # state after heat exchanger
-    # TODO: temperature could come from ventilation heat exchanger...
-    t2, w2 = calc_hex(tsd, hoy)  # (°C), (kg/kg)
-
-    # State No. 3
-    # Assuming that AHU does not modify the air humidity
-    w3v = w2  # virtual moisture content at state 3
-
-    # first we guess the temperature of supply based on the sensible heating load and the required vetilation mass flow rate
-    h_t5_prime_w3v = calc_h(t5_prime, w3v)  # for enthalpy change in first assumption, see Eq.(4.31) in [1]
-
-    t3 = gv.temp_sup_heat_hvac
-    h_t3_w3v = calc_h(t3, w3v)  # for enthalpy change in first assumption, see Eq.(4.31) in [1]
-
-    # calculate the part of the sensible load that can be supplied by conditioning the ventilation air
-    q_hs_sen_ventilation = -m_ve_hvac_req * (h_t5_prime_w3v - h_t3_w3v)  # (kW)
-
-    return q_hs_sen_ventilation * 1000 # convert from (kW) back to (W)
-
-
 def calc_hvac_heating(tsd, hoy, gv):
     """
+    Calculate AC air mass flows, energy demand and temperatures for the heating case
+    For AC system with demand controlled ventilation air flows (mechanical ventilation) and conditioning of recirculated
+    air (outdoor air flows are not modified)
 
-
+    :param tsd: time series data dict
+    :param hoy: time step
+    :param gv: globalvars
+    :return: AC air mass flows, energy demand and temperatures for the heating case
     """
 
-    temp_zone_set = tsd['theta_a'][hoy]
-    qe_sen = tsd['Qhs_sen'][hoy] # get the total sensible load from the RC model, in this case without any mechanical ventilation losses???
-    m_ve_hvac_req = tsd['m_ve_mech'][hoy]   # (kg/s) mechanical ventilation flow rate according to ventilation control
-    wint = tsd['w_int'][hoy]
+    temp_zone_set = tsd['theta_a'][hoy]  # zone set temperature according to scheduled set points
+    qe_sen = tsd['Qhs_sen'][hoy] / 1000  # get the total sensible load from the RC model in [W]
+    m_ve_mech = tsd['m_ve_mech'][hoy]  # (kg/s) mechanical ventilation flow rate according to ventilation control
+    wint = tsd['w_int'][hoy]  # internal moisture gains from occupancy
+    rel_humidity_ext = tsd['rh_ext'][hoy]  # exterior relative humidity
+    temp_ext = tsd['T_ext'][hoy]  # exterior air temperature
+    temp_mech_vent = tsd['theta_ve_mech'][hoy]  # air temperature of mechanical ventilation air
 
-    # sensible heating load provided by conditioning of ventilation air
-    #  = enthalpy difference in air mass flow between supply and room temperature
-    q_hs_sen_ventilation = calc_hvac_sensible_heating_ventilation_air(tsd, hoy, gv)
+    # indoor air set point
+    t5 = temp_zone_set
+
+    if m_ve_mech > 0:  # mechanical ventilation system is active, ventilation air and recirculation air gets conditioned
+
+        # ventilation air properties after heat exchanger
+        # State No. 1
+        w1 = calc_w(temp_ext, rel_humidity_ext)  # outdoor moisture (kg/kg)
+
+        # State No. 2
+        t2 = temp_mech_vent
+        w2 = min(w1, calc_w(t2, 100))  # inlet air moisture (kg/kg), Eq. (4.24) in [1]
+
+        # State No. 3
+        # Assuming that AHU does not modify the air humidity
+        w3v = w2  # virtual moisture content at state 3
+
+        # determine virtual state in the zone without moisture conditioning
+        # moisture balance accounting for internal moisture load, see also Eq. (4.32) in [1]
+        w5_prime = (wint + w3v * m_ve_mech) / m_ve_mech
+
+        # supply air condition
+        t3 = gv.temp_sup_heat_hvac
+
+        # room supply moisture content:
+        # algorithm for cooling case
+        w3 = calc_w3_heating_case(t5, w2, w5_prime, t3, gv)
+
+        # State of Supply
+        ts = t3  # minus expected delta T rise in the ducts TODO: check and document value of temp decrease
+        ws = w3
+
+        # actual room condition
+        w5 = (wint + w3 * m_ve_mech) / m_ve_mech
+        h_w5_t5 = calc_h(t5, w5)
+
+        # Humidification of ventilation air
+        h_t2_ws = calc_h(t2, ws)
+        h_t2_w2 = calc_h(t2, w2)
+        qe_hum = m_ve_mech * (h_t2_ws - h_t2_w2)  # (kW) energy for humidification / latent heating demand
+
+        # Adiabatic humidifier - computation of electrical auxiliary loads
+        e_hs_lat_aux = 15 / 3600 * m_ve_mech  # assuming a performance of 15 W por Kg/h of humidified air source: bertagnolo 2012
+
+        # heating load provided by conditioning ventilation air
+        h_t2_w2 = calc_h(t2, w2)
+        h_ts_w2 = calc_h(ts, w2)
+        q_hs_sen_mech_vent = m_ve_mech * (h_ts_w2 - h_t2_w2)
+
+    elif m_ve_mech == 0:  # mechanical ventilation system is not active, only recirculation air gets conditioned
+
+        # supply air condition
+        t3 = gv.temp_sup_cool_hvac
+
+        # State of Supply
+        ts = t3  # minus expected delta T rise in the ducts TODO: check and document value of temp decrease
+        w5 = wint
+        h_w5_t5 = calc_h(t5, w5)
+
+        # No humidification of recirculation air as there is no model yet for internal humidity assessment
+        qe_hum = 0
+        q_hs_sen_mech_vent = 0
+        e_hs_lat_aux = 0
+        t2 = temp_mech_vent
+
+    else:
+        raise
 
     # calculate the part of the sensible load that is supplied by conditioning the recirculation air
     # = additional load that has to be covered by conditioning room air through recirculation
-    # additional load can not be smaller than 0, over cooling situation
-    q_hs_sen_recirculation = max(qe_sen - q_hs_sen_ventilation, 0) / 1000
-
-    # State No. 5 # indoor air set point
-    t5 = temp_zone_set
-
-    # state after heat exchanger
-    t2, w2 = calc_hex(tsd, hoy)  # (°C), (kg/kg)
-
-    # State No. 3
-    # Assuming that AHU does not modify the air humidity
-    w3v = w2  # virtual moisture content at state 3
-
-    # determine virtual state in the zone without moisture conditioning
-    # moisture balance accounting for internal moisture load, see also Eq. (4.32) in [1]
-    w5_prime = (wint + w3v * m_ve_hvac_req) / m_ve_hvac_req
-
-    t3 = gv.temp_sup_heat_hvac
-
-    # room supply moisture content:
-    # algorithm for heating case
-    w3 = calc_w3_heating_case(t5, w2, w5_prime, t3, gv)
-    ts = t3 # minus expected delta T rise in the ducts TODO: check and document value of temp decrease
-
-    # State of Supply
-    ws = w3
-
-    # actual room condition
-    w5 = (wint + w3 * m_ve_hvac_req) / m_ve_hvac_req
-    h_w5_t5 = calc_h(t5, w5)
-
-    # TODO: now the energy of humidification and dehumidification can be calculated
-    h_t2_ws = calc_h(t2, ws)
-    h_t2_w2 = calc_h(t2, w2)
-    qe_hum_dehum = m_ve_hvac_req * (h_t2_ws - h_t2_w2)  # (kW) TODO: document energy for (de)humidification
-
-    # TODO: could be replaced by min() and max() functions
-    if qe_hum_dehum > 0:  # humidification
-        qe_hum = qe_hum_dehum
-        qe_dehum = 0
-    elif qe_hum_dehum < 0:  # dehumidification
-        qe_hum = 0
-        qe_dehum = qe_hum_dehum
-    else:
-        qe_hum = 0
-        qe_dehum = 0
-
-    # Total loads
-    h_t2_w2 = calc_h(t2, w2)
-    # h_ts_ws = calc_h(ts, ws)
-    h_ts_w2 = calc_h(ts, w2)
-    # qe_tot_ventilation_air = m_ve_hvac_req * (h_ts_ws - h_t2_w2)  # TODO: document
-    q_hs_sen_hvac = m_ve_hvac_req * (h_ts_w2 - h_t2_w2)
-
+    # additional load can not be smaller than 0, over heating situation
+    q_hs_sen_recirculation = max(qe_sen - q_hs_sen_mech_vent, 0)
     h_ts_w5 = calc_h(ts, w5)
-
     m_ve_hvac_recirculation = q_hs_sen_recirculation / (h_ts_w5 - h_w5_t5)
 
-    # qe_free = - m * (h_t5_prime_w3 - calc_h(temp_1, calc_w(temp_1,rhum_1))) * 1000
-    # q_sen_tot = qe_tot + qe_free - qe_hum_dehum
-
-    # Adiabatic humidifier - computation of electrical auxiliary loads
-    if qe_hum > 0:
-        pel_hum_aux = 15 / 3600 * m_ve_hvac_req  # assuming a performance of 15 W por Kg/h of humidified air source: bertagnolo 2012
-    else:
-        pel_hum_aux = 0
-
-    q_hs_sen_hvac = (q_hs_sen_hvac + q_hs_sen_recirculation) * 1000
+    # output parameters
+    q_hs_sen_hvac = (q_hs_sen_mech_vent + q_hs_sen_recirculation) * 1000
     q_hs_lat_hvac = qe_hum * 1000
-    ma_sup_hs = m_ve_hvac_req + m_ve_hvac_recirculation
+    ma_sup_hs = m_ve_mech + m_ve_hvac_recirculation
     ta_sup_hs = ts
     ta_re_hs = (
-               m_ve_hvac_req * t2 + m_ve_hvac_recirculation * t5) / ma_sup_hs  # temperature mixing proportional to mass flow rates
+               m_ve_mech * t2 + m_ve_hvac_recirculation * t5) / ma_sup_hs  # temperature mixing proportional to mass flow rates
 
     air_con_model_loads_flows_temperatures = {'q_hs_sen_hvac': q_hs_sen_hvac,
                                               'q_hs_lat_hvac': q_hs_lat_hvac,
                                               'ma_sup_hs': ma_sup_hs,
                                               'ta_sup_hs': ta_sup_hs,
                                               'ta_re_hs': ta_re_hs,
-                                              'e_hs_lat_aux': pel_hum_aux}
+                                              'e_hs_lat_aux': e_hs_lat_aux}
 
-    if m_ve_hvac_req + m_ve_hvac_recirculation < 0:
+    if m_ve_mech + m_ve_hvac_recirculation < 0:
         raise ValueError
 
     return air_con_model_loads_flows_temperatures
-
-
-"""
-=========================================
-air Heat exchanger unit
-=========================================
-"""
-
-
-def calc_hex(tsd, hoy):
-    """
-    Calculates air properties of mechanical ventilation system with heat exchanger
-    Modeled after 2.4.2 in SIA 2044
-
-    :param tsd: time series data dict
-    :param hoy: time step [0...8760]
-    :return: t2, w2 : temperature and moisture content of inlet air after heat exchanger
-    """
-
-    # TODO add literature
-
-    rel_humidity_ext = tsd['rh_ext'][hoy]
-    temp_ext = tsd['T_ext'][hoy]
-
-    # State No. 1
-    w1 = calc_w(temp_ext, rel_humidity_ext)  # outdoor moisture (kg/kg)
-
-    # State No. 2
-    # inlet air temperature after HEX calculated from zone air temperature at time step t-1 (°C)
-    t2 = tsd['theta_ve_mech'][hoy]
-    w2 = min(w1, calc_w(t2, 100))  # inlet air moisture (kg/kg), Eq. (4.24) in [1]
-
-    return t2, w2
 
 
 """
