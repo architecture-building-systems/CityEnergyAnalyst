@@ -115,21 +115,7 @@ def calc_h_ec(bpr):
     return h_ec
 
 
-def calc_h_ea(tsdt):
 
-    cp = 1.005 / 3.6  # (Wh/kg/K)
-    # TODO: check units of air flow
-
-    # get values
-    m_v_sys = tsdt.m_ve_mech * 3600  # mass flow rate mechanical ventilation
-    m_v_w = tsdt.m_ve_window * 3600  # mass flow rate window ventilation
-    m_v_inf = tsdt.m_ve_inf_simple * 3600  # mass flow rate infiltration
-
-    # (13) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-    # adapted for mass flows instead of volume flows
-    h_ea = (m_v_sys + m_v_w + m_v_inf) * cp
-
-    return h_ea
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -391,7 +377,7 @@ def calc_theta_m_t(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m_t_1):
 def calc_h_1(bpr, tsdt):
 
     # get values
-    h_ea = calc_h_ea(tsdt)
+    h_ea = tsdt.h_ea
     h_ac = calc_h_ac(bpr)
 
     # (26) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
@@ -439,7 +425,7 @@ def calc_phi_m_tot(phi_hc_cv, phi_hc_r, bpr, tsdt):
     theta_ec = calc_theta_ec(tsdt)
     h_1 = calc_h_1(bpr, tsdt)
     phi_a = calc_phi_a(phi_hc_cv, bpr, tsdt)
-    h_ea = calc_h_ea(tsdt)
+    h_ea = tsdt.h_ea
     theta_ea = calc_theta_ea(tsdt)
     h_2 = calc_h_2(bpr, tsdt)
 
@@ -471,7 +457,7 @@ def calc_theta_c(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m):
     theta_ec = calc_theta_ec(tsdt)
     h_1 = calc_h_1(bpr, tsdt)
     phi_a = calc_phi_a(phi_hc_cv, bpr, tsdt)
-    h_ea = calc_h_ea(tsdt)
+    h_ea = tsdt.h_ea
     theta_ea = calc_theta_ea(tsdt)
 
     # (31) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
@@ -485,7 +471,7 @@ def calc_theta_a(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_c):
 
     # get values
     h_ac = calc_h_ac(bpr)
-    h_ea = calc_h_ea(tsdt)
+    h_ea = tsdt.h_ea
     theta_ea = calc_theta_ea(tsdt)
     phi_a = calc_phi_a(phi_hc_cv, bpr, tsdt)
 
