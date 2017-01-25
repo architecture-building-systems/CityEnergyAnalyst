@@ -386,13 +386,14 @@ def calc_theta_e_star():
 # 2.1.6
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-def calc_theta_m_t(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m_t_1):
+def calc_theta_m_t(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m_t_1, h_1):
 
     # get values
     c_m = bpr.rc_model['Cm'] / 3600  # (Wh/K) SIA 2044 unit is Wh/K, ISO unit is J/K
-    h_3 = calc_h_3(bpr, tsdt)
+    h_2 = calc_h_2(h_1, tsdt)
+    h_3 = calc_h_3(h_2, tsdt)
     h_em = tsdt.h_em
-    phi_m_tot = calc_phi_m_tot(phi_hc_cv, phi_hc_r, h_3, bpr, tsdt)
+    phi_m_tot = calc_phi_m_tot(phi_hc_cv, phi_hc_r, h_1, h_2, h_3, bpr, tsdt)
 
     # (25) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -401,7 +402,7 @@ def calc_theta_m_t(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m_t_1):
     return theta_m_t
 
 
-def calc_h_1(bpr, tsdt):
+def calc_h_1(tsdt):
 
     # get values
     h_ea = tsdt.h_ea
@@ -414,10 +415,9 @@ def calc_h_1(bpr, tsdt):
     return h_1
 
 
-def calc_h_2(bpr, tsdt):
+def calc_h_2(h_1, tsdt):
 
     # get values
-    h_1 = calc_h_1(bpr, tsdt)
     h_ec = tsdt.h_ec
 
     # (27) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
@@ -427,10 +427,9 @@ def calc_h_2(bpr, tsdt):
     return h_2
 
 
-def calc_h_3(bpr, tsdt):
+def calc_h_3(h_2, tsdt):
 
     # get values
-    h_2 = calc_h_2(bpr, tsdt)
     h_mc = tsdt.h_mc
 
     # (28) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
@@ -440,20 +439,18 @@ def calc_h_3(bpr, tsdt):
     return h_3
 
 
-def calc_phi_m_tot(phi_hc_cv, phi_hc_r, h_3, bpr, tsdt):
+def calc_phi_m_tot(phi_hc_cv, phi_hc_r, h_1, h_2, h_3, bpr, tsdt):
 
     # get values
-    phi_m = calc_phi_m(phi_hc_r, bpr, tsdt)
-    h_em = tsdt.h_em
     theta_em = calc_theta_em(tsdt)
-    phi_c = calc_phi_c(phi_hc_r, bpr, tsdt)
-    h_ec = tsdt.h_ec
     theta_ec = calc_theta_ec(tsdt)
-    h_1 = calc_h_1(bpr, tsdt)
-    phi_a = calc_phi_a(phi_hc_cv, bpr, tsdt)
-    h_ea = tsdt.h_ea
     theta_ea = calc_theta_ea(tsdt)
-    h_2 = calc_h_2(bpr, tsdt)
+    phi_a = calc_phi_a(phi_hc_cv, bpr, tsdt)
+    phi_c = calc_phi_c(phi_hc_r, bpr, tsdt)
+    phi_m = calc_phi_m(phi_hc_r, bpr, tsdt)
+    h_ec = tsdt.h_ec
+    h_ea = tsdt.h_ea
+    h_em = tsdt.h_em
 
     # (29) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -462,10 +459,10 @@ def calc_phi_m_tot(phi_hc_cv, phi_hc_r, h_3, bpr, tsdt):
     return phi_m_tot
 
 
-def calc_theta_m(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m_t_1):
+def calc_theta_m(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m_t_1, h_1):
 
     # get values
-    theta_m_t = calc_theta_m_t(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m_t_1)
+    theta_m_t = calc_theta_m_t(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m_t_1, h_1)
 
     # (30) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -474,14 +471,13 @@ def calc_theta_m(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m_t_1):
     return theta_m
 
 
-def calc_theta_c(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m):
+def calc_theta_c(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m, h_1):
 
     # get values
     h_mc = tsdt.h_mc
     phi_c = calc_phi_c(phi_hc_r, bpr, tsdt)
     h_ec = tsdt.h_ec
     theta_ec = calc_theta_ec(tsdt)
-    h_1 = calc_h_1(bpr, tsdt)
     phi_a = calc_phi_a(phi_hc_cv, bpr, tsdt)
     h_ea = tsdt.h_ea
     theta_ea = calc_theta_ea(tsdt)
@@ -604,8 +600,9 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     tsdt = TimeStepDataT(tsd, t, bpr)
     theta_m_t_1 = tsd['theta_m'][t - 1] if not np.isnan(tsd['theta_m'][t - 1]) else tsd['T_ext'][t - 1]
 
-    theta_m = calc_theta_m(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m_t_1)
-    theta_c = calc_theta_c(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m)
+    h_1 = calc_h_1(tsdt)
+    theta_m = calc_theta_m(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m_t_1, h_1)
+    theta_c = calc_theta_c(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m, h_1)
     theta_a = calc_theta_a(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_c)
     theta_o = calc_theta_o(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_a, theta_c)
     rc_model_temp = {'theta_m': theta_m, 'theta_c': theta_c, 'theta_a': theta_a, 'theta_o': theta_o}
