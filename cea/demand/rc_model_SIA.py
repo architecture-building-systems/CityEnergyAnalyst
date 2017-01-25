@@ -38,10 +38,14 @@ f_r_a = 0.2  # (-) section 2.1.4 in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2
 # 2.1.3
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-def calc_h_mc(bpr):
+def calc_h_mc(a_m):
+    """
+    :param a_m: see ``bpr.rc_model['Am']``
+    :return:
+    """
 
     # get properties from bpr # TODO: to be addressed in issue #443
-    a_m = bpr.rc_model['Am']
+    # a_m = bpr.rc_model['Am']
 
     # (7) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -50,14 +54,17 @@ def calc_h_mc(bpr):
     return h_mc
 
 
-def calc_h_ac(bpr):
+def calc_h_ac(a_t):
+    """
+    :param a_t: equivalent to ``bpr.rc_model['Atot']``
+    :return:
+    """
 
     # get properties from bpr # TODO: to be addressed in issue #443
-    a_t = bpr.rc_model['Atot']
 
     # (8) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
-    h_ac = a_t / (1/h_cv_i - 1/h_ic)
+    h_ac = a_t / (1 / h_cv_i - 1 / h_ic)
 
     return h_ac
 
@@ -77,11 +84,7 @@ def calc_h_op_m(bpr):
     return h_op_m
 
 
-def calc_h_em(bpr):
-
-    # calculate values
-    h_op_m = calc_h_op_m(bpr)
-    h_mc = calc_h_mc(bpr)
+def calc_h_em(h_op_m, h_mc):
 
     # (10) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     h_em = 1 / (1 / h_op_m - 1 / h_mc)
@@ -115,7 +118,20 @@ def calc_h_ec(bpr):
     return h_ec
 
 
+def calc_h_ea(tsdt):
+    cp = 1.005 / 3.6  # (Wh/kg/K)
+    # TODO: check units of air flow
 
+    # get values
+    m_v_sys = tsdt.m_ve_mech * 3600  # mass flow rate mechanical ventilation
+    m_v_w = tsdt.m_ve_window * 3600  # mass flow rate window ventilation
+    m_v_inf = tsdt.m_ve_inf_simple * 3600  # mass flow rate infiltration
+
+    # (13) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
+    # adapted for mass flows instead of volume flows
+    h_ea = (m_v_sys + m_v_w + m_v_inf) * cp
+
+    return h_ea
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -161,8 +177,8 @@ def calc_phi_c(phi_hc_r, bpr, tsdt):
     phi_s = tsdt.I_sol  # solar gains
 
     # call functions for factor
-    f_ic = calc_f_ic(bpr)
-    f_sc = calc_f_sc(bpr)
+    f_ic = tsdt.f_ic
+    f_sc = tsdt.f_sc
 
     # standard assumptions
     #f_sa = 0.1
@@ -189,8 +205,8 @@ def calc_phi_m(phi_hc_r, bpr, tsdt):
     phi_s = tsdt.I_sol  # solar gains
 
     # call functions for factors
-    f_im = calc_f_im(bpr)
-    f_sm = calc_f_sm(bpr)
+    f_im = tsdt.f_im
+    f_sm = tsdt.f_sm
 
     # standard assumption
     #f_sa = 0.1
@@ -202,15 +218,18 @@ def calc_phi_m(phi_hc_r, bpr, tsdt):
     return phi_m
 
 
-def calc_f_ic(bpr):
+def calc_f_ic(a_t, a_m, h_ec):
+    """
+
+    :param a_t: see ``bpr.rc_model['Atot']``
+    :param a_m: see ``bpr.rc_model['Am']``
+    :param h_ec: see ``calc_h_ec``
+    :return:
+    """
 
     # (17) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     # Gabriel Happle 01.12.2016
 
-    # get values from bpr
-    a_t = bpr.rc_model['Atot']
-    a_m = bpr.rc_model['Am']
-    h_ec = calc_h_ec(bpr)
     #h_ic = 9.1  # in (W/m2K) from (8) in SIA 2044
 
     f_ic = (a_t - a_m - h_ec / h_ic) / a_t
@@ -218,16 +237,21 @@ def calc_f_ic(bpr):
     return f_ic
 
 
-def calc_f_sc(bpr):
+def calc_f_sc(a_t, a_m, a_w, h_ec):
+    """
+
+    :param a_t: see ``bpr.rc_model['Atot']``
+    :param a_m: see ``bpr.rc_model['Am']``
+    :param a_w: see ``bpr.rc_model['Aw']``
+    :param h_ec: see ``calc_h_ec``
+    :return:
+    """
 
     # (18) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     # Gabriel Happle 01.12.2016
 
     # get values from bpr
-    a_t = bpr.rc_model['Atot']
-    a_m = bpr.rc_model['Am']
-    a_w = bpr.rc_model['Aw']
-    h_ec = bpr.rc_model['Htr_w']
+
     #h_ic = 9.1  # in (W/m2K) from (8) in SIA 2044
 
     f_sc = (a_t-a_m-a_w-h_ec/h_ic) / (a_t - a_w)
@@ -235,29 +259,32 @@ def calc_f_sc(bpr):
     return f_sc
 
 
-def calc_f_im(bpr):
+def calc_f_im(a_t, a_m):
+    """
+
+    :param a_t: see ``bpr.rc_model['Atot']``
+    :param a_m: see ``bpr.rc_model['Am']``
+    :return:
+    """
 
     # (19) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     # Gabriel Happle 01.12.2016
-
-    # get values from bpr
-    a_t = bpr.rc_model['Atot']
-    a_m = bpr.rc_model['Am']
 
     f_im = a_m / a_t
 
     return f_im
 
 
-def calc_f_sm(bpr):
+def calc_f_sm(a_t, a_m, a_w):
+    """
+    :param a_t: bpr.rc_model['Atot']
+    :param a_m: bpr.rc_model['Am']
+    :param a_w: bpr.rc_model['Aw']
+    :return:
+    """
 
     # (20) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     # Gabriel Happle 01.12.2016
-
-    # get values from bpr
-    a_t = bpr.rc_model['Atot']
-    a_m = bpr.rc_model['Am']
-    a_w = bpr.rc_model['Aw']
 
     f_sm = a_m / (a_t - a_w)
 
@@ -364,7 +391,7 @@ def calc_theta_m_t(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m_t_1):
     # get values
     c_m = bpr.rc_model['Cm'] / 3600  # (Wh/K) SIA 2044 unit is Wh/K, ISO unit is J/K
     h_3 = calc_h_3(bpr, tsdt)
-    h_em = calc_h_em(bpr)
+    h_em = tsdt.h_em
     phi_m_tot = calc_phi_m_tot(phi_hc_cv, phi_hc_r, bpr, tsdt)
 
     # (25) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
@@ -378,7 +405,7 @@ def calc_h_1(bpr, tsdt):
 
     # get values
     h_ea = tsdt.h_ea
-    h_ac = calc_h_ac(bpr)
+    h_ac = tsdt.h_ac
 
     # (26) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -404,7 +431,7 @@ def calc_h_3(bpr, tsdt):
 
     # get values
     h_2 = calc_h_2(bpr, tsdt)
-    h_mc = calc_h_mc(bpr)
+    h_mc = tsdt.h_mc
 
     # (28) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -417,7 +444,7 @@ def calc_phi_m_tot(phi_hc_cv, phi_hc_r, bpr, tsdt):
 
     # get values
     phi_m = calc_phi_m(phi_hc_r, bpr, tsdt)
-    h_em = calc_h_em(bpr)
+    h_em = tsdt.h_em
     theta_em = calc_theta_em(tsdt)
     h_3 = calc_h_3(bpr, tsdt)
     phi_c = calc_phi_c(phi_hc_r, bpr, tsdt)
@@ -451,7 +478,7 @@ def calc_theta_m(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m_t_1):
 def calc_theta_c(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m):
 
     # get values
-    h_mc = calc_h_mc(bpr)
+    h_mc = tsdt.h_mc
     phi_c = calc_phi_c(phi_hc_r, bpr, tsdt)
     h_ec = calc_h_ec(bpr)
     theta_ec = calc_theta_ec(tsdt)
@@ -470,7 +497,7 @@ def calc_theta_c(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m):
 def calc_theta_a(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_c):
 
     # get values
-    h_ac = calc_h_ac(bpr)
+    h_ac = tsdt.h_ac
     h_ea = tsdt.h_ea
     theta_ea = calc_theta_ea(tsdt)
     phi_a = calc_phi_a(phi_hc_cv, bpr, tsdt)
@@ -575,7 +602,7 @@ def calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t):
 
 def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     # calculate node temperatures of RC model
-    tsdt = TimeStepDataT(tsd, t)
+    tsdt = TimeStepDataT(tsd, t, bpr)
     theta_m_t_1 = tsd['theta_m'][t - 1] if not np.isnan(tsd['theta_m'][t - 1]) else tsd['T_ext'][t - 1]
 
     theta_m = calc_theta_m(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m_t_1)
