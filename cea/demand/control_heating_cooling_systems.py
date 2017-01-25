@@ -2,7 +2,6 @@
 
 
 from __future__ import division
-
 from cea.demand import rc_model_SIA
 from cea.utilities import helpers
 
@@ -106,14 +105,13 @@ def cooling_system_is_ac(bpr):
         return False
 
 
-
 def is_active_heating_system(bpr, tsd, t):
 
     # check for heating system in building
     # check for heating season
     # check for heating demand
-    if has_heating_system(bpr) \
-            and helpers.is_heatingseason_hoy(t) \
+    if helpers.is_heatingseason_hoy(t) \
+            and has_heating_system(bpr) \
             and rc_model_SIA.has_heating_demand(bpr, tsd, t):
 
         return True
@@ -126,21 +124,11 @@ def is_active_cooling_system(bpr, tsd, t):
     # check for cooling system in building
     # check for cooling season
     # check for cooling demand
-    if has_cooling_system(bpr) \
-            and helpers.is_coolingseason_hoy(t) \
-            and rc_model_SIA.has_cooling_demand(bpr, tsd, t) \
-            and tsd['T_ext'][t] >= tsd['ta_cs_set'][t]:
+    if helpers.is_coolingseason_hoy(t) \
+            and has_cooling_system(bpr) \
+            and tsd['T_ext'][t] >= tsd['ta_cs_set'][t] \
+            and rc_model_SIA.has_cooling_demand(bpr, tsd, t):
 
         return True
-
-    elif has_cooling_system(bpr) \
-            and helpers.is_coolingseason_hoy(t) \
-            and rc_model_SIA.has_cooling_demand(bpr, tsd, t) \
-            and tsd['T_ext'][t] < tsd['ta_cs_set'][t]:  # Cooling system turned off if outside is cooler than set point
-        return False
-
     else:
         return False
-
-
-
