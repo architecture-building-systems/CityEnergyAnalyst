@@ -884,7 +884,7 @@ def run_as_script(scenario_path=None):
 
     # add a way to test for either a csv source for the network or a shapefile
     ## shapefile_flag is true if source of data is a shapefile, false if it is a csv
-    shapefile_flag = True
+    shapefile_flag = False
 
     thermal_network_main(locator, gv, shapefile_flag)
     print 'test thermal_network_main() succeeded'
