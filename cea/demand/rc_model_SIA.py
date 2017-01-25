@@ -392,7 +392,7 @@ def calc_theta_m_t(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_m_t_1):
     c_m = bpr.rc_model['Cm'] / 3600  # (Wh/K) SIA 2044 unit is Wh/K, ISO unit is J/K
     h_3 = calc_h_3(bpr, tsdt)
     h_em = tsdt.h_em
-    phi_m_tot = calc_phi_m_tot(phi_hc_cv, phi_hc_r, bpr, tsdt)
+    phi_m_tot = calc_phi_m_tot(phi_hc_cv, phi_hc_r, h_3, bpr, tsdt)
 
     # (25) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -440,13 +440,12 @@ def calc_h_3(bpr, tsdt):
     return h_3
 
 
-def calc_phi_m_tot(phi_hc_cv, phi_hc_r, bpr, tsdt):
+def calc_phi_m_tot(phi_hc_cv, phi_hc_r, h_3, bpr, tsdt):
 
     # get values
     phi_m = calc_phi_m(phi_hc_r, bpr, tsdt)
     h_em = tsdt.h_em
     theta_em = calc_theta_em(tsdt)
-    h_3 = calc_h_3(bpr, tsdt)
     phi_c = calc_phi_c(phi_hc_r, bpr, tsdt)
     h_ec = tsdt.h_ec
     theta_ec = calc_theta_ec(tsdt)
