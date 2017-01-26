@@ -65,7 +65,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     #  pass
 
 
-#    """ IMPORT DATA """
+    """ IMPORT DATA """
 
     # Import Demand Data:
     os.chdir(locator.get_optimization_slave_results_folder())
@@ -1236,7 +1236,7 @@ def extract_csv(fName, colName, DAYS_IN_YEAR):
 
 
 def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
-   """
+    """
     importing and preparing distribution data for analysis of the Centralized Plant Choice
 
     Parameters
@@ -1251,8 +1251,7 @@ def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     Q_DH_networkload, E_aux_ch,E_aux_dech, Q_missing, Q_storage_content_Wh, Q_to_storage, Solar_Q_th_W
     :rtype: list
     """
-
-#"""     import dataframes    """
+    """ import dataframes """
     # mass flows
 
     # print fName
