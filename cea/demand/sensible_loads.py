@@ -80,7 +80,7 @@ def calc_I_sol(t, bpr, tsd, gv):
 
     Asol_wall, Asol_roof, Asol_win = calc_Asol(t, bpr, gv)
     I_rad = calc_I_rad(t, tsd, bpr, gv)
-    I_sol = bpr.solar['I_roof'][t] * Asol_roof + bpr.solar['I_win'][t]*Asol_win + bpr.solar['I_wall'][t]*Asol_wall
+    I_sol = bpr.solar.I_roof[t] * Asol_roof + bpr.solar.I_win[t]*Asol_win + bpr.solar.I_wall[t]*Asol_wall
     I_sol_net = I_sol - I_rad
 
     return I_sol_net, I_rad # vector in W
@@ -134,7 +134,7 @@ def calc_Asol(t, bpr, gv):
     :return:
     """
     from cea.technologies import blinds
-    Fsh_win = blinds.calc_blinds_activation(bpr.solar['I_win'][t], bpr.architecture.G_win, bpr.architecture.rf_sh)
+    Fsh_win = blinds.calc_blinds_activation(bpr.solar.I_win[t], bpr.architecture.G_win, bpr.architecture.rf_sh)
     Asol_wall = bpr.rc_model['Awall_all'] * bpr.architecture.a_wall * gv.Rse * bpr.rc_model['U_wall']
     Asol_roof = bpr.rc_model['Aroof'] * bpr.architecture.a_roof * gv.Rse * bpr.rc_model['U_roof']
     Asol_win = Fsh_win * bpr.rc_model['Aw'] * (1 - gv.F_f)

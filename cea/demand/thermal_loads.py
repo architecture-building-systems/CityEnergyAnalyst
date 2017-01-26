@@ -709,7 +709,7 @@ class BuildingPropertiesRow(object):
         self.comfort = comfort
         self.internal_loads = internal_loads
         self.age = age
-        self.solar = solar
+        self.solar = SolarProperties(solar)
         self.windows = windows
         self.building_systems = self._get_properties_building_systems(gv)
 
@@ -776,7 +776,7 @@ class BuildingPropertiesRow(object):
 
 
 class ArchitectureProperties(object):
-    """Encapsulate a single row of the architecture input file"""
+    """Encapsulate a single row of the architecture input file for a building"""
     __slots__ = [u'Occ_m2p', u'a_roof', u'f_cros', u'n50', u'win_op', u'win_wall', u'a_wall', u'rf_sh', u'e_wall',
                  u'e_roof', u'G_win', u'e_win']
 
@@ -793,6 +793,16 @@ class ArchitectureProperties(object):
         self.e_roof = architecture['e_roof']
         self.G_win = architecture['G_win']
         self.e_win = architecture['e_win']
+
+
+class SolarProperties(object):
+    """Encapsulates the solar properties of a building"""
+    __slots__ = ['I_roof', 'I_wall', 'I_win']
+
+    def __init__(self, solar):
+        self.I_roof = solar['I_roof']
+        self.I_wall = solar['I_wall']
+        self.I_win = solar['I_win']
 
 
 def get_temperatures(locator, prop_HVAC):
