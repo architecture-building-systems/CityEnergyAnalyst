@@ -100,7 +100,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     schedules = usage_schedules['schedules']
 
     # get n50 value
-    # n50 = bpr.architecture['n50']
+    # n50 = bpr.architecture.n50
 
     # get occupancy
     tsd['people'] = occupancy_model.calc_occ(list_uses, schedules, bpr)
@@ -216,7 +216,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             gv,
             bpr.internal_loads['Vww_lpd'],
             bpr.internal_loads['Vw_lpd'],
-            bpr.architecture['Occ_m2p'],
+            bpr.architecture.Occ_m2p,
             list_uses,
             schedules,
             bpr.occupancy)
@@ -702,7 +702,7 @@ class BuildingPropertiesRow(object):
         """Create a new instance of BuildingPropertiesRow - meant to be called by BuildingProperties[building_name].
         Each of the arguments is a pandas Series object representing a row in the corresponding DataFrame."""
         self.geometry = geometry
-        self.architecture = architecture
+        self.architecture = ArchitectureProperties(architecture)
         self.occupancy = occupancy  # FIXME: rename to uses!
         self.hvac = hvac
         self.rc_model = rc_model
@@ -773,6 +773,26 @@ class BuildingPropertiesRow(object):
     def _calc_form(self):
         factor = self.geometry['footprint'] / (self.geometry['Bwidth'] * self.geometry['Blength'])
         return factor
+
+
+class ArchitectureProperties(object):
+    """Encapsulate a single row of the architecture input file"""
+    __slots__ = [u'Occ_m2p', u'a_roof', u'f_cros', u'n50', u'win_op', u'win_wall', u'a_wall', u'rf_sh', u'e_wall',
+                 u'e_roof', u'G_win', u'e_win']
+
+    def __init__(self, architecture):
+        self.Occ_m2p = architecture['Occ_m2p']
+        self.a_roof = architecture['a_roof']
+        self.f_cros = architecture['f_cros']
+        self.n50 = architecture['n50']
+        self.win_op = architecture['win_op']
+        self.win_wall = architecture['win_wall']
+        self.a_wall = architecture['a_wall']
+        self.rf_sh = architecture['rf_sh']
+        self.e_wall = architecture['e_wall']
+        self.e_roof = architecture['e_roof']
+        self.G_win = architecture['G_win']
+        self.e_win = architecture['e_win']
 
 
 def get_temperatures(locator, prop_HVAC):
