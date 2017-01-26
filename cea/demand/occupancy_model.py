@@ -49,11 +49,11 @@ def calc_occ(list_uses, schedules, bpr):
     :rtype: ndarray
     """
     schedule = calc_occ_schedule(list_uses, schedules, bpr.occupancy)
-    if bpr.architecture['Occ_m2p'] > 0.0:
+    if bpr.architecture.Occ_m2p > 0.0:
 
-        people = schedule * bpr.rc_model['Af'] / bpr.architecture['Occ_m2p']  # in people
+        people = schedule * bpr.rc_model['Af'] / bpr.architecture.Occ_m2p  # in people
 
-    elif bpr.architecture['Occ_m2p'] == 0:
+    elif bpr.architecture.Occ_m2p == 0:
 
         people = np.zeros(8760)
 

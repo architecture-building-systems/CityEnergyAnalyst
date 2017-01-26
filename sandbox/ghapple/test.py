@@ -238,7 +238,7 @@ def testing_gabriel(locator, weather_path, gv):
             gv,
             bpr.internal_loads['Vww_lpd'],
             bpr.internal_loads['Vw_lpd'],
-            bpr.architecture['Occ_m2p'],
+            bpr.architecture.Occ_m2p,
             list_uses,
             schedules,
             bpr.occupancy)

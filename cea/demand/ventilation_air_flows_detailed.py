@@ -104,7 +104,7 @@ def get_properties_natural_ventilation(bpr, gv):
     dict_props_nat_vent : dictionary containing natural ventilation properties of zone
     """
 
-    n50 = bpr.architecture['n50']
+    n50 = bpr.architecture.n50
     vol_building = bpr.geometry['footprint'] * bpr.geometry['height_ag']
     qv_delta_p_lea_ref_zone = calc_qv_delta_p_ref(n50, vol_building)
     area_facade_zone,\
@@ -112,7 +112,7 @@ def get_properties_natural_ventilation(bpr, gv):
     height_zone,\
     slope_roof = get_building_geometry_ventilation(bpr.geometry)
     class_shielding = gv.shielding_class
-    factor_cros = bpr.architecture['f_cros']
+    factor_cros = bpr.architecture.f_cros
     area_vent_zone = 0  # (cm2) area of ventilation openings # TODO: get from buildings properties
 
     # calculate properties that remain constant in the minimization
