@@ -484,11 +484,10 @@ def calc_theta_m(phi_m, phi_a, phi_c, theta_ea, bpr, tsdt, theta_m_t_1, h_1):
     return theta_m
 
 
-def calc_theta_c(phi_hc_r, phi_a, theta_ea, bpr, tsdt, theta_m, h_1):
+def calc_theta_c(phi_a, phi_c, theta_ea, tsdt, theta_m, h_1):
 
     # get values
     h_mc = tsdt.h_mc
-    phi_c = calc_phi_c(phi_hc_r, bpr, tsdt)
     h_ec = tsdt.h_ec
     theta_ec = calc_theta_ec(tsdt)
     h_ea = tsdt.h_ea
@@ -617,8 +616,7 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
 
     theta_m = calc_theta_m(phi_m=phi_m, phi_a=phi_a, phi_c=phi_c, theta_ea=theta_ea, bpr=bpr, tsdt=tsdt, theta_m_t_1=theta_m_t_1,
                            h_1=h_1)
-    theta_c = calc_theta_c(phi_hc_r=phi_hc_r, phi_a=phi_a, theta_ea=theta_ea, bpr=bpr, tsdt=tsdt, theta_m=theta_m,
-                           h_1=h_1)
+    theta_c = calc_theta_c(phi_a=phi_a, phi_c=phi_c, theta_ea=theta_ea, tsdt=tsdt, theta_m=theta_m, h_1=h_1)
     theta_a = calc_theta_a(phi_a, theta_ea=theta_ea, tsdt=tsdt, theta_c=theta_c)
     theta_o = calc_theta_o(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_a, theta_c)
     rc_model_temp = {'theta_m': theta_m, 'theta_c': theta_c, 'theta_a': theta_a, 'theta_o': theta_o}
