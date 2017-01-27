@@ -16,13 +16,18 @@ from cea.technologies import boilers
 
 def calc_pareto_Qhp(locator, total_demand, gv):
     """
-    This function calculates the contribution to the pareto opptimal results of process heating,
+    This function calculates the contribution to the pareto optimal results of process heating,
 
+    Parameters
+    ----------
     :param locator: locator class
     :param total_demand: dataframe with building demand
     :param gv: global variables
-    :return:
-        (hpCosts, hpCO2, hpPrim) : tuple
+    :type locator: class
+    :type total_demand: class
+    :type gv: class
+    :return: hpCosts, hpCO2, hpPrim
+    :rtype: tuple
     """
     hpCosts = 0
     hpCO2 = 0
