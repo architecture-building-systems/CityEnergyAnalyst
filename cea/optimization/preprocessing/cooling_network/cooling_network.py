@@ -41,18 +41,18 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
     
     Parameters
     ----------
-    locator : string
-        path to res folder
-    configKey : string
-        configuration key for the DHN
-    ntwFeat : class ntwFeatures
-    HRdata : inf
-        0 if no data heat recovery, 1 if so
-    
-    Returns
-    -------
-    (costs, co2, prim) : tuple
-    
+    :param locator: path to res folder
+    :param configKey: configuration key for the District Heating Network (DHN)
+    :param ntwFeat: network features
+    :param HRdata: Heat recovery data, 0 if no heat recovery data, 1 if so
+    :param gv: global variables
+    :type locator: string
+    :type configKey: string
+    :type ntwFeat: class
+    :type HRdata: int
+    :type gv: class
+    :return: costs, co2, prim
+    :rtype: tuple
     """
     
     ############# Recover the cooling needs
@@ -105,6 +105,20 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
     
     ############ Function for cooling operation
     def coolOperation(dataArray, el, QavailIni, TempSup = 0):
+        """
+        Parameters
+        ----------
+        :param dataArray:
+        :param el:
+        :param QavailIni:
+        :param TempSup:
+        :type dataArray: list
+        :type el:
+        :type QavailIni: float?
+        :type TempSup:
+        :return: toCosts, toCO2, toPrim, toCalfactor, toTotalCool, QavailCopy, VCCnomIni
+        :rtype: float, float, float, float, float, float, float
+        """
         toTotalCool = 0
         toCalfactor = 0
         toCosts = 0

@@ -4,14 +4,14 @@ Normalize results
 ==============================
 
 """
-import Rep3D as rep
+#import Rep3D as rep
 from deap import base
 
 import cea.optimization.supportFn as sFn
 from cea.optimization.conversion_storage.master import evaluation as eI
 
 reload(sFn)
-reload(rep)
+#reload(rep)
 reload(eI)
 toolbox = base.Toolbox()
 
@@ -24,17 +24,12 @@ def normalizePop(locator, Generation):
     
     Parameters
     ----------
-    Generation : int
-        generation to extract
-
-    :param locator: InputLocator set to scenario
-    :type locator: cea.inputlocator.InputLocator
-    
-    Returns
-    -------
-    popFinal : list
-        normalized population
-    
+    :param locator: inputlocator set to scenario
+    :param Generation: generation to extract
+    :type locator: string
+    :type Generation: int
+    :return: normalized population
+    :rtype: list
     """
     popFinal, eps, testedPop = sFn.readCheckPoint(locator, Generation, storeData = 0)
 
@@ -81,28 +76,23 @@ def normalizePop(locator, Generation):
 def normalize_epsIndicator(locator, generation):
     """
     Calculates the normalized epsilon indicator
-    For all generations, the populations are normalized with regards to the
+    For all generations, the population are normalized with regards to the
     min / max over ALL generations
     
     Parameters
     ----------
-    generation : int
-        generation up to which data are extracted
-
-    :param locator: InputLocator set to scenario
-    :type locator: cea.inputlocator.InputLocator
-    
-    Returns
-    -------
-    epsAll : list
-        normalized epsilon indicator from the beginning of the master to generation
-    
+    :param locator: inputlocator set to scenario
+    :param generation: generation up to which data are extracted
+    :type locator: string
+    :type generation: int
+    :return: epsAll, normalized epsilon indicator from the beginning of the master to generation
+    :rtype: list
     """
     epsAll = []
     allPop = []
     allPopNorm = []
     
-    # Load the populations
+    # Load the population
     i = 1
     while i < generation+1:
         pop, eps, testedPop = sFn.readCheckPoint(locator, i, storeData = 0)
@@ -164,6 +154,16 @@ def normalize_epsIndicator(locator, generation):
 
 
 def decentralizeCosts(individual, locator, gV):
+    """
+    :param individual: list of all parameters corresponding to an individual configuration
+    :param locator: locator set to the scenario
+    :param gV: global variables
+    :type individual: list
+    :type locator: string
+    :type gV: class
+    :return: costsDisc
+    :rtype: float
+    """
     indCombi = sFn.individual_to_barcode(individual, gV)
     buildList = sFn.extractList(locator.pathRaw + "/Total.csv")
     costsDisc = 0
@@ -173,7 +173,6 @@ def decentralizeCosts(individual, locator, gV):
             building_name = buildList[i]
             df = pd.read_csv(locator.get_optimization_disconnected_result_file(building_name))
             dfBest = df[df["Best configuration"] == 1]
-
             costsDisc += dfBest["Annualized Investment Costs [CHF]"].iloc[0]
 
     print costsDisc, "costsDisc"
