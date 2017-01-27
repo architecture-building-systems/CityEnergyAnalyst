@@ -25,11 +25,15 @@ __status__ = "Production"
 
 def manualCheck(individual):
     '''
-    Function to manually check the results of a cerain configuration.
+    This function is used to manually check the results of a certain configuration.
+    This function is otherwise not called.
 
+    Parameters
+    ----------
     :param individual: list with variables included in each individual.
-
-    :return:
+    :type individual: list
+    :return: None
+    :rtype: 'NoneType'
     '''
 
     # CHP
@@ -84,11 +88,17 @@ def manualCheck(individual):
 
 def putToRef(individual):
     """
-    To used on a population with ONE individual
-    Puts that individual to the reference, ie
+    This function is to be used on a population with only ONE individual
+    This function puts that individual to the reference, ie
     All buildings connected to the DHN
-    Heating by a centralized pieak boiler
-    
+    Heating by a centralized peak boiler
+
+    Parameters
+    ----------
+    :param individual: list with variables included in each individual.
+    :type individual: list
+    :return: None
+    :rtype: 'NoneType'
     """
     n = len( individual )
     index = 0
@@ -104,15 +114,21 @@ def putToRef(individual):
 
 def GHPCheck(individual, locator, Qnom, gv):
     """
-    Computes the geothermal availability and modifies the individual to 
+    This function computes the geothermal availability and modifies the individual to
     comply with it
-    
+
     Parameters
     ----------
-    individual : list with variables included in each individual.
-    locator : path to demand folder
-    Qnom : float, Nominal installed capacity in the district heating plant
-    
+    :param individual: list with variables included in each individual.
+    :param locator: path to the demand folder
+    :param Qnom: Nominal installed capacity in the district heating plant
+    :param gv: Global Variables
+    :type individual: list
+    :type locator: string
+    :type Qnom: float
+    :type gv: class
+    :return: None
+    :rtype: 'NoneType'
     """
     areaArray = np.array( pd.read_csv(locator.get_geothermal_potential(), usecols=["Area_geo"] ) )
     buildArray = np.array( pd.read_csv(locator.get_geothermal_potential(), usecols=["Name"] ) )
