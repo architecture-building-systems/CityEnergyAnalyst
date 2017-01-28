@@ -138,7 +138,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             child1, child2 = cx.cxUniform(ind1, ind2, PROBA, gv)
             offspring += [child1, child2]
 
-        # First half of the master: create new un-collerated configurations
+        # First half of the master: create new un-correlated configurations
         if g < gv.NGEN/2:
             for mutant in pop:
                 print "Mutation Flip"
@@ -162,7 +162,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
 
         # Evaluate the individuals with an invalid fitness
-        # NB: every generation leads to the reevaluation of 4n / 2n / 2n individuals
+        # NB: every generation leads to the reevaluation of (n/2) / (n/4) / (n/4) individuals
         # (n being the number of individuals in the previous generation)
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         
@@ -181,7 +181,13 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         
         # Select the Pareto Optimal individuals
         print "Pareto Selection"
-        selection = sel.selectPareto(offspring)
+        print offspring
+        selection = sel.selectPareto(offspring,gv)
+        len(selection)
+        print toolbox.population(n=gv.initialInd)
+        print pop
+        print selection
+
         
         # Compute the epsilon criteria [and check the stopping criteria]
         epsInd.append(evaluation_function.epsIndicator(pop, selection))
