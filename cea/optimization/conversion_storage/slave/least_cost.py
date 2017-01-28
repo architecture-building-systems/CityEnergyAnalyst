@@ -711,8 +711,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
             "cost_HP_storage_operation": [cost_HP_storage_operation]
         })
         results.to_csv(
-            os.path.join(locator.get_optimization_slave_results_folder(), MS_Var.configKey + "_SlaveCostData.csv",
-                         sep=','))
+            os.path.join(locator.get_optimization_slave_results_folder(), MS_Var.configKey + "_SlaveCostData.csv"),
+                         sep=',')
         print "Slave to Master Variables saved in : ", locator.get_optimization_slave_results_folder()
         print " as : ", MS_Var.configKey + "_SlaveCostData.csv"
 

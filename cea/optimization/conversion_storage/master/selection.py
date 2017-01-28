@@ -5,6 +5,13 @@ Selection of Pareto Optimal individuals
 
 """
 
+from __future__ import division
+import random
+import numpy as np
+
+from functools import partial
+from operator import attrgetter
+
 __author__ =  "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = [ "Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
@@ -15,7 +22,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def selectPareto(pop):
+def selectPareto(pop,gv):
     """
     Select Pareto Optimal individuals in the population
     An individual is considered Pareto optimal if there exist no other
@@ -32,14 +39,13 @@ def selectPareto(pop):
         list of selected individuals
 
     """
-    selectedInd = list(pop)
-    for ind in pop:
-        if (ind in selectedInd):
-            otherList = [el for el in selectedInd if el != ind]
-            for other in otherList:
-                if ind.fitness.dominates(other.fitness):
-                    selectedInd.remove(other)
-    
+    selectedInd = []
+    a = gv.initialInd
+
+    for i in xrange(a):
+        aspirants = [random.choice(pop) for i in xrange(a)]
+        selectedInd.append(max(aspirants, key=attrgetter("fitness")))
+
     return selectedInd
                 
 
