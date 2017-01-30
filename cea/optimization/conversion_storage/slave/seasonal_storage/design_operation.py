@@ -18,6 +18,31 @@ import SolarPowerHandler_incl_Losses as SPH_fn
 
 def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locator,
                    STORAGE_SIZE, STORE_DATA, context, P_HP_max, gV):
+    """
+
+    :param CSV_NAME:
+    :param SOLCOL_TYPE:
+    :param T_storage_old:
+    :param Q_in_storage_old:
+    :param locator:
+    :param STORAGE_SIZE:
+    :param STORE_DATA:
+    :param context:
+    :param P_HP_max:
+    :param gV:
+    :type CSV_NAME:
+    :type SOLCOL_TYPE:
+    :type T_storage_old:
+    :type Q_in_storage_old:
+    :type locator:
+    :type STORAGE_SIZE:
+    :type STORE_DATA:
+    :type context:
+    :type P_HP_max:
+    :type gV:
+    :return:
+    :rtype:
+    """
     os.chdir(locator.get_optimization_network_results_folder())
     MS_Var = context
     HOURS_IN_DAY = 24

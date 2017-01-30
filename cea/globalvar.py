@@ -77,7 +77,11 @@ class GlobalVariables(object):
 
         # Commands for the evolutionary algorithm
 
+<<<<<<< HEAD
         self.initialInd = 20  # number of initial individuals
+=======
+        self.initialInd = 100  # number of initial individuals
+>>>>>>> refs/remotes/origin/master
         self.NGEN = 30  # number of total generations
         self.fCheckPoint = 1  # frequency for the saving of checkpoints
         self.maxTime = 7 * 24 * 3600  # maximum computional time [seconds]
@@ -415,7 +419,7 @@ class GlobalVariables(object):
 
         # Data for Evolutionary algorithm
         self.nHeat = 6  # number of heating
-        self.nHR = 2 # number of heat recovry options
+        self.nHR = 2 # number of heat recovery options
         self.nSolar = 3 # number of solar technologies
 
         self.PROBA = 0.5

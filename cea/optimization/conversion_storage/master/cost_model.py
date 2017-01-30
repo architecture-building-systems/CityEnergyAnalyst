@@ -39,28 +39,32 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
     """
     Computes additional costs / GHG emisions / primary energy needs
     for the individual
-    
+    addCosts = additional costs
+    addCO2 = GHG emissions
+    addPrm = primary energy needs
+
     Parameters
     ----------
-    indCombi : string
-        with 0 if disconnected building, 1 if connected
-    buildList : list
-        list of buildings in the district
-    :param locator: InputLocator set to scenario
-    :type locator: cea.inputlocator.InputLocator
-
-    dicoSupply : class context
-        with the features of the specific individual
-    QuncoveredDesign : float
-        hourly max of the heating uncovered demand
-    QuncoveredAnnual : float
-        total heating uncovered
-    solarFeat / ntwFeat : class solarFeatures / ntwFeatures
-    
-    Returns
-    -------
-    (addCosts, addCO2, addPrim) : tuple
-    
+    :param indCombi: parameter indicating if the building is connected or not
+    :param buildList: list of buildings in the district
+    :param locator: input locator set to scenario
+    :param dicoSupply: class containing the features of a specific individual
+    :param QUncoveredDesign: hourly max of the heating uncovered demand
+    :param QUncoveredAnnual: total heating uncovered
+    :param solarFeat: solar features
+    :param ntwFeat: network features
+    :param gv: global variables
+    :type indCombi: string
+    :type buildList: list
+    :type locator: string
+    :type dicoSupply: class
+    :type QUncoveredDesign: float
+    :type QUncoveredAnnual: float
+    :type solarFeat: class
+    :type ntwFeat: class
+    :type gv: class
+    :return: returns the objectives addCosts, addCO2, addPrim
+    :rtype: tuple
     """
     addCosts = 0
     addCO2 = 0
