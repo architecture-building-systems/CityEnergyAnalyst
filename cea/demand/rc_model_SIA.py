@@ -615,7 +615,7 @@ def _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref, 
     phi_i_a = calc_phi_i_a(Eaf=Eaf, Qcdataf=Qcdataf, Qcref=Qcref)
     phi_i_p = calc_phi_i_p(Qs_Wp=Qs_Wp, people=people)
     h_1 = calc_h_1(h_ea=h_ea, h_ac=h_ac)
-    phi_a = calc_phi_a(phi_hc_cv=phi_hc_cv, phi_i_l=phi_i_l, phi_i_a=phi_i_a, phi_i_p=phi_i_p, I_sol=I_sol)
+    phi_a = calc_phi_a(phi_hc_cv, phi_i_l, phi_i_a, phi_i_p, I_sol)
     phi_m = calc_phi_m(phi_hc_r, phi_i_l, phi_i_a, phi_i_p, I_sol, f_im, f_sm)
     phi_c = calc_phi_c(phi_hc_r, phi_i_l, phi_i_a, phi_i_p, I_sol, f_ic, f_sc)
     theta_ea = calc_theta_ea(m_ve_mech=m_ve_mech, m_ve_window=m_ve_window, m_ve_inf_simple=m_ve_inf_simple,
@@ -736,7 +736,7 @@ def lookup_f_hc_cv_cooling(bpr):
 # use the optimized (numba_cc) versions of the functions in this module if available
 try:
     # import Numba AOT versions of the functions above, overwriting them
-    from rc_model_sia_cc import calc_phi_m, calc_phi_c, calc_theta_c, calc_phi_m_tot
+    from rc_model_sia_cc import calc_phi_m, calc_phi_c, calc_theta_c, calc_phi_m_tot, calc_phi_a
 except ImportError:
     # fall back to using the python version
     print('failed to import from rc_model_sia_cc.pyd, falling back to pure python functions')
