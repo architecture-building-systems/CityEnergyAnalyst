@@ -93,7 +93,7 @@ def thermal_network_main(locator, gv, shapefile_flag):
 
     # assign pipe id/od according to maximum edge mass flow
     pipe_properties_DH_df = assign_pipes_to_edges(max_edge_mass_flow_DH_df, locator, gv)
-    #pipe_properties_DC_df = assign_pipes_to_edges(max_edge_mass_flow_DC_df, locator, gv) # TODO[SH]: check data format
+    pipe_properties_DC_df = assign_pipes_to_edges(max_edge_mass_flow_DC_df, locator, gv) # TODO[SH]: check data format
 
     # calculate pipe aggregated heat conduction coefficient
     K_DH = calc_aggregated_heat_conduction_coefficient(locator, gv, pipe_length_df, pipe_properties_DH_df)#(exe) [kW/K]
@@ -362,18 +362,11 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
         # FIXME: what should we fill in for the plant mass flow before entering calc_mass_flow_edges?
 
         # solve mass flow rates on edges
-<<<<<<< HEAD
         edge_mass_flow_DH_df[:][t:t + 1] = calc_mass_flow_edges(edge_node_df, DH_df)
         edge_mass_flow_DC_df[:][t:t + 1] = calc_mass_flow_edges(edge_node_df, DC_df)
 
     edge_mass_flow_DC_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'NominalEdgeMassFlow_DC.csv')
     edge_mass_flow_DH_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'NominalEdgeMassFlow_DH.csv')
-=======
-        edge_mass_flow_df[:][t:t + 1] = calc_mass_flow_edges(edge_node_df, df)
-    edge_mass_flow_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'DH_NominalEdgeMassFlow.csv')
-    edge_mass_flow_df = pd.read_csv(
-        locator.get_optimization_network_layout_folder() + '//' + 'DH_NominalEdgeMassFlow.csv').drop('Unnamed: 0', 1)
->>>>>>> origin/i412-DHC-network-path
     print time.clock() - t0, "seconds process time for edge mass flow calculation\n"
 
     edge_mass_flow_DH_df = pd.read_csv(locator.get_optimization_network_layout_folder() + '//' + 'NominalEdgeMassFlow_DH.csv')
