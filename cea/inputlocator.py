@@ -61,40 +61,76 @@ class InputLocator(object):
         return self._ensure_folder(self.get_optimization_network_results_folder(), "layout")
 
     def get_optimization_network_layout_pipes_file(self):
-        """scenario/outputs/data/optimization/network/layout/PipesData_DH.csv
+        """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv
         Network layout files for pipes of district heat networks
         """
         return os.path.join(self.get_optimization_network_layout_folder(), "PipesData_DH.csv")
 
     def get_optimization_network_layout_nodes_file(self):
-        """scenario/outputs/data/optimization/network/layout/PipesData_DH.csv
+        """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv
         Network layout files for pipes of district heat networks
         """
         return os.path.join(self.get_optimization_network_layout_folder(), "NodesData_DH.csv")
 
-    def get_optimization_network_layout_massflow_file(self):
-        """scenario/outputs/data/optimization/network/layout/PipesData_DH.csv
+    def get_optimization_network_edge_node_matrix_file(self):
+        """scenario/outputs/data/optimization/network/layout/DH_EdgeNode.csv
         Network layout files for pipes of district heat networks
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), "MassFlow_DH.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), "DH_EdgeNode.csv")
+
+    def get_optimization_network_node_list_file(self):
+        """scenario/outputs/data/optimization/network/layout/DH_AllNodes.csv
+        Network layout files for pipes of district heat networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "DH_AllNodes.csv")
+
+    def get_optimization_network_edge_list_file(self):
+        """scenario/outputs/data/optimization/network/layout/DH_AllEdges.csv
+        Network layout files for pipes of district heat networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "DH_AllEdges.csv")
+
+    def get_optimization_network_layout_massflow_file(self):
+        """scenario/outputs/data/optimization/network/layout/DH_MassFlow.csv
+        Network layout files for pipes of district heat networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "DH_MassFlow.csv")
 
     def get_optimization_network_layout_supply_temperature_file(self):
-        """scenario/outputs/data/optimization/network/layout/PipesData_DH.csv
+        """scenario/outputs/data/optimization/network/layout/DH_T_Supply.csv
         Network layout files for pipes of district heat networks
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), "SupplyT_DH.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), "DH_T_Supply.csv")
 
     def get_optimization_network_layout_return_temperature_file(self):
-        """scenario/outputs/data/optimization/network/layout/PipesData_DH.csv
+        """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv
         Network layout files for pipes of district heat networks
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), "ReturnT_DH.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), "DH_T_Return.csv")
+
+    def get_optimization_network_layout_supply_pressure_file(self):
+        """scenario/outputs/data/optimization/network/layout/DH_P_Supply.csv
+        Network layout files for pipes of district heat networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "DH_P_Supply.csv")
+
+    def get_optimization_network_layout_return_pressure_file(self):
+        """scenario/outputs/data/optimization/network/layout/DH_P_Return.csv
+        Network layout files for pipes of district heat networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "DH_P_Return.csv")
+
+    def get_optimization_network_layout_pressure_drop_file(self):
+        """scenario/outputs/data/optimization/network/layout/DH_P_DeltaP.csv
+        Network layout files for pipes of district heat networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "DH_P_DeltaP.csv")
 
     def get_optimization_network_layout_plant_heat_requirement_file(self):
-        """scenario/outputs/data/optimization/network/layout/PipesData_DH.csv
+        """scenario/outputs/data/optimization/network/layout/DH_Plant_heat_requirement.csv
         Network layout files for pipes of district heat networks
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), "Plant_heat_requirement_DH.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), "DH_Plant_heat_requirement.csv")
 
     def get_optimization_network_totals_folder(self):
         """scenario/outputs/data/optimization/network/totals
