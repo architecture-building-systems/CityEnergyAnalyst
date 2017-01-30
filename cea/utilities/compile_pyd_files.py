@@ -13,11 +13,11 @@ import os
 
 
 def main():
-    delete_pyd('..', 'demand', 'calc_tm.pyd')
-    delete_pyd('calc_tm.pyd')
-    compile_sensible_loads()
-    copy_pyd('calc_tm.pyd', ['..', 'demand', 'calc_tm.pyd'])
-    delete_pyd('calc_tm.pyd')
+    delete_pyd('..', 'demand', 'rc_model_sia_cc.pyd')
+    delete_pyd('rc_model_sia_cc.pyd')
+    compile_rc_model_sia()
+    copy_pyd('rc_model_sia_cc.pyd', ['..', 'demand', 'rc_model_sia_cc.pyd'])
+    delete_pyd('rc_model_sia_cc.pyd')
 
     delete_pyd('..', 'technologies', 'calc_radiator.pyd')
     delete_pyd('calc_radiator.pyd')
@@ -38,20 +38,16 @@ def copy_pyd(source, destination):
                 os.path.join(parent, *destination))
 
 
-def compile_sensible_loads():
-    import cea.demand.sensible_loads
-    reload(cea.demand.sensible_loads)
-    cc = CC('calc_tm')
+def compile_rc_model_sia():
+    import cea.demand.rc_model_SIA
+    reload(cea.demand.rc_model_SIA)
+    cc = CC('rc_model_sia_cc')
 
-    cc.export('calc_tm', "UniTuple(f8, 2)(f8, f8, f8, f8, f8)")(cea.demand.sensible_loads.calc_tm)
-    cc.export('calc_ts', "f8(f8, f8, f8, f8, i4, f8, f8, f8, f8)")(cea.demand.sensible_loads.calc_ts)
-    cc.export('calc_ts_tabs', "f8(f8, f8, f8, f8, i4, f8, f8, f8, f8)")(cea.demand.sensible_loads.calc_ts_tabs)
-    cc.export('calc_ta', "f8(f8, f8, i4, f8, f8, f8)")(cea.demand.sensible_loads.calc_ta)
-    cc.export('calc_ta_tabs', "f8(f8, f8, i4, f8, f8, f8)")(cea.demand.sensible_loads.calc_ta_tabs)
-    cc.export('calc_top', "f8(f8, f8)")(cea.demand.sensible_loads.calc_top)
-    cc.export('calc_Im_tot', "f8(f8, f8, f8, f8, f8, f8, f8, f8, i4, f8, f8)")(cea.demand.sensible_loads.calc_Im_tot)
-    cc.export('calc_Im_tot_tabs', "f8(f8, f8, f8, f8, f8, f8, f8, f8, i4, f8, f8)")(cea.demand.sensible_loads.calc_Im_tot_tabs)
-
+    # cc.export('calc_h_ec', "f8(f8)")(cea.demand.rc_model_SIA.calc_h_ec)
+    # cc.export('calc_h_ac', "f8(f8)")(cea.demand.rc_model_SIA.calc_h_ac)
+    # cc.export('calc_h_ea', "f8(f8, f8, f8)")(cea.demand.rc_model_SIA.calc_h_ea)
+    # cc.export('calc_f_sc', "f8(f8, f8, f8, f8)")(cea.demand.rc_model_SIA.calc_f_sc)
+    cc.export('calc_phi_m', "f8(f8, f8, f8, f8, f8, f8, f8)")(cea.demand.rc_model_SIA.calc_phi_m)
     cc.compile()
 
 
