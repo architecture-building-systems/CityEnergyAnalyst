@@ -80,14 +80,14 @@ def calc_I_sol(t, bpr, tsd, gv):
     """
 
     Asol_wall, Asol_roof, Asol_win = calc_Asol(t, bpr, gv)
-    I_rad = calc_I_rad(t, tsd, bpr, gv)
-    I_sol = bpr.solar.I_roof[t] * Asol_roof + bpr.solar.I_win[t]*Asol_win + bpr.solar.I_wall[t]*Asol_wall
+    I_rad = calc_I_rad(t, tsd, bpr, gv.Rse)
+    I_sol = bpr.solar.I_roof[t] * Asol_roof + bpr.solar.I_win[t] * Asol_win + bpr.solar.I_wall[t] * Asol_wall
     I_sol_net = I_sol - I_rad
 
     return I_sol_net, I_rad # vector in W
 
 
-def calc_I_rad(t, tsd, bpr, gv):
+def calc_I_rad(t, tsd, bpr, Rse):
     """
     This function calculates the solar radiation re-irradiated from a building to the sky according to ISO 13790
 
@@ -99,29 +99,34 @@ def calc_I_rad(t, tsd, bpr, gv):
         I_rad: vector solar radiation re-irradiated to the sky.
     """
 
-    temp_s_prev = tsd['theta_c'][t - 1] if not np.isnan(tsd['theta_c'][t - 1]) else tsd['T_ext'][t-1]
+    temp_s_prev = tsd['theta_c'][t - 1]
+    if np.isnan(tsd['theta_c'][t - 1]):
+        temp_s_prev = tsd['T_ext'][t-1]
+
     theta_ss = tsd['T_sky'][t] - temp_s_prev
-    Fform_wall, Fform_win, Fform_roof = 0.5,0.5,1 # 50% reiradiated by vertical surfaces and 100% by horizontal.
-    I_rad_win = gv.Rse * bpr.rc_model['U_win']*calc_hr(bpr.architecture.e_win, theta_ss, gv) * bpr.rc_model['Aw'] * theta_ss
-    I_rad_roof = gv.Rse * bpr.rc_model['U_roof']*calc_hr(bpr.architecture.e_roof, theta_ss, gv) * bpr.rc_model['Aroof'] * theta_ss
-    I_rad_wall = gv.Rse * bpr.rc_model['U_wall']*calc_hr(bpr.architecture.e_wall, theta_ss, gv) * bpr.rc_model['Awall_all'] * theta_ss
-    I_rad = Fform_wall*I_rad_wall + Fform_win*I_rad_win + Fform_roof*I_rad_roof
+    Fform_wall, Fform_win, Fform_roof = 0.5, 0.5, 1  # 50% reiradiated by vertical surfaces and 100% by horizontal.
+    I_rad_win = Rse * bpr.rc_model['U_win'] * calc_hr(bpr.architecture.e_win, theta_ss) * bpr.rc_model[
+        'Aw'] * theta_ss
+    I_rad_roof = Rse * bpr.rc_model['U_roof'] * calc_hr(bpr.architecture.e_roof, theta_ss) * bpr.rc_model[
+        'Aroof'] * theta_ss
+    I_rad_wall = Rse * bpr.rc_model['U_wall'] * calc_hr(bpr.architecture.e_wall, theta_ss) * bpr.rc_model[
+        'Awall_all'] * theta_ss
+    I_rad = Fform_wall * I_rad_wall + Fform_win * I_rad_win + Fform_roof * I_rad_roof
 
     return I_rad
 
 
-def calc_hr(emissivity, theta_ss, gv):
+def calc_hr(emissivity, theta_ss):
     """
     This function calculates the external radiative heat transfer coefficient according to ISO 13790
 
     :param emissivity: emissivity of the considered surface
     :param theta_ss: delta of temperature between building surface and the sky.
-    :param gv: global variables class
     :return:
         hr:
 
     """
-    return 4 * emissivity * BOLTZMANN * (theta_ss + 273) ** 3
+    return 4.0 * emissivity * BOLTZMANN * (theta_ss + 273.0) ** 3.0
 
 
 def calc_Asol(t, bpr, gv):
