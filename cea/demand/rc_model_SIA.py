@@ -67,11 +67,11 @@ def calc_h_ac(a_t):
     return h_ac
 
 
-def calc_h_op_m(bpr):
+def calc_h_op_m(Htr_op):
 
     # work around # TODO: to be addressed in issue #443
     # get h_op from ISO model (with basement factor)
-    h_op_m = bpr.rc_model['Htr_op']
+    h_op_m = Htr_op
     # TODO: This formula should be adjusted to be compatible with SIA2044
 
     # (9) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
@@ -103,7 +103,7 @@ def calc_h_j_em():
     return None
 
 
-def calc_h_ec(bpr):
+def calc_h_ec(Htr_w):
 
     # (12) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     # h_ec = a_j_l * u_j
@@ -111,7 +111,7 @@ def calc_h_ec(bpr):
     # e.g. adiabatic building elements with U = 0
     # TODO: can incorporate point or linear thermal bridges
 
-    h_ec = bpr.rc_model['Htr_w']  # h_ec is Htr_w of ISO13790 RC model
+    h_ec = Htr_w  # h_ec is Htr_w of ISO13790 RC model
 
     return h_ec
 
@@ -580,38 +580,47 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     T_ext = tsd['T_ext'][t]
     theta_ve_mech = tsd['theta_ve_mech'][t]
 
-    # precalculate values that are constant for a single timestep
+    # copy data from `bpr`
+    Htr_op = bpr.rc_model['Htr_op']
+    Htr_w = bpr.rc_model['Htr_w']
+    Qs_Wp = bpr.internal_loads['Qs_Wp']
     a_t = bpr.rc_model['Atot']
     a_m = bpr.rc_model['Am']
     a_w = bpr.rc_model['Aw']
+    c_m = bpr.rc_model['Cm'] / 3600  # (Wh/K) SIA 2044 unit is Wh/K, ISO unit is J/K
 
-    h_ec = calc_h_ec(bpr)
+    theta_a, theta_c, theta_m, theta_o = _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref,
+                                                                     Qs_Wp, T_ext, a_m, a_t, a_w, c_m, m_ve_inf_simple,
+                                                                     m_ve_mech, m_ve_window, people, phi_hc_cv,
+                                                                     phi_hc_r, theta_m_t_1, theta_ve_mech)
+    rc_model_temp = {'theta_m': theta_m, 'theta_c': theta_c, 'theta_a': theta_a, 'theta_o': theta_o}
+    return rc_model_temp
+
+
+def _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref, Qs_Wp, T_ext, a_m, a_t, a_w, c_m,
+                                m_ve_inf_simple, m_ve_mech, m_ve_window, people, phi_hc_cv, phi_hc_r, theta_m_t_1,
+                                theta_ve_mech):
+    # numba_cc compatible calculation
+    h_ec = calc_h_ec(Htr_w=Htr_w)
     h_ac = calc_h_ac(a_t)
     h_ea = calc_h_ea(m_ve_mech, m_ve_window, m_ve_inf_simple)
-
     f_sc = calc_f_sc(a_t, a_m, a_w, h_ec)
     f_ic = calc_f_ic(a_t, a_m, h_ec)
-
-    h_op_m = calc_h_op_m(bpr)
+    h_op_m = calc_h_op_m(Htr_op=Htr_op)
     h_mc = calc_h_mc(a_m=a_m)
     h_em = calc_h_em(h_op_m=h_op_m, h_mc=h_mc)
     f_im = calc_f_im(a_t=a_t, a_m=a_m)
     f_sm = calc_f_sm(a_t=a_t, a_m=a_m, a_w=a_w)
-
     phi_i_l = calc_phi_i_l(Elf=Elf)
     phi_i_a = calc_phi_i_a(Eaf=Eaf, Qcdataf=Qcdataf, Qcref=Qcref)
-    phi_i_p = calc_phi_i_p(Qs_Wp=bpr.internal_loads['Qs_Wp'], people=people)
-
+    phi_i_p = calc_phi_i_p(Qs_Wp=Qs_Wp, people=people)
     h_1 = calc_h_1(h_ea=h_ea, h_ac=h_ac)
     phi_a = calc_phi_a(phi_hc_cv=phi_hc_cv, phi_i_l=phi_i_l, phi_i_a=phi_i_a, phi_i_p=phi_i_p, I_sol=I_sol)
-    phi_m = calc_phi_m(phi_hc_r=phi_hc_r, phi_i_l=phi_i_l, phi_i_a=phi_i_a, phi_i_p=phi_i_p, I_sol=I_sol, f_im=f_im,
-                       f_sm=f_sm)
+    phi_m = calc_phi_m(phi_hc_r, phi_i_l, phi_i_a, phi_i_p, I_sol, f_im, f_sm)
     phi_c = calc_phi_c(phi_hc_r=phi_hc_r, phi_i_l=phi_i_l, phi_i_a=phi_i_a, phi_i_p=phi_i_p, I_sol=I_sol, f_ic=f_ic,
                        f_sc=f_sc)
     theta_ea = calc_theta_ea(m_ve_mech=m_ve_mech, m_ve_window=m_ve_window, m_ve_inf_simple=m_ve_inf_simple,
                              theta_ve_mech=theta_ve_mech, T_ext=T_ext)
-
-    c_m = bpr.rc_model['Cm'] / 3600  # (Wh/K) SIA 2044 unit is Wh/K, ISO unit is J/K
     theta_em = calc_theta_em(T_ext=T_ext)
     theta_ec = calc_theta_ec(T_ext=T_ext)
     h_2 = calc_h_2(h_1=h_1, h_ec=h_ec)
@@ -625,8 +634,7 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
                            h_mc=h_mc, h_ec=h_ec, h_ea=h_ea)
     theta_a = calc_theta_a(phi_a=phi_a, theta_ea=theta_ea, theta_c=theta_c, h_ac=h_ac, h_ea=h_ea)
     theta_o = calc_theta_o(theta_a=theta_a, theta_c=theta_c)
-    rc_model_temp = {'theta_m': theta_m, 'theta_c': theta_c, 'theta_a': theta_a, 'theta_o': theta_o}
-    return rc_model_temp
+    return theta_a, theta_c, theta_m, theta_o
 
 
 def calc_rc_model_temperatures_heating(phi_hc, bpr, tsd, t):
@@ -726,5 +734,15 @@ def lookup_f_hc_cv_cooling(bpr):
     f_hc_cv = f_hc_cv_cooling_system[bpr.hvac['type_cs']]
 
     return f_hc_cv
+
+
+# use the optimized (numba_cc) versions of the functions in this module if available
+try:
+    # import Numba AOT versions of the functions above, overwriting them
+    from rc_model_sia_cc import calc_phi_m
+except ImportError:
+    # fall back to using the python version
+    print('failed to import from rc_model_sia_cc.pyd, falling back to pure python functions')
+    pass
 
 
