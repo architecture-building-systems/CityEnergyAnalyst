@@ -85,7 +85,7 @@ def calc_h_op_m(Htr_op):
 def calc_h_em(h_op_m, h_mc):
 
     # (10) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-    h_em = 1 / (1 / h_op_m - 1 / h_mc)
+    h_em = 1.0 / (1.0 / h_op_m - 1.0 / h_mc)
 
     return h_em
 
@@ -605,7 +605,7 @@ def _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref, 
     f_ic = calc_f_ic(a_t, a_m, h_ec)
     h_op_m = calc_h_op_m(Htr_op=Htr_op)
     h_mc = calc_h_mc(a_m=a_m)
-    h_em = calc_h_em(h_op_m=h_op_m, h_mc=h_mc)
+    h_em = calc_h_em(h_op_m, h_mc)
     f_im = calc_f_im(a_t=a_t, a_m=a_m)
     f_sm = calc_f_sm(a_t=a_t, a_m=a_m, a_w=a_w)
     phi_i_l = calc_phi_i_l(Elf=Elf)
@@ -733,7 +733,7 @@ def lookup_f_hc_cv_cooling(bpr):
 try:
     # import Numba AOT versions of the functions above, overwriting them
     from rc_model_sia_cc import (calc_phi_m, calc_phi_c, calc_theta_c, calc_phi_m_tot, calc_phi_a, calc_theta_m,
-                                 calc_h_ea, calc_theta_m_t, calc_theta_ea)
+                                 calc_h_ea, calc_theta_m_t, calc_theta_ea, calc_h_em)
 except ImportError:
     # fall back to using the python version
     print('failed to import from rc_model_sia_cc.pyd, falling back to pure python functions')
