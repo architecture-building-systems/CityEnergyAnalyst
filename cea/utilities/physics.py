@@ -19,6 +19,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+# stefan-boltzmann constant
+BOLTZMANN = 0.0000000567  # W/m2K4
 
 def calc_w(t, RH):
     """

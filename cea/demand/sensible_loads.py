@@ -8,6 +8,7 @@ EN-13970
 """
 from __future__ import division
 import numpy as np
+from cea.utilities.physics import BOLTZMANN
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -120,7 +121,7 @@ def calc_hr(emissivity, theta_ss, gv):
         hr:
 
     """
-    return 4 * emissivity * gv.blotzman * (theta_ss + 273) ** 3
+    return 4 * emissivity * BOLTZMANN * (theta_ss + 273) ** 3
 
 
 def calc_Asol(t, bpr, gv):
