@@ -33,10 +33,17 @@ def moo_optimization(locator, weather_file, gv):
     '''
     This function optimizes the conversion, storage and distribution systems of a heating distribution for the case study.
     It requires that solar technologies be calculated in advance and nodes of a distribution should have been already generated.
+
+    Parameters
+    ----------
     :param locator: path to input locator
     :param weather_file: path to weather file
     :param gv: global variables class
-    :return:
+    :type locator: string
+    :type weather_file: string
+    :type gv: class
+    :return: none
+    :rtype: Nonetype
     '''
 
     # read total demand file and names and number of all buildings

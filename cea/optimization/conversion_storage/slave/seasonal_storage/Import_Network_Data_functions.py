@@ -17,19 +17,15 @@ def extract_csv(fName, colName, DAYS_IN_YEAR):
     
     Parameters
     ----------
-    fName : string
-        Name of the csv file.
-    colName : stringT_
-        Name of the column from whom to extract data.
-    DAYS_IN_YEAR : int
-        Number of days to consider.
-        
-    Returns
-    -------
-    result : pandas.DataFrame
-        Contains the hour of the day in the first column and the data 
-        of the selected column in the second.   
-    
+    :param fName: name of the csv file
+    :param colName: name of the column from which to extract data
+    :param DAYS_IN_YEAR: number of days to consider
+    :type fName: string
+    :type colName: string
+    :type DAYS_IN_YEAR: int
+    :return: result as pandas.DataFrame, contains the hour of the day in the first column and
+    the data of the selected column in the second
+    :rtype: list
     """
     result = pd.read_csv(fName, usecols=[colName], nrows=24*DAYS_IN_YEAR)
     return result
@@ -37,42 +33,30 @@ def extract_csv(fName, colName, DAYS_IN_YEAR):
 
 
 def import_network_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
-    ''' 
-    
+    """
     importing and preparing raw data for analysis of the district distribution
 
-        
     Parameters
     ----------
-    fName : string
-        name of the building (has to be the same as the csv file, e.g. "AA16.csv" 
-        
-    DAYS_IN_YEAR : integer
-        numer of days in a year (usually 365)
-    
-    HOURS_IN_DAY : interger
-        number of hours in day (usually 24)
-    
-    
-    Returns
-    -------
-    Arrays containing all relevant data for further processing:
-            
-        mdot_sst_heat, mdot_sst_cool, T_sst_heat_return, T_sst_heat_supply, T_sst_cool_return, 
-        Q_DH_building, Q_DC_building, Q_DH_building_max, Q_DC_bulding_max, T_sst_heat_supply_ofmaxQh, 
+    :param fName: name of the building (has to be the same as the csv file, eg. "AA16.csv")
+    :param DAYS_IN_YEAR: number of days in a year (usually 365)
+    :param HOURS_IN_DAY: number of hours in day (usually 24)
+    :type fName: string
+    :type DAYS_IN_YEAR: int
+    :type HOURS_IN_DAY: int
+    :return: Arrays containing all relevant data for further processing:
+        mdot_sst_heat, mdot_sst_cool, T_sst_heat_return, T_sst_heat_supply, T_sst_cool_return,
+        Q_DH_building, Q_DC_building, Q_DH_building_max, Q_DC_bulding_max, T_sst_heat_supply_ofmaxQh,
         T_sst_heat_return_ofmaxQh, T_sst_cool_return_ofmaxQc, Q_wasteheat_netw_total, Q_serverheat_netw_total
-    
-    
-    '''
+    :rtype: list
+    """
     
     
     """     import dataframes    """
     # mass flows
         
-        
     mdot_heat_netw_total = np.array(extract_csv(fName, "mdot_DH_netw_total", DAYS_IN_YEAR))
     mdot_cool_netw_total = 0 #np.array(extract_csv(fName, "mdot_cool_netw_total", DAYS_IN_YEAR))
-    
     
     Q_DH_building_netw_total = np.array(extract_csv(fName, "Q_DH_building_netw_total", DAYS_IN_YEAR))
     Q_DC_building_netw_total = 0 #np.array(extract_csv(fName, "Q_DC_building_netw_total", DAYS_IN_YEAR))
@@ -83,40 +67,28 @@ def import_network_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     Q_wasteheat_netw_total = np.array(extract_csv(fName, "Qcdata_netw_total", DAYS_IN_YEAR))
     #print "sum of Qcdata_netw_total", Q_wasteheat_netw_total
     Q_serverheat_netw_total = np.array(extract_csv(fName, "Ecaf_netw_total", DAYS_IN_YEAR))
-
-
     
     return mdot_heat_netw_total, mdot_cool_netw_total, Q_DH_building_netw_total,Q_DC_building_netw_total,T_sst_heat_return_netw_total,\
                         T_sst_cool_return_netw_total, T_sst_heat_supply_netw_total, Q_wasteheat_netw_total, Q_serverheat_netw_total
     
 def import_solar_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
-    ''' 
-    
+    """
     importing and preparing raw data for analysis of the district distribution
 
-        
     Parameters
     ----------
-    fName : string
-        Name of File where solar data is stored in
-        
-    DAYS_IN_YEAR : integer
-        numer of days in a year (usually 365)
-    
-    HOURS_IN_DAY : interger
-        number of hours in day (usually 24)
-    
-    
-    Returns
-    -------
-    Arrays containing all relevant data for further processing:
-            
-        mdot_sst_heat, mdot_sst_cool, T_sst_heat_return, T_sst_heat_supply, T_sst_cool_return, 
-        Q_DH_building, Q_DC_building, Q_DH_building_max, Q_DC_bulding_max, T_sst_heat_supply_ofmaxQh, 
+    :param fName: name of file where solar data is stored in
+    :param DAYS_IN_YEAR: number of days in a year (usually 365)
+    :param HOURS_IN_DAY: number of hours in a day (usually 24)
+    :type fName: string
+    :type DAYS_IN_YEAR: int
+    :type HOURS_IN_DAY: int
+    :return: Arrays containing all relevant data for further processing:
+        mdot_sst_heat, mdot_sst_cool, T_sst_heat_return, T_sst_heat_supply, T_sst_cool_return,
+        Q_DH_building, Q_DC_building, Q_DH_building_max, Q_DC_bulding_max, T_sst_heat_supply_ofmaxQh,
         T_sst_heat_return_ofmaxQh, T_sst_cool_return_ofmaxQc
-    
-    
-    '''
+    :rtype: list
+    """
 
     if fName == "Pv.csv":
         Pv_kWh_PV_import = np.array(extract_csv(fName, "PV_kWh", DAYS_IN_YEAR))

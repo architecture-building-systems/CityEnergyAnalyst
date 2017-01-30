@@ -73,18 +73,14 @@ def selectPareto(pop,gv):
     """
     Select Pareto Optimal individuals in the population
     An individual is considered Pareto optimal if there exist no other
-    individual by whom it is dominated.
+    individual by whom it is dominated in any of the objective functions.
 
     Parameters
     ----------
-    pop : list
-        List of individuals
-    
-    Returns
-    -------
-    selectedInd : list
-        list of selected individuals
-
+    :param pop: list of individuals
+    :type pop: list
+    :return: list of selected individuals
+    :rtype: list
     """
     selectedInd = []
     # individuals_1 = []
