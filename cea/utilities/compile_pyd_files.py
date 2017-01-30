@@ -49,6 +49,9 @@ def compile_rc_model_sia():
     # cc.export('calc_f_sc', "f8(f8, f8, f8, f8)")(cea.demand.rc_model_SIA.calc_f_sc)
     cc.export('calc_phi_m', "f8(f8, f8, f8, f8, f8, f8, f8)")(cea.demand.rc_model_SIA.calc_phi_m)
     cc.export('calc_phi_c', "f8(f8, f8, f8, f8, f8, f8, f8)")(cea.demand.rc_model_SIA.calc_phi_c)
+    cc.export('calc_theta_c', "f8(f8, f8, f8, f8, f8, f8, f8, f8, f8)")(cea.demand.rc_model_SIA.calc_theta_c)
+    cc.export('calc_phi_m_tot', "f8(f8, f8, f8, f8, f8, f8, f8, f8, f8, f8, f8, f8)")(
+        cea.demand.rc_model_SIA.calc_phi_m_tot)
     cc.compile()
 
 
