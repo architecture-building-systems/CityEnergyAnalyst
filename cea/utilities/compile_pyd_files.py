@@ -25,6 +25,12 @@ def main():
     copy_pyd('calc_radiator.pyd', ['..', 'technologies', 'calc_radiator.pyd'])
     delete_pyd('calc_radiator.pyd')
 
+    delete_pyd('..', 'technologies', 'storagetank_cc.pyd')
+    delete_pyd('storagetank_cc.pyd')
+    compile_storagetank()
+    copy_pyd('storagetank_cc.pyd', ['..', 'technologies', 'storagetank_cc.pyd'])
+    delete_pyd('storagetank_cc.pyd')
+
 
 def delete_pyd(*pathspec):
     """Delete the file with the pathspec. `pathspec` is an array of path segments."""
@@ -70,6 +76,16 @@ def compile_radiators():
 
     cc.export('fh', "f8(f8, f8, f8, f8, f8, f8, f8)")(cea.technologies.radiators.fh)
     cc.export('lmrt', "f8(f8, f8, f8)")(cea.technologies.radiators.lmrt)
+
+    cc.compile()
+
+
+def compile_storagetank():
+    import cea.technologies.storagetank
+    reload(cea.technologies.storagetank)
+    cc = CC('storagetank_cc')
+
+    cc.export('ode', "f8(f8[:], f8, f8, f8, f8, f8, f8, f8)")(cea.technologies.storagetank.ode)
 
     cc.compile()
 
