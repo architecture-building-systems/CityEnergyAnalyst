@@ -733,7 +733,7 @@ def lookup_f_hc_cv_cooling(bpr):
 # use the optimized (numba_cc) versions of the functions in this module if available
 try:
     # import Numba AOT versions of the functions above, overwriting them
-    from rc_model_sia_cc import calc_phi_m, calc_phi_c, calc_theta_c, calc_phi_m_tot, calc_phi_a, calc_theta_m
+    from rc_model_sia_cc import calc_phi_m, calc_phi_c, calc_theta_c, calc_phi_m_tot, calc_phi_a, calc_theta_m, calc_h_ea
 except ImportError:
     # fall back to using the python version
     print('failed to import from rc_model_sia_cc.pyd, falling back to pure python functions')
