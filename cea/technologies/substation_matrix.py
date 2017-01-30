@@ -240,7 +240,8 @@ def substation_HEX_sizing(locator, gv, building):
     # results.to_csv(result_substation, sep=',', index=False, float_format='%.3f')
     return [A_hex_hs, A_hex_ww, A_hex_cs, UA_heating_hs, UA_heating_ww, UA_cooling_cs]
 
-def substation_return_model_main(locator, gv, building_names, buildings_demands, substations_HEX_specs, T_DH, t, flag):
+def substation_return_model_main(locator, gv, building_names, buildings_demands, substations_HEX_specs, T_target, t,
+                                 t_flag, dh_network_flag):
     """
     calculate all substation return temperature and required flow rate at each time-step.
 
@@ -256,21 +257,30 @@ def substation_return_model_main(locator, gv, building_names, buildings_demands,
     """
     index = 0
     # combi = [0] * len(building_names)
-    T_DH_return_all = pd.DataFrame()
-    mdot_DH_all = pd.DataFrame()
+    T_return_all = pd.DataFrame()
+    mdot_sun_all = pd.DataFrame()
 
     for name in building_names:
         building = buildings_demands[index].loc[[t]]
-        if flag is True: # for the initialization step
-            T_supply = T_DH
+        if t_flag is True:
+            # for the initialization step
+            T_supply_target = T_target
+
         else:
             # find substation supply temperature
-            T_supply = T_DH.loc['T_supply', name]
-        t_DH_return, mcp_DH = calc_substation_return_DH(building, T_supply, substations_HEX_specs.ix[name])
-        T_DH_return_all[name] = [t_DH_return]
-        mdot_DH_all[name] = [mcp_DH/gv.Cpw]   # [kg/s]
+            T_supply_target = T_target.loc['T_supply', name]
+
+        if dh_network_flag == True:
+            # calculate DH substation return temerpature and substation flow rate
+            t_sub_return, mcp_sub = calc_substation_return_DH(building, T_supply_target, substations_HEX_specs.ix[name])
+        else:
+            # calculate DC substation return temerpature and substation flow rate
+            t_sub_return, mcp_sub = calc_substation_return_DC(building, T_supply_target, substations_HEX_specs.ix[name])
+
+        T_return_all[name] = [t_sub_return]
+        mdot_sun_all[name] = [mcp_sub/gv.Cpw]   # [kg/s]
         index += 1
-    return T_DH_return_all, mdot_DH_all
+    return T_return_all, mdot_sun_all
 
 def calc_substation_return_DH(building, T_DH_supply, substation_HEX_specs):
     """
@@ -303,7 +313,7 @@ def calc_substation_return_DH(building, T_DH_supply, substation_HEX_specs):
         tco = building.Twwf_sup_C.values + 273  # in K
         tci = building.Twwf_re_C.values + 273  # in K
         cc = building.mcpwwf_kWC.values * 1000  # in W/K
-        t_DH_return_ww, mcp_DH_ww = calc_required_flow_and_t_return(Qwwf, UA_heating_ww, thi, tco, tci, cc)   #[kW/K]
+        t_DH_return_ww, mcp_DH_ww = calc_HEX_heating(Qwwf, UA_heating_ww, thi, tco, tci, cc)   #[kW/K]
     else:
         t_DH_return_ww = T_DH_supply
         mcp_DH_ww = 0
@@ -314,16 +324,15 @@ def calc_substation_return_DH(building, T_DH_supply, substation_HEX_specs):
 
     return t_DH_return, mcp_DH
 
-def calc_substation_return_DC(locator, gv, building, T_DC_supply_matrix, substation_HEX_specs):
-    UA_heating_cs = substation_HEX_specs
-
+def calc_substation_return_DC(building, T_DC_supply_matrix, substation_HEX_specs):
+    UA_cooling_cs = substation_HEX_specs.HEX_UA_SC
     Qcf = (abs(building.Qcsf_kWh.values)) * 1000  # in W
-    if Qcf.max > 0:
-        tci = T_DC_supply_matrix + 273  # in K   #todo:replaced with tsupply at each time-step
+    if Qcf.max() > 0:
+        tci = T_DC_supply_matrix  # in K
         tho = building.Tcsf_sup_C.values + 273  # in K
         thi = building.Tcsf_re_C.values + 273  # in K
         ch = (abs(building.mcpcsf_kWC.values)) * 1000  # in W/K
-        t_DC_return_cs, mcp_DC_cs = calc_required_flow_and_t_return(Qcf, UA_heating_cs, thi, tho, tci, ch)
+        t_DC_return_cs, mcp_DC_cs = calc_HEX_cooling(Qcf, UA_cooling_cs, thi, tho, tci, ch)
     else:
         t_DC_return_cs = T_DC_supply_matrix
         mcp_DC_cs = 0
@@ -401,9 +410,6 @@ def calc_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0, gv):
     Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, gv.U_heat)
     return Area_HEX_heating, UA_heating
 
-def calc_required_flow_and_t_return(Q, UA_heating, thi, tco, tci, cc):
-    tho, ch = calc_HEX_heating(Q, UA_heating, thi, tco, tci, cc)
-    return tho, ch
 
 # ============================
 # Heat exchanger model
@@ -451,7 +457,7 @@ def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
             tco = tci + eff[1] * cmin * (thi - tci) / cc
             Flag = True
         cc = Q / abs(tci - tco)
-        tco = tco - 273
+        tco = tco   # in [K]
     else:
         tco = 0
         cc = 0
