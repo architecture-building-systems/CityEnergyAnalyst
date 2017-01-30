@@ -550,8 +550,8 @@ def calc_phi_m_tot_tabs():
 def calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t):
 
     # no heating or cooling
-    phi_hc_cv = 0
-    phi_hc_r = 0
+    phi_hc_cv = 0.0
+    phi_hc_r = 0.0
 
     rc_model_temp = calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t)
 
@@ -659,46 +659,29 @@ def calc_rc_model_temperatures_cooling(phi_hc, bpr, tsd, t):
 
 def has_heating_demand(bpr, tsd, t):
 
-    if np.isnan(tsd['ta_hs_set'][t]):
+    ta_hs_set = tsd['ta_hs_set'][t]
+    if np.isnan(ta_hs_set):
         # no set point = system off
         return False
 
-    elif not np.isnan(tsd['ta_hs_set'][t]):
+    # calculate temperatures
+    rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
 
-        # calculate temperatures
-        rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
-
-        # check temperatures
-        if rc_model_temp['theta_a'] >= tsd['ta_hs_set'][t]:
-            # if temperature w/o conditioning is higher
-            return False
-        elif rc_model_temp['theta_a'] < tsd['ta_hs_set'][t]:
-            # if temperature w/o conditioning is lower than heating temperature set point
-            return True
-        else:
-            raise ValueError(rc_model_temp['theta_a'], tsd['ta_hs_set'][t])
+    # True, if theta_a < ta_hs_set, False, if theta_a >= ta_hs_set
+    return rc_model_temp['theta_a'] < ta_hs_set
 
 
 def has_cooling_demand(bpr, tsd, t):
-
-    if np.isnan(tsd['ta_cs_set'][t]):
+    ta_cs_set = tsd['ta_cs_set'][t]
+    if np.isnan(ta_cs_set):
         # no set point = system off
         return False
 
-    elif not np.isnan(tsd['ta_cs_set'][t]):
+    # calculate temperatures
+    rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
 
-        # calculate temperatures
-        rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
-
-        # calculate temperatures
-        if rc_model_temp['theta_a'] <= tsd['ta_cs_set'][t]:
-            # if temperature w/o conditioning is lower than cooling set point temperature
-            return False
-        elif rc_model_temp['theta_a'] > tsd['ta_cs_set'][t]:
-            # if temperature w/o conditioning is higher than cooling set point temperature
-            return True
-        else:
-            raise
+    # True, if temperature w/o conditioning is higher than cooling set point temperature, else False
+    return rc_model_temp['theta_a'] > ta_cs_set
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
