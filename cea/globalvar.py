@@ -35,7 +35,6 @@ class GlobalVariables(object):
         self.his = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
         self.hms = 9.1  # heat transfer coefficient between nodes m and s in W/m2K
         self.theta_ss = 10  # difference between surface of building and sky temperature in C. 10 for temperate climates
-        self.blotzman = 0.0000000567  # stefan-blotzmann constant W/m2K4
         self.F_f = 0.2  # Frame area faction coefficient
         self.Rse = 0.04  # thermal resistance of external surfaces according to ISO 6946
         self.D = 20  # in mm the diameter of the pipe to calculate losses
