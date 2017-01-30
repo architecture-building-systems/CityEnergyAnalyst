@@ -5,8 +5,6 @@ from __future__ import division
 
 import numpy as np
 
-from cea.demand.time_step_data_t import TimeStepDataT
-
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Gabriel Happle"]
@@ -118,14 +116,14 @@ def calc_h_ec(bpr):
     return h_ec
 
 
-def calc_h_ea(tsdt):
+def calc_h_ea(m_ve_mech, m_ve_window, m_ve_inf_simple):
     cp = 1.005 / 3.6  # (Wh/kg/K)
     # TODO: check units of air flow
 
     # get values
-    m_v_sys = tsdt.m_ve_mech * 3600  # mass flow rate mechanical ventilation
-    m_v_w = tsdt.m_ve_window * 3600  # mass flow rate window ventilation
-    m_v_inf = tsdt.m_ve_inf_simple * 3600  # mass flow rate infiltration
+    m_v_sys = m_ve_mech * 3600  # mass flow rate mechanical ventilation
+    m_v_w = m_ve_window * 3600  # mass flow rate window ventilation
+    m_v_inf = m_ve_inf_simple * 3600  # mass flow rate infiltration
 
     # (13) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     # adapted for mass flows instead of volume flows
@@ -139,18 +137,18 @@ def calc_h_ea(tsdt):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-def calc_phi_a(phi_hc_cv, tsdt):
+def calc_phi_a(phi_hc_cv, phi_i_l, phi_i_a, phi_i_p, I_sol):
 
     # (14) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     # Gabriel Happle 01.12.2016
 
     # get internal loads
-    phi_i_l = tsdt.phi_i_l
-    phi_i_a = tsdt.phi_i_a
-    phi_i_p = tsdt.phi_i_p
+    phi_i_l = phi_i_l
+    phi_i_a = phi_i_a
+    phi_i_p = phi_i_p
 
     # solar gains
-    phi_s = tsdt.I_sol  # solar gains
+    phi_s = I_sol  # solar gains
 
     # standard assumptions
     #f_sa = 0.1
@@ -163,22 +161,22 @@ def calc_phi_a(phi_hc_cv, tsdt):
     return phi_a
 
 
-def calc_phi_c(phi_hc_r, bpr, tsdt):
+def calc_phi_c(phi_hc_r, phi_i_l, phi_i_a, phi_i_p, I_sol, f_ic, f_sc):
 
     # (15) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     # Gabriel Happle 01.12.2016
 
     # get internal loads
-    phi_i_l = tsdt.phi_i_l
-    phi_i_a = tsdt.phi_i_a
-    phi_i_p = tsdt.phi_i_p
+    phi_i_l = phi_i_l
+    phi_i_a = phi_i_a
+    phi_i_p = phi_i_p
 
     # solar gains
-    phi_s = tsdt.I_sol  # solar gains
+    phi_s = I_sol  # solar gains
 
     # call functions for factor
-    f_ic = tsdt.f_ic
-    f_sc = tsdt.f_sc
+    f_ic = f_ic
+    f_sc = f_sc
 
     # standard assumptions
     #f_sa = 0.1
@@ -191,44 +189,49 @@ def calc_phi_c(phi_hc_r, bpr, tsdt):
     return phi_c
 
 
-def calc_phi_i_p(bpr, tsdt):
-    phi_i_p = tsdt.people * bpr.internal_loads['Qs_Wp']  # internal gains from people
+def calc_phi_i_p(Qs_Wp, people):
+    # internal gains from people
+    phi_i_p = people * Qs_Wp
     return phi_i_p
 
 
-def calc_phi_i_a(tsdt):
-    phi_i_a = 0.9 * tsdt.Eaf + tsdt.Qcdataf - tsdt.Qcref  # internal gains from appliances, factor of 0.9 taken from old method calc_Qgain_sen() #TODO make function and dynamic, check factor
+def calc_phi_i_a(Eaf, Qcdataf, Qcref):
+    # internal gains from appliances, factor of 0.9 taken from old method calc_Qgain_sen()
+    # TODO make function and dynamic, check factor
+    phi_i_a = 0.9 * Eaf + Qcdataf - Qcref
     return phi_i_a
 
 
-def calc_phi_i_l(tsdt):
-    phi_i_l = 0.9 * tsdt.Elf  # internal gains from lighting, factor of 0.9 taken from old method calc_Qgain_sen() #TODO make function and dynamic, check factor
+def calc_phi_i_l(Elf):
+    # internal gains from lighting, factor of 0.9 taken from old method calc_Qgain_sen()
+    # TODO make function and dynamic, check factor
+    phi_i_l = 0.9 * Elf
     return phi_i_l
 
 
-def calc_phi_m(phi_hc_r, bpr, tsdt):
+def calc_phi_m(phi_hc_r, phi_i_l, phi_i_a, phi_i_p, I_sol, f_im, f_sm):
 
     # (16) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     # Gabriel Happle 01.12.2016
 
     # get internal loads
-    phi_i_l = tsdt.phi_i_l
-    phi_i_a = tsdt.phi_i_a
-    phi_i_p = tsdt.phi_i_p
+    phi_i_l = phi_i_l
+    phi_i_a = phi_i_a
+    phi_i_p = phi_i_p
 
     # solar gains
-    phi_s = tsdt.I_sol  # solar gains
+    phi_s = I_sol  # solar gains
 
     # call functions for factors
-    f_im = tsdt.f_im
-    f_sm = tsdt.f_sm
+    f_im = f_im
+    f_sm = f_sm
 
     # standard assumption
     #f_sa = 0.1
     #f_r_l = 0.7
     #f_r_p = 0.5
     #f_r_a = 0.2
-    phi_m = f_im * (f_r_l*phi_i_l+f_r_p*phi_i_p+f_r_a*phi_i_a + phi_hc_r) + (1-f_sa)*f_sm*phi_s
+    phi_m = f_im * (f_r_l * phi_i_l + f_r_p * phi_i_p + f_r_a * phi_i_a + phi_hc_r) + (1 - f_sa) * f_sm * phi_s
 
     return phi_m
 
@@ -310,14 +313,14 @@ def calc_f_sm(a_t, a_m, a_w):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-def calc_theta_ea(tsdt):
+def calc_theta_ea(m_ve_mech, m_ve_window, m_ve_inf_simple, theta_ve_mech, T_ext):
 
     # get values
-    m_v_sys = tsdt.m_ve_mech  # mass flow rate mechanical ventilation
-    m_v_w = tsdt.m_ve_window  # mass flow rate window ventilation
-    m_v_inf = tsdt.m_ve_inf_simple  # mass flow rate infiltration
-    theta_v_sys = tsdt.theta_ve_mech  # supply air temperature of mechanical ventilation (i.e. after HEX)
-    theta_e = tsdt.T_ext  # outdoor air temperature
+    m_v_sys = m_ve_mech  # mass flow rate mechanical ventilation
+    m_v_w = m_ve_window  # mass flow rate window ventilation
+    m_v_inf = m_ve_inf_simple  # mass flow rate infiltration
+    theta_v_sys = theta_ve_mech  # supply air temperature of mechanical ventilation (i.e. after HEX)
+    theta_e = T_ext  # outdoor air temperature
 
     # (21) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
     # adjusted for mass flows instead of volume flows and simplified by (rho*cp)/(rho*cp) = 1
@@ -328,10 +331,10 @@ def calc_theta_ea(tsdt):
     return theta_ea
 
 
-def calc_theta_ec(tsdt):
+def calc_theta_ec(T_ext):
 
     # WORKAROUND
-    theta_ec = tsdt.T_ext  # TODO: adjust to actual calculation
+    theta_ec = T_ext  # TODO: adjust to actual calculation
 
     # (22) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -345,10 +348,10 @@ def calc_theta_ec(tsdt):
     return theta_ec
 
 
-def calc_theta_em(tsdt):
+def calc_theta_em(T_ext):
 
     # WORKAROUND
-    theta_em = tsdt.T_ext  # TODO: adjust to actual calculation
+    theta_em = T_ext  # TODO: adjust to actual calculation
 
     # (23) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -401,28 +404,18 @@ def calc_theta_e_star():
 # 2.1.6
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-def calc_theta_m_t(phi_m, phi_a, phi_c, theta_ea, bpr, tsdt, theta_m_t_1, h_1):
-
-    # get values
-    c_m = bpr.rc_model['Cm'] / 3600  # (Wh/K) SIA 2044 unit is Wh/K, ISO unit is J/K
-    h_2 = calc_h_2(h_1, tsdt)
-    h_3 = calc_h_3(h_2, tsdt)
-    h_em = tsdt.h_em
-    phi_m_tot = calc_phi_m_tot(phi_m=phi_m, phi_a=phi_a, phi_c=phi_c, theta_ea=theta_ea, h_1=h_1, h_2=h_2, h_3=h_3,
-                               tsdt=tsdt)
-
+def calc_theta_m_t(phi_m_tot, theta_m_t_1, h_em, h_3, c_m):
     # (25) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-
     theta_m_t = (theta_m_t_1 * (c_m - 0.5 * (h_3 + h_em)) + phi_m_tot) / (c_m + 0.5 * (h_3 + h_em))
 
     return theta_m_t
 
 
-def calc_h_1(tsdt):
+def calc_h_1(h_ea, h_ac):
 
     # get values
-    h_ea = tsdt.h_ea
-    h_ac = tsdt.h_ac
+    h_ea = h_ea
+    h_ac = h_ac
 
     # (26) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -431,11 +424,7 @@ def calc_h_1(tsdt):
     return h_1
 
 
-def calc_h_2(h_1, tsdt):
-
-    # get values
-    h_ec = tsdt.h_ec
-
+def calc_h_2(h_1, h_ec):
     # (27) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
     h_2 = h_1 + h_ec
@@ -443,39 +432,19 @@ def calc_h_2(h_1, tsdt):
     return h_2
 
 
-def calc_h_3(h_2, tsdt):
-
-    # get values
-    h_mc = tsdt.h_mc
-
+def calc_h_3(h_2, h_mc):
     # (28) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-
     h_3 = 1 / (1 / h_2 + 1 / h_mc)
-
     return h_3
 
 
-def calc_phi_m_tot(phi_m, phi_a, phi_c, theta_ea, h_1, h_2, h_3, tsdt):
-
-    # get values
-    theta_em = calc_theta_em(tsdt)
-    theta_ec = calc_theta_ec(tsdt)
-    h_ec = tsdt.h_ec
-    h_ea = tsdt.h_ea
-    h_em = tsdt.h_em
-
+def calc_phi_m_tot(phi_m, phi_a, phi_c, theta_ea, theta_em, theta_ec, h_1, h_2, h_3, h_ec, h_ea, h_em):
     # (29) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-
     phi_m_tot = phi_m + h_em * theta_em + (h_3 * (phi_c + h_ec * theta_ec + h_1 * (phi_a / h_ea + theta_ea))) / h_2
-
     return phi_m_tot
 
 
-def calc_theta_m(phi_m, phi_a, phi_c, theta_ea, bpr, tsdt, theta_m_t_1, h_1):
-
-    # get values
-    theta_m_t = calc_theta_m_t(phi_m=phi_m, phi_a=phi_a, phi_c=phi_c, theta_ea=theta_ea, bpr=bpr, tsdt=tsdt, theta_m_t_1=theta_m_t_1,
-                               h_1=h_1)
+def calc_theta_m(theta_m_t, theta_m_t_1):
 
     # (30) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -484,13 +453,12 @@ def calc_theta_m(phi_m, phi_a, phi_c, theta_ea, bpr, tsdt, theta_m_t_1, h_1):
     return theta_m
 
 
-def calc_theta_c(phi_a, phi_c, theta_ea, tsdt, theta_m, h_1):
+def calc_theta_c(phi_a, phi_c, theta_ea, theta_ec, theta_m, h_1, h_mc, h_ec, h_ea):
 
     # get values
-    h_mc = tsdt.h_mc
-    h_ec = tsdt.h_ec
-    theta_ec = calc_theta_ec(tsdt)
-    h_ea = tsdt.h_ea
+    h_mc = h_mc
+    h_ec = h_ec
+    h_ea = h_ea
 
     # (31) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
 
@@ -499,25 +467,15 @@ def calc_theta_c(phi_a, phi_c, theta_ea, tsdt, theta_m, h_1):
     return theta_c
 
 
-def calc_theta_a(phi_a, theta_ea, tsdt, theta_c):
-
-    # get values
-    h_ac = tsdt.h_ac
-    h_ea = tsdt.h_ea
-
+def calc_theta_a(phi_a, theta_ea, theta_c, h_ac, h_ea):
     # (32) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-
     theta_a = (h_ac * theta_c + h_ea * theta_ea + phi_a) / (h_ac + h_ea)
-
     return theta_a
 
 
-def calc_theta_o(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_a, theta_c):
-
+def calc_theta_o(theta_a, theta_c):
     # (33) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-
     theta_o = theta_a * 0.31 + theta_c * 0.69
-
     return theta_o
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -605,20 +563,68 @@ def calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t):
 
 def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     # calculate node temperatures of RC model
-    tsdt = TimeStepDataT(tsd, t, bpr)
-    theta_m_t_1 = tsd['theta_m'][t - 1] if not np.isnan(tsd['theta_m'][t - 1]) else tsd['T_ext'][t - 1]
+    theta_m_t_1 = tsd['theta_m'][t - 1]
+    if np.isnan(theta_m_t_1):
+        theta_m_t_1 = tsd['T_ext'][t - 1]
 
-    h_1 = calc_h_1(tsdt)
-    phi_a = calc_phi_a(phi_hc_cv, tsdt)
-    phi_m = calc_phi_m(phi_hc_r=phi_hc_r, bpr=bpr, tsdt=tsdt)
-    phi_c = calc_phi_c(phi_hc_r=phi_hc_r, bpr=bpr, tsdt=tsdt)
-    theta_ea = calc_theta_ea(tsdt)
+    # copy data required for calculation from `tsd` for this timestep
+    m_ve_mech = tsd['m_ve_mech'][t]
+    m_ve_window = tsd['m_ve_window'][t]
+    m_ve_inf_simple = tsd['m_ve_inf_simple'][t]
+    Elf = tsd['Elf'][t]
+    Eaf = tsd['Eaf'][t]
+    Qcdataf = tsd['Qcdataf'][t]
+    Qcref = tsd['Qcref'][t]
+    people = tsd['people'][t]
+    I_sol = tsd['I_sol'][t]
+    T_ext = tsd['T_ext'][t]
+    theta_ve_mech = tsd['theta_ve_mech'][t]
 
-    theta_m = calc_theta_m(phi_m=phi_m, phi_a=phi_a, phi_c=phi_c, theta_ea=theta_ea, bpr=bpr, tsdt=tsdt, theta_m_t_1=theta_m_t_1,
-                           h_1=h_1)
-    theta_c = calc_theta_c(phi_a=phi_a, phi_c=phi_c, theta_ea=theta_ea, tsdt=tsdt, theta_m=theta_m, h_1=h_1)
-    theta_a = calc_theta_a(phi_a, theta_ea=theta_ea, tsdt=tsdt, theta_c=theta_c)
-    theta_o = calc_theta_o(phi_hc_cv, phi_hc_r, bpr, tsdt, theta_a, theta_c)
+    # precalculate values that are constant for a single timestep
+    a_t = bpr.rc_model['Atot']
+    a_m = bpr.rc_model['Am']
+    a_w = bpr.rc_model['Aw']
+
+    h_ec = calc_h_ec(bpr)
+    h_ac = calc_h_ac(a_t)
+    h_ea = calc_h_ea(m_ve_mech, m_ve_window, m_ve_inf_simple)
+
+    f_sc = calc_f_sc(a_t, a_m, a_w, h_ec)
+    f_ic = calc_f_ic(a_t, a_m, h_ec)
+
+    h_op_m = calc_h_op_m(bpr)
+    h_mc = calc_h_mc(a_m=a_m)
+    h_em = calc_h_em(h_op_m=h_op_m, h_mc=h_mc)
+    f_im = calc_f_im(a_t=a_t, a_m=a_m)
+    f_sm = calc_f_sm(a_t=a_t, a_m=a_m, a_w=a_w)
+
+    phi_i_l = calc_phi_i_l(Elf=Elf)
+    phi_i_a = calc_phi_i_a(Eaf=Eaf, Qcdataf=Qcdataf, Qcref=Qcref)
+    phi_i_p = calc_phi_i_p(Qs_Wp=bpr.internal_loads['Qs_Wp'], people=people)
+
+    h_1 = calc_h_1(h_ea=h_ea, h_ac=h_ac)
+    phi_a = calc_phi_a(phi_hc_cv=phi_hc_cv, phi_i_l=phi_i_l, phi_i_a=phi_i_a, phi_i_p=phi_i_p, I_sol=I_sol)
+    phi_m = calc_phi_m(phi_hc_r=phi_hc_r, phi_i_l=phi_i_l, phi_i_a=phi_i_a, phi_i_p=phi_i_p, I_sol=I_sol, f_im=f_im,
+                       f_sm=f_sm)
+    phi_c = calc_phi_c(phi_hc_r=phi_hc_r, phi_i_l=phi_i_l, phi_i_a=phi_i_a, phi_i_p=phi_i_p, I_sol=I_sol, f_ic=f_ic,
+                       f_sc=f_sc)
+    theta_ea = calc_theta_ea(m_ve_mech=m_ve_mech, m_ve_window=m_ve_window, m_ve_inf_simple=m_ve_inf_simple,
+                             theta_ve_mech=theta_ve_mech, T_ext=T_ext)
+
+    c_m = bpr.rc_model['Cm'] / 3600  # (Wh/K) SIA 2044 unit is Wh/K, ISO unit is J/K
+    theta_em = calc_theta_em(T_ext=T_ext)
+    theta_ec = calc_theta_ec(T_ext=T_ext)
+    h_2 = calc_h_2(h_1=h_1, h_ec=h_ec)
+    h_3 = calc_h_3(h_2=h_2, h_mc=h_mc)
+    phi_m_tot = calc_phi_m_tot(phi_m=phi_m, phi_a=phi_a, phi_c=phi_c, theta_ea=theta_ea, theta_em=theta_em,
+                               theta_ec=theta_ec, h_1=h_1, h_2=h_2, h_3=h_3, h_ec=h_ec, h_ea=h_ea, h_em=h_em)
+    theta_m_t = calc_theta_m_t(phi_m_tot=phi_m_tot, theta_m_t_1=theta_m_t_1, h_em=h_em, h_3=h_3, c_m=c_m)
+    theta_m = calc_theta_m(theta_m_t=theta_m_t, theta_m_t_1=theta_m_t_1)
+    theta_ec = calc_theta_ec(T_ext=T_ext)
+    theta_c = calc_theta_c(phi_a=phi_a, phi_c=phi_c, theta_ea=theta_ea, theta_ec=theta_ec, theta_m=theta_m, h_1=h_1,
+                           h_mc=h_mc, h_ec=h_ec, h_ea=h_ea)
+    theta_a = calc_theta_a(phi_a=phi_a, theta_ea=theta_ea, theta_c=theta_c, h_ac=h_ac, h_ea=h_ea)
+    theta_o = calc_theta_o(theta_a=theta_a, theta_c=theta_c)
     rc_model_temp = {'theta_m': theta_m, 'theta_c': theta_c, 'theta_a': theta_a, 'theta_o': theta_o}
     return rc_model_temp
 
