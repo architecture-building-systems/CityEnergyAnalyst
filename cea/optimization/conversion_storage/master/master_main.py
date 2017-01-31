@@ -188,15 +188,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         print "....................................... \n"
         
         # Select the Pareto Optimal individuals
-        print "Pareto Selection"
-        print offspring
         selection = sel.selectPareto(offspring,gv)
-        len(selection)
-        print toolbox.population(n=gv.initialInd)
-        print pop
-        print selection
 
-        
         # Compute the epsilon criteria [and check the stopping criteria]
         epsInd.append(evaluation_function.epsIndicator(pop, selection))
         #if len(epsInd) >1:
