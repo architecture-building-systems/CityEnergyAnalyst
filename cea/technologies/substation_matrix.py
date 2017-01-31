@@ -258,7 +258,7 @@ def substation_return_model_main(locator, gv, building_names, buildings_demands,
     index = 0
     # combi = [0] * len(building_names)
     T_return_all = pd.DataFrame()
-    mdot_sun_all = pd.DataFrame()
+    mdot_sum_all = pd.DataFrame()
 
     for name in building_names:
         building = buildings_demands[index].loc[[t]]
@@ -278,9 +278,9 @@ def substation_return_model_main(locator, gv, building_names, buildings_demands,
             t_sub_return, mcp_sub = calc_substation_return_DC(building, T_supply_target, substations_HEX_specs.ix[name])
 
         T_return_all[name] = [t_sub_return]
-        mdot_sun_all[name] = [mcp_sub/gv.Cpw]   # [kg/s]
+        mdot_sum_all[name] = [mcp_sub/gv.Cpw]   # [kg/s]
         index += 1
-    return T_return_all, mdot_sun_all
+    return T_return_all, mdot_sum_all
 
 def calc_substation_return_DH(building, T_DH_supply, substation_HEX_specs):
     """
