@@ -60,29 +60,53 @@ class InputLocator(object):
         """
         return self._ensure_folder(self.get_optimization_network_results_folder(), "layout")
 
-    def get_optimization_network_layout_pipes_file(self):
+    def get_optimization_network_DH_layout_pipes_file(self):
         """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv
         Network layout files for pipes of district heat networks
         """
         return os.path.join(self.get_optimization_network_layout_folder(), "PipesData_DH.csv")
 
-    def get_optimization_network_layout_nodes_file(self):
+    def get_optimization_network_DH_layout_nodes_file(self):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv
         Network layout files for pipes of district heat networks
         """
         return os.path.join(self.get_optimization_network_layout_folder(), "NodesData_DH.csv")
 
-    def get_optimization_network_edge_node_matrix_file(self):
+    def get_optimization_network_DH_edge_node_matrix_file(self):
         """scenario/outputs/data/optimization/network/layout/DH_EdgeNode.csv
         Network layout files for pipes of district heat networks
         """
         return os.path.join(self.get_optimization_network_layout_folder(), "DH_EdgeNode.csv")
 
-    def get_optimization_network_node_list_file(self):
+    def get_optimization_network_DH_node_list_file(self):
         """scenario/outputs/data/optimization/network/layout/DH_AllNodes.csv
         Network layout files for pipes of district heat networks
         """
         return os.path.join(self.get_optimization_network_layout_folder(), "DH_AllNodes.csv")
+
+    def get_optimization_network_DC_layout_pipes_file(self):
+        """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv
+        Network layout files for pipes of district heat networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "PipesData_DC.csv")
+
+    def get_optimization_network_DC_layout_nodes_file(self):
+        """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv
+        Network layout files for pipes of district heat networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "NodesData_DC.csv")
+
+    def get_optimization_network_DC_edge_node_matrix_file(self):
+        """scenario/outputs/data/optimization/network/layout/DH_EdgeNode.csv
+        Network layout files for pipes of district heat networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "DC_EdgeNode.csv")
+
+    def get_optimization_network_DC_node_list_file(self):
+        """scenario/outputs/data/optimization/network/layout/DH_AllNodes.csv
+        Network layout files for pipes of district heat networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "DC_AllNodes.csv")
 
     def get_optimization_network_edge_list_file(self):
         """scenario/outputs/data/optimization/network/layout/DH_AllEdges.csv
@@ -300,11 +324,19 @@ class InputLocator(object):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain.tif')
 
-    def get_heating_network_edges(self):
+    def get_heating_network_DH_edges(self):
         """scenario/inputs/network/heating-edges.shp"""
         return os.path.join(self.scenario_path, 'inputs', 'network', 'network-edges.shp')
 
-    def get_heating_network_nodes(self):
+    def get_heating_network_DH_nodes(self):
+        """scenario/inputs/network/heating-nodes.shp"""
+        return os.path.join(self.scenario_path, 'inputs', 'network', 'network-nodes.shp')
+
+    def get_heating_network_DC_edges(self):
+        """scenario/inputs/network/heating-edges.shp"""
+        return os.path.join(self.scenario_path, 'inputs', 'network', 'network-edges.shp')
+
+    def get_heating_network_DC_nodes(self):
         """scenario/inputs/network/heating-nodes.shp"""
         return os.path.join(self.scenario_path, 'inputs', 'network', 'network-nodes.shp')
 
