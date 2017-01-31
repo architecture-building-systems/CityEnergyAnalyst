@@ -93,7 +93,7 @@ def thermal_network_main(locator, gv, shapefile_flag):
 
     # assign pipe id/od according to maximum edge mass flow
     pipe_properties_DH_df = assign_pipes_to_edges(max_edge_mass_flow_DH_df, locator, gv)
-    pipe_properties_DC_df = assign_pipes_to_edges(max_edge_mass_flow_DC_df, locator, gv) # TODO[SH]: check data format
+    #pipe_properties_DC_df = assign_pipes_to_edges(max_edge_mass_flow_DC_df, locator, gv) # TODO[SH]: check data format
 
     # calculate pipe aggregated heat conduction coefficient
     K_DH = calc_aggregated_heat_conduction_coefficient(locator, gv, pipe_length_df, pipe_properties_DH_df)#(exe) [kW/K]
@@ -140,8 +140,8 @@ def thermal_network_main(locator, gv, shapefile_flag):
 
     # calculate pressure at each node and pressure drop throughout the entire network
     pressure_nodes_supply, pressure_nodes_return, pressure_loss_system = calc_pressure_nodes(edge_node_df,
-                                                    pipe_properties_df[:]['DN':'DN'].values, pipe_length_df.values,
-                                                    edge_mass_flow_df.values, T_DH_supply_nodes, T_DH_return_nodes, gv, locator)
+                                                    pipe_properties_DH_df[:]['DN':'DN'].values, pipe_length_df.values,
+                                                    edge_mass_flow_DH_df.values, T_DH_supply_nodes, T_DH_return_nodes, gv, locator)
     pd.DataFrame(pressure_nodes_supply, columns=edge_node_df.index). \
             to_csv(locator.get_optimization_network_layout_supply_pressure_file(), index=False, float_format='%.3f')
     pd.DataFrame(pressure_nodes_return, columns=edge_node_df.index).\
@@ -229,7 +229,7 @@ def assign_pipes_to_edges(mass_flow_df, locator, gv):
     pipe_catalog = pd.read_excel(locator.get_thermal_networks())
     pipe_catalog['Vdot_min'] = pipe_catalog['Vdot_min'] * gv.Pwater
     pipe_catalog['Vdot_max'] = pipe_catalog['Vdot_max'] * gv.Pwater
-    pipe_properties_df = pd.DataFrame( data = None, index = pipe_catalog.columns.values, columns = mass_flow_df.columns.values)
+    pipe_properties_df = pd.DataFrame(data = None, index = pipe_catalog.columns.values, columns = mass_flow_df.columns.values)
     for pipe in mass_flow_df:
         pipe_found = False
         i = 0
@@ -568,15 +568,16 @@ def calc_supply_temperatures(locator, gv, T_ground, edge_node_df, mass_flow_df, 
 
         # evaluate if all node supply temperature reach the targets
         dT = (T_node - (t_target_supply + 273.15)).dropna()  # [K] temperature differences b/t node supply and target supply
-        if all(dT > 0) is False and iteration < 40:
+        if all(dT > -0.1) is False and (T_H-T_H_0) <= 50:
                 # increase plant supply temperature and re-iterate the node supply temperature calculation
-                T_H = T_H + 1  # TODO[SH]: add to global variable
+                T_H = T_H + abs(dT.min())  # increase by the maximum amount of temperature deficit at nodes
                 Z_note = Z.copy()
                 T_e_out = Z_pipe_out.copy()
                 T_e_in = Z_pipe_in.copy().dot(-1)
                 T_node = np.zeros(Z.shape[0])
                 iteration += 1
-        elif all(dT > 0) is False and iteration >= 40: #FIXME[SH]:decide the method
+        elif all(dT > -0.1) is False and (T_H-T_H_0) >= 50:
+            # if the temperatures couldn't reach the target after 40 iterations
             print ('cannot fulfill temperature requirement after iterations:'), iteration, dT
             node_insufficient = dT[dT<0].index.values
             for node in range(node_insufficient.size):
