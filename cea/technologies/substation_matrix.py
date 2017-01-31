@@ -241,7 +241,7 @@ def substation_HEX_sizing(locator, gv, building):
     return [A_hex_hs, A_hex_ww, A_hex_cs, UA_heating_hs, UA_heating_ww, UA_cooling_cs]
 
 def substation_return_model_main(locator, gv, building_names, buildings_demands, substations_HEX_specs, T_target, t,
-                                 t_flag, dh_network_flag):
+                                 network, t_flag):
     """
     calculate all substation return temperature and required flow rate at each time-step.
 
@@ -270,11 +270,11 @@ def substation_return_model_main(locator, gv, building_names, buildings_demands,
             # find substation supply temperature
             T_supply_target = T_target.loc['T_supply', name]
 
-        if dh_network_flag == True:
-            # calculate DH substation return temerpature and substation flow rate
+        if network == 'DH':
+            # calculate DH substation return temperature and substation flow rate
             t_sub_return, mcp_sub = calc_substation_return_DH(building, T_supply_target, substations_HEX_specs.ix[name])
         else:
-            # calculate DC substation return temerpature and substation flow rate
+            # calculate DC substation return temperature and substation flow rate
             t_sub_return, mcp_sub = calc_substation_return_DC(building, T_supply_target, substations_HEX_specs.ix[name])
 
         T_return_all[name] = [t_sub_return]
@@ -665,9 +665,12 @@ def run_as_script(scenario_path=None):
 
     t = 1000
     T_DH = 60
-    substations_HEX_specs, buildings = substation_HEX_design_main(locator, total_demand, building_names, gv)
-    substation_return_model_main(locator, building_names, gv, buildings, substations_HEX_specs, T_DH, t)
+    network = 'DH'
+    t_flag = True
 
+    substations_HEX_specs, buildings = substation_HEX_design_main(locator, total_demand, building_names, gv)
+
+    substation_return_model_main(locator, gv, building_names, buildings, substations_HEX_specs, T_DH, t, network, t_flag)
 
     print 'substation_main() succeeded'
 
