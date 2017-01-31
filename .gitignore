@@ -1,3 +1,6 @@
+# sphynx documentation builds
+doc/_build
+
 # PyCharm files
 .idea/
 
