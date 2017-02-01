@@ -26,7 +26,8 @@ if os.environ.get('READTHEDOCS', False) == 'True':
     INSTALL_REQUIRES = []
 else:
     # TODO: list all the requirements for installing
-    INSTALL_REQUIRES = ['geopandas', 'pandas', 'shapely', 'fiona', 'descartes', 'pyproj', 'versioneer']
+    INSTALL_REQUIRES = ['geopandas', 'pandas', 'shapely', 'fiona', 'descartes', 'pyproj', 'versioneer',
+                        'sphinx_rtd_theme']
 
 setup(name='cityenergyanalyst',
       version=versioneer.get_version(),
@@ -36,7 +37,9 @@ setup(name='cityenergyanalyst',
       author_email='cea@arch.ethz.ch',
       url='http://cityenergyanalyst.com',
       long_description=LONG_DESCRIPTION,
-      packages=['cea'],
+      packages=['cea', 'cea.analysis', 'cea.analysis.sensitivity', 'cea.demand', 'cea.demand.preprocessing',
+                'cea.geometry', 'cea.GUI', 'cea.optimization', 'cea.plots', 'cea.resources', 'cea.technologies',
+                'cea.utilities'],
       package_data={},
       install_requires=INSTALL_REQUIRES,
       cmdclass=versioneer.get_cmdclass())
