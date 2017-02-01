@@ -1,6 +1,11 @@
 cea.analysis package
 ====================
 
+.. automodule:: cea.analysis
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Subpackages
 -----------
 
@@ -11,51 +16,11 @@ Subpackages
 Submodules
 ----------
 
-cea.analysis.benchmark module
------------------------------
+.. toctree::
 
-.. automodule:: cea.analysis.benchmark
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   cea.analysis.benchmark
+   cea.analysis.embodied
+   cea.analysis.mcda
+   cea.analysis.mobility
+   cea.analysis.operation
 
-cea.analysis.embodied module
-----------------------------
-
-.. automodule:: cea.analysis.embodied
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.analysis.mcda module
-------------------------
-
-.. automodule:: cea.analysis.mcda
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.analysis.mobility module
-----------------------------
-
-.. automodule:: cea.analysis.mobility
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea.analysis.operation module
------------------------------
-
-.. automodule:: cea.analysis.operation
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: cea.analysis
-    :members:
-    :undoc-members:
-    :show-inheritance:
