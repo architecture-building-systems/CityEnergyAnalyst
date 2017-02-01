@@ -5,17 +5,19 @@ Selection of Pareto Optimal individuals
 
 """
 
-__author__ =  "Thuy-An Nguyen"
+from __future__ import division
+from deap import tools
+
+__author__ =  "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = [ "Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
+__credits__ = [ "Sreepathi Bhargava Krishna", "Thuy-An Nguyen", "Tim Vollrath", "Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-
-def selectPareto(pop):
+def selectPareto(pop,gv):
     """
     Select Pareto Optimal individuals in the population
     An individual is considered Pareto optimal if there exist no other
@@ -24,18 +26,17 @@ def selectPareto(pop):
     Parameters
     ----------
     :param pop: list of individuals
+    :param gv: global variables
     :type pop: list
+    :type gv: class
     :return: list of selected individuals
     :rtype: list
     """
-    selectedInd = list(pop)
-    for ind in pop:
-        if (ind in selectedInd):
-            otherList = [el for el in selectedInd if el != ind]
-            for other in otherList:
-                if ind.fitness.dominates(other.fitness):
-                    selectedInd.remove(other)
-    
+    selectedInd = []
+    a = gv.initialInd
+    selectedInd = tools.selNSGA2(pop,a)
+
+
     return selectedInd
                 
 
