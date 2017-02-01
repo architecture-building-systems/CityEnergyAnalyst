@@ -21,12 +21,20 @@ __status__ = "Production"
 
 class GlobalVariables(object):
     def __init__(self):
+<<<<<<< HEAD
+        self.scenario_reference = r'c:\reference-case-zug\baseline'
+        self.print_partial = 'hourly' # hourly or monthly for the deamnd script
+        self.print_totals = True # print yearly values
+        self.print_yearly_peak = True # print peak values
+        self.simulate_building_list = None # fill it with a list of names of buildings in case not all the data set needs to be run
+=======
 
         self.scenario_reference = r'c:\reference-case-open\baseline'
         self.print_partial = 'hourly'  # hourly or monthly for the demand script
         self.print_totals = True  # print yearly values
         self.print_yearly_peak = True  # print peak values
         self.simulate_building_list = None  # fill it with a list of names of buildings in case not all the data set needs to be run
+>>>>>>> refs/remotes/origin/g000-gabriels-branch
         self.date_start = '2016-01-01'  # format: yyyy-mm-dd
         self.seasonhours = [3216, 6192]
         self.multiprocessing = True  # use multiprocessing / parallel execution if possible

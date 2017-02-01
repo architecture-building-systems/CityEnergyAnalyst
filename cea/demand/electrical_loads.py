@@ -275,6 +275,12 @@ def calc_Eauxf_cs_dis(Qcsf, Qcsf0, Imax, deltaP_des, b, ts, tr, cpw):
 
 
 def calc_Eauxf_ve(Qhsf, Qcsf, P_ve, qve, SystemH, SystemC):
+    # TODO: DOCUMENTATION
+    # FIXME: Why only energy demand for AC? Also other mechanical ventilation should have auxiliary energy demand
+    # FIXME: What are the units
+
+    # m_ve_mech is
+
     if SystemH == 'T3':
         if Qhsf > 0:
             Eve_aux = P_ve * qve * 3600
