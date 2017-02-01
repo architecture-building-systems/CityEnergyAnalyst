@@ -70,16 +70,24 @@ def ode(y, t, ql, qd, qc, Pwater, Cpw, Vtank):
     -------
     :return dydt: change in temperature at each time step.
     """
-    dydt = (qc-ql-qd)/(Pwater*Vtank*Cpw)
+    dydt = (qc - ql - qd) / (Pwater * Vtank * Cpw)
     return dydt
 
 
-def solve_ode_storage(Tww_st_0,ql,qd,qc,Pwater,Cpw,Vtank):
+def solve_ode_storage(Tww_st_0, ql, qd, qc, Pwater, Cpw, Vtank):
     """
     This algorithm solves the differential equation, ode.
     """
     t = np.linspace(0,1,2)
-    y = odeint(ode, Tww_st_0, t, args = (ql, qd, qc, Pwater, Cpw, Vtank))
+    y = odeint(ode, Tww_st_0, t, args=(ql, qd, qc, Pwater, Cpw, Vtank))
     return y[1]
 
 
+# use the optimized (numba_cc) versions of the ode function in this module if available
+try:
+    # import Numba AOT versions of the functions above, overwriting them
+    from storagetank_cc import (ode)
+except ImportError:
+    # fall back to using the python version
+    print('failed to import from storagetank_cc.pyd, falling back to pure python functions')
+    pass

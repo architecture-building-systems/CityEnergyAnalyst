@@ -19,6 +19,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+# stefan-boltzmann constant
+BOLTZMANN = 0.0000000567  # W/m2K4
 
 def calc_w(t, RH):
     """
@@ -37,6 +39,8 @@ def calc_w(t, RH):
     Ps = 610.78 * scipy.exp(t / (t + 238.3) * 17.2694)
     Pv = RH / 100 * Ps
     w = 0.62 * Pv / (Pa - Pv)
+
+    # TODO: source?
 
     return w
 
@@ -60,9 +64,12 @@ def calc_h(t, w):
     elif -100 < t <= 0: # temperature below zero
         h = (1.005 * t) + w * (2501 + 1.84 * t)
     else:
+        raise
         h = np.nan
         print('Warning: Temperature out of bounds (>60°C or <-100°C)')
         print(t)
+
+    # TODO: source?
 
     return h
 
@@ -87,6 +94,7 @@ def calc_t_from_h(h, w):
     elif -100 < t2 <= 0:
         t = t2
     else:
+        raise
         t = np.nan
     #    print('Warning: Temperature out of bounds (>60°C or <-100°C)')
      #   print(t1,t2)
@@ -135,11 +143,11 @@ def calc_rho_air(temp_air):
     # TODO import from global variables
     # TODO implement dynamic air density in other functions
     rho_air_ref = 1.23  # (kg/m3)
-    temp_air_ref = 283  # (K)
-    temp_air += 273  # conversion to (K)
+    temp_air_ref_K = 283  # (K)
+    temp_air_K = temp_air + 273  # conversion to (K)
 
     # Equation (1) in [1]
-    rho_air = temp_air_ref / temp_air * rho_air_ref
+    rho_air = temp_air_ref_K / temp_air_K * rho_air_ref
 
     return rho_air
 

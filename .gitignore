@@ -84,3 +84,4 @@ setup/site-packages/*
 # euler batch job output files
 lsf.o*
 cea/utilities/trace-data.pickle
+doc/make.output.txt
