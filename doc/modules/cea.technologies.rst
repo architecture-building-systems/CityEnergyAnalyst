@@ -1,35 +1,182 @@
 cea.technologies package
 ========================
 
-.. automodule:: cea.technologies
+Submodules
+----------
+
+cea.technologies.blinds module
+------------------------------
+
+.. automodule:: cea.technologies.blinds
     :members:
     :undoc-members:
     :show-inheritance:
 
-Submodules
-----------
+cea.technologies.boilers module
+-------------------------------
 
-.. toctree::
+.. automodule:: cea.technologies.boilers
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
-   cea.technologies.blinds
-   cea.technologies.boilers
-   cea.technologies.chillers
-   cea.technologies.cogeneration
-   cea.technologies.controllers
-   cea.technologies.cooling_tower
-   cea.technologies.furnace
-   cea.technologies.heat_exchangers
-   cea.technologies.heating_coils
-   cea.technologies.heatpumps
-   cea.technologies.photovoltaic
-   cea.technologies.photovoltaic_thermal
-   cea.technologies.pumps
-   cea.technologies.radiators
-   cea.technologies.sewage_heat_exchanger
-   cea.technologies.solar_collector
-   cea.technologies.storagetank
-   cea.technologies.substation
-   cea.technologies.tabs
-   cea.technologies.thermal_network
-   cea.technologies.thermal_storage
+cea.technologies.chillers module
+--------------------------------
 
+.. automodule:: cea.technologies.chillers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.cogeneration module
+------------------------------------
+
+.. automodule:: cea.technologies.cogeneration
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.controllers module
+-----------------------------------
+
+.. automodule:: cea.technologies.controllers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.cooling_tower module
+-------------------------------------
+
+.. automodule:: cea.technologies.cooling_tower
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.furnace module
+-------------------------------
+
+.. automodule:: cea.technologies.furnace
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.heat_exchangers module
+---------------------------------------
+
+.. automodule:: cea.technologies.heat_exchangers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.heating_coils module
+-------------------------------------
+
+.. automodule:: cea.technologies.heating_coils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.heatpumps module
+---------------------------------
+
+.. automodule:: cea.technologies.heatpumps
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.photovoltaic module
+------------------------------------
+
+.. automodule:: cea.technologies.photovoltaic
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.photovoltaic_thermal module
+--------------------------------------------
+
+.. automodule:: cea.technologies.photovoltaic_thermal
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.pumps module
+-----------------------------
+
+.. automodule:: cea.technologies.pumps
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.radiators module
+---------------------------------
+
+.. automodule:: cea.technologies.radiators
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.sewage_heat_exchanger module
+---------------------------------------------
+
+.. automodule:: cea.technologies.sewage_heat_exchanger
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.solar_collector module
+---------------------------------------
+
+.. automodule:: cea.technologies.solar_collector
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.storagetank module
+-----------------------------------
+
+.. automodule:: cea.technologies.storagetank
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.substation module
+----------------------------------
+
+.. automodule:: cea.technologies.substation
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.tabs module
+----------------------------
+
+.. automodule:: cea.technologies.tabs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.thermal_network module
+---------------------------------------
+
+.. automodule:: cea.technologies.thermal_network
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.technologies.thermal_storage module
+---------------------------------------
+
+.. automodule:: cea.technologies.thermal_storage
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: cea.technologies
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,15 +1,22 @@
 cea.demand.preprocessing package
 ================================
 
-.. automodule:: cea.demand.preprocessing
+Submodules
+----------
+
+cea.demand.preprocessing.properties module
+------------------------------------------
+
+.. automodule:: cea.demand.preprocessing.properties
     :members:
     :undoc-members:
     :show-inheritance:
 
-Submodules
-----------
 
-.. toctree::
+Module contents
+---------------
 
-   cea.demand.preprocessing.properties
-
+.. automodule:: cea.demand.preprocessing
+    :members:
+    :undoc-members:
+    :show-inheritance:
