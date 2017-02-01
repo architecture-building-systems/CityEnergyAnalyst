@@ -1,6 +1,11 @@
 cea.databases package
 =====================
 
+.. automodule:: cea.databases
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Subpackages
 -----------
 
@@ -8,10 +13,3 @@ Subpackages
 
     cea.databases.CH
 
-Module contents
----------------
-
-.. automodule:: cea.databases
-    :members:
-    :undoc-members:
-    :show-inheritance:
