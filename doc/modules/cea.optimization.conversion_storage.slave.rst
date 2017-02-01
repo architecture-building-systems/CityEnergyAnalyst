@@ -1,6 +1,11 @@
 cea.optimization.conversion_storage.slave package
 =================================================
 
+.. automodule:: cea.optimization.conversion_storage.slave
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Subpackages
 -----------
 
@@ -11,27 +16,8 @@ Subpackages
 Submodules
 ----------
 
-cea.optimization.conversion_storage.slave.Slave_main module
------------------------------------------------------------
+.. toctree::
 
-.. automodule:: cea.optimization.conversion_storage.slave.Slave_main
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   cea.optimization.conversion_storage.slave.Slave_main
+   cea.optimization.conversion_storage.slave.least_cost
 
-cea.optimization.conversion_storage.slave.least_cost module
------------------------------------------------------------
-
-.. automodule:: cea.optimization.conversion_storage.slave.least_cost
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: cea.optimization.conversion_storage.slave
-    :members:
-    :undoc-members:
-    :show-inheritance:

@@ -1,6 +1,11 @@
 cea.demand.calibration package
 ==============================
 
+.. automodule:: cea.demand.calibration
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Subpackages
 -----------
 
@@ -8,10 +13,3 @@ Subpackages
 
     cea.demand.calibration.clustering
 
-Module contents
----------------
-
-.. automodule:: cea.demand.calibration
-    :members:
-    :undoc-members:
-    :show-inheritance:

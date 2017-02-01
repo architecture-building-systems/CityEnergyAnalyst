@@ -1,6 +1,11 @@
 cea package
 ===========
 
+.. automodule:: cea
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Subpackages
 -----------
 
@@ -20,27 +25,8 @@ Subpackages
 Submodules
 ----------
 
-cea.globalvar module
---------------------
+.. toctree::
 
-.. automodule:: cea.globalvar
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   cea.globalvar
+   cea.inputlocator
 
-cea.inputlocator module
------------------------
-
-.. automodule:: cea.inputlocator
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: cea
-    :members:
-    :undoc-members:
-    :show-inheritance:
