@@ -1,17 +1,38 @@
 cea.resources package
 =====================
 
-.. automodule:: cea.resources
+Submodules
+----------
+
+cea.resources.geothermal module
+-------------------------------
+
+.. automodule:: cea.resources.geothermal
     :members:
     :undoc-members:
     :show-inheritance:
 
-Submodules
-----------
+cea.resources.natural_gas module
+--------------------------------
 
-.. toctree::
+.. automodule:: cea.resources.natural_gas
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
-   cea.resources.geothermal
-   cea.resources.natural_gas
-   cea.resources.radiation
+cea.resources.radiation module
+------------------------------
 
+.. automodule:: cea.resources.radiation
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: cea.resources
+    :members:
+    :undoc-members:
+    :show-inheritance:

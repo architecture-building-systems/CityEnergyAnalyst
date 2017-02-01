@@ -1,15 +1,22 @@
 cea.geometry package
 ====================
 
-.. automodule:: cea.geometry
+Submodules
+----------
+
+cea.geometry.geometry_reader module
+-----------------------------------
+
+.. automodule:: cea.geometry.geometry_reader
     :members:
     :undoc-members:
     :show-inheritance:
 
-Submodules
-----------
 
-.. toctree::
+Module contents
+---------------
 
-   cea.geometry.geometry_reader
-
+.. automodule:: cea.geometry
+    :members:
+    :undoc-members:
+    :show-inheritance:

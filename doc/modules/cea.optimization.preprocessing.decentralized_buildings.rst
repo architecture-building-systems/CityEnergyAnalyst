@@ -1,15 +1,22 @@
 cea.optimization.preprocessing.decentralized_buildings package
 ==============================================================
 
-.. automodule:: cea.optimization.preprocessing.decentralized_buildings
+Submodules
+----------
+
+cea.optimization.preprocessing.decentralized_buildings.decentralized_buildings module
+-------------------------------------------------------------------------------------
+
+.. automodule:: cea.optimization.preprocessing.decentralized_buildings.decentralized_buildings
     :members:
     :undoc-members:
     :show-inheritance:
 
-Submodules
-----------
 
-.. toctree::
+Module contents
+---------------
 
-   cea.optimization.preprocessing.decentralized_buildings.decentralized_buildings
-
+.. automodule:: cea.optimization.preprocessing.decentralized_buildings
+    :members:
+    :undoc-members:
+    :show-inheritance:
