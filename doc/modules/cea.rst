@@ -16,11 +16,14 @@ Subpackages
     cea.databases
     cea.demand
     cea.geometry
-    cea.optimization
     cea.plots
     cea.resources
     cea.technologies
     cea.utilities
+
+.. add these when they start working:
+   - cea.optimization
+
 
 Submodules
 ----------

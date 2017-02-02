@@ -1,12 +1,5 @@
 """
-===========================
 Primary energy and CO2 emissions model algorithm for building operation
-===========================
-J. Fonseca  script development          26.08.15
-D. Thomas   formatting and cleaning     27.08.15
-D. Thomas   integration in toolbox      27.08.15
-J. Fonseca  script redevelopment        19.04.16
-
 """
 from __future__ import division
 
@@ -32,26 +25,31 @@ def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_f
     Fonseca et al. 2015.
     Appl. energy. and the performance factors of ecobau.ch
 
-    Parameters
-    ----------
-    :param InputLocator locator: an InputLocator instance set to the scenario to work on
-    :param boolean Qww_flag: create a separate file with emissions due to hot water consumption?
+    :param locator: an InputLocator instance set to the scenario to work on
+    :type locator: cea.inputlocator.InputLocator
+    :param Qww_flag: create a separate file with emissions due to hot water consumption?
+    :type Qww_flag: bool
     :param boolean Qhs_flag: create a separate file with emissions due to space heating?
-    :param boolean Qcs_flag: create a get separate file with emissions due to space cooling?
-    :param boolean Qcdata_flag: create a separate file with emissions due to servers cooling?
-    :param boolean Qcrefri_flag: create a separate file with emissions due to refrigeration?
-    :param boolean Eal_flag: create a separate file with emissions due to appliances and lighting?
-    :param boolean Eaux_flag: create a separate file with emissions due to auxiliary electricity?
-    :param boolean Epro_flag: create a separate file with emissions due to electricity in industrial processes?
-    :param boolean Edata_flag: create a separate file with emissions due to electricity consumption in data centers?
+    :type Qhs_flag: bool
+    :param Qcs_flag: create a get separate file with emissions due to space cooling?
+    :type Qcs_flag: bool
+    :param Qcdata_flag: create a separate file with emissions due to servers cooling?
+    :type Qcdata_flag: bool
+    :param Qcrefri_flag: create a separate file with emissions due to refrigeration?
+    :type Qcrefri_flag: bool
+    :param Eal_flag: create a separate file with emissions due to appliances and lighting?
+    :type Eal_flag: bool
+    :param Eaux_flag: create a separate file with emissions due to auxiliary electricity?
+    :type Eaux_flag: bool
+    :param Epro_flag: create a separate file with emissions due to electricity in industrial processes?
+    :type Epro_flag: bool
+    :param Edata_flag: create a separate file with emissions due to electricity consumption in data centers?
+    :type Edata_flag: bool
 
-    Returns
-    -------
-    total_LCA_operation:.csv
-        csv file of yearly primary energy per building and energy service
-        (i.e. heating, hot water, cooling, electricity)
+    Produces Total_LCA_operation.csv containing the yearly primary energy per building and energy service (i.e. heating,
+    hot water, cooling, electricity)
 
-    The following files are created by this script, depending on which flags were set:
+    The following files are also created by this script, depending on which flags were set:
 
     - Qhs_LCA_operation:.csv
         describes the emissions and primary energy due to space heating
@@ -71,8 +69,6 @@ def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_f
         describes the emissions and primary energy due to electricity in industrial processes
     - Edata_LCA_operation:.csv
         describes the emissions and primary energy due to electricity consumption in data centers
-
-
     """
 
     # local files
