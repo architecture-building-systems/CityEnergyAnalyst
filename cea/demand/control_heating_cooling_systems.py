@@ -19,14 +19,10 @@ def has_heating_system(bpr):
     """
     determines whether a building has a heating system installed or not
 
-    Parameters
-    ----------
     bpr : building properties row object
 
-    Returns
-    -------
-    bool
-
+    :returns:
+    :rtype: bool
     """
 
     if bpr.hvac['type_hs'] in {'T1', 'T2', 'T3', 'T4'}:
@@ -41,14 +37,8 @@ def has_cooling_system(bpr):
     """
     determines whether a building has a cooling system installed or not
 
-    Parameters
-    ----------
-    bpr : building properties row object
-
-    Returns
-    -------
-    bool
-
+    :param bpr: building properties row object
+    :rtype: bool
     """
 
     if bpr.hvac['type_cs'] in {'T1', 'T2', 'T3'}:
@@ -63,14 +53,9 @@ def heating_system_is_ac(bpr):
     """
     determines whether a building's heating system is ac or not
 
-    Parameters
-    ----------
-    bpr : building properties row object
+    :param bpr: building properties row object
 
-    Returns
-    -------
-    bool
-
+    :rtype: bool
     """
 
     if bpr.hvac['type_hs'] in {'T3'}:  # central ac
@@ -86,14 +71,9 @@ def cooling_system_is_ac(bpr):
     """
     determines whether a building's heating system is ac or not
 
-    Parameters
-    ----------
-    bpr : building properties row object
+    :param: bpr: building properties row object
 
-    Returns
-    -------
-    bool
-
+    :rtype: bool
     """
 
     if bpr.hvac['type_cs'] in {'T2', 'T3'}:  # mini-split ac and central ac

@@ -1,8 +1,5 @@
 """
-=========================================
 Sensible Heat Storage - Fully Mixed tank
-=========================================
-
 """
 
 from __future__ import division

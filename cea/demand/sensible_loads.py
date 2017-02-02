@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-=========================================
 Sensible space heating and space cooling loads
 EN-13970
-=========================================
-
 """
 from __future__ import division
 import numpy as np
@@ -20,12 +17,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-"""
-=========================================
-capacity of emission/control system
-=========================================
-"""
 
+# capacity of emission/control system
 
 def calc_Qhs_Qcs_sys_max(Af, prop_HVAC):
     # TODO: Documentation
@@ -36,12 +29,8 @@ def calc_Qhs_Qcs_sys_max(Af, prop_HVAC):
     return IC_max, IH_max
 
 
-"""
-=========================================
-solar and heat gains
-=========================================
-"""
 
+# solar and heat gains
 
 def calc_Qgain_sen(t, tsd, bpr, gv):
     # TODO
@@ -147,12 +136,8 @@ def calc_Asol(t, bpr, gv):
 
     return Asol_wall, Asol_roof, Asol_win
 
-"""
-=========================================
-temperature of emission/control system
-=========================================
-"""
 
+# temperature of emission/control system
 
 def calc_temperatures_emission_systems(tsd, bpr, Qcsf_0, Qhsf_0, gv):
     from cea.technologies import radiators, heating_coils, tabs
@@ -203,12 +188,8 @@ def calc_temperatures_emission_systems(tsd, bpr, Qcsf_0, Qhsf_0, gv):
     return Tcs_re, Tcs_sup, Ths_re, Ths_sup, mcpcs, mcphs  # C,C, C,C, W/C, W/C
 
 
-"""
-=========================================
-space heating/cooling losses
-=========================================
-"""
 
+# space heating/cooling losses
 
 def calc_Qhs_Qcs_dis_ls(tair, text, Qhs, Qcs, tsh, trh, tsc, trc, Qhs_max, Qcs_max, D, Y, SystemH, SystemC, Bf, Lv):
     """calculates distribution losses based on ISO 15316"""

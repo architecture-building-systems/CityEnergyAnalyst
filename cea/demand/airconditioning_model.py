@@ -26,12 +26,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-"""
-=========================================
-ventilation demand controlled unit
-=========================================
-"""
-
+# ventilation demand controlled unit
 
 def calc_hvac_cooling(tsd, hoy, gv):
 
@@ -272,12 +267,7 @@ def calc_hvac_heating(tsd, hoy, gv):
     return air_con_model_loads_flows_temperatures
 
 
-"""
-=========================================
-Moisture balance
-=========================================
-"""
-
+# Moisture balance
 
 def calc_w3_heating_case(t5, w2, w5, t3, gv):
     """

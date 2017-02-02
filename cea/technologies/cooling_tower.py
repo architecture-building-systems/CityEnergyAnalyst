@@ -1,8 +1,5 @@
 """
-==============================
 System Modeling: Cooling tower
-==============================
-
 """
 from __future__ import division
 
@@ -16,12 +13,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-"""
-============================
-technical model
-============================
+# technical model
 
-"""
 def calc_CT(qhotdot, Qdesign, gV):
     """
     For the operation of a water condenser + direct cooling tower
@@ -52,12 +45,7 @@ def calc_CT(qhotdot, Qdesign, gV):
     return wdot
     
 
-"""
-============================
-Investment costs
-============================
-
-"""
+# Investment costs
 
 def calc_Cinv_CT(CT_size, gV):
     """

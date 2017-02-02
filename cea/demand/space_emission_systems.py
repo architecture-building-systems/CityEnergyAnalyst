@@ -180,9 +180,6 @@ def calc_delta_theta_int_inc_heating(heating_system, control_system):
     In another case with no heating systems: input: (T0, T3, T1) return: (0.0, -2.0), the control system is only
     specified for the heating system.
 
-    PARAMETERS
-    ----------
-
     :param heating_system: The heating system used. Valid values: T0, T1, T2, T3, T4
     :type heating_system: str
 
@@ -194,9 +191,6 @@ def calc_delta_theta_int_inc_heating(heating_system, control_system):
         T1 for none, T2 for PI control, T3 for PI control with optimum tuning, and T4 for room temperature control
         (electromagnetically/electronically).
     :type control_system: str
-
-    RETURNS
-    -------
 
     :returns: two delta T to correct the set point temperature, dT_heating, dT_cooling
     :rtype: tuple(double, double)
@@ -230,9 +224,6 @@ def calc_delta_theta_int_inc_cooling(cooling_system, control_system):
     In another case with no heating systems: input: (T0, T3, T1) return: (0.0, -2.0), the control system is only
     specified for the heating system.
 
-    PARAMETERS
-    ----------
-
     :param heating_system: The heating system used. Valid values: T0, T1, T2, T3, T4
     :type heating_system: str
 
@@ -244,9 +235,6 @@ def calc_delta_theta_int_inc_cooling(cooling_system, control_system):
         T1 for none, T2 for PI control, T3 for PI control with optimum tuning, and T4 for room temperature control
         (electromagnetically/electronically).
     :type control_system: str
-
-    RETURNS
-    -------
 
     :returns: two delta T to correct the set point temperature, dT_heating, dT_cooling
     :rtype: tuple(double, double)

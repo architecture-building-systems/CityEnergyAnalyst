@@ -1,8 +1,5 @@
 """
-=====================
 Post-processing: MCDA
-=====================
-
 """
 from __future__ import division
 

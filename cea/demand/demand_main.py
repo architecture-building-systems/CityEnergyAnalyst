@@ -90,10 +90,6 @@ def demand_calculation(locator, weather_path, gv):
         gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
         return totals, time_series
 
-#=========================================
-#multiple or single core calculation
-#=========================================
-
 
 def thermal_loads_all_buildings(building_properties, date, gv, locator, list_building_names, usage_schedules,
                                 weather_data):
@@ -121,11 +117,6 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
         job.get(240)
         gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
     pool.close()
-
-
-#=========================================
-#test
-#=========================================
 
 
 def run_as_script(scenario_path=None, weather_path=None):

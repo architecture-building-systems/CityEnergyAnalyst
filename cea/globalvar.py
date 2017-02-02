@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-================
-Global variables
-================
-
+Global variables - this object contains context information and is expected to be refactored away in future.
 """
 import cea.demand.demand_writers
 

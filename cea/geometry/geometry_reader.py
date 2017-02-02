@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-===========================
 algorithms for manipulation of building geometry
-===========================
-
 """
 
 from __future__ import division
@@ -19,19 +16,11 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-"""
-=========================================
-Windows
-=========================================
-"""
+# Windows
 
 def create_windows(df_prop_surfaces, gdf_building_architecture):
     """
     Creates windows on exposed building surfaces according to building win-wall-ratio
-
-
-    PARAMETERS
-    ----------
 
     :param df_prop_surfaces: DataFrame containing all exposed building surfaces (this is the `properties_surfaces.csv`
         file from the radiation calculation)
@@ -40,9 +29,6 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
     :param gdf_building_architecture: GeoDataFrame containing building architecture - this is the `architecture.shp`
         file from the scenario input, containing the `win_wall` column with the window to wall ratio.
     :type gdf_building_architecture: GeoDataFrame
-
-    RETURNS
-    -------
 
     :returns: DataFrame containing all windows of all buildings
     :rtype: DataFrame
@@ -150,22 +136,13 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
     return df_windows
 
 
-"""
-=========================================
-surfaces for ventilation
-=========================================
-"""
+# surfaces for ventilation
 
 def get_building_geometry_ventilation(gdf_building_geometry):
     """
+    :param gdf_building_geometry : GeoDataFrame contains single building
 
-    Parameters
-    ----------
-    gdf_building_geometry : GeoDataFrame contains single building
-
-    Returns
-    -------
-    building properties for natural ventilation calculation
+    :returns: building properties for natural ventilation calculation
     """
 
     # TODO: get real slope of roof in the future

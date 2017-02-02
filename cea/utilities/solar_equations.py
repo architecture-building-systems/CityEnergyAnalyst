@@ -1,8 +1,5 @@
 """
-==================================================
 solar equations
-==================================================
-
 """
 
 
@@ -14,7 +11,6 @@ import datetime
 import math
 
 
-
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca"]
@@ -24,13 +20,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
-"""
-============================
-import ephem library
-============================
-
-"""
+# import ephem library
 
 def _ephem_setup(latitude, longitude, altitude, pressure, temperature):
     # observer
@@ -94,12 +84,7 @@ def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
 
     return sun_coords
 
-"""
-============================
-solar properties
-============================
-
-"""
+# solar properties
 
 def calc_sun_properties(latitude, longitude, weather_data, gv):
 

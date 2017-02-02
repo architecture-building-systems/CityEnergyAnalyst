@@ -1,10 +1,5 @@
 """
-===============================
 Functions for Report generation
-===============================
-File history and credits:
-G. Happle   ... 13.05.2016
-D. Thomas, 18.05.2016: refactoring
 """
 
 import pandas as pd

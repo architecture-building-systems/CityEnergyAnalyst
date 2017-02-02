@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-=========================================
 Physical functions
-=========================================
-
 """
 from __future__ import division
 import scipy.optimize as sopt

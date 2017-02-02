@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-==================================================
 furnaces
-==================================================
-
 """
 from __future__ import division
 
@@ -17,13 +14,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-"""
-============================
-performance model
-============================
-
-"""
-
+# performance model
 
 def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
@@ -66,7 +57,7 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
     phi = float(Q_load) / float(Q_design)
 
 
-    """ Plant Thermal Efficiency """
+    # Plant Thermal Efficiency
     if phi > gv.Furn_min_Load:
 
         #Implement Curves provided by http://www.greenshootscontrols.net/?p=153
@@ -87,7 +78,7 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
         #print "Furnace Boiler below minimum Power! 1"
         #raise ModelError
 
-    """ Plant Electric Efficiency """
+    # Plant Electric Efficiency
     if phi < gv.Furn_min_electric:
         eta_el = 0
         #print "Furnace Boiler below minimum Power! 2"
@@ -121,13 +112,7 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
     return eff_therm_tot, eta_el, Q_aux
 
 
-"""
-============================
-operation costs
-============================
-
-"""
-
+# operation costs
 
 def Furnace_op_cost(Q_therm, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
     """
@@ -217,12 +202,7 @@ def Furnace_op_cost(Q_therm, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
 
 
-"""
-============================
-investment and maintenance costs
-============================
-
-"""
+# investment and maintenance costs
 
 def calc_Cinv_furnace(P_design, Q_annual, gv):
     """

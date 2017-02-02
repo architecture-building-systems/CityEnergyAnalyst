@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-============================================
 Ventilation according to DIN EN 16798-7:2015
-============================================ 
+
 Created on Tue Apr 12 18:04:04 2016
 @author: happle@arch.ethz.ch
 Reference:
@@ -36,27 +35,18 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-
-"""
-=========================================
-ventilation calculation
-=========================================
-"""
+# ventilation calculation
 
 
 def calc_air_flows(temp_zone, u_wind, temp_ext, dict_props_nat_vent):
     """
     Minimization of variable air flows as a function of zone gauge
 
-    Parameters
-    ----------
-    temp_zone : zone indoor air temperature (°C)
-    u_wind : wind velocity (m/s)
-    temp_ext : exterior air temperature (°C)
-    dict_props_nat_vent : dictionary containing natural ventilation properties of zone
+    :param temp_zone: zone indoor air temperature (°C)
+    :param u_wind: wind velocity (m/s)
+    :param temp_ext: exterior air temperature (°C)
+    :param dict_props_nat_vent: dictionary containing natural ventilation properties of zone
 
-    Returns
-    -------
     qm_sum_in : total air mass flow rates into zone (kg/h)
     qm_sum_out : total air mass flow rates out of zone (kg/h)
     """
@@ -92,16 +82,12 @@ def calc_air_flows(temp_zone, u_wind, temp_ext, dict_props_nat_vent):
 
 def get_properties_natural_ventilation(bpr, gv):
     """
-
-    Parameters
-    ----------
     gdf_geometry_building : GeoDataFrame containing geometry properties of single building
     gdf_architecture_building : GeoDataFrame containing architecture props of single building
-    gv : globalvars
+    :param gv: globalvars
+    :param bpr: building propert row
 
-    Returns
-    -------
-    dict_props_nat_vent : dictionary containing natural ventilation properties of zone
+    :returns: dictionary containing natural ventilation properties of zone
     """
 
     n50 = bpr.architecture.n50
@@ -144,24 +130,15 @@ def get_properties_natural_ventilation(bpr, gv):
     return dict_props_nat_vent
 
 
-"""
-=========================================
-Wind pressure calculation
-=========================================
-"""
-
+# Wind pressure calculation
 
 def calc_u_wind_site(u_wind_10):
     """
     Adjusts meteorological wind velocity to site surroundings according to 6.4.2.2 in [1]
 
-    Parameters
-    ----------
-    u_wind_10 : meteorological wind velocity (m/s)
+    :param u_wind_10: meteorological wind velocity (m/s)
 
-    Returns
-    -------
-    u_wind_site : site wind velocity (m/s)
+    :returns: u_wind_site, site wind velocity (m/s)
     """
 
     # terrain class of surroundings
@@ -181,20 +158,15 @@ def lookup_coeff_wind_pressure(height_path, class_shielding, orientation_path, s
     """
     Lookup default wind pressure coefficients for air leakage paths according to B.1.3.3 in [1]
 
-    Parameters
-    ----------
-    height_path
-    class_shielding
-    orientation_path
-    slope_roof
-    factor_cros
+    :param height_path:
+    :param class_shielding:
+    :param orientation_path:
+    :param slope_roof:
+    :param factor_cros:
 
-    Returns
-    -------
-    wind pressure coefficients (-)
+    :returns: wind pressure coefficients (-)
 
-    conventions
-    -----------
+    Conventions:
 
     class_shielding = 0 : open terrain
     class_shielding = 1 : normal
@@ -316,25 +288,16 @@ def calc_delta_p_path(p_zone_ref, height_path, temp_zone, coeff_wind_pressure_pa
     return delta_p_path
 
 
-"""
-=========================================
-leakages through the envelope
-=========================================
-"""
-
+# leakages through the envelope
 
 def calc_qv_delta_p_ref(n_delta_p_ref, vol_building):
     """
     Calculate airflow at reference pressure according to 6.3.2 in [2]
 
-    Parameters
-    ----------
-    n_delta_p_ref : air changes at reference pressure [1/h]
-    vol_building : building_volume [m3]
+    :param n_delta_p_ref: air changes at reference pressure [1/h]
+    :param vol_building: building_volume [m3]
 
-    Returns
-    -------
-    qv_delta_p_ref : air volume flow rate at reference pressure (m3/h)
+    :returns: qv_delta_p_ref : air volume flow rate at reference pressure (m3/h)
     """
 
     # Eq. (9) in [2]
@@ -345,14 +308,10 @@ def calc_qv_lea_path(coeff_lea_path, delta_p_lea_path):
     """
     Calculate volume air flow of single leakage path according to 6.4.3.6.5 in [1]
 
-    Parameters
-    ----------
-    coeff_lea_path : coefficient of leakage path
-    delta_p_lea_path : pressure difference across leakage path (Pa)
+    :param coeff_lea_path: coefficient of leakage path
+    :param delta_p_lea_path: pressure difference across leakage path (Pa)
 
-    Returns
-    -------
-    qv_lea_path : volume flow rate across leakage path (m3/h)
+    :returns: qv_lea_path : volume flow rate across leakage path (m3/h)
     """
     # default values in [1]
     # TODO reference global variables
@@ -367,13 +326,9 @@ def calc_coeff_lea_zone(qv_delta_p_lea_ref):
     """
     Calculate default leakage coefficient of zone according to B.1.3.16 in [1]
 
-    Parameters
-    ----------
-    qv_delta_p_lea_ref : air volume flow rate at reference pressure (m3/h)
+    :param qv_delta_p_lea_ref: air volume flow rate at reference pressure (m3/h)
 
-    Returns
-    -------
-    coeff_lea_zone : leakage coefficient of zone
+    :returns: coeff_lea_zone : leakage coefficient of zone
     """
     # default values in [1]
     # TODO reference global variables
@@ -390,18 +345,14 @@ def allocate_default_leakage_paths(coeff_lea_zone, area_facade_zone, area_roof_z
     """
     Allocate default leakage paths according to B.1.3.17 in [1]
 
-    Parameters
-    ----------
-    coeff_lea_zone : leakage coefficient of zone
-    area_facade_zone : facade area of zone (m2)
-    area_roof_zone : roof area of zone (m2)
-    height_zone : height of zone (m)
+    :param coeff_lea_zone: leakage coefficient of zone
+    :param area_facade_zone: facade area of zone (m2)
+    :param area_roof_zone: roof area of zone (m2)
+    :param height_zone: height of zone (m)
 
-    Returns
-    -------
-    coeff_lea_path : coefficients of default leakage paths
-    height_lea_path : heights of default leakage paths (m)
-    orientation_lea_path : orientation index of default leakage paths (-)
+    :returns: - coeff_lea_path : coefficients of default leakage paths
+              - height_lea_path : heights of default leakage paths (m)
+              - orientation_lea_path : orientation index of default leakage paths (-)
     """
 
     # Equation (B.6) in [1]
@@ -446,18 +397,14 @@ def calc_qm_lea(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_props_nat_ven
     """
     Calculation of leakage infiltration and exfiltration air mass flow as a function of zone indoor reference pressure
 
-    Parameters
-    ----------
-    p_zone_ref : zone reference pressure (Pa)
-    temp_zone : air temperature in ventilation zone (°C)
-    temp_ext : exterior air temperature (°C)
-    u_wind_site : wind velocity (m/s)
-    dict_props_nat_vent : dictionary containing natural ventilation properties of zone
+    :param p_zone_ref: zone reference pressure (Pa)
+    :param temp_zone: air temperature in ventilation zone (°C)
+    :param temp_ext: exterior air temperature (°C)
+    :param u_wind_site: wind velocity (m/s)
+    :param dict_props_nat_vent: dictionary containing natural ventilation properties of zone
 
-    Returns
-    -------
-    qm_lea_in : air mass flow rate into zone through leakages (kg/h)
-    qm_lea_out : air mass flow rate out of zone through leakages (kg/h)
+    :returns: - qm_lea_in : air mass flow rate into zone through leakages (kg/h)
+              - qm_lea_out : air mass flow rate out of zone through leakages (kg/h)
     """
 
     # get default leakage paths from locals
@@ -491,25 +438,16 @@ def calc_qm_lea(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_props_nat_ven
     return qm_lea_in, qm_lea_out
 
 
-"""
-=========================================
-operation of window openings
-=========================================
-"""
-
+# operation of window openings
 
 def calc_qv_vent_path(coeff_vent_path, delta_p_vent_path):
     """
     Calculate volume air flow of single ventilation opening path according to 6.4.3.6.4 in [1]
 
-    Parameters
-    ----------
-    coeff_vent_path : ventilation opening coefficient of air path
-    delta_p_vent_path : pressure difference across air path (Pa)
+    :param coeff_vent_path : ventilation opening coefficient of air path
+    :param delta_p_vent_path : pressure difference across air path (Pa)
 
-    Returns
-    -------
-    qv_vent_path : air volume flow rate across air path (m3/h)
+    :returns: qv_vent_path : air volume flow rate across air path (m3/h)
     """
     # default values in [1]
     # TODO reference global variables
@@ -524,13 +462,9 @@ def calc_coeff_vent_zone(area_vent_zone):
     """
     Calculate air volume flow coefficient of ventilation openings of zone according to 6.4.3.6.4 in [1]
 
-    Parameters
-    ----------
-    area_vent_zone : total area of ventilation openings of zone (cm2)
+    :param area_vent_zone : total area of ventilation openings of zone (cm2)
 
-    Returns
-    -------
-    coeff_vent_zone : coefficient of ventilation openings of zone
+    :returns coeff_vent_zone : coefficient of ventilation openings of zone
     """
 
     # default values in [1]
@@ -552,16 +486,12 @@ def allocate_default_ventilation_openings(coeff_vent_zone, height_zone):
     """
     Allocate default ventilation openings according to B.1.3.13 in [1]
 
-    Parameters
-    ----------
-    coeff_vent_zone : coefficient of ventilation openings of zone
-    height_zone : height of zone (m)
+    :param coeff_vent_zone : coefficient of ventilation openings of zone
+    :param height_zone : height of zone (m)
 
-    Returns
-    -------
-    coeff_vent_path : coefficients of default ventilation opening paths
-    height_vent_path : heights of default ventilation opening paths (m)
-    orientation_vent_path : orientation index of default ventilation opening paths (-)
+    :returns: - coeff_vent_path : coefficients of default ventilation opening paths
+              - height_vent_path : heights of default ventilation opening paths (m)
+              - orientation_vent_path : orientation index of default ventilation opening paths (-)
     """
 
     # initialize
@@ -597,18 +527,14 @@ def calc_qm_vent(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_props_nat_ve
     """
     Calculation of air flows through ventilation openings in the facade
 
-    Parameters
-    ----------
-    p_zone_ref : zone reference pressure (Pa)
-    temp_zone : zone air temperature (°C)
-    temp_ext : exterior air temperature (°C)
-    u_wind_site : wind velocity (m/s)
-    dict_props_nat_vent : dictionary containing natural ventilation properties of zone
+    :param p_zone_ref : zone reference pressure (Pa)
+    :param temp_zone : zone air temperature (°C)
+    :param temp_ext : exterior air temperature (°C)
+    :param u_wind_site : wind velocity (m/s)
+    :param dict_props_nat_vent : dictionary containing natural ventilation properties of zone
 
-    Returns
-    -------
-    qm_vent_in : air mass flow rate into zone through ventilation openings (kg/h)
-    qm_vent_out : air mass flow rate out of zone through ventilation openings (kg/h)
+    :returns: - qm_vent_in : air mass flow rate into zone through ventilation openings (kg/h)
+              - qm_vent_out : air mass flow rate out of zone through ventilation openings (kg/h)
     """
 
     # get properties from locals()
@@ -640,25 +566,16 @@ def calc_qm_vent(p_zone_ref, temp_zone, temp_ext, u_wind_site, dict_props_nat_ve
     return qm_vent_in, qm_vent_out
 
 
-"""
-=========================================
-windows ventilation
-=========================================
-"""
-
+# windows ventilation
 
 def calc_area_window_free(area_window_max, r_window_arg):
     """
     Calculate free window opening area according to 6.4.3.5.2 in [1]
 
-    Parameters
-    ----------
-    area_window_max : area of single operable window (m2)
-    r_window_arg : fraction of window opening (-)
+    :param area_window_max : area of single operable window (m2)
+    :param r_window_arg : fraction of window opening (-)
 
-    Returns
-    -------
-    area_window_free : open area of window (m2)
+    :returns: area_window_free : open area of window (m2)
     """
     # TODO: check final standard for area_window_max
 
@@ -675,14 +592,10 @@ def calc_area_window_tot(dict_windows_building, r_window_arg):
     """
     Calculation of total open window area according to 6.4.3.5.2 in [1]
 
-    Parameters
-    ----------
-    dict_windows_building : dictionary containing information of all windows in building
-    r_window_arg : fraction of window opening (-)
+    :param dict_windows_building : dictionary containing information of all windows in building
+    :param r_window_arg : fraction of window opening (-)
 
-    Returns
-    -------
-    area_window_tot = total open area of windows in building (m2)
+    :returns: area_window_tot = total open area of windows in building (m2)
     """
 
     # Eq. (43) in [1]
@@ -696,13 +609,9 @@ def calc_effective_stack_height(dict_windows_building):
     """
     Calculation of effective stack height for window ventilation according to 6.4.3.4.1 in [1]
 
-    Parameters
-    ----------
-    dict_windows_building : dictionary containing information of all windows in building
+    :param dict_windows_building : dictionary containing information of all windows in building
 
-    Returns
-    -------
-    height_window_stack : effective stack height of windows of building (m)
+    :returns: height_window_stack : effective stack height of windows of building (m)
     """
     # TODO: maybe this formula is wrong --> check final edition of standard as soon as possible
 
@@ -722,14 +631,10 @@ def calc_area_window_cros(dict_windows_building, r_window_arg):
     """
     Calculate cross-ventilation window area according to the procedure in 6.4.3.5.4.3 in [1]
 
-    Parameters
-    ----------
-    dict_windows_building : dictionary containing information of all windows in building
-    r_window_arg : fraction of window opening (-)
+    :param dict_windows_building : dictionary containing information of all windows in building
+    :param r_window_arg : fraction of window opening (-)
 
-    Returns
-    -------
-    area_window_cros : effective window area for cross ventilation (m2)
+    :returns: area_window_cros : effective window area for cross ventilation (m2)
     """
 
     # initialize results
@@ -767,18 +672,14 @@ def calc_qm_arg(factor_cros, temp_ext, dict_windows_building, u_wind_10, temp_zo
     Calculation of cross ventilated and non-cross ventilated window ventilation according to procedure in 6.4.3.5.4
     in [1]
 
-    Parameters
-    ----------
-    factor_cros : cross ventilation factor [0,1]
-    temp_ext : exterior temperature (°C)
-    dict_windows_building : dictionary containing information of all windows in building
-    u_wind_10 : wind velocity (m/s)
-    temp_zone : zone temperature (°C)
-    r_window_arg : fraction of window opening (-)
+    :param factor_cros : cross ventilation factor [0,1]
+    :param temp_ext : exterior temperature (°C)
+    :param dict_windows_building : dictionary containing information of all windows in building
+    :param u_wind_10 : wind velocity (m/s)
+    :param temp_zone : zone temperature (°C)
+    :param r_window_arg : fraction of window opening (-)
 
-    Returns
-    -------
-    window ventilation air mass flows in (kg/h)
+    :returns: window ventilation air mass flows in (kg/h)
     """
 
     # initialize result
@@ -855,29 +756,20 @@ def calc_qm_arg(factor_cros, temp_ext, dict_windows_building, u_wind_10, temp_zo
     return qm_arg_in, qm_arg_out
 
 
-"""
-=========================================
-mass balance
-=========================================
-"""
+# mass balance
 
 def calc_air_flow_mass_balance(p_zone_ref, temp_zone, u_wind_10, temp_ext, dict_props_nat_vent, option):
     """
     Air flow mass balance for iterative calculation according to 6.4.3.9 in [1]
 
-    Parameters
-    ----------
-    p_zone_ref : zone reference pressure (Pa)
-    temp_zone : air temperature in ventilation zone (°C)
-    u_wind_10 : meteorological wind velocity (m/s)
-    temp_ext : exterior air temperature (°C)
-    dict_props_nat_vent : dictionary containing natural ventilation properties of zone
-    option : 'minimize' = returns sum of air mass flows, 'calculate' = returns air mass flows
+    :param p_zone_ref : zone reference pressure (Pa)
+    :param temp_zone : air temperature in ventilation zone (°C)
+    :param u_wind_10 : meteorological wind velocity (m/s)
+    :param temp_ext : exterior air temperature (°C)
+    :param dict_props_nat_vent : dictionary containing natural ventilation properties of zone
+    :param option : 'minimize' = returns sum of air mass flows, 'calculate' = returns air mass flows
 
-    Returns
-    -------
-    sum of air mass flows in and out of zone in (kg/h)
-
+    :returns: sum of air mass flows in and out of zone in (kg/h)
     """
 
     # adjust wind velocity
@@ -917,11 +809,6 @@ def calc_air_flow_mass_balance(p_zone_ref, temp_zone, u_wind_10, temp_ext, dict_
         return qm_sum_in, qm_sum_out  # for the calculation the total air mass flows are output
 
 
-"""
-=========================================
-tester
-=========================================
-"""
 
 def testing():
     from geopandas import GeoDataFrame as gpdf
@@ -929,7 +816,7 @@ def testing():
     gv = cea.globalvar.GlobalVariables()
     from cea import inputlocator
     import time
-    import simple_window_generator
+    import cea.geometry.geometry_reader
 
     # generate windows based on geometry of vertical surfaces in radiation file
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
@@ -940,7 +827,7 @@ def testing():
     prop_geometry['footprint'] = prop_geometry.area
     prop_geometry['perimeter'] = prop_geometry.length
     prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
-    df_windows = simple_window_generator.create_windows(surface_properties, gdf_building_architecture)
+    df_windows = cea.geometry.geometry_reader.simple_window_generator.create_windows(surface_properties, gdf_building_architecture)
 
     building_test = 'B153737'  # 'B154767' this building doesn't have windows
     # get building windows
@@ -968,6 +855,5 @@ def testing():
     print(['time: ', t1 - t0])
 
 
-# TESTING
 if __name__ == '__main__':
     testing()

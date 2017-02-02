@@ -1,11 +1,5 @@
 """
-===========================
 Energyplus file reader
-===========================
-File history and credits:
-C. Miller script development               10.08.14
-J. A. Fonseca  adaptation for CEA tool      18.05.16
-J. A. Fonseca  adding sky temperature Epuls model     20.10.16
 """
 import pandas as pd
 

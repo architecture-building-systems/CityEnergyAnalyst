@@ -1,8 +1,5 @@
 """
-==================================================
 heatpumps
-==================================================
-
 """
 
 
@@ -20,13 +17,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-"""
-============================
-operation costs
-============================
-
-"""
-
+# operation costs
 
 def calc_Cop_GHP(mdot, tsup, tret, tground, gV):
     """
@@ -175,12 +166,7 @@ def GHP_Op_max(tsup, tground, nProbes, gV):
     return qhotdot, COP
 
 
-"""
-============================
-investment and maintenance costs
-============================
-
-"""
+# investment and maintenance costs
 
 def calc_Cinv_GHP(GHP_Size, gV):
     """
