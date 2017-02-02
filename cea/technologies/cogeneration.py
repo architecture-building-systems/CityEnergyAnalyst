@@ -26,38 +26,19 @@ def calc_Cop_CCT(GT_SIZE, T_DH_Supply, fuel, gV):
     How to use : input Q_therm_requested into the output function
                 Conditions: not below or above boundaries Q_therm_min & Q_therm_max
 
-    Parameters
-    ----------
+    :param GT_SIZE : float Electric Size of Gas Turbine (only GT)
 
-    GT_SIZE : float
-        Electric Size of Gas Turbine (only GT)
+    :param T_DH_Supply : float Supply Temperature of DH network
 
-    T_DH_Supply : float
-        Supply Temperature of DH network
+    :param fuel : string state either "NG" or "BG"
 
-    fuel : string
-        state either "NG" or "BG"
-
-
-    Returns
-    -------
-    wdot_interpol : function
-        interpolation function that is able to tell for every Q_therm_requested
-        the required electric part load (wdot_required)
-
-    Q_used_prim_interpol: function
-        gives the primary energy used when asking for a thermal energy output
-
-    cost_per_Wh_th_incl_el_interpol : interpol
-        gives the cost per Wh energy used when asking for a thermal energy output
-
-    Q_therm_min : float
-        minimum thermal energy output possible
-
-    Q_therm_max : float
-        maximum thermal energy output possible
-
-
+    :returns: - wdot_interpol : function interpolation function that is able to tell for every Q_therm_requested the
+                   required electric part load (wdot_required)
+              - Q_used_prim_interpol: function gives the primary energy used when asking for a thermal energy output
+              - cost_per_Wh_th_incl_el_interpol : interpol gives the cost per Wh energy used when asking for a thermal
+                   energy output
+              - Q_therm_min : float minimum thermal energy output possible
+              - Q_therm_max : float maximum thermal energy output possible
     """
 
     it_len = 50
@@ -105,20 +86,11 @@ def GT_fullLoadParam(gt_size, fuel, gV):
     """
     Calculates parameters at full load
 
-    Parameters
-    ----------
-    gt_size : float
-        Maximum electric load that is demanded to the gas turbine
-    fuel : string
-        'NG' (natural gas) or 'BG' (biogas)
+    :param gt_size : float Maximum electric load that is demanded to the gas turbine
+    :param fuel : string 'NG' (natural gas) or 'BG' (biogas)
 
-    Returns
-    -------
-    eta0 : float
-        efficiency at full load
-    mdot0 : float
-        mass flow rate at full load of exhaust gas
-
+    :returns: - eta0 : float efficiency at full load
+              - mdot0 : float mass flow rate at full load of exhaust gas
     """
     assert gt_size < gV.GT_maxSize + 0.001
     if gt_size == 0:
