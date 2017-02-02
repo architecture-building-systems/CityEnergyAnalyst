@@ -15,5 +15,4 @@ Submodules
    cea.analysis.sensitivity.sensitivity_demand_count
    cea.analysis.sensitivity.sensitivity_demand_samples
    cea.analysis.sensitivity.sensitivity_demand_simulate
-   cea.analysis.sensitivity.sensitivity_optimization
 

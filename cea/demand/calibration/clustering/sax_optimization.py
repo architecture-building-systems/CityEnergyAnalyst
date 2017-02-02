@@ -1,7 +1,8 @@
 """
-Multiobjective optimization of the variables word_size and alphabet_size for SAX in clustering_main.py
-Step required to get the right number of clusters in a semi - non-supervised manner.
+Multi-objective optimization of the variables ``word_size`` and ``alphabet_size`` for SAX in
+:py:mod:`~cea.demand.calibration.clustering.clustering_main`.
 
+Step required to get the right number of clusters in a semi - non-supervised manner.
 """
 from __future__ import division
 
@@ -111,13 +112,14 @@ def optimization_main(locator, toolbox, NGEN=100, MU=100, CXPB=0.9, start_genera
     """
     main optimization call which provides the cross-over and mutation generation after generation
     this script is based on the example of the library DEAP of python and the algortighm NSGA-II
+
     :param toolbox: toolbox generated with evaluation, selection, mutation and crossover functions
     :param NGEN: number of maximum generations
     :param MU: number of initial individuals
     :param CXPB: level of confidence
     :param seed: seed.
     :return: pop = population with fitness values and individuals, stats = statistics of the population for the last
-                    generation
+        generation
     """
     random.seed(seed)
     if start_generation:

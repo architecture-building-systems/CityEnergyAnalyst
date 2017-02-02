@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-=========================================
 Electrical loads
-=========================================
-
 """
 from __future__ import division
 import numpy as np
@@ -17,11 +14,9 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-"""
-=========================================
-final internal electrical loads
-=========================================
-"""
+# =========================================
+# final internal electrical loads
+# =========================================
 
 
 def calc_Eint(tsd, bpr, list_uses, schedules):
@@ -89,21 +84,15 @@ def average_appliances_lighting_schedule(list_uses, schedules, building_uses):
     Calculate the schedule to use for lighting and appliances based on the building uses from the schedules
     defined for the project unsing a weighted average.
 
-    PARAMETERS
-    ----------
-
     :param list_uses: the schedule names for the `schedules` parameter
-    :type list_uses: list of str
+    :type list_uses: List[str]
     :param schedules: the schedules, one for each name in `list_uses`. Each schedule is a list of 8760 floats...
-    :type schedules: list of list of list of float
+    :type schedules: List[Tuple[List[float], List[float], List[float]]]
     :param building_uses: A set of weights for the schedules as they apply to this particular building.
-    :type building_uses: dict of (str, float)
+    :type building_uses: Dict[str, float]
 
-    RETURNS
-    -------
-
-    :return: A weighted average of the schedules for a specific building.
-    :rtype: list of float
+    :return: appliances lighting schedule as a weighted average of the schedules for a specific building.
+    :rtype: numpy.ndarray[numpy.float64]
     """
 
     # weighted average of schedules
@@ -126,9 +115,6 @@ def calc_Edataf(schedule, Ed_Wm2, Aef):
     """
     Calculates the final electricity consumption in data centers.
 
-    PARAMETERS
-    ----------
-
     :param schedule: The data center schedule as calculated by `calc_Ea_El_Edata_Eref_schedule` but just for the
                      SERVERROOM portion of the occupancy.
     :type schedule: ndarray
@@ -140,11 +126,8 @@ def calc_Edataf(schedule, Ed_Wm2, Aef):
     :param Aef: The floor area with electricity in [m2]
     :type Aef: float64
 
-    RETURNS
-    -------
-
     :returns: final electricity consumption in data centers per hour in [W]
-    :rtype: ndarray
+    :rtype: numpy.ndarray[numpy.float64]
     """
     Edataf = schedule * Ed_Wm2 * Aef   # in W
     return Edataf
@@ -193,11 +176,9 @@ def calc_Eprof(schedule, Epro_Wm2, Aef):
     return Eprof
 
 
-"""
-=========================================
-final auxiliary loads
-=========================================
-"""
+# =========================================
+# final auxiliary loads
+# =========================================
 
 
 def calc_Eauxf(Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,

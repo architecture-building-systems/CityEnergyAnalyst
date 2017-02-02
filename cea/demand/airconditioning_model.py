@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-    hvac_kaempf
-    ===========
-    contains debugged version of HVAC model of Kämpf [1]
-    originally coded by J. Fonseca
-    debugged  by G. Happle
-    Literature:
-    [1] Kämpf, Jérôme Henri
-        On the modelling and optimisation of urban energy fluxes
-        http://dx.doi.org/10.5075/epfl-thesis-4548
+Contains debugged version of HVAC model from [Kämpf2009]_
 
+- originally coded by J. Fonseca
+- debugged  by G. Happle
+
+.. note:: this is not really true anymore. The procedure now is just loosely based on [Kämpf2009]_.
+
+.. [Kämpf2009] Kämpf, Jérôme Henri
+   On the modelling and optimisation of urban energy fluxes
+   http://dx.doi.org/10.5075/epfl-thesis-4548
 """
-#TODO: this is not really true anymore. The procedure now is just loosely based on Kaempf.
+
 
 from __future__ import division
 from cea.utilities.physics import calc_h, calc_w
@@ -36,14 +36,18 @@ ventilation demand controlled unit
 def calc_hvac_cooling(tsd, hoy, gv):
 
     """
-    Calculate AC air mass flows, energy demand and temperatures for the cooling case
-    For AC system with demand controlled ventilation air flows (mechanical ventilation) and conditioning of recirculated
-    air (outdoor air flows are not modified)
+    Calculate AC air mass flows, energy demand and temperatures
+    For the cooling case for AC systems with demand controlled ventilation air flows (mechanical ventilation) and
+    conditioning of recirculated air (outdoor air flows are not modified)
 
     :param tsd: time series data dict
+    :type tsd: Dict[str, numpy.ndarray[numpy.float64]]
     :param hoy: time step
-    :param gv: globalvars
+    :type hoy: int
+    :param gv: global variables
+    :type gv: cea.globalvar.GlobalVariables
     :return: AC air mass flows, energy demand and temperatures for the cooling case
+    :rtype: Dict[str, numpy.float64]
     """
 
     temp_zone_set = tsd['theta_a'][hoy]  # zone set temperature according to scheduled set points
@@ -152,9 +156,16 @@ def calc_hvac_heating(tsd, hoy, gv):
     air (outdoor air flows are not modified)
 
     :param tsd: time series data dict
+    :type tsd: Dict[str, numpy.ndarray[numpy.float64]]
+
     :param hoy: time step
-    :param gv: globalvars
+    :type hoy: int
+
+    :param gv: global variables
+    :type gv: cea.globalvar.GlobalVariables
+
     :return: AC air mass flows, energy demand and temperatures for the heating case
+    :rtype: Dict[str, numpy.float64]
     """
 
     temp_zone_set = tsd['theta_a'][hoy]  # zone set temperature according to scheduled set points
@@ -270,26 +281,26 @@ Moisture balance
 
 def calc_w3_heating_case(t5, w2, w5, t3, gv):
     """
-    Algorithm 1 Determination of the room's supply moisture content (w3) for the heating case
-     from Kaempf's HVAC model [1]
+    Algorithm 1 Determination of the room's supply moisture content (w3) for the heating case from Kaempf's HVAC model
+    [Kämpf2009]_
 
-    Source:
-    [1] Kämpf, Jérôme Henri
-        On the modelling and optimisation of urban energy fluxes
-        http://dx.doi.org/10.5075/epfl-thesis-4548
+    :param t5: temperature 5 in (°C)
+    :type t5: numpy.float64
 
+    :param w2: moisture content 2 in (kg/kg dry air)
+    :type w2: numpy.float64
 
-    Parameters
-    ----------
-    t5 : temperature 5 in (°C)
-    w2 : moisture content 2 in (kg/kg dry air)
-    w5 : moisture content 5 in (kg/kg dry air)
-    t3 : temperature 3 in (°C)
-    gv : globalvar
+    :param w5: moisture content 5 in (kg/kg dry air)
+    :type w5: numpy.float64
 
-    Returns
-    -------
-    w3 : moisture content of HVAC supply air in (kg/kg dry air)
+    :param t3: temperature 3 in (°C)
+    :type t3: numpy.float64
+
+    :param gv: global variables
+    :type gv: cea.globalvar.GlobalVariables
+
+    :return: w3, moisture content of HVAC supply air in (kg/kg dry air)
+    :rtype: numpy.float64
     """
 
     # get constants and properties
@@ -325,22 +336,22 @@ def calc_w3_cooling_case(t5, w2, t3, w5):
     Algorithm 2 Determination of the room's supply moisture content (w3) for the cooling case from Kaempf's HVAC model
     for non-evaporative cooling
 
-    Source:
-    [1] Kämpf, Jérôme Henri
-        On the modelling and optimisation of urban energy fluxes
-        http://dx.doi.org/10.5075/epfl-thesis-4548
+    Source: [Kämpf2009]_
 
+    :param t5: temperature 5 in (°C)
+    :type t5: numpy.float64
 
-    Parameters
-    ----------
-    t5 : temperature 5 in (°C)
-    w2 : moisture content 2 in (kg/kg dry air)
-    t3 : temperature 3 in (°C)
-    w5 : moisture content 5 in (kg/kg dry air)
+    :param w2 : moisture content 2 in (kg/kg dry air)
+    :type w2: numpy.float64
 
-    Returns
-    -------
-    w3 : moisture content of HVAC supply air in (kg/kg dry air)
+    :param t3: temperature 3 in (°C)
+    :type t3: numpy.float64
+
+    :param w5: moisture content 5 in (kg/kg dry air)
+    :type w5: numpy.float64
+
+    :return: w3, moisture content of HVAC supply air in (kg/kg dry air)
+    :rtype: numpy.float64
     """
 
     # get constants and properties
