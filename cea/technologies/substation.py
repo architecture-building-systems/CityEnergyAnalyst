@@ -20,10 +20,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-# ============================
 # Substation model
-# ============================
-
 
 def substation_main(locator, total_demand, building_names, gv, Flag):
     '''
@@ -211,9 +208,7 @@ def substation_model(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS
     return results
 
 
-# ============================
 # substation cooling
-# ============================
 
 
 def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_0, gv):
@@ -248,10 +243,7 @@ def calc_substation_cooling(Q, thi, tho, tci, ch, ch_0, Qnom, thi_0, tci_0, tho_
     return tco, cc, Area_HEX_cooling
 
 
-# ============================
 # substation heating
-# ============================
-
 
 def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_0, gv):
     '''
@@ -284,10 +276,7 @@ def calc_substation_heating(Q, thi, tco, tci, cc, cc_0, Qnom, thi_0, tci_0, tco_
     return tho, ch, Area_HEX_heating
 
 
-# ============================
 # Heat exchanger model
-# ============================
-
 
 def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
     '''
@@ -338,7 +327,7 @@ def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
 
 
 def calc_plate_HEX(NTU, cr):
-    '''
+    """
     This function calculates the efficiency of exchange for a plate heat exchanger according to the NTU method of
     AShRAE 90.1
 
@@ -346,13 +335,13 @@ def calc_plate_HEX(NTU, cr):
     :param cr: ratio between min and max capacity mass flow rates
     :return:
         eff: efficiency of heat exchange
-    '''
+    """
     eff = 1 - scipy.exp((1 / cr) * (NTU ** 0.22) * (scipy.exp(-cr * (NTU) ** 0.78) - 1))
     return eff
 
 
 def calc_shell_HEX(NTU, cr):
-    '''
+    """
     This function calculates the efficiency of exchange for a tube-shell heat exchanger according to the NTU method of
     AShRAE 90.1
 
@@ -360,14 +349,14 @@ def calc_shell_HEX(NTU, cr):
     :param cr: ratio between min and max capacity mass flow rates
     :return:
         eff: efficiency of heat exchange
-    '''
+    """
     eff = 2 * ((1 + cr + (1 + cr ** 2) ** (1 / 2)) * (
         (1 + scipy.exp(-(NTU) * (1 + cr ** 2))) / (1 - scipy.exp(-(NTU) * (1 + cr ** 2))))) ** -1
     return eff
 
 
 def calc_HEX_mix(Q1, Q2, t1, m1, t2, m2):
-    '''
+    """
     This function computes the average  temperature between two vectors of heating demand.
     In this case, domestic hotwater and space heating.
 
@@ -379,7 +368,7 @@ def calc_HEX_mix(Q1, Q2, t1, m1, t2, m2):
     :param m2: mas flow rate secondary side of heat exchanger for domestic hot water
     :return:
         tavg: average out temperature.
-    '''
+    """
     if Q1 > 0 or Q2 > 0:
         tavg = (t1 * m1 + t2 * m2) / (m1 + m2)
     else:
@@ -388,7 +377,7 @@ def calc_HEX_mix(Q1, Q2, t1, m1, t2, m2):
 
 
 def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
-    '''
+    """
     This function calculates the mass flow rate, temperature of return (secondary side)
     and heat exchanger area for a shell-tube pleat exchanger in the heating case.
 
@@ -405,7 +394,7 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
     :return:
         tho = out temperature of secondary side (district cooling network)
         ch = capacity mass flow rate secondary side
-    '''
+    """
 
     if Q > 0:
         eff = [0.1, 0]

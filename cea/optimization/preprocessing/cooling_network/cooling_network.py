@@ -28,12 +28,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-"""
-============================
-technical model
-============================
-
-"""
+# technical model
 
 def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
     """

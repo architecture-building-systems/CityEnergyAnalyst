@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-=========================================
 controllers
-=========================================
-
 """
 from __future__ import division
 import numpy as np
@@ -18,11 +15,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-"""
-=========================================
-temperature controllers
-=========================================
-"""
+# temperature controllers
+
 def calc_simple_temp_control(tsd, prop_comfort, limit_inf_season, limit_sup_season, weekday):
     def get_hsetpoint(a, b, Thset, Thsetback, weekday):
         if (b < limit_inf_season or b >= limit_sup_season):
@@ -112,11 +106,11 @@ def temperature_control_tabs(bpr, tsd, hoy, gv, control):
     return ta, ts, tm_t, IH_max
 
 
-"""
-=========================================
-ventilation controllers
-=========================================
-"""
+
+
+# ventilation controllers
+
+
 def calc_simple_ventilation_control(ve, people, Af, gv, hour_day, hour_year, n50):
     """
     Modified version of calc_simple_ventilation_control from functions.

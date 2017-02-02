@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-============================
 pumps
-============================
-
 """
 from __future__ import division
 import os
@@ -22,12 +19,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-"""
-============================
-operation and total costs
-============================
-
-"""
+# operation and total costs
 
 def Pump_operation(P_design):
 
@@ -181,12 +173,7 @@ def Pump_Cost(deltaP, mdot, eta_pumping, gV):
 
     return InvCa
 
-"""
-============================
-investment and maintenance costs
-============================
-
-"""
+# investment and maintenance costs
 
 def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
     """

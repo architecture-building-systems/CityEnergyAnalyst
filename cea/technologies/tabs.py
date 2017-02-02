@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-=========================================
 Termoactivated building surfaces (TABS)
-=========================================
-
 """
 
 from __future__ import division

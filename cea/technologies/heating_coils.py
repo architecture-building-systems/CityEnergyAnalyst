@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-=========================================
 Heating and cooling coils of Air handling units
-=========================================
-
 """
 from __future__ import division
 import scipy.optimize as sopt

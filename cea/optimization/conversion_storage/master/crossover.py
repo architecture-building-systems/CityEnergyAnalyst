@@ -16,14 +16,13 @@ def cxUniform(ind1, ind2, proba, gV):
     Performs a uniform crossover between the two parents.
     Each segments is swapped with probability *proba*
     
-    Parameters
-    ----------
     :param ind1: a list containing the parameters of the parent 1
     :param ind2: a list containing the parameters of the parent 2
     :param proba: Crossover probability
     :type ind1: list
     :type ind2: list
     :type proba: float
+
     :return: child1, child2
     :rtype: list, list
     """

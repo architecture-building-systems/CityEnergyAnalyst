@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-=========================================
 Demand model of thermal loads
-=========================================
-
 """
 from __future__ import division
 
@@ -18,20 +15,12 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.technologies import controllers
 from cea.utilities import helpers
 
-
-#=========================================
-#demand model of thermal and electrical loads
-#=========================================
-
+# demand model of thermal and electrical loads
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
-
-
-    PARAMETERS
-    ----------
 
     :param building_name: name of building
     :type building_name: str
@@ -75,17 +64,11 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :type temporary_folder: str
 
 
-    RETURNS
-    -------
-
     :returns: This function does not return anything
     :rtype: NoneType
 
 
-    SIDE EFFECTS
-    ------------
-
-    A number of files in two folders:
+    Side effect include a number of files in two folders:
     - results_folder
       - ${Name}.csv for each building
     - temporary_folder
@@ -332,11 +315,6 @@ def update_timestep_data_no_conditioned_area(tsd):
     return tsd
 
 
-# =============================================
-# object to gather all properties from buidings
-# =============================================
-
-
 class BuildingProperties(object):
     """
     Groups building properties used for the calc-thermal-loads functions. Stores the full DataFrame for each of the
@@ -349,23 +327,14 @@ class BuildingProperties(object):
         """
         Read building properties from input shape files and construct a new BuildingProperties object.
 
-        PARAMETERS
-        ----------
-
         :param locator: an InputLocator for locating the input files
         :type locator: cea.inputlocator.InputLocator
 
         :param gv: contains the context (constants and models) for the calculation
         :type gv: cea.globalvar.GlobalVariables
 
-        RETURNS
-        -------
-
         :returns: object of type BuildingProperties
         :rtype: BuildingProperties
-
-        INPUT / OUTPUT FILES
-        --------------------
 
         - get_radiation: C:\reference-case\baseline\outputs\data\solar-radiation\radiation.csv
         - get_surface_properties: C:\reference-case\baseline\outputs\data\solar-radiation\properties_surfaces.csv
@@ -503,10 +472,6 @@ class BuildingProperties(object):
         Return the RC model properties for all buildings. The RC model used is described in ISO 13790:2008, Annex C (Full
         set of equations for simple hourly method).
 
-
-        PARAMETERS
-        ----------
-
         :param occupancy: The contents of the `occupancy.shp` file, indexed by building name. Each column is the name of an
             occupancy type (GYM, HOSPITAL, HOTEL, INDUSTRIAL, MULTI_RES, OFFICE, PARKING, etc.) except for the
             "PFloor" column which is a fraction of heated floor area.
@@ -540,10 +505,6 @@ class BuildingProperties(object):
 
         :param gv: An instance of the GlobalVariables context.
         :type gv: GlobalVariables
-
-
-        RETURNS
-        -------
 
         :returns: RC model properties per building
         :rtype: DataFrame
@@ -810,9 +771,6 @@ def get_temperatures(locator, prop_HVAC):
     Return temperature data per building based on the HVAC systems of the building. Uses the `emission_systems.xls`
     file to look up the temperatures.
 
-    PARAMETERS
-    ----------
-
     :param locator:
     :type locator: LocatorDecorator
 
@@ -829,10 +787,6 @@ def get_temperatures(locator, prop_HVAC):
     2     B153831      T0        T1       T1      T1       T0
     3  B302022960      T0        T0       T0      T0       T0
     4  B302034063      T0        T0       T0      T0       T0
-
-
-    RETURNS
-    -------
 
     :returns: A DataFrame containing temperature data for each building in the scenario. More information can be
               found in the contributors manual:
@@ -861,9 +815,6 @@ def get_temperatures(locator, prop_HVAC):
     dTww0_C            50   (delta of dwh system temperature at nominal conditions [C])
     Qwwmax_Wm2        500   (maximum dwh system power capacity per unit of gross built area [W/m2])
     Name: 0, dtype: object
-
-    INPUT / OUTPUT FILES
-    --------------------
 
     - get_technical_emission_systems: cea\databases\CH\Systems\emission_systems.xls
     """

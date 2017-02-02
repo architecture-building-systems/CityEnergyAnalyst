@@ -1,11 +1,5 @@
 """
-===========================
 Solar vertical insolation algorithm based on ArcGIS Solar Analyst
-===========================
-File history and credits:
-J. A. Fonseca  script development          10.08.13
-J. A. Fonseca  adaptation for CEA tool     12.04.16
-
 """
 from __future__ import division
 
@@ -37,37 +31,33 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     The algorithm is based on the Solar Analyst Engine of ArcGIS 10.
     For more info check the integrated demand model of Fonseca et al. 2015. Appl. energy.
 
-    Parameters
-    ----------
-    path_geometry : string
+    :param path_geometry : string
         path to file buildings_geometry.shp
-    path_boundary: renovation
+    :param path_boundary: renovation
         path to file zone_of_study.shp
-    path_arcgis_db: boolean
+    :param path_arcgis_db: boolean
         path to default database of Arcgis. Generally of the form c:\users\your_name\Documents\Arcgis\Default.gdb
-    latitude: float
+    :param latitude: float
         latitude north  at the centre of the location
-    longitude: float
+    :param longitude: float
         latitude north
-    timezone: integer
+    :param timezone: integer
         timezone (UTC)
-    year: integer
+    :param year: integer
         year of calculation
-    path_dem_raster: string
+    :param path_dem_raster: string
         path to terrain file
-    weather_daily_data: string
+    :param weather_daily_data: string
         path to weather_day.csv file
-    prop_architecture_flag: boolean
+    :param prop_architecture_flag: boolean
         True, get properties about the construction and architecture, otherwise False.
-    prop_HVAC_flag: boolean
+    :param prop_HVAC_flag: boolean
         True, get properties about types of HVAC systems, otherwise False.
-    gv: GlobalVariables
+    :param gv: GlobalVariables
         an instance of globalvar.GlobalVariables with the constants
         to use (like `list_uses` etc.)
-    Returns
-    -------
-    radiation: .csv
-        solar radiation file in vertical surfaces of buildings stored in path_output
+
+    :returns: radiation.csv, solar radiation file in vertical surfaces of buildings stored in path_output
     """
 
     # Set environment settings
