@@ -1,11 +1,6 @@
 cea.optimization.preprocessing package
 ======================================
 
-.. automodule:: cea.optimization.preprocessing
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 Subpackages
 -----------
 
@@ -18,7 +13,19 @@ Subpackages
 Submodules
 ----------
 
-.. toctree::
+cea.optimization.preprocessing.preprocessing_main module
+--------------------------------------------------------
 
-   cea.optimization.preprocessing.preprocessing_main
+.. automodule:: cea.optimization.preprocessing.preprocessing_main
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
+
+Module contents
+---------------
+
+.. automodule:: cea.optimization.preprocessing
+    :members:
+    :undoc-members:
+    :show-inheritance:

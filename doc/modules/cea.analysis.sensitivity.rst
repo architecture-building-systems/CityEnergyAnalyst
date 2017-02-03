@@ -1,18 +1,54 @@
 cea.analysis.sensitivity package
 ================================
 
-.. automodule:: cea.analysis.sensitivity
+Submodules
+----------
+
+cea.analysis.sensitivity.sensitivity_demand_analyze module
+----------------------------------------------------------
+
+.. automodule:: cea.analysis.sensitivity.sensitivity_demand_analyze
     :members:
     :undoc-members:
     :show-inheritance:
 
-Submodules
-----------
+cea.analysis.sensitivity.sensitivity_demand_count module
+--------------------------------------------------------
 
-.. toctree::
+.. automodule:: cea.analysis.sensitivity.sensitivity_demand_count
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
-   cea.analysis.sensitivity.sensitivity_demand_analyze
-   cea.analysis.sensitivity.sensitivity_demand_count
-   cea.analysis.sensitivity.sensitivity_demand_samples
-   cea.analysis.sensitivity.sensitivity_demand_simulate
+cea.analysis.sensitivity.sensitivity_demand_samples module
+----------------------------------------------------------
 
+.. automodule:: cea.analysis.sensitivity.sensitivity_demand_samples
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.analysis.sensitivity.sensitivity_demand_simulate module
+-----------------------------------------------------------
+
+.. automodule:: cea.analysis.sensitivity.sensitivity_demand_simulate
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea.analysis.sensitivity.sensitivity_optimization module
+--------------------------------------------------------
+
+.. automodule:: cea.analysis.sensitivity.sensitivity_optimization
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: cea.analysis.sensitivity
+    :members:
+    :undoc-members:
+    :show-inheritance:

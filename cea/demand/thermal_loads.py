@@ -792,18 +792,19 @@ def get_temperatures(locator, prop_HVAC):
     Each row contains the following fields:
 
     ==========    =======   ===========================================================================
-    Name          B154862   (building name)
+    Column           e.g.   Description
     ==========    =======   ===========================================================================
+    Name          B154862   (building name)
     type_hs            T1   (copied from input)
     type_cs            T0   (copied from input)
     type_dhw           T1   (copied from input)
     type_ctrl          T1   (copied from input)
     type_vent          T1   (copied from input)
     MECH_VENT        True   (copied from input, ventilation system configuration)
-    WIN_VENT         False  (copied from input, ventilation system configuration)
+    WIN_VENT        False   (copied from input, ventilation system configuration)
     HEAT_REC         True   (copied from input, ventilation system configuration)
     NIGHT_FLSH       True   (copied from input, ventilation system control strategy)
-    ECONOMIZER       False  (copied from input, ventilation system control strategy)
+    ECONOMIZER      False   (copied from input, ventilation system control strategy)
     Tshs0_C            90   (heating system supply temperature at nominal conditions [C])
     dThs0_C            20   (delta of heating system temperature at nominal conditions [C])
     Qhsmax_Wm2        500   (maximum heating system power capacity per unit of gross built area [W/m2])

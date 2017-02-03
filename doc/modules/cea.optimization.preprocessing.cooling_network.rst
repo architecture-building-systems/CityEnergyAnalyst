@@ -1,15 +1,22 @@
 cea.optimization.preprocessing.cooling_network package
 ======================================================
 
-.. automodule:: cea.optimization.preprocessing.cooling_network
+Submodules
+----------
+
+cea.optimization.preprocessing.cooling_network.cooling_network module
+---------------------------------------------------------------------
+
+.. automodule:: cea.optimization.preprocessing.cooling_network.cooling_network
     :members:
     :undoc-members:
     :show-inheritance:
 
-Submodules
-----------
 
-.. toctree::
+Module contents
+---------------
 
-   cea.optimization.preprocessing.cooling_network.cooling_network
-
+.. automodule:: cea.optimization.preprocessing.cooling_network
+    :members:
+    :undoc-members:
+    :show-inheritance:
