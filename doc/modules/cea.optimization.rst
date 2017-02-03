@@ -1,11 +1,6 @@
 cea.optimization package
 ========================
 
-.. automodule:: cea.optimization
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 Subpackages
 -----------
 
@@ -18,8 +13,27 @@ Subpackages
 Submodules
 ----------
 
-.. toctree::
+cea.optimization.optimization_main module
+-----------------------------------------
 
-   cea.optimization.optimization_main
-   cea.optimization.supportFn
+.. automodule:: cea.optimization.optimization_main
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
+cea.optimization.supportFn module
+---------------------------------
+
+.. automodule:: cea.optimization.supportFn
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: cea.optimization
+    :members:
+    :undoc-members:
+    :show-inheritance:

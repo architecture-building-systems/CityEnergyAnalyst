@@ -809,9 +809,8 @@ def calc_air_flow_mass_balance(p_zone_ref, temp_zone, u_wind_10, temp_ext, dict_
         return qm_sum_in, qm_sum_out  # for the calculation the total air mass flows are output
 
 
-
 def testing():
-    from geopandas import GeoDataFrame as gpdf
+    import geopandas
     import cea.globalvar
     gv = cea.globalvar.GlobalVariables()
     from cea import inputlocator
@@ -822,8 +821,9 @@ def testing():
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
 
     surface_properties = pd.read_csv(locator.get_surface_properties())
-    gdf_building_architecture = gpdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1).set_index('Name')
-    prop_geometry = gpdf.from_file(locator.get_building_geometry())
+    gdf_building_architecture = geopandas.GeoDataFrame.from_file(
+        locator.get_building_architecture()).drop('geometry', axis=1).set_index('Name')
+    prop_geometry = geopandas.GeoDataFrame.from_file(locator.get_building_geometry())
     prop_geometry['footprint'] = prop_geometry.area
     prop_geometry['perimeter'] = prop_geometry.length
     prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')

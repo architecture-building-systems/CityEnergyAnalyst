@@ -1,16 +1,30 @@
 cea.optimization.preprocessing.extra_loads package
 ==================================================
 
-.. automodule:: cea.optimization.preprocessing.extra_loads
+Submodules
+----------
+
+cea.optimization.preprocessing.extra_loads.electricity module
+-------------------------------------------------------------
+
+.. automodule:: cea.optimization.preprocessing.extra_loads.electricity
     :members:
     :undoc-members:
     :show-inheritance:
 
-Submodules
-----------
+cea.optimization.preprocessing.extra_loads.processheat module
+-------------------------------------------------------------
 
-.. toctree::
+.. automodule:: cea.optimization.preprocessing.extra_loads.processheat
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
-   cea.optimization.preprocessing.extra_loads.electricity
-   cea.optimization.preprocessing.extra_loads.processheat
 
+Module contents
+---------------
+
+.. automodule:: cea.optimization.preprocessing.extra_loads
+    :members:
+    :undoc-members:
+    :show-inheritance:
