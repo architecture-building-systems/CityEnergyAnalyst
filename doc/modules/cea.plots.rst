@@ -15,7 +15,8 @@ cea.plots.graphs_demand module
 cea.plots.graphs_optimization module
 ------------------------------------
 
-.. automodule:: cea.plots.graphs_optimization
+.. note:: documentation pending
+.. automodule: cea.plots.graphs_optimization
     :members:
     :undoc-members:
     :show-inheritance:

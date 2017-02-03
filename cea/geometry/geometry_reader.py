@@ -33,22 +33,23 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
     :returns: DataFrame containing all windows of all buildings
     :rtype: DataFrame
 
-    Sample rows of output:
-           angle_window  area_window  height_window_above_ground  \
-    0            90     1.910858                         1.5
-    1            90     2.276739                         1.5
-    2            90     2.276739                         4.5
-    3            90     2.276739                         7.5
-    4            90     2.276739                        10.5
+    Sample rows of output:::
 
-       height_window_in_zone name_building  orientation_window
-    0                    1.5       B140589                   0
-    1                    1.5       B140590                 180
-    2                    4.5       B140590                 180
-    3                    7.5       B140590                 180
-    4                   10.5       B140590                 180
+               angle_window  area_window  height_window_above_ground  \
+        0            90     1.910858                         1.5
+        1            90     2.276739                         1.5
+        2            90     2.276739                         4.5
+        3            90     2.276739                         7.5
+        4            90     2.276739                        10.5
 
-    [5 rows x 6 columns]
+           height_window_in_zone name_building  orientation_window
+        0                    1.5       B140589                   0
+        1                    1.5       B140590                 180
+        2                    4.5       B140590                 180
+        3                    7.5       B140590                 180
+        4                   10.5       B140590                 180
+
+        [5 rows x 6 columns]
     """
     # TODO: documentation
 

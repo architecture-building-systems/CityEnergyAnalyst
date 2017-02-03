@@ -39,10 +39,7 @@ cea.analysis.sensitivity.sensitivity_demand_simulate module
 cea.analysis.sensitivity.sensitivity_optimization module
 --------------------------------------------------------
 
-.. automodule:: cea.analysis.sensitivity.sensitivity_optimization
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. note:: documentation pending
 
 
 Module contents

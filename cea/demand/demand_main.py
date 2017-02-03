@@ -30,7 +30,7 @@ __status__ = "Production"
 def demand_calculation(locator, weather_path, gv):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
-    using the integrated model of [Fonseca et al. 2015]_.
+    using the integrated model of [Fonseca2015]_.
 
     Produces a demand file per building and a total demand file for the whole zone of interest:
       - a csv file for every building with hourly demand data.
@@ -49,7 +49,7 @@ def demand_calculation(locator, weather_path, gv):
     :returns: None
     :rtype: NoneType
 
-    .. [Fonseca et al. 2015] Fonseca, Jimeno A., and Arno Schlueter. “Integrated Model for Characterization of
+    .. [Fonseca2015] Fonseca, Jimeno A., and Arno Schlueter. “Integrated Model for Characterization of
         Spatiotemporal Building Energy Consumption Patterns in Neighborhoods and City Districts.”
         Applied Energy 142 (2015): 247–265.
     """
