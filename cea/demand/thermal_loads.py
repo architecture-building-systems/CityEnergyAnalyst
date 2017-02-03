@@ -22,6 +22,34 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
 
+    The structure of ``usage_schedules`` is:
+
+    .. code-block:: python
+        :emphasize-lines: 3,5
+
+        {
+            'list_uses': ['ADMIN', 'GYM', ...],
+            'schedules': [ ([...], [...], [...], [...]), (), (), () ]
+        }
+
+    * each element of the 'list_uses' entry represents a building occupancy type.
+    * each element of the 'schedules' entry represents the schedules for a building occupancy type.
+    * the schedules for a building occupancy type are a 4-tuple (occupancy, electricity, domestic hot water,
+      probability of use), with each element of the 4-tuple being a list of hourly values (8760 values).
+
+
+    Side effect include a number of files in two folders:
+
+    * ``scenario/outputs/data/demand``
+
+      * ``${Name}.csv`` for each building
+
+    * temporary folder (as returned by ``tempfile.gettempdir()``)
+
+      * ``${Name}T.csv`` for each building
+
+    daren-thomas: as far as I can tell, these are the only side-effects.
+
     :param building_name: name of building
     :type building_name: str
 
@@ -29,53 +57,21 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :type bpr: BuildingPropertiesRow
 
     :param weather_data: data from the .epw weather file. Each row represents an hour of the year. The columns are:
-        drybulb_C, relhum_percent, and windspd_ms
-    :type weather_data: DataFrame
+        ``drybulb_C``, ``relhum_percent``, and ``windspd_ms``
+    :type weather_data: pandas.DataFrame
 
-    :param usage_schedules: dict containing schedules and function names of buildings. The structure is:
-        {
-            'list_uses': ['ADMIN', 'GYM', ...],
-            'schedules': [ ([...], [...], [...], [...]), (), (), () ]
-        }
-        each element of the 'list_uses' entry represents a building occupancy type.
-        each element of the 'schedules' entry represents the schedules for a building occupancy type.
-        the schedules for a building occupancy type are a 4-tuple (occupancy, electricity, domestic hot water,
-        probability of use), with each element of the 4-tuple being a list of hourly values (8760 values).
+    :param usage_schedules: dict containing schedules and function names of buildings.
     :type usage_schedules: dict
 
     :param date: the dates (hours) of the year (8760)
-        <class 'pandas.tseries.index.DatetimeIndex'>
-        [2016-01-01 00:00:00, ..., 2016-12-30 23:00:00]
-        Length: 8760, Freq: H, Timezone: None
-    :type date: DatetimeIndex
+    :type date: pandas.tseries.index.DatetimeIndex
 
     :param gv: global variables / context
     :type gv: GlobalVariables
 
-    :param results_folder: path to results folder (sample value: 'C:\reference-case\baseline\outputs\data\demand')
-        obtained from inputlocator.InputLocator..get_demand_results_folder() in demand.demand_calculation
-        used for writing the ${Name}.csv file and also the report file (${Name}-{yyyy-mm-dd-hh-MM-ss}.xls)
-    :type results_folder: str
-
-    :param temporary_folder: path to a temporary folder for intermediate results
-        (sample value: c:\users\darthoma\appdata\local\temp')
-        obtained from inputlocator.InputLocator..get_temporary_folder() in demand.demand_calculation
-        used for writing the ${Name}.csv file
-    :type temporary_folder: str
-
-
     :returns: This function does not return anything
     :rtype: NoneType
-
-
-    Side effect include a number of files in two folders:
-    - results_folder
-      - ${Name}.csv for each building
-    - temporary_folder
-      - ${Name}T.csv for each building
-
-    daren-thomas: as far as I can tell, these are the only side-effects.
-    """
+"""
     tsd = initialize_timestep_data(bpr, weather_data)
 
     # get schedules
@@ -772,21 +768,21 @@ def get_temperatures(locator, prop_HVAC):
     file to look up the temperatures.
 
     :param locator:
-    :type locator: LocatorDecorator
+    :type locator: cea.inputlocator.InputLocator
 
     :param prop_HVAC: HVAC properties for each building (type of cooling system, control system, domestic hot water
                       system and heating system.
                       The values can be looked up in the contributors manual:
                       https://architecture-building-systems.gitbooks.io/cea-toolbox-for-arcgis-manual/content/building_properties.html#mechanical-systems
-    :type prop_HVAC: Gdf
+    :type prop_HVAC: geopandas.GeoDataFrame
+        Sample data (first 5 rows)::
 
-    Sample data (first 5 rows):
-                 Name type_cs type_ctrl type_dhw type_hs type_vent
-    0     B154862      T0        T1       T1      T1       T0
-    1     B153604      T0        T1       T1      T1       T0
-    2     B153831      T0        T1       T1      T1       T0
-    3  B302022960      T0        T0       T0      T0       T0
-    4  B302034063      T0        T0       T0      T0       T0
+                     Name type_cs type_ctrl type_dhw type_hs type_vent
+            0     B154862      T0        T1       T1      T1       T0
+            1     B153604      T0        T1       T1      T1       T0
+            2     B153831      T0        T1       T1      T1       T0
+            3  B302022960      T0        T0       T0      T0       T0
+            4  B302034063      T0        T0       T0      T0       T0
 
     :returns: A DataFrame containing temperature data for each building in the scenario. More information can be
               found in the contributors manual:
@@ -794,7 +790,10 @@ def get_temperatures(locator, prop_HVAC):
     :rtype: DataFrame
 
     Each row contains the following fields:
+
+    ==========    =======   ===========================================================================
     Name          B154862   (building name)
+    ==========    =======   ===========================================================================
     type_hs            T1   (copied from input)
     type_cs            T0   (copied from input)
     type_dhw           T1   (copied from input)
@@ -814,9 +813,10 @@ def get_temperatures(locator, prop_HVAC):
     Tsww0_C            60   (dhw system supply temperature at nominal conditions [C])
     dTww0_C            50   (delta of dwh system temperature at nominal conditions [C])
     Qwwmax_Wm2        500   (maximum dwh system power capacity per unit of gross built area [W/m2])
-    Name: 0, dtype: object
+    ==========    =======   ===========================================================================
 
-    - get_technical_emission_systems: cea\databases\CH\Systems\emission_systems.xls
+    Data is read from :py:meth:`cea.inputlocator.InputLocator.get_technical_emission_systems` (e.g.
+    ``db/Systems/emission_systems.csv``)
     """
     prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(), 'heating')
     prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')
