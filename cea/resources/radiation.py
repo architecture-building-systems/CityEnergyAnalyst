@@ -31,33 +31,25 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     The algorithm is based on the Solar Analyst Engine of ArcGIS 10.
     For more info check the integrated demand model of Fonseca et al. 2015. Appl. energy.
 
-    :param path_geometry : string
-        path to file buildings_geometry.shp
-    :param path_boundary: renovation
-        path to file zone_of_study.shp
-    :param path_arcgis_db: boolean
-        path to default database of Arcgis. Generally of the form c:\users\your_name\Documents\Arcgis\Default.gdb
-    :param latitude: float
-        latitude north  at the centre of the location
-    :param longitude: float
-        latitude north
-    :param timezone: integer
-        timezone (UTC)
-    :param year: integer
-        year of calculation
-    :param path_dem_raster: string
-        path to terrain file
-    :param weather_daily_data: string
-        path to weather_day.csv file
-    :param prop_architecture_flag: boolean
-        True, get properties about the construction and architecture, otherwise False.
-    :param prop_HVAC_flag: boolean
-        True, get properties about types of HVAC systems, otherwise False.
-    :param gv: GlobalVariables
-        an instance of globalvar.GlobalVariables with the constants
-        to use (like `list_uses` etc.)
+    :param locator: input locator for file paths
+    :type locator: cea.inputlocator.InputLocator
 
-    :returns: radiation.csv, solar radiation file in vertical surfaces of buildings stored in path_output
+    :param path_arcgis_db:  path to default database of Arcgis. E.g.``c:\users\your_name\Documents\Arcgis\Default.gdb``
+    :type path_arcgis_db: str
+
+    :param latitude: latitude north  at the centre of the location
+    :type latitude: float
+
+    :param longitude: latitude north
+    :type longitude: float
+
+    :param year: year of calculation
+    :type year: int
+
+    :param gv: global context and constants
+    :type gv: cea.globalvar.GlobalVariables
+
+    :returns: produces ``radiation.csv``, solar radiation file in vertical surfaces of buildings.
     """
 
     # Set environment settings
