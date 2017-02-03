@@ -451,7 +451,11 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
             T_substation_supply_2 = write_nodes_to_substations(T_supply_nodes_2, all_nodes_df, plant_node)
 
             # check if the supply temperature at substations converged
-            max_node_dT = max(list((T_substation_supply-T_substation_supply_2).dropna(axis=1).values[0]))  # max supply node temperature difference
+            if np.isnan(T_substation_supply) and np.isnan(T_substation_supply_2):
+                max_node_dT = 0
+            else:
+                max_node_dT = max(list((T_substation_supply-T_substation_supply_2).dropna(axis=1).values[0]))  # max supply node temperature difference
+
             if max_node_dT > 1 and iteration < 10:
                 # update the substation supply temperature and re-enter the iteration
                 T_substation_supply = T_substation_supply_2
@@ -956,7 +960,7 @@ def write_substations_to_nodes_df(all_nodes_df, df_value, flag):
             so mass_flow_node[node] = mass_flow_demand[node] for consumer nodes and
                mass_flow_node[node] = mass_flow_demand[node] - mass_flow_supply[node] for plant nodes
             assuming only one plant node, the mass flow on the supply side needs to equal the mass flow from consumers
-            so mass_flow_supply = sum(mass_flow_deman[node]) for all nodes
+            so mass_flow_supply = sum(mass_flow_demand[node]) for all nodes
             '''
 
             if all_nodes_df[node]['consumer'] != '':
