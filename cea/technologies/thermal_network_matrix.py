@@ -132,14 +132,14 @@ def thermal_network_main(locator, gv, network, source):
     # #     to_csv(locator.get_optimization_network_layout_plant_heat_requirement_file(network), index=False, float_format='%.3f') #FIXME[SH]: save to csv
 
     # skip calculation, import csv TODO: get rid of this after testing
-    T_supply_nodes_list = pd.read_csv(locator.get_optimization_network_layout_supply_temperature_file(network))
-    T_return_nodes_list = pd.read_csv(locator.get_optimization_network_layout_return_temperature_file(network))
+    T_supply_nodes_list = pd.read_csv(locator.get_optimization_network_layout_supply_temperature_file(network)).values.tolist()
+    T_return_nodes_list = pd.read_csv(locator.get_optimization_network_layout_return_temperature_file(network)).values.tolist()
     # plant_heat_requirements = pd.read_csv(locator.get_optimization_network_layout_plant_heat_requirement_file(network))
 
 
     # calculate pressure at each node and pressure drop throughout the entire network
     pressure_nodes_supply, pressure_nodes_return, pressure_loss_system = calc_pressure_nodes(edge_node_df,
-                                                    pipe_properties_df[:]['Pipe_DN':'Pipe_DN'].values, pipe_length_df.values,
+                                                    pipe_properties_df[:]['D_int':'D_int'].values, pipe_length_df.values,
                                                     edge_mass_flow_df.values, T_supply_nodes_list, T_return_nodes_list, gv)
     pd.DataFrame(pressure_nodes_supply, columns=edge_node_df.index). \
             to_csv(locator.get_optimization_network_layout_supply_pressure_file(network), index=False, float_format='%.3f')
