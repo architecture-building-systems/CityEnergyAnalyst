@@ -300,11 +300,11 @@ class InputLocator(object):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain.tif')
 
-    def get_heating_network_edges(self, network):
+    def get_network_edges_shapefile(self, network):
         """scenario/inputs/network/DH or DC/heating-edges.shp"""
         return os.path.join(self.scenario_path, 'inputs', 'network', network, 'network-edges.shp')
 
-    def get_heating_network_nodes(self, network):
+    def get_network_nodes_shapefile(self, network):
         """scenario/inputs/network/DH or DC/heating-nodes.shp"""
         return os.path.join(self.scenario_path, 'inputs', 'network', network, 'network-nodes.shp')
 

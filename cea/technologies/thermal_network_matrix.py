@@ -225,7 +225,7 @@ def assign_pipes_to_edges(mass_flow_df, locator, gv):
     '''
 
     # import pipe catalog from Excel file
-    pipe_catalog = pd.read_excel(locator.get_thermal_networks())
+    pipe_catalog = pd.read_excel(locator.get_thermal_networks(),sheetname=['PIPING CATALOG'])['PIPING CATALOG']
     pipe_catalog['Vdot_min'] = pipe_catalog['Vdot_min'] * gv.Pwater
     pipe_catalog['Vdot_max'] = pipe_catalog['Vdot_max'] * gv.Pwater
     pipe_properties_df = pd.DataFrame(data = None, index = pipe_catalog.columns.values, columns = mass_flow_df.columns.values)
@@ -242,7 +242,7 @@ def assign_pipes_to_edges(mass_flow_df, locator, gv):
 
     return pipe_properties_df
 
-def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, mass_flow_rate, T_supply_node, T_return_node, gv):
+def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, mass_flow_rate, T_supply_node, T_return_node, gv, locator):
     ''' calculates the pressure at each node based on Eq. 1 in Todini & Pilati (1987) "A gradient method for the analysis
 of pipe networks," in Computer Applications in Water Supply Volume 1 - Systems Analysis and Simulation. Since the
 pressure is calculated after the mass flow rate (rather than concurrently) this is only a first step towards implementing
@@ -674,17 +674,22 @@ def calc_aggregated_heat_conduction_coefficient(locator, gv, L_pipe, pipe_proper
      K matrix (1 x e) for all edges
     """
     # TODO [SH]: load thermal conductivity, and ground thermal conductivity from database, and define network_depth, extra_heat_transfer_coef in gv
-    thermal_conductivity_pipe = 0.025     # [W/mC]
-    thermal_conductivity_ground = 1.75    # [W/mC]
-    network_depth = 1                     # [m]
+    material_properties = pd.read_excel(locator.get_thermal_networks(), sheetname=['MATERIAL PROPERTIES'])['MATERIAL PROPERTIES']
+    material_properties = material_properties.set_index(material_properties['material'].values)
+    conductivity_pipe = material_properties.ix['Steel','lamda']     # [W/mC]
+    conductivity_insulation = material_properties.ix['PUR','lamda'] # [W/mC]
+    conductivity_ground = material_properties.ix['Soil','lamda']    # [W/mC]
+    network_depth = gv.NetworkDepth       # [m]
     extra_heat_transfer_coef = 0.2
+
 
     K_all = []
     for pipe in L_pipe.index:
-        R_pipe = np.log(pipe_properties_df.loc['D_ext', pipe]/pipe_properties_df.loc['D_ext', pipe])/(2*math.pi*thermal_conductivity_pipe)     #[mC/W]
-        a= 2*network_depth/pipe_properties_df.loc['D_ext', pipe]
-        R_ground = np.log(a+(a**2-1)**0.5)/(2*math.pi*thermal_conductivity_ground) #[mC/W]
-        k = L_pipe[pipe]*(1+extra_heat_transfer_coef)/(R_pipe+R_ground)/1000   #[kW/C]
+        R_pipe = np.log(pipe_properties_df.loc['D_ext', pipe]/pipe_properties_df.loc['D_int', pipe])/(2*math.pi*conductivity_pipe)     #[mC/W]
+        R_insulation = np.log((pipe_properties_df.loc['D_ins', pipe])/pipe_properties_df.loc['D_ext', pipe])/(2*math.pi*conductivity_insulation)
+        a= 2*network_depth/(pipe_properties_df.loc['D_ins', pipe])
+        R_ground = np.log(a+(a**2-1)**0.5)/(2*math.pi*conductivity_ground) #[mC/W]
+        k = L_pipe[pipe]*( 1 +  extra_heat_transfer_coef)/(R_pipe + R_insulation + R_ground)/1000   #[kW/C]
         K_all.append(k)
 
     K_all = np.diag(K_all)
@@ -788,8 +793,8 @@ def get_thermal_network_from_shapefile(locator, network):
     t0 = time.clock()
 
     # import network properties from shapefile
-    network_edges_df = gpd.read_file(locator.get_heating_network_edges(network))
-    network_nodes_df = gpd.read_file(locator.get_heating_network_nodes(network))
+    network_edges_df = gpd.read_file(locator.get_network_edges_shapefile(network))
+    network_nodes_df = gpd.read_file(locator.get_network_nodes_shapefile(network))
 
     # get node and pipe information
     node_df, pipe_df = extract_network_from_shapefile(network_edges_df, network_nodes_df)

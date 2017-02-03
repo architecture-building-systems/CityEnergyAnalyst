@@ -273,6 +273,7 @@ class GlobalVariables(object):
         self.PipeLifeTime = 40.0  # years, Data from A&W
         self.PipeInterestRate = 0.05  # 5% interest rate
         self.PipeCostPerMeterAnnual = self.PipeCostPerMeterInv / self.PipeLifeTime
+        self.NetworkDepth = 1 # m
 
         # Solar area to Wpeak
         self.eta_area_to_peak = 0.16  # Peak Capacity - Efficisency, how much kW per area there are, valid for PV and PVT (after Jimeno's J+)
