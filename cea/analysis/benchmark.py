@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 ===========================
-Benchmark graphs algorithm
+Benchmark plots
 ===========================
+
+M. Mosteiro Romero  script development          31.08.16
 
 """
 from __future__ import division
@@ -20,22 +22,24 @@ from cea import inputlocator
 
 def benchmark(locator_list, output_file):
     """
-    algorithm to print graphs in PDF concerning the 2000 Watt society benchmark 
-    for two scenarios (A and B)
+    Algorithm to print graphs in PDF concerning the 2000 Watt society benchmark for different scenarios.
 
     Parameters
     ----------
-
-    :param locator: an array of InputLocator set to each first scenario to be computed
-    :type locator: inputlocator.InputLocator
+    :param locator: a list of InputLocator instances set to each scenario to be computed. The first element in
+    the array is always considered as the baseline for the comparison.
+    :type locator: list
     :param output_file: the filename (pdf) to save the results as.
+    :type output_file: str
 
-    Returns
+    Side effects
     -------
-    Graphs of the embodied and operational emissions and primary energy demand: .Pdf
+    The following file is created by this script:
+    - ouput_file: .pdf
+        Plot of the embodied and operational emissions and primary energy demand
     """
 
-    # setup-time
+    # setup: the labels and colors for the graphs are defined
     color_palette = ['g', 'r', 'y', 'c', 'b', 'm', 'k']
     legend = []
     graphs = ['embodied', 'operation', 'mobility', 'total']
@@ -43,15 +47,17 @@ def benchmark(locator_list, output_file):
     old_prefix = ['E_', 'O_', 'M_']
     fields = ['_GJ', '_ton', '_MJm2', '_kgm2']
     new_cols = {}
+    # prepare a dictionary to contain the results for the maximum primary energy demand and emissions in the comparison
+    # these are later used to set the scale of the axes of the plots
     scenario_max = {}
     for i in range(4):
         for j in range(3):
             new_cols[old_prefix[j] + old_fields[i]] = graphs[j] + fields[i]
         scenario_max[graphs[i] + fields[2]] = scenario_max[graphs[i] + fields[3]] = 0
 
-    # calculate target values - THIS IS ASSUMING THE FIRST SCENARIO IS ALWAYS THE BASELINE! Need to confirm.
+    # calculate target values based on the baseline case
     targets = calc_benchmark_targets(locator_list[0])
-    # calculate current values - THIS SHOULD NOT BE HARD CODED AND NEED A SOURCE (other than Inducity)
+    # calculate current values based on the baseline case
     values_today = calc_benchmark_today(locator_list[0])
 
     # start graphs
@@ -62,7 +68,7 @@ def benchmark(locator_list, output_file):
     ax6.axis('off')
     axes = [1, 2, 4, 5]
 
-    # run for each locator
+    # run for each locator (i.e., for each scenario)
     for n in range(len(locator_list)):
         locator = locator_list[n]
         scenario_name = os.path.basename(locator.scenario_path)
@@ -93,6 +99,7 @@ def benchmark(locator_list, output_file):
             plt.plot(df_scenario[graphs[i]+fields[2]], df_scenario[graphs[i]+fields[3]], 'o', color = color_palette[n],
                      markersize = 15)
         legend.extend([scenario_name, scenario_name+' total'])
+
     # complete graphs
     plt.plot()
     for i in range(len(graphs)):
@@ -122,10 +129,29 @@ def benchmark(locator_list, output_file):
 
 def calc_benchmark_targets(locator):
     '''
-    Calculates the embodied, operation, mobility and total targets (ghg_kgm2
-    and pen_MJm2) for all buildings in a scenario.
-    :param locator: an InputLocator set to the scenario to compute
-    :array target: pen_MJm2 and ghg_kgm2 target values
+    This function calculates the embodied, operation, mobility and total targets (ghg_kgm2 and pen_MJm2) for all
+    buildings in a scenario.
+
+    The target values for the Swiss case for each type of occupancy are based on the following sources:
+        -   Swiss Society of Engineers and Architects (SIA), "SIA Efficiency Path 2040" (2011):
+            'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
+        -   Kellenberger, D. et al. "Arealentwicklung fur die 2000-Watt gesellschaft: Leitfaden und Fallbeispiele" (2012):
+            'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
+        -   Fonseca, J. et al. "Assessing the environmental impact of future urban developments at neighborhood scale" (2015):
+            'INDUSTRY'
+
+    Due to lack of sources, the following target values are, as of yet, undefined:
+        'HOSPITAL', 'GYM', 'SWIMMING', 'SERVERROOM', 'COOLROOM'
+
+    Parameters
+    ----------
+    :param locator: an InputLocator instance set to the scenario to compute
+    :type locator: InputLocator
+
+    Return
+    ------
+    :returns target: dict containing pen_MJm2 and ghg_kgm2 target values
+    :rtype target: dict
     '''
 
     # local files
@@ -134,7 +160,6 @@ def calc_benchmark_targets(locator):
     data_benchmark = locator.get_data_benchmark()
     occupancy = prop_occupancy.merge(demand,on='Name')
 
-    fields = ['Name', 'pen_GJ', 'ghg_ton', 'pen_MJm2', 'ghg_kgm2']
     categories = ['embodied', 'operation', 'mobility', 'total']
     suffix = ['_GJ', '_ton','_MJm2', '_kgm2']
     targets = {}
