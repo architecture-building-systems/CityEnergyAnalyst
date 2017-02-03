@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Ventilation according to DIN EN 16798-7:2015
+Ventilation according to [DIN-16798-7]_ and [ISO-9972]_
 
-Created on Tue Apr 12 18:04:04 2016
-@author: happle@arch.ethz.ch
-Reference:
-[1] Energieeffizienz von Gebäuden - Teil 7: Modul M5-1, M 5-5, M 5-6, M 5-8 –
+.. [DIN-16798-7]  Energieeffizienz von Gebäuden - Teil 7: Modul M5-1, M 5-5, M 5-6, M 5-8 –
     Berechnungsmethoden zur Bestimmung der Luftvolumenströme in Gebäuden inklusive Infiltration;
     Deutsche Fassung prEN 16798-7:2014
-[2] Wärmetechnisches Verhalten von Gebäuden –
+
+
+.. [ISO-9972] Wärmetechnisches Verhalten von Gebäuden –
     Bestimmung der Luftdurchlässigkeit von Gebäuden –
     Differenzdruckverfahren (ISO 9972:2015);
     Deutsche Fassung EN ISO 9972:2015
@@ -252,18 +251,14 @@ def calc_delta_p_path(p_zone_ref, height_path, temp_zone, coeff_wind_pressure_pa
     """
     Calculation of indoor-outdoor pressure difference at air path according to 6.4.2.4 in [1]
 
-    Parameters
-    ----------
-    p_zone_ref : zone reference pressure (Pa)
-    height_path : height of ventilation path (m)
-    temp_zone : air temperature of ventilation zone in (°C)
-    coeff_wind_pressure_path : wind pressure coefficient of ventilation path (-)
-    u_wind_site : wind velocity (m/s)
-    temp_ext : external air temperature (°C)
+    :param p_zone_ref: zone reference pressure (Pa)
+    :param height_path: height of ventilation path (m)
+    :param temp_zone: air temperature of ventilation zone in (°C)
+    :param coeff_wind_pressure_path: wind pressure coefficient of ventilation path (-)
+    :param u_wind_site: wind velocity (m/s)
+    :param temp_ext: external air temperature (°C)
 
-    Returns
-    -------
-    delta_p_path : pressure difference across ventilation path (Pa)
+    :returns: ``delta_p_path``, pressure difference across ventilation path (Pa)
     """
 
     # constants from Table 12 in [1]
