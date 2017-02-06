@@ -20,7 +20,7 @@ import os
 import sys
 # import sphinx_rtd_theme
 
-sys.path.insert(0, os.path.abspath('../cea'))
+sys.path.insert(0, os.path.abspath('..'))
 
 print 'conf.py:', sys.path
 print 'currdir:', os.path.abspath(os.curdir)
