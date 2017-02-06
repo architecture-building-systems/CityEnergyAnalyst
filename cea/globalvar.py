@@ -2,11 +2,6 @@
 """
 Global variables - this object contains context information and is expected to be refactored away in future.
 """
-import sys
-import os
-
-print 'globalvar:', sys.path, os.curdir
-
 import cea.demand.demand_writers
 
 # from cea.demand import thermal_loads

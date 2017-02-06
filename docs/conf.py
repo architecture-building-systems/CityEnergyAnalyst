@@ -22,6 +22,8 @@ import sys
 
 sys.path.insert(0, os.path.abspath('../cea'))
 
+print 'conf.py:', sys.path, os.curdir
+
 
 # -- General configuration ------------------------------------------------
 
