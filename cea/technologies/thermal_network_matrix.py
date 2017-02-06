@@ -81,13 +81,13 @@ def thermal_network_main(locator, gv, network_type, source):
     t_target_supply = read_properties_from_buildings(building_names, buildings_demands, 'T_sup_target_'+ network_type)
     t_target_supply_df = write_substations_to_nodes_df(all_nodes_df, t_target_supply, flag= True)  #(1xn)
 
-    # assign pipe properties
-    ## calculate maximum edge mass flow
+    # # assign pipe properties
+    # ## calculate maximum edge mass flow
     # edge_mass_flow_df, max_edge_mass_flow_df =  calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands,
     #                                                                   edge_node_df, gv, locator, substations_HEX_specs,
     #                                                                   t_target_supply, network_type)
 
-    # # TODO: This is a temporary function to read from file and save run time for 'calc_max_edge_flowrate'
+    # TODO: This is a temporary function to read from file and save run time for 'calc_max_edge_flowrate'
     edge_mass_flow_df, max_edge_mass_flow_df = read_max_edge_flowrate(edge_node_df, locator, network_type)
 
     # assign pipe id/od according to maximum edge mass flow
@@ -728,11 +728,12 @@ def calc_edge_temperatures(temperature_node, edge_node):
     # since many nodes have no assigned temperature, the temperatures in many of the edges were unreasonable (< 273K)
     # these are set to zero here # TODO [MM, SH]: does this make sense? can we set the node temperatures somehow?
     # FIXME[Answer to MM]: if one of the node temperature is 'nan' meaning there is no flow on that edge, therefore, you probably don't need the temperature from that edge...
+    # ANSWER: as I mentioned, the 'nan' had to be converted to 0 to do the edge temperature calculation, but this means that there's a lot of values <273K (average of one node temperature and 0)
+    # FIXED: changed all values that make no sense (<273K) back to 'nan'. TODO: agree?
     for i in range(temperature_edge.shape[0]):
         for j in range(temperature_edge.shape[1]):
             if temperature_edge[i][j] < 273:
-                temperature_edge[i][j] = 0
-
+                temperature_edge[i][j] = np.nan
     return temperature_edge
 
 #============================
@@ -962,6 +963,15 @@ def extract_network_from_shapefile(edges_df, nodes_df):
 
 def write_substations_to_nodes_df(all_nodes_df, df_value, flag):
     nodes_df = pd.DataFrame()
+
+    # it is assumed that if there is more than one plant, they all supply the same amount of heat at each time step
+    # (i.e., the amount supplied by each plant is not optimized)
+    # TODO[MM, SH]: question: due to the way we processed the data before, this step is necessary in order to have multiple plants. is this ok? one step further: is this better than just assuming there is always one plant?
+    number_of_plants = 0
+    for node in all_nodes_df:
+        if all_nodes_df[node]['plant'] != '':
+            number_of_plants += 1
+
     if flag == True:
         #write temperature into nodes dataframe
         for node in all_nodes_df:
@@ -983,13 +993,11 @@ def write_substations_to_nodes_df(all_nodes_df, df_value, flag):
             assuming only one plant node, the mass flow on the supply side needs to equal the mass flow from consumers
             so mass_flow_supply = sum(mass_flow_demand[node]) for all nodes
             '''
-
             if all_nodes_df[node]['consumer'] != '':
                 nodes_df[node] = df_value[all_nodes_df[node]['consumer']]
             elif all_nodes_df[node]['plant'] != '':
                 # nodes_df[node] = df_value[all_nodes_df[node]['plant']] - (df_value.sum(axis=1) - df_value[all_nodes_df[node]['plant']])
-                nodes_df[node] = - (df_value.sum(axis=1) - df_value[all_nodes_df[node]['plant']])
-                # FIXME[MM]: shall we delete this? are we ignoring the consumer requirement at the plant node, and only treating the plant node as a plant now?
+                nodes_df[node] = - df_value.sum(axis=1)/number_of_plants
             else:
                 nodes_df[node] = 0
     return nodes_df
