@@ -17,7 +17,11 @@ from geopandas import GeoDataFrame as gpdf
 
 from cea import inputlocator
 
-
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 
 def benchmark(locator_list, output_file):
@@ -137,11 +141,10 @@ def calc_benchmark_targets(locator):
             'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
         -   Kellenberger, D. et al. "Arealentwicklung fur die 2000-Watt gesellschaft: Leitfaden und Fallbeispiele" (2012):
             'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
-        -   Fonseca, J. et al. "Assessing the environmental impact of future urban developments at neighborhood scale" (2015):
-            'INDUSTRY'
-
+        -   Calculated based on "SIA Effizienzpfad: Bestimmung der Ziel- und Richtwerte mit dem Top-Down Approach" (2010):
+            'HOSPITAL', 'INDUSTRY'
     Due to lack of sources, the following target values are, as of yet, undefined:
-        'HOSPITAL', 'GYM', 'SWIMMING', 'SERVERROOM', 'COOLROOM'
+        'GYM', 'SWIMMING', 'SERVERROOM', 'COOLROOM'
 
     Parameters
     ----------
@@ -189,11 +192,28 @@ def calc_benchmark_targets(locator):
 
 def calc_benchmark_today(locator):
     '''
-    Calculates the embodied, operation, mobility and total targets (ghg_kgm2
-    and pen_MJm2) for the area for the current national trend.
-    CURRENTLY BASED ON INDUCITY! Need a better source.
-    :param locator: an InputLocator set to the scenario to compute
-    :array values_today: pen_MJm2 and ghg_kgm2 for the scenario based on benchmarked present day situation
+    This function calculates the embodied, operation, mobility and total targets (ghg_kgm2 and pen_MJm2)
+    for the area for the current national trend.
+
+    The current values for the Swiss case for each type of occupancy are based on the following sources:
+        -   Swiss Society of Engineers and Architects (SIA), "SIA Efficiency Path 2040" (2011):
+            'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
+        -   Kellenberger, D. et al. "Arealentwicklung fur die 2000-Watt gesellschaft: Leitfaden und Fallbeispiele" (2012):
+            'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
+        -   Calculated based on "SIA Effizienzpfad: Bestimmung der Ziel- und Richtwerte mit dem Top-Down Approach" (2010):
+            'HOSPITAL', 'INDUSTRY'
+    Due to lack of sources, the following target values are, as of yet, undefined:
+        'GYM', 'SWIMMING', 'SERVERROOM', 'COOLROOM'
+
+    Parameters
+    ----------
+    :param locator: an InputLocator instance set to the scenario to compute
+    :type locator: InputLocator
+
+    Return
+    ------
+    :returns target: dict containing pen_MJm2 and ghg_kgm2 target values
+    :rtype target: dict
     '''
 
     # local files
