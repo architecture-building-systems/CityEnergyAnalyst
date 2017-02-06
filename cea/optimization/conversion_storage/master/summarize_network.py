@@ -27,17 +27,22 @@ def network_main(locator, total_demand, building_names, gv, key):
     - absolute values (design values = extreme values)
     - hourly operation scheme of input/output of distribution
 
+    Parameters
+    ----------
     :param locator: locator class
     :param total_demand: dataframe with total demand of buildings
     :param building_names: vector with names of buildings
     :param gv: global variables class
     :param key: when called by the optimization, a key will provide an id for the individual
      and the generation.
-    :return:
-        csv file stored in locator.get_optimization_network_results_folder() as fName_result
-        where
-        fName_result: FIXME: what?
-
+    :type locator: class
+    :type total_demand: list
+    :type building_names: vector
+    :type gv: class
+    :type key: int
+    :return: csv file stored in locator.get_optimization_network_results_folder() as fName_result
+        where fName_result: FIXME: what?
+    :rtype: Nonetype
     """
 
     t0 = time.clock()
@@ -176,13 +181,20 @@ def calc_temp_withlosses(t0, Q, m, cp, case):
     """
     This function calculates the new temperature of the distribution including losses
 
+    Parameters
+    ----------
     :param t0: current distribution temperature
     :param Q: load including thermal losses
     :param m: mass flow rate
     :param cp: specific heat capacity
     :param case: "positive": if there is an addition to the losses, :negative" otherwise
-    :return:
-        t1: new temperature of the distribution accounting for thermal losses in the grid
+    :type t0: float
+    :type Q: float
+    :type m: float
+    :type cp: float
+    :type case: string
+    :return: t1: new temperature of the distribution accounting for thermal losses in the grid
+    :rtype: float
     """
     if m > 0:
         if case == "positive":
@@ -195,12 +207,16 @@ def calc_temp_withlosses(t0, Q, m, cp, case):
 
 def calc_return_temp(sum_t_m, sum_m):
     """
+    Parameters
+    ----------
     This function calculates the return temperature of the distribution for a time step
 
     :param sum_t_m: sum of temperature times mass flow rate
     :param sum_m: sum of mass flow rate
-    :return:
-        tr: vector return temperature
+    :type sum_t_m: float
+    :type sum_m: float
+    :return: tr: vector return temperature
+    :rtype: float
     """
     if sum_m > 0:
         tr = sum_t_m / sum_m
@@ -211,15 +227,22 @@ def calc_return_temp(sum_t_m, sum_m):
 
 def calc_supply_temp(tr, Q, m, cp, case):
     """
+    Parameters
+    ----------
     This function calculates the supply temperature of the distribution for a time step.
 
     :param tr: current return temperature
     :param Q: load including thermal losses
     :param m: mass flow rate
     :param cp: specific heat capacity
-    :param case:
-    :return:
-        ts: new temperature of the distribution accounting for thermal losses in the grid
+    :param case: 'DH' or something else??
+    :type tr: float
+    :type Q: float
+    :type m: float
+    :type cp: float
+    :type case: string
+    :return: ts: new temperature of the distribution accounting for thermal losses in the grid
+    :rtype: float
     """
     if m > 0:
         if case == "DH":
@@ -238,6 +261,8 @@ def calc_piping_thermal_losses(Tnet, mmax, mmin, L, Tg, K, cp):
     """
     This function estimates the average thermal losses of a distribution for an hour of the year
 
+    Parameters
+    ----------
     :param Tnet: current temperature of the pipe
     :param mmax: maximum mass flow rate in the pipe
     :param mmin: minimum mass flow rate in the pipe
@@ -245,8 +270,15 @@ def calc_piping_thermal_losses(Tnet, mmax, mmin, L, Tg, K, cp):
     :param Tg: ground temperature
     :param K: linear transmittance coefficient (it accounts for insulation and pipe diameter)
     :param cp: specific heat capacity
-    :return:
-        Qloss: thermal lossess in the pipe.
+    :type Tnet: float
+    :type mmax: float
+    :type mmin: float
+    :type L: float
+    :type Tg: float
+    :type K: float
+    :type cp: float
+    :return: Qloss: thermal lossess in the pipe.
+    :rtype: float
     """
     if mmin != 1E6:  # control variable see function fn.calc_min_flow
         mavg = (mmax + mmin) / 2
@@ -262,13 +294,17 @@ def calc_piping_thermal_losses(Tnet, mmax, mmin, L, Tg, K, cp):
 
 def calc_min_flow(m0, m1):
     """
-    This fucntion calculates the minimum flow of a distribution by comparison of two vectors.
-    this is useful when lookig up at multiple buildings in a for loop.
+    This function calculates the minimum flow of a distribution by comparison of two vectors.
+    this is useful when looking up at multiple buildings in a for loop.
 
+    Parameters
+    ----------
     :param m0: last minimum mass flow rate
     :param m1: current minimum mass flow rate
-    :return:
-        mmin: new minimum mass flow rate
+    :type m0: float
+    :type m1: float
+    :return: mmin: new minimum mass flow rate
+    :rtype: float
     """
     if m0 == 0:
         m0 = 1E6
@@ -284,18 +320,12 @@ def find_index_of_max(array):
 
     Parameters
     ----------
-    array : ndarray
-        Array of observations. Each row represents a day and each column the hourly data of that day
-
-
-    Returns
-    -------
-
-    max_index_hour : integer
-        max_index_hour : tells on what hour it happens (hour of the year)
-
-    to use: e.g. data_array[max_index_hour] will give the maximum data of the year
-
+    :param array: ndarray, Array of observations. Each row represents a day and each column
+    the hourly data of that day
+    :type array: list
+    :return: max_index_hour : integer, max_index_hour : tells on what hour it happens (hour of the year)
+     to use: e.g. data_array[max_index_hour] will give the maximum data of the year
+    :rtype: list
     """
 
     max_value = -abs(np.amax(array))

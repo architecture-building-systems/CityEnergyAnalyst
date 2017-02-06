@@ -21,7 +21,8 @@ class InputLocator(object):
     # SCENARIO
     def __init__(self, scenario_path):
         self.scenario_path = scenario_path
-        self.db_path = os.path.join(os.path.dirname(__file__), 'databases', 'CH')
+        self.db_path = os.path.join(os.path.dirname(__file__), 'databases', 'CH')  # FIXME: add country code parameter
+        self.weather_path = os.path.join(os.path.dirname(__file__), 'databases', 'weather')
 
     @staticmethod
     def _ensure_folder(*components):
@@ -187,20 +188,20 @@ class InputLocator(object):
 
     # DATABASES
     def get_default_weather(self):
-        """db/Weather/Zurich.epw
+        """weather/Zug-2010.epw
         path to database of archetypes file Archetypes_properties.xlsx"""
-        return os.path.join(self.db_path, 'Weather', 'Zug-2010.epw')
+        return os.path.join(self.weather_path, 'Zug-2010.epw')
 
     def get_weather(self, name):
-        """db/Weather/{name}.epw"""
-        weather_path = os.path.join(self.db_path, 'Weather', name + '.epw')
-        if not os.path.exists(weather_path):
+        """weather/{name}.epw"""
+        weather_file = os.path.join(self.weather_path, name + '.epw')
+        if not os.path.exists(weather_file):
             return self.get_default_weather()
-        return weather_path
+        return weather_file
 
     def get_weather_names(self):
         """Return a list of all installed epw files in the system"""
-        weather_names = [os.path.splitext(f)[0] for f in os.listdir(os.path.join(self.db_path, 'Weather'))]
+        weather_names = [os.path.splitext(f)[0] for f in os.listdir(self.weather_path)]
         return weather_names
 
     def get_archetypes_properties(self):
@@ -275,7 +276,7 @@ class InputLocator(object):
         return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'internal_loads.shp')
 
     def get_building_comfort(self):
-        """scenario/inputs/building-properties/indoor_comfort.shp'"""
+        """scenario/inputs/building-properties/indoor_comfort.shp"""
         return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'indoor_comfort.shp')
 
     def get_building_hvac(self):
@@ -389,11 +390,11 @@ class InputLocator(object):
         return lca_emissions_results_folder
 
     def get_lca_embodied(self):
-        """cenario/outputs/data/emissions/Total_LCA_embodied.csv"""
+        """scenario/outputs/data/emissions/Total_LCA_embodied.csv"""
         return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_embodied.csv')
 
     def get_lca_operation(self):
-        """cenario/outputs/data/emissions/Total_LCA_operation.csv"""
+        """scenario/outputs/data/emissions/Total_LCA_operation.csv"""
         return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_operation.csv')
 
     def get_lca_mobility(self):
@@ -417,6 +418,11 @@ class InputLocator(object):
         """scenario/outputs/plots/graphs/Benchmark_scenarios.pdf"""
         return os.path.join(self._ensure_folder(self.scenario_path, 'outputs', 'plots', 'graphs'),
                             'Benchmark_scenarios.pdf')
+
+    def get_optimization_plots_folder(self):
+        """scenario/outputs/plots/graphs/Benchmark_scenarios.pdf"""
+        return os.path.join(self._ensure_folder(self.scenario_path, 'outputs', 'plots', 'graphs'))
+
 
     # HEATMAPS
     def get_heatmaps_demand_folder(self):

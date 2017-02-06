@@ -1,3 +1,5 @@
+import os
+
 import arcpy
 
 import cea
@@ -49,6 +51,18 @@ class DemandTool(object):
         return
 
     def updateMessages(self, parameters):
+        scenario_path = parameters[0].valueAsText
+        if scenario_path is None:
+            return
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+        import cea.inputlocator
+        locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+        if not os.path.exists(locator.get_radiation()):
+            parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
+        if not os.path.exists(locator.get_surface_properties()):
+            parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
         return
 
     def execute(self, parameters, messages):

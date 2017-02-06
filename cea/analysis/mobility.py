@@ -44,9 +44,6 @@ def lca_mobility(locator):
     data_mobility = locator.get_data_mobility()
     factors_mobility = pd.read_excel(data_mobility, sheetname='2010')
 
-    # local variables
-    result_folder = locator.get_lca_emissions_results_folder()
-
     # calculate total_LCA_mobility:.csv
     vt = factors_mobility['code']
     pt = factors_mobility['PEN']
