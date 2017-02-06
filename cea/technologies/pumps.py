@@ -31,19 +31,11 @@ def Pump_operation(P_design):
         MerkblattPreiseFU2010_2011.pdf
         MerkblattPreiseMotoren2010_2011.pdf
 
-    Parameters
-    ----------
     P_design : float
         Load of time step
 
-    Returns
-    -------
     eta_el : float
         electric efficiency of Pumping operation in abs. numbers (e.g. 0.93)
-
-
-
-
     """
 
     x = [0.5, 0.75, 1.1, 1.5, 2.2, 3, 4, 5.5, 7.5, 11, 15, 18, 22, 30, 37, 45, 55, 75, 90, 110, 132, 160, 200, 220] # Nominal load in kW
@@ -60,20 +52,11 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV):
     """
     Computes the pumping costs
     
-    Parameters
-    ----------
-    dicoSupply : class context
-    buildList : list
-        list of buildings in the district
-    network_results_folder : string
-        path to network results folder
-    ntwFeat : class ntwFeatures
-    
-    Returns
-    -------
-    pumpCosts : float
-    
-    """    
+    :param dicoSupply: class context
+    :param buildList: list, list of buildings in the district
+    :param network_results_folder: string, path to network results folder
+    :param ntwFeat: class ntwFeatures
+    """
     pumpCosts = 0
     #nBuild = dicoSupply.nBuildingsConnected
     #ntot = len(buildList)
@@ -112,8 +95,6 @@ def Pump_Cost(deltaP, mdot, eta_pumping, gV):
 
     Investement costs are calculated upon the life time of a GHP ( 20y) and a GHP- related interest rate of 6%
 
-    Parameters
-    ----------
     deltaP : float
         Pressure drop that has to be overcome with the pump (nominal)
 
@@ -123,14 +104,11 @@ def Pump_Cost(deltaP, mdot, eta_pumping, gV):
     eta_pumping : float
         pump efficiency (set 0.8 as standard value, eta = E_pumping / E_elec)
 
-    Returns
-    -------
     InvC_return : float
         total investment Cost in CHF
 
     InvCa : float
         annualized investment costs in CHF/year
-
     """
 
     E_pumping_required = mdot * deltaP /gV.rho_60
@@ -183,8 +161,6 @@ def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
 
     Investement costs are calculated upon the life time of a GHP ( 20y) and a GHP- related interest rate of 6%
 
-    ParametersF
-    ----------
     deltaP : float
         Pressure drop that has to be overcome with the pump (nominal)
 
@@ -194,14 +170,11 @@ def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
     eta_pumping : float
         pump efficiency (set 0.8 as standard value, eta = E_pumping / E_elec)
 
-    Returns
-    -------
     InvC_return : float
         total investment Cost in CHF
 
     InvCa : float
         annualized investment costs in CHF/year
-
     """
 
     E_pumping_required = mdot * deltaP /gV.rho_60

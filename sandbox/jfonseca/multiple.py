@@ -74,18 +74,11 @@ class MultipleTool(object):
                             path_schedules=os.path.join(os.path.dirname(__file__), 'databases', 'Schedules'),
                             path_temporary_folder = tempfile.gettempdir(),
                             gv=gv)
-                    
+
+
 def multiple_scenarios(path_list_scenarios, path_LCA_embodied_energy, path_LCA_embodied_emissions, path_archetypes, path_schedules, path_temporary_folder, gv):
     """
     Algorithm to calculate multiple scenarios at the time
-
-    Parameters
-    ----------
-    To do
-
-    Returns
-    -------
-    To do
     """
     paths_of_scenarios = pd.read_excel(path_list_scenarios, sheetname='scenarios')
     number_scenarios = paths_of_scenarios.path_scenario.count()

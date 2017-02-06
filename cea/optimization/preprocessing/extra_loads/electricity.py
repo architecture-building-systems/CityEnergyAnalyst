@@ -18,8 +18,6 @@ def calc_pareto_electricity(locator, gv):
     This function computes the parameters for the electrical demand contributing to the pareto optimal alternatives.
     in the future, this aspect should be included in the optimization itself.
 
-    Parameters
-    ----------
     :param locator: locator class
     :param gv: global variables class
     :type locator: class

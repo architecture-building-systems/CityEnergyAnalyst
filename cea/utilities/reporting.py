@@ -17,7 +17,7 @@ __status__ = "Production"
 
 
 def full_report_to_xls(tsd, output_folder, basename, gv):
-    """ this function is to write a full report to an *.xls file containing all intermediate and final results of a
+    """ this function is to write a full report to an ``*.xls`` file containing all intermediate and final results of a
     single building thermal loads calculation"""
 
     df = pd.DataFrame(tsd)

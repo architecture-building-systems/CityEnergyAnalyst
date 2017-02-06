@@ -22,8 +22,6 @@ def calc_h_ve_adj(tsd, hoy, gv):
     """
     calculate Hve,adj according to ISO 13790
 
-    Parameters
-    ----------
     q_m_mech : air mass flow from mechanical ventilation (kg/s)
     q_m_nat : air mass flow from windows and leakages and other natural ventilation (kg/s)
     temp_ext : exterior air temperature (°C)
@@ -31,10 +29,7 @@ def calc_h_ve_adj(tsd, hoy, gv):
     temp_zone_set : zone air temperature set point (°C)
     gv : globalvars
 
-    Returns
-    -------
     Hve,adj in (W/K)
-
     """
 
     # get parameters

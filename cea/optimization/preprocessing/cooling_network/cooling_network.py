@@ -34,8 +34,6 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
     """
     Computes the parameters for the cooling of the complete DCN
     
-    Parameters
-    ----------
     :param locator: path to res folder
     :param configKey: configuration key for the District Heating Network (DHN)
     :param ntwFeat: network features
@@ -101,8 +99,6 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
     ############ Function for cooling operation
     def coolOperation(dataArray, el, QavailIni, TempSup = 0):
         """
-        Parameters
-        ----------
         :param dataArray:
         :param el:
         :param QavailIni:

@@ -18,14 +18,9 @@ def hoy_2_doy(hoy):
     """
     Hour of year to day of year
 
-    Parameters
-    ----------
     hoy: hour of year
 
-    Returns
-    -------
     doy: day of year
-
     """
 
     if check_hoy(hoy):
@@ -38,14 +33,9 @@ def doy_2_hoy(doy):
     """
     Day of year to hour of year
 
-    Parameters
-    ----------
     doy: day of year
 
-    Returns
-    -------
     hoy: hour of year
-
     """
 
     if check_doy(doy):
@@ -58,14 +48,9 @@ def hoy_2_woy(hoy):
     """
     Hour of year to week of year
 
-    Parameters
-    ----------
     hoy: hour of year
 
-    Returns
-    -------
     woy: weak of year
-
     """
 
     if check_hoy(hoy):
@@ -78,14 +63,9 @@ def hoy_2_moy(hoy):
     """
     hour of year to month of year
 
-    Parameters
-    ----------
     hoy: hour of year
 
-    Returns
-    -------
     moy: month of year
-
     """
 
     if check_hoy(hoy):
@@ -102,14 +82,9 @@ def hoy_2_hod(hoy):
     """
     hour of year to hour of day
 
-    Parameters
-    ----------
     hoy: hour of year
 
-    Returns
-    -------
     hod: hour of day
-
     """
 
     if check_hoy(hoy):
@@ -122,14 +97,9 @@ def hoy_2_dom(hoy):
     """
     hour of year to day of month
 
-    Parameters
-    ----------
     hoy: hour of year
 
-    Returns
-    -------
     dom: day of month
-
     """
 
     if check_hoy(hoy):
@@ -146,14 +116,9 @@ def hoy_2_seasonhour(hoy):
     """
     hour of year to hour relative to start of heating season
 
-    Parameters
-    ----------
     hoy: hour of year
 
-    Returns
-    -------
     seasonhour: hour relative to start of heating season
-
     """
 
     hoy_heat_stop, hoy_heat_start = globalvar.GlobalVariables().seasonhours
@@ -174,14 +139,9 @@ def seasonhour_2_hoy(seasonhour):
     """
     hour relative to start of heating season to hour of year
 
-    Parameters
-    ----------
     seasonhour: hour relative to start of heating season
 
-    Returns
-    -------
     hoy: hour of year
-
     """
 
     hoy_heat_stop, hoy_heat_start = globalvar.GlobalVariables().seasonhours
@@ -201,14 +161,9 @@ def check_hoy(hoy):
     """
     check for hour of year within bounds
 
-    Parameters
-    ----------
     hoy: hour of year
 
-    Returns
-    -------
     bool
-
     """
 
     if 0 <= hoy <= 8759:
@@ -223,14 +178,9 @@ def check_doy(doy):
     """
     check for day of year within bounds
 
-    Parameters
-    ----------
     doy: day of year
 
-    Returns
-    -------
     bool
-
     """
 
     if 0 <= doy <= 359:
@@ -245,14 +195,9 @@ def is_nighttime_hoy(hoy):
     """
     Check if a certain hour of year is during night or not
 
-    Parameters
-    ----------
     hoy: hour of year
 
-    Returns
-    -------
     bool
-
     """
     if check_hoy(hoy):
 
@@ -273,14 +218,9 @@ def is_daytime_hoy(hoy):
     """
     Check if a certain hour of the year is during the daytime or not
 
-    Parameters
-    ----------
     hoy : hour of year
 
-    Returns
-    -------
     bool
-
     """
     if check_hoy(hoy):
 
@@ -296,14 +236,9 @@ def is_heatingseason_hoy(hoy):
     """
     checks if a certain hour of the year is part of the heating season or not
 
-    Parameters
-    ----------
     hoy : hour of year
 
-    Returns
-    -------
     bool
-
     """
 
     if check_hoy(hoy):
@@ -327,14 +262,9 @@ def is_coolingseason_hoy(hoy):
     """
     checks if a certain hour of the year is part of the cooling season or not
 
-    Parameters
-    ----------
     hoy : hour of year
 
-    Returns
-    -------
     bool
-
     """
 
     if check_hoy(hoy):
@@ -352,10 +282,6 @@ def is_coolingseason_hoy(hoy):
 def test_helpers():
     """
     test helpers
-
-    Returns
-    -------
-
     """
 
     # translate hours of year to hours relative to start of heating season

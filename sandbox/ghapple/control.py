@@ -20,12 +20,8 @@ def has_heating_system(bpr):
     """
     determines whether a building has a heating system installed or not
 
-    Parameters
-    ----------
     bpr : building properties row object
 
-    Returns
-    -------
     bool
 
     """
@@ -43,12 +39,8 @@ def heating_system_is_ac(bpr):
     """
     determines whether a building's heating system is ac or not
 
-    Parameters
-    ----------
     bpr : building properties row object
 
-    Returns
-    -------
     bool
 
     """
@@ -66,14 +58,9 @@ def heating_system_is_radiative(bpr):
     """
     determines whether a building's heating system is radiative (radiators/floor heating) or not
 
-    Parameters
-    ----------
     bpr : building properties row object
 
-    Returns
-    -------
     bool
-
     """
 
     if bpr.hvac['type_hs'] in {'T1', 'T2'}:
@@ -107,14 +94,9 @@ def has_cooling_system(bpr):
     """
     determines whether a building has a cooling system installed or not
 
-    Parameters
-    ----------
     bpr : building properties row object
 
-    Returns
-    -------
     bool
-
     """
 
     if bpr.hvac['type_cs'] in {'T1', 'T2', 'T3'}:
@@ -130,14 +112,9 @@ def cooling_system_is_ac(bpr):
     """
     determines whether a building's heating system is ac or not
 
-    Parameters
-    ----------
     bpr : building properties row object
 
-    Returns
-    -------
     bool
-
     """
 
     if bpr.hvac['type_cs'] in {'T2', 'T3'}:  # mini-split ac and central ac
@@ -153,14 +130,9 @@ def cooling_system_is_radiative(bpr):
     """
     determines whether a building's heating system is radiative or not
 
-    Parameters
-    ----------
     bpr : building properties row object
 
-    Returns
-    -------
     bool
-
     """
 
     if bpr.hvac['type_cs'] in {'T1'}:
@@ -176,15 +148,10 @@ def is_heating_active(hoy, bpr):
     """
     determines whether the heating system of a building is active or not at a certain hour of the year
 
-    Parameters
-    ----------
     hoy : hour of the year
     bpr : building properties row object
 
-    Returns
-    -------
     bool
-
     """
 
     if has_heating_system(bpr):
@@ -201,13 +168,9 @@ def is_cooling_active(bpr, tsd, hoy, gv):
     """
     determines whether the cooling system of a building is active or not at a certain hour of the year
 
-    Parameters
-    ----------
     hoy : hour of the year
     bpr : building properties row object
 
-    Returns
-    -------
     bool
 
     """
@@ -267,16 +230,11 @@ def is_night_flushing_active(bpr, tsd, hoy):
     """
     determines system status (active/inactive) of night flushing system
 
-    Parameters
-    ----------
     hoy : hour of year
     tsd : data frame with thermal loads simulation results
     bpr : building properties row object
 
-    Returns
-    -------
     bool
-
     """
 
     # TODO: get night flushing building property (bpr)

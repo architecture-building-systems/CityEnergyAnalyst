@@ -190,8 +190,6 @@ def readCheckPoint(locator, genCP, storeData):
 
 def calc_num_buildings(data_path, totalfilename):
     """
-    Parameters
-    ----------
     :param data_path: path name
     :param totalfilename: path name
     :type data_path: string
