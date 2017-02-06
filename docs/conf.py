@@ -25,7 +25,8 @@ sys.path.insert(0, os.path.abspath('../cea'))
 print 'conf.py:', sys.path
 print 'currdir:', os.path.abspath(os.curdir)
 print os.listdir('..')
-
+import cea.globalvar
+print 'imported globalvar!!'
 
 # -- General configuration ------------------------------------------------
 
