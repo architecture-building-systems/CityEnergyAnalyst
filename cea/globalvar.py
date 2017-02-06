@@ -19,10 +19,11 @@ __status__ = "Production"
 
 class GlobalVariables(object):
     def __init__(self):
-        self.scenario_reference = r'c:\reference-case-zug\baseline'
+        self.scenario_reference = r'c:\reference-case-open\baseline'
         self.print_partial = 'hourly' # hourly or monthly for the deamnd script
-        self.print_yearly = True # print yearly values
+        self.print_totals = True # print yearly values
         self.print_yearly_peak = True # print peak values
+        self.simulate_building_list = None # fill it with a list of names of buildings in case not all the data set needs to be run
         self.date_start = '2016-01-01'  # format: yyyy-mm-dd
         self.seasonhours = [3216, 6192]
         self.multiprocessing = True  # use multiprocessing / parallel execution if possible
@@ -76,8 +77,8 @@ class GlobalVariables(object):
 
         # Commands for the evolutionary algorithm
 
-        self.initialInd = 3  # number of initial individuals
-        self.NGEN = 3000  # number of total generations
+        self.initialInd = 100  # number of initial individuals
+        self.NGEN = 30  # number of total generations
         self.fCheckPoint = 1  # frequency for the saving of checkpoints
         self.maxTime = 7 * 24 * 3600  # maximum computional time [seconds]
 
@@ -416,7 +417,7 @@ class GlobalVariables(object):
 
         # Data for Evolutionary algorithm
         self.nHeat = 6  # number of heating
-        self.nHR = 2 # number of heat recovry options
+        self.nHR = 2 # number of heat recovery options
         self.nSolar = 3 # number of solar technologies
 
         self.PROBA = 0.5
@@ -581,7 +582,6 @@ class GlobalVariables(object):
         if self.testing:
             from cea.utilities import reporting
             reporting.full_report_to_xls(template, variables, output_folder, basename, self)
-
 
 
     def log(self, msg, **kwargs):
