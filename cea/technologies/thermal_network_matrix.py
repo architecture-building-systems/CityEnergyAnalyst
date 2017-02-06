@@ -724,12 +724,9 @@ def calc_edge_temperatures(temperature_node, edge_node):
     '''
     calculates the temperature at each edge assuming T_edge = (T_node_1 + T_node_2)/2 as done, for example, by Wang et al.
     '''
+    # in order to calculate the edge temperatures, node temperature values of 'nan' were not acceptable
+    # so these were converted to 0 and then converted back to 'nan'
     temperature_edge = np.dot(np.nan_to_num(temperature_node),abs(edge_node)/2)
-    # since many nodes have no assigned temperature, the temperatures in many of the edges were unreasonable (< 273K)
-    # these are set to zero here # TODO [MM, SH]: does this make sense? can we set the node temperatures somehow?
-    # FIXME[Answer to MM]: if one of the node temperature is 'nan' meaning there is no flow on that edge, therefore, you probably don't need the temperature from that edge...
-    # ANSWER: as I mentioned, the 'nan' had to be converted to 0 to do the edge temperature calculation, but this means that there's a lot of values <273K (average of one node temperature and 0)
-    # FIXED: changed all values that make no sense (<273K) back to 'nan'. TODO: agree?
     for i in range(temperature_edge.shape[0]):
         for j in range(temperature_edge.shape[1]):
             if temperature_edge[i][j] < 273:
@@ -966,7 +963,6 @@ def write_substations_to_nodes_df(all_nodes_df, df_value, flag):
 
     # it is assumed that if there is more than one plant, they all supply the same amount of heat at each time step
     # (i.e., the amount supplied by each plant is not optimized)
-    # TODO[MM, SH]: question: due to the way we processed the data before, this step is necessary in order to have multiple plants. is this ok? one step further: is this better than just assuming there is always one plant?
     number_of_plants = 0
     for node in all_nodes_df:
         if all_nodes_df[node]['plant'] != '':
