@@ -120,8 +120,6 @@ def ST_Op(mdot, texh, tDH, fuel, gV):
     """
     Operation of a steam turbine connected to a district heating network
 
-    Parameters
-    ----------
     mdot : float
         mass flow rate of gas at the exit of the gas turbine
     texh : float
@@ -131,8 +129,6 @@ def ST_Op(mdot, texh, tDH, fuel, gV):
     fuel : string
         'NG' (natural gas) or 'BG' (biogas)
 
-    Returns
-    -------
     qdot : float
         heat power transfered to the DHN
     wdotfin : float
@@ -200,45 +196,42 @@ def ST_Op(mdot, texh, tDH, fuel, gV):
     return qdot, wdotfin
 
 
-def CC_Op(wdot, gt_size, fuel, tDH, gV):
+def CC_Op(wdot, gt_size, fuel, tDH, gv):
     """
     Operation Function of Combined Cycle, asking for electricity Demand.
 
-    Parameters
-    ----------
-    wdot : float
-        Electric load that is demanded to the gas turbine (only GT output, not CC output!)
-    gt_size : float
-        size of the GAS turbine and NOT CC (P_el_max)
-    fuel : string
-        'NG' (natural gas) or 'BG' (biogas)
-    tDH : float
-        temperature of supply of the district heating network (hot)
+    :param wdot: Electric load that is demanded to the gas turbine (only GT output, not CC output!)
+    :type wdot: float
 
+    :param gt_size:  size of the GAS turbine and NOT CC (P_el_max)
+    :type gt_size: float
 
-    Returns
-    -------
-    wtot : float
-        electric power OUTPUT from the combined cycle (both GT + ST !)
-    qdot : float
-        heat power transfered to the DHN
-    eta_elec : float
-        total electric efficiency
-    eta_heat : float
-        total thermal efficiency
-    eta_all : float
-        sum of total electric and thermal efficiency
+    :param fuel: 'NG' (natural gas) or 'BG' (biogas)
+    :type fuel: str
 
+    :param tDH: temperature of supply of the district heating network (hot)
+    :type tDH: float
+
+    :param gv: global context
+    :type gv: cea.globalvar.GlobalVariables
+
+    :returns: returns the tuple wtot, qdot, eta_elec, eta_heat, eta_all:
+       * wtot: electric power OUTPUT from the combined cycle (both GT + ST !)
+       * qdot: heat power transfered to the DHN
+       * eta_elec: total electric efficiency
+       * eta_heat: total thermal efficiency
+       * eta_all : sum of total electric and thermal efficiency
+    :rtype: Tuple[float, float, float, float, float]
     """
 
-    (eta0, mdot0) = GT_fullLoadParam(gt_size, fuel, gV)
-    (eta, mdot, texh, mdotgas) = GT_partLoadParam(wdot, gt_size, eta0, mdot0, fuel, gV)
-    (qdot, wdotfin) = ST_Op(mdot, texh, tDH, fuel, gV)
+    (eta0, mdot0) = GT_fullLoadParam(gt_size, fuel, gv)
+    (eta, mdot, texh, mdotgas) = GT_partLoadParam(wdot, gt_size, eta0, mdot0, fuel, gv)
+    (qdot, wdotfin) = ST_Op(mdot, texh, tDH, fuel, gv)
 
     if fuel == 'NG':
-        LHV = gV.LHV_NG
+        LHV = gv.LHV_NG
     else:
-        LHV = gV.LHV_BG
+        LHV = gv.LHV_BG
 
     eta_elec = (wdot + wdotfin) / (mdotgas * LHV)
     eta_heat = qdot / (mdotgas * LHV)
@@ -252,8 +245,6 @@ def GT_partLoadParam(wdot, gt_size, eta0, mdot0, fuel, gV):
     """
     Calculates parameters at part load
 
-    Parameters
-    ----------
     wdot : float
         Electric load that is demanded to the gas turbine
     gt_size : float
@@ -265,8 +256,6 @@ def GT_partLoadParam(wdot, gt_size, eta0, mdot0, fuel, gV):
     fuel : string
         'NG' (natural gas) or 'BG' (biogas)
 
-    Returns
-    -------
     eta : float
         efficiency at part load (electr)
     mdot : float
@@ -329,8 +318,6 @@ def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
         Approach B:
             http://etheses.bham.ac.uk/641/1/Staffell10PhD.pdf
 
-    Parameters
-    ----------
     Q_load : float
         Load of time step
 
@@ -343,8 +330,6 @@ def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
     approach_call : string
         choose "A" or "B": A = NREL-Approach, B = Empiric Approach
 
-    Returns
-    -------
     eta_el : float
         electric efficiency of FC (Lower Heating Value), in abs. numbers
 
@@ -414,13 +399,9 @@ def calc_Cinv_CCT(CC_size, gV):
     """
     Annualized investment costs for the Combined cycle
 
-    Parameters
-    ----------
     CC_size : float
         Electrical size of the CC
 
-    Returns
-    -------
     InvCa : float
         annualized investment costs in CHF
 
@@ -438,13 +419,9 @@ def calc_Cinv_FC(P_design, gV):
 
     http://hexis.com/sites/default/files/media/publikationen/140623_hexis_galileo_ibb_profitpaket.pdf?utm_source=HEXIS+Mitarbeitende&utm_campaign=06d2c528a5-1_Newsletter_2014_Mitarbeitende_DE&utm_medium=email&utm_term=0_e97bc1703e-06d2c528a5-
 
-    Parameters
-    ----------
     P_design : float
         Design THERMAL Load of Fuel Cell [W_th]
 
-    Returns
-    -------
     InvC_return : float
         total investment Cost
 

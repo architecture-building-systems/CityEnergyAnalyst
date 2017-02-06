@@ -120,19 +120,12 @@ def calc_sunrise(sunrise, Yearsimul, longitude, latitude):
 def declination_degree(when, TY):
     """The declination of the sun is the angle between Earth's equatorial plane and a line
     between the Earth and the sun. It varies between 23.45 degrees and -23.45 degrees,
-    hitting zero on the equinoxes and peaking on the solstices.
-    Parameters
-    ----------
-    when : datetime.datetime
-        date/time for which to do the calculation
-    TY : float
-        Total number of days in a year. eg. 365 days per year,(no leap days)
-    Returns
-    -------
-    DEC : float
-        The declination of the Sun
-    References
-    ----------
+    hitting zero on the equinoxes and peaking on the solstices. [1]_
+
+    :param when: datetime.datetime, date/time for which to do the calculation
+    :param TY: float, Total number of days in a year. eg. 365 days per year,(no leap days)
+    :param DEC: float,  The declination of the Sun
+
     .. [1] http://pysolar.org/
     """
     return 23.45 * math.sin((2 * math.pi / (TY)) * ((when.utctimetuple().tm_yday) - 81))

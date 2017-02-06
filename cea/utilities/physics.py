@@ -23,13 +23,9 @@ def calc_w(t, RH):
     """
     Moisture content in kg/kg of dry air
 
-    Parameters
-    ----------
     t : temperature of air in (°C)
     RH : relative humidity of air in (%)
 
-    Returns
-    -------
     w : moisture content of air in (kg/kg dry air)
     """
     Pa = 100000  # Pa
@@ -46,13 +42,9 @@ def calc_h(t, w):
     """
     calculates enthalpy of moist air in kJ/kg
 
-    Parameters
-    ----------
     t : air temperature in (°C)
     w : moisture content of air in (kg/kg dry air)
 
-    Returns
-    -------
     h : enthalpy of moist air in (kJ/kg)
     """
 
@@ -127,12 +119,8 @@ def calc_rho_air(temp_air):
     """
     Calculation of density of air according to 6.4.2.1 in [1]
 
-    Parameters
-    ----------
     temp_air : air temperature in (°C)
 
-    Returns
-    -------
     rho_air : air density in (kg/m3)
 
     """

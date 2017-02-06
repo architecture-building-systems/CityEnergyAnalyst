@@ -28,8 +28,6 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
     Valid for Q_design = 1-10 MW
 
-    Parameters
-    ----------
     Q_load : float
         Load of time step
 
@@ -41,8 +39,6 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
 
 
-    Returns
-    -------
     eta_therm : float
         thermal Efficiency of Furnace (Lower Heating Value), in abs. numbers
 
@@ -120,8 +116,6 @@ def Furnace_op_cost(Q_therm, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
 
 
-    Parameters
-    ----------
     Q_therm : float
         thermal energy required from furnace plant in Wh
 
@@ -135,8 +129,6 @@ def Furnace_op_cost(Q_therm, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
         moisture type of the fuel, set in MasterToSlaveVariables ('wet' or 'dry')
 
 
-    Returns
-    -------
     C_furn : float
         Total generation cost for required load (per hour) in CHF, including profits from electricity Sold
 
@@ -210,16 +202,12 @@ def calc_Cinv_furnace(P_design, Q_annual, gv):
     based on Bioenergy 2020 (AFO) and POLYCITY Ostfildern 
 
     
-    Parameters
-    ----------
     P_design : float
         Design Power of Furnace Plant (Boiler Thermal power!!) [W]
         
     Q_annual : float
         annual thermal Power output [Wh]
     
-    Returns
-    -------
     InvC_return : float
         total investment Cost for building the plant
     

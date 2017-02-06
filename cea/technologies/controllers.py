@@ -116,8 +116,6 @@ def calc_simple_ventilation_control(ve, people, Af, gv, hour_day, hour_year, n50
     Modified version of calc_simple_ventilation_control from functions.
     Fixed infiltration according to schedule is only considered for mechanically ventilated buildings.
 
-    Parameters
-    ----------
     ve : required ventilation rate according to schedule (?)
     people : occupancy schedules (pax?)
     Af : conditioned floor area (m2)
@@ -126,8 +124,6 @@ def calc_simple_ventilation_control(ve, people, Af, gv, hour_day, hour_year, n50
     hour_year : hour of the year [0..8760]
     n50 : building envelope leakiness from archetypes
 
-    Returns
-    -------
     q_req : required ventilation rate schedule (m3/s)
     """
     # TODO: check units

@@ -19,51 +19,35 @@ __status__ = "Production"
 
 # operation costs
 
-def calc_Cop_GHP(mdot, tsup, tret, tground, gV):
+def calc_Cop_GHP(mdot, tsup, tret, tground, gv):
     """
     For the operation of a Geothermal Heat pump
 
-    Parameters
-    ----------
-    mdot : float
-        mass flow rate in the district heating network
-    tsup : float
-        temperature of supply to the DHN (hot)
-    tret : float
-        temperature of return from the DHN (cold)
-    tground : float
-        temperature of the ground
-
-    Returns
-    -------
-    wdot_el : float
-        total electric power needed (compressor and auxiliary)
-    qcolddot : float
-        cold power needed
-    qhotdot_missing : float
-        heating energy which cannot be provided by the HP
-    tsup2 : supply temperature after HP (to DHN)
-
+    :param mdot: float, mass flow rate in the district heating network
+    :param tsup: float, temperature of supply to the DHN (hot)
+    :param tret: float, temperature of return from the DHN (cold)
+    :param tground: float, temperature of the ground
+    :param gv: global context
     """
     tsup2 = tsup
 
-    tcond = tsup + gV.HP_deltaT_cond
-    if tcond > gV.HP_maxT_cond:
+    tcond = tsup + gv.HP_deltaT_cond
+    if tcond > gv.HP_maxT_cond:
         #raise ModelError
-        tcond = gV.HP_maxT_cond
-        tsup2 = tcond - gV.HP_deltaT_cond  # lower the supply temp if necessairy
+        tcond = gv.HP_maxT_cond
+        tsup2 = tcond - gv.HP_deltaT_cond  # lower the supply temp if necessairy
 
 
-    tevap = tground - gV.HP_deltaT_evap
-    COP = gV.GHP_etaex / (1- tevap/tcond)
+    tevap = tground - gv.HP_deltaT_evap
+    COP = gv.GHP_etaex / (1 - tevap / tcond)
 
-    qhotdot = mdot * gV.cp * (tsup2 - tret)  # tsup2 = tsup, if all load can be provided by the HP
+    qhotdot = mdot * gv.cp * (tsup2 - tret)  # tsup2 = tsup, if all load can be provided by the HP
                                              #  else: tsup2 < tsup if max load is not enough
 
-    qhotdot_missing = mdot * gV.cp * (tsup - tsup2) #calculate the missing energy if needed
+    qhotdot_missing = mdot * gv.cp * (tsup - tsup2) #calculate the missing energy if needed
 
     wdot = qhotdot / COP
-    wdot_el = wdot / gV.GHP_Auxratio
+    wdot_el = wdot / gv.GHP_Auxratio
 
     qcolddot =  qhotdot - wdot
 
@@ -118,8 +102,6 @@ def HPLake_Op(mdot, tsup, tret, tlake, gV):
     For the operation of a Heat pump
     between a district heating network and a lake
 
-    Parameters
-    ----------
     mdot : float
         mass flow rate in the district heating network
     tsup : float
@@ -129,8 +111,6 @@ def HPLake_Op(mdot, tsup, tret, tlake, gV):
     tlake : float
         temperature of the lake
 
-    Returns
-    -------
     wdot_el : float
         total electric power needed (compressor and auxiliary)
     qcolddot : float
@@ -172,13 +152,9 @@ def calc_Cinv_GHP(GHP_Size, gV):
     """
     Calculates the annualized investment costs for the geothermal heat pump
 
-    Parameters
-    ----------
     GHP_Size : float
         Design ELECTRICAL size of the heat pump in WATT ELECTRICAL
 
-    Returns
-    -------
     InvCa : float
         annualized investment costs in EUROS/a
 
@@ -207,13 +183,9 @@ def calc_Cinv_HP(HP_Size, gV):
     """
     Calculates the annualized investment costs for the heat pump
 
-    Parameters
-    ----------
     HP_Size : float
         Design THERMAL size of the heat pump in WATT THERMAL
 
-    Returns
-    -------
     InvCa : float
         annualized investment costs in CHF/a
 
@@ -233,13 +205,9 @@ def HP_InvCost(HP_Size, gV):
     """
     Calculates the annualized investment costs for the heat pump
 
-    Parameters
-    ----------
     HP_Size : float
         Design THERMAL size of the heat pump in WATT THERMAL
 
-    Returns
-    -------
     InvCa : float
         annualized investment costs in CHF/a
 
@@ -255,16 +223,11 @@ def GHP_InvCost(GHP_Size, gV):
     """
     Calculates the annualized investment costs for the geothermal heat pump
 
-    Parameters
-    ----------
     GHP_Size : float
         Design ELECTRICAL size of the heat pump in WATT ELECTRICAL
 
-    Returns
-    -------
     InvCa : float
         annualized investment costs in EUROS/a
-
     """
     InvC_HP = 5247.5 * (GHP_Size * 1E-3) ** 0.49
     InvC_BH = 7100 * (GHP_Size * 1E-3) ** 0.74

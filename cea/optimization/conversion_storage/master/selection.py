@@ -23,8 +23,6 @@ def selectPareto(pop,gv):
     An individual is considered Pareto optimal if there exist no other
     individual by whom it is dominated in any of the objective functions.
 
-    Parameters
-    ----------
     :param pop: list of individuals
     :param gv: global variables
     :type pop: list
