@@ -103,38 +103,38 @@ def thermal_network_main(locator, gv, network_type, source):
     T_supply_nodes_list = []
     plant_heat_requirements = []
 
-    for t in range(8760):
-        print('calculating network thermal hydraulic properties... timestep',t)
-        timer = time.clock()
+    # for t in range(8760):
+    #     print('calculating network thermal hydraulic properties... timestep',t)
+    #     timer = time.clock()
+    #
+    #     ## solve network temperatures
+    #
+    #     T_supply_nodes, \
+    #     T_return_nodes, \
+    #     plant_heat_requirement = solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df,
+    #                                                         edge_mass_flow_df.ix[t], K_pipe, t_target_supply_df,
+    #                                                         building_names, buildings_demands, substations_HEX_specs, t,
+    #                                                         network_type)
+    #
+    #     # store node temperatures and plant heat requirement at each time-step
+    #     T_supply_nodes_list.append(T_supply_nodes)
+    #     T_return_nodes_list.append(T_return_nodes)
+    #     plant_heat_requirements.append(plant_heat_requirement)
+    #
+    #     print (time.clock() - timer, 'seconds process time for timestep',t)
+    #
+    # # save results
+    # pd.DataFrame(T_supply_nodes_list, columns=edge_node_df.index).\
+    #     to_csv(locator.get_optimization_network_layout_supply_temperature_file(network_type), index=False, float_format='%.3f')
+    # pd.DataFrame(T_return_nodes_list, columns=edge_node_df.index).\
+    #     to_csv(locator.get_optimization_network_layout_return_temperature_file(network_type), index=False, float_format='%.3f')
+    # # pd.DataFrame(plant_heat_requirements).\
+    # #     to_csv(locator.get_optimization_network_layout_plant_heat_requirement_file(network_type), index=False, float_format='%.3f') #FIXME[SH]: save to csv
 
-        ## solve network temperatures
-
-        T_supply_nodes, \
-        T_return_nodes, \
-        plant_heat_requirement = solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df,
-                                                            edge_mass_flow_df.ix[t], K_pipe, t_target_supply_df,
-                                                            building_names, buildings_demands, substations_HEX_specs, t,
-                                                            network_type)
-
-        # store node temperatures and plant heat requirement at each time-step
-        T_supply_nodes_list.append(T_supply_nodes)
-        T_return_nodes_list.append(T_return_nodes)
-        plant_heat_requirements.append(plant_heat_requirement)
-
-        print (time.clock() - timer, 'seconds process time for timestep',t)
-
-    # save results
-    pd.DataFrame(T_supply_nodes_list, columns=edge_node_df.index).\
-        to_csv(locator.get_optimization_network_layout_supply_temperature_file(network_type), index=False, float_format='%.3f')
-    pd.DataFrame(T_return_nodes_list, columns=edge_node_df.index).\
-        to_csv(locator.get_optimization_network_layout_return_temperature_file(network_type), index=False, float_format='%.3f')
-    # pd.DataFrame(plant_heat_requirements).\
-    #     to_csv(locator.get_optimization_network_layout_plant_heat_requirement_file(network_type), index=False, float_format='%.3f') #FIXME[SH]: save to csv
-
-    # # skip calculation, import csv TODO: get rid of this after testing
-    # T_supply_nodes_list = pd.read_csv(locator.get_optimization_network_layout_supply_temperature_file(network_type)).values.tolist()
-    # T_return_nodes_list = pd.read_csv(locator.get_optimization_network_layout_return_temperature_file(network_type)).values.tolist()
-    # # plant_heat_requirements = pd.read_csv(locator.get_optimization_network_layout_plant_heat_requirement_file(network_type))
+    # skip calculation, import csv TODO: get rid of this after testing
+    T_supply_nodes_list = pd.read_csv(locator.get_optimization_network_layout_supply_temperature_file(network_type)).values.tolist()
+    T_return_nodes_list = pd.read_csv(locator.get_optimization_network_layout_return_temperature_file(network_type)).values.tolist()
+    # plant_heat_requirements = pd.read_csv(locator.get_optimization_network_layout_plant_heat_requirement_file(network_type))
 
 
     # calculate pressure at each node and pressure drop throughout the entire network
@@ -1045,7 +1045,7 @@ def run_as_script(scenario_path=None):
     network_type = ['DH', 'DC'] # set to either 'DH' or 'DC'
     source = ['csv', 'shapefile'] # set to csv or shapefile
 
-    thermal_network_main(locator, gv, network_type[1], source[0])
+    thermal_network_main(locator, gv, network_type[0], source[0])
     print ('test thermal_network_main() succeeded')
 
 if __name__ == '__main__':
