@@ -25,7 +25,7 @@ __status__ = "Production"
 # ============================
 
 
-def substation_HEX_design_main(locator, total_demand, building_names, gv):
+def substation_HEX_design_main(locator, building_names, gv):
     '''
     this function calculates the temperatures and mass flow rates of the district heating network
     at every costumer. Based on this, the script calculates the hourly temperature of the network at the plant.
@@ -59,18 +59,33 @@ def substation_HEX_design_main(locator, total_demand, building_names, gv):
     Tsupply_bui_df = pd.DataFrame()
     for name in building_names:
         buildings_demands.append(pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
-                                     usecols=['Name', 'Thsf_sup_C', 'Thsf_re_C', 'Tcsf_sup_C', 'Tcsf_re_C',
-                                              'Twwf_sup_C', 'Twwf_re_C', 'Qhsf_kWh', 'Qcsf_kWh', 'Qwwf_kWh',
-                                              'mcphsf_kWC', 'mcpwwf_kWC', 'mcpcsf_kWC', 'Ef_kWh']))
+                                     usecols=['Name', 'Thsf_sup_C', 'Thsf_re_C', 'Twwf_sup_C', 'Twwf_re_C',
+                                              'Tcsf_sup_C', 'Tcsf_re_C', 'Tcdataf_sup_C', 'Tcdataf_re_C',
+                                              'Tcref_sup_C', 'Tcref_re_C', 'Qhsf_kWh','Qwwf_kWh', 'Qcsf_kWh',
+                                              'Qcsf_lat_kWh', 'Qcdataf_kWh', 'Qcref_kWh', 'mcphsf_kWC',
+                                              'mcpwwf_kWC', 'mcpcsf_kWC', 'Ef_kWh']))
         Q_substation_heating = buildings_demands[iteration].Qhsf_kWh + buildings_demands[iteration].Qwwf_kWh
+        Q_substation_cooling = buildings_demands[iteration].Qcsf_kWh + buildings_demands[iteration].Qcsf_lat_kWh + \
+                               buildings_demands[iteration].Qcdataf_kWh + buildings_demands[iteration].Qcref_kWh
+        # set the building side heating supply temperature
         T_supply_heating = np.vectorize(calc_DH_supply)(buildings_demands[iteration].Thsf_sup_C.values,
                                                         np.where(buildings_demands[iteration].Qwwf_kWh > 0,
                                                                  buildings_demands[iteration].Twwf_sup_C.values, np.nan))
-        T_supply_cooling = buildings_demands[iteration].Tcsf_sup_C.values
+        # set the building side cooling supply temperature
+        T_supply_cooling = np.vectorize(calc_DC_supply)(np.where(buildings_demands[iteration].Qcsf_kWh > 0,
+                                                                 buildings_demands[iteration].Tcsf_sup_C.values, np.nan),
+                                                        np.where(buildings_demands[iteration].Qcdataf_kWh > 0,
+                                                                 buildings_demands[iteration].Tcdataf_sup_C.values,
+                                                                 np.nan),
+                                                        np.where(buildings_demands[iteration].Qcref_kWh > 0,
+                                                                 buildings_demands[iteration].Tcref_sup_C.values,
+                                                                 np.nan))
+        #T_supply_cooling = buildings_demands[iteration].Tcsf_sup_C.values
         T_supply_DH = np.where(Q_substation_heating > 0, T_supply_heating + gv.dT_heat, np.nan)
-        T_supply_DC = np.where(abs(buildings_demands[iteration].Qcsf_kWh) > 0, T_supply_cooling - gv.dT_cool, np.nan)
+        T_supply_DC = np.where(abs(Q_substation_cooling) > 0, T_supply_cooling - gv.dT_cool, np.nan)
 
         buildings_demands[iteration]['Q_substation_heating'] = Q_substation_heating
+        buildings_demands[iteration]['Q_substation_cooling'] = Q_substation_cooling
         buildings_demands[iteration]['T_sup_target_DH'] = T_supply_DH
         buildings_demands[iteration]['T_sup_target_DC'] = T_supply_DC
 
@@ -602,7 +617,7 @@ def calc_area_HEX(Qnom, dTm_0, U):
 # ============================
 # Other functions
 # ============================
-def calc_DC_supply(t_0, t_1):
+def calc_DC_supply(t_0, t_1, t_2):
     '''
     This function calculates the temperature of the district cooling network according to the minimum observed
     (different to zero) in all buildings connected to the grid.
@@ -611,23 +626,24 @@ def calc_DC_supply(t_0, t_1):
     :return:
         tmin: new minimum temperature
     '''
-    if t_0 == 0:
-        t_0 = 1E6
-    if t_1 > 0:
-        tmin = min(t_0, t_1)
-    else:
-        tmin = t_0
+    # if t_0 == 0:
+    #     t_0 = 1E6
+    # if t_1 > 0:
+    #     tmin = min(t_0, t_1)
+    # else:
+    #     tmin = t_0
+    tmin = min(t_0,t_1,t_2)
     return tmin
 
 
 def calc_DH_supply(t_0, t_1):
     '''
-    This function calculates the temperature of the district heating network according to the maximum observed
-    in all buildings connected to the grid.
-    :param t_0: last maximum temperature
-    :param t_1: current maximum temperature
+    This function calculates the heating temperature requirement of the building side according to the maximum
+    temperature requirement at that time-step.
+    :param t_0: temperature requirement from one heating application
+    :param t_1: temperature requirement from another heating application
     :return:
-        tmax: new maximum temperature
+        tmax: maximum temperature requirement
     '''
     tmax = max(t_0, t_1)
     return tmax
