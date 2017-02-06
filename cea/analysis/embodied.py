@@ -29,16 +29,17 @@ __status__ = "Production"
 
 def lca_embodied(year_to_calculate, locator, gv):
     """
-    algorithm to calculate the embodied energy and grey energy of buildings
-    according to the method of Fonseca et al 2015. CISBAT 2015. and Thoma et al
-    2014. CUI 2014.
+    Algorithm to calculate the embodied energy and emissions of buildings according to the method of Fonseca et al 2015.
+    CISBAT 2015. and Thoma et al 2014. CUI 2014.
+
+    The calculation method assumes a 60 year payoff for the embodied energy and emissions of a building, after which
+    both values become zero.
 
     Parameters
     ----------
 
     :param year_to_calculate:  year between 1900 and 2100 indicating when embodied energy is evaluated
-        to account for emissions already offset from building construction
-        and retrofits more than 60 years ago.
+        to account for emissions already offset from building construction and retrofits more than 60 years ago.
     :type year_to_calculate: int
 
     :param locator: an instance of InputLocator set to the scenario
