@@ -22,12 +22,6 @@ import sys
 
 sys.path.insert(0, os.path.abspath('..'))
 
-print 'conf.py:', sys.path
-print 'currdir:', os.path.abspath(os.curdir)
-print os.listdir('..')
-import cea.globalvar
-print 'imported globalvar!!'
-
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -100,6 +94,7 @@ todo_include_todos = True
 # this should make the style the blue read-the-docs style
 # html_theme = "sphinx_rtd_theme"
 # html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+modindex_common_prefix = ['cea.']
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
