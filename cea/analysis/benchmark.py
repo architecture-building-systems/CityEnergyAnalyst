@@ -17,6 +17,9 @@ from geopandas import GeoDataFrame as gpdf
 
 from cea import inputlocator
 
+__author__ = "Martin Mosteiro Romero"
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Martin Mosteiro Romero"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
