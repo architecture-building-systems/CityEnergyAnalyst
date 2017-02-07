@@ -1,7 +1,4 @@
 import os
-
-import arcpy
-
 import cea.globalvar
 import cea.plots
 from cea.GUI.toolbox import add_message
@@ -24,6 +21,7 @@ class DemandGraphsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        import arcpy
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
