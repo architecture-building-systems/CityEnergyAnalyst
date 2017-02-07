@@ -22,9 +22,9 @@ import scipy
 import geopandas as gpd
 
 
-__author__ = "Martin Mosteiro, Shanshan Hsieh"
+__author__ = "Martin Mosteiro Romero, Shanshan Hsieh"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Martin Mosteiro", "Shanshan Hsieh" ]
+__credits__ = ["Martin Mosteiro Romero", "Shanshan Hsieh" ]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -34,27 +34,59 @@ __status__ = "Production"
 def thermal_network_main(locator, gv, network_type, source):
     """
     This function performs thermal and hydraulic calculation of a "well-defined" network, namely, the plant/consumer
-    substations, piping routes and the pipe properties (length/diameter/heat transfer coefficient) are already specified.
+    substations, piping routes and the pipe properties (length/diameter/heat transfer coefficient) are already
+    specified.
 
-    Firstly, the consumer substation heat exchanger designs are calculated according to the consumer demands at each
-    substation. Secondly, the piping network is imported as a node-edge matrix (NxE), which indicates the connections
-    of all nodes and edges and the direction of flow between them following graph theory [Ikonen, E., et al, 2016]_ .
-    Nodes represent points in the network, which could be the consumers, plants or joint points. Edges represent the
-    pipes in the network. For example, (n1,e1) = 1 denotes the flow enters edge "e1" at node "n1", while when
-    (n2,e2) = -1 denotes the flow leave edge "e2" at node "n2". Following, a steady-state hydraulic calculation is
-    carried out at each time-step to solve for the edge mass flow rates according to mass conservation equations.
+    The hydraulic calculation is based on Oppelt, T., et al., 2016 for the case with no loops. Firstly, the consumer
+    substation heat exchanger designs are calculated according to the consumer demands at each substation. Secondly,
+    the piping network is imported as a node-edge matrix (NxE), which indicates the connections of all nodes and edges
+    and the direction of flow between them following graph theory. Nodes represent points in the network, which could
+    be the consumers, plants or joint points. Edges represent the pipes in the network. For example, (n1,e1) = 1 denotes
+    the flow enters edge "e1" at node "n1", while when (n2,e2) = -1 denotes the flow leave edge "e2" at node "n2".
+    Following, a steady-state hydraulic calculation is carried out at each time-step to solve for the edge mass flow
+    rates according to mass conservation equations.
 
-    Finally, we enter the hydraulic thermal calculation routine.
+    The hydraulic thermal calculation is based on a heat balance for each edge (heat at the pipe inlet equals heat at
+    the outlet minus heat losses through the pipe). Finally, the pressure loss calculation is carried out based on
+    Todini et al. (1987)
 
-    :param locator:
-    :param gv:
-    :param shapefile_flag: Boolean set to True if the source for the data is a shapefile, False if it is a csv.
-    :return:
+    Parameters
+    ----------
+    :param locator: an InputLocator instance set to the scenario to work on
+    :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
+    :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
+                         network
+    :param source: string that defines the type of source file for the network to be imported ('csv' or 'shapefile')
 
-    ..[Ikonen, E., et al, 2016] Ikonen, E., et al. Examination of Operational Optimization at Kemi District Heating Network.
-    Thermal Science. 2016, Vol. 20, No.2, pp.667-678.
+    :type locator: InputLocator
+    :type gv: GlobalVariables
+    :type network_type: str
+    :type source: str
 
+    Side effects:
+    -------------
+    The following files are created by this script, depending on the network type defined in the inputs:
+    - DH_EdgeNode or DC_EdgeNode: .csv
+        edge-node matrix for the defined network
+    - DH_AllNodes or DC_AllNodes: .csv
+        list of plant nodes and consumer nodes and their corresponding building names
+    - DH_MassFlow or DC_MassFlow: .csv
+        mass flow rates at each edge for each time step
+    - DH_T_Supply or DC_T_Supply: .csv
+        describes the supply temperatures at each node at each type step
+    - DH_T_Return or DC_T_Return: .csv
+        describes the return temperatures at each node at each type step
+    - DH_Plant_heat_requirement or DC_Plant_heat_requirement: .csv
+        heat requirement at from the plants in a district heating or cooling network
+    - DH_P_Supply or DC_P_Supply: .csv
+        supply side pressure for each node in a district heating or cooling network at each time step
+    - DH_P_Return or DC_P_Return: .csv
+        supply side pressure for each node in a district heating or cooling network at each time step
+    - DH_P_DeltaP or DC_P_DeltaP.csv
+        pressure drop over an entire district heating or cooling network at each time step
 
+    ..[Oppelt, T., et al., 2016] Oppelt, T., et al. Dynamic thermo-hydraulic model of district cooling networks.
+    Applied Thermal Engineering, 2016.
     """
 
     ## prepare data for calculation
@@ -159,70 +191,48 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df):
     This function carries out the steady-state mass flow rate calculation for a predefined network with predefined mass
     flow rates at each substation.
 
-    :param locator: locator class
-    :param gv: globalvariables class
+    Parameters
+    ----------
+    :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges) and indicating
+                         the direction of flow of each edge e at node n: if e points to n, value is 1; if e leaves node
+                        n, -1; else, 0.     (n x e)
+    :param: mass_flow_substation_df: DataFrame containing the mass flow rate at each node n at each time
+                        of the year t       (t x n)
 
-    :return: mass_flow: (1 x e) vector specifying the mass flow rate at each edge e at the given time step t
-    '''
+    :type edge_node_df: DataFrame
+    :param mass_flow_substation_df: DataFrame
 
-    '''
-    ============
-    This part of the code is obsolete since the edge_node_matrix is already imported before the time step calculation.
-    Preserved since I cannot test the function now, but could be deleted as soon as I can verify this.
-    ============
-
-    # get mass flow matrix from substation.py
-    edge_node_df, all_nodes_df, pipe_length_df = get_thermal_network_from_csv(locator)
-        #
-        # edge_node_matrix needs to be expanded to include return pipes
-        for pipe in edge_node_df:
-            edge_node_df['-'+pipe] = -edge_node_df[pipe]
-        #
-    '''
-
-    '''
-    ============
-    This part of the code is obsolete since we now have the correct edge flow calculation.
-    Preserved since I cannot test the function now, but could be deleted as soon as I can verify this.
-    ============
-    # get substation flow vector
-    total_demand = pd.read_csv(locator.get_total_demand())
-    building_names = total_demand['Name']
-    mass_flow_substation_df = pd.DataFrame()
-    iteration = 0
-    for node in all_nodes_df:   #consumer_nodes+plant_nodes:    #name in building_names:
-        if (all_nodes_df[node]['consumer']+all_nodes_df[node]['plant']) != '':
-            mass_flow_substation_df[node] = pd.read_csv(locator.pathSubsRes + '//' + (all_nodes_df[node]['consumer']+all_nodes_df[node]['plant']) + "_result.csv", usecols=['mdot_result'])  #name] = pd.read_csv(locator.pathSubsRes + '//' + name + "_result.csv", usecols=['mdot_result'])
-        else:
-            mass_flow_substation_df[node] = np.zeros(8760)
+    Return
+    ------
+    :return: mass_flow_edge: matrix specifying the mass flow rate at each edge e at the given time step t
+    :type: mass_flow_edge: numpy.ndarray
     '''
 
     # t0 = time.clock()
     mass_flow_edge = np.round(np.transpose(np.linalg.lstsq(edge_node_df.values, np.transpose(mass_flow_substation_df.values))[0]), decimals = 9)
     # print time.clock() - t0, "seconds process time for total mass flow calculation\n"
 
-    '''
-    ============
-    This part of the code imports previously exported results in order to speed up the calculation during testing.
-    Preserved in case we need it again for testing later, but can be deleted otherwise.
-    ============
-    mass_flow_df = pd.read_csv(locator.pathNtwLayout + '//' + 'MassFlow_DH.csv', usecols=edge_node_df.columns.values)
-    mass_flow_df = np.absolute(mass_flow_df)    # added this hack to make sure code runs TODO: make sure you don't get negative flows!
-    '''
-
     return mass_flow_edge
 
 def assign_pipes_to_edges(mass_flow_df, locator, gv):
     '''
     This function assigns pipes from the catalog to the network for a network with unspecified pipe properties.
-    Pipes are assigned based on each edge's minimum and maximum required flow rate (for now)
+    Pipes are assigned based on each edge's minimum and maximum required flow rate (for now).
 
-    :param: mass_flow_df: dataframe containing the mass flow rate for each edge e at each time of the year t
-    :param: locator: locator class
-    :param: gv: globalvars
+    Parameters
+    ----------
+    :param: mass_flow_df: DataFrame containing the mass flow rate for each edge e at each time of the year t
+    :param locator: an InputLocator instance set to the scenario to work on
+    :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
+    :type: mass_flow_df: DataFrame
+    :type: locator: InputLocator
+    :type: gv: GlobalVariables
 
+    Return
+    ------
     :return: pipe_properties_df: dataframe containing the pipe properties for each edge in the network
     '''
+    # TODO[SH]: document source of pipe database?
 
     # import pipe catalog from Excel file
     pipe_catalog = pd.read_excel(locator.get_thermal_networks(),sheetname=['PIPING CATALOG'])['PIPING CATALOG']
@@ -243,27 +253,55 @@ def assign_pipes_to_edges(mass_flow_df, locator, gv):
     return pipe_properties_df
 
 def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, mass_flow_rate, T_supply_node, T_return_node, gv):
-    ''' calculates the pressure at each node based on Eq. 1 in Todini & Pilati (1987) "A gradient method for the analysis
-of pipe networks," in Computer Applications in Water Supply Volume 1 - Systems Analysis and Simulation. Since the
-pressure is calculated after the mass flow rate (rather than concurrently) this is only a first step towards implementing
- the Gradient Method from Todini & Pilati used by EPANET et al.
-        edge_node_df: dataframe consisting of n rows (number of nodes) and e columns (number of edges) and indicating
-direction of flow of each edge e at node n: if e points to n, value is 1; if e leaves node n, -1; else, 0.  (n x e)
+    '''
+    Calculates the pressure at each node based on Eq. 1 in Todini & Pilati (1987). For the pressure drop through a pipe,
+    the Darcy-Weisbach equation was used as in Oppelt et al. (2016) instead of the Hazen-Williams method used by Todini
+    & Pilati. Since the pressure is calculated after the mass flow rate (rather than concurrently) this is only a first
+    step towards implementing the Gradient Method from Todini & Pilati used by EPANET et al.
+
+    Parameters
+    ----------
+        :param: edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges) and
+                indicating the direction of flow of each edge e at node n: if e points to n, value is 1; if e leaves
+                node n, -1; else, 0.                                                                        (n x e)
         :param: pipe_diameter: vector containing the pipe diameter in m for each edge e in the network      (e x 1)
         :param: pipe_length: vector containing the length in m of each edge e in the network                (e x 1)
         :param: mass_flow_rate: matrix containing the mass flow rate in each edge e at time t               (t x e)
         :param: T_supply_node: matrix containing the temperature in each supply node e at time t            (t x e)
         :param: T_return_node: matrix containing the temperature in each return node e at time t            (t x e)
         :param: gv: globalvars
+        :type: edge_node_df: DataFrame
+        :type: pipe_diameter: ndarray
+        :type: pipe_length: ndarray
+        :type: mass_flow_rate: ndarray
+        :type: T_supply_node: list
+        :type: T_return_node: list
 
-     :return: pressure loss at each supply and return node for each time t                                  (t x n)
-     '''
+    Returns
+    -------
+        :return: pressure_loss_nodes_supply: array containing the pressure loss at each supply node
+                 for each time t                                                                            (t x n)
+        :return: pressure_loss_nodes_return: array containing the pressure loss at each return node
+                 for each time t                                                                            (t x n)
+        :return: pressure_loss_system: array containing the pressure loss over the entire network
+                 for each time t                                                                            (t x 1)
+        :type: pressure_loss_nodes_supply: ndarray
+        :type: pressure_loss_nodes_return: ndarray
+        :type: pressure_loss_system: ndarray
+
+
+    ..[Todini & Pilati, 1987] Todini & Pilati. "A gradient method for the analysis of pipe networks," in Computer
+     Applications in Water Supply Volume 1 - Systems Analysis and Simulation, 1987.
+    ..[Oppelt, T., et al., 2016] Oppelt, T., et al. Dynamic thermo-hydraulic model of district cooling networks.
+    Applied Thermal Engineering, 2016.
+
+    '''
 
     # get the temperatures at each supply and return edge
     temperature_supply_edges = calc_edge_temperatures(T_supply_node, edge_node_df)
     temperature_return_edges = calc_edge_temperatures(T_return_node, edge_node_df)
 
-    # get the pressure through each edge
+    # get the pressure drop through each edge
     pressure_loss_pipe_supply = calc_pressure_loss_pipe(pipe_diameter, pipe_length, mass_flow_rate, temperature_supply_edges, gv)
     pressure_loss_pipe_return = calc_pressure_loss_pipe(pipe_diameter, pipe_length, mass_flow_rate, temperature_return_edges, gv)
 
@@ -281,37 +319,44 @@ direction of flow of each edge e at node n: if e points to n, value is 1; if e l
     pressure_nodes_return = np.round(
         np.transpose(np.linalg.lstsq(-edge_node_transpose, np.transpose(pressure_loss_pipe_return))[0]), decimals=9)
 
-    # # get a matrix showing which edges point to each node n
-    # edge_node = edge_node_df.values.transpose()
-    # for i in range(len(edge_node)):
-    #     for j in range(len(edge_node[0])):
-    #         if edge_node[i][j] < 0:
-    #             edge_node[i][j] = 0
-    #
-    # # the pressure losses at time t are calculated as the sum of the pressure losses from all edges pointing to node n
-    # pressure_loss_nodes_supply_df = pd.DataFrame(np.dot(pressure_loss_pipe_supply, edge_node), index=range(8760), columns=edge_node_df.index.values)
-    # pressure_loss_nodes_return_df = pd.DataFrame(np.dot(pressure_loss_pipe_return, -edge_node), index=range(8760), columns=edge_node_df.index.values)
-
     return pressure_nodes_supply, pressure_nodes_return, pressure_loss_system
 
 def calc_pressure_loss_pipe(pipe_diameter, pipe_length, mass_flow_rate, temperature, gv):
-    ''' calculates the pressure losses throughout a pipe based on the Darcy-Weisbach equation and the Swamee-Jain
-    solution for the Darcy friction factor
+    '''
+    Calculates the pressure losses throughout a pipe based on the Darcy-Weisbach equation and the Swamee-Jain
+    solution for the Darcy friction factor [Oppelt et al., 2016].
 
-     :param: pipe_diameter: vector containing the pipe diameter in m for each edge e in the network (e x 1)
-     :param: pipe_length: vector containing the length in m of each edge e in the network           (e x 1)
-     :param: mass_flow_rate: matrix containing the mass flow rate in each edge e at time t          (t x e)
-     :param: temperature: matrix containing the temperature of the water in each edge e at time t   (t x e)
-     :param: gv: globalvars
+    Parameters
+    ----------
+    :param: pipe_diameter: vector containing the pipe diameter in m for each edge e in the network (e x 1)
+    :param: pipe_length: vector containing the length in m of each edge e in the network           (e x 1)
+    :param: mass_flow_rate: matrix containing the mass flow rate in each edge e at time t          (t x e)
+    :param: temperature: matrix containing the temperature of the water in each edge e at time t   (t x e)
+    :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
+    :type: pipe_diameter: ndarray
+    :type: pipe_length: ndarray
+    :type: mass_flow_rate: ndarray
+    :type: temperature: list
+    :type: gv: GlobalVariables
 
-     :return: pressure loss through each edge
-     '''
+    Returns
+    -------
+    :return: pressure_loss_edge: pressure loss through each edge e at each time t                  (t x e)
+    :type: pressure_loss_edge: ndarray
 
+    ..[Oppelt, T., et al., 2016] Oppelt, T., et al. Dynamic thermo-hydraulic model of district cooling networks.
+    Applied Thermal Engineering, 2016.
+
+    '''
+
+    # calculate the properties of water flowing in the pipes at the given temperature
     kinematic_viscosity = calc_kinematic_viscosity(temperature) # m2/s
     reynolds = 4*(mass_flow_rate/gv.Pwater)/(math.pi * kinematic_viscosity * pipe_diameter)
     pipe_roughness = gv.roughness    # assumed from Li & Svendsen for now
-    darcy = 1.325 * np.log(pipe_roughness / (3.7 * pipe_diameter) + 5.74 / reynolds ** 0.9) ** (-2)  # Swamee-Jain equation to calculate the Darcy-Weisbach friction factor
-    pressure_loss_edge = darcy * 8 * mass_flow_rate**2 * pipe_length/(math.pi**2 * pipe_diameter**5 * gv.Pwater) #darcy*8/(math.pi*gv.gr)*kinematic_viscosity**2/pipe_diameter**5*pipe_length
+    # calculate the Darcy-Weisbach friction factor using the Swamee-Jain equation
+    darcy = 1.325 * np.log(pipe_roughness / (3.7 * pipe_diameter) + 5.74 / reynolds ** 0.9) ** (-2)
+    # calculate the pressure losses through a pipe using the Darcy-Weisbach equation
+    pressure_loss_edge = darcy * 8 * mass_flow_rate**2 * pipe_length/(math.pi**2 * pipe_diameter**5 * gv.Pwater)
 
     return pressure_loss_edge
 
