@@ -1,7 +1,7 @@
 """Installation script for the City Energy Analyst"""
 
 import os
-import versioneer
+# import versioneer
 
 
 __author__ = "Daren Thomas"
@@ -30,7 +30,7 @@ else:
                         'sphinx_rtd_theme']
 
 setup(name='cityenergyanalyst',
-      version=versioneer.get_version(),
+      version='1.0',  # versioneer.get_version(),
       description='City Energy Analyst',
       license='MIT',
       author='Architecture and Building Systems',
@@ -42,4 +42,5 @@ setup(name='cityenergyanalyst',
                 'cea.utilities'],
       package_data={},
       install_requires=INSTALL_REQUIRES,
-      cmdclass=versioneer.get_cmdclass())
+      # cmdclass=versioneer.get_cmdclass(),
+      )
