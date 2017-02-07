@@ -18,7 +18,7 @@ def add_message(msg, **kwargs):
     import arcpy
     """Log to arcpy.AddMessage() instead of print to STDOUT"""
     if len(kwargs):
-        msg = msg % kwargs
+        msg %= kwargs
     arcpy.AddMessage(msg)
     log_file = os.path.join(tempfile.gettempdir(), 'cea.log')
     with open(log_file, 'a') as log:
