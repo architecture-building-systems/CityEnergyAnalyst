@@ -78,41 +78,41 @@ the demand calculation as part of their process.
 
 .. |CEA architecture objects| digraph:: cea_objects
 
-  node [shape=box, fontname="Helvetica"];
+    node [shape=box, fontname="Helvetica"];
 
-  demand [label="Demand calculation", style="filled"];
-  sensitivity [label="Sensitivity Analysis"];
-  calibration [label="Transient Bayesian Calibration"];
-  optimization [label="Network Optimization"];
-  analysis [label="Mobility / Life Cycle Analysis"];
-  plots [label="Data Visualization"];
+    demand [label="Demand calculation", style="filled"];
+    sensitivity [label="Sensitivity Analysis"];
+    calibration [label="Transient Bayesian Calibration"];
+    optimization [label="Network Optimization"];
+    analysis [label="Mobility / Life Cycle Analysis"];
+    plots [label="Data Visualization"];
 
-  {
-     node [style="dashed"];
-     rank=same;
-     bpr [label="bpr (BuildingPropertiesRow)"];
-     tsd [label="tsd (timestep data)"];
-     locator [label="locator (InputLocator)", style="filled"];
-  }
+    {
+        node [style="dashed"];
+        rank=same;
+        bpr [label="bpr (BuildingPropertiesRow)"];
+        tsd [label="tsd (timestep data)"];
+        locator [label="locator (InputLocator)", style="filled"];
+    }
 
-  db [label="db (Archetypes)", shape="folder"];
-  scenario [label="Case Study (scenario)", shape="folder"];
+    db [label="db (Archetypes)", shape="folder"];
+    scenario [label="Case Study (scenario)", shape="folder"];
 
-  locator -> bpr;
-  locator -> scenario [label="  read / write"];
-  locator -> db [label="  write"];
+    locator -> bpr;
+    locator -> scenario [label="  read / write"];
+    locator -> db [label="  write"];
 
-  {rank=same; demand; analysis; plots; }
-  {rank=same; db; scenario; }
+    {rank=same; demand; analysis; plots; }
+    {rank=same; db; scenario; }
 
-  demand -> locator;
-  demand -> tsd;
-  demand -> bpr;
-  analysis -> locator;
-  plots -> locator;
-  sensitivity -> demand;
-  calibration -> demand;
-  optimization -> demand;
+    demand -> locator;
+    demand -> tsd;
+    demand -> bpr;
+    analysis -> locator;
+    plots -> locator;
+    sensitivity -> demand;
+    calibration -> demand;
+    optimization -> demand;
 
-  db -> scenario [label="  preprocessing  "];
+    db -> scenario [label="  preprocessing  "];
 
