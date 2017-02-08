@@ -8,7 +8,7 @@ under the name of
 The main workflow for working with the City Energy Analyst looks like
 this:
 
-.. image:: assets/getting-started/cea.workflow.png
+|CEA workflow|
 
 Preprocessing
 ~~~~~~~~~~~~~
@@ -71,4 +71,37 @@ this is a plug-in/module/class created out of work in the Sandbox. These
 contributions are presented in the form of a sub-folder structure like
 ``contributions/energystorage/simplewatertank/``. Developers level 2 and
 3 o merge their contributions in the Master branch.
+
+.. |CEA workflow| digraph:: cea_workflow
+    rankdir=LR;
+    compound=true;
+    node [shape=box];
+
+    subgraph cluster0 {
+        gather_data [shape=oval, style=dashed, label="gather data"];
+        radiation [label="Radiation"];
+        preprocessing [style="dashed", label="Data helper"];
+        label="Preprocessing";
+    }
+    subgraph cluster1 {
+        demand [label="Demand"];
+        label="Demand Calculation";
+    }
+    subgraph cluster2 {
+        analysis_operation [label="Emissions Operation"];
+        analysis_embodied [label="Embodied Energy"];
+        analysis_mobility [label="Emissions Mobility"];
+        label="Analysis";
+    }
+    subgraph cluster3 {
+        benchmark_graphs [label="Benchmark graphs"];
+        demand_graphs [label="Demand graphs"];
+        heatmaps [label="Heatmaps"];
+        scenario_plots [label="Scenario plots"];
+        label="Visualization";
+    }
+
+    radiation -> demand [ltail=cluster0, lhead=cluster1];
+    demand -> analysis_embodied [ltail=cluster1, lhead=cluster2];
+    analysis_embodied -> demand_graphs  [ltail=cluster2, lhead=cluster3];
 
