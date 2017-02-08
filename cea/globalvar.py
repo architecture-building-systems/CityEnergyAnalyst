@@ -125,7 +125,8 @@ class GlobalVariables(object):
         self.Qmargin_Disc = 0.20  # Reliability margin for the system nominal capacity for decentralized systems
         self.QminShare = 0.10  # Minimum percentage for the installed capacity
         self.K_DH = 0.25  # linear heat loss coefficient district heting network twin pipes groundfoss
-        self.roughness = 0.02/1000 # roughness coefficient for heating network pipe in m (based on Li & Svendsen for a steel pipe)
+        self.roughness = 0.02/1000 # roughness coefficient for heating network pipe in m (for a steel pipe, from Li &
+                           # Svendsen (2012) "Energy and exergy analysis of low temperature district heating network")
 
         # pipes location properties
         self.Z0 = 1.5  # location of pipe underground in m
