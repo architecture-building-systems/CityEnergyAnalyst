@@ -151,7 +151,7 @@ def thermal_network_main(locator, gv, network_type, source):
     T_supply_nodes_list = []
     plant_heat_requirements = []
 
-    for t in range(10):
+    for t in range(8760):
         print('calculating network thermal hydraulic properties... timestep',t)
         timer = time.clock()
 
