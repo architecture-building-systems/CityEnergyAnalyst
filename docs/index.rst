@@ -16,6 +16,7 @@ Welcome to City Energy Analyst's documentation!
    disclaimer
    developer-walk-through
    interfaces
+   databases
    modules/cea
 
 
