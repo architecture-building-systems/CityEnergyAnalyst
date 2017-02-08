@@ -6,6 +6,7 @@ J. Fonseca  script development          26.08.15
 D. Thomas   formatting and cleaning
 D. Thomas   integration in toolbox
 J. Fonseca  new development             13.04.16
+M. Mosteiro corrected multiple errors   07.11.16
 
 """
 from __future__ import division
@@ -35,47 +36,43 @@ def lca_embodied(year_to_calculate, locator, gv):
     The calculation method assumes a 60 year payoff for the embodied energy and emissions of a building, after which
     both values become zero.
 
-    Parameters
-    ----------
+    As part of the algorithm, the following files are read from InputLocator:
+        - get_building_architecture
+        - get_building_occupancy
+        - get_building_age
+        - get_building_geometry
+        - get_archetypes_embodied_energy
+        - get_archetypes_embodied_emissions
+        path_LCA_embodied_energy: path to database of archetypes embodied energy file
+            Archetypes_embodied_energy.csv
+        path_LCA_embodied_emissions:
+            path to database of archetypes grey emissions file
+            Archetypes_embodied_emissions.csv
+        path_age_shp: string
+            path to building_age.shp
+        path_occupancy_shp:
+            path to building_occupancyshp
+        path_geometry_shp:
+            path to building_geometrys.hp
+        path_architecture_shp:
+            path to building_architecture.shp
+        path_results : string
+            path to demand results folder emissions
+
+    As a result, the following file is created:
+        Total_LCA_embodied: .csv
+        csv file of yearly primary energy and grey emissions per building stored in path_results
 
     :param year_to_calculate:  year between 1900 and 2100 indicating when embodied energy is evaluated
         to account for emissions already offset from building construction and retrofits more than 60 years ago.
     :type year_to_calculate: int
 
     :param locator: an instance of InputLocator set to the scenario
-    :type locator: inputlocator.InputLocator
+    :type locator: InputLocator
 
+    :returns: This function does not return anything
+    :rtype: NoneType
 
-    Files read / written from InputLocator:
-
-    get_building_architecture
-    get_building_occupancy
-    get_building_age
-    get_building_geometry
-    get_archetypes_embodied_energy
-    get_archetypes_embodied_emissions
-
-    path_LCA_embodied_energy:
-        path to database of archetypes embodied energy file
-        Archetypes_embodied_energy.csv
-    path_LCA_embodied_emissions:
-        path to database of archetypes grey emissions file
-        Archetypes_embodied_emissions.csv
-    path_age_shp: string
-        path to building_age.shp
-    path_occupancy_shp:
-        path to building_occupancyshp
-    path_geometry_shp:
-        path to building_geometrys.hp
-    path_architecture_shp:
-        path to building_architecture.shp
-    path_results : string
-        path to demand results folder emissions
-
-    Returns
-    -------
-    Total_LCA_embodied: .csv
-        csv file of yearly primary energy and grey emissions per building stored in path_results
     """
 
     # local variables

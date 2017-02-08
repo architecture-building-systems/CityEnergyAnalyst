@@ -29,29 +29,29 @@ __status__ = "Production"
 
 def lca_mobility(locator):
     """
-    Algorithm to calculate the primary energy and CO2 emissions for mobility
-    in the area in order to compare with the 2000 Watt society benchmark
-    based on the present day values calculated for the 2000 Watt society target.
+    Calculation of the primary energy and CO2 emissions for mobility in the area based on the present day values
+    calculated for the 2000 Watt society target.
 
     The current values for the Swiss case for each type of occupancy are based on the following sources:
-        -   Swiss Society of Engineers and Architects (SIA), "SIA Efficiency Path 2040" (2011):
-            'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
-        -   Kellenberger, D. et al. "Arealentwicklung fur die 2000-Watt gesellschaft: Leitfaden und Fallbeispiele" (2012):
-            'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'; 'HOSPITAL' assumed same as for hotel
-        -   Assumed from Fonseca, J. et al. "Assessing the environmental impact of future urban developments at neighborhood scale" (2015):
-            'INDUSTRY'
-    Due to lack of sources, the following target values are, as of yet, undefined:
-        'GYM', 'SWIMMING', 'SERVERROOM', 'COOLROOM'
-    
-    Parameters
-    ----------
-    :param InputLocator locator: an InputLocator instance set to the scenario to work on
+        -   [SIA 2040, 2011]: 'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
+        -   [Kellenberger, D. et al., 2012]: 'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
+    Due to a lack of data, multiple values had to be assumed:
+        -   'INDUSTRY': assumed to be equal to the value for the use type 'OFFICE'
+        -   'HOSPITAL': assumed to be equal to the value for the use type 'HOTEL'
+        -   'GYM', 'SWIMMING': assumed to be equal to the value for use type 'RETAIL'
+        -   'SERVERROOM', 'COOLROOM': assumed negligible
 
-    Side effects
-    ------------
-    The following file is created by this script:
+    The following file is created as a side effect by this script:
     - total_LCA_mobility:.csv
         csv file of yearly nonr-renewable primary energy demand and emissions due to mobility for each building
+
+    :param locator: an InputLocator instance set to the scenario to work on
+    :type locator: InputLocator
+
+    ..[SIA 2040, 2011]: Swiss Society of Engineers and Architects (SIA), "SIA Efficiency Path 2040" (2011)
+    ..[Kellenberger, D. et al., 2010]: Kellenberger, D. et al., 2010. "Arealentwicklung fur die 2000-Watt Gesellschaft:
+    Leitfaden und Fallbeispiele".
+
     """
 
     # local files

@@ -45,33 +45,30 @@ def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_f
     :param boolean Epro_flag: create a separate file with emissions due to electricity in industrial processes?
     :param boolean Edata_flag: create a separate file with emissions due to electricity consumption in data centers?
 
-    Returns
-    -------
-    total_LCA_operation:.csv
-        csv file of yearly primary energy per building and energy service
-        (i.e. heating, hot water, cooling, electricity)
+    The following file is created by this script:
+    -   total_LCA_operation:.csv
+            csv file of yearly primary energy per building and energy service
+            (i.e. heating, hot water, cooling, electricity)
 
-    The following files are created by this script, depending on which flags were set:
-
-    - Qhs_LCA_operation:.csv
+    Furthermore, the following files are created by this script, depending on which flags were set:
+    -   Qhs_LCA_operation:.csv
         describes the emissions and primary energy due to space heating
-    - Qww_LCA_operation:.csv
-        describes the emissions and primary energy due to domestic hot water consumption
-    - Qcs_LCA_operation:.csv
-        describes the emissions and primary energy due to space cooling
-    - Qcdata_LCA_operation:.csv
-        describes the emissions and primary energy due to servers cooling
-    - Qcrefri_LCA_operation:.csv
-        describes the emissions and primary energy due to refrigeration
-    - Eal_LCA_operation:.csv
-        describes the emissions and primary energy due to appliances and lighting
-    - Eaux_LCA_operation:.csv
-        describes the emissions and primary energy due to auxiliary electricity
-    - Epro_LCA_operation:.csv
-        describes the emissions and primary energy due to electricity in industrial processes
-    - Edata_LCA_operation:.csv
-        describes the emissions and primary energy due to electricity consumption in data centers
-
+    -   Qww_LCA_operation:.csv
+            describes the emissions and primary energy due to domestic hot water consumption
+    -   Qcs_LCA_operation:.csv
+            describes the emissions and primary energy due to space cooling
+    -   Qcdata_LCA_operation:.csv
+            describes the emissions and primary energy due to servers cooling
+    -   Qcrefri_LCA_operation:.csv
+            describes the emissions and primary energy due to refrigeration
+    -   Eal_LCA_operation:.csv
+            describes the emissions and primary energy due to appliances and lighting
+    -   Eaux_LCA_operation:.csv
+            describes the emissions and primary energy due to auxiliary electricity
+    -   Epro_LCA_operation:.csv
+            describes the emissions and primary energy due to electricity in industrial processes
+    -   Edata_LCA_operation:.csv
+            describes the emissions and primary energy due to electricity consumption in data centers
 
     """
 
