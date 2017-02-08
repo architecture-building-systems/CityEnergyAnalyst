@@ -24,20 +24,24 @@ technical model
 """
 def calc_CT(qhotdot, Qdesign, gV):
     """
-    For the operation of a water condenser + direct cooling tower
+    For the operation of a water condenser + direct cooling tower based on [B. Stephane, 2012]_
     
     Parameters
     ----------
-    qhotdot : float
-        heating power to condenser, From Model_VCC
-    Qdesign : float
-        Max cooling power
+    :type qhotdot : float
+    :param qhotdot: heating power to condenser, From Model_VCC
+    :type Qdesign : float
+    :param Qdesign: Max cooling power
     
     Returns
     -------
-    wdot : float
-        electric power needed for the variable speed drive fan
-        
+    :type wdot : float
+    :param wdot: electric power needed for the variable speed drive fan
+
+    References
+    ----------
+    ..[B. Stephane, 2012] B. Stephane (2012), Evidence-Based Model Calibration for Efficient Building Energy Services.
+    PhD Thesis, University de Liege, Belgium
     """
     if qhotdot < gV.CT_maxSize:
         print "Error in CT model, over the max capacity"
@@ -65,13 +69,13 @@ def calc_Cinv_CT(CT_size, gV):
     
     Parameters
     ----------
-    CT_size : float
-        Cooling size of the Cooling tower in WATT
+    :type CT_size : float
+    :param CT_size: Size of the Cooling tower in [W]
         
     Returns
     -------
-    InvCa : float
-        annualized investment costs in DOLLARS
+    :rtype InvCa : float
+    :returns InvCa: annualized investment costs in Dollars
     
     """
     if CT_size > 0:
