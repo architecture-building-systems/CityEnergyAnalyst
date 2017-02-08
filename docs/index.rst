@@ -10,6 +10,7 @@ Welcome to City Energy Analyst's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   getting_started
    modules/cea
 
 
