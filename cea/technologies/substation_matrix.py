@@ -33,11 +33,8 @@ def substation_HEX_design_main(locator, building_names, gv):
     losses in the network.
 
     :param locator: path to locator function
-    :param total_demand: dataframe with total demand and names of all building in the area
     :param building_names:  dataframe with names of all buildings_demands in the area
-    :param gv: path to global variables class
-    :param Flag: boolean, True if the function is called by the master optimizaiton. False if the fucntion is
-    called during preprocessing
+    :param gv: path to global variables classg
 
     :return:
     substations_HEX_specs: dataframe with substation heat exchanger specs at each building.
@@ -55,8 +52,7 @@ def substation_HEX_design_main(locator, building_names, gv):
     # determine thermal network target temperatures (T_supply_DH,T_supply_DC) at costumer side.
     iteration = 0
     buildings_demands = []
-    Tsupply_all_bui_df = pd.DataFrame()
-    Tsupply_bui_df = pd.DataFrame()
+
     for name in building_names:
         buildings_demands.append(pd.read_csv(locator.get_demand_results_folder() + '//' + name + ".csv",
                                      usecols=['Name', 'Thsf_sup_C', 'Thsf_re_C', 'Twwf_sup_C', 'Twwf_re_C',
@@ -80,7 +76,8 @@ def substation_HEX_design_main(locator, building_names, gv):
                                                         np.where(buildings_demands[iteration].Qcref_kWh > 0,
                                                                  buildings_demands[iteration].Tcref_sup_C.values,
                                                                  np.nan))
-        #T_supply_cooling = buildings_demands[iteration].Tcsf_sup_C.values
+
+        # find the target substation supply temperature
         T_supply_DH = np.where(Q_substation_heating > 0, T_supply_heating + gv.dT_heat, np.nan)
         T_supply_DC = np.where(abs(Q_substation_cooling) > 0, T_supply_cooling - gv.dT_cool, np.nan)
 
@@ -89,28 +86,7 @@ def substation_HEX_design_main(locator, building_names, gv):
         buildings_demands[iteration]['T_sup_target_DH'] = T_supply_DH
         buildings_demands[iteration]['T_sup_target_DC'] = T_supply_DC
 
-        # Tsupply_bui_df['T_DH'] = T_supply_DH
-        # Tsupply_bui_df['T_DC'] = T_supply_DC
-        # Tsupply_bui_df.sort_index(axis=1)
-        # Tsupply_bui_df.columns = [['%s'%name, '%s' %name], Tsupply_bui_df.columns]
-        # Tsupply_all_bui_df[Tsupply_bui_df.columns]=Tsupply_bui_df.iloc[:]
-        # Tsupply_all_bui_df = pd.concat([Tsupply_all_bui_df,Tsupply_bui_df], axis=1)
-
-        # Ths = np.vectorize(calc_DH_supply)(Ths.copy(), buildings_demands[iteration].Thsf_sup_C.values)
-        # Tww = np.vectorize(calc_DH_supply)(Tww.copy(), buildings_demands[iteration].Twwf_sup_C.values)
-        # Tcs = np.vectorize(calc_DC_supply)(Tcs.copy(), buildings_demands[iteration].Tcsf_sup_C.values)
-        #Q_all_substations = calc_total_network_flow(Q_all_substations, buildings_demands[iteration].mcphsf_kWC)
         iteration += 1
-
-    # buildings_demands[0].Qwwf_kWh[0]
-
-    # substation design
-    # T_DCS_supply = np.where(Tcs != 1E6, Tcs - gv.dT_cool, 0)
-    # T_DHS = np.vectorize(calc_DH_supply)(Ths, Tww)
-    # T_DHS_supply = np.where(T_DHS > 0, T_DHS + gv.dT_heat, T_DHS)
-
-    #Q_max_network_flow = max(Q_all_substations)
-    #index_max_network_flow =  np.where(Q_all_substations >= Q_max_network_flow)
 
     # Calculate disconnected buildings_demands files and substation operation.
     index = 0
@@ -118,12 +94,6 @@ def substation_HEX_design_main(locator, building_names, gv):
     substations_HEX_specs = pd.DataFrame(columns=['HEX_area_SH', 'HEX_area_DHW','HEX_area_SC', 'HEX_UA_SH', 'HEX_UA_DHW', 'HEX_UA_SC'])
     for name in building_names:
         print name
-        # dfRes = total_demand[(total_demand.Name == name)]
-        # combi[index] = 1
-        # key = "".join(str(e) for e in combi)
-        # fName_result = "Total_" + key + ".csv"
-        # dfRes.to_csv(locator.get_optimization_substations_folder + '//' + fName_result, sep=',', float_format='%.3f')
-        # dfRes.to_csv(locator.get_optimization_substations_results_file + '//' + fName_result, sep=',', float_format='%.3f')
         combi[index] = 0
 
         # calculate substation parameters (A,UA) per building and store to .csv (target)
@@ -136,25 +106,14 @@ def substation_HEX_design_main(locator, building_names, gv):
     return substations_HEX_specs, buildings_demands
 
 def substation_HEX_sizing(locator, gv, building):
-    '''
+    """
+    This function size the substation heat exchanger area and the UA values.
 
-    :param locator: path to locator function
-    :param gv: path to global variables class
-    :param building: dataframe with consumption data per building
-    :param t_DH: vector with hourly temperature of the district heating network without losses
-    :param t_DH_supply: vector with hourly temperature of the district heating netowork with losses
-    :param t_DC_supply: vector with hourly temperature of the district cooling network with losses
-    :param t_HS: maximum hourly temperature for all buildings connected due to space heating
-    :param t_WW: maximum hourly temperature for all buildings connected due to domestic hot water
-    :return:
-        Dataframe stored for every building with the mass flow rates and temperatures district heating and cooling
-        side in:
-
-        locator.pathSubsRes+'\\'+fName_result.
-
-        where fName_result: ID of the building accounting for the individual at which it belongs to.
-
-    '''
+    :param locator: an InputLocator instance set to the scenario to work on
+    :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
+    :param building: dataframe with building demand properties
+    :return: A list of substation heat exchanger properties (Area & UA) for heating, cooling and DHW
+    """
     t_DH_supply = building.T_sup_target_DH
     t_DC_supply = building.T_sup_target_DC
 
@@ -208,67 +167,23 @@ def substation_HEX_sizing(locator, gv, building):
     else:
         A_hex_cs, UA_cooling_cs = 0
 
-    # TODO: write results later
-    # # converting units and quantities:
-    # T_supply_DH_result_flat = t_DH_supply + 273.0  # convert to K
-    # T_supply_DC_result_flat = t_DC_supply + 273.0  # convert to K
-    # #  T_return_DH_result_flat = t_DH_return + 273.0  # convert to K
-    # # mdot_DH_result_flat = mcp_DH * 1000 / gv.cp  # convert from kW/K to kg/s
-    # # mdot_heating_result_flat = mcp_DH_hs * 1000 / gv.cp  # convert from kW/K to kg/s
-    # # mdot_dhw_result_flat = mcp_DH_ww * 1000 / gv.cp  # convert from kW/K to kg/s
-    # # mdot_cool_result_flat = mcp_DC_cs * 1000 / gv.cp  # convert from kW/K to kg/s
-    # # T_r1_dhw_result_flat = t_DH_return_ww + 273.0  # convert to K
-    # # T_r1_heating_result_flat = t_DH_return_hs + 273.0  # convert to K
-    # # T_r1_cool_result_flat = t_DC_return_cs + 273.0  # convert to K
-    # # T_supply_max_all_buildings_flat = t_DH + 273.0  # convert to K
-    # # T_hotwater_max_all_buildings_flat = t_WW + 273.0  # convert to K
-    # # T_heating_sup_max_all_buildings_flat = t_HS + 273.0  # convert to K
-    # Electr_array_all_flat = building.Ef_kWh.values * 1000  # convert to #to W
-    #
-    # # save the results into a .csv file
-    # results = pd.DataFrame({"T_supply_DH_result": T_supply_DH_result_flat,
-    #                         "T_supply_DC_result": T_supply_DC_result_flat,
-    #                         "A_hex_heating_design": A_hex_hs,
-    #                         "A_hex_dhw_design": A_hex_ww,
-    #                         "A_hex_cooling_design": A_hex_cs,
-    #                         "UA_hex_heating_design": UA_heating_hs,
-    #                         "UA_hex_dhw_design": UA_heating_ww,
-    #                         "UA_hex_cooling_design": UA_cooling_cs,
-    #                         "Q_heating": Qhsf,
-    #                         "Q_dhw": Qwwf,
-    #                         "Q_cool": Qcf,
-    #                         "Electr_array_all_flat": Electr_array_all_flat })
-    #                         # "mdot_DH_result": mdot_DH_result_flat,
-    #                         # "T_return_DH_result": T_return_DH_result_flat,
-    #                         # "mdot_heating_result": mdot_heating_result_flat,
-    #                         # "mdot_dhw_result": mdot_dhw_result_flat,
-    #                         # "mdot_DC_result": mdot_cool_result_flat,
-    #                         # "T_r1_dhw_result": T_r1_dhw_result_flat,
-    #                         # "T_r1_heating_result": T_r1_heating_result_flat,
-    #                         # "T_return_DC_result": T_r1_cool_result_flat,
-    #                         # "T_total_supply_max_all_buildings_intern": T_supply_max_all_buildings_flat,
-    #                         # "T_hotwater_max_all_buildings_intern": T_hotwater_max_all_buildings_flat,
-    #                         # "T_heating_max_all_buildings_intern": T_heating_sup_max_all_buildings_flat,})
-    #
-    # fName_result = building.Name.values[0] + "_result.csv"
-    # result_substation = locator.pathSubsRes + '\\' + fName_result
-    # results.to_csv(result_substation, sep=',', index=False, float_format='%.3f')
     return [A_hex_hs, A_hex_ww, A_hex_cs, UA_heating_hs, UA_heating_ww, UA_cooling_cs]
 
 def substation_return_model_main(locator, gv, building_names, buildings_demands, substations_HEX_specs, T_target, t,
                                  network, t_flag):
     """
-    calculate all substation return temperature and required flow rate at each time-step.
+    Calculate all substation return temperature and required flow rate at each time-step.
 
     :param locator:
-    :param building_names:
     :param gv:
-    :param buildings_demands:
-    :param substation_HEX_specs:
-    :param T_DH:
+    :param building_names:
+    :param buildings_demands: list of building demands
+    :param substations_HEX_specs: list of substation heat exchanger Area and UA for heating, cooling and DHW
+    :param T_target:
     :param t:
+    :param network:
+    :param t_flag:
     :return:
-
     """
     index = 0
     # combi = [0] * len(building_names)
@@ -415,13 +330,13 @@ def calc_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0, gv):
     :return:
         tho = out temperature of secondary side (district cooling network)
         ch = capacity mass flow rate secondary side
-        Area_HEX_heating = are of heat excahnger.
+        Area_HEX_heating = are of heat exchanger.
     '''
     # nominal conditions network side
     ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * 0.9)
     tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'heat')
-    # Area heat excahnge and UA_heating
+    # Area heat exchange and UA_heating
     Area_HEX_heating, UA_heating = calc_area_HEX(Qnom, dTm_0, gv.U_heat)
     return Area_HEX_heating, UA_heating
 
@@ -623,15 +538,9 @@ def calc_DC_supply(t_0, t_1, t_2):
     (different to zero) in all buildings connected to the grid.
     :param t_0: last minimum temperature
     :param t_1:  current minimum temperature to evaluate
-    :return:
-        tmin: new minimum temperature
+    :return tmin: new minimum temperature
     '''
-    # if t_0 == 0:
-    #     t_0 = 1E6
-    # if t_1 > 0:
-    #     tmin = min(t_0, t_1)
-    # else:
-    #     tmin = t_0
+
     tmin = min(t_0,t_1,t_2)
     return tmin
 
