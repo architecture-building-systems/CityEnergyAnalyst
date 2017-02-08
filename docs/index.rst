@@ -15,6 +15,7 @@ Welcome to City Energy Analyst's documentation!
    installation-on-euler
    license
    disclaimer
+   developer-walk-through
    modules/cea
 
 
