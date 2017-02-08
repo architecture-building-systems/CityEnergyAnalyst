@@ -37,19 +37,33 @@ def thermal_network_main(locator, gv, network_type, source):
     substations, piping routes and the pipe properties (length/diameter/heat transfer coefficient) are already specified.
 
     Firstly, the consumer substation heat exchanger designs are calculated according to the consumer demands at each
-    substation. Secondly, the piping network is imported as a node-edge matrix (NxE), which indicates the connections
+    substation.
+
+    Secondly, the piping network is imported as a node-edge matrix (NxE), which indicates the connections
     of all nodes and edges and the direction of flow between them following graph theory [Ikonen, E., et al, 2016]_ .
     Nodes represent points in the network, which could be the consumers, plants or joint points. Edges represent the
     pipes in the network. For example, (n1,e1) = 1 denotes the flow enters edge "e1" at node "n1", while when
     (n2,e2) = -1 denotes the flow leave edge "e2" at node "n2". Following, a steady-state hydraulic calculation is
     carried out at each time-step to solve for the edge mass flow rates according to mass conservation equations.
 
-    Finally, we enter the hydraulic thermal calculation routine.
+    Thridly, with the maximum mass flow calculated from each edge, the property of each pipe is assigned.
 
-    :param locator:
-    :param gv:
-    :param shapefile_flag: Boolean set to True if the source for the data is a shapefile, False if it is a csv.
+    Finally, we enter the hydraulic thermal calculation routine for each time-steps over a year.
+    The network temperature on the supply and return temperatures accounting for temperature loss.
+    Following, the temperature losses in the supply and return pipes are calculated.
+
+    :param locator: An InputLocator to locate input files
+    :type locator: cea.inputlocator.InputLocator
+    :param gv: A GlobalVariable (context) instance
+    :type gv: cea.globalvar.GlobalVariable
+    :param shapefile_flag: set to True if the source for the data is a shapefile, False if it is a csv.
+    :type shapefile_flat: Boolean
     :return:
+
+    The following files are created from the script:
+
+
+    -
 
     ..[Ikonen, E., et al, 2016] Ikonen, E., et al. Examination of Operational Optimization at Kemi District Heating Network.
     Thermal Science. 2016, Vol. 20, No.2, pp.667-678.
@@ -83,12 +97,12 @@ def thermal_network_main(locator, gv, network_type, source):
 
     # # assign pipe properties
     # ## calculate maximum edge mass flow
-    # edge_mass_flow_df, max_edge_mass_flow_df =  calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands,
-    #                                                                   edge_node_df, gv, locator, substations_HEX_specs,
-    #                                                                   t_target_supply, network_type)
+    edge_mass_flow_df, max_edge_mass_flow_df = calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands,
+                                                                      edge_node_df, gv, locator, substations_HEX_specs,
+                                                                      t_target_supply, network_type)
 
     # TODO: This is a temporary function to read from file and save run time for 'calc_max_edge_flowrate'
-    edge_mass_flow_df, max_edge_mass_flow_df = read_max_edge_flowrate(edge_node_df, locator, network_type)
+    #edge_mass_flow_df, max_edge_mass_flow_df = read_max_edge_flowrate(edge_node_df, locator, network_type)
 
     # assign pipe id/od according to maximum edge mass flow
     pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv)
@@ -103,33 +117,33 @@ def thermal_network_main(locator, gv, network_type, source):
     T_supply_nodes_list = []
     plant_heat_requirements = []
 
-    # for t in range(8760):
-    #     print('calculating network thermal hydraulic properties... timestep',t)
-    #     timer = time.clock()
-    #
-    #     ## solve network temperatures
-    #
-    #     T_supply_nodes, \
-    #     T_return_nodes, \
-    #     plant_heat_requirement = solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df,
-    #                                                         edge_mass_flow_df.ix[t], K_pipe, t_target_supply_df,
-    #                                                         building_names, buildings_demands, substations_HEX_specs, t,
-    #                                                         network_type)
-    #
-    #     # store node temperatures and plant heat requirement at each time-step
-    #     T_supply_nodes_list.append(T_supply_nodes)
-    #     T_return_nodes_list.append(T_return_nodes)
-    #     plant_heat_requirements.append(plant_heat_requirement)
-    #
-    #     print (time.clock() - timer, 'seconds process time for timestep',t)
-    #
-    # # save results
-    # pd.DataFrame(T_supply_nodes_list, columns=edge_node_df.index).\
-    #     to_csv(locator.get_optimization_network_layout_supply_temperature_file(network_type), index=False, float_format='%.3f')
-    # pd.DataFrame(T_return_nodes_list, columns=edge_node_df.index).\
-    #     to_csv(locator.get_optimization_network_layout_return_temperature_file(network_type), index=False, float_format='%.3f')
-    # # pd.DataFrame(plant_heat_requirements).\
-    # #     to_csv(locator.get_optimization_network_layout_plant_heat_requirement_file(network_type), index=False, float_format='%.3f') #FIXME[SH]: save to csv
+    for t in range(8760):
+        print('calculating network thermal hydraulic properties... timestep',t)
+        timer = time.clock()
+
+        ## solve network temperatures
+
+        T_supply_nodes, \
+        T_return_nodes, \
+        plant_heat_requirement = solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df,
+                                                            edge_mass_flow_df.ix[t], K_pipe, t_target_supply_df,
+                                                            building_names, buildings_demands, substations_HEX_specs, t,
+                                                            network_type)
+
+        # store node temperatures and plant heat requirement at each time-step
+        T_supply_nodes_list.append(T_supply_nodes)
+        T_return_nodes_list.append(T_return_nodes)
+        plant_heat_requirements.append(plant_heat_requirement)
+
+        print (time.clock() - timer, 'seconds process time for timestep',t)
+
+    # save results
+    pd.DataFrame(T_supply_nodes_list, columns=edge_node_df.index).\
+        to_csv(locator.get_optimization_network_layout_supply_temperature_file(network_type), index=False, float_format='%.3f')
+    pd.DataFrame(T_return_nodes_list, columns=edge_node_df.index).\
+        to_csv(locator.get_optimization_network_layout_return_temperature_file(network_type), index=False, float_format='%.3f')
+    # pd.DataFrame(plant_heat_requirements).\
+    #     to_csv(locator.get_optimization_network_layout_plant_heat_requirement_file(network_type), index=False, float_format='%.3f') #FIXME[SH]: save to csv
 
     # skip calculation, import csv TODO: get rid of this after testing
     T_supply_nodes_list = pd.read_csv(locator.get_optimization_network_layout_supply_temperature_file(network_type)).values.tolist()
@@ -159,8 +173,10 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df):
     This function carries out the steady-state mass flow rate calculation for a predefined network with predefined mass
     flow rates at each substation.
 
-    :param locator: locator class
-    :param gv: globalvariables class
+    :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges) and
+    indicating the direction of flow of each edge e at node n: if e points to n, value is 1; if e leaves
+    node n, -1; else, 0.                                                                        (n x e)
+    :param mass_flow_substation_df:
 
     :return: mass_flow: (1 x e) vector specifying the mass flow rate at each edge e at the given time step t
     '''
@@ -326,6 +342,29 @@ def calc_kinematic_viscosity(temperature):
 
 def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge_node_df, gv, locator,
                            substations_HEX_specs, t_target_supply, network_type):
+    """
+    This function calculates the mass flow rate on each edge assuming zero temperature losses in the pipeline.
+    The supply network temperature is set at the target supply temperature of the specific time-step.
+    With the supply temperature arriving to each substation and the building side heat exchanger specifications, the
+    return temperature and required mass flow of each substation are calculated.
+    Lastly, with the substation mass flows, the mass flow in each edge are solved, and the maximum mass flow rate on
+    each edge over 8760 hr are determined.
+
+    :param all_nodes_df:
+    :param building_names:
+    :param buildings_demands:
+    :param edge_node_df:
+    :param gv:
+    :param locator:
+    :param substations_HEX_specs:
+    :param t_target_supply: [the network target supply temperature, set by the highest substation temperature requirement.
+    :param network_type: specifying weather the network is DH or DC
+    :returns: edge_mass_flow_df: dataframe of
+    :returns: max_edge_mass_flow_df:
+
+    The following file is saved.
+    NominalEdgeMassFlow_ + 'network_type'.csv: the mass flow on each edge assume no temperatur losses in the network.
+    """
     # create empty dataframes to store results
     edge_mass_flow_df = pd.DataFrame(data=np.zeros((8760, len(edge_node_df.columns.values))),
                                      columns=edge_node_df.columns.values)
@@ -358,8 +397,6 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     edge_mass_flow_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'NominalEdgeMassFlow_'+network_type+'.csv')
     print (time.clock() - t0, "seconds process time for edge mass flow calculation\n")
 
-    edge_mass_flow_df = pd.read_csv(locator.get_optimization_network_layout_folder() + '//' + 'NominalEdgeMassFlow_'+network_type+'.csv')
-
     # assign pipe properties based on max flow on edges
     max_edge_mass_flow = edge_mass_flow_df.max(axis=0)
     max_edge_mass_flow_df = pd.DataFrame(data=[max_edge_mass_flow], columns=edge_node_df.columns)
@@ -379,28 +416,57 @@ def read_max_edge_flowrate(edge_node_df, locator, network_type):
 #===========================
 # Thermal calculation
 #===========================
-def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df, edge_mass_flow_df, K, t_target_supply_df,
+def  solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df, edge_mass_flow_df, K, t_target_supply_df,
                                building_names, buildings_demands, substations_HEX_specs, t, network_type):
     """
     This function calculates the node temperatures at time-step t accounting for heat losses throughout the network.
 
     Parameters
     ----------
-    locator
-    gv
-    T_ground
-    edge_node_df
-    all_nodes_df
-    edge_mass_flow_df
-    K
-    t_target_supply_df
-    building_names
-    buildings_demands
-    substations_HEX_specs
-    t
+    :param locator: An InputLocator to locate input files
+    :type locator: cea.inputlocator.InputLocator
+
+    :param gv: A GlobalVariable (context) instance
+    :type gv: cea.globalvar.GlobalVariable
+
+    :param T_ground: vector with ground temperatures in [K]
+    :type T_ground:
+
+    :param edge_node_df: edge node matrix (n x e) indicating the connection and the pipe flow direction
+    :type edge_node_df: dataframe
+
+    :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
+                        (and if so, which building that node corresponds to), or neither.
+    :type all_nodes_df: dataframe
+
+    :param edge_mass_flow_df:
+    :type edge_mass_flow_df: dataframe
+
+    :param K: aggregated heat conduction coefficient for each pipe
+    :type K:
+
+    :param t_target_supply_df: target supply temperature at all substations
+    :type t_target_supply_df: dataframe
+
+    :param building_names: list of building names in the scenario
+    :type building_names: list
+
+    :param buildings_demands: demand of each building in the scenario
+    :type buildings_demands:
+    :param substations_HEX_specs: DataFrame with substation heat exchanger specs at each building.
+    :type substations_HEX_specs:
+    :param t:
+    :type t:
+
 
     Returns
     -------
+    :returns T_supply_nodes:
+    :rtype T_supply_nodes:
+    :returns T_return_nodes:
+    :rtype T_return_nodes:
+    :returns plant_heat_requiremnt:
+    :rtype plant_heat_requirement:
 
     """
 
@@ -499,6 +565,13 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
 
 
 def write_nodes_to_substations(T_supply_nodes, all_nodes_df, plant_node):
+    """
+    This function writes node values to the corresponding building substations.
+    :param T_supply_nodes: dataframe of node number and temperature
+    :param all_nodes_df:
+    :param plant_node: the
+    :return:
+    """
     T_substation_supply = all_nodes_df.copy().drop('plant')   # add building names to corresponding nodes
     T_substation_supply.loc['T_supply'] = T_supply_nodes      # add consumer node supply temperatures
     T_substation_supply.columns = T_substation_supply.loc['consumer']   # set building names as column names
@@ -510,6 +583,30 @@ def write_nodes_to_substations(T_supply_nodes, all_nodes_df, plant_node):
 
 
 def calc_supply_temperatures(gv, T_ground, edge_node_df, mass_flow_df, K, t_target_supply, network_type):
+    """
+    This function calculate the node temperatures considering heat losses in the supply network.
+    Starting from the plant supply node, the function go through the edge-node index to search for the outlet node, and
+    calculate the outlet node temperature after heat loss. And starting from the outlet node, the function calculates
+    the node temperature at the corresponding pipe outlet, and the calculation goes on until all the node temperatures
+    are solved. At nodes connecting to multiple pipes, the mixing temperature is calculated.
+
+    :param gv:
+    :param T_ground:
+    :param edge_node_df:
+    :param mass_flow_df:
+    :param K:
+    :param t_target_supply:
+    :param network_type: a string that defines whether the network is a district heating ('DH') or cooling ('DC')
+                         network
+
+    :return T_node.T: list of node temperatures (nx1)
+    :rtype T_node.T:
+
+    :return plant_node: the index of the plant node
+    :rtype plant_node: float
+
+
+    """
     Z = np.asarray(edge_node_df)   # (nxe) edge-node matrix
     Z_pipe_out = Z.clip(min=0)     # pipe outlet matrix
     Z_pipe_in = Z.clip(max=0)      # pipe inlet matrix
@@ -525,11 +622,11 @@ def calc_supply_temperatures(gv, T_ground, edge_node_df, mass_flow_df, K, t_targ
 
     # start node temperature calculation
     flag = 0
-    T_plant_sup_0 = 273 + t_target_supply.max()  # set initial supply temperature guess to the minimum required temperature at node
+    T_plant_sup_0 = 273 + t_target_supply.max()  # set initial supply temperature guess to the target substation supply temperature
     T_plant_sup = T_plant_sup_0
     iteration = 0
     while flag == 0:
-        # calculate the pipe outlet temperature from the plant node
+        ## calculate the pipe outlet temperature from the plant node
         for i in range(Z.shape[0]):
             if np.count_nonzero(Z_note[i]==0) == (Z.shape[1]-1) and Z[i].sum() == -1:  # find plant node
                     # write plant inlet temperature
@@ -538,10 +635,10 @@ def calc_supply_temperatures(gv, T_ground, edge_node_df, mass_flow_df, K, t_targ
                     T_e_in[i] = T_e_in[i]*T_node[i]
                     # calculate pipe outlet temperature
                     calc_t_out(i, edge, K, M_d, Z, T_e_in, T_e_out, T_ground, Z_note, gv)
-        plant_node = T_node.argmax()
+        plant_node = T_node.argmax()   # the position of the plant node in the edge-node index
 
-        # calculate pipe outlet temperature and node temperature for the rest
-        while np.count_nonzero(T_node==0) > 0:  #Z_note.max() >= 1:
+        ## calculate pipe outlet temperature and node temperature for the rest
+        while np.count_nonzero(T_node==0) > 0:
             for j in range(Z.shape[0]):
                 # check if all inlet flow info towards node j are known (only -1 left in row Z_note[j])
                 if np.count_nonzero(Z_note[j] == 1) == 0 and np.count_nonzero(Z_note[j] == 0) != Z.shape[1]:
@@ -551,6 +648,7 @@ def calc_supply_temperatures(gv, T_ground, edge_node_df, mass_flow_df, K, t_targ
                     T_node[j] = part1 / part2
                     # write the node temperature to the corresponding pipe inlet
                     T_e_in[j] = T_e_in[j] * T_node[j]
+
                     # calculate pipe outlet temperatures entering from node j
                     for edge in range(Z_note.shape[1]):
                         # find the pipes with water flow leaving from node j
@@ -564,31 +662,40 @@ def calc_supply_temperatures(gv, T_ground, edge_node_df, mass_flow_df, K, t_targ
                 elif T_e_out[j].min() < 0:
                     print('negative node temperature!')
 
-        # evaluate if all node supply temperature reach the targets
+        ## iterate the plant supply temperature until all the node temperature reaches the target temperatures
         if network_type is 'DH':
+            # calculate the difference between node temperature and the target supply temperature at substations
             dT = (T_node - (t_target_supply + 273.15)).dropna()  # [K] temperature differences b/t node supply and target supply
+
+            # enter iteration if the node supply temperature is lower than the target supply temperature (0.1 is the tolerance)
             if all(dT > -0.1) is False and (T_plant_sup - T_plant_sup_0) < 60:
                     # increase plant supply temperature and re-iterate the node supply temperature calculation
                     T_plant_sup = T_plant_sup + abs(dT.min())  # increase by the maximum amount of temperature deficit at nodes
+
+                    # reset the matrices for supply network temperature calculation
                     Z_note = Z.copy()
                     T_e_out = Z_pipe_out.copy()
                     T_e_in = Z_pipe_in.copy().dot(-1)
                     T_node = np.zeros(Z.shape[0])
                     iteration += 1
+
             elif all(dT > -0.1) is False and (T_plant_sup - T_plant_sup_0) >= 60:
                 # end iteration if total network temperature drop is higher than 60 K
                 print ('cannot fulfill substation supply node temperature requirement after iterations:', iteration, dT.min())
-                node_insufficient = dT[dT<0].index.values
+                node_insufficient = dT[dT < 0].index.values
                 for node in range(node_insufficient.size):
                     index_insufficient = np.argwhere(edge_node_df.index == node_insufficient[node])[0]
                     T_node[index_insufficient] = t_target_supply[index_insufficient] + 273.15
-                    # force setting node temperature to target to avoid substation HEX calculation error
-                    # FIXME[SH]: causing error at mass flow iteration, the supply temperature will not converge...
+                    # force setting node temperature to target to avoid substation HEX calculation error.
+                    # However, it might potentially cause error at mass flow iteration.
                 flag = 1
             else:
                 flag = 1
         else: # when network type == 'DC'
+            # calculate the difference between node temperature and the target supply temperature at substations
             dT = (T_node - (t_target_supply + 273.15)).dropna()  # [K] temperature differences b/t node supply and target supply
+
+            # enter iteration if the node supply temperature is higher than the target supply temperature (0.1 is the tolerance)
             if all(dT < 0.1) is False and (T_plant_sup_0 - T_plant_sup) < 10:
                 # increase plant supply temperature and re-iterate the node supply temperature calculation
                 T_plant_sup = T_plant_sup - abs(dT.max())  # increase by the maximum amount of temperature deficit at nodes
@@ -598,20 +705,31 @@ def calc_supply_temperatures(gv, T_ground, edge_node_df, mass_flow_df, K, t_targ
                 T_node = np.zeros(Z.shape[0])
                 iteration += 1
             elif all(dT < 0.1) is False and (T_plant_sup_0 - T_plant_sup) >= 10:
-                # end iteration if total network temperature drop is higher than 60 K
+                # end iteration if total network temperature rise is higher than 10 K
                 print('cannot fulfill substation supply node temperature requirement after iterations:', iteration, dT.min())
                 node_insufficient = dT[dT > 0].index.values
                 for node in range(node_insufficient.size):
                     index_insufficient = np.argwhere(edge_node_df.index == node_insufficient[node])[0]
                     T_node[index_insufficient] = t_target_supply[index_insufficient] + 273.15
-                    # force setting node temperature to target to avoid substation HEX calculation error
-                    # FIXME[SH]: causing error at mass flow iteration, the supply temperature will not converge...
+                    # force setting node temperature to target to avoid substation HEX calculation error.
+                    # However, it might potentially cause error at mass flow iteration.
                     flag = 1
             else:
                 flag = 1
     return T_node.T, plant_node
 
 def calc_return_temperatures(gv, T_ground, edge_node_df, mass_flow_df, mass_flow_substation_df, K, t_return):
+    """
+
+    :param gv:
+    :param T_ground:
+    :param edge_node_df:
+    :param mass_flow_df:
+    :param mass_flow_substation_df:
+    :param K:
+    :param t_return:
+    :return:
+    """
     Z = np.asarray(edge_node_df) *(-1)  # (nxe) edge-node matrix
     Z_pipe_out = Z.clip(min=0)     # pipe outlet matrix
     Z_pipe_in = Z.clip(max=0)      # pipe inlet matrix
@@ -734,7 +852,7 @@ def calc_edge_temperatures(temperature_node, edge_node):
     return temperature_edge
 
 #============================
-#other functions
+# Other functions
 #============================
 
 def get_thermal_network_from_csv(locator, network_type):
@@ -1049,7 +1167,7 @@ def run_as_script(scenario_path=None):
     network_type = ['DH', 'DC'] # set to either 'DH' or 'DC'
     source = ['csv', 'shapefile'] # set to csv or shapefile
 
-    thermal_network_main(locator, gv, network_type[0], source[0])
+    thermal_network_main(locator, gv, network_type[1], source[0])
     print ('test thermal_network_main() succeeded')
 
 if __name__ == '__main__':
