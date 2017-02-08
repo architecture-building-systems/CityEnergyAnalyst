@@ -270,6 +270,14 @@ To set the custom dictionary used in PyCharm, do:
 
 #. Click "Apply".
 
+Installation on the Euler cluster
+---------------------------------
+
+It is possible to install the CEA on the Euler_ cluster by following the following guide:
+:doc:`installation-on-euler`.
+
+.. _Euler: https://www.ethz.ch/services/en/it-services/catalogue/server-cluster/hpc.html
+
 .. |image0| image:: assets/installation-guide/Capture1.PNG
 .. |image1| image:: assets/installation-guide/Capture2.PNG
 .. |image2| image:: assets/installation-guide/Capture3.PNG

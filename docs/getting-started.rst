@@ -73,6 +73,7 @@ contributions are presented in the form of a sub-folder structure like
 3 o merge their contributions in the Master branch.
 
 .. |CEA workflow| digraph:: cea_workflow
+
     rankdir=LR;
     compound=true;
     node [shape=box];
