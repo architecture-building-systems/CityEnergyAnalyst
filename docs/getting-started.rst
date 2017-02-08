@@ -4,6 +4,48 @@ Getting started
 The City Energy Analyst V1.0b is stored in a public repository in Github
 under the name of
 `CEAforArcGIS <https://github.com/architecture-building-systems/CEAforArcGIS>`__.
+
+The main workflow for working with the City Energy Analyst looks like
+this:
+
+.. image:: assets/getting-started/cea.workflow.png
+
+Preprocessing
+~~~~~~~~~~~~~
+
+The *gather data* step will be different from project to project, but
+usually involves collecting data from municipality databases, GIS
+systems and in-person survey. The output is a set of shapefiles with the
+building floor plans, floor heights and the corresponding building
+program (usages).
+
+The *Radiation* step calculates radiation data for the scenario.
+
+The (optional) *Data helper* step aggregates archetype data to the
+scenario for demand calculation.
+
+Demand Calculation
+~~~~~~~~~~~~~~~~~~
+
+The *Demand* step calculates the load demands for heating and cooling
+for a whole year. The output is used for the *Analysis* and
+*Visualization* stages.
+
+Analysis
+~~~~~~~~
+
+The *Analysis* stage contains three modules for analyzing various
+aspects of the scenario: The emissions due to operation, embodied energy
+of the built environment and emissions due to mobility.
+
+Visualization
+~~~~~~~~~~~~~
+
+The *Visualization* stage creates visual representations of the data
+obtained in the *Demand Calculation* and *Analysis* stages.
+
+--------------
+
 The repository is divided in the next folder structure:
 
 The ``CEA`` folder
@@ -20,18 +62,6 @@ requires an explicit modification to ``cea``. For this,a branch under
 the name of their contribution should be created first and then pushed
 to master. the board will take a look and accept.
 
-The ``SANDBOX`` folder
-----------------------
-
-The folder ``Sandbox`` is the playground of contributors level 2 and 3.
-Each developer has been assigned a sub-folder under his name. i.e.,
-``sandbox/shsieh/``. Here you can put anything you want. You can play
-around with new practices or theories that might/might not be one day
-part of the CEA tool. The Sandbox facilitates mutual interaction while
-scripting a new plug-in/module/class for the CEA tool. Developers level
-2 and 3 are free to merge their work to the sub-folder under their name
-in the Master branch.
-
 The ``CONTRIBUTIONS`` folder
 ----------------------------
 
@@ -41,3 +71,4 @@ this is a plug-in/module/class created out of work in the Sandbox. These
 contributions are presented in the form of a sub-folder structure like
 ``contributions/energystorage/simplewatertank/``. Developers level 2 and
 3 o merge their contributions in the Master branch.
+
