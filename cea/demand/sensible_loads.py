@@ -360,7 +360,7 @@ def calc_Asol(t, bpr, gv):
     Fsh_win = blinds.calc_blinds_activation(bpr.solar['I_win'][t], bpr.architecture['G_win'], bpr.architecture['rf_sh'])
     Asol_wall = bpr.rc_model['Awall_all'] * bpr.architecture['a_wall'] * gv.Rse * bpr.rc_model['U_wall']
     Asol_roof = bpr.rc_model['Aroof'] * bpr.architecture['a_roof'] * gv.Rse * bpr.rc_model['U_roof']
-    Asol_win = Fsh_win * bpr.rc_model['Aw'] * (1 - gv.F_f)
+    Asol_win = Fsh_win * bpr.rc_model['Aw'] * (1 - gv.F_f)   # eq.(44)
 
     return Asol_wall, Asol_roof, Asol_win
 """
