@@ -131,12 +131,12 @@ def thermal_network_main(locator, gv, network_type, source):
 
     ## assign pipe properties
     # calculate maximum edge mass flow
-    # edge_mass_flow_df, max_edge_mass_flow_df = calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands,
-    #                                                                   edge_node_df, gv, locator, substations_HEX_specs,
-    #                                                                   t_target_supply, network_type)
+    edge_mass_flow_df, max_edge_mass_flow_df = calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands,
+                                                                      edge_node_df, gv, locator, substations_HEX_specs,
+                                                                      t_target_supply, network_type)
 
     # TODO: This is a temporary function to read from file and save run time for 'calc_max_edge_flowrate'
-    edge_mass_flow_df, max_edge_mass_flow_df = read_max_edge_flowrate(edge_node_df, locator, network_type)
+    # edge_mass_flow_df, max_edge_mass_flow_df = read_max_edge_flowrate(edge_node_df, locator, network_type)
 
     # assign pipe id/od according to maximum edge mass flow
     pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv)
@@ -1438,7 +1438,7 @@ def run_as_script(scenario_path=None):
     network_type = ['DH', 'DC'] # set to either 'DH' or 'DC'
     source = ['csv', 'shapefile'] # set to csv or shapefile
 
-    thermal_network_main(locator, gv, network_type[0], source[0])
+    thermal_network_main(locator, gv, network_type[1], source[0])
     print ('test thermal_network_main() succeeded')
 
 if __name__ == '__main__':
