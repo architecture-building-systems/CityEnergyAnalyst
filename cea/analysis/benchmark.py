@@ -29,21 +29,27 @@ __status__ = "Production"
 
 def benchmark(locator_list, output_file):
     """
-    Algorithm to print graphs in PDF concerning the 2000 Watt society benchmark for different scenarios.
+    Print PDF graphs comparing the selected scenarios to the 2000 Watt society benchmark for construction, operation
+    and mobility.
 
-    Parameters
-    ----------
+    The following file is created as a side effect by this script in the specified file path:
+    - ouput_file: .pdf
+        Plot of the embodied and operational emissions and primary energy demand
+
     :param locator: a list of InputLocator instances set to each scenario to be computed. The first element in
     the array is always considered as the baseline for the comparison.
     :type locator: list
     :param output_file: the filename (pdf) to save the results as.
     :type output_file: str
 
-    Side effects
-    -------
-    The following file is created by this script:
-    - ouput_file: .pdf
-        Plot of the embodied and operational emissions and primary energy demand
+    ..[SIA 2040, 2011]: Swiss Society of Engineers and Architects (SIA), "SIA Efficiency Path 2040" (2011)
+    ..[Kellenberger, D. et al., 2010]: Kellenberger, D. et al., 2010. "Arealentwicklung fur die 2000-Watt Gesellschaft:
+    Leitfaden und Fallbeispiele".
+    ..[SIA Effizienzpfad, 2011] Swiss Society of Engineers and Architects (SIA), "SIA Effizienzpfad: Bestimmung der Ziel- und
+    Richtwerte mit dem Top-Down Approach".
+    ..[SIA 2024, 2015]: Swiss Society of Engineers and Architects (SIA), Raumnutzungsdaten fur die Energie- und
+    Gebaeudetechnik" (2015)
+
     """
 
     # setup: the labels and colors for the graphs are defined
@@ -139,25 +145,21 @@ def calc_benchmark_targets(locator):
     This function calculates the embodied, operation, mobility and total targets (ghg_kgm2 and pen_MJm2) for all
     buildings in a scenario.
 
-    The target values for the Swiss case for each type of occupancy are based on the following sources:
-        -   Swiss Society of Engineers and Architects (SIA), "SIA Efficiency Path 2040" (2011):
-            'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
-        -   Kellenberger, D. et al. "Arealentwicklung fur die 2000-Watt gesellschaft: Leitfaden und Fallbeispiele" (2012):
-            'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
-        -   Calculated based on "SIA Effizienzpfad: Bestimmung der Ziel- und Richtwerte mit dem Top-Down Approach" (2010):
-            'HOSPITAL', 'INDUSTRY'
-    Due to lack of sources, the following target values are, as of yet, undefined:
-        'GYM', 'SWIMMING', 'SERVERROOM', 'COOLROOM'
+    The current values for the Swiss case and 2000 W target values for each type of occupancy were taken from the
+    literature, when available:
+        -   [SIA 2040, 2011]: 'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
+        -   [Kellenberger, D. et al., 2010]: 'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
 
-    Parameters
-    ----------
+    For the following occupancy types, the target values were calculated based on the approach in [SIA Effizienzpfad,
+    2011] for the present-day values assumed in calc_benchmark_today:
+            'INDUSTRY', 'HOSPITAL', 'GYM', 'SWIMMING', 'SERVERROOM' and 'COOLROOM'
+
     :param locator: an InputLocator instance set to the scenario to compute
     :type locator: InputLocator
 
-    Return
-    ------
     :returns target: dict containing pen_MJm2 and ghg_kgm2 target values
     :rtype target: dict
+
     '''
 
     # local files
@@ -198,25 +200,36 @@ def calc_benchmark_today(locator):
     This function calculates the embodied, operation, mobility and total targets (ghg_kgm2 and pen_MJm2)
     for the area for the current national trend.
 
-    The current values for the Swiss case for each type of occupancy are based on the following sources:
-        -   Swiss Society of Engineers and Architects (SIA), "SIA Efficiency Path 2040" (2011):
-            'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
-        -   Kellenberger, D. et al. "Arealentwicklung fur die 2000-Watt gesellschaft: Leitfaden und Fallbeispiele" (2012):
-            'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
-        -   Calculated based on "SIA Effizienzpfad: Bestimmung der Ziel- und Richtwerte mit dem Top-Down Approach" (2010):
-            'HOSPITAL', 'INDUSTRY'
-    Due to lack of sources, the following target values are, as of yet, undefined:
-        'GYM', 'SWIMMING', 'SERVERROOM', 'COOLROOM'
+    The current values for the Swiss case for each type of occupancy were taken from the literature, when available:
+        -   [SIA 2040, 2011]: 'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
+        -   [Kellenberger, D. et al., 2010]: 'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
 
-    Parameters
-    ----------
+    For the following occupancy types, the values for construction and operation were calculated based on the approach
+    in [SIA Effizienzpfad, 2011]: 'INDUSTRY' and 'HOSPITAL'.
+
+    For the following occupancy types, the current for operation were estimating by obtaining the final energy demand
+    for each use from [SIA 2024, 2015] and extrapolating the corresponding primary energy and emissions from the values
+    for the other occupancy types: 'GYM', 'SWIMMING', 'SERVERROOM' and 'COOLROOM'.
+
+    Finally, due to a lack of data, multiple values had to be assumed. The embodied energy for the following uses was
+    assumed as follows:
+        -   'GYM', 'SWIMMING': assumed to be equal to the value for use type 'RETAIL'
+        -   'SERVERROOM': assumed to be equal to the value for the use type 'OFFICE'
+        -   'COOLROOM': assumed to be equal to the value for the use type 'HOSPITAL'
+
+    Due to lacking mobility data, the following values were assumed:
+        -   'INDUSTRY': assumed to be equal to the value for the use type 'OFFICE'
+        -   'HOSPITAL': assumed to be equal to the value for the use type 'HOTEL'
+        -   'GYM', 'SWIMMING': assumed to be equal to the value for use type 'RETAIL'
+        -   'SERVERROOM', 'COOLROOM': assumed negligible
+
+
     :param locator: an InputLocator instance set to the scenario to compute
     :type locator: InputLocator
 
-    Return
-    ------
     :returns target: dict containing pen_MJm2 and ghg_kgm2 target values
     :rtype target: dict
+
     '''
 
     # local files
