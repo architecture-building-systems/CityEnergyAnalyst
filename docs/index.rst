@@ -12,6 +12,7 @@ Welcome to City Energy Analyst's documentation!
 
    installation
    installation-on-euler
+   license
    getting_started
    modules/cea
 
