@@ -1,3 +1,6 @@
+Installing the City Energy Analyst on the Euler cluster
+=======================================================
+
 **Disclaimer**: for this to work, you must be an ETH Zurich affiliated
 person and own a nethz-account.
 
