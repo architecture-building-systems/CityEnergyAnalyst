@@ -207,16 +207,6 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df):
     This function carries out the steady-state mass flow rate calculation for a predefined network with predefined mass
     flow rates at each substation.
 
-<<<<<<< HEAD
-    :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges) and
-    indicating the direction of flow of each edge e at node n: if e points to n, value is 1; if e leaves
-    node n, -1; else, 0.                                                                        (n x e)
-    :param mass_flow_substation_df:
-
-    :return: mass_flow: (1 x e) vector specifying the mass flow rate at each edge e at the given time step t
-    '''
-
-    '''
     ============
     This part of the code is obsolete since the edge_node_matrix is already imported before the time step calculation.
     Preserved since I cannot test the function now, but could be deleted as soon as I can verify this.
@@ -229,9 +219,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df):
         for pipe in edge_node_df:
             edge_node_df['-'+pipe] = -edge_node_df[pipe]
         #
-    '''
 
-    '''
     ============
     This part of the code is obsolete since we now have the correct edge flow calculation.
     Preserved since I cannot test the function now, but could be deleted as soon as I can verify this.
@@ -246,7 +234,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df):
             mass_flow_substation_df[node] = pd.read_csv(locator.pathSubsRes + '//' + (all_nodes_df[node]['consumer']+all_nodes_df[node]['plant']) + "_result.csv", usecols=['mdot_result'])  #name] = pd.read_csv(locator.pathSubsRes + '//' + name + "_result.csv", usecols=['mdot_result'])
         else:
             mass_flow_substation_df[node] = np.zeros(8760)
-=======
+
     Parameters
     ----------
     :param edge_node_df: DataFrame consisting of n rows (number of nodes) and e columns (number of edges) and indicating
@@ -262,7 +250,6 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df):
     ------
     :return: mass_flow_edge: matrix specifying the mass flow rate at each edge e at the given time step t
     :type: mass_flow_edge: numpy.ndarray
->>>>>>> origin/i412-DHC-network-path
     '''
 
     # t0 = time.clock()
