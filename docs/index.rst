@@ -10,9 +10,11 @@ Welcome to City Energy Analyst's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   installation
+   getting-started
+   installation_guide
    installation-on-euler
    license
+   disclaimer
    getting_started
    modules/cea
 
