@@ -28,7 +28,7 @@ __status__ = "Production"
 def substation_main(locator, total_demand, building_names, gv, Flag):
     '''
     this function calculates the temperatures and mass flow rates of the district heating network
-    at every costumer. Based onthis, the script calculates the hourly temperature of the network at the plant.
+    at every costumer. Based on this, the script calculates the hourly temperature of the network at the plant.
     This temperature needs to be equal to that of the customer with the highest temperature requirement plus thermal
     losses in the network.
 
@@ -38,7 +38,7 @@ def substation_main(locator, total_demand, building_names, gv, Flag):
     :param gv: path to global variables class
     :param Flag: boolean, True if the function is called by the master optimizaiton. False if the fucntion is
     called during preprocessing
-    :return:
+    :return :
 
     '''
 

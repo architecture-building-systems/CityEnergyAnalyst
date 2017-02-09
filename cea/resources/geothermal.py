@@ -16,18 +16,30 @@ __status__ = "Production"
 
 
 def calc_ground_temperature(T_ambient, gv):
-    '''
-    SOURCE?
-    This function calculates the ground temperature in an hourly basis.
+    """
+    Calculates hourly ground temperature fluctuation over a year following [Kusuda, T. et al., 1965]_.
+
+    Parameters
+    ----------
     :param T_ambient: vector with outdoor temperature
-    :param gv: global variables class
-    :return:
-        Tg: vector with ground temperatures in K
-    '''
+    :type T_ambient: np array
+    :param gv: globalvar.py
 
-    T_max = max(T_ambient)+273 # to K
-    T_avg = np.mean(T_ambient)+273 # to K
-    e = gv.Z0*math.sqrt((math.pi*gv.Csl*gv.Psl)/(8760*gv.Bsl)) # soil constants
-    Tg = [T_avg+(T_max-T_avg)*math.exp(-e)*math.cos((2*math.pi*(i+1)/8760)-e) for i in range(8760)]
+    Returns
+    -------
+    :return Tg: vector with ground temperatures in [K]
+    :rtype Tg: np array
 
-    return Tg #in K
+    References
+    ----------
+    ..[Kusuda, T. et al., 1965] Kusuda, T. and P.R. Achenbach (1965). Earth Temperatures and Thermal Diffusivity at
+    Selected Stations in the United States. ASHRAE Transactions. 71(1):61-74
+    """
+
+    T_max = max( T_ambient ) + 273 # to K
+    T_avg = np.mean( T_ambient ) + 273 # to K
+    e = gv.Z0 * math.sqrt ( ( math.pi * gv.Csl * gv.Psl ) / ( 8760 * gv.Bsl ) ) # soil constants
+    Tg = [ T_avg + ( T_max - T_avg ) * math.exp( -e ) * math.cos ( ( 2 * math.pi * ( i + 1 ) / 8760 ) - e )
+           for i in range(8760)]
+
+    return Tg
