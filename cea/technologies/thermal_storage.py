@@ -28,8 +28,18 @@ investment and maintenance costs
 
 def calc_Cinv_storage(vol, gV):
     """
-    vol in m3
-    50y lifetime
+    calculate the annualized investment cost of a thermal storage tank
+
+    Parameters
+    ----------
+    :param vol: storage tank volume
+    :type vol: float
+    :param gV: global.var
+
+    Returns
+    -------
+    :returns InvCa:
+
     """
     if vol>0:
         InvCa = 7224.8 * vol ** (-0.522) * vol * gV.EURO_TO_CHF / 50
