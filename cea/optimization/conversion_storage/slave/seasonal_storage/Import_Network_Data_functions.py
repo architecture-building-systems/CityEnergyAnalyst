@@ -14,9 +14,7 @@ import numpy as np
 def extract_csv(fName, colName, DAYS_IN_YEAR):
     """
     Extract data from one column of a csv file to a pandas.DataFrame
-    
-    Parameters
-    ----------
+
     :param fName: name of the csv file
     :param colName: name of the column from which to extract data
     :param DAYS_IN_YEAR: number of days to consider
@@ -36,8 +34,6 @@ def import_network_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     """
     importing and preparing raw data for analysis of the district distribution
 
-    Parameters
-    ----------
     :param fName: name of the building (has to be the same as the csv file, eg. "AA16.csv")
     :param DAYS_IN_YEAR: number of days in a year (usually 365)
     :param HOURS_IN_DAY: number of hours in day (usually 24)
@@ -75,8 +71,6 @@ def import_solar_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     """
     importing and preparing raw data for analysis of the district distribution
 
-    Parameters
-    ----------
     :param fName: name of file where solar data is stored in
     :param DAYS_IN_YEAR: number of days in a year (usually 365)
     :param HOURS_IN_DAY: number of hours in a day (usually 24)

@@ -1,8 +1,5 @@
 """
-=========================================
 Vapor-compressor chiller
-=========================================
-
 """
 from __future__ import division
 
@@ -16,12 +13,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-"""
-============================
-technical model
-============================
 
-"""
+# technical model
 
 def calc_VCC(mdot, tsup, tret, gV):
     """
@@ -29,22 +22,12 @@ def calc_VCC(mdot, tsup, tret, gV):
     between a district cooling network and a condenser with fresh water
     to a cooling tower
     
-    Parameters
-    ----------
-    mdot : float
-        mass flow rate in the district cooling network
-    tsup : float
-        temperature of supply for the DCN (cold)
-    tret : float
-        temperature of return for the DCN (hot)
+    :param mdot : float mass flow rate in the district cooling network
+    :param tsup : float temperature of supply for the DCN (cold)
+    :param tret : float temperature of return for the DCN (hot)
     
-    Returns
-    -------
-    wdot : float
-        electric power needed
-    qhotdot : float
-        heating power to condenser
-        
+    :retunrs: - wdot : float electric power needed
+              - qhotdot : float heating power to condenser
     """
     qcolddot = mdot * gV.cp * (tret - tsup)    
     tcoolin = gV.VCC_tcoolin
@@ -72,27 +55,15 @@ def calc_VCC(mdot, tsup, tret, gV):
     return wdot, qhotdot
 
 
-"""
-============================
-Investment costs
-============================
-
-"""
-
+# Investment costs
 
 def calc_Cinv_VCC(qcold, gV):
     """
     Annualized investment costs for the vapor compressor chiller
     
-    Parameters
-    ----------
-    qcolddot : float
-        COOLING PEAK demand in WATT-HOUR
+    :param qcolddot : float COOLING PEAK demand in WATT-HOUR
     
-    Returns
-    -------
-    InvCa in CHF/a
-    
+    :returns: InvCa in CHF/a
     """
     InvCa = 0.65 * 23E6 * gV.USD_TO_CHF * qcold / 37E6 / 25
     

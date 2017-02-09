@@ -22,8 +22,6 @@ def generate_main(nBuildings, gv):
     """
     Creates an individual configuration for the evolutionary algorithm
 
-    Parameters
-    ----------
     :param nBuildings: number of buildings
     :param gv: global variables class
     :type nBuildings: int

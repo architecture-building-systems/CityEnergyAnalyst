@@ -2,7 +2,7 @@
 Analyze the results in the samples folder and write them out to an Excel file. This script assumes:
 
 - a samples folder with the files `samples.npy` and `problem.pickle` was created with `sensitivity_demand_samples.py`
-- all the results have been added to the sammples folder in the format `result.%i.csv`, with `%i` replaced by the index
+- all the results have been added to the samples folder in the format `result.%i.csv`, with `%i` replaced by the index
   into the samples array. Use the script `sensitivity_demand_simulate.py` to create the results.
 - each result file has the same list of columns (the `--output-parameters` for the simulations were the same)
 - the `analyze_sensitivity` function is called with the same method and arguments as the sampling routine
@@ -38,11 +38,10 @@ def analyze_sensitivity(samples_path, temporal_scale):
     It also contains the `problem.pickle` file which contains information about the problem as well as parameters
     that were set in the `sensitivity_demand_samples.py` call (`method`, `N` and method-specific parameters)
 
-    PARAMETERS
-    ----------
-
     :param samples_path: the path to the samples folder as created by `sensitivity_demand_samples.py`
     :type samples_path: str
+    :param temporal_scale: The scale at which to do the analysis. Valid values: ``['monthly', 'yearly']``
+    :type temporal_scale: str
     """
     print("analyzing sensitivity in %(samples_path)s for temporal_scale=%(temporal_scale)s" % locals())
     # do checks
@@ -155,9 +154,6 @@ def read_results(samples_folder, samples_count, output_parameter, temporal_scale
     Read each `results.%i.csv` file from the samples folder into a DataFrame and return them as a list. Each such
     csv file has a column for each output parameter specified for the simulation runs and a row for each building.
 
-    PARAMETERS
-    ----------
-
     :param samples_folder: path to the samples folder containing the results files of the simulation runs
     :type samples_folder: str
 
@@ -171,16 +167,8 @@ def read_results(samples_folder, samples_count, output_parameter, temporal_scale
     :param output_parameter: output parameter of the simualation e.g., Qhsf, Ef
     :type samples_count: str
 
-    RETURNS
-    -------
-
     :returns: matrix of lenght mxn where m: samples_count, n: buildings, content: result for output_parameter
     :rtype: list of DataFrame
-
-    INPUT / OUTPUT FILES
-    --------------------
-
-    - `$samples_folder/result.$i.csv` for i in range(samples_count)
     """
     if temporal_scale == 'yearly':
         results = np.array(

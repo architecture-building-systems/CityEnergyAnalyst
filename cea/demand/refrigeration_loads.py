@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-=========================================
 refrigeration loads
-=========================================
-
 """
 from __future__ import division
 
@@ -16,12 +13,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
-"""
-=========================================
-final refrigeration loads
-=========================================
-"""
 
 def calc_Qcref(Eref):
     if Eref > 0:
