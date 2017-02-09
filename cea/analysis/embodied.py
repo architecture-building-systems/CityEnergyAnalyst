@@ -1,12 +1,12 @@
 """
 ===========================
-embodied energy and related grey emissions model algorithm
+Embodied energy and related grey emissions model algorithm
 ===========================
 J. Fonseca  script development          26.08.15
 D. Thomas   formatting and cleaning
 D. Thomas   integration in toolbox
 J. Fonseca  new development             13.04.16
-M. Mosteiro corrected multiple errors   07.11.16
+M. Mosteiro fixed calculation errors    07.11.16
 
 """
 from __future__ import division
@@ -14,7 +14,6 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
-
 import cea.globalvar
 import cea.inputlocator
 
