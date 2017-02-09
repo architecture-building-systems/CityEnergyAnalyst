@@ -438,7 +438,7 @@ def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
     ## Approach A - NREL Approach
     if approach_call == "A":
 
-        phi = float (Q_load) / float(Q_design)
+        phi = float( Q_load ) / float( Q_design )
         eta_max = 0.425 # from energy.gov
 
         if phi >= phi_threshold: # from NREL-Shape
@@ -447,14 +447,15 @@ def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
 
         if phi < phi_threshold:
             if phi <= 118/520.0 * phi_threshold:
-                eta_el = eta_max * 2/3 * (phi / (phi_threshold*118/520.0))
+                eta_el = eta_max * 2/3 * ( phi / ( phi_threshold * 118 / 520.0 ) )
 
-
-            if phi < 0.5 * phi_threshold and phi >= 118/520.0 * phi_threshold:
-                eta_el = eta_max * 2/3.0 + eta_max * 0.25 * (phi-phi_threshold*118/520.0) / (phi_threshold * (0.5 - 118/520.0))
+            if phi < 0.5 * phi_threshold and phi >= 118 / 520.0 * phi_threshold:
+                eta_el = eta_max * 2/3.0 + \
+                         eta_max * 0.25 * ( phi-phi_threshold * 118/520.0) / ( phi_threshold * (0.5 - 118/520.0 ) )
 
             if phi > 0.5 * phi_threshold and phi < phi_threshold:
-                eta_el = eta_max * (2/3.0 + 0.25)  +  1/12.0 * eta_max * (phi - phi_threshold * 0.5) / (phi_threshold * (1-0.5))
+                eta_el = eta_max * ( 2/3.0 + 0.25 ) + \
+                         1/12.0 * eta_max * ( phi - phi_threshold * 0.5) / (phi_threshold * (1-0.5))
 
         eta_therm_max = 0.45 # constant, after energy.gov
 
@@ -464,8 +465,7 @@ def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
         else:
             eta_therm = 0.5 * eta_therm_max * (1 + eta_therm_max * ((phi - phi_threshold) / (1 - phi_threshold)))
 
-
-    """ SECOND APPROACH  after http://etheses.bham.ac.uk/641/"""
+    ## Approach B - Empiric Approach
     if approach_call == "B":
 
         if Q_design > 0:
@@ -474,8 +474,8 @@ def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
         else:
             phi = 0
 
-        eta_el_max = 0.39  # after http://etheses.bham.ac.uk/641/
-        eta_therm_max = 0.58   # http://etheses.bham.ac.uk/641/     * 1.11 as this source gives eff. of HHV
+        eta_el_max = 0.39
+        eta_therm_max = 0.58   #* 1.11 as this source gives eff. of HHV
         eta_el_score = -0.220 + 5.277 * phi - 9.127 * phi**2 + 7.172* phi ** 3 - 2.103* phi**4
         eta_therm_score = 0.9 - 0.07 * phi + 0.17 * phi**2
 
