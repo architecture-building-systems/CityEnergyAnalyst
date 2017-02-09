@@ -17,7 +17,7 @@ buildings to a building category. It contains the next attributes:
 +----------+--------+------------------+-----------------------------------------------------------------------------------------------------------------+----------------+-------+
 | Variable | Type   | Unit             | Description                                                                                                     | Valid Values   | Ref.  |
 +==========+========+==================+=================================================================================================================+================+=======+
-| Code     | string | -                | code of type of main energy supply system (e.g., solar collector, natural gas in district heating network etc.) | T0,T1,T2,...Tn | -     |
+| Code     | string | \-               | code of type of main energy supply system (e.g., solar collector, natural gas in district heating network etc.) | T0,T1,T2,...Tn | -     |
 +----------+--------+------------------+-----------------------------------------------------------------------------------------------------------------+----------------+-------+
 | PEN      | float  | MJ-oil/m2.yr     | Non-renewable Primary energy factor (only fossil fuels contribution)                                            | (0.0.....4)    | [1]_  |
 +----------+--------+------------------+-----------------------------------------------------------------------------------------------------------------+----------------+-------+
