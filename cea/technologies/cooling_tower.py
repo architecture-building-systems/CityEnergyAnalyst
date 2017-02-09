@@ -49,7 +49,7 @@ def calc_CT(qhotdot, Qdesign, gV):
 
     wdesign_fan = 0.011 * Qdesign
     wpartload = 0.8603 * qpartload ** 3 + 0.2045 * qpartload ** 2 - 0.0623 * \
-                qpartload +0.0026
+                qpartload + 0.0026
     
     wdot = wpartload * wdesign_fan
     

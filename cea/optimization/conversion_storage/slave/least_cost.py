@@ -109,7 +109,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
         import cea.technologies.furnace as CMFurn
         # os.chdir(Cost_Maps_Path)
         reload(CMFurn)
-        Furnace_op_cost = CMFurn.Furnace_op_cost
+        Furnace_op_cost = CMFurn.furnace_op_cost
 
     # Heat Pumps
     if (MS_Var.GHP_on) == 1 or (MS_Var.HP_Lake_on) == 1 or (MS_Var.HP_Sew_on) == 1:
