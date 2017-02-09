@@ -162,10 +162,7 @@ class InputLocator(object):
 
     def get_data_benchmark(self):
         """db/Benchmarks/benchmark_targets.xls"""
-        return os.path.join(self.db_path, 'Benchmarks', 'benchmark_targets.xls')
-    def get_data_benchmark_today(self):
-        """db/Benchmarks/benchmark_today.xls"""
-        return os.path.join(self.db_path, 'Benchmarks', 'benchmark_today.xls')
+        return os.path.join(self.db_path, 'Benchmarks', 'benchmark_2000W.xls')
 
     def get_data_mobility(self):
         """db/Benchmarks/mobility.xls"""

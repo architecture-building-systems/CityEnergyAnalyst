@@ -55,7 +55,7 @@ def benchmark(locator_list, output_file):
     # setup: the labels and colors for the graphs are defined
     color_palette = ['g', 'r', 'y', 'c', 'b', 'm', 'k']
     legend = []
-    graphs = ['embodied', 'operation', 'mobility', 'total']
+    graphs = ['Embodied', 'Operation', 'Mobility', 'Total']
     old_fields = ['nre_pen_GJ', 'ghg_ton', 'nre_pen_MJm2', 'ghg_kgm2']
     old_prefix = ['E_', 'O_', 'M_']
     fields = ['_GJ', '_ton', '_MJm2', '_kgm2']
@@ -168,22 +168,25 @@ def calc_benchmark_targets(locator):
     data_benchmark = locator.get_data_benchmark()
     occupancy = prop_occupancy.merge(demand,on='Name')
 
-    categories = ['embodied', 'operation', 'mobility', 'total']
+    categories = ['Embodied', 'Operation', 'Mobility', 'Total']
     suffix = ['_GJ', '_ton','_MJm2', '_kgm2']
     targets = {}
     area_study = 0
 
     factors = pd.read_excel(data_benchmark, sheetname=categories[0])
+
     for i in range(len(factors['code'])):
         if factors['code'][i] in occupancy:
-            if factors['PEN'][i] > 0 and factors['CO2'][i] > 0:
+            if factors['NRE_target_retrofit'][i] > 0 and factors['CO2_target_retrofit'][i] > 0:
                 area_study += (occupancy['GFA_m2'] * occupancy[factors['code'][i]]).sum()
 
     for category in categories:
+        # the targets for the area are set for the existing building stock, i.e., retrofit targets are used
+        # (instead of new building targets)
         factors = pd.read_excel(data_benchmark, sheetname = category)
         vt = factors['code']
-        pt = factors['PEN']
-        gt = factors['CO2']
+        pt = factors['NRE_target_retrofit']
+        gt = factors['CO2_target_retrofit']
 
         for j in range(len(suffix)):
             targets[category + suffix[j]] = 0
@@ -235,11 +238,11 @@ def calc_benchmark_today(locator):
     # local files
     demand = pd.read_csv(locator.get_total_demand())
     prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
-    data_benchmark_today = locator.get_data_benchmark_today()
+    data_benchmark_today = locator.get_data_benchmark()
     occupancy = prop_occupancy.merge(demand, on='Name')
 
     fields = ['Name', 'pen_GJ', 'ghg_ton', 'pen_MJm2', 'ghg_kgm2']
-    categories = ['embodied', 'operation', 'mobility', 'total']
+    categories = ['Embodied', 'Operation', 'Mobility', 'Total']
     suffix = ['_GJ', '_ton', '_MJm2', '_kgm2']
     values_today = {}
     area_study = 0
@@ -247,14 +250,14 @@ def calc_benchmark_today(locator):
     factors = pd.read_excel(data_benchmark_today, sheetname=categories[0])
     for i in range(len(factors['code'])):
         if factors['code'][i] in occupancy:
-            if factors['PEN'][i] > 0 and factors['CO2'][i] > 0:
+            if factors['NRE_today'][i] > 0 and factors['CO2_today'][i] > 0:
                 area_study += (occupancy['GFA_m2'] * occupancy[factors['code'][i]]).sum()
 
     for category in categories:
         factors = pd.read_excel(data_benchmark_today, sheetname=category)
         vt = factors['code']
-        pt = factors['PEN']
-        gt = factors['CO2']
+        pt = factors['NRE_today']
+        gt = factors['CO2_today']
 
         for j in range(len(suffix)):
             values_today[category + suffix[j]] = 0
