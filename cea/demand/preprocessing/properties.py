@@ -1,11 +1,10 @@
 """
-===========================
 building properties algorithm
-===========================
-File history and credits:
-J. A. Fonseca  script development          22.03.15
-
 """
+
+# HISTORY:
+# J. A. Fonseca  script development          22.03.15
+
 from __future__ import division
 
 import numpy as np
@@ -30,17 +29,12 @@ def properties(locator, prop_thermal_flag, prop_architecture_flag,
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
     model of Fonseca et al. 2015. Appl. energy.
 
-    Parameters
-    ----------
     :param InputLocator locator: an InputLocator instance set to the scenario to work on
     :param boolean prop_thermal_flag: if True, get properties about thermal properties of the building envelope.
     :param boolean prop_architecture_flag: if True, get properties about the construction and architecture.
     :param boolean prop_hvac_flag: if True, get properties about types of HVAC systems, otherwise False.
     :param GlobalVariables gv: an instance of globalvar.GlobalVariables with the constants  to use
         (like `list_uses` etc.)
-
-    Side effects:
-    -------------
 
     The following files are created by this script, depending on which flags were set:
 

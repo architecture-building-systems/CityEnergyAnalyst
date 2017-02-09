@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-=========================================
 heating radiators
-=========================================
-
 """
 from __future__ import division
 from scipy.optimize import newton

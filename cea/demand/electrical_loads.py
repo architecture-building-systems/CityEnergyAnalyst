@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-=========================================
 Electrical loads
-=========================================
-
 """
 from __future__ import division
 import numpy as np
@@ -17,41 +14,29 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-"""
-=========================================
-final internal electrical loads
-=========================================
-"""
-
 
 def calc_Eint(tsd, bpr, list_uses, schedules):
     """
     Calculate final internal electrical loads (without auxiliary loads)
 
-    PARAMETERS
-    ----------
-
     :param tsd: Timestep data
-    :type tsd: dict[ndarray]
+    :type tsd: Dict[str, numpy.ndarray]
 
-    :param bpr:
+    :param bpr: building properties
     :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
 
     :param list_uses: The list of uses used in the project
     :type list_uses: list
 
     :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
-    :type schedules: list[ndarray]
+    :type schedules: List[numpy.ndarray]
 
     :param building_uses: for each use in `list_uses`, the percentage of that use for this building.
         Sum of values is 1.0
-    :type building_uses: dict[str, ndarray]
-
-    RETURNS
-    -------
+    :type building_uses: Dict[str, numpy.ndarray]
 
     :returns: `tsd` with new keys: `['Eaf', 'Elf', 'Ealf', 'Edataf', 'Eref', 'Eprof']`
-    :rtype: dict[ndarray]
+    :rtype: Dict[str, numpy.ndarray]
     """
 
     # calculate schedules
@@ -89,21 +74,15 @@ def average_appliances_lighting_schedule(list_uses, schedules, building_uses):
     Calculate the schedule to use for lighting and appliances based on the building uses from the schedules
     defined for the project unsing a weighted average.
 
-    PARAMETERS
-    ----------
-
     :param list_uses: the schedule names for the `schedules` parameter
-    :type list_uses: list of str
+    :type list_uses: List[str]
     :param schedules: the schedules, one for each name in `list_uses`. Each schedule is a list of 8760 floats...
-    :type schedules: list of list of list of float
+    :type schedules: List[Tuple[List[float], List[float], List[float]]]
     :param building_uses: A set of weights for the schedules as they apply to this particular building.
-    :type building_uses: dict of (str, float)
+    :type building_uses: Dict[str, float]
 
-    RETURNS
-    -------
-
-    :return: A weighted average of the schedules for a specific building.
-    :rtype: list of float
+    :return: appliances lighting schedule as a weighted average of the schedules for a specific building.
+    :rtype: numpy.ndarray[numpy.float64]
     """
 
     # weighted average of schedules
@@ -126,9 +105,6 @@ def calc_Edataf(schedule, Ed_Wm2, Aef):
     """
     Calculates the final electricity consumption in data centers.
 
-    PARAMETERS
-    ----------
-
     :param schedule: The data center schedule as calculated by `calc_Ea_El_Edata_Eref_schedule` but just for the
                      SERVERROOM portion of the occupancy.
     :type schedule: ndarray
@@ -140,11 +116,8 @@ def calc_Edataf(schedule, Ed_Wm2, Aef):
     :param Aef: The floor area with electricity in [m2]
     :type Aef: float64
 
-    RETURNS
-    -------
-
     :returns: final electricity consumption in data centers per hour in [W]
-    :rtype: ndarray
+    :rtype: numpy.ndarray[numpy.float64]
     """
     Edataf = schedule * Ed_Wm2 * Aef   # in W
     return Edataf
@@ -160,9 +133,6 @@ def calc_Eprof_schedule(list_uses, schedules, building_uses):
     Calculate a weighted average of the schedules as defined in `list_uses` and `schedules`, using the weights
     in `building_uses` (which is taken from `bpr.occupancy`).
 
-    PARAMETERS
-    ----------
-
     :param list_uses: the schedule names for the `schedules` parameter
     :type list_uses: list of str
     :param schedules: the schedules, one for each name in `list_uses`. Each schedule is a list of 8760 floats...
@@ -170,11 +140,8 @@ def calc_Eprof_schedule(list_uses, schedules, building_uses):
     :param building_uses: A set of weights for the schedules as they apply to this particular building.
     :type building_uses: dict of (str, float)
 
-    RETURNS
-    -------
-
     :return: A weighted average of the schedules for a specific building.
-    :rtype: list of float
+    :rtype: numpy.ndarray[numpy.float64]
     """
 
     def calc_average(last, current, share_of_use):
@@ -191,13 +158,6 @@ def calc_Eprof_schedule(list_uses, schedules, building_uses):
 def calc_Eprof(schedule, Epro_Wm2, Aef):
     Eprof = schedule * Epro_Wm2 * Aef  # in W
     return Eprof
-
-
-"""
-=========================================
-final auxiliary loads
-=========================================
-"""
 
 
 def calc_Eauxf(Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
@@ -275,6 +235,12 @@ def calc_Eauxf_cs_dis(Qcsf, Qcsf0, Imax, deltaP_des, b, ts, tr, cpw):
 
 
 def calc_Eauxf_ve(Qhsf, Qcsf, P_ve, qve, SystemH, SystemC):
+    # TODO: DOCUMENTATION
+    # FIXME: Why only energy demand for AC? Also other mechanical ventilation should have auxiliary energy demand
+    # FIXME: What are the units
+
+    # m_ve_mech is
+
     if SystemH == 'T3':
         if Qhsf > 0:
             Eve_aux = P_ve * qve * 3600

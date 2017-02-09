@@ -28,10 +28,9 @@ def manualCheck(individual):
     This function is used to manually check the results of a certain configuration.
     This function is otherwise not called.
 
-    Parameters
-    ----------
     :param individual: list with variables included in each individual.
     :type individual: list
+
     :return: None
     :rtype: 'NoneType'
     '''
@@ -93,10 +92,9 @@ def putToRef(individual):
     All buildings connected to the DHN
     Heating by a centralized peak boiler
 
-    Parameters
-    ----------
     :param individual: list with variables included in each individual.
     :type individual: list
+
     :return: None
     :rtype: 'NoneType'
     """
@@ -117,8 +115,6 @@ def GHPCheck(individual, locator, Qnom, gv):
     This function computes the geothermal availability and modifies the individual to
     comply with it
 
-    Parameters
-    ----------
     :param individual: list with variables included in each individual.
     :param locator: path to the demand folder
     :param Qnom: Nominal installed capacity in the district heating plant
@@ -127,8 +123,9 @@ def GHPCheck(individual, locator, Qnom, gv):
     :type locator: string
     :type Qnom: float
     :type gv: class
+
     :return: None
-    :rtype: 'NoneType'
+    :rtype: NoneType
     """
     areaArray = np.array( pd.read_csv(locator.get_geothermal_potential(), usecols=["Area_geo"] ) )
     buildArray = np.array( pd.read_csv(locator.get_geothermal_potential(), usecols=["Name"] ) )

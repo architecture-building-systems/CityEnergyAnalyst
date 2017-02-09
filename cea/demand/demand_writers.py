@@ -97,8 +97,6 @@ class HourlyDemandWriter(DemandWriter):
                 df = df.append(pd.read_csv(temporary_file), ignore_index=True)
         df.to_csv(locator.get_total_demand(), index=False, float_format='%.3f')
 
-        print building_properties.list_building_names()
-
         """read saved data of hourly values and return as totals"""
         hourly_data_buildings = [pd.read_csv(locator.get_demand_results_file(building_name)) for building_name in
                                  building_properties.list_building_names()]

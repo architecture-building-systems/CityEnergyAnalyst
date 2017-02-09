@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-=========================================
 Sewage source heat exchanger
-=========================================
-
 """
 from __future__ import division
 import pandas as pd
@@ -51,13 +48,7 @@ def calc_sewage_heat_exchanger(locator, Length_HEX_available, gv):
     print "done!"
 
 
-
-"""
-============================
-Calc Sewage heat
-============================
-
-"""
+# Calc Sewage heat
 
 def calc_Sewagetemperature(Qwwf,Qww,tsww,trww,totwater,mcpww,cp, density, SW_ratio):
     if Qwwf > 0:
@@ -100,13 +91,6 @@ def calc_sewageheat(mcp,tin,w_HEX,Vf,cp,h0,min_m,L_HEX,tmin, ATmin):
         t_source =  tin
     return Q_source,t_source, tb2, ta1, ta2
 
-
-"""
-============================
-test
-============================
-
-"""
 
 def test_ss_heatpump():
     import cea.inputlocator
