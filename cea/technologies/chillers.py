@@ -26,7 +26,7 @@ technical model
 def calc_VCC(mdot, tsup, tret, gV):
     """
     For the operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
-    to a cooling tower
+    to a cooling tower following [D.J. Swider, 2003]_.
     
     Parameters
     ----------
@@ -44,7 +44,11 @@ def calc_VCC(mdot, tsup, tret, gV):
     :returns wdot: chiller electric power requirement
     :rtype qhotdot : float
     :returns qhotdot: condenser heat rejection
-        
+
+    References
+    ----------
+    ..[D.J. Swider, 2003] D.J. Swider (2003). A comparison of empirically based steady-state models for
+    vapor-compression liquid chillers. Applied Thermal Engineering.
     """
     qcolddot = mdot * gV.cp * (tret - tsup)      # required cooling at the chiller evaporator
     tcoolin = gV.VCC_tcoolin                     # condenser water inlet temperature in [K]
