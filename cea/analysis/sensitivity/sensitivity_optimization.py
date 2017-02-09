@@ -8,10 +8,13 @@ from __future__ import division
 
 import os
 
-import cea.globalVar as glob
-import cea.optimization.evolAlgo.evaluateInd as eI
+from cea import globalvar as glob
+# import cea.globalVar as glob
+import cea.optimization.conversion_storage.master.evaluation as eI
 import numpy as np
 from deap import base
+from deap import creator
+from deap import tools
 
 import cea.optimization.conversion_storage.master.selection as sel
 import cea.optimization.supportFn as sFn
@@ -46,7 +49,7 @@ class sensBandwidth(object):
 
 def sensAnalysis(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gen):
 
-    gV = glob.globalVariables()
+    gV = glob.GlobalVariables()
     step = gV.sensibilityStep
 
     bandwidth = sensBandwidth()
@@ -54,7 +57,8 @@ def sensAnalysis(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, g
     os.chdir(locator.get_optimization_master_results_folder())
     pop, eps, testedPop = sFn.readCheckPoint(locator, gen, 0)
     toolbox = base.Toolbox()
-    
+
+
     os.chdir(locator.pathRaw)
     buildList = sFn.extractList("Total.csv")
 
@@ -74,7 +78,7 @@ def sensAnalysis(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, g
                 for ind in pop:
                     newInd = toolbox.clone(ind)
                     newpop.append(newInd)
-                    (costs, CO2, prim) = eI.evalInd(newInd, buildList, locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, obj)
+                    (costs, CO2, prim) = eI.evaluation_main(newInd, buildList, locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, obj)
                     newInd.fitness.values = (costs, CO2, prim)
                 
                 selection = sel.selectPareto(newpop)
@@ -100,7 +104,10 @@ def sensAnalysis(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, g
         mostSensitive = 'NG price'
     else:
         mostSensitive = 'BG price'
-        
+
+    print ParetoResults
+    print FactorResults
+    print mostSensitive
     return ParetoResults, FactorResults, mostSensitive
 
 """
@@ -110,3 +117,35 @@ test
 
 """
 gen = 24
+def run_as_script(scenario_path=None):
+    """
+    run the whole optimization routine
+    """
+    import cea.globalvar
+    import pandas as pd
+    import cea.optimization.distribution.network_opt_main as network_opt
+    from cea.optimization.preprocessing.preprocessing_main import preproccessing
+    gv = cea.globalvar.GlobalVariables()
+
+    if scenario_path is None:
+        scenario_path = gv.scenario_reference
+
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+
+
+    total_demand = pd.read_csv(locator.get_total_demand())
+    building_names = total_demand.Name.values
+    gv.num_tot_buildings = total_demand.Name.count()
+
+
+    weather_file = locator.get_default_weather()
+
+    extraCosts, extraCO2, extraPrim, solarFeat = preproccessing(locator, total_demand, building_names,
+                                                                   weather_file, gv)
+    ntwFeat = network_opt.network_opt_main()
+    sensAnalysis(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, gen)
+
+    print 'test_optimization_main() succeeded'
+
+if __name__ == '__main__':
+    run_as_script(r'C:\reference-case-zug\baseline')
