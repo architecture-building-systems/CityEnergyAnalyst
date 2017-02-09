@@ -55,7 +55,8 @@ def benchmark(locator_list, output_file):
     # setup: the labels and colors for the graphs are defined
     color_palette = ['g', 'r', 'y', 'c', 'b', 'm', 'k']
     legend = []
-    graphs = ['Embodied', 'Operation', 'Mobility', 'Total']
+    graphs = ['EMBODIED', 'OPERATION', 'MOBILITY', 'TOTAL']
+    graph_titles = {'EMBODIED': 'Embodied', 'OPERATION': 'Operation', 'MOBILITY': 'Mobility', 'TOTAL': 'Total'}
     old_fields = ['nre_pen_GJ', 'ghg_ton', 'nre_pen_MJm2', 'ghg_kgm2']
     old_prefix = ['E_', 'O_', 'M_']
     fields = ['_GJ', '_ton', '_MJm2', '_kgm2']
@@ -129,7 +130,7 @@ def benchmark(locator_list, output_file):
             plt.axis([0, scenario_max[graphs[i] + fields[2]] * 1.2, 0, values_today[graphs[i] + fields[3]] *
                       scenario_max[graphs[i] + fields[2]] / values_today[graphs[i] + fields[2]] * 1.2 ])
         # plot title
-        plt.title(graphs[i])
+        plt.title(graph_titles[graphs[i]])
 
     legend.extend(['Benchmark targets','Present day values'])
     legend_y = 1.2 + 0.05 * (len(locator_list) - 2)
@@ -168,7 +169,7 @@ def calc_benchmark_targets(locator):
     data_benchmark = locator.get_data_benchmark()
     occupancy = prop_occupancy.merge(demand,on='Name')
 
-    categories = ['Embodied', 'Operation', 'Mobility', 'Total']
+    categories = ['EMBODIED', 'OPERATION', 'MOBILITY', 'TOTAL']
     suffix = ['_GJ', '_ton','_MJm2', '_kgm2']
     targets = {}
     area_study = 0
@@ -242,7 +243,7 @@ def calc_benchmark_today(locator):
     occupancy = prop_occupancy.merge(demand, on='Name')
 
     fields = ['Name', 'pen_GJ', 'ghg_ton', 'pen_MJm2', 'ghg_kgm2']
-    categories = ['Embodied', 'Operation', 'Mobility', 'Total']
+    categories = ['EMBODIED', 'OPERATION', 'MOBILITY', 'TOTAL']
     suffix = ['_GJ', '_ton', '_MJm2', '_kgm2']
     values_today = {}
     area_study = 0

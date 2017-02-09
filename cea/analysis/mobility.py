@@ -57,7 +57,7 @@ def lca_mobility(locator):
     # local files
     demand = pd.read_csv(locator.get_total_demand())
     prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)#.set_index('Name')
-    factors_mobility = pd.read_excel(locator.get_data_benchmark(), sheetname='Mobility').drop('Description', axis=1)
+    factors_mobility = pd.read_excel(locator.get_data_benchmark(), sheetname='MOBILITY').drop('Description', axis=1)
 
     # calculate total_LCA_mobility: .csv
     occupancy_type = factors_mobility['code']
