@@ -1,10 +1,10 @@
 """
-===========================
 Query schedules according to database
-===========================
-J. Fonseca  script development          26.08.2015
-D. Thomas   documentation               10.08.2016
 """
+
+# HISTORY
+# J. Fonseca  script development          26.08.2015
+# D. Thomas   documentation               10.08.2016
 
 from __future__ import division
 import pandas as pd
@@ -12,26 +12,17 @@ import numpy as np
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__credits__ = ["Jimeno A. Fonseca", "Daren Thomas"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-"""
-=========================================
-Occupancy
-=========================================
-"""
-
 
 def calc_occ(list_uses, schedules, bpr):
     """
     Calculate the occupancy in number of people for the whole building per timestep.
-
-    PARAMETERS
-    ----------
 
     :param list_uses: The list of uses used in the project
     :type list_uses: list
@@ -42,14 +33,21 @@ def calc_occ(list_uses, schedules, bpr):
     :param bpr: The properties of the building to calculate
     :type bpr: cea.demand.thermal_loads.BuildingPropertiesRow
 
-    RETURNS
-    -------
-
     :returns: Occupancy as number of persons per timestep for the whole building
     :rtype: ndarray
     """
     schedule = calc_occ_schedule(list_uses, schedules, bpr.occupancy)
-    people = schedule * bpr.rc_model['Af'] / bpr.architecture['Occ_m2p']  # in people
+    if bpr.architecture.Occ_m2p > 0.0:
+
+        people = schedule * bpr.rc_model['Af'] / bpr.architecture.Occ_m2p  # in people
+
+    elif bpr.architecture.Occ_m2p == 0:
+
+        people = np.zeros(8760)
+
+    else:
+        raise
+
     return people
 
 
@@ -57,9 +55,6 @@ def calc_occ_schedule(list_uses, schedules, building_uses):
     """
     Given schedule data for archetypical building uses, `calc_occ_schedule` calculates the schedule for a building
     with possibly a mixed schedule as defined in `building_uses` using a weighted average approach.
-
-    PARAMETERS
-    ----------
 
     :param list_uses: The list of uses used in the project
     :type list_uses: list
@@ -70,9 +65,6 @@ def calc_occ_schedule(list_uses, schedules, building_uses):
     :param building_uses: for each use in `list_uses`, the percentage of that use for this building.
         Sum of values is 1.0
     :type building_uses: dict[str, float]
-
-    RETURNS
-    -------
 
     :returns:
     :rtype: ndarray
@@ -90,12 +82,7 @@ def calc_occ_schedule(list_uses, schedules, building_uses):
     return occ
 
 
-"""
-=========================================
-read schedules from excel file
-=========================================
-"""
-
+# read schedules from excel file
 
 def schedule_maker(dates, locator, list_uses):
     def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule):

@@ -1,11 +1,5 @@
 """
-===========================
 Heatmapping algorithm
-===========================
-J. Fonseca  script development          27.08.15
-D. Thomas   formatting and cleaning
-D. Thomas   integration in toolbox
-
 """
 from __future__ import division
 
@@ -31,25 +25,18 @@ def heatmaps(locator, analysis_fields, path_results, file_to_analyze):
     """
     algorithm to calculate heat maps out of n variables of interest
 
-    Parameters
-    ----------
-    file_to_analyze:
-        path to the file with the variables to be mapped. This is used as the `in_rows` parameter
-        to arcpy.CopyRows_management, so anything supported by that tool could, in theory, work, but
-        we use the csv files. Either the Total_Demand.csv file produced by the demand script or one of
+    :param file_to_analyze: path to the file with the variables to be mapped. This is used as the ``in_rows`` parameter
+        to ``arcpy.CopyRows_management``, so anything supported by that tool could, in theory, work, but
+        we use the csv files. Either the ``Total_Demand.csv`` file produced by the demand script or one of
         the files in the emissions results folder.
-    analysis_fields: array
-        when the path variables is selected, an array of n variables 'string'
+    :param analysis_fields:  when the path variables is selected, an array of n variables 'string'
         will be elaborated based on the selection of n input fields. For this a
-        form like the one used in the Arcgis function "merge/FieldMap could
+        form like the one used in the Arcgis function ``merge/FieldMap`` could
         be used.
-    path_results : string
-        path to store results: folder heatmaps
+    :param path_results: path to store results: folder heatmaps
 
-    Returns
-    -------
-    heat map of variable n: .tif
-        heat map file per variable of interest n.
+    :returns: - heat map of variable n: .tif
+              - heat map file per variable of interest n.
     """
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")

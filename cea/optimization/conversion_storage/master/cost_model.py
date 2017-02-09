@@ -43,8 +43,6 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
     addCO2 = GHG emissions
     addPrm = primary energy needs
 
-    Parameters
-    ----------
     :param indCombi: parameter indicating if the building is connected or not
     :param buildList: list of buildings in the district
     :param locator: input locator set to scenario
@@ -63,6 +61,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
     :type solarFeat: class
     :type ntwFeat: class
     :type gv: class
+
     :return: returns the objectives addCosts, addCO2, addPrim
     :rtype: tuple
     """

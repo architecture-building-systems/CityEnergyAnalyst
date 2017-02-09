@@ -1,4 +1,3 @@
-import arcpy
 import cea
 
 __author__ = "Daren Thomas"
@@ -17,6 +16,7 @@ class BenchmarkGraphsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        import arcpy
         scenarios = arcpy.Parameter(
             displayName="Path to the scenarios to plot",
             name="scenarios",
@@ -34,6 +34,7 @@ class BenchmarkGraphsTool(object):
         return [scenarios, output_file]
 
     def execute(self, parameters, messages):
+        import arcpy
         scenarios = parameters[0].valueAsText
         scenarios = scenarios.replace('"', '')
         scenarios = scenarios.replace("'", '')

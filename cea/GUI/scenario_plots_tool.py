@@ -1,5 +1,3 @@
-import arcpy
-
 import cea.plots
 
 __author__ = "Daren Thomas"
@@ -19,6 +17,7 @@ class ScenarioPlotsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        import arcpy
         scenarios = arcpy.Parameter(
             displayName="Path to the scenarios to plot",
             name="scenarios",

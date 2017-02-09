@@ -1,8 +1,5 @@
 """
-==============================
 System Modeling: Cooling tower
-==============================
-
 """
 from __future__ import division
 
@@ -16,25 +13,17 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-"""
-============================
-technical model
-============================
+# technical model
 
-"""
 def calc_CT(qhotdot, Qdesign, gV):
     """
     For the operation of a water condenser + direct cooling tower
     
-    Parameters
-    ----------
     qhotdot : float
         heating power to condenser, From Model_VCC
     Qdesign : float
         Max cooling power
     
-    Returns
-    -------
     wdot : float
         electric power needed for the variable speed drive fan
         
@@ -52,24 +41,15 @@ def calc_CT(qhotdot, Qdesign, gV):
     return wdot
     
 
-"""
-============================
-Investment costs
-============================
-
-"""
+# Investment costs
 
 def calc_Cinv_CT(CT_size, gV):
     """
     Annualized investment costs for the Combined cycle
     
-    Parameters
-    ----------
     CT_size : float
         Cooling size of the Cooling tower in WATT
         
-    Returns
-    -------
     InvCa : float
         annualized investment costs in DOLLARS
     

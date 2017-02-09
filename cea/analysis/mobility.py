@@ -1,12 +1,5 @@
 """
-===========================
-Primary energy and CO2 emissions model algorithm for building operation
-===========================
-J. Fonseca  script development          26.08.15
-D. Thomas   formatting and cleaning     27.08.15
-D. Thomas   integration in toolbox      27.08.15
-J. Fonseca  script redevelopment        19.04.16
-
+Primary energy and CO2 emissions due to mobility
 """
 from __future__ import division
 
@@ -17,7 +10,15 @@ from geopandas import GeoDataFrame as gpdf
 
 from cea import inputlocator
 
-reload(inputlocator)
+__author__ = "Martin Mosteiro"
+__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Martin Mosteiro"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 
 def lca_mobility(locator):
     """
@@ -25,22 +26,17 @@ def lca_mobility(locator):
     in the area in order to compare with the 2000 Watt society benchmark
     based on SIA Standard 2039 (expanded to include industry and hospital
     buildings)
-    
-    Parameters
-    ----------
-    :param InputLocator locator: an InputLocator instance set to the scenario to work on
 
-    Returns
-    -------
-    total_LCA_mobility:.csv
-        csv file of yearly primary energy demand and emissions due to mobility
-        for each building
+    Produces Total_LCA_mobility.csv containing the yearly primary energy demand and emissions due to mobility for each
+    building.
 
+    :param locator: an InputLocator instance set to the scenario to work on
+    :type locator: cea.inputlocator.InputLocator
     """
 
     # local files
     demand = pd.read_csv(locator.get_total_demand())
-    prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)#.set_index('Name')
+    prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)  # .set_index('Name')
     data_mobility = locator.get_data_mobility()
     factors_mobility = pd.read_excel(data_mobility, sheetname='2010')
 
@@ -49,7 +45,7 @@ def lca_mobility(locator):
     pt = factors_mobility['PEN']
     gt = factors_mobility['CO2']
 
-    mobility = prop_occupancy.merge(demand,on='Name')
+    mobility = prop_occupancy.merge(demand, on='Name')
     fields_to_plot = ['Name', 'GFA_m2', 'M_nre_pen_GJ', 'M_nre_pen_MJm2', 'M_ghg_ton', 'M_ghg_kgm2']
     mobility[fields_to_plot[3]] = 0
     mobility[fields_to_plot[5]] = 0
@@ -69,6 +65,7 @@ def run_as_script(scenario_path=None):
         scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     lca_mobility(locator=locator)
+
 
 if __name__ == '__main__':
     import argparse

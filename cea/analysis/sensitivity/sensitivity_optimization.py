@@ -1,8 +1,5 @@
 """
-====================
 Sensitivity analysis
-====================
-
 """
 from __future__ import division
 
@@ -110,12 +107,6 @@ def sensAnalysis(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, g
     print mostSensitive
     return ParetoResults, FactorResults, mostSensitive
 
-"""
-============================
-test
-============================
-
-"""
 gen = 24
 def run_as_script(scenario_path=None):
     """

@@ -5,52 +5,66 @@ digraph demand_function_graph {
   node [shape=plaintext, ranksep=0.7, nodesep=0.7, fontsize=10, fontname=monospace, color=none];
   subgraph "cluster_cea.demand" {
     "thermal_loads";
-    "sensible_loads";
-    "ventilation_model";
-    "refrigeration_loads";
-    "datacenter_loads";
-    "airconditioning_model";
+    "control_ventilation_systems";
+    "ventilation_air_flows_simple";
     "hotwater_loads";
+    "refrigeration_loads";
     "occupancy_model";
+    "datacenter_loads";
     "electrical_loads";
+    "sensible_loads";
+    "airconditioning_model";
+    "rc_model_crank_nicholson_procedure";
+    "control_heating_cooling_systems";
+    "space_emission_systems";
+    "rc_model_SIA";
     "demand_main";
     label="cea.demand";
-  }
-  subgraph "cluster_cea.geometry" {
-    "geometry_reader";
-    label="cea.geometry";
   }
   subgraph "cluster_cea.utilities" {
     "physics";
     "epwreader";
     label="cea.utilities";
   }
+  subgraph "cluster_cea" {
+    "utilities";
+    "technologies";
+    label="cea";
+  }
   subgraph "cluster_cea.technologies" {
+    "controllers";
+    "blinds";
     "storagetank";
     "heating_coils";
     "radiators";
-    "blinds";
-    "controllers";
     "tabs";
     label="cea.technologies";
   }
-  "thermal_loads" -> "occupancy_model";
   "thermal_loads" -> "hotwater_loads";
-  "sensible_loads" -> "radiators";
-  "thermal_loads" -> "electrical_loads";
-  "ventilation_model" -> "geometry_reader";
+  "thermal_loads" -> "rc_model_crank_nicholson_procedure";
   "thermal_loads" -> "controllers";
-  "sensible_loads" -> "blinds";
-  "thermal_loads" -> "airconditioning_model";
+  "ventilation_air_flows_simple" -> "control_ventilation_systems";
   "thermal_loads" -> "datacenter_loads";
-  "airconditioning_model" -> "physics";
-  "thermal_loads" -> "refrigeration_loads";
-  "thermal_loads" -> "sensible_loads";
-  "sensible_loads" -> "tabs";
-  "demand_main" -> "epwreader";
-  "hotwater_loads" -> "storagetank";
-  "demand_main" -> "occupancy_model";
   "sensible_loads" -> "heating_coils";
-  "thermal_loads" -> "ventilation_model";
+  "sensible_loads" -> "radiators";
+  "rc_model_crank_nicholson_procedure" -> "control_heating_cooling_systems";
+  "airconditioning_model" -> "utilities";
+  "sensible_loads" -> "blinds";
+  "thermal_loads" -> "refrigeration_loads";
+  "rc_model_crank_nicholson_procedure" -> "space_emission_systems";
+  "hotwater_loads" -> "storagetank";
+  "ventilation_air_flows_simple" -> "physics";
+  "rc_model_crank_nicholson_procedure" -> "airconditioning_model";
+  "control_heating_cooling_systems" -> "rc_model_SIA";
+  "demand_main" -> "occupancy_model";
+  "thermal_loads" -> "occupancy_model";
+  "thermal_loads" -> "electrical_loads";
+  "airconditioning_model" -> "physics";
+  "thermal_loads" -> "sensible_loads";
   "demand_main" -> "thermal_loads";
+  "thermal_loads" -> "ventilation_air_flows_simple";
+  "hotwater_loads" -> "technologies";
+  "demand_main" -> "epwreader";
+  "sensible_loads" -> "tabs";
+  "rc_model_crank_nicholson_procedure" -> "rc_model_SIA";
 }
