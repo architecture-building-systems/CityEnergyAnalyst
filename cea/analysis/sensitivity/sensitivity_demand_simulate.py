@@ -38,6 +38,9 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
     the problem statement. Return an `InputLocator` implementation that can be used to simulate the demand
     of the resulting scenario.
 
+    The `simulation_path` is modified by the demand calculation. For the purposes of the sensitivity analysis, these
+    changes can be viewed as temporary and deleted / overwritten after each simulation.
+
     :param sample_index: zero-based index into the samples list, which is read from the file `$samples_path/samples.npy`
     :type sample_index: int
 
@@ -56,18 +59,7 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
                             job scheduler of the Euler cluster. Other setups will need to adopt an equivalent strategy.
     :type simulation_path: str
 
-
-    RESULT:
-    -------
-
     :return: InputLocator that can be used to simulate the demand in the `simulation_path`
-
-
-    INPUT / OUTPUT FILES:
-    ---------------------
-
-    The `simulation_path` is modified by the demand calculation. FOr the purposes of the sensitivity analysis, these
-    changes can be viewed as temporary and deleted / overwritten after each simulation.
     """
     if os.path.exists(simulation_path):
         shutil.rmtree(simulation_path)
@@ -99,24 +91,16 @@ def simulate_demand_sample(locator, weather_path, output_parameters):
     Run a demand simulation for a single sample. This function expects a locator that is already initialized to the
     simulation folder, that has already been prepared with `apply_sample_parameters`.
 
-
-    PARAMETERS:
-    -----------
-
     :param locator: The InputLocator to use for the simulation
     :type locator: InputLocator
 
-    :param weather: The path to the weather file (*.epw) to use for simulation. See the `weather_path` parameter in
+    :param weather: The path to the weather file (``*.epw``) to use for simulation. See the `weather_path` parameter in
                     `cea.demand.demand_main.demand_calculation` for more information.
     :type weather: str
 
     :param output_parameters: The list of output parameters to save to disk. This is a column-wise subset of the
                               output of `cea.demand.demand_main.demand_calculation`.
     :type output_parameters: list of str
-
-
-    RESULT:
-    -------
 
     :return: Returns the columns of the results of `cea.demand.demand_main.demand_calculation` as defined in
             `output_parameters`.
@@ -134,9 +118,8 @@ def simulate_demand_batch(sample_index, batch_size, samples_folder, scenario, si
     """
     Run the simulations for a whole batch of samples and write the results out to the samples folder.
 
-
-    PARAMETERS:
-    -----------
+    Each simulation result is saved to the samples folder as `result.$i.csv` with `$i` representing the index into
+    the samples array.
 
     :param sample_index: The index into the first sample of the batch as defined in the `samples.npy` NumPy array in
                          the samples folder.
@@ -166,7 +149,7 @@ def simulate_demand_batch(sample_index, batch_size, samples_folder, scenario, si
                               `apply_sample_parameters`.
     :type simulation_folder: str
 
-    :param weather: The path to the weather file (*.epw) to use for simulation. See the `weather_path` parameter in
+    :param weather: The path to the weather file (``*.epw``) to use for simulation. See the `weather_path` parameter in
                     `cea.demand.demand_main.demand_calculation` for more information.
     :type weather: str
 
@@ -175,17 +158,7 @@ def simulate_demand_batch(sample_index, batch_size, samples_folder, scenario, si
     :type output_parameters: list of str
 
 
-    RETURNS:
-    --------
-
     :return: None
-
-
-    OUTPUT FILES:
-    -------------
-
-    Each simulation result is saved to the samples folder as `result.$i.csv` with `$i` representing the index into
-    the samples array.
     """
     for i in range(sample_index, sample_index + batch_size):
         locator = apply_sample_parameters(i, samples_folder, scenario, simulation_folder)
