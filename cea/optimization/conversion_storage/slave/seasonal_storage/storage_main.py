@@ -39,8 +39,6 @@ def storage_optimization(locator, master_to_slave_vars, gv):
     """
     This function performs the storage optimization and stores the results in the designated folders
 
-    Parameters
-    ----------
     :param locator: locator class
     :param master_to_slave_vars: class MastertoSlaveVars containing the value of variables to be passed to the slave optimization
     for each individual

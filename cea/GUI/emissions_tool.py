@@ -1,5 +1,3 @@
-import arcpy
-
 import cea.inputlocator
 
 __author__ = "Daren Thomas"
@@ -19,6 +17,7 @@ class EmissionsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        import arcpy
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",

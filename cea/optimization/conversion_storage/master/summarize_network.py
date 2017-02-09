@@ -27,8 +27,6 @@ def network_main(locator, total_demand, building_names, gv, key):
     - absolute values (design values = extreme values)
     - hourly operation scheme of input/output of distribution
 
-    Parameters
-    ----------
     :param locator: locator class
     :param total_demand: dataframe with total demand of buildings
     :param building_names: vector with names of buildings
@@ -181,8 +179,6 @@ def calc_temp_withlosses(t0, Q, m, cp, case):
     """
     This function calculates the new temperature of the distribution including losses
 
-    Parameters
-    ----------
     :param t0: current distribution temperature
     :param Q: load including thermal losses
     :param m: mass flow rate
@@ -207,8 +203,6 @@ def calc_temp_withlosses(t0, Q, m, cp, case):
 
 def calc_return_temp(sum_t_m, sum_m):
     """
-    Parameters
-    ----------
     This function calculates the return temperature of the distribution for a time step
 
     :param sum_t_m: sum of temperature times mass flow rate
@@ -227,8 +221,6 @@ def calc_return_temp(sum_t_m, sum_m):
 
 def calc_supply_temp(tr, Q, m, cp, case):
     """
-    Parameters
-    ----------
     This function calculates the supply temperature of the distribution for a time step.
 
     :param tr: current return temperature
@@ -261,8 +253,6 @@ def calc_piping_thermal_losses(Tnet, mmax, mmin, L, Tg, K, cp):
     """
     This function estimates the average thermal losses of a distribution for an hour of the year
 
-    Parameters
-    ----------
     :param Tnet: current temperature of the pipe
     :param mmax: maximum mass flow rate in the pipe
     :param mmin: minimum mass flow rate in the pipe
@@ -297,8 +287,6 @@ def calc_min_flow(m0, m1):
     This function calculates the minimum flow of a distribution by comparison of two vectors.
     this is useful when looking up at multiple buildings in a for loop.
 
-    Parameters
-    ----------
     :param m0: last minimum mass flow rate
     :param m1: current minimum mass flow rate
     :type m0: float
@@ -318,8 +306,6 @@ def find_index_of_max(array):
     """
     Returns the index of an array on which the maximum value is at.
 
-    Parameters
-    ----------
     :param array: ndarray, Array of observations. Each row represents a day and each column
     the hourly data of that day
     :type array: list

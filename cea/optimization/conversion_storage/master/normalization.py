@@ -21,9 +21,7 @@ def normalizePop(locator, Generation):
     """
     Normalizes the population with the min / max IN THAT GENERATION
     All 3 objectives are normalized to [0,1] 
-    
-    Parameters
-    ----------
+
     :param locator: inputlocator set to scenario
     :param Generation: generation to extract
     :type locator: string
@@ -78,9 +76,7 @@ def normalize_epsIndicator(locator, generation):
     Calculates the normalized epsilon indicator
     For all generations, the population are normalized with regards to the
     min / max over ALL generations
-    
-    Parameters
-    ----------
+
     :param locator: inputlocator set to scenario
     :param generation: generation up to which data are extracted
     :type locator: string
