@@ -17,9 +17,7 @@ def StorageGateway(Q_solar_available, Q_network_demand, P_HP_max, gv):
     This function is a first filter for solar energy handling: 
         If there is excess solar power, this will be specified and stored.
         If there is not enough solar power, the lack will be calculated.
-    
-    Parameters
-    ----------
+
     :param Q_solar_available: solar energy available at a given time step
     :param Q_network_demand: network load at a given time step
     :param P_HP_max: storage??
@@ -63,8 +61,6 @@ def Temp_before_Powerplant(Q_network_demand, Q_solar_available, mdot_DH, T_retur
     USE ONLY IF Q solar is not sufficient!
     This function derives the temperature just before the power plant, after solar energy is injected.
 
-    Parameters
-    ----------
     :param Q_network_demand: network load at a given time step
     :param Q_solar_available: solar energy available at a given time step
     :param mdot_DH: ??
@@ -93,8 +89,6 @@ def Storage_Charger(T_storage_old, Q_to_storage_lossfree, T_DH_ret, Q_in_storage
     calculates the temperature of storage when charging
     Q_to_storage_new = including losses
 
-    Parameters
-    ----------
     :param T_storage_old:
     :param Q_to_storage_lossfree:
     :param T_DH_ret:
@@ -137,8 +131,6 @@ def Storage_DeCharger(T_storage_old, Q_from_storage_req, T_DH_sup, Q_in_storage_
     """
     discharging of the storage, no outside thermal losses  in the model
 
-    Parameters
-    ----------
     :param T_storage_old:
     :param Q_from_storage_req:
     :param T_DH_sup:
@@ -191,8 +183,6 @@ def Storage_Loss(T_storage_old, T_amb, STORAGE_SIZE, context, gv):
     """
     Calculates the storage Loss for every time step, assume  D : H = 3 : 1
     
-    Parameters
-    ----------
     :param T_storage_old: temperature of storage at time step, without any losses
     :param T_amb: ambient temperature
     :param STORAGE_SIZE:
@@ -227,8 +217,6 @@ def Storage_Loss(T_storage_old, T_amb, STORAGE_SIZE, context, gv):
 def Storage_Operator(Q_solar_available, Q_network_demand, T_storage_old, T_DH_sup, T_amb, Q_in_storage_old, T_DH_return, \
         mdot_DH, STORAGE_SIZE, context, P_HP_max, gv):
     """
-    Parameters
-    ----------
     :param Q_solar_available:
     :param Q_network_demand:
     :param T_storage_old:

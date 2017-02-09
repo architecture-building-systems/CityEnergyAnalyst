@@ -45,29 +45,20 @@ def create_demand_samples(method='morris', num_samples=1000, variable_groups=('T
     """
     Create the samples to simulate using the specified method (`method`), the sampling method parameter N
     (`num_samples`) and any additional sampling method-specific parameters specified in `sampler_parameters for each
-     variable definined in the uncertainty database worksheets referenced in `variable_groups`.
-
-    PARAMETERS:
-    -----------
+    variable definined in the uncertainty database worksheets referenced in `variable_groups`.
 
     :param method: The method to use. Valid values are 'morris' (default) and 'sobol'.
     :type method: str
-
     :param num_samples: The parameter `N` for the sampling methods (sobol defines this as "The number of samples to
                         generate", but in reality, for both methods, the actual number of samples is a multiple of
                         `num_samples`).
     :type num_samples: int
-
     :param sampler_parameters: additional, sampler-specific parameters. For `method='morris'` these are: [grid_jump,
                                num_levels], for `method='sobol'` these are: [calc_second_order]
     :type sampler_parameters: dict of (str, _)
-
     :param variable_groups: list of names of groups of variables to analyse. Possible values are:
         'THERMAL', 'ARCHITECTURE', 'INDOOR_COMFORT', 'INTERNAL_LOADS'. This list links to the probability density
         functions of the variables contained in locator.get_uncertainty_db() and refers to the Excel worksheet names.
-
-    RETURNS:
-    --------
 
     :return: (samples, problem) - samples is a list of configurations for each simulation to run, a configuration being
         a list of values for each variable in the problem. The problem is a dictionary with the keys 'num_vars',
@@ -95,9 +86,6 @@ def sampler(method, problem, num_samples, sampler_parameters):
     """
     Run the sampler specified by `method` and return the results.
 
-    PARAMETERS:
-    -----------
-
     :param method: The method to use. Valid values: 'morris', 'sobol'
     :type method: str
 
@@ -113,9 +101,6 @@ def sampler(method, problem, num_samples, sampler_parameters):
     :param sampler_parameters: Sampler method-specific parameters to be passed to the sampler function as keyword
                                arguments.
     :type sampler_parameters: dict of (str, _)
-
-    RETURNS:
-    --------
 
     :return: The list of samples generated as a NumPy array with one row per sample and each row containing one
              value for each variable name in `problem['names']`.

@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-===========================
 Benchmark graphs algorithm
-===========================
-
 """
 from __future__ import division
 
@@ -23,16 +20,11 @@ def benchmark(locator_list, output_file):
     algorithm to print graphs in PDF concerning the 2000 Watt society benchmark 
     for two scenarios (A and B)
 
-    Parameters
-    ----------
-
     :param locator: an array of InputLocator set to each first scenario to be computed
     :type locator: inputlocator.InputLocator
     :param output_file: the filename (pdf) to save the results as.
 
-    Returns
-    -------
-    Graphs of the embodied and operational emissions and primary energy demand: .Pdf
+    :returns: Graphs of the embodied and operational emissions and primary energy demand: .Pdf
     """
 
     # setup-time

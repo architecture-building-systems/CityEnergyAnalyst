@@ -1,0 +1,77 @@
+digraph demand_function_graph {
+  rankdir=LR;
+  ratio=0.7072135785007072;
+  edge[weight=1.2];
+  node [shape=plaintext, ranksep=0.7, nodesep=0.7, fontsize=10, fontname=monospace, color=none];
+  subgraph "cluster_cea.demand.time_step_data_t.TimeStepDataT" {
+    "__init__";
+    label="cea.demand.time_step_data_t.TimeStepDataT";
+  }
+  subgraph "cluster_cea.demand.rc_model_SIA" {
+    "calc_h_op_m";
+    "calc_phi_m_tot";
+    "calc_theta_o";
+    "calc_theta_m";
+    "calc_h_2";
+    "calc_h_3";
+    "calc_h_1";
+    "calc_phi_a";
+    "calc_phi_c";
+    "calc_theta_a";
+    "calc_phi_m";
+    "calc_theta_ea";
+    "calc_f_im";
+    "calc_theta_em";
+    "calc_theta_c";
+    "calc_theta_m_t";
+    "calc_h_em";
+    "calc_phi_i_l";
+    "calc_h_ac";
+    "calc_phi_i_a";
+    "calc_h_mc";
+    "calc_h_ea";
+    "calc_h_ec";
+    "calc_f_sm";
+    "calc_phi_i_p";
+    "calc_f_sc";
+    "calc_rc_model_temperatures";
+    "calc_f_ic";
+    "calc_theta_ec";
+    label="cea.demand.rc_model_SIA";
+  }
+  "calc_rc_model_temperatures" -> "__init__";
+  "__init__" -> "calc_h_ec";
+  "__init__" -> "calc_h_ac";
+  "__init__" -> "calc_h_ea";
+  "__init__" -> "calc_f_sc";
+  "__init__" -> "calc_f_ic";
+  "__init__" -> "calc_h_op_m";
+  "__init__" -> "calc_h_mc";
+  "__init__" -> "calc_h_em";
+  "__init__" -> "calc_f_im";
+  "__init__" -> "calc_f_sm";
+  "__init__" -> "calc_phi_i_l";
+  "__init__" -> "calc_phi_i_a";
+  "__init__" -> "calc_phi_i_p";
+  "calc_rc_model_temperatures" -> "calc_h_1";
+  "calc_rc_model_temperatures" -> "calc_theta_m";
+  "calc_theta_m" -> "calc_theta_m_t";
+  "calc_theta_m_t" -> "calc_h_2";
+  "calc_theta_m_t" -> "calc_h_3";
+  "calc_theta_m_t" -> "calc_phi_m_tot";
+  "calc_phi_m_tot" -> "calc_theta_em";
+  "calc_phi_m_tot" -> "calc_theta_ec";
+  "calc_phi_m_tot" -> "calc_theta_ea";
+  "calc_phi_m_tot" -> "calc_phi_a";
+  "calc_phi_m_tot" -> "calc_phi_c";
+  "calc_phi_m_tot" -> "calc_phi_m";
+  "calc_rc_model_temperatures" -> "calc_theta_c";
+  "calc_theta_c" -> "calc_phi_c";
+  "calc_theta_c" -> "calc_theta_ec";
+  "calc_theta_c" -> "calc_phi_a";
+  "calc_theta_c" -> "calc_theta_ea";
+  "calc_rc_model_temperatures" -> "calc_theta_a";
+  "calc_theta_a" -> "calc_theta_ea";
+  "calc_theta_a" -> "calc_phi_a";
+  "calc_rc_model_temperatures" -> "calc_theta_o";
+}

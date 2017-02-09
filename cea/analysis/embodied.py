@@ -1,12 +1,5 @@
 """
-===========================
 embodied energy and related grey emissions model algorithm
-===========================
-J. Fonseca  script development          26.08.15
-D. Thomas   formatting and cleaning
-D. Thomas   integration in toolbox
-J. Fonseca  new development             13.04.16
-
 """
 from __future__ import division
 
@@ -33,8 +26,7 @@ def lca_embodied(year_to_calculate, locator, gv):
     according to the method of Fonseca et al 2015. CISBAT 2015. and Thoma et al
     2014. CUI 2014.
 
-    Parameters
-    ----------
+    Writes out Total_LCA_embodied.csv, containing the yearly primary energy and grey emissions per building.
 
     :param year_to_calculate:  year between 1900 and 2100 indicating when embodied energy is evaluated
         to account for emissions already offset from building construction
@@ -70,11 +62,6 @@ def lca_embodied(year_to_calculate, locator, gv):
         path to building_architecture.shp
     path_results : string
         path to demand results folder emissions
-
-    Returns
-    -------
-    Total_LCA_embodied: .csv
-        csv file of yearly primary energy and grey emissions per building stored in path_results
     """
 
     # local variables
