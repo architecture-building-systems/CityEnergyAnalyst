@@ -57,12 +57,12 @@ def lca_mobility(locator):
     # local files
     demand = pd.read_csv(locator.get_total_demand())
     prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)#.set_index('Name')
-    factors_mobility = pd.read_excel(locator.get_data_benchmark_today(), sheetname='mobility').drop('Description', axis=1)
+    factors_mobility = pd.read_excel(locator.get_data_benchmark(), sheetname='Mobility').drop('Description', axis=1)
 
-    # calculate total_LCA_mobility:.csv
+    # calculate total_LCA_mobility: .csv
     occupancy_type = factors_mobility['code']
-    non_renewable_energy = factors_mobility['PEN']
-    emissions = factors_mobility['CO2']
+    non_renewable_energy = factors_mobility['NRE_today']
+    emissions = factors_mobility['CO2_today']
 
     mobility = prop_occupancy.merge(demand,on='Name')
     fields_to_plot = ['Name', 'GFA_m2', 'M_nre_pen_GJ', 'M_nre_pen_MJm2', 'M_ghg_ton', 'M_ghg_kgm2']
