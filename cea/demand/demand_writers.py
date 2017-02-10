@@ -8,7 +8,7 @@ the `MonthlyDemandWriter`.
 import pandas as pd
 
 # index into the `vars_to_print` structure, that corresponds to `gv.demand_building_csv_columns`
-FLOAT_FORMAT = '%.3f'
+FLOAT_FORMAT = '%.6f'
 LOAD_VARS = 0
 MASS_FLOW_VARS = 1
 TEMPERATURE_VARS = 2
