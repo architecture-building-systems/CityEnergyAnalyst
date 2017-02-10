@@ -139,40 +139,37 @@ class InputLocator(object):
         return weather_names
 
     def get_archetypes_properties(self):
-        """db/Archetypes/Archetypes_properties.xlsx
+        """databases/CH/Archetypes/Archetypes_properties.xlsx
         path to database of archetypes file Archetypes_properties.xlsx"""
         return os.path.join(self.db_path, 'Archetypes', 'Archetypes_properties.xlsx')
 
     def get_archetypes_schedules(self):
-        """db/Archetypes/Archetypes_schedules.xlsx
+        """databases/CH/Archetypes/Archetypes_schedules.xlsx
         path to database of archetypes file Archetypes_HVAC_properties.xlsx"""
         return os.path.join(self.db_path, 'Archetypes', 'Archetypes_schedules.xlsx')
 
     def get_life_cycle_inventory_supply_systems(self):
-        """db/Systems/supply_systems.csv"""
+        """databases/CH/Systems/supply_systems.csv"""
         return os.path.join(self.db_path, 'Systems', 'supply_systems.xls')
 
     def get_technical_emission_systems(self):
-        """db/Systems/emission_systems.csv"""
+        """databases/CH/Systems/emission_systems.csv"""
         return os.path.join(self.db_path, 'Systems',  'emission_systems.xls')
 
     def get_envelope_systems(self):
-        """db/Systems/emission_systems.csv"""
+        """databases/CH/Systems/emission_systems.csv"""
         return os.path.join(self.db_path, 'Systems',  'envelope_systems.xls')
 
     def get_data_benchmark(self):
-        """db/Benchmarks/benchmark_targets.xls"""
-        return os.path.join(self.db_path, 'Benchmarks', 'benchmark_targets.xls')
-    def get_data_benchmark_today(self):
-        """db/Benchmarks/benchmark_today.xls"""
-        return os.path.join(self.db_path, 'Benchmarks', 'benchmark_today.xls')
+        """databases/CH/Benchmarks/benchmark_targets.xls"""
+        return os.path.join(self.db_path, 'Benchmarks', 'benchmark_2000W.xls')
 
     def get_data_mobility(self):
-        """db/Benchmarks/mobility.xls"""
+        """databases/CH/Benchmarks/mobility.xls"""
         return os.path.join(self.db_path, 'Benchmarks', 'mobility.xls')
 
     def get_uncertainty_db(self):
-        """db/Uncertainty/uncertainty_distributions.xls"""
+        """databases/CH/Uncertainty/uncertainty_distributions.xls"""
         return os.path.join(self.db_path, 'Uncertainty', 'uncertainty_distributions.xls')
 
     # INPUTS
