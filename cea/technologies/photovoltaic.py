@@ -1,8 +1,5 @@
 """
-==================================================
 photovoltaic
-==================================================
-
 """
 
 
@@ -27,10 +24,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-#============================
-#PV electricity generation
-#============================
-
+# PV electricity generation
 
 def calc_pv_main(locator, sensors_data, radiation, latitude, longitude, year, gv, weather_path):
 
@@ -185,10 +179,7 @@ def Calc_PV_power(S, Tcell, eff_nom, areagroup, Bref,misc_losses):
     P = eff_nom*areagroup*S*(1-Bref*(Tcell-25))*(1-misc_losses)/1000 # Osterwald, 1986) in kWatts
     return P
 
-#============================
-#properties of module
-#============================
-
+# properties of module
 
 def calc_properties_PV(type_PVpanel):
     if type_PVpanel == 1:#     # assuming only monocrystalline panels.
@@ -224,9 +215,7 @@ def calc_properties_PV(type_PVpanel):
 
     return eff_nom,NOCT,Bref,a0,a1,a2,a3,a4,L
 
-# ============================
 # investment and maintenance costs
-# ============================
 
 def calc_Cinv_pv(P_peak):
     """
@@ -242,10 +231,7 @@ def calc_Cinv_pv(P_peak):
     return InvCa # [CHF/y]
 
 
-# ============================
 # remuneration scheeme
-# ============================
-
 
 def calc_Crem_pv(E_nom):
     """
@@ -310,10 +296,6 @@ def calc_Crem_pv(E_nom):
     KEV_obtained_in_RpPerkWh = KEV_interpolated_kW(E_nom / 1000.0)
     return KEV_obtained_in_RpPerkWh
 
-
-#============================
-#test
-#============================
 
 def test_photovoltaic():
     import cea.inputlocator

@@ -11,11 +11,7 @@ import numpy as np
 def hoy_2_doy(hoy):
     """
     Hour of year to day of year
-    Parameters
-    ----------
     hoy: hour of year
-    Returns
-    -------
     doy: day of year
     """
 
@@ -28,11 +24,8 @@ def hoy_2_doy(hoy):
 def doy_2_hoy(doy):
     """
     Day of year to hour of year
-    Parameters
-    ----------
+
     doy: day of year
-    Returns
-    -------
     hoy: hour of year
     """
 
@@ -45,11 +38,7 @@ def doy_2_hoy(doy):
 def hoy_2_woy(hoy):
     """
     Hour of year to week of year
-    Parameters
-    ----------
     hoy: hour of year
-    Returns
-    -------
     woy: weak of year
     """
 
@@ -62,11 +51,7 @@ def hoy_2_woy(hoy):
 def hoy_2_moy(hoy):
     """
     hour of year to month of year
-    Parameters
-    ----------
     hoy: hour of year
-    Returns
-    -------
     moy: month of year
     """
 
@@ -83,11 +68,7 @@ def hoy_2_moy(hoy):
 def hoy_2_hod(hoy):
     """
     hour of year to hour of day
-    Parameters
-    ----------
     hoy: hour of year
-    Returns
-    -------
     hod: hour of day
     """
 
@@ -100,11 +81,7 @@ def hoy_2_hod(hoy):
 def hoy_2_dom(hoy):
     """
     hour of year to day of month
-    Parameters
-    ----------
     hoy: hour of year
-    Returns
-    -------
     dom: day of month
     """
 
@@ -121,11 +98,7 @@ def hoy_2_dom(hoy):
 def hoy_2_seasonhour(hoy, gv):
     """
     hour of year to hour relative to start of heating season
-    Parameters
-    ----------
     hoy: hour of year
-    Returns
-    -------
     seasonhour: hour relative to start of heating season
     """
 
@@ -146,11 +119,7 @@ def hoy_2_seasonhour(hoy, gv):
 def seasonhour_2_hoy(seasonhour, gv):
     """
     hour relative to start of heating season to hour of year
-    Parameters
-    ----------
     seasonhour: hour relative to start of heating season
-    Returns
-    -------
     hoy: hour of year
     """
 
@@ -174,11 +143,7 @@ def seasonhour_2_hoy(seasonhour, gv):
 def check_hoy(hoy):
     """
     check for hour of year within bounds
-    Parameters
-    ----------
     hoy: hour of year
-    Returns
-    -------
     bool
     """
 
@@ -193,11 +158,7 @@ def check_hoy(hoy):
 def check_doy(doy):
     """
     check for day of year within bounds
-    Parameters
-    ----------
     doy: day of year
-    Returns
-    -------
     bool
     """
 
@@ -212,11 +173,7 @@ def check_doy(doy):
 def is_nighttime_hoy(hoy):
     """
     Check if a certain hour of year is during night or not
-    Parameters
-    ----------
     hoy: hour of year
-    Returns
-    -------
     bool
     """
     if check_hoy(hoy):
@@ -237,11 +194,7 @@ def is_nighttime_hoy(hoy):
 def is_daytime_hoy(hoy):
     """
     Check if a certain hour of the year is during the daytime or not
-    Parameters
-    ----------
     hoy : hour of year
-    Returns
-    -------
     bool
     """
     if check_hoy(hoy):
@@ -257,11 +210,7 @@ def is_daytime_hoy(hoy):
 def is_heatingseason_hoy(hoy):
     """
     checks if a certain hour of the year is part of the heating season or not
-    Parameters
-    ----------
     hoy : hour of year
-    Returns
-    -------
     bool
     """
 
@@ -285,11 +234,7 @@ def is_heatingseason_hoy(hoy):
 def is_coolingseason_hoy(hoy):
     """
     checks if a certain hour of the year is part of the cooling season or not
-    Parameters
-    ----------
     hoy : hour of year
-    Returns
-    -------
     bool
     """
 
@@ -306,8 +251,6 @@ def is_coolingseason_hoy(hoy):
 def test_helpers():
     """
     test helpers
-    Returns
-    -------
     """
     import cea.globalvar
     gv = cea.globalvar.GlobalVariables()

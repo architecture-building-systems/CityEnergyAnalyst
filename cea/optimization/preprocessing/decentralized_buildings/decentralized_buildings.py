@@ -22,8 +22,6 @@ def decentralized_main(locator, building_names, gv):
     There is no optimization at this point. The different technologies are calculated and compared 1 to 1 to
     each technology. it is a classical combinatorial problem.
 
-    Parameters
-    ----------
     :param locator: locator class
     :param building_names: list with names of buildings
     :param gv: global variables class
@@ -42,8 +40,6 @@ def decentralized_main(locator, building_names, gv):
         """
         This function calculates the load distribution side of the district heating distribution.
 
-        Parameters
-        ----------
         :param mdot: mass flow
         :param TsupDH: supply temeperature
         :param Tret: return temperature

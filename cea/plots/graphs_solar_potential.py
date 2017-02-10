@@ -1,8 +1,5 @@
 """
-====================
 Solar graphs
-====================
-
 """
 
 import pandas as pd

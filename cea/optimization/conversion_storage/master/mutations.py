@@ -15,9 +15,7 @@ def mutFlip(individual, proba, gv):
     """
     For all integer parameters of individual except the connection integers, 
     flip the value with probability *proba*
-    
-    Parameters
-    ----------
+
     :param individual: list of all parameters corresponding to an individual configuration
     :param proba: mutation probability
     :param gv: global variables class
@@ -66,9 +64,7 @@ def mutFlip(individual, proba, gv):
 def mutShuffle(individual, proba, gv):
     """
     Swap with probability *proba*
-    
-    Parameters
-    ----------
+
     :param individual: list of all parameters corresponding to an individual configuration
     :param proba: mutation probability
     :type individual: list
@@ -128,9 +124,7 @@ def mutGaussCap(individual, sigmap, gv):
     Change the continuous variables with a gaussian distribution of mean of the
     old value and so that there is 95% chance (-2 to 2 sigma) to stay within
     a band of *sigmap* (percentage) of the entire band.
-    
-    Parameters
-    ----------
+
     :param individual: list of all parameters corresponding to an individual configuration
     :param sigmap: random value between 0 and 1 (1 is excluded )
     :type individual: list
@@ -188,9 +182,7 @@ def mutGaussCap(individual, sigmap, gv):
 def mutUniformCap(individual, gv):
     """
     Change the continuous variables with a uniform distribution
-    
-    Parameters
-    ----------
+
     :param individual: list of all parameters corresponding to an individual configuration
     :param gv: global variables class
     :type individual: list
@@ -234,9 +226,7 @@ def mutUniformCap(individual, gv):
 def mutGU(individual, proba, gv):
     """
     Flip the presence of the Generation units with probability *proba*
-    
-    Parameters
-    ----------
+
     :param individual: list of all parameters corresponding to an individual configuration
     :param proba: mutation probability
     :type individual: list
