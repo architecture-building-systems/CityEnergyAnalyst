@@ -107,7 +107,7 @@ def sensAnalysis(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, g
     print mostSensitive
     return ParetoResults, FactorResults, mostSensitive
 
-gen = 24
+gen = 4
 def run_as_script(scenario_path=None):
     """
     run the whole optimization routine
