@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Benchmark graphs algorithm
+===========================
+Benchmark plots
+===========================
+
+M. Mosteiro Romero  script development          31.08.16
+
 """
 from __future__ import division
 
@@ -12,38 +17,61 @@ from geopandas import GeoDataFrame as gpdf
 
 from cea import inputlocator
 
-
+__author__ = "Martin Mosteiro Romero"
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Martin Mosteiro Romero"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 
 def benchmark(locator_list, output_file):
     """
-    algorithm to print graphs in PDF concerning the 2000 Watt society benchmark 
-    for two scenarios (A and B)
+    Print PDF graphs comparing the selected scenarios to the 2000 Watt society benchmark for construction, operation
+    and mobility.
 
-    :param locator: an array of InputLocator set to each first scenario to be computed
-    :type locator: inputlocator.InputLocator
+    The following file is created as a side effect by this script in the specified file path:
+    - ouput_file: .pdf
+        Plot of the embodied and operational emissions and primary energy demand
+
+    :param locator: a list of InputLocator instances set to each scenario to be computed. The first element in
+    the array is always considered as the baseline for the comparison.
+    :type locator: list
     :param output_file: the filename (pdf) to save the results as.
+    :type output_file: str
 
-    :returns: Graphs of the embodied and operational emissions and primary energy demand: .Pdf
+    ..[SIA 2040, 2011]: Swiss Society of Engineers and Architects (SIA), "SIA Efficiency Path 2040" (2011)
+    ..[Kellenberger, D. et al., 2010]: Kellenberger, D. et al., 2010. "Arealentwicklung fur die 2000-Watt Gesellschaft:
+    Leitfaden und Fallbeispiele".
+    ..[SIA Effizienzpfad, 2011] Swiss Society of Engineers and Architects (SIA), "SIA Effizienzpfad: Bestimmung der Ziel- und
+    Richtwerte mit dem Top-Down Approach".
+    ..[SIA 2024, 2015]: Swiss Society of Engineers and Architects (SIA), Raumnutzungsdaten fur die Energie- und
+    Gebaeudetechnik" (2015)
+
     """
 
-    # setup-time
+    # setup: the labels and colors for the graphs are defined
     color_palette = ['g', 'r', 'y', 'c', 'b', 'm', 'k']
     legend = []
-    graphs = ['embodied', 'operation', 'mobility', 'total']
+    graphs = ['EMBODIED', 'OPERATION', 'MOBILITY', 'TOTAL']
+    graph_titles = {'EMBODIED': 'Embodied', 'OPERATION': 'Operation', 'MOBILITY': 'Mobility', 'TOTAL': 'Total'}
     old_fields = ['nre_pen_GJ', 'ghg_ton', 'nre_pen_MJm2', 'ghg_kgm2']
     old_prefix = ['E_', 'O_', 'M_']
     fields = ['_GJ', '_ton', '_MJm2', '_kgm2']
     new_cols = {}
+    # prepare a dictionary to contain the results for the maximum primary energy demand and emissions in the comparison
+    # these are later used to set the scale of the axes of the plots
     scenario_max = {}
     for i in range(4):
         for j in range(3):
             new_cols[old_prefix[j] + old_fields[i]] = graphs[j] + fields[i]
         scenario_max[graphs[i] + fields[2]] = scenario_max[graphs[i] + fields[3]] = 0
 
-    # calculate target values - THIS IS ASSUMING THE FIRST SCENARIO IS ALWAYS THE BASELINE! Need to confirm.
+    # calculate target values based on the baseline case
     targets = calc_benchmark_targets(locator_list[0])
-    # calculate current values - THIS SHOULD NOT BE HARD CODED AND NEED A SOURCE (other than Inducity)
+    # calculate current values based on the baseline case
     values_today = calc_benchmark_today(locator_list[0])
 
     # start graphs
@@ -54,7 +82,7 @@ def benchmark(locator_list, output_file):
     ax6.axis('off')
     axes = [1, 2, 4, 5]
 
-    # run for each locator
+    # run for each locator (i.e., for each scenario)
     for n in range(len(locator_list)):
         locator = locator_list[n]
         scenario_name = os.path.basename(locator.scenario_path)
@@ -85,6 +113,7 @@ def benchmark(locator_list, output_file):
             plt.plot(df_scenario[graphs[i]+fields[2]], df_scenario[graphs[i]+fields[3]], 'o', color = color_palette[n],
                      markersize = 15)
         legend.extend([scenario_name, scenario_name+' total'])
+
     # complete graphs
     plt.plot()
     for i in range(len(graphs)):
@@ -101,7 +130,7 @@ def benchmark(locator_list, output_file):
             plt.axis([0, scenario_max[graphs[i] + fields[2]] * 1.2, 0, values_today[graphs[i] + fields[3]] *
                       scenario_max[graphs[i] + fields[2]] / values_today[graphs[i] + fields[2]] * 1.2 ])
         # plot title
-        plt.title(graphs[i])
+        plt.title(graph_titles[graphs[i]])
 
     legend.extend(['Benchmark targets','Present day values'])
     legend_y = 1.2 + 0.05 * (len(locator_list) - 2)
@@ -114,10 +143,24 @@ def benchmark(locator_list, output_file):
 
 def calc_benchmark_targets(locator):
     '''
-    Calculates the embodied, operation, mobility and total targets (ghg_kgm2
-    and pen_MJm2) for all buildings in a scenario.
-    :param locator: an InputLocator set to the scenario to compute
-    :array target: pen_MJm2 and ghg_kgm2 target values
+    This function calculates the embodied, operation, mobility and total targets (ghg_kgm2 and pen_MJm2) for all
+    buildings in a scenario.
+
+    The current values for the Swiss case and 2000 W target values for each type of occupancy were taken from the
+    literature, when available:
+        -   [SIA 2040, 2011]: 'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
+        -   [Kellenberger, D. et al., 2010]: 'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
+
+    For the following occupancy types, the target values were calculated based on the approach in [SIA Effizienzpfad,
+    2011] for the present-day values assumed in calc_benchmark_today:
+            'INDUSTRY', 'HOSPITAL', 'GYM', 'SWIMMING', 'SERVERROOM' and 'COOLROOM'
+
+    :param locator: an InputLocator instance set to the scenario to compute
+    :type locator: InputLocator
+
+    :returns target: dict containing pen_MJm2 and ghg_kgm2 target values
+    :rtype target: dict
+
     '''
 
     # local files
@@ -126,23 +169,25 @@ def calc_benchmark_targets(locator):
     data_benchmark = locator.get_data_benchmark()
     occupancy = prop_occupancy.merge(demand,on='Name')
 
-    fields = ['Name', 'pen_GJ', 'ghg_ton', 'pen_MJm2', 'ghg_kgm2']
-    categories = ['embodied', 'operation', 'mobility', 'total']
+    categories = ['EMBODIED', 'OPERATION', 'MOBILITY', 'TOTAL']
     suffix = ['_GJ', '_ton','_MJm2', '_kgm2']
     targets = {}
     area_study = 0
 
     factors = pd.read_excel(data_benchmark, sheetname=categories[0])
+
     for i in range(len(factors['code'])):
         if factors['code'][i] in occupancy:
-            if factors['PEN'][i] > 0 and factors['CO2'][i] > 0:
+            if factors['NRE_target_retrofit'][i] > 0 and factors['CO2_target_retrofit'][i] > 0:
                 area_study += (occupancy['GFA_m2'] * occupancy[factors['code'][i]]).sum()
 
     for category in categories:
+        # the targets for the area are set for the existing building stock, i.e., retrofit targets are used
+        # (instead of new building targets)
         factors = pd.read_excel(data_benchmark, sheetname = category)
         vt = factors['code']
-        pt = factors['PEN']
-        gt = factors['CO2']
+        pt = factors['NRE_target_retrofit']
+        gt = factors['CO2_target_retrofit']
 
         for j in range(len(suffix)):
             targets[category + suffix[j]] = 0
@@ -156,21 +201,49 @@ def calc_benchmark_targets(locator):
 
 def calc_benchmark_today(locator):
     '''
-    Calculates the embodied, operation, mobility and total targets (ghg_kgm2
-    and pen_MJm2) for the area for the current national trend.
-    CURRENTLY BASED ON INDUCITY! Need a better source.
-    :param locator: an InputLocator set to the scenario to compute
-    :array values_today: pen_MJm2 and ghg_kgm2 for the scenario based on benchmarked present day situation
+    This function calculates the embodied, operation, mobility and total targets (ghg_kgm2 and pen_MJm2)
+    for the area for the current national trend.
+
+    The current values for the Swiss case for each type of occupancy were taken from the literature, when available:
+        -   [SIA 2040, 2011]: 'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
+        -   [Kellenberger, D. et al., 2010]: 'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
+
+    For the following occupancy types, the values for construction and operation were calculated based on the approach
+    in [SIA Effizienzpfad, 2011]: 'INDUSTRY' and 'HOSPITAL'.
+
+    For the following occupancy types, the current for operation were estimating by obtaining the final energy demand
+    for each use from [SIA 2024, 2015] and extrapolating the corresponding primary energy and emissions from the values
+    for the other occupancy types: 'GYM', 'SWIMMING', 'SERVERROOM' and 'COOLROOM'.
+
+    Finally, due to a lack of data, multiple values had to be assumed. The embodied energy for the following uses was
+    assumed as follows:
+        -   'GYM', 'SWIMMING': assumed to be equal to the value for use type 'RETAIL'
+        -   'SERVERROOM': assumed to be equal to the value for the use type 'OFFICE'
+        -   'COOLROOM': assumed to be equal to the value for the use type 'HOSPITAL'
+
+    Due to lacking mobility data, the following values were assumed:
+        -   'INDUSTRY': assumed to be equal to the value for the use type 'OFFICE'
+        -   'HOSPITAL': assumed to be equal to the value for the use type 'HOTEL'
+        -   'GYM', 'SWIMMING': assumed to be equal to the value for use type 'RETAIL'
+        -   'SERVERROOM', 'COOLROOM': assumed negligible
+
+
+    :param locator: an InputLocator instance set to the scenario to compute
+    :type locator: InputLocator
+
+    :returns target: dict containing pen_MJm2 and ghg_kgm2 target values
+    :rtype target: dict
+
     '''
 
     # local files
     demand = pd.read_csv(locator.get_total_demand())
     prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
-    data_benchmark_today = locator.get_data_benchmark_today()
+    data_benchmark_today = locator.get_data_benchmark()
     occupancy = prop_occupancy.merge(demand, on='Name')
 
     fields = ['Name', 'pen_GJ', 'ghg_ton', 'pen_MJm2', 'ghg_kgm2']
-    categories = ['embodied', 'operation', 'mobility', 'total']
+    categories = ['EMBODIED', 'OPERATION', 'MOBILITY', 'TOTAL']
     suffix = ['_GJ', '_ton', '_MJm2', '_kgm2']
     values_today = {}
     area_study = 0
@@ -178,14 +251,14 @@ def calc_benchmark_today(locator):
     factors = pd.read_excel(data_benchmark_today, sheetname=categories[0])
     for i in range(len(factors['code'])):
         if factors['code'][i] in occupancy:
-            if factors['PEN'][i] > 0 and factors['CO2'][i] > 0:
+            if factors['NRE_today'][i] > 0 and factors['CO2_today'][i] > 0:
                 area_study += (occupancy['GFA_m2'] * occupancy[factors['code'][i]]).sum()
 
     for category in categories:
         factors = pd.read_excel(data_benchmark_today, sheetname=category)
         vt = factors['code']
-        pt = factors['PEN']
-        gt = factors['CO2']
+        pt = factors['NRE_today']
+        gt = factors['CO2_today']
 
         for j in range(len(suffix)):
             values_today[category + suffix[j]] = 0
