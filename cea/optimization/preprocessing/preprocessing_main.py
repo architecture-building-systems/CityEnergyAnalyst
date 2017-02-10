@@ -31,8 +31,6 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     """
     This function aims at preprocessing all data for the optimization.
 
-    Parameters
-    ----------
     :param locator: path to locator function
     :param total_demand: dataframe with total demand and names of all building in the area
     :param building_names: dataframe with names of all buildings in the area

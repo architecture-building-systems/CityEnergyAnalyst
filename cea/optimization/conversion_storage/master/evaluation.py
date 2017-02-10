@@ -31,8 +31,6 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     """
     This function evaluates an individual
 
-    Parameters
-    ----------
     :param individual: list with values of the individual
     :param building_names: list with names of buildings
     :param locator: locator class
@@ -150,8 +148,6 @@ def check_invalid(individual, nBuildings, gv):
     This function rejects individuals out of the bounds of the problem
     It can also generate a new individual, to replace the rejected individual
 
-    Parameters
-    ----------
     :param individual: individual sent for checking
     :param nBuildings: number of buildings
     :param gv: global variables class
@@ -212,8 +208,6 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     This function reads the list encoding a configuration and implements the corresponding
     for the slave routine's to use
 
-    Parameters
-    ----------
     :param individual: list with inidividual
     :param Qmax:  peak heating demand
     :param locator: locator class
@@ -344,8 +338,6 @@ def checkNtw(individual, ntwList, locator, gv):
     """
     This function calls the distribution routine if necessary
     
-    Parameters
-    ----------
     :param individual: network configuration considered
     :param ntwList: list of DHN configurations previously encounterd in the master
     :param locator: path to the folder
@@ -384,8 +376,6 @@ def epsIndicator(frontOld, frontNew):
     """
     This function computes the epsilon indicator
     
-    Parameters
-    ----------
     :param frontOld: Old Pareto front
     :param frontNew: New Pareto front
     :type frontOld: list

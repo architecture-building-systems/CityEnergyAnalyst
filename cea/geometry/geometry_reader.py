@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-===========================
 algorithms for manipulation of building geometry
-===========================
-
 """
 
 from __future__ import division
@@ -19,19 +16,11 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-"""
-=========================================
-Windows
-=========================================
-"""
+# Windows
 
 def create_windows(df_prop_surfaces, gdf_building_architecture):
     """
     Creates windows on exposed building surfaces according to building win-wall-ratio
-
-
-    PARAMETERS
-    ----------
 
     :param df_prop_surfaces: DataFrame containing all exposed building surfaces (this is the `properties_surfaces.csv`
         file from the radiation calculation)
@@ -41,28 +30,26 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
         file from the scenario input, containing the `win_wall` column with the window to wall ratio.
     :type gdf_building_architecture: GeoDataFrame
 
-    RETURNS
-    -------
-
     :returns: DataFrame containing all windows of all buildings
     :rtype: DataFrame
 
-    Sample rows of output:
-           angle_window  area_window  height_window_above_ground  \
-    0            90     1.910858                         1.5
-    1            90     2.276739                         1.5
-    2            90     2.276739                         4.5
-    3            90     2.276739                         7.5
-    4            90     2.276739                        10.5
+    Sample rows of output:::
 
-       height_window_in_zone name_building  orientation_window
-    0                    1.5       B140589                   0
-    1                    1.5       B140590                 180
-    2                    4.5       B140590                 180
-    3                    7.5       B140590                 180
-    4                   10.5       B140590                 180
+               angle_window  area_window  height_window_above_ground  \
+        0            90     1.910858                         1.5
+        1            90     2.276739                         1.5
+        2            90     2.276739                         4.5
+        3            90     2.276739                         7.5
+        4            90     2.276739                        10.5
 
-    [5 rows x 6 columns]
+           height_window_in_zone name_building  orientation_window
+        0                    1.5       B140589                   0
+        1                    1.5       B140590                 180
+        2                    4.5       B140590                 180
+        3                    7.5       B140590                 180
+        4                   10.5       B140590                 180
+
+        [5 rows x 6 columns]
     """
     # TODO: documentation
 
@@ -150,22 +137,13 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
     return df_windows
 
 
-"""
-=========================================
-surfaces for ventilation
-=========================================
-"""
+# surfaces for ventilation
 
 def get_building_geometry_ventilation(gdf_building_geometry):
     """
+    :param gdf_building_geometry : GeoDataFrame contains single building
 
-    Parameters
-    ----------
-    gdf_building_geometry : GeoDataFrame contains single building
-
-    Returns
-    -------
-    building properties for natural ventilation calculation
+    :returns: building properties for natural ventilation calculation
     """
 
     # TODO: get real slope of roof in the future

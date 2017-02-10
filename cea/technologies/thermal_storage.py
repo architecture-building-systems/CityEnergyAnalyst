@@ -1,8 +1,5 @@
 """
-==================================================
 thermal storage
-==================================================
-
 """
 
 
@@ -18,13 +15,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-"""
-============================
-investment and maintenance costs
-============================
-
-"""
-
+# investment and maintenance costs
 
 def calc_Cinv_storage(vol, gV):
     """

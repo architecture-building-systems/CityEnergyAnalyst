@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-===========================
 Graphs for sensitivity_demand.py
-===========================
-
 """
 from __future__ import division
 
