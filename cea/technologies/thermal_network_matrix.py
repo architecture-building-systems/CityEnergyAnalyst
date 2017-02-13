@@ -142,7 +142,7 @@ def thermal_network_main(locator, gv, network_type, source):
     pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df, locator, gv)
 
     # calculate pipe aggregated heat conduction coefficient
-    K_pipe = calc_aggregated_heat_conduction_coefficient(locator, gv, pipe_length_df, pipe_properties_df)#(exe) [kW/K]
+    K_pipe = calc_aggregated_heat_conduction_coefficient(locator, gv, pipe_length_df, pipe_properties_df)#(e x e) [kW/K]
 
     ## Start solving hydraulic and thermal equations at each time-step
     t0 = time.clock()
@@ -1124,8 +1124,8 @@ def get_thermal_network_from_csv(locator, network_type):
     t0 = time.clock()
 
     # get node and pipe data
-    node_data_df = pd.read_csv(locator.get_optimization_network_layout_nodes_file(network_type))
-    pipe_data_df = pd.read_csv(locator.get_optimization_network_layout_pipes_file(network_type))
+    node_data_df = pd.read_csv(locator.get_network_layout_nodes_csv_file(network_type))
+    pipe_data_df = pd.read_csv(locator.get_network_layout_pipes_csv_file(network_type))
 
     # create consumer and plant node vectors from node data
     for column in ['Plant','Sink']:
@@ -1198,8 +1198,8 @@ def get_thermal_network_from_shapefile(locator, network_type):
     t0 = time.clock()
 
     # import shapefiles containing the network's edges and nodes
-    network_edges_df = gpd.read_file(locator.get_network_edges_shapefile(network_type))
-    network_nodes_df = gpd.read_file(locator.get_network_nodes_shapefile(network_type))
+    network_edges_df = gpd.read_file(locator.get_network_layout_edges_shapefile(network_type))
+    network_nodes_df = gpd.read_file(locator.get_network_layout_nodes_shapefile(network_type))
 
     # get node and pipe information
     node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df)
@@ -1465,7 +1465,7 @@ def run_as_script(scenario_path=None):
     network_type = ['DH', 'DC'] # set to either 'DH' or 'DC'
     source = ['csv', 'shapefile'] # set to csv or shapefile
 
-    thermal_network_main(locator, gv, network_type[1], source[0])
+    thermal_network_main(locator, gv, network_type[0], source[0])
     print ('test thermal_network_main() succeeded')
 
 if __name__ == '__main__':
