@@ -15,10 +15,13 @@ from OCC.StlAPI import StlAPI_Reader
 from OCC.TopAbs import TopAbs_REVERSED
 from OCCUtils import face, Topology
 
-from cea.resources.radiation_daysim.pyliburo import py3dmodel
-from cea.resources.radiation_daysim.pyliburo import gml3dmodel
-from cea.resources.radiation_daysim.interface2py3d import pyptlist_frm_occface
-from cea.resources.radiation_daysim.pyliburo import py2radiance
+import pyliburo.py3dmodel.construct as construct
+import pyliburo.py3dmodel.fetch as fetch
+import pyliburo.py3dmodel.calculate as calculate
+import pyliburo.py3dmodel.modify as modify
+import pyliburo.gml3dmodel as gml3dmodel
+import pyliburo.pycitygml as pycitygml
+import pyliburo.py2radiance as py2radiance
 
 import cea.globalvar
 import cea.inputlocator
@@ -42,41 +45,6 @@ def create_sensor_input_file(arad, abui):
     sensor_file.close()
     arad.sensor_file_path = sensor_file_path
 
-
-def make_unique(original_list):
-    unique_list = []
-    [unique_list.append(obj) for obj in original_list if obj not in unique_list]
-    return unique_list
-
-
-def points_from_face(face):
-    point_list = []
-    pnt_coord = []
-    wire_list = Topology.Topo(face).wires()
-    for wire in wire_list:
-        edges_list = Topology.Topo(wire).edges()
-        for edge in edges_list:
-            vertice_list = Topology.Topo(edge).vertices()
-            for vertex in vertice_list:
-                pnt_coord.append(
-                    [BRep.BRep_Tool().Pnt(vertex).X(),
-                     BRep.BRep_Tool().Pnt(vertex).Y(), BRep.BRep_Tool().Pnt(vertex).Z()])
-    pnt_coord = make_unique(pnt_coord)
-    for point in pnt_coord:
-        point_list.append(point)
-    return point_list
-
-
-def face_normal(occface):
-    fc = face.Face(occface)
-    centre_uv, centre_pt = fc.mid_point()
-    normal_dir = fc.DiffGeom.normal(centre_uv[0], centre_uv[1])
-    if occface.Orientation() == TopAbs_REVERSED:
-        normal_dir = normal_dir.Reversed()
-    normal = (normal_dir.X(), normal_dir.Y(), normal_dir.Z())
-    return normal
-
-
 def add_rad_mat(aresults_path, abui, ageometry_table):
     file_path = os.path.join(aresults_path, abui + '\\rad\\' + abui +
                              "_material")
@@ -95,28 +63,71 @@ def add_rad_mat(aresults_path, abui, ageometry_table):
         write_file.close()
     os.rename(file_name_txt, file_name_rad.replace(".txt", ".rad"))
 
-
-def geometry2radiance(arad, ageometry_table, ainput_path):
-
+def create_radiance_srf(occface, srfname, srfmat, arad):
+    bface_pts = fetch.pyptlist_frm_occface(occface)
+    py2radiance.RadSurface(srfname, bface_pts, srfmat, arad)
+    
+def triangulate_occface(occface):
+    pyptlist = fetch.pyptlist_frm_occface(occface)
+    d_face = construct.delaunay3d(pyptlist)
+    compound = construct.boolean_common(d_face, occface)
+    face_list = fetch.geomexplorer(compound, "face")
+    return face_list
+            
+def geometry2radiance(arad, ageometry_table, ainput_path, citygml_reader):
     # add all geometries which are in "ageometry_table" to radiance
+    bldg_dict_list = []
+    gmlbldgs = citygml_reader.get_buildings()
     bcnt = 0
-    for geo in ageometry_table.index.values:
-        filepath = os.path.join(ainput_path, geo + ".stl")
-        geo_solid = TopoDS.TopoDS_Solid()
-        StlAPI_Reader().Read(geo_solid, str(filepath))
-        face_list = py3dmodel.fetch.faces_frm_solid(geo_solid)
-        bf_cnt = 0
-        for face in face_list:
-            bface_pts = pyptlist_frm_occface(face)
-            srfname = "building_srf" + str(bcnt) + str(bf_cnt)
+    for gmlbldg in gmlbldgs:
+        bldg_dict = {}
+        window_list = []
+        
+        bldg_name = citygml_reader.get_gml_id(gmlbldg) 
+        pypolgon_list = citygml_reader.get_pypolygon_list(gmlbldg)
+        geo_solid = construct.make_occsolid_frm_pypolygons(pypolgon_list)
+        facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(geo_solid)
 
-            srfmat = ageometry_table['mat_name'][geo]
-            py2radiance.RadSurface(srfname, bface_pts, srfmat, arad)
-            bf_cnt += 1
+        wwr = ageometry_table["fwindow"][bldg_name]
+        print wwr
+        fcnt = 0
+        for facade in facade_list:
+            ref_pypt = calculate.face_midpt(facade)
+            #offset the facade to create a window according to the wwr
+            if wwr != 0.0 and wwr != 1.0:
+                window = fetch.shape2shapetype(modify.uniform_scale(facade, wwr, wwr, wwr, ref_pypt))
+                window_list.append(window)
+                create_radiance_srf(window, "win"+str(bcnt)+str(fcnt), ageometry_table['win_name'][bldg_name], arad)
+                b_facade_cmpd = fetch.shape2shapetype(construct.boolean_difference(facade, window))
+                hole_facade = fetch.geom_explorer(b_facade_cmpd, "face")[0]
+                #triangulate the wall with hole
+                tri_facade_list = construct.simple_mesh(hole_facade)
+                for tri_bface in tri_facade_list:
+                    create_radiance_srf(tri_bface, "wall"+str(bcnt)+str(fcnt), ageometry_table['wall_name'][bldg_name], arad)
+                    
+            elif wwr == 1.0:
+                create_radiance_srf(facade, "win"+str(bcnt)+str(fcnt), ageometry_table['win_name'][bldg_name], arad)
+            else:
+                create_radiance_srf(facade, "wall"+str(bcnt)+str(fcnt), ageometry_table['wall_name'][bldg_name], arad)
+            fcnt+=1
+            
+        rcnt = 0
+        for roof in roof_list:
+            create_radiance_srf(roof, "roof"+str(bcnt)+str(rcnt), ageometry_table['roof_name'][bldg_name], arad)
+            rcnt+=1
+            
+        bldg_dict["name"] = bldg_name
+        bldg_dict["windows"] = window_list
+        bldg_dict["facades"] = facade_list
+        bldg_dict["roofs"] = roof_list
+        bldg_dict["footprints"] = footprint_list
+        bldg_dict_list.append(bldg_dict)
         bcnt += 1
+        
+    return bldg_dict_list
 
 
-def get_bui_props(face_list, aresults_path, abui):
+def get_bui_props(bldg_dict, aresults_path, abui):
 
     bui_props = pd.DataFrame(columns=['roof_area', 'facade_area', 'roof_angle', 'bui_height', 'bui_min_z'])
 
@@ -124,25 +135,27 @@ def get_bui_props(face_list, aresults_path, abui):
     facade_area = []
     roof_area = []
     roof_angle = []
-
-    for bui_face in face_list:
-        fc = face.Face(bui_face)
-        centre_uv, centre_pt = fc.mid_point()
-        fac_normal = fc.DiffGeom.normal(centre_uv[0], centre_uv[1])
-        fac_area = py3dmodel.calculate.face_area(bui_face)
-
-        # builing Z
-        zs.append(centre_pt.Z())
-
-        # building roof area
-        if fac_normal.Z() > 0.05:
-            roof_area.append(fac_area)
-            roof_angle.append(math.acos(fac_normal.Z()))
-
-        # building facade area
-        elif fac_normal.Z() > -0.85:
-            facade_area.append(fac_area)
-
+    
+    facade_list = bldg_dict["facades"]
+    roof_list = bldg_dict["roofs"]
+    footprint_list = bldg_dict["footprints"]
+    
+    for facade in facade_list:
+        fac_area = calculate.face_area(facade)
+        facade_area.append(fac_area)
+        
+    for roof in roof_list:
+        rf_area = calculate.face_area(roof)
+        roof_area.append(rf_area)
+        rf_normal = calculate.face_normal(roof)
+        roof_angle.append(math.acos(rf_normal[2]))
+        centre_pt = calculate.face_midpt(roof)
+        zs.append(centre_pt[2])
+        
+    for ftprnt in footprint_list:
+        centre_pt = calculate.face_midpt(ftprnt)
+        zs.append(centre_pt[2])
+        
     bui_roof_area = sum(roof_area)
     bui_roof_angle = sum(roof_angle)/len(roof_angle)
     bui_facade_area= sum(facade_area)
@@ -155,55 +168,41 @@ def get_bui_props(face_list, aresults_path, abui):
 
 def calc_sensors(aresults_path, abui, ainput_path):
 
-    bui_vol = []
     sen_df = []
     fps_df = []
-    # import stl file
-    filepath = os.path.join(ainput_path, abui + ".stl")
-    geo_solid = TopoDS.TopoDS_Solid()
-    StlAPI_Reader().Read(geo_solid, str(filepath))
-
-    # calculate geometries properties
-    props = GProp.GProp_GProps()
-    BRepGProp.brepgprop_VolumeProperties(geo_solid, props)
-
-    # reverse geometry if volume is negative
-    if props.Mass() < 0:
-        bui_vol.append(-props.Mass())
-        geo_solid.Reverse()
-    else:
-        bui_vol.append(props.Mass())
-
-    # get all faces from geometry
-    face_list = py3dmodel.fetch.faces_frm_solid(geo_solid)
-
-    # get minimum z of building
-    get_bui_props(face_list, aresults_path, abui)
+    
+    facade_list = abui["facades"]
+    roof_list = abui["roofs"]
+    window_list = abui["windows"]
+    all_faces = []
+    all_faces.extend(facade_list)
+    all_faces.extend(roof_list)
+    
+    abui_name = abui["name"]
+    get_bui_props(abui, aresults_path, abui_name)
 
     fac_int = 0
-    for face in face_list:
-        normal = face_normal(face)
+    for face in all_faces:
+        normal = calculate.face_normal(face)
+        # calculate pts of each face
+        fps = fetch.pyptlist_frm_occface(face)
+        fps_df.append([val for sublist in fps for val in sublist])
 
-        if settings.SEN_PARMS['MIN_Z_DIR'] < normal[2]:
+        sensor_srfs, sensor_pts, sensor_dirs = \
+            gml3dmodel.generate_sensor_surfaces(face, settings.SEN_PARMS['X_DIM'], settings.SEN_PARMS['Y_DIM'])
+        fac_area = calculate.face_area(face)
+        # generate dataframe with building, face and sensor ID
+        
+        sen_int = 0
+        for sen_dir in sensor_dirs:
+            orientation = math.copysign(math.acos(normal[1]), normal[0]) * 180 / math.pi
+            tilt = math.acos(normal[2]) * 180 / math.pi
 
-            # calculate pts of each face
-            fps = points_from_face(face)
-            fps_df.append([val for sublist in fps for val in sublist])
-
-            sensor_srfs, sensor_pts, sensor_dirs = \
-                gml3dmodel.generate_sensor_surfaces(face, settings.SEN_PARMS['X_DIM'], settings.SEN_PARMS['Y_DIM'])
-            fac_area = py3dmodel.calculate.face_area(face)
-            # generate dataframe with building, face and sensor ID
-            sen_int = 0
-
-            for sen_dir in sensor_dirs:
-                orientation = math.copysign(math.acos(normal[1]), normal[0]) * 180 / math.pi
-                tilt = math.acos(normal[2]) * 180 / math.pi
-
-                sen_df.append((fac_int, sen_int, fac_area, fac_area / len(sensor_dirs), sensor_pts[sen_int][0], sensor_pts[sen_int][1],
-                     sensor_pts[sen_int][2], normal[0], normal[1], normal[2], orientation, tilt))
-                sen_int += 1
-            fac_int += 1
+            sen_df.append((fac_int, sen_int, fac_area, fac_area / len(sensor_dirs), sensor_pts[sen_int][0], sensor_pts[sen_int][1],
+                 sensor_pts[sen_int][2], normal[0], normal[1], normal[2], orientation, tilt))
+            
+            sen_int += 1
+        fac_int += 1
 
     sen_df = pd.DataFrame(sen_df, columns=['fac_int', 'sen_int', 'fac_area','sen_area', 'sen_x', 'sen_y',
                                        'sen_z', 'sen_dir_x', 'sen_dir_y', 'sen_dir_z', 'orientation', 'tilt'])
@@ -341,7 +340,6 @@ def calculate_windows(results_path, bui):
 
 
 def calc_radiation(geometry_table_name, weatherfile_path, locator):
-
     # file paths
     input_path = locator.get_3D_geometry_folder()
     results_path = locator.get_solar_radiation_folder()
@@ -350,11 +348,13 @@ def calc_radiation(geometry_table_name, weatherfile_path, locator):
     rad = py2radiance.Rad(os.path.join(results_path, 'base.rad'), results_path)
 
     # =============================== Import =============================== #
-
-    materials_surfaces = pd.read_csv(os.path.join(input_path, geometry_table_name+".csv"), index_col='name')
-
+    bldg_prop_list = pd.read_csv(os.path.join(input_path, geometry_table_name +".csv"), index_col='name')
     # =============================== Simulation =============================== #
-    geometry2radiance(rad, materials_surfaces, input_path)
+    citygml_reader = pycitygml.Reader()
+    citygml_filepath = os.path.join(input_path, "new.gml")
+    citygml_reader.load_filepath(citygml_filepath)
+    bldg_dict_list = geometry2radiance(rad, bldg_prop_list, input_path, citygml_reader)
+    
     rad.create_rad_input_file()
 
     building_names_df = gpdf.from_file(locator.get_building_occupancy())
@@ -362,15 +362,15 @@ def calc_radiation(geometry_table_name, weatherfile_path, locator):
 
     # calculate sensor points
     pool = multiprocessing.Pool()  # use all available cores, otherwise specify the number you want as an argument
-    for bui in building_names:
-        pool.apply_async(calc_sensors, args=(results_path, bui, input_path))
+    for bldg_dict in bldg_dict_list:
+        pool.apply_async(calc_sensors, args=(results_path, bldg_dict, input_path))
     pool.close()
     pool.join()
 
     # execute daysim
     processes = []
     for bui in building_names:
-        process = multiprocessing.Process(target=execute_daysim, args=(bui, results_path, rad, weatherfile_path, settings.RAD_PARMS, materials_surfaces,))
+        process = multiprocessing.Process(target=execute_daysim, args=(bui, results_path, rad, weatherfile_path, settings.RAD_PARMS, bldg_prop_list,))
         process.start()
         processes.append(process)
     for process in processes:
