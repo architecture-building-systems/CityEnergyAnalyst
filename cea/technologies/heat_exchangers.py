@@ -27,15 +27,11 @@ def calc_Cinv_HEX(Q_design, gV):
     """
     Calculates the cost of a heat exchanger (based on A+W cost of oil boilers) [CHF / a]
 
-    Parameters
-    ----------
     :type Q_design : float
     :param Q_design: Design Load of Boiler
 
     :param gV: globalvar.py
 
-    Returns
-    -------
     :rtype InvC_return : float
     :returns InvC_return: total investment Cost in [CHF]
 

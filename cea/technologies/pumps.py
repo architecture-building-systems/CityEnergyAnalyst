@@ -67,9 +67,7 @@ def Pump_operation(P_design):
 def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV):
     """
     Computes the total pump investment cost
-    
-    Parameters
-    ----------
+
     :type dicoSupply : class context
     :type buildList : list
     :param buildList: list of buildings in the district
@@ -77,8 +75,6 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV):
     :param network_results_folder: path to network results folder
     :type ntwFeat : class ntwFeatures
 
-    Returns
-    -------
     :rtype pumpCosts : float
     :returns pumpCosts: pumping cost
     """    
@@ -118,10 +114,8 @@ def Pump_Cost(deltaP, mdot, eta_pumping, gV):
     if the nominal load (electric) > 375kW, a new pump is installed
     if the nominal load (electric) < 500W, a pump with Pel_design = 500W is assumed
 
-    Investement costs are calculated upon the life time of a GHP (20y) and a GHP- related interest rate of 6%
+    Investment costs are calculated upon the life time of a GHP (20y) and a GHP- related interest rate of 6%
 
-    Parameters
-    ----------
     :type deltaP : float
     :param deltaP: nominal pressure drop that has to be overcome with the pump
 
@@ -131,8 +125,6 @@ def Pump_Cost(deltaP, mdot, eta_pumping, gV):
     :type eta_pumping : float
     :param pump efficiency: (set 0.8 as standard value, eta = E_pumping / E_elec)
 
-    Returns
-    -------
     :rtype InvCa : float
     :returns InvCa: annualized investment costs in CHF/year
     """
@@ -192,8 +184,6 @@ def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
 
     Investement costs are calculated upon the life time of a GHP (20y) and a GHP- related interest rate of 6%
 
-    Parameters
-    ----------
     :type deltaP : float
     :param deltaP: nominal pressure drop that has to be overcome with the pump
 
@@ -203,8 +193,6 @@ def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
     :type eta_pumping : float
     :param pump efficiency: (set 0.8 as standard value, eta = E_pumping / E_elec)
 
-    Returns
-    -------
     :rtype InvC_return : float
     :returns InvC_return: total investment Cost in CHF
 
