@@ -25,8 +25,6 @@ def calc_Qww_ls_st(ta, te, Tww_st, V, Qww, Qww_ls_r, Qww_ls_nr, gv):
     Heat flows include sensible heat loss to the environment (ql), heat charged into the tank (qc),
     and heat discharged from the tank (qd).
 
-    Parameters
-    ----------
     :param Tww_st: tank temperature in [C]
     :param Tww_setpoint: DHW temperature set point in [C]
     :param ta: room temperature in [C]
@@ -53,8 +51,6 @@ def calc_Qww_ls_st(ta, te, Tww_st, V, Qww, Qww_ls_r, Qww_ls_nr, gv):
     :type AR: float
 
 
-    Returns
-    -------
     :return ql: storage sensible heat loss in [W].
     :return qd: heat discharged from the tank in [W], including dhw heating demand and distribution heat loss.
     :return qc: heat charged into the tank in [W].
@@ -80,8 +76,6 @@ def ode(y, t, ql, qd, qc, Pwater, Cpw, Vtank):
     """
     This algorithm describe the energy balance of the dhw tank with a differential equation.
 
-    Parameters
-    ----------
     :param y: storage sensible temperature in K.
     :param t: time steps.
     :param ql: storage tank sensible heat loss in W.
@@ -94,8 +88,6 @@ def ode(y, t, ql, qd, qc, Pwater, Cpw, Vtank):
     :type qd: float
     :type qc: float
 
-    Returns
-    -------
     :return dydt: change in temperature at each time step.
     :type dydt: float
     """
@@ -107,8 +99,6 @@ def solve_ode_storage(Tww_st_0, ql, qd, qc, Vtank, gv):
     """
     This algorithm solves the differential equation, ode.
 
-    Parameters
-    ----------
     :param Tww_st_0: initial tank temperature in [C]
     :param ql: storage tank sensible heat loss in W.
     :param qd: heat discharged from the tank in W.
@@ -122,8 +112,6 @@ def solve_ode_storage(Tww_st_0, ql, qd, qc, Vtank, gv):
     :type qc: float
     :type Vtank: float
 
-    Returns
-    -------
     :returns y[1]: solution of the ode
     :rtype y[1]: float
     """

@@ -30,14 +30,10 @@ def calc_Cinv_gas(PnomGas, gV):
     """
     Calculate investment cost of natural gas connections.
 
-    Parameters
-    ----------
     :param PnomGas: peak natural gas supply in [W]
     :type PnomGas: float
     :param gV: globalvar.py
 
-    Returns
-    -------
     :returns InvCa:
     :rtype InvCa:
 

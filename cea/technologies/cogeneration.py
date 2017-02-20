@@ -43,9 +43,6 @@ def calc_Cop_CCT(GT_SIZE, T_DH_Supply, fuel, gV):
     How to use the return functions : input Q_therm_requested into the output interpolation functions
     Conditions: not below or above boundaries Q_therm_min & Q_therm_max
 
-    Parameters
-    ----------
-
     :type GT_SIZE : float
     :param GT_SIZE: Nominal capacity of Gas Turbine (only GT not cogeneration)
 
@@ -58,8 +55,6 @@ def calc_Cop_CCT(GT_SIZE, T_DH_Supply, fuel, gV):
     :param gV: globalvar.py
 
 
-    Returns
-    -------
     :rtype wdot_interpol : function
     :returns wdot_interpol: interpolation function for part load electricity requirement for given Q_therm_requested
 
@@ -78,8 +73,7 @@ def calc_Cop_CCT(GT_SIZE, T_DH_Supply, fuel, gV):
     :rtype eta_elec_interpol: function
     :returns eta_elec_interpol: interpolation function, electrical efficiency at Q_therm_requested
 
-    References
-    ----------
+
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
 
@@ -131,8 +125,6 @@ def CC_Op(wdot, gt_size, fuel, tDH, gV) :
     Operation Function of Combined Cycle at given electricity Demand (wdot).
     The gas turbine (GT) exhaust gas is used by the steam turbine (ST).
 
-    Parameters
-    ----------
     :type wdot : float
     :param wdot: Electric load that is demanded to the gas turbine (only GT output, not CC output!)
     :type gt_size : float
@@ -144,8 +136,6 @@ def CC_Op(wdot, gt_size, fuel, tDH, gV) :
     :param gV: globalvar.py
 
 
-    Returns
-    -------
     :rtype wtot : float
     :returns wtot: total electric power output from the combined cycle (both GT + ST !)
     :rtype qdot : float
@@ -179,23 +169,17 @@ def GT_fullLoadParam(gt_size, fuel, gV):
     """
     Calculates gas turbine efficiency and exhaust gas mass flow rate at full load.
 
-    Parameters
-    ----------
     :type gt_size : float
     :param gt_size: Maximum electric load that is demanded to the gas turbine
     :type fuel : string
-    :param fuel: fuel used, either 'NG' (natural gas) or 'BG' (biogas)
+    :param fuel: fuel used, either NG (Natural Gas) or BG (Biogas)
     :param gV: globalvar.py
 
-    Returns
-    -------
     :rtype eta0 : float
     :returns eta0: efficiency at full load
     :rtype mdot0 : float
     :returns mdot0: exhaust gas mass flow rate at full load
 
-    References
-    ----------
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
 
@@ -227,8 +211,6 @@ def GT_partLoadParam(wdot, gt_size, eta0, mdot0, fuel, gV):
     """
     Calculates GT operational parameters at part load
 
-    Parameters
-    ----------
     :type wdot : float
     :param wdot: GT electric output (load)
     :type gt_size : float
@@ -240,8 +222,7 @@ def GT_partLoadParam(wdot, gt_size, eta0, mdot0, fuel, gV):
     :type fuel : string
     :param fuel: fuel used, either 'NG' (natural gas) or 'BG' (biogas)
 
-    Returns
-    -------
+
     :rtype eta : float
     :returns eta: GT part-load electric efficiency
     :rtype mdot : float
@@ -251,8 +232,7 @@ def GT_partLoadParam(wdot, gt_size, eta0, mdot0, fuel, gV):
     :rtype mdotfuel : float
     :returns mdotfuel: mass flow rate of fuel(gas) requirement
 
-    References
-    ----------
+
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
 
@@ -293,8 +273,6 @@ def ST_Op(mdot, texh, tDH, fuel, gV):
     Operation of a double pressure (LP,HP) steam turbine connected to a district heating network following
     [C. Weber, 2008]_
 
-    Parameters
-    ----------
     :type mdot : float
     :param mdot: GT part-load exhaust gas mass flow rate
     :type texh : float
@@ -305,15 +283,11 @@ def ST_Op(mdot, texh, tDH, fuel, gV):
     :type tDH : float
     :param gV: globalvar.py
 
-    Returns
-    -------
     :rtype qdot : float
     :returns qdot: heat power supplied to the DHN
     :rtype wdotfin : float
     :returns wdotfin: electric power generated from the steam cycle
 
-    References
-    ----------
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
 
@@ -401,8 +375,6 @@ def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
 
         Approach B (Empiric Approach): [Iain Staffell]_
 
-    Parameters
-    ----------
     :type Q_load : float
     :param Q_load: Load at each time step
 
@@ -415,8 +387,6 @@ def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
     :type approach_call : string
     :param appraoch_call: choose "A" or "B": A = NREL-Approach, B = Empiric Approach
 
-    Returns
-    -------
     :rtype eta_el : float
     :returns eta_el: electric efficiency of FC (Lower Heating Value), in abs. numbers
 
@@ -424,8 +394,6 @@ def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
     :returns Q_fuel: Heat demand from fuel (in Watt)
 
 
-    References
-    ----------
     ..[M. Zolot et al., 2004] M. Zolot et al., Analysis of Fuel Cell Hybridization and Implications for Energy Storage
     Devices, NREL, 4th International Advanced Automotive Battery.
     http://www.nrel.gov/vehiclesandfuels/energystorage/pdfs/36169.pdf
@@ -500,18 +468,15 @@ def calc_Cinv_CCT(CC_size, gV):
     """
     Annualized investment costs for the Combined cycle
 
-    Parameters
-    ----------
+
     :type CC_size : float
     :param CC_size: Electrical size of the CC
 
-    Returns
-    -------
+
     :rtype InvCa : float
     :returns InvCa: annualized investment costs in CHF
 
-    References
-    ----------
+
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
@@ -527,13 +492,11 @@ def calc_Cinv_FC(P_design, gV):
 
     http://hexis.com/sites/default/files/media/publikationen/140623_hexis_galileo_ibb_profitpaket.pdf?utm_source=HEXIS+Mitarbeitende&utm_campaign=06d2c528a5-1_Newsletter_2014_Mitarbeitende_DE&utm_medium=email&utm_term=0_e97bc1703e-06d2c528a5-
 
-    Parameters
-    ----------
+
     :type P_design : float
     :param P_design: Design thermal Load of Fuel Cell [W_th]
 
-    Returns
-    -------
+
     :rtype InvCa: float
     :returns InvCa: annualized investment costs in CHF
 

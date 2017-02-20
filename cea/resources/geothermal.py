@@ -19,19 +19,14 @@ def calc_ground_temperature(T_ambient, gv):
     """
     Calculates hourly ground temperature fluctuation over a year following [Kusuda, T. et al., 1965]_.
 
-    Parameters
-    ----------
     :param T_ambient: vector with outdoor temperature
     :type T_ambient: np array
     :param gv: globalvar.py
 
-    Returns
-    -------
+
     :return Tg: vector with ground temperatures in [K]
     :rtype Tg: np array
 
-    References
-    ----------
     ..[Kusuda, T. et al., 1965] Kusuda, T. and P.R. Achenbach (1965). Earth Temperatures and Thermal Diffusivity at
     Selected Stations in the United States. ASHRAE Transactions. 71(1):61-74
     """

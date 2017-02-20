@@ -30,14 +30,10 @@ def calc_Cinv_storage(vol, gV):
     """
     calculate the annualized investment cost of a thermal storage tank
 
-    Parameters
-    ----------
     :param vol: storage tank volume
     :type vol: float
     :param gV: global.var
 
-    Returns
-    -------
     :returns InvCa:
 
     """

@@ -33,8 +33,6 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
     Capacity : 1-10 [MW], Minimum Part Load: 30% of P_design
     Source: POLYCITY HANDBOOK 2012
 
-    Parameters
-    ----------
     :type Q_load : float
     :param Q_load: Load of time step
 
@@ -52,8 +50,7 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
     up to 6MW_therm_out Capacity proven!
     = 8 MW th (burner)
 
-    Returns
-    -------
+
     :rtype eta_therm : float
     :returns eta_therm: thermal Efficiency of Furnace (LHV), in abs. numbers
 
@@ -131,8 +128,6 @@ def furnace_op_cost(Q_therm, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
     """
     Calculates the operation cost of a furnace plant (only operation, no annualized cost!)
 
-    Parameters
-    ----------
     :type Q_therm : float
     :param Q_therm: thermal energy required from furnace plant in [Wh]
 
@@ -148,8 +143,6 @@ def furnace_op_cost(Q_therm, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
     :param gV: globalvar.py
 
 
-    Returns
-    -------
     :rtype C_furn : float
     :returns C_furn: Total generation cost for required load (per hour) in [CHF], including profits from electricity sold
 
@@ -225,8 +218,7 @@ def calc_Cinv_furnace(Q_design, Q_annual, gv):
     Calculates the annualized investment cost of a Furnace
     based on Bioenergy 2020 (AFO) and POLYCITY Ostfildern 
 
-    Parameters
-    ----------
+
     :type Q_design : float
     :param Q_design: Design Load of Boiler
         
@@ -234,9 +226,7 @@ def calc_Cinv_furnace(Q_design, Q_annual, gv):
     :param Q_annual: annual thermal Power output [Wh]
 
     :param gV: globalvar.py
-    
-    Returns
-    -------
+
     :rtype InvC_return : float
     :returns InvC_return: total investment Cost for building the plant
     

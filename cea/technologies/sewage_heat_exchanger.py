@@ -25,15 +25,11 @@ def calc_sewage_heat_exchanger(locator, Length_HEX_available, gv):
     """
     Calaculate the heat extracted from the sewage HEX.
 
-    Parameters
-    ----------
     :param locator: an InputLocator instance set to the scenario to work on
     :param Length_HEX_available: HEX length available
     :type Length_HEX_available: float
     :param gv: globalvar.py
 
-    Returns
-    -------
     Save the results to `SWP.csv`
     """
 
@@ -79,8 +75,6 @@ def calc_Sewagetemperature( Qwwf, Qww, tsww, trww, totwater, mcpww, cp, density,
     """
     Calculate sewage temperature and flow rate released from DHW usages and Fresh Water (FW) in buildings.
 
-    Parameters
-    ----------
     :param Qwwf: final DHW heat requirement
     :type Qwwf: float
     :param Qww: DHW heat requirement
@@ -100,8 +94,6 @@ def calc_Sewagetemperature( Qwwf, Qww, tsww, trww, totwater, mcpww, cp, density,
     :param SW_ratio: ratio of waste water to fresh water production.
     :type SW_ratio: float
 
-    Returns
-    -------
     :returns mcp_combi: sewage water heat capacity [kWh/K]
     :rtype mcp_combi: float
     :returns t_to_sewage: sewage water temperature
@@ -125,8 +117,6 @@ def calc_sewageheat( mcp, tin, w_HEX, Vf, cp, h0, min_m, L_HEX, tmin, ATmin):
     """
     Calculates the operation of sewage heat exchanger.
 
-    Parameters
-    ----------
     :param mcp: heat capacity of total sewage in a zone
     :type mcp: float
     :param tin: sewage inlet temperature of a zone
@@ -148,8 +138,6 @@ def calc_sewageheat( mcp, tin, w_HEX, Vf, cp, h0, min_m, L_HEX, tmin, ATmin):
     :param ATmin: minimum area of heat exchange
     :type ATmin: float
 
-    Returns
-    -------
     :returns Q_source: heat supplied by sewage
     :rtype: float
     :returns t_source: sewage heat supply temperature
@@ -161,8 +149,6 @@ def calc_sewageheat( mcp, tin, w_HEX, Vf, cp, h0, min_m, L_HEX, tmin, ATmin):
     :returns ta2: temperature outlet of the cold stream (to the HP)
     :rtype ta2: float
 
-    References
-    ----------
     ..[J.A. Fonseca et al., 2016] J.A. Fonseca, Thuy-An Nguyen, Arno Schlueter, Francois Marechal (2016). City Enegy
     Analyst (CEA): Integrated framework for analysis and optimization of building energy systems in neighborhoods and
     city districts. Energy and Buildings.

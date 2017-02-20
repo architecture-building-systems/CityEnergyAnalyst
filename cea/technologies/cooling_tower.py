@@ -26,20 +26,16 @@ def calc_CT(qhotdot, Qdesign, gV):
     """
     For the operation of a water condenser + direct cooling tower based on [B. Stephane, 2012]_
     
-    Parameters
-    ----------
+
     :type qhotdot : float
     :param qhotdot: heating power to condenser, From Model_VCC
     :type Qdesign : float
     :param Qdesign: Max cooling power
     
-    Returns
-    -------
+
     :type wdot : float
     :param wdot: electric power needed for the variable speed drive fan
 
-    References
-    ----------
     ..[B. Stephane, 2012] B. Stephane (2012), Evidence-Based Model Calibration for Efficient Building Energy Services.
     PhD Thesis, University de Liege, Belgium
     """
@@ -67,13 +63,10 @@ def calc_Cinv_CT(CT_size, gV):
     """
     Annualized investment costs for the Combined cycle
     
-    Parameters
-    ----------
+
     :type CT_size : float
     :param CT_size: Size of the Cooling tower in [W]
-        
-    Returns
-    -------
+
     :rtype InvCa : float
     :returns InvCa: annualized investment costs in Dollars
     

@@ -27,9 +27,7 @@ def calc_VCC(mdot, tsup, tret, gV):
     """
     For the operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
-    
-    Parameters
-    ----------
+
     :type mdot : float
     :param mdot: plant supply mass flow rate to the district cooling network
     :type tsup : float
@@ -38,15 +36,13 @@ def calc_VCC(mdot, tsup, tret, gV):
     :param tret: plant return temperature from DCN
     :param gV: globalvar.py
     
-    Returns
-    -------
+
     :rtype wdot : float
     :returns wdot: chiller electric power requirement
     :rtype qhotdot : float
     :returns qhotdot: condenser heat rejection
 
-    References
-    ----------
+
     ..[D.J. Swider, 2003] D.J. Swider (2003). A comparison of empirically based steady-state models for
     vapor-compression liquid chillers. Applied Thermal Engineering.
     """
@@ -86,16 +82,11 @@ Investment costs
 def calc_Cinv_VCC(qcold, gV):
     """
     Annualized investment costs for the vapor compressor chiller
-    
-    Parameters
-    ----------
+
     :type qcold : float
     :param qcold: peak cooling demand in [W]
-
     :param gV: globalvar.py
 
-    Returns
-    -------
     :returns InvCa: annualized chiller investment cost in CHF/a
     
     """

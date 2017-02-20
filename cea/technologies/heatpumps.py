@@ -31,8 +31,6 @@ def calc_Cop_GHP(mdot, tsup, tret, tground, gV):
     """
     For the operation of a Geothermal heat pump (GSHP) supplying DHN.
 
-    Parameters
-    ----------
     :type mdot : float
     :param mdot: supply mass flow rate to the DHN
     :type tsup : float
@@ -43,8 +41,6 @@ def calc_Cop_GHP(mdot, tsup, tret, tground, gV):
     :param tground: ground temperature
     :param gV: globalvar.py
 
-    Returns
-    -------
     :rtype wdot_el : float
     :returns wdot_el: total electric power requirement for compressor and auxiliary el.
     :rtype qcolddot : float
@@ -54,8 +50,6 @@ def calc_Cop_GHP(mdot, tsup, tret, tground, gV):
     :rtype tsup2 :
     :returns tsup2: supply temperature after HP (to DHN)
 
-    References
-    ----------
     ..[O. Ozgener et al., 2005] O. Ozgener, A. Hepbasli (2005). Experimental performance analysis of a solar assisted
     ground-source heat pump greenhouse heating system, Energy Build.
     ..[C. Montagud et al., 2014] C. Montagud, J.M. Corberan, A. Montero (2014). In situ optimization methodology for
@@ -92,8 +86,6 @@ def GHP_op_cost(mdot, tsup, tret, gV, COP):
     """
     Operation cost of GSHP supplying DHN
 
-    Parameters
-    ----------
     :type mdot : float
     :param mdot: supply mass flow rate to the DHN
     :type tsup : float
@@ -104,8 +96,6 @@ def GHP_op_cost(mdot, tsup, tret, gV, COP):
     :param COP: coefficient of performance of GSHP
     :param gV: globalvar.py
 
-    Returns
-    -------
     :rtype C_GHP_el: float
     :returns C_GHP_el: electricity cost of GSHP operation
 
@@ -132,8 +122,6 @@ def GHP_Op_max(tsup, tground, nProbes, gV):
     """
     For the operation of a Geothermal heat pump (GSHP) at maximum capacity supplying DHN.
 
-    Parameters
-    ----------
     :type tsup : float
     :param tsup: supply temperature to the DHN (hot)
     :type tground : float
@@ -142,8 +130,6 @@ def GHP_Op_max(tsup, tground, nProbes, gV):
     :param nProbes: bumber of probes
     :param gV: globalvar.py
 
-    Returns
-    -------
     :rtype qhotdot: float
     :returns qhotdot: heating energy provided from GHSP
     :rtype COP: float
@@ -161,8 +147,6 @@ def HPLake_op_cost(mdot, tsup, tret, tlake, gV):
     """
     For the operation of lake heat pump supplying DHN
 
-    Parameters
-    ----------
     :type mdot : float
     :param mdot: supply mass flow rate to the DHN
     :type tsup : float
@@ -173,8 +157,6 @@ def HPLake_op_cost(mdot, tsup, tret, tlake, gV):
     :param tlake: lake temperature
     :param gV: globalvar.py
 
-    Returns
-    -------
     :rtype C_HPL_el: float
     :returns C_HPL_el: electricity cost of Lake HP operation
 
@@ -203,8 +185,6 @@ def HPLake_Op(mdot, tsup, tret, tlake, gV):
     """
     For the operation of a Heat pump between a district heating network and a lake
 
-    Parameters
-    ----------
     :type mdot : float
     :param mdot: supply mass flow rate to the DHN
     :type tsup : float
@@ -215,15 +195,11 @@ def HPLake_Op(mdot, tsup, tret, tlake, gV):
     :param tlake: lake temperature
     :param gV: globalvar.py
 
-    Returns
-    -------
     :rtype wdot_el : float
     :returns wdot_el: total electric power requirement for compressor and auxiliary el.
     :rtype qcolddot : float
     :returns qcolddot: cold power requirement
 
-    References
-    ----------
     ..[L. Girardin et al., 2010] L. Girardin, F. Marechal, M. Dubuis, N. Calame-Darbellay, D. Favrat (2010). EnerGis:
     a geographical information based system for the evaluation of integrated energy conversion systems in urban areas,
     Energy.
@@ -258,8 +234,6 @@ def HPSew_op_cost(mdot, tsup, tret, tsupsew, gV):
     """
     Operation cost of sewage water HP supplying DHN
 
-    Parameters
-    ----------
     :type mdot : float
     :param mdot: supply mass flow rate to the DHN
     :type tsup : float
@@ -270,8 +244,6 @@ def HPSew_op_cost(mdot, tsup, tret, tsupsew, gV):
     :param tsupsew: sewage supply temperature
     :param gV: globalvar.py
 
-    Returns
-    -------
     :rtype C_HPSew_el_pure: float
     :returns C_HPSew_el_pure: electricity cost of sewage water HP operation
 
@@ -287,8 +259,6 @@ def HPSew_op_cost(mdot, tsup, tret, tsupsew, gV):
     :rtype wdot: float
     :returns wdot: electricty required for sewage water HP operation
 
-    References
-    ----------
     ..[L. Girardin et al., 2010] L. Girardin, F. Marechal, M. Dubuis, N. Calame-Darbellay, D. Favrat (2010). EnerGis:
     a geographical information based system for the evaluation of integrated energy conversion systems in urban areas,
     Energy.
@@ -320,18 +290,12 @@ def calc_Cinv_GHP(GHP_Size, gV):
     """
     Calculates the annualized investment costs for the geothermal heat pump
 
-    Parameters
-    ----------
     :type GHP_Size : float
     :param GHP_Size: Design electrical size of the heat pump in [Wel]
 
-    Returns
-    -------
     :type InvCa : float
     :returns InvCa: annualized investment costs in [EUROS/a]
 
-    References
-    ----------
     ..[D. Bochatay et al., 2005] D. Bochatay, I. Blanc, O. Jolliet, F. Marechal, T. Manasse-Ratmandresy (2005). Project
     PACOGEN Evaluation economique et environmentale de systemes energetiques a usage residentiel., EPFL.
 
@@ -361,18 +325,12 @@ def calc_Cinv_HP(HP_Size, gV):
     """
     Calculates the annualized investment costs for the heat pump
 
-    Parameters
-    ----------
     :type HP_Size : float
     :param HP_Size: Design thermal size of the heat pump in [W]
 
-    Returns
-    -------
     :rtype InvCa : float
     :returns InvCa: annualized investment costs in [CHF/a]
 
-    References
-    ----------
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
 
@@ -392,13 +350,9 @@ def GHP_InvCost(GHP_Size, gV):
     """
     Calculates the annualized investment costs for the geothermal heat pump
 
-    Parameters
-    ----------
     :type GHP_Size : float
     :param GHP_Size: Design electrical size of the heat pump in [Wel]
 
-    Returns
-    -------
     InvCa : float
         annualized investment costs in EUROS/a
 

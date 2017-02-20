@@ -33,8 +33,6 @@ def cond_boiler_operation(Q_load, Q_design, T_return_to_boiler):
     operational efficiency after:
         http://www.greenshootscontrols.net/?p=153
 
-    Parameters
-    ----------
     :param Q_load: Load of time step
     :type Q_load: float
 
@@ -44,8 +42,6 @@ def cond_boiler_operation(Q_load, Q_design, T_return_to_boiler):
     :type T_return_to_boiler : float
     :param T_return_to_boiler: Return Temperature of the network to the boiler [K]
 
-    Returns
-    -------
     :retype boiler_eff: float
     :returns boiler_eff: efficiency of Boiler (Lower Heating Value), in abs. numbers
 
