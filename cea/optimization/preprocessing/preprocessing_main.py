@@ -11,9 +11,9 @@ import os
 
 import pandas as pd
 
-import cea.optimization.preprocessing.extra_loads.processheat as process_heat
+import cea.optimization.preprocessing.processheat as process_heat
 from cea.optimization.master import summarize_network
-from cea.optimization.preprocessing.extra_loads import electricity
+from cea.optimization.preprocessing import electricity
 from cea.resources import geothermal
 from cea.utilities import  epwreader
 
