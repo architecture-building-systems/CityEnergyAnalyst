@@ -10,8 +10,8 @@ import os
 import time
 from pickle import Pickler, Unpickler
 
-import cea.optimization.conversion_storage.master.crossover as cx
-import cea.optimization.conversion_storage.master.evaluation as evaluation
+import cea.optimization.master.crossover as cx
+import cea.optimization.master.evaluation as evaluation
 from deap import base
 from deap import creator
 from deap import tools

@@ -360,7 +360,7 @@ plot electricity imports and exports
 def Elec_ImportExport(individual, locator):
 
     # Extract Electricity needs
-    buildList = sFn.extractList(locator.pathRaw + "/Total.csv")
+    buildList = sFn.extract_building_names_from_csv(locator.pathRaw + "/Total.csv")
 
     allElec = np.zeros((8760,1))
 
