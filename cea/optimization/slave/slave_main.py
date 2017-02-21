@@ -6,8 +6,10 @@ Mixed-integer algorithm main
 """
 
 import time
-import cea.optimization.conversion_storage.slave.least_cost as least_cost
+
 import cea.optimization.conversion_storage.slave.seasonal_storage.storage_main as storage_main
+
+import cea.optimization.slave.least_cost as least_cost
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

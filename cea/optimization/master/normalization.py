@@ -8,7 +8,7 @@ Normalize results
 from deap import base
 
 import cea.optimization.supportFn as sFn
-from cea.optimization.conversion_storage.master import evaluation as eI
+from cea.optimization.master import evaluation as eI
 
 reload(sFn)
 #reload(rep)

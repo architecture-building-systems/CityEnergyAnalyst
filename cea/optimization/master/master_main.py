@@ -10,16 +10,15 @@ import os
 import time
 from pickle import Pickler, Unpickler
 
+import cea.optimization.conversion_storage.master.crossover as cx
 import cea.optimization.conversion_storage.master.evaluation as evaluation
-import cea.optimization.conversion_storage.master.generation as generation
-import mutations as mut
-import selection as sel
 from deap import base
 from deap import creator
 from deap import tools
 
-import cea.optimization.conversion_storage.master.crossover as cx
-
+import cea.optimization.master.generation as generation
+import mutations as mut
+import selection as sel
 
 __author__ =  "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
