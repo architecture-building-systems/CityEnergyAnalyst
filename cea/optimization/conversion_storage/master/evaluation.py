@@ -11,7 +11,7 @@ import cea.optimization.conversion_storage.master.summarize_network as nM
 import numpy as np
 import pandas as pd
 
-from cea.optimization.conversion_storage import master_to_slave
+from cea.optimization.conversion_storage import slave_data
 import cea.optimization.conversion_storage.master.generation as generation
 
 import cea.optimization.conversion_storage.master.cost_model as eM
@@ -220,7 +220,7 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     :rtype: class
     """
     # initialise class storing dynamic variables transfered from master to slave optimization
-    master_to_slave_vars = master_to_slave.MastertoSlave()
+    master_to_slave_vars = slave_data.SlaveData()
     master_to_slave_vars.configKey = "".join(str(e)[0:4] for e in individual)
     
     individual_barcode = sFn.individual_to_barcode(individual, gv)

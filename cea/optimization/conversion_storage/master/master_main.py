@@ -35,12 +35,12 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
                            network_features, gv, genCP = 0):
     """
     Evolutionary algorithm to optimize the district energy system's design.
-    This algortihm optimizes the size and operation of technologies for a district heating netowrk.
-    electrical netowrk are not considered but their burdens in terms electricity costs, efficiency and emissions
-    is added on top of the optimization
-    The equipment for Cooling networks is not optimized as it is assumed that all customer with cooling needs will be
-    connected to a lake. in case there is not enough cvapacity form the lake a chiller and cooling tower is used to cover
-    the extra needs.
+    This algorithm optimizes the size and operation of technologies for a district heating network.
+    electrical network are not considered but their burdens in terms electricity costs, efficiency and emissions
+    is added on top of the optimization.
+    The equipment for cooling networks is not optimized as it is assumed that all customers with cooling needs will be
+    connected to a lake. in case there is not enough capacity from the lake, a chiller and cooling tower is used to
+    cover the extra needs.
 
     :param locator: locator class
     :param building_names: vector with building names
