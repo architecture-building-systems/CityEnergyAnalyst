@@ -53,7 +53,7 @@ def sensAnalysis(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, g
     toolbox = base.Toolbox()
     
     os.chdir(locator.pathRaw)
-    buildList = sFn.extractList("Total.csv")
+    buildList = sFn.extract_building_names_from_csv("Total.csv")
 
     ParetoResults = np.zeros( len(pop) )
     FactorResults = np.zeros((step + 1, bandwidth.nFactors * 2))

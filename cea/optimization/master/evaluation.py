@@ -8,8 +8,8 @@ from __future__ import division
 
 import os
 
-import cea.optimization.conversion_storage.master.generation as generation
-import cea.optimization.conversion_storage.master.summarize_network as nM
+import cea.optimization.master.generation as generation
+import cea.optimization.master.summarize_network as nM
 import numpy as np
 import pandas as pd
 

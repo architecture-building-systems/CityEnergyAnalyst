@@ -7,7 +7,7 @@ Mixed-integer algorithm main
 
 import time
 
-import cea.optimization.conversion_storage.slave.seasonal_storage.storage_main as storage_main
+import cea.optimization.slave.seasonal_storage.storage_main as storage_main
 
 import cea.optimization.slave.least_cost as least_cost
 
