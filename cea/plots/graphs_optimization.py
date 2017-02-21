@@ -7,14 +7,15 @@ plot results of optimization
 
 from __future__ import division
 
+import os
+
 import matplotlib
 import matplotlib.cm as cmx
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import os
 
-import cea.optimization.conversion_storage.master.normalization as norm
+import cea.optimization.master.normalization as norm
 import cea.optimization.supportFn as sFn
 
 __author__ = "Jimeno A. Fonseca"
@@ -399,7 +400,6 @@ test
 """
 
 def test_graphs_optimization():
-    import cea.inputlocator
     import cea.globalvar
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference

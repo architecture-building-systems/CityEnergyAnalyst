@@ -6,20 +6,20 @@ Evaluation function of an individual
 """
 from __future__ import division
 
-import cea.optimization.conversion_storage.slave.slave_main as sM
+import os
+
+import cea.optimization.conversion_storage.master.generation as generation
 import cea.optimization.conversion_storage.master.summarize_network as nM
 import numpy as np
 import pandas as pd
 
-from cea.optimization.conversion_storage import slave_data
-import cea.optimization.conversion_storage.master.generation as generation
-
-import cea.optimization.conversion_storage.master.cost_model as eM
+import cea.optimization.master.cost_model as eM
 import cea.optimization.preprocessing.cooling_network.cooling_network as coolMain
+import cea.optimization.slave.slave_main as sM
 import cea.optimization.supportFn as sFn
 import cea.technologies.substation as sMain
 import check as cCheck
-import os
+from cea.optimization import slave_data
 
 
 # +++++++++++++++++++++++++++++++++++++
