@@ -23,8 +23,8 @@ RAD_PARMS = {
 }
 # Daysim Sensor parameters
 SEN_PARMS = {
-'X_DIM': 5,
-'Y_DIM': 5,
+'X_DIM': 6,
+'Y_DIM': 6,
 'MIN_Z_DIR': -0.85,
 'MAX_Z_DIR': 0.05,
 }
