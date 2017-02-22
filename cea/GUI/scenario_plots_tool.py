@@ -1,4 +1,4 @@
-import arcpy
+
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Daren Thomas"]
@@ -16,6 +16,7 @@ class ScenarioPlotsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        import arcpy
         scenarios = arcpy.Parameter(
             displayName="Path to the scenarios to plot",
             name="scenarios",
@@ -33,6 +34,7 @@ class ScenarioPlotsTool(object):
         return [scenarios, output_file]
 
     def execute(self, parameters, messages):
+        import arcpy
         scenarios = parameters[0].valueAsText
         scenarios = scenarios.replace("'", "")
         scenarios = scenarios.replace('"', '')
