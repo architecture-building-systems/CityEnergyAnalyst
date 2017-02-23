@@ -9,10 +9,8 @@ import pyliburo.shp2citygml as shp2citygml
 import shapefile
 import cea.globalvar
 import cea.inputlocator
-from OCC.StlAPI import StlAPI_Writer
-import pandas as pd
 
-__author__ = "Paul Neitzel"
+__author__ = "Paul Neitzel, Kian Wee Chen"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Paul Neitzel", "Jimeno A. Fonseca"]
 __license__ = "MIT"
@@ -22,8 +20,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def building2d23d(shapefilepath, out_path, height_col, elev_col, name_col,nfloor_col):
-    citygml_writer = pycitygml.Writer()
+def building2d23d(citygml_writer, shapefilepath, out_path, height_col, elev_col, name_col,nfloor_col):
     sf = shapefile.Reader(shapefilepath)
     shapeRecs = sf.shapeRecords()
     field_name_list = shp2citygml.get_field_name_list(sf)
@@ -71,7 +68,10 @@ def building2d23d(shapefilepath, out_path, height_col, elev_col, name_col,nfloor
                 citygml_writer.add_building("lod1", name,geometry_list)
         rcnt+=1
         
-    citygml_writer.write(os.path.join(out_path,'new.gml'))
+def terrain2d23d(citygml_writer, terrain_shapefile, elev_attrib):
+    tin_occface_list = shp2citygml.terrain2d23d_tin(terrain_shapefile, elev_attrib)
+    geometry_list = gml3dmodel.write_gml_triangle(tin_occface_list)
+    citygml_writer.add_tin_relief("lod1", "terrain1", geometry_list)
     
 if __name__ == '__main__':
     gv = cea.globalvar.GlobalVariables()
@@ -79,9 +79,11 @@ if __name__ == '__main__':
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     output_folder = locator.get_3D_geometry_folder()
     input_shapefile= locator.get_building_geometry_with_elevation()
-    building_solids = building2d23d(input_shapefile, output_folder, height_col='height_ag', name_col='Name', elev_col='DN', nfloor_col = "floors_ag")
-
-
+    terrain_shapefile = locator.get_terrain_shpfile()
+    citygml_writer = pycitygml.Writer()
+    building2d23d(citygml_writer, input_shapefile, output_folder, height_col='height_ag', name_col='Name', elev_col='DN', nfloor_col = "floors_ag")
+    terrain2d23d(citygml_writer, terrain_shapefile, "DN")
+    citygml_writer.write(os.path.join(output_folder,'new.gml'))
 
 
 

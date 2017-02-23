@@ -233,6 +233,10 @@ class InputLocator(object):
     def get_terrain(self):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain.tif')
+    
+    def get_terrain_shpfile(self):
+        """scenario/inputs/topography/terrain/terrain.shp"""
+        return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain', 'terrain.shp')
 
     # OUTPUTS
 

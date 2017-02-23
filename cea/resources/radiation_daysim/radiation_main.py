@@ -35,6 +35,17 @@ def create_radiance_srf(occface, srfname, srfmat, rad):
 def geometry2radiance(rad, ageometry_table, ainput_path, citygml_reader):
     # add all geometries which are in "ageometry_table" to radiance
     bldg_dict_list = []
+    
+    '''
+    gmlterrains = citygml_reader.get_relief_feature()
+    srfmat = ageometry_table["wall_name"]["Terrain"]
+    tcnt = 0
+    for gmlterrain in gmlterrains:
+        pytri_list = citygml_reader.get_pytriangle_list(gmlterrain)
+        for pytri in pytri_list:
+            py2radiance.RadSurface("terrain_srf"+ str(tcnt), pytri, srfmat, rad)
+            tcnt+=1
+    '''        
     gmlbldgs = citygml_reader.get_buildings()
     bcnt = 0
     for gmlbldg in gmlbldgs:
@@ -158,7 +169,7 @@ def add_rad_mat(aresults_path, daysim_dir, bldg_name, ageometry_table):
         write_file.close()
     os.rename(file_name_txt, file_name_rad.replace(".txt", ".rad"))
     
-def execute_daysim_all(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_params, ageometry_table):
+def execute_daysim(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_params, ageometry_table):
     sensor_pt_list = []
     sensor_dir_list = []
     daysim_dir = os.path.join(aresults_path, "daysim_project")
@@ -192,13 +203,8 @@ def execute_daysim_all(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad
     rad.execute_gen_dc("w/m2")
     rad.execute_ds_illum()
     solar_res = rad.eval_ill_per_sensor()
-    
-    
-    
-    res_columns = ['building_name', 'surface_name']
-    for hcnt in range(8760):
-        res_columns.append(str(hcnt+1))
-        
+    sum_res_list = []
+    occface_list = []
     scnt = 0
     for srf_dict_list in all_sensor_srf_dict_2dlist:
         srf_properties = []
@@ -209,8 +215,9 @@ def execute_daysim_all(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad
             res_columns.append("building_surface_name")
         for srf_dict in srf_dict_list:
             occface = srf_dict["occface"]
+            #occface_list.append(occface)
             bldg_name = srf_dict["bldg_name"]
-            srf_name = scnt
+            srf_name = "srf" + str(scnt)
             mid_pt = srf_dict["sensor_pt"]
             mid_ptx = mid_pt[0]
             mid_pty = mid_pt[1]
@@ -225,7 +232,9 @@ def execute_daysim_all(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad
             
             #create csv for 8760 hours of results
             srf_res = solar_res[scnt]
-            asrf_solar_result = [bldg_name, srf_name]
+            #sum_res = sum(srf_res)
+            #sum_res_list.append(sum_res)
+            asrf_solar_result = [srf_name]
             for res in srf_res:
                 asrf_solar_result.append(res)
                 
@@ -237,10 +246,11 @@ def execute_daysim_all(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad
                                       'surface_type'])
         
         srf_properties.to_csv(os.path.join(aresults_path, bldg_name + '_srf_properties.csv'), index=None)
-        
-        srf_solar_results = pd.DataFrame(zip(*srf_solar_results), columns = res_columns)
+        zipped_solar_res = zip(*srf_solar_results)
+        srf_solar_results = pd.DataFrame(zipped_solar_res[1:], columns = zipped_solar_res[0])
         srf_solar_results.to_csv(os.path.join(aresults_path, bldg_name + '_srf_solar_results.csv'), index=None)
         
+    #construct.visualise_falsecolour_topo(sum_res_list, occface_list, backend = "wx")
     print 'execute daysim', 'done'
     
     
@@ -257,7 +267,7 @@ def calc_radiation(geometry_table_name, weatherfile_path, locator):
     bldg_dict_list = geometry2radiance(rad, bldg_prop_list, input_path, citygml_reader)
     rad.create_rad_input_file()
     time1 = time.time()
-    execute_daysim_all(bldg_dict_list, results_path, rad, weatherfile_path, settings.RAD_PARMS, bldg_prop_list)
+    execute_daysim(bldg_dict_list, results_path, rad, weatherfile_path, settings.RAD_PARMS, bldg_prop_list)
     
     # execute daysim
     time2 = time.time()
