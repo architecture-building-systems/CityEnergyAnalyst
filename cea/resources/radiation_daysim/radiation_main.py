@@ -36,7 +36,7 @@ def geometry2radiance(rad, ageometry_table, ainput_path, citygml_reader):
     # add all geometries which are in "ageometry_table" to radiance
     bldg_dict_list = []
     
-    '''
+
     gmlterrains = citygml_reader.get_relief_feature()
     srfmat = ageometry_table["wall_name"]["Terrain"]
     tcnt = 0
@@ -45,7 +45,7 @@ def geometry2radiance(rad, ageometry_table, ainput_path, citygml_reader):
         for pytri in pytri_list:
             py2radiance.RadSurface("terrain_srf"+ str(tcnt), pytri, srfmat, rad)
             tcnt+=1
-    '''        
+   
     gmlbldgs = citygml_reader.get_buildings()
     bcnt = 0
     for gmlbldg in gmlbldgs:
