@@ -658,6 +658,19 @@ def calc_rc_model_temperatures_cooling(phi_hc, bpr, tsd, t):
 
 
 def has_heating_demand(bpr, tsd, t):
+    """
+
+
+    :param bpr:
+    :param tsd:
+    :param t:
+    :return:
+    """
+
+    temp_tolerance = 0.001  # temperature tolerance of temperature sensor (°C),
+    #  i.e. heating is turned on if temperature is temp_tolerance below the set point
+    # tolerance is consistent with maximum temperature difference that can be reported with the current precision
+    # of the demand *.csv file
 
     ta_hs_set = tsd['ta_hs_set'][t]
     if np.isnan(ta_hs_set):
@@ -668,10 +681,23 @@ def has_heating_demand(bpr, tsd, t):
     rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
 
     # True, if theta_a < ta_hs_set, False, if theta_a >= ta_hs_set
-    return rc_model_temp['theta_a'] < ta_hs_set
+    return rc_model_temp['theta_a'] < ta_hs_set - temp_tolerance
 
 
 def has_cooling_demand(bpr, tsd, t):
+    """
+
+    :param bpr:
+    :param tsd:
+    :param t:
+    :return:
+    """
+
+    temp_tolerance = 0.001  # temperature tolerance of temperature sensor (°C),
+    #  i.e. heating is turned on if temperature is temp_tolerance below the set point
+    # tolerance is consistent with maximum temperature difference that can be reported with the current precision
+    # of the demand *.csv file
+
     ta_cs_set = tsd['ta_cs_set'][t]
     if np.isnan(ta_cs_set):
         # no set point = system off
@@ -681,7 +707,7 @@ def has_cooling_demand(bpr, tsd, t):
     rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
 
     # True, if temperature w/o conditioning is higher than cooling set point temperature, else False
-    return rc_model_temp['theta_a'] > ta_cs_set
+    return rc_model_temp['theta_a'] > ta_cs_set + temp_tolerance
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
