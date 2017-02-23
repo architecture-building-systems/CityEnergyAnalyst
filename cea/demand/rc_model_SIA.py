@@ -631,6 +631,29 @@ def _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref, 
 
 
 def calc_rc_model_temperatures_heating(phi_hc, bpr, tsd, t):
+    """
+    This function executes the equations of SIA 2044 R-C-Building-Model to calculate the node temperatures for a given
+    heating energy demand
+
+    :py:func: `cea.demand.rc_model_SIA.lookup_f_hc_cv_heating`
+    :py:func: `cea.demand.rc_model_SIA.calc_phi_hc_cv`
+    :py:func: `cea.demand.rc_model_SIA.calc_phi_hc_r`
+    :py:func: `cea.demand.rc_model_SIA.calc_rc_model_temperatures`
+
+    Author: Gabriel Happle
+    Date: FEB 2017
+
+    :param phi_hc: Heating or cooling energy demand of building
+    :type phi_hc: float
+    :param bpr: Building Properties
+    :type bpr: BuildingPropertiesRow
+    :param tsd: Time series data of building
+    :type tsd: dict
+    :param t: time step / hour of the year
+    :type t: int
+    :return: R-C-Building-Model node temperatures
+    :rtype: dict
+    """
 
     # lookup convection factor for heating/cooling system
     f_hc_cv = lookup_f_hc_cv_heating(bpr)
@@ -639,6 +662,7 @@ def calc_rc_model_temperatures_heating(phi_hc, bpr, tsd, t):
     phi_hc_cv = calc_phi_hc_cv(phi_hc, f_hc_cv)
     phi_hc_r = calc_phi_hc_r(phi_hc, f_hc_cv)
 
+    # calculating R-C-Model node temperatures
     rc_model_temp = calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t)
 
     return rc_model_temp
@@ -647,7 +671,7 @@ def calc_rc_model_temperatures_heating(phi_hc, bpr, tsd, t):
 def calc_rc_model_temperatures_cooling(phi_hc, bpr, tsd, t):
     """
     This function executes the equations of SIA 2044 R-C-Building-Model to calculate the node temperatures for a given
-     heating or cooling energy demand
+    cooling energy demand
 
     :py:func: `cea.demand.rc_model_SIA.lookup_f_hc_cv_cooling`
     :py:func: `cea.demand.rc_model_SIA.calc_phi_hc_cv`
@@ -676,6 +700,7 @@ def calc_rc_model_temperatures_cooling(phi_hc, bpr, tsd, t):
     phi_hc_cv = calc_phi_hc_cv(phi_hc, f_hc_cv)
     phi_hc_r = calc_phi_hc_r(phi_hc, f_hc_cv)
 
+    # calculating R-C-Model node temperatures
     rc_model_temp = calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t)
 
     return rc_model_temp
@@ -683,7 +708,7 @@ def calc_rc_model_temperatures_cooling(phi_hc, bpr, tsd, t):
 
 def has_heating_demand(bpr, tsd, t):
     """
-
+    This function checks 
 
     :param bpr:
     :param tsd:
