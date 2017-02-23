@@ -131,7 +131,8 @@ def substation_HEX_sizing(locator, gv, building):
         cc_0 = cc[index]
         A_hex_hs, UA_heating_hs = calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0, gv)
     else:
-        A_hex_hs, UA_heating_hs = 0
+        A_hex_hs = 0
+        UA_heating_hs = 0
 
     # calculate HEX area and UA for DHW
     Qwwf = building.Qwwf_kWh.values * 1000  # in W
@@ -147,7 +148,8 @@ def substation_HEX_sizing(locator, gv, building):
         cc_0 = cc[index]
         A_hex_ww, UA_heating_ww = calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0, gv)
     else:
-        A_hex_ww, UA_heating_ww = 0
+        A_hex_ww = 0
+        UA_heating_ww = 0
 
 
     # calculate HEX area and UA for cooling costumers incl refrigeration and processes
@@ -165,7 +167,8 @@ def substation_HEX_sizing(locator, gv, building):
         ch_0 = ch[index]
         A_hex_cs, UA_cooling_cs = calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0, gv)
     else:
-        A_hex_cs, UA_cooling_cs = 0
+        A_hex_cs = 0
+        UA_cooling_cs = 0
 
     return [A_hex_hs, A_hex_ww, A_hex_cs, UA_heating_hs, UA_heating_ww, UA_cooling_cs]
 
