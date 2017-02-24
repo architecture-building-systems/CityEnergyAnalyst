@@ -29,8 +29,10 @@ __status__ = "Production"
 
 def benchmark(locator_list, output_file):
     """
+
     Print PDF graphs comparing the selected scenarios to the 2000 Watt society benchmark for construction, operation
-    and mobility.
+    and mobility. The calculation is based on the database read by and described in calc_benchmark_today and
+    calc_benchmark_targets.
 
     The following file is created as a side effect by this script in the specified file path:
     - ouput_file: .pdf
@@ -41,14 +43,6 @@ def benchmark(locator_list, output_file):
     :type locator: list
     :param output_file: the filename (pdf) to save the results as.
     :type output_file: str
-
-    ..[SIA 2040, 2011]: Swiss Society of Engineers and Architects (SIA), "SIA Efficiency Path 2040" (2011)
-    ..[Kellenberger, D. et al., 2010]: Kellenberger, D. et al., 2010. "Arealentwicklung fur die 2000-Watt Gesellschaft:
-    Leitfaden und Fallbeispiele".
-    ..[SIA Effizienzpfad, 2011] Swiss Society of Engineers and Architects (SIA), "SIA Effizienzpfad: Bestimmung der Ziel- und
-    Richtwerte mit dem Top-Down Approach".
-    ..[SIA 2024, 2015]: Swiss Society of Engineers and Architects (SIA), Raumnutzungsdaten fur die Energie- und
-    Gebaeudetechnik" (2015)
 
     """
 
@@ -149,7 +143,7 @@ def calc_benchmark_targets(locator):
     The current values for the Swiss case and 2000 W target values for each type of occupancy were taken from the
     literature, when available:
         -   [SIA 2040, 2011]: 'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
-        -   [Kellenberger, D. et al., 2010]: 'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
+        -   [BFE, 2012]: 'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
 
     For the following occupancy types, the target values were calculated based on the approach in [SIA Effizienzpfad,
     2011] for the present-day values assumed in calc_benchmark_today:
@@ -160,6 +154,15 @@ def calc_benchmark_targets(locator):
 
     :returns target: dict containing pen_MJm2 and ghg_kgm2 target values
     :rtype target: dict
+
+
+    ..[SIA 2040, 2011]: Swiss Society of Engineers and Architects (SIA). 2011. "SIA Efficiency Path 2040."
+    ..[BFE, 2012]: Bundesamt fur Energie (BFE). 2012. "Arealentwicklung fur die 2000-Watt Gesellschaft: Beurteilungsmethode in
+    Anlehnung an den SIA-Effizienzpfad Energie."
+    ..[SIA Effizienzpfad, 2011] Swiss Society of Engineers and Architects (SIA). 2011. "SIA Effizienzpfad: Bestimmung
+    der Ziel- und Richtwerte mit dem Top-Down Approach."
+    ..[SIA 2024, 2015]: Swiss Society of Engineers and Architects (SIA). 2015. "Merkblatt 2024: Raumnutzungsdaten fur
+    die Energie- und Gebaeudetechnik."
 
     '''
 
@@ -206,7 +209,7 @@ def calc_benchmark_today(locator):
 
     The current values for the Swiss case for each type of occupancy were taken from the literature, when available:
         -   [SIA 2040, 2011]: 'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
-        -   [Kellenberger, D. et al., 2010]: 'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
+        -   [BFE, 2012]: 'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
 
     For the following occupancy types, the values for construction and operation were calculated based on the approach
     in [SIA Effizienzpfad, 2011]: 'INDUSTRY' and 'HOSPITAL'.
@@ -233,6 +236,14 @@ def calc_benchmark_today(locator):
 
     :returns target: dict containing pen_MJm2 and ghg_kgm2 target values
     :rtype target: dict
+
+    ..[SIA 2040, 2011]: Swiss Society of Engineers and Architects (SIA). 2011. "SIA Efficiency Path 2040."
+    ..[BFE, 2012]: Bundesamt fur Energie (BFE). 2012. "Arealentwicklung fur die 2000-Watt Gesellschaft: Beurteilungsmethode in
+    Anlehnung an den SIA-Effizienzpfad Energie."
+    ..[SIA Effizienzpfad, 2011] Swiss Society of Engineers and Architects (SIA). 2011. "SIA Effizienzpfad: Bestimmung
+    der Ziel- und Richtwerte mit dem Top-Down Approach."
+    ..[SIA 2024, 2015]: Swiss Society of Engineers and Architects (SIA). 2015. "Merkblatt 2024: Raumnutzungsdaten fur
+    die Energie- und Gebaeudetechnik."
 
     '''
 
