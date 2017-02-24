@@ -9,7 +9,7 @@ from cea.globalvar import GlobalVariables
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
 
-REFERENCE_CASE = r'C:\reference-case-open\baseline'
+REFERENCE_CASE = r'C:\cea-reference-case\reference-case-open\baseline'
 
 
 class TestCalcThermalLoads(unittest.TestCase):
@@ -72,14 +72,15 @@ class TestCalcThermalLoads(unittest.TestCase):
         """Test some other buildings just to make sure we have the proper data"""
         # randomly selected except for B302006716, which has `Af == 0`
         buildings = {'B01': (33642.66900, 148713.29100),
-                     'B03': (33654.23900, 148763.63700),
+                     'B03': (33654.23900, 148763.63000),
                      'B02': (34078.58200, 148858.43400),
                      'B05': (34686.73200, 149072.58000),
-                     'B04': (34138.18300, 148847.07900),
+                     'B04': (34138.18300, 148847.07800),
                      'B07': (33536.96800, 148736.44200),
                      'B06': (0.00000, 0.00000),
                      'B09': (34928.68400, 149081.76100),
-                     'B08': (36940.84100, 149184.58100), }
+                     'B08': (36940.84100, 149184.58100),
+                     }
         if self.gv.multiprocessing:
             import multiprocessing as mp
             pool = mp.Pool()
