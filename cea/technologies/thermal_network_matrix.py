@@ -725,8 +725,8 @@ def calc_supply_temperatures(gv, T_ground, edge_node_df, mass_flow_df, K, t_targ
 
     """
     Z = np.asarray(edge_node_df)   # (nxe) edge-node matrix
-    Z_pipe_out = Z.clip(min=0)     # pipe outlet matrix
-    Z_pipe_in = Z.clip(max=0)      # pipe inlet matrix
+    Z_pipe_out = Z.clip(a_min=0)     # pipe outlet matrix
+    Z_pipe_in = Z.clip(a_max=0)      # pipe inlet matrix
 
     M_d = np.zeros((Z.shape[1], Z.shape[1]))   # (exe) pipe mass flow rate matrix
     np.fill_diagonal(M_d, mass_flow_df)
@@ -868,8 +868,8 @@ def calc_return_temperatures(gv, T_ground, edge_node_df, mass_flow_df, mass_flow
 
     """
     Z = np.asarray(edge_node_df) * (-1)  # (n x e) edge-node matrix
-    Z_pipe_out = Z.clip(min=0)     # pipe outlet matrix
-    Z_pipe_in = Z.clip(max=0)      # pipe inlet matrix
+    Z_pipe_out = Z.clip(a_min=0)     # pipe outlet matrix
+    Z_pipe_in = Z.clip(a_max=0)      # pipe inlet matrix
 
     M_sub = np.zeros((Z.shape[0], Z.shape[0]))    # (nxn) substation flow rate matrix
     np.fill_diagonal(M_sub, mass_flow_substation_df)
