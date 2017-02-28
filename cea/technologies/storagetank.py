@@ -25,27 +25,20 @@ def calc_Qww_ls_st(ta, te, Tww_st, V, Qww, Qww_ls_r, Qww_ls_nr, gv):
     :param Tww_st: tank temperature in [C]
     :param Tww_setpoint: DHW temperature set point in [C]
     :param ta: room temperature in [C]
-    :param Bf: the coefficient of reduction in transmittance for surfaces in contact with the ground according to
-    values of SIA 380/1
     :param te: ambient temperature in [C]
     :param V: DHW tank size in [m3]
     :param Qww: DHW demand in [W]
     :param Qww_ls_r: recoverable loss in distribution in [W]
     :param Qww_ls_nr: non-recoverable loss in distribution in [W]
-    :param Utank: dhw tank insulation heat transfer coefficient in [W/m2-K], value taken from SIA 385. global variable.
-    :param AR: tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), value taken from commercial tank geometry (jenni.ch).
     :param gv: globalvar.py
 
     :type Tww_st: float
     :type Tww_setpoint: float
     :type ta: float
-    :type Bf: float
     :type te: float
     :type V: float
     :type Qww: float
     :type Qww_ls_nr: float
-    :type Utank: float
-    :type AR: float
 
 
     :return ql: storage sensible heat loss in [W].
@@ -57,15 +50,15 @@ def calc_Qww_ls_st(ta, te, Tww_st, V, Qww, Qww_ls_r, Qww_ls_nr, gv):
     """
     tamb = ta - gv.Bf * (ta - te)         # Calculate tamb in basement according to EN
 
-    h = (4 * V * gv.AR ** 2 / math.pi) ** (1.0 / 3.0)  # tank height in [m], derived from tank Aspect Ratio(AR)
-    r = (V / (math.pi * h)) ** (1.0 / 2.0)  # tank radius in [m], assuming tank shape is cylinder
-    Atank = 2 * math.pi * r ** 2 + 2 * math.pi * r * h  # tank surface area in [m2].
-    ql = gv.Utank * Atank * (Tww_st - tamb)  # tank heat loss to the room in [W]
+    h = ( 4 * V * gv.AR ** 2 / math.pi ) ** ( 1.0 / 3.0 )     # tank height in [m], derived from tank Aspect Ratio(AR)
+    r = ( V / ( math.pi * h ) ) ** ( 1.0 / 2.0 )         # tank radius in [m], assuming tank shape is cylinder
+    Atank = 2 * math.pi * r ** 2 + 2 * math.pi * r * h      # tank surface area in [m2].
+    ql = gv.Udhwtank * Atank * ( Tww_st - tamb )       # tank heat loss to the room in [W]
     qd = Qww + Qww_ls_r + Qww_ls_nr
     if Qww <= 0:
         qc = 0
     else:
-        qc = qd + ql + gv.Pwater * V * gv.Cpw * (gv.Tww_setpoint - Tww_st) / 3.6
+        qc = qd + ql + gv.Pwater * V * gv.Cpw * ( gv.Tww_setpoint - Tww_st ) / 3.6
     return ql, qd, qc
 
 
