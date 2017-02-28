@@ -18,8 +18,6 @@ def calc_pareto_Qhp(locator, total_demand, gv):
     """
     This function calculates the contribution to the pareto optimal results of process heating,
 
-    Parameters
-    ----------
     :param locator: locator class
     :param total_demand: dataframe with building demand
     :param gv: global variables

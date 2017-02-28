@@ -1,8 +1,5 @@
 """
-=========================================
 Hotwater load (it also calculates fresh water needs)
-=========================================
-
 """
 
 from __future__ import division
@@ -21,48 +18,45 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-
-"""
-=========================================
-water demand calculation
-=========================================
-"""
-
 def calc_mww(schedule, Vww_lpd, Occ_m2p, Af, Pwater):
     """
     Algorithm to calculate the hourly mass flow rate of domestic hot water
 
-    Parameters
-    ----------
-    schedule: hourly DHW demand profile [1/h]
-    Vww_lpd: DHW demand per person per day in [L/person/day]
-    Occ_m2p: Occupant density in [m2/person]
-    Af: Total floor area per building [m2]
-    Pwater: water density [kg/m3]
-
-    Returns
-    -------
-
+    :param schedule: hourly DHW demand profile [1/h]
+    :param Vww_lpd: DHW demand per person per day in [L/person/day]
+    :param Occ_m2p: Occupant density in [m2/person]
+    :param Af: Total floor area per building [m2]
+    :param Pwater: water density [kg/m3]
     """
-    vww = schedule* Vww_lpd * (Occ_m2p ** -1) * Af / 1000 # m3/h
-    mww = vww * Pwater / 3600  # in kg/s
+
+    if Occ_m2p > 0:
+
+        vww = schedule* Vww_lpd * (Occ_m2p ** -1) * Af / 1000 # m3/h
+        mww = vww * Pwater / 3600  # in kg/s
+
+    else:
+
+        vww = 0
+        mww = 0
 
     return mww, vww
 
 
 def calc_mw(schedule, Vw_lpd, Occ_m2p, Af, Pwater):
-    vw = schedule * Vw_lpd * (Occ_m2p ** -1) * Af / 1000 # m3/h
-    mw = vw * Pwater / 3600  # in kg/s
+    if Occ_m2p > 0:
+
+        vw = schedule * Vw_lpd * (Occ_m2p ** -1) * Af / 1000 # m3/h
+        mw = vw * Pwater / 3600  # in kg/s
+
+    else:
+
+        vw = 0
+        mw = 0
 
     return mw, vw
 
 
-"""
-=========================================
-final hot water demand calculation
-=========================================
-"""
-
+# final hot water demand calculation
 
 def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, Vww_lpd, Vw_lpd, Occ_m2p,
               list_uses, schedules, building_uses):
@@ -107,25 +101,15 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
 
     return mww, Qww, Qww_st_ls, Qwwf, Qwwf_0, Tww_st, Vww, Vw, mcpwwf
 
-"""
-=========================================
-end-use hot water demand calculation
-=========================================
-"""
+# end-use hot water demand calculation
 
 def calc_Qww_schedule(list_uses, schedules, building_uses):
     """
     Algoithm to calculate the schedule of Qww use
 
-    Parameters
-    ----------
-    list_uses
-    schedules
-    building_uses
-
-    Returns
-    -------
-
+    :param list_uses:
+    :param schedules:
+    :param building_uses:
     """
 
     def calc_average(last, current, share_of_use):
@@ -145,11 +129,7 @@ def calc_Qww(mww, Tww_sup_0, Tww_re, Cpw):
     Qww = mcpww * (Tww_sup_0 - Tww_re)  # heating for dhw in W
     return Qww
 
-"""
-=========================================
-losess hot water demand calculation
-=========================================
-"""
+# losess hot water demand calculation
 
 def calc_Qww_dis_ls_r(Tair, Qww, lsww_dis, lcww_dis, Y, Qww_0, V, Flowtap, twws, Cpw, Pwater, gv):
     if Qww > 0:

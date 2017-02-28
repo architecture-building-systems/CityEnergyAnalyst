@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-==================================================
 condensing boilers
-==================================================
-
 """
 
 
@@ -20,9 +17,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-#============================
 #operation costs
-#============================
 
 def cond_boiler_operation(Q_load, Q_design, T_return_to_boiler):
 
@@ -86,8 +81,6 @@ def cond_boiler_op_cost(Q_therm, Q_design, T_return_to_boiler, BoilerFuelType, E
     """
     Calculates the operation cost of a Condensing Boiler (only operation, not annualized cost)
 
-    Parameters
-    ----------
     :type Q_therm : float
     :param Q_therm: Load of time step
 
@@ -99,8 +92,6 @@ def cond_boiler_op_cost(Q_therm, Q_design, T_return_to_boiler, BoilerFuelType, E
 
     :param gV: globalvar.py
 
-    Returns
-    -------
     :rtype C_boil_therm : float
     :returns C_boil_therm: Total generation cost for required load (per hour) in CHF
 
@@ -114,7 +105,7 @@ def cond_boiler_op_cost(Q_therm, Q_design, T_return_to_boiler, BoilerFuelType, E
     :returns E_aux_Boiler: auxiliary electricity of boiler operation
     """
 
-    """ Iterating for efficiency as Q_thermal_required is given as input """
+    # Iterating for efficiency as Q_thermal_required is given as input
 
     #if float(Q_therm) / float(Q_design) < gV.Boiler_min:
     #    print "error expected in Boiler operation, below min part load!"
@@ -156,8 +147,7 @@ def calc_Cop_boiler(Q_load, Q_design, T_return_to_boiler):
     operational efficiency after:
         http://www.greenshootscontrols.net/?p=153
 
-    Parameters
-    ----------
+
     :param Q_load: Load of time step
     :type Q_load: float
 
@@ -167,11 +157,9 @@ def calc_Cop_boiler(Q_load, Q_design, T_return_to_boiler):
     :type T_return_to_boiler : float
     :param T_return_to_boiler: Return Temperature of the network to the boiler [K]
 
-    Returns
-    -------
+
     :retype boiler_eff: float
     :returns boiler_eff: efficiency of Boiler (Lower Heating Value), in abs. numbers
-
     """
 
     #Implement Curves provided by http://www.greenshootscontrols.net/?p=153
@@ -203,20 +191,14 @@ def calc_Cop_boiler(Q_load, Q_design, T_return_to_boiler):
     return boiler_eff
 
 
-"""
-============================
-investment and maintenance costs
-============================
 
-"""
+# investment and maintenance costs
 
 def calc_Cinv_boiler(Q_design, Q_annual, gV):
     """
     Calculates the annual cost of a boiler (based on A+W cost of oil boilers) [CHF / a]
     and Faz. 2012 data
 
-    Parameters
-    ----------
     :type Q_design : float
     :param Q_design: Design Load of Boiler in [W]
 
@@ -225,12 +207,8 @@ def calc_Cinv_boiler(Q_design, Q_annual, gV):
 
     :param gV: globalvar.py
 
-
-    Returns
-    -------
     :rtype InvCa : float
     :returns InvCa: Annualized investment costs in CHF/a including Maintenance Cost
-
     """
     # TODO[SH]: check source
     if Q_design >0:

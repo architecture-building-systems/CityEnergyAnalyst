@@ -1,8 +1,5 @@
 """
-==================================================
 heatpumps
-==================================================
-
 """
 
 
@@ -20,12 +17,9 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-"""
-============================
-operation costs
-============================
-
-"""
+#============================
+#operation costs
+#============================
 
 def calc_Cop_GHP(mdot, tsup, tret, tground, gV):
     """
@@ -54,7 +48,6 @@ def calc_Cop_GHP(mdot, tsup, tret, tground, gV):
     ground-source heat pump greenhouse heating system, Energy Build.
     ..[C. Montagud et al., 2014] C. Montagud, J.M. Corberan, A. Montero (2014). In situ optimization methodology for
     the water circulation pump frequency of ground source heat pump systems. Energy and Buildings
-
     """
     tsup2 = tsup      # tsup2 = tsup, if all load can be provided by the HP
 
@@ -206,7 +199,6 @@ def HPLake_Op(mdot, tsup, tret, tlake, gV):
 
     ..[C. Montagud et al., 2014] C. Montagud, J.M. Corberan, A. Montero (2014). In situ optimization methodology for
     the water circulation pump frequency of ground source heat pump systems. Energy and Buildings
-
     """
 
     # calculate condenser temperature
@@ -279,12 +271,7 @@ def HPSew_op_cost(mdot, tsup, tret, tsupsew, gV):
 
 
 
-"""
-============================
-investment and maintenance costs
-============================
-
-"""
+# investment and maintenance costs
 
 def calc_Cinv_GHP(GHP_Size, gV):
     """
@@ -298,7 +285,6 @@ def calc_Cinv_GHP(GHP_Size, gV):
 
     ..[D. Bochatay et al., 2005] D. Bochatay, I. Blanc, O. Jolliet, F. Marechal, T. Manasse-Ratmandresy (2005). Project
     PACOGEN Evaluation economique et environmentale de systemes energetiques a usage residentiel., EPFL.
-
     """
     nProbe = floor(GHP_Size / gV.GHP_WmaxSize)
     roundProbe = GHP_Size / gV.GHP_WmaxSize - nProbe
@@ -333,7 +319,6 @@ def calc_Cinv_HP(HP_Size, gV):
 
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
-
     """
     if HP_Size > 0:
         InvC = (-493.53 * log(HP_Size * 1E-3) + 5484) * (HP_Size * 1E-3)
@@ -355,7 +340,6 @@ def GHP_InvCost(GHP_Size, gV):
 
     InvCa : float
         annualized investment costs in EUROS/a
-
     """
     InvC_HP = 5247.5 * (GHP_Size * 1E-3) ** 0.49
     InvC_BH = 7100 * (GHP_Size * 1E-3) ** 0.74

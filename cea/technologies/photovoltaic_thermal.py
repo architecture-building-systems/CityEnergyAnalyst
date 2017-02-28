@@ -1,8 +1,5 @@
 """
-==================================================
 Photovoltaic thermal panels
-==================================================
-
 """
 
 
@@ -345,12 +342,7 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
               PV_generation]
     return result
 
-"""
-============================
-investment and maintenance costs
-============================
-
-"""
+# investment and maintenance costs
 
 def calc_Cinv_PVT(P_peak):
     """
@@ -361,13 +353,6 @@ def calc_Cinv_PVT(P_peak):
     # 2sol
 
     return InvCa
-
-"""
-============================
-test
-============================
-
-"""
 
 def test_PVT():
     import cea.inputlocator

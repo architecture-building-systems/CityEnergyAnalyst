@@ -38,3 +38,4 @@ def calc_ground_temperature(T_ambient, gv):
            for i in range(8760)]
 
     return Tg
+

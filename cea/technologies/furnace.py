@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-==================================================
 furnaces
-==================================================
-
 """
 from __future__ import division
 
@@ -17,13 +14,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-"""
-============================
-performance model
-============================
-
-"""
-
+# performance model
 
 def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
@@ -50,7 +41,6 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
     up to 6MW_therm_out Capacity proven!
     = 8 MW th (burner)
 
-
     :rtype eta_therm : float
     :returns eta_therm: thermal Efficiency of Furnace (LHV), in abs. numbers
 
@@ -63,7 +53,7 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
     """
 
     phi = float(Q_load) / float(Q_design)
-
+    
     # calculate plant thermal efficiency
     if phi > gv.Furn_min_Load:
 
@@ -82,7 +72,7 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
         #print "Furnace Boiler below minimum Power! 1"
         #raise ModelError
 
-    # calculate plant electric efficiency
+    # calculate plant electrical efficiency
     if phi < gv.Furn_min_electric:
         eta_el = 0
         #print "Furnace Boiler below minimum Power! 2"
@@ -96,11 +86,9 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
 
     # Return Temperature Dependency
-
     x = [0,15.5, 21, 26.7, 32.2, 37.7, 43.3, 49, 54.4, 60, 65.6, 71.1, 100] # Return Temperature Dependency
     y = [96.8,96.8, 96.2, 95.5, 94.7, 93.2, 91.2, 88.9, 87.3, 86.3, 86.0, 85.9, 85.8] # Return Temperature Dependency
     eff_of_T_return = interpolate.interp1d(x, y, kind='linear')
-
 
     eff_therm_tot = eff_of_T_return(T_return_to_boiler - 273) * eta_therm / eff_of_T_return(60)
 
@@ -116,13 +104,7 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
     return eff_therm_tot, eta_el, Q_aux
 
 
-"""
-============================
-operation costs
-============================
-
-"""
-
+# operation costs
 
 def furnace_op_cost(Q_therm, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
     """
@@ -141,7 +123,6 @@ def furnace_op_cost(Q_therm, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
     :param MOIST_TYPE: moisture type of the fuel, set in MasterToSlaveVariables ('wet' or 'dry')
 
     :param gV: globalvar.py
-
 
     :rtype C_furn : float
     :returns C_furn: Total generation cost for required load (per hour) in [CHF], including profits from electricity sold
@@ -206,18 +187,12 @@ def furnace_op_cost(Q_therm, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
 
 
-"""
-============================
-investment and maintenance costs
-============================
-
-"""
+# investment and maintenance costs
 
 def calc_Cinv_furnace(Q_design, Q_annual, gv):
     """
     Calculates the annualized investment cost of a Furnace
     based on Bioenergy 2020 (AFO) and POLYCITY Ostfildern 
-
 
     :type Q_design : float
     :param Q_design: Design Load of Boiler
