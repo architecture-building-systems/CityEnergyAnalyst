@@ -37,7 +37,6 @@ def create_radiance_srf(occface, srfname, srfmat, rad):
 def geometry2radiance(rad, ageometry_table, citygml_reader):
     # add all geometries which are in "ageometry_table" to radiance
     bldg_dict_list = []
-    
 
     gmlterrains = citygml_reader.get_relief_feature()
     srfmat = ageometry_table["wall_name"]["Terrain"]
@@ -257,14 +256,16 @@ def execute_daysim(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_par
 
 def calc_radiation(geometry_table_name, weatherfile_path, locator):    
 
-    # Import
+    # local variables
     building_surface_properties = gpdf.from_file(locator.get_3D_geometry_folder()).drop('geometry', axis=1)
+    results_path = locator.get_solar_radiation_folder()
+
+    # city gml reader
     citygml_reader = pycitygml.Reader()
     citygml_filepath = locator.get_building_geometry_citygml()
     citygml_reader.load_filepath(citygml_filepath)
 
     # Simulation
-    results_path = locator.get_solar_radiation_folder()
     rad = py2radiance.Rad(os.path.join(results_path, 'base.rad'), results_path)
     bldg_dict_list = geometry2radiance(rad, building_surface_properties, citygml_reader)
     rad.create_rad_input_file()
