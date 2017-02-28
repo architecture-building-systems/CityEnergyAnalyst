@@ -173,6 +173,11 @@ class InputLocator(object):
         return os.path.join(self.db_path, 'Uncertainty', 'uncertainty_distributions.xls')
 
     # INPUTS
+
+    def get_building_geometry_folder(self):
+        """scenario/inputs/building-geometry/"""
+        return os.path.join(self.scenario_path, 'inputs', 'building-geometry')
+
     def get_building_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
         return os.path.join(self.scenario_path, 'inputs', 'building-geometry', 'zone.shp')
@@ -181,9 +186,6 @@ class InputLocator(object):
         """scenario/inputs/building-geometry/zone.gml"""
         return os.path.join(self.scenario_path, 'inputs', 'building-geometry', 'zone.gml')
 
-    def get_building_geometry_with_elevation(self):
-        """scenario/inputs/building-geometry/zone.shp"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-geometry', 'zone_with_terrain_level.shp')
 
     def get_district(self):
         """scenario/inputs/building-geometry/district.shp"""
@@ -234,10 +236,10 @@ class InputLocator(object):
     def get_terrain(self):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain.tif')
-    
-    def get_terrain_shpfile(self):
-        """scenario/inputs/topography/terrain/terrain.shp"""
-        return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain', 'terrain.shp')
+
+    def get_terrain_shapefile(self):
+        """scenario/inputs/topography/terrain.tif"""
+        return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain.shp')
 
     # OUTPUTS
 

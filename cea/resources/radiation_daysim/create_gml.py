@@ -9,6 +9,7 @@ import pyliburo.shp2citygml as shp2citygml
 import shapefile
 import cea.globalvar
 import cea.inputlocator
+import gdal
 
 __author__ = "Paul Neitzel, Kian Wee Chen"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -28,7 +29,7 @@ def building2d23d(citygml_writer, shapefilepath, out_path, height_col, elev_col,
     name_index = field_name_list.index(name_col) - 1
     elev_index = field_name_list.index(elev_col) - 1
     floor_index = field_name_list.index(nfloor_col) - 1
-    rcnt = 0
+    counter = 0
     for rec in shapeRecs:
         poly_attribs = rec.record
         height = float(poly_attribs[height_index])
@@ -37,12 +38,17 @@ def building2d23d(citygml_writer, shapefilepath, out_path, height_col, elev_col,
         nfloors = int(poly_attribs[floor_index])
         part_list = shp2citygml.get_geometry(rec)
         for part in part_list:
+            # adding elevation to 2d shapefile vertex
             point_list = shp2citygml.pypt_list2d_2_3d(part, elev)
+
+            #creating floor surface in pythonocc
             face = construct.make_polygon(point_list)
+
+            # floor by floor copying and moving  the footprint surface
             flr2flr_height = height/nfloors
             moved_face_list = []
-            for flrcnt in range(nfloors+1):
-                dist2mve = flrcnt*flr2flr_height
+            for floor_counter in range(nfloors+1):
+                dist2mve = floor_counter*flr2flr_height
                 #get midpt of face
                 orig_pt = calculate.face_midpt(face)
                 #move the pt 1 level up 
@@ -50,7 +56,7 @@ def building2d23d(citygml_writer, shapefilepath, out_path, height_col, elev_col,
                 moved_face = modify.move(orig_pt, dest_pt, face)
                 moved_face_list.append(moved_face)
             
-            #loft all the face to form a solid
+            #loft all the faces and form a solid
             vertical_shell = construct.make_loft(moved_face_list)
             vertical_face_list = fetch.geom_explorer(vertical_shell, "face")
             roof = moved_face_list[-1]
@@ -60,30 +66,57 @@ def building2d23d(citygml_writer, shapefilepath, out_path, height_col, elev_col,
             all_faces.extend(vertical_face_list)
             all_faces.append(roof)
             bldg_shell_list = construct.make_shell_frm_faces(all_faces)
+
+            # make sure all the normals are correct (they are pointing out)
             if bldg_shell_list:
                 bldg_solid = construct.make_solid(bldg_shell_list[0])
                 bldg_solid = modify.fix_close_solid(bldg_solid)
                 occface_list = fetch.geom_explorer(bldg_solid, "face")
                 geometry_list = gml3dmodel.write_gml_srf_member(occface_list)
                 citygml_writer.add_building("lod1", name,geometry_list)
-        rcnt+=1
-        
-def terrain2d23d(citygml_writer, terrain_shapefile, elev_attrib):
-    tin_occface_list = shp2citygml.terrain2d23d_tin(terrain_shapefile, elev_attrib)
+        counter+=1
+
+def terrain2d23d(citygml_writer, input_terrain):
+
+    # read raster records
+    raster_dataset = gdal.Open(input_terrain)
+    geotransform = raster_dataset.GetGeoTransform()
+
+    tin_occface_list = []
+
     geometry_list = gml3dmodel.write_gml_triangle(tin_occface_list)
     citygml_writer.add_tin_relief("lod1", "terrain1", geometry_list)
-    
+
+def create_citygml(input_buildings, input_terrain, output_folder):
+
+    # local variables
+    citygml_writer = pycitygml.Writer()
+
+    # transform buildings to LOD3
+    building2d23d(citygml_writer, input_buildings, output_folder, height_col='height_ag', name_col='Name',
+                  elev_col='elevation', nfloor_col="floors_ag")
+
+    # transform terrain to CityGML
+    terrain2d23d(citygml_writer, input_terrain)
+
+    # write to citygml
+    citygml_writer.write(locator.get_building_geometry_citygml())
+
 if __name__ == '__main__':
+
+    # import modules
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    output_folder = locator.get_3D_geometry_folder()
-    input_shapefile= locator.get_building_geometry_with_elevation()
-    terrain_shapefile = locator.get_terrain_shpfile()
-    citygml_writer = pycitygml.Writer()
-    building2d23d(citygml_writer, input_shapefile, output_folder, height_col='height_ag', name_col='Name', elev_col='DN', nfloor_col = "floors_ag")
-    terrain2d23d(citygml_writer, terrain_shapefile, "DN")
-    citygml_writer.write(os.path.join(output_folder,'new.gml'))
+
+    # local variables
+    output_folder = locator.get_building_geometry_folder()
+    input_buildings_shapefile= locator.get_building_geometry()
+    input_terrain_raster = locator.get_terrain()
+
+    # run routine
+    create_citygml(input_buildings_shapefile, input_terrain_raster, output_folder)
+
 
 
 
