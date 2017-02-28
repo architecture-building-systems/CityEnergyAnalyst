@@ -57,15 +57,15 @@ def calc_Qww_ls_st(ta, te, Tww_st, V, Qww, Qww_ls_r, Qww_ls_nr, gv):
     """
     tamb = ta - gv.Bf * (ta - te)         # Calculate tamb in basement according to EN
 
-    h = ( 4 * V * gv.AR ** 2 / math.pi ) ** ( 1.0 / 3.0 )     # tank height in [m], derived from tank Aspect Ratio(AR)
-    r = ( V / ( math.pi * h ) ) ** ( 1.0 / 2.0 )         # tank radius in [m], assuming tank shape is cylinder
-    Atank = 2 * math.pi * r ** 2 + 2 * math.pi * r * h      # tank surface area in [m2].
-    ql = gv.Utank * Atank * ( Tww_st - tamb )       # tank heat loss to the room in [W]
+    h = (4 * V * gv.AR ** 2 / math.pi) ** (1.0 / 3.0)  # tank height in [m], derived from tank Aspect Ratio(AR)
+    r = (V / (math.pi * h)) ** (1.0 / 2.0)  # tank radius in [m], assuming tank shape is cylinder
+    Atank = 2 * math.pi * r ** 2 + 2 * math.pi * r * h  # tank surface area in [m2].
+    ql = gv.Utank * Atank * (Tww_st - tamb)  # tank heat loss to the room in [W]
     qd = Qww + Qww_ls_r + Qww_ls_nr
     if Qww <= 0:
         qc = 0
     else:
-        qc = qd + ql + gv.Pwater * V * gv.Cpw * ( gv.Tww_setpoint - Tww_st ) / 3.6
+        qc = qd + ql + gv.Pwater * V * gv.Cpw * (gv.Tww_setpoint - Tww_st) / 3.6
     return ql, qd, qc
 
 
