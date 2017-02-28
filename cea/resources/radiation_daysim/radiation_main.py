@@ -16,12 +16,14 @@ import pyliburo.gml3dmodel as gml3dmodel
 import pyliburo.pycitygml as pycitygml
 import pyliburo.py2radiance as py2radiance
 
+from geopandas import GeoDataFrame as gpdf
+
 import cea.globalvar
 import cea.inputlocator
 
 __author__ = "Paul Neitzel, Kian Wee Chen"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Paul Neitzel", "Jimeno A. Fonseca"]
+__credits__ = ["Paul Neitzel", "Kian Wee Chen", "Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -32,7 +34,7 @@ def create_radiance_srf(occface, srfname, srfmat, rad):
     bface_pts = fetch.pyptlist_frm_occface(occface)
     py2radiance.RadSurface(srfname, bface_pts, srfmat, rad)
     
-def geometry2radiance(rad, ageometry_table, ainput_path, citygml_reader):
+def geometry2radiance(rad, ageometry_table, citygml_reader):
     # add all geometries which are in "ageometry_table" to radiance
     bldg_dict_list = []
     
@@ -252,22 +254,22 @@ def execute_daysim(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_par
         
     #construct.visualise_falsecolour_topo(sum_res_list, occface_list, backend = "wx")
     print 'execute daysim', 'done'
-    
-    
+
 def calc_radiation(geometry_table_name, weatherfile_path, locator):    
-    # =============================== Import =============================== #
-    input_path = locator.get_3D_geometry_folder()
-    bldg_prop_list = pd.read_csv(os.path.join(input_path, geometry_table_name +".csv"), index_col='name')
+
+    # Import
+    building_surface_properties = gpdf.from_file(locator.get_3D_geometry_folder()).drop('geometry', axis=1)
     citygml_reader = pycitygml.Reader()
-    citygml_filepath = os.path.join(input_path, "new.gml")
+    citygml_filepath = locator.get_building_geometry_citygml()
     citygml_reader.load_filepath(citygml_filepath)
-    # =============================== Simulation =============================== #
+
+    # Simulation
     results_path = locator.get_solar_radiation_folder()
     rad = py2radiance.Rad(os.path.join(results_path, 'base.rad'), results_path)
-    bldg_dict_list = geometry2radiance(rad, bldg_prop_list, input_path, citygml_reader)
+    bldg_dict_list = geometry2radiance(rad, building_surface_properties, citygml_reader)
     rad.create_rad_input_file()
     time1 = time.time()
-    execute_daysim(bldg_dict_list, results_path, rad, weatherfile_path, settings.RAD_PARMS, bldg_prop_list)
+    execute_daysim(bldg_dict_list, results_path, rad, weatherfile_path, settings.RAD_PARMS, building_surface_properties)
     
     # execute daysim
     time2 = time.time()

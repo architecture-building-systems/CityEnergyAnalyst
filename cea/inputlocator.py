@@ -177,6 +177,10 @@ class InputLocator(object):
         """scenario/inputs/building-geometry/zone.shp"""
         return os.path.join(self.scenario_path, 'inputs', 'building-geometry', 'zone.shp')
 
+    def get_building_geometry_citygml(self):
+        """scenario/inputs/building-geometry/zone.gml"""
+        return os.path.join(self.scenario_path, 'inputs', 'building-geometry', 'zone.gml')
+
     def get_building_geometry_with_elevation(self):
         """scenario/inputs/building-geometry/zone.shp"""
         return os.path.join(self.scenario_path, 'inputs', 'building-geometry', 'zone_with_terrain_level.shp')
