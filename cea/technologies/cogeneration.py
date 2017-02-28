@@ -1,10 +1,6 @@
 """
-==================================================
 cogeneration (combined heat and power)
-==================================================
-
 """
-
 
 from __future__ import division
 import numpy as np
@@ -20,16 +16,12 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-"""
-============================
-operation costs
-============================
 
-"""
 
 #===========================
 #Combined Cycle Gas Turbine
 #===========================
+
 
 def calc_Cop_CCT(GT_SIZE, T_DH_Supply, fuel, gV):
     """
@@ -38,7 +30,6 @@ def calc_Cop_CCT(GT_SIZE, T_DH_Supply, fuel, gV):
 
     This generated function calculates Operation Point and associated costs of the cogeneration at given
     thermal load (Q_therm_requested).
-
 
     How to use the return functions : input Q_therm_requested into the output interpolation functions
     Conditions: not below or above boundaries Q_therm_min & Q_therm_max
@@ -76,13 +67,12 @@ def calc_Cop_CCT(GT_SIZE, T_DH_Supply, fuel, gV):
 
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
-
-
     """
 
     it_len = 50
 
     # create empty arrays
+
     wdotfin = np.zeros( it_len)
     qdot = np.zeros( it_len)
     eta_elec = np.zeros( it_len)
@@ -95,12 +85,10 @@ def calc_Cop_CCT(GT_SIZE, T_DH_Supply, fuel, gV):
 
     # calculate the operation data at different electricity load
     for wdot_it in range(len(wdot_range)):
-
         wdot_in = wdot_range[wdot_it]
 
         # combine cycle operation
         CC_OpInfo = CC_Op(wdot_in, GT_SIZE, fuel, T_DH_Supply, gV)
-
         wdotfin[wdot_it] = CC_OpInfo[0]  # Electricity output from the combined cycle
         qdot[wdot_it] = CC_OpInfo[1]     # Thermal output from the combined cycle
         eta_elec[wdot_it] = CC_OpInfo[2] # el. efficiency
@@ -150,7 +138,7 @@ def CC_Op(wdot, gt_size, fuel, tDH, gV) :
     """
 
     (eta0, mdot0) = GT_fullLoadParam(gt_size, fuel, gV)
-    (eta, mdot, texh, mdotfuel) = GT_partLoadParam(wdot, gt_size, eta0, mdot0, fuel, gV)
+    (eta, mdot, texh, mdotfuel) = GT_partloadParam(wdot, gt_size, eta0, mdot0, fuel, gV)
     (qdot, wdotfin) = ST_Op(mdot, texh, tDH, fuel, gV)
 
     if fuel == 'NG':
@@ -182,7 +170,6 @@ def GT_fullLoadParam(gt_size, fuel, gV):
 
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
-
     """
     assert gt_size < gV.GT_maxSize + 0.001
     if gt_size == 0:
@@ -200,7 +187,6 @@ def GT_fullLoadParam(gt_size, fuel, gV):
     if fuel == 'NG':
         mdot0 = (103.7 * 44E-3 + 196.2 * 18E-3 + 761.4  * 28E-3 + 200.5 * 32E-3 * (gV.CC_airratio - 1) +
                  200.5 * 3.773 * 28E-3 * (gV.CC_airratio - 1) ) * mdotfuel / 1.8156
-
     else:
         mdot0 = (98.5 * 44E-3 + 116 * 18E-3 + 436.8 * 28E-3 + 115.5 * 32E-3 * (gV.CC_airratio - 1) +
                  115.5 * 3.773 * 28E-3 * (gV.CC_airratio - 1) ) * mdotfuel / 2.754
@@ -294,34 +280,32 @@ def ST_Op(mdot, texh, tDH, fuel, gV):
     """
 
     temp_i = (0.9 * ((6/48.2) ** (0.4/1.4) - 1) + 1) * (texh - gV.ST_deltaT)
-
     if fuel == 'NG':
         Mexh = 103.7 * 44E-3 + 196.2 * 18E-3 + 761.4 * 28E-3 + 200.5 * \
-                (gV.CC_airratio -1) * 32E-3 + \
-                200.5 * (gV.CC_airratio -1) * 3.773 * 28E-3
+                                                               (gV.CC_airratio - 1) * 32E-3 + \
+               200.5 * (gV.CC_airratio - 1) * 3.773 * 28E-3
         ncp_exh = 103.7 * 44 * 0.846 + 196.2 * 18 * 1.8723 + \
-                   761.4 * 28 * 1.039 + 200.5 * (gV.CC_airratio -1) * 32 * \
-                   0.918 + 200.5 * (gV.CC_airratio -1) * 3.773 * 28 * 1.039
-        cp_exh = ncp_exh / Mexh # J/kgK
+                  761.4 * 28 * 1.039 + 200.5 * (gV.CC_airratio - 1) * 32 * \
+                                       0.918 + 200.5 * (gV.CC_airratio - 1) * 3.773 * 28 * 1.039
+        cp_exh = ncp_exh / Mexh  # J/kgK
 
 
     else:
         Mexh = 98.5 * 44E-3 + 116 * 18E-3 + 436.8 * 28E-3 + 115.5 * \
-                (gV.CC_airratio -1) * 32E-3 + \
-                115.5 * (gV.CC_airratio -1) * 3.773 * 28E-3
+                                                            (gV.CC_airratio - 1) * 32E-3 + \
+               115.5 * (gV.CC_airratio - 1) * 3.773 * 28E-3
         ncp_exh = 98.5 * 44 * 0.846 + 116 * 18 * 1.8723 + \
-                   436.8 * 28 * 1.039 + 115.5 * (gV.CC_airratio -1) * 32 * \
-                   0.918 + 115.5 * (gV.CC_airratio -1) * 3.773 * 28 * 1.039
-        cp_exh = ncp_exh / Mexh # J/kgK
-
+                  436.8 * 28 * 1.039 + 115.5 * (gV.CC_airratio - 1) * 32 * \
+                                       0.918 + 115.5 * (gV.CC_airratio - 1) * 3.773 * 28 * 1.039
+        cp_exh = ncp_exh / Mexh  # J/kgK
 
     a = np.array([[1653E3 + gV.cp * (texh - gV.ST_deltaT - 534.5), \
-                gV.cp * (temp_i-534.5)], \
-                [gV.cp * (534.5 - 431.8), \
-                2085.8E3 + gV.cp * (534.5 - 431.8)]])
+                   gV.cp * (temp_i - 534.5)], \
+                  [gV.cp * (534.5 - 431.8), \
+                   2085.8E3 + gV.cp * (534.5 - 431.8)]])
     b = np.array([mdot * cp_exh * (texh - (534.5 + gV.ST_deltaT)), \
                   mdot * cp_exh * (534.5 - 431.8)])
-    [mdotHP, mdotLP] = np.linalg.solve(a,b)   # HP and LP mass flow of a double pressure steam turbine
+    [mdotHP, mdotLP] = np.linalg.solve(a, b)   # HP and LP mass flow of a double pressure steam turbine
 
     temp0 = tDH + gV.CC_deltaT_DH    # condensation temperature constrained by the DH network temperature
     pres0 = (0.0261 * (temp0-273) ** 2 -2.1394 * (temp0-273) + 52.893) * 1E3
@@ -329,24 +313,24 @@ def ST_Op(mdot, texh, tDH, fuel, gV):
     deltaHevap = (-2.4967 * (temp0-273) + 2507) * 1E3
     qdot = (mdotHP + mdotLP) * deltaHevap       # thermal output of ST
 
-    #temp_c = (0.9 * ((pres0/48.2E5) ** (0.4/1.4) - 1) + 1) * (texh - gV.ST_deltaT)
-    #qdot = (mdotHP + mdotLP) * (gV.cp * (temp_c - temp0) + deltaHevap)
-    #presSTexit = pres0 + gV.ST_deltaP
-    #wdotST = 0.9 / 18E-3 * 1.4 / 0.4 * 8.31 * \
+
+    # temp_c = (0.9 * ((pres0/48.2E5) ** (0.4/1.4) - 1) + 1) * (texh - gV.ST_deltaT)
+    # qdot = (mdotHP + mdotLP) * (gV.cp * (temp_c - temp0) + deltaHevap)
+    # presSTexit = pres0 + gV.ST_deltaP
+    # wdotST = 0.9 / 18E-3 * 1.4 / 0.4 * 8.31 * \
     #         (mdotHP * 534.5 * ( (6/48.2) ** (0.4/1.4) - 1 )\
     #         + (mdotLP + mdotHP) * temp_i * ( (presSTexit/6E5) ** (0.4/1.4) - 1 ) )
     #
-    #temp1 = (((6E5/pres0) ** (0.4/1.4) - 1) / 0.87 + 1) * temp0
-    #wdotcomp = 0.87 / 18E-3 * 1.4 / 0.4 * 8.31 * \
+    # temp1 = (((6E5/pres0) ** (0.4/1.4) - 1) / 0.87 + 1) * temp0
+    # wdotcomp = 0.87 / 18E-3 * 1.4 / 0.4 * 8.31 * \
     #           (mdotHP * temp1 * ( (48.2/6) ** (0.4/1.4) - 1 )\
     #           + (mdotHP + mdotLP) * temp0 * ( (6E5/pres0) ** (0.4/1.4) - 1 ))
 
 
-    h_HP = (2.5081 * (texh - gV.ST_deltaT - 273) + 2122.7) * 1E3 #J/kg
-    h_LP = (2.3153 * (temp_i - 273) + 2314.7) * 1E3 #J/kg
-    h_cond = (1.6979 * (temp0 - 273) + 2506.6) * 1E3 #J/kg
-    spec_vol = 0.0010 #m3/kg
-
+    h_HP = (2.5081 * (texh - gV.ST_deltaT - 273) + 2122.7) * 1E3  # J/kg
+    h_LP = (2.3153 * (temp_i - 273) + 2314.7) * 1E3  # J/kg
+    h_cond = (1.6979 * (temp0 - 273) + 2506.6) * 1E3  # J/kg
+    spec_vol = 0.0010  # m3/kg
 
     wdotST = mdotHP * (h_HP - h_LP) + (mdotHP + mdotLP) * (h_LP - h_cond)  # turbine electricity output
     wdotcomp = spec_vol * (mdotLP * (6E5 - pres0) + (mdotHP + mdotLP) * (48.2E5 - 6E5))  # compressor electricity use
@@ -356,13 +340,11 @@ def ST_Op(mdot, texh, tDH, fuel, gV):
     return qdot, wdotfin
 
 
-
 #===========================
 #Fuel Cell
 #===========================
 
 def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
-
     """
     Efficiency for operation of a SOFC (based on LHV of NG) including all auxiliary losses
     Valid for Q_load in range of 1-10 [kW_el]
@@ -374,6 +356,7 @@ def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
             NREL : p.5  of [M. Zolot et al., 2004]_
 
         Approach B (Empiric Approach): [Iain Staffell]_
+
 
     :type Q_load : float
     :param Q_load: Load at each time step
@@ -393,7 +376,6 @@ def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
     :rtype Q_fuel : float
     :returns Q_fuel: Heat demand from fuel (in Watt)
 
-
     ..[M. Zolot et al., 2004] M. Zolot et al., Analysis of Fuel Cell Hybridization and Implications for Energy Storage
     Devices, NREL, 4th International Advanced Automotive Battery.
     http://www.nrel.gov/vehiclesandfuels/energystorage/pdfs/36169.pdf
@@ -409,9 +391,8 @@ def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
         phi = float( Q_load ) / float( Q_design )
         eta_max = 0.425 # from energy.gov
 
-        if phi >= phi_threshold: # from NREL-Shape
-            eta_el = eta_max - ((1/6.0 * eta_max)/ (1.0-phi_threshold) )* abs(phi-phi_threshold)
-
+        if phi >= phi_threshold:  # from NREL-Shape
+            eta_el = eta_max - ((1 / 6.0 * eta_max) / (1.0 - phi_threshold)) * abs(phi - phi_threshold)
 
         if phi < phi_threshold:
             if phi <= 118/520.0 * phi_threshold:
@@ -425,7 +406,7 @@ def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
                 eta_el = eta_max * ( 2/3.0 + 0.25 ) + \
                          1/12.0 * eta_max * ( phi - phi_threshold * 0.5) / (phi_threshold * (1-0.5))
 
-        eta_therm_max = 0.45 # constant, after energy.gov
+        eta_therm_max = 0.45  # constant, after energy.gov
 
         if phi < phi_threshold:
             eta_therm = 0.5 * eta_therm_max * (phi / phi_threshold)
@@ -453,33 +434,25 @@ def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
         if phi < 0.2:
             eta_el = 0
 
-
     return eta_el, eta_therm
 
 
-"""
-============================
-investment and maintenance costs
-============================
-
-"""
+# investment and maintenance costs
 
 def calc_Cinv_CCT(CC_size, gV):
     """
     Annualized investment costs for the Combined cycle
 
-
     :type CC_size : float
     :param CC_size: Electrical size of the CC
-
 
     :rtype InvCa : float
     :returns InvCa: annualized investment costs in CHF
 
-
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
+
     InvC = 32978 * (CC_size * 1E-3) ** 0.5946  # [C. Weber, 2008]_
     InvCa = InvC * gV.CC_i * (1+ gV.CC_i) ** gV.CC_n / ((1+gV.CC_i) ** gV.CC_n - 1)
 
@@ -492,18 +465,14 @@ def calc_Cinv_FC(P_design, gV):
 
     http://hexis.com/sites/default/files/media/publikationen/140623_hexis_galileo_ibb_profitpaket.pdf?utm_source=HEXIS+Mitarbeitende&utm_campaign=06d2c528a5-1_Newsletter_2014_Mitarbeitende_DE&utm_medium=email&utm_term=0_e97bc1703e-06d2c528a5-
 
-
     :type P_design : float
     :param P_design: Design thermal Load of Fuel Cell [W_th]
 
-
     :rtype InvCa: float
     :returns InvCa: annualized investment costs in CHF
-
     """
 
     InvC = (1 + gV.FC_overhead) * gV.FC_stack_cost * P_design / 1000 # FC_stack_cost = 55'000 CHF  / kW_therm, 10 % extra (overhead) cost
-
     InvCa = InvC * gV.FC_i * (1 + gV.FC_i) ** gV.FC_n / (( 1 + gV.FC_i) ** gV.FC_n - 1)
 
     return InvCa

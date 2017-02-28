@@ -1,7 +1,5 @@
 import os
 
-import arcpy
-
 import cea
 import cea.demand
 import cea.globalvar
@@ -27,6 +25,7 @@ class DemandTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        import arcpy
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",

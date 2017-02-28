@@ -34,8 +34,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     This function runs the least cost optimization code and returns cost, co2 and primary energy required. \
     On the go, it saves the operation pattern
 
-    Parameters
-    ----------
     :param locator: locator class
     :param master_to_slave_vars: class MastertoSlaveVars containing the value of variables to be passed to the
     slave optimization for each individual
@@ -139,8 +137,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     def source_activator(Q_therm_req, hour, context):
         """
-        Parameters
-        ----------
         :param Q_therm_req:
         :param hour:
         :param context:
@@ -866,8 +862,6 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
     """
     This function calculates the emissions and primary energy consumption
 
-    Parameters
-    ----------
     :param Q_source_data: array with loads of different units for heating
     :param Q_coldsource_data: array with loads of different units for cooling
     :param E_PP_el_data: array with data of pattern activation for electrical loads
@@ -1219,8 +1213,6 @@ def extract_csv(fName, colName, DAYS_IN_YEAR):
     """
     Extract data from one column of a csv file to a pandas.DataFrame
 
-    Parameters
-    ----------
     :param fName: Name of the csv file
     :param colName: Name of the column from which to the data needs to be extracted
     :param DAYS_IN_YEAR: number of days to consider
@@ -1239,8 +1231,6 @@ def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     """
     importing and preparing distribution data for analysis of the Centralized Plant Choice
 
-    Parameters
-    ----------
     :param fName: name of the building (has to be the same as the csv file, e.g. "AA16.csv")
     :param DAYS_IN_YEAR: number of days in a year (usually 365)
     :param HOURS_IN_DAY: number of hours in a day (usually 24)
@@ -1291,8 +1281,6 @@ def import_solar_PeakPower(fNameTotalCSV, nBuildingsConnected, gv):
     This function estimates the amount of solar installed for a certain configuration
     based on the number of buildings connected to the grid.
 
-    Parameters
-    ----------
     :param fNameTotalCSV: name of the csv file
     :param nBuildingsConnected: number of the buildings connected to the grid
     :param gv: global variables

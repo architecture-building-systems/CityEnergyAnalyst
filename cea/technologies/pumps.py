@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-============================
 pumps
-============================
-
 """
 from __future__ import division
 import os
@@ -22,12 +19,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-"""
-============================
-operation and total costs
-============================
-
-"""
+# operation and total costs
 
 def Pump_operation(P_design):
 
@@ -39,19 +31,11 @@ def Pump_operation(P_design):
         MerkblattPreiseFU2010_2011.pdf
         MerkblattPreiseMotoren2010_2011.pdf
 
-    Parameters
-    ----------
     P_design : float
         Load of time step
 
-    Returns
-    -------
     eta_el : float
         electric efficiency of Pumping operation in abs. numbers (e.g. 0.93)
-
-
-
-
     """
 
     x = [0.5, 0.75, 1.1, 1.5, 2.2, 3, 4, 5.5, 7.5, 11, 15, 18, 22, 30, 37, 45, 55, 75, 90, 110, 132, 160, 200, 220] # Nominal load in kW
@@ -169,12 +153,7 @@ def Pump_Cost(deltaP, mdot, eta_pumping, gV):
 
     return InvCa
 
-"""
-============================
-investment and maintenance costs
-============================
-
-"""
+# investment and maintenance costs
 
 def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
     """
@@ -198,7 +177,6 @@ def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
 
     :rtype InvCa : float
     :returns InvCa: annualized investment costs in CHF/year
-
     """
 
     E_pumping_required = mdot * deltaP / gV.rho_60

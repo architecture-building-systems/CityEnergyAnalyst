@@ -1,5 +1,3 @@
-import arcpy
-
 import cea.analysis
 import cea.globalvar
 import cea.inputlocator
@@ -22,6 +20,7 @@ class EmbodiedEnergyTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        import arcpy
         yearcalc = arcpy.Parameter(
             displayName="Year to calculate",
             name="yearcalc",

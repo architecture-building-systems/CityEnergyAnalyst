@@ -1,8 +1,5 @@
 """
-=========================================
 Vapor-compressor chiller
-=========================================
-
 """
 from __future__ import division
 
@@ -16,12 +13,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-"""
-============================
-technical model
-============================
 
-"""
+# technical model
 
 def calc_VCC(mdot, tsup, tret, gV):
     """
@@ -35,16 +28,15 @@ def calc_VCC(mdot, tsup, tret, gV):
     :type tret : float
     :param tret: plant return temperature from DCN
     :param gV: globalvar.py
-    
 
     :rtype wdot : float
     :returns wdot: chiller electric power requirement
     :rtype qhotdot : float
     :returns qhotdot: condenser heat rejection
 
-
     ..[D.J. Swider, 2003] D.J. Swider (2003). A comparison of empirically based steady-state models for
     vapor-compression liquid chillers. Applied Thermal Engineering.
+
     """
     qcolddot = mdot * gV.cp * (tret - tsup)      # required cooling at the chiller evaporator
     tcoolin = gV.VCC_tcoolin                     # condenser water inlet temperature in [K]
@@ -71,13 +63,7 @@ def calc_VCC(mdot, tsup, tret, gV):
     return wdot, qhotdot
 
 
-"""
-============================
-Investment costs
-============================
-
-"""
-
+# Investment costs
 
 def calc_Cinv_VCC(qcold, gV):
     """
@@ -88,7 +74,8 @@ def calc_Cinv_VCC(qcold, gV):
     :param gV: globalvar.py
 
     :returns InvCa: annualized chiller investment cost in CHF/a
-    
+    :rtype InvCa: float
+
     """
     InvCa = 0.65 * 23E6 * gV.USD_TO_CHF * qcold / 37E6 / 25
     

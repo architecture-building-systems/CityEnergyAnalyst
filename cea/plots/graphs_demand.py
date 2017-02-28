@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-===========================
 graphs algorithm
-===========================
-J. Fonseca  script development          18.09.15
-D. Thomas   formatting and cleaning
-D. Thomas   integration in toolbox
-
 """
 from __future__ import division
 
@@ -32,19 +26,14 @@ def graphs_demand(locator, analysis_fields, gv):
     """
     algorithm to print graphs in PDF concerning the dynamics of each and all buildings
 
-    Parameters
-    ----------
-
     :param locator: an InputLocator set to the scenario to compute
     :type locator: inputlocator.InputLocator
 
     :param analysis_fields: list of fields (column names in Totals.csv) to analyse
     :type analysis_fields: list[string]
 
-    Returns
-    -------
-    Graphs of each building and total: .Pdf
-        heat map file per variable of interest n.
+    :returns: - Graphs of each building and total: .Pdf
+              - heat map file per variable of interest n.
     """
     color_palette = ['g', 'r', 'y', 'c']
     total_file = pd.read_csv(locator.get_total_demand()).set_index('Name')

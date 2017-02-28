@@ -1,0 +1,10 @@
+name: cityenergyanalyst_docs
+channels:
+- conda-forge
+dependencies:
+- python=2.7
+- pandas
+- geopandas
+- matplotlib
+- sphinx
+- versioneer
