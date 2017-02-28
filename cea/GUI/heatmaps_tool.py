@@ -1,7 +1,4 @@
 import os
-
-import arcpy
-
 import cea
 import cea.inputlocator
 import cea.plots
@@ -23,6 +20,7 @@ class HeatmapsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        import arcpy
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",

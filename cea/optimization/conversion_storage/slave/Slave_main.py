@@ -29,12 +29,17 @@ def slave_main(locator, master_to_slave_vars, solar_features, gv):
     for each individual
     :param solar_features: class solar_features
     :param gv: global variables class
-    :return:
-        E_oil_eq_MJ: primary energy
-        CO2_kg_eq: co2 emissions
-        cost_sum: accumualted costs during operation
-        QUncoveredDesign: part of the design load not covered
-        QUncoveredAnnual: part of the toal load not covered
+    :type locator: class
+    :type network_file_name: string
+    :type master_to_slave_vars: class
+    :type solar_features: class
+    :type gv: class
+    :return: E_oil_eq_MJ: primary energy
+             CO2_kg_eq: co2 emissions
+             cost_sum: accumualted costs during operation
+             QUncoveredDesign: part of the design load not covered
+             QUncoveredAnnual: part of the toal load not covered
+    :rtype: float, float, float, float, float
 
     """
     t0 = time.time()

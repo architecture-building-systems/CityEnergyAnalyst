@@ -34,17 +34,26 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     :param individual: list with values of the individual
     :param building_names: list with names of buildings
     :param locator: locator class
-    :param extra_costs: costs calculated before optimization ofr specific energy services
+    :param extraCosts: costs calculated before optimization of specific energy services
      (process heat and electricity)
-    :param extra_CO2: green house gas emissions calculated before optimization ofr specific energy services
+    :param extraCO2: green house gas emissions calculated before optimization ofr specific energy services
      (process heat and electricity)
-    :param extra_primary_energy: primary energy calculated before optimization ofr specific energy services
+    :param extraPrim: primary energy calculated before optimization ofr specific energy services
      (process heat and electricity)
     :param solar_features: solar features call to class
     :param network_features: network features call to class
     :param gv: global variables class
-    :return:
-        Resulting values of the objective function. costs, CO2, prim
+    :type individual: list
+    :type building_names: list
+    :type locator: string
+    :type extraCosts: float
+    :type extraCO2: float
+    :type extraPrim: float
+    :type solar_features: class
+    :type network_features: class
+    :type gv: class
+    :return: Resulting values of the objective function. costs, CO2, prim
+    :rtype: tuple
 
     """
     # Check the consistency of the individual or create a new one
@@ -137,12 +146,16 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 def check_invalid(individual, nBuildings, gv):
     """
     This function rejects individuals out of the bounds of the problem
+    It can also generate a new individual, to replace the rejected individual
 
-    :param individual: individual
+    :param individual: individual sent for checking
     :param nBuildings: number of buildings
     :param gv: global variables class
-    :return:
-        new individual if necessary
+    :type individual: list
+    :type nBuildings: int
+    :type gv: class
+    :return: new individual if necessary
+    :rtype: list
     """
     valid = True
 
@@ -192,15 +205,19 @@ def check_invalid(individual, nBuildings, gv):
 
 def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     """
-    This function reads the list encoding a configuration and implementes the corresponding
+    This function reads the list encoding a configuration and implements the corresponding
     for the slave routine's to use
 
     :param individual: list with inidividual
     :param Qmax:  peak heating demand
     :param locator: locator class
     :param gv: global variables class
-    :return:
-         master_to_slave_vars : class MasterSlaveVariables
+    :type individual: list
+    :type Qmax: float
+    :type locator: string
+    :type gv: class
+    :return: master_to_slave_vars : class MasterSlaveVariables
+    :rtype: class
     """
     # initialise class storing dynamic variables transfered from master to slave optimization
     master_to_slave_vars = master_to_slave.MastertoSlave()
@@ -321,15 +338,14 @@ def checkNtw(individual, ntwList, locator, gv):
     """
     This function calls the distribution routine if necessary
     
-    Parameters
-    ----------
-    individual : list
-        configuration considered
-    ntwList : list
-        list of DHN configuration previously encountered in the master
-    locator : string
-        path to folders
-    
+    :param individual: network configuration considered
+    :param ntwList: list of DHN configurations previously encounterd in the master
+    :param locator: path to the folder
+    :type individual: list
+    :type ntwList: list
+    :type locator: string
+    :return: None
+    :rtype: Nonetype
     """
     indCombi = sFn.individual_to_barcode(individual, gv)
     print indCombi,2
@@ -360,18 +376,12 @@ def epsIndicator(frontOld, frontNew):
     """
     This function computes the epsilon indicator
     
-    Parameters
-    ----------
-    frontOld : list
-        old Pareto front
-    frontNew : list
-        new Pareto front
-    
-    Returns
-    -------
-    epsInd : float
-        epsilon indicator between frontOld and frontNew
-    
+    :param frontOld: Old Pareto front
+    :param frontNew: New Pareto front
+    :type frontOld: list
+    :type frontNew:list
+    :return: epsilon indicator between the old and new Pareto fronts
+    :rtype: float
     """
     epsInd = 0
     firstValueAll = True

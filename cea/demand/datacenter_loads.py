@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-=========================================
 datacenter loads
-=========================================
-
 """
 from __future__ import division
 
@@ -16,12 +13,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
-"""
-=========================================
-final datacenter loads
-=========================================
-"""
 
 def calc_Qcdataf(Edataf):
     if Edataf > 0:

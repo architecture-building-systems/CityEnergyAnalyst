@@ -19,15 +19,17 @@ def decentralized_main(locator, building_names, gv):
     """
     Computes the parameters for the operation of disconnected buildings
     output results in csv files.
-
     There is no optimization at this point. The different technologies are calculated and compared 1 to 1 to
     each technology. it is a classical combinatorial problem.
 
     :param locator: locator class
     :param building_names: list with names of buildings
     :param gv: global variables class
-    :return:
-        results of operation of buildings located in locator.get_optimization_disconnected_folder
+    :type locator: class
+    :type building_names: list
+    :type gv: class
+    :return: results of operation of buildings located in locator.get_optimization_disconnected_folder
+    :rtype: Nonetype
 
     """
     t0 = time.clock()
@@ -42,8 +44,12 @@ def decentralized_main(locator, building_names, gv):
         :param TsupDH: supply temeperature
         :param Tret: return temperature
         :param gv: global variables class
-        :return:
-            Qload: load of the distribution
+        :type mdot: float
+        :type TsupDH: float
+        :type Tret: float
+        :type gv: class
+        :return: Qload: load of the distribution
+        :rtype: float
         """
         Qload = mdot * gv.cp * (TsupDH - Tret) * (1 + gv.Qloss_Disc)
         if Qload < 0:
