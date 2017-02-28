@@ -1,0 +1,70 @@
+digraph demand_function_graph {
+  rankdir=LR;
+  ratio=0.7072135785007072;
+  edge[weight=1.2];
+  node [shape=plaintext, ranksep=0.7, nodesep=0.7, fontsize=10, fontname=monospace, color=none];
+  subgraph "cluster_cea.demand" {
+    "thermal_loads";
+    "control_ventilation_systems";
+    "ventilation_air_flows_simple";
+    "hotwater_loads";
+    "refrigeration_loads";
+    "occupancy_model";
+    "datacenter_loads";
+    "electrical_loads";
+    "sensible_loads";
+    "airconditioning_model";
+    "rc_model_crank_nicholson_procedure";
+    "control_heating_cooling_systems";
+    "space_emission_systems";
+    "rc_model_SIA";
+    "demand_main";
+    label="cea.demand";
+  }
+  subgraph "cluster_cea.utilities" {
+    "physics";
+    "epwreader";
+    label="cea.utilities";
+  }
+  subgraph "cluster_cea" {
+    "utilities";
+    "technologies";
+    label="cea";
+  }
+  subgraph "cluster_cea.technologies" {
+    "controllers";
+    "blinds";
+    "storagetank";
+    "heating_coils";
+    "radiators";
+    "tabs";
+    label="cea.technologies";
+  }
+  "thermal_loads" -> "hotwater_loads";
+  "thermal_loads" -> "rc_model_crank_nicholson_procedure";
+  "thermal_loads" -> "controllers";
+  "ventilation_air_flows_simple" -> "control_ventilation_systems";
+  "thermal_loads" -> "datacenter_loads";
+  "sensible_loads" -> "heating_coils";
+  "sensible_loads" -> "radiators";
+  "rc_model_crank_nicholson_procedure" -> "control_heating_cooling_systems";
+  "airconditioning_model" -> "utilities";
+  "sensible_loads" -> "blinds";
+  "thermal_loads" -> "refrigeration_loads";
+  "rc_model_crank_nicholson_procedure" -> "space_emission_systems";
+  "hotwater_loads" -> "storagetank";
+  "ventilation_air_flows_simple" -> "physics";
+  "rc_model_crank_nicholson_procedure" -> "airconditioning_model";
+  "control_heating_cooling_systems" -> "rc_model_SIA";
+  "demand_main" -> "occupancy_model";
+  "thermal_loads" -> "occupancy_model";
+  "thermal_loads" -> "electrical_loads";
+  "airconditioning_model" -> "physics";
+  "thermal_loads" -> "sensible_loads";
+  "demand_main" -> "thermal_loads";
+  "thermal_loads" -> "ventilation_air_flows_simple";
+  "hotwater_loads" -> "technologies";
+  "demand_main" -> "epwreader";
+  "sensible_loads" -> "tabs";
+  "rc_model_crank_nicholson_procedure" -> "rc_model_SIA";
+}

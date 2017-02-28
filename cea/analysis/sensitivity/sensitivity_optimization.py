@@ -1,8 +1,5 @@
 """
-====================
 Sensitivity analysis
-====================
-
 """
 from __future__ import division
 
@@ -103,10 +100,4 @@ def sensAnalysis(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, g
         
     return ParetoResults, FactorResults, mostSensitive
 
-"""
-============================
-test
-============================
-
-"""
 gen = 24

@@ -15,16 +15,15 @@ def mutFlip(individual, proba, gv):
     """
     For all integer parameters of individual except the connection integers, 
     flip the value with probability *proba*
-    
-    Parameters
-    ----------
-    individual : list
-    proba : float
-    
-    Return
-    ------
-    mutant : list
-    
+
+    :param individual: list of all parameters corresponding to an individual configuration
+    :param proba: mutation probability
+    :param gv: global variables class
+    :type individual: list
+    :type proba: float
+    :type gv: class
+    :return: mutant list
+    :rtype: list
     """
     mutant = toolbox.clone(individual)
     
@@ -65,16 +64,13 @@ def mutFlip(individual, proba, gv):
 def mutShuffle(individual, proba, gv):
     """
     Swap with probability *proba*
-    
-    Parameters
-    ----------
-    individual : list
-    proba : float
-    
-    Return
-    ------
-    mutant : list
-    
+
+    :param individual: list of all parameters corresponding to an individual configuration
+    :param proba: mutation probability
+    :type individual: list
+    :type proba: float
+    :return: mutant list
+    :rtype: list
     """       
     mutant = toolbox.clone(individual)
     
@@ -125,20 +121,16 @@ def mutShuffle(individual, proba, gv):
 
 def mutGaussCap(individual, sigmap, gv):
     """
-    Change the continuous variables with a gaussian distribution of mean the
-    old value and so that there is 95% change (-2 to 2 sigma) to stay within
+    Change the continuous variables with a gaussian distribution of mean of the
+    old value and so that there is 95% chance (-2 to 2 sigma) to stay within
     a band of *sigmap* (percentage) of the entire band.
-    
-    Parameters
-    ----------
-    individual : list
-    sigmap : float
-        between 0 and 1 (excluded)
-    
-    Returns
-    -------
-    mutant : list
-    
+
+    :param individual: list of all parameters corresponding to an individual configuration
+    :param sigmap: random value between 0 and 1 (1 is excluded )
+    :type individual: list
+    :type sigmap: float
+    :return: mutant list
+    :rtype: list
     """
     assert (0 < sigmap) and (sigmap < 1)
     mutant = toolbox.clone(individual)
@@ -190,15 +182,13 @@ def mutGaussCap(individual, sigmap, gv):
 def mutUniformCap(individual, gv):
     """
     Change the continuous variables with a uniform distribution
-    
-    Parameters
-    ----------
-    individual : list
-    
-    Returns
-    -------
-    mutant : list
-    
+
+    :param individual: list of all parameters corresponding to an individual configuration
+    :param gv: global variables class
+    :type individual: list
+    :type gv: class
+    :return: mutant list
+    :rtype:list
     """    
     mutant = toolbox.clone(individual)
     
@@ -236,16 +226,13 @@ def mutUniformCap(individual, gv):
 def mutGU(individual, proba, gv):
     """
     Flip the presence of the Generation units with probability *proba*
-    
-    Parameters
-    ----------
-    individual : list
-    proba : float
-    
-    Return
-    ------
-    mutant : list
-    
+
+    :param individual: list of all parameters corresponding to an individual configuration
+    :param proba: mutation probability
+    :type individual: list
+    :type proba: float
+    :return: mutant list
+    :rtype: list
     """
     mutant = toolbox.clone(individual)
 

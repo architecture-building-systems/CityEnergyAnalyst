@@ -1,7 +1,5 @@
 import os
 
-import arcpy
-
 import cea
 import cea.globalvar
 import cea.inputlocator
@@ -25,6 +23,7 @@ class RadiationTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        import arcpy
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
@@ -100,6 +99,7 @@ class RadiationTool(object):
         return
 
     def execute(self, parameters, messages):
+        import arcpy
         import cea
 
         scenario_path = parameters[0].valueAsText

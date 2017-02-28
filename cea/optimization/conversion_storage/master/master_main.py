@@ -44,20 +44,28 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
     :param locator: locator class
     :param building_names: vector with building names
-    :param extra_costs: costs calculated before optimization ofr specific energy services
+    :param extra_costs: costs calculated before optimization of specific energy services
      (process heat and electricity)
-    :param extra_CO2: green house gas emissions calculated before optimization ofr specific energy services
+    :param extra_CO2: green house gas emissions calculated before optimization of specific energy services
      (process heat and electricity)
-    :param extra_primary_energy: primary energy calculated before optimization ofr specific energy services
+    :param extra_primary_energy: primary energy calculated before optimization of specific energy services
      (process heat and electricity)
     :param solar_features: object class with vectors and values of interest for the integration of solar potentials
-    :param network_features: object class with linear coefficients of the netowrk obtained after its optimization
+    :param network_features: object class with linear coefficients of the network obtained after its optimization
     :param gv: global variables class
-    :param genCP:
-    :return:
-        for every generation 'g': it stores the results of every generation of the genetic algorithm in the subfolders
-        locator.get_optimization_master_results_folder() as a python pickle file.
-
+    :param genCP: 0
+    :type locator: class
+    :type building_names: array
+    :type extra_costs: float
+    :type extra_CO2: float
+    :type extra_primary_energy: float
+    :type solar_features: class
+    :type network_features: class
+    :type gv: class
+    :type genCP: int
+    :return: for every generation 'g': it stores the results of every generation of the genetic algorithm in the
+     subfolders locator.get_optimization_master_results_folder() as a python pickle file.
+    :rtype: pickled file
     """
     t0 = time.clock()
 
@@ -123,7 +131,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     
     # Evolution starts !
     g = genCP
-    stopCrit = False # Threshold for the Epsilon indictor, Not used
+    stopCrit = False # Threshold for the Epsilon indicator, Not used
 	
     while g < gv.NGEN and not stopCrit and ( time.clock() - t0 ) < gv.maxTime :
         
@@ -138,7 +146,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             child1, child2 = cx.cxUniform(ind1, ind2, PROBA, gv)
             offspring += [child1, child2]
 
-        # First half of the master: create new un-collerated configurations
+        # First half of the master: create new un-correlated configurations
         if g < gv.NGEN/2:
             for mutant in pop:
                 print "Mutation Flip"
@@ -162,7 +170,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
 
         # Evaluate the individuals with an invalid fitness
-        # NB: every generation leads to the reevaluation of 4n / 2n / 2n individuals
+        # NB: every generation leads to the reevaluation of (n/2) / (n/4) / (n/4) individuals
         # (n being the number of individuals in the previous generation)
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         
@@ -180,9 +188,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         print "....................................... \n"
         
         # Select the Pareto Optimal individuals
-        print "Pareto Selection"
-        selection = sel.selectPareto(offspring)
-        
+        selection = sel.selectPareto(offspring,gv)
+
         # Compute the epsilon criteria [and check the stopping criteria]
         epsInd.append(evaluation_function.epsIndicator(pop, selection))
         #if len(epsInd) >1:

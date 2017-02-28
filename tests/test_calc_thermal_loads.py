@@ -9,7 +9,7 @@ from cea.globalvar import GlobalVariables
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
 
-REFERENCE_CASE = r'C:\reference-case-open\baseline'
+REFERENCE_CASE = r'C:\cea-reference-case\reference-case-open\baseline'
 
 
 class TestCalcThermalLoads(unittest.TestCase):
@@ -56,9 +56,10 @@ class TestCalcThermalLoads(unittest.TestCase):
                          u'Qcdataf_kWh', u'Qcref_kWh', u'Qcs_kWh', u'Qcsf_kWh', u'Qhs_kWh', u'Qhsf_kWh', u'Qww_kWh',
                          u'Qwwf_kWh', u'Tcsf_re_C', u'Thsf_re_C', u'Twwf_re_C', u'Tcsf_sup_C', u'Thsf_sup_C',
                          u'Twwf_sup_C']
-        values = [155102.61600000001, 2786.4370000000004, 0.0, 157889.05300000001, 81124.394, 150471.052, 0, 0,
-                  73314.964999999997, 81124.394, 99848.559000000008, 110534.87899999999, 37198.886999999995, 39936.178,
-                  16840.622000000003, 43927.460999999996, 99496.0, 11880.622000000001, 49832.514000000003, 525600]
+        values = [155102.61600000001, 1032.2150000000001, 0.0, 156134.83099999998, 33642.668999999994, 148713.291, 0, 0,
+                  31814.229999999996, 33642.668999999994, 102867.37599999999, 108845.97899999999, 37198.886999999995,
+                  39867.324999999997, 3264.0, 44968.798999999999, 99496.0, 2304.0, 51691.493000000002, 525600]
+
         for i, column in enumerate(value_columns):
             try:
                 self.assertAlmostEqual(values[i], df[column].sum(), msg='Sum of column %s differs, %f != %f' % (
@@ -70,15 +71,16 @@ class TestCalcThermalLoads(unittest.TestCase):
     def test_calc_thermal_loads_other_buildings(self):
         """Test some other buildings just to make sure we have the proper data"""
         # randomly selected except for B302006716, which has `Af == 0`
-        buildings = {'B01': (81124.39400, 150471.05200),
-                     'B03': (81255.09200, 150520.01000),
-                     'B02': (82176.15300, 150604.85100),
-                     'B05': (84058.72400, 150841.56200),
-                     'B04': (82356.22600, 150598.43400),
-                     'B07': (81052.19000, 150490.94800),
+        buildings = {'B01': (33642.66900, 148713.29100),
+                     'B03': (33654.23900, 148763.63000),
+                     'B02': (34078.58200, 148858.43400),
+                     'B05': (34686.73200, 149072.58000),
+                     'B04': (34138.18300, 148847.07800),
+                     'B07': (33536.96800, 148736.44200),
                      'B06': (0.00000, 0.00000),
-                     'B09': (84491.58100, 150853.54000),
-                     'B08': (88572.59000, 151020.09300), }
+                     'B09': (34928.68400, 149081.76100),
+                     'B08': (36940.84100, 149184.58100),
+                     }
         if self.gv.multiprocessing:
             import multiprocessing as mp
             pool = mp.Pool()

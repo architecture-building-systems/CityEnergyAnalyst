@@ -1,8 +1,6 @@
+# coding=utf-8
 """
-===========================
 Analytical energy demand model algorithm
-===========================
-
 """
 from __future__ import division
 
@@ -28,60 +26,32 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-"""
-=========================================
-demand calculation
-=========================================
-"""
-
 
 def demand_calculation(locator, weather_path, gv):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
-    using the integrated model of Fonseca et al. 2015. Applied energy.
-    (http://dx.doi.org/10.1016/j.apenergy.2014.12.068)
+    using the integrated model of [Fonseca2015]_.
 
-    PARAMETERS
-    ----------
+    Produces a demand file per building and a total demand file for the whole zone of interest:
+      - a csv file for every building with hourly demand data.
+      - ``Total_demand.csv``, csv file of yearly demand data per building.
+
+
     :param locator: An InputLocator to locate input files
     :type locator: cea.inputlocator.InputLocator
 
     :param weather_path: A path to the EnergyPlus weather data file (.epw)
     :type weather_path: str
 
-    :param gv: A GlobalVariable (context) instance
-    :type gv: cea.globalvar.GlobalVariable
-
-
-    RETURNS
-    -------
+    :param gv: global variables
+    :type gv: cea.globalvar.GlobalVariables
 
     :returns: None
     :rtype: NoneType
 
-
-    INPUT / OUTPUT FILES
-    --------------------
-
-    - get_radiation: c:\reference-case\baseline\outputs\data\solar-radiation\radiation.csv
-    - get_surface_properties: c:\reference-case\baseline\outputs\data\solar-radiation\properties_surfaces.csv
-    - get_building_geometry: c:\reference-case\baseline\inputs\building-geometry\zone.shp
-    - get_building_hvac: c:\reference-case\baseline\inputs\building-properties\technical_systems.shp
-    - get_building_thermal: c:\reference-case\baseline\inputs\building-properties\thermal_properties.shp
-    - get_building_occupancy: c:\reference-case\baseline\inputs\building-properties\occupancy.shp
-    - get_building_architecture: c:\reference-case\baseline\inputs\building-properties\architecture.shp
-    - get_building_age: c:\reference-case\baseline\inputs\building-properties\age.shp
-    - get_building_comfort: c:\reference-case\baseline\inputs\building-properties\indoor_comfort.shp
-    - get_building_internal: c:\reference-case\baseline\inputs\building-properties\internal_loads.shp
-
-
-    SIDE EFFECTS
-    ------------
-
-    Produces a demand file per building and a total demand file for the whole zone of interest.
-
-    B153767T.csv: csv file for every building with hourly demand data
-    Total_demand.csv: csv file of yearly demand data per buidling.
+    .. [Fonseca2015] Fonseca, Jimeno A., and Arno Schlueter. “Integrated Model for Characterization of
+        Spatiotemporal Building Energy Consumption Patterns in Neighborhoods and City Districts.”
+        Applied Energy 142 (2015): 247–265.
     """
     if not os.path.exists(locator.get_radiation()) or not os.path.exists(locator.get_surface_properties()):
         raise ValueError("No radiation file found in scenario. Consider running radiation script first.")
@@ -120,10 +90,6 @@ def demand_calculation(locator, weather_path, gv):
         gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
         return totals, time_series
 
-#=========================================
-#multiple or single core calculation
-#=========================================
-
 
 def thermal_loads_all_buildings(building_properties, date, gv, locator, list_building_names, usage_schedules,
                                 weather_data):
@@ -151,11 +117,6 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
         job.get(240)
         gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
     pool.close()
-
-
-#=========================================
-#test
-#=========================================
 
 
 def run_as_script(scenario_path=None, weather_path=None):

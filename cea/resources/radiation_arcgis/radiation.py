@@ -1,11 +1,5 @@
 """
-===========================
 Solar vertical insolation algorithm based on ArcGIS Solar Analyst
-===========================
-File history and credits:
-J. A. Fonseca  script development          10.08.13
-J. A. Fonseca  adaptation for CEA tool     12.04.16
-
 """
 from __future__ import division
 
@@ -37,37 +31,25 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     The algorithm is based on the Solar Analyst Engine of ArcGIS 10.
     For more info check the integrated demand model of Fonseca et al. 2015. Appl. energy.
 
-    Parameters
-    ----------
-    path_geometry : string
-        path to file buildings_geometry.shp
-    path_boundary: renovation
-        path to file zone_of_study.shp
-    path_arcgis_db: boolean
-        path to default database of Arcgis. Generally of the form c:\users\your_name\Documents\Arcgis\Default.gdb
-    latitude: float
-        latitude north  at the centre of the location
-    longitude: float
-        latitude north
-    timezone: integer
-        timezone (UTC)
-    year: integer
-        year of calculation
-    path_dem_raster: string
-        path to terrain file
-    weather_daily_data: string
-        path to weather_day.csv file
-    prop_architecture_flag: boolean
-        True, get properties about the construction and architecture, otherwise False.
-    prop_HVAC_flag: boolean
-        True, get properties about types of HVAC systems, otherwise False.
-    gv: GlobalVariables
-        an instance of globalvar.GlobalVariables with the constants
-        to use (like `list_uses` etc.)
-    Returns
-    -------
-    radiation: .csv
-        solar radiation file in vertical surfaces of buildings stored in path_output
+    :param locator: input locator for file paths
+    :type locator: cea.inputlocator.InputLocator
+
+    :param path_arcgis_db:  path to default database of Arcgis. E.g.``c:\users\your_name\Documents\Arcgis\Default.gdb``
+    :type path_arcgis_db: str
+
+    :param latitude: latitude north  at the centre of the location
+    :type latitude: float
+
+    :param longitude: latitude north
+    :type longitude: float
+
+    :param year: year of calculation
+    :type year: int
+
+    :param gv: global context and constants
+    :type gv: cea.globalvar.GlobalVariables
+
+    :returns: produces ``radiation.csv``, solar radiation file in vertical surfaces of buildings.
     """
 
     # Set environment settings

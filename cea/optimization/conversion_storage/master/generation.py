@@ -20,12 +20,14 @@ __status__ = "Production"
 
 def generate_main(nBuildings, gv):
     """
-    Creates an individual for the evolutionary algorithm
+    Creates an individual configuration for the evolutionary algorithm
 
     :param nBuildings: number of buildings
     :param gv: global variables class
-    :return:
-        individual: representation of values taken by the individual
+    :type nBuildings: int
+    :type gv: class
+    :return: individual: representation of values taken by the individual
+    :rtype: list
     """
 
     # create list to store values of inidividual

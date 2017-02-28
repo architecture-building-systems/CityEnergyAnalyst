@@ -34,8 +34,8 @@ class TestCheckForRadiationInputInDemandScript(unittest.TestCase):
 
     def test_ninecubes_copied(self):
         """sanity check on `setUpClass`"""
-        self.assertTrue(os.path.exists(r'c:\Users\darthoma\AppData\Local\Temp\ninecubes.zip'))
-        self.assertTrue(os.path.exists(r'c:\Users\darthoma\AppData\Local\Temp\ninecubes'))
+        self.assertTrue(os.path.exists(os.path.join(tempfile.gettempdir(), 'ninecubes.zip')))
+        self.assertTrue(os.path.exists(os.path.join(tempfile.gettempdir(), 'ninecubes')))
 
     def test_demand_checks_radiation_script(self):
         import cea.inputlocator

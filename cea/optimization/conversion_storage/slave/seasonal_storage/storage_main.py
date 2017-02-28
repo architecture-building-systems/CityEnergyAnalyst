@@ -43,9 +43,11 @@ def storage_optimization(locator, master_to_slave_vars, gv):
     :param master_to_slave_vars: class MastertoSlaveVars containing the value of variables to be passed to the slave optimization
     for each individual
     :param gv: global variables class
-    :return:
-        The function saves all files when it's done in the location locator.get_potentials_solar_folder()
-
+    :type locator: class
+    :type master_to_slave_vars: class
+    :type gv: class
+    :return: The function saves all files when it's done in the location locator.get_potentials_solar_folder()
+    :rtype: Nonetype
     """
     print "Storage Optimization Ready"
     MS_Var = master_to_slave_vars
@@ -211,8 +213,14 @@ def storage_optimization(locator, master_to_slave_vars, gv):
 
             if 0.05 < InitialStorageContent / abs(InitialStorageContent - FinalStorageContent):
                 result = pd.DataFrame([storageDeviation6, InitialStorageContent, FinalStorageContent])
+                # print "aa\n"
+                # print locator.get_optimization_slave_results_folder
+                # print MS_Var.configKey
+                # print result
+                # print os.path.join(locator.get_optimization_slave_results_folder, MS_Var.configKey + "_StorageFlag.csv")
+                # print "aa\n"
                 result.to_csv(
-                    os.path.join(locator.get_optimization_slave_results_folder, MS_Var.configKey + "_StorageFlag.csv"),
+                    os.path.join(locator.get_optimization_slave_results_folder(), MS_Var.configKey + "_StorageFlag.csv"),
                     sep=',')
 
 

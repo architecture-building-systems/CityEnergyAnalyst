@@ -35,22 +35,19 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     On the go, it saves the operation pattern
 
     :param locator: locator class
-    :param master_to_slave_vars: lass MastertoSlaveVars containing the value of variables to be passed to the
+    :param master_to_slave_vars: class MastertoSlaveVars containing the value of variables to be passed to the
     slave optimization for each individual
     :param solar_features: solar features class
     :param gv: global variables class
-    :return:
-        E_oil_eq_MJ : float
-        MJ oil Equivalent used during operation
-
-        CO2_kg_eq : float
-        kg of CO2-Equivalent emitted during operation
-
-        cost_sum : float
-        total cost in CHF used for operation
-
-        Q_source_data[:,7] : array
-        uncovered demand
+    :type locator: class
+    :type master_to_slave_vars: class
+    :type solar_features: class
+    :type gv: class
+    :return: E_oil_eq_MJ: MJ oil Equivalent used during operation
+        CO2_kg_eq: kg of CO2-Equivalent emitted during operation
+        cost_sum: total cost in CHF used for operation
+        Q_source_data[:,7]: uncovered demand
+    :rtype: float, float, float, array
     """
 
     print "Least Cost Optimization Ready \n"
@@ -103,7 +100,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     # import Marginal Cost of PP Data :
     # os.chdir(Cost_Maps_Path)
 
-    """ LOAD MODULES """
+ #   """ LOAD MODULES """
 
     if (MS_Var.Furnace_on) == 1:
         # os.chdir(Cost_Maps_Path)
@@ -131,7 +128,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
         # then: ask for Q_therm_req:
         # Q_used_prim = Q_used_prim_fn(Q_therm_req) OR cost_per_Wh = cost_per_Wh_fn(Q_therm_req)
 
-    """ Fixed order COST ALGORITHM STARTS """  # Run the Centralized Plant Operation Scheme
+ #   """ Fixed order COST ALGORITHM STARTS """  # Run the Centralized Plant Operation Scheme
 
     # Import Data - Sewage
     if gv.HPSew_allowed == 1:
@@ -139,6 +136,16 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
         TretsewArray = np.array(pd.read_csv(locator.get_sewage_heat_potential(), usecols=["ts_C"])) + 273
 
     def source_activator(Q_therm_req, hour, context):
+        """
+        :param Q_therm_req:
+        :param hour:
+        :param context:
+        :type Q_therm_req: float
+        :type hour: int
+        :type context: list
+        :return: cost_data_centralPlant_op, source_info, Q_source_data, E_coldsource_data, E_PP_el_data, E_gas_data, E_wood_data, Q_excess
+        :rtype:
+        """
         Q_therm_req_COPY = copy.copy(Q_therm_req)
         MS_Var = context
         current_source = gv.act_first  # Start with first source, no cost yet
@@ -471,8 +478,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                     print "not sufficient capacity installed in hour : ", hour
                     print Q_therm_req, "Wh missing"
                     print "check least cost optimization (here the error comes from) but also the inputs: "
-                    print "It is not sufficient capacity available to the slave in order to fulfull the thermal "
-                    print "demand of the distribution (think about the bands or gaps that occur when a system has a minimum load"
+                    print "It is not sufficient capacity available to the slave in order to fulfill the thermal "
+                    print "demand of the distribution (think about the bands or gaps that occur when a system has a minimum load)"
                     print "This is now covered by a boiler"
 
                     print Q_therm_req_COPY, "Wh was required \n"
@@ -711,8 +718,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
             "cost_HP_storage_operation": [cost_HP_storage_operation]
         })
         results.to_csv(
-            os.path.join(locator.get_optimization_slave_results_folder(), MS_Var.configKey + "_SlaveCostData.csv",
-                         sep=','))
+            os.path.join(locator.get_optimization_slave_results_folder(), MS_Var.configKey + "_SlaveCostData.csv"),
+                         sep=',')
         print "Slave to Master Variables saved in : ", locator.get_optimization_slave_results_folder()
         print " as : ", MS_Var.configKey + "_SlaveCostData.csv"
 
@@ -871,8 +878,23 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
     :param E_HP_SolarAndHeatRecoverySum: auxiliary electricity of heat pump
     :param E_aux_storage_operation_sum: auxiliary electricity of operation of storage
     :param gv:  global variables class
-    :return:
-        CO2_emitted, Eprim_used
+    :type Q_source_data: list
+    :type Q_coldsource_data: list
+    :type E_PP_el_data: list
+    :type Q_gas_data: list
+    :type Q_wood_data: list
+    :type Q_gas_AdduncoveredBoilerSum: list
+    :type E_aux_AddBoilerSum: list
+    :type ESolarProduced: list
+    :type Q_SCandPVT: list
+    :type Q_storage_content_Wh: list
+    :type master_to_slave_vars: class
+    :type locator: string
+    :type E_HP_SolarAndHeatRecoverySum: list
+    :type E_aux_storage_operation_sum: list
+    :type gv: class
+    :return: CO2_emitted, Eprim_used
+    :rtype float, float
     """
     
     MS_Var = master_to_slave_vars
@@ -1191,54 +1213,35 @@ def extract_csv(fName, colName, DAYS_IN_YEAR):
     """
     Extract data from one column of a csv file to a pandas.DataFrame
 
-    Parameters
-    ----------
-    fName : string
-        Name of the csv file.
-
-    colName : string
-        Name of the column from whom to extract data.
-
-    DAYS_IN_YEAR : int
-        Number of days to consider.
-
-    Returns
-    -------
-    result : pandas.DataFrame
-        Contains the hour of the day in the first column and the data
-        of the selected column in the second.
-
+    :param fName: Name of the csv file
+    :param colName: Name of the column from which to the data needs to be extracted
+    :param DAYS_IN_YEAR: number of days to consider
+    :type fName: string
+    :type colName: string
+    :type DAYS_IN_YEAR: int
+    :return: pandas.DataFrame, contains the hour of the day in the first column
+    and the data of the selected column in the second
+    :rtype: class
     """
     result = pd.read_csv(fName, usecols=[colName], nrows=24 * DAYS_IN_YEAR)
     return result
 
 
 def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
-    '''
-
+    """
     importing and preparing distribution data for analysis of the Centralized Plant Choice
 
-    Parameters
-    ----------
-    fName : string
-        name of the building (has to be the same as the csv file, e.g. "AA16.csv"
-
-    DAYS_IN_YEAR : integer
-        numer of days in a year (usually 365)
-
-    HOURS_IN_DAY : interger
-        number of hours in day (usually 24)
-
-
-    Returns
-    -------
-    Arrays containing all relevant data for further processing:
-
+    :param fName: name of the building (has to be the same as the csv file, e.g. "AA16.csv")
+    :param DAYS_IN_YEAR: number of days in a year (usually 365)
+    :param HOURS_IN_DAY: number of hours in a day (usually 24)
+    :type fName: string
+    :type DAYS_IN_YEAR: int
+    :type HOURS_IN_DAY: int
+    :return: Arrays containing all relevant data for further processing:
     Q_DH_networkload, E_aux_ch,E_aux_dech, Q_missing, Q_storage_content_Wh, Q_to_storage, Solar_Q_th_W
-
-    '''
-
-    """     import dataframes    """
+    :rtype: list
+    """
+    """ import dataframes """
     # mass flows
 
     # print fName
@@ -1278,10 +1281,14 @@ def import_solar_PeakPower(fNameTotalCSV, nBuildingsConnected, gv):
     This function estimates the amount of solar installed for a certain configuration
     based on the number of buildings connected to the grid.
 
-    :param fNameTotalCSV:
-    :param nBuildingsConnected:
-    :param gv:
-    :return:
+    :param fNameTotalCSV: name of the csv file
+    :param nBuildingsConnected: number of the buildings connected to the grid
+    :param gv: global variables
+    :type fNameTotalCSV: string
+    :type nBuildingsConnected: int
+    :type gv: class
+    :return: PeakPowerAvgkW
+    :rtype: float
     """
     AreaAllowed = np.array(extract_csv(fNameTotalCSV, "Af", nBuildingsConnected))
     nFloors = np.array(extract_csv(fNameTotalCSV, "Floors", nBuildingsConnected))

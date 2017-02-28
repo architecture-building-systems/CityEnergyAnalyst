@@ -1,9 +1,5 @@
 """
-============================
 multi-objective optimization of supply systems for the CEA
-
-============================
-
 """
 
 from __future__ import division
@@ -24,19 +20,22 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-#============================
 # optimization
-#============================
-
 
 def moo_optimization(locator, weather_file, gv):
     '''
     This function optimizes the conversion, storage and distribution systems of a heating distribution for the case study.
     It requires that solar technologies be calculated in advance and nodes of a distribution should have been already generated.
+
     :param locator: path to input locator
     :param weather_file: path to weather file
     :param gv: global variables class
-    :return:
+    :type locator: string
+    :type weather_file: string
+    :type gv: class
+
+    :returns: None
+    :rtype: Nonetype
     '''
 
     # read total demand file and names and number of all buildings

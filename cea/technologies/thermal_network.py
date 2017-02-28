@@ -1,8 +1,5 @@
 """
-==================================================
 hydraulic network
-==================================================
-
 """
 
 
@@ -20,13 +17,7 @@ __status__ = "Production"
 
 
 
-"""
-============================
-investment and maintenance costs
-============================
-
-"""
-
+# investment and maintenance costs
 
 def calc_Cinv_network_linear(LengthNetwork, gV):
     """
