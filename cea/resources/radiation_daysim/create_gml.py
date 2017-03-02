@@ -9,6 +9,7 @@ import pyliburo.shp2citygml as shp2citygml
 import shapefile
 import cea.globalvar
 import cea.inputlocator
+import numpy as np
 import gdal
 
 __author__ = "Paul Neitzel, Kian Wee Chen"
@@ -78,14 +79,26 @@ def building2d23d(citygml_writer, shapefilepath, out_path, height_col, elev_col,
 
 def terrain2d23d(citygml_writer, input_terrain):
 
-    # read raster records
-    raster_dataset = gdal.Open(input_terrain)
-    geotransform = raster_dataset.GetGeoTransform()
+    # read x, y, z coordinates of raster
+    raster_points = raster_reader(input_terrain_raster)
 
-    tin_occface_list = []
-
+    #create tin and triangulate
+    tin_occface_list = construct.delaunay3d(raster_points)
     geometry_list = gml3dmodel.write_gml_triangle(tin_occface_list)
     citygml_writer.add_tin_relief("lod1", "terrain1", geometry_list)
+
+def raster_reader(input_terrain_raster):
+
+    # read raster records
+    raster_dataset = gdal.Open(input_terrain_raster)
+    band = raster_dataset.GetRasterBand(1)
+    a = band.ReadAsArray(0, 0, raster_dataset.RasterXSize, raster_dataset.RasterYSize)
+    (y_index, x_index) = np.nonzero(a >= 0)
+    (upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = raster_dataset.GetGeoTransform()
+    x_coords = x_index * x_size + upper_left_x + (x_size / 2)  # add half the cell size
+    y_coords = y_index * y_size + upper_left_y + (y_size / 2)  # to centre the point
+
+    return [(x, y, z) for x, y, z in zip(x_coords, y_coords, a[y_index, x_index])]
 
 def create_citygml(input_buildings, input_terrain, output_folder):
 
@@ -111,7 +124,7 @@ if __name__ == '__main__':
 
     # local variables
     output_folder = locator.get_building_geometry_folder()
-    input_buildings_shapefile= locator.get_building_geometry()
+    input_buildings_shapefile = locator.get_building_geometry()
     input_terrain_raster = locator.get_terrain()
 
     # run routine

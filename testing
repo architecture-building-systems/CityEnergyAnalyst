@@ -13,7 +13,7 @@ output_folder = locator.get_building_geometry_folder()
 input_buildings_shapefile = locator.get_building_geometry()
 input_terrain_raster = locator.get_terrain()
 
-# run routine
+# # run routine
 # type_mapping = { gdal.GDT_Byte: ogr.OFTInteger,
 #                  gdal.GDT_UInt16: ogr.OFTInteger,
 #                  gdal.GDT_Int16: ogr.OFTInteger,
@@ -35,19 +35,17 @@ input_terrain_raster = locator.get_terrain()
 # dst_layer = dst_ds.CreateLayer(dst_layername, srs = None )
 # raster_field = ogr.FieldDefn('elevation', type_mapping[raster_band.DataType])
 # dst_layer.CreateField(raster_field)
-# features_to_delete = dst_layer.SetAttributeFilter("FD_1 < '0'")
-# print features_to_delete
+# features_to_delete = dst_layer.SetAttributeFilter("elevation < '0'")
 # gdal.Polygonize(raster_band, None, dst_layer, 0, [], callback=None)
 
 import numpy as np
 
 raster_dataset = gdal.Open(input_terrain_raster)
 band = raster_dataset.GetRasterBand(1)
-a = band.ReadAsArray().astype(np.float)
+a = band.ReadAsArray(0, 0, raster_dataset.RasterXSize, raster_dataset.RasterYSize)
 (y_index, x_index) = np.nonzero(a >=0)
 (upper_left_x, x_size, x_rotation, upper_left_y, y_rotation, y_size) = raster_dataset.GetGeoTransform()
 x_coords = x_index * x_size + upper_left_x + (x_size / 2) #add half the cell size
 y_coords = y_index * y_size + upper_left_y + (y_size / 2) #to centre the point
-print len(x_coords)
-print x_coords, y_coords
-print
+
+list = [(x, y, z) for x,y,z in zip(x_coords,y_coords, a[y_index,x_index])]
