@@ -39,7 +39,7 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
     bldg_dict_list = []
 
     gmlterrains = citygml_reader.get_relief_feature()
-    srfmat = ageometry_table["wall_name"]["Terrain"]
+    srfmat = settings.TERRAIN_PARAMS.e_terrain
     tcnt = 0
     for gmlterrain in gmlterrains:
         pytri_list = citygml_reader.get_pytriangle_list(gmlterrain)
@@ -59,7 +59,7 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
         facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(geo_solid)
         wall_list = []
 
-        wwr = ageometry_table["fwindow"][bldg_name]
+        wwr = ageometry_table["win_wall"][bldg_name]
         fcnt = 0
         for facade in facade_list:
             ref_pypt = calculate.face_midpt(facade)
@@ -67,20 +67,20 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
             if wwr != 0.0 and wwr != 1.0:
                 window = fetch.shape2shapetype(modify.uniform_scale(facade, wwr, wwr, wwr, ref_pypt))
                 window_list.append(window)
-                create_radiance_srf(window, "win"+str(bcnt)+str(fcnt), ageometry_table['win_name'][bldg_name], rad)
+                create_radiance_srf(window, "win"+str(bcnt)+str(fcnt), str(ageometry_table['G_win'][bldg_name]), rad)
                 b_facade_cmpd = fetch.shape2shapetype(construct.boolean_difference(facade, window))
                 hole_facade = fetch.geom_explorer(b_facade_cmpd, "face")[0]
                 wall_list.append(hole_facade)
                 #triangulate the wall with hole
                 tri_facade_list = construct.simple_mesh(hole_facade)
                 for tri_bface in tri_facade_list:
-                    create_radiance_srf(tri_bface, "wall"+str(bcnt)+str(fcnt), ageometry_table['wall_name'][bldg_name], rad)
+                    create_radiance_srf(tri_bface, "wall"+str(bcnt)+str(fcnt), str(ageometry_table['a_wall'][bldg_name]), rad)
                     
             elif wwr == 1.0:
-                create_radiance_srf(facade, "win"+str(bcnt)+str(fcnt), ageometry_table['win_name'][bldg_name], rad)
+                create_radiance_srf(facade, "win"+str(bcnt)+str(fcnt), str(ageometry_table['G_win'][bldg_name]), rad)
                 window_list.append(facade)
             else:
-                create_radiance_srf(facade, "wall"+str(bcnt)+str(fcnt), ageometry_table['wall_name'][bldg_name], rad)
+                create_radiance_srf(facade, "wall"+str(bcnt)+str(fcnt), str(ageometry_table['a_wall'][bldg_name]), rad)
                 wall_list.append(facade)
             fcnt+=1
             
@@ -147,21 +147,21 @@ def add_rad_mat(aresults_path, daysim_dir, bldg_name, ageometry_table):
     os.rename(file_name_rad, file_name_rad.replace(".rad", ".txt"))
     with open(file_name_txt, 'a') as write_file:
         for geo in ageometry_table.index.values:
-            mat_name = ageometry_table['wall_name'][geo]
-            mat_value = ageometry_table['wall_value'][geo]
+            mat_name = str(ageometry_table['a_wall'][geo])
+            mat_value = ageometry_table['a_wall'][geo]
             string = "void plastic " + mat_name + " 0 0 5 " + str(mat_value) + " " + str(mat_value) + " " + str(mat_value) \
                      + " 0.0000 0.0000"
             write_file.writelines('\n' + string + '\n')
 
-            mat_name = ageometry_table['win_name'][geo]
-            mat_value = ageometry_table['win_value'][geo]
+            mat_name = str(ageometry_table['G_win'][geo])
+            mat_value = ageometry_table['G_win'][geo]
             if not math.isnan(mat_value):
                 string = "void plastic " + mat_name + " 0 0 5 " + str(mat_value) + " " + str(mat_value) + " " + str(mat_value) \
                 + " 0.0000 0.0000"
                 write_file.writelines('\n' + string + '\n')
             
-            mat_name = ageometry_table['roof_name'][geo]
-            mat_value = ageometry_table['roof_value'][geo]
+            mat_name = str(ageometry_table['a_roof'][geo])
+            mat_value = ageometry_table['a_roof'][geo]
             if not math.isnan(mat_value):
                 string = "void plastic " + mat_name + " 0 0 5 " + str(mat_value) + " " + str(mat_value) + " " + str(mat_value) \
                          + " 0.0000 0.0000"
@@ -257,7 +257,7 @@ def execute_daysim(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_par
 def calc_radiation(geometry_table_name, weatherfile_path, locator):    
 
     # local variables
-    building_surface_properties = gpdf.from_file(locator.get_3D_geometry_folder()).drop('geometry', axis=1)
+    building_surface_properties = reader_surface_properties(locator.get_building_architecture())
     results_path = locator.get_solar_radiation_folder()
 
     # city gml reader
@@ -276,6 +276,31 @@ def calc_radiation(geometry_table_name, weatherfile_path, locator):
     time2 = time.time()
     time3 = time2-time1
     print time3
+
+def reader_surface_properties(input_shp):
+    """
+    This function returns a dataframe with the emissivity values of walls, roof, and windows
+    of every building in the scene
+    :param input_shp:
+    :return:
+    """
+
+    # local variables
+    architectural_properties = gpdf.from_file(input_shp).drop('geometry', axis=1)
+    surface_database_windows = pd.read_excel(locator.get_envelope_systems(), "WINDOW")
+    surface_database_roof = pd.read_excel(locator.get_envelope_systems(), "ROOF")
+    surface_database_walls = pd.read_excel(locator.get_envelope_systems(), "WALL")
+
+    # querry data
+    df = architectural_properties.merge(surface_database_windows, left_on='type_win', right_on='code')
+    df2 = architectural_properties.merge(surface_database_roof, left_on='type_roof', right_on='code')
+    df3 = architectural_properties.merge(surface_database_walls, left_on='type_wall', right_on='code')
+    fields = ['Name', 'G_win', 'win_wall']
+    fields2 = ['Name', 'a_roof']
+    fields3 = ['Name', 'a_wall']
+    surface_properties = df[fields].merge(df2[fields2], on='Name').merge(df3[fields3], on='Name')
+
+    return surface_properties.set_index('Name').round(decimals=2)
 
 if __name__ == '__main__':
 

@@ -23,8 +23,12 @@ RAD_PARMS = {
 }
 # Daysim Sensor parameters
 SEN_PARMS = {
-'X_DIM': 6,
-'Y_DIM': 6,
+'X_DIM': 5,
+'Y_DIM': 5,
 'MIN_Z_DIR': -0.85,
 'MAX_Z_DIR': 0.05,
+}
+# terrain parameters
+TERRAIN_PARAMS = {
+'e_terrain': 0.8,
 }
