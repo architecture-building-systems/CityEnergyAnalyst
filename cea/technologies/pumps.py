@@ -50,13 +50,18 @@ def Pump_operation(P_design):
 
 def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV):
     """
-    Computes the pumping costs
-    
-    :param dicoSupply: class context
-    :param buildList: list, list of buildings in the district
-    :param network_results_folder: string, path to network results folder
-    :param ntwFeat: class ntwFeatures
-    """
+    Computes the total pump investment cost
+
+    :type dicoSupply : class context
+    :type buildList : list
+    :param buildList: list of buildings in the district
+    :type network_results_folder : string
+    :param network_results_folder: path to network results folder
+    :type ntwFeat : class ntwFeatures
+
+    :rtype pumpCosts : float
+    :returns pumpCosts: pumping cost
+    """    
     pumpCosts = 0
     #nBuild = dicoSupply.nBuildingsConnected
     #ntot = len(buildList)
@@ -89,26 +94,23 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV):
 
 def Pump_Cost(deltaP, mdot, eta_pumping, gV):
     """
-    calculates the cost of a pumping device.
-    if the nominal load (electric) is above 375kW, a second pump is assumed
-    if the nominal load (electric) is below 500W, a pump with Pel_design = 500W is assumed
+    Calculates the cost of a pumping device.
+    if the nominal load (electric) > 375kW, a new pump is installed
+    if the nominal load (electric) < 500W, a pump with Pel_design = 500W is assumed
 
-    Investement costs are calculated upon the life time of a GHP ( 20y) and a GHP- related interest rate of 6%
+    Investment costs are calculated upon the life time of a GHP (20y) and a GHP- related interest rate of 6%
 
-    deltaP : float
-        Pressure drop that has to be overcome with the pump (nominal)
+    :type deltaP : float
+    :param deltaP: nominal pressure drop that has to be overcome with the pump
 
-    mdot : float
-        mass flow (nominal)
+    :type mdot : float
+    :param mdot: nominal mass flow
 
-    eta_pumping : float
-        pump efficiency (set 0.8 as standard value, eta = E_pumping / E_elec)
+    :type eta_pumping : float
+    :param pump efficiency: (set 0.8 as standard value, eta = E_pumping / E_elec)
 
-    InvC_return : float
-        total investment Cost in CHF
-
-    InvCa : float
-        annualized investment costs in CHF/year
+    :rtype InvCa : float
+    :returns InvCa: annualized investment costs in CHF/year
     """
 
     E_pumping_required = mdot * deltaP /gV.rho_60
@@ -155,36 +157,37 @@ def Pump_Cost(deltaP, mdot, eta_pumping, gV):
 
 def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
     """
-    calculates the cost of a pumping device.
-    if the nominal load (electric) is above 375kW, a second pump is assumed
-    if the nominal load (electric) is below 500W, a pump with Pel_design = 500W is assumed
+    Calculates the cost of a pumping device.
+    if the nominal load (electric) > 375kW, a new pump is installed
+    if the nominal load (electric) < 500W, a pump with Pel_design = 500W is assumed
 
-    Investement costs are calculated upon the life time of a GHP ( 20y) and a GHP- related interest rate of 6%
+    Investement costs are calculated upon the life time of a GHP (20y) and a GHP- related interest rate of 6%
 
-    deltaP : float
-        Pressure drop that has to be overcome with the pump (nominal)
+    :type deltaP : float
+    :param deltaP: nominal pressure drop that has to be overcome with the pump
 
-    mdot : float
-        mass flow (nominal)
+    :type mdot : float
+    :param mdot: nominal mass flow
 
-    eta_pumping : float
-        pump efficiency (set 0.8 as standard value, eta = E_pumping / E_elec)
+    :type eta_pumping : float
+    :param pump efficiency: (set 0.8 as standard value, eta = E_pumping / E_elec)
 
-    InvC_return : float
-        total investment Cost in CHF
+    :rtype InvC_return : float
+    :returns InvC_return: total investment Cost in CHF
 
-    InvCa : float
-        annualized investment costs in CHF/year
+    :rtype InvCa : float
+    :returns InvCa: annualized investment costs in CHF/year
     """
 
-    E_pumping_required = mdot * deltaP /gV.rho_60
-    P_motor_tot = E_pumping_required / eta_pumping
+    E_pumping_required = mdot * deltaP / gV.rho_60
+    P_motor_tot = E_pumping_required / eta_pumping    # electricty to run the motor
 
     PmaxPumpkW = 375.0
     PpumpMinkW = 0.5
     print P_motor_tot
     print PmaxPumpkW
-    nPumps = int(np.ceil(P_motor_tot / 1000.0 / PmaxPumpkW))
+    nPumps = int( np.ceil ( P_motor_tot / 1000.0 / PmaxPumpkW))
+    # if the nominal load (electric) > 375kW, a new pump is installed
 
     print nPumps," nPumps"
 
@@ -197,7 +200,7 @@ def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
 
     x = [0.4999, 0.75, 1.1, 1.5, 2.2, 3, 4, 5.5, 7.5, 11, 15, 18.5, 22, 30, 37, 45, 55, 75, 90, 110, 132, 160, 200, 220, 260, 315, 335, 375] # Nominal load in kW
     y = [630, 580, 500, 420, 350, 315, 285, 260, 240, 220, 210, 205, 195, 190, 185, 182, 180, 176, 175, 174, 173, 170, 169, 168, 167, 165, 162, 161.9] # efficiency in %
-        # do the interpolation
+    # do the interpolation
     x1 = [0.4999, 0.75, 1.1, 1.5, 2.2, 3, 4, 5.5, 7.5, 11, 15, 18.5, 22, 30, 37, 45, 55, 75, 90, 110, 132, 160, 200, 220, 260, 315, 335, 375] # Nominal load in kW
     y1 = [720, 680, 585, 425, 330, 275, 220, 195, 180, 150, 145, 143, 135, 120, 115, 114, 110, 100, 90, 88, 85, 80, 75, 74, 74, 73, 72, 71.9] # efficiency in %
     InvC_mot= interp1d(x, y, kind='cubic')
@@ -208,7 +211,6 @@ def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
 
     for pump_i in range(nPumps):
         # calculate pump nominal capacity
-
         PpumpArray[pump_i] =  min(PpumpRemain, PmaxPumpkW*1000)
         if PpumpArray[pump_i] < PpumpMinkW * 1000:
             PpumpArray[pump_i] = PpumpMinkW * 1000
@@ -216,7 +218,7 @@ def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
 
         # Calculate cost
         InvC += InvC_mot(PpumpArray[pump_i]/1000.0) + InvC_VFC(PpumpArray[pump_i]/1000.0)
-        InvCa +=  InvC * gV.GHP_i * (1+ gV.GHP_i) ** gV.GHP_nHP / ((1+gV.GHP_i) ** gV.GHP_nHP - 1)
+        InvCa += InvC * gV.GHP_i * (1+ gV.GHP_i) ** gV.GHP_nHP / ((1+gV.GHP_i) ** gV.GHP_nHP - 1)
 
     return InvCa
 

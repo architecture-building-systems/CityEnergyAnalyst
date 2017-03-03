@@ -18,8 +18,17 @@ __status__ = "Production"
 
 def calc_Cinv_gas(PnomGas, gV):
     """
-    PnomGas in Watt Peak Capacity of Gas supply for connection to gas
+    Calculate investment cost of natural gas connections.
+
+    :param PnomGas: peak natural gas supply in [W]
+    :type PnomGas: float
+    :param gV: globalvar.py
+
+    :returns InvCa:
+    :rtype InvCa:
+
     """
+
     InvCa = 0
     InvCa = gV.GasConnectionCost * PnomGas # from Energie360 - Zurich
 

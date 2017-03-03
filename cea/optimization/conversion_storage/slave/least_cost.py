@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 from cea.technologies.photovoltaic import calc_Crem_pv
-from cea.technologies.boilers import BoilerCond_op_cost
+from cea.technologies.boilers import cond_boiler_op_cost
 import copy
 
 __author__ = "Tim Vollrath"
@@ -107,7 +107,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
         import cea.technologies.furnace as CMFurn
         # os.chdir(Cost_Maps_Path)
         reload(CMFurn)
-        Furnace_op_cost = CMFurn.Furnace_op_cost
+        Furnace_op_cost = CMFurn.furnace_op_cost
 
     # Heat Pumps
     if (MS_Var.GHP_on) == 1 or (MS_Var.HP_Lake_on) == 1 or (MS_Var.HP_Sew_on) == 1:
@@ -392,8 +392,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                         else:
                             Q_therm_boiler = Q_therm_req.copy()
 
-                        Boiler_Cost_Data = BoilerCond_op_cost(Q_therm_boiler, MS_Var.Boiler_Q_max, tdhret_req, \
-                                                              context.BoilerType, context.EL_TYPE, gv)
+                        Boiler_Cost_Data = cond_boiler_op_cost(Q_therm_boiler, MS_Var.Boiler_Q_max, tdhret_req, \
+                                                               context.BoilerType, context.EL_TYPE, gv)
                         C_boil_therm, C_boil_per_Wh, Q_primary, E_aux_Boiler = Boiler_Cost_Data
 
                         sBoiler = 1
@@ -428,8 +428,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                             Q_therm_boilerP = Q_therm_req.copy()
                             Q_therm_req = 0
 
-                        Boiler_Cost_DataP = BoilerCond_op_cost(Q_therm_boilerP, MS_Var.BoilerPeak_Q_max, tdhret_req, \
-                                                               context.BoilerPeakType, context.EL_TYPE, gv)
+                        Boiler_Cost_DataP = cond_boiler_op_cost(Q_therm_boilerP, MS_Var.BoilerPeak_Q_max, tdhret_req, \
+                                                                context.BoilerPeakType, context.EL_TYPE, gv)
                         C_boil_thermP, C_boil_per_WhP, Q_primaryP, E_aux_BoilerP = Boiler_Cost_DataP
 
                         sBackup = 1
@@ -553,8 +553,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     if QUncoveredDesign != 0:
         for hour in range(gv.HOURS_IN_DAY * gv.DAYS_IN_YEAR):
             tdhret_req = tdhret[hour, 0]
-            BoilerBackup_Cost_Data = BoilerCond_op_cost(QUncovered[hour], QUncoveredDesign, tdhret_req, \
-                                                        master_to_slave_vars.BoilerBackupType, master_to_slave_vars.EL_TYPE, gv)
+            BoilerBackup_Cost_Data = cond_boiler_op_cost(QUncovered[hour], QUncoveredDesign, tdhret_req, \
+                                                         master_to_slave_vars.BoilerBackupType, master_to_slave_vars.EL_TYPE, gv)
             C_boil_thermAddBackup[hour], C_boil_per_WhBackup, Q_primaryAddBackup[hour], E_aux_AddBoiler[
                 hour] = BoilerBackup_Cost_Data
         Q_primaryAddBackupSum = np.sum(Q_primaryAddBackup)
