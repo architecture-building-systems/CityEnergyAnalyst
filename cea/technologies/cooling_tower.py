@@ -17,16 +17,19 @@ __status__ = "Production"
 
 def calc_CT(qhotdot, Qdesign, gV):
     """
-    For the operation of a water condenser + direct cooling tower
+    For the operation of a water condenser + direct cooling tower based on [B. Stephane, 2012]_
     
-    qhotdot : float
-        heating power to condenser, From Model_VCC
-    Qdesign : float
-        Max cooling power
+    :type qhotdot : float
+    :param qhotdot: heating power to condenser, From Model_VCC
+    :type Qdesign : float
+    :param Qdesign: Max cooling power
     
-    wdot : float
-        electric power needed for the variable speed drive fan
-        
+
+    :type wdot : float
+    :param wdot: electric power needed for the variable speed drive fan
+
+    ..[B. Stephane, 2012] B. Stephane (2012), Evidence-Based Model Calibration for Efficient Building Energy Services.
+    PhD Thesis, University de Liege, Belgium
     """
     if qhotdot < gV.CT_maxSize:
         print "Error in CT model, over the max capacity"
@@ -34,7 +37,7 @@ def calc_CT(qhotdot, Qdesign, gV):
 
     wdesign_fan = 0.011 * Qdesign
     wpartload = 0.8603 * qpartload ** 3 + 0.2045 * qpartload ** 2 - 0.0623 * \
-                qpartload +0.0026
+                qpartload + 0.0026
     
     wdot = wpartload * wdesign_fan
     
@@ -46,13 +49,12 @@ def calc_CT(qhotdot, Qdesign, gV):
 def calc_Cinv_CT(CT_size, gV):
     """
     Annualized investment costs for the Combined cycle
-    
-    CT_size : float
-        Cooling size of the Cooling tower in WATT
-        
-    InvCa : float
-        annualized investment costs in DOLLARS
-    
+
+    :type CT_size : float
+    :param CT_size: Size of the Cooling tower in [W]
+
+    :rtype InvCa : float
+    :returns InvCa: annualized investment costs in Dollars
     """
     if CT_size > 0:
         InvC = (0.0161 * CT_size * 1E-3 + 1457.3) * 1E3
