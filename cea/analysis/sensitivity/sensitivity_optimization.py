@@ -69,8 +69,6 @@ def sensAnalysis(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, g
     pop, eps, testedPop = sFn.readCheckPoint(locator, gen, 0)
     toolbox = base.Toolbox()
 
-
-    ParetoResults = np.zeros( len(pop) )
     total_demand = pd.read_csv(locator.get_total_demand())
     buildList = total_demand.Name.values
     FactorResults = np.zeros((step + 1, bandwidth.nFactors * 2))
