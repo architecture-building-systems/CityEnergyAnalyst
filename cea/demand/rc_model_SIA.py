@@ -548,11 +548,29 @@ def calc_phi_m_tot_tabs():
 
 
 def calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t):
+    """
+    Calculates R-C-Model temperatures are calculated with zero heating/cooling power according to SIA 2044 procedure.
+
+    :py:func: `cea.demand.rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling`
+
+    Author: Gabriel Happle
+    Date: FEB 2017
+
+    :param bpr: Building Properties
+    :type bpr: BuildingPropertiesRow
+    :param tsd: Time series data of building
+    :type tsd: dict
+    :param t: time step / hour of the year
+    :type t: int
+    :return: R-C-Model node temperatures
+    :rtype: dict
+    """
 
     # no heating or cooling
     phi_hc_cv = 0.0
     phi_hc_r = 0.0
 
+    # calculate r-c-model node temperatures
     rc_model_temp = calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t)
 
     return rc_model_temp
@@ -631,6 +649,29 @@ def _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref, 
 
 
 def calc_rc_model_temperatures_heating(phi_hc, bpr, tsd, t):
+    """
+    This function executes the equations of SIA 2044 R-C-Building-Model to calculate the node temperatures for a given
+    heating energy demand
+
+    :py:func: `cea.demand.rc_model_SIA.lookup_f_hc_cv_heating`
+    :py:func: `cea.demand.rc_model_SIA.calc_phi_hc_cv`
+    :py:func: `cea.demand.rc_model_SIA.calc_phi_hc_r`
+    :py:func: `cea.demand.rc_model_SIA.calc_rc_model_temperatures`
+
+    Author: Gabriel Happle
+    Date: FEB 2017
+
+    :param phi_hc: Heating or cooling energy demand of building
+    :type phi_hc: float
+    :param bpr: Building Properties
+    :type bpr: BuildingPropertiesRow
+    :param tsd: Time series data of building
+    :type tsd: dict
+    :param t: time step / hour of the year
+    :type t: int
+    :return: R-C-Building-Model node temperatures
+    :rtype: dict
+    """
 
     # lookup convection factor for heating/cooling system
     f_hc_cv = lookup_f_hc_cv_heating(bpr)
@@ -639,12 +680,37 @@ def calc_rc_model_temperatures_heating(phi_hc, bpr, tsd, t):
     phi_hc_cv = calc_phi_hc_cv(phi_hc, f_hc_cv)
     phi_hc_r = calc_phi_hc_r(phi_hc, f_hc_cv)
 
+    # calculating R-C-Model node temperatures
     rc_model_temp = calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t)
 
     return rc_model_temp
 
 
 def calc_rc_model_temperatures_cooling(phi_hc, bpr, tsd, t):
+    """
+    This function executes the equations of SIA 2044 R-C-Building-Model to calculate the node temperatures for a given
+    cooling energy demand
+
+    :py:func: `cea.demand.rc_model_SIA.lookup_f_hc_cv_cooling`
+    :py:func: `cea.demand.rc_model_SIA.calc_phi_hc_cv`
+    :py:func: `cea.demand.rc_model_SIA.calc_phi_hc_r`
+    :py:func: `cea.demand.rc_model_SIA.calc_rc_model_temperatures`
+
+    Author: Gabriel Happle
+    Date: FEB 2017
+
+    :param phi_hc: Heating or cooling energy demand of building
+    :type phi_hc: float
+    :param bpr: Building Properties
+    :type bpr: BuildingPropertiesRow
+    :param tsd: Time series data of building
+    :type tsd: dict
+    :param t: time step / hour of the year
+    :type t: int
+    :return: R-C-Building-Model node temperatures
+    :rtype: dict
+    """
+
     # lookup convection factor for heating/cooling system
     f_hc_cv = lookup_f_hc_cv_cooling(bpr)
 
@@ -652,12 +718,37 @@ def calc_rc_model_temperatures_cooling(phi_hc, bpr, tsd, t):
     phi_hc_cv = calc_phi_hc_cv(phi_hc, f_hc_cv)
     phi_hc_r = calc_phi_hc_r(phi_hc, f_hc_cv)
 
+    # calculating R-C-Model node temperatures
     rc_model_temp = calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t)
 
     return rc_model_temp
 
 
 def has_heating_demand(bpr, tsd, t):
+    """
+    This function checks whether the building R-C-Model has a heating demand according to the procedure in SIA 2044.
+    R-C-Model temperatures are calculated with zero heating power and checked versus the set-point temperature.
+    Function includes a temperature tolerance according to the precision of the result reporting.
+
+    :py:func: `cea.demand.rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling`
+
+    Author: Gabriel Happle
+    Date: FEB 2017
+
+    :param bpr: Building Properties
+    :type bpr: BuildingPropertiesRow
+    :param tsd: Time series data of building
+    :type tsd: dict
+    :param t: time step / hour of the year
+    :type t: int
+    :return: True or False
+    :rtype: bool
+    """
+
+    temp_tolerance = 0.001  # temperature tolerance of temperature sensor (°C),
+    #  i.e. heating is turned on if temperature is temp_tolerance below the set point
+    # tolerance is consistent with maximum temperature difference that can be reported with the current precision
+    # of the demand *.csv file
 
     ta_hs_set = tsd['ta_hs_set'][t]
     if np.isnan(ta_hs_set):
@@ -668,10 +759,35 @@ def has_heating_demand(bpr, tsd, t):
     rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
 
     # True, if theta_a < ta_hs_set, False, if theta_a >= ta_hs_set
-    return rc_model_temp['theta_a'] < ta_hs_set
+    return rc_model_temp['theta_a'] < ta_hs_set - temp_tolerance
 
 
 def has_cooling_demand(bpr, tsd, t):
+    """
+    This function checks whether the building R-C-Model has a cooling demand according to the procedure in SIA 2044.
+    R-C-Model temperatures are calculated with zero cooling power and checked versus the set-point temperature.
+    Function includes a temperature tolerance according to the precision of the result reporting.
+
+    :py:func: `cea.demand.rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling`
+
+    Author: Gabriel Happle
+    Date: FEB 2017
+
+    :param bpr: Building Properties
+    :type bpr: BuildingPropertiesRow
+    :param tsd: Time series data of building
+    :type tsd: dict
+    :param t: time step / hour of the year
+    :type t: int
+    :return: True or False
+    :rtype: bool
+    """
+
+    temp_tolerance = 0.001  # temperature tolerance of temperature sensor (°C),
+    #  i.e. heating is turned on if temperature is temp_tolerance below the set point
+    # tolerance is consistent with maximum temperature difference that can be reported with the current precision
+    # of the demand *.csv file
+
     ta_cs_set = tsd['ta_cs_set'][t]
     if np.isnan(ta_cs_set):
         # no set point = system off
@@ -681,15 +797,17 @@ def has_cooling_demand(bpr, tsd, t):
     rc_model_temp = calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
 
     # True, if temperature w/o conditioning is higher than cooling set point temperature, else False
-    return rc_model_temp['theta_a'] > ta_cs_set
+    return rc_model_temp['theta_a'] > ta_cs_set + temp_tolerance
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # 3.8.1
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-f_hc_cv_heating_system = {'T1' : 1, 'T2' : 1, 'T3' : 1, 'T4' : 0.5}  # T1 = radiator, T2 = radiator, T3 = AC, T4 = floor heating #TODO: add heating ceiling
-f_hc_cv_cooling_system = {'T1' : 0.5, 'T2' : 1, 'T3' : 1}  # T1 = ceiling cooling, T2 mini-split AC, T3 = AC #TODO: add floor cooling
+f_hc_cv_heating_system = {'T1': 1, 'T2': 1, 'T3': 1, 'T4': 0.5}
+# T1 = radiator, T2 = radiator, T3 = AC, T4 = floor heating #TODO: add heating ceiling
+f_hc_cv_cooling_system = {'T1': 0.5, 'T2': 1, 'T3': 1}
+# T1 = ceiling cooling, T2 mini-split AC, T3 = AC #TODO: add floor cooling
 
 
 def lookup_f_hc_cv_heating(bpr):
@@ -721,5 +839,3 @@ except ImportError:
     # fall back to using the python version
     print('failed to import from rc_model_sia_cc.pyd, falling back to pure python functions')
     pass
-
-
