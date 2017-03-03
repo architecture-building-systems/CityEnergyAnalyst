@@ -5,7 +5,7 @@ from __future__ import division
 import os
 from cea import globalvar as glob
 import pandas as pd
-import cea.optimization.conversion_storage.master.evaluation as eI
+import cea.optimization.master.evaluation as eI
 import numpy as np
 from deap import base
 
@@ -69,8 +69,6 @@ def sensAnalysis(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, g
     pop, eps, testedPop = sFn.readCheckPoint(locator, gen, 0)
     toolbox = base.Toolbox()
 
-    os.chdir(locator.pathRaw)
-    buildList = sFn.extract_building_names_from_csv("Total.csv")
 
     ParetoResults = np.zeros( len(pop) )
     total_demand = pd.read_csv(locator.get_total_demand())
