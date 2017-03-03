@@ -93,8 +93,7 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     Qww_dis_ls_nr = np.vectorize(calc_Qww_dis_ls_nr)(Ta, Qww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
                                              gv.Cpw, gv.Pwater, gv.Bf, T_ext, gv)
     # storage losses
-    Qww_st_ls, Tww_st, Qwwf = calc_Qww_st_ls(Vww, gv.Tww_setpoint, Ta, gv.Bf, gv.Pwater, gv.Cpw, Qww_dis_ls_r,
-                                                     Qww_dis_ls_nr, gv.U_dhwtank, gv.AR, gv, T_ext, Qww)
+    Qww_st_ls, Tww_st, Qwwf = calc_Qww_st_ls(T_ext, Ta, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr, gv)
 
     # final demand
     Qwwf_0 = Qwwf.max()
@@ -183,18 +182,17 @@ def calc_disls(tamb, hotw, Flowtap, V, twws, Lsww_dis, p, cpw, Y, gv):
     return losses
 
 
-def calc_Qww_st_ls(Vww, Tww_setpoint, Ta, Bf, Pwater, Cpw, Qww_dis_ls_r, Qww_dis_ls_nr, U_dhwtank, AR, gv, T_ext, Qww):
+def calc_Qww_st_ls(T_ext, Ta, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr, gv):
     Qwwf = np.zeros(8760)
     Qww_st_ls = np.zeros(8760)
     Tww_st = np.zeros(8760)
     Qd = np.zeros(8760)
     Vww_0 = Vww.max()
-    Tww_st_0 = Tww_setpoint
+    Tww_st_0 = gv.Tww_setpoint
     for k in range(8760):
-        Qww_st_ls[k], Qd[k], Qwwf[k] = sto_m.calc_Qww_ls_st(Tww_st_0, Tww_setpoint, Ta[k], Bf, T_ext[k], Vww_0,
-                                                            Qww[k], Qww_dis_ls_r[k], Qww_dis_ls_nr[k], U_dhwtank, AR,
-                                                            gv)
-        Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_st_ls[k], Qd[k], Qwwf[k], Pwater, Cpw, Vww_0)
+        Qww_st_ls[k], Qd[k], Qwwf[k] = sto_m.calc_Qww_ls_st(Ta[k], T_ext[k], Tww_st_0, Vww_0, Qww[k], Qww_dis_ls_r[k],
+                                                            Qww_dis_ls_nr[k], gv)
+        Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_st_ls[k], Qd[k], Qwwf[k], Vww_0, gv)
         Tww_st_0 = Tww_st[k]
 
     return Qww_st_ls, Tww_st, Qwwf
