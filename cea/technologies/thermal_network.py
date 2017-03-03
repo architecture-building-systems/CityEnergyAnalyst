@@ -21,11 +21,19 @@ __status__ = "Production"
 
 def calc_Cinv_network_linear(LengthNetwork, gV):
     """
-    Length Network in meters of total length of network
+    calculate annualised network investment cost with a linearized function.
+
+    :param LengthNetwork: total length of the network in [m]
+    :pram gV: globalvar.py
+
+    :returns InvCa: annualised investment cost of the thermal network
+    :rtype InvCa: float
+
     """
+
     InvC = 0
     InvC = LengthNetwork * gV.PipeCostPerMeterInv
-    InvCa =  InvC * gV.PipeInterestRate * (1+ gV.PipeInterestRate) ** gV.PipeLifeTime / ((1+gV.PipeInterestRate) ** gV.PipeLifeTime - 1)
+    InvCa = InvC * gV.PipeInterestRate * (1+ gV.PipeInterestRate) ** gV.PipeLifeTime / ((1+gV.PipeInterestRate) ** gV.PipeLifeTime - 1)
 
     return InvCa
 
