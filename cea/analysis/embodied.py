@@ -67,6 +67,32 @@ def lca_embodied(year_to_calculate, locator, gv):
     warming potential (GWP 100A) and Umweltbelastungspunkte (UBP 2006) for Swiss constructions from before 1920 until
     today." CUI 2014.
 
+
+    Files read / written from InputLocator:
+
+    get_building_architecture
+    get_building_occupancy
+    get_building_age
+    get_building_geometry
+    get_archetypes_embodied_energy
+    get_archetypes_embodied_emissions
+
+    path_LCA_embodied_energy:
+        path to database of archetypes embodied energy file
+        Archetypes_embodied_energy.csv
+    path_LCA_embodied_emissions:
+        path to database of archetypes grey emissions file
+        Archetypes_embodied_emissions.csv
+    path_age_shp: string
+        path to building_age.shp
+    path_occupancy_shp:
+        path to building_occupancyshp
+    path_geometry_shp:
+        path to building_geometrys.hp
+    path_architecture_shp:
+        path to building_architecture.shp
+    path_results : string
+        path to demand results folder emissions
     """
 
     # local variables
@@ -342,14 +368,13 @@ def calc_mainuse(uses_df, uses):
     array_min = np.array(databaseclean[databaseclean[:] > 0].idxmin(skipna=True), dtype='S10')
     array_max = np.array(databaseclean[databaseclean[:] > 0].idxmax(skipna=True), dtype='S10')
     mainuse = np.array(map(calc_comparison, array_min, array_max))
-    print type(array_min)
-    print type(array_max)
+
     return mainuse
 
 def calc_comparison(array_min, array_max):
     """
     This function reads the least and most common occupancy types in each building and, if the most common occupancy
-    type is 'DEPO', reassigns this building's occupancy type to its least common.
+    type is 'PARKING', reassigns this building's occupancy type to its least common.
 
     :param array_min: array containing the occupancy type that takes up the least space (>0) for each building
     :type array_min: ndarray
@@ -361,10 +386,8 @@ def calc_comparison(array_min, array_max):
 
     """
 
-    # TODO: Since there is no actual 'DEPO' occupancy type, this function doesn't do anything, so it should be repurposed or deleted.
-
-    if array_max == 'DEPO':
-        if array_min != 'DEPO':
+    if array_max == 'PARKING':
+        if array_min != 'PARKING':
             array_max = array_min
     return array_max
 
