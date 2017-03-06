@@ -23,3 +23,8 @@ def add_message(msg, **kwargs):
     log_file = os.path.join(tempfile.gettempdir(), 'cea.log')
     with open(log_file, 'a') as log:
         log.write(msg)
+
+
+def get_weather_names():
+    """Shell out to cea.py and collect the list of weather files registered with the CEA"""
+    return None
