@@ -2,6 +2,7 @@
 This script implements the main command-line interface to the CEA. It allows running the various scripts through a
 standard interface.
 """
+import os
 import sys
 
 
@@ -17,12 +18,19 @@ def demand_helper(args):
     cea.demand.preprocessing.properties.run_as_script(scenario_path=args.scenario)
 
 
+def weather_files(_):
+    """List the available weather files to STDOUT."""
+    import cea.inputlocator
+    weather_names = cea.inputlocator.InputLocator(None).get_weather_names()
+    for weather_name in weather_names:
+        print(weather_name)
+
+
 def main(args):
     """Parse the arguments and run the program."""
-    print 'main(args)', args
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
+    parser.add_argument('-s', '--scenario', help='Path to the scenario folder', default=os.curdir)
     subparsers = parser.add_subparsers()
 
     demand_parser = subparsers.add_parser('demand')
@@ -31,6 +39,9 @@ def main(args):
 
     demand_helper_parser = subparsers.add_parser('demand-helper')
     demand_helper_parser.set_defaults(func=demand_helper)
+
+    weather_files_parser = subparsers.add_parser('weather-files')
+    weather_files_parser.set_defaults(func=weather_files)
 
     parsed_args = parser.parse_args(args)
     parsed_args.func(parsed_args)
