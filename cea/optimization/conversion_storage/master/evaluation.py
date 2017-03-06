@@ -36,7 +36,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     :param locator: locator class
     :param extraCosts: costs calculated before optimization of specific energy services
      (process heat and electricity)
-    :param extraCO2: green house gas emissions calculated before optimization ofr specific energy services
+    :param extraCO2: green house gas emissions calculated before optimization of specific energy services
      (process heat and electricity)
     :param extraPrim: primary energy calculated before optimization ofr specific energy services
      (process heat and electricity)
