@@ -1,10 +1,6 @@
 import os
 
-import cea
-import cea.demand
-import cea.globalvar
-import cea.inputlocator
-from cea.GUI.toolbox import add_message
+import toolbox
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -38,8 +34,7 @@ class DemandTool(object):
             datatype="String",
             parameterType="Required",
             direction="Input")
-        locator = cea.inputlocator.InputLocator(None)
-        weather_name.filter.list = locator.get_weather_names()
+        weather_name.filter.list = toolbox.get_weather_names()
 
         return [scenario_path, weather_name]
 
@@ -56,11 +51,9 @@ class DemandTool(object):
         if not os.path.exists(scenario_path):
             parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
-        import cea.inputlocator
-        locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-        if not os.path.exists(locator.get_radiation()):
+        if not os.path.exists(toolbox.get_radiation(scenario_path)):
             parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
-        if not os.path.exists(locator.get_surface_properties()):
+        if not os.path.exists(toolbox.get_surface_properties(scenario_path)):
             parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
         return
 
@@ -79,7 +72,7 @@ class DemandTool(object):
             weather_path = locator.get_default_weather()
 
         gv = cea.globalvar.GlobalVariables()
-        gv.log = add_message
+        gv.log = toolbox.add_message
 
         # find the version of python to use:
         import pandas
@@ -106,10 +99,11 @@ class DemandTool(object):
         # run demand script in subprocess (for multiprocessing)
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        process = subprocess.Popen([python_exe, '-u', demand_py, '--scenario', scenario_path, '--weather', weather_path],
-                                   startupinfo=startupinfo,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE, env=dict(os.environ, PYTHONPATH=cea_root_path))
+        process = subprocess.Popen(
+            [python_exe, '-u', demand_py, '--scenario', scenario_path, '--weather', weather_path],
+            startupinfo=startupinfo,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, env=dict(os.environ, PYTHONPATH=cea_root_path))
         while True:
             nextline = process.stdout.readline()
             if nextline == '' and process.poll() is not None:
