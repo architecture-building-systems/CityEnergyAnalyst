@@ -2,6 +2,7 @@
 ArcGIS Tool classes for integrating the CEA with ArcGIS.
 """
 import os
+import subprocess
 import tempfile
 
 __author__ = "Daren Thomas"
@@ -27,4 +28,12 @@ def add_message(msg, **kwargs):
 
 def get_weather_names():
     """Shell out to cea.py and collect the list of weather files registered with the CEA"""
-    return None
+    def get_weather_names_inner():
+        p = subprocess.Popen(['python', '-u', 'cea.py', 'weather-files'], stdout=subprocess.PIPE)
+        while True:
+            line = p.stdout.readline()
+            if line == '':
+                # end of input
+                break
+            yield line.rstrip()
+    return list(get_weather_names_inner())
