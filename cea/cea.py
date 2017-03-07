@@ -26,6 +26,14 @@ def weather_files(_):
         print(weather_name)
 
 
+def file_location(args):
+    """Locate a file using the InputLocator. The file to find is named the same as the InputLocator
+    attribute."""
+    import cea.inputlocator
+    locator = cea.inputlocator.InputLocator(args.scenario)
+    print(getattr(locator, args.attribute)())
+
+
 def main(args):
     """Parse the arguments and run the program."""
     import argparse
@@ -43,9 +51,13 @@ def main(args):
     weather_files_parser = subparsers.add_parser('weather-files')
     weather_files_parser.set_defaults(func=weather_files)
 
+    file_location_parser = subparsers.add_parser('locate')
+    file_location_parser.add_argument('attribute', metavar='ATTR',
+                                      help='The name of the file to find, denoted by InputLocator.ATTR()')
+    file_location_parser.set_defaults(func=file_location)
+
     parsed_args = parser.parse_args(args)
     parsed_args.func(parsed_args)
-
 
 
 if __name__ == '__main__':
