@@ -1,7 +1,6 @@
 """Installation script for the City Energy Analyst"""
 
 import os
-# import versioneer
 
 
 __author__ = "Daren Thomas"
@@ -16,8 +15,10 @@ __status__ = "Production"
 
 try:
     from setuptools import setup
+    from setuptools.command.install import install
 except ImportError:
     from distutils.core import setup
+    from distutils.command.install import install
 
 LONG_DESCRIPTION = """TODO: add long description"""
 
@@ -29,8 +30,22 @@ else:
     INSTALL_REQUIRES = ['geopandas', 'pandas', 'shapely', 'fiona', 'descartes', 'pyproj', 'xlrd', 'requests',
                         'doit==0.29.0']
 
+
+class PostInstall(install):
+    """Add a link to the python.exe that ran setup.py to user's home directory in the file cea_python.pth"""
+    def run(self):
+        # do the stuff ``install`` normally does
+        install.run(self)
+
+        # write out path to python.exe to the file cea_python.pth
+        import sys
+        import os.path
+        with open(os.path.expanduser('~/cea_python.pth'), 'w') as f:
+            f.write(sys.executable)
+
+
 setup(name='cityenergyanalyst',
-      version='1.0',  # versioneer.get_version(),
+      version='1.0',
       description='City Energy Analyst',
       license='MIT',
       author='Architecture and Building Systems',
@@ -42,5 +57,5 @@ setup(name='cityenergyanalyst',
                 'cea.utilities'],
       package_data={},
       install_requires=INSTALL_REQUIRES,
-      # cmdclass=versioneer.get_cmdclass(),
+      cmdclass={'install': PostInstall},
       )
