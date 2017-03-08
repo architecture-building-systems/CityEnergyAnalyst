@@ -27,7 +27,7 @@ if os.environ.get('READTHEDOCS', False) == 'True':
 else:
     # TODO: list all the requirements for installing
     INSTALL_REQUIRES = ['geopandas', 'pandas', 'shapely', 'fiona', 'descartes', 'pyproj', 'versioneer',
-                        'sphinx_rtd_theme']
+                        'sphinx_rtd_theme', 'deap']
 
 setup(name='cityenergyanalyst',
       version='1.0',  # versioneer.get_version(),

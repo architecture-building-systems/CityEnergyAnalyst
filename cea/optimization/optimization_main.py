@@ -6,8 +6,8 @@ from __future__ import division
 
 import pandas as pd
 
-import cea.optimization.conversion_storage.master.master_main as master
 import cea.optimization.distribution.network_opt_main as network_opt
+import cea.optimization.master.master_main as master
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
 
 __author__ = "Jimeno A. Fonseca"
