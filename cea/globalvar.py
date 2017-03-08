@@ -26,7 +26,7 @@ class GlobalVariables(object):
         self.simulate_building_list = None  # fill it with a list of names of buildings in case not all the data set needs to be run
         self.date_start = '2016-01-01'  # format: yyyy-mm-dd
         self.seasonhours = [3216, 6192]
-        self.multiprocessing = False  # use multiprocessing / parallel execution if possible
+        self.multiprocessing = True  # use multiprocessing / parallel execution if possible
         self.Z = 3  # height of basement for every building in m
         self.Bf = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
         self.his = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
@@ -78,7 +78,7 @@ class GlobalVariables(object):
 
 
         self.initialInd = 4  # number of initial individuals
-        self.NGEN = 10  # number of total generations
+        self.NGEN = 5  # number of total generations
         self.fCheckPoint = 1  # frequency for the saving of checkpoints
         self.maxTime = 7 * 24 * 3600  # maximum computional time [seconds]
 
