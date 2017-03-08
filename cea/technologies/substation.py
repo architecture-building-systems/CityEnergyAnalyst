@@ -30,10 +30,9 @@ def substation_main(locator, total_demand, building_names, gv, Flag):
     :param total_demand: dataframe with total demand and names of all building in the area
     :param building_names:  dataframe with names of all buildings in the area
     :param gv: path to global variables class
-    :param Flag: boolean, True if the function is called by the master optimization. False if the function is
-                 called during preprocessing
-    :return:
-
+    :param Flag: boolean, True if the function is called by the master optimizaiton. False if the fucntion is
+    called during preprocessing
+    :return :
     """
 
     t0 = time.clock()

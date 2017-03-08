@@ -301,7 +301,7 @@ class GlobalVariables(object):
         self.HP_minSize = 1.0E6  # min thermal design size [Wth]
         self.HP_n = 20.0  # lifetime [years]
 
-        self.HP_etaex = 0.6  # exergetic efficiency
+        self.HP_etaex = 0.6  # exergetic efficiency of WSHP [L. Girardin et al., 2010]_
         self.HP_deltaT_cond = 2.0  # pinch for condenser [K]
         self.HP_deltaT_evap = 2.0  # pinch for evaporator [K]
         self.HP_maxT_cond = 140 + 273.0  # max temperature at condenser [K]
@@ -324,7 +324,7 @@ class GlobalVariables(object):
         self.COPScalingFactorGroundWater = 3.4 / 3.9  # Scaling factor according to EcoBau, take GroundWater Heat pump into account
 
         self.GHP_CmaxSize = 2E3  # max cooling design size [Wc] FOR ONE PROBE
-        self.GHP_Cmax_Size_th = 2E3  # Wth/m per probe
+        self.GHP_Cmax_Size_th = 2E3  # Wh/m per probe
         self.GHP_Cmax_Length = 40  # depth of exploration taken into account
 
         self.GHP_HmaxSize = 2E3  # max heating design size [Wth] FOR ONE PROBE
@@ -333,7 +333,7 @@ class GlobalVariables(object):
         self.GHP_nBH = 50.0  # [years] for a borehole
         self.GHP_nHP = 20.0  # for the geothermal heat pump
 
-        self.GHP_etaex = 0.677  # exergetic efficiency
+        self.GHP_etaex = 0.677  # exergetic efficiency [O. Ozgener et al., 2005]_
         self.GHP_Auxratio = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
 
         self.GHP_i = 0.06  # interest rate

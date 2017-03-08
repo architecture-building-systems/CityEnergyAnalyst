@@ -18,19 +18,28 @@ __status__ = "Production"
 
 def calc_VCC(mdot, tsup, tret, gV):
     """
-    For the operation of a Vapor-compressor chiller
-    between a district cooling network and a condenser with fresh water
-    to a cooling tower
-    
-    :param mdot : float mass flow rate in the district cooling network
-    :param tsup : float temperature of supply for the DCN (cold)
-    :param tret : float temperature of return for the DCN (hot)
-    
-    :retunrs: - wdot : float electric power needed
-              - qhotdot : float heating power to condenser
+    For the operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
+    to a cooling tower following [D.J. Swider, 2003]_.
+
+    :type mdot : float
+    :param mdot: plant supply mass flow rate to the district cooling network
+    :type tsup : float
+    :param tsup: plant supply temperature to DCN
+    :type tret : float
+    :param tret: plant return temperature from DCN
+    :param gV: globalvar.py
+
+    :rtype wdot : float
+    :returns wdot: chiller electric power requirement
+    :rtype qhotdot : float
+    :returns qhotdot: condenser heat rejection
+
+    ..[D.J. Swider, 2003] D.J. Swider (2003). A comparison of empirically based steady-state models for
+    vapor-compression liquid chillers. Applied Thermal Engineering.
+
     """
-    qcolddot = mdot * gV.cp * (tret - tsup)    
-    tcoolin = gV.VCC_tcoolin
+    qcolddot = mdot * gV.cp * (tret - tsup)      # required cooling at the chiller evaporator
+    tcoolin = gV.VCC_tcoolin                     # condenser water inlet temperature in [K]
     
     if qcolddot == 0:
         wdot = 0
@@ -46,7 +55,6 @@ def calc_VCC(mdot, tsup, tret, gV):
         C = 0.1980E3 * tret / qcolddot + 168.1846E3 * (tcoolin - tret) / (tcoolin * qcolddot)
         
         COP = 1 /( (1+C) / (B-A) -1 )
-        #print COP, "=COP"
         
         wdot = qcolddot / COP
          
@@ -60,10 +68,14 @@ def calc_VCC(mdot, tsup, tret, gV):
 def calc_Cinv_VCC(qcold, gV):
     """
     Annualized investment costs for the vapor compressor chiller
-    
-    :param qcolddot : float COOLING PEAK demand in WATT-HOUR
-    
-    :returns: InvCa in CHF/a
+
+    :type qcold : float
+    :param qcold: peak cooling demand in [W]
+    :param gV: globalvar.py
+
+    :returns InvCa: annualized chiller investment cost in CHF/a
+    :rtype InvCa: float
+
     """
     InvCa = 0.65 * 23E6 * gV.USD_TO_CHF * qcold / 37E6 / 25
     
