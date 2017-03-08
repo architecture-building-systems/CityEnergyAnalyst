@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-============================
 Data required for Slave from Master
 This File sets all variables for the slave optimization, that have to be set by the Master
-============================
-
 """
 from __future__ import division
 import numpy as np
@@ -20,7 +17,7 @@ __status__ = "Production"
 
 
 
-class MastertoSlave(object):
+class SlaveData(object):
     def __init__(self):            
         
         # Name the file which should be loaded:
