@@ -26,6 +26,13 @@ def weather_files(_):
         print(weather_name)
 
 
+def weather_path(args):
+    """Find the path to the weather file by name"""
+    import cea.inputlocator
+    weather_path = cea.inputlocator.InputLocator(None).get_weather(args.weather)
+    print(weather_path)
+
+
 def file_location(args):
     """Locate a file using the InputLocator. The file to find is named the same as the InputLocator
     attribute."""
@@ -50,6 +57,11 @@ def main(args):
 
     weather_files_parser = subparsers.add_parser('weather-files')
     weather_files_parser.set_defaults(func=weather_files)
+
+    weather_path_parser = subparsers.add_parser('weather-path')
+    weather_path_parser.add_argument('weather', metavar='ATTR',
+                                     help='The name of the weather file (from the weather-files list)')
+    weather_path_parser.set_defaults(func=weather_path)
 
     file_location_parser = subparsers.add_parser('locate')
     file_location_parser.add_argument('attribute', metavar='ATTR',

@@ -1,7 +1,7 @@
 """
 ArcGIS Tool classes for integrating the CEA with ArcGIS.
 
-These tools shell out to ``cea.py`` because the ArcGIS python version is old and we would like to decouple the
+These tools shell out to ``cli.py`` because the ArcGIS python version is old and we would like to decouple the
 python version used by CEA from the ArcGIS version.
 """
 import os
@@ -32,9 +32,10 @@ def add_message(msg, **kwargs):
 
 
 def get_weather_names():
-    """Shell out to cea.py and collect the list of weather files registered with the CEA"""
+    """Shell out to cli.py and collect the list of weather files registered with the CEA"""
     def get_weather_names_inner():
-        p = subprocess.Popen([get_python_exe(), '-u', '-m', 'cea.cea', 'weather-files'], stdout=subprocess.PIPE)
+        command = [get_python_exe(), '-u', '-m', 'cea.cli', 'weather-files']
+        p = subprocess.Popen(command, stdout=subprocess.PIPE)
         while True:
             line = p.stdout.readline()
             if line == '':
@@ -45,25 +46,25 @@ def get_weather_names():
 
 
 def get_weather(weather_name='default'):
-    """Shell out to cea.py and find the path to the weather file"""
+    """Shell out to cli.py and find the path to the weather file"""
     weather_path = subprocess.check_output(
-        [get_python_exe(), '-m', 'cea.cea', 'weather-path', weather_name]
+        [get_python_exe(), '-m', 'cea.cli', 'weather-path', weather_name]
     )
-    return weather_path
+    return weather_path.strip()
 
 
 def get_radiation(scenario_path):
-    """Shell out to cea.py and find the path to the ``radiation.csv`` file for the scenario."""
+    """Shell out to cli.py and find the path to the ``radiation.csv`` file for the scenario."""
     radiation = subprocess.check_output(
-        [get_python_exe(), '-m', 'cea.cea', '--scenario', scenario_path, 'location', 'get_radiation'])
-    return radiation
+        [get_python_exe(), '-m', 'cea.cli', '--scenario', scenario_path, 'locate', 'get_radiation'])
+    return radiation.strip()
 
 
 def get_surface_properties(scenario_path):
-    """Shell out to cea.py and find the path to the ``surface_properties.csv`` file for the scenario."""
+    """Shell out to cli.py and find the path to the ``surface_properties.csv`` file for the scenario."""
     surface_properties = subprocess.check_output(
-        [get_python_exe(), '-m', 'cea.cea', '--scenario', scenario_path, 'location', 'get_surface_properties'])
-    return surface_properties
+        [get_python_exe(), '-m', 'cea.cli', '--scenario', scenario_path, 'locate', 'get_surface_properties'])
+    return surface_properties.strip()
 
 
 def get_python_exe():
@@ -71,5 +72,6 @@ def get_python_exe():
     try:
         with open(os.path.expanduser('~/cea_python.pth'), 'r') as f:
             python_exe = f.read().strip()
+            return python_exe
     except:
         raise exceptions.AssertionError("Could not find 'cea_python.pth' in home directory.")
