@@ -39,7 +39,7 @@ def mcda_indicators(individual, locator, plot = 0):
     """
     configKey = "".join(str(e)[0:4] for e in individual)
     print configKey
-    buildList = sFn.extractList(locator.pathRaw + "/Total.csv")
+    buildList = sFn.extract_building_names_from_csv(locator.pathRaw + "/Total.csv")
     gv = cea.globalvar.GlobalVariables()
     
     # Recover data from the PP activation file
