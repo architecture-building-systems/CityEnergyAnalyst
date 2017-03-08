@@ -58,7 +58,7 @@ def demand_calculation(locator, weather_path, gv):
 
     t0 = time.clock()
 
-    date = pd.date_range(gv.date_start, periods=8760, freq='H')
+    date = pd.date_range(gv.date_start, periods=8784, freq='H')
 
     # weather model
     weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
