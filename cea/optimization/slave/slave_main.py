@@ -6,8 +6,10 @@ Mixed-integer algorithm main
 """
 
 import time
-import cea.optimization.conversion_storage.slave.least_cost as least_cost
-import cea.optimization.conversion_storage.slave.seasonal_storage.storage_main as storage_main
+
+import cea.optimization.slave.seasonal_storage.storage_main as storage_main
+
+import cea.optimization.slave.least_cost as least_cost
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -20,13 +22,13 @@ __status__ = "Production"
 
 def slave_main(locator, master_to_slave_vars, solar_features, gv):
     """
-    This function calls the optimization storage and a least cost optimization fucntion.
+    This function calls the storage optimization and a least cost optimization function.
     Both functions aim at selecting the dispatch pattern of the technologies selected by the evolutionary algorithm.
 
     :param locator: locator class
     :param network_file_name: name of the network file
-    :param master_to_slave_vars: class MastertoSlaveVars containing the value of variables to be passed to the slave optimization
-    for each individual
+    :param master_to_slave_vars: class MastertoSlaveVars containing the value of variables to be passed to the slave
+                                 optimization for each individual
     :param solar_features: class solar_features
     :param gv: global variables class
     :type locator: class
@@ -38,7 +40,7 @@ def slave_main(locator, master_to_slave_vars, solar_features, gv):
              CO2_kg_eq: co2 emissions
              cost_sum: accumualted costs during operation
              QUncoveredDesign: part of the design load not covered
-             QUncoveredAnnual: part of the toal load not covered
+             QUncoveredAnnual: part of the total load not covered
     :rtype: float, float, float, float, float
 
     """
@@ -52,7 +54,7 @@ def slave_main(locator, master_to_slave_vars, solar_features, gv):
     QUncoveredDesign, QUncoveredAnnual = least_cost.least_cost_main(locator, master_to_slave_vars,
                                                                     solar_features, gv)
 
-    print " Slave Optimization done (", round(time.time()-t0,1)," seconds used for this task)"
+    print " Slave Optimization done (", round(time.time()-t0, 1), " seconds used for this task)"
 
     return E_oil_eq_MJ, CO2_kg_eq, cost_sum, QUncoveredDesign, QUncoveredAnnual
     
