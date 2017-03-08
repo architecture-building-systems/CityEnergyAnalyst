@@ -8,7 +8,7 @@ Normalize results
 from deap import base
 
 import cea.optimization.supportFn as sFn
-from cea.optimization.conversion_storage.master import evaluation as eI
+from cea.optimization.master import evaluation as eI
 
 reload(sFn)
 #reload(rep)
@@ -161,7 +161,7 @@ def decentralizeCosts(individual, locator, gV):
     :rtype: float
     """
     indCombi = sFn.individual_to_barcode(individual, gV)
-    buildList = sFn.extractList(locator.pathRaw + "/Total.csv")
+    buildList = sFn.extract_building_names_from_csv(locator.pathRaw + "/Total.csv")
     costsDisc = 0
 
     for i in range(len(indCombi)):

@@ -5,9 +5,11 @@ from __future__ import division
 import os
 from cea import globalvar as glob
 import pandas as pd
-import cea.optimization.conversion_storage.master.evaluation as eI
+import cea.optimization.master.evaluation as eI
 import numpy as np
 from deap import base
+
+import cea.optimization.master.selection as sel
 import cea.optimization.supportFn as sFn
 
 __author__ = "Sreepathi Bhargava Krishna"
@@ -66,6 +68,7 @@ def sensAnalysis(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, g
     os.chdir(locator.get_optimization_master_results_folder())
     pop, eps, testedPop = sFn.readCheckPoint(locator, gen, 0)
     toolbox = base.Toolbox()
+
     total_demand = pd.read_csv(locator.get_total_demand())
     buildList = total_demand.Name.values
     FactorResults = np.zeros((step + 1, bandwidth.nFactors * 2))

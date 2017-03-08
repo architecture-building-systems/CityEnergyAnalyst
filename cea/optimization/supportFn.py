@@ -15,20 +15,20 @@ from deap import creator
 import math
 
 
-def extractList(fName):
+def extract_building_names_from_csv(path_to_csv):
     """
     Extract the names of the buildings in the area
 
-    :param fName: csv file with the names of the buildings
-    :type fName: string
+    :param path_to_csv: csv file with the names of the buildings
+    :type path_to_csv: string
 
-    :returns: namesList, list of strings with the names of the buildings
+    :returns: building_names, list of strings with the names of the buildings
     :rtype: list
     """
-    df = pd.read_csv(fName, usecols=["Name"])
-    namesList = df['Name'].values.tolist()
+    df = pd.read_csv(path_to_csv, usecols=["Name"])
+    building_names = df['Name'].values.tolist()
 
-    return namesList
+    return building_names
 
 
 def extractDemand(fName, colNameList, nDay):
