@@ -1,7 +1,7 @@
 import os
-import subprocess
 
 import toolbox
+from interfaces.arcgis.toolbox import run_cli
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -68,24 +68,4 @@ class DemandTool(object):
         else:
             weather_path = toolbox.get_weather()
 
-        # find python executable to use
-        python_exe = toolbox.get_python_exe()
-        toolbox.add_message("Using python: %(python_exe)s", python_exe=python_exe)
-        assert os.path.exists(python_exe), 'Python interpreter (see above) not found.'
-
-        # run demand script in subprocess (for multiprocessing)
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        process = subprocess.Popen(
-            [python_exe, '-u', '-m', 'cea.cli', '--scenario', scenario_path, 'demand', '--weather', weather_path],
-            startupinfo=startupinfo,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
-        while True:
-            next_line = process.stdout.readline()
-            if next_line == '' and process.poll() is not None:
-                break
-            toolbox.add_message(next_line.rstrip())
-        stdout, stderr = process.communicate()
-        toolbox.add_message(stdout)
-        toolbox.add_message(stderr)
+        toolbox.run_cli(scenario_path, 'demand', '--weather', weather_path)
