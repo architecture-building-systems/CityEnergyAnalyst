@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 import pylab as plt
 
-import cea.optimization.conversion_storage.slave.seasonal_storage.design_operation as StDesOp
+import cea.optimization.slave.seasonal_storage.design_operation as StDesOp
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"

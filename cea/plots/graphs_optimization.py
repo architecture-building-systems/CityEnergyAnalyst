@@ -7,14 +7,15 @@ plot results of optimization
 
 from __future__ import division
 
+import os
+
 import matplotlib
 import matplotlib.cm as cmx
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import os
 
-import cea.optimization.conversion_storage.master.normalization as norm
+import cea.optimization.master.normalization as norm
 import cea.optimization.supportFn as sFn
 
 __author__ = "Jimeno A. Fonseca"
@@ -359,7 +360,7 @@ plot electricity imports and exports
 def Elec_ImportExport(individual, locator):
 
     # Extract Electricity needs
-    buildList = sFn.extractList(locator.pathRaw + "/Total.csv")
+    buildList = sFn.extract_building_names_from_csv(locator.pathRaw + "/Total.csv")
 
     allElec = np.zeros((8760,1))
 
@@ -399,7 +400,6 @@ test
 """
 
 def test_graphs_optimization():
-    import cea.inputlocator
     import cea.globalvar
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference

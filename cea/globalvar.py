@@ -41,7 +41,7 @@ class GlobalVariables(object):
         self.Cpw = 4.184  # heat capacity of water in kJ/kgK
         self.Flowtap = 0.036  # in m3/min == 12 l/min during 3 min every tap opening
         # constant values for HVAC
-        self.nrec_N = 0.75  # possilbe recovery
+        self.nrec_N = 0.75  # possible recovery
         self.NACH_inf_non_occ = 0.2  # num air exchanges due to infiltration when no occupied
         self.NACH_inf_occ = 0.5  # num air exchanges due to infiltration when occupied
         self.C1 = 0.054  # assumed a flat plate heat exchanger (-)
@@ -59,10 +59,10 @@ class GlobalVariables(object):
         self.effi = 0.6  # efficiency of pumps
         self.deltaP_l = 0.1  # delta of pressure
         self.fsr = 0.3  # factor for pressure calculation
-        # grey emssions
+        # grey emissions
         self.fwratio = 1.5  # conversion component's area to floor area
         self.sl_materials = 60  # service life of standard building components and materials
-        self.sl_services = 40  # service life of technical instalations
+        self.sl_services = 40  # service life of technical installations
         # constant variables for air conditioning fan
         self.Pfan = 0.55  # specific fan consumption in W/m3/h
 
@@ -70,7 +70,7 @@ class GlobalVariables(object):
         # optimization
         # ==============================================================================================================
 
-        self.sensibilityStep = 2  # the more, the longer the sensitibility analysis
+        self.sensibilityStep = 2  # the more, the longer the sensibility analysis
 
         ########################### User inputs
 
@@ -80,12 +80,12 @@ class GlobalVariables(object):
         self.initialInd = 4  # number of initial individuals
         self.NGEN = 10  # number of total generations
         self.fCheckPoint = 1  # frequency for the saving of checkpoints
-        self.maxTime = 7 * 24 * 3600  # maximum computional time [seconds]
+        self.maxTime = 7 * 24 * 3600  # maximum computational time [seconds]
 
         # Set Flags for different system setup preferences
 
         # self.NetworkLengthZernez = 864.0 #meters network length of maximum network, \
-        # then scaled by number of costumers (Zernez Specific), from J.Fonseca's PipsesData
+        # then scaled by number of costumers (Zernez Specific), from J.Fonseca's Pipes Data
 
         self.ZernezFlag = 0
         self.FlagBioGasFromAgriculture = 0  # 1 = Biogas from Agriculture, 0 = Biogas normal
@@ -124,7 +124,7 @@ class GlobalVariables(object):
         self.Qloss_Disc = 0.05  # Heat losses within a disconnected building
         self.Qmargin_Disc = 0.20  # Reliability margin for the system nominal capacity for decentralized systems
         self.QminShare = 0.10  # Minimum percentage for the installed capacity
-        self.K_DH = 0.25  # linear heat loss coefficient district heting network twin pipes groundfoss
+        self.K_DH = 0.25  # linear heat loss coefficient district heating network twin pipes ground loss
 
         # pipes location properties
         self.Z0 = 1.5  # location of pipe underground in m
@@ -275,7 +275,7 @@ class GlobalVariables(object):
         self.PipeCostPerMeterAnnual = self.PipeCostPerMeterInv / self.PipeLifeTime
 
         # Solar area to Wpeak
-        self.eta_area_to_peak = 0.16  # Peak Capacity - Efficisency, how much kW per area there are, valid for PV and PVT (after Jimeno's J+)
+        self.eta_area_to_peak = 0.16  # Peak Capacity - Efficiency, how much kW per area there are, valid for PV and PVT (after Jimeno's J+)
 
         # Pressure losses
         # self.DeltaP_DCN = 1.0 #Pa - change
@@ -290,8 +290,8 @@ class GlobalVariables(object):
         # Heat Exchangers
         self.U_cool = 2500  # W/m2K
         self.U_heat = 2500  # W/m2K
-        self.dT_heat = 5  # K - pinchdelta at design conditions
-        self.dT_cool = 1  # K - pinchdelta at design conditions
+        self.dT_heat = 5  # K - pinch delta at design conditions
+        self.dT_cool = 1  # K - pinch delta at design conditions
 
         # Heat pump
         self.HP_maxSize = 20.0E6  # max thermal design size [Wth]

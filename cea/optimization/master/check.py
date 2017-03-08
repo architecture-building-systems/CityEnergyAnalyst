@@ -11,7 +11,6 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 
-import cea.optimization.conversion_storage.master.generation as ci
 import cea.optimization.supportFn as sFn
 
 __author__ =  "Thuy-An Nguyen"
@@ -130,7 +129,7 @@ def GHPCheck(individual, locator, Qnom, gv):
     areaArray = np.array( pd.read_csv(locator.get_geothermal_potential(), usecols=["Area_geo"] ) )
     buildArray = np.array( pd.read_csv(locator.get_geothermal_potential(), usecols=["Name"] ) )
     
-    buildList = sFn.extractList(locator.get_total_demand())
+    buildList = sFn.extract_building_names_from_csv(locator.get_total_demand())
     barcode = sFn.individual_to_barcode(individual)
     
     Qallowed = 0
