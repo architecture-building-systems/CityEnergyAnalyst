@@ -77,7 +77,7 @@ class DemandTool(object):
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         process = subprocess.Popen(
-            [python_exe, '-u', '-m', 'cea.cea', '--scenario', scenario_path, 'demand', '--weather', weather_path],
+            [python_exe, '-u', '-m', 'cea.cli', '--scenario', scenario_path, 'demand', '--weather', weather_path],
             startupinfo=startupinfo,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
