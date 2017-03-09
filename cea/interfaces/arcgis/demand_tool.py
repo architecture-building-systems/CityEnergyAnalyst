@@ -1,7 +1,6 @@
 import os
 
 import toolbox
-from interfaces.arcgis.toolbox import run_cli
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"

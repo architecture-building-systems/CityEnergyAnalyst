@@ -15,10 +15,8 @@ __status__ = "Production"
 
 try:
     from setuptools import setup
-    from setuptools.command.install import install
 except ImportError:
     from distutils.core import setup
-    from distutils.command.install import install
 
 LONG_DESCRIPTION = """TODO: add long description"""
 
@@ -31,19 +29,6 @@ else:
                         'doit==0.29.0']
 
 
-class PostInstall(install):
-    """Add a link to the python.exe that ran setup.py to user's home directory in the file cea_python.pth"""
-    def run(self):
-        # do the stuff ``install`` normally does
-        install.run(self)
-
-        # write out path to python.exe to the file cea_python.pth
-        import sys
-        import os.path
-        with open(os.path.expanduser('~/cea_python.pth'), 'w') as f:
-            f.write(sys.executable)
-
-
 setup(name='cityenergyanalyst',
       version='1.0',
       description='City Energy Analyst',
@@ -54,8 +39,7 @@ setup(name='cityenergyanalyst',
       long_description=LONG_DESCRIPTION,
       packages=['cea', 'cea.analysis', 'cea.analysis.sensitivity', 'cea.demand', 'cea.demand.preprocessing',
                 'cea.geometry', 'cea.GUI', 'cea.optimization', 'cea.plots', 'cea.resources', 'cea.technologies',
-                'cea.utilities'],
+                'cea.utilities', 'cea.interfaces.arcgis'],
       package_data={},
       install_requires=INSTALL_REQUIRES,
-      cmdclass={'install': PostInstall},
       )

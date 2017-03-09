@@ -1,7 +1,7 @@
 import os
 
+from cea.interfaces.arcgis.toolbox import add_message
 from cea.plots.graphs_demand import demand_graph_fields
-from interfaces.arcgis.toolbox import add_message
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
