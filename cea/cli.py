@@ -15,7 +15,12 @@ def demand(args):
 def demand_helper(args):
     """Run the demand helper script with the arguments provided."""
     import cea.demand.preprocessing.properties
-    cea.demand.preprocessing.properties.run_as_script(scenario_path=args.scenario)
+    cea.demand.preprocessing.properties.run_as_script(scenario_path=args.scenario,
+                                                      prop_thermal_flag='thermal' in args.archetypes,
+                                                      prop_architecture_flag='architecture' in args.archetypes,
+                                                      prop_hvac_flag='HVAC' in args.archetypes,
+                                                      prop_comfort_flag='comfort' in args.archetypes,
+                                                      prop_internal_loads_flag='internal-loads' in args.archetypes)
 
 
 def weather_files(_):
@@ -53,6 +58,9 @@ def main(args):
     demand_parser.set_defaults(func=demand)
 
     demand_helper_parser = subparsers.add_parser('demand-helper')
+    demand_helper_parser.add_argument('--archetypes', help='List of archetypes process', nargs="*",
+                                      default=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'],
+                                      choices=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'])
     demand_helper_parser.set_defaults(func=demand_helper)
 
     weather_files_parser = subparsers.add_parser('weather-files')
