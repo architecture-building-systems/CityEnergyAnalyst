@@ -1,6 +1,6 @@
 import os
 
-from cea.interfaces.arcgis.toolbox import add_message
+from cea.interfaces.arcgis.CityEnergyAnalyst import add_message
 from cea.plots.graphs_demand import demand_graph_fields
 
 __author__ = "Daren Thomas"
