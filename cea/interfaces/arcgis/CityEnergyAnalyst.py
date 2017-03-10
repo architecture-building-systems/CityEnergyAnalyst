@@ -36,9 +36,9 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
-        # self.tools = [EmbodiedEnergyTool, HeatmapsTool, DemandGraphsTool,
+        # self.tools = [HeatmapsTool, DemandGraphsTool,
         #               RadiationTool, ScenarioPlotsTool, BenchmarkGraphsTool, MobilityTool]
-        self.tools = [DemandTool, DataHelperTool, BenchmarkGraphsTool, EmissionsTool]
+        self.tools = [DemandTool, DataHelperTool, BenchmarkGraphsTool, EmissionsTool, EmbodiedEnergyTool]
 
 
 class DemandTool(object):
@@ -297,6 +297,45 @@ class EmissionsTool(object):
         }
         extra_files_to_create = [key for key in flags if flags[key]]
         run_cli(scenario_path, 'emissions', '--extra-files-to-create', *extra_files_to_create)
+
+
+class EmbodiedEnergyTool(object):
+    def __init__(self):
+        self.label = 'Embodied Energy'
+        self.description = 'Calculate the Emissions for operation'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        import arcpy
+        yearcalc = arcpy.Parameter(
+            displayName="Year to calculate",
+            name="yearcalc",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        return [yearcalc, scenario_path]
+
+    def isLicensed(self):
+        return True
+
+    def updateParameters(self, parameters):
+        return
+
+    def updateMessages(self, parameters):
+        return
+
+    def execute(self, parameters, _):
+        year_to_calculate = int(parameters[0].valueAsText)
+        scenario_path = parameters[1].valueAsText
+        run_cli(scenario_path, 'embodied-energy', '--year-to-calculate', year_to_calculate)
 
 
 def add_message(msg, **kwargs):
