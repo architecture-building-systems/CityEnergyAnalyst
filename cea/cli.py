@@ -23,6 +23,22 @@ def demand_helper(args):
                                                       prop_internal_loads_flag='internal-loads' in args.archetypes)
 
 
+def emissions(args):
+    """Run the emissions script with the arguments provided."""
+    import cea.analysis.operation
+    import cea.inputlocator
+    cea.analysis.operation.lca_operation(locator=cea.inputlocator.InputLocator(args.scenario),
+                                         Qww_flag='Qww' in args.extra_files_to_create,
+                                         Qhs_flag='Qhs' in args.extra_files_to_create,
+                                         Qcs_flag='Qcs' in args.extra_files_to_create,
+                                         Qcdata_flag='Qcdata' in args.extra_files_to_create,
+                                         Qcrefri_flag='Qcrefri' in args.extra_files_to_create,
+                                         Eal_flag='Eal' in args.extra_files_to_create,
+                                         Eaux_flag='Eaux' in args.extra_files_to_create,
+                                         Epro_flag='Epro' in args.extra_files_to_create,
+                                         Edata_flag='Edata' in args.extra_files_to_create,)
+
+
 def benchmark_graphs(args):
     """Run the benchmark graphs script with the arguments provided."""
     import cea.analysis.benchmark
@@ -70,6 +86,13 @@ def main():
                                       default=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'],
                                       choices=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'])
     demand_helper_parser.set_defaults(func=demand_helper)
+
+    emissions_parser = subparsers.add_parser('emissions')
+    emissions_parser.add_argument('--extra-files-to-create', help='List of variables to create separate files for',
+                                  nargs='*',
+                                  default=['Qcs', 'Qhs', 'Qcrefri', 'Eal', 'Epro', 'Eaux', 'Qww', 'Edata', 'Qcdata'],
+                                  choices=['Qcs', 'Qhs', 'Qcrefri', 'Eal', 'Epro', 'Eaux', 'Qww', 'Edata', 'Qcdata'])
+    emissions_parser.set_defaults(func=emissions)
 
     benchmark_graphs_parser = subparsers.add_parser('benchmark-graphs')
     benchmark_graphs_parser.add_argument('--output-file', help='File (*.pdf) to store the output in')
