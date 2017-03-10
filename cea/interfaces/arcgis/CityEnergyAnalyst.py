@@ -38,7 +38,7 @@ class Toolbox(object):
         self.alias = 'cea'
         # self.tools = [DataHelperTool, DemandTool, EmissionsTool, EmbodiedEnergyTool, HeatmapsTool, DemandGraphsTool,
         #               RadiationTool, ScenarioPlotsTool, BenchmarkGraphsTool, MobilityTool]
-        self.tools = [DemandTool, DataHelperTool]
+        self.tools = [DemandTool, DataHelperTool, BenchmarkGraphsTool]
 
 
 class DemandTool(object):
@@ -165,6 +165,41 @@ class DataHelperTool(object):
         archetypes = [key for key in flags.keys() if flags[key]]
         run_cli(scenario_path, 'demand-helper', '--archetypes', *archetypes)
 
+class BenchmarkGraphsTool(object):
+    def __init__(self):
+        self.label = 'Benchmark graphs'
+        self.description = 'Create benchmark plots of scenarios in a folder'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        import arcpy
+        scenarios = arcpy.Parameter(
+            displayName="Path to the scenarios to plot",
+            name="scenarios",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input",
+            multiValue=True)
+        output_file = arcpy.Parameter(
+            displayName="Path to output PDF",
+            name="output_file",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Output")
+        output_file.filter.list = ['pdf']
+        return [scenarios, output_file]
+
+    def execute(self, parameters, messages):
+        import arcpy
+        scenarios = parameters[0].valueAsText
+        scenarios = scenarios.replace('"', '')
+        scenarios = scenarios.replace("'", '')
+        scenarios = scenarios.split(';')
+        arcpy.AddMessage(scenarios)
+        output_file = parameters[1].valueAsText
+        run_cli(None, 'benchmark-graphs', '--output-file', output_file, '--scenarios', *scenarios)
+        return
+
 
 def add_message(msg, **kwargs):
     import arcpy
@@ -195,7 +230,7 @@ def get_weather_names():
 
 def get_weather(weather_name='default'):
     """Shell out to cli.py and find the path to the weather file"""
-    return _cli_output('', 'weather-path', weather_name)
+    return _cli_output(None, 'weather-path', weather_name)
 
 
 def get_radiation(scenario_path):
@@ -218,26 +253,34 @@ def get_python_exe():
         raise AssertionError("Could not find 'cea_python.pth' in home directory.")
 
 
-def _cli_output(scenario_path, *args):
+def _cli_output(scenario_path=None, *args):
     """Run the CLI in a subprocess without showing windows and return the output as a string, whitespace
     is stripped from the output"""
     startupinfo = subprocess.STARTUPINFO()
     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    result = subprocess.check_output(
-        [get_python_exe(), '-m', 'cea.cli', '--scenario', scenario_path] + list(args),
-        startupinfo=startupinfo)
+
+    command = [get_python_exe(), '-m', 'cea.cli']
+    if scenario_path:
+        command.append('--scenario')
+        command.append(scenario_path)
+    command.extend(args)
+
+    result = subprocess.check_output(command, startupinfo=startupinfo)
     return result.strip()
 
 
-def run_cli(scenario_path, *args):
+def run_cli(scenario_path=None, *args):
     """Run the CLI in a subprocess without showing windows"""
     startupinfo = subprocess.STARTUPINFO()
     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    process = subprocess.Popen(
-        [get_python_exe(), '-u', '-m', 'cea.cli', '--scenario', scenario_path] + list(args),
-        startupinfo=startupinfo,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+
+    command = [get_python_exe(), '-u', '-m', 'cea.cli']
+    if scenario_path:
+        command.append('--scenario')
+        command.append(scenario_path)
+    command.extend(args)
+
+    process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     while True:
         next_line = process.stdout.readline()
         if next_line == '' and process.poll() is not None:
