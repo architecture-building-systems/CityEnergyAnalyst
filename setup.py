@@ -39,7 +39,7 @@ setup(name='cityenergyanalyst',
       long_description=LONG_DESCRIPTION,
       packages=['cea', 'cea.analysis', 'cea.analysis.sensitivity', 'cea.demand', 'cea.demand.preprocessing',
                 'cea.geometry', 'cea.GUI', 'cea.optimization', 'cea.plots', 'cea.resources', 'cea.technologies',
-                'cea.utilities', 'cea.interfaces.arcgis'],
+                'cea.utilities', 'cea.interfaces', 'cea.interfaces.arcgis'],
       package_data={},
       install_requires=INSTALL_REQUIRES,
       )
