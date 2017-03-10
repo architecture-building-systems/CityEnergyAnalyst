@@ -42,4 +42,7 @@ setup(name='cityenergyanalyst',
                 'cea.utilities', 'cea.interfaces', 'cea.interfaces.arcgis'],
       package_data={},
       install_requires=INSTALL_REQUIRES,
+      entry_points={
+          'console_scripts': ['cea=cea.cli:main'],
+      },
       )

@@ -23,6 +23,14 @@ def demand_helper(args):
                                                       prop_internal_loads_flag='internal-loads' in args.archetypes)
 
 
+def benchmark_graphs(args):
+    """Run the benchmark graphs script with the arguments provided."""
+    import cea.analysis.benchmark
+    import cea.inputlocator
+    locator_list = [cea.inputlocator.InputLocator(scenario) for scenario in args.scenarios]
+    cea.analysis.benchmark.benchmark(locator_list=locator_list, output_file=args.output_file)
+
+
 def weather_files(_):
     """List the available weather files to STDOUT."""
     import cea.inputlocator
@@ -46,7 +54,7 @@ def file_location(args):
     print(getattr(locator, args.attribute)())
 
 
-def main(args):
+def main():
     """Parse the arguments and run the program."""
     import argparse
     parser = argparse.ArgumentParser()
@@ -63,6 +71,12 @@ def main(args):
                                       choices=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'])
     demand_helper_parser.set_defaults(func=demand_helper)
 
+    benchmark_graphs_parser = subparsers.add_parser('benchmark-graphs')
+    benchmark_graphs_parser.add_argument('--output-file', help='File (*.pdf) to store the output in')
+    benchmark_graphs_parser.add_argument('--scenarios', help='List of scenarios to benchmark',
+                                         nargs='+', default=['.'])
+    benchmark_graphs_parser.set_defaults(func=benchmark_graphs)
+
     weather_files_parser = subparsers.add_parser('weather-files')
     weather_files_parser.set_defaults(func=weather_files)
 
@@ -76,9 +90,9 @@ def main(args):
                                       help='The name of the file to find, denoted by InputLocator.ATTR()')
     file_location_parser.set_defaults(func=file_location)
 
-    parsed_args = parser.parse_args(args)
+    parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main()
