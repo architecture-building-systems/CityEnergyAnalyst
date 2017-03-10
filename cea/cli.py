@@ -39,6 +39,16 @@ def emissions(args):
                                          Edata_flag='Edata' in args.extra_files_to_create,)
 
 
+def embodied_energy(args):
+    """Run the embodied energy script with the arguments provided."""
+    import cea.analysis.embodied
+    import cea.inputlocator
+    import cea.globalvar
+    gv = cea.globalvar.GlobalVariables()
+    cea.analysis.embodied.lca_embodied(year_to_calculate=args.year_to_calculate,
+                                       locator=cea.inputlocator.InputLocator(args.scenario), gv=gv)
+
+
 def benchmark_graphs(args):
     """Run the benchmark graphs script with the arguments provided."""
     import cea.analysis.benchmark
@@ -93,6 +103,10 @@ def main():
                                   default=['Qcs', 'Qhs', 'Qcrefri', 'Eal', 'Epro', 'Eaux', 'Qww', 'Edata', 'Qcdata'],
                                   choices=['Qcs', 'Qhs', 'Qcrefri', 'Eal', 'Epro', 'Eaux', 'Qww', 'Edata', 'Qcdata'])
     emissions_parser.set_defaults(func=emissions)
+
+    embodied_energy_parser = subparsers.add_parser('embodied-energy')
+    embodied_energy_parser.add_argument('--year-to-calculate', help='Year to calculate for', type=int, default=2017)
+    embodied_energy_parser.set_defaults(func=embodied_energy)
 
     benchmark_graphs_parser = subparsers.add_parser('benchmark-graphs')
     benchmark_graphs_parser.add_argument('--output-file', help='File (*.pdf) to store the output in')
