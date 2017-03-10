@@ -38,7 +38,7 @@ class Toolbox(object):
         self.alias = 'cea'
         # self.tools = [DataHelperTool, DemandTool, EmissionsTool, EmbodiedEnergyTool, HeatmapsTool, DemandGraphsTool,
         #               RadiationTool, ScenarioPlotsTool, BenchmarkGraphsTool, MobilityTool]
-        self.tools = [DemandTool]
+        self.tools = [DemandTool, DataHelperTool]
 
 
 class DemandTool(object):
@@ -97,6 +97,73 @@ class DemandTool(object):
             weather_path = get_weather()
 
         run_cli(scenario_path, 'demand', '--weather', weather_path)
+
+
+class DataHelperTool(object):
+    """
+    integrate the cea/demand/preprocessing/properties.py script with ArcGIS.
+    """
+
+    def __init__(self):
+        self.label = 'Data helper'
+        self.description = 'Query characteristics of buildings and systems from statistical data'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        import arcpy
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+        prop_thermal_flag = arcpy.Parameter(
+            displayName="Generate thermal properties",
+            name="prop_thermal_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        prop_thermal_flag.value = True
+        prop_architecture_flag = arcpy.Parameter(
+            displayName="Generate architectural properties",
+            name="prop_architecture_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        prop_architecture_flag.value = True
+        prop_HVAC_flag = arcpy.Parameter(
+            displayName="Generate technical systems properties",
+            name="prop_HVAC_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        prop_HVAC_flag.value = True
+        prop_comfort_flag = arcpy.Parameter(
+            displayName="Generate comfort properties",
+            name="prop_comfort_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        prop_comfort_flag.value = True
+        prop_internal_loads_flag = arcpy.Parameter(
+            displayName="Generate internal loads properties",
+            name="prop_internal_loads_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        prop_internal_loads_flag.value = True
+        return [scenario_path, prop_thermal_flag, prop_architecture_flag, prop_HVAC_flag, prop_comfort_flag,
+                prop_internal_loads_flag]
+
+    def execute(self, parameters, _):
+        scenario_path = parameters[0].valueAsText
+        flags = {'thermal': parameters[1].value,
+                 'architecture': parameters[2].value,
+                 'HVAC': parameters[3].value,
+                 'comfort': parameters[4].value,
+                 'internal-loads': parameters[5].value}
+        archetypes = [key for key in flags.keys() if flags[key]]
+        run_cli(scenario_path, 'demand-helper', '--archetypes', *archetypes)
 
 
 def add_message(msg, **kwargs):
