@@ -49,6 +49,13 @@ def embodied_energy(args):
                                        locator=cea.inputlocator.InputLocator(args.scenario), gv=gv)
 
 
+def mobility(args):
+    """Run the mobility script with the arguments provided."""
+    import cea.analysis.mobility
+    import cea.inputlocator
+    cea.analysis.mobility.lca_mobility(locator=cea.inputlocator.InputLocator(args.scenario))
+
+
 def benchmark_graphs(args):
     """Run the benchmark graphs script with the arguments provided."""
     import cea.analysis.benchmark
@@ -107,6 +114,9 @@ def main():
     embodied_energy_parser = subparsers.add_parser('embodied-energy')
     embodied_energy_parser.add_argument('--year-to-calculate', help='Year to calculate for', type=int, default=2017)
     embodied_energy_parser.set_defaults(func=embodied_energy)
+
+    mobility_parser = subparsers.add_parser('mobility')
+    mobility_parser.set_defaults(func=mobility)
 
     benchmark_graphs_parser = subparsers.add_parser('benchmark-graphs')
     benchmark_graphs_parser.add_argument('--output-file', help='File (*.pdf) to store the output in')

@@ -22,23 +22,14 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-# DataHelperTool = cea.GUI.data_helper_tool.DataHelperTool
-# EmissionsTool = cea.GUI.emissions_tool.EmissionsTool
-# EmbodiedEnergyTool = cea.GUI.embodied_energy_tool.EmbodiedEnergyTool
-# HeatmapsTool = cea.GUI.heatmaps_tool.HeatmapsTool
-# DemandGraphsTool = cea.GUI.demand_graphs_tool.DemandGraphsTool
-# RadiationTool = cea.GUI.radiation_tool.RadiationTool
-# ScenarioPlotsTool = cea.GUI.scenario_plots_tool.ScenarioPlotsTool
-# BenchmarkGraphsTool = cea.GUI.benchmark_graphs_tool.BenchmarkGraphsTool
-# MobilityTool = cea.GUI.mobility_tool.MobilityTool
-
 class Toolbox(object):
+    """List the tools to show in the toolbox."""
     def __init__(self):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
         # self.tools = [HeatmapsTool, DemandGraphsTool,
-        #               RadiationTool, ScenarioPlotsTool, BenchmarkGraphsTool, MobilityTool]
-        self.tools = [DemandTool, DataHelperTool, BenchmarkGraphsTool, EmissionsTool, EmbodiedEnergyTool]
+        #               RadiationTool, ScenarioPlotsTool, BenchmarkGraphsTool]
+        self.tools = [DemandTool, DataHelperTool, BenchmarkGraphsTool, EmissionsTool, EmbodiedEnergyTool, MobilityTool]
 
 
 class DemandTool(object):
@@ -166,6 +157,7 @@ class DataHelperTool(object):
         run_cli(scenario_path, 'demand-helper', '--archetypes', *archetypes)
 
 class BenchmarkGraphsTool(object):
+    """Integrates the cea/analysis/benchmark.py tool with ArcGIS"""
     def __init__(self):
         self.label = 'Benchmark graphs'
         self.description = 'Create benchmark plots of scenarios in a folder'
@@ -323,19 +315,32 @@ class EmbodiedEnergyTool(object):
 
         return [yearcalc, scenario_path]
 
-    def isLicensed(self):
-        return True
-
-    def updateParameters(self, parameters):
-        return
-
-    def updateMessages(self, parameters):
-        return
-
     def execute(self, parameters, _):
         year_to_calculate = int(parameters[0].valueAsText)
         scenario_path = parameters[1].valueAsText
         run_cli(scenario_path, 'embodied-energy', '--year-to-calculate', year_to_calculate)
+
+class MobilityTool(object):
+    """Integrates the cea/analysis/mobility.py script with ArcGIS."""
+    def __init__(self):
+        self.label = 'Emissions Mobility'
+        self.description = 'Calculate emissions and primary energy due to mobility'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        import arcpy
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        return [scenario_path]
+
+    def execute(self, parameters, messages):
+        scenario_path = parameters[0].valueAsText
+        run_cli(scenario_path, 'mobility')
 
 
 def add_message(msg, **kwargs):
@@ -346,7 +351,7 @@ def add_message(msg, **kwargs):
     arcpy.AddMessage(msg)
     log_file = os.path.join(tempfile.gettempdir(), 'cea.log')
     with open(log_file, 'a') as log:
-        log.write(msg)
+        log.write(str(msg))
 
 
 def get_weather_names():
@@ -415,8 +420,8 @@ def run_cli(scenario_path=None, *args):
     if scenario_path:
         command.append('--scenario')
         command.append(scenario_path)
-    command.extend(args)
-
+    command.extend(map(str, args))
+    add_message(command)
     process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     while True:
         next_line = process.stdout.readline()
