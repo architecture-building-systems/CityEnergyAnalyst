@@ -87,6 +87,23 @@ def file_location(args):
     print(getattr(locator, args.attribute)())
 
 
+def demand_graphs(args):
+    """Run the demand graphs script.
+    If ``args.list_fields`` is set, then just return the list of valid fields - one per line.
+    """
+    import cea.plots.graphs_demand
+
+    if args.list_fields:
+        fields = cea.plots.graphs_demand.demand_graph_fields(args.scenario)
+        print('\n'.join(sorted(fields)))
+    else:
+        import cea.inputlocator
+        import cea.globalvar
+        locator = cea.inputlocator.InputLocator(args.scenario)
+        gv = cea.globalvar.GlobalVariables()
+        cea.plots.graphs_demand.graphs_demand(locator, args.analysis_fields[:4], gv)
+
+
 def main():
     """Parse the arguments and run the program."""
     import argparse
@@ -136,6 +153,13 @@ def main():
     file_location_parser.add_argument('attribute', metavar='ATTR',
                                       help='The name of the file to find, denoted by InputLocator.ATTR()')
     file_location_parser.set_defaults(func=file_location)
+
+    demand_graph_parser = subparsers.add_parser('demand-graphs')
+    demand_graph_parser.add_argument('--list-fields', action='store_true', default=False,
+                               help='List the valid fields for the --analysis-fields arguments, one per line.')
+    demand_graph_parser.add_argument('--analysis-fields', nargs='+', default=[],
+                               help='The list of fields to graph. See --list-fields option for valid values. Max 4.')
+    demand_graph_parser.set_defaults(func=demand_graphs)
 
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)
