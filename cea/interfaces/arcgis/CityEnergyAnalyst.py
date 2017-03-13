@@ -27,9 +27,9 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
-        # self.tools = [HeatmapsTool, DemandGraphsTool,
-        #               RadiationTool, ScenarioPlotsTool, BenchmarkGraphsTool]
-        self.tools = [DemandTool, DataHelperTool, BenchmarkGraphsTool, EmissionsTool, EmbodiedEnergyTool, MobilityTool]
+        # self.tools = [HeatmapsTool, RadiationTool, ScenarioPlotsTool, BenchmarkGraphsTool]
+        self.tools = [DemandTool, DataHelperTool, BenchmarkGraphsTool, EmissionsTool, EmbodiedEnergyTool, MobilityTool,
+                      DemandGraphsTool]
 
 
 class DemandTool(object):
@@ -155,6 +155,7 @@ class DataHelperTool(object):
                  'internal-loads': parameters[5].value}
         archetypes = [key for key in flags.keys() if flags[key]]
         run_cli(scenario_path, 'demand-helper', '--archetypes', *archetypes)
+
 
 class BenchmarkGraphsTool(object):
     """Integrates the cea/analysis/benchmark.py tool with ArcGIS"""
@@ -320,6 +321,7 @@ class EmbodiedEnergyTool(object):
         scenario_path = parameters[1].valueAsText
         run_cli(scenario_path, 'embodied-energy', '--year-to-calculate', year_to_calculate)
 
+
 class MobilityTool(object):
     """Integrates the cea/analysis/mobility.py script with ArcGIS."""
     def __init__(self):
@@ -341,6 +343,46 @@ class MobilityTool(object):
     def execute(self, parameters, messages):
         scenario_path = parameters[0].valueAsText
         run_cli(scenario_path, 'mobility')
+
+
+class DemandGraphsTool(object):
+    def __init__(self):
+        self.label = 'Demand graphs'
+        self.description = 'Calculate Graphs of the Demand'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        import arcpy
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+        analysis_fields = arcpy.Parameter(
+            displayName="Variables to analyse",
+            name="analysis_fields",
+            datatype="String",
+            parameterType="Required",
+            multiValue=True,
+            direction="Input")
+        analysis_fields.filter.list = []
+        return [scenario_path, analysis_fields]
+
+    def updateParameters(self, parameters):
+        scenario_path = parameters[0].valueAsText
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+        analysis_fields = parameters[1]
+        fields = _cli_output(scenario_path, 'demand-graphs', '--list-fields').split()
+        analysis_fields.filter.list = list(fields)
+        return
+
+    def execute(self, parameters, messages):
+        scenario_path = parameters[0].valueAsText
+        analysis_fields = parameters[1].valueAsText.split(';')[:4]  # max 4 fields for analysis
+        run_cli(scenario_path, 'demand-graphs', '--analysis-fields', *analysis_fields)
 
 
 def add_message(msg, **kwargs):

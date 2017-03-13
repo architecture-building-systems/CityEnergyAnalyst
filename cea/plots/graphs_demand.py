@@ -44,6 +44,8 @@ def graphs_demand(locator, analysis_fields, gv):
     fields_date = analysis_fields + ['DATE']
     num_buildings = len(building_names)
 
+    print('Storing results in: %s' % locator.get_demand_plots_folder())
+
     if gv.multiprocessing and mp.cpu_count() > 1:
         pool = mp.Pool()
         gv.log("Using %i CPU's" % mp.cpu_count())
@@ -55,13 +57,15 @@ def graphs_demand(locator, analysis_fields, gv):
             joblist.append(job)
         for i, job in enumerate(joblist):
             job.get(60)
-            gv.log('Building No. %(bno)i completed out of %(btot)i', bno=i + 1, btot=num_buildings)
+            gv.log('Building No. %(bno)i completed out of %(btot)i: %(bname)s', bno=i + 1, btot=num_buildings,
+                   bname=building_names[i])
         pool.close()
     else:
         for i, name in enumerate(building_names):
             create_demand_graph_for_building(analysis_fields, area_df, color_palette, fields_date, locator, name,
                                              total_demand)
-            gv.log('Building No. %(bno)i completed out of %(btot)i', bno=i+1, btot=num_buildings)
+            gv.log('Building No. %(bno)i completed out of %(btot)i: %(bname)s', bno=i+1, btot=num_buildings,
+                   bname=building_names[i])
 
 
 def create_demand_graph_for_building(analysis_fields, area_df, color_palette, fields_date, locator, name, total_demand):
@@ -119,6 +123,8 @@ def run_as_script(scenario_path=None, analysis_fields=["Ealf_kWh", "Qhsf_kWh", "
 
 
 def demand_graph_fields(scenario_path):
+    """Lists the available fields for the demand graphs - these are fields that are present in both the
+    building demand results files as well as the totals file (albeit with different units)."""
     locator = cea.inputlocator.InputLocator(scenario_path)
     df_total_demand = pd.read_csv(locator.get_total_demand())
     total_fields = set(df_total_demand.columns.tolist())
