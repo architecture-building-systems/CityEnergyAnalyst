@@ -110,6 +110,52 @@ def scenario_plots(args):
     cea.plots.scenario_plots.plot_scenarios(scenarios=args.scenarios, output_file=args.output_file)
 
 
+def latitude(args):
+    """Return the latitude of the scenario, based on the building geometry shape file."""
+    lat = _get_latitude(args.scenario)
+    print(lat)
+
+
+def _get_latitude(scenario_path):
+    import fiona
+    import cea.inputlocator
+    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_building_geometry()) as shp:
+        lat = shp.crs['lat_0']
+    return lat
+
+
+def longitude(args):
+    """Return the longitude of the scenario, based on the building geometry shape file."""
+    lon = _get_longitude(args.scenario)
+    print(lon)
+
+
+def _get_longitude(scenario_path):
+    import fiona
+    import cea.inputlocator
+    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_building_geometry()) as shp:
+        lon = shp.crs['lon_0']
+    return lon
+
+
+def radiation(args):
+    """Run the radiation script with the arguments provided."""
+    import cea.resources.radiation
+    import cea.inputlocator
+    import cea.globalvar
+
+    if not args.latitude:
+        args.latitude = _get_latitude(args.scenario)
+    if not args.longitude:
+        args.longitude = _get_longitude(args.scenario)
+
+    cea.resources.radiation.solar_radiation_vertical(locator=cea.inputlocator.InputLocator(args.scenario),
+                                                     path_arcgis_db=args.arcgis_db, latitude=args.latitude,
+                                                     longitude=args.longitude, year=args.year,
+                                                     gv=cea.globalvar.GlobalVariables(),
+                                                     weather_path=args.weather_path)
+
+
 def main():
     """Parse the arguments and run the program."""
     import argparse
@@ -171,6 +217,22 @@ def main():
     scenario_plots_parser.add_argument('--output-file', required=True, help='The path to the output pdf file to write.')
     scenario_plots_parser.add_argument('--scenarios', required=True, nargs='+', help='The list of scenarios to plot')
     scenario_plots_parser.set_defaults(func=scenario_plots)
+    
+    latitude_parser = subparsers.add_parser('latitude')
+    latitude_parser.set_defaults(func=latitude)
+
+    longitude_parser = subparsers.add_parser('longitude')
+    longitude_parser.set_defaults(func=longitude)
+
+    radiation_parser = subparsers.add_parser('radiation')
+    radiation_parser.add_argument('--arcgis-db', help='The path to the ArcGIS database',
+                                  default=os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb')))
+    radiation_parser.add_argument('--latitude', help='Latitude to use for calculations.', type=float)
+    radiation_parser.add_argument('--longitude', help='Longitude to use for calculations.', type=float)
+    radiation_parser.add_argument('--year', help='Year to use for calculations.', type=int, default=2014)
+    radiation_parser.add_argument('--weather-path', help='Path to weather file.')
+    radiation_parser.set_defaults(func=radiation)
+
 
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)
