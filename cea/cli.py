@@ -104,6 +104,12 @@ def demand_graphs(args):
         cea.plots.graphs_demand.graphs_demand(locator, args.analysis_fields[:4], gv)
 
 
+def scenario_plots(args):
+    """Run the scenario plots script with the provided arguments (``output_file`` and ``scenarios``)."""
+    import cea.plots.scenario_plots
+    cea.plots.scenario_plots.plot_scenarios(scenarios=args.scenarios, output_file=args.output_file)
+
+
 def main():
     """Parse the arguments and run the program."""
     import argparse
@@ -160,6 +166,11 @@ def main():
     demand_graph_parser.add_argument('--analysis-fields', nargs='+', default=[],
                                help='The list of fields to graph. See --list-fields option for valid values. Max 4.')
     demand_graph_parser.set_defaults(func=demand_graphs)
+
+    scenario_plots_parser = subparsers.add_parser('scenario-plots')
+    scenario_plots_parser.add_argument('--output-file', required=True, help='The path to the output pdf file to write.')
+    scenario_plots_parser.add_argument('--scenarios', required=True, nargs='+', help='The list of scenarios to plot')
+    scenario_plots_parser.set_defaults(func=scenario_plots)
 
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)

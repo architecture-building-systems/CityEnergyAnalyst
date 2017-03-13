@@ -29,7 +29,7 @@ class Toolbox(object):
         self.alias = 'cea'
         # self.tools = [HeatmapsTool, RadiationTool, ScenarioPlotsTool, BenchmarkGraphsTool]
         self.tools = [DemandTool, DataHelperTool, BenchmarkGraphsTool, EmissionsTool, EmbodiedEnergyTool, MobilityTool,
-                      DemandGraphsTool]
+                      DemandGraphsTool, ScenarioPlotsTool]
 
 
 class DemandTool(object):
@@ -383,6 +383,40 @@ class DemandGraphsTool(object):
         scenario_path = parameters[0].valueAsText
         analysis_fields = parameters[1].valueAsText.split(';')[:4]  # max 4 fields for analysis
         run_cli(scenario_path, 'demand-graphs', '--analysis-fields', *analysis_fields)
+
+
+class ScenarioPlotsTool(object):
+    def __init__(self):
+        self.label = 'Scenario Plots'
+        self.description = 'Create summary plots of scenarios in a folder'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        import arcpy
+        scenarios = arcpy.Parameter(
+            displayName="Path to the scenarios to plot",
+            name="scenarios",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input",
+            multiValue=True)
+        output_file = arcpy.Parameter(
+            displayName="Path to output PDF",
+            name="output_file",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Output")
+        output_file.filter.list = ['pdf']
+        return [scenarios, output_file]
+
+    def execute(self, parameters, messages):
+        scenarios = parameters[0].valueAsText
+        scenarios = scenarios.replace("'", "")
+        scenarios = scenarios.replace('"', '')
+        scenarios = scenarios.split(';')
+        output_file = parameters[1].valueAsText
+        add_message(scenarios)
+        run_cli(None, 'scenario-plots', '--output-file', output_file, '--scenarios', *scenarios)
 
 
 def add_message(msg, **kwargs):
