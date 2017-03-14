@@ -3,7 +3,15 @@ This script implements the main command-line interface to the CEA. It allows run
 standard interface.
 """
 import os
-import sys
+
+__author__ = "Daren Thomas"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Daren Thomas"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 
 def demand(args):
@@ -156,6 +164,12 @@ def radiation(args):
                                                      weather_path=args.weather_path)
 
 
+def install_toolbox(_):
+    """Install the ArcGIS toolbox"""
+    import cea.interfaces.arcgis.install_toolbox
+    cea.interfaces.arcgis.install_toolbox.main()
+
+
 def main():
     """Parse the arguments and run the program."""
     import argparse
@@ -232,6 +246,9 @@ def main():
     radiation_parser.add_argument('--year', help='Year to use for calculations.', type=int, default=2014)
     radiation_parser.add_argument('--weather-path', help='Path to weather file.')
     radiation_parser.set_defaults(func=radiation)
+
+    install_toolbox_parser = subparsers.add_parser('install-toolbox')
+    install_toolbox_parser.set_defaults(func=install_toolbox)
 
 
     parsed_args = parser.parse_args()
