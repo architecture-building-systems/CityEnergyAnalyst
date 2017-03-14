@@ -44,7 +44,7 @@ def emissions(args):
                                          Eal_flag='Eal' in args.extra_files_to_create,
                                          Eaux_flag='Eaux' in args.extra_files_to_create,
                                          Epro_flag='Epro' in args.extra_files_to_create,
-                                         Edata_flag='Edata' in args.extra_files_to_create,)
+                                         Edata_flag='Edata' in args.extra_files_to_create, )
 
 
 def embodied_energy(args):
@@ -192,72 +192,86 @@ def heatmaps(args):
 def main():
     """Parse the arguments and run the program."""
     import argparse
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder', default=os.curdir)
     subparsers = parser.add_subparsers()
 
-    demand_parser = subparsers.add_parser('demand')
+    demand_parser = subparsers.add_parser('demand',
+                                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     demand_parser.add_argument('-w', '--weather', help='Path to the weather file')
     demand_parser.set_defaults(func=demand)
 
-    demand_helper_parser = subparsers.add_parser('demand-helper')
+    demand_helper_parser = subparsers.add_parser('demand-helper',
+                                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     demand_helper_parser.add_argument('--archetypes', help='List of archetypes process', nargs="*",
                                       default=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'],
                                       choices=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'])
     demand_helper_parser.set_defaults(func=demand_helper)
 
-    emissions_parser = subparsers.add_parser('emissions')
+    emissions_parser = subparsers.add_parser('emissions',
+                                             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     emissions_parser.add_argument('--extra-files-to-create', help='List of variables to create separate files for',
                                   nargs='*',
                                   default=['Qcs', 'Qhs', 'Qcrefri', 'Eal', 'Epro', 'Eaux', 'Qww', 'Edata', 'Qcdata'],
                                   choices=['Qcs', 'Qhs', 'Qcrefri', 'Eal', 'Epro', 'Eaux', 'Qww', 'Edata', 'Qcdata'])
     emissions_parser.set_defaults(func=emissions)
 
-    embodied_energy_parser = subparsers.add_parser('embodied-energy')
+    embodied_energy_parser = subparsers.add_parser('embodied-energy',
+                                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     embodied_energy_parser.add_argument('--year-to-calculate', help='Year to calculate for', type=int, default=2017)
     embodied_energy_parser.set_defaults(func=embodied_energy)
 
-    mobility_parser = subparsers.add_parser('mobility')
+    mobility_parser = subparsers.add_parser('mobility',
+                                            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     mobility_parser.set_defaults(func=mobility)
 
-    benchmark_graphs_parser = subparsers.add_parser('benchmark-graphs')
+    benchmark_graphs_parser = subparsers.add_parser('benchmark-graphs',
+                                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     benchmark_graphs_parser.add_argument('--output-file', help='File (*.pdf) to store the output in')
     benchmark_graphs_parser.add_argument('--scenarios', help='List of scenarios to benchmark',
                                          nargs='+', default=['.'])
     benchmark_graphs_parser.set_defaults(func=benchmark_graphs)
 
-    weather_files_parser = subparsers.add_parser('weather-files')
+    weather_files_parser = subparsers.add_parser('weather-files',
+                                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     weather_files_parser.set_defaults(func=weather_files)
 
-    weather_path_parser = subparsers.add_parser('weather-path')
+    weather_path_parser = subparsers.add_parser('weather-path',
+                                                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     weather_path_parser.add_argument('weather', metavar='ATTR',
                                      help='The name of the weather file (from the weather-files list)')
     weather_path_parser.set_defaults(func=weather_path)
 
-    file_location_parser = subparsers.add_parser('locate')
+    file_location_parser = subparsers.add_parser('locate',
+                                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     file_location_parser.add_argument('attribute', metavar='ATTR',
                                       help='The name of the file to find, denoted by InputLocator.ATTR()')
     file_location_parser.set_defaults(func=file_location)
 
-    demand_graph_parser = subparsers.add_parser('demand-graphs')
+    demand_graph_parser = subparsers.add_parser('demand-graphs',
+                                                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     demand_graph_parser.add_argument('--list-fields', action='store_true', default=False,
-                               help='List the valid fields for the --analysis-fields arguments, one per line.')
+                                     help='List the valid fields for the --analysis-fields arguments, one per line.')
     demand_graph_parser.add_argument('--analysis-fields', nargs='+', default=[],
-                               help='The list of fields to graph. See --list-fields option for valid values. Max 4.')
+                                     help='The list of fields to graph. See --list-fields option for valid values. Max 4.')
     demand_graph_parser.set_defaults(func=demand_graphs)
 
-    scenario_plots_parser = subparsers.add_parser('scenario-plots')
+    scenario_plots_parser = subparsers.add_parser('scenario-plots',
+                                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     scenario_plots_parser.add_argument('--output-file', required=True, help='The path to the output pdf file to write.')
     scenario_plots_parser.add_argument('--scenarios', required=True, nargs='+', help='The list of scenarios to plot')
     scenario_plots_parser.set_defaults(func=scenario_plots)
-    
-    latitude_parser = subparsers.add_parser('latitude')
+
+    latitude_parser = subparsers.add_parser('latitude',
+                                            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     latitude_parser.set_defaults(func=latitude)
 
-    longitude_parser = subparsers.add_parser('longitude')
+    longitude_parser = subparsers.add_parser('longitude',
+                                             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     longitude_parser.set_defaults(func=longitude)
 
-    radiation_parser = subparsers.add_parser('radiation')
+    radiation_parser = subparsers.add_parser('radiation',
+                                             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     radiation_parser.add_argument('--arcgis-db', help='The path to the ArcGIS database',
                                   default=os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb')))
     radiation_parser.add_argument('--latitude', help='Latitude to use for calculations.', type=float)
@@ -266,12 +280,14 @@ def main():
     radiation_parser.add_argument('--weather-path', help='Path to weather file.')
     radiation_parser.set_defaults(func=radiation)
 
-    install_toolbox_parser = subparsers.add_parser('install-toolbox')
+    install_toolbox_parser = subparsers.add_parser('install-toolbox',
+                                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     install_toolbox_parser.set_defaults(func=install_toolbox)
 
-    heatmaps_parser = subparsers.add_parser('heatmaps')
+    heatmaps_parser = subparsers.add_parser('heatmaps',
+                                            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     heatmaps_parser.add_argument('--file-to-analyze',
-         help='The file to analyse (Either the Total_Demand.csv file or one of the emissions results files)')
+                                 help='The file to analyse (Either the Total_Demand.csv file or one of the emissions results files)')  # noqa
     heatmaps_parser.add_argument('--analysis-fields', nargs='+', help='The fields to analyze',
                                  default=["Qhsf_MWhyr", "Qcsf_MWhyr"])
     heatmaps_parser.add_argument('--list-fields', action='store_true', help='List available fields in the file.',
