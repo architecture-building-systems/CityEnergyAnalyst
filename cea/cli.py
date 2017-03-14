@@ -170,6 +170,25 @@ def install_toolbox(_):
     cea.interfaces.arcgis.install_toolbox.main()
 
 
+def heatmaps(args):
+    """Run the heatmaps tool"""
+    import cea.plots.heatmaps
+    import cea.inputlocator
+    locator = cea.inputlocator.InputLocator(args.scenario)
+    if not args.file_to_analyze:
+        args.file_to_analyze = locator.get_total_demand()
+
+    if args.list_fields:
+        import pandas as pd
+        df = pd.read_csv(args.file_to_analyze)
+        fields = df.columns.tolist()
+        fields.remove('Name')
+        print('\n'.join(fields))
+    else:
+        cea.plots.heatmaps.heatmaps(locator=locator, analysis_fields=args.analysis_fields,
+                                    file_to_analyze=args.file_to_analyze)
+
+
 def main():
     """Parse the arguments and run the program."""
     import argparse
@@ -250,6 +269,14 @@ def main():
     install_toolbox_parser = subparsers.add_parser('install-toolbox')
     install_toolbox_parser.set_defaults(func=install_toolbox)
 
+    heatmaps_parser = subparsers.add_parser('heatmaps')
+    heatmaps_parser.add_argument('--file-to-analyze',
+         help='The file to analyse (Either the Total_Demand.csv file or one of the emissions results files)')
+    heatmaps_parser.add_argument('--analysis-fields', nargs='+', help='The fields to analyze',
+                                 default=["Qhsf_MWhyr", "Qcsf_MWhyr"])
+    heatmaps_parser.add_argument('--list-fields', action='store_true', help='List available fields in the file.',
+                                 default=False)
+    heatmaps_parser.set_defaults(func=heatmaps)
 
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)

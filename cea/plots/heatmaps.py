@@ -21,7 +21,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def heatmaps(locator, analysis_fields, path_results, file_to_analyze):
+def heatmaps(locator, analysis_fields, file_to_analyze):
     """
     algorithm to calculate heat maps out of n variables of interest
 
@@ -33,13 +33,22 @@ def heatmaps(locator, analysis_fields, path_results, file_to_analyze):
         will be elaborated based on the selection of n input fields. For this a
         form like the one used in the Arcgis function ``merge/FieldMap`` could
         be used.
-    :param path_results: path to store results: folder heatmaps
 
     :returns: - heat map of variable n: .tif
               - heat map file per variable of interest n.
     """
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")
+
+    # figure out folder for the results based on file to analyze
+    file_to_analyze = os.path.realpath(file_to_analyze)
+    if file_to_analyze == os.path.realpath(locator.get_total_demand()):
+        path_results = locator.get_heatmaps_demand_folder()
+    elif os.path.dirname(file_to_analyze) == os.path.realpath(locator.get_lca_emissions_results_folder()):
+        path_results = locator.get_heatmaps_emission_folder()
+    else:
+        raise ValueError(
+            'file_to_analyze must be either the demand totals file or a file in the emissions results folder')
     
     # local variables
     # create dbf file
