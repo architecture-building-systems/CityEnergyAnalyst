@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 import cea.optimization.master.cost_model as eM
-import cea.optimization.preprocessing.cooling_network as coolMain
+import cea.optimization.preprocessing.cooling_net as coolMain
 import cea.optimization.slave.slave_main as sM
 import cea.optimization.supportFn as sFn
 import cea.technologies.substation as sMain
