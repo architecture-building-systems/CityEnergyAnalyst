@@ -3,6 +3,7 @@
 Global variables - this object contains context information and is expected to be refactored away in future.
 """
 import cea.demand.demand_writers
+import numpy as np
 
 # from cea.demand import thermal_loads
 
@@ -124,3 +125,39 @@ class GlobalVariables(object):
         self.EP = 0.104
         self.NG = 0.057
         self.BG = 0.078
+
+
+
+def run_as_script(scenario_path=None):
+    yo = []
+    ir = []
+    fclt = []
+    oelt = []
+    fccf = []
+    ep = []
+    op = []
+    sp = []
+
+    for i in xrange(500):
+        # print (i)
+        yo.append(8600*np.random.beta(3.9, 1.2, size=None))
+        ir.append(np.random.normal(loc=0.06, scale=0.01))
+        fclt.append(10 * np.random.beta(5.8, 4, size=None))
+        oelt.append(30 * np.random.beta(5.8, 4, size=None))
+        fccf.append(np.random.uniform(-.3, .3))
+        ep.append(np.random.normal(loc=0.16, scale=0.02))
+        op.append(np.random.normal(loc=1476, scale=200))
+        sp.append(np.random.normal(loc=670, scale=100))
+
+    print (np.mean(yo))
+    print (np.mean(ir))
+    print (np.mean(fclt))
+    print (np.mean(oelt))
+    print (np.mean(fccf))
+    print (np.mean(ep))
+    print (np.mean(op))
+    print (np.mean(sp))
+    print 'test_optimization_main() succeeded'
+
+if __name__ == '__main__':
+    run_as_script(r'C:\reference-case-zug\baseline')
