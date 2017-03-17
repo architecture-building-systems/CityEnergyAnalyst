@@ -5,72 +5,108 @@ The City Energy Analyst V1.0b is stored in a public repository in Github
 under the name of
 `CEAforArcGIS <https://github.com/architecture-building-systems/CEAforArcGIS>`__.
 
-The main workflow for working with the City Energy Analyst looks like
-this:
+|Folder Structure|
+
+The repository is divided in the next folder structure:
+
+cea
+~~~~
+It stores the source code (human readable) of the different modules of CEA.
+This is the core of CEA and is divided in the next sub-folder structure:
+
+GUI: It stores scripts to connect CEA to the graphical user interface of ArcGIS.
+analysis: It stores scripts to analyze the results of all simulations in CEA.
+databases: It stores default data of weather, technology, occupancy, costs etc.,
+demand: It stores scripts to calculate the demand of energy in buildings
+geometry: It stores scripts to manipulate and read building geometry.
+optimization: It stores scripts aiming to optimize the energy system of a district.
+plots: It stores script to plot information.
+resources: It stores scripts to analyze the potential of energy sources.
+technologies: It stores scripts for the simulation of different technologies.
+utilities: It stores functions needed by any other script frequently.
+
+docs
+~~~~
+It Stores the developers manual of the CEA.
+
+examples
+~~~~~~~~
+It stores an open source case study to test the cea.
+
+bin
+~~~~
+It stores the compiled code (non-human readable stuff) of the different modules of the CEA.
+
+euler
+~~~~~
+stores source code (human readable) needed to connect to the cluster of 50K cores called Euler at ETH Zurich
+(Only researchers at ETH Zurich can use this).
+
+setup
+~~~~~
+It stores data needed to install cea.
+
+tests
+~~~~~
+It stores unitest data and scripts necessary ot run our automatic code checker in Github.
 
 |CEA workflow|
 
-Preprocessing
-~~~~~~~~~~~~~
+The main workflow of CEA is:
 
-The *gather data* step will be different from project to project, but
-usually involves collecting data from municipality databases, GIS
-systems and in-person survey. The output is a set of shapefiles with the
-building floor plans, floor heights and the corresponding building
-program (usages).
+Set-up a case study
+~~~~~~~~~~~~~~~~~~~
 
-The *Radiation* step calculates radiation data for the scenario.
+If you want to run a case study different from those available in 'examples' folder.
+This step entails preparing a case study to have:
 
-The (optional) *Data helper* step aggregates archetype data to the
-scenario for demand calculation.
+1. the same folder structure as one of our case studies in the 'examples' folder.
+2. the exact number, names and attributes tables of the input shapefiles.
+3. the exact name and content of the digital elevation model of the terrain.
 
-Demand Calculation
+The CEA users manual includes a great deal of hints to both gather and format these data for CEA
+using ArcGIS or any other geographical information system.
+
+Resource potential
 ~~~~~~~~~~~~~~~~~~
 
-The *Demand* step calculates the load demands for heating and cooling
-for a whole year. The output is used for the *Analysis* and
-*Visualization* stages.
+Once a case study is created the solar radiation incident in every surface is calculated.
+- run 'cea.resources.radiation.py'
 
-Analysis
-~~~~~~~~
+Demand estimation
+~~~~~~~~~~~~~~~~~
 
-The *Analysis* stage contains three modules for analyzing various
-aspects of the scenario: The emissions due to operation, embodied energy
-of the built environment and emissions due to mobility.
+Once done, calculate the demand of energy services for every building in the area.
+- run 'cea.demand.demand_main.py'
+
+Life Cycle Analysis
+~~~~~~~~~~~~~~~~~~~
+
+Once done, calculate the emissions and primary energy needed due to the construction,
+operation and dismantling of buildings in the area.
+- run 'cea.analysis.operation.py'
+- run 'cea.analysis.embodied.py'
+
+Benchmarking
+~~~~~~~~~~~~
+
+In case you have more than one scenario inside the case study. this step calculates
+targets of performance according to the 2000-Watt Society approach. The apporach also
+calculates the LCA of vehicles in the area.
+
+- run 'cea.analysis.mobility.py'
+- run 'cea.analysis.benchamark.py'
 
 Visualization
 ~~~~~~~~~~~~~
 
-The *Visualization* stage creates visual representations of the data
-obtained in the *Demand Calculation* and *Analysis* stages.
+There are different ways to visualize and plot all the raw data described until now.
+you can either Map it using ArcGIS (we expect you to know how through our users manual).
+or run the different scripts we included for this.
+- for heatmaps of demand or LCA run 'cea.plots.heatmaps.py' - you still will need ArcGIS for this (we are working in anther way now).
+- for plots of demand           run 'cea.plots.graphs_demand.py'
+- for plots of benchamrking     run 'cea.plots.scenario_plots.py'
 
---------------
-
-The repository is divided in the next folder structure:
-
-The ``CEA`` folder
-------------------
-
-The folder ``cea`` stores the core of the City Energy Analyst. Access to
-this folder is available to both contributors and normal users. Pulling
-requests and merging activities are in principle limited to contributors
-Level 3 and the board (`See team
-conventions <./users_and_credentials.md>`__)
-
-Contributors level 2 could create a pull request if their contribution
-requires an explicit modification to ``cea``. For this,a branch under
-the name of their contribution should be created first and then pushed
-to master. the board will take a look and accept.
-
-The ``CONTRIBUTIONS`` folder
-----------------------------
-
-The folder ``contributions`` stores contributions of developers level 2
-and 3 after tested, documented and accepted by the board. Generally,
-this is a plug-in/module/class created out of work in the Sandbox. These
-contributions are presented in the form of a sub-folder structure like
-``contributions/energystorage/simplewatertank/``. Developers level 2 and
-3 o merge their contributions in the Master branch.
 
 .. |CEA workflow| digraph:: cea_workflow
 
