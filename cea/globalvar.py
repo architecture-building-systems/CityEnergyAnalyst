@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-================
-Global variables
-================
-
+Global variables - this object contains context information and is expected to be refactored away in future.
 """
 import cea.demand.demand_writers
-from cea.demand import thermal_loads
+
+# from cea.demand import thermal_loads
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -17,12 +15,15 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 class GlobalVariables(object):
     def __init__(self):
+
         self.scenario_reference = r'c:\reference-case-zug\baseline'
-        self.print_partial = 'hourly' # hourly or monthly for the deamnd script
-        self.print_yearly = True # print yearly values
-        self.print_yearly_peak = True # print peak values
+        self.print_partial = 'hourly'  # hourly or monthly for the demand script
+        self.print_totals = True  # print yearly values
+        self.print_yearly_peak = True  # print peak values
+        self.simulate_building_list = None  # fill it with a list of names of buildings in case not all the data set needs to be run
         self.date_start = '2016-01-01'  # format: yyyy-mm-dd
         self.seasonhours = [3216, 6192]
         self.multiprocessing = True  # use multiprocessing / parallel execution if possible
@@ -30,18 +31,17 @@ class GlobalVariables(object):
         self.Bf = 0.7  # it calculates the coefficient of reduction in transmittance for surfaces in contact with the ground according to values of SIA 380/1
         self.his = 3.45  # heat transfer coefficient between air and the surfacein W/(m2K)
         self.hms = 9.1  # heat transfer coefficient between nodes m and s in W/m2K
-        self.theta_ss = 10 # difference between surface of building and sky temperature in C. 10 for temperate climates
-        self.blotzman = 0.0000000567 #stefan-blotzmann constant W/m2K4
+        self.theta_ss = 10  # difference between surface of building and sky temperature in C. 10 for temperate climates
         self.F_f = 0.2  # Frame area faction coefficient
-        self.Rse = 0.04# thermal resistance of external surfaces according to ISO 6946
+        self.Rse = 0.04  # thermal resistance of external surfaces according to ISO 6946
         self.D = 20  # in mm the diameter of the pipe to calculate losses
         self.hf = 3  # average height per floor in m
-        self.Pwater = 998  # water density kg/m3
+        self.Pwater = 998.0  # water density kg/m3
         self.PaCa = 1200  # Air constant J/m3K 
         self.Cpw = 4.184  # heat capacity of water in kJ/kgK
         self.Flowtap = 0.036  # in m3/min == 12 l/min during 3 min every tap opening
         # constant values for HVAC
-        self.nrec_N = 0.75  # possilbe recovery
+        self.nrec_N = 0.75  # possible recovery
         self.NACH_inf_non_occ = 0.2  # num air exchanges due to infiltration when no occupied
         self.NACH_inf_occ = 0.5  # num air exchanges due to infiltration when occupied
         self.C1 = 0.054  # assumed a flat plate heat exchanger (-)
@@ -59,32 +59,33 @@ class GlobalVariables(object):
         self.effi = 0.6  # efficiency of pumps
         self.deltaP_l = 0.1  # delta of pressure
         self.fsr = 0.3  # factor for pressure calculation
-        # grey emssions
+        # grey emissions
         self.fwratio = 1.5  # conversion component's area to floor area
         self.sl_materials = 60  # service life of standard building components and materials
-        self.sl_services = 40  # service life of technical instalations
+        self.sl_services = 40  # service life of technical installations
         # constant variables for air conditioning fan
-        self.Pfan = 0.55 # specific fan consumption in W/m3/h
+        self.Pfan = 0.55  # specific fan consumption in W/m3/h
 
         # ==============================================================================================================
         # optimization
         # ==============================================================================================================
 
-        self.sensibilityStep = 2 #the more, the longer the sensitibility analysis
-        
+        self.sensibilityStep = 2  # the more, the longer the sensibility analysis
+
         ########################### User inputs
 
         # Commands for the evolutionary algorithm
 
-        self.initialInd = 3  # number of initial individuals
-        self.NGEN = 3000  # number of total generations
+
+        self.initialInd = 4  # number of initial individuals
+        self.NGEN = 5  # number of total generations
         self.fCheckPoint = 1  # frequency for the saving of checkpoints
-        self.maxTime = 7 * 24 * 3600  # maximum computional time [seconds]
+        self.maxTime = 7 * 24 * 3600  # maximum computational time [seconds]
 
         # Set Flags for different system setup preferences
 
         # self.NetworkLengthZernez = 864.0 #meters network length of maximum network, \
-        # then scaled by number of costumers (Zernez Specific), from J.Fonseca's PipsesData
+        # then scaled by number of costumers (Zernez Specific), from J.Fonseca's Pipes Data
 
         self.ZernezFlag = 0
         self.FlagBioGasFromAgriculture = 0  # 1 = Biogas from Agriculture, 0 = Biogas normal
@@ -123,7 +124,7 @@ class GlobalVariables(object):
         self.Qloss_Disc = 0.05  # Heat losses within a disconnected building
         self.Qmargin_Disc = 0.20  # Reliability margin for the system nominal capacity for decentralized systems
         self.QminShare = 0.10  # Minimum percentage for the installed capacity
-        self.K_DH = 0.25  # linear heat loss coefficient district heting network twin pipes groundfoss
+        self.K_DH = 0.25  # linear heat loss coefficient district heating network twin pipes ground loss
 
         # pipes location properties
         self.Z0 = 1.5  # location of pipe underground in m
@@ -154,27 +155,27 @@ class GlobalVariables(object):
         self.CC_sigma = 4 / 5
 
         self.NG_CC_TO_CO2_STD = (0.0353 + 0.186) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-        1 + self.CC_sigma)  # kg_CO2 / MJ_useful
+            1 + self.CC_sigma)  # kg_CO2 / MJ_useful
         self.NG_CC_TO_OIL_STD = (0.6 + 2.94) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-        1 + self.CC_sigma)  # MJ_oil / MJ_useful
+            1 + self.CC_sigma)  # MJ_oil / MJ_useful
 
         if self.FlagBioGasFromAgriculture == 1:
             self.BG_CC_TO_CO2_STD = (0.00592 + 0.0495) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-            1 + self.CC_sigma)  # kg_CO2 / MJ_useful
+                1 + self.CC_sigma)  # kg_CO2 / MJ_useful
             self.BG_CC_TO_OIL_STD = (0.0703 + 0.156) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-            1 + self.CC_sigma)  # MJ_oil / MJ_useful
+                1 + self.CC_sigma)  # MJ_oil / MJ_useful
 
         else:
             self.BG_CC_TO_CO2_STD = (0.0223 + 0.114) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-            1 + self.CC_sigma)  # kg_CO2 / MJ_useful
+                1 + self.CC_sigma)  # kg_CO2 / MJ_useful
             self.BG_CC_TO_OIL_STD = (0.214 + 0.851) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-            1 + self.CC_sigma)  # kg_CO2 / MJ_useful
+                1 + self.CC_sigma)  # kg_CO2 / MJ_useful
 
         # Furnace
         self.FURNACE_TO_CO2_STD = (0.0104 + 0.0285) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-        1 + self.CC_sigma)  # kg_CO2 / MJ_useful
+            1 + self.CC_sigma)  # kg_CO2 / MJ_useful
         self.FURNACE_TO_OIL_STD = (0.0956 + 0.141) * 0.78 / self.ETA_FINAL_TO_USEFUL * (
-        1 + self.CC_sigma)  # MJ_oil / MJ_useful
+            1 + self.CC_sigma)  # MJ_oil / MJ_useful
 
         # Boiler
         self.NG_BOILER_TO_CO2_STD = 0.0874 * 0.87 / self.ETA_FINAL_TO_USEFUL  # kg_CO2 / MJ_useful
@@ -182,9 +183,9 @@ class GlobalVariables(object):
 
         if self.FlagBioGasFromAgriculture == 1:
             self.BG_BOILER_TO_CO2_STD = 0.339 * 0.87 * self.NormalBGToAgriBG_CO2 / (
-            1 + self.DHNetworkLoss) / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
+                1 + self.DHNetworkLoss) / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
             self.BG_BOILER_TO_OIL_STD = 0.04 * 0.87 * self.NormalBGToAgriBG_Eprim / (
-            1 + self.DHNetworkLoss) / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
+                1 + self.DHNetworkLoss) / self.ETA_FINAL_TO_USEFUL  # MJ_oil / MJ_useful
 
         else:
             self.BG_BOILER_TO_CO2_STD = self.NG_BOILER_TO_CO2_STD * 0.04 / 0.0691  # kg_CO2 / MJ_useful
@@ -274,7 +275,7 @@ class GlobalVariables(object):
         self.PipeCostPerMeterAnnual = self.PipeCostPerMeterInv / self.PipeLifeTime
 
         # Solar area to Wpeak
-        self.eta_area_to_peak = 0.16  # Peak Capacity - Efficisency, how much kW per area there are, valid for PV and PVT (after Jimeno's J+)
+        self.eta_area_to_peak = 0.16  # Peak Capacity - Efficiency, how much kW per area there are, valid for PV and PVT (after Jimeno's J+)
 
         # Pressure losses
         # self.DeltaP_DCN = 1.0 #Pa - change
@@ -289,15 +290,15 @@ class GlobalVariables(object):
         # Heat Exchangers
         self.U_cool = 2500  # W/m2K
         self.U_heat = 2500  # W/m2K
-        self.dT_heat = 5  # K - pinchdelta at design conditions
-        self.dT_cool = 1  # K - pinchdelta at design conditions
+        self.dT_heat = 5  # K - pinch delta at design conditions
+        self.dT_cool = 1  # K - pinch delta at design conditions
 
         # Heat pump
         self.HP_maxSize = 20.0E6  # max thermal design size [Wth]
         self.HP_minSize = 1.0E6  # min thermal design size [Wth]
         self.HP_n = 20.0  # lifetime [years]
 
-        self.HP_etaex = 0.6  # exergetic efficiency
+        self.HP_etaex = 0.6  # exergetic efficiency of WSHP [L. Girardin et al., 2010]_
         self.HP_deltaT_cond = 2.0  # pinch for condenser [K]
         self.HP_deltaT_evap = 2.0  # pinch for evaporator [K]
         self.HP_maxT_cond = 140 + 273.0  # max temperature at condenser [K]
@@ -320,7 +321,7 @@ class GlobalVariables(object):
         self.COPScalingFactorGroundWater = 3.4 / 3.9  # Scaling factor according to EcoBau, take GroundWater Heat pump into account
 
         self.GHP_CmaxSize = 2E3  # max cooling design size [Wc] FOR ONE PROBE
-        self.GHP_Cmax_Size_th = 2E3  # Wth/m per probe
+        self.GHP_Cmax_Size_th = 2E3  # Wh/m per probe
         self.GHP_Cmax_Length = 40  # depth of exploration taken into account
 
         self.GHP_HmaxSize = 2E3  # max heating design size [Wth] FOR ONE PROBE
@@ -329,7 +330,7 @@ class GlobalVariables(object):
         self.GHP_nBH = 50.0  # [years] for a borehole
         self.GHP_nHP = 20.0  # for the geothermal heat pump
 
-        self.GHP_etaex = 0.677  # exergetic efficiency
+        self.GHP_etaex = 0.677  # exergetic efficiency [O. Ozgener et al., 2005]_
         self.GHP_Auxratio = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
 
         self.GHP_i = 0.06  # interest rate
@@ -414,7 +415,7 @@ class GlobalVariables(object):
 
         # Data for Evolutionary algorithm
         self.nHeat = 6  # number of heating
-        self.nHR = 2 # number of heat recovry options
+        self.nHR = 2 # number of heat recovery options
         self.nSolar = 3 # number of solar technologies
 
         self.PROBA = 0.5
@@ -514,9 +515,8 @@ class GlobalVariables(object):
         # ==============================================================================================================
         # TABS
         # ==============================================================================================================
-        self.max_temperature_difference_tabs = 9 # (°C) from Koschenz & Lehmann "Thermoaktive Bauteilsysteme (TABS)"
-        self.max_surface_temperature_tabs = 27 # (°C) from Koschenz & Lehmann "Thermoaktive Bauteilsysteme (TABS)"
-
+        self.max_temperature_difference_tabs = 9  # (°C) from Koschenz & Lehmann "Thermoaktive Bauteilsysteme (TABS)"
+        self.max_surface_temperature_tabs = 27  # (°C) from Koschenz & Lehmann "Thermoaktive Bauteilsysteme (TABS)"
 
         # ==============================================================================================================
         # Columns to write for the demand calculation
@@ -536,61 +536,22 @@ class GlobalVariables(object):
         # here is where we decide whether full excel reports of the calculations are generated
         self.testing = False  # if true: reports are generated, if false: not
 
-
-        self.report_variables = {
-            'calc-thermal-loads': {
-                'Building properties':
-                    ['Name',                'Af',                   'Aef',          'sys_e_heating',
-                     'sys_e_cooling',       'Occupants',            'Am',           'Atot',
-                     'Awall_all',           'Cm',                   'Ll',           'Lw',
-                     'Retrofit',            'Sh_typ',               'Year',         'footprint',
-                     'nf_ag',               'nfp',                  'Lcww_dis',     'Lsww_dis',
-                     'Lv',                  'Lvww_dis',             'Tcs_re_0',     'Tcs_sup_0',
-                     'Ths_re_0',            'Ths_sup_0',            'Tww_re_0',     'Tww_sup_0',
-                     'Y',                   'fforma'],
-                'Thermal loads hourly':
-                    ['ta_hs_set',           'ta_cs_set',            'people',       've',
-                     'q_int',               'Eal_nove',             'Eprof',        'Edata',
-                     'Qcdataf',             'Qcrefrif',             'vww',          'vw',
-                     'Qcdata',              'Qcrefri',              'qv_req',       'Hve',
-                     'Htr_is',              'Htr_ms',               'Htr_w',        'Htr_em',
-                     'Htr_1',               'Htr_2',                'Htr_3',        'I_sol',
-                     'I_int_sen',           'w_int',                'I_ia',         'I_m',
-                     'I_st',                'uncomfort',            'Ta',           'Tm',
-                     'Qhs_sen',             'Qcs_sen',              'Qhs_lat',      'Qcs_lat',
-                     'Qhs_em_ls',           'Qcs_em_ls',            'QHC_sen',      'ma_sup_hs',
-                     'Ta_sup_hs',           'Ta_re_hs',             'ma_sup_cs',    'Ta_sup_cs',
-                     'Ta_re_cs',            'w_sup',                'w_re',         'Ehs_lat_aux',
-                     'Qhs_sen_incl_em_ls',  'Qcs_sen_incl_em_ls',   't5',           'Tww_re',
-                     'Top',                 'Im_tot',               'tHset_corr',   'tCset_corr',
-                     'Tcs_re',              'Tcs_sup','Ths_re',     'Ths_sup',      'mcpcs',
-                     'mcphs',               'Mww',                  'Qww',          'Qww_ls_st',
-                     'Qwwf',                'Tww_st',               'Vw',           'Vww',
-                     'mcpww',               'Eaux_cs',              'Eaux_fw',      'Eaux_ve',
-                     'Eaux_ww',             'Eauxf',                'Occupancy',    'Waterconsumption']},
-            'other-module-that-needs-logging': {'worksheet1': ['v1', 'v2', 'v3'],
-                                                #'worksheet2': [('v4', 'm'), ('v5', 'Mwh'), ('v6', 'MJ')]}}
-                                                'worksheet2': ['v4', 'v5', 'v6']}}
-
         self.demand_writer = cea.demand.demand_writers.HourlyDemandWriter(self)
 
-    def report(self, template, variables, output_folder, basename):
+    def report(self, tsd, output_folder, basename):
         """Use vars to fill worksheets in an excel file $destination_template based on the template.
         The template references self.report_variables. The destination_template may contain date format codes that
         will be updated with the current datetime."""
         if self.testing:
             from cea.utilities import reporting
-            reporting.full_report_to_xls(template, variables, output_folder, basename, self)
-
-
+            reporting.full_report_to_xls(tsd, output_folder, basename, self)
 
     def log(self, msg, **kwargs):
         print msg % kwargs
 
-
     def is_heating_season(self, timestep):
 
-        if self.seasonhours[0]+1 <= timestep < self.seasonhours[1]:
+        if self.seasonhours[0] + 1 <= timestep < self.seasonhours[1]:
             return False
         else:
             return True

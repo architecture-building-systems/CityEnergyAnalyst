@@ -1,0 +1,422 @@
+digraph demand_function_graph {
+  rankdir=LR;
+  ratio=0.7072135785007072;
+  edge[weight=1.2];
+  node [shape=plaintext, ranksep=0.7, nodesep=0.7, fontsize=10, fontname=monospace, color=none];
+  subgraph "cluster_cea.demand.thermal_loads" {
+    "initialize_timestep_data";
+    "SolarProperties";
+    "BuildingPropertiesRow";
+    "ArchitectureProperties";
+    "calc_thermal_loads";
+    "<module>";
+    "<genexpr>";
+    "update_timestep_data_no_conditioned_area";
+    "BuildingProperties";
+    label="cea.demand.thermal_loads";
+  }
+  subgraph "cluster_cea.demand.time_step_data_t" {
+    "<module>";
+    "TimeStepDataT";
+    label="cea.demand.time_step_data_t";
+  }
+  subgraph "cluster_cea.utilities.physics" {
+    "calc_rho_air";
+    "calc_h";
+    "calc_w";
+    "<module>";
+    label="cea.utilities.physics";
+  }
+  subgraph "cluster_cea.utilities" {
+    "<module>";
+    label="cea.utilities";
+  }
+  subgraph "cluster_cea.technologies.controllers" {
+    "calc_simple_temp_control";
+    "get_csetpoint";
+    "get_hsetpoint";
+    "<module>";
+    label="cea.technologies.controllers";
+  }
+  subgraph "cluster_cea.demand.control_ventilation_systems" {
+    "has_window_ventilation";
+    "is_mechanical_ventilation_active";
+    "is_window_ventilation_active";
+    "has_mechanical_ventilation";
+    "has_night_flushing";
+    "is_mechanical_ventilation_heat_recovery_active";
+    "<module>";
+    "is_night_flushing_active";
+    "has_mechanical_ventilation_heat_recovery";
+    label="cea.demand.control_ventilation_systems";
+  }
+  subgraph "cluster_cea.technologies.blinds" {
+    "calc_blinds_activation";
+    "<module>";
+    label="cea.technologies.blinds";
+  }
+  subgraph "cluster_cea.demand.ventilation_air_flows_simple" {
+    "calc_air_mass_flow_window_ventilation";
+    "calc_m_ve_leakage_simple";
+    "calc_air_mass_flow_mechanical_ventilation";
+    "calc_theta_ve_mech";
+    "<module>";
+    "calc_m_ve_required";
+    label="cea.demand.ventilation_air_flows_simple";
+  }
+  subgraph "cluster_cea.demand.hotwater_loads" {
+    "calc_mww";
+    "calc_average";
+    "<module>";
+    "calc_Qwwf";
+    "calc_Qww_schedule";
+    "calc_Qww";
+    "calc_disls";
+    "calc_Qww_dis_ls_nr";
+    "calc_Qww_st_ls";
+    "calc_Qww_dis_ls_r";
+    label="cea.demand.hotwater_loads";
+  }
+  subgraph "cluster_cea.technologies.storagetank" {
+    "ode";
+    "<module>";
+    "calc_Qww_ls_st";
+    "solve_ode_storage";
+    label="cea.technologies.storagetank";
+  }
+  subgraph "cluster_cea.technologies.heating_coils" {
+    "<module>";
+    "calc_cooling_coil";
+    "fh";
+    label="cea.technologies.heating_coils";
+  }
+  subgraph "cluster_cea.demand.refrigeration_loads" {
+    "<module>";
+    "calc_Qcref";
+    label="cea.demand.refrigeration_loads";
+  }
+  subgraph "cluster_cea.demand.occupancy_model" {
+    "calc_average";
+    "<module>";
+    "calc_occ_schedule";
+    "schedule_maker";
+    "calc_occ";
+    "get_yearly_vectors";
+    "read_schedules";
+    label="cea.demand.occupancy_model";
+  }
+  subgraph "cluster_cea.technologies.radiators" {
+    "calc_radiator";
+    "<module>";
+    label="cea.technologies.radiators";
+  }
+  subgraph "cluster_cea.technologies" {
+    "<module>";
+    label="cea.technologies";
+  }
+  subgraph "cluster_cea.utilities.epwreader" {
+    "<module>";
+    "epw_reader";
+    "calc_skytemp";
+    label="cea.utilities.epwreader";
+  }
+  subgraph "cluster_cea.technologies.tabs" {
+    "<module>";
+    label="cea.technologies.tabs";
+  }
+  subgraph "cluster_cea.demand.datacenter_loads" {
+    "<module>";
+    "calc_Qcdataf";
+    label="cea.demand.datacenter_loads";
+  }
+  subgraph "cluster_cea.demand.electrical_loads" {
+    "<module>";
+    "calc_Eauxf_hs_dis";
+    "calc_Eauxf_ve";
+    "calc_Eauxf_fw";
+    "calc_Eint";
+    "calc_Eauxf_cs_dis";
+    "calc_average";
+    "calc_Eauxf_ww";
+    "average_appliances_lighting_schedule";
+    "calc_Eauxf";
+    label="cea.demand.electrical_loads";
+  }
+  subgraph "cluster_cea.demand.time_step_data_t.TimeStepDataT" {
+    "__init__";
+    label="cea.demand.time_step_data_t.TimeStepDataT";
+  }
+  subgraph "cluster_cea.demand.sensible_loads" {
+    "calc_I_rad";
+    "calc_I_sol";
+    "calc_temperatures_emission_systems";
+    "calc_Qgain_lat";
+    "calc_Qhs_Qcs_dis_ls";
+    "calc_Asol";
+    "<module>";
+    "calc_hr";
+    "calc_Qgain_sen";
+    label="cea.demand.sensible_loads";
+  }
+  subgraph "cluster_cea.demand.airconditioning_model" {
+    "<module>";
+    "calc_hvac_cooling";
+    "calc_w3_cooling_case";
+    label="cea.demand.airconditioning_model";
+  }
+  subgraph "cluster_cea.demand.rc_model_crank_nicholson_procedure" {
+    "update_tsd_no_heating";
+    "<module>";
+    "calc_rc_model_demand_heating_cooling";
+    "update_tsd_no_cooling";
+    label="cea.demand.rc_model_crank_nicholson_procedure";
+  }
+  subgraph "cluster_cea.demand.demand_main" {
+    "thermal_loads_all_buildings";
+    "demand_calculation";
+    "<module>";
+    label="cea.demand.demand_main";
+  }
+  subgraph "cluster_cea.demand.space_emission_systems" {
+    "calc_theta_int_inc";
+    "<module>";
+    "calc_q_em_ls_heating";
+    "calc_delta_theta_int_inc_heating";
+    "calc_delta_theta_int_inc_cooling";
+    "calc_theta_e_comb_heating";
+    "get_delta_theta_e_sol";
+    "calc_theta_e_comb_cooling";
+    "calc_q_em_ls_cooling";
+    "calc_q_em_ls";
+    label="cea.demand.space_emission_systems";
+  }
+  subgraph "cluster_cea.demand.rc_model_SIA" {
+    "calc_h_op_m";
+    "calc_theta_ea";
+    "calc_theta_ec";
+    "calc_theta_em";
+    "calc_h_em";
+    "calc_phi_i_a";
+    "calc_phi_i_l";
+    "calc_h_ea";
+    "calc_h_ec";
+    "calc_phi_i_p";
+    "has_cooling_demand";
+    "calc_rc_model_temperatures";
+    "<module>";
+    "calc_phi_m_tot";
+    "calc_theta_a";
+    "calc_phi_hc_cv";
+    "calc_f_im";
+    "calc_f_ic";
+    "calc_theta_m";
+    "calc_h_2";
+    "calc_h_1";
+    "calc_rc_model_temperatures_no_heating_cooling";
+    "calc_rc_model_temperatures_heating";
+    "calc_h_ac";
+    "calc_theta_o";
+    "calc_rc_model_temperatures_cooling";
+    "has_heating_demand";
+    "lookup_f_hc_cv_cooling";
+    "calc_phi_hc_r";
+    "calc_phi_a";
+    "calc_phi_c";
+    "calc_phi_m";
+    "calc_h_mc";
+    "calc_h_3";
+    "calc_theta_m_t";
+    "calc_f_sm";
+    "calc_f_sc";
+    "lookup_f_hc_cv_heating";
+    "calc_theta_c";
+    label="cea.demand.rc_model_SIA";
+  }
+  subgraph "cluster_cea.demand.control_heating_cooling_systems" {
+    "heating_system_is_ac";
+    "is_active_cooling_system";
+    "cooling_system_is_ac";
+    "has_cooling_system";
+    "is_active_heating_system";
+    "has_heating_system";
+    "<module>";
+    label="cea.demand.control_heating_cooling_systems";
+  }
+  "<module>" -> "<module>";
+  "<module>" -> "<module>";
+  "<module>" -> "<module>";
+  "<module>" -> "<module>";
+  "<module>" -> "<module>";
+  "<module>" -> "<module>";
+  "<module>" -> "<module>";
+  "<module>" -> "<module>";
+  "<module>" -> "TimeStepDataT";
+  "<module>" -> "<module>";
+  "<module>" -> "<module>";
+  "<module>" -> "<module>";
+  "<module>" -> "<module>";
+  "<module>" -> "<module>";
+  "<module>" -> "<module>";
+  "<module>" -> "<module>";
+  "<module>" -> "<module>";
+  "<module>" -> "<module>";
+  "<module>" -> "<module>";
+  "<module>" -> "<module>";
+  "<module>" -> "<module>";
+  "<module>" -> "BuildingProperties";
+  "<module>" -> "BuildingPropertiesRow";
+  "<module>" -> "ArchitectureProperties";
+  "<module>" -> "SolarProperties";
+  "<module>" -> "<module>";
+  "demand_calculation" -> "epw_reader";
+  "epw_reader" -> "calc_skytemp";
+  "demand_calculation" -> "schedule_maker";
+  "schedule_maker" -> "read_schedules";
+  "schedule_maker" -> "get_yearly_vectors";
+  "demand_calculation" -> "thermal_loads_all_buildings";
+  "thermal_loads_all_buildings" -> "calc_thermal_loads";
+  "calc_thermal_loads" -> "initialize_timestep_data";
+  "initialize_timestep_data" -> "<genexpr>";
+  "calc_thermal_loads" -> "calc_occ";
+  "calc_occ" -> "calc_occ_schedule";
+  "calc_occ_schedule" -> "calc_average";
+  "calc_thermal_loads" -> "calc_Eint";
+  "calc_Eint" -> "average_appliances_lighting_schedule";
+  "average_appliances_lighting_schedule" -> "calc_average";
+  "calc_thermal_loads" -> "calc_Qcref";
+  "calc_thermal_loads" -> "calc_Qcdataf";
+  "calc_thermal_loads" -> "calc_m_ve_required";
+  "calc_m_ve_required" -> "calc_rho_air";
+  "calc_thermal_loads" -> "calc_m_ve_leakage_simple";
+  "calc_m_ve_leakage_simple" -> "calc_rho_air";
+  "calc_thermal_loads" -> "calc_simple_temp_control";
+  "calc_simple_temp_control" -> "get_hsetpoint";
+  "calc_simple_temp_control" -> "get_csetpoint";
+  "calc_thermal_loads" -> "calc_Qgain_lat";
+  "calc_thermal_loads" -> "calc_Qgain_sen";
+  "calc_Qgain_sen" -> "calc_I_sol";
+  "calc_I_sol" -> "calc_Asol";
+  "calc_Asol" -> "<module>";
+  "calc_Asol" -> "calc_blinds_activation";
+  "calc_I_sol" -> "calc_I_rad";
+  "calc_I_rad" -> "calc_hr";
+  "calc_thermal_loads" -> "calc_air_mass_flow_mechanical_ventilation";
+  "calc_air_mass_flow_mechanical_ventilation" -> "is_mechanical_ventilation_active";
+  "is_mechanical_ventilation_active" -> "has_mechanical_ventilation";
+  "is_mechanical_ventilation_active" -> "is_night_flushing_active";
+  "is_night_flushing_active" -> "has_night_flushing";
+  "calc_air_mass_flow_mechanical_ventilation" -> "has_mechanical_ventilation";
+  "calc_air_mass_flow_mechanical_ventilation" -> "is_night_flushing_active";
+  "calc_thermal_loads" -> "calc_air_mass_flow_window_ventilation";
+  "calc_air_mass_flow_window_ventilation" -> "is_window_ventilation_active";
+  "is_window_ventilation_active" -> "has_window_ventilation";
+  "calc_thermal_loads" -> "calc_theta_ve_mech";
+  "calc_theta_ve_mech" -> "is_mechanical_ventilation_heat_recovery_active";
+  "is_mechanical_ventilation_heat_recovery_active" -> "is_mechanical_ventilation_active";
+  "calc_thermal_loads" -> "calc_rc_model_demand_heating_cooling";
+  "calc_rc_model_demand_heating_cooling" -> "is_active_heating_system";
+  "calc_rc_model_demand_heating_cooling" -> "is_active_cooling_system";
+  "is_active_cooling_system" -> "has_cooling_system";
+  "calc_rc_model_demand_heating_cooling" -> "calc_rc_model_temperatures_no_heating_cooling";
+  "calc_rc_model_temperatures_no_heating_cooling" -> "calc_rc_model_temperatures";
+  "calc_rc_model_temperatures" -> "__init__";
+  "__init__" -> "calc_h_ec";
+  "__init__" -> "calc_h_ac";
+  "__init__" -> "calc_h_ea";
+  "__init__" -> "calc_f_sc";
+  "__init__" -> "calc_f_ic";
+  "__init__" -> "calc_h_op_m";
+  "__init__" -> "calc_h_mc";
+  "__init__" -> "calc_h_em";
+  "__init__" -> "calc_f_im";
+  "__init__" -> "calc_f_sm";
+  "__init__" -> "calc_phi_i_l";
+  "__init__" -> "calc_phi_i_a";
+  "__init__" -> "calc_phi_i_p";
+  "calc_rc_model_temperatures" -> "calc_h_1";
+  "calc_rc_model_temperatures" -> "calc_theta_m";
+  "calc_theta_m" -> "calc_theta_m_t";
+  "calc_theta_m_t" -> "calc_h_2";
+  "calc_theta_m_t" -> "calc_h_3";
+  "calc_theta_m_t" -> "calc_phi_m_tot";
+  "calc_phi_m_tot" -> "calc_theta_em";
+  "calc_phi_m_tot" -> "calc_theta_ec";
+  "calc_phi_m_tot" -> "calc_theta_ea";
+  "calc_phi_m_tot" -> "calc_phi_a";
+  "calc_phi_m_tot" -> "calc_phi_c";
+  "calc_phi_m_tot" -> "calc_phi_m";
+  "calc_rc_model_temperatures" -> "calc_theta_c";
+  "calc_theta_c" -> "calc_phi_c";
+  "calc_theta_c" -> "calc_theta_ec";
+  "calc_theta_c" -> "calc_phi_a";
+  "calc_theta_c" -> "calc_theta_ea";
+  "calc_rc_model_temperatures" -> "calc_theta_a";
+  "calc_theta_a" -> "calc_theta_ea";
+  "calc_theta_a" -> "calc_phi_a";
+  "calc_rc_model_temperatures" -> "calc_theta_o";
+  "calc_rc_model_demand_heating_cooling" -> "update_tsd_no_cooling";
+  "calc_rc_model_demand_heating_cooling" -> "update_tsd_no_heating";
+  "is_mechanical_ventilation_heat_recovery_active" -> "has_mechanical_ventilation_heat_recovery";
+  "is_active_cooling_system" -> "has_cooling_demand";
+  "has_cooling_demand" -> "calc_rc_model_temperatures_no_heating_cooling";
+  "calc_rc_model_demand_heating_cooling" -> "calc_rc_model_temperatures_cooling";
+  "calc_rc_model_temperatures_cooling" -> "lookup_f_hc_cv_cooling";
+  "calc_rc_model_temperatures_cooling" -> "calc_phi_hc_cv";
+  "calc_rc_model_temperatures_cooling" -> "calc_phi_hc_r";
+  "calc_rc_model_temperatures_cooling" -> "calc_rc_model_temperatures";
+  "calc_rc_model_demand_heating_cooling" -> "calc_rc_model_temperatures_heating";
+  "calc_rc_model_temperatures_heating" -> "lookup_f_hc_cv_heating";
+  "calc_rc_model_temperatures_heating" -> "calc_phi_hc_cv";
+  "calc_rc_model_temperatures_heating" -> "calc_phi_hc_r";
+  "calc_rc_model_temperatures_heating" -> "calc_rc_model_temperatures";
+  "calc_rc_model_demand_heating_cooling" -> "cooling_system_is_ac";
+  "calc_rc_model_demand_heating_cooling" -> "calc_hvac_cooling";
+  "calc_hvac_cooling" -> "calc_w";
+  "calc_hvac_cooling" -> "calc_w3_cooling_case";
+  "calc_w3_cooling_case" -> "calc_w";
+  "calc_hvac_cooling" -> "calc_h";
+  "calc_rc_model_demand_heating_cooling" -> "calc_q_em_ls_cooling";
+  "calc_q_em_ls_cooling" -> "calc_delta_theta_int_inc_cooling";
+  "calc_q_em_ls_cooling" -> "calc_theta_int_inc";
+  "calc_q_em_ls_cooling" -> "calc_theta_e_comb_cooling";
+  "calc_theta_e_comb_cooling" -> "get_delta_theta_e_sol";
+  "calc_q_em_ls_cooling" -> "calc_q_em_ls";
+  "is_active_heating_system" -> "has_heating_system";
+  "is_active_heating_system" -> "has_heating_demand";
+  "has_heating_demand" -> "calc_rc_model_temperatures_no_heating_cooling";
+  "calc_rc_model_demand_heating_cooling" -> "heating_system_is_ac";
+  "calc_rc_model_demand_heating_cooling" -> "calc_q_em_ls_heating";
+  "calc_q_em_ls_heating" -> "calc_delta_theta_int_inc_heating";
+  "calc_q_em_ls_heating" -> "calc_theta_int_inc";
+  "calc_q_em_ls_heating" -> "calc_theta_e_comb_heating";
+  "calc_q_em_ls_heating" -> "calc_q_em_ls";
+  "calc_thermal_loads" -> "calc_Qhs_Qcs_dis_ls";
+  "calc_thermal_loads" -> "calc_temperatures_emission_systems";
+  "calc_temperatures_emission_systems" -> "<module>";
+  "calc_temperatures_emission_systems" -> "<module>";
+  "calc_temperatures_emission_systems" -> "<module>";
+  "calc_temperatures_emission_systems" -> "calc_radiator";
+  "calc_temperatures_emission_systems" -> "calc_cooling_coil";
+  "calc_cooling_coil" -> "fh";
+  "calc_thermal_loads" -> "calc_Qwwf";
+  "calc_Qwwf" -> "calc_Qww_schedule";
+  "calc_Qww_schedule" -> "calc_average";
+  "calc_Qwwf" -> "calc_mww";
+  "calc_Qwwf" -> "calc_Qww";
+  "calc_Qwwf" -> "calc_Qww_dis_ls_r";
+  "calc_Qww_dis_ls_r" -> "calc_disls";
+  "calc_Qwwf" -> "calc_Qww_dis_ls_nr";
+  "calc_Qww_dis_ls_nr" -> "calc_disls";
+  "calc_Qwwf" -> "calc_Qww_st_ls";
+  "calc_Qww_st_ls" -> "calc_Qww_ls_st";
+  "calc_Qww_st_ls" -> "solve_ode_storage";
+  "solve_ode_storage" -> "ode";
+  "calc_thermal_loads" -> "calc_Eauxf";
+  "calc_Eauxf" -> "calc_Eauxf_ww";
+  "calc_Eauxf" -> "calc_Eauxf_hs_dis";
+  "calc_Eauxf" -> "calc_Eauxf_cs_dis";
+  "calc_Eauxf" -> "calc_Eauxf_fw";
+  "calc_Eauxf" -> "calc_Eauxf_ve";
+  "calc_thermal_loads" -> "update_timestep_data_no_conditioned_area";
+  "update_timestep_data_no_conditioned_area" -> "<genexpr>";
+}

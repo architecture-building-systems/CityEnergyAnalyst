@@ -15,47 +15,33 @@ from deap import creator
 import math
 
 
-def extractList(fName):
+def extract_building_names_from_csv(path_to_csv):
     """
     Extract the names of the buildings in the area
-    
-    Parameters
-    ----------
-    fName : string
-        csv file with the names of the buildings
-    
-    Returns
-    -------
-    namesList : list
-        List of strings with the names of the buildings
-    
-    """
-    df = pd.read_csv(fName, usecols=["Name"])
-    namesList = df['Name'].values.tolist()
 
-    return namesList
+    :param path_to_csv: csv file with the names of the buildings
+    :type path_to_csv: string
+
+    :returns: building_names, list of strings with the names of the buildings
+    :rtype: list
+    """
+    df = pd.read_csv(path_to_csv, usecols=["Name"])
+    building_names = df['Name'].values.tolist()
+
+    return building_names
 
 
 def extractDemand(fName, colNameList, nDay):
     """
     Extract data from the columns of a csv file to an array.
-
     WARNING : the order of the columns in the array are the SAME as in the
     original file and NOT the order in the colNameList
-    
-    Parameters
-    ----------
-    fName : string
-        Name of the csv file.
-    colNameList : list
-        List of the columns' name from whom to extract data.
-    nDay : int
-        Number of days to consider.
-        
-    Returns
-    -------
-    result : np.array
-    
+
+    :param fName: name of the csv file
+    :type fName: list of the columns name from which the data  needs to be extracted
+
+    :return: np.array
+    :rtype: class
     """
     df = pd.read_csv(fName, usecols=colNameList, nrows=24*nDay)
     result = np.array(df)
@@ -67,18 +53,15 @@ def calcQmax(fName, filepath, gV):
     """
     Calculates the peak heating power in fName file
     
-    Parameters
-    ----------
-    fname : string
-        Name of the csv file
-    filepath : string
-        path to the file
-    
-    Returns
-    -------
-    Qmax: float
-        maximum heating power [W]
-    
+    :param fName: name of the csv file
+    :param filepath: path to the file
+    :param gV: global variables
+    :type fName: string
+    :type filepath: string
+    :type gV: class
+
+    :return: Qmax: maximum heating power [W]
+    :rtype: float
     """    
     HeatfeatureList = ["T_sst_heat_return_netw_total", "T_sst_heat_supply_netw_total", "mdot_DH_netw_total"]
     buildDemand = extractDemand(filepath+'//'+fName, HeatfeatureList, gV.DAYS_IN_YEAR)
@@ -92,14 +75,13 @@ def individual_to_barcode(individual, gV):
     Reads the 0-1 combination of connected/disconnected buildings
     and creates a list of strings type barcode i.e. ("12311111123012")
     
-    Parameters
-    ----------
-    individual: list
-    
-    Returns
-    -------
-    indCombi : list of strings
-    
+    :param individual: list containing the combination of connected/disconnected buildings
+    :param gV: global variables
+    :type individual: list
+    :type gV: class
+
+    :return: indCombi: list of strings
+    :rtype: list
     """
     irank = (gV.nHeat + gV.nSolar) * 2 + gV.nHR + 1
     frank = len(individual)
@@ -118,18 +100,13 @@ def createTotalNtwCsv(indCombi, locator):
     Create and saves the total file for a specific DHN configuration
     to make the distribution routine possible
     
-    Parameters
-    ----------
-    indCombi : string
-        string of 0 and 1: 0 of the building is disconnected, 1 if connected
-    locator: string
-        path to raw files
-    
-    Returns
-    -------
-    fName_result : string
-        name of the Total file
-    
+    :param indCombi: string of 0 and 1: 0 if the building is disconnected, 1 if connected
+    :param locator: path to raw files
+    :type indCombi: string
+    :type locator: string
+
+    :return: name of the total file
+    :rtype: string
     """
     df = pd.read_csv(locator.get_total_demand())
     
@@ -149,27 +126,18 @@ def readCheckPoint(locator, genCP, storeData):
     """
     Extracts data from the checkpoints created in the master routine
     
-    Parameters
-    ----------
-    genCP : int
-        generation from whom to extract data
-
     :param locator: InputLocator set to scenario
+    :param genCP: generation from whom to extract data
+    :param storeData: 0 if no, 1 if yes
     :type locator: cea.inputlocator.InputLocator
+    :type genCP: int
+    :type storeData: int
 
-    storeData : int
-        0 if no, 1 if yes
-    
-    Returns
-    -------
-    pop : list
-        list of individuals in the Pareto front at that generation
-    eps : list
-        UN-NORMALIZED epsilon indicator from the beginning of the master to this
-        generation
-    testedPop : list
-        list of individuals tested in that generation
-    
+    :returns: pop : list of individuals in the Pareto front at that generation
+             eps : UN-NORMALIZED epsilon indicator from the beginning of the
+             master to this generation
+             testedPop : list of individuals tested in that generation
+    :rtype: list, list, list
     """    
     os.chdir(locator.get_optimization_master_results_folder())
 
@@ -221,5 +189,13 @@ def readCheckPoint(locator, genCP, storeData):
 
 
 def calc_num_buildings(data_path, totalfilename):
+    """
+    :param data_path: path name
+    :param totalfilename: path name
+    :type data_path: string
+    :type totalfilename: string
+    :return: number
+    :rtype: float
+    """
     number = pd.read_csv(data_path+'//'+totalfilename, usecols=['Name']).Name.count()
     return number

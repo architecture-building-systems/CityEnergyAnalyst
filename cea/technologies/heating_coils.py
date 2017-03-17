@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-=========================================
 Heating and cooling coils of Air handling units
-=========================================
-
 """
 from __future__ import division
 import scipy.optimize as sopt
@@ -20,7 +17,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma_sup_hs, ma_sup_0,Ta_sup_0, Ta_re_0, Cpa, gv):
+def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma_sup_hs, ma_sup_0,Ta_sup_0, Ta_re_0,
+                      Cpa, gv):
 
     tasup = Ta_sup_hs + 273
     tare = Ta_re_hs + 273
@@ -110,8 +108,8 @@ def calc_cooling_coil(Qcsf, Qcsf_0, Ta_sup_cs, Ta_re_cs, Tcs_sup_0, Tcs_re_0, ma
 
         #Control system check - close to optimal flow
         min_AT = 5  # Its equal to 10% of the mass flowrate
-        tsc_min = 7  # to consider coolest source possible
-        trc_max = 17
+        tsc_min = Tcs_sup_0  # to consider coolest source possible
+        trc_max = Tcs_re_0
         tsc_max = 12
         AT = tsc - trc
         if AT < min_AT:

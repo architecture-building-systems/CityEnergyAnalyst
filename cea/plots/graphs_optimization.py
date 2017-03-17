@@ -7,14 +7,15 @@ plot results of optimization
 
 from __future__ import division
 
+import os
+
 import matplotlib
 import matplotlib.cm as cmx
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import os
 
-import cea.optimization.conversion_storage.master.normalization as norm
+import cea.optimization.master.normalization as norm
 import cea.optimization.supportFn as sFn
 
 __author__ = "Jimeno A. Fonseca"
@@ -99,33 +100,50 @@ plot pareto curves comparing all scenarios
 =========================================
 """
 
-def plot_pareto_scenarios(generations, headers, relative, savelocation):
+def plot_pareto_scenarios(locator, generations, relative):
+    '''
+    This function plots a pareto curve for a certan checkpoint number. The checkpoint number is equivalent
+    to the Generation number to be mapped
+
+    :param locator:
+    :param generations:
+    :param headers:
+    :param relative:
+    :param savelocation:
+    :return:
+    '''
+
+    # create local variables
     xs =[]
     ys =[]
     zs =[]
     fig = plt.figure()
+    savelocation = locator.get_optimization_plots_folder()
+
+    # read the checkpoint
     counter = 0
-    for header in headers:
-        pathX = sFn.pathX(header)
-        pop, eps, testedPop = sFn.readCheckPoint(pathX, generations[counter], 0)
-        Area_buildings = pd.read_csv(pathX.pathRaw+'//'+'Total.csv',usecols=['Af']).values.sum()
-        [x, y, z] = map(np.array, zip( *[ind.fitness.values for ind in pop] ) )
-        ax = fig.add_subplot(111)
-        if relative == True:
-            z[:] = [a / Area_buildings for a in z]
-            x[:] = [b / Area_buildings for b in x]
-            y[:] = [c / Area_buildings for c in y]
-        xs.extend(x)
-        ys.extend(y)
-        zs.extend(z)
-        counter +=1
+    #for scenario in scenarios:
+    pop, eps, testedPop = sFn.readCheckPoint(locator, generations, 0)
+
+    # get floor area of buildings and estimate relative parameters
+    Area_buildings = pd.read_csv(locator.get_total_demand(),usecols=['Af_m2']).values.sum()
+    [x, y, z] = map(np.array, zip( *[ind.fitness.values for ind in pop] ) )
+    ax = fig.add_subplot(111)
+    if relative == True:
+        z[:] = [a / Area_buildings for a in z]
+        x[:] = [b / Area_buildings for b in x]
+        y[:] = [c / Area_buildings for c in y]
+    xs.extend(x)
+    ys.extend(y)
+    zs.extend(z)
+    counter +=1
         
     if relative == True:
         TAC = 'TAC [EU/m2.yr]'
         CO2 = 'CO2 [kg-CO2/m2.yr]'
         PEN = 'PEN [MJ/m2.yr]'
         ax.set_ylim([10,50])
-        finallocation = savelocation+"pareto_m2.png"
+        finallocation = os.path.join(savelocation, "pareto_m2.png")
     else:
         var = 1000000
         zs[:] = [x / var for x in zs]
@@ -135,7 +153,7 @@ def plot_pareto_scenarios(generations, headers, relative, savelocation):
         CO2 = 'CO2 [kton-CO2/yr]'
         PEN = 'PEN [TJ/yr]' 
         ax.set_xlim([2.5,7.0]) 
-        finallocation = savelocation+"pareto.png"
+        finallocation = os.path.join(savelocation, "pareto.png")
                
     cm = plt.get_cmap('jet')
     cNorm = matplotlib.colors.Normalize(vmin=min(zs), vmax=max(zs))
@@ -294,13 +312,13 @@ number of buildings connected per scenario
 =========================================
 """
 
-def buildingConnection(generation, pathX):
+def buildingConnection(generation, locator):
     BuildCon = []
     nInd = []
 
     for i in range(generation):
         i += 1
-        pop, eps, testedPop = sFn.readCheckPoint(pathX, i, 0)
+        pop, eps, testedPop = sFn.readCheckPoint(locator, i, 0)
         buildCon = []
 
         for ind in pop:
@@ -342,7 +360,7 @@ plot electricity imports and exports
 def Elec_ImportExport(individual, locator):
 
     # Extract Electricity needs
-    buildList = sFn.extractList(locator.pathRaw + "/Total.csv")
+    buildList = sFn.extract_building_names_from_csv(locator.pathRaw + "/Total.csv")
 
     allElec = np.zeros((8760,1))
 
@@ -382,21 +400,22 @@ test
 """
 
 def test_graphs_optimization():
-    import cea.inputlocator
     import cea.globalvar
-    locator = cea.inputlocator.InputLocator(scenario_path=r'C:\reference-case\baseline')
     gv = cea.globalvar.GlobalVariables()
+    scenario_path = gv.scenario_reference
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+
     # define scenarios and headers
     scenarios = ['BAU', 'CAMP', 'HEB', 'UC']
-    generations = [24, 24, 5, 24]
+    generation = 7
     # headers = ["/Volumes/SAMSUNG/paper 3/BAU/", "/Volumes/SAMSUNG/paper 3/CAMP/", "/Volumes/SAMSUNG/paper 3/HEB/", "/Volumes/SAMSUNG/paper 3/UC/"]
     # savelocation = "/Volumes/SAMSUNG/paper 3/Figures/"
     # CodePath = "/Users/jimeno/Documents/Urben/MOO/"
 
-    headers = ["D:\paper 3/BAU/", "D:\paper 3/CAMP/", "D:\paper 3/HEB/", "D:\paper 3/UC/"]
-    savelocation = "D:\paper 3/Figures/"
-    CodePath = "C:\urben\MOO/"
-    matlabDir = "C:/Program Files/MATLAB/R2014a/bin"  # path to the Matlab core files
+    #headers = ["D:\paper 3/BAU/", "D:\paper 3/CAMP/", "D:\paper 3/HEB/", "D:\paper 3/UC/"]
+    ##savelocation = "C:\urben\MOO"
+    CodePath = "C:\urben\MOO"
+    matlabDir = "C:\Program Files\MATLAB\R2015b\\bin"  # path to the Matlab core files
     # run epsilon all scenarios and graph
     # plot_epsilon_norm(scenarios,generations, headers)
 
@@ -404,8 +423,8 @@ def test_graphs_optimization():
     # plot_building_connection(scenarios, generations, headers)
 
     # run graphs of pareto optimal
-    plot_pareto_scenarios(generations, headers, True, savelocation)
-    plot_pareto_scenarios(generations, headers, False, savelocation)
+    plot_pareto_scenarios(locator, generation, True)
+    plot_pareto_scenarios(locator, generation, False)
 
     # run graphs of multi-criteria assement and comparison to decentralized_buildings Intra-scenario
     # header = headers[0]

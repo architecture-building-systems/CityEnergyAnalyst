@@ -7,14 +7,14 @@ pre-processing algorithm
 
 from __future__ import division
 
-import pandas as pd
 import os
-import cea.optimization.preprocessing.extra_loads.processheat as process_heat
-from cea.optimization.conversion_storage.master import summarize_network
-from cea.optimization.preprocessing.decentralized_buildings import decentralized_buildings
-from cea.optimization.preprocessing.extra_loads import electricity
+
+import pandas as pd
+
+import cea.optimization.preprocessing.processheat as process_heat
+from cea.optimization.master import summarize_network
+from cea.optimization.preprocessing import electricity
 from cea.resources import geothermal
-from cea.technologies import substation
 from cea.utilities import  epwreader
 
 __author__ = "Jimeno A. Fonseca"
@@ -28,7 +28,7 @@ __status__ = "Production"
 
 
 def preproccessing(locator, total_demand, building_names, weather_file, gv):
-    '''
+    """
     This function aims at preprocessing all data for the optimization.
 
     :param locator: path to locator function
@@ -36,16 +36,21 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     :param building_names: dataframe with names of all buildings in the area
     :param weather_file: path to wather file
     :param gv: path to global variables class
-    :return:
-
-    extraCosts: extra pareto optimal costs due to electricity and process heat (
-    these are treated separately and not considered inside the optimization)
-    extraCO2: extra pareto optimal emissions due to electricity and process heat (
-    these are treated separately and not considered inside the optimization)
-    extraPrim: extra pareto optimal primary energy due to electricity and process heat (
-    these are treated separately and not considered inside the optimization)
-    solar_features: extraction of solar features form the results of the solar technologies calculation.
-    '''
+    :type locator: class
+    :type total_demand: list
+    :type building_names: list
+    :type weather_file: string
+    :type gv: class
+    :return: extraCosts: extra pareto optimal costs due to electricity and process heat (
+             these are treated separately and not considered inside the optimization)
+             extraCO2: extra pareto optimal emissions due to electricity and process heat (
+             these are treated separately and not considered inside the optimization)
+             extraPrim: extra pareto optimal primary energy due to electricity and process heat (
+             these are treated separately and not considered inside the optimization)
+             solar_features: extraction of solar features form the results of the solar technologies
+             calculation.
+    :rtype: float, float, float, float
+    """
 
     # GET ENERGY POTENTIALS
     # geothermal
@@ -108,7 +113,6 @@ def run_as_script(scenario_path=None):
     run the whole preprocessing routine
     """
     import cea.globalvar
-    from geopandas import GeoDataFrame as gpdf
 
     gv = cea.globalvar.GlobalVariables()
 

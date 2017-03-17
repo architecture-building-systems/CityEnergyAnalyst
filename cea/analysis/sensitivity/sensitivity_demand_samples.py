@@ -45,29 +45,20 @@ def create_demand_samples(method='morris', num_samples=1000, variable_groups=('T
     """
     Create the samples to simulate using the specified method (`method`), the sampling method parameter N
     (`num_samples`) and any additional sampling method-specific parameters specified in `sampler_parameters for each
-     variable definined in the uncertainty database worksheets referenced in `variable_groups`.
-
-    PARAMETERS:
-    -----------
+    variable definined in the uncertainty database worksheets referenced in `variable_groups`.
 
     :param method: The method to use. Valid values are 'morris' (default) and 'sobol'.
     :type method: str
-
     :param num_samples: The parameter `N` for the sampling methods (sobol defines this as "The number of samples to
                         generate", but in reality, for both methods, the actual number of samples is a multiple of
                         `num_samples`).
     :type num_samples: int
-
     :param sampler_parameters: additional, sampler-specific parameters. For `method='morris'` these are: [grid_jump,
                                num_levels], for `method='sobol'` these are: [calc_second_order]
     :type sampler_parameters: dict of (str, _)
-
     :param variable_groups: list of names of groups of variables to analyse. Possible values are:
         'THERMAL', 'ARCHITECTURE', 'INDOOR_COMFORT', 'INTERNAL_LOADS'. This list links to the probability density
         functions of the variables contained in locator.get_uncertainty_db() and refers to the Excel worksheet names.
-
-    RETURNS:
-    --------
 
     :return: (samples, problem) - samples is a list of configurations for each simulation to run, a configuration being
         a list of values for each variable in the problem. The problem is a dictionary with the keys 'num_vars',
@@ -78,18 +69,14 @@ def create_demand_samples(method='morris', num_samples=1000, variable_groups=('T
     """
     locator = InputLocator(None)
 
-    # get probability density functions of all variable_groups from the uncertainty database
+    # get probability density functions (pdf) of all variable_groups from the uncertainty database
     pdf = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1) for group in variable_groups])
-    num_vars = pdf.name.count()  # integer with number of variables
-    names = pdf.name.values  # list of str - with the names of each variable to sample
-    bounds = []  # a list of (min, max) - contains the lower-bound and upper-bound of each variable to sample
-    for var in range(num_vars):
-        limits = [pdf.loc[var, 'min'], pdf.loc[var, 'max']]
-        bounds.append(limits)
+    # a list of tupples containing the lower-bound and upper-bound of each variable
+    bounds = list(zip(pdf['min'], pdf['max']))
 
     # define the problem
-    problem = {'num_vars': num_vars, 'names': names, 'bounds': bounds, 'groups': None, 'N': num_samples,
-               'method': method}
+    problem = {'num_vars': pdf.name.count(), 'names': pdf.name.values, 'bounds': bounds, 'groups': None,
+               'N': num_samples, 'method': method}
     problem.update(sampler_parameters)
 
     return sampler(method, problem, num_samples, sampler_parameters), problem
@@ -98,9 +85,6 @@ def create_demand_samples(method='morris', num_samples=1000, variable_groups=('T
 def sampler(method, problem, num_samples, sampler_parameters):
     """
     Run the sampler specified by `method` and return the results.
-
-    PARAMETERS:
-    -----------
 
     :param method: The method to use. Valid values: 'morris', 'sobol'
     :type method: str
@@ -117,9 +101,6 @@ def sampler(method, problem, num_samples, sampler_parameters):
     :param sampler_parameters: Sampler method-specific parameters to be passed to the sampler function as keyword
                                arguments.
     :type sampler_parameters: dict of (str, _)
-
-    RETURNS:
-    --------
 
     :return: The list of samples generated as a NumPy array with one row per sample and each row containing one
              value for each variable name in `problem['names']`.
@@ -138,7 +119,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', '--method', help='Method to use valid values: "morris" (default), "sobol"',
-                        default='morris')
+                        default='sobol', choices=['sobol', 'morris'])
     parser.add_argument('-n', '--num-samples', help='number of samples (generally 1000 or until it converges',
                         default=1000, type=int)
     parser.add_argument('--calc-second-order', help='(sobol) calc_second_order parameter', type=bool,
@@ -149,7 +130,7 @@ if __name__ == '__main__':
                         default=4)
     parser.add_argument('-S', '--samples-folder', default='.',
                         help='folder to place the output files (samples.npy, problem.pickle) in')
-    parser.add_argument('-V', '--variable-groups', default=['THERMAL'], nargs='+',
+    parser.add_argument('-V', '--variable-groups', default=['THERMAL', 'ARCHITECTURE', 'INDOOR_COMFORT', 'INTERNAL_LOADS'], nargs='+',
                         help=('list of variable groups. Valid values: THERMAL, ARCHITECTURE, ' +
                               'INDOOR_COMFORT, INTERNAL_LOADS'))
     args = parser.parse_args()

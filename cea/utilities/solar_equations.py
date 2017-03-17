@@ -1,8 +1,5 @@
 """
-==================================================
 solar equations
-==================================================
-
 """
 
 
@@ -14,7 +11,6 @@ import datetime
 import math
 
 
-
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca"]
@@ -24,13 +20,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
-"""
-============================
-import ephem library
-============================
-
-"""
+# import ephem library
 
 def _ephem_setup(latitude, longitude, altitude, pressure, temperature):
     # observer
@@ -94,12 +84,7 @@ def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
 
     return sun_coords
 
-"""
-============================
-solar properties
-============================
-
-"""
+# solar properties
 
 def calc_sun_properties(latitude, longitude, weather_data, gv):
 
@@ -137,19 +122,12 @@ def calc_sunrise(sunrise, Yearsimul, longitude, latitude):
 def declination_degree(day_date, TY):
     """The declination of the sun is the angle between Earth's equatorial plane and a line
     between the Earth and the sun. It varies between 23.45 degrees and -23.45 degrees,
-    hitting zero on the equinoxes and peaking on the solstices.
-    Parameters
-    ----------
-    when : datetime.datetime
-        date/time for which to do the calculation
-    TY : float
-        Total number of days in a year. eg. 365 days per year,(no leap days)
-    Returns
-    -------
-    DEC : float
-        The declination of the Sun
-    References
-    ----------
+    hitting zero on the equinoxes and peaking on the solstices. [1]_
+
+    :param when: datetime.datetime, date/time for which to do the calculation
+    :param TY: float, Total number of days in a year. eg. 365 days per year,(no leap days)
+    :param DEC: float,  The declination of the Sun
+
     .. [1] http://pysolar.org/
     """
 
