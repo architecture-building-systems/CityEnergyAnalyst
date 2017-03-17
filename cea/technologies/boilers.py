@@ -19,12 +19,11 @@ __status__ = "Production"
 
 #operation costs
 
-def Cond_Boiler_operation(Q_load, Q_design, T_return_to_boiler, gV):
+def cond_boiler_operation(Q_load, Q_design, T_return_to_boiler):
 
     """
-    Efficiency for operation of condensing Boilers
-
-    Efficiencies based on LHV !
+    This function calculates efficiency for operation of condensing Boilers at DH plant based on LHV.
+    This efficiency accounts for boiler efficiency only (not plant efficiency!)
 
     operational efficiency after:
         http://www.greenshootscontrols.net/?p=153
@@ -32,21 +31,21 @@ def Cond_Boiler_operation(Q_load, Q_design, T_return_to_boiler, gV):
     :param Q_load: Load of time step
     :type Q_load: float
 
-    :param Q_max : float Design Load of Boiler
+    :type Q_design: float
+    :param Q_design: Design Load of Boiler
 
-    :param T_return_to_boiler : float Return Temperature of the network to the boiler [K]
+    :type T_return_to_boiler : float
+    :param T_return_to_boiler: Return Temperature of the network to the boiler [K]
 
-    :returns eta_boiler : float
-        efficiency of Boiler (Lower Heating Value), in abs. numbers
-        accounts for boiler efficiency only (not plant efficiency!)
+    :retype boiler_eff: float
+    :returns boiler_eff: efficiency of Boiler (Lower Heating Value), in abs. numbers
+
     """
+    #TODO[SH]: Operation efficiency Reference link doesn't work
 
     #Implement Curves provided by http://www.greenshootscontrols.net/?p=153
-    x = [0,15.5, 21, 26.7, 32.2, 37.7, 43.3, 49, 54.4, 60, 65.6, 71.1, 100] # Return Temperature Dependency
-    y = [96.8,96.8, 96.2, 95.5, 94.7, 93.2, 91.2, 88.9, 87.3, 86.3, 86.0, 85.9, 85.8] # Return Temperature Dependency
-    #x1 = [0.05, 0.25, 0.5, 0.75, 1] # Load Point dependency
-    #y1 = [99.3, 98.3, 97.6, 97.1, 96.8] # Load Point Dependency
-
+    x = [0, 15.5, 21, 26.7, 32.2, 37.7, 43.3, 49, 54.4, 60, 65.6, 71.1, 100] # Return Temperature Dependency
+    y = [96.8, 96.8, 96.2, 95.5, 94.7, 93.2, 91.2, 88.9, 87.3, 86.3, 86.0, 85.9, 85.8] # Return Temperature Dependency
     x1 = [0, 0.05, 0.25, 0.5, 0.75, 1] # Load Point dependency
     y1 = [99.5, 99.3, 98.3, 97.6, 97.1, 96.8] # Load Point Dependency
 
@@ -78,19 +77,32 @@ def Cond_Boiler_operation(Q_load, Q_design, T_return_to_boiler, gV):
     return boiler_eff
 
 
-def BoilerCond_op_cost(Q_therm, Q_design, T_return_to_boiler, BoilerFuelType, ElectricityType, gV):
+def cond_boiler_op_cost(Q_therm, Q_design, T_return_to_boiler, BoilerFuelType, ElectricityType, gV):
     """
-    Calculates the operation cost of a Condensing Boiler (only operation, no annualized cost!)
+    Calculates the operation cost of a Condensing Boiler (only operation, not annualized cost)
 
-    :param P_design : float Design Power of Boiler Plant (Boiler Thermal power!!)
+    :type Q_therm : float
+    :param Q_therm: Load of time step
 
-    :param Q_annual : float annual thermal Power output
+    :type Q_design: float
+    :param Q_design: Design Load of Boiler
 
-    :param T_return_to_boiler : float return temperature to Boiler (from DH network)
+    :type T_return_to_boiler : float
+    :param T_return_to_boiler: return temperature to Boiler (from DH network)
 
-    :returns: - C_boil_therm : float Total generation cost for required load (per hour) in CHF
-              - C_boil_per_Wh : float cost per Wh in CHF / kWh
-              - Q_primary : float required thermal energy per hour (in Wh Natural Gas)
+    :param gV: globalvar.py
+
+    :rtype C_boil_therm : float
+    :returns C_boil_therm: Total generation cost for required load (per hour) in CHF
+
+    :rtype C_boil_per_Wh : float
+    :returns C_boil_per_Wh: cost per Wh in CHF / kWh
+
+    :rtype Q_primary : float
+    :returns Q_primary: required thermal energy per hour (in Wh Natural Gas)
+
+    :rtype E_aux_Boiler: float
+    :returns E_aux_Boiler: auxiliary electricity of boiler operation
     """
 
     # Iterating for efficiency as Q_thermal_required is given as input
@@ -99,7 +111,9 @@ def BoilerCond_op_cost(Q_therm, Q_design, T_return_to_boiler, BoilerFuelType, El
     #    print "error expected in Boiler operation, below min part load!"
 
     #print float(Q_therm) / float(Q_design)
-    eta_boiler = Cond_Boiler_operation(Q_therm, Q_design, T_return_to_boiler, gV)
+
+    # boiler efficiency
+    eta_boiler = cond_boiler_operation(Q_therm, Q_design, T_return_to_boiler)
 
 
     if BoilerFuelType == 'BG':
@@ -127,26 +141,30 @@ def BoilerCond_op_cost(Q_therm, Q_design, T_return_to_boiler, BoilerFuelType, El
 def calc_Cop_boiler(Q_load, Q_design, T_return_to_boiler):
 
     """
-    Efficiency for operation of condensing Boilers
-
-    Efficiencies based on LHV !
+    This function calculates efficiency for operation of condensing Boilers based on LHV.
+    This efficiency accounts for boiler efficiency only (not plant efficiency!)
 
     operational efficiency after:
         http://www.greenshootscontrols.net/?p=153
 
-    :param Q_load : float Load of time step
 
-    :param Q_max : float Design Load of Boiler
+    :param Q_load: Load of time step
+    :type Q_load: float
 
-    :param T_return_to_boiler : float Return Temperature of the network to the boiler [K]
+    :type Q_design: float
+    :param Q_design: Design Load of Boiler
 
-    :returns: eta_boiler : float efficiency of Boiler (Lower Heating Value), in abs. numbers accounts for boiler
-        efficiency only (not plant efficiency!)
+    :type T_return_to_boiler : float
+    :param T_return_to_boiler: Return Temperature of the network to the boiler [K]
+
+
+    :retype boiler_eff: float
+    :returns boiler_eff: efficiency of Boiler (Lower Heating Value), in abs. numbers
     """
 
     #Implement Curves provided by http://www.greenshootscontrols.net/?p=153
-    x = [0,15.5, 21, 26.7, 32.2, 37.7, 43.3, 49, 54.4, 60, 65.6, 71.1, 100] # Return Temperature Dependency
-    y = [96.8,96.8, 96.2, 95.5, 94.7, 93.2, 91.2, 88.9, 87.3, 86.3, 86.0, 85.9, 85.8] # Return Temperature Dependency
+    x = [0, 15.5, 21, 26.7, 32.2, 37.7, 43.3, 49, 54.4, 60, 65.6, 71.1, 100] # Return Temperature Dependency
+    y = [96.8, 96.8, 96.2, 95.5, 94.7, 93.2, 91.2, 88.9, 87.3, 86.3, 86.0, 85.9, 85.8] # Return Temperature Dependency
     x1 = [0.0, 0.05, 0.25, 0.5, 0.75, 1.0] # Load Point dependency
     y1 = [100.0, 99.3, 98.3, 97.6, 97.1, 96.8] # Load Point Dependency
 
@@ -181,12 +199,18 @@ def calc_Cinv_boiler(Q_design, Q_annual, gV):
     Calculates the annual cost of a boiler (based on A+W cost of oil boilers) [CHF / a]
     and Faz. 2012 data
 
-    :param Q_design : float Design Load of Boiler in WATT
+    :type Q_design : float
+    :param Q_design: Design Load of Boiler in [W]
 
-    :param Q_annual : float Annual thermal load required from Boiler in WATT HOUR
+    :type Q_annual : float
+    :param Q_annual: Annual thermal load required from Boiler in [Wh]
 
-    :returns InvCa : float annualized investment costs in CHF/a including Maintainance Cost
+    :param gV: globalvar.py
+
+    :rtype InvCa : float
+    :returns InvCa: Annualized investment costs in CHF/a including Maintenance Cost
     """
+    # TODO[SH]: check source
     if Q_design >0:
         InvC = 28000 # after A+W
 
