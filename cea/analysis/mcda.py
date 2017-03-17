@@ -1,8 +1,5 @@
 """
-=====================
 Post-processing: MCDA
-=====================
-
 """
 from __future__ import division
 
@@ -11,7 +8,7 @@ import numpy as np
 import pandas as pd
 import os
 
-import cea.globalVar as glob
+import cea.globalvar
 import cea.optimization.supportFn as sFn
 
 
@@ -42,8 +39,8 @@ def mcda_indicators(individual, locator, plot = 0):
     """
     configKey = "".join(str(e)[0:4] for e in individual)
     print configKey
-    buildList = sFn.extractList(locator.pathRaw + "/Total.csv")
-    gV = glob.globalVariables()
+    buildList = sFn.extract_building_names_from_csv(locator.pathRaw + "/Total.csv")
+    gv = cea.globalvar.GlobalVariables()
     
     # Recover data from the PP activation file
     resourcesFile = os.path.join(locator.get_optimization_slave_results_folder(), "%(configKey)sPPActivationPattern.csv" % locals())
@@ -69,7 +66,7 @@ def mcda_indicators(individual, locator, plot = 0):
 
 
     # Recover heating needs for decentralized buildings
-    indCombi = sFn.individual_to_barcode(individual, gV)
+    indCombi = sFn.individual_to_barcode(individual, gv)
     QfromNG = 0
     QfromBG = 0
     QfromGHP = 0
@@ -93,9 +90,9 @@ def mcda_indicators(individual, locator, plot = 0):
     df = pd.read_csv(totalFile, usecols=["Qcdataf", "Qcicef", "Qcpf", "Qcsf"])
     arrayTotal = np.array(df)
     if individual[12] == 0:
-        totalCool = ( np.sum((arrayTotal)[:,:-1]) + np.sum((arrayTotal)[:,-1:]) * (1+gV.DCNetworkLoss) ) * 1E6 # [Wh]
+        totalCool = ( np.sum((arrayTotal)[:,:-1]) + np.sum((arrayTotal)[:,-1:]) * (1+gv.DCNetworkLoss) ) * 1E6 # [Wh]
     else:
-        totalCool = ( np.sum((arrayTotal)[:,1:-1]) + np.sum((arrayTotal)[:,-1:]) * (1+gV.DCNetworkLoss) ) * 1E6 # [Wh]
+        totalCool = ( np.sum((arrayTotal)[:,1:-1]) + np.sum((arrayTotal)[:,-1:]) * (1+gv.DCNetworkLoss) ) * 1E6 # [Wh]
     
     
     # Computes the specific operational costs
@@ -162,9 +159,9 @@ def mcda_indicators(individual, locator, plot = 0):
         print 'shareElecSolar', shareElecSolar*100 
         print 'shareCoolLake', shareCoolLake*100
 
-    specificCosts = gV.ELEC_PRICE * shareElecGrid + \
-                    gV.NG_PRICE * (shareCC_NG + shareBB_NG + shareBP_NG + shareExtraNG + shareDecentralizedNG) + \
-                    gV.BG_PRICE * (shareCC_BG + shareBB_BG + shareBP_BG + shareDecentralizedBG)
+    specificCosts = gv.ELEC_PRICE * shareElecGrid + \
+                    gv.NG_PRICE * (shareCC_NG + shareBB_NG + shareBP_NG + shareExtraNG + shareDecentralizedNG) + \
+                    gv.BG_PRICE * (shareCC_BG + shareBB_BG + shareBP_BG + shareDecentralizedBG)
     
     # Computes the share of local resources
     shareLocal = shareHPLake + shareHPSew + shareGHP + shareHR + shareHeatSolar + shareDecentralizedGHP + shareElecSolar + shareCoolLake

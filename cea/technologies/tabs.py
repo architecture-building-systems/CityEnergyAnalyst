@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-=========================================
 Termoactivated building surfaces (TABS)
-=========================================
-
 """
 
 from __future__ import division
@@ -20,13 +17,11 @@ __status__ = "Production"
 
 
 def calc_floorheating(Qh, tm, Qh0, tsh0, trh0, Af):
-    '''
+    """
     Calculates the operating conditions of the TABS system based on existing radiator model, replacing the radiator
     equation with the simple calculation for TABS from SIA 2044, which in turn is based on Koschenz & Lehmann
     "Thermoaktive Bauteilsysteme (TABS)".
 
-    Parameters
-    ----------
     :param Qh: heating demand
     :param tm: Temperature of the thermal mass
     :param Qh0: nominal heating power of the heating system
@@ -34,12 +29,10 @@ def calc_floorheating(Qh, tm, Qh0, tsh0, trh0, Af):
     :param trh0: nominal return temperature from the TABS system
     :param Af: heated area
 
-    Returns
-    -------
-    :return: tsh: supply temperature to the TABS system
-    ;return: trh: return temperature from the TABS system
-    ;return: mCw: flow rate in the TABS system
-    '''
+    :return: - ``tsh``, supply temperature to the TABS system
+             - ``trh``, return temperature from the TABS system
+             - ``mCw``, flow rate in the TABS system
+    """
 
     if Qh > 0:
         tsh0 = tsh0 + 273

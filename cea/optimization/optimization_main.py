@@ -1,17 +1,13 @@
 """
-============================
 multi-objective optimization of supply systems for the CEA
-
-============================
-
 """
 
 from __future__ import division
 
 import pandas as pd
 
-import cea.optimization.conversion_storage.master.master_main as master
 import cea.optimization.distribution.network_opt_main as network_opt
+import cea.optimization.master.master_main as master
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
 
 __author__ = "Jimeno A. Fonseca"
@@ -24,19 +20,22 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-#============================
 # optimization
-#============================
-
 
 def moo_optimization(locator, weather_file, gv):
     '''
     This function optimizes the conversion, storage and distribution systems of a heating distribution for the case study.
     It requires that solar technologies be calculated in advance and nodes of a distribution should have been already generated.
+
     :param locator: path to input locator
     :param weather_file: path to weather file
     :param gv: global variables class
-    :return:
+    :type locator: string
+    :type weather_file: string
+    :type gv: class
+
+    :returns: None
+    :rtype: Nonetype
     '''
 
     # read total demand file and names and number of all buildings
@@ -50,7 +49,7 @@ def moo_optimization(locator, weather_file, gv):
     extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand, building_names,
                                                                    weather_file, gv)
 
-    # optimize the distribution and linearalize the results (at the moment, there is only a linearilization of values in Zug)
+    # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     print "NETWORK OPTIMIZATION"
     network_features = network_opt.network_opt_main()
 

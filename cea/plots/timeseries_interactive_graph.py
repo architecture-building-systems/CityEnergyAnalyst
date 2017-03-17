@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-===========================
 Dynamic demand graphs algorithm
-===========================
-J. Fonseca  script development          25.08.15
-
 """
 from __future__ import division
 
@@ -28,19 +24,14 @@ def timeseries_graph(locator, analysis_fields, gv):
     """
     algorithm to print graphs in html for easy visualization
 
-    Parameters
-    ----------
-
     :param locator: an InputLocator set to the scenario to compute
     :type locator: inputlocator.InputLocator
 
     :param analysis_fields: list of fields (column names in Totals.csv) to analyse
     :type analysis_fields: list[string]
 
-    Returns
-    -------
-    Graphs of each building and total: .Pdf
-        heat map file per variable of interest n.
+    :returns: - Graphs of each building and total: .Pdf
+              - heat map file per variable of interest n.
     """
 
     # get name of files to map
