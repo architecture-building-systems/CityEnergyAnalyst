@@ -16,34 +16,50 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def calc_Qww_ls_st(Tww_st, Tww_setpoint, tair, Bf, te, V, Qww, Qww_ls_r, Qww_ls_nr, Utank, AR, gv):
+def calc_Qww_ls_st(ta, te, Tww_st, V, Qww, Qww_ls_r, Qww_ls_nr, gv):
     """
     This algorithm calculates the heat flows within a fully mixed water storage tank.
-    Heat flows include sensible heat loss to the environment (ql), heat charged into the tank (qc), and heat discharged from the tank (qd).
+    Heat flows include sensible heat loss to the environment (ql), heat charged into the tank (qc),
+    and heat discharged from the tank (qd).
 
-    :param Tww_st_0: Initial tank temperature in C
-    :param V: dhw tank size in m3
-    :param Qww: dhw demand in W
-    :param Qww_ls_r: recoverable loss in distribution in W
-    :param Qww_ls_nr: non-recoverable loss in distribution in W
-    :param Utank: dhw tank insulation heat transfer coefficient in W/m2-K, value taken from SIA 385. global variable.
-    :param AR: # tank height aspect ratio, H=(4*V*AR^2/pi)^(1/3), value taken from commercial tank geometry (jenni.ch). global variable.
+    :param Tww_st: tank temperature in [C]
+    :param Tww_setpoint: DHW temperature set point in [C]
+    :param ta: room temperature in [C]
+    :param te: ambient temperature in [C]
+    :param V: DHW tank size in [m3]
+    :param Qww: DHW demand in [W]
+    :param Qww_ls_r: recoverable loss in distribution in [W]
+    :param Qww_ls_nr: non-recoverable loss in distribution in [W]
+    :param gv: globalvar.py
 
-    :return ql: storage sensible heat loss in W.
-    :return qd: heat discharged from the tank in W, including dhw heating demand and distribution heat loss.
-    :return qc: heat charged into the tank in W.
+    :type Tww_st: float
+    :type Tww_setpoint: float
+    :type ta: float
+    :type te: float
+    :type V: float
+    :type Qww: float
+    :type Qww_ls_nr: float
+
+
+    :return ql: storage sensible heat loss in [W].
+    :return qd: heat discharged from the tank in [W], including dhw heating demand and distribution heat loss.
+    :return qc: heat charged into the tank in [W].
+    :rtype ql: float
+    :rtype qd: float
+    :rtype qc: float
     """
-    tamb = tair - Bf * (tair - te)         # Calculate tamb in basement according to EN
 
-    h = (4*V*AR**2/math.pi)**(1.0/3.0)     # tank height in m, derived from tank Aspect Ratio(AR)
-    r = (V/(math.pi*h))**(1.0/2.0)         # tank radius in m, assuming tank shape is cylinder
-    Atank = 2*math.pi*r**2 + 2*math.pi*r*h      # tank surface area in m2.
-    ql = Utank*Atank*(Tww_st - tamb)       # tank heat loss to the room in W
+    tamb = ta - gv.Bf * (ta - te)         # Calculate tamb in basement according to EN
+
+    h = ( 4 * V * gv.AR ** 2 / math.pi ) ** ( 1.0 / 3.0 )     # tank height in [m], derived from tank Aspect Ratio(AR)
+    r = ( V / ( math.pi * h ) ) ** ( 1.0 / 2.0 )         # tank radius in [m], assuming tank shape is cylinder
+    Atank = 2 * math.pi * r ** 2 + 2 * math.pi * r * h      # tank surface area in [m2].
+    ql = gv.U_dhwtank * Atank * ( Tww_st - tamb )       # tank heat loss to the room in [W]
     qd = Qww + Qww_ls_r + Qww_ls_nr
     if Qww <= 0:
         qc = 0
     else:
-        qc = qd + ql + gv.Pwater*V*gv.Cpw*(Tww_setpoint-Tww_st)/3.6
+        qc = qd + ql + gv.Pwater * V * gv.Cpw * ( gv.Tww_setpoint - Tww_st ) / 3.6
     return ql, qd, qc
 
 
@@ -56,19 +72,41 @@ def ode(y, t, ql, qd, qc, Pwater, Cpw, Vtank):
     :param ql: storage tank sensible heat loss in W.
     :param qd: heat discharged from the tank in W.
     :param qc: heat charged into the tank in W.
-
+    :type y: float
+    :type t: float
+    :type ql: float
+    :type qd: float
+    :type qc: float
+    
     :return dydt: change in temperature at each time step.
+    :type dydt: float
     """
     dydt = (qc - ql - qd) / (Pwater * Vtank * Cpw)
     return dydt
 
-
-def solve_ode_storage(Tww_st_0, ql, qd, qc, Pwater, Cpw, Vtank):
+def solve_ode_storage(Tww_st_0, ql, qd, qc, Vtank, gv):
     """
     This algorithm solves the differential equation, ode.
+
+    :param Tww_st_0: initial tank temperature in [C]
+    :param ql: storage tank sensible heat loss in W.
+    :param qd: heat discharged from the tank in W.
+    :param qc: heat charged into the tank in W.
+    :param Vtank: DHW tank size in [m3]
+    :param gv: globalvar.py
+
+    :type Tww_st_0: float
+    :type ql: float
+    :type qd: float
+    :type qc: float
+    :type Vtank: float
+
+    :returns y[1]: solution of the ode
+    :rtype y[1]: float
     """
     t = np.linspace(0,1,2)
-    y = odeint(ode, Tww_st_0, t, args=(ql, qd, qc, Pwater, Cpw, Vtank))
+    y = odeint(ode, Tww_st_0, t, args = (ql, qd, qc, gv.Pwater, gv.Cpw, Vtank))
+
     return y[1]
 
 

@@ -6,20 +6,20 @@ Evaluation function of an individual
 """
 from __future__ import division
 
-import cea.optimization.conversion_storage.slave.slave_main as sM
-import cea.optimization.conversion_storage.master.summarize_network as nM
+import os
+
+import cea.optimization.master.generation as generation
+import cea.optimization.master.summarize_network as nM
 import numpy as np
 import pandas as pd
 
-from cea.optimization.conversion_storage import master_to_slave
-import cea.optimization.conversion_storage.master.generation as generation
-
-import cea.optimization.conversion_storage.master.cost_model as eM
-import cea.optimization.preprocessing.cooling_network.cooling_network as coolMain
+import cea.optimization.master.cost_model as eM
+import cea.optimization.preprocessing.cooling_net as coolMain
+import cea.optimization.slave.slave_main as sM
 import cea.optimization.supportFn as sFn
 import cea.technologies.substation as sMain
 import check as cCheck
-import os
+from cea.optimization import slave_data
 
 
 # +++++++++++++++++++++++++++++++++++++
@@ -36,7 +36,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     :param locator: locator class
     :param extraCosts: costs calculated before optimization of specific energy services
      (process heat and electricity)
-    :param extraCO2: green house gas emissions calculated before optimization ofr specific energy services
+    :param extraCO2: green house gas emissions calculated before optimization of specific energy services
      (process heat and electricity)
     :param extraPrim: primary energy calculated before optimization ofr specific energy services
      (process heat and electricity)
@@ -220,7 +220,7 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     :rtype: class
     """
     # initialise class storing dynamic variables transfered from master to slave optimization
-    master_to_slave_vars = master_to_slave.MastertoSlave()
+    master_to_slave_vars = slave_data.SlaveData()
     master_to_slave_vars.configKey = "".join(str(e)[0:4] for e in individual)
     
     individual_barcode = sFn.individual_to_barcode(individual, gv)
