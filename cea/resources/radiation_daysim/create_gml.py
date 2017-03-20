@@ -28,9 +28,10 @@ def building2d23d(citygml_writer, shapefilepath, out_path, height_col, elev_col,
     field_name_list = shp2citygml.get_field_name_list(sf)
     height_index = field_name_list.index(height_col) - 1
     name_index = field_name_list.index(name_col) - 1
-    elev_index = field_name_list.index(elev_col) - 1
+    elev_index = field_name_list.index(elev_col) - 1 #TODO: ADD ELEVATION FROM RASTER
     floor_index = field_name_list.index(nfloor_col) - 1
     counter = 0
+    bsolid_list = []
     for rec in shapeRecs:
         poly_attribs = rec.record
         height = float(poly_attribs[height_index])
@@ -72,10 +73,14 @@ def building2d23d(citygml_writer, shapefilepath, out_path, height_col, elev_col,
             if bldg_shell_list:
                 bldg_solid = construct.make_solid(bldg_shell_list[0])
                 bldg_solid = modify.fix_close_solid(bldg_solid)
+                bsolid_list.append(bldg_solid)
                 occface_list = fetch.geom_explorer(bldg_solid, "face")
                 geometry_list = gml3dmodel.write_gml_srf_member(occface_list)
                 citygml_writer.add_building("lod1", name,geometry_list)
         counter+=1
+
+    return bsolid_list
+
 
 def terrain2d23d(citygml_writer, input_terrain):
 
@@ -84,8 +89,11 @@ def terrain2d23d(citygml_writer, input_terrain):
 
     #create tin and triangulate
     tin_occface_list = construct.delaunay3d(raster_points)
+    print len(tin_occface_list)
+
     geometry_list = gml3dmodel.write_gml_triangle(tin_occface_list)
     citygml_writer.add_tin_relief("lod1", "terrain1", geometry_list)
+    return tin_occface_list
 
 def raster_reader(input_terrain_raster):
 
@@ -106,12 +114,12 @@ def create_citygml(input_buildings, input_terrain, output_folder):
     citygml_writer = pycitygml.Writer()
 
     # transform buildings to LOD3
-    building2d23d(citygml_writer, input_buildings, output_folder, height_col='height_ag', name_col='Name',
+    bsolid_list = building2d23d(citygml_writer, input_buildings, output_folder, height_col='height_ag', name_col='Name',
                   elev_col='elevation', nfloor_col="floors_ag")
 
     # transform terrain to CityGML
-    terrain2d23d(citygml_writer, input_terrain)
-
+    terrain_face_list = terrain2d23d(citygml_writer, input_terrain)
+    construct.visualise([terrain_face_list,bsolid_list], ["GREEN","WHITE"],backend = "wx")
     # write to citygml
     citygml_writer.write(locator.get_building_geometry_citygml())
 

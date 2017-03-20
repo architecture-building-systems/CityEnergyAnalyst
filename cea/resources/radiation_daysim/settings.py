@@ -29,6 +29,4 @@ SEN_PARMS = {
 'MAX_Z_DIR': 0.05,
 }
 # terrain parameters
-TERRAIN_PARAMS = {
-'e_terrain': 0.8,
-}
+TERRAIN_PARAMS = {'e_terrain': 0.8}
