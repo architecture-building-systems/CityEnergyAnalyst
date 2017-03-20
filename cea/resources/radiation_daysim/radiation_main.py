@@ -32,6 +32,7 @@ __status__ = "Production"
 
 def create_radiance_srf(occface, srfname, srfmat, rad):
     bface_pts = fetch.pyptlist_frm_occface(occface)
+    print type(srfname)
     py2radiance.RadSurface(srfname, bface_pts, srfmat, rad)
     
 def geometry2radiance(rad, ageometry_table, citygml_reader):
@@ -39,7 +40,7 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
     bldg_dict_list = []
 
     gmlterrains = citygml_reader.get_relief_feature()
-    srfmat = settings.TERRAIN_PARAMS.e_terrain
+    srfmat = settings.TERRAIN_PARAMS['e_terrain']
     tcnt = 0
     for gmlterrain in gmlterrains:
         pytri_list = citygml_reader.get_pytriangle_list(gmlterrain)
@@ -86,7 +87,7 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
             
         rcnt = 0
         for roof in roof_list:
-            create_radiance_srf(roof, "roof"+str(bcnt)+str(rcnt), ageometry_table['roof_name'][bldg_name], rad)
+            create_radiance_srf(roof, "roof"+str(bcnt)+str(rcnt), str(ageometry_table['a_roof'][bldg_name]), rad)
             rcnt+=1
             
         bldg_dict["name"] = bldg_name
