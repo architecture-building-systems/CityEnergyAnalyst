@@ -1,11 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-===========================
 Benchmark plots
-===========================
-
-M. Mosteiro Romero  script development          31.08.16
-
 """
 from __future__ import division
 
@@ -29,21 +24,19 @@ __status__ = "Production"
 
 def benchmark(locator_list, output_file):
     """
-
     Print PDF graphs comparing the selected scenarios to the 2000 Watt society benchmark for construction, operation
     and mobility. The calculation is based on the database read by and described in calc_benchmark_today and
     calc_benchmark_targets.
 
     The following file is created as a side effect by this script in the specified file path:
-    - ouput_file: .pdf
-        Plot of the embodied and operational emissions and primary energy demand
 
-    :param locator: a list of InputLocator instances set to each scenario to be computed. The first element in
-    the array is always considered as the baseline for the comparison.
-    :type locator: list
+    - output_file: .pdf Plot of the embodied and operational emissions and primary energy demand
+
+    :param locator_list: a list of InputLocator instances set to each scenario to be computed. The first element in
+                         the array is always considered as the baseline for the comparison.
+    :type locator_list: List[cea.inputlocator.InputLocator]
     :param output_file: the filename (pdf) to save the results as.
     :type output_file: str
-
     """
 
     # setup: the labels and colors for the graphs are defined

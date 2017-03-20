@@ -229,7 +229,7 @@ If you would like to be able to access the ``arcpy`` module from the
 ``C:\Users\your_name\Anaconda2\envs\esri104\Lib\site-packages`` with the
 following contents:
 
-.. code:: txt
+.. code::
 
     C:\Program Files (x86)\ArcGIS\Desktop10.4\bin
     C:\Program Files (x86)\ArcGIS\Desktop10.4\arcpy

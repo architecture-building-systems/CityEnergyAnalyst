@@ -21,9 +21,9 @@ list of commands available::
     > cea --help
     usage: cea [-h] [-s SCENARIO]
            {demand,demand-helper,emissions,embodied-energy,mobility,
-           benchmark-graphs,weather-files,weather-path,locate,demand-graphs,
-           scenario-plots,latitude,longitude,radiation,install-toolbox,
-           heatmaps}
+           benchmark-graphs,weather-files,weather-path,
+           locate,demand-graphs, scenario-plots,latitude,longitude,
+           radiation,install-toolbox, heatmaps}
            ...
 
     positional arguments:
@@ -54,6 +54,41 @@ run that sub-command. For example, the ``embodied-energy`` sub-command has an (o
 
 As you can see, you can get help on any sub-command by typing ``cea SUBCOMMAND --help``. This will list the expected
 arguments as well as the default values used.
+
+The sub-commands can be grouped into three groups: Main commands that work on a single scenario, main commands that work
+on multiple scenarios and auxillary commands. Main commands that work on multiple scenarios have a ``--scenarios``
+option for specifying the scenarios to work on - these commands ignore the ``-s`` global option for specifying the
+scenario folder.
+
+Main commands
+.............
+
+Main commands that work on a single scenario are:
+
+- demand (calculate the demand load of a scenario)
+- demand-helper (apply archetypes to a scenario)
+- emissions (calculate emissions due to operation)
+- embodied-energy (calculate embodied energy)
+- mobility (calculate emissions due to mobility)
+- demand-graphs (create graphs for demand output variables per building)
+- radiation (create radiation data as input to the demand calculation)
+- heatmaps (create heatmaps based on demand and emissions output)
+
+Main commands that work on multiple scenarios:
+
+- benchmark-graphs (create graphs for the 2000 Watt society benchmark for multiple scenarios)
+- scenario-plots (plots various scenarios against each other)
+
+Auxillary commands
+..................
+
+- weather-files (list the weather names shipped with the CEA)
+- weather-path (given a weather name {see above} return the path to the file)
+- latitude (try to guess the latitude of a scenario based on it's building geometry shapefile)
+- longitude (try to guess the longitude of a scenario based on it's building geometry shapefile)
+- install-toolbox (install the ArcGIS interface)
+- locate (gives access to the InputLocator class for finding paths)
+
 
 Planned interfaces
 ------------------
