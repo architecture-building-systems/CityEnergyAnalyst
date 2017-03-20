@@ -10,16 +10,15 @@ import os
 import time
 from pickle import Pickler, Unpickler
 
-import cea.optimization.conversion_storage.master.evaluation as evaluation_function
-import cea.optimization.conversion_storage.master.generation as generation_function
-import mutations as mut
-import selection as sel
+import cea.optimization.master.crossover as cx
+import cea.optimization.master.evaluation as evaluation
 from deap import base
 from deap import creator
 from deap import tools
 
-import cea.optimization.conversion_storage.master.crossover as cx
-
+import cea.optimization.master.generation as generation
+import mutations as mut
+import selection as sel
 
 __author__ =  "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -32,15 +31,15 @@ __status__ = "Production"
 
 
 def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                           network_features, gv, genCP = 0):
+                           network_features, gv, genCP=0):
     """
     Evolutionary algorithm to optimize the district energy system's design.
-    This algortihm optimizes the size and operation of technologies for a district heating netowrk.
-    electrical netowrk are not considered but their burdens in terms electricity costs, efficiency and emissions
-    is added on top of the optimization
-    The equipment for Cooling networks is not optimized as it is assumed that all customer with cooling needs will be
-    connected to a lake. in case there is not enough cvapacity form the lake a chiller and cooling tower is used to cover
-    the extra needs.
+    This algorithm optimizes the size and operation of technologies for a district heating network.
+    electrical network are not considered but their burdens in terms electricity costs, efficiency and emissions
+    is added on top of the optimization.
+    The equipment for cooling networks is not optimized as it is assumed that all customers with cooling needs will be
+    connected to a lake. in case there is not enough capacity from the lake, a chiller and cooling tower is used to
+    cover the extra needs.
 
     :param locator: locator class
     :param building_names: vector with building names
@@ -74,8 +73,8 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
     # DEFINE OBJECTIVE FUNCTION
     def objective_function(ind):
-        (costs, CO2, prim) = evaluation_function.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
-                                                                 network_features, gv)
+        (costs, CO2, prim) = evaluation.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solar_features,
+                                                        network_features, gv)
         return (costs, CO2, prim)
 
     # SET-UP EVOLUTIONARY ALGORITHM
@@ -83,7 +82,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     creator.create("Fitness", base.Fitness, weights=(-1.0, -1.0, -1.0))
     creator.create("Individual", list, fitness=creator.Fitness)
     toolbox = base.Toolbox()
-    toolbox.register("generate", generation_function.generate_main, nBuildings, gv)
+    toolbox.register("generate", generation.generate_main, nBuildings, gv)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.generate)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", objective_function)
@@ -99,7 +98,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         # Check distribution
         for ind in pop:
-            evaluation_function.checkNtw(ind, ntwList, locator, gv)
+            evaluation.checkNtw(ind, ntwList, locator, gv)
         
         # Evaluate the initial population
         print "Evaluate initial population"
@@ -176,7 +175,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         
         print "Update Network list \n"
         for ind in invalid_ind:
-            evaluation_function.checkNtw(ind, ntwList, locator, gv)
+            evaluation.checkNtw(ind, ntwList, locator, gv)
         
         print "Re-evaluate the population" 
         fitnesses = map(toolbox.evaluate, invalid_ind)
@@ -191,7 +190,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         selection = sel.selectPareto(offspring,gv)
 
         # Compute the epsilon criteria [and check the stopping criteria]
-        epsInd.append(evaluation_function.epsIndicator(pop, selection))
+        epsInd.append(evaluation.epsIndicator(pop, selection))
         #if len(epsInd) >1:
         #    eta = (epsInd[-1] - epsInd[-2]) / epsInd[-2]
         #    if eta < gv.epsMargin:

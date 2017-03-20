@@ -138,7 +138,7 @@ def CC_Op(wdot, gt_size, fuel, tDH, gV) :
     """
 
     (eta0, mdot0) = GT_fullLoadParam(gt_size, fuel, gV)
-    (eta, mdot, texh, mdotfuel) = GT_partloadParam(wdot, gt_size, eta0, mdot0, fuel, gV)
+    (eta, mdot, texh, mdotfuel) = GT_partLoadParam(wdot, gt_size, eta0, mdot0, fuel, gV)
     (qdot, wdotfin) = ST_Op(mdot, texh, tDH, fuel, gV)
 
     if fuel == 'NG':
