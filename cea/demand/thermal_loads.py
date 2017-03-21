@@ -351,6 +351,7 @@ class BuildingProperties(object):
         prop_geometry = Gdf.from_file(locator.get_building_geometry())
         prop_geometry['footprint'] = prop_geometry.area
         prop_geometry['perimeter'] = prop_geometry.length
+        prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(locator.get_building_geometry())
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
         prop_hvac = Gdf.from_file(locator.get_building_hvac()).drop('geometry', axis=1)
         prop_thermal = Gdf.from_file(locator.get_building_thermal()).drop('geometry', axis=1).set_index('Name')
@@ -399,6 +400,27 @@ class BuildingProperties(object):
         self._solar = solar
         self._prop_windows = df_windows
         self._prop_RC_model = prop_rc_model
+
+    def calc_bounding_box_geom(self, geometry_shapefile):
+        import shapefile
+        sf = shapefile.Reader(geometry_shapefile)
+        shapes = sf.shapes()
+        len_shapes = len(shapes)
+        bwidth = []
+        blength = []
+        for shape in range(len_shapes):
+            bbox = shapes[shape].bbox
+            coords_bbox = [coord for coord in bbox]
+            delta1 = abs(coords_bbox[0] - coords_bbox[2])
+            delta2 = abs(coords_bbox[1] - coords_bbox[3])
+            if delta1 >= delta2:
+                bwidth.append(delta2)
+                blength.append(delta1)
+            else:
+                bwidth.append(delta1)
+                blength.append(delta2)
+
+        return blength, bwidth
 
     def apply_overrides(self, df):
         """Apply the overrides to `df`. This works by checking each column in the `self._overrides` dataframe
@@ -673,6 +695,8 @@ class BuildingPropertiesRow(object):
     def _get_properties_building_systems(self, gv):
         # TODO: Documentation
         # Refactored from CalcThermalLoads
+
+        # gemoetry properties.
 
         Ll = self.geometry['Blength']
         Lw = self.geometry['Bwidth']
