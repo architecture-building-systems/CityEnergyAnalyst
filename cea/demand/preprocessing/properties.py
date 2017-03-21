@@ -6,12 +6,13 @@ building properties algorithm
 # J. A. Fonseca  script development          22.03.15
 
 from __future__ import division
+from __future__ import absolute_import
 
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
 
-from cea import inputlocator
+import cea.inputlocator
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -235,7 +236,7 @@ def run_as_script(scenario_path=None, prop_thermal_flag=True, prop_architecture_
     gv = cea.globalvar.GlobalVariables()
     if not scenario_path:
         scenario_path = gv.scenario_reference
-    locator = inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     properties(locator=locator, prop_thermal_flag=prop_thermal_flag, prop_architecture_flag=prop_architecture_flag,
                prop_hvac_flag=prop_hvac_flag, prop_comfort_flag=prop_comfort_flag,
                prop_internal_loads_flag=prop_internal_loads_flag, gv=gv)

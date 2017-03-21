@@ -1,22 +1,18 @@
 """Installation script for the City Energy Analyst"""
 
 import os
+from setuptools import setup, find_packages
 
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Daren Thomas"]
 __license__ = "MIT"
-__version__ = "0.2a2"
+__version__ = "1.1a3"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
 
 LONG_DESCRIPTION = """TODO: add long description"""
 
@@ -26,7 +22,7 @@ if os.environ.get('READTHEDOCS', False) == 'True':
 else:
     # TODO: list all the requirements for installing
     INSTALL_REQUIRES = ['geopandas', 'pandas', 'shapely', 'fiona', 'descartes', 'pyproj', 'xlrd', 'requests',
-                        'doit==0.29.0']
+                        'doit==0.29.0', 'pyshp']
 
 
 setup(name='cityenergyanalyst',
@@ -37,13 +33,12 @@ setup(name='cityenergyanalyst',
       author_email='cea@arch.ethz.ch',
       url='http://cityenergyanalyst.com',
       long_description=LONG_DESCRIPTION,
-      packages=['cea', 'cea.analysis', 'cea.analysis.sensitivity', 'cea.demand', 'cea.demand.preprocessing',
-                'cea.geometry', 'cea.optimization', 'cea.plots', 'cea.resources', 'cea.technologies',
-                'cea.utilities', 'cea.interfaces', 'cea.interfaces.arcgis'],
+      py_modules=[''],
+      packages=find_packages(),
       package_data={},
       install_requires=INSTALL_REQUIRES,
       include_package_data=True,
       entry_points={
-          'console_scripts': ['ceabin=cea.cli:main'],
+          'console_scripts': ['cea=cea.cli:main'],
       },
       )
