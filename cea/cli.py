@@ -20,7 +20,7 @@ def demand(args):
     cea.demand.demand_main.run_as_script(scenario_path=args.scenario, weather_path=args.weather)
 
 
-def demand_helper(args):
+def data_helper(args):
     """Run the demand helper script with the arguments provided."""
     import cea.demand.preprocessing.properties
     cea.demand.preprocessing.properties.run_as_script(scenario_path=args.scenario,
@@ -157,7 +157,13 @@ def radiation(args):
     if not args.longitude:
         args.longitude = _get_longitude(args.scenario)
 
-    cea.resources.radiation.solar_radiation_vertical(locator=cea.inputlocator.InputLocator(args.scenario),
+    locator = cea.inputlocator.InputLocator(args.scenario)
+    if not args.weather_path:
+        args.weather_path = locator.get_default_weather()
+    elif args.weather_path in locator.get_weather_names():
+        args.weather_path = locator.get_weather(args.weather_path)
+
+    cea.resources.radiation.solar_radiation_vertical(locator=locator,
                                                      path_arcgis_db=args.arcgis_db, latitude=args.latitude,
                                                      longitude=args.longitude, year=args.year,
                                                      gv=cea.globalvar.GlobalVariables(),
@@ -201,12 +207,12 @@ def main():
     demand_parser.add_argument('-w', '--weather', help='Path to the weather file')
     demand_parser.set_defaults(func=demand)
 
-    demand_helper_parser = subparsers.add_parser('demand-helper',
+    data_helper_parser = subparsers.add_parser('data-helper',
                                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    demand_helper_parser.add_argument('--archetypes', help='List of archetypes process', nargs="*",
+    data_helper_parser.add_argument('--archetypes', help='List of archetypes process', nargs="*",
                                       default=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'],
                                       choices=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'])
-    demand_helper_parser.set_defaults(func=demand_helper)
+    data_helper_parser.set_defaults(func=data_helper)
 
     emissions_parser = subparsers.add_parser('emissions',
                                              formatter_class=argparse.ArgumentDefaultsHelpFormatter)
