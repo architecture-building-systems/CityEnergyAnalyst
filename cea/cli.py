@@ -235,7 +235,7 @@ def main():
 
     benchmark_graphs_parser = subparsers.add_parser('benchmark-graphs',
                                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    benchmark_graphs_parser.add_argument('--output-file', help='File (*.pdf) to store the output in')
+    benchmark_graphs_parser.add_argument('--output-file', help='File (*.pdf) to store the output in', required=True)
     benchmark_graphs_parser.add_argument('--scenarios', help='List of scenarios to benchmark',
                                          nargs='+', default=['.'])
     benchmark_graphs_parser.set_defaults(func=benchmark_graphs)
