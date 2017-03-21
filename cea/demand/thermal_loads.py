@@ -9,6 +9,7 @@ import os
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
+from cea.utilities.dbfreader import dbf2df
 
 from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, ventilation_air_flows_simple
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
@@ -353,13 +354,13 @@ class BuildingProperties(object):
         prop_geometry['perimeter'] = prop_geometry.length
         prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(locator.get_building_geometry())
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
-        prop_hvac = Gdf.from_file(locator.get_building_hvac()).drop('geometry', axis=1)
-        prop_occupancy_df = Gdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index('Name')
+        prop_hvac = dbf2df(locator.get_building_hvac())
+        prop_occupancy_df = dbf2df(locator.get_building_occupancy()).set_index('Name')
         prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
-        prop_architectures = Gdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1)
-        prop_age = Gdf.from_file(locator.get_building_age()).drop('geometry', axis=1).set_index('Name')
-        prop_comfort = Gdf.from_file(locator.get_building_comfort()).drop('geometry', axis=1).set_index('Name')
-        prop_internal_loads = Gdf.from_file(locator.get_building_internal()).drop('geometry', axis=1).set_index('Name')
+        prop_architectures = dbf2df(locator.get_building_architecture())
+        prop_age = dbf2df(locator.get_building_age()).set_index('Name')
+        prop_comfort = dbf2df(locator.get_building_comfort()).set_index('Name')
+        prop_internal_loads = dbf2df(locator.get_building_internal()).set_index('Name')
 
         # get solar properties
         solar = get_prop_solar(locator).set_index('Name')
