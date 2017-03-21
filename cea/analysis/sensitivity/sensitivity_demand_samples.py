@@ -41,7 +41,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def create_demand_samples(method='morris', num_samples=1000, variable_groups=('THERMAL',), sampler_parameters={}):
+def create_demand_samples(method='morris', num_samples=1000, variable_groups=('ENVELOPE',), sampler_parameters={}):
     """
     Create the samples to simulate using the specified method (`method`), the sampling method parameter N
     (`num_samples`) and any additional sampling method-specific parameters specified in `sampler_parameters for each
@@ -130,8 +130,8 @@ if __name__ == '__main__':
                         default=4)
     parser.add_argument('-S', '--samples-folder', default='.',
                         help='folder to place the output files (samples.npy, problem.pickle) in')
-    parser.add_argument('-V', '--variable-groups', default=['THERMAL', 'ARCHITECTURE', 'INDOOR_COMFORT', 'INTERNAL_LOADS'], nargs='+',
-                        help=('list of variable groups. Valid values: THERMAL, ARCHITECTURE, ' +
+    parser.add_argument('-V', '--variable-groups', default=['ENVELOPE', 'INDOOR_COMFORT', 'INTERNAL_LOADS'], nargs='+',
+                        help=('list of variable groups. Valid values: ENVELOPE, ' +
                               'INDOOR_COMFORT, INTERNAL_LOADS'))
     args = parser.parse_args()
 
