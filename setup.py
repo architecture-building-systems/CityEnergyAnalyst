@@ -3,12 +3,13 @@
 import os
 from setuptools import setup, find_packages
 
+import cea
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Daren Thomas"]
 __license__ = "MIT"
-__version__ = "1.1a4"
+__version__ = cea.__version__
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
