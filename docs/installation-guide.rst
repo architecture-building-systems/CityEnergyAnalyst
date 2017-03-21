@@ -1,7 +1,7 @@
 Installation guide
 ==================
 
-The version 1.5 of the City Energy Analyst is dependent on ArcGIS 10.4
+The version :py:data:`cea.__version__` of the City Energy Analyst is dependent on ArcGIS 10.4
 for its visuals. As such it is restricted to Windows-based OS for now.
 
 **Prerequisites**
