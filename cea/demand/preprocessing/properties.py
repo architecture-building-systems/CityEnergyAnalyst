@@ -9,7 +9,7 @@ from __future__ import division
 
 import numpy as np
 import pandas as pd
-from geopandas import GeoDataFrame as gpdf
+from cea.utilities.dbfreader import dbf2df, df2dbf
 
 from cea import inputlocator
 
@@ -53,13 +53,13 @@ def properties(locator, prop_architecture_flag,
     """
 
     # get occupancy and age files
-    building_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
+    building_occupancy_df = dbf2df(locator.get_building_occupancy())
     list_uses = list(building_occupancy_df.drop(['PFloor','Name'], axis=1).columns) #parking excluded in U-Values
-    building_age_df = gpdf.from_file(locator.get_building_age())
+    building_age_df = dbf2df(locator.get_building_age())
 
     # prepare shapefile to store results (a shapefile with only names of buildings
     fields_drop = ['envelope', 'roof', 'windows', 'partitions', 'basement', 'HVAC', 'built']  # FIXME: this hardcodes the field names!!
-    names_shp = gpdf.from_file(locator.get_building_age()).drop(fields_drop, axis=1)
+    names_shp = building_age_df.drop(fields_drop, axis=1)
 
     # define main use:
     building_occupancy_df['mainuse'] = calc_mainuse(building_occupancy_df, list_uses)
@@ -82,7 +82,7 @@ def properties(locator, prop_architecture_flag,
         prop_architecture_shp = names_shp.copy()
         for field in fields:
             prop_architecture_shp[field] = prop_architecture_df_merged[field].copy()
-        prop_architecture_shp.to_file(locator.get_building_architecture())
+        df2dbf(prop_architecture_shp, locator.get_building_architecture())
 
 
     # get properties about types of HVAC systems
@@ -100,7 +100,7 @@ def properties(locator, prop_architecture_flag,
         prop_HVAC_shp = names_shp.copy()
         for field in fields:
             prop_HVAC_shp[field] = prop_HVAC_df_merged[field].copy()
-        prop_HVAC_shp.to_file(locator.get_building_hvac())
+        df2dbf(prop_HVAC_shp, locator.get_building_hvac())
 
     if prop_comfort_flag:
         comfort_DB = get_database(locator.get_archetypes_properties(), 'INDOOR_COMFORT')
@@ -114,7 +114,7 @@ def properties(locator, prop_architecture_flag,
         prop_comfort_shp = names_shp.copy()
         for field in fields:
             prop_comfort_shp[field] = prop_comfort_df_merged[field].copy()
-        prop_comfort_shp.to_file(locator.get_building_comfort())
+        df2dbf(prop_comfort_shp, locator.get_building_comfort())
 
     if prop_internal_loads_flag:
         internal_DB = get_database(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
@@ -128,7 +128,7 @@ def properties(locator, prop_architecture_flag,
         prop_internal_shp = names_shp.copy()
         for field in fields:
             prop_internal_shp[field] = prop_internal_df_merged[field].copy()
-        prop_internal_shp.to_file(locator.get_building_internal())
+        df2dbf(prop_internal_shp, locator.get_building_internal())
 
 
 def calc_mainuse(uses_df, uses):
