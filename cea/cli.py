@@ -2,6 +2,8 @@
 This script implements the main command-line interface to the CEA. It allows running the various scripts through a
 standard interface.
 """
+from __future__ import absolute_import
+
 import os
 
 __author__ = "Daren Thomas"

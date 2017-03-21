@@ -2,9 +2,9 @@
 """
 Global variables - this object contains context information and is expected to be refactored away in future.
 """
-import cea.demand.demand_writers
+from __future__ import absolute_import
 
-# from cea.demand import thermal_loads
+import cea.demand.demand_writers
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
