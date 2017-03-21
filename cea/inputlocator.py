@@ -78,6 +78,11 @@ class InputLocator(object):
         Operation pattern for disconnected buildings"""
         return self._ensure_folder(self.get_optimization_results_folder(), "disconnected")
 
+    def get_measurements(self):
+        """scenario/inputs/
+        Operation pattern for disconnected buildings"""
+        return self._ensure_folder(self.scenario_path, 'inputs', 'building-metering',)
+
     def get_optimization_disconnected_result_file(self, building_name):
         """scenario/outputs/data/optimization/disconnected/DiscOp_${building_name}_result.csv"""
         return os.path.join(self.get_optimization_disconnected_folder(),
@@ -222,6 +227,8 @@ class InputLocator(object):
     def get_terrain(self):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain.tif')
+
+    def
 
     # OUTPUTS
 
