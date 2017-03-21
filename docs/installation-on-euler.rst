@@ -194,7 +194,7 @@ user name) using a reference case previously cloned to the home folder:
 ::
 
     cd $HOME/CEAforArcGIS/cea
-    export WEATHER=/cluster/home/darthoma/CEAforArcGIS/cea/databases/CH/Weather/Zug.epw
+    export WEATHER=/cluster/home/darthoma/CEAforArcGIS/cea/databases/weather/Zug.epw
     export SCENARIO=/cluster/home/darthoma/cea-reference-case/reference-case-zug/baseline
     python demand/demand_main.py --scenario $SCENARIO --weather $WEATHER
 
