@@ -199,7 +199,7 @@ def task_run_emissions_mobility():
 def task_run_heatmaps():
     """run the heat maps script for each reference case"""
     try:
-        import arcpy
+        from cea.interfaces.arcgis.modules import arcpy
     except ImportError:
         # do not require ArcGIS to be installed, but skip testing the heatmaps
         # module if it isn't installed.

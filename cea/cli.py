@@ -173,7 +173,7 @@ def radiation(args):
 
 
 def install_toolbox(_):
-    """Install the ArcGIS toolbox"""
+    """Install the ArcGIS toolbox and sets up .pth files to access arcpy from the cea python interpreter."""
     import cea.interfaces.arcgis.install_toolbox
     cea.interfaces.arcgis.install_toolbox.main()
 

@@ -5,10 +5,9 @@ from __future__ import division
 
 import os
 
-import arcpy
-
 import cea.inputlocator
 import cea.globalvar
+from cea.interfaces.arcgis.modules import arcpy
 
 
 __author__ = "Jimeno A. Fonseca"
