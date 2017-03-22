@@ -74,8 +74,8 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
     except IndexError:
         return None
 
-    prop_thermal = Gdf.from_file(locator.get_building_thermal()).set_index('Name')
-    prop_overrides = pd.DataFrame(index=prop_thermal.index)
+    prop = Gdf.from_file(locator.get_building_geometry()).set_index('Name')
+    prop_overrides = pd.DataFrame(index=prop.index)
     for i, key in enumerate(problem['names']):
         print("Setting prop_overrides['%s'] to %s" % (key, sample[i]))
         prop_overrides[key] = sample[i]
