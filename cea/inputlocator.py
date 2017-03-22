@@ -228,7 +228,6 @@ class InputLocator(object):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain.tif')
 
-    def
 
     # OUTPUTS
 
