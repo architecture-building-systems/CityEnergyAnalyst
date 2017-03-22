@@ -249,11 +249,11 @@ class GlobalVariables(object):
         self.MWST = 0.08  # 8% MWST assumed, used in A+W data
 
         # Resource prices
-        self.ELEC_PRICE = 0.104 * self.EURO_TO_CHF / 1000.0  # = 15 Rp/kWh   or  0.104 * EURO_TO_CHF / 1000.0 # [CHF / wh]
+        self.ELEC_PRICE = 0.2 * self.EURO_TO_CHF / 1000.0  # = 15 Rp/kWh   or  0.104 * EURO_TO_CHF / 1000.0 # [CHF / wh]
         # self.ELEC_PRICE_KEV = 1.5 * ELEC_PRICE # MAKE RESEARCH ABOUT A PROPER PRICE AND DOCUMENT THAT!
         # self.ELEC_PRICE_GREEN = 1.5 * ELEC_PRICE
-        self.NG_PRICE = 0.057 * self.EURO_TO_CHF / 1000.0  # [CHF / wh]
-        self.BG_PRICE = 0.078 * self.EURO_TO_CHF / 1000.0  # [CHF / wh]
+        self.NG_PRICE = 0.068 * self.EURO_TO_CHF / 1000.0  # [CHF / wh]
+        self.BG_PRICE = 0.076 * self.EURO_TO_CHF / 1000.0  # [CHF / wh]
 
         self.GasConnectionCost = 15.5 / 1000.0  # CHF / W, from  Energie360 15.5 CHF / kW
 
@@ -379,7 +379,7 @@ class GlobalVariables(object):
         self.Furn_min_electric = 0.3  # Minimum load for electricity generation in furnace plant
 
         # Substation Heat Exchangers
-        self.Subst_n = 25.0  # Lifetime after A+W
+        self.Subst_n = 20.0  # Lifetime after A+W
         self.Subst_i = 0.05
 
         # Fuel Cells
@@ -387,7 +387,7 @@ class GlobalVariables(object):
         self.FC_LIFETIME = 40000.0  # hours of operation
         self.FC_n = 10  # years of operation
         self.FC_i = 0.05  # interest rate
-        self.FC_stack_cost = 55000.0  # CHF /kW_th for a Hexis 1000 N 1kWe/1.8kWth
+        self.FC_stack_cost = 12000.0  # CHF /kW_th for a Hexis 1000 N 1kWe/1.8kWth
         self.FC_overhead = 0.1  # 10 % higher cost due to final installation
 
         # Vapor compressor chiller
