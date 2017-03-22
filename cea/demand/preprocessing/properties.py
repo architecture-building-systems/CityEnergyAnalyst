@@ -193,9 +193,9 @@ def run_as_script(scenario_path=None, prop_thermal_flag=True, prop_architecture_
     if not scenario_path:
         scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    properties(locator=locator, prop_thermal_flag=prop_thermal_flag, prop_architecture_flag=prop_architecture_flag,
+    properties(locator=locator, prop_architecture_flag=prop_architecture_flag,
                prop_hvac_flag=prop_hvac_flag, prop_comfort_flag=prop_comfort_flag,
-               prop_internal_loads_flag=prop_internal_loads_flag, gv=gv)
+               prop_internal_loads_flag=prop_internal_loads_flag)
 
 
 if __name__ == '__main__':
