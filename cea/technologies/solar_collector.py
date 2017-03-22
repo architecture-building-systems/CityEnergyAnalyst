@@ -661,7 +661,7 @@ def calc_Cinv_SC(Area):
     """
     Lifetime 35 years
     """
-    InvCa = 2050 * Area / 35  # [CHF/y]
+    InvCa = 2050 * Area / 20  # [CHF/y]
 
     return InvCa
 
