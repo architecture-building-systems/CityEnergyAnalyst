@@ -3,11 +3,11 @@ Solar vertical insolation algorithm based on ArcGIS Solar Analyst
 """
 from __future__ import division
 
-import arcgisscripting
+from cea.interfaces.arcgis.modules import arcgisscripting
 import datetime
 import os
 
-import arcpy
+from cea.interfaces.arcgis.modules import arcpy
 import ephem
 import numpy as np
 import pandas as pd

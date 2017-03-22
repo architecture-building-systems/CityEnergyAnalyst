@@ -44,7 +44,7 @@ class DemandTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        import arcpy
+        from cea.interfaces.arcgis.modules import arcpy
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
@@ -104,7 +104,7 @@ class DataHelperTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        import arcpy
+        from cea.interfaces.arcgis.modules import arcpy
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
@@ -168,7 +168,7 @@ class BenchmarkGraphsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        import arcpy
+        from cea.interfaces.arcgis.modules import arcpy
         scenarios = arcpy.Parameter(
             displayName="Path to the scenarios to plot",
             name="scenarios",
@@ -186,7 +186,7 @@ class BenchmarkGraphsTool(object):
         return [scenarios, output_file]
 
     def execute(self, parameters, messages):
-        import arcpy
+        from cea.interfaces.arcgis.modules import arcpy
         scenarios = parameters[0].valueAsText
         scenarios = scenarios.replace('"', '')
         scenarios = scenarios.replace("'", '')
@@ -204,7 +204,7 @@ class EmissionsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        import arcpy
+        from cea.interfaces.arcgis.modules import arcpy
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
@@ -302,7 +302,7 @@ class EmbodiedEnergyTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        import arcpy
+        from cea.interfaces.arcgis.modules import arcpy
         yearcalc = arcpy.Parameter(
             displayName="Year to calculate",
             name="yearcalc",
@@ -334,7 +334,7 @@ class MobilityTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        import arcpy
+        from cea.interfaces.arcgis.modules import arcpy
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
@@ -356,7 +356,7 @@ class DemandGraphsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        import arcpy
+        from cea.interfaces.arcgis.modules import arcpy
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
@@ -396,7 +396,7 @@ class ScenarioPlotsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        import arcpy
+        from cea.interfaces.arcgis.modules import arcpy
         scenarios = arcpy.Parameter(
             displayName="Path to the scenarios to plot",
             name="scenarios",
@@ -430,7 +430,7 @@ class RadiationTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        import arcpy
+        from cea.interfaces.arcgis.modules import arcpy
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
@@ -529,7 +529,7 @@ class RadiationTool(object):
 
 
 def add_message(msg, **kwargs):
-    import arcpy
+    from cea.interfaces.arcgis.modules import arcpy
     """Log to arcpy.AddMessage() instead of print to STDOUT"""
     if len(kwargs):
         msg %= kwargs
@@ -625,7 +625,7 @@ class HeatmapsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        import arcpy
+        from cea.interfaces.arcgis.modules import arcpy
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",

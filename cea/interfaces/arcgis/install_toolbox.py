@@ -11,13 +11,21 @@ def main():
     - add a link to the python.exe that ran setup.py to user's home directory in the file cea_python.pth
     - copy the file "CityEnergyAnalyst.py" to the "My Toolboxes" folder of ArcGIS Desktop and rename the
       extension to ".pyt"
+    - sets up .pth files to access arcpy from the cea python interpreter.
     """
     # write out path to python.exe to the file cea_python.pth
     with open(os.path.expanduser('~/cea_python.pth'), 'w') as f:
         f.write(sys.executable)
 
-    shutil.copy(find_toolbox_src(), find_toolbox_dst())
+    toolbox_dst = find_toolbox_dst()
+    if not os.path.exists(toolbox_dst):
+        os.makedirs(toolbox_dst)
+    shutil.copy(find_toolbox_src(), toolbox_dst)
 
+    with open(os.path.expanduser('~/cea_arcpy.pth'), 'w') as f:
+        f.writelines([os.path.expandvars(r'%ProgramFiles(x86)%\ArcGIS\Desktop10.4\bin' + '\n'),
+                      os.path.expandvars(r'%ProgramFiles(x86)%\ArcGIS\Desktop10.4\arcpy' + '\n'),
+                      os.path.expandvars(r'%ProgramFiles(x86)%\ArcGIS\Desktop10.4\Scripts' + '\n')])
 
 def find_toolbox_src():
     """
