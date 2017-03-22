@@ -36,28 +36,33 @@ into your other work. Follow these steps to create a new conda environment for t
 
 
 Connecting to Arcpy
--------------------
+...................
 
-If you would like to be able to access the ``arcpy`` module from the
-``esri104`` Anaconda python environment, create a file called
-``arcpy.pth`` in
-``C:\Users\your_name\Anaconda2\envs\esri104\Lib\site-packages`` with the
-following contents:
+The command ``cea install-toolbox`` attempts to connect the CEA with the ArcGIS environment. You should not need to
+do anything else.
 
-.. code::
+If, however, you get error messages like ``ImportError: no module named arcpy`` you can check your home directory
+for a file called ``cea_arcgis.pth`` containing these three lines::
 
     C:\Program Files (x86)\ArcGIS\Desktop10.4\bin
     C:\Program Files (x86)\ArcGIS\Desktop10.4\arcpy
     C:\Program Files (x86)\ArcGIS\Desktop10.4\Scripts
 
-Configure your python console
------------------------------
+Edit these folders to point to the appropriate ArcGIS folders as documented in the ArcGIS manuals.
 
-Whatever console you like, you will need to configure it to call the
-environment esri104 created in Anaconda.
+Installation of the development environment
+-------------------------------------------
 
-The developing team uses Pycharm Community edition as default. Here are
-the instructions for get pycharm up and running.
+**Software to be Downloaded**
+
+-  GitHub Desktop
+-  Anaconda distribution (x86)
+-  PyCharm community edition
+-  VCredist SP1 (x86)
+-  Git Large File Storage
+
+The developer team uses PyCharm Community edition as default. Here are
+the instructions to get PyCharm up and running:
 
 #. Access PyCharm and open project CEAforArcGIS
 
@@ -65,9 +70,9 @@ the instructions for get pycharm up and running.
    Interpreter
 
 #. Click on settings>addlocal and point to the location of your python
-   installation in the environment esri104. It should be located in
+   installation in the environment ``cea``. It should be located in
    something like
-   ``C:\Users\your_name\Anaconda2\envs\esri104/python.exe``
+   ``C:\Users\your_name\Anaconda2\envs\cea/python.exe``
 
 #. Click apply changes and your are done!
 
@@ -84,17 +89,6 @@ To set the custom dictionary used in PyCharm, do:
    ``C:\Users\your_name\Documents\GitHub\CEAforArcGIS``.
 
 #. Click "Apply".
-
-Installation of the development environment
--------------------------------------------
-
-**Software to be Downloaded**
-
--  GitHub Desktop
--  Anaconda distribution (x86)
--  Pycharm community edition
--  VCredist SP1 (x86)
--  Git Large File Storage
 
 Installation on the Euler cluster
 ---------------------------------
