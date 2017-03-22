@@ -13,7 +13,8 @@ from __future__ import division
 
 import numpy as np
 import pandas as pd
-from geopandas import GeoDataFrame as gpdf
+from cea.utilities.dbfreader import dbf2df
+from geopandas import GeoDataFrame as Gdf
 import cea.globalvar
 import cea.inputlocator
 
@@ -96,11 +97,11 @@ def lca_embodied(year_to_calculate, locator, gv):
     """
 
     # local variables
-    architecture_df = gpdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1)
-    prop_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
+    architecture_df = dbf2df(locator.get_building_architecture())
+    prop_occupancy_df = dbf2df(locator.get_building_occupancy())
     occupancy_df = pd.DataFrame(prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)])
-    age_df = gpdf.from_file(locator.get_building_age()).drop('geometry', axis=1)
-    geometry_df = gpdf.from_file(locator.get_building_geometry())
+    age_df = dbf2df(locator.get_building_age())
+    geometry_df = Gdf.from_file(locator.get_building_geometry())
     geometry_df['footprint'] = geometry_df.area
     geometry_df['perimeter'] = geometry_df.length
     geometry_df = geometry_df.drop('geometry', axis=1)

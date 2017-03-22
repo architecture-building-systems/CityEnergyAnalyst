@@ -9,6 +9,7 @@ import os
 import numpy as np
 import pandas as pd
 from geopandas import GeoDataFrame as Gdf
+from cea.utilities.dbfreader import dbf2df
 
 from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, ventilation_air_flows_simple
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
@@ -353,14 +354,13 @@ class BuildingProperties(object):
         prop_geometry['perimeter'] = prop_geometry.length
         prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(locator.get_building_geometry())
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
-        prop_hvac = Gdf.from_file(locator.get_building_hvac()).drop('geometry', axis=1)
-        prop_thermal = Gdf.from_file(locator.get_building_thermal()).drop('geometry', axis=1).set_index('Name')
-        prop_occupancy_df = Gdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1).set_index('Name')
+        prop_hvac = dbf2df(locator.get_building_hvac())
+        prop_occupancy_df = dbf2df(locator.get_building_occupancy()).set_index('Name')
         prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
-        prop_architectures = Gdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1)
-        prop_age = Gdf.from_file(locator.get_building_age()).drop('geometry', axis=1).set_index('Name')
-        prop_comfort = Gdf.from_file(locator.get_building_comfort()).drop('geometry', axis=1).set_index('Name')
-        prop_internal_loads = Gdf.from_file(locator.get_building_internal()).drop('geometry', axis=1).set_index('Name')
+        prop_architectures = dbf2df(locator.get_building_architecture())
+        prop_age = dbf2df(locator.get_building_age()).set_index('Name')
+        prop_comfort = dbf2df(locator.get_building_comfort()).set_index('Name')
+        prop_internal_loads = dbf2df(locator.get_building_internal()).set_index('Name')
 
         # get solar properties
         solar = get_prop_solar(locator).set_index('Name')
@@ -369,36 +369,35 @@ class BuildingProperties(object):
         prop_HVAC_result = get_temperatures(locator, prop_hvac).set_index('Name')
 
         # get envelope properties
-        prop_architecture = get_envelope_properties(locator, prop_architectures).set_index('Name')
+        prop_envelope = get_envelope_properties(locator, prop_architectures).set_index('Name')
 
         # apply overrides
         if os.path.exists(locator.get_building_overrides()):
             self._overrides = pd.read_csv(locator.get_building_overrides()).set_index('Name')
-            prop_thermal = self.apply_overrides(prop_thermal)
-            prop_architecture = self.apply_overrides(prop_architecture)
+            prop_envelope = self.apply_overrides(prop_envelope)
             prop_internal_loads = self.apply_overrides(prop_internal_loads)
             prop_comfort = self.apply_overrides(prop_comfort)
 
         # get properties of rc demand model
-        prop_rc_model = self.calc_prop_rc_model(prop_occupancy, prop_architecture, prop_thermal,
+        prop_rc_model = self.calc_prop_rc_model(prop_occupancy, prop_envelope,
                                                 prop_geometry, prop_HVAC_result, surface_properties,
                                                 gv)
 
-        df_windows = geometry_reader.create_windows(surface_properties, prop_architecture)
+        #df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
+        #TODO: to check if the Win_op and height of window is necessary.
+        #TODO: maybe mergin branch i9 with CItyGML could help with this
         gv.log("done")
 
         # save resulting data
         self._prop_surface = surface_properties
-        self._prop_thermal = prop_thermal
         self._prop_geometry = prop_geometry
-        self._prop_architecture = prop_architecture
+        self._prop_envelope = prop_envelope
         self._prop_occupancy = prop_occupancy
         self._prop_HVAC_result = prop_HVAC_result
         self._prop_comfort = prop_comfort
         self._prop_internal_loads = prop_internal_loads
         self._prop_age = prop_age
         self._solar = solar
-        self._prop_windows = df_windows
         self._prop_RC_model = prop_rc_model
 
     def calc_bounding_box_geom(self, geometry_shapefile):
@@ -447,9 +446,9 @@ class BuildingProperties(object):
         """get geometry of a building by name"""
         return self._prop_geometry.ix[name_building].to_dict()
 
-    def get_prop_architecture(self, name_building):
-        """get the architecture properties of a building by name"""
-        return self._prop_architecture.ix[name_building].to_dict()
+    def get_prop_envelope(self, name_building):
+        """get the architecture and thermal properties of a building by name"""
+        return self._prop_envelope.ix[name_building].to_dict()
 
     def get_prop_occupancy(self, name_building):
         """get the occupancy properties of a building by name"""
@@ -483,7 +482,7 @@ class BuildingProperties(object):
         """get windows and their properties of a building by name"""
         return self._prop_windows.loc[self._prop_windows['name_building'] == name_building].to_dict('list')
 
-    def calc_prop_rc_model(self, occupancy, architecture, thermal_properties, geometry, hvac_temperatures,
+    def calc_prop_rc_model(self, occupancy, envelope, geometry, hvac_temperatures,
                            surface_properties,
                            gv):
         """
@@ -496,16 +495,14 @@ class BuildingProperties(object):
             The occupancy types must add up to 1.0.
         :type occupancy: Gdf
 
-        :param architecture: The contents of the `architecture.shp` file, indexed by building name. It contains the
-            following fields: Occ_m2p, f_cros, n50, type_shade, win_op, win_wall. Only `win_wall` (window to wall ratio) is
-            used.
-        :type architecture: Gdf
-
-        :param thermal_properties: The contents of the `thermal_properties.shp` file, indexed by building name. It
-            contains the following fields: Es, Hs, U_base, U_roof, U_wall, U_win, th_mass.
+        :param envelope: The contents of the `architecture.shp` file, indexed by building name. It contains the
+            following fields: Occ_m2p,  n50, type_shade, win_op, win_wall. Only `win_wall` (window to wall ratio) is
+            used. Es, Hs, U_base, U_roof, U_wall, U_win, th_mass.
             - Es: fraction of gross floor area that has electricity {0 <= Es <= 1}
             - Hs: fraction of gross floor area that is heated/cooled {0 <= Hs <= 1}
             - th_mass: type of building construction {T1: light, T2: medium, T3: heavy}
+        :type envelope: Gdf
+
         :type thermal_properties: Gdf
 
         :param geometry: The contents of the `zone.shp` file indexed by building name - the list of buildings, their floor
@@ -556,8 +553,8 @@ class BuildingProperties(object):
         df = pd.DataFrame({'Name': surface_properties['Name'],
                            'Awall_all': surface_properties['Awall']}).groupby(by='Name').sum()
 
-        df = df.merge(architecture, left_index=True, right_index=True).merge(occupancy, left_index=True,
-                                                                             right_index=True)
+        df = df.merge(envelope, left_index=True, right_index=True).merge(occupancy, left_index=True,
+                                                                         right_index=True)
 
         # area of windows
         df['Aw'] = df['Awall_all'] * df['win_wall'] * df['PFloor']
@@ -566,7 +563,6 @@ class BuildingProperties(object):
         df['Aop_sup'] = df['Awall_all'] * df['PFloor'] - df['Aw']
 
         # Areas below ground
-        df = df.merge(thermal_properties, left_index=True, right_index=True)
         df = df.merge(geometry, left_index=True, right_index=True)
         df = df.merge(hvac_temperatures, left_index=True, right_index=True)
         df['floors'] = df['floors_bg'] + df['floors_ag']
@@ -654,15 +650,14 @@ class BuildingProperties(object):
     def __getitem__(self, building_name):
         """return a (read-only) BuildingPropertiesRow for the building"""
         return BuildingPropertiesRow(geometry=self.get_prop_geometry(building_name),
-                                     architecture=self.get_prop_architecture(building_name),
+                                     envelope=self.get_prop_envelope(building_name),
                                      occupancy=self.get_prop_occupancy(building_name),
                                      hvac=self.get_prop_hvac(building_name),
                                      rc_model=self.get_prop_rc_model(building_name),
                                      comfort=self.get_prop_comfort(building_name),
                                      internal_loads=self.get_prop_internal_loads(building_name),
                                      age=self.get_prop_age(building_name),
-                                     solar=self.get_solar(building_name),
-                                     windows=self.get_prop_windows(building_name), gv=self.gv)
+                                     solar=self.get_solar(building_name), gv=self.gv)
 
     def get_overrides_columns(self):
         """Return the list of column names in the `overrides.csv` file or an empty list if no such file
@@ -676,12 +671,12 @@ class BuildingPropertiesRow(object):
     """Encapsulate the data of a single row in the DataSets of BuildingProperties. This class meant to be
     read-only."""
 
-    def __init__(self, geometry, architecture, occupancy, hvac,
-                 rc_model, comfort, internal_loads, age, solar, windows, gv):
+    def __init__(self, geometry, envelope, occupancy, hvac,
+                 rc_model, comfort, internal_loads, age, solar, gv):
         """Create a new instance of BuildingPropertiesRow - meant to be called by BuildingProperties[building_name].
         Each of the arguments is a pandas Series object representing a row in the corresponding DataFrame."""
         self.geometry = geometry
-        self.architecture = ArchitectureProperties(architecture)
+        self.architecture = EnvelopeProperties(envelope)
         self.occupancy = occupancy  # FIXME: rename to uses!
         self.hvac = hvac
         self.rc_model = rc_model
@@ -689,7 +684,6 @@ class BuildingPropertiesRow(object):
         self.internal_loads = internal_loads
         self.age = age
         self.solar = SolarProperties(solar)
-        self.windows = windows
         self.building_systems = self._get_properties_building_systems(gv)
 
     def _get_properties_building_systems(self, gv):
@@ -755,25 +749,30 @@ class BuildingPropertiesRow(object):
         factor = self.geometry['footprint'] / (self.geometry['Bwidth'] * self.geometry['Blength'])
         return factor
 
-
-class ArchitectureProperties(object):
+class EnvelopeProperties(object):
     """Encapsulate a single row of the architecture input file for a building"""
-    __slots__ = [u'Occ_m2p', u'a_roof', u'f_cros', u'n50', u'win_op', u'win_wall', u'a_wall', u'rf_sh', u'e_wall',
-                 u'e_roof', u'G_win', u'e_win']
+    __slots__ = [u'Occ_m2p', u'a_roof', u'f_cros', u'n50', u'win_op', u'win_wall',
+                 u'a_wall', u'rf_sh', u'e_wall', u'e_roof', u'G_win', u'e_win',
+                 u'U_roof',u'Es', u'Hs', u'th_mass', u'U_wall', u'U_base', u'U_win']
 
-    def __init__(self, architecture):
-        self.Occ_m2p = architecture['Occ_m2p']
-        self.a_roof = architecture['a_roof']
-        self.f_cros = architecture['f_cros']
-        self.n50 = architecture['n50']
-        self.win_op = architecture['win_op']
-        self.win_wall = architecture['win_wall']
-        self.a_wall = architecture['a_wall']
-        self.rf_sh = architecture['rf_sh']
-        self.e_wall = architecture['e_wall']
-        self.e_roof = architecture['e_roof']
-        self.G_win = architecture['G_win']
-        self.e_win = architecture['e_win']
+    def __init__(self, envelope):
+        self.Occ_m2p = envelope['Occ_m2p']
+        self.a_roof = envelope['a_roof']
+        self.n50 = envelope['n50']
+        self.win_wall = envelope['win_wall']
+        self.a_wall = envelope['a_wall']
+        self.rf_sh = envelope['rf_sh']
+        self.e_wall = envelope['e_wall']
+        self.e_roof = envelope['e_roof']
+        self.G_win = envelope['G_win']
+        self.e_win = envelope['e_win']
+        self.U_roof= envelope['U_roof']
+        self.Es= envelope['Es']
+        self.Hs= envelope['Hs']
+        self.th_mass = envelope['th_mass']
+        self.U_wall = envelope['U_wall']
+        self.U_base = envelope['U_base']
+        self.U_win = envelope['U_win']
 
 
 class SolarProperties(object):
@@ -878,14 +877,15 @@ def get_envelope_properties(locator, prop_architecture):
     df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code')
     df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code')
 
-    fields_roof = ['Name', 'win_wall', 'Occ_m2p', 'n50', 'win_op', 'f_cros', 'e_roof', 'a_roof']
-    fields_wall = ['Name', 'e_wall', 'a_wall']
-    fields_win = ['Name', 'e_win', 'G_win']
+    fields_roof = ['Name', 'win_wall', 'Occ_m2p', 'n50', 'e_roof', 'a_roof', 'U_roof', 'Es', 'Hs', 'th_mass']
+    fields_wall = ['Name', 'e_wall', 'a_wall', 'U_wall', 'U_base']
+    fields_win = ['Name', 'e_win', 'G_win', 'U_win']
     fields_shading = ['Name', 'rf_sh']
 
-    result = df_roof[fields_roof].merge(df_wall[fields_wall], on='Name').merge(df_win[fields_win], on='Name').merge(
+    envelope_prop = df_roof[fields_roof].merge(df_wall[fields_wall], on='Name').merge(df_win[fields_win], on='Name').merge(
         df_shading[fields_shading], on='Name')
-    return result
+
+    return envelope_prop
 
 
 def get_prop_solar(locator):
