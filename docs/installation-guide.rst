@@ -4,64 +4,35 @@ Installation guide
 The version |version| of the City Energy Analyst is dependent on ArcGIS 10.4
 for its visuals. As such it is restricted to Windows-based OS's for some features.
 
-Prerequisites
--------------
 
--  OS: Windows 7 or higher
--  ArcGIS 10.4 (for some features)
+Installation on Windows
+-----------------------
 
+Installing the CEA on Windows is easiest with Anaconda_ (or Miniconda_) as the CEA depends on the geopandas_ module.
 
-Installation Procedure
-----------------------
+.. _Anaconda: https://www.continuum.io/downloads
+.. _Miniconda: https://conda.io/miniconda.html
+.. _geopandas: https://github.com/geopandas/geopandas
 
-Installation on Windows is easiest using Anaconda as the CEA requires ``geopandas`` which is tricky to install.
+Installation follows the following basic steps:
 
-Open the Anaconda prompt and create a new conda environment::
-
-    (C:\Users\darthoma\Anaconda2) C:\Users\darthoma>conda create -n cea python=2.7
-
-You should see similar output to the following::
-
-    Fetching package metadata .........
-    Solving package specifications: ..........
-
-    Package plan for installation in environment C:\Users\darthoma\Anaconda2\envs\cea:
-
-    The following NEW packages will be INSTALLED:
-
-        pip:            9.0.1-py27_1
-        python:         2.7.13-0
-        setuptools:     27.2.0-py27_1
-        vs2008_runtime: 9.00.30729.5054-0
-        wheel:          0.29.0-py27_0
-
-    Proceed ([y]/n)? y
-
-    Linking packages ...
-    [      COMPLETE      ]|##################################################| 100%
-    #
-    # To activate this environment, use:
-    # > activate cea
-    #
-    # To deactivate this environment, use:
-    # > deactivate cea
-    #
-    # * for power-users using bash, you must source
-    #
+#. create a conda environment and activate it (optional)
+#. ``conda install -c conda-forge geopandas``
+#. ``pip install cityenergyanalyst``
+#. ``cea install-toolbox`` (installs the CEA as an ArcGIS 10.4 toolbox)
 
 
-    (C:\Users\darthoma\Anaconda2) C:\Users\darthoma>
+Creating a conda environment
+............................
 
-Next, install geopandas::
+Creating a conda environment is an optional step, but probably a good habit to get into: This creates a python
+environment separate from your other python environments - that way, version mismatches between packages don't bleed
+into your other work. Follow these steps to create a new conda environment for the CEA:
 
-    (C:\Users\darthoma\Anaconda2) C:\Users\darthoma>activate cea
-
-    (cea) C:\Users\darthoma>conda install -c conda-forge geopandas
-
-This will trigger a lot of installation and might require confirmation. When all is done, installation of the CEA is
-as easy as::
-
-    (cea) C:\Users\darthoma>pip install cityenergyanalyst
+#. ``conda create -n cea python=2.7`` (you can use any name, when creating an environment - "cea" is just an example)
+#. ``activate cea`` (do this before any cea-related work on the commandline)
+#. work with CEA, python is now set up to use your conda environment
+#. ``deactivate cea`` (you can also just close the shell)
 
 
 Connecting to Arcpy
@@ -132,39 +103,4 @@ It is possible to install the CEA on the Euler_ cluster by following the followi
 :doc:`installation-on-euler`.
 
 .. _Euler: https://www.ethz.ch/services/en/it-services/catalogue/server-cluster/hpc.html
-
-.. |image0| image:: assets/installation-guide/Capture1.PNG
-.. |image1| image:: assets/installation-guide/Capture2.PNG
-.. |image2| image:: assets/installation-guide/Capture3.PNG
-.. |image3| image:: assets/installation-guide/Capture4.PNG
-.. |image4| image:: assets/installation-guide/Capture5.PNG
-.. |image5| image:: assets/installation-guide/Capture6.PNG
-.. |image6| image:: assets/installation-guide/Capture7.PNG
-.. |image7| image:: assets/installation-guide/Capture8.PNG
-.. |image8| image:: assets/installation-guide/Capture9.PNG
-.. |image9| image:: assets/installation-guide/Capture10.PNG
-.. |image10| image:: assets/installation-guide/Capture11.PNG
-.. |image11| image:: assets/installation-guide/Capture12.PNG
-.. |image12| image:: assets/installation-guide/Capture14.PNG
-.. |image13| image:: assets/installation-guide/Capture15.PNG
-.. |image14| image:: assets/installation-guide/Capture16.PNG
-.. |image15| image:: assets/installation-guide/Capture17.PNG
-.. |image16| image:: assets/installation-guide/Capture19.PNG
-.. |image17| image:: assets/installation-guide/Capture20.PNG
-.. |image18| image:: assets/installation-guide/Capture21.PNG
-.. |image19| image:: assets/installation-guide/Capture22.PNG
-.. |image20| image:: assets/installation-guide/Capture23.PNG
-.. |image21| image:: assets/installation-guide/Capture24.PNG
-.. |image22| image:: assets/installation-guide/Capture25.PNG
-.. |image23| image:: assets/installation-guide/Capture26.PNG
-.. |image24| image:: assets/installation-guide/Capture27.PNG
-.. |image25| image:: assets/installation-guide/Capture28.PNG
-.. |image26| image:: assets/installation-guide/Capture29.PNG
-.. |image27| image:: assets/installation-guide/Capture30.PNG
-.. |image28| image:: assets/installation-guide/Capture31.PNG
-.. |image29| image:: assets/installation-guide/Capture32.PNG
-.. |image30| image:: assets/installation-guide/Capture33.PNG
-.. |image31| image:: assets/installation-guide/Capture34.PNG
-.. |image32| image:: assets/installation-guide/Capture35.PNG
-.. |image33| image:: assets/installation-guide/Capture36.PNG
 
