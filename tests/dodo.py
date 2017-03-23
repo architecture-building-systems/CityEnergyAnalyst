@@ -245,7 +245,10 @@ def task_run_unit_tests():
     }
 
 
-if __name__ == '__main__':
+def main():
     import doit
-
     doit.run(globals())
+
+
+if __name__ == '__main__':
+    main()

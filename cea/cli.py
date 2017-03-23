@@ -197,6 +197,11 @@ def heatmaps(args):
                                     file_to_analyze=args.file_to_analyze)
 
 
+def test(_):
+    """Run the pydoit tests (same test-suite as run by Jenkins)"""
+
+
+
 def main():
     """Parse the arguments and run the program."""
     import argparse
@@ -301,6 +306,9 @@ def main():
     heatmaps_parser.add_argument('--list-fields', action='store_true', help='List available fields in the file.',
                                  default=False)
     heatmaps_parser.set_defaults(func=heatmaps)
+
+    test_parser = subparsers.add_parser('test', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    test_parser.set_defaults(func=test)
 
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)
