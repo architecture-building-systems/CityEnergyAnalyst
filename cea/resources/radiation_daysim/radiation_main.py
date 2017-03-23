@@ -4,7 +4,6 @@ Radiation engine and geometry handler for CEA
 
 import os
 import pandas as pd
-import math
 import time 
 from cea.resources.radiation_daysim import settings
 
@@ -34,6 +33,58 @@ def create_radiance_srf(occface, srfname, srfmat, rad):
     bface_pts = fetch.pyptlist_frm_occface(occface)
     py2radiance.RadSurface(srfname, bface_pts, srfmat, rad)
     
+def add_rad_mat(daysim_mat_file, ageometry_table):
+    file_path = daysim_mat_file
+    
+    with open(file_path, 'w') as write_file:
+        
+        #first write the material use for the terrain and surrounding buildings 
+        string = "void plastic reflectance0.2\n0\n0\n5 0.5360 0.1212 0.0565 0 0"
+        write_file.writelines(string + '\n')
+                
+        written_mat_name_list = []
+        for geo in ageometry_table.index.values:
+            mat_name = "wall" + str(ageometry_table['type_wall'][geo])
+            if mat_name not in written_mat_name_list:
+                mat_value1 = ageometry_table['r_wall'][geo]
+                mat_value2 = ageometry_table['g_wall'][geo]
+                mat_value3 = ageometry_table['b_wall'][geo]
+                mat_value4 = ageometry_table['spec_wall'][geo]
+                mat_value5 = ageometry_table['rough_wall'][geo]
+                string = "void plastic " + mat_name + "\n0\n0\n5 " + str(mat_value1) + " " + str(mat_value2) + " " + str(mat_value3) \
+                         + " " + str(mat_value4) + " " + str(mat_value5)
+                         
+                write_file.writelines('\n' + string + '\n')
+                
+                written_mat_name_list.append(mat_name)
+
+            mat_name = "win" + str(ageometry_table['type_win'][geo])
+            if mat_name not in written_mat_name_list:
+                mat_value1 = ageometry_table['rtn_win'][geo]
+                mat_value2 = ageometry_table['gtn_win'][geo]
+                mat_value3 = ageometry_table['btn_win'][geo]
+
+                string = "void glass " + mat_name + "\n0\n0\n3 " + str(mat_value1) + " " + str(mat_value2) + " " + str(mat_value3)
+                write_file.writelines('\n' + string + '\n')
+                written_mat_name_list.append(mat_name)
+            
+            mat_name = "roof" + str(ageometry_table['type_roof'][geo])
+            if mat_name not in written_mat_name_list:
+                mat_value1 = ageometry_table['r_roof'][geo]
+                mat_value2 = ageometry_table['g_roof'][geo]
+                mat_value3 = ageometry_table['b_roof'][geo]
+                mat_value4 = ageometry_table['spec_roof'][geo]
+                mat_value5 = ageometry_table['rough_roof'][geo]
+
+                string = "void plastic " + mat_name + "\n0\n0\n5 " + str(mat_value1) + " " + str(mat_value2) + " " + str(mat_value3) \
+                         + " " + str(mat_value4) + " " + str(mat_value5)
+                write_file.writelines('\n' + string + '\n')
+                written_mat_name_list.append(mat_name)
+                
+        write_file.close()
+        
+    #os.rename(file_name_txt, file_name_rad.replace(".txt", ".rad"))
+    
 def filter_bldgs_of_interest(gmlbldgs, bldg_of_interest_name_list, citygml_reader):
     eligible_bldgs = []
     n_eligible_bldgs = []
@@ -50,18 +101,25 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
     bldg_dict_list = []
     #translate the terrain into radiance surface 
     gmlterrains = citygml_reader.get_relief_feature()
-    srfmat = settings.TERRAIN_PARAMS['e_terrain']
+    #srfmat = settings.TERRAIN_PARAMS['e_terrain']
     tcnt = 0
     for gmlterrain in gmlterrains:
         pytri_list = citygml_reader.get_pytriangle_list(gmlterrain)
         for pytri in pytri_list:
-            py2radiance.RadSurface("terrain_srf"+ str(tcnt), pytri, str(srfmat), rad)
+            py2radiance.RadSurface("terrain_srf"+ str(tcnt), pytri, "reflectance0.2", rad)
             tcnt+=1
     
     bldg_of_interest_name_list = ageometry_table.index.values
     gmlbldgs = citygml_reader.get_buildings()
     eligible_bldgs, n_eligible_bldgs = filter_bldgs_of_interest(gmlbldgs, bldg_of_interest_name_list, citygml_reader)
     
+    for n_gmlbldg in n_eligible_bldgs:
+        pypolgon_list = citygml_reader.get_pypolygon_list(n_gmlbldg)
+        nbldg_cnt = 0
+        for pypolygon in pypolgon_list:
+            py2radiance.RadSurface("surroundingbldgs"+ str(nbldg_cnt), pypolygon, "reflectance0.2", rad)
+            nbldg_cnt+=1
+            
     bcnt = 0
     for gmlbldg in eligible_bldgs:
         bldg_dict = {}
@@ -81,26 +139,28 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
             if wwr != 0.0 and wwr != 1.0:
                 window = fetch.shape2shapetype(modify.uniform_scale(facade, wwr, wwr, wwr, ref_pypt))
                 window_list.append(window)
-                create_radiance_srf(window, "win"+str(bcnt)+str(fcnt), str(ageometry_table['G_win'][bldg_name]), rad)
+                create_radiance_srf(window, "win"+str(bcnt)+str(fcnt), "win" + str(ageometry_table['type_win'][bldg_name]), rad)
+                
                 b_facade_cmpd = fetch.shape2shapetype(construct.boolean_difference(facade, window))
                 hole_facade = fetch.geom_explorer(b_facade_cmpd, "face")[0]
                 wall_list.append(hole_facade)
                 #triangulate the wall with hole
                 tri_facade_list = construct.simple_mesh(hole_facade)
                 for tri_bface in tri_facade_list:
-                    create_radiance_srf(tri_bface, "wall"+str(bcnt)+str(fcnt), str(ageometry_table['a_wall'][bldg_name]), rad)
+                    create_radiance_srf(tri_bface, "wall"+str(bcnt)+str(fcnt), 
+                                        "wall" + str(ageometry_table['type_wall'][bldg_name]), rad)
                     
             elif wwr == 1.0:
-                create_radiance_srf(facade, "win"+str(bcnt)+str(fcnt), str(ageometry_table['G_win'][bldg_name]), rad)
+                create_radiance_srf(facade, "win"+str(bcnt)+str(fcnt), "win" + str(ageometry_table['type_win'][bldg_name]), rad)
                 window_list.append(facade)
             else:
-                create_radiance_srf(facade, "wall"+str(bcnt)+str(fcnt), str(ageometry_table['a_wall'][bldg_name]), rad)
+                create_radiance_srf(facade, "wall"+str(bcnt)+str(fcnt), "wall" + str(ageometry_table['type_wall'][bldg_name]), rad)
                 wall_list.append(facade)
             fcnt+=1
             
         rcnt = 0
         for roof in roof_list:
-            create_radiance_srf(roof, "roof"+str(bcnt)+str(rcnt), str(ageometry_table['a_roof'][bldg_name]), rad)
+            create_radiance_srf(roof, "roof"+str(bcnt)+str(rcnt), "roof" + str(ageometry_table['type_roof'][bldg_name]), rad)
             rcnt+=1
             
         bldg_dict["name"] = bldg_name
@@ -153,38 +213,6 @@ def create_sensor_input_file(rad):
     sensor_file.write(sensor_pts_data)
     sensor_file.close()
     rad.sensor_file_path = sensor_file_path
-
-def add_rad_mat(aresults_path, daysim_dir, bldg_name, ageometry_table):
-    file_path = os.path.join(daysim_dir, 'rad',  "daysim_project_material")
-    print file_path
-    file_name_rad = file_path + ".rad"
-    file_name_txt = file_path + ".txt"
-    os.rename(file_name_rad, file_name_rad.replace(".rad", ".txt"))
-    with open(file_name_txt, 'a') as write_file:
-        for geo in ageometry_table.index.values:
-            mat_name = str(ageometry_table['a_wall'][geo])
-            mat_value = ageometry_table['a_wall'][geo]
-            string = "void plastic " + mat_name + " 0 0 5 " + str(mat_value) + " " + str(mat_value) + " " + str(mat_value) \
-                     + " 0.0000 0.0000"
-            write_file.writelines('\n' + string + '\n')
-
-            mat_name = str(ageometry_table['G_win'][geo])
-            mat_value = ageometry_table['G_win'][geo]
-            if not math.isnan(mat_value):
-                string = "void plastic " + mat_name + " 0 0 5 " + str(mat_value) + " " + str(mat_value) + " " + str(mat_value) \
-                + " 0.0000 0.0000"
-                write_file.writelines('\n' + string + '\n')
-            
-            mat_name = str(ageometry_table['a_roof'][geo])
-            mat_value = ageometry_table['a_roof'][geo]
-            if not math.isnan(mat_value):
-                string = "void plastic " + mat_name + " 0 0 5 " + str(mat_value) + " " + str(mat_value) + " " + str(mat_value) \
-                         + " 0.0000 0.0000"
-                write_file.writelines('\n' + string + '\n')
-
-        write_file.close()
-        
-    os.rename(file_name_txt, file_name_rad.replace(".txt", ".rad"))
     
 def execute_daysim(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_params, ageometry_table):
     sensor_pt_list = []
@@ -194,12 +222,10 @@ def execute_daysim(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_par
     # transform weather file
     rad.execute_epw2wea(aweatherfile_path)
     rad.execute_radfiles2daysim()
-    
+    0
     all_sensor_srf_dict_2dlist = []
     for bldg_dict in bldg_dict_list:
         bldg_name = bldg_dict["name"]
-        add_rad_mat(aresults_path, daysim_dir, bldg_name, ageometry_table)
-        
         sensor_srf_dict_list = calc_sensors(bldg_dict)
         all_sensor_srf_dict_2dlist.append(sensor_srf_dict_list)
         for srf_dict in sensor_srf_dict_list:
@@ -220,8 +246,6 @@ def execute_daysim(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_par
     rad.execute_gen_dc("w/m2")
     rad.execute_ds_illum()
     solar_res = rad.eval_ill_per_sensor()
-    sum_res_list = []
-    occface_list = []
     scnt = 0
     for srf_dict_list in all_sensor_srf_dict_2dlist:
         srf_properties = []
@@ -274,6 +298,7 @@ def calc_radiation(geometry_table_name, weatherfile_path, locator):
 
     # local variables
     building_surface_properties = reader_surface_properties(locator.get_building_architecture())
+
     results_path = locator.get_solar_radiation_folder()
 
     # city gml reader
@@ -282,7 +307,10 @@ def calc_radiation(geometry_table_name, weatherfile_path, locator):
     citygml_reader.load_filepath(citygml_filepath)
 
     # Simulation
-    rad = py2radiance.Rad(locator.get_daysim_mat(), results_path)
+    daysim_mat = locator.get_daysim_mat()
+    rad = py2radiance.Rad(daysim_mat, results_path)
+    add_rad_mat(daysim_mat, building_surface_properties)
+    
     bldg_dict_list = geometry2radiance(rad, building_surface_properties, citygml_reader)
     rad.create_rad_input_file()
     time1 = time.time()
@@ -291,7 +319,7 @@ def calc_radiation(geometry_table_name, weatherfile_path, locator):
     # execute daysim
     time2 = time.time()
     time3 = time2-time1
-    print time3
+    print "TIME TAKEN: ", time3/60.0
 
 def reader_surface_properties(input_shp):
     """
@@ -311,9 +339,9 @@ def reader_surface_properties(input_shp):
     df = architectural_properties.merge(surface_database_windows, left_on='type_win', right_on='code')
     df2 = architectural_properties.merge(surface_database_roof, left_on='type_roof', right_on='code')
     df3 = architectural_properties.merge(surface_database_walls, left_on='type_wall', right_on='code')
-    fields = ['Name', 'G_win', 'win_wall']
-    fields2 = ['Name', 'a_roof']
-    fields3 = ['Name', 'a_wall']
+    fields = ['Name', 'G_win', 'win_wall', 'rtn_win', 'gtn_win', 'btn_win', "type_win" ]
+    fields2 = ['Name', 'r_roof', 'g_roof', 'b_roof', 'spec_roof', 'rough_roof', "type_roof" ]
+    fields3 = ['Name', 'r_wall', 'g_wall', 'b_wall', 'spec_wall', 'rough_wall', "type_wall" ]
     surface_properties = df[fields].merge(df2[fields2], on='Name').merge(df3[fields3], on='Name')
     
     return surface_properties.set_index('Name').round(decimals=2)
