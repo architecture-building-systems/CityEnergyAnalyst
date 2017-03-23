@@ -28,13 +28,6 @@ class DataHelperTool(object):
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
-        prop_thermal_flag = arcpy.Parameter(
-            displayName="Generate thermal properties",
-            name="prop_thermal_flag",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        prop_thermal_flag.value = True
         prop_architecture_flag = arcpy.Parameter(
             displayName="Generate architectural properties",
             name="prop_architecture_flag",
@@ -63,7 +56,7 @@ class DataHelperTool(object):
             parameterType="Required",
             direction="Input")
         prop_internal_loads_flag.value = True
-        return [scenario_path, prop_thermal_flag, prop_architecture_flag, prop_HVAC_flag, prop_comfort_flag,
+        return [scenario_path, prop_architecture_flag, prop_HVAC_flag, prop_comfort_flag,
                 prop_internal_loads_flag]
 
     def execute(self, parameters, messages):
@@ -71,15 +64,13 @@ class DataHelperTool(object):
 
         scenario_path = parameters[0].valueAsText
         locator = cea.inputlocator.InputLocator(scenario_path)
-
-        prop_thermal_flag = parameters[1]
-        prop_architecture_flag = parameters[2]
-        prop_HVAC_flag = parameters[3]
+        prop_architecture_flag = parameters[1]
+        prop_HVAC_flag = parameters[2]
         prop_comfort_flag = parameters[3]
-        prop_internal_loads_flag = parameters[3]
+        prop_internal_loads_flag = parameters[4]
         gv = cea.globalvar.GlobalVariables()
         gv.log = add_message
-        properties(locator=locator, prop_thermal_flag=prop_thermal_flag.value,
+        properties(locator=locator,
                    prop_architecture_flag=prop_architecture_flag.value, prop_hvac_flag=prop_HVAC_flag.value,
-                   prop_comfort_flag=prop_comfort_flag.value, prop_internal_loads_flag=prop_internal_loads_flag.value,
-                   gv=gv)
+                   prop_comfort_flag=prop_comfort_flag.value, prop_internal_loads_flag=prop_internal_loads_flag.value
+                   )
