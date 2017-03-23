@@ -223,7 +223,7 @@ def calc_hvac_heating(tsd, hoy, gv):
     elif m_ve_mech == 0:  # mechanical ventilation system is not active, only recirculation air gets conditioned
 
         # supply air condition
-        t3 = gv.temp_sup_cool_hvac
+        t3 = gv.temp_sup_heat_hvac
 
         # State of Supply
         ts = t3  # minus expected delta T rise in the ducts TODO: check and document value of temp decrease
