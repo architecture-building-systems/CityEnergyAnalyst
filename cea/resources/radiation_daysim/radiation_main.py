@@ -34,10 +34,21 @@ def create_radiance_srf(occface, srfname, srfmat, rad):
     bface_pts = fetch.pyptlist_frm_occface(occface)
     py2radiance.RadSurface(srfname, bface_pts, srfmat, rad)
     
+def filter_bldgs_of_interest(gmlbldgs, bldg_of_interest_name_list, citygml_reader):
+    eligible_bldgs = []
+    n_eligible_bldgs = []
+    for gmlbldg in gmlbldgs:
+        bldg_name = citygml_reader.get_gml_id(gmlbldg) 
+        if bldg_name not in bldg_of_interest_name_list:
+            n_eligible_bldgs.append(gmlbldg)
+        else:
+            eligible_bldgs.append(gmlbldg)
+            
+    return eligible_bldgs, n_eligible_bldgs
+    
 def geometry2radiance(rad, ageometry_table, citygml_reader):
-    # add all geometries which are in "ageometry_table" to radiance
     bldg_dict_list = []
-
+    #translate the terrain into radiance surface 
     gmlterrains = citygml_reader.get_relief_feature()
     srfmat = settings.TERRAIN_PARAMS['e_terrain']
     tcnt = 0
@@ -46,10 +57,13 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
         for pytri in pytri_list:
             py2radiance.RadSurface("terrain_srf"+ str(tcnt), pytri, str(srfmat), rad)
             tcnt+=1
-   
+    
+    bldg_of_interest_name_list = ageometry_table.index.values
     gmlbldgs = citygml_reader.get_buildings()
+    eligible_bldgs, n_eligible_bldgs = filter_bldgs_of_interest(gmlbldgs, bldg_of_interest_name_list, citygml_reader)
+    
     bcnt = 0
-    for gmlbldg in gmlbldgs:
+    for gmlbldg in eligible_bldgs:
         bldg_dict = {}
         window_list = []
         
@@ -142,6 +156,7 @@ def create_sensor_input_file(rad):
 
 def add_rad_mat(aresults_path, daysim_dir, bldg_name, ageometry_table):
     file_path = os.path.join(daysim_dir, 'rad',  "daysim_project_material")
+    print file_path
     file_name_rad = file_path + ".rad"
     file_name_txt = file_path + ".txt"
     os.rename(file_name_rad, file_name_rad.replace(".rad", ".txt"))
@@ -168,6 +183,7 @@ def add_rad_mat(aresults_path, daysim_dir, bldg_name, ageometry_table):
                 write_file.writelines('\n' + string + '\n')
 
         write_file.close()
+        
     os.rename(file_name_txt, file_name_rad.replace(".txt", ".rad"))
     
 def execute_daysim(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_params, ageometry_table):
@@ -266,7 +282,7 @@ def calc_radiation(geometry_table_name, weatherfile_path, locator):
     citygml_reader.load_filepath(citygml_filepath)
 
     # Simulation
-    rad = py2radiance.Rad(os.path.join(results_path, 'base.rad'), results_path)
+    rad = py2radiance.Rad(locator.get_daysim_mat(), results_path)
     bldg_dict_list = geometry2radiance(rad, building_surface_properties, citygml_reader)
     rad.create_rad_input_file()
     time1 = time.time()
@@ -299,7 +315,7 @@ def reader_surface_properties(input_shp):
     fields2 = ['Name', 'a_roof']
     fields3 = ['Name', 'a_wall']
     surface_properties = df[fields].merge(df2[fields2], on='Name').merge(df3[fields3], on='Name')
-
+    
     return surface_properties.set_index('Name').round(decimals=2)
 
 if __name__ == '__main__':

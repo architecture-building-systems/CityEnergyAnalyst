@@ -240,6 +240,11 @@ class InputLocator(object):
     def get_terrain_shapefile(self):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain.shp')
+    
+    def get_daysim_mat(self):
+        """this gets the file that documents all of the radiance/daysim materials"""
+        return os.path.join(self.scenario_path, 'inputs', 'daysim_mat', 'base.rad')
+    
 
     # OUTPUTS
 
