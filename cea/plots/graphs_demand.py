@@ -35,7 +35,7 @@ def graphs_demand(locator, analysis_fields, gv):
     :returns: - Graphs of each building and total: .Pdf
               - heat map file per variable of interest n.
     """
-    color_palette = ['g', 'r', 'y', 'c']
+    color_palette = 'Set1'
     total_file = pd.read_csv(locator.get_total_demand()).set_index('Name')
     building_names = list(total_file.index)
     fields_MWhyr = [field.split('_')[0] + "_MWhyr" for field in analysis_fields]
@@ -43,6 +43,8 @@ def graphs_demand(locator, analysis_fields, gv):
     area_df = total_file['GFA_m2']
     fields_date = analysis_fields + ['DATE']
     num_buildings = len(building_names)
+
+    print('Storing results in: %s' % locator.get_demand_plots_folder())
 
     if gv.multiprocessing and mp.cpu_count() > 1:
         pool = mp.Pool()
@@ -55,13 +57,15 @@ def graphs_demand(locator, analysis_fields, gv):
             joblist.append(job)
         for i, job in enumerate(joblist):
             job.get(60)
-            gv.log('Building No. %(bno)i completed out of %(btot)i', bno=i + 1, btot=num_buildings)
+            gv.log('Building No. %(bno)i completed out of %(btot)i: %(bname)s', bno=i + 1, btot=num_buildings,
+                   bname=building_names[i])
         pool.close()
     else:
         for i, name in enumerate(building_names):
             create_demand_graph_for_building(analysis_fields, area_df, color_palette, fields_date, locator, name,
                                              total_demand)
-            gv.log('Building No. %(bno)i completed out of %(btot)i', bno=i+1, btot=num_buildings)
+            gv.log('Building No. %(bno)i completed out of %(btot)i: %(bname)s', bno=i+1, btot=num_buildings,
+                   bname=building_names[i])
 
 
 def create_demand_graph_for_building(analysis_fields, area_df, color_palette, fields_date, locator, name, total_demand):
@@ -73,10 +77,10 @@ def create_demand_graph_for_building(analysis_fields, area_df, color_palette, fi
     df.index = pd.to_datetime(df.DATE)
     fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, figsize=(12, 16))
     fig.text(0.07, 0.5, 'Demand [kW]', va='center', rotation='vertical')
-    df.plot(ax=ax1, y=analysis_fields, title='YEAR', color=color_palette, label=' ', legend=False)
-    df[408:576].plot(ax=ax2, y=analysis_fields, title='WINTER', legend=False, color=color_palette)
-    df[4102:4270].plot(ax=ax3, y=analysis_fields, title='SUMMER', legend=False, color=color_palette)
-    df[3096:3264].plot(ax=ax4, y=analysis_fields, title='SPRING AND FALL', legend=False, color=color_palette)
+    df.plot(ax=ax1, y=analysis_fields, title='YEAR', colormap=color_palette, label=' ', legend=False)
+    df[408:576].plot(ax=ax2, y=analysis_fields, title='WINTER', legend=False, colormap=color_palette)
+    df[4102:4270].plot(ax=ax3, y=analysis_fields, title='SUMMER', legend=False, colormap=color_palette)
+    df[3096:3264].plot(ax=ax4, y=analysis_fields, title='SPRING AND FALL', legend=False, colormap=color_palette)
     ax4.legend(bbox_to_anchor=(0, -0.4, 1, 0.102), loc=0, ncol=4, mode="expand", borderaxespad=0, fontsize=15)
     ax1.set_xlabel('')
     ax2.set_xlabel('')
@@ -91,11 +95,11 @@ def create_demand_graph_for_building(analysis_fields, area_df, color_palette, fi
     ax2 = fig.add_subplot(122)
     dftogether = pd.DataFrame({'TOTAL': total_demand.ix[name]}).T
     dftogether.plot(ax=ax1, kind='bar', title='TOTAL YEARLY CONSUMPTION', legend=False, stacked=True,
-                    color=color_palette)
+                    colormap=color_palette)
     ax1.set_ylabel('Yearly Consumption  [MWh/yr]')
     dftogether2 = pd.DataFrame({'EUI': (total_demand.ix[name] / area_df.ix[name] * 1000)}).T
     dftogether2.plot(ax=ax2, kind='bar', legend=False, title='ENERGY USE INTENSITY', stacked=True,
-                     color=color_palette)
+                     colormap=color_palette)
     ax2.set_ylabel('Energy Use Intensity EUI [kWh/m2.yr]')
     pdf.savefig()
     plt.close()
@@ -119,6 +123,8 @@ def run_as_script(scenario_path=None, analysis_fields=["Ealf_kWh", "Qhsf_kWh", "
 
 
 def demand_graph_fields(scenario_path):
+    """Lists the available fields for the demand graphs - these are fields that are present in both the
+    building demand results files as well as the totals file (albeit with different units)."""
     locator = cea.inputlocator.InputLocator(scenario_path)
     df_total_demand = pd.read_csv(locator.get_total_demand())
     total_fields = set(df_total_demand.columns.tolist())
