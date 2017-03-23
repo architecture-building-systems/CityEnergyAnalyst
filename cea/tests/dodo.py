@@ -8,6 +8,8 @@ import os
 import shutil
 import zipfile
 
+import sys
+
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Daren Thomas"]
@@ -246,8 +248,9 @@ def task_run_unit_tests():
 
 
 def main():
-    import doit
-    doit.run(globals())
+    from doit.api import DoitMain
+    from doit.api import ModuleTaskLoader
+    sys.exit(DoitMain(ModuleTaskLoader(globals())).run([]))
 
 
 if __name__ == '__main__':

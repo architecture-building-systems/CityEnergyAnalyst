@@ -19,6 +19,13 @@ __status__ = "Production"
 def demand(args):
     """Run the demand script with the arguments provided."""
     import cea.demand.demand_main
+    if args.weather and not os.path.exists(args.weather):
+        try:
+            # allow using shortcut
+            import cea.inputlocator
+            args.weather = cea.inputlocator.InputLocator(None).get_weather(args.weather)
+        except:
+            pass
     cea.demand.demand_main.run_as_script(scenario_path=args.scenario, weather_path=args.weather)
 
 
@@ -199,8 +206,12 @@ def heatmaps(args):
 
 def test(_):
     """Run the pydoit tests (same test-suite as run by Jenkins)"""
-
-
+    import cea.tests.dodo
+    try:
+        cea.tests.dodo.main()
+    except:
+        import traceback
+        traceback.print_exc()
 
 def main():
     """Parse the arguments and run the program."""
