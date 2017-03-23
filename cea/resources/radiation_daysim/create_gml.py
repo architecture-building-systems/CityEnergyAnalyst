@@ -1,4 +1,3 @@
-import os
 import pyliburo.py3dmodel.construct as construct
 import pyliburo.py3dmodel.fetch as fetch
 import pyliburo.py3dmodel.calculate as calculate
@@ -22,30 +21,37 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def building2d23d(citygml_writer, shapefilepath, out_path, height_col, elev_col, name_col,nfloor_col):
+def building2d23d(citygml_writer, shapefilepath, out_path, tin_occface_list, 
+                  height_col, name_col,nfloor_col):
     sf = shapefile.Reader(shapefilepath)
     shapeRecs = sf.shapeRecords()
     field_name_list = shp2citygml.get_field_name_list(sf)
     height_index = field_name_list.index(height_col) - 1
     name_index = field_name_list.index(name_col) - 1
-    elev_index = field_name_list.index(elev_col) - 1 #TODO: ADD ELEVATION FROM RASTER
     floor_index = field_name_list.index(nfloor_col) - 1
+    
+    #make shell out of tin_occface_list
+    terrain_shell = construct.make_shell_frm_faces(tin_occface_list)[0]
     counter = 0
     bsolid_list = []
     for rec in shapeRecs:
         poly_attribs = rec.record
         height = float(poly_attribs[height_index])
-        elev = float(poly_attribs[elev_index])
         name = str(poly_attribs[name_index])
         nfloors = int(poly_attribs[floor_index])
         part_list = shp2citygml.get_geometry(rec)
         for part in part_list:
             # adding elevation to 2d shapefile vertex
-            point_list = shp2citygml.pypt_list2d_2_3d(part, elev)
-
+            point_list = shp2citygml.pypt_list2d_2_3d(part, 0)
             #creating floor surface in pythonocc
             face = construct.make_polygon(point_list)
-
+            #get the midpt of the face
+            face_midpt = calculate.face_midpt(face)
+            #project the face_midpt to the terrain and get the elevation 
+            inter_pt, inter_face = calculate.intersect_shape_with_ptdir(terrain_shell,face_midpt, (0,0,1))
+            loc_pt = fetch.occpt2pypt(inter_pt)
+            #reconstruct the footprint with the elevation
+            face = fetch.shape2shapetype(modify.move(face_midpt, loc_pt, face))
             # floor by floor copying and moving  the footprint surface
             flr2flr_height = height/nfloors
             moved_face_list = []
@@ -89,7 +95,6 @@ def terrain2d23d(citygml_writer, input_terrain):
 
     #create tin and triangulate
     tin_occface_list = construct.delaunay3d(raster_points)
-    print len(tin_occface_list)
 
     geometry_list = gml3dmodel.write_gml_triangle(tin_occface_list)
     citygml_writer.add_tin_relief("lod1", "terrain1", geometry_list)
@@ -112,13 +117,13 @@ def create_citygml(input_buildings, input_terrain, output_folder):
 
     # local variables
     citygml_writer = pycitygml.Writer()
-
-    # transform buildings to LOD3
-    bsolid_list = building2d23d(citygml_writer, input_buildings, output_folder, height_col='height_ag', name_col='Name',
-                  elev_col='elevation', nfloor_col="floors_ag")
-
     # transform terrain to CityGML
     terrain_face_list = terrain2d23d(citygml_writer, input_terrain)
+    
+    # transform buildings to LOD3
+    bsolid_list = building2d23d(citygml_writer, input_buildings, output_folder, terrain_face_list,
+                                height_col='height_ag', name_col='Name', nfloor_col="floors_ag")
+
     construct.visualise([terrain_face_list,bsolid_list], ["GREEN","WHITE"],backend = "wx")
     # write to citygml
     citygml_writer.write(locator.get_building_geometry_citygml())
@@ -132,9 +137,8 @@ if __name__ == '__main__':
 
     # local variables
     output_folder = locator.get_building_geometry_folder()
-    input_buildings_shapefile = locator.get_building_geometry()
+    input_buildings_shapefile = locator.get_district()
     input_terrain_raster = locator.get_terrain()
-
     # run routine
     create_citygml(input_buildings_shapefile, input_terrain_raster, output_folder)
 
