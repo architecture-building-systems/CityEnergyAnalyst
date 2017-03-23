@@ -6,12 +6,13 @@ building properties algorithm
 # J. A. Fonseca  script development          22.03.15
 
 from __future__ import division
+from __future__ import absolute_import
 
 import numpy as np
 import pandas as pd
 from cea.utilities.dbfreader import dbf2df, df2dbf
 
-from cea import inputlocator
+import cea.inputlocator
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -22,39 +23,37 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def properties(locator, prop_architecture_flag,
-               prop_hvac_flag, prop_comfort_flag, prop_internal_loads_flag):
+
+def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_flag, prop_internal_loads_flag):
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
     model of Fonseca et al. 2015. Appl. energy.
 
     :param InputLocator locator: an InputLocator instance set to the scenario to work on
-    :param boolean prop_thermal_flag: if True, get properties about thermal properties of the building envelope.
     :param boolean prop_architecture_flag: if True, get properties about the construction and architecture.
+    :param boolean prop_comfort_flag: if True, get properties about thermal comfort.
     :param boolean prop_hvac_flag: if True, get properties about types of HVAC systems, otherwise False.
-    :param GlobalVariables gv: an instance of globalvar.GlobalVariables with the constants  to use
-        (like `list_uses` etc.)
+    :param boolean prop_internal_loads_flag: if True, get properties about internal loads, otherwise False.
 
     The following files are created by this script, depending on which flags were set:
 
-    - building_HVAC: .shp
+    - building_HVAC: .dbf
         describes the queried properties of HVAC systems.
 
-    - building_architecture: .shp
+    - architecture.dbf
         describes the queried properties of architectural features
 
     - building_thermal: .shp
         describes the queried thermal properties of buildings
 
-    - building_comfort: .shp
+    - indoor_comfort.shp
         describes the queried thermal properties of buildings
-
     """
 
     # get occupancy and age files
     building_occupancy_df = dbf2df(locator.get_building_occupancy())
-    list_uses = list(building_occupancy_df.drop(['PFloor','Name'], axis=1).columns) #parking excluded in U-Values
+    list_uses = list(building_occupancy_df.drop(['PFloor', 'Name'], axis=1).columns) #parking excluded in U-Values
     building_age_df = dbf2df(locator.get_building_age())
 
     # prepare shapefile to store results (a shapefile with only names of buildings
@@ -79,10 +78,10 @@ def properties(locator, prop_architecture_flag,
         # write to shapefile
         prop_architecture_df_merged = names_shp.merge(prop_architecture_df, on="Name")
         fields = ['Es', 'Hs', 'win_wall',  'Occ_m2p', 'n50', 'th_mass',  'type_roof', 'type_wall', 'type_win', 'type_shade']
-        prop_architecture_shp = names_shp.copy()
+        prop_architecture_dbf = names_shp.copy()
         for field in fields:
-            prop_architecture_shp[field] = prop_architecture_df_merged[field].copy()
-        df2dbf(prop_architecture_shp, locator.get_building_architecture())
+            prop_architecture_dbf[field] = prop_architecture_df_merged[field].copy()
+        df2dbf(prop_architecture_dbf, locator.get_building_architecture())
 
 
     # get properties about types of HVAC systems
@@ -110,11 +109,11 @@ def properties(locator, prop_architecture_flag,
 
         # write to shapefile
         prop_comfort_df_merged = names_shp.merge(prop_comfort_df, on="Name")
-        fields = ['Tcs_set_C', 'Ths_set_C','Tcs_setb_C', 'Ths_setb_C', 'Ve_lps']
-        prop_comfort_shp = names_shp.copy()
+        fields = ['Tcs_set_C', 'Ths_set_C', 'Tcs_setb_C', 'Ths_setb_C', 'Ve_lps']
+        prop_comfort_dbf = names_shp.copy()
         for field in fields:
-            prop_comfort_shp[field] = prop_comfort_df_merged[field].copy()
-        df2dbf(prop_comfort_shp, locator.get_building_comfort())
+            prop_comfort_dbf[field] = prop_comfort_df_merged[field].copy()
+        df2dbf(prop_comfort_dbf, locator.get_building_comfort())
 
     if prop_internal_loads_flag:
         internal_DB = get_database(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
@@ -179,10 +178,12 @@ def calc_category(a, x, y):
     elif y > 2020:
         result = '12'
 
-    category = a+result
+    category = a + result
     return category
 
-def run_as_script(scenario_path=None):
+
+def run_as_script(scenario_path=None, prop_thermal_flag=True, prop_architecture_flag=True, prop_hvac_flag=True,
+                  prop_comfort_flag=True, prop_internal_loads_flag=True):
     """
     Run the properties script with input from the reference case and compare the results. This ensures that changes
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
@@ -191,9 +192,10 @@ def run_as_script(scenario_path=None):
     gv = cea.globalvar.GlobalVariables()
     if not scenario_path:
         scenario_path = gv.scenario_reference
-    locator = inputlocator.InputLocator(scenario_path=scenario_path)
-    properties(locator=locator, prop_architecture_flag=True, prop_hvac_flag=True,
-               prop_comfort_flag=True, prop_internal_loads_flag=True)
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    properties(locator=locator, prop_architecture_flag=prop_architecture_flag,
+               prop_hvac_flag=prop_hvac_flag, prop_comfort_flag=prop_comfort_flag,
+               prop_internal_loads_flag=prop_internal_loads_flag)
 
 
 if __name__ == '__main__':
