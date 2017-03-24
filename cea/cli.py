@@ -204,11 +204,17 @@ def heatmaps(args):
                                     file_to_analyze=args.file_to_analyze)
 
 
-def test(_):
+def test(args):
     """Run the pydoit tests (same test-suite as run by Jenkins)"""
     import cea.tests.dodo
+    if args.save:
+        with open(os.path.expanduser(r'~\cea_github.auth')) as f:
+            f.write(args.user + '\n')
+            f.write(args.token + '\n')
     try:
-        cea.tests.dodo.main()
+        cea.tests.dodo.main(user=args.user, token=args.token)
+    except SystemExit:
+        raise
     except:
         import traceback
         traceback.print_exc()
@@ -319,6 +325,10 @@ def main():
     heatmaps_parser.set_defaults(func=heatmaps)
 
     test_parser = subparsers.add_parser('test', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    test_parser.add_argument('--user', help='GitHub user with access to cea-reference-case repository')
+    test_parser.add_argument('--token', help='Personal Access Token for the GitHub user')
+    test_parser.add_argument('--save', action='store_true', default=False,
+                             help='Save user name and access token to ~/cea_github.auth')
     test_parser.set_defaults(func=test)
 
     parsed_args = parser.parse_args()
