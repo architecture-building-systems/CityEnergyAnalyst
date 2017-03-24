@@ -219,6 +219,15 @@ def test(args):
         import traceback
         traceback.print_exc()
 
+
+def extract_reference_case(args):
+    """extract the reference case to a folder"""
+    import zipfile
+    import cea.examples
+    archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+    archive.extractall(args.to)
+
+
 def main():
     """Parse the arguments and run the program."""
     import argparse
@@ -328,6 +337,12 @@ def main():
     test_parser.add_argument('--user', help='GitHub user with access to cea-reference-case repository')
     test_parser.add_argument('--token', help='Personal Access Token for the GitHub user')
     test_parser.set_defaults(func=test)
+
+    extract_reference_case_parser = subparsers.add_parser('extract-reference-case',
+                                                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    extract_reference_case_parser.add_argument('--to', help='Folder to extract the reference case to',
+                                               default='.')
+    extract_reference_case_parser.set_defaults(func=extract_reference_case)
 
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)

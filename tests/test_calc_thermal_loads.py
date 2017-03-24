@@ -9,20 +9,25 @@ from cea.globalvar import GlobalVariables
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
 
-REFERENCE_CASE = r'C:\cea-reference-case\reference-case-open\baseline'
-
 
 class TestCalcThermalLoads(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        if 'REFERENCE_CASE' in os.environ:
-            cls.locator = InputLocator(os.environ['REFERENCE_CASE'])
-        else:
-            cls.locator = InputLocator(REFERENCE_CASE)
+        import zipfile
+        import cea.examples
+        import tempfile
+        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+        archive.extractall(tempfile.gettempdir())
+        reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
+        cls.locator = InputLocator(reference_case)
         cls.gv = GlobalVariables()
-
         weather_path = cls.locator.get_default_weather()
-        cls.weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
+        cls.weather_data = epwreader.epw_reader(weather_path)[
+            ['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
+
+        # run properties script
+        import cea.demand.preprocessing.properties
+        cea.demand.preprocessing.properties.properties(cls.locator, True, True, True, True)
 
         cls.building_properties = BuildingProperties(cls.locator, cls.gv)
         cls.date = pd.date_range(cls.gv.date_start, periods=8760, freq='H')
