@@ -249,11 +249,7 @@ class GlobalVariables(object):
         self.MWST = 0.08  # 8% MWST assumed, used in A+W data
 
         # Resource prices
-        self.ELEC_PRICE = 0.2 * self.EURO_TO_CHF / 1000.0  # = 15 Rp/kWh   or  0.104 * EURO_TO_CHF / 1000.0 # [CHF / wh]
-        # self.ELEC_PRICE_KEV = 1.5 * ELEC_PRICE # MAKE RESEARCH ABOUT A PROPER PRICE AND DOCUMENT THAT!
-        # self.ELEC_PRICE_GREEN = 1.5 * ELEC_PRICE
-        self.NG_PRICE = 0.068 * self.EURO_TO_CHF / 1000.0  # [CHF / wh]
-        self.BG_PRICE = 0.076 * self.EURO_TO_CHF / 1000.0  # [CHF / wh]
+
 
         self.GasConnectionCost = 15.5 / 1000.0  # CHF / W, from  Energie360 15.5 CHF / kW
 
@@ -280,7 +276,7 @@ class GlobalVariables(object):
         # Pressure losses
         # self.DeltaP_DCN = 1.0 #Pa - change
         # self.DeltaP_DHN = 84.8E3 / 10.0 #Pa  - change
-        self.cPump = self.ELEC_PRICE * 24. * 365.  # coupled to electricity cost
+
         self.PumpEnergyShare = 0.01  # assume 1% of energy required for pumping, after 4DH
         self.PumpReliabilityMargin = 0.05  # assume 5% reliability margin
 
@@ -296,7 +292,7 @@ class GlobalVariables(object):
         # Heat pump
         self.HP_maxSize = 20.0E6  # max thermal design size [Wth]
         self.HP_minSize = 1.0E6  # min thermal design size [Wth]
-        self.HP_n = 20.0  # lifetime [years]
+
 
         self.HP_etaex = 0.6  # exergetic efficiency of WSHP [L. Girardin et al., 2010]_
         self.HP_deltaT_cond = 2.0  # pinch for condenser [K]
@@ -304,7 +300,7 @@ class GlobalVariables(object):
         self.HP_maxT_cond = 140 + 273.0  # max temperature at condenser [K]
 
         self.HP_Auxratio = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
-        self.HP_i = 0.05  # interest rate
+
 
         # Sewage resource
 
@@ -328,7 +324,7 @@ class GlobalVariables(object):
         self.GHP_WmaxSize = 1E3  # max electrical design size [Wel] FOR ONE PROBE
 
         self.GHP_nBH = 50.0  # [years] for a borehole
-        self.GHP_nHP = 20.0  # for the geothermal heat pump
+
 
         self.GHP_etaex = 0.677  # exergetic efficiency [O. Ozgener et al., 2005]_
         self.GHP_Auxratio = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
@@ -337,7 +333,7 @@ class GlobalVariables(object):
         self.GHP_A = 25  # [m^2] area occupancy of one borehole Gultekin et al. 5 m separation at a penalty of 10% less efficeincy
 
         # Combined cycle
-        self.CC_n = 25.0  # lifetime
+
         self.CC_i = 0.06
 
         self.GT_maxSize = 50.00000001E6  # max electrical design size in W = 50MW (NOT THERMAL capacity)
@@ -358,9 +354,8 @@ class GlobalVariables(object):
         # Boiler
         # Operating figures, quality parameters and investment costs for district heating systems (AFO)
 
-        self.Boiler_n = 20.0  # lifetime, after A+W, confirmed by average of 15-25y range after http://www.elco.ch/pdf/Solutions/ \
         # ELCO-Loesungsbeispiel-Huber.pdf
-        self.Boiler_i = 0.05  # interest rate
+
         self.Boiler_C_fuel = 20.0  # € / MWh_therm_bought(for LHV), AFO
         self.Boiler_C_labour = 4.0  # [€ /MWh_therm_sold]
         self.Boiler_P_aux = 0.026  # 0.026 Wh/Wh_th_sold = 26 kWh_el / MWh_th_sold, bioenergy 2020
@@ -379,14 +374,12 @@ class GlobalVariables(object):
         self.Furn_min_electric = 0.3  # Minimum load for electricity generation in furnace plant
 
         # Substation Heat Exchangers
-        self.Subst_n = 20.0  # Lifetime after A+W
-        self.Subst_i = 0.05
+
 
         # Fuel Cells
         self.FC_OP_HOURS_PER_YEAR = 4000.0  # hours / year
         self.FC_LIFETIME = 40000.0  # hours of operation
-        self.FC_n = 10  # years of operation
-        self.FC_i = 0.05  # interest rate
+
         self.FC_stack_cost = 12000.0  # CHF /kW_th for a Hexis 1000 N 1kWe/1.8kWth
         self.FC_overhead = 0.1  # 10 % higher cost due to final installation
 
@@ -399,7 +392,7 @@ class GlobalVariables(object):
         # Cooling tower
         self.CT_maxSize = 10.0E6  # cooling power desin size [W]
         self.CT_n = 20.0
-        self.CT_a = 0.15  # annuity factor
+
 
         # Storage
         self.T_storage_min = 10 + 273.0  # K  - Minimum Storage Temperature
@@ -509,6 +502,27 @@ class GlobalVariables(object):
         # ==============================================================================================================
         self.initial_temp_air_prev = 21
         self.initial_temp_m_prev = 16
+
+        # Uncertainty
+        self.HP_n = 20.0  # lifetime [years]
+        self.GHP_nHP = 20.0  # for the geothermal heat pump
+        self.Boiler_n = 20.0  # lifetime, after A+W, confirmed by average of 15-25y range after http://www.elco.ch/pdf/Solutions/ \
+        self.CC_n = 25.0  # lifetime
+        self.FC_n = 10  # years of operation
+        self.PVT_n = 20  # years of operation
+        self.SC_n = 20  # years of operation
+        self.CT_a = 0.15  # annuity factor
+        self.Subst_n = 20.0  # Lifetime after A+W
+        self.ELEC_PRICE = 0.2 * self.EURO_TO_CHF / 1000.0  # = 15 Rp/kWh   or  0.104 * EURO_TO_CHF / 1000.0 # [CHF / wh]
+        # self.ELEC_PRICE_KEV = 1.5 * ELEC_PRICE # MAKE RESEARCH ABOUT A PROPER PRICE AND DOCUMENT THAT!
+        # self.ELEC_PRICE_GREEN = 1.5 * ELEC_PRICE
+        self.NG_PRICE = 0.068 * self.EURO_TO_CHF / 1000.0  # [CHF / wh]
+        self.BG_PRICE = 0.076 * self.EURO_TO_CHF / 1000.0  # [CHF / wh]
+        self.cPump = self.ELEC_PRICE * 24. * 365.  # coupled to electricity cost
+        self.Subst_i = 0.05
+        self.FC_i = 0.05  # interest rate
+        self.HP_i = 0.05  # interest rate
+        self.Boiler_i = 0.05  # interest rate
 
         # ==============================================================================================================
         # TABS
