@@ -23,6 +23,7 @@ __status__ = "Production"
 REPOSITORY_URL = "https://github.com/architecture-building-systems/cea-reference-case/archive/%s.zip"
 REPOSITORY_NAME = "master"
 
+
 if 'JOB_NAME' in os.environ:
     # this script is being run as part of a Jenkins job
     ARCHIVE_PATH = os.path.expandvars(r'%TEMP%\%JOB_NAME%\cea-reference-case.zip')
@@ -57,17 +58,25 @@ REFERENCE_CASES_DATA = {
                           'radiation': 'https://shared.ethz.ch/owncloud/s/MG3FeiSMVnIekwp/download',
                           'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/HFHttennomZSbSf/download'}}
 
+# set to github user and personal access token in main
+_user = None
+_token = None
+
+
 def get_github_auth():
     """
-    get the username / password for github from a file in the home directory
-    called "github.auth". The first line contains the user, the second line
-    the password.
+    get the username / token for github from a file in the home directory
+    called "cea_github.auth". The first line contains the user, the second line
+    the personal access token.
 
-    :return: (user, password)
+    :return: (user, token)
     """
-    with open(os.path.expanduser('~/github.auth')) as f:
-        user, password = map(str.strip, f.readlines())
-    return user, password
+    if _user and _token:
+        return _user, _token
+
+    with open(os.path.expanduser('~/cea_github.auth')) as f:
+        user, token = map(str.strip, f.readlines())
+    return user, token
 
 
 def task_download_reference_cases():
@@ -247,9 +256,15 @@ def task_run_unit_tests():
     }
 
 
-def main():
+def main(user=None, token=None):
     from doit.api import DoitMain
     from doit.api import ModuleTaskLoader
+    if user:
+        global _user
+        _user = user
+    if token:
+        global _token
+        _token = token
     sys.exit(DoitMain(ModuleTaskLoader(globals())).run([]))
 
 
