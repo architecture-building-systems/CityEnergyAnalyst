@@ -74,9 +74,24 @@ def get_github_auth():
     if _user and _token:
         return _user, _token
 
-    with open(os.path.expanduser('~/cea_github.auth')) as f:
+    with open(os.path.expanduser(r'~\cea_github.auth')) as f:
         user, token = map(str.strip, f.readlines())
     return user, token
+
+
+def task_run_unit_tests():
+    """run the unittests"""
+    def run_unit_tests():
+        import unittest
+        import os
+        testsuite = unittest.defaultTestLoader.discover(os.path.dirname(__file__))
+        result = unittest.TextTestRunner(verbosity=1).run(testsuite)
+        return result.wasSuccessful()
+    return {
+        'actions': [run_unit_tests],
+        'task_dep': [],
+        'verbosity': 1
+    }
 
 
 def task_download_reference_cases():
@@ -238,22 +253,6 @@ def task_run_scenario_plots():
             })],
             'verbosity': 1,
         }
-
-
-def task_run_unit_tests():
-    """run the unittests"""
-    def run_unit_tests():
-        import unittest
-        import os
-        os.environ['REFERENCE_CASE'] = REFERENCE_CASES['open']
-        testsuite = unittest.defaultTestLoader.discover('.')
-        result = unittest.TextTestRunner(verbosity=1).run(testsuite)
-        return result.wasSuccessful()
-    return {
-        'actions': [run_unit_tests],
-        'task_dep': ['download_reference_cases', 'download_radiation', 'run_data_helper'],
-        'verbosity': 1
-    }
 
 
 def main(user=None, token=None):
