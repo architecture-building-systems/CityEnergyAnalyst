@@ -22,6 +22,18 @@ def test_graphs_optimization(generation):
     weather_file = locator.get_default_weather()
     os.chdir(locator.get_optimization_master_results_folder())
 
+    import csv
+    scenario_path = r'c:\reference-case-zug\baseline'
+    locator = cea.inputlocator.InputLocator(scenario_path)
+    os.chdir(locator.get_optimization_master_results_folder())
+    # row = []
+    # with open('uncertainty.csv') as f:
+    #     reader = csv.reader(f)
+    #     for i in xrange(1000):
+    #         row.append(next(reader))
+    #     j = 0
+    #     print row[j]
+
     pareto = []
     xs = []
     ys = []
@@ -34,7 +46,7 @@ def test_graphs_optimization(generation):
         mydict = dict(reader)
         population = mydict['population']
         population = re.findall(r'\d+(?:\.\d+)?', population)
-        print (population)
+        # print (population)
         popfloat = [float(x) for x in population]
 
         for i in xrange(len(popfloat)):
@@ -45,7 +57,7 @@ def test_graphs_optimization(generation):
         for i in xrange(len(popfloat)/45):
             pop.append(popfloat[i*45:(((i+1)*45)-1)])
 
-    print (len(pop))
+    # print (len(pop))
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     gv.num_tot_buildings = total_demand.Name.count()
@@ -58,27 +70,27 @@ def test_graphs_optimization(generation):
 
     network_features = network_opt.network_opt_main()
 
-    print (pop[1])
-    print (type(pop[0]))
+    # print (pop[1])
+    # print (type(pop[0]))
 
 
     def objective_function(ind):
         (costs, CO2, prim) = evaluation.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solarFeat,
                                                         network_features, gv)
-        print (costs, CO2, prim)
+        # print (costs, CO2, prim)
         return (costs, CO2, prim)
 
     nBuildings = len(building_names)
     ntwList = ["1" * nBuildings]
     fitness = []
-    for i in xrange(1):
-        print (i)
-        print (pop[i])
+    for i in xrange(20):
+        # print (i)
+        # print (pop[i])
         evaluation.checkNtw(pop[i], ntwList, locator, gv)
         fitness.append(objective_function(pop[i]))
 
     os.chdir(locator.get_optimization_master_results_folder())
-    with open("CheckPointTesting", "wb") as csv_file:
+    with open("CheckPointTesting_uncertainty_1", "wb") as csv_file:
         writer = csv.writer(csv_file)
         cp = dict(population=pop, generation=generation, objective_function_values=fitness)
         for key, value in cp.items():
