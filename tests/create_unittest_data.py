@@ -14,6 +14,7 @@ from cea.utilities import epwreader
 
 REFERENCE_CASE = r'C:\reference-case-open\baseline'
 
+
 def main():
     locator = InputLocator(REFERENCE_CASE)
     gv = GlobalVariables()
