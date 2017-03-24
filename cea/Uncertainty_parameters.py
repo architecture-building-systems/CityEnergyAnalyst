@@ -129,34 +129,68 @@ class GlobalVariables(object):
 
 
 def run_as_script(scenario_path=None):
-    yo = []
-    ir = []
-    fclt = []
-    oelt = []
-    fccf = []
-    ep = []
-    op = []
-    sp = []
+    import pandas as pd
+    WHP_LT = []
+    GHP_LT = []
+    CB_LT = []
+    CC_LT = []
+    FC_LT = []
+    PV_LT = []
+    SC_LT = []
+    PVT_LT = []
+    CCT_LT = []
+    TS_LT = []
+    HEX_LT = []
+    CP_LT = []
+    EP = []
+    NG = []
+    BG = []
+    IR = []
 
-    for i in xrange(500):
+    for i in xrange(1000):
         # print (i)
-        yo.append(8600*np.random.beta(3.9, 1.2, size=None))
-        ir.append(np.random.normal(loc=0.06, scale=0.01))
-        fclt.append(10 * np.random.beta(5.8, 4, size=None))
-        oelt.append(30 * np.random.beta(5.8, 4, size=None))
-        fccf.append(np.random.uniform(-.3, .3))
-        ep.append(np.random.normal(loc=0.16, scale=0.02))
-        op.append(np.random.normal(loc=1476, scale=200))
-        sp.append(np.random.normal(loc=670, scale=100))
+        WHP_LT.append(34 * np.random.beta(5.8, 4, size=None))
+        GHP_LT.append(34 * np.random.beta(5.8, 4, size=None))
+        CB_LT.append(34 * np.random.beta(5.8, 4, size=None))
+        CC_LT.append(43 * np.random.beta(5.8, 4, size=None))
+        FC_LT.append(17 * np.random.beta(5.8, 4, size=None))
+        PV_LT.append(34 * np.random.beta(5.8, 4, size=None))
+        SC_LT.append(34 * np.random.beta(5.8, 4, size=None))
+        PVT_LT.append(34 * np.random.beta(5.8, 4, size=None))
+        CCT_LT.append(11.27 * np.random.beta(5.8, 4, size=None))
+        TS_LT.append(102 * np.random.beta(5.8, 4, size=None))
+        HEX_LT.append(34 * np.random.beta(5.8, 4, size=None))
+        CP_LT.append(17 * np.random.beta(5.8, 4, size=None))
+        EP.append(np.random.normal(loc=0.2, scale=0.02))
+        NG.append(np.random.normal(loc=0.068, scale=0.0068))
+        BG.append(np.random.normal(loc=0.076, scale=0.0076))
+        IR.append(np.random.normal(loc=5, scale=1))
 
-    print (np.mean(yo))
-    print (np.mean(ir))
-    print (np.mean(fclt))
-    print (np.mean(oelt))
-    print (np.mean(fccf))
-    print (np.mean(ep))
-    print (np.mean(op))
-    print (np.mean(sp))
+    table = [WHP_LT, GHP_LT, CB_LT, CC_LT, FC_LT, PV_LT, SC_LT, PVT_LT, CCT_LT, TS_LT, HEX_LT, CP_LT, EP, NG, BG, IR]
+    df = pd.DataFrame(table)
+    df = df.transpose()
+    cols = ['WHP', 'GHP', 'CB', 'CC', 'FC', 'PV', 'SC', 'PVT', 'CCT', 'TS', 'HEX', 'CP', 'EP', 'NG', 'BG', 'IR']
+    df.columns = cols
+    print (df)
+    df.to_csv("C:\Users\Bhargava\Documents\uncertainty.csv")
+
+    # print (np.mean(WHP_LT))
+    # print (np.mean(GHP_LT))
+    # print (np.mean(CB_LT))
+    # print (np.mean(CC_LT))
+    # print (np.mean(FC_LT))
+    # print (np.mean(PV_LT))
+    # print (np.mean(SC_LT))
+    # print (np.mean(PVT_LT))
+    # print (np.mean(CCT_LT))
+    # print (np.mean(TS_LT))
+    # print (np.mean(HEX_LT))
+    # print (np.mean(CP_LT))
+    # print (np.mean(EP))
+    # print (np.mean(NG))
+    # print (np.mean(BG))
+    # print (np.mean(IR))
+
     print 'test_optimization_main() succeeded'
 
 if __name__ == '__main__':
