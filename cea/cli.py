@@ -327,8 +327,6 @@ def main():
     test_parser = subparsers.add_parser('test', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     test_parser.add_argument('--user', help='GitHub user with access to cea-reference-case repository')
     test_parser.add_argument('--token', help='Personal Access Token for the GitHub user')
-    test_parser.add_argument('--save', action='store_true', default=False,
-                             help='Save user name and access token to ~/cea_github.auth')
     test_parser.set_defaults(func=test)
 
     parsed_args = parser.parse_args()
