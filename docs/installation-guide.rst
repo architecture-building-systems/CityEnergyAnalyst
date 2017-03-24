@@ -50,6 +50,16 @@ for a file called ``cea_arcgis.pth`` containing these three lines::
 
 Edit these folders to point to the appropriate ArcGIS folders as documented in the ArcGIS manuals.
 
+Installation from GitHub repository
+...................................
+
+If you'd prefer to track the newest version of the City Energy Analyst, clone the GitHub repository and run::
+
+    python setup.py install
+
+to install the CEA, including the ``cea`` tool. Note, you will need to follow the guide above to create a conda
+environment and install geopandas.
+
 Installation of the development environment
 -------------------------------------------
 
