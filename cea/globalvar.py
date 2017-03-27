@@ -510,7 +510,7 @@ class GlobalVariables(object):
         row = []
         with open('uncertainty.csv') as f:
             reader = csv.reader(f)
-            for i in xrange(1000):
+            for i in xrange(100):
                 row.append(next(reader))
 
         j = 0
