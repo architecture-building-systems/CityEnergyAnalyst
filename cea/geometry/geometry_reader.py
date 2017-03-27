@@ -5,8 +5,6 @@ algorithms for manipulation of building geometry
 
 from __future__ import division
 import pandas as pd
-import os
-
 
 __author__ = "Gabriel Happle"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -106,9 +104,38 @@ def create_windows(df_prop_surfaces, gdf_building_architecture):
         elif i % 4 == 3:
             orientation_default = 270
         else:
-            df_window = pd.concat((df_window, pd.read_csv(df_window_path)))
+            orientation_default = 0
 
-    return df_window
+        # get window-wall ratio of building from architecture geodataframe
+        # win_wall_ratio = gdf_building_architecture.loc[gdf_building_architecture['Name'] == name[i]].iloc[0]['win_wall']
+        win_wall_ratio = gdf_building_architecture.ix[name[i]]['win_wall']
+        win_op_ratio = gdf_building_architecture.ix[name[i]]['win_op']
+
+        # for all levels in a facade
+        for j in range(num_floors_free_height[i]):
+            window_area = length_shape[
+                              i] * 3 * win_wall_ratio * win_op_ratio  # 3m = average floor height
+            window_height_above_ground = height_ag[i] - free_height[
+                i] + j * 3 + 1.5  # 1.5m = window is placed in the middle of the floor height # TODO: make heights dynamic
+            window_height_in_zone = window_height_above_ground  # for now the building is one ventilation zone
+
+            col_name_building.append(name[i])
+            col_area_window.append(window_area)
+            col_height_window_above_ground.append(window_height_above_ground)
+            col_orientation_window.append(orientation_default)
+            col_angle_window.append(angle_window_default)
+            col_height_window_in_zone.append(window_height_in_zone)
+
+    # create pandas dataframe with table of all windows
+    df_windows = pd.DataFrame({'name_building': col_name_building,
+                               'area_window': col_area_window,
+                               'height_window_above_ground': col_height_window_above_ground,
+                               'orientation_window': col_orientation_window,
+                               'angle_window': col_angle_window,
+                               'height_window_in_zone': col_height_window_in_zone})
+
+    return df_windows
+
 
 # surfaces for ventilation
 
@@ -128,3 +155,4 @@ def get_building_geometry_ventilation(gdf_building_geometry):
     slope_roof = slope_roof_default
 
     return area_facade_zone, area_roof_zone, height_zone, slope_roof
+
