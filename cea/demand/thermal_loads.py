@@ -356,6 +356,7 @@ class BuildingProperties(object):
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
         prop_hvac = dbf2df(locator.get_building_hvac())
         prop_occupancy_df = dbf2df(locator.get_building_occupancy()).set_index('Name')
+        prop_occupancy_df.fillna(value=0.0, inplace=True)  # fix badly formatted occupancy file...
         prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
         prop_architectures = dbf2df(locator.get_building_architecture())
         prop_age = dbf2df(locator.get_building_age()).set_index('Name')
