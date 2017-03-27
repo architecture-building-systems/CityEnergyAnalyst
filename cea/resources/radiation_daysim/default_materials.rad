@@ -1,0 +1,29 @@
+void plastic reflectance0.2
+0
+0
+5 0.5360 0.1212 0.0565 0 0
+
+void plastic wallT5
+0
+0
+5 0.5 0.5 0.5 0.03 0.02
+
+void glass winT2
+0
+0
+3 0.96 0.96 0.96
+
+void plastic roofT4
+0
+0
+5 0.5 0.5 0.5 0.03 0.02
+
+void glass winT1
+0
+0
+3 0.96 0.96 0.96
+
+void plastic roofT1
+0
+0
+5 0.5 0.5 0.5 0.03 0.02
