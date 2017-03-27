@@ -208,7 +208,7 @@ def test(args):
     """Run the pydoit tests (same test-suite as run by Jenkins)"""
     import cea.tests.dodo
     if args.save:
-        with open(os.path.expanduser(r'~\cea_github.auth')) as f:
+        with open(os.path.expanduser(r'~\cea_github.auth'), 'w') as f:
             f.write(args.user + '\n')
             f.write(args.token + '\n')
     try:
@@ -226,6 +226,11 @@ def extract_reference_case(args):
     import cea.examples
     archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
     archive.extractall(args.to)
+
+def compile(args):
+    """compile the binary versions of some modules for faster execution"""
+    import cea.utilities.compile_pyd_files
+    cea.utilities.compile_pyd_files.main()
 
 
 def main():
@@ -336,6 +341,7 @@ def main():
     test_parser = subparsers.add_parser('test', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     test_parser.add_argument('--user', help='GitHub user with access to cea-reference-case repository')
     test_parser.add_argument('--token', help='Personal Access Token for the GitHub user')
+    test_parser.add_argument('--save', action='store_true', default=False, help='Save user and token to disk.')
     test_parser.set_defaults(func=test)
 
     extract_reference_case_parser = subparsers.add_parser('extract-reference-case',
@@ -343,6 +349,9 @@ def main():
     extract_reference_case_parser.add_argument('--to', help='Folder to extract the reference case to',
                                                default='.')
     extract_reference_case_parser.set_defaults(func=extract_reference_case)
+
+    compile_parser = subparsers.add_parser('compile', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    compile_parser.set_defaults(func=compile)
 
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)
