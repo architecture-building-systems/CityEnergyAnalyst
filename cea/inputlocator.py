@@ -129,7 +129,7 @@ class InputLocator(object):
     def get_default_weather(self):
         """weather/Zug-2010.epw
         path to database of archetypes file Archetypes_properties.xlsx"""
-        return os.path.join(self.weather_path, 'Singapore-2016.epw')
+        return os.path.join(self.weather_path, 'zug-2010.epw')
 
     def get_weather(self, name):
         """weather/{name}.epw"""
@@ -239,9 +239,8 @@ class InputLocator(object):
         return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain.tif')
     
     def get_daysim_mat(self):
-        """this gets the file that documents all of the radiance/daysim materials"""
-        return os.path.join(self.scenario_path, 'inputs', 'daysim_mat', 'base.rad')
-    
+        """this gets the file that documents all of the radiance/default_materials"""
+        return os.path.join(os.path.dirname(__file__), 'resources', 'radiation_daysim', 'default_materials.rad')
     # OUTPUTS
 
     ##SOLAR-RADIATION

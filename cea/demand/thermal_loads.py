@@ -383,15 +383,9 @@ class BuildingProperties(object):
                                                 prop_geometry, prop_HVAC_result, surface_properties,
                                                 gv)
 
-<<<<<<< HEAD
-        df_windows = geometry_reader.load_windows(locator)
-=======
         #df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         #TODO: to check if the Win_op and height of window is necessary.
         #TODO: maybe mergin branch i9 with CItyGML could help with this
->>>>>>> refs/remotes/origin/master
-        gv.log("done")
-
         # save resulting data
         self._prop_surface = surface_properties
         self._prop_geometry = prop_geometry
