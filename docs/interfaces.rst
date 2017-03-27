@@ -73,6 +73,7 @@ Main commands that work on a single scenario are:
 - demand-graphs (create graphs for demand output variables per building)
 - radiation (create radiation data as input to the demand calculation)
 - heatmaps (create heatmaps based on demand and emissions output)
+- extract-reference-case (extracts a sample reference case that can be used to test-drive the CEA)
 
 Main commands that work on multiple scenarios:
 
@@ -88,6 +89,17 @@ Auxillary commands
 - longitude (try to guess the longitude of a scenario based on it's building geometry shapefile)
 - install-toolbox (install the ArcGIS interface)
 - locate (gives access to the InputLocator class for finding paths)
+
+Commands for developers
+.......................
+
+- test (runs a set of tests - requires access to the private repository *cea-reference-case*)
+
+To run the ``cea test`` tool, you will need to provide authentication for the *cea-reference-case* repository. The
+options ``--user`` and ``--token`` should be set to your GitHub username and a Personal Access Token. These will be
+stored in your home folder in a file called ``cea_github.auth``. The first line is the username, the second contains the
+token. See this page on how to create such a token: https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/
+In the scopes section, select "repo (Full control of private repositories)" for the token.
 
 
 Planned interfaces

@@ -8,7 +8,7 @@ J. A. Fonseca  adaptation for CEA tool     25.05.16
 
 """
 
-import pysal as ps
+import pysal
 import numpy as np
 import pandas as pd
 
@@ -26,7 +26,7 @@ def df2dbf(df, dbf_path, my_specs=None):
                      }
         types = [type(df[i].iloc[0]) for i in df.columns]
         specs = [type2spec[t] for t in types]
-    db = ps.open(dbf_path, 'w', 'dbf')
+    db = pysal.open(dbf_path, 'w', 'dbf')
     db.header = list(df.columns)
     db.field_spec = specs
     df_transpose = df.T
@@ -37,7 +37,7 @@ def df2dbf(df, dbf_path, my_specs=None):
     return dbf_path
 
 def dbf2df(dbf_path, index=None, cols=False, incl_index=False):
-    db = ps.open(dbf_path)
+    db = pysal.open(dbf_path)
     if cols:
         if incl_index:
             cols.append(index)

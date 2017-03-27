@@ -9,20 +9,25 @@ from cea.globalvar import GlobalVariables
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
 
-REFERENCE_CASE = r'C:\cea-reference-case\reference-case-open\baseline'
-
 
 class TestCalcThermalLoads(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        if 'REFERENCE_CASE' in os.environ:
-            cls.locator = InputLocator(os.environ['REFERENCE_CASE'])
-        else:
-            cls.locator = InputLocator(REFERENCE_CASE)
+        import zipfile
+        import cea.examples
+        import tempfile
+        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+        archive.extractall(tempfile.gettempdir())
+        reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
+        cls.locator = InputLocator(reference_case)
         cls.gv = GlobalVariables()
-
         weather_path = cls.locator.get_default_weather()
-        cls.weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
+        cls.weather_data = epwreader.epw_reader(weather_path)[
+            ['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
+
+        # run properties script
+        import cea.demand.preprocessing.properties
+        cea.demand.preprocessing.properties.properties(cls.locator, True, True, True, True)
 
         cls.building_properties = BuildingProperties(cls.locator, cls.gv)
         cls.date = pd.date_range(cls.gv.date_start, periods=8760, freq='H')
@@ -56,9 +61,9 @@ class TestCalcThermalLoads(unittest.TestCase):
                          u'Qcdataf_kWh', u'Qcref_kWh', u'Qcs_kWh', u'Qcsf_kWh', u'Qhs_kWh', u'Qhsf_kWh', u'Qww_kWh',
                          u'Qwwf_kWh', u'Tcsf_re_C', u'Thsf_re_C', u'Twwf_re_C', u'Tcsf_sup_C', u'Thsf_sup_C',
                          u'Twwf_sup_C']
-        values = [155102.61600000001, 1032.2150000000001, 0.0, 156134.83099999998, 33642.668999999994, 148713.291, 0, 0,
-                  31814.229999999996, 33642.668999999994, 102867.37599999999, 108845.97899999999, 37198.886999999995,
-                  39867.324999999997, 3264.0, 44968.798999999999, 99496.0, 2304.0, 51691.493000000002, 525600]
+        values = [155102.61600000001, 4742.3779999999997, 0.0, 159844.99400000001, 165701.56699999998,
+                  39311.435999999994, 0, 0, 159109.299, 165701.56699999998, 0.0, 0.0, 37198.886999999995,
+                  39311.435999999994, 21539.0, 0.0, 99496.0, 15204.0, 0.0, 525600]
 
         for i, column in enumerate(value_columns):
             try:
@@ -71,15 +76,15 @@ class TestCalcThermalLoads(unittest.TestCase):
     def test_calc_thermal_loads_other_buildings(self):
         """Test some other buildings just to make sure we have the proper data"""
         # randomly selected except for B302006716, which has `Af == 0`
-        buildings = {'B01': (33642.66900, 148713.29100),
-                     'B03': (33654.23900, 148763.63000),
-                     'B02': (34078.58200, 148858.43400),
-                     'B05': (34686.73200, 149072.58000),
-                     'B04': (34138.18300, 148847.07800),
-                     'B07': (33536.96800, 148736.44200),
+        buildings = {'B01': (165701.56700, 39311.43600),
+                     'B03': (165861.17900, 39311.46900),
+                     'B02': (166527.42500, 39311.76600),
+                     'B05': (168551.96100, 39311.75900),
+                     'B04': (166894.20000, 39311.67800),
+                     'B07': (165530.62700, 39311.31100),
                      'B06': (0.00000, 0.00000),
-                     'B09': (34928.68400, 149081.76100),
-                     'B08': (36940.84100, 149184.58100),
+                     'B09': (169180.58500, 39311.99900),
+                     'B08': (173289.07800, 39313.08100),
                      }
         if self.gv.multiprocessing:
             import multiprocessing as mp
