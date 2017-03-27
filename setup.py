@@ -15,7 +15,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-LONG_DESCRIPTION = """TODO: add long description"""
+with open('README.rst', 'r') as f:
+    LONG_DESCRIPTION = f.read()
 
 if os.environ.get('READTHEDOCS', False) == 'True':
     # trick to make cea installable for readthedocs
