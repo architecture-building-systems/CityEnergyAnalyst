@@ -147,7 +147,7 @@ def run_as_script(scenario_path=None):
     BG = []
     IR = []
 
-    for i in xrange(1000):
+    for i in xrange(100):
         # print (i)
         WHP_LT.append(34 * np.random.beta(5.8, 4, size=None))
         GHP_LT.append(34 * np.random.beta(5.8, 4, size=None))
