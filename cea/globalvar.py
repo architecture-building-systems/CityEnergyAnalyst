@@ -19,7 +19,7 @@ __status__ = "Production"
 class GlobalVariables(object):
     def __init__(self):
 
-        self.scenario_reference = r'c:\reference-case-open\baseline'
+        self.scenario_reference = r'C:\reference-case-open\baseline'
         self.print_partial = 'hourly'  # hourly or monthly for the demand script
         self.print_totals = True  # print yearly values
         self.print_yearly_peak = True  # print peak values
@@ -128,7 +128,7 @@ class GlobalVariables(object):
 
         # pipes location properties
         self.Z0 = 1.5  # location of pipe underground in m
-        self.Psl = 1600  # heat capacity of ground in kg/m3 => should be density?
+        self.Psl = 1600  # heat capacity of ground in kg/m3
         self.Csl = 1300  # heat capacity of ground in J/kg K
         self.Bsl = 1.5  # thermal conductivity of ground in W/m.K
 
@@ -543,6 +543,7 @@ class GlobalVariables(object):
         if self.testing:
             from cea.utilities import reporting
             reporting.full_report_to_xls(tsd, output_folder, basename, self)
+
 
     def log(self, msg, **kwargs):
         print msg % kwargs
