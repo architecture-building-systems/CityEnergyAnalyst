@@ -513,7 +513,7 @@ class GlobalVariables(object):
             for i in xrange(100):
                 row.append(next(reader))
 
-        j = 14
+        j = 19
         j = j + 1
         # Uncertainty
         self.HP_n = float(row[j][1])  # lifetime [years] default 20
