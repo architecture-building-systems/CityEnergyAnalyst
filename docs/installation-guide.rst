@@ -50,16 +50,37 @@ for a file called ``cea_arcgis.pth`` containing these three lines::
 
 Edit these folders to point to the appropriate ArcGIS folders as documented in the ArcGIS manuals.
 
+Installation from GitHub repository
+...................................
+
+If you'd prefer to track the newest version of the City Energy Analyst, clone the GitHub repository and run::
+
+    python setup.py install
+
+to install the CEA, including the ``cea`` tool. Note, you will need to follow the guide above to create a conda
+environment and install geopandas.
+
 Installation of the development environment
 -------------------------------------------
 
-**Software to be Downloaded**
+When installing the City Energy Analyst for development, clone the repository to your computer and run::
 
--  GitHub Desktop
--  Anaconda distribution (x86)
--  PyCharm community edition
--  VCredist SP1 (x86)
--  Git Large File Storage
+    python setup.py develop
+
+This will install the ``cea`` tool to your path and set it up to use the version in the repository. Note, you will need
+to follow the guide above to create a conda environment and install geopandas.
+
+Recommended software
+....................
+
+-  GitHub Desktop (or your favorite ``git``)
+-  Anaconda distribution (x86) - other pythons can work, but this is really recommended
+-  PyCharm community edition - you can use your own favorite editor, but this is what we use
+-  Git Large File Storage - only for working with the reference case repository (you need to be a core developer to
+   have access to the private reference case repository)
+
+Setting up PyCharm
+..................
 
 The developer team uses PyCharm Community edition as default. Here are
 the instructions to get PyCharm up and running:
