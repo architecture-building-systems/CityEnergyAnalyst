@@ -222,7 +222,7 @@ def execute_daysim(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_par
     # transform weather file
     rad.execute_epw2wea(aweatherfile_path)
     rad.execute_radfiles2daysim()
-    0
+
     all_sensor_srf_dict_2dlist = []
     for bldg_dict in bldg_dict_list:
         bldg_name = bldg_dict["name"]
@@ -294,7 +294,7 @@ def execute_daysim(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_par
     #construct.visualise_falsecolour_topo(sum_res_list, occface_list, backend = "wx")
     print 'execute daysim', 'done'
 
-def calc_radiation(geometry_table_name, weatherfile_path, locator):    
+def calc_radiation(weatherfile_path, locator):
 
     # local variables
     building_surface_properties = reader_surface_properties(locator.get_building_architecture())
@@ -352,7 +352,5 @@ if __name__ == '__main__':
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     weatherfile_path = locator.get_default_weather()
-    geometry_table_name = 'background_geometries'
-    sensor_geometries_name = 'sensor_geometries'
 
-    calc_radiation(geometry_table_name, weatherfile_path, locator)
+    calc_radiation(weatherfile_path, locator)
