@@ -512,7 +512,9 @@ class GlobalVariables(object):
             reader = csv.reader(f)
             for i in xrange(1000):
                 row.append(next(reader))
-            j = 2
+
+        j = 112
+        j = j + 1
         # Uncertainty
         self.HP_n = float(row[j][1])  # lifetime [years] default 20
         self.GHP_nHP = float(row[j][2])  # for the geothermal heat pump default 20
