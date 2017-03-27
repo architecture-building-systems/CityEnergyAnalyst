@@ -513,7 +513,7 @@ class GlobalVariables(object):
             for i in xrange(1000):
                 row.append(next(reader))
 
-        j = 112
+        j = 0
         j = j + 1
         # Uncertainty
         self.HP_n = float(row[j][1])  # lifetime [years] default 20
@@ -523,7 +523,7 @@ class GlobalVariables(object):
         self.FC_n = float(row[j][5])  # years of operation default 10
         self.PVT_n = float(row[j][7])  # years of operation default 20
         self.SC_n = self.PVT_n  # years of operation default 20
-        self.CT_a = float(row[j][8])  # annuity factor default 0.15
+        self.CT_a = 1/(float(row[j][8]))  # annuity factor default 0.15
         self.Subst_n = float(row[j][10])  # Lifetime after A+W default 20
         self.ELEC_PRICE = float(row[j][12]) * self.EURO_TO_CHF / 1000.0  # default 0.2
         # self.ELEC_PRICE_KEV = 1.5 * ELEC_PRICE # MAKE RESEARCH ABOUT A PROPER PRICE AND DOCUMENT THAT!
@@ -535,6 +535,26 @@ class GlobalVariables(object):
         self.FC_i = float(row[j][15]) /100 # interest rate default 0.05
         self.HP_i = float(row[j][15])/100  # interest rate default 0.05
         self.Boiler_i = float(row[j][15])/100  # interest rate default 0.05
+
+        # self.HP_n = 20  # lifetime [years] default 20
+        # self.GHP_nHP = 20  # for the geothermal heat pump default 20
+        # self.Boiler_n = 20  # lifetime, after A+W, default 20
+        # self.CC_n = 25  # lifetime default 25
+        # self.FC_n = 10  # years of operation default 10
+        # self.PVT_n = 20  # years of operation default 20
+        # self.SC_n = 20  # years of operation default 20
+        # self.CT_a = 1/(float(row[j][8]))  # annuity factor default 0.15
+        # self.Subst_n = float(row[j][10])  # Lifetime after A+W default 20
+        # self.ELEC_PRICE = float(row[j][12]) * self.EURO_TO_CHF / 1000.0  # default 0.2
+        # # self.ELEC_PRICE_KEV = 1.5 * ELEC_PRICE # MAKE RESEARCH ABOUT A PROPER PRICE AND DOCUMENT THAT!
+        # # self.ELEC_PRICE_GREEN = 1.5 * ELEC_PRICE
+        # self.NG_PRICE = float(row[j][13]) * self.EURO_TO_CHF / 1000.0  # [CHF / wh] # default 0.068
+        # self.BG_PRICE = float(row[j][14]) * self.EURO_TO_CHF / 1000.0  # [CHF / wh] # default 0.076
+        # self.cPump = self.ELEC_PRICE * 24. * 365.  # coupled to electricity cost
+        # self.Subst_i = float(row[j][15])/100 # default 0.05
+        # self.FC_i = float(row[j][15]) /100 # interest rate default 0.05
+        # self.HP_i = float(row[j][15])/100  # interest rate default 0.05
+        # self.Boiler_i = float(row[j][15])/100  # interest rate default 0.05
 
         # ==============================================================================================================
         # TABS
