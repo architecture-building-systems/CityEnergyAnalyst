@@ -1,5 +1,5 @@
 
-def test_graphs_optimization(generation):
+def test_graphs_optimization(generation, level):
     import cea.globalvar
     import cea.inputlocator
     import csv
@@ -15,7 +15,7 @@ def test_graphs_optimization(generation):
     import os
     import re
     from cea.optimization.preprocessing.preprocessing_main import preproccessing
-
+    j = level
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path)
@@ -90,7 +90,7 @@ def test_graphs_optimization(generation):
         fitness.append(objective_function(pop[i]))
 
     os.chdir(locator.get_optimization_master_results_folder())
-    with open("CheckPointTesting_uncertainty_1", "wb") as csv_file:
+    with open("CheckPointTesting_uncertainty_" + str(level), "wb") as csv_file:
         writer = csv.writer(csv_file)
         cp = dict(population=pop, generation=generation, objective_function_values=fitness)
         for key, value in cp.items():
@@ -98,4 +98,5 @@ def test_graphs_optimization(generation):
 
 if __name__ == '__main__':
     generation = 50
-    test_graphs_optimization(generation)
+    level = 112
+    test_graphs_optimization(generation, level)
