@@ -1,0 +1,5 @@
+include cea/databases/weather/*.epw
+include cea/databases/CH/Archetypes/*.xlsx
+include cea/databases/CH/Benchmarks/benchmark_2000W.xls
+include cea/databases/CH/Systems/*.xls
+include cea/databases/CH/Uncertainty/*.xls

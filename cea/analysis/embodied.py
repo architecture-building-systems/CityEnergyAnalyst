@@ -1,19 +1,18 @@
 """
-===========================
 Embodied energy and related grey emissions model algorithm
-===========================
+
 J. Fonseca  script development          26.08.15
 D. Thomas   formatting and cleaning
 D. Thomas   integration in toolbox
 J. Fonseca  new development             13.04.16
 M. Mosteiro fixed calculation errors    07.11.16
-
 """
 from __future__ import division
 
 import numpy as np
 import pandas as pd
-from geopandas import GeoDataFrame as gpdf
+from cea.utilities.dbfreader import dbf2df
+from geopandas import GeoDataFrame as Gdf
 import cea.globalvar
 import cea.inputlocator
 
@@ -34,24 +33,27 @@ def lca_embodied(year_to_calculate, locator, gv):
     energy and emissions of a building, after which both values become zero.
 
     The results are provided in total as well as per square meter:
-        - embodied non-renewable primary energy: E_nre_pen_GJ and E_nre_pen_MJm2
-        - embodied greenhouse gas emissions: E_ghg_ton and E_ghg_kgm2
+
+    - embodied non-renewable primary energy: E_nre_pen_GJ and E_nre_pen_MJm2
+    - embodied greenhouse gas emissions: E_ghg_ton and E_ghg_kgm2
 
     As part of the algorithm, the following files are read from InputLocator:
-        - architecture.shp: shapefile with the architecture of each building
-            locator.get_building_architecture()
-        - occupancy.shp: shapefile with the occupancy types of each building
-            locator.get_building_occupancy()
-        - age.shp: shapefile with the age and retrofit date of each building
-            locator.get_building_age()
-        - zone.shp: shapefile with the geometry of each building in the zone of study
-            locator.get_building_geometry()
-        - Archetypes_properties: csv file with the database of archetypes including embodied energy and emissions
-            locator.get_archetypes_properties()
+
+    - architecture.shp: shapefile with the architecture of each building
+        locator.get_building_architecture()
+    - occupancy.shp: shapefile with the occupancy types of each building
+        locator.get_building_occupancy()
+    - age.shp: shapefile with the age and retrofit date of each building
+        locator.get_building_age()
+    - zone.shp: shapefile with the geometry of each building in the zone of study
+        locator.get_building_geometry()
+    - Archetypes_properties: csv file with the database of archetypes including embodied energy and emissions
+        locator.get_archetypes_properties()
 
     As a result, the following file is created:
-        - Total_LCA_embodied: .csv
-            csv file of yearly primary energy and grey emissions per building stored in locator.get_lca_embodied()
+
+    - Total_LCA_embodied: .csv
+        csv file of yearly primary energy and grey emissions per building stored in locator.get_lca_embodied()
 
     :param year_to_calculate:  year between 1900 and 2100 indicating when embodied energy is evaluated
         to account for emissions already offset from building construction and retrofits more than 60 years ago.
@@ -62,10 +64,10 @@ def lca_embodied(year_to_calculate, locator, gv):
     :rtype: NoneType
 
     .. [Fonseca et al., 2015] Fonseca et al. (2015) "Assessing the environmental impact of future urban developments at
-    neighborhood scale." CISBAT 2015.
+        neighborhood scale." CISBAT 2015.
     .. [Thoma et al., 2014] Thoma et al. (2014). "Estimation of base-values for grey energy, primary energy, global
-    warming potential (GWP 100A) and Umweltbelastungspunkte (UBP 2006) for Swiss constructions from before 1920 until
-    today." CUI 2014.
+        warming potential (GWP 100A) and Umweltbelastungspunkte (UBP 2006) for Swiss constructions from before 1920
+        until today." CUI 2014.
 
 
     Files read / written from InputLocator:
@@ -96,11 +98,11 @@ def lca_embodied(year_to_calculate, locator, gv):
     """
 
     # local variables
-    architecture_df = gpdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1)
-    prop_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
+    architecture_df = dbf2df(locator.get_building_architecture())
+    prop_occupancy_df = dbf2df(locator.get_building_occupancy())
     occupancy_df = pd.DataFrame(prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)])
-    age_df = gpdf.from_file(locator.get_building_age()).drop('geometry', axis=1)
-    geometry_df = gpdf.from_file(locator.get_building_geometry())
+    age_df = dbf2df(locator.get_building_age())
+    geometry_df = Gdf.from_file(locator.get_building_geometry())
     geometry_df['footprint'] = geometry_df.area
     geometry_df['perimeter'] = geometry_df.length
     geometry_df = geometry_df.drop('geometry', axis=1)
@@ -155,6 +157,7 @@ def lca_embodied(year_to_calculate, locator, gv):
                                                      columns=fields_to_plot, index=False, float_format='%.2f')
     print('done!')
 
+
 def calculate_contributions(archetype, cat_df, gv, locator, year_to_calculate, total_column, specific_column):
     """
     Calculate the embodied energy/emissions for each building based on their construction year, and the area and 
@@ -163,14 +166,15 @@ def calculate_contributions(archetype, cat_df, gv, locator, year_to_calculate, t
     :param archetype: String that defines whether the 'EMBODIED_ENERGY' or 'EMBODIED_EMISSIONS' are being calculated.
     :type archetype: str
     :param cat_df: DataFrame with joined data of all categories for each building, that is: occupancy, age, geometry,
-    architecture, building component area, construction category and renovation category for each building component
+        architecture, building component area, construction category and renovation category for each building component
     :type cat_df: DataFrame
     :param gv: an instance of GlobalVariables with the constants to be used (like `list_uses` etc.)
     :type gv: GlobalVariables
     :param locator: an InputLocator instance set to the scenario to work on
     :type locator: InputLocator
     :param year_to_calculate: year in which the calculation is done; since the embodied energy and emissions are
-    calculated over 60 years, if the year of calculation is more than 60 years after construction, the results will be 0
+        calculated over 60 years, if the year of calculation is more than 60 years after construction, the results
+        will be 0
     :type year_to_calculate: int
     :param total_column: label for the column with the total results (e.g., 'GEN_GJ')
     :type total_column: str
@@ -178,9 +182,8 @@ def calculate_contributions(archetype, cat_df, gv, locator, year_to_calculate, t
     :type specific_column: str
 
     :return result: DataFrame with the calculation results (i.e., the total and specific embodied energy or emisisons
-    for each building)
+        for each building)
     :rtype result: DataFrame
-
     """
 
     # get archetype properties from the database
