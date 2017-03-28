@@ -125,7 +125,7 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     for r in radiations[1:]:
         radiationyear = radiationyear.merge(r, on='ID', how='outer')
     radiationyear.fillna(value=0, inplace=True)
-    radiationyear.to_csv(DataradiationLocation, Index=False)
+    radiationyear.to_csv(DataradiationLocation, index=True)
 
     radiationyear = radiations = None
     gv.log('complete transformation radiation files')
