@@ -6,6 +6,7 @@ import os
 import pandas as pd
 import time 
 from cea.resources.radiation_daysim import settings
+from cea.resources.radiation_daysim import create_gml
 
 import pyliburo.py3dmodel.construct as construct
 import pyliburo.py3dmodel.fetch as fetch
@@ -353,4 +354,11 @@ if __name__ == '__main__':
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     weatherfile_path = locator.get_default_weather()
 
+    #Create City GML file (this is necesssary only once).
+    output_folder = locator.get_solar_radiation_folder()
+    input_buildings_shapefile = locator.get_district()
+    input_terrain_raster = locator.get_terrain()
+    create_gml.create_citygml(input_buildings_shapefile, input_terrain_raster, output_folder)
+
+    #calculate solar radiation
     calc_radiation(weatherfile_path, locator)
