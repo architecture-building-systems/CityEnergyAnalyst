@@ -98,6 +98,6 @@ def test_graphs_optimization(generation, level):
 
 if __name__ == '__main__':
     generation = 50
-    level = 19
+    level = 99
 
     test_graphs_optimization(generation, level)
