@@ -146,6 +146,8 @@ The remaining libraries install easily:
     pip install --user fiona
     pip install --user pyproj
     pip install --user geopandas
+    pip install --user pysal
+    pip install --user pyshp
 
 Installing SALib
 ~~~~~~~~~~~~~~~~
