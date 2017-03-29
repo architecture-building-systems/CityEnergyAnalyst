@@ -61,6 +61,7 @@ REFERENCE_CASES_DATA = {
 # set to github user and personal access token in main
 _user = None
 _token = None
+_reference_cases = []
 
 
 def get_github_auth():
@@ -120,6 +121,8 @@ def task_run_data_helper():
     """Run the data helper for each reference case"""
     import cea.demand.preprocessing.properties
     for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
         yield {
             'name': reference_case,
             'actions': [
@@ -145,6 +148,8 @@ def task_download_radiation():
         with open(locator.get_radiation(), 'w') as f:
             f.write(r.content)
     for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
         yield {
             'name': reference_case,
             'actions': [(download_radiation, [], {
@@ -158,6 +163,8 @@ def task_run_demand():
     import cea.demand.demand_main
     import cea.inputlocator
     for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
         locator = cea.inputlocator.InputLocator(scenario_path)
         weather = REFERENCE_CASES_DATA[reference_case]['weather']
         yield {
@@ -174,6 +181,8 @@ def task_run_demand_graphs():
     """graph default demand variables for each reference case"""
     import cea.plots.graphs_demand
     for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
         yield {
             'name': '%(reference_case)s' % locals(),
             'actions': [(cea.plots.graphs_demand.run_as_script, [], {
@@ -186,6 +195,8 @@ def task_run_embodied_energy():
     """Run the embodied energy script for each reference case"""
     import cea.analysis.embodied
     for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
         yield {
             'name': '%(reference_case)s' % locals(),
             'actions': [(cea.analysis.embodied.run_as_script, [], {
@@ -200,6 +211,8 @@ def task_run_emissions_operation():
     """run the emissions operation script for each reference case"""
     import cea.analysis.operation
     for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
         yield {
             'name': '%(reference_case)s' % locals(),
             'actions': [(cea.analysis.operation.run_as_script, [], {
@@ -213,6 +226,8 @@ def task_run_emissions_mobility():
     """run the emissions mobility script for each reference case"""
     import cea.analysis.mobility
     for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
         yield {
             'name': '%(reference_case)s' % locals(),
             'actions': [(cea.analysis.mobility.run_as_script, [], {
@@ -232,6 +247,8 @@ def task_run_heatmaps():
         return
     import cea.plots.heatmaps
     for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
         yield {
             'name': '%(reference_case)s' % locals(),
             'actions': [(cea.plots.heatmaps.run_as_script, [], {
@@ -245,6 +262,8 @@ def task_run_scenario_plots():
     """run the scenario plots script for each reference case"""
     import cea.plots.scenario_plots
     for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
         yield {
             'name': '%(reference_case)s' % locals(),
             'actions': [(cea.plots.scenario_plots.run_as_script, [], {
@@ -255,7 +274,7 @@ def task_run_scenario_plots():
         }
 
 
-def main(user=None, token=None):
+def main(user=None, token=None, reference_cases=None):
     from doit.api import DoitMain
     from doit.api import ModuleTaskLoader
     if user:
@@ -264,6 +283,9 @@ def main(user=None, token=None):
     if token:
         global _token
         _token = token
+    if reference_cases:
+        global _reference_cases
+        _reference_cases = reference_cases
     sys.exit(DoitMain(ModuleTaskLoader(globals())).run([]))
 
 
