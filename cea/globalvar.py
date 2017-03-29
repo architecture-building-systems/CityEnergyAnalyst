@@ -510,10 +510,10 @@ class GlobalVariables(object):
         row = []
         with open('uncertainty.csv') as f:
             reader = csv.reader(f)
-            for i in xrange(100):
+            for i in xrange(101):
                 row.append(next(reader))
 
-        j = 19
+        j = 99
         j = j + 1
         # Uncertainty
         self.HP_n = float(row[j][1])  # lifetime [years] default 20
