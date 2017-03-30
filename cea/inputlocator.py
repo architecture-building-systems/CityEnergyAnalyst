@@ -102,9 +102,9 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_substations_folder(),  "Total_%(genome)s.csv" % locals())
 
     def get_optimization_clustering_folder(self):
-        """scenario/outputs/data/optimization/clustering
+        """scenario/outputs/data/optimization/clustering_main
         Clustering results for disconnected buildings"""
-        return self._ensure_folder(self.get_optimization_results_folder(), "clustering")
+        return self._ensure_folder(self.get_optimization_results_folder(), "clustering_main")
 
     def get_potentials_results_folder(self):
         """scenario/outputs/data/potentials"""
@@ -271,6 +271,10 @@ class InputLocator(object):
         """scenario/outputs/data/calibration"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'calibration')
 
+    def get_calibration_clustering_folder(self):
+        """scenario/outputs/data/calibration"""
+        return self._ensure_folder(self.get_calibration_folder(), 'clustering')
+
     def get_demand_measured_folder(self):
         """scenario/outputs/data/demand"""
         assert False, 'this is the same as get_demand_results_folder'
@@ -287,18 +291,17 @@ class InputLocator(object):
 
     def get_calibration_cluster(self, sax_name):
         """scenario/outputs/data/demand/{sax_name}.csv"""
-        file = self.get_calibration_folder()
-        return os.path.join(file, 'clustering', '%s.csv' % sax_name)
+        return os.path.join(self.get_calibration_clustering_folder(), '%s.csv' % sax_name)
 
     def get_calibration_cluster_opt_checkpoint(self, generation):
         """scenario/outputs/data/demand/{sax_name}.csv"""
         file = self.get_calibration_folder()
-        return os.path.join(file, 'clustering', 'checkpoint_gen_'+str(generation))
+        return os.path.join(self.get_calibration_clustering_folder(), 'checkpoint_gen_'+str(generation))
 
     def get_calibration_clusters_names(self):
         """scenario/outputs/data/demand/{sax_name}.csv"""
         file = self.get_calibration_folder()
-        return os.path.join(file, 'clustering', 'sax_names.csv')
+        return os.path.join(file, 'clustering_main', 'sax_names.csv')
 
     ##EMISSIONS
     def get_lca_emissions_results_folder(self):
