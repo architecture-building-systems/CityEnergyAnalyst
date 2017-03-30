@@ -9,6 +9,10 @@ from __future__ import division
 import math
 import pickle
 
+import os
+import matplotlib
+import matplotlib.cm as cmx
+
 import matplotlib.pyplot as plt
 import numpy as np
 import deap.base
@@ -36,7 +40,7 @@ def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, 
     1. Compound function of accurracy, complexity and compression based on the work of
     D. Garcia-Lopez1 and H. Acosta-Mesa 2009
     2. Classic Shiluette and
-    3. Carlinski indicators of clustering.
+    3. Carlinski indicators of clustering_main.
 
     The variables to maximize are wordsize and alphabet size.
 
@@ -50,7 +54,7 @@ def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, 
     :return: Plot with pareto front
     """
     # set-up deap library for optimization with 1 objective to minimize and 2 objectives to be maximized
-    deap.creator.create("Fitness", deap.base.Fitness, weights=(1.0, 1.0, -0.1))  # maximize shilluette and calinski
+    deap.creator.create("Fitness", deap.base.Fitness, weights=(1.0, 1.0, 1.0))  # maximize shilluette and calinski
     deap.creator.create("Individual", list, fitness=deap.creator.Fitness)
 
     # set-up problem
@@ -83,131 +87,107 @@ def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, 
         """
         s = SAX(ind[0], ind[1])
         sax = [s.to_letter_representation(array)[0] for array in data]
-        accurracy = calc_gain(sax)
+        accurracy = calc_accuracy(sax)
         complexity = calc_complexity(sax)
-        compression = calc_num_cutpoints(ind[0], time_series_len)
-        f1 = 0.7 * accurracy - 0.2 * complexity - 0.1 * compression
-        f2 = silhouette_score(data, sax)  # metrics.calinski_harabaz_score(data, sax)
-        f3 = len(set(sax))
+        compression = calc_compression(ind[0], time_series_len)
+        f1 = 0.7 * accurracy + 0.17 * complexity + 0.13 * compression #information objective to maximize
+        f2 = silhouette_score(np.array(data), np.array(sax))  # metrics.silhuette score_score(data, sax)
+        f3 = len(set(sax)) # number of clusters to minimize
+
         return f1, f2, f3
 
     toolbox.register("evaluate", evaluation)
-    toolbox.register("mate",
-                     deap.tools.cxTwoPoint)  # tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0)#
-    toolbox.register("mutate", deap.tools.mutUniformInt, low=BOUND_LOW, up=BOUND_UP,
-                     indpb=1.0 / NDIM)  # tools.mutPolynomialBounded, low=BOUND_LOW, up=BOUND_UP, eta=20.0, indpb=1.0/NDIM)#
+    toolbox.register("mate", deap.tools.cxTwoPoint)
+    toolbox.register("mutate", deap.tools.mutUniformInt, low=BOUND_LOW, up=BOUND_UP, indpb=1.0 / NDIM)
     toolbox.register("select", deap.tools.selNSGA2)
 
     # run optimization
-    pop, halloffame, paretofrontier, stats = optimization_main(locator, toolbox, NGEN, MU, CXPB, start_gen)
-
-    return pop, halloffame, paretofrontier, stats
-
-
-# ++++++++++++++++++++++++++++
-# Main optimizaiton routine
-# ++++++++++++++++++++++++++++
-
-def optimization_main(locator, toolbox, NGEN=100, MU=100, CXPB=0.9, start_generation=None, seed=None):
-    """
-    main optimization call which provides the cross-over and mutation generation after generation
-    this script is based on the example of the library DEAP of python and the algortighm NSGA-II
-
-    :param toolbox: toolbox generated with evaluation, selection, mutation and crossover functions
-    :param NGEN: number of maximum generations
-    :param MU: number of initial individuals
-    :param CXPB: level of confidence
-    :param seed: seed.
-    :return: pop = population with fitness values and individuals, stats = statistics of the population for the last
-        generation
-    """
-    random.seed(seed)
-    if start_generation:
-        print start_generation
-        # A file name has been given, then load the data from the file
-        with open(locator.get_calibration_cluster_opt_checkpoint(start_generation), "rb") as cp_file:
-            cp = pickle.load(cp_file)
+    def main(seed=None):
+        random.seed(seed)
+        if start_gen:
+            # A file name has been given, then load the data from the file
+            cp = pickle.load(open(locator.get_calibration_cluster_opt_checkpoint(start_gen), "rb"))
             pop = cp["population"]
             start_generation = cp["generation"]
-            hall_of_fame = cp["hall_of_fame"]
-            pareto_frontier = cp["pareto_frontier"]
+            halloffame = cp["halloffame"]
+            paretofrontier = cp["paretofrontier"]
             log_book = cp["log_book"]  # this registers
             random.set_state(cp["rndstate"])
-    else:
-        # Start a new evolution
-        pop = toolbox.population(n=MU)
-        start_generation = 1
-        hall_of_fame = deap.tools.HallOfFame(maxsize=3)
-        pareto_frontier = deap.tools.ParetoFront()
-        log_book = deap.tools.Logbook()
-        log_book.header = "gen", "evals", "std", "min", "avg", "max"
+        else:
+            # Start a new evolution
+            pop = toolbox.population(n=MU)
+            start_generation = 1
+            halloffame = deap.tools.HallOfFame(maxsize=3)
+            paretofrontier = deap.tools.ParetoFront()
+            log_book = deap.tools.Logbook()
+            log_book.header = "gen", "evals", "std", "min", "avg", "max"
 
-    stats = deap.tools.Statistics(lambda ind: ind.fitness.values)
-    stats.register("avg", np.mean, axis=0)
-    stats.register("std", np.std, axis=0)
-    stats.register("min", np.min, axis=0)
-    stats.register("max", np.max, axis=0)
-
-    # Evaluate the individuals with an invalid fitness
-    invalid_individuals = [ind for ind in pop if not ind.fitness.valid]
-    fitnesses = toolbox.map(toolbox.evaluate, invalid_individuals)
-    for ind, fit in zip(invalid_individuals, fitnesses):
-        ind.fitness.values = fit
-
-    # This is just to assign the crowding distance to the individuals
-    # no actual selection is done
-    pop = toolbox.select(pop, len(pop))
-
-    record = stats.compile(pop)
-    log_book.record(gen=0, evals=len(invalid_individuals), **record)
-    print(log_book.stream)
-
-    # Begin the generational process
-    for generation in range(start_generation, NGEN + 1):
-        # Vary the population
-        offspring = deap.tools.selTournamentDCD(pop, len(pop))
-        offspring = [toolbox.clone(ind) for ind in offspring]
-
-        for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
-            if random.random() <= CXPB:
-                toolbox.mate(ind1, ind2)
-
-            toolbox.mutate(ind1)
-            toolbox.mutate(ind2)
-            del ind1.fitness.values, ind2.fitness.values
+        stats = deap.tools.Statistics(lambda ind: ind.fitness.values)
+        stats.register("avg", np.mean, axis=0)
+        stats.register("std", np.std, axis=0)
+        stats.register("min", np.min, axis=0)
+        stats.register("max", np.max, axis=0)
 
         # Evaluate the individuals with an invalid fitness
-        invalid_individuals = [ind for ind in offspring if not ind.fitness.valid]
+        invalid_individuals = [ind for ind in pop if not ind.fitness.valid]
         fitnesses = toolbox.map(toolbox.evaluate, invalid_individuals)
         for ind, fit in zip(invalid_individuals, fitnesses):
             ind.fitness.values = fit
 
-        # update the hall of fame and pareto
-        hall_of_fame.update(pop)
-        pareto_frontier.update(pop)
+        # This is just to assign the crowding distance to the individuals
+        # no actual selection is done
+        #deap.tools.emo.assignCrowdingDist(pop)
+        pop = toolbox.select(pop, len(pop))
 
-        # Select the next generation population
-        pop = toolbox.select(pop + offspring, MU)
         record = stats.compile(pop)
-        log_book.record(gen=generation, evals=len(invalid_individuals), **record)
+        log_book.record(gen=0, evals=len(invalid_individuals), **record)
         print(log_book.stream)
 
-        FREQ = 1  # frequence of storage
-        if generation % FREQ == 0:
-            # Fill the dictionary using the dict(key=value[, ...]) constructor
-            cp = dict(population=pop, generation=generation, halloffame=hall_of_fame, paretofrontier=pareto_frontier,
-                      logbook=log_book, rndstate=random.get_state())
+        # Begin the generational process
+        for generation in range(start_generation, NGEN + 1):
+            # Vary the population
+            offspring = deap.tools.selTournamentDCD(pop, len(pop))
+            offspring = [toolbox.clone(ind) for ind in offspring]
 
-            with open(locator.get_calibration_cluster_opt_checkpoint(generation), "wb") as cp_file:
-                pickle.dump(cp, cp_file)
+            for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
+                if random.random() <= CXPB:
+                    toolbox.mate(ind1, ind2)
 
-        # print("hypervolume is %f" % hypervolume(pop, [11.0, 11.0]))
-        print("Convergence: ", deap.benchmarks.tools.convergence(pop, pareto_frontier))
-        print("Diversity: ", deap.benchmarks.tools.diversity(pop, pareto_frontier[0], pareto_frontier[-1]))
+                toolbox.mutate(ind1)
+                toolbox.mutate(ind2)
+                del ind1.fitness.values, ind2.fitness.values
 
-    return pop, hall_of_fame, pareto_frontier, stats
+            # Evaluate the individuals with an invalid fitness
+            invalid_individuals = [ind for ind in offspring if not ind.fitness.valid]
+            fitnesses = toolbox.map(toolbox.evaluate, invalid_individuals)
+            for ind, fit in zip(invalid_individuals, fitnesses):
+                ind.fitness.values = fit
 
+            # Select the next generation population
+            #deap.tools.emo.assignCrowdingDist(pop+offspring)
+            pop = toolbox.select(pop + offspring, MU)
+            record = stats.compile(pop)
 
+            # update the hall of fame and pareto
+            halloffame.update(pop)
+            paretofrontier.update(pop)
+            log_book.record(gen=generation, evals=len(invalid_individuals), **record)
+            print(log_book.stream)
+
+            #calculate benchmarks
+            diversity = deap.benchmarks.tools.diversity(paretofrontier, paretofrontier[0], paretofrontier[-1])
+            print diversity
+
+            FREQ = 1  # frequence of storage
+            if generation % FREQ == 0:
+                # Fill the dictionary using the dict(key=value[, ...]) constructor
+                cp = dict(population=pop, generation=generation, halloffame=halloffame, paretofrontier=paretofrontier,
+                          logbook=log_book, diversity=diversity, rndstate=random.get_state())
+
+                with open(locator.get_calibration_cluster_opt_checkpoint(generation), "wb") as cp_file:
+                    pickle.dump(cp, cp_file)
+
+    main()
 # ++++++++++++++++++++++++++++
 # Evaluation functions
 # ++++++++++++++++++++++++++++
@@ -226,7 +206,7 @@ def calc_complexity(names_of_clusters):
     return result
 
 
-def calc_num_cutpoints(word_size, time_series_len=24):
+def calc_compression(word_size, time_series_len=24):
     """
     Calculated according to 'Application of time series discretization using evolutionary programming for classification
     of precancerous cervical lesions' by H. Acosta-Mesa et al., 2014
@@ -234,11 +214,11 @@ def calc_num_cutpoints(word_size, time_series_len=24):
     :param time_series_len: length of time_series group. integer
     :return: level of compression which penalizes the objective function
     """
-    result = word_size / (2 * time_series_len)  # 24 hours
+    result = word_size / (2*time_series_len)  # 24 hours
     return result
 
 
-def calc_entropy(names_of_clusters):
+def calc_accuracy(names_of_clusters):
     """
     Calculated according to 'Application of time series discretization using evolutionary programming for classification
     of precancerous cervical lesions' by H. Acosta-Mesa et al., 2014
@@ -287,24 +267,54 @@ def calc_gain(names_of_clusters):
 # ++++++++++++++++++++++++++
 
 
-def print_pareto(pop, pareto_frontier):
+def print_pareto(locator, generation, what_to_plot, labelx, labely, labelz,
+                 show_benchmarks, show_fitness,  show_in_screen, save_to_disc):
     """
     plot front and pareto-optimal forntier
     :param pop: population of generation to check
     :param paretoprontier:
     :return:
     """
-    # frontiers
-    # front = np.array([list(ind.fitness.values) for ind in pop])
-    optimal_front = np.array([list(ind.fitness.values) for ind in pareto_frontier])
+    # set-up deap library for optimization with 1 objective to minimize and 2 objectives to be maximized
+    deap.creator.create("Fitness", deap.base.Fitness, weights=(1.0, 1.0, -1.0))  # maximize shilluette and calinski
+    deap.creator.create("Individual", list, fitness=deap.creator.Fitness)
 
-    # text
-    n = [str(ind) for ind in pareto_frontier]
-    fig, ax = plt.subplots()
-    ax.scatter(optimal_front[:, 0], optimal_front[:, 1], c='b', s=optimal_front[:, 2], marker='o')
-    # ax.scatter(front[:,0], front[:,1], s=front[:, 2], c='r', marker='v')
-    for i, txt in enumerate(n):
-        ax.annotate(txt, (optimal_front[i][0], optimal_front[i][1]))
-    plt.axis("tight")
-    plt.show()
+    #read_checkpoint
+    cp = pickle.load(open(locator.get_calibration_cluster_opt_checkpoint(generation), "r"))
+    frontier = cp[what_to_plot]
+
+
+    # create figure
+    fig = plt.figure()
+    xs, ys, zs = map(np.array, zip(*[ind.fitness.values for ind in frontier]))
+
+    scalarMap = cmx.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=min(zs), vmax=max(zs)), cmap=plt.get_cmap('jet'))
+    scalarMap.set_array(zs)
+    fig.colorbar(scalarMap, label=labelz)
+
+    ax = fig.add_subplot(111)
+    ax.scatter(xs, ys, c=scalarMap.to_rgba(zs), s=50, alpha=0.8)
+    ax.set_xlabel(labelx)
+    ax.set_ylabel(labely)
+
+    individuals = [str(ind) for ind in frontier]
+    if show_fitness:
+        for i, txt in enumerate(individuals):
+            ax.annotate(txt, xy=(xs[i], ys[i]))
+
+    if show_benchmarks:
+        number_individuals = len(individuals )
+        #convergence = cp['convergence']
+        diversity = round(cp['diversity'],3)
+        plt.title("No. individuals: "+str(number_individuals)+" Diversity: "+str(diversity))
+
+    # get formatting
+    plt.grid(True)
+    plt.rcParams.update({'font.size': 16})
+    plt.gcf().subplots_adjust(bottom=0.15)
+    if save_to_disc:
+        plt.savefig(os.path.join(locator.get_calibration_clustering_folder(), "pareto.png"))
+    if show_in_screen:
+        plt.show()
+    plt.clf()
     return

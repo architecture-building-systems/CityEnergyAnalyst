@@ -422,7 +422,7 @@ class GlobalVariables(object):
         self.SIGMAP = 0.2
         self.epsMargin = 0.001
 
-        # Data for clustering
+        # Data for clustering_main
         self.nPeriodMin = 2
         self.nPeriodMax = 15
         self.gam = 0.2
