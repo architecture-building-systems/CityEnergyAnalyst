@@ -1,12 +1,10 @@
 """
-===========================
 Non-renewable primary energy and CO2 emissions model algorithm for building operation
-===========================
+
 J. Fonseca  script development          26.08.15
 D. Thomas   formatting and cleaning     27.08.15
 D. Thomas   integration in toolbox      27.08.15
 J. Fonseca  script redevelopment        19.04.16
-
 """
 from __future__ import division
 
@@ -30,7 +28,7 @@ def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_f
                   Eal_flag=True, Eaux_flag=True, Epro_flag=True, Edata_flag=True):
     """
     Algorithm to calculate the primary energy and CO2 emissions of buildings according to the method used in the
-    integrated model of [Fonseca & Schlueter (2015)] and the performance factors of [ecobau.ch].
+    integrated model of [Fonseca-Schlueter-2015]_ and the performance factors of [ecobau.ch].
 
     :param locator: an InputLocator instance set to the scenario to work on
     :type locator: InputLocator
@@ -54,35 +52,37 @@ def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_f
     :type Edata_flag: boolean
 
     The following file is created by this script:
-        -   total_LCA_operation: .csv
-                csv file of yearly non-renewable primary energy demand and CO2 emissions per building for all energy
-                services (i.e. heating, hot water, cooling, electricity) both total and per square meter
-    Depending on which flags were set, the following files can also becreated by this script:
-        -   Qhs_LCA_operation: .csv
-            describes the emissions and primary energy due to space heating
-        -   Qww_LCA_operation: .csv
-                describes the emissions and primary energy due to domestic hot water consumption
-        -   Qcs_LCA_operation: .csv
-                describes the emissions and primary energy due to space cooling
-        -   Qcdata_LCA_operation: .csv
-                describes the emissions and primary energy due to servers cooling
-        -   Qcrefri_LCA_operation: .csv
-                describes the emissions and primary energy due to refrigeration
-        -   Eal_LCA_operation: .csv
-                describes the emissions and primary energy due to appliances and lighting
-        -   Eaux_LCA_operation: .csv
-                describes the emissions and primary energy due to auxiliary electricity
-        -   Epro_LCA_operation: .csv
-                describes the emissions and primary energy due to electricity in industrial processes
-        -   Edata_LCA_operation: .csv
-                describes the emissions and primary energy due to electricity consumption in data centers
+
+    - total_LCA_operation: .csv
+        csv file of yearly non-renewable primary energy demand and CO2 emissions per building for all energy
+        services (i.e. heating, hot water, cooling, electricity) both total and per square meter
+
+    Depending on which flags were set, the following files can also be created by this script:
+
+    - Qhs_LCA_operation: .csv
+        describes the emissions and primary energy due to space heating
+    - Qww_LCA_operation: .csv
+        describes the emissions and primary energy due to domestic hot water consumption
+    - Qcs_LCA_operation: .csv
+        describes the emissions and primary energy due to space cooling
+    - Qcdata_LCA_operation: .csv
+        describes the emissions and primary energy due to servers cooling
+    - Qcrefri_LCA_operation: .csv
+        describes the emissions and primary energy due to refrigeration
+    - Eal_LCA_operation: .csv
+        describes the emissions and primary energy due to appliances and lighting
+    - Eaux_LCA_operation: .csv
+        describes the emissions and primary energy due to auxiliary electricity
+    - Epro_LCA_operation: .csv
+        describes the emissions and primary energy due to electricity in industrial processes
+    - Edata_LCA_operation: .csv
+        describes the emissions and primary energy due to electricity consumption in data centers
 
     :returns: This function does not return anything
     :rtype: NoneType
 
-    .. [Fonseca & Schlueter (2015)] J. Fonseca & A. Schlueter (2015) "Integrated model for characterization of
-    spatiotemporal building energy consumption patterns in neighborhoods and city districts". Applied Energy 142.
-
+    .. [Fonseca-Schlueter-2015] J. Fonseca & A. Schlueter (2015) "Integrated model for characterization of
+        spatiotemporal building energy consumption patterns in neighborhoods and city districts". Applied Energy 142.
     """
 
     # get local files

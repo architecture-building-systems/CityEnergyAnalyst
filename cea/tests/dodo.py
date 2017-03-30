@@ -8,6 +8,8 @@ import os
 import shutil
 import zipfile
 
+import sys
+
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Daren Thomas"]
@@ -20,6 +22,7 @@ __status__ = "Production"
 
 REPOSITORY_URL = "https://github.com/architecture-building-systems/cea-reference-case/archive/%s.zip"
 REPOSITORY_NAME = "master"
+
 
 if 'JOB_NAME' in os.environ:
     # this script is being run as part of a Jenkins job
@@ -55,17 +58,40 @@ REFERENCE_CASES_DATA = {
                           'radiation': 'https://shared.ethz.ch/owncloud/s/MG3FeiSMVnIekwp/download',
                           'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/HFHttennomZSbSf/download'}}
 
+# set to github user and personal access token in main
+_user = None
+_token = None
+
+
 def get_github_auth():
     """
-    get the username / password for github from a file in the home directory
-    called "github.auth". The first line contains the user, the second line
-    the password.
+    get the username / token for github from a file in the home directory
+    called "cea_github.auth". The first line contains the user, the second line
+    the personal access token.
 
-    :return: (user, password)
+    :return: (user, token)
     """
-    with open(os.path.expanduser('~/github.auth')) as f:
-        user, password = map(str.strip, f.readlines())
-    return user, password
+    if _user and _token:
+        return _user, _token
+
+    with open(os.path.expanduser(r'~\cea_github.auth')) as f:
+        user, token = map(str.strip, f.readlines())
+    return user, token
+
+
+def task_run_unit_tests():
+    """run the unittests"""
+    def run_unit_tests():
+        import unittest
+        import os
+        testsuite = unittest.defaultTestLoader.discover(os.path.dirname(__file__))
+        result = unittest.TextTestRunner(verbosity=1).run(testsuite)
+        return result.wasSuccessful()
+    return {
+        'actions': [run_unit_tests],
+        'task_dep': [],
+        'verbosity': 1
+    }
 
 
 def task_download_reference_cases():
@@ -198,6 +224,12 @@ def task_run_emissions_mobility():
 
 def task_run_heatmaps():
     """run the heat maps script for each reference case"""
+    try:
+        from cea.interfaces.arcgis.modules import arcpy
+    except ImportError:
+        # do not require ArcGIS to be installed, but skip testing the heatmaps
+        # module if it isn't installed.
+        return
     import cea.plots.heatmaps
     for reference_case, scenario_path in REFERENCE_CASES.items():
         yield {
@@ -223,23 +255,17 @@ def task_run_scenario_plots():
         }
 
 
-def task_run_unit_tests():
-    """run the unittests"""
-    def run_unit_tests():
-        import unittest
-        import os
-        os.environ['REFERENCE_CASE'] = REFERENCE_CASES['open']
-        testsuite = unittest.defaultTestLoader.discover('.')
-        result = unittest.TextTestRunner(verbosity=1).run(testsuite)
-        return result.wasSuccessful()
-    return {
-        'actions': [run_unit_tests],
-        'task_dep': ['download_reference_cases', 'download_radiation', 'run_data_helper'],
-        'verbosity': 1
-    }
+def main(user=None, token=None):
+    from doit.api import DoitMain
+    from doit.api import ModuleTaskLoader
+    if user:
+        global _user
+        _user = user
+    if token:
+        global _token
+        _token = token
+    sys.exit(DoitMain(ModuleTaskLoader(globals())).run([]))
 
 
 if __name__ == '__main__':
-    import doit
-
-    doit.run(globals())
+    main()
