@@ -6,7 +6,6 @@ Subpackages
 
 .. toctree::
 
-    cea.GUI
     cea.analysis
     cea.databases
     cea.demand
