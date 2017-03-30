@@ -1,5 +1,5 @@
 
-def test_graphs_optimization(generation, level):
+def individual_evaluation(generation, level):
     import cea.globalvar
     import cea.inputlocator
     import csv
@@ -7,7 +7,6 @@ def test_graphs_optimization(generation, level):
     import cea.optimization.distribution.network_opt_main as network_opt
     import cea.optimization.master.master_main as master
     import cea.optimization.master.evaluation as evaluation
-
     import matplotlib
     import matplotlib.cm as cmx
     import matplotlib.pyplot as plt
@@ -26,13 +25,6 @@ def test_graphs_optimization(generation, level):
     scenario_path = r'c:\reference-case-zug\baseline'
     locator = cea.inputlocator.InputLocator(scenario_path)
     os.chdir(locator.get_optimization_master_results_folder())
-    # row = []
-    # with open('uncertainty.csv') as f:
-    #     reader = csv.reader(f)
-    #     for i in xrange(1000):
-    #         row.append(next(reader))
-    #     j = 0
-    #     print row[j]
 
     pareto = []
     xs = []
@@ -70,10 +62,6 @@ def test_graphs_optimization(generation, level):
 
     network_features = network_opt.network_opt_main()
 
-    # print (pop[1])
-    # print (type(pop[0]))
-
-
     def objective_function(ind):
         (costs, CO2, prim) = evaluation.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solarFeat,
                                                         network_features, gv)
@@ -100,4 +88,4 @@ if __name__ == '__main__':
     generation = 50
     level = 99
 
-    test_graphs_optimization(generation, level)
+    individual_evaluation(generation, level)
