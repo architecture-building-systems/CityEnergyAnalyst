@@ -43,7 +43,7 @@ Due to the way the simulation tasks are split up, the simulation uses the follow
   - personal scratch storage: `/cluster/scratch/username` (not backed up, deleted after 15 days, alias: `$SCRATCH`)
   
 - the weather path: the path to the *.epw file used for simulation. This can be kept in the home folder.
-    - the default weather file used by the bash scripts is `$HOME/CEAforArcGIS/cea/databases/CH/Weather/Zurich.epw`
+    - the default weather file used by the bash scripts is `$HOME/CEAforArcGIS/cea/databases/weather/Zurich.epw`
   
 - the samples folder contains the inputs (list of samples and the problem statement) and the final outputs of the
   analysis. This should be stored in your personal scratch folder (as the home folder has a limit to 100k files).
@@ -96,7 +96,7 @@ created 12 samples in C:\Users\darthoma\AppData\Local\Temp\samples
 > md %TEMP%\simulations
 
 [esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
-> python cea\analysis\sensitivity\sensitivity_demand_simulate.py -i 0 -n 12 --scenario "C:\reference-case-open\baseline" --samples-folder %TEMP%\samples --simulation-folder %TEMP%\simulation --weather .\cea\databases\CH\Weather\Zurich.epw
+> python cea\analysis\sensitivity\sensitivity_demand_simulate.py -i 0 -n 12 --scenario "C:\reference-case-open\baseline" --samples-folder %TEMP%\samples --simulation-folder %TEMP%\simulation --weather .\cea\databases\weather\Zurich.epw
 read input files
 done
 Using 8 CPU's
