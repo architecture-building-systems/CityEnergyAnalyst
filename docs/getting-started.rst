@@ -13,7 +13,14 @@ The repository contains the following folders:
 - cea
 
   - analysis
-  -
+  - databases
+  - demand
+  - geometry
+  - optimization
+  - plots
+  - resources
+  - technologies
+  - utilities
   - examples
   - tests
 
@@ -74,11 +81,6 @@ cea/utilities
 
 Contains functions needed by any other script frequently.
 
-docs
-~~~~
-
-Contains the developers manual of the CEA.
-
 cea/examples
 ~~~~~~~~~~~~
 
@@ -87,7 +89,12 @@ Contains an open source case study to test the cea.
 cea/tests
 ~~~~~~~~~
 
-It stores unitest data and scripts necessary ot run our automatic code checker in Github.
+Contains unitest data and scripts necessary ot run our automatic code checker in Github.
+
+docs
+~~~~
+
+Contains the developers manual of the CEA.
 
 euler
 ~~~~~
