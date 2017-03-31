@@ -12,6 +12,7 @@ from geopandas import GeoDataFrame as Gdf
 from cea.utilities.dbfreader import dbf2df
 
 from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, ventilation_air_flows_simple
+from cea.demand import ventilation_air_flows_detailed
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.technologies import controllers
 from cea.utilities import helpers
@@ -124,21 +125,27 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             # sensible heat gains
             tsd = sensible_loads.calc_Qgain_sen(hoy, tsd, bpr, gv)
 
+            # # TODO: add option for detailed infiltration calculation
+            # dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
+            # qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(tsd['theta_a'][hoy - 1] if not np.isnan(tsd['theta_a'][hoy - 1]) else tsd['T_ext'][hoy - 1], tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
+            # tsd['m_ve_inf_simple'][hoy] = max(qm_sum_in/3600, 1/3600)  # OVERWRITE IN CASE OF DETAILED
+            # if qm_sum_in == 0:
+            #     print("zero")
+            # #tsd['qm_sum_out'][hoy] = qm_sum_out
+
             # ventilation air flows [kg/s]
             ventilation_air_flows_simple.calc_air_mass_flow_mechanical_ventilation(bpr, tsd, hoy)
             ventilation_air_flows_simple.calc_air_mass_flow_window_ventilation(bpr, tsd, hoy)
 
-            # TODO: add option for detailed infiltration calculation
-            # dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
-            # qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(tsd['theta_a'][hoy - 1] if not tsd['theta_a'][hoy - 1] else tsd['T_ext'][hoy - 1], tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
-            # tsd['qm_sum_in'][hoy] = qm_sum_in
-            # tsd['qm_sum_out'][hoy] = qm_sum_out
+
 
             # ventilation air temperature
             ventilation_air_flows_simple.calc_theta_ve_mech(bpr, tsd, hoy, gv)
 
             # heating / cooling demand of building
             rc_model_crank_nicholson_procedure.calc_rc_model_demand_heating_cooling(bpr, tsd, hoy, gv)
+            if tsd['theta_a'][hoy] == np.inf:
+                print("inf!!!")
 
             # END OF FOR LOOP
 
@@ -275,7 +282,7 @@ def initialize_timestep_data(bpr, weather_data):
                   'Qwwf', 'Qww', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs',
                   'Eauxf_ww', 'Eauxf_fw', 'mcphsf', 'mcpcsf', 'mcpwwf', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup',
                   'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'theta_ve_mech', 'm_ve_window',
-                  'm_ve_mech']
+                  'm_ve_mech', 'm_ve_inf_dynamic']
     tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))
 
     # initialize system status log

@@ -38,9 +38,9 @@ def calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t):
     if control_ventilation_systems.is_mechanical_ventilation_active(bpr, tsd, t) \
             and not control_ventilation_systems.is_night_flushing_active(bpr, tsd, t):
 
-        # mechanical ventilation fulfills requirement + replaces leakages (similar to CO2 sensor)
+        # mechanical ventilation fulfills requirement - ventilation provided by infiltration (similar to CO2 sensor)
 
-        m_ve_mech = tsd['m_ve_required'][t] + tsd['m_ve_inf_simple'][t]
+        m_ve_mech = max(tsd['m_ve_required'][t] - tsd['m_ve_inf_simple'][t], 0)
         # TODO: check mech ventilation rule - maybe: required + infiltration
 
     elif control_ventilation_systems.has_mechanical_ventilation(bpr) \
