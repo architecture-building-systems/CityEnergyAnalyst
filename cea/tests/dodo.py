@@ -8,6 +8,8 @@ import os
 import shutil
 import zipfile
 
+import sys
+
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Daren Thomas"]
@@ -20,6 +22,7 @@ __status__ = "Production"
 
 REPOSITORY_URL = "https://github.com/architecture-building-systems/cea-reference-case/archive/%s.zip"
 REPOSITORY_NAME = "master"
+
 
 if 'JOB_NAME' in os.environ:
     # this script is being run as part of a Jenkins job
@@ -55,17 +58,41 @@ REFERENCE_CASES_DATA = {
                           'radiation': 'https://shared.ethz.ch/owncloud/s/MG3FeiSMVnIekwp/download',
                           'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/HFHttennomZSbSf/download'}}
 
+# set to github user and personal access token in main
+_user = None
+_token = None
+_reference_cases = []
+
+
 def get_github_auth():
     """
-    get the username / password for github from a file in the home directory
-    called "github.auth". The first line contains the user, the second line
-    the password.
+    get the username / token for github from a file in the home directory
+    called "cea_github.auth". The first line contains the user, the second line
+    the personal access token.
 
-    :return: (user, password)
+    :return: (user, token)
     """
-    with open(os.path.expanduser('~/github.auth')) as f:
-        user, password = map(str.strip, f.readlines())
-    return user, password
+    if _user and _token:
+        return _user, _token
+
+    with open(os.path.expanduser(r'~\cea_github.auth')) as f:
+        user, token = map(str.strip, f.readlines())
+    return user, token
+
+
+def task_run_unit_tests():
+    """run the unittests"""
+    def run_unit_tests():
+        import unittest
+        import os
+        testsuite = unittest.defaultTestLoader.discover(os.path.dirname(__file__))
+        result = unittest.TextTestRunner(verbosity=1).run(testsuite)
+        return result.wasSuccessful()
+    return {
+        'actions': [run_unit_tests],
+        'task_dep': [],
+        'verbosity': 1
+    }
 
 
 def task_download_reference_cases():
@@ -94,6 +121,8 @@ def task_run_data_helper():
     """Run the data helper for each reference case"""
     import cea.demand.preprocessing.properties
     for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
         yield {
             'name': reference_case,
             'actions': [
@@ -119,6 +148,8 @@ def task_download_radiation():
         with open(locator.get_radiation(), 'w') as f:
             f.write(r.content)
     for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
         yield {
             'name': reference_case,
             'actions': [(download_radiation, [], {
@@ -132,6 +163,8 @@ def task_run_demand():
     import cea.demand.demand_main
     import cea.inputlocator
     for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
         locator = cea.inputlocator.InputLocator(scenario_path)
         weather = REFERENCE_CASES_DATA[reference_case]['weather']
         yield {
@@ -148,6 +181,8 @@ def task_run_demand_graphs():
     """graph default demand variables for each reference case"""
     import cea.plots.graphs_demand
     for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
         yield {
             'name': '%(reference_case)s' % locals(),
             'actions': [(cea.plots.graphs_demand.run_as_script, [], {
@@ -160,6 +195,8 @@ def task_run_embodied_energy():
     """Run the embodied energy script for each reference case"""
     import cea.analysis.embodied
     for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
         yield {
             'name': '%(reference_case)s' % locals(),
             'actions': [(cea.analysis.embodied.run_as_script, [], {
@@ -174,6 +211,8 @@ def task_run_emissions_operation():
     """run the emissions operation script for each reference case"""
     import cea.analysis.operation
     for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
         yield {
             'name': '%(reference_case)s' % locals(),
             'actions': [(cea.analysis.operation.run_as_script, [], {
@@ -187,6 +226,8 @@ def task_run_emissions_mobility():
     """run the emissions mobility script for each reference case"""
     import cea.analysis.mobility
     for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
         yield {
             'name': '%(reference_case)s' % locals(),
             'actions': [(cea.analysis.mobility.run_as_script, [], {
@@ -206,6 +247,8 @@ def task_run_heatmaps():
         return
     import cea.plots.heatmaps
     for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
         yield {
             'name': '%(reference_case)s' % locals(),
             'actions': [(cea.plots.heatmaps.run_as_script, [], {
@@ -219,6 +262,8 @@ def task_run_scenario_plots():
     """run the scenario plots script for each reference case"""
     import cea.plots.scenario_plots
     for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
         yield {
             'name': '%(reference_case)s' % locals(),
             'actions': [(cea.plots.scenario_plots.run_as_script, [], {
@@ -229,23 +274,20 @@ def task_run_scenario_plots():
         }
 
 
-def task_run_unit_tests():
-    """run the unittests"""
-    def run_unit_tests():
-        import unittest
-        import os
-        os.environ['REFERENCE_CASE'] = REFERENCE_CASES['open']
-        testsuite = unittest.defaultTestLoader.discover('.')
-        result = unittest.TextTestRunner(verbosity=1).run(testsuite)
-        return result.wasSuccessful()
-    return {
-        'actions': [run_unit_tests],
-        'task_dep': ['download_reference_cases', 'download_radiation', 'run_data_helper'],
-        'verbosity': 1
-    }
+def main(user=None, token=None, reference_cases=None):
+    from doit.api import DoitMain
+    from doit.api import ModuleTaskLoader
+    if user:
+        global _user
+        _user = user
+    if token:
+        global _token
+        _token = token
+    if reference_cases:
+        global _reference_cases
+        _reference_cases = reference_cases
+    sys.exit(DoitMain(ModuleTaskLoader(globals())).run([]))
 
 
 if __name__ == '__main__':
-    import doit
-
-    doit.run(globals())
+    main()

@@ -356,6 +356,7 @@ class BuildingProperties(object):
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
         prop_hvac = dbf2df(locator.get_building_hvac())
         prop_occupancy_df = dbf2df(locator.get_building_occupancy()).set_index('Name')
+        prop_occupancy_df.fillna(value=0.0, inplace=True)  # fix badly formatted occupancy file...
         prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
         prop_architectures = dbf2df(locator.get_building_architecture())
         prop_age = dbf2df(locator.get_building_age()).set_index('Name')
@@ -386,6 +387,8 @@ class BuildingProperties(object):
         #df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         #TODO: to check if the Win_op and height of window is necessary.
         #TODO: maybe mergin branch i9 with CItyGML could help with this
+        gv.log("done")
+
         # save resulting data
         self._prop_surface = surface_properties
         self._prop_geometry = prop_geometry
@@ -546,7 +549,8 @@ class BuildingProperties(object):
 
         # Areas above ground
         # get the area of each wall in the buildings
-        surface_properties['Awall'] = (surface_properties['exposed'] * surface_properties['facade_area'])
+        surface_properties['Awall'] = (surface_properties['Shape_Leng'] * surface_properties['Freeheight'] *
+                                       surface_properties['FactorShade'])
         df = pd.DataFrame({'Name': surface_properties['Name'],
                            'Awall_all': surface_properties['Awall']}).groupby(by='Name').sum()
 
@@ -886,11 +890,11 @@ def get_envelope_properties(locator, prop_architecture):
 
 
 def get_prop_solar(locator):
-
     solar = pd.read_csv(locator.get_radiation()).set_index('Name')
     solar_list = solar.values.tolist()
     surface_properties = pd.read_csv(locator.get_surface_properties())
-    surface_properties['Awall'] = (surface_properties['exposed'] * surface_properties['facade_area'])
+    surface_properties['Awall'] = (
+        surface_properties['Shape_Leng'] * surface_properties['FactorShade'] * surface_properties['Freeheight'])
     sum_surface = surface_properties[['Awall', 'Name']].groupby(['Name']).sum().values
 
     I_sol = I_roof = I_win = [a / b for a, b in zip(solar_list, sum_surface)]
