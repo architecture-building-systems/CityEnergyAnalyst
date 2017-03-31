@@ -236,10 +236,11 @@ class InputLocator(object):
     def get_terrain(self):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain.tif')
-    
+
     def get_daysim_mat(self):
         """this gets the file that documents all of the radiance/default_materials"""
         return os.path.join(os.path.dirname(__file__), 'resources', 'radiation_daysim', 'default_materials.rad')
+
     # OUTPUTS
 
     ##SOLAR-RADIATION
@@ -300,9 +301,7 @@ class InputLocator(object):
 
     def get_demand_measured_file(self, building_name):
         """scenario/outputs/data/demand/{building_name}.csv"""
-        assert False, 'this is the same as get_demand_results_file'
-        demand_measured_file = self.get_demand_measured_folder()
-        return os.path.join(demand_measured_file, '%s.csv' % building_name)
+        return os.path.join(self.get_demand_measured_folder(), '%s.csv' % building_name)
 
     def get_calibration_cluster(self, sax_name):
         """scenario/outputs/data/demand/{sax_name}.csv"""
