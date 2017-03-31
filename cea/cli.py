@@ -59,7 +59,6 @@ def emissions(args):
 def embodied_energy(args):
     """Run the embodied energy script with the arguments provided."""
     import cea.analysis.embodied
-    import cea.inputlocator
     import cea.globalvar
     gv = cea.globalvar.GlobalVariables()
     cea.analysis.embodied.lca_embodied(year_to_calculate=args.year_to_calculate,
@@ -157,8 +156,7 @@ def _get_longitude(scenario_path):
 
 def radiation(args):
     """Run the radiation script with the arguments provided."""
-    import cea.resources.radiation
-    import cea.inputlocator
+    import cea.resources.radiation_arcgis.radiation
     import cea.globalvar
 
     if not args.latitude:
@@ -172,11 +170,11 @@ def radiation(args):
     elif args.weather_path in locator.get_weather_names():
         args.weather_path = locator.get_weather(args.weather_path)
 
-    cea.resources.radiation.solar_radiation_vertical(locator=locator,
-                                                     path_arcgis_db=args.arcgis_db, latitude=args.latitude,
-                                                     longitude=args.longitude, year=args.year,
-                                                     gv=cea.globalvar.GlobalVariables(),
-                                                     weather_path=args.weather_path)
+    cea.resources.radiation_arcgis.radiation.solar_radiation_vertical(locator=locator,
+                                                                      path_arcgis_db=args.arcgis_db, latitude=args.latitude,
+                                                                      longitude=args.longitude, year=args.year,
+                                                                      gv=cea.globalvar.GlobalVariables(),
+                                                                      weather_path=args.weather_path)
 
 
 def install_toolbox(_):
@@ -223,8 +221,8 @@ def test(args):
 def extract_reference_case(args):
     """extract the reference case to a folder"""
     import zipfile
-    import cea.examples
-    archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+    import examples
+    archive = zipfile.ZipFile(os.path.join(os.path.dirname(examples.__file__), 'reference-case-open.zip'))
     archive.extractall(args.to)
 
 
