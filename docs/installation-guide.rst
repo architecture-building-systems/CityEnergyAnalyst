@@ -22,6 +22,8 @@ Installation follows the following basic steps:
 #. ``cea install-toolbox`` (installs the CEA as an ArcGIS 10.4 toolbox)
 
 
+The following subsections contain additional information for variations on the above theme.
+
 Creating a conda environment
 ............................
 
@@ -38,8 +40,8 @@ into your other work. Follow these steps to create a new conda environment for t
 Connecting to Arcpy
 ...................
 
-The command ``cea install-toolbox`` attempts to connect the CEA with the ArcGIS environment. You should not need to
-do anything else.
+The command ``cea install-toolbox`` (see step 4 in the basic installation steps above) attempts to connect the CEA with
+the ArcGIS environment. You should not need to do anything else.
 
 If, however, you get error messages like ``ImportError: no module named arcpy`` you can check your home directory
 for a file called ``cea_arcgis.pth`` containing these three lines::
@@ -53,11 +55,12 @@ Edit these folders to point to the appropriate ArcGIS folders as documented in t
 Installation from GitHub repository
 ...................................
 
-If you'd prefer to track the newest version of the City Energy Analyst, clone the GitHub repository and run::
+If you'd prefer to track the newest version of the City Energy Analyst, replace step 3 in the basic installation steps
+above with a git clone of the CEA GitHub repository and run::
 
     python setup.py install
 
-to install the CEA, including the ``cea`` tool. Note, you will need to follow the guide above to create a conda
+to install the CEA, including the ``cea`` tool. Note, you will still need to follow the guide above to create a conda
 environment and install geopandas.
 
 Installation of the development environment
