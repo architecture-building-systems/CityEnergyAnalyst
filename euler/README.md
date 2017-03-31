@@ -177,7 +177,7 @@ to fit the simulation count in the time slot of the node as the Euler cluster wi
 any process that runs longer than a fixed amount of time. Keeping it as large as possible
 reduces the overhead of waiting for a node to pick up the job, so we will need to
 experiment a bit here... The bash scripts for the euler cluster do this automatically and have a batch size of 100,
-which works well for the `reference-cas-open`.
+which works well for the `reference-case-open`.
 
 The next step is to run the analysis on the results. This is done in a single process.
 
@@ -220,6 +220,8 @@ created 12 samples in /cluster/scratch/darthoma/samples_morris_1
 Check the scripts for a list of valid variables to export. They refer to the input parameters to the python scripts,
 but are uppercase and with underscores.
 
+When choosing your variables to analyze and the number of samples to be created, keep in mind that the maximum number of files Euler can store in your scratch folder is one million. By default, the number of files created by the sensitivity analysis is equal to the number of samples times the number of buildings to be simulated plus one.
+
 #### Run the simulations
 
 ```
@@ -230,7 +232,7 @@ Job <31205729> is submitted to queue <normal.4h>.
 
 This sets up the demand calculation to run in batch mode. You can use the command `bjobs` to view the list of jobs
 still open - read up in the [Euler wiki](https://scicomp.ethz.ch/wiki/Using_the_batch_system) on how that works.
-The variable `NUM_SIMULATIONS` (default: 100) determines how many samples are simulated per job.
+The variable `NUM_SIMULATIONS` (default: 100) determines how many samples are simulated per job. When choosing the number of simulations, keep in mind that the run-time limit for a job on Euler is 4 hours.
 
 Wait for all the jobs to complete by checking `bjobs` until there are no more jobs in the queue. You can use this command to see how many simulations a job batch has done (`31300468` is the jobid, get that from `bjobs` or `bbjobs`):
 
