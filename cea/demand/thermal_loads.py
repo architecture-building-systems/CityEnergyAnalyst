@@ -576,6 +576,10 @@ class BuildingProperties(object):
         df['Atot'] = df[['Aw', 'Aop_sup', 'footprint', 'Aop_bel']].sum(axis=1) + (df['Aroof'] * (df['floors'] - 1))  # TODO: check! why is roof counted multiple times (inner walls are not contributing to heat transfer)
 
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
+        for building in df.index.values:
+            if hvac_temperatures['type_hs'][building] == 'T0':
+                df['Hs'][building] = 0
+                print 'Building %s has no heating system, Hs corrected to 0.' % building
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated
         df['Aef'] = df['GFA_m2'] * df['Es']  # conditioned area only those for electricity
 
