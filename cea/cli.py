@@ -19,6 +19,13 @@ __status__ = "Production"
 def demand(args):
     """Run the demand script with the arguments provided."""
     import cea.demand.demand_main
+    if args.weather and not os.path.exists(args.weather):
+        try:
+            # allow using shortcut
+            import cea.inputlocator
+            args.weather = cea.inputlocator.InputLocator(None).get_weather(args.weather)
+        except:
+            pass
     cea.demand.demand_main.run_as_script(scenario_path=args.scenario, weather_path=args.weather)
 
 
@@ -197,6 +204,36 @@ def heatmaps(args):
                                     file_to_analyze=args.file_to_analyze)
 
 
+def test(args):
+    """Run the pydoit tests (same test-suite as run by Jenkins)"""
+    import cea.tests.dodo
+    if args.save:
+        with open(os.path.expanduser(r'~\cea_github.auth'), 'w') as f:
+            f.write(args.user + '\n')
+            f.write(args.token + '\n')
+    try:
+        cea.tests.dodo.main(user=args.user, token=args.token, reference_cases=args.reference_cases)
+    except SystemExit:
+        raise
+    except:
+        import traceback
+        traceback.print_exc()
+
+
+def extract_reference_case(args):
+    """extract the reference case to a folder"""
+    import zipfile
+    import cea.examples
+    archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+    archive.extractall(args.to)
+
+
+def compile(args):
+    """compile the binary versions of some modules for faster execution"""
+    import cea.utilities.compile_pyd_files
+    cea.utilities.compile_pyd_files.main()
+
+
 def main():
     """Parse the arguments and run the program."""
     import argparse
@@ -210,10 +247,10 @@ def main():
     demand_parser.set_defaults(func=demand)
 
     data_helper_parser = subparsers.add_parser('data-helper',
-                                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                                               formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     data_helper_parser.add_argument('--archetypes', help='List of archetypes process', nargs="*",
-                                      default=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'],
-                                      choices=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'])
+                                    default=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'],
+                                    choices=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'])
     data_helper_parser.set_defaults(func=data_helper)
 
     emissions_parser = subparsers.add_parser('emissions',
@@ -301,6 +338,24 @@ def main():
     heatmaps_parser.add_argument('--list-fields', action='store_true', help='List available fields in the file.',
                                  default=False)
     heatmaps_parser.set_defaults(func=heatmaps)
+
+    test_parser = subparsers.add_parser('test', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    test_parser.add_argument('--user', help='GitHub user with access to cea-reference-case repository')
+    test_parser.add_argument('--token', help='Personal Access Token for the GitHub user')
+    test_parser.add_argument('--save', action='store_true', default=False, help='Save user and token to disk.')
+    test_parser.add_argument('--reference-cases', default=[], nargs='+',
+                             choices=['open', 'zug/baseline', 'zurich/baseline', 'zurich/masterplan'],
+                             help='list of reference cases to test')
+    test_parser.set_defaults(func=test)
+
+    extract_reference_case_parser = subparsers.add_parser('extract-reference-case',
+                                                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    extract_reference_case_parser.add_argument('--to', help='Folder to extract the reference case to',
+                                               default='.')
+    extract_reference_case_parser.set_defaults(func=extract_reference_case)
+
+    compile_parser = subparsers.add_parser('compile', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    compile_parser.set_defaults(func=compile)
 
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)
