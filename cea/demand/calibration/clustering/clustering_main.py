@@ -78,7 +78,7 @@ def optimization_clustering_main(locator, data, start_generation, number_individ
     t0 = time.clock()
 
     # set optimization problem for wordzise and alpha number
-    sax_optimization(locator, data, time_series_len=24, BOUND_LOW=4, BOUND_UP=24,
+    sax_optimization(locator, data, time_series_len=24, BOUND_LOW=3, BOUND_UP=24,
                      NGEN=number_generations, MU=number_individuals, CXPB=0.9, start_gen=start_generation)
 
     gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
@@ -105,7 +105,7 @@ def run_as_script():
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
 
     #Options
-    optimize = False
+    optimize = True
     clustering = False
     plot_pareto = True
     building_name = 'B01'
@@ -117,19 +117,19 @@ def run_as_script():
     if optimize:
         start_generation = None  # or the number of generation to start from
         number_individuals = 16
-        number_generations = 150
+        number_generations = 50
         optimization_clustering_main(locator=locator, data=data, start_generation=start_generation,
                                      number_individuals=number_individuals, number_generations=number_generations, gv=gv)
     if plot_pareto:
-        generation_to_plot = 150
+        generation_to_plot = 50
         annotate_benchmarks = True
         annotate_fitness = True
         show_in_screen = True
         save_to_disc = False
-        what_to_plot = "paretofrontier" #paretofrontier, halloffame, or population
-        labelx = 'Information content [-]'
-        labely = 'Silhuette Index [-]'
-        labelz = 'Number of clusters [-]'
+        what_to_plot = "population" #paretofrontier, halloffame, or population
+        labelx = 'Accurracy [-]'
+        labely = 'Complexity [-]'
+        labelz = 'Compression [-]'
         print_pareto(locator=locator, generation=generation_to_plot, what_to_plot=what_to_plot, labelx= labelx,
                      labely = labely, labelz = labelz, show_benchmarks= annotate_benchmarks, show_fitness=annotate_fitness,
                      show_in_screen = show_in_screen, save_to_disc=save_to_disc)

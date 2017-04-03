@@ -90,9 +90,9 @@ def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, 
         accurracy = calc_accuracy(sax)
         complexity = calc_complexity(sax)
         compression = calc_compression(ind[0], time_series_len)
-        f1 = 0.7 * accurracy + 0.17 * complexity + 0.13 * compression #information objective to maximize
-        f2 = silhouette_score(np.array(data), np.array(sax))  # metrics.silhuette score_score(data, sax)
-        f3 = len(set(sax)) # number of clusters to minimize
+        f1 = accurracy #+ 0.17 * complexity + 0.13 * compression #information objective to maximize
+        f2 = complexity #silhouette_score(np.array(data), np.array(sax))  # metrics.silhuette score_score(data, sax)
+        f3 = compression #len(set(sax)) # number of clusters to minimize
 
         return f1, f2, f3
 
@@ -176,7 +176,6 @@ def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, 
 
             #calculate benchmarks
             diversity = deap.benchmarks.tools.diversity(paretofrontier, paretofrontier[0], paretofrontier[-1])
-            print diversity
 
             FREQ = 1  # frequence of storage
             if generation % FREQ == 0:
@@ -199,10 +198,9 @@ def calc_complexity(names_of_clusters):
     :param names_of_clusters: list containing a word which clusters the time series. e.g., ['abcffs', dddddd'...'svfdab']
     :return: level of complexity which penalizes the objective function
     """
-    single_words_length = len(set(names_of_clusters))
-    m = len(names_of_clusters)  # number of observations
-    C = 1  # number of classes is 1
-    result = (single_words_length - C) / (m + C)
+    single_words_length = len(list(set(names_of_clusters)))
+    len_timeseries = len(names_of_clusters)  # number of observations
+    result = 1- (single_words_length/ len_timeseries)
     return result
 
 
@@ -214,9 +212,8 @@ def calc_compression(word_size, time_series_len=24):
     :param time_series_len: length of time_series group. integer
     :return: level of compression which penalizes the objective function
     """
-    result = word_size / (2*time_series_len)  # 24 hours
+    result = 1- (word_size / time_series_len)  # 24 hours
     return result
-
 
 def calc_accuracy(names_of_clusters):
     """
@@ -226,41 +223,12 @@ def calc_accuracy(names_of_clusters):
     :return:
     """
     single_words = list(set(names_of_clusters))
-    n_clusters = len(names_of_clusters)
+    len_timeseries = len(names_of_clusters)
     entropy = 0
     for single_word in single_words:
-        pi = names_of_clusters.count(single_word) / n_clusters
-        entropy += -pi * math.log(pi, 2)
-    return entropy
-
-
-def calc_gain(names_of_clusters):
-    """
-    Calculated according to the value of information gain of "Discretization of Time Series Dataset
-    with a Genetic Search' by D. Garcia-Lopez1 and H. Acosta-Mesa 2009.
-    :param names_of_clusters: list containing a word which clusters the time series. e.g., ['abcffs', dddddd'...'svfdab']
-    :return: gain = information gain [real]
-    """
-    single_words = list(set(names_of_clusters))
-    n_clusters = len(names_of_clusters)
-    entropy = 0
-
-    for single_word in single_words:
-        pi = names_of_clusters.count(single_word) / n_clusters
-        entropy += -pi * math.log(pi, 2)
-
-    entropy_values = 0
-    all_values = ''.join(names_of_clusters)
-    all_values_len = len(all_values)
-    single_letters = list(set(all_values))
-
-    for value in single_letters:
-        value_in_clusters = len([s for s in names_of_clusters if value in s])
-        pi = all_values.count(value) / all_values_len
-        entropy_values += value_in_clusters / n_clusters * -pi * math.log(pi, 2)
-    gain = entropy - entropy_values
-    return gain
-
+        pi = names_of_clusters.count(single_word) / len_timeseries
+        entropy += pi * math.log(pi,2)
+    return - entropy/ math.log(len_timeseries,2)
 
 # ++++++++++++++++++++++++++
 # Printing option
@@ -276,7 +244,7 @@ def print_pareto(locator, generation, what_to_plot, labelx, labely, labelz,
     :return:
     """
     # set-up deap library for optimization with 1 objective to minimize and 2 objectives to be maximized
-    deap.creator.create("Fitness", deap.base.Fitness, weights=(1.0, 1.0, -1.0))  # maximize shilluette and calinski
+    deap.creator.create("Fitness", deap.base.Fitness, weights=(1.0, 1.0, 1.0 ))  # maximize shilluette and calinski
     deap.creator.create("Individual", list, fitness=deap.creator.Fitness)
 
     #read_checkpoint
@@ -286,7 +254,7 @@ def print_pareto(locator, generation, what_to_plot, labelx, labely, labelz,
 
     # create figure
     fig = plt.figure()
-    xs, ys, zs = map(np.array, zip(*[ind.fitness.values for ind in frontier]))
+    xs, ys, zs= map(np.array, zip(*[ind.fitness.values for ind in frontier]))
 
     scalarMap = cmx.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=min(zs), vmax=max(zs)), cmap=plt.get_cmap('jet'))
     scalarMap.set_array(zs)
