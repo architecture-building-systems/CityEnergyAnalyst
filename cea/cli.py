@@ -212,7 +212,7 @@ def test(args):
             f.write(args.user + '\n')
             f.write(args.token + '\n')
     try:
-        cea.tests.dodo.main(user=args.user, token=args.token)
+        cea.tests.dodo.main(user=args.user, token=args.token, reference_cases=args.reference_cases)
     except SystemExit:
         raise
     except:
@@ -226,6 +226,7 @@ def extract_reference_case(args):
     import cea.examples
     archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
     archive.extractall(args.to)
+
 
 def compile(args):
     """compile the binary versions of some modules for faster execution"""
@@ -246,10 +247,10 @@ def main():
     demand_parser.set_defaults(func=demand)
 
     data_helper_parser = subparsers.add_parser('data-helper',
-                                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                                               formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     data_helper_parser.add_argument('--archetypes', help='List of archetypes process', nargs="*",
-                                      default=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'],
-                                      choices=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'])
+                                    default=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'],
+                                    choices=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'])
     data_helper_parser.set_defaults(func=data_helper)
 
     emissions_parser = subparsers.add_parser('emissions',
@@ -342,6 +343,9 @@ def main():
     test_parser.add_argument('--user', help='GitHub user with access to cea-reference-case repository')
     test_parser.add_argument('--token', help='Personal Access Token for the GitHub user')
     test_parser.add_argument('--save', action='store_true', default=False, help='Save user and token to disk.')
+    test_parser.add_argument('--reference-cases', default=[], nargs='+',
+                             choices=['open', 'zug/baseline', 'zurich/baseline', 'zurich/masterplan'],
+                             help='list of reference cases to test')
     test_parser.set_defaults(func=test)
 
     extract_reference_case_parser = subparsers.add_parser('extract-reference-case',
