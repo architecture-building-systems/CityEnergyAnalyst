@@ -20,11 +20,12 @@ with open('README.rst', 'r') as f:
 
 if os.environ.get('READTHEDOCS', False) == 'True':
     # trick to make cea installable for readthedocs
-    INSTALL_REQUIRES = []
+    INSTALL_REQUIRES = ['geopandas', 'pandas', 'shapely', 'fiona', 'descartes', 'pyproj', 'xlrd', 'requests',
+                        'doit==0.29.0', 'pyshp', 'pysal', 'ephem']
 else:
     # TODO: list all the requirements for installing
     INSTALL_REQUIRES = ['geopandas', 'pandas', 'shapely', 'fiona', 'descartes', 'pyproj', 'xlrd', 'requests',
-                        'doit==0.29.0', 'pyshp', 'pysal']
+                        'doit==0.29.0', 'pyshp', 'pysal', 'ephem']
 
 
 setup(name='cityenergyanalyst',

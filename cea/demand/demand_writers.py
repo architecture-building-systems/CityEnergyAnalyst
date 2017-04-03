@@ -108,7 +108,7 @@ class MonthlyDemandWriter(DemandWriter):
     """Write out the monthly demand results"""
     def __init__(self, gv):
         super(MonthlyDemandWriter, self).__init__(gv)
-        self.vars_to_print = [['QEf', 'QHf', 'QCf', 'Ef'], [], []]
+        self.vars_to_print = [['QEf', 'QHf', 'QCf', 'Ef', 'Qhsf', 'Qcsf'], [], []]
 
     def write_to_csv(self, building_name, columns, hourly_data, locator):
         # get monthly totals and rename to MWhyr
