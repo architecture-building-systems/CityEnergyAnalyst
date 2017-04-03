@@ -5,6 +5,7 @@ Global variables - this object contains context information and is expected to b
 import cea.demand.demand_writers
 import os
 import cea.inputlocator
+import pandas as pd
 # from cea.demand import thermal_loads
 
 __author__ = "Jimeno A. Fonseca"
@@ -537,25 +538,29 @@ class GlobalVariables(object):
         # self.HP_i = float(row[j][16])/100  # interest rate default 0.05
         # self.Boiler_i = float(row[j][16])/100  # interest rate default 0.05
 
-        self.HP_n = 20  # lifetime [years] default 20
-        self.GHP_nHP = 20  # for the geothermal heat pump default 20
-        self.Boiler_n = 20  # lifetime, after A+W, default 20
-        self.CC_n = 25  # lifetime default 25
-        self.FC_n = 10  # years of operation default 10
-        self.PVT_n = 20  # years of operation default 20
-        self.SC_n = 20  # years of operation default 20
-        self.CT_a = 0.15  # annuity factor default 0.15
-        self.Subst_n = 20  # Lifetime after A+W default 20
-        self.ELEC_PRICE = 0.2 * self.EURO_TO_CHF / 1000.0  # default 0.2
+
+        locator = cea.inputlocator.InputLocator(scenario_path=self.scenario_reference)
+        x = pd.read_excel(locator.get_uncertainty_db(), 'ECONOMIC')
+
+        self.HP_n = x[x['name'] == 'HP_n']['default'].max()  # lifetime [years] default 20
+        self.GHP_nHP = x[x['name'] == 'GHP_nHP']['default'].max()  # for the geothermal heat pump default 20
+        self.Boiler_n = x[x['name'] == 'Boiler_n']['default'].max()  # lifetime, after A+W, default 20
+        self.CC_n = x[x['name'] == 'CC_n']['default'].max()  # lifetime default 25
+        self.FC_n = x[x['name'] == 'FC_n']['default'].max()  # years of operation default 10
+        self.PVT_n = x[x['name'] == 'PVT_n']['default'].max()  # years of operation default 20
+        self.SC_n = x[x['name'] == 'SC_n']['default'].max()  # years of operation default 20
+        self.CT_a = x[x['name'] == 'CT_a']['default'].max()  # annuity factor default 0.15
+        self.Subst_n = x[x['name'] == 'Subst_n']['default'].max()  # Lifetime after A+W default 20
+        self.ELEC_PRICE = x[x['name'] == 'ELEC_PRICE']['default'].max() * self.EURO_TO_CHF / 1000.0  # default 0.2
         # self.ELEC_PRICE_KEV = 1.5 * ELEC_PRICE # MAKE RESEARCH ABOUT A PROPER PRICE AND DOCUMENT THAT!
         # self.ELEC_PRICE_GREEN = 1.5 * ELEC_PRICE
-        self.NG_PRICE = 0.068 * self.EURO_TO_CHF / 1000.0  # [CHF / wh] # default 0.068
-        self.BG_PRICE = 0.076 * self.EURO_TO_CHF / 1000.0  # [CHF / wh] # default 0.076
+        self.NG_PRICE = x[x['name'] == 'NG_PRICE']['default'].max() * self.EURO_TO_CHF / 1000.0  # [CHF / wh] # default 0.068
+        self.BG_PRICE = x[x['name'] == 'BG_PRICE']['default'].max() * self.EURO_TO_CHF / 1000.0  # [CHF / wh] # default 0.076
         self.cPump = self.ELEC_PRICE * 24. * 365.  # coupled to electricity cost
-        self.Subst_i = 5/100 # default 0.05
-        self.FC_i = 5/100 # interest rate default 0.05
-        self.HP_i = 5/100  # interest rate default 0.05
-        self.Boiler_i = 5/100  # interest rate default 0.05
+        self.Subst_i = x[x['name'] == 'Subst_i']['default'].max() /100 # default 0.05
+        self.FC_i = x[x['name'] == 'FC_i']['default'].max() /100 # interest rate default 0.05
+        self.HP_i = x[x['name'] == 'HP_i']['default'].max() /100  # interest rate default 0.05
+        self.Boiler_i = x[x['name'] == 'Boiler_i']['default'].max() /100  # interest rate default 0.05
 
         # ==============================================================================================================
         # TABS
