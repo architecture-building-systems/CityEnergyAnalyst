@@ -177,6 +177,10 @@ class InputLocator(object):
         """databases/CH/Uncertainty/uncertainty_distributions.xls"""
         return os.path.join(self.db_path, 'Uncertainty', 'uncertainty_distributions.xls')
 
+    def get_uncertainty_parameters(self):
+        """databases/CH/Uncertainty/uncertainty_distributions.xls"""
+        return os.path.join(self.db_path, 'Uncertainty')
+
     # INPUTS
     def get_building_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
