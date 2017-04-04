@@ -227,10 +227,10 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                         gv,
                                                                                         bpr.geometry['floors_ag'],
                                                                                         bpr.occupancy['PFloor'],
-                                                                                        tsd['m_ve_mech'],
                                                                                         bpr.hvac['type_cs'],
                                                                                         bpr.hvac['type_hs'],
-                                                                                        tsd['Ehs_lat_aux'])
+                                                                                        tsd['Ehs_lat_aux'],
+                                                                                        tsd)
 
     elif bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
 
@@ -282,7 +282,7 @@ def initialize_timestep_data(bpr, weather_data):
                   'Qwwf', 'Qww', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs',
                   'Eauxf_ww', 'Eauxf_fw', 'mcphsf', 'mcpcsf', 'mcpwwf', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup',
                   'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'theta_ve_mech', 'm_ve_window',
-                  'm_ve_mech', 'm_ve_inf_dynamic']
+                  'm_ve_mech', 'm_ve_recirculation']
     tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))
 
     # initialize system status log
