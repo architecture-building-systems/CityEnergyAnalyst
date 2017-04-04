@@ -50,12 +50,36 @@ def is_window_ventilation_active(bpr, tsd, t):
 
 
 def is_mechanical_ventilation_heat_recovery_active(bpr, tsd, t):
+    """
+    Control of activity of heat exchanger of mechanical ventilation system
+    
+    Author: Gabriel Happle
+    Date: APR 2017
+    
+    :param bpr: Building Properties
+    :type bpr: BuildingPropertiesRow
+    :param tsd: Time series data of building
+    :type tsd: dict
+    :param t: time step / hour of the year
+    :type t: int
+    :return: Heat exchanger ON/OFF status
+    :rtype: bool
+    """
 
     if is_mechanical_ventilation_active(bpr, tsd, t) and has_mechanical_ventilation_heat_recovery(bpr):
 
         # heat recovery is always active if mechanical ventilation is active (no intelligent by pass)
         # this is the usual system configuration according to Clayton Miller
         return True
+
+    elif is_mechanical_ventilation_active(bpr, tsd, t) \
+            and helpers.is_coolingseason_hoy(t) \
+            and tsd['theta_a'][t-1] > tsd['T_ext'][t]:
+
+        # heat recovery is deactivated in the cooling case,
+        #  if outdoor air conditions are colder than indoor (free cooling)
+
+        return False
 
     else:
         return False
@@ -64,7 +88,8 @@ def is_mechanical_ventilation_heat_recovery_active(bpr, tsd, t):
 def is_night_flushing_active(bpr, tsd, t):
 
     # night flushing is available for window ventilation (manual) and mechanical ventilation (automatic)
-    # night flushing is active during the night in the cooling season IF the outdoor conditions are favourable (only temperature at the moment)
+    # night flushing is active during the night in the cooling season,
+    #  IF the outdoor conditions are favourable (only temperature at the moment)
     temperature_zone_control = 26  # (°C) night flushing only if temperature is higher than 26 # TODO review and make dynamic
     delta_t = 2 # (°C) night flushing only if outdoor temperature is two degrees lower than indoor # TODO review and make dynamic
 
