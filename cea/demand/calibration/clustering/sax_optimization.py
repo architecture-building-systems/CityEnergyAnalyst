@@ -176,18 +176,15 @@ def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, 
                 # Fill the dictionary using the dict(key=value[, ...]) constructor
                 # round values of fitnesses to 3d
                 cp = dict(population=pop, halloffame=halloffame, paretofrontier=paretofrontier,
-                          population_fitness=[ind.fitness.values for ind in pop],
-                          halloffame_fitness=[ind.fitness.values for ind in halloffame],
-                          paretofrontier_fitness=[ind.fitness.values for ind in paretofrontier],
+                          #population_fitness=[ind.fitness.values for ind in pop],
+                          #halloffame_fitness=[ind.fitness.values for ind in halloffame],
+                          #paretofrontier_fitness=[ind.fitness.values for ind in paretofrontier],
                           diversity=diversity, generation=generation, rndstate=random.get_state())
 
                 # code for standalone use
-                t = Thing("foo")
-                Thing.__module__ = 'Fitness'
-                t.save("foo.pickle")
-
-                with open(locator.get_calibration_cluster_opt_checkpoint(generation, building_name), "wb") as cp_file:
-                    pickle.dump(cp, cp_file)
+                cp_file = open(locator.get_calibration_cluster_opt_checkpoint(generation, building_name), "wb")
+                pickle.dump(cp, cp_file)
+                cp_file.close()
 
     main()
 # ++++++++++++++++++++++++++++
