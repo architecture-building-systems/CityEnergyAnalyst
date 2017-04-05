@@ -112,16 +112,22 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         # Save initial population
         print "Save Initial population \n"
         os.chdir(locator.get_optimization_master_results_folder())
-        with open("CheckPointInitial", "wb") as csv_file:
-            fitnesses = map(toolbox.evaluate, pop)
-            writer = csv.writer(csv_file)
-            cp = dict(population=pop, generation=0, population_fitness=fitnesses)
-            for key, value in cp.items():
-                writer.writerow([key, value])
+
+        with open("CheckPointInitial","wb") as CPwrite:
+            CPpickle = Pickler(CPwrite)
+            cp = dict(population=pop, generation=0, networkList=ntwList, epsIndicator=[], testedPop=[], population_fitness=fitnesses)
+            CPpickle.dump(cp)
+
+        if gv.save_csv_files:
+            with open("CheckPointInitialcsv", "wb") as csv_file:
+                writer = csv.writer(csv_file)
+                cp = dict(population=pop, generation=0, population_fitness=fitnesses)
+                for key, value in cp.items():
+                    writer.writerow([key, value])
 
     else:
         print "Recover from CP " + str(genCP) + "\n"
-        os.chdir(locator.get_optimization_master_results_folder())
+        os.path.join(locator.get_optimization_master_results_folder())
 
         with open("CheckPoint" + str(genCP), "rb") as CPread:
             CPunpick = Unpickler(CPread)
@@ -211,15 +217,21 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         # Create Checkpoint if necessary
         if g % gv.fCheckPoint == 0:
-            os.chdir(locator.get_optimization_master_results_folder())
+            # os.chdir(locator.get_optimization_master_results_folder())
 
             print "Create CheckPoint", g, "\n"
-            with open("CheckPoint" + str(g),"wb") as csv_file:
-                fitnesses = map(toolbox.evaluate, pop)
-                writer = csv.writer(csv_file)
-                cp = dict(population=pop, generation=g, population_fitness=fitnesses)
-                for key, value in cp.items():
-                    writer.writerow([key, value])
+            fitnesses = map(toolbox.evaluate, pop)
+            with open("CheckPoint" + str(g), "wb") as CPwrite:
+                CPpickle = Pickler(CPwrite)
+                cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind, population_fitness=fitnesses)
+                CPpickle.dump(cp)
+
+            if gv.save_csv_files:
+                with open("CheckPointcsv" + str(g),"wb") as csv_file:
+                    writer = csv.writer(csv_file)
+                    cp = dict(population=pop, generation=g, population_fitness=fitnesses)
+                    for key, value in cp.items():
+                        writer.writerow([key, value])
 
     if g == gv.NGEN:
         print "Final Generation reached"
@@ -229,14 +241,19 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     # Saving the final results
     print "Save final results. " + str(len(pop)) + " individuals in final population"
     print "Epsilon indicator", epsInd, "\n"
-    os.chdir(locator.get_optimization_master_results_folder())
+    # os.chdir(locator.get_optimization_master_results_folder())
+    fitnesses = map(toolbox.evaluate, pop)
+    with open("CheckPointFinal", "wb") as CPwrite:
+        CPpickle = Pickler(CPwrite)
+        cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind, population_fitness=fitnesses)
+        CPpickle.dump(cp)
 
-    with open("CheckPointFinal", "wb") as csv_file:
-        fitnesses = map(toolbox.evaluate, pop)
-        writer = csv.writer(csv_file)
-        cp = dict(population=pop, generation='Final', population_fitness=fitnesses)
-        for key, value in cp.items():
-            writer.writerow([key, value])
+    if gv.save_csv_files:
+        with open("CheckPointFinalcsv", "wb") as csv_file:
+            writer = csv.writer(csv_file)
+            cp = dict(population=pop, generation='Final', population_fitness=fitnesses)
+            for key, value in cp.items():
+                writer.writerow([key, value])
         
     print "Master Work Complete \n"
     

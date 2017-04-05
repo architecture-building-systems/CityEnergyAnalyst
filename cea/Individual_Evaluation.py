@@ -22,7 +22,7 @@ def individual_evaluation(generation, level):
     weather_file = locator.get_default_weather()
     scenario_path = r'c:\reference-case-zug\baseline'
     locator = cea.inputlocator.InputLocator(scenario_path)
-    os.path.join(locator.get_optimization_master_results_folder())
+    os.chdir(locator.get_optimization_master_results_folder())
 
     pareto = []
     xs = []
@@ -75,7 +75,7 @@ def individual_evaluation(generation, level):
         evaluation.checkNtw(pop[i], ntwList, locator, gv)
         fitness.append(objective_function(pop[i]))
 
-    os.path.join(locator.get_optimization_master_results_folder())
+    os.chdir(locator.get_optimization_master_results_folder())
     with open("CheckPointTesting_uncertainty_" + str(level), "wb") as csv_file:
         writer = csv.writer(csv_file)
         cp = dict(population=pop, generation=generation, population_fitness=fitness)
@@ -83,7 +83,7 @@ def individual_evaluation(generation, level):
             writer.writerow([key, value])
 
 if __name__ == '__main__':
-    generation = 50
+    generation = 5
     level = 99
 
     individual_evaluation(generation, level)
