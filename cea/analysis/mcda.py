@@ -288,7 +288,8 @@ def mcda_differentWeights(pop, pathX):
     return [indexBestOriginal, indexBestEco, indexBestEnv, indexBestSoc]
 
 
-def mcda_analysis(locator, generation, building_name, what_to_plot, weight_fitness1, weight_fitness2, weight_fitness3):
+def mcda_analysis(locator, generation, building_name, what_to_plot,
+                  weight_fitness1, weight_fitness2, weight_fitness3):
 
     import deap
     import pickle
@@ -300,6 +301,8 @@ def mcda_analysis(locator, generation, building_name, what_to_plot, weight_fitne
     cp = pickle.load(open(locator.get_calibration_cluster_opt_checkpoint(generation, building_name), "r"))
     frontier = cp[what_to_plot]
 
+
+    nPop = len(frontier)
     normArray = np.zeros((nPop, 3))
     scoreArray = np.zeros(nPop)
 
