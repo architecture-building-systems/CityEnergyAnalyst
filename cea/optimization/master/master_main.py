@@ -217,7 +217,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         # Create Checkpoint if necessary
         if g % gv.fCheckPoint == 0:
-            # os.chdir(locator.get_optimization_master_results_folder())
+            os.chdir(locator.get_optimization_master_results_folder())
 
             print "Create CheckPoint", g, "\n"
             fitnesses = map(toolbox.evaluate, pop)
@@ -241,7 +241,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     # Saving the final results
     print "Save final results. " + str(len(pop)) + " individuals in final population"
     print "Epsilon indicator", epsInd, "\n"
-    # os.chdir(locator.get_optimization_master_results_folder())
+    os.chdir(locator.get_optimization_master_results_folder())
     fitnesses = map(toolbox.evaluate, pop)
     with open("CheckPointFinal", "wb") as CPwrite:
         CPpickle = Pickler(CPwrite)
