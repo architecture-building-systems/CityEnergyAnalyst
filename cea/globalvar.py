@@ -73,14 +73,15 @@ class GlobalVariables(object):
         # ==============================================================================================================
 
         self.sensibilityStep = 2  # the more, the longer the sensibility analysis
+        self.save_csv_files = True  # for saving the files both in csv and pickle formats
 
         ########################### User inputs
 
         # Commands for the evolutionary algorithm
 
 
-        self.initialInd = 20  # number of initial individuals
-        self.NGEN = 50  # number of total generations
+        self.initialInd = 4  # number of initial individuals
+        self.NGEN = 2  # number of total generations
         self.fCheckPoint = 1  # frequency for the saving of checkpoints
         self.maxTime = 7 * 24 * 3600  # maximum computational time [seconds]
 
