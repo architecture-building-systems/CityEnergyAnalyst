@@ -125,13 +125,12 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             # sensible heat gains
             tsd = sensible_loads.calc_Qgain_sen(hoy, tsd, bpr, gv)
 
+            # UNCOMMENT THIS TO OVERWRITE STATIC INFILTRATION WITH DYNAMIC INFILTRATION RATE
             # # TODO: add option for detailed infiltration calculation
             # dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
             # qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(tsd['theta_a'][hoy - 1] if not np.isnan(tsd['theta_a'][hoy - 1]) else tsd['T_ext'][hoy - 1], tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
-            # tsd['m_ve_inf_simple'][hoy] = max(qm_sum_in/3600, 1/3600)  # OVERWRITE IN CASE OF DETAILED
-            # if qm_sum_in == 0:
-            #     print("zero")
-            # #tsd['qm_sum_out'][hoy] = qm_sum_out
+            # tsd['m_ve_inf'][hoy] = max(qm_sum_in/3600, 1/3600)  # INFILTRATION IS FORCED NOT TO REACH ZERO IN ORDER TO AVOID THE RC MODEL TO FAIL
+
 
             # ventilation air flows [kg/s]
             ventilation_air_flows_simple.calc_air_mass_flow_mechanical_ventilation(bpr, tsd, hoy)
@@ -144,8 +143,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
             # heating / cooling demand of building
             rc_model_crank_nicholson_procedure.calc_rc_model_demand_heating_cooling(bpr, tsd, hoy, gv)
-            if tsd['theta_a'][hoy] == np.inf:
-                print("inf!!!")
 
             # END OF FOR LOOP
 
@@ -277,12 +274,12 @@ def initialize_timestep_data(bpr, weather_data):
     # fill data with nan values
     nan_fields = ['Qhs_lat_sys', 'Qhs_sen_sys', 'Qcs_lat_sys', 'Qcs_sen_sys', 'theta_a', 'theta_m', 'theta_c',
                   'theta_o', 'Qhs_sen', 'Qcs_sen', 'Ehs_lat_aux', 'Qhs_em_ls', 'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs',
-                  'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs', 'I_sol', 'w_int', 'm_ve_mech',
-                  'm_ve_window', 'I_rad', 'QEf', 'QHf', 'QCf', 'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat',
+                  'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs', 'I_sol', 'w_int', 'I_rad', 'QEf', 'QHf', 'QCf',
+                  'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat',
                   'Qwwf', 'Qww', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs',
                   'Eauxf_ww', 'Eauxf_fw', 'mcphsf', 'mcpcsf', 'mcpwwf', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup',
                   'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'theta_ve_mech', 'm_ve_window',
-                  'm_ve_mech', 'm_ve_recirculation']
+                  'm_ve_mech', 'm_ve_recirculation', 'm_ve_inf']
     tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))
 
     # initialize system status log

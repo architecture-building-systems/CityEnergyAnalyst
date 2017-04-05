@@ -40,7 +40,7 @@ def calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t):
 
         # mechanical ventilation fulfills requirement - ventilation provided by infiltration (similar to CO2 sensor)
 
-        m_ve_mech = max(tsd['m_ve_required'][t] - tsd['m_ve_inf_simple'][t], 0)
+        m_ve_mech = max(tsd['m_ve_required'][t] - tsd['m_ve_inf'][t], 0)
         # TODO: check mech ventilation rule - maybe: required + infiltration
 
     elif control_ventilation_systems.has_mechanical_ventilation(bpr) \
@@ -82,7 +82,7 @@ def calc_air_mass_flow_window_ventilation(bpr, tsd, t):
             and not control_ventilation_systems.is_night_flushing_active(bpr, tsd, t):
 
         # window ventilation fulfills requirement (control by occupants similar to CO2 sensor)
-        m_ve_window = max(tsd['m_ve_required'][t] - tsd['m_ve_inf_simple'][t], 0)
+        m_ve_window = max(tsd['m_ve_required'][t] - tsd['m_ve_inf'][t], 0)
         # TODO: check window ventilation calculation, there are some methods in SIA2044
 
     elif control_ventilation_systems.is_window_ventilation_active(bpr, tsd, t) \
@@ -136,7 +136,7 @@ def calc_m_ve_leakage_simple(bpr, tsd, gv):
     n_inf = 0.5 * n50 * (gv.delta_p_dim/50) ** (2/3)  # [air changes per hour] m3/h.m2
     infiltration = gv.hf * area_f * n_inf * 0.000277778  # m3/s
 
-    tsd['m_ve_inf_simple'] = infiltration * physics.calc_rho_air(tsd['T_ext'][:])  # (kg/s)
+    tsd['m_ve_inf'] = infiltration * physics.calc_rho_air(tsd['T_ext'][:])  # (kg/s)
 
     return
 
