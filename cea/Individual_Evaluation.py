@@ -13,15 +13,13 @@ def individual_evaluation(generation, level):
     from mpl_toolkits.mplot3d import Axes3D
     import os
     import re
+    import csv
     from cea.optimization.preprocessing.preprocessing_main import preproccessing
     j = level
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path)
     weather_file = locator.get_default_weather()
-    os.chdir(locator.get_optimization_master_results_folder())
-
-    import csv
     scenario_path = r'c:\reference-case-zug\baseline'
     locator = cea.inputlocator.InputLocator(scenario_path)
     os.path.join(locator.get_optimization_master_results_folder())
