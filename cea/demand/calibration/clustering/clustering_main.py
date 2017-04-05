@@ -14,11 +14,14 @@ import time
 import matplotlib.pyplot as plt
 import pandas as pd
 
+import os, csv
+
 from cea.demand.calibration.clustering.sax import SAX
-from cea.demand.calibration.clustering.sax_optimization import sax_optimization, print_pareto
+from cea.demand.calibration.clustering.sax_optimization import sax_optimization
+from cea.plots.pareto_frontier_plot import frontier_2D_3OB
 
 __author__ = "Jimeno A. Fonseca"
-__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
@@ -125,8 +128,8 @@ def run_as_script():
     optimize = False
     clustering = False
     plot_pareto = True
-    multicriteria = True
-    building_names = ['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']
+    multicriteria = False
+    building_names = ["B01"]#['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']
     building_load = 'Ef_kWh'
 
     if optimize:
@@ -134,14 +137,13 @@ def run_as_script():
             data = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load)
             start_generation = None  # or the number of generation to start from
             number_individuals = 8
-            number_generations = 20
+            number_generations = 100
             optimization_clustering_main(locator=locator, data=data, start_generation=start_generation,
                                          number_individuals=number_individuals, number_generations=number_generations,
                                          building_name=name, gv=gv)
-
     if multicriteria:
         for name in building_names:
-            generation = 20
+            generation = 10
             weight_fitness1 = 0.8
             weight_fitness2 = 0.17
             weight_fitness3 = 0.13
@@ -151,19 +153,25 @@ def run_as_script():
 
     if plot_pareto:
         for name in building_names:
-            generation_to_plot = 20
+            generation_to_plot = 100
             annotate_benchmarks = True
             annotate_fitness = True
-            show_in_screen = False
+            show_in_screen = True
             save_to_disc = True
             what_to_plot = "paretofrontier" #paretofrontier, halloffame, or population
             labelx = 'Accurracy [-]'
             labely = 'Inv-complexity[-]'
             labelz = 'Compression [-]'
-            print_pareto(locator=locator, generation=generation_to_plot, what_to_plot=what_to_plot,
-                         building_name=name, labelx= labelx,
-                         labely = labely, labelz = labelz, show_benchmarks= annotate_benchmarks, show_fitness=annotate_fitness,
-                         show_in_screen = show_in_screen, save_to_disc=save_to_disc)
+            output = os.path.join(locator.get_calibration_clustering_folder(),
+                                 "plot_gen_"+str(generation_to_plot)+"_building_name_"+name+".png")
+
+            # read_checkpoint
+            input_path = locator.get_calibration_cluster_opt_checkpoint(generation_to_plot, name)
+            frontier_2D_3OB(input_path=input_path, what_to_plot = what_to_plot, output_path=output,
+                            labelx= labelx,
+                            labely = labely, labelz = labelz, show_benchmarks= annotate_benchmarks,
+                            show_fitness=annotate_fitness,
+                            show_in_screen = show_in_screen, save_to_disc=save_to_disc)
 
     if clustering:
         name = 'B01'

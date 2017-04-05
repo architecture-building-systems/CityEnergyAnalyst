@@ -9,18 +9,12 @@ from __future__ import division
 import math
 import pickle
 
-import os
-import matplotlib
-import matplotlib.cm as cmx
-
-import matplotlib.pyplot as plt
 import numpy as np
 import deap.base
 import deap.creator
 import deap.tools
 import deap.benchmarks.tools
 from numpy import random
-from sklearn.metrics import silhouette_score
 
 from cea.demand.calibration.clustering.sax import SAX
 
@@ -106,7 +100,7 @@ def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, 
         random.seed(seed)
         if start_gen:
             # A file name has been given, then load the data from the file
-            cp = pickle.load(open(locator.get_calibration_cluster_opt_checkpoint(start_gen), "rb"))
+            cp = pickle.load((open(locator.get_calibration_cluster_opt_checkpoint(start_gen), "rb")))
             pop = cp["population"]
             start_generation = cp["generation"]
             halloffame = cp["halloffame"]
@@ -180,8 +174,17 @@ def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, 
             FREQ = 1  # frequence of storage
             if generation % FREQ == 0:
                 # Fill the dictionary using the dict(key=value[, ...]) constructor
-                cp = dict(population=pop, generation=generation, halloffame=halloffame, paretofrontier=paretofrontier,
-                          logbook=log_book, diversity=diversity, rndstate=random.get_state())
+                # round values of fitnesses to 3d
+                cp = dict(population=pop, halloffame=halloffame, paretofrontier=paretofrontier,
+                          population_fitness=[ind.fitness.values for ind in pop],
+                          halloffame_fitness=[ind.fitness.values for ind in halloffame],
+                          paretofrontier_fitness=[ind.fitness.values for ind in paretofrontier],
+                          diversity=diversity, generation=generation, rndstate=random.get_state())
+
+                # code for standalone use
+                t = Thing("foo")
+                Thing.__module__ = 'Fitness'
+                t.save("foo.pickle")
 
                 with open(locator.get_calibration_cluster_opt_checkpoint(generation, building_name), "wb") as cp_file:
                     pickle.dump(cp, cp_file)
@@ -229,63 +232,3 @@ def calc_accuracy(names_of_clusters):
         pi = names_of_clusters.count(single_word) / len_timeseries
         entropy += pi * math.log(pi,2)
     return - entropy/ math.log(len_timeseries,2)
-
-# ++++++++++++++++++++++++++
-# Printing option
-# ++++++++++++++++++++++++++
-
-
-def print_pareto(locator, generation, what_to_plot, building_name, labelx, labely, labelz,
-                 show_benchmarks, show_fitness,  show_in_screen, save_to_disc):
-    """
-    plot front and pareto-optimal forntier
-    :param pop: population of generation to check
-    :param paretoprontier:
-    :return:
-    """
-    # set-up deap library for optimization with 1 objective to minimize and 2 objectives to be maximized
-    deap.creator.create("Fitness", deap.base.Fitness, weights=(1.0, 1.0, 1.0 ))  # maximize shilluette and calinski
-    deap.creator.create("Individual", list, fitness=deap.creator.Fitness)
-
-    #read_checkpoint
-    cp = pickle.load(open(locator.get_calibration_cluster_opt_checkpoint(generation, building_name), "r"))
-    frontier = cp[what_to_plot]
-
-
-    # create figure
-    fig = plt.figure()
-    xs, ys, zs= map(np.array, zip(*[ind.fitness.values for ind in frontier]))
-
-    scalarMap = cmx.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=min(zs), vmax=max(zs)), cmap=plt.get_cmap('jet'))
-    scalarMap.set_array(zs)
-    fig.colorbar(scalarMap, label=labelz)
-
-    ax = fig.add_subplot(111)
-    ax.scatter(xs, ys, c=scalarMap.to_rgba(zs), s=50, alpha=0.8, vmin=0.0, vmax=1.0)
-    ax.set_xlabel(labelx)
-    ax.set_ylabel(labely)
-
-    individuals = [str(ind) for ind in frontier]
-    if show_fitness:
-        for i, txt in enumerate(individuals):
-            ax.annotate(txt, xy=(xs[i], ys[i]))
-
-    if show_benchmarks:
-        number_individuals = len(individuals )
-        #convergence = cp['convergence']
-        diversity = round(cp['diversity'],3)
-        plt.title("No. individuals: "+str(number_individuals)+" Diversity: "+str(diversity))
-
-    # get formatting
-    plt.grid(True)
-    #ax.set_xlim([0, 1])
-    #ax.set_ylim([0, 1])
-    plt.rcParams.update({'font.size': 16})
-    plt.gcf().subplots_adjust(bottom=0.15)
-    if save_to_disc:
-        plt.savefig(os.path.join(locator.get_calibration_clustering_folder(),
-                                 "plot_gen_"+str(generation)+"_building_name_"+building_name+".png"))
-    if show_in_screen:
-        plt.show()
-    plt.clf()
-    return
