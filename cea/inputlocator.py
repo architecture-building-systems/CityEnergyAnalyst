@@ -275,6 +275,10 @@ class InputLocator(object):
         """scenario/outputs/data/calibration"""
         return self._ensure_folder(self.get_calibration_folder(), 'clustering')
 
+    def get_calibration_clustering_clusters_folder(self):
+        """scenario/outputs/data/calibration"""
+        return self._ensure_folder(self.get_calibration_clustering_folder(), 'clusters')
+
     def get_demand_measured_folder(self):
         """scenario/outputs/data/demand"""
         assert False, 'this is the same as get_demand_results_folder'
@@ -291,7 +295,7 @@ class InputLocator(object):
 
     def get_calibration_cluster(self, sax_name):
         """scenario/outputs/data/demand/{sax_name}.csv"""
-        return os.path.join(self.get_calibration_clustering_folder(), '%s.csv' % sax_name)
+        return os.path.join(self.get_calibration_clustering_clusters_folder(), '%s.csv' % sax_name)
 
     def get_calibration_cluster_opt_checkpoint_folder(self):
         return self._ensure_folder(self.get_calibration_clustering_folder(), 'checkpoint')
@@ -302,10 +306,15 @@ class InputLocator(object):
         return os.path.join(self.get_calibration_cluster_opt_checkpoint_folder(),
                             'cp_gen_'+str(generation)+'_building_'+building)
 
+    def get_calibration_cluster_mcda_folder(self):
+        return self._ensure_folder(self.get_calibration_clustering_folder(), "multicriteria")
+
+    def get_calibration_cluster_mcda(self, generation):
+        return os.path.join(self.get_calibration_cluster_mcda_folder(), "mcda_gen_"+str(generation)+".csv")
+
     def get_calibration_clusters_names(self):
         """scenario/outputs/data/demand/{sax_name}.csv"""
-        file = self.get_calibration_folder()
-        return os.path.join(file, 'clustering_main', 'sax_names.csv')
+        return os.path.join(self.get_calibration_clustering_clusters_folder(), 'sax_names.csv')
 
     ##EMISSIONS
     def get_lca_emissions_results_folder(self):

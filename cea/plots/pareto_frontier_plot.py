@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import pickle
 import deap
 
-
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca"]
@@ -41,9 +40,9 @@ def frontier_2D_3OB(input_path, what_to_plot, output_path, labelx, labely, label
 
     #read data form pickle file:
     cp = pickle.load(open(input_path, "rb"))
-    individuals = [str(ind) for ind in cp[what_to_plot]]
-    fitnesses = cp[what_to_plot+"_fitness"]
-    xs, ys, zs = zip(*fitnesses)
+    frontier = cp[what_to_plot]
+    xs, ys, zs = zip(*[ind.fitness.values for ind in frontier])
+    individuals = [str(ind) for ind in frontier]
 
     # create figure
     fig = plt.figure()

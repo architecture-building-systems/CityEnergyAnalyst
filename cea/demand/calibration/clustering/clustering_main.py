@@ -19,6 +19,7 @@ import os, csv
 from cea.demand.calibration.clustering.sax import SAX
 from cea.demand.calibration.clustering.sax_optimization import sax_optimization
 from cea.plots.pareto_frontier_plot import frontier_2D_3OB
+from cea.analysis.mcda import mcda_cluster_main
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -126,10 +127,10 @@ def run_as_script():
 
     #Options
     optimize = False
-    clustering = False
-    plot_pareto = True
+    clustering = True
+    plot_pareto = False
     multicriteria = False
-    building_names = ["B01"]#['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']
+    building_names = ['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']
     building_load = 'Ef_kWh'
 
     if optimize:
@@ -142,21 +143,33 @@ def run_as_script():
                                          number_individuals=number_individuals, number_generations=number_generations,
                                          building_name=name, gv=gv)
     if multicriteria:
-        for name in building_names:
-            generation = 10
-            weight_fitness1 = 0.8
-            weight_fitness2 = 0.17
-            weight_fitness3 = 0.13
-            mcda_cluster_main(locator=locator, data=data, start_generation=start_generation,
-                             number_individuals=number_individuals, number_generations=number_generations,
-                             building_name=name, gv=gv)
+        for i,name in enumerate(building_names):
+            generation = 100
+            weight_fitness1 = 80
+            weight_fitness2 = 20
+            weight_fitness3 = 10
+            what_to_plot = "paretofrontier"
+            output_path = locator.get_calibration_cluster_mcda(generation)
+
+            # read_checkpoint
+            input_path = locator.get_calibration_cluster_opt_checkpoint(generation, name)
+            result = mcda_cluster_main(input_path=input_path, what_to_plot=what_to_plot,
+                                       weight_fitness1=weight_fitness1, weight_fitness2=weight_fitness2,
+                                       weight_fitness3=weight_fitness3)
+            result["name"] = name
+            if i ==0:
+               result_final = pd.DataFrame(result).T
+            else:
+               result_final = result_final.append(pd.DataFrame(result).T, ignore_index=True)
+
+        result_final.to_csv(output_path)
 
     if plot_pareto:
         for name in building_names:
             generation_to_plot = 100
             annotate_benchmarks = True
             annotate_fitness = True
-            show_in_screen = True
+            show_in_screen = False
             save_to_disc = True
             what_to_plot = "paretofrontier" #paretofrontier, halloffame, or population
             labelx = 'Accurracy [-]'
@@ -171,12 +184,12 @@ def run_as_script():
                             labelx= labelx,
                             labely = labely, labelz = labelz, show_benchmarks= annotate_benchmarks,
                             show_fitness=annotate_fitness,
-                            show_in_screen = show_in_screen, save_to_disc=save_to_disc)
-
+                            show_in_screen = show_in_screen,
+                            save_to_disc=save_to_disc)
     if clustering:
         name = 'B01'
         data = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load)
-        word_size = 4
+        word_size = 7
         alphabet_size = 24
         clustering_main(locator=locator, data=data, word_size=word_size, alphabet_size=alphabet_size, gv=gv)
 
