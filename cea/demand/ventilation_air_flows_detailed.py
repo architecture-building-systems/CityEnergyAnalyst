@@ -98,7 +98,7 @@ def get_properties_natural_ventilation(bpr, gv):
     slope_roof = get_building_geometry_ventilation(bpr.geometry)
     class_shielding = gv.shielding_class
 #    factor_cros = bpr.architecture.f_cros
-    factor_cros = 1  # TODO write dict function to look up
+    factor_cros = 0  # TODO write dict function to look up, ZERO is for office and industrial functions
     area_vent_zone = 0  # (cm2) area of ventilation openings # TODO: get from buildings properties
 
     # calculate properties that remain constant in the minimization
