@@ -34,7 +34,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB, start_gen):
+def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, MU, CXPB, start_gen, building_name):
     """
     A multi-objective problem set for three objectives to maximize using the DEAP library and NSGAII algorithm:
     1. Compound function of accurracy, complexity and compression based on the work of
@@ -90,9 +90,9 @@ def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, 
         accurracy = calc_accuracy(sax)
         complexity = calc_complexity(sax)
         compression = calc_compression(ind[0], time_series_len)
-        f1 = accurracy #+ 0.17 * complexity + 0.13 * compression #information objective to maximize
+        f1 = accurracy#0.7 * accurracy + 0.17 * complexity + 0.13 * compression #information objective to maximize
         f2 = complexity #silhouette_score(np.array(data), np.array(sax))  # metrics.silhuette score_score(data, sax)
-        f3 = compression #len(set(sax)) # number of clusters to minimize
+        f3 = compression#silhouette_score(np.array(data), np.array(sax))#len(set(sax)) # number of clusters to minimize
 
         return f1, f2, f3
 
@@ -183,7 +183,7 @@ def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, 
                 cp = dict(population=pop, generation=generation, halloffame=halloffame, paretofrontier=paretofrontier,
                           logbook=log_book, diversity=diversity, rndstate=random.get_state())
 
-                with open(locator.get_calibration_cluster_opt_checkpoint(generation), "wb") as cp_file:
+                with open(locator.get_calibration_cluster_opt_checkpoint(generation, building_name), "wb") as cp_file:
                     pickle.dump(cp, cp_file)
 
     main()
@@ -235,7 +235,7 @@ def calc_accuracy(names_of_clusters):
 # ++++++++++++++++++++++++++
 
 
-def print_pareto(locator, generation, what_to_plot, labelx, labely, labelz,
+def print_pareto(locator, generation, what_to_plot, building_name, labelx, labely, labelz,
                  show_benchmarks, show_fitness,  show_in_screen, save_to_disc):
     """
     plot front and pareto-optimal forntier
@@ -248,7 +248,7 @@ def print_pareto(locator, generation, what_to_plot, labelx, labely, labelz,
     deap.creator.create("Individual", list, fitness=deap.creator.Fitness)
 
     #read_checkpoint
-    cp = pickle.load(open(locator.get_calibration_cluster_opt_checkpoint(generation), "r"))
+    cp = pickle.load(open(locator.get_calibration_cluster_opt_checkpoint(generation, building_name), "r"))
     frontier = cp[what_to_plot]
 
 
@@ -261,7 +261,7 @@ def print_pareto(locator, generation, what_to_plot, labelx, labely, labelz,
     fig.colorbar(scalarMap, label=labelz)
 
     ax = fig.add_subplot(111)
-    ax.scatter(xs, ys, c=scalarMap.to_rgba(zs), s=50, alpha=0.8)
+    ax.scatter(xs, ys, c=scalarMap.to_rgba(zs), s=50, alpha=0.8, vmin=0.0, vmax=1.0)
     ax.set_xlabel(labelx)
     ax.set_ylabel(labely)
 
@@ -278,10 +278,13 @@ def print_pareto(locator, generation, what_to_plot, labelx, labely, labelz,
 
     # get formatting
     plt.grid(True)
+    #ax.set_xlim([0, 1])
+    #ax.set_ylim([0, 1])
     plt.rcParams.update({'font.size': 16})
     plt.gcf().subplots_adjust(bottom=0.15)
     if save_to_disc:
-        plt.savefig(os.path.join(locator.get_calibration_clustering_folder(), "pareto.png"))
+        plt.savefig(os.path.join(locator.get_calibration_clustering_folder(),
+                                 "plot_gen_"+str(generation)+"_building_name_"+building_name+".png"))
     if show_in_screen:
         plt.show()
     plt.clf()

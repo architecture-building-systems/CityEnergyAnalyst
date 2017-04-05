@@ -74,12 +74,13 @@ def clustering_main(locator, data,  word_size, alphabet_size, gv):
     gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
 def optimization_clustering_main(locator, data, start_generation, number_individuals,
-                                 number_generations, gv):
+                                 number_generations, building_name, gv):
     t0 = time.clock()
 
     # set optimization problem for wordzise and alpha number
     sax_optimization(locator, data, time_series_len=24, BOUND_LOW=3, BOUND_UP=24,
-                     NGEN=number_generations, MU=number_individuals, CXPB=0.9, start_gen=start_generation)
+                     NGEN=number_generations, MU=number_individuals, CXPB=0.9, start_gen=start_generation,
+                     building_name=building_name)
 
     gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
@@ -105,36 +106,41 @@ def run_as_script():
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
 
     #Options
-    optimize = True
+    optimize = False
     clustering = False
     plot_pareto = True
-    building_name = 'B01'
-    building_load = 'Qhsf_kWh'
-
-    # read demand datafrom CEA or any other source and aggregate in 24 h interval
-    data = demand_CEA_reader(locator=locator, building_name=building_name, building_load=building_load)
+    building_names = ['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']
+    building_load = 'Ef_kWh'
 
     if optimize:
-        start_generation = None  # or the number of generation to start from
-        number_individuals = 16
-        number_generations = 50
-        optimization_clustering_main(locator=locator, data=data, start_generation=start_generation,
-                                     number_individuals=number_individuals, number_generations=number_generations, gv=gv)
+        for name in building_names:
+            data = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load)
+            start_generation = None  # or the number of generation to start from
+            number_individuals = 8
+            number_generations = 20
+            optimization_clustering_main(locator=locator, data=data, start_generation=start_generation,
+                                         number_individuals=number_individuals, number_generations=number_generations,
+                                         building_name=name, gv=gv)
+
     if plot_pareto:
-        generation_to_plot = 50
-        annotate_benchmarks = True
-        annotate_fitness = True
-        show_in_screen = True
-        save_to_disc = False
-        what_to_plot = "population" #paretofrontier, halloffame, or population
-        labelx = 'Accurracy [-]'
-        labely = 'Complexity [-]'
-        labelz = 'Compression [-]'
-        print_pareto(locator=locator, generation=generation_to_plot, what_to_plot=what_to_plot, labelx= labelx,
-                     labely = labely, labelz = labelz, show_benchmarks= annotate_benchmarks, show_fitness=annotate_fitness,
-                     show_in_screen = show_in_screen, save_to_disc=save_to_disc)
+        for name in building_names:
+            generation_to_plot = 20
+            annotate_benchmarks = True
+            annotate_fitness = True
+            show_in_screen = False
+            save_to_disc = True
+            what_to_plot = "population" #paretofrontier, halloffame, or population
+            labelx = 'Accurracy [-]'
+            labely = 'Inv-complexity[-]'
+            labelz = 'Compression [-]'
+            print_pareto(locator=locator, generation=generation_to_plot, what_to_plot=what_to_plot,
+                         building_name=name, labelx= labelx,
+                         labely = labely, labelz = labelz, show_benchmarks= annotate_benchmarks, show_fitness=annotate_fitness,
+                         show_in_screen = show_in_screen, save_to_disc=save_to_disc)
 
     if clustering:
+        name = 'B01'
+        data = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load)
         word_size = 4
         alphabet_size = 24
         clustering_main(locator=locator, data=data, word_size=word_size, alphabet_size=alphabet_size, gv=gv)
