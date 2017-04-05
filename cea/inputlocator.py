@@ -293,10 +293,13 @@ class InputLocator(object):
         """scenario/outputs/data/demand/{sax_name}.csv"""
         return os.path.join(self.get_calibration_clustering_folder(), '%s.csv' % sax_name)
 
-    def get_calibration_cluster_opt_checkpoint(self, generation):
+    def get_calibration_cluster_opt_checkpoint_folder(self):
+        return self._ensure_folder(self.get_calibration_clustering_folder(), 'checkpoint')
+
+    def get_calibration_cluster_opt_checkpoint(self, generation, building):
         """scenario/outputs/data/demand/{sax_name}.csv"""
         file = self.get_calibration_folder()
-        return os.path.join(self.get_calibration_clustering_folder(), 'checkpoint_gen_'+str(generation))
+        return os.path.join(self.get_calibration_cluster_opt_checkpoint_folder(), 'cp_gen_'+str(generation)+'_building_'+building)
 
     def get_calibration_clusters_names(self):
         """scenario/outputs/data/demand/{sax_name}.csv"""
