@@ -78,7 +78,7 @@ def individual_evaluation(generation, level):
     os.path.join(locator.get_optimization_master_results_folder())
     with open("CheckPointTesting_uncertainty_" + str(level), "wb") as csv_file:
         writer = csv.writer(csv_file)
-        cp = dict(population=pop, generation=generation, objective_function_values=fitness)
+        cp = dict(population=pop, generation=generation, population_fitness=fitness)
         for key, value in cp.items():
             writer.writerow([key, value])
 
