@@ -117,6 +117,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         tsd['ma_sup_hs'][t] = 0
         tsd['Ta_sup_hs'][t] = 0
         tsd['Ta_re_hs'][t] = 0
+        tsd['m_ve_recirculation'][t] = 0
 
         # STEP 5 - latent and sensible heat demand of AC systems
         # ******
@@ -128,7 +129,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
             # update temperatures for over heating case
             if air_con_model_loads_flows_temperatures['q_hs_sen_hvac'] > phi_h_act:
                 phi_h_act_over_heating = air_con_model_loads_flows_temperatures['q_hs_sen_hvac']
-                rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_cooling(
+                rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_heating(
                     phi_h_act_over_heating, bpr, tsd,
                     t)
 
@@ -146,6 +147,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
             tsd['Ta_sup_hs'][t] = air_con_model_loads_flows_temperatures['ta_sup_hs']
             tsd['Ta_re_hs'][t] = air_con_model_loads_flows_temperatures['ta_re_hs']
             tsd['Ehs_lat_aux'][t] = air_con_model_loads_flows_temperatures['e_hs_lat_aux']
+            tsd['m_ve_recirculation'][t] = air_con_model_loads_flows_temperatures['m_ve_hvac_recirculation']
 
         # STEP 6 - emission system losses
         # ******
@@ -212,7 +214,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
 
         # STEP 4
         # ******
-        rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_heating(phi_c_act, bpr, tsd, t)
+        rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_cooling(phi_c_act, bpr, tsd, t)
 
         # write necessary parameters for AC calculation to tsd
         tsd['theta_a'][t] = rc_model_temperatures['theta_a']
@@ -223,6 +225,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         tsd['Qcs_sen_sys'][t] = phi_c_act
         tsd['Qcs_lat_sys'][t] = 0
         tsd['ma_sup_cs'][t] = 0
+        tsd['m_ve_recirculation'][t] = 0
 
         # STEP 5 - latent and sensible heat demand of AC systems
         # ******
@@ -236,7 +239,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
             if air_con_model_loads_flows_temperatures['q_cs_sen_hvac'] < phi_c_act:
 
                 phi_c_act_over_cooling = air_con_model_loads_flows_temperatures['q_cs_sen_hvac']
-                rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_heating(phi_c_act_over_cooling, bpr, tsd,
+                rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_cooling(phi_c_act_over_cooling, bpr, tsd,
                                                                                         t)
                 # update temperatures
                 tsd['theta_a'][t] = rc_model_temperatures['theta_a']
@@ -252,6 +255,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
             tsd['ma_sup_cs'][t] = air_con_model_loads_flows_temperatures['ma_sup_cs']
             tsd['Ta_sup_cs'][t] = air_con_model_loads_flows_temperatures['ta_sup_cs']
             tsd['Ta_re_cs'][t] = air_con_model_loads_flows_temperatures['ta_re_cs']
+            tsd['m_ve_recirculation'][t] = air_con_model_loads_flows_temperatures['m_ve_hvac_recirculation']
 
         # STEP 6 - emission system losses
         # ******
@@ -291,6 +295,7 @@ def update_tsd_no_heating(tsd, t):
     tsd['Ta_sup_hs'][t] = 0  # TODO: this is dangerous as there is no temperature needed, 0 is necessary for 'calc_temperatures_emission_systems' to work
     tsd['Ta_re_hs'][t] = 0  # TODO: this is dangerous as there is no temperature needed, 0 is necessary for 'calc_temperatures_emission_systems' to work
     tsd['Ehs_lat_aux'][t] = 0
+    tsd['m_ve_recirculation'][t] = 0
 
     return
 
@@ -314,5 +319,6 @@ def update_tsd_no_cooling(tsd, t):
     tsd['ma_sup_cs'][t] = 0
     tsd['Ta_sup_cs'][t] = 0  # TODO: this is dangerous as there is no temperature needed, 0 is necessary for 'calc_temperatures_emission_systems' to work
     tsd['Ta_re_cs'][t] = 0  # TODO: this is dangerous as there is no temperature needed, 0 is necessary for 'calc_temperatures_emission_systems' to work
+    tsd['m_ve_recirculation'][t] = 0
 
     return
