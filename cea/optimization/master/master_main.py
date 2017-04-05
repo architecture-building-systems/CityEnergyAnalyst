@@ -115,7 +115,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         with open("CheckPointInitial", "wb") as csv_file:
             fitnesses = map(toolbox.evaluate, pop)
             writer = csv.writer(csv_file)
-            cp = dict(population=pop, generation=0, objective_function_values=fitnesses)
+            cp = dict(population=pop, generation=0, population_fitness=fitnesses)
             for key, value in cp.items():
                 writer.writerow([key, value])
 
@@ -217,7 +217,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             with open("CheckPoint" + str(g),"wb") as csv_file:
                 fitnesses = map(toolbox.evaluate, pop)
                 writer = csv.writer(csv_file)
-                cp = dict(population=pop, generation=g, objective_function_values=fitnesses)
+                cp = dict(population=pop, generation=g, population_fitness=fitnesses)
                 for key, value in cp.items():
                     writer.writerow([key, value])
 
@@ -234,7 +234,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     with open("CheckPointFinal", "wb") as csv_file:
         fitnesses = map(toolbox.evaluate, pop)
         writer = csv.writer(csv_file)
-        cp = dict(population=pop, generation=0, objective_function_values=fitnesses)
+        cp = dict(population=pop, generation='Final', population_fitness=fitnesses)
         for key, value in cp.items():
             writer.writerow([key, value])
         
