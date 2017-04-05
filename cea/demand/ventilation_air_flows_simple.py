@@ -36,7 +36,8 @@ def calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t):
 
     # if has mechanical ventilation and not night flushing : m_ve_mech = m_ve_schedule
     if control_ventilation_systems.is_mechanical_ventilation_active(bpr, tsd, t) \
-            and not control_ventilation_systems.is_night_flushing_active(bpr, tsd, t):
+            and not control_ventilation_systems.is_night_flushing_active(bpr, tsd, t)\
+            and not control_ventilation_systems.is_economizer_active(bpr, tsd, t):
 
         # mechanical ventilation fulfills requirement - ventilation provided by infiltration (similar to CO2 sensor)
 
@@ -49,6 +50,13 @@ def calc_air_mass_flow_mechanical_ventilation(bpr, tsd, t):
         # night flushing according to strategy
         # ventilation with maximum capacity = maximum required ventilation rate
         m_ve_mech = tsd['m_ve_required'].max()  # TODO: some night flushing rule
+
+    elif control_ventilation_systems.has_mechanical_ventilation(bpr) \
+            and control_ventilation_systems.is_economizer_active(bpr, tsd, t):
+
+        # economizer according to strategy
+        # ventilation with maximum capacity = maximum required ventilation rate
+        m_ve_mech = tsd['m_ve_required'].max()
 
     elif not control_ventilation_systems.is_mechanical_ventilation_active(bpr, tsd, t):
 
