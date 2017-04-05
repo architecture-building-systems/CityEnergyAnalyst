@@ -288,4 +288,80 @@ def mcda_differentWeights(pop, pathX):
     return [indexBestOriginal, indexBestEco, indexBestEnv, indexBestSoc]
 
 
+def mcda_analysis(locator, generation, building_name, what_to_plot, weight_fitness1, weight_fitness2, weight_fitness3):
 
+    import deap
+    import pickle
+
+    deap.creator.create("Fitness", deap.base.Fitness, weights=(1.0, 1.0, 1.0))
+    deap.creator.create("Individual", list, fitness=deap.creator.Fitness)
+
+    #read_checkpoint
+    cp = pickle.load(open(locator.get_calibration_cluster_opt_checkpoint(generation, building_name), "r"))
+    frontier = cp[what_to_plot]
+
+    normArray = np.zeros((nPop, 3))
+    scoreArray = np.zeros(nPop)
+
+    # Computes the specific costs and share of local resources for all individual
+    extraIndicators = np.zeros((nPop, 2))
+    index = 0
+    for ind in pop:
+        specificCosts, shareLocal = mcda_indicators(ind, locator, plot=0)
+        # extraIndicators[index][0] = specificCosts
+        extraIndicators[index][1] = shareLocal
+        index += 1
+
+    # Computes the better / worst
+    betterWorstArray = np.zeros((2, nCriteria))
+
+    betterWorstArray[0][0] = min([costs for (costs, CO2, prim) in [ind.fitness.values for ind in pop]])
+    betterWorstArray[1][0] = max([costs for (costs, CO2, prim) in [ind.fitness.values for ind in pop]])
+
+    betterWorstArray[0][1] = min([CO2 for (costs, CO2, prim) in [ind.fitness.values for ind in pop]])
+    betterWorstArray[1][1] = max([CO2 for (costs, CO2, prim) in [ind.fitness.values for ind in pop]])
+
+    betterWorstArray[0][2] = min([prim for (costs, CO2, prim) in [ind.fitness.values for ind in pop]])
+    betterWorstArray[1][2] = max([prim for (costs, CO2, prim) in [ind.fitness.values for ind in pop]])
+
+    # betterWorstArray[0][3] = min ( extraIndicators[:,0] )
+    # betterWorstArray[1][3] = max ( extraIndicators[:,0] )
+
+    betterWorstArray[0][4] = max(extraIndicators[:, 1])
+    betterWorstArray[1][4] = min(extraIndicators[:, 1])
+
+    # Computes the normalized score
+    for objective in range(3):
+        for i in range(nPop):
+            ind = pop[i]
+            normArray[i][objective] = (betterWorstArray[1][objective] - ind.fitness.values[objective]) / (
+            betterWorstArray[1][objective] - betterWorstArray[0][objective])
+    for objective in range(2):
+        for i in range(nPop):
+            ind = pop[i]
+            normArray[i][3 + objective] = (betterWorstArray[1][3 + objective] - extraIndicators[i][objective]) / (
+            betterWorstArray[1][3 + objective] - betterWorstArray[0][3 + objective])
+
+    for i in range(nPop):
+        scoreArray[i] = normArray[i][0] * setWeights.wCosts * setWeights.wEco \
+                        + normArray[i][1] * setWeights.wCO2 * setWeights.wEnv \
+                        + normArray[i][2] * setWeights.wPrim * setWeights.wEnv \
+                        + normArray[i][4] * setWeights.wLocal * setWeights.wSocial
+        # + normArray[i][3] * setWeights.wOpCosts * setWeights.wEco \
+
+    bestInd = pop[0]
+    currentScore = scoreArray[0]
+    indexBest = 0
+    for i in range(nPop):
+        if scoreArray[i] > currentScore:
+            currentScore = scoreArray[i]
+            bestInd = pop[i]
+            indexBest = i
+
+    scoreBest = pop[indexBest].fitness.values[0], \
+                extraIndicators[indexBest][0], \
+                pop[indexBest].fitness.values[1], \
+                pop[indexBest].fitness.values[2], \
+                extraIndicators[indexBest][1]
+
+    return scoreArray, bestInd, indexBest, scoreBest

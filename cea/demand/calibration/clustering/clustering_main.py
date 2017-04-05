@@ -86,6 +86,22 @@ def optimization_clustering_main(locator, data, start_generation, number_individ
 
 
 def demand_CEA_reader(locator, building_name, building_load):
+    """
+    Algorithm to read hourly data of a building load and transform it
+    into an array of 24h sequences.
+
+    :param locator:
+    :type locator: cea.inputlocator.InputLocator
+
+    :param building_name:buidling name as stored in locator.get_demand_results_file()
+    :type
+
+    :param building_load: name of building load to consider. It must exist
+    :return:
+
+    :returns: array with 
+    :rtype: array of arrays
+    """
     # import data
     data = pd.read_csv(locator.get_demand_results_file(building_name),
                        usecols=['DATE', building_load], index_col='DATE')
@@ -109,6 +125,7 @@ def run_as_script():
     optimize = False
     clustering = False
     plot_pareto = True
+    multicriteria = True
     building_names = ['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']
     building_load = 'Ef_kWh'
 
@@ -122,6 +139,16 @@ def run_as_script():
                                          number_individuals=number_individuals, number_generations=number_generations,
                                          building_name=name, gv=gv)
 
+    if multicriteria:
+        for name in building_names:
+            generation = 20
+            weight_fitness1 = 0.8
+            weight_fitness2 = 0.17
+            weight_fitness3 = 0.13
+            mcda_cluster_main(locator=locator, data=data, start_generation=start_generation,
+                             number_individuals=number_individuals, number_generations=number_generations,
+                             building_name=name, gv=gv)
+
     if plot_pareto:
         for name in building_names:
             generation_to_plot = 20
@@ -129,7 +156,7 @@ def run_as_script():
             annotate_fitness = True
             show_in_screen = False
             save_to_disc = True
-            what_to_plot = "population" #paretofrontier, halloffame, or population
+            what_to_plot = "paretofrontier" #paretofrontier, halloffame, or population
             labelx = 'Accurracy [-]'
             labely = 'Inv-complexity[-]'
             labelz = 'Compression [-]'
