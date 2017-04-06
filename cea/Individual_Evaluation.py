@@ -1,8 +1,21 @@
+"""
+This file helps in evaluating individual generation. This will be useful when you need to change the global variables
+and see how the objective function value changes. This can accept both pickle files and csv files. Pickle files are
+the preferred mode as they keep intact the type of the variables being passed, where as the csv files convert everything
+into string format. So this will only useful to see the results but not much further
+
+This is part of the uncertainty analysis
+"""
+__author__ = "Sreepathi Bhargava Krishna"
+__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Sreepathi Bhargava Krishna"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
 def individual_evaluation(generation, level, filetype):
-    import cea.globalvar
-    from pickle import Pickler, Unpickler
-    from deap import base, tools, algorithms
     import cea.optimization.supportFn as sFn
     import cea.inputlocator
     import pandas as pd
@@ -12,7 +25,6 @@ def individual_evaluation(generation, level, filetype):
     import re
     import csv
     from cea.optimization.preprocessing.preprocessing_main import preproccessing
-    j = level
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path)
@@ -20,25 +32,18 @@ def individual_evaluation(generation, level, filetype):
     scenario_path = r'c:\reference-case-zug\baseline'
     locator = cea.inputlocator.InputLocator(scenario_path)
     os.chdir(locator.get_optimization_master_results_folder())
-
-    pareto = []
-    xs = []
-    ys = []
-    zs = []
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     gv.num_tot_buildings = total_demand.Name.count()
 
     if filetype == 'pickle':
-        pop, eps, testedPop, ntwList = sFn.readCheckPoint(locator, generation, 0)
+        pop, eps, testedPop, ntwList, fitness = sFn.readCheckPoint(locator, generation, 0)
     elif filetype == 'csv':
+        pop, eps, testedPop, ntwList, fitness = sFn.readCheckPoint(locator, generation, 0)
         with open("CheckPointcsv" + str(generation), "rb") as csv_file:
             pop = []
-            popfloat = []
             reader = csv.reader(csv_file)
             mydict = dict(reader)
-            nBuildings = len(building_names)
-            ntwList = ["1" * nBuildings]
             population = mydict['population']
             population = re.findall(r'\d+(?:\.\d+)?', population)
             # print (population)
@@ -70,10 +75,8 @@ def individual_evaluation(generation, level, filetype):
         # print (costs, CO2, prim)
         return (costs, CO2, prim)
 
-    nBuildings = len(building_names)
-    # ntwList = ["1" * nBuildings]
     fitness = []
-    for i in xrange(4):
+    for i in xrange(gv.initialInd):
         # print (i)
         # print (pop[i])
         evaluation.checkNtw(pop[i], ntwList, locator, gv)
@@ -89,6 +92,6 @@ def individual_evaluation(generation, level, filetype):
 if __name__ == '__main__':
     generation = 2
     level = 99
-    filetype = 'pickle'  # file type can be either pickle or csv
+    filetype = 'csv'  # file type can be either pickle or csv
 
     individual_evaluation(generation, level, filetype)
