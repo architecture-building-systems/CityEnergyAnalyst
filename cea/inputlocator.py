@@ -281,17 +281,11 @@ class InputLocator(object):
 
     def get_demand_measured_folder(self):
         """scenario/outputs/data/demand"""
-        assert False, 'this is the same as get_demand_results_folder'
-        demand_measured_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'demand')
-        if not os.path.exists(demand_measured_folder):
-            os.makedirs(demand_measured_folder)
-        return demand_measured_folder
+        return self._ensure_folder(self.scenario_path, 'inputs', 'building-metering')
 
     def get_demand_measured_file(self, building_name):
         """scenario/outputs/data/demand/{building_name}.csv"""
-        assert False, 'this is the same as get_demand_results_file'
-        demand_measured_file = self.get_demand_measured_folder()
-        return os.path.join(demand_measured_file, '%s.csv' % building_name)
+        return os.path.join(self.get_demand_measured_folder(), '%s.csv' % building_name)
 
     def get_calibration_cluster(self, sax_name):
         """scenario/outputs/data/demand/{sax_name}.csv"""
@@ -316,6 +310,8 @@ class InputLocator(object):
         """scenario/outputs/data/demand/{sax_name}.csv"""
         return os.path.join(self.get_calibration_clustering_clusters_folder(), 'sax_names.csv')
 
+    def get_calibration_clustering_plots_folder(self):
+        return self._ensure_folder(self.get_calibration_clustering_folder(), "plots")
     ##EMISSIONS
     def get_lca_emissions_results_folder(self):
         """scenario/outputs/data/emissions"""

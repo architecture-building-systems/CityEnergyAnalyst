@@ -16,7 +16,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def frontier_2D_3OB(input_path, what_to_plot, output_path, labelx, labely, labelz,
-                    show_benchmarks=True, show_fitness=True, show_in_screen=False, save_to_disc=True):
+                    show_benchmarks=True, show_fitness=True, show_in_screen=False, save_to_disc=True,
+                    optimal_individual=None):
     """
     This funciton plots 2D scattered data of a 3 objective function
     objective 1 and 2 are plotted in the x and y axes, objective 3 is plotted as a color map
@@ -31,6 +32,7 @@ def frontier_2D_3OB(input_path, what_to_plot, output_path, labelx, labely, label
     :param show_fitness: Flag to show the
     :param show_in_screen: Flag to show plot on the screen
     :param save_to_disc:  Flag to save the plot
+    :param optimal_individual: dafault None, passes data to scatter the top individual.
     :return:
     """
 
@@ -56,18 +58,30 @@ def frontier_2D_3OB(input_path, what_to_plot, output_path, labelx, labely, label
     ax.set_xlabel(labelx)
     ax.set_ylabel(labely)
 
+    #add optimal individual accoridng to multicriteria
+    xs_opt, ys_opt = optimal_individual["fitness1"].values, optimal_individual["fitness2"].values
+    ax.plot(xs_opt, ys_opt, marker='o', color='w', markersize=15)
+    for i, txt in enumerate(optimal_individual["Individual"].values):
+        ax.annotate(txt, xy=(xs_opt[i], ys_opt[i]))
+
+    # plot optimal individual, top and bottom annotations
+    len_series = len(individuals)
     if show_fitness:
         for i, txt in enumerate(individuals):
+            #if xs[i] == max(xs) or xs[i] == min(xs):
             ax.annotate(txt, xy=(xs[i], ys[i]))
+            #elif xs[i]==xs_opt[0] and ys[i] == ys_opt[0]:
+            #    ax.annotate(optimal_individual["Individual"].values[0], xy=(xs[i], ys[i]))
 
     if show_benchmarks:
-        number_individuals = len(individuals )
-        diversity = round(cp['diversity'], 3)
-        plt.title("No. individuals: "+str(number_individuals)+" Diversity: "+str(diversity))
+        #number_individuals = len(individuals)
+        n_clusters_opt = str(round((1- optimal_individual["fitness2"].values[0])*365,0))
+        #diversity = round(cp['diversity'], 3)
+        plt.title("n'= "+n_clusters_opt)
 
     # get formatting
     plt.grid(True)
-    plt.rcParams.update({'font.size': 16})
+    plt.rcParams.update({'font.size': 20})
     plt.gcf().subplots_adjust(bottom=0.15)
     if save_to_disc:
         plt.savefig(output_path)
