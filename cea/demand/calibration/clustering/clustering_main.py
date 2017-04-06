@@ -89,7 +89,7 @@ def optimization_clustering_main(locator, data, start_generation, number_individ
     gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
 
-def demand_CEA_reader(locator, building_name, building_load):
+def demand_CEA_reader(locator, building_name, building_load, type="simulated"):
     """
     Algorithm to read hourly data of a building load and transform it
     into an array of 24h sequences.
@@ -107,8 +107,16 @@ def demand_CEA_reader(locator, building_name, building_load):
     :rtype: array of arrays
     """
     # import data
-    data = pd.read_csv(locator.get_demand_results_file(building_name),
-                       usecols=['DATE', building_load], index_col='DATE')
+    #location of data
+    if type == 'simulation':
+        data = pd.read_csv(locator.get_demand_results_file(building_name),
+                           usecols=['DATE', building_load], index_col='DATE')
+    elif type== 'measured':
+        data = pd.read_csv(locator.get_demand_measured_file(building_name),
+                           usecols=['DATE', building_load], index_col='DATE')
+    else:
+        print 'Error: Make sure you select type equal to either "measured" or "simulated'
+
     data.set_index(pd.to_datetime(data.index), inplace=True)
     data['day'] = data.index.dayofyear
 
@@ -126,18 +134,20 @@ def run_as_script():
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
 
     #Options
-    optimize = False
-    clustering = True
-    plot_pareto = False
-    multicriteria = False
-    building_names = ['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']
+    optimize = True
+    multicriteria = True
+    plot_pareto = True
+    clustering = False
+    building_names = ['M01', 'M02', 'M03']#['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']#['B01']#['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']
     building_load = 'Ef_kWh'
+    type_data = 'measured'
 
     if optimize:
         for name in building_names:
-            data = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load)
+            data = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load,
+                                     type=type_data)
             start_generation = None  # or the number of generation to start from
-            number_individuals = 8
+            number_individuals = 16
             number_generations = 100
             optimization_clustering_main(locator=locator, data=data, start_generation=start_generation,
                                          number_individuals=number_individuals, number_generations=number_generations,
@@ -145,9 +155,9 @@ def run_as_script():
     if multicriteria:
         for i,name in enumerate(building_names):
             generation = 100
-            weight_fitness1 = 80
-            weight_fitness2 = 20
-            weight_fitness3 = 10
+            weight_fitness1 = 0.7
+            weight_fitness2 = 0.2
+            weight_fitness3 = 0.1
             what_to_plot = "paretofrontier"
             output_path = locator.get_calibration_cluster_mcda(generation)
 
@@ -161,21 +171,22 @@ def run_as_script():
                result_final = pd.DataFrame(result).T
             else:
                result_final = result_final.append(pd.DataFrame(result).T, ignore_index=True)
-
         result_final.to_csv(output_path)
 
     if plot_pareto:
         for name in building_names:
             generation_to_plot = 100
             annotate_benchmarks = True
-            annotate_fitness = True
+            annotate_fitness = False
             show_in_screen = False
             save_to_disc = True
             what_to_plot = "paretofrontier" #paretofrontier, halloffame, or population
-            labelx = 'Accurracy [-]'
-            labely = 'Inv-complexity[-]'
-            labelz = 'Compression [-]'
-            output = os.path.join(locator.get_calibration_clustering_folder(),
+            optimal_individual = pd.read_csv(locator.get_calibration_cluster_mcda(generation_to_plot))
+            optimal_individual = optimal_individual.loc[optimal_individual["name"]==name]
+            labelx = 'Accurracy (A) [-]'
+            labely = 'Complexity (B) [-]'
+            labelz = r'Compression ($\Gamma$) [-]'
+            output = os.path.join(locator.get_calibration_clustering_plots_folder(),
                                  "plot_gen_"+str(generation_to_plot)+"_building_name_"+name+".png")
 
             # read_checkpoint
@@ -185,12 +196,16 @@ def run_as_script():
                             labely = labely, labelz = labelz, show_benchmarks= annotate_benchmarks,
                             show_fitness=annotate_fitness,
                             show_in_screen = show_in_screen,
-                            save_to_disc=save_to_disc)
+                            save_to_disc=save_to_disc,
+                            optimal_individual= optimal_individual)
     if clustering:
         name = 'B01'
-        data = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load)
-        word_size = 7
-        alphabet_size = 24
+        data = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load,
+                                 type=type_data)
+        optimal_individual = pd.read_csv(locator.get_calibration_cluster_mcda(generation_to_plot))
+        optimal_individual = optimal_individual.loc[optimal_individual["name"] == name]
+        word_size = 3#7
+        alphabet_size = 4#24
         clustering_main(locator=locator, data=data, word_size=word_size, alphabet_size=alphabet_size, gv=gv)
 
 if __name__ == '__main__':
