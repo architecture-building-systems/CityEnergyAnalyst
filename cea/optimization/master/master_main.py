@@ -10,6 +10,7 @@ import os
 import time
 from pickle import Pickler, Unpickler
 import csv
+import json
 
 import cea.optimization.master.crossover as cx
 import cea.optimization.master.evaluation as evaluation
@@ -113,17 +114,9 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         print "Save Initial population \n"
         os.chdir(locator.get_optimization_master_results_folder())
 
-        with open("CheckPointInitial","wb") as CPwrite:
-            CPpickle = Pickler(CPwrite)
+        with open("CheckPointInitial","wb") as fp:
             cp = dict(population=pop, generation=0, networkList=ntwList, epsIndicator=[], testedPop=[], population_fitness=fitnesses)
-            CPpickle.dump(cp)
-
-        if gv.save_csv_files:
-            with open("CheckPointInitialcsv", "wb") as csv_file:
-                writer = csv.writer(csv_file)
-                cp = dict(population=pop, generation=0, networkList=ntwList, epsIndicator=[], testedPop=[], population_fitness=fitnesses)
-                for key, value in cp.items():
-                    writer.writerow([key, value])
+            json.dump(cp, fp)
 
     else:
         print "Recover from CP " + str(genCP) + "\n"
@@ -220,17 +213,10 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             print "Create CheckPoint", g, "\n"
             fitnesses = map(toolbox.evaluate, pop)
             os.chdir(locator.get_optimization_master_results_folder())
-            with open("CheckPoint" + str(g), "wb") as CPwrite:
-                CPpickle = Pickler(CPwrite)
-                cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind, population_fitness=fitnesses)
-                CPpickle.dump(cp)
-
-            if gv.save_csv_files:
-                with open("CheckPointcsv" + str(g),"wb") as csv_file:
-                    writer = csv.writer(csv_file)
-                    cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind, population_fitness=fitnesses)
-                    for key, value in cp.items():
-                        writer.writerow([key, value])
+            with open("CheckPoint" + str(g), "wb") as fp:
+                cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind,
+                          population_fitness=fitnesses)
+                json.dump(cp, fp)
 
     if g == gv.NGEN:
         print "Final Generation reached"
@@ -242,18 +228,11 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     print "Epsilon indicator", epsInd, "\n"
     fitnesses = map(toolbox.evaluate, pop)
     os.chdir(locator.get_optimization_master_results_folder())
-    with open("CheckPointFinal", "wb") as CPwrite:
-        CPpickle = Pickler(CPwrite)
-        cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind, population_fitness=fitnesses)
-        CPpickle.dump(cp)
+    with open("CheckPointFinal", "wb") as fp:
+        cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind,
+                  population_fitness=fitnesses)
+        json.dump(cp, fp)
 
-    if gv.save_csv_files:
-        with open("CheckPointFinalcsv", "wb") as csv_file:
-            writer = csv.writer(csv_file)
-            cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind, population_fitness=fitnesses)
-            for key, value in cp.items():
-                writer.writerow([key, value])
-        
     print "Master Work Complete \n"
     
     return pop, epsInd

@@ -24,24 +24,27 @@ def individual_evaluation(generation, level, filetype):
     import os
     import re
     import csv
+    import json
     from cea.optimization.preprocessing.preprocessing_main import preproccessing
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path)
     weather_file = locator.get_default_weather()
-    scenario_path = r'c:\reference-case-zug\baseline'
-    locator = cea.inputlocator.InputLocator(scenario_path)
     os.chdir(locator.get_optimization_master_results_folder())
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     gv.num_tot_buildings = total_demand.Name.count()
 
+    with open("CheckPointInitialjson", "rb") as fp:
+        data = json.load(fp)
+    print ((data['population']))
     if filetype == 'pickle':
         pop, eps, testedPop, ntwList, fitness = sFn.readCheckPoint(locator, generation, 0)
     elif filetype == 'csv':
         pop, eps, testedPop, ntwList, fitness = sFn.readCheckPoint(locator, generation, 0)
         with open("CheckPointcsv" + str(generation), "rb") as csv_file:
             pop = []
+            ntwList =[]
             reader = csv.reader(csv_file)
             mydict = dict(reader)
             population = mydict['population']
@@ -54,7 +57,13 @@ def individual_evaluation(generation, level, filetype):
                     popfloat[i] = int(popfloat[i])
 
             for i in xrange(len(popfloat)/45):
-                pop.append(popfloat[i*45:(((i+1)*45)-1)])
+                pop.append(popfloat[i*45:(((i+1)*45))])
+
+            network = mydict['networkList']
+            network = re.findall(r'\d+', network)
+            for i in xrange(len(network)):
+                ntwList.append(long(network[i]))
+            print (ntwList)
 
     # print (len(pop))
     total_demand = pd.read_csv(locator.get_total_demand())
@@ -90,8 +99,8 @@ def individual_evaluation(generation, level, filetype):
             writer.writerow([key, value])
 
 if __name__ == '__main__':
-    generation = 2
-    level = 99
+    generation = 3
+    level = 99  # specifying parameters of which level need to be used in uncertainty analysis
     filetype = 'csv'  # file type can be either pickle or csv
 
     individual_evaluation(generation, level, filetype)
