@@ -121,7 +121,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         if gv.save_csv_files:
             with open("CheckPointInitialcsv", "wb") as csv_file:
                 writer = csv.writer(csv_file)
-                cp = dict(population=pop, generation=0, population_fitness=fitnesses)
+                cp = dict(population=pop, generation=0, networkList=ntwList, epsIndicator=[], testedPop=[], population_fitness=fitnesses)
                 for key, value in cp.items():
                     writer.writerow([key, value])
 
@@ -229,7 +229,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
             if gv.save_csv_files:
                 with open("CheckPointcsv" + str(g),"wb") as csv_file:
                     writer = csv.writer(csv_file)
-                    cp = dict(population=pop, generation=g, population_fitness=fitnesses)
+                    cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind, population_fitness=fitnesses)
                     for key, value in cp.items():
                         writer.writerow([key, value])
 
@@ -251,7 +251,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     if gv.save_csv_files:
         with open("CheckPointFinalcsv", "wb") as csv_file:
             writer = csv.writer(csv_file)
-            cp = dict(population=pop, generation='Final', population_fitness=fitnesses)
+            cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind, population_fitness=fitnesses)
             for key, value in cp.items():
                 writer.writerow([key, value])
         
