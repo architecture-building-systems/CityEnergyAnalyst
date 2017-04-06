@@ -1,16 +1,11 @@
 
-def individual_evaluation(generation, level):
+def individual_evaluation(generation, level, filetype):
     import cea.globalvar
+    from pickle import Pickler, Unpickler
     import cea.inputlocator
-    import csv
     import pandas as pd
     import cea.optimization.distribution.network_opt_main as network_opt
-    import cea.optimization.master.master_main as master
     import cea.optimization.master.evaluation as evaluation
-    import matplotlib
-    import matplotlib.cm as cmx
-    import matplotlib.pyplot as plt
-    from mpl_toolkits.mplot3d import Axes3D
     import os
     import re
     import csv
@@ -29,23 +24,30 @@ def individual_evaluation(generation, level):
     ys = []
     zs = []
 
-    with open("CheckPoint" + str(generation), "rb") as csv_file:
-        pop = []
-        popfloat = []
-        reader = csv.reader(csv_file)
-        mydict = dict(reader)
-        population = mydict['population']
-        population = re.findall(r'\d+(?:\.\d+)?', population)
-        # print (population)
-        popfloat = [float(x) for x in population]
+    if filetype == 'pickle':
+        with open("CheckPoint" + str(generation), "rb") as CPread:
+            CPunpick = Unpickler(CPread)
+            cp = CPunpick.load()
+            pop = cp["population"]
+            ntwList = cp["networkList"]
+            epsInd = cp["epsIndicator"]
+    elif filetype == 'csv':
+        with open("CheckPoint" + str(generation), "rb") as csv_file:
+            pop = []
+            popfloat = []
+            reader = csv.reader(csv_file)
+            mydict = dict(reader)
+            population = mydict['population']
+            population = re.findall(r'\d+(?:\.\d+)?', population)
+            # print (population)
+            popfloat = [float(x) for x in population]
 
-        for i in xrange(len(popfloat)):
-            if popfloat[i] - int(popfloat[i]) == 0:
-                popfloat[i] = int(popfloat[i])
+            for i in xrange(len(popfloat)):
+                if popfloat[i] - int(popfloat[i]) == 0:
+                    popfloat[i] = int(popfloat[i])
 
-
-        for i in xrange(len(popfloat)/45):
-            pop.append(popfloat[i*45:(((i+1)*45)-1)])
+            for i in xrange(len(popfloat)/45):
+                pop.append(popfloat[i*45:(((i+1)*45)-1)])
 
     # print (len(pop))
     total_demand = pd.read_csv(locator.get_total_demand())
@@ -85,5 +87,6 @@ def individual_evaluation(generation, level):
 if __name__ == '__main__':
     generation = 5
     level = 99
+    filetype = 'pickle'  # file type can be either pickle or csv
 
-    individual_evaluation(generation, level)
+    individual_evaluation(generation, level, filetype)
