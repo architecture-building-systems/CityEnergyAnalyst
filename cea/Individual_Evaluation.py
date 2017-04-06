@@ -15,15 +15,13 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def individual_evaluation(generation, level, filetype):
-    import cea.optimization.supportFn as sFn
+def individual_evaluation(generation, level):
+
     import cea.inputlocator
     import pandas as pd
     import cea.optimization.distribution.network_opt_main as network_opt
     import cea.optimization.master.evaluation as evaluation
     import os
-    import re
-    import csv
     import json
     from cea.optimization.preprocessing.preprocessing_main import preproccessing
     gv = cea.globalvar.GlobalVariables()
@@ -35,37 +33,11 @@ def individual_evaluation(generation, level, filetype):
     building_names = total_demand.Name.values
     gv.num_tot_buildings = total_demand.Name.count()
 
-    with open("CheckPointInitialjson", "rb") as fp:
+    with open("CheckPoint" + str(generation), "rb") as fp:
         data = json.load(fp)
-    print ((data['population']))
-    if filetype == 'pickle':
-        pop, eps, testedPop, ntwList, fitness = sFn.readCheckPoint(locator, generation, 0)
-    elif filetype == 'csv':
-        pop, eps, testedPop, ntwList, fitness = sFn.readCheckPoint(locator, generation, 0)
-        with open("CheckPointcsv" + str(generation), "rb") as csv_file:
-            pop = []
-            ntwList =[]
-            reader = csv.reader(csv_file)
-            mydict = dict(reader)
-            population = mydict['population']
-            population = re.findall(r'\d+(?:\.\d+)?', population)
-            # print (population)
-            popfloat = [float(x) for x in population]
 
-            for i in xrange(len(popfloat)):
-                if popfloat[i] - int(popfloat[i]) == 0:
-                    popfloat[i] = int(popfloat[i])
-
-            for i in xrange(len(popfloat)/45):
-                pop.append(popfloat[i*45:(((i+1)*45))])
-
-            network = mydict['networkList']
-            network = re.findall(r'\d+', network)
-            for i in xrange(len(network)):
-                ntwList.append(long(network[i]))
-            print (ntwList)
-
-    # print (len(pop))
+    pop = data['population']
+    ntwList = data['networkList']
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand.Name.values
     gv.num_tot_buildings = total_demand.Name.count()
@@ -73,11 +45,7 @@ def individual_evaluation(generation, level, filetype):
     extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand,
                                                                                      building_names,
                                                                                      weather_file, gv)
-
-
-
     network_features = network_opt.network_opt_main()
-
     def objective_function(ind):
         (costs, CO2, prim) = evaluation.evaluation_main(ind, building_names, locator, extra_costs, extra_CO2, extra_primary_energy, solarFeat,
                                                         network_features, gv)
@@ -86,21 +54,17 @@ def individual_evaluation(generation, level, filetype):
 
     fitness = []
     for i in xrange(gv.initialInd):
-        # print (i)
-        # print (pop[i])
         evaluation.checkNtw(pop[i], ntwList, locator, gv)
         fitness.append(objective_function(pop[i]))
 
     os.chdir(locator.get_optimization_master_results_folder())
-    with open("CheckPointTesting_uncertainty_" + str(level), "wb") as csv_file:
-        writer = csv.writer(csv_file)
+    with open("CheckPointTesting_uncertainty_" + str(level), "wb") as fp:
         cp = dict(population=pop, generation=generation, population_fitness=fitness)
-        for key, value in cp.items():
-            writer.writerow([key, value])
+        json.dump(cp, fp)
+
 
 if __name__ == '__main__':
     generation = 3
     level = 99  # specifying parameters of which level need to be used in uncertainty analysis
-    filetype = 'csv'  # file type can be either pickle or csv
 
-    individual_evaluation(generation, level, filetype)
+    individual_evaluation(generation, level)
