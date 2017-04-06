@@ -2,6 +2,8 @@
 def individual_evaluation(generation, level, filetype):
     import cea.globalvar
     from pickle import Pickler, Unpickler
+    from deap import base, tools, algorithms
+    import cea.optimization.supportFn as sFn
     import cea.inputlocator
     import pandas as pd
     import cea.optimization.distribution.network_opt_main as network_opt
@@ -23,20 +25,20 @@ def individual_evaluation(generation, level, filetype):
     xs = []
     ys = []
     zs = []
+    total_demand = pd.read_csv(locator.get_total_demand())
+    building_names = total_demand.Name.values
+    gv.num_tot_buildings = total_demand.Name.count()
 
     if filetype == 'pickle':
-        with open("CheckPoint" + str(generation), "rb") as CPread:
-            CPunpick = Unpickler(CPread)
-            cp = CPunpick.load()
-            pop = cp["population"]
-            ntwList = cp["networkList"]
-            epsInd = cp["epsIndicator"]
+        pop, eps, testedPop, ntwList = sFn.readCheckPoint(locator, generation, 0)
     elif filetype == 'csv':
-        with open("CheckPoint" + str(generation), "rb") as csv_file:
+        with open("CheckPointcsv" + str(generation), "rb") as csv_file:
             pop = []
             popfloat = []
             reader = csv.reader(csv_file)
             mydict = dict(reader)
+            nBuildings = len(building_names)
+            ntwList = ["1" * nBuildings]
             population = mydict['population']
             population = re.findall(r'\d+(?:\.\d+)?', population)
             # print (population)
@@ -69,9 +71,9 @@ def individual_evaluation(generation, level, filetype):
         return (costs, CO2, prim)
 
     nBuildings = len(building_names)
-    ntwList = ["1" * nBuildings]
+    # ntwList = ["1" * nBuildings]
     fitness = []
-    for i in xrange(20):
+    for i in xrange(4):
         # print (i)
         # print (pop[i])
         evaluation.checkNtw(pop[i], ntwList, locator, gv)
@@ -85,7 +87,7 @@ def individual_evaluation(generation, level, filetype):
             writer.writerow([key, value])
 
 if __name__ == '__main__':
-    generation = 5
+    generation = 2
     level = 99
     filetype = 'pickle'  # file type can be either pickle or csv
 

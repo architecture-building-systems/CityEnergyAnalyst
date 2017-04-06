@@ -549,7 +549,7 @@ class GlobalVariables(object):
         self.CC_n = x[x['name'] == 'CC_n']['default'].max()  # lifetime default 25
         self.FC_n = x[x['name'] == 'FC_n']['default'].max()  # years of operation default 10
         self.PVT_n = x[x['name'] == 'PVT_n']['default'].max()  # years of operation default 20
-        self.SC_n = x[x['name'] == 'SC_n']['default'].max()  # years of operation default 20
+        self.SC_n = self.PVT_n  # years of operation default 20
         self.CT_a = x[x['name'] == 'CT_a']['default'].max()  # annuity factor default 0.15
         self.Subst_n = x[x['name'] == 'Subst_n']['default'].max()  # Lifetime after A+W default 20
         self.ELEC_PRICE = x[x['name'] == 'ELEC_PRICE']['default'].max() * self.EURO_TO_CHF / 1000.0  # default 0.2

@@ -151,6 +151,7 @@ def readCheckPoint(locator, genCP, storeData):
         cp = CPunpick.load()
         pop = cp["population"]
         eps = cp["epsIndicator"]
+        ntwList = cp["networkList"]
         testedPop = cp["testedPop"]
 
     if storeData == 1:
@@ -185,7 +186,7 @@ def readCheckPoint(locator, genCP, storeData):
                                            "ParetoValuesAndKeysGeneration%(genCP)s.csv" % locals())
         results.to_csv(pareto_results_file, sep=',')
 
-    return pop, eps, testedPop
+    return pop, eps, testedPop, ntwList
 
 
 def calc_num_buildings(data_path, totalfilename):
