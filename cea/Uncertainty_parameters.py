@@ -260,7 +260,7 @@ def run_as_script(scenario_path):
     df.columns = cols
     print (df)
     locator.get_uncertainty_parameters()
-    df.to_csv(scenario_path + "\uncertainty.csv")
+    df.to_csv(locator.get_optimization_master_results_folder() + "\uncertainty.csv")
 
 
     print 'Uncertain Parameters have been generated for the given economic scenarios'

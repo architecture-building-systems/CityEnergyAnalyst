@@ -506,40 +506,6 @@ class GlobalVariables(object):
         self.initial_temp_air_prev = 21
         self.initial_temp_m_prev = 16
 
-        # # Uncertainty Part
-        # import csv
-        # locator = cea.inputlocator.InputLocator(r'c:\reference-case-zug\baseline')
-        # os.chdir(locator.get_optimization_master_results_folder())
-        # row = []
-        # with open('uncertainty.csv') as f:
-        #     reader = csv.reader(f)
-        #     for i in xrange(101):
-        #         row.append(next(reader))
-        #
-        # j = 99
-        # j = j + 1
-        # # Uncertainty
-        # self.HP_n = float(row[j][1])  # lifetime [years] default 20
-        # self.GHP_nHP = float(row[j][2])  # for the geothermal heat pump default 20
-        # self.Boiler_n = float(row[j][3])  # lifetime, after A+W, default 20
-        # self.CC_n = float(row[j][4])  # lifetime default 25
-        # self.FC_n = float(row[j][5])  # years of operation default 10
-        # self.PVT_n = float(row[j][8])  # years of operation default 20
-        # self.SC_n = self.PVT_n  # years of operation default 20
-        # self.CT_a = 1/(float(row[j][9]))  # annuity factor default 0.15
-        # self.Subst_n = float(row[j][11])  # Lifetime after A+W default 20
-        # self.ELEC_PRICE = float(row[j][13]) * self.EURO_TO_CHF / 1000.0  # default 0.2
-        # # self.ELEC_PRICE_KEV = 1.5 * ELEC_PRICE # MAKE RESEARCH ABOUT A PROPER PRICE AND DOCUMENT THAT!
-        # # self.ELEC_PRICE_GREEN = 1.5 * ELEC_PRICE
-        # self.NG_PRICE = float(row[j][14]) * self.EURO_TO_CHF / 1000.0  # [CHF / wh] # default 0.068
-        # self.BG_PRICE = float(row[j][15]) * self.EURO_TO_CHF / 1000.0  # [CHF / wh] # default 0.076
-        # self.cPump = self.ELEC_PRICE * 24. * 365.  # coupled to electricity cost
-        # self.Subst_i = float(row[j][16])/100 # default 0.05
-        # self.FC_i = float(row[j][16]) /100 # interest rate default 0.05
-        # self.HP_i = float(row[j][16])/100  # interest rate default 0.05
-        # self.Boiler_i = float(row[j][16])/100  # interest rate default 0.05
-
-
         locator = cea.inputlocator.InputLocator(scenario_path=self.scenario_reference)
         x = pd.read_excel(locator.get_uncertainty_db(), 'ECONOMIC')
 
