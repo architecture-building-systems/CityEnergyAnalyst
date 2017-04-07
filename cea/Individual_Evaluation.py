@@ -2,6 +2,8 @@
 This file helps in evaluating individual generation. This will be useful when you need to change the global variables
 and see how the objective function value changes. 
 
+Do ensure you have the uncertainty.csv which will be obtained by running uncertainty_parameters.py
+
 This is part of the uncertainty analysis
 """
 __author__ = "Sreepathi Bhargava Krishna"
