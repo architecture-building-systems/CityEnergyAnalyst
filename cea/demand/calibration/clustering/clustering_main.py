@@ -68,12 +68,26 @@ def clustering_main(locator, data,  word_size, alphabet_size, gv):
 
     # save individual results to disk # create group by pattern
     grouped_sax = df.groupby('sax')
+    means = pd.DataFrame()
+    counter = 0
     for name, group in grouped_sax:
-        result = group.T.drop(['sax', 'day'], axis=0)
+        # total of time series and every sax
+        result = group.T.drop(['day','sax'], axis=0)
         result.to_csv(locator.get_calibration_cluster(name))
-        result.plot()
-        plt.show()
-    print
+
+        # calculate mean
+        mean_df = result.mean(axis=1)
+        if len(result.columns) >=3:
+            if counter == 0:
+                means = pd.DataFrame({name:mean_df.values})
+            else:
+                means = means.join(pd.DataFrame({name:mean_df.values}))
+            counter +=1
+
+    means.to_csv(locator.get_calibration_cluster(name+'_mean'))
+    means.plot()
+    plt.show()
+
 
     gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
@@ -138,7 +152,7 @@ def run_as_script():
     multicriteria = True
     plot_pareto = True
     clustering = False
-    building_names = ['M01', 'M02', 'M03']#['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']#['B01']#['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']
+    building_names = ['M01','M02','M03']#['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']#['B01']#['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']
     building_load = 'Ef_kWh'
     type_data = 'measured'
 
@@ -155,9 +169,9 @@ def run_as_script():
     if multicriteria:
         for i,name in enumerate(building_names):
             generation = 100
-            weight_fitness1 = 0.7
-            weight_fitness2 = 0.2
-            weight_fitness3 = 0.1
+            weight_fitness1 = 0.9 # accurracy
+            weight_fitness2 = 0.7 # complexity
+            weight_fitness3 = 0.7 # compression
             what_to_plot = "paretofrontier"
             output_path = locator.get_calibration_cluster_mcda(generation)
 
@@ -199,13 +213,13 @@ def run_as_script():
                             save_to_disc=save_to_disc,
                             optimal_individual= optimal_individual)
     if clustering:
-        name = 'B01'
+        name = 'M02'
         data = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load,
                                  type=type_data)
-        optimal_individual = pd.read_csv(locator.get_calibration_cluster_mcda(generation_to_plot))
-        optimal_individual = optimal_individual.loc[optimal_individual["name"] == name]
+        #optimal_individual = pd.read_csv(locator.get_calibration_cluster_mcda(generation_to_plot))
+        #optimal_individual = optimal_individual.loc[optimal_individual["name"] == name]
         word_size = 3#7
-        alphabet_size = 4#24
+        alphabet_size = 23#24
         clustering_main(locator=locator, data=data, word_size=word_size, alphabet_size=alphabet_size, gv=gv)
 
 if __name__ == '__main__':
