@@ -54,13 +54,13 @@ def frontier_2D_3OB(input_path, what_to_plot, output_path, labelx, labely, label
     fig.colorbar(scalarMap, label=labelz)
 
     ax = fig.add_subplot(111)
-    ax.scatter(xs, ys, c=scalarMap.to_rgba(zs), s=50, alpha=0.8, vmin=0.0, vmax=1.0)
+    ax.scatter(xs, ys, c=scalarMap.to_rgba(zs), s=100, alpha=0.8, vmin=0.0, vmax=1.0)
     ax.set_xlabel(labelx)
     ax.set_ylabel(labely)
 
     #add optimal individual accoridng to multicriteria
     xs_opt, ys_opt = optimal_individual["fitness1"].values, optimal_individual["fitness2"].values
-    ax.plot(xs_opt, ys_opt, marker='o', color='w', markersize=15)
+    ax.plot(xs_opt, ys_opt, marker='o', color='w', markersize=20)
     for i, txt in enumerate(optimal_individual["Individual"].values):
         ax.annotate(txt, xy=(xs_opt[i], ys_opt[i]))
 
@@ -81,11 +81,12 @@ def frontier_2D_3OB(input_path, what_to_plot, output_path, labelx, labely, label
 
     # get formatting
     plt.grid(True)
-    plt.rcParams.update({'font.size': 20})
-    plt.gcf().subplots_adjust(bottom=0.15)
+    plt.rcParams.update({'font.size': 24})
+    plt.tight_layout()
+    #plt.gcf().subplots_adjust(bottom=0.15)
     if save_to_disc:
         plt.savefig(output_path)
     if show_in_screen:
         plt.show()
-    plt.clf()
+    plt.close(fig)
     return
