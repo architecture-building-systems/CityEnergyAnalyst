@@ -1,24 +1,25 @@
-# THE CITY ENERGY ANALYST
+THE CITY ENERGY ANALYST
+=========================
 
-## Quick tour
+The City Energy Analyst (CEA) is an urban building simulation platform and one of the first open-source initiatives of computation tools for the design of low-carbon and highly efficient cities. The CEA combines knowledge of urban planning and energy systems engineering in an integrated simulation platform. This allows to study the effects, trade-offs and synergies of urban design options and energy infrastructure plans.
 
-The city energy analyst (CEA) is an urban simulation engine created to assess multiple energy efficiency strategies in urban areas. The CEA offers tools for the analysis of the carbon, financial and environmental benefits of the next strategies in an urban area:
+Learn more:
+-----------
 
-1. **Building retrofits**: Appliances and lighting, building envelope, HVAC systems (incl. Control strategies)
-2. **Integration of local energy sources**: renewable and waste-to-heat energy sources.
-3. **Infrastructure retrofits**: decentralized and centralized thermal micro-grids and conversion technologies.
-4. **Modifications to urban form**: new zoning, changes in occupancy and building typology.
+https://www.cityenergyanalyst.com/
 
-## Documentation and style guide
+Documentation CEA Planners
+---------------------------
 
-Documentation is still a work-in-progress and is available in [here](https://architecture-building-systems.gitbooks.io/cea-toolbox-for-arcgis-manual/content/).
-To start with a new project and get a sample data, please contact us
+https://cityenergyanalyst.com/installation-1/
 
-##Check me out on Video
+Documentation CEA Research
+---------------------------
 
-[here](https://vimeo.com/futurecitieslaboratory/the_city_energy_analyst)
+(https://architecture-building-systems.gitbooks.io/cea-toolbox-for-arcgis-manual/content/).
 
-## Contact
+Contact
+--------
 
 cea@arch.ethz.ch
 
