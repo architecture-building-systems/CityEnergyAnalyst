@@ -39,7 +39,7 @@ def individual_evaluation(generation, level, size):
 
     # # Uncertainty Part
     row = []
-    with open('uncertainty.csv') as f:
+    with open('uncertainty1000.csv') as f:
         reader = csv.reader(f)
         for i in xrange(size+1):
             row.append(next(reader))
@@ -150,8 +150,9 @@ def individual_evaluation(generation, level, size):
 
 
 if __name__ == '__main__':
-    generation = 3  # generation which you are interested in testing
+    generation = 50  # generation which you are interested in testing
     level = 5  # specifying parameters of which level need to be used in uncertainty analysis
-    size = 100  # number of uncertain scenarios being tested
+    size = 1000  # number of uncertain scenarios being tested
 
-    individual_evaluation(generation, level, size)
+    for i in xrange(1000):
+        individual_evaluation(generation, i, size)
