@@ -19,7 +19,7 @@ def frontier_2D_3OB(input_path, what_to_plot, output_path, labelx, labely, label
                     show_benchmarks=True, show_fitness=True, show_in_screen=False, save_to_disc=True,
                     optimal_individual=None):
     """
-    This funciton plots 2D scattered data of a 3 objective function
+    This function plots 2D scattered data of a 3 objective function
     objective 1 and 2 are plotted in the x and y axes, objective 3 is plotted as a color map
 
     :param input_path: path to pickle file storing the data about the front to plt

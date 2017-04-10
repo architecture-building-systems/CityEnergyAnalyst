@@ -20,6 +20,7 @@ from cea.demand.calibration.clustering.sax import SAX
 from cea.demand.calibration.clustering.sax_optimization import sax_optimization
 from cea.plots.pareto_frontier_plot import frontier_2D_3OB
 from cea.analysis.mcda import mcda_cluster_main
+from cea.plots.clusters_plot import clusters_day_mean
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -77,17 +78,18 @@ def clustering_main(locator, data,  word_size, alphabet_size, gv):
 
         # calculate mean
         mean_df = result.mean(axis=1)
-        if len(result.columns) >=3:
-            if counter == 0:
-                means = pd.DataFrame({name:mean_df.values})
-            else:
-                means = means.join(pd.DataFrame({name:mean_df.values}))
-            counter +=1
 
-    means.to_csv(locator.get_calibration_cluster(name+'_mean'))
-    means.plot()
-    plt.show()
+        if counter == 0:
+            means = pd.DataFrame({name:mean_df.values})
+        else:
+            means = means.join(pd.DataFrame({name:mean_df.values}))
+        counter +=1
 
+    # print means
+    means.to_csv(locator.get_calibration_cluster('clusters_mean'), index=False)
+
+    # print names of clusters
+    pd.DataFrame({"SAX":means.columns.values}).to_csv(locator.get_calibration_cluster('clusters_sax'), index=False)
 
     gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
@@ -152,7 +154,8 @@ def run_as_script():
     multicriteria = True
     plot_pareto = True
     clustering = False
-    building_names = ['M01','M02','M03']#['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']#['B01']#['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']
+    cluster_plot = False
+    building_names = ['M01']#['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']#['B01']#['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']
     building_load = 'Ef_kWh'
     type_data = 'measured'
 
@@ -169,9 +172,9 @@ def run_as_script():
     if multicriteria:
         for i,name in enumerate(building_names):
             generation = 100
-            weight_fitness1 = 0.9 # accurracy
-            weight_fitness2 = 0.7 # complexity
-            weight_fitness3 = 0.7 # compression
+            weight_fitness1 = 100 # accurracy
+            weight_fitness2 = 80 # complexity
+            weight_fitness3 = 80 # compression
             what_to_plot = "paretofrontier"
             output_path = locator.get_calibration_cluster_mcda(generation)
 
@@ -213,14 +216,29 @@ def run_as_script():
                             save_to_disc=save_to_disc,
                             optimal_individual= optimal_individual)
     if clustering:
-        name = 'M02'
+        name = 'M03'
         data = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load,
                                  type=type_data)
-        #optimal_individual = pd.read_csv(locator.get_calibration_cluster_mcda(generation_to_plot))
-        #optimal_individual = optimal_individual.loc[optimal_individual["name"] == name]
-        word_size = 3#7
-        alphabet_size = 23#24
+        word_size = 3
+        alphabet_size = 4
         clustering_main(locator=locator, data=data, word_size=word_size, alphabet_size=alphabet_size, gv=gv)
+
+    if cluster_plot:
+        save_to_disc = True
+        show_in_screen = False
+        show_legend = True
+        labelx = "Hour of the day"
+        labely = "Electriicty load [kW]"
+        input_path = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load,
+                          type=type_data)
+        #input_path = locator.get_calibration_cluster('clusters_mean')
+        output_path = os.path.join(locator.get_calibration_clustering_plots_folder(),
+                             "w_a_"+str(word_size)+"_"+str(alphabet_size)+"_building_name_"+name+".png")
+
+        clusters_day_mean(input_path=input_path, output_path=output_path,labelx=labelx,
+                          labely=labely, save_to_disc=save_to_disc, show_in_screen=show_in_screen,
+                          show_legend=show_legend)
+
 
 if __name__ == '__main__':
     run_as_script()
