@@ -154,5 +154,6 @@ if __name__ == '__main__':
     level = 5  # specifying parameters of which level need to be used in uncertainty analysis
     size = 1000  # number of uncertain scenarios being tested
 
-    for i in xrange(1000):
+    for i in xrange(750):
+        i = i + 253
         individual_evaluation(generation, i, size)
