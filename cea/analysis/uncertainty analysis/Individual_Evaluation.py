@@ -153,6 +153,6 @@ if __name__ == '__main__':
     generation = 50  # generation which you are interested in testing
     size = 1000  # number of uncertain scenarios being tested
 
-    for i in xrange(750):
-        i = i + 253
+    for i in xrange(1000):
+        i = i + 1
         individual_evaluation(generation, i, size)
