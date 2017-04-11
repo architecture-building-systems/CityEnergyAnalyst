@@ -25,7 +25,8 @@ if os.environ.get('READTHEDOCS', False) == 'True':
 else:
     # TODO: list all the requirements for installing
     INSTALL_REQUIRES = ['geopandas', 'pandas', 'shapely', 'fiona', 'descartes', 'pyproj', 'xlrd', 'requests',
-                        'doit==0.29.0', 'pyshp', 'pysal', 'ephem']
+                        'doit==0.29.0', 'pyshp', 'pysal', 'ephem', 'lxml', 'pycollada',
+                        'OCCUtils>=0.1-dev']
 
 
 setup(name='cityenergyanalyst',
@@ -39,6 +40,7 @@ setup(name='cityenergyanalyst',
       py_modules=[''],
       packages=find_packages(),
       package_data={},
+      dependency_links = ['https://github.com/tpaviot/pythonocc-utils/tarball/master#egg=OCCUtils-0.1-dev'],
       install_requires=INSTALL_REQUIRES,
       include_package_data=True,
       entry_points={
