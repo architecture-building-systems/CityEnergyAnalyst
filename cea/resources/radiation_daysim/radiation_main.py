@@ -1,7 +1,7 @@
 """
 Radiation engine and geometry handler for CEA
 """
-
+from __future__ import division
 import os
 import pandas as pd
 import time 
@@ -109,18 +109,18 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
         for pytri in pytri_list:
             py2radiance.RadSurface("terrain_srf"+ str(tcnt), pytri, "reflectance0.2", rad)
             tcnt+=1
-    
+
     bldg_of_interest_name_list = ageometry_table.index.values
     gmlbldgs = citygml_reader.get_buildings()
     eligible_bldgs, n_eligible_bldgs = filter_bldgs_of_interest(gmlbldgs, bldg_of_interest_name_list, citygml_reader)
-    
+
     for n_gmlbldg in n_eligible_bldgs:
         pypolgon_list = citygml_reader.get_pypolygon_list(n_gmlbldg)
         nbldg_cnt = 0
         for pypolygon in pypolgon_list:
             py2radiance.RadSurface("surroundingbldgs"+ str(nbldg_cnt), pypolygon, "reflectance0.2", rad)
             nbldg_cnt+=1
-            
+
     bcnt = 0
     for gmlbldg in eligible_bldgs:
         bldg_dict = {}
@@ -136,21 +136,25 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
         fcnt = 0
         for facade in facade_list:
             ref_pypt = calculate.face_midpt(facade)
+
             #offset the facade to create a window according to the wwr
-            if wwr != 0.0 and wwr != 1.0:
+            if 0.0 < wwr < 1.0:
                 window = fetch.shape2shapetype(modify.uniform_scale(facade, wwr, wwr, wwr, ref_pypt))
                 window_list.append(window)
                 create_radiance_srf(window, "win"+str(bcnt)+str(fcnt), "win" + str(ageometry_table['type_win'][bldg_name]), rad)
-                
+
+                #TODO: this next line is creating the error messages
                 b_facade_cmpd = fetch.shape2shapetype(construct.boolean_difference(facade, window))
+
                 hole_facade = fetch.geom_explorer(b_facade_cmpd, "face")[0]
                 wall_list.append(hole_facade)
+
                 #triangulate the wall with hole
                 tri_facade_list = construct.simple_mesh(hole_facade)
                 for tri_bface in tri_facade_list:
                     create_radiance_srf(tri_bface, "wall"+str(bcnt)+str(fcnt), 
                                         "wall" + str(ageometry_table['type_wall'][bldg_name]), rad)
-                    
+
             elif wwr == 1.0:
                 create_radiance_srf(facade, "win"+str(bcnt)+str(fcnt), "win" + str(ageometry_table['type_win'][bldg_name]), rad)
                 window_list.append(facade)
@@ -158,6 +162,7 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
                 create_radiance_srf(facade, "wall"+str(bcnt)+str(fcnt), "wall" + str(ageometry_table['type_wall'][bldg_name]), rad)
                 wall_list.append(facade)
             fcnt+=1
+
             
         rcnt = 0
         for roof in roof_list:
@@ -220,6 +225,7 @@ def execute_daysim(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_par
     sensor_dir_list = []
     daysim_dir = os.path.join(aresults_path, "daysim_project")
     rad.initialise_daysim(daysim_dir)
+
     # transform weather file
     rad.execute_epw2wea(aweatherfile_path)
     rad.execute_radfiles2daysim()
@@ -243,10 +249,11 @@ def execute_daysim(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_par
                                    rad_params['RAD_AA'], rad_params['RAD_LR'],rad_params['RAD_ST'],rad_params['RAD_SJ'],
                                    rad_params['RAD_LW'],rad_params['RAD_DJ'],rad_params['RAD_DS'],rad_params['RAD_DR'],
                                    rad_params['RAD_DP'])
-
+    print 'starting Daysim radiation simulation'
     rad.execute_gen_dc("w/m2")
     rad.execute_ds_illum()
     solar_res = rad.eval_ill_per_sensor()
+    print 'Daysim radiation finished - proceed to save results'
     scnt = 0
     for srf_dict_list in all_sensor_srf_dict_2dlist:
         srf_properties = []
@@ -311,8 +318,8 @@ def calc_radiation(weatherfile_path, locator):
     daysim_mat = locator.get_daysim_mat()
     rad = py2radiance.Rad(daysim_mat, results_path)
     add_rad_mat(daysim_mat, building_surface_properties)
-    
-    bldg_dict_list = geometry2radiance(rad, building_surface_properties, citygml_reader)
+
+    bldg_dict_list = geometry2radiance(rad, building_surface_properties, citygml_reader) #TODO: fix messages
     rad.create_rad_input_file()
     time1 = time.time()
     execute_daysim(bldg_dict_list, results_path, rad, weatherfile_path, settings.RAD_PARMS, building_surface_properties)
@@ -355,7 +362,7 @@ if __name__ == '__main__':
     weatherfile_path = locator.get_default_weather()
 
     #Create City GML file (this is necesssary only once).
-    output_folder = locator.get_solar_radiation_folder()
+    output_folder = locator.get_building_geometry_citygml()
     input_buildings_shapefile = locator.get_district()
     input_terrain_raster = locator.get_terrain()
     create_gml.create_citygml(input_buildings_shapefile, input_terrain_raster, output_folder)

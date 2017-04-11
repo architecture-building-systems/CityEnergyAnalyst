@@ -21,7 +21,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def building2d23d(citygml_writer, shapefilepath, out_path, tin_occface_list, 
+def building2d23d(citygml_writer, shapefilepath, tin_occface_list,
                   height_col, name_col,nfloor_col):
     sf = shapefile.Reader(shapefilepath)
     shapeRecs = sf.shapeRecords()
@@ -88,7 +88,7 @@ def building2d23d(citygml_writer, shapefilepath, out_path, tin_occface_list,
     return bsolid_list
 
 
-def terrain2d23d(citygml_writer, input_terrain):
+def terrain2d23d(citygml_writer, input_terrain_raster):
 
     # read x, y, z coordinates of raster
     raster_points = raster_reader(input_terrain_raster)
@@ -121,12 +121,12 @@ def create_citygml(input_buildings, input_terrain, output_folder):
     terrain_face_list = terrain2d23d(citygml_writer, input_terrain)
     
     # transform buildings to LOD3
-    bsolid_list = building2d23d(citygml_writer, input_buildings, output_folder, terrain_face_list,
+    bsolid_list = building2d23d(citygml_writer, input_buildings, terrain_face_list,
                                 height_col='height_ag', name_col='Name', nfloor_col="floors_ag")
 
-    construct.visualise([terrain_face_list,bsolid_list], ["GREEN","WHITE"],backend = "wx")
+    #construct.visualise([terrain_face_list,bsolid_list], ["GREEN","WHITE"],backend = "wx")
     # write to citygml
-    citygml_writer.write(locator.get_building_geometry_citygml())
+    citygml_writer.write(output_folder)
 
 if __name__ == '__main__':
 
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
 
     # local variables
-    output_folder = locator.get_building_geometry_folder()
+    output_folder = locator.get_building_geometry_citygml()
     input_buildings_shapefile = locator.get_district()
     input_terrain_raster = locator.get_terrain()
     # run routine
