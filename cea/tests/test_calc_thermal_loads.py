@@ -9,13 +9,15 @@ from cea.globalvar import GlobalVariables
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
 
+import cea.examples
+
 
 class TestCalcThermalLoads(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         import zipfile
         import tempfile
-        archive = zipfile.ZipFile(os.path.join(os.path.dirname(examples.__file__), 'reference-case-open.zip'))
+        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
         archive.extractall(tempfile.gettempdir())
         reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
         cls.locator = InputLocator(reference_case)
