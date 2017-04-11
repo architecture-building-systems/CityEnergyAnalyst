@@ -11,7 +11,6 @@ from __future__ import division
 
 import time
 
-import matplotlib.pyplot as plt
 import pandas as pd
 
 import os, csv
@@ -153,8 +152,8 @@ def run_as_script():
     optimize = True
     multicriteria = True
     plot_pareto = True
-    clustering = False
-    cluster_plot = False
+    clustering = True
+    cluster_plot = True
     building_names = ['M01']#['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']#['B01']#['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']
     building_load = 'Ef_kWh'
     type_data = 'measured'
@@ -216,29 +215,32 @@ def run_as_script():
                             save_to_disc=save_to_disc,
                             optimal_individual= optimal_individual)
     if clustering:
-        name = 'M03'
+        name = 'M01'
         data = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load,
                                  type=type_data)
-        word_size = 3
-        alphabet_size = 4
+        word_size = 9
+        alphabet_size = 7
         clustering_main(locator=locator, data=data, word_size=word_size, alphabet_size=alphabet_size, gv=gv)
 
-    if cluster_plot:
-        save_to_disc = True
-        show_in_screen = False
-        show_legend = True
-        labelx = "Hour of the day"
-        labely = "Electriicty load [kW]"
-        input_path = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load,
-                          type=type_data)
-        #input_path = locator.get_calibration_cluster('clusters_mean')
-        output_path = os.path.join(locator.get_calibration_clustering_plots_folder(),
-                             "w_a_"+str(word_size)+"_"+str(alphabet_size)+"_building_name_"+name+".png")
+        if cluster_plot:
+            show_benchmark = True
+            save_to_disc = True
+            show_in_screen = False
+            show_legend = False
+            labelx = "Hour of the day"
+            labely = "Electrical load [kW]"
+            # input_path = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load,
+            #                  type=type_data)
+            #
+            # input_path = pd.DataFrame(dict((str(key), value) for (key, value) in enumerate(input_path)))
 
-        clusters_day_mean(input_path=input_path, output_path=output_path,labelx=labelx,
-                          labely=labely, save_to_disc=save_to_disc, show_in_screen=show_in_screen,
-                          show_legend=show_legend)
+            input_path = locator.get_calibration_cluster('clusters_mean')
+            output_path = os.path.join(locator.get_calibration_clustering_plots_folder(),
+                                 "w_a_"+str(word_size)+"_"+str(alphabet_size)+"_building_name_"+name+".png")
 
+            clusters_day_mean(input_path=input_path, output_path=output_path,labelx=labelx,
+                              labely=labely, save_to_disc=save_to_disc, show_in_screen=show_in_screen,
+                              show_legend=show_legend)#, show_benchmark=show_benchmark)
 
 if __name__ == '__main__':
     run_as_script()
