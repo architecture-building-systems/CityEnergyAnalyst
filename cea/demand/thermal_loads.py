@@ -79,13 +79,12 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     # get schedules
     list_uses = usage_schedules['list_uses']
     schedules = usage_schedules['schedules']
+    occupancy_densities = usage_schedules['occupancy_densities']
 
-    # get n50 value
-    # n50 = bpr.architecture.n50
 
     # get occupancy
-    tsd['people'] = occupancy_model.calc_occ(list_uses, schedules, bpr)
-
+    tsd['people'] = occupancy_model.calc_occ_schedule(list_uses, schedules, occupancy_densities, bpr.occupancy,
+                                                      bpr.rc_model['Af'])
     # get electrical loads (no auxiliary loads)
     tsd = electrical_loads.calc_Eint(tsd, bpr, list_uses, schedules)
 
@@ -200,7 +199,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             gv,
             bpr.internal_loads['Vww_lpd'],
             bpr.internal_loads['Vw_lpd'],
-            bpr.architecture.Occ_m2p,
+            occupancy_densities,
             list_uses,
             schedules,
             bpr.occupancy)
@@ -501,7 +500,7 @@ class BuildingProperties(object):
         :type occupancy: Gdf
 
         :param envelope: The contents of the `architecture.shp` file, indexed by building name. It contains the
-            following fields: Occ_m2p,  n50, type_shade, win_op, win_wall. Only `win_wall` (window to wall ratio) is
+            following fields: n50, type_shade, win_op, win_wall. Only `win_wall` (window to wall ratio) is
             used. Es, Hs, U_base, U_roof, U_wall, U_win, th_mass.
             - Es: fraction of gross floor area that has electricity {0 <= Es <= 1}
             - Hs: fraction of gross floor area that is heated/cooled {0 <= Hs <= 1}
@@ -760,12 +759,11 @@ class BuildingPropertiesRow(object):
 
 class EnvelopeProperties(object):
     """Encapsulate a single row of the architecture input file for a building"""
-    __slots__ = [u'Occ_m2p', u'a_roof', u'f_cros', u'n50', u'win_op', u'win_wall',
+    __slots__ = [u'a_roof', u'f_cros', u'n50', u'win_op', u'win_wall',
                  u'a_wall', u'rf_sh', u'e_wall', u'e_roof', u'G_win', u'e_win',
                  u'U_roof',u'Es', u'Hs', u'th_mass', u'U_wall', u'U_base', u'U_win']
 
     def __init__(self, envelope):
-        self.Occ_m2p = envelope['Occ_m2p']
         self.a_roof = envelope['a_roof']
         self.n50 = envelope['n50']
         self.win_wall = envelope['win_wall']
@@ -886,7 +884,7 @@ def get_envelope_properties(locator, prop_architecture):
     df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code')
     df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code')
 
-    fields_roof = ['Name', 'win_wall', 'Occ_m2p', 'n50', 'e_roof', 'a_roof', 'U_roof', 'Es', 'Hs', 'th_mass']
+    fields_roof = ['Name', 'win_wall', 'n50', 'e_roof', 'a_roof', 'U_roof', 'Es', 'Hs', 'th_mass']
     fields_wall = ['Name', 'e_wall', 'a_wall', 'U_wall', 'U_base']
     fields_win = ['Name', 'e_win', 'G_win', 'U_win']
     fields_shading = ['Name', 'rf_sh']
