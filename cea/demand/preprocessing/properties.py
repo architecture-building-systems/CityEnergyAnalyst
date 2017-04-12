@@ -77,7 +77,7 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
 
         # write to shapefile
         prop_architecture_df_merged = names_shp.merge(prop_architecture_df, on="Name")
-        fields = ['Es', 'Hs', 'win_wall',  'Occ_m2p', 'n50', 'th_mass',  'type_roof', 'type_wall', 'type_win', 'type_shade']
+        fields = ['Es', 'Hs', 'win_wall', 'n50', 'th_mass',  'type_roof', 'type_wall', 'type_win', 'type_shade']
         prop_architecture_dbf = names_shp.copy()
         for field in fields:
             prop_architecture_dbf[field] = prop_architecture_df_merged[field].copy()
