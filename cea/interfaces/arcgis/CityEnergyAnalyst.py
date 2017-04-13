@@ -567,6 +567,15 @@ def get_python_exe():
         raise AssertionError("Could not find 'cea_python.pth' in home directory.")
 
 
+def get_environment():
+    """Return the system environment to use for the execution - this is based on the location of the python
+    interpreter in ``get_python_exe``"""
+    root_dir = os.path.dirname(get_python_exe())
+    scripts_dir = os.path.join(root_dir, 'Scripts')
+    os.environ['PATH'] = ';'.join((root_dir, scripts_dir, os.environ['PATH']))
+    return os.environ
+
+
 def _cli_output(scenario_path=None, *args):
     """Run the CLI in a subprocess without showing windows and return the output as a string, whitespace
     is stripped from the output"""
@@ -579,7 +588,7 @@ def _cli_output(scenario_path=None, *args):
         command.append(scenario_path)
     command.extend(args)
 
-    result = subprocess.check_output(command, startupinfo=startupinfo)
+    result = subprocess.check_output(command, startupinfo=startupinfo, env=get_environment())
     return result.strip()
 
 
@@ -594,7 +603,8 @@ def run_cli(scenario_path=None, *args):
         command.append(scenario_path)
     command.extend(map(str, args))
     add_message(command)
-    process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                               env=get_environment())
     while True:
         next_line = process.stdout.readline()
         if next_line == '' and process.poll() is not None:
