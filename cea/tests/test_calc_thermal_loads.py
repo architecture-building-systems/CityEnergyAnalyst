@@ -8,7 +8,6 @@ from cea.demand.thermal_loads import calc_thermal_loads, BuildingProperties
 from cea.globalvar import GlobalVariables
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
-
 import cea.examples
 
 
