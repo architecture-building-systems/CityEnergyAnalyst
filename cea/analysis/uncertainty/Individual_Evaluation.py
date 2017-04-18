@@ -17,6 +17,13 @@ __status__ = "Production"
 
 def individual_evaluation(generation, level, size):
 
+    """
+    :param generation: Generation of the optimization in which the individual evaluation is to be done
+    :param level: Number of the uncertain scenario. For each scenario, the objectives are calculated
+    :param size: Total uncertain scenarios developed. See 'uncertainty.csv'
+    :return: Function saves the new objectives in a json file 
+    """
+
     import cea.inputlocator
     import pandas as pd
     import cea.optimization.distribution.network_opt_main as network_opt
@@ -39,7 +46,7 @@ def individual_evaluation(generation, level, size):
 
     # # Uncertainty Part
     row = []
-    with open('uncertainty500.csv') as f:
+    with open('uncertainty.csv') as f:
         reader = csv.reader(f)
         for i in xrange(size+1):
             row.append(next(reader))
