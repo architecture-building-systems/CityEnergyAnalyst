@@ -50,16 +50,19 @@ def calc_Qww_ls_st(ta, te, Tww_st, V, Qww, Qww_ls_r, Qww_ls_nr, gv):
     """
 
     tamb = ta - gv.Bf * (ta - te)         # Calculate tamb in basement according to EN
-
-    h = ( 4 * V * gv.AR ** 2 / math.pi ) ** ( 1.0 / 3.0 )     # tank height in [m], derived from tank Aspect Ratio(AR)
-    r = ( V / ( math.pi * h ) ) ** ( 1.0 / 2.0 )         # tank radius in [m], assuming tank shape is cylinder
-    Atank = 2 * math.pi * r ** 2 + 2 * math.pi * r * h      # tank surface area in [m2].
+    if V > 0:
+        h = ( 4 * V * gv.AR ** 2 / math.pi ) ** ( 1.0 / 3.0 )     # tank height in [m], derived from tank Aspect Ratio(AR)
+        r = ( V / ( math.pi * h ) ) ** ( 1.0 / 2.0 )         # tank radius in [m], assuming tank shape is cylinder
+        Atank = 2 * math.pi * r ** 2 + 2 * math.pi * r * h      # tank surface area in [m2].
+    else:
+        Atank = 0
     ql = gv.U_dhwtank * Atank * ( Tww_st - tamb )       # tank heat loss to the room in [W]
     qd = Qww + Qww_ls_r + Qww_ls_nr
     if Qww <= 0:
         qc = 0
     else:
         qc = qd + ql + gv.Pwater * V * gv.Cpw * ( gv.Tww_setpoint - Tww_st ) / 3.6
+
     return ql, qd, qc
 
 
@@ -72,12 +75,14 @@ def ode(y, t, ql, qd, qc, Pwater, Cpw, Vtank):
     :param ql: storage tank sensible heat loss in W.
     :param qd: heat discharged from the tank in W.
     :param qc: heat charged into the tank in W.
+    :param Vtank: DHW tank size in [m3]
     :type y: float
     :type t: float
     :type ql: float
     :type qd: float
     :type qc: float
-    
+    :type Vtank: float
+
     :return dydt: change in temperature at each time step.
     :type dydt: float
     """
