@@ -11,9 +11,10 @@ How to do Uncertainty Analysis:
 
 1. Run Uncertainty_parameters.py to generate the 'uncertainty.csv' file. The file is saved in the 'get_optimization_master_results_folder()'
 2. After this, run Individual_Evaluation.py, providing the generation, number of uncertain scenarios to be tested
+3. The resulting output files are saved in 'get_optimization_master_results_folder()'
 
 In Individual_Evaluation.py, the uncertain values are changed using 'setattr' function, and the values are reset back to the default after the analysis
 
 ### Contributors to this manual
-* [Sreepathi Bhargava Krishna](http://www.fcl.ethz.ch/people/Researchers/SreepathiKrishna.html/) / Future Cities Laboratory - Singapore-ETH Centre,
+* [Dr. Sreepathi Bhargava Krishna](http://www.fcl.ethz.ch/people/Researchers/SreepathiKrishna.html/) / Future Cities Laboratory - Singapore-ETH Centre.
 

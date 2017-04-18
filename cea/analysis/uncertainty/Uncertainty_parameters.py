@@ -1,12 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Global variables - this object contains context information and is expected to be refactored away in future.
-"""
-import cea.demand.demand_writers
-import numpy as np
-import cea.inputlocator
-
-# from cea.demand import thermal_loads
+" This file is used to generate various scenarios which involve uncertainty. Go through README.md"
 
 __author__ = "Sreepathi Bhargava Krishna"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -19,6 +11,8 @@ __status__ = "Production"
 
 def run_as_script(scenario_path):
     import pandas as pd
+    import cea.inputlocator
+    import numpy as np
 
     # Importing the excel sheet containing the uncertainty distributions
     locator = cea.inputlocator.InputLocator(scenario_path)
@@ -260,10 +254,13 @@ def run_as_script(scenario_path):
     df.columns = cols
     print (df)
     locator.get_uncertainty_parameters()
-    df.to_csv(locator.get_optimization_master_results_folder() + "\uncertainty500.csv")
+    df.to_csv(locator.get_optimization_master_results_folder() + "\uncertainty.csv")
 
 
     print 'Uncertain Parameters have been generated for the given economic scenarios'
 
 if __name__ == '__main__':
-    run_as_script(r'C:\reference-case-zug\baseline')
+    import cea.globalvar
+    gv = cea.globalvar.GlobalVariables()
+    scenario_path = gv.scenario_reference
+    run_as_script(scenario_path)
