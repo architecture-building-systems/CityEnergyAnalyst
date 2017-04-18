@@ -4,7 +4,6 @@ Installation guide
 This guide covers the main steps of installing the City Energy Analyst version |version| for research.
 It also includes a guide to connect to our development environment and to the Euler cluster of ETH Zurich (only of ETH zurich affiliates).
 
-
 Prerequisites
 -------------
 
