@@ -1,7 +1,9 @@
 Installation guide
 ==================
 
-The version |version| of the City Energy Analyst installation guide
+This guide covers the main steps of installing the City Energy Analyst version |version| for research.
+It also includes a guide to connect to our development environment and to the Euler cluster of ETH Zurich (only of ETH zurich affiliates).
+
 
 Prerequisites
 -------------
@@ -40,7 +42,7 @@ To install the development environment of CEA:
 #. go to location where the repository was cloned: do ``cd CEAforArcGIS``
 #. install dependencies: do ``conda install -c conda-forge geopandas ephem``
 #. install cea development: do ``python setup.py install``
-#. set-up path: do ``python setup.py develop``
+#. set-up path to repository: do ``python setup.py develop``
 
 Note: Creating a conda environment is an optional step, but probably a good habit to get into: This creates a python
 environment separate from your other python environments - that way, version mismatches between packages don't bleed
@@ -80,12 +82,6 @@ To set the custom dictionary used in PyCharm, do:
 
 #. Click "Apply".
 
-Installation on the Euler cluster
----------------------------------
-
-It is possible to install the CEA on the Euler_ cluster by following the following guide:
-:doc:`installation-on-euler`.
-
 
 Connecting to Arcpy
 -------------------
@@ -100,6 +96,13 @@ for a file called ``cea_arcgis.pth`` containing these three lines::
     C:\Program Files (x86)\ArcGIS\Desktop10.4\Scripts
 
 Edit these folders to point to the appropriate ArcGIS folders as documented in the ArcGIS manuals.
+
+Installation on the Euler cluster
+---------------------------------
+
+It is possible to install the CEA on the Euler_ cluster by following the following guide:
+:doc:`installation-on-euler`.
+
 
 .. _Euler: https://www.ethz.ch/services/en/it-services/catalogue/server-cluster/hpc.html
 .. _Anaconda: https://www.continuum.io/downloads
