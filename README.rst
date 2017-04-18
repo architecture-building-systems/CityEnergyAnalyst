@@ -9,5 +9,14 @@ The City Energy Analyst (CEA) is an urban building simulation platform and one o
 * Click `here <https://www.cityenergyanalyst.com/>`_  to check our website
 * Click `here <mailto:cea@arch.ethz.ch>`_  to contact us.
 
+Cite us:
+---------
+
+For V0.4:
+
+|V0.4|
 
 
+   
+.. |V0.4| image:: https://zenodo.org/badge/49491341.svg
+   :target: https://zenodo.org/badge/latestdoi/49491341

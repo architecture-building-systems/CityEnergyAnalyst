@@ -189,11 +189,14 @@ def calc_Qww_st_ls(T_ext, Ta, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr, gv):
     Qd = np.zeros(8760)
     Vww_0 = Vww.max()
     Tww_st_0 = gv.Tww_setpoint
-    for k in range(8760):
-        Qww_st_ls[k], Qd[k], Qwwf[k] = sto_m.calc_Qww_ls_st(Ta[k], T_ext[k], Tww_st_0, Vww_0, Qww[k], Qww_dis_ls_r[k],
-                                                            Qww_dis_ls_nr[k], gv)
-        Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_st_ls[k], Qd[k], Qwwf[k], Vww_0, gv)
-        Tww_st_0 = Tww_st[k]
 
+    if Vww_0 > 0:
+        for k in range(8760):
+            Qww_st_ls[k], Qd[k], Qwwf[k] = sto_m.calc_Qww_ls_st(Ta[k], T_ext[k], Tww_st_0, Vww_0, Qww[k], Qww_dis_ls_r[k],
+                                                                Qww_dis_ls_nr[k], gv)
+            Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_st_ls[k], Qd[k], Qwwf[k], Vww_0, gv)
+            Tww_st_0 = Tww_st[k]
+    else:
+        for k in range(8760):
+            Tww_st[k] = np.nan
     return Qww_st_ls, Tww_st, Qwwf
-
