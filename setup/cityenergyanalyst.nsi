@@ -64,9 +64,9 @@ download_ok:
 # install miniconda...
 nsExec::ExecToLog '"$INSTDIR\miniconda.exe" /S /AddToPath=0 /RegisterPython=0 /NoRegistry=1 /D=$INSTDIR'
 # use conda to install some stuff
-nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -y geopandas ephem'
+nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c conda-forge -y geopandas ephem'
 
-nsExec::ExecToLog '"$INSTDIR\Scripts\pip.exe" install cityenergyanalyst'
+nsExec::ExecToLog '"$INSTDIR\Scripts\pip.exe" install cityenergyanalyst==2.2a2'
 nsExec::ExecToLog '"$INSTDIR\Scripts\cea.exe" install-toolbox'
 
 
