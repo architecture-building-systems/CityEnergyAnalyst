@@ -3,11 +3,11 @@ Solar vertical insolation algorithm based on ArcGIS Solar Analyst
 """
 from __future__ import division
 
-import arcgisscripting
+from cea.interfaces.arcgis.modules import arcgisscripting
 import datetime
 import os
 
-import arcpy
+from cea.interfaces.arcgis.modules import arcpy
 import ephem
 import numpy as np
 import pandas as pd
@@ -49,9 +49,12 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     :param gv: global context and constants
     :type gv: cea.globalvar.GlobalVariables
 
+    :param weather_path: path to the weather file
+    :type weather_path: str
+
     :returns: produces ``radiation.csv``, solar radiation file in vertical surfaces of buildings.
     """
-
+    print(weather_path)
     # Set environment settings
     arcpy.env.workspace = path_arcgis_db
     arcpy.env.overwriteOutput = True
@@ -122,7 +125,7 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     for r in radiations[1:]:
         radiationyear = radiationyear.merge(r, on='ID', how='outer')
     radiationyear.fillna(value=0, inplace=True)
-    radiationyear.to_csv(DataradiationLocation, Index=False)
+    radiationyear.to_csv(DataradiationLocation, index=True)
 
     radiationyear = radiations = None
     gv.log('complete transformation radiation files')
