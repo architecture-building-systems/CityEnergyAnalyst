@@ -32,9 +32,9 @@ class TestCalcThermalLoads(unittest.TestCase):
         cls.building_properties = BuildingProperties(cls.locator, cls.gv)
         cls.date = pd.date_range(cls.gv.date_start, periods=8760, freq='H')
         cls.list_uses = cls.building_properties.list_uses()
-        cls.schedules = schedule_maker(cls.date, cls.locator, cls.list_uses)
-        cls.usage_schedules = {'list_uses': cls.list_uses,
-                               'schedules': cls.schedules}
+        cls.schedules, cls.occupancy_densities = schedule_maker(cls.date, cls.locator, cls.list_uses)
+        cls.usage_schedules = {'list_uses': cls.list_uses, 'schedules': cls.schedules, 'occupancy_densities': cls.occupancy_densities}
+
 
     def test_calc_thermal_loads(self):
         # FIXME: the usage_schedules bit needs to be fixed!!
