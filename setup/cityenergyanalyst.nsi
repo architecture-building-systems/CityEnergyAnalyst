@@ -8,15 +8,18 @@
 !define MINICONDA "https://repo.continuum.io/miniconda/Miniconda2-latest-Windows-x86.exe"
 
 !define CEA "City Energy Analyst"
-!define VER "2.2"
+
+# figure out the version based on cea\__init__.py
+!system "get_version.exe"
+!include "version.nsh"
 
 Name "${CEA} ${VER}"
 !define MUI_FILE "savefile"
-!define MUI_BRANDINGTEXT "City Energy Analyst 2.2"
+!define MUI_BRANDINGTEXT "City Energy Analyst ${VER}"
 CRCCheck On
 
 
-OutFile "Output\Setup_CityEnergyAnalyst_2.2.exe"
+OutFile "Output\Setup_CityEnergyAnalyst_${VER}.exe"
 
 
 ;--------------------------------
@@ -66,7 +69,7 @@ nsExec::ExecToLog '"$INSTDIR\miniconda.exe" /S /AddToPath=0 /RegisterPython=0 /N
 # use conda to install some stuff
 nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c conda-forge -y geopandas ephem'
 
-nsExec::ExecToLog '"$INSTDIR\Scripts\pip.exe" install cityenergyanalyst==2.2a2'
+nsExec::ExecToLog '"$INSTDIR\Scripts\pip.exe" install cityenergyanalyst==${VER}'
 nsExec::ExecToLog '"$INSTDIR\Scripts\cea.exe" install-toolbox'
 
 
