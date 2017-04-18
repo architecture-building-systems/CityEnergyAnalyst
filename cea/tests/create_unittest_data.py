@@ -3,6 +3,8 @@ Create the data for tests/test_calc_thermal_loads_new_ventilation.py
 
 This test-data changes when the core algorithms get updated. This script spits out the data used.
 """
+import os
+
 import pandas as pd
 
 from cea.demand.occupancy_model import schedule_maker
@@ -12,20 +14,29 @@ from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
 
 
-REFERENCE_CASE = r'C:\reference-case-open\baseline'
-
 def main():
-    locator = InputLocator(REFERENCE_CASE)
+    import zipfile
+    import cea.examples
+    import tempfile
+    archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+    archive.extractall(tempfile.gettempdir())
+    reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
+    locator = InputLocator(reference_case)
     gv = GlobalVariables()
     weather_path = locator.get_default_weather()
-    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    weather_data = epwreader.epw_reader(weather_path)[
+        ['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
+
+    # run properties script
+    import cea.demand.preprocessing.properties
+    cea.demand.preprocessing.properties.properties(locator, True, True, True, True)
 
     building_properties = BuildingProperties(locator, gv)
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
     list_uses = building_properties.list_uses()
     schedules = schedule_maker(date, locator, list_uses)
     usage_schedules = {'list_uses': list_uses,
-                            'schedules': schedules}
+                       'schedules': schedules}
 
     print("data for test_calc_thermal_loads:")
     print building_properties.list_building_names()
