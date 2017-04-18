@@ -17,7 +17,7 @@ Installing the CEA on Windows is easiest with Anaconda_ (or Miniconda_) as the C
 Installation follows the following basic steps:
 
 #. create a conda environment and activate it (optional)
-#. ``conda install -c conda-forge geopandas``
+#. ``conda install -c conda-forge geopandas ephem``
 #. ``pip install cityenergyanalyst``
 #. ``cea install-toolbox`` (installs the CEA as an ArcGIS 10.4 toolbox)
 
