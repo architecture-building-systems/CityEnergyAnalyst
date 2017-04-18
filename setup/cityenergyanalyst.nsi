@@ -11,7 +11,7 @@
 
 # figure out the version based on cea\__init__.py
 !system "get_version.exe"
-!include "version.nsh"
+!include "cea_version.txt"
 
 Name "${CEA} ${VER}"
 !define MUI_FILE "savefile"
