@@ -117,10 +117,10 @@ def calc_Qww_schedule(list_uses, schedules, occ_density, building_uses, Af):
     occ = np.zeros(8760)
     num_profiles = len(list_uses)
     for num in range(num_profiles):
-        current_share_of_use = building_uses[list_uses[num]]
-        share_time_occupancy_density = (1/occ_density[num])*current_share_of_use
-        occ = np.vectorize(calc_average)(occ, schedules[num][2], share_time_occupancy_density)
-
+        if occ_density[num] != 0:
+            current_share_of_use = building_uses[list_uses[num]]
+            share_time_occupancy_density = (1/occ_density[num])*current_share_of_use
+            occ = np.vectorize(calc_average)(occ, schedules[num][2], share_time_occupancy_density)
     result = occ *Af
     return result
 
