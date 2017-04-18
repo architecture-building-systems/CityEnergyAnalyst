@@ -73,11 +73,16 @@ nsExec::ExecToLog '"$INSTDIR\Scripts\pip.exe" install cityenergyanalyst==${VER}'
 nsExec::ExecToLog '"$INSTDIR\Scripts\cea.exe" install-toolbox'
 
 
-  ;Store installation folder
-  ;WriteRegStr HKCU "Software\${CEA}" "" $INSTDIR
+# next, copy the *.pyd files, as they are not provided by pypi
+SetOutPath "$INSTDIR\Lib\site-packages\cea\demand"
+File "..\cea\demand\rc_model_sia_cc.pyd"
+SetOutPath "$INSTDIR\Lib\site-packages\cea\technologies"
+File "..\cea\technologies\calc_radiator.pyd"
+File "..\cea\technologies\storagetank_cc.pyd"
+SetOutPath "$INSTDIR"
 
-  ;Create uninstaller
-  WriteUninstaller "$INSTDIR\Uninstall.exe"
+;Create uninstaller
+WriteUninstaller "$INSTDIR\Uninstall.exe"
 
 SectionEnd
 
