@@ -1,0 +1,105 @@
+# NSIS script for creating the City Energy Analyst installer
+
+
+; include the modern UI stuff
+!include "MUI2.nsh"
+
+# download miniconda from here:
+!define MINICONDA "https://repo.continuum.io/miniconda/Miniconda2-latest-Windows-x86.exe"
+
+!define CEA "City Energy Analyst"
+!define VER "2.2"
+
+Name "${CEA} ${VER}"
+!define MUI_FILE "savefile"
+!define MUI_BRANDINGTEXT "City Energy Analyst 2.2"
+CRCCheck On
+
+
+OutFile "Output\Setup_CityEnergyAnalyst_2.2.exe"
+
+
+;--------------------------------
+;Folder selection page
+
+InstallDir "$LOCALAPPDATA\${CEA}"
+
+;Request application privileges for Windows Vista
+RequestExecutionLevel user
+
+;--------------------------------
+;Interface Settings
+
+!define MUI_ABORTWARNING
+
+;--------------------------------
+;Pages
+
+!insertmacro MUI_PAGE_LICENSE "..\LICENSE"
+!insertmacro MUI_PAGE_INSTFILES
+
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+
+;--------------------------------
+;Languages
+
+  !insertmacro MUI_LANGUAGE "English"
+
+;--------------------------------
+;Installer Sections
+
+Section "Dummy Section" SecDummy
+
+SetOutPath "$INSTDIR"
+
+;ADD YOUR OWN FILES HERE...
+inetc::get ${MINICONDA} miniconda.exe
+Pop $R0 ;Get the return value
+StrCmp $R0 "OK" download_ok
+    MessageBox MB_OK "Download failed: $R0"
+    Quit
+download_ok:
+    # get on with life...
+# install miniconda...
+nsExec::ExecToLog '"$INSTDIR\miniconda.exe" /S /AddToPath=0 /RegisterPython=0 /NoRegistry=1 /D=$INSTDIR'
+# use conda to install some stuff
+nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -y geopandas ephem'
+
+nsExec::ExecToLog '"$INSTDIR\Scripts\pip.exe" install cityenergyanalyst'
+nsExec::ExecToLog '"$INSTDIR\Scripts\cea.exe" install-toolbox'
+
+
+  ;Store installation folder
+  ;WriteRegStr HKCU "Software\${CEA}" "" $INSTDIR
+
+  ;Create uninstaller
+  WriteUninstaller "$INSTDIR\Uninstall.exe"
+
+SectionEnd
+
+;--------------------------------
+;Descriptions
+
+;Language strings
+;  LangString DESC_SecDummy ${LANG_ENGLISH} "A test section."
+
+  ;Assign language strings to sections
+;  !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+;    !insertmacro MUI_DESCRIPTION_TEXT ${SecDummy} $(DESC_SecDummy)
+;  !insertmacro MUI_FUNCTION_DESCRIPTION_END
+
+;--------------------------------
+;Uninstaller Section
+
+Section "Uninstall"
+
+  ;ADD YOUR OWN FILES HERE...
+
+  Delete "$INSTDIR\Uninstall.exe"
+
+  RMDir "$INSTDIR"
+
+  DeleteRegKey /ifempty HKCU "Software\Modern UI Test"
+
+SectionEnd
