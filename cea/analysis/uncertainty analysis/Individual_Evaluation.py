@@ -39,7 +39,7 @@ def individual_evaluation(generation, level, size):
 
     # # Uncertainty Part
     row = []
-    with open('uncertainty1000.csv') as f:
+    with open('uncertainty500.csv') as f:
         reader = csv.reader(f)
         for i in xrange(size+1):
             row.append(next(reader))
@@ -103,7 +103,7 @@ def individual_evaluation(generation, level, size):
         fitness.append(objective_function(pop[i]))
 
     os.chdir(locator.get_optimization_master_results_folder())
-    with open("CheckPointTesting_uncertainty_" + str(level), "wb") as fp:
+    with open("CheckPointTesting_uncertainty500_" + str(level), "wb") as fp:
         cp = dict(population=pop, generation=generation, population_fitness=fitness)
         json.dump(cp, fp)
 
@@ -151,8 +151,7 @@ def individual_evaluation(generation, level, size):
 
 if __name__ == '__main__':
     generation = 50  # generation which you are interested in testing
-    size = 1000  # number of uncertain scenarios being tested
+    size = 500  # number of uncertain scenarios being tested
 
-    for i in xrange(1000):
-        i = i + 1
+    for i in xrange(size):
         individual_evaluation(generation, i, size)

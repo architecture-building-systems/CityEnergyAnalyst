@@ -177,7 +177,7 @@ def run_as_script(scenario_path):
     HP_i = []
     Boiler_i = []
 
-    for i in xrange(100):
+    for i in xrange(500):
         if HP_n_distribution == 'Beta':
             HP_n.append(HP_n_c * np.random.beta(HP_n_alpha, HP_n_beta, size = None))
         elif HP_n_distribution == 'Normal':
@@ -260,7 +260,7 @@ def run_as_script(scenario_path):
     df.columns = cols
     print (df)
     locator.get_uncertainty_parameters()
-    df.to_csv(locator.get_optimization_master_results_folder() + "\uncertainty.csv")
+    df.to_csv(locator.get_optimization_master_results_folder() + "\uncertainty500.csv")
 
 
     print 'Uncertain Parameters have been generated for the given economic scenarios'
