@@ -114,9 +114,8 @@ def individual_evaluation(generation, level, size):
         evaluation.checkNtw(pop[i], ntwList, locator, gv)
         fitness.append(objective_function(pop[i]))
 
-    os.chdir(locator.get_optimization_master_results_folder())
-    with open("CheckPointTesting_uncertainty500_" + str(level), "wb") as fp:
-        cp = dict(population=pop, generation=generation, population_fitness=fitness)
+    with open(locator.get_uncertainty_checkpoint(level), "wb") as fp:
+        cp = dict(population=pop, uncertainty_level=level, population_fitness=fitness)
         json.dump(cp, fp)
 
     x = pd.read_excel(locator.get_uncertainty_db(), 'ECONOMIC')
@@ -163,7 +162,7 @@ def individual_evaluation(generation, level, size):
 
 if __name__ == '__main__':
     generation = 50  # generation which you are interested in testing
-    size = 500  # number of uncertain scenarios being tested
+    size = 1  # number of uncertain scenarios being tested
 
     for i in xrange(size):
         individual_evaluation(generation, i, size)
