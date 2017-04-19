@@ -12,6 +12,7 @@ from numpy.random import random_sample
 from pickle import Unpickler
 from deap import base
 from deap import creator
+import json
 import math
 
 
@@ -146,12 +147,13 @@ def readCheckPoint(locator, genCP, storeData):
     # Contains 3 Fitnesses : Costs, CO2 emissions, Primary Energy Needs
     creator.create("Individual", list, fitness=creator.Fitness)
 
-    with open("CheckPoint" + str(genCP),"rb") as CPread:
-        CPunpick = Unpickler(CPread)
-        cp = CPunpick.load()
+    with open("CheckPoint" + str(genCP),"rb") as fp:
+        cp = json.load(fp)
         pop = cp["population"]
         eps = cp["epsIndicator"]
+        ntwList = cp["networkList"]
         testedPop = cp["testedPop"]
+        fitness = cp["population_fitness"]
 
     if storeData == 1:
         data_container = [['Cost', 'CO2', 'Eprim_i', 'Qmax', 'key']]
@@ -185,7 +187,7 @@ def readCheckPoint(locator, genCP, storeData):
                                            "ParetoValuesAndKeysGeneration%(genCP)s.csv" % locals())
         results.to_csv(pareto_results_file, sep=',')
 
-    return pop, eps, testedPop
+    return pop, eps, testedPop, ntwList, fitness
 
 
 def calc_num_buildings(data_path, totalfilename):
