@@ -6,8 +6,18 @@ Do ensure you have the uncertainty.csv which will be obtained by running uncerta
 
 This is part of the uncertainty analysis
 """
+from __future__ import division
+
+import cea.inputlocator
+import pandas as pd
+import cea.optimization.distribution.network_opt_main as network_opt
+import cea.optimization.master.evaluation as evaluation
+import os
+import json
+import csv
+
 __author__ = "Sreepathi Bhargava Krishna"
-__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Sreepathi Bhargava Krishna"]
 __license__ = "MIT"
 __version__ = "0.1"
@@ -16,21 +26,16 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 def individual_evaluation(generation, level, size):
-
     """
     :param generation: Generation of the optimization in which the individual evaluation is to be done
+    :type generation: int
     :param level: Number of the uncertain scenario. For each scenario, the objectives are calculated
+    :type level: int
     :param size: Total uncertain scenarios developed. See 'uncertainty.csv'
+    :type size: int
     :return: Function saves the new objectives in a json file 
     """
 
-    import cea.inputlocator
-    import pandas as pd
-    import cea.optimization.distribution.network_opt_main as network_opt
-    import cea.optimization.master.evaluation as evaluation
-    import os
-    import json
-    import csv
     from cea.optimization.preprocessing.preprocessing_main import preproccessing
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference

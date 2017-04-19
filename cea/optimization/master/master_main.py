@@ -112,17 +112,15 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         # Save initial population
         print "Save Initial population \n"
-        os.chdir(locator.get_optimization_master_results_folder())
 
-        with open("CheckPointInitial","wb") as fp:
+        with open(locator.get_optimization_checkpoint_initial(),"wb") as fp:
             cp = dict(population=pop, generation=0, networkList=ntwList, epsIndicator=[], testedPop=[], population_fitness=fitnesses)
             json.dump(cp, fp)
 
     else:
         print "Recover from CP " + str(genCP) + "\n"
-        os.path.join(locator.get_optimization_master_results_folder())
 
-        with open("CheckPoint" + str(genCP), "rb") as CPread:
+        with open(locator.get_optimization_checkpoint(genCP), "rb") as CPread:
             CPunpick = Unpickler(CPread)
             cp = CPunpick.load()
             pop = cp["population"]
@@ -212,8 +210,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         if g % gv.fCheckPoint == 0:
             print "Create CheckPoint", g, "\n"
             fitnesses = map(toolbox.evaluate, pop)
-            os.chdir(locator.get_optimization_master_results_folder())
-            with open("CheckPoint" + str(g), "wb") as fp:
+            with open(locator.get_optimization_checkpoint(g), "wb") as fp:
                 cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind,
                           population_fitness=fitnesses)
                 json.dump(cp, fp)
@@ -227,8 +224,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
     print "Save final results. " + str(len(pop)) + " individuals in final population"
     print "Epsilon indicator", epsInd, "\n"
     fitnesses = map(toolbox.evaluate, pop)
-    os.chdir(locator.get_optimization_master_results_folder())
-    with open("CheckPointFinal", "wb") as fp:
+    with open(locator.get_optimization_checkpoint_final(), "wb") as fp:
         cp = dict(population=pop, generation=g, networkList=ntwList, epsIndicator=epsInd, testedPop=invalid_ind,
                   population_fitness=fitnesses)
         json.dump(cp, fp)

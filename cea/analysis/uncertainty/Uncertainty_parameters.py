@@ -1,7 +1,12 @@
 " This file is used to generate various scenarios which involve uncertainty. Go through README.md"
+from __future__ import division
+
+import pandas as pd
+import cea.inputlocator
+import numpy as np
 
 __author__ = "Sreepathi Bhargava Krishna"
-__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Sreepathi Bhargava Krishna"]
 __license__ = "MIT"
 __version__ = "0.1"
@@ -9,13 +14,23 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+def variable_uncertainty_distribution_assignment(locator, variable_groups):
+
+    # get probability density functions (pdf) of all variable_groups from the uncertainty database
+    pdf = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1) for group in variable_groups])
+    # a list of tupples containing the lower-bound and upper-bound of each variable
+    names = list(zip(pdf['name']))
+    for i in names:
+        print (i)
+        print (type(i))
+    return 0
+
 def run_as_script(scenario_path):
-    import pandas as pd
-    import cea.inputlocator
-    import numpy as np
+
 
     # Importing the excel sheet containing the uncertainty distributions
     locator = cea.inputlocator.InputLocator(scenario_path)
+    variable_uncertainty_distribution_assignment(locator, variable_groups=('ECONOMIC',))
     uncertainty_db = pd.read_excel(locator.get_uncertainty_db(), 'ECONOMIC')
 
     # Fetching the distribution type and the corresponding variables from the excel sheet
