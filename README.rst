@@ -1,4 +1,9 @@
-THE CITY ENERGY ANALYST
+.. image::<https://github.com/architecture-building-systems/CEAforArcGIS/docs/assets/CEA_logo.png
+    :alt: City Energy Analyst (CEA) logo
+    :align: center
+
+
+
 =======================
 This is the repository of the `City Energy Analyst <https://www.cityenergyanalyst.com/>`_
 
