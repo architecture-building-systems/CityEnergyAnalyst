@@ -18,7 +18,7 @@ with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
 INSTALL_REQUIRES = ['geopandas', 'pandas', 'shapely', 'fiona', 'descartes', 'pyproj', 'xlrd', 'requests',
-                    'doit==0.29.0', 'pyshp', 'pysal', 'ephem', 'simpledbf', 'plotly', 'deap', 'SALib']
+                    'doit==0.29.0', 'pyshp', 'pysal', 'ephem', 'simpledbf', 'plotly', 'deap', 'SALib', 'scikit-learn']
 
 setup(name='cityenergyanalyst',
       version=__version__,
