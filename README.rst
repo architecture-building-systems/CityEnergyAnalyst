@@ -1,4 +1,4 @@
-.. image:: https://github.com/architecture-building-systems/CEAforArcGIS/tree/master/docs/assets/CEA_logo.png
+.. image:: https://github.com/architecture-building-systems/CEAforArcGIS/tree/master/docs/assets/CEA_logo.png?raw=true
     :alt: City Energy Analyst (CEA) logo
     :align: center
 
