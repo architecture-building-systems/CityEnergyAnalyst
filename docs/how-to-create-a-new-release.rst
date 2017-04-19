@@ -83,5 +83,15 @@ Testing in a virtual machine
 Building the documentation
 ==========================
 
+An important part of the release process is ensuring that the documentation for readthedocs_ can be built. This can
+be tested locally by executing the following commands in the repository folder::
 
+    cd docs
+    make clean
+    make html
+
+For this to run you might need to first ``pip install sphinx``. If any error messages show up, these need to be fixed
+before publishing the release.
+
+.. _readthedocs: http://city-energy-analyst.readthedocs.io/en/latest/index.html
 
