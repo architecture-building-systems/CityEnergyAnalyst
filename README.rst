@@ -4,7 +4,6 @@
 
 
 
-=======================
 This is the repository of the `City Energy Analyst <https://www.cityenergyanalyst.com/>`_
 
 * Click `here <https://cityenergyanalyst.com/user-manual>`_  for documentation and installation of CEA Planning
