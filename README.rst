@@ -2,7 +2,7 @@
     :alt: City Energy Analyst (CEA) logo
     :scale: 50 %
     :alt: alternate text
-    :align: left
+    :align: center
 
 
 This is the repository of the `City Energy Analyst <https://www.cityenergyanalyst.com/>`_
