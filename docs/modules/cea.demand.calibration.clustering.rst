@@ -1,29 +1,29 @@
-cea.demand.calibration.clustering package
+cea.demand.calibration.clustering_main package
 =========================================
 
 Submodules
 ----------
 
-cea.demand.calibration.clustering.clustering_main module
+cea.demand.calibration.clustering_main.clustering_main module
 --------------------------------------------------------
 
-.. automodule:: cea.demand.calibration.clustering.clustering_main
+.. automodule:: cea.demand.calibration.clustering_main.clustering_main
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea.demand.calibration.clustering.sax module
+cea.demand.calibration.clustering_main.sax module
 --------------------------------------------
 
-.. automodule:: cea.demand.calibration.clustering.sax
+.. automodule:: cea.demand.calibration.clustering_main.sax
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea.demand.calibration.clustering.sax_optimization module
+cea.demand.calibration.clustering_main.sax_optimization module
 ---------------------------------------------------------
 
-.. automodule:: cea.demand.calibration.clustering.sax_optimization
+.. automodule:: cea.demand.calibration.clustering_main.sax_optimization
     :members:
     :undoc-members:
     :show-inheritance:
@@ -32,7 +32,7 @@ cea.demand.calibration.clustering.sax_optimization module
 Module contents
 ---------------
 
-.. automodule:: cea.demand.calibration.clustering
+.. automodule:: cea.demand.calibration.clustering_main
     :members:
     :undoc-members:
     :show-inheritance:

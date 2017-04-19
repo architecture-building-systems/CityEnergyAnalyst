@@ -34,9 +34,8 @@ def main():
     building_properties = BuildingProperties(locator, gv)
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
     list_uses = building_properties.list_uses()
-    schedules = schedule_maker(date, locator, list_uses)
-    usage_schedules = {'list_uses': list_uses,
-                       'schedules': schedules}
+    schedules, occupancy_densities = schedule_maker(date, locator, list_uses)
+    usage_schedules = {'list_uses': list_uses, 'schedules': schedules, 'occupancy_densities': occupancy_densities}
 
     print("data for test_calc_thermal_loads:")
     print building_properties.list_building_names()
@@ -59,17 +58,10 @@ def main():
 
     print("data for test_calc_thermal_loads_other_buildings:")
     # randomly selected except for B302006716, which has `Af == 0`
-    buildings = {'B01': (81124.39400, 150471.05200),
-                 'B03': (81255.09200, 150520.01000),
-                 'B02': (82176.15300, 150604.85100),
-                 'B05': (84058.72400, 150841.56200),
-                 'B04': (82356.22600, 150598.43400),
-                 'B07': (81052.19000, 150490.94800),
-                 'B06': (83108.45600, 150657.24900),
-                 'B09': (84491.58100, 150853.54000),
-                 'B08': (88572.59000, 151020.09300), }
+    buildings = ['B01', 'B03', 'B02', 'B05', 'B04','B07','B06','B09',
+                 'B08']
 
-    for building in buildings.keys():
+    for building in buildings:
         bpr = building_properties[building]
         b, qcf_kwh, qhf_kwh = run_for_single_building(building, bpr, weather_data, usage_schedules,
                                                       date, gv, locator)

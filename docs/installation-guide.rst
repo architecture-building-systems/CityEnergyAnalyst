@@ -1,86 +1,53 @@
 Installation guide
 ==================
 
-The version |version| of the City Energy Analyst is dependent on ArcGIS 10.4
-for its visuals. As such it is restricted to Windows-based OS's for some features.
+This guide covers the main steps of installing the City Energy Analyst version |version| for research.
+It also includes a guide to connect to our development environment and to the Euler cluster of ETH Zurich (only of ETH zurich affiliates).
 
-
-Installation on Windows
------------------------
-
-Installing the CEA on Windows is easiest with Anaconda_ (or Miniconda_) as the CEA depends on the geopandas_ module.
-
-.. _Anaconda: https://www.continuum.io/downloads
-.. _Miniconda: https://conda.io/miniconda.html
-.. _geopandas: https://github.com/geopandas/geopandas
-
-Installation follows the following basic steps:
-
-#. create a conda environment and activate it (optional)
-#. ``conda install -c conda-forge geopandas``
-#. ``pip install cityenergyanalyst``
-#. ``cea install-toolbox`` (installs the CEA as an ArcGIS 10.4 toolbox)
-
-
-The following subsections contain additional information for variations on the above theme.
-
-Creating a conda environment
-............................
-
-Creating a conda environment is an optional step, but probably a good habit to get into: This creates a python
-environment separate from your other python environments - that way, version mismatches between packages don't bleed
-into your other work. Follow these steps to create a new conda environment for the CEA:
-
-#. ``conda create -n cea python=2.7`` (you can use any name, when creating an environment - "cea" is just an example)
-#. ``activate cea`` (do this before any cea-related work on the commandline)
-#. work with CEA, python is now set up to use your conda environment
-#. ``deactivate cea`` (you can also just close the shell)
-
-
-Connecting to Arcpy
-...................
-
-The command ``cea install-toolbox`` (see step 4 in the basic installation steps above) attempts to connect the CEA with
-the ArcGIS environment. You should not need to do anything else.
-
-If, however, you get error messages like ``ImportError: no module named arcpy`` you can check your home directory
-for a file called ``cea_arcgis.pth`` containing these three lines::
-
-    C:\Program Files (x86)\ArcGIS\Desktop10.4\bin
-    C:\Program Files (x86)\ArcGIS\Desktop10.4\arcpy
-    C:\Program Files (x86)\ArcGIS\Desktop10.4\Scripts
-
-Edit these folders to point to the appropriate ArcGIS folders as documented in the ArcGIS manuals.
-
-Installation from GitHub repository
-...................................
-
-If you'd prefer to track the newest version of the City Energy Analyst, replace step 3 in the basic installation steps
-above with a git clone of the CEA GitHub repository and run::
-
-    python setup.py install
-
-to install the CEA, including the ``cea`` tool. Note, you will still need to follow the guide above to create a conda
-environment and install geopandas.
-
-Installation of the development environment
--------------------------------------------
-
-When installing the City Energy Analyst for development, clone the repository to your computer and run::
-
-    python setup.py develop
-
-This will install the ``cea`` tool to your path and set it up to use the version in the repository. Note, you will need
-to follow the guide above to create a conda environment and install geopandas.
-
-Recommended software
-....................
+Prerequisites
+-------------
 
 -  GitHub Desktop (or your favorite ``git``)
 -  Anaconda distribution (x86) - other pythons can work, but this is really recommended
 -  PyCharm community edition - you can use your own favorite editor, but this is what we use
+-  ArcGIS 10.4 - only if you would like to use ArcGIS visuals.
 -  Git Large File Storage - only for working with the reference case repository (you need to be a core developer to
    have access to the private reference case repository)
+
+Installation CEA research
+-------------------------
+
+To install the research version of CEA:
+
+#. open Anaconda prompt (terminal console) from the start menu.
+#. create a conda environment and activate it: do ``conda create -n cea python=2.7``, do ``activate cea``
+#. install dependencies: do ``conda install -c conda-forge geopandas ephem``
+#. install cea: do ``pip install cityenergyanalyst``
+#. install arcgis plug-in: do ``cea install-toolbox``
+
+Note: Creating a conda environment is an optional step, but probably a good habit to get into: This creates a python
+environment separate from your other python environments - that way, version mismatches between packages don't bleed
+into your other work. (you can use any name, when creating an environment - "cea" is just an example)
+
+Installation CEA development environment
+----------------------------------------
+
+To install the development environment of CEA:
+
+#. open Anaconda prompt (terminal console) from the start menu.
+#. create a conda environment and activate it. do ``conda create -n cea python=2.7``, do ``activate cea``
+#. choose location where to store the repository: do ``cd Documents``
+#. clone repository: do ``git clone https://github.com/architecture-building-systems/CEAforArcGIS.git``
+#. go to location where the repository was cloned: do ``cd CEAforArcGIS``
+#. install dependencies: do ``conda install -c conda-forge geopandas ephem``
+#. install cea development: do ``python setup.py install``
+#. set-up path to repository: do ``python setup.py develop``
+
+Note: Creating a conda environment is an optional step, but probably a good habit to get into: This creates a python
+environment separate from your other python environments - that way, version mismatches between packages don't bleed
+into your other work. (you can use any name, when creating an environment - "cea" is just an example)
+
+Note: Location where to store the repository can be any -"Documents" is just an example.
 
 Setting up PyCharm
 ..................
@@ -114,11 +81,29 @@ To set the custom dictionary used in PyCharm, do:
 
 #. Click "Apply".
 
+
+Connecting to Arcpy
+-------------------
+
+the step ``cea install-toolbox`` (see step 4 in the basic installation steps above) attempts to connect the CEA with
+the ArcGIS environment. You should not need to do anything else. If, however, you get error messages like
+``ImportError: no module named arcpy`` you can check your home directory
+for a file called ``cea_arcgis.pth`` containing these three lines::
+
+    C:\Program Files (x86)\ArcGIS\Desktop10.4\bin
+    C:\Program Files (x86)\ArcGIS\Desktop10.4\arcpy
+    C:\Program Files (x86)\ArcGIS\Desktop10.4\Scripts
+
+Edit these folders to point to the appropriate ArcGIS folders as documented in the ArcGIS manuals.
+
 Installation on the Euler cluster
 ---------------------------------
 
 It is possible to install the CEA on the Euler_ cluster by following the following guide:
 :doc:`installation-on-euler`.
 
-.. _Euler: https://www.ethz.ch/services/en/it-services/catalogue/server-cluster/hpc.html
 
+.. _Euler: https://www.ethz.ch/services/en/it-services/catalogue/server-cluster/hpc.html
+.. _Anaconda: https://www.continuum.io/downloads
+.. _Miniconda: https://conda.io/miniconda.html
+.. _geopandas: https://github.com/geopandas/geopandas
