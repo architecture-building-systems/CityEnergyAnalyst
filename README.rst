@@ -1,5 +1,7 @@
 .. image:: https://static1.squarespace.com/static/587d65bdbebafb893ba24447/t/587d845d29687f2d2febee75/1492591264954/?format=1500w
-    :scale: 10 %
+    :height: 50px
+    :width: 150 px
+    :scale: 50 %
     :alt: City Energy Analyst (CEA) logo
     :align: left
 
