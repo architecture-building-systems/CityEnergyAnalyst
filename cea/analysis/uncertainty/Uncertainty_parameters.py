@@ -15,10 +15,17 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def variable_uncertainty_distribution_assignment(locator, number_of_uncertain_scenarios, variable_groups):
-
+    """
+    :param locator: path to the scenario
+    :type locator: string
+    :param number_of_uncertain_scenarios: number of uncertain scenarios
+    :type number_of_uncertain_scenarios: int
+    :param variable_groups: groups displaying the various sheets present in the excel file
+    :type variable_groups: tuple
+    :return: saves csv file with the uncertain situations
+    """
     # get probability density functions (pdf) of all variable_groups from the uncertainty database
     pdf = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1) for group in variable_groups])
-
     names = pdf['name']
 
     # Fetching the distribution type and the corresponding variables from the excel sheet
@@ -34,7 +41,7 @@ def variable_uncertainty_distribution_assignment(locator, number_of_uncertain_sc
 
     df = pd.DataFrame()
     for i in xrange(len(names)):
-        if distribution[i] == 'Beta':
+        if distribution[i] == 'Beta':  # based on distribution, the random numbers are generated
             a = []
             for j in xrange(number_of_uncertain_scenarios):
                 a.append(mu_c[i] * np.random.beta(stdv_alpha[i], beta[i], size=None))
@@ -48,7 +55,13 @@ def variable_uncertainty_distribution_assignment(locator, number_of_uncertain_sc
 
 
 def run_as_script(scenario_path, number_of_uncertain_scenarios):
-
+    """
+    :param scenario_path: path to the scenario path
+    :type scenario_path: string
+    :param number_of_uncertain_scenarios: total number of uncertain scenarios
+    :type number_of_uncertain_scenarios: int
+    :return: NULL
+    """
    # Importing the excel sheet containing the uncertainty distributions
     locator = cea.inputlocator.InputLocator(scenario_path)
     variable_uncertainty_distribution_assignment(locator, number_of_uncertain_scenarios, variable_groups=('ECONOMIC',) )
