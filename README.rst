@@ -1,7 +1,7 @@
 .. image:: https://static1.squarespace.com/static/587d65bdbebafb893ba24447/t/587d845d29687f2d2febee75/1492591264954/?format=1500w
-    :scale: 50 %
+    :scale: 10 %
     :alt: City Energy Analyst (CEA) logo
-    :align: center
+    :align: left
 
 
 This is the repository of the `City Energy Analyst <https://www.cityenergyanalyst.com/>`_
