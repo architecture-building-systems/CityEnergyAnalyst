@@ -4,7 +4,6 @@ Global variables - this object contains context information and is expected to b
 """
 from __future__ import absolute_import
 import cea.demand.demand_writers
-# from cea.demand import thermal_loads
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -71,7 +70,6 @@ class GlobalVariables(object):
         # ==============================================================================================================
 
         self.sensibilityStep = 2  # the more, the longer the sensibility analysis
-        self.save_csv_files = True  # for saving the files both in csv and pickle formats
 
         ########################### User inputs
 
