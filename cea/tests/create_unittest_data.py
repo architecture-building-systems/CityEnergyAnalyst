@@ -16,9 +16,9 @@ from cea.utilities import epwreader
 
 def main():
     import zipfile
-    import examples
+    import cea.examples
     import tempfile
-    archive = zipfile.ZipFile(os.path.join(os.path.dirname(examples.__file__), 'reference-case-open.zip'))
+    archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
     archive.extractall(tempfile.gettempdir())
     reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
     locator = InputLocator(reference_case)
