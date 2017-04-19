@@ -14,7 +14,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
 with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
