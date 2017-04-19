@@ -67,10 +67,9 @@ Uploading to PyPI
 
 - use twine (pip install ``twine`` first, then set environment variables / use username & password)
 
-    ::
+::
 
     twine upload dist/*
-
 
 
 Creating the installer for the planner's edition
