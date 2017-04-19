@@ -2,10 +2,8 @@
 """
 Global variables - this object contains context information and is expected to be refactored away in future.
 """
+from __future__ import absolute_import
 import cea.demand.demand_writers
-import os
-import cea.inputlocator
-import pandas as pd
 # from cea.demand import thermal_loads
 
 __author__ = "Jimeno A. Fonseca"
