@@ -44,7 +44,7 @@ requiring knowledge of the current version number should read the version from h
 Responsibility for version numbers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The repository admin merging a pull request to master is responsible for updating the
+The repository admin merging a pull request to master is responsible for updating the version number.
 
 .. _PyPI: https://pypi.python.org/pypi
 .. _PEP440: https://www.python.org/dev/peps/pep-0440
@@ -54,9 +54,29 @@ The repository admin merging a pull request to master is responsible for updatin
 Uploading to PyPI
 =================
 
+- check long-description with this commandline::
+
+    python setup.py --long-description | python %temp%\CityEnergyAnalyst\Scripts\rst2html.py > ld.html && start ld.html
+
+
+- delete any old distributions from dist folder
+
+- ``python setup.py sdist bdist_wheel``
+
+- NOTE: maybe we can haz a dev tool / make thingy?? hey! pydoit to the rescue!!!
+
+- use twine (pip install ``twine`` first, then set environment variables / use username & password)
+
+    ::
+
+    twine upload dist/*
+
+
 
 Creating the installer for the planner's edition
 ================================================
+
+- required: NSIS
 
 Testing in a virtual machine
 ============================
