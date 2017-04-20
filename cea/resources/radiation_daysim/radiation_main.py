@@ -354,18 +354,22 @@ def reader_surface_properties(input_shp):
     
     return surface_properties.set_index('Name').round(decimals=2)
 
+
+def main(locator, weather_path):
+    # Create City GML file (this is necesssary only once).
+    output_folder = locator.get_building_geometry_citygml()
+    input_buildings_shapefile = locator.get_district()
+    input_terrain_raster = locator.get_terrain()
+    create_gml.create_citygml(input_buildings_shapefile, input_terrain_raster, output_folder)
+    # calculate solar radiation
+    calc_radiation(weather_path, locator)
+
+
 if __name__ == '__main__':
 
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    weatherfile_path = locator.get_default_weather()
+    weather_path = locator.get_default_weather()
 
-    #Create City GML file (this is necesssary only once).
-    output_folder = locator.get_building_geometry_citygml()
-    input_buildings_shapefile = locator.get_district()
-    input_terrain_raster = locator.get_terrain()
-    create_gml.create_citygml(input_buildings_shapefile, input_terrain_raster, output_folder)
-
-    #calculate solar radiation
-    calc_radiation(weatherfile_path, locator)
+    main(locator=locator, weather_path=weather_path)
