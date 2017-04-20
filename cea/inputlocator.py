@@ -78,6 +78,26 @@ class InputLocator(object):
         Operation pattern for disconnected buildings"""
         return self._ensure_folder(self.get_optimization_results_folder(), "disconnected")
 
+    def get_optimization_checkpoint(self, generation):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_master_results_folder(),
+                            'CheckPoint_'+str(generation))
+
+    def get_optimization_checkpoint_initial(self):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_master_results_folder(),
+                            'CheckPoint_Initial')
+
+    def get_optimization_checkpoint_final(self):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_master_results_folder(),
+                            'Checkpoint_Final')
+
+    def get_uncertainty_checkpoint(self, generation):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_uncertainty_results_folder(),
+                            'CheckPoint_uncertainty_'+str(generation))
+
     def get_measurements(self):
         """scenario/inputs/
         Operation pattern for disconnected buildings"""
@@ -176,6 +196,14 @@ class InputLocator(object):
     def get_uncertainty_db(self):
         """databases/CH/Uncertainty/uncertainty_distributions.xls"""
         return os.path.join(self.db_path, 'Uncertainty', 'uncertainty_distributions.xls')
+
+    def get_uncertainty_parameters(self):
+        """databases/CH/Uncertainty/uncertainty_distributions.xls"""
+        return os.path.join(self.db_path, 'Uncertainty')
+
+    def get_uncertainty_results_folder(self):
+        return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'uncertainty')
+
 
     # INPUTS
 
