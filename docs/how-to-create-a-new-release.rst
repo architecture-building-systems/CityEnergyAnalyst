@@ -58,12 +58,18 @@ Uploading to PyPI
 
     python setup.py --long-description | python %temp%\CityEnergyAnalyst\Scripts\rst2html.py > ld.html && start ld.html
 
+  - make sure the output is valid / no errors, as this will be the text of the CEA on PyPI
 
-- delete any old distributions from dist folder
+- delete any old distributions from dist folder (you can just delete the whole ``dist`` folder if you like)
 
-- ``python setup.py sdist bdist_wheel``
+- do ``python setup.py sdist bdist_wheel``
 
-- NOTE: maybe we can haz a dev tool / make thingy?? hey! pydoit to the rescue!!!
+  - this will recreate the ``dist`` folder with two files that look similar to these:
+
+    - cityenergyanalyst-2.2-py2-none-any.whl
+    - cityenergyanalyst-2.2.tar.gz
+
+- **NOTE**: All this stuff could be made a lot easier if we created a pydoit-powered script (cea-admin?)
 
 - use twine (pip install ``twine`` first, then set environment variables / use username & password)
 
@@ -75,7 +81,13 @@ Uploading to PyPI
 Creating the installer for the planner's edition
 ================================================
 
-- required: NSIS
+- first, make sure you have the nullsoft scriptable installation system (NSIS) version 3.01 installed. You can get it
+  from here: http://nsis.sourceforge.net/Download (choose the version 3.01)
+
+- update the `*.pyd` files by running `cea/utilities/compile_pyd_files.py`
+
+  - this requires `numba.pycc` to be installed, which can be obtained by doing `conda install numba`
+  - this also requires a C compiler installed, **TODO**: figure out in a VM exactly how to set this up...
 
 Testing in a virtual machine
 ============================
