@@ -177,6 +177,10 @@ def radiation(args):
                                                                       weather_path=args.weather_path)
 
 
+def radiation_daysim(args):
+    """Run the DAYSIM radiation script with the arguments provided."""
+
+
 def install_toolbox(_):
     """Install the ArcGIS toolbox and sets up .pth files to access arcpy from the cea python interpreter."""
     import cea.interfaces.arcgis.install_toolbox

@@ -216,7 +216,7 @@ class InputLocator(object):
         return os.path.join(self.scenario_path, 'inputs', 'building-geometry', 'zone.shp')
 
     def get_building_geometry_citygml(self):
-        """scenario/inputs/building-geometry/zone.gml"""
+        """scenario/outputs/data/solar-radiation/district.gml"""
         return os.path.join(self.get_solar_radiation_folder(), 'district.gml')
 
     def get_district(self):
@@ -274,15 +274,15 @@ class InputLocator(object):
     ##SOLAR-RADIATION
     def get_radiation(self):
         """scenario/outputs/data/solar-radiation/radiation.csv"""
-        return os.path.join(self.get_solar_radiation_folder(), 'radiation.csv')
+        return self._ensure_folder(os.path.join(self.get_solar_radiation_folder(), 'radiation.csv'))
 
     def get_solar_radiation_folder(self):
         """scenario/outputs/data/solar-radiation"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'solar-radiation')
 
     def get_3D_geometry_folder(self):
-        """scenario/inputs/3D_geometries"""
-        return os.path.join(self.scenario_path, 'inputs', '3D_geometries')
+        """scenario/inputs/3D-geometries"""
+        return self._ensure_folder(os.path.join(self.scenario_path, 'inputs', '3D-geometries'))
 
     def get_solar_radiation_folder(self):
         """scenario/outputs/data/solar-radiation"""
