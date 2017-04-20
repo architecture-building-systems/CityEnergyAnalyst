@@ -305,7 +305,8 @@ def execute_daysim(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_par
 def calc_radiation(weatherfile_path, locator):
 
     # local variables
-    building_surface_properties = reader_surface_properties(locator.get_building_architecture())
+    building_surface_properties = reader_surface_properties(locator=locator,
+                                                            input_shp=locator.get_building_architecture())
 
     results_path = locator.get_solar_radiation_folder()
 
@@ -329,7 +330,7 @@ def calc_radiation(weatherfile_path, locator):
     time3 = time2-time1
     print "TIME TAKEN: ", time3/60.0
 
-def reader_surface_properties(input_shp):
+def reader_surface_properties(locator, input_shp):
     """
     This function returns a dataframe with the emissivity values of walls, roof, and windows
     of every building in the scene
