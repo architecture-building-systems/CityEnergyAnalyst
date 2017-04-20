@@ -65,7 +65,13 @@ the instructions to get PyCharm up and running:
    something like
    ``C:\Users\your_name\Anaconda2\envs\cea/python.exe``
 
-#. Click apply changes and your are done!
+#. Click apply changes.
+
+#. Now add your conda environment ``C:\Users\your_name\Anaconda2\envs\cea``
+to your environment variable ``PATH``. The environment variable is located
+under Environment Variables in the tab Advanced in System Properties in the Control Panel.
+
+#. Restart PyCharm if open.
 
 To set the custom dictionary used in PyCharm, do:
 
