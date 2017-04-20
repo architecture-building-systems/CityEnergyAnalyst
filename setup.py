@@ -17,16 +17,9 @@ __status__ = "Production"
 with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
-if os.environ.get('READTHEDOCS', False) == 'True':
-    # trick to make cea installable for readthedocs
-    INSTALL_REQUIRES = ['geopandas', 'pandas', 'shapely', 'fiona', 'descartes', 'pyproj', 'xlrd', 'requests',
-                        'doit==0.29.0', 'pyshp', 'pysal', 'ephem', 'lxml', 'pycollada', 'simpledbf',
-                        'OCCUtils>=0.1-dev', 'simpledbf']
-else:
-    # TODO: list all the requirements for installing
-    INSTALL_REQUIRES = ['geopandas', 'pandas', 'shapely', 'fiona', 'descartes', 'pyproj', 'xlrd', 'requests',
-                        'doit==0.29.0', 'pyshp', 'pysal', 'ephem', 'lxml', 'pycollada', 'simpledbf', 'plotly'
-                        'OCCUtils>=0.1-dev', 'simpledbf']
+INSTALL_REQUIRES = ['geopandas', 'pandas', 'shapely', 'fiona', 'descartes', 'pyproj', 'xlrd', 'requests',
+                    'doit==0.29.0', 'pyshp', 'pysal', 'ephem', 'lxml', 'pycollada', 'simpledbf', 'plotly',
+                    'OCCUtils>=0.1-dev', 'simpledbf']
 
 setup(name='cityenergyanalyst',
       version=__version__,
