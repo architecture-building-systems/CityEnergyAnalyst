@@ -5,7 +5,7 @@
     :alt: City Energy Analyst (CEA) logo
     :target: https://www.cityenergyanalyst.com
 
-This is the repository of the `City Energy Analyst <https://www.cityenergyanalyst.com/>`_
+The  `City Energy Analyst (CEA) <https://www.cityenergyanalyst.com/>`_ is an urban building simulation platform and one of the first open-source initiatives of computation tools for the design of low-carbon and highly efficient cities. The CEA combines knowledge of urban planning and energy systems engineering in an integrated simulation platform. This allows to study the effects, trade-offs and synergies of urban design options and energy infrastructure plans.
 
 * Click `here <https://cityenergyanalyst.com/user-manual>`__  for documentation and installation of CEA Planning
 
@@ -18,9 +18,14 @@ This is the repository of the `City Energy Analyst <https://www.cityenergyanalys
 Cite us:
 --------
 
-For V0.4:
+For V2.2:    |V2.2|
 
-|V0.4|
+For V0.4:    |V0.4|
 
-.. |V0.4| image:: https://zenodo.org/badge/49491341.svg
-   :target: https://zenodo.org/badge/latestdoi/49491341
+
+
+.. |V2.2| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.556165.svg
+   :target: https://doi.org/10.5281/zenodo.556165
+   
+.. |V0.4| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.496194.svg
+   :target: https://doi.org/10.5281/zenodo.496194
