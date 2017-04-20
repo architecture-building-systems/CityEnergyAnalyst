@@ -17,9 +17,9 @@ __status__ = "Production"
 with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
-INSTALL_REQUIRES = ['geopandas', 'pandas', 'shapely', 'fiona', 'descartes', 'pyproj', 'xlrd', 'requests',
-                    'doit==0.29.0', 'pyshp', 'pysal', 'ephem', 'lxml', 'pycollada', 'simpledbf', 'plotly',
-                    'OCCUtils>=0.1-dev', 'simpledbf']
+INSTALL_REQUIRES = ['OCCUtils>=0.1-dev', 'SALib', 'deap', 'descartes', 'doit==0.29.0', 'ephem', 'fiona', 'geopandas',
+                    'lxml', 'pandas', 'plotly', 'pycollada', 'pyproj', 'pysal', 'pyshp', 'requests', 'scikit-learn',
+                    'shapely', 'simpledbf', 'xlrd']
 
 setup(name='cityenergyanalyst',
       version=__version__,
@@ -32,7 +32,7 @@ setup(name='cityenergyanalyst',
       py_modules=[''],
       packages=find_packages(),
       package_data={},
-      dependency_links = ['https://github.com/tpaviot/pythonocc-utils/tarball/master#egg=OCCUtils-0.1-dev'],
+      dependency_links=['https://github.com/tpaviot/pythonocc-utils/tarball/master#egg=OCCUtils-0.1-dev'],
       install_requires=INSTALL_REQUIRES,
       include_package_data=True,
       entry_points={
