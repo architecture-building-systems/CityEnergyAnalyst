@@ -43,6 +43,12 @@ To install the development environment of CEA:
 #. install dependencies: do ``conda install -c pythonocc -c oce pythonocc-core==0.17.3``
 #. install cea development: do ``python setup.py install``
 #. set-up path to repository: do ``python setup.py develop``
+#. download ``https://github.com/tpaviot/pythonocc-utils``. ranme to ``OCCUtils`` and store it into
+``C:\Users\your_name\Anaconda2\envs\cea\Lib\site-packages``
+#. download ``https://github.com/chenkianwee/pyliburo``. rename to ``pyliburo`` and store it into
+``C:\Users\your_name\Anaconda2\envs\cea\Lib\site-packages``
+#. download and install Daysim: ``http://daysim.ning.com/page/download``
+
 
 Note: Creating a conda environment is an optional step, but probably a good habit to get into: This creates a python
 environment separate from your other python environments - that way, version mismatches between packages don't bleed
