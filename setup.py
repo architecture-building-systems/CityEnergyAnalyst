@@ -33,7 +33,7 @@ setup(name='cityenergyanalyst',
       packages=find_packages(),
       package_data={},
       dependency_links=['https://github.com/tpaviot/pythonocc-utils/tarball/master#egg=OCCUtils-0.1-dev',
-                        'https://github.com/architecture-building-systems/pyliburo#egg=pyliburo-0.1a0'],
+                        'https://github.com/architecture-building-systems/pyliburo/tarball/master#egg=pyliburo-0.1a0'],
       install_requires=INSTALL_REQUIRES,
       include_package_data=True,
       entry_points={
