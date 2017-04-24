@@ -234,8 +234,8 @@ def test(args):
 def extract_reference_case(args):
     """extract the reference case to a folder"""
     import zipfile
-    import examples
-    archive = zipfile.ZipFile(os.path.join(os.path.dirname(examples.__file__), 'reference-case-open.zip'))
+    import cea.examples
+    archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
     archive.extractall(args.to)
 
 

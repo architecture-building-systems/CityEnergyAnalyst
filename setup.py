@@ -19,7 +19,7 @@ with open('README.rst', 'r') as f:
 
 INSTALL_REQUIRES = ['OCCUtils>=0.1-dev', 'SALib', 'deap', 'descartes', 'doit==0.29.0', 'ephem', 'fiona', 'geopandas',
                     'lxml', 'pandas', 'plotly', 'pycollada', 'pyproj', 'pysal', 'pyshp', 'requests', 'scikit-learn',
-                    'shapely', 'simpledbf', 'xlrd', 'networkx']
+                    'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo>=0.1a0']
 
 setup(name='cityenergyanalyst',
       version=__version__,
@@ -32,7 +32,8 @@ setup(name='cityenergyanalyst',
       py_modules=[''],
       packages=find_packages(),
       package_data={},
-      dependency_links=['https://github.com/tpaviot/pythonocc-utils/tarball/master#egg=OCCUtils-0.1-dev'],
+      dependency_links=['https://github.com/tpaviot/pythonocc-utils/tarball/master#egg=OCCUtils-0.1-dev',
+                        'https://github.com/architecture-building-systems/pyliburo#egg=pyliburo-0.1a0'],
       install_requires=INSTALL_REQUIRES,
       include_package_data=True,
       entry_points={
