@@ -19,7 +19,7 @@ with open('README.rst', 'r') as f:
 
 INSTALL_REQUIRES = ['OCCUtils>=0.1-dev', 'SALib', 'deap', 'descartes', 'doit==0.29.0', 'ephem', 'fiona', 'geopandas',
                     'lxml', 'pandas', 'plotly', 'pycollada', 'pyproj', 'pysal', 'pyshp', 'requests', 'scikit-learn',
-                    'shapely', 'simpledbf', 'xlrd']
+                    'shapely', 'simpledbf', 'xlrd', 'networkx','pythonocc-core=0.16']
 
 setup(name='cityenergyanalyst',
       version=__version__,
