@@ -1244,31 +1244,52 @@ def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     """ import dataframes """
     # mass flows
 
-    # print fName
-    Q_DH_networkload = np.array(extract_csv(fName, "Q_DH_networkload", DAYS_IN_YEAR))
-    E_aux_ch = np.array(extract_csv(fName, "E_aux_ch", DAYS_IN_YEAR))
+    # Extract data from all columns of the csv file to a pandas.Dataframe
+    result = pd.read_csv(fName, nrows=24 * DAYS_IN_YEAR)
+    Q_DH_networkload = (np.array(result['Q_DH_networkload'])[np.newaxis]).T
+    E_aux_ch = (np.array(result['E_aux_ch'])[np.newaxis]).T
+    E_aux_dech = (np.array(result['E_aux_dech'])[np.newaxis]).T
+    Q_missing = (np.array(result['Q_missing'])[np.newaxis]).T
+    Q_storage_content_Wh = (np.array(result['Q_storage_content_Wh'])[np.newaxis]).T
+    Q_to_storage = (np.array(result['Q_to_storage'])[np.newaxis]).T
+    Q_from_storage = (np.array(result['Q_from_storage_used'])[np.newaxis]).T
+    Q_uncontrollable = (np.array(result['Q_uncontrollable_hot'])[np.newaxis]).T
+    E_PV_Wh = (np.array(result['E_PV_Wh'])[np.newaxis]).T
+    E_PVT_Wh = (np.array(result['E_PVT_Wh'])[np.newaxis]).T
+    E_aux_HP_uncontrollable = (np.array(result['E_aux_HP_uncontrollable'])[np.newaxis]).T
+    Q_SCandPVT = (np.array(result['Q_SCandPVT_coldstream'])[np.newaxis]).T
+    HPServerHeatDesignArray = (np.array(result['HPServerHeatDesignArray'])[np.newaxis]).T
+    HPpvt_designArray = (np.array(result['HPpvt_designArray'])[np.newaxis]).T
+    HPCompAirDesignArray = (np.array(result['HPCompAirDesignArray'])[np.newaxis]).T
+    HPScDesignArray = (np.array(result['HPScDesignArray'])[np.newaxis]).T
+    E_produced_solarAndHPforSolar = (np.array(result['E_produced_total'])[np.newaxis]).T
+    E_consumed_without_buildingdemand_solarAndHPforSolar = (np.array(
+        result['E_consumed_total_without_buildingdemand'])[np.newaxis]).T
 
-    E_aux_dech = np.array(extract_csv(fName, "E_aux_dech", DAYS_IN_YEAR))
-    Q_missing = np.array(extract_csv(fName, "Q_missing", DAYS_IN_YEAR))
-    Q_storage_content_Wh = np.array(extract_csv(fName, "Q_storage_content_Wh", DAYS_IN_YEAR))
-    Q_to_storage = np.array(extract_csv(fName, "Q_to_storage", DAYS_IN_YEAR))
-    Q_from_storage = np.array(extract_csv(fName, "Q_from_storage_used", DAYS_IN_YEAR))
-    Q_uncontrollable = np.array(extract_csv(fName, "Q_uncontrollable_hot", DAYS_IN_YEAR))
-    E_PV_Wh = np.array(extract_csv(fName, "E_PV_Wh", DAYS_IN_YEAR))
-    E_PVT_Wh = np.array(extract_csv(fName, "E_PVT_Wh", DAYS_IN_YEAR))
+
+    # Q_DH_networkload = np.array(extract_csv(fName, "Q_DH_networkload", DAYS_IN_YEAR))
+    # E_aux_ch = np.array(extract_csv(fName, "E_aux_ch", DAYS_IN_YEAR))
+    #
+    # E_aux_dech = np.array(extract_csv(fName, "E_aux_dech", DAYS_IN_YEAR))
+    # Q_missing = np.array(extract_csv(fName, "Q_missing", DAYS_IN_YEAR))
+    # Q_storage_content_Wh = np.array(extract_csv(fName, "Q_storage_content_Wh", DAYS_IN_YEAR))
+    # Q_to_storage = np.array(extract_csv(fName, "Q_to_storage", DAYS_IN_YEAR))
+    # Q_from_storage = np.array(extract_csv(fName, "Q_from_storage_used", DAYS_IN_YEAR))
+    # Q_uncontrollable = np.array(extract_csv(fName, "Q_uncontrollable_hot", DAYS_IN_YEAR))
+    # E_PV_Wh = np.array(extract_csv(fName, "E_PV_Wh", DAYS_IN_YEAR))
+    # E_PVT_Wh = np.array(extract_csv(fName, "E_PVT_Wh", DAYS_IN_YEAR))
     # print " \n ----------- "
     # print "E_PVT_Wh Sum in Import netw. data functions: ", np.sum(E_PVT_Wh)
 
-
-    E_aux_HP_uncontrollable = np.array(extract_csv(fName, "E_aux_HP_uncontrollable", DAYS_IN_YEAR))
-    Q_SCandPVT = np.array(extract_csv(fName, "Q_SCandPVT_coldstream", DAYS_IN_YEAR))
-    HPServerHeatDesignArray = np.array(extract_csv(fName, "HPServerHeatDesignArray", DAYS_IN_YEAR))
-    HPpvt_designArray = np.array(extract_csv(fName, "HPpvt_designArray", DAYS_IN_YEAR))
-    HPCompAirDesignArray = np.array(extract_csv(fName, "HPCompAirDesignArray", DAYS_IN_YEAR))
-    HPScDesignArray = np.array(extract_csv(fName, "HPScDesignArray", DAYS_IN_YEAR))
-    E_produced_solarAndHPforSolar = np.array(extract_csv(fName, "E_produced_total", DAYS_IN_YEAR))
-    E_consumed_without_buildingdemand_solarAndHPforSolar = np.array(
-        extract_csv(fName, "E_consumed_total_without_buildingdemand", DAYS_IN_YEAR))
+    # E_aux_HP_uncontrollable = np.array(extract_csv(fName, "E_aux_HP_uncontrollable", DAYS_IN_YEAR))
+    # Q_SCandPVT = np.array(extract_csv(fName, "Q_SCandPVT_coldstream", DAYS_IN_YEAR))
+    # HPServerHeatDesignArray = np.array(extract_csv(fName, "HPServerHeatDesignArray", DAYS_IN_YEAR))
+    # HPpvt_designArray = np.array(extract_csv(fName, "HPpvt_designArray", DAYS_IN_YEAR))
+    # HPCompAirDesignArray = np.array(extract_csv(fName, "HPCompAirDesignArray", DAYS_IN_YEAR))
+    # HPScDesignArray = np.array(extract_csv(fName, "HPScDesignArray", DAYS_IN_YEAR))
+    # E_produced_solarAndHPforSolar = np.array(extract_csv(fName, "E_produced_total", DAYS_IN_YEAR))
+    # E_consumed_without_buildingdemand_solarAndHPforSolar = np.array(
+    #     extract_csv(fName, "E_consumed_total_without_buildingdemand", DAYS_IN_YEAR))
 
     return Q_DH_networkload, E_aux_ch, E_aux_dech, Q_missing, Q_storage_content_Wh, Q_to_storage, Q_from_storage, \
            Q_uncontrollable, E_PV_Wh, E_PVT_Wh, E_aux_HP_uncontrollable, Q_SCandPVT, HPServerHeatDesignArray, \
