@@ -40,7 +40,8 @@ To install the development environment of CEA:
 #. clone repository: do ``git clone https://github.com/architecture-building-systems/CEAforArcGIS.git``
 #. go to location where the repository was cloned: do ``cd CEAforArcGIS``
 #. install dependencies: do ``conda install -c conda-forge geopandas ephem``
-#. install dependencies: do ``conda install -c oce -c pythonocc pythonocc-core``
+#. install dependencies: do ``conda install -c dlr-sc tbb freeimageplus gl2ps``
+#. install dependencies: do ``conda install -c oce -c pythonocc pythonocc-core=0.17.3``
 #. install cea development: do ``python setup.py install``
 #. set-up path to repository: do ``python setup.py develop``
 #. download ``https://github.com/tpaviot/pythonocc-utils``. ranme to ``OCCUtils`` and store it into
