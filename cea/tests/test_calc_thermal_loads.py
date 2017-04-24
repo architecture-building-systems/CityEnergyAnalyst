@@ -32,9 +32,8 @@ class TestCalcThermalLoads(unittest.TestCase):
         cls.building_properties = BuildingProperties(cls.locator, cls.gv)
         cls.date = pd.date_range(cls.gv.date_start, periods=8760, freq='H')
         cls.list_uses = cls.building_properties.list_uses()
-        cls.schedules = schedule_maker(cls.date, cls.locator, cls.list_uses)
-        cls.usage_schedules = {'list_uses': cls.list_uses,
-                               'schedules': cls.schedules}
+        cls.schedules, cls.occupancy_densities = schedule_maker(cls.date, cls.locator, cls.list_uses)
+        cls.usage_schedules = {'list_uses': cls.list_uses, 'schedules': cls.schedules, 'occupancy_densities': cls.occupancy_densities}
 
     def test_calc_thermal_loads(self):
         # FIXME: the usage_schedules bit needs to be fixed!!
@@ -61,10 +60,10 @@ class TestCalcThermalLoads(unittest.TestCase):
                          u'Qcdataf_kWh', u'Qcref_kWh', u'Qcs_kWh', u'Qcsf_kWh', u'Qhs_kWh', u'Qhsf_kWh', u'Qww_kWh',
                          u'Qwwf_kWh', u'Tcsf_re_C', u'Thsf_re_C', u'Twwf_re_C', u'Tcsf_sup_C', u'Thsf_sup_C',
                          u'Twwf_sup_C']
-        values = [155102.61600000001, 1038.8329999999999, 0.0, 156141.44900000002, 19366.055999999997,
-                  243320.65100000001, 0, 0, 18414.238000000001, 19366.055999999997, 191328.31199999998,
-                  203347.20999999999, 37198.886999999995, 39973.417000000009, 3213.0, 61874.169000000002, 99496.0,
-                  2268.0, 71042.358999999997, 525600]
+        values = [155102.61600000001, 4557.2359999999999, 0.0, 159659.85200000001, 16384.744999999999,
+                  325303.57399999996, 0, 0, 15497.883, 16384.744999999999, 177442.73700000002, 188580.326,
+                  134184.50699999998, 136723.26499999998, 3213.0, 60985.175000000003, 99496.0, 2268.0,
+                  70168.260999999999, 525600]
 
         for i, column in enumerate(value_columns):
             try:
@@ -77,15 +76,15 @@ class TestCalcThermalLoads(unittest.TestCase):
     def test_calc_thermal_loads_other_buildings(self):
         """Test some other buildings just to make sure we have the proper data"""
         # randomly selected except for B302006716, which has `Af == 0`
-        buildings = {'B01': (19366.05600, 243320.65100),
-                     'B03': (19367.81200, 243376.59600),
-                     'B02': (19702.76000, 243560.03000),
-                     'B05': (20112.47700, 243468.37900),
-                     'B04': (19738.74600, 243507.89000),
-                     'B07': (19295.73600, 243299.56000),
-                     'B06': (0.00000, 0.00000),
-                     'B09': (20258.32200, 243631.21100),
-                     'B08': (21735.43500, 244153.70400),
+        buildings = {'B01': (16384.74500, 325303.57400),
+                    'B03': (16438.47700, 325362.84600),
+                    'B02': (16713.03700, 325542.41000),
+                    'B05': (17077.23600, 325487.21100),
+                    'B04': (16749.32600, 325492.92400),
+                    'B07': (16334.56100, 325290.01600),
+                    'B06': (0.00000, 0.00000),
+                    'B09': (17211.04600, 325643.29900),
+                    'B08': (18373.98300, 326123.45900),
                      }
         if self.gv.multiprocessing:
             import multiprocessing as mp
