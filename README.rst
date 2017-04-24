@@ -1,26 +1,32 @@
-# THE CITY ENERGY ANALYST
+.. image:: https://static1.squarespace.com/static/587d65bdbebafb893ba24447/t/587d845d29687f2d2febee75/1492591264954/?format=1500w
+    :height: 50 px
+    :width: 150 px
+    :scale: 50 %
+    :alt: City Energy Analyst (CEA) logo
+    :align: left
+    :target: https://www.cityenergyanalyst.com
 
-## Quick tour
+The  `City Energy Analyst (CEA) <https://www.cityenergyanalyst.com/>`_ is an urban building simulation platform and one of the first open-source initiatives of computation tools for the design of low-carbon and highly efficient cities. The CEA combines knowledge of urban planning and energy systems engineering in an integrated simulation platform. This allows to study the effects, trade-offs and synergies of urban design options and energy infrastructure plans.
 
-The city energy analyst (CEA) is an urban simulation engine created to assess multiple energy efficiency strategies in urban areas. The CEA offers tools for the analysis of the carbon, financial and environmental benefits of the next strategies in an urban area:
+* Click `here <https://cityenergyanalyst.com/user-manual>`_  for documentation and installation of CEA Planning
 
-1. **Building retrofits**: Appliances and lighting, building envelope, HVAC systems (incl. Control strategies)
-2. **Integration of local energy sources**: renewable and waste-to-heat energy sources.
-3. **Infrastructure retrofits**: decentralized and centralized thermal micro-grids and conversion technologies.
-4. **Modifications to urban form**: new zoning, changes in occupancy and building typology.
+* Click `here <http://city-energy-analyst.readthedocs.io/en/latest/>`_   for documentation and installation of CEA Research
 
-## Documentation and style guide
+* Click `here <https://github.com/architecture-building-systems/CEAforArcGIS/issues>`_ to report an issue
 
-Documentation is still a work-in-progress and is available in [here](https://architecture-building-systems.gitbooks.io/cea-toolbox-for-arcgis-manual/content/).
-To start with a new project and get a sample data, please contact us
+* Click `here <mailto:cea@arch.ethz.ch>`_ to contact us
 
-##Check me out on Video
+Cite us:
+--------
 
-[here](https://vimeo.com/futurecitieslaboratory/the_city_energy_analyst)
+For V2.2:    |V2.2|
 
-## Contact
-
-cea@arch.ethz.ch
+For V0.4:    |V0.4|
 
 
 
+.. |V2.2| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.556165.svg
+   :target: https://doi.org/10.5281/zenodo.556165
+   
+.. |V0.4| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.496194.svg
+   :target: https://doi.org/10.5281/zenodo.496194
