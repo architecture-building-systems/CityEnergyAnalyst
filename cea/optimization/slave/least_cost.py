@@ -91,11 +91,16 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     # Import Temperatures from Network Summary:
 
     os.chdir(locator.get_optimization_network_results_folder())
-    tdhret = np.array(pd.read_csv(NETWORK_DATA_FILE, usecols=["T_sst_heat_return_netw_total"],
-                                  nrows=gv.DAYS_IN_YEAR * gv.HOURS_IN_DAY))
-    mdot_DH = np.array(
-        pd.read_csv(NETWORK_DATA_FILE, usecols=["mdot_DH_netw_total"], nrows=gv.DAYS_IN_YEAR * gv.HOURS_IN_DAY))
-    tdhsup = np.array(pd.read_csv(NETWORK_DATA_FILE, usecols=["T_sst_heat_supply_netw_total"], nrows=1))[0][0]
+    NETWORK_DATA = pd.read_csv(NETWORK_DATA_FILE, nrows=gv.DAYS_IN_YEAR * gv.HOURS_IN_DAY)
+    tdhret = NETWORK_DATA['T_sst_heat_return_netw_total']
+
+    mdot_DH = NETWORK_DATA['mdot_DH_netw_total']
+    tdhsup = NETWORK_DATA['T_sst_heat_supply_netw_total'][0]
+    # tdhret = np.array(pd.read_csv(NETWORK_DATA_FILE, usecols=["T_sst_heat_return_netw_total"],
+    #                               nrows=gv.DAYS_IN_YEAR * gv.HOURS_IN_DAY))
+    # mdot_DH = np.array(
+    #     pd.read_csv(NETWORK_DATA_FILE, usecols=["mdot_DH_netw_total"], nrows=gv.DAYS_IN_YEAR * gv.HOURS_IN_DAY))
+    # tdhsup = np.array(pd.read_csv(NETWORK_DATA_FILE, usecols=["T_sst_heat_supply_netw_total"], nrows=1))[0][0]
 
     # import Marginal Cost of PP Data :
     # os.chdir(Cost_Maps_Path)
@@ -132,6 +137,9 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     # Import Data - Sewage
     if gv.HPSew_allowed == 1:
+        HPSew_Data = pd.read_csv(locator.get_sewage_heat_potential())
+        QcoldsewArray_Trial = np.array(HPSew_Data['Qsw_kW'])* 1E3
+        TretsewArray_Trial = np.array(HPSew_Data['ts_C']) + 273
         QcoldsewArray = np.array(pd.read_csv(locator.get_sewage_heat_potential(), usecols=["Qsw_kW"])) * 1E3
         TretsewArray = np.array(pd.read_csv(locator.get_sewage_heat_potential(), usecols=["ts_C"])) + 273
 
@@ -149,8 +157,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
         Q_therm_req_COPY = copy.copy(Q_therm_req)
         MS_Var = context
         current_source = gv.act_first  # Start with first source, no cost yet
-        mdot_DH_req = mdot_DH[hour, 0]
-        tdhret_req = tdhret[hour, 0]
+        mdot_DH_req = mdot_DH[hour]
+        tdhret_req = tdhret[hour]
         Q_uncovered = 0
         # Initializing resulting values (necessairy as not all of them are over-written):
 
@@ -552,7 +560,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     if QUncoveredDesign != 0:
         for hour in range(gv.HOURS_IN_DAY * gv.DAYS_IN_YEAR):
-            tdhret_req = tdhret[hour, 0]
+            tdhret_req = tdhret[hour]
             BoilerBackup_Cost_Data = cond_boiler_op_cost(QUncovered[hour], QUncoveredDesign, tdhret_req, \
                                                          master_to_slave_vars.BoilerBackupType, master_to_slave_vars.EL_TYPE, gv)
             C_boil_thermAddBackup[hour], C_boil_per_WhBackup, Q_primaryAddBackup[hour], E_aux_AddBoiler[
