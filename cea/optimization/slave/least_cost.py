@@ -1322,7 +1322,7 @@ def import_solar_PeakPower(fNameTotalCSV, nBuildingsConnected, gv):
     """
     solar_results = pd.read_csv(fNameTotalCSV, nBuildingsConnected)
     AreaAllowed = np.array(solar_results['Af'])
-    nFloors = np.array(solar_results['Af'])
+    nFloors = np.array(solar_results['Floors'])
 
     AreaRoof = np.zeros(nBuildingsConnected)
 
