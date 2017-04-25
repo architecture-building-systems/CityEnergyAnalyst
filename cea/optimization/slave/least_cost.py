@@ -1254,7 +1254,7 @@ def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     # mass flows
 
     # Extract data from all columns of the csv file to a pandas.Dataframe
-    result = pd.read_csv(fName, nrows=24 * DAYS_IN_YEAR)
+    result = pd.read_csv(fName)
     Q_DH_networkload = (np.array(result['Q_DH_networkload'])[np.newaxis]).T
     E_aux_ch = (np.array(result['E_aux_ch'])[np.newaxis]).T
     E_aux_dech = (np.array(result['E_aux_dech'])[np.newaxis]).T
