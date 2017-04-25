@@ -211,15 +211,15 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         print pv.calc_Cinv_pv(PV_peak), "PV peak"
         
         SC_area = dicoSupply.SOLAR_PART_SC * solarFeat.SolarAreaSC
-        SCInvC = stc.calc_Cinv_SC(SC_area)
+        SCInvC = stc.calc_Cinv_SC(SC_area, gv)
         addCosts += SCInvC
-        print stc.calc_Cinv_SC(SC_area), "SC area"
+        print stc.calc_Cinv_SC(SC_area, gv), "SC area"
         
 
         PVT_peak = dicoSupply.SOLAR_PART_PVT * solarFeat.SolarAreaPVT * gv.nPVT #kW
-        PVTInvC = pvt.calc_Cinv_PVT(PVT_peak)
+        PVTInvC = pvt.calc_Cinv_PVT(PVT_peak, gv)
         addCosts += PVTInvC
-        print pvt.calc_Cinv_PVT(PVT_peak), "PVT peak"
+        print pvt.calc_Cinv_PVT(PVT_peak, gv), "PVT peak"
         
         # Back-up boiler
         BoilerAddInvC = boiler.calc_Cinv_boiler(QUncoveredDesign, QUncoveredAnnual, gv)
