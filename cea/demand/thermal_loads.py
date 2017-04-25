@@ -873,8 +873,6 @@ def get_envelope_properties(locator, prop_architecture):
                     on='Name').merge(df_leakage[fields_leakage],
                     on='Name')
 
-
-
     return envelope_prop
 
 
