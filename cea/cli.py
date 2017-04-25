@@ -59,7 +59,6 @@ def emissions(args):
 def embodied_energy(args):
     """Run the embodied energy script with the arguments provided."""
     import cea.analysis.embodied
-    import cea.inputlocator
     import cea.globalvar
     gv = cea.globalvar.GlobalVariables()
     cea.analysis.embodied.lca_embodied(year_to_calculate=args.year_to_calculate,
@@ -157,8 +156,7 @@ def _get_longitude(scenario_path):
 
 def radiation(args):
     """Run the radiation script with the arguments provided."""
-    import cea.resources.radiation
-    import cea.inputlocator
+    import cea.resources.radiation_arcgis.radiation
     import cea.globalvar
 
     if not args.latitude:
@@ -172,12 +170,25 @@ def radiation(args):
     elif args.weather_path in locator.get_weather_names():
         args.weather_path = locator.get_weather(args.weather_path)
 
-    cea.resources.radiation.solar_radiation_vertical(locator=locator,
-                                                     path_arcgis_db=args.arcgis_db, latitude=args.latitude,
-                                                     longitude=args.longitude, year=args.year,
-                                                     gv=cea.globalvar.GlobalVariables(),
-                                                     weather_path=args.weather_path)
+    cea.resources.radiation_arcgis.radiation.solar_radiation_vertical(locator=locator,
+                                                                      path_arcgis_db=args.arcgis_db, latitude=args.latitude,
+                                                                      longitude=args.longitude, year=args.year,
+                                                                      gv=cea.globalvar.GlobalVariables(),
+                                                                      weather_path=args.weather_path)
 
+
+def radiation_daysim(args):
+    """Run the DAYSIM radiation script with the arguments provided."""
+    import cea.resources.radiation_daysim.radiation_main
+
+    locator = cea.inputlocator.InputLocator(args.scenario)
+
+    if not args.weather_path:
+        args.weather_path = locator.get_default_weather()
+    elif args.weather_path in locator.get_weather_names():
+        args.weather_path = locator.get_weather(args.weather_path)
+
+    cea.resources.radiation_daysim.radiation_main.main(locator=locator, weather_path=args.weather_path)
 
 def install_toolbox(_):
     """Install the ArcGIS toolbox and sets up .pth files to access arcpy from the cea python interpreter."""
@@ -324,6 +335,11 @@ def main():
     radiation_parser.add_argument('--year', help='Year to use for calculations.', type=int, default=2014)
     radiation_parser.add_argument('--weather-path', help='Path to weather file.')
     radiation_parser.set_defaults(func=radiation)
+
+    radiation_daysim_parser = subparsers.add_parser('radiation-daysim',
+                                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    radiation_daysim_parser.add_argument('--weather-path', help='Path to weather file.')
+    radiation_daysim_parser.set_defaults(func=radiation_daysim)
 
     install_toolbox_parser = subparsers.add_parser('install-toolbox',
                                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
