@@ -220,7 +220,36 @@ def create_sensor_input_file(rad):
     sensor_file.close()
     rad.sensor_file_path = sensor_file_path
     
-def execute_daysim(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_params, ageometry_table):
+def execute_daysim(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_params):
+    """
+    This is the main routine of the Daysim calculation
+    :param bldg_dict_list: array of dicts storing ID's of surfaces of all buildings.
+    :type narray
+    :param aresults_path: path to folder where to store the daysim project.
+    :type path to folder
+    :param rad: Pyliburo object needed to initialize radiance and daysim
+    :type pyliburo object
+    :param aweatherfile_path: location of weather file
+    :type path to folder
+    :param rad_params: dict storing dafault parameters of daysim
+    :return: <building>_geometry.csv
+            'BUILDING': name of building
+             'SURFACE': ID of surface
+             'Xcoor': geolocation of centroid in X
+             'Ycoor': geolocation of centroid in Y
+             'Zcoor': geolocation of centroid in Z
+              'Xdir': orientation of surface in  X
+              'Ydir': orientation of surface in  Y
+              'Zdir': orientation of surface in  Z
+              'AREA_m2': area of surface
+              'TYPE': type of surface, e.g., wall, roof, window.
+
+             <building>_insolation_whm2.csv
+             'srf': 8760 data points for every surface ID in the building
+
+    :rtype: comma delimeted files
+
+    """
     sensor_pt_list = []
     sensor_dir_list = []
     daysim_dir = os.path.join(aresults_path, "daysim_project")
@@ -229,7 +258,7 @@ def execute_daysim(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_par
     # transform weather file
     rad.execute_epw2wea(aweatherfile_path)
     rad.execute_radfiles2daysim()
-
+    print rad
     all_sensor_srf_dict_2dlist = []
     for bldg_dict in bldg_dict_list:
         bldg_name = bldg_dict["name"]
@@ -290,14 +319,14 @@ def execute_daysim(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_par
             srf_solar_results.append(asrf_solar_result)
             scnt+=1
             
-        srf_properties = pd.DataFrame(srf_properties, columns=['building_name', 'surface_name', 'centre_point_x','centre_point_y', 'centre_point_z', 
-                                      'surface_direction_x', 'surface_direction_y', 'surface_direction_z', 'surface_area_m2', 
-                                      'surface_type'])
+        srf_properties = pd.DataFrame(srf_properties, columns=['BUILDING', 'SURFACE', 'Xcoor','Ycoor', 'Zcoor',
+                                      'Xdir', 'Ydir', 'Zdir', 'AREA_m2',
+                                      'TYPE'])
         
-        srf_properties.to_csv(os.path.join(aresults_path, bldg_name + '_srf_properties.csv'), index=None)
+        srf_properties.to_csv(os.path.join(aresults_path, bldg_name + '_geometry.csv'), index=None)
         zipped_solar_res = zip(*srf_solar_results)
         srf_solar_results = pd.DataFrame(zipped_solar_res[1:], columns = zipped_solar_res[0])
-        srf_solar_results.to_csv(os.path.join(aresults_path, bldg_name + '_srf_solar_results.csv'), index=None)
+        srf_solar_results.to_csv(os.path.join(aresults_path, bldg_name + '_insolation_Whm2.csv'), index=None)
         
     #construct.visualise_falsecolour_topo(sum_res_list, occface_list, backend = "wx")
     print 'execute daysim', 'done'
@@ -320,10 +349,11 @@ def calc_radiation(weatherfile_path, locator):
     rad = py2radiance.Rad(daysim_mat, results_path)
     add_rad_mat(daysim_mat, building_surface_properties)
 
-    bldg_dict_list = geometry2radiance(rad, building_surface_properties, citygml_reader) #TODO: fix messages
+    bldg_dict_list = geometry2radiance(rad, building_surface_properties, citygml_reader)
+
     rad.create_rad_input_file()
     time1 = time.time()
-    execute_daysim(bldg_dict_list, results_path, rad, weatherfile_path, settings.RAD_PARMS, building_surface_properties)
+    execute_daysim(bldg_dict_list, results_path, rad, weatherfile_path, settings.RAD_PARMS)
     
     # execute daysim
     time2 = time.time()
