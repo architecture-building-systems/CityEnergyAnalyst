@@ -733,7 +733,7 @@ class EnvelopeProperties(object):
     """Encapsulate a single row of the architecture input file for a building"""
     __slots__ = [u'a_roof', u'f_cros', u'n50', u'win_op', u'win_wall',
                  u'a_wall', u'rf_sh', u'e_wall', u'e_roof', u'G_win', u'e_win',
-                 u'U_roof',u'Es', u'Hs', u'Cm_Af', u'U_wall', u'U_base', u'U_win']
+                 u'U_roof', u'Hs', u'Cm_Af', u'U_wall', u'U_base', u'U_win']
 
     def __init__(self, envelope):
         self.a_roof = envelope['a_roof']
@@ -746,7 +746,6 @@ class EnvelopeProperties(object):
         self.G_win = envelope['G_win']
         self.e_win = envelope['e_win']
         self.U_roof= envelope['U_roof']
-        self.Es= envelope['Es']
         self.Hs= envelope['Hs']
         self.Cm_Af = envelope['Cm_Af']
         self.U_wall = envelope['U_wall']
