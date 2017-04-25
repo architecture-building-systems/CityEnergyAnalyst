@@ -274,7 +274,7 @@ class InputLocator(object):
     ##SOLAR-RADIATION
     def get_radiation(self):
         """scenario/outputs/data/solar-radiation/radiation.csv"""
-        return self._ensure_folder(os.path.join(self.get_solar_radiation_folder(), 'radiation.csv'))
+        return os.path.join(self._ensure_folder(self.get_solar_radiation_folder()), 'radiation.csv')
 
     def get_solar_radiation_folder(self):
         """scenario/outputs/data/solar-radiation"""
