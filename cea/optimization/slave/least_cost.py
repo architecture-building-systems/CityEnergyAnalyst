@@ -17,8 +17,8 @@ from cea.technologies.boilers import cond_boiler_op_cost
 import copy
 
 __author__ = "Tim Vollrath"
-__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Tim Vollrath", "Thuy-An Nguyen"]
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Sreepathi Bhargava Krishna","Tim Vollrath", "Thuy-An Nguyen"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -138,10 +138,11 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     # Import Data - Sewage
     if gv.HPSew_allowed == 1:
         HPSew_Data = pd.read_csv(locator.get_sewage_heat_potential())
-        QcoldsewArray_Trial = np.array(HPSew_Data['Qsw_kW'])* 1E3
-        TretsewArray_Trial = np.array(HPSew_Data['ts_C']) + 273
-        QcoldsewArray = np.array(pd.read_csv(locator.get_sewage_heat_potential(), usecols=["Qsw_kW"])) * 1E3
-        TretsewArray = np.array(pd.read_csv(locator.get_sewage_heat_potential(), usecols=["ts_C"])) + 273
+        QcoldsewArray = (np.array(HPSew_Data['Qsw_kW'])[np.newaxis]).T * 1E3
+        TretsewArray = (np.array(HPSew_Data['ts_C'])[np.newaxis]).T + 273
+        # QcoldsewArray = np.array(pd.read_csv(locator.get_sewage_heat_potential(), usecols=["Qsw_kW"])) * 1E3
+        # TretsewArray = np.array(pd.read_csv(locator.get_sewage_heat_potential(), usecols=["ts_C"])) + 273
+
 
     def source_activator(Q_therm_req, hour, context):
         """
@@ -1217,22 +1218,22 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
     
     return CO2_emitted, Eprim_used
 
-def extract_csv(fName, colName, DAYS_IN_YEAR):
-    """
-    Extract data from one column of a csv file to a pandas.DataFrame
-
-    :param fName: Name of the csv file
-    :param colName: Name of the column from which to the data needs to be extracted
-    :param DAYS_IN_YEAR: number of days to consider
-    :type fName: string
-    :type colName: string
-    :type DAYS_IN_YEAR: int
-    :return: pandas.DataFrame, contains the hour of the day in the first column
-    and the data of the selected column in the second
-    :rtype: class
-    """
-    result = pd.read_csv(fName, usecols=[colName], nrows=24 * DAYS_IN_YEAR)
-    return result
+# def extract_csv(fName, colName, DAYS_IN_YEAR):
+#     """
+#     Extract data from one column of a csv file to a pandas.DataFrame
+#
+#     :param fName: Name of the csv file
+#     :param colName: Name of the column from which to the data needs to be extracted
+#     :param DAYS_IN_YEAR: number of days to consider
+#     :type fName: string
+#     :type colName: string
+#     :type DAYS_IN_YEAR: int
+#     :return: pandas.DataFrame, contains the hour of the day in the first column
+#     and the data of the selected column in the second
+#     :rtype: class
+#     """
+#     result = pd.read_csv(fName, usecols=[colName], nrows=24 * DAYS_IN_YEAR)
+#     return result
 
 
 def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
@@ -1319,8 +1320,9 @@ def import_solar_PeakPower(fNameTotalCSV, nBuildingsConnected, gv):
     :return: PeakPowerAvgkW
     :rtype: float
     """
-    AreaAllowed = np.array(extract_csv(fNameTotalCSV, "Af", nBuildingsConnected))
-    nFloors = np.array(extract_csv(fNameTotalCSV, "Floors", nBuildingsConnected))
+    solar_results = pd.read_csv(fNameTotalCSV, nBuildingsConnected)
+    AreaAllowed = np.array(solar_results['Af'])
+    nFloors = np.array(solar_results['Af'])
 
     AreaRoof = np.zeros(nBuildingsConnected)
 
