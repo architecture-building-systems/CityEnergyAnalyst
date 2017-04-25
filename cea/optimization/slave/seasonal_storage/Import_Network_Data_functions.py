@@ -8,7 +8,14 @@ Import Network Data:
 """
 import pandas as pd
 import numpy as np
-
+__author__ = "Sreepathi Bhargava Krishna"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Sreepathi Bhargava Krishna", "Thuy-an Ngugen", "Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "thomas@arch.ethz.ch"
+__status__ = "Production"
 
 
 # def extract_csv(fName, colName, DAYS_IN_YEAR):
