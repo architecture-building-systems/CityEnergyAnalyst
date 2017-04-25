@@ -57,7 +57,7 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
     building_age_df = dbf2df(locator.get_building_age())
 
     # prepare shapefile to store results (a shapefile with only names of buildings
-    names_shp = building_age_df[['Name']]
+    names_df = building_age_df[['Name']]
 
     # define main use:
     building_occupancy_df['mainuse'] = calc_mainuse(building_occupancy_df, list_uses)
@@ -68,16 +68,19 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
     # get properties about the construction and architecture
     if prop_architecture_flag:
         architecture_DB = get_database(locator.get_archetypes_properties(), 'ARCHITECTURE')
+        architecture_DB['Code'] = architecture_DB.apply(lambda x: calc_code_architecture_DB(x['code'], x['year_start'],
+                                                                            x['year_end'],x['standard']),axis=1)
 
-        categories_df['cat_architecture'] = categories_df.apply(lambda x: calc_category(x['mainuse'], x['built'],  x['envelope']),axis=1)
+        categories_df['cat_architecture'] = categories_df.apply(lambda x: calc_category(x['mainuse'], x['built'],
+                                                                                        x['envelope'], architecture_DB.set_index('code')),axis=1)
 
         # define architectural characteristics
         prop_architecture_df = categories_df.merge(architecture_DB, left_on='cat_architecture', right_on='Code')
 
         # write to shapefile
-        prop_architecture_df_merged = names_shp.merge(prop_architecture_df, on="Name")
+        prop_architecture_df_merged = names_df.merge(prop_architecture_df, on="Name")
         fields = ['Hs', 'win_wall', 'type_cons', 'type_leak',  'type_roof', 'type_wall', 'type_win', 'type_shade']
-        prop_architecture_dbf = names_shp.copy()
+        prop_architecture_dbf = names_df.copy()
         for field in fields:
             prop_architecture_dbf[field] = prop_architecture_df_merged[field].copy()
         df2dbf(prop_architecture_dbf, locator.get_building_architecture())
@@ -93,9 +96,9 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
         prop_HVAC_df = categories_df.merge(HVAC_DB, left_on='cat_HVAC', right_on='Code')
 
         # write to shapefile
-        prop_HVAC_df_merged = names_shp.merge(prop_HVAC_df, on="Name")
+        prop_HVAC_df_merged = names_df.merge(prop_HVAC_df, on="Name")
         fields = ['type_cs', 'type_hs', 'type_dhw', 'type_ctrl', 'type_vent']
-        prop_HVAC_shp = names_shp.copy()
+        prop_HVAC_shp = names_df.copy()
         for field in fields:
             prop_HVAC_shp[field] = prop_HVAC_df_merged[field].copy()
         df2dbf(prop_HVAC_shp, locator.get_building_hvac())
@@ -107,9 +110,9 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
         prop_comfort_df = categories_df.merge(comfort_DB, left_on='mainuse', right_on='Code')
 
         # write to shapefile
-        prop_comfort_df_merged = names_shp.merge(prop_comfort_df, on="Name")
+        prop_comfort_df_merged = names_df.merge(prop_comfort_df, on="Name")
         fields = ['Tcs_set_C', 'Ths_set_C', 'Tcs_setb_C', 'Ths_setb_C', 'Ve_lps']
-        prop_comfort_dbf = names_shp.copy()
+        prop_comfort_dbf = names_df.copy()
         for field in fields:
             prop_comfort_dbf[field] = prop_comfort_df_merged[field].copy()
         df2dbf(prop_comfort_dbf, locator.get_building_comfort())
@@ -121,12 +124,16 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
         prop_internal_df = categories_df.merge(internal_DB, left_on='mainuse', right_on='Code')
 
         # write to shapefile
-        prop_internal_df_merged = names_shp.merge(prop_internal_df, on="Name")
+        prop_internal_df_merged = names_df.merge(prop_internal_df, on="Name")
         fields = ['Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2',	'Epro_Wm2',	'Ere_Wm2', 'Ed_Wm2', 'Vww_lpd',	'Vw_lpd']
-        prop_internal_shp = names_shp.copy()
+        prop_internal_shp = names_df.copy()
         for field in fields:
             prop_internal_shp[field] = prop_internal_df_merged[field].copy()
         df2dbf(prop_internal_shp, locator.get_building_internal())
+
+
+def calc_code_architecture_DB(code1,code2,code3,code4):
+    return str(code1)+str(code2)+str(code3)+str(code4)
 
 
 def calc_mainuse(uses_df, uses):
@@ -150,35 +157,19 @@ def calc_comparison(array_min, array_max):
             array_max = array_min
     return array_max
 
-def calc_category(a, x, y):
-    if 0 < x <= 1920:
-        result = '1'
-    elif x > 1920 and x <= 1970:
-        result = '2'
-    elif x > 1970 and x <= 1980:
-        result = '3'
-    elif x > 1980 and x <= 2000:
-        result = '4'
-    elif x > 2000 and x <= 2020:
-        result = '5'
-    elif x > 2020:
-        result = '6'
 
-    if 0 < y <= 1920:
-        result = '7'
-    elif 1920 < y <= 1970:
-        result = '8'
-    elif 1970 < y <= 1980:
-        result = '9'
-    elif 1980 < y <= 2000:
-        result = '10'
-    elif 2000 < y <= 2020:
-        result = '11'
-    elif y > 2020:
-        result = '12'
+def calc_category(mainuse, year_construction, year_renovation, archetypes_DB):
+    print archetypes_DB[mainuse]
+    if year_renovation > 0:
+        for row in archetypes_DB[mainuse]:
+            if row['year_start'] <= year_renovation <= row['year_end']:
+                code = mainuse+str(row['year_start']),str(row['year_end'])+"R"
+    else:
+        for row in archetypes_DB[mainuse]:
+            if row['year_start'] <= year_construction <= row['year_end']:
+                code = mainuse+str(row['year_start']),str(row['year_end'])+"C"
 
-    category = a + result
-    return category
+    return code
 
 
 def run_as_script(scenario_path=None, prop_thermal_flag=True, prop_architecture_flag=True, prop_hvac_flag=True,
