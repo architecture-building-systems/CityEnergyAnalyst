@@ -66,7 +66,7 @@ def calc_occ_schedule(list_uses, schedules, building_uses):
         Sum of values is 1.0
     :type building_uses: dict[str, float]
 
-    :returns:
+    :returns occ: percentage of the occupied floor area that is occupied
     :rtype: ndarray
     """
     # weighted average of schedules
