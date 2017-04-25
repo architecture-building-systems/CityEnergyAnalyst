@@ -500,8 +500,7 @@ class BuildingProperties(object):
 
         :param envelope: The contents of the `architecture.shp` file, indexed by building name. It contains the
             following fields: n50, type_shade, win_op, win_wall. Only `win_wall` (window to wall ratio) is
-            used. Es, Hs, U_base, U_roof, U_wall, U_win, Cm_Af.
-            - Es: fraction of gross floor area that has electricity {0 <= Es <= 1}
+            used. Hs, U_base, U_roof, U_wall, U_win, Cm_Af.
             - Hs: fraction of gross floor area that is heated/cooled {0 <= Hs <= 1}
             - Cm_Af: iternal heat capacity per unit of area J/K.m2
         :type envelope: Gdf
@@ -584,7 +583,7 @@ class BuildingProperties(object):
                 df.loc[building,'Hs'] = 0
                 print 'Building %s has no heating system, Hs corrected to 0.' % building
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated
-        df['Aef'] = df['GFA_m2'] * df['Es']  # conditioned area only those for electricity
+        df['Aef'] = df['GFA_m2'] * gv.Es  # conditioned area only those for electricity
 
         if 'Cm' in self.get_overrides_columns():
             # Internal heat capacity is not part of input, calculate [J/K]
@@ -863,7 +862,7 @@ def get_envelope_properties(locator, prop_architecture):
 
     fields_construction = ['Name', 'Cm_Af']
     fields_leakage = ['Name', 'n50']
-    fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof', 'Es', 'Hs',]
+    fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof', 'Hs']
     fields_wall = ['Name', 'win_wall','e_wall', 'a_wall', 'U_wall', 'U_base']
     fields_win = ['Name', 'e_win', 'G_win', 'U_win']
     fields_shading = ['Name', 'rf_sh']
