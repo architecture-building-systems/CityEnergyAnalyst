@@ -14,8 +14,8 @@ class TestCalcThermalLoads(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         import zipfile
-        import cea.examples
         import tempfile
+        import cea.examples
         archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
         archive.extractall(tempfile.gettempdir())
         reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
@@ -60,10 +60,10 @@ class TestCalcThermalLoads(unittest.TestCase):
                          u'Qcdataf_kWh', u'Qcref_kWh', u'Qcs_kWh', u'Qcsf_kWh', u'Qhs_kWh', u'Qhsf_kWh', u'Qww_kWh',
                          u'Qwwf_kWh', u'Tcsf_re_C', u'Thsf_re_C', u'Twwf_re_C', u'Tcsf_sup_C', u'Thsf_sup_C',
                          u'Twwf_sup_C']
-        values = [155102.61600000001, 4557.2359999999999, 0.0, 159659.85200000001, 16384.744999999999,
-                  325303.57399999996, 0, 0, 15497.883, 16384.744999999999, 177442.73700000002, 188580.326,
-                  134184.50699999998, 136723.26499999998, 3213.0, 60985.175000000003, 99496.0, 2268.0,
-                  70168.260999999999, 525600]
+        values = [155102.61600000001, 3776.9010000000003, 0.0, 158879.51699999999, 8373.9639999999999,
+                  332161.44099999999, 0, 0, 7888.4459999999999, 8373.9639999999999, 183389.465, 195411.984,
+                  134184.50699999998, 136749.459, 2567.0, 67361.358999999997, 99496.0, 1812.0, 77058.267999999996,
+                  525600]
 
         for i, column in enumerate(value_columns):
             try:
@@ -76,16 +76,15 @@ class TestCalcThermalLoads(unittest.TestCase):
     def test_calc_thermal_loads_other_buildings(self):
         """Test some other buildings just to make sure we have the proper data"""
         # randomly selected except for B302006716, which has `Af == 0`
-        buildings = {'B01': (16384.74500, 325303.57400),
-                    'B03': (16438.47700, 325362.84600),
-                    'B02': (16713.03700, 325542.41000),
-                    'B05': (17077.23600, 325487.21100),
-                    'B04': (16749.32600, 325492.92400),
-                    'B07': (16334.56100, 325290.01600),
+        buildings = {'B01': (8373.96400, 332161.44100),
+                    'B03': (8362.64100, 331800.73400),
+                    'B02': (8423.01800, 332303.93500),
+                    'B05': (8569.54200, 331622.01200),
+                    'B04': (8546.75100, 332664.97900),
+                    'B07': (8358.49200, 331901.41900),
                     'B06': (0.00000, 0.00000),
-                    'B09': (17211.04600, 325643.29900),
-                    'B08': (18373.98300, 326123.45900),
-                     }
+                    'B09': (8436.55700, 331646.05300),
+                    'B08': (8401.99800, 332857.90100)}
         if self.gv.multiprocessing:
             import multiprocessing as mp
             pool = mp.Pool()
