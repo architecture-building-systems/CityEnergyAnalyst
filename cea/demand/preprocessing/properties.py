@@ -57,8 +57,7 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
     building_age_df = dbf2df(locator.get_building_age())
 
     # prepare shapefile to store results (a shapefile with only names of buildings
-    fields_drop = ['envelope', 'roof', 'windows', 'partitions', 'basement', 'HVAC', 'built']  # FIXME: this hardcodes the field names!!
-    names_shp = building_age_df.drop(fields_drop, axis=1)
+    names_shp = building_age_df[['Name']]
 
     # define main use:
     building_occupancy_df['mainuse'] = calc_mainuse(building_occupancy_df, list_uses)
@@ -77,7 +76,7 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
 
         # write to shapefile
         prop_architecture_df_merged = names_shp.merge(prop_architecture_df, on="Name")
-        fields = ['Es', 'Hs', 'win_wall', 'type_cons', 'type_leak',  'type_roof', 'type_wall', 'type_win', 'type_shade']
+        fields = ['Hs', 'win_wall', 'type_cons', 'type_leak',  'type_roof', 'type_wall', 'type_win', 'type_shade']
         prop_architecture_dbf = names_shp.copy()
         for field in fields:
             prop_architecture_dbf[field] = prop_architecture_df_merged[field].copy()
