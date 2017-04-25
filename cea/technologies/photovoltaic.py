@@ -6,6 +6,7 @@ photovoltaic
 from __future__ import division
 import numpy as np
 import pandas as pd
+import math
 from math import *
 
 from scipy import interpolate
@@ -109,18 +110,17 @@ def filter_low_potential(weather_data, radiation_csv, metadata_csv, gv):
     sensors_rad_sum = sensors_rad.sum(0).values # add new row with yearly radiation
     sensors_metadata['total_rad'] = sensors_rad_sum
 
-    # keep sensors if allow pv installation on walls or on roofs
-    sensors_metadata['fac_type'] = np.where(sensors_metadata['tilt'] >= 89, 'wall', 'roof')
-    if gv.pvonroof is False:
-        sensors_metadata = sensors_metadata[sensors_metadata.fac_type != 'roof']
-    if gv.pvonwall is False:
-        sensors_metadata = sensors_metadata[sensors_metadata.fac_type != 'wall']
+    # remove window surfaces
+    sensors_metadata = sensors_metadata[sensors_metadata.surface_type != 'window']
 
-    # delete sensors facing downwards, FIXME: this should be cleaned up in the radiation script, but not possible at this point (08/2016)
-    sensors_metadata = sensors_metadata[sensors_metadata.tilt <= 91]
+    # keep sensors if allow pv installation on walls or on roofs
+    if gv.pvonroof is False:
+        sensors_metadata = sensors_metadata[sensors_metadata.surface_type != 'roof']
+    if gv.pvonwall is False:
+        sensors_metadata = sensors_metadata[sensors_metadata.surface_type != 'wall']
 
     # keep sensors above min production in sensors_rad
-    sensors_metadata = sensors_metadata.set_index('bui_fac_sen')
+    sensors_metadata = sensors_metadata.set_index('surface_name')
     max_yearly_radiation = yearly_horizontal_rad
     min_yearly_radiation = max_yearly_radiation * gv.min_radiation # set min yearly radiation threshold for sensor selection
 
@@ -480,12 +480,14 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     3) Surface azimuth (orientation) of panels: If the sensor is on a tilted roof, the orientation of the panel is the
         same as the roof. Sensors on flat roofs are all south facing (orientation = 0).
     """
-    # calculate tilt angle for flat roofs (tilt < 5 degrees).
+    # calculate panel tilt angle (B) for flat roofs (tilt < 5 degrees), slope roofs (B = tilt) and walls (B = tilt).
     optimal_angle_flat = Calc_optimal_angle(0, latitude, transmissivity)
+    sensors_metadata_clean['tilt']= np.vectorize(math.acos)(sensors_metadata_clean['surface_direction_z']) #surface tilt angle in rad
+    sensors_metadata_clean['tilt'] = np.vectorize(math.degrees)(sensors_metadata_clean['tilt']) #surface tilt angle in degrees
     sensors_metadata_clean['B'] = np.where(sensors_metadata_clean['tilt'] >= 5, sensors_metadata_clean['tilt'],
-                                           degrees(optimal_angle_flat))
+                                           degrees(optimal_angle_flat)) # panel tilt angle in degrees
     # set panel declination as 90 degree for walls
-    sensors_metadata_clean['B'] = np.where(sensors_metadata_clean['tilt'] >= 90, 90, sensors_metadata_clean['B'])
+    # sensors_metadata_clean['B'] = np.where(sensors_metadata_clean['tilt'] >= 90, 90, sensors_metadata_clean['B'])
 
     # calculate spacing and surface azimuth of the panels for flat roofs
     optimal_spacing_flat = Calc_optimal_spacing(worst_sh, worst_Az, optimal_angle_flat, module_length)
@@ -657,10 +659,10 @@ def test_photovoltaic():
     import cea.inputlocator
     import cea.globalvar
 
-    locator = cea.inputlocator.InputLocator(r'C:\reference-case-zug\baseline')
+    locator = cea.inputlocator.InputLocator(r'C:\reference-case-open\baseline')
     # for the interface, the user should pick a file out of of those in ...DB/Weather/...
     weather_path = locator.get_default_weather()
-    list_buildings_names = pd.read_csv(locator.get_building_list()).columns.values
+    list_buildings_names = pd.read_csv(locator.get_building_list()).Name.values
     gv = cea.globalvar.GlobalVariables()
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name= building)
