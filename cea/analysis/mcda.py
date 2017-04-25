@@ -10,7 +10,8 @@ import os
 
 import cea.globalvar
 import cea.optimization.supportFn as sFn
-
+import deap
+import pickle
 
 class mcda_criteria(object):
     def __init__(self):
@@ -288,4 +289,43 @@ def mcda_differentWeights(pop, pathX):
     return [indexBestOriginal, indexBestEco, indexBestEnv, indexBestSoc]
 
 
+def mcda_cluster_main(input_path, what_to_plot, weight_fitness1, weight_fitness2, weight_fitness3):
 
+    #get modules to read pickle file
+    deap.creator.create("Fitness", deap.base.Fitness, weights=(1.0, 1.0, 1.0))
+    deap.creator.create("Individual", list, fitness=deap.creator.Fitness)
+
+    #read data form pickle file:
+    cp = pickle.load(open(input_path, "rb"))
+    frontier = cp[what_to_plot]
+    individuals = [str(ind) for ind in frontier]
+    fitness1, fitness2, fitness3 = map(np.array, zip(*[ind.fitness.values for ind in frontier]))
+
+    #normalizaiton of weights
+    total_weights = weight_fitness1 + weight_fitness2 + weight_fitness3
+    w1 = weight_fitness1 / total_weights * 100
+    w2 = weight_fitness2 / total_weights * 100
+    w3 = weight_fitness3 / total_weights * 100
+
+    #normalization of data
+    f1_min = min(fitness1)
+    f1_max = max(fitness1)
+    f1 = np.array([(value-f1_min)/(f1_max-f1_min) if (f1_max-f1_min) else value for value in fitness1])
+    f2_min = min(fitness2)
+    f2_max = max(fitness2)
+    f2 = np.array([(value-f2_min)/(f2_max-f2_min) if (f1_max-f1_min) else value for value in fitness2])
+    f3_min = min(fitness3)
+    f3_max = max(fitness3)
+    f3 = np.array([(value-f3_min)/(f3_max-f3_min) if (f3_max-f3_min) else value for value in fitness3])
+
+    #calculate MCDA score
+    global_value = f1 * w1 + f2 * w2 + f3 * w3
+
+    #computation of global value
+    data = pd.DataFrame({"Global_value": global_value,
+                         "Individual": individuals, "fitness1": fitness1, "fitness2": fitness2,
+                         "fitness3": fitness3})
+
+    index_best = data["Global_value"].argmax()
+    result = data.ix[index_best]
+    return result

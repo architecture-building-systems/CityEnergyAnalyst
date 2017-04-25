@@ -12,6 +12,7 @@ from geopandas import GeoDataFrame as Gdf
 from cea.utilities.dbfreader import dbf2df
 
 from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, ventilation_air_flows_simple
+from cea.demand import ventilation_air_flows_detailed
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
 from cea.technologies import controllers
 from cea.utilities import helpers
@@ -78,13 +79,11 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     # get schedules
     list_uses = usage_schedules['list_uses']
     schedules = usage_schedules['schedules']
-
-    # get n50 value
-    # n50 = bpr.architecture.n50
+    occupancy_densities = usage_schedules['occupancy_densities']
 
     # get occupancy
-    tsd['people'] = occupancy_model.calc_occ(list_uses, schedules, bpr)
-
+    tsd['people'] = occupancy_model.calc_occ_schedule(list_uses, schedules, occupancy_densities, bpr.occupancy,
+                                                      bpr.rc_model['Af'])
     # get electrical loads (no auxiliary loads)
     tsd = electrical_loads.calc_Eint(tsd, bpr, list_uses, schedules)
 
@@ -124,15 +123,18 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             # sensible heat gains
             tsd = sensible_loads.calc_Qgain_sen(hoy, tsd, bpr, gv)
 
+            # UNCOMMENT THIS TO OVERWRITE STATIC INFILTRATION WITH DYNAMIC INFILTRATION RATE
+            # # TODO: add option for detailed infiltration calculation
+            # dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
+            # qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(tsd['theta_a'][hoy - 1] if not np.isnan(tsd['theta_a'][hoy - 1]) else tsd['T_ext'][hoy - 1], tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
+            # tsd['m_ve_inf'][hoy] = max(qm_sum_in/3600, 1/3600)  # INFILTRATION IS FORCED NOT TO REACH ZERO IN ORDER TO AVOID THE RC MODEL TO FAIL
+
+
             # ventilation air flows [kg/s]
             ventilation_air_flows_simple.calc_air_mass_flow_mechanical_ventilation(bpr, tsd, hoy)
             ventilation_air_flows_simple.calc_air_mass_flow_window_ventilation(bpr, tsd, hoy)
 
-            # TODO: add option for detailed infiltration calculation
-            # dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
-            # qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(tsd['theta_a'][hoy - 1] if not tsd['theta_a'][hoy - 1] else tsd['T_ext'][hoy - 1], tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
-            # tsd['qm_sum_in'][hoy] = qm_sum_in
-            # tsd['qm_sum_out'][hoy] = qm_sum_out
+
 
             # ventilation air temperature
             ventilation_air_flows_simple.calc_theta_ve_mech(bpr, tsd, hoy, gv)
@@ -196,7 +198,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             gv,
             bpr.internal_loads['Vww_lpd'],
             bpr.internal_loads['Vw_lpd'],
-            bpr.architecture.Occ_m2p,
+            occupancy_densities,
             list_uses,
             schedules,
             bpr.occupancy)
@@ -220,10 +222,10 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                                                                                         gv,
                                                                                         bpr.geometry['floors_ag'],
                                                                                         bpr.occupancy['PFloor'],
-                                                                                        tsd['m_ve_mech'],
                                                                                         bpr.hvac['type_cs'],
                                                                                         bpr.hvac['type_hs'],
-                                                                                        tsd['Ehs_lat_aux'])
+                                                                                        tsd['Ehs_lat_aux'],
+                                                                                        tsd)
 
     elif bpr.rc_model['Af'] == 0:  # if building does not have conditioned area
 
@@ -270,12 +272,12 @@ def initialize_timestep_data(bpr, weather_data):
     # fill data with nan values
     nan_fields = ['Qhs_lat_sys', 'Qhs_sen_sys', 'Qcs_lat_sys', 'Qcs_sen_sys', 'theta_a', 'theta_m', 'theta_c',
                   'theta_o', 'Qhs_sen', 'Qcs_sen', 'Ehs_lat_aux', 'Qhs_em_ls', 'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs',
-                  'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs', 'I_sol', 'w_int', 'm_ve_mech',
-                  'm_ve_window', 'I_rad', 'QEf', 'QHf', 'QCf', 'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat',
+                  'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs', 'I_sol', 'w_int', 'I_rad', 'QEf', 'QHf', 'QCf',
+                  'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat',
                   'Qwwf', 'Qww', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs',
                   'Eauxf_ww', 'Eauxf_fw', 'mcphsf', 'mcpcsf', 'mcpwwf', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup',
                   'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'theta_ve_mech', 'm_ve_window',
-                  'm_ve_mech']
+                  'm_ve_mech', 'm_ve_recirculation', 'm_ve_inf']
     tsd.update(dict((x, np.zeros(8760) * np.nan) for x in nan_fields))
 
     # initialize system status log
@@ -497,7 +499,7 @@ class BuildingProperties(object):
         :type occupancy: Gdf
 
         :param envelope: The contents of the `architecture.shp` file, indexed by building name. It contains the
-            following fields: Occ_m2p,  n50, type_shade, win_op, win_wall. Only `win_wall` (window to wall ratio) is
+            following fields: n50, type_shade, win_op, win_wall. Only `win_wall` (window to wall ratio) is
             used. Es, Hs, U_base, U_roof, U_wall, U_win, th_mass.
             - Es: fraction of gross floor area that has electricity {0 <= Es <= 1}
             - Hs: fraction of gross floor area that is heated/cooled {0 <= Hs <= 1}
@@ -576,6 +578,10 @@ class BuildingProperties(object):
         df['Atot'] = df[['Aw', 'Aop_sup', 'footprint', 'Aop_bel']].sum(axis=1) + (df['Aroof'] * (df['floors'] - 1))  # TODO: check! why is roof counted multiple times (inner walls are not contributing to heat transfer)
 
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
+        for building in df.index.values:
+            if hvac_temperatures['type_hs'][building] == 'T0':
+                df['Hs'][building] = 0
+                print 'Building %s has no heating system, Hs corrected to 0.' % building
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated
         df['Aef'] = df['GFA_m2'] * df['Es']  # conditioned area only those for electricity
 
@@ -752,12 +758,11 @@ class BuildingPropertiesRow(object):
 
 class EnvelopeProperties(object):
     """Encapsulate a single row of the architecture input file for a building"""
-    __slots__ = [u'Occ_m2p', u'a_roof', u'f_cros', u'n50', u'win_op', u'win_wall',
+    __slots__ = [u'a_roof', u'f_cros', u'n50', u'win_op', u'win_wall',
                  u'a_wall', u'rf_sh', u'e_wall', u'e_roof', u'G_win', u'e_win',
                  u'U_roof',u'Es', u'Hs', u'th_mass', u'U_wall', u'U_base', u'U_win']
 
     def __init__(self, envelope):
-        self.Occ_m2p = envelope['Occ_m2p']
         self.a_roof = envelope['a_roof']
         self.n50 = envelope['n50']
         self.win_wall = envelope['win_wall']
@@ -878,7 +883,7 @@ def get_envelope_properties(locator, prop_architecture):
     df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code')
     df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code')
 
-    fields_roof = ['Name', 'win_wall', 'Occ_m2p', 'n50', 'e_roof', 'a_roof', 'U_roof', 'Es', 'Hs', 'th_mass']
+    fields_roof = ['Name', 'win_wall', 'n50', 'e_roof', 'a_roof', 'U_roof', 'Es', 'Hs', 'th_mass']
     fields_wall = ['Name', 'e_wall', 'a_wall', 'U_wall', 'U_base']
     fields_win = ['Name', 'e_win', 'G_win', 'U_win']
     fields_shading = ['Name', 'rf_sh']
