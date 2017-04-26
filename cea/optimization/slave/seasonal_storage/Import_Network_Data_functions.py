@@ -109,7 +109,7 @@ def import_solar_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
         result = pd.read_csv(fName, nrows=24 * DAYS_IN_YEAR)
         Pv_kWh_PV_import = np.array(result['PV_kWh'])
         # Pv_kWh_PV_import = np.array(extract_csv(fName, "PV_kWh", DAYS_IN_YEAR))
-        Pv_kWh_PV = Pv_kWh_PV_import[:,0]
+        Pv_kWh_PV = Pv_kWh_PV_import
         PV_kWh_PVT = np.zeros(24*DAYS_IN_YEAR)
         Solar_Area = np.zeros(24*DAYS_IN_YEAR)
         Solar_E_aux_kW = np.zeros(24*DAYS_IN_YEAR)
@@ -121,10 +121,9 @@ def import_solar_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     
     elif fName == "PVT_35.csv":
         result = pd.read_csv(fName, nrows=24 * DAYS_IN_YEAR)
-        Pv_kWh_PV_import = np.array(result['PV_kWh'])
         Pv_kWh_PV = np.zeros(24*DAYS_IN_YEAR)
         PV_kWh_PVT_import = np.array(result['PV_kWh'])
-        PV_kWh_PVT = PV_kWh_PVT_import[:,0]
+        PV_kWh_PVT = PV_kWh_PVT_import
         Solar_Area_Array = np.array(result['Area'])
         Solar_Area = Solar_Area_Array[0]
         Solar_E_aux_kW = np.array(result['Eaux_kWh'])
@@ -149,11 +148,11 @@ def import_solar_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
         Tscs = np.array( pd.read_csv( fName, usecols=["Tscs"], nrows=1 ) ) [0][0]
         
         for i in range(DAYS_IN_YEAR * HOURS_IN_DAY):
-            if Solar_Q_th_kW[i][0] < 0:
-                Solar_Q_th_kW[i][0] = 0
-                Solar_E_aux_kW[i][0] = 0
+            if Solar_Q_th_kW[i] < 0:
+                Solar_Q_th_kW[i] = 0
+                Solar_E_aux_kW[i] = 0
                 Solar_Tscr_th[0] = Tscs + 273
-                Solar_mcp_kW_C[i][0] = 0
+                Solar_mcp_kW_C[i] = 0
     
     else:
         result = pd.read_csv(fName, nrows=24 * DAYS_IN_YEAR)
@@ -184,11 +183,11 @@ def import_solar_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
         Tscs = np.array( pd.read_csv( fName, usecols=["Tscs"], nrows=1 ) ) [0][0]
         
         for i in range(DAYS_IN_YEAR * HOURS_IN_DAY):
-            if Solar_Q_th_kW[i][0] < 0:
-                Solar_Q_th_kW[i][0] = 0
-                Solar_E_aux_kW[i][0] = 0
+            if Solar_Q_th_kW[i] < 0:
+                Solar_Q_th_kW[i] = 0
+                Solar_E_aux_kW[i] = 0
                 Solar_Tscr_th[0] = Tscs + 273
-                Solar_mcp_kW_C[i][0] = 0
+                Solar_mcp_kW_C[i] = 0
         
         #print "SC"
     #print "PV_kWh_PVT", np.shape(PV_kWh_PVT)
