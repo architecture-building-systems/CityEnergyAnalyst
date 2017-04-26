@@ -151,9 +151,9 @@ def calc_pv_generation(type_panel, hourly_radiation, number_groups, number_point
     eff_nom,NOCT,Bref,a0,a1,a2,a3,a4,L = calc_properties_PV(type_panel)
 
     for group in range(number_groups):
-        teta_z = prop_observers.loc[group,'orientation'] #azimuth of paneles of group
+        teta_z = prop_observers.loc[group,'surface_azimuth'] #azimuth of paneles of each group
         area_per_group = prop_observers.loc[group,'total_area_pv']
-        tilt_angle = prop_observers.loc[group,'tilt'] #tilt angle of panels
+        tilt_angle = prop_observers.loc[group,'B'] #tilt angle of panels
         radiation = pd.DataFrame({'I_sol':hourly_radiation[group]}) #choose vector with all values of Isol
         radiation['I_diffuse'] = weather_data.ratio_diffhout.fillna(0)*radiation.I_sol      #calculate diffuse radiation
         radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']   #direct radaition
@@ -489,7 +489,9 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     # calculate spacing and surface azimuth of the panels for flat roofs
     optimal_spacing_flat = Calc_optimal_spacing(worst_sh, worst_Az, optimal_angle_flat, module_length)
     sensors_metadata_clean['array_s'] = np.where(sensors_metadata_clean['tilt'] >= 5, 0, optimal_spacing_flat)
-    sensors_metadata_clean['surface_azimuth'] = np.vectorize(calc_surface_azimuth)(sensors_metadata_clean['Xdir'], sensors_metadata_clean['B'])
+    sensors_metadata_clean['surface_azimuth'] = np.vectorize(calc_surface_azimuth)(sensors_metadata_clean['Xdir'],
+                                                                                   sensors_metadata_clean['Ydir'],
+                                                                                   sensors_metadata_clean['B'])  # degrees
 
     # TODO: improve calculation.
     # sensors_metadata_clean['area_netpv'] = (grid_side - sensors_metadata_clean.array_s) / [cos(x) for x in sensors_metadata_clean.B] * grid_side
@@ -510,9 +512,17 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     sensors_metadata_clean['CATGB'] = result[2]
     return sensors_metadata_clean
 
-def calc_surface_azimuth(xdir, B):
+def calc_surface_azimuth(xdir, ydir, B):
     B = math.radians(B)
-    surface_azimuth = math.asin(xdir / math.sin(B))
+    teta_z = math.degrees(math.asin(xdir / math.sin(B)))
+    # set the surface azimuth with on the (N,E) 
+    if xdir < 0:
+        if ydir <0:
+            surface_azimuth = 180 + teta_z     # (xdir,ydir) = (-,-)
+        else: surface_azimuth = 360 + teta_z   # (xdir,ydir) = (-,+)
+    elif ydir < 0:
+        surface_azimuth = 180 + teta_z         # (xdir,ydir) = (+,-)
+    else: surface_azimuth = teta_z             # (xdir,ydir) = (+,+)
     return surface_azimuth
 
 def calc_groups(sensors_rad_clean, sensors_metadata_cat):
