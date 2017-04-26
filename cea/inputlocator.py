@@ -285,14 +285,14 @@ class InputLocator(object):
         solar_radiation_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
         if not os.path.exists(solar_radiation_folder):
             os.makedirs(solar_radiation_folder)
-        return os.path.join(solar_radiation_folder, '%s_srf_solar_results.csv' %building_name)
+        return os.path.join(solar_radiation_folder, '%s_insolation_Whm2.csv' %building_name)
 
     def get_radiation_metadata(self, building_name):
         """scenario/outputs/data/solar-radiation/radiation.csv"""
         solar_radiation_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
         if not os.path.exists(solar_radiation_folder):
             os.makedirs(solar_radiation_folder)
-        return os.path.join(solar_radiation_folder, '%s_srf_properties.csv' %building_name)
+        return os.path.join(solar_radiation_folder, '%s_geometry.csv' %building_name)
 
     def get_building_list(self):
         """scenario/outputs/data/solar-radiation/radiation.csv"""
