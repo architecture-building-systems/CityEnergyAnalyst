@@ -91,7 +91,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     # Import Temperatures from Network Summary:
 
     os.chdir(locator.get_optimization_network_results_folder())
-    NETWORK_DATA = pd.read_csv(NETWORK_DATA_FILE, nrows=gv.DAYS_IN_YEAR * gv.HOURS_IN_DAY)
+    NETWORK_DATA = pd.read_csv(NETWORK_DATA_FILE)
     tdhret = NETWORK_DATA['T_sst_heat_return_netw_total']
 
     mdot_DH = NETWORK_DATA['mdot_DH_netw_total']
