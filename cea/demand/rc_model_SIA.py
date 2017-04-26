@@ -585,7 +585,7 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     # copy data required for calculation from `tsd` for this timestep
     m_ve_mech = tsd['m_ve_mech'][t]
     m_ve_window = tsd['m_ve_window'][t]
-    m_ve_inf_simple = tsd['m_ve_inf_simple'][t]
+    m_ve_inf = tsd['m_ve_inf'][t]
     Elf = tsd['Elf'][t]
     Eaf = tsd['Eaf'][t]
     Qcdataf = tsd['Qcdataf'][t]
@@ -605,7 +605,7 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     c_m = bpr.rc_model['Cm'] / 3600  # (Wh/K) SIA 2044 unit is Wh/K, ISO unit is J/K
 
     theta_a, theta_c, theta_m, theta_o = _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref,
-                                                                     Qs_Wp, T_ext, a_m, a_t, a_w, c_m, m_ve_inf_simple,
+                                                                     Qs_Wp, T_ext, a_m, a_t, a_w, c_m, m_ve_inf,
                                                                      m_ve_mech, m_ve_window, people, phi_hc_cv,
                                                                      phi_hc_r, theta_m_t_1, theta_ve_mech)
     rc_model_temp = {'theta_m': theta_m, 'theta_c': theta_c, 'theta_a': theta_a, 'theta_o': theta_o}
