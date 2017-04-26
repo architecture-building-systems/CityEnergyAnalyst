@@ -594,7 +594,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     if save_file == 1:
         results = pd.DataFrame({
-            "Q_Network_Demand_after_Storage": Q_missing_copy[:, 0],
+            "Q_Network_Demand_after_Storage": Q_missing_copy,
             "Cost_HPSew": cost_data_centralPlant_op[:, 0],
             "Cost_HPLake": cost_data_centralPlant_op[:, 1],
             "Cost_GHP": cost_data_centralPlant_op[:, 2],
@@ -617,13 +617,13 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
             "Q_Furnace": Q_source_data[:, 4],
             "Q_BoilerBase": Q_source_data[:, 5],
             "Q_BoilerPeak": Q_source_data[:, 6],
-            "Q_uncontrollable": Q_uncontrollable[:, 0],
+            "Q_uncontrollable": Q_uncontrollable,
             "Q_primaryAddBackupSum": Q_primaryAddBackupSum,
             "E_PP_and_storage": E_PP_and_storage,
             "Q_uncovered": Q_source_data[:, 7],
             "Q_AddBoiler": QUncovered,
-            "E_aux_HP_uncontrollable": E_aux_HP_uncontrollable[:, 0],
-            "ESolarProducedPVandPVT": ESolarProduced[:, 0],
+            "E_aux_HP_uncontrollable": E_aux_HP_uncontrollable,
+            "ESolarProducedPVandPVT": ESolarProduced,
             "E_GHP": E_PP_el_data[:, 2],
             "Qcold_HPLake": E_coldsource_data[:, 1],
             "E_produced_total": E_produed_total,
@@ -743,11 +743,11 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     avgCostFurnaceRpkWh = 100 * 1000.0 * costFurnace_sum / np.sum(Q_source_data[:, 4])
     avgCostBoilerBaseRpkWh = 100 * 1000.0 * costBoiler_sum / np.sum(Q_source_data[:, 5])
     avgCostBoilerPeakRpkWh = 100 * 1000.0 * costBackup_sum / np.sum(Q_source_data[:, 6])
-    avgCostUncontrollableSources = 100 * 1000.0 * cost_HP_aux_uncontrollable / np.sum(Q_uncontrollable[:, 0])
+    avgCostUncontrollableSources = 100 * 1000.0 * cost_HP_aux_uncontrollable / np.sum(Q_uncontrollable)
     avgCostAddBoiler = 100 * 1000.0 * costAddBackup_total / np.sum(QUncovered)
     avgCostStorageOperation = 100 * 1000.0 * cost_HP_storage_operation / Q_StorageToDHNpipe_sum
 
-    print "\n Q_uncontrollable produced", np.sum(Q_uncontrollable[:, 0])
+    print "\n Q_uncontrollable produced", np.sum(Q_uncontrollable)
     print "cost_HP_aux_uncontrollable", cost_HP_aux_uncontrollable
     print "E_aux_HP_uncontrollable sum", np.sum(E_aux_HP_uncontrollable)
 
