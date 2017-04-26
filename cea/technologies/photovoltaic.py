@@ -481,7 +481,7 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
         same as the roof. Sensors on flat roofs are all south facing (orientation = 0).
     """
     # calculate panel tilt angle (B) for flat roofs (tilt < 5 degrees), slope roofs (B = tilt) and walls (B = tilt).
-    optimal_angle_flat = Calc_optimal_angle(0, latitude, transmissivity)
+    optimal_angle_flat = Calc_optimal_angle(0, latitude, transmissivity) # assume surface azimuth, teta_z = 0, south facing #FIXME: change to singapore
     sensors_metadata_clean['tilt']= np.vectorize(math.acos)(sensors_metadata_clean['surface_direction_z']) #surface tilt angle in rad
     sensors_metadata_clean['tilt'] = np.vectorize(math.degrees)(sensors_metadata_clean['tilt']) #surface tilt angle in degrees
     sensors_metadata_clean['B'] = np.where(sensors_metadata_clean['tilt'] >= 5, sensors_metadata_clean['tilt'],
