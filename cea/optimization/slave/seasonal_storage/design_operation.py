@@ -318,7 +318,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locat
         #print type(E_aux_HP_uncontrollable_fin[HOUR]),
         mdot_DH_fin[HOUR] = mdot_DH_afterSto
         
-        Q_from_storage_fin[HOUR] = Q_DH_networkload[HOUR,0] - Q_missing
+        Q_from_storage_fin[HOUR] = Q_DH_networkload[HOUR] - Q_missing
         
         if T_storage_new <= T_storage_min:
             T_storage_min = T_storage_new
@@ -359,7 +359,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locat
         
         results = pd.DataFrame(
             {"Q_storage_content_Wh":Q_storage_content_fin, 
-             "Q_DH_networkload":Q_DH_networkload[:,0],
+             "Q_DH_networkload":Q_DH_networkload,
              "Q_uncontrollable_hot":Q_uncontrollable_fin,
              "Q_to_storage":Q_to_storage_fin, 
              "Q_from_storage_used":Q_from_storage_used_fin,
