@@ -58,19 +58,19 @@ def import_network_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     # mass flows
     result = pd.read_csv(fName, nrows=24 * DAYS_IN_YEAR)
 
-    mdot_heat_netw_total = (np.array(result['mdot_DH_netw_total'])[np.newaxis]).T
+    mdot_heat_netw_total = np.array(result['mdot_DH_netw_total'])
     mdot_cool_netw_total = 0  # np.array(extract_csv(fName, "mdot_cool_netw_total", DAYS_IN_YEAR))
 
-    Q_DH_building_netw_total = (np.array(result['Q_DH_building_netw_total'])[np.newaxis]).T
+    Q_DH_building_netw_total = np.array(result['Q_DH_building_netw_total'])
     Q_DC_building_netw_total = 0  # np.array(extract_csv(fName, "Q_DC_building_netw_total", DAYS_IN_YEAR))
 
-    T_sst_heat_return_netw_total = (np.array(result['T_sst_heat_return_netw_total'])[np.newaxis]).T
-    T_sst_heat_supply_netw_total = (np.array(result['T_sst_heat_supply_netw_total'])[np.newaxis]).T
+    T_sst_heat_return_netw_total = np.array(result['T_sst_heat_return_netw_total'])
+    T_sst_heat_supply_netw_total = np.array(result['T_sst_heat_supply_netw_total'])
     T_sst_cool_return_netw_total = 0  # np.array(extract_csv(fName, "T_sst_cool_return_netw_total", DAYS_IN_YEAR))
 
-    Q_wasteheat_netw_total = (np.array(result['Qcdata_netw_total'])[np.newaxis]).T
+    Q_wasteheat_netw_total = np.array(result['Qcdata_netw_total'])
     # print "sum of Qcdata_netw_total", Q_wasteheat_netw_total
-    Q_serverheat_netw_total = (np.array(result['Ecaf_netw_total'])[np.newaxis]).T
+    Q_serverheat_netw_total = np.array(result['Ecaf_netw_total'])
 
     # mdot_heat_netw_total = np.array(extract_csv(fName, "mdot_DH_netw_total", DAYS_IN_YEAR))
     # mdot_cool_netw_total = 0 #np.array(extract_csv(fName, "mdot_cool_netw_total", DAYS_IN_YEAR))
@@ -107,7 +107,7 @@ def import_solar_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
 
     if fName == "Pv.csv":
         result = pd.read_csv(fName, nrows=24 * DAYS_IN_YEAR)
-        Pv_kWh_PV_import = (np.array(result['PV_kWh'])[np.newaxis]).T
+        Pv_kWh_PV_import = np.array(result['PV_kWh'])
         # Pv_kWh_PV_import = np.array(extract_csv(fName, "PV_kWh", DAYS_IN_YEAR))
         Pv_kWh_PV = Pv_kWh_PV_import[:,0]
         PV_kWh_PVT = np.zeros(24*DAYS_IN_YEAR)
@@ -121,18 +121,18 @@ def import_solar_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     
     elif fName == "PVT_35.csv":
         result = pd.read_csv(fName, nrows=24 * DAYS_IN_YEAR)
-        Pv_kWh_PV_import = (np.array(result['PV_kWh'])[np.newaxis]).T
+        Pv_kWh_PV_import = np.array(result['PV_kWh'])
         Pv_kWh_PV = np.zeros(24*DAYS_IN_YEAR)
-        PV_kWh_PVT_import = (np.array(result['PV_kWh'])[np.newaxis]).T
+        PV_kWh_PVT_import = np.array(result['PV_kWh'])
         PV_kWh_PVT = PV_kWh_PVT_import[:,0]
-        Solar_Area_Array = (np.array(result['Area'])[np.newaxis]).T
+        Solar_Area_Array = np.array(result['Area'])
         Solar_Area = Solar_Area_Array[0]
-        Solar_E_aux_kW = (np.array(result['Eaux_kWh'])[np.newaxis]).T
-        Solar_Q_th_kW = (np.array(result['Qsc_KWh'])[np.newaxis]).T + 0.0
+        Solar_E_aux_kW = np.array(result['Eaux_kWh'])
+        Solar_Q_th_kW = np.array(result['Qsc_KWh']) + 0.0
         #Solar_Tscs_th = np.array(extract_csv(fName, "Tscs", DAYS_IN_YEAR))
         Solar_Tscs_th = np.zeros(24*DAYS_IN_YEAR)
-        Solar_Tscr_th = (np.array(result['Tscr'])[np.newaxis]).T + 273.0
-        Solar_mcp_kW_C = (np.array(result['mcp_kW/C'])[np.newaxis]).T
+        Solar_Tscr_th = np.array(result['Tscr']) + 273.0
+        Solar_mcp_kW_C = np.array(result['mcp_kW/C'])
         # PV_kWh_PVT_import = np.array(extract_csv(fName, "PV_kWh", DAYS_IN_YEAR))
         # PV_kWh_PVT = PV_kWh_PVT_import[:,0]
         # Solar_Area_Array = np.array(extract_csv(fName, "Area", DAYS_IN_YEAR))
@@ -157,15 +157,15 @@ def import_solar_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     
     else:
         result = pd.read_csv(fName, nrows=24 * DAYS_IN_YEAR)
-        Solar_Area_Array = (np.array(result['Area'])[np.newaxis]).T
+        Solar_Area_Array = np.array(result['Area'])
         Solar_Area = Solar_Area_Array[0]
-        Solar_E_aux_kW = (np.array(result['Eaux_kW'])[np.newaxis]).T
-        Solar_Q_th_kW = (np.array(result['Qsc_Kw'])[np.newaxis]).T + 0.0
-        Solar_Tscr_th = (np.array(result['Tscr'])[np.newaxis]).T + 273.0
+        Solar_E_aux_kW = np.array(result['Eaux_kW'])
+        Solar_Q_th_kW = np.array(result['Qsc_Kw']) + 0.0
+        Solar_Tscr_th = np.array(result['Tscr']) + 273.0
         # Solar_Tscs_th = np.array(extract_csv(fName, "Tscs", DAYS_IN_YEAR))
         Solar_Tscs_th = np.zeros(24 * DAYS_IN_YEAR)
 
-        Solar_mcp_kW_C = (np.array(result['mcp_kW/C'])[np.newaxis]).T
+        Solar_mcp_kW_C = np.array(result['mcp_kW/C'])
         Pv_kWh_PV = np.zeros(24 * DAYS_IN_YEAR)
         PV_kWh_PVT = np.zeros(24 * DAYS_IN_YEAR)
         # Solar_Area_Array = np.array(extract_csv(fName, "Area", DAYS_IN_YEAR))
