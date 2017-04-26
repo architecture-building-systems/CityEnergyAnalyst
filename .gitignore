@@ -87,3 +87,4 @@ cea/utilities/trace-data.pickle
 doc/make.output.txt
 cea/.doit.db
 setup/cea_version.txt
+.doit.db
