@@ -138,8 +138,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     # Import Data - Sewage
     if gv.HPSew_allowed == 1:
         HPSew_Data = pd.read_csv(locator.get_sewage_heat_potential())
-        QcoldsewArray = (np.array(HPSew_Data['Qsw_kW'])[np.newaxis]).T * 1E3
-        TretsewArray = (np.array(HPSew_Data['ts_C'])[np.newaxis]).T + 273
+        QcoldsewArray = np.array(HPSew_Data['Qsw_kW']) * 1E3
+        TretsewArray = np.array(HPSew_Data['ts_C']) + 273
         # QcoldsewArray = np.array(pd.read_csv(locator.get_sewage_heat_potential(), usecols=["Qsw_kW"])) * 1E3
         # TretsewArray = np.array(pd.read_csv(locator.get_sewage_heat_potential(), usecols=["ts_C"])) + 273
 
@@ -208,7 +208,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                         mdot_DH_to_Sew = float(mdot_DH_req.copy())
                         # Q_therm_req = 0
 
-                    HP_Sew_Cost_Data = HPSew_op_cost(mdot_DH_to_Sew, tdhsup, tdhret_req, TretsewArray[hour][0], gv)
+                    HP_Sew_Cost_Data = HPSew_op_cost(mdot_DH_to_Sew, tdhsup, tdhret_req, TretsewArray[hour], gv)
                     C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, Q_HPSew_cold_primary, Q_HPSew_therm, E_HPSew_el = HP_Sew_Cost_Data
                     Q_therm_req -= Q_HPSew_therm
                     # print "C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, Q_HPSew_cold_primary, Q_HPSew_therm", \
@@ -577,7 +577,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     # Sum up all electricity needs
     E_PP_tot_used = E_PP_el_data[:, 0] + E_PP_el_data[:, 1] + E_PP_el_data[:, 2] + \
                     E_PP_el_data[:, 5] + E_PP_el_data[:, 6] + E_aux_AddBoiler
-    E_aux_storage_operation = E_aux_ch[:, 0] + E_aux_dech[:, 0]
+    E_aux_storage_operation = E_aux_ch + E_aux_dech
     E_aux_storage_operation_sum = np.sum(E_aux_storage_operation)
     E_PP_and_storage = E_PP_tot_used + E_aux_storage_operation
     E_HP_SolarAndHeatRecoverySum = np.sum(E_aux_HP_uncontrollable)
@@ -588,9 +588,9 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     # price from PV and PVT electricity (both are in E_PV_Wh, see Storage_Design_and..., about Line 133)
     ESolarProduced = E_PV_Wh + E_PVT_Wh
 
-    E_produed_total = E_produced_solarAndHPforSolar[:, 0] + E_CC_tot_produced
+    E_produed_total = E_produced_solarAndHPforSolar + E_CC_tot_produced
 
-    E_consumed_without_buildingdemand = E_consumed_without_buildingdemand_solarAndHPforSolar[:, 0] + E_PP_and_storage
+    E_consumed_without_buildingdemand = E_consumed_without_buildingdemand_solarAndHPforSolar + E_PP_and_storage
 
     if save_file == 1:
         results = pd.DataFrame({
@@ -1255,25 +1255,25 @@ def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
 
     # Extract data from all columns of the csv file to a pandas.Dataframe
     result = pd.read_csv(fName)
-    Q_DH_networkload = (np.array(result['Q_DH_networkload'])[np.newaxis]).T
-    E_aux_ch = (np.array(result['E_aux_ch'])[np.newaxis]).T
-    E_aux_dech = (np.array(result['E_aux_dech'])[np.newaxis]).T
-    Q_missing = (np.array(result['Q_missing'])[np.newaxis]).T
-    Q_storage_content_Wh = (np.array(result['Q_storage_content_Wh'])[np.newaxis]).T
-    Q_to_storage = (np.array(result['Q_to_storage'])[np.newaxis]).T
-    Q_from_storage = (np.array(result['Q_from_storage_used'])[np.newaxis]).T
-    Q_uncontrollable = (np.array(result['Q_uncontrollable_hot'])[np.newaxis]).T
-    E_PV_Wh = (np.array(result['E_PV_Wh'])[np.newaxis]).T
-    E_PVT_Wh = (np.array(result['E_PVT_Wh'])[np.newaxis]).T
-    E_aux_HP_uncontrollable = (np.array(result['E_aux_HP_uncontrollable'])[np.newaxis]).T
-    Q_SCandPVT = (np.array(result['Q_SCandPVT_coldstream'])[np.newaxis]).T
-    HPServerHeatDesignArray = (np.array(result['HPServerHeatDesignArray'])[np.newaxis]).T
-    HPpvt_designArray = (np.array(result['HPpvt_designArray'])[np.newaxis]).T
-    HPCompAirDesignArray = (np.array(result['HPCompAirDesignArray'])[np.newaxis]).T
-    HPScDesignArray = (np.array(result['HPScDesignArray'])[np.newaxis]).T
-    E_produced_solarAndHPforSolar = (np.array(result['E_produced_total'])[np.newaxis]).T
-    E_consumed_without_buildingdemand_solarAndHPforSolar = (np.array(
-        result['E_consumed_total_without_buildingdemand'])[np.newaxis]).T
+    Q_DH_networkload = np.array(result['Q_DH_networkload'])
+    E_aux_ch = np.array(result['E_aux_ch'])
+    E_aux_dech = np.array(result['E_aux_dech'])
+    Q_missing = np.array(result['Q_missing'])
+    Q_storage_content_Wh = np.array(result['Q_storage_content_Wh'])
+    Q_to_storage = np.array(result['Q_to_storage'])
+    Q_from_storage = np.array(result['Q_from_storage_used'])
+    Q_uncontrollable = np.array(result['Q_uncontrollable_hot'])
+    E_PV_Wh = np.array(result['E_PV_Wh'])
+    E_PVT_Wh = np.array(result['E_PVT_Wh'])
+    E_aux_HP_uncontrollable = np.array(result['E_aux_HP_uncontrollable'])
+    Q_SCandPVT = np.array(result['Q_SCandPVT_coldstream'])
+    HPServerHeatDesignArray = np.array(result['HPServerHeatDesignArray'])
+    HPpvt_designArray = np.array(result['HPpvt_designArray'])
+    HPCompAirDesignArray = np.array(result['HPCompAirDesignArray'])
+    HPScDesignArray = np.array(result['HPScDesignArray'])
+    E_produced_solarAndHPforSolar = np.array(result['E_produced_total'])
+    E_consumed_without_buildingdemand_solarAndHPforSolar = np.array(
+        result['E_consumed_total_without_buildingdemand'])
 
 
     # Q_DH_networkload = np.array(extract_csv(fName, "Q_DH_networkload", DAYS_IN_YEAR))
