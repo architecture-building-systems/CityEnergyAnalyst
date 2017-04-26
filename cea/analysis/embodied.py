@@ -134,10 +134,7 @@ def lca_embodied(year_to_calculate, locator, gv):
     ## each building component gets categorized according to its occupancy type, construction year and retrofit year
     ## e.g., for an office building built in 1975, cat_df['cat_built'] = 'OFFICE3'
     ## e.g., for an office building with windows renovated in 1975, cat_df['cat_windows'] = 'OFFICE9'
-    cat_df['cat_built'] = cat_df.apply(lambda x: calc_category_construction(x['mainuse'], x['built']), axis=1)
-    retro_cat = ['envelope', 'roof', 'windows', 'partitions', 'basement', 'HVAC']
-    for cat in retro_cat:
-        cat_df['cat_' + cat] = cat_df.apply(lambda x: calc_category_retrofit(x['mainuse'], x[cat]), axis=1)
+
 
     # calculate contributions to embodied energy and emissions
     ## calculated by multiplying the area of the given component by the energy and emissions per square meter for the
@@ -185,10 +182,17 @@ def calculate_contributions(archetype, cat_df, gv, locator, year_to_calculate, t
         for each building)
     :rtype result: DataFrame
     """
-
     # get archetype properties from the database
-    database_df = pd.read_excel(locator.get_archetypes_properties(), archetype)
-    
+    database_df = pd.read_excel(locator.get_life_cycle_inventory_building_systems(), archetype)
+    database_df['Code'] = database_df.apply(lambda x: calc_code(x['building_use'], x['year_start'],
+                                                                        x['year_end'], x['standard']), axis=1)
+
+    cat_df['cat_built'] = calc_category(database_df, cat_df, 'built', 'C')
+
+    retro_cat = ['envelope', 'roof', 'windows', 'partitions', 'basement', 'HVAC']
+    for cat in retro_cat:
+        cat_df['cat_' + cat] = calc_category(database_df, cat_df, cat, 'R')
+
     # merge databases according to category
     built_df = cat_df.merge(database_df, left_on='cat_built', right_on='Code')
     envelope_df = cat_df.merge(database_df, left_on='cat_envelope', right_on='Code')
@@ -197,6 +201,10 @@ def calculate_contributions(archetype, cat_df, gv, locator, year_to_calculate, t
     partitions_df = cat_df.merge(database_df, left_on='cat_partitions', right_on='Code')
     basement_df = cat_df.merge(database_df, left_on='cat_basement', right_on='Code')
     HVAC_df = cat_df.merge(database_df, left_on='cat_HVAC', right_on='Code')
+
+    #do checkup in case some buildings or all buildings do not have a match.
+    #this happens when building has not been retrofitted.
+
     
     # calculate the embodied energy/emissions due to construction
     # these include: external walls, roof, windows, interior floors, partitions, HVAC systems, and excavation
@@ -394,6 +402,24 @@ def calc_comparison(array_min, array_max):
             array_max = array_min
     return array_max
 
+def calc_code(code1, code2, code3, code4):
+    return str(code1) + str(code2) + str(code3) + str(code4)
+
+def calc_category(archetype_DB, age, field, type):
+    category = []
+    for row in age.index:
+        if age.loc[row, field] > 0:
+            category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, field]) & \
+                                         (archetype_DB['year_end'] >= age.loc[row, field]) & \
+                                         (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
+                                         (archetype_DB['standard'] == type)].Code.values[0])
+        else:
+            category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, 'built']) & \
+                                         (archetype_DB['year_end'] >= age.loc[row, 'built']) & \
+                                         (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
+                                         (archetype_DB['standard'] == type)].Code.values[0])
+
+    return category
 
 def run_as_script(scenario_path=None, year_to_calculate=2050):
     gv = cea.globalvar.GlobalVariables()

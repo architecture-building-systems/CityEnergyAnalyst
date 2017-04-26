@@ -68,13 +68,10 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
     # get properties about the construction and architecture
     if prop_architecture_flag:
         architecture_DB = get_database(locator.get_archetypes_properties(), 'ARCHITECTURE')
-        architecture_DB['Code'] = architecture_DB.apply(lambda x: calc_code_architecture_DB(x['code'], x['year_start'],
-                                                                            x['year_end'],x['standard']),axis=1)
+        architecture_DB['Code'] = architecture_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
+                                                                            x['year_end'], x['standard']),axis=1)
+        categories_df['cat_architecture'] = calc_category(architecture_DB, categories_df)
 
-        categories_df['cat_architecture'] = categories_df.apply(lambda x: calc_category(x['mainuse'], x['built'],
-                                                                                        x['envelope'], architecture_DB.set_index('code')),axis=1)
-
-        # define architectural characteristics
         prop_architecture_df = categories_df.merge(architecture_DB, left_on='cat_architecture', right_on='Code')
 
         # write to shapefile
@@ -89,8 +86,10 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
     # get properties about types of HVAC systems
     if prop_hvac_flag:
         HVAC_DB = get_database(locator.get_archetypes_properties(), 'HVAC')
+        HVAC_DB['Code'] = HVAC_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
+                                                            x['year_end'], x['standard']),axis=1)
 
-        categories_df['cat_HVAC'] = categories_df.apply(lambda x: calc_category(x['mainuse'], x['built'],  x['HVAC']),axis=1)
+        categories_df['cat_HVAC'] = calc_category(HVAC_DB, categories_df)
 
         # define HVAC systems types
         prop_HVAC_df = categories_df.merge(HVAC_DB, left_on='cat_HVAC', right_on='Code')
@@ -132,7 +131,7 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
         df2dbf(prop_internal_shp, locator.get_building_internal())
 
 
-def calc_code_architecture_DB(code1,code2,code3,code4):
+def calc_code(code1, code2, code3, code4):
     return str(code1)+str(code2)+str(code3)+str(code4)
 
 
@@ -158,19 +157,20 @@ def calc_comparison(array_min, array_max):
     return array_max
 
 
-def calc_category(mainuse, year_construction, year_renovation, archetypes_DB):
-    print archetypes_DB[mainuse]
-    if year_renovation > 0:
-        for row in archetypes_DB[mainuse]:
-            if row['year_start'] <= year_renovation <= row['year_end']:
-                code = mainuse+str(row['year_start']),str(row['year_end'])+"R"
-    else:
-        for row in archetypes_DB[mainuse]:
-            if row['year_start'] <= year_construction <= row['year_end']:
-                code = mainuse+str(row['year_start']),str(row['year_end'])+"C"
-
-    return code
-
+def calc_category(archetype_DB, age):
+    category = []
+    for row in age.index:
+        if age.loc[row, 'envelope'] > 0:
+            category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, 'envelope']) & \
+                                         (archetype_DB['year_end'] >= age.loc[row, 'envelope']) & \
+                                         (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
+                                         (archetype_DB['standard'] == 'R')].Code.values[0])
+        else:
+            category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, 'built']) & \
+                                         (archetype_DB['year_end'] >= age.loc[row, 'built']) & \
+                                         (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
+                                         (archetype_DB['standard'] == 'C')].Code.values[0])
+    return category
 
 def run_as_script(scenario_path=None, prop_thermal_flag=True, prop_architecture_flag=True, prop_hvac_flag=True,
                   prop_comfort_flag=True, prop_internal_loads_flag=True):
