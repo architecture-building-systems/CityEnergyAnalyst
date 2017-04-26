@@ -3,6 +3,8 @@ Create the data for tests/test_calc_thermal_loads_new_ventilation.py
 
 This test-data changes when the core algorithms get updated. This script spits out the data used.
 """
+import os
+
 import pandas as pd
 
 from cea.demand.occupancy_model import schedule_maker
@@ -12,20 +14,28 @@ from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
 
 
-REFERENCE_CASE = r'C:\reference-case-open\baseline'
-
 def main():
-    locator = InputLocator(REFERENCE_CASE)
+    import zipfile
+    import cea.examples
+    import tempfile
+    archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+    archive.extractall(tempfile.gettempdir())
+    reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
+    locator = InputLocator(reference_case)
     gv = GlobalVariables()
     weather_path = locator.get_default_weather()
-    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    weather_data = epwreader.epw_reader(weather_path)[
+        ['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
+
+    # run properties script
+    import cea.demand.preprocessing.properties
+    cea.demand.preprocessing.properties.properties(locator, True, True, True, True)
 
     building_properties = BuildingProperties(locator, gv)
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
     list_uses = building_properties.list_uses()
-    schedules = schedule_maker(date, locator, list_uses)
-    usage_schedules = {'list_uses': list_uses,
-                            'schedules': schedules}
+    schedules, occupancy_densities = schedule_maker(date, locator, list_uses)
+    usage_schedules = {'list_uses': list_uses, 'schedules': schedules, 'occupancy_densities': occupancy_densities}
 
     print("data for test_calc_thermal_loads:")
     print building_properties.list_building_names()
@@ -48,17 +58,10 @@ def main():
 
     print("data for test_calc_thermal_loads_other_buildings:")
     # randomly selected except for B302006716, which has `Af == 0`
-    buildings = {'B01': (81124.39400, 150471.05200),
-                 'B03': (81255.09200, 150520.01000),
-                 'B02': (82176.15300, 150604.85100),
-                 'B05': (84058.72400, 150841.56200),
-                 'B04': (82356.22600, 150598.43400),
-                 'B07': (81052.19000, 150490.94800),
-                 'B06': (83108.45600, 150657.24900),
-                 'B09': (84491.58100, 150853.54000),
-                 'B08': (88572.59000, 151020.09300), }
+    buildings = ['B01', 'B03', 'B02', 'B05', 'B04','B07','B06','B09',
+                 'B08']
 
-    for building in buildings.keys():
+    for building in buildings:
         bpr = building_properties[building]
         b, qcf_kwh, qhf_kwh = run_for_single_building(building, bpr, weather_data, usage_schedules,
                                                       date, gv, locator)

@@ -1,46 +1,42 @@
 """Installation script for the City Energy Analyst"""
 
 import os
-# import versioneer
+from setuptools import setup, find_packages
 
+import cea
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Daren Thomas"]
 __license__ = "MIT"
-__version__ = "0.1"
+__version__ = cea.__version__
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+with open('README.rst', 'r') as f:
+    LONG_DESCRIPTION = f.read()
 
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
-
-LONG_DESCRIPTION = """TODO: add long description"""
-
-if os.environ.get('READTHEDOCS', False) == 'True':
-    # trick to make cea installable for readthedocs
-    INSTALL_REQUIRES = []
-else:
-    # TODO: list all the requirements for installing
-    INSTALL_REQUIRES = ['geopandas', 'pandas', 'shapely', 'fiona', 'descartes', 'pyproj', 'versioneer',
-                        'sphinx_rtd_theme', 'deap']
+INSTALL_REQUIRES = ['OCCUtils>=0.1-dev', 'SALib', 'deap', 'descartes', 'doit==0.29.0', 'ephem', 'fiona', 'geopandas',
+                    'lxml', 'pandas', 'plotly', 'pycollada', 'pyproj', 'pysal', 'pyshp', 'requests', 'scikit-learn',
+                    'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo>=0.1a0']
 
 setup(name='cityenergyanalyst',
-      version='1.0',  # versioneer.get_version(),
+      version=__version__,
       description='City Energy Analyst',
       license='MIT',
       author='Architecture and Building Systems',
       author_email='cea@arch.ethz.ch',
       url='http://cityenergyanalyst.com',
       long_description=LONG_DESCRIPTION,
-      packages=['cea', 'cea.analysis', 'cea.analysis.sensitivity', 'cea.demand', 'cea.demand.preprocessing',
-                'cea.geometry', 'cea.GUI', 'cea.optimization', 'cea.plots', 'cea.resources', 'cea.technologies',
-                'cea.utilities'],
+      py_modules=[''],
+      packages=find_packages(),
       package_data={},
+      dependency_links=['https://github.com/tpaviot/pythonocc-utils/tarball/master#egg=OCCUtils-0.1-dev',
+                        'https://github.com/architecture-building-systems/pyliburo/tarball/master#egg=pyliburo-0.1a0'],
       install_requires=INSTALL_REQUIRES,
-      # cmdclass=versioneer.get_cmdclass(),
+      include_package_data=True,
+      entry_points={
+          'console_scripts': ['cea=cea.cli:main'],
+      },
       )

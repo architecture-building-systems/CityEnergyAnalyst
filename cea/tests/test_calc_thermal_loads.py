@@ -9,27 +9,31 @@ from cea.globalvar import GlobalVariables
 from cea.inputlocator import InputLocator
 from cea.utilities import epwreader
 
-REFERENCE_CASE = r'C:\cea-reference-case\reference-case-open\baseline'
-
 
 class TestCalcThermalLoads(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        if 'REFERENCE_CASE' in os.environ:
-            cls.locator = InputLocator(os.environ['REFERENCE_CASE'])
-        else:
-            cls.locator = InputLocator(REFERENCE_CASE)
+        import zipfile
+        import tempfile
+        import cea.examples
+        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+        archive.extractall(tempfile.gettempdir())
+        reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
+        cls.locator = InputLocator(reference_case)
         cls.gv = GlobalVariables()
-
         weather_path = cls.locator.get_default_weather()
-        cls.weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
+        cls.weather_data = epwreader.epw_reader(weather_path)[
+            ['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
+
+        # run properties script
+        import cea.demand.preprocessing.properties
+        cea.demand.preprocessing.properties.properties(cls.locator, True, True, True, True)
 
         cls.building_properties = BuildingProperties(cls.locator, cls.gv)
         cls.date = pd.date_range(cls.gv.date_start, periods=8760, freq='H')
         cls.list_uses = cls.building_properties.list_uses()
-        cls.schedules = schedule_maker(cls.date, cls.locator, cls.list_uses)
-        cls.usage_schedules = {'list_uses': cls.list_uses,
-                               'schedules': cls.schedules}
+        cls.schedules, cls.occupancy_densities = schedule_maker(cls.date, cls.locator, cls.list_uses)
+        cls.usage_schedules = {'list_uses': cls.list_uses, 'schedules': cls.schedules, 'occupancy_densities': cls.occupancy_densities}
 
     def test_calc_thermal_loads(self):
         # FIXME: the usage_schedules bit needs to be fixed!!
@@ -56,9 +60,10 @@ class TestCalcThermalLoads(unittest.TestCase):
                          u'Qcdataf_kWh', u'Qcref_kWh', u'Qcs_kWh', u'Qcsf_kWh', u'Qhs_kWh', u'Qhsf_kWh', u'Qww_kWh',
                          u'Qwwf_kWh', u'Tcsf_re_C', u'Thsf_re_C', u'Twwf_re_C', u'Tcsf_sup_C', u'Thsf_sup_C',
                          u'Twwf_sup_C']
-        values = [155102.61600000001, 1032.2150000000001, 0.0, 156134.83099999998, 33642.668999999994, 148713.291, 0, 0,
-                  31814.229999999996, 33642.668999999994, 102867.37599999999, 108845.97899999999, 37198.886999999995,
-                  39867.324999999997, 3264.0, 44968.798999999999, 99496.0, 2304.0, 51691.493000000002, 525600]
+        values = [155102.61600000001, 3776.9010000000003, 0.0, 158879.51699999999, 8373.9639999999999,
+                  332161.44099999999, 0, 0, 7888.4459999999999, 8373.9639999999999, 183389.465, 195411.984,
+                  134184.50699999998, 136749.459, 2567.0, 67361.358999999997, 99496.0, 1812.0, 77058.267999999996,
+                  525600]
 
         for i, column in enumerate(value_columns):
             try:
@@ -71,16 +76,15 @@ class TestCalcThermalLoads(unittest.TestCase):
     def test_calc_thermal_loads_other_buildings(self):
         """Test some other buildings just to make sure we have the proper data"""
         # randomly selected except for B302006716, which has `Af == 0`
-        buildings = {'B01': (33642.66900, 148713.29100),
-                     'B03': (33654.23900, 148763.63000),
-                     'B02': (34078.58200, 148858.43400),
-                     'B05': (34686.73200, 149072.58000),
-                     'B04': (34138.18300, 148847.07800),
-                     'B07': (33536.96800, 148736.44200),
-                     'B06': (0.00000, 0.00000),
-                     'B09': (34928.68400, 149081.76100),
-                     'B08': (36940.84100, 149184.58100),
-                     }
+        buildings = {'B01': (8373.96400, 332161.44100),
+                    'B03': (8362.64100, 331800.73400),
+                    'B02': (8423.01800, 332303.93500),
+                    'B05': (8569.54200, 331622.01200),
+                    'B04': (8546.75100, 332664.97900),
+                    'B07': (8358.49200, 331901.41900),
+                    'B06': (0.00000, 0.00000),
+                    'B09': (8436.55700, 331646.05300),
+                    'B08': (8401.99800, 332857.90100)}
         if self.gv.multiprocessing:
             import multiprocessing as mp
             pool = mp.Pool()
