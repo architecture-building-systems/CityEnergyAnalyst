@@ -39,7 +39,6 @@ def calc_occ_schedule(list_uses, schedules, occ_density, building_uses, Af):
     :type building_uses: dict[str, float]
 
     :param Af: total conditioned floor area
-
     :type Af: float
 
     :returns:
