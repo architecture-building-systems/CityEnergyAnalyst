@@ -1,8 +1,5 @@
-name: cityenergyanalyst_docs
 channels:
 - conda-forge
-- pythonocc
-- oce
 - https://conda.anaconda.org/dlr-sc
 dependencies:
 - python=2.7
@@ -15,4 +12,3 @@ dependencies:
 - fiona
 - pythonocc-core=0.17
 - networkx
-- pythonocc-core==0.17.3
