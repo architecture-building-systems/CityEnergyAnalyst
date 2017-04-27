@@ -31,8 +31,10 @@ the software is just being tested with show-stopping bugs being fixed if possibl
 Where to find the current version number
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The current version number can be found in the source file `cea/__init__.py` in the variable `__version__`. All code
-requiring knowledge of the current version number should read the version from here. In python this can be achieved by:
+The current version number can be found in the module :py:mod:`cea` (actually, since :py:mod:`cea` is a package, you
+need to look into the file ``__init__.py``) in the variable ``__version__``.
+All code requiring knowledge of the current version number should read the version from here. In python this can be
+achieved by:
 
 .. source: python
 
@@ -40,22 +42,37 @@ requiring knowledge of the current version number should read the version from h
     version_number = cea.__version__
 
 
+The NSIS installer uses the helper tool ``setup/get_version.exe`` to extract the version and write it to the file
+``setup/cea_version.txt`` - if importing :py:mod:`cea` is not an option, you could explore this avenue too...
+
 
 Responsibility for version numbers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The repository admin merging a pull request to master is responsible for updating the version number.
 
+
 .. _PyPI: https://pypi.python.org/pypi
 .. _PEP440: https://www.python.org/dev/peps/pep-0440
 .. _GitHub issues milestones list: https://github.com/architecture-building-systems/CEAforArcGIS/milestones
 
 
+Update the CREDITS.md file
+--------------------------
+
+For each minor release (2.2, 2.3, ...) the ``CREDITS.md`` file needs to be updated to include all the authors that
+worked on that release.
+
+@JIMENO: Do I understand this correctly: The list is ever expanding? Then we also might need a HISTORY.md file or
+similar...
+
+
 Uploading to PyPI
-=================
+-----------------
 
 - check long-description with this commandline::
 
+    NOTE: fix this!
     python setup.py --long-description | python %temp%\CityEnergyAnalyst\Scripts\rst2html.py > ld.html && start ld.html
 
   - make sure the output is valid / no errors, as this will be the text of the CEA on PyPI
@@ -69,41 +86,64 @@ Uploading to PyPI
     - cityenergyanalyst-2.2-py2-none-any.whl
     - cityenergyanalyst-2.2.tar.gz
 
-- **NOTE**: All this stuff could be made a lot easier if we created a pydoit-powered script (cea-admin?)
-
-- use twine (pip install ``twine`` first, then set environment variables / use username & password)
+- use twine to upload to PyPI
 
 ::
 
     twine upload dist/*
 
+  - you can get twine_ with ``pip install twine``
+  - the command above assumes you have set the ``TWINE_PASSWORD`` and ``TWINE_USERNAME`` environment variables
+    if not, use the ``--username`` and ``--password`` positional arguments
+  - ask the repository admins for username and password
+
+.. _twine: https://pypi.python.org/pypi/twine
 
 Creating the installer for the planner's edition
-================================================
+------------------------------------------------
 
 - first, make sure you have the nullsoft scriptable installation system (NSIS) version 3.01 installed. You can get it
-  from here: http://nsis.sourceforge.net/Download (choose the version 3.01)
+  from here: http://nsis.sourceforge.net/Download (choose the version 3.01, this was the newest version at the time
+  of writing htis document)
 
 - update the `*.pyd` files by running `cea/utilities/compile_pyd_files.py`
 
   - this requires `numba.pycc` to be installed, which can be obtained by doing `conda install numba`
-  - this also requires a C compiler installed, **TODO**: figure out in a VM exactly how to set this up...
+  - this also requires a C compiler installed
+
+
+**TODO**: figure out in a VM exactly how to set this up... (this could be a separate document)
 
 Testing in a virtual machine
-============================
+----------------------------
+
+In order to test the release, it is a good idea to run the installation guide / installer on a clean virtual machine,
+e.g. with VirtualBox_. This test should go as far as running `cea test --reference-case open` just to be sure everything
+is still working.
+
+.. _VirtualBox: https://www.virtualbox.org/
 
 Building the documentation
-==========================
+--------------------------
 
-An important part of the release process is ensuring that the documentation for readthedocs_ can be built. This can
+An important part of the release process is ensuring that the documentation for readthedocs_ site can be built. This can
 be tested locally by executing the following commands in the repository folder::
 
     cd docs
     make clean
     make html
 
-For this to run you might need to first ``pip install sphinx``. If any error messages show up, these need to be fixed
-before publishing the release.
+For this to run you will need to first ``pip install sphinx``.
+
+If any error messages show up, these need to be fixed before publishing the release. The readthedocs_ site uses
+these steps to produce the developer and API documentation.
+
+The documentation will be build in the folder ``docs/_build/html`` and you can open the ``index.html`` file there to
+browse the documentation.
+
+Changes to the conda environment need to be reflected in the ``docs/environment.yml`` file.
+
+
 
 .. _readthedocs: http://city-energy-analyst.readthedocs.io/en/latest/index.html
 
