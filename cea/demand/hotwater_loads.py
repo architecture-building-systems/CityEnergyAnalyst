@@ -63,10 +63,10 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     # calc schedule of use:
     schedule = calc_Qww_schedule(list_uses, schedules, occupancy_densities, building_uses, Af)
     # end-use demand
-    mww = schedule * Vww_lpd/ 1000
-    Vww = mww * gv.Pwater /3600 # kg/s
-    mw = schedule * Vww_lpd / 1000
-    Vw = mw * gv.Pwater /3600 # kg/s
+    Vww = schedule * Vww_lpd/ 1000
+    mww = Vwwww * gv.Pwater /3600 # kg/s
+    Vw = schedule * Vw_lpd / 1000
+    mw = Vw * gv.Pwater /3600 # kg/s
     Qww = np.vectorize(calc_Qww)(mww, Tww_sup_0, Tww_re, gv.Cpw)
     Qww_0 = Qww.max()
     # distribution and circulation losses
