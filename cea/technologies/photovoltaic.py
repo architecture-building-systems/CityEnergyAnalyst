@@ -126,7 +126,7 @@ def filter_low_potential(weather_data, radiation_csv, metadata_csv, gv):
 
     # join total radiation to sensor_metadata
     sensors_rad_sum = sensors_rad.sum(0).values # add new row with yearly radiation
-    sensors_metadata['total_rad'] = sensors_rad_sum
+    sensors_metadata['total_rad_Whm2'] = sensors_rad_sum    #[Wh/m2]
 
     # remove window surfaces
     sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'window']
@@ -143,7 +143,7 @@ def filter_low_potential(weather_data, radiation_csv, metadata_csv, gv):
     # set min yearly radiation threshold for sensor selection
     min_yearly_radiation = max_yearly_radiation * gv.min_radiation
 
-    sensors_metadata_clean = sensors_metadata[sensors_metadata.total_rad >= min_yearly_radiation]
+    sensors_metadata_clean = sensors_metadata[sensors_metadata.total_rad_Whm2 >= min_yearly_radiation]
     sensors_rad_clean = sensors_rad[sensors_metadata_clean.index.tolist()] # keep sensors above min radiation
 
     sensors_rad_clean[sensors_rad_clean[:] <= 50] = 0   # eliminate points when hourly production < 50 W/m2
@@ -154,7 +154,6 @@ def filter_low_potential(weather_data, radiation_csv, metadata_csv, gv):
 def calc_pv_generation(type_panel, hourly_radiation, number_groups, number_points, prop_observers, weather_data,
                        g, Sz, Az, ha, latitude, misc_losses):
     """
-
     :param type_panel:
     :param hourly_radiation:
     :param number_groups:
@@ -234,13 +233,20 @@ def calc_incidenteangleB(g, lat, ha, tilt, teta_z):
 
 def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):
     """
-    Calculated angle of incidence from solar vector and surface normal vector.
-    :param lat: radians
-    :param g:
-    :param ha:
-    :param tilt:
-    :param teta_z:
-    :return:
+    To calculate angle of incidence from solar vector and surface normal vector.
+
+    :param lat: latitude of the loacation of case study [radians]
+    :param g: declination of the solar position [radians]
+    :param ha: hour angle [radians]
+    :param tilt: panel surface tilt angle [radians]
+    :param teta_z: panel surface azimuth angle [radians]
+    :type lat: float
+    :type g: float
+    :type ha: float
+    :type tilt: float
+    :type teta_z: float
+    :return teta_B: angle of incidence [radians]
+    :rtype teta_B: float
     """
     # surface normal vector
     n_E = sin(tilt)*sin(teta_z)
@@ -255,26 +261,22 @@ def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):
     teta_B = acos(n_E*s_E + n_N*s_N + n_Z*s_Z)
     return teta_B
 
-
 def calc_diffuseground_comp(tilt_radians):
     """
     To calculate reflected radiation and diffuse radiation.
 
-    Parameters
-    ----------
-    tilt_radians
-
-    Returns
-    -------
-    teta_ed: groups-reflected radiation
-    teta_eg: diffuse radiation
+    :param tilt_radians:  surface tilt angle [radians]
+    :type tilt_radians: float
+    :return teta_ed: groups-reflected radiation
+    :return teta_eg: diffuse radiation
+    :rtype teta_ed: float
+    :rtype teta_eg: float
 
     References
     ----------
     Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
     Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
     doi: 10.1002/9781118671603.ch5
-
     """
     tilt = degrees(tilt_radians)
     teta_ed = 59.68 - 0.1388 * tilt + 0.001497 * tilt ** 2  # angle in degrees
@@ -286,37 +288,32 @@ def Calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg,
     """
     To calculate the absorbed solar radiation on tilted surface.
 
-    Parameters
-    ----------
-    te
-    I_sol
-    I_direct
-    I_diffuse
-    tilt
-    Sz
-    teta
-    tetaed
-    tetaeg
-    n
-    Pg
-    K
-    NOCT
-    a0
-    a1
-    a2
-    a3
-    a4
-    L
-
-    Returns
-    -------
+    :param te:
+    :param I_sol:
+    :param I_direct:
+    :param I_diffuse:
+    :param tilt:
+    :param Sz:
+    :param teta:
+    :param tetaed:
+    :param tetaeg:
+    :param n:
+    :param Pg:
+    :param K:
+    :param NOCT:
+    :param a0:
+    :param a1:
+    :param a2:
+    :param a3:
+    :param a4:
+    :param L:
+    :return:
 
     References
     ----------
     Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
     Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
     doi: 10.1002/9781118671603.ch5
-
     """
 
     # calcualte ratio of beam radiation on a tilted plane
@@ -382,20 +379,19 @@ def Calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg,
 
 def Calc_PV_power(S, Tcell, eff_nom, areagroup, Bref,misc_losses):
     """
+    To calculate the power production of PV panels.
 
-    Parameters
-    ----------
-    S: absorbed radiation [W/m2]
-    Tcell: cell temperature [degree]
-    eff_nom
-    areagroup: panel area [m2]
-    Bref
-    misc_losses: expected system loss
+    :param S: absorbed radiation [W/m2]
+    :param Tcell: cell temperature [degree]
+    :param eff_nom:
+    :param areagroup: panel area [m2]
+    :param Bref:
+    :param misc_losses: expected system loss
+    :return: Power production [kW]
 
-    Returns
-    -------
-    P: Power production [kWh]
 
+    ..[Osterwald, C. R., 1986] Osterwald, C. R. (1986). Translation of device performance measurements to
+    reference conditions. Solar Cells, 18, 269-279.
     """
     P = eff_nom*areagroup*S*(1-Bref*(Tcell-25))*(1-misc_losses)/1000 # Osterwald, 1986) in kWatts
     return P
@@ -413,16 +409,13 @@ def Calc_optimal_angle(teta_z, latitude, transmissivity):
     """
     To calculate the optimal tilt angle of the solar panels.
 
-    Parameters
-    ----------
-    teta_z: surface azimuth, 0 degree south (east negative, west positive) according to the paper of Quinn et al., 2013
-    latitude
-    transmissivity
+    :param teta_z: surface azimuth, 0 degree south (east negative, west positive) according to the paper of Quinn et al., 2013
+    :param latitude:
+    :param transmissivity:
+    :return:
 
-    Returns
-    -------
-    S.W.Quinn, B.Lehman.A simple formula for estimating the optimum tilt angles of photovoltaic panels.
-    2013 IEEE 14th Work Control Model Electron, Jun, 2013, pp.1-8
+    ..[Quinn et al., 2013] S.W.Quinn, B.Lehman.A simple formula for estimating the optimum tilt angles of photovoltaic
+    panels. 2013 IEEE 14th Work Control Model Electron, Jun, 2013, pp.1-8
     """
     if transmissivity <= 0.15:
         gKt = 0.977
@@ -443,16 +436,16 @@ def Calc_optimal_spacing(Sh, Az, tilt_angle, module_length):
     """
     To calculate the optimal spacing between each panel to avoid shading.
 
-    Parameters
-    ----------
-    Sh: Solar elevation at the worst hour [degree]
-    Az: Azimuth [degree]
-    tilt_angle: optimal tilt angle for panels on flat surfaces [degree]
-    module_length: [m]
-
-    Returns
-    -------
-    D: optimal distance in [m]
+    :param Sh: Solar elevation at the worst hour [degree]
+    :type Sh: float
+    :param Az: Solar Azimuth [degree]
+    :type Az: float
+    :param tilt_angle: optimal tilt angle for panels on flat surfaces [degree]
+    :type tilt_angle: float
+    :param module_length: [m]
+    :type module_length: float
+    :return D: optimal distance in [m]
+    :rtype D: float
     """
     h = module_length * sin(tilt_angle)
     D1 = h / tan(radians(Sh))
@@ -464,11 +457,15 @@ def calc_categoriesroof(teta_z, B, GB, Max_Isol):
     """
     To categorize solar panels by the surface azimuth, tilt angle and yearly radiation.
 
-    :param teta_z: surface azimuth, 0 degree north (east positive, west negative)
-    :param B: solar panel tile angle in degree
-    :param GB: yearly radiation of sensors
-    :param Max_Isol: yearly global horizontal radiation
-    :return:
+    :param teta_z: surface azimuth [degree], 0 degree north (east positive, west negative)
+    :type teta_z: float
+    :param B: solar panel tile angle [degree]
+    :type B: float
+    :param GB: yearly radiation of sensors [Wh/m2/year]
+    :type GB: float
+    :param Max_Isol: yearly global horizontal radiation [Wh/m2/year]
+    :type Max_Isol: float
+    :return: Categories of panels CATteta_z, CATB, CATBG
     """
     if -122.5 < teta_z <= -67:
         CATteta_z = 1
@@ -572,7 +569,7 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
 
     # categorize the sensors by surface_azimuth, B, GB
     result = np.vectorize(calc_categoriesroof)(sensors_metadata_clean.surface_azimuth, sensors_metadata_clean.B,
-                                               sensors_metadata_clean.total_rad, Max_Isol)
+                                               sensors_metadata_clean.total_rad_Whm2, Max_Isol)
     sensors_metadata_clean['CATteta_z'] = result[0]
     sensors_metadata_clean['CATB'] = result[1]
     sensors_metadata_clean['CATGB'] = result[2]
