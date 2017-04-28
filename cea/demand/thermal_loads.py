@@ -83,11 +83,15 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     # area_per_occupant = usage_schedules['area_per_occupant']
     internal_loads = usage_schedules['internal_loads']
 
-    # get occupancy
+    # get schedules
     # tsd['people'] = occupancy_model.calc_occ_schedule(list_uses, schedules, area_per_occupant, bpr.occupancy,
     #                                                   bpr.rc_model['Af'])
     tsd['people'] = occupancy_model.calc_schedules(list_uses, schedules, occupancy_densities, bpr.occupancy,
                                                       bpr.rc_model['Af'])
+    tsd['ve'] = occupancy_model.calc_schedules(list_uses, schedules, internal_loads['Ve_lps'], bpr.occupancy,
+                                                      bpr.rc_model['Af'], 'people') * 3.6  # in m3/h
+    tsd['Qs'] = occupancy_model.calc_schedules(list_uses, schedules, internal_loads['Qs_Wp'], bpr.occupancy,
+                                                      bpr.rc_model['Af'], 'people')
 
     # get electrical loads (no auxiliary loads)
     tsd = electrical_loads.calc_Eint(tsd, bpr, list_uses, schedules, internal_loads)
@@ -115,10 +119,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd = controllers.calc_simple_temp_control(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
                                                    date.dayofweek)
 
-        # latent heat gains
-        tsd['w_int'] = sensible_loads.calc_Qgain_lat(tsd['people'], bpr.internal_loads['X_ghp'],
-                                                     bpr.hvac['type_cs'],
-                                                     bpr.hvac['type_hs'])
+        # # latent heat gains
+        tsd['w_int'] = sensible_loads.calc_Qgain_lat(list_uses, schedules, internal_loads['X_ghp'], bpr.occupancy,
+                                                     bpr.rc_model['Af'], bpr.hvac['type_cs'], bpr.hvac['type_hs'])
 
         # end-use demand calculation
         for t in range(-720, 8760):

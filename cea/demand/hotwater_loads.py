@@ -67,13 +67,12 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     Vww = calc_water_demand_schedule(list_uses, schedules, occupancy_densities, building_uses, Af, Vww_lpd)
     Vw = calc_water_demand_schedule(list_uses, schedules, occupancy_densities, building_uses, Af, Vw_lpd)
     mww = Vww * gv.Pwater /3600 # kg/s
-    mw = Vw * gv.Pwater /3600 # kg/s
 
     Qww = np.vectorize(calc_Qww)(mww, Tww_sup_0, Tww_re, gv.Cpw)
     Qww_0 = Qww.max()
 
     # distribution and circulation losses
-    Vol_ls = Lsww_dis * (gv.D / 1000) ** (2 / 4) * pi #volume per meter of pipe
+    Vol_ls = Lsww_dis * (gv.D / 1000) ** (2 / 4) * pi # volume per meter of pipe
     Qww_dis_ls_r = np.vectorize(calc_Qww_dis_ls_r)(Ta, Qww, Lsww_dis, Lcww_dis, Y[1], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
                                            gv.Cpw, gv.Pwater, gv)
     Qww_dis_ls_nr = np.vectorize(calc_Qww_dis_ls_nr)(Ta, Qww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
@@ -91,7 +90,7 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
 
 def calc_water_demand_schedule(list_uses, schedules, occ_density, building_uses, Af, volume):
     """
-    Algoithm to calculate the schedule of Qww use
+    Algorithm to calculate the schedule of Qww use
 
     :param list_uses: The list of uses used in the project
     :type list_uses: list

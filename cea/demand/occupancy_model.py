@@ -32,47 +32,6 @@ def calc_occ_schedule(list_uses, schedules, occ_density, building_uses, Af):
     :type schedules: list[ndarray[float]]
 
     :param occ_density: the list of occupancy densities per every schedule
-    :type occ_density:: list[float]
-
-    :param building_uses: for each use in `list_uses`, the percentage of that use for this building.
-        Sum of values is 1.0
-    :type building_uses: dict[str, float]
-
-    :param Af: total conditioned floor area
-    :type Af: float
-
-    :returns:
-    :rtype: ndarray
-    """
-    # weighted average of schedules
-    def calc_average(last, current, share_of_use):
-        return last + current * share_of_use
-
-    occ = np.zeros(8760)
-
-    num_profiles = len(list_uses)
-    for num in range(num_profiles):
-        if occ_density[num] != 0: # do not consider when the occupancy is 0
-            current_share_of_use = building_uses[list_uses[num]]
-            share_time_occupancy_density = (1/occ_density[num])*current_share_of_use
-            occ = np.vectorize(calc_average)(occ, schedules[num][0], share_time_occupancy_density)
-    result = occ*Af
-
-    return result
-
-
-def calc_schedules(list_uses, schedules, occ_density, building_uses, Af):
-    """
-    Given schedule data for archetypical building uses, `calc_occ_schedule` calculates the schedule for a building
-    with possibly a mixed schedule as defined in `building_uses` using a weighted average approach.
-
-    :param list_uses: The list of uses used in the project
-    :type list_uses: list
-
-    :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
-    :type schedules: list[ndarray[float]]
-
-    :param occ_density: the list of occupancy densities per every schedule
     :type occ_density: list[float]
 
     :param building_uses: for each use in `list_uses`, the percentage of that use for this building.
@@ -99,6 +58,54 @@ def calc_schedules(list_uses, schedules, occ_density, building_uses, Af):
             occ = np.vectorize(calc_average)(occ, schedules[num][0], share_time_occupancy_density)
 
     result = occ * Af
+
+    return result
+
+
+def calc_schedules(list_uses, schedules, specific_values, building_uses, Af, schedule_type):
+    """
+    Given schedule data for archetypical building uses, `calc_occ_schedule` calculates the schedule for a building
+    with possibly a mixed schedule as defined in `building_uses` using a weighted average approach.
+
+    :param list_uses: The list of uses used in the project
+    :type list_uses: list
+
+    :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
+    :type schedules: list[ndarray[float]]
+
+    :param occ_density: the list of occupancy densities per every schedule
+    :type occ_density: list[float]
+
+    :param building_uses: for each use in `list_uses`, the percentage of that use for this building.
+        Sum of values is 1.0
+    :type building_uses: dict[str, float]
+
+    :param Af: total conditioned floor area
+    :type Af: float
+
+    :returns:
+    :rtype: ndarray
+    """
+
+    # code to get each corresponding schedule from `schedules`
+    schedule_code_dict = {'people': 0, 'electricity': 1, 'water': 2, 'process': 3}
+    code = schedule_code_dict[schedule_type]
+
+    # weighted average of schedules
+    def calc_average(last, current, share_of_use):
+        return last + current * share_of_use
+
+    specific_result = np.zeros(8760)
+
+    num_profiles = len(list_uses)
+    for num in range(num_profiles):
+        if specific_values[num] != 0: # do not consider when the occupancy is 0
+            current_share_of_use = building_uses[list_uses[num]]
+            share_time_occupancy_density = (specific_values[num]) * current_share_of_use
+            specific_result = np.vectorize(calc_average)(specific_result, schedules[num][code],
+                                                         share_time_occupancy_density)
+
+    result = specific_result * Af
 
     return result
 
