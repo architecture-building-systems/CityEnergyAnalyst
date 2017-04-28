@@ -119,7 +119,8 @@ Testing in a virtual machine
 
 In order to test the release, it is a good idea to run the installation guide / installer on a clean virtual machine,
 e.g. with VirtualBox_. This test should go as far as running `cea test --reference-case open` just to be sure everything
-is still working.
+is still working. This test goes a bit further than the regular test in that it makes sure the installation instructions
+still work on a new installation. This is important because it can find missing packages in the dependency lists etc.
 
 .. _VirtualBox: https://www.virtualbox.org/
 
