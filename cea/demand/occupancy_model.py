@@ -32,11 +32,11 @@ def calc_schedules(list_uses, schedules, specific_values, building_uses, area, s
     :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
     :type schedules: list[ndarray[float]]
 
-    :param occ_density: the list of occupancy densities per every schedule
-    :type occ_density: list[float]
+    :param specific_values: for the variable to be calculated, list of yearly values per m2 or per person (e.g. occupant
+    density)
+    :type specific_values: list[float]
 
-    :param building_uses: for each use in `list_uses`, the percentage of that use for this building.
-        Sum of values is 1.0
+    :param building_uses: for each use in `list_uses`, the percentage of that use for this building. Sum of values is 1.0
     :type building_uses: dict[str, float]
 
     :param area: total conditioned or electrified floor area (Af or Ae)

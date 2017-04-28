@@ -80,12 +80,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     list_uses = usage_schedules['list_uses']
     schedules = usage_schedules['schedules']
     occupancy_densities = usage_schedules['occupancy_densities']
-    # area_per_occupant = usage_schedules['area_per_occupant']
     internal_loads = usage_schedules['internal_loads']
 
-    # get schedules
-    # tsd['people'] = occupancy_model.calc_occ_schedule(list_uses, schedules, area_per_occupant, bpr.occupancy,
-    #                                                   bpr.rc_model['Af'])
+    # calculate occupancy schedule and occupant-related parameters
     tsd['people'] = occupancy_model.calc_schedules(list_uses, schedules, occupancy_densities, bpr.occupancy,
                                                       bpr.rc_model['Af'], 'people')
     tsd['ve'] = occupancy_model.calc_schedules(list_uses, schedules, internal_loads['Ve_lps'], bpr.occupancy,
@@ -141,8 +138,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             # ventilation air flows [kg/s]
             ventilation_air_flows_simple.calc_air_mass_flow_mechanical_ventilation(bpr, tsd, hoy)
             ventilation_air_flows_simple.calc_air_mass_flow_window_ventilation(bpr, tsd, hoy)
-
-
 
             # ventilation air temperature
             ventilation_air_flows_simple.calc_theta_ve_mech(bpr, tsd, hoy, gv)
