@@ -133,7 +133,9 @@ be tested locally by executing the following commands in the repository folder::
     make clean
     make html
 
-For this to run you will need to first ``pip install sphinx``.
+For this to run you will need to first ``pip install sphinx``. Also note that the command ``cea install-toolbox`` needs
+to be run at least once to set up some paths required for importing certain modules. You will also need to do
+``conda install numba``. You also need to install GraphViz_ to produce the graphs.
 
 If any error messages show up, these need to be fixed before publishing the release. The readthedocs_ site uses
 these steps to produce the developer and API documentation.
@@ -144,6 +146,5 @@ browse the documentation.
 Changes to the conda environment need to be reflected in the ``docs/environment.yml`` file.
 
 
-
 .. _readthedocs: http://city-energy-analyst.readthedocs.io/en/latest/index.html
-
+.. _GraphViz: http://www.graphviz.org/Download.php
