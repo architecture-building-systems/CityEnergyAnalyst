@@ -106,21 +106,25 @@ def schedule_maker(dates, locator, list_uses):
 
     schedules = []
     occ_densities = []
+    internal_loads = []
     for use in list_uses:
         # Read from archetypes_schedules
         x = pd.read_excel(locator.get_archetypes_schedules(), use).T
 
         # read lists of every daily profile
-        occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, occ_density = read_schedules(use, x)
+        occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, occ_density, internal_load = \
+            read_schedules(use, x)
 
         # read occupancy density per schedule
         occ_densities.append(occ_density)
+        # read internal loads per schedule
+        internal_loads.append(internal_load)
 
         # get yearly schedules in a list
         schedule = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule)
         schedules.append(schedule)
 
-    return schedules, occ_densities
+    return schedules, occ_densities, internal_loads
 
 
 def read_schedules(use, x):
@@ -152,5 +156,7 @@ def read_schedules(use, x):
     Vw_lpd = x['Vw_lpd'].values[:1][0]
     # read ventilation demand
     Ve_lps = x['Ve_lps'].values[:1][0]
+    # gather all internal loads into a list
+    internal_load = [Qs_Wp, X_ghp, Ea_Wm2, El_Wm2 Epro_Wm2, Ere_Wm2, Ed_Wm2, Vww_lpd, Vw_lpd, Ve_lps]
 
-    return occ, el, dhw, pro, month, occ_density
+    return occ, el, dhw, pro, month, occ_density, internal_load

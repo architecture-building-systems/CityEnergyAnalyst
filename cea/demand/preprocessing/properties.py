@@ -75,6 +75,10 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
         # define architectural characteristics
         prop_architecture_df = categories_df.merge(architecture_DB, left_on='cat_architecture', right_on='Code')
 
+        # adjust 'Hs' and 'Es' for multiuse buildings
+        prop_architecture_df['Hs'], prop_architecture_df['Es'] = \
+            correct_archetype_values(prop_architecture_df, architecture_DB, list_uses)
+
         # write to shapefile
         prop_architecture_df_merged = names_shp.merge(prop_architecture_df, on="Name")
         fields = ['Es', 'Hs', 'win_wall', 'n50', 'th_mass',  'type_roof', 'type_wall', 'type_win', 'type_shade']
@@ -181,6 +185,45 @@ def calc_category(a, x, y):
     category = a + result
     return category
 
+
+def correct_archetype_values(prop_architecture_df, architecture_DB, list_uses):
+    """
+        Corrects the heated and electrical areas 'Hs' and 'Es' for buildings with multiple uses.
+
+         :var prop_architecture_df: DataFrame containing each building's occupancy, construction and renovation data as
+         well as the architectural properties obtained from the archetypes.
+         :type prop_architecture_df: DataFrame
+         :var architecture_DB: architecture database for each archetype
+         :type architecture_DB: DataFrame
+         :var list_uses: list of all occupancy types in the project
+         :type list_uses: list[str]
+
+         :return Hs_list: the corrected values for 'Hs' for each building
+         :type Hs_list: list[float]
+         :return Es_list: the corrected values for 'Es' for each building
+         :type Es_list: list[float]
+    """
+    indexed_DB = architecture_DB.set_index('Code')
+
+    # weighted average of values
+    def calc_average(last, current, share_of_use):
+        return last + current * share_of_use
+    Hs_list = []
+    Es_list = []
+    for building in prop_architecture_df.index:
+        Hs = Es = win_wall = 0
+        for use in list_uses:
+            if prop_architecture_df[use][building] > 0:
+                current_use_code = calc_category(use, prop_architecture_df['built'][building],
+                                                 prop_architecture_df['envelope'][building])
+                Hs = calc_average(Hs, indexed_DB['Hs'][current_use_code], prop_architecture_df[use][building])
+                Es = calc_average(Es, indexed_DB['Es'][current_use_code], prop_architecture_df[use][building])
+                win_wall = calc_average(win_wall, indexed_DB['win_wall'][current_use_code],
+                                        prop_architecture_df[use][building])
+        Hs_list.append(Hs) # prop_architecture_df['Hs'][building] = Hs
+        Es_list.append(Es) # prop_architecture_df['Es'][building] = Es
+
+    return Hs_list, Es_list
 
 def run_as_script(scenario_path=None, prop_thermal_flag=True, prop_architecture_flag=True, prop_hvac_flag=True,
                   prop_comfort_flag=True, prop_internal_loads_flag=True):

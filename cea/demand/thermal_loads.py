@@ -80,7 +80,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     list_uses = usage_schedules['list_uses']
     schedules = usage_schedules['schedules']
     occupancy_densities = usage_schedules['occupancy_densities']
-
+    internal_loads = usage_schedules['internal_loads']
     # get occupancy
     tsd['people'] = occupancy_model.calc_occ_schedule(list_uses, schedules, occupancy_densities, bpr.occupancy,
                                                       bpr.rc_model['Af'])
