@@ -75,6 +75,7 @@ Uploading to PyPI
     python setup.py --long-description | for /f %i in ('where rst2html.py') do python %i > %temp%\ld.html && start %temp%\ld.html
 
   - make sure the output is valid / no errors, as this will be the text of the CEA on PyPI
+  - for ``rst2html.py`` to be installed, you will need to do a ``pip install sphinx``
 
 - delete any old distributions from dist folder (you can just delete the whole ``dist`` folder if you like)
 
