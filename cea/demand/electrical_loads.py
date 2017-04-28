@@ -58,23 +58,17 @@ def calc_Eint(tsd, bpr, list_uses, schedules, internal_loads):
 
     # calculate other loads
     if 'COOLROOM' in bpr.occupancy:
-        # schedule_Eref = average_appliances_lighting_schedule(['COOLROOM'], schedules, bpr.occupancy)
         tsd['Eref'] = electrical_schedules['Eref'] * bpr.rc_model['Aef']  # in W
-                    # calc_Eref(schedule_Eref, bpr.internal_loads['Ere_Wm2'], bpr.rc_model['Aef'])  # in W
     else:
         tsd['Eref'] = np.zeros(8760)
 
     if 'SERVERROOM' in bpr.occupancy:
-        # schedule_Edata = average_appliances_lighting_schedule(['SERVERROOM'], schedules, bpr.occupancy)
         tsd['Edataf'] = electrical_schedules['Edataf'] * bpr.rc_model['Aef']  # in W
-        # tsd['Edataf'] = calc_Edataf(schedule_Edata, bpr.internal_loads['Ed_Wm2'], bpr.rc_model['Aef'])  # in W
     else:
         tsd['Edataf'] = np.zeros(8760)
 
     if 'INDUSTRY' in bpr.occupancy:
-        # schedule_pro = calc_Eprof_schedule(list_uses, schedules, bpr.occupancy)
         tsd['Eprof'] = electrical_schedules['Eprof'] * bpr.rc_model['Aef']  # in W
-        # tsd['Eprof'] = calc_Eprof(schedule_pro, bpr.internal_loads['Epro_Wm2'], bpr.rc_model['Aef'])  # in W
     else:
         tsd['Eprof'] = np.zeros(8760)
         tsd['Ecaf'] = np.zeros(8760) # not used in the current version but in the optimization part

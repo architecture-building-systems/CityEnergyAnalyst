@@ -201,12 +201,10 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             bpr.building_systems['Tww_sup_0'],
             bpr.building_systems['Y'],
             gv,
-            bpr.internal_loads['Vww_lpd'],
-            bpr.internal_loads['Vw_lpd'],
             occupancy_densities,
             list_uses,
             schedules,
-            bpr.occupancy)
+            bpr.occupancy, internal_loads)
 
         # calc auxiliary loads
         tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'], \
