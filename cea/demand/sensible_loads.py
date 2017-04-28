@@ -47,8 +47,10 @@ def calc_Qgain_lat(people, X_ghp, sys_e_cooling, sys_e_heating):
 
     # X_ghp is the humidity gain from people in g/h
 
+    schedule = occupancy_model.calc_schedules(list_uses, schedules, internal_loads['X_ghp'], bpr.occupancy,
+                                              bpr.rc_model['Af'])
     if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
-        w_int = people * X_ghp / (1000 * 3600)  # kg/s
+        w_int = schedule / (1000 * 3600)  # kg/s
     else:
         w_int = 0
 
