@@ -16,7 +16,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_Eint(tsd, bpr, list_uses, schedules):
+def calc_Eint(tsd, bpr, list_uses, schedules, internal_loads):
     """
     Calculate final internal electrical loads (without auxiliary loads)
 
@@ -36,41 +36,53 @@ def calc_Eint(tsd, bpr, list_uses, schedules):
         Sum of values is 1.0
     :type building_uses: Dict[str, numpy.ndarray]
 
+    :param internal_loads: list of internal loads defined in the archetypes for each occupancy type
+    :type internal_loads: Dict[str, list[float]]
+
     :returns: `tsd` with new keys: `['Eaf', 'Elf', 'Ealf', 'Edataf', 'Eref', 'Eprof']`
     :rtype: Dict[str, numpy.ndarray]
     """
 
     # calculate schedules
-    schedule_applicances_lighting = average_appliances_lighting_schedule(list_uses, schedules, bpr.occupancy)
+    electrical_schedules = {}
+    electrical_schedules['Eaf'] = average_appliances_lighting_schedule(list_uses, schedules, bpr.occupancy, internal_loads['Ea_Wm2'])
+    electrical_schedules['Elf'] = average_appliances_lighting_schedule(list_uses, schedules, bpr.occupancy, internal_loads['El_Wm2'])
+    electrical_schedules['Eref'] = average_appliances_lighting_schedule(list_uses, schedules, bpr.occupancy, internal_loads['Epro_Wm2'])
+    electrical_schedules['Edataf'] = average_appliances_lighting_schedule(list_uses, schedules, bpr.occupancy, internal_loads['Ed_Wm2'])
+    electrical_schedules['Eprof'] = average_appliances_lighting_schedule(list_uses, schedules, bpr.occupancy, internal_loads['Ere_Wm2'])
 
     # calculate final electrical consumption due to appliances and lights
-    tsd['Eaf'] = schedule_applicances_lighting * bpr.internal_loads['Ea_Wm2'] * bpr.rc_model['Aef']
-    tsd['Elf'] = schedule_applicances_lighting * bpr.internal_loads['El_Wm2'] * bpr.rc_model['Aef']
+    tsd['Eaf'] = electrical_schedules['Eaf'] * bpr.rc_model['Aef']
+    tsd['Elf'] = electrical_schedules['Elf'] * bpr.rc_model['Aef']
     tsd['Ealf'] = tsd['Elf'] + tsd['Eaf']
 
     # calculate other loads
     if 'COOLROOM' in bpr.occupancy:
-        schedule_Eref = average_appliances_lighting_schedule(['COOLROOM'], schedules, bpr.occupancy)
-        tsd['Eref'] = calc_Eref(schedule_Eref, bpr.internal_loads['Ere_Wm2'], bpr.rc_model['Aef'])  # in W
+        # schedule_Eref = average_appliances_lighting_schedule(['COOLROOM'], schedules, bpr.occupancy)
+        tsd['Eref'] = electrical_schedules['Eref'] * bpr.rc_model['Aef']  # in W
+                    # calc_Eref(schedule_Eref, bpr.internal_loads['Ere_Wm2'], bpr.rc_model['Aef'])  # in W
     else:
         tsd['Eref'] = np.zeros(8760)
 
     if 'SERVERROOM' in bpr.occupancy:
-        schedule_Edata = average_appliances_lighting_schedule(['SERVERROOM'], schedules, bpr.occupancy)
-        tsd['Edataf'] = calc_Edataf(schedule_Edata, bpr.internal_loads['Ed_Wm2'], bpr.rc_model['Aef'])  # in W
+        # schedule_Edata = average_appliances_lighting_schedule(['SERVERROOM'], schedules, bpr.occupancy)
+        tsd['Edataf'] = electrical_schedules['Edataf'] * bpr.rc_model['Aef']  # in W
+        # tsd['Edataf'] = calc_Edataf(schedule_Edata, bpr.internal_loads['Ed_Wm2'], bpr.rc_model['Aef'])  # in W
     else:
         tsd['Edataf'] = np.zeros(8760)
 
     if 'INDUSTRY' in bpr.occupancy:
-        schedule_pro = calc_Eprof_schedule(list_uses, schedules, bpr.occupancy)
-        tsd['Eprof'] = calc_Eprof(schedule_pro, bpr.internal_loads['Epro_Wm2'], bpr.rc_model['Aef'])  # in W
+        # schedule_pro = calc_Eprof_schedule(list_uses, schedules, bpr.occupancy)
+        tsd['Eprof'] = electrical_schedules['Eprof'] * bpr.rc_model['Aef']  # in W
+        # tsd['Eprof'] = calc_Eprof(schedule_pro, bpr.internal_loads['Epro_Wm2'], bpr.rc_model['Aef'])  # in W
     else:
         tsd['Eprof'] = np.zeros(8760)
         tsd['Ecaf'] = np.zeros(8760) # not used in the current version but in the optimization part
+
     return tsd
 
 
-def average_appliances_lighting_schedule(list_uses, schedules, building_uses):
+def average_appliances_lighting_schedule(list_uses, schedules, building_uses, load):
     """
     Calculate the schedule to use for lighting and appliances based on the building uses from the schedules
     defined for the project unsing a weighted average.
@@ -81,6 +93,8 @@ def average_appliances_lighting_schedule(list_uses, schedules, building_uses):
     :type schedules: List[Tuple[List[float], List[float], List[float]]]
     :param building_uses: A set of weights for the schedules as they apply to this particular building.
     :type building_uses: Dict[str, float]
+    :param load: specific load (in W/m2) defined for each occupancy type for each type of electricity demand
+    :type load: list[float]
 
     :return: appliances lighting schedule as a weighted average of the schedules for a specific building.
     :rtype: numpy.ndarray[numpy.float64]
@@ -97,8 +111,9 @@ def average_appliances_lighting_schedule(list_uses, schedules, building_uses):
             current_share_of_use = 0
         else:
             current_share_of_use = building_uses[list_uses[num]]
+        share_time_electricity_load = (load[num]) * current_share_of_use
+        el = np.vectorize(calc_average)(el, schedules[num][1], share_time_electricity_load)
 
-        el = np.vectorize(calc_average)(el, schedules[num][1], current_share_of_use)
     return el
 
 
