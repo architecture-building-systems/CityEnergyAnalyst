@@ -67,38 +67,6 @@ worked on that release.
 similar...
 
 
-Uploading to PyPI
------------------
-
-- check long-description with this commandline::
-
-    python setup.py --long-description | for /f %i in ('where rst2html.py') do python %i > %temp%\ld.html && start %temp%\ld.html
-
-  - make sure the output is valid / no errors, as this will be the text of the CEA on PyPI
-  - for ``rst2html.py`` to be installed, you will need to do a ``pip install sphinx``
-
-- delete any old distributions from dist folder (you can just delete the whole ``dist`` folder if you like)
-
-- do ``python setup.py sdist bdist_wheel``
-
-  - this will recreate the ``dist`` folder with two files that look similar to these:
-
-    - cityenergyanalyst-2.2-py2-none-any.whl
-    - cityenergyanalyst-2.2.tar.gz
-
-- use twine to upload to PyPI
-
-::
-
-    twine upload dist/*
-
-  - you can get twine_ with ``pip install twine``
-  - the command above assumes you have set the ``TWINE_PASSWORD`` and ``TWINE_USERNAME`` environment variables
-    if not, use the ``--username`` and ``--password`` positional arguments
-  - ask the repository admins for username and password
-
-.. _twine: https://pypi.python.org/pypi/twine
-
 Creating the installer for the planner's edition
 ------------------------------------------------
 
@@ -149,3 +117,35 @@ Changes to the conda environment need to be reflected in the ``docs/environment.
 
 .. _readthedocs: http://city-energy-analyst.readthedocs.io/en/latest/index.html
 .. _GraphViz: http://www.graphviz.org/Download.php
+
+Uploading to PyPI
+-----------------
+
+- check long-description with this commandline::
+
+    python setup.py --long-description | for /f %i in ('where rst2html.py') do python %i > %temp%\ld.html && start %temp%\ld.html
+
+  - make sure the output is valid / no errors, as this will be the text of the CEA on PyPI
+  - for ``rst2html.py`` to be installed, you will need to do a ``pip install sphinx``
+
+- delete any old distributions from dist folder (you can just delete the whole ``dist`` folder if you like)
+
+- do ``python setup.py sdist bdist_wheel``
+
+  - this will recreate the ``dist`` folder with two files that look similar to these:
+
+    - cityenergyanalyst-2.2-py2-none-any.whl
+    - cityenergyanalyst-2.2.tar.gz
+
+- use twine to upload to PyPI
+
+::
+
+    twine upload dist/*
+
+  - you can get twine_ with ``pip install twine``
+  - the command above assumes you have set the ``TWINE_PASSWORD`` and ``TWINE_USERNAME`` environment variables
+    if not, use the ``--username`` and ``--password`` positional arguments
+  - ask the repository admins for username and password
+
+.. _twine: https://pypi.python.org/pypi/twine
