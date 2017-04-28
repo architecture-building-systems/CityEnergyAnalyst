@@ -68,8 +68,8 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     for use in range(len(occupancy_densities)):
         Vww_ld.append(internal_loads['Vww_lpd'][use] * occupancy_densities[use])
         Vw_ld.append(internal_loads['Vw_lpd'][use] * occupancy_densities[use])
-    Vww = occupancy_model.calc_schedules(list_uses, schedules, Vww_ld, building_uses, Af, 'water')
-    Vw = occupancy_model.calc_schedules(list_uses, schedules, Vw_ld, building_uses, Af, 'water')
+    Vww = occupancy_model.calc_schedules(list_uses, schedules, Vww_ld, building_uses, Af, 'water')  # m3/h
+    Vw = occupancy_model.calc_schedules(list_uses, schedules, Vw_ld, building_uses, Af, 'water')  # m3/h
     mww = Vww * gv.Pwater /3600 # kg/s
 
     Qww = np.vectorize(calc_Qww)(mww, Tww_sup_0, Tww_re, gv.Cpw)
