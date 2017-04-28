@@ -138,5 +138,19 @@ def read_schedules(use, x):
 
     # read occupancy density
     occ_density = x['density'].values[:1][0]
+    # read occupant loads
+    Qs_Wp = x['Qs_Wp'].values[:1][0]
+    X_ghp = x['X_ghp'].values[:1][0]
+    # read electricity demands
+    Ea_Wm2 = x['Ea_Wm2'].values[:1][0]
+    El_Wm2 = x['El_Wm2'].values[:1][0]
+    Epro_Wm2 = x['Epro_Wm2'].values[:1][0]
+    Ere_Wm2 = x['Ere_Wm2'].values[:1][0]
+    Ed_Wm2 = x['Ed_Wm2'].values[:1][0]
+    # read water demands
+    Vww_lpd = x['Vww_lpd'].values[:1][0]
+    Vw_lpd = x['Vw_lpd'].values[:1][0]
+    # read ventilation demand
+    Ve_lps = x['Ve_lps'].values[:1][0]
 
     return occ, el, dhw, pro, month, occ_density
