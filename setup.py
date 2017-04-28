@@ -39,4 +39,7 @@ setup(name='cityenergyanalyst',
       entry_points={
           'console_scripts': ['cea=cea.cli:main'],
       },
+      extras_require={
+          'dev': ['sphinx', 'twine']
+      }
       )
