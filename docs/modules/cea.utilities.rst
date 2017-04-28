@@ -12,13 +12,6 @@ cea\.utilities\.building\_info module
     :undoc-members:
     :show-inheritance:
 
-cea\.utilities\.compile\_pyd\_files module
-------------------------------------------
-
-.. automodule:: cea.utilities.compile_pyd_files
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 cea\.utilities\.dbfreader module
 --------------------------------

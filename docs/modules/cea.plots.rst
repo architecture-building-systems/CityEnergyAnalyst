@@ -36,13 +36,6 @@ cea\.plots\.graphs\_solar\_potential module
     :undoc-members:
     :show-inheritance:
 
-cea\.plots\.heatmaps module
----------------------------
-
-.. automodule:: cea.plots.heatmaps
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 cea\.plots\.pareto\_frontier\_plot module
 -----------------------------------------
