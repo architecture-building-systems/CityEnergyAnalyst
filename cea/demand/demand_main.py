@@ -69,8 +69,8 @@ def demand_calculation(locator, weather_path, gv):
     # schedules model
     list_uses = list(building_properties._prop_occupancy.drop('PFloor', axis=1).columns)
     schedules, occupancy_densities, internal_loads = occupancy_model.schedule_maker(date, locator, list_uses)
-    schedules_dict = {'list_uses': list_uses, 'schedules': schedules, 'occupancy_densities':occupancy_densities,
-                      'internal_loads': internal_loads}
+    schedules_dict = {'list_uses': list_uses, 'schedules': schedules, 'occupancy_densities': occupancy_densities,
+                      'internal_loads': internal_loads} # , 'area_per_occupant': area_per_occupant}
 
     # in case gv passes a list of specific buildings to simulate.
     if gv.simulate_building_list:

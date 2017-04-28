@@ -61,6 +61,48 @@ def calc_occ_schedule(list_uses, schedules, occ_density, building_uses, Af):
     return result
 
 
+def calc_schedules(list_uses, schedules, occ_density, building_uses, Af):
+    """
+    Given schedule data for archetypical building uses, `calc_occ_schedule` calculates the schedule for a building
+    with possibly a mixed schedule as defined in `building_uses` using a weighted average approach.
+
+    :param list_uses: The list of uses used in the project
+    :type list_uses: list
+
+    :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
+    :type schedules: list[ndarray[float]]
+
+    :param occ_density: the list of occupancy densities per every schedule
+    :type occ_density: list[float]
+
+    :param building_uses: for each use in `list_uses`, the percentage of that use for this building.
+        Sum of values is 1.0
+    :type building_uses: dict[str, float]
+
+    :param Af: total conditioned floor area
+    :type Af: float
+
+    :returns:
+    :rtype: ndarray
+    """
+    # weighted average of schedules
+    def calc_average(last, current, share_of_use):
+        return last + current * share_of_use
+
+    occ = np.zeros(8760)
+
+    num_profiles = len(list_uses)
+    for num in range(num_profiles):
+        if occ_density[num] != 0: # do not consider when the occupancy is 0
+            current_share_of_use = building_uses[list_uses[num]]
+            share_time_occupancy_density = (occ_density[num])*current_share_of_use
+            occ = np.vectorize(calc_average)(occ, schedules[num][0], share_time_occupancy_density)
+
+    result = occ * Af
+
+    return result
+
+
 # read schedules from excel file
 
 def schedule_maker(dates, locator, list_uses):
@@ -106,25 +148,51 @@ def schedule_maker(dates, locator, list_uses):
 
     schedules = []
     occ_densities = []
-    internal_loads = []
+    areas_per_occupant = []
+    Qs_Wp = []
+    X_ghp = []
+    Ea_Wm2 = []
+    El_Wm2 = []
+    Epro_Wm2 = []
+    Ere_Wm2 = []
+    Ed_Wm2 = []
+    Vww_lpd = []
+    Vw_lpd = []
+    Ve_lps = []
     for use in list_uses:
         # Read from archetypes_schedules
         x = pd.read_excel(locator.get_archetypes_schedules(), use).T
 
         # read lists of every daily profile
-        occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, occ_density, internal_load = \
+        occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, area_per_occupant, internal_loads = \
             read_schedules(use, x)
 
-        # read occupancy density per schedule
-        occ_densities.append(occ_density)
-        # read internal loads per schedule
-        internal_loads.append(internal_load)
+        # get occupancy density per schedule in a list
+        if area_per_occupant != 0:
+            occ_densities.append(1/area_per_occupant)
+        else: occ_densities.append(area_per_occupant)
+        # areas_per_occupant.append(area_per_occupant)
+        # get internal loads per schedule in a list
+        Qs_Wp.append(internal_loads[0])
+        X_ghp.append(internal_loads[1])
+        Ea_Wm2.append(internal_loads[2])
+        El_Wm2.append(internal_loads[3])
+        Epro_Wm2.append(internal_loads[4])
+        Ere_Wm2.append(internal_loads[5])
+        Ed_Wm2.append(internal_loads[6])
+        Vww_lpd.append(internal_loads[7])
+        Vw_lpd.append(internal_loads[8])
+        Ve_lps.append(internal_loads[9])
 
         # get yearly schedules in a list
         schedule = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule)
         schedules.append(schedule)
 
-    return schedules, occ_densities, internal_loads
+    internal_loads_and_ventilation = {'Qs_Wp': Qs_Wp, 'X_ghp': X_ghp, 'Ea_Wm2': Ea_Wm2, 'El_Wm2': El_Wm2,
+                                      'Epro_Wm2': Epro_Wm2, 'Ere_Wm2': Ere_Wm2, 'Ed_Wm2': Ed_Wm2, 'Vww_lpd': Vww_lpd,
+                                      'Vw_lpd': Vw_lpd, 'Ve_lps': Ve_lps}
+
+    return schedules, occ_densities, internal_loads_and_ventilation # , areas_per_occupant
 
 
 def read_schedules(use, x):
@@ -156,7 +224,8 @@ def read_schedules(use, x):
     Vw_lpd = x['Vw_lpd'].values[:1][0]
     # read ventilation demand
     Ve_lps = x['Ve_lps'].values[:1][0]
-    # gather all internal loads into a list
-    internal_load = [Qs_Wp, X_ghp, Ea_Wm2, El_Wm2 Epro_Wm2, Ere_Wm2, Ed_Wm2, Vww_lpd, Vw_lpd, Ve_lps]
 
-    return occ, el, dhw, pro, month, occ_density, internal_load
+    # get internal loads and ventilation in a list
+    internal_loads = [Qs_Wp, X_ghp, Ea_Wm2, El_Wm2, Epro_Wm2, Ere_Wm2, Ed_Wm2, Vww_lpd, Vw_lpd, Ve_lps]
+
+    return occ, el, dhw, pro, month, occ_density, internal_loads
