@@ -5,6 +5,7 @@ Electrical loads
 from __future__ import division
 import numpy as np
 from cea.utilities import physics
+from cea.demand import occupancy_model
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -43,32 +44,29 @@ def calc_Eint(tsd, bpr, list_uses, schedules, internal_loads):
     :rtype: Dict[str, numpy.ndarray]
     """
 
-    # calculate schedules
-    electrical_schedules = {}
-    electrical_schedules['Eaf'] = average_appliances_lighting_schedule(list_uses, schedules, bpr.occupancy, internal_loads['Ea_Wm2'])
-    electrical_schedules['Elf'] = average_appliances_lighting_schedule(list_uses, schedules, bpr.occupancy, internal_loads['El_Wm2'])
-    electrical_schedules['Eref'] = average_appliances_lighting_schedule(list_uses, schedules, bpr.occupancy, internal_loads['Epro_Wm2'])
-    electrical_schedules['Edataf'] = average_appliances_lighting_schedule(list_uses, schedules, bpr.occupancy, internal_loads['Ed_Wm2'])
-    electrical_schedules['Eprof'] = average_appliances_lighting_schedule(list_uses, schedules, bpr.occupancy, internal_loads['Ere_Wm2'])
-
     # calculate final electrical consumption due to appliances and lights
-    tsd['Eaf'] = electrical_schedules['Eaf'] * bpr.rc_model['Aef']
-    tsd['Elf'] = electrical_schedules['Elf'] * bpr.rc_model['Aef']
+    tsd['Eaf'] = occupancy_model.calc_schedules(list_uses, schedules, internal_loads['Ea_Wm2'], bpr.occupancy,
+                                                bpr.rc_model['Aef'], 'electricity') # in W
+    tsd['Elf'] = occupancy_model.calc_schedules(list_uses, schedules, internal_loads['El_Wm2'], bpr.occupancy,
+                                                bpr.rc_model['Aef'], 'electricity') # in W
     tsd['Ealf'] = tsd['Elf'] + tsd['Eaf']
 
     # calculate other loads
     if 'COOLROOM' in bpr.occupancy:
-        tsd['Eref'] = electrical_schedules['Eref'] * bpr.rc_model['Aef']  # in W
+        tsd['Eref'] = occupancy_model.calc_schedules(list_uses, schedules, internal_loads['Ere_Wm2'], bpr.occupancy,
+                                                     bpr.rc_model['Aef'], 'electricity')  # in W
     else:
         tsd['Eref'] = np.zeros(8760)
 
     if 'SERVERROOM' in bpr.occupancy:
-        tsd['Edataf'] = electrical_schedules['Edataf'] * bpr.rc_model['Aef']  # in W
+        tsd['Edataf'] = occupancy_model.calc_schedules(list_uses, schedules, internal_loads['Ed_Wm2'], bpr.occupancy,
+                                                       bpr.rc_model['Aef'], 'electricity')  # in W
     else:
         tsd['Edataf'] = np.zeros(8760)
 
     if 'INDUSTRY' in bpr.occupancy:
-        tsd['Eprof'] = electrical_schedules['Eprof'] * bpr.rc_model['Aef']  # in W
+        tsd['Eprof'] = occupancy_model.calc_schedules(list_uses, schedules, internal_loads['Epro_Wm2'], bpr.occupancy,
+                                                      bpr.rc_model['Aef'], 'process')  # in W
     else:
         tsd['Eprof'] = np.zeros(8760)
         tsd['Ecaf'] = np.zeros(8760) # not used in the current version but in the optimization part
