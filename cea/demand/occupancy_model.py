@@ -62,7 +62,7 @@ def calc_occ_schedule(list_uses, schedules, occ_density, building_uses, Af):
     return result
 
 
-def calc_schedules(list_uses, schedules, specific_values, building_uses, Af, schedule_type):
+def calc_schedules(list_uses, schedules, specific_values, building_uses, area, schedule_type):
     """
     Given schedule data for archetypical building uses, `calc_occ_schedule` calculates the schedule for a building
     with possibly a mixed schedule as defined in `building_uses` using a weighted average approach.
@@ -80,8 +80,8 @@ def calc_schedules(list_uses, schedules, specific_values, building_uses, Af, sch
         Sum of values is 1.0
     :type building_uses: dict[str, float]
 
-    :param Af: total conditioned floor area
-    :type Af: float
+    :param area: total conditioned or electrified floor area (Af or Ae)
+    :type area: float
 
     :returns:
     :rtype: ndarray
@@ -105,7 +105,7 @@ def calc_schedules(list_uses, schedules, specific_values, building_uses, Af, sch
             specific_result = np.vectorize(calc_average)(specific_result, schedules[num][code],
                                                          share_time_occupancy_density)
 
-    result = specific_result * Af
+    result = specific_result * area
 
     return result
 

@@ -6,6 +6,7 @@ EN-13970
 from __future__ import division
 import numpy as np
 from cea.utilities.physics import BOLTZMANN
+from cea.demand import occupancy_model
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -41,14 +42,14 @@ def calc_Qgain_sen(t, tsd, bpr, gv):
     return tsd
 
 
-def calc_Qgain_lat(people, X_ghp, sys_e_cooling, sys_e_heating):
+def calc_Qgain_lat(list_uses, schedules, X_ghp, occupancy, Af, sys_e_cooling, sys_e_heating):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
 
     # X_ghp is the humidity gain from people in g/h
 
-    schedule = occupancy_model.calc_schedules(list_uses, schedules, internal_loads['X_ghp'], bpr.occupancy,
-                                              bpr.rc_model['Af'])
+    schedule = occupancy_model.calc_schedules(list_uses, schedules, X_ghp, occupancy, Af, 'people')
+
     if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
         w_int = schedule / (1000 * 3600)  # kg/s
     else:
