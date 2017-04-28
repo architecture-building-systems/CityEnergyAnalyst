@@ -72,8 +72,7 @@ Uploading to PyPI
 
 - check long-description with this commandline::
 
-    NOTE: fix this!
-    python setup.py --long-description | python %temp%\CityEnergyAnalyst\Scripts\rst2html.py > ld.html && start ld.html
+    python setup.py --long-description | for /f %i in ('where rst2html.py') do python %i > %temp%\ld.html && start %temp%\ld.html
 
   - make sure the output is valid / no errors, as this will be the text of the CEA on PyPI
 
