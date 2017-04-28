@@ -7,6 +7,7 @@ import numpy as np
 import scipy
 from math import pi
 from cea.technologies import storagetank as sto_m
+from cea.demand import occupancy_model
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -62,10 +63,13 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     """
 
     # calc schedules of use and end-use demand
-    Vww_lpd = internal_loads['Vww_lpd']
-    Vw_lpd = internal_loads['Vw_lpd']
-    Vww = calc_water_demand_schedule(list_uses, schedules, occupancy_densities, building_uses, Af, Vww_lpd)
-    Vw = calc_water_demand_schedule(list_uses, schedules, occupancy_densities, building_uses, Af, Vw_lpd)
+    Vww_ld = []
+    Vw_ld = []
+    for use in range(len(occupancy_densities)):
+        Vww_ld.append(internal_loads['Vww_lpd'][use] * occupancy_densities[use])
+        Vw_ld.append(internal_loads['Vw_lpd'][use] * occupancy_densities[use])
+    Vww = occupancy_model.calc_schedules(list_uses, schedules, Vww_ld, building_uses, Af, 'water')
+    Vw = occupancy_model.calc_schedules(list_uses, schedules, Vw_ld, building_uses, Af, 'water')
     mww = Vww * gv.Pwater /3600 # kg/s
 
     Qww = np.vectorize(calc_Qww)(mww, Tww_sup_0, Tww_re, gv.Cpw)
@@ -87,50 +91,6 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     return mww, Qww, Qww_st_ls, Qwwf, Qwwf_0, Tww_st, Vww, Vw, mcpwwf
 
 # end-use hot water demand calculation
-
-def calc_water_demand_schedule(list_uses, schedules, occ_density, building_uses, Af, volume):
-    """
-    Algorithm to calculate the schedule of Qww use
-
-    :param list_uses: The list of uses used in the project
-    :type list_uses: list
-
-    :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
-    :type schedules: list[ndarray[float]]
-
-    :param occ_density: the list of occupancy densities per every schedule
-    :type occ_density:: list[float]
-
-    :param building_uses: for each use in `list_uses`, the percentage of that use for this building.
-        Sum of values is 1.0
-    :type building_uses: dict[str, float]
-
-    :param Af: total conditioned floor area
-    :type Af: float
-
-    :param volume: volume of water or hot water required in liters per person per day (l/p/d) for each occupancy type
-    :type volume: list[float]
-
-    :returns: volume of water needed (in m3) per hour of the year
-    :rtype: ndarray
-    """
-
-    # weighted average of schedules
-    def calc_average(last, current, share_of_use):
-        return last + current * share_of_use
-
-    demand = np.zeros(8760)
-    num_profiles = len(list_uses)
-    for num in range(num_profiles):
-        if occ_density[num] != 0:
-            current_share_of_use = building_uses[list_uses[num]]
-            share_time_occupancy_density = (occ_density[num]) * current_share_of_use * volume[num]
-            demand = np.vectorize(calc_average)(demand, schedules[num][2], share_time_occupancy_density)
-
-    result = demand * Af / 1000 # convert liters to cubic meters
-
-    return result
-
 
 def calc_Qww(mww, Tww_sup_0, Tww_re, Cpw):
     mcpww = mww * Cpw * 1000  # W/K
