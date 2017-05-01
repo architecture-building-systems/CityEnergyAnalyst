@@ -159,11 +159,12 @@ def schedule_maker(dates, locator, list_uses):
         schedule = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule)
         schedules.append(schedule)
 
-    internal_loads_and_ventilation = {'Qs_Wp': Qs_Wp, 'X_ghp': X_ghp, 'Ea_Wm2': Ea_Wm2, 'El_Wm2': El_Wm2,
+    internal_loads = {'Qs_Wp': Qs_Wp, 'X_ghp': X_ghp, 'Ea_Wm2': Ea_Wm2, 'El_Wm2': El_Wm2,
                                       'Epro_Wm2': Epro_Wm2, 'Ere_Wm2': Ere_Wm2, 'Ed_Wm2': Ed_Wm2, 'Vww_lpd': Vww_lpd,
-                                      'Vw_lpd': Vw_lpd, 'Ve_lps': Ve_lps}
+                                      'Vw_lpd': Vw_lpd}
+    ventilation = Ve_lps
 
-    return schedules, occ_densities, internal_loads_and_ventilation # , areas_per_occupant
+    return schedules, occ_densities, internal_loads, ventilation
 
 
 def read_schedules(use, x):

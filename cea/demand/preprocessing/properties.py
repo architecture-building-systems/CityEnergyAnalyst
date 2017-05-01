@@ -60,15 +60,6 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
     fields_drop = ['envelope', 'roof', 'windows', 'partitions', 'basement', 'HVAC', 'built']  # FIXME: this hardcodes the field names!!
     names_shp = building_age_df.drop(fields_drop, axis=1)
 
-    for i in building_occupancy_df.index:
-        if building_occupancy_df['OFFICE'][i] == 1:
-            building_occupancy_df['OFFICE'][i] = 0.7
-            building_occupancy_df['RETAIL'][i] = 0.2
-            building_occupancy_df['PARKING'][i] = 0.1
-        if building_occupancy_df['PARKING'][i] == 1:
-            building_occupancy_df['PARKING'][i] = 0.5
-            building_occupancy_df['MULTI_RES'][i] = 0.4
-            building_occupancy_df['RESTAURANT'][i] = 0.1
     # define main use:
     building_occupancy_df['mainuse'] = calc_mainuse(building_occupancy_df, list_uses)
 
