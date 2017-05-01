@@ -77,7 +77,7 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
 
         # adjust 'Hs' and 'Es' for multiuse buildings
         prop_architecture_df['Hs'], prop_architecture_df['Es'] = \
-            correct_archetype_values(prop_architecture_df, architecture_DB, list_uses)
+            correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses)
 
         # write to shapefile
         prop_architecture_df_merged = names_shp.merge(prop_architecture_df, on="Name")
@@ -121,17 +121,13 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
 
     if prop_internal_loads_flag:
         internal_DB = get_database(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
+        fields = ['Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Ere_Wm2', 'Ed_Wm2', 'Vww_lpd', 'Vw_lpd']
 
-        # define comfort
-        prop_internal_df = categories_df.merge(internal_DB, left_on='mainuse', right_on='Code')
+        # calculate internal loads from archetypes and ocupancy shares
+        prop_internal_df = calc_internal_loads(categories_df, internal_DB, list_uses, fields)
 
         # write to shapefile
-        prop_internal_df_merged = names_shp.merge(prop_internal_df, on="Name")
-        fields = ['Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2',	'Epro_Wm2',	'Ere_Wm2', 'Ed_Wm2', 'Vww_lpd',	'Vw_lpd']
-        prop_internal_shp = names_shp.copy()
-        for field in fields:
-            prop_internal_shp[field] = prop_internal_df_merged[field].copy()
-        df2dbf(prop_internal_shp, locator.get_building_internal())
+        df2dbf(prop_internal_df, locator.get_building_internal())
 
 
 def calc_mainuse(uses_df, uses):
@@ -189,7 +185,7 @@ def calc_category(a, x, y):
     return category
 
 
-def correct_archetype_values(prop_architecture_df, architecture_DB, list_uses):
+def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
     """
         Corrects the heated and electrical areas 'Hs' and 'Es' for buildings with multiple uses.
 
@@ -214,19 +210,60 @@ def correct_archetype_values(prop_architecture_df, architecture_DB, list_uses):
     Hs_list = []
     Es_list = []
     for building in prop_architecture_df.index:
-        Hs = Es = win_wall = 0
+        Hs = Es = 0
         for use in list_uses:
             if prop_architecture_df[use][building] > 0:
                 current_use_code = calc_category(use, prop_architecture_df['built'][building],
                                                  prop_architecture_df['envelope'][building])
                 Hs = calc_average(Hs, indexed_DB['Hs'][current_use_code], prop_architecture_df[use][building])
                 Es = calc_average(Es, indexed_DB['Es'][current_use_code], prop_architecture_df[use][building])
-                win_wall = calc_average(win_wall, indexed_DB['win_wall'][current_use_code],
-                                        prop_architecture_df[use][building])
-        Hs_list.append(Hs) # prop_architecture_df['Hs'][building] = Hs
-        Es_list.append(Es) # prop_architecture_df['Es'][building] = Es
+
+        Hs_list.append(Hs)
+        Es_list.append(Es)
 
     return Hs_list, Es_list
+
+def calc_internal_loads(categories_df, internal_DB, list_uses, fields):
+    """
+
+    :param categories_df:
+    :type categories_df: DataFrame
+    :param internal_DB:
+    :type internal_DB: DataFrame
+    :param list_uses:
+    :type list_uses: list[str]
+    :param fields:
+    :type fields: list[str]
+
+    :return internal_loads:
+    """
+    indexed_DB = internal_DB.set_index('Code')
+
+    # weighted average of values
+    def calc_average(last, current, share_of_use):
+        return last + current * share_of_use
+
+    internal_loads = {}
+    building_loads = {}
+    for field in fields:
+        internal_loads[field] = []
+
+    for building in categories_df.index:
+        for field in fields:
+            building_loads[field] = 0
+        for use in list_uses:
+            if categories_df[use][building] > 0:
+                for field in fields:
+                    building_loads[field] = calc_average(building_loads[field], indexed_DB[field][use], categories_df[use][building])
+        for field in fields:
+            internal_loads[field].append(building_loads[field])
+
+    internal_loads_df = pd.DataFrame(data=None)
+    internal_loads_df['Name'] = categories_df['Name']
+    for field in fields:
+        internal_loads_df[field] = internal_loads[field]
+
+    return internal_loads_df
 
 def run_as_script(scenario_path=None, prop_thermal_flag=True, prop_architecture_flag=True, prop_hvac_flag=True,
                   prop_comfort_flag=True, prop_internal_loads_flag=True):
