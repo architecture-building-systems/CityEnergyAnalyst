@@ -104,6 +104,22 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(),
                             configkey + '_Storage_Sizing_Parameters.csv')
 
+    def get_optimization_disconnected_folder_DiscOpSummary(self):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOpSummary.csv')
+
+    def get_optimization_disconnected_folder_building_result(self, buildingname):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_disconnected_folder(), 'DiscOp_' + buildingname + '_result.csv')
+
+    def get_optimization_network_results_summary(self, key):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_network_results_folder(), 'Network_summary_result_' + key + '.csv')
+
+    def get_optimization_network_totals_folder_Total(self, indCombi):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_network_totals_folder(), "Total_" + indCombi + ".csv")
+
     def get_optimization_network_results_folder(self):
         """scenario/outputs/data/optimization/network
         Network summary results
