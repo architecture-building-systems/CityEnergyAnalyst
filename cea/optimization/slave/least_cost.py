@@ -67,7 +67,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     # Import Demand Data:
     os.chdir(locator.get_optimization_slave_results_folder())
-    CSV_NAME = MS_Var.configKey + "StorageOperationData.csv"
+    CSV_NAME = locator.get_optimization_slave_StorageOperationData(MS_Var.configKey)
+    # CSV_NAME = MS_Var.configKey + "StorageOperationData.csv"
 
     Q_DH_networkload, E_aux_ch, E_aux_dech, Q_missing, Q_storage_content_Wh, Q_to_storage, Q_from_storage, \
     Q_uncontrollable, E_PV_Wh, E_PVT_Wh, E_aux_HP_uncontrollable, Q_SCandPVT, HPServerHeatDesignArray, \
@@ -622,9 +623,10 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
             "Q_excess": Q_excess
         })
 
-        results.to_csv(
-            os.path.join(locator.get_optimization_slave_results_folder(), MS_Var.configKey + "PPActivationPattern.csv"),
-            sep=',')
+        results.to_csv(locator.get_optimization_slave_PPActivationPattern(MS_Var.configKey), sep=',')
+        # results.to_csv(
+        #     os.path.join(locator.get_optimization_slave_results_folder(), MS_Var.configKey + "PPActivationPattern.csv"),
+        #     sep=',')
 
         print "PP Activation Results saved in : ", locator.get_optimization_slave_results_folder()
         print " as : ", MS_Var.configKey + "PPActivationPattern.csv"
@@ -717,9 +719,10 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
             "cost_HP_aux_uncontrollable": [cost_HP_aux_uncontrollable],
             "cost_HP_storage_operation": [cost_HP_storage_operation]
         })
-        results.to_csv(
-            os.path.join(locator.get_optimization_slave_results_folder(), MS_Var.configKey + "_SlaveCostData.csv"),
-                         sep=',')
+        results.to_csv(locator.get_optimization_slave_SlaveCostData(MS_Var.configKey), sep=',')
+        # results.to_csv(
+        #     os.path.join(locator.get_optimization_slave_results_folder(), MS_Var.configKey + "_SlaveCostData.csv"),
+        #                  sep=',')
         print "Slave to Master Variables saved in : ", locator.get_optimization_slave_results_folder()
         print " as : ", MS_Var.configKey + "_SlaveCostData.csv"
 
@@ -756,8 +759,9 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
             "avgCostStorageOperation": [avgCostStorageOperation]
         })
 
-        results.to_csv(os.path.join(locator.get_optimization_slave_results_folder(),
-                                    MS_Var.configKey + "AveragedCostData.csv"), sep=',')
+        results.to_csv(locator.get_optimization_slave_AveragedCostData(MS_Var.configKey), sep=',')
+        # results.to_csv(os.path.join(locator.get_optimization_slave_results_folder(),
+        #                             MS_Var.configKey + "AveragedCostData.csv"), sep=',')
 
         print "Averaged Cost Results saved in : ", locator.get_optimization_slave_results_folder()
         print " as : ", MS_Var.configKey + "AveragedCostData.csv"
@@ -775,8 +779,9 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     if save_file == 1:
         results = pd.DataFrame({"E_oil_eq_MJ": [E_oil_eq_MJ], "CO2_kg_eq": [CO2_kg_eq], "cost_sum": [cost_sum]})
-        os.chdir(locator.get_optimization_slave_results_folder())
-        results.to_csv(MS_Var.configKey + "_SlaveToMasterCostEmissionsPrimE.csv", sep=',')
+        results.to_csv(locator.get_optimization_slave_SlaveTOMasterCostEmissionsPrimE(MS_Var.configKey), sep=',')
+        # os.chdir(locator.get_optimization_slave_results_folder())
+        # results.to_csv(MS_Var.configKey + "_SlaveToMasterCostEmissionsPrimE.csv", sep=',')
         print "Slave to Master Variables saved in : ", locator.get_optimization_slave_results_folder()
         print " as : ", MS_Var.configKey + "_SlaveToMasterCostEmissionsPrimE.csv"
     printcost = 0
@@ -841,9 +846,10 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
         "costBenefitNotUsedHPs": [costBenefitNotUsedHPs]
     })
 
-    results.to_csv(
-        os.path.join(locator.get_optimization_slave_results_folder(), MS_Var.configKey + "PrimaryEnergyBySource.csv"),
-        sep=',')
+    results.to_csv(locator.get_optimization_slave_PrimaryEnergyBySource(MS_Var.configKey), sep=',')
+    # results.to_csv(
+    #     os.path.join(locator.get_optimization_slave_results_folder(), MS_Var.configKey + "PrimaryEnergyBySource.csv"),
+    #     sep=',')
 
     print "Averaged Cost Results saved in : ", locator.get_optimization_slave_results_folder()
     print " as : ", os.path.join(locator.get_optimization_slave_results_folder(),
@@ -1097,8 +1103,9 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
                             "CO2_from_HPSolarandHearRecovery":[CO2_from_HPSolarandHearRecovery],
                             "CO2_from_HP_StorageOperationChDeCh":[CO2_from_HP_StorageOperationChDeCh]
                             })
-    results.to_csv(os.path.join(locator.get_optimization_slave_results_folder(),
-                                MS_Var.configKey + "_SlaveDetailedEmissionData.csv"), sep=',')
+    results.to_csv(locator.get_optimization_slave_SlaveDetailedEmissionData(MS_Var.configKey), sep=',')
+    # results.to_csv(os.path.join(locator.get_optimization_slave_results_folder(),
+    #                             MS_Var.configKey + "_SlaveDetailedEmissionData.csv"), sep=',')
 
     #CO2_from_AuxElectricity= (E_aux_AddBoilerSum + E_el_Backup + E_el_BoilerBase) * Electricity_to_CO2 # Not used as the conversion factors
     #                                                                                           of the machinery takes into account final energy
@@ -1173,9 +1180,10 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
                             "Eprim_from_HPSolarandHearRecovery":[Eprim_from_HPSolarandHearRecovery],
                             "Eprim_from_HP_StorageOperationChDeCh":[Eprim_from_HP_StorageOperationChDeCh]
                             })
-    results.to_csv(
-        os.path.join(locator.get_optimization_slave_results_folder(), MS_Var.configKey + "_SlaveDetailedEprimData.csv"),
-        sep=',')
+    results.to_csv(locator.get_optimization_slave_SlaveDetailedEprimData(MS_Var.configKey), sep=',')
+    # results.to_csv(
+    #     os.path.join(locator.get_optimization_slave_results_folder(), MS_Var.configKey + "_SlaveDetailedEprimData.csv"),
+    #     sep=',')
 
     ######### Summed up results    
     CO2_emitted     = (CO2_from_HP + CO2_from_gas + CO2_from_wood + CO2_from_elec_sold + CO2_from_SCandPVT + CO2_from_elec_usedAuxBoilersAll\

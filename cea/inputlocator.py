@@ -49,6 +49,61 @@ class InputLocator(object):
         """
         return self._ensure_folder(self.get_optimization_results_folder(), "slave")
 
+    def get_optimization_slave_StorageOperationData(self, configkey):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(),
+                            configkey + '_StorageOperationData.csv')
+
+    def get_optimization_slave_PPActivationPattern(self, configkey):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(),
+                            configkey + '_PPActivationPattern.csv')
+
+    def get_optimization_slave_SlaveCostData(self, configkey):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(),
+                            configkey + '_SlaveCostData.csv')
+
+    def get_optimization_slave_AveragedCostData(self, configkey):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(),
+                            configkey + '_AveragedCostData.csv')
+
+    def get_optimization_slave_SlaveTOMasterCostEmissionsPrimE(self, configkey):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(),
+                            configkey + '_SlaveToMasterCostEmissionsPrimE.csv')
+
+    def get_optimization_slave_PrimaryEnergyBySource(self, configkey):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(),
+                            configkey + '_PrimaryEnergyBySource.csv')
+
+    def get_optimization_slave_SlaveDetailedEmissionData(self, configkey):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(),
+                            configkey + '_SlaveDetailedEmissionData.csv')
+
+    def get_optimization_slave_SlaveDetailedEprimData(self, configkey):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(),
+                            configkey + '_SlaveDetailedEprimData.csv')
+
+    def get_optimization_slave_InvestmentCostDetailed(self, configkey):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(),
+                            configkey + '_InvestmentCostDetailed.csv')
+
+    def get_optimization_slave_StorageFlag(self, configkey):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(),
+                            configkey + '_StorageFlag.csv')
+
+    def get_optimization_slave_Storage_Sizing_Parameters(self, configkey):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_slave_results_folder(),
+                            configkey + '_Storage_Sizing_Parameters.csv')
+
     def get_optimization_network_results_folder(self):
         """scenario/outputs/data/optimization/network
         Network summary results
