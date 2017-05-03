@@ -43,7 +43,7 @@ Due to the way the simulation tasks are split up, the simulation uses the follow
   - personal scratch storage: `/cluster/scratch/username` (not backed up, deleted after 15 days, alias: `$SCRATCH`)
   
 - the weather path: the path to the *.epw file used for simulation. This can be kept in the home folder.
-    - the default weather file used by the bash scripts is `$HOME/CEAforArcGIS/cea/databases/CH/Weather/Zurich.epw`
+    - the default weather file used by the bash scripts is `$HOME/CEAforArcGIS/cea/databases/weather/Zurich.epw`
   
 - the samples folder contains the inputs (list of samples and the problem statement) and the final outputs of the
   analysis. This should be stored in your personal scratch folder (as the home folder has a limit to 100k files).
@@ -96,7 +96,7 @@ created 12 samples in C:\Users\darthoma\AppData\Local\Temp\samples
 > md %TEMP%\simulations
 
 [esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
-> python cea\analysis\sensitivity\sensitivity_demand_simulate.py -i 0 -n 12 --scenario "C:\reference-case-open\baseline" --samples-folder %TEMP%\samples --simulation-folder %TEMP%\simulation --weather .\cea\databases\CH\Weather\Zurich.epw
+> python cea\analysis\sensitivity\sensitivity_demand_simulate.py -i 0 -n 12 --scenario "C:\reference-case-open\baseline" --samples-folder %TEMP%\samples --simulation-folder %TEMP%\simulation --weather .\cea\databases\weather\Zurich.epw
 read input files
 done
 Using 8 CPU's
@@ -177,7 +177,7 @@ to fit the simulation count in the time slot of the node as the Euler cluster wi
 any process that runs longer than a fixed amount of time. Keeping it as large as possible
 reduces the overhead of waiting for a node to pick up the job, so we will need to
 experiment a bit here... The bash scripts for the euler cluster do this automatically and have a batch size of 100,
-which works well for the `reference-cas-open`.
+which works well for the `reference-case-open`.
 
 The next step is to run the analysis on the results. This is done in a single process.
 
@@ -220,6 +220,8 @@ created 12 samples in /cluster/scratch/darthoma/samples_morris_1
 Check the scripts for a list of valid variables to export. They refer to the input parameters to the python scripts,
 but are uppercase and with underscores.
 
+When choosing your variables to analyze and the number of samples to be created, keep in mind that the maximum number of files Euler can store in your scratch folder is one million. By default, the number of files created by the sensitivity analysis is equal to the number of samples times the number of buildings to be simulated plus one.
+
 #### Run the simulations
 
 ```
@@ -230,7 +232,7 @@ Job <31205729> is submitted to queue <normal.4h>.
 
 This sets up the demand calculation to run in batch mode. You can use the command `bjobs` to view the list of jobs
 still open - read up in the [Euler wiki](https://scicomp.ethz.ch/wiki/Using_the_batch_system) on how that works.
-The variable `NUM_SIMULATIONS` (default: 100) determines how many samples are simulated per job.
+The variable `NUM_SIMULATIONS` (default: 100) determines how many samples are simulated per job. When choosing the number of simulations, keep in mind that the run-time limit for a job on Euler is 4 hours.
 
 Wait for all the jobs to complete by checking `bjobs` until there are no more jobs in the queue. You can use this command to see how many simulations a job batch has done (`31300468` is the jobid, get that from `bjobs` or `bbjobs`):
 

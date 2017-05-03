@@ -29,7 +29,7 @@ def epw_reader(weather_path):
                   'snowdepth_cm', 'days_last_snow', 'Albedo', 'liq_precip_depth_mm', 'liq_precip_rate_Hour']
 
     result = pd.read_csv(weather_path, skiprows=8, header=None, names=epw_labels).drop('datasource', axis=1)
-    result['dayofyear'] = pd.date_range('1/1/2010', periods=8760, freq='H').dayofyear
+    result['dayofyear'] = pd.date_range('1/1/2016', periods=8760, freq='H').dayofyear
     result['ratio_diffhout'] = result['difhorrad_Whm2'] / result['glohorrad_Whm2']
     result['skycover'] = result['ratio_diffhout'].fillna(1)
     result['skytemp_C'] = np.vectorize(calc_skytemp)(result['drybulb_C'], result['dewpoint_C'], result['skycover'])

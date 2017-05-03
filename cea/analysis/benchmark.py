@@ -1,11 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-===========================
 Benchmark plots
-===========================
-
-M. Mosteiro Romero  script development          31.08.16
-
 """
 from __future__ import division
 
@@ -29,21 +24,19 @@ __status__ = "Production"
 
 def benchmark(locator_list, output_file):
     """
-
     Print PDF graphs comparing the selected scenarios to the 2000 Watt society benchmark for construction, operation
     and mobility. The calculation is based on the database read by and described in calc_benchmark_today and
     calc_benchmark_targets.
 
     The following file is created as a side effect by this script in the specified file path:
-    - ouput_file: .pdf
-        Plot of the embodied and operational emissions and primary energy demand
 
-    :param locator: a list of InputLocator instances set to each scenario to be computed. The first element in
-    the array is always considered as the baseline for the comparison.
-    :type locator: list
+    - output_file: .pdf Plot of the embodied and operational emissions and primary energy demand
+
+    :param locator_list: a list of InputLocator instances set to each scenario to be computed. The first element in
+                         the array is always considered as the baseline for the comparison.
+    :type locator_list: List[cea.inputlocator.InputLocator]
     :param output_file: the filename (pdf) to save the results as.
     :type output_file: str
-
     """
 
     # setup: the labels and colors for the graphs are defined
@@ -83,9 +76,9 @@ def benchmark(locator_list, output_file):
 
         # get embodied and operation PEN and GHG for each building from CSV files
         demand = pd.read_csv(locator.get_total_demand())
-        df_buildings = pd.read_csv(locator.get_lca_embodied()).merge\
-            (pd.read_csv(locator.get_lca_operation()),on = 'Name').merge\
-            (pd.read_csv(locator.get_lca_mobility()),on = 'Name')
+        df_buildings = pd.read_csv(locator.get_lca_embodied()).merge \
+            (pd.read_csv(locator.get_lca_operation()), on='Name').merge \
+            (pd.read_csv(locator.get_lca_mobility()), on='Name')
         df_buildings = df_buildings.rename(columns=new_cols)
 
         for i in range(4):
@@ -93,28 +86,30 @@ def benchmark(locator_list, output_file):
             df_buildings[graphs[3] + fields[i]] = df_buildings[col_list].sum(axis=1)
 
         # calculate total results for entire scenario
-        df_scenario = df_buildings.drop('Name',axis=1).sum(axis=0)
+        df_scenario = df_buildings.drop('Name', axis=1).sum(axis=0)
         for graph in graphs:
             for j in range(2):
-                df_scenario[graph + fields[j+2]] = df_scenario[graph + fields[j]] / df_scenario['GFA_m2'] * 1000
-                if scenario_max[graph + fields[j+2]] < df_scenario[graph + fields[j+2]]:
-                    scenario_max[graph + fields[j+2]] = df_scenario[graph + fields[j+2]]
+                df_scenario[graph + fields[j + 2]] = df_scenario[graph + fields[j]] / df_scenario['GFA_m2'] * 1000
+                if scenario_max[graph + fields[j + 2]] < df_scenario[graph + fields[j + 2]]:
+                    scenario_max[graph + fields[j + 2]] = df_scenario[graph + fields[j + 2]]
 
         # plot scenario results
         for i in range(len(graphs)):
             plt.subplot(2, 3, axes[i])
-            plt.plot(df_buildings[graphs[i]+fields[2]], df_buildings[graphs[i]+fields[3]],'o', color = color_palette[n])
-            plt.plot(df_scenario[graphs[i]+fields[2]], df_scenario[graphs[i]+fields[3]], 'o', color = color_palette[n],
-                     markersize = 15)
-        legend.extend([scenario_name, scenario_name+' total'])
+            plt.plot(df_buildings[graphs[i] + fields[2]], df_buildings[graphs[i] + fields[3]], 'o',
+                     color=color_palette[n])
+            plt.plot(df_scenario[graphs[i] + fields[2]], df_scenario[graphs[i] + fields[3]], 'o',
+                     color=color_palette[n],
+                     markersize=15)
+        legend.extend([scenario_name, scenario_name + ' total'])
 
     # complete graphs
     plt.plot()
     for i in range(len(graphs)):
         # plot today and target values
         plt.subplot(2, 3, axes[i])
-        plt.plot([0,targets[graphs[i] + fields[2]],targets[graphs[i] + fields[2]]],
-                 [targets[graphs[i] + fields[3]],targets[graphs[i] + fields[3]],0], color='k')
+        plt.plot([0, targets[graphs[i] + fields[2]], targets[graphs[i] + fields[2]]],
+                 [targets[graphs[i] + fields[3]], targets[graphs[i] + fields[3]], 0], color='k')
         plt.plot([0, values_today[graphs[i] + fields[2]], values_today[graphs[i] + fields[2]]],
                  [values_today[graphs[i] + fields[3]], values_today[graphs[i] + fields[3]], 0], '--', color='k')
         # set axis limits
@@ -122,32 +117,35 @@ def benchmark(locator_list, output_file):
             plt.axis([0, values_today[graphs[i] + fields[2]] * 1.2, 0, values_today[graphs[i] + fields[3]] * 1.2])
         else:
             plt.axis([0, scenario_max[graphs[i] + fields[2]] * 1.2, 0, values_today[graphs[i] + fields[3]] *
-                      scenario_max[graphs[i] + fields[2]] / values_today[graphs[i] + fields[2]] * 1.2 ])
+                      scenario_max[graphs[i] + fields[2]] / values_today[graphs[i] + fields[2]] * 1.2])
         # plot title
         plt.title(graph_titles[graphs[i]])
 
-    legend.extend(['Benchmark targets','Present day values'])
+    legend.extend(['Benchmark targets', 'Present day values'])
     legend_y = 1.2 + 0.05 * (len(locator_list) - 2)
-    plt.legend(legend, bbox_to_anchor=(1.3, legend_y , 0.8, 0.102), loc=0, ncol=1 , mode="expand", borderaxespad=0,numpoints=1)
+    plt.legend(legend, bbox_to_anchor=(1.3, legend_y, 0.8, 0.102), loc=0, ncol=1, mode="expand", borderaxespad=0,
+               numpoints=1)
 
     # save to disk
     plt.savefig(output_file)
     plt.clf()
     plt.close()
 
+
 def calc_benchmark_targets(locator):
-    '''
+    """
     This function calculates the embodied, operation, mobility and total targets (ghg_kgm2 and pen_MJm2) for all
     buildings in a scenario.
 
     The current values for the Swiss case and 2000 W target values for each type of occupancy were taken from the
     literature, when available:
-        -   [SIA 2040, 2011]: 'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
-        -   [BFE, 2012]: 'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
+
+    -   [SIA 2040, 2011]: 'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
+    -   [BFE, 2012]: 'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
 
     For the following occupancy types, the target values were calculated based on the approach in [SIA Effizienzpfad,
-    2011] for the present-day values assumed in calc_benchmark_today:
-            'INDUSTRY', 'HOSPITAL', 'GYM', 'SWIMMING', 'SERVERROOM' and 'COOLROOM'
+    2011] for the present-day values assumed in ``calc_benchmark_today``: 'INDUSTRY', 'HOSPITAL', 'GYM', 'SWIMMING',
+    'SERVERROOM' and 'COOLROOM'.
 
     :param locator: an InputLocator instance set to the scenario to compute
     :type locator: InputLocator
@@ -163,17 +161,16 @@ def calc_benchmark_targets(locator):
     der Ziel- und Richtwerte mit dem Top-Down Approach."
     ..[SIA 2024, 2015]: Swiss Society of Engineers and Architects (SIA). 2015. "Merkblatt 2024: Raumnutzungsdaten fur
     die Energie- und Gebaeudetechnik."
-
-    '''
+    """
 
     # local files
     demand = pd.read_csv(locator.get_total_demand())
     prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
     data_benchmark = locator.get_data_benchmark()
-    occupancy = prop_occupancy.merge(demand,on='Name')
+    occupancy = prop_occupancy.merge(demand, on='Name')
 
     categories = ['EMBODIED', 'OPERATION', 'MOBILITY', 'TOTAL']
-    suffix = ['_GJ', '_ton','_MJm2', '_kgm2']
+    suffix = ['_GJ', '_ton', '_MJm2', '_kgm2']
     targets = {}
     area_study = 0
 
@@ -187,7 +184,7 @@ def calc_benchmark_targets(locator):
     for category in categories:
         # the targets for the area are set for the existing building stock, i.e., retrofit targets are used
         # (instead of new building targets)
-        factors = pd.read_excel(data_benchmark, sheetname = category)
+        factors = pd.read_excel(data_benchmark, sheetname=category)
         vt = factors['code']
         pt = factors['NRE_target_retrofit']
         gt = factors['CO2_target_retrofit']
@@ -195,12 +192,13 @@ def calc_benchmark_targets(locator):
         for j in range(len(suffix)):
             targets[category + suffix[j]] = 0
         for i in range(len(vt)):
-            targets[category+suffix[0]] += (occupancy['GFA_m2'] * occupancy[vt[i]] * pt[i]).sum() / 1000
-            targets[category+suffix[1]] += (occupancy['GFA_m2'] * occupancy[vt[i]] * gt[i]).sum() / 1000
-        targets[category + suffix[2]] += targets[category+suffix[0]] / area_study * 1000
+            targets[category + suffix[0]] += (occupancy['GFA_m2'] * occupancy[vt[i]] * pt[i]).sum() / 1000
+            targets[category + suffix[1]] += (occupancy['GFA_m2'] * occupancy[vt[i]] * gt[i]).sum() / 1000
+        targets[category + suffix[2]] += targets[category + suffix[0]] / area_study * 1000
         targets[category + suffix[3]] += targets[category + suffix[1]] / area_study * 1000
 
     return targets
+
 
 def calc_benchmark_today(locator):
     '''
@@ -208,8 +206,9 @@ def calc_benchmark_today(locator):
     for the area for the current national trend.
 
     The current values for the Swiss case for each type of occupancy were taken from the literature, when available:
-        -   [SIA 2040, 2011]: 'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
-        -   [BFE, 2012]: 'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
+
+    -   [SIA 2040, 2011]: 'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
+    -   [BFE, 2012]: 'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
 
     For the following occupancy types, the values for construction and operation were calculated based on the approach
     in [SIA Effizienzpfad, 2011]: 'INDUSTRY' and 'HOSPITAL'.
@@ -220,15 +219,17 @@ def calc_benchmark_today(locator):
 
     Finally, due to a lack of data, multiple values had to be assumed. The embodied energy for the following uses was
     assumed as follows:
-        -   'GYM', 'SWIMMING': assumed to be equal to the value for use type 'RETAIL'
-        -   'SERVERROOM': assumed to be equal to the value for the use type 'OFFICE'
-        -   'COOLROOM': assumed to be equal to the value for the use type 'HOSPITAL'
+
+    -   'GYM', 'SWIMMING': assumed to be equal to the value for use type 'RETAIL'
+    -   'SERVERROOM': assumed to be equal to the value for the use type 'OFFICE'
+    -   'COOLROOM': assumed to be equal to the value for the use type 'HOSPITAL'
 
     Due to lacking mobility data, the following values were assumed:
-        -   'INDUSTRY': assumed to be equal to the value for the use type 'OFFICE'
-        -   'HOSPITAL': assumed to be equal to the value for the use type 'HOTEL'
-        -   'GYM', 'SWIMMING': assumed to be equal to the value for use type 'RETAIL'
-        -   'SERVERROOM', 'COOLROOM': assumed negligible
+
+    -   'INDUSTRY': assumed to be equal to the value for the use type 'OFFICE'
+    -   'HOSPITAL': assumed to be equal to the value for the use type 'HOTEL'
+    -   'GYM', 'SWIMMING': assumed to be equal to the value for use type 'RETAIL'
+    -   'SERVERROOM', 'COOLROOM': assumed negligible
 
 
     :param locator: an InputLocator instance set to the scenario to compute
@@ -281,6 +282,7 @@ def calc_benchmark_today(locator):
 
     return values_today
 
+
 def test_benchmark():
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case-zug\baseline')
     locator_list = [locator, locator, locator, locator]
@@ -288,10 +290,11 @@ def test_benchmark():
     benchmark(locator_list=locator_list, output_file=output_file)
     print 'test_benchmark() succeeded'
 
+
 def test_benchmark_targets():
     locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case-zug\baseline')
     calc_benchmark_targets(locator)
 
+
 if __name__ == '__main__':
     test_benchmark()
-

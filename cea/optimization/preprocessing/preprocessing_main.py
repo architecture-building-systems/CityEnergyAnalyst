@@ -7,14 +7,14 @@ pre-processing algorithm
 
 from __future__ import division
 
-import pandas as pd
 import os
-import cea.optimization.preprocessing.extra_loads.processheat as process_heat
-from cea.optimization.conversion_storage.master import summarize_network
-from cea.optimization.preprocessing.decentralized_buildings import decentralized_buildings
-from cea.optimization.preprocessing.extra_loads import electricity
+
+import pandas as pd
+
+import cea.optimization.preprocessing.processheat as process_heat
+from cea.optimization.master import summarize_network
+from cea.optimization.preprocessing import electricity
 from cea.resources import geothermal
-from cea.technologies import substation
 from cea.utilities import  epwreader
 
 __author__ = "Jimeno A. Fonseca"
@@ -113,7 +113,6 @@ def run_as_script(scenario_path=None):
     run the whole preprocessing routine
     """
     import cea.globalvar
-    from geopandas import GeoDataFrame as gpdf
 
     gv = cea.globalvar.GlobalVariables()
 

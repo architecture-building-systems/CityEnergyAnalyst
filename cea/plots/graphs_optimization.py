@@ -7,14 +7,15 @@ plot results of optimization
 
 from __future__ import division
 
+import os
+
 import matplotlib
 import matplotlib.cm as cmx
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import os
 
-import cea.optimization.conversion_storage.master.normalization as norm
+import cea.optimization.master.normalization as norm
 import cea.optimization.supportFn as sFn
 
 __author__ = "Jimeno A. Fonseca"
@@ -122,7 +123,7 @@ def plot_pareto_scenarios(locator, generations, relative):
     # read the checkpoint
     counter = 0
     #for scenario in scenarios:
-    pop, eps, testedPop = sFn.readCheckPoint(locator, generations, 0)
+    pop, eps, testedPop, ntwList, fitness = sFn.readCheckPoint(locator, generations, 0)
 
     # get floor area of buildings and estimate relative parameters
     Area_buildings = pd.read_csv(locator.get_total_demand(),usecols=['Af_m2']).values.sum()
@@ -214,7 +215,7 @@ def plot_buildings_connected_scenarios(scenarios, generations, headers):
         BuildCon2 = []
         for i in range(generations[counter]):
             i += 1
-            pop, eps, testedPop = sFn.readCheckPoint(pathX, i, 0)
+            pop, eps, testedPop, ntwList, fitness = sFn.readCheckPoint(pathX, i, 0)
             buildCon = []
             buildCon2 = []
             for ind in pop:
@@ -317,7 +318,7 @@ def buildingConnection(generation, locator):
 
     for i in range(generation):
         i += 1
-        pop, eps, testedPop = sFn.readCheckPoint(locator, i, 0)
+        pop, eps, testedPop, ntwList, fitness = sFn.readCheckPoint(locator, i, 0)
         buildCon = []
 
         for ind in pop:
@@ -359,7 +360,7 @@ plot electricity imports and exports
 def Elec_ImportExport(individual, locator):
 
     # Extract Electricity needs
-    buildList = sFn.extractList(locator.pathRaw + "/Total.csv")
+    buildList = sFn.extract_building_names_from_csv(locator.pathRaw + "/Total.csv")
 
     allElec = np.zeros((8760,1))
 
@@ -399,7 +400,6 @@ test
 """
 
 def test_graphs_optimization():
-    import cea.inputlocator
     import cea.globalvar
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
