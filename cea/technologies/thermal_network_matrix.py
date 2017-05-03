@@ -1307,7 +1307,8 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
 
 def write_substations_to_nodes_df(all_nodes_df, df_value, flag):
     """
-    The function writes values from each substations to the corresponding nodes in the edge node matrix.
+    The function writes values (temperatures or mass flows) from each substations to the corresponding nodes in the
+    edge node matrix.
 
     :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
                         (and if so, which building that node corresponds to), or neither.                   (2 x n)
