@@ -18,47 +18,29 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_mww(schedule, Vww_lpd, Occ_m2p, Af, Pwater):
+def calc_mww(schedule, water_lpd, Pwater):
     """
-    Algorithm to calculate the hourly mass flow rate of domestic hot water
+    Algorithm to calculate the hourly mass flow rate of water
 
-    :param schedule: hourly DHW demand profile [1/h]
-    :param Vww_lpd: DHW demand per person per day in [L/person/day]
-    :param Occ_m2p: Occupant density in [m2/person]
-    :param Af: Total floor area per building [m2]
+    :param schedule: hourly DHW demand profile [person/d.h]
+    :param water_lpd: water emand per person per day in [L/person/day]
     :param Pwater: water density [kg/m3]
     """
 
-    if Occ_m2p > 0:
+    if schedule > 0:
 
-        vww = schedule* Vww_lpd * (Occ_m2p ** -1) * Af / 1000 # m3/h
-        mww = vww * Pwater / 3600  # in kg/s
-
-    else:
-
-        vww = 0
-        mww = 0
-
-    return mww, vww
-
-
-def calc_mw(schedule, Vw_lpd, Occ_m2p, Af, Pwater):
-    if Occ_m2p > 0:
-
-        vw = schedule * Vw_lpd * (Occ_m2p ** -1) * Af / 1000 # m3/h
-        mw = vw * Pwater / 3600  # in kg/s
+        volume =  schedule * water_lpd/ 1000 # m3/h
+        massflow = volume * Pwater/3600  # in kg/s
 
     else:
+        volume = 0
+        massflow = 0
 
-        vw = 0
-        mw = 0
-
-    return mw, vw
-
+    return massflow, volume
 
 # final hot water demand calculation
 
-def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, Vww_lpd, Vw_lpd, Occ_m2p,
+def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, Vww_lpd, Vw_lpd, occupancy_densities,
               list_uses, schedules, building_uses):
     # Refactored from CalcThermalLoads
     """
@@ -79,11 +61,12 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
 
     """
     # calc schedule of use:
-    schedule = calc_Qww_schedule(list_uses, schedules, building_uses)
-
+    schedule = calc_Qww_schedule(list_uses, schedules, occupancy_densities, building_uses, Af)
     # end-use demand
-    mww, Vww =  np.vectorize(calc_mww)(schedule, Vww_lpd, Occ_m2p, Af, gv.Pwater)
-    mw, Vw = np.vectorize(calc_mww)(schedule, Vw_lpd, Occ_m2p, Af, gv.Pwater)
+    mww = schedule * Vww_lpd/ 1000
+    Vww = mww * gv.Pwater /3600 # kg/s
+    mw = schedule * Vww_lpd / 1000
+    Vw = mw * gv.Pwater /3600 # kg/s
     Qww = np.vectorize(calc_Qww)(mww, Tww_sup_0, Tww_re, gv.Cpw)
     Qww_0 = Qww.max()
     # distribution and circulation losses
@@ -103,25 +86,43 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
 
 # end-use hot water demand calculation
 
-def calc_Qww_schedule(list_uses, schedules, building_uses):
+def calc_Qww_schedule(list_uses, schedules, occ_density, building_uses, Af):
     """
     Algoithm to calculate the schedule of Qww use
 
-    :param list_uses:
-    :param schedules:
-    :param building_uses:
-    """
+    :param list_uses: The list of uses used in the project
+    :type list_uses: list
 
+    :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
+    :type schedules: list[ndarray[float]]
+
+    :param occ_density: the list of occupancy densities per every schedule
+    :type occ_density:: list[float]
+
+    :param building_uses: for each use in `list_uses`, the percentage of that use for this building.
+        Sum of values is 1.0
+    :type building_uses: dict[str, float]
+
+    :param Af: total conditioned floor area
+
+    :type Af: float
+
+    :returns:
+    :rtype: ndarray
+    """
+    # weighted average of schedules
     def calc_average(last, current, share_of_use):
         return last + current * share_of_use
 
-    dhw = np.zeros(8760)
+    occ = np.zeros(8760)
     num_profiles = len(list_uses)
     for num in range(num_profiles):
-        current_share_of_use = building_uses[list_uses[num]]
-        dhw = np.vectorize(calc_average)(dhw, schedules[num][2], current_share_of_use)
-
-    return dhw
+        if occ_density[num] != 0:
+            current_share_of_use = building_uses[list_uses[num]]
+            share_time_occupancy_density = (1/occ_density[num])*current_share_of_use
+            occ = np.vectorize(calc_average)(occ, schedules[num][2], share_time_occupancy_density)
+    result = occ *Af
+    return result
 
 
 def calc_Qww(mww, Tww_sup_0, Tww_re, Cpw):
@@ -189,11 +190,14 @@ def calc_Qww_st_ls(T_ext, Ta, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr, gv):
     Qd = np.zeros(8760)
     Vww_0 = Vww.max()
     Tww_st_0 = gv.Tww_setpoint
-    for k in range(8760):
-        Qww_st_ls[k], Qd[k], Qwwf[k] = sto_m.calc_Qww_ls_st(Ta[k], T_ext[k], Tww_st_0, Vww_0, Qww[k], Qww_dis_ls_r[k],
-                                                            Qww_dis_ls_nr[k], gv)
-        Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_st_ls[k], Qd[k], Qwwf[k], Vww_0, gv)
-        Tww_st_0 = Tww_st[k]
 
+    if Vww_0 > 0:
+        for k in range(8760):
+            Qww_st_ls[k], Qd[k], Qwwf[k] = sto_m.calc_Qww_ls_st(Ta[k], T_ext[k], Tww_st_0, Vww_0, Qww[k], Qww_dis_ls_r[k],
+                                                                Qww_dis_ls_nr[k], gv)
+            Tww_st[k] = sto_m.solve_ode_storage(Tww_st_0, Qww_st_ls[k], Qd[k], Qwwf[k], Vww_0, gv)
+            Tww_st_0 = Tww_st[k]
+    else:
+        for k in range(8760):
+            Tww_st[k] = np.nan
     return Qww_st_ls, Tww_st, Qwwf
-

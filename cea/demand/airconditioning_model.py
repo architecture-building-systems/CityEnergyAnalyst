@@ -136,7 +136,8 @@ def calc_hvac_cooling(tsd, hoy, gv):
                                               'q_cs_lat_hvac': q_cs_lat_hvac,
                                               'ma_sup_cs': ma_sup_cs,
                                               'ta_sup_cs': ta_sup_cs,
-                                              'ta_re_cs': ta_re_cs}
+                                              'ta_re_cs': ta_re_cs,
+                                              'm_ve_hvac_recirculation' : m_ve_hvac_recirculation}
 
     if m_ve_mech + m_ve_hvac_recirculation < 0:
         raise ValueError
@@ -223,7 +224,7 @@ def calc_hvac_heating(tsd, hoy, gv):
     elif m_ve_mech == 0:  # mechanical ventilation system is not active, only recirculation air gets conditioned
 
         # supply air condition
-        t3 = gv.temp_sup_cool_hvac
+        t3 = gv.temp_sup_heat_hvac
 
         # State of Supply
         ts = t3  # minus expected delta T rise in the ducts TODO: check and document value of temp decrease
@@ -259,7 +260,8 @@ def calc_hvac_heating(tsd, hoy, gv):
                                               'ma_sup_hs': ma_sup_hs,
                                               'ta_sup_hs': ta_sup_hs,
                                               'ta_re_hs': ta_re_hs,
-                                              'e_hs_lat_aux': e_hs_lat_aux}
+                                              'e_hs_lat_aux': e_hs_lat_aux,
+                                              'm_ve_hvac_recirculation': m_ve_hvac_recirculation}
 
     if m_ve_mech + m_ve_hvac_recirculation < 0:
         raise ValueError

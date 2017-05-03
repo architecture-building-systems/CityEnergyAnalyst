@@ -6,8 +6,8 @@ from __future__ import division
 
 import pandas as pd
 
-import cea.optimization.conversion_storage.master.master_main as master
 import cea.optimization.distribution.network_opt_main as network_opt
+import cea.optimization.master.master_main as master
 from cea.optimization.preprocessing.preprocessing_main import preproccessing
 
 __author__ = "Jimeno A. Fonseca"
@@ -49,7 +49,7 @@ def moo_optimization(locator, weather_file, gv):
     extra_costs, extra_CO2, extra_primary_energy, solarFeat = preproccessing(locator, total_demand, building_names,
                                                                    weather_file, gv)
 
-    # optimize the distribution and linearalize the results (at the moment, there is only a linearilization of values in Zug)
+    # optimize the distribution and linearize the results(at the moment, there is only a linearization of values in Zug)
     print "NETWORK OPTIMIZATION"
     network_features = network_opt.network_opt_main()
 

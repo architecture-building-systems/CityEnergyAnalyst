@@ -2,9 +2,8 @@
 """
 Global variables - this object contains context information and is expected to be refactored away in future.
 """
+from __future__ import absolute_import
 import cea.demand.demand_writers
-
-# from cea.demand import thermal_loads
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -19,7 +18,7 @@ __status__ = "Production"
 class GlobalVariables(object):
     def __init__(self):
 
-        self.scenario_reference = r'c:\reference-case-zug\baseline'
+        self.scenario_reference = r'c:\reference-case-open\baseline'
         self.print_partial = 'hourly'  # hourly or monthly for the demand script
         self.print_totals = True  # print yearly values
         self.print_yearly_peak = True  # print peak values
@@ -41,7 +40,7 @@ class GlobalVariables(object):
         self.Cpw = 4.184  # heat capacity of water in kJ/kgK
         self.Flowtap = 0.036  # in m3/min == 12 l/min during 3 min every tap opening
         # constant values for HVAC
-        self.nrec_N = 0.75  # possilbe recovery
+        self.nrec_N = 0.75  # possible recovery
         self.NACH_inf_non_occ = 0.2  # num air exchanges due to infiltration when no occupied
         self.NACH_inf_occ = 0.5  # num air exchanges due to infiltration when occupied
         self.C1 = 0.054  # assumed a flat plate heat exchanger (-)
@@ -59,10 +58,10 @@ class GlobalVariables(object):
         self.effi = 0.6  # efficiency of pumps
         self.deltaP_l = 0.1  # delta of pressure
         self.fsr = 0.3  # factor for pressure calculation
-        # grey emssions
+        # grey emissions
         self.fwratio = 1.5  # conversion component's area to floor area
         self.sl_materials = 60  # service life of standard building components and materials
-        self.sl_services = 40  # service life of technical instalations
+        self.sl_services = 40  # service life of technical installations
         # constant variables for air conditioning fan
         self.Pfan = 0.55  # specific fan consumption in W/m3/h
 
@@ -70,22 +69,22 @@ class GlobalVariables(object):
         # optimization
         # ==============================================================================================================
 
-        self.sensibilityStep = 2  # the more, the longer the sensitibility analysis
+        self.sensibilityStep = 2  # the more, the longer the sensibility analysis
 
         ########################### User inputs
 
         # Commands for the evolutionary algorithm
 
 
-        self.initialInd = 4  # number of initial individuals
-        self.NGEN = 10  # number of total generations
+        self.initialInd = 2  # number of initial individuals
+        self.NGEN = 5  # number of total generations
         self.fCheckPoint = 1  # frequency for the saving of checkpoints
-        self.maxTime = 7 * 24 * 3600  # maximum computional time [seconds]
+        self.maxTime = 7 * 24 * 3600  # maximum computational time [seconds]
 
         # Set Flags for different system setup preferences
 
         # self.NetworkLengthZernez = 864.0 #meters network length of maximum network, \
-        # then scaled by number of costumers (Zernez Specific), from J.Fonseca's PipsesData
+        # then scaled by number of costumers (Zernez Specific), from J.Fonseca's Pipes Data
 
         self.ZernezFlag = 0
         self.FlagBioGasFromAgriculture = 0  # 1 = Biogas from Agriculture, 0 = Biogas normal
@@ -127,6 +126,7 @@ class GlobalVariables(object):
         self.K_DH = 0.25  # linear heat loss coefficient district heting network twin pipes groundfoss
         self.roughness = 0.02/1000 # roughness coefficient for heating network pipe in m (for a steel pipe, from Li &
                            # Svendsen (2012) "Energy and exergy analysis of low temperature district heating network")
+
 
         # pipes location properties
         self.Z0 = 1.5  # location of pipe underground in m
@@ -251,11 +251,7 @@ class GlobalVariables(object):
         self.MWST = 0.08  # 8% MWST assumed, used in A+W data
 
         # Resource prices
-        self.ELEC_PRICE = 0.104 * self.EURO_TO_CHF / 1000.0  # = 15 Rp/kWh   or  0.104 * EURO_TO_CHF / 1000.0 # [CHF / wh]
-        # self.ELEC_PRICE_KEV = 1.5 * ELEC_PRICE # MAKE RESEARCH ABOUT A PROPER PRICE AND DOCUMENT THAT!
-        # self.ELEC_PRICE_GREEN = 1.5 * ELEC_PRICE
-        self.NG_PRICE = 0.057 * self.EURO_TO_CHF / 1000.0  # [CHF / wh]
-        self.BG_PRICE = 0.078 * self.EURO_TO_CHF / 1000.0  # [CHF / wh]
+
 
         self.GasConnectionCost = 15.5 / 1000.0  # CHF / W, from  Energie360 15.5 CHF / kW
 
@@ -278,12 +274,12 @@ class GlobalVariables(object):
         self.NetworkDepth = 1 # m
 
         # Solar area to Wpeak
-        self.eta_area_to_peak = 0.16  # Peak Capacity - Efficisency, how much kW per area there are, valid for PV and PVT (after Jimeno's J+)
+        self.eta_area_to_peak = 0.16  # Peak Capacity - Efficiency, how much kW per area there are, valid for PV and PVT (after Jimeno's J+)
 
         # Pressure losses
         # self.DeltaP_DCN = 1.0 #Pa - change
         # self.DeltaP_DHN = 84.8E3 / 10.0 #Pa  - change
-        self.cPump = self.ELEC_PRICE * 24. * 365.  # coupled to electricity cost
+
         self.PumpEnergyShare = 0.01  # assume 1% of energy required for pumping, after 4DH
         self.PumpReliabilityMargin = 0.05  # assume 5% reliability margin
 
@@ -293,13 +289,13 @@ class GlobalVariables(object):
         # Heat Exchangers
         self.U_cool = 2500  # W/m2K
         self.U_heat = 2500  # W/m2K
-        self.dT_heat = 5  # K - pinchdelta at design conditions
-        self.dT_cool = 1  # K - pinchdelta at design conditions
+        self.dT_heat = 5  # K - pinch delta at design conditions
+        self.dT_cool = 1  # K - pinch delta at design conditions
 
         # Heat pump
         self.HP_maxSize = 20.0E6  # max thermal design size [Wth]
         self.HP_minSize = 1.0E6  # min thermal design size [Wth]
-        self.HP_n = 20.0  # lifetime [years]
+
 
         self.HP_etaex = 0.6  # exergetic efficiency of WSHP [L. Girardin et al., 2010]_
         self.HP_deltaT_cond = 2.0  # pinch for condenser [K]
@@ -307,7 +303,7 @@ class GlobalVariables(object):
         self.HP_maxT_cond = 140 + 273.0  # max temperature at condenser [K]
 
         self.HP_Auxratio = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
-        self.HP_i = 0.05  # interest rate
+
 
         # Sewage resource
 
@@ -331,7 +327,7 @@ class GlobalVariables(object):
         self.GHP_WmaxSize = 1E3  # max electrical design size [Wel] FOR ONE PROBE
 
         self.GHP_nBH = 50.0  # [years] for a borehole
-        self.GHP_nHP = 20.0  # for the geothermal heat pump
+
 
         self.GHP_etaex = 0.677  # exergetic efficiency [O. Ozgener et al., 2005]_
         self.GHP_Auxratio = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
@@ -340,7 +336,7 @@ class GlobalVariables(object):
         self.GHP_A = 25  # [m^2] area occupancy of one borehole Gultekin et al. 5 m separation at a penalty of 10% less efficeincy
 
         # Combined cycle
-        self.CC_n = 25.0  # lifetime
+
         self.CC_i = 0.06
 
         self.GT_maxSize = 50.00000001E6  # max electrical design size in W = 50MW (NOT THERMAL capacity)
@@ -361,9 +357,8 @@ class GlobalVariables(object):
         # Boiler
         # Operating figures, quality parameters and investment costs for district heating systems (AFO)
 
-        self.Boiler_n = 20.0  # lifetime, after A+W, confirmed by average of 15-25y range after http://www.elco.ch/pdf/Solutions/ \
         # ELCO-Loesungsbeispiel-Huber.pdf
-        self.Boiler_i = 0.05  # interest rate
+
         self.Boiler_C_fuel = 20.0  # € / MWh_therm_bought(for LHV), AFO
         self.Boiler_C_labour = 4.0  # [€ /MWh_therm_sold]
         self.Boiler_P_aux = 0.026  # 0.026 Wh/Wh_th_sold = 26 kWh_el / MWh_th_sold, bioenergy 2020
@@ -382,15 +377,13 @@ class GlobalVariables(object):
         self.Furn_min_electric = 0.3  # Minimum load for electricity generation in furnace plant
 
         # Substation Heat Exchangers
-        self.Subst_n = 25.0  # Lifetime after A+W
-        self.Subst_i = 0.05
+
 
         # Fuel Cells
         self.FC_OP_HOURS_PER_YEAR = 4000.0  # hours / year
         self.FC_LIFETIME = 40000.0  # hours of operation
-        self.FC_n = 10  # years of operation
-        self.FC_i = 0.05  # interest rate
-        self.FC_stack_cost = 55000.0  # CHF /kW_th for a Hexis 1000 N 1kWe/1.8kWth
+
+        self.FC_stack_cost = 12000.0  # CHF /kW_th for a Hexis 1000 N 1kWe/1.8kWth
         self.FC_overhead = 0.1  # 10 % higher cost due to final installation
 
         # Vapor compressor chiller
@@ -402,7 +395,7 @@ class GlobalVariables(object):
         # Cooling tower
         self.CT_maxSize = 10.0E6  # cooling power desin size [W]
         self.CT_n = 20.0
-        self.CT_a = 0.15  # annuity factor
+
 
         # Storage
         self.T_storage_min = 10 + 273.0  # K  - Minimum Storage Temperature
@@ -425,7 +418,7 @@ class GlobalVariables(object):
         self.SIGMAP = 0.2
         self.epsMargin = 0.001
 
-        # Data for clustering
+        # Data for clustering_main
         self.nPeriodMin = 2
         self.nPeriodMax = 15
         self.gam = 0.2
@@ -512,6 +505,26 @@ class GlobalVariables(object):
         # ==============================================================================================================
         self.initial_temp_air_prev = 21
         self.initial_temp_m_prev = 16
+
+        self.HP_n = 20  # lifetime [years] default 20
+        self.GHP_nHP = 20  # for the geothermal heat pump default 20
+        self.Boiler_n = 20  # lifetime, after A+W, default 20
+        self.CC_n = 25  # lifetime default 25
+        self.FC_n = 10  # years of operation default 10
+        self.PVT_n = 20  # years of operation default 20
+        self.SC_n = self.PVT_n  # years of operation default 20
+        self.CT_a = 0.15  # annuity factor default 0.15
+        self.Subst_n = 20  # Lifetime after A+W default 20
+        self.ELEC_PRICE = 0.2 * self.EURO_TO_CHF / 1000.0  # default 0.2
+        # self.ELEC_PRICE_KEV = 1.5 * ELEC_PRICE # MAKE RESEARCH ABOUT A PROPER PRICE AND DOCUMENT THAT!
+        # self.ELEC_PRICE_GREEN = 1.5 * ELEC_PRICE
+        self.NG_PRICE = 0.068 * self.EURO_TO_CHF / 1000.0  # [CHF / wh] # default 0.068
+        self.BG_PRICE = 0.076 * self.EURO_TO_CHF / 1000.0  # [CHF / wh] # default 0.076
+        self.cPump = self.ELEC_PRICE * 24. * 365.  # coupled to electricity cost
+        self.Subst_i = 0.05 # default 0.05
+        self.FC_i = 0.05 # interest rate default 0.05
+        self.HP_i = 0.05  # interest rate default 0.05
+        self.Boiler_i = 0.05  # interest rate default 0.05
 
         # ==============================================================================================================
         # TABS

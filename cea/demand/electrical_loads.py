@@ -4,6 +4,7 @@ Electrical loads
 """
 from __future__ import division
 import numpy as np
+from cea.utilities import physics
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -161,8 +162,8 @@ def calc_Eprof(schedule, Epro_Wm2, Aef):
 
 
 def calc_Eauxf(Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_re, Tcs_sup,
-               Ths_re, Ths_sup, Vw, Year, fforma, gv, nf_ag, nfp, qv_req, sys_e_cooling,
-               sys_e_heating, Ehs_lat_aux):
+               Ths_re, Ths_sup, Vw, Year, fforma, gv, nf_ag, nfp, sys_e_cooling,
+               sys_e_heating, Ehs_lat_aux, tsd):
     Eaux_cs = np.zeros(8760)
     Eaux_ve = np.zeros(8760)
     Eaux_fw = np.zeros(8760)
@@ -180,8 +181,8 @@ def calc_Eauxf(Ll, Lw, Mww, Qcsf, Qcsf_0, Qhsf, Qhsf_0, Qww, Qwwf, Qwwf_0, Tcs_r
         Eaux_cs = np.vectorize(calc_Eauxf_cs_dis)(Qcsf, Qcsf_0, Imax, deltaP_des, b, Tcs_sup, Tcs_re, gv.Cpw)
     if nf_ag > 5:  # up to 5th floor no pumping needs
         Eaux_fw = calc_Eauxf_fw(Vw, nf_ag, gv)
-    if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
-        Eaux_ve = np.vectorize(calc_Eauxf_ve)(Qhsf, Qcsf, gv.Pfan, qv_req, sys_e_heating, sys_e_cooling)
+
+    Eaux_ve = np.vectorize(calc_Eauxf_ve)(tsd, gv)
 
     Eauxf = Eaux_hs + Eaux_cs + Eaux_ve + Eaux_ww + Eaux_fw + Ehs_lat_aux
 
@@ -234,25 +235,31 @@ def calc_Eauxf_cs_dis(Qcsf, Qcsf0, Imax, deltaP_des, b, ts, tr, cpw):
     return Eaux_cs  # in #W
 
 
-def calc_Eauxf_ve(Qhsf, Qcsf, P_ve, qve, SystemH, SystemC):
+def calc_Eauxf_ve(tsd, gv):
+    """
+    calculation of auxiliary electricity consumption of mechanical ventilation and AC fans
+    
+    :param tsd: Time series data of building
+    :type tsd: dict
+    :param gv: global variables
+    :type gv
+    :return: electrical energy for fans of mechanical ventilation in [Wh/h]
+    :rtype: float
+    """
+
     # TODO: DOCUMENTATION
     # FIXME: Why only energy demand for AC? Also other mechanical ventilation should have auxiliary energy demand
     # FIXME: What are the units
 
     # m_ve_mech is
 
-    if SystemH == 'T3':
-        if Qhsf > 0:
-            Eve_aux = P_ve * qve * 3600
-        else:
-            Eve_aux = 0.0
-    elif SystemC == 'T3':
-        if Qcsf < 0:
-            Eve_aux = P_ve * qve * 3600
-        else:
-            Eve_aux = 0.0
-    else:
-        Eve_aux = 0.0
+    fan_power = gv.Pfan  # specific fan consumption in W/m3/h, see globalvar.py
+
+    # mechanical ventilation system air flow [m3/s] = outdoor air + recirculation air
+    q_ve_mech = tsd['m_ve_mech']/physics.calc_rho_air(tsd['theta_ve_mech']) \
+        + tsd['m_ve_recirculation']/physics.calc_rho_air(tsd['theta_a'])
+
+    Eve_aux = fan_power * q_ve_mech * 3600
 
     return Eve_aux
 
