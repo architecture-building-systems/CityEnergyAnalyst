@@ -15,7 +15,7 @@ The folders present inside this are:
 4. slave
 5. substations
 
-#### 1. Disconnected
+### 1. Disconnected
 
 **Purpose:** ?????
 
@@ -27,7 +27,7 @@ The folders present inside this are:
 
 **Information:** ????
 
-#### 2. Master
+### 2. Master
 
 **Purpose:** This folder saves the files corresponding to various generations in an optimization run.
 
@@ -41,7 +41,7 @@ times, the files are constantly replaced with new ones. **Thus if using multiple
 
 **Information:** The file has `population_fitness`, `epsIndicator`, `generation`, `testedPop`, `population`
 
-#### 3. Network
+### 3. Network
 
 **Purpose:** ?????
 
@@ -53,7 +53,7 @@ times, the files are constantly replaced with new ones. **Thus if using multiple
 
 **Information:** ????
 
-#### 4. Slave
+### 4. Slave
 
 **Purpose:** ????
 
@@ -85,25 +85,25 @@ are run multiple times
 
 **Origin:**
 
-`configuration_AveragedCostData` --> `CEAforArcGIS\cea\optimization\slave\least_cost.py`
+`configuration_AveragedCostData` originates from `CEAforArcGIS\cea\optimization\slave\least_cost.py`
 
-`configuraiton_InvestmentCostDetailed` --> `CEAforArcGIS\cea\optimization\master\cost_model.py`
+`configuraiton_InvestmentCostDetailed` originates from `CEAforArcGIS\cea\optimization\master\cost_model.py`
 
-`configuration_PrimaryEnergyBySource` --> `CEAforArcGIS\cea\optimization\slave\least_cost.py`
+`configuration_PrimaryEnergyBySource` originates from `CEAforArcGIS\cea\optimization\slave\least_cost.py`
 
-`configuration_SlaveCostData` --> `CEAforArcGIS\cea\optimization\slave\least_cost.py`
+`configuration_SlaveCostData` originates from `CEAforArcGIS\cea\optimization\slave\least_cost.py`
 
-`configuration_SlaveToMasterCostEmissionsPrimE` --> `CEAforArcGIS\cea\optimization\slave\least_cost.py`
+`configuration_SlaveToMasterCostEmissionsPrimE` originates from `CEAforArcGIS\cea\optimization\slave\least_cost.py`
 
-`configuration_PPActivationPattern` --> `CEAforArcGIS\cea\optimization\slave\least_cost.py`
+`configuration_PPActivationPattern` originates from `CEAforArcGIS\cea\optimization\slave\least_cost.py`
 
-`configuration_SlaveDetailedEmissionData` --> `CEAforArcGIS\cea\optimization\slave\least_cost.py`
+`configuration_SlaveDetailedEmissionData` originates from `CEAforArcGIS\cea\optimization\slave\least_cost.py`
 
-`configuration_SlaveDetailedEprimData` --> `CEAforArcGIS\cea\optimization\slave\least_cost.py`
+`configuration_SlaveDetailedEprimData` originates from `CEAforArcGIS\cea\optimization\slave\least_cost.py`
 
-`configuration_Storage_Sizing_Parameters` --> `CEAforArcGIS\cea\optimization\slave\seasonal_storage\storage_main.py`
+`configuration_Storage_Sizing_Parameters` originates from `CEAforArcGIS\cea\optimization\slave\seasonal_storage\storage_main.py`
 
-`configuration_StorageOperationData` --> `CEAforArcGIS\cea\optimization\slave\seasonal_storage\design_operation.py`
+`configuration_StorageOperationData` originates from `CEAforArcGIS\cea\optimization\slave\seasonal_storage\design_operation.py`
 
 **Information:**
 
@@ -189,14 +189,47 @@ are run multiple times
 `Storage_Size`,	`mdot_DH_fin`
 
 
-#### 5. Substations
+### 5. Substations
 
 **Purpose:** ?????
 
-**File Names:** ?????
+**File Names:** `BuildingName_result`, `Total_linkedbuildings`
 
-**Rewritten:** ????
+**Rewritten:** Most of the files are rewritten in every iteration
 
-**Origin:** ????
+**Origin:**
 
-**Information:** ????
+`BuildingName_result` originates from `CEAforArcGIS\cea\technologies\substation.py`
+
+`Total_linkedbuildings` originates from `CEAforArcGIS\cea\optimization\supportFn.py`
+
+**Information:** 
+
+**`BuildingName_result`** has the following parameters:
+
+`A_hex_cool_design`,	`A_hex_dhw_design`,	`A_hex_heating_design`,
+`Electr_array_all_flat`,	`Q_cool`,	`Q_dhw`,	`Q_heating`,
+`T_heating_max_all_buildings_intern`,	`T_hotwater_max_all_buildings_intern`,
+`T_r1_dhw_result`,	`T_r1_heating_result`,	`T_return_DC_result`,
+`T_return_DH_result`,	`T_supply_DC_result`,	`T_supply_DH_result`,
+`T_total_supply_max_all_buildings_intern`,	`mdot_DC_result`,	`mdot_DH_result`,
+`mdot_dhw_result`,	`mdot_heating_result`
+
+**`Total_linkedbuildings`** has the following parameters:
+
+`Name`,	`Af_m2`,	`Aroof_m2`,	`GFA_m2`,	`people0`,	`Eref_MWhyr`,
+`Eauxf_cs0_kW`,	`Eauxf_ve0_kW`,	`Edataf0_kW`,	`Qhprof_MWhyr`,
+`Ecaf0_kW`,	`Qhsf0_kW`,	`Qww0_kW`,	`QHf0_kW`,	`Eauxf_hs0_kW`,
+`Eprof_MWhyr`,	`Eauxf_ve_MWhyr`,	`Qcs0_kW`,	`Qcsf_lat0_kW`,
+`Qhprof0_kW`,	`QEf_MWhyr`,	`Ef0_kW`,	`Eauxf_hs_MWhyr`,	`Eprof0_kW`,
+`Ealf_MWhyr`,	`Qhsf_lat0_kW`,	`Qhsf_MWhyr`,	`Qwwf_MWhyr`,
+`Ecaf_MWhyr`,	`Qcs_MWhyr`,	`Qhs_MWhyr`,	`Eauxf_cs_MWhyr`,
+`Eaf0_kW`,	`Qcref0_kW`,	`Edataf_MWhyr`,	`Ealf0_kW`,	`Eauxf_fw_MWhyr`,
+`Eauxf_MWhyr`,	`Qhs0_kW`,	`Eauxf_ww_MWhyr`,	`Qcsf_MWhyr`,
+`Qwwf0_kW`,	`QCf0_kW`,	`Qww_MWhyr`,	`Qcsf_lat_MWhyr`,
+`Qcdataf0_kW`,	`Qcsf0_kW`,	`Qcdataf_MWhyr`,	`Eauxf_fw0_kW`,
+`QCf_MWhyr`,	`Eauxf0_kW`,	`QEf0_kW`,	`Elf0_kW`,	`Eaf_MWhyr`,
+`QHf_MWhyr`,	`Qhsf_lat_MWhyr`,	`Eauxf_ww0_kW`,	`Qcref_MWhyr`,
+`Eref0_kW`,	`Elf_MWhyr`,	`Ef_MWhyr`
+
+
