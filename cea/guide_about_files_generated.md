@@ -17,8 +17,6 @@ The folders present inside this are:
 
 ### 1. Disconnected
 
-**Purpose:** ?????
-
 **File Names:** ?????
 
 **Rewritten:** ????
@@ -28,8 +26,6 @@ The folders present inside this are:
 **Information:** ????
 
 ### 2. Master
-
-**Purpose:** This folder saves the files corresponding to various generations in an optimization run.
 
 **File Names:** `CheckPoint_Initial`, `CheckPoint_generationnumber`, `CheckPoint_Final`
 
@@ -43,19 +39,29 @@ times, the files are constantly replaced with new ones. **Thus if using multiple
 
 ### 3. Network
 
-**Purpose:** ?????
+**File Names:** 
 
-**File Names:** ?????
+`Network_summary_result_buildingnetwork`, `Network_summary_result_all`
 
-**Rewritten:** ????
+**Rewritten:** High chance of the files being rewritten, even though the file 
+name has building network configuration in it.
 
-**Origin:** ????
+**Origin:** Both the files originate in 
+`CEAforArcGIS\cea\optimization\master\summarize_network.py`
 
-**Information:** ????
+**Information:** 
+
+`Network_summary_result_buildingnetwork` has the following parameters:
+
+`Ecaf_netw_total`,	`Electr_netw_total`,	`Q_DC_building_netw_total`,
+`Q_DC_losses`,	`Q_DH_building_netw_total`,	`Q_DH_losses`,	`Qcdata_netw_total`,
+`T_sst_cool_return_netw_total`,	`T_sst_cool_supply_netw_total`,
+`T_sst_heat_return_netw_total`,	`T_sst_heat_supply_netw_total`,	
+`day_of_max_heatmassflow`,	`mdot_DH_netw_total`,	`mdot_cool_netw_total`,
+`mdotdata_netw_total`
+
 
 ### 4. Slave
-
-**Purpose:** ????
 
 **File Names:**
  
@@ -190,8 +196,6 @@ are run multiple times
 
 
 ### 5. Substations
-
-**Purpose:** ?????
 
 **File Names:** `BuildingName_result`, `Total_linkedbuildings`
 
