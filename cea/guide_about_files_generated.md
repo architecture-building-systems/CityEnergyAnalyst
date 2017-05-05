@@ -17,13 +17,19 @@ The folders present inside this are:
 
 ### 1. Disconnected
 
-**File Names:** ?????
+**File Names:** `DiscOp_BuildingName_result`
 
-**Rewritten:** ????
+**Rewritten:** Not rewritten
 
-**Origin:** ????
+**Origin:** They are being shipped along with the reference case
 
-**Information:** ????
+**Information:** Each of these files have the following parameters:
+`Annualized Investment Costs [CHF]`,	`Best configuration`,
+`BoilerBG Share`,	`BoilerNG Share`,	`CO2 Emissions [kgCO2-eq]`,
+`EforGHP`,	`FC Share`,	`GHP Share`,	`Nominal Power`,	
+`Operation Costs [CHF]`,	`Primary Energy Needs [MJoil-eq]`,
+`QfromBG`,	`QfromGHP`,	`QfromNG`,	`Total Costs [CHF]`
+
 
 ### 2. Master
 
@@ -236,4 +242,62 @@ are run multiple times
 `QHf_MWhyr`,	`Qhsf_lat_MWhyr`,	`Eauxf_ww0_kW`,	`Qcref_MWhyr`,
 `Eref0_kW`,	`Elf_MWhyr`,	`Ef_MWhyr`
 
+## Demand
+This section deals with the files saved in `reference-case\baseline\outputs\data\demand`
 
+
+**File Names:** `BuildingName`, `Total_demand`
+
+**Rewritten:** These files are only rewritten when the `CEAforArcGIS\cea\demand\demand_file.py`
+is run
+
+**Origin:** All files originate from `CEAforArcGIS\cea\demand\demand_writers.py`
+
+**Information:** 
+
+`BuildingName` file has the following parameters:
+`DATE`,	`Name`,	`people`,	`QEf_kWh`,	`QHf_kWh`,	`QCf_kWh`,
+`Ef_kWh`,	`Qhsf_kWh`,	`Qhs_kWh`,	`Qhsf_lat_kWh`,	`Qwwf_kWh`,
+`Qww_kWh`,	`Qcsf_kWh`,	`Qcs_kWh`,	`Qcsf_lat_kWh`,	`Qcdataf_kWh`,
+`Qcref_kWh`,	`Qhprof_kWh`,	`Edataf_kWh`,	`Ealf_kWh`,	
+`Eaf_kWh`,	`Elf_kWh`,	`Eref_kWh`,	`Eauxf_kWh`,	`Eauxf_ve_kWh`,
+`Eauxf_hs_kWh`,	`Eauxf_cs_kWh`,	`Eauxf_ww_kWh`,	`Eauxf_fw_kWh`,
+`Eprof_kWh`,	`Ecaf_kWh`,	`mcphsf_kWC`,	`mcpcsf_kWC`,	`mcpwwf_kWC`,
+`mcpdataf_kWC`,	`mcpref_kWC`,	`Twwf_sup_C`,	`Twwf_re_C`,	
+`Thsf_sup_C`,	`Thsf_re_C`,	`Tcsf_sup_C`,	`Tcsf_re_C`,
+`Tcdataf_re_C`,	`Tcdataf_sup_C`,	`Tcref_re_C`,	`Tcref_sup_C`
+
+`Total_demand` file has the following parameters:
+`Name`,	`Af_m2`,	`Aroof_m2`,	`GFA_m2`,	`people0`,	`Eref_MWhyr`,	`Eauxf_cs0_kW`,	`Eauxf_ve0_kW`,
+`Edataf0_kW`,	`Qhprof_MWhyr`,	`Ecaf0_kW`,	`Qhsf0_kW`,	`Qww0_kW`,	`QHf0_kW`,	`Eauxf_hs0_kW`,
+`Eprof_MWhyr`,	`Eauxf_ve_MWhyr`,	`Qcs0_kW`,	`Qcsf_lat0_kW`,	`Qhprof0_kW`,	`QEf_MWhyr`,	`Ef0_kW`,
+`Eauxf_hs_MWhyr`,	`Eprof0_kW`,	`Ealf_MWhyr`,	`Qhsf_lat0_kW`,	`Qhsf_MWhyr`,	`Qwwf_MWhyr`,
+`Ecaf_MWhyr`,	`Qcs_MWhyr`,	`Qhs_MWhyr`,	`Eauxf_cs_MWhyr`,	`Eaf0_kW`,	`Qcref0_kW`,
+`Edataf_MWhyr`,	`Ealf0_kW`,	`Eauxf_fw_MWhyr`,	`Eauxf_MWhyr`,	`Qhs0_kW`,	`Eauxf_ww_MWhyr`,	`Qcsf_MWhyr`,
+`Qwwf0_kW`,	`QCf0_kW`,	`Qww_MWhyr`,	`Qcsf_lat_MWhyr`,	`Qcdataf0_kW`,	`Qcsf0_kW`,	`Qcdataf_MWhyr`,
+`Eauxf_fw0_kW`,	`QCf_MWhyr`,	`Eauxf0_kW`,	`QEf0_kW`,	`Elf0_kW`,	`Eaf_MWhyr`,	`QHf_MWhyr`,
+`Qhsf_lat_MWhyr`,	`Eauxf_ww0_kW`,	`Qcref_MWhyr`,	`Eref0_kW`,	`Elf_MWhyr`,	`Ef_MWhyr`
+
+## Uncertainty
+
+This section deals with the files in `reference-case\baseline\outputs\data\uncertainty`
+
+
+**File Names:** `uncertainty.csv`, `CheckPoint_uncertainty_number`
+
+**Rewritten:** The files are rewritten only when `CEAforArcGIS\cea\analysis\uncertainty\Individual_Evaluation.py`,
+or `CEAforArcGIS\cea\analysis\uncertainty\Uncertainty_parameters.py` are run
+
+**Origin:** 
+
+`uncertainty.csv` originates from `CEAforArcGIS\cea\analysis\uncertainty\Uncertainty_parameters.py`
+
+`CheckPoint_uncertainty_number` originates from `CEAforArcGIS\cea\analysis\uncertainty\Individual_Evaluation.py`
+
+**Information:**
+ 
+ `uncertainty.csv` has the values for parameters that are changed in uncertainty analysis
+ 
+ `CheckPoint_uncertainty_number` has the following parameters:
+ 
+ `population_fitness`, `uncertainty_level`, `population`
