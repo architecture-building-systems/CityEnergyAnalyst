@@ -31,7 +31,7 @@ def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, gv, weath
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
-    tilt angles, and global irradiation. In the last, energy generation from PV panels of each group is then calculated.
+    tilt angles, and global irradiation. In the last, electricity generation from PV panels of each group is calculated.
 
     :param locator: An InputLocator to locate input files
     :type locator: cea.inputlocator.InputLocator
@@ -94,7 +94,7 @@ def filter_low_potential(weather_data, radiation_csv, metadata_csv, gv):
     To filter the sensor points/hours with low radiation potential.
 
     :param weather_data: weather data read from the epw file
-    :type weather_data:
+    :type weather_data: dataframe
     :param radiation_csv: solar insulation data on all surfaces of each building
     :type radiation_csv: .csv
     :param metadata_csv: solar insulation sensor data of each building
@@ -105,7 +105,7 @@ def filter_low_potential(weather_data, radiation_csv, metadata_csv, gv):
     :rtype max_yearly_radiation: float
     :return min_yearly_radiation: minimum yearly radiation threshold for sensor selection [Wh/m2/year]
     :rtype min_yearly_radiation: float
-    :return sensors_rad_clean: radiation data of the filtered sensors
+    :return sensors_rad_clean: radiation data of the filtered sensors [Wh/m2]
     :rtype sensors_rad_clean: dataframe
     :return sensors_metadata_clean: data of filtered sensor points measuring solar insulation of each building
     :rtype sensors_metadata_clean: dataframe
@@ -154,34 +154,45 @@ def filter_low_potential(weather_data, radiation_csv, metadata_csv, gv):
 def calc_pv_generation(type_panel, hourly_radiation, number_groups, number_points, prop_observers, weather_data,
                        g, Sz, Az, ha, latitude, misc_losses):
     """
-    :param type_panel:
-    :param hourly_radiation:
-    :param number_groups:
-    :param number_points:
-    :param prop_observers:
-    :param weather_data:
+    To calculate the electricity generated from PV panels.
+    :param type_panel: type of PV panel used
+    :type type_panel: float
+    :param hourly_radiation: mean hourly radiation of sensors in each group [Wh/m2]
+    :type hourly_radiation: dataframe
+    :param number_groups: number of groups of sensor points
+    :type number_groups: float
+    :param number_points: number of sensor points in each group
+    :type number_points: float
+    :param prop_observers: mean values of sensor properties of each group of sensors
+    :type prop_observers: dataframe
+    :param weather_data: weather data read from the epw file
+    :type weather_data: dataframe
     :param g: declination
+    :type g: float
     :param Sz: zenith angle
+    :type Sz: float
     :param Az: solar azimuth
+
     :param ha: hour angle
-    :param latitude:
-    :param misc_losses:
+    :param latitude: latitude of the case study location
+    :param misc_losses: expected system loss [-]
     :return:
     """
 
-
+    # convert degree to radians
     lat = radians(latitude)
     g_vector = np.radians(g)
     ha_vector = np.radians(ha)
     Sz_vector = np.radians(Sz)
     Az_vector = np.radians(Az)
+
     result = list(range(number_groups))
     groups_area = list(range(number_groups))
     Sum_PV = np.zeros(8760)
 
-    n = 1.526 # refractive index of galss
+    n = 1.526 # refractive index of glass
     Pg = 0.2  # ground reflectance
-    K = 0.4   # extinction coefficien
+    K = 0.4   # extinction coefficient
     eff_nom,NOCT,Bref,a0,a1,a2,a3,a4,L = calc_properties_PV(type_panel)
 
     for group in range(number_groups):
@@ -202,10 +213,10 @@ def calc_pv_generation(type_panel, hourly_radiation, number_groups, number_point
         teta_vector = np.vectorize(calc_angle_of_incidence)(g_vector, lat, ha_vector, tilt, teta_z)
         teta_ed, teta_eg  = calc_diffuseground_comp(tilt)
 
-        results = np.vectorize(Calc_Sm_PV)(weather_data.drybulb_C,radiation.I_sol, radiation.I_direct, radiation.I_diffuse, tilt,
-                                              Sz_vector, teta_vector, teta_ed, teta_eg,
-                                              n, Pg, K,NOCT,a0,a1,a2,a3,a4,L)
-        result[group] = np.vectorize(Calc_PV_power)(results[0], results[1], eff_nom, area_per_group, Bref,misc_losses)
+        results = np.vectorize(Calc_Sm_PV)(weather_data.drybulb_C, radiation.I_sol, radiation.I_direct,
+                                           radiation.I_diffuse, tilt, Sz_vector, teta_vector, teta_ed, teta_eg, n, Pg,
+                                           K, NOCT, a0, a1, a2, a3, a4, L)
+        result[group] = np.vectorize(Calc_PV_power)(results[0], results[1], eff_nom, area_per_group, Bref, misc_losses)
         groups_area[group] = area_per_group
 
         Sum_PV = Sum_PV + result[group] # in kWh
@@ -216,12 +227,12 @@ def calc_pv_generation(type_panel, hourly_radiation, number_groups, number_point
 def calc_incidenteangleB(g, lat, ha, tilt, teta_z):
     """
     Calculates the angle of incidence (angle between the solar vector and the surface normal)
-    :param g:
-    :param lat:
-    :param ha:
-    :param tilt:
-    :param teta_z:
-    :return:
+    :param g: declination
+    :param lat: latitude of the case study location
+    :param ha: hour angle
+    :param tilt: panel tilt angle [rad]
+    :param teta_z: panel surface azimuth [rad]
+    :return teta_B: incident angle [rad]
     """
 
     # calculate incident angle beam radiation
@@ -377,23 +388,28 @@ def Calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg,
 
     return S, Tcell
 
-def Calc_PV_power(S, Tcell, eff_nom, areagroup, Bref,misc_losses):
+def Calc_PV_power(S, Tcell, eff_nom, areagroup, Bref, misc_losses):
     """
     To calculate the power production of PV panels.
 
     :param S: absorbed radiation [W/m2]
+    :type S: float
     :param Tcell: cell temperature [degree]
-    :param eff_nom:
-    :param areagroup: panel area [m2]
-    :param Bref:
-    :param misc_losses: expected system loss
-    :return: Power production [kW]
-
+    :param eff_nom: nominal efficiency of PV module [-]
+    :type eff_nom: float
+    :param areagroup: PV module area [m2]
+    :type areagroup: float
+    :param Bref: cell maximum power temperature coefficient [degree C^(-1)]
+    :type Bref: float
+    :param misc_losses: expected system loss [-]
+    :type misc_losses: float
+    :return P: Power production [kW]
+    :rtype P: float
 
     ..[Osterwald, C. R., 1986] Osterwald, C. R. (1986). Translation of device performance measurements to
     reference conditions. Solar Cells, 18, 269-279.
     """
-    P = eff_nom*areagroup*S*(1-Bref*(Tcell-25))*(1-misc_losses)/1000 # Osterwald, 1986) in kWatts
+    P = eff_nom*areagroup*S*(1-Bref*(Tcell-25))*(1-misc_losses)/1000
     return P
 
 
@@ -405,14 +421,18 @@ optimal angle and tilt
 """
 
 
-def Calc_optimal_angle(teta_z, latitude, transmissivity):
+def calc_optimal_angle(teta_z, latitude, transmissivity):
     """
     To calculate the optimal tilt angle of the solar panels.
 
-    :param teta_z: surface azimuth, 0 degree south (east negative, west positive) according to the paper of Quinn et al., 2013
-    :param latitude:
-    :param transmissivity:
-    :return:
+    :param teta_z: surface azimuth, 0 degree south (east negative) or 0 degree north (east positive)
+    :type teta_z: float
+    :param latitude: latitude of the case study site
+    :type latitude: float
+    :param transmissivity: clearness index [-]
+    :type transmissivity: float
+    :return abs(b): optimal tilt angle [radians]
+    :rtype abs(b): float
 
     ..[Quinn et al., 2013] S.W.Quinn, B.Lehman.A simple formula for estimating the optimum tilt angles of photovoltaic
     panels. 2013 IEEE 14th Work Control Model Electron, Jun, 2013, pp.1-8
@@ -423,13 +443,13 @@ def Calc_optimal_angle(teta_z, latitude, transmissivity):
         gKt = 1.237 - 1.361 * transmissivity
     else:
         gKt = 0.273
-    Tad = 0.98
-    Tar = 0.97
-    Pg = 0.2  # ground reflectance of 0.2
+    Tad = 0.98  # transmittance-absorptance product of the diffuse radiation
+    Tar = 0.97  # transmittance-absorptance product of the reflected radiation
+    Pg = 0.2    # ground reflectance of 0.2
     l = radians(latitude)
     a = radians(teta_z)
     b = atan((cos(a) * tan(l)) * (1 / (1 + ((Tad * gKt - Tar * Pg) / (2 * (1 - gKt))))))  # eq.(11)
-    return abs(b)  # radians
+    return abs(b)
 
 
 def Calc_optimal_spacing(Sh, Az, tilt_angle, module_length):
@@ -465,7 +485,12 @@ def calc_categoriesroof(teta_z, B, GB, Max_Isol):
     :type GB: float
     :param Max_Isol: yearly global horizontal radiation [Wh/m2/year]
     :type Max_Isol: float
-    :return: Categories of panels CATteta_z, CATB, CATBG
+    :return CATteta_z: category of surface azimuth
+    :rtype CATteta_z: float
+    :return CATB: category of tilt angle
+    :rtype CATB: float
+    :return CATBG: category of yearly radiation
+    :rtype CATBG: float
     """
     if -122.5 < teta_z <= -67:
         CATteta_z = 1
@@ -516,23 +541,30 @@ def calc_categoriesroof(teta_z, B, GB, Max_Isol):
 def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az, transmissivity,
                            module_length, Max_Isol):
     """
-    First determine the optimal tilt angle of the solar panels, row spacing, and surface azimuth.
-    Secondly, the total PV module area is calculated.
-    And then all the modules are categorized with its surface azimuth, tilt angle, and yearly radiation to calculate the
-    absorbed radiation.
+    This function first determines the optimal tilt angle, row spacing and surface azimuth of panels installed at each
+    sensor point. Secondly, the installed PV module areas at each sensor point are calculated. Lastly, all the modules
+    are categorized with its surface azimuth, tilt angle, and yearly radiation. The output will then be used to
+    calculate the absorbed radiation.
 
-    Parameters
-    ----------
-    sensors_metadata_clean
-    latitude
-    worst_sh
-    worst_Az
-    transmissivity
-    module_length
-    Max_Isol
+    :param sensors_metadata_clean: data of filtered sensor points measuring solar insulation of each building
+    :type sensors_metadata_clean: dataframe
+    :param latitude: latitude of the case study location
+    :type latitude: float
+    :param worst_sh: solar elevation at the worst hour [degree]
+    :type worst_sh: float
+    :param worst_Az: solar azimuth at the worst hour [degree]
+    :type worst_Az: float
+    :param transmissivity: transmissivity: clearness index [-]
+    :type transmissivity: float
+    :param module_length: length of the PV module [m]
+    :type module_length: float
+    :param Max_Isol: max radiation potential (equals to global horizontal radiation) [Wh/m2/year]
+    :type Max_Isol: float
 
-    Returns
-    -------
+    :returns sensors_metadata_clean: data of filtered sensor points categorized with module tilt angle, array spacing,
+    surface azimuth, installed PV module area of each sensor point and the categories
+    :rtype sensors_metadata_clean: dataframe
+
     Assumptions
     -----------
     1) Tilt angle: If the sensor is on tilted roof, the panel will have the same tilt as the roof. If the sensor is on
@@ -540,10 +572,10 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     2) Row spacing: Determine the row spacing by minimizing the shadow according to the solar elevation and azimuth at
        the worst hour of the year. The worst hour is a global variable defined by users.
     3) Surface azimuth (orientation) of panels: If the sensor is on a tilted roof, the orientation of the panel is the
-        same as the roof. Sensors on flat roofs are all south facing (orientation = 0).
+        same as the roof. Sensors on flat roofs are all south facing.
     """
-    # calculate panel tilt angle (B) for flat roofs (tilt < 5 degrees), slope roofs (B = tilt) and walls (B = tilt).
-    optimal_angle_flat = Calc_optimal_angle(180, latitude, transmissivity) # assume surface azimuth, teta_z = 180, south facing #FIXME: change to singapore
+    # calculate panel tilt angle (B) for flat roofs (tilt < 5 degrees), slope roofs and walls.
+    optimal_angle_flat = calc_optimal_angle(180, latitude, transmissivity) # assume surface azimuth = 180 (N,E), south facing
     sensors_metadata_clean['tilt']= np.vectorize(math.acos)(sensors_metadata_clean['Zdir']) #surface tilt angle in rad
     sensors_metadata_clean['tilt'] = np.vectorize(math.degrees)(sensors_metadata_clean['tilt']) #surface tilt angle in degrees
     sensors_metadata_clean['B'] = np.where(sensors_metadata_clean['tilt'] >= 5, sensors_metadata_clean['tilt'],
@@ -556,14 +588,11 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
                                                                                    sensors_metadata_clean['Ydir'],
                                                                                    sensors_metadata_clean['B'])  # degrees
 
-    # TODO: improve calculation.
-    # sensors_metadata_clean['area_netpv'] = (grid_side - sensors_metadata_clean.array_s) / [cos(x) for x in sensors_metadata_clean.B] * grid_side
-    # calculate the surface area to install one pv panel on flat roofs with defined tilt angle and array spacing
-    #surface_area_flat = module_length*(sensors_metadata_clean.array_s/2 + module_length*[cos(radians(x)) for x in sensors_metadata_clean.B])
+    # calculate the surface area required to install one pv panel on flat roofs with defined tilt angle and array spacing
     surface_area_flat = module_length * (
     sensors_metadata_clean.array_s / 2 + module_length * [cos(optimal_angle_flat)])
 
-    # calculate the pv module area for each sensor
+    # calculate the pv module area within the area of each sensor point
     sensors_metadata_clean['area_netpv'] = np.where(sensors_metadata_clean['tilt'] >= 5, sensors_metadata_clean.AREA_m2,
                                                     module_length**2 * (sensors_metadata_clean.AREA_m2/surface_area_flat))
 
@@ -603,9 +632,25 @@ def calc_surface_azimuth(xdir, ydir, B):
     return surface_azimuth  # degree
 
 def calc_groups(sensors_rad_clean, sensors_metadata_cat):
-    # calculate number of optimal groups as number of optimal combinations.
-    # group the sensors by categories
-    groups_ob = sensors_metadata_cat.groupby(['CATB', 'CATGB', 'CATteta_z'])
+    """
+    To calculate the mean hourly radiation of sensors in each group.
+
+    :param sensors_rad_clean: radiation data of the filtered sensors
+    :type sensors_rad_clean: dataframe
+    :param sensors_metadata_cat: data of filtered sensor points categorized with module tilt angle, array spacing,
+    surface azimuth, installed PV module area of each sensor point
+    :type sensors_metadata_cat: dataframe
+    :return number_groups: number of groups of sensor points
+    :rtype number_groups: float
+    :return hourlydata_groups: mean hourly radiation of sensors in each group
+    :rtype hourlydata_groups: dataframe
+    :return number_points: number of sensor points in each group
+    :rtype number_points: array
+    :return prop_observers: mean values of sensor properties of each group of sensors
+    :rtype prop_observers: dataframe
+    """
+    # calculate number of groups as number of optimal combinations.
+    groups_ob = sensors_metadata_cat.groupby(['CATB', 'CATGB', 'CATteta_z']) # group the sensors by categories
     prop_observers = groups_ob.mean().reset_index()
     prop_observers = pd.DataFrame(prop_observers)
     total_area_pv = groups_ob['area_netpv'].sum().reset_index()['area_netpv']
@@ -613,7 +658,7 @@ def calc_groups(sensors_rad_clean, sensors_metadata_cat):
     number_groups = groups_ob.size().count()
     sensors_list = groups_ob.groups.values()
 
-    # calculate mean hourly radiation among the sensors in each group
+    # calculate mean hourly radiation of sensors in each group
     rad_group_mean = np.empty(shape=(number_groups,8760))
     number_points = np.empty(shape=(number_groups,1))
     for x in range(0, number_groups):
@@ -631,6 +676,14 @@ def calc_groups(sensors_rad_clean, sensors_metadata_cat):
 
 
 def calc_properties_PV(type_PVpanel):
+    """
+    To assign PV module properties according to panel types.
+
+    :param type_PVpanel: type of PV panel used
+    :type type_PVpanel: float
+    :return:
+    """
+
     if type_PVpanel == 1:#     # assuming only monocrystalline panels.
         eff_nom = 0.16 # GTM 2014
         NOCT = 43.5 # Fanney et al.,
@@ -668,29 +721,29 @@ def calc_properties_PV(type_PVpanel):
 
 def calc_Cinv_pv(P_peak):
     """
-    P_peak in kW
-    result in CHF
-    Lifetime 20 y
+    To calculate capital cost of PV modules, assuming 20 year system lifetime.
+    :param P_peak: installed capacity of PV module [kW]
+    :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
     if P_peak < 10:
-        InvCa = 3500.07 * P_peak /20
+        InvCa = 3500.07 * P_peak /20  #FIXME: should be amortized?
     else:
         InvCa = 2500.07 * P_peak /20
 
-    return InvCa # [CHF/y]
+    return InvCa
 
 
-# remuneration scheeme
+# remuneration scheme
 
 def calc_Crem_pv(E_nom):
     """
     Calculates KEV (Kostendeckende Einspeise - Verguetung) for solar PV and PVT.
     Therefore, input the nominal capacity of EACH installation and get the according KEV as return in Rp/kWh
 
-    :param E_nom: Nominal Capacity of solar panels (PV or PVT) in Wh
-    :return:
-        KEV_obtained_in_RpPerkWh : float
-        KEV remuneration in Rp / kWh
+    :param E_nom: Nominal Capacity of solar panels (PV or PVT) [Wh]
+    :type E_nom: float
+    :return KEV_obtained_in_RpPerkWh: KEV remuneration [Rp/kWh]
+    :rtype KEV_obtained_in_RpPerkWh: float
     """
 
     KEV_regime = [0,
