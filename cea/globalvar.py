@@ -461,9 +461,9 @@ class GlobalVariables(object):
         self.module_length_PV = 1 # m # 1 for PV and 2 for solar collectors
         self.min_radiation = 0.75  # points are selected with at least a minimum production of this % from the maximum in the area.
         self.type_PVpanel = 1  # monocrystalline
-        self.misc_losses = 0.1 #cabling, resistances etc..
-        self.pvonroof = True  # flag for pv on roof #FIXME: define
-        self.pvonwall = True  # flag for pv on wall #FIXME: define
+        self.misc_losses = 0.1 # cabling, resistances etc..
+        self.pvonroof = True  # flag for PV on roof #FIXME: define
+        self.pvonwall = True  # flag for PV on wall #FIXME: define
 
         # ==============================================================================================================
         # sewage potential

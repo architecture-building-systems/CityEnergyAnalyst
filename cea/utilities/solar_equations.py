@@ -100,14 +100,15 @@ def calc_sun_properties(latitude, longitude, weather_data, gv):
     worst_sh = sun_coords['elevation'].loc[date[gv.worst_hour]]
     worst_Az = sun_coords['azimuth'].loc[date[gv.worst_hour]]
 
-    # mean trnasmissivity
+    # mean transmissivity
     weather_data['diff'] = weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
     T_G_hour = weather_data[np.isfinite(weather_data['diff'])]
     T_G_day = np.round(T_G_hour.groupby(['dayofyear']).mean(), 2)
     T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
     transmittivity = (1 - T_G_day['diff']).mean()
 
-    return sun_coords['declination'], sun_coords['zenith'], sun_coords['azimuth'], sun_coords['hour_angle'], transmittivity, worst_sh, worst_Az
+    return sun_coords['declination'], sun_coords['zenith'], sun_coords['azimuth'], sun_coords['hour_angle'], \
+           transmittivity, worst_sh, worst_Az
 
 
 def calc_sunrise(sunrise, Yearsimul, longitude, latitude):
