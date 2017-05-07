@@ -323,12 +323,12 @@ class InputLocator(object):
     ## POTENTIALS #FIXME: find better placement for these two locators
     def PV_results(self, building_name):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
-        solar_potential_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+        solar_potential_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'potentials','solar')
         return os.path.join(solar_potential_folder, '%s_PV.csv' % building_name)
 
     def metadata_results(self, building_name):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
-        solar_potential_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+        solar_potential_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'potentials','solar')
         return os.path.join(solar_potential_folder, '%s_sensors.csv' % building_name)
 
     # DEMAND
