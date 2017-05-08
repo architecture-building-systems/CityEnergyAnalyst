@@ -7,6 +7,7 @@ channels:
 dependencies:
 - python=2.7
 - pandas=0.19.2
+- setuptools
 - geopandas=0.2.1
 - matplotlib
 - jpeg=8d
