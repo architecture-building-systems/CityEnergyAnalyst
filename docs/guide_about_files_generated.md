@@ -1,10 +1,12 @@
 Guide
 =======
-**Author : Sreepathi Bhargava Krishna**
+**Author :** Sreepathi Bhargava Krishna
 
-**Intent : To provide information about what and where files are saved while running CEA**
+**Date :** 04-May-2017
 
-**Date : 04-May-2017**
+**Intent :** To provide information about what and where files are saved while running CEA
+
+
 
 ## Optimization
 This section deals with the different files saved in `reference-case\baseline\outputs\data\optimization`

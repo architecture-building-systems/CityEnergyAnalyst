@@ -219,11 +219,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
                 # print result
                 # print os.path.join(locator.get_optimization_slave_results_folder, MS_Var.configKey + "_StorageFlag.csv")
                 # print "aa\n"
-                result.to_csv(locator.get_optimization_slave_StorageFlag(MS_Var.configKey), sep=',')
-                # result.to_csv(
-                #     os.path.join(locator.get_optimization_slave_results_folder(), MS_Var.configKey + "_StorageFlag.csv"),
-                #     sep=',')
-
+                result.to_csv(locator.get_optimization_slave_storage_flag(MS_Var.configKey), sep=',')
 
     """ EVALUATION AND FURTHER PROCESSING """
 
@@ -261,7 +257,7 @@ def storage_optimization(locator, master_to_slave_vars, gv):
     # Save Files
     if save_file == 1:
         results = pd.DataFrame({"Storage_Size_opt": [V5], "T_initial": [T_initial], "Q_initial": [Q_initial]})
-        Name = locator.get_optimization_slave_Storage_Sizing_Parameters(MS_Var.configKey)
+        Name = locator.get_optimization_slave_storage_sizing_parameters(MS_Var.configKey)
         # Name = MS_Var.configKey + "Storage_Sizing_Parameters.csv"
         # os.chdir(locator.get_optimization_slave_results_folder())
         results.to_csv(Name, sep=',')
