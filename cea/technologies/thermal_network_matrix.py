@@ -124,7 +124,7 @@ def thermal_network_main(locator, gv, network_type, source):
     t_target_supply = read_properties_from_buildings(building_names, buildings_demands, 'T_sup_target_' + network_type)
     t_target_supply_df = write_substations_to_nodes_df(all_nodes_df, t_target_supply, flag=True)  # (1 x n)
 
-    # # assign pipe properties
+    ## assign pipe properties
     # calculate maximum edge mass flow
     edge_mass_flow_df, max_edge_mass_flow_df = calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands,
                                                                       edge_node_df, gv, locator, substations_HEX_specs,
@@ -137,7 +137,7 @@ def thermal_network_main(locator, gv, network_type, source):
     # calculate pipe aggregated heat conduction coefficient
     K_pipe = calc_aggregated_heat_conduction_coefficient(locator, gv, pipe_length_df, pipe_properties_df)  # (exe)[kW/K]
 
-    # # Start solving hydraulic and thermal equations at each time-step
+    ## Start solving hydraulic and thermal equations at each time-step
     t0 = time.clock()
     # create empty lists to write results
     T_return_nodes_list = []
@@ -151,7 +151,7 @@ def thermal_network_main(locator, gv, network_type, source):
         print('calculating network thermal hydraulic properties... time step', t)
         timer = time.clock()
 
-        # # solve network temperatures
+        ## solve network temperatures
         T_supply_nodes, \
             T_return_nodes, \
             plant_heat_requirement, \
@@ -179,21 +179,21 @@ def thermal_network_main(locator, gv, network_type, source):
         print (time.clock() - timer, 'seconds process time for time step', t)
 
     # save results
-    # # node temperatures
+    # node temperatures
     pd.DataFrame(T_supply_nodes_list, columns=edge_node_df.index).to_csv(
         locator.get_optimization_network_layout_supply_temperature_file(network_type), index=False, float_format='%.3f')
     pd.DataFrame(T_return_nodes_list, columns=edge_node_df.index).to_csv(
         locator.get_optimization_network_layout_return_temperature_file(network_type), index=False, float_format='%.3f')
-    # # plant heat requirements
+    # plant heat requirements
     pd.DataFrame(plant_heat_requirements).to_csv(
         locator.get_optimization_network_layout_plant_heat_requirement_file(network_type), index=False,
         float_format='%.3f')
-    # # node pressures
+    # node pressures
     pd.DataFrame(pressure_nodes_supply, columns=edge_node_df.index).to_csv(
         locator.get_optimization_network_layout_supply_pressure_file(network_type), index=False, float_format='%.3f')
     pd.DataFrame(pressure_nodes_return, columns=edge_node_df.index).to_csv(
         locator.get_optimization_network_layout_return_pressure_file(network_type), index=False, float_format='%.3f')
-    # # pressure losses over entire network
+    # pressure losses over entire network
     pd.DataFrame(pressure_loss_system, columns=['pressure_drop_Pa']).to_csv(
         locator.get_optimization_network_layout_pressure_drop_file(network_type), index=False, float_format='%.3f')
 
@@ -229,7 +229,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df):
     Applied Thermal Engineering, 2016.
 
     """
-
+    mass_flow_substation_df = mass_flow_substation_df.sort_index(axis=1)
     # t0 = time.clock()
     mass_flow_edge = np.round(np.transpose(np.linalg.lstsq(edge_node_df.values, np.transpose(
         mass_flow_substation_df.values))[0]), decimals = 9)
@@ -452,15 +452,16 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     #     # (1 x n) #flag = True: writing temperature
     #
     #     # solve mass flow rates on edges
-    #     edge_mass_flow_df[:][t:t + 1] = calc_mass_flow_edges(edge_node_df, required_flow_rate_df)
+    #     edge_mass_flow_df[:][t:t + 1] = calc_mass_flow_edges(edge_node_df, required_flow_rate_df) # FIXME: answer not right when plant is locating at a branhing point
     #
     # # create csv file to store the nominal edge mass flow results
     # edge_mass_flow_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'NominalEdgeMassFlow_' +
     #                          network_type + '.csv')
     # print (time.clock() - t0, "seconds process time for edge mass flow calculation\n")
 
-    edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type))
+    edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type))  #TODO: delete when done
     del edge_mass_flow_df['Unnamed: 0']
+
     # assign pipe properties based on max flow on edges
     max_edge_mass_flow = edge_mass_flow_df.max(axis=0)
     max_edge_mass_flow_df = pd.DataFrame(data=[max_edge_mass_flow], columns=edge_node_df.columns)
@@ -575,11 +576,11 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
     :type t_target_supply_df: DataFrame
 
     :returns T_supply_nodes: list of supply line node temperatures (nx1)
-    :rtype T_supply_nodes: list
+    :rtype T_supply_nodes: list of arrays
     :returns T_return_nodes: list of return line node temperatures (nx1)
-    :rtype T_return_nodes: list
+    :rtype T_return_nodes: list of arrays
     :returns plant_heat_requirement: list of plant heat requirement
-    :rtype plant_heat_requirement: list
+    :rtype plant_heat_requirement: list of arrays
 
     """
 
@@ -659,15 +660,23 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
         T_return_nodes = calc_return_temperatures(gv, T_ground[t], edge_node_df, edge_mass_flow_df,
                                                   mass_flow_substations_nodes_df, K, T_substation_return_df)
 
-        plant_heat_requirement = gv.Cpw * (T_supply_nodes[plant_node] - T_return_nodes[plant_node]) * abs(
-            mass_flow_substations_nodes_df.values.T[plant_node])
+        plant_heat_requirement = calc_plant_heat_requirement(plant_node, T_supply_nodes, T_return_nodes, mass_flow_substations_nodes_df, gv)
+
     else:
         T_supply_nodes = np.full(edge_node_df.shape[0], np.nan)
         T_return_nodes = np.full(edge_node_df.shape[0], np.nan)
-        plant_heat_requirement = [0]
+        plant_heat_requirement = np.full(np.argwhere(all_nodes_df.ix['plant']!='').size, 0)
 
     return T_supply_nodes, T_return_nodes, plant_heat_requirement, edge_mass_flow_df
 
+def calc_plant_heat_requirement(plant_node, T_supply_nodes, T_return_nodes, mass_flow_substations_nodes_df, gv):
+    plant_heat_requirement = np.full(plant_node.size, np.nan)
+    for i in range(plant_node.size):
+        plant_node = plant_node[i]
+        heat_requirement = gv.Cpw * (T_supply_nodes[plant_node] - T_return_nodes[plant_node]) * abs(
+            mass_flow_substations_nodes_df.iloc[0, plant_node])
+        plant_heat_requirement[i] = heat_requirement
+    return plant_heat_requirement
 
 def write_nodes_to_substations(T_supply_nodes, all_nodes_df, plant_node):
     """
@@ -676,25 +685,45 @@ def write_nodes_to_substations(T_supply_nodes, all_nodes_df, plant_node):
     :param T_supply_nodes: DataFrame of supply line node temperatures (nx1)
     :param all_nodes_df: DataFrame that contains all nodes, whether a node is a consumer, plant, or neither,
                         and, if it is a consumer or plant, the name of the corresponding building               (2 x n)
-    :param plant_node: the index of the plant node
+    :param plant_node: the indices of the plant node(s)
 
     :type T_supply_nodes: DataFrame
     :type all_nodes_df: DataFrame
-    :type plant_node: float
+    :type plant_node: numpy array
+
+    :return T_substation_supply: dataframe with node values matched to building substations
+    :rtype T_substation_supply: DataFrame
+    """
+    T_substation_supply = all_nodes_df.copy().sort_index(axis=1)
+    T_substation_supply.columns = all_nodes_df.sort_index(axis=1).sum()
+    T_substation_supply.loc['T_supply'] = T_supply_nodes
+    T_substation_supply = T_substation_supply.drop('consumer')
+    T_substation_supply = T_substation_supply.drop('plant')
+
+    return T_substation_supply
+
+def write_nodes_to_substations_1(T_supply_nodes, all_nodes_df, plant_node):
+    """
+    This function writes node values to the corresponding building substations.
+
+    :param T_supply_nodes: DataFrame of supply line node temperatures (nx1)
+    :param all_nodes_df: DataFrame that contains all nodes, whether a node is a consumer, plant, or neither,
+                        and, if it is a consumer or plant, the name of the corresponding building               (2 x n)
+    :param plant_node: the indices of the plant node(s)
+
+    :type T_supply_nodes: DataFrame
+    :type all_nodes_df: DataFrame
+    :type plant_node: numpy array
 
     :return T_substation_supply
     :rtype T_substation_supply: float
     """
-
-    T_substation_supply = all_nodes_df.copy().drop('plant')   # add building names to corresponding nodes
-    T_substation_supply.loc['T_supply'] = T_supply_nodes      # add consumer node supply temperatures
-    T_substation_supply.columns = T_substation_supply.loc['consumer']   # set building names as column names
-    T_substation_supply = T_substation_supply.drop('consumer')          # drop row with building names
-    T_substation_supply = T_substation_supply.drop('', axis=1)          # only keep nodes at consumer buildings
-    plant_building = all_nodes_df.ix['plant', plant_node]               # find plant building name
-    T_substation_supply.loc['T_supply', plant_building] = T_supply_nodes[plant_node]   # add plant temperature to df
+    T_substation_supply = all_nodes_df.copy().sort_index(axis=1)
+    T_substation_supply.columns = all_nodes_df.sort_index(axis=1).sum()
+    T_substation_supply.loc['T_supply'] = T_supply_nodes
 
     return T_substation_supply.astype(float)
+
 
 
 def calc_supply_temperatures(gv, T_ground, edge_node_df, mass_flow_df, K, t_target_supply, network_type):
@@ -724,7 +753,7 @@ def calc_supply_temperatures(gv, T_ground, edge_node_df, mass_flow_df, K, t_targ
     :return T_node.T: list of node temperatures (nx1)
     :return plant_node: the index of the plant node
     :rtype T_node.T: list
-    :rtype plant_node: float
+    :rtype plant_node: numpy array
 
     """
     Z = np.asarray(edge_node_df)   # (nxe) edge-node matrix
@@ -749,14 +778,14 @@ def calc_supply_temperatures(gv, T_ground, edge_node_df, mass_flow_df, K, t_targ
     while flag == 0:
         # # calculate the pipe outlet temperature from the plant node
         for i in range(Z.shape[0]):
-            if np.count_nonzero(Z_note[i] == 0) == (Z.shape[1]-1) and Z[i].sum() == -1:  # find plant node
+            if np.argwhere(Z[i]==1).size == 0:  # find plant node
                     # write plant inlet temperature
                     T_node[i] = T_plant_sup   # assume plant inlet temperature
                     edge = np.where(T_e_in[i]!=0)[0]   # find edge index
                     T_e_in[i] = T_e_in[i]*T_node[i]
                     # calculate pipe outlet temperature
                     calc_t_out(i, edge, K, M_d, Z, T_e_in, T_e_out, T_ground, Z_note, gv)
-        plant_node = T_node.argmax()   # the position of the plant node in the edge-node index
+        plant_node = T_node.nonzero()[0]   # the node indices of the plant nodes in the edge-node index
 
         # # calculate pipe outlet temperature and node temperature for the rest
         while np.count_nonzero(T_node == 0) > 0:
@@ -958,7 +987,7 @@ def calc_t_out(node, edge, K, M_d, Z, T_e_in, T_e_out, T_ground, Z_note, gv):
     Following the reference of [Wang et al., 2016]_.
 
     :param node: node index
-    :param edge: edge index
+    :param edge: edge indices
     :param K: DataFrame of aggregated heat conduction coefficient for each pipe (exe)
     :param M_d: DataFrame of pipe flow rate (exe)
     :param Z: DataFrame of  edge_node_matrix (nxe)
@@ -969,7 +998,7 @@ def calc_t_out(node, edge, K, M_d, Z, T_e_in, T_e_out, T_ground, Z_note, gv):
     :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
 
     :type node: float
-    :type edge: float
+    :type edge: np array
     :type K: DataFrame
     :type M_d: DataFrame
     :type Z: DataFrame
@@ -985,21 +1014,28 @@ def calc_t_out(node, edge, K, M_d, Z, T_e_in, T_e_out, T_ground, Z_note, gv):
     district heating systems and model parameters calibration. Eenergy Conversion and Management, 120, 294-305.
     """
     # calculate pipe outlet temperature
-    k = K[edge, edge]
-    m = M_d[edge, edge]
-    out_node_index = np.where(Z[:, edge] == 1)[0].max()
-    if m <= 0 and Z[node, edge] == -1:
-        # set outlet temperature to nan if no flow is going out from node to connected edges
-        T_e_out[out_node_index, edge] = np.nan
-        Z_note[:, edge] = 0
+    if isinstance(edge, np.ndarray) is False:
+        edge = np.array([edge])
 
-    elif Z[node, edge] == -1:
-        # calculate outlet temperature if flow goes from node to out_node through edge
-        T_e_out[out_node_index, edge] = (T_e_in[node, edge] * (k / 2 - m * gv.Cpw) - k * T_ground) / (-m * gv.Cpw - k / 2)  # [K]
-        dT = T_e_in[node, edge] - T_e_out[out_node_index, edge]
-        if abs(dT) > 30:
-            print ('High temperature loss on edge', edge, '. Loss:', abs(dT))
-        Z_note[:, edge] = 0
+    for i in range(edge.size):
+        e = edge[i]
+        k = K[e, e]
+        m = M_d[e, e]
+        out_node_index = np.where(Z[:, e] == 1)[0].max()
+        if m <= 0 and Z[node, e] == -1:
+            # set outlet temperature to nan if no flow is going out from node to connected edges
+            T_e_out[out_node_index, e] = np.nan
+            Z_note[:, e] = 0
+
+        elif Z[node, e] == -1:
+            # calculate outlet temperature if flow goes from node to out_node through edge
+            T_e_out[out_node_index, e] = (T_e_in[node, e] * (k / 2 - m * gv.Cpw) - k * T_ground) / (
+            -m * gv.Cpw - k / 2)  # [K]
+            dT = T_e_in[node, e] - T_e_out[out_node_index, e]
+            if abs(dT) > 30:
+                print('High temperature loss on edge', e, '. Loss:', abs(dT))
+            Z_note[:, e] = 0
+
 
 
 def calc_aggregated_heat_conduction_coefficient(locator, gv, L_pipe, pipe_properties_df):
@@ -1111,7 +1147,7 @@ def get_thermal_network_from_csv(locator, network_type):
     edge_node_df.to_csv(locator.get_optimization_network_edge_node_matrix_file(network_type))
     all_nodes_df = pd.DataFrame(data=[consumer_nodes[1][:], plant_nodes[1][:]], index=['consumer', 'plant'],
                                 columns=consumer_nodes[0][:])
-    all_nodes_df = all_nodes_df[edge_node_df.index.tolist()]
+    all_nodes_df = all_nodes_df[edge_node_df.index.tolist()]   #TODO: check node orders for zug
     all_nodes_df.to_csv(locator.get_optimization_network_node_list_file(network_type))
 
     print (time.clock() - t0, "seconds process time for Network summary\n")
@@ -1186,6 +1222,7 @@ def get_thermal_network_from_shapefile(locator, network_type):
             all_nodes_df[node]['plant'] = node_df['Name'][node]
         else:
             all_nodes_df[node]['plant'] = ''
+    all_nodes_df = all_nodes_df.sort_index(axis=1)  # sort columns by node numbers
     all_nodes_df.to_csv(locator.get_optimization_network_node_list_file(network_type))
 
     # create first edge-node matrix
@@ -1316,7 +1353,7 @@ def write_substations_to_nodes_df(all_nodes_df, df_value, flag):
     :param all_nodes_df: DataFrame containing all nodes and whether a node n is a consumer or plant node
                         (and if so, which building that node corresponds to), or neither.                   (2 x n)
     :param df_value: DataFrame of value of each substation
-    :param flag: flag == True if the values are ; flag == False if the value is mass flow
+    :param flag: flag == True if the values are temperatures ; flag == False if the value is mass flow
 
     :return nodes_df: DataFrame with values at each node (1xn)
     :rtype nodes_df: DataFrame
@@ -1366,6 +1403,7 @@ def write_substations_to_nodes_df(all_nodes_df, df_value, flag):
                 nodes_df[node] = - df_value.sum(axis=1)/number_of_plants
             else:
                 nodes_df[node] = 0
+    nodes_df = nodes_df.sort_index(axis=1)  # sort dataframe columns by node numbers
     return nodes_df
 
 
