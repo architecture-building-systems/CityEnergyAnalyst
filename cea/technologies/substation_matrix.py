@@ -43,11 +43,6 @@ def substation_HEX_design_main(locator, building_names, gv):
     '''
 
     t0 = time.clock()
-    # # generate empty vectors
-    # Ths = np.zeros(8760)
-    # Tww = np.zeros(8760)
-    # Tcs = np.zeros(8760) + 1E6
-    # Q_all_substations = []
 
     # determine thermal network target temperatures (T_supply_DH,T_supply_DC) at costumer side.
     iteration = 0
