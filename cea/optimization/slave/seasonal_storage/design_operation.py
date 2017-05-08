@@ -382,8 +382,6 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locat
              "P_HPCharge_max":P_HP_max
             })
         storage_operation_data_path = locator.get_optimization_slave_storage_operation_data(MS_Var.configKey)
-        # Name = MS_Var.configKey + "StorageOperationData.csv"
-        # os.chdir(locator.get_optimization_slave_results_folder())
         results.to_csv(storage_operation_data_path, sep= ',')
         
         print "Results saved in :", locator.get_optimization_slave_results_folder()
