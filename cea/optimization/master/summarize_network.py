@@ -78,9 +78,6 @@ def network_main(locator, total_demand, building_names, gv, key):
         Qcdata_netw_total += buildings[iteration].Qcdataf_kWh.values
         mdotdata_netw_total += buildings[iteration].mcpdataf_kWC.values
         Ecaf_netw_total += buildings[iteration].Ecaf_kWh.values
-        print (building_name)
-        # print (substations)
-        # print (buildings)
         Electr_netw_total += substations[iteration].Electr_array_all_flat.values
         mdot_heat_netw_all += substations[iteration].mdot_DH_result.values
         mdot_cool_netw_all += substations[iteration].mdot_DC_result.values
