@@ -6,6 +6,8 @@ photovoltaic
 from __future__ import division
 import numpy as np
 import pandas as pd
+import cea.globalvar
+import cea.inputlocator
 import math
 from math import *
 from cea.utilities import dbfreader
@@ -683,7 +685,7 @@ def calc_properties_PV(type_PVpanel):
     To assign PV module properties according to panel types.
 
     :param type_PVpanel: type of PV panel used
-    :type type_PVpanel: float
+    :type type_PVpanel: string
     :return:
     """
 
@@ -800,21 +802,28 @@ def calc_Crem_pv(E_nom):
     return KEV_obtained_in_RpPerkWh
 
 def test_photovoltaic():
-    import cea.inputlocator
-    import cea.globalvar
 
-    locator = cea.inputlocator.InputLocator(r'C:\reference-case-open\baseline')
-    # for the interface, the user should pick a file out of of those in ...DB/Weather/...
+    gv = cea.globalvar.GlobalVariables()
+    scenario_path = gv.scenario_reference
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     weather_path = locator.get_default_weather()
     list_buildings_names = dbfreader.dbf2df(locator.get_building_occupancy())['Name']
 
-    gv = cea.globalvar.GlobalVariables()
+    module_length_PV = 1  # m # 1 for PV and 2 for solar collectors
+    min_radiation = 0.75  # points are selected with at least a minimum production of this % from the maximum in the area.
+    type_PVpanel = "PV1"  # monocrystalline, T2 is poly and T3 is amorphous. it relates to the database of technologies
+    worst_hour = 8744  # first hour of sun on the solar solstice
+    misc_losses = 0.1  # cabling, resistances etc..
+    pvonroof = True  # flag for considering PV on roof #FIXME: define
+    pvonwall = True  # flag for considering PV on wall #FIXME: define
+    longitude = 7.439583333333333
+    latitude = 46.95240555555556
+
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name= building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
-        calc_PV(locator=locator, radiation_csv= radiation, metadata_csv= radiation_metadata, latitude=46.95240555555556,
-                longitude=7.439583333333333, gv=gv, weather_path=weather_path, building_name = building)
-
+        calc_PV(locator=locator, radiation_csv= radiation, metadata_csv= radiation_metadata, latitude=latitude,
+                longitude=longitude,weather_path=weather_path, building_name = building)
 
 
 if __name__ == '__main__':
