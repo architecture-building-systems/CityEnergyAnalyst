@@ -807,7 +807,7 @@ def test_photovoltaic():
     # for the interface, the user should pick a file out of of those in ...DB/Weather/...
     weather_path = locator.get_default_weather()
     list_buildings_names = dbfreader.dbf2df(locator.get_building_occupancy())['Name']
-    #pd.read_csv(locator.get_building_list()).Name.values
+
     gv = cea.globalvar.GlobalVariables()
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name= building)

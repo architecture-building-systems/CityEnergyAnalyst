@@ -120,7 +120,7 @@ def create_citygml(input_buildings, input_terrain, output_folder):
     # transform terrain to CityGML
     terrain_face_list = terrain2d23d(citygml_writer, input_terrain)
     
-    # transform buildings to LOD3
+    # transform buildings to
     bsolid_list = building2d23d(citygml_writer, input_buildings, terrain_face_list,
                                 height_col='height_ag', name_col='Name', nfloor_col="floors_ag")
 
