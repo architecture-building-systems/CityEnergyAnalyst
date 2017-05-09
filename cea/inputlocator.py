@@ -149,7 +149,7 @@ class InputLocator(object):
     def get_default_weather(self):
         """weather/Zug-2010.epw
         path to database of archetypes file Archetypes_properties.xlsx"""
-        return os.path.join(self.weather_path, 'zug-2010.epw')
+        return os.path.join(self.weather_path, 'Zug.epw')
 
     def get_weather(self, name):
         """weather/{name}.epw"""
@@ -206,9 +206,18 @@ class InputLocator(object):
 
 
     # INPUTS
+
+    def get_building_geometry_folder(self):
+        """scenario/inputs/building-geometry/"""
+        return os.path.join(self.scenario_path, 'inputs', 'building-geometry')
+
     def get_building_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
         return os.path.join(self.scenario_path, 'inputs', 'building-geometry', 'zone.shp')
+
+    def get_building_geometry_citygml(self):
+        """scenario/outputs/data/solar-radiation/district.gml"""
+        return os.path.join(self.get_solar_radiation_folder(), 'district.gml')
 
     def get_district(self):
         """scenario/inputs/building-geometry/district.shp"""
@@ -256,17 +265,28 @@ class InputLocator(object):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain.tif')
 
+    def get_daysim_mat(self):
+        """this gets the file that documents all of the radiance/default_materials"""
+        return os.path.join(os.path.dirname(__file__), 'resources', 'radiation_daysim', 'default_materials.rad')
 
     # OUTPUTS
 
     ##SOLAR-RADIATION
     def get_radiation(self):
         """scenario/outputs/data/solar-radiation/radiation.csv"""
-        return os.path.join(self.get_solar_radiation_folder(), 'radiation.csv')
+        return os.path.join(self._ensure_folder(self.get_solar_radiation_folder()), 'radiation.csv')
 
     def get_solar_radiation_folder(self):
         """scenario/outputs/data/solar-radiation"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+
+    def get_3D_geometry_folder(self):
+        """scenario/inputs/3D-geometries"""
+        return self._ensure_folder(os.path.join(self.scenario_path, 'inputs', '3D-geometries'))
+
+    def get_solar_radiation_folder(self):
+        """scenario/outputs/data/solar-radiation"""
+        return os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
 
     def get_surface_properties(self):
         """scenario/outputs/data/solar-radiation/properties_surfaces.csv"""
