@@ -97,6 +97,8 @@ def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
 def filter_low_potential(weather_data, radiation_csv, metadata_csv, min_radiation, pvonroof, pvonwall):
     """
     To filter the sensor points/hours with low radiation potential.
+    1. # keep sensors above min radiation
+    2. # eliminate points when hourly production < 50 W/m2
 
     :param weather_data: weather data read from the epw file
     :type weather_data: dataframe
@@ -705,7 +707,7 @@ def calc_properties_PV(database_path, type_PVpanel):
 
     data = pd.read_excel(database_path, sheet='PV')
     panel_properties = data[data['code'] == type_PVpanel].T.to_dict()[0]
-    print panel_properties
+
     return panel_properties
 
 # investment and maintenance costs
