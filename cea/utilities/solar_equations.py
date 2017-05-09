@@ -86,9 +86,9 @@ def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
 
 # solar properties
 
-def calc_sun_properties(latitude, longitude, weather_data, gv):
+def calc_sun_properties(latitude, longitude, weather_data, date_start, worst_hour):
 
-    date = pd.date_range(gv.date_start, periods=8760, freq='H')
+    date = pd.date_range(date_start, periods=8760, freq='H')
     hour_date = date.hour
     min_date = date.minute
     day_date = date.dayofyear
@@ -97,8 +97,8 @@ def calc_sun_properties(latitude, longitude, weather_data, gv):
     sun_coords = pyephem(date, latitude, longitude)
     sun_coords['declination'] = np.vectorize(declination_degree)(day_date, 365)
     sun_coords['hour_angle'] = np.vectorize(get_hour_angle)(longitude, min_date, hour_date, day_date)
-    worst_sh = sun_coords['elevation'].loc[date[gv.worst_hour]]
-    worst_Az = sun_coords['azimuth'].loc[date[gv.worst_hour]]
+    worst_sh = sun_coords['elevation'].loc[date[worst_hour]]
+    worst_Az = sun_coords['azimuth'].loc[date[worst_hour]]
 
     # mean transmissivity
     weather_data['diff'] = weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
