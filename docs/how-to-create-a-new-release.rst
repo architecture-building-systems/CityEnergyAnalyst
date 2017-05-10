@@ -42,8 +42,9 @@ achieved by:
     version_number = cea.__version__
 
 
-The NSIS installer uses the helper tool ``setup/get_version.exe`` to extract the version and write it to the file
-``setup/cea_version.txt`` - if importing :py:mod:`cea` is not an option, you could explore this avenue too...
+The NSIS installer (see section `Creating the installer for the planner's edition`_) uses the helper tool
+``setup/get_version.exe`` to extract the version and write it to the file ``setup/cea_version.txt`` - if importing
+:py:mod:`cea` is not an option, you could explore this avenue too...
 
 
 Responsibility for version numbers
@@ -70,7 +71,7 @@ similar...
 Creating the installer for the planner's edition
 ------------------------------------------------
 
-- first, make sure you have the nullsoft scriptable installation system (NSIS) version 3.01 installed. You can get it
+- first, make sure you have the Nullsoft Scriptable Installation System (NSIS) version 3.01 installed. You can get it
   from here: http://nsis.sourceforge.net/Download (choose the version 3.01, this was the newest version at the time
   of writing htis document)
 
