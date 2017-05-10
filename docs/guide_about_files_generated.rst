@@ -39,6 +39,7 @@ The folders present inside this are:
 | ``Operation Costs [CHF]``             | ``Nominal Power``      | ``QfromBG``        |
 +=======================================+========================+====================+
 | ``Total Costs [CHF]``                 | ``QfromGHP``           | ``QfromNG``        |
++---------------------------------------+------------------------+--------------------+
 
 ``Annualized Investment Costs [CHF]``,	``Best configuration``,
 ``BoilerBG Share``,	``BoilerNG Share``,	``CO2 Emissions [kgCO2-eq]``,
