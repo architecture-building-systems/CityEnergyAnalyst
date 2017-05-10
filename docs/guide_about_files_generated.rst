@@ -1,5 +1,5 @@
-Guide
-===============
+Guide to provide information about saved files in CEA
+=====================================================
 **Author :** Sreepathi Bhargava Krishna
 
 **Date :** 04-May-2017
@@ -7,7 +7,7 @@ Guide
 **Intent :** To provide information about what and where files are saved while running CEA
 
 Optimization
--------------
+------------
 This section deals with the different files saved in ``reference-case\baseline\outputs\data\optimization``
 The folders present inside this are:
 1. disconnected
@@ -17,7 +17,7 @@ The folders present inside this are:
 5. substations
 
 1. Disconnected
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 **File Names:** ``DiscOp_BuildingName_result``
 
@@ -34,7 +34,7 @@ The folders present inside this are:
 
 
 2. Master
-~~~~~~~~~~
+~~~~~~~~~
 
 **File Names:** ``CheckPoint_Initial``, ``CheckPoint_generationnumber``, ``CheckPoint_Final``
 
@@ -47,7 +47,7 @@ times, the files are constantly replaced with new ones. **Thus if using multiple
 **Information:** The file has ``population_fitness``, ``epsIndicator``, ``generation``, ``testedPop``, ``population``
 
 3. Network
-~~~~~~~~~~~
+~~~~~~~~~~
 
 **File Names:**
 
@@ -71,7 +71,7 @@ name has building network configuration in it.
 ``mdotdata_netw_total``
 
 4. Slave
-~~~~~~~~~
+~~~~~~~~
 
 **File Names:**
 
@@ -206,7 +206,7 @@ are run multiple times
 
 
 5. Substations
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 **File Names:** ``BuildingName_result``, ``Total_linkedbuildings``
 
@@ -249,7 +249,7 @@ are run multiple times
 
 
 Demand
--------
+------
 
 This section deals with the files saved in ``reference-case\baseline\outputs\data\demand``
 
@@ -287,7 +287,7 @@ is run
 ``Qhsf_lat_MWhyr``,	``Eauxf_ww0_kW``,	``Qcref_MWhyr``,	``Eref0_kW``,	``Elf_MWhyr``,	``Ef_MWhyr``
 
 Uncertainty
--------------
+-----------
 
 This section deals with the files in ````reference-case\baseline\outputs\data\uncertainty``
 
