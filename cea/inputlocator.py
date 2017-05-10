@@ -21,8 +21,8 @@ class InputLocator(object):
     # SCENARIO
     def __init__(self, scenario_path):
         self.scenario_path = scenario_path
-        self.db_path = os.path.join(os.path.dirname(__file__), 'databases', )  # FIXME: add country code parameter
-        self.weather_path = os.path.join(os.path.dirname(__file__), 'databases', 'weather')
+        self.db_path = os.path.join(os.path.dirname(__file__), 'databases')
+        self.weather_path = os.path.join(self.db_path, 'weather')
 
     @staticmethod
     def _ensure_folder(*components):
@@ -208,9 +208,9 @@ class InputLocator(object):
     def get_uncertainty_results_folder(self):
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'uncertainty')
 
-    def get_technologies_database(self):
+    def get_supply_systems_database(self):
         """databases/CH/Systems/etechnologies.xls"""
-        return os.path.join(self.db_path, 'Systems',  'technologies.xls')
+        return os.path.join(self.db_path, 'systems',  'supply_systems.xls')
 
     # INPUTS
 
