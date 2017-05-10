@@ -208,6 +208,9 @@ class InputLocator(object):
     def get_uncertainty_results_folder(self):
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'uncertainty')
 
+    def get_technologies_database(self):
+        """databases/CH/Systems/etechnologies.xls"""
+        return os.path.join(self.db_path, 'Systems',  'technologies.xls')
 
     # INPUTS
 
@@ -276,13 +279,32 @@ class InputLocator(object):
     # OUTPUTS
 
     ##SOLAR-RADIATION
-    def get_radiation(self):
+    def get_radiation(self):  #todo: delete if not used
         """scenario/outputs/data/solar-radiation/radiation.csv"""
         return os.path.join(self._ensure_folder(self.get_solar_radiation_folder()), 'radiation.csv')
 
     def get_solar_radiation_folder(self):
         """scenario/outputs/data/solar-radiation"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+
+    def get_radiation_building(self, building_name):
+        """scenario/outputs/data/solar-radiation/radiation.csv"""
+        solar_radiation_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+        if not os.path.exists(solar_radiation_folder):
+            os.makedirs(solar_radiation_folder)
+        return os.path.join(solar_radiation_folder, '%s_insolation_Whm2.csv' %building_name)
+
+    def get_radiation_metadata(self, building_name):
+        """scenario/outputs/data/solar-radiation/radiation.csv"""
+        solar_radiation_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+        if not os.path.exists(solar_radiation_folder):
+            os.makedirs(solar_radiation_folder)
+        return os.path.join(solar_radiation_folder, '%s_geometry.csv' %building_name)
+
+    def get_building_list(self):
+        """scenario/outputs/data/solar-radiation/radiation.csv"""
+        solar_radiation_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+        return os.path.join(solar_radiation_folder, 'radiation.csv')
 
     def get_3D_geometry_folder(self):
         """scenario/inputs/3D-geometries"""
@@ -305,7 +327,22 @@ class InputLocator(object):
         """scenario/outputs/plots/sensitivity/${PARAMETER}.pdf"""
         return os.path.join(self.scenario_path, 'outputs', 'plots', 'sensitivity', '%s.pdf' % parameter)
 
+    ## POTENTIALS #FIXME: find better placement for these two locators
+
+    def solar_potential_folder(self):
+        return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'potentials','solar')
+
+    def PV_results(self, building_name):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), '%s_PV.csv' % building_name)
+
+    def metadata_results(self, building_name):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        solar_potential_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'potentials','solar')
+        return os.path.join(solar_potential_folder, '%s_sensors.csv' % building_name)
+
     # DEMAND
+
     def get_demand_results_folder(self):
         """scenario/outputs/data/demand"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'demand')

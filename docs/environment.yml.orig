@@ -7,8 +7,11 @@ channels:
 dependencies:
 - python=2.7
 - pandas=0.19.2
+<<<<<<< HEAD
+=======
 - setuptools
 - salib
+>>>>>>> refs/remotes/origin/master
 - geopandas=0.2.1
 - matplotlib
 - jpeg=8d
