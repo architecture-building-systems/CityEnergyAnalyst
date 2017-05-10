@@ -6,6 +6,9 @@ channels:
 - https://conda.anaconda.org/dlr-sc
 dependencies:
 - python=2.7
+- pandas=0.19.2
+- setuptools
+- salib
 - geopandas=0.2.1
 - matplotlib
 - jpeg=8d
