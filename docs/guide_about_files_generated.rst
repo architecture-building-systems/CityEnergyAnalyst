@@ -15,9 +15,9 @@ The folders present inside this are:
 1. disconnected
 2. master
 3. network
-    3.1 network
-    3.2 totals
-    3.3 layout
+    - 3.1 network
+    - 3.2 totals
+    - 3.3 layout
 4. slave
 5. substations
 
