@@ -171,6 +171,7 @@ name has building network configuration in it.
 **Information:**
 
 **NodesData_DC, NodesData_DH** has ``DC_ID``, ``Name``, ``Plant``, ``Sink``
+
 **PipesData_DC, PipesData_DH** has ``DC_ID``, ``Length``, ``NODE1``, ``NODE2``
 
 
