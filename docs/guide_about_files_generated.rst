@@ -152,9 +152,10 @@ name has building network configuration in it.
 +--------------------+--------------------+--------------------+------------------+----------------+
 | ``Eauxf_cs_MWhyr`` | ``Eauxf_MWhyr``    | ``Eauxf_ww_MWhyr`` | ``Qcsf_MWhyr``   | ``Qwwf0_kW``   |
 +--------------------+--------------------+--------------------+------------------+----------------+
-| ``Qcs0_kW`` | ``Edataf_MWhyr`` | ``Eauxf_fw_MWhyr`` | ``Ealf0_kW`` | ``Elf_MWhyr``| ``Ef_MWhyr`` |
-+-------------+------------------+--------------------+--------------+--------------+--------------+
-
+| ``Qcs0_kW``        | ``Edataf_MWhyr``   | ``Eauxf_fw_MWhyr`` | ``Ealf0_kW``     | ``Elf_MWhyr``  |
++--------------------+--------------------+--------------------+------------------+----------------+
+| ``Ef_MWhyr``                                                                                     |
++--------------------+--------------------+--------------------+------------------+----------------+
 
 4. Slave
 ~~~~~~~~
@@ -179,29 +180,29 @@ are run multiple times
 
 **Origin:**
 
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| File Name                                         | Originates from                                                              |
-+===================================================+==============================================================================+
-| ``configuration_AveragedCostData``                | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| ``configuraiton_InvestmentCostDetailed``          | ``CEAforArcGIS\cea\optimization\master\cost_model.py``                       |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_PrimaryEnergyBySource``           | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_SlaveCostData``                   | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_SlaveToMasterCostEmissionsPrimE`` | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_PPActivationPattern``             | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_SlaveDetailedEmissionData``       | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_SlaveDetailedEprimData``          | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_Storage_Sizing_Parameters``       | ``CEAforArcGIS\cea\optimization\slave\seasonal_storage\storage_main.py``     |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_StorageOperationData``            | ``CEAforArcGIS\cea\optimization\slave\seasonal_storage\design_operation.py`` |
-+---------------------------------------------------+------------------------------------------------------------------------------+
++---------------------------------------------------+------------------------------------------------------------------------+
+| File Name                                         | Originates from                                                        |
++===================================================+========================================================================+
+| ``configuration_AveragedCostData``                | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                  |
++---------------------------------------------------+------------------------------------------------------------------------+
+| ``configuraiton_InvestmentCostDetailed``          | ``CEAforArcGIS\cea\optimization\master\cost_model.py``                 |
++---------------------------------------------------+------------------------------------------------------------------------+
+| ``configuration_PrimaryEnergyBySource``           | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                  |
++---------------------------------------------------+------------------------------------------------------------------------+
+| ``configuration_SlaveCostData``                   | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                  |
++---------------------------------------------------+------------------------------------------------------------------------+
+| ``configuration_SlaveToMasterCostEmissionsPrimE`` | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                  |
++---------------------------------------------------+------------------------------------------------------------------------+
+| ``configuration_PPActivationPattern``             | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                  |
++---------------------------------------------------+------------------------------------------------------------------------+
+| ``configuration_SlaveDetailedEmissionData``       | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                  |
++---------------------------------------------------+------------------------------------------------------------------------+
+| ``configuration_SlaveDetailedEprimData``          | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                  |
++---------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_Storage_Sizing_Parameters`` | ``CEAforArcGIS\cea\optimization\slave\seasonal_storage\storage_main.py``     |
++---------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_StorageOperationData``      | ``CEAforArcGIS\cea\optimization\slave\seasonal_storage\design_operation.py`` |
++---------------------------------------------+------------------------------------------------------------------------------+
 
 **Information:**
 
