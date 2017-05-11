@@ -76,11 +76,8 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
 
         # write to shapefile
         prop_architecture_df_merged = names_df.merge(prop_architecture_df, on="Name")
-        fields = ['Hs', 'win_wall', 'type_cons', 'type_leak',  'type_roof', 'type_wall', 'type_win', 'type_shade']
-        prop_architecture_dbf = names_df.copy()
-        for field in fields:
-            prop_architecture_dbf[field] = prop_architecture_df_merged[field].copy()
-        df2dbf(prop_architecture_dbf, locator.get_building_architecture())
+        fields = ['Name', 'Hs', 'win_wall', 'type_cons', 'type_leak',  'type_roof', 'type_wall', 'type_win', 'type_shade']
+        df2dbf(prop_architecture_df_merged[fields], locator.get_building_architecture())
 
 
     # get properties about types of HVAC systems
@@ -96,11 +93,8 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
 
         # write to shapefile
         prop_HVAC_df_merged = names_df.merge(prop_HVAC_df, on="Name")
-        fields = ['type_cs', 'type_hs', 'type_dhw', 'type_ctrl', 'type_vent']
-        prop_HVAC_shp = names_df.copy()
-        for field in fields:
-            prop_HVAC_shp[field] = prop_HVAC_df_merged[field].copy()
-        df2dbf(prop_HVAC_shp, locator.get_building_hvac())
+        fields = ['Name','type_cs', 'type_hs', 'type_dhw', 'type_ctrl', 'type_vent']
+        df2dbf(prop_HVAC_df_merged[fields], locator.get_building_hvac())
 
     if prop_comfort_flag:
         comfort_DB = get_database(locator.get_archetypes_properties(), 'INDOOR_COMFORT')
@@ -110,11 +104,8 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
 
         # write to shapefile
         prop_comfort_df_merged = names_df.merge(prop_comfort_df, on="Name")
-        fields = ['Tcs_set_C', 'Ths_set_C', 'Tcs_setb_C', 'Ths_setb_C', 'Ve_lps']
-        prop_comfort_dbf = names_df.copy()
-        for field in fields:
-            prop_comfort_dbf[field] = prop_comfort_df_merged[field].copy()
-        df2dbf(prop_comfort_dbf, locator.get_building_comfort())
+        fields = ['Name','Tcs_set_C', 'Ths_set_C', 'Tcs_setb_C', 'Ths_setb_C', 'Ve_lps']
+        df2dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
 
     if prop_internal_loads_flag:
         internal_DB = get_database(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
@@ -124,11 +115,8 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
 
         # write to shapefile
         prop_internal_df_merged = names_df.merge(prop_internal_df, on="Name")
-        fields = ['Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2',	'Epro_Wm2',	'Ere_Wm2', 'Ed_Wm2', 'Vww_lpd',	'Vw_lpd']
-        prop_internal_shp = names_df.copy()
-        for field in fields:
-            prop_internal_shp[field] = prop_internal_df_merged[field].copy()
-        df2dbf(prop_internal_shp, locator.get_building_internal())
+        fields = ['Name','Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2',	'Epro_Wm2',	'Ere_Wm2', 'Ed_Wm2', 'Vww_lpd',	'Vw_lpd']
+        df2dbf(prop_internal_df_merged[fields], locator.get_building_internal())
 
 
 def calc_code(code1, code2, code3, code4):
