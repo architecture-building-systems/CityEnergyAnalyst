@@ -180,24 +180,24 @@ are run multiple times
 
 **Origin:**
 
-+---------------------------------------------------+------------------------------------------------------------------------+
-| File Name                                         | Originates from                                                        |
-+===================================================+========================================================================+
-| ``configuration_AveragedCostData``                | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                  |
-+---------------------------------------------------+------------------------------------------------------------------------+
-| ``configuraiton_InvestmentCostDetailed``          | ``CEAforArcGIS\cea\optimization\master\cost_model.py``                 |
-+---------------------------------------------------+------------------------------------------------------------------------+
-| ``configuration_PrimaryEnergyBySource``           | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                  |
-+---------------------------------------------------+------------------------------------------------------------------------+
-| ``configuration_SlaveCostData``                   | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                  |
-+---------------------------------------------------+------------------------------------------------------------------------+
++---------------------------------------------+------------------------------------------------------------------------------+
+| File Name                                   | Originates from                                                              |
++=============================================+==============================================================================+
+| ``configuration_AveragedCostData``          | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------+------------------------------------------------------------------------------+
+| ``configuraiton_InvestmentCostDetailed``    | ``CEAforArcGIS\cea\optimization\master\cost_model.py``                       |
++---------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_PrimaryEnergyBySource``     | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_SlaveCostData``             | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------+------------------------------------------------------------------------------+
 | ``configuration_SlaveToMasterCostEmissionsPrimE`` | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                  |
-+---------------------------------------------------+------------------------------------------------------------------------+
-| ``configuration_PPActivationPattern``             | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                  |
-+---------------------------------------------------+------------------------------------------------------------------------+
-| ``configuration_SlaveDetailedEmissionData``       | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                  |
-+---------------------------------------------------+------------------------------------------------------------------------+
-| ``configuration_SlaveDetailedEprimData``          | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                  |
++---------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_PPActivationPattern``       | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_SlaveDetailedEmissionData`` | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_SlaveDetailedEprimData``    | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
 +---------------------------------------------+------------------------------------------------------------------------------+
 | ``configuration_Storage_Sizing_Parameters`` | ``CEAforArcGIS\cea\optimization\slave\seasonal_storage\storage_main.py``     |
 +---------------------------------------------+------------------------------------------------------------------------------+
@@ -206,21 +206,37 @@ are run multiple times
 
 **Information:**
 
-``configuration_AveragedCostData`` includes the following parameters:
- ``avgCostAddBoiler``,	``avgCostBoilerBaseRpkWh``,
-``avgCostBoilerPeakRpkWh``,	``avgCostCCRpkWh``,	``avgCostFurnaceRpkWh``,
-``avgCostGHPRpkWh``,	``avgCostHPLakeRpkWh``,	``avgCostHPSewRpkWh``,
-``avgCostStorageOperation``,	``avgCostUncontrollableSources``
+**``configuration_AveragedCostData``** includes the following parameters:
+
++------------------------+----------------------------+----------------------------+
+| ``avgCostAddBoiler``   | ``avgCostBoilerBaseRpkWh`` | ``avgCostBoilerPeakRpkWh`` |
++------------------------+----------------------------+----------------------------+
+| ``avgCostCCRpkWh``     | ``avgCostFurnaceRpkWh``    | ``avgCostGHPRpkWh``        |
++------------------------+----------------------------+----------------------------+
+| ``avgCostHPLakeRpkWh`` | ``avgCostHPSewRpkWh``      | ``avgCostStorageOperation``|
++----------------------------------------------------------------------------------+
+| ``avgCostUncontrollableSources``                                                 |
++----------------------------------------------------------------------------------+
 
 
-``configuration_InvestmentCostDetailed`` includes the following parameters:
-``BoilerAddInvC``,	``BoilerBInvCost``,	``BoilerPInvCost``,
-``CO2DiscBuild``,	``CostDiscBuild``,	``DHNInvestCost``,
-``FurnaceInvCost``,	``GasConnectionInvCa``,	``HPLakeInvC``,
-``HPSewInvC``,	``NetworkCost``,	``PVTHEXCost``,	``PVTInvC``,
-``PrimDiscBuild``,	``SCHEXCost``,	``SCInvC``,	``StorageCostSum``,
-``StorageHEXCost``,	``StorageHPCost``,	``StorageInvC``,	``SubstHEXCost``,
-``SumInvestCost``,	``pumpCosts``
+
+
+**``configuration_InvestmentCostDetailed``** includes the following parameters:
+
++-------------------+--------------------+--------------------+-----------------------+
+| ``BoilerAddInvC`` | ``BoilerBInvCost`` | ``BoilerPInvCost`` | ``CO2DiscBuild``      |
++-------------------+--------------------+--------------------+-----------------------+
+| ``CostDiscBuild`` | ``DHNInvestCost``  | ``FurnaceInvCost`` |``GasConnectionInvCa`` |
++-------------------+--------------------+--------------------+-----------------------+
+| ``HPLakeInvC``    | ``HPSewInvC``      | ``NetworkCost``    |``PVTHEXCost``         |
++-------------------+--------------------+--------------------+-----------------------+
+| ``PVTInvC``       | ``PrimDiscBuild``  | ``SCHEXCost``      | ``SCInvC``            |
++-------------------+--------------------+--------------------+-----------------------+
+| ``StorageCostSum``| ``StorageHEXCost`` | ``StorageHPCost``  |``StorageInvC``        |
++-------------------+--------------------+--------------------+-----------------------+
+| ``SubstHEXCost``  | ``SumInvestCost``  | ``pumpCosts``                              |
++-------------------+--------------------+--------------------------------------------+
+
 
 
 ``configuration_PrimaryEnergyBySource`` includes the following parameters:
