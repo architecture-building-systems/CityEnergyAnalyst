@@ -86,15 +86,15 @@ name has building network configuration in it.
 
 +----------------------------------+----------------------------------+-----------------------------+
 | ``Q_DC_building_netw_total``     | ``Electr_netw_total``            |``Ecaf_netw_total``          |
-+---------------------------------------+-----------------------------+-----------------------------+
++----------------------------------+----------------------------------+-----------------------------+
 | ``Q_DH_building_netw_total``     | ``Qcdata_netw_total``            | ``Q_DC_losses``             |
-+---------------------------------------+-----------------------------+-----------------------------+
++----------------------------------+----------------------------------+-----------------------------+
 | ``T_sst_heat_supply_netw_total`` | ``Q_DH_losses``                  | ``mdot_DH_netw_total``      |
-+---------------------------------------+-----------------------------+-----------------------------+
++----------------------------------+----------------------------------+-----------------------------+
 | ``T_sst_cool_return_netw_total`` | ``mdot_cool_netw_total``         |  ``mdotdata_netw_total``    |
-+---------------------------------------+-----------------------------+-----------------------------+
++----------------------------------+----------------------------------+-----------------------------+
 | ``T_sst_cool_supply_netw_total`` | ``T_sst_heat_return_netw_total`` | ``day_of_max_heatmassflow`` |
-+----------------------------------+------------------------+---------------------------------------+
++----------------------------------+----------------------------------+-----------------------------+
 
 
 
@@ -214,7 +214,7 @@ are run multiple times
 | ``avgCostCCRpkWh``     | ``avgCostFurnaceRpkWh``    | ``avgCostGHPRpkWh``        |
 +------------------------+----------------------------+----------------------------+
 | ``avgCostHPLakeRpkWh`` | ``avgCostHPSewRpkWh``      | ``avgCostStorageOperation``|
-+----------------------------------------------------------------------------------+
++------------------------+---------------------------------------------------------+
 | ``avgCostUncontrollableSources``                                                 |
 +----------------------------------------------------------------------------------+
 
@@ -239,23 +239,34 @@ are run multiple times
 
 
 
-``configuration_PrimaryEnergyBySource`` includes the following parameters:
-``EelExport``,	``EelectrImportSlave``,	``EgasPrimary``,
-``EgasPrimaryPeakPower``,	``Egroundheat``,	``EsolarUsed``,
-``EwoodPrimary``,	``costBenefitNotUsedHPs``
+**``configuration_PrimaryEnergyBySource``** includes the following parameters:
++----------------+--------------------------+--------------------------+------------------+
+| ``EelExport``  | ``EelectrImportSlave``   | ``EgasPrimary``          | ``Egroundheat``  |
++----------------+--------------------------+--------------------------+------------------+
+| ``EsolarUsed`` | ``EgasPrimaryPeakPower`` |``costBenefitNotUsedHPs`` | ``EwoodPrimary`` |
++----------------+--------------------------+--------------------------+------------------+
 
 
-``configuration_SlaveCostData`` includes the following parameters:
-``KEV_Remuneration``,	``PPoperation_exclAddBackup``,	``costAddBackup_total``,
-``costBackup_sum``,	``costBoiler_sum``,	``costCC_sum``,	``costFurnace_sum``,
-``costGHP_sum``,	``costHPLake_sum``,	``costHPSew_sum``,
-``cost_Boiler_for_Storage_reHeat_at_seasonend``,
-``cost_CC_maintenance``,	``cost_HP_aux_uncontrollable``,
-``cost_HP_storage_operation``,	``total cost``
+**``configuration_SlaveCostData``** includes the following parameters:
++----------------------+-------------------------------+----------------------------+
+| ``KEV_Remuneration`` | ``PPoperation_exclAddBackup`` |``costAddBackup_total``     |
++--------------------+----------------+---------------------+-----------------------+
+| ``costBoiler_sum`` | ``costCC_sum`` | ``costFurnace_sum`` | ``costGHP_sum``       |
++--------------------+-------------------+-------------------------+----------------+
+| ``costHPLake_sum`` | ``costHPSew_sum`` | ``cost_CC_maintenance`` | ``total cost`` |
++-------------------------------------------------+---------------------------------+
+| ``cost_HP_storage_operation``                   | ``cost_HP_aux_uncontrollable``  |
++-------------------------------------------------+---------------------------------+
+| ``cost_Boiler_for_Storage_reHeat_at_seasonend`` | ``costBackup_sum``              |
++-------------------------------------------------+---------------------------------+
 
 
-``configuration_SlaveToMasterCostEmissionsPrimE`` includes the following parameters:
-``CO2_kg_eq``,	``E_oil_eq_MJ``,	``cost_sum``
+
+
+**``configuration_SlaveToMasterCostEmissionsPrimE``** includes the following parameters:
++---------------+-----------------+--------------+
+| ``CO2_kg_eq`` | ``E_oil_eq_MJ`` | ``cost_sum`` |
++---------------+-----------------+--------------+
 
 
 ``configuration_PPActivationPattern`` file has **8760** lines. It includes the following parameters:
