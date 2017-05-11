@@ -82,7 +82,7 @@ name has building network configuration in it.
 
 **Information:**
 
-``Network_summary_result_buildingnetwork`` has the following parameters:
+**``Network_summary_result_buildingnetwork``** has the following parameters:
 
 +----------------------------------+----------------------------------+-----------------------------+
 | ``Q_DC_building_netw_total``     | ``Electr_netw_total``            |``Ecaf_netw_total``          |
@@ -98,21 +98,21 @@ name has building network configuration in it.
 
 
 
-``Network_summary_result_all`` has the following parameters
+**``Network_summary_result_all``** has the following parameters
 
 +----------------------------------+------------------------------+----------------------------------+
 | ``Ecaf_netw_total``              | ``Electr_netw_total``        | ``Q_DC_building_netw_total``     |
-+---------------------------------------+-------------------------+----------------------------------+
++----------------------------------+------------------------------+----------------------------------+
 | ``T_sst_cool_return_netw_total`` | ``Q_DH_building_netw_total`` | ``Q_DH_losses``                  |
-+---------------------------------------+-------------------------+----------------------------------+
++----------------------------------+------------------------------+----------------------------------+
 | ``Qcdata_netw_total``            | ``Q_DC_losses``              | ``T_sst_cool_supply_netw_total`` |
-+---------------------------------------+-------------------------+----------------------------------+
++----------------------------------+------------------------------+----------------------------------+
 | ``T_sst_heat_return_netw_total`` | ``mdot_DH_netw_total``       | ``day_of_max_heatmassflow``      |
-+---------------------------------------+-------------------------+----------------------------------+
++----------------------------------+------------------------------+----------------------------------+
 | ``T_sst_heat_supply_netw_total`` | ``mdot_cool_netw_total``     | ``mdotdata_netw_total``          |
 +----------------------------------+------------------------------+----------------------------------+
 
-3.2 totals
+3.2 Totals
 ~~~~~~~~~~
 
 **File Names:**
@@ -127,7 +127,7 @@ name has building network configuration in it.
 
 **Information:**
 
-``Total_buildingnetwork`` has the following parameters:
+**``Total_buildingnetwork``** has the following parameters:
 
 +--------------------+--------------------+--------------------+------------------+----------------+
 | ``Name``           | ``Af_m2``          | ``Aroof_m2``       | ``GFA_m2``       | ``Ecaf_MWhyr`` |
@@ -151,7 +151,7 @@ name has building network configuration in it.
 | ``QHf_MWhyr``      | ``Qhsf_lat_MWhyr`` | ``Eauxf_ww0_kW``   | ``Qcref_MWhyr``  | ``Eref0_kW``   |
 +--------------------+--------------------+--------------------+------------------+----------------+
 | ``Eauxf_cs_MWhyr`` | ``Eauxf_MWhyr``    | ``Eauxf_ww_MWhyr`` | ``Qcsf_MWhyr``   | ``Qwwf0_kW``   |
-+--------------------+--------------------+--------------------+------------------+----------------+
++-------------+------------------+--------------------+-------------+---------------+--------------+
 | ``Qcs0_kW`` | ``Edataf_MWhyr`` | ``Eauxf_fw_MWhyr`` | ``Ealf0_kW`` | ``Elf_MWhyr``| ``Ef_MWhyr`` |
 +-------------+------------------+--------------------+--------------+--------------+--------------+
 
@@ -161,25 +161,17 @@ name has building network configuration in it.
 
 **File Names:**
 
-``configuration_AveragedCostData``
-
-``configuration_InvestmentCostDetailed``
-
-``configuration_PrimaryEnergyBySource``
-
-``configuration_SlaveCostData``
-
-``configuration_SlaveToMasterCostEmissionsPrimE``
-
-``configuration_PPActivationPattern``
-
-``configuration_SlaveDetailedEmissionData``
-
-``configuration_SlaveDetailedEprimData``
-
-``configuration_Storage_Sizing_Parameters``
-
-``configuration_StorageOperationData``
++---------------------------------------------------+------------------------------------------+
+| ``configuration_AveragedCostData``                | ``configuration_InvestmentCostDetailed`` |
++---------------------------------------------------+------------------------------------------+
+| ``configuration_PrimaryEnergyBySource``           | ``configuration_SlaveCostData``          |
++---------------------------------------------------+------------------------------------------+
+| ``configuration_SlaveToMasterCostEmissionsPrimE`` | ``configuration_PPActivationPattern``    |
++---------------------------------------------------+------------------------------------------+
+| ``configuration_SlaveDetailedEmissionData``       | ``configuration_SlaveDetailedEprimData`` |
++---------------------------------------------------+------------------------------------------+
+| ``configuration_Storage_Sizing_Parameters``       | ``configuration_StorageOperationData``   |
++---------------------------------------------------+------------------------------------------+
 
 **Rewritten:** Highly unlikely to be rewritten as ``configuration`` is associated
 with each saved file. Over time this folder will get cluttered with files if the simulations
@@ -187,25 +179,29 @@ are run multiple times
 
 **Origin:**
 
-``configuration_AveragedCostData`` originates from ``CEAforArcGIS\cea\optimization\slave\least_cost.py``
-
-``configuraiton_InvestmentCostDetailed`` originates from ``CEAforArcGIS\cea\optimization\master\cost_model.py``
-
-``configuration_PrimaryEnergyBySource`` originates from ``CEAforArcGIS\cea\optimization\slave\least_cost.py``
-
-``configuration_SlaveCostData`` originates from ``CEAforArcGIS\cea\optimization\slave\least_cost.py``
-
-``configuration_SlaveToMasterCostEmissionsPrimE`` originates from ``CEAforArcGIS\cea\optimization\slave\least_cost.py``
-
-``configuration_PPActivationPattern`` originates from ``CEAforArcGIS\cea\optimization\slave\least_cost.py``
-
-``configuration_SlaveDetailedEmissionData`` originates from ``CEAforArcGIS\cea\optimization\slave\least_cost.py``
-
-``configuration_SlaveDetailedEprimData`` originates from ``CEAforArcGIS\cea\optimization\slave\least_cost.py``
-
-``configuration_Storage_Sizing_Parameters`` originates from ``CEAforArcGIS\cea\optimization\slave\seasonal_storage\storage_main.py``
-
-``configuration_StorageOperationData`` originates from ``CEAforArcGIS\cea\optimization\slave\seasonal_storage\design_operation.py``
++===================================================+==============================================================================+
+| File Name                                         | Originates from                                                              |
++===================================================+==============================================================================+
+| ``configuration_AveragedCostData``                | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------------+------------------------------------------------------------------------------+
+| ``configuraiton_InvestmentCostDetailed``          | ``CEAforArcGIS\cea\optimization\master\cost_model.py``                       |
++---------------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_PrimaryEnergyBySource``           | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_SlaveCostData``                   | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_SlaveToMasterCostEmissionsPrimE`` | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_PPActivationPattern``             | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_SlaveDetailedEmissionData``       | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_SlaveDetailedEprimData``          | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_Storage_Sizing_Parameters``       | ``CEAforArcGIS\cea\optimization\slave\seasonal_storage\storage_main.py``     |
++---------------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_StorageOperationData``            | ``CEAforArcGIS\cea\optimization\slave\seasonal_storage\design_operation.py`` |
++---------------------------------------------------+------------------------------------------------------------------------------+
 
 **Information:**
 
