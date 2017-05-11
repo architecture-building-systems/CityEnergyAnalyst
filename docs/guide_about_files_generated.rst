@@ -15,6 +15,9 @@ The folders present inside this are:
 1. disconnected
 2. master
 3. network
+    3.1 network
+    3.2 totals
+    3.3 layout
 4. slave
 5. substations
 
@@ -31,7 +34,7 @@ The folders present inside this are:
 
 +---------------------------------------+------------------------+--------------------+
 | ``Annualized Investment Costs [CHF]`` | ``Best configuration`` | ``BoilerBG Share`` |
-+=======================================+========================+====================+
++---------------------------------------+------------------------+--------------------+
 | ``CO2 Emissions [kgCO2-eq]``          | ``BoilerNG Share``     | ``EforGHP``        |
 +---------------------------------------+------------------------+--------------------+
 | ``Primary Energy Needs [MJoil-eq]``   | ``FC Share``           | ``GHP Share``      |
@@ -40,13 +43,6 @@ The folders present inside this are:
 +---------------------------------------+------------------------+--------------------+
 | ``Total Costs [CHF]``                 | ``QfromGHP``           | ``QfromNG``        |
 +---------------------------------------+------------------------+--------------------+
-
-``Annualized Investment Costs [CHF]``,	``Best configuration``,
-``BoilerBG Share``,	``BoilerNG Share``,	``CO2 Emissions [kgCO2-eq]``,
-``EforGHP``,	``FC Share``,	``GHP Share``,	``Nominal Power``,
-``Operation Costs [CHF]``,	``Primary Energy Needs [MJoil-eq]``,
-``QfromBG``,	``QfromGHP``,	``QfromNG``,	``Total Costs [CHF]``
-
 
 2. Master
 ~~~~~~~~~
@@ -59,10 +55,20 @@ times, the files are constantly replaced with new ones. **Thus if using multiple
 **Origin:** All the files in this folder are created in the following script
 ``CEAforArcGIS\cea\optimization\master\master_main.py``
 
-**Information:** The file has ``population_fitness``, ``epsIndicator``, ``generation``, ``testedPop``, ``population``
+**Information:** Each of these files have the following parameters:
+
++------------------------+------------------+----------------+
+| ``population_fitness`` | ``epsIndicator`` | ``generation`` |
++------------------------+------------------+----------------+
+|    ``testedPop``       | ``population``   |                |
++------------------------+------------------+----------------+
+
 
 3. Network
 ~~~~~~~~~~
+
+3.1 Network
+~~~~~~~~~~~
 
 **File Names:**
 
@@ -78,12 +84,77 @@ name has building network configuration in it.
 
 ``Network_summary_result_buildingnetwork`` has the following parameters:
 
-``Ecaf_netw_total``,	``Electr_netw_total``,	``Q_DC_building_netw_total``,
-``Q_DC_losses``,	``Q_DH_building_netw_total``,	``Q_DH_losses``,	``Qcdata_netw_total``,
-``T_sst_cool_return_netw_total``,	``T_sst_cool_supply_netw_total``,
-``T_sst_heat_return_netw_total``,	``T_sst_heat_supply_netw_total``,
-``day_of_max_heatmassflow``,	``mdot_DH_netw_total``,	``mdot_cool_netw_total``,
-``mdotdata_netw_total``
++----------------------------------+----------------------------------+-----------------------------+
+| ``Q_DC_building_netw_total``     | ``Electr_netw_total``            |``Ecaf_netw_total``          |
++---------------------------------------+-----------------------------+-----------------------------+
+| ``Q_DH_building_netw_total``     | ``Qcdata_netw_total``            | ``Q_DC_losses``             |
++---------------------------------------+-----------------------------+-----------------------------+
+| ``T_sst_heat_supply_netw_total`` | ``Q_DH_losses``                  | ``mdot_DH_netw_total``      |
++---------------------------------------+-----------------------------+-----------------------------+
+| ``T_sst_cool_return_netw_total`` | ``mdot_cool_netw_total``         |  ``mdotdata_netw_total``    |
++---------------------------------------+-----------------------------+-----------------------------+
+| ``T_sst_cool_supply_netw_total`` | ``T_sst_heat_return_netw_total`` | ``day_of_max_heatmassflow`` |
++----------------------------------+------------------------+---------------------------------------+
+
+
+
+``Network_summary_result_all`` has the following parameters
+
++----------------------------------+------------------------------+----------------------------------+
+| ``Ecaf_netw_total``              | ``Electr_netw_total``        | ``Q_DC_building_netw_total``     |
++---------------------------------------+-------------------------+----------------------------------+
+| ``T_sst_cool_return_netw_total`` | ``Q_DH_building_netw_total`` | ``Q_DH_losses``                  |
++---------------------------------------+-------------------------+----------------------------------+
+| ``Qcdata_netw_total``            | ``Q_DC_losses``              | ``T_sst_cool_supply_netw_total`` |
++---------------------------------------+-------------------------+----------------------------------+
+| ``T_sst_heat_return_netw_total`` | ``mdot_DH_netw_total``       | ``day_of_max_heatmassflow``      |
++---------------------------------------+-------------------------+----------------------------------+
+| ``T_sst_heat_supply_netw_total`` | ``mdot_cool_netw_total``     | ``mdotdata_netw_total``          |
++----------------------------------+------------------------------+----------------------------------+
+
+3.2 totals
+~~~~~~~~~~
+
+**File Names:**
+
+``Total_buildingnetwork``
+
+**Rewritten:** High chance of the files being rewritten, even though the file
+name has building network configuration in it.
+
+**Origin:** Both the files originate in
+``CEAforArcGIS\cea\optimization\supportFn.py``
+
+**Information:**
+
+``Total_buildingnetwork`` has the following parameters:
+
++--------------------+--------------------+--------------------+------------------+----------------+
+| ``Name``           | ``Af_m2``          | ``Aroof_m2``       | ``GFA_m2``       | ``Ecaf_MWhyr`` |
++--------------------+--------------------+--------------------+------------------+----------------+
+| ``people0``        | ``Eref_MWhyr``     | ``Eauxf_cs0_kW``   | ``Eauxf_ve0_kW`` | ``Qcs_MWhyr``  |
++--------------------+--------------------+--------------------+------------------+----------------+
+| ``Edataf0_kW``     | ``Qhprof_MWhyr``   | ``Ecaf0_kW``       | ``Qhsf0_kW``     | ``Qhs_MWhyr``  |
++--------------------+--------------------+--------------------+------------------+----------------+
+| ``Qww0_kW``        | ``QHf0_kW``        | ``Eauxf_hs0_kW``   | ``Eprof_MWhyr``  | ``Qhs0_kW``    |
++--------------------+--------------------+--------------------+------------------+----------------+
+| ``Eauxf_ve_MWhyr`` | ``Qcdataf_MWhyr``  | ``Qcsf_lat0_kW``   | ``Qhprof0_kW``   | ``Eaf0_kW``    |
++--------------------+--------------------+--------------------+------------------+----------------+
+| ``QEf_MWhyr``      | ``Ef0_kW``         | ``Eauxf_hs_MWhyr`` | ``Eprof0_kW``    | ``Qcref0_kW``  |
++--------------------+--------------------+--------------------+------------------+----------------+
+| ``Ealf_MWhyr``     | ``Qhsf_lat0_kW``   | ``Qhsf_MWhyr``     | ``Qwwf_MWhyr``   | ``Eaf_MWhyr``  |
++--------------------+--------------------+--------------------+---------+--------+----------------+
+| ``QCf0_kW``        | ``Qww_MWhyr``      | ``Qcsf_lat_MWhyr`` | ``Qcdataf0_kW``  | ``Qcsf0_kW``   |
++--------------------+--------------------+--------------------+---------+--------+----------------+
+| ``Eauxf_fw0_kW``   | ``QCf_MWhyr``      | ``Eauxf0_kW``      | ``QEf0_kW``      | ``Elf0_kW``    |
++--------------------+--------------------+--------------------+------------------+----------------+
+| ``QHf_MWhyr``      | ``Qhsf_lat_MWhyr`` | ``Eauxf_ww0_kW``   | ``Qcref_MWhyr``  | ``Eref0_kW``   |
++--------------------+--------------------+--------------------+------------------+----------------+
+| ``Eauxf_cs_MWhyr`` | ``Eauxf_MWhyr``    | ``Eauxf_ww_MWhyr`` | ``Qcsf_MWhyr``   | ``Qwwf0_kW``   |
++--------------------+--------------------+--------------------+------------------+----------------+
+| ``Qcs0_kW`` | ``Edataf_MWhyr`` | ``Eauxf_fw_MWhyr`` | ``Ealf0_kW`` | ``Elf_MWhyr``| ``Ef_MWhyr`` |
++-------------+------------------+--------------------+--------------+--------------+--------------+
+
 
 4. Slave
 ~~~~~~~~
