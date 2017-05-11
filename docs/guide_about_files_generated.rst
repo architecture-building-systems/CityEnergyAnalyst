@@ -82,7 +82,7 @@ name has building network configuration in it.
 
 **Information:**
 
-**``Network_summary_result_buildingnetwork``** has the following parameters:
+**Network_summary_result_buildingnetwork** has the following parameters:
 
 +----------------------------------+----------------------------------+-----------------------------+
 | ``Q_DC_building_netw_total``     | ``Electr_netw_total``            |``Ecaf_netw_total``          |
@@ -98,7 +98,7 @@ name has building network configuration in it.
 
 
 
-**``Network_summary_result_all``** has the following parameters
+**Network_summary_result_all** has the following parameters
 
 +----------------------------------+------------------------------+----------------------------------+
 | ``Ecaf_netw_total``              | ``Electr_netw_total``        | ``Q_DC_building_netw_total``     |
@@ -127,7 +127,7 @@ name has building network configuration in it.
 
 **Information:**
 
-**``Total_buildingnetwork``** has the following parameters:
+**Total_buildingnetwork** has the following parameters:
 
 +--------------------+--------------------+--------------------+------------------+----------------+
 | ``Name``           | ``Af_m2``          | ``Aroof_m2``       | ``GFA_m2``       | ``Ecaf_MWhyr`` |
@@ -170,8 +170,8 @@ name has building network configuration in it.
 
 **Information:**
 
-**``NodesData_DC``, ``NodesData_DH``** has ``DC_ID``, ``Name``, ``Plant``, ``Sink``
-**``PipesData_DC``, ``PipesData_DH``** has ``DC_ID``, ``Length``, ``NODE1``, ``NODE2``
+**NodesData_DC, NodesData_DH** has ``DC_ID``, ``Name``, ``Plant``, ``Sink``
+**PipesData_DC, PipesData_DH** has ``DC_ID``, ``Length``, ``NODE1``, ``NODE2``
 
 
 4. Slave
@@ -223,7 +223,7 @@ are run multiple times
 
 **Information:**
 
-**``configuration_AveragedCostData``** includes the following parameters:
+**configuration_AveragedCostData** includes the following parameters:
 
 +------------------------+----------------------------+----------------------------+
 | ``avgCostAddBoiler``   | ``avgCostBoilerBaseRpkWh`` | ``avgCostBoilerPeakRpkWh`` |
@@ -236,9 +236,7 @@ are run multiple times
 +----------------------------------------------------------------------------------+
 
 
-
-
-**``configuration_InvestmentCostDetailed``** includes the following parameters:
+**configuration_InvestmentCostDetailed** includes the following parameters:
 
 +-------------------+--------------------+--------------------+-----------------------+
 | ``BoilerAddInvC`` | ``BoilerBInvCost`` | ``BoilerPInvCost`` | ``CO2DiscBuild``      |
@@ -254,9 +252,7 @@ are run multiple times
 | ``SubstHEXCost``  | ``SumInvestCost``  | ``pumpCosts``                              |
 +-------------------+--------------------+--------------------------------------------+
 
-
-
-**``configuration_PrimaryEnergyBySource``** includes the following parameters:
+**configuration_PrimaryEnergyBySource** includes the following parameters:
 
 +----------------+--------------------------+--------------------------+------------------+
 | ``EelExport``  | ``EelectrImportSlave``   | ``EgasPrimary``          | ``Egroundheat``  |
@@ -264,8 +260,7 @@ are run multiple times
 | ``EsolarUsed`` | ``EgasPrimaryPeakPower`` |``costBenefitNotUsedHPs`` | ``EwoodPrimary`` |
 +----------------+--------------------------+--------------------------+------------------+
 
-
-**``configuration_SlaveCostData``** includes the following parameters:
+**configuration_SlaveCostData** includes the following parameters:
 
 +----------------------+-------------------------------+----------------------------+
 | ``KEV_Remuneration`` | ``PPoperation_exclAddBackup`` |``costAddBackup_total``     |
@@ -279,17 +274,13 @@ are run multiple times
 | ``cost_Boiler_for_Storage_reHeat_at_seasonend`` | ``costBackup_sum``              |
 +-------------------------------------------------+---------------------------------+
 
-
-
-
-**``configuration_SlaveToMasterCostEmissionsPrimE``** includes the following parameters:
+**configuration_SlaveToMasterCostEmissionsPrimE** includes the following parameters:
 
 +---------------+-----------------+--------------+
 | ``CO2_kg_eq`` | ``E_oil_eq_MJ`` | ``cost_sum`` |
 +---------------+-----------------+--------------+
 
-
-**``configuration_PPActivationPattern``** file has **8760** lines. It includes the following parameters:
+**configuration_PPActivationPattern** file has **8760** lines. It includes the following parameters:
 
 +----------------------------+------------------------+----------------+--------------------+
 | ``BoilerBase_Status``      | ``BoilerPeak_Status``  | ``CC_Status``  | ``Cost_AddBoiler`` |
@@ -312,7 +303,7 @@ are run multiple times
 +---------------------------+----------------------+-----------------+----------------------+
 
 
-**``configuration_SlaveDetailedEmissionData``** includes the following parameters:
+**configuration_SlaveDetailedEmissionData** includes the following parameters:
 
 +----------------------------------------+-----------------------------+----------------------+
 | ``CO2_from_AddBoiler_gas``             | ``CO2_from_BaseBoiler_gas`` | ``CO2_from_CC_gas``  |
@@ -326,8 +317,7 @@ are run multiple times
 | ``CO2_from_fictiveBoilerStorage``      |  ``CO2_from_wood``                                 |
 +----------------------------------------+----------------------------------------------------+
 
-
-**``configuration_SlaveDetailedEprimData``** includes the following parameters:
+**configuration_SlaveDetailedEprimData** includes the following parameters:
 
 +------------------------------------------+---------------------------------------+
 | ``E_prim_from_AddBoiler_gas``            | ``E_prim_from_AddBoiler_gas``         |
@@ -351,15 +341,13 @@ are run multiple times
 | ``Eprim_from_wood``                                                              |
 +----------------------------------------------------------------------------------+
 
-
-**``configuration_Storage_Sizing_Parameters``** includes the following parameters:
+**configuration_Storage_Sizing_Parameters** includes the following parameters:
 
 +---------------+----------------------+---------------+
 | ``Q_initial`` | ``Storage_Size_opt`` | ``T_initial`` |
 +---------------+----------------------+---------------+
 
-
-**``configuration_StorageOperationData``** file has **8760** lines. It includes the following parameters:
+**configuration_StorageOperationData** file has **8760** lines. It includes the following parameters:
 
 
 +---------------------+-----------------------------+---------------------------+
@@ -396,7 +384,7 @@ are run multiple times
 
 **Information:**
 
-**``BuildingName_result``** has the following parameters:
+**BuildingName_result** has the following parameters:
 
 +---------------------------------------------+------------------------+--------------------------+
 | ``A_hex_cool_design``                       | ``A_hex_dhw_design``   | ``A_hex_heating_design`` |
@@ -414,8 +402,7 @@ are run multiple times
 | ``mdot_heating_result``                     | ``mdot_dhw_result``                               |
 +---------------------------------------------+---------------------------------------------------+
 
-
-**``Total_linkedbuildings``** has the following parameters:
+**Total_linkedbuildings** has the following parameters:
 
 +------------------+--------------------+-------------------+------------------+--------------------+
 | ``Name``         | ``Af_m2``          | ``Aroof_m2``      | ``GFA_m2``       | ``people0``        |
@@ -440,10 +427,10 @@ are run multiple times
 +------------------+--------------------+-------------------+------------------+--------------------+
 | ``Eauxf0_kW``    | ``Qhsf_lat_MWhyr`` | ``Eauxf_ww0_kW``  | ``Qcref_MWhyr``  | ``Eaf_MWhyr``      |
 +------------------+--------------------+-------------------+------------------+--------------------+
-| ``QEf0_kW``  | ``Eref0_kW``  | ``Elf_MWhyr``  |  ``Elf0_kW``  |  ``QHf_MWhyr``  |  ``Ef_MWhyr``   |
-+--------------+---------------+----------------+---------------+-----------------+-----------------+
-
-
+| ``QEf0_kW``      | ``Eref0_kW``       | ``Elf_MWhyr``     | ``Elf0_kW``      | ``QHf_MWhyr``      |
++------------------+--------------------+-------------------+------------------+--------------------+
+| ``Ef_MWhyr``                                                                                      |
++---------------------------------------------------------------------------------------------------+
 
 
 Demand
@@ -461,8 +448,7 @@ is run
 
 **Information:**
 
-**``BuildingName``** file has the following parameters:
-
+**BuildingName** file has the following parameters:
 
 +------------+-----------+-------------+--------------+-------------------+---------------------+
 | ``DATE``   | ``Name``  | ``people``  | ``QEf_kWh``  | ``QHf_kWh``       | ``Tcref_sup_C``     |
@@ -485,8 +471,7 @@ is run
 +------------------+------------------+------------------+-------------------+------------------+
 
 
-**``Total_demand``** file has the following parameters:
-
+**Total_demand** file has the following parameters:
 
 
 +------------------+------------------+------------------+--------------+--------------+---------------+
