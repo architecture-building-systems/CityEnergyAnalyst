@@ -12,7 +12,7 @@ from cea.utilities import solar_equations
 from cea.technologies.solar_collector import optimal_angle_and_tilt, \
     calc_groups, Calc_incidenteangleB, calc_properties_SC, calc_anglemodifierSC, calc_qrad, calc_qgain, calc_Eaux_SC,\
     SelectminimumenergySc, Selectminimumenergy2, Calc_qloss_net
-from cea.technologies.photovoltaic import calc_properties_PV, Calc_PV_power, Calc_diffuseground_comp, Calc_Sm_PV
+from cea.technologies.photovoltaic import calc_properties_PV, calc_PV_power, calc_diffuseground_comp, calc_Sm_PV
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -115,9 +115,9 @@ def calc_PVT_generation(type_panel, hourly_radiation, Number_groups, number_poin
 
         # calculate angles necesary
         teta_vector = np.vectorize(Calc_incidenteangleB)(g_vector, lat, ha_vector, tilt, teta_z)
-        teta_ed, teta_eG = Calc_diffuseground_comp(tilt)
+        teta_ed, teta_eG = calc_diffuseground_comp(tilt)
 
-        results = np.vectorize(Calc_Sm_PV)(weather_data.drybulb_C, radiation.I_sol, radiation.I_direct.copy(),
+        results = np.vectorize(calc_Sm_PV)(weather_data.drybulb_C, radiation.I_sol, radiation.I_direct.copy(),
                                            radiation.I_diffuse.copy(), tilt, lat, teta_z, ha_vector, g_vector,
                                            Sz_vector, Az_vector, teta_vector, teta_ed, teta_eG, areagroup, type_panel,
                                            misc_losses,
@@ -337,7 +337,7 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
         if Tcell[x] == 0:
             Tcell[x] = Tcell_pv[x]
 
-    PV_generation = np.vectorize(Calc_PV_power)(Sm_pv, Tcell, eff_nom, areagroup, Bref, misc_losses)
+    PV_generation = np.vectorize(calc_PV_power)(Sm_pv, Tcell, eff_nom, areagroup, Bref, misc_losses)
     result = [supply_losses[5], supply_out_total[5], Auxiliary[5], temperature_out[flow], temperature_in[flow], mcp,
               PV_generation]
     return result
