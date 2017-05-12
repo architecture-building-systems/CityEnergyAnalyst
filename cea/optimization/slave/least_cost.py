@@ -86,16 +86,15 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     Q_missing_copy = Q_missing.copy()
 
-    NETWORK_DATA_FILE = MS_Var.NETWORK_DATA_FILE
+    network_data_file = MS_Var.NETWORK_DATA_FILE
 
     # Import Temperatures from Network Summary:
-    network_storage_file = locator.get_optimization_network_results_folder()
-    os.chdir(network_storage_file)
-    NETWORK_DATA = pd.read_csv(NETWORK_DATA_FILE)
-    tdhret = NETWORK_DATA['T_sst_heat_return_netw_total']
+    network_storage_file = locator.get_optimization_network_data_folder(network_data_file)
+    network_data = pd.read_csv(network_storage_file)
+    tdhret = network_data['T_sst_heat_return_netw_total']
 
-    mdot_DH = NETWORK_DATA['mdot_DH_netw_total']
-    tdhsup = NETWORK_DATA['T_sst_heat_supply_netw_total'][0]
+    mdot_DH = network_data['mdot_DH_netw_total']
+    tdhsup = network_data['T_sst_heat_supply_netw_total'][0]
         # import Marginal Cost of PP Data :
     # os.chdir(Cost_Maps_Path)
 
