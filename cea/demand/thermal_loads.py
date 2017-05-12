@@ -500,10 +500,9 @@ class BuildingProperties(object):
 
         :param envelope: The contents of the `architecture.shp` file, indexed by building name. It contains the
             following fields: n50, type_shade, win_op, win_wall. Only `win_wall` (window to wall ratio) is
-            used. Es, Hs, U_base, U_roof, U_wall, U_win, th_mass.
-            - Es: fraction of gross floor area that has electricity {0 <= Es <= 1}
+            used. Hs, U_base, U_roof, U_wall, U_win, Cm_Af.
             - Hs: fraction of gross floor area that is heated/cooled {0 <= Hs <= 1}
-            - th_mass: type of building construction {T1: light, T2: medium, T3: heavy}
+            - Cm_Af: iternal heat capacity per unit of area J/K.m2
         :type envelope: Gdf
 
         :type thermal_properties: Gdf
@@ -575,23 +574,24 @@ class BuildingProperties(object):
 
         # total area of the building envelope in [m2], the roof is considered to be flat
         df['Aroof'] = df['footprint']
-        df['Atot'] = df[['Aw', 'Aop_sup', 'footprint', 'Aop_bel']].sum(axis=1) + (df['Aroof'] * (df['floors'] - 1))  # TODO: check! why is roof counted multiple times (inner walls are not contributing to heat transfer)
+        df['Atot'] = df[['Aw', 'Aop_sup', 'footprint', 'Aop_bel']].sum(axis=1) + (df['Aroof'] * (df['floors'] - 1))
 
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
+
         for building in df.index.values:
-            if hvac_temperatures['type_hs'][building] == 'T0':
-                df['Hs'][building] = 0
+            if hvac_temperatures.loc[building,'type_hs'] == 'T0':
+                df.loc[building,'Hs'] = 0
                 print 'Building %s has no heating system, Hs corrected to 0.' % building
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated
-        df['Aef'] = df['GFA_m2'] * df['Es']  # conditioned area only those for electricity
+        df['Aef'] = df['GFA_m2'] * gv.Es  # conditioned area only those for electricity
 
         if 'Cm' in self.get_overrides_columns():
             # Internal heat capacity is not part of input, calculate [J/K]
-            df['Cm'] = self._overrides['Cm'] * df['Af']
+            df['Cm'] = self._overrides['Cm_Af'] * df['Af']
         else:
-            df['Cm'] = df['th_mass'].apply(self.lookup_specific_heat_capacity) * df['Af']
+            df['Cm'] = df['Cm_Af'] * df['Af']
 
-        df['Am'] = df['Cm'].apply(self.lookup_effective_mass_area_factor) * df['Af']  # Effective mass area in [m2]
+        df['Am'] = df['Cm_Af'].apply(self.lookup_effective_mass_area_factor) * df['Af']  # Effective mass area in [m2]
 
         # Steady-state Thermal transmittance coefficients and Internal heat Capacity
         df['Htr_w'] = df['Aw'] * df['U_win']  # Thermal transmission coefficient for windows and glazing in [W/K]
@@ -611,40 +611,13 @@ class BuildingProperties(object):
         result = df[fields]
         return result
 
-    def lookup_specific_heat_capacity(self, th_mass):
-        """
-        Look up the specific heat capacity in [J/K] for the building construction type. This is used for the calculation
-        of the internal heat capacity "Cm" in `get_prop_RC_model`.
-
-        `th_mass` is one of the following values:
-
-        - T1: light
-        - T2: medium (default)
-        - T3: heavy
-
-        :param th_mass: the type of building construction (origin: thermal_properties.shp)
-        :return:
-        """
-        if th_mass == 'T1':
-            return 110000.0
-        elif th_mass == 'T3':
-            return 300000.0
-        else:
-            return 165000.0
-
     def lookup_effective_mass_area_factor(self, cm):
         """
         Look up the factor to multiply the conditioned floor area by to get the effective mass area by building construction
         type. This is used for the calculation of the effective mass area "Am" in `get_prop_RC_model`.
         Standard values can be found in the Annex G of ISO EN13790
 
-        `th_mass` is one of the following values:
-
-        - T1: light
-        - T2: medium (default)
-        - T3: heavy
-
-        :param th_mass: the type of building construction (origin: thermal_properties.shp)
+        :param Cm_Af: The internal heat capacity per unit of area.
         :return: effective mass area factor
         """
         if cm == 0:
@@ -760,7 +733,7 @@ class EnvelopeProperties(object):
     """Encapsulate a single row of the architecture input file for a building"""
     __slots__ = [u'a_roof', u'f_cros', u'n50', u'win_op', u'win_wall',
                  u'a_wall', u'rf_sh', u'e_wall', u'e_roof', u'G_win', u'e_win',
-                 u'U_roof',u'Es', u'Hs', u'th_mass', u'U_wall', u'U_base', u'U_win']
+                 u'U_roof', u'Hs', u'Cm_Af', u'U_wall', u'U_base', u'U_win']
 
     def __init__(self, envelope):
         self.a_roof = envelope['a_roof']
@@ -773,9 +746,8 @@ class EnvelopeProperties(object):
         self.G_win = envelope['G_win']
         self.e_win = envelope['e_win']
         self.U_roof= envelope['U_roof']
-        self.Es= envelope['Es']
         self.Hs= envelope['Hs']
-        self.th_mass = envelope['th_mass']
+        self.Cm_Af = envelope['Cm_Af']
         self.U_wall = envelope['U_wall']
         self.U_base = envelope['U_base']
         self.U_win = envelope['U_win']
@@ -877,19 +849,29 @@ def get_envelope_properties(locator, prop_architecture):
     prop_wall = pd.read_excel(locator.get_envelope_systems(), 'WALL')
     prop_win = pd.read_excel(locator.get_envelope_systems(), 'WINDOW')
     prop_shading = pd.read_excel(locator.get_envelope_systems(), 'SHADING')
+    prop_construction = pd.read_excel(locator.get_envelope_systems(), 'CONSTRUCTION')
+    prop_leakage = pd.read_excel(locator.get_envelope_systems(), 'LEAKAGE')
 
+    df_construction = prop_architecture.merge(prop_construction, left_on='type_cons', right_on='code')
+    df_leakage = prop_architecture.merge(prop_leakage, left_on='type_leak', right_on='code')
     df_roof = prop_architecture.merge(prop_roof, left_on='type_roof', right_on='code')
     df_wall = prop_architecture.merge(prop_wall, left_on='type_wall', right_on='code')
     df_win = prop_architecture.merge(prop_win, left_on='type_win', right_on='code')
     df_shading = prop_architecture.merge(prop_shading, left_on='type_shade', right_on='code')
 
-    fields_roof = ['Name', 'win_wall', 'n50', 'e_roof', 'a_roof', 'U_roof', 'Es', 'Hs', 'th_mass']
-    fields_wall = ['Name', 'e_wall', 'a_wall', 'U_wall', 'U_base']
+    fields_construction = ['Name', 'Cm_Af']
+    fields_leakage = ['Name', 'n50']
+    fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof', 'Hs']
+    fields_wall = ['Name', 'win_wall','e_wall', 'a_wall', 'U_wall', 'U_base']
     fields_win = ['Name', 'e_win', 'G_win', 'U_win']
     fields_shading = ['Name', 'rf_sh']
 
-    envelope_prop = df_roof[fields_roof].merge(df_wall[fields_wall], on='Name').merge(df_win[fields_win], on='Name').merge(
-        df_shading[fields_shading], on='Name')
+    envelope_prop = df_roof[fields_roof].merge(df_wall[fields_wall],
+                    on='Name').merge(df_win[fields_win],
+                    on='Name').merge(df_shading[fields_shading],
+                    on='Name').merge(df_construction[fields_construction],
+                    on='Name').merge(df_leakage[fields_leakage],
+                    on='Name')
 
     return envelope_prop
 

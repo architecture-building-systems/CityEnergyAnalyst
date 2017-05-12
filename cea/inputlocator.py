@@ -21,8 +21,8 @@ class InputLocator(object):
     # SCENARIO
     def __init__(self, scenario_path):
         self.scenario_path = scenario_path
-        self.db_path = os.path.join(os.path.dirname(__file__), 'databases', 'CH')  # FIXME: add country code parameter
-        self.weather_path = os.path.join(os.path.dirname(__file__), 'databases', 'weather')
+        self.db_path = os.path.join(os.path.dirname(__file__), 'databases')
+        self.weather_path = os.path.join(self.db_path, 'weather')
 
     @staticmethod
     def _ensure_folder(*components):
@@ -164,46 +164,53 @@ class InputLocator(object):
         return weather_names
 
     def get_archetypes_properties(self):
-        """databases/CH/Archetypes/Archetypes_properties.xlsx
+        """databases/CH/Archetypes/Aconstruction_properties.xlsx
         path to database of archetypes file Archetypes_properties.xlsx"""
-        return os.path.join(self.db_path, 'Archetypes', 'Archetypes_properties.xlsx')
+        return os.path.join(self.db_path, 'archetypes', 'construction_properties_CH.xlsx')
 
     def get_archetypes_schedules(self):
         """databases/CH/Archetypes/Archetypes_schedules.xlsx
         path to database of archetypes file Archetypes_HVAC_properties.xlsx"""
-        return os.path.join(self.db_path, 'Archetypes', 'Archetypes_schedules.xlsx')
+        return os.path.join(self.db_path, 'archetypes', 'occupancy_schedules_SIA.xlsx')
 
     def get_life_cycle_inventory_supply_systems(self):
-        """databases/CH/Systems/supply_systems.csv"""
-        return os.path.join(self.db_path, 'Systems', 'supply_systems.xls')
+        """databases/lifecycle/LCA_infrastructure.csv"""
+        return os.path.join(self.db_path, 'lifecycle', 'LCA_infrastructure.xlsx')
+
+    def get_life_cycle_inventory_building_systems(self):
+        """databases/lifecycle/LCA_infrastructure.csv"""
+        return os.path.join(self.db_path, 'lifecycle', 'LCA_buildings.xlsx')
 
     def get_technical_emission_systems(self):
         """databases/CH/Systems/emission_systems.csv"""
-        return os.path.join(self.db_path, 'Systems',  'emission_systems.xls')
+        return os.path.join(self.db_path, 'systems',  'emission_systems.xls')
 
     def get_envelope_systems(self):
         """databases/CH/Systems/emission_systems.csv"""
-        return os.path.join(self.db_path, 'Systems',  'envelope_systems.xls')
+        return os.path.join(self.db_path, 'systems',  'envelope_systems.xls')
 
     def get_data_benchmark(self):
         """databases/CH/Benchmarks/benchmark_targets.xls"""
-        return os.path.join(self.db_path, 'Benchmarks', 'benchmark_2000W.xls')
+        return os.path.join(self.db_path, 'benchmarks', 'benchmark_2000W.xls')
 
     def get_data_mobility(self):
         """databases/CH/Benchmarks/mobility.xls"""
-        return os.path.join(self.db_path, 'Benchmarks', 'mobility.xls')
+        return os.path.join(self.db_path, 'benchmarks', 'mobility.xls')
 
     def get_uncertainty_db(self):
         """databases/CH/Uncertainty/uncertainty_distributions.xls"""
-        return os.path.join(self.db_path, 'Uncertainty', 'uncertainty_distributions.xls')
+        return os.path.join(self.db_path, 'uncertainty', 'uncertainty_distributions.xls')
 
     def get_uncertainty_parameters(self):
         """databases/CH/Uncertainty/uncertainty_distributions.xls"""
-        return os.path.join(self.db_path, 'Uncertainty')
+        return os.path.join(self.db_path, 'uncertainty')
 
     def get_uncertainty_results_folder(self):
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'uncertainty')
 
+    def get_supply_systems_database(self):
+        """databases/CH/Systems/etechnologies.xls"""
+        return os.path.join(self.db_path, 'systems',  'supply_systems.xls')
 
     # INPUTS
 
@@ -272,13 +279,32 @@ class InputLocator(object):
     # OUTPUTS
 
     ##SOLAR-RADIATION
-    def get_radiation(self):
+    def get_radiation(self):  #todo: delete if not used
         """scenario/outputs/data/solar-radiation/radiation.csv"""
         return os.path.join(self._ensure_folder(self.get_solar_radiation_folder()), 'radiation.csv')
 
     def get_solar_radiation_folder(self):
         """scenario/outputs/data/solar-radiation"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+
+    def get_radiation_building(self, building_name):
+        """scenario/outputs/data/solar-radiation/radiation.csv"""
+        solar_radiation_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+        if not os.path.exists(solar_radiation_folder):
+            os.makedirs(solar_radiation_folder)
+        return os.path.join(solar_radiation_folder, '%s_insolation_Whm2.csv' %building_name)
+
+    def get_radiation_metadata(self, building_name):
+        """scenario/outputs/data/solar-radiation/radiation.csv"""
+        solar_radiation_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+        if not os.path.exists(solar_radiation_folder):
+            os.makedirs(solar_radiation_folder)
+        return os.path.join(solar_radiation_folder, '%s_geometry.csv' %building_name)
+
+    def get_building_list(self):
+        """scenario/outputs/data/solar-radiation/radiation.csv"""
+        solar_radiation_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+        return os.path.join(solar_radiation_folder, 'radiation.csv')
 
     def get_3D_geometry_folder(self):
         """scenario/inputs/3D-geometries"""
@@ -301,7 +327,22 @@ class InputLocator(object):
         """scenario/outputs/plots/sensitivity/${PARAMETER}.pdf"""
         return os.path.join(self.scenario_path, 'outputs', 'plots', 'sensitivity', '%s.pdf' % parameter)
 
+    ## POTENTIALS #FIXME: find better placement for these two locators
+
+    def solar_potential_folder(self):
+        return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'potentials','solar')
+
+    def PV_results(self, building_name):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), '%s_PV.csv' % building_name)
+
+    def metadata_results(self, building_name):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        solar_potential_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'potentials','solar')
+        return os.path.join(solar_potential_folder, '%s_sensors.csv' % building_name)
+
     # DEMAND
+
     def get_demand_results_folder(self):
         """scenario/outputs/data/demand"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'demand')
