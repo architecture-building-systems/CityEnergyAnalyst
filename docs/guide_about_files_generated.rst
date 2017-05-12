@@ -527,3 +527,31 @@ or ``CEAforArcGIS\cea\analysis\uncertainty\Uncertainty_parameters.py`` are run
 +------------------------+-----------------------+----------------+
 | ``population_fitness`` | ``uncertainty_level`` | ``population`` |
 +------------------------+-----------------------+----------------+
+
+Potentials
+-----------
+
+This section deals with the files in ``reference-case\baseline\outputs\data\potentials`` and
+``reference-case\baseline\outputs\data\potentials\solar``
+
+
+**File Names:** ``uncertainty.csv``, ``CheckPoint_uncertainty_number``
+
+**Rewritten:** The files are rewritten only when ``CEAforArcGIS\cea\analysis\uncertainty\Individual_Evaluation.py``,
+or ``CEAforArcGIS\cea\analysis\uncertainty\Uncertainty_parameters.py`` are run
+
+**Origin:**
+
+``uncertainty.csv`` originates from ``CEAforArcGIS\cea\analysis\uncertainty\Uncertainty_parameters.py``
+
+``CheckPoint_uncertainty_number`` originates from ``CEAforArcGIS\cea\analysis\uncertainty\Individual_Evaluation.py``
+
+**Information:**
+
+ ``uncertainty.csv`` has the values for parameters that are changed in uncertainty analysis
+
+ ``CheckPoint_uncertainty_number`` has the following parameters:
+
++------------------------+-----------------------+----------------+
+| ``population_fitness`` | ``uncertainty_level`` | ``population`` |
++------------------------+-----------------------+----------------+
