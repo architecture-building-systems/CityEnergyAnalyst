@@ -33,8 +33,8 @@ Where to find the current version number
 
 The current version number can be found in the module :py:mod:`cea` (actually, since :py:mod:`cea` is a package, you
 need to look into the file ``__init__.py``) in the variable ``__version__``.
-All code requiring knowledge of the current version number should read the version from here. In python this can be
-achieved by:
+All code requiring knowledge of the current version number should read the version from here. In python modules this can
+be achieved by:
 
 .. source: python
 
