@@ -64,9 +64,6 @@ Update the CREDITS.md file
 For each minor release (2.2, 2.3, ...) the ``CREDITS.md`` file needs to be updated to include all the authors that
 worked on that release.
 
-@JIMENO: Do I understand this correctly: The list is ever expanding? Then we also might need a HISTORY.md file or
-similar...
-
 
 Creating the installer for the planner's edition
 ------------------------------------------------
