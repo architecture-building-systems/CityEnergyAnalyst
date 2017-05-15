@@ -38,7 +38,7 @@ def building2d23d(citygml_writer, shapefilepath, tin_occface_list,
         poly_attribs = rec.record
         height = float(poly_attribs[height_index])
         name = str(poly_attribs[name_index])
-        nfloors = int(poly_attribs[floor_index])
+        nfloors = int(float(poly_attribs[floor_index]))  # bug fix for incorrect input file field definition (double)
         part_list = shp2citygml.get_geometry(rec)
         for part in part_list:
             # adding elevation to 2d shapefile vertex
