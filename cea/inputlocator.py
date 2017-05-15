@@ -5,8 +5,8 @@ import os
 import tempfile
 
 __author__ = "Daren Thomas"
-__copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Daren Thomas", "Jimeno A. Fonseca"]
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Daren Thomas", "Jimeno A. Fonseca", "Sreepathi Bhargava Krishna"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -54,6 +54,12 @@ class InputLocator(object):
         Network summary results
         """
         return self._ensure_folder(self.get_optimization_results_folder(), "network")
+
+    def get_optimization_network_data_folder(self, network_data_file):
+        """scenario/outputs/data/optimization/network
+        Network summary results
+        """
+        return os.path.join(self.get_optimization_network_results_folder(), '%(network_data_file)s' % locals())
 
     def get_optimization_network_layout_folder(self):
         """scenario/outputs/data/optimization/network/layout
