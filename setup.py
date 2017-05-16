@@ -17,9 +17,9 @@ __status__ = "Production"
 with open('README.rst', 'r') as f:
     LONG_DESCRIPTION = f.read()
 
-INSTALL_REQUIRES = ['OCCUtils>=0.1-dev', 'SALib', 'deap', 'descartes', 'doit==0.29.0', 'ephem', 'fiona', 'geopandas',
-                    'lxml', 'pandas', 'plotly', 'pycollada', 'pyproj', 'pysal', 'pyshp', 'requests', 'scikit-learn',
-                    'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo>=0.1a0']
+INSTALL_REQUIRES = ['setuptools', 'OCCUtils>=0.1-dev', 'SALib', 'deap', 'descartes', 'doit==0.29.0', 'ephem', 'fiona',
+                    'geopandas', 'lxml', 'pandas', 'plotly', 'pycollada', 'pyproj', 'pysal', 'pyshp', 'requests',
+                    'scikit-learn', 'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo>=0.1a0']
 
 setup(name='cityenergyanalyst',
       version=__version__,
