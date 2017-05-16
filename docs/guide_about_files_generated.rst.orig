@@ -10,19 +10,14 @@ corresponding to ``demand``, ``optimization``, ``potentials``, ``solar-radiation
 are generated during every successful run corresponding to the function, i.e. ``demand`` folder is generated
 when ``CEAforArcGIS\cea\demand\demand_main.py`` file is run.
 
-The variable ``SCENARIO`` is used throughout this document to reference the path to a CEA scenario folder, e.g. the
-folder ``baseline`` in the sample reference case shipped with the CEA.
-
-The variable ``BUILDINGNAME``  is used throughout this document to reference the name of a single building in the
-scenario.
 
 Demand
 ------
 
-This section deals with the files saved in ``SCENARIO\outputs\data\demand``
+This section deals with the files saved in ``reference-case\baseline\outputs\data\demand``
 
 
-**File Names:** ``BUILDINGNAME``, ``Total_demand``
+**File Names:** ``BuildingName``, ``Total_demand``
 
 **Rewritten:** These files are only rewritten when the ``CEAforArcGIS\cea\demand\demand_file.py``
 is run
@@ -31,7 +26,7 @@ is run
 
 **Information:**
 
-**BUILDINGNAME** file has the following parameters:
+**BuildingName** file has the following parameters:
 
 ``DATE``
 
@@ -124,6 +119,79 @@ is run
 ``Tcdataf_sup_C``
 
 ``Tcref_re_C``
+
+
+**Total_demand** file has the following parameters:
+
+
++------------------+------------------+------------------+--------------+--------------+---------------+
+| ``Name``         | ``Af_m2``        | ``Aroof_m2``     | ``GFA_m2``   | ``people0``  | ``Ef_MWhyr``  |
++------------------+------------------+------------------+--------------+--------------+---------------+
+| ``Eref_MWhyr``     | ``Eauxf_cs0_kW``   | ``Eauxf_ve0_kW``   | ``Edataf0_kW``   | ``Qhprof_MWhyr``   |
++--------------------+--------------------+--------------------+------------------+-----+--------------+
+| ``Ecaf0_kW``       | ``Qhsf0_kW``       | ``Qww0_kW``        | ``QHf0_kW``      | ``Eauxf_hs0_kW``   |
++--------------------+--------------------+--------------------+------------------+-----+--------------+
+| ``Eprof_MWhyr``    | ``Eauxf_ve_MWhyr`` | ``Qcs0_kW``        | ``Qcsf_lat0_kW`` | ``Qhprof0_kW``     |
++--------------------+--------------------+--------------------+------------------+--------------------+
+| ``QEf_MWhyr``      | ``Ef0_kW``         | ``Eauxf_hs_MWhyr`` | ``Eprof0_kW``    | ``Ealf_MWhyr``     |
++--------------------+--------------------+--------------------+------------------+--------------------+
+| ``Qhsf_lat0_kW``   | ``Qhsf_MWhyr``     | ``Qwwf_MWhyr``     | ``Ecaf_MWhyr``   | ``Qcs_MWhyr``      |
++--------------------+--------------------+--------------------+------------------+--------------------+
+| ``Qhs_MWhyr``      | ``Eauxf_cs_MWhyr`` | ``Eaf0_kW``        | ``Qcref0_kW``    | ``Edataf_MWhyr``   |
++--------------------+--------------------+--------------------+------------------+--------------------+
+| ``Ealf0_kW``       | ``Eauxf_fw_MWhyr`` | ``Eauxf_MWhyr``    | ``Qhs0_kW``      | ``Eauxf_ww_MWhyr`` |
++--------------------+--------------------+--------------------+------------------+--------------------+
+| ``Qcsf_MWhyr``     | ``Qwwf0_kW``       | ``QCf0_kW``        | ``Qww_MWhyr``    | ``Qcsf_lat_MWhyr`` |
++--------------------+--------------------+--------------------+------------------+--------------------+
+| ``Qcdataf0_kW``    | ``Qcsf0_kW``       | ``Qcdataf_MWhyr``  | ``Eauxf_fw0_kW`` | ``QCf_MWhyr``      |
++--------------------+--------------------+--------------------+------------------+--------------------+
+| ``Eauxf0_kW``      | ``QEf0_kW``        | ``Elf0_kW``        | ``Eaf_MWhyr``    | ``QHf_MWhyr``      |
++--------------------+--------------------+--------------------+------------------+--------------------+
+| ``Qhsf_lat_MWhyr`` | ``Eauxf_ww0_kW``   | ``Qcref_MWhyr``    | ``Eref0_kW``     | ``Elf_MWhyr``      |
++--------------------+--------------------+--------------------+------------------+--------------------+
+
+The variable ``SCENARIO`` is used throughout this document to reference the path to a CEA scenario folder, e.g. the
+folder ``baseline`` in the sample reference case shipped with the CEA.
+
+The variable ``BUILDINGNAME``  is used throughout this document to reference the name of a single building in the
+scenario.
+
+Demand
+------
+
+This section deals with the files saved in ``SCENARIO\outputs\data\demand``
+
+
+**File Names:** ``BUILDINGNAME``, ``Total_demand``
+
+**Rewritten:** These files are only rewritten when the ``CEAforArcGIS\cea\demand\demand_file.py``
+is run
+
+**Origin:** All files originate from ``CEAforArcGIS\cea\demand\demand_writers.py``
+
+**Information:**
+
+**BUILDINGNAME** file has the following parameters:
+
++------------+-----------+-------------+--------------+-------------------+---------------------+
+| ``DATE``   | ``Name``  | ``people``  | ``QEf_kWh``  | ``QHf_kWh``       | ``Tcref_sup_C``     |
++------------+-----------+-------------+--------------+-------------------+---------------------+
+| ``QCf_kWh``      | ``Ef_kWh``       | ``Qhsf_kWh``     | ``Qhs_kWh``       | ``Qhsf_lat_kWh`` |
++------------------+------------------+------------------+-------------------+------------------+
+| ``Qwwf_kWh``     | ``Qww_kWh``      | ``Qcsf_kWh``     | ``Qcs_kWh``       | ``Qcsf_lat_kWh`` |
++------------------+------------------+------------------+-------------------+------------------+
+| ``Qcdataf_kWh``  | ``Qcref_kWh``    | ``Qhprof_kWh``   | ``Edataf_kWh``    | ``Ealf_kWh``     |
++------------------+------------------+------------------+-------------------+------------------+
+| ``Eaf_kWh``      | ``Elf_kWh``      | ``Eref_kWh``     | ``Eauxf_kWh``     | ``Eauxf_ve_kWh`` |
++------------------+------------------+------------------+-------------------+------------------+
+| ``Eauxf_hs_kWh`` | ``Eauxf_cs_kWh`` | ``Eauxf_ww_kWh`` | ``Eauxf_fw_kWh``  | ``Eprof_kWh``    |
++------------------+------------------+------------------+-------------------+------------------+
+| ``Ecaf_kWh``     | ``mcphsf_kWC``   | ``mcpcsf_kWC``   | ``mcpwwf_kWC``    | ``mcpdataf_kWC`` |
++------------------+------------------+------------------+-------------------+------------------+
+| ``mcpref_kWC``   | ``Twwf_sup_C``   | ``Twwf_re_C``    | ``Thsf_sup_C``    | ``Thsf_re_C``    |
++------------------+------------------+------------------+-------------------+------------------+
+| ``Tcsf_sup_C``   | ``Tcsf_re_C``    | ``Tcdataf_re_C`` | ``Tcdataf_sup_C`` | ``Tcref_re_C``   |
++------------------+------------------+------------------+-------------------+------------------+
 
 
 **Total_demand** file has the following parameters:
@@ -582,7 +650,10 @@ are run multiple times
 +---------------------------------------------------------------------------------------------------+
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/i613-guide-on-how-files-are-saved
 
 Uncertainty
 -----------
