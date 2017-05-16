@@ -75,7 +75,6 @@ def calc_schedules(list_uses, schedules, specific_values, building_uses, area, s
 
 
 # read schedules from excel file
-
 def schedule_maker(dates, locator, list_uses):
     def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule):
         occ = []
@@ -135,25 +134,26 @@ def schedule_maker(dates, locator, list_uses):
         x = pd.read_excel(locator.get_archetypes_schedules(), use).T
 
         # read lists of every daily profile
-        occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, area_per_occupant, internal_loads = \
-            read_schedules(use, x)
+        occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, area_per_occupant, sensible_gains,\
+        humidity_gains, appliance_electricity, lighting_electricity, process_electricity, refrigeration_electricity, \
+        server_electricity, dhw_demand, water_demand, ventilation_rate = read_schedules(use, x)
 
         # get occupancy density per schedule in a list
         if area_per_occupant != 0:
             occ_densities.append(1/area_per_occupant)
         else: occ_densities.append(area_per_occupant)
-        # areas_per_occupant.append(area_per_occupant)
-        # get internal loads per schedule in a list
-        Qs_Wp.append(internal_loads[0])
-        X_ghp.append(internal_loads[1])
-        Ea_Wm2.append(internal_loads[2])
-        El_Wm2.append(internal_loads[3])
-        Epro_Wm2.append(internal_loads[4])
-        Ere_Wm2.append(internal_loads[5])
-        Ed_Wm2.append(internal_loads[6])
-        Vww_lpd.append(internal_loads[7])
-        Vw_lpd.append(internal_loads[8])
-        Ve_lps.append(internal_loads[9])
+
+        # get internal loads and ventilation per schedule in a list
+        Qs_Wp.append(sensible_gains)
+        X_ghp.append(humidity_gains)
+        Ea_Wm2.append(appliance_electricity)
+        El_Wm2.append(lighting_electricity)
+        Epro_Wm2.append(process_electricity)
+        Ere_Wm2.append(refrigeration_electricity)
+        Ed_Wm2.append(server_electricity)
+        Vww_lpd.append(dhw_demand)
+        Vw_lpd.append(water_demand)
+        Ve_lps.append(ventilation_rate)
 
         # get yearly schedules in a list
         schedule = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule)
@@ -168,7 +168,31 @@ def schedule_maker(dates, locator, list_uses):
 
 
 def read_schedules(use, x):
+    """
+    This function reads the occupancy, electricity, domestic hot water, process electricity and monthly schedules for a
+    given use type from the schedules database.
 
+    :param use: occupancy type (e.g. 'SCHOOL')
+    :type use: str
+    :param x: Excel worksheet containing the schedule database for a given occupancy type from the archetypes database
+    :type x: DataFrame
+
+    :return occ: the daily occupancy schedule for the given occupancy type
+    :type occ: list[array]
+    :return el: the daily electricity schedule for the given occupancy type
+    :type el: list[array]
+    :return dhw: the daily domestic hot water schedule for the given occupancy type
+    :type dhw: list[array]
+    :return pro: the daily process electricity schedule for the given occupancy type
+    :type pro: list[array]
+    :return month: the monthly schedule for the given occupancy type
+    :type month: ndarray
+    :return occ_density: the occupants per square meter for the given occupancy type
+    :type occ_density: int
+    :return internal_loads: the internal loads and ventilation needs for the given occupancy types
+    :type internal_loads: list
+
+    """
     # read schedules from excel file
     occ = [x['Weekday_1'].values[:24], x['Saturday_1'].values[:24], x['Sunday_1'].values[:24]]
     el = [x['Weekday_2'].values[:24], x['Saturday_2'].values[:24], x['Sunday_2'].values[:24]]
@@ -200,4 +224,5 @@ def read_schedules(use, x):
     # get internal loads and ventilation in a list
     internal_loads = [Qs_Wp, X_ghp, Ea_Wm2, El_Wm2, Epro_Wm2, Ere_Wm2, Ed_Wm2, Vww_lpd, Vw_lpd, Ve_lps]
 
-    return occ, el, dhw, pro, month, occ_density, internal_loads
+    return occ, el, dhw, pro, month, occ_density, Qs_Wp, X_ghp, Ea_Wm2, El_Wm2, Epro_Wm2, Ere_Wm2, Ed_Wm2, Vww_lpd, \
+           Vw_lpd, Ve_lps
