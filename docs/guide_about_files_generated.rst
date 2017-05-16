@@ -17,7 +17,10 @@ Demand
 This section deals with the files saved in ``reference-case\baseline\outputs\data\demand``
 
 
-**File Names:** ``BuildingName``, ``Total_demand``
+**File Names:**
+
+1. ``BuildingName``
+2. ``Total_demand``
 
 **Rewritten:** These files are only rewritten when the ``CEAforArcGIS\cea\demand\demand_file.py``
 is run
@@ -26,129 +29,122 @@ is run
 
 **Information:**
 
-**BuildingName** file has the following parameters:
+**BuildingName** is a ``csv`` file having (total hours in a year + 1) rows (including header) and 46 columns
+corresponding to the following parameters:
 
-``DATE``
-
-``Name``
-
-``people``
-
-``QEf_kWh``
-
-``QHf_kWh``
-
-``Tcref_sup_C``
-
-``QCf_kWh``
-
-``Ef_kWh``
-
-``Qhsf_kWh``
-
-``Qhs_kWh``
-
-``Qhsf_lat_kWh``
-
-``Qwwf_kWh``
-
-``Qww_kWh``
-
-``Qcsf_kWh``
-
-``Qcs_kWh``
-
-``Qcsf_lat_kWh``
-
-``Qcdataf_kWh``
-
-``Qcref_kWh``
-
-``Qhprof_kWh``
-
-``Edataf_kWh``
-
-``Ealf_kWh``
-
-``Eaf_kWh``
-
-``Elf_kWh``
-
-``Eref_kWh``
-
-``Eauxf_kWh``
-
-``Eauxf_ve_kWh``
-
-``Eauxf_hs_kWh``
-
-``Eauxf_cs_kWh``
-
-``Eauxf_ww_kWh``
-
-``Eauxf_fw_kWh``
-
-``Eprof_kWh``
-
-``Ecaf_kWh``
-
-``mcphsf_kWC``
-
-``mcpcsf_kWC``
-
-``mcpwwf_kWC``
-
-``mcpdataf_kWC``
-
-``mcpref_kWC``
-
-``Twwf_sup_C``
-
-``Twwf_re_C``
-
-``Thsf_sup_C``
-
-``Thsf_re_C``
-
-``Tcsf_sup_C``
-
-``Tcsf_re_C``
-
-``Tcdataf_re_C``
-
-``Tcdataf_sup_C``
-
-``Tcref_re_C``
+- ``DATE``
+- ``Name``
+- ``people``
+- ``QEf_kWh``
+- ``QHf_kWh``
+- ``QCf_kWh``
+- ``Ef_kWh``
+- ``Qhsf_kWh``
+- ``Qhs_kWh``
+- ``Qhsf_lat_kWh``
+- ``Qwwf_kWh``
+- ``Qww_kWh``
+- ``Qcsf_kWh``
+- ``Qcs_kWh``
+- ``Qcsf_lat_kWh``
+- ``Qcdataf_kWh``
+- ``Qcref_kWh``
+- ``Qhprof_kWh``
+- ``Edataf_kWh``
+- ``Ealf_kWh``
+- ``Eaf_kWh``
+- ``Elf_kWh``
+- ``Eref_kWh``
+- ``Eauxf_kWh``
+- ``Eauxf_ve_kWh``
+- ``Eauxf_hs_kWh``
+- ``Eauxf_cs_kWh``
+- ``Eauxf_ww_kWh``
+- ``Eauxf_fw_kWh``
+- ``Eprof_kWh``
+- ``Ecaf_kWh``
+- ``mcphsf_kWC``
+- ``mcpcsf_kWC``
+- ``mcpwwf_kWC``
+- ``mcpdataf_kWC``
+- ``mcpref_kWC``
+- ``Twwf_sup_C``
+- ``Twwf_re_C``
+- ``Thsf_sup_C``
+- ``Thsf_re_C``
+- ``Tcsf_sup_C``
+- ``Tcsf_re_C``
+- ``Tcdataf_re_C``
+- ``Tcdataf_sup_C``
+- ``Tcref_re_C``
+- ``Tcref_sup_C``
 
 
-**Total_demand** file has the following parameters:
+**Total_demand** is a ``csv`` file having (number of buildings + 1) rows (including header)
+and 61 columns corresponding to the following parameters:
 
+- ``Name``
+- ``Af_m2``
+- ``Aroof_m2``
+- ``GFA_m2``
+- ``people0``
+- ``Eref_MWhyr``
+- ``Eauxf_cs0_kW``
+- ``Eauxf_ve0_kW``
+- ``Edataf0_kW``
+- ``Qhprof_MWhyr``
+- ``Ecaf0_kW``
+- ``Qhsf0_kW``
+- ``Qww0_kW``
+- ``QHf0_kW``
+- ``Eauxf_hs0_kW``
+- ``Eprof_MWhyr``
+- ``Eauxf_ve_MWhyr``
+- ``Qcs0_kW``
+- ``Qcsf_lat0_kW``
+- ``Qhprof0_kW``
+- ``QEf_MWhyr``
+- ``Ef0_kW``
+- ``Eauxf_hs_MWhyr``
+- ``Eprof0_kW``
+- ``Ealf_MWhyr``
+- ``Qhsf_lat0_kW``
+- ``Qhsf_MWhyr``
+- ``Qwwf_MWhyr``
+- ``Ecaf_MWhyr``
+- ``Qcs_MWhyr``
+- ``Qhs_MWhyr``
+- ``Eauxf_cs_MWhyr``
+- ``Eaf0_kW``
+- ``Qcref0_kW``
+- ``Edataf_MWhyr``
+- ``Ealf0_kW``
+- ``Eauxf_fw_MWhyr``
+- ``Eauxf_MWhyr``
+- ``Qhs0_kW``
+- ``Eauxf_ww_MWhyr``
+- ``Qcsf_MWhyr``
+- ``Qwwf0_kW``
+- ``QCf0_kW``
+- ``Qww_MWhyr``
+- ``Qcsf_lat_MWhyr``
+- ``Qcdataf0_kW``
+- ``Qcsf0_kW``
+- ``Qcdataf_MWhyr``
+- ``Eauxf_fw0_kW``
+- ``QCf_MWhyr``
+- ``Eauxf0_kW``
+- ``QEf0_kW``
+- ``Elf0_kW``
+- ``Eaf_MWhyr``
+- ``QHf_MWhyr``
+- ``Qhsf_lat_MWhyr``
+- ``Eauxf_ww0_kW``
+- ``Qcref_MWhyr``
+- ``Eref0_kW``
+- ``Elf_MWhyr``
+- ``Ef_MWhyr``
 
-+------------------+------------------+------------------+--------------+--------------+---------------+
-| ``Name``         | ``Af_m2``        | ``Aroof_m2``     | ``GFA_m2``   | ``people0``  | ``Ef_MWhyr``  |
-+------------------+------------------+------------------+--------------+--------------+---------------+
-| ``Eref_MWhyr``     | ``Eauxf_cs0_kW``   | ``Eauxf_ve0_kW``   | ``Edataf0_kW``   | ``Qhprof_MWhyr``   |
-+--------------------+--------------------+--------------------+------------------+-----+--------------+
-| ``Ecaf0_kW``       | ``Qhsf0_kW``       | ``Qww0_kW``        | ``QHf0_kW``      | ``Eauxf_hs0_kW``   |
-+--------------------+--------------------+--------------------+------------------+-----+--------------+
-| ``Eprof_MWhyr``    | ``Eauxf_ve_MWhyr`` | ``Qcs0_kW``        | ``Qcsf_lat0_kW`` | ``Qhprof0_kW``     |
-+--------------------+--------------------+--------------------+------------------+--------------------+
-| ``QEf_MWhyr``      | ``Ef0_kW``         | ``Eauxf_hs_MWhyr`` | ``Eprof0_kW``    | ``Ealf_MWhyr``     |
-+--------------------+--------------------+--------------------+------------------+--------------------+
-| ``Qhsf_lat0_kW``   | ``Qhsf_MWhyr``     | ``Qwwf_MWhyr``     | ``Ecaf_MWhyr``   | ``Qcs_MWhyr``      |
-+--------------------+--------------------+--------------------+------------------+--------------------+
-| ``Qhs_MWhyr``      | ``Eauxf_cs_MWhyr`` | ``Eaf0_kW``        | ``Qcref0_kW``    | ``Edataf_MWhyr``   |
-+--------------------+--------------------+--------------------+------------------+--------------------+
-| ``Ealf0_kW``       | ``Eauxf_fw_MWhyr`` | ``Eauxf_MWhyr``    | ``Qhs0_kW``      | ``Eauxf_ww_MWhyr`` |
-+--------------------+--------------------+--------------------+------------------+--------------------+
-| ``Qcsf_MWhyr``     | ``Qwwf0_kW``       | ``QCf0_kW``        | ``Qww_MWhyr``    | ``Qcsf_lat_MWhyr`` |
-+--------------------+--------------------+--------------------+------------------+--------------------+
-| ``Qcdataf0_kW``    | ``Qcsf0_kW``       | ``Qcdataf_MWhyr``  | ``Eauxf_fw0_kW`` | ``QCf_MWhyr``      |
-+--------------------+--------------------+--------------------+------------------+--------------------+
-| ``Eauxf0_kW``      | ``QEf0_kW``        | ``Elf0_kW``        | ``Eaf_MWhyr``    | ``QHf_MWhyr``      |
-+--------------------+--------------------+--------------------+------------------+--------------------+
-| ``Qhsf_lat_MWhyr`` | ``Eauxf_ww0_kW``   | ``Qcref_MWhyr``    | ``Eref0_kW``     | ``Elf_MWhyr``      |
-+--------------------+--------------------+--------------------+------------------+--------------------+
 
 Optimization
 ============
@@ -174,24 +170,34 @@ The folders present inside this are:
 
 **Origin:** They are being shipped along with the reference case
 
-**Information:** Each of these files have the following parameters:
+**Information:** All the files are saved in ``csv`` format. Each of these files have 14 rows (including header)
+and 16 columns (including one for index) having the following parameters:
 
-+---------------------------------------+------------------------+--------------------+
-| ``Annualized Investment Costs [CHF]`` | ``Best configuration`` | ``BoilerBG Share`` |
-+---------------------------------------+------------------------+--------------------+
-| ``CO2 Emissions [kgCO2-eq]``          | ``BoilerNG Share``     | ``EforGHP``        |
-+---------------------------------------+------------------------+--------------------+
-| ``Primary Energy Needs [MJoil-eq]``   | ``FC Share``           | ``GHP Share``      |
-+---------------------------------------+------------------------+--------------------+
-| ``Operation Costs [CHF]``             | ``Nominal Power``      | ``QfromBG``        |
-+---------------------------------------+------------------------+--------------------+
-| ``Total Costs [CHF]``                 | ``QfromGHP``           | ``QfromNG``        |
-+---------------------------------------+------------------------+--------------------+
+- ``Annualized Investment Costs [CHF]``
+- ``Best configuration``
+- ``BoilerBG Share``
+- ``BoilerNG Share``
+- ``CO2 Emissions [kgCO2-eq]``
+- ``EforGHP``
+- ``FC Share``
+- ``GHP Share``
+- ``Nominal Power``
+- ``Operation Costs [CHF]``
+- ``Primary Energy Needs [MJoil-eq]``
+- ``QfromBG``
+- ``QfromGHP``
+- ``QfromNG``
+- ``Total Costs [CHF]``
+
 
 2. Master
 ~~~~~~~~~
 
-**File Names:** ``CheckPoint_Initial``, ``CheckPoint_generationnumber``, ``CheckPoint_Final``
+**File Names:**
+
+1. ``CheckPoint_Initial``
+2. ``CheckPoint_generationnumber``
+3. ``CheckPoint_Final``
 
 **Rewritten:** The files present in this folder are rewritten. If the optimization is run multiple
 times, the files are constantly replaced with new ones. **Thus if using multiple runs, be aware**
@@ -199,14 +205,13 @@ times, the files are constantly replaced with new ones. **Thus if using multiple
 **Origin:** All the files in this folder are created in the following script
 ``CEAforArcGIS\cea\optimization\master\master_main.py``
 
-**Information:** Each of these files have the following parameters:
+**Information:** Each of these files are saved as ``json`` files. They have the following parameters:
 
-+------------------------+------------------+----------------+
-| ``population_fitness`` | ``epsIndicator`` | ``generation`` |
-+------------------------+------------------+----------------+
-|    ``testedPop``       | ``population``   |                |
-+------------------------+------------------+----------------+
-
+- ``population_fitness``
+- ``epsIndicator``
+- ``generation``
+- ``testedPop``
+- ``population``
 
 3. Network
 ~~~~~~~~~~
@@ -216,7 +221,8 @@ times, the files are constantly replaced with new ones. **Thus if using multiple
 
 **File Names:**
 
-``Network_summary_result_buildingnetwork``, ``Network_summary_result_all``
+1. ``Network_summary_result_buildingnetwork``
+2. ``Network_summary_result_all``
 
 **Rewritten:** High chance of the files being rewritten, even though the file
 name has building network configuration in it.
@@ -226,35 +232,45 @@ name has building network configuration in it.
 
 **Information:**
 
-**Network_summary_result_buildingnetwork** has the following parameters:
+**Network_summary_result_buildingnetwork** All the files are saved in ``csv`` format.
+Each of these files have (total hours in a year + 1) rows (including header) and
+16 columns (including one for index) corresponding to the following parameters:
 
-+----------------------------------+----------------------------------+-----------------------------+
-| ``Q_DC_building_netw_total``     | ``Electr_netw_total``            |``Ecaf_netw_total``          |
-+----------------------------------+----------------------------------+-----------------------------+
-| ``Q_DH_building_netw_total``     | ``Qcdata_netw_total``            | ``Q_DC_losses``             |
-+----------------------------------+----------------------------------+-----------------------------+
-| ``T_sst_heat_supply_netw_total`` | ``Q_DH_losses``                  | ``mdot_DH_netw_total``      |
-+----------------------------------+----------------------------------+-----------------------------+
-| ``T_sst_cool_return_netw_total`` | ``mdot_cool_netw_total``         |  ``mdotdata_netw_total``    |
-+----------------------------------+----------------------------------+-----------------------------+
-| ``T_sst_cool_supply_netw_total`` | ``T_sst_heat_return_netw_total`` | ``day_of_max_heatmassflow`` |
-+----------------------------------+----------------------------------+-----------------------------+
+- ``Ecaf_netw_total``
+- ``Electr_netw_total``
+- ``Q_DC_building_netw_total``
+- ``Q_DC_losses``
+- ``Q_DH_building_netw_total``
+- ``Q_DH_losses``
+- ``Qcdata_netw_total``
+- ``T_sst_cool_return_netw_total``
+- ``T_sst_cool_supply_netw_total``
+- ``T_sst_heat_return_netw_total``
+- ``T_sst_heat_supply_netw_total``
+- ``day_of_max_heatmassflow``
+- ``mdot_DH_netw_total``
+- ``mdot_cool_netw_total``
+- ``mdotdata_netw_total``
 
+**Network_summary_result_all** is saved in ``csv`` format and has (total hours in a year + 1) rows (including header)
+and 16 columns (including one for index) corresponding to the following parameters:
 
+- ``Ecaf_netw_total``
+- ``Electr_netw_total``
+- ``Q_DC_building_netw_total``
+- ``Q_DC_losses``
+- ``Q_DH_building_netw_total``
+- ``Q_DH_losses``
+- ``Qcdata_netw_total``
+- ``T_sst_cool_return_netw_total``
+- ``T_sst_cool_supply_netw_total``
+- ``T_sst_heat_return_netw_total``
+- ``T_sst_heat_supply_netw_total``
+- ``day_of_max_heatmassflow``
+- ``mdot_DH_netw_total``
+- ``mdot_cool_netw_total``
+- ``mdotdata_netw_total``
 
-**Network_summary_result_all** has the following parameters
-
-+----------------------------------+------------------------------+----------------------------------+
-| ``Ecaf_netw_total``              | ``Electr_netw_total``        | ``Q_DC_building_netw_total``     |
-+----------------------------------+------------------------------+----------------------------------+
-| ``T_sst_cool_return_netw_total`` | ``Q_DH_building_netw_total`` | ``Q_DH_losses``                  |
-+----------------------------------+------------------------------+----------------------------------+
-| ``Qcdata_netw_total``            | ``Q_DC_losses``              | ``T_sst_cool_supply_netw_total`` |
-+----------------------------------+------------------------------+----------------------------------+
-| ``T_sst_heat_return_netw_total`` | ``mdot_DH_netw_total``       | ``day_of_max_heatmassflow``      |
-+----------------------------------+------------------------------+----------------------------------+
-| ``T_sst_heat_supply_netw_total`` | ``mdot_cool_netw_total``     | ``mdotdata_netw_total``          |
-+----------------------------------+------------------------------+----------------------------------+
 
 3.2 Totals
 ~~~~~~~~~~
@@ -271,42 +287,80 @@ name has building network configuration in it.
 
 **Information:**
 
-**Total_buildingnetwork** has the following parameters:
+**Total_buildingnetwork** is saved in ``csv`` format and has varying rows (based on DHN)
+and 62 columns (including one for index) with the following parameters:
 
-+--------------------+--------------------+--------------------+------------------+----------------+
-| ``Name``           | ``Af_m2``          | ``Aroof_m2``       | ``GFA_m2``       | ``Ecaf_MWhyr`` |
-+--------------------+--------------------+--------------------+------------------+----------------+
-| ``people0``        | ``Eref_MWhyr``     | ``Eauxf_cs0_kW``   | ``Eauxf_ve0_kW`` | ``Qcs_MWhyr``  |
-+--------------------+--------------------+--------------------+------------------+----------------+
-| ``Edataf0_kW``     | ``Qhprof_MWhyr``   | ``Ecaf0_kW``       | ``Qhsf0_kW``     | ``Qhs_MWhyr``  |
-+--------------------+--------------------+--------------------+------------------+----------------+
-| ``Qww0_kW``        | ``QHf0_kW``        | ``Eauxf_hs0_kW``   | ``Eprof_MWhyr``  | ``Qhs0_kW``    |
-+--------------------+--------------------+--------------------+------------------+----------------+
-| ``Eauxf_ve_MWhyr`` | ``Qcdataf_MWhyr``  | ``Qcsf_lat0_kW``   | ``Qhprof0_kW``   | ``Eaf0_kW``    |
-+--------------------+--------------------+--------------------+------------------+----------------+
-| ``QEf_MWhyr``      | ``Ef0_kW``         | ``Eauxf_hs_MWhyr`` | ``Eprof0_kW``    | ``Qcref0_kW``  |
-+--------------------+--------------------+--------------------+------------------+----------------+
-| ``Ealf_MWhyr``     | ``Qhsf_lat0_kW``   | ``Qhsf_MWhyr``     | ``Qwwf_MWhyr``   | ``Eaf_MWhyr``  |
-+--------------------+--------------------+--------------------+---------+--------+----------------+
-| ``QCf0_kW``        | ``Qww_MWhyr``      | ``Qcsf_lat_MWhyr`` | ``Qcdataf0_kW``  | ``Qcsf0_kW``   |
-+--------------------+--------------------+--------------------+---------+--------+----------------+
-| ``Eauxf_fw0_kW``   | ``QCf_MWhyr``      | ``Eauxf0_kW``      | ``QEf0_kW``      | ``Elf0_kW``    |
-+--------------------+--------------------+--------------------+------------------+----------------+
-| ``QHf_MWhyr``      | ``Qhsf_lat_MWhyr`` | ``Eauxf_ww0_kW``   | ``Qcref_MWhyr``  | ``Eref0_kW``   |
-+--------------------+--------------------+--------------------+------------------+----------------+
-| ``Eauxf_cs_MWhyr`` | ``Eauxf_MWhyr``    | ``Eauxf_ww_MWhyr`` | ``Qcsf_MWhyr``   | ``Qwwf0_kW``   |
-+--------------------+--------------------+--------------------+------------------+----------------+
-| ``Qcs0_kW``        | ``Edataf_MWhyr``   | ``Eauxf_fw_MWhyr`` | ``Ealf0_kW``     | ``Elf_MWhyr``  |
-+--------------------+--------------------+--------------------+------------------+----------------+
-| ``Ef_MWhyr``                                                                                     |
-+--------------------+--------------------+--------------------+------------------+----------------+
+- ``Name``
+- ``Af_m2``
+- ``Aroof_m2``
+- ``GFA_m2``
+- ``people0``
+- ``Eref_MWhyr``
+- ``Eauxf_cs0_kW``
+- ``Eauxf_ve0_kW``
+- ``Edataf0_kW``
+- ``Qhprof_MWhyr``
+- ``Ecaf0_kW``
+- ``Qhsf0_kW``
+- ``Qww0_kW``
+- ``QHf0_kW``
+- ``Eauxf_hs0_kW``
+- ``Eprof_MWhyr``
+- ``Eauxf_ve_MWhyr``
+- ``Qcs0_kW``
+- ``Qcsf_lat0_kW``
+- ``Qhprof0_kW``
+- ``QEf_MWhyr``
+- ``Ef0_kW``
+- ``Eauxf_hs_MWhyr``
+- ``Eprof0_kW``
+- ``Ealf_MWhyr``
+- ``Qhsf_lat0_kW``
+- ``Qhsf_MWhyr``
+- ``Qwwf_MWhyr``
+- ``Ecaf_MWhyr``
+- ``Qcs_MWhyr``
+- ``Qhs_MWhyr``
+- ``Eauxf_cs_MWhyr``
+- ``Eaf0_kW``
+- ``Qcref0_kW``
+- ``Edataf_MWhyr``
+- ``Ealf0_kW``
+- ``Eauxf_fw_MWhyr``
+- ``Eauxf_MWhyr``
+- ``Qhs0_kW``
+- ``Eauxf_ww_MWhyr``
+- ``Qcsf_MWhyr``
+- ``Qwwf0_kW``
+- ``QCf0_kW``
+- ``Qww_MWhyr``
+- ``Qcsf_lat_MWhyr``
+- ``Qcdataf0_kW``
+- ``Qcsf0_kW``
+- ``Qcdataf_MWhyr``
+- ``Eauxf_fw0_kW``
+- ``QCf_MWhyr``
+- ``Eauxf0_kW``
+- ``QEf0_kW``
+- ``Elf0_kW``
+- ``Eaf_MWhyr``
+- ``QHf_MWhyr``
+- ``Qhsf_lat_MWhyr``
+- ``Eauxf_ww0_kW``
+- ``Qcref_MWhyr``
+- ``Eref0_kW``
+- ``Elf_MWhyr``
+- ``Ef_MWhyr``
 
 3.3 Layout
 ~~~~~~~~~~
 
 **File Names:**
 
-``NodesData_DC``, ``NodesData_DH``, ``PipesData_DC``, ``PipesData_DH``
+1. ``NodesData_DC``
+2. ``NodesData_DH``
+3. ``PipesData_DC``
+4. ``PipesData_DH``
 
 **Rewritten:** Not rewritten
 
@@ -314,27 +368,38 @@ name has building network configuration in it.
 
 **Information:**
 
-**NodesData_DC, NodesData_DH** has ``DC_ID``, ``Name``, ``Plant``, ``Sink``
+**NodesData_DC, NodesData_DH** are of ``csv`` format and have 68 rows (including header)
+and 4 columns corresponding to the following parameters:
 
-**PipesData_DC, PipesData_DH** has ``DC_ID``, ``Length``, ``NODE1``, ``NODE2``
+- ``DC_ID``
+- ``Name``
+- ``Plant``
+- ``Sink``
 
+**PipesData_DC, PipesData_DH** are of ``csv`` format and have 67 rows (including header)
+and 4 columns corresponding to the following parameters:
+
+- ``DC_ID``
+- ``Length``
+- ``NODE1``
+- ``NODE2``
 
 4. Slave
 ~~~~~~~~
 
 **File Names:**
 
-+---------------------------------------------------+------------------------------------------+
-| ``configuration_AveragedCostData``                | ``configuration_InvestmentCostDetailed`` |
-+---------------------------------------------------+------------------------------------------+
-| ``configuration_PrimaryEnergyBySource``           | ``configuration_SlaveCostData``          |
-+---------------------------------------------------+------------------------------------------+
-| ``configuration_SlaveToMasterCostEmissionsPrimE`` | ``configuration_PPActivationPattern``    |
-+---------------------------------------------------+------------------------------------------+
-| ``configuration_SlaveDetailedEmissionData``       | ``configuration_SlaveDetailedEprimData`` |
-+---------------------------------------------------+------------------------------------------+
-| ``configuration_Storage_Sizing_Parameters``       | ``configuration_StorageOperationData``   |
-+---------------------------------------------------+------------------------------------------+
+1. ``configuration_AveragedCostData``
+2. ``configuration_InvestmentCostDetailed``
+3. ``configuration_PrimaryEnergyBySource``
+4. ``configuration_PPActivationPattern``
+5. ``configuration_SlaveCostData``
+6. ``configuration_SlaveDetailedEmissionData``
+7. ``configuration_SlaveDetailedEprimData``
+8. ``configuration_SlaveToMasterCostEmissionsPrimE``
+9. ``configuration_Storage_Sizing_Parameters``
+10. ``configuration_StorageOperationData``
+
 
 **Rewritten:** Highly unlikely to be rewritten as ``configuration`` is associated
 with each saved file. Over time this folder will get cluttered with files if the simulations
@@ -342,182 +407,236 @@ are run multiple times
 
 **Origin:**
 
-+---------------------------------------------+------------------------------------------------------------------------------+
-| File Name                                   | Originates from                                                              |
-+=============================================+==============================================================================+
-| ``configuration_AveragedCostData``          | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------+------------------------------------------------------------------------------+
-| ``configuraiton_InvestmentCostDetailed``    | ``CEAforArcGIS\cea\optimization\master\cost_model.py``                       |
-+---------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_PrimaryEnergyBySource``     | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_SlaveCostData``             | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_SlaveToMasterCostEmissionsPrimE`` | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                  |
-+---------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_PPActivationPattern``       | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_SlaveDetailedEmissionData`` | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_SlaveDetailedEprimData``    | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_Storage_Sizing_Parameters`` | ``CEAforArcGIS\cea\optimization\slave\seasonal_storage\storage_main.py``     |
-+---------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_StorageOperationData``      | ``CEAforArcGIS\cea\optimization\slave\seasonal_storage\design_operation.py`` |
-+---------------------------------------------+------------------------------------------------------------------------------+
++---------------------------------------------------+------------------------------------------------------------------------------+
+| File Name                                         | Originates from                                                              |
++===================================================+==============================================================================+
+| ``configuration_AveragedCostData``                | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------------+------------------------------------------------------------------------------+
+| ``configuraiton_InvestmentCostDetailed``          | ``CEAforArcGIS\cea\optimization\master\cost_model.py``                       |
++---------------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_PrimaryEnergyBySource``           | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_SlaveCostData``                   | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_SlaveToMasterCostEmissionsPrimE`` | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_PPActivationPattern``             | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_SlaveDetailedEmissionData``       | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_SlaveDetailedEprimData``          | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
++---------------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_Storage_Sizing_Parameters``       | ``CEAforArcGIS\cea\optimization\slave\seasonal_storage\storage_main.py``     |
++---------------------------------------------------+------------------------------------------------------------------------------+
+| ``configuration_StorageOperationData``            | ``CEAforArcGIS\cea\optimization\slave\seasonal_storage\design_operation.py`` |
++---------------------------------------------------+------------------------------------------------------------------------------+
 
 **Information:**
 
-**configuration_AveragedCostData** includes the following parameters:
+**configuration_AveragedCostData** is saved in ``csv`` format and has 2 rows (including header).
+This includes the following parameters:
 
-+------------------------+----------------------------+----------------------------+
-| ``avgCostAddBoiler``   | ``avgCostBoilerBaseRpkWh`` | ``avgCostBoilerPeakRpkWh`` |
-+------------------------+----------------------------+----------------------------+
-| ``avgCostCCRpkWh``     | ``avgCostFurnaceRpkWh``    | ``avgCostGHPRpkWh``        |
-+------------------------+----------------------------+----------------------------+
-| ``avgCostHPLakeRpkWh`` | ``avgCostHPSewRpkWh``      | ``avgCostStorageOperation``|
-+------------------------+---------------------------------------------------------+
-| ``avgCostUncontrollableSources``                                                 |
-+----------------------------------------------------------------------------------+
-
-
-**configuration_InvestmentCostDetailed** includes the following parameters:
-
-+-------------------+--------------------+--------------------+-----------------------+
-| ``BoilerAddInvC`` | ``BoilerBInvCost`` | ``BoilerPInvCost`` | ``CO2DiscBuild``      |
-+-------------------+--------------------+--------------------+-----------------------+
-| ``CostDiscBuild`` | ``DHNInvestCost``  | ``FurnaceInvCost`` |``GasConnectionInvCa`` |
-+-------------------+--------------------+--------------------+-----------------------+
-| ``HPLakeInvC``    | ``HPSewInvC``      | ``NetworkCost``    |``PVTHEXCost``         |
-+-------------------+--------------------+--------------------+-----------------------+
-| ``PVTInvC``       | ``PrimDiscBuild``  | ``SCHEXCost``      | ``SCInvC``            |
-+-------------------+--------------------+--------------------+-----------------------+
-| ``StorageCostSum``| ``StorageHEXCost`` | ``StorageHPCost``  |``StorageInvC``        |
-+-------------------+--------------------+--------------------+-----------------------+
-| ``SubstHEXCost``  | ``SumInvestCost``  | ``pumpCosts``                              |
-+-------------------+--------------------+--------------------------------------------+
-
-**configuration_PrimaryEnergyBySource** includes the following parameters:
-
-+----------------+--------------------------+--------------------------+------------------+
-| ``EelExport``  | ``EelectrImportSlave``   | ``EgasPrimary``          | ``Egroundheat``  |
-+----------------+--------------------------+--------------------------+------------------+
-| ``EsolarUsed`` | ``EgasPrimaryPeakPower`` |``costBenefitNotUsedHPs`` | ``EwoodPrimary`` |
-+----------------+--------------------------+--------------------------+------------------+
-
-**configuration_SlaveCostData** includes the following parameters:
-
-+----------------------+-------------------------------+----------------------------+
-| ``KEV_Remuneration`` | ``PPoperation_exclAddBackup`` |``costAddBackup_total``     |
-+--------------------+----------------+---------------------+-----------------------+
-| ``costBoiler_sum`` | ``costCC_sum`` | ``costFurnace_sum`` | ``costGHP_sum``       |
-+--------------------+-------------------+-------------------------+----------------+
-| ``costHPLake_sum`` | ``costHPSew_sum`` | ``cost_CC_maintenance`` | ``total cost`` |
-+-------------------------------------------------+---------------------------------+
-| ``cost_HP_storage_operation``                   | ``cost_HP_aux_uncontrollable``  |
-+-------------------------------------------------+---------------------------------+
-| ``cost_Boiler_for_Storage_reHeat_at_seasonend`` | ``costBackup_sum``              |
-+-------------------------------------------------+---------------------------------+
-
-**configuration_SlaveToMasterCostEmissionsPrimE** includes the following parameters:
-
-+---------------+-----------------+--------------+
-| ``CO2_kg_eq`` | ``E_oil_eq_MJ`` | ``cost_sum`` |
-+---------------+-----------------+--------------+
-
-**configuration_PPActivationPattern** file has **8760** lines. It includes the following parameters:
-
-+----------------------------+------------------------+----------------+--------------------+
-| ``BoilerBase_Status``      | ``BoilerPeak_Status``  | ``CC_Status``  | ``Cost_AddBoiler`` |
-+----------------------------+------------------------+----------------+--------------------+
-| ``Cost_BoilerBase``        | ``Cost_BoilerPeak``    | ``Cost_CC``    | ``Cost_Furnace``   |
-+----------------------------+------------------------+----------------+--------------------+
-| ``ESolarProducedPVandPVT`` | ``E_GHP``              | ``Cost_GHP``   | ``Cost_HPLake``    |
-+----------------------------+------------------------+----------------+--------------------+
-| ``E_PP_and_storage``       | ``Cost_HPSew``         | ``E_aux_HP_uncontrollable``         |
-+----------------------------+------------------------+-------------------------------------+
-| ``E_consumed_without_buildingdemand`` | ``E_produced_total`` | ``Furnace_Status``         |
-+---------------------------------------+----------------------+----------------------------+
-| ``HPLake_Status``          | ``GHP_Status`` | ``HPSew_Status`` |  ``Q_AddBoiler``         |
-+----------------------------+----------------+------------------+--------------------------+
-| ``Q_BoilerBase`` | ``Q_BoilerPeak`` | ``Q_CC`` | ``Q_Furnace`` | ``Q_GHP`` | ``Q_HPLake`` |
-+------------------+------------------+----------+---------------+-----------+--------------+
-| ``Q_HPSew``      | ``Q_Network_Demand_after_Storage`` | ``Q_excess``                      |
-+------------------+------------------------------------+-----------------------------------+
-| ``Q_primaryAddBackupSum`` | ``Q_uncontrollable`` | ``Q_uncovered`` | ``Qcold_HPLake``     |
-+---------------------------+----------------------+-----------------+----------------------+
+- ``avgCostAddBoiler``
+- ``avgCostBoilerBaseRpkWh``
+- ``avgCostBoilerPeakRpkWh``
+- ``avgCostCCRpkWh``
+- ``avgCostFurnaceRpkWh``
+- ``avgCostGHPRpkWh``
+- ``avgCostHPLakeRpkWh``
+- ``avgCostHPSewRpkWh``
+- ``avgCostStorageOperation``
+- ``avgCostUncontrollableSources``
 
 
-**configuration_SlaveDetailedEmissionData** includes the following parameters:
+**configuration_InvestmentCostDetailed** is saved in ``csv`` format and has 2 rows (including header).
+This includes the following parameters:
 
-+----------------------------------------+-----------------------------+----------------------+
-| ``CO2_from_AddBoiler_gas``             | ``CO2_from_BaseBoiler_gas`` | ``CO2_from_CC_gas``  |
-+----------------------------------------+-----------------------------+----------------------+
-| ``CO2_from_HP_StorageOperationChDeCh`` | ``CO2_from_HPLake``         | ``CO2_from_GHP``     |
-+----------------------------------------+-----------------------------+----------------------+
-| ``CO2_from_HPSolarandHearRecovery``    | ``CO2_from_PeakBoiler_gas`` | ``CO2_from_Sewage``  |
-+----------------------------------------+-----------------------------+----------------+-----+
-| ``CO2_from_elec_usedAuxBoilersAll``    | ``CO2_from_elec_sold``      | ``CO2_from_SCandPVT``|
-+----------------------------------------+-----------------------------+----------------------+
-| ``CO2_from_fictiveBoilerStorage``      |  ``CO2_from_wood``                                 |
-+----------------------------------------+----------------------------------------------------+
-
-**configuration_SlaveDetailedEprimData** includes the following parameters:
-
-+------------------------------------------+---------------------------------------+
-| ``E_prim_from_AddBoiler_gas``            | ``E_prim_from_AddBoiler_gas``         |
-+------------------------------------------+---------------------------------------+
-| ``E_prim_from_AddBoiler_gas``            | ``E_prim_from_AddBoiler_gas``         |
-+------------------------------------------+---------------------------------------+
-| ``E_prim_from_FictiveBoiler_gas``        | ``E_prim_from_PeakBoiler_gas``        |
-+------------------------------------------+---------------------------------------+
-| ``EprimSaved_from_elec_sold_CC``         | ``EprimSaved_from_elec_sold_Furnace`` |
-+------------------------------------------+---------------------------------------+
-| ``Eprim_from_HP_StorageOperationChDeCh`` | ``EprimSaved_from_elec_sold_Solar``   |
-+------------------------------------------+---------------------------------------+
-| ``Eprim_from_HPSolarandHearRecovery``    | ``Eprim_from_Sewage``                 |
-+------------------------------------------+---------------------------------------+
-| ``Eprim_from_elec_usedAuxBoilersAll``    | ``E_prim_from_CC_gas``                |
-+------------------------------------------+---------------------------------------+
-| ``E_prim_from_BaseBoiler_gas``           | ``Eprim_from_HPLake``                 |
-+------------------------------------------+---------------------------------------+
-| ``E_prim_from_AddBoiler_gas``            | ``Eprim_from_GHP``                    |
-+------------------------------------------+---------------------------------------+
-| ``Eprim_from_wood``                                                              |
-+----------------------------------------------------------------------------------+
-
-**configuration_Storage_Sizing_Parameters** includes the following parameters:
-
-+---------------+----------------------+---------------+
-| ``Q_initial`` | ``Storage_Size_opt`` | ``T_initial`` |
-+---------------+----------------------+---------------+
-
-**configuration_StorageOperationData** file has **8760** lines. It includes the following parameters:
+- ``BoilerAddInvC``
+- ``BoilerBInvCost``
+- ``BoilerPInvCost``
+- ``CO2DiscBuild``
+- ``CostDiscBuild``
+- ``DHNInvestCost``
+- ``FurnaceInvCost``
+- ``GasConnectionInvCa``
+- ``HPLakeInvC``
+- ``HPSewInvC``
+- ``NetworkCost``
+- ``PVTHEXCost``
+- ``PVTInvC``
+- ``PrimDiscBuild``
+- ``SCHEXCost``
+- ``SCInvC``
+- ``StorageCostSum``
+- ``StorageHEXCost``
+- ``StorageHPCost``
+- ``StorageInvC``
+- ``SubstHEXCost``
+- ``SumInvestCost``
+- ``pumpCosts``
 
 
-+---------------------+-----------------------------+---------------------------+
-| ``E_PVT_Wh``        | ``E_aux_HP_uncontrollable`` | ``Q_uncontrollable_hot``  |
-+---------------------+-----------------------------+---------------------------+
-| ``E_PV_Wh``         | ``mdot_DH_fin``             | ``Q_missing``             |
-+---------------------+-----------------------------+---------------------------+
-| ``E_aux_dech``      | ``E_produced_total``        | ``Q_from_storage_used``   |
-+---------------------+-----------------------------+---------------------------+
-| ``E_aux_ch``        | ``HPCompAirDesignArray``    | ``Q_SCandPVT_coldstream`` |
-+---------------------+-----------------------------+---------------------------+
-| ``HPScDesignArray`` | ``HPServerHeatDesignArray`` | ``Q_storage_content_Wh``  |
-+---------------------+-----------------------------+---------------------------+
-| ``P_HPCharge_max``  | ``Q_DH_networkload``        | ``HPpvt_designArray``     |
-+---------------------+-----------------------------+---------------------------+
-| ``Q_to_storage``    | ``Q_rejected_fin``          | ``Storage_Size``          |
-+---------------------+-----------------------------+---------------------------+
-| ``E_consumed_total_without_buildingdemand``                                   |
-+-------------------------------------------------------------------------------+
+**configuration_PrimaryEnergyBySource** is saved in ``csv`` format and has 2 rows (including header)
+and 9 columns (first column corresponding to index). This includes the following parameters:
+
+- ``EelExport``
+- ``EelectrImportSlave``
+- ``EgasPrimary``
+- ``EgasPrimaryPeakPower``
+- ``Egroundheat``
+- ``EsolarUsed``
+- ``EwoodPrimary``
+- ``costBenefitNotUsedHPs``
+
+
+**configuration_SlaveCostData** is saved in ``csv`` format and has 2 rows (including header) and 16 columns
+(first column corresponding to index). This includes the following parameters:
+
+- ``KEV_Remuneration``
+- ``PPoperation_exclAddBackup``
+- ``costAddBackup_total``
+- ``costBackup_sum``
+- ``costBoiler_sum``
+- ``costCC_sum``
+- ``costFurnace_sum``
+- ``costGHP_sum``
+- ``costHPLake_sum``
+- ``costHPSew_sum``
+- ``cost_Boiler_for_Storage_reHeat_at_seasonend``
+- ``cost_CC_maintenance``
+- ``cost_HP_aux_uncontrollable``
+- ``cost_HP_storage_operation``
+- ``total cost``
+
+
+**configuration_SlaveToMasterCostEmissionsPrimE** is a file in ``csv`` format and has 2 rows (including header)
+ and 4 columns (first column corresponding to index). This includes the following parameters:
+
+- ``CO2_kg_eq``
+- ``E_oil_eq_MJ``
+- ``cost_sum``
+
+
+**configuration_PPActivationPattern** is a file in ``csv`` format and has (total hours in a year + 1) rows (including header)
+ and 36 columns (first column corresponding to index) containing the following parameters:
+
+- ``BoilerBase_Status``
+- ``BoilerPeak_Status``
+- ``CC_Status``
+- ``Cost_AddBoiler``
+- ``Cost_BoilerBase``
+- ``Cost_BoilerPeak``
+- ``Cost_CC``
+- ``Cost_Furnace``
+- ``Cost_GHP``
+- ``Cost_HPLake``
+- ``Cost_HPSew``
+- ``ESolarProducedPVandPVT``
+- ``E_GHP``
+- ``E_PP_and_storage``
+- ``E_aux_HP_uncontrollable``
+- ``E_consumed_without_buildingdemand``
+- ``E_produced_total``
+- ``Furnace_Status``
+- ``GHP_Status``
+- ``HPLake_Status``
+- ``HPSew_Status``
+- ``Q_AddBoiler``
+- ``Q_BoilerBase``
+- ``Q_BoilerPeak``
+- ``Q_CC``
+- ``Q_Furnace``
+- ``Q_GHP``
+- ``Q_HPLake``
+- ``Q_HPSew``
+- ``Q_Network_Demand_after_Storage``
+- ``Q_excess``
+- ``Q_primaryAddBackupSum``
+- ``Q_uncontrollable``
+- ``Q_uncovered``
+- ``Qcold_HPLake``
+
+
+**configuration_SlaveDetailedEmissionData** is a file in ``csv`` format having 2 rows (including header)
+ and 15 columns (first column including index) which include the following parameters:
+
+- ``CO2_from_AddBoiler_gas``
+- ``CO2_from_BaseBoiler_gas``
+- ``CO2_from_CC_gas``
+- ``CO2_from_GHP``
+- ``CO2_from_HPLake``
+- ``CO2_from_HPSolarandHearRecovery``
+- ``CO2_from_HP_StorageOperationChDeCh``
+- ``CO2_from_PeakBoiler_gas``
+- ``CO2_from_SCandPVT``
+- ``CO2_from_Sewage``
+- ``CO2_from_elec_sold``
+- ``CO2_from_elec_usedAuxBoilersAll``
+- ``CO2_from_fictiveBoilerStorage``
+- ``CO2_from_wood``
+
+**configuration_SlaveDetailedEprimData** is a file in ``csv`` format containing two rows (including header)
+and having 16 columns (first column corresponding to index) which include the following parameters:
+
+- ``E_prim_from_AddBoiler_gas``
+- ``E_prim_from_BaseBoiler_gas``
+- ``E_prim_from_CC_gas``
+- ``E_prim_from_FictiveBoiler_gas``
+- ``E_prim_from_PeakBoiler_gas``
+- ``EprimSaved_from_elec_sold_CC``
+- ``EprimSaved_from_elec_sold_Furnace``
+- ``EprimSaved_from_elec_sold_Solar``
+- ``Eprim_from_GHP``
+- ``Eprim_from_HPLake``
+- ``Eprim_from_HPSolarandHearRecovery``
+- ``Eprim_from_HP_StorageOperationChDeCh``
+- ``Eprim_from_Sewage``
+- ``Eprim_from_elec_usedAuxBoilersAll``
+- ``Eprim_from_wood``
+
+
+**configuration_Storage_Sizing_Parameters** is a file in ``csv`` format which has 2 rows (including header)
+ and 4 columsn (first corresponding to index) which include the following parameters:
+
+- ``Q_initial``
+- ``Storage_Size_opt``
+- ``T_initial``
+
+**configuration_StorageOperationData** a ``csv`` file has (total hours in a year + 1) rows (including header) and
+21 columns (first column corresponding to index) which include the following parameters.
+**This file has few missing values. Reason needs to be investigated**
+
+- ``E_PVT_Wh``
+- ``E_PV_Wh``
+- ``E_aux_HP_uncontrollable``
+- ``E_aux_ch``
+- ``E_aux_dech``
+- ``E_consumed_total_without_buildingdemand``
+- ``E_produced_total``
+- ``HPCompAirDesignArray``
+- ``HPScDesignArray``
+- ``HPServerHeatDesignArray``
+- ``HPpvt_designArray``
+- ``P_HPCharge_max``
+- ``Q_DH_networkload``
+- ``Q_SCandPVT_coldstream``
+- ``Q_from_storage_used``
+- ``Q_missing``
+- ``Q_rejected_fin``
+- ``Q_storage_content_Wh``
+- ``Q_to_storage``
+- ``Q_uncontrollable_hot``
+- ``Storage_Size``
+- ``mdot_DH_fin``
 
 
 5. Substations
 ~~~~~~~~~~~~~~
 
-**File Names:** ``BuildingName_result``, ``Total_linkedbuildings``
+**File Names:**
+
+1. ``BuildingName_result``
+2. ``Total_linkedbuildings``
 
 **Rewritten:** Most of the files are rewritten in every iteration
 
@@ -529,76 +648,116 @@ are run multiple times
 
 **Information:**
 
-**BuildingName_result** has the following parameters:
+**BuildingName_result** a ``csv`` file has (total hours in a year + 1) rows (including header) and
+ 20 columns corresponding to the following parameters:
 
-+---------------------------------------------+------------------------+--------------------------+
-| ``A_hex_cool_design``                       | ``A_hex_dhw_design``   | ``A_hex_heating_design`` |
-+---------------------------------------------+------------------------+-----+--------------------+
-| ``Electr_array_all_flat``                   | ``Q_cool``             | ``Q_dhw``                |
-+---------------------------------------------+------------------------+-----+--------------------+
-| ``Q_heating``                               | ``T_r1_dhw_result``    | ``T_r1_heating_result``  |
-+---------------------------------------------+------------------------+--------------------------+
-| ``T_heating_max_all_buildings_intern``      | ``T_return_DC_result`` | ``T_return_DH_result``   |
-+---------------------------------------------+------------------------+-----+--------------------+
-| ``T_hotwater_max_all_buildings_intern``     | ``T_supply_DC_result`` | ``T_supply_DH_result``   |
-+---------------------------------------------+------------------------+-----+--------------------+
-| ``T_total_supply_max_all_buildings_intern`` | ``mdot_DC_result``     | ``mdot_DH_result``       |
-+---------------------------------------------+------------------------+--------------------------+
-| ``mdot_heating_result``                     | ``mdot_dhw_result``                               |
-+---------------------------------------------+---------------------------------------------------+
-
-**Total_linkedbuildings** has the following parameters:
-
-+------------------+--------------------+-------------------+------------------+--------------------+
-| ``Name``         | ``Af_m2``          | ``Aroof_m2``      | ``GFA_m2``       | ``people0``        |
-+------------------+--------------------+-------+-----------+------------------+-----+--------------+
-| ``Eref_MWhyr``   | ``Eauxf_cs0_kW``   | ``Eauxf_ve0_kW``  | ``Edataf0_kW``   | ``Qhprof_MWhyr``   |
-+------------------+--------------------+-------+-----------+------------------+-----+--------------+
-| ``Ecaf0_kW``     | ``Qhsf0_kW``       | ``Qww0_kW``       | ``QHf0_kW``      | ``Eauxf_hs0_kW``   |
-+------------------+--------------------+-------+-----------+------------------+--------------------+
-| ``Eprof_MWhyr``  | ``Eauxf_ve_MWhyr`` | ``Qcs0_kW``       | ``Qcsf_lat0_kW`` | ``Qhprof0_kW``     |
-+------------------+--------------------+-------+-----------+------------------+-----+--------------+
-| ``QEf_MWhyr``    | ``Eauxf_hs_MWhyr`` | ``Ef0_kW``        | ``Eprof0_kW``    | ``Ealf_MWhyr``     |
-+------------------+--------------------+-------+-----------+------------------+-----+--------------+
-| ``Qhsf_lat0_kW`` | ``Qhsf_MWhyr``     | ``Qwwf_MWhyr``    | ``Ecaf_MWhyr``   | ``Qcs_MWhyr``      |
-+------------------+--------------------+-------+-----------+------------------+--------------------+
-| ``Qhs_MWhyr``    | ``Eauxf_cs_MWhyr`` | ``Eaf0_kW``       | ``Qcref0_kW``    | ``Edataf_MWhyr``   |
-+------------------+--------------------+-------+-----------+------------------+--------------------+
-| ``Ealf0_kW``     | ``Eauxf_fw_MWhyr`` | ``Eauxf_MWhyr``   | ``Qhs0_kW``      | ``Eauxf_ww_MWhyr`` |
-+------------------+--------------------+-------+-----------+------------------+--------------------+
-| ``Qcsf_MWhyr``   | ``Qwwf0_kW``       | ``QCf0_kW``       | ``Qww_MWhyr``    | ``Qcsf_lat_MWhyr`` |
-+------------------+--------------------+-------+-----------+------------------+--------------------+
-| ``Qcdataf0_kW``  | ``Qcsf0_kW``       | ``Qcdataf_MWhyr`` | ``Eauxf_fw0_kW`` | ``QCf_MWhyr``      |
-+------------------+--------------------+-------------------+------------------+--------------------+
-| ``Eauxf0_kW``    | ``Qhsf_lat_MWhyr`` | ``Eauxf_ww0_kW``  | ``Qcref_MWhyr``  | ``Eaf_MWhyr``      |
-+------------------+--------------------+-------------------+------------------+--------------------+
-| ``QEf0_kW``      | ``Eref0_kW``       | ``Elf_MWhyr``     | ``Elf0_kW``      | ``QHf_MWhyr``      |
-+------------------+--------------------+-------------------+------------------+--------------------+
-| ``Ef_MWhyr``                                                                                      |
-+---------------------------------------------------------------------------------------------------+
+- ``A_hex_cool_design``
+- ``A_hex_dhw_design``
+- ``A_hex_heating_design``
+- ``Electr_array_all_flat``
+- ``Q_cool``
+- ``Q_dhw``
+- ``Q_heating``
+- ``T_heating_max_all_buildings_intern``
+- ``T_hotwater_max_all_buildings_intern``
+- ``T_r1_dhw_result``
+- ``T_r1_heating_result``
+- ``T_return_DC_result``
+- ``T_return_DH_result``
+- ``T_supply_DC_result``
+- ``T_supply_DH_result``
+- ``T_total_supply_max_all_buildings_intern``
+- ``mdot_DC_result``
+- ``mdot_DH_result``
+- ``mdot_dhw_result``
+- ``mdot_heating_result``
 
 
+**Total_linkedbuildings** a ``csv`` file has 2 rows (including header) and
+62 columns (first column corresponding to indes) which include the following parameters:
+
+- ``Name``
+- ``Af_m2``
+- ``Aroof_m2``
+- ``GFA_m2``
+- ``people0``
+- ``Eref_MWhyr``
+- ``Eauxf_cs0_kW``
+- ``Eauxf_ve0_kW``
+- ``Edataf0_kW``
+- ``Qhprof_MWhyr``
+- ``Ecaf0_kW``
+- ``Qhsf0_kW``
+- ``Qww0_kW``
+- ``QHf0_kW``
+- ``Eauxf_hs0_kW``
+- ``Eprof_MWhyr``
+- ``Eauxf_ve_MWhyr``
+- ``Qcs0_kW``
+- ``Qcsf_lat0_kW``
+- ``Qhprof0_kW``
+- ``QEf_MWhyr``
+- ``Ef0_kW``
+- ``Eauxf_hs_MWhyr``
+- ``Eprof0_kW``
+- ``Ealf_MWhyr``
+- ``Qhsf_lat0_kW``
+- ``Qhsf_MWhyr``
+- ``Qwwf_MWhyr``
+- ``Ecaf_MWhyr``
+- ``Qcs_MWhyr``
+- ``Qhs_MWhyr``
+- ``Eauxf_cs_MWhyr``
+- ``Eaf0_kW``
+- ``Qcref0_kW``
+- ``Edataf_MWhyr``
+- ``Ealf0_kW``
+- ``Eauxf_fw_MWhyr``
+- ``Eauxf_MWhyr``
+- ``Qhs0_kW``
+- ``Eauxf_ww_MWhyr``
+- ``Qcsf_MWhyr``
+- ``Qwwf0_kW``
+- ``QCf0_kW``
+- ``Qww_MWhyr``
+- ``Qcsf_lat_MWhyr``
+- ``Qcdataf0_kW``
+- ``Qcsf0_kW``
+- ``Qcdataf_MWhyr``
+- ``Eauxf_fw0_kW``
+- ``QCf_MWhyr``
+- ``Eauxf0_kW``
+- ``QEf0_kW``
+- ``Elf0_kW``
+- ``Eaf_MWhyr``
+- ``QHf_MWhyr``
+- ``Qhsf_lat_MWhyr``
+- ``Eauxf_ww0_kW``
+- ``Qcref_MWhyr``
+- ``Eref0_kW``
+- ``Elf_MWhyr``
+- ``Ef_MWhyr``
 
 Uncertainty
 -----------
 
-This section deals with the files in ````reference-case\baseline\outputs\data\uncertainty``
+This section deals with the files in ``reference-case\baseline\outputs\data\uncertainty``
 
 
-**File Names:** ``uncertainty.csv``, ``CheckPoint_uncertainty_number``
+**File Names:** ``uncertainty``, ``CheckPoint_uncertainty_number``
 
 **Rewritten:** The files are rewritten only when ``CEAforArcGIS\cea\analysis\uncertainty\Individual_Evaluation.py``,
 or ``CEAforArcGIS\cea\analysis\uncertainty\Uncertainty_parameters.py`` are run
 
 **Origin:**
 
-``uncertainty.csv`` originates from ``CEAforArcGIS\cea\analysis\uncertainty\Uncertainty_parameters.py``
+``uncertainty`` originates from ``CEAforArcGIS\cea\analysis\uncertainty\Uncertainty_parameters.py``
 
 ``CheckPoint_uncertainty_number`` originates from ``CEAforArcGIS\cea\analysis\uncertainty\Individual_Evaluation.py``
 
 **Information:**
 
- ``uncertainty.csv`` has the values for parameters that are changed in uncertainty analysis
+ ``uncertainty.csv`` a ``csv`` file has the values for parameters that are changed in uncertainty analysis
 
  ``CheckPoint_uncertainty_number`` has the following parameters:
 
@@ -613,23 +772,12 @@ This section deals with the files in ``reference-case\baseline\outputs\data\pote
 ``reference-case\baseline\outputs\data\potentials\solar``
 
 
-**File Names:** ``uncertainty.csv``, ``CheckPoint_uncertainty_number``
+**File Names:**
 
-**Rewritten:** The files are rewritten only when ``CEAforArcGIS\cea\analysis\uncertainty\Individual_Evaluation.py``,
-or ``CEAforArcGIS\cea\analysis\uncertainty\Uncertainty_parameters.py`` are run
+**Rewritten:**
 
 **Origin:**
 
-``uncertainty.csv`` originates from ``CEAforArcGIS\cea\analysis\uncertainty\Uncertainty_parameters.py``
 
-``CheckPoint_uncertainty_number`` originates from ``CEAforArcGIS\cea\analysis\uncertainty\Individual_Evaluation.py``
 
 **Information:**
-
- ``uncertainty.csv`` has the values for parameters that are changed in uncertainty analysis
-
- ``CheckPoint_uncertainty_number`` has the following parameters:
-
-+------------------------+-----------------------+----------------+
-| ``population_fitness`` | ``uncertainty_level`` | ``population`` |
-+------------------------+-----------------------+----------------+
