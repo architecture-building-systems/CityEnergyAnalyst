@@ -16,6 +16,14 @@ folder ``baseline`` in the sample reference case shipped with the CEA.
 The variable ``<BUILDINGNAME>``  is used throughout this document to reference the name of a single building in the
 scenario.
 
+The variable ``<GENERATIONNUMBER>`` refers to the unique generation number assigned during the optimization process.
+
+The variable ``<CONFIGURATION>`` refers to the unique configuration assigned during the optimization process.
+@bhargavakrishna: please give more information on ``<CONFIGURATION>`` - also, consider moving configuration and
+generationnumber to a local scope (to the optimization section)
+
+.. contents:: Table of Contents
+
 Demand
 ------
 
@@ -23,15 +31,13 @@ This section deals with the files saved in ``<SCENARIO>\outputs\data\demand``
 
 
 :File Names: ``<BUILDINGNAME>.csv``, ``Total_demand.csv``
+:Rewritten:  These files are only rewritten when the ``CEAforArcGIS\cea\demand\demand_file.py``
+             is run
 
-:Rewritten: These files are only rewritten when the ``CEAforArcGIS\cea\demand\demand_file.py``
-is run
+:Origin:     All files originate from ``CEAforArcGIS\cea\demand\demand_writers.py``
 
-**Origin:** All files originate from ``CEAforArcGIS\cea\demand\demand_writers.py``
 
-**Information:**
-
-**<BUILDINGNAME>** file has the following parameters:
+``<BUILDINGNAME>.csv`` file has a header row and one row for each hour of the your. It has the following fields:
 
 - ``DATE``
 - ``Name``
@@ -81,8 +87,8 @@ is run
 - ``Tcref_sup_C``
 
 
-**Total_demand** is a ``csv`` file having (number of buildings + 1) rows (including header)
-and 61 columns corresponding to the following parameters:
+``Total_demand.csv`` has (number of buildings + 1) rows (including header) and 61 columns corresponding to the following
+fields:
 
 - ``Name``
 - ``Af_m2``
@@ -150,7 +156,7 @@ and 61 columns corresponding to the following parameters:
 Optimization
 ------------
 
-This section deals with the different files saved in ``<SCENARIO>\outputs\data\optimization``
+This section deals with the different files saved in ``<SCENARIO>\outputs\data\optimization``.
 The folders present inside this are:
 
 1. disconnected
@@ -167,14 +173,11 @@ The folders present inside this are:
 1. Disconnected
 ~~~~~~~~~~~~~~~
 
-**File Names:** ``DiscOp_<BUILDINGNAME>_result``
-
-**Rewritten:** Not rewritten
-
-**Origin:** They are being shipped along with the reference case
-
-**Information:** All the files are saved in ``csv`` format. Each of these files have 14 rows (including header)
-and 16 columns (including one for index) having the following parameters:
+:File Names: ``DiscOp_<BUILDINGNAME>_result.csv``
+:Rewritten:  Not rewritten
+:Origin:     They are being shipped along with the reference case
+:Notes:      All the files are saved in ``csv`` format. Each of these files has 14 rows (including header)
+             and 16 columns (including one for index) with the following names:
 
 - ``Annualized Investment Costs [CHF]``
 - ``Best configuration``
@@ -192,23 +195,20 @@ and 16 columns (including one for index) having the following parameters:
 - ``QfromNG``
 - ``Total Costs [CHF]``
 
+@bhargavakrishna: What is the meaning of each row? Why 13?
+
 
 2. Master
 ~~~~~~~~~
 
-**File Names:**
+:File Names: ``CheckPoint_Initial.csv``, ``CheckPoint_<GENERATIONNUMBER>.csv``, ``CheckPoint_Final.csv``
+:Rewritten:  The files present in this folder are rewritten. If the optimization is run multiple
+             times, the files are constantly replaced with new ones.
 
-1. ``CheckPoint_Initial``
-2. ``CheckPoint_generationnumber``
-3. ``CheckPoint_Final``
+:Origin:     All the files in this folder are created in the script
+             ``CEAforArcGIS\cea\optimization\master\master_main.py``
 
-**Rewritten:** The files present in this folder are rewritten. If the optimization is run multiple
-times, the files are constantly replaced with new ones. **Thus if using multiple runs, be aware**
-
-**Origin:** All the files in this folder are created in the following script
-``CEAforArcGIS\cea\optimization\master\master_main.py``
-
-**Information:** Each of these files have the following parameters:
+Each of these files has the following fields:
 
 - ``population_fitness``
 - ``epsIndicator``
@@ -220,22 +220,22 @@ times, the files are constantly replaced with new ones. **Thus if using multiple
 3.1 Network/Network
 ~~~~~~~~~~~~~~~~~~~
 
-**File Names:**
+:File Names:  ``Network_summary_result_buildingnetwork.csv``, ``Network_summary_result_all.csv``
 
-1. ``Network_summary_result_buildingnetwork``
-2. ``Network_summary_result_all``
+@bhargavakrishna: what are the estensions? what is buildingnetwork? ist that also a variable???
 
-**Rewritten:** High chance of the files being rewritten, even though the file
-name has building network configuration in it.
+:Rewritten:   High chance of the files being rewritten, even though the file name has building network configuration in
+              it.
 
-**Origin:** Both the files originate in
-``CEAforArcGIS\cea\optimization\master\summarize_network.py``
+@bhargavakrishna: this needs an explaination!!
 
-**Information:**
+:Origin: Both the files originate in ``CEAforArcGIS\cea\optimization\master\summarize_network.py``
 
-**Network_summary_result_buildingnetwork** All the files are saved in ``csv`` format.
-Each of these files have (total hours in a year + 1) rows (including header) and
-16 columns (including one for index) corresponding to the following parameters:
+
+All the ``Network_summary_result_buildingnetwork.csv`` Each of these files has a header plus one row per hour in the
+simulated year 16 columns (including one for index) corresponding to the following fields:
+
+@bhargavakrishna: one such for each building?
 
 - ``Ecaf_netw_total``
 - ``Electr_netw_total``
@@ -253,8 +253,8 @@ Each of these files have (total hours in a year + 1) rows (including header) and
 - ``mdot_cool_netw_total``
 - ``mdotdata_netw_total``
 
-**Network_summary_result_all** is saved in ``csv`` format and has (total hours in a year + 1) rows (including header)
-and 16 columns (including one for index) corresponding to the following parameters:
+The file ``Network_summary_result_all.csv`` has a header row plus one row for each hour in the simulated year,
+and 16 columns (including one for index) corresponding to the following fields:
 
 - ``Ecaf_netw_total``
 - ``Electr_netw_total``
@@ -276,20 +276,15 @@ and 16 columns (including one for index) corresponding to the following paramete
 3.2 Totals
 ~~~~~~~~~~
 
-**File Names:**
+:File Names: ``Total_buildingnetwork.csv``
+:Rewritten:  High chance of the file being rewritten, even though the file name has building network configuration in it.
 
-``Total_buildingnetwork``
+@bhargavakrishna: This needs an explaination.
 
-**Rewritten:** High chance of the files being rewritten, even though the file
-name has building network configuration in it.
+:Origin:     Both the files originate in ``CEAforArcGIS\cea\optimization\supportFn.py``
 
-**Origin:** Both the files originate in
-``CEAforArcGIS\cea\optimization\supportFn.py``
-
-**Information:**
-
-**Total_buildingnetwork** is saved in ``csv`` format and has varying rows (based on DHN)
-and 62 columns (including one for index) with the following parameters:
+``Total_buildingnetwork.csv`` has a variable number of rows (based on DHN) and 62 columns (including one for index) with
+the following fields:
 
 - ``Name``
 - ``Af_m2``
@@ -356,20 +351,11 @@ and 62 columns (including one for index) with the following parameters:
 3.3 Network/Layout
 ~~~~~~~~~~~~~~~~~~
 
-**File Names:**
+:File Names: ``NodesData_DC``, ``NodesData_DH``, ``PipesData_DC``, ``PipesData_DH``
+:Rewritten:  Not rewritten
+:Origin:     They are being shipped along with the reference case
 
-1. ``NodesData_DC``
-2. ``NodesData_DH``
-3. ``PipesData_DC``
-4. ``PipesData_DH``
-
-**Rewritten:** Not rewritten
-
-**Origin:** They are being shipped along with the reference case
-
-**Information:**
-
-**NodesData_DC, NodesData_DH** are of ``csv`` format and have 68 rows (including header)
+``NodesData_DC.csv`` and ``NodesData_DH.csv`` each and have 68 rows (including header)
 and 4 columns corresponding to the following parameters:
 
 - ``DC_ID``
@@ -377,7 +363,10 @@ and 4 columns corresponding to the following parameters:
 - ``Plant``
 - ``Sink``
 
-**PipesData_DC, PipesData_DH** are of ``csv`` format and have 67 rows (including header)
+@bhargavakrishna: why 68 rows? please explain.
+
+
+``PipesData_DC.csv`` and ``PipesData_DH.csv`` each have 67 rows (including header)
 and 4 columns corresponding to the following parameters:
 
 - ``DC_ID``
@@ -385,57 +374,48 @@ and 4 columns corresponding to the following parameters:
 - ``NODE1``
 - ``NODE2``
 
+@bhargavakrishna: why 67 rows? please explain.
+
 4. Slave
 ~~~~~~~~
 
-**File Names:**
+:File Names: ``<CONFIGURATION>_AveragedCostData.csv``, ``<CONFIGURATION>_InvestmentCostDetailed.csv``,
+             ``<CONFIGURATION>_PrimaryEnergyBySource.csv``, ``<CONFIGURATION>_PPActivationPattern.csv``,
+             ``<CONFIGURATION>_SlaveCostData.csv``, ``<CONFIGURATION>_SlaveDetailedEmissionData.csv``,
+             ``<CONFIGURATION>_SlaveDetailedEprimData.csv``, ``<CONFIGURATION>_SlaveToMasterCostEmissionsPrimE.csv``,
+             ``<CONFIGURATION>_Storage_Sizing_Parameters.csv``, ``<CONFIGURATION>_StorageOperationData.csv``
 
-1. ``configuration_AveragedCostData``
-2. ``configuration_InvestmentCostDetailed``
-3. ``configuration_PrimaryEnergyBySource``
-4. ``configuration_PPActivationPattern``
-5. ``configuration_SlaveCostData``
-6. ``configuration_SlaveDetailedEmissionData``
-7. ``configuration_SlaveDetailedEprimData``
-8. ``configuration_SlaveToMasterCostEmissionsPrimE``
-9. ``configuration_Storage_Sizing_Parameters``
-10. ``configuration_StorageOperationData``
+:Rewritten:  Highly unlikely to be rewritten as ``<CONFIGURATION>`` is associated with each saved file. Over time this
+             folder will get cluttered with files if the simulations are run multiple times
+
+:Origin:
+
+    +-----------------------------------------------------+------------------------------------------------------------------------------+
+    | File Name                                           | Originates from                                                              |
+    +=====================================================+==============================================================================+
+    | ``<CONFIGURATION>_AveragedCostData``                | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
+    +-----------------------------------------------------+------------------------------------------------------------------------------+
+    | ``<CONFIGURATION>_InvestmentCostDetailed``          | ``CEAforArcGIS\cea\optimization\master\cost_model.py``                       |
+    +-----------------------------------------------------+------------------------------------------------------------------------------+
+    | ``<CONFIGURATION>_PrimaryEnergyBySource``           | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
+    +-----------------------------------------------------+------------------------------------------------------------------------------+
+    | ``<CONFIGURATION>_SlaveCostData``                   | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
+    +-----------------------------------------------------+------------------------------------------------------------------------------+
+    | ``<CONFIGURATION>_SlaveToMasterCostEmissionsPrimE`` | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
+    +-----------------------------------------------------+------------------------------------------------------------------------------+
+    | ``<CONFIGURATION>_PPActivationPattern``             | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
+    +-----------------------------------------------------+------------------------------------------------------------------------------+
+    | ``<CONFIGURATION>_SlaveDetailedEmissionData``       | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
+    +-----------------------------------------------------+------------------------------------------------------------------------------+
+    | ``<CONFIGURATION>_SlaveDetailedEprimData``          | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
+    +-----------------------------------------------------+------------------------------------------------------------------------------+
+    | ``<CONFIGURATION>_Storage_Sizing_Parameters``       | ``CEAforArcGIS\cea\optimization\slave\seasonal_storage\storage_main.py``     |
+    +-----------------------------------------------------+------------------------------------------------------------------------------+
+    | ``<CONFIGURATION>_StorageOperationData``            | ``CEAforArcGIS\cea\optimization\slave\seasonal_storage\design_operation.py`` |
+    +-----------------------------------------------------+------------------------------------------------------------------------------+
 
 
-**Rewritten:** Highly unlikely to be rewritten as ``configuration`` is associated
-with each saved file. Over time this folder will get cluttered with files if the simulations
-are run multiple times
-
-**Origin:**
-
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| File Name                                         | Originates from                                                              |
-+===================================================+==============================================================================+
-| ``configuration_AveragedCostData``                | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| ``configuraiton_InvestmentCostDetailed``          | ``CEAforArcGIS\cea\optimization\master\cost_model.py``                       |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_PrimaryEnergyBySource``           | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_SlaveCostData``                   | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_SlaveToMasterCostEmissionsPrimE`` | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_PPActivationPattern``             | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_SlaveDetailedEmissionData``       | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_SlaveDetailedEprimData``          | ``CEAforArcGIS\cea\optimization\slave\least_cost.py``                        |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_Storage_Sizing_Parameters``       | ``CEAforArcGIS\cea\optimization\slave\seasonal_storage\storage_main.py``     |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-| ``configuration_StorageOperationData``            | ``CEAforArcGIS\cea\optimization\slave\seasonal_storage\design_operation.py`` |
-+---------------------------------------------------+------------------------------------------------------------------------------+
-
-**Information:**
-
-**configuration_AveragedCostData** is saved in ``csv`` format and has 2 rows (including header).
-This includes the following parameters:
+``<CONFIGURATION>_AveragedCostData.csv`` has 2 rows (including header) and the following fields:
 
 - ``avgCostAddBoiler``
 - ``avgCostBoilerBaseRpkWh``
@@ -449,8 +429,7 @@ This includes the following parameters:
 - ``avgCostUncontrollableSources``
 
 
-**configuration_InvestmentCostDetailed** is saved in ``csv`` format and has 2 rows (including header).
-This includes the following parameters:
+``<CONFIGURATION>_InvestmentCostDetailed.csv`` has 2 rows (including header) and the following fields:
 
 - ``BoilerAddInvC``
 - ``BoilerBInvCost``
@@ -477,8 +456,8 @@ This includes the following parameters:
 - ``pumpCosts``
 
 
-**configuration_PrimaryEnergyBySource** is saved in ``csv`` format and has 2 rows (including header)
-and 9 columns (first column corresponding to index). This includes the following parameters:
+``<CONFIGURATION>_PrimaryEnergyBySource.csv`` has 2 rows (including header)
+and 9 columns (first column corresponding to index) with the following names:
 
 - ``EelExport``
 - ``EelectrImportSlave``
@@ -490,8 +469,8 @@ and 9 columns (first column corresponding to index). This includes the following
 - ``costBenefitNotUsedHPs``
 
 
-**configuration_SlaveCostData** is saved in ``csv`` format and has 2 rows (including header) and 16 columns
-(first column corresponding to index). This includes the following parameters:
+``<CONFIGURATION>_SlaveCostData.csv`` has 2 rows (including header) and 16 columns
+(first column corresponding to index) with the following names:
 
 - ``KEV_Remuneration``
 - ``PPoperation_exclAddBackup``
@@ -510,7 +489,7 @@ and 9 columns (first column corresponding to index). This includes the following
 - ``total cost``
 
 
-**configuration_SlaveToMasterCostEmissionsPrimE** is a file in ``csv`` format and has 2 rows (including header)
+``<CONFIGURATION>_SlaveToMasterCostEmissionsPrimE.csv`` has 2 rows (including header)
  and 4 columns (first column corresponding to index). This includes the following parameters:
 
 - ``CO2_kg_eq``
@@ -518,7 +497,7 @@ and 9 columns (first column corresponding to index). This includes the following
 - ``cost_sum``
 
 
-**configuration_PPActivationPattern** is a file in ``csv`` format and has (total hours in a year + 1) rows (including header)
+**<CONFIGURATION>_PPActivationPattern** is a file in ``csv`` format and has (total hours in a year + 1) rows (including header)
  and 36 columns (first column corresponding to index) containing the following parameters:
 
 - ``BoilerBase_Status``
@@ -558,7 +537,7 @@ and 9 columns (first column corresponding to index). This includes the following
 - ``Qcold_HPLake``
 
 
-**configuration_SlaveDetailedEmissionData** is a file in ``csv`` format having 2 rows (including header)
+**<CONFIGURATION>_SlaveDetailedEmissionData** is a file in ``csv`` format having 2 rows (including header)
  and 15 columns (first column including index) which include the following parameters:
 
 - ``CO2_from_AddBoiler_gas``
@@ -576,7 +555,7 @@ and 9 columns (first column corresponding to index). This includes the following
 - ``CO2_from_fictiveBoilerStorage``
 - ``CO2_from_wood``
 
-**configuration_SlaveDetailedEprimData** is a file in ``csv`` format containing two rows (including header)
+**<CONFIGURATION>_SlaveDetailedEprimData** is a file in ``csv`` format containing two rows (including header)
 and having 16 columns (first column corresponding to index) which include the following parameters:
 
 - ``E_prim_from_AddBoiler_gas``
@@ -596,14 +575,14 @@ and having 16 columns (first column corresponding to index) which include the fo
 - ``Eprim_from_wood``
 
 
-**configuration_Storage_Sizing_Parameters** is a file in ``csv`` format which has 2 rows (including header)
+**<CONFIGURATION>_Storage_Sizing_Parameters** is a file in ``csv`` format which has 2 rows (including header)
  and 4 columsn (first corresponding to index) which include the following parameters:
 
 - ``Q_initial``
 - ``Storage_Size_opt``
 - ``T_initial``
 
-**configuration_StorageOperationData** a ``csv`` file has (total hours in a year + 1) rows (including header) and
+**<CONFIGURATION>_StorageOperationData** a ``csv`` file has (total hours in a year + 1) rows (including header) and
 21 columns (first column corresponding to index) which include the following parameters.
 **This file has few missing values. Reason needs to be investigated**
 
