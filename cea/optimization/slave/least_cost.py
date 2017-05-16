@@ -17,8 +17,8 @@ from cea.technologies.boilers import cond_boiler_op_cost
 import copy
 
 __author__ = "Tim Vollrath"
-__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Tim Vollrath", "Thuy-An Nguyen"]
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Sreepathi Bhargava Krishna","Tim Vollrath", "Thuy-An Nguyen"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -86,18 +86,16 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     Q_missing_copy = Q_missing.copy()
 
-    NETWORK_DATA_FILE = MS_Var.NETWORK_DATA_FILE
+    network_data_file = MS_Var.NETWORK_DATA_FILE
 
     # Import Temperatures from Network Summary:
+    network_storage_file = locator.get_optimization_network_data_folder(network_data_file)
+    network_data = pd.read_csv(network_storage_file)
+    tdhret = network_data['T_sst_heat_return_netw_total']
 
-    os.chdir(locator.get_optimization_network_results_folder())
-    tdhret = np.array(pd.read_csv(NETWORK_DATA_FILE, usecols=["T_sst_heat_return_netw_total"],
-                                  nrows=gv.DAYS_IN_YEAR * gv.HOURS_IN_DAY))
-    mdot_DH = np.array(
-        pd.read_csv(NETWORK_DATA_FILE, usecols=["mdot_DH_netw_total"], nrows=gv.DAYS_IN_YEAR * gv.HOURS_IN_DAY))
-    tdhsup = np.array(pd.read_csv(NETWORK_DATA_FILE, usecols=["T_sst_heat_supply_netw_total"], nrows=1))[0][0]
-
-    # import Marginal Cost of PP Data :
+    mdot_DH = network_data['mdot_DH_netw_total']
+    tdhsup = network_data['T_sst_heat_supply_netw_total'][0]
+        # import Marginal Cost of PP Data :
     # os.chdir(Cost_Maps_Path)
 
  #   """ LOAD MODULES """
@@ -132,8 +130,9 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     # Import Data - Sewage
     if gv.HPSew_allowed == 1:
-        QcoldsewArray = np.array(pd.read_csv(locator.get_sewage_heat_potential(), usecols=["Qsw_kW"])) * 1E3
-        TretsewArray = np.array(pd.read_csv(locator.get_sewage_heat_potential(), usecols=["ts_C"])) + 273
+        HPSew_Data = pd.read_csv(locator.get_sewage_heat_potential())
+        QcoldsewArray = np.array(HPSew_Data['Qsw_kW']) * 1E3
+        TretsewArray = np.array(HPSew_Data['ts_C']) + 273
 
     def source_activator(Q_therm_req, hour, context):
         """
@@ -149,8 +148,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
         Q_therm_req_COPY = copy.copy(Q_therm_req)
         MS_Var = context
         current_source = gv.act_first  # Start with first source, no cost yet
-        mdot_DH_req = mdot_DH[hour, 0]
-        tdhret_req = tdhret[hour, 0]
+        mdot_DH_req = mdot_DH[hour]
+        tdhret_req = tdhret[hour]
         Q_uncovered = 0
         # Initializing resulting values (necessairy as not all of them are over-written):
 
@@ -199,7 +198,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                         mdot_DH_to_Sew = float(mdot_DH_req.copy())
                         # Q_therm_req = 0
 
-                    HP_Sew_Cost_Data = HPSew_op_cost(mdot_DH_to_Sew, tdhsup, tdhret_req, TretsewArray[hour][0], gv)
+                    HP_Sew_Cost_Data = HPSew_op_cost(mdot_DH_to_Sew, tdhsup, tdhret_req, TretsewArray[hour], gv)
                     C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, Q_HPSew_cold_primary, Q_HPSew_therm, E_HPSew_el = HP_Sew_Cost_Data
                     Q_therm_req -= Q_HPSew_therm
                     # print "C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, Q_HPSew_cold_primary, Q_HPSew_therm", \
@@ -552,7 +551,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     if QUncoveredDesign != 0:
         for hour in range(gv.HOURS_IN_DAY * gv.DAYS_IN_YEAR):
-            tdhret_req = tdhret[hour, 0]
+            tdhret_req = tdhret[hour]
             BoilerBackup_Cost_Data = cond_boiler_op_cost(QUncovered[hour], QUncoveredDesign, tdhret_req, \
                                                          master_to_slave_vars.BoilerBackupType, master_to_slave_vars.EL_TYPE, gv)
             C_boil_thermAddBackup[hour], C_boil_per_WhBackup, Q_primaryAddBackup[hour], E_aux_AddBoiler[
@@ -568,7 +567,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     # Sum up all electricity needs
     E_PP_tot_used = E_PP_el_data[:, 0] + E_PP_el_data[:, 1] + E_PP_el_data[:, 2] + \
                     E_PP_el_data[:, 5] + E_PP_el_data[:, 6] + E_aux_AddBoiler
-    E_aux_storage_operation = E_aux_ch[:, 0] + E_aux_dech[:, 0]
+    E_aux_storage_operation = E_aux_ch + E_aux_dech
     E_aux_storage_operation_sum = np.sum(E_aux_storage_operation)
     E_PP_and_storage = E_PP_tot_used + E_aux_storage_operation
     E_HP_SolarAndHeatRecoverySum = np.sum(E_aux_HP_uncontrollable)
@@ -579,13 +578,13 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     # price from PV and PVT electricity (both are in E_PV_Wh, see Storage_Design_and..., about Line 133)
     ESolarProduced = E_PV_Wh + E_PVT_Wh
 
-    E_produed_total = E_produced_solarAndHPforSolar[:, 0] + E_CC_tot_produced
+    E_produed_total = E_produced_solarAndHPforSolar + E_CC_tot_produced
 
-    E_consumed_without_buildingdemand = E_consumed_without_buildingdemand_solarAndHPforSolar[:, 0] + E_PP_and_storage
+    E_consumed_without_buildingdemand = E_consumed_without_buildingdemand_solarAndHPforSolar + E_PP_and_storage
 
     if save_file == 1:
         results = pd.DataFrame({
-            "Q_Network_Demand_after_Storage": Q_missing_copy[:, 0],
+            "Q_Network_Demand_after_Storage": Q_missing_copy,
             "Cost_HPSew": cost_data_centralPlant_op[:, 0],
             "Cost_HPLake": cost_data_centralPlant_op[:, 1],
             "Cost_GHP": cost_data_centralPlant_op[:, 2],
@@ -608,13 +607,13 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
             "Q_Furnace": Q_source_data[:, 4],
             "Q_BoilerBase": Q_source_data[:, 5],
             "Q_BoilerPeak": Q_source_data[:, 6],
-            "Q_uncontrollable": Q_uncontrollable[:, 0],
+            "Q_uncontrollable": Q_uncontrollable,
             "Q_primaryAddBackupSum": Q_primaryAddBackupSum,
             "E_PP_and_storage": E_PP_and_storage,
             "Q_uncovered": Q_source_data[:, 7],
             "Q_AddBoiler": QUncovered,
-            "E_aux_HP_uncontrollable": E_aux_HP_uncontrollable[:, 0],
-            "ESolarProducedPVandPVT": ESolarProduced[:, 0],
+            "E_aux_HP_uncontrollable": E_aux_HP_uncontrollable,
+            "ESolarProducedPVandPVT": ESolarProduced,
             "E_GHP": E_PP_el_data[:, 2],
             "Qcold_HPLake": E_coldsource_data[:, 1],
             "E_produced_total": E_produed_total,
@@ -734,11 +733,11 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     avgCostFurnaceRpkWh = 100 * 1000.0 * costFurnace_sum / np.sum(Q_source_data[:, 4])
     avgCostBoilerBaseRpkWh = 100 * 1000.0 * costBoiler_sum / np.sum(Q_source_data[:, 5])
     avgCostBoilerPeakRpkWh = 100 * 1000.0 * costBackup_sum / np.sum(Q_source_data[:, 6])
-    avgCostUncontrollableSources = 100 * 1000.0 * cost_HP_aux_uncontrollable / np.sum(Q_uncontrollable[:, 0])
+    avgCostUncontrollableSources = 100 * 1000.0 * cost_HP_aux_uncontrollable / np.sum(Q_uncontrollable)
     avgCostAddBoiler = 100 * 1000.0 * costAddBackup_total / np.sum(QUncovered)
     avgCostStorageOperation = 100 * 1000.0 * cost_HP_storage_operation / Q_StorageToDHNpipe_sum
 
-    print "\n Q_uncontrollable produced", np.sum(Q_uncontrollable[:, 0])
+    print "\n Q_uncontrollable produced", np.sum(Q_uncontrollable)
     print "cost_HP_aux_uncontrollable", cost_HP_aux_uncontrollable
     print "E_aux_HP_uncontrollable sum", np.sum(E_aux_HP_uncontrollable)
 
@@ -1201,31 +1200,8 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
     
     print "\n CO2_from_HPSolarandHearRecovery", CO2_from_HPSolarandHearRecovery
     print "Eprim_from_HPSolarandHearRecovery",Eprim_from_HPSolarandHearRecovery
-    
-    
-    
-    #print Eprim_used
-    #print CO2_emitted
-    
+
     return CO2_emitted, Eprim_used
-
-def extract_csv(fName, colName, DAYS_IN_YEAR):
-    """
-    Extract data from one column of a csv file to a pandas.DataFrame
-
-    :param fName: Name of the csv file
-    :param colName: Name of the column from which to the data needs to be extracted
-    :param DAYS_IN_YEAR: number of days to consider
-    :type fName: string
-    :type colName: string
-    :type DAYS_IN_YEAR: int
-    :return: pandas.DataFrame, contains the hour of the day in the first column
-    and the data of the selected column in the second
-    :rtype: class
-    """
-    result = pd.read_csv(fName, usecols=[colName], nrows=24 * DAYS_IN_YEAR)
-    return result
-
 
 def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     """
@@ -1244,31 +1220,27 @@ def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     """ import dataframes """
     # mass flows
 
-    # print fName
-    Q_DH_networkload = np.array(extract_csv(fName, "Q_DH_networkload", DAYS_IN_YEAR))
-    E_aux_ch = np.array(extract_csv(fName, "E_aux_ch", DAYS_IN_YEAR))
-
-    E_aux_dech = np.array(extract_csv(fName, "E_aux_dech", DAYS_IN_YEAR))
-    Q_missing = np.array(extract_csv(fName, "Q_missing", DAYS_IN_YEAR))
-    Q_storage_content_Wh = np.array(extract_csv(fName, "Q_storage_content_Wh", DAYS_IN_YEAR))
-    Q_to_storage = np.array(extract_csv(fName, "Q_to_storage", DAYS_IN_YEAR))
-    Q_from_storage = np.array(extract_csv(fName, "Q_from_storage_used", DAYS_IN_YEAR))
-    Q_uncontrollable = np.array(extract_csv(fName, "Q_uncontrollable_hot", DAYS_IN_YEAR))
-    E_PV_Wh = np.array(extract_csv(fName, "E_PV_Wh", DAYS_IN_YEAR))
-    E_PVT_Wh = np.array(extract_csv(fName, "E_PVT_Wh", DAYS_IN_YEAR))
-    # print " \n ----------- "
-    # print "E_PVT_Wh Sum in Import netw. data functions: ", np.sum(E_PVT_Wh)
-
-
-    E_aux_HP_uncontrollable = np.array(extract_csv(fName, "E_aux_HP_uncontrollable", DAYS_IN_YEAR))
-    Q_SCandPVT = np.array(extract_csv(fName, "Q_SCandPVT_coldstream", DAYS_IN_YEAR))
-    HPServerHeatDesignArray = np.array(extract_csv(fName, "HPServerHeatDesignArray", DAYS_IN_YEAR))
-    HPpvt_designArray = np.array(extract_csv(fName, "HPpvt_designArray", DAYS_IN_YEAR))
-    HPCompAirDesignArray = np.array(extract_csv(fName, "HPCompAirDesignArray", DAYS_IN_YEAR))
-    HPScDesignArray = np.array(extract_csv(fName, "HPScDesignArray", DAYS_IN_YEAR))
-    E_produced_solarAndHPforSolar = np.array(extract_csv(fName, "E_produced_total", DAYS_IN_YEAR))
+    # Extract data from all columns of the csv file to a pandas.Dataframe
+    centralized_plant_data = pd.read_csv(fName)
+    Q_DH_networkload = np.array(centralized_plant_data['Q_DH_networkload'])
+    E_aux_ch = np.array(centralized_plant_data['E_aux_ch'])
+    E_aux_dech = np.array(centralized_plant_data['E_aux_dech'])
+    Q_missing = np.array(centralized_plant_data['Q_missing'])
+    Q_storage_content_Wh = np.array(centralized_plant_data['Q_storage_content_Wh'])
+    Q_to_storage = np.array(centralized_plant_data['Q_to_storage'])
+    Q_from_storage = np.array(centralized_plant_data['Q_from_storage_used'])
+    Q_uncontrollable = np.array(centralized_plant_data['Q_uncontrollable_hot'])
+    E_PV_Wh = np.array(centralized_plant_data['E_PV_Wh'])
+    E_PVT_Wh = np.array(centralized_plant_data['E_PVT_Wh'])
+    E_aux_HP_uncontrollable = np.array(centralized_plant_data['E_aux_HP_uncontrollable'])
+    Q_SCandPVT = np.array(centralized_plant_data['Q_SCandPVT_coldstream'])
+    HPServerHeatDesignArray = np.array(centralized_plant_data['HPServerHeatDesignArray'])
+    HPpvt_designArray = np.array(centralized_plant_data['HPpvt_designArray'])
+    HPCompAirDesignArray = np.array(centralized_plant_data['HPCompAirDesignArray'])
+    HPScDesignArray = np.array(centralized_plant_data['HPScDesignArray'])
+    E_produced_solarAndHPforSolar = np.array(centralized_plant_data['E_produced_total'])
     E_consumed_without_buildingdemand_solarAndHPforSolar = np.array(
-        extract_csv(fName, "E_consumed_total_without_buildingdemand", DAYS_IN_YEAR))
+        centralized_plant_data['E_consumed_total_without_buildingdemand'])
 
     return Q_DH_networkload, E_aux_ch, E_aux_dech, Q_missing, Q_storage_content_Wh, Q_to_storage, Q_from_storage, \
            Q_uncontrollable, E_PV_Wh, E_PVT_Wh, E_aux_HP_uncontrollable, Q_SCandPVT, HPServerHeatDesignArray, \
@@ -1290,8 +1262,9 @@ def import_solar_PeakPower(fNameTotalCSV, nBuildingsConnected, gv):
     :return: PeakPowerAvgkW
     :rtype: float
     """
-    AreaAllowed = np.array(extract_csv(fNameTotalCSV, "Af", nBuildingsConnected))
-    nFloors = np.array(extract_csv(fNameTotalCSV, "Floors", nBuildingsConnected))
+    solar_results = pd.read_csv(fNameTotalCSV, nBuildingsConnected)
+    AreaAllowed = np.array(solar_results['Af'])
+    nFloors = np.array(solar_results['Floors'])
 
     AreaRoof = np.zeros(nBuildingsConnected)
 
