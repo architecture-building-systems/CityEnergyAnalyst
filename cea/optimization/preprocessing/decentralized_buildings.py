@@ -1,6 +1,6 @@
 """
 ====================================
-Operation for diecentralized buildings
+Operation for decentralized buildings
 ====================================
 
 """
