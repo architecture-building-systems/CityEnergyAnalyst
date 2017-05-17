@@ -97,6 +97,7 @@ def building2d23d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_
         bldg_shell_list = construct.make_shell_frm_faces(all_faces)
 
         # make sure all the normals are correct (they are pointing out)
+
         if bldg_shell_list:
             bldg_solid = construct.make_solid(bldg_shell_list[0])
             bldg_solid = modify.fix_close_solid(bldg_solid)
@@ -104,7 +105,6 @@ def building2d23d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_
             occface_list = fetch.geom_explorer(bldg_solid, "face")
             geometry_list = gml3dmodel.write_gml_srf_member(occface_list)
             citygml_writer.add_building("lod1", name,geometry_list)
-        counter+=1
 
     return bsolid_list
 
