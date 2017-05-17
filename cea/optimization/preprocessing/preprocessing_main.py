@@ -15,7 +15,7 @@ import cea.optimization.preprocessing.processheat as process_heat
 from cea.optimization.master import summarize_network
 from cea.optimization.preprocessing import electricity
 from cea.resources import geothermal
-from cea.utilities import  epwreader
+from cea.utilities import epwreader
 from cea.technologies import substation
 from cea.optimization.preprocessing import decentralized_buildings
 
