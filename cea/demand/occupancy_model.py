@@ -119,6 +119,7 @@ def schedule_maker(dates, locator, list_uses):
     schedules = []
     occ_densities = []
     areas_per_occupant = []
+    archetypes_internal_loads = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
     Qs_Wp = []
     X_ghp = []
     Ea_Wm2 = []
@@ -128,32 +129,46 @@ def schedule_maker(dates, locator, list_uses):
     Ed_Wm2 = []
     Vww_lpd = []
     Vw_lpd = []
+    archetypes_indoor_comfort = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT')
     Ve_lps = []
     for use in list_uses:
-        # Read from archetypes_schedules
-        x = pd.read_excel(locator.get_archetypes_schedules(), use).T
+        # Read from archetypes_schedules and properties
+        archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(), use).T
 
         # read lists of every daily profile
-        occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, area_per_occupant, sensible_gains,\
-        humidity_gains, appliance_electricity, lighting_electricity, process_electricity, refrigeration_electricity, \
-        server_electricity, dhw_demand, water_demand, ventilation_rate = read_schedules(use, x)
+        occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, \
+        area_per_occupant = read_schedules(use, archetypes_schedules)
 
         # get occupancy density per schedule in a list
         if area_per_occupant != 0:
             occ_densities.append(1/area_per_occupant)
         else: occ_densities.append(area_per_occupant)
 
-        # get internal loads and ventilation per schedule in a list
-        Qs_Wp.append(sensible_gains)
-        X_ghp.append(humidity_gains)
-        Ea_Wm2.append(appliance_electricity)
-        El_Wm2.append(lighting_electricity)
-        Epro_Wm2.append(process_electricity)
-        Ere_Wm2.append(refrigeration_electricity)
-        Ed_Wm2.append(server_electricity)
-        Vww_lpd.append(dhw_demand)
-        Vw_lpd.append(water_demand)
-        Ve_lps.append(ventilation_rate)
+        # get internal loads per schedule in a list
+        Qs_Wp.append(archetypes_internal_loads['Qs_Wp'][use])
+        X_ghp.append(archetypes_internal_loads['X_ghp'][use])
+        Ea_Wm2.append(archetypes_internal_loads['Ea_Wm2'][use])
+        El_Wm2.append(archetypes_internal_loads['El_Wm2'][use])
+        Epro_Wm2.append(archetypes_internal_loads['Epro_Wm2'][use])
+        Ere_Wm2.append(archetypes_internal_loads['Ere_Wm2'][use])
+        Ed_Wm2.append(archetypes_internal_loads['Ed_Wm2'][use])
+        Vww_lpd.append(archetypes_internal_loads['Vww_lpd'][use])
+        Vw_lpd.append(archetypes_internal_loads['Vw_lpd'][use])
+
+        # get ventilation required per schedule in a list
+        Ve_lps.append(archetypes_indoor_comfort['Ve_lps'][use])
+
+        # # get internal loads and ventilation per schedule in a list
+        # Qs_Wp.append(sensible_gains)
+        # X_ghp.append(humidity_gains)
+        # Ea_Wm2.append(appliance_electricity)
+        # El_Wm2.append(lighting_electricity)
+        # Epro_Wm2.append(process_electricity)
+        # Ere_Wm2.append(refrigeration_electricity)
+        # Ed_Wm2.append(server_electricity)
+        # Vww_lpd.append(dhw_demand)
+        # Vw_lpd.append(water_demand)
+        # Ve_lps.append(ventilation_rate)
 
         # get yearly schedules in a list
         schedule = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule)
@@ -221,8 +236,7 @@ def read_schedules(use, x):
     # read ventilation demand
     Ve_lps = x['Ve_lps'].values[:1][0]
 
-    # get internal loads and ventilation in a list
-    internal_loads = [Qs_Wp, X_ghp, Ea_Wm2, El_Wm2, Epro_Wm2, Ere_Wm2, Ed_Wm2, Vww_lpd, Vw_lpd, Ve_lps]
+    # # get internal loads and ventilation in a list
+    # internal_loads = [Qs_Wp, X_ghp, Ea_Wm2, El_Wm2, Epro_Wm2, Ere_Wm2, Ed_Wm2, Vww_lpd, Vw_lpd, Ve_lps]
 
-    return occ, el, dhw, pro, month, occ_density, Qs_Wp, X_ghp, Ea_Wm2, El_Wm2, Epro_Wm2, Ere_Wm2, Ed_Wm2, Vww_lpd, \
-           Vw_lpd, Ve_lps
+    return occ, el, dhw, pro, month, occ_density # , Qs_Wp, X_ghp, Ea_Wm2, El_Wm2, Epro_Wm2, Ere_Wm2, Ed_Wm2, Vww_lpd, Vw_lpd, Ve_lps
