@@ -339,11 +339,13 @@ def calc_radiation(weatherfile_path, locator):
 
     results_path = locator.get_solar_radiation_folder()
 
+    print "reading surface properties"
     # city gml reader
     citygml_reader = pycitygml.Reader()
     citygml_filepath = locator.get_building_geometry_citygml()
     citygml_reader.load_filepath(citygml_filepath)
 
+    print "reading back from CityGML file"
     # Simulation
     daysim_mat = locator.get_daysim_mat()
     rad = py2radiance.Rad(daysim_mat, results_path)
@@ -352,13 +354,14 @@ def calc_radiation(weatherfile_path, locator):
     bldg_dict_list = geometry2radiance(rad, building_surface_properties, citygml_reader)
 
     rad.create_rad_input_file()
+    print "Files sent to Daysim"
+
+    # Simulation
+    print "Daysim simulation starts"
     time1 = time.time()
     execute_daysim(bldg_dict_list, results_path, rad, weatherfile_path, settings.RAD_PARMS)
-    
-    # execute daysim
-    time2 = time.time()
-    time3 = time2-time1
-    print "TIME TAKEN: ", time3/60.0
+
+    print "Daysim simulation finished in ", (time.time() - time1) / 60.0, " mins"
 
 def reader_surface_properties(locator, input_shp):
     """
@@ -391,7 +394,11 @@ def main(locator, weather_path):
     output_folder = locator.get_building_geometry_citygml()
     input_buildings_shapefile = locator.get_district()
     input_terrain_raster = locator.get_terrain()
-    create_gml.create_citygml(input_buildings_shapefile, input_terrain_raster, output_folder)
+
+    #time1 = time.time()
+    #create_gml.create_citygml(input_buildings_shapefile, input_terrain_raster, output_folder)
+    #print "CityGML LOD 2 created in ", (time.time()-time1)/60.0, " mins"
+
     # calculate solar radiation
     calc_radiation(weather_path, locator)
 
