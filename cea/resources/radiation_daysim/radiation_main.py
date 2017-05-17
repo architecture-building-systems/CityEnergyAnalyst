@@ -407,7 +407,7 @@ def main(locator, weather_path):
 
     time1 = time.time()
     create_gml.create_citygml(input_buildings_shapefile, input_terrain_raster, output_folder)
-    print "CityGML LOD 2 created in ", (time.time()-time1)/60.0, " mins"
+    print "CityGML LOD1 created in ", (time.time()-time1)/60.0, " mins"
 
     # calculate solar radiation
     radiation_daysim_main(weather_path, locator)

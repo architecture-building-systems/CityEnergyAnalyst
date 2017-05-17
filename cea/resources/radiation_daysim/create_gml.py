@@ -39,16 +39,9 @@ def building2d23d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_
     district_building_names = district_building_records.index.values
     zone_building_names = gdf.from_file(zone_shp_path)['Name'].values
 
-    # sf = shapefile.Reader(district_shp_path)
-    # part_list = shp2citygml.get_geometry(sf.shapeRecords()[0])
-    # print part_list
-    # print list(district_building_records.ix['Bau A'].geometry.exterior.coords)
-
     #make shell out of tin_occface_list
     terrain_shell = construct.make_shell_frm_faces(tin_occface_list)[0]
-    counter = 0
     bsolid_list = []
-
     #create the buildings in 3D
     for name in district_building_names:
         height = float(district_building_records.loc[name, height_col])
@@ -97,7 +90,6 @@ def building2d23d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_
         bldg_shell_list = construct.make_shell_frm_faces(all_faces)
 
         # make sure all the normals are correct (they are pointing out)
-
         if bldg_shell_list:
             bldg_solid = construct.make_solid(bldg_shell_list[0])
             bldg_solid = modify.fix_close_solid(bldg_solid)
@@ -107,7 +99,6 @@ def building2d23d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_
             citygml_writer.add_building("lod1", name,geometry_list)
 
     return bsolid_list
-
 
 def terrain2d23d(citygml_writer, input_terrain_raster):
 
@@ -162,7 +153,8 @@ if __name__ == '__main__':
     district_shp = locator.get_district()
     zone_shp = locator.get_building_geometry()
     input_terrain_raster = locator.get_terrain()
-    # run routine
+
+    # run routine City GML LOD 1
     create_citygml(zone_shp, district_shp, input_terrain_raster, output_folder)
 
 
