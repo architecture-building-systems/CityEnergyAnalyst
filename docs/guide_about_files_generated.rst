@@ -16,11 +16,6 @@ folder ``baseline`` in the sample reference case shipped with the CEA.
 The variable ``<BUILDINGNAME>``  is used throughout this document to reference the name of a single building in the
 scenario.
 
-The variable ``<GENERATIONNUMBER>`` refers to the unique generation number assigned during the optimization process.
-
-The variable ``<CONFIGURATION>`` refers to the unique configuration assigned during the optimization process.
-@bhargavakrishna: please give more information on ``<CONFIGURATION>`` - also, consider moving configuration and
-generationnumber to a local scope (to the optimization section)
 
 .. contents:: Table of Contents
 
@@ -33,11 +28,11 @@ This section deals with the files saved in ``<SCENARIO>\outputs\data\demand``
 :File Names: ``<BUILDINGNAME>.csv``, ``Total_demand.csv``
 :Rewritten:  These files are only rewritten when the ``CEAforArcGIS\cea\demand\demand_file.py``
              is run
-
 :Origin:     All files originate from ``CEAforArcGIS\cea\demand\demand_writers.py``
 
 
-``<BUILDINGNAME>.csv`` file has a header row and one row for each hour of the your. It has the following fields:
+``<BUILDINGNAME>.csv`` file has a header row and one row for each hour of the your.
+ It has 46 columns corresponding to the following fields:
 
 - ``DATE``
 - ``Name``
@@ -87,8 +82,8 @@ This section deals with the files saved in ``<SCENARIO>\outputs\data\demand``
 - ``Tcref_sup_C``
 
 
-``Total_demand.csv`` has (number of buildings + 1) rows (including header) and 61 columns corresponding to the following
-fields:
+``Total_demand.csv`` has a header row and one row for each building involved in simulation.
+ It has 61 columns corresponding to the following fields:
 
 - ``Name``
 - ``Af_m2``
@@ -163,12 +158,170 @@ The folders present inside this are:
 2. master
 3. network
 
-   1. network
-   2. totals
-   3. layout
+   1. totals
+   2. layout
 
 4. slave
 5. substations
+
+The variable ``<GENERATIONNUMBER>`` refers to the unique generation number assigned during the optimization process.
+
+The variable ``<CONFIGURATION>`` refers to the unique configuration assigned during the optimization process.
+The encoding of the ``<CONFIGURATION>`` represents the following:
+
++---------------+--------+-----------------------------------------+
+| Index in list | Value  | Description                             |
++===============+========+=========================================+
+|             0 |      0 | CHP off                                 |
+|               +--------+-----------------------------------------+
+|               |      1 | Furnace wet ON                          |
+|               +--------+-----------------------------------------+
+|               |      2 | Furnace dry ON                          |
+|               +--------+-----------------------------------------+
+|               |      3 | CHP NG ON                               |
+|               +--------+-----------------------------------------+
+|               |      4 | CHP BG ON                               |
++---------------+--------+-----------------------------------------+
+|             1 | 0 to 1 | Capacity share (of overall requirement) |
+|               |        | of index '0', truncated to two          |
+|               |        | decimals. '0' meaning OFF               |
++---------------+--------+-----------------------------------------+
+|             2 |      0 | Base boiler OFF                         |
+|               +--------+-----------------------------------------+
+|               |      1 | Base boiler ON                          |
++---------------+--------+-----------------------------------------+
+|             3 | 0 to 1 | Capacity share (of overall requirement) |
+|               |        | of index '2', truncated to two          |
+|               |        | decimals. '0' meaning OFF               |
++---------------+--------+-----------------------------------------+
+|             4 |      0 | Peak boiler OFF                         |
+|               +--------+-----------------------------------------+
+|               |      1 | Peak boiler ON                          |
++---------------+--------+-----------------------------------------+
+|             5 | 0 to 1 | Capacity share (of overall requirement) |
+|               |        | of index '4', truncated to two          |
+|               |        | decimals. '0' meaning OFF               |
++---------------+--------+-----------------------------------------+
+|             6 |      0 | HP Lake OFF                             |
+|               +--------+-----------------------------------------+
+|               |      1 | HP Lake ON                              |
++---------------+--------+-----------------------------------------+
+|             7 | 0 to 1 | Capacity share (of overall requirement) |
+|               |        | of index '6', truncated to two          |
+|               |        | decimals. '0' meaning OFF               |
++---------------+--------+-----------------------------------------+
+|             8 |      0 | HP Sewage OFF                           |
+|               +--------+-----------------------------------------+
+|               |      1 | HP Sewage ON                            |
++---------------+--------+-----------------------------------------+
+|             9 | 0 to 1 | Capacity share (of overall requirement) |
+|               |        | of index '8', truncated to two          |
+|               |        | decimals. '0' meaning OFF               |
++---------------+--------+-----------------------------------------+
+|            10 |      0 | GHP OFF                                 |
+|               +--------+-----------------------------------------+
+|               |      1 | GHP ON                                  |
++---------------+--------+-----------------------------------------+
+|            11 | 0 to 1 | Capacity share (of overall requirement) |
+|               |        | of index '10', truncated to two         |
+|               |        | decimals. '0' meaning OFF               |
++---------------+--------+-----------------------------------------+
+|            12 |      0 | Heat Recovery Data Centre OFF           |
+|               +--------+-----------------------------------------+
+|               |      1 | Heat Recovery Data Centre ON            |
++---------------+--------+-----------------------------------------+
+|            13 |      0 | Heat Recovery Compressed Air OFF        |
+|               +--------+-----------------------------------------+
+|               |      1 | Heat Recovery Compressed Air ON         |
++---------------+--------+-----------------------------------------+
+|            14 |      0 | PV OFF                                  |
+|               +--------+-----------------------------------------+
+|               |      1 | PV ON                                   |
++---------------+--------+-----------------------------------------+
+|            15 | 0 to 1 | Area share (of the total allocated area |
+|               |        | for solar) of  index '14', truncated to |
+|               |        | two decimals. '0' meaning OFF           |
++---------------+--------+-----------------------------------------+
+|            16 |      0 | PVT OFF                                 |
+|               +--------+-----------------------------------------+
+|               |      1 | PVT ON                                  |
++---------------+--------+-----------------------------------------+
+|            17 | 0 to 1 | Area share (of the total allocated area |
+|               |        | for solar) of  index '16', truncated to |
+|               |        | two decimals. '0' meaning OFF           |
++---------------+--------+-----------------------------------------+
+|            18 |      0 | SC OFF                                  |
+|               +--------+-----------------------------------------+
+|               |      1 | SC ON                                   |
++---------------+--------+-----------------------------------------+
+|            19 | 0 to 1 | Area share (of the total allocated area |
+|               |        | for solar) of  index '18', truncated to |
+|               |        | two decimals. '0' meaning OFF           |
++---------------+--------+-----------------------------------------+
+|            20 | 0 to 1 | Area share allocated to solar in the    |
+|               |        | total available built area              |
++---------------+--------+-----------------------------------------+
+|    21 onwards | 0 or 1 | For all buildings (following the order  |
+|               |        | given in ``Total_demand.csv``), '0' if  |
+|               |        | the building is disconnected from DHN,  |
+|               |        | '1' if connected                        |
++---------------+--------+-----------------------------------------+
+
+For example ``40.1910.3410.36000000001100000.23001111111000000000010001_PPActivationPattern``
+
++---------------+--------+-----------------------------------------+
+| Index in list | Value  | Description                             |
++===============+========+=========================================+
+|             0 |      4 | CHP BG ON                               |
++---------------+--------+-----------------------------------------+
+|             1 |   0.19 | 19% of overall heat requirement of      |
+|               |        | network is satisfied by 'CHP BG'        |
++---------------+--------+-----------------------------------------+
+|             2 |      1 | Base boiler ON                          |
++---------------+--------+-----------------------------------------+
+|             3 |   0.34 | 34% of overall heat requirement of      |
+|               |        | network is satisfied by 'Base Boiler'   |
++---------------+--------+-----------------------------------------+
+|             4 |      1 | Peak boiler ON                          |
++---------------+--------+-----------------------------------------+
+|             5 |   0.36 | 36% of overall heat requirement of      |
+|               |        | network is satisfied by 'Peak Boiler'   |
++---------------+--------+-----------------------------------------+
+|             6 |      0 | HP Lake OFF                             |
++---------------+--------+-----------------------------------------+
+|             7 |      0 | No Share                                |
++---------------+--------+-----------------------------------------+
+|             8 |      0 | HP Sewage OFF                           |
++---------------+--------+-----------------------------------------+
+|             9 |      0 | No Share                                |
++---------------+--------+-----------------------------------------+
+|            10 |      0 | GHP OFF                                 |
++---------------+--------+-----------------------------------------+
+|            11 |      0 | No Share                                |
++---------------+--------+-----------------------------------------+
+|            12 |      0 | Heat Recovery Data Centre OFF           |
++---------------+--------+-----------------------------------------+
+|            13 |      0 | Heat Recovery Compressed Air OFF        |
++---------------+--------+-----------------------------------------+
+|            14 |      1 | PV ON                                   |
++---------------+--------+-----------------------------------------+
+|            15 |      1 | 100% of allocated area is PV            |
+|               |        | i.e 1 * 0.23 * Built Area               |
++---------------+--------+-----------------------------------------+
+|            16 |      0 | PVT OFF                                 |
++---------------+--------+-----------------------------------------+
+|            17 |      0 | No Share                                |
++---------------+--------+-----------------------------------------+
+|            18 |      0 | SC OFF                                  |
++---------------+--------+-----------------------------------------+
+|            19 |      0 | No Share                                |
++---------------+--------+-----------------------------------------+
+|            20 |   0.23 | 23% of Built Area is allocated for      |
+|               |        | Solar                                   |
++---------------+--------+-----------------------------------------+
+|    21 onwards |        | ``001111111000000000010001`` corresponds|
+|               |        | to which buildings are connected to DHN |
++---------------+--------+-----------------------------------------+
 
 1. Disconnected
 ~~~~~~~~~~~~~~~
@@ -176,8 +329,8 @@ The folders present inside this are:
 :File Names: ``DiscOp_<BUILDINGNAME>_result.csv``
 :Rewritten:  Not rewritten
 :Origin:     They are being shipped along with the reference case
-:Notes:      All the files are saved in ``csv`` format. Each of these files has 14 rows (including header)
-             and 16 columns (including one for index) with the following names:
+:Notes:      All the files have 14 rows (including header)
+             It has one column for index and 15 columns corresponding to the following fields:
 
 - ``Annualized Investment Costs [CHF]``
 - ``Best configuration``
@@ -201,14 +354,14 @@ The folders present inside this are:
 2. Master
 ~~~~~~~~~
 
-:File Names: ``CheckPoint_Initial.csv``, ``CheckPoint_<GENERATIONNUMBER>.csv``, ``CheckPoint_Final.csv``
+:File Names: ``CheckPoint_Initial.file``, ``CheckPoint_<GENERATIONNUMBER>.file``, ``CheckPoint_Final.file``
 :Rewritten:  The files present in this folder are rewritten. If the optimization is run multiple
              times, the files are constantly replaced with new ones.
 
 :Origin:     All the files in this folder are created in the script
              ``CEAforArcGIS\cea\optimization\master\master_main.py``
 
-Each of these files has the following fields:
+Each of these files have the following fields:
 
 - ``population_fitness``
 - ``epsIndicator``
@@ -217,10 +370,10 @@ Each of these files has the following fields:
 - ``population``
 
 
-3.1 Network/Network
-~~~~~~~~~~~~~~~~~~~
+3. Network
+~~~~~~~~~~
 
-:File Names:  ``Network_summary_result_buildingnetwork.csv``, ``Network_summary_result_all.csv``
+:File Names:  ``Network_summary_result_<BUILDINGNETWORK>.csv``, ``Network_summary_result_all.csv``
 
 @bhargavakrishna: what are the estensions? what is buildingnetwork? ist that also a variable???
 
@@ -232,7 +385,7 @@ Each of these files has the following fields:
 :Origin: Both the files originate in ``CEAforArcGIS\cea\optimization\master\summarize_network.py``
 
 
-All the ``Network_summary_result_buildingnetwork.csv`` Each of these files has a header plus one row per hour in the
+All the ``Network_summary_result_<BUILDINGNETWORK>.csv`` Each of these files has a header plus one row per hour in the
 simulated year 16 columns (including one for index) corresponding to the following fields:
 
 @bhargavakrishna: one such for each building?
@@ -273,17 +426,17 @@ and 16 columns (including one for index) corresponding to the following fields:
 - ``mdotdata_netw_total``
 
 
-3.2 Totals
-~~~~~~~~~~
+3.2 Network/Totals
+~~~~~~~~~~~~~~~~~~
 
-:File Names: ``Total_buildingnetwork.csv``
+:File Names: ``Total_<BUILDINGNETWORK>.csv``
 :Rewritten:  High chance of the file being rewritten, even though the file name has building network configuration in it.
 
 @bhargavakrishna: This needs an explaination.
 
 :Origin:     Both the files originate in ``CEAforArcGIS\cea\optimization\supportFn.py``
 
-``Total_buildingnetwork.csv`` has a variable number of rows (based on DHN) and 62 columns (including one for index) with
+``Total_<BUILDINGNETWORK>.csv`` has a variable number of rows (based on DHN) and 62 columns (including one for index) with
 the following fields:
 
 - ``Name``
