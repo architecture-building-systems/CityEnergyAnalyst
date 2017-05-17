@@ -74,9 +74,9 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
 
         prop_architecture_df = categories_df.merge(architecture_DB, left_on='cat_architecture', right_on='Code')
 
-        # adjust 'Hs' and 'Es' for multiuse buildings
-        prop_architecture_df['Hs'], prop_architecture_df['Es'] = \
-            correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses)
+        # adjust 'Hs' for multiuse buildings
+        prop_architecture_df['Hs'] = \
+            correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses, categories_df)
 
         # write to shapefile
         prop_architecture_df_merged = names_df.merge(prop_architecture_df, on="Name")
@@ -168,9 +168,9 @@ def calc_category(archetype_DB, age):
     return category
 
 
-def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
+def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses, categories_df):
     """
-        Corrects the heated and electrical areas 'Hs' and 'Es' for buildings with multiple uses.
+        Corrects the heated area 'Hs' for buildings with multiple uses.
 
          :var prop_architecture_df: DataFrame containing each building's occupancy, construction and renovation data as
          well as the architectural properties obtained from the archetypes.
@@ -182,8 +182,6 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
 
          :return Hs_list: the corrected values for 'Hs' for each building
          :type Hs_list: list[float]
-         :return Es_list: the corrected values for 'Es' for each building
-         :type Es_list: list[float]
     """
     indexed_DB = architecture_DB.set_index('Code')
 
@@ -191,20 +189,17 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
     def calc_average(last, current, share_of_use):
         return last + current * share_of_use
     Hs_list = []
-    Es_list = []
+
     for building in prop_architecture_df.index:
-        Hs = Es = 0
+        Hs = 0
         for use in list_uses:
             if prop_architecture_df[use][building] > 0:
-                current_use_code = calc_category(use, prop_architecture_df['built'][building],
-                                                 prop_architecture_df['envelope'][building])
+                current_use_code = calc_category(architecture_DB, categories_df)
                 Hs = calc_average(Hs, indexed_DB['Hs'][current_use_code], prop_architecture_df[use][building])
-                Es = calc_average(Es, indexed_DB['Es'][current_use_code], prop_architecture_df[use][building])
 
         Hs_list.append(Hs)
-        Es_list.append(Es)
 
-    return Hs_list, Es_list
+    return Hs_list
 
 def calc_internal_loads(categories_df, internal_DB, list_uses, fields):
     """
