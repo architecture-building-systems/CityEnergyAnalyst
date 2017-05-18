@@ -1,11 +1,11 @@
-cea.optimization.distribution package
-=====================================
+cea\.optimization\.distribution package
+=======================================
 
 Submodules
 ----------
 
-cea.optimization.distribution.network_opt_main module
------------------------------------------------------
+cea\.optimization\.distribution\.network\_opt\_main module
+----------------------------------------------------------
 
 .. automodule:: cea.optimization.distribution.network_opt_main
     :members:
