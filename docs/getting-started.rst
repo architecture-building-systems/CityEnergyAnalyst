@@ -106,50 +106,9 @@ Contains source code needed to connect to the cluster of 50K cores called Euler 
 CEA workflow
 ------------
 
-.. |CEA workflow| digraph:: cea_workflow
-
-    rankdir=LR;
-    compound=true;
-    node [shape=box];
-
-    subgraph cluster0 {
-        gather_data [shape=oval, style=dashed, label="gather data"];
-        data_helper [style="dashed", label="cea data-helper"];
-        label="Set up a case study";
-    }
-    subgraph cluster1 {
-        radiation [label="cea radiation"];
-        label="Resource potential";
-    }
-    subgraph cluster2 {
-        demand [label="cea demand"];
-        label="Demand estimation";
-    }
-    subgraph cluster3 {
-        analysis_operation [label="cea emissions"];
-        analysis_embodied [label="cea embodied-energy"];
-        label="Life Cycle Analysis";
-    }
-    subgraph cluster4 {
-        mobility [label="cea mobility"];
-        benchmark_graphs [label="cea benchmark-graphs"];
-        label="Benchmarking";
-    }
-    subgraph cluster5 {
-        heatmaps [label="cea heatmaps"];
-        benchmark_graphs [label="cea benchmark-graphs"];
-        demand_graphs [label="cea demand-graphs"];
-        scenario_plots [label="cea scenario-plots"];
-        label="Visualization";
-    }
-
-    data_helper -> radiation [ltail=cluster0, lhead=cluster1];
-    radiation -> demand [ltail=cluster1, lhead=cluster2];
-    demand -> analysis_embodied [ltail=cluster2, lhead=cluster3];
-    analysis_embodied -> mobility  [ltail=cluster3, lhead=cluster4];
-    mobility -> heatmaps  [ltail=cluster4, lhead=cluster5];
-
 The main workflow of CEA is:
+
+|CEA workflow|
 
 Set up a case study
 ~~~~~~~~~~~~~~~~~~~
@@ -210,5 +169,49 @@ or run the different scripts we included for this.
 - for plots of benchmarking run ``cea scenario plots``
 
 
+.. =====================================================================================================================
+.. figures and charts (GraphViz stuff)
+.. =====================================================================================================================
 
+.. |CEA workflow| digraph:: cea_workflow
 
+    rankdir=LR;
+    compound=true;
+    node [shape=box];
+
+    subgraph cluster0 {
+        gather_data [shape=oval, style=dashed, label="gather data"];
+        data_helper [style="dashed", label="cea data-helper"];
+        label="Set up a case study";
+    }
+    subgraph cluster1 {
+        radiation [label="cea radiation"];
+        label="Resource potential";
+    }
+    subgraph cluster2 {
+        demand [label="cea demand"];
+        label="Demand estimation";
+    }
+    subgraph cluster3 {
+        analysis_operation [label="cea emissions"];
+        analysis_embodied [label="cea embodied-energy"];
+        label="Life Cycle Analysis";
+    }
+    subgraph cluster4 {
+        mobility [label="cea mobility"];
+        benchmark_graphs [label="cea benchmark-graphs"];
+        label="Benchmarking";
+    }
+    subgraph cluster5 {
+        heatmaps [label="cea heatmaps"];
+        benchmark_graphs [label="cea benchmark-graphs"];
+        demand_graphs [label="cea demand-graphs"];
+        scenario_plots [label="cea scenario-plots"];
+        label="Visualization";
+    }
+
+    data_helper -> radiation [ltail=cluster0, lhead=cluster1];
+    radiation -> demand [ltail=cluster1, lhead=cluster2];
+    demand -> analysis_embodied [ltail=cluster2, lhead=cluster3];
+    analysis_embodied -> mobility  [ltail=cluster3, lhead=cluster4];
+    mobility -> heatmaps  [ltail=cluster4, lhead=cluster5];
