@@ -167,7 +167,6 @@ def calc_category(archetype_DB, age):
                                          (archetype_DB['standard'] == 'C')].Code.values[0])
     return category
 
-
 def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses, categories_df):
     """
         Corrects the heated area 'Hs' for buildings with multiple uses.
@@ -183,6 +182,7 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses, ca
          :return Hs_list: the corrected values for 'Hs' for each building
          :type Hs_list: list[float]
     """
+
     indexed_DB = architecture_DB.set_index('Code')
 
     # weighted average of values
@@ -193,10 +193,15 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses, ca
     for building in prop_architecture_df.index:
         Hs = 0
         for use in list_uses:
+            # if the use is present in the building, find the building archetype properties for that use
             if prop_architecture_df[use][building] > 0:
-                current_use_code = calc_category(architecture_DB, categories_df)
+                # get archetype code for the current occupancy type
+                current_use_code = use+str(prop_architecture_df['year_start'][building])+\
+                                   str(prop_architecture_df['year_end'][building])+\
+                                   str(prop_architecture_df['standard'][building])
+                # recalculate heated floor area as an average of the archetype value for each occupancy type in the
+                # building
                 Hs = calc_average(Hs, indexed_DB['Hs'][current_use_code], prop_architecture_df[use][building])
-
         Hs_list.append(Hs)
 
     return Hs_list
