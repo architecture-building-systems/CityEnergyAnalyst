@@ -1,5 +1,5 @@
-cea.analysis package
-====================
+cea\.analysis package
+=====================
 
 Subpackages
 -----------
@@ -11,40 +11,40 @@ Subpackages
 Submodules
 ----------
 
-cea.analysis.benchmark module
------------------------------
+cea\.analysis\.benchmark module
+-------------------------------
 
 .. automodule:: cea.analysis.benchmark
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea.analysis.embodied module
-----------------------------
+cea\.analysis\.embodied module
+------------------------------
 
 .. automodule:: cea.analysis.embodied
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea.analysis.mcda module
-------------------------
+cea\.analysis\.mcda module
+--------------------------
 
 .. automodule:: cea.analysis.mcda
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea.analysis.mobility module
-----------------------------
+cea\.analysis\.mobility module
+------------------------------
 
 .. automodule:: cea.analysis.mobility
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea.analysis.operation module
------------------------------
+cea\.analysis\.operation module
+-------------------------------
 
 .. automodule:: cea.analysis.operation
     :members:
