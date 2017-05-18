@@ -152,8 +152,11 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
                 #triangulate the wall with hole
                 tri_facade_list = construct.simple_mesh(hole_facade)
                 for tri_bface in tri_facade_list:
-                    create_radiance_srf(tri_bface, "wall"+str(bcnt)+str(fcnt),
-                                        "wall" + str(ageometry_table['type_wall'][bldg_name]), rad)
+                    tri_area = calculate.face_area(tri_bface)
+                    if tri_area > 1E-3:
+                        #print "wall"+str(bcnt)+str(fcnt), bldg_name
+                        create_radiance_srf(tri_bface, "wall"+str(bcnt)+str(fcnt),
+                                            "wall" + str(ageometry_table['type_wall'][bldg_name]), rad)
 
             elif wwr == 1.0:
                 create_radiance_srf(facade, "win"+str(bcnt)+str(fcnt), "win" + str(ageometry_table['type_win'][bldg_name]), rad)
@@ -405,12 +408,14 @@ def main(locator, weather_path):
     zone_shp = locator.get_building_geometry()
     input_terrain_raster = locator.get_terrain()
 
-    #time1 = time.time()
-    #create_gml.create_citygml(zone_shp, district_shp, input_terrain_raster, output_folder)
-    #print "CityGML LOD1 created in ", (time.time()-time1)/60.0, " mins"
+    time1 = time.time()
+    create_gml.create_citygml(zone_shp, district_shp, input_terrain_raster, output_folder)
+    print "CityGML LOD1 created in ", (time.time()-time1)/60.0, " mins"
 
     # calculate solar radiation
+    time1 = time.time()
     radiation_daysim_main(weather_path, locator)
+    print "Daysim simulation finished in ", (time.time() - time1) / 60.0, " mins"
 
 
 if __name__ == '__main__':
