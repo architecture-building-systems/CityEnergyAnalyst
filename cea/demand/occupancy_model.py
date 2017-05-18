@@ -76,7 +76,59 @@ def calc_schedules(list_uses, schedules, specific_values, building_uses, area, s
 
 # read schedules from excel file
 def schedule_maker(dates, locator, list_uses):
+    """
+    Reads schedules from the archetype schedule Excel file along with the corresponding internal loads and ventilation
+    demands.
+
+    :param dates: dates and times throughout the year
+    :type dates: DatetimeIndex
+    :param locator: an instance of InputLocator set to the scenario
+    :type locator: InputLocator
+    :param list_uses: list of occupancy types used in the scenario
+    :type list_uses: list
+
+    :return schedules: yearly schedule for each occupancy type used in the project
+    :type schedules: list[tuple]
+    :return occ_densities: occupant density in people per square meter for each occupancy type used in the project
+    :type occ_densities: list[float]
+    :return internal_loads: dictionary containing the internal loads for each occupancy type used in the project
+    :type internal_loads: dict[list[float]]
+    :return ventilation: ventilation demand for each occupancy type used in the project
+    :type ventilation: list[float]
+    """
+
     def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule):
+        """
+        For a given use type, this script generates yearly schedules for occupancy, electricity demand,
+        hot water demand, process electricity demand based on the daily and monthly schedules obtained from the
+        archetype database.
+
+        :param dates: dates and times throughout the year
+        :type dates: DatetimeIndex
+        :param occ_schedules: occupancy schedules for a weekdays, Saturdays and Sundays from the archetype database
+        :type occ_schedules: list[array]
+        :param el_schedules: electricity schedules for a weekdays, Saturdays and Sundays from the archetype database
+        :type el_schedules: list[array]
+        :param dhw_schedules: domestic hot water schedules for a weekdays, Saturdays and Sundays from the archetype
+        database
+        :type dhw_schedules: list[array]
+        :param pro_schedules: process electricity schedules for a weekdays, Saturdays and Sundays from the archetype
+        database
+        :type pro_schedules: list[array]
+        :param month_schedule: monthly schedules from the archetype database
+        :type month_schedule: ndarray
+
+        :return occ: occupancy schedule for each hour of the year
+        :type occ: list[float]
+        :return el: electricity schedule for each hour of the year
+        :type el: list[float]
+        :return dhw: domestic hot water schedule for each hour of the year
+        :type dhw: list[float]
+        :return pro: process electricity schedule for each hour of the year
+        :type pro: list[float]
+
+        """
+
         occ = []
         el = []
         dhw = []
@@ -118,8 +170,7 @@ def schedule_maker(dates, locator, list_uses):
 
     schedules = []
     occ_densities = []
-    areas_per_occupant = []
-    archetypes_internal_loads = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
+    archetypes_internal_loads = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS').set_index('Code')
     Qs_Wp = []
     X_ghp = []
     Ea_Wm2 = []
@@ -129,7 +180,7 @@ def schedule_maker(dates, locator, list_uses):
     Ed_Wm2 = []
     Vww_lpd = []
     Vw_lpd = []
-    archetypes_indoor_comfort = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT')
+    archetypes_indoor_comfort = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT').set_index('Code')
     Ve_lps = []
     for use in list_uses:
         # Read from archetypes_schedules and properties
@@ -158,18 +209,6 @@ def schedule_maker(dates, locator, list_uses):
         # get ventilation required per schedule in a list
         Ve_lps.append(archetypes_indoor_comfort['Ve_lps'][use])
 
-        # # get internal loads and ventilation per schedule in a list
-        # Qs_Wp.append(sensible_gains)
-        # X_ghp.append(humidity_gains)
-        # Ea_Wm2.append(appliance_electricity)
-        # El_Wm2.append(lighting_electricity)
-        # Epro_Wm2.append(process_electricity)
-        # Ere_Wm2.append(refrigeration_electricity)
-        # Ed_Wm2.append(server_electricity)
-        # Vww_lpd.append(dhw_demand)
-        # Vw_lpd.append(water_demand)
-        # Ve_lps.append(ventilation_rate)
-
         # get yearly schedules in a list
         schedule = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule)
         schedules.append(schedule)
@@ -180,7 +219,6 @@ def schedule_maker(dates, locator, list_uses):
     ventilation = Ve_lps
 
     return schedules, occ_densities, internal_loads, ventilation
-
 
 def read_schedules(use, x):
     """
