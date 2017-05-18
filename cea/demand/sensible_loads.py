@@ -67,7 +67,7 @@ def calc_Qgain_lat(list_uses, schedules, X_ghp, occupancy, Af, sys_e_cooling, sy
     """
     # calc yearly humidity gains based on occupancy schedule and specific humidity gains for each occupancy type in the
     # building
-    humidity_schedule = occupancy_model.calc_schedules(list_uses, schedules, X_ghp, occupancy, Af, 'people')
+    humidity_schedule = occupancy_model.calc_normalized_schedule(list_uses, schedules, X_ghp, occupancy, Af, 'people')
 
     if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
         w_int = humidity_schedule / (1000 * 3600)  # kg/s
