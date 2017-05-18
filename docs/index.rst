@@ -17,6 +17,7 @@ Welcome to City Energy Analyst's documentation!
    developer-walk-through
    interfaces
    databases
+   how-to-create-a-new-release
    modules/cea
 
 
