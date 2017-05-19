@@ -119,13 +119,11 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
     ## for the surrounding buildings
     for n_gmlbldg in n_eligible_bldgs:
         pypolgon_list = citygml_reader.get_pypolygon_list(n_gmlbldg)
-        nbldg_cnt = 0
         for id, pypolygon in enumerate(pypolgon_list):
             py2radiance.RadSurface("surroundingbldgs"+ str(id), pypolygon, "reflectance0.2", rad)
 
     ## for the
-    bcnt = 0
-    for gmlbldg in eligible_bldgs:
+    for bcnt, gmlbldg in enumerate(eligible_bldgs):
         bldg_dict = {}
         window_list = []
         
@@ -134,13 +132,12 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
         geo_solid = construct.make_occsolid_frm_pypolygons(pypolgon_list)
         facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(geo_solid)
         wall_list = []
-
         wwr = ageometry_table["win_wall"][bldg_name]
-        fcnt = 0
-        for surface_facade in facade_list:
+
+        for fcnt, surface_facade in enumerate(facade_list):
             ref_pypt = calculate.face_midpt(surface_facade)
 
-            #offset the facade to create a window according to the wwr
+            # offset the facade to create a window according to the wwr
             if 0.0 < wwr < 1.0:
                 window = fetch.shape2shapetype(modify.uniform_scale(surface_facade, wwr, wwr, wwr, ref_pypt))
                 window_list.append(window)
@@ -165,13 +162,9 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
             else:
                 create_radiance_srf(surface_facade, "wall"+str(bcnt)+str(fcnt), "wall" + str(ageometry_table['type_wall'][bldg_name]), rad)
                 wall_list.append(surface_facade)
-            fcnt+=1
 
-            
-        rcnt = 0
-        for roof in roof_list:
+        for rcnt, roof in enumerate(roof_list):
             create_radiance_srf(roof, "roof"+str(bcnt)+str(rcnt), "roof" + str(ageometry_table['type_roof'][bldg_name]), rad)
-            rcnt+=1
             
         bldg_dict["name"] = bldg_name
         bldg_dict["windows"] = window_list
@@ -179,7 +172,6 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
         bldg_dict["roofs"] = roof_list
         bldg_dict["footprints"] = footprint_list
         bldg_dict_list.append(bldg_dict)
-        bcnt += 1
         
     return bldg_dict_list
     
@@ -262,7 +254,7 @@ def execute_daysim(bldg_dict_list,aresults_path, rad, aweatherfile_path, rad_par
     # transform weather file
     rad.execute_epw2wea(aweatherfile_path)
     rad.execute_radfiles2daysim()
-    print rad
+
     all_sensor_srf_dict_2dlist = []
     for bldg_dict in bldg_dict_list:
         bldg_name = bldg_dict["name"]
