@@ -5,6 +5,9 @@ import pyliburo.py3dmodel.modify as modify
 import pyliburo.pycitygml as pycitygml
 import pyliburo.gml3dmodel as gml3dmodel
 import pyliburo.shp2citygml as shp2citygml
+
+from OCC.IntCurvesFace import IntCurvesFace_ShapeIntersector
+from OCC.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
 from geopandas import GeoDataFrame as gdf
 import shapefile
 import cea.globalvar
@@ -22,7 +25,26 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
+def calc_intersection(terrain_intersection_curves, edges_coords, edges_dir):
+    """
+    This script calculates the intersection of the building edges to the terrain,
+    :param terrain_intersection_curves:
+    :param edges_coords:
+    :param edges_dir:
+    :return:
+            intersecting points, intersecting faces
+    """
+    building_line = gp_Lin(gp_Ax1(gp_Pnt(edges_coords[0], edges_coords[1], edges_coords[2]),
+                                  gp_Dir(edges_dir[0], edges_dir[1], edges_dir[2])))
+    terrain_intersection_curves.PerformNearest(building_line, 0.0, float("+inf"))
+    if terrain_intersection_curves.IsDone():
+        npts = terrain_intersection_curves.NbPnt()
+        if npts !=0:
+            return terrain_intersection_curves.Pnt(1), terrain_intersection_curves.Face(1)
+        else:
+            return None, None
+    else:
+        return None, None
 
 def building2d23d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_list,
                   height_col, nfloor_col):
@@ -41,9 +63,12 @@ def building2d23d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_
     district_building_names = district_building_records.index.values
     zone_building_names = gdf.from_file(zone_shp_path)['Name'].values
 
-    #make shell out of tin_occface_list
+    #make shell out of tin_occface_list and create OCC object
     terrain_shell = construct.make_shell_frm_faces(tin_occface_list)[0]
+    terrain_intersection_curves = IntCurvesFace_ShapeIntersector()
+    terrain_intersection_curves.Load(terrain_shell, 1e-6)
     bsolid_list = []
+
     #create the buildings in 3D
     for name in district_building_names:
         height = float(district_building_records.loc[name, height_col])
@@ -69,13 +94,13 @@ def building2d23d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_
         face = construct.make_polygon(point_list_3D)
         #get the midpt of the face
         face_midpt = calculate.face_midpt(face)
+
         #project the face_midpt to the terrain and get the elevation
-        inter_pt, inter_face = calculate.intersect_shape_with_ptdir(terrain_shell,face_midpt, (0,0,1))
+        inter_pt, inter_face = calc_intersection(terrain_intersection_curves, face_midpt, (0, 0, 1))
+
         loc_pt = fetch.occpt2pypt(inter_pt)
         #reconstruct the footprint with the elevation
         face = fetch.shape2shapetype(modify.move(face_midpt, loc_pt, face))
-
-
 
         moved_face_list = []
         for floor_counter in range_floors:
@@ -145,7 +170,7 @@ def create_citygml(zone_shp_path, district_shp_path, input_terrain, output_folde
     bsolid_list = building2d23d(citygml_writer, zone_shp_path, district_shp_path, terrain_face_list,
                                 height_col='height_ag', nfloor_col="floors_ag")
 
-    #construct.visualise([terrain_face_list,bsolid_list], ["GREEN","WHITE"], backend = "wx") #install Wxpython
+    construct.visualise([terrain_face_list,bsolid_list], ["GREEN","WHITE"], backend = "wx") #install Wxpython
 
     # write to citygml
     citygml_writer.write(output_folder)
