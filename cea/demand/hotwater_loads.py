@@ -42,7 +42,7 @@ def calc_mww(schedule, water_lpd, Pwater):
 # final hot water demand calculation
 
 def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, occupancy_densities,
-              list_uses, schedules, building_uses, internal_loads):
+              schedules, bpr):
     # Refactored from CalcThermalLoads
     """
     This function calculates the distribution heat loss and final energy consumption of domestic hot water.
@@ -62,14 +62,9 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
 
     """
 
-    # calc schedules of use and end-use demand
-    Vww_ld = []
-    Vw_ld = []
-    for use in range(len(occupancy_densities)):
-        Vww_ld.append(internal_loads['Vww_lpd'][use] * occupancy_densities[use])
-        Vw_ld.append(internal_loads['Vw_lpd'][use] * occupancy_densities[use])
-    Vww = occupancy_model.calc_schedules(list_uses, schedules, Vww_ld, building_uses, Af, 'water')  # m3/h
-    Vw = occupancy_model.calc_schedules(list_uses, schedules, Vw_ld, building_uses, Af, 'water')  # m3/h
+    # calc end-use demand
+    Vww = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] / 1000   # m3/h
+    Vw = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] / 1000      # m3/h
     mww = Vww * gv.Pwater /3600 # kg/s
 
     Qww = np.vectorize(calc_Qww)(mww, Tww_sup_0, Tww_re, gv.Cpw)

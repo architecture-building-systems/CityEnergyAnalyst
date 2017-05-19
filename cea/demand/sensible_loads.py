@@ -42,7 +42,7 @@ def calc_Qgain_sen(t, tsd, bpr, gv):
     return tsd
 
 
-def calc_Qgain_lat(list_uses, schedules, X_ghp, occupancy, Af, sys_e_cooling, sys_e_heating):
+def calc_Qgain_lat(schedules, X_ghp, Af, sys_e_cooling, sys_e_heating):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
     """
@@ -67,10 +67,9 @@ def calc_Qgain_lat(list_uses, schedules, X_ghp, occupancy, Af, sys_e_cooling, sy
     """
     # calc yearly humidity gains based on occupancy schedule and specific humidity gains for each occupancy type in the
     # building
-    humidity_schedule = occupancy_model.calc_normalized_schedule(list_uses, schedules, X_ghp, occupancy, Af, 'people')
-
+    humidity_schedule = schedules['X'] * X_ghp
     if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
-        w_int = humidity_schedule / (1000 * 3600)  # kg/s
+        w_int = humidity_schedule * Af / (1000 * 3600)  # kg/s
     else:
         w_int = 0
 
