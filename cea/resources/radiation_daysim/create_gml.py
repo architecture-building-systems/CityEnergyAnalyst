@@ -11,6 +11,7 @@ import cea.globalvar
 import cea.inputlocator
 import numpy as np
 import gdal
+import time
 
 __author__ = "Paul Neitzel, Kian Wee Chen"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -20,6 +21,7 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
+
 
 
 def building2d23d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_list,
@@ -46,7 +48,21 @@ def building2d23d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_
     for name in district_building_names:
         height = float(district_building_records.loc[name, height_col])
         nfloors = int(district_building_records.loc[name, nfloor_col])
-        point_list_2D = list(district_building_records.ix[name].geometry.exterior.coords)
+
+        # Make floors only for the buildings of the zone of interest
+        # for the rest just consider one high floor.
+        # simplify geometry tol =1 for buildings of interest, tol = 5 for surroundings
+        if name in zone_building_names:
+            range_floors = range(nfloors+1)
+            flr2flr_height = height / nfloors
+            geometry = district_building_records.ix[name].geometry.simplify(1, preserve_topology=True)
+        else:
+            range_floors = [0,1]
+            flr2flr_height = height
+            geometry = district_building_records.ix[name].geometry.simplify(5, preserve_topology=True)
+
+
+        point_list_2D = list(geometry.exterior.coords)
         point_list_3D = [(a,b,0) for (a,b) in point_list_2D] # add 0 elevation
 
         #creating floor surface in pythonocc
@@ -59,14 +75,7 @@ def building2d23d(citygml_writer, zone_shp_path, district_shp_path, tin_occface_
         #reconstruct the footprint with the elevation
         face = fetch.shape2shapetype(modify.move(face_midpt, loc_pt, face))
 
-        # Make floors only for the buildings of the zone of interest
-        if name in zone_building_names:
-            range_floors = range(nfloors+1)
-            flr2flr_height = height / nfloors
-        # for the rest just consider one high floor.
-        else:
-            range_floors = [0,1]
-            flr2flr_height = height
+
 
         moved_face_list = []
         for floor_counter in range_floors:
@@ -136,7 +145,7 @@ def create_citygml(zone_shp_path, district_shp_path, input_terrain, output_folde
     bsolid_list = building2d23d(citygml_writer, zone_shp_path, district_shp_path, terrain_face_list,
                                 height_col='height_ag', nfloor_col="floors_ag")
 
-    construct.visualise([terrain_face_list,bsolid_list], ["GREEN","WHITE"], backend = "wx") #install Wxpython
+    #construct.visualise([terrain_face_list,bsolid_list], ["GREEN","WHITE"], backend = "wx") #install Wxpython
 
     # write to citygml
     citygml_writer.write(output_folder)
@@ -155,8 +164,9 @@ if __name__ == '__main__':
     input_terrain_raster = locator.get_terrain()
 
     # run routine City GML LOD 1
+    time1 = time.time()
     create_citygml(zone_shp, district_shp, input_terrain_raster, output_folder)
-
+    print "Daysim simulation finished in ", (time.time() - time1) / 60.0, " mins"
 
 
 
