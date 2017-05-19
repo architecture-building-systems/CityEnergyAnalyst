@@ -409,9 +409,9 @@ def main(locator, weather_path):
     zone_shp = locator.get_building_geometry()
     input_terrain_raster = locator.get_terrain()
 
-    # time1 = time.time()
-    # create_gml.create_citygml(zone_shp, district_shp, input_terrain_raster, output_folder)
-    # print "CityGML LOD1 created in ", (time.time()-time1)/60.0, " mins"
+    time1 = time.time()
+    create_gml.create_citygml(zone_shp, district_shp, input_terrain_raster, output_folder)
+    print "CityGML LOD1 created in ", (time.time()-time1)/60.0, " mins"
 
     # calculate solar radiation
     time1 = time.time()
