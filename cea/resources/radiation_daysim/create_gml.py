@@ -163,6 +163,7 @@ def create_citygml(zone_shp_path, district_shp_path, input_terrain, output_folde
 
     # local variables
     citygml_writer = pycitygml.Writer()
+
     # transform terrain to CityGML
     terrain_face_list = terrain2d23d(citygml_writer, input_terrain)
     
@@ -170,7 +171,7 @@ def create_citygml(zone_shp_path, district_shp_path, input_terrain, output_folde
     bsolid_list = building2d23d(citygml_writer, zone_shp_path, district_shp_path, terrain_face_list,
                                 height_col='height_ag', nfloor_col="floors_ag")
 
-    construct.visualise([terrain_face_list,bsolid_list], ["GREEN","WHITE"], backend = "wx") #install Wxpython
+    #construct.visualise([terrain_face_list,bsolid_list], ["GREEN","WHITE"], backend = "wx") #install Wxpython
 
     # write to citygml
     citygml_writer.write(output_folder)
@@ -191,7 +192,7 @@ if __name__ == '__main__':
     # run routine City GML LOD 1
     time1 = time.time()
     create_citygml(zone_shp, district_shp, input_terrain_raster, output_folder)
-    print "Daysim simulation finished in ", (time.time() - time1) / 60.0, " mins"
+    print "CityGml creation finished in ", (time.time() - time1) / 60.0, " mins"
 
 
 
