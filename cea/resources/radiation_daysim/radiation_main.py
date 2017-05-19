@@ -107,28 +107,23 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
 
     #translate the terrain into radiance surface 
     gmlterrains = citygml_reader.get_relief_feature()
-    np.vectorize(surfaces2radiance)(range(len(gmlterrains)), gmlterrains, rad)
+    pytri_list = citygml_reader.get_pytriangle_list(gmlterrains[0])
+    for id, pytri in enumerate(pytri_list):
+        py2radiance.RadSurface("terrain_srf"+ str(id), pytri, "reflectance0.2", rad)
 
-
-
-    # tcnt = 0
-    # for gmlterrain in gmlterrains:
-    #     pytri_list = citygml_reader.get_pytriangle_list(gmlterrain)
-    #     for pytri in pytri_list:
-    #         py2radiance.RadSurface("terrain_srf"+ str(tcnt), pytri, "reflectance0.2", rad)
-    #         tcnt+=1
-
+    #translate buildings into radiance surface
     bldg_of_interest_name_list = ageometry_table.index.values
     gmlbldgs = citygml_reader.get_buildings()
     eligible_bldgs, n_eligible_bldgs = filter_bldgs_of_interest(gmlbldgs, bldg_of_interest_name_list, citygml_reader)
 
+    ## for the surrounding buildings
     for n_gmlbldg in n_eligible_bldgs:
         pypolgon_list = citygml_reader.get_pypolygon_list(n_gmlbldg)
         nbldg_cnt = 0
-        for pypolygon in pypolgon_list:
-            py2radiance.RadSurface("surroundingbldgs"+ str(nbldg_cnt), pypolygon, "reflectance0.2", rad)
-            nbldg_cnt+=1
+        for id, pypolygon in enumerate(pypolgon_list):
+            py2radiance.RadSurface("surroundingbldgs"+ str(id), pypolygon, "reflectance0.2", rad)
 
+    ## for the
     bcnt = 0
     for gmlbldg in eligible_bldgs:
         bldg_dict = {}
@@ -161,7 +156,6 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
                 for tri_bface in tri_facade_list:
                     tri_area = calculate.face_area(tri_bface)
                     if tri_area > 1E-3:
-                        #print "wall"+str(bcnt)+str(fcnt), bldg_name
                         create_radiance_srf(tri_bface, "wall"+str(bcnt)+str(fcnt),
                                             "wall" + str(ageometry_table['type_wall'][bldg_name]), rad)
 
@@ -415,9 +409,9 @@ def main(locator, weather_path):
     zone_shp = locator.get_building_geometry()
     input_terrain_raster = locator.get_terrain()
 
-    time1 = time.time()
-    create_gml.create_citygml(zone_shp, district_shp, input_terrain_raster, output_folder)
-    print "CityGML LOD1 created in ", (time.time()-time1)/60.0, " mins"
+    # time1 = time.time()
+    # create_gml.create_citygml(zone_shp, district_shp, input_terrain_raster, output_folder)
+    # print "CityGML LOD1 created in ", (time.time()-time1)/60.0, " mins"
 
     # calculate solar radiation
     time1 = time.time()
