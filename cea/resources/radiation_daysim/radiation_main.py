@@ -7,6 +7,7 @@ import pandas as pd
 import time 
 from cea.resources.radiation_daysim import settings
 from cea.resources.radiation_daysim import create_gml
+import numpy as np
 
 import pyliburo.py3dmodel.construct as construct
 import pyliburo.py3dmodel.fetch as fetch
@@ -97,19 +98,25 @@ def filter_bldgs_of_interest(gmlbldgs, bldg_of_interest_name_list, citygml_reade
             eligible_bldgs.append(gmlbldg)
             
     return eligible_bldgs, n_eligible_bldgs
-    
+
+def surfaces2radiance(id, surface, rad):
+    py2radiance.RadSurface("terrain_srf" + str(id), surface, "reflectance0.2", rad)
+
 def geometry2radiance(rad, ageometry_table, citygml_reader):
     bldg_dict_list = []
 
     #translate the terrain into radiance surface 
     gmlterrains = citygml_reader.get_relief_feature()
-    #srfmat = settings.TERRAIN_PARAMS['e_terrain']
-    tcnt = 0
-    for gmlterrain in gmlterrains:
-        pytri_list = citygml_reader.get_pytriangle_list(gmlterrain)
-        for pytri in pytri_list:
-            py2radiance.RadSurface("terrain_srf"+ str(tcnt), pytri, "reflectance0.2", rad)
-            tcnt+=1
+    np.vectorize(surfaces2radiance)(range(len(gmlterrains)), gmlterrains, rad)
+
+
+
+    # tcnt = 0
+    # for gmlterrain in gmlterrains:
+    #     pytri_list = citygml_reader.get_pytriangle_list(gmlterrain)
+    #     for pytri in pytri_list:
+    #         py2radiance.RadSurface("terrain_srf"+ str(tcnt), pytri, "reflectance0.2", rad)
+    #         tcnt+=1
 
     bldg_of_interest_name_list = ageometry_table.index.values
     gmlbldgs = citygml_reader.get_buildings()
@@ -135,16 +142,16 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
 
         wwr = ageometry_table["win_wall"][bldg_name]
         fcnt = 0
-        for facade in facade_list:
-            ref_pypt = calculate.face_midpt(facade)
+        for surface_facade in facade_list:
+            ref_pypt = calculate.face_midpt(surface_facade)
 
             #offset the facade to create a window according to the wwr
             if 0.0 < wwr < 1.0:
-                window = fetch.shape2shapetype(modify.uniform_scale(facade, wwr, wwr, wwr, ref_pypt))
+                window = fetch.shape2shapetype(modify.uniform_scale(surface_facade, wwr, wwr, wwr, ref_pypt))
                 window_list.append(window)
                 create_radiance_srf(window, "win"+str(bcnt)+str(fcnt), "win" + str(ageometry_table['type_win'][bldg_name]), rad)
 
-                b_facade_cmpd = fetch.shape2shapetype(construct.boolean_difference(facade, window))
+                b_facade_cmpd = fetch.shape2shapetype(construct.boolean_difference(surface_facade, window))
 
                 hole_facade = fetch.geom_explorer(b_facade_cmpd, "face")[0]
                 wall_list.append(hole_facade)
@@ -159,11 +166,11 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
                                             "wall" + str(ageometry_table['type_wall'][bldg_name]), rad)
 
             elif wwr == 1.0:
-                create_radiance_srf(facade, "win"+str(bcnt)+str(fcnt), "win" + str(ageometry_table['type_win'][bldg_name]), rad)
-                window_list.append(facade)
+                create_radiance_srf(surface_facade, "win"+str(bcnt)+str(fcnt), "win" + str(ageometry_table['type_win'][bldg_name]), rad)
+                window_list.append(surface_facade)
             else:
-                create_radiance_srf(facade, "wall"+str(bcnt)+str(fcnt), "wall" + str(ageometry_table['type_wall'][bldg_name]), rad)
-                wall_list.append(facade)
+                create_radiance_srf(surface_facade, "wall"+str(bcnt)+str(fcnt), "wall" + str(ageometry_table['type_wall'][bldg_name]), rad)
+                wall_list.append(surface_facade)
             fcnt+=1
 
             
@@ -416,7 +423,6 @@ def main(locator, weather_path):
     time1 = time.time()
     radiation_daysim_main(weather_path, locator)
     print "Daysim simulation finished in ", (time.time() - time1) / 60.0, " mins"
-
 
 if __name__ == '__main__':
 
