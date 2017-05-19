@@ -102,6 +102,18 @@ def filter_bldgs_of_interest(gmlbldgs, bldg_of_interest_name_list, citygml_reade
 def surfaces2radiance(id, surface, rad):
     py2radiance.RadSurface("terrain_srf" + str(id), surface, "reflectance0.2", rad)
 
+
+def create_windows(surface, wwr, ref_pypt):
+    return fetch.shape2shapetype(modify.uniform_scale(surface, wwr, wwr, wwr, ref_pypt))
+
+def create_hollowed_facade(surface_facade, window):
+    b_facade_cmpd = fetch.shape2shapetype(construct.boolean_difference(surface_facade, window))
+    hole_facade = fetch.geom_explorer(b_facade_cmpd, "face")[0]
+    hollowed_facade = construct.simple_mesh(hole_facade)
+
+    return hollowed_facade, hole_facade
+
+
 def geometry2radiance(rad, ageometry_table, citygml_reader):
     bldg_dict_list = []
 
@@ -139,21 +151,19 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
 
             # offset the facade to create a window according to the wwr
             if 0.0 < wwr < 1.0:
-                window = fetch.shape2shapetype(modify.uniform_scale(surface_facade, wwr, wwr, wwr, ref_pypt))
-                window_list.append(window)
+                window = create_windows(surface_facade, wwr, ref_pypt)
                 create_radiance_srf(window, "win"+str(bcnt)+str(fcnt), "win" + str(ageometry_table['type_win'][bldg_name]), rad)
+                window_list.append(window)
 
-                b_facade_cmpd = fetch.shape2shapetype(construct.boolean_difference(surface_facade, window))
-
-                hole_facade = fetch.geom_explorer(b_facade_cmpd, "face")[0]
+                # triangulate the wall with hole
+                hollowed_facade, hole_facade = create_hollowed_facade(surface_facade, window) #accounts for hole created by window
                 wall_list.append(hole_facade)
 
-                #triangulate the wall with hole
-                tri_facade_list = construct.simple_mesh(hole_facade)
-                for tri_bface in tri_facade_list:
-                    tri_area = calculate.face_area(tri_bface)
+                # check the elements of the wall do not have 0 area and send to radiance
+                for triangle in hollowed_facade:
+                    tri_area = calculate.face_area(triangle)
                     if tri_area > 1E-3:
-                        create_radiance_srf(tri_bface, "wall"+str(bcnt)+str(fcnt),
+                        create_radiance_srf(triangle, "wall"+str(bcnt)+str(fcnt),
                                             "wall" + str(ageometry_table['type_wall'][bldg_name]), rad)
 
             elif wwr == 1.0:
@@ -351,7 +361,6 @@ def reader_surface_properties(locator, input_shp):
     surface_properties = df[fields].merge(df2[fields2], on='Name').merge(df3[fields3], on='Name')
     
     return surface_properties.set_index('Name').round(decimals=2)
-
 
 def radiation_daysim_main(weatherfile_path, locator):
     """
