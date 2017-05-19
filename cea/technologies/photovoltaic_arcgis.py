@@ -12,7 +12,7 @@ import pandas as pd
 from math import *
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
-from cea.technologies.solar_collector import optimal_angle_and_tilt, calc_groups, Calc_incidenteangleB
+from cea.technologies.solar_collector import optimal_angle_and_tilt, calc_groups, calc_incident_angle_beam
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -94,7 +94,7 @@ def Calc_pv_generation(type_panel, hourly_radiation, Number_groups, number_point
         teta_z = radians(teta_z) #azimuth of panel
 
         #calculate angles necesary
-        teta_vector = np.vectorize(Calc_incidenteangleB)(g_vector, lat, ha_vector, tilt, teta_z)
+        teta_vector = np.vectorize(calc_incident_angle_beam)(g_vector, lat, ha_vector, tilt, teta_z)
         teta_ed, teta_eG  = Calc_diffuseground_comp(tilt)
 
         results = np.vectorize(Calc_Sm_PV)(weather_data.drybulb_C,radiation.I_sol, radiation.I_direct, radiation.I_diffuse, tilt,

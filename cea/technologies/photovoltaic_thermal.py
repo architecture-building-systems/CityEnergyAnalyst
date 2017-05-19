@@ -10,7 +10,7 @@ from math import *
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.technologies.solar_collector import optimal_angle_and_tilt, \
-    calc_groups, Calc_incidenteangleB, calc_properties_SC, calc_anglemodifierSC, calc_qrad, calc_qgain, calc_Eaux_SC,\
+    calc_groups, calc_incident_angle_beam, calc_properties_SC, calc_anglemodifierSC, calc_qrad, calc_qgain, calc_Eaux_SC,\
     SelectminimumenergySc, Selectminimumenergy2, Calc_qloss_net
 from cea.technologies.photovoltaic import calc_properties_PV, calc_PV_power, calc_diffuseground_comp, calc_Sm_PV
 
@@ -114,7 +114,7 @@ def calc_PVT_generation(type_panel, hourly_radiation, Number_groups, number_poin
         teta_z = radians(teta_z)  # azimuth of panel
 
         # calculate angles necesary
-        teta_vector = np.vectorize(Calc_incidenteangleB)(g_vector, lat, ha_vector, tilt, teta_z)
+        teta_vector = np.vectorize(calc_incident_angle_beam)(g_vector, lat, ha_vector, tilt, teta_z)
         teta_ed, teta_eG = calc_diffuseground_comp(tilt)
 
         results = np.vectorize(calc_Sm_PV)(weather_data.drybulb_C, radiation.I_sol, radiation.I_direct.copy(),
