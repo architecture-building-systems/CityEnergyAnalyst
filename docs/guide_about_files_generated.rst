@@ -159,7 +159,6 @@ The folders present inside this are:
 3. network
 
    1. totals
-   2. layout
 
 4. slave
 5. substations
@@ -264,7 +263,8 @@ The encoding of the ``<CONFIGURATION>`` represents the following:
 |    21 onwards | 0 or 1 | For all buildings (following the order  |
 |               |        | given in ``Total_demand.csv``), '0' if  |
 |               |        | the building is disconnected from DHN,  |
-|               |        | '1' if connected                        |
+|               |        | '1' if connected.                       |
+|               |        | This is the <BUILDINGNETWORK>           |
 +---------------+--------+-----------------------------------------+
 
 For example ``40.1910.3410.36000000001100000.23001111111000000000010001_PPActivationPattern``
@@ -321,6 +321,7 @@ For example ``40.1910.3410.36000000001100000.23001111111000000000010001_PPActiva
 +---------------+--------+-----------------------------------------+
 |    21 onwards |        | ``001111111000000000010001`` corresponds|
 |               |        | to which buildings are connected to DHN |
+|               |        | This is the <BUILDINGNETWORK>           |
 +---------------+--------+-----------------------------------------+
 
 1. Disconnected
@@ -329,7 +330,9 @@ For example ``40.1910.3410.36000000001100000.23001111111000000000010001_PPActiva
 :File Names: ``DiscOp_<BUILDINGNAME>_result.csv``
 :Rewritten:  Not rewritten
 :Origin:     They are being shipped along with the reference case
-:Notes:      All the files have 14 rows (including header)
+:Notes:      All the files have a header and 13 rows corresponding to a combination of resources to be used.
+             The combinations are Boiler(Biogas), Boiler(Natural gas), Fuel Cell and 10 combinations of
+             (GHP and Boiler), like 10% GHP and 90% Boiler.
              It has one column for index and 15 columns corresponding to the following fields:
 
 - ``Annualized Investment Costs [CHF]``
@@ -348,7 +351,6 @@ For example ``40.1910.3410.36000000001100000.23001111111000000000010001_PPActiva
 - ``QfromNG``
 - ``Total Costs [CHF]``
 
-@bhargavakrishna: What is the meaning of each row? Why 13?
 
 
 2. Master
@@ -374,40 +376,19 @@ Each of these files have the following fields:
 ~~~~~~~~~~
 
 :File Names:  ``Network_summary_result_<BUILDINGNETWORK>.csv``, ``Network_summary_result_all.csv``
+              <BUILDINGNETWORK> is the connection between buildings. It is represented with either '1' or '0' per building
 
-@bhargavakrishna: what are the estensions? what is buildingnetwork? ist that also a variable???
+:Rewritten:   Each file is associated with a <BUILDINGNETWORK>, which in most cases make the file names unique.
+              But there is a probability where the file names match when two <CONFIGURATION>s have the same network
 
-:Rewritten:   High chance of the files being rewritten, even though the file name has building network configuration in
-              it.
-
-@bhargavakrishna: this needs an explaination!!
 
 :Origin: Both the files originate in ``CEAforArcGIS\cea\optimization\master\summarize_network.py``
 
 
 All the ``Network_summary_result_<BUILDINGNETWORK>.csv`` Each of these files has a header plus one row per hour in the
-simulated year 16 columns (including one for index) corresponding to the following fields:
+simulated year. Each have an index column and 15 columns corresponding to the following fields:
 
-@bhargavakrishna: one such for each building?
-
-- ``Ecaf_netw_total``
-- ``Electr_netw_total``
-- ``Q_DC_building_netw_total``
-- ``Q_DC_losses``
-- ``Q_DH_building_netw_total``
-- ``Q_DH_losses``
-- ``Qcdata_netw_total``
-- ``T_sst_cool_return_netw_total``
-- ``T_sst_cool_supply_netw_total``
-- ``T_sst_heat_return_netw_total``
-- ``T_sst_heat_supply_netw_total``
-- ``day_of_max_heatmassflow``
-- ``mdot_DH_netw_total``
-- ``mdot_cool_netw_total``
-- ``mdotdata_netw_total``
-
-The file ``Network_summary_result_all.csv`` has a header row plus one row for each hour in the simulated year,
-and 16 columns (including one for index) corresponding to the following fields:
+@bhargavakrishna: one such for each building? Nope. It is one for <BUILDINGNETWORK>
 
 - ``Ecaf_netw_total``
 - ``Electr_netw_total``
@@ -425,14 +406,32 @@ and 16 columns (including one for index) corresponding to the following fields:
 - ``mdot_cool_netw_total``
 - ``mdotdata_netw_total``
 
+The file ``Network_summary_result_all.csv`` has a header row plus one row for each hour in the simulated year.
+It has an index column and 15 columns corresponding to the following fields:
 
-3.2 Network/Totals
+- ``Ecaf_netw_total``
+- ``Electr_netw_total``
+- ``Q_DC_building_netw_total``
+- ``Q_DC_losses``
+- ``Q_DH_building_netw_total``
+- ``Q_DH_losses``
+- ``Qcdata_netw_total``
+- ``T_sst_cool_return_netw_total``
+- ``T_sst_cool_supply_netw_total``
+- ``T_sst_heat_return_netw_total``
+- ``T_sst_heat_supply_netw_total``
+- ``day_of_max_heatmassflow``
+- ``mdot_DH_netw_total``
+- ``mdot_cool_netw_total``
+- ``mdotdata_netw_total``
+
+
+3.1 Network/Totals
 ~~~~~~~~~~~~~~~~~~
 
 :File Names: ``Total_<BUILDINGNETWORK>.csv``
-:Rewritten:  High chance of the file being rewritten, even though the file name has building network configuration in it.
-
-@bhargavakrishna: This needs an explaination.
+:Rewritten:  Each file is associated with a <BUILDINGNETWORK>, which in most cases make the file names unique.
+             But there is a probability where the file names match when two <CONFIGURATION>s have the same network
 
 :Origin:     Both the files originate in ``CEAforArcGIS\cea\optimization\supportFn.py``
 
@@ -501,33 +500,6 @@ the following fields:
 - ``Elf_MWhyr``
 - ``Ef_MWhyr``
 
-3.3 Network/Layout
-~~~~~~~~~~~~~~~~~~
-
-:File Names: ``NodesData_DC``, ``NodesData_DH``, ``PipesData_DC``, ``PipesData_DH``
-:Rewritten:  Not rewritten
-:Origin:     They are being shipped along with the reference case
-
-``NodesData_DC.csv`` and ``NodesData_DH.csv`` each and have 68 rows (including header)
-and 4 columns corresponding to the following parameters:
-
-- ``DC_ID``
-- ``Name``
-- ``Plant``
-- ``Sink``
-
-@bhargavakrishna: why 68 rows? please explain.
-
-
-``PipesData_DC.csv`` and ``PipesData_DH.csv`` each have 67 rows (including header)
-and 4 columns corresponding to the following parameters:
-
-- ``DC_ID``
-- ``Length``
-- ``NODE1``
-- ``NODE2``
-
-@bhargavakrishna: why 67 rows? please explain.
 
 4. Slave
 ~~~~~~~~
@@ -568,7 +540,8 @@ and 4 columns corresponding to the following parameters:
     +-----------------------------------------------------+------------------------------------------------------------------------------+
 
 
-``<CONFIGURATION>_AveragedCostData.csv`` has 2 rows (including header) and the following fields:
+``<CONFIGURATION>_AveragedCostData.csv`` has two rows (including header) and 10 columns corresponding to
+the following fields:
 
 - ``avgCostAddBoiler``
 - ``avgCostBoilerBaseRpkWh``
@@ -582,7 +555,8 @@ and 4 columns corresponding to the following parameters:
 - ``avgCostUncontrollableSources``
 
 
-``<CONFIGURATION>_InvestmentCostDetailed.csv`` has 2 rows (including header) and the following fields:
+``<CONFIGURATION>_InvestmentCostDetailed.csv`` has two rows (including header) and 23 columns
+corresponding to the following fields:
 
 - ``BoilerAddInvC``
 - ``BoilerBInvCost``
@@ -609,8 +583,8 @@ and 4 columns corresponding to the following parameters:
 - ``pumpCosts``
 
 
-``<CONFIGURATION>_PrimaryEnergyBySource.csv`` has 2 rows (including header)
-and 9 columns (first column corresponding to index) with the following names:
+``<CONFIGURATION>_PrimaryEnergyBySource.csv`` has two rows (including header)
+It has an index column and 8 columns corresponding to the following fields:
 
 - ``EelExport``
 - ``EelectrImportSlave``
@@ -622,8 +596,8 @@ and 9 columns (first column corresponding to index) with the following names:
 - ``costBenefitNotUsedHPs``
 
 
-``<CONFIGURATION>_SlaveCostData.csv`` has 2 rows (including header) and 16 columns
-(first column corresponding to index) with the following names:
+``<CONFIGURATION>_SlaveCostData.csv`` has two rows (including header).
+ It has an index column and 15 columns corresponding to the following fields:
 
 - ``KEV_Remuneration``
 - ``PPoperation_exclAddBackup``
@@ -642,16 +616,16 @@ and 9 columns (first column corresponding to index) with the following names:
 - ``total cost``
 
 
-``<CONFIGURATION>_SlaveToMasterCostEmissionsPrimE.csv`` has 2 rows (including header)
- and 4 columns (first column corresponding to index). This includes the following parameters:
+``<CONFIGURATION>_SlaveToMasterCostEmissionsPrimE.csv`` has two rows (including header).
+It has an index column and 3 columns corresponding to the following fields:
 
 - ``CO2_kg_eq``
 - ``E_oil_eq_MJ``
 - ``cost_sum``
 
 
-**<CONFIGURATION>_PPActivationPattern** is a file in ``csv`` format and has (total hours in a year + 1) rows (including header)
- and 36 columns (first column corresponding to index) containing the following parameters:
+**<CONFIGURATION>_PPActivationPattern** Each of these files has a header plus one row per hour in the
+simulated year. It has an index column and 35 columns corresponding to the following fields:
 
 - ``BoilerBase_Status``
 - ``BoilerPeak_Status``
@@ -690,8 +664,8 @@ and 9 columns (first column corresponding to index) with the following names:
 - ``Qcold_HPLake``
 
 
-**<CONFIGURATION>_SlaveDetailedEmissionData** is a file in ``csv`` format having 2 rows (including header)
- and 15 columns (first column including index) which include the following parameters:
+**<CONFIGURATION>_SlaveDetailedEmissionData** has 2 rows (including header).
+It has an index column and 14 columns corresponding to the following fields:
 
 - ``CO2_from_AddBoiler_gas``
 - ``CO2_from_BaseBoiler_gas``
@@ -708,8 +682,8 @@ and 9 columns (first column corresponding to index) with the following names:
 - ``CO2_from_fictiveBoilerStorage``
 - ``CO2_from_wood``
 
-**<CONFIGURATION>_SlaveDetailedEprimData** is a file in ``csv`` format containing two rows (including header)
-and having 16 columns (first column corresponding to index) which include the following parameters:
+**<CONFIGURATION>_SlaveDetailedEprimData** has two rows (including header)
+It has an index column and 15 columns corresponding to the following fields:
 
 - ``E_prim_from_AddBoiler_gas``
 - ``E_prim_from_BaseBoiler_gas``
@@ -728,15 +702,15 @@ and having 16 columns (first column corresponding to index) which include the fo
 - ``Eprim_from_wood``
 
 
-**<CONFIGURATION>_Storage_Sizing_Parameters** is a file in ``csv`` format which has 2 rows (including header)
- and 4 columsn (first corresponding to index) which include the following parameters:
+**<CONFIGURATION>_Storage_Sizing_fields** has two rows (including header)
+It has an index column and 3 columns corresponding to the following fields:
 
 - ``Q_initial``
 - ``Storage_Size_opt``
 - ``T_initial``
 
-**<CONFIGURATION>_StorageOperationData** a ``csv`` file has (total hours in a year + 1) rows (including header) and
-21 columns (first column corresponding to index) which include the following parameters.
+**<CONFIGURATION>_StorageOperationData** Each of these files has a header plus one row per hour in the
+simulated year.It has an index column and 20 columns corresponding to the following fields.
 **This file has few missing values. Reason needs to be investigated**
 
 - ``E_PVT_Wh``
@@ -781,8 +755,8 @@ and having 16 columns (first column corresponding to index) which include the fo
 
 **Information:**
 
-**<BUILDINGNAME>_result** a ``csv`` file has (total hours in a year + 1) rows (including header) and
- 20 columns corresponding to the following parameters:
+**<BUILDINGNAME>_result** Each of these files has a header plus one row per hour in the
+simulated year. It has 20 columns corresponding to the following fields:
 
 - ``A_hex_cool_design``
 - ``A_hex_dhw_design``
@@ -806,8 +780,8 @@ and having 16 columns (first column corresponding to index) which include the fo
 - ``mdot_heating_result``
 
 
-**Total_linkedbuildings** a ``csv`` file has 2 rows (including header) and
-62 columns (first column corresponding to indes) which include the following parameters:
+**Total_linkedbuildings** a ``csv`` file has two rows (including header) and
+62 columns (first column corresponding to indes) which include the following fields:
 
 - ``Name``
 - ``Af_m2``
@@ -877,7 +851,7 @@ Uncertainty
 This section deals with the files in ````<SCENARIO>\outputs\data\uncertainty``
 
 
-**File Names:** ``uncertainty``, ``CheckPoint_uncertainty_number``
+**File Names:** ``uncertainty.csv``, ``CheckPoint_uncertainty_number.file``
 
 **Rewritten:** The files are rewritten only when ``CEAforArcGIS\cea\analysis\uncertainty\Individual_Evaluation.py``,
 or ``CEAforArcGIS\cea\analysis\uncertainty\Uncertainty_parameters.py`` are run
@@ -898,19 +872,3 @@ or ``CEAforArcGIS\cea\analysis\uncertainty\Uncertainty_parameters.py`` are run
 | ``population_fitness`` | ``uncertainty_level`` | ``population`` |
 +------------------------+-----------------------+----------------+
 
-Potentials
------------
-
-This section deals with the files in ``<SCENARIO>\outputs\data\potentials`` and
-``<SCENARIO>\outputs\data\potentials\solar``
-
-
-**File Names:**
-
-**Rewritten:**
-
-**Origin:**
-
-
-
-**Information:**
