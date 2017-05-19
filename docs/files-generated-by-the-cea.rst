@@ -17,8 +17,6 @@ The variable ``<BUILDINGNAME>``  is used throughout this document to reference t
 scenario.
 
 
-.. contents:: Table of Contents
-
 Demand
 ------
 
