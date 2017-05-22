@@ -7,7 +7,6 @@ import numpy as np
 import scipy
 from math import pi
 from cea.technologies import storagetank as sto_m
-from cea.demand import occupancy_model
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"

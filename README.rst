@@ -3,18 +3,20 @@
     :width: 150 px
     :scale: 50 %
     :alt: City Energy Analyst (CEA) logo
-    :align: left
     :target: https://www.cityenergyanalyst.com
 
-The  `City Energy Analyst (CEA) <https://www.cityenergyanalyst.com/>`_ is an urban building simulation platform and one of the first open-source initiatives of computation tools for the design of low-carbon and highly efficient cities. The CEA combines knowledge of urban planning and energy systems engineering in an integrated simulation platform. This allows to study the effects, trade-offs and synergies of urban design options and energy infrastructure plans.
+The  `City Energy Analyst (CEA) <https://www.cityenergyanalyst.com/>`_ is an urban building simulation platform and one
+of the first open-source initiatives of computation tools for the design of low-carbon and highly efficient cities.
+The CEA combines knowledge of urban planning and energy systems engineering in an integrated simulation platform. This
+allows to study the effects, trade-offs and synergies of urban design options and energy infrastructure plans.
 
-* Click `here <https://cityenergyanalyst.com/user-manual>`_  for documentation and installation of CEA Planning
+* Click `here <https://cityenergyanalyst.com/user-manual>`__  for documentation and installation of CEA Planning
 
-* Click `here <http://city-energy-analyst.readthedocs.io/en/latest/>`_   for documentation and installation of CEA Research
+* Click `here <http://city-energy-analyst.readthedocs.io/en/latest/>`__   for documentation and installation of CEA Research
 
-* Click `here <https://github.com/architecture-building-systems/CEAforArcGIS/issues>`_ to report an issue
+* Click `here <https://github.com/architecture-building-systems/CEAforArcGIS/issues>`__ to report an issue
 
-* Click `here <mailto:cea@arch.ethz.ch>`_ to contact us
+* Click `here <mailto:cea@arch.ethz.ch>`__ to contact us
 
 Cite us:
 --------
