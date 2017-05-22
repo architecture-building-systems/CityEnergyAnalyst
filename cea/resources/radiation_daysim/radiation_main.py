@@ -248,7 +248,6 @@ def create_sensor_input_file(rad, chunk_n):
 
 def radiation_multiprocessing(rad, simul_params, bldg_dict_list, aresults_path, rad_params, aweatherfile_path):
 
-    gv.log("Using %i CPU's" % mp.cpu_count())
     # get chunks to iterate and start multiprocessing
     chunks = [bldg_dict_list[i:i +simul_params['n_build_in_chunk']] for i in range(0, len(bldg_dict_list),
                                                                                    simul_params['n_build_in_chunk'])]
@@ -267,7 +266,6 @@ def radiation_singleprocessing(rad, bldg_dict_list, aresults_path, rad_params, a
     chunk_n = None
     for i, bldg_dict in enumerate(bldg_dict_list):
         isolation_daysim(chunk_n, rad, bldg_dict, aresults_path, rad_params, aweatherfile_path)
-        print gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
 
 def isolation_daysim(chunk_n, rad, bldg_dict_list, aresults_path, rad_params, aweatherfile_path):
 
@@ -443,7 +441,7 @@ def radiation_daysim_main(weatherfile_path, locator):
     print "Daysim simulation starts"
     time1 = time.time()
 
-    if (gv.multiprocessing and mp.cpu_count() > 1):
+    if (settings.SIMUL_PARAMS['multiprocessing'] and mp.cpu_count() > 1):
         radiation_multiprocessing(rad, settings.SIMUL_PARAMS, bldg_dict_list, results_path, settings.RAD_PARMS, weatherfile_path)
     else:
         radiation_singleprocessing(rad, bldg_dict_list, results_path, settings.RAD_PARMS, weatherfile_path)
