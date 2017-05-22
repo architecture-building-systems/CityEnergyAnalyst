@@ -309,7 +309,6 @@ def isolation_daysim(chunk_n, rad, bldg_dict_list, aresults_path, rad_params, aw
                                   rad_params['RAD_DJ'], rad_params['RAD_DS'], rad_params['RAD_DR'],
                                   rad_params['RAD_DP'])
     rad.execute_gen_dc("w/m2")
-    print "done2"
     rad.execute_ds_illum()
     solar_res = rad.eval_ill_per_sensor()
 
