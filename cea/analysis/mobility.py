@@ -1,10 +1,7 @@
 """
-===========================
 Primary energy and CO2 emissions model algorithm for mobility
-===========================
 
 M. Mosteiro Romero  script development          31.08.16
-
 """
 
 from __future__ import division
@@ -33,25 +30,32 @@ def lca_mobility(locator):
     calculated for the 2000 Watt society target.
 
     The current values for the Swiss case for each type of occupancy are based on the following sources:
-        -   [SIA 2040, 2011]: 'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
-        -   [Kellenberger, D. et al., 2012]: 'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
+
+    - [SIA_2040_2011]_: 'MULTI_RES', 'SINGLE_RES', 'SCHOOL', 'OFFICE'
+    - [BFE_2012]_: 'HOTEL', 'RETAIL', 'FOODSTORE', 'RESTAURANT'
+
     Due to a lack of data, multiple values had to be assumed:
-        -   'INDUSTRY': assumed to be equal to the value for the use type 'OFFICE'
-        -   'HOSPITAL': assumed to be equal to the value for the use type 'HOTEL'
-        -   'GYM', 'SWIMMING': assumed to be equal to the value for use type 'RETAIL'
-        -   'SERVERROOM', 'COOLROOM': assumed negligible
+
+    - 'INDUSTRY': assumed to be equal to the value for the use type 'OFFICE'
+    - 'HOSPITAL': assumed to be equal to the value for the use type 'HOTEL'
+    - 'GYM', 'SWIMMING': assumed to be equal to the value for use type 'RETAIL'
+    - 'SERVERROOM', 'COOLROOM': assumed negligible
 
     The following file is created as a side effect by this script:
-    - total_LCA_mobility:.csv
-        csv file of yearly nonr-renewable primary energy demand and emissions due to mobility for each building
+
+    - total_LCA_mobility (.csv)
+      csv file of yearly non-renewable primary energy demand and emissions due to mobility for each building
 
     :param locator: an InputLocator instance set to the scenario to work on
     :type locator: InputLocator
 
-    ..[SIA 2040, 2011]: Swiss Society of Engineers and Architects (SIA), "SIA Efficiency Path 2040" (2011)
-    ..[Kellenberger, D. et al., 2010]: Kellenberger, D. et al., 2010. "Arealentwicklung fur die 2000-Watt Gesellschaft:
-    Leitfaden und Fallbeispiele".
-
+    .. [SIA_2040_2011] Swiss Society of Engineers and Architects (SIA). 2011. "SIA Efficiency Path 2040."
+    .. [BFE_2012] Bundesamt fur Energie (BFE). 2012. "Arealentwicklung fur die 2000-Watt Gesellschaft:
+        Beurteilungsmethode in Anlehnung an den SIA-Effizienzpfad Energie."
+    .. [SIA_Effizienzpfad_2011] Swiss Society of Engineers and Architects (SIA). 2011. "SIA Effizienzpfad: Bestimmung
+        der Ziel- und Richtwerte mit dem Top-Down Approach."
+    .. [SIA_2024_2015]: Swiss Society of Engineers and Architects (SIA). 2015. "Merkblatt 2024: Raumnutzungsdaten fur
+        die Energie- und Gebaeudetechnik."
     """
 
     # local files

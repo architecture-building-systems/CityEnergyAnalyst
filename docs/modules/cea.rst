@@ -6,29 +6,36 @@ Subpackages
 
 .. toctree::
 
-    cea.GUI
     cea.analysis
-    cea.databases
     cea.demand
     cea.geometry
     cea.plots
     cea.resources
     cea.technologies
+    cea.tests
     cea.utilities
 
 Submodules
 ----------
 
-cea.globalvar module
---------------------
+cea\.cli module
+---------------
+
+.. automodule:: cea.cli
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea\.globalvar module
+---------------------
 
 .. automodule:: cea.globalvar
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea.inputlocator module
------------------------
+cea\.inputlocator module
+------------------------
 
 .. automodule:: cea.inputlocator
     :members:

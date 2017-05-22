@@ -1,19 +1,18 @@
 """
-===========================
 Embodied energy and related grey emissions model algorithm
-===========================
+
 J. Fonseca  script development          26.08.15
 D. Thomas   formatting and cleaning
 D. Thomas   integration in toolbox
 J. Fonseca  new development             13.04.16
 M. Mosteiro fixed calculation errors    07.11.16
-
 """
 from __future__ import division
 
 import numpy as np
 import pandas as pd
-from geopandas import GeoDataFrame as gpdf
+from cea.utilities.dbfreader import dbf2df
+from geopandas import GeoDataFrame as Gdf
 import cea.globalvar
 import cea.inputlocator
 
@@ -34,24 +33,27 @@ def lca_embodied(year_to_calculate, locator, gv):
     energy and emissions of a building, after which both values become zero.
 
     The results are provided in total as well as per square meter:
-        - embodied non-renewable primary energy: E_nre_pen_GJ and E_nre_pen_MJm2
-        - embodied greenhouse gas emissions: E_ghg_ton and E_ghg_kgm2
+
+    - embodied non-renewable primary energy: E_nre_pen_GJ and E_nre_pen_MJm2
+    - embodied greenhouse gas emissions: E_ghg_ton and E_ghg_kgm2
 
     As part of the algorithm, the following files are read from InputLocator:
-        - architecture.shp: shapefile with the architecture of each building
-            locator.get_building_architecture()
-        - occupancy.shp: shapefile with the occupancy types of each building
-            locator.get_building_occupancy()
-        - age.shp: shapefile with the age and retrofit date of each building
-            locator.get_building_age()
-        - zone.shp: shapefile with the geometry of each building in the zone of study
-            locator.get_building_geometry()
-        - Archetypes_properties: csv file with the database of archetypes including embodied energy and emissions
-            locator.get_archetypes_properties()
+
+    - architecture.shp: shapefile with the architecture of each building
+        locator.get_building_architecture()
+    - occupancy.shp: shapefile with the occupancy types of each building
+        locator.get_building_occupancy()
+    - age.shp: shapefile with the age and retrofit date of each building
+        locator.get_building_age()
+    - zone.shp: shapefile with the geometry of each building in the zone of study
+        locator.get_building_geometry()
+    - Archetypes_properties: csv file with the database of archetypes including embodied energy and emissions
+        locator.get_archetypes_properties()
 
     As a result, the following file is created:
-        - Total_LCA_embodied: .csv
-            csv file of yearly primary energy and grey emissions per building stored in locator.get_lca_embodied()
+
+    - Total_LCA_embodied: .csv
+        csv file of yearly primary energy and grey emissions per building stored in locator.get_lca_embodied()
 
     :param year_to_calculate:  year between 1900 and 2100 indicating when embodied energy is evaluated
         to account for emissions already offset from building construction and retrofits more than 60 years ago.
@@ -62,19 +64,45 @@ def lca_embodied(year_to_calculate, locator, gv):
     :rtype: NoneType
 
     .. [Fonseca et al., 2015] Fonseca et al. (2015) "Assessing the environmental impact of future urban developments at
-    neighborhood scale." CISBAT 2015.
+        neighborhood scale." CISBAT 2015.
     .. [Thoma et al., 2014] Thoma et al. (2014). "Estimation of base-values for grey energy, primary energy, global
-    warming potential (GWP 100A) and Umweltbelastungspunkte (UBP 2006) for Swiss constructions from before 1920 until
-    today." CUI 2014.
+        warming potential (GWP 100A) and Umweltbelastungspunkte (UBP 2006) for Swiss constructions from before 1920
+        until today." CUI 2014.
 
+
+    Files read / written from InputLocator:
+
+    get_building_architecture
+    get_building_occupancy
+    get_building_age
+    get_building_geometry
+    get_archetypes_embodied_energy
+    get_archetypes_embodied_emissions
+
+    path_LCA_embodied_energy:
+        path to database of archetypes embodied energy file
+        Archetypes_embodied_energy.csv
+    path_LCA_embodied_emissions:
+        path to database of archetypes grey emissions file
+        Archetypes_embodied_emissions.csv
+    path_age_shp: string
+        path to building_age.shp
+    path_occupancy_shp:
+        path to building_occupancyshp
+    path_geometry_shp:
+        path to building_geometrys.hp
+    path_architecture_shp:
+        path to building_architecture.shp
+    path_results : string
+        path to demand results folder emissions
     """
 
     # local variables
-    architecture_df = gpdf.from_file(locator.get_building_architecture()).drop('geometry', axis=1)
-    prop_occupancy_df = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
+    architecture_df = dbf2df(locator.get_building_architecture())
+    prop_occupancy_df = dbf2df(locator.get_building_occupancy())
     occupancy_df = pd.DataFrame(prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)])
-    age_df = gpdf.from_file(locator.get_building_age()).drop('geometry', axis=1)
-    geometry_df = gpdf.from_file(locator.get_building_geometry())
+    age_df = dbf2df(locator.get_building_age())
+    geometry_df = Gdf.from_file(locator.get_building_geometry())
     geometry_df['footprint'] = geometry_df.area
     geometry_df['perimeter'] = geometry_df.length
     geometry_df = geometry_df.drop('geometry', axis=1)
@@ -106,10 +134,7 @@ def lca_embodied(year_to_calculate, locator, gv):
     ## each building component gets categorized according to its occupancy type, construction year and retrofit year
     ## e.g., for an office building built in 1975, cat_df['cat_built'] = 'OFFICE3'
     ## e.g., for an office building with windows renovated in 1975, cat_df['cat_windows'] = 'OFFICE9'
-    cat_df['cat_built'] = cat_df.apply(lambda x: calc_category_construction(x['mainuse'], x['built']), axis=1)
-    retro_cat = ['envelope', 'roof', 'windows', 'partitions', 'basement', 'HVAC']
-    for cat in retro_cat:
-        cat_df['cat_' + cat] = cat_df.apply(lambda x: calc_category_retrofit(x['mainuse'], x[cat]), axis=1)
+
 
     # calculate contributions to embodied energy and emissions
     ## calculated by multiplying the area of the given component by the energy and emissions per square meter for the
@@ -129,6 +154,7 @@ def lca_embodied(year_to_calculate, locator, gv):
                                                      columns=fields_to_plot, index=False, float_format='%.2f')
     print('done!')
 
+
 def calculate_contributions(archetype, cat_df, gv, locator, year_to_calculate, total_column, specific_column):
     """
     Calculate the embodied energy/emissions for each building based on their construction year, and the area and 
@@ -137,14 +163,15 @@ def calculate_contributions(archetype, cat_df, gv, locator, year_to_calculate, t
     :param archetype: String that defines whether the 'EMBODIED_ENERGY' or 'EMBODIED_EMISSIONS' are being calculated.
     :type archetype: str
     :param cat_df: DataFrame with joined data of all categories for each building, that is: occupancy, age, geometry,
-    architecture, building component area, construction category and renovation category for each building component
+        architecture, building component area, construction category and renovation category for each building component
     :type cat_df: DataFrame
     :param gv: an instance of GlobalVariables with the constants to be used (like `list_uses` etc.)
     :type gv: GlobalVariables
     :param locator: an InputLocator instance set to the scenario to work on
     :type locator: InputLocator
     :param year_to_calculate: year in which the calculation is done; since the embodied energy and emissions are
-    calculated over 60 years, if the year of calculation is more than 60 years after construction, the results will be 0
+        calculated over 60 years, if the year of calculation is more than 60 years after construction, the results
+        will be 0
     :type year_to_calculate: int
     :param total_column: label for the column with the total results (e.g., 'GEN_GJ')
     :type total_column: str
@@ -152,14 +179,20 @@ def calculate_contributions(archetype, cat_df, gv, locator, year_to_calculate, t
     :type specific_column: str
 
     :return result: DataFrame with the calculation results (i.e., the total and specific embodied energy or emisisons
-    for each building)
+        for each building)
     :rtype result: DataFrame
-
     """
-
     # get archetype properties from the database
-    database_df = pd.read_excel(locator.get_archetypes_properties(), archetype)
-    
+    database_df = pd.read_excel(locator.get_life_cycle_inventory_building_systems(), archetype)
+    database_df['Code'] = database_df.apply(lambda x: calc_code(x['building_use'], x['year_start'],
+                                                                        x['year_end'], x['standard']), axis=1)
+
+    cat_df['cat_built'] = calc_category(database_df, cat_df, 'built', 'C')
+
+    retro_cat = ['envelope', 'roof', 'windows', 'partitions', 'basement', 'HVAC']
+    for cat in retro_cat:
+        cat_df['cat_' + cat] = calc_category(database_df, cat_df, cat, 'R')
+
     # merge databases according to category
     built_df = cat_df.merge(database_df, left_on='cat_built', right_on='Code')
     envelope_df = cat_df.merge(database_df, left_on='cat_envelope', right_on='Code')
@@ -168,6 +201,10 @@ def calculate_contributions(archetype, cat_df, gv, locator, year_to_calculate, t
     partitions_df = cat_df.merge(database_df, left_on='cat_partitions', right_on='Code')
     basement_df = cat_df.merge(database_df, left_on='cat_basement', right_on='Code')
     HVAC_df = cat_df.merge(database_df, left_on='cat_HVAC', right_on='Code')
+
+    #do checkup in case some buildings or all buildings do not have a match.
+    #this happens when building has not been retrofitted.
+
     
     # calculate the embodied energy/emissions due to construction
     # these include: external walls, roof, windows, interior floors, partitions, HVAC systems, and excavation
@@ -342,14 +379,13 @@ def calc_mainuse(uses_df, uses):
     array_min = np.array(databaseclean[databaseclean[:] > 0].idxmin(skipna=True), dtype='S10')
     array_max = np.array(databaseclean[databaseclean[:] > 0].idxmax(skipna=True), dtype='S10')
     mainuse = np.array(map(calc_comparison, array_min, array_max))
-    print type(array_min)
-    print type(array_max)
+
     return mainuse
 
 def calc_comparison(array_min, array_max):
     """
     This function reads the least and most common occupancy types in each building and, if the most common occupancy
-    type is 'DEPO', reassigns this building's occupancy type to its least common.
+    type is 'PARKING', reassigns this building's occupancy type to its least common.
 
     :param array_min: array containing the occupancy type that takes up the least space (>0) for each building
     :type array_min: ndarray
@@ -361,13 +397,29 @@ def calc_comparison(array_min, array_max):
 
     """
 
-    # TODO: Since there is no actual 'DEPO' occupancy type, this function doesn't do anything, so it should be repurposed or deleted.
-
-    if array_max == 'DEPO':
-        if array_min != 'DEPO':
+    if array_max == 'PARKING':
+        if array_min != 'PARKING':
             array_max = array_min
     return array_max
 
+def calc_code(code1, code2, code3, code4):
+    return str(code1) + str(code2) + str(code3) + str(code4)
+
+def calc_category(archetype_DB, age, field, type):
+    category = []
+    for row in age.index:
+        if age.loc[row, field] > 0:
+            category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, field]) & \
+                                         (archetype_DB['year_end'] >= age.loc[row, field]) & \
+                                         (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
+                                         (archetype_DB['standard'] == type)].Code.values[0])
+        else:
+            category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, 'built']) & \
+                                         (archetype_DB['year_end'] >= age.loc[row, 'built']) & \
+                                         (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
+                                         (archetype_DB['standard'] == type)].Code.values[0])
+
+    return category
 
 def run_as_script(scenario_path=None, year_to_calculate=2050):
     gv = cea.globalvar.GlobalVariables()

@@ -7,15 +7,16 @@ pre-processing algorithm
 
 from __future__ import division
 
-import pandas as pd
 import os
-import cea.optimization.preprocessing.extra_loads.processheat as process_heat
-from cea.optimization.conversion_storage.master import summarize_network
-from cea.optimization.preprocessing.decentralized_buildings import decentralized_buildings
-from cea.optimization.preprocessing.extra_loads import electricity
+
+import pandas as pd
+
+import cea.optimization.preprocessing.processheat as process_heat
+from cea.optimization.master import summarize_network
+from cea.optimization.preprocessing import electricity
 from cea.resources import geothermal
-from cea.technologies import substation
 from cea.utilities import  epwreader
+from cea.technologies import substation
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -64,7 +65,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     # GET LOADS IN SUBSTATIONS
     # prepocess space heating, domestic hot water and space cooling to substation.
     print "Run substation model for each building separately"
-    #substation.substation_main(locator, total_demand, building_names, gv, Flag = True) # True if disconected buildings are calculated
+    substation.substation_main(locator, total_demand, building_names, gv, Flag = True) # True if disconected buildings are calculated
 
     # GET COMPETITIVE ALTERNATIVES TO A NETWORK
     # estimate what would be the operation of single buildings only for heating.
@@ -113,7 +114,6 @@ def run_as_script(scenario_path=None):
     run the whole preprocessing routine
     """
     import cea.globalvar
-    from geopandas import GeoDataFrame as gpdf
 
     gv = cea.globalvar.GlobalVariables()
 

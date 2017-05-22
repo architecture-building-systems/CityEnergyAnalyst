@@ -1,5 +1,5 @@
-cea.demand.calibration package
-==============================
+cea\.demand\.calibration package
+================================
 
 Subpackages
 -----------

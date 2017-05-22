@@ -17,7 +17,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma_sup_hs, ma_sup_0,Ta_sup_0, Ta_re_0, Cpa, gv):
+def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma_sup_hs, ma_sup_0,Ta_sup_0, Ta_re_0,
+                      Cpa, gv):
 
     tasup = Ta_sup_hs + 273
     tare = Ta_re_hs + 273
@@ -50,7 +51,6 @@ def calc_heating_coil(Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma
             result = sopt.newton(fh, trh0, maxiter=1000, tol=0.01).real - 273
         except RuntimeError:
             print (Qhsf, Qhsf_0, Ta_sup_hs, Ta_re_hs, Ths_sup_0, Ths_re_0, ma_sup_hs, ma_sup_0,Ta_sup_0, Ta_re_0)
-            print gv.samples
             result = sopt.bisect(fh, 0, 350, xtol=0.01, maxiter=500).real - 273
 
         trh = result
