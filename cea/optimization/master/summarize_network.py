@@ -166,8 +166,7 @@ def network_main(locator, total_demand, building_names, gv, key):
                             "Q_DC_losses": Q_DC_losses})
 
     # the key depicts weather this is the distribution of all customers or a distribution of a gorup of them.
-    fName_result = "Network_summary_result_" + key + ".csv"
-    results.to_csv(os.path.join(locator.get_optimization_network_results_folder(), fName_result), sep=',')
+    results.to_csv(locator.get_optimization_network_results_summary(key), sep=',')
 
     print time.clock() - t0, "seconds process time for Network summary for configuration", key, "\n"
 
