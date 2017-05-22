@@ -15,6 +15,7 @@ Welcome to City Energy Analyst's documentation!
    license
    disclaimer
    developer-walk-through
+   files-generated-by-the-cea
    interfaces
    databases
    how-to-create-a-new-release
