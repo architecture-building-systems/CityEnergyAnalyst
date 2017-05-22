@@ -46,20 +46,11 @@ def calc_schedules(list_uses, archetype_schedules, bpr, archetype_values):
     :param archetype_schedules: The list of schedules defined for the project - in the same order as `list_uses`
     :type archetype_schedules: list[ndarray[float]]
 
-    :param specific_values: for the variable to be calculated, list of yearly values per m2 or per person (e.g. occupant
-    density)
-    :type specific_values: list[float]
+    :param bpr: 
+    :type bpr: 
 
-    :param building_uses: for each use in `list_uses`, the percentage of that use for this building. Sum of values is 1.0
-    :type building_uses: dict[str, float]
-
-    :param area: total conditioned or electrified floor area (Af or Ae)
-    :type area: float
-
-    :param schedule_type: defines the type of schedule to be generated based on the schedules in the archetype data
-    base. Valid inputs are 'people' (for occupancy, occupant-related internal loads and ventilation), 'electricity' (for
-    lighting, appliances, refrigeration and data centers), 'water' (for total water and hot water), or 'process'.
-    :param schedule_type: string
+	:param archetype_values:
+	:type archetype_values:
 
     :returns schedules: a dictionary containing the weighted average schedule for: occupancy; ventilation demand;
     sensible heat and moisture gains due to occupancy; electricity demand for appliances, lighting, processes,

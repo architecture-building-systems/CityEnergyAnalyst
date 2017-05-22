@@ -49,7 +49,7 @@ def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
     :param building_name: list of building names in the case study
     :type building_name: Series
     :return: Building_PV.csv with PV generation potential of each building, Building_sensors.csv with sensor data of
-    each PV panel.
+             each PV panel.
     """
     t0 = time.clock()
 
@@ -117,12 +117,11 @@ def filter_low_potential(weather_data, radiation_csv, metadata_csv, min_radiatio
     :return sensors_metadata_clean: data of filtered sensor points measuring solar insulation of each building
     :rtype sensors_metadata_clean: dataframe
 
-    Assumptions
-    -----------
-    1) Sensor points with low yearly radiation are deleted. The threshold (minimum yearly radiation) is a percentage
-    of global horizontal radiation. The percentage threshold (min_radiation) is a global variable defined by users.
-    2) For each sensor point kept, the radiation value is set to zero when radiation value is below 50 W/m2.
-    3) No solar panels on windows.
+    :Assumptions:
+        1) Sensor points with low yearly radiation are deleted. The threshold (minimum yearly radiation) is a percentage
+           of global horizontal radiation. The percentage threshold (min_radiation) is a global variable defined by users.
+        2) For each sensor point kept, the radiation value is set to zero when radiation value is below 50 W/m2.
+        3) No solar panels on windows.
     """
     # get max radiation potential from global horizontal radiation
     yearly_horizontal_rad = weather_data.glohorrad_Whm2.sum()  # [Wh/m2/year]
@@ -164,7 +163,7 @@ def calc_groups(sensors_rad_clean, sensors_metadata_cat):
     :param sensors_rad_clean: radiation data of the filtered sensors
     :type sensors_rad_clean: dataframe
     :param sensors_metadata_cat: data of filtered sensor points categorized with module tilt angle, array spacing,
-    surface azimuth, installed PV module area of each sensor point
+                                 surface azimuth, installed PV module area of each sensor point
     :type sensors_metadata_cat: dataframe
     :return number_groups: number of groups of sensor points
     :rtype number_groups: float
@@ -300,7 +299,7 @@ def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):
     :rtype teta_B: float
 
     .. [Sproul, A. B., 2017] Sproul, A.B. (2007). Derivation of the solar geometric relationships using vector analysis.
-    Renewable Energy, 32(7), 1187-1205.
+                             Renewable Energy, 32(7), 1187-1205.
     """
     # surface normal vector
     n_E = sin(tilt)*sin(teta_z)
@@ -326,11 +325,9 @@ def calc_diffuseground_comp(tilt_radians):
     :rtype teta_ed: float
     :rtype teta_eg: float
 
-    References
-    ----------
-    Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
-    Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
-    doi: 10.1002/9781118671603.ch5
+    :References: Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
+                 Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
+                 doi: 10.1002/9781118671603.ch5
     """
     tilt = degrees(tilt_radians)
     teta_ed = 59.68 - 0.1388 * tilt + 0.001497 * tilt ** 2  # [degrees] (5.4.2)
@@ -385,11 +382,9 @@ def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg,
     :return Tcell: cell temperature [C]
     :rtype Tcell: float
 
-    References
-    ----------
-    Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
-    Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
-    doi: 10.1002/9781118671603.ch5
+    :References: Duffie, J. A. and Beckman, W. A. (2013) Radiation Transmission through Glazing: Absorbed Radiation, in
+                 Solar Engineering of Thermal Processes, Fourth Edition, John Wiley & Sons, Inc., Hoboken, NJ, USA.
+                 doi: 10.1002/9781118671603.ch5
     """
 
     # calcualte ratio of beam radiation on a tilted plane
@@ -506,17 +501,16 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     :type Max_Isol: float
 
     :returns sensors_metadata_clean: data of filtered sensor points categorized with module tilt angle, array spacing,
-    surface azimuth, installed PV module area of each sensor point and the categories
+     surface azimuth, installed PV module area of each sensor point and the categories
     :rtype sensors_metadata_clean: dataframe
 
-    Assumptions
-    -----------
-    1) Tilt angle: If the sensor is on tilted roof, the panel will have the same tilt as the roof. If the sensor is on
-       a wall, the tilt angle is 90 degree. Tilt angles for flat roof is determined using the method from Quinn et al.
-    2) Row spacing: Determine the row spacing by minimizing the shadow according to the solar elevation and azimuth at
-       the worst hour of the year. The worst hour is a global variable defined by users.
-    3) Surface azimuth (orientation) of panels: If the sensor is on a tilted roof, the orientation of the panel is the
-        same as the roof. Sensors on flat roofs are all south facing.
+    :Assumptions:
+        1) Tilt angle: If the sensor is on tilted roof, the panel will have the same tilt as the roof. If the sensor is on
+           a wall, the tilt angle is 90 degree. Tilt angles for flat roof is determined using the method from Quinn et al.
+        2) Row spacing: Determine the row spacing by minimizing the shadow according to the solar elevation and azimuth at
+           the worst hour of the year. The worst hour is a global variable defined by users.
+        3) Surface azimuth (orientation) of panels: If the sensor is on a tilted roof, the orientation of the panel is the
+           same as the roof. Sensors on flat roofs are all south facing.
     """
     # calculate panel tilt angle (B) for flat roofs (tilt < 5 degrees), slope roofs and walls.
     optimal_angle_flat = calc_optimal_angle(180, latitude, transmissivity) # assume surface azimuth = 180 (N,E), south facing
