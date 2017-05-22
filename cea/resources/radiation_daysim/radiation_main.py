@@ -84,8 +84,6 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
                 written_mat_name_list.append(mat_name)
                 
         write_file.close()
-        
-    #os.rename(file_name_txt, file_name_rad.replace(".txt", ".rad"))
     
 def filter_bldgs_of_interest(gmlbldgs, bldg_of_interest_name_list, citygml_reader):
     eligible_bldgs = []
@@ -102,10 +100,8 @@ def filter_bldgs_of_interest(gmlbldgs, bldg_of_interest_name_list, citygml_reade
 def surfaces2radiance(id, surface, rad):
     py2radiance.RadSurface("terrain_srf" + str(id), surface, "reflectance0.2", rad)
 
-
 def create_windows(surface, wwr, ref_pypt):
     return fetch.shape2shapetype(modify.uniform_scale(surface, wwr, wwr, wwr, ref_pypt))
-
 
 def create_hollowed_facade(surface_facade, window):
     b_facade_cmpd = fetch.shape2shapetype(construct.boolean_difference(surface_facade, window))
@@ -113,7 +109,6 @@ def create_hollowed_facade(surface_facade, window):
     hollowed_facade = construct.simple_mesh(hole_facade)
 
     return hollowed_facade, hole_facade
-
 
 def geometry2radiance(rad, ageometry_table, citygml_reader):
     bldg_dict_list = []
@@ -218,7 +213,6 @@ def calc_sensors(bldg_dict):
     sensor_srf_dict_list.extend(rf_sensor_srf_dict_list)
     return sensor_srf_dict_list
 
-
 def reader_surface_properties(locator, input_shp):
     """
     This function returns a dataframe with the emissivity values of walls, roof, and windows
@@ -244,56 +238,69 @@ def reader_surface_properties(locator, input_shp):
 
     return surface_properties.set_index('Name').round(decimals=2)
 
-def create_sensor_input_file(rad, bldg_name):
-    sensor_file_path = os.path.join(rad.data_folder_path, "points_"+bldg_name+".pts")
+def create_sensor_input_file(rad, chunk_n):
+    sensor_file_path = os.path.join(rad.data_folder_path, "points_"+str(chunk_n)+".pts")
     sensor_file = open(sensor_file_path, "w")
     sensor_pts_data = py2radiance.write_rad.sensor_file(rad.sensor_positions, rad.sensor_normals)
     sensor_file.write(sensor_pts_data)
     sensor_file.close()
     rad.sensor_file_path = sensor_file_path
 
-def radiation_multiprocessing(rad, bldg_dict_list, aresults_path, rad_params, aweatherfile_path):
-    pool = mp.Pool()
+def radiation_multiprocessing(rad, simul_params, bldg_dict_list, aresults_path, rad_params, aweatherfile_path):
+
     gv.log("Using %i CPU's" % mp.cpu_count())
-    joblist = []
-    num_buildings = len(bldg_dict_list)
-    # add the sensor points
-    for bldg_dict in bldg_dict_list:
-        job = pool.apply_async(isolation_daysim,[rad, bldg_dict, aresults_path, rad_params, aweatherfile_path])
-        joblist.append(job)
-    for i, job in enumerate(joblist):
-        job.get(240)
-        print gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
-    pool.close()
+    # get chunks to iterate and start multiprocessing
+    chunks = [bldg_dict_list[i:i +simul_params['n_build_in_chunk']] for i in range(0, len(bldg_dict_list),
+                                                                                   simul_params['n_build_in_chunk'])]
+    processes = []
+    for chunk_n, bldg_dict in enumerate(chunks):
+        process = mp.Process(target=isolation_daysim, args=(
+            chunk_n, rad, bldg_dict, aresults_path, rad_params, aweatherfile_path,))
+        process.start()
+        processes.append(process)
+    for process in processes:
+        process.join()
 
 def radiation_singleprocessing(rad, bldg_dict_list, aresults_path, rad_params, aweatherfile_path):
 
     num_buildings = len(bldg_dict_list)
+    chunk_n = None
     for i, bldg_dict in enumerate(bldg_dict_list):
-        isolation_daysim(rad, bldg_dict, aresults_path, rad_params, aweatherfile_path)
+        isolation_daysim(chunk_n, rad, bldg_dict, aresults_path, rad_params, aweatherfile_path)
         print gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
 
-def isolation_daysim(rad, bldg_dict, aresults_path, rad_params, aweatherfile_path):
+def isolation_daysim(chunk_n, rad, bldg_dict_list, aresults_path, rad_params, aweatherfile_path):
 
     # calculate sensors
     sensor_pt_list = []
     sensor_dir_list = []
-    bldg_name = bldg_dict["name"]
-    all_sensor_srf_dict_2dlist = calc_sensors(bldg_dict)
 
-    for srf_dict in all_sensor_srf_dict_2dlist:
-        sensor_pt = srf_dict["sensor_pt"]
-        sensor_pt_list.append(sensor_pt)
-        sensor_dir = srf_dict["sensor_dir"]
-        sensor_dir_list.append(sensor_dir)
+    # folder for data work
+    daysim_dir = os.path.join(aresults_path, "temp" + str(chunk_n))
+    rad.initialise_daysim(daysim_dir)
 
+    # calculate sensors
+    if chunk_n == None: # do simple list when considering single buildings (single processing)
+        all_sensor_srf_dict_2dlist = calc_sensors(bldg_dict_list)
+        for srf_dict in all_sensor_srf_dict_2dlist:
+            sensor_pt = srf_dict["sensor_pt"]
+            sensor_pt_list.append(sensor_pt)
+            sensor_dir = srf_dict["sensor_dir"]
+            sensor_dir_list.append(sensor_dir)
+    else: # create bigger list when considering chunks of buildings (multi-processing)
+        all_sensor_srf_dict_2dlist = []
+        for bldg_dict in bldg_dict_list:
+            sensor_srf_dict_list = calc_sensors(bldg_dict)
+            all_sensor_srf_dict_2dlist.append(sensor_srf_dict_list)
+            for srf_dict in sensor_srf_dict_list:
+                sensor_pt = srf_dict["sensor_pt"]
+                sensor_pt_list.append(sensor_pt)
+                sensor_dir = srf_dict["sensor_dir"]
+                sensor_dir_list.append(sensor_dir)
 
     rad.set_sensor_points(sensor_pt_list, sensor_dir_list)
-    create_sensor_input_file(rad, bldg_name)
+    create_sensor_input_file(rad, chunk_n)
 
-    # send to daysim
-    daysim_dir = os.path.join(aresults_path, "temp"+bldg_name)
-    rad.initialise_daysim(daysim_dir)
     rad.execute_epw2wea(aweatherfile_path)
     rad.execute_radfiles2daysim()
     rad.write_radiance_parameters(rad_params['RAD_AB'], rad_params['RAD_AD'], rad_params['RAD_AS'],
@@ -301,16 +308,18 @@ def isolation_daysim(rad, bldg_dict, aresults_path, rad_params, aweatherfile_pat
                                   rad_params['RAD_ST'], rad_params['RAD_SJ'], rad_params['RAD_LW'],
                                   rad_params['RAD_DJ'], rad_params['RAD_DS'], rad_params['RAD_DR'],
                                   rad_params['RAD_DP'])
-    print "done"
     rad.execute_gen_dc("w/m2")
     print "done2"
     rad.execute_ds_illum()
     solar_res = rad.eval_ill_per_sensor()
 
     #write the results
-    results_writer(solar_res, all_sensor_srf_dict_2dlist, aresults_path)
+    if chunk_n == None:
+        results_writer_single_processing(solar_res, all_sensor_srf_dict_2dlist, aresults_path)
+    else:
+        results_writer_multi_processing(solar_res, all_sensor_srf_dict_2dlist, aresults_path)
 
-def results_writer(solar_res, all_sensor_srf_dict_2dlist, aresults_path):
+def results_writer_single_processing(solar_res, all_sensor_srf_dict_2dlist, aresults_path):
 
     srf_properties = []
     srf_solar_results = []
@@ -342,6 +351,7 @@ def results_writer(solar_res, all_sensor_srf_dict_2dlist, aresults_path):
             asrf_solar_result.append(res)
 
         srf_solar_results.append(asrf_solar_result)
+        scnt +=1
 
     srf_properties = pd.DataFrame(srf_properties, columns=['BUILDING', 'SURFACE', 'Xcoor', 'Ycoor', 'Zcoor',
                                                            'Xdir', 'Ydir', 'Zdir', 'AREA_m2',
@@ -352,6 +362,50 @@ def results_writer(solar_res, all_sensor_srf_dict_2dlist, aresults_path):
     srf_solar_results = pd.DataFrame(zipped_solar_res[1:], columns=zipped_solar_res[0])
     srf_solar_results.to_csv(os.path.join(aresults_path, bldg_name + '_insolation_Whm2.csv'), index=None)
 
+def results_writer_multi_processing(solar_res, all_sensor_srf_dict_2dlist, aresults_path):
+
+    scnt = 0
+    for srf_dict_list in all_sensor_srf_dict_2dlist:
+        srf_properties = []
+        srf_solar_results = []
+        nsrfs = len(srf_dict_list)
+        res_columns = []
+        for _ in range(nsrfs):
+            res_columns.append("building_surface_name")
+        for srf_dict in srf_dict_list:
+            occface = srf_dict["occface"]
+            bldg_name = srf_dict["bldg_name"]
+            srf_name = "srf" + str(scnt)
+            mid_pt = srf_dict["sensor_pt"]
+            mid_ptx = mid_pt[0]
+            mid_pty = mid_pt[1]
+            mid_ptz = mid_pt[2]
+            nrml = srf_dict["sensor_dir"]
+            nrmlx = nrml[0]
+            nrmly = nrml[1]
+            nrmlz = nrml[2]
+            face_area = calculate.face_area(occface)
+            srf_type = srf_dict["srf_type"]
+            srf_properties.append(
+                (bldg_name, srf_name, mid_ptx, mid_pty, mid_ptz, nrmlx, nrmly, nrmlz, face_area, srf_type))
+
+            # create csv for 8760 hours of results
+            srf_res = solar_res[scnt]
+            asrf_solar_result = [srf_name]
+            for res in srf_res:
+                asrf_solar_result.append(res)
+
+            srf_solar_results.append(asrf_solar_result)
+            scnt +=1
+
+        srf_properties = pd.DataFrame(srf_properties, columns=['BUILDING', 'SURFACE', 'Xcoor', 'Ycoor', 'Zcoor',
+                                                               'Xdir', 'Ydir', 'Zdir', 'AREA_m2',
+                                                               'TYPE'])
+
+        srf_properties.to_csv(os.path.join(aresults_path, bldg_name + '_geometry.csv'), index=None)
+        zipped_solar_res = zip(*srf_solar_results)
+        srf_solar_results = pd.DataFrame(zipped_solar_res[1:], columns=zipped_solar_res[0])
+        srf_solar_results.to_csv(os.path.join(aresults_path, bldg_name + '_insolation_Whm2.csv'), index=None)
 
 def radiation_daysim_main(weatherfile_path, locator):
     """
@@ -390,8 +444,8 @@ def radiation_daysim_main(weatherfile_path, locator):
     print "Daysim simulation starts"
     time1 = time.time()
 
-    if gv.multiprocessing and mp.cpu_count() > 1:
-        radiation_multiprocessing(rad, bldg_dict_list, results_path, settings.RAD_PARMS, weatherfile_path)
+    if (gv.multiprocessing and mp.cpu_count() > 1):
+        radiation_multiprocessing(rad, settings.SIMUL_PARAMS, bldg_dict_list, results_path, settings.RAD_PARMS, weatherfile_path)
     else:
         radiation_singleprocessing(rad, bldg_dict_list, results_path, settings.RAD_PARMS, weatherfile_path)
 
@@ -405,9 +459,9 @@ def main(locator, weather_path):
     zone_shp = locator.get_building_geometry()
     input_terrain_raster = locator.get_terrain()
 
-    # time1 = time.time()
-    # create_gml.create_citygml(zone_shp, district_shp, input_terrain_raster, output_folder)
-    # print "CityGML LOD1 created in ", (time.time()-time1)/60.0, " mins"
+    time1 = time.time()
+    create_gml.create_citygml(zone_shp, district_shp, input_terrain_raster, output_folder)
+    print "CityGML LOD1 created in ", (time.time()-time1)/60.0, " mins"
 
     # calculate solar radiation
     time1 = time.time()
