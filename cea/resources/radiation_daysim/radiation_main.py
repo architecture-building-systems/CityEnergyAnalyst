@@ -246,7 +246,7 @@ def create_sensor_input_file(rad, chunk_n):
     sensor_file.close()
     rad.sensor_file_path = sensor_file_path
 
-def radiation_multiprocessing(rad, simul_params, bldg_dict_list, aresults_path, rad_params, aweatherfile_path):
+def radiation_multiprocessing(rad, simul_params, bldg_dict_list, aresults_path, rad_params, aweatherfile_path, gv):
 
     gv.log("Using %i CPU's" % mp.cpu_count())
     # get chunks to iterate and start multiprocessing
@@ -261,13 +261,13 @@ def radiation_multiprocessing(rad, simul_params, bldg_dict_list, aresults_path, 
     for process in processes:
         process.join()
 
-def radiation_singleprocessing(rad, bldg_dict_list, aresults_path, rad_params, aweatherfile_path):
+def radiation_singleprocessing(rad, bldg_dict_list, aresults_path, rad_params, aweatherfile_path, gv):
 
     num_buildings = len(bldg_dict_list)
     chunk_n = None
     for i, bldg_dict in enumerate(bldg_dict_list):
         isolation_daysim(chunk_n, rad, bldg_dict, aresults_path, rad_params, aweatherfile_path)
-        print gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
+        gv.log('Building No. %(bno)i completed out of %(num_buildings)i', bno=i + 1, num_buildings=num_buildings)
 
 def isolation_daysim(chunk_n, rad, bldg_dict_list, aresults_path, rad_params, aweatherfile_path):
 
@@ -406,7 +406,7 @@ def results_writer_multi_processing(solar_res, all_sensor_srf_dict_2dlist, aresu
         srf_solar_results = pd.DataFrame(zipped_solar_res[1:], columns=zipped_solar_res[0])
         srf_solar_results.to_csv(os.path.join(aresults_path, bldg_name + '_insolation_Whm2.csv'), index=None)
 
-def radiation_daysim_main(weatherfile_path, locator):
+def radiation_daysim_main(weatherfile_path, locator, gv):
     """
     This function makes the calculation of solar insolation in X sensor points for every building in the zone
     of interest. the number of sensor points depends on the size of the grid selected in the SETTINGS.py file and
@@ -443,14 +443,15 @@ def radiation_daysim_main(weatherfile_path, locator):
     print "Daysim simulation starts"
     time1 = time.time()
 
-    if (gv.multiprocessing and mp.cpu_count() > 1):
-        radiation_multiprocessing(rad, settings.SIMUL_PARAMS, bldg_dict_list, results_path, settings.RAD_PARMS, weatherfile_path)
+    if gv.multiprocessing and mp.cpu_count() > 1:
+        radiation_multiprocessing(rad, settings.SIMUL_PARAMS, bldg_dict_list, results_path, settings.RAD_PARMS,
+                                  weatherfile_path, gv)
     else:
         radiation_singleprocessing(rad, bldg_dict_list, results_path, settings.RAD_PARMS, weatherfile_path)
 
     print "Daysim simulation finished in ", (time.time() - time1) / 60.0, " mins"
 
-def main(locator, weather_path):
+def main(locator, weather_path, gv):
 
     # Create City GML file (this is necesssary only once).
     output_folder = locator.get_building_geometry_citygml()
@@ -464,7 +465,7 @@ def main(locator, weather_path):
 
     # calculate solar radiation
     time1 = time.time()
-    radiation_daysim_main(weather_path, locator)
+    radiation_daysim_main(weather_path, locator, gv)
     print "Daysim simulation finished in ", (time.time() - time1) / 60.0, " mins"
 
 if __name__ == '__main__':
@@ -474,4 +475,4 @@ if __name__ == '__main__':
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     weather_path = locator.get_default_weather()
 
-    main(locator=locator, weather_path=weather_path)
+    main(locator=locator, weather_path=weather_path, gv=gv)
