@@ -135,7 +135,8 @@ def geometry2radiance(rad, ageometry_table, citygml_reader):
         bldg_dict = {}
         window_list = []
         
-        bldg_name = citygml_reader.get_gml_id(gmlbldg) 
+        bldg_name = citygml_reader.get_gml_id(gmlbldg)
+        print "adding windows to building: ", bldg_name
         pypolgon_list = citygml_reader.get_pypolygon_list(gmlbldg)
         geo_solid = construct.make_occsolid_frm_pypolygons(pypolgon_list)
         facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(geo_solid)
