@@ -32,7 +32,6 @@ setup(name='cityenergyanalyst',
       py_modules=[''],
       packages=find_packages(),
       package_data={},
-      dependency_links=['https://github.com/architecture-building-systems/pyliburo/tarball/master#egg=pyliburo-0.1a8'],
       install_requires=INSTALL_REQUIRES,
       include_package_data=True,
       entry_points={
