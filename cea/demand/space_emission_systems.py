@@ -97,11 +97,24 @@ def calc_q_em_ls(q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb, q_e
     With modification of capping emission losses at system capacity [Happle 01/2017]
 
     :param q_em_out: heating power of emission system (W)
+    :type q_em_out: double
+    
     :param delta_theta_int_inc: delta temperature caused by all losses (K)
+    :type delta_theta_int_inc: double
+    
     :param theta_int_inc: equivalent room temperature (°C)
+    :type theta_int_inc: double
+    
     :param theta_e_comb: ?comb? outdoor temperature (°C)
-    :return:
+    :type theta_e_comb: double
+    
+    :param q_em_max: maximum emission capacity of heating/cooling system [W]
+    :type q_em_max: double
+    
+    :return: emission losses of heating/cooling system [W]
+    :rtype: double
     """
+    __author__ = "Gabriel Happle"
 
     if abs(theta_int_inc-theta_e_comb) < 1e-6:
         q_em_ls = 0.0  # prevent division by zero
@@ -122,8 +135,14 @@ def calc_theta_int_inc(theta_int_ini, delta_theta_int_inc):
     """
     Eq. (1) in [prEN 15316-2:2014]
 
-    :param theta_int_ini:
-    :return:
+    :param theta_int_ini: temperature [C]
+    :type theta_int_ini: double
+    
+    :param delta_theta_int_inc: temperature [C]
+    :type delta_theta_int_inc: double
+    
+    :return: sum of temperatures [C]
+    :rtype: double
     """
 
     return theta_int_ini + delta_theta_int_inc
@@ -132,8 +151,12 @@ def calc_theta_int_inc(theta_int_ini, delta_theta_int_inc):
 def calc_theta_e_comb_heating(theta_e):
     """
     Eq. (9) in [prEN 15316-2:2014]
+    
+    :param theta_e: outdoor temperature [C]
+    :type theta_e: double
 
-    :return:
+    :return: temperature [C]
+    :rtype: double
     """
 
     return theta_e
@@ -142,8 +165,15 @@ def calc_theta_e_comb_heating(theta_e):
 def calc_theta_e_comb_cooling(theta_e, bpr):
     """
     Eq. (10) in [prEN 15316-2:2014]
+    
+    :param theta_e: outdoor temperature [C]
+    :type theta_e: double
 
-    :return:
+    :param bpr: BuildingPropertiesRow 
+    :type bpr: BuildingPropertiesRow object
+    
+    :return: temperature [C]
+    :rtype: double
     """
 
     return theta_e + get_delta_theta_e_sol(bpr)
