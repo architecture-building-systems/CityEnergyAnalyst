@@ -58,7 +58,7 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
     if not sensors_metadata_clean.empty:
         # calculate optimal angle and tilt for panels
         sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az, trr_mean,
-                                                      max_yearly_radiation, module_length=2) #FIXME: find module length of the solar collectors
+                                                      max_yearly_radiation, module_length=2) #FIXME: change module length to panel property
         print 'calculating optimal tile angle and separation done'
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
@@ -84,7 +84,7 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, 
                   Tin, height):
     n0, c1, c2, mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, Aratio, Apanel, dP1, dP2, dP3, dP4 = calc_properties_SC(
         type_SCpanel) #TODO: move out when testing is done
-    Area_a = Aratio * Apanel
+    aperature_area = Aratio * Apanel
     listgroups = number_points.count()  # counter from the vector with number of points
     listresults = [None] * listgroups
     listresults_perarea = [None] * listgroups
@@ -95,12 +95,12 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, 
     Sum_qloss = np.zeros(8760)
     Tin_array = np.zeros(8760) + Tin
     Sum_Area_m = (prop_observers['area_netpv'] * number_points).sum()
-    lv = 2  # grid lenght module length
+    lv = 2  # grid lenght module length # TODO: change to module length
     Le = (2 * lv * number_points.sum()) / (Sum_Area_m * Aratio)
     Li = 2 * height / (Sum_Area_m * Aratio)
     Leq = Li + Le  # in m/m2
     if type_SCpanel == 2:  # for vaccum tubes
-        Nseg = 100  # default number of subsdivisions for the calculation
+        Nseg = 100  # default number of subsdivisions for the calculation #TODO: find reference
     else:
         Nseg = 10  # default number of subsdivisions for the calculation
 
@@ -112,13 +112,12 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, 
         radiation['I_diffuse'] = weather_data.ratio_diffhout * radiation.I_sol  # calculate diffuse radiation
         radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']  # direct radaition
 
-        # calculate angle modifiers,
-        IAM_b = calc_anglemodifierSC(Az, g, ha, teta_z, tilt_angle, type_SCpanel,
-                                     latitude, Sz)  # direct angle modifier
+        # calculate incidence angle modifier for beam radiation
+        IAM_b = calc_anglemodifierSC(Az, g, ha, teta_z, tilt_angle, type_SCpanel, latitude, Sz)  # direct angle modifier
 
         listresults[group] = calc_SC_module(radiation, tilt_angle, IAM_b, radiation.I_direct,
                                             radiation.I_diffuse, weather_data.drybulb_C,
-                                            n0, c1, c2, mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, Area_a,
+                                            n0, c1, c2, mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, aperature_area,
                                             dP1, dP2, dP3, dP4, Tin, Leq, Le, Nseg)
 
         K = Area_group / Apanel
@@ -142,8 +141,8 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, 
     Tout_group = (Sum_qout / Sum_mcp) + Tin  # in C
 
     Final = pd.DataFrame(
-        {'Qsc_Kw': Sum_qout, 'Tscs': Tin_array, 'Tscr': Tout_group, 'mcp_kW/C': Sum_mcp, 'Eaux_kW': Sum_Eaux,
-         'Qsc_l_KWH': Sum_qloss, 'Area': sum(listareasgroups)}, index=range(8760))
+        {'Qsc_kWh': Sum_qout, 'Ts_C': Tin_array, 'Tr_C': Tout_group, 'mcp_kW/C': Sum_mcp, 'Eaux_kWh': Sum_Eaux,
+         'Qsc_l_kWh': Sum_qloss, 'Area': sum(listareasgroups)}, index=range(8760))
 
     return listresults, Final
 
@@ -178,7 +177,7 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, 
 #TODO: delete when done
 
 def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector, Te_vector, n0, c1, c2,
-                   mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, Area_a, dP1, dP2, dP3, dP4, Tin, Leq, Le, Nseg):
+                   mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, aperture_area, dP1, dP2, dP3, dP4, Tin, Leq, Le, Nseg):
     """
     This function calculates the heat production of solar collectors. The method is adapted from
     :param radiation:
@@ -196,7 +195,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
     :param C_eff:
     :param t_max:
     :param IAM_d:
-    :param Area_a:
+    :param aperture_area:
     :param dP1:
     :param dP2:
     :param dP3:
@@ -212,8 +211,8 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
     # calculate radiation part
 
     # local variables
-    Cp_waterglycol = 3680  # J/kgK  water glycol  specific heat
-    msc_max = mB_max_r * Area_a / 3600  # maximum mass flow [kg/s]
+    Cp_waterglycol = 3680  # J/kgK  water glycol  specific heat #TODO: move to gv
+    msc_max = mB_max_r * aperture_area / 3600  # maximum mass flow [kg/s] #TODO: move into the equation
 
     # Do the calculation of every time step for every possible flow condition
     # get states where highly performing values are obtained.
@@ -224,19 +223,19 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
     supply_losses = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
     Auxiliary = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
     temperature_m = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    specific_flows = [np.zeros(8760), (np.zeros(8760) + mB0_r) * Area_a / 3600,
-                      (np.zeros(8760) + mB_max_r) * Area_a / 3600,
-                      (np.zeros(8760) + mB_min_r) * Area_a / 3600, np.zeros(8760), np.zeros(8760)]  # in kg/s
-    specific_pressurelosses = [np.zeros(8760), (np.zeros(8760) + dP2) * Area_a, (np.zeros(8760) + dP3) * Area_a,
-                               (np.zeros(8760) + dP4) * Area_a, np.zeros(8760), np.zeros(8760)]  # in Pa
+    specific_flows = [np.zeros(8760), (np.zeros(8760) + mB0_r) * aperture_area / 3600,
+                      (np.zeros(8760) + mB_max_r) * aperture_area / 3600,
+                      (np.zeros(8760) + mB_min_r) * aperture_area / 3600, np.zeros(8760), np.zeros(8760)]  # in kg/s
+    specific_pressurelosses = [np.zeros(8760), (np.zeros(8760) + dP2) * aperture_area, (np.zeros(8760) + dP3) * aperture_area,
+                               (np.zeros(8760) + dP4) * aperture_area, np.zeros(8760), np.zeros(8760)]  # in Pa
     supply_out_pre = np.zeros(8760)
     supply_out_total = np.zeros(8760)
     mcp = np.zeros(8760)
 
     # calculate net radiant heat (absorbed)
     tilt = radians(tilt_angle)
-    qrad_vector = np.vectorize(calc_qrad)(n0, IAM_b_vector, I_direct_vector, IAM_d, I_diffuse_vector,
-                                          tilt)  # absorbed solar radiation in W/m2 is a mean of the group
+    S_vector = np.vectorize(calc_Sm_SC)(n0, IAM_b_vector, I_direct_vector, IAM_d, I_diffuse_vector,
+                                           tilt)  # absorbed solar radiation in W/m2 is a mean of the group
     counter = 0
     Flag = False
     Flag2 = False
@@ -266,30 +265,33 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
 
             # calculate stability criteria
             if Mfl > 0:
-                stabcrit = Mfl * Cp_waterglycol * Nseg * (DELT * 3600) / (C_eff * Area_a)
-                if stabcrit <= 0.5:
-                    print 'ERROR' + str(stabcrit) + ' ' + str(Area_a) + ' ' + str(Mfl)
+                stability_criteria = Mfl * Cp_waterglycol * Nseg * (DELT * 3600) / (C_eff * aperture_area)
+                if stability_criteria <= 0.5:
+                    print 'ERROR: stability criteria' + str(stability_criteria) + \
+                          'is not reached with the aperature of ' + str(aperture_area) + 'at this flow rate ' + str(Mfl)
+
             Te = Te_vector[time]
-            qrad = qrad_vector[time]
+            S = S_vector[time]
             Tfl[1] = 0  # mean absorber temp
             Tabs[1] = 0  # mean absorber initial tempr
             for Iseg in range(1, Nseg + 1):
                 Tfl[1] = Tfl[1] + STORED[100 + Iseg] / Nseg
                 Tabs[1] = Tabs[1] + STORED[300 + Iseg] / Nseg
-            # first guess for DeatT
+
+            # first guess for Delta T
             if Mfl > 0:
-                Tout = Tin + (qrad - (c1 + 0.5) * (Tin - Te)) / (Mfl * Cp_waterglycol / Area_a)
+                Tout = Tin + (S - (c1 + 0.5) * (Tin - Te)) / (Mfl * Cp_waterglycol / aperture_area)
                 Tfl[2] = (Tin + Tout) / 2
             else:
-                Tout = Te + qrad / (c1 + 0.5)
+                Tout = Te + S / (c1 + 0.5)
                 Tfl[2] = Tout  # fluid temperature same as output
             DT[1] = Tfl[2] - Te
 
             # calculate qgain with the guess
 
-            qgain = calc_qgain(Tfl, Tabs, qrad, DT, Tin, Tout, Area_a, c1, c2, Mfl, delts, Cp_waterglycol, C_eff, Te)
+            qgain = calc_qgain(Tfl, Tabs, S, DT, Tin, Tout, aperture_area, c1, c2, Mfl, delts, Cp_waterglycol, C_eff, Te)
 
-            Aseg = Area_a / Nseg
+            Aseg = aperture_area / Nseg
             for Iseg in range(1, Nseg + 1):
                 TflA[Iseg] = STORED[100 + Iseg]
                 TabsA[Iseg] = STORED[300 + Iseg]
@@ -305,7 +307,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
                 else:
                     Tfl[1] = TflA[Iseg]
                     Tabs[1] = TabsA[Iseg]
-                    qgain = calc_qgain(Tfl, Tabs, qrad, DT, TinSeg, Tout, Aseg, c1, c2, Mfl, delts, Cp_waterglycol, C_eff, Te)
+                    qgain = calc_qgain(Tfl, Tabs, S, DT, TinSeg, Tout, Aseg, c1, c2, Mfl, delts, Cp_waterglycol, C_eff, Te)
                     ToutSeg = Tout
                     if Mfl > 0:
                         TflB[Iseg] = (TinSeg + ToutSeg) / 2
@@ -343,14 +345,14 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
                 TavgB = TavgB + TflB[Iseg] / Nseg
 
             # OUT[9] = qgain/Area_a # in W/m2
-            qmtherm = (TavgB - TavgA) * C_eff * Area_a / delts
+            qmtherm = (TavgB - TavgA) * C_eff * aperture_area / delts
             qbal = qgain - qmtherm - qout
 
             # OUT[11] = qmtherm
             # OUT[12] = qbal
         if flow < 4:
             Auxiliary[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow],
-                                                         Leq, Area_a)  # in kW
+                                                         Leq, aperture_area)  # in kW
         if flow == 3:
             q1 = supply_out[0]
             q2 = supply_out[1]
@@ -360,23 +362,24 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
             E2 = Auxiliary[1]
             E3 = Auxiliary[2]
             E4 = Auxiliary[3]
-            specific_flows[4], specific_pressurelosses[4] = SelectminimumenergySc(q1, q2, q3, q4, E1, E2, E3, E4, 0,
-                                                                                  mB0_r, mB_max_r, mB_min_r, 0,
-                                                                                  dP2, dP3, dP4, Area_a)
+            specific_flows[4], specific_pressurelosses[4] = calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, 0,
+                                                                                   mB0_r, mB_max_r, mB_min_r, 0,
+                                                                                   dP2, dP3, dP4, aperture_area)
         if flow == 4:
             Auxiliary[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow],
-                                                         Leq, Area_a)  # in kW
+                                                         Leq, aperture_area)  # in kW
             dp5 = specific_pressurelosses[flow]
             q5 = supply_out[flow]
             m5 = specific_flows[flow]
             ##poits where load is negative
-            specific_flows[5], specific_pressurelosses[5] = Selectminimumenergy2(m5, q5, dp5)
+            specific_flows[5], specific_pressurelosses[5] = calc_optimal_mass_flow_2(m5, q5, dp5)
+
         if flow == 5:
-            supply_losses[flow] = np.vectorize(Calc_qloss_net)(specific_flows[flow], Le, Area_a, temperature_m[flow],
+            supply_losses[flow] = np.vectorize(calc_qloss_net)(specific_flows[flow], Le, aperture_area, temperature_m[flow],
                                                                Te_vector, msc_max)
             supply_out_pre = supply_out[flow].copy() + supply_losses[flow].copy()
             Auxiliary[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow],
-                                                         Leq, Area_a)  # in kW
+                                                         Leq, aperture_area)  # in kW
             supply_out_total = supply_out + 0.5 * Auxiliary[flow] - supply_losses[flow]
             mcp = specific_flows[flow] * (Cp_waterglycol / 1000)  # mcp in kW/c
 
@@ -384,39 +387,52 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
     return result
 
 
-def calc_qrad(n0, IAM_b, I_direct, IAM_d, I_diffuse, tilt):
-    qrad = n0 * IAM_b * I_direct + n0 * IAM_d * I_diffuse * (1 + cos(tilt)) / 2
-    return qrad
+def calc_Sm_SC(n0, IAM_b, I_direct, IAM_d, I_diffuse, tilt):
+    """
+    Calculates the absorbed radiation for solar thermal collectors.
+    :param n0: zero loss efficiency [-]
+    :param IAM_b: incidence angle modifier for beam radiation [-]
+    :param I_direct: direct/beam radiation [Wh/m2]
+    :param IAM_d: incidence angle modifier for diffuse radiation [-]
+    :param I_diffuse: diffuse radiation [Wh/m2]
+    :param tilt: solar panel tilt angle [rad]
+    :return S: absorbed radiation [Wh/m2]
+    """
+    S = n0 * IAM_b * I_direct + n0 * IAM_d * I_diffuse * (1 + cos(tilt)) / 2
+    return S
 
 
-def calc_qgain(Tfl, Tabs, qrad, DT, TinSub, Tout, Aseg, c1, c2, Mfl, delts, Cpwg, C_eff, Te):
+def calc_qgain(Tfl, Tabs, qrad, DT, TinSub, Tout, Aseg, c1, c2, Mfl, delts, Cp_wg, C_eff, Te):
     xgain = 1
     xgainmax = 100
     exit = False
     while exit == False:
-        qgain = qrad - c1 * (DT[1]) - c2 * abs(DT[1]) * DT[1]
+        qgain = qrad - c1 * (DT[1]) - c2 * abs(DT[1]) * DT[1]  # heat production from solar collector
         if Mfl > 0:
-            Tout = ((Mfl * Cpwg * TinSub) / Aseg - (C_eff * TinSub) / (2 * delts) + qgain + (
-                C_eff * Tfl[1]) / delts) / (Mfl * Cpwg / Aseg + C_eff / (2 * delts))
+            Tout = ((Mfl * Cp_wg * TinSub) / Aseg - (C_eff * TinSub) / (2 * delts) + qgain + (
+                C_eff * Tfl[1]) / delts) / (Mfl * Cp_wg / Aseg + C_eff / (2 * delts))
             Tfl[2] = (TinSub + Tout) / 2
             DT[2] = Tfl[2] - Te
-            qdiff = Mfl / Aseg * Cpwg * 2 * (DT[2] - DT[1])
+            qdiff = Mfl / Aseg * Cp_wg * 2 * (DT[2] - DT[1])
         else:
             Tout = Tfl[1] + (qgain * delts) / C_eff
             Tfl[2] = Tout
             DT[2] = Tfl[2] - Te
             qdiff = 5 * (DT[2] - DT[1])
+
         if abs(qdiff < 0.1):
             DT[1] = DT[2]
             exit = True
         else:
-            if xgain > 40:
+            if xgain > 40: #FIXME: no iteration?
                 DT[1] = (DT[1] + DT[2]) / 2
                 if xgain == xgainmax:
                     exit = True
             else:
                 DT[1] = DT[2]
-    qout = Mfl * Cpwg * (Tout - TinSub) / Aseg
+
+    #FIXME: what is this part for?
+    qout = Mfl * Cp_wg * (Tout - TinSub) / Aseg
     qmtherm = (Tfl[2] - Tfl[1]) * C_eff / delts
     qbal = qgain - qout - qmtherm
     if abs(qbal) > 1:
@@ -424,8 +440,19 @@ def calc_qgain(Tfl, Tabs, qrad, DT, TinSub, Tout, Aseg, c1, c2, Mfl, delts, Cpwg
     return qgain
 
 
-def Calc_qloss_net(Mfl, Le, Area_a, Tm, Te, maxmsc):
-    qloss = 0.217 * Le * Area_a * (Tm - Te) * (Mfl / maxmsc) / 1000
+def calc_qloss_net(Mfl, Le, Area_a, Tm, Te, maxmsc):
+    """
+    calculate non-recoverable losses
+    :param Mfl:
+    :param Le:
+    :param Area_a:
+    :param Tm:
+    :param Te:
+    :param maxmsc:
+    :return:
+    """
+
+    qloss = 0.217 * Le * Area_a * (Tm - Te) * (Mfl / maxmsc) / 1000  # TODO: find reference for constant
     return qloss  # in kW
 
 
@@ -548,7 +575,7 @@ def calc_properties_SC(type_SCpanel):
 
 def calc_Eaux_SC(qV_des, Dp_collector, Leq, Aa):
     """
-    auxiliary electricity solar collectort
+    auxiliary electricity solar collectors
 
     :param qV_des:
     :param Dp_collector:
@@ -556,34 +583,58 @@ def calc_Eaux_SC(qV_des, Dp_collector, Leq, Aa):
     :param Aa:
     :return:
     """
-    Ro = 1000  # kg/m3
-    dpl = 200  # pressure losses per length of pipe according to solar districts
+    Ro = 1000  # kg/m3 # TODO: change to water density from gv
+    dpl = 200  # pressure losses per length of pipe according to solar districts #FIXME[Q]: reference
     Fcr = 1.3  # factor losses of accessories
     Dp_friction = dpl * Leq * Aa * Fcr  # HANZENWILIAMSN PA/M
-    Eaux = (qV_des / Ro) * (Dp_collector + Dp_friction) / 0.6 / 10  # energy necesary in kW from pumps
+    Eaux = (qV_des / Ro) * (Dp_collector + Dp_friction) / 0.6 / 10  # energy necesary in kW from pumps#FIXME[Q]:what are the numbers for?
     return Eaux  # energy spent in kWh
 
 
-# minimization of Eaux
 
-def SelectminimumenergySc(q1, q2, q3, q4, E1, E2, E3, E4, m1, m2, m3, m4, dP1, dP2, dP3, dP4, Area_a):
-    mopt = np.empty(8760)
-    dpopt = np.empty(8760)
+def calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, m1, m2, m3, m4, dP1, dP2, dP3, dP4, Area_a):
+    """
+    This function determine the optimal mass flow rate and the corresponding pressure drop that maximize the
+    total heat production in every time-step. It is done by maximizing the energy generation function (balance equation)
+    assuming the electricity requirement is twice as valuable as the thermal output of the solar collector.
+
+    :param q1:
+    :param q2:
+    :param q3:
+    :param q4:
+    :param E1:
+    :param E2:
+    :param E3:
+    :param E4:
+    :param m1:
+    :param m2:
+    :param m3:
+    :param m4:
+    :param dP1:
+    :param dP2:
+    :param dP3:
+    :param dP4:
+    :param Area_a:
+    :return:
+
+    """
+
+    mass_flow_opt = np.empty(8760)
+    dP_opt = np.empty(8760)
     const = Area_a / 3600
-    ms = [m1 * const, m2 * const, m3 * const, m4 * const]  # float points
-    dps = [dP1 * Area_a, dP2 * Area_a, dP3 * Area_a, dP4 * Area_a]  # float points
-    balances = [q1 - E1 * 2, q2 - E2 * 2, q3 - E3 * 2,
-                q4 - E4 * 2]  # vectors #quality of electricity is twice as expensive
+    mass_flow_all = [m1 * const, m2 * const, m3 * const, m4 * const]  # float points
+    dP_all = [dP1 * Area_a, dP2 * Area_a, dP3 * Area_a, dP4 * Area_a]  # float points
+    balances = [q1 - E1 * 2, q2 - E2 * 2, q3 - E3 * 2, q4 - E4 * 2]  # energy generation function #TODO: ref CEA
     for time in range(8760):
-        balances2 = [balances[0][time], balances[1][time], balances[2][time], balances[3][time]]
-        maxenergy = np.max(balances2)
-        ix_maxenergy = np.where(balances2 == maxenergy)
-        mopt[time] = ms[ix_maxenergy[0][0]]
-        dpopt[time] = dps[ix_maxenergy[0][0]]
-    return mopt, dpopt
+        balances_time = [balances[0][time], balances[1][time], balances[2][time], balances[3][time]]
+        max_heat_production = np.max(balances_time)
+        ix_max_heat_production = np.where(balances_time == max_heat_production)
+        mass_flow_opt[time] = mass_flow_all[ix_max_heat_production[0][0]]
+        dP_opt[time] = dP_all[ix_max_heat_production[0][0]]
+    return mass_flow_opt, dP_opt
 
 
-def Selectminimumenergy2(m, q, dp):
+def calc_optimal_mass_flow_2(m, q, dp): #FIXME[Q]: reason for this calculation?
     for time in range(8760):
         if q[time] <= 0:
             m[time] = 0

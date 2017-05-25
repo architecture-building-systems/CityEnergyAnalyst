@@ -10,8 +10,8 @@ from math import *
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.technologies.solar_collector import optimal_angle_and_tilt, \
-    calc_groups, calc_incident_angle_beam, calc_properties_SC, calc_anglemodifierSC, calc_qrad, calc_qgain, calc_Eaux_SC,\
-    SelectminimumenergySc, Selectminimumenergy2, Calc_qloss_net
+    calc_groups, calc_incident_angle_beam, calc_properties_SC, calc_anglemodifierSC, calc_Sm_SC, calc_qgain, calc_Eaux_SC,\
+    calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_net
 from cea.technologies.photovoltaic import calc_properties_PV, calc_PV_power, calc_diffuseground_comp, calc_Sm_PV
 
 __author__ = "Jimeno A. Fonseca"
@@ -181,8 +181,8 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
 
     # calculate net radiant heat (absorbed)
     tilt = radians(tilt_angle)
-    qrad_vector = np.vectorize(calc_qrad)(n0, IAM_b_vector, I_direct_vector, IAM_d, I_diffuse_vector,
-                                          tilt)  # in W/m2 is a mean of the group
+    qrad_vector = np.vectorize(calc_Sm_SC)(n0, IAM_b_vector, I_direct_vector, IAM_d, I_diffuse_vector,
+                                           tilt)  # in W/m2 is a mean of the group
     counter = 0
     Flag = False
     Flag2 = False
@@ -307,9 +307,9 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
             E2 = Auxiliary[1]
             E3 = Auxiliary[2]
             E4 = Auxiliary[3]
-            specific_flows[4], specific_pressurelosses[4] = SelectminimumenergySc(q1, q2, q3, q4, E1, E2, E3, E4, 0, mB0_r,
-                                                                                  mB_max_r, mB_min_r, 0, dP2, dP3, dP4,
-                                                                                  Area_a)
+            specific_flows[4], specific_pressurelosses[4] = calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, 0, mB0_r,
+                                                                                   mB_max_r, mB_min_r, 0, dP2, dP3, dP4,
+                                                                                   Area_a)
         if flow == 4:
             Auxiliary[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow], Leq,
                                                         Area_a)  # in kW
@@ -317,9 +317,9 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
             q5 = supply_out[flow]
             m5 = specific_flows[flow]
             ##poits where load is negative
-            specific_flows[5], specific_pressurelosses[5] = Selectminimumenergy2(m5, q5, dp5)
+            specific_flows[5], specific_pressurelosses[5] = calc_optimal_mass_flow_2(m5, q5, dp5)
         if flow == 5:
-            supply_losses[flow] = np.vectorize(Calc_qloss_net)(specific_flows[flow], Le, Area_a, temperature_m[flow],
+            supply_losses[flow] = np.vectorize(calc_qloss_net)(specific_flows[flow], Le, Area_a, temperature_m[flow],
                                                                Te_vector, maxmsc)
             supply_out_pre = supply_out[flow].copy() + supply_losses[flow].copy()
             Auxiliary[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow], Leq,
