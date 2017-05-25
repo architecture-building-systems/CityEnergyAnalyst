@@ -498,6 +498,16 @@ class InputLocator(object):
         """scenario/outputs/data/emissions/Total_LCA_mobility.csv"""
         return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_mobility.csv')
 
+
+    ##COSTS
+    def get_costs_folder(self):
+        """scenario/outputs/data/costs"""
+        return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'costs')
+
+    def get_costs_operation_file(self, load):
+        """scenario/outputs/data/costs/{load}_cost_operation.pdf"""
+        return os.path.join(self.get_costs_folder(), '%(load)s_cost_operation.csv' %locals())
+
     ##GRAPHS
     def get_demand_plots_folder(self):
         """scenario/outputs/plots/timeseries"""
