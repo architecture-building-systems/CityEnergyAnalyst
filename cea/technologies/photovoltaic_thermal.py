@@ -10,7 +10,7 @@ from math import *
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.technologies.solar_collector import optimal_angle_and_tilt, \
-    calc_groups, calc_incident_angle_beam, calc_properties_SC, calc_anglemodifierSC, calc_Sm_SC, calc_qgain, calc_Eaux_SC,\
+    calc_groups, calc_incident_angle_beam, calc_properties_SC, calc_IAM_beam_SC, calc_Sm_SC, calc_qgain, calc_Eaux_SC,\
     calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_net
 from cea.technologies.photovoltaic import calc_properties_PV, calc_PV_power, calc_diffuseground_comp, calc_Sm_PV
 
@@ -124,8 +124,8 @@ def calc_PVT_generation(type_panel, hourly_radiation, Number_groups, number_poin
                                            n, Pg, K, eff_nom, NOCT, Bref, a0, a1, a2, a3, a4, L)
 
         # calculate angle modifiers
-        T_G_hour['IAM_b'] = calc_anglemodifierSC(T_G_hour.Az, T_G_hour.g, T_G_hour.ha, teta_z, tilt_angle, type_SCpanel,
-                                                 latitude, T_G_hour.Sz)
+        T_G_hour['IAM_b'] = calc_IAM_beam_SC(T_G_hour.Az, T_G_hour.g, T_G_hour.ha, teta_z, tilt_angle, type_SCpanel,
+                                             latitude, T_G_hour.Sz)
 
         listresults[group] = Calc_PVT_module(tilt_angle, T_G_hour.IAM_b.copy(), radiation.I_direct.copy(),
                                              radiation.I_diffuse.copy(), T_G_hour.te,

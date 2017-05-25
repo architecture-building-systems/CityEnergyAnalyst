@@ -5,6 +5,7 @@ solar collectors
 from __future__ import division
 import numpy as np
 import pandas as pd
+import geopandas as gpd
 import cea.globalvar
 import cea.inputlocator
 from math import *
@@ -26,7 +27,7 @@ __status__ = "Production"
 
 # SC heat generation
 
-def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_path, building_name, pvonroof, pvonwall,
+def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_path, building_name, panel_on_roof, panel_on_wall,
             misc_losses, worst_hour, type_SCpanel, T_in, min_radiation, date_start):
 
     t0 = time.clock()
@@ -42,18 +43,17 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
     print 'calculating solar properties done'
 
     # get properties of the panel to evaluate
-    n0, c1, c2, mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, Aratio, Apanel, dP1, dP2, dP3, dP4 = calc_properties_SC(
-        type_SCpanel)
+    panel_properties = calc_properties_SC_db(locator.get_supply_systems_database(), type_SCpanel)
     print 'gathering properties of PV panel'
 
     # select sensor point with sufficient solar radiation
     max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_csv, metadata_csv, min_radiation, pvonroof, pvonwall)
+        solar_equations.filter_low_potential(weather_data, radiation_csv, metadata_csv, min_radiation, panel_on_roof, panel_on_wall)
 
     print 'filtering low potential sensor points done'
 
     # Calculate the heights of all buildings for length of vertical pipes
-    height = locator.get_total_demand().height.sum()
+    height = gpd.read_file(locator.get_building_geometry())['height_ag'].sum()
 
     if not sensors_metadata_clean.empty:
         # calculate optimal angle and tilt for panels
@@ -62,11 +62,11 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
         print 'calculating optimal tile angle and separation done'
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
-        Number_groups, hourlydata_groups, number_points, prop_observers = calc_groups(sensors_rad_clean, sensors_metadata_cat)
+        number_groups, hourlydata_groups, number_points, prop_observers = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
 
         print 'generating groups of sensor points done'
 
-        results, Final = SC_generation(type_SCpanel, hourlydata_groups, prop_observers, number_points, g, Sz, Az, ha,
+        results, Final = SC_generation(type_SCpanel, hourlydata_groups, prop_observers, number_groups, number_points, weather_data, g, Sz, Az, ha,
                                   latitude, T_in, height)
 
 
@@ -80,55 +80,57 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
 # SC heat production
 # =========================
 
-def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, weather_data, g, Sz, Az, ha, latitude,
-                  Tin, height):
+def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, number_points, weather_data, g, Sz, Az,
+                  ha, latitude, Tin, height):
     n0, c1, c2, mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, Aratio, Apanel, dP1, dP2, dP3, dP4 = calc_properties_SC(
-        type_SCpanel) #TODO: move out when testing is done
+        type_SCpanel=1) #TODO: move out when testing is done
     aperature_area = Aratio * Apanel
-    listgroups = number_points.count()  # counter from the vector with number of points
-    listresults = [None] * listgroups
-    listresults_perarea = [None] * listgroups
-    listareasgroups = [None] * listgroups
+
+    listresults = [None] * number_groups
+    listresults_perarea = [None] * number_groups
+    listareasgroups = [None] * number_groups
     Sum_mcp = np.zeros(8760)
     Sum_qout = np.zeros(8760)
     Sum_Eaux = np.zeros(8760)
     Sum_qloss = np.zeros(8760)
+
     Tin_array = np.zeros(8760) + Tin
-    Sum_Area_m = (prop_observers['area_netpv'] * number_points).sum()
+    Sum_Area_m = (prop_observers['AREA_m2'].values*number_points.T).sum() # total area for panel installation
+
     lv = 2  # grid lenght module length # TODO: change to module length
-    Le = (2 * lv * number_points.sum()) / (Sum_Area_m * Aratio)
-    Li = 2 * height / (Sum_Area_m * Aratio)
-    Leq = Li + Le  # in m/m2
-    if type_SCpanel == 2:  # for vaccum tubes
+    l_ext = (2 * lv * number_points.sum()) / (Sum_Area_m * Aratio)
+    l_int = 2 * height / (Sum_Area_m * Aratio)
+    Leq = l_int + l_ext  # in m/m2
+
+    if type_SCpanel == 2:  # for evacuated tubes #TODO:change to panel_properties['type']=='ET'
         Nseg = 100  # default number of subsdivisions for the calculation #TODO: find reference
     else:
         Nseg = 10  # default number of subsdivisions for the calculation
 
-    for group in range(listgroups):
-        teta_z = prop_observers.loc[group, 'aspect']  # azimuth of panels of group
-        Area_group = prop_observers.loc[group, 'area_netpv'] * number_points[group]
-        tilt_angle = prop_observers.loc[group, 'slope']  # tilt angle of panels
+    for group in range(number_groups):
+        teta_z = prop_observers.loc[group, 'surface_azimuth']  # azimuth of panels of group
+        area_group = prop_observers.loc[group, 'AREA_m2'] * number_points[group]
+        tilt_angle = prop_observers.loc[group, 'tilt']  # tilt angle of panels
         radiation = pd.DataFrame({'I_sol': group_radiation[group]})  # choose vector with all values of Isol
         radiation['I_diffuse'] = weather_data.ratio_diffhout * radiation.I_sol  # calculate diffuse radiation
-        radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']  # direct radaition
+        radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']  # calculate direct radiation
 
-        # calculate incidence angle modifier for beam radiation
-        IAM_b = calc_anglemodifierSC(Az, g, ha, teta_z, tilt_angle, type_SCpanel, latitude, Sz)  # direct angle modifier
+        IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle, type_SCpanel, latitude, Sz)  # calculate incidence angle modifier for beam radiation
 
         listresults[group] = calc_SC_module(radiation, tilt_angle, IAM_b, radiation.I_direct,
                                             radiation.I_diffuse, weather_data.drybulb_C,
                                             n0, c1, c2, mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, aperature_area,
-                                            dP1, dP2, dP3, dP4, Tin, Leq, Le, Nseg)
+                                            dP1, dP2, dP3, dP4, Tin, Leq, l_ext, Nseg)
 
-        K = Area_group / Apanel
+        K = area_group / Apanel
         listresults[group][5] = listresults[group][5] * K
         listresults[group][0] = listresults[group][0] * K
         listresults[group][1] = listresults[group][1] * K
         listresults[group][2] = listresults[group][2] * K
 
-        listareasgroups[group] = Area_group
+        listareasgroups[group] = area_group
 
-    for group in range(listgroups):
+    for group in range(number_groups):
         mcp_array = listresults[group][5]
         qloss_array = listresults[group][0]
         qout_array = listresults[group][1]
@@ -216,23 +218,24 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
 
     # Do the calculation of every time step for every possible flow condition
     # get states where highly performing values are obtained.
-    mopt = 0  # para iniciar
-    temperature_out = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    temperature_in = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    supply_out = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    supply_losses = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    Auxiliary = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    temperature_m = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
     specific_flows = [np.zeros(8760), (np.zeros(8760) + mB0_r) * aperture_area / 3600,
                       (np.zeros(8760) + mB_max_r) * aperture_area / 3600,
                       (np.zeros(8760) + mB_min_r) * aperture_area / 3600, np.zeros(8760), np.zeros(8760)]  # in kg/s
     specific_pressurelosses = [np.zeros(8760), (np.zeros(8760) + dP2) * aperture_area, (np.zeros(8760) + dP3) * aperture_area,
                                (np.zeros(8760) + dP4) * aperture_area, np.zeros(8760), np.zeros(8760)]  # in Pa
+
+    # generate empty lists to store results
+    temperature_out = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
+    temperature_in = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
+    supply_out = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
+    supply_losses = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
+    auxiliary_electricity = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
+    temperature_mean = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
     supply_out_pre = np.zeros(8760)
     supply_out_total = np.zeros(8760)
     mcp = np.zeros(8760)
 
-    # calculate net radiant heat (absorbed)
+    # calculate absorbed radiation
     tilt = radians(tilt_angle)
     S_vector = np.vectorize(calc_Sm_SC)(n0, IAM_b_vector, I_direct_vector, IAM_d, I_diffuse_vector,
                                            tilt)  # absorbed solar radiation in W/m2 is a mean of the group
@@ -334,7 +337,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
             temperature_out[flow][time] = ToutSeg
             temperature_in[flow][time] = Tin
             supply_out[flow][time] = qout / 1000  # in kW
-            temperature_m[flow][time] = (Tin + ToutSeg) / 2  # Mean absorber temperature at present
+            temperature_mean[flow][time] = (Tin + ToutSeg) / 2  # Mean absorber temperature at present
 
             qgain = 0
             TavgB = 0
@@ -351,22 +354,22 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
             # OUT[11] = qmtherm
             # OUT[12] = qbal
         if flow < 4:
-            Auxiliary[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow],
+            auxiliary_electricity[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow],
                                                          Leq, aperture_area)  # in kW
         if flow == 3:
             q1 = supply_out[0]
             q2 = supply_out[1]
             q3 = supply_out[2]
             q4 = supply_out[3]
-            E1 = Auxiliary[0]
-            E2 = Auxiliary[1]
-            E3 = Auxiliary[2]
-            E4 = Auxiliary[3]
+            E1 = auxiliary_electricity[0]
+            E2 = auxiliary_electricity[1]
+            E3 = auxiliary_electricity[2]
+            E4 = auxiliary_electricity[3]
             specific_flows[4], specific_pressurelosses[4] = calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, 0,
                                                                                    mB0_r, mB_max_r, mB_min_r, 0,
                                                                                    dP2, dP3, dP4, aperture_area)
         if flow == 4:
-            Auxiliary[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow],
+            auxiliary_electricity[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow],
                                                          Leq, aperture_area)  # in kW
             dp5 = specific_pressurelosses[flow]
             q5 = supply_out[flow]
@@ -375,15 +378,15 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
             specific_flows[5], specific_pressurelosses[5] = calc_optimal_mass_flow_2(m5, q5, dp5)
 
         if flow == 5:
-            supply_losses[flow] = np.vectorize(calc_qloss_net)(specific_flows[flow], Le, aperture_area, temperature_m[flow],
+            supply_losses[flow] = np.vectorize(calc_qloss_net)(specific_flows[flow], Le, aperture_area, temperature_mean[flow],
                                                                Te_vector, msc_max)
             supply_out_pre = supply_out[flow].copy() + supply_losses[flow].copy()
-            Auxiliary[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow],
+            auxiliary_electricity[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow],
                                                          Leq, aperture_area)  # in kW
-            supply_out_total = supply_out + 0.5 * Auxiliary[flow] - supply_losses[flow]
+            supply_out_total = supply_out + 0.5 * auxiliary_electricity[flow] - supply_losses[flow]
             mcp = specific_flows[flow] * (Cp_waterglycol / 1000)  # mcp in kW/c
 
-    result = [supply_losses[5], supply_out_total[5], Auxiliary[5], temperature_out[flow], temperature_in[flow], mcp]
+    result = [supply_losses[5], supply_out_total[5], auxiliary_electricity[5], temperature_out[flow], temperature_in[flow], mcp]
     return result
 
 
@@ -398,6 +401,7 @@ def calc_Sm_SC(n0, IAM_b, I_direct, IAM_d, I_diffuse, tilt):
     :param tilt: solar panel tilt angle [rad]
     :return S: absorbed radiation [Wh/m2]
     """
+    #tilt = radians(tilt)
     S = n0 * IAM_b * I_direct + n0 * IAM_d * I_diffuse * (1 + cos(tilt)) / 2
     return S
 
@@ -456,7 +460,7 @@ def calc_qloss_net(Mfl, Le, Area_a, Tm, Te, maxmsc):
     return qloss  # in kW
 
 
-def calc_anglemodifierSC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, type_SCpanel, latitude, Sz_vector):
+def calc_IAM_beam_SC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, type_SCpanel, latitude, Sz_vector):
 
     def calc_teta_L(Az, teta_z, tilt, Sz):
         # calculate incident angles modifier of the longitudinal plane
@@ -487,9 +491,9 @@ def calc_anglemodifierSC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, typ
         return teta_L
 
     def calc_IAMb(teta_l, teta_T, type_SCpanel):
-        if type_SCpanel == 1:  # # Flat plate collector   SOLEX blu SFP, 2012
+        if type_SCpanel == 'SC1':  # # Flat plate collector   SOLEX blu SFP, 2012 #TODO: change to panel_properties['type'] == 'FP'
             IAM_b = -0.00000002127039627042 * teta_l ** 4 + 0.00000143550893550934 * teta_l ** 3 - 0.00008493589743580050 * teta_l ** 2 + 0.00041588966590833100 * teta_l + 0.99930069929920900000
-        if type_SCpanel == 2:  # # evacuated tube   Zewotherm SOL ZX-30 SFP, 2012
+        if type_SCpanel == 'SC2':  # # evacuated tube   Zewotherm SOL ZX-30 SFP, 2012 #TODO: change to panel_properties['type'] == 'ET'
             IAML = -0.00000003365384615386 * teta_l ** 4 + 0.00000268745143745027 * teta_l ** 3 - 0.00010196678321666700 * teta_l ** 2 + 0.00088830613832779900 * teta_l + 0.99793706293541500000
             IAMT = 0.000000002794872 * teta_T ** 5 - 0.000000534731935 * teta_T ** 4 + 0.000027381118880 * teta_T ** 3 - 0.000326340326281 * teta_T ** 2 + 0.002973799531468 * teta_T + 1.000713286764210
             IAM_b = IAMT * IAML  # overall incidence angle modifier for beam radiation
@@ -508,11 +512,11 @@ def calc_anglemodifierSC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, typ
                                                               teta_z)  # incident angle in radians
 
     # calculate incident angles
-    if type_SCpanel == 1:  #
+    if type_SCpanel == 'SC1':  #TODO: change to panel_properties['type']=='FP'
         incident_angle = np.degrees(Incidence_vector)
         Teta_L = np.vectorize(calc_teta_L_max)(incident_angle)
         Teta_T = 0  # not necessary
-    if type_SCpanel == 2:  #
+    if type_SCpanel == 'SC2':  ##TODO: change to panel_properties['type']=='ET'
         Teta_L = np.vectorize(calc_teta_L)(Az_vector, teta_z, tilt, Sz_vector)  # in degrees
         Teta_T = np.vectorize(calc_teta_T)(Az_vector, Sz_vector, teta_z, Incidence_vector)  # in degrees
 
@@ -521,8 +525,19 @@ def calc_anglemodifierSC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, typ
 
     return IAM_b_vector
 
+def calc_properties_SC_db(database_path, type_SCpanel):
+    """
+    To assign PV module properties according to panel types.
 
+    :param type_PVpanel: type of PV panel used
+    :type type_PVpanel: string
+    :return: dict with Properties of the panel taken form the database
+    """
 
+    data = pd.read_excel(database_path, sheetname="SC")
+    panel_properties = data[data['code'] == type_SCpanel].T.to_dict()[0]
+
+    return panel_properties
 
 
 def calc_properties_SC(type_SCpanel):
@@ -775,7 +790,7 @@ def test_solar_collector():
     list_buildings_names = dbfreader.dbf2df(locator.get_building_occupancy())['Name']
 
     min_radiation = 0.75  # points are selected with at least a minimum production of this % from the maximum in the area.
-    type_SCpanel = 1  # monocrystalline, T2 is poly and T3 is amorphous. it relates to the database of technologies
+    type_SCpanel = 'SC1'  # monocrystalline, T2 is poly and T3 is amorphous. it relates to the database of technologies
     T_in = 75 # average temeperature #FIXME:defininition
     worst_hour = 8744  # first hour of sun on the solar solstice
     misc_losses = 0.1  # cabling, resistances etc.. #TODO:delete
@@ -790,7 +805,7 @@ def test_solar_collector():
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
         calc_SC(locator=locator, radiation_csv=radiation, metadata_csv=radiation_metadata, latitude=latitude,
                 longitude=longitude, weather_path=weather_path, building_name=building,
-                sc_on_roof=sc_on_roof, sc_on_wall=sc_on_wall, misc_losses=misc_losses, worst_hour=worst_hour,
+                panel_on_roof = sc_on_roof, panel_on_wall = sc_on_wall, misc_losses=misc_losses, worst_hour=worst_hour,
                 type_SCpanel=type_SCpanel, T_in=T_in, min_radiation=min_radiation, date_start=date_start)
 
 
