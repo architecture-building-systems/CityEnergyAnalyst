@@ -52,7 +52,7 @@ def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_f
                           x[2] + '_cost', x[2] + '_cost_m2']
         # calculate the total and relative costs
         heating[fields_to_plot[2]] = heating[x[1]] * heating['costs_kWh']* 1000
-        heating[fields_to_plot[3]] =  heating[x[1]] * heating['costs_kWh']/heating['GFA_m2']
+        heating[fields_to_plot[3]] =  heating[fields_to_plot[2]]/heating['GFA_m2']
 
         if x[0]:
             # if Qhs_flag is True, create the corresponding csv file
@@ -65,7 +65,7 @@ def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_f
                           x[2] + '_cost', x[2] + '_cost_m2']
         # calculate the total and relative costs
         dhw[fields_to_plot[2]] = dhw[x[1]] * dhw['costs_kWh'] * 1000
-        dhw[fields_to_plot[3]] = dhw[x[1]] * dhw['costs_kWh'] / dhw['GFA_m2']
+        dhw[fields_to_plot[3]] = dhw[fields_to_plot[2]] / dhw['GFA_m2']
         if x[0]:
             # if Qww_flag is True, create the corresponding csv file
             dhw[fields_to_plot].to_csv(locator.get_costs_operation_file(x[2]), index=False, float_format='%.2f')
@@ -78,7 +78,7 @@ def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_f
                           x[2] + '_cost', x[2] + '_cost_m2']
         # calculate the total and relative costs
         cooling[fields_to_plot[2]] = cooling[x[1]] * cooling['costs_kWh'] * 1000
-        cooling[fields_to_plot[3]] =  cooling[x[1]] * cooling['costs_kWh']/cooling['GFA_m2']
+        cooling[fields_to_plot[3]] =  cooling[fields_to_plot[2]]/cooling['GFA_m2']
         if x[0]:
             # if QC_flag, Qcs_flag, Qcsdata_flag or Qcrefri_flag is True, create the corresponding csv file
             cooling[fields_to_plot].to_csv(locator.get_costs_operation_file(x[2]), index=False, float_format='%.2f')
@@ -92,7 +92,7 @@ def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_f
                           x[2] + '_cost', x[2] + '_cost_m2']
         # calculate the total and relative costs
         electricity[fields_to_plot[2]] = electricity[x[1]] * electricity['costs_kWh'] * 1000
-        electricity[fields_to_plot[3]] =  electricity[x[1]] * electricity['costs_kWh'] /electricity['GFA_m2']
+        electricity[fields_to_plot[3]] =  electricity[fields_to_plot[2]] /electricity['GFA_m2']
         if x[0]:
             # if E_flag, Eal_flag, Eaux_flag, Epro_flag or Edata_flag is True, create the corresponding csv file
             electricity[fields_to_plot].to_csv(locator.get_costs_operation_file(x[2]), index=False, float_format='%.2f')
