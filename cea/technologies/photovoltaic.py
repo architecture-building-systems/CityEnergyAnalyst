@@ -79,11 +79,11 @@ def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
         print 'calculating optimal tile angle and separation done'
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
-        Number_groups, hourlydata_groups, number_points, prop_observers = calc_groups(sensors_rad_clean, sensors_metadata_cat)
+        number_groups, hourlydata_groups, number_points, prop_observers = calc_groups(sensors_rad_clean, sensors_metadata_cat)
 
         print 'generating groups of sensor points done'
 
-        results, Final = calc_pv_generation(hourlydata_groups, Number_groups, number_points, prop_observers,
+        results, Final = calc_pv_generation(hourlydata_groups, number_groups, number_points, prop_observers,
                                             weather_data, g, Sz, Az, ha, latitude, misc_losses, panel_properties)
 
 
@@ -698,7 +698,7 @@ def calc_properties_PV(database_path, type_PVpanel):
     :return: dict with Properties of the panel taken form the database
     """
 
-    data = pd.read_excel(database_path, sheet='PV')
+    data = pd.read_excel(database_path, sheetname="PV")
     panel_properties = data[data['code'] == type_PVpanel].T.to_dict()[0]
 
     return panel_properties
