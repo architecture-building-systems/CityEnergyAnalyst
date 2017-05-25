@@ -46,59 +46,79 @@ def retrofit_main(locator_baseline, age_retrofit, age_criteria, eui_heating_crit
     if age_criteria[0]:
         age_difference = age_retrofit - age_criteria[1]
         age_df = dbfreader.dbf2df(locator_baseline.get_building_age())
-        selection_names.extend(age_filter_HVAC(age_df, age_difference))
+        selection_names.append(("Crit_age",age_filter_HVAC(age_df, age_difference)))
 
     #CASE 2.1:
     if eui_heating_criteria[0]:
         demand_totals = pd.read_csv(locator_baseline.get_total_demand())
-        selection_names.extend(eui_filter_HVAC(demand_totals, eui_heating_criteria[1], eui_heating_criteria[2]))
+        selection_names.append(("Crit_eui_Qhsf", eui_filter_HVAC(demand_totals, eui_heating_criteria[1],
+                                                          eui_heating_criteria[2])))
 
     # CASE 2.2:
     if eui_hotwater_criteria[0]:
         demand_totals = pd.read_csv(locator_baseline.get_total_demand())
-        selection_names.extend(eui_filter_HVAC(demand_totals, eui_hotwater_criteria[1], eui_hotwater_criteria[2]))
-
-    # CASE 2.2:
-    if eui_cooling_criteria[0]:
-        demand_totals = pd.read_csv(locator_baseline.get_total_demand())
-        selection_names.extend(eui_filter_HVAC(demand_totals, eui_cooling_criteria[1], eui_cooling_criteria[2]))
+        selection_names.append(("Crit_eui_Qwwf",eui_filter_HVAC(demand_totals, eui_hotwater_criteria[1],
+                                                         eui_hotwater_criteria[2])))
 
     # CASE 2.3:
     if eui_cooling_criteria[0]:
         demand_totals = pd.read_csv(locator_baseline.get_total_demand())
-        selection_names.extend(eui_filter_HVAC(demand_totals, eui_cooling_criteria[1], eui_cooling_criteria[2]))
+        selection_names.append(("Crit_eui_Qcsf",eui_filter_HVAC(demand_totals, eui_cooling_criteria[1],
+                                                         eui_cooling_criteria[2])))
+
+    # CASE 2.4:
+    if eui_electricity_criteria[0]:
+        demand_totals = pd.read_csv(locator_baseline.get_total_demand())
+        selection_names.append(("Crit_eui_Ef",eui_filter_HVAC(demand_totals, eui_electricity_criteria[1],
+                                                         eui_electricity_criteria[2])))
 
     # CASE 3:
     if emissions_criteria[0]:
         emissions_totals = pd.read_csv(locator_baseline.get_lca_operation())
-        selection_names.extend(emissions_filter_HVAC(emissions_totals, emissions_criteria[1], emissions_criteria[2]))
+        selection_names.append(("Crit_ghg_tot",emissions_filter_HVAC(emissions_totals, emissions_criteria[1],
+                                                               emissions_criteria[2])))
 
     #CASE 4.1
     if heating_costs_criteria[0]:
         costs_totals = pd.read_csv(locator_baseline.get_costs_operation_file(heating_costs_criteria[1]))
-        selection_names.extend(emissions_filter_HVAC(costs_totals, heating_costs_criteria[1]+"_cost_m2",
-                                                     heating_costs_criteria[2]))
+        selection_names.append(("Crit_cost_Qhsf",emissions_filter_HVAC(costs_totals, heating_costs_criteria[1]+"_cost_m2",
+                                                     heating_costs_criteria[2])))
 
     #CASE 4.2
     if hotwater_costs_criteria[0]:
         costs_totals = pd.read_csv(locator_baseline.get_costs_operation_file(hotwater_costs_criteria[1]))
-        selection_names.extend(emissions_filter_HVAC(costs_totals, hotwater_costs_criteria[1]+"_cost_m2",
-                                                     hotwater_costs_criteria[2]))
+        selection_names.append(("Crit_cost_Qwwf",emissions_filter_HVAC(costs_totals, hotwater_costs_criteria[1]+"_cost_m2",
+                                                     hotwater_costs_criteria[2])))
 
     #CASE 4.3
     if cooling_costs_criteria[0]:
         costs_totals = pd.read_csv(locator_baseline.get_costs_operation_file(cooling_costs_criteria[1]))
-        selection_names.extend(emissions_filter_HVAC(costs_totals, cooling_costs_criteria[1]+"_cost_m2",
-                                                     cooling_costs_criteria[2]))
+        selection_names.append(("Crit_cost_Qcsf",emissions_filter_HVAC(costs_totals, cooling_costs_criteria[1]+"_cost_m2",
+                                                     cooling_costs_criteria[2])))
 
     #CASE 4.4
     if electricity_costs_criteria[0]:
         costs_totals = pd.read_csv(locator_baseline.get_costs_operation_file(electricity_costs_criteria[1]))
-        selection_names.extend(emissions_filter_HVAC(costs_totals, electricity_costs_criteria[1]+"_cost_m2",
-                                                     electricity_costs_criteria[2]))
+        selection_names.append(("Crit_cost_Ef",emissions_filter_HVAC(costs_totals, electricity_costs_criteria[1]+"_cost_m2",
+                                                     electricity_costs_criteria[2])))
+    counter = 0
+    for (x,b) in selection_names:
+        if counter ==0:
+            data = pd.DataFrame({"Name":b})
+            data[x] = "TRUE"
+        else:
+            y = pd.DataFrame({"Name": b})
+            y[x] = "TRUE"
+            data = data.merge(y, on = "Name", how='outer')
+        counter+=1
+
+    # fill with FALSE for those buildings that do not comply the criteria
+    data.fillna(value="FALSE", inplace=True)
+
+    #save results of filer
+    data.to_csv()
 
 
-    print selection_names
 
 def run_as_script(scenario_path=None):
     gv = cea.globalvar.GlobalVariables()
