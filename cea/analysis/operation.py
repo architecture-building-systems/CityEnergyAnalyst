@@ -115,10 +115,10 @@ def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_f
         fields_to_plot = ['Name', 'GFA_m2', x[2] + '_ghg_ton', x[2] + '_ghg_kgm2', x[2] + '_nre_pen_GJ', x[2] + '_nre_pen_MJm2']
         # calculate the total (GJ) and specific (MJ/m2) operational non-renewable primary energy demand (O_nre_pen_)
         heating[fields_to_plot[4]] = heating[x[1]] * heating['PEN'] * 3.6
-        heating[fields_to_plot[5]] = heating[x[1]] * heating['PEN'] * 3600/heating['GFA_m2']
+        heating[fields_to_plot[5]] = (heating[x[1]] * heating['PEN'] * 3600)/heating['GFA_m2']
         # calculate the total (t CO2-eq) and specific (kg CO2-eq/m2) operational greenhouse gas emissions (O_ghg_)
         heating[fields_to_plot[2]] = heating[x[1]] * heating['CO2'] * 3.6
-        heating[fields_to_plot[3]] =  heating[x[1]] * heating['CO2'] * 3600/heating['GFA_m2']
+        heating[fields_to_plot[3]] =  (heating[x[1]] * heating['CO2'] * 3600)/heating['GFA_m2']
         if x[0]:
             # if Qhs_flag is True, create the corresponding csv file
             heating[fields_to_plot].to_csv(os.path.join(result_folder, '%s_LCA_operation.csv' % x[2]), index=False,
@@ -130,10 +130,10 @@ def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_f
         fields_to_plot = ['Name', 'GFA_m2', x[2] + '_ghg_ton', x[2] + '_ghg_kgm2', x[2] + '_nre_pen_GJ', x[2] + '_nre_pen_MJm2']
         # calculate the total (GJ) and specific (MJ/m2) operational non-renewable primary energy demand (O_nre_pen_)
         dhw[fields_to_plot[4]] = dhw[x[1]] * dhw['PEN'] * 3.6
-        dhw[fields_to_plot[5]] = dhw[x[1]] * dhw['PEN'] * 3600 / dhw['GFA_m2']
+        dhw[fields_to_plot[5]] = (dhw[x[1]] * dhw['PEN'] * 3600) / dhw['GFA_m2']
         # calculate the total (t CO2-eq) and specific (kg CO2-eq/m2) operational greenhouse gas emissions (O_ghg_)
         dhw[fields_to_plot[2]] = dhw[x[1]] * dhw['CO2'] * 3.6
-        dhw[fields_to_plot[3]] = dhw[x[1]] * dhw['CO2'] * 3600 / dhw['GFA_m2']
+        dhw[fields_to_plot[3]] = (dhw[x[1]] * dhw['CO2'] * 3600) / dhw['GFA_m2']
         if x[0]:
             # if Qww_flag is True, create the corresponding csv file
             dhw[fields_to_plot].to_csv(os.path.join(result_folder, x[2] + '_LCA_operation.csv'), index=False,
@@ -145,10 +145,10 @@ def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_f
         fields_to_plot = ['Name', 'GFA_m2', x[2] + '_ghg_ton', x[2] + '_ghg_kgm2', x[2] + '_nre_pen_GJ', x[2] + '_nre_pen_MJm2']
         # calculate the total (GJ) and specific (MJ/m2) operational non-renewable primary energy demand (O_nre_pen_)
         cooling[fields_to_plot[4]] = cooling[x[1]] * cooling['PEN'] * 3.6
-        cooling[fields_to_plot[5]] = cooling[x[1]] * cooling['PEN'] * 3600/cooling['GFA_m2']
+        cooling[fields_to_plot[5]] = (cooling[x[1]] * cooling['PEN'] * 3600)/cooling['GFA_m2']
         # calculate the total (t CO2-eq) and specific (kg CO2-eq/m2) operational greenhouse gas emissions (O_ghg_)
         cooling[fields_to_plot[2]] = cooling[x[1]] * cooling['CO2'] * 3.6
-        cooling[fields_to_plot[3]] =  cooling[x[1]] * cooling['CO2'] * 3600/cooling['GFA_m2']
+        cooling[fields_to_plot[3]] =  (cooling[x[1]] * cooling['CO2'] * 3600)/cooling['GFA_m2']
         if x[0]:
             # if QC_flag, Qcs_flag, Qcsdata_flag or Qcrefri_flag is True, create the corresponding csv file
             cooling[fields_to_plot].to_csv(os.path.join(result_folder, x[2] + '_LCA_operation.csv'), index=False,
@@ -165,7 +165,7 @@ def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_f
         electricity[fields_to_plot[5]] = electricity[x[1]] * electricity['PEN'] * 3600/electricity['GFA_m2']
         # calculate the total (t CO2-eq) and specific (kg CO2-eq/m2) operational greenhouse gas emissions (O_ghg_)
         electricity[fields_to_plot[2]] = electricity[x[1]] * electricity['CO2'] * 3.6
-        electricity[fields_to_plot[3]] =  electricity[x[1]] * electricity['CO2'] * 3600/electricity['GFA_m2']
+        electricity[fields_to_plot[3]] =  (electricity[x[1]] * electricity['CO2'] * 3600)/electricity['GFA_m2']
         if x[0]:
             # if E_flag, Eal_flag, Eaux_flag, Epro_flag or Edata_flag is True, create the corresponding csv file
             electricity[fields_to_plot].to_csv(result_folder + '\\' + x[2] + '_LCA_operation.csv', index=False,
