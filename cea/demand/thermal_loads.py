@@ -82,9 +82,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     archetype_values = usage_schedules['archetype_values']
     schedules = occupancy_model.calc_schedules(list_uses, archetype_schedules, bpr.occupancy, archetype_values)
 
-    df = pd.DataFrame(schedules)
-    df.to_csv(r'C:\schedules\test.csv')
-
     # calculate occupancy schedule and occupant-related parameters
     tsd['people'] = schedules['people'] * bpr.rc_model['Af']
     tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6) * bpr.rc_model['Af'] # in m3/h
