@@ -178,42 +178,45 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, 
 #     return Number_groups, hourlydata_groups, number_points, prop_observers
 #TODO: delete when done
 
-def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector, Te_vector, n0, c1, c2,
+def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector, Tamb_vector, n0, c1, c2,
                    mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, aperture_area, dP1, dP2, dP3, dP4, Tin, Leq, Le, Nseg):
     """
-    This function calculates the heat production of solar collectors. The method is adapted from
+    This function calculates the heat production of solar collectors. The method is adapted from TRNSYS Type 832.
     :param radiation:
     :param tilt_angle:
     :param IAM_b_vector:
     :param I_direct_vector:
     :param I_diffuse_vector:
-    :param Te_vector:
-    :param n0:
-    :param c1:
-    :param c2:
-    :param mB0_r:
-    :param mB_max_r:
-    :param mB_min_r:
-    :param C_eff:
-    :param t_max:
+    :param Tamb_vector:
+    :param n0: zero loss efficiency at normal incidence [-]
+    :param c1: collector heat loss coefficient at zero temperature difference and wind speed [W/m2K]
+    :param c2: temperature difference dependency of the heat loss coefficient [W/m2K2]
+    :param mB0_r: nominal flow rate per aperture area [kg/h/m2 aperture]
+    :param mB_max_r: maximum flow rate per aperture area
+    :param mB_min_r: minimum flow rate per aperture area
+    :param C_eff: thermal capacitance of module [J/m2K]
+    :param t_max: stagnation temperature [C]
     :param IAM_d:
-    :param aperture_area:
+    :param aperture_area: collector aperture area [m2]
     :param dP1:
     :param dP2:
     :param dP3:
     :param dP4:
-    :param Tin:
+    :param Tin: Fluid inlet temperature (C)
     :param Leq:
     :param Le:
-    :param Nseg:
+    :param Nseg: Number of collector segments in flow direction for heat capacitance calculation
     :return:
+
+    ..[M. Haller et al., 2012] Haller, M., Perers, B., Bale, C., Paavilainen, J., Dalibard, A. Fischer, S. & Bertram, E.
+    (2012). TRNSYS Type 832 v5.00 " Dynamic Collector Model by Bengt Perers". Updated Input-Output Reference.
     """
     # panel to store the results per flow
     # method with no condensaiton gains, no wind or long-wave dependency, sky factor set to zero.
     # calculate radiation part
 
     # local variables
-    Cp_waterglycol = 3680  # J/kgK  water glycol  specific heat #TODO: move to gv
+    Cp_waterglycol = 3680  # J/kgK  water glycol  specific heat #TODO: move to gv, CHECK UNIT
     msc_max = mB_max_r * aperture_area / 3600  # maximum mass flow [kg/s] #TODO: move into the equation
 
     # Do the calculation of every time step for every possible flow condition
@@ -237,17 +240,14 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
 
     # calculate absorbed radiation
     tilt = radians(tilt_angle)
-    S_vector = np.vectorize(calc_Sm_SC)(n0, IAM_b_vector, I_direct_vector, IAM_d, I_diffuse_vector,
-                                           tilt)  # absorbed solar radiation in W/m2 is a mean of the group
-    counter = 0
-    Flag = False
-    Flag2 = False
-    for flow in range(6):#TODO: change back to 6
-        Mo = 1
+    q_rad_vector = np.vectorize(calc_q_rad)(n0, IAM_b_vector, I_direct_vector, IAM_d, I_diffuse_vector,
+                                            tilt)  # absorbed solar radiation in W/m2 is a mean of the group
+    for flow in range(6):
+        Mo_seg = 1 # mode of segmented heat loss calculation. only one mode is implemented.
         TIME0 = 0
         DELT = 1  # timestep 1 hour
         delts = DELT * 3600  # convert time step in seconds
-        Tfl = np.zeros([3, 1])  # create vector
+        Tfl = np.zeros([3, 1])  # create vector to store value at previous [1] and present [2] time-steps
         DT = np.zeros([3, 1])
         Tabs = np.zeros([3, 1])
         STORED = np.zeros([600, 1])
@@ -255,76 +255,87 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
         TflB = np.zeros([600, 1])
         TabsB = np.zeros([600, 1])
         TabsA = np.zeros([600, 1])
-        qgainSeg = np.zeros([100, 1])
-        for time in range(8760): #TODO: change back to 8760
-            Mfl = specific_flows[flow][time]
-            if time < TIME0 + DELT / 2:  #FIXME[Q]: time = 0? save inlet temperature, Tin=75, to point 101-501
+        q_gain_Seg = np.zeros([100, 1])
+
+        for time in range(8760):
+            Mfl = specific_flows[flow][time]  # [kg/s]
+            if time < TIME0 + DELT / 2:
+                # set output values to teh appropriate initial values
                 for Iseg in range(101, 501):  # 400 points with the data
                     STORED[Iseg] = Tin
             else:
+                # write average temperature of all segments at the end of previous time-step
+                # as the initial temperature of the present time-step
                 for Iseg in range(1, Nseg):  # 400 points with the data
-                    STORED[100 + Iseg] = STORED[200 + Iseg]
-                    STORED[300 + Iseg] = STORED[400 + Iseg]
+                    STORED[100 + Iseg] = STORED[200 + Iseg] # thermal capacitance node temperature
+                    STORED[300 + Iseg] = STORED[400 + Iseg] # absorber node temperature
 
             # calculate stability criteria
             if Mfl > 0:
                 stability_criteria = Mfl * Cp_waterglycol * Nseg * (DELT * 3600) / (C_eff * aperture_area)
                 if stability_criteria <= 0.5:
-                    print 'ERROR: stability criteria' + str(stability_criteria) + \
-                          'is not reached with the aperature of ' + str(aperture_area) + 'at this flow rate ' + str(Mfl)
+                    print ('ERROR: stability criteria' + str(stability_criteria) + 'is not reached. aperture_area: '
+                           + str(aperture_area) + 'mass flow: ' + str(Mfl))
 
-            Te = Te_vector[time]
-            S = S_vector[time]
-            Tfl[1] = 0  # mean absorber temp
-            Tabs[1] = 0  # mean absorber initial tempr
+            # calculate average fluid temperature and average absorber temperature at the beginning of the time-step
+            Tamb = Tamb_vector[time]
+            q_rad = q_rad_vector[time]
+            Tfl[1] = 0
+            Tabs[1] = 0
             for Iseg in range(1, Nseg + 1):
-                Tfl[1] = Tfl[1] + STORED[100 + Iseg] / Nseg
-                Tabs[1] = Tabs[1] + STORED[300 + Iseg] / Nseg
+                Tfl[1] = Tfl[1] + STORED[100 + Iseg] / Nseg      # mean fluid temperature
+                Tabs[1] = Tabs[1] + STORED[300 + Iseg] / Nseg    # mean absorber temperature
 
-            # first guess for Delta T
+            ## first guess for Delta T
             if Mfl > 0:
-                Tout = Tin + (S - (c1 + 0.5) * (Tin - Te)) / (Mfl * Cp_waterglycol / aperture_area)
-                Tfl[2] = (Tin + Tout) / 2
+                Tout = Tin + (q_rad - (c1 + 0.5) * (Tin - Tamb)) / (Mfl * Cp_waterglycol / aperture_area)
+                Tfl[2] = (Tin + Tout) / 2 # mean fluid temperature at present time-step
             else:
-                Tout = Te + S / (c1 + 0.5)
+                Tout = Tamb + q_rad / (c1 + 0.5)
                 Tfl[2] = Tout  # fluid temperature same as output
-            DT[1] = Tfl[2] - Te  # difference between mean absorber temperature and ambient
+            DT[1] = Tfl[2] - Tamb  # difference between mean absorber temperature and the ambient temperature
 
-            # calculate qgain with the guess
-            qgain = calc_qgain(Tfl, Tabs, S, DT, Tin, Tout, aperture_area, c1, c2, Mfl, delts, Cp_waterglycol, C_eff, Te)
+            # calculate q_gain with the guess for DT[1]
+            q_gain = calc_q_gain(Tfl, Tabs, q_rad, DT, Tin, Tout, aperture_area, c1, c2, Mfl, delts, Cp_waterglycol, C_eff, Tamb)
 
-            Aseg = aperture_area / Nseg
+            A_seg = aperture_area / Nseg # aperture area of one segment
+            # multi-segment calculation to avoid temperature jump at times of flow rate changes.
             for Iseg in range(1, Nseg + 1):
+                # get temperatures of the previous time-step
                 TflA[Iseg] = STORED[100 + Iseg]
                 TabsA[Iseg] = STORED[300 + Iseg]
                 if Iseg > 1:
-                    TinSeg = ToutSeg
+                    Tin_Seg = Tout_Seg
                 else:
-                    TinSeg = Tin
-                if Mfl > 0 and Mo == 1:  #FIXME[Q]: what is Mo
-                    ToutSeg = ((Mfl * Cp_waterglycol * (TinSeg + 273)) / Aseg - (C_eff * (TinSeg + 273)) / (2 * delts) + qgain +
-                               (C_eff * (TflA[Iseg] + 273) / delts)) / (Mfl * Cp_waterglycol / Aseg + C_eff / (2 * delts))
-                    ToutSeg = ToutSeg - 273
-                    TflB[Iseg] = (TinSeg + ToutSeg) / 2
-                else:
+                    Tin_Seg = Tin
+
+                if Mfl > 0 and Mo_seg == 1:  # same heat gain/ losses for all segments
+                    Tout_Seg = ((Mfl * Cp_waterglycol * (Tin_Seg + 273)) / A_seg - (C_eff * (Tin_Seg + 273)) / (2 * delts) + q_gain +
+                               (C_eff * (TflA[Iseg] + 273) / delts)) / (Mfl * Cp_waterglycol / A_seg + C_eff / (2 * delts))
+                    Tout_Seg = Tout_Seg - 273
+                    TflB[Iseg] = (Tin_Seg + Tout_Seg) / 2
+                else: # heat losses based on each segment's inlet and outlet temperatures.
                     Tfl[1] = TflA[Iseg]
                     Tabs[1] = TabsA[Iseg]
-                    qgain = calc_qgain(Tfl, Tabs, S, DT, TinSeg, Tout, Aseg, c1, c2, Mfl, delts, Cp_waterglycol, C_eff, Te)
-                    ToutSeg = Tout
+                    q_gain = calc_q_gain(Tfl, Tabs, q_rad, DT, Tin_Seg, Tout, A_seg, c1, c2, Mfl, delts, Cp_waterglycol, C_eff, Tamb)
+                    Tout_Seg = Tout
+
                     if Mfl > 0:
-                        TflB[Iseg] = (TinSeg + ToutSeg) / 2
-                        ToutSeg = TflA[Iseg] + (qgain * delts) / C_eff
+                        TflB[Iseg] = (Tin_Seg + Tout_Seg) / 2
+                        Tout_Seg = TflA[Iseg] + (q_gain * delts) / C_eff
                     else:
-                        TflB[Iseg] = ToutSeg
-                    TflB[Iseg] = ToutSeg
-                    qfluid = (ToutSeg - TinSeg) * Mfl * Cp_waterglycol / Aseg
-                    qmtherm = (TflB[Iseg] - TflA[Iseg]) * C_eff / delts
-                    q_balance = qgain - qfluid - qmtherm
-                    if abs(q_balance) > 1: #FIXME[Q]: time = time?
-                        time = time
-                qgainSeg[Iseg] = qgain  # in W/m2
-            # the resulting energy output
-            qout = Mfl * Cp_waterglycol * (ToutSeg - Tin)
+                        TflB[Iseg] = Tout_Seg
+
+                    #TflB[Iseg] = Tout_Seg
+                    q_fluid = (Tout_Seg - Tin_Seg) * Mfl * Cp_waterglycol / A_seg
+                    q_mtherm = (TflB[Iseg] - TflA[Iseg]) * C_eff / delts  # total heat change rate of thermal capacitance
+                    q_balance_error = q_gain - q_fluid - q_mtherm
+                    if abs(q_balance_error) > 1:
+                        time = time      # re-enter the iteration when energy balance not satisfied
+                q_gain_Seg[Iseg] = q_gain  # in W/m2
+
+            # resulting net energy output
+            q_out = Mfl * Cp_waterglycol * (Tout_Seg - Tin)
             Tabs[2] = 0
             # storage of the mean temperature
             for Iseg in range(1, Nseg + 1):
@@ -333,25 +344,25 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
                 Tabs[2] = Tabs[2] + TabsB[Iseg] / Nseg
 
             # outputs
-            temperature_out[flow][time] = ToutSeg
+            temperature_out[flow][time] = Tout_Seg
             temperature_in[flow][time] = Tin
-            supply_out[flow][time] = qout / 1000  # in kW
-            temperature_mean[flow][time] = (Tin + ToutSeg) / 2  # Mean absorber temperature at present
+            supply_out[flow][time] = q_out / 1000  # in kW
+            temperature_mean[flow][time] = (Tin + Tout_Seg) / 2  # Mean absorber temperature at present
 
-            qgain = 0
+            q_gain = 0
             TavgB = 0
             TavgA = 0
             for Iseg in range(1, Nseg + 1):
-                qgain = qgain + qgainSeg * Aseg  # W
+                q_gain = q_gain + q_gain_Seg * A_seg  # [W]
                 TavgA = TavgA + TflA[Iseg] / Nseg
                 TavgB = TavgB + TflB[Iseg] / Nseg
 
-            # OUT[9] = qgain/Area_a # in W/m2
-            qmtherm = (TavgB - TavgA) * C_eff * aperture_area / delts
-            q_balance = qgain - qmtherm - qout
+            # OUT[9] = q_gain/Area_a # in W/m2
+            q_mtherm = (TavgB - TavgA) * C_eff * aperture_area / delts
+            q_balance_error = q_gain - q_mtherm - q_out
 
-            # OUT[11] = qmtherm
-            # OUT[12] = q_balance
+            # OUT[11] = q_mtherm
+            # OUT[12] = q_balance_error
         if flow < 4:
             auxiliary_electricity[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow],
                                                          Leq, aperture_area)  # in kW
@@ -370,7 +381,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
                                                                                    dP2, dP3, dP4, aperture_area)
         if flow == 4:
             auxiliary_electricity[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow],
-                                                         Leq, aperture_area)  # in kW
+                                                                     Leq, aperture_area)  # in kW
             dp5 = specific_pressurelosses[flow]
             q5 = supply_out[flow]
             m5 = specific_flows[flow]
@@ -378,8 +389,8 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
             specific_flows[5], specific_pressurelosses[5] = calc_optimal_mass_flow_2(m5, q5, dp5)
 
         if flow == 5: # optimal mass flow
-            supply_losses[flow] = np.vectorize(calc_qloss_net)(specific_flows[flow], Le, aperture_area, temperature_mean[flow],
-                                                               Te_vector, msc_max)
+            supply_losses[flow] = np.vectorize(calc_qloss_network)(specific_flows[flow], Le, aperture_area, temperature_mean[flow],
+                                                                   Tamb_vector, msc_max)
             supply_out_pre = supply_out[flow].copy() + supply_losses[flow].copy()
             auxiliary_electricity[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow],
                                                          Leq, aperture_area)  # in kW
@@ -390,7 +401,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
     return result
 
 
-def calc_Sm_SC(n0, IAM_b, I_direct, IAM_d, I_diffuse, tilt):
+def calc_q_rad(n0, IAM_b, I_direct, IAM_d, I_diffuse, tilt):
     """
     Calculates the absorbed radiation for solar thermal collectors.
     :param n0: zero loss efficiency [-]
@@ -399,23 +410,46 @@ def calc_Sm_SC(n0, IAM_b, I_direct, IAM_d, I_diffuse, tilt):
     :param IAM_d: incidence angle modifier for diffuse radiation [-]
     :param I_diffuse: diffuse radiation [Wh/m2]
     :param tilt: solar panel tilt angle [rad]
-    :return S: absorbed radiation [Wh/m2]
+    :return q_rad: absorbed radiation [Wh/m2]
     """
-    #tilt = radians(tilt)
-    S = n0 * IAM_b * I_direct + n0 * IAM_d * I_diffuse * (1 + cos(tilt)) / 2
-    return S
+    #tilt = radians(tilt) # TODO: check if results are the same
+    q_rad = n0 * IAM_b * I_direct + n0 * IAM_d * I_diffuse * (1 + cos(tilt)) / 2
+    return q_rad
 
 
-def calc_qgain(Tfl, Tabs, qrad, DT, TinSub, Tout, Aseg, c1, c2, Mfl, delts, Cp_wg, C_eff, Te):
+def calc_q_gain(Tfl, Tabs, qrad, DT, Tin, Tout, Aseg, c1, c2, Mfl, delts, Cp_wg, C_eff, Te):
+    """
+    calculate the collector heat gain including temperature dependent thermal losses of the collectors.
+    :param Tfl:
+    :param Tabs:
+    :param qrad:
+    :param DT:
+    :param Tin: collector inlet temperature
+    :param Tout: collector outlet temperature
+    :param Aseg:
+    :param c1:
+    :param c2:
+    :param Mfl:
+    :param delts:
+    :param Cp_wg: heat capacity of water glycol
+    :param C_eff:
+    :param Te:
+    :return:
+
+    ..[M. Haller et al., 2012] Haller, M., Perers, B., Bale, C., Paavilainen, J., Dalibard, A. Fischer, S. & Bertram, E.
+    (2012). TRNSYS Type 832 v5.00 " Dynamic Collector Model by Bengt Perers". Updated Input-Output Reference.
+    """
+
     xgain = 1
     xgainmax = 100
     exit = False
     while exit == False:
-        qgain = qrad - c1 * (DT[1]) - c2 * abs(DT[1]) * DT[1]  # heat production from solar collector
+        qgain = qrad - c1 * (DT[1]) - c2 * abs(DT[1]) * DT[1]  # heat production from solar collector, eq.(5)
+
         if Mfl > 0:
-            Tout = ((Mfl * Cp_wg * TinSub) / Aseg - (C_eff * TinSub) / (2 * delts) + qgain + (
-                C_eff * Tfl[1]) / delts) / (Mfl * Cp_wg / Aseg + C_eff / (2 * delts))
-            Tfl[2] = (TinSub + Tout) / 2
+            Tout = ((Mfl * Cp_wg * Tin) / Aseg - (C_eff * Tin) / (2 * delts) + qgain + (
+                C_eff * Tfl[1]) / delts) / (Mfl * Cp_wg / Aseg + C_eff / (2 * delts)) # eq.(6)
+            Tfl[2] = (Tin + Tout) / 2
             DT[2] = Tfl[2] - Te
             qdiff = Mfl / Aseg * Cp_wg * 2 * (DT[2] - DT[1])
         else:
@@ -428,7 +462,7 @@ def calc_qgain(Tfl, Tabs, qrad, DT, TinSub, Tout, Aseg, c1, c2, Mfl, delts, Cp_w
             DT[1] = DT[2]
             exit = True
         else:
-            if xgain > 40: #FIXME: no iteration?
+            if xgain > 40:
                 DT[1] = (DT[1] + DT[2]) / 2
                 if xgain == xgainmax:
                     exit = True
@@ -437,7 +471,7 @@ def calc_qgain(Tfl, Tabs, qrad, DT, TinSub, Tout, Aseg, c1, c2, Mfl, delts, Cp_w
         xgain += 1
 
     #FIXME[Q]: what is this part for?
-    qout = Mfl * Cp_wg * (Tout - TinSub) / Aseg
+    qout = Mfl * Cp_wg * (Tout - Tin) / Aseg
     qmtherm = (Tfl[2] - Tfl[1]) * C_eff / delts
     qbal = qgain - qout - qmtherm
     if abs(qbal) > 1:
@@ -445,7 +479,7 @@ def calc_qgain(Tfl, Tabs, qrad, DT, TinSub, Tout, Aseg, c1, c2, Mfl, delts, Cp_w
     return qgain
 
 
-def calc_qloss_net(Mfl, Le, Area_a, Tm, Te, maxmsc):
+def calc_qloss_network(Mfl, Le, Area_a, Tm, Te, maxmsc):
     """
     calculate non-recoverable losses
     :param Mfl:
@@ -462,28 +496,38 @@ def calc_qloss_net(Mfl, Le, Area_a, Tm, Te, maxmsc):
 
 
 def calc_IAM_beam_SC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, type_SCpanel, latitude, Sz_vector):
+    """
+    Calculates Incidence angle modifier for beam radiation.
+    :param Az_vector: Solar azimuth angle
+    :param g_vector:
+    :param ha_vector: hour angle
+    :param teta_z: panel surface azimuth angle
+    :param tilt_angle: panel tilt angle
+    :param type_SCpanel: type of solar collector
+    :param latitude:
+    :param Sz_vector: solar zenith angle
+    :return IAM_b_vector:
+    """
+
 
     def calc_teta_L(Az, teta_z, tilt, Sz):
-        # calculate incident angles modifier of the longitudinal plane
         teta_la = tan(Sz) * cos(teta_z - Az)
-        teta_l = degrees(abs(atan(teta_la) - tilt))  # longitudinal incidence angle
+        teta_l = degrees(abs(atan(teta_la) - tilt))
         if teta_l < 0:
             teta_l = min(89, abs(teta_l))
         if teta_l >= 90:
             teta_l = 89.999
-        return teta_l  # in degrees
+        return teta_l  # longitudinal incidence angle in degrees
 
     def calc_teta_T(Az, Sz, teta_z):
-        # calculate incident angles modifier of the transversal plane
         teta_ta = sin(Sz) * sin(abs(teta_z - Az))
-        teta_T = degrees(atan(teta_ta / cos(teta_ta)))  # transversal incidence angle
+        teta_T = degrees(atan(teta_ta / cos(teta_ta)))
         if teta_T < 0:
             teta_T = min(89, abs(teta_T))
         if teta_T >= 90:
             teta_T = 89.999
-        return teta_T
+        return teta_T  # transversal incidence angle in degrees
 
-   
     def calc_teta_L_max(teta_L):
         if teta_L < 0:
             teta_L = min(89, abs(teta_L))
@@ -516,7 +560,7 @@ def calc_IAM_beam_SC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, type_SC
     if type_SCpanel == 'SC1':  #TODO: change to panel_properties['type']=='FP'
         incident_angle = np.degrees(Incidence_vector)
         Teta_L = np.vectorize(calc_teta_L_max)(incident_angle)
-        Teta_T = 0  # not necessary
+        Teta_T = 0  # not necessary for flat plate collectors
     if type_SCpanel == 'SC2':  ##TODO: change to panel_properties['type']=='ET'
         Teta_L = np.vectorize(calc_teta_L)(Az_vector, teta_z, tilt, Sz_vector)  # in degrees
         Teta_T = np.vectorize(calc_teta_T)(Az_vector, Sz_vector, teta_z, Incidence_vector)  # in degrees

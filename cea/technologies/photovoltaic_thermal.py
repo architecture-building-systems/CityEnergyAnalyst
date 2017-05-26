@@ -10,8 +10,8 @@ from math import *
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.technologies.solar_collector import optimal_angle_and_tilt, \
-    calc_groups, calc_incident_angle_beam, calc_properties_SC, calc_IAM_beam_SC, calc_Sm_SC, calc_qgain, calc_Eaux_SC,\
-    calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_net
+    calc_groups, calc_incident_angle_beam, calc_properties_SC, calc_IAM_beam_SC, calc_q_rad, calc_q_gain, calc_Eaux_SC,\
+    calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_network
 from cea.technologies.photovoltaic import calc_properties_PV, calc_PV_power, calc_diffuseground_comp, calc_Sm_PV
 
 __author__ = "Jimeno A. Fonseca"
@@ -181,7 +181,7 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
 
     # calculate net radiant heat (absorbed)
     tilt = radians(tilt_angle)
-    qrad_vector = np.vectorize(calc_Sm_SC)(n0, IAM_b_vector, I_direct_vector, IAM_d, I_diffuse_vector,
+    qrad_vector = np.vectorize(calc_q_rad)(n0, IAM_b_vector, I_direct_vector, IAM_d, I_diffuse_vector,
                                            tilt)  # in W/m2 is a mean of the group
     counter = 0
     Flag = False
@@ -234,7 +234,7 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
 
             # calculate qgain with the guess
 
-            qgain = calc_qgain(Tfl, Tabs, qrad, DT, Tin, Tout, Area_a, c1_pvt, c2, Mfl, delts, Cpwg, C_eff, Te)
+            qgain = calc_q_gain(Tfl, Tabs, qrad, DT, Tin, Tout, Area_a, c1_pvt, c2, Mfl, delts, Cpwg, C_eff, Te)
 
             Aseg = Area_a / Nseg
             for Iseg in range(1, Nseg + 1):
@@ -252,7 +252,7 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
                 else:
                     Tfl[1] = TflA[Iseg]
                     Tabs[1] = TabsA[Iseg]
-                    qgain = calc_qgain(Tfl, Tabs, qrad, DT, TinSeg, Tout, Aseg, c1_pvt, c2, Mfl, delts, Cpwg, C_eff, Te)
+                    qgain = calc_q_gain(Tfl, Tabs, qrad, DT, TinSeg, Tout, Aseg, c1_pvt, c2, Mfl, delts, Cpwg, C_eff, Te)
                     ToutSeg = Tout
                     if Mfl > 0:
                         TflB[Iseg] = (TinSeg + ToutSeg) / 2
@@ -319,8 +319,8 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
             ##poits where load is negative
             specific_flows[5], specific_pressurelosses[5] = calc_optimal_mass_flow_2(m5, q5, dp5)
         if flow == 5:
-            supply_losses[flow] = np.vectorize(calc_qloss_net)(specific_flows[flow], Le, Area_a, temperature_m[flow],
-                                                               Te_vector, maxmsc)
+            supply_losses[flow] = np.vectorize(calc_qloss_network)(specific_flows[flow], Le, Area_a, temperature_m[flow],
+                                                                   Te_vector, maxmsc)
             supply_out_pre = supply_out[flow].copy() + supply_losses[flow].copy()
             Auxiliary[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow], Leq,
                                                         Area_a)  # in kW
