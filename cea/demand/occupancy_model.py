@@ -27,18 +27,21 @@ def calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values):
     normalized such that the final demands and internal gains are calculated from the specified building properties and
     not the archetype values.
 
+    Schedules for internal loads due to occupants and ventilation are in p/m2 (since for a variable X the hourly value
+    is calculated as schedule * X * A). The electrical schedules are unitless.
+
     The script generates the following scheduleS:
-        'people': number of people per square meter at each hour (in p)
-        've': ventilation demand (in p^-1 since the ventilation demand is then calculated as schedule * lpd)
-        'Qs': sensible heat gain due to occupancy (in p^-1 since the heat gains are calculated as schedule * W/p)
-        'X': moisture gain due to occupants (in p^-1 since the gains are calculated as schedule * ghp)
+        'people': number of people per square meter at each hour (in p/m2)
+        've': ventilation demand schedule weighted by the corresponding occupancy types (in p/m2)
+        'Qs': sensible heat gain due to occupancy weighted by the corresponding occupancy types (in p/m2)
+        'X': moisture gain due to occupants weighted by the corresponding occupancy types (in p/m2)
         'Ea': electricity demand for appliances at each hour (unitless)
         'El': electricity demand for lighting at each hour (unitless)
         'Epro': electricity demand for process at each hour (unitless)
         'Ere': electricity demand for refrigeration at each hour (unitless)
         'Ed': electricity demand for data centers at each hour (unitless)
-        'Vww': domestic hot water demand at each hour (in p^-1 since the demand is calculated as schedule * lpd)
-        'Vw': total water demand at each hour (in p^-1 since the demand is calculated as schedule * lpd)
+        'Vww': domestic hot water schedule at each hour  weighted by the corresponding occupancy types (in p/m2)
+        'Vw': total water schedule at each hour weighted by the corresponding occupancy types (in p/m2)
 
     :param list_uses: The list of uses used in the project
     :type list_uses: list
@@ -52,7 +55,7 @@ def calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values):
 	:param archetype_values: occupant density, ventilation and internal loads for each archetypal occupancy type
 	:type archetype_values: dict[str:array]
 
-    :returns schedules: a dictionary containing the weighted average schedule for: occupancy; ventilation demand;
+    :returns schedules: a dictionary containing the weighted average schedules for: occupancy; ventilation demand;
     sensible heat and moisture gains due to occupancy; electricity demand for appliances, lighting, processes,
     refrigeration and data centers; demand for water and domestic hot water
     :rtype: dict[array]
