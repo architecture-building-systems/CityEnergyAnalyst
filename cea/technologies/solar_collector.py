@@ -102,7 +102,7 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, 
     l_int = 2 * height / (Sum_Area_m * Aratio)
     Leq = l_int + l_ext  # in m/m2
 
-    if type_SCpanel == 2:  # for evacuated tubes #TODO:change to panel_properties['type']=='ET'
+    if type_SCpanel == 'SC2':  # for evacuated tubes #TODO:change to panel_properties['type']=='ET'
         Nseg = 100  # default number of subsdivisions for the calculation #TODO: find reference
     else:
         Nseg = 10  # default number of subsdivisions for the calculation
@@ -242,7 +242,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
     counter = 0
     Flag = False
     Flag2 = False
-    for flow in range(6):
+    for flow in range(6):#TODO: change back to 6
         Mo = 1
         TIME0 = 0
         DELT = 1  # timestep 1 hour
@@ -256,9 +256,9 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
         TabsB = np.zeros([600, 1])
         TabsA = np.zeros([600, 1])
         qgainSeg = np.zeros([100, 1])
-        for time in range(8760):
+        for time in range(8760): #TODO: change back to 8760
             Mfl = specific_flows[flow][time]
-            if time < TIME0 + DELT / 2:
+            if time < TIME0 + DELT / 2:  #FIXME[Q]: time = 0? save inlet temperature, Tin=75, to point 101-501
                 for Iseg in range(101, 501):  # 400 points with the data
                     STORED[Iseg] = Tin
             else:
@@ -288,10 +288,9 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
             else:
                 Tout = Te + S / (c1 + 0.5)
                 Tfl[2] = Tout  # fluid temperature same as output
-            DT[1] = Tfl[2] - Te
+            DT[1] = Tfl[2] - Te  # difference between mean absorber temperature and ambient
 
             # calculate qgain with the guess
-
             qgain = calc_qgain(Tfl, Tabs, S, DT, Tin, Tout, aperture_area, c1, c2, Mfl, delts, Cp_waterglycol, C_eff, Te)
 
             Aseg = aperture_area / Nseg
@@ -302,7 +301,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
                     TinSeg = ToutSeg
                 else:
                     TinSeg = Tin
-                if Mfl > 0 and Mo == 1:
+                if Mfl > 0 and Mo == 1:  #FIXME[Q]: what is Mo
                     ToutSeg = ((Mfl * Cp_waterglycol * (TinSeg + 273)) / Aseg - (C_eff * (TinSeg + 273)) / (2 * delts) + qgain +
                                (C_eff * (TflA[Iseg] + 273) / delts)) / (Mfl * Cp_waterglycol / Aseg + C_eff / (2 * delts))
                     ToutSeg = ToutSeg - 273
@@ -320,8 +319,8 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
                     TflB[Iseg] = ToutSeg
                     qfluid = (ToutSeg - TinSeg) * Mfl * Cp_waterglycol / Aseg
                     qmtherm = (TflB[Iseg] - TflA[Iseg]) * C_eff / delts
-                    qbal = qgain - qfluid - qmtherm
-                    if abs(qbal) > 1:
+                    q_balance = qgain - qfluid - qmtherm
+                    if abs(q_balance) > 1: #FIXME[Q]: time = time?
                         time = time
                 qgainSeg[Iseg] = qgain  # in W/m2
             # the resulting energy output
@@ -349,10 +348,10 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
 
             # OUT[9] = qgain/Area_a # in W/m2
             qmtherm = (TavgB - TavgA) * C_eff * aperture_area / delts
-            qbal = qgain - qmtherm - qout
+            q_balance = qgain - qmtherm - qout
 
             # OUT[11] = qmtherm
-            # OUT[12] = qbal
+            # OUT[12] = q_balance
         if flow < 4:
             auxiliary_electricity[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow],
                                                          Leq, aperture_area)  # in kW
@@ -365,6 +364,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
             E2 = auxiliary_electricity[1]
             E3 = auxiliary_electricity[2]
             E4 = auxiliary_electricity[3]
+            # calculate optimal mass flow and the corresponding pressure loss
             specific_flows[4], specific_pressurelosses[4] = calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, 0,
                                                                                    mB0_r, mB_max_r, mB_min_r, 0,
                                                                                    dP2, dP3, dP4, aperture_area)
@@ -374,10 +374,10 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
             dp5 = specific_pressurelosses[flow]
             q5 = supply_out[flow]
             m5 = specific_flows[flow]
-            ##poits where load is negative
+            # set points to zero when load is negative
             specific_flows[5], specific_pressurelosses[5] = calc_optimal_mass_flow_2(m5, q5, dp5)
 
-        if flow == 5:
+        if flow == 5: # optimal mass flow
             supply_losses[flow] = np.vectorize(calc_qloss_net)(specific_flows[flow], Le, aperture_area, temperature_mean[flow],
                                                                Te_vector, msc_max)
             supply_out_pre = supply_out[flow].copy() + supply_losses[flow].copy()
@@ -434,8 +434,9 @@ def calc_qgain(Tfl, Tabs, qrad, DT, TinSub, Tout, Aseg, c1, c2, Mfl, delts, Cp_w
                     exit = True
             else:
                 DT[1] = DT[2]
+        xgain += 1
 
-    #FIXME: what is this part for?
+    #FIXME[Q]: what is this part for?
     qout = Mfl * Cp_wg * (Tout - TinSub) / Aseg
     qmtherm = (Tfl[2] - Tfl[1]) * C_eff / delts
     qbal = qgain - qout - qmtherm
@@ -649,7 +650,7 @@ def calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, m1, m2, m3, m4, dP1, 
     return mass_flow_opt, dP_opt
 
 
-def calc_optimal_mass_flow_2(m, q, dp): #FIXME[Q]: reason for this calculation?
+def calc_optimal_mass_flow_2(m, q, dp):
     for time in range(8760):
         if q[time] <= 0:
             m[time] = 0
