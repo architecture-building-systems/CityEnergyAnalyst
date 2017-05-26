@@ -62,8 +62,8 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     """
 
     # calc end-use demand
-    Vww = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] / 1000   # m3/h
-    Vw = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] / 1000      # m3/h
+    Vww = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] * bpr.rc_model['Af'] / 1000   # m3/h
+    Vw = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] * bpr.rc_model['Af'] / 1000      # m3/h
     mww = Vww * gv.Pwater /3600 # kg/s
 
     Qww = np.vectorize(calc_Qww)(mww, Tww_sup_0, Tww_re, gv.Cpw)

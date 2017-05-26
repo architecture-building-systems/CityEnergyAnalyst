@@ -44,24 +44,24 @@ def calc_Eint(tsd, bpr, schedules):
     :rtype: Dict[str, numpy.ndarray]
     """
 
-    # calculate final electrical consumption due to appliances and lights in W
-    tsd['Eaf'] = schedules['Ea'] * bpr.internal_loads['Ea_Wm2'] * bpr.rc_model['Aef']
-    tsd['Elf'] = schedules['El'] * bpr.internal_loads['El_Wm2'] * bpr.rc_model['Aef']
+    # calculate final electrical consumption due to appliances and lights in kWh
+    tsd['Eaf'] = schedules['Ea'] * bpr.internal_loads['Ea_Wm2'] * bpr.rc_model['Aef'] / 1000
+    tsd['Elf'] = schedules['El'] * bpr.internal_loads['El_Wm2'] * bpr.rc_model['Aef'] / 1000
     tsd['Ealf'] = tsd['Elf'] + tsd['Eaf']
 
-    # calculate other electrical loads in W
+    # calculate other electrical loads in kWh
     if 'COOLROOM' in bpr.occupancy:
-        tsd['Eref'] = schedules['Ere'] * bpr.internal_loads['Ere_Wm2'] * bpr.rc_model['Aef']
+        tsd['Eref'] = schedules['Ere'] * bpr.internal_loads['Ere_Wm2'] * bpr.rc_model['Aef'] / 1000
     else:
         tsd['Eref'] = np.zeros(8760)
 
     if 'SERVERROOM' in bpr.occupancy:
-        tsd['Edataf'] = schedules['Ed'] * bpr.internal_loads['Ed_Wm2'] * bpr.rc_model['Aef']
+        tsd['Edataf'] = schedules['Ed'] * bpr.internal_loads['Ed_Wm2'] * bpr.rc_model['Aef'] / 1000
     else:
         tsd['Edataf'] = np.zeros(8760)
 
     if 'INDUSTRY' in bpr.occupancy:
-        tsd['Eprof'] = schedules['Epro'] * bpr.internal_loads['Epro_Wm2'] * bpr.rc_model['Aef']
+        tsd['Eprof'] = schedules['Epro'] * bpr.internal_loads['Epro_Wm2'] * bpr.rc_model['Aef'] / 1000
     else:
         tsd['Eprof'] = np.zeros(8760)
         tsd['Ecaf'] = np.zeros(8760) # not used in the current version but in the optimization part

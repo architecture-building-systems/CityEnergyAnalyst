@@ -85,7 +85,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     # calculate occupancy schedule and occupant-related parameters
     tsd['people'] = schedules['people'] * bpr.rc_model['Af']
     tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6) * bpr.rc_model['Af'] # in m3/h
-    tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp']
+    tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp'] * bpr.rc_model['Af'] / 1000 # in kWh
 
     # get electrical loads (no auxiliary loads)
     tsd = electrical_loads.calc_Eint(tsd, bpr, schedules)
