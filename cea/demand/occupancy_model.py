@@ -90,26 +90,22 @@ def calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values):
         for num in range(len(list_uses)):
             if current_archetype_values[num] != 0: # do not consider when the value is 0
                 current_share_of_use = occupancy[list_uses[num]]
-                # variables that depend on the number of people need to be adjusted by the number of people
-                if label in ['ve','Qs','X']:
-                    share_time_occupancy_density = (current_archetype_values[num] * archetype_values['people'][num]) * \
+                # for variables that depend on the number of people, the schedule needs to be calculated by number of
+                # people for each use at each time step, not the share of the occupancy for each
+                if label in ['ve','Qs','X', 'Vww', 'Vw']:
+                    share_time_occupancy_density = current_archetype_values[num] * archetype_values['people'][num] * \
                                                    current_share_of_use
-                    normalizing_value += share_time_occupancy_density * occupant_density_average
-                # since water schedules are given as a percentage of the daily total, they need not be normalized by the
-                # number of people
-                elif label in ['Vww', 'Vw']:
-                    share_time_occupancy_density = (current_archetype_values[num] * archetype_values['people'][num]) * \
-                                                   current_share_of_use
-                    normalizing_value += share_time_occupancy_density
+                    normalizing_value += share_time_occupancy_density / people_per_square_meter
                 else:
-                    share_time_occupancy_density = (current_archetype_values[num]) * current_share_of_use
-
+                    share_time_occupancy_density = current_archetype_values[num] * current_share_of_use
                     normalizing_value += share_time_occupancy_density
 
                 current_schedule = np.vectorize(calc_average)(current_schedule, archetype_schedules[num][code],
                                                               share_time_occupancy_density)
-
-        schedules[label] = current_schedule / normalizing_value
+        if label == 'people':
+            schedules[label] = current_schedule
+        else:
+            schedules[label] = current_schedule / normalizing_value
 
     return schedules
 
