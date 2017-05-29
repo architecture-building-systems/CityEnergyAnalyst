@@ -56,6 +56,10 @@ into your other work. (you can use any name, when creating an environment - "cea
 
 Note: Location where to store the repository can be any -"Documents" is just an example.
 
+Note: If after the installation you experience an error concerning geopandas or fiona, i.e., ``ImportError: DLL load
+ failed: The specified module could not be found.`` Try copying ``C:\Users\your_name\Anaconda2\envs\cea\proj.dll`` to
+``C:\Users\your_name\Anaconda2\envs\cea\Library\bin`` and CEA should run.
+
 Setting up PyCharm
 ..................
 
