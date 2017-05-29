@@ -11,7 +11,6 @@ from __future__ import absolute_import
 import numpy as np
 import pandas as pd
 from cea.utilities.dbfreader import dbf2df, df2dbf
-from cea.demand.occupancy_model import read_archetype_schedules_and_properties
 import cea.inputlocator
 
 __author__ = "Jimeno A. Fonseca"
