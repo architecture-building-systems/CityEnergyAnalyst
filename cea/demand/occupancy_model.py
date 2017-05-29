@@ -227,17 +227,10 @@ def schedule_maker(dates, locator, list_uses):
     Ve_lsm2 = []
 
     for use in list_uses:
-        # Read from archetypes_schedules and properties
-        archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(), use).T
-
-        # read lists of every daily profile
-        occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, \
-        area_per_occupant = read_schedules(use, archetypes_schedules)
-
-        # get occupancy density per schedule in a list
-        if area_per_occupant != 0:
-            occ_densities.append(1/area_per_occupant)
-        else: occ_densities.append(area_per_occupant)
+        # read from archetypes_schedules and properties, read and list every profile and get ooccupancy density per
+        # schedule in a list
+        occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, occ_densities = \
+            read_archetype_schedules_and_properties(locator, use, occ_densities)
 
         # get internal loads per schedule in a list
         Ea_Wm2.append(archetypes_internal_loads['Ea_Wm2'][use])
@@ -250,23 +243,6 @@ def schedule_maker(dates, locator, list_uses):
         Vww_ldm2.append(archetypes_internal_loads['Vww_lpd'][use])
         Vw_ldm2.append(archetypes_internal_loads['Vw_lpd'][use])
         Ve_lsm2.append(archetypes_indoor_comfort['Ve_lps'][use])
-        # ## variables that were defined per person are converted to per square meter occupied, the occupancy effect is
-        # ## accounted for when multiplying by the occupancy schedule later on
-        # if area_per_occupant > 0:   # do not consider if occupant density is 0
-        #     Qs_Wm2.append(archetypes_internal_loads['Qs_Wp'][use] / area_per_occupant)
-        #     X_ghm2.append(archetypes_internal_loads['X_ghp'][use] / area_per_occupant)
-        #     Vww_ldm2.append(archetypes_internal_loads['Vww_lpd'][use] / area_per_occupant)
-        #     Vw_ldm2.append(archetypes_internal_loads['Vw_lpd'][use] / area_per_occupant)
-        # else:
-        #     Qs_Wm2.append(0)
-        #     X_ghm2.append(0)
-        #     Vww_ldm2.append(0)
-        #     Vw_ldm2.append(0)
-        #
-        # # get ventilation required per schedule in a list
-        # if area_per_occupant > 0:   # do not consider if occupant density is 0
-        #     Ve_lsm2.append(archetypes_indoor_comfort['Ve_lps'][use] / area_per_occupant)
-        # else: Ve_lsm2.append(0)
 
         # get yearly schedules in a list
         schedule = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule)
@@ -277,6 +253,22 @@ def schedule_maker(dates, locator, list_uses):
                         'Vw': Vw_ldm2, 've': Ve_lsm2}
 
     return schedules, archetype_values
+
+def read_archetype_schedules_and_properties(locator, use, occ_densities):
+    # read from archetypes_schedules and properties
+    archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(), use).T
+
+    # read lists of every daily profile
+    occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, area_per_occupant = read_schedules(
+        use, archetypes_schedules)
+
+    # get occupancy density per schedule in a list
+    if area_per_occupant != 0:
+        occ_densities.append(1 / area_per_occupant)
+    else:
+        occ_densities.append(area_per_occupant)
+
+    return occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, occ_densities
 
 def read_schedules(use, x):
     """
@@ -298,10 +290,8 @@ def read_schedules(use, x):
     :type pro: list[array]
     :return month: the monthly schedule for the given occupancy type
     :type month: ndarray
-    :return occ_density: the occupants per square meter for the given occupancy type
-    :type occ_density: int
-    :return internal_loads: the internal loads and ventilation needs for the given occupancy types
-    :type internal_loads: list
+    :return area_per_occupant: the occupants per square meter for the given occupancy type
+    :type area_per_occupant: int
 
     """
     # read schedules from excel file
@@ -315,7 +305,9 @@ def read_schedules(use, x):
     else:
         pro = [np.zeros(24), np.zeros(24), np.zeros(24)]
 
-    # read occupancy density
-    occ_density = x['density'].values[:1][0]
+    # read area per occupant
+    area_per_occupant = x['density'].values[:1][0]
 
-    return occ, el, dhw, pro, month, occ_density
+    return occ, el, dhw, pro, month, area_per_occupant
+
+
