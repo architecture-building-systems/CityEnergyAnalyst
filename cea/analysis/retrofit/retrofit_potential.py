@@ -45,7 +45,8 @@ def losses_filter_HVAC(demand, load_withlosses, load_enduse, threshold):
     return demand[(demand.losses >= threshold)].Name.values
 
 
-def retrofit_main(locator_baseline, name_new_scenario, age_retrofit, age_crit, eui_crit, LCA_crit, op_costs_crit, losses_crit):
+def retrofit_main(locator_baseline, name_new_scenario, select_only_all_criteria,
+                  age_retrofit, age_crit, eui_crit, LCA_crit, op_costs_crit, losses_crit):
 
 
     selection_names =[] #list to store names of selected buildings to retrofit
@@ -84,6 +85,10 @@ def retrofit_main(locator_baseline, name_new_scenario, age_retrofit, age_crit, e
                                                                               criteria[1][1])))
 
     #appending all the resutls
+    if select_only_all_criteria:
+        type_of_join = "inner"
+    else:
+        type_of_join = "outer"
     counter = 0
     for (x,b) in selection_names:
         if counter ==0:
@@ -92,7 +97,7 @@ def retrofit_main(locator_baseline, name_new_scenario, age_retrofit, age_crit, e
         else:
             y = pd.DataFrame({"Name": b})
             y[x] = "TRUE"
-            data = data.merge(y, on = "Name", how='outer')
+            data = data.merge(y, on = "Name", how=type_of_join)
         counter+=1
 
     # fill with FALSE for those buildings that do not comply the criteria
@@ -151,6 +156,9 @@ def run_as_script(scenario_path=None):
     locator_baseline = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     # for the interface it would be good if the default values where calculated as 2 standard deviations of
 
+    #FLAG
+    select_only_all_criteria = True # if it is desidered to keep only buildings that attain all the
+                                    #criteria simultaneously
     # CRITERIA AGE
     name_new_scenario = "retrofit_HVAC"
     age_retrofit = 2020  #[true or false, threshold]
@@ -190,7 +198,8 @@ def run_as_script(scenario_path=None):
     losses_crit = [["Qhsf_MWhyr", "Qhs_MWhyr", heating_losses_criteria],
                    ["Qwwf_MWhyr", "Qww_MWhyr", hotwater_losses_criteria],
                    ["Qcsf_MWhyr", "Qcs_MWhyr", cooling_losses_criteria]]
-    retrofit_main(locator_baseline=locator_baseline, name_new_scenario=name_new_scenario, age_retrofit=age_retrofit,
+    retrofit_main(locator_baseline=locator_baseline, select_only_all_criteria =select_only_all_criteria ,
+                  name_new_scenario=name_new_scenario, age_retrofit=age_retrofit,
                   age_crit=age_crit, eui_crit=eui_crit,
                   LCA_crit=LCA_crit,
                   op_costs_crit=op_costs_crit, losses_crit=losses_crit)
