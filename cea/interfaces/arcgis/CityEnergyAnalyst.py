@@ -28,8 +28,100 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
-        self.tools = [DemandTool, DataHelperTool, BenchmarkGraphsTool, EmissionsTool, EmbodiedEnergyTool, MobilityTool,
+        self.tools = [OperationCostsTool, RetrofitPotentialTool, DemandTool, DataHelperTool, BenchmarkGraphsTool, EmissionsTool, EmbodiedEnergyTool, MobilityTool,
                       DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool]
+
+
+class OperationCostsTool(object):
+    def __init__(self):
+        self.label = 'Costs Operation'
+        self.description = 'Calculate energy costs due to building operation'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        return [scenario_path]
+
+    def execute(self, parameters, _):
+        scenario_path = parameters[0].valueAsText
+        run_cli(scenario_path,)
+
+
+class RetrofitPotentialTool(object):
+    def __init__(self):
+        self.label = 'Building Retrofit Potential'
+        self.description = 'Select buildings according to specific criteria for retrofit'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+        age_retrofit = arcpy.Parameter(
+            displayName="Year when the retrofit will take place",
+            name="age_retrofit",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        age_retrofit.value = 2020
+
+        #TODO: nice boxes with flags and target values.
+        #CRITERIA AGE
+        age_criteria = [True, 15]  # [true or false, threshold]
+
+        # CRITERIA UNERGY USE INTENSITY
+        eui_heating_criteria = [True, 50]  # [true or false, threshold]
+        eui_hotwater_criteria = [True, 50]  # [true or false, threshold]
+        eui_cooling_criteria = [True, 4]  # [true or false, threshold]
+        eui_electricity_criteria = [False, 20]  # [true or false, threshold]
+
+        # CRITERIA EMISSIONS
+        emissions_operation_criteria = [False, 30]  # [true or false, threshold]
+
+        # CRITERIA COSTS
+        heating_costs_criteria = [True, 2]  # [true or false, threshold]
+        hotwater_costs_criteria = [True, 2]  # [true or false, threshold]
+        cooling_costs_criteria = [True, 2]  # [true or false, threshold]
+        electricity_costs_criteria = [False, 2]  # [true or false, threshold]
+
+        # CASE OF THERMAL LOSSES
+        heating_losses_criteria = [True, 15]  # [true or false, threshold]
+        hotwater_losses_criteria = [True, 15]  # [true or false, threshold]
+        cooling_losses_criteria = [True, 15]  # [true or false, threshold]
+
+        age_crit = [age_criteria]
+        eui_crit = [eui_heating_criteria, eui_hotwater_criteria, eui_cooling_criteria, eui_electricity_criteria]
+        LCA_crit = [emissions_operation_criteria]
+        op_costs_crit = [heating_costs_criteria, hotwater_costs_criteria, cooling_costs_criteria,
+                         electricity_costs_criteria]
+        losses_crit = [heating_losses_criteria, hotwater_losses_criteria, cooling_losses_criteria]
+        return [scenario_path, age_retrofit, age_crit, eui_crit, LCA_crit,
+                  op_costs_crit, losses_crit]
+
+    def execute(self, parameters, _):
+        scenario_path = parameters[0].valueAsText
+        flags = {
+            'Qww': parameters[1].value,
+            'Qhs': parameters[2].value,
+            'Qcs': parameters[3].value,
+            'Qcdata': parameters[4].value,
+            'Qcrefri': parameters[5].value,
+            'Eal': parameters[6].value,
+            'Eaux': parameters[7].value,
+            'Epro': parameters[8].value,
+            'Edata': parameters[9].value,
+        }
+        extra_files_to_create = [key for key in flags if flags[key]]
+        run_cli(scenario_path, 'emissions', '--extra-files-to-create', *extra_files_to_create)
 
 
 class DemandTool(object):
