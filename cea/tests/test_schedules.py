@@ -32,6 +32,7 @@ class TestScheduleCreation(unittest.TestCase):
     def test_mixed_use_schedules(self):
         from cea.demand.occupancy_model import calc_schedules
         from cea.demand.occupancy_model import schedule_maker
+        from cea.demand.occupancy_model import read_schedules
         dates = pd.date_range('2016-01-01', periods=72, freq='H')
         locator = cea.inputlocator.InputLocator(r'C:')
         list_uses = ['MULTI_RES', 'OFFICE']
@@ -41,3 +42,24 @@ class TestScheduleCreation(unittest.TestCase):
         self.assertRaises(ValueError, calc_delta_theta_int_inc_cooling, cooling_system='T1', control_system=None)
         self.assertRaises(ValueError, calc_delta_theta_int_inc_cooling, cooling_system='XYZ', control_system='T1')
         self.assertRaises(ValueError, calc_delta_theta_int_inc_cooling, cooling_system=None, control_system='T1')
+
+        schedules = {'people': [],
+                     've': [],
+                     'Qs': [],
+                     'X': [],
+                     'Ea': [],
+                     'El': [],
+                     'Epro': [],
+                     'Ere': [],
+                     'Ed': [],
+                     'Vww': [],
+                     'Vw': []}
+
+        self.assert(schedules, calc_schedules, list_uses=['OFFICE', 'INDUSTRIAL'],
+            archetype_schedules=[[[0.0, 0.2, 0.4, 0.6, 0.8], [0.1, 0.2, 0.4, 0.8, 0.8], [0.0, 0.2, 0.4, 0.6, 0.8],
+             [0.0, 0.0, 0.0, 0.0, 0.0]], [[0.8, 1.0, 1.0, 0.8, 1.0], [0.8, 1.0, 1.0, 0.8, 1.0],
+                                          [0.0, 0.2, 0.4, 0.6, 0.8], [0.3, 0.3, 0.3, 0.3, 0.3]]],
+            occupancy=pd.DataFrame(data=['B1',0.5,0.5],columns=['Name','OFFICE', 'INDUSTRIAL']),
+            archetype_values={'people':[1/14,1/10], 've': [10,31], 'Qs':[70,90], 'X': [80,170], 'Ea': [7,20],
+                              'El': [15.9,14.7], 'Epro':[0,16.5], 'Ere':[0,0], 'Ed':[0,0], 'Vww':[10,10], 'Vw':[20,20]}
+        )
