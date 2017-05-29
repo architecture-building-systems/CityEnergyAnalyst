@@ -82,8 +82,7 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
         prop_architecture_df = categories_df.merge(architecture_DB, left_on='cat_architecture', right_on='Code')
 
         # adjust 'Hs' for multiuse buildings
-        prop_architecture_df['Hs'] = \
-            correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses, categories_df)
+        prop_architecture_df['Hs'] = correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses)
 
         # write to shapefile
         prop_architecture_df_merged = names_df.merge(prop_architecture_df, on="Name")
@@ -216,50 +215,6 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
         Hs_list.append(Hs)
 
     return Hs_list
-
-def calc_internal_loads(categories_df, internal_DB, list_uses, fields):
-    """
-
-    :param categories_df:
-    :type categories_df: DataFrame
-    :param internal_DB:
-    :type internal_DB: DataFrame
-    :param list_uses:
-    :type list_uses: list[str]
-    :param fields:
-    :type fields: list[str]
-
-    :return internal_loads:
-    """
-    indexed_DB = internal_DB.set_index('Code')
-
-    # weighted average of values
-    def calc_average(last, current, share_of_use):
-        return last + current * share_of_use
-
-    internal_loads = {}
-    building_loads = {}
-    for field in fields:
-        internal_loads[field] = []
-
-    for building in categories_df.index:
-        for field in fields:
-            building_loads[field] = 0
-        for use in list_uses:
-            if categories_df[use][building] > 0:
-                for field in fields:
-                    building_loads[field] = calc_average(building_loads[field], indexed_DB[field][use],
-                                                         categories_df[use][building])
-        for field in fields:
-            internal_loads[field].append(building_loads[field])
-
-    internal_loads_df = pd.DataFrame(data=None)
-    internal_loads_df['Name'] = categories_df['Name']
-    for field in fields:
-        internal_loads_df[field] = internal_loads[field]
-
-    return internal_loads_df
-
 
 def calculate_average_multiuse(properties_df, occupant_densities, list_uses, properties_DB):
     '''
