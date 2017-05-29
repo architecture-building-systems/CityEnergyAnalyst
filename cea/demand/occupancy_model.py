@@ -227,10 +227,18 @@ def schedule_maker(dates, locator, list_uses):
     Ve_lsm2 = []
 
     for use in list_uses:
-        # read from archetypes_schedules and properties, read and list every profile and get ooccupancy density per
-        # schedule in a list
-        occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, occ_densities = \
-            read_archetype_schedules_and_properties(locator, use, occ_densities)
+        # read from archetypes_schedules and properties
+        archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(), use).T
+
+        # read lists of every daily profile
+        occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, area_per_occupant = read_schedules(
+            use, archetypes_schedules)
+
+        # get occupancy density per schedule in a list
+        if area_per_occupant != 0:
+            occ_densities.append(1 / area_per_occupant)
+        else:
+            occ_densities.append(area_per_occupant)
 
         # get internal loads per schedule in a list
         Ea_Wm2.append(archetypes_internal_loads['Ea_Wm2'][use])
@@ -253,22 +261,6 @@ def schedule_maker(dates, locator, list_uses):
                         'Vw': Vw_ldm2, 've': Ve_lsm2}
 
     return schedules, archetype_values
-
-def read_archetype_schedules_and_properties(locator, use, occ_densities):
-    # read from archetypes_schedules and properties
-    archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(), use).T
-
-    # read lists of every daily profile
-    occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, area_per_occupant = read_schedules(
-        use, archetypes_schedules)
-
-    # get occupancy density per schedule in a list
-    if area_per_occupant != 0:
-        occ_densities.append(1 / area_per_occupant)
-    else:
-        occ_densities.append(area_per_occupant)
-
-    return occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, occ_densities
 
 def read_schedules(use, x):
     """
