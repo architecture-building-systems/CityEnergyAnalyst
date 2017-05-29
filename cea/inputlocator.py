@@ -203,7 +203,12 @@ class InputLocator(object):
         Clustering results for disconnected buildings"""
         return self._ensure_folder(self.get_optimization_results_folder(), "clustering_main")
 
-    def get_potentials_results_folder(self):
+    # optimization
+    def get_sewage_heat_potential(self):
+        return os.path.join(self.get_potentials_folder(), "SWP.csv")
+
+    # POTENTIAL
+    def get_potentials_folder(self):
         """scenario/outputs/data/potentials"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'potentials')
 
@@ -211,16 +216,19 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar
         Contains raw solar files
         """
-        return self._ensure_folder(self.get_potentials_results_folder(), "solar")
+        return self._ensure_folder(self.get_potentials_folder(), "solar")
 
-    # optimization
-    def get_sewage_heat_potential(self):
-        return os.path.join(self.get_potentials_results_folder(), "SWP.csv")
-
-    # resource potential assessment
     def get_geothermal_potential(self):
-        """scenario/outputs/data/potentials/geothermal.csv"""
-        return os.path.join(self.get_potentials_results_folder(), "geothermal.csv")
+        """scenario/outputs/data/potentials/geothermal/geothermal.csv"""
+        return os.path.join(self.get_potentials_folder(), "geothermal", "geothermal.csv")
+
+    def get_potentials_retrofit_folder(self):
+        """scenario/outputs/data/potentials/retrofit.csv"""
+        return self._ensure_folder(self.get_potentials_folder(), "retrofit")
+
+    def get_retrofit_filters(self):
+        """scenario/outputs/data/potentials/retrofit.csv"""
+        return os.path.join(self.get_potentials_retrofit_folder(), "retrofit_filters.csv")
 
     # DATABASES
     def get_default_weather(self):
@@ -507,6 +515,17 @@ class InputLocator(object):
     def get_costs_operation_file(self, load):
         """scenario/outputs/data/costs/{load}_cost_operation.pdf"""
         return os.path.join(self.get_costs_folder(), '%(load)s_cost_operation.csv' %locals())
+
+
+    ##RETROFIT POTENTIAL
+    def get_costs_folder(self):
+        """scenario/outputs/data/costs"""
+        return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'costs')
+
+    def get_costs_operation_file(self, load):
+        """scenario/outputs/data/costs/{load}_cost_operation.pdf"""
+        return os.path.join(self.get_costs_folder(), '%(load)s_cost_operation.csv' %locals())
+
 
     ##GRAPHS
     def get_demand_plots_folder(self):
