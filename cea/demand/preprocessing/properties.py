@@ -286,6 +286,7 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
 
     for column in properties_df.columns:
         if column in ['Ve_lps','Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd']:
+            # some properties are imported from the Excel files as int instead of float
             properties_df[column] = properties_df[column].astype(float)
             for building in properties_df.index:
                 column_total = 0
