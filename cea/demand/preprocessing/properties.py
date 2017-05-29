@@ -11,7 +11,7 @@ from __future__ import absolute_import
 import numpy as np
 import pandas as pd
 from cea.utilities.dbfreader import dbf2df, df2dbf
-
+from cea.demand.occupancy_model import read_archetype_schedules_and_properties
 import cea.inputlocator
 
 __author__ = "Jimeno A. Fonseca"
@@ -55,6 +55,15 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
     building_occupancy_df = dbf2df(locator.get_building_occupancy())
     list_uses = list(building_occupancy_df.drop(['PFloor', 'Name'], axis=1).columns) #parking excluded in U-Values
     building_age_df = dbf2df(locator.get_building_age())
+
+    # get occupant densities from archetypes schedules
+    occupant_densities = {}
+    for use in list_uses:
+        archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(), use).T
+        area_per_occupant = archetypes_schedules['density'].values[:1][0]
+        if area_per_occupant > 0:
+            occupant_densities[use] = 1 / area_per_occupant
+        else: occupant_densities[use] = 0
 
     # prepare shapefile to store results (a shapefile with only names of buildings
     names_df = building_age_df[['Name']]
@@ -108,6 +117,8 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
 
         # write to shapefile
         prop_comfort_df_merged = names_df.merge(prop_comfort_df, on="Name")
+        prop_comfort_df_merged = calculate_average_multiuse(prop_comfort_df_merged, occupant_densities, list_uses,
+                                                            comfort_DB)
         fields = ['Name','Tcs_set_C', 'Ths_set_C', 'Tcs_setb_C', 'Ths_setb_C', 'Ve_lps']
         df2dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
 
@@ -119,6 +130,8 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
 
         # write to shapefile
         prop_internal_df_merged = names_df.merge(prop_internal_df, on="Name")
+        prop_internal_df_merged = calculate_average_multiuse(prop_internal_df_merged, occupant_densities, list_uses,
+                                                             internal_DB)
         fields = ['Name','Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2',	'Epro_Wm2',	'Ere_Wm2', 'Ed_Wm2', 'Vww_lpd',	'Vw_lpd']
         df2dbf(prop_internal_df_merged[fields], locator.get_building_internal())
 
@@ -247,6 +260,49 @@ def calc_internal_loads(categories_df, internal_DB, list_uses, fields):
         internal_loads_df[field] = internal_loads[field]
 
     return internal_loads_df
+
+
+def calculate_average_multiuse(properties_df, occupant_densities, list_uses, properties_DB):
+    '''
+    This script calculates the average internal loads and ventilation properties for multiuse buildings.
+
+    :param properties_df:
+    :type properties_df: DataFrame
+    :param occupant_densities:
+    :type occupant_densities: Dict
+    :param list_uses:
+    :type list_uses: list[str]
+    :properties_DB:
+    :type properties_DB:
+
+    :return properties_df: the same DataFrame as the input parameter, but with the updated properties for multiuse
+    buildings
+    '''
+
+    indexed_DB = properties_DB.set_index('Code')
+
+    for column in properties_df.columns:
+        if column in ['Ve_lps','Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd']:
+            for building in properties_df.index:
+                column_total = 0
+                people_total = 0
+                for use in list_uses:
+                    if use in properties_df.columns:
+                        column_total += properties_df[use][building] * occupant_densities[use] * indexed_DB[column][use]
+                        people_total += properties_df[use][building] * occupant_densities[use]
+                if people_total > 0:
+                    properties_df[column][building] = column_total/people_total
+                else: properties_df[column][building] = 0
+
+        elif column in ['Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Ere_Wm2', 'Ed_Wm2']:
+            for building in properties_df.index:
+                average = 0
+                for use in list_uses:
+                    average += properties_df[use][building] * indexed_DB[column][use]
+                properties_df[column][building] = average
+
+    return properties_df
+
 
 def run_as_script(scenario_path=None, prop_thermal_flag=True, prop_architecture_flag=True, prop_hvac_flag=True,
                   prop_comfort_flag=True, prop_internal_loads_flag=True):
