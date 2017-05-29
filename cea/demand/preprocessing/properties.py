@@ -249,7 +249,8 @@ def calc_internal_loads(categories_df, internal_DB, list_uses, fields):
         for use in list_uses:
             if categories_df[use][building] > 0:
                 for field in fields:
-                    building_loads[field] = calc_average(building_loads[field], indexed_DB[field][use], categories_df[use][building])
+                    building_loads[field] = calc_average(building_loads[field], indexed_DB[field][use],
+                                                         categories_df[use][building])
         for field in fields:
             internal_loads[field].append(building_loads[field])
 
@@ -265,14 +266,17 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
     '''
     This script calculates the average internal loads and ventilation properties for multiuse buildings.
 
-    :param properties_df:
+    :param properties_df: DataFrame containing the building's occupancy type and the corresponding indoor comfort
+    properties or internal loads.
     :type properties_df: DataFrame
-    :param occupant_densities:
+    :param occupant_densities: DataFrame containing the number of people per square meter for each occupancy type based
+    on the archetypes
     :type occupant_densities: Dict
-    :param list_uses:
+    :param list_uses: list of uses in the project
     :type list_uses: list[str]
-    :properties_DB:
-    :type properties_DB:
+    :param properties_DB: DataFrame containing each occupancy type's indoor comfort properties or internal loads based
+    on the corresponding archetypes
+    :type properties_DB: DataFrame
 
     :return properties_df: the same DataFrame as the input parameter, but with the updated properties for multiuse
     buildings
@@ -282,6 +286,7 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
 
     for column in properties_df.columns:
         if column in ['Ve_lps','Qs_Wp', 'X_ghp', 'Vww_lpd', 'Vw_lpd']:
+            properties_df[column] = properties_df[column].astype(float)
             for building in properties_df.index:
                 column_total = 0
                 people_total = 0
