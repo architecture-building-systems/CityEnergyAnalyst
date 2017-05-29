@@ -19,8 +19,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_flag=True, Qcrefri_flag=True,
-                  Eal_flag=True, Eaux_flag=True, Epro_flag=True, Edata_flag=True):
+def costs_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_flag=True, Qcrefri_flag=True,
+                    Eal_flag=True, Eaux_flag=True, Epro_flag=True, Edata_flag=True):
 
     # get local files
     ## get demand results for the scenario
@@ -116,7 +116,7 @@ def run_as_script(scenario_path=None):
     if not scenario_path:
         scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    lca_operation(locator=locator)
+    costs_operation(locator=locator)
 
 if __name__ == '__main__':
     import argparse
