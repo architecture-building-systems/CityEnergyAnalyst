@@ -46,91 +46,44 @@ def losses_filter_HVAC(demand, load_withlosses, load_enduse, threshold):
     return demand[(demand.losses >= threshold)].Name.values
 
 
-def retrofit_main(locator_baseline, age_retrofit, age_criteria, eui_heating_criteria,
-                  eui_hotwater_criteria, eui_cooling_criteria, eui_electricity_criteria, emissions_criteria,
-                  heating_costs_criteria, hotwater_costs_criteria, cooling_costs_criteria,
-                  electricity_costs_criteria, heating_losses_criteria,
-                  hotwater_losses_criteria,
-                  cooling_losses_criteria):
+def retrofit_main(locator_baseline, age_retrofit, age_crit, eui_crit, LCA_crit, op_costs_crit, losses_crit):
+
 
     selection_names =[] #list to store names of selected buildings to retrofit
+    #CASE 1
+    for criteria in age_crit:
+        if criteria[0]:
+            age_difference = age_retrofit - criteria[1]
+            age_df = dbfreader.dbf2df(locator_baseline.get_building_age())
+            selection_names.append(("Crit_age",age_filter_HVAC(age_df, age_difference)))
 
-    #CASE 1:
-    if age_criteria[0]:
-        age_difference = age_retrofit - age_criteria[1]
-        age_df = dbfreader.dbf2df(locator_baseline.get_building_age())
-        selection_names.append(("Crit_age",age_filter_HVAC(age_df, age_difference)))
+    #CASE 2
+    for criteria in eui_crit:
+        if criteria[0]:
+            demand_totals = pd.read_csv(locator_baseline.get_total_demand())
+            selection_names.append(("Crit_eui_"+criteria[1], eui_filter_HVAC(demand_totals, criteria[1],
+                                                                             criteria[2])))
 
-    #CASE 2.1:
-    if eui_heating_criteria[0]:
-        demand_totals = pd.read_csv(locator_baseline.get_total_demand())
-        selection_names.append(("Crit_eui_Qhsf", eui_filter_HVAC(demand_totals, eui_heating_criteria[1],
-                                                          eui_heating_criteria[2])))
+    #CASE 3
+    for criteria in op_costs_crit:
+        if criteria[0]:
+            costs_totals = pd.read_csv(locator_baseline.get_costs_operation_file(criteria[1]))
+            selection_names.append(("Crit_cost_"+criteria[1],emissions_filter_HVAC(costs_totals, criteria[1]+"_cost_m2",
+                                                                           criteria[2])))
 
-    # CASE 2.2:
-    if eui_hotwater_criteria[0]:
-        demand_totals = pd.read_csv(locator_baseline.get_total_demand())
-        selection_names.append(("Crit_eui_Qwwf",eui_filter_HVAC(demand_totals, eui_hotwater_criteria[1],
-                                                         eui_hotwater_criteria[2])))
-
-    # CASE 2.3:
-    if eui_cooling_criteria[0]:
-        demand_totals = pd.read_csv(locator_baseline.get_total_demand())
-        selection_names.append(("Crit_eui_Qcsf",eui_filter_HVAC(demand_totals, eui_cooling_criteria[1],
-                                                         eui_cooling_criteria[2])))
-
-    # CASE 2.4:
-    if eui_electricity_criteria[0]:
-        demand_totals = pd.read_csv(locator_baseline.get_total_demand())
-        selection_names.append(("Crit_eui_Ef",eui_filter_HVAC(demand_totals, eui_electricity_criteria[1],
-                                                         eui_electricity_criteria[2])))
-
-    # CASE 3:
-    if emissions_criteria[0]:
-        emissions_totals = pd.read_csv(locator_baseline.get_lca_operation())
-        selection_names.append(("Crit_ghg_tot",emissions_filter_HVAC(emissions_totals, emissions_criteria[1],
-                                                               emissions_criteria[2])))
-
-    #CASE 4.1
-    if heating_costs_criteria[0]:
-        costs_totals = pd.read_csv(locator_baseline.get_costs_operation_file(heating_costs_criteria[1]))
-        selection_names.append(("Crit_cost_Qhsf",emissions_filter_HVAC(costs_totals, heating_costs_criteria[1]+"_cost_m2",
-                                                     heating_costs_criteria[2])))
-
-    #CASE 4.2
-    if hotwater_costs_criteria[0]:
-        costs_totals = pd.read_csv(locator_baseline.get_costs_operation_file(hotwater_costs_criteria[1]))
-        selection_names.append(("Crit_cost_Qwwf",emissions_filter_HVAC(costs_totals, hotwater_costs_criteria[1]+"_cost_m2",
-                                                     hotwater_costs_criteria[2])))
-
-    #CASE 4.3
-    if cooling_costs_criteria[0]:
-        costs_totals = pd.read_csv(locator_baseline.get_costs_operation_file(cooling_costs_criteria[1]))
-        selection_names.append(("Crit_cost_Qcsf",emissions_filter_HVAC(costs_totals, cooling_costs_criteria[1]+"_cost_m2",
-                                                     cooling_costs_criteria[2])))
-
-    #CASE 4.4
-    if electricity_costs_criteria[0]:
-        costs_totals = pd.read_csv(locator_baseline.get_costs_operation_file(electricity_costs_criteria[1]))
-        selection_names.append(("Crit_cost_Ef",emissions_filter_HVAC(costs_totals, electricity_costs_criteria[1]+"_cost_m2",
-                                                     electricity_costs_criteria[2])))
-
-    #CASE 5.1
-    if heating_losses_criteria:
-        demand_totals = pd.read_csv(locator_baseline.get_total_demand())
-        selection_names.append(("Crit_loss_Qhsf", losses_filter_HVAC(demand_totals, heating_losses_criteria[1],
-                                                                     heating_losses_criteria[2],
-                                                                     heating_losses_criteria[3])))
-    if hotwater_losses_criteria:
-        demand_totals = pd.read_csv(locator_baseline.get_total_demand())
-        selection_names.append(("Crit_loss_Qwwf", losses_filter_HVAC(demand_totals, hotwater_losses_criteria[1],
-                                                                     hotwater_losses_criteria[2],
-                                                                     hotwater_losses_criteria[3])))
-    if cooling_losses_criteria:
-        demand_totals = pd.read_csv(locator_baseline.get_total_demand())
-        selection_names.append(("Crit_loss_Qcsf", losses_filter_HVAC(demand_totals, cooling_losses_criteria[1],
-                                                                     cooling_losses_criteria[2],
-                                                                     cooling_losses_criteria[3])))
+    # CASE 4
+    for criteria in losses_crit:
+        if criteria[0]:
+            demand_totals = pd.read_csv(locator_baseline.get_total_demand())
+            selection_names.append(("Crit_loss_"+criteria[1], losses_filter_HVAC(demand_totals, criteria[1],
+                                                                         criteria[2],
+                                                                         criteria[3])))
+    #CASE 5
+    for criteria in LCA_crit:
+        if criteria[0]:
+            emissions_totals = pd.read_csv(locator_baseline.get_lca_operation())
+            selection_names.append(("Crit_ghg_tot",emissions_filter_HVAC(emissions_totals, criteria[1],
+                                                                         criteria[2])))
 
     #appending all the resutls
     counter = 0
@@ -147,17 +100,26 @@ def retrofit_main(locator_baseline, age_retrofit, age_criteria, eui_heating_crit
     # fill with FALSE for those buildings that do not comply the criteria
     data.fillna(value="FALSE", inplace=True)
 
+    # Create a retrofit case with the buildings that
+    retrofit_scenario_creator()
     #save results of filer
     data.to_csv(locator_baseline.get_retrofit_filters())
 
+def retrofit_scenario_creator():
+    """
+    This creates a new retrofit scenario, based on the criteria we have selected as True
+    :return:
+    """
 
 def run_as_script(scenario_path=None):
     gv = cea.globalvar.GlobalVariables()
     if scenario_path is None:
         scenario_path = gv.scenario_reference
 
+    ## INPUTS
+    locator_baseline = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     # for the interface it would be good if the default values where calculated as 2 standard deviations of
-    #the case study.
+
     # CRITERIA AGE
     age_retrofit = 2020  #[true or false, threshold]
     age_criteria = [True, 15] #[true or false, threshold]
@@ -182,20 +144,17 @@ def run_as_script(scenario_path=None):
     hotwater_losses_criteria = [True, "Qwwf_MWhyr", "Qww_MWhyr", 15]  # [true or false, threshold]
     cooling_losses_criteria = [True, "Qcsf_MWhyr", "Qcs_MWhyr", 15]   # [true or false, threshold]
 
+    ##PROCESS
+    age_crit = [age_criteria]
+    eui_crit = [eui_heating_criteria, eui_hotwater_criteria, eui_cooling_criteria, eui_electricity_criteria]
+    LCA_crit = [emissions_operation_criteria]
+    op_costs_crit = [heating_costs_criteria, hotwater_costs_criteria, cooling_costs_criteria, electricity_costs_criteria]
+    losses_crit = [heating_losses_criteria, hotwater_losses_criteria, cooling_losses_criteria]
+    retrofit_main(locator_baseline=locator_baseline,age_retrofit=age_retrofit, age_crit=age_crit, eui_crit=eui_crit,
+                  LCA_crit=LCA_crit,
+                  op_costs_crit=op_costs_crit, losses_crit=losses_crit)
 
-    locator_baseline = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    retrofit_main(locator_baseline=locator_baseline,age_retrofit=age_retrofit, age_criteria=age_criteria,
-                  eui_heating_criteria=eui_heating_criteria, eui_cooling_criteria=eui_cooling_criteria,
-                  eui_hotwater_criteria = eui_hotwater_criteria,
-                  eui_electricity_criteria=eui_electricity_criteria,
-                  emissions_criteria=emissions_operation_criteria,
-                  heating_costs_criteria=heating_costs_criteria,
-                  hotwater_costs_criteria=hotwater_costs_criteria,
-                  cooling_costs_criteria=cooling_costs_criteria,
-                  electricity_costs_criteria=electricity_costs_criteria,
-                  heating_losses_criteria=heating_losses_criteria,
-                  hotwater_losses_criteria=hotwater_losses_criteria,
-                  cooling_losses_criteria=cooling_losses_criteria)
+
 
 if __name__ == '__main__':
     import argparse
