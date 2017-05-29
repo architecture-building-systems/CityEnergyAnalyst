@@ -34,7 +34,7 @@ class Toolbox(object):
 
 class OperationCostsTool(object):
     def __init__(self):
-        self.label = 'Costs Operation'
+        self.label = 'Operation Costs'
         self.description = 'Calculate energy costs due to building operation'
         self.canRunInBackground = False
 
@@ -50,7 +50,7 @@ class OperationCostsTool(object):
 
     def execute(self, parameters, _):
         scenario_path = parameters[0].valueAsText
-        run_cli(scenario_path,)
+        run_cli(scenario_path, 'operation-costs')
 
 
 class RetrofitPotentialTool(object):
