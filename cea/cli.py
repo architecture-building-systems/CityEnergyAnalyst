@@ -40,6 +40,12 @@ def data_helper(args):
                                                       prop_internal_loads_flag='internal-loads' in args.archetypes)
 
 
+def operation_costs(args):
+    """Run the operation costs script with the arguments provided (args.scenario)."""
+    import cea.analysis.operation_costs
+    cea.analysis.operation_costs.run_as_script(scenario_path=args.scenario)
+
+
 def emissions(args):
     """Run the emissions script with the arguments provided."""
     import cea.analysis.operation
@@ -372,6 +378,10 @@ def main():
 
     compile_parser = subparsers.add_parser('compile', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     compile_parser.set_defaults(func=compile)
+
+    operation_costs_parser = subparsers.add_parser('operation-costs',
+                                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    operation_costs_parser.set_defaults(func=operation_costs)
 
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)
