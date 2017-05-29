@@ -21,6 +21,7 @@ class InputLocator(object):
     # SCENARIO
     def __init__(self, scenario_path):
         self.scenario_path = scenario_path
+        self.case_study_path = os.path.dirname(self.scenario_path)
         self.db_path = os.path.join(os.path.dirname(__file__), 'databases')
         self.weather_path = os.path.join(self.db_path, 'weather')
 
@@ -226,9 +227,9 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/retrofit.csv"""
         return self._ensure_folder(self.get_potentials_folder(), "retrofit")
 
-    def get_retrofit_filters(self):
+    def get_retrofit_filters(self, name_retrofit):
         """scenario/outputs/data/potentials/retrofit.csv"""
-        return os.path.join(self.get_potentials_retrofit_folder(), "retrofit_filters.csv")
+        return os.path.join(self.get_potentials_retrofit_folder(), "potential_"+name_retrofit+".csv")
 
     # DATABASES
     def get_default_weather(self):

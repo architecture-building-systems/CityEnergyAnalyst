@@ -4,14 +4,13 @@
 
 from __future__ import division
 
-import multiprocessing as mp
-import os
+import shutil, stat, os
 
 import pandas as pd
-import time
 
 import cea.globalvar
 import cea.inputlocator
+from geopandas import GeoDataFrame as gdf
 from cea.utilities import dbfreader
 
 __author__ = "Jimeno A. Fonseca"
@@ -46,7 +45,7 @@ def losses_filter_HVAC(demand, load_withlosses, load_enduse, threshold):
     return demand[(demand.losses >= threshold)].Name.values
 
 
-def retrofit_main(locator_baseline, age_retrofit, age_crit, eui_crit, LCA_crit, op_costs_crit, losses_crit):
+def retrofit_main(locator_baseline, name_new_scenario, age_retrofit, age_crit, eui_crit, LCA_crit, op_costs_crit, losses_crit):
 
 
     selection_names =[] #list to store names of selected buildings to retrofit
@@ -98,18 +97,37 @@ def retrofit_main(locator_baseline, age_retrofit, age_crit, eui_crit, LCA_crit, 
         counter+=1
 
     # fill with FALSE for those buildings that do not comply the criteria
-    data.fillna(value="FALSE", inplace=True)
+    data.fillna(value="FALSE").to_csv(locator_baseline.get_retrofit_filters(name_new_scenario))
 
-    # Create a retrofit case with the buildings that
-    retrofit_scenario_creator()
-    #save results of filer
-    data.to_csv(locator_baseline.get_retrofit_filters())
+    # Create a retrofit case with the buildings that pass the criteria
+    retrofit_scenario_creator(locator_baseline.scenario_path, os.path.join(locator_baseline.case_study_path,name_new_scenario),
+                              data)
 
-def retrofit_scenario_creator():
+
+def retrofit_scenario_creator(src, dst, data, symlinks=False, ignore=None):
     """
     This creates a new retrofit scenario, based on the criteria we have selected as True
     :return:
     """
+
+    #Create new folder and trow eeror if already existing,
+    shutil.copytree(src, dst, symlinks, ignore)
+
+    #Get locator
+    locator_new_scenario = cea.inputlocator.InputLocator(scenario_path=dst)
+
+    #Import properties buidlings
+    geometry = gdf.from_file(locator_new_scenario.get_building_geometry())
+    geometry.merge(data, on='Name').to_file(locator_new_scenario.get_building_geometry())
+    # age = locator_new_scenario.get_building_age()
+    # architecture = locator_new_scenario.get_building_architecture()
+    # comfort = locator_new_scenario.get_building_comfort()
+    # internal_loads = locator_new_scenario.get_building_internal()
+    # hvac = locator_new_scenario.get_building_hvac()
+    # supply = locator_new_scenario.get_supply_systems_database()
+
+
+
 
 def run_as_script(scenario_path=None):
     gv = cea.globalvar.GlobalVariables()
@@ -121,6 +139,7 @@ def run_as_script(scenario_path=None):
     # for the interface it would be good if the default values where calculated as 2 standard deviations of
 
     # CRITERIA AGE
+    name_new_scenario = "retrofit_HVAC"
     age_retrofit = 2020  #[true or false, threshold]
     age_criteria = [True, 15] #[true or false, threshold]
 
@@ -150,10 +169,9 @@ def run_as_script(scenario_path=None):
     LCA_crit = [emissions_operation_criteria]
     op_costs_crit = [heating_costs_criteria, hotwater_costs_criteria, cooling_costs_criteria, electricity_costs_criteria]
     losses_crit = [heating_losses_criteria, hotwater_losses_criteria, cooling_losses_criteria]
-    retrofit_main(locator_baseline=locator_baseline,age_retrofit=age_retrofit, age_crit=age_crit, eui_crit=eui_crit,
+    retrofit_main(locator_baseline=locator_baseline, name_new_scenario=name_new_scenario, age_retrofit=age_retrofit, age_crit=age_crit, eui_crit=eui_crit,
                   LCA_crit=LCA_crit,
                   op_costs_crit=op_costs_crit, losses_crit=losses_crit)
-
 
 
 if __name__ == '__main__':
