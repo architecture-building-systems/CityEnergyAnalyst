@@ -1,6 +1,7 @@
 include cea/databases/weather/*.epw
-include cea/databases/CH/Archetypes/*.xlsx
-include cea/databases/CH/Benchmarks/benchmark_2000W.xls
-include cea/databases/CH/Systems/*.xls
-include cea/databases/CH/Uncertainty/*.xls
+include cea/databases/archetypes/*.xlsx
+include cea/databases/benchmarks/benchmark_2000W.xls
+include cea/databases/lifecycle/*.xlsx
+include cea/databases/systems/*.xls
+include cea/databases/uncertainty/uncertainty_distributions.xls
 include cea/examples/reference-case-open.zip

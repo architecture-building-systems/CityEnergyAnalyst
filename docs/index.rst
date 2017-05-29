@@ -18,6 +18,7 @@ Welcome to City Energy Analyst's documentation!
    files-generated-by-the-cea
    interfaces
    databases
+   documentation-guide
    how-to-create-a-new-release
    modules/cea
 
