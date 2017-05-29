@@ -12,7 +12,7 @@ import numpy as np
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca", "Daren Thomas", "Martin Mosteiro-Romero"]
+__credits__ = ["Jimeno A. Fonseca", "Daren Thomas", "Martin Mosteiro"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -301,5 +301,3 @@ def read_schedules(use, x):
     area_per_occupant = x['density'].values[:1][0]
 
     return occ, el, dhw, pro, month, area_per_occupant
-
-
