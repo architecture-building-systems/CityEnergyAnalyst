@@ -40,7 +40,7 @@ def emissions_filter_HVAC(emissions, lca, threshold):
 
 def losses_filter_HVAC(demand, load_withlosses, load_enduse, threshold):
     def calc_filter(load_losses, load):
-        if (load_losses  > 0) and (load>0):
+        if (load_losses > 0) and (load > 0):
             return ((load_losses - load) / load) * 100
         else:
             return 0
@@ -95,13 +95,13 @@ def retrofit_main(locator_baseline, name_new_scenario, select_only_all_criteria,
     else:
         type_of_join = "outer"
     counter = 0
-    for (x, b) in selection_names:
+    for (criteria, list_true_values) in selection_names:
         if counter == 0:
-            data = pd.DataFrame({"Name": b})
-            data[x] = "TRUE"
+            data = pd.DataFrame({"Name": list_true_values})
+            data[criteria] = "TRUE"
         else:
-            y = pd.DataFrame({"Name": b})
-            y[x] = "TRUE"
+            y = pd.DataFrame({"Name": list_true_values})
+            y[criteria] = "TRUE"
             data = data.merge(y, on="Name", how=type_of_join)
         counter += 1
 
