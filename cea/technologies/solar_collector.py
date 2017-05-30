@@ -114,7 +114,7 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, 
         radiation = pd.DataFrame({'I_sol': group_radiation[group]})  # choose vector with all values of Isol
         radiation['I_diffuse'] = weather_data.ratio_diffhout * radiation.I_sol  # calculate diffuse radiation
         radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']  # calculate direct radiation
-
+        radiation.fillna(0, inplace=True)  # set nan to zero
         IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle, type_SCpanel, latitude, Sz)  # calculate incidence angle modifier for beam radiation
 
         listresults[group] = calc_SC_module(radiation, tilt_angle, IAM_b, radiation.I_direct,
@@ -260,7 +260,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
         for time in range(8760):
             Mfl = specific_flows[flow][time]  # [kg/s]
             if time < TIME0 + DELT / 2:
-                # set output values to teh appropriate initial values
+                # set output values to the appropriate initial values
                 for Iseg in range(101, 501):  # 400 points with the data
                     STORED[Iseg] = Tin
             else:
@@ -331,7 +331,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
                     q_mtherm = (TflB[Iseg] - TflA[Iseg]) * C_eff / delts  # total heat change rate of thermal capacitance
                     q_balance_error = q_gain - q_fluid - q_mtherm
                     if abs(q_balance_error) > 1:
-                        time = time      # re-enter the iteration when energy balance not satisfied
+                        time = time        # re-enter the iteration when energy balance not satisfied
                 q_gain_Seg[Iseg] = q_gain  # in W/m2
 
             # resulting net energy output
