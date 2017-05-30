@@ -40,7 +40,7 @@ def emissions_filter_HVAC(emissions, lca, threshold):
 
 def losses_filter_HVAC(demand, load_withlosses, load_enduse, threshold):
     def calc_filter(load_losses, load):
-        if load_losses  > 0:
+        if (load_losses  > 0) and (load>0):
             return ((load_losses - load) / load) * 100
         else:
             return 0
