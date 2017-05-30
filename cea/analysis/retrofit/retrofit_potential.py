@@ -51,6 +51,7 @@ def losses_filter_HVAC(demand, load_withlosses, load_enduse, threshold):
 
 def retrofit_main(locator_baseline, name_new_scenario, select_only_all_criteria,
                   age_retrofit, age_crit, eui_crit, LCA_crit, op_costs_crit, losses_crit):
+
     selection_names = []  # list to store names of selected buildings to retrofit
     # CASE 1
     for criteria in age_crit:
