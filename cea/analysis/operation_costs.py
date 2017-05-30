@@ -5,7 +5,6 @@ from __future__ import division
 
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
-import os
 import cea.globalvar
 import cea.inputlocator
 
@@ -125,4 +124,3 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
     args = parser.parse_args()
     run_as_script(scenario_path=args.scenario)
-
