@@ -9,6 +9,7 @@ into 3D geometry with windows and roof equivalent to LOD3
 import pyliburo.py3dmodel.construct as construct
 import pyliburo.py3dmodel.fetch as fetch
 import pyliburo.py3dmodel.calculate as calculate
+from pyliburo import py3dmodel as py3dmodel
 import pyliburo.py3dmodel.modify as modify
 import pyliburo.pycitygml as pycitygml
 import pyliburo.gml3dmodel as gml3dmodel
@@ -36,30 +37,31 @@ __status__ = "Production"
 
 def identify_surfaces_type(occface_list):
 
-    facade_list = []
     roof_list = []
     footprint_list = []
-    vec1 = (0, 0, 1)
+    facade_list_north = []
+    facade_list_west = []
+    facade_list_east = []
+    facade_list_south = []
+    vec_vertical = (0, 0, 1)
+    vec_horizontal = (0, 1, 0)
 
     # distinguishing between facade, roof and footprint.
     for f in occface_list:
         # get the normal of each face
         n = py3dmodel.calculate.face_normal(f)
-        angle = py3dmodel.calculate.angle_bw_2_vecs(vec1, n)
+        flatten_n = [n[0],n[1],0] # need to flatten to erase Z just to consider vertical surfaces.
+        angle_to_vertical = py3dmodel.calculate.angle_bw_2_vecs(vec_vertical, n)
+        angle_to_horizontal = py3dmodel.calculate.angle_bw_2_vecs_w_ref(vec_horizontal, flatten_n, vec_vertical)
         # means its a facade
-        if angle > 45 and angle < 135:
-            facade_list.append(f)
-        elif angle <= 45:
+        if angle_to_vertical > 45 and angle_to_vertical < 135:
+            if (0 <= angle_to_horizontal) <= 45  or  (315 <= angle_to_horizontal <= 360):
+                facade_list_north.append(f)
+
+        elif angle_to_vertical <= 45:
             roof_list.append(f)
-        elif angle >= 135:
+        elif angle_to_vertical >= 135:
             footprint_list.append(f)
-
-    facade_list_north = []
-    roof_list = []
-    footprint_list = []
-    vec1 = (0, 0, 1)
-    for f in facade_list:
-
 
     return facade_list_north, facade_list_west, facade_list_east, facade_list_south, roof_list, footprint_list
 
@@ -178,7 +180,8 @@ def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architectu
 
             # identify building surfaces according to angle:
             face_list = py3dmodel.fetch.faces_frm_solid(bldg_solid)
-            facade_list, roof_list, footprint_list = identify_surfaces_type(face_list)
+            facade_list, facade_list_north, facade_list_west,\
+            facade_list_east, facade_list_south, roof_list, footprint_list = identify_surfaces_type(face_list)
 
 
             facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(bldg_solid)
