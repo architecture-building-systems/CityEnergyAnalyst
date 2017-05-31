@@ -57,14 +57,18 @@ def identify_surfaces_type(occface_list):
         if angle_to_vertical > 45 and angle_to_vertical < 135:
             if (0 <= angle_to_horizontal) <= 45  or  (315 <= angle_to_horizontal <= 360):
                 facade_list_north.append(f)
-
+            elif (45 < angle_to_horizontal < 135):
+                facade_list_west.append(f)
+            elif (135 <= angle_to_horizontal <= 225):
+                facade_list_south.append(f)
+            elif (225 < angle_to_horizontal < 315):
+                facade_list_east.append(f)
         elif angle_to_vertical <= 45:
             roof_list.append(f)
         elif angle_to_vertical >= 135:
             footprint_list.append(f)
 
     return facade_list_north, facade_list_west, facade_list_east, facade_list_south, roof_list, footprint_list
-
 
 def calc_intersection(terrain_intersection_curves, edges_coords, edges_dir):
     """
@@ -183,49 +187,31 @@ def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architectu
             facade_list, facade_list_north, facade_list_west,\
             facade_list_east, facade_list_south, roof_list, footprint_list = identify_surfaces_type(face_list)
 
-
-            facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(bldg_solid)
-
+            window_list = []
+            wall_list = []
             # calculate windows in facade_list
             if name in zone_building_names:
                 # get window properties
-                wwr_west = architecture_wwr.loc[name,"wwr_west"]
-                wwr_east = architecture_wwr.loc[name,"wwr_east"]
-                wwr_north = architecture_wwr.loc[name,"wwr_north"]
-                wwr_south = architecture_wwr.loc[name,"wwr_south"]
+                wwr_west = architecture_wwr.loc[name, "wwr_west"]
+                wwr_east = architecture_wwr.loc[name, "wwr_east"]
+                wwr_north = architecture_wwr.loc[name, "wwr_north"]
+                wwr_south = architecture_wwr.loc[name, "wwr_south"]
 
-                for surface_facade in facade_list:
-
+                for surface_facade in facade_list_north:
                     ref_pypt = calculate.face_midpt(surface_facade)
                     # offset the facade to create a window according to the wwr
-                    if 0.0 < wwr < 1.0:
-                        window = create_windows(surface_facade, wwr, ref_pypt)
-                        create_radiance_srf(window, "win" + str(bcnt) + str(fcnt),
-                                            "win" + str(ageometry_table['type_win'][bldg_name]), rad)
+                    if 0.0 < wwr_north < 1.0:
+                        window = create_windows(surface_facade, wwr_north, ref_pypt)
                         window_list.append(window)
 
                         # triangulate the wall with hole
-                        hollowed_facade, hole_facade = create_hollowed_facade(surface_facade,
-                                                                              window)  # accounts for hole created by window
-                        wall_list.append(hole_facade)
+                        hollowed_facade, hole_facade = create_hollowed_facade(surface_facade, window)  # accounts for hole created by window
+                        wall_list.append(hollowed_facade)
 
-                        # check the elements of the wall do not have 0 area and send to radiance
-                        for triangle in hollowed_facade:
-                            tri_area = calculate.face_area(triangle)
-                            if tri_area > 1E-3:
-                                create_radiance_srf(triangle, "wall" + str(bcnt) + str(fcnt),
-                                                    "wall" + str(ageometry_table['type_wall'][bldg_name]), rad)
-
-
-
-
-
-
-
-
-            bsolid_list.append(bldg_solid)
-
-        #identify building surfaces according to angle:
+                    elif wwr_north== 1.0:
+                        window_list.append(surface_facade)
+                    else:
+                        wall_list.append(surface_facade)
 
 
     return bsolid_list
