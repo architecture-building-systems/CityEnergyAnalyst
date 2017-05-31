@@ -177,8 +177,8 @@ def calc_groups(sensors_rad_clean, sensors_metadata_cat):
     groups_ob = sensors_metadata_cat.groupby(['CATB', 'CATGB', 'CATteta_z']) # group the sensors by categories
     prop_observers = groups_ob.mean().reset_index()
     prop_observers = pd.DataFrame(prop_observers)
-    total_area_pv = groups_ob['area_netpv'].sum().reset_index()['area_netpv']
-    prop_observers['total_area_pv'] = total_area_pv
+    total_area_module = groups_ob['area_module'].sum().reset_index()['area_module']
+    prop_observers['total_area_module'] = total_area_module
     number_groups = groups_ob.size().count()
     sensors_list = groups_ob.groups.values()
 
@@ -251,7 +251,7 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
     for group in range(number_groups):
         # read panel properties of each group
         teta_z = prop_observers.loc[group,'surface_azimuth']
-        area_per_group = prop_observers.loc[group,'total_area_pv']
+        area_per_group = prop_observers.loc[group,'total_area_module']
         tilt_angle = prop_observers.loc[group,'B']
         # degree to radians
         tilt = radians(tilt_angle) #tilt angle
@@ -528,7 +528,7 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     sensors_metadata_clean.array_s / 2 + module_length * [cos(optimal_angle_flat)])
 
     # calculate the pv module area within the area of each sensor point
-    sensors_metadata_clean['area_netpv'] = np.where(sensors_metadata_clean['tilt'] >= 5, sensors_metadata_clean.AREA_m2,
+    sensors_metadata_clean['area_module'] = np.where(sensors_metadata_clean['tilt'] >= 5, sensors_metadata_clean.AREA_m2,
                                                     module_length**2 * (sensors_metadata_clean.AREA_m2/surface_area_flat))
 
     # categorize the sensors by surface_azimuth, B, GB
@@ -699,7 +699,7 @@ def calc_properties_PV(database_path, type_PVpanel):
     """
 
     data = pd.read_excel(database_path, sheetname="PV")
-    panel_properties = data[data['code'] == type_PVpanel].T.to_dict()[0]
+    panel_properties = data[data['code'] == type_PVpanel].reset_index().T.to_dict()[0]
 
     return panel_properties
 
