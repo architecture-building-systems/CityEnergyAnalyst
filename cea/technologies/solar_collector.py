@@ -44,7 +44,7 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
 
     # get properties of the panel to evaluate
     panel_properties = calc_properties_SC_db(locator.get_supply_systems_database(), type_SCpanel)
-    print 'gathering properties of PV panel'
+    print 'gathering properties of Solar collector panel'
 
     # select sensor point with sufficient solar radiation
     max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
@@ -58,7 +58,7 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
     if not sensors_metadata_clean.empty:
         # calculate optimal angle and tilt for panels
         sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az, trr_mean,
-                                                      max_yearly_radiation, module_length=2) #FIXME: change module length to panel property
+                                                      max_yearly_radiation, panel_properties) #TODO: change module length to panel property
         print 'calculating optimal tile angle and separation done'
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
@@ -66,14 +66,15 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
 
         print 'generating groups of sensor points done'
 
-        results, Final = SC_generation(type_SCpanel, hourlydata_groups, prop_observers, number_groups, number_points, weather_data, g, Sz, Az, ha,
-                                  latitude, T_in, height)
+        #calculate heat production from solar collectors
+        results, Final = SC_generation(type_SCpanel, hourlydata_groups, prop_observers, number_groups, number_points,
+                                       weather_data, g, Sz, Az, ha, latitude, T_in, height)
 
 
         Final.to_csv(locator.SC_results(building_name= building_name), index=True, float_format='%.2f')  # print PV generation potential
         sensors_metadata_cat.to_csv(locator.SC_metadata_results(building_name= building_name), index=True, float_format='%.2f')  # print selected metadata of the selected sensors
 
-        print 'done - time elapsed:', (time.clock() - t0), ' seconds'
+        print 'Building', building_name,'done - time elapsed:', (time.clock() - t0), ' seconds'
     return
 
 # =========================
@@ -95,12 +96,14 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, 
     Sum_qloss = np.zeros(8760)
 
     Tin_array = np.zeros(8760) + Tin
-    Sum_Area_m = (prop_observers['AREA_m2'].values*number_points.T).sum() # total area for panel installation
+    total_area_module = prop_observers['total_area_module'].sum() # total area for panel installation
 
-    lv = 2  # grid lenght module length # TODO: change to module length
-    l_ext = (2 * lv * number_points.sum()) / (Sum_Area_m * Aratio)
-    l_int = 2 * height / (Sum_Area_m * Aratio)
-    Leq = l_int + l_ext  # in m/m2
+    # calculate equivalent length
+    lv = 2  # grid length module length # TODO: change to module length
+    number_modules = round(total_area_module/Apanel)
+    l_ext = (2 * lv * number_modules/ (total_area_module * Aratio))
+    l_int = 2 * height / (total_area_module * Aratio)
+    Leq = l_int + l_ext  # in m/m2 aperture
 
     if type_SCpanel == 'SC2':  # for evacuated tubes #TODO:change to panel_properties['type']=='ET'
         Nseg = 100  # default number of subsdivisions for the calculation #TODO: find reference
@@ -108,15 +111,21 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, 
         Nseg = 10  # default number of subsdivisions for the calculation
 
     for group in range(number_groups):
+        # load panel angles from group
         teta_z = prop_observers.loc[group, 'surface_azimuth']  # azimuth of panels of group
-        area_group = prop_observers.loc[group, 'AREA_m2'] * number_points[group]
+        area_group = prop_observers.loc[group, 'total_area_module']
         tilt_angle = prop_observers.loc[group, 'tilt']  # tilt angle of panels
-        radiation = pd.DataFrame({'I_sol': group_radiation[group]})  # choose vector with all values of Isol
-        radiation['I_diffuse'] = weather_data.ratio_diffhout * radiation.I_sol  # calculate diffuse radiation
-        radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']  # calculate direct radiation
-        radiation.fillna(0, inplace=True)  # set nan to zero
-        IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle, type_SCpanel, latitude, Sz)  # calculate incidence angle modifier for beam radiation
 
+        # create dataframe with irradiation from group
+        radiation = pd.DataFrame({'I_sol': group_radiation[group]})
+        radiation['I_diffuse'] = weather_data.ratio_diffhout * radiation.I_sol  # calculate diffuse radiation
+        radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']     # calculate direct radiation
+        radiation.fillna(0, inplace=True)                                       # set nan to zero
+
+        # calculate incidence angle modifier for beam radiation
+        IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle, type_SCpanel, latitude, Sz)
+
+        # calculate heat production from solar collectors
         listresults[group] = calc_SC_module(radiation, tilt_angle, IAM_b, radiation.I_direct,
                                             radiation.I_diffuse, weather_data.drybulb_C,
                                             n0, c1, c2, mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, aperature_area,
@@ -181,7 +190,7 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, 
 def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector, Tamb_vector, n0, c1, c2,
                    mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, aperture_area, dP1, dP2, dP3, dP4, Tin, Leq, Le, Nseg):
     """
-    This function calculates the heat production of solar collectors. The method is adapted from TRNSYS Type 832.
+    This function calculates the heat production from solar collectors. The method is adapted from TRNSYS Type 832.
     :param radiation:
     :param tilt_angle:
     :param IAM_b_vector:
@@ -255,7 +264,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
         TflB = np.zeros([600, 1])
         TabsB = np.zeros([600, 1])
         TabsA = np.zeros([600, 1])
-        q_gain_Seg = np.zeros([100, 1])
+        q_gain_Seg = np.zeros([101, 1])  # maximum Iseg = maximum Nseg + 1 = 101
 
         for time in range(8760):
             Mfl = specific_flows[flow][time]  # [kg/s]
@@ -266,7 +275,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
             else:
                 # write average temperature of all segments at the end of previous time-step
                 # as the initial temperature of the present time-step
-                for Iseg in range(1, Nseg):  # 400 points with the data
+                for Iseg in range(1, Nseg + 1):  # 400 points with the data
                     STORED[100 + Iseg] = STORED[200 + Iseg] # thermal capacitance node temperature
                     STORED[300 + Iseg] = STORED[400 + Iseg] # absorber node temperature
 
@@ -298,7 +307,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
             # calculate q_gain with the guess for DT[1]
             q_gain = calc_q_gain(Tfl, Tabs, q_rad, DT, Tin, Tout, aperture_area, c1, c2, Mfl, delts, Cp_waterglycol, C_eff, Tamb)
 
-            A_seg = aperture_area / Nseg # aperture area of one segment
+            A_seg = aperture_area / Nseg # aperture area per segment
             # multi-segment calculation to avoid temperature jump at times of flow rate changes.
             for Iseg in range(1, Nseg + 1):
                 # get temperatures of the previous time-step
@@ -312,7 +321,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
                 if Mfl > 0 and Mo_seg == 1:  # same heat gain/ losses for all segments
                     Tout_Seg = ((Mfl * Cp_waterglycol * (Tin_Seg + 273)) / A_seg - (C_eff * (Tin_Seg + 273)) / (2 * delts) + q_gain +
                                (C_eff * (TflA[Iseg] + 273) / delts)) / (Mfl * Cp_waterglycol / A_seg + C_eff / (2 * delts))
-                    Tout_Seg = Tout_Seg - 273
+                    Tout_Seg = Tout_Seg - 273  # in [C]
                     TflB[Iseg] = (Tin_Seg + Tout_Seg) / 2
                 else: # heat losses based on each segment's inlet and outlet temperatures.
                     Tfl[1] = TflA[Iseg]
@@ -332,10 +341,10 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
                     q_balance_error = q_gain - q_fluid - q_mtherm
                     if abs(q_balance_error) > 1:
                         time = time        # re-enter the iteration when energy balance not satisfied
-                q_gain_Seg[Iseg] = q_gain  # in W/m2
+                q_gain_Seg[Iseg] = q_gain  # in W/m2 # fixme: redundant?
 
             # resulting net energy output
-            q_out = Mfl * Cp_waterglycol * (Tout_Seg - Tin)
+            q_out = (Mfl * Cp_waterglycol * (Tout_Seg - Tin))/1000   #[kW]
             Tabs[2] = 0
             # storage of the mean temperature
             for Iseg in range(1, Nseg + 1):
@@ -346,7 +355,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
             # outputs
             temperature_out[flow][time] = Tout_Seg
             temperature_in[flow][time] = Tin
-            supply_out[flow][time] = q_out / 1000  # in kW
+            supply_out[flow][time] = q_out
             temperature_mean[flow][time] = (Tin + Tout_Seg) / 2  # Mean absorber temperature at present
 
             q_gain = 0
@@ -394,7 +403,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
             supply_out_pre = supply_out[flow].copy() + supply_losses[flow].copy()
             auxiliary_electricity[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow],
                                                          Leq, aperture_area)  # in kW
-            supply_out_total = supply_out + 0.5 * auxiliary_electricity[flow] - supply_losses[flow]
+            supply_out_total = supply_out + 0.5 * auxiliary_electricity[flow] - supply_losses[flow]  #fixme: why???
             mcp = specific_flows[flow] * (Cp_waterglycol / 1000)  # mcp in kW/c
 
     result = [supply_losses[5], supply_out_total[5], auxiliary_electricity[5], temperature_out[flow], temperature_in[flow], mcp]
@@ -492,6 +501,7 @@ def calc_qloss_network(Mfl, Le, Area_a, Tm, Te, maxmsc):
     """
 
     qloss = 0.217 * Le * Area_a * (Tm - Te) * (Mfl / maxmsc) / 1000  # TODO: find reference for constant
+    #fixme: not exactly the same as eq.(61) in the CEA paper
     return qloss  # in kW
 
 
@@ -563,7 +573,7 @@ def calc_IAM_beam_SC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, type_SC
         Teta_T = 0  # not necessary for flat plate collectors
     if type_SCpanel == 'SC2':  ##TODO: change to panel_properties['type']=='ET'
         Teta_L = np.vectorize(calc_teta_L)(Az_vector, teta_z, tilt, Sz_vector)  # in degrees
-        Teta_T = np.vectorize(calc_teta_T)(Az_vector, Sz_vector, teta_z, Incidence_vector)  # in degrees
+        Teta_T = np.vectorize(calc_teta_T)(Az_vector, Sz_vector, teta_z)  # in degrees
 
     # calculate incident angle modifier for beam radiation
     IAM_b_vector = np.vectorize(calc_IAMb)(Teta_L, Teta_T, type_SCpanel)
@@ -580,7 +590,7 @@ def calc_properties_SC_db(database_path, type_SCpanel):
     """
 
     data = pd.read_excel(database_path, sheetname="SC")
-    panel_properties = data[data['code'] == type_SCpanel].T.to_dict()[0]
+    panel_properties = data[data['code'] == type_SCpanel].reset_index().T.to_dict()[0]
 
     return panel_properties
 
@@ -839,8 +849,8 @@ def test_solar_collector():
     T_in = 75 # average temeperature #FIXME:defininition
     worst_hour = 8744  # first hour of sun on the solar solstice
     misc_losses = 0.1  # cabling, resistances etc.. #TODO:delete
-    sc_on_roof = True  # flag for considering PV on roof #FIXME: define
-    sc_on_wall = True  # flag for considering PV on wall #FIXME: define
+    sc_on_roof = True  # flag for considering panels on roof
+    sc_on_wall = True  # flag for considering panels on wall
     longitude = 7.439583333333333
     latitude = 46.95240555555556
     date_start = gv.date_start
