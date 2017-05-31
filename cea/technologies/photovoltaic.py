@@ -75,7 +75,7 @@ def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
     if not sensors_metadata_clean.empty:
         # calculate optimal angle and tilt for panels
         sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az, trr_mean,
-                                                      max_yearly_radiation, panel_properties['PV_L'])
+                                                      max_yearly_radiation, panel_properties)
         print 'calculating optimal tile angle and separation done'
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
@@ -177,8 +177,8 @@ def calc_groups(sensors_rad_clean, sensors_metadata_cat):
     groups_ob = sensors_metadata_cat.groupby(['CATB', 'CATGB', 'CATteta_z']) # group the sensors by categories
     prop_observers = groups_ob.mean().reset_index()
     prop_observers = pd.DataFrame(prop_observers)
-    total_area_module = groups_ob['area_module'].sum().reset_index()['area_module']
-    prop_observers['total_area_module'] = total_area_module
+    total_area_installed_module = groups_ob['area_installed_module'].sum().reset_index()['area_installed_module']
+    prop_observers['total_area_module'] = total_area_installed_module
     number_groups = groups_ob.size().count()
     sensors_list = groups_ob.groups.values()
 
