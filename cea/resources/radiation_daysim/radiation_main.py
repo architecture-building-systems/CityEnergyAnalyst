@@ -97,20 +97,10 @@ def filter_bldgs_of_interest(gmlbldgs, bldg_of_interest_name_list, citygml_reade
             
     return eligible_bldgs, n_eligible_bldgs
 
-def surfaces2radiance(id, surface, rad):
+def terrain2radiance(id, surface, rad):
     py2radiance.RadSurface("terrain_srf" + str(id), surface, "reflectance0.2", rad)
 
-def create_windows(surface, wwr, ref_pypt):
-    return fetch.shape2shapetype(modify.uniform_scale(surface, wwr, wwr, wwr, ref_pypt))
-
-def create_hollowed_facade(surface_facade, window):
-    b_facade_cmpd = fetch.shape2shapetype(construct.boolean_difference(surface_facade, window))
-    hole_facade = fetch.geom_explorer(b_facade_cmpd, "face")[0]
-    hollowed_facade = construct.simple_mesh(hole_facade)
-
-    return hollowed_facade, hole_facade
-
-def geometry2radiance(rad, ageometry_table, citygml_reader):
+def buildings2radiance(rad, ageometry_table, citygml_reader):
     bldg_dict_list = []
 
     #translate the terrain into radiance surface 
@@ -267,7 +257,7 @@ def radiation_daysim_main(weatherfile_path, locator):
     rad = py2radiance.Rad(daysim_mat, results_path)
     add_rad_mat(daysim_mat, building_surface_properties)
 
-    bldg_dict_list = geometry2radiance(rad, building_surface_properties, citygml_reader)
+    bldg_dict_list = buildings2radiance(rad, building_surface_properties, citygml_reader)
     rad.create_rad_input_file()
 
     print "Files sent to Daysim"
