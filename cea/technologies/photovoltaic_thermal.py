@@ -6,7 +6,11 @@ Photovoltaic thermal panels
 from __future__ import division
 import numpy as np
 import pandas as pd
+import geopandas as gpd
+import cea.globalvar
+import cea.inputlocator
 from math import *
+from cea.utilities import dbfreader
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 from cea.technologies.solar_collector import optimal_angle_and_tilt, \
@@ -24,41 +28,51 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_PVT(locator, sensors_data, radiation, latitude, longitude, year, gv, weather_path):
-    # weather data
+def calc_PVT(locator, radiation_csv, metadata_csv, latitude, longitude, weather_path, building_name,
+             panel_on_roof, panel_on_wall, misc_losses, worst_hour, type_SCpanel, T_in, min_radiation, date_start):
 
+    # weather data
     weather_data = epwreader.epw_reader(weather_path)
+    print 'reading weather data done'
 
     # solar properties
-    g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
-                                                                                      gv)
+    g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude,longitude, weather_data,
+                                                                                                        date_start,
+                                                                                                        worst_hour)
+    print 'calculating solar properties done'
 
-    # read radiation file
-    hourly_data = pd.read_csv(radiation)
+    # get properties of the panel to evaluate
+    # panel_properties = calc_properties_SC_db(locator.get_supply_systems_database(), type_SCpanel)
+    # print 'gathering properties of Solar collector panel'
 
-    # get only datapoints with production beyond min_production
-    Max_Isol = hourly_data.total.max()
-    Min_Isol = Max_Isol * gv.min_production  # 80% of the local average maximum in the area
-    sensors_data_clean = sensors_data[sensors_data["total"] > Min_Isol]
-    radiation_clean = radiation.loc[radiation['sensor_id'].isin(sensors_data_clean.sensor_id)]
+    # select sensor point with sufficient solar radiation
+    max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
+        solar_equations.filter_low_potential(weather_data, radiation_csv, metadata_csv, min_radiation, panel_on_roof, panel_on_wall)
 
-    # get only datapoints with aminimum 50 W/m2 of radiation for energy production
-    radiation_clean[radiation_clean[:] <= 50] = 0
+    print 'filtering low potential sensor points done'
 
     # Calculate the heights of all buildings for length of vertical pipes
-    height = locator.get_total_demand().height.sum()
+    height = gpd.read_file(locator.get_building_geometry())['height_ag'].sum()
 
-    # calculate optimal angle and tilt for panels
-    optimal_angle_and_tilt(sensors_data, latitude, worst_sh, worst_Az, trr_mean, gv.grid_side,
+    if not sensors_metadata_clean.empty:
+
+        # calculate optimal angle and tilt for panels
+        sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az, trr_mean, gv.grid_side,
                            gv.module_lenght_PV, gv.angle_north, Min_Isol, Max_Isol)
+        print 'calculating optimal tile angle and separation done'
 
-    Number_groups, hourlydata_groups, number_points, prop_observers = calc_groups(radiation_clean, sensors_data_clean)
+        # group the sensors with the same tilt, surface azimuth, and total radiation
+        number_groups, hourlydata_groups, number_points, prop_observers = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
 
-    Tin = 35
-    result, Final = calc_PVT_generation(gv.type_PVpanel, hourlydata_groups,Number_groups, number_points, prop_observers,
+        print 'generating groups of sensor points done'
+
+        Number_groups, hourlydata_groups, number_points, prop_observers = calc_groups(radiation_clean, sensors_data_clean)
+
+        Tin = 35
+        result, Final = calc_PVT_generation(gv.type_PVpanel, hourlydata_groups,Number_groups, number_points, prop_observers,
                                         weather_data, g, Sz, Az, ha, latitude, gv.misc_losses, gv.type_SCpanel, Tin, height)
 
-    Final.to_csv(locator.PVT_result(), index=True, float_format='%.2f')
+        Final.to_csv(locator.PVT_result(), index=True, float_format='%.2f')
     return
 
 
@@ -73,7 +87,9 @@ def calc_PVT_generation(type_panel, hourly_radiation, Number_groups, number_poin
 
     # get properties of the panel to evaluate
     n0, c1, c2, mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, Aratio, Apanel, dP1, dP2, dP3, dP4 = calc_properties_SC(
-        type_SCpanel)
+        type_SCpanel)  # TODO: move out
+
+
     Area_a = Aratio * Apanel
     listresults = list(range(Number_groups))
     listareasgroups = list(range(Number_groups))
@@ -355,16 +371,31 @@ def calc_Cinv_PVT(P_peak, gv):
     return InvCa
 
 def test_PVT():
-    import cea.inputlocator
-    locator = cea.inputlocator.InputLocator(r'C:\reference-case\baseline')
-    # for the interface, the user should pick a file out of of those in ...DB/Weather/...
-    weather_path = locator.get_default_weather()
-    radiation = locator.get_radiation()
     gv = cea.globalvar.GlobalVariables()
+    scenario_path = gv.scenario_reference
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    weather_path = locator.get_default_weather()
+    list_buildings_names = dbfreader.dbf2df(locator.get_building_occupancy())['Name']
 
-    calc_PVT(locator=locator, radiation = radiation, latitude=46.95240555555556, longitude=7.439583333333333, year=2014, gv=gv,
-                             weather_path=weather_path)
 
+    min_radiation = 0.75  # points are selected with at least a minimum production of this % from the maximum in the area.
+    type_SCpanel = 'SC1'  # monocrystalline, T2 is poly and T3 is amorphous. it relates to the database of technologies
+    T_in = 75 # average temeperature #FIXME:defininition
+    worst_hour = 8744  # first hour of sun on the solar solstice
+    misc_losses = 0.1  # cabling, resistances etc.. #TODO:delete
+    sc_on_roof = True  # flag for considering PV on roof #FIXME: define
+    sc_on_wall = True  # flag for considering PV on wall #FIXME: define
+    longitude = 7.439583333333333
+    latitude = 46.95240555555556
+    date_start = gv.date_start
+
+    for building in list_buildings_names:
+        radiation = locator.get_radiation_building(building_name= building)
+        radiation_metadata = locator.get_radiation_metadata(building_name= building)
+        calc_PVT(locator=locator, radiation_csv=radiation, metadata_csv=radiation_metadata, latitude=latitude,
+                longitude=longitude, weather_path=weather_path, building_name=building,
+                panel_on_roof = sc_on_roof, panel_on_wall = sc_on_wall, misc_losses=misc_losses, worst_hour=worst_hour,
+                type_SCpanel=type_SCpanel, T_in=T_in, min_radiation=min_radiation, date_start=date_start)
 
 if __name__ == '__main__':
     test_PVT()
