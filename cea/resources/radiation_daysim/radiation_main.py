@@ -4,9 +4,9 @@ Radiation engine and geometry handler for CEA
 from __future__ import division
 import os
 import pandas as pd
-import time 
+import time
 from cea.resources.radiation_daysim import settings
-from cea.resources.radiation_daysim import create_gml, daysim_main
+from cea.resources.radiation_daysim import create_gml, daysim_main, geometry_generator
 import multiprocessing as mp
 
 import pyliburo.py3dmodel.construct as construct
@@ -97,72 +97,43 @@ def filter_bldgs_of_interest(gmlbldgs, bldg_of_interest_name_list, citygml_reade
             
     return eligible_bldgs, n_eligible_bldgs
 
-def terrain2radiance(id, surface, rad):
-    py2radiance.RadSurface("terrain_srf" + str(id), surface, "reflectance0.2", rad)
-
-def buildings2radiance(rad, ageometry_table, citygml_reader):
-    bldg_dict_list = []
-
-    #translate the terrain into radiance surface 
-    gmlterrains = citygml_reader.get_relief_feature()
-    pytri_list = citygml_reader.get_pytriangle_list(gmlterrains[0])
-    for id, pytri in enumerate(pytri_list):
+def terrain2radiance(rad, tin_occface_terrain):
+    for id, pytri in enumerate(tin_occface_terrain):
         py2radiance.RadSurface("terrain_srf"+ str(id), pytri, "reflectance0.2", rad)
 
+def buildings2radiance(rad, ageometry_table, geometry_buildings):
+    bldg_dict_list = []
+
     #translate buildings into radiance surface
-    bldg_of_interest_name_list = ageometry_table.index.values
-    gmlbldgs = citygml_reader.get_buildings()
-    eligible_bldgs, n_eligible_bldgs = filter_bldgs_of_interest(gmlbldgs, bldg_of_interest_name_list, citygml_reader)
+    building_names = ageometry_table.index.values
 
-    ## for the surrounding buildings
-    for n_gmlbldg in n_eligible_bldgs:
-        pypolgon_list = citygml_reader.get_pypolygon_list(n_gmlbldg)
-        for id, pypolygon in enumerate(pypolgon_list):
-            py2radiance.RadSurface("surroundingbldgs"+ str(id), pypolygon, "reflectance0.2", rad)
+    for bcnt, building_surfaces in enumerate(geometry_buildings):
+        building_name = building_surfaces['Name']
+        if building_name in building_names:
+            for pypolygon in building_surfaces['windows']:
+                create_radiance_srf(pypolygon, "win" + str(bcnt) + str(fcnt),
+                                    "win" + str(ageometry_table['type_win'][building_name]), rad)
+            for pypolygon in building_surfaces['walls']:
+                create_radiance_srf(pypolygon, "wall" + str(bcnt) + str(fcnt),
+                                   "wall" + str(ageometry_table['type_wall'][building_name]), rad)
+            for pypolygon in building_surfaces['roofs']:
+                create_radiance_srf(pypolygon, "roof" + str(bcnt) + str(rcnt),
+                                    "roof" + str(ageometry_table['type_roof'][building_name]), rad)
+                id += 1
+        else:
+            ## for the surrounding buildings
+            id = 0
+            for pypolygon in building_surfaces['windows']:
+                py2radiance.RadSurface("surroundingbldgs"+ str(id), pypolygon, "reflectance0.2", rad)
+                id+=1
+            for pypolygon in building_surfaces['walls']:
+                py2radiance.RadSurface("surroundingbldgs" + str(id), pypolygon, "reflectance0.2", rad)
+                id += 1
+            for pypolygon in building_surfaces['roofs']:
+                py2radiance.RadSurface("surroundingbldgs" + str(id), pypolygon, "reflectance0.2", rad)
+                id += 1
 
-    ## for the
-    for bcnt, gmlbldg in enumerate(eligible_bldgs):
-        bldg_dict = {}
-        window_list = []
-        
-        bldg_name = citygml_reader.get_gml_id(gmlbldg)
-        print "adding windows to building: ", bldg_name
-        pypolgon_list = citygml_reader.get_pypolygon_list(gmlbldg)
-        geo_solid = construct.make_occsolid_frm_pypolygons(pypolgon_list)
-        facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(geo_solid)
-        wall_list = []
-        wwr = ageometry_table["win_wall"][bldg_name]
 
-        for fcnt, surface_facade in enumerate(facade_list):
-            ref_pypt = calculate.face_midpt(surface_facade)
-
-            # offset the facade to create a window according to the wwr
-            if 0.0 < wwr < 1.0:
-                window = create_windows(surface_facade, wwr, ref_pypt)
-                create_radiance_srf(window, "win"+str(bcnt)+str(fcnt), "win" + str(ageometry_table['type_win'][bldg_name]), rad)
-                window_list.append(window)
-
-                # triangulate the wall with hole
-                hollowed_facade, hole_facade = create_hollowed_facade(surface_facade, window) #accounts for hole created by window
-                wall_list.append(hole_facade)
-
-                # check the elements of the wall do not have 0 area and send to radiance
-                for triangle in hollowed_facade:
-                    tri_area = calculate.face_area(triangle)
-                    if tri_area > 1E-3:
-                        create_radiance_srf(triangle, "wall"+str(bcnt)+str(fcnt),
-                                            "wall" + str(ageometry_table['type_wall'][bldg_name]), rad)
-
-            elif wwr == 1.0:
-                create_radiance_srf(surface_facade, "win"+str(bcnt)+str(fcnt), "win" + str(ageometry_table['type_win'][bldg_name]), rad)
-                window_list.append(surface_facade)
-            else:
-                create_radiance_srf(surface_facade, "wall"+str(bcnt)+str(fcnt), "wall" + str(ageometry_table['type_wall'][bldg_name]), rad)
-                wall_list.append(surface_facade)
-
-        for rcnt, roof in enumerate(roof_list):
-            create_radiance_srf(roof, "roof"+str(bcnt)+str(rcnt), "roof" + str(ageometry_table['type_roof'][bldg_name]), rad)
-            
         bldg_dict["name"] = bldg_name
         bldg_dict["windows"] = window_list
         bldg_dict["walls"] = wall_list
@@ -229,43 +200,45 @@ def radiation_singleprocessing(rad, bldg_dict_list, aresults_path, rad_params, a
     for i, bldg_dict in enumerate(bldg_dict_list):
         daysim_main.isolation_daysim(chunk_n, rad, bldg_dict, aresults_path, rad_params, aweatherfile_path)
 
-def radiation_daysim_main(weatherfile_path, locator):
+def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
+                          input_terrain_raster, architecture_dbf):
     """
-    This function makes the calculation of solar insolation in X sensor points for every building in the zone
+        This function makes the calculation of solar insolation in X sensor points for every building in the zone
     of interest. the number of sensor points depends on the size of the grid selected in the SETTINGS.py file and
     are generated automatically.
-
-    :param weatherfile_path: file to weather file
-    :param locator: input locator object
+    :param weatherfile_path:
+    :param locator:
+    :param zone_shp:
+    :param district_shp:
+    :param input_terrain_raster:
+    :param architecture_dbf:
     :return:
     """
 
-    # local variables
+    # import material properties of buildings
     building_surface_properties = reader_surface_properties(locator=locator,
                                                             input_shp=locator.get_building_architecture())
 
-    print "reading surface properties"
-    # city gml reader
-    citygml_reader = pycitygml.Reader()
-    citygml_filepath = locator.get_building_geometry_citygml()
-    citygml_reader.load_filepath(citygml_filepath)
+    print "creating 3D geometry and surfaces"
+    # create geometrical faces of terrain and buildings
+    geometry_terrain, geometry_buildings = geometry_generator.geometry_main(zone_shp, district_shp,
+                                                                            input_terrain_raster, architecture_dbf)
 
-    print "reading back from CityGML file"
-    # Simulation
+    print "Sending the scene: geometry and materials to daysim"
+    # send materials
     daysim_mat = locator.get_daysim_mat()
     results_path = locator.get_solar_radiation_folder()
     rad = py2radiance.Rad(daysim_mat, results_path)
     add_rad_mat(daysim_mat, building_surface_properties)
-
-    bldg_dict_list = buildings2radiance(rad, building_surface_properties, citygml_reader)
+    # send terrain
+    terrain2radiance(rad, geometry_terrain)
+    # send buildings
+    bldg_dict_list = buildings2radiance(rad, building_surface_properties, geometry_terrain, geometry_buildings)
+    # create scene out of all this
     rad.create_rad_input_file()
 
-    print "Files sent to Daysim"
-
-    # Simulation
     print "Daysim simulation starts"
     time1 = time.time()
-
     if (settings.SIMUL_PARAMS['multiprocessing'] and mp.cpu_count() > 1):
         radiation_multiprocessing(rad, settings.SIMUL_PARAMS, bldg_dict_list, results_path, settings.RAD_PARMS, weatherfile_path)
     else:
@@ -275,20 +248,14 @@ def radiation_daysim_main(weatherfile_path, locator):
 
 def main(locator, weather_path):
 
-    # Create City GML file (this is necesssary only once).
-    output_folder = locator.get_building_geometry_citygml()
     district_shp = locator.get_district()
     zone_shp = locator.get_building_geometry()
+    architecture_dbf = locator.get_building_architecture()
     input_terrain_raster = locator.get_terrain()
 
-    time1 = time.time()
-    create_gml.create_citygml(zone_shp, district_shp, input_terrain_raster, output_folder)
-    print "CityGML LOD1 created in ", (time.time()-time1)/60.0, " mins"
-
     # calculate solar radiation
-    time1 = time.time()
-    radiation_daysim_main(weather_path, locator)
-    print "Daysim simulation finished in ", (time.time() - time1) / 60.0, " mins"
+    radiation_daysim_main(weather_path, locator, zone_shp=zone_shp, district_shp=district_shp,
+         input_terrain_raster=input_terrain_raster, architecture_dbf=architecture_dbf)
 
 if __name__ == '__main__':
 
@@ -296,5 +263,4 @@ if __name__ == '__main__':
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     weather_path = locator.get_default_weather()
-
     main(locator=locator, weather_path=weather_path)
