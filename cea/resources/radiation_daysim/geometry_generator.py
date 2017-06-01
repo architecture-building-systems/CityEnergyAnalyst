@@ -51,10 +51,14 @@ def identify_surfaces_type(occface_list):
         # get the normal of each face
         n = py3dmodel.calculate.face_normal(f)
         flatten_n = [n[0],n[1],0] # need to flatten to erase Z just to consider vertical surfaces.
+
         angle_to_vertical = py3dmodel.calculate.angle_bw_2_vecs(vec_vertical, n)
-        angle_to_horizontal = py3dmodel.calculate.angle_bw_2_vecs_w_ref(vec_horizontal, flatten_n, vec_vertical)
+
+        print flatten_n, n, angle_to_vertical, vec_horizontal, vec_vertical
+
         # means its a facade
         if angle_to_vertical > 45 and angle_to_vertical < 135:
+            angle_to_horizontal = py3dmodel.calculate.angle_bw_2_vecs_w_ref(vec_horizontal, flatten_n, vec_vertical)
             if (0 <= angle_to_horizontal) <= 45  or  (315 <= angle_to_horizontal <= 360):
                 facade_list_north.append(f)
             elif (45 < angle_to_horizontal < 135):
@@ -180,8 +184,8 @@ def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architectu
             wall_list = facade_list
             window_list = []
 
-        bldg_dict[name] = {"windows": window_list,"walls": wall_list, "roof": roof_list, "footprint":footprint_list}
-        bsolid_list.append(bldg_dict)
+            bsolid_list.append({"name": name, "windows": window_list, "walls": wall_list, "roof": roof_list,
+                                "footprint":footprint_list})
 
     return bsolid_list
 
@@ -257,7 +261,6 @@ def calc_window_wall(facade_list, wwr):
 
     return window_list, wall_list
 
-
 def raster2tin(input_terrain_raster):
 
     # read raster records
@@ -272,9 +275,9 @@ def raster2tin(input_terrain_raster):
     raster_points = [(x, y, z) for x, y, z in zip(x_coords, y_coords, a[y_index, x_index])]
 
     tin_occface_list = construct.delaunay3d(raster_points)
+    print tin_occface_list
 
     return tin_occface_list
-
 
 def geometry_main(zone_shp_path, district_shp_path, input_terrain_raster, architecture_path):
 
@@ -295,7 +298,6 @@ if __name__ == '__main__':
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
 
     # local variables
-    output_folder = locator.get_building_geometry_citygml()
     district_shp = locator.get_district()
     zone_shp = locator.get_building_geometry()
     architecture_dbf = locator.get_building_architecture()
