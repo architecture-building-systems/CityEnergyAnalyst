@@ -140,131 +140,105 @@ def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architectu
             flr2flr_height = height
             geometry = district_building_records.ix[name].geometry.simplify(5, preserve_topology=True)
 
+        # burn buildings footprint into the terrain and return the location of the new face
+        face_footprint = burn_buildings(geometry, terrain_intersection_curves)
 
-        point_list_2D = list(geometry.exterior.coords)
-        point_list_3D = [(a,b,0) for (a,b) in point_list_2D] # add 0 elevation
+        # create floors and form a solid
+        bldg_solid = calc_solid(face_footprint, range_floors, flr2flr_height)
 
-        #creating floor surface in pythonocc
-        face = construct.make_polygon(point_list_3D)
-        #get the midpt of the face
-        face_midpt = calculate.face_midpt(face)
+        # identify building surfaces according to angle:
+        face_list = py3dmodel.fetch.faces_frm_solid(bldg_solid)
+        facade_list, facade_list_north, facade_list_west,\
+        facade_list_east, facade_list_south, roof_list, footprint_list = identify_surfaces_type(face_list)
 
-        #project the face_midpt to the terrain and get the elevation
-        inter_pt, inter_face = calc_intersection(terrain_intersection_curves, face_midpt, (0, 0, 1))
+        # calculate windows in facade_list
+        if name in zone_building_names:
+            # get window properties
+            wwr_west = architecture_wwr.loc[name, "wwr_west"]
+            wwr_east = architecture_wwr.loc[name, "wwr_east"]
+            wwr_north = architecture_wwr.loc[name, "wwr_north"]
+            wwr_south = architecture_wwr.loc[name, "wwr_south"]
 
-        loc_pt = fetch.occpt2pypt(inter_pt)
-        #reconstruct the footprint with the elevation
-        face = fetch.shape2shapetype(modify.move(face_midpt, loc_pt, face))
-
-        moved_face_list = []
-        for floor_counter in range_floors:
-            dist2mve = floor_counter*flr2flr_height
-            #get midpt of face
-            orig_pt = calculate.face_midpt(face)
-            #move the pt 1 level up
-            dest_pt = modify.move_pt(orig_pt, (0,0,1), dist2mve)
-            moved_face = modify.move(orig_pt, dest_pt, face)
-            moved_face_list.append(moved_face)
-
-        #loft all the faces and form a solid
-        vertical_shell = construct.make_loft(moved_face_list)
-        vertical_face_list = fetch.geom_explorer(vertical_shell, "face")
-        roof = moved_face_list[-1]
-        footprint = moved_face_list[0]
-        all_faces = []
-        all_faces.append(footprint)
-        all_faces.extend(vertical_face_list)
-        all_faces.append(roof)
-        bldg_shell_list = construct.make_shell_frm_faces(all_faces)
-
-        if bldg_shell_list:
-            # make sure all the normals are correct (they are pointing out)
-            bldg_solid = construct.make_solid(bldg_shell_list[0])
-            bldg_solid = modify.fix_close_solid(bldg_solid)
-
-            # identify building surfaces according to angle:
-            face_list = py3dmodel.fetch.faces_frm_solid(bldg_solid)
-            facade_list, facade_list_north, facade_list_west,\
-            facade_list_east, facade_list_south, roof_list, footprint_list = identify_surfaces_type(face_list)
-
-            window_list = []
-            wall_list = []
-            # calculate windows in facade_list
-            if name in zone_building_names:
-                # get window properties
-                wwr_west = architecture_wwr.loc[name, "wwr_west"]
-                wwr_east = architecture_wwr.loc[name, "wwr_east"]
-                wwr_north = architecture_wwr.loc[name, "wwr_north"]
-                wwr_south = architecture_wwr.loc[name, "wwr_south"]
-
-                for surface_facade in facade_list_north:
-                    ref_pypt = calculate.face_midpt(surface_facade)
-                    # offset the facade to create a window according to the wwr
-                    if 0.0 < wwr_north < 1.0:
-                        window = create_windows(surface_facade, wwr_north, ref_pypt)
-                        window_list.append(window)
-
-                        # triangulate the wall with hole
-                        hollowed_facade, hole_facade = create_hollowed_facade(surface_facade, window)  # accounts for hole created by window
-                        wall_list.append(hollowed_facade)
-
-                    elif wwr_north== 1.0:
-                        window_list.append(surface_facade)
-                    else:
-                        wall_list.append(surface_facade)
+            window_list, wall_list = calc_window_wall(facade_list, wwr_west)
+            window_list, wall_list = calc_window_wall(facade_list, wwr_east)
+            window_list, wall_list = calc_window_wall(facade_list, wwr_north)
+            window_list, wall_list = calc_window_wall(facade_list, wwr_south)
 
 
     return bsolid_list
 
-def buildings2radiance(rad, ageometry_table):
 
-        facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(bldg_solid)
-        wall_list = []
-        wwr = ageometry_table["win_wall"][bldg_name]
+def burn_buildings(geometry, terrain_intersection_curves):
+    point_list_2D = list(geometry.exterior.coords)
+    point_list_3D = [(a, b, 0) for (a, b) in point_list_2D]  # add 0 elevation
 
-        for fcnt, surface_facade in enumerate(facade_list):
-            ref_pypt = calculate.face_midpt(surface_facade)
+    # creating floor surface in pythonocc
+    face = construct.make_polygon(point_list_3D)
+    # get the midpt of the face
+    face_midpt = calculate.face_midpt(face)
 
-            # offset the facade to create a window according to the wwr
-            if 0.0 < wwr < 1.0:
-                window = create_windows(surface_facade, wwr, ref_pypt)
-                create_radiance_srf(window, "win" + str(bcnt) + str(fcnt),
-                                    "win" + str(ageometry_table['type_win'][bldg_name]), rad)
-                window_list.append(window)
+    # project the face_midpt to the terrain and get the elevation
+    inter_pt, inter_face = calc_intersection(terrain_intersection_curves, face_midpt, (0, 0, 1))
 
-                # triangulate the wall with hole
-                hollowed_facade, hole_facade = create_hollowed_facade(surface_facade,
-                                                                      window)  # accounts for hole created by window
-                wall_list.append(hole_facade)
+    # reconstruct the footprint with the elevation
+    loc_pt = fetch.occpt2pypt(inter_pt)
+    face = fetch.shape2shapetype(modify.move(face_midpt, loc_pt, face))
+    return face
 
-                # check the elements of the wall do not have 0 area and send to radiance
-                for triangle in hollowed_facade:
-                    tri_area = calculate.face_area(triangle)
-                    if tri_area > 1E-3:
-                        create_radiance_srf(triangle, "wall" + str(bcnt) + str(fcnt),
-                                            "wall" + str(ageometry_table['type_wall'][bldg_name]), rad)
+def calc_solid(face_footprint, range_floors, flr2flr_height):
 
-            elif wwr == 1.0:
-                create_radiance_srf(surface_facade, "win" + str(bcnt) + str(fcnt),
-                                    "win" + str(ageometry_table['type_win'][bldg_name]), rad)
-                window_list.append(surface_facade)
-            else:
-                create_radiance_srf(surface_facade, "wall" + str(bcnt) + str(fcnt),
-                                    "wall" + str(ageometry_table['type_wall'][bldg_name]), rad)
-                wall_list.append(surface_facade)
+    # create faces for every floor and extrude the solid
+    moved_face_list = []
+    for floor_counter in range_floors:
+        dist2mve = floor_counter * flr2flr_height
+        # get midpt of face
+        orig_pt = calculate.face_midpt(face_footprint)
+        # move the pt 1 level up
+        dest_pt = modify.move_pt(orig_pt, (0, 0, 1), dist2mve)
+        moved_face = modify.move(orig_pt, dest_pt, face_footprint)
+        moved_face_list.append(moved_face)
 
-        for rcnt, roof in enumerate(roof_list):
-            create_radiance_srf(roof, "roof" + str(bcnt) + str(rcnt),
-                                "roof" + str(ageometry_table['type_roof'][bldg_name]), rad)
+    # make checks to satisfy a closed geometry also called a shell
+    bldg_solid = None
+    vertical_shell = construct.make_loft(moved_face_list)
+    vertical_face_list = fetch.geom_explorer(vertical_shell, "face")
+    roof = moved_face_list[-1]
+    footprint = moved_face_list[0]
+    all_faces = []
+    all_faces.append(footprint)
+    all_faces.extend(vertical_face_list)
+    all_faces.append(roof)
+    bldg_shell_list = construct.make_shell_frm_faces(all_faces)
 
-        bldg_dict["name"] = bldg_name
-        bldg_dict["windows"] = window_list
-        bldg_dict["walls"] = wall_list
-        bldg_dict["roofs"] = roof_list
-        bldg_dict["footprints"] = footprint_list
-        bldg_dict_list.append(bldg_dict)
+    if bldg_shell_list:
+        # make sure all the normals are correct (they are pointing out)
+        bldg_solid = construct.make_solid(bldg_shell_list[0])
+        bldg_solid = modify.fix_close_solid(bldg_solid)
 
-    return bldg_dict_list
+    return bldg_solid
+
+def calc_window_wall(facade_list, wwr):
+    window_list = []
+    wall_list = []
+    for surface_facade in facade_list:
+        ref_pypt = calculate.face_midpt(surface_facade)
+        # offset the facade to create a window according to the wwr
+        if 0.0 < wwr < 1.0:
+            window = create_windows(surface_facade, wwr, ref_pypt)
+            window_list.append(window)
+
+            # triangulate the wall with hole
+            hollowed_facade, hole_facade = create_hollowed_facade(surface_facade,
+                                                                  window)  # accounts for hole created by window
+            wall_list.append(hollowed_facade)
+
+        elif wwr == 1.0:
+            window_list.append(surface_facade)
+        else:
+            wall_list.append(surface_facade)
+
+    return window_list, wall_list
+
 
 def raster2tin(input_terrain_raster):
 
