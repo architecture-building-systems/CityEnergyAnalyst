@@ -84,22 +84,10 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
                 written_mat_name_list.append(mat_name)
                 
         write_file.close()
-    
-def filter_bldgs_of_interest(gmlbldgs, bldg_of_interest_name_list, citygml_reader):
-    eligible_bldgs = []
-    n_eligible_bldgs = []
-    for gmlbldg in gmlbldgs:
-        bldg_name = citygml_reader.get_gml_id(gmlbldg) 
-        if bldg_name not in bldg_of_interest_name_list:
-            n_eligible_bldgs.append(gmlbldg)
-        else:
-            eligible_bldgs.append(gmlbldg)
-            
-    return eligible_bldgs, n_eligible_bldgs
 
 def terrain2radiance(rad, tin_occface_terrain):
-    for id, pytri in enumerate(tin_occface_terrain):
-        py2radiance.RadSurface("terrain_srf"+ str(id), pytri, "reflectance0.2", rad)
+    for id, face in enumerate(tin_occface_terrain):
+        create_radiance_srf(face, "terrain_srf"+ str(id), "reflectance0.2", rad)
 
 def buildings2radiance(rad, ageometry_table, geometry_buildings):
     bldg_dict_list = []
@@ -108,30 +96,32 @@ def buildings2radiance(rad, ageometry_table, geometry_buildings):
     building_names = ageometry_table.index.values
 
     for bcnt, building_surfaces in enumerate(geometry_buildings):
-        building_name = building_surfaces['Name']
+        building_name = building_surfaces['name']
         if building_name in building_names:
+            fcnt = 0
+            print building_surfaces['windows']
             for pypolygon in building_surfaces['windows']:
+                print pypolygon[1]
                 create_radiance_srf(pypolygon, "win" + str(bcnt) + str(fcnt),
                                     "win" + str(ageometry_table['type_win'][building_name]), rad)
+                fcnt+=1
             for pypolygon in building_surfaces['walls']:
                 create_radiance_srf(pypolygon, "wall" + str(bcnt) + str(fcnt),
                                    "wall" + str(ageometry_table['type_wall'][building_name]), rad)
+                fcnt+= 1
             for pypolygon in building_surfaces['roofs']:
-                create_radiance_srf(pypolygon, "roof" + str(bcnt) + str(rcnt),
+                create_radiance_srf(pypolygon, "roof" + str(bcnt) + str(fcnt),
                                     "roof" + str(ageometry_table['type_roof'][building_name]), rad)
-                id += 1
+                fcnt+= 1
         else:
-            ## for the surrounding buildings
-            id = 0
-            for pypolygon in building_surfaces['windows']:
-                py2radiance.RadSurface("surroundingbldgs"+ str(id), pypolygon, "reflectance0.2", rad)
-                id+=1
+            ## for the surrounding buildings only, walls and roofs
+            fcnt = 0
             for pypolygon in building_surfaces['walls']:
-                py2radiance.RadSurface("surroundingbldgs" + str(id), pypolygon, "reflectance0.2", rad)
-                id += 1
+                py2radiance.RadSurface("surroundingbldgs" + str(fcnt), pypolygon, "reflectance0.2", rad)
+                fcnt += 1
             for pypolygon in building_surfaces['roofs']:
-                py2radiance.RadSurface("surroundingbldgs" + str(id), pypolygon, "reflectance0.2", rad)
-                id += 1
+                py2radiance.RadSurface("surroundingbldgs" + str(fcnt), pypolygon, "reflectance0.2", rad)
+                fcnt += 1
 
 
         bldg_dict["name"] = bldg_name
@@ -161,7 +151,7 @@ def reader_surface_properties(locator, input_shp):
     df = architectural_properties.merge(surface_database_windows, left_on='type_win', right_on='code')
     df2 = architectural_properties.merge(surface_database_roof, left_on='type_roof', right_on='code')
     df3 = architectural_properties.merge(surface_database_walls, left_on='type_wall', right_on='code')
-    fields = ['Name', 'G_win', 'win_wall', 'rtn_win', 'gtn_win', 'btn_win', "type_win"]
+    fields = ['Name', 'G_win', 'rtn_win', 'gtn_win', 'btn_win', "type_win"]
     fields2 = ['Name', 'r_roof', 'g_roof', 'b_roof', 'spec_roof', 'rough_roof', "type_roof"]
     fields3 = ['Name', 'r_wall', 'g_wall', 'b_wall', 'spec_wall', 'rough_wall', "type_wall"]
     surface_properties = df[fields].merge(df2[fields2], on='Name').merge(df3[fields3], on='Name')
@@ -233,7 +223,7 @@ def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
     # send terrain
     terrain2radiance(rad, geometry_terrain)
     # send buildings
-    bldg_dict_list = buildings2radiance(rad, building_surface_properties, geometry_terrain, geometry_buildings)
+    bldg_dict_list = buildings2radiance(rad, building_surface_properties, geometry_buildings)
     # create scene out of all this
     rad.create_rad_input_file()
 
