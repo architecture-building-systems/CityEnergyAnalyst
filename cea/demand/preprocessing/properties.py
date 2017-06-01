@@ -76,7 +76,8 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
 
         # write to shapefile
         prop_architecture_df_merged = names_df.merge(prop_architecture_df, on="Name")
-        fields = ['Name', 'Hs', 'win_wall', 'type_cons', 'type_leak',  'type_roof', 'type_wall', 'type_win', 'type_shade']
+        fields = ['Name', 'Hs', 'wwr_north', 'wwr_west','wwr_east', 'wwr_south',
+                  'type_cons', 'type_leak',  'type_roof', 'type_wall', 'type_win', 'type_shade']
         df2dbf(prop_architecture_df_merged[fields], locator.get_building_architecture())
 
 

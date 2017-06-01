@@ -51,11 +51,7 @@ def identify_surfaces_type(occface_list):
         # get the normal of each face
         n = py3dmodel.calculate.face_normal(f)
         flatten_n = [n[0],n[1],0] # need to flatten to erase Z just to consider vertical surfaces.
-
         angle_to_vertical = py3dmodel.calculate.angle_bw_2_vecs(vec_vertical, n)
-
-        print flatten_n, n, angle_to_vertical, vec_horizontal, vec_vertical
-
         # means its a facade
         if angle_to_vertical > 45 and angle_to_vertical < 135:
             angle_to_horizontal = py3dmodel.calculate.angle_bw_2_vecs_w_ref(vec_horizontal, flatten_n, vec_vertical)
@@ -120,7 +116,7 @@ def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architectu
     district_building_records = gdf.from_file(district_shp_path).set_index('Name')
     district_building_names = district_building_records.index.values
     zone_building_names = gdf.from_file(zone_shp_path)['Name'].values
-    architecture_wwr = gdf.from_file(architecture_path)
+    architecture_wwr = gdf.from_file(architecture_path).set_index('Name')
 
     #make shell out of tin_occface_list and create OCC object
     terrain_shell = construct.make_shell_frm_faces(tin_occface_list)[0]
@@ -162,31 +158,36 @@ def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architectu
             facade_list_east, facade_list_south, roof_list, footprint_list = identify_surfaces_type(face_list)
 
             # get window properties
-            wwr_west = architecture_wwr.loc[name, "wwr_west"]
-            wwr_east = architecture_wwr.loc[name, "wwr_east"]
-            wwr_north = architecture_wwr.loc[name, "wwr_north"]
-            wwr_south = architecture_wwr.loc[name, "wwr_south"]
+            wwr_west = architecture_wwr.ix[name, "wwr_west"]
+            wwr_east = architecture_wwr.ix[name, "wwr_east"]
+            wwr_north = architecture_wwr.ix[name, "wwr_north"]
+            wwr_south = architecture_wwr.ix[name, "wwr_south"]
 
             window_west, wall_west = calc_window_wall(facade_list_west, wwr_west)
-            window_list.append(window_west)
-            wall_list.append(wall_west)
+            if len(window_west) != 0:
+                window_list.append(window_west)
+            wall_list.extend(wall_west)
+
             window_east, wall_east = calc_window_wall(facade_list_east, wwr_east)
-            window_list.append(window_east)
-            wall_list.append(wall_east)
+            if len(window_east) != 0:
+                window_list.append(window_east)
+            wall_list.extend(wall_east)
+
             window_north, wall_north = calc_window_wall(facade_list_north, wwr_north)
-            window_list.append(window_north)
-            wall_list.append(wall_north)
+            if len(window_north) != 0:
+                window_list.append(window_north)
+            wall_list.extend(wall_north)
+
             window_south, wall_south = calc_window_wall(facade_list_south, wwr_south)
-            window_list.append(window_south)
-            wall_list.append(wall_south)
+            if len(window_south) != 0:
+                window_list.append(window_south)
+            wall_list.extend(wall_south)
         else:
             facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(bldg_solid)
             wall_list = facade_list
-            window_list = []
 
-            bsolid_list.append({"name": name, "windows": window_list, "walls": wall_list, "roof": roof_list,
-                                "footprint":footprint_list})
-
+        bsolid_list.append({"name": name, "windows": window_list, "walls": wall_list, "roof": roof_list,
+                            "footprint":footprint_list})
     return bsolid_list
 
 
@@ -275,7 +276,6 @@ def raster2tin(input_terrain_raster):
     raster_points = [(x, y, z) for x, y, z in zip(x_coords, y_coords, a[y_index, x_index])]
 
     tin_occface_list = construct.delaunay3d(raster_points)
-    print tin_occface_list
 
     return tin_occface_list
 
