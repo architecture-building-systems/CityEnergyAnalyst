@@ -163,29 +163,30 @@ def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architectu
             wwr_north = architecture_wwr.ix[name, "wwr_north"]
             wwr_south = architecture_wwr.ix[name, "wwr_south"]
 
-            window_west, wall_west = calc_window_wall(facade_list_west, wwr_west)
-            if len(window_west) != 0:
+            window_west, wall_west = calc_windows_walls(facade_list_west, wwr_west)
+            if len(window_west) != 0: # TODO: here we need to create single lists instead f [[],[],[],..]
                 window_list.append(window_west)
-            wall_list.extend(wall_west)
+            wall_list.append(wall_west)
 
-            window_east, wall_east = calc_window_wall(facade_list_east, wwr_east)
+            window_east, wall_east = calc_windows_walls(facade_list_east, wwr_east)
             if len(window_east) != 0:
                 window_list.append(window_east)
-            wall_list.extend(wall_east)
+            wall_list.append(wall_east)
 
-            window_north, wall_north = calc_window_wall(facade_list_north, wwr_north)
+            window_north, wall_north = calc_windows_walls(facade_list_north, wwr_north)
             if len(window_north) != 0:
                 window_list.append(window_north)
-            wall_list.extend(wall_north)
+            wall_list.append(wall_north)
 
-            window_south, wall_south = calc_window_wall(facade_list_south, wwr_south)
+            window_south, wall_south = calc_windows_walls(facade_list_south, wwr_south)
             if len(window_south) != 0:
                 window_list.append(window_south)
-            wall_list.extend(wall_south)
+            wall_list.append(wall_south)
         else:
             facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(bldg_solid)
             wall_list = facade_list
 
+        print wall_list
         bsolid_list.append({"name": name, "windows": window_list, "walls": wall_list, "roof": roof_list,
                             "footprint":footprint_list})
     return bsolid_list
@@ -240,7 +241,7 @@ def calc_solid(face_footprint, range_floors, flr2flr_height):
 
     return bldg_solid
 
-def calc_window_wall(facade_list, wwr):
+def calc_windows_walls(facade_list, wwr):
     window_list = []
     wall_list = []
     for surface_facade in facade_list:
