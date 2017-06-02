@@ -23,10 +23,13 @@ RAD_PARMS = {
 }
 # Daysim Sensor parameters
 SEN_PARMS = {
-'X_DIM': 5,
-'Y_DIM': 5,
+'X_DIM': 100, # aximum so there is only one point per surface
+'Y_DIM': 100, # maximum so there is only one point per surface
 'MIN_Z_DIR': -0.85,
 'MAX_Z_DIR': 0.05,
 }
 # terrain parameters
 TERRAIN_PARAMS = {'e_terrain': 0.8}
+
+# simulation parameters
+SIMUL_PARAMS = {'n_build_in_chunk':50, 'multiprocessing': True} # min number of buildings for multiprocessing # limit the number if running out of memory

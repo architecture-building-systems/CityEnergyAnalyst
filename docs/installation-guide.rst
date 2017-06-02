@@ -46,6 +46,7 @@ To install the development environment of CEA:
 #. install dependencies: do ``conda install -c oce -c pythonocc pythonocc-core=0.17.3``
 #. install cea development: do ``python setup.py install``
 #. set-up path to repository: do ``python setup.py develop``
+#. install additional dependencies only for developers: do ``pip install .[dev]``
 #. download and install Daysim: ``http://daysim.ning.com/page/download``
 
 
@@ -54,6 +55,10 @@ environment separate from your other python environments - that way, version mis
 into your other work. (you can use any name, when creating an environment - "cea" is just an example)
 
 Note: Location where to store the repository can be any -"Documents" is just an example.
+
+Note: If after the installation you experience an error concerning geopandas or fiona, i.e., ``ImportError: DLL load
+ failed: The specified module could not be found.`` Try copying ``C:\Users\your_name\Anaconda2\envs\cea\proj.dll`` to
+``C:\Users\your_name\Anaconda2\envs\cea\Library\bin`` and CEA should run.
 
 Setting up PyCharm
 ..................

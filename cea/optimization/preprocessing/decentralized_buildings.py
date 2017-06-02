@@ -288,10 +288,9 @@ def decentralized_main(locator, building_names, gv):
         dico[ "EforGHP" ] = resourcesRes[:,2]
         dico[ "QfromGHP" ] = resourcesRes[:,3]
 
-        os.chdir(locator.get_optimization_disconnected_folder())
-        fName = building_name + "_result.csv"
+
         results_to_csv = pd.DataFrame(dico)
-        fName_result = "DiscOp_" + fName[0:(len(fName)-4)] + ".csv"
+        fName_result = locator.get_optimization_disconnected_folder_building_result(building_name)
         results_to_csv.to_csv(fName_result, sep= ',')
         
     
@@ -311,8 +310,7 @@ def decentralized_main(locator, building_names, gv):
         BestData[building_name] = BestComb
 
     if 0:
-        os.chdir(locator.get_optimization_disconnected_folder())
-        fName = "DiscOpSummary.csv"
+        fName = locator.get_optimization_disconnected_folder_disc_op_summary()
         results_to_csv = pd.DataFrame(BestData)
         results_to_csv.to_csv(fName, sep= ',')
 

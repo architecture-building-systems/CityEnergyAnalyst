@@ -1,11 +1,11 @@
-cea.demand.preprocessing package
-================================
+cea\.demand\.preprocessing package
+==================================
 
 Submodules
 ----------
 
-cea.demand.preprocessing.properties module
-------------------------------------------
+cea\.demand\.preprocessing\.properties module
+---------------------------------------------
 
 .. automodule:: cea.demand.preprocessing.properties
     :members:

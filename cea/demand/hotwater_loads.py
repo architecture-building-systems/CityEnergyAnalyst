@@ -97,7 +97,7 @@ def calc_Qww_schedule(list_uses, schedules, occ_density, building_uses, Af):
     :type schedules: list[ndarray[float]]
 
     :param occ_density: the list of occupancy densities per every schedule
-    :type occ_density:: list[float]
+    :type occ_density: list[float]
 
     :param building_uses: for each use in `list_uses`, the percentage of that use for this building.
         Sum of values is 1.0

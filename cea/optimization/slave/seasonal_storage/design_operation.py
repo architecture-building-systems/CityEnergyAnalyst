@@ -381,12 +381,11 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locat
              "Q_rejected_fin":Q_rejected_fin,
              "P_HPCharge_max":P_HP_max
             })
-        Name = MS_Var.configKey + "StorageOperationData.csv"
-        os.chdir(locator.get_optimization_slave_results_folder())
-        results.to_csv(Name, sep= ',')
+        storage_operation_data_path = locator.get_optimization_slave_storage_operation_data(MS_Var.configKey)
+        results.to_csv(storage_operation_data_path, sep= ',')
         
         print "Results saved in :", locator.get_optimization_slave_results_folder()
-        print " as : ", Name 
+        print " as : ", storage_operation_data_path
     
     Q_stored_max = np.amax(Q_storage_content_fin)
     T_st_max = np.amax(T_storage_fin)

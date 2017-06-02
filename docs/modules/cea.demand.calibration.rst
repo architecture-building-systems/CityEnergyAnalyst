@@ -1,12 +1,12 @@
-cea.demand.calibration package
-==============================
+cea\.demand\.calibration package
+================================
 
 Subpackages
 -----------
 
 .. toctree::
 
-    cea.demand.calibration.clustering_main
+    cea.demand.calibration.clustering
 
 Module contents
 ---------------

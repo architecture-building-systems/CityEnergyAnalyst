@@ -242,7 +242,7 @@ def calc_Eauxf_ve(tsd, gv):
     :param tsd: Time series data of building
     :type tsd: dict
     :param gv: global variables
-    :type gv
+    :type gv: cea.globalvar.GlobalVariables
     :return: electrical energy for fans of mechanical ventilation in [Wh/h]
     :rtype: float
     """
