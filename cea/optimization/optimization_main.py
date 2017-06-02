@@ -81,5 +81,5 @@ def run_as_script(scenario_path=None):
     print 'test_optimization_main() succeeded'
 
 if __name__ == '__main__':
-    run_as_script(r'C:\reference-case-zug\baseline')
+    run_as_script()
 
