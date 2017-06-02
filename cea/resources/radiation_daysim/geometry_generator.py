@@ -310,12 +310,30 @@ if __name__ == '__main__':
 
     # run routine City GML LOD 1
     time1 = time.time()
-    geometry_terrain, ggeometry_3D_zone, geometry_3D_surroundings  = geometry_main(zone_shp, district_shp,
+    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings  = geometry_main(zone_shp, district_shp,
                                                                                    input_terrain_raster, architecture_dbf)
     print "Geometry of the scene created in", (time.time() - time1) / 60.0, " mins"
 
+
     # to visualize the results
-    #construct.visualise([geometry_terrain,geometry_buildings], ["GREEN","WHITE"], backend = "wx") #install Wxpython
+    geometry_buildings = []
+    windows = [val for sublist in geometry_3D_zone for val in sublist['windows']]
+    walls = [val for sublist in geometry_3D_zone for val in sublist['walls']]
+    roofs = [val for sublist in geometry_3D_zone for val in sublist['roofs']]
+    footprint = [val for sublist in geometry_3D_zone for val in sublist['footprint']]
+    walls_s = [val for sublist in geometry_3D_surroundings  for val in sublist['walls']]
+    windows_s = [val for sublist in geometry_3D_surroundings for val in sublist['windows']]
+    roof_s = [val for sublist in geometry_3D_surroundings for val in sublist['roofs']]
+
+    geometry_buildings.extend(windows)
+    geometry_buildings.extend(walls)
+    geometry_buildings.extend(roofs)
+    geometry_buildings.extend(footprint)
+    geometry_buildings.extend(walls_s)
+    geometry_buildings.extend(windows_s)
+    geometry_buildings.extend(roof_s)
+
+    construct.visualise([geometry_terrain, geometry_buildings], ["GREEN","WHITE"], backend = "wx") #install Wxpython
 
 
 
