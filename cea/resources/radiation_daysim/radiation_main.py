@@ -99,9 +99,9 @@ def buildings2radiance(rad, ageometry_table, geometry_buildings):
         building_name = building_surfaces['name']
         if building_name in building_names:
             fcnt = 0
-            print building_surfaces['windows']
-            for pypolygon in building_surfaces['windows']:
-                print pypolygon[1]
+            print building_surfaces['windows'][0]
+            for pypolygon in building_surfaces['windows'][0]:
+                print pypolygon
                 create_radiance_srf(pypolygon, "win" + str(bcnt) + str(fcnt),
                                     "win" + str(ageometry_table['type_win'][building_name]), rad)
                 fcnt+=1
