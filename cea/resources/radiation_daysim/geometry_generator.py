@@ -55,13 +55,13 @@ def identify_surfaces_type(occface_list):
         # means its a facade
         if angle_to_vertical > 45 and angle_to_vertical < 135:
             angle_to_horizontal = py3dmodel.calculate.angle_bw_2_vecs_w_ref(vec_horizontal, flatten_n, vec_vertical)
-            if (0 <= angle_to_horizontal) <= 45  or  (315 <= angle_to_horizontal <= 360):
+            if (0 <= angle_to_horizontal <= 45) or (315 <= angle_to_horizontal <= 360):
                 facade_list_north.append(f)
             elif (45 < angle_to_horizontal < 135):
                 facade_list_west.append(f)
             elif (135 <= angle_to_horizontal <= 225):
                 facade_list_south.append(f)
-            elif (225 < angle_to_horizontal < 315):
+            elif 225 < angle_to_horizontal < 315:
                 facade_list_east.append(f)
         elif angle_to_vertical <= 45:
             roof_list.append(f)
@@ -98,8 +98,10 @@ def create_hollowed_facade(surface_facade, window):
     b_facade_cmpd = fetch.shape2shapetype(construct.boolean_difference(surface_facade, window))
     hole_facade = fetch.geom_explorer(b_facade_cmpd, "face")[0]
     hollowed_facade = construct.simple_mesh(hole_facade)
+    #Clean small triangles: this is a despicable source of error
+    hollowed_facade_clean = [x for x in hollowed_facade if calculate.face_area(x) > 1E-3]
 
-    return hollowed_facade, hole_facade
+    return hollowed_facade_clean, hole_facade
 
 def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architecture_path,
                   height_col, nfloor_col):
@@ -124,7 +126,8 @@ def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architectu
     terrain_intersection_curves.Load(terrain_shell, 1e-6)
 
     #empty list where to store the closed geometries
-    bsolid_list = []
+    geometry_3D_zone = []
+    geometry_3D_surroundings = []
 
     for name in district_building_names:
         height = float(district_building_records.loc[name, height_col])
@@ -164,32 +167,34 @@ def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architectu
             wwr_south = architecture_wwr.ix[name, "wwr_south"]
 
             window_west, wall_west = calc_windows_walls(facade_list_west, wwr_west)
-            if len(window_west) != 0: # TODO: here we need to create single lists instead f [[],[],[],..]
-                window_list.append(window_west)
-            wall_list.append(wall_west)
+            if len(window_west) != 0:
+                window_list.extend(window_west)
+            wall_list.extend(wall_west)
 
             window_east, wall_east = calc_windows_walls(facade_list_east, wwr_east)
             if len(window_east) != 0:
-                window_list.append(window_east)
-            wall_list.append(wall_east)
+                window_list.extend(window_east)
+            wall_list.extend(wall_east)
 
             window_north, wall_north = calc_windows_walls(facade_list_north, wwr_north)
             if len(window_north) != 0:
-                window_list.append(window_north)
-            wall_list.append(wall_north)
+                window_list.extend(window_north)
+            wall_list.extend(wall_north)
 
             window_south, wall_south = calc_windows_walls(facade_list_south, wwr_south)
             if len(window_south) != 0:
-                window_list.append(window_south)
-            wall_list.append(wall_south)
+                window_list.extend(window_south)
+            wall_list.extend(wall_south)
+
+            geometry_3D_zone.append({"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
+                                 "footprint": footprint_list})
         else:
             facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(bldg_solid)
             wall_list = facade_list
+            geometry_3D_surroundings.append({"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
+                                 "footprint": footprint_list})
 
-        print wall_list
-        bsolid_list.append({"name": name, "windows": window_list, "walls": wall_list, "roof": roof_list,
-                            "footprint":footprint_list})
-    return bsolid_list
+    return geometry_3D_zone, geometry_3D_surroundings
 
 
 def burn_buildings(geometry, terrain_intersection_curves):
@@ -249,12 +254,11 @@ def calc_windows_walls(facade_list, wwr):
         # offset the facade to create a window according to the wwr
         if 0.0 < wwr < 1.0:
             window = create_windows(surface_facade, wwr, ref_pypt)
-            window_list.append(window)
 
-            # triangulate the wall with hole
-            hollowed_facade, hole_facade = create_hollowed_facade(surface_facade,
-                                                                  window)  # accounts for hole created by window
-            wall_list.append(hollowed_facade)
+            window_list.append(window)
+            hollowed_facade, hole_facade = create_hollowed_facade(surface_facade, window)  # accounts for hole created by window
+
+            wall_list.extend(hollowed_facade)
 
         elif wwr == 1.0:
             window_list.append(surface_facade)
@@ -286,10 +290,10 @@ def geometry_main(zone_shp_path, district_shp_path, input_terrain_raster, archit
     geometry_terrain = raster2tin(input_terrain_raster)
     
     # transform buildings 2D to 3D and add windows
-    geometry_buildings = building2d23d(zone_shp_path, district_shp_path, geometry_terrain, architecture_path,
+    geometry_3D_zone, geometry_3D_surroundings = building2d23d(zone_shp_path, district_shp_path, geometry_terrain, architecture_path,
                                 height_col='height_ag', nfloor_col="floors_ag")
 
-    return geometry_terrain, geometry_buildings
+    return geometry_terrain, geometry_3D_zone,geometry_3D_surroundings
 
 if __name__ == '__main__':
 
@@ -306,7 +310,8 @@ if __name__ == '__main__':
 
     # run routine City GML LOD 1
     time1 = time.time()
-    geometry_terrain, geometry_buildings = geometry_main(zone_shp, district_shp, input_terrain_raster, architecture_dbf)
+    geometry_terrain, ggeometry_3D_zone, geometry_3D_surroundings  = geometry_main(zone_shp, district_shp,
+                                                                                   input_terrain_raster, architecture_dbf)
     print "Geometry of the scene created in", (time.time() - time1) / 60.0, " mins"
 
     # to visualize the results
