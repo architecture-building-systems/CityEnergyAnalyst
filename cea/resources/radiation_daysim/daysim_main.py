@@ -58,7 +58,7 @@ def calc_sensors(bldg_dict):
     return sensor_srf_dict_list
 
 
-def isolation_daysim(chunk_n, rad, bldg_dict_list, aresults_path, rad_params, aweatherfile_path):
+def isolation_daysim(chunk_n, rad, geometry_3D_building, aresults_path, rad_params, aweatherfile_path):
 
     # calculate sensors
     sensor_pt_list = []
@@ -70,7 +70,7 @@ def isolation_daysim(chunk_n, rad, bldg_dict_list, aresults_path, rad_params, aw
 
     # calculate sensors
     if chunk_n == None: # do simple list when considering single buildings (single processing)
-        all_sensor_srf_dict_2dlist = calc_sensors(bldg_dict_list)
+        all_sensor_srf_dict_2dlist = calc_sensors(geometry_3D_building)
         for srf_dict in all_sensor_srf_dict_2dlist:
             sensor_pt = srf_dict["sensor_pt"]
             sensor_pt_list.append(sensor_pt)
@@ -78,7 +78,7 @@ def isolation_daysim(chunk_n, rad, bldg_dict_list, aresults_path, rad_params, aw
             sensor_dir_list.append(sensor_dir)
     else: # create bigger list when considering chunks of buildings (multi-processing)
         all_sensor_srf_dict_2dlist = []
-        for bldg_dict in bldg_dict_list:
+        for bldg_dict in geometry_3D_building:
             sensor_srf_dict_list = calc_sensors(bldg_dict)
             all_sensor_srf_dict_2dlist.append(sensor_srf_dict_list)
             for srf_dict in sensor_srf_dict_list:

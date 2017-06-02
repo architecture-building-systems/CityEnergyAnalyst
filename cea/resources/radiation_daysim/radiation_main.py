@@ -2,19 +2,13 @@
 Radiation engine and geometry handler for CEA
 """
 from __future__ import division
-import os
 import pandas as pd
 import time
 from cea.resources.radiation_daysim import settings
-from cea.resources.radiation_daysim import create_gml, daysim_main, geometry_generator
+from cea.resources.radiation_daysim import daysim_main, geometry_generator
 import multiprocessing as mp
 
-import pyliburo.py3dmodel.construct as construct
 import pyliburo.py3dmodel.fetch as fetch
-import pyliburo.py3dmodel.calculate as calculate
-import pyliburo.py3dmodel.modify as modify
-import pyliburo.gml3dmodel as gml3dmodel
-import pyliburo.pycitygml as pycitygml
 import pyliburo.py2radiance as py2radiance
 
 from geopandas import GeoDataFrame as gpdf
@@ -89,49 +83,36 @@ def terrain2radiance(rad, tin_occface_terrain):
     for id, face in enumerate(tin_occface_terrain):
         create_radiance_srf(face, "terrain_srf"+ str(id), "reflectance0.2", rad)
 
-def buildings2radiance(rad, ageometry_table, geometry_buildings):
-    bldg_dict_list = []
+def buildings2radiance(rad, ageometry_table, geometry_3D_zone, geometry_3D_surroundings):
 
     #translate buildings into radiance surface
-    building_names = ageometry_table.index.values
-
-    for bcnt, building_surfaces in enumerate(geometry_buildings):
+    fcnt = 0
+    for bcnt, building_surfaces in enumerate(geometry_3D_zone):
         building_name = building_surfaces['name']
-        if building_name in building_names:
-            fcnt = 0
-            print building_surfaces['windows'][0]
-            for pypolygon in building_surfaces['windows'][0]:
-                print pypolygon
-                create_radiance_srf(pypolygon, "win" + str(bcnt) + str(fcnt),
-                                    "win" + str(ageometry_table['type_win'][building_name]), rad)
-                fcnt+=1
-            for pypolygon in building_surfaces['walls']:
-                create_radiance_srf(pypolygon, "wall" + str(bcnt) + str(fcnt),
-                                   "wall" + str(ageometry_table['type_wall'][building_name]), rad)
-                fcnt+= 1
-            for pypolygon in building_surfaces['roofs']:
-                create_radiance_srf(pypolygon, "roof" + str(bcnt) + str(fcnt),
-                                    "roof" + str(ageometry_table['type_roof'][building_name]), rad)
-                fcnt+= 1
-        else:
-            ## for the surrounding buildings only, walls and roofs
-            fcnt = 0
-            for pypolygon in building_surfaces['walls']:
-                py2radiance.RadSurface("surroundingbldgs" + str(fcnt), pypolygon, "reflectance0.2", rad)
-                fcnt += 1
-            for pypolygon in building_surfaces['roofs']:
-                py2radiance.RadSurface("surroundingbldgs" + str(fcnt), pypolygon, "reflectance0.2", rad)
-                fcnt += 1
+        for pypolygon in building_surfaces['windows']:
+            create_radiance_srf(pypolygon, "win" + str(bcnt) + str(fcnt),
+                                "win" + str(ageometry_table['type_win'][building_name]), rad)
+            fcnt+=1
+        for pypolygon in building_surfaces['walls']:
+            create_radiance_srf(pypolygon, "wall" + str(bcnt) + str(fcnt),
+                               "wall" + str(ageometry_table['type_wall'][building_name]), rad)
+            fcnt+= 1
+        for pypolygon in building_surfaces['roofs']:
+            create_radiance_srf(pypolygon, "roof" + str(bcnt) + str(fcnt),
+                                "roof" + str(ageometry_table['type_roof'][building_name]), rad)
+            fcnt+= 1
 
+    for building_surfaces in geometry_3D_surroundings:
+        ## for the surrounding buildings only, walls and roofs
+        id = 0
+        for pypolygon in building_surfaces['walls']:
+            create_radiance_srf(pypolygon, "surroundingbldgs" + str(id), "reflectance0.2" , rad)
+            id += 1
+        for pypolygon in building_surfaces['roofs']:
+            create_radiance_srf(pypolygon, "surroundingbldgs" + str(id), "reflectance0.2", rad)
+            id += 1
 
-        bldg_dict["name"] = bldg_name
-        bldg_dict["windows"] = window_list
-        bldg_dict["walls"] = wall_list
-        bldg_dict["roofs"] = roof_list
-        bldg_dict["footprints"] = footprint_list
-        bldg_dict_list.append(bldg_dict)
-        
-    return bldg_dict_list
+    return
 
 def reader_surface_properties(locator, input_shp):
     """
@@ -185,7 +166,6 @@ def radiation_multiprocessing(rad, simul_params, bldg_dict_list, aresults_path, 
 
 def radiation_singleprocessing(rad, bldg_dict_list, aresults_path, rad_params, aweatherfile_path):
 
-    num_buildings = len(bldg_dict_list)
     chunk_n = None
     for i, bldg_dict in enumerate(bldg_dict_list):
         daysim_main.isolation_daysim(chunk_n, rad, bldg_dict, aresults_path, rad_params, aweatherfile_path)
@@ -211,7 +191,7 @@ def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
 
     print "creating 3D geometry and surfaces"
     # create geometrical faces of terrain and buildings
-    geometry_terrain, geometry_buildings = geometry_generator.geometry_main(zone_shp, district_shp,
+    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(zone_shp, district_shp,
                                                                             input_terrain_raster, architecture_dbf)
 
     print "Sending the scene: geometry and materials to daysim"
@@ -223,16 +203,16 @@ def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
     # send terrain
     terrain2radiance(rad, geometry_terrain)
     # send buildings
-    bldg_dict_list = buildings2radiance(rad, building_surface_properties, geometry_buildings)
+    buildings2radiance(rad, building_surface_properties, geometry_3D_zone, geometry_3D_surroundings)
     # create scene out of all this
     rad.create_rad_input_file()
 
     print "Daysim simulation starts"
     time1 = time.time()
     if (settings.SIMUL_PARAMS['multiprocessing'] and mp.cpu_count() > 1):
-        radiation_multiprocessing(rad, settings.SIMUL_PARAMS, bldg_dict_list, results_path, settings.RAD_PARMS, weatherfile_path)
+        radiation_multiprocessing(rad, settings.SIMUL_PARAMS, geometry_3D_zone, results_path, settings.RAD_PARMS, weatherfile_path)
     else:
-        radiation_singleprocessing(rad, bldg_dict_list, results_path, settings.RAD_PARMS, weatherfile_path)
+        radiation_singleprocessing(rad, geometry_3D_zone, results_path, settings.RAD_PARMS, weatherfile_path)
 
     print "Daysim simulation finished in ", (time.time() - time1) / 60.0, " mins"
 
