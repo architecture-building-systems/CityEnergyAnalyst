@@ -263,7 +263,7 @@ class InputLocator(object):
 
     def get_thermal_networks(self):
         """db/Systems/thermal_networks.xls"""
-        return os.path.join(self.db_path, 'Systems',  'thermal_networks.xls')
+        return os.path.join(self.db_path, 'systems',  'thermal_networks.xls')
 
     def get_data_benchmark(self):
         """databases/CH/Benchmarks/benchmark_targets.xls"""
