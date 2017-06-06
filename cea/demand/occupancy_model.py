@@ -31,17 +31,17 @@ def calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values):
     is calculated as schedule * X * A). The electrical schedules are unitless.
 
     The script generates the following scheduleS:
-        'people': number of people per square meter at each hour (in p/m2)
-        've': ventilation demand schedule weighted by the corresponding occupancy types (in p/m2)
-        'Qs': sensible heat gain due to occupancy weighted by the corresponding occupancy types (in p/m2)
-        'X': moisture gain due to occupants weighted by the corresponding occupancy types (in p/m2)
-        'Ea': electricity demand for appliances at each hour (unitless)
-        'El': electricity demand for lighting at each hour (unitless)
-        'Epro': electricity demand for process at each hour (unitless)
-        'Ere': electricity demand for refrigeration at each hour (unitless)
-        'Ed': electricity demand for data centers at each hour (unitless)
-        'Vww': domestic hot water schedule at each hour  weighted by the corresponding occupancy types (in p/m2)
-        'Vw': total water schedule at each hour weighted by the corresponding occupancy types (in p/m2)
+        'people': number of people per square meter at each hour [in p/m2]
+        've': ventilation demand schedule weighted by the corresponding occupancy types [in lps/(l/m2/s)]
+        'Qs': sensible heat gain due to occupancy weighted by the corresponding occupancy types [in Wp/Wm2]
+        'X': moisture gain due to occupants weighted by the corresponding occupancy types [in ghp/(g/m2/h)]
+        'Ea': electricity demand for appliances at each hour [unitless]
+        'El': electricity demand for lighting at each hour [unitless]
+        'Epro': electricity demand for process at each hour [unitless]
+        'Ere': electricity demand for refrigeration at each hour [unitless]
+        'Ed': electricity demand for data centers at each hour [unitless]
+        'Vww': domestic hot water schedule at each hour  weighted by the corresponding occupancy types [in lpd/(l/m2/d)]
+        'Vw': total water schedule at each hour weighted by the corresponding occupancy types [in lpd/(l/m2/d)]
 
     :param list_uses: The list of uses used in the project
     :type list_uses: list
