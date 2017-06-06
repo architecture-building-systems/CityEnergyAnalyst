@@ -427,6 +427,9 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     edge_mass_flow_df = pd.DataFrame(data=np.zeros((8760, len(edge_node_df.columns.values))),
                                      columns=edge_node_df.columns.values)
 
+    node_mass_flow_df = pd.DataFrame(data=np.zeros((8760, len(edge_node_df.index))),
+                                     columns=edge_node_df.index.values) #TODO: for test case validation, delete when done
+
     print('start calculating edge mass flow...')
     t0 = time.clock()
     for t in range(8760):
@@ -449,13 +452,17 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
 
         # write consumer substation required flow rate to nodes
         required_flow_rate_df = write_substation_massflows_to_nodes_df(all_nodes_df, mdot_all)
-        # (1 x n) #flag = True: writing temperature
+        # (1 x n)
 
         # solve mass flow rates on edges
         edge_mass_flow_df[:][t:t + 1] = calc_mass_flow_edges(edge_node_df, required_flow_rate_df)
 
+        node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values  #TODO: for test case validation, delete when done
+
     #create csv file to store the nominal edge mass flow results
     edge_mass_flow_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'NominalEdgeMassFlow_' +
+                             network_type + '.csv')
+    node_mass_flow_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'Node_MassFlow_' +
                              network_type + '.csv')
     print (time.clock() - t0, "seconds process time for edge mass flow calculation\n")
 
