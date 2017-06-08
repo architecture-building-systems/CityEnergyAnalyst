@@ -209,9 +209,9 @@ def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
     rad.create_rad_input_file()
 
     time1 = time.time()
-    # if (settings.SIMUL_PARAMS['multiprocessing'] and mp.cpu_count() > 1):
-    #     radiation_multiprocessing(rad, settings.SIMUL_PARAMS, geometry_3D_zone, results_path, settings.RAD_PARMS, weatherfile_path)
-    # else:
+    if (settings.SIMUL_PARAMS['multiprocessing'] and mp.cpu_count() > 1):
+        radiation_multiprocessing(rad, settings.SIMUL_PARAMS, geometry_3D_zone, results_path, settings.RAD_PARMS, weatherfile_path)
+    else:
     radiation_singleprocessing(rad, geometry_3D_zone, results_path, settings.RAD_PARMS, weatherfile_path)
 
     print "Daysim simulation finished in ", (time.time() - time1) / 60.0, " mins"
