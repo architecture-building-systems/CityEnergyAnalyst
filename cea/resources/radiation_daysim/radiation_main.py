@@ -25,6 +25,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
 def create_radiance_srf(occface, srfname, srfmat, rad):
     bface_pts = fetch.pyptlist_frm_occface(occface)
     py2radiance.RadSurface(srfname, bface_pts, srfmat, rad)
@@ -167,8 +168,7 @@ def radiation_multiprocessing(rad, simul_params, bldg_dict_list, aresults_path, 
 def radiation_singleprocessing(rad, bldg_dict_list, aresults_path, rad_params, aweatherfile_path):
 
     chunk_n = None
-    for i, bldg_dict in enumerate(bldg_dict_list):
-        daysim_main.isolation_daysim(chunk_n, rad, bldg_dict, aresults_path, rad_params, aweatherfile_path)
+    daysim_main.isolation_daysim(chunk_n, rad, bldg_dict_list, aresults_path, rad_params, aweatherfile_path)
 
 def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
                           input_terrain_raster, architecture_dbf):
@@ -194,6 +194,7 @@ def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
     geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(zone_shp, district_shp,
                                                                             input_terrain_raster, architecture_dbf)
 
+
     print "Sending the scene: geometry and materials to daysim"
     # send materials
     daysim_mat = locator.get_daysim_mat()
@@ -207,12 +208,11 @@ def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
     # create scene out of all this
     rad.create_rad_input_file()
 
-    print "Daysim simulation starts"
     time1 = time.time()
-    if (settings.SIMUL_PARAMS['multiprocessing'] and mp.cpu_count() > 1):
-        radiation_multiprocessing(rad, settings.SIMUL_PARAMS, geometry_3D_zone, results_path, settings.RAD_PARMS, weatherfile_path)
-    else:
-        radiation_singleprocessing(rad, geometry_3D_zone, results_path, settings.RAD_PARMS, weatherfile_path)
+    # if (settings.SIMUL_PARAMS['multiprocessing'] and mp.cpu_count() > 1):
+    #     radiation_multiprocessing(rad, settings.SIMUL_PARAMS, geometry_3D_zone, results_path, settings.RAD_PARMS, weatherfile_path)
+    # else:
+    radiation_singleprocessing(rad, geometry_3D_zone, results_path, settings.RAD_PARMS, weatherfile_path)
 
     print "Daysim simulation finished in ", (time.time() - time1) / 60.0, " mins"
 
