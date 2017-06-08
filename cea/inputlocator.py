@@ -248,7 +248,7 @@ class InputLocator(object):
     def get_archetypes_schedules(self):
         """databases/CH/Archetypes/Archetypes_schedules.xlsx
         path to database of archetypes file Archetypes_HVAC_properties.xlsx"""
-        return os.path.join(self.db_path, 'archetypes', 'occupancy_schedules_SIA.xlsx')
+        return os.path.join(self.db_path, 'archetypes', 'occupancy_schedules_ASHRAE.xlsx')
 
     def get_life_cycle_inventory_supply_systems(self):
         """databases/lifecycle/LCA_infrastructure.csv"""
