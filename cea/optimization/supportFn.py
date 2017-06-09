@@ -119,7 +119,7 @@ def createTotalNtwCsv(indCombi, locator):
         rank += 1
     
     dfRes = df.drop(df.index[index])
-    dfRes.to_csv(os.path.join(locator.get_optimization_network_totals_folder(), "Total_" + indCombi + ".csv"), sep=',')
+    dfRes.to_csv(locator.get_optimization_network_totals_folder_total(indCombi), sep=',')
     return dfRes
     
 
