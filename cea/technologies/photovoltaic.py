@@ -802,10 +802,10 @@ def test_photovoltaic():
     date_start = gv.date_start
 
     for building in list_buildings_names:
-        radiation = locator.get_radiation_building(building_name= building)
-        radiation_metadata = locator.get_radiation_metadata(building_name= building)
-        calc_PV(locator=locator, radiation_csv= radiation, metadata_csv= radiation_metadata, latitude=latitude,
-                longitude=longitude, weather_path=weather_path, building_name = building,
+        radiation = locator.get_radiation_building(building_name=building)
+        radiation_metadata = locator.get_radiation_metadata(building_name=building)
+        calc_PV(locator=locator, radiation_csv=radiation, metadata_csv=radiation_metadata, latitude=latitude,
+                longitude=longitude, weather_path=weather_path, building_name=building,
                 pvonroof=pvonroof, pvonwall=pvonwall, misc_losses=misc_losses, worst_hour=worst_hour,
                 type_PVpanel=type_PVpanel, min_radiation=min_radiation, date_start=date_start)
 
