@@ -12,7 +12,7 @@ Following are the steps to run the solar technology scripts: (take ``photovoltai
 
    - ``min_radiation`` : A user input. Minimum radiation threshold to install solar panels, represented as % of the
      maximum solar radiation in the district.
-   - ``type_PVpanel``: A list of panels in ``..databases/systems/supply_systems.xls``
+   - ``type_PVpanel``: A list of panels in ``..databases/systems/supply_systems.xls`` **FIXME: this doesn't seem to be a list input, rather select one from the list??**
    - ``worst_hour``: Site specific input. First hour of sunrise on the solar solstice at the case study location.
    - ``misc_losses``: Default input. Losses from cabling, resistances etc..
    - ``pvonroof``: A user input. True if allow PV installed on roofs.
