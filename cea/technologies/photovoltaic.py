@@ -792,7 +792,7 @@ def test_photovoltaic():
     list_buildings_names = dbfreader.dbf2df(locator.get_building_occupancy())['Name']
 
     min_radiation = 0.75  # points are selected with at least a minimum production of this % from the maximum in the area.
-    type_PVpanel = "PV1"  # monocrystalline, T2 is poly and T3 is amorphous. it relates to the database of technologies
+    type_PVpanel = "PV1"  # PV1 monocrystalline, PV2 is poly and PV3 is amorphous. it relates to the database of technologies
     worst_hour = 8744  # first hour of sun on the solar solstice
     misc_losses = 0.1  # cabling, resistances etc..
     pvonroof = True  # flag for considering PV on roof #FIXME: define

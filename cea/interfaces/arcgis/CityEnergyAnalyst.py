@@ -25,11 +25,12 @@ __status__ = "Production"
 
 class Toolbox(object):
     """List the tools to show in the toolbox."""
+
     def __init__(self):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
         self.tools = [DemandTool, DataHelperTool, BenchmarkGraphsTool, EmissionsTool, EmbodiedEnergyTool, MobilityTool,
-                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool]
+                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, PhotovoltaicTool, HeatmapsTool]
 
 
 class DemandTool(object):
@@ -157,6 +158,7 @@ class DataHelperTool(object):
 
 class BenchmarkGraphsTool(object):
     """Integrates the cea/analysis/benchmark.py tool with ArcGIS"""
+
     def __init__(self):
         self.label = 'Benchmark graphs'
         self.description = 'Create benchmark plots of scenarios in a folder'
@@ -319,13 +321,13 @@ class EmbodiedEnergyTool(object):
 
 class MobilityTool(object):
     """Integrates the cea/analysis/mobility.py script with ArcGIS."""
+
     def __init__(self):
         self.label = 'Emissions Mobility'
         self.description = 'Calculate emissions and primary energy due to mobility'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
@@ -410,6 +412,168 @@ class ScenarioPlotsTool(object):
         output_file = parameters[1].valueAsText
         add_message(scenarios)
         run_cli(None, 'scenario-plots', '--output-file', output_file, '--scenarios', *scenarios)
+
+
+class PhotovoltaicTool(object):
+    def __init__(self):
+        self.label = 'Photovoltaic'
+        self.description = 'Run PV analysis on buildings'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        weather_name = arcpy.Parameter(
+            displayName="Weather file (choose from list or enter full path to .epw file)",
+            name="weather_name",
+            datatype="String",
+            parameterType="Required",
+            direction="Input")
+        weather_name.filter.list = get_weather_names()
+        weather_name.enabled = False
+
+        year = arcpy.Parameter(
+            displayName="Year",
+            name="year",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        year.value = 2014
+        year.enabled = False
+
+        latitude = arcpy.Parameter(
+            displayName="Latitude",
+            name="latitude",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        latitude.enabled = False
+
+        longitude = arcpy.Parameter(
+            displayName="Longitude",
+            name="longitude",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        longitude.enabled = False
+
+        pvonroof = arcpy.Parameter(
+            displayName="flag for considering PV on roofs",
+            name="pvonroof",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        pvonroof.value = True
+
+        pvonwall = arcpy.Parameter(
+            displayName="flag for considering PV on walls",
+            name="pvonwall",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        pvonwall.value = True
+
+        misc_losses = arcpy.Parameter(
+            displayName="cabling, resistances etc.",
+            name="misc_losses",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        misc_losses.value = 0.1
+
+        worst_hour = arcpy.Parameter(
+            displayName="cabling, resistances etc.",
+            name="worst_hour",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        worst_hour.value = 8744
+
+        type_PVpanel = arcpy.Parameter(
+            displayName="PV technology to use",
+            name="type_PVpanel",
+            datatype="String",
+            parameterType="Required",
+            direction="Input")
+        type_PVpanel.filter.list = ['monocrystalline', 'polycrystalline', 'amorphous']
+
+        min_radiation = arcpy.Parameter(
+            displayName="points are selected with at least a minimum production of this % from the maximum in the area.",
+            name="min_radiation",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        min_radiation.value = 0.75
+
+        return [scenario_path, weather_name, year, latitude, longitude, pvonroof, pvonwall, misc_losses, worst_hour,
+                type_PVpanel, min_radiation]
+
+    def updateParameters(self, parameters):
+        scenario_path = parameters[0].valueAsText
+        if scenario_path is None:
+            return
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+
+        weather_parameter = parameters[1]
+        year_parameter = parameters[2]
+        latitude_parameter = parameters[3]
+        longitude_parameter = parameters[4]
+
+        weather_parameter.enabled = True
+        year_parameter.enabled = True
+
+        latitude_value = float(_cli_output(scenario_path, 'latitude'))
+        longitude_value = float(_cli_output(scenario_path, 'longitude'))
+        if not latitude_parameter.enabled:
+            # only overwrite on first try
+            latitude_parameter.value = latitude_value
+            latitude_parameter.enabled = True
+
+        if not longitude_parameter.enabled:
+            # only overwrite on first try
+            longitude_parameter.value = longitude_value
+            longitude_parameter.enabled = True
+        return
+
+    def execute(self, parameters, messages):
+        scenario_path = parameters[0].valueAsText
+        weather_name = parameters[1].valueAsText
+        year = parameters[2].value
+        latitude = parameters[3].value
+        longitude = parameters[4].value
+        pvonroof = parameters[5].value
+        pvonwall = parameters[6].value
+        misc_losses = parameters[7].value
+        worst_hour = parameters[8].value
+        type_PVpanel = {'monocrystalline': 'PV1',
+                        'polycrystalline': 'PV2',
+                        'amorphous': 'PV3'}[parameters[9].value]
+        min_radiation = parameters[10].value
+
+        date_start = str(year) + '-01-01'
+
+        if weather_name in get_weather_names():
+            weather_path = get_weather_path(weather_name)
+        elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
+            weather_path = weather_name
+        else:
+            weather_path = get_weather_path('.')
+
+        add_message('longitude: %s' % longitude)
+        add_message('latitude: %s' % latitude)
+
+        run_cli(scenario_path, 'photovoltaic', '--latitude', latitude, '--longitude', longitude, '--weather-path',
+                weather_path, '--pvonroof', pvonroof, '--pvonwall', pvonwall, '--misc-losses', misc_losses,
+                '--worst-hour', worst_hour, '--type-PVpanel', type_PVpanel, '--min-radiation', min_radiation,
+                '--date-start', date_start)
+        return
 
 
 class RadiationTool(object):
@@ -528,6 +692,7 @@ def add_message(msg, **kwargs):
 
 def get_weather_names():
     """Shell out to cli.py and collect the list of weather files registered with the CEA"""
+
     def get_weather_names_inner():
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -539,6 +704,7 @@ def get_weather_names():
                 # end of input
                 break
             yield line.rstrip()
+
     return list(get_weather_names_inner())
 
 
@@ -646,7 +812,6 @@ class HeatmapsTool(object):
         analysis_fields.parameterDependencies = ['path_variables']
 
         return [scenario_path, path_variables, analysis_fields]
-
 
     def updateParameters(self, parameters):
         # scenario_path
