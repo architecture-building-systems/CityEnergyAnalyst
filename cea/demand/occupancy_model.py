@@ -78,10 +78,6 @@ def calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values):
     people_per_square_meter = 0
     for num in range(len(list_uses)):
         people_per_square_meter += occupancy[list_uses[num]] * archetype_values['people'][num]
-    if people_per_square_meter > 0:
-        occupant_density_average = 1/people_per_square_meter
-    else:
-        occupant_density_average = 0
 
     for label in schedule_labels:
         # each schedule is defined as (sum of schedule[i]*X[i]*share_of_area[i])/(sum of X[i]*share_of_area[i]) for each
