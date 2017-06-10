@@ -76,7 +76,7 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
     if prop_architecture_flag:
         architecture_DB = get_database(locator.get_archetypes_properties(), 'ARCHITECTURE')
         architecture_DB['Code'] = architecture_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
-                                                                            x['year_end'], x['standard']),axis=1)
+                                                                            x['year_end'], x['standard']), axis=1)
         categories_df['cat_architecture'] = calc_category(architecture_DB, categories_df)
 
         prop_architecture_df = categories_df.merge(architecture_DB, left_on='cat_architecture', right_on='Code')
