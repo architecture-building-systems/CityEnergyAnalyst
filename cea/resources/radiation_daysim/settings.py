@@ -32,4 +32,4 @@ SEN_PARMS = {
 TERRAIN_PARAMS = {'e_terrain': 0.8}
 
 # simulation parameters
-SIMUL_PARAMS = {'n_build_in_chunk':1, 'multiprocessing': False} # min number of buildings for multiprocessing # limit the number if running out of memory
+SIMUL_PARAMS = {'n_build_in_chunk':50, 'multiprocessing': False} # min number of buildings for multiprocessing # limit the number if running out of memory
