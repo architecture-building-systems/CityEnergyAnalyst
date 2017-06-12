@@ -191,6 +191,7 @@ def run_as_script(scenario_path=None):
     # for the interface it would be good if the default values where calculated as 2 standard deviations of
 
     # FLAGS
+    exclude_partial_matches = False  # keep only buildings that attain all the criteria simultaneously?
 
     # CRITERIA AGE
     name_new_scenario = "retrofit_HVAC"
