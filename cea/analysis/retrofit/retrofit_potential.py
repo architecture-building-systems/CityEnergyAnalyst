@@ -28,8 +28,8 @@ def age_filter_HVAC(age_df, delta_min_age):
     return age_df[(age_df.built <= delta_min_age) & (age_df.HVAC <= delta_min_age)].Name.values
 
 
-def eui_filter_HVAC(demand, load, threshold):
-    demand["eui"] = demand[load] / demand["Af_m2"] * 1000
+def eui_filter_HVAC(demand, variable_name, threshold, column_suffix='_MWhyr'):
+    demand["eui"] = demand[variable_name + column_suffix] / demand["Af_m2"] * 1000
     return demand[(demand.eui >= threshold)].Name.values
 
 
@@ -49,76 +49,75 @@ def losses_filter_HVAC(demand, load_withlosses, load_enduse, threshold):
     return demand[(demand.losses >= threshold)].Name.values
 
 
-def retrofit_main(locator_baseline, name_new_scenario, select_only_all_criteria,
-                  age_retrofit,
-                  age_criteria,
-                  eui_heating_criteria,
-                  eui_hotwater_criteria,
-                  eui_cooling_criteria,
-                  eui_electricity_criteria,
-                  heating_costs_criteria,
-                  hotwater_costs_criteria,
-                  cooling_costs_criteria,
-                  electricity_costs_criteria,
-                  heating_losses_criteria,
-                  hotwater_losses_criteria,
-                  cooling_losses_criteria,
-                  emissions_operation_criteria):
-
+def retrofit_main(locator_baseline, name_new_scenario, exclude_partial_matches,
+                  age_retrofit=None,
+                  age_criteria=None,
+                  eui_heating_criteria=None,
+                  eui_hotwater_criteria=None,
+                  eui_cooling_criteria=None,
+                  eui_electricity_criteria=None,
+                  heating_costs_criteria=None,
+                  hotwater_costs_criteria=None,
+                  cooling_costs_criteria=None,
+                  electricity_costs_criteria=None,
+                  heating_losses_criteria=None,
+                  hotwater_losses_criteria=None,
+                  cooling_losses_criteria=None,
+                  emissions_operation_criteria=None):
     selection_names = []  # list to store names of selected buildings to retrofit
     # CASE 1
 
-
     age_crit = [["age", age_criteria]]
-    for criteria in age_crit:
-        if criteria[1][0]:
-            age_difference = age_retrofit - criteria[1][1]
+    for criteria_name, criteria_threshold in age_crit:
+        if criteria_threshold is not None:
+            # FIXME: check to see if this really subtracts years (I'm not sure it does, maybe use timespan to be sure?)
+            age_difference = age_retrofit - criteria_threshold
             age_df = dbfreader.dbf2df(locator_baseline.get_building_age())
-            selection_names.append(("Crit_" + criteria[0], age_filter_HVAC(age_df, age_difference)))
+            selection_names.append(("Crit_" + criteria_name, age_filter_HVAC(age_df, age_difference)))
 
     # CASE 2
-    eui_crit = [["Qhsf", "Qhsf_MWhyr", eui_heating_criteria],
-                ["Qwwf", "Qwwf_MWhyr", eui_hotwater_criteria],
-                ["Qcsf", "Qcsf_MWhyr", eui_cooling_criteria],
-                ["Ef", "Ef_MWhyr", eui_electricity_criteria]]
-    for criteria in eui_crit:
-        if criteria[2][0]:
+    eui_crit = [["Qhsf", eui_heating_criteria],
+                ["Qwwf", eui_hotwater_criteria],
+                ["Qcsf", eui_cooling_criteria],
+                ["Ef", eui_electricity_criteria]]
+    for criteria_name, criteria_threshold in eui_crit:
+        if criteria_threshold is not None:
             demand_totals = pd.read_csv(locator_baseline.get_total_demand())
             selection_names.append(
-                ("c_eui_" + criteria[0], eui_filter_HVAC(demand_totals, criteria[1], criteria[2][1])))
+                ("c_eui_" + criteria_name, eui_filter_HVAC(demand_totals, criteria_name, criteria_threshold)))
 
     # CASE 3
     op_costs_crit = [["Qhsf", heating_costs_criteria],
                      ["Qwwf", hotwater_costs_criteria],
                      ["Qcsf", cooling_costs_criteria],
                      ["Ef", electricity_costs_criteria]]
-    for criteria in op_costs_crit:
-        if criteria[1][0]:
-            costs_totals = pd.read_csv(locator_baseline.get_costs_operation_file(criteria[0]))
+    for criteria_name, criteria_threshold in op_costs_crit:
+        if criteria_threshold is not None:
+            costs_totals = pd.read_csv(locator_baseline.get_costs_operation_file(criteria_name))
             selection_names.append(
-                ("c_cost_" + criteria[0], emissions_filter_HVAC(costs_totals, criteria[0] + "_cost_m2",
-                                                                   criteria[1][1])))
+                ("c_cost_" + criteria_name, emissions_filter_HVAC(costs_totals, criteria_name + "_cost_m2",
+                                                                  criteria_threshold)))
 
     # CASE 4
     losses_crit = [["Qhsf", "Qhsf_MWhyr", "Qhs_MWhyr", heating_losses_criteria],
-                    ["Qwwf", "Qwwf_MWhyr", "Qww_MWhyr", hotwater_losses_criteria],
-                    ["Qcsf", "Qcsf_MWhyr", "Qcs_MWhyr", cooling_losses_criteria]]
-    for criteria in losses_crit:
-        if criteria[3][0]:
+                   ["Qwwf", "Qwwf_MWhyr", "Qww_MWhyr", hotwater_losses_criteria],
+                   ["Qcsf", "Qcsf_MWhyr", "Qcs_MWhyr", cooling_losses_criteria]]
+    for criteria_name, load_with_losses, load_end_use, criteria_threshold in losses_crit:
+        if criteria_threshold is not None:
             demand_totals = pd.read_csv(locator_baseline.get_total_demand())
-            selection_names.append(("c_loss_" + criteria[0], losses_filter_HVAC(demand_totals, criteria[1],
-                                                                                   criteria[2],
-                                                                                   criteria[3][1])))
+            selection_names.append(("c_loss_" + criteria_name,
+                                    losses_filter_HVAC(demand_totals, load_with_losses, load_end_use,
+                                                       criteria_threshold)))
     # CASE 5
     LCA_crit = [["ghg", "O_ghg_ton", emissions_operation_criteria]]
-    for criteria in LCA_crit:
-        if criteria[1][0]:
+    for criteria_name, lca_name, criteria_threshold in LCA_crit:
+        if criteria_threshold is not None:
             emissions_totals = pd.read_csv(locator_baseline.get_lca_operation())
-            selection_names.append(("c_" + criteria[0], emissions_filter_HVAC(emissions_totals, criteria[1],
-                                                                                 criteria[2][1])))
+            selection_names.append(
+                ("c_" + criteria_name, emissions_filter_HVAC(emissions_totals, lca_name, criteria_threshold)))
 
     # appending all the results
-    if select_only_all_criteria:
+    if exclude_partial_matches:
         type_of_join = "inner"
     else:
         type_of_join = "outer"
@@ -137,9 +136,8 @@ def retrofit_main(locator_baseline, name_new_scenario, select_only_all_criteria,
     data.fillna(value="FALSE", inplace=True)
 
     # Create a retrofit case with the buildings that pass the criteria
-    retrofit_scenario_creator(locator_baseline.scenario_path,
-                              os.path.join(locator_baseline.get_project_path(), name_new_scenario),
-                              data)
+    retrofit_scenario_path = os.path.join(locator_baseline.get_project_path(), name_new_scenario)
+    retrofit_scenario_creator(locator_baseline.scenario_path, retrofit_scenario_path, data)
 
 
 def retrofit_scenario_creator(src, dst, data, symlinks=False, ignore=None):
@@ -193,35 +191,34 @@ def run_as_script(scenario_path=None):
     # for the interface it would be good if the default values where calculated as 2 standard deviations of
 
     # FLAGS
-    select_only_all_criteria = False  # keep only buildings that attain all the criteria simultaneously?
 
     # CRITERIA AGE
     name_new_scenario = "retrofit_HVAC"
     age_retrofit = 2020  # [true or false, threshold]
-    age_criteria = [True, 15]  # [true or false, threshold]
+    age_criteria = 15  # [years] threshold age of HVAC (built / retrofitted)
 
     # CRITERIA ENERGY USE INTENSITY
-    eui_heating_criteria = [True, 50]  # [true or false, load to verify, threshold]
-    eui_hotwater_criteria = [True, 50]  # [true or false, load to verify, threshold]
-    eui_cooling_criteria = [True, 4]  # [true or false, load to verify, threshold]
-    eui_electricity_criteria = [True, 20]  # [true or false, load to verify, threshold]
+    eui_heating_criteria = 50  # load to verify, threshold
+    eui_hotwater_criteria = 50  # load to verify
+    eui_cooling_criteria = 4  # load to verify, threshold
+    eui_electricity_criteria = 20  # load to verify, threshold
 
     # CRITERIA EMISSIONS
-    emissions_operation_criteria = [True, 30]  # [true or false, threshold]
+    emissions_operation_criteria = 30  # threshold
 
     # CRITERIA COSTS
-    heating_costs_criteria = [True, 2]  # [true or false, threshold]
-    hotwater_costs_criteria = [True, 2]  # [true or false, threshold]
-    cooling_costs_criteria = [True, 2]  # [true or false, threshold]
-    electricity_costs_criteria = [True, 2]  # [true or false, threshold]
+    heating_costs_criteria = 2  # threshold
+    hotwater_costs_criteria = 2  # threshold
+    cooling_costs_criteria = 2  # threshold
+    electricity_costs_criteria = 2  # threshold
 
     # CASE OF THERMAL LOSSES
-    heating_losses_criteria = [True, 15]  # [true or false, threshold]
-    hotwater_losses_criteria = [True, 15]  # [true or false, threshold]
-    cooling_losses_criteria = [True, 15]  # [true or false, threshold]
+    heating_losses_criteria = 15  # threshold
+    hotwater_losses_criteria = 15  # threshold
+    cooling_losses_criteria = 15  # threshold
 
     # PROCESS
-    retrofit_main(locator_baseline=locator_baseline, select_only_all_criteria=select_only_all_criteria,
+    retrofit_main(locator_baseline=locator_baseline, exclude_partial_matches=exclude_partial_matches,
                   name_new_scenario=name_new_scenario,
                   age_retrofit=age_retrofit,
                   age_criteria=age_criteria,
