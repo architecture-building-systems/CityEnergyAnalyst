@@ -21,7 +21,6 @@ class InputLocator(object):
     # SCENARIO
     def __init__(self, scenario_path):
         self.scenario_path = scenario_path
-        self.case_study_path = os.path.dirname(self.scenario_path)
         self.db_path = os.path.join(os.path.dirname(__file__), 'databases')
         self.weather_path = os.path.join(self.db_path, 'weather')
 
@@ -33,6 +32,10 @@ class InputLocator(object):
         if not os.path.exists(folder):
             os.makedirs(folder)
         return folder
+
+    def get_project_path(self):
+        """Returns the parent folder of a scenario - this is called a project or 'case-study'"""
+        return os.path.dirname(self.scenario_path)
 
     def get_optimization_results_folder(self):
         """scenario/outputs/data/optimization"""

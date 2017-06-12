@@ -54,16 +54,16 @@ def retrofit_main(locator_baseline, name_new_scenario, select_only_all_criteria,
                   age_criteria,
                   eui_heating_criteria,
                   eui_hotwater_criteria,
-                    eui_cooling_criteria,
-                    eui_electricity_criteria,
-                    heating_costs_criteria,
-                    hotwater_costs_criteria,
-                    cooling_costs_criteria,
-                    electricity_costs_criteria,
-                    heating_losses_criteria,
-                    hotwater_losses_criteria,
-                    cooling_losses_criteria,
-                    emissions_operation_criteria):
+                  eui_cooling_criteria,
+                  eui_electricity_criteria,
+                  heating_costs_criteria,
+                  hotwater_costs_criteria,
+                  cooling_costs_criteria,
+                  electricity_costs_criteria,
+                  heating_losses_criteria,
+                  hotwater_losses_criteria,
+                  cooling_losses_criteria,
+                  emissions_operation_criteria):
 
     selection_names = []  # list to store names of selected buildings to retrofit
     # CASE 1
@@ -138,7 +138,7 @@ def retrofit_main(locator_baseline, name_new_scenario, select_only_all_criteria,
 
     # Create a retrofit case with the buildings that pass the criteria
     retrofit_scenario_creator(locator_baseline.scenario_path,
-                              os.path.join(locator_baseline.case_study_path, name_new_scenario),
+                              os.path.join(locator_baseline.get_project_path(), name_new_scenario),
                               data)
 
 
