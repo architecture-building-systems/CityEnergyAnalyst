@@ -73,8 +73,8 @@ def calc_sensors_zone(geometry_3D_zone, results_path):
         # building name
         bldg_name = building_geometry["name"]
         # get sensors in the building
-        sensors_coords_building, sensors_dir_building,\
-        sensors_area_building, sensors_type_building = calc_sensors_building(building_geometry)
+        sensors_dir_building, sensors_coords_building, \
+        sensors_type_building, sensors_area_building = calc_sensors_building(building_geometry)
 
         # get the total number of sensors and store in lst
         sensors_number = len(sensors_coords_building)
@@ -139,3 +139,4 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, aresults_path, rad_params, 
         items_sensor_name_and_result = dict(zip(sensor_code_building, selection_of_results))
         with open(os.path.join(aresults_path, building_name + '_insolation_Whm2.json'), 'w') as outfile:
             json.dump(items_sensor_name_and_result, outfile)
+        index = sensors_number_building
