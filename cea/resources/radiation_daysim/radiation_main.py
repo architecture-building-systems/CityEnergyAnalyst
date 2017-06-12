@@ -165,10 +165,14 @@ def radiation_multiprocessing(rad, simul_params, bldg_dict_list, aresults_path, 
     for process in processes:
         process.join()
 
-def radiation_singleprocessing(rad, bldg_dict_list, aresults_path, rad_params, aweatherfile_path):
+def radiation_singleprocessing(rad, bldg_dict_list, aresults_path, aweatherfile_path):
 
-    chunk_n = None
-    daysim_main.isolation_daysim(chunk_n, rad, bldg_dict_list, aresults_path, rad_params, aweatherfile_path)
+    # get chunks of buildings to iterate
+    simul_params = settings.SIMUL_PARAMS
+    chunks = [bldg_dict_list[i:i + simul_params['n_build_in_chunk']] for i in range(0, len(bldg_dict_list),
+                                                                                    simul_params['n_build_in_chunk'])]
+    for chunk_n, bldg_dict in enumerate(chunks):
+        daysim_main.isolation_daysim(chunk_n, rad, bldg_dict, aresults_path, settings.RAD_PARMS, aweatherfile_path)
 
 def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
                           input_terrain_raster, architecture_dbf):
@@ -209,10 +213,12 @@ def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
     rad.create_rad_input_file()
 
     time1 = time.time()
-    if (settings.SIMUL_PARAMS['multiprocessing'] and mp.cpu_count() > 1):
-        radiation_multiprocessing(rad, settings.SIMUL_PARAMS, geometry_3D_zone, results_path, settings.RAD_PARMS, weatherfile_path)
-    else:
-        radiation_singleprocessing(rad, geometry_3D_zone, results_path, settings.RAD_PARMS, weatherfile_path)
+    radiation_singleprocessing(rad, geometry_3D_zone, results_path, weatherfile_path)
+
+    # if (settings.SIMUL_PARAMS['multiprocessing'] and mp.cpu_count() > 1):
+    #     radiation_multiprocessing(rad, settings.SIMUL_PARAMS, geometry_3D_zone, results_path, settings.RAD_PARMS, weatherfile_path)
+    # else:
+    #     radiation_singleprocessing(rad, geometry_3D_zone, results_path, settings.RAD_PARMS, weatherfile_path)
 
     print "Daysim simulation finished in ", (time.time() - time1) / 60.0, " mins"
 
