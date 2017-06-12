@@ -250,6 +250,26 @@ def compile(args):
     import cea.utilities.compile_pyd_files
     cea.utilities.compile_pyd_files.main()
 
+def retrofit_potential(args):
+    """Run the ``cea.analysis.retrofit.retrofit_potential`` module on the scenario"""
+    import cea.analysis.retrofit.retrofit_potential as retrofit_potential
+    retrofit_potential.retrofit_main(locator_baseline=locator_baseline, select_only_all_criteria=select_only_all_criteria,
+                  name_new_scenario=name_new_scenario,
+                  age_retrofit=age_retrofit,
+                  age_criteria=age_criteria,
+                  eui_heating_criteria=eui_heating_criteria,
+                  eui_hotwater_criteria=eui_hotwater_criteria,
+                  eui_cooling_criteria=eui_cooling_criteria,
+                  eui_electricity_criteria=eui_electricity_criteria,
+                  heating_costs_criteria=heating_costs_criteria,
+                  hotwater_costs_criteria=hotwater_costs_criteria,
+                  cooling_costs_criteria=cooling_costs_criteria,
+                  electricity_costs_criteria=electricity_costs_criteria,
+                  heating_losses_criteria=heating_losses_criteria,
+                  hotwater_losses_criteria=hotwater_losses_criteria,
+                  cooling_losses_criteria=cooling_losses_criteria,
+                  emissions_operation_criteria=emissions_operation_criteria)
+
 
 def main():
     """Parse the arguments and run the program."""
