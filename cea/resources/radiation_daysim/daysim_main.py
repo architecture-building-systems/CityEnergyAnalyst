@@ -120,7 +120,8 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, aresults_path, rad_params, 
     rad.set_sensor_points(sensors_coords_zone, sensors_dir_zone)
     create_sensor_input_file(rad, chunk_n)
 
-    print "Daysim simulation starts"
+    print "Daysim simulation starts for building(s)", names_zone
+    print "and the next number of total sensors", sum(sensors_number_zone)
     rad.execute_epw2wea(aweatherfile_path)
     rad.execute_radfiles2daysim()
     rad.write_radiance_parameters(rad_params['RAD_AB'], rad_params['RAD_AD'], rad_params['RAD_AS'],

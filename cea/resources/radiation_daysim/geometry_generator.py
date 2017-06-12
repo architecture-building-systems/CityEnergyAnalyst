@@ -129,7 +129,7 @@ def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architectu
     geometry_3D_zone = []
     geometry_3D_surroundings = []
 
-    for name in district_building_names[:50]:
+    for name in district_building_names:
         height = float(district_building_records.loc[name, height_col])
         nfloors = int(district_building_records.loc[name, nfloor_col])
 
