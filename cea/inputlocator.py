@@ -351,8 +351,7 @@ class InputLocator(object):
 
     def get_daysim_mat(self):
         """this gets the file that documents all of the radiance/default_materials"""
-        return os.path.join(os.path.dirname(__file__), 'resources', 'radiation_daysim', 'default_materials.rad')
-
+        return os.path.join(self.get_solar_radiation_folder(), 'materials.rad')
     # OUTPUTS
 
     ##SOLAR-RADIATION
