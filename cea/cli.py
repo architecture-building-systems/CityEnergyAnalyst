@@ -408,7 +408,7 @@ def main():
 
     retrofit_potential_parser = subparsers.add_parser('retrofit-potential',
                                                       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    retrofit_potential_parser.add_argument('--exclude-partial-matches', type=bool, default=False,
+    retrofit_potential_parser.add_argument('--exclude-partial-matches', default=False, action='store_true',
                                            help='exclude buildings that only fit some of the criteria?')
     retrofit_potential_parser.add_argument('--name', default="retrofit_HVAC", help="name for new scenario")
     retrofit_potential_parser.add_argument('--retrofit-target-date', default=2020, type=int,

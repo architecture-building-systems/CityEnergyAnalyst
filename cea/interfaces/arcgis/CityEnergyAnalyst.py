@@ -66,62 +66,146 @@ class RetrofitPotentialTool(object):
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
-        age_retrofit = arcpy.Parameter(
+        retrofit_target_date = arcpy.Parameter(
             displayName="Year when the retrofit will take place",
-            name="age_retrofit",
+            name="retrofit_target_date",
             datatype="GPLong",
             parameterType="Required",
             direction="Input")
-        age_retrofit.value = 2020
+        retrofit_target_date.value = 2020
 
-        #TODO: nice boxes with flags and target values.
-        #CRITERIA AGE
-        age_criteria = [True, 15]  # [true or false, threshold]
+        exclude_partial_matches = arcpy.Parameter(
+            displayName="Exclude partial matches",
+            name="exclude_partial_matches",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        exclude_partial_matches.value = False
 
-        # CRITERIA UNERGY USE INTENSITY
-        eui_heating_criteria = [True, 50]  # [true or false, threshold]
-        eui_hotwater_criteria = [True, 50]  # [true or false, threshold]
-        eui_cooling_criteria = [True, 4]  # [true or false, threshold]
-        eui_electricity_criteria = [False, 20]  # [true or false, threshold]
+        name = arcpy.Parameter(
+            displayName="Name for new scenario",
+            name="name",
+            datatype="String",
+            parameterType="Required",
+            direction="Input")
+        name.value = "retrofit_HVAC"
 
-        # CRITERIA EMISSIONS
-        emissions_operation_criteria = [False, 30]  # [true or false, threshold]
+        age_threshold = arcpy.Parameter(
+            displayName="threshold age of HVAC (built / retrofitted)",
+            name="age_threshold",
+            datatype="GPLong",
+            parameterType="Optional",
+            direction="Input")
 
-        # CRITERIA COSTS
-        heating_costs_criteria = [True, 2]  # [true or false, threshold]
-        hotwater_costs_criteria = [True, 2]  # [true or false, threshold]
-        cooling_costs_criteria = [True, 2]  # [true or false, threshold]
-        electricity_costs_criteria = [False, 2]  # [true or false, threshold]
+        eui_heating_threshold = arcpy.Parameter(
+            displayName="End use intensity threshold for heating",
+            name="eui_heating_threshold",
+            datatype="GPLong",
+            parameterType="Optional",
+            direction="Input")
 
-        # CASE OF THERMAL LOSSES
-        heating_losses_criteria = [True, 15]  # [true or false, threshold]
-        hotwater_losses_criteria = [True, 15]  # [true or false, threshold]
-        cooling_losses_criteria = [True, 15]  # [true or false, threshold]
+        eui_hot_water_threshold = arcpy.Parameter(
+            displayName="End use intensity threshold for hot water",
+            name="eui_hot_water_threshold",
+            datatype="GPLong",
+            parameterType="Optional",
+            direction="Input")
 
-        age_crit = [age_criteria]
-        eui_crit = [eui_heating_criteria, eui_hotwater_criteria, eui_cooling_criteria, eui_electricity_criteria]
-        LCA_crit = [emissions_operation_criteria]
-        op_costs_crit = [heating_costs_criteria, hotwater_costs_criteria, cooling_costs_criteria,
-                         electricity_costs_criteria]
-        losses_crit = [heating_losses_criteria, hotwater_losses_criteria, cooling_losses_criteria]
-        return [scenario_path, age_retrofit, age_crit, eui_crit, LCA_crit,
-                  op_costs_crit, losses_crit]
+        eui_cooling_threshold = arcpy.Parameter(
+            displayName="End use intensity threshold for cooling",
+            name="eui_cooling_threshold",
+            datatype="GPLong",
+            parameterType="Optional",
+            direction="Input")
+
+        eui_electricity_threshold = arcpy.Parameter(
+            displayName="End use intensity threshold for electricity",
+            name="eui_electricity_threshold",
+            datatype="GPLong",
+            parameterType="Optional",
+            direction="Input")
+
+        emissions_operation_threshold = arcpy.Parameter(
+            displayName="Threshold for emissions due to operation",
+            name="emissions_operation_threshold",
+            datatype="GPLong",
+            parameterType="Optional",
+            direction="Input")
+
+        heating_costs_threshold = arcpy.Parameter(
+            displayName="Threshold for heating costs",
+            name="heating_costs_threshold",
+            datatype="GPLong",
+            parameterType="Optional",
+            direction="Input")
+
+        hot_water_costs_threshold = arcpy.Parameter(
+            displayName="Threshold for hot water costs",
+            name="hot_water_costs_threshold",
+            datatype="GPLong",
+            parameterType="Optional",
+            direction="Input")
+
+        cooling_costs_threshold = arcpy.Parameter(
+            displayName="Threshold for cooling costs",
+            name="cooling_costs_threshold",
+            datatype="GPLong",
+            parameterType="Optional",
+            direction="Input")
+
+        electricity_costs_threshold = arcpy.Parameter(
+            displayName="Threshold for electricity costs",
+            name="electricity_costs_threshold",
+            datatype="GPLong",
+            parameterType="Optional",
+            direction="Input")
+
+        heating_losses_threshold = arcpy.Parameter(
+            displayName="Threshold for thermal losses from heating",
+            name="heating_losses_threshold",
+            datatype="GPLong",
+            parameterType="Optional",
+            direction="Input")
+
+        hot_water_losses_threshold = arcpy.Parameter(
+            displayName="Threshold for thermal losses from hot water",
+            name="hot_water_losses_threshold",
+            datatype="GPLong",
+            parameterType="Optional",
+            direction="Input")
+
+        cooling_losses_threshold = arcpy.Parameter(
+            displayName="Threshold for thermal losses from cooling",
+            name="cooling_losses_threshold",
+            datatype="GPLong",
+            parameterType="Optional",
+            direction="Input")
+
+        return [scenario_path, retrofit_target_date, exclude_partial_matches, name, age_threshold,
+                eui_heating_threshold, eui_hot_water_threshold, eui_cooling_threshold, eui_electricity_threshold,
+                emissions_operation_threshold, heating_costs_threshold, hot_water_costs_threshold,
+                cooling_costs_threshold, electricity_costs_threshold, heating_losses_threshold,
+                hot_water_losses_threshold, cooling_losses_threshold]
 
     def execute(self, parameters, _):
-        scenario_path = parameters[0].valueAsText
-        flags = {
-            'Qww': parameters[1].value,
-            'Qhs': parameters[2].value,
-            'Qcs': parameters[3].value,
-            'Qcdata': parameters[4].value,
-            'Qcrefri': parameters[5].value,
-            'Eal': parameters[6].value,
-            'Eaux': parameters[7].value,
-            'Epro': parameters[8].value,
-            'Edata': parameters[9].value,
-        }
-        extra_files_to_create = [key for key in flags if flags[key]]
-        run_cli(scenario_path, 'emissions', '--extra-files-to-create', *extra_files_to_create)
+
+        scenario_path, retrofit_target_date, exclude_partial_matches, name = parameters[:4]
+        scenario_path = scenario_path.valueAsText
+        retrofit_target_date = retrofit_target_date.value
+        exclude_partial_matches = exclude_partial_matches.value
+        name = name.valueAsText
+
+        args = ['--retrofit-target-date', str(retrofit_target_date), '--name', name]
+        if exclude_partial_matches:
+            args.append('--exclude-partial-matches')
+
+        for parameter in parameters[4:]:
+            if parameter.value is not None:
+                args.append('--%s' % parameter.name.replace('_', '-'))
+                args.append(str(parameter.value))
+
+        run_cli(scenario_path, 'retrofit-potential', *args)
+
 
 
 class DemandTool(object):
