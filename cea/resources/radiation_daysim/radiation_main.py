@@ -140,8 +140,11 @@ def reader_surface_properties(locator, input_shp):
 
     return surface_properties.set_index('Name').round(decimals=2)
 
-def radiation_multiprocessing(rad, simul_params, bldg_dict_list, aresults_path, rad_params, aweatherfile_path):
+def radiation_multiprocessing(rad, bldg_dict_list, aresults_path, rad_params, aweatherfile_path):
 
+    # get chunks of buildings to iterate
+    simul_params = settings.SIMUL_PARAMS
+    rad_params = settings.RAD_PARMS
     # get chunks to iterate and start multiprocessing
     chunks = [bldg_dict_list[i:i +simul_params['n_build_in_chunk']] for i in range(0, len(bldg_dict_list),
                                                                                    simul_params['n_build_in_chunk'])]
@@ -215,10 +218,10 @@ def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
     time1 = time.time()
     radiation_singleprocessing(rad, geometry_3D_zone, results_path, weatherfile_path)
 
-    # if (settings.SIMUL_PARAMS['multiprocessing'] and mp.cpu_count() > 1):
-    #     radiation_multiprocessing(rad, settings.SIMUL_PARAMS, geometry_3D_zone, results_path, settings.RAD_PARMS, weatherfile_path)
-    # else:
-    #     radiation_singleprocessing(rad, geometry_3D_zone, results_path, settings.RAD_PARMS, weatherfile_path)
+    if (settings.SIMUL_PARAMS['multiprocessing'] and mp.cpu_count() > 1):
+        radiation_multiprocessing(rad, geometry_3D_zone, results_path, weatherfile_path)
+    else:
+        radiation_singleprocessing(rad, geometry_3D_zone, results_path, weatherfile_path)
 
     print "Daysim simulation finished in ", (time.time() - time1) / 60.0, " mins"
 
