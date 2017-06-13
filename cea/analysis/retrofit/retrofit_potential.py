@@ -64,7 +64,6 @@ def retrofit_main(locator_baseline, name_new_scenario, exclude_partial_matches,
                   hotwater_losses_criteria=None,
                   cooling_losses_criteria=None,
                   emissions_operation_criteria=None):
-    print 'exclude_partial_matches:', exclude_partial_matches
     selection_names = []  # list to store names of selected buildings to retrofit
     # CASE 1
 
