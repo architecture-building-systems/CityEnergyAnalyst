@@ -5,3 +5,4 @@ include cea/databases/lifecycle/*.xlsx
 include cea/databases/systems/*.xls
 include cea/databases/uncertainty/uncertainty_distributions.xls
 include cea/examples/reference-case-open.zip
+include cea/default.config
