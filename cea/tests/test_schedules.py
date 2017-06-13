@@ -76,28 +76,28 @@ class TestScheduleCreation(unittest.TestCase):
         indoor_comfort_DB = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT').set_index('Code')
 
         results = pd.DataFrame({'people': np.ones(8760) *
-                             (occupancy['OFFICE'] * schedules_office[0] * office_occ + occupancy['INDUSTRIAL'] *
-                              schedules_industry[0] * industrial_occ),
+                             (occupancy['OFFICE'] * schedules_office[0] / office_occ + occupancy['INDUSTRIAL'] *
+                              schedules_industry[0] / industrial_occ),
                    've': np.ones(8760) *
                          (occupancy['OFFICE'] * schedules_office[0] * indoor_comfort_DB['Ve_lps']['OFFICE'] /
                           office_occ + occupancy['INDUSTRIAL'] * schedules_industry[0] / industrial_occ *
                           indoor_comfort_DB['Ve_lps']['INDUSTRIAL']) /
                          ((occupancy['OFFICE'] * indoor_comfort_DB['Ve_lps']['OFFICE'] / office_occ +
-                           occupancy['INDUSTRIAL'] * indoor_comfort_DB['Ve_lps']['INDUSTRIAL'] / industrial_occ) /
+                           occupancy['INDUSTRIAL'] * indoor_comfort_DB['Ve_lps']['INDUSTRIAL'] / industrial_occ) *
                           average_occ),
                    'Qs': np.ones(8760) *
                          (occupancy['OFFICE'] * schedules_office[0] / office_occ * internal_loads_DB['Qs_Wp']['OFFICE']
                           + occupancy['INDUSTRIAL'] * schedules_industry[0] / industrial_occ *
                           internal_loads_DB['Qs_Wp']['INDUSTRIAL']) /
                          ((occupancy['OFFICE'] * internal_loads_DB['Qs_Wp']['OFFICE'] / office_occ +
-                           occupancy['INDUSTRIAL'] * internal_loads_DB['Qs_Wp']['INDUSTRIAL'] / industrial_occ) /
+                           occupancy['INDUSTRIAL'] * internal_loads_DB['Qs_Wp']['INDUSTRIAL'] / industrial_occ) *
                           average_occ),
                    'X': np.ones(8760) *
                         (occupancy['OFFICE'] * schedules_office[0] / office_occ * internal_loads_DB['X_ghp']['OFFICE'] +
                          occupancy['INDUSTRIAL'] * schedules_industry[0] / industrial_occ *
                          internal_loads_DB['X_ghp']['INDUSTRIAL']) /
                         ((occupancy['OFFICE'] * internal_loads_DB['X_ghp']['OFFICE'] / office_occ +
-                          occupancy['INDUSTRIAL'] * internal_loads_DB['X_ghp']['INDUSTRIAL'] / industrial_occ) /
+                          occupancy['INDUSTRIAL'] * internal_loads_DB['X_ghp']['INDUSTRIAL'] / industrial_occ) *
                          average_occ),
                    'Ea': np.ones(8760) *
                          (occupancy['OFFICE'] * schedules_office[1] * internal_loads_DB['Ea_Wm2']['OFFICE'] +
@@ -125,18 +125,18 @@ class TestScheduleCreation(unittest.TestCase):
                            / (occupancy['OFFICE'] * internal_loads_DB['Ed_Wm2']['OFFICE'] +
                               occupancy['INDUSTRIAL'] * internal_loads_DB['Ed_Wm2']['INDUSTRIAL']),
                    'Vww': np.ones(8760) * (
-                       occupancy['OFFICE'] * (1/24) / office_occ * internal_loads_DB['Vww_lpd']['OFFICE'] +
-                       occupancy['INDUSTRIAL'] * (1/24) / industrial_occ *
+                       occupancy['OFFICE'] * schedules_office[2] / office_occ * internal_loads_DB['Vww_lpd']['OFFICE'] +
+                       occupancy['INDUSTRIAL'] * schedules_industry[2] / industrial_occ *
                        internal_loads_DB['Vww_lpd']['INDUSTRIAL']) / (
                        (occupancy['OFFICE'] * internal_loads_DB['Vww_lpd']['OFFICE'] / office_occ +
-                        occupancy['INDUSTRIAL'] * internal_loads_DB['Vww_lpd']['INDUSTRIAL'] / industrial_occ) /
+                        occupancy['INDUSTRIAL'] * internal_loads_DB['Vww_lpd']['INDUSTRIAL'] / industrial_occ) *
                        average_occ),
                    'Vw': np.ones(8760) * (
-                       occupancy['OFFICE'] * (1/24) / office_occ * internal_loads_DB['Vw_lpd']['OFFICE'] +
-                       occupancy['INDUSTRIAL'] * (1/24) / industrial_occ *
+                       occupancy['OFFICE'] * schedules_office[2] / office_occ * internal_loads_DB['Vw_lpd']['OFFICE'] +
+                       occupancy['INDUSTRIAL'] * schedules_industry[2] / industrial_occ *
                        internal_loads_DB['Vw_lpd']['INDUSTRIAL']) / (
                        (occupancy['OFFICE'] * internal_loads_DB['Vw_lpd']['OFFICE'] / office_occ +
-                        occupancy['INDUSTRIAL'] * internal_loads_DB['Vw_lpd']['INDUSTRIAL'] / industrial_occ) /
+                        occupancy['INDUSTRIAL'] * internal_loads_DB['Vw_lpd']['INDUSTRIAL'] / industrial_occ) *
                        average_occ)})
         calculated_schedule = pd.DataFrame(
             calc_schedules(list_uses=['OFFICE', 'INDUSTRIAL'],
