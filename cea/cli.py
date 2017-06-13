@@ -26,7 +26,9 @@ def demand(args):
             args.weather = cea.inputlocator.InputLocator(None).get_weather(args.weather)
         except:
             pass
-    cea.demand.demand_main.run_as_script(scenario_path=args.scenario, weather_path=args.weather)
+    print 'use_dynamic_infiltration_calculation:', args.use_dynamic_infiltration_calculation
+    cea.demand.demand_main.run_as_script(scenario_path=args.scenario, weather_path=args.weather,
+                                         use_dynamic_infiltration_calculation=args.use_dynamic_infiltration_calculation)
 
 
 def data_helper(args):
@@ -255,6 +257,8 @@ def main():
     demand_parser = subparsers.add_parser('demand',
                                           formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     demand_parser.add_argument('-w', '--weather', help='Path to the weather file')
+    demand_parser.add_argument('--use-dynamic-infiltration-calculation', action='store_true',
+                               help='Use the dynamic infiltration calculation instead of default')
     demand_parser.set_defaults(func=demand)
 
     data_helper_parser = subparsers.add_parser('data-helper',
