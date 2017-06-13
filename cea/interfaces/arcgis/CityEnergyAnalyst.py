@@ -30,7 +30,7 @@ class Toolbox(object):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
         self.tools = [DemandTool, DataHelperTool, BenchmarkGraphsTool, EmissionsTool, EmbodiedEnergyTool, MobilityTool,
-                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, PhotovoltaicTool, HeatmapsTool]
+                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, SolarTechnologyTool, HeatmapsTool]
 
 
 class DemandTool(object):
@@ -416,7 +416,7 @@ class ScenarioPlotsTool(object):
 
 class SolarTechnologyTool(object):
     def __init__(self):
-        self.label = 'Solar Technology'
+        self.label = 'Solar Technologies'
         self.description = 'Calculate heat and electricity production from solar energy technologies'
         self.canRunInBackground = False
 
