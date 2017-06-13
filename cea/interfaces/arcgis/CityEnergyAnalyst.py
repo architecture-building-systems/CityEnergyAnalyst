@@ -414,10 +414,10 @@ class ScenarioPlotsTool(object):
         run_cli(None, 'scenario-plots', '--output-file', output_file, '--scenarios', *scenarios)
 
 
-class PhotovoltaicTool(object):
+class SolarTechnologyTool(object):
     def __init__(self):
-        self.label = 'Photovoltaic'
-        self.description = 'Run PV analysis on buildings'
+        self.label = 'Solar Technology'
+        self.description = 'Calculate heat and electricity production from solar energy technologies'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -479,7 +479,7 @@ class PhotovoltaicTool(object):
         pvonwall.value = True
 
         misc_losses = arcpy.Parameter(
-            displayName="cabling, resistances etc.",
+            displayName="misc. loss from cabling, resistances etc.",
             name="misc_losses",
             datatype="GPDouble",
             parameterType="Required",
@@ -487,7 +487,7 @@ class PhotovoltaicTool(object):
         misc_losses.value = 0.1
 
         worst_hour = arcpy.Parameter(
-            displayName="cabling, resistances etc.",
+            displayName="worst hour (the hour of sunrise on the solar solstice at the site)",
             name="worst_hour",
             datatype="GPLong",
             parameterType="Required",
