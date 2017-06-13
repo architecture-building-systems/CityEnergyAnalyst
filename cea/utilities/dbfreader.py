@@ -54,10 +54,9 @@ def dbf2df(dbf_path, index=None, cols=False, incl_index=False):
         return pd.DataFrame(data)
 
 def xls2dbf(xls_path,dbf_path):
-    df=pd.DataFrame.read_excel(xls_path)
-    df.df2dbf(dbf_path)
-
+    df=pd.read_excel(xls_path)
+    df2dbf(df,dbf_path)
 
 def dbf2xls(dbf_path,xls_path):
      df=dbf2df(dbf_path)
-     df.pd.DataFrame.to_excel(xls_path)
+     df.to_excel(xls_path)
