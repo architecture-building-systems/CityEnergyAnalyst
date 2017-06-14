@@ -232,7 +232,7 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
     Az_vector = np.radians(Az)
 
     result = list(range(number_groups))
-    groups_area = list(range(number_groups))
+    list_groups_area = list(range(number_groups))
     Sum_PV = np.zeros(8760)
 
     n = 1.526 # refractive index of glass
@@ -270,11 +270,11 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
                                            radiation.I_diffuse, tilt, Sz_vector, teta_vector, teta_ed, teta_eg, n, Pg,
                                            K, NOCT, a0, a1, a2, a3, a4, L)
         result[group] = np.vectorize(calc_PV_power)(results[0], results[1], eff_nom, area_per_group, Bref, misc_losses)
-        groups_area[group] = area_per_group
+        list_groups_area[group] = area_per_group
 
         Sum_PV = Sum_PV + result[group] # in kWh
-    total_area = sum(groups_area)
-    Final = pd.DataFrame({'PV_kWh':Sum_PV,'Area':total_area})
+
+    Final = pd.DataFrame({'PV_kWh':Sum_PV,'Area':sum(list_groups_area)})
     return result, Final
 
 
