@@ -85,8 +85,8 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, 
                   ha, latitude, Tin, height):
     n0, c1, c2, mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, Aratio, Apanel, dP1, dP2, dP3, dP4 = calc_properties_SC(
         type_SCpanel=1) #TODO: move out when testing is done
-    aperature_area = Aratio * Apanel
 
+    # create lists to store results
     listresults = [None] * number_groups
     listresults_perarea = [None] * number_groups
     listareasgroups = [None] * number_groups
@@ -96,6 +96,7 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, 
     Sum_qloss = np.zeros(8760)
 
     Tin_array = np.zeros(8760) + Tin
+    aperature_area = Aratio * Apanel
     total_area_module = prop_observers['total_area_module'].sum() # total area for panel installation
 
     # calculate equivalent length
@@ -113,11 +114,11 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, 
     for group in range(number_groups):
         # load panel angles from group
         teta_z = prop_observers.loc[group, 'surface_azimuth']  # azimuth of panels of group
-        area_group = prop_observers.loc[group, 'total_area_module']
+        area_per_group = prop_observers.loc[group, 'total_area_module']
         tilt_angle = prop_observers.loc[group, 'tilt']  # tilt angle of panels
 
         # create dataframe with irradiation from group
-        radiation = pd.DataFrame({'I_sol': group_radiation[group]})
+        radiation = pd.DataFrame({'I_sol': group_radiation[group]}) # FIXME: check case when more than one group
         radiation['I_diffuse'] = weather_data.ratio_diffhout * radiation.I_sol  # calculate diffuse radiation
         radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']     # calculate direct radiation
         radiation.fillna(0, inplace=True)                                       # set nan to zero
@@ -131,15 +132,15 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, 
                                             n0, c1, c2, mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, aperature_area,
                                             dP1, dP2, dP3, dP4, Tin, Leq, l_ext, Nseg)
 
-        K = area_group / Apanel
-        listresults[group][5] = listresults[group][5] * K
-        listresults[group][0] = listresults[group][0] * K
-        listresults[group][1] = listresults[group][1] * K
-        listresults[group][2] = listresults[group][2] * K
+        number_of_panels = area_per_group / Apanel
+        listresults[group][5] = listresults[group][5] * number_of_panels
+        listresults[group][0] = listresults[group][0] * number_of_panels
+        listresults[group][1] = listresults[group][1] * number_of_panels
+        listresults[group][2] = listresults[group][2] * number_of_panels
 
-        listareasgroups[group] = area_group
+        listareasgroups[group] = area_per_group
 
-    for group in range(number_groups):
+    for group in range(number_groups):  #FIXME: maybe merge with the previous for loop?
         mcp_array = listresults[group][5]
         qloss_array = listresults[group][0]
         qout_array = listresults[group][1]
