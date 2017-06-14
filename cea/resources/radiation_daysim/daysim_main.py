@@ -120,8 +120,14 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, aresults_path, rad_params, 
     rad.set_sensor_points(sensors_coords_zone, sensors_dir_zone)
     create_sensor_input_file(rad, chunk_n)
 
+    num_sensors = sum(sensors_number_zone)
     print "Daysim simulation starts for building(s)", names_zone
-    print "and the next number of total sensors", sum(sensors_number_zone)
+    print "and the next number of total sensors", num_sensors
+    if num_sensors > 10000:
+        raise ValueError('You are sending more than 10000 sensors at the same time, this'
+                         'will eventually crash a daysim instance. To solve it, reduce the number of buildings'
+                         'in each chunk in the Settings.py file')
+
     rad.execute_epw2wea(aweatherfile_path)
     rad.execute_radfiles2daysim()
     rad.write_radiance_parameters(rad_params['RAD_AB'], rad_params['RAD_AD'], rad_params['RAD_AS'],
