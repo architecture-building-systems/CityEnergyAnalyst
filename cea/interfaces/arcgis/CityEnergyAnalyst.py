@@ -521,6 +521,12 @@ class SolarTechnologyTool(object):
             parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
 
+        radiation_csv = _cli_output(scenario_path, 'locate', 'get_radiation')
+        if not os.path.exists(radiation_csv):
+            parameters[0].setErrorMessage("No radiation file found - please run radiation tool first")
+            return
+
+        # scenario passes test
         weather_parameter = parameters[1]
         year_parameter = parameters[2]
         latitude_parameter = parameters[3]
@@ -541,6 +547,19 @@ class SolarTechnologyTool(object):
             longitude_parameter.value = longitude_value
             longitude_parameter.enabled = True
         return
+
+    def updateMessages(self, parameters):
+        scenario_path = parameters[0].valueAsText
+        if scenario_path is None:
+            return
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+
+        radiation_csv = _cli_output(scenario_path, 'locate', 'get_radiation')
+        if not os.path.exists(radiation_csv):
+            parameters[0].setErrorMessage("No radiation file found - please run radiation tool first")
+            return
 
     def execute(self, parameters, messages):
         scenario_path = parameters[0].valueAsText
