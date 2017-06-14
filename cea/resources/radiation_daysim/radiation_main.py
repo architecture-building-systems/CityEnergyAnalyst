@@ -140,7 +140,7 @@ def reader_surface_properties(locator, input_shp):
 
     return surface_properties.set_index('Name').round(decimals=2)
 
-def radiation_multiprocessing(rad, bldg_dict_list, aresults_path, rad_params, aweatherfile_path):
+def radiation_multiprocessing(rad, bldg_dict_list, aresults_path, aweatherfile_path):
 
     # get chunks of buildings to iterate
     simul_params = settings.SIMUL_PARAMS
