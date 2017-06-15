@@ -463,7 +463,7 @@ class SolarTechnologyTool(object):
         longitude.enabled = False
 
         pvonroof = arcpy.Parameter(
-            displayName="flag for considering PV on roofs",
+            displayName="Considering PV on roofs",
             name="pvonroof",
             datatype="GPBoolean",
             parameterType="Required",
@@ -471,20 +471,12 @@ class SolarTechnologyTool(object):
         pvonroof.value = True
 
         pvonwall = arcpy.Parameter(
-            displayName="flag for considering PV on walls",
+            displayName="Considering PV on walls",
             name="pvonwall",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
         pvonwall.value = True
-
-        misc_losses = arcpy.Parameter(
-            displayName="misc. loss from cabling, resistances etc.",
-            name="misc_losses",
-            datatype="GPDouble",
-            parameterType="Required",
-            direction="Input")
-        misc_losses.value = 0.1
 
         worst_hour = arcpy.Parameter(
             displayName="worst hour (the hour of sunrise on the solar solstice at the site)",
@@ -503,14 +495,14 @@ class SolarTechnologyTool(object):
         type_PVpanel.filter.list = ['monocrystalline', 'polycrystalline', 'amorphous']
 
         min_radiation = arcpy.Parameter(
-            displayName="points are selected with at least a minimum production of this % from the maximum in the area.",
+            displayName="filtering surfaces with low radiation potential (% of the maximum radiation in the area)",
             name="min_radiation",
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
         min_radiation.value = 0.75
 
-        return [scenario_path, weather_name, year, latitude, longitude, pvonroof, pvonwall, misc_losses, worst_hour,
+        return [scenario_path, weather_name, year, latitude, longitude, pvonroof, pvonwall, worst_hour,
                 type_PVpanel, min_radiation]
 
     def updateParameters(self, parameters):
