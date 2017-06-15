@@ -309,7 +309,15 @@ class DemandTool(object):
             direction="Input")
         weather_name.filter.list = get_weather_names()
 
-        return [scenario_path, weather_name]
+        dynamic_infiltration = arcpy.Parameter(
+            displayName="Use dynamic infiltration model (slower)",
+            name="dynamic_infiltration",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        dynamic_infiltration.value = False
+
+        return [scenario_path, weather_name, dynamic_infiltration]
 
     def isLicensed(self):
         return True
@@ -340,7 +348,12 @@ class DemandTool(object):
         else:
             weather_path = get_weather_path()
 
-        run_cli(scenario_path, 'demand', '--weather', weather_path)
+        use_dynamic_infiltration_calculation = parameters[2].value
+
+        args = [scenario_path, 'demand', '--weather', weather_path]
+        if use_dynamic_infiltration_calculation:
+            args.append('--use-dynamic-infiltration-calculation')
+        run_cli(*args)
 
 
 class DataHelperTool(object):
