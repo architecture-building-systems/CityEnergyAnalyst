@@ -198,8 +198,10 @@ def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
 
     print "creating 3D geometry and surfaces"
     # create geometrical faces of terrain and buildings
+    simplification_params = settings.SIMPLIFICATION_PARAMS
     geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(zone_shp, district_shp,
-                                                                            input_terrain_raster, architecture_dbf)
+                                                                            input_terrain_raster, architecture_dbf,
+                                                                                                    simplification_params)
 
 
     print "Sending the scene: geometry and materials to daysim"

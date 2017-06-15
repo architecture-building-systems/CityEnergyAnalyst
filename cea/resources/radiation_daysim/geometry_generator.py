@@ -11,14 +11,14 @@ import pyliburo.py3dmodel.fetch as fetch
 import pyliburo.py3dmodel.calculate as calculate
 from pyliburo import py3dmodel as py3dmodel
 import pyliburo.py3dmodel.modify as modify
-import pyliburo.pycitygml as pycitygml
-import pyliburo.gml3dmodel as gml3dmodel
-import pyliburo.shp2citygml as shp2citygml
 
+import pyliburo.gml3dmodel as gml3dmodel
+
+from cea.resources.radiation_daysim import settings
 from OCC.IntCurvesFace import IntCurvesFace_ShapeIntersector
 from OCC.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
 from geopandas import GeoDataFrame as gdf
-import shapefile
+
 import cea.globalvar
 import cea.inputlocator
 import numpy as np
@@ -103,15 +103,17 @@ def create_hollowed_facade(surface_facade, window):
 
     return hollowed_facade_clean, hole_facade
 
-def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architecture_path,
+def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architecture_path, simplification_params,
                   height_col, nfloor_col):
     """
-    This script extrudes buildings from the shapefile and creates intermediate floors.
 
-    :param district_shp_path: path to the shapefile to be extruded of the district
-    :param tin_occface_list: the faces of the terrain, to be used to put the buildings on top.
-    :param height_col:
-    :param nfloor_col:
+    :param zone_shp_path: path to zone geometrydatabase
+    :param district_shp_path: path to district geometry database
+    :param tin_occface_list: list of faces of terrain
+    :param architecture_path: path to database of architecture properties
+    :param simplification_params: parameters that configure the level of simplification of geometry
+    :param height_col: name of the columns storing the height of buildings
+    :param nfloor_col: name ofthe column storing the number of floors in buildings.
     :return:
     """
     # read district shapefile and names of buildings of the zone of analysis
@@ -137,11 +139,13 @@ def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architectu
         if name in zone_building_names:
             range_floors = range(nfloors+1)
             flr2flr_height = height / nfloors
-            geometry = district_building_records.ix[name].geometry.simplify(2, preserve_topology=True)
+            geometry = district_building_records.ix[name].geometry.simplify(simplification_params['zone_geometry'],
+                                                                            preserve_topology=True)
         else:
             range_floors = [0,1]
             flr2flr_height = height
-            geometry = district_building_records.ix[name].geometry.simplify(10, preserve_topology=False)
+            geometry = district_building_records.ix[name].geometry.simplify(simplification_params['surrounding_geometry'],
+                                                                            preserve_topology=True)
 
         # burn buildings footprint into the terrain and return the location of the new face
         face_footprint = burn_buildings(geometry, terrain_intersection_curves)
@@ -150,7 +154,6 @@ def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architectu
         bldg_solid = calc_solid(face_footprint, range_floors, flr2flr_height)
 
         # now get all surfaces and create windows only if the buildings are in the area of study
-        bldg_dict = {}
         window_list =[]
         wall_list = []
         if name in zone_building_names:
@@ -284,14 +287,15 @@ def raster2tin(input_terrain_raster):
 
     return tin_occface_list
 
-def geometry_main(zone_shp_path, district_shp_path, input_terrain_raster, architecture_path):
+def geometry_main(zone_shp_path, district_shp_path, input_terrain_raster, architecture_path, simplification_params):
 
     # transform terrain from raster to tin
     geometry_terrain = raster2tin(input_terrain_raster)
     
     # transform buildings 2D to 3D and add windows
-    geometry_3D_zone, geometry_3D_surroundings = building2d23d(zone_shp_path, district_shp_path, geometry_terrain, architecture_path,
-                                height_col='height_ag', nfloor_col="floors_ag")
+    geometry_3D_zone, geometry_3D_surroundings = building2d23d(zone_shp_path, district_shp_path, geometry_terrain,
+                                                               architecture_path, simplification_params,
+                                                               height_col='height_ag', nfloor_col="floors_ag")
 
     return geometry_terrain, geometry_3D_zone,geometry_3D_surroundings
 
@@ -310,8 +314,10 @@ if __name__ == '__main__':
 
     # run routine City GML LOD 1
     time1 = time.time()
+    simplification_params = settings.SIMPLIFICATION_PARAMS
     geometry_terrain, geometry_3D_zone, geometry_3D_surroundings  = geometry_main(zone_shp, district_shp,
-                                                                                   input_terrain_raster, architecture_dbf)
+                                                                                   input_terrain_raster, architecture_dbf,
+                                                                                  simplification_params)
     print "Geometry of the scene created in", (time.time() - time1) / 60.0, " mins"
 
 
