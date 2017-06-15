@@ -63,7 +63,7 @@ def calc_sensors_building(building_geometry_dict):
     return sensor_dir_list, sensor_cord_list, sensor_type_list, sensor_area_list
 
 
-def calc_sensors_zone(geometry_3D_zone, results_path):
+def calc_sensors_zone(geometry_3D_zone, locator):
     sensors_coords_zone = []
     sensors_dir_zone = []
     sensors_total_number_list = []
@@ -100,23 +100,22 @@ def calc_sensors_zone(geometry_3D_zone, results_path):
                       'Ydir':[x[1] for x in sensors_dir_building],
                       'Zdir':[x[2] for x in sensors_dir_building],
                       'AREA_m2': sensors_area_building,
-                      'TYPE': sensors_type_building}).to_csv(os.path.join(results_path,
-                                                                          bldg_name + '_geometry.csv'), index=None)
+                      'TYPE': sensors_type_building}).to_csv(locator.get_radiation_metadata(bldg_name), index=None)
 
 
     return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone
 
 
-def isolation_daysim(chunk_n, rad, geometry_3D_zone, aresults_path, rad_params, aweatherfile_path):
+def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, rad_params, aweatherfile_path):
 
     # folder for data work
-    daysim_dir = os.path.join(aresults_path, "temp" + str(chunk_n))
+    daysim_dir = locator.os.path.join(locator, "temp" + str(chunk_n))
     rad.initialise_daysim(daysim_dir)
 
     # calculate sensors
     print " calculating and sending sensor points"
     sensors_coords_zone, sensors_dir_zone, sensors_number_zone, names_zone, \
-    sensors_code_zone = calc_sensors_zone(geometry_3D_zone, aresults_path)
+    sensors_code_zone = calc_sensors_zone(geometry_3D_zone, locator)
     rad.set_sensor_points(sensors_coords_zone, sensors_dir_zone)
     create_sensor_input_file(rad, chunk_n)
 
@@ -144,6 +143,6 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, aresults_path, rad_params, 
     for building_name, sensors_number_building, sensor_code_building in zip(names_zone, sensors_number_zone, sensors_code_zone):
         selection_of_results = solar_res[index:index+sensors_number_building]
         items_sensor_name_and_result = dict(zip(sensor_code_building, selection_of_results))
-        with open(os.path.join(aresults_path, building_name + '_insolation_Whm2.json'), 'w') as outfile:
+        with open(locator.get_radiation_building(building_name), 'w') as outfile:
             json.dump(items_sensor_name_and_result, outfile)
         index = sensors_number_building
