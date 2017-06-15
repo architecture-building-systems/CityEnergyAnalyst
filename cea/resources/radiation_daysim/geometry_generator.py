@@ -137,11 +137,11 @@ def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architectu
         if name in zone_building_names:
             range_floors = range(nfloors+1)
             flr2flr_height = height / nfloors
-            geometry = district_building_records.ix[name].geometry.simplify(1, preserve_topology=True)
+            geometry = district_building_records.ix[name].geometry.simplify(2, preserve_topology=True)
         else:
             range_floors = [0,1]
             flr2flr_height = height
-            geometry = district_building_records.ix[name].geometry.simplify(5, preserve_topology=True)
+            geometry = district_building_records.ix[name].geometry.simplify(10, preserve_topology=False)
 
         # burn buildings footprint into the terrain and return the location of the new face
         face_footprint = burn_buildings(geometry, terrain_intersection_curves)
