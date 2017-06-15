@@ -79,7 +79,7 @@ def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
         print 'calculating optimal tile angle and separation done'
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
-        number_groups, hourlydata_groups, number_points, prop_observers = calc_groups(sensors_rad_clean, sensors_metadata_cat)
+        number_groups, hourlydata_groups, number_points, prop_observers = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
 
         print 'generating groups of sensor points done'
 
@@ -155,44 +155,6 @@ def filter_low_potential(weather_data, radiation_csv, metadata_csv, min_radiatio
 
     return max_yearly_radiation, min_yearly_radiation, sensors_rad_clean, sensors_metadata_clean
 
-def calc_groups(sensors_rad_clean, sensors_metadata_cat):
-    """
-    To calculate the mean hourly radiation of sensors in each group.
-
-    :param sensors_rad_clean: radiation data of the filtered sensors
-    :type sensors_rad_clean: dataframe
-    :param sensors_metadata_cat: data of filtered sensor points categorized with module tilt angle, array spacing,
-                                 surface azimuth, installed PV module area of each sensor point
-    :type sensors_metadata_cat: dataframe
-    :return number_groups: number of groups of sensor points
-    :rtype number_groups: float
-    :return hourlydata_groups: mean hourly radiation of sensors in each group
-    :rtype hourlydata_groups: dataframe
-    :return number_points: number of sensor points in each group
-    :rtype number_points: array
-    :return prop_observers: mean values of sensor properties of each group of sensors
-    :rtype prop_observers: dataframe
-    """
-    # calculate number of groups as number of optimal combinations.
-    groups_ob = sensors_metadata_cat.groupby(['CATB', 'CATGB', 'CATteta_z']) # group the sensors by categories
-    prop_observers = groups_ob.mean().reset_index()
-    prop_observers = pd.DataFrame(prop_observers)
-    total_area_installed_module = groups_ob['area_installed_module'].sum().reset_index()['area_installed_module']
-    prop_observers['total_area_module'] = total_area_installed_module
-    number_groups = groups_ob.size().count()
-    sensors_list = groups_ob.groups.values()
-
-    # calculate mean hourly radiation of sensors in each group
-    rad_group_mean = np.empty(shape=(number_groups,8760))
-    number_points = np.empty(shape=(number_groups,1))
-    for x in range(0, number_groups):
-        sensors_rad_group = sensors_rad_clean[sensors_list[x]]
-        rad_mean = sensors_rad_group.mean(axis=1).as_matrix().T
-        rad_group_mean[x] = rad_mean
-        number_points[x] = len(sensors_list[x])
-    hourlydata_groups = pd.DataFrame(rad_group_mean).T
-
-    return number_groups, hourlydata_groups, number_points, prop_observers
 
 # =========================
 # PV electricity generation
