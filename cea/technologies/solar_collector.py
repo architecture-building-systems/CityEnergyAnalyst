@@ -17,7 +17,7 @@ from cea.utilities import solar_equations
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__credits__ = ["Jimeno A. Fonseca", "Shanshan Hsieh "]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -27,8 +27,8 @@ __status__ = "Production"
 
 # SC heat generation
 
-def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_path, building_name, panel_on_roof, panel_on_wall,
-            misc_losses, worst_hour, type_SCpanel, T_in, min_radiation, date_start):
+def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_path, building_name, panel_on_roof,
+            panel_on_wall, misc_losses, worst_hour, type_SCpanel, T_in, min_radiation, date_start):
 
     t0 = time.clock()
 
@@ -107,7 +107,7 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, 
     Leq = l_int + l_ext  # in m/m2 aperture
 
     if type_SCpanel == 'SC2':  # for evacuated tubes #TODO:change to panel_properties['type']=='ET'
-        Nseg = 100  # default number of subsdivisions for the calculation #TODO: find reference
+        Nseg = 100  # default number of subsdivisions for the calculation
     else:
         Nseg = 10  # default number of subsdivisions for the calculation
 
@@ -158,35 +158,6 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, 
 
     return listresults, Final
 
-
-# def calc_groups(Clean_hourly, observers_fin):
-#     # calculate number of optima groups as number of optimal combiantions.
-#     groups_ob = Clean_hourly.groupby(['CATB', 'CATGB', 'CATteta_z'])
-#     hourlydata_groups = groups_ob.mean().reset_index()
-#     hourlydata_groups = pd.DataFrame(hourlydata_groups)
-#     Number_pointsgroup = groups_ob.size().reset_index()
-#     number_points = Number_pointsgroup[0]
-#
-#     groups_ob = observers_fin.groupby(['CATB', 'CATGB', 'CATteta_z'])
-#     prop_observers = groups_ob.mean().reset_index()
-#     prop_observers = pd.DataFrame(prop_observers)
-#     Number_groups = groups_ob.size().count()
-#
-#     hourlydata_groups = hourlydata_groups.drop({'ID', 'GB', 'grid_code', 'pointid', 'array_s', 'area_netpv', 'aspect',
-#                                                 'slope', 'CATB', 'CATGB', 'CATteta_z'}, axis=1).transpose().reindex(
-#         axis=1)  # vector with radiation points of group
-#     hourlydata_groups['newindex'] = hourlydata_groups.index
-#     hourlydata_groups['newindex'] = hourlydata_groups.newindex.apply(lambda x: re.findall('\d+', x))
-#     hourlydata_groups.index = range(8760)
-#     for hour in range(8760):
-#         hourlydata_groups.loc[hour, 'newindex'] = int(hourlydata_groups.loc[hour, 'newindex'][0])
-#
-#     hourlydata_groups.set_index('newindex', inplace=True)
-#     hourlydata_groups.sort_index(inplace=True)
-#     hourlydata_groups.index = range(8760)
-#
-#     return Number_groups, hourlydata_groups, number_points, prop_observers
-#TODO: delete when done
 
 def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector, Tamb_vector, n0, c1, c2,
                    mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, aperture_area, dP1, dP2, dP3, dP4, Tin, Leq, Le, Nseg):
@@ -502,7 +473,7 @@ def calc_qloss_network(Mfl, Le, Area_a, Tm, Te, maxmsc):
     """
 
     qloss = 0.217 * Le * Area_a * (Tm - Te) * (Mfl / maxmsc) / 1000  # TODO: find reference for constant
-    #fixme: not exactly the same as eq.(61) in the CEA paper
+    #FIXME[Q]: not exactly the same as eq.(61) in the CEA paper
     return qloss  # in kW
 
 
