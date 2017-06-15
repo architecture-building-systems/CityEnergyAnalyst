@@ -19,7 +19,8 @@ from cea.utilities import helpers
 
 # demand model of thermal and electrical loads
 
-def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator):
+def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
+                       use_dynamic_infiltration_calculation=False):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
@@ -125,11 +126,14 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             # sensible heat gains
             tsd = sensible_loads.calc_Qgain_sen(hoy, tsd, bpr, gv)
 
-            # UNCOMMENT THIS TO OVERWRITE STATIC INFILTRATION WITH DYNAMIC INFILTRATION RATE
-            # # TODO: add option for detailed infiltration calculation
-            # dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
-            # qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(tsd['theta_a'][hoy - 1] if not np.isnan(tsd['theta_a'][hoy - 1]) else tsd['T_ext'][hoy - 1], tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
-            # tsd['m_ve_inf'][hoy] = max(qm_sum_in/3600, 1/3600)  # INFILTRATION IS FORCED NOT TO REACH ZERO IN ORDER TO AVOID THE RC MODEL TO FAIL
+            if use_dynamic_infiltration_calculation:
+                # OVERWRITE STATIC INFILTRATION WITH DYNAMIC INFILTRATION RATE
+                dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
+                qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(
+                    tsd['theta_a'][hoy - 1] if not np.isnan(tsd['theta_a'][hoy - 1]) else tsd['T_ext'][hoy - 1],
+                    tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
+                # INFILTRATION IS FORCED NOT TO REACH ZERO IN ORDER TO AVOID THE RC MODEL TO FAIL
+                tsd['m_ve_inf'][hoy] = max(qm_sum_in / 3600, 1 / 3600)
 
 
             # ventilation air flows [kg/s]
