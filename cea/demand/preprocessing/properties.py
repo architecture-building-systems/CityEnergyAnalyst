@@ -250,15 +250,15 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
                         column_total += properties_df[use][building] * occupant_densities[use] * indexed_DB[column][use]
                         people_total += properties_df[use][building] * occupant_densities[use]
                 if people_total > 0:
-                    properties_df[column][building] = column_total/people_total
-                else: properties_df[column][building] = 0
+                    properties_df.loc[building,column] = column_total/people_total
+                else: properties_df.loc[building,column] = 0
 
         elif column in ['Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Ere_Wm2', 'Ed_Wm2']:
             for building in properties_df.index:
                 average = 0
                 for use in list_uses:
                     average += properties_df[use][building] * indexed_DB[column][use]
-                properties_df[column][building] = average
+                properties_df.loc[building,column] = average
 
     return properties_df
 
