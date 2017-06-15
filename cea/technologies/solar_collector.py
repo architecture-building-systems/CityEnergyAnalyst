@@ -224,7 +224,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
     q_rad_vector = np.vectorize(calc_q_rad)(n0, IAM_b_vector, I_direct_vector, IAM_d, I_diffuse_vector,
                                             tilt)  # absorbed solar radiation in W/m2 is a mean of the group
     for flow in range(6):
-        Mo_seg = 1 # mode of segmented heat loss calculation. only one mode is implemented.
+        mode_seg = 1 # mode of segmented heat loss calculation. only one mode is implemented.
         TIME0 = 0
         DELT = 1  # timestep 1 hour
         delts = DELT * 3600  # convert time step in seconds
@@ -290,7 +290,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
                 else:
                     Tin_Seg = Tin
 
-                if Mfl > 0 and Mo_seg == 1:  # same heat gain/ losses for all segments
+                if Mfl > 0 and mode_seg == 1:  # same heat gain/ losses for all segments
                     Tout_Seg = ((Mfl * Cp_waterglycol * (Tin_Seg + 273)) / A_seg - (C_eff * (Tin_Seg + 273)) / (2 * delts) + q_gain +
                                (C_eff * (TflA[Iseg] + 273) / delts)) / (Mfl * Cp_waterglycol / A_seg + C_eff / (2 * delts))
                     Tout_Seg = Tout_Seg - 273  # in [C]
@@ -313,7 +313,7 @@ def calc_SC_module(radiation, tilt_angle, IAM_b_vector, I_direct_vector, I_diffu
                     q_balance_error = q_gain - q_fluid - q_mtherm
                     if abs(q_balance_error) > 1:
                         time = time        # re-enter the iteration when energy balance not satisfied
-                q_gain_Seg[Iseg] = q_gain  # in W/m2 # fixme: redundant?
+                q_gain_Seg[Iseg] = q_gain  # in W/m2
 
             # resulting net energy output
             q_out = (Mfl * Cp_waterglycol * (Tout_Seg - Tin))/1000   #[kW]
