@@ -561,12 +561,11 @@ class SolarTechnologyTool(object):
         longitude = parameters[4].value
         pvonroof = parameters[5].value
         pvonwall = parameters[6].value
-        misc_losses = parameters[7].value
-        worst_hour = parameters[8].value
+        worst_hour = parameters[7].value
         type_PVpanel = {'monocrystalline': 'PV1',
                         'polycrystalline': 'PV2',
-                        'amorphous': 'PV3'}[parameters[9].value]
-        min_radiation = parameters[10].value
+                        'amorphous': 'PV3'}[parameters[8].value]
+        min_radiation = parameters[9].value
 
         date_start = str(year) + '-01-01'
 
@@ -581,9 +580,8 @@ class SolarTechnologyTool(object):
         add_message('latitude: %s' % latitude)
 
         run_cli(scenario_path, 'photovoltaic', '--latitude', latitude, '--longitude', longitude, '--weather-path',
-                weather_path, '--pvonroof', pvonroof, '--pvonwall', pvonwall, '--misc-losses', misc_losses,
-                '--worst-hour', worst_hour, '--type-PVpanel', type_PVpanel, '--min-radiation', min_radiation,
-                '--date-start', date_start)
+                weather_path, '--pvonroof', pvonroof, '--pvonwall', pvonwall, '--worst-hour', worst_hour,
+                '--type-PVpanel', type_PVpanel, '--min-radiation', min_radiation, '--date-start', date_start)
         return
 
 
