@@ -28,7 +28,7 @@ __status__ = "Production"
 
 
 def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, weather_path, building_name, pvonroof,
-            pvonwall, misc_losses, worst_hour, type_PVpanel, min_radiation, date_start):
+            pvonwall, worst_hour, type_PVpanel, min_radiation, date_start):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -85,7 +85,7 @@ def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
         print 'generating groups of sensor points done'
 
         results, Final = calc_pv_generation(type_PVpanel, hourlydata_groups, Number_groups, number_points,
-                                        prop_observers, weather_data, g, Sz, Az, ha, latitude, misc_losses, panel_properties)
+                                        prop_observers, weather_data, g, Sz, Az, ha, latitude, panel_properties)
 
 
         Final.to_csv(locator.PV_results(building_name= building_name), index=True, float_format='%.2f')  # print PV generation potential
@@ -200,7 +200,7 @@ def calc_groups(sensors_rad_clean, sensors_metadata_cat):
 # =========================
 
 def calc_pv_generation(type_panel, hourly_radiation, number_groups, number_points, prop_observers, weather_data,
-                       g, Sz, Az, ha, latitude, misc_losses, panel_properties):
+                       g, Sz, Az, ha, latitude, panel_properties):
     """
     To calculate the electricity generated from PV panels.
     :param type_panel: type of PV panel used
@@ -250,6 +250,7 @@ def calc_pv_generation(type_panel, hourly_radiation, number_groups, number_point
     a3 = panel_properties['PV_a3']
     a4 = panel_properties['PV_a4']
     L = panel_properties['PV_th']
+    misc_losses = panel_properties['misc_losses'] # cabling, resistances etc..
 
     for group in range(number_groups):
         # read panel properties of each group
@@ -793,8 +794,7 @@ def test_photovoltaic():
 
     min_radiation = 0.75  # points are selected with at least a minimum production of this % from the maximum in the area.
     type_PVpanel = "PV1"  # PV1 monocrystalline, PV2 is poly and PV3 is amorphous. it relates to the database of technologies
-    worst_hour = 8744  # first hour of sun on the solar solstice
-    misc_losses = 0.1  # cabling, resistances etc..
+    worst_hour = 8744  # first hour of sun on the solar solstice # TODO: write a function to extract this value automatically
     pvonroof = True  # flag for considering PV on roof #FIXME: define
     pvonwall = True  # flag for considering PV on wall #FIXME: define
     longitude = 7.439583333333333
@@ -806,7 +806,7 @@ def test_photovoltaic():
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
         calc_PV(locator=locator, radiation_csv=radiation, metadata_csv=radiation_metadata, latitude=latitude,
                 longitude=longitude, weather_path=weather_path, building_name=building,
-                pvonroof=pvonroof, pvonwall=pvonwall, misc_losses=misc_losses, worst_hour=worst_hour,
+                pvonroof=pvonroof, pvonwall=pvonwall, worst_hour=worst_hour,
                 type_PVpanel=type_PVpanel, min_radiation=min_radiation, date_start=date_start)
 
 
