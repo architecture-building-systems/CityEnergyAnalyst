@@ -13,8 +13,7 @@ class Configuration(object):
         defaults['CEA.SCENARIO'] = str(scenario)
         defaults['CEA.DB'] = os.path.dirname(cea.databases.__file__)
         self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
-        files_found = self._parser.read(self._list_configuration_files(scenario))
-        print("Configuration files: " + ', '.join(files_found))
+        self._files_found = self._parser.read(self._list_configuration_files(scenario))
         self.demand = DemandConfiguration(self._parser)
 
     @property
