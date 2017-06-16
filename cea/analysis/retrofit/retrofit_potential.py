@@ -137,48 +137,47 @@ def retrofit_main(locator_baseline, name_new_scenario, exclude_partial_matches,
 
     # Create a retrofit case with the buildings that pass the criteria
     retrofit_scenario_path = os.path.join(locator_baseline.get_project_path(), name_new_scenario)
-    retrofit_scenario_creator(locator_baseline, retrofit_scenario_path, data)
+    locator_retrofit = cea.inputlocator.InputLocator(scenario_path=retrofit_scenario_path)
+    retrofit_scenario_creator(locator_baseline, locator_retrofit, data)
 
-
-def retrofit_scenario_creator(locator_baseline, retrofit_sccenario_path, data, symlinks=False, ignore=None):
+def retrofit_scenario_creator(locator_baseline, locator_retrofit, data, symlinks=False, ignore=None):
     """
     This creates a new retrofit scenario, based on the criteria we have selected as True
     :return:
     """
-
+    print locator_baseline.get_input_folder()
+    print locator_retrofit.scenario_path
     # Create new folder and trow error if already existing
-    if os.path.exists(retrofit_sccenario_path):
-        shutil.rmtree(retrofit_sccenario_path)
-    shutil.copytree(locator_baseline.get_input_folder(), retrofit_sccenario_path, symlinks, ignore)
+    if os.path.exists(locator_retrofit.scenario_path):
+        shutil.rmtree(locator_retrofit.scenario_path)
+    shutil.copytree(locator_baseline.get_input_folder(), locator_retrofit.get_input_folder(), symlinks, ignore)
 
-    # Get locator
-    locator_new_scenario = cea.inputlocator.InputLocator(scenario_path=retrofit_sccenario_path)
 
     # Import properties buildings and export just selected buildings + criteria
 
-    geometry = gdf.from_file(locator_new_scenario.get_building_geometry())
-    geometry.merge(data, on='Name').to_file(locator_new_scenario.get_building_geometry())
+    geometry = gdf.from_file(locator_retrofit.get_building_geometry())
+    geometry.merge(data, on='Name').to_file(locator_retrofit.get_building_geometry())
 
-    age = dbfreader.dbf2df(locator_new_scenario.get_building_age())
-    dbfreader.df2dbf(age.merge(data, on='Name'), locator_new_scenario.get_building_age())
+    age = dbfreader.dbf2df(locator_retrofit.get_building_age())
+    dbfreader.df2dbf(age.merge(data, on='Name'), locator_retrofit.get_building_age())
 
-    architecture = dbfreader.dbf2df(locator_new_scenario.get_building_architecture())
-    dbfreader.df2dbf(architecture.merge(data, on='Name'), locator_new_scenario.get_building_architecture())
+    architecture = dbfreader.dbf2df(locator_retrofit.get_building_architecture())
+    dbfreader.df2dbf(architecture.merge(data, on='Name'), locator_retrofit.get_building_architecture())
 
-    comfort = dbfreader.dbf2df(locator_new_scenario.get_building_comfort())
-    dbfreader.df2dbf(comfort.merge(data, on='Name'), locator_new_scenario.get_building_comfort())
+    comfort = dbfreader.dbf2df(locator_retrofit.get_building_comfort())
+    dbfreader.df2dbf(comfort.merge(data, on='Name'), locator_retrofit.get_building_comfort())
 
-    internal_loads = dbfreader.dbf2df(locator_new_scenario.get_building_internal())
-    dbfreader.df2dbf(internal_loads.merge(data, on='Name'), locator_new_scenario.get_building_internal())
+    internal_loads = dbfreader.dbf2df(locator_retrofit.get_building_internal())
+    dbfreader.df2dbf(internal_loads.merge(data, on='Name'), locator_retrofit.get_building_internal())
 
-    hvac = dbfreader.dbf2df(locator_new_scenario.get_building_hvac())
-    dbfreader.df2dbf(hvac.merge(data, on='Name'), locator_new_scenario.get_building_hvac())
+    hvac = dbfreader.dbf2df(locator_retrofit.get_building_hvac())
+    dbfreader.df2dbf(hvac.merge(data, on='Name'), locator_retrofit.get_building_hvac())
 
-    supply = dbfreader.dbf2df(locator_new_scenario.get_building_supply())
-    dbfreader.df2dbf(supply.merge(data, on='Name'), locator_new_scenario.get_building_supply())
+    supply = dbfreader.dbf2df(locator_retrofit.get_building_supply())
+    dbfreader.df2dbf(supply.merge(data, on='Name'), locator_retrofit.get_building_supply())
 
-    occupancy = dbfreader.dbf2df(locator_new_scenario.get_building_occupancy())
-    dbfreader.df2dbf(occupancy.merge(data, on='Name'), locator_new_scenario.get_building_occupancy())
+    occupancy = dbfreader.dbf2df(locator_retrofit.get_building_occupancy())
+    dbfreader.df2dbf(occupancy.merge(data, on='Name'), locator_retrofit.get_building_occupancy())
 
 
 def run_as_script(scenario_path=None):

@@ -38,7 +38,7 @@ class InputLocator(object):
         return os.path.dirname(self.scenario_path)
 
     def get_input_folder(self):
-        self._ensure_folder(self.scenario_path, "inputs")
+        return os.path.join(self.scenario_path, "inputs")
 
     def get_optimization_results_folder(self):
         """scenario/outputs/data/optimization"""
