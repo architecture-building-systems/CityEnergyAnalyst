@@ -188,6 +188,9 @@ def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architectu
                 if len(window_south) != 0:
                     window_list.extend(window_south)
                 wall_list.extend(wall_south)
+                geometry_3D_zone.append({"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
+                                     "footprint": footprint_list})
+
             else:
                 facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(bldg_solid)
                 wall_list = facade_list

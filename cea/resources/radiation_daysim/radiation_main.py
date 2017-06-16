@@ -173,6 +173,8 @@ def radiation_singleprocessing(rad, bldg_dict_list, locator, aweatherfile_path):
     simul_params = settings.SIMUL_PARAMS
     chunks = [bldg_dict_list[i:i + simul_params['n_build_in_chunk']] for i in range(0, len(bldg_dict_list),
                                                                                     simul_params['n_build_in_chunk'])]
+
+    print bldg_dict_list
     for chunk_n, bldg_dict in enumerate(chunks):
         daysim_main.isolation_daysim(chunk_n, rad, bldg_dict, locator, settings.RAD_PARMS, aweatherfile_path)
 
