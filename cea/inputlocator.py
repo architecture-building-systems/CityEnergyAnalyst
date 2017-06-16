@@ -37,6 +37,9 @@ class InputLocator(object):
         """Returns the parent folder of a scenario - this is called a project or 'case-study'"""
         return os.path.dirname(self.scenario_path)
 
+    def get_input_folder(self):
+        self._ensure_folder(self.scenario_path, "inputs")
+
     def get_optimization_results_folder(self):
         """scenario/outputs/data/optimization"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'optimization')

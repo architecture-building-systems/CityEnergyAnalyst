@@ -137,22 +137,22 @@ def retrofit_main(locator_baseline, name_new_scenario, exclude_partial_matches,
 
     # Create a retrofit case with the buildings that pass the criteria
     retrofit_scenario_path = os.path.join(locator_baseline.get_project_path(), name_new_scenario)
-    retrofit_scenario_creator(locator_baseline.scenario_path, retrofit_scenario_path, data)
+    retrofit_scenario_creator(locator_baseline, retrofit_scenario_path, data)
 
 
-def retrofit_scenario_creator(src, dst, data, symlinks=False, ignore=None):
+def retrofit_scenario_creator(locator_baseline, retrofit_sccenario_path, data, symlinks=False, ignore=None):
     """
     This creates a new retrofit scenario, based on the criteria we have selected as True
     :return:
     """
 
     # Create new folder and trow error if already existing
-    if os.path.exists(dst):
-        shutil.rmtree(dst)
-    shutil.copytree(src, dst, symlinks, ignore)
+    if os.path.exists(retrofit_sccenario_path):
+        shutil.rmtree(retrofit_sccenario_path)
+    shutil.copytree(locator_baseline.get_input_folder(), retrofit_sccenario_path, symlinks, ignore)
 
     # Get locator
-    locator_new_scenario = cea.inputlocator.InputLocator(scenario_path=dst)
+    locator_new_scenario = cea.inputlocator.InputLocator(scenario_path=retrofit_sccenario_path)
 
     # Import properties buildings and export just selected buildings + criteria
 
