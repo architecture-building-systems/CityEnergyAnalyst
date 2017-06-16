@@ -598,7 +598,7 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     # copy data from `bpr`
     Htr_op = bpr.rc_model['Htr_op']
     Htr_w = bpr.rc_model['Htr_w']
-    Qs = tsd['Qs'][t] # bpr.internal_loads['Qs_Wp']
+    Qs = tsd['Qs'][t]
     a_t = bpr.rc_model['Atot']
     a_m = bpr.rc_model['Am']
     a_w = bpr.rc_model['Aw']
