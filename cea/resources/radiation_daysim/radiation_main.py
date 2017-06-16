@@ -206,8 +206,8 @@ def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
 
     print "Sending the scene: geometry and materials to daysim"
     # send materials
-    daysim_mat = locator.get_daysim_mat()
-    rad = py2radiance.Rad(daysim_mat, locator)
+    daysim_mat = locator.get_temporary_file('default_materials.rad')
+    rad = py2radiance.Rad(daysim_mat, locator.get_temporary_folder())
     add_rad_mat(daysim_mat, building_surface_properties)
     # send terrain
     terrain2radiance(rad, geometry_terrain)

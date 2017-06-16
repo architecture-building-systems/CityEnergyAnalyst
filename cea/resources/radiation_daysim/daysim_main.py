@@ -109,7 +109,7 @@ def calc_sensors_zone(geometry_3D_zone, locator):
 def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, rad_params, aweatherfile_path):
 
     # folder for data work
-    daysim_dir = locator.os.path.join(locator, "temp" + str(chunk_n))
+    daysim_dir = locator.get_temporary_file("temp" + str(chunk_n))
     rad.initialise_daysim(daysim_dir)
 
     # calculate sensors
