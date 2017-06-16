@@ -136,7 +136,7 @@ def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architectu
         nfloors = int(district_building_records.loc[name, nfloor_col])
 
         # simplify geometry tol =1 for buildings of interest, tol = 5 for surroundings
-        if name in zone_building_names:
+        if (name in zone_building_names) and (simplification_params['consider_floors']== True) :
             range_floors = range(nfloors+1)
             flr2flr_height = height / nfloors
             geometry = district_building_records.ix[name].geometry.simplify(simplification_params['zone_geometry'],
@@ -156,7 +156,7 @@ def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architectu
         # now get all surfaces and create windows only if the buildings are in the area of study
         window_list =[]
         wall_list = []
-        if name in zone_building_names:
+        if (name in zone_building_names) and (simplification_params['consider_windows']== True):
 
             # identify building surfaces according to angle:
             face_list = py3dmodel.fetch.faces_frm_solid(bldg_solid)
