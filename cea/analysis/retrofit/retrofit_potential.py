@@ -49,7 +49,7 @@ def losses_filter_HVAC(demand, load_withlosses, load_enduse, threshold):
     return demand[(demand.losses >= threshold)].Name.values
 
 
-def retrofit_main(locator_baseline, name_new_scenario, exclude_partial_matches,
+def retrofit_main(locator_baseline, name_new_scenario, keep_partial_matches,
                   age_retrofit=None,
                   age_criteria=None,
                   eui_heating_criteria=None,
@@ -65,15 +65,41 @@ def retrofit_main(locator_baseline, name_new_scenario, exclude_partial_matches,
                   cooling_losses_criteria=None,
                   emissions_operation_criteria=None):
     selection_names = []  # list to store names of selected buildings to retrofit
-    # CASE 1
 
+
+    #load databases and select only buildings in geometry
+    #geometry
+    geometry_df = gdf.from_file(locator_baseline.get_building_geometry())
+    names = geometry_df['Name'].values
+    #age
+    age = dbfreader.dbf2df(locator_baseline.get_building_age())
+    age = age.loc[age['Name'].isin(names)]
+
+    architecture = dbfreader.dbf2df(locator_baseline.get_building_architecture())
+    architecture = architecture.loc[architecture['Name'].isin(names)]
+
+    comfort = dbfreader.dbf2df(locator_baseline.get_building_comfort())
+    comfort = comfort.loc[comfort['Name'].isin(names)]
+
+    internal_loads = dbfreader.dbf2df(locator_baseline.get_building_internal())
+    internal_loads = internal_loads.loc[internal_loads['Name'].isin(names)]
+
+    hvac = dbfreader.dbf2df(locator_baseline.get_building_hvac())
+    hvac = hvac.loc[hvac['Name'].isin(names)]
+
+    supply = dbfreader.dbf2df(locator_baseline.get_building_supply())
+    supply = supply.loc[supply['Name'].isin(names)]
+
+    occupancy = dbfreader.dbf2df(locator_baseline.get_building_occupancy())
+    occupancy = occupancy.loc[occupancy['Name'].isin(names)]
+
+
+    # CASE 1
     age_crit = [["age", age_criteria]]
     for criteria_name, criteria_threshold in age_crit:
         if criteria_threshold is not None:
-            # FIXME: check to see if this really subtracts years (I'm not sure it does, maybe use timespan to be sure?)
             age_difference = age_retrofit - criteria_threshold
-            age_df = dbfreader.dbf2df(locator_baseline.get_building_age())
-            selection_names.append(("Crit_" + criteria_name, age_filter_HVAC(age_df, age_difference)))
+            selection_names.append(("Crit_" + criteria_name, age_filter_HVAC(age, age_difference)))
 
     # CASE 2
     eui_crit = [["Qhsf", eui_heating_criteria],
@@ -117,10 +143,10 @@ def retrofit_main(locator_baseline, name_new_scenario, exclude_partial_matches,
                 ("c_" + criteria_name, emissions_filter_HVAC(emissions_totals, lca_name, criteria_threshold)))
 
     # appending all the results
-    if exclude_partial_matches:
-        type_of_join = "inner"
-    else:
+    if keep_partial_matches:
         type_of_join = "outer"
+    else:
+        type_of_join = "inner"
     counter = 0
     for (criteria, list_true_values) in selection_names:
         if counter == 0:
@@ -132,51 +158,37 @@ def retrofit_main(locator_baseline, name_new_scenario, exclude_partial_matches,
             data = data.merge(y, on="Name", how=type_of_join)
         counter += 1
 
-    # fill with FALSE for those buildings that do not comply the criteria
     data.fillna(value="FALSE", inplace=True)
+    if data.empty and (keep_partial_matches==False):
+        raise ValueError("There is not a single building matching all selected criteria,"
+                         "try to keep those buildings that partially match the criteria")
 
     # Create a retrofit case with the buildings that pass the criteria
     retrofit_scenario_path = os.path.join(locator_baseline.get_project_path(), name_new_scenario)
     locator_retrofit = cea.inputlocator.InputLocator(scenario_path=retrofit_scenario_path)
-    retrofit_scenario_creator(locator_baseline, locator_retrofit, data)
+    retrofit_scenario_creator(locator_retrofit, geometry_df, age, architecture, internal_loads, comfort, hvac,
+                              supply, occupancy, data, type_of_join)
 
-def retrofit_scenario_creator(locator_baseline, locator_retrofit, data, symlinks=False, ignore=None):
+def retrofit_scenario_creator(locator_retrofit, geometry_df, age, architecture, internal_loads, comfort, hvac,
+                              supply, occupancy, data, keep_partial_matches):
     """
     This creates a new retrofit scenario, based on the criteria we have selected as True
     :return:
     """
-    print locator_baseline.get_input_folder()
-    print locator_retrofit.scenario_path
-    # Create new folder and trow error if already existing
-    if os.path.exists(locator_retrofit.scenario_path):
-        shutil.rmtree(locator_retrofit.scenario_path)
-    shutil.copytree(locator_baseline.get_input_folder(), locator_retrofit.get_input_folder(), symlinks, ignore)
 
+    #confirm that the builings selected are part of the zone
+    new_geometry = geometry_df.merge(data, on='Name')
+    if new_geometry.empty and keep_partial_matches:
+        raise ValueError("The keep partial matches flag is on, Still, there is not a single building matching any of "
+                         "the criteria, please try other criteria / thresholds instead")
 
-    # Import properties buildings and export just selected buildings + criteria
-
-    geometry = gdf.from_file(locator_retrofit.get_building_geometry())
-    geometry.merge(data, on='Name').to_file(locator_retrofit.get_building_geometry())
-
-    age = dbfreader.dbf2df(locator_retrofit.get_building_age())
+    new_geometry.to_file(locator_retrofit.get_building_geometry())
     dbfreader.df2dbf(age.merge(data, on='Name'), locator_retrofit.get_building_age())
-
-    architecture = dbfreader.dbf2df(locator_retrofit.get_building_architecture())
     dbfreader.df2dbf(architecture.merge(data, on='Name'), locator_retrofit.get_building_architecture())
-
-    comfort = dbfreader.dbf2df(locator_retrofit.get_building_comfort())
     dbfreader.df2dbf(comfort.merge(data, on='Name'), locator_retrofit.get_building_comfort())
-
-    internal_loads = dbfreader.dbf2df(locator_retrofit.get_building_internal())
     dbfreader.df2dbf(internal_loads.merge(data, on='Name'), locator_retrofit.get_building_internal())
-
-    hvac = dbfreader.dbf2df(locator_retrofit.get_building_hvac())
     dbfreader.df2dbf(hvac.merge(data, on='Name'), locator_retrofit.get_building_hvac())
-
-    supply = dbfreader.dbf2df(locator_retrofit.get_building_supply())
     dbfreader.df2dbf(supply.merge(data, on='Name'), locator_retrofit.get_building_supply())
-
-    occupancy = dbfreader.dbf2df(locator_retrofit.get_building_occupancy())
     dbfreader.df2dbf(occupancy.merge(data, on='Name'), locator_retrofit.get_building_occupancy())
 
 
@@ -190,7 +202,7 @@ def run_as_script(scenario_path=None):
     # for the interface it would be good if the default values where calculated as 2 standard deviations of
 
     # FLAGS
-    exclude_partial_matches = False  # keep only buildings that attain all the criteria simultaneously?
+    keep_partial_matches = True # keep buildings that attained one or more of the criteria
 
     # CRITERIA AGE
     name_new_scenario = "retrofit_HVAC"
@@ -198,28 +210,28 @@ def run_as_script(scenario_path=None):
     age_criteria = 15  # [years] threshold age of HVAC (built / retrofitted)
 
     # CRITERIA ENERGY USE INTENSITY
-    eui_heating_criteria = 50  # load to verify, threshold
+    eui_heating_criteria = 150  # load to verify, threshold
     eui_hotwater_criteria = 50  # load to verify
     eui_cooling_criteria = 4  # load to verify, threshold
     eui_electricity_criteria = 20  # load to verify, threshold
-
-    # CRITERIA EMISSIONS
+    #
+    # # CRITERIA EMISSIONS
     emissions_operation_criteria = 30  # threshold
-
-    # CRITERIA COSTS
+    #
+    # # CRITERIA COSTS
     heating_costs_criteria = 2  # threshold
     hotwater_costs_criteria = 2  # threshold
     cooling_costs_criteria = 2  # threshold
     electricity_costs_criteria = 2  # threshold
-
-    # CASE OF THERMAL LOSSES
+    #
+    # # CASE OF THERMAL LOSSES
     heating_losses_criteria = 15  # threshold
     hotwater_losses_criteria = 15  # threshold
     cooling_losses_criteria = 15  # threshold
 
     # PROCESS
-    retrofit_main(locator_baseline=locator_baseline, exclude_partial_matches=exclude_partial_matches,
-                  name_new_scenario=name_new_scenario,
+    retrofit_main(locator_baseline=locator_baseline, name_new_scenario=name_new_scenario,
+                  keep_partial_matches=keep_partial_matches,
                   age_retrofit=age_retrofit,
                   age_criteria=age_criteria,
                   eui_heating_criteria=eui_heating_criteria,
