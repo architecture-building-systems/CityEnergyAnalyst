@@ -245,6 +245,23 @@ def compile(args):
     cea.utilities.compile_pyd_files.main()
 
 
+def read_config(args):
+    """Read a key from a section in the configuration"""
+    import cea.config
+    config = cea.config.Configuration(args.scenario)
+    print(config._parser.get(args.section, args.key))
+
+
+def write_config(args):
+    """write a value to a section/key in the configuration in the scenario folder"""
+    import cea.config
+    config = cea.config.Configuration(args.scenario)
+    config._parser.set(args.section, args.key, args.value)
+    scenario_config = os.path.join(args.scenario, 'scenario.config')
+    with open(scenario_config, 'w') as f:
+        config._parser.write(f)
+
+
 def main():
     """Parse the arguments and run the program."""
     import argparse
@@ -372,6 +389,17 @@ def main():
 
     compile_parser = subparsers.add_parser('compile', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     compile_parser.set_defaults(func=compile)
+
+    read_config_parser = subparsers.add_parser('read-config', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    read_config_parser.add_argument('--section', help='section to read from')
+    read_config_parser.add_argument('--key', help='key to read')
+    read_config_parser.set_defaults(func=read_config)
+
+    write_config_parser = subparsers.add_parser('write-config', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    write_config_parser.add_argument('--section', help='section to write to')
+    write_config_parser.add_argument('--key', help='key to write')
+    write_config_parser.add_argument('--value', help='value to write')
+    write_config_parser.set_defaults(func=write_config)
 
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)
