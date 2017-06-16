@@ -156,41 +156,43 @@ def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architectu
         # now get all surfaces and create windows only if the buildings are in the area of study
         window_list =[]
         wall_list = []
-        if (name in zone_building_names) and (simplification_params['consider_windows']== True):
+        if (name in zone_building_names):
+            if (simplification_params['consider_windows']== True):
+                # identify building surfaces according to angle:
+                face_list = py3dmodel.fetch.faces_frm_solid(bldg_solid)
+                facade_list_north, facade_list_west, \
+                facade_list_east, facade_list_south, roof_list, footprint_list = identify_surfaces_type(face_list)
 
-            # identify building surfaces according to angle:
-            face_list = py3dmodel.fetch.faces_frm_solid(bldg_solid)
-            facade_list_north, facade_list_west, \
-            facade_list_east, facade_list_south, roof_list, footprint_list = identify_surfaces_type(face_list)
+                # get window properties
+                wwr_west = architecture_wwr.ix[name, "wwr_west"]
+                wwr_east = architecture_wwr.ix[name, "wwr_east"]
+                wwr_north = architecture_wwr.ix[name, "wwr_north"]
+                wwr_south = architecture_wwr.ix[name, "wwr_south"]
 
-            # get window properties
-            wwr_west = architecture_wwr.ix[name, "wwr_west"]
-            wwr_east = architecture_wwr.ix[name, "wwr_east"]
-            wwr_north = architecture_wwr.ix[name, "wwr_north"]
-            wwr_south = architecture_wwr.ix[name, "wwr_south"]
+                window_west, wall_west = calc_windows_walls(facade_list_west, wwr_west)
+                if len(window_west) != 0:
+                    window_list.extend(window_west)
+                wall_list.extend(wall_west)
 
-            window_west, wall_west = calc_windows_walls(facade_list_west, wwr_west)
-            if len(window_west) != 0:
-                window_list.extend(window_west)
-            wall_list.extend(wall_west)
+                window_east, wall_east = calc_windows_walls(facade_list_east, wwr_east)
+                if len(window_east) != 0:
+                    window_list.extend(window_east)
+                wall_list.extend(wall_east)
 
-            window_east, wall_east = calc_windows_walls(facade_list_east, wwr_east)
-            if len(window_east) != 0:
-                window_list.extend(window_east)
-            wall_list.extend(wall_east)
+                window_north, wall_north = calc_windows_walls(facade_list_north, wwr_north)
+                if len(window_north) != 0:
+                    window_list.extend(window_north)
+                wall_list.extend(wall_north)
 
-            window_north, wall_north = calc_windows_walls(facade_list_north, wwr_north)
-            if len(window_north) != 0:
-                window_list.extend(window_north)
-            wall_list.extend(wall_north)
-
-            window_south, wall_south = calc_windows_walls(facade_list_south, wwr_south)
-            if len(window_south) != 0:
-                window_list.extend(window_south)
-            wall_list.extend(wall_south)
-
-            geometry_3D_zone.append({"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
-                                 "footprint": footprint_list})
+                window_south, wall_south = calc_windows_walls(facade_list_south, wwr_south)
+                if len(window_south) != 0:
+                    window_list.extend(window_south)
+                wall_list.extend(wall_south)
+            else:
+                facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(bldg_solid)
+                wall_list = facade_list
+                geometry_3D_zone.append({"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
+                                     "footprint": footprint_list})
         else:
             facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(bldg_solid)
             wall_list = facade_list
