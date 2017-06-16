@@ -258,7 +258,7 @@ def retrofit_potential(args):
     import cea.inputlocator
     locator_baseline = cea.inputlocator.InputLocator(args.scenario)
     retrofit_potential.retrofit_main(locator_baseline=locator_baseline,
-                                     exclude_partial_matches=args.exclude_partial_matches,
+                                     keep_partial_matches=args.keep_partial_matches,
                                      name_new_scenario=args.name,
                                      age_retrofit=args.retrofit_target_date,
                                      age_criteria=args.age_threshold,
@@ -274,7 +274,6 @@ def retrofit_potential(args):
                                      hotwater_losses_criteria=args.hot_water_losses_threshold,
                                      cooling_losses_criteria=args.cooling_losses_threshold,
                                      emissions_operation_criteria=args.emissions_operation_threshold)
-
 
 def main():
     """Parse the arguments and run the program."""
@@ -412,7 +411,7 @@ def main():
 
     retrofit_potential_parser = subparsers.add_parser('retrofit-potential',
                                                       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    retrofit_potential_parser.add_argument('--exclude-partial-matches', default=False, action='store_true',
+    retrofit_potential_parser.add_argument('--keep-partial-matches', default=False, action='store_true',
                                            help='exclude buildings that only fit some of the criteria?')
     retrofit_potential_parser.add_argument('--name', default="retrofit_HVAC", help="name for new scenario")
     retrofit_potential_parser.add_argument('--retrofit-target-date', default=2020, type=int,

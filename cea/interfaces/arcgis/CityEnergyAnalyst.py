@@ -67,9 +67,10 @@ class RetrofitPotentialTool(object):
                                                direction="Input")
         retrofit_target_date.value = 2020
 
-        exclude_partial_matches = arcpy.Parameter(displayName="Exclude partial matches", name="exclude_partial_matches",
+        keep_partial_matches = arcpy.Parameter(displayName="Keep buildings partially matching the selected criteria",
+                                                               name="keep_partial_matches",
                                                   datatype="GPBoolean", parameterType="Required", direction="Input")
-        exclude_partial_matches.value = False
+        keep_partial_matches.value = False
 
         name = arcpy.Parameter(displayName="Name for new scenario", name="name", datatype="String",
                                parameterType="Required", direction="Input")
@@ -231,7 +232,7 @@ class RetrofitPotentialTool(object):
         cooling_losses_threshold.value = 15
         cooling_losses_threshold.enabled = False
 
-        return [scenario_path, retrofit_target_date, exclude_partial_matches, name, cb_age_threshold, age_threshold,
+        return [scenario_path, retrofit_target_date, keep_partial_matches, name, cb_age_threshold, age_threshold,
                 cb_eui_heating_threshold, eui_heating_threshold, cb_eui_hot_water_threshold, eui_hot_water_threshold,
                 cb_eui_cooling_threshold, eui_cooling_threshold, cb_eui_electricity_threshold,
                 eui_electricity_threshold, cb_emissions_operation_threshold, emissions_operation_threshold,
@@ -263,15 +264,15 @@ class RetrofitPotentialTool(object):
                 parameters[parameter_name[3:]].enabled = parameters[parameter_name].value
 
     def execute(self, parameters, _):
-        scenario_path, retrofit_target_date, exclude_partial_matches, name = parameters[:4]
+        scenario_path, retrofit_target_date, include_only_matches_to_all_criteria, name = parameters[:4]
         scenario_path = scenario_path.valueAsText
         retrofit_target_date = retrofit_target_date.value
-        exclude_partial_matches = exclude_partial_matches.value
+        include_only_matches_to_all_criteria = include_only_matches_to_all_criteria.value
         name = name.valueAsText
 
         args = ['--retrofit-target-date', str(retrofit_target_date), '--name', name]
-        if exclude_partial_matches:
-            args.append('--exclude-partial-matches')
+        if include_only_matches_to_all_criteria:
+            args.append('--keep-partial-matches')
 
         parameters = {p.name: p for p in parameters[4:]}
         for p_name in parameters.keys():
