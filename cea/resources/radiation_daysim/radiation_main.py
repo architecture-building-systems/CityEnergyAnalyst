@@ -34,7 +34,6 @@ def add_rad_mat(daysim_mat_file, ageometry_table):
     file_path = daysim_mat_file
     
     with open(file_path, 'w') as write_file:
-        
         #first write the material use for the terrain and surrounding buildings 
         string = "void plastic reflectance0.2\n0\n0\n5 0.5360 0.1212 0.0565 0 0"
         write_file.writelines(string + '\n')
