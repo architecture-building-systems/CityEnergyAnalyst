@@ -63,7 +63,7 @@ def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
     print 'calculating solar properties done'
 
     # calculate properties of PV panel
-    panel_properties = calc_properties_PV(locator.get_supply_systems_database(), type_PVpanel)
+    panel_properties = calc_properties_PV_db(locator.get_supply_systems_database(), type_PVpanel)
     print 'gathering properties of PV panel'
 
     # select sensor point with sufficient solar radiation
@@ -651,7 +651,7 @@ def calc_surface_azimuth(xdir, ydir, B):
 
 
 
-def calc_properties_PV(database_path, type_PVpanel):
+def calc_properties_PV_db(database_path, type_PVpanel):
     """
     To assign PV module properties according to panel types.
 

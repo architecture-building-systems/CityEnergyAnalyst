@@ -15,13 +15,13 @@ from cea.utilities import dbfreader
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
 
-from cea.technologies.solar_collector import calc_properties_SC, calc_IAM_beam_SC, calc_q_rad, calc_q_gain, calc_Eaux_SC,\
+from cea.technologies.solar_collector import calc_properties_SC_db, calc_IAM_beam_SC, calc_q_rad, calc_q_gain, calc_Eaux_SC,\
     calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_network
-from cea.technologies.photovoltaic import calc_properties_PV, calc_PV_power, calc_diffuseground_comp, calc_Sm_PV
+from cea.technologies.photovoltaic import calc_properties_PV_db, calc_PV_power, calc_diffuseground_comp, calc_Sm_PV
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__credits__ = ["Jimeno A. Fonseca, Shanshan Hsieh"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -44,8 +44,9 @@ def calc_PVT(locator, radiation_csv, metadata_csv, latitude, longitude, weather_
                                                                                                         worst_hour)
     print 'calculating solar properties done'
 
-    # get properties of the panel to evaluate
-    panel_properties = calc_properties_PV(locator.get_supply_systems_database(), type_PVpanel)
+    # get properties of the panel to evaluate # TODO: find a PVT reference
+    panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems_database(), type_PVpanel)
+    panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems_database(), type_SCpanel)
     print 'gathering properties of PV collector panel'
 
     # select sensor point with sufficient solar radiation
@@ -61,7 +62,7 @@ def calc_PVT(locator, radiation_csv, metadata_csv, latitude, longitude, weather_
 
         # calculate optimal angle and tilt for panels according to PV module size
         sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az, trr_mean,
-                                                      max_yearly_radiation, panel_properties)
+                                                      max_yearly_radiation, panel_properties_PV)
         print 'calculating optimal tile angle and separation done'
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
@@ -69,8 +70,8 @@ def calc_PVT(locator, radiation_csv, metadata_csv, latitude, longitude, weather_
 
         print 'generating groups of sensor points done'
 
-        result, Final = calc_PVT_generation(type_PVpanel, hourlydata_groups, number_groups, number_points, prop_observers,
-                                        weather_data, g, Sz, Az, ha, latitude, misc_losses, type_SCpanel, T_in, height, panel_properties)
+        result, Final = calc_PVT_generation(hourlydata_groups, number_groups, number_points, prop_observers,
+                                        weather_data, g, Sz, Az, ha, latitude, misc_losses, panel_properties_SC, T_in, height, panel_properties_PV)
 
         Final.to_csv(locator.PVT_results(building_name= building_name), index=True, float_format='%.2f')
         sensors_metadata_cat.to_csv(locator.PVT_metadata_results(building_name= building_name), index=True, float_format='%.2f')  # print selected metadata of the selected sensors
@@ -80,11 +81,25 @@ def calc_PVT(locator, radiation_csv, metadata_csv, latitude, longitude, weather_
     return
 
 
-def calc_PVT_generation(type_panel, group_radiation, number_groups, number_points, prop_observers, weather_data,
-                        g, Sz, Az, ha, latitude, misc_losses, type_SCpanel, Tin, height, panel_properties):
+def calc_PVT_generation(group_radiation, number_groups, number_points, prop_observers, weather_data,
+                        g, Sz, Az, ha, latitude, misc_losses, panel_properties_SC, Tin, height, panel_properties_PV):
 
-    n0, c1, c2, mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, Aratio, Apanel, dP1, dP2, dP3, dP4 = calc_properties_SC(
-        type_SCpanel=1) #TODO: move out when testing is done
+    n0 = panel_properties_SC['n0']
+    c1 = panel_properties_SC['c1']
+    c2 = panel_properties_SC['c2']
+    mB0_r = panel_properties_SC['mB0_r']
+    mB_max_r = panel_properties_SC['mB_max_r']
+    mB_min_r = panel_properties_SC['mB_min_r']
+    C_eff = panel_properties_SC['C_eff']
+    t_max = panel_properties_SC['t_max']
+    IAM_d = panel_properties_SC['IAM_d']
+    Aratio = panel_properties_SC['aperture_area_ratio']
+    Apanel = panel_properties_SC['module_area']
+    dP1 = panel_properties_SC['dP1']
+    dP2 = panel_properties_SC['dP2']
+    dP3 = panel_properties_SC['dP3']
+    dP4 = panel_properties_SC['dP4']
+    Cp_fluid = panel_properties_SC['Cp_fluid']  # J/kgK
 
     list_results_PVT = list(range(number_groups))
     list_groups_areas = list(range(number_groups))
@@ -100,8 +115,8 @@ def calc_PVT_generation(type_panel, group_radiation, number_groups, number_point
     aperature_area = Aratio * Apanel
     total_area_module = prop_observers['total_area_module'].sum() # total area for panel installation
 
-    if type_SCpanel == 'SC2':  # for evacuated tubes #TODO:change to panel_properties['type']=='ET'
-        Nseg = 100  # default number of subsdivisions for the calculation #TODO: find reference
+    if panel_properties_SC['type'] == 'ET':  # for evacuated tubes
+        Nseg = 100  # default number of subsdivisions for the calculation
     else:
         Nseg = 10  # default number of subsdivisions for the calculation
 
@@ -125,19 +140,20 @@ def calc_PVT_generation(type_panel, group_radiation, number_groups, number_point
     # empty lists to store results
     result_PV = list(range(number_groups))
     Sum_PV = np.zeros(8760)
+    Sum_radiation = np.zeros(8760)
 
     n = 1.526  # refractive index of glass
     Pg = 0.2  # ground reflectance
     K = 0.4  # glazing extinction coefficient
-    eff_nom = panel_properties['PV_n']
-    NOCT = panel_properties['PV_noct']
-    Bref = panel_properties['PV_Bref']
-    a0 = panel_properties['PV_a0']
-    a1 = panel_properties['PV_a1']
-    a2 = panel_properties['PV_a2']
-    a3 = panel_properties['PV_a3']
-    a4 = panel_properties['PV_a4']
-    L = panel_properties['PV_th']   # fixme: check if it's the same as SC grid length
+    eff_nom = panel_properties_PV['PV_n']
+    NOCT = panel_properties_PV['PV_noct']
+    Bref = panel_properties_PV['PV_Bref']
+    a0 = panel_properties_PV['PV_a0']
+    a1 = panel_properties_PV['PV_a1']
+    a2 = panel_properties_PV['PV_a2']
+    a3 = panel_properties_PV['PV_a3']
+    a4 = panel_properties_PV['PV_a4']
+    L = panel_properties_PV['PV_th']   # fixme: check if it's the same as SC grid length
 
     for group in range(number_groups):
         # read panel properties of each group
@@ -165,7 +181,7 @@ def calc_PVT_generation(type_panel, group_radiation, number_groups, number_point
 
         ## SC heat generation
         # calculate incidence angle modifier for beam radiation
-        IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle, type_SCpanel, latitude, Sz)
+        IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle, panel_properties_SC['type'], latitude, Sz)
 
         list_results_PVT[group] = Calc_PVT_module(tilt_angle, IAM_b.copy(), radiation.I_direct.copy(),
                                              radiation.I_diffuse.copy(), weather_data.drybulb_C,
@@ -180,12 +196,13 @@ def calc_PVT_generation(type_panel, group_radiation, number_groups, number_point
         Sum_qout = Sum_qout + list_results_PVT[group][1] * number_of_panels
         Sum_Eaux = Sum_Eaux + list_results_PVT[group][2] * number_of_panels
         Sum_PV = Sum_PV + list_results_PVT[group][6]
+        Sum_radiation = Sum_radiation + group_radiation[group]
         list_groups_areas[group] = area_per_group
 
     Tout_group = (Sum_qout / Sum_mcp) + Tin  # in C
     Final = pd.DataFrame(
         {'Qsc_KWh': Sum_qout, 'Tscs': Tin_array, 'Tscr': Tout_group, 'mcp_kW/C': Sum_mcp, 'Eaux_kWh': Sum_Eaux,
-         'Qsc_l_KWh': Sum_qloss, 'PV_kWh': Sum_PV, 'Area': sum(list_groups_areas)}, index=range(8760))
+         'Qsc_l_KWh': Sum_qloss, 'PV_kWh': Sum_PV, 'Area': sum(list_groups_areas), 'radiation_kWh': Sum_radiation}, index=range(8760))
 
     return list_results_PVT, Final
 
@@ -447,7 +464,7 @@ def test_PVT():
 
 
     min_radiation = 0.75  # points are selected with at least a minimum production of this % from the maximum in the area.
-    type_SCpanel = 'SC1'  # monocrystalline, T2 is poly and T3 is amorphous. it relates to the database of technologies
+    type_SCpanel = 'SC1'  # SC1: flat plat collector
     type_PVpanel = 'PV1'  # PV1: monocrystalline, PV2: poly, PV3: amorphous. please refer to supply system database.
     T_in = 35 # average temeperature #FIXME:defininition, find reference
     worst_hour = 8744  # first hour of sun on the solar solstice
