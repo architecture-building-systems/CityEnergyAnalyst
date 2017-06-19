@@ -248,18 +248,27 @@ def compile(args):
 def read_config(args):
     """Read a key from a section in the configuration"""
     import cea.config
+    import ConfigParser
     config = cea.config.Configuration(args.scenario)
-    print(config._parser.get(args.section, args.key))
+    try:
+        print(config._parser.get(args.section, args.key))
+    except ConfigParser.NoSectionError:
+        print("")
+
 
 
 def write_config(args):
     """write a value to a section/key in the configuration in the scenario folder"""
     import cea.config
+    import ConfigParser
     config = cea.config.Configuration(args.scenario)
+    if not config._parser.has_section(args.section):
+        config._parser.add_section(args.section)
     config._parser.set(args.section, args.key, args.value)
     scenario_config = os.path.join(args.scenario, 'scenario.config')
     with open(scenario_config, 'w') as f:
         config._parser.write(f)
+
 
 
 def main():

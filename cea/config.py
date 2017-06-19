@@ -9,7 +9,7 @@ import cea.databases
 class Configuration(object):
     def __init__(self, scenario=None):
         """Read in configuration information for a scenario (or the default scenario)"""
-        defaults = dict(os.environ)
+        defaults = dict() # dict(os.environ)
         defaults['CEA.SCENARIO'] = str(scenario)
         defaults['CEA.DB'] = os.path.dirname(cea.databases.__file__)
         self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
