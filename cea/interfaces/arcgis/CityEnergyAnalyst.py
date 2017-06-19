@@ -95,6 +95,10 @@ class DataHelperTool(object):
     """
 
     def __init__(self):
+        # map from CLI flag names to the parameter names used in the ArcGIS interface
+        self.flag_mapping = {'thermal': 'prop_thermal_flag', 'architecture': 'prop_architecture_flag',
+                             'HVAC': 'prop_HVAC_flag', 'comfort': 'prop_comfort_flag',
+                             'internal-loads': 'prop_internal_loads_flag'}
         self.label = 'Data helper'
         self.description = 'Query characteristics of buildings and systems from statistical data'
         self.canRunInBackground = False
@@ -113,6 +117,7 @@ class DataHelperTool(object):
             parameterType="Required",
             direction="Input")
         prop_thermal_flag.value = True
+        prop_thermal_flag.enabled = False
         prop_architecture_flag = arcpy.Parameter(
             displayName="Generate architectural properties",
             name="prop_architecture_flag",
@@ -120,6 +125,7 @@ class DataHelperTool(object):
             parameterType="Required",
             direction="Input")
         prop_architecture_flag.value = True
+        prop_architecture_flag.enabled = False
         prop_HVAC_flag = arcpy.Parameter(
             displayName="Generate technical systems properties",
             name="prop_HVAC_flag",
@@ -127,6 +133,7 @@ class DataHelperTool(object):
             parameterType="Required",
             direction="Input")
         prop_HVAC_flag.value = True
+        prop_HVAC_flag.enabled = False
         prop_comfort_flag = arcpy.Parameter(
             displayName="Generate comfort properties",
             name="prop_comfort_flag",
@@ -134,6 +141,7 @@ class DataHelperTool(object):
             parameterType="Required",
             direction="Input")
         prop_comfort_flag.value = True
+        prop_comfort_flag.enabled = False
         prop_internal_loads_flag = arcpy.Parameter(
             displayName="Generate internal loads properties",
             name="prop_internal_loads_flag",
@@ -141,8 +149,47 @@ class DataHelperTool(object):
             parameterType="Required",
             direction="Input")
         prop_internal_loads_flag.value = True
+        prop_internal_loads_flag.enabled = False
         return [scenario_path, prop_thermal_flag, prop_architecture_flag, prop_HVAC_flag, prop_comfort_flag,
                 prop_internal_loads_flag]
+
+    def updateParameters(self, parameters):
+        f = open(os.path.expandvars(r'%temp%\cea.arcgis.log'), 'a')
+        scenario_path = parameters[0].valueAsText
+        f.write('scenario_path: %(scenario_path)s\n' % locals())
+        if scenario_path is None:
+            for p in parameters[1:]:
+                p.enabled = False
+            return
+        if not os.path.exists(scenario_path):
+            for p in parameters[1:]:
+                p.enabled = False
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+
+        # first time only (for a new scenario_path)
+        if not parameters[1].enabled:
+            for p in parameters[1:]:
+                p.enabled = True
+            parameters = {p.name: p for p in parameters}
+            flags = ConfigurationStore().read(scenario_path, 'data-helper')
+            f.write('flags: %(flags)s\n' % locals())
+            if flags:
+                for key in flags.keys():
+                    f.write('key: %(key)s\n' % locals())
+                    if key in self.flag_mapping:
+                        f.write('key in self.flag_mapping\n')
+                        p = parameters[self.flag_mapping[key]]
+                        p.value = flags[key]
+                    else:
+                        f.write('key NOT in self.flag_mapping!!! flag!! %s\n' % key)
+                        raise Exception('flag!! %s' % key)
+        f.close()
+
+    def updateMessages(self, parameters):
+        pass
+        #parameters[0].clearMessage()
+        #parameters[0].setErrorMessage(repr(self.scenario_path))
 
     def execute(self, parameters, _):
         scenario_path = parameters[0].valueAsText
@@ -151,6 +198,9 @@ class DataHelperTool(object):
                  'HVAC': parameters[3].value,
                  'comfort': parameters[4].value,
                  'internal-loads': parameters[5].value}
+
+        ConfigurationStore().write(scenario_path, 'data-helper', flags)
+
         archetypes = [key for key in flags.keys() if flags[key]]
         run_cli(scenario_path, 'data-helper', '--archetypes', *archetypes)
 
@@ -688,3 +738,21 @@ class HeatmapsTool(object):
             file_to_analyze = os.path.join(_cli_output(scenario_path, 'locate', 'get_lca_emissions_results_folder'),
                                            file_to_analyze)
         run_cli(scenario_path, 'heatmaps', '--file-to-analyze', file_to_analyze, '--analysis-fields', *analysis_fields)
+
+class ConfigurationStore(object):
+    """Read and write the parameters of a tool for populating the interface for subsequent runs.
+    The parameters are written to a section called "ArcGIS", with the tool name as the key. The value is
+    a json dictionary of the values for each parameter.
+    """
+    def read(self, scenario_path, tool):
+        import json
+        data = _cli_output(scenario_path, 'read-config', '--section', 'ArcGIS', '--key', tool)
+        if len(data):
+            return json.loads(data)
+        return None
+
+    def write(self, scenario_path, tool, parameters):
+        """Assuming parameters is a dictionary of values to store, write them as a json string to the store"""
+        import json
+        data = json.dumps(parameters)
+        run_cli(scenario_path, 'write-config', '--section', 'ArcGIS', '--key', tool, '--value', data)
