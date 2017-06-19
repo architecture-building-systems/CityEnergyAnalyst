@@ -297,11 +297,11 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     else:
         module_width = panel_properties['module_area']/module_length # for FP, ET
     surface_area_flat = module_width * (sensors_metadata_clean.array_s / 2 + module_length * cos(optimal_angle_flat))
-    module_area = module_width*module_length
+    module_area = module_width * module_length
 
     # calculate the pv/solar collector module area within the area of each sensor point
     sensors_metadata_clean['area_installed_module'] = np.where(sensors_metadata_clean['tilt'] >= 5, sensors_metadata_clean.AREA_m2,
-                                                     module_area * (sensors_metadata_clean.AREA_m2/surface_area_flat))
+                                                     module_area * (sensors_metadata_clean.AREA_m2 / surface_area_flat))
 
     # categorize the sensors by surface_azimuth, B, GB
     result = np.vectorize(calc_categoriesroof)(sensors_metadata_clean.surface_azimuth, sensors_metadata_clean.B,
