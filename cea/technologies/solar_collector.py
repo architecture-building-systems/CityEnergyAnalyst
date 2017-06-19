@@ -102,8 +102,8 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, 
     Cp_fluid = panel_properties['Cp_fluid']  # J/kgK
 
     # create lists to store results
-    listresults = [None] * number_groups
-    listresults = [None] * number_groups
+    list_results = [None] * number_groups
+    list_results = [None] * number_groups
     listareasgroups = [None] * number_groups
     Sum_mcp = np.zeros(8760)
     Sum_qout = np.zeros(8760)
@@ -143,23 +143,23 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, 
         IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle, panel_properties['type'], latitude, Sz)
 
         # calculate heat production from a solar collector of each group
-        listresults[group] = calc_SC_module(tilt_angle, IAM_b, IAM_d, radiation.I_direct, radiation.I_diffuse,
+        list_results[group] = calc_SC_module(tilt_angle, IAM_b, IAM_d, radiation.I_direct, radiation.I_diffuse,
                                             weather_data.drybulb_C, n0, c1, c2, mB0_r, mB_max_r, mB_min_r, C_eff, t_max,
                                             aperature_area, dP1, dP2, dP3, dP4, Cp_fluid, Tin, Leq, l_ext, Nseg)
         # multiplying the results with the number of panels in each group
         number_modules_per_group = area_per_group / Apanel
-        listresults[group][5] = listresults[group][5] * number_modules_per_group
-        listresults[group][0] = listresults[group][0] * number_modules_per_group
-        listresults[group][1] = listresults[group][1] * number_modules_per_group
-        listresults[group][2] = listresults[group][2] * number_modules_per_group
+        list_results[group][5] = list_results[group][5] * number_modules_per_group
+        list_results[group][0] = list_results[group][0] * number_modules_per_group
+        list_results[group][1] = list_results[group][1] * number_modules_per_group
+        list_results[group][2] = list_results[group][2] * number_modules_per_group
 
         listareasgroups[group] = area_per_group
 
     for group in range(number_groups):  #FIXME: maybe merge with the previous for loop?
-        mcp_array = listresults[group][5]
-        qloss_array = listresults[group][0]
-        qout_array = listresults[group][1]
-        Eaux_array = listresults[group][2]
+        mcp_array = list_results[group][5]
+        qloss_array = list_results[group][0]
+        qout_array = list_results[group][1]
+        Eaux_array = list_results[group][2]
         radiation_array = group_radiation[group]*listareasgroups[group]/1000 # kWh
         Sum_qout = Sum_qout + qout_array
         Sum_Eaux = Sum_Eaux + Eaux_array
@@ -173,7 +173,7 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, 
         {'Qsc_kWh': Sum_qout, 'Ts_C': Tin_array, 'Tr_C': Tout_group, 'mcp_kW/C': Sum_mcp, 'Eaux_kWh': Sum_Eaux,
          'Qsc_l_kWh': Sum_qloss, 'module_area_m2': sum(listareasgroups), 'radiation_kWh': Sum_radiation}, index=range(8760))
 
-    return listresults, Final
+    return list_results, Final
 
 
 def calc_SC_module(tilt_angle, IAM_b_vector, IAM_d_vector, I_direct_vector, I_diffuse_vector, Tamb_vector, n0, c1, c2,
