@@ -255,7 +255,9 @@ def read_config(args):
     try:
         print(config._parser.get(args.section, args.key))
     except ConfigParser.NoSectionError:
-        print("")
+        pass
+    except ConfigParser.NoOptionError:
+        pass
 
 
 

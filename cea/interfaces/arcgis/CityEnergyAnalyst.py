@@ -48,12 +48,20 @@ class DemandTool(object):
             parameterType="Required",
             direction="Input")
         weather_name = arcpy.Parameter(
-            displayName="Weather file (choose from list or enter full path to .epw file)",
+            displayName="Weather file",
             name="weather_name",
             datatype="String",
             parameterType="Required",
             direction="Input")
-        weather_name.filter.list = get_weather_names()
+        weather_name.filter.list = get_weather_names() + ['<choose path from below>']
+
+        weather_path = arcpy.Parameter(
+            displayName="Path to .epw file",
+            name="weather_path",
+            datatype="DEFile",
+            parameterType="Optional",
+            direction="Input")
+        weather_path.filter.list = ['epw']
 
         dynamic_infiltration = arcpy.Parameter(
             displayName="Use dynamic infiltration model (slower)",
@@ -61,15 +69,33 @@ class DemandTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        dynamic_infiltration.value = False
-
-        return [scenario_path, weather_name, dynamic_infiltration]
-
-    def isLicensed(self):
-        return True
+        return [scenario_path, weather_name, weather_path, dynamic_infiltration]
 
     def updateParameters(self, parameters):
-        return
+        scenario_path = parameters[0].valueAsText
+        if scenario_path is None:
+            for p in parameters[1:]:
+                p.enabled = False
+            return
+        if not os.path.exists(scenario_path):
+            for p in parameters[1:]:
+                p.enabled = False
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+
+        if not parameters[1].enabled:
+            for p in parameters[1:]:
+                p.enabled = True
+            parameters = {p.name: p for p in parameters}
+            flags = ConfigurationStore().read(scenario_path, 'demand')
+            if flags:
+                for key in flags.keys():
+                    p = parameters[key]
+                    p.value = flags[key]
+            parameters['weather_path'].enabled = parameters['weather_name'].value == '<choose path from below>'
+        else:
+            parameters = {p.name: p for p in parameters}
+            parameters['weather_path'].enabled = parameters['weather_name'].value == '<choose path from below>'
 
     def updateMessages(self, parameters):
         scenario_path = parameters[0].valueAsText
@@ -85,21 +111,28 @@ class DemandTool(object):
         return
 
     def execute(self, parameters, _):
-        scenario_path = parameters[0].valueAsText
-        weather_name = parameters[1].valueAsText
+        parameters = {p.name: p for p in parameters}
+        scenario_path = parameters['scenario_path'].valueAsText
+        weather_name = parameters['weather_name'].valueAsText
+        weather_path_param = parameters['weather_path']
         if weather_name in get_weather_names():
             weather_path = get_weather_path(weather_name)
-        elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
-            weather_path = weather_name
+        elif weather_path_param.enabled:
+            if os.path.exists(weather_path_param.valueAsText) and weather_path_param.valueAsText.endswith('.epw'):
+                weather_path = weather_path_param.valueAsText
         else:
             weather_path = get_weather_path()
 
-        use_dynamic_infiltration_calculation = parameters[2].value
+        use_dynamic_infiltration_calculation = parameters['dynamic_infiltration'].value
 
         args = [scenario_path, 'demand', '--weather', weather_path]
         if use_dynamic_infiltration_calculation:
             args.append('--use-dynamic-infiltration-calculation')
         run_cli(*args)
+        ConfigurationStore().write(scenario_path,
+                                   'demand', {'weather_name': weather_name,
+                                              'weather_path': weather_path,
+                                              'dynamic_infiltration': use_dynamic_infiltration_calculation})
 
 
 class DataHelperTool(object):
@@ -129,7 +162,6 @@ class DataHelperTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        prop_thermal_flag.value = True
         prop_thermal_flag.enabled = False
         prop_architecture_flag = arcpy.Parameter(
             displayName="Generate architectural properties",
@@ -137,7 +169,6 @@ class DataHelperTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        prop_architecture_flag.value = True
         prop_architecture_flag.enabled = False
         prop_HVAC_flag = arcpy.Parameter(
             displayName="Generate technical systems properties",
@@ -145,7 +176,6 @@ class DataHelperTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        prop_HVAC_flag.value = True
         prop_HVAC_flag.enabled = False
         prop_comfort_flag = arcpy.Parameter(
             displayName="Generate comfort properties",
@@ -153,7 +183,6 @@ class DataHelperTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        prop_comfort_flag.value = True
         prop_comfort_flag.enabled = False
         prop_internal_loads_flag = arcpy.Parameter(
             displayName="Generate internal loads properties",
@@ -161,15 +190,12 @@ class DataHelperTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        prop_internal_loads_flag.value = True
         prop_internal_loads_flag.enabled = False
         return [scenario_path, prop_thermal_flag, prop_architecture_flag, prop_HVAC_flag, prop_comfort_flag,
                 prop_internal_loads_flag]
 
     def updateParameters(self, parameters):
-        f = open(os.path.expandvars(r'%temp%\cea.arcgis.log'), 'a')
         scenario_path = parameters[0].valueAsText
-        f.write('scenario_path: %(scenario_path)s\n' % locals())
         if scenario_path is None:
             for p in parameters[1:]:
                 p.enabled = False
@@ -186,23 +212,11 @@ class DataHelperTool(object):
                 p.enabled = True
             parameters = {p.name: p for p in parameters}
             flags = ConfigurationStore().read(scenario_path, 'data-helper')
-            f.write('flags: %(flags)s\n' % locals())
             if flags:
                 for key in flags.keys():
-                    f.write('key: %(key)s\n' % locals())
                     if key in self.flag_mapping:
-                        f.write('key in self.flag_mapping\n')
                         p = parameters[self.flag_mapping[key]]
                         p.value = flags[key]
-                    else:
-                        f.write('key NOT in self.flag_mapping!!! flag!! %s\n' % key)
-                        raise Exception('flag!! %s' % key)
-        f.close()
-
-    def updateMessages(self, parameters):
-        pass
-        #parameters[0].clearMessage()
-        #parameters[0].setErrorMessage(repr(self.scenario_path))
 
     def execute(self, parameters, _):
         scenario_path = parameters[0].valueAsText
