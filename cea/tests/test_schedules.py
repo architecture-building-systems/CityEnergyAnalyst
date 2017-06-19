@@ -9,9 +9,7 @@ class TestBuildingPreprocessing(unittest.TestCase):
         from cea.demand.preprocessing.properties import calculate_average_multiuse
         from cea.demand.preprocessing.properties import correct_archetype_areas
         from cea.demand.preprocessing.properties import get_database
-        from cea.demand.preprocessing.properties import calc_code
         import pandas as pd
-        import numpy as np
 
         locator = InputLocator(scenario_path=GlobalVariables().scenario_reference)
 
@@ -54,7 +52,6 @@ class TestScheduleCreation(unittest.TestCase):
         from cea.globalvar import GlobalVariables
         from cea.inputlocator import InputLocator
         from cea.demand.occupancy_model import calc_schedules
-        # from cea.demand.occupancy_model import schedule_maker
         import pandas as pd
         import numpy as np
 
@@ -62,11 +59,6 @@ class TestScheduleCreation(unittest.TestCase):
         office_occ = float(pd.read_excel(locator.get_archetypes_schedules(), 'OFFICE').T['density'].values[:1][0])
         industrial_occ = float(pd.read_excel(locator.get_archetypes_schedules(),
                                              'INDUSTRIAL').T['density'].values[:1][0])
-
-        # dates = pd.date_range('2016-01-01', periods=72, freq='H')
-        # list_uses = ['MULTI_RES', 'OFFICE']
-        # archetype_schedules, archetype_values = schedule_maker(dates, locator, list_uses)
-        # schedules = calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values)
 
         schedules_office = [0.4, 0.4, 0.4, 0.0]
         schedules_industry = [1.0, 1.0, 0.4, 0.3]
