@@ -199,6 +199,7 @@ def calc_m_ve_required(bpr, tsd):
     :return: updates tsd
     """
 
-    tsd['m_ve_required'] = tsd['people'] * bpr.comfort['Ve_lps'] * physics.calc_rho_air(tsd['T_ext'][:]) * 0.001  # kg/s
+    tsd['m_ve_required'] = (tsd['ve']/3.6) * physics.calc_rho_air(tsd['T_ext'][:]) * 0.001  # kg/s
 
     return
+
