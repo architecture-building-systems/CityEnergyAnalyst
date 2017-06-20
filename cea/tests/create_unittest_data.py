@@ -34,8 +34,9 @@ def main():
     building_properties = BuildingProperties(locator, gv)
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
     list_uses = building_properties.list_uses()
-    schedules, occupancy_densities = schedule_maker(date, locator, list_uses)
-    usage_schedules = {'list_uses': list_uses, 'schedules': schedules, 'occupancy_densities': occupancy_densities}
+    archetype_schedules, archetype_values = schedule_maker(date, locator, list_uses)
+    usage_schedules = {'list_uses': list_uses, 'archetype_schedules': archetype_schedules,
+                       'occupancy_densities': archetype_values['people'], 'archetype_values': archetype_values}
 
     print("data for test_calc_thermal_loads:")
     print building_properties.list_building_names()
