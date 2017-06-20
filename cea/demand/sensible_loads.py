@@ -6,6 +6,7 @@ EN-13970
 from __future__ import division
 import numpy as np
 from cea.utilities.physics import BOLTZMANN
+from cea.demand import occupancy_model
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -41,14 +42,34 @@ def calc_Qgain_sen(t, tsd, bpr, gv):
     return tsd
 
 
-def calc_Qgain_lat(people, X_ghp, sys_e_cooling, sys_e_heating):
+def calc_Qgain_lat(schedules, X_ghp, Af, sys_e_cooling, sys_e_heating):
     # TODO: Documentation
     # Refactored from CalcThermalLoads
+    """
+    :param list_uses: The list of uses used in the project
+    :type list_uses: list
+    :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
+    :type schedules: list[ndarray[float]]
+    :param X_ghp: humidity gain from people in g/h/p for each occupancy type
+    :type X_ghp: list[float]
+    :param occupancy: for each use in `list_uses`, the percentage of that use for this building. Sum of values is 1.0
+    :type occupancy: dict[str, float]
+    :param Af: total conditioned floor area
+    :type Af: float
 
-    # X_ghp is the humidity gain from people in g/h
+    :param sys_e_heating: cooling system code as defined in the systems database (e.g. 'T0' if no cooling)
+    :param sys_e_heating: string
+    :param sys_e_cooling: cooling system code as defined in the systems database (e.g. 'T0' if no cooling)
+    :param sys_e_cooling: string
 
+    :return w_int: yearly schedule
+
+    """
+    # calc yearly humidity gains based on occupancy schedule and specific humidity gains for each occupancy type in the
+    # building
+    humidity_schedule = schedules['X'] * X_ghp  # in g/h/m2
     if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
-        w_int = people * X_ghp / (1000 * 3600)  # kg/s
+        w_int = humidity_schedule * Af / (1000 * 3600)  # kg/s
     else:
         w_int = 0
 
