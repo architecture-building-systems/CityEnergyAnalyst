@@ -755,9 +755,9 @@ def test_photovoltaic():
     min_radiation = 0.75  # points are selected with at least a minimum production of this % from the maximum in the area.
     type_PVpanel = "PV1"  # PV1: monocrystalline, PV2: poly, PV3: amorphous. please refer to supply system database.
     worst_hour = 8744  # first hour of sun on the solar solstice
-    misc_losses = 0.1  # cabling, resistances etc..
-    pvonroof = True  # flag for considering PV on roof #FIXME: define
-    pvonwall = True  # flag for considering PV on wall #FIXME: define
+    misc_losses = 0.1  # cabling, resistances etc..# FIXME: delete
+    panel_on_roof = True  # flag for considering PV on roof
+    panel_on_wall = True  # flag for considering PV on wall
     longitude = 7.439583333333333
     latitude = 46.95240555555556
     date_start = gv.date_start
@@ -767,7 +767,7 @@ def test_photovoltaic():
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
         calc_PV(locator=locator, radiation_csv= radiation, metadata_csv= radiation_metadata, latitude=latitude,
                 longitude=longitude, weather_path=weather_path, building_name = building,
-                pvonroof=pvonroof, pvonwall=pvonwall, misc_losses=misc_losses, worst_hour=worst_hour,
+                pvonroof=panel_on_roof, pvonwall=panel_on_wall, misc_losses=misc_losses, worst_hour=worst_hour,
                 type_PVpanel=type_PVpanel, min_radiation=min_radiation, date_start=date_start)
 
 

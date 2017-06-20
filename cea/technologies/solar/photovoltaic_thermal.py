@@ -4,20 +4,25 @@ Photovoltaic thermal panels
 
 
 from __future__ import division
-import numpy as np
-import pandas as pd
-import geopandas as gpd
-import cea.globalvar
-import cea.inputlocator
+
 import time
 from math import *
+
+import geopandas as gpd
+import numpy as np
+import pandas as pd
+
+import cea.globalvar
+import cea.inputlocator
+from cea.technologies.solar.photovoltaic import calc_properties_PV_db, calc_PV_power, calc_diffuseground_comp, \
+    calc_Sm_PV
+from cea.technologies.solar.solar_collector import calc_properties_SC_db, calc_IAM_beam_SC, calc_q_rad, calc_q_gain, \
+    calc_Eaux_SC, \
+    calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_network
 from cea.utilities import dbfreader
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
-
-from cea.technologies.solar_collector import calc_properties_SC_db, calc_IAM_beam_SC, calc_q_rad, calc_q_gain, calc_Eaux_SC,\
-    calc_optimal_mass_flow, calc_optimal_mass_flow_2, calc_qloss_network
-from cea.technologies.photovoltaic import calc_properties_PV_db, calc_PV_power, calc_diffuseground_comp, calc_Sm_PV
+from cea.technologies.solar import settings
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -29,29 +34,52 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_PVT(locator, radiation_csv, metadata_csv, latitude, longitude, weather_path, building_name,
-             panel_on_roof, panel_on_wall, misc_losses, worst_hour, type_SCpanel, type_PVpanel, T_in, min_radiation, date_start):
+def calc_PVT(locator, radiation_csv, metadata_csv, latitude, longitude, weather_path, building_name):
+    """
+    This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
+    tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
+    tilt angles, and global irradiation. In the last, electricity and heat generation from PVT panels of each group are calculated.
+
+    :param locator: An InputLocator to locate input files
+    :type locator: cea.inputlocator.InputLocator
+    :param radiation_csv: solar insulation data on all surfaces of each building
+    :type radiation_csv: .csv
+    :param metadata_csv: data of sensor points measuring solar insulation of each building
+    :type metadata_csv: .csv
+    :param latitude: latitude of the case study location
+    :type latitude: float
+    :param longitude: longitude of the case study location
+    :type longitude: float
+    :param weather_path: path to the weather data file of the case study location
+    :type weather_path: .epw
+    :param building_name: list of building names in the case study
+    :type building_name: Series
+    :param T_in: inlet temperature to the solar collectors [C]
+    :return: Building_PVT.csv with solar collectors heat generation potential of each building, Building_PVT_sensors.csv
+    with sensor data of each PVT panel.
+    """
 
     t0 = time.clock()
 
     # weather data
     weather_data = epwreader.epw_reader(weather_path)
+    worst_hour = solar_equations.calc_worst_hour(latitude, weather_data, settings.solar_window_solstice)
     print 'reading weather data done'
 
     # solar properties
-    g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude,longitude, weather_data,
-                                                                                                        date_start,
-                                                                                                        worst_hour)
+    g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
+                                                                                      settings.date_start, worst_hour)
     print 'calculating solar properties done'
 
     # get properties of the panel to evaluate # TODO: find a PVT reference
-    panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems_database(), type_PVpanel)
-    panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems_database(), type_SCpanel)
+    panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems_database(), settings.type_PVpanel)
+    panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems_database(), settings.type_SCpanel)
     print 'gathering properties of PV collector panel'
 
     # select sensor point with sufficient solar radiation
     max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_csv, metadata_csv, min_radiation, panel_on_roof, panel_on_wall)
+        solar_equations.filter_low_potential(weather_data, radiation_csv, metadata_csv, settings.min_radiation,
+                                             settings.panel_on_roof, settings.panel_on_wall)
 
     print 'filtering low potential sensor points done'
 
@@ -61,17 +89,20 @@ def calc_PVT(locator, radiation_csv, metadata_csv, latitude, longitude, weather_
     if not sensors_metadata_clean.empty:
 
         # calculate optimal angle and tilt for panels according to PV module size
-        sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az, trr_mean,
-                                                      max_yearly_radiation, panel_properties_PV)
+        sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh,
+                                                                      worst_Az, trr_mean, max_yearly_radiation,
+                                                                      panel_properties_PV)
         print 'calculating optimal tile angle and separation done'
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
-        number_groups, hourlydata_groups, number_points, prop_observers = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
+        number_groups, hourlydata_groups, number_points, prop_observers = solar_equations.calc_groups(sensors_rad_clean,
+                                                                                                      sensors_metadata_cat)
 
         print 'generating groups of sensor points done'
 
-        result, Final = calc_PVT_generation(hourlydata_groups, number_groups, number_points, prop_observers,
-                                        weather_data, g, Sz, Az, ha, latitude, misc_losses, panel_properties_SC, T_in, height, panel_properties_PV)
+        result, Final = calc_PVT_generation(hourlydata_groups, weather_data, number_groups, prop_observers, g, Sz, Az,
+                                            ha, settings.T_in_PVT, latitude, height, panel_properties_SC,
+                                            panel_properties_PV)
 
         Final.to_csv(locator.PVT_results(building_name= building_name), index=True, float_format='%.2f')
         sensors_metadata_cat.to_csv(locator.PVT_metadata_results(building_name= building_name), index=True, float_format='%.2f')  # print selected metadata of the selected sensors
@@ -81,8 +112,8 @@ def calc_PVT(locator, radiation_csv, metadata_csv, latitude, longitude, weather_
     return
 
 
-def calc_PVT_generation(group_radiation, number_groups, number_points, prop_observers, weather_data,
-                        g, Sz, Az, ha, latitude, misc_losses, panel_properties_SC, Tin, height, panel_properties_PV):
+def calc_PVT_generation(group_radiation, weather_data, number_groups, prop_observers, g, Sz, Az, ha, Tin, latitude,
+                        height, panel_properties_SC, panel_properties_PV):
 
     n0 = panel_properties_SC['n0']
     c1 = panel_properties_SC['c1']
@@ -154,6 +185,7 @@ def calc_PVT_generation(group_radiation, number_groups, number_points, prop_obse
     a3 = panel_properties_PV['PV_a3']
     a4 = panel_properties_PV['PV_a4']
     L = panel_properties_PV['PV_th']   # fixme: check if it's the same as SC grid length
+    misc_losses = panel_properties_PV['misc_losses']
 
     for group in range(number_groups):
         # read panel properties of each group
@@ -183,12 +215,11 @@ def calc_PVT_generation(group_radiation, number_groups, number_points, prop_obse
         # calculate incidence angle modifier for beam radiation
         IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle, panel_properties_SC['type'], latitude, Sz)
 
-        list_results_PVT[group] = Calc_PVT_module(tilt_angle, IAM_b.copy(), radiation.I_direct.copy(),
-                                             radiation.I_diffuse.copy(), weather_data.drybulb_C,
-                                             n0, c1, c2, mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, aperature_area, dP1,
-                                             dP2, dP3, dP4, Tin, Leq, l_ext, Nseg,
-                                             eff_nom, Bref, results_Sm[0].copy(), results_Sm[1].copy(), misc_losses,
-                                             area_per_group)
+        list_results_PVT[group] = Calc_PVT_module(tilt_angle, IAM_b.copy(), IAM_d, radiation.I_direct.copy(),
+                                                  radiation.I_diffuse.copy(), weather_data.drybulb_C, n0, c1, c2, mB0_r,
+                                                  mB_max_r, mB_min_r, C_eff, t_max, aperature_area, dP1, dP2, dP3, dP4,
+                                                  Cp_fluid, Tin, Leq, l_ext, Nseg, eff_nom, Bref, results_Sm[0].copy(),
+                                                  results_Sm[1].copy(), misc_losses, area_per_group)
 
         number_of_panels = area_per_group / Apanel
         Sum_mcp = Sum_mcp + list_results_PVT[group][5] * number_of_panels
@@ -207,9 +238,9 @@ def calc_PVT_generation(group_radiation, number_groups, number_points, prop_obse
     return list_results_PVT, Final
 
 
-def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector, Tamb_vector,
-                    n0, c1, c2, mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, aperture_area, dP1, dP2, dP3, dP4, Tin,
-                    Leq, l_ext, Nseg, eff_nom, Bref, Sm_PV, Tcell_PV, misc_losses, area_per_group):
+def Calc_PVT_module(tilt_angle, IAM_b_vector, IAM_d, I_direct_vector, I_diffuse_vector, Tamb_vector, n0, c1, c2, mB0_r,
+                    mB_max_r, mB_min_r, C_eff, t_max, aperture_area, dP1, dP2, dP3, dP4, Cp_fluid, Tin, Leq, l_ext,
+                    Nseg, eff_nom, Bref, Sm_PV, Tcell_PV, misc_losses, area_per_group):
     """
     This function calculates the heat & electricity production from PVT collectors. 
     The heat production calculation is adapted from calc_SC_module and then the updated cell temperature is used to 
@@ -248,8 +279,7 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
     """
 
     # local variables
-    Cp_waterglycol = 3680  # J/kgK  water glycol  specific heat #TODO: move to gv, CHECK UNIT
-    msc_max = mB_max_r * aperture_area / 3600  # maximum mass flow [kg/s] #TODO: move into the equation
+    msc_max = mB_max_r * aperture_area / 3600  # maximum mass flow [kg/s]
 
     # Do the calculation of every time step for every possible flow condition
     # get states where highly performing values are obtained.
@@ -306,7 +336,7 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
 
             # calculate stability criteria
             if Mfl > 0:
-                stability_criteria = Mfl * Cp_waterglycol * Nseg * (DELT * 3600) / (C_eff * aperture_area)
+                stability_criteria = Mfl * Cp_fluid * Nseg * (DELT * 3600) / (C_eff * aperture_area)
                 if stability_criteria <= 0.5:
                     print ('ERROR: stability criteria' + str(stability_criteria) + 'is not reached. aperture_area: '
                            + str(aperture_area) + 'mass flow: ' + str(Mfl))
@@ -322,7 +352,7 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
 
             # first guess for Delta T
             if Mfl > 0:
-                Tout = Tin + (q_rad - ((c1_pvt) + 0.5) * (Tin - Tamb)) / (Mfl * Cp_waterglycol / aperture_area)
+                Tout = Tin + (q_rad - ((c1_pvt) + 0.5) * (Tin - Tamb)) / (Mfl * Cp_fluid / aperture_area)
                 Tfl[2] = (Tin + Tout) / 2 # mean fluid temperature at present time-step
             else:
                 Tout = Tamb + q_rad / (c1_pvt + 0.5)
@@ -330,7 +360,7 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
             DT[1] = Tfl[2] - Tamb # difference between mean absorber temperature and the ambient temperature
 
             # calculate q_gain with the guess for DT[1]
-            q_gain = calc_q_gain(Tfl, Tabs, q_rad, DT, Tin, Tout, aperture_area, c1_pvt, c2, Mfl, delts, Cp_waterglycol, C_eff, Tamb)
+            q_gain = calc_q_gain(Tfl, Tabs, q_rad, DT, Tin, Tout, aperture_area, c1_pvt, c2, Mfl, delts, Cp_fluid, C_eff, Tamb)
 
             Aseg = aperture_area / Nseg # aperture area per segment
             for Iseg in range(1, Nseg + 1):
@@ -342,14 +372,14 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
                 else:
                     TinSeg = Tin
                 if Mfl > 0 and Mo_seg == 1:  # same heat gain/ losses for all segments
-                    ToutSeg = ((Mfl * Cp_waterglycol * (TinSeg + 273)) / Aseg - (C_eff * (TinSeg + 273)) / (2 * delts) + q_gain +
-                               (C_eff * (TflA[Iseg] + 273) / delts)) / (Mfl * Cp_waterglycol / Aseg + C_eff / (2 * delts))
+                    ToutSeg = ((Mfl * Cp_fluid * (TinSeg + 273)) / Aseg - (C_eff * (TinSeg + 273)) / (2 * delts) + q_gain +
+                               (C_eff * (TflA[Iseg] + 273) / delts)) / (Mfl * Cp_fluid / Aseg + C_eff / (2 * delts))
                     ToutSeg = ToutSeg - 273  # in [C]
                     TflB[Iseg] = (TinSeg + ToutSeg) / 2
                 else: # heat losses based on each segment's inlet and outlet temperatures.
                     Tfl[1] = TflA[Iseg]
                     Tabs[1] = TabsA[Iseg]
-                    q_gain = calc_q_gain(Tfl, Tabs, q_rad, DT, TinSeg, Tout, Aseg, c1_pvt, c2, Mfl, delts, Cp_waterglycol, C_eff, Tamb)
+                    q_gain = calc_q_gain(Tfl, Tabs, q_rad, DT, TinSeg, Tout, Aseg, c1_pvt, c2, Mfl, delts, Cp_fluid, C_eff, Tamb)
                     ToutSeg = Tout
                     if Mfl > 0:
                         TflB[Iseg] = (TinSeg + ToutSeg) / 2
@@ -358,7 +388,7 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
                         TflB[Iseg] = ToutSeg
 
                     # TflB[Iseg] = ToutSeg
-                    qfluid = (ToutSeg - TinSeg) * Mfl * Cp_waterglycol / Aseg
+                    qfluid = (ToutSeg - TinSeg) * Mfl * Cp_fluid / Aseg
                     q_mtherm = (TflB[Iseg] - TflA[Iseg]) * C_eff / delts
                     qbal = q_gain - qfluid - q_mtherm
                     if abs(qbal) > 1:
@@ -366,7 +396,7 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
                 q_gain_Seg[Iseg] = q_gain  # in W/m2 # fixme: redundant?
 
             # resulting energy output
-            q_out = Mfl * Cp_waterglycol * (ToutSeg - Tin) / 1000 #[kW]
+            q_out = Mfl * Cp_fluid * (ToutSeg - Tin) / 1000 #[kW]
             Tabs[2] = 0
             # storage of the mean temperature
             for Iseg in range(1, Nseg + 1):
@@ -425,7 +455,7 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
             auxiliary_electricity[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow], Leq,
                                                          aperture_area)  # in kW
             supply_out_total = supply_out + 0.5 * auxiliary_electricity[flow] - supply_losses[flow]
-            mcp = specific_flows[flow] * (Cp_waterglycol / 1000)  # mcp in kW/c
+            mcp = specific_flows[flow] * (Cp_fluid / 1000)  # mcp in kW/c
 
     for x in range(8760):
         if supply_out_total[5][x] <= 0:  # the demand is zero
@@ -462,26 +492,14 @@ def test_PVT():
     weather_path = locator.get_default_weather()
     list_buildings_names = dbfreader.dbf2df(locator.get_building_occupancy())['Name']
 
-
-    min_radiation = 0.75  # points are selected with at least a minimum production of this % from the maximum in the area.
-    type_SCpanel = 'SC1'  # SC1: flat plat collector
-    type_PVpanel = 'PV1'  # PV1: monocrystalline, PV2: poly, PV3: amorphous. please refer to supply system database.
-    T_in = 35 # average temeperature #FIXME:defininition, find reference
-    worst_hour = 8744  # first hour of sun on the solar solstice
-    misc_losses = 0.1  # cabling, resistances etc.. #TODO:delete
-    panel_on_roof = True  # flag for considering PV on roof #FIXME: define
-    panel_on_wall = True  # flag for considering PV on wall #FIXME: define
     longitude = 7.439583333333333
     latitude = 46.95240555555556
-    date_start = gv.date_start
 
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name= building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
         calc_PVT(locator=locator, radiation_csv=radiation, metadata_csv=radiation_metadata, latitude=latitude,
-                longitude=longitude, weather_path=weather_path, building_name=building,
-                panel_on_roof = panel_on_roof, panel_on_wall = panel_on_wall, misc_losses=misc_losses, worst_hour=worst_hour,
-                type_SCpanel=type_SCpanel, type_PVpanel=type_PVpanel, T_in=T_in, min_radiation=min_radiation, date_start=date_start)
+                 longitude=longitude, weather_path=weather_path, building_name=building)
 
 if __name__ == '__main__':
     test_PVT()
