@@ -165,7 +165,7 @@ def calc_comparison(array_second, array_max):
 def calc_category(archetype_DB, age):
     category = []
     for row in age.index:
-        if age.loc[row, 'envelope'] > 0:
+        if age.loc[row, 'envelope'] > age.loc[row, 'built']:
             category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, 'envelope']) & \
                                          (archetype_DB['year_end'] >= age.loc[row, 'envelope']) & \
                                          (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
@@ -175,6 +175,11 @@ def calc_category(archetype_DB, age):
                                          (archetype_DB['year_end'] >= age.loc[row, 'built']) & \
                                          (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
                                          (archetype_DB['standard'] == 'C')].Code.values[0])
+        if 0 < age.loc[row, 'envelope'] < age.loc[row, 'built']:
+            print 'Incorrect renovation year in building ' + age['Name'][row] + \
+                  ': renovation year is lower than building age'
+        if age.loc[row, 'envelope'] == age.loc[row, 'built']:
+            print 'Incorrect renovation year in building '+age['Name'][row]+': if building is not renovated, the year needs to be set to 0'
     return category
 
 def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
@@ -272,7 +277,7 @@ def run_as_script(scenario_path=None, prop_thermal_flag=True, prop_architecture_
     import cea.globalvar
     gv = cea.globalvar.GlobalVariables()
     if not scenario_path:
-        scenario_path = gv.scenario_reference
+        scenario_path = r'C:\reference-case-open1\baseline2' # gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     properties(locator=locator, prop_architecture_flag=prop_architecture_flag,
                prop_hvac_flag=prop_hvac_flag, prop_comfort_flag=prop_comfort_flag,
