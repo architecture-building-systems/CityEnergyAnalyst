@@ -14,6 +14,7 @@ import time
 from cea.utilities import dbfreader
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
+from cea.technologies.solar import settings
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -27,28 +28,50 @@ __status__ = "Production"
 
 # SC heat generation
 
-def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_path, building_name, panel_on_roof,
-            panel_on_wall, misc_losses, worst_hour, type_SCpanel, T_in, min_radiation, date_start):
+def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_path, building_name):
+    """
+    This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
+    tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
+    tilt angles, and global irradiation. In the last, heat generation from SC panels of each group is calculated.
+
+    :param locator: An InputLocator to locate input files
+    :type locator: cea.inputlocator.InputLocator
+    :param radiation_csv: solar insulation data on all surfaces of each building
+    :type radiation_csv: .csv
+    :param metadata_csv: data of sensor points measuring solar insulation of each building
+    :type metadata_csv: .csv
+    :param latitude: latitude of the case study location
+    :type latitude: float
+    :param longitude: longitude of the case study location
+    :type longitude: float
+    :param weather_path: path to the weather data file of the case study location
+    :type weather_path: .epw
+    :param building_name: list of building names in the case study
+    :type building_name: Series
+    :param T_in: inlet temperature to the solar collectors [C]
+    :return: Building_SC.csv with solar collectors heat generation potential of each building, Building_SC_sensors.csv
+    with sensor data of each SC panel.
+    """
 
     t0 = time.clock()
-
     # weather data
     weather_data = epwreader.epw_reader(weather_path)
+    worst_hour = solar_equations.calc_worst_hour(latitude, weather_data, settings.solar_window_solstice)
     print 'reading weather data done'
 
     # solar properties
     g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude,longitude, weather_data,
-                                                                                                        date_start,
-                                                                                                        worst_hour)
+                                                                                      settings.date_start, worst_hour)
     print 'calculating solar properties done'
 
     # get properties of the panel to evaluate
-    panel_properties = calc_properties_SC_db(locator.get_supply_systems_database(), type_SCpanel)
+    panel_properties = calc_properties_SC_db(locator.get_supply_systems_database(), settings.type_SCpanel)
     print 'gathering properties of Solar collector panel'
 
     # select sensor point with sufficient solar radiation
     max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_csv, metadata_csv, min_radiation, panel_on_roof, panel_on_wall)
+        solar_equations.filter_low_potential(weather_data, radiation_csv, metadata_csv, settings.min_radiation,
+                                             settings.panel_on_roof, settings.panel_on_wall)
 
     print 'filtering low potential sensor points done'
 
@@ -57,32 +80,52 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
 
     if not sensors_metadata_clean.empty:
         # calculate optimal angle and tilt for panels
-        sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az, trr_mean,
-                                                      max_yearly_radiation, panel_properties)
+        sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude,
+                                                                      worst_sh, worst_Az, trr_mean, max_yearly_radiation,
+                                                                      panel_properties)
         print 'calculating optimal tilt angle and separation done'
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
-        number_groups, hourlydata_groups, number_points, prop_observers = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
+        number_groups, hourlydata_groups, number_points, prop_observers = solar_equations.calc_groups(sensors_rad_clean,
+                                                                                                      sensors_metadata_cat)
 
         print 'generating groups of sensor points done'
 
         #calculate heat production from solar collectors
-        results, Final = SC_generation(type_SCpanel, hourlydata_groups, prop_observers, number_groups, number_points,
-                                       weather_data, g, Sz, Az, ha, latitude, T_in, height, panel_properties)
+        results, Final = SC_generation(hourlydata_groups, prop_observers, number_groups, weather_data, g, Sz, Az, ha,
+                                       latitude, settings.T_in_SC , height, panel_properties)
 
-
-        Final.to_csv(locator.SC_results(building_name= building_name), index=True, float_format='%.2f')  # print PV generation potential
-        sensors_metadata_cat.to_csv(locator.SC_metadata_results(building_name= building_name), index=True, float_format='%.2f')  # print selected metadata of the selected sensors
+        # save SC generation potential and metadata of the selected sensors
+        Final.to_csv(locator.SC_results(building_name= building_name), index=True, float_format='%.2f')
+        sensors_metadata_cat.to_csv(locator.SC_metadata_results(building_name= building_name), index=True, float_format='%.2f')
 
         print 'Building', building_name,'done - time elapsed:', (time.clock() - t0), ' seconds'
+
     return
 
 # =========================
 # SC heat production
 # =========================
 
-def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, number_points, weather_data, g, Sz, Az,
+def SC_generation(group_radiation, prop_observers, number_groups, weather_data, g, Sz, Az,
                   ha, latitude, Tin, height, panel_properties):
+    """
+
+    :param group_radiation:
+    :param prop_observers:
+    :param number_groups:
+    :param weather_data:
+    :param g:
+    :param Sz:
+    :param Az:
+    :param ha:
+    :param latitude:
+    :param Tin:
+    :param height:
+    :param panel_properties:
+    :return:
+    """
+
 
     n0 = panel_properties['n0']
     c1 = panel_properties['c1']
@@ -103,8 +146,7 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, 
 
     # create lists to store results
     list_results = [None] * number_groups
-    list_results = [None] * number_groups
-    listareasgroups = [None] * number_groups
+    list_areas_groups = [None] * number_groups
     Sum_mcp = np.zeros(8760)
     Sum_qout = np.zeros(8760)
     Sum_Eaux = np.zeros(8760)
@@ -118,7 +160,7 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, 
     # calculate equivalent length of pipes
     lv = panel_properties['module_length']  # module length
     number_modules = round(total_area_module/Apanel)  # this is an estimation
-    l_ext = (2 * lv * number_modules/ (total_area_module * Aratio))
+    l_ext = (2 * lv * number_modules/ (total_area_module * Aratio)) #
     l_int = 2 * height / (total_area_module * Aratio)
     Leq = l_int + l_ext  # in m/m2 aperture
 
@@ -146,32 +188,22 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_groups, 
         list_results[group] = calc_SC_module(tilt_angle, IAM_b, IAM_d, radiation.I_direct, radiation.I_diffuse,
                                             weather_data.drybulb_C, n0, c1, c2, mB0_r, mB_max_r, mB_min_r, C_eff, t_max,
                                             aperature_area, dP1, dP2, dP3, dP4, Cp_fluid, Tin, Leq, l_ext, Nseg)
-        # multiplying the results with the number of panels in each group
+
+        # multiplying the results with the number of panels in each group and write to list
         number_modules_per_group = area_per_group / Apanel
-        list_results[group][5] = list_results[group][5] * number_modules_per_group
-        list_results[group][0] = list_results[group][0] * number_modules_per_group
-        list_results[group][1] = list_results[group][1] * number_modules_per_group
-        list_results[group][2] = list_results[group][2] * number_modules_per_group
-
-        listareasgroups[group] = area_per_group
-
-    for group in range(number_groups):  #FIXME: maybe merge with the previous for loop?
-        mcp_array = list_results[group][5]
-        qloss_array = list_results[group][0]
-        qout_array = list_results[group][1]
-        Eaux_array = list_results[group][2]
-        radiation_array = group_radiation[group]*listareasgroups[group]/1000 # kWh
-        Sum_qout = Sum_qout + qout_array
-        Sum_Eaux = Sum_Eaux + Eaux_array
-        Sum_qloss = Sum_qloss + qloss_array
-        Sum_mcp = Sum_mcp + mcp_array
+        list_areas_groups[group] = area_per_group
+        radiation_array = group_radiation[group]*list_areas_groups[group]/1000 # kWh
+        Sum_qout = Sum_qout + list_results[group][1] * number_modules_per_group
+        Sum_Eaux = Sum_Eaux + list_results[group][2] * number_modules_per_group
+        Sum_qloss = Sum_qloss + list_results[group][0] * number_modules_per_group
+        Sum_mcp = Sum_mcp + list_results[group][5] * number_modules_per_group
         Sum_radiation = Sum_radiation + radiation_array
 
     Tout_group = (Sum_qout / Sum_mcp) + Tin  # in C assuming all collectors are connected in parallel
 
     Final = pd.DataFrame(
         {'Qsc_kWh': Sum_qout, 'Ts_C': Tin_array, 'Tr_C': Tout_group, 'mcp_kW/C': Sum_mcp, 'Eaux_kWh': Sum_Eaux,
-         'Qsc_l_kWh': Sum_qloss, 'module_area_m2': sum(listareasgroups), 'radiation_kWh': Sum_radiation}, index=range(8760))
+         'Qsc_l_kWh': Sum_qloss, 'module_area_m2': sum(list_areas_groups), 'radiation_kWh': Sum_radiation}, index=range(8760))
 
     return list_results, Final
 
@@ -181,11 +213,12 @@ def calc_SC_module(tilt_angle, IAM_b_vector, IAM_d_vector, I_direct_vector, I_di
     """
     This function calculates the heat production from a solar collector. The method is adapted from TRNSYS Type 832.
     Assume no no condensaiton gains, no wind or long-wave dependency, sky factor set to zero.
-    :param tilt_angle:
-    :param IAM_b_vector:
-    :param I_direct_vector:
-    :param I_diffuse_vector:
-    :param Tamb_vector:
+
+    :param tilt_angle: solar panel tilt angle [rad]
+    :param IAM_b_vector: incident angle modifier for beam radiation [-]
+    :param I_direct_vector: direct radiation [W/m2]
+    :param I_diffuse_vector: diffuse radiation [W/m2]
+    :param Tamb_vector: dry bulb temperature [C]
     :param n0: zero loss efficiency at normal incidence [-]
     :param c1: collector heat loss coefficient at zero temperature difference and wind speed [W/m2K]
     :param c2: temperature difference dependency of the heat loss coefficient [W/m2K2]
@@ -194,14 +227,14 @@ def calc_SC_module(tilt_angle, IAM_b_vector, IAM_d_vector, I_direct_vector, I_di
     :param mB_min_r: minimum flow rate per aperture area
     :param C_eff: thermal capacitance of module [J/m2K]
     :param t_max: stagnation temperature [C]
-    :param IAM_d_vector:
+    :param IAM_d_vector: incident angle modifier for diffuse radiation [-]
     :param aperture_area: collector aperture area [m2]
-    :param dP1:
-    :param dP2:
-    :param dP3:
-    :param dP4:
+    :param dP1: pressure drop [Pa/m2] at zero flow rate
+    :param dP2: pressure drop [Pa/m2] at nominal flow rate (mB0)
+    :param dP3: pressure drop [Pa/m2] at maximum flow rate (mB_max)
+    :param dP4: pressure drop [Pa/m2] at minimum flow rate (mB_min)
     :param Tin: Fluid inlet temperature (C)
-    :param Leq:
+    :param Leq: equivalent length of pipes per aperture area [m/m2 aperture)
     :param Le:
     :param Nseg: Number of collector segments in flow direction for heat capacitance calculation
     :return:
@@ -209,9 +242,6 @@ def calc_SC_module(tilt_angle, IAM_b_vector, IAM_d_vector, I_direct_vector, I_di
     ..[M. Haller et al., 2012] Haller, M., Perers, B., Bale, C., Paavilainen, J., Dalibard, A. Fischer, S. & Bertram, E.
     (2012). TRNSYS Type 832 v5.00 " Dynamic Collector Model by Bengt Perers". Updated Input-Output Reference.
     """
-    # panel to store the results per flow
-    # method with no condensaiton gains, no wind or long-wave dependency, sky factor set to zero.
-    # calculate radiation part
 
     # local variables
     msc_max = mB_max_r * aperture_area / 3600  # maximum mass flow [kg/s]
@@ -346,7 +376,6 @@ def calc_SC_module(tilt_angle, IAM_b_vector, IAM_d_vector, I_direct_vector, I_di
             supply_out[flow][time] = q_out
             temperature_mean[flow][time] = (Tin + Tout_Seg) / 2  # Mean absorber temperature at present
 
-            # FIXME: ARE THESE PART REDUNDANT?
             # q_gain = 0
             # TavgB = 0
             # TavgA = 0
@@ -402,6 +431,7 @@ def calc_SC_module(tilt_angle, IAM_b_vector, IAM_d_vector, I_direct_vector, I_di
 def calc_q_rad(n0, IAM_b, I_direct, IAM_d, I_diffuse, tilt):
     """
     Calculates the absorbed radiation for solar thermal collectors.
+
     :param n0: zero loss efficiency [-]
     :param IAM_b: incidence angle modifier for beam radiation [-]
     :param I_direct: direct/beam radiation [Wh/m2]
@@ -417,6 +447,7 @@ def calc_q_rad(n0, IAM_b, I_direct, IAM_d, I_diffuse, tilt):
 def calc_q_gain(Tfl, Tabs, qrad, DT, Tin, Tout, Aseg, c1, c2, Mfl, delts, Cp_waterglycol, C_eff, Te):
     """
     calculate the collector heat gain through iteration including temperature dependent thermal losses of the collectors.
+
     :param Tfl:
     :param Tabs:
     :param qrad:
@@ -467,7 +498,7 @@ def calc_q_gain(Tfl, Tabs, qrad, DT, Tin, Tout, Aseg, c1, c2, Mfl, delts, Cp_wat
                 DT[1] = DT[2]
         xgain += 1
 
-    #FIXME[Q]: what is this part for?
+    #FIXME: what is this part for?
     qout = Mfl * Cp_waterglycol * (Tout - Tin) / Aseg
     qmtherm = (Tfl[2] - Tfl[1]) * C_eff / delts
     qbal = qgain - qout - qmtherm
@@ -486,16 +517,22 @@ def calc_qloss_network(Mfl, Le, Area_a, Tm, Te, maxmsc):
     :param Te:
     :param maxmsc:
     :return:
+
+    ..[ J. Fonseca et al., 2016] Fonseca, J., Nguyen, T-A., Schlueter, A., Marechal, F. City Energy Analyst:
+    Integrated framework for analysis and optimization of building energy systems in neighborhoods and city districts.
+    Energy and Buildings, 2016.
+    ..
     """
 
-    qloss = 0.217 * Le * Area_a * (Tm - Te) * (Mfl / maxmsc) / 1000  # TODO: find reference for constant
-    #FIXME[Q]: not exactly the same as eq.(61) in the CEA paper
+    qloss = 0.217 * Le * Area_a * (Tm - Te) * (Mfl / maxmsc) / 1000  # eq. (61) non-recoverable losses # TODO: find reference for constant linear coefficient of transmittance [W/m2/K]
+
     return qloss  # in kW
 
 
 def calc_IAM_beam_SC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, type_SCpanel, latitude, Sz_vector):
     """
     Calculates Incidence angle modifier for beam radiation.
+
     :param Az_vector: Solar azimuth angle
     :param g_vector:
     :param ha_vector: hour angle
@@ -506,7 +543,6 @@ def calc_IAM_beam_SC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, type_SC
     :param Sz_vector: solar zenith angle
     :return IAM_b_vector:
     """
-
 
     def calc_teta_L(Az, teta_z, tilt, Sz):
         teta_la = tan(Sz) * cos(teta_z - Az)
@@ -570,10 +606,10 @@ def calc_IAM_beam_SC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, type_SC
 
 def calc_properties_SC_db(database_path, type_SCpanel):
     """
-    To assign PV module properties according to panel types.
+    To assign SC module properties according to panel types.
 
-    :param type_PVpanel: type of PV panel used
-    :type type_PVpanel: string
+    :param type_SCpanel: type of SC panel used
+    :type type_SCpanel: string
     :return: dict with Properties of the panel taken form the database
     """
 
@@ -583,57 +619,9 @@ def calc_properties_SC_db(database_path, type_SCpanel):
     return panel_properties
 
 
-def calc_properties_SC(type_SCpanel):
-    """
-    properties of module
-    :param type_SCpanel:
-    :return:
-    """
-    if type_SCpanel == 1:  # # Flat plate collector   SOLEX blu SFP, 2012
-        n0 = 0.775  # zero loss efficeincy
-        c1 = 3.91  # W/m2K
-        c2 = 0.0081  # W/m2K2
-        # specific mass flow rates
-        mB0_r = 57.98  # # in kg/h/m2   of aperture area
-        mB_max_r = 86.97  # in kg/h/m2   of aperture area
-        mB_min_r = 28.99  # in kg/h/m2   of aperture area
-        C_eff = 8000  # thermal capacitance of module J/m2K
-        t_max = 192  # stagnation temperature in C
-        IAM_d = 0.87  # diffuse incident angle considered at 50 degrees
-        aperture_area_ratio = 0.888  # the aperture/gross area ratio
-        panel_area = 2.023  # m2
-        dP1 = 0
-        dP2 = 170 / (aperture_area_ratio * panel_area)
-        dP3 = 270 / (aperture_area_ratio * panel_area)
-        dP4 = 80 / (aperture_area_ratio * panel_area)
-    if type_SCpanel == 2:  # # evacuated tube   Zewotherm SOL ZX-30 SFP, 2012
-        n0 = 0.721
-        c1 = 0.89  # W/m2K
-        c2 = 0.0199  # W/m2K2
-
-        # specific mass flow rates
-        mB0_r = 88.2  # in kg/h/m2   of aperture area
-        mB_max_r = 147.12  # in kg/h/m2
-        mB_min_r = 33.10  # in kg/h/m2
-        C_eff = 38000  # thermal capacitance of module anf fluid for Brine J/m2K
-        t_max = 196  # stagnation temperature in C
-        IAM_d = 0.91  # diffuse incident angle considered at 50 degrees
-        aperture_area_ratio = 0.655  # the aperture/gross area ratio
-        panel_area = 4.322  # m2
-        dP1 = 0  # in Pa per m2
-        dP2 = 8000 / (aperture_area_ratio * panel_area)  # in Pa per m2
-        dP3 = 22000 / (aperture_area_ratio * panel_area)  # in Pa per m2
-        dP4 = 2000 / (aperture_area_ratio * panel_area)  # in Pa per m2
-        # Fluids Cp [kJ/kgK] Density [kg/m3] Used for
-        # Water-glyucol 33%  3.68            1044 Collector Loop
-        # Water 4.19             998 Secondary collector loop, store, loops for auxiliary
-
-    return n0, c1, c2, mB0_r, mB_max_r, mB_min_r, C_eff, t_max, IAM_d, aperture_area_ratio, panel_area, dP1, dP2, dP3, dP4
-
-
 def calc_Eaux_SC(specific_flow, Dp_collector, Leq, Aa):
     """
-    auxiliary electricity solar collectors
+    Calculate auxiliary electricity for pumping heat transfer fluid in solar collectors.
 
     :param specific_flow: mass flow [kg/s]
     :param Dp_collector: pressure loss per module [Pa]
@@ -641,13 +629,9 @@ def calc_Eaux_SC(specific_flow, Dp_collector, Leq, Aa):
     :param Aa: aperture area [m2]
     :return:
     """
-    Ro = 1000  # water density kg/m3
-    dpl = 200  # pressure losses per length of pipe according to solar districts #FIXME[Q]: reference
-    Fcr = 1.3  # factor losses of accessories
-    Dp_friction = dpl * Leq * Aa * Fcr  # HANZENWILIAMSN PA
-    Eaux = (specific_flow / Ro) * (Dp_collector + Dp_friction) / 0.6 / 1000  # energy necesary in kW from pumps#FIXME[Q]:reference
+    Dp_friction = settings.dpl * Leq * Aa * settings.fcr  # HANZENWILIAMSN PA
+    Eaux = (specific_flow / settings.Ro) * (Dp_collector + Dp_friction) / settings.eff_pumping / 1000  # kW from pumps
     return Eaux  # energy spent in kWh
-
 
 
 def calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, m1, m2, m3, m4, dP1, dP2, dP3, dP4, Area_a):
@@ -656,24 +640,29 @@ def calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, m1, m2, m3, m4, dP1, 
     total heat production in every time-step. It is done by maximizing the energy generation function (balance equation)
     assuming the electricity requirement is twice as valuable as the thermal output of the solar collector.
 
-    :param q1:
-    :param q2:
-    :param q3:
-    :param q4:
-    :param E1:
-    :param E2:
-    :param E3:
-    :param E4:
-    :param m1:
-    :param m2:
-    :param m3:
-    :param m4:
-    :param dP1:
-    :param dP2:
-    :param dP3:
-    :param dP4:
-    :param Area_a:
-    :return:
+    :param q1: qout [kW] at zero flow rate
+    :param q2: qout [kW] at nominal flow rate (mB0)
+    :param q3: qout [kW] at maximum flow rate (mB_max)
+    :param q4: qout [kW] at minimum flow rate (mB_min)
+    :param E1: auxiliary electricity used at zero flow rate [kW]
+    :param E2: auxiliary electricity used at nominal flow rate [kW]
+    :param E3: auxiliary electricity used at max flow rate [kW]
+    :param E4: auxiliary electricity used at min flow rate [kW]
+    :param m1: zero flow rate [kg/hr/m2 aperture]
+    :param m2: nominal flow rate (mB0) [kg/hr/m2 aperture]
+    :param m3: maximum flow rate (mB_max) [kg/hr/m2 aperture]
+    :param m4: minimum flow rate (mB_min) [kg/hr/m2 aperture]
+    :param dP1: pressure drop [Pa/m2] at zero flow rate
+    :param dP2: pressure drop [Pa/m2] at nominal flow rate (mB0)
+    :param dP3: pressure drop [Pa/m2] at maximum flow rate (mB_max)
+    :param dP4: pressure drop [Pa/m2] at minimum flow rate (mB_min)
+    :param Area_a: aperture area [m2]
+    :return mass_flow_opt: optimal mass flow at each hour [kg/s]
+    :return dP_opt: pressure drop at optimal mass flow at each hour [Pa]
+
+    ..[ J. Fonseca et al., 2016] Fonseca, J., Nguyen, T-A., Schlueter, A., Marechal, F. City Energy Analyst:
+    Integrated framework for analysis and optimization of building energy systems in neighborhoods and city districts.
+    Energy and Buildings, 2016.
 
     """
 
@@ -682,7 +671,7 @@ def calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, m1, m2, m3, m4, dP1, 
     const = Area_a / 3600
     mass_flow_all = [m1 * const, m2 * const, m3 * const, m4 * const]  # float points
     dP_all = [dP1 * Area_a, dP2 * Area_a, dP3 * Area_a, dP4 * Area_a]  # float points
-    balances = [q1 - E1 * 2, q2 - E2 * 2, q3 - E3 * 2, q4 - E4 * 2]  # energy generation function #TODO: ref CEA
+    balances = [q1 - E1 * 2, q2 - E2 * 2, q3 - E3 * 2, q4 - E4 * 2]  # energy generation function eq.(63)
     for time in range(8760):
         balances_time = [balances[0][time], balances[1][time], balances[2][time], balances[3][time]]
         max_heat_production = np.max(balances_time)
@@ -693,6 +682,15 @@ def calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, m1, m2, m3, m4, dP1, 
 
 
 def calc_optimal_mass_flow_2(m, q, dp):
+    """
+    Set mass flow and pressure drop to zero if the heat balance is negative.
+
+    :param m: mass flow rate [kg/s]
+    :param q: qout [kW]
+    :param dp: pressure drop [Pa]
+    :return m: hourly mass flow rate [kg/s]
+    :return dp: hourly pressure drop [Pa]
+    """
     for time in range(8760):
         if q[time] <= 0:
             m[time] = 0
@@ -704,6 +702,7 @@ def calc_optimal_mass_flow_2(m, q, dp):
 
 def optimal_angle_and_tilt(observers_all, latitude, worst_sh, worst_Az, transmittivity,
                            grid_side, module_lenght, angle_north, Min_Isol, Max_Isol):
+    #FIXME: this function is reserved for the calculation with argis
     def Calc_optimal_angle(teta_z, latitude, transmissivity):
         if transmissivity <= 0.15:
             gKt = 0.977
@@ -832,23 +831,15 @@ def test_solar_collector():
     weather_path = locator.get_default_weather()
     list_buildings_names = dbfreader.dbf2df(locator.get_building_occupancy())['Name']
 
-    min_radiation = 0.75  # points are selected with at least a minimum production of this % from the maximum in the area.
-    type_SCpanel = 'SC1'  # code for solar panel (refer to supply system database)
-    T_in = 75 # average temeperature #FIXME:defininition
     worst_hour = 8744  # first hour of sun on the solar solstice
-    sc_on_roof = True  # flag for considering panels on roof
-    sc_on_wall = True  # flag for considering panels on wall
     longitude = 7.439583333333333
     latitude = 46.95240555555556
-    date_start = gv.date_start
 
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name= building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
         calc_SC(locator=locator, radiation_csv=radiation, metadata_csv=radiation_metadata, latitude=latitude,
-                longitude=longitude, weather_path=weather_path, building_name=building,
-                panel_on_roof = sc_on_roof, panel_on_wall = sc_on_wall, worst_hour=worst_hour,
-                type_SCpanel=type_SCpanel, T_in=T_in, min_radiation=min_radiation, date_start=date_start)
+                longitude=longitude, weather_path=weather_path, building_name=building)
 
 
 

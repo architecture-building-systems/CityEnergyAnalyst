@@ -7,12 +7,15 @@ photovoltaic
 
 
 from __future__ import division
+
+from math import *
+
 import numpy as np
 import pandas as pd
-from math import *
+
+from cea.technologies.solar.solar_collector import optimal_angle_and_tilt, calc_groups, calc_incident_angle_beam
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
-from cea.technologies.solar_collector import optimal_angle_and_tilt, calc_groups, calc_incident_angle_beam
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
