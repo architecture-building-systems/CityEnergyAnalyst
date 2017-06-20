@@ -89,9 +89,9 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     elevRaster = arcpy.sa.Raster(locator.get_terrain())
     dem_raster_extent = elevRaster.extent
     arcpy.SimplifyBuilding_cartography(locator.get_building_geometry(), Simple_CQ,
-                                       simplification_tolerance=8, minimum_area=None)
+                                       simplification_tolerance=5, minimum_area=None)
     arcpy.SimplifyBuilding_cartography(locator.get_district(), Simple_context,
-                                       simplification_tolerance=8, minimum_area=None)
+                                       simplification_tolerance=5, minimum_area=None)
 
     # # burn buildings into raster
     Burn(Simple_context, locator.get_terrain(), dem_rasterfinal, locator.get_temporary_folder(), dem_raster_extent, gv)
@@ -428,6 +428,7 @@ def CalcBoundaries(Simple_CQ, locationtemp1, locationtemp2, DataFactorsCentroids
 
     # Update table Datacentroids with the Fields Freeheight and Factor Shade. for those buildings without
     # shading boundaries these factors are equal to 1 and the field 'height' respectively.
+    pd.options.mode.chained_assignment = None
     DataCentroids['FactorShade'] = 1
     DataCentroids['Freeheight'] = DataCentroids.height_ag
     Results = DataCentroids.merge(SecondaryJoin, left_on='ORIG_FID', right_on='ORIG_FID_x', how='outer')
