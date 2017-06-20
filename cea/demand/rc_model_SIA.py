@@ -156,7 +156,7 @@ def calc_phi_a(phi_hc_cv, phi_i_l, phi_i_a, phi_i_p, I_sol):
     #f_r_p = 0.5
     #f_r_a = 0.2
 
-    phi_a = f_sa * phi_s + (1-f_r_l)*phi_i_l + (1-f_r_p) * phi_i_p +(1-f_r_a)*phi_i_a + phi_hc_cv
+    phi_a = f_sa * phi_s + (1 - f_r_l) * phi_i_l + (1 - f_r_p) * phi_i_p +(1 - f_r_a) * phi_i_a + phi_hc_cv
 
     return phi_a
 
@@ -184,15 +184,15 @@ def calc_phi_c(phi_hc_r, phi_i_l, phi_i_a, phi_i_p, I_sol, f_ic, f_sc):
     #f_r_p = 0.5
     #f_r_a = 0.2
 
-    phi_c = f_ic * (f_r_l*phi_i_l+f_r_p*phi_i_p+f_r_a*phi_i_a + phi_hc_r) + (1-f_sa)*f_sc*phi_s
+    phi_c = f_ic * (f_r_l * phi_i_l + f_r_p * phi_i_p + f_r_a * phi_i_a + phi_hc_r) + (1 - f_sa) * f_sc * phi_s
 
     return phi_c
 
 
-def calc_phi_i_p(Qs_Wp, people):
-    # internal gains from people
-    phi_i_p = people * Qs_Wp
-    return phi_i_p
+def calc_phi_i_p(Qs): # _Wp, people):
+    # # internal gains from people
+    # phi_i_p = people * Qs_Wp
+    return Qs # phi_i_p
 
 
 def calc_phi_i_a(Eaf, Qcdataf, Qcref):
@@ -598,21 +598,21 @@ def calc_rc_model_temperatures(phi_hc_cv, phi_hc_r, bpr, tsd, t):
     # copy data from `bpr`
     Htr_op = bpr.rc_model['Htr_op']
     Htr_w = bpr.rc_model['Htr_w']
-    Qs_Wp = bpr.internal_loads['Qs_Wp']
+    Qs = tsd['Qs'][t]
     a_t = bpr.rc_model['Atot']
     a_m = bpr.rc_model['Am']
     a_w = bpr.rc_model['Aw']
     c_m = bpr.rc_model['Cm'] / 3600  # (Wh/K) SIA 2044 unit is Wh/K, ISO unit is J/K
 
     theta_a, theta_c, theta_m, theta_o = _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref,
-                                                                     Qs_Wp, T_ext, a_m, a_t, a_w, c_m, m_ve_inf,
+                                                                     Qs, T_ext, a_m, a_t, a_w, c_m, m_ve_inf,
                                                                      m_ve_mech, m_ve_window, people, phi_hc_cv,
                                                                      phi_hc_r, theta_m_t_1, theta_ve_mech)
     rc_model_temp = {'theta_m': theta_m, 'theta_c': theta_c, 'theta_a': theta_a, 'theta_o': theta_o}
     return rc_model_temp
 
 
-def _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref, Qs_Wp, T_ext, a_m, a_t, a_w, c_m,
+def _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref, Qs, T_ext, a_m, a_t, a_w, c_m,
                                 m_ve_inf_simple, m_ve_mech, m_ve_window, people, phi_hc_cv, phi_hc_r, theta_m_t_1,
                                 theta_ve_mech):
     # numba_cc compatible calculation
@@ -628,7 +628,7 @@ def _calc_rc_model_temperatures(Eaf, Elf, Htr_op, Htr_w, I_sol, Qcdataf, Qcref, 
     f_sm = calc_f_sm(a_t=a_t, a_m=a_m, a_w=a_w)
     phi_i_l = calc_phi_i_l(Elf=Elf)
     phi_i_a = calc_phi_i_a(Eaf=Eaf, Qcdataf=Qcdataf, Qcref=Qcref)
-    phi_i_p = calc_phi_i_p(Qs_Wp=Qs_Wp, people=people)
+    phi_i_p = calc_phi_i_p(Qs=Qs) # , people=people)
     h_1 = calc_h_1(h_ea=h_ea, h_ac=h_ac)
     phi_a = calc_phi_a(phi_hc_cv, phi_i_l, phi_i_a, phi_i_p, I_sol)
     phi_m = calc_phi_m(phi_hc_r, phi_i_l, phi_i_a, phi_i_p, I_sol, f_im, f_sm)
