@@ -79,14 +79,17 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     # get schedules
     list_uses = usage_schedules['list_uses']
-    schedules = usage_schedules['schedules']
-    occupancy_densities = usage_schedules['occupancy_densities']
+    archetype_schedules = usage_schedules['archetype_schedules']
+    archetype_values = usage_schedules['archetype_values']
+    schedules = occupancy_model.calc_schedules(list_uses, archetype_schedules, bpr.occupancy, archetype_values)
 
-    # get occupancy
-    tsd['people'] = occupancy_model.calc_occ_schedule(list_uses, schedules, occupancy_densities, bpr.occupancy,
-                                                      bpr.rc_model['Af'])
+    # calculate occupancy schedule and occupant-related parameters
+    tsd['people'] = schedules['people'] * bpr.rc_model['Af']
+    tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6) * bpr.rc_model['Af'] # in m3/h
+    tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp'] * bpr.rc_model['Af'] # in W
+
     # get electrical loads (no auxiliary loads)
-    tsd = electrical_loads.calc_Eint(tsd, bpr, list_uses, schedules)
+    tsd = electrical_loads.calc_Eint(tsd, bpr, schedules)
 
     # get refrigeration loads
     tsd['Qcref'], tsd['mcpref'], \
@@ -111,10 +114,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd = controllers.calc_simple_temp_control(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
                                                    date.dayofweek)
 
-        # latent heat gains
-        tsd['w_int'] = sensible_loads.calc_Qgain_lat(tsd['people'], bpr.internal_loads['X_ghp'],
-                                                     bpr.hvac['type_cs'],
-                                                     bpr.hvac['type_hs'])
+        # # latent heat gains
+        tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr.internal_loads['X_ghp'], bpr.rc_model['Af'],
+                                                     bpr.hvac['type_cs'], bpr.hvac['type_hs'])
 
         # end-use demand calculation
         for t in range(-720, 8760):
@@ -137,8 +139,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             # ventilation air flows [kg/s]
             ventilation_air_flows_simple.calc_air_mass_flow_mechanical_ventilation(bpr, tsd, hoy)
             ventilation_air_flows_simple.calc_air_mass_flow_window_ventilation(bpr, tsd, hoy)
-
-
 
             # ventilation air temperature
             ventilation_air_flows_simple.calc_theta_ve_mech(bpr, tsd, hoy, gv)
@@ -200,12 +200,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             bpr.building_systems['Tww_sup_0'],
             bpr.building_systems['Y'],
             gv,
-            bpr.internal_loads['Vww_lpd'],
-            bpr.internal_loads['Vw_lpd'],
-            occupancy_densities,
-            list_uses,
+            archetype_values['people'],
             schedules,
-            bpr.occupancy)
+            bpr)
 
         # calc auxiliary loads
         tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'], \
