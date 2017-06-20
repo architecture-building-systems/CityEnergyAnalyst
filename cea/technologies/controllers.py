@@ -42,7 +42,6 @@ def calc_simple_temp_control(tsd, prop_comfort, limit_inf_season, limit_sup_seas
         else:
             return np.nan  # huge so the system will be off
 
-    tsd['ve'] = tsd['people'] * prop_comfort['Ve_lps'] * 3.6  # in m3/h
     tsd['ta_hs_set'] = np.vectorize(get_hsetpoint)(tsd['people'], range(8760), prop_comfort['Ths_set_C'],
                                                    prop_comfort['Ths_setb_C'], weekday)
     tsd['ta_cs_set'] = np.vectorize(get_csetpoint)(tsd['people'], range(8760), prop_comfort['Tcs_set_C'],
