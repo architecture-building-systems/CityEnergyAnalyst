@@ -68,8 +68,9 @@ def demand_calculation(locator, weather_path, gv, use_dynamic_infiltration_calcu
 
     # schedules model
     list_uses = list(building_properties._prop_occupancy.drop('PFloor', axis=1).columns)
-    schedules, occupancy_densities = occupancy_model.schedule_maker(date, locator, list_uses)
-    schedules_dict = {'list_uses': list_uses, 'schedules': schedules, 'occupancy_densities':occupancy_densities}
+    archetype_schedules, archetype_values = occupancy_model.schedule_maker(date, locator, list_uses)
+    schedules_dict = {'list_uses': list_uses, 'archetype_schedules': archetype_schedules, 'occupancy_densities':
+        archetype_values['people'], 'archetype_values': archetype_values}
 
     # in case gv passes a list of specific buildings to simulate.
     if gv.simulate_building_list:
