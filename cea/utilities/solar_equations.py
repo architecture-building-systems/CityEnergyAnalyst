@@ -537,3 +537,30 @@ def calc_groups(sensors_rad_clean, sensors_metadata_cat):
     hourlydata_groups = pd.DataFrame(rad_group_mean).T
 
     return number_groups, hourlydata_groups, number_points, prop_observers
+
+# calculate the worst hour
+
+def calc_worst_hour(latitude, weather_data, solar_window_solstice):
+    """
+    Calculate the first hour of solar window of the winter solstice for panel spacing.
+    http://www.affordable-solar.com/learning-center/building-a-system/calculating-tilted-array-spacing/
+
+    :param latitude: latitude of the site [degree]
+    :type latitude: float
+    :param weather_data: weather data of the site
+    :type weather_data: pd.dataframe
+    :param solar_window_solstice: the desired hour of shade-free solar window on the winter solstice.
+    :type solar_window_solstice: floar
+    :return worst_hour: the hour to calculate minimum spacing
+    :rtype worst_hour: float
+
+
+    """
+    if latitude > 0:
+        northern_solstice = weather_data.query('month == 12 & day == 21')
+        worst_hour = northern_solstice[northern_solstice.hour == (12 - solar_window_solstice/2)].index[0]
+    else:
+        southern_solstice = weather_data.query('month == 6 & day == 21')
+        worst_hour = southern_solstice[southern_solstice.hour == (12 - solar_window_solstice/2)].index[0]
+
+    return worst_hour
