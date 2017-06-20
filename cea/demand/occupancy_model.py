@@ -68,7 +68,7 @@ def calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values):
     # define the archetypal schedule type to be used for the creation of each schedule: 0 for occupancy, 1 for
     # electricity use, 2 for domestic hot water consumption, 3 for processes
     schedule_code_dict = {'people': 0, 've': 0, 'Qs': 0, 'X': 0, 'Ea': 1, 'El': 1, 'Ere': 1, 'Ed': 1, 'Vww': 2,
-                          'Vw': 2, 'Epro': 3}
+                          'Vw': 2, 'Epro': 3, 'Qhpro': 3}
 
     # define function to calculated the weighted average of schedules
     def calc_average(last, current, share_of_use):
@@ -221,6 +221,7 @@ def schedule_maker(dates, locator, list_uses):
     Vww_ldm2 = []
     Vw_ldm2 = []
     Ve_lsm2 = []
+    Qhpro_Wm2 = []
 
     for use in list_uses:
         # read from archetypes_schedules and properties
@@ -247,6 +248,7 @@ def schedule_maker(dates, locator, list_uses):
         Vww_ldm2.append(archetypes_internal_loads['Vww_lpd'][use])
         Vw_ldm2.append(archetypes_internal_loads['Vw_lpd'][use])
         Ve_lsm2.append(archetypes_indoor_comfort['Ve_lps'][use])
+        Qhpro_Wm2.append(archetypes_internal_loads['Qhpro_Wm2'][use])
 
         # get yearly schedules in a list
         schedule = get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule)
@@ -254,7 +256,7 @@ def schedule_maker(dates, locator, list_uses):
 
     archetype_values = {'people': occ_densities, 'Qs': Qs_Wm2, 'X': X_ghm2, 'Ea': Ea_Wm2, 'El': El_Wm2,
                         'Epro': Epro_Wm2, 'Ere': Ere_Wm2, 'Ed': Ed_Wm2, 'Vww': Vww_ldm2,
-                        'Vw': Vw_ldm2, 've': Ve_lsm2}
+                        'Vw': Vw_ldm2, 've': Ve_lsm2, 'Qhpro': Qhpro_Wm2}
 
     return schedules, archetype_values
 

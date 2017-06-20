@@ -236,7 +236,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         raise
 
     # TODO: calculate process heat - this seems to be somehow forgotten
-    tsd['Qhprof'][:] = 0
+    tsd['Qhprof'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2'] * bpr.rc_model['Af'] # in kWh
 
     # calculate other quantities
     tsd['Qcsf_lat'] = abs(tsd['Qcsf_lat'])
