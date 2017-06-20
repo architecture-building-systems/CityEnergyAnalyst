@@ -377,14 +377,6 @@ class EmbodiedEnergyTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        yearcalc = arcpy.Parameter(
-            displayName="Year to calculate",
-            name="yearcalc",
-            datatype="GPLong",
-            parameterType="Required",
-            direction="Input")
-        yearcalc.value = 2014
-
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
@@ -392,12 +384,39 @@ class EmbodiedEnergyTool(object):
             parameterType="Required",
             direction="Input")
 
-        return [yearcalc, scenario_path]
+        yearcalc = arcpy.Parameter(
+            displayName="Year to calculate",
+            name="yearcalc",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        return [scenario_path, yearcalc]
+
+    def updateParameters(self, parameters):
+        scenario_path = parameters[0].valueAsText
+        if scenario_path is None:
+            for p in parameters[1:]:
+                p.enabled = False
+            return
+        if not os.path.exists(scenario_path):
+            for p in parameters[1:]:
+                p.enabled = False
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+        if not parameters[1].enabled:
+            for p in parameters[1:]:
+                p.enabled = True
+            parameters = {p.name: p for p in parameters}
+            previous_run = ConfigurationStore().read(scenario_path, 'embodied-energy')
+            if previous_run:
+                    parameters['yearcalc'].value = previous_run['yearcalc']
 
     def execute(self, parameters, _):
-        year_to_calculate = int(parameters[0].valueAsText)
-        scenario_path = parameters[1].valueAsText
+        parameters = {p.name: p for p in parameters}
+        scenario_path = parameters['scenario_path'].valueAsText
+        year_to_calculate = parameters['yearcalc'].value
         run_cli(scenario_path, 'embodied-energy', '--year-to-calculate', year_to_calculate)
+        ConfigurationStore().write(scenario_path, 'embodied-energy', {'yearcalc': year_to_calculate})
 
 
 class MobilityTool(object):
