@@ -467,18 +467,26 @@ class DemandGraphsTool(object):
 
     def updateParameters(self, parameters):
         scenario_path = parameters[0].valueAsText
+        analysis_fields = parameters[1]
+        if scenario_path is None:
+            analysis_fields.enabled = False
+            return
         if not os.path.exists(scenario_path):
+            analysis_fields.enabled = False
             parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
-        analysis_fields = parameters[1]
+        analysis_fields.enabled = True
         fields = _cli_output(scenario_path, 'demand-graphs', '--list-fields').split()
         analysis_fields.filter.list = list(fields)
-        return
+        previous_run = ConfigurationStore().read(scenario_path, 'demand-graphs')
+        if previous_run:
+            analysis_fields.value = previous_run['analysis_fields']
 
     def execute(self, parameters, messages):
         scenario_path = parameters[0].valueAsText
         analysis_fields = parameters[1].valueAsText.split(';')[:4]  # max 4 fields for analysis
         run_cli(scenario_path, 'demand-graphs', '--analysis-fields', *analysis_fields)
+        ConfigurationStore().write(scenario_path, 'demand-graphs', {'analysis_fields': analysis_fields})
 
 
 class ScenarioPlotsTool(object):
