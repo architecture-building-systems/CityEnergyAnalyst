@@ -53,10 +53,27 @@ def dbf2df(dbf_path, index=None, cols=False, incl_index=False):
         db.close()
         return pd.DataFrame(data)
 
-def xls2dbf(xls_path,dbf_path):
-    df=pd.read_excel(xls_path)
-    df2dbf(df,dbf_path)
 
-def dbf2xls(dbf_path,xls_path):
-     df=dbf2df(dbf_path)
-     df.to_excel(xls_path)
+def xls_dbf_xls(input_path,output_path):
+    if input_path.endswith('.xls'):     # check if the extension of the input is xls
+        df=pd.read_excel(input_path)
+        df2dbf(df,output_path)
+    elif input_path.endswith('.dbf'):   # check if the extension of the input is dbf
+        df=dbf2df(input_path)
+        df.to_excel(output_path)
+    else:
+        print 'input file type not supported'
+
+def run_as_script(parameters):
+    input_path=parameters[0]
+    output_path=parameters[1]
+    xls_dbf_xls(input_path=input_path, output_path=output_path)
+
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('parameters')
+    args = parser.parse_args()
+    run_as_script(parameters=args.parameters)
