@@ -1,16 +1,18 @@
 import os
 import unittest
-import pandas as pd
-from pandas.util.testing import assert_frame_equal
 import zipfile
 import tempfile
+import numpy as np
+import pandas as pd
+from pandas.util.testing import assert_frame_equal
 import cea.examples
 from cea.inputlocator import InputLocator
+from cea.globalvar import GlobalVariables
 from cea.demand.preprocessing.properties import calculate_average_multiuse
 from cea.demand.preprocessing.properties import correct_archetype_areas
 from cea.demand.preprocessing.properties import get_database
 from cea.demand.occupancy_model import calc_schedules
-import numpy as np
+from cea.demand.occupancy_model import schedule_maker
 
 class TestBuildingPreprocessing(unittest.TestCase):
     def test_mixed_use_archetype_values(self):
@@ -64,112 +66,22 @@ class TestScheduleCreation(unittest.TestCase):
         reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
         locator = InputLocator(reference_case)
 
-        office_occ = float(pd.read_excel(locator.get_archetypes_schedules(), 'OFFICE').T['density'].values[:1][0])
-        industrial_occ = float(pd.read_excel(locator.get_archetypes_schedules(),
-                                             'INDUSTRIAL').T['density'].values[:1][0])
-
-        schedules_office = [0.4, 0.4, 0.4, 0.0]
-        schedules_industry = [1.0, 1.0, 0.4, 0.3]
+        # calculate schedules
+        list_uses = ['OFFICE', 'INDUSTRIAL']
         occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
-        average_occ = 1 / (occupancy['OFFICE'] / office_occ + occupancy['INDUSTRIAL'] / industrial_occ)
-        internal_loads_DB = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS').set_index('Code')
-        indoor_comfort_DB = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT').set_index('Code')
+        gv = GlobalVariables()
+        date = pd.date_range(gv.date_start, periods=8760, freq='H')
+        archetype_schedules, archetype_values = schedule_maker(date, locator, list_uses)
+        calculated_schedules = calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values)
 
-        results = pd.DataFrame({'people': np.ones(8760) *
-                             (occupancy['OFFICE'] * schedules_office[0] / office_occ + occupancy['INDUSTRIAL'] *
-                              schedules_industry[0] / industrial_occ),
-                   've': np.ones(8760) *
-                         (occupancy['OFFICE'] * schedules_office[0] * indoor_comfort_DB['Ve_lps']['OFFICE'] /
-                          office_occ + occupancy['INDUSTRIAL'] * schedules_industry[0] / industrial_occ *
-                          indoor_comfort_DB['Ve_lps']['INDUSTRIAL']) /
-                         ((occupancy['OFFICE'] * indoor_comfort_DB['Ve_lps']['OFFICE'] / office_occ +
-                           occupancy['INDUSTRIAL'] * indoor_comfort_DB['Ve_lps']['INDUSTRIAL'] / industrial_occ) *
-                          average_occ),
-                   'Qs': np.ones(8760) *
-                         (occupancy['OFFICE'] * schedules_office[0] / office_occ * internal_loads_DB['Qs_Wp']['OFFICE']
-                          + occupancy['INDUSTRIAL'] * schedules_industry[0] / industrial_occ *
-                          internal_loads_DB['Qs_Wp']['INDUSTRIAL']) /
-                         ((occupancy['OFFICE'] * internal_loads_DB['Qs_Wp']['OFFICE'] / office_occ +
-                           occupancy['INDUSTRIAL'] * internal_loads_DB['Qs_Wp']['INDUSTRIAL'] / industrial_occ) *
-                          average_occ),
-                   'X': np.ones(8760) *
-                        (occupancy['OFFICE'] * schedules_office[0] / office_occ * internal_loads_DB['X_ghp']['OFFICE'] +
-                         occupancy['INDUSTRIAL'] * schedules_industry[0] / industrial_occ *
-                         internal_loads_DB['X_ghp']['INDUSTRIAL']) /
-                        ((occupancy['OFFICE'] * internal_loads_DB['X_ghp']['OFFICE'] / office_occ +
-                          occupancy['INDUSTRIAL'] * internal_loads_DB['X_ghp']['INDUSTRIAL'] / industrial_occ) *
-                         average_occ),
-                   'Ea': np.ones(8760) *
-                         (occupancy['OFFICE'] * schedules_office[1] * internal_loads_DB['Ea_Wm2']['OFFICE'] +
-                          occupancy['INDUSTRIAL'] * schedules_industry[1] * internal_loads_DB['Ea_Wm2']['INDUSTRIAL']) /
-                         (occupancy['OFFICE'] * internal_loads_DB['Ea_Wm2']['OFFICE'] +
-                          occupancy['INDUSTRIAL'] * internal_loads_DB['Ea_Wm2']['INDUSTRIAL']),
-                   'El': np.ones(8760) *
-                         (occupancy['OFFICE'] * schedules_office[1] * internal_loads_DB['El_Wm2']['OFFICE'] +
-                          occupancy['INDUSTRIAL'] * schedules_industry[1] * internal_loads_DB['El_Wm2']['INDUSTRIAL']) /
-                         (occupancy['OFFICE'] * internal_loads_DB['El_Wm2']['OFFICE'] +
-                          occupancy['INDUSTRIAL'] * internal_loads_DB['El_Wm2']['INDUSTRIAL']),
-                   'Epro': np.ones(8760) *
-                         (occupancy['OFFICE'] * schedules_office[3] * internal_loads_DB['Epro_Wm2']['OFFICE'] +
-                          occupancy['INDUSTRIAL'] * schedules_industry[3] * internal_loads_DB['Epro_Wm2']['INDUSTRIAL'])
-                           / (occupancy['OFFICE'] * internal_loads_DB['Epro_Wm2']['OFFICE'] +
-                              occupancy['INDUSTRIAL'] * internal_loads_DB['Epro_Wm2']['INDUSTRIAL']),
-                   'Ere': np.ones(8760) *
-                         (occupancy['OFFICE'] * schedules_office[1] * internal_loads_DB['Ere_Wm2']['OFFICE'] +
-                          occupancy['INDUSTRIAL'] * schedules_industry[1] * internal_loads_DB['Ere_Wm2']['INDUSTRIAL'])
-                           / (occupancy['OFFICE'] * internal_loads_DB['Ere_Wm2']['OFFICE'] +
-                              occupancy['INDUSTRIAL'] * internal_loads_DB['Ere_Wm2']['INDUSTRIAL']),
-                   'Ed': np.ones(8760) *
-                         (occupancy['OFFICE'] * schedules_office[1] * internal_loads_DB['Ed_Wm2']['OFFICE'] +
-                          occupancy['INDUSTRIAL'] * schedules_industry[1] * internal_loads_DB['Ed_Wm2']['INDUSTRIAL'])
-                           / (occupancy['OFFICE'] * internal_loads_DB['Ed_Wm2']['OFFICE'] +
-                              occupancy['INDUSTRIAL'] * internal_loads_DB['Ed_Wm2']['INDUSTRIAL']),
-                   'Vww': np.ones(8760) * (
-                       occupancy['OFFICE'] * schedules_office[2] / office_occ * internal_loads_DB['Vww_lpd']['OFFICE'] +
-                       occupancy['INDUSTRIAL'] * schedules_industry[2] / industrial_occ *
-                       internal_loads_DB['Vww_lpd']['INDUSTRIAL']) / (
-                       (occupancy['OFFICE'] * internal_loads_DB['Vww_lpd']['OFFICE'] / office_occ +
-                        occupancy['INDUSTRIAL'] * internal_loads_DB['Vww_lpd']['INDUSTRIAL'] / industrial_occ) *
-                       average_occ),
-                   'Vw': np.ones(8760) * (
-                       occupancy['OFFICE'] * schedules_office[2] / office_occ * internal_loads_DB['Vw_lpd']['OFFICE'] +
-                       occupancy['INDUSTRIAL'] * schedules_industry[2] / industrial_occ *
-                       internal_loads_DB['Vw_lpd']['INDUSTRIAL']) / (
-                       (occupancy['OFFICE'] * internal_loads_DB['Vw_lpd']['OFFICE'] / office_occ +
-                        occupancy['INDUSTRIAL'] * internal_loads_DB['Vw_lpd']['INDUSTRIAL'] / industrial_occ) *
-                       average_occ)})
-        calculated_schedule = pd.DataFrame(
-            calc_schedules(list_uses=['OFFICE', 'INDUSTRIAL'],
-                                             archetype_schedules=[[schedules_office[0] + np.zeros(8760),
-                                                                   schedules_office[1] + np.zeros(8760),
-                                                                   schedules_office[2] + np.zeros(8760),
-                                                                   schedules_office[3] + np.zeros(8760)],
-                                                                  [schedules_industry[0] + np.zeros(8760),
-                                                                   schedules_industry[1] + np.zeros(8760),
-                                                                   schedules_industry[2] + np.zeros(8760),
-                                                                   schedules_industry[3] + np.zeros(8760)]],
-                                             occupancy=occupancy,
-                                             archetype_values={'people': [1 / office_occ, 1 / industrial_occ],
-                                                               've': [indoor_comfort_DB['Ve_lps']['OFFICE'],
-                                                                      indoor_comfort_DB['Ve_lps']['INDUSTRIAL']],
-                                                               'Qs': [internal_loads_DB['Qs_Wp']['OFFICE'],
-                                                                      internal_loads_DB['Qs_Wp']['INDUSTRIAL']],
-                                                               'X': [internal_loads_DB['X_ghp']['OFFICE'],
-                                                                     internal_loads_DB['X_ghp']['INDUSTRIAL']],
-                                                               'Ea': [internal_loads_DB['Ea_Wm2']['OFFICE'],
-                                                                      internal_loads_DB['Ea_Wm2']['INDUSTRIAL']],
-                                                               'El': [internal_loads_DB['El_Wm2']['OFFICE'],
-                                                                      internal_loads_DB['El_Wm2']['INDUSTRIAL']],
-                                                               'Epro': [internal_loads_DB['Epro_Wm2']['OFFICE'],
-                                                                        internal_loads_DB['Epro_Wm2']['INDUSTRIAL']],
-                                                               'Ere': [internal_loads_DB['Ere_Wm2']['OFFICE'],
-                                                                       internal_loads_DB['Ere_Wm2']['INDUSTRIAL']],
-                                                               'Ed': [internal_loads_DB['Ed_Wm2']['OFFICE'],
-                                                                      internal_loads_DB['Ed_Wm2']['INDUSTRIAL']],
-                                                               'Vww': [internal_loads_DB['Vww_lpd']['OFFICE'],
-                                                                       internal_loads_DB['Vww_lpd']['INDUSTRIAL']],
-                                                               'Vw': [internal_loads_DB['Vw_lpd']['OFFICE'],
-                                                                      internal_loads_DB['Vw_lpd']['INDUSTRIAL']]}))
+        reference_time = 3456
+        reference_results = {'El': 0.1080392156862745, 'Qs': 0.0088163265306122462, 've': 0.01114606741573034,
+                             'Epro': 0.17661721828842394, 'people': 0.0080000000000000019, 'Ed': 0.0, 'Vww': 0.0,
+                             'Ea': 0.1340740740740741, 'Ere': 0.0, 'Vw': 0.0, 'X': 0.010264150943396229}
 
-        assert_frame_equal(results, calculated_schedule)
+        for schedule in reference_results:
+            self.assertEqual(calculated_schedules[schedule][reference_time], reference_results[schedule],
+                             msg="Schedule '%s' at time %s, %f != %f" % (schedule, str(reference_time),
+                                                                       calculated_schedules[schedule][reference_time],
+                                                                       reference_results[schedule]))
 
