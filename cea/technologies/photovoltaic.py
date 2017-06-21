@@ -701,7 +701,7 @@ def calc_properties_PV(database_path, type_PVpanel):
     """
 
     data = pd.read_excel(database_path, sheet='PV')
-    panel_properties = data[data['code'] == type_PVpanel].T.to_dict()[0]
+    panel_properties = data[data['code'] == type_PVpanel].reset_index().T.to_dict()[0]
 
     return panel_properties
 
