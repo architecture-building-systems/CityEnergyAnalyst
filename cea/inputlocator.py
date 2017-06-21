@@ -186,6 +186,12 @@ class InputLocator(object):
         """
         return os.path.join(self.get_optimization_network_layout_folder(), network+"_T_Return.csv")
 
+    def get_optimization_network_layout_qloss_file(self, network):
+        """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
+        Return temperatures at each node for each time step for a district heating or cooling network
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_qloss_Supply.csv")
+
     def get_optimization_network_layout_supply_pressure_file(self, network):
         """scenario/outputs/data/optimization/network/layout/DH_P_Supply.csv or DC_P_Supply.csv
         Supply side pressure for each node in a district heating or cooling network at each time step
