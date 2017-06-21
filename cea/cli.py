@@ -217,9 +217,9 @@ def photovoltaic(args):
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
         calc_PV(locator=locator, radiation_csv=radiation_csv, metadata_csv=radiation_metadata, latitude=args.latitude,
                 longitude=args.longitude, weather_path=args.weather_path, building_name=building,
-                pvonroof=args.pvonroof, pvonwall=args.pvonwall, misc_losses=args.misc_losses,
-                worst_hour=args.worst_hour, type_PVpanel=args.type_PVpanel, min_radiation=args.min_radiation,
-                date_start=args.date_start)
+                pvonroof=args.pvonroof, pvonwall=args.pvonwall, worst_hour=args.worst_hour,
+                type_PVpanel=args.type_
+        PVpanel, min_radiation=args.min_radiation, date_start=args.date_start)
 
 
 def install_toolbox(_):
