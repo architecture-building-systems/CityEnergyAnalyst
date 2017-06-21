@@ -14,6 +14,7 @@ from cea.demand.preprocessing.properties import get_database
 from cea.demand.occupancy_model import calc_schedules
 from cea.demand.occupancy_model import schedule_maker
 
+
 class TestBuildingPreprocessing(unittest.TestCase):
     def test_mixed_use_archetype_values(self):
         # test if a sample mixed use building gets standard results
@@ -24,42 +25,35 @@ class TestBuildingPreprocessing(unittest.TestCase):
         locator = InputLocator(reference_case)
 
         # create test results
-        results_df = pd.DataFrame(data=[['B1', 0.5, 0.5, 0.0, 0.0], ['B2', 0.25, 0.75, 0.0, 0.0]],
-                                  columns=['Name', 'OFFICE', 'GYM', 'X_ghp', 'El_Wm2'])
-        properties_DB = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS').set_index('Code')
         office_occ = float(pd.read_excel(locator.get_archetypes_schedules(), 'OFFICE').T['density'].values[:1][0])
         gym_occ = float(pd.read_excel(locator.get_archetypes_schedules(), 'GYM').T['density'].values[:1][0])
-        for index in results_df.index:
-            results_df.loc[index,'El_Wm2'] = properties_DB['El_Wm2']['OFFICE'] * results_df['OFFICE'][index] + \
-                                          properties_DB['El_Wm2']['GYM'] * results_df['GYM'][index]
-            results_df.loc[index,'X_ghp'] = (properties_DB['X_ghp']['OFFICE']/office_occ * results_df['OFFICE'][index] \
-                                         + properties_DB['X_ghp']['GYM']/gym_occ * results_df['GYM'][index]) / \
-                                         (results_df['OFFICE'][index]/office_occ + results_df['GYM'][index]/gym_occ)
+        calculated_results = calculate_average_multiuse(
+            properties_df=pd.DataFrame(data=[['B1', 0.5, 0.5, 0.0, 0.0], ['B2', 0.25, 0.75, 0.0, 0.0]],
+                                       columns=['Name', 'OFFICE', 'GYM', 'X_ghp', 'El_Wm2']),
+            occupant_densities={'OFFICE': 1 / office_occ, 'GYM': 1 / gym_occ},
+            list_uses=['OFFICE', 'GYM'],
+            properties_DB=pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS'))
 
-        assert_frame_equal(calculate_average_multiuse(
-            properties_df = pd.DataFrame(data=[['B1', 0.5, 0.5, 0.0, 0.0], ['B2', 0.25, 0.75, 0.0, 0.0]],
-                                         columns=['Name','OFFICE', 'GYM', 'X_ghp', 'El_Wm2']),
-            occupant_densities = {'OFFICE': 1/office_occ,'GYM': 1/gym_occ},
-            list_uses = ['OFFICE', 'GYM'],
-            properties_DB = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')),
-            results_df)
+        # compare to reference values
+        expected_results = pd.DataFrame(data=[['B1', 0.5, 0.5, 208.947368, 12.9], ['B2', 0.25, 0.75, 236.382979, 11.4]],
+                                        columns=['Name', 'OFFICE', 'GYM', 'X_ghp', 'El_Wm2'])
+        assert_frame_equal(calculated_results, expected_results)
 
         architecture_DB = get_database(locator.get_archetypes_properties(), 'ARCHITECTURE')
         architecture_DB['Code'] = architecture_DB.apply(lambda x: x['building_use'] + str(x['year_start']) +
                                                                   str(x['year_end']) + x['standard'], axis=1)
 
         self.assertEqual(correct_archetype_areas(
-            prop_architecture_df = pd.DataFrame(
+            prop_architecture_df=pd.DataFrame(
                 data=[['B1', 0.5, 0.5, 0.0, 2006, 2020, 'C'], ['B2', 0.2, 0.8, 0.0, 1300, 1920, 'R']],
-                columns=['Name','SERVERROOM', 'PARKING', 'Hs', 'year_start', 'year_end', 'standard']),
-            architecture_DB = architecture_DB,
-            list_uses = ['SERVERROOM', 'PARKING']),
+                columns=['Name', 'SERVERROOM', 'PARKING', 'Hs', 'year_start', 'year_end', 'standard']),
+            architecture_DB=architecture_DB,
+            list_uses=['SERVERROOM', 'PARKING']),
             [0.5, 0.2])
 
 
 class TestScheduleCreation(unittest.TestCase):
     def test_mixed_use_schedules(self):
-
         # get reference case to be tested
         archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
         archive.extractall(tempfile.gettempdir())
@@ -82,6 +76,5 @@ class TestScheduleCreation(unittest.TestCase):
         for schedule in reference_results:
             self.assertEqual(calculated_schedules[schedule][reference_time], reference_results[schedule],
                              msg="Schedule '%s' at time %s, %f != %f" % (schedule, str(reference_time),
-                                                                       calculated_schedules[schedule][reference_time],
-                                                                       reference_results[schedule]))
-
+                                                                         calculated_schedules[schedule][reference_time],
+                                                                         reference_results[schedule]))
