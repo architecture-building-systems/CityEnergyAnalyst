@@ -376,7 +376,6 @@ def main():
     photovoltaic_parser.add_argument('--weather-path', help='Path to weather file.')
     photovoltaic_parser.add_argument('--pvonroof', help='flag for considering PV on roof', type=bool, default=True)
     photovoltaic_parser.add_argument('--pvonwall', help='flag for considering PV on wall', type=bool, default=True)
-    photovoltaic_parser.add_argument('--misc-losses', help='cabling, resistances etc.', type=float, default=0.1)
     photovoltaic_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int,
                                      default=8744)
     photovoltaic_parser.add_argument('--type-PVpanel',
