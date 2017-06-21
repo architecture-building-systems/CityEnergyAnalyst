@@ -1,17 +1,25 @@
+import os
 import unittest
+import pandas as pd
 from pandas.util.testing import assert_frame_equal
+import zipfile
+import tempfile
+import cea.examples
+from cea.inputlocator import InputLocator
+from cea.demand.preprocessing.properties import calculate_average_multiuse
+from cea.demand.preprocessing.properties import correct_archetype_areas
+from cea.demand.preprocessing.properties import get_database
+from cea.demand.occupancy_model import calc_schedules
+import numpy as np
 
 class TestBuildingPreprocessing(unittest.TestCase):
     def test_mixed_use_archetype_values(self):
         # test if a sample mixed use building gets standard results
-        from cea.globalvar import GlobalVariables
-        from cea.inputlocator import InputLocator
-        from cea.demand.preprocessing.properties import calculate_average_multiuse
-        from cea.demand.preprocessing.properties import correct_archetype_areas
-        from cea.demand.preprocessing.properties import get_database
-        import pandas as pd
-
-        locator = InputLocator(scenario_path=GlobalVariables().scenario_reference)
+        # get reference case to be tested
+        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+        archive.extractall(tempfile.gettempdir())
+        reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
+        locator = InputLocator(reference_case)
 
         # create test results
         results_df = pd.DataFrame(data=[['B1', 0.5, 0.5, 0.0, 0.0], ['B2', 0.25, 0.75, 0.0, 0.0]],
@@ -20,9 +28,9 @@ class TestBuildingPreprocessing(unittest.TestCase):
         office_occ = float(pd.read_excel(locator.get_archetypes_schedules(), 'OFFICE').T['density'].values[:1][0])
         gym_occ = float(pd.read_excel(locator.get_archetypes_schedules(), 'GYM').T['density'].values[:1][0])
         for index in results_df.index:
-            results_df['El_Wm2'][index] = properties_DB['El_Wm2']['OFFICE'] * results_df['OFFICE'][index] + \
+            results_df.loc[index,'El_Wm2'] = properties_DB['El_Wm2']['OFFICE'] * results_df['OFFICE'][index] + \
                                           properties_DB['El_Wm2']['GYM'] * results_df['GYM'][index]
-            results_df['X_ghp'][index] = (properties_DB['X_ghp']['OFFICE']/office_occ * results_df['OFFICE'][index] \
+            results_df.loc[index,'X_ghp'] = (properties_DB['X_ghp']['OFFICE']/office_occ * results_df['OFFICE'][index] \
                                          + properties_DB['X_ghp']['GYM']/gym_occ * results_df['GYM'][index]) / \
                                          (results_df['OFFICE'][index]/office_occ + results_df['GYM'][index]/gym_occ)
 
@@ -49,13 +57,13 @@ class TestBuildingPreprocessing(unittest.TestCase):
 
 class TestScheduleCreation(unittest.TestCase):
     def test_mixed_use_schedules(self):
-        from cea.globalvar import GlobalVariables
-        from cea.inputlocator import InputLocator
-        from cea.demand.occupancy_model import calc_schedules
-        import pandas as pd
-        import numpy as np
 
-        locator = InputLocator(scenario_path=GlobalVariables().scenario_reference)
+        # get reference case to be tested
+        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+        archive.extractall(tempfile.gettempdir())
+        reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
+        locator = InputLocator(reference_case)
+
         office_occ = float(pd.read_excel(locator.get_archetypes_schedules(), 'OFFICE').T['density'].values[:1][0])
         industrial_occ = float(pd.read_excel(locator.get_archetypes_schedules(),
                                              'INDUSTRIAL').T['density'].values[:1][0])
