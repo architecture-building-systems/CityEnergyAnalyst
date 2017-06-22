@@ -4,8 +4,6 @@ Constant variables for solar technologies
 """
 
 # site specific input
-longitude = 7.439583333333333
-latitude = 46.95240555555556
 date_start = '2016-01-01'  # format: yyyy-mm-dd
 
 # type of panels
@@ -19,8 +17,8 @@ panel_on_wall = True  # flag for considering panels on wall
 min_radiation = 0.75  # filtering criteria: at least a minimum production of this % from the maximum in the area.
 
 # panel specific inputs
-T_in_SC = 75  # inlet temperature of solar collectors
-T_in_PVT = 35 # inlet temperature of PVT panels
+T_in_SC = 75  # inlet temperature of solar collectors [C]
+T_in_PVT = 35 # inlet temperature of PVT panels [C]
 
 # panel spacing
 solar_window_solstice = 4 # desired hours of solar window on the solstice

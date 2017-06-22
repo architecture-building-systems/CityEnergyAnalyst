@@ -4,14 +4,12 @@ Photovoltaic thermal panels
 
 
 from __future__ import division
-
-import time
-from math import *
-
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-
+import time
+import fiona
+from math import *
 import cea.globalvar
 import cea.inputlocator
 from cea.technologies.solar.photovoltaic import calc_properties_PV_db, calc_PV_power, calc_diffuseground_comp, \
@@ -112,8 +110,32 @@ def calc_PVT(locator, radiation_csv, metadata_csv, latitude, longitude, weather_
     return
 
 
-def calc_PVT_generation(group_radiation, weather_data, number_groups, prop_observers, g, Sz, Az, ha, Tin, latitude,
+def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_observers, g, Sz, Az, ha, Tin, latitude,
                         height, panel_properties_SC, panel_properties_PV):
+    """
+    To calculate the heat and electricity generated from PVT panels.
+
+    :param hourly_radiation: mean hourly radiation of sensors in each group [Wh/m2]
+    :type hourly_radiation: dataframe
+    :param prop_observers: mean values of sensor properties of each group of sensors
+    :type prop_observers: dataframe
+    :param number_groups: number of groups of sensor points
+    :type number_groups: float
+    :param weather_data: weather data read from the epw file
+    :type weather_data: dataframe
+    :param g: declination
+    :type g: float
+    :param Sz: zenith angle
+    :type Sz: float
+    :param Az: solar azimuth
+    :type Az: float
+    :param ha: hour angle
+    :param Tin: Fluid inlet temperature (C)
+    :param height: height of the building [m]
+    :param panel_properties_SC: properties of solar collector part
+    :param panel_properties_PV: properties of the pv modules
+    :return:
+    """
 
     n0 = panel_properties_SC['n0']
     c1 = panel_properties_SC['c1']
@@ -197,7 +219,7 @@ def calc_PVT_generation(group_radiation, weather_data, number_groups, prop_obser
         teta_z = radians(teta_z) #surface azimuth
 
         # read irradiation from group
-        radiation = pd.DataFrame({'I_sol': group_radiation[group]})
+        radiation = pd.DataFrame({'I_sol': hourly_radiation[group]})
         radiation['I_diffuse'] = weather_data.ratio_diffhout * radiation.I_sol  # calculate diffuse radiation
         radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']     # calculate direct radiation
         radiation.fillna(0, inplace=True)                                       # set nan to zero
@@ -213,7 +235,7 @@ def calc_PVT_generation(group_radiation, weather_data, number_groups, prop_obser
 
         ## SC heat generation
         # calculate incidence angle modifier for beam radiation
-        IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle, panel_properties_SC['type'], latitude, Sz)
+        IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle, panel_properties_SC['type'], Sz)
 
         list_results_PVT[group] = Calc_PVT_module(tilt_angle, IAM_b.copy(), IAM_d, radiation.I_direct.copy(),
                                                   radiation.I_diffuse.copy(), weather_data.drybulb_C, n0, c1, c2, mB0_r,
@@ -227,7 +249,7 @@ def calc_PVT_generation(group_radiation, weather_data, number_groups, prop_obser
         Sum_qout = Sum_qout + list_results_PVT[group][1] * number_of_panels
         Sum_Eaux = Sum_Eaux + list_results_PVT[group][2] * number_of_panels
         Sum_PV = Sum_PV + list_results_PVT[group][6]
-        Sum_radiation = Sum_radiation + group_radiation[group]
+        Sum_radiation = Sum_radiation + hourly_radiation[group]
         list_groups_areas[group] = area_per_group
 
     Tout_group = (Sum_qout / Sum_mcp) + Tin  # in C
@@ -246,35 +268,35 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, IAM_d, I_direct_vector, I_diffuse_
     The heat production calculation is adapted from calc_SC_module and then the updated cell temperature is used to 
     calculate PV electricity production.
     
-    :param tilt_angle: 
-    :param IAM_b_vector: 
-    :param I_direct_vector: 
-    :param I_diffuse_vector: 
-    :param Tamb_vector:
-    :param n0: 
-    :param c1: 
-    :param c2: 
-    :param mB0_r: 
-    :param mB_max_r: 
-    :param mB_min_r: 
-    :param C_eff: 
-    :param t_max: 
-    :param IAM_d: 
-    :param aperture_area: 
-    :param dP1: 
-    :param dP2: 
-    :param dP3: 
-    :param dP4: 
-    :param Tin: 
-    :param Leq: 
-    :param l_ext: 
-    :param Nseg: 
-    :param eff_nom: 
-    :param Bref: 
-    :param Sm_PV: 
-    :param Tcell_PV: 
-    :param misc_losses: 
-    :param area_per_group: 
+    :param tilt_angle: solar panel tilt angle [rad]
+    :param IAM_b_vector: incident angle modifier for beam radiation [-]
+    :param I_direct_vector: direct radiation [W/m2]
+    :param I_diffuse_vector: diffuse radiation [W/m2]
+    :param Tamb_vector: dry bulb temperature [C]
+    :param n0: zero loss efficiency at normal incidence [-]
+    :param c1: collector heat loss coefficient at zero temperature difference and wind speed [W/m2K]
+    :param c2: temperature difference dependency of the heat loss coefficient [W/m2K2]
+    :param mB0_r: nominal flow rate per aperture area [kg/h/m2 aperture]
+    :param mB_max_r: maximum flow rate per aperture area
+    :param mB_min_r: minimum flow rate per aperture area
+    :param C_eff: thermal capacitance of module [J/m2K]
+    :param t_max: stagnation temperature [C]
+    :param IAM_d_vector: incident angle modifier for diffuse radiation [-]
+    :param aperture_area: collector aperture area [m2]
+    :param dP1: pressure drop [Pa/m2] at zero flow rate
+    :param dP2: pressure drop [Pa/m2] at nominal flow rate (mB0)
+    :param dP3: pressure drop [Pa/m2] at maximum flow rate (mB_max)
+    :param dP4: pressure drop [Pa/m2] at minimum flow rate (mB_min)
+    :param Tin: Fluid inlet temperature (C)
+    :param Leq: equivalent length of pipes per aperture area [m/m2 aperture)
+    :param Le: equivalent length of collector pipes per aperture area [m/m2 aperture]
+    :param Nseg: Number of collector segments in flow direction for heat capacitance calculation
+    :param eff_nom: nominal efficiency of PV module [-]
+    :param Bref: cell maximum power temperature coefficient [degree C^(-1)]
+    :param Sm_PV: absorbed solar radiation of PV module [Wh/m2]
+    :param Tcell_PV: PV cell temperature [C]
+    :param misc_losses: expected system loss [-]
+    :param area_per_group: PV module area [m2]
     :return: 
     """
 
@@ -344,8 +366,8 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, IAM_d, I_direct_vector, I_diffuse_
             # calculate average fluid temperature and average absorber temperature at the beginning of the time-step
             Tamb = Tamb_vector[time]
             q_rad = q_rad_vector[time]
-            Tfl[1] = 0  # mean absorber temp
-            Tabs[1] = 0  # mean absorber initial tempr
+            Tfl[1] = 0  # mean fluid temperature
+            Tabs[1] = 0  # mean absorber temperature
             for Iseg in range(1, Nseg + 1):
                 Tfl[1] = Tfl[1] + STORED[100 + Iseg] / Nseg  # mean fluid temperature
                 Tabs[1] = Tabs[1] + STORED[300 + Iseg] / Nseg  # mean absorber temperature
@@ -492,8 +514,9 @@ def test_PVT():
     weather_path = locator.get_default_weather()
     list_buildings_names = dbfreader.dbf2df(locator.get_building_occupancy())['Name']
 
-    longitude = 7.439583333333333
-    latitude = 46.95240555555556
+    with fiona.open(locator.get_building_geometry()) as shp:
+        longitude = shp.crs['lon_0']
+        latitude = shp.crs['lat_0']
 
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name= building)

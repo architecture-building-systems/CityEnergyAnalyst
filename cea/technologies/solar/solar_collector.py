@@ -11,6 +11,7 @@ import cea.inputlocator
 from math import *
 import re
 import time
+import fiona
 from cea.utilities import dbfreader
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
@@ -54,6 +55,7 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
     """
 
     t0 = time.clock()
+
     # weather data
     weather_data = epwreader.epw_reader(weather_path)
     worst_hour = solar_equations.calc_worst_hour(latitude, weather_data, settings.solar_window_solstice)
@@ -93,7 +95,7 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
 
         #calculate heat production from solar collectors
         results, Final = SC_generation(hourlydata_groups, prop_observers, number_groups, weather_data, g, Sz, Az, ha,
-                                       latitude, settings.T_in_SC , height, panel_properties)
+                                       settings.T_in_SC, height, panel_properties, latitude)
 
         # save SC generation potential and metadata of the selected sensors
         Final.to_csv(locator.SC_results(building_name= building_name), index=True, float_format='%.2f')
@@ -107,22 +109,30 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
 # SC heat production
 # =========================
 
-def SC_generation(group_radiation, prop_observers, number_groups, weather_data, g, Sz, Az,
-                  ha, latitude, Tin, height, panel_properties):
+def SC_generation(hourly_radiation, prop_observers, number_groups, weather_data, g, Sz, Az, ha, Tin, height,
+                  panel_properties, latitude):
     """
+    To calculate the heat generated from SC panels.
 
-    :param group_radiation:
-    :param prop_observers:
-    :param number_groups:
-    :param weather_data:
-    :param g:
-    :param Sz:
-    :param Az:
-    :param ha:
-    :param latitude:
-    :param Tin:
-    :param height:
-    :param panel_properties:
+    :param hourly_radiation: mean hourly radiation of sensors in each group [Wh/m2]
+    :type hourly_radiation: dataframe
+    :param prop_observers: mean values of sensor properties of each group of sensors
+    :type prop_observers: dataframe
+    :param number_groups: number of groups of sensor points
+    :type number_groups: float
+    :param weather_data: weather data read from the epw file
+    :type weather_data: dataframe
+    :param g: declination
+    :type g: float
+    :param Sz: zenith angle
+    :type Sz: float
+    :param Az: solar azimuth
+    :type Az: float
+    :param ha: hour angle
+    :param Tin: Fluid inlet temperature (C)
+    :param height: height of the building [m]
+    :param panel_properties: properties of solar panels
+    :type panel_properties: dataframe
     :return:
     """
 
@@ -176,13 +186,13 @@ def SC_generation(group_radiation, prop_observers, number_groups, weather_data, 
         tilt_angle = prop_observers.loc[group, 'tilt']  # tilt angle of panels
 
         # create dataframe with irradiation from group
-        radiation = pd.DataFrame({'I_sol': group_radiation[group]})
+        radiation = pd.DataFrame({'I_sol': hourly_radiation[group]})
         radiation['I_diffuse'] = weather_data.ratio_diffhout * radiation.I_sol  # calculate diffuse radiation
         radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']     # calculate direct radiation
         radiation.fillna(0, inplace=True)                                       # set nan to zero
 
         # calculate incidence angle modifier for beam radiation
-        IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle, panel_properties['type'], latitude, Sz)
+        IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle, panel_properties['type'], Sz, latitude)
 
         # calculate heat production from a solar collector of each group
         list_results[group] = calc_SC_module(tilt_angle, IAM_b, IAM_d, radiation.I_direct, radiation.I_diffuse,
@@ -192,7 +202,7 @@ def SC_generation(group_radiation, prop_observers, number_groups, weather_data, 
         # multiplying the results with the number of panels in each group and write to list
         number_modules_per_group = area_per_group / Apanel
         list_areas_groups[group] = area_per_group
-        radiation_array = group_radiation[group]*list_areas_groups[group]/1000 # kWh
+        radiation_array = hourly_radiation[group] * list_areas_groups[group] / 1000 # kWh
         Sum_qout = Sum_qout + list_results[group][1] * number_modules_per_group
         Sum_Eaux = Sum_Eaux + list_results[group][2] * number_modules_per_group
         Sum_qloss = Sum_qloss + list_results[group][0] * number_modules_per_group
@@ -212,7 +222,7 @@ def calc_SC_module(tilt_angle, IAM_b_vector, IAM_d_vector, I_direct_vector, I_di
                    mB0_r, mB_max_r, mB_min_r, C_eff, t_max, aperture_area, dP1, dP2, dP3, dP4, Cp_fluid, Tin, Leq, Le, Nseg):
     """
     This function calculates the heat production from a solar collector. The method is adapted from TRNSYS Type 832.
-    Assume no no condensaiton gains, no wind or long-wave dependency, sky factor set to zero.
+    Assume no no condensation gains, no wind or long-wave dependency, sky factor set to zero.
 
     :param tilt_angle: solar panel tilt angle [rad]
     :param IAM_b_vector: incident angle modifier for beam radiation [-]
@@ -444,24 +454,24 @@ def calc_q_rad(n0, IAM_b, I_direct, IAM_d, I_diffuse, tilt):
     return q_rad
 
 
-def calc_q_gain(Tfl, Tabs, qrad, DT, Tin, Tout, Aseg, c1, c2, Mfl, delts, Cp_waterglycol, C_eff, Te):
+def calc_q_gain(Tfl, Tabs, q_rad, DT, Tin, Tout, aperture_area, c1, c2, Mfl, delts, Cp_waterglycol, C_eff, Te):
     """
     calculate the collector heat gain through iteration including temperature dependent thermal losses of the collectors.
 
-    :param Tfl:
-    :param Tabs:
-    :param qrad:
-    :param DT:
-    :param Tin: collector inlet temperature
-    :param Tout: collector outlet temperature
-    :param Aseg:
-    :param c1:
-    :param c2:
-    :param Mfl:
+    :param Tfl: mean fluid temperature
+    :param Tabs: mean absorber temperature
+    :param q_rad: absorbed radiation [Wh/m2]
+    :param DT: temperature differences between collector and ambient [K]
+    :param Tin: collector inlet temperature [K]
+    :param Tout: collector outlet temperature [K]
+    :param aperture_area: aperture area [m2]
+    :param c1: collector heat loss coefficient at zero temperature difference and wind speed [W/m2K]
+    :param c2: temperature difference dependency of the heat loss coefficient [W/m2K2]
+    :param Mfl: mass flow rate [kg/s]
     :param delts:
-    :param Cp_waterglycol: heat capacity of water glycol
-    :param C_eff:
-    :param Te:
+    :param Cp_waterglycol: heat capacity of water glycol [J/kgK]
+    :param C_eff: thermal capacitance of module [J/m2K]
+    :param Te: ambient temperature
     :return:
 
     ..[M. Haller et al., 2012] Haller, M., Perers, B., Bale, C., Paavilainen, J., Dalibard, A. Fischer, S. & Bertram, E.
@@ -472,14 +482,14 @@ def calc_q_gain(Tfl, Tabs, qrad, DT, Tin, Tout, Aseg, c1, c2, Mfl, delts, Cp_wat
     xgainmax = 100
     exit = False
     while exit == False:
-        qgain = qrad - c1 * (DT[1]) - c2 * abs(DT[1]) * DT[1]  # heat production from solar collector, eq.(5)
+        qgain = q_rad - c1 * (DT[1]) - c2 * abs(DT[1]) * DT[1]  # heat production from solar collector, eq.(5)
 
         if Mfl > 0:
-            Tout = ((Mfl * Cp_waterglycol * Tin) / Aseg - (C_eff * Tin) / (2 * delts) + qgain + (
-                C_eff * Tfl[1]) / delts) / (Mfl * Cp_waterglycol / Aseg + C_eff / (2 * delts)) # eq.(6)
+            Tout = ((Mfl * Cp_waterglycol * Tin) / aperture_area - (C_eff * Tin) / (2 * delts) + qgain + (
+                C_eff * Tfl[1]) / delts) / (Mfl * Cp_waterglycol / aperture_area + C_eff / (2 * delts)) # eq.(6)
             Tfl[2] = (Tin + Tout) / 2
             DT[2] = Tfl[2] - Te
-            qdiff = Mfl / Aseg * Cp_waterglycol * 2 * (DT[2] - DT[1])
+            qdiff = Mfl / aperture_area * Cp_waterglycol * 2 * (DT[2] - DT[1])
         else:
             Tout = Tfl[1] + (qgain * delts) / C_eff   # eq.(8)
             Tfl[2] = Tout
@@ -499,7 +509,7 @@ def calc_q_gain(Tfl, Tabs, qrad, DT, Tin, Tout, Aseg, c1, c2, Mfl, delts, Cp_wat
         xgain += 1
 
     #FIXME: what is this part for?
-    qout = Mfl * Cp_waterglycol * (Tout - Tin) / Aseg
+    qout = Mfl * Cp_waterglycol * (Tout - Tin) / aperture_area
     qmtherm = (Tfl[2] - Tfl[1]) * C_eff / delts
     qbal = qgain - qout - qmtherm
     if abs(qbal) > 1:
@@ -528,17 +538,16 @@ def calc_qloss_network(Mfl, Le, Area_a, Tm, Te, maxmsc):
     return qloss  # in kW
 
 
-def calc_IAM_beam_SC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, type_SCpanel, latitude, Sz_vector):
+def calc_IAM_beam_SC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, type_SCpanel, Sz_vector, latitude):
     """
     Calculates Incidence angle modifier for beam radiation.
 
     :param Az_vector: Solar azimuth angle
-    :param g_vector:
+    :param g_vector: declination
     :param ha_vector: hour angle
     :param teta_z: panel surface azimuth angle
     :param tilt_angle: panel tilt angle
     :param type_SCpanel: type of solar collector
-    :param latitude:
     :param Sz_vector: solar zenith angle
     :return IAM_b_vector:
     """
@@ -583,7 +592,7 @@ def calc_IAM_beam_SC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, type_SC
 
     g_vector = np.radians(g_vector)
     ha_vector = np.radians(ha_vector)
-    lat = radians(latitude)
+    lat = radians(settings.latitude)
     Sz_vector = np.radians(Sz_vector)
     Az_vector = np.radians(Az_vector)
     Incidence_vector = np.vectorize(solar_equations.calc_incident_angle_beam)(g_vector, lat, ha_vector, tilt,
@@ -830,9 +839,9 @@ def test_solar_collector():
     weather_path = locator.get_default_weather()
     list_buildings_names = dbfreader.dbf2df(locator.get_building_occupancy())['Name']
 
-    worst_hour = 8744  # first hour of sun on the solar solstice
-    longitude = 7.439583333333333
-    latitude = 46.95240555555556
+    with fiona.open(locator.get_building_geometry()) as shp:
+        longitude = shp.crs['lon_0']
+        latitude = shp.crs['lat_0']
 
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name= building)
