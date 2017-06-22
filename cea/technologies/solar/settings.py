@@ -32,7 +32,7 @@ Ro = 1000 # water density [kg/m3]
 eff_pumping = 0.6 # pump efficiency
 
 # solar collectors heat losses
-
+k_msc_max = 0.217 # linear heat transmittance coefficient of piping (2*pi*k/ln(Do/Di))) [W/mK]
 
 
 
