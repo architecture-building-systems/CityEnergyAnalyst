@@ -283,7 +283,7 @@ def run_as_script(scenario_path=None, prop_thermal_flag=True, prop_architecture_
     import cea.globalvar
     gv = cea.globalvar.GlobalVariables()
     if not scenario_path:
-        scenario_path = r'C:\reference-case-open1\baseline2'  # gv.scenario_reference
+        scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     properties(locator=locator, prop_architecture_flag=prop_architecture_flag,
                prop_hvac_flag=prop_hvac_flag, prop_comfort_flag=prop_comfort_flag,
