@@ -32,8 +32,10 @@ class TestCalcThermalLoads(unittest.TestCase):
         cls.building_properties = BuildingProperties(cls.locator, cls.gv)
         cls.date = pd.date_range(cls.gv.date_start, periods=8760, freq='H')
         cls.list_uses = cls.building_properties.list_uses()
-        cls.schedules, cls.occupancy_densities = schedule_maker(cls.date, cls.locator, cls.list_uses)
-        cls.usage_schedules = {'list_uses': cls.list_uses, 'schedules': cls.schedules, 'occupancy_densities': cls.occupancy_densities}
+        cls.archetype_schedules, cls.archetype_values = schedule_maker(cls.date, cls.locator, cls.list_uses)
+        cls.occupancy_densities = cls.archetype_values['people']
+        cls.usage_schedules = {'list_uses': cls.list_uses, 'archetype_schedules': cls.archetype_schedules,
+                               'occupancy_densities': cls.occupancy_densities, 'archetype_values': cls.archetype_values}
 
     def test_calc_thermal_loads(self):
         # FIXME: the usage_schedules bit needs to be fixed!!
@@ -60,10 +62,9 @@ class TestCalcThermalLoads(unittest.TestCase):
                          u'Qcdataf_kWh', u'Qcref_kWh', u'Qcs_kWh', u'Qcsf_kWh', u'Qhs_kWh', u'Qhsf_kWh', u'Qww_kWh',
                          u'Qwwf_kWh', u'Tcsf_re_C', u'Thsf_re_C', u'Twwf_re_C', u'Tcsf_sup_C', u'Thsf_sup_C',
                          u'Twwf_sup_C']
-        values = [155102.61600000001, 3776.9010000000003, 0.0, 158879.51699999999, 8373.9639999999999,
-                  332161.44099999999, 0, 0, 7888.4459999999999, 8373.9639999999999, 183389.465, 195411.984,
-                  134184.50699999998, 136749.459, 2567.0, 67361.358999999997, 99496.0, 1812.0, 77058.267999999996,
-                  525600]
+        values = [155102.615999994, 3817.304, 0.0, 158919.92, 8373.964, 235413.775, 0,
+                  0, 7888.446, 8373.964, 183389.465, 195411.984, 37198.8870000003, 40001.765,
+                  2567.0, 67361.359, 99496.0, 1812.0, 77058.2680000001, 525600]
 
         for i, column in enumerate(value_columns):
             try:

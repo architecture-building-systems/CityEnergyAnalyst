@@ -19,7 +19,8 @@ from cea.utilities import helpers
 
 # demand model of thermal and electrical loads
 
-def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator):
+def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
+                       use_dynamic_infiltration_calculation=False):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
@@ -78,14 +79,17 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     # get schedules
     list_uses = usage_schedules['list_uses']
-    schedules = usage_schedules['schedules']
-    occupancy_densities = usage_schedules['occupancy_densities']
+    archetype_schedules = usage_schedules['archetype_schedules']
+    archetype_values = usage_schedules['archetype_values']
+    schedules = occupancy_model.calc_schedules(list_uses, archetype_schedules, bpr.occupancy, archetype_values)
 
-    # get occupancy
-    tsd['people'] = occupancy_model.calc_occ_schedule(list_uses, schedules, occupancy_densities, bpr.occupancy,
-                                                      bpr.rc_model['Af'])
+    # calculate occupancy schedule and occupant-related parameters
+    tsd['people'] = schedules['people'] * bpr.rc_model['Af']
+    tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6) * bpr.rc_model['Af'] # in m3/h
+    tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp'] * bpr.rc_model['Af'] # in W
+
     # get electrical loads (no auxiliary loads)
-    tsd = electrical_loads.calc_Eint(tsd, bpr, list_uses, schedules)
+    tsd = electrical_loads.calc_Eint(tsd, bpr, schedules)
 
     # get refrigeration loads
     tsd['Qcref'], tsd['mcpref'], \
@@ -110,10 +114,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd = controllers.calc_simple_temp_control(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
                                                    date.dayofweek)
 
-        # latent heat gains
-        tsd['w_int'] = sensible_loads.calc_Qgain_lat(tsd['people'], bpr.internal_loads['X_ghp'],
-                                                     bpr.hvac['type_cs'],
-                                                     bpr.hvac['type_hs'])
+        # # latent heat gains
+        tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr.internal_loads['X_ghp'], bpr.rc_model['Af'],
+                                                     bpr.hvac['type_cs'], bpr.hvac['type_hs'])
 
         # end-use demand calculation
         for t in range(-720, 8760):
@@ -123,18 +126,19 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             # sensible heat gains
             tsd = sensible_loads.calc_Qgain_sen(hoy, tsd, bpr, gv)
 
-            # UNCOMMENT THIS TO OVERWRITE STATIC INFILTRATION WITH DYNAMIC INFILTRATION RATE
-            # # TODO: add option for detailed infiltration calculation
-            # dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
-            # qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(tsd['theta_a'][hoy - 1] if not np.isnan(tsd['theta_a'][hoy - 1]) else tsd['T_ext'][hoy - 1], tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
-            # tsd['m_ve_inf'][hoy] = max(qm_sum_in/3600, 1/3600)  # INFILTRATION IS FORCED NOT TO REACH ZERO IN ORDER TO AVOID THE RC MODEL TO FAIL
+            if use_dynamic_infiltration_calculation:
+                # OVERWRITE STATIC INFILTRATION WITH DYNAMIC INFILTRATION RATE
+                dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
+                qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(
+                    tsd['theta_a'][hoy - 1] if not np.isnan(tsd['theta_a'][hoy - 1]) else tsd['T_ext'][hoy - 1],
+                    tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
+                # INFILTRATION IS FORCED NOT TO REACH ZERO IN ORDER TO AVOID THE RC MODEL TO FAIL
+                tsd['m_ve_inf'][hoy] = max(qm_sum_in / 3600, 1 / 3600)
 
 
             # ventilation air flows [kg/s]
             ventilation_air_flows_simple.calc_air_mass_flow_mechanical_ventilation(bpr, tsd, hoy)
             ventilation_air_flows_simple.calc_air_mass_flow_window_ventilation(bpr, tsd, hoy)
-
-
 
             # ventilation air temperature
             ventilation_air_flows_simple.calc_theta_ve_mech(bpr, tsd, hoy, gv)
@@ -196,12 +200,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             bpr.building_systems['Tww_sup_0'],
             bpr.building_systems['Y'],
             gv,
-            bpr.internal_loads['Vww_lpd'],
-            bpr.internal_loads['Vw_lpd'],
-            occupancy_densities,
-            list_uses,
+            archetype_values['people'],
             schedules,
-            bpr.occupancy)
+            bpr)
 
         # calc auxiliary loads
         tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'], \
@@ -369,7 +370,7 @@ class BuildingProperties(object):
         solar = get_prop_solar(locator).set_index('Name')
 
         # get temperatures of operation
-        prop_HVAC_result = get_temperatures(locator, prop_hvac).set_index('Name')
+        prop_HVAC_result = get_properties_technical_systems(locator, prop_hvac).set_index('Name')
 
         # get envelope properties
         prop_envelope = get_envelope_properties(locator, prop_architectures).set_index('Name')
@@ -512,7 +513,7 @@ class BuildingProperties(object):
             Includes additional fields "footprint" and "perimeter" as calculated in `read_building_properties`.
         :type geometry: Gdf
 
-        :param hvac_temperatures: The return value of `get_temperatures`.
+        :param hvac_temperatures: The return value of `get_properties_technical_systems`.
         :type hvac_temperatures: DataFrame
 
         :param surface_properties: The contents of the `properties_surfaces.csv` file generated by the radiation script.
@@ -763,10 +764,10 @@ class SolarProperties(object):
         self.I_win = solar['I_win']
 
 
-def get_temperatures(locator, prop_HVAC):
+def get_properties_technical_systems(locator, prop_HVAC):
     """
     Return temperature data per building based on the HVAC systems of the building. Uses the `emission_systems.xls`
-    file to look up the temperatures.
+    file to look up properties
 
     :param locator:
     :type locator: cea.inputlocator.InputLocator
@@ -796,25 +797,29 @@ def get_temperatures(locator, prop_HVAC):
     Column           e.g.   Description
     ==========    =======   ===========================================================================
     Name          B154862   (building name)
-    type_hs            T1   (copied from input)
-    type_cs            T0   (copied from input)
-    type_dhw           T1   (copied from input)
-    type_ctrl          T1   (copied from input)
-    type_vent          T1   (copied from input)
+    type_hs            T1   (copied from input, code for type of heating system)
+    type_cs            T0   (copied from input, code for type of cooling system)
+    type_dhw           T1   (copied from input, code for type of hot water system)
+    type_ctrl          T1   (copied from input, code for type of controller for heating and cooling system)
+    type_vent          T1   (copied from input, code for type of ventilation system)
+    Tshs0_C            90   (heating system supply temperature at nominal conditions [C])
+    dThs0_C            20   (delta of heating system temperature at nominal conditions [C])
+    Qhsmax_Wm2        500   (maximum heating system power capacity per unit of gross built area [W/m2])
+    dThs_C           0.15   (correction temperature of emission losses due to type of heating system [C])
+    Tscs0_C             0   (cooling system supply temperature at nominal conditions [C])
+    dTcs0_C             0   (delta of cooling system temperature at nominal conditions [C])
+    Qcsmax_Wm2          0   (maximum cooling system power capacity per unit of gross built area [W/m2])
+    dTcs_C            0.5   (correction temperature of emission losses due to type of cooling system [C])
+    dT_Qhs            1.2   (correction temperature of emission losses due to control system of heating [C])
+    dT_Qcs           -1.2   (correction temperature of emission losses due to control system of cooling[C])
+    Tsww0_C            60   (dhw system supply temperature at nominal conditions [C])
+    dTww0_C            50   (delta of dwh system temperature at nominal conditions [C])
+    Qwwmax_Wm2        500   (maximum dwh system power capacity per unit of gross built area [W/m2])
     MECH_VENT        True   (copied from input, ventilation system configuration)
     WIN_VENT        False   (copied from input, ventilation system configuration)
     HEAT_REC         True   (copied from input, ventilation system configuration)
     NIGHT_FLSH       True   (copied from input, ventilation system control strategy)
     ECONOMIZER      False   (copied from input, ventilation system control strategy)
-    Tshs0_C            90   (heating system supply temperature at nominal conditions [C])
-    dThs0_C            20   (delta of heating system temperature at nominal conditions [C])
-    Qhsmax_Wm2        500   (maximum heating system power capacity per unit of gross built area [W/m2])
-    Tscs0_C             0   (cooling system supply temperature at nominal conditions [C])
-    dTcs0_C             0   (delta of cooling system temperature at nominal conditions [C])
-    Qcsmax_Wm2          0   (maximum cooling system power capacity per unit of gross built area [W/m2])
-    Tsww0_C            60   (dhw system supply temperature at nominal conditions [C])
-    dTww0_C            50   (delta of dwh system temperature at nominal conditions [C])
-    Qwwmax_Wm2        500   (maximum dwh system power capacity per unit of gross built area [W/m2])
     ==========    =======   ===========================================================================
 
     Data is read from :py:meth:`cea.inputlocator.InputLocator.get_technical_emission_systems` (e.g.
@@ -823,22 +828,24 @@ def get_temperatures(locator, prop_HVAC):
     prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(), 'heating')
     prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')
     prop_emission_dhw = pd.read_excel(locator.get_technical_emission_systems(), 'dhw')
-    prop_ventilation_system = pd.read_excel(locator.get_technical_emission_systems(), 'ventilation')
-    prop_ventilation_system_control = pd.read_excel(locator.get_technical_emission_systems(), 'ventilation_control')
+    prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_technical_emission_systems(),'controller')
+    prop_ventilation_system_and_control = pd.read_excel(locator.get_technical_emission_systems(), 'ventilation')
 
     df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
     df_emission_cooling = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
+    df_emission_control_heating_and_cooling = prop_HVAC.merge(prop_emission_control_heating_and_cooling, left_on='type_ctrl', right_on='code')
     df_emission_dhw = prop_HVAC.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
-    df_ventilation_system_and_control = prop_ventilation_system.merge(prop_ventilation_system_control,left_on='code_ctrl', right_on='code', suffixes={'_v','_c'})
-    df_ventilation_system_and_control = prop_HVAC.merge(df_ventilation_system_and_control, left_on='type_vent', right_on='code_v')
+    df_ventilation_system_and_control = prop_HVAC.merge(prop_ventilation_system_and_control, left_on='type_vent', right_on='code')
 
 
-    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'Tshs0_C', 'dThs0_C', 'Qhsmax_Wm2']
-    fields_emission_cooling = ['Name', 'Tscs0_C', 'dTcs0_C', 'Qcsmax_Wm2']
+    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl','type_vent', 'Tshs0_C', 'dThs0_C', 'Qhsmax_Wm2','dThs_C']
+    fields_emission_cooling = ['Name', 'Tscs0_C', 'dTcs0_C', 'Qcsmax_Wm2','dTcs_C']
+    fields_emission_control_heating_and_cooling = ['Name','dT_Qhs','dT_Qcs']
     fields_emission_dhw = ['Name', 'Tsww0_C', 'dTww0_C', 'Qwwmax_Wm2']
     fields_system_ctrl_vent = ['Name', 'MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']
 
     result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
+                                                                on='Name').merge(df_emission_control_heating_and_cooling[fields_emission_control_heating_and_cooling],
                                                                 on='Name').merge(df_emission_dhw[fields_emission_dhw],
                                                                                  on='Name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='Name')
     return result
