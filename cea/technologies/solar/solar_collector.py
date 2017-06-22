@@ -160,8 +160,8 @@ def SC_generation(group_radiation, prop_observers, number_groups, weather_data, 
     # calculate equivalent length of pipes
     lv = panel_properties['module_length']  # module length
     number_modules = round(total_area_module/Apanel)  # this is an estimation
-    l_ext = (2 * lv * number_modules/ (total_area_module * Aratio)) #
-    l_int = 2 * height / (total_area_module * Aratio)
+    l_ext = (2 * lv * number_modules/ (total_area_module * Aratio)) # pipe length within the collectors
+    l_int = 2 * height / (total_area_module * Aratio) # pipe length from building substation to roof top collectors
     Leq = l_int + l_ext  # in m/m2 aperture
 
     if panel_properties['type'] == 'ET':  # for evacuated tubes
@@ -235,7 +235,7 @@ def calc_SC_module(tilt_angle, IAM_b_vector, IAM_d_vector, I_direct_vector, I_di
     :param dP4: pressure drop [Pa/m2] at minimum flow rate (mB_min)
     :param Tin: Fluid inlet temperature (C)
     :param Leq: equivalent length of pipes per aperture area [m/m2 aperture)
-    :param Le:
+    :param Le: equivalent length of collector pipes per aperture area [m/m2 aperture]
     :param Nseg: Number of collector segments in flow direction for heat capacitance calculation
     :return:
 
@@ -510,12 +510,12 @@ def calc_q_gain(Tfl, Tabs, qrad, DT, Tin, Tout, Aseg, c1, c2, Mfl, delts, Cp_wat
 def calc_qloss_network(Mfl, Le, Area_a, Tm, Te, maxmsc):
     """
     calculate non-recoverable losses
-    :param Mfl:
-    :param Le:
-    :param Area_a:
-    :param Tm:
-    :param Te:
-    :param maxmsc:
+    :param Mfl: mass flow rate [kg/s]
+    :param Le: length per aperture area [m/m2 aperture]
+    :param Area_a: aperture area [m2]
+    :param Tm: mean temperature
+    :param Te: ambient temperature
+    :param maxmsc: maximum mass flow [kg/s]
     :return:
 
     ..[ J. Fonseca et al., 2016] Fonseca, J., Nguyen, T-A., Schlueter, A., Marechal, F. City Energy Analyst:
@@ -523,8 +523,7 @@ def calc_qloss_network(Mfl, Le, Area_a, Tm, Te, maxmsc):
     Energy and Buildings, 2016.
     ..
     """
-
-    qloss = 0.217 * Le * Area_a * (Tm - Te) * (Mfl / maxmsc) / 1000  # eq. (61) non-recoverable losses # TODO: find reference for constant linear coefficient of transmittance [W/m2/K]
+    qloss = settings.k_msc_max * Le * Area_a * (Tm - Te) * (Mfl / maxmsc) / 1000  # eq. (61) non-recoverable losses
 
     return qloss  # in kW
 
