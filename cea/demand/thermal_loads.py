@@ -722,11 +722,9 @@ class BuildingPropertiesRow(object):
             phi_pipes = [0.2, 0.3, 0.3]
         # elif 1985 <= self.age['built'] < 1995 and self.age['HVAC'] == 0:
         elif 1985 <= self.age['built'] < 1995:
-            if self.age['HVAC'] == 0:
-                phi_pipes = [0.3, 0.4, 0.4]
-            elif self.age['HVAC'] == self.age['built']:
+            phi_pipes = [0.3, 0.4, 0.4]
+            if self.age['HVAC'] == self.age['built']:
                 print 'Incorrect HVAC renovation year: if HVAC has not been renovated, the year should be set to 0'
-                phi_pipes = [0.3, 0.4, 0.4]
         else:
             phi_pipes = [0.4, 0.4, 0.4]
         return phi_pipes
