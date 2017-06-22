@@ -16,9 +16,11 @@ defined in the CEA. This has historical reasons, mainly for the integration test
 
 The integration tests are defined in the file ``cea/tests/test_calc_thermal_loads.py``. They test the demand calculation
 engine to make sure changes to the code don't result in unexpected changes to the results. If results do change, the
-program ``cea/tests/create_unittest_data.py`` can be used to update the test data to compare against. Note, you will need
-to verify the new results using another method before merging back to master. Strictly speaking, the integration
-tests are coded as unit tests.
+program ``cea/tests/create_unittest_data.py`` can be used to update the test data to compare against. The test data
+is stored in the file ``cea/tests/test_calc_thermal_loads.config``. Note, you will need to verify the new results using
+another method before merging back to master.
+
+Strictly speaking, the integration tests are coded as unit tests.
 
 The rest of the python files in ``cea/tests`` that start with ``test_`` contain unit tests. See the python documentation
 on the unittest_  module and also take a look at the pymotw_ page on the ``unittest`` module.
