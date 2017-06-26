@@ -1,6 +1,13 @@
 """
 "Makefile" for doit to test the whole package with Jenkins.
 
+This file gets run with the ``cea test`` command as well as by the Jenkins continuous integration server. It runs all
+the unit tests in the ``cea/tests/`` folder as well as some of the CEA scripts, to make sure they at least run through.
+
+In order to run reference cases besides the one called "open", you will need to set up authentication to the private
+GitHub repository. The easiest way to do this is with ``cea test --save --user USERNAME --token PERSONAL_ACCESS_TOKEN``,
+adding your own user name and a GitHub personal access token.
+
 The reference cases can be found here: https://github.com/architecture-building-systems/cea-reference-case/archive/master.zip
 """
 import requests

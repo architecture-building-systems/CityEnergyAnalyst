@@ -13,6 +13,14 @@ from cea.utilities import epwreader
 
 
 class TestCalcThermalLoads(unittest.TestCase):
+    """
+    This test case contains the two tests :py:meth`test_calc_thermal_loads` and
+    :py:meth:`test_calc_thermal_loads_other_buildings`. They are not stricty unit tests, but rather test the whole
+    thermal loads calculation (for the built-in reference case) against a set of known results, stored in the file
+    ``test_calc_thermal_loads.config`` - if the results should change and the change has been verified, you can use
+    the script ``create_unittest_data.py`` to update the config file with the new results.
+    """
+
     @classmethod
     def setUpClass(cls):
         import zipfile
