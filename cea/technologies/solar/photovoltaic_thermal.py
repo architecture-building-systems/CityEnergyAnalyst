@@ -137,6 +137,36 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
     :return:
     """
 
+    ## prepare data for electricity production calculation
+
+    # convert degree to radians
+    lat_rad = radians(latitude)
+    g_rad = np.radians(g)
+    ha_rad = np.radians(ha)
+    Sz_rad = np.radians(Sz)
+    Az_rad = np.radians(Az)
+
+    # empty lists to store results
+    result_PV = list(range(number_groups))
+    Sum_PV = np.zeros(8760)
+    Sum_radiation = np.zeros(8760)
+
+    n = 1.526  # refractive index of glass
+    Pg = 0.2  # ground reflectance
+    K = 0.4  # glazing extinction coefficient
+    eff_nom = panel_properties_PV['PV_n']
+    NOCT = panel_properties_PV['PV_noct']
+    Bref = panel_properties_PV['PV_Bref']
+    a0 = panel_properties_PV['PV_a0']
+    a1 = panel_properties_PV['PV_a1']
+    a2 = panel_properties_PV['PV_a2']
+    a3 = panel_properties_PV['PV_a3']
+    a4 = panel_properties_PV['PV_a4']
+    L = panel_properties_PV['PV_th']
+    misc_losses = panel_properties_PV['misc_losses']
+
+
+    ## prepare data for heat production calculation
     n0 = panel_properties_SC['n0']
     c1 = panel_properties_SC['c1']
     c2 = panel_properties_SC['c2']
@@ -147,7 +177,7 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
     t_max = panel_properties_SC['t_max']
     IAM_d = panel_properties_SC['IAM_d']
     Aratio = panel_properties_SC['aperture_area_ratio']
-    Apanel = panel_properties_SC['module_area']
+    Apanel = panel_properties_PV['module_length']**2  # FIXME: has to be the same as PV module area, find out typical PV module length
     dP1 = panel_properties_SC['dP1']
     dP2 = panel_properties_SC['dP2']
     dP3 = panel_properties_SC['dP3']
@@ -174,40 +204,14 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
         Nseg = 10  # default number of subsdivisions for the calculation
 
     # calculate equivalent length
-    lv = 2  # grid length module length # TODO: change to module length, and make sure it's the same as PV
+    lv = panel_properties_PV['module_length']  # module length, same as PV
     number_modules = round(total_area_module/Apanel)
     l_ext = (2 * lv * number_modules/ (total_area_module * Aratio))
     l_int = 2 * height / (total_area_module * Aratio)
     Leq = l_int + l_ext  # in m/m2 aperture
 
 
-    ## prepare data for PV electricity generation
 
-    # convert degree to radians
-    lat = radians(latitude)
-    g_vector = np.radians(g)
-    ha_vector = np.radians(ha)
-    Sz_vector = np.radians(Sz)
-    Az_vector = np.radians(Az)
-
-    # empty lists to store results
-    result_PV = list(range(number_groups))
-    Sum_PV = np.zeros(8760)
-    Sum_radiation = np.zeros(8760)
-
-    n = 1.526  # refractive index of glass
-    Pg = 0.2  # ground reflectance
-    K = 0.4  # glazing extinction coefficient
-    eff_nom = panel_properties_PV['PV_n']
-    NOCT = panel_properties_PV['PV_noct']
-    Bref = panel_properties_PV['PV_Bref']
-    a0 = panel_properties_PV['PV_a0']
-    a1 = panel_properties_PV['PV_a1']
-    a2 = panel_properties_PV['PV_a2']
-    a3 = panel_properties_PV['PV_a3']
-    a4 = panel_properties_PV['PV_a4']
-    L = panel_properties_PV['PV_th']   # fixme: check if it's the same as SC grid length
-    misc_losses = panel_properties_PV['misc_losses']
 
     for group in range(number_groups):
         # read panel properties of each group
@@ -215,8 +219,8 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
         area_per_group = prop_observers.loc[group,'total_area_module']
         tilt_angle = prop_observers.loc[group,'B']
         # degree to radians
-        tilt = radians(tilt_angle) #tilt angle
-        teta_z = radians(teta_z) #surface azimuth
+        tilt_rad = radians(tilt_angle) #tilt angle
+        teta_z_rad = radians(teta_z) #surface azimuth
 
         # read irradiation from group
         radiation = pd.DataFrame({'I_sol': hourly_radiation[group]})
@@ -226,18 +230,18 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
 
         ## calculate absorbed solar irradiation on tilt surfaces
         # calculate effective indicent angles necessary
-        teta_vector = np.vectorize(solar_equations.calc_angle_of_incidence)(g_vector, lat, ha_vector, tilt, teta_z)
-        teta_ed, teta_eg = calc_diffuseground_comp(tilt)
+        teta_rad = np.vectorize(solar_equations.calc_angle_of_incidence)(g_rad, lat_rad, ha_rad, tilt_rad, teta_z_rad)
+        teta_ed_rad, teta_eg_rad = calc_diffuseground_comp(tilt_rad)
 
         results_Sm = np.vectorize(calc_Sm_PV)(weather_data.drybulb_C, radiation.I_sol, radiation.I_direct,
-                                           radiation.I_diffuse, tilt, Sz_vector, teta_vector, teta_ed, teta_eg, n, Pg,
+                                           radiation.I_diffuse, tilt_rad, Sz_rad, teta_rad, teta_ed_rad, teta_eg_rad, n, Pg,
                                            K, NOCT, a0, a1, a2, a3, a4, L)
 
         ## SC heat generation
         # calculate incidence angle modifier for beam radiation
-        IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle, panel_properties_SC['type'], Sz)
+        IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle, panel_properties_SC['type'], Sz, latitude)
 
-        list_results_PVT[group] = Calc_PVT_module(tilt_angle, IAM_b.copy(), IAM_d, radiation.I_direct.copy(),
+        list_results_PVT[group] = calc_PVT_module(tilt_angle, IAM_b.copy(), IAM_d, radiation.I_direct.copy(),
                                                   radiation.I_diffuse.copy(), weather_data.drybulb_C, n0, c1, c2, mB0_r,
                                                   mB_max_r, mB_min_r, C_eff, t_max, aperature_area, dP1, dP2, dP3, dP4,
                                                   Cp_fluid, Tin, Leq, l_ext, Nseg, eff_nom, Bref, results_Sm[0].copy(),
@@ -260,7 +264,7 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
     return list_results_PVT, Final
 
 
-def Calc_PVT_module(tilt_angle, IAM_b_vector, IAM_d, I_direct_vector, I_diffuse_vector, Tamb_vector, n0, c1, c2, mB0_r,
+def calc_PVT_module(tilt_angle, IAM_b_vector, IAM_d, I_direct_vector, I_diffuse_vector, Tamb_vector, n0, c1, c2, mB0_r,
                     mB_max_r, mB_min_r, C_eff, t_max, aperture_area, dP1, dP2, dP3, dP4, Cp_fluid, Tin, Leq, l_ext,
                     Nseg, eff_nom, Bref, Sm_PV, Tcell_PV, misc_losses, area_per_group):
     """
