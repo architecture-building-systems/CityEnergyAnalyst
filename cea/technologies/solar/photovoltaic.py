@@ -398,7 +398,7 @@ def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg,
 
     # absorbed solar radiation
     S = M * Ta_n * (kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
-    1 - cos(tilt)) / 2)  # [W/m2] (5.12.1)
+    1 - cos(tilt)) / 2)  # [W/m2] (5.12.1) # TODO: analyze the upper bound and lower bound of each parameter, and check why give exceptionally high number
     if S <= 0:  # when points are 0 and too much losses
         S = 0
     # temperature of cell

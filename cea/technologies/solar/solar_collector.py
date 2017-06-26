@@ -592,7 +592,7 @@ def calc_IAM_beam_SC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, type_SC
 
     g_vector = np.radians(g_vector)
     ha_vector = np.radians(ha_vector)
-    lat = radians(settings.latitude)
+    lat = radians(latitude)
     Sz_vector = np.radians(Sz_vector)
     Az_vector = np.radians(Az_vector)
     Incidence_vector = np.vectorize(solar_equations.calc_incident_angle_beam)(g_vector, lat, ha_vector, tilt,
