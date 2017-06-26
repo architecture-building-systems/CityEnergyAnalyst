@@ -69,4 +69,30 @@ When a branch is merged into master, a full test is performed, equivalent to run
 This ensures that the master branch is kept in a defined state. This doesn't mean there are no bugs. Just that those
 we have found don't creep back.
 
+.. _Jenkins: https://jenkins.io/
+
+Dodo
+----
+
+The Jenkins is set up to run the script ``cea/tests/dodo.py``. This script uses a library called pydoit_ - an
+implementation of a build system (e.g. make_ or ant_) in python using python syntax to descript the targets and actions.
+The dodo script is equivalent to a ``Makefile`` in the standard make_. We use this script to describe the integration
+tests - a selection of scripts from the CEA are run on a set of reference cases to ensure that they at least run through
+without producing errors. In addition, the set of unit tests is also run, actually testing the output of parts of the
+functionality.
+
+.. _make: https://www.gnu.org/software/make/
+.. _ant: http://ant.apache.org/
+
+Test Driven Development
+-----------------------
+
+New code added to the CEA should be accompanied with unit tests. There are many benefits of using unit tests as a
+starting point for writing new code, a concept known as `Test Driven Development (TDD)`_. Developing in this style
+can turn the workflow "inside out", starting bottom-up, testing at the level of equations and only aggregating later
+on in the development life-cycle. This can help reduce bugs and think about code internals. It also is a good way to
+run small "bits" of code quickly. Try it, and see how the style fits your work!
+
+.. _Test Driven Development (TDD): https://en.wikipedia.org/wiki/Test-driven_development
+
 
