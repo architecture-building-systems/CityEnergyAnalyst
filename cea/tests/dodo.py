@@ -288,7 +288,7 @@ def main(user=None, token=None, reference_cases=None):
     if token:
         global _token
         _token = token
-    if reference_cases:
+    if reference_cases and 'all' not in reference_cases:
         global _reference_cases
         _reference_cases = reference_cases
     sys.exit(DoitMain(ModuleTaskLoader(globals())).run([]))
