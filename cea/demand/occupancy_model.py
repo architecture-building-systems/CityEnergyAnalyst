@@ -84,7 +84,7 @@ def calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values):
         # variable X and occupancy type i
         code = schedule_code_dict[label]
         current_schedule = np.zeros(8760)
-        normalizing_value = 0
+        normalizing_value = 0.0
         current_archetype_values = archetype_values[label]
         for num in range(len(list_uses)):
             if current_archetype_values[num] != 0: # do not consider when the value is 0
@@ -92,9 +92,10 @@ def calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values):
                 # for variables that depend on the number of people, the schedule needs to be calculated by number of
                 # people for each use at each time step, not the share of the occupancy for each
                 if label in ['ve','Qs','X', 'Vww', 'Vw']:
-                    share_time_occupancy_density = current_archetype_values[num] * archetype_values['people'][num] * \
-                                                   current_share_of_use
-                    normalizing_value += share_time_occupancy_density / people_per_square_meter
+                    share_time_occupancy_density = \
+                        current_archetype_values[num] * archetype_values['people'][num] * current_share_of_use
+                    if people_per_square_meter > 0:
+                        normalizing_value += share_time_occupancy_density / people_per_square_meter
                 else:
                     share_time_occupancy_density = current_archetype_values[num] * current_share_of_use
                     normalizing_value += share_time_occupancy_density
@@ -103,6 +104,8 @@ def calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values):
                                                               share_time_occupancy_density)
         if label == 'people':
             schedules[label] = current_schedule
+        elif normalizing_value == 0:
+            schedules[label] = current_schedule * 0
         else:
             schedules[label] = current_schedule / normalizing_value
 

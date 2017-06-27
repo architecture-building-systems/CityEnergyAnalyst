@@ -77,15 +77,15 @@ class TestCalcThermalLoads(unittest.TestCase):
     def test_calc_thermal_loads_other_buildings(self):
         """Test some other buildings just to make sure we have the proper data"""
         # randomly selected except for B302006716, which has `Af == 0`
-        buildings = {'B01': (8373.96400, 332161.44100),
-                    'B03': (8362.64100, 331800.73400),
-                    'B02': (8423.01800, 332303.93500),
-                    'B05': (8569.54200, 331622.01200),
-                    'B04': (8546.75100, 332664.97900),
-                    'B07': (8358.49200, 331901.41900),
-                    'B06': (0.00000, 0.00000),
-                    'B09': (8436.55700, 331646.05300),
-                    'B08': (8401.99800, 332857.90100)}
+        buildings = {'B01': (8373.96400, 235413.77500),
+                     'B03': (8362.64100, 235053.04400),
+                     'B02': (8423.01800, 235556.22800),
+                     'B05': (8569.54200, 234874.28400),
+                     'B04': (8546.75100, 235917.23100),
+                     'B07': (8358.49200, 235153.72100),
+                     'B06': (0.00000, 0.00000),
+                     'B09': (8436.55700, 234898.39800),
+                     'B08': (8401.99800, 236110.17000)}
         if self.gv.multiprocessing:
             import multiprocessing as mp
             pool = mp.Pool()
