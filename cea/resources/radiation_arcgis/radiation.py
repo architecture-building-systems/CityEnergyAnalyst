@@ -83,58 +83,61 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
     T_G_day['trr'] = (1 - T_G_day['diff'])
 
-    # T_G_day.to_csv(r'C:\Users\Jimeno\Documents/test4.csv')
+    T_G_day.to_csv(r'C:\Users\Jimeno\Documents/test4.csv')
 
     # Simplify building's geometry
-    elevRaster = arcpy.sa.Raster(locator.get_terrain())
-    dem_raster_extent = elevRaster.extent
-    arcpy.SimplifyBuilding_cartography(locator.get_building_geometry(), Simple_CQ,
-                                       simplification_tolerance=7, minimum_area=None)
-    arcpy.SimplifyBuilding_cartography(locator.get_district(), Simple_context,
-                                       simplification_tolerance=7, minimum_area=None)
-
-    # # burn buildings into raster
-    Burn(Simple_context, locator.get_terrain(), dem_rasterfinal, locator.get_temporary_folder(), dem_raster_extent, gv)
-
-    # Calculate boundaries of buildings
-    CalcBoundaries(Simple_CQ, locator.get_temporary_folder(), path_arcgis_db,
-                   DataFactorsCentroids, DataFactorsBoundaries, gv)
-
-    # calculate observers
-    CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgis_db, gv)
-
-    # Calculate radiation
-    for day in range(1, 366):
-        CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
-                       locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
+    # elevRaster = arcpy.sa.Raster(locator.get_terrain())
+    # dem_raster_extent = elevRaster.extent
+    # arcpy.SimplifyBuilding_cartography(locator.get_building_geometry(), Simple_CQ,
+    #                                    simplification_tolerance=7, minimum_area=None)
+    # arcpy.SimplifyBuilding_cartography(locator.get_district(), Simple_context,
+    #                                    simplification_tolerance=7, minimum_area=None)
+    #
+    # # # burn buildings into raster
+    # Burn(Simple_context, locator.get_terrain(), dem_rasterfinal, locator.get_temporary_folder(), dem_raster_extent, gv)
+    #
+    # # Calculate boundaries of buildings
+    # CalcBoundaries(Simple_CQ, locator.get_temporary_folder(), path_arcgis_db,
+    #                DataFactorsCentroids, DataFactorsBoundaries, gv)
+    #
+    # # calculate observers
+    # CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgis_db, gv)
+    #
+    # # Calculate radiation
+    # for day in range(1, 366):
+    #     CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
+    #                    locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
 
     gv.log('complete raw radiation files')
 
     # run the transformation of files appending all and adding non-sunshine hours
     radiations = []
     for day in range(1, 366):
-        radiations.append(calc_radiation_day(day, sunrise, locator.get_temporary_folder()))
+        result = calc_radiation_day(day, sunrise, locator.get_temporary_folder())
+        result = result.apply(pd.to_numeric, downcast='integer')
+        radiations.append(result)
 
     radiationyear = radiations[0]
     for r in radiations[1:]:
         radiationyear = radiationyear.merge(r, on='ID', how='outer')
-    radiationyear.fillna(value=0, inplace=True)
-    radiationyear.to_csv(DataradiationLocation, index=True)
 
-    radiationyear = radiations = None
+    radiationyear = radiationyear.fillna(value=0)
+    #radiationyear.to_csv(DataradiationLocation, index=True)
+
+    #radiationyear = radiations = None
     gv.log('complete transformation radiation files')
 
     # Assign radiation to every surface of the buildings
     Data_radiation_path = CalcRadiationSurfaces(observers, DataFactorsCentroids,
-                                                DataradiationLocation, locator.get_temporary_folder(), path_arcgis_db)
+                                                radiationyear, locator.get_temporary_folder(), path_arcgis_db)
 
     # get solar insolation @ daren: this is a A BOTTLE NECK
     CalcIncidentRadiation(Data_radiation_path, locator.get_radiation(), locator.get_surface_properties(), gv)
     gv.log('done')
 
 
-def CalcIncidentRadiation(path_radiation_data, path_radiation_year_final, surface_properties, gv):
-    radiation = pd.read_csv(path_radiation_data)
+def CalcIncidentRadiation(radiation, path_radiation_year_final, surface_properties, gv):
+    #radiation = pd.read_csv(path_radiation_data)
     # export surfaces properties
     radiation['Awall_all'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
     radiation[['Name', 'Freeheight', 'FactorShade', 'height_ag', 'Shape_Leng', 'Awall_all']].to_csv(surface_properties, index=False)
@@ -164,7 +167,7 @@ def CalcIncidentRadiation(path_radiation_data, path_radiation_year_final, surfac
     return  # total solar radiation in areas exposed to radiation in Watts
 
 
-def CalcRadiationSurfaces(Observers, DataFactorsCentroids, DataradiationLocation, locationtemp1, locationtemp2):
+def CalcRadiationSurfaces(Observers, DataFactorsCentroids, Radiationtable, locationtemp1, locationtemp2):
     # local variables
     CQSegments_centroid = locationtemp2 + '\\' + 'CQSegmentCentro'
     Outjoin = locationtemp2 + '\\' + 'Join'
@@ -189,13 +192,13 @@ def CalcRadiationSurfaces(Observers, DataFactorsCentroids, DataradiationLocation
     DataCentroidsFull = pd.merge(Centroids_ID_observers, Datacentroids, left_on='ORIG_FID', right_on='ORIG_FID')
 
     # Read again the radiation table and merge values with the Centroid_ID_observers under the field ID in Radiationtable and 'ORIG_ID' in Centroids...
-    Radiationtable = pd.read_csv(DataradiationLocation, index_col='Unnamed: 0')
+    #Radiationtable = pd.read_csv(DataradiationLocation, index_col='Unnamed: 0')
     DataRadiation = pd.merge(left=DataCentroidsFull, right=Radiationtable, left_on='ID', right_on='ID')
 
     Data_radiation_path = locationtemp1 + '\\' + 'tempradaition.csv'
-    DataRadiation.to_csv(Data_radiation_path, index=False)
+    #DataRadiation.to_csv(Data_radiation_path, index=False)
 
-    return Data_radiation_path
+    return DataRadiation
 
 
 def calc_radiation_day(day, sunrise, route):
