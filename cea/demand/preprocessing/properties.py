@@ -252,7 +252,8 @@ def get_prop_architecture(categories_df, architecture_DB, list_uses):
     '''
 
     # create prop_architecture_df based on the construction categories and archetype architecture database
-    prop_architecture_df = categories_df.merge(architecture_DB, left_on='cat_built', right_on='Code')
+    prop_architecture_df = categories_df.merge(architecture_DB, left_on='cat_built', right_on='Code').drop(
+        ['type_leak','type_wall','type_roof','type_shade','type_win'], axis=1)
     # adjust envelope properties based on the envelope renovation year
     prop_envelope_df = categories_df.merge(architecture_DB, left_on='cat_envelope', right_on='Code')
     prop_architecture_df['type_leak'] = prop_envelope_df['type_leak']
