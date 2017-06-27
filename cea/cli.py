@@ -410,8 +410,8 @@ def main():
     test_parser.add_argument('--user', help='GitHub user with access to cea-reference-case repository')
     test_parser.add_argument('--token', help='Personal Access Token for the GitHub user')
     test_parser.add_argument('--save', action='store_true', default=False, help='Save user and token to disk.')
-    test_parser.add_argument('--reference-cases', default=[], nargs='+',
-                             choices=['open', 'zug/baseline', 'zurich/baseline', 'zurich/masterplan'],
+    test_parser.add_argument('--reference-cases', default=['open'], nargs='+',
+                             choices=['open', 'zug/baseline', 'zurich/baseline', 'zurich/masterplan', 'all'],
                              help='list of reference cases to test')
     test_parser.set_defaults(func=test)
 
