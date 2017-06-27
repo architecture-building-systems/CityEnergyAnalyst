@@ -251,20 +251,20 @@ def get_prop_architecture(categories_df, architecture_DB, list_uses):
     :rtype prop_architecture_df: DataFrame
     '''
 
+    # create databases from construction and renovation archetypes
+    construction_DB = architecture_DB.drop(['type_leak','type_wall','type_roof','type_shade','type_win'], axis=1)
+    envelope_DB = architecture_DB[['Code', 'type_leak', 'type_wall']].copy()
+    roof_DB = architecture_DB[['Code','type_roof']].copy()
+    window_DB = architecture_DB[['Code','type_win', 'type_shade']].copy()
+
     # create prop_architecture_df based on the construction categories and archetype architecture database
-    prop_architecture_df = categories_df.merge(architecture_DB, left_on='cat_built', right_on='Code').drop(
-        ['type_leak','type_wall','type_roof','type_shade','type_win'], axis=1)
-    # adjust envelope properties based on the envelope renovation year
-    prop_envelope_df = categories_df.merge(architecture_DB, left_on='cat_envelope', right_on='Code')
-    prop_architecture_df['type_leak'] = prop_envelope_df['type_leak']
-    prop_architecture_df['type_wall'] = prop_envelope_df['type_wall']
-    # adjust roof properties based on the roof renovation year
-    prop_roof_df = categories_df.merge(architecture_DB, left_on='cat_envelope', right_on='Code')
-    prop_architecture_df['type_roof'] = prop_roof_df['type_roof']
-    # adjust window properties based on the window renovation year
-    prop_windows_df = categories_df.merge(architecture_DB, left_on='cat_windows', right_on='Code')
-    prop_architecture_df['type_shade'] = prop_windows_df['type_shade']
-    prop_architecture_df['type_win'] = prop_windows_df['type_win']
+    prop_architecture_df = categories_df.merge(construction_DB, left_on='cat_built', right_on='Code').drop('Code',axis=1)
+    # get envelope properties based on the envelope renovation year
+    prop_architecture_df = prop_architecture_df.merge(envelope_DB, left_on='cat_envelope', right_on='Code').drop('Code',axis=1)
+    # get roof properties based on the roof renovation year
+    prop_architecture_df = prop_architecture_df.merge(roof_DB, left_on='cat_roof', right_on='Code').drop('Code',axis=1)
+    # get window properties based on the window renovation year
+    prop_architecture_df = prop_architecture_df.merge(window_DB, left_on='cat_windows', right_on='Code').drop('Code',axis=1)
 
     # adjust share of floor space that is heated ('Hs') for multiuse buildings
     prop_architecture_df['Hs'] = correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses)
