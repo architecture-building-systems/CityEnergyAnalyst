@@ -531,3 +531,16 @@ class InputLocator(object):
     def get_temporary_file(self, filename):
         """Returns the path to a file in the temporary folder with the name `filename`"""
         return os.path.join(self.get_temporary_folder(), filename)
+
+
+class ReferenceCaseOpenLocator(InputLocator):
+    """This is a special InputLocator that extracts the builtin reference case
+    (``cea/examples/reference-case-open.zip``) to the temporary folder and uses the baseline scenario in there"""
+
+    def __init__(self):
+        import cea.examples
+        import zipfile
+        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+        archive.extractall(tempfile.gettempdir())
+        reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
+        super(ReferenceCaseOpenLocator, self).__init__(scenario_path=reference_case)
