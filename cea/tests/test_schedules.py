@@ -69,7 +69,7 @@ class TestScheduleCreation(unittest.TestCase):
         calculated_schedules = calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values)
 
         reference_time = 3456
-        reference_results = {'El': 0.1080392156862745, 'Qs': 0.000000, 've': 0.01114606741573034,
+        reference_results = {'El': 0.1080392156862745, 'Qs': 0.000000, 've': 0.000000,
                              'Epro': 0.17661721828842394, 'people': 0.0080000000000000019, 'Ed': 0.0, 'Vww': 0.0,
                              'Ea': 0.1340740740740741, 'Ere': 0.0, 'Vw': 0.0, 'X': 0.010264150943396229}
 
