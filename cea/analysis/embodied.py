@@ -11,6 +11,7 @@ from __future__ import division
 
 import numpy as np
 import pandas as pd
+from cea.demand.preprocessing.properties import calc_mainuse
 from cea.utilities.dbfreader import dbf2df
 from geopandas import GeoDataFrame as Gdf
 import cea.globalvar
@@ -361,26 +362,6 @@ def calc_category_retrofit(a, y):
     category = a + result
 
     return category
-
-def calc_mainuse(uses_df, uses):
-    """
-    Calculate a building's main use
-    :param uses_df: DataFrame containing the share of each building that corresponds to each occupancy type
-    :type uses_df: DataFrame
-    :param uses: list of building uses actually available in the area
-    :type uses: list
-
-    :return mainuse: array containing each building's main occupancy
-    :rtype mainuse: ndarray
-
-    """
-
-    databaseclean = uses_df[uses].transpose()
-    array_min = np.array(databaseclean[databaseclean[:] > 0].idxmin(skipna=True), dtype='S10')
-    array_max = np.array(databaseclean[databaseclean[:] > 0].idxmax(skipna=True), dtype='S10')
-    mainuse = np.array(map(calc_comparison, array_min, array_max))
-
-    return mainuse
 
 def calc_comparison(array_min, array_max):
     """
