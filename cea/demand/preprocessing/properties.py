@@ -79,12 +79,12 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
         architecture_DB = get_database(locator.get_archetypes_properties(), 'ARCHITECTURE')
         architecture_DB['Code'] = architecture_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
                                                                             x['year_end'], x['standard']), axis=1)
-        categories_df['cat_architecture'] = calc_category(architecture_DB, categories_df)
+        categories_df['cat_built'] = calc_category(architecture_DB, categories_df, 'built', 'C')
+        retrofit_category = ['envelope', 'roof', 'windows']
+        for category in retrofit_category:
+            categories_df['cat_'+category] = calc_category(architecture_DB, categories_df, category, 'R')
 
-        prop_architecture_df = categories_df.merge(architecture_DB, left_on='cat_architecture', right_on='Code')
-
-        # adjust 'Hs' for multiuse buildings
-        prop_architecture_df['Hs'] = correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses)
+        prop_architecture_df = get_prop_architecture(categories_df, architecture_DB, list_uses)
 
         # write to shapefile
         prop_architecture_df_merged = names_df.merge(prop_architecture_df, on="Name")
@@ -98,7 +98,7 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
         HVAC_DB['Code'] = HVAC_DB.apply(lambda x: calc_code(x['building_use'], x['year_start'],
                                                             x['year_end'], x['standard']), axis=1)
 
-        categories_df['cat_HVAC'] = calc_category(HVAC_DB, categories_df)
+        categories_df['cat_HVAC'] = calc_category(HVAC_DB, categories_df, 'HVAC', 'R')
 
         # define HVAC systems types
         prop_HVAC_df = categories_df.merge(HVAC_DB, left_on='cat_HVAC', right_on='Code')
@@ -174,27 +174,28 @@ def calc_comparison(array_second, array_max):
     return array_max
 
 
-def calc_category(archetype_DB, age):
+def calc_category(archetype_DB, age, field, type):
     category = []
     for row in age.index:
-        if age.loc[row, 'envelope'] > age.loc[row, 'built']:
-            category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, 'envelope']) & \
-                                         (archetype_DB['year_end'] >= age.loc[row, 'envelope']) & \
+        if age.loc[row, field] > age.loc[row, 'built']:
+            category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, field]) & \
+                                         (archetype_DB['year_end'] >= age.loc[row, field]) & \
                                          (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
-                                         (archetype_DB['standard'] == 'R')].Code.values[0])
+                                         (archetype_DB['standard'] == type)].Code.values[0])
         else:
             category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, 'built']) & \
                                          (archetype_DB['year_end'] >= age.loc[row, 'built']) & \
                                          (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
                                          (archetype_DB['standard'] == 'C')].Code.values[0])
-        if 0 < age.loc[row, 'envelope'] < age.loc[row, 'built']:
-            print 'Incorrect renovation year in building ' + age['Name'][row] + \
-                  ': renovation year is lower than building age'
-        if age.loc[row, 'envelope'] == age.loc[row, 'built']:
-            print 'Incorrect renovation year in building ' + age['Name'][
-                row] + ': if building is not renovated, the year needs to be set to 0'
-    return category
+        if field != 'built':
+            if 0 < age.loc[row, field] < age.loc[row, 'built']:
+                print('Incorrect %s renovation year in building %s: renovation year is lower than building age' %
+                      (field, age['Name'][row]))
+            if age.loc[row, field] == age.loc[row, 'built']:
+                print('Incorrect %s renovation year in building %s: if building is not renovated, the year needs to be '
+                      'set to 0' % (field, age['Name'][row]))
 
+    return category
 
 def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
     """
@@ -236,6 +237,38 @@ def correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses):
 
     return Hs_list
 
+def get_prop_architecture(categories_df, architecture_DB, list_uses):
+    '''
+    This function obtains every building's architectural properties based on the construction and renovation years.
+
+    :param categories_df: DataFrame containing each building's construction and renovation categories for each building
+    component based on the construction and renovation years
+    :type categories_df: DataFrame
+    :param architecture_DB: DataFrame containing the archetypal architectural properties for each use type, construction
+    and renovation year
+    :type categories_df: DataFrame
+    :return prop_architecture_df: DataFrame containing the architectural properties of each building in the area
+    :rtype prop_architecture_df: DataFrame
+    '''
+
+    # create prop_architecture_df based on the construction categories and archetype architecture database
+    prop_architecture_df = categories_df.merge(architecture_DB, left_on='cat_built', right_on='Code')
+    # adjust envelope properties based on the envelope renovation year
+    prop_envelope_df = categories_df.merge(architecture_DB, left_on='cat_envelope', right_on='Code')
+    prop_architecture_df['type_leak'] = prop_envelope_df['type_leak']
+    prop_architecture_df['type_wall'] = prop_envelope_df['type_wall']
+    # adjust roof properties based on the roof renovation year
+    prop_roof_df = categories_df.merge(architecture_DB, left_on='cat_envelope', right_on='Code')
+    prop_architecture_df['type_roof'] = prop_roof_df['type_roof']
+    # adjust window properties based on the window renovation year
+    prop_windows_df = categories_df.merge(architecture_DB, left_on='cat_windows', right_on='Code')
+    prop_architecture_df['type_shade'] = prop_windows_df['type_shade']
+    prop_architecture_df['type_win'] = prop_windows_df['type_win']
+
+    # adjust share of floor space that is heated ('Hs') for multiuse buildings
+    prop_architecture_df['Hs'] = correct_archetype_areas(prop_architecture_df, architecture_DB, list_uses)
+
+    return prop_architecture_df
 
 def calculate_average_multiuse(properties_df, occupant_densities, list_uses, properties_DB):
     '''
