@@ -118,7 +118,7 @@ def lca_embodied(year_to_calculate, locator, gv):
 
     # calculate building geometry
     ## total window area
-    cat_df['windows_ag'] = cat_df['win_wall'] * cat_df['perimeter'] * (cat_df['height_ag'] * cat_df['PFloor'])
+    cat_df['windows_ag'] = cat_df['wwr_south'] * cat_df['perimeter'] * (cat_df['height_ag'] * cat_df['PFloor'])
     ## wall area above ground
     cat_df['area_walls_ext_ag'] = cat_df['perimeter'] * (cat_df['height_ag'] * cat_df['PFloor']) - cat_df['windows_ag']
     ## wall area below ground
