@@ -1,5 +1,7 @@
+import ConfigParser
 import os
 import unittest
+import json
 
 import pandas as pd
 
@@ -11,6 +13,14 @@ from cea.utilities import epwreader
 
 
 class TestCalcThermalLoads(unittest.TestCase):
+    """
+    This test case contains the two tests :py:meth`test_calc_thermal_loads` and
+    :py:meth:`test_calc_thermal_loads_other_buildings`. They are not stricty unit tests, but rather test the whole
+    thermal loads calculation (for the built-in reference case) against a set of known results, stored in the file
+    ``test_calc_thermal_loads.config`` - if the results should change and the change has been verified, you can use
+    the script ``create_unittest_data.py`` to update the config file with the new results.
+    """
+
     @classmethod
     def setUpClass(cls):
         import zipfile
@@ -24,6 +34,8 @@ class TestCalcThermalLoads(unittest.TestCase):
         weather_path = cls.locator.get_default_weather()
         cls.weather_data = epwreader.epw_reader(weather_path)[
             ['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
+        cls.config = ConfigParser.SafeConfigParser()
+        cls.config.read(os.path.join(os.path.dirname(__file__), 'test_calc_thermal_loads.config'))
 
         # run properties script
         import cea.demand.preprocessing.properties
@@ -38,7 +50,6 @@ class TestCalcThermalLoads(unittest.TestCase):
                                'occupancy_densities': cls.occupancy_densities, 'archetype_values': cls.archetype_values}
 
     def test_calc_thermal_loads(self):
-        # FIXME: the usage_schedules bit needs to be fixed!!
         bpr = self.building_properties['B01']
         result = calc_thermal_loads('B01', bpr, self.weather_data,
                                     self.usage_schedules, self.date, self.gv, self.locator)
@@ -47,45 +58,21 @@ class TestCalcThermalLoads(unittest.TestCase):
         self.assertTrue(os.path.exists(self.locator.get_temporary_file('B01T.csv')),
                         'Building temp file not produced')
 
-        # test the building csv file
+        # test the building csv file (output of the `calc_thermal_loads` call above)
         df = pd.read_csv(self.locator.get_demand_results_file('B01'))
-        #
-        # expected_columns = self.gv.demand_building_csv_columns
-        # print expected_columns
-        # set(expected_columns)
-        # self.assertEqual(set(expected_columns), set(df.columns),
-        #                  'Column list of building csv does not match: ' + str(
-        #                      set(expected_columns).symmetric_difference(set(df.columns))))
-        # self.assertEqual(df.shape[0], 8760, 'Expected one row per hour in the year')
 
-        value_columns = [u'Ealf_kWh', u'Eauxf_kWh', u'Edataf_kWh', u'Ef_kWh', u'QCf_kWh', u'QHf_kWh',
-                         u'Qcdataf_kWh', u'Qcref_kWh', u'Qcs_kWh', u'Qcsf_kWh', u'Qhs_kWh', u'Qhsf_kWh', u'Qww_kWh',
-                         u'Qwwf_kWh', u'Tcsf_re_C', u'Thsf_re_C', u'Twwf_re_C', u'Tcsf_sup_C', u'Thsf_sup_C',
-                         u'Twwf_sup_C']
-        values = [155102.615999994, 3817.304, 0.0, 158919.92, 8373.964, 235413.775, 0,
-                  0, 7888.446, 8373.964, 183389.465, 195411.984, 37198.8870000003, 40001.765,
-                  2567.0, 67361.359, 99496.0, 1812.0, 77058.2680000001, 525600]
+        value_columns = json.loads(self.config.get('test_calc_thermal_loads', 'value_columns'))
+        values = json.loads(self.config.get('test_calc_thermal_loads', 'values'))
 
         for i, column in enumerate(value_columns):
-            try:
-                self.assertAlmostEqual(values[i], df[column].sum(), msg='Sum of column %s differs, %f != %f' % (
-                    column, values[i], df[column].sum()), places=3)
-            except:
-                print 'values:', [df[column].sum() for column in value_columns]  # make it easier to update changes
-                raise
+            self.assertAlmostEqual(values[i], df[column].sum(), msg='Sum of column %s differs, %f != %f' % (
+                column, values[i], df[column].sum()), places=3)
+
 
     def test_calc_thermal_loads_other_buildings(self):
         """Test some other buildings just to make sure we have the proper data"""
         # randomly selected except for B302006716, which has `Af == 0`
-        buildings = {'B01': (8373.96400, 332161.44100),
-                    'B03': (8362.64100, 331800.73400),
-                    'B02': (8423.01800, 332303.93500),
-                    'B05': (8569.54200, 331622.01200),
-                    'B04': (8546.75100, 332664.97900),
-                    'B07': (8358.49200, 331901.41900),
-                    'B06': (0.00000, 0.00000),
-                    'B09': (8436.55700, 331646.05300),
-                    'B08': (8401.99800, 332857.90100)}
+        buildings = json.loads(self.config.get('test_calc_thermal_loads_other_buildings', 'results'))
         if self.gv.multiprocessing:
             import multiprocessing as mp
             pool = mp.Pool()
