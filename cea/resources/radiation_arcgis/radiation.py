@@ -86,27 +86,27 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     T_G_day.to_csv(r'C:\Users\Jimeno\Documents/test4.csv')
 
     # Simplify building's geometry
-    # elevRaster = arcpy.sa.Raster(locator.get_terrain())
-    # dem_raster_extent = elevRaster.extent
-    # arcpy.SimplifyBuilding_cartography(locator.get_building_geometry(), Simple_CQ,
-    #                                    simplification_tolerance=7, minimum_area=None)
-    # arcpy.SimplifyBuilding_cartography(locator.get_district(), Simple_context,
-    #                                    simplification_tolerance=7, minimum_area=None)
-    #
-    # # # burn buildings into raster
-    # Burn(Simple_context, locator.get_terrain(), dem_rasterfinal, locator.get_temporary_folder(), dem_raster_extent, gv)
-    #
-    # # Calculate boundaries of buildings
-    # CalcBoundaries(Simple_CQ, locator.get_temporary_folder(), path_arcgis_db,
-    #                DataFactorsCentroids, DataFactorsBoundaries, gv)
-    #
-    # # calculate observers
-    # CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgis_db, gv)
-    #
-    # # Calculate radiation
-    # for day in range(1, 366):
-    #     CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
-    #                    locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
+    elevRaster = arcpy.sa.Raster(locator.get_terrain())
+    dem_raster_extent = elevRaster.extent
+    arcpy.SimplifyBuilding_cartography(locator.get_building_geometry(), Simple_CQ,
+                                       simplification_tolerance=7, minimum_area=None)
+    arcpy.SimplifyBuilding_cartography(locator.get_district(), Simple_context,
+                                       simplification_tolerance=7, minimum_area=None)
+
+    # # burn buildings into raster
+    Burn(Simple_context, locator.get_terrain(), dem_rasterfinal, locator.get_temporary_folder(), dem_raster_extent, gv)
+
+    # Calculate boundaries of buildings
+    CalcBoundaries(Simple_CQ, locator.get_temporary_folder(), path_arcgis_db,
+                   DataFactorsCentroids, DataFactorsBoundaries, gv)
+
+    # calculate observers
+    CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgis_db, gv)
+
+    # Calculate radiation
+    for day in range(1, 366):
+        CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
+                       locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
 
     gv.log('complete raw radiation files')
 
