@@ -83,7 +83,7 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
     T_G_day['trr'] = (1 - T_G_day['diff'])
 
-    T_G_day.to_csv(r'C:\Users\Jimeno\Documents/test4.csv')
+    T_G_day.to_csv(locator.get_temporary_file('T_G_day.csv'))
 
     # Simplify building's geometry
     elevRaster = arcpy.sa.Raster(locator.get_terrain())
