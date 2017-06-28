@@ -42,6 +42,7 @@ def calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values):
         'Ed': electricity demand for data centers at each hour [unitless]
         'Vww': domestic hot water schedule at each hour  weighted by the corresponding occupancy types [in lpd/(l/m2/d)]
         'Vw': total water schedule at each hour weighted by the corresponding occupancy types [in lpd/(l/m2/d)]
+        'Qhpro': heating demand for process at each hour [unitless]
 
     :param list_uses: The list of uses used in the project
     :type list_uses: list
@@ -62,7 +63,7 @@ def calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values):
     """
 
     # set up schedules to be defined and empty dictionary
-    schedule_labels = ['people', 've', 'Qs', 'X', 'Ea', 'El', 'Epro', 'Ere', 'Ed', 'Vww', 'Vw']
+    schedule_labels = ['people', 've', 'Qs', 'X', 'Ea', 'El', 'Epro', 'Ere', 'Ed', 'Vww', 'Vw', 'Qhpro']
     schedules = {}
 
     # define the archetypal schedule type to be used for the creation of each schedule: 0 for occupancy, 1 for
