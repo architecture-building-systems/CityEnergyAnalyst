@@ -226,7 +226,7 @@ class InputLocator(object):
     def get_default_weather(self):
         """weather/Zug-2010.epw
         path to database of archetypes file Archetypes_properties.xlsx"""
-        return os.path.join(self.weather_path, 'Zug.epw')
+        return os.path.join(self.weather_path, 'Singapore-2015.epw')
 
     def get_weather(self, name):
         """weather/{name}.epw"""
@@ -243,7 +243,7 @@ class InputLocator(object):
     def get_archetypes_properties(self):
         """databases/CH/Archetypes/Aconstruction_properties.xlsx
         path to database of archetypes file Archetypes_properties.xlsx"""
-        return os.path.join(self.db_path, 'archetypes', 'construction_properties_CH.xlsx')
+        return os.path.join(self.db_path, 'archetypes', 'construction_properties_SIN.xlsx')
 
     def get_archetypes_schedules(self):
         """databases/CH/Archetypes/Archetypes_schedules.xlsx
@@ -379,10 +379,6 @@ class InputLocator(object):
     def get_3D_geometry_folder(self):
         """scenario/inputs/3D-geometries"""
         return self._ensure_folder(os.path.join(self.scenario_path, 'inputs', '3D-geometries'))
-
-    def get_solar_radiation_folder(self):
-        """scenario/outputs/data/solar-radiation"""
-        return os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
 
     def get_surface_properties(self):
         """scenario/outputs/data/solar-radiation/properties_surfaces.csv"""
