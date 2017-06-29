@@ -34,7 +34,7 @@ TERRAIN_PARAMS = {'e_terrain': 0.8} #reflection for the terrain.
 
 # simulation parameters
 SIMUL_PARAMS = {'n_build_in_chunk':10, # min number of buildings for multiprocessing
-                'multiprocessing': False}  # limit the number if running out of memory
+                'multiprocessing': True}  # limit the number if running out of memory
 
 # geometry simplification
 SIMPLIFICATION_PARAMS = {'zone_geometry': 2,     #level of simplification of the zone geometry
