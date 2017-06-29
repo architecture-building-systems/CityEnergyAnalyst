@@ -70,7 +70,7 @@ nsExec::ExecToLog '"$INSTDIR\miniconda.exe" /S /AddToPath=0 /RegisterPython=0 /N
 nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c conda-forge -y geopandas ephem "pandas<0.20"'
 nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c dlr-sc tbb freeimageplus gl2ps'
 nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c oce -c pythonocc pythonocc-core=0.17.3'
-
+nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c omnia cvxopt'
 nsExec::ExecToLog '"$INSTDIR\Scripts\pip.exe" install cityenergyanalyst==${VER}'
 nsExec::ExecToLog '"$INSTDIR\Scripts\cea.exe" install-toolbox'
 
