@@ -63,13 +63,12 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     # local variables
     aspect_slope = "FROM_DEM"
     heightoffset = 1
-    Simple_CQ = path_arcgis_db + '\\' + 'Simple_CQ'
-    Simple_context = path_arcgis_db + '\\' + 'Simple_context'
+    Simple_CQ = locator.get_temporary_file('Simple_CQ.shp')
+    Simple_context = locator.get_temporary_file('Simple_context.shp')
     dem_rasterfinal = path_arcgis_db + '\\' + 'DEM_All2'
     observers = path_arcgis_db + '\\' + 'observers'
     DataFactorsBoundaries = locator.get_temporary_file('DataFactorsBoundaries.csv')
     DataFactorsCentroids = locator.get_temporary_file('DataFactorsCentroids.csv')
-    DataradiationLocation = locator.get_temporary_file('RadiationYear.csv')
 
     # calculate sunrise
     sunrise = calc_sunrise(range(1, 366), year, longitude, latitude, gv)
@@ -102,9 +101,9 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgis_db, gv)
 
     # Calculate radiation
-    for day in range(1, 366):
+    for day in range(1,366):
         CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
-                       locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
+                      locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
 
     gv.log('complete raw radiation files')
 
@@ -120,22 +119,20 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
         radiationyear = radiationyear.merge(r, on='ID', how='outer')
 
     radiationyear = radiationyear.fillna(value=0)
-    #radiationyear.to_csv(DataradiationLocation, index=True)
 
-    #radiationyear = radiations = None
     gv.log('complete transformation radiation files')
 
     # Assign radiation to every surface of the buildings
-    Data_radiation_path = CalcRadiationSurfaces(observers, DataFactorsCentroids,
+    Data_radiation = CalcRadiationSurfaces(observers, DataFactorsCentroids,
                                                 radiationyear, locator.get_temporary_folder(), path_arcgis_db)
 
     # get solar insolation @ daren: this is a A BOTTLE NECK
-    CalcIncidentRadiation(Data_radiation_path, locator.get_radiation(), locator.get_surface_properties(), gv)
+    CalcIncidentRadiation(Data_radiation, locator.get_radiation(), locator.get_surface_properties(), gv)
     gv.log('done')
 
 
 def CalcIncidentRadiation(radiation, path_radiation_year_final, surface_properties, gv):
-    #radiation = pd.read_csv(path_radiation_data)
+
     # export surfaces properties
     radiation['Awall_all'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
     radiation[['Name', 'Freeheight', 'FactorShade', 'height_ag', 'Shape_Leng', 'Awall_all']].to_csv(surface_properties, index=False)
@@ -190,11 +187,7 @@ def CalcRadiationSurfaces(Observers, DataFactorsCentroids, Radiationtable, locat
     DataCentroidsFull = pd.merge(Centroids_ID_observers, Datacentroids, left_on='ORIG_FID', right_on='ORIG_FID')
 
     # Read again the radiation table and merge values with the Centroid_ID_observers under the field ID in Radiationtable and 'ORIG_ID' in Centroids...
-    #Radiationtable = pd.read_csv(DataradiationLocation, index_col='Unnamed: 0')
     DataRadiation = pd.merge(left=DataCentroidsFull, right=Radiationtable, left_on='ID', right_on='ID')
-
-    Data_radiation_path = locationtemp1 + '\\' + 'tempradaition.csv'
-    #DataRadiation.to_csv(Data_radiation_path, index=False)
 
     return DataRadiation
 
