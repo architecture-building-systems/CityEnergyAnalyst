@@ -148,16 +148,6 @@ def radiation_multiprocessing(rad, bldg_dict_list, aresults_path, aweatherfile_p
     chunks = [bldg_dict_list[i:i +simul_params['n_build_in_chunk']] for i in range(0, len(bldg_dict_list),
                                                                                    simul_params['n_build_in_chunk'])]
 
-    # pool = mp.Pool()
-    # joblist = []
-    # for chunk_n, bldg_dict in enumerate(chunks):
-    #     job = pool.apply_async(daysim_main.isolation_daysim,
-    #                                 [chunk_n, rad, bldg_dict, aresults_path, rad_params, aweatherfile_path])
-    #     joblist.append(job)
-    # for i, job in enumerate(joblist):
-    #     job.get(240)
-    # pool.close()
-
     processes = []
     for chunk_n, bldg_dict in enumerate(chunks):
         process = mp.Process(target=daysim_main.isolation_daysim, args=(
@@ -203,7 +193,6 @@ def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
                                                                             input_terrain_raster, architecture_dbf,
                                                                                                     simplification_params)
 
-
     print "Sending the scene: geometry and materials to daysim"
     # send materials
     daysim_mat = locator.get_temporary_file('default_materials.rad')
@@ -217,9 +206,7 @@ def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
     rad.create_rad_input_file()
 
     time1 = time.time()
-    radiation_singleprocessing(rad, geometry_3D_zone, locator, weatherfile_path)
-
-    if (settings.SIMUL_PARAMS['multiprocessing'] and mp.cpu_count() > 1):
+    if settings.SIMUL_PARAMS['multiprocessing']:
         radiation_multiprocessing(rad, geometry_3D_zone, locator, weatherfile_path)
     else:
         radiation_singleprocessing(rad, geometry_3D_zone, locator, weatherfile_path)
