@@ -147,7 +147,7 @@ def thermal_network_main(locator, gv, network_type, source):
     pressure_nodes_return = []
     pressure_loss_system = []
 
-    for t in range(79,80):
+    for t in range(79,80):  # FIXME
         print('calculating network thermal hydraulic properties... time step', t)
         timer = time.clock()
 
@@ -235,7 +235,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df):
     mass_flow_substation_df = mass_flow_substation_df.sort_index(axis=1)
     # t0 = time.clock()
     mass_flow_edge = np.round(np.transpose(np.linalg.lstsq(edge_node_df.values, np.transpose(
-        mass_flow_substation_df.values))[0]), decimals = 9)
+        mass_flow_substation_df.values))[0]), decimals = 9)  # FIXME
     # print time.clock() - t0, "seconds process time for total mass flow calculation\n"
 
     return mass_flow_edge
@@ -335,9 +335,9 @@ def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, mass_flow_rate
     # edge_node_transpose * pressure_nodes = - (pressure_loss_pipe) (Ax = b)
     edge_node_transpose = np.transpose(edge_node_df.values)
     pressure_nodes_supply = np.round(
-        np.transpose(np.linalg.lstsq(edge_node_transpose, np.transpose(pressure_loss_pipe_supply)*(-1))[0]), decimals=9)
+        np.transpose(np.linalg.lstsq(edge_node_transpose, np.transpose(pressure_loss_pipe_supply)*(-1))[0]), decimals=9)  # FIXME
     pressure_nodes_return = np.round(
-        np.transpose(np.linalg.lstsq(-edge_node_transpose, np.transpose(pressure_loss_pipe_return)*(-1))[0]), decimals=9)
+        np.transpose(np.linalg.lstsq(-edge_node_transpose, np.transpose(pressure_loss_pipe_return)*(-1))[0]), decimals=9)  # FIXME
 
     return pressure_nodes_supply, pressure_nodes_return, pressure_loss_system
 
@@ -368,14 +368,14 @@ def calc_pressure_loss_pipe(pipe_diameter, pipe_length, mass_flow_rate, temperat
 
     # calculate the properties of water flowing in the pipes at the given temperature
     kinematic_viscosity = calc_kinematic_viscosity(temperature)  # m2/s
-    reynolds = 4*(mass_flow_rate/gv.Pwater)/(math.pi * kinematic_viscosity * pipe_diameter)
+    reynolds = 4*(mass_flow_rate/gv.Pwater)/(math.pi * kinematic_viscosity * pipe_diameter)  # FIXME
     pipe_roughness = gv.roughness
 
     # calculate the Darcy-Weisbach friction factor using the Swamee-Jain equation
-    darcy = 1.325 * np.log(pipe_roughness / (3.7 * pipe_diameter) + 5.74 / reynolds ** 0.9) ** (-2)
+    darcy = 1.325 * np.log(pipe_roughness / (3.7 * pipe_diameter) + 5.74 / reynolds ** 0.9) ** (-2)  # FIXME
 
     # calculate the pressure losses through a pipe using the Darcy-Weisbach equation
-    pressure_loss_edge = darcy * 8 * mass_flow_rate**2 * pipe_length/(math.pi**2 * pipe_diameter**5 * gv.Pwater)
+    pressure_loss_edge = darcy * 8 * mass_flow_rate**2 * pipe_length/(math.pi**2 * pipe_diameter**5 * gv.Pwater)  # FIXME
 
     return pressure_loss_edge
 
@@ -397,7 +397,7 @@ def calc_kinematic_viscosity(temperature):
 
     """
 
-    return 2.652623e-8*math.e**(557.5447*(temperature-140)**-1)
+    return 2.652623e-8*math.e**(557.5447*(temperature-140)**-1)  # FIXME
 
 
 def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge_node_df, gv, locator,
@@ -447,7 +447,7 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
         print('\n calculating edge mass flow... time step', t)
 
         # set to the highest value in the network and assume no loss within the network
-        T_substation_supply = t_target_supply.ix[t].max() + 273.15  # in [K]
+        T_substation_supply = t_target_supply.ix[t].max() + 273.15  # in [K] # FIXME
 
         # calculate substation flow rates and return temperatures
         if network_type == 'DH' or (network_type == 'DC' and math.isnan(T_substation_supply) is False):
@@ -854,7 +854,7 @@ def calc_supply_temperatures(gv, T_ground, edge_node_df, mass_flow_df, K, t_targ
                     T_node = np.zeros(Z.shape[0])
                     iteration += 1
 
-            elif all(dT > -0.1) is False and (T_plant_sup - T_plant_sup_0) >= 60:
+            elif all(dT > -0.1) is False and (T_plant_sup - T_plant_sup_0) >= 60:  # FIXME
                 # end iteration if total network temperature drop is higher than 60 K
                 print ('cannot fulfill substation supply node temperature requirement after iterations:',
                        iteration, dT.min())
@@ -1097,7 +1097,7 @@ def calc_aggregated_heat_conduction_coefficient(locator, gv, L_pipe, pipe_proper
         R_pipe = np.log(pipe_properties_df.loc['D_ext', pipe]/pipe_properties_df.loc['D_int', pipe])/(2*math.pi*conductivity_pipe)     #[mC/W]
         R_insulation = np.log((pipe_properties_df.loc['D_ins', pipe])/pipe_properties_df.loc['D_ext', pipe])/(2*math.pi*conductivity_insulation)
         a= 2*network_depth/(pipe_properties_df.loc['D_ins', pipe])
-        R_ground = np.log(a+(a**2-1)**0.5)/(2*math.pi*conductivity_ground) #[mC/W]
+        R_ground = np.log(a+(a**2-1)**0.5)/(2*math.pi*conductivity_ground) #[mC/W]  # FIXME
         # calculate the aggregated heat conduction coefficient, equation (4) in Wang et al., 2016
         k = L_pipe[pipe]*(1 + extra_heat_transfer_coef)/(R_pipe + R_insulation + R_ground)/1000   #[kW/C]
         K_all.append(k)
