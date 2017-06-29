@@ -2,7 +2,7 @@ from dbfpy import dbf
 
 ## create empty DBF, set fields
 
-path_age =r'C:\reference-case-test\baseline\inputs\building-properties\age.dbf'
+path_age =r'C:\trial\age.dbf'
 
 db = dbf.Dbf(path_age, new=True)
 
