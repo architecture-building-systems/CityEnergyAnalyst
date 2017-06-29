@@ -83,8 +83,6 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
     T_G_day['trr'] = (1 - T_G_day['diff'])
 
-    T_G_day.to_csv(r'C:\Users\Jimeno\Documents/test4.csv')
-
     # Simplify building's geometry
     elevRaster = arcpy.sa.Raster(locator.get_terrain())
     dem_raster_extent = elevRaster.extent
@@ -258,7 +256,7 @@ def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, 
                   heightoffset, gv):
     # Local Variables
     Latitude = str(latitude)
-    skySize = '1400'  # max 10000
+    skySize = '400'  # max 10000
     dayInterval = '1'
     hourInterval = '1'
     calcDirections = '32'
