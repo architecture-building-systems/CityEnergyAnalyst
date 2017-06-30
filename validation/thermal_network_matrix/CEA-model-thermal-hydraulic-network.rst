@@ -94,9 +94,9 @@ Comparison of Results from CEA and Simulink
 +-------------------------------------------+------------+----------------+-----------------------+
 | Average difference in pressure loss       | 2% lower   |                | Excluding t=438, 8667 |
 +-------------------------------------------+------------+----------------+-----------------------+
-| Hours with t = 438                        | 0.1% of the maximum flow rate                       |
+| Hours with maximum difference t = 438     | 0.1% of the maximum flow rate                       |
 +-------------------------------------------+-----------------------------------------------------+
-| Hours with t = 8667                       | 0.01% of the maximum flow rate                      |
+| Hours with maximum difference t = 8667    | 0.01% of the maximum flow rate                      |
 +-------------------------------------------+-----------------------------------------------------+
 
 
