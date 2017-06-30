@@ -112,6 +112,8 @@ between the results from CEA and Simulink. This is because we assume all flows a
 while Simulink considers different heat transfer resistances with different flow regimes (laminar,
 turbulent and transitional)
 
+.. figure:: network3_ploss.png
+
 Future Improvements
 ===================
 
