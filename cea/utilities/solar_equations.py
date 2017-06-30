@@ -174,7 +174,7 @@ def get_equation_of_time(day_date):
 
 # filter sensor points with low solar potential
 
-def filter_low_potential(weather_data, radiation_csv, metadata_csv, min_radiation, panel_on_roof, panel_on_wall):
+def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, min_radiation, panel_on_roof, panel_on_wall):
     """
     To filter the sensor points/hours with low radiation potential.
     1. keep sensors above min radiation
@@ -208,8 +208,8 @@ def filter_low_potential(weather_data, radiation_csv, metadata_csv, min_radiatio
     yearly_horizontal_rad = weather_data.glohorrad_Whm2.sum()  # [Wh/m2/year]
 
     # read radiation file
-    sensors_rad = pd.read_csv(radiation_csv)
-    sensors_metadata = pd.read_csv(metadata_csv)
+    sensors_rad = pd.read_json(radiation_json_path)
+    sensors_metadata = pd.read_csv(metadata_csv_path)
 
     # join total radiation to sensor_metadata
     sensors_rad_sum = sensors_rad.sum(0).values # add new row with yearly radiation

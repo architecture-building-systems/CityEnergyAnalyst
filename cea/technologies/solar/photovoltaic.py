@@ -26,7 +26,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, weather_path, building_name, pvonroof,
+def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_path, building_name, pvonroof,
             pvonwall, misc_losses, worst_hour, type_PVpanel, min_radiation, date_start):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
@@ -35,8 +35,8 @@ def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
 
     :param locator: An InputLocator to locate input files
     :type locator: cea.inputlocator.InputLocator
-    :param radiation_csv: solar insulation data on all surfaces of each building
-    :type radiation_csv: .csv
+    :param radiation_path: solar insulation data on all surfaces of each building (path
+    :type radiation_path: String
     :param metadata_csv: data of sensor points measuring solar insulation of each building
     :type metadata_csv: .csv
     :param latitude: latitude of the case study location
@@ -68,7 +68,7 @@ def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
 
     # select sensor point with sufficient solar radiation
     max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_csv, metadata_csv, min_radiation, pvonroof, pvonwall)
+        solar_equations.filter_low_potential(weather_data, radiation_path, metadata_csv, min_radiation, pvonroof, pvonwall)
 
     print 'filtering low potential sensor points done'
 
@@ -93,67 +93,6 @@ def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
         print 'done - time elapsed:', (time.clock() - t0), ' seconds'
     return
 
-def filter_low_potential(weather_data, radiation_csv, metadata_csv, min_radiation, pvonroof, pvonwall): #TODO: move to solar equation when done
-    """
-    To filter the sensor points/hours with low radiation potential.
-    1. # keep sensors above min radiation
-    2. # eliminate points when hourly production < 50 W/m2
-
-    :param weather_data: weather data read from the epw file
-    :type weather_data: dataframe
-    :param radiation_csv: solar insulation data on all surfaces of each building
-    :type radiation_csv: .csv
-    :param metadata_csv: solar insulation sensor data of each building
-    :type metadata_csv: .csv
-    :param gv: global variables
-    :type gv: cea.globalvar.GlobalVariables
-    :return max_yearly_radiation: yearly horizontal radiation [Wh/m2/year]
-    :rtype max_yearly_radiation: float
-    :return min_yearly_radiation: minimum yearly radiation threshold for sensor selection [Wh/m2/year]
-    :rtype min_yearly_radiation: float
-    :return sensors_rad_clean: radiation data of the filtered sensors [Wh/m2]
-    :rtype sensors_rad_clean: dataframe
-    :return sensors_metadata_clean: data of filtered sensor points measuring solar insulation of each building
-    :rtype sensors_metadata_clean: dataframe
-
-    :Assumptions:
-        1) Sensor points with low yearly radiation are deleted. The threshold (minimum yearly radiation) is a percentage
-           of global horizontal radiation. The percentage threshold (min_radiation) is a global variable defined by users.
-        2) For each sensor point kept, the radiation value is set to zero when radiation value is below 50 W/m2.
-        3) No solar panels on windows.
-    """
-    # get max radiation potential from global horizontal radiation
-    yearly_horizontal_rad = weather_data.glohorrad_Whm2.sum()  # [Wh/m2/year]
-
-    # read radiation file
-    sensors_rad = pd.read_csv(radiation_csv)
-    sensors_metadata = pd.read_csv(metadata_csv)
-
-    # join total radiation to sensor_metadata
-    sensors_rad_sum = sensors_rad.sum(0).values # add new row with yearly radiation
-    sensors_metadata['total_rad_Whm2'] = sensors_rad_sum    #[Wh/m2]
-
-    # remove window surfaces
-    sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'window']
-
-    # keep sensors if allow pv installation on walls or on roofs
-    if pvonroof is False:
-        sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'roof']
-    if pvonwall is False:
-        sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'wall']
-
-    # keep sensors above min production in sensors_rad
-    sensors_metadata = sensors_metadata.set_index('SURFACE')
-    max_yearly_radiation = yearly_horizontal_rad
-    # set min yearly radiation threshold for sensor selection
-    min_yearly_radiation = max_yearly_radiation * min_radiation
-
-    sensors_metadata_clean = sensors_metadata[sensors_metadata.total_rad_Whm2 >= min_yearly_radiation]
-    sensors_rad_clean = sensors_rad[sensors_metadata_clean.index.tolist()] # keep sensors above min radiation
-
-    sensors_rad_clean[sensors_rad_clean[:] <= 50] = 0   # eliminate points when hourly production < 50 W/m2
-
-    return max_yearly_radiation, min_yearly_radiation, sensors_rad_clean, sensors_metadata_clean
 
 
 # =========================
@@ -765,7 +704,7 @@ def test_photovoltaic():
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name= building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
-        calc_PV(locator=locator, radiation_csv= radiation, metadata_csv= radiation_metadata, latitude=latitude,
+        calc_PV(locator=locator, radiation_path= radiation, metadata_csv= radiation_metadata, latitude=latitude,
                 longitude=longitude, weather_path=weather_path, building_name = building,
                 pvonroof=panel_on_roof, pvonwall=panel_on_wall, misc_losses=misc_losses, worst_hour=worst_hour,
                 type_PVpanel=type_PVpanel, min_radiation=min_radiation, date_start=date_start)
