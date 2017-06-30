@@ -94,9 +94,9 @@ Comparison of Results from CEA and Simulink
 +-------------------------------------------+------------+----------------+-----------------------+
 | Average difference in pressure loss       | 2% lower   |                | Excluding t=438, 8667 |
 +-------------------------------------------+------------+----------------+-----------------------+
-| Hours with t = 438                        | 0.1% of the maximum flow rate                       |
+| Hours with maximum difference t = 438     | 0.1% of the maximum flow rate                       |
 +-------------------------------------------+-----------------------------------------------------+
-| Hours with t = 8667                       | 0.01% of the maximum flow rate                      |
+| Hours with maximum difference t = 8667    | 0.01% of the maximum flow rate                      |
 +-------------------------------------------+-----------------------------------------------------+
 
 
@@ -109,8 +109,8 @@ supply network accounts for 1.3% of the total heat supplied by the heating plant
 in th thermal loss calculation is in acceptable range
 3. There are two instances (t = 438, 8667) where the thermal/hydraulic losses deviate more than 15%
 between the results from CEA and Simulink. This is because we assume all flows are turbulent in CEA,
- while Simulink considers different heat transfer resistances with different flow regimes ( laminar,
- turbulent and transitional)
+while Simulink considers different heat transfer resistances with different flow regimes (laminar,
+turbulent and transitional)
 
 Future Improvements
 ===================
