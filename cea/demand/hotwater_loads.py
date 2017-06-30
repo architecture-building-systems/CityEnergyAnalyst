@@ -136,7 +136,10 @@ def calc_disls(tamb, hotw, Flowtap, V, twws, Lsww_dis, p, cpw, Y, gv):
         except ZeroDivisionError:
             gv.log('twws: %(twws).2f, tamb: %(tamb).2f, p: %(p).2f, cpw: %(cpw).2f, V: %(V).2f',
                    twws=twws, tamb=tamb, p=p, cpw=cpw, V=V)
-            exponential = scipy.exp(-(q * Lsww_dis * t) / (p * cpw * V * (twws - tamb) * 1000))
+            if (p * cpw * V * (twws - tamb) * 1000 == 0) and (q * Lsww_dis * t != 0):
+                exponential = 0
+            else:
+                raise ZeroDivisionError
         tamb = tamb + (twws - tamb) * exponential
         losses = (twws - tamb) * V * cpw * p / 1000 * 278
     else:
