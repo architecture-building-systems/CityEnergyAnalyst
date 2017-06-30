@@ -7,10 +7,10 @@ C. Miller script development               10.08.14
 J. A. Fonseca  adaptation for CEA tool     25.05.16
 
 """
-
 import pysal
 import numpy as np
 import pandas as pd
+import os
 
 def df2dbf(df, dbf_path, my_specs=None):
 
@@ -52,3 +52,50 @@ def dbf2df(dbf_path, index=None, cols=False, incl_index=False):
     else:
         db.close()
         return pd.DataFrame(data)
+
+
+def xls2dbf(input_path,output_path):
+    if input_path.endswith('.xls'):     # check if the extension of the input is xls
+        if os.path.isfile(input_path):
+            base = os.path.basename(input_path)
+            base_filename=os.path.splitext(base)[0]
+            df=pd.read_excel(input_path)
+            suffix = '.dbf'
+            output_path=os.path.join(output_path, base_filename + '_convereted' + suffix)
+            df2dbf(df,output_path)
+        else:
+            print 'file does not exist'
+    else:
+        print 'input file should have *.xls extention'
+
+def dbf2xls(input_path,output_path):
+    if input_path.endswith('.dbf'):   # check if the extension of the input is dbf
+        if os.path.isfile(input_path):
+            base = os.path.basename(input_path)
+            base_filename = os.path.splitext(base)[0]
+            df=dbf2df(input_path)
+            suffix = '.xls'
+            output_path = os.path.join(output_path, base_filename + '_convereted' + suffix)
+            df.to_excel(output_path)
+        else:
+            print 'file does not exist'
+    else:
+        print 'input file should have *.dbf extension'
+
+def run_as_script(parameters):
+    input_path=parameters[0]
+    output_path=parameters[1]
+    if input_path.endswith('.dbf'):
+        dbf2xls(input_path=input_path, output_path=output_path)
+    elif input_path.endswith('.xls'):
+        xls2dbf(input_path=input_path, output_path=output_path)
+    else:
+        print 'input file type not supported'
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('parameters')
+    args = parser.parse_args()
+    run_as_script(parameters=args.parameters)
