@@ -135,23 +135,7 @@ def CalcIncidentRadiation(radiation, path_radiation_year_final, surface_properti
 
     # export surfaces properties
     # radiation['Awall_all'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
-    gv.log('pickling radation dataframe to temp folder')
-    radiation.to_pickle(os.path.expandvars(r'$temp\radiation.pickle'))
-    radiation = pd.read_pickle(os.path.expandvars(r'$temp\radiation.pickle'))
-
-    # use a temporary dataframe for calculations to avoid MemoryError (see #661)
-    import gc
-    gc.collect()
-    gv.log('creating temporary radation dataframe')
-    radiation_temp = pd.DataFrame(radiation['Shape_Leng'])
-    radiation_temp['FactorShade'] = radiation['FactorShade']
-    radiation_temp['Freeheight'] = radiation['Freeheight']
-    radiation_temp.loc[:, 'Awall_all'] = radiation_temp['Shape_Leng']
-    radiation_temp.loc[:, 'Awall_all'] = radiation_temp['Awall_all'] * radiation_temp['FactorShade']
-    radiation_temp.loc[:, 'Awall_all'] = radiation_temp['Awall_all'] * radiation_temp['Freeheight']
-
-    gv.log('assigning back to radiation frame')
-    radiation['Awall_all'] = radiation_temp['Awall_all']
+    radiation = calculate_wall_areas(radiation)
     radiation[['Name', 'Freeheight', 'FactorShade', 'height_ag', 'Shape_Leng', 'Awall_all']].to_csv(surface_properties,
                                                                                                     index=False)
     gv.log('saved surface properties to disk')
@@ -179,6 +163,35 @@ def CalcIncidentRadiation(radiation, path_radiation_year_final, surface_properti
     incident_radiation.to_csv(path_radiation_year_final)
 
     return  # total solar radiation in areas exposed to radiation in Watts
+
+
+def calculate_wall_areas(radiation):
+    """Calculate Awall_all in radiation as the multiplication ``Shape_Leng * FactorShade * Freeheight``
+    Uses a subprocess to get around a MemoryError we are having (might have to do with conflicts with ArcGIS numpy?)
+    """
+    print('pickling radation dataframe to temp folder')
+    radiation_pickle_path = os.path.expandvars(r'$temp\radiation.pickle')
+    radiation.to_pickle(radiation_pickle_path)
+
+    import multiprocessing
+    process = multiprocessing.Process(target=_calculate_wall_areas_subprocess, args=(radiation_pickle_path,))
+    process.start()
+    process.join()  ## block until process terminates
+
+    del radiation
+    import gc
+    gc.collect()
+    radiation = pd.read_pickle(radiation_pickle_path)
+
+
+def _calculate_wall_areas_subprocess(radiation_pickle_path):
+    """subprocess for calculating wall areas using multiprocessing. the data is passed in the pickled
+    dataframe ``radiation_pickle_path``"""
+
+    # use a temporary dataframe for calculations to avoid MemoryError (see #661)
+    radiation = pd.read_pickle(radiation_pickle_path)
+    radiation.loc[:, 'Awall_all'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
+    radiation.to_pickle(radiation_pickle_path)
 
 
 def CalcRadiationSurfaces(Observers, DataFactorsCentroids, Radiationtable, locationtemp1, locationtemp2):
