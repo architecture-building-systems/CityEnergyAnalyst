@@ -74,36 +74,36 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     sunrise = calc_sunrise(range(1, 366), year, longitude, latitude, gv)
 
     # calcuate daily transmissivity and daily diffusivity
-    weather_data = epwreader.epw_reader(weather_path)[['dayofyear', 'exthorrad_Whm2',
-                                                       'glohorrad_Whm2', 'difhorrad_Whm2']]
-    weather_data['diff'] = weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
-    weather_data = weather_data[np.isfinite(weather_data['diff'])]
-    T_G_day = np.round(weather_data.groupby(['dayofyear']).mean(), 2)
-    T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
-    T_G_day['trr'] = (1 - T_G_day['diff'])
-
-    # Simplify building's geometry
-    elevRaster = arcpy.sa.Raster(locator.get_terrain())
-    dem_raster_extent = elevRaster.extent
-    arcpy.SimplifyBuilding_cartography(locator.get_building_geometry(), Simple_CQ,
-                                       simplification_tolerance=7, minimum_area=None)
-    arcpy.SimplifyBuilding_cartography(locator.get_district(), Simple_context,
-                                       simplification_tolerance=7, minimum_area=None)
-
-    # # burn buildings into raster
-    Burn(Simple_context, locator.get_terrain(), dem_rasterfinal, locator.get_temporary_folder(), dem_raster_extent, gv)
-
-    # Calculate boundaries of buildings
-    CalcBoundaries(Simple_CQ, locator.get_temporary_folder(), path_arcgis_db,
-                   DataFactorsCentroids, DataFactorsBoundaries, gv)
-
-    # calculate observers
-    CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgis_db, gv)
-
-    # Calculate radiation
-    for day in range(1,366):
-        CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
-                      locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
+    # weather_data = epwreader.epw_reader(weather_path)[['dayofyear', 'exthorrad_Whm2',
+    #                                                    'glohorrad_Whm2', 'difhorrad_Whm2']]
+    # weather_data['diff'] = weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
+    # weather_data = weather_data[np.isfinite(weather_data['diff'])]
+    # T_G_day = np.round(weather_data.groupby(['dayofyear']).mean(), 2)
+    # T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
+    # T_G_day['trr'] = (1 - T_G_day['diff'])
+    #
+    # # Simplify building's geometry
+    # elevRaster = arcpy.sa.Raster(locator.get_terrain())
+    # dem_raster_extent = elevRaster.extent
+    # arcpy.SimplifyBuilding_cartography(locator.get_building_geometry(), Simple_CQ,
+    #                                    simplification_tolerance=7, minimum_area=None)
+    # arcpy.SimplifyBuilding_cartography(locator.get_district(), Simple_context,
+    #                                    simplification_tolerance=7, minimum_area=None)
+    #
+    # # # burn buildings into raster
+    # Burn(Simple_context, locator.get_terrain(), dem_rasterfinal, locator.get_temporary_folder(), dem_raster_extent, gv)
+    #
+    # # Calculate boundaries of buildings
+    # CalcBoundaries(Simple_CQ, locator.get_temporary_folder(), path_arcgis_db,
+    #                DataFactorsCentroids, DataFactorsBoundaries, gv)
+    #
+    # # calculate observers
+    # CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgis_db, gv)
+    #
+    # # Calculate radiation
+    # for day in range(1,366):
+    #     CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
+    #                   locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
 
     gv.log('complete raw radiation files')
 
@@ -134,8 +134,27 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
 def CalcIncidentRadiation(radiation, path_radiation_year_final, surface_properties, gv):
 
     # export surfaces properties
-    radiation['Awall_all'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
-    radiation[['Name', 'Freeheight', 'FactorShade', 'height_ag', 'Shape_Leng', 'Awall_all']].to_csv(surface_properties, index=False)
+    # radiation['Awall_all'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
+    gv.log('pickling radation dataframe to temp folder')
+    radiation.to_pickle(os.path.expandvars(r'$temp\radiation.pickle'))
+    radiation = pd.read_pickle(os.path.expandvars(r'$temp\radiation.pickle'))
+
+    # use a temporary dataframe for calculations to avoid MemoryError (see #661)
+    import gc
+    gc.collect()
+    gv.log('creating temporary radation dataframe')
+    radiation_temp = pd.DataFrame(radiation['Shape_Leng'])
+    radiation_temp['FactorShade'] = radiation['FactorShade']
+    radiation_temp['Freeheight'] = radiation['Freeheight']
+    radiation_temp.loc[:, 'Awall_all'] = radiation_temp['Shape_Leng']
+    radiation_temp.loc[:, 'Awall_all'] = radiation_temp['Awall_all'] * radiation_temp['FactorShade']
+    radiation_temp.loc[:, 'Awall_all'] = radiation_temp['Awall_all'] * radiation_temp['Freeheight']
+
+    gv.log('assigning back to radiation frame')
+    radiation['Awall_all'] = radiation_temp['Awall_all']
+    radiation[['Name', 'Freeheight', 'FactorShade', 'height_ag', 'Shape_Leng', 'Awall_all']].to_csv(surface_properties,
+                                                                                                    index=False)
+    gv.log('saved surface properties to disk')
 
     # Import Radiation table and compute the Irradiation in W in every building's surface
     hours_in_year = 8760
@@ -197,9 +216,7 @@ def calc_radiation_day(day, sunrise, route):
 
     # Obtain the number of points modeled to do the iterations
     radiation_sunnyhours['ID'] = 0
-    counter = radiation_sunnyhours.ID.count()
-    value = counter + 1
-    radiation_sunnyhours['ID'] = range(1, value)
+    radiation_sunnyhours['ID'] = range(1, radiation_sunnyhours.ID.count() + 1)
 
     # Table with empty values with the same range as the points.
     Table = pd.DataFrame.copy(radiation_sunnyhours)
