@@ -109,8 +109,8 @@ supply network accounts for 1.3% of the total heat supplied by the heating plant
 in th thermal loss calculation is in acceptable range
 3. There are two instances (t = 438, 8667) where the thermal/hydraulic losses deviate more than 15%
 between the results from CEA and Simulink. This is because we assume all flows are turbulent in CEA,
-while Simulink considers different heat transfer resistances with different flow regimes ( laminar,
- turbulent and transitional)
+while Simulink considers different heat transfer resistances with different flow regimes (laminar,
+turbulent and transitional)
 
 Future Improvements
 ===================
