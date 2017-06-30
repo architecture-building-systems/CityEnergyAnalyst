@@ -19,7 +19,8 @@ from cea.utilities import helpers
 
 # demand model of thermal and electrical loads
 
-def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator):
+def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
+                       use_dynamic_infiltration_calculation=False):
     """
     Calculate thermal loads of a single building with mechanical or natural ventilation.
     Calculation procedure follows the methodology of ISO 13790
@@ -78,14 +79,17 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     # get schedules
     list_uses = usage_schedules['list_uses']
-    schedules = usage_schedules['schedules']
-    occupancy_densities = usage_schedules['occupancy_densities']
+    archetype_schedules = usage_schedules['archetype_schedules']
+    archetype_values = usage_schedules['archetype_values']
+    schedules = occupancy_model.calc_schedules(list_uses, archetype_schedules, bpr.occupancy, archetype_values)
 
-    # get occupancy
-    tsd['people'] = occupancy_model.calc_occ_schedule(list_uses, schedules, occupancy_densities, bpr.occupancy,
-                                                      bpr.rc_model['Af'])
+    # calculate occupancy schedule and occupant-related parameters
+    tsd['people'] = schedules['people'] * bpr.rc_model['Af']
+    tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6) * bpr.rc_model['Af'] # in m3/h
+    tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp'] * bpr.rc_model['Af'] # in W
+
     # get electrical loads (no auxiliary loads)
-    tsd = electrical_loads.calc_Eint(tsd, bpr, list_uses, schedules)
+    tsd = electrical_loads.calc_Eint(tsd, bpr, schedules)
 
     # get refrigeration loads
     tsd['Qcref'], tsd['mcpref'], \
@@ -110,10 +114,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd = controllers.calc_simple_temp_control(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
                                                    date.dayofweek)
 
-        # latent heat gains
-        tsd['w_int'] = sensible_loads.calc_Qgain_lat(tsd['people'], bpr.internal_loads['X_ghp'],
-                                                     bpr.hvac['type_cs'],
-                                                     bpr.hvac['type_hs'])
+        # # latent heat gains
+        tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr.internal_loads['X_ghp'], bpr.rc_model['Af'],
+                                                     bpr.hvac['type_cs'], bpr.hvac['type_hs'])
 
         # end-use demand calculation
         for t in range(-720, 8760):
@@ -123,18 +126,19 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             # sensible heat gains
             tsd = sensible_loads.calc_Qgain_sen(hoy, tsd, bpr, gv)
 
-            # UNCOMMENT THIS TO OVERWRITE STATIC INFILTRATION WITH DYNAMIC INFILTRATION RATE
-            # # TODO: add option for detailed infiltration calculation
-            # dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
-            # qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(tsd['theta_a'][hoy - 1] if not np.isnan(tsd['theta_a'][hoy - 1]) else tsd['T_ext'][hoy - 1], tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
-            # tsd['m_ve_inf'][hoy] = max(qm_sum_in/3600, 1/3600)  # INFILTRATION IS FORCED NOT TO REACH ZERO IN ORDER TO AVOID THE RC MODEL TO FAIL
+            if use_dynamic_infiltration_calculation:
+                # OVERWRITE STATIC INFILTRATION WITH DYNAMIC INFILTRATION RATE
+                dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
+                qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(
+                    tsd['theta_a'][hoy - 1] if not np.isnan(tsd['theta_a'][hoy - 1]) else tsd['T_ext'][hoy - 1],
+                    tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
+                # INFILTRATION IS FORCED NOT TO REACH ZERO IN ORDER TO AVOID THE RC MODEL TO FAIL
+                tsd['m_ve_inf'][hoy] = max(qm_sum_in / 3600, 1 / 3600)
 
 
             # ventilation air flows [kg/s]
             ventilation_air_flows_simple.calc_air_mass_flow_mechanical_ventilation(bpr, tsd, hoy)
             ventilation_air_flows_simple.calc_air_mass_flow_window_ventilation(bpr, tsd, hoy)
-
-
 
             # ventilation air temperature
             ventilation_air_flows_simple.calc_theta_ve_mech(bpr, tsd, hoy, gv)
@@ -196,12 +200,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
             bpr.building_systems['Tww_sup_0'],
             bpr.building_systems['Y'],
             gv,
-            bpr.internal_loads['Vww_lpd'],
-            bpr.internal_loads['Vw_lpd'],
-            occupancy_densities,
-            list_uses,
+            archetype_values['people'],
             schedules,
-            bpr.occupancy)
+            bpr)
 
         # calc auxiliary loads
         tsd['Eauxf'], tsd['Eauxf_hs'], tsd['Eauxf_cs'], \
@@ -717,10 +718,13 @@ class BuildingPropertiesRow(object):
 
     def _calculate_pipe_transmittance_values(self):
         """linear trasmissivity coefficients of piping W/(m.K)"""
-        if self.age['built'] >= 1995 or self.age['HVAC'] > 0:
+        if self.age['built'] >= 1995 or self.age['HVAC'] > 1995:
             phi_pipes = [0.2, 0.3, 0.3]
-        elif 1985 <= self.age['built'] < 1995 and self.age['HVAC'] == 0:
+        # elif 1985 <= self.age['built'] < 1995 and self.age['HVAC'] == 0:
+        elif 1985 <= self.age['built'] < 1995:
             phi_pipes = [0.3, 0.4, 0.4]
+            if self.age['HVAC'] == self.age['built']:
+                print 'Incorrect HVAC renovation year: if HVAC has not been renovated, the year should be set to 0'
         else:
             phi_pipes = [0.4, 0.4, 0.4]
         return phi_pipes
