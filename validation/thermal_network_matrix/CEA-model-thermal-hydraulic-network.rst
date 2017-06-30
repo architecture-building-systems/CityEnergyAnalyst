@@ -113,15 +113,12 @@ while Simulink considers different heat transfer resistances with different flow
 turbulent and transitional)
 
 .. figure:: network1.png
-   :scale: 50
    Network 1
 
 .. figure:: network2.png
-   :scale: 50
    Network 2
 
 .. figure:: network3.png
-   :scale: 50
    Network 3
 
 Future Improvements
