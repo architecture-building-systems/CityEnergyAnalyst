@@ -360,20 +360,21 @@ def CalcObservers(Simple_CQ, Observers, DataFactorsBoundaries, locationtemporal2
     CleanDataNear.drop_duplicates(subset='Name_x', inplace=True)
     CleanDataNear.reset_index(inplace=True)
     rows = CleanDataNear.Name_x.count()
-    for row in range(rows):
-        Field = "Name"  # select field where the name exists to iterate
-        Value = CleanDataNear.loc[row, 'Name_x']  # set the value or name of the City quarter
-        Where_clausule = '''''' + '"' + Field + '"' + "=" + "\'" + str(
-            Value) + "\'" + ''''''  # strange writing to introduce in ArcGIS
-        if row == 0:
-            arcpy.MakeFeatureLayer_management(Simple_CQ, 'Simple_lyr')
-            arcpy.SelectLayerByAttribute_management('Simple_lyr', "NEW_SELECTION", Where_clausule)
-        else:
-            arcpy.SelectLayerByAttribute_management('Simple_lyr', "ADD_TO_SELECTION", Where_clausule)
+    if rows > 0: #there are overlapping buildings
+        for row in range(rows):
+            Field = "Name"  # select field where the name exists to iterate
+            Value = CleanDataNear.loc[row, 'Name_x']  # set the value or name of the City quarter
+            Where_clausule = '''''' + '"' + Field + '"' + "=" + "\'" + str(
+                Value) + "\'" + ''''''  # strange writing to introduce in ArcGIS
+            if row == 0:
+                arcpy.MakeFeatureLayer_management(Simple_CQ, 'Simple_lyr')
+                arcpy.SelectLayerByAttribute_management('Simple_lyr', "NEW_SELECTION", Where_clausule)
+            else:
+                arcpy.SelectLayerByAttribute_management('Simple_lyr', "ADD_TO_SELECTION", Where_clausule)
 
-        arcpy.CopyFeatures_management('simple_lyr', NonoverlappingBuildings)
+            arcpy.CopyFeatures_management('simple_lyr', NonoverlappingBuildings)
+        arcpy.ErasePoint_edit(Observers0, NonoverlappingBuildings, "INSIDE")
 
-    arcpy.ErasePoint_edit(Observers0, NonoverlappingBuildings, "INSIDE")
     arcpy.CopyFeatures_management(Observers0, Observers)  # copy features to reset the OBJECTID
     with arcpy.da.UpdateCursor(Observers, ["OBJECTID", "ORIG_FID"]) as cursor:
         for row in cursor:
