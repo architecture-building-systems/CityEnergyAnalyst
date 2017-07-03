@@ -74,36 +74,36 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     sunrise = calc_sunrise(range(1, 366), year, longitude, latitude)
 
     # calcuate daily transmissivity and daily diffusivity
-    # weather_data = epwreader.epw_reader(weather_path)[['dayofyear', 'exthorrad_Whm2',
-    #                                                    'glohorrad_Whm2', 'difhorrad_Whm2']]
-    # weather_data['diff'] = weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
-    # weather_data = weather_data[np.isfinite(weather_data['diff'])]
-    # T_G_day = np.round(weather_data.groupby(['dayofyear']).mean(), 2)
-    # T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
-    # T_G_day['trr'] = (1 - T_G_day['diff'])
-    #
-    # # Simplify building's geometry
-    # elevRaster = arcpy.sa.Raster(locator.get_terrain())
-    # dem_raster_extent = elevRaster.extent
-    # arcpy.SimplifyBuilding_cartography(locator.get_building_geometry(), simple_cq_shp,
-    #                                    simplification_tolerance=7, minimum_area=None)
-    # arcpy.SimplifyBuilding_cartography(locator.get_district(), simple_context_shp,
-    #                                    simplification_tolerance=7, minimum_area=None)
-    #
-    # # # burn buildings into raster
-    # Burn(simple_context_shp, locator.get_terrain(), dem_rasterfinal_path, locator.get_temporary_folder(), dem_raster_extent, gv)
-    #
-    # # Calculate boundaries of buildings
-    # CalcBoundaries(simple_cq_shp, locator.get_temporary_folder(), path_arcgis_db,
-    #                data_factors_centroids_csv, data_factors_boundaries_csv, gv)
-    #
-    # # calculate observers_path
-    # CalcObservers(simple_cq_shp, observers_path, data_factors_boundaries_csv, path_arcgis_db, gv)
-    #
-    # # Calculate radiation
-    # for day in range(1,366):
-    #     CalcRadiation(day, dem_rasterfinal_path, observers_path, T_G_day, latitude,
-    #                   locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
+    weather_data = epwreader.epw_reader(weather_path)[['dayofyear', 'exthorrad_Whm2',
+                                                       'glohorrad_Whm2', 'difhorrad_Whm2']]
+    weather_data['diff'] = weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
+    weather_data = weather_data[np.isfinite(weather_data['diff'])]
+    T_G_day = np.round(weather_data.groupby(['dayofyear']).mean(), 2)
+    T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
+    T_G_day['trr'] = (1 - T_G_day['diff'])
+
+    # Simplify building's geometry
+    elevRaster = arcpy.sa.Raster(locator.get_terrain())
+    dem_raster_extent = elevRaster.extent
+    arcpy.SimplifyBuilding_cartography(locator.get_building_geometry(), simple_cq_shp,
+                                       simplification_tolerance=7, minimum_area=None)
+    arcpy.SimplifyBuilding_cartography(locator.get_district(), simple_context_shp,
+                                       simplification_tolerance=7, minimum_area=None)
+
+    # # burn buildings into raster
+    Burn(simple_context_shp, locator.get_terrain(), dem_rasterfinal_path, locator.get_temporary_folder(), dem_raster_extent, gv)
+
+    # Calculate boundaries of buildings
+    CalcBoundaries(simple_cq_shp, locator.get_temporary_folder(), path_arcgis_db,
+                   data_factors_centroids_csv, data_factors_boundaries_csv, gv)
+
+    # calculate observers_path
+    CalcObservers(simple_cq_shp, observers_path, data_factors_boundaries_csv, path_arcgis_db, gv)
+
+    # Calculate radiation
+    for day in range(1, 366):
+        CalcRadiation(day, dem_rasterfinal_path, observers_path, T_G_day, latitude,
+                      locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
 
     gv.log('complete raw radiation files')
 
@@ -326,13 +326,26 @@ def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, 
     timeConfig = 'WithinDay    ' + str(day) + ', 0, 24'
 
     # Run the extension of arcgis
+    import multiprocessing
+    process = multiprocessing.Process(target=_CalcRadiation, args=(Latitude, aspect_slope, azimuthDivisions, calcDirections, dayInterval, diffuseProp,
+                   global_radiation, heightoffset, hourInterval, in_points_feature, in_surface_raster, skySize,
+                   timeConfig, transmittivity, zenithDivisions))
+    process.start()
+    process.join()
+    rc = process.exitcode
+    gv.log('complete calculating radiation of day No. %(day)i, rc=%(rc)i' % locals())
+    return arcpy.GetMessages()
+
+
+def _CalcRadiation(Latitude, aspect_slope, azimuthDivisions, calcDirections, dayInterval, diffuseProp,
+                   global_radiation, heightoffset, hourInterval, in_points_feature, in_surface_raster, skySize,
+                   timeConfig, transmittivity, zenithDivisions):
+    """Splitting off a possibly problematic piece of code to a separate process..."""
     arcpy.sa.PointsSolarRadiation(in_surface_raster, in_points_feature, global_radiation, heightoffset,
                                   Latitude, skySize, timeConfig, dayInterval, hourInterval, "INTERVAL", "1",
                                   aspect_slope,
                                   calcDirections, zenithDivisions, azimuthDivisions, "STANDARD_OVERCAST_SKY",
                                   diffuseProp, transmittivity, "#", "#", "#")
-    gv.log('complete calculating radiation of day No. ' + str(day))
-    return arcpy.GetMessages()
 
 
 def CalcObservers(Simple_CQ, Observers, DataFactorsBoundaries, locationtemporal2, gv):
