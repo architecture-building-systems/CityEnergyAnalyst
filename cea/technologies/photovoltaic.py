@@ -131,8 +131,8 @@ def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, m
     sensors_metadata = pd.read_csv(metadata_csv_path)
 
     # join total radiation to sensor_metadata
-    sensors_rad_sum = sensors_rad.sum(0).to_frame() # add new row with yearly radiation
-    sensors_rad_sum.columns = ['total_rad_Whm2']
+
+    sensors_rad_sum = sensors_rad.sum(0).to_frame('total_rad_Whm2') # add new row with yearly radiation
     sensors_metadata.set_index('SURFACE', inplace=True)
     sensors_metadata = sensors_metadata.merge(sensors_rad_sum, left_index=True, right_index=True)    #[Wh/m2]
 
