@@ -145,7 +145,6 @@ def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, m
         sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'wall']
 
     # keep sensors above min production in sensors_rad
-    sensors_metadata = sensors_metadata.set_index('SURFACE')
     max_yearly_radiation = yearly_horizontal_rad
     # set min yearly radiation threshold for sensor selection
     min_yearly_radiation = max_yearly_radiation * min_radiation
