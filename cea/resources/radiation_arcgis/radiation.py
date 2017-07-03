@@ -103,7 +103,7 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     # Calculate radiation
     for day in range(1, 366):
         CalcRadiation(day, dem_rasterfinal_path, observers_path, T_G_day, latitude,
-                      locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
+                      locator.get_temporary_folder(), aspect_slope, heightoffset, path_arcgis_db, gv)
 
     gv.log('complete raw radiation files')
 
@@ -310,7 +310,7 @@ def calculate_sunny_hours_of_day(day, sunrise, temporary_folder):
 
 
 def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, locationtemp1, aspect_slope,
-                  heightoffset, gv):
+                  heightoffset, path_arcgis_db, gv):
     # Local Variables
     Latitude = str(latitude)
     skySize = '400'  # max 10000
@@ -329,23 +329,32 @@ def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, 
     import multiprocessing
     process = multiprocessing.Process(target=_CalcRadiation, args=(Latitude, aspect_slope, azimuthDivisions, calcDirections, dayInterval, diffuseProp,
                    global_radiation, heightoffset, hourInterval, in_points_feature, in_surface_raster, skySize,
-                   timeConfig, transmittivity, zenithDivisions))
+                   timeConfig, transmittivity, zenithDivisions, path_arcgis_db))
     process.start()
     process.join()
     rc = process.exitcode
+
     gv.log('complete calculating radiation of day No. %(day)i, rc=%(rc)i' % locals())
     return arcpy.GetMessages()
 
 
 def _CalcRadiation(Latitude, aspect_slope, azimuthDivisions, calcDirections, dayInterval, diffuseProp,
                    global_radiation, heightoffset, hourInterval, in_points_feature, in_surface_raster, skySize,
-                   timeConfig, transmittivity, zenithDivisions):
+                   timeConfig, transmittivity, zenithDivisions, path_arcgis_db):
     """Splitting off a possibly problematic piece of code to a separate process..."""
-    arcpy.sa.PointsSolarRadiation(in_surface_raster, in_points_feature, global_radiation, heightoffset,
-                                  Latitude, skySize, timeConfig, dayInterval, hourInterval, "INTERVAL", "1",
-                                  aspect_slope,
-                                  calcDirections, zenithDivisions, azimuthDivisions, "STANDARD_OVERCAST_SKY",
-                                  diffuseProp, transmittivity, "#", "#", "#")
+    try:
+        arcpy.env.workspace = path_arcgis_db
+        arcpy.env.overwriteOutput = True
+        arcpy.CheckOutExtension("spatial")
+        arcpy.sa.PointsSolarRadiation(in_surface_raster, in_points_feature, global_radiation, heightoffset,
+                                      Latitude, skySize, timeConfig, dayInterval, hourInterval, "INTERVAL", "1",
+                                      aspect_slope,
+                                      calcDirections, zenithDivisions, azimuthDivisions, "STANDARD_OVERCAST_SKY",
+                                      diffuseProp, transmittivity, "#", "#", "#")
+    except:
+        import traceback
+        print(traceback.format_exc())
+        raise
 
 
 def CalcObservers(Simple_CQ, Observers, DataFactorsBoundaries, locationtemporal2, gv):
