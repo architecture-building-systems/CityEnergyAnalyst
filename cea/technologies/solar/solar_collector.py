@@ -245,7 +245,7 @@ def calc_SC_module(tilt_angle, IAM_b_vector, IAM_d_vector, I_direct_vector, I_di
     :param dP4: pressure drop [Pa/m2] at minimum flow rate (mB_min)
     :param Tin: Fluid inlet temperature (C)
     :param Leq: equivalent length of pipes per aperture area [m/m2 aperture)
-    :param Le: equivalent length of collector pipes per aperture area [m/m2 aperture]
+    :param Le: equivalent length of pipes within the collectors per aperture area [m/m2 aperture]
     :param Nseg: Number of collector segments in flow direction for heat capacitance calculation
     :return:
 
@@ -427,7 +427,7 @@ def calc_SC_module(tilt_angle, IAM_b_vector, IAM_d_vector, I_direct_vector, I_di
 
         if flow == 5: # optimal mass flow
             supply_losses[flow] = np.vectorize(calc_qloss_network)(specific_flows[flow], Le, aperture_area, temperature_mean[flow],
-                                                                   Tamb_vector, msc_max)
+                                                                   Tamb_vector, msc_max) #FIXME: check old code, which length to use? which one is non-recoverable?
             supply_out_pre = supply_out[flow].copy() + supply_losses[flow].copy()
             auxiliary_electricity[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow],
                                                          Leq, aperture_area)  # in kW
@@ -677,8 +677,8 @@ def calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, m1, m2, m3, m4, dP1, 
     mass_flow_opt = np.empty(8760)
     dP_opt = np.empty(8760)
     const = Area_a / 3600
-    mass_flow_all = [m1 * const, m2 * const, m3 * const, m4 * const]  # float points
-    dP_all = [dP1 * Area_a, dP2 * Area_a, dP3 * Area_a, dP4 * Area_a]  # float points
+    mass_flow_all = [m1 * const, m2 * const, m3 * const, m4 * const]  # [kg/s]
+    dP_all = [dP1 * Area_a, dP2 * Area_a, dP3 * Area_a, dP4 * Area_a]  # [Pa]
     balances = [q1 - E1 * 2, q2 - E2 * 2, q3 - E3 * 2, q4 - E4 * 2]  # energy generation function eq.(63)
     for time in range(8760):
         balances_time = [balances[0][time], balances[1][time], balances[2][time], balances[3][time]]
