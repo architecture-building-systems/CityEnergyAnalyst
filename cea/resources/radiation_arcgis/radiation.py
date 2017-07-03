@@ -149,11 +149,7 @@ def _calculate_sunny_hours_of_year(sunrise, temporary_folder, result_file_path):
                 sunny_hours_of_year[column] = df[column].copy()
                 # sunny_hours_of_year = sunny_hours_of_year.merge(df, on='ID', how='outer')
     sunny_hours_of_year = sunny_hours_of_year.fillna(value=0)
-    print(type(result_file_path))
-    print(type(sunny_hours_of_year))
-    print(result_file_path)
     sunny_hours_of_year.to_pickle(result_file_path)
-    print(result_file_path)
     return None
 
 
