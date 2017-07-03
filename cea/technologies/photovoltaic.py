@@ -132,6 +132,7 @@ def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, m
 
     # join total radiation to sensor_metadata
     sensors_rad_sum = sensors_rad.sum(0).to_frame() # add new row with yearly radiation
+    sensors_rad_sum.columns = ['total_rad_Whm2']
     sensors_metadata.set_index('SURFACE', inplace=True)
     sensors_metadata = sensors_metadata.merge(sensors_rad_sum, left_index=True, right_index=True)    #[Wh/m2]
 
@@ -140,9 +141,9 @@ def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, m
 
     # keep sensors if allow pv installation on walls or on roofs
     if pvonroof is False:
-        sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'roof']
+        sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'roofs']
     if pvonwall is False:
-        sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'wall']
+        sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'walls']
 
     # keep sensors above min production in sensors_rad
     max_yearly_radiation = yearly_horizontal_rad
@@ -795,8 +796,8 @@ def test_photovoltaic():
     min_radiation = 0.75  # points are selected with at least a minimum production of this % from the maximum in the area.
     type_PVpanel = "PV1"  # PV1 monocrystalline, PV2 is poly and PV3 is amorphous. it relates to the database of technologies
     worst_hour = 8744  # first hour of sun on the solar solstice # TODO: write a function to extract this value automatically
-    pvonroof = True  # flag for considering PV on roof #FIXME: define
-    pvonwall = True  # flag for considering PV on wall #FIXME: define
+    pvonroof = True  # flag for considering PV on roof
+    pvonwall = True  # flag for considering PV on wall
     longitude = 7.439583333333333
     latitude = 46.95240555555556
     date_start = gv.date_start
