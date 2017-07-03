@@ -442,7 +442,7 @@ class SolarTechnologyTool(object):
             direction="Input")
 
         weather_name = arcpy.Parameter(
-            displayName="Weather file (choose from list or enter full path to .epw file)",
+            displayName="Weather file (use the same one for solar radiation calculation)",
             name="weather_name",
             datatype="String",
             parameterType="Required",
