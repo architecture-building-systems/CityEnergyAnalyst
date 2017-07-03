@@ -72,6 +72,7 @@ class TestCalcThermalLoads(unittest.TestCase):
     def test_calc_thermal_loads_other_buildings(self):
         """Test some other buildings just to make sure we have the proper data"""
         # randomly selected except for B302006716, which has `Af == 0`
+
         buildings = json.loads(self.config.get('test_calc_thermal_loads_other_buildings', 'results'))
         if self.gv.multiprocessing:
             import multiprocessing as mp
