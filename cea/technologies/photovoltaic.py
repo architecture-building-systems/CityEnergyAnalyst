@@ -2,20 +2,20 @@
 photovoltaic
 """
 
-
 from __future__ import division
+
+import time
+from math import *
+
 import numpy as np
 import pandas as pd
-import cea.globalvar
-import cea.inputlocator
-import math
-from math import *
-from cea.utilities import dbfreader
 from scipy import interpolate
 
+import cea.globalvar
+import cea.inputlocator
+from cea.utilities import dbfreader
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
-import time
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -26,9 +26,9 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
 def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, weather_path, building_name, pvonroof,
             pvonwall, worst_hour, type_PVpanel, min_radiation, date_start):
+
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -36,8 +36,8 @@ def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
 
     :param locator: An InputLocator to locate input files
     :type locator: cea.inputlocator.InputLocator
-    :param radiation_csv: solar insulation data on all surfaces of each building
-    :type radiation_csv: .csv
+    :param radiation_path: solar insulation data on all surfaces of each building (path
+    :type radiation_path: String
     :param metadata_csv: data of sensor points measuring solar insulation of each building
     :type metadata_csv: .csv
     :param latitude: latitude of the case study location
@@ -94,7 +94,7 @@ def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
         print 'done - time elapsed:', (time.clock() - t0), ' seconds'
     return
 
-def filter_low_potential(weather_data, radiation_csv, metadata_csv, min_radiation, pvonroof, pvonwall):
+def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, min_radiation, pvonroof, pvonwall):
     """
     To filter the sensor points/hours with low radiation potential.
     1. # keep sensors above min radiation
@@ -102,10 +102,10 @@ def filter_low_potential(weather_data, radiation_csv, metadata_csv, min_radiatio
 
     :param weather_data: weather data read from the epw file
     :type weather_data: dataframe
-    :param radiation_csv: solar insulation data on all surfaces of each building
-    :type radiation_csv: .csv
-    :param metadata_csv: solar insulation sensor data of each building
-    :type metadata_csv: .csv
+    :param radiation_json_path: solar insulation data on all surfaces of each building
+    :type radiation_json_path: .json
+    :param metadata_csv_path: solar insulation sensor data of each building
+    :type metadata_csv_path: .csv
     :param gv: global variables
     :type gv: cea.globalvar.GlobalVariables
     :return max_yearly_radiation: yearly horizontal radiation [Wh/m2/year]
@@ -127,8 +127,8 @@ def filter_low_potential(weather_data, radiation_csv, metadata_csv, min_radiatio
     yearly_horizontal_rad = weather_data.glohorrad_Whm2.sum()  # [Wh/m2/year]
 
     # read radiation file
-    sensors_rad = pd.read_csv(radiation_csv)
-    sensors_metadata = pd.read_csv(metadata_csv)
+    sensors_rad = pd.read_json(radiation_json_path)
+    sensors_metadata = pd.read_csv(metadata_csv_path)
 
     # join total radiation to sensor_metadata
     sensors_rad_sum = sensors_rad.sum(0).values # add new row with yearly radiation
@@ -802,6 +802,7 @@ def test_photovoltaic():
     date_start = gv.date_start
 
     for building in list_buildings_names:
+
         radiation = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
         calc_PV(locator=locator, radiation_csv=radiation, metadata_csv=radiation_metadata, latitude=latitude,
