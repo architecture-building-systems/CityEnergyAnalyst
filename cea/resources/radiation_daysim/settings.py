@@ -26,15 +26,15 @@ RAD_PARMS = {
 
 # GRID FOR THE SENSORS
 SEN_PARMS = {
-'X_DIM': 5, # maximum so there is only one point per surface
-'Y_DIM': 5, # maximum so there is only one point per surface
+'X_DIM': 100, # maximum so there is only one point per surface
+'Y_DIM': 100, # maximum so there is only one point per surface
 }
 # terrain parameters
 TERRAIN_PARAMS = {'e_terrain': 0.8} #reflection for the terrain.
 
 # simulation parameters
 SIMUL_PARAMS = {'n_build_in_chunk':10, # min number of buildings for multiprocessing
-                'multiprocessing': True}  # limit the number if running out of memory
+                'multiprocessing': False}  # limit the number if running out of memory
 
 # geometry simplification
 SIMPLIFICATION_PARAMS = {'zone_geometry': 2,     #level of simplification of the zone geometry
