@@ -248,7 +248,7 @@ class InputLocator(object):
     def get_archetypes_schedules(self):
         """databases/CH/Archetypes/Archetypes_schedules.xlsx
         path to database of archetypes file Archetypes_HVAC_properties.xlsx"""
-        return os.path.join(self.db_path, 'archetypes', 'occupancy_schedules_SIA.xlsx')
+        return os.path.join(self.db_path, 'archetypes', 'occupancy_schedules_ASHRAE.xlsx')
 
     def get_life_cycle_inventory_supply_systems(self):
         """databases/lifecycle/LCA_infrastructure.csv"""
@@ -351,8 +351,7 @@ class InputLocator(object):
 
     def get_daysim_mat(self):
         """this gets the file that documents all of the radiance/default_materials"""
-        return os.path.join(os.path.dirname(__file__), 'resources', 'radiation_daysim', 'default_materials.rad')
-
+        return os.path.join(self.get_solar_radiation_folder(), 'materials.rad')
     # OUTPUTS
 
     ##SOLAR-RADIATION
@@ -366,17 +365,11 @@ class InputLocator(object):
 
     def get_radiation_building(self, building_name):
         """scenario/outputs/data/solar-radiation/radiation.csv"""
-        solar_radiation_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
-        if not os.path.exists(solar_radiation_folder):
-            os.makedirs(solar_radiation_folder)
-        return os.path.join(solar_radiation_folder, '%s_insolation_Whm2.csv' %building_name)
+        return os.path.join(self.get_solar_radiation_folder(), '%s_insolation_Whm2.json' %building_name)
 
     def get_radiation_metadata(self, building_name):
-        """scenario/outputs/data/solar-radiation/radiation.csv"""
-        solar_radiation_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
-        if not os.path.exists(solar_radiation_folder):
-            os.makedirs(solar_radiation_folder)
-        return os.path.join(solar_radiation_folder, '%s_geometry.csv' %building_name)
+        """scenario/outputs/data/solar-radiation/{building_name}_geometrgy.csv"""
+        return os.path.join(self.get_solar_radiation_folder(), '%s_geometry.csv' %building_name)
 
     def get_building_list(self):
         """scenario/outputs/data/solar-radiation/radiation.csv"""
@@ -386,10 +379,6 @@ class InputLocator(object):
     def get_3D_geometry_folder(self):
         """scenario/inputs/3D-geometries"""
         return self._ensure_folder(os.path.join(self.scenario_path, 'inputs', '3D-geometries'))
-
-    def get_solar_radiation_folder(self):
-        """scenario/outputs/data/solar-radiation"""
-        return os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
 
     def get_surface_properties(self):
         """scenario/outputs/data/solar-radiation/properties_surfaces.csv"""
@@ -538,3 +527,16 @@ class InputLocator(object):
     def get_temporary_file(self, filename):
         """Returns the path to a file in the temporary folder with the name `filename`"""
         return os.path.join(self.get_temporary_folder(), filename)
+
+
+class ReferenceCaseOpenLocator(InputLocator):
+    """This is a special InputLocator that extracts the builtin reference case
+    (``cea/examples/reference-case-open.zip``) to the temporary folder and uses the baseline scenario in there"""
+
+    def __init__(self):
+        import cea.examples
+        import zipfile
+        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+        archive.extractall(tempfile.gettempdir())
+        reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
+        super(ReferenceCaseOpenLocator, self).__init__(scenario_path=reference_case)
