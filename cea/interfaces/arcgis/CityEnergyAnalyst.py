@@ -475,21 +475,21 @@ class SolarTechnologyTool(object):
             direction="Input")
         longitude.enabled = False
 
-        panel_on_roof = arcpy.Parameter(
+        pvonroof = arcpy.Parameter(
             displayName="Considering panels on roofs",
-            name="panel_on_roof",
+            name="pvonroof",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        panel_on_roof.value = True
+        pvonroof.value = True
 
-        panel_on_wall = arcpy.Parameter(
+        pvonwall = arcpy.Parameter(
             displayName="Considering panels on walls",
-            name="panel_on_wall",
+            name="pvonwall",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        panel_on_wall.value = True
+        pvonwall.value = True
 
         worst_hour = arcpy.Parameter(
             displayName="worst hour (the hour of sunrise on the solar solstice at the site)",
@@ -515,7 +515,7 @@ class SolarTechnologyTool(object):
             direction="Input")
         min_radiation.value = 0.75
 
-        return [scenario_path, weather_name, year, latitude, longitude, panel_on_roof, panel_on_wall, worst_hour,
+        return [scenario_path, weather_name, year, latitude, longitude, pvonroof, pvonwall, worst_hour,
                 type_PVpanel, min_radiation]
 
     def updateParameters(self, parameters):
