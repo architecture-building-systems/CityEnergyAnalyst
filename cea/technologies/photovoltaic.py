@@ -135,7 +135,7 @@ def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, m
     sensors_metadata['total_rad_Whm2'] = sensors_rad_sum    #[Wh/m2]
 
     # remove window surfaces
-    sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'window']
+    sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'windows']
 
     # keep sensors if allow pv installation on walls or on roofs
     if pvonroof is False:
