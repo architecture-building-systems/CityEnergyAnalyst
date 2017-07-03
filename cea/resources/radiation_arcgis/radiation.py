@@ -107,31 +107,54 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
 
     gv.log('complete raw radiation files')
 
-    # run the transformation of files appending all and adding non-sunshine hours
-    radiations = []
-    for day in range(1, 366):
-        result = calc_radiation_day(day, sunrise, locator.get_temporary_folder())
-        result = result.apply(pd.to_numeric, downcast='integer')
-        radiations.append(result)
-
-    radiation_year = radiations[0]
-    for r in radiations[1:]:
-        for column in r.columns:
-            if column.startswith('T'):
-                radiation_year[column] = r[column].copy
-        #radiation_year = radiation_year.merge(r, on='ID', how='outer')
-
-    radiation_year = radiation_year.fillna(value=0)
+    sunny_hours_of_year = calculate_sunny_hours_of_year(locator, sunrise)
 
     gv.log('complete transformation radiation files')
 
     # Assign radiation to every surface of the buildings
-    Data_radiation = CalcRadiationSurfaces(observers_path, data_factors_centroids_csv, radiation_year,
+    Data_radiation = CalcRadiationSurfaces(observers_path, data_factors_centroids_csv, sunny_hours_of_year,
                                            locator.get_temporary_folder(), path_arcgis_db)
 
     # get solar insolation @ daren: this is a A BOTTLE NECK
     CalcIncidentRadiation(Data_radiation, locator.get_radiation(), locator.get_surface_properties(), gv)
     gv.log('done')
+
+
+def calculate_sunny_hours_of_year(locator, sunrise):
+    # run the transformation of files appending all and adding non-sunshine hours
+    temporary_folder = locator.get_temporary_folder()
+    result_file_path = os.path.join(temporary_folder, 'sunny_hours_of_year.pickle')
+
+    import multiprocessing
+    process = multiprocessing.Process(target=_calculate_sunny_hours_of_year,
+                                      args=(sunrise, temporary_folder, result_file_path))
+    process.start()
+    process.join()  ## block until process terminates
+
+    sunny_hours_of_year = pd.read_pickle(result_file_path)
+    return sunny_hours_of_year
+
+
+def _calculate_sunny_hours_of_year(sunrise, temporary_folder, result_file_path):
+    """Run this code in separate process to avoid MemoryError of #661"""
+    sunny_hours_per_day = []
+    for day in range(1, 366):
+        result = calculate_sunny_hours_of_day(day, sunrise, temporary_folder)
+        result = result.apply(pd.to_numeric, downcast='integer')
+        sunny_hours_per_day.append(result)
+    sunny_hours_of_year = sunny_hours_per_day[0]
+    for df in sunny_hours_per_day[1:]:
+        for column in df.columns:
+            if column.startswith('T'):
+                sunny_hours_of_year[column] = df[column].copy()
+                # sunny_hours_of_year = sunny_hours_of_year.merge(df, on='ID', how='outer')
+    sunny_hours_of_year = sunny_hours_of_year.fillna(value=0)
+    print(type(result_file_path))
+    print(type(sunny_hours_of_year))
+    print(result_file_path)
+    sunny_hours_of_year.to_pickle(result_file_path)
+    print(result_file_path)
+    return None
 
 
 def CalcIncidentRadiation(radiation, path_radiation_year_final, surface_properties, gv):
@@ -185,6 +208,7 @@ def calculate_wall_areas(radiation):
     import gc
     gc.collect()
     radiation = pd.read_pickle(radiation_pickle_path)
+    return radiation
 
 
 def _calculate_wall_areas_subprocess(radiation_pickle_path):
@@ -213,13 +237,14 @@ def CalcRadiationSurfaces(observers_path, DataFactorsCentroids, Radiationtable, 
 
     # ORIG_FID represents the points in the segments of the simplified shape of the building
     # ORIG_FID_1 is the observers ID
-    Centroids_ID_observers0 = Dbf5(temporary_folder + '\\' + OutTable).to_dataframe()
-    Centroids_ID_observers = Centroids_ID_observers0[['Name', 'height_ag', 'ORIG_FID', 'ORIG_FID_1', 'Shape_Leng']]
-    Centroids_ID_observers.rename(columns={'ORIG_FID_1': 'ID'}, inplace=True)
+    Centroids_ID_observers0_dbf5 = Dbf5(os.path.join(temporary_folder, OutTable)).to_dataframe()
+    Centroids_ID_observers_dbf5 = Centroids_ID_observers0_dbf5[
+        ['Name', 'height_ag', 'ORIG_FID', 'ORIG_FID_1', 'Shape_Leng']]
+    Centroids_ID_observers_dbf5.rename(columns={'ORIG_FID_1': 'ID'}, inplace=True)
 
     # Create a Join of the Centroid_ID_observers and Datacentroids in the Second Chapter to get values of surfaces Shaded.
     Datacentroids = pd.read_csv(DataFactorsCentroids)
-    DataCentroidsFull = pd.merge(Centroids_ID_observers, Datacentroids, left_on='ORIG_FID', right_on='ORIG_FID')
+    DataCentroidsFull = pd.merge(Centroids_ID_observers_dbf5, Datacentroids, left_on='ORIG_FID', right_on='ORIG_FID')
 
     # Read again the radiation table and merge values with the Centroid_ID_observers under the field ID in Radiationtable and 'ORIG_ID' in Centroids...
     DataRadiation = pd.merge(left=DataCentroidsFull, right=Radiationtable, left_on='ID', right_on='ID')
@@ -227,7 +252,7 @@ def CalcRadiationSurfaces(observers_path, DataFactorsCentroids, Radiationtable, 
     return DataRadiation
 
 
-def calc_radiation_day(day, sunrise, temporary_folder):
+def calculate_sunny_hours_of_day(day, sunrise, temporary_folder):
     """
     :param day:
     :type day: int
