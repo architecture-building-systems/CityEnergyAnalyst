@@ -18,8 +18,9 @@ def main():
         f.write(sys.executable)
 
     toolbox_dst = find_toolbox_dst()
-    if not os.path.exists(toolbox_dst):
-        os.makedirs(toolbox_dst)
+    toolbox_folder = os.path.dirname(toolbox_dst)
+    if not os.path.exists(toolbox_folder):
+        os.makedirs(toolbox_folder)
     shutil.copy(find_toolbox_src(), toolbox_dst)
 
     with open(os.path.expanduser('~/cea_arcpy.pth'), 'w') as f:

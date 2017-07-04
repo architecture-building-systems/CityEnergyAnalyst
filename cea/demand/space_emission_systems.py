@@ -25,20 +25,28 @@ def calc_q_em_ls_cooling(bpr, tsd, hoy):
     """
     calculation procedure for space emissions losses in the cooling case [prEN 15316-2:2014]
 
-    :return:
+    :param bpr: building properties row
+    :type bpr: BuildingPropertiesRow object
+    
+    :param tsd: time step data
+    :type tsd: dict
+    
+    :param hoy: hour of year (0..8759)
+    :type hoy: int
+    
+    :return: emission losses of cooling system for time step [W]
+    :rtype: double
     """
+    __author__ = "Gabriel Happle"
 
     # get properties
-    cooling_system = bpr.hvac['type_cs']
-    control_system = bpr.hvac['type_ctrl']
-
     theta_e = tsd['T_ext'][hoy]
     theta_int_ini = tsd['theta_a'][hoy]
     q_em_out = tsd['Qcs_sen_sys'][hoy]
 
     q_em_max = -bpr.hvac['Qcsmax_Wm2'] * bpr.rc_model['Af']
 
-    delta_theta_int_inc = calc_delta_theta_int_inc_cooling(cooling_system, control_system)
+    delta_theta_int_inc = calc_delta_theta_int_inc_cooling(bpr)
 
     theta_int_inc = calc_theta_int_inc(theta_int_ini, delta_theta_int_inc)
 
@@ -51,20 +59,28 @@ def calc_q_em_ls_heating(bpr, tsd, hoy):
     """
     calculation procedure for space emissions losses in the heating case [prEN 15316-2:2014]
 
-    :return:
+    :param bpr: building properties row
+    :type bpr: BuildingPropertiesRow object
+    
+    :param tsd: time step data
+    :type tsd: dict
+    
+    :param hoy: hour of year (0..8759)
+    :type hoy: int
+    
+    :return: emission losses of heating system for time step [W]
+    :rtype: double
     """
+    __author__ = "Gabriel Happle"
 
     # get properties
-    heating_system = bpr.hvac['type_hs']
-    control_system = bpr.hvac['type_ctrl']
-
     theta_e = tsd['T_ext'][hoy]
     theta_int_ini = tsd['theta_a'][hoy]
     q_em_out = tsd['Qhs_sen_sys'][hoy]
 
     q_em_max = bpr.hvac['Qhsmax_Wm2'] * bpr.rc_model['Af']
 
-    delta_theta_int_inc = calc_delta_theta_int_inc_heating(heating_system, control_system)
+    delta_theta_int_inc = calc_delta_theta_int_inc_heating(bpr)
 
     theta_int_inc = calc_theta_int_inc(theta_int_ini, delta_theta_int_inc)
 
@@ -81,11 +97,24 @@ def calc_q_em_ls(q_em_out, delta_theta_int_inc, theta_int_inc, theta_e_comb, q_e
     With modification of capping emission losses at system capacity [Happle 01/2017]
 
     :param q_em_out: heating power of emission system (W)
+    :type q_em_out: double
+    
     :param delta_theta_int_inc: delta temperature caused by all losses (K)
+    :type delta_theta_int_inc: double
+    
     :param theta_int_inc: equivalent room temperature (°C)
+    :type theta_int_inc: double
+    
     :param theta_e_comb: ?comb? outdoor temperature (°C)
-    :return:
+    :type theta_e_comb: double
+    
+    :param q_em_max: maximum emission capacity of heating/cooling system [W]
+    :type q_em_max: double
+    
+    :return: emission losses of heating/cooling system [W]
+    :rtype: double
     """
+    __author__ = "Gabriel Happle"
 
     if abs(theta_int_inc-theta_e_comb) < 1e-6:
         q_em_ls = 0.0  # prevent division by zero
@@ -106,8 +135,14 @@ def calc_theta_int_inc(theta_int_ini, delta_theta_int_inc):
     """
     Eq. (1) in [prEN 15316-2:2014]
 
-    :param theta_int_ini:
-    :return:
+    :param theta_int_ini: temperature [C]
+    :type theta_int_ini: double
+    
+    :param delta_theta_int_inc: temperature [C]
+    :type delta_theta_int_inc: double
+    
+    :return: sum of temperatures [C]
+    :rtype: double
     """
 
     return theta_int_ini + delta_theta_int_inc
@@ -116,8 +151,12 @@ def calc_theta_int_inc(theta_int_ini, delta_theta_int_inc):
 def calc_theta_e_comb_heating(theta_e):
     """
     Eq. (9) in [prEN 15316-2:2014]
+    
+    :param theta_e: outdoor temperature [C]
+    :type theta_e: double
 
-    :return:
+    :return: temperature [C]
+    :rtype: double
     """
 
     return theta_e
@@ -126,8 +165,15 @@ def calc_theta_e_comb_heating(theta_e):
 def calc_theta_e_comb_cooling(theta_e, bpr):
     """
     Eq. (10) in [prEN 15316-2:2014]
+    
+    :param theta_e: outdoor temperature [C]
+    :type theta_e: double
 
-    :return:
+    :param bpr: BuildingPropertiesRow 
+    :type bpr: BuildingPropertiesRow object
+    
+    :return: temperature [C]
+    :rtype: double
     """
 
     return theta_e + get_delta_theta_e_sol(bpr)
@@ -155,13 +201,7 @@ def get_delta_theta_e_sol(bpr):
     return delta_theta_e_sol
 
 
-control_delta_heating = {'T1': 2.5, 'T2': 1.2, 'T3': 0.9, 'T4': 1.8}
-control_delta_cooling = {'T1': -2.5, 'T2': -1.2, 'T3': -0.9, 'T4': -1.8}
-system_delta_heating = {'T0': 0.0, 'T1': 0.15, 'T2': -0.1, 'T3': -1.1, 'T4': -0.9}
-system_delta_cooling = {'T0': 0.0, 'T1': 0.5, 'T2': 0.7, 'T3': 0.5}
-
-
-def calc_delta_theta_int_inc_heating(heating_system, control_system):
+def calc_delta_theta_int_inc_heating(bpr):
     """
     Model of losses in the emission and control system for space heating and cooling.
 
@@ -176,36 +216,26 @@ def calc_delta_theta_int_inc_heating(heating_system, control_system):
     In another case with no heating systems: input: (T0, T3, T1) return: (0.0, -2.0), the control system is only
     specified for the heating system.
 
-    :param heating_system: The heating system used. Valid values: T0, T1, T2, T3, T4
-    :type heating_system: str
+    :param bpr: BuildingPropertiesRow 
+    :type bpr: BuildingPropertiesRow object
 
-    :param cooling_system: The cooling system used. Valid values: T0, T1, T2, T3
-    :type cooling_system: str
-
-    :param control_system: The control system used. Valid values: T1, T2, T3, T4 - as defined in the
-        contributors manual under Databases / Archetypes / Building Properties / Mechanical systems.
-        T1 for none, T2 for PI control, T3 for PI control with optimum tuning, and T4 for room temperature control
-        (electromagnetically/electronically).
-    :type control_system: str
-
-    :returns: two delta T to correct the set point temperature, dT_heating, dT_cooling
-    :rtype: tuple(double, double)
+    :returns: delta T to correct the set point temperature for heating
+    :rtype: double
     """
-    __author__ = "Shanshan Hsieh"
+    __author__ = ["Shanshan Hsieh","Gabriel Happle"]
     __credits__ = ["Shanshan Hsieh", "Daren Thomas"]
 
     try:
-        delta_theta_int_inc_heating = 0.0 if heating_system == 'T0' else (control_delta_heating[control_system] +
-                                                             system_delta_heating[heating_system])
+        delta_theta_int_inc_heating = 0.0 if bpr.hvac['type_hs'] == 'T0' else (bpr.hvac['dT_Qhs'] + bpr.hvac['dThs_C'])
 
     except KeyError:
         raise ValueError(
-            'Invalid system / control combination: %s, %s' % (heating_system, control_system))
+            'Invalid system / control combination: %s, %s' % (bpr.hvac['type_hs'], bpr.hvac['type_ctrl']))
 
     return delta_theta_int_inc_heating
 
 
-def calc_delta_theta_int_inc_cooling(cooling_system, control_system):
+def calc_delta_theta_int_inc_cooling(bpr):
     """
     Model of losses in the emission and control system for space heating and cooling.
 
@@ -220,33 +250,20 @@ def calc_delta_theta_int_inc_cooling(cooling_system, control_system):
     In another case with no heating systems: input: (T0, T3, T1) return: (0.0, -2.0), the control system is only
     specified for the heating system.
 
-    :param heating_system: The heating system used. Valid values: T0, T1, T2, T3, T4
-    :type heating_system: str
+    :param bpr: BuildingPropertiesRow 
+    :type bpr: BuildingPropertiesRow object
 
-    :param cooling_system: The cooling system used. Valid values: T0, T1, T2, T3
-    :type cooling_system: str
-
-    :param control_system: The control system used. Valid values: T1, T2, T3, T4 - as defined in the
-        contributors manual under Databases / Archetypes / Building Properties / Mechanical systems.
-        T1 for none, T2 for PI control, T3 for PI control with optimum tuning, and T4 for room temperature control
-        (electromagnetically/electronically).
-    :type control_system: str
-
-    :returns: two delta T to correct the set point temperature, dT_heating, dT_cooling
-    :rtype: tuple(double, double)
+    :returns: delta T to correct the set point temperature for cooling
+    :rtype: double
     """
-    __author__ = "Shanshan Hsieh"
+    __author__ = ["Shanshan Hsieh","Gabriel Happle"]
     __credits__ = ["Shanshan Hsieh", "Daren Thomas"]
 
     try:
 
-        delta_theta_int_inc_cooling = 0.0 if cooling_system == 'T0' else (control_delta_cooling[control_system] +
-                                                             system_delta_cooling[cooling_system])
+        delta_theta_int_inc_cooling = 0.0 if bpr.hvac['type_cs'] == 'T0' else (bpr.hvac['dT_Qcs'] + bpr.hvac['dTcs_C'])
     except KeyError:
         raise ValueError(
-            'Invalid system / control combination: %s, %s' % (cooling_system, control_system))
+            'Invalid system / control combination: %s, %s' % (bpr.hvac['type_cs'], bpr.hvac['type_ctrl']))
 
     return delta_theta_int_inc_cooling
-
-
-

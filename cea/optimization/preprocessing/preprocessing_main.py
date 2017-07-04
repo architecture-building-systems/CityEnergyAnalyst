@@ -16,6 +16,7 @@ from cea.optimization.master import summarize_network
 from cea.optimization.preprocessing import electricity
 from cea.resources import geothermal
 from cea.utilities import  epwreader
+from cea.technologies import substation
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -64,7 +65,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     # GET LOADS IN SUBSTATIONS
     # prepocess space heating, domestic hot water and space cooling to substation.
     print "Run substation model for each building separately"
-    #substation.substation_main(locator, total_demand, building_names, gv, Flag = True) # True if disconected buildings are calculated
+    substation.substation_main(locator, total_demand, building_names, gv, Flag = True) # True if disconected buildings are calculated
 
     # GET COMPETITIVE ALTERNATIVES TO A NETWORK
     # estimate what would be the operation of single buildings only for heating.

@@ -18,48 +18,30 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_mww(schedule, Vww_lpd, Occ_m2p, Af, Pwater):
+def calc_mww(schedule, water_lpd, Pwater):
     """
-    Algorithm to calculate the hourly mass flow rate of domestic hot water
+    Algorithm to calculate the hourly mass flow rate of water
 
-    :param schedule: hourly DHW demand profile [1/h]
-    :param Vww_lpd: DHW demand per person per day in [L/person/day]
-    :param Occ_m2p: Occupant density in [m2/person]
-    :param Af: Total floor area per building [m2]
+    :param schedule: hourly DHW demand profile [person/d.h]
+    :param water_lpd: water emand per person per day in [L/person/day]
     :param Pwater: water density [kg/m3]
     """
 
-    if Occ_m2p > 0:
+    if schedule > 0:
 
-        vww = schedule* Vww_lpd * (Occ_m2p ** -1) * Af / 1000 # m3/h
-        mww = vww * Pwater / 3600  # in kg/s
-
-    else:
-
-        vww = 0
-        mww = 0
-
-    return mww, vww
-
-
-def calc_mw(schedule, Vw_lpd, Occ_m2p, Af, Pwater):
-    if Occ_m2p > 0:
-
-        vw = schedule * Vw_lpd * (Occ_m2p ** -1) * Af / 1000 # m3/h
-        mw = vw * Pwater / 3600  # in kg/s
+        volume =  schedule * water_lpd/ 1000 # m3/h
+        massflow = volume * Pwater/3600  # in kg/s
 
     else:
+        volume = 0
+        massflow = 0
 
-        vw = 0
-        mw = 0
-
-    return mw, vw
-
+    return massflow, volume
 
 # final hot water demand calculation
 
-def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, Vww_lpd, Vw_lpd, Occ_m2p,
-              list_uses, schedules, building_uses):
+def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, occupancy_densities,
+              schedules, bpr):
     # Refactored from CalcThermalLoads
     """
     This function calculates the distribution heat loss and final energy consumption of domestic hot water.
@@ -78,16 +60,17 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     :return:
 
     """
-    # calc schedule of use:
-    schedule = calc_Qww_schedule(list_uses, schedules, building_uses)
 
-    # end-use demand
-    mww, Vww =  np.vectorize(calc_mww)(schedule, Vww_lpd, Occ_m2p, Af, gv.Pwater)
-    mw, Vw = np.vectorize(calc_mww)(schedule, Vw_lpd, Occ_m2p, Af, gv.Pwater)
+    # calc end-use demand
+    Vww = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] * bpr.rc_model['Af'] / 1000   # m3/h
+    Vw = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] * bpr.rc_model['Af'] / 1000      # m3/h
+    mww = Vww * gv.Pwater /3600 # kg/s
+
     Qww = np.vectorize(calc_Qww)(mww, Tww_sup_0, Tww_re, gv.Cpw)
     Qww_0 = Qww.max()
+
     # distribution and circulation losses
-    Vol_ls = Lsww_dis * (gv.D / 1000) ** (2 / 4) * pi #volume per meter of pipe
+    Vol_ls = Lsww_dis * (gv.D / 1000) ** (2 / 4) * pi # volume per meter of pipe
     Qww_dis_ls_r = np.vectorize(calc_Qww_dis_ls_r)(Ta, Qww, Lsww_dis, Lcww_dis, Y[1], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
                                            gv.Cpw, gv.Pwater, gv)
     Qww_dis_ls_nr = np.vectorize(calc_Qww_dis_ls_nr)(Ta, Qww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
@@ -102,27 +85,6 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     return mww, Qww, Qww_st_ls, Qwwf, Qwwf_0, Tww_st, Vww, Vw, mcpwwf
 
 # end-use hot water demand calculation
-
-def calc_Qww_schedule(list_uses, schedules, building_uses):
-    """
-    Algoithm to calculate the schedule of Qww use
-
-    :param list_uses:
-    :param schedules:
-    :param building_uses:
-    """
-
-    def calc_average(last, current, share_of_use):
-        return last + current * share_of_use
-
-    dhw = np.zeros(8760)
-    num_profiles = len(list_uses)
-    for num in range(num_profiles):
-        current_share_of_use = building_uses[list_uses[num]]
-        dhw = np.vectorize(calc_average)(dhw, schedules[num][2], current_share_of_use)
-
-    return dhw
-
 
 def calc_Qww(mww, Tww_sup_0, Tww_re, Cpw):
     mcpww = mww * Cpw * 1000  # W/K

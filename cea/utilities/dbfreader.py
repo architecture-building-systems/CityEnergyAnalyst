@@ -21,8 +21,8 @@ def df2dbf(df, dbf_path, my_specs=None):
                      np.int64: ('N', 20, 0),
                      float: ('N', 36, 15),
                      np.float64: ('N', 36, 15),
-                     unicode: ('C', 14, 0),
-                     str: ('C', 14, 0)
+                     unicode: ('C', 25, 0),
+                     str: ('C', 25, 0)
                      }
         types = [type(df[i].iloc[0]) for i in df.columns]
         specs = [type2spec[t] for t in types]

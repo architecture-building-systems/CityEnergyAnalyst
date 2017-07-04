@@ -21,7 +21,9 @@ To install the research version of CEA:
 
 #. open Anaconda prompt (terminal console) from the start menu.
 #. create a conda environment and activate it: do ``conda create -n cea python=2.7``, do ``activate cea``
-#. install dependencies: do ``conda install -c conda-forge geopandas ephem``
+#. install dependencies: do ``conda install -c conda-forge geopandas ephem "pandas<0.20"``
+#. install dependencies: do ``conda install -c dlr-sc tbb freeimageplus gl2ps``
+#. install dependencies: do ``conda install -c oce -c pythonocc pythonocc-core=0.17.3``
 #. install cea: do ``pip install cityenergyanalyst``
 #. install arcgis plug-in: do ``cea install-toolbox``
 
@@ -39,15 +41,24 @@ To install the development environment of CEA:
 #. choose location where to store the repository: do ``cd Documents``
 #. clone repository: do ``git clone https://github.com/architecture-building-systems/CEAforArcGIS.git``
 #. go to location where the repository was cloned: do ``cd CEAforArcGIS``
-#. install dependencies: do ``conda install -c conda-forge geopandas ephem``
+#. install dependencies: do ``conda install -c conda-forge geopandas ephem "pandas<0.20"``
+#. install dependencies: do ``conda install -c dlr-sc tbb freeimageplus gl2ps``
+#. install dependencies: do ``conda install -c oce -c pythonocc pythonocc-core=0.17.3``
 #. install cea development: do ``python setup.py install``
 #. set-up path to repository: do ``python setup.py develop``
+#. install additional dependencies only for developers: do ``pip install .[dev]``
+#. download and install Daysim: ``http://daysim.ning.com/page/download``
+
 
 Note: Creating a conda environment is an optional step, but probably a good habit to get into: This creates a python
 environment separate from your other python environments - that way, version mismatches between packages don't bleed
 into your other work. (you can use any name, when creating an environment - "cea" is just an example)
 
 Note: Location where to store the repository can be any -"Documents" is just an example.
+
+Note: If after the installation you experience an error concerning geopandas or fiona, i.e., ``ImportError: DLL load
+ failed: The specified module could not be found.`` Try copying ``C:\Users\your_name\Anaconda2\envs\cea\proj.dll`` to
+``C:\Users\your_name\Anaconda2\envs\cea\Library\bin`` and CEA should run.
 
 Setting up PyCharm
 ..................
@@ -65,7 +76,13 @@ the instructions to get PyCharm up and running:
    something like
    ``C:\Users\your_name\Anaconda2\envs\cea/python.exe``
 
-#. Click apply changes and your are done!
+#. Click apply changes.
+
+#. Now add your conda environment ``C:\Users\your_name\Anaconda2\envs\cea``
+   to your environment variable ``PATH``. The environment variable is located
+   under Environment Variables in the tab Advanced in System Properties in the Control Panel.
+
+#. Restart PyCharm if open.
 
 To set the custom dictionary used in PyCharm, do:
 

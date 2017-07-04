@@ -1,0 +1,14 @@
+channels:
+- conda-forge
+- https://conda.anaconda.org/dlr-sc
+dependencies:
+- python=2.7
+- geopandas=0.2.1
+- matplotlib
+- jpeg=8d
+- sphinx=1.3.5
+- versioneer
+- ephem
+- fiona
+- pythonocc-core=0.17
+- networkx

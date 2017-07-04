@@ -1,9 +1,7 @@
+import os
+import shutil
 import tempfile
 import unittest
-import os
-
-import shutil
-import zipfile
 
 
 class TestCheckForRadiationInputInDemandScript(unittest.TestCase):
@@ -37,7 +35,6 @@ class TestCheckForRadiationInputInDemandScript(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(tempfile.gettempdir(), 'reference-case-open')))
 
     def test_demand_checks_radiation_script(self):
-        import cea.inputlocator
         import cea.demand.demand_main
         import cea.globalvar
 

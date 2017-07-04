@@ -66,7 +66,7 @@ def sensAnalysis(locator, extraCosts, extraCO2, extraPrim, solarFeat, ntwFeat, g
     step = gV.sensibilityStep
     bandwidth = sensBandwidth()
     os.chdir(locator.get_optimization_master_results_folder())
-    pop, eps, testedPop = sFn.readCheckPoint(locator, gen, 0)
+    pop, eps, testedPop, ntwList, fitness = sFn.readCheckPoint(locator, gen, 0)
     toolbox = base.Toolbox()
 
     total_demand = pd.read_csv(locator.get_total_demand())

@@ -29,7 +29,7 @@ def normalizePop(locator, Generation):
     :return: normalized population
     :rtype: list
     """
-    popFinal, eps, testedPop = sFn.readCheckPoint(locator, Generation, storeData = 0)
+    popFinal, eps, testedPop, ntwList, fitness = sFn.readCheckPoint(locator, Generation, storeData = 0)
 
     maxCosts =0
     minCosts =0
@@ -91,7 +91,7 @@ def normalize_epsIndicator(locator, generation):
     # Load the population
     i = 1
     while i < generation+1:
-        pop, eps, testedPop = sFn.readCheckPoint(locator, i, storeData = 0)
+        pop, eps, testedPop, ntwList, fitness = sFn.readCheckPoint(locator, i, storeData = 0)
         i+=1
         allPop.append(pop)
         

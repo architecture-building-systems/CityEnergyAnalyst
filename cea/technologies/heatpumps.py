@@ -293,11 +293,11 @@ def calc_Cinv_GHP(GHP_Size, gV):
     InvC_HP = 0
     InvC_BH = 0
 
-    InvC_HP += nProbe * 5247.5 * (gV.GHP_WmaxSize * 1E-3) ** 0.49
-    InvC_BH += nProbe * 7100 * (gV.GHP_WmaxSize * 1E-3) ** 0.74
+    InvC_HP += nProbe * 6297 * (gV.GHP_WmaxSize * 1E-3) ** 0.49
+    InvC_BH += nProbe * 8520 * (gV.GHP_WmaxSize * 1E-3) ** 0.74
 
-    InvC_HP += 5247.5 * (roundProbe * gV.GHP_WmaxSize * 1E-3) ** 0.49
-    InvC_BH += 7100 * (roundProbe * gV.GHP_WmaxSize * 1E-3) ** 0.74
+    InvC_HP += 6297 * (roundProbe * gV.GHP_WmaxSize * 1E-3) ** 0.49
+    InvC_BH += 8520 * (roundProbe * gV.GHP_WmaxSize * 1E-3) ** 0.74
 
     InvCa = InvC_HP * gV.GHP_i * (1+ gV.GHP_i) ** gV.GHP_nHP / \
             ((1+gV.GHP_i) ** gV.GHP_nHP - 1) + \

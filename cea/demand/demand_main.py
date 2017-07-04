@@ -27,7 +27,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def demand_calculation(locator, weather_path, gv):
+def demand_calculation(locator, weather_path, gv, use_dynamic_infiltration_calculation=False):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
     using the integrated model of [Fonseca2015]_.
@@ -68,8 +68,9 @@ def demand_calculation(locator, weather_path, gv):
 
     # schedules model
     list_uses = list(building_properties._prop_occupancy.drop('PFloor', axis=1).columns)
-    schedules = occupancy_model.schedule_maker(date, locator, list_uses)
-    schedules_dict = {'list_uses': list_uses, 'schedules': schedules}
+    archetype_schedules, archetype_values = occupancy_model.schedule_maker(date, locator, list_uses)
+    schedules_dict = {'list_uses': list_uses, 'archetype_schedules': archetype_schedules, 'occupancy_densities':
+        archetype_values['people'], 'archetype_values': archetype_values}
 
     # in case gv passes a list of specific buildings to simulate.
     if gv.simulate_building_list:
@@ -80,10 +81,10 @@ def demand_calculation(locator, weather_path, gv):
     # demand
     if gv.multiprocessing and mp.cpu_count() > 1:
         thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, list_building_names,
-                                                    schedules_dict, weather_data)
+                                                    schedules_dict, weather_data, use_dynamic_infiltration_calculation)
     else:
         thermal_loads_all_buildings(building_properties, date, gv, locator, list_building_names, schedules_dict,
-                                    weather_data)
+                                    weather_data, use_dynamic_infiltration_calculation)
 
     if gv.print_totals:
         totals, time_series = gv.demand_writer.write_totals_csv(building_properties, locator)
@@ -92,18 +93,18 @@ def demand_calculation(locator, weather_path, gv):
 
 
 def thermal_loads_all_buildings(building_properties, date, gv, locator, list_building_names, usage_schedules,
-                                weather_data):
+                                weather_data, use_dynamic_infiltration_calculation):
     num_buildings = len(list_building_names)
     for i, building in enumerate(list_building_names):
         bpr = building_properties[building]
-        thermal_loads.calc_thermal_loads(
-            building, bpr, weather_data, usage_schedules, date, gv, locator)
+        thermal_loads.calc_thermal_loads(building, bpr, weather_data, usage_schedules, date, gv, locator,
+                                         use_dynamic_infiltration_calculation)
         gv.log('Building No. %(bno)i completed out of %(num_buildings)i: %(building)s', bno=i + 1,
                num_buildings=num_buildings, building=building)
 
 
 def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, list_building_names, usage_schedules,
-                                                weather_data):
+                                                weather_data, use_dynamic_infiltration_calculation):
     pool = mp.Pool()
     gv.log("Using %i CPU's" % mp.cpu_count())
     joblist = []
@@ -111,7 +112,8 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
     for building in list_building_names:
         bpr = building_properties[building]
         job = pool.apply_async(thermal_loads.calc_thermal_loads,
-                               [building, bpr, weather_data, usage_schedules, date, gv, locator])
+                               [building, bpr, weather_data, usage_schedules, date, gv, locator,
+                                use_dynamic_infiltration_calculation])
         joblist.append(job)
     for i, job in enumerate(joblist):
         job.get(240)
@@ -119,7 +121,7 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
     pool.close()
 
 
-def run_as_script(scenario_path=None, weather_path=None):
+def run_as_script(scenario_path=None, weather_path=None, use_dynamic_infiltration_calculation=False):
     gv = cea.globalvar.GlobalVariables()
     if scenario_path is None:
         scenario_path = gv.scenario_reference
@@ -130,7 +132,8 @@ def run_as_script(scenario_path=None, weather_path=None):
 
     gv.log('Running demand calculation for scenario %(scenario)s', scenario=scenario_path)
     gv.log('Running demand calculation with weather file %(weather)s', weather=weather_path)
-    demand_calculation(locator=locator, weather_path=weather_path, gv=gv)
+    demand_calculation(locator=locator, weather_path=weather_path, gv=gv,
+                       use_dynamic_infiltration_calculation=use_dynamic_infiltration_calculation)
 
 
 if __name__ == '__main__':
@@ -139,6 +142,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
     parser.add_argument('-w', '--weather', help='Path to the weather file')
+    parser.add_argument('--use-dynamic-infiltration-calculation', action='store_true',
+                        help='Use the dynamic infiltration calculation instead of default')
     args = parser.parse_args()
 
-    run_as_script(scenario_path=args.scenario, weather_path=args.weather)
+    run_as_script(scenario_path=args.scenario, weather_path=args.weather,
+                  use_dynamic_infiltration_calculation=args.use_dynamic_infiltration_calculation)
