@@ -12,6 +12,7 @@ import ephem
 import numpy as np
 import pandas as pd
 from simpledbf import Dbf5
+import traceback
 
 from cea.utilities import epwreader
 
@@ -145,11 +146,14 @@ def CalcRadiationAllDays(T_G_day, aspect_slope, dem_rasterfinal_path, heightoffs
 
 def _CalcRadiationAllDays(T_G_day_path, aspect_slope, dem_rasterfinal_path, heightoffset, latitude, observers_path,
                           path_arcgis_db, temporary_folder):
-
-    T_G_day = pd.read_pickle(T_G_day_path)
-    for day in range(1, 366):
-        CalcRadiation(day, dem_rasterfinal_path, observers_path, T_G_day, latitude,
-                      temporary_folder, aspect_slope, heightoffset, path_arcgis_db)
+    try:
+        T_G_day = pd.read_pickle(T_G_day_path)
+        for day in range(1, 366):
+            CalcRadiation(day, dem_rasterfinal_path, observers_path, T_G_day, latitude,
+                          temporary_folder, aspect_slope, heightoffset, path_arcgis_db)
+    except:
+        print(traceback.format_exc())
+        raise
 
 
 def calculate_sunny_hours_of_year(locator, sunrise):
@@ -357,12 +361,19 @@ def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, 
     global_radiation = locationtemp1 + '\\' + 'Day_' + str(day) + '.shp'
     timeConfig = 'WithinDay    ' + str(day) + ', 0, 24'
 
-    # Run the extension of arcgis
-    _CalcRadiation(Latitude, aspect_slope, azimuthDivisions, calcDirections, dayInterval, diffuseProp, global_radiation,
-                   heightoffset, hourInterval, in_points_feature, in_surface_raster, skySize, timeConfig,
-                   transmittivity, zenithDivisions, path_arcgis_db)
-    print('complete calculating radiation of day No. %(day)i' % locals())
-    return arcpy.GetMessages()
+    # Run the extension of arcgis, retry max_retries times before giving up...
+    max_retries = 3
+    for _ in range(max_retries):
+        try:
+            _CalcRadiation(Latitude, aspect_slope, azimuthDivisions, calcDirections, dayInterval, diffuseProp, global_radiation,
+                           heightoffset, hourInterval, in_points_feature, in_surface_raster, skySize, timeConfig,
+                           transmittivity, zenithDivisions, path_arcgis_db)
+            print('complete calculating radiation of day No. %(day)i' % locals())
+            return arcpy.GetMessages()
+        except:
+            print(traceback.format_exc())
+    raise AssertionError('_CalcRadiation failed %(max_retries)i times... giving up!' % locals())
+
 
 
 def _CalcRadiation(Latitude, aspect_slope, azimuthDivisions, calcDirections, dayInterval, diffuseProp,
@@ -380,7 +391,6 @@ def _CalcRadiation(Latitude, aspect_slope, azimuthDivisions, calcDirections, day
                                       calcDirections, zenithDivisions, azimuthDivisions, "STANDARD_OVERCAST_SKY",
                                       diffuseProp, transmittivity, "#", "#", "#")
     except:
-        import traceback
         print(traceback.format_exc())
         raise
 
