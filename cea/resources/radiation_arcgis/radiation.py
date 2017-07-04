@@ -146,8 +146,9 @@ def CalcRadiationAllDays(T_G_day, aspect_slope, dem_rasterfinal_path, heightoffs
 def _CalcRadiationAllDays(T_G_day_path, aspect_slope, dem_rasterfinal_path, heightoffset, latitude, observers_path,
                           path_arcgis_db, temporary_folder):
 
+    T_G_day = pd.read_pickle(T_G_day_path)
     for day in range(1, 366):
-        CalcRadiation(day, dem_rasterfinal_path, observers_path, T_G_day_path, latitude,
+        CalcRadiation(day, dem_rasterfinal_path, observers_path, T_G_day, latitude,
                       temporary_folder, aspect_slope, heightoffset, path_arcgis_db)
 
 
