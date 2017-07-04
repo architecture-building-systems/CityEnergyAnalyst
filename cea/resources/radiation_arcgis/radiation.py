@@ -101,9 +101,8 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     CalcObservers(simple_cq_shp, observers_path, data_factors_boundaries_csv, path_arcgis_db, gv)
 
     # Calculate radiation
-    for day in range(1, 366):
-        CalcRadiation(day, dem_rasterfinal_path, observers_path, T_G_day, latitude,
-                      locator.get_temporary_folder(), aspect_slope, heightoffset, path_arcgis_db, gv)
+    CalcRadiationAllDays(T_G_day, aspect_slope, dem_rasterfinal_path, heightoffset, latitude, locator,
+                         observers_path, path_arcgis_db)
 
     gv.log('complete raw radiation files')
 
@@ -118,6 +117,38 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     # get solar insolation @ daren: this is a A BOTTLE NECK
     CalcIncidentRadiation(Data_radiation, locator.get_radiation(), locator.get_surface_properties(), gv)
     gv.log('done')
+
+
+def CalcRadiationAllDays(T_G_day, aspect_slope, dem_rasterfinal_path, heightoffset, latitude, locator,
+                         observers_path, path_arcgis_db):
+
+    # let's just be sure this is set
+    arcpy.env.workspace = path_arcgis_db
+    arcpy.env.overwriteOutput = True
+    arcpy.CheckOutExtension("spatial")
+
+    T_G_day_path = locator.get_temporary_file('T_G_day.pickle')
+    T_G_day.to_pickle(T_G_day_path)
+
+    temporary_folder = locator.get_temporary_folder()
+
+    import multiprocessing
+    process = multiprocessing.Process(target=_CalcRadiationAllDays, args=(
+        T_G_day_path, aspect_slope, dem_rasterfinal_path, heightoffset, latitude, observers_path, path_arcgis_db,
+        temporary_folder))
+    process.start()
+    process.join()  ## block until process terminates
+    if process.exitcode != 0:
+        raise AssertionError('_CalcRadiationAllDays failed...')
+
+
+
+def _CalcRadiationAllDays(T_G_day_path, aspect_slope, dem_rasterfinal_path, heightoffset, latitude, observers_path,
+                          path_arcgis_db, temporary_folder):
+
+    for day in range(1, 366):
+        CalcRadiation(day, dem_rasterfinal_path, observers_path, T_G_day_path, latitude,
+                      temporary_folder, aspect_slope, heightoffset, path_arcgis_db)
 
 
 def calculate_sunny_hours_of_year(locator, sunrise):
@@ -310,7 +341,7 @@ def calculate_sunny_hours_of_day(day, sunrise, temporary_folder):
 
 
 def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, locationtemp1, aspect_slope,
-                  heightoffset, path_arcgis_db, gv):
+                  heightoffset, path_arcgis_db):
     # Local Variables
     Latitude = str(latitude)
     skySize = '400'  # max 10000
@@ -326,16 +357,10 @@ def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, 
     timeConfig = 'WithinDay    ' + str(day) + ', 0, 24'
 
     # Run the extension of arcgis
-    import multiprocessing
-    process = multiprocessing.Process(target=_CalcRadiation, args=(Latitude, aspect_slope, azimuthDivisions, calcDirections, dayInterval, diffuseProp,
-                   global_radiation, heightoffset, hourInterval, in_points_feature, in_surface_raster, skySize,
-                   timeConfig, transmittivity, zenithDivisions, path_arcgis_db))
-    process.start()
-    process.join()
-    rc = process.exitcode
-    if rc != 0:
-        raise AssertionError('CalcRadiation could not be completed for day No. %(day)i' % locals())
-    gv.log('complete calculating radiation of day No. %(day)i, rc=%(rc)i' % locals())
+    _CalcRadiation(Latitude, aspect_slope, azimuthDivisions, calcDirections, dayInterval, diffuseProp, global_radiation,
+                   heightoffset, hourInterval, in_points_feature, in_surface_raster, skySize, timeConfig,
+                   transmittivity, zenithDivisions, path_arcgis_db)
+    print('complete calculating radiation of day No. %(day)i' % locals())
     return arcpy.GetMessages()
 
 
@@ -344,7 +369,7 @@ def _CalcRadiation(Latitude, aspect_slope, azimuthDivisions, calcDirections, day
                    timeConfig, transmittivity, zenithDivisions, path_arcgis_db):
     """Splitting off a possibly problematic piece of code to a separate process..."""
     try:
-        os.chdir(path_arcgis_db)  # make sure this process is in a writeable directory
+        # os.chdir(path_arcgis_db)  # make sure this process is in a writeable directory
         arcpy.env.workspace = path_arcgis_db
         arcpy.env.overwriteOutput = True
         arcpy.CheckOutExtension("spatial")
