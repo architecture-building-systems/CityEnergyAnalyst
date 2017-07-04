@@ -453,7 +453,7 @@ def calc_Cinv_CCT(CC_size, gV):
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
 
-    InvC = 32978 * (CC_size * 1E-3) ** 0.5946  # [C. Weber, 2008]_
+    InvC = 32978 * (CC_size * 1E-3) ** 0.5967  # [C. Weber, 2008]_
     InvCa = InvC * gV.CC_i * (1+ gV.CC_i) ** gV.CC_n / ((1+gV.CC_i) ** gV.CC_n - 1)
 
     return InvCa

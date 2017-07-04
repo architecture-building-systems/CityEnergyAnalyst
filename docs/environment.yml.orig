@@ -1,0 +1,24 @@
+name: cityenergyanalyst_docs
+channels:
+- conda-forge
+- pythonocc
+- oce
+- https://conda.anaconda.org/dlr-sc
+dependencies:
+- python=2.7
+- pandas=0.19.2
+<<<<<<< HEAD
+=======
+- setuptools
+- salib
+>>>>>>> refs/remotes/origin/master
+- geopandas=0.2.1
+- matplotlib
+- jpeg=8d
+- sphinx=1.3.5
+- versioneer
+- ephem
+- fiona
+- pythonocc-core=0.17
+- networkx
+- pythonocc-core==0.17.3

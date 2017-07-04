@@ -53,7 +53,7 @@ def calc_h(t, w):
     elif -100 < t <= 0: # temperature below zero
         h = (1.005 * t) + w * (2501 + 1.84 * t)
     else:
-        raise
+        raise Exception('temperature out of bounds!'+str(t))
         h = np.nan
         print('Warning: Temperature out of bounds (>60°C or <-100°C)')
         print(t)

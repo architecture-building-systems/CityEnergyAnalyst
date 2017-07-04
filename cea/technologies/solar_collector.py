@@ -657,11 +657,11 @@ def optimal_angle_and_tilt(observers_all, latitude, worst_sh, worst_Az, transmit
 
 # investment and maintenance costs
 
-def calc_Cinv_SC(Area):
+def calc_Cinv_SC(Area, gv):
     """
     Lifetime 35 years
     """
-    InvCa = 2050 * Area / 35  # [CHF/y]
+    InvCa = 2050 * Area / gv.SC_n  # [CHF/y]
 
     return InvCa
 

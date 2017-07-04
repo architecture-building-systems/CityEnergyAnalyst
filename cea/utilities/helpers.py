@@ -119,8 +119,11 @@ def hoy_2_seasonhour(hoy, gv):
 def seasonhour_2_hoy(seasonhour, gv):
     """
     hour relative to start of heating season to hour of year
-    seasonhour: hour relative to start of heating season
-    hoy: hour of year
+
+    :param seasonhour: hour relative to start of heating season
+    :type seasonhour: int
+    :returns hoy: hour of year
+    :rtype hoy: int
     """
 
     hoy_heat_stop, hoy_heat_start = gv.seasonhours
@@ -246,6 +249,51 @@ def is_coolingseason_hoy(hoy):
 
     else:
         return
+
+
+def sind(angle):
+    """
+    Calculates sine function with input in degree.
+
+    :param angle: angle in degree
+    :type angle: float
+    :return: sine of the angle
+    :rtype: float
+
+    Author: Shanshan Hsieh, 27/04/2017
+    """
+    return np.sin(np.radians(angle))
+
+
+def cosd(angle):
+    """
+    Calculates cosine function with input in degree.
+
+    :param angle: angle in degree
+    :type angle: float
+    :return: cosine of the angle
+    :rtype: float
+
+    Author: Shanshan Hsieh, 27/04/2017
+    """
+    return np.cos(np.radians(angle))
+
+
+def tand(angle):
+    """
+    Calculates tangent function with input in degree.
+
+    :param angle: angle in degree
+    :type angle: float
+    :return: tan of the angle
+    :rtype: float
+
+    Author: Shanshan Hsieh, 27/04/2017
+    """
+    return np.tan(np.radians(angle))
+
+
+
 
 
 def test_helpers():

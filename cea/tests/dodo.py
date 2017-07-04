@@ -1,6 +1,13 @@
 """
 "Makefile" for doit to test the whole package with Jenkins.
 
+This file gets run with the ``cea test`` command as well as by the Jenkins continuous integration server. It runs all
+the unit tests in the ``cea/tests/`` folder as well as some of the CEA scripts, to make sure they at least run through.
+
+In order to run reference cases besides the one called "open", you will need to set up authentication to the private
+GitHub repository. The easiest way to do this is with ``cea test --save --user USERNAME --token PERSONAL_ACCESS_TOKEN``,
+adding your own user name and a GitHub personal access token.
+
 The reference cases can be found here: https://github.com/architecture-building-systems/cea-reference-case/archive/master.zip
 """
 import requests
@@ -110,6 +117,11 @@ def task_download_reference_cases():
             shutil.rmtree(REFERENCE_CASE_PATH)
         archive = zipfile.ZipFile(ARCHIVE_PATH)
         archive.extractall(REFERENCE_CASE_PATH)
+
+        # extract the reference-case-open to the folder
+        import cea.examples
+        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+        archive.extractall(os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME))
 
     return {
         'actions': [download_reference_cases],
@@ -283,7 +295,7 @@ def main(user=None, token=None, reference_cases=None):
     if token:
         global _token
         _token = token
-    if reference_cases:
+    if reference_cases and 'all' not in reference_cases:
         global _reference_cases
         _reference_cases = reference_cases
     sys.exit(DoitMain(ModuleTaskLoader(globals())).run([]))

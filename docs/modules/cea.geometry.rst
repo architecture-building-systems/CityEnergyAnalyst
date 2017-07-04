@@ -1,11 +1,11 @@
-cea.geometry package
-====================
+cea\.geometry package
+=====================
 
 Submodules
 ----------
 
-cea.geometry.geometry_reader module
------------------------------------
+cea\.geometry\.geometry\_reader module
+--------------------------------------
 
 .. automodule:: cea.geometry.geometry_reader
     :members:

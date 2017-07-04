@@ -1,28 +1,37 @@
-cea.optimization package
-========================
+cea\.optimization package
+=========================
 
 Subpackages
 -----------
 
 .. toctree::
 
-    cea.optimization.conversion_storage
     cea.optimization.distribution
+    cea.optimization.master
     cea.optimization.preprocessing
+    cea.optimization.slave
 
 Submodules
 ----------
 
-cea.optimization.optimization_main module
------------------------------------------
+cea\.optimization\.optimization\_main module
+--------------------------------------------
 
 .. automodule:: cea.optimization.optimization_main
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea.optimization.supportFn module
----------------------------------
+cea\.optimization\.slave\_data module
+-------------------------------------
+
+.. automodule:: cea.optimization.slave_data
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cea\.optimization\.supportFn module
+-----------------------------------
 
 .. automodule:: cea.optimization.supportFn
     :members:
