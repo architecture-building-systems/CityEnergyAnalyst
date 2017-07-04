@@ -333,7 +333,8 @@ def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, 
     process.start()
     process.join()
     rc = process.exitcode
-
+    if rc != 0:
+        raise AssertionError('CalcRadiation could not be completed for day No. %(day)i' % locals())
     gv.log('complete calculating radiation of day No. %(day)i, rc=%(rc)i' % locals())
     return arcpy.GetMessages()
 
@@ -343,6 +344,7 @@ def _CalcRadiation(Latitude, aspect_slope, azimuthDivisions, calcDirections, day
                    timeConfig, transmittivity, zenithDivisions, path_arcgis_db):
     """Splitting off a possibly problematic piece of code to a separate process..."""
     try:
+        os.chdir(path_arcgis_db)  # make sure this process is in a writeable directory
         arcpy.env.workspace = path_arcgis_db
         arcpy.env.overwriteOutput = True
         arcpy.CheckOutExtension("spatial")
