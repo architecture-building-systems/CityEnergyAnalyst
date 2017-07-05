@@ -27,7 +27,7 @@ the authors:*
    constructions from before 1920 until today." Contemporary Urban
    Issues. 2014. 17.
 
-The current version of the CEA uses the next archetype databases:
+The current version of the CEA uses the following archetype databases:
 
 .. toctree::
     :maxdepth: 2
