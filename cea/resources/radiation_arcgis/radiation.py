@@ -96,7 +96,7 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
 
     # Calculate boundaries of buildings
     CalcBoundaries(simple_cq_shp, locator.get_temporary_folder(), path_arcgis_db,
-                   data_factors_centroids_csv, data_factors_boundaries_csv, gv)
+                  data_factors_centroids_csv, data_factors_boundaries_csv, gv)
 
     # calculate observers_path
     CalcObservers(simple_cq_shp, observers_path, data_factors_boundaries_csv, path_arcgis_db, gv)
@@ -132,28 +132,10 @@ def CalcRadiationAllDays(T_G_day, aspect_slope, dem_rasterfinal_path, heightoffs
     T_G_day.to_pickle(T_G_day_path)
 
     temporary_folder = locator.get_temporary_folder()
-
-    import multiprocessing
-    process = multiprocessing.Process(target=_CalcRadiationAllDays, args=(
-        T_G_day_path, aspect_slope, dem_rasterfinal_path, heightoffset, latitude, observers_path, path_arcgis_db,
-        temporary_folder))
-    process.start()
-    process.join()  ## block until process terminates
-    if process.exitcode != 0:
-        raise AssertionError('_CalcRadiationAllDays failed...')
-
-
-
-def _CalcRadiationAllDays(T_G_day_path, aspect_slope, dem_rasterfinal_path, heightoffset, latitude, observers_path,
-                          path_arcgis_db, temporary_folder):
-    try:
-        T_G_day = pd.read_pickle(T_G_day_path)
-        for day in range(1, 366):
-            CalcRadiation(day, dem_rasterfinal_path, observers_path, T_G_day, latitude,
-                          temporary_folder, aspect_slope, heightoffset, path_arcgis_db)
-    except:
-        print(traceback.format_exc())
-        raise
+    T_G_day = pd.read_pickle(T_G_day_path)
+    for day in range(1, 366):
+        CalcRadiation(day, dem_rasterfinal_path, observers_path, T_G_day, latitude,
+                      temporary_folder, aspect_slope, heightoffset, path_arcgis_db)
 
 
 def calculate_sunny_hours_of_year(locator, sunrise):
