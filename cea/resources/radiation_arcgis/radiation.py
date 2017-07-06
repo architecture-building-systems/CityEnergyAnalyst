@@ -567,6 +567,21 @@ def calc_sunrise(sunrise, year_to_simulate, longitude, latitude):
     return sunrise
 
 
+def get_latitude(scenario_path):
+    import fiona
+    import cea.inputlocator
+    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_building_geometry()) as shp:
+        lat = shp.crs['lat_0']
+    return lat
+
+def get_longitude(scenario_path):
+    import fiona
+    import cea.inputlocator
+    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_building_geometry()) as shp:
+        lon = shp.crs['lon_0']
+    return lon
+
+
 def run_as_script(scenario_path=None, weather_path=None, latitude=None, longitude=None, year=None):
     import cea.globalvar
     import cea.inputlocator
@@ -577,11 +592,11 @@ def run_as_script(scenario_path=None, weather_path=None, latitude=None, longitud
     if weather_path is None:
         weather_path = locator.get_default_weather()
     if latitude is None:
-        latitude = 47.1628017306431
+        latitude = get_latitude(scenario_path)
     if longitude is None:
-        longitude = 8.31
+        longitude = get_longitude(scenario_path)
     if year is None:
-        year = 2010
+        year = 2016
     path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
 
     solar_radiation_vertical(locator=locator, path_arcgis_db=path_default_arcgis_db,
