@@ -69,7 +69,7 @@ def calc_PVT(locator, radiation_json_path, metadata_csv_path, latitude, longitud
                                                                                       settings.date_start, worst_hour)
     print 'calculating solar properties done'
 
-    # get properties of the panel to evaluate # TODO: find a PVT reference
+    # get properties of the panel to evaluate # TODO: find a PVT module reference
     panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems_database(), settings.type_PVpanel)
     panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems_database(), settings.type_SCpanel)
     print 'gathering properties of PV collector panel'
@@ -177,7 +177,7 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
     t_max = panel_properties_SC['t_max']
     IAM_d = panel_properties_SC['IAM_d']
     Aratio = panel_properties_SC['aperture_area_ratio']
-    Apanel = panel_properties_PV['module_length']**2  # FIXME: has to be the same as PV module area, find out typical PV module length
+    Apanel = panel_properties_PV['module_length']**2
     dP1 = panel_properties_SC['dP1']
     dP2 = panel_properties_SC['dP2']
     dP3 = panel_properties_SC['dP3']
@@ -258,7 +258,7 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
 
     Tout_group = (Sum_qout / Sum_mcp) + Tin  # in C
     Final = pd.DataFrame(
-        {'Qsc_KWh': Sum_qout, 'Tscs': Tin_array, 'Tscr': Tout_group, 'mcp_kW/C': Sum_mcp, 'Eaux_kWh': Sum_Eaux,
+        {'Qsc_kWh': Sum_qout, 'Tscs': Tin_array, 'Tscr': Tout_group, 'mcp_kW/C': Sum_mcp, 'Eaux_kWh': Sum_Eaux,
          'Qsc_l_KWh': Sum_qloss, 'PV_kWh': Sum_PV, 'Area': sum(list_groups_areas), 'radiation_kWh': Sum_radiation}, index=range(8760))
 
     return list_results_PVT, Final
@@ -301,7 +301,10 @@ def calc_PVT_module(tilt_angle, IAM_b_vector, IAM_d, I_direct_vector, I_diffuse_
     :param Tcell_PV: PV cell temperature [C]
     :param misc_losses: expected system loss [-]
     :param area_per_group: PV module area [m2]
-    :return: 
+    :return:
+
+    ..[J. Allan et al., 2015] J. Allan, Z. Dehouche, S. Stankovic, L. Mauricette. "Performance testing of thermal and
+    photovoltaic thermal solar collectors." Energy Science & Engineering 2015; 3(4): 310-326
     """
 
     # local variables
@@ -350,7 +353,7 @@ def calc_PVT_module(tilt_angle, IAM_b_vector, IAM_d, I_direct_vector, I_diffuse_
         q_gain_Seg = np.zeros([101, 1])  # maximum Iseg = maximum Nseg + 1 = 101
 
         for time in range(8760):
-            c1_pvt = c1 - eff_nom * Bref * Sm_PV[time]    #TODO: reference
+            c1_pvt = c1 - eff_nom * Bref * Sm_PV[time]  # _[J. Allan et al., 2015] eq.(18)
             Mfl = specific_flows[flow][time]
             if time < TIME0 + DELT / 2:
                 for Iseg in range(101, 501):  # 400 points with the data
@@ -419,7 +422,7 @@ def calc_PVT_module(tilt_angle, IAM_b_vector, IAM_d, I_direct_vector, I_diffuse_
                     qbal = q_gain - qfluid - q_mtherm
                     if abs(qbal) > 1:
                         time = time # re-enter the iteration when energy balance not satisfied
-                q_gain_Seg[Iseg] = q_gain  # in W/m2 # fixme: redundant?
+                q_gain_Seg[Iseg] = q_gain  # in W/m2
 
             # resulting energy output
             q_out = Mfl * Cp_fluid * (ToutSeg - Tin) / 1000 #[kW]
@@ -487,7 +490,7 @@ def calc_PVT_module(tilt_angle, IAM_b_vector, IAM_d, I_direct_vector, I_diffuse_
         if supply_out_total[5][x] <= 0:  # the demand is zero
             supply_out_total[5][x] = 0
             auxiliary_electricity[5][x] = 0
-            temperature_out[5][x] = 0  # FIXME: change to np.nan
+            temperature_out[5][x] = 0
             temperature_in[5][x] = 0
         T_module.append((temperature_out[5][x] + temperature_in[5][x]) / 2)
 
