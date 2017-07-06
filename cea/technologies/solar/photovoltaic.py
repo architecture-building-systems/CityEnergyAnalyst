@@ -301,7 +301,9 @@ def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg,
         Sz = lim3
 
     # Rb: ratio of beam radiation of tilted surface to that on horizontal surface
-    Rb = cos(teta) / cos(Sz)  # Sz is Zenith angle
+    if Sz <= radians(85):  # Sz is Zenith angle   # TODO: FIND REFERENCE
+        Rb = cos(teta) / cos(Sz)
+    else: Rb = 0  # Assume there is no direct radiation when the sun is close to the horizon.
 
     # calculate air mass modifier
     m = 1 / cos(Sz) # air mass
@@ -310,7 +312,7 @@ def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg,
     # incidence angle modifier for direct (beam) radiation
     teta_r = asin(sin(teta) / n)  # refraction angle in radians(aproximation accrding to Soteris A.) (5.1.4)
     Ta_n = exp(-K * L) * (1 - ((n - 1) / (n + 1)) ** 2)
-    if teta < 1.5707:  # 90 degrees in radians
+    if teta < radians(90):  # 90 degrees in radians
         part1 = teta_r + teta
         part2 = teta_r - teta
         Ta_B = exp((-K * L) / cos(teta_r)) * (
@@ -337,9 +339,10 @@ def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg,
 
     # absorbed solar radiation
     S = M * Ta_n * (kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
-    1 - cos(tilt)) / 2)  # [W/m2] (5.12.1) # TODO: analyze the upper bound and lower bound of each parameter, and check why give exceptionally high number
+    1 - cos(tilt)) / 2)  # [W/m2] (5.12.1)
     if S <= 0:  # when points are 0 and too much losses
         S = 0
+
     # temperature of cell
     Tcell = te + S * (NOCT - 20) / (800)   # assuming linear temperature rise vs radiation according to NOCT condition
 
