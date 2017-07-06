@@ -70,7 +70,7 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     Qww_0 = Qww.max()
 
     # distribution and circulation losses
-    Vol_ls = Lsww_dis * (gv.D / 1000) ** (2 / 4) * pi # volume per meter of pipe
+    Vol_ls = Lsww_dis * ((gv.D / 1000)/2) ** 2 * pi # volume inside distribution pipe
     Qww_dis_ls_r = np.vectorize(calc_Qww_dis_ls_r)(Ta, Qww, Lsww_dis, Lcww_dis, Y[1], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
                                            gv.Cpw, gv.Pwater, gv)
     Qww_dis_ls_nr = np.vectorize(calc_Qww_dis_ls_nr)(Ta, Qww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
@@ -137,9 +137,14 @@ def calc_disls(tamb, hotw, Flowtap, V, twws, Lsww_dis, p, cpw, Y, gv):
             gv.log('twws: %(twws).2f, tamb: %(tamb).2f, p: %(p).2f, cpw: %(cpw).2f, V: %(V).2f',
                    twws=twws, tamb=tamb, p=p, cpw=cpw, V=V)
             if (p * cpw * V * (twws - tamb) * 1000 == 0) and (q * Lsww_dis * t != 0):
-                exponential = 0
+                if (twws - tamb) == 0:
+                    exponential = 0
+                else:
+                    print 'Hot water distribution pipes have no volume!'
+                    raise
             else:
                 raise ZeroDivisionError
+
         tamb = tamb + (twws - tamb) * exponential
         losses = (twws - tamb) * V * cpw * p / 1000 * 278
     else:
