@@ -302,7 +302,7 @@ def calc_cooling_substation_heat_exchange(ch_0, Qnom, thi_0, tci_0, tho_0, gv):
     '''
 
     # nominal conditions network side
-    cc_0 = ch_0 * (thi_0 - tho_0) / ((thi_0 - tci_0) * 0.9)
+    cc_0 = ch_0 * (thi_0 - tho_0) / ((thi_0 - tci_0) * 0.9)  # FIXME
     tco_0 = Qnom / cc_0 + tci_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'cool')
     # Area heat exchange and UA_heating
@@ -332,7 +332,7 @@ def calc_heating_substation_heat_exchange(cc_0, Qnom, thi_0, tci_0, tco_0, gv):
     :return UA_heating: UA [
     '''
     # nominal conditions network side
-    ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * 0.9)
+    ch_0 = cc_0 * (tco_0 - tci_0) / ((thi_0 - tci_0) * 0.9)  # FIXME
     tho_0 = thi_0 - Qnom / ch_0
     dTm_0 = calc_dTm_HEX(thi_0, tho_0, tci_0, tco_0, 'heat')
     # Area heat exchange and UA_heating
@@ -364,7 +364,7 @@ def calc_HEX_cooling(Q, UA, thi, tho, tci, ch):
     '''
 
     if ch > 0:
-        eff = [0.1, 0]
+        eff = [0.1, 0]  # FIXME
         Flag = False
         tol = 0.00000001
         while abs((eff[0] - eff[1]) / eff[0]) > tol:
@@ -464,7 +464,7 @@ def calc_HEX_heating(Q, UA, thi, tco, tci, cc):
     '''
 
     if Q > 0:
-        eff = [0.1, 0]
+        eff = [0.1, 0]  # FIXME
         Flag = False
         tol = 0.00000001
         while abs((eff[0] - eff[1]) / eff[0]) > tol:
@@ -587,10 +587,10 @@ def run_as_script(scenario_path=None):
     gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
     #substation_main(locator, total_demand, total_demand['Name'], gv, False)
 
-    t = 1000
-    T_DH = 60
-    network = 'DH'
-    t_flag = True
+    t = 1000  # FIXME
+    T_DH = 60  # FIXME
+    network = 'DH'  # FIXME
+    t_flag = True  # FIXME
 
     substations_HEX_specs, buildings = substation_HEX_design_main(locator, total_demand, building_names, gv)
 
