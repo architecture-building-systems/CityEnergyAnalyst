@@ -14,7 +14,7 @@ from timezonefinder import TimezoneFinder
 import pytz
 from astral import Location
 
-# from cea.interfaces.arcgis.modules import arcpy
+from cea.interfaces.arcgis.modules import arcpy
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
