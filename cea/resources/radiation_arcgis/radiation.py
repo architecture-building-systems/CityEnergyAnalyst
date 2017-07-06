@@ -58,9 +58,9 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     """
     print(weather_path)
     # Set environment settings
-    # arcpy.env.workspace = path_arcgis_db
-    # arcpy.env.overwriteOutput = True
-    # arcpy.CheckOutExtension("spatial")
+    arcpy.env.workspace = path_arcgis_db
+    arcpy.env.overwriteOutput = True
+    arcpy.CheckOutExtension("spatial")
 
     # local variables
     aspect_slope = "FROM_DEM"

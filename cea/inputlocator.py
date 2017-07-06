@@ -226,7 +226,7 @@ class InputLocator(object):
     def get_default_weather(self):
         """weather/Zug-2010.epw
         path to database of archetypes file Archetypes_properties.xlsx"""
-        return os.path.join(self.weather_path, 'Zug.epw')
+        return os.path.join(self.weather_path, 'Singapore-2016.epw')
 
     def get_weather(self, name):
         """weather/{name}.epw"""
