@@ -60,8 +60,9 @@ def calc_Eint(tsd, bpr, schedules):
     else:
         tsd['Edataf'] = np.zeros(8760)
 
-    if 'INDUSTRY' in bpr.occupancy:
+    if 'INDUSTRIAL' in bpr.occupancy:
         tsd['Eprof'] = schedules['Epro'] * bpr.internal_loads['Epro_Wm2'] * bpr.rc_model['Aef']
+        tsd['Ecaf'] = np.zeros(8760) # not used in the current version but in the optimization part
     else:
         tsd['Eprof'] = np.zeros(8760)
         tsd['Ecaf'] = np.zeros(8760) # not used in the current version but in the optimization part
