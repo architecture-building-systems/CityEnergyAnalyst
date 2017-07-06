@@ -30,7 +30,7 @@ the authors:*
 The current version of the CEA uses the following archetype databases:
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
     building-properties
     building-schedules
