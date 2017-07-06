@@ -212,24 +212,24 @@ def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, m
     sensors_metadata = pd.read_csv(metadata_csv_path)
 
     # join total radiation to sensor_metadata
-    sensors_rad_sum = sensors_rad.sum(0).values # add new row with yearly radiation
-    sensors_metadata['total_rad_Whm2'] = sensors_rad_sum    #[Wh/m2]
+
+    sensors_rad_sum = sensors_rad.sum(0).to_frame('total_rad_Whm2') # add new row with yearly radiation
+    sensors_metadata.set_index('SURFACE', inplace=True)
+    sensors_metadata = sensors_metadata.merge(sensors_rad_sum, left_index=True, right_index=True)    #[Wh/m2]
 
     # remove window surfaces
-    sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'window']
+    sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'windows']
 
     # keep sensors if allow pv installation on walls or on roofs
     if panel_on_roof is False:
-        sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'roof']
+        sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'roofs']
     if panel_on_wall is False:
-        sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'wall']
+        sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'walls']
 
     # keep sensors above min production in sensors_rad
-    sensors_metadata = sensors_metadata.set_index('SURFACE')
     max_yearly_radiation = yearly_horizontal_rad
     # set min yearly radiation threshold for sensor selection
     min_yearly_radiation = max_yearly_radiation * min_radiation
-
     sensors_metadata_clean = sensors_metadata[sensors_metadata.total_rad_Whm2 >= min_yearly_radiation]
     sensors_rad_clean = sensors_rad[sensors_metadata_clean.index.tolist()] # keep sensors above min radiation
 
