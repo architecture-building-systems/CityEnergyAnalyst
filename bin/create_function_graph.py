@@ -92,7 +92,6 @@ def trace_function(function_to_trace):
             print(call_src, call_dst)
         return
 
-    import cea.inputlocator
     import cea.globalvar
 
     scenario_path = extract_ninecubes()
@@ -280,15 +279,15 @@ def run_demand(gv, locator, weather_path):
 
 
 def run_embodied_energy(gv, locator, weather_path):
-    import cea.analysis.embodied
-    cea.analysis.embodied.lca_embodied(year_to_calculate=2014, locator=locator, gv=gv)
+    import cea.analysis.lca.embodied
+    cea.analysis.lca.embodied.lca_embodied(year_to_calculate=2014, locator=locator, gv=gv)
 
 
 def run_emissions(gv, locator, weather_path):
-    import cea.analysis.operation
-    cea.analysis.operation.lca_operation(locator=locator, Qww_flag=(True), Qhs_flag=(True), Qcs_flag=(True),
-                                         Qcdata_flag=(True), Qcrefri_flag=(True), Eal_flag=(True), Eaux_flag=(True),
-                                         Epro_flag=(True), Edata_flag=(True))
+    import cea.analysis.lca.operation
+    cea.analysis.lca.operation.lca_operation(locator=locator, Qww_flag=(True), Qhs_flag=(True), Qcs_flag=(True),
+                                             Qcdata_flag=(True), Qcrefri_flag=(True), Eal_flag=(True), Eaux_flag=(True),
+                                             Epro_flag=(True), Edata_flag=(True))
 
 
 def run_heatmaps(gv, locator, weather_path):
@@ -301,8 +300,8 @@ def run_heatmaps(gv, locator, weather_path):
 
 
 def run_mobility(gv, locator, weather_path):
-    import cea.analysis.mobility
-    cea.analysis.mobility.lca_mobility(locator=locator)
+    import cea.analysis.lca.mobility
+    cea.analysis.lca.mobility.lca_mobility(locator=locator)
 
 
 def create_function_graph(input=None, output=None, save_trace_data=None, module_overview=False, function_name='demand'):
