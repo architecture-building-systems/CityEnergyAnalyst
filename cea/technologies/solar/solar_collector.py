@@ -251,6 +251,9 @@ def calc_SC_module(tilt_angle, IAM_b_vector, IAM_d_vector, I_direct_vector, I_di
 
     ..[M. Haller et al., 2012] Haller, M., Perers, B., Bale, C., Paavilainen, J., Dalibard, A. Fischer, S. & Bertram, E.
     (2012). TRNSYS Type 832 v5.00 " Dynamic Collector Model by Bengt Perers". Updated Input-Output Reference.
+    ..[ J. Fonseca et al., 2016] Fonseca, J., Nguyen, T-A., Schlueter, A., Marechal, F. City Energy Analyst:
+    Integrated framework for analysis and optimization of building energy systems in neighborhoods and city districts.
+    Energy and Buildings, 2016.
     """
 
     # local variables
@@ -365,7 +368,7 @@ def calc_SC_module(tilt_angle, IAM_b_vector, IAM_d_vector, I_direct_vector, I_di
 
                     #TflB[Iseg] = Tout_Seg
                     q_fluid = (Tout_Seg - Tin_Seg) * Mfl * Cp_fluid / A_seg
-                    q_mtherm = (TflB[Iseg] - TflA[Iseg]) * C_eff / delts  # total heat change rate of thermal capacitance # FIXME: find reference
+                    q_mtherm = (TflB[Iseg] - TflA[Iseg]) * C_eff / delts  # total heat change rate of thermal capacitance
                     q_balance_error = q_gain - q_fluid - q_mtherm
                     if abs(q_balance_error) > 1:
                         time = time        # re-enter the iteration when energy balance not satisfied
@@ -427,11 +430,11 @@ def calc_SC_module(tilt_angle, IAM_b_vector, IAM_d_vector, I_direct_vector, I_di
 
         if flow == 5: # optimal mass flow
             supply_losses[flow] = np.vectorize(calc_qloss_network)(specific_flows[flow], Le, aperture_area, temperature_mean[flow],
-                                                                   Tamb_vector, msc_max) #FIXME: check old code, which length to use? which one is non-recoverable?
+                                                                   Tamb_vector, msc_max)
             supply_out_pre = supply_out[flow].copy() + supply_losses[flow].copy()
             auxiliary_electricity[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow],
                                                          Leq, aperture_area)  # in kW
-            supply_out_total = supply_out + 0.5 * auxiliary_electricity[flow] - supply_losses[flow]  #fixme: why???
+            supply_out_total = supply_out + 0.5 * auxiliary_electricity[flow] - supply_losses[flow]  # eq.(58) _[J. Fonseca et al., 2016]
             mcp = specific_flows[flow] * (Cp_fluid / 1000)  # mcp in kW/c
 
     result = [supply_losses[5], supply_out_total[5], auxiliary_electricity[5], temperature_out[flow], temperature_in[flow], mcp]
@@ -450,7 +453,7 @@ def calc_q_rad(n0, IAM_b, I_direct, IAM_d, I_diffuse, tilt):
     :param tilt: solar panel tilt angle [rad]
     :return q_rad: absorbed radiation [Wh/m2]
     """
-    q_rad = n0 * IAM_b * I_direct + n0 * IAM_d * I_diffuse * (1 + cos(tilt)) / 2  # FIXME: check if "n0" is required here
+    q_rad = n0 * IAM_b * I_direct + n0 * IAM_d * I_diffuse * (1 + cos(tilt)) / 2
     return q_rad
 
 
@@ -508,12 +511,12 @@ def calc_q_gain(Tfl, Tabs, q_rad, DT, Tin, Tout, aperture_area, c1, c2, Mfl, del
                 DT[1] = DT[2]
         xgain += 1
 
-    #FIXME: what is this part for?
-    qout = Mfl * Cp_waterglycol * (Tout - Tin) / aperture_area
-    qmtherm = (Tfl[2] - Tfl[1]) * C_eff / delts
-    qbal = qgain - qout - qmtherm
-    if abs(qbal) > 1:
-        qbal = qbal
+    # FIXME: redundant...
+    # qout = Mfl * Cp_waterglycol * (Tout - Tin) / aperture_area
+    # qmtherm = (Tfl[2] - Tfl[1]) * C_eff / delts
+    # qbal = qgain - qout - qmtherm
+    # if abs(qbal) > 1:
+    #     qbal = qbal
     return qgain
 
 
@@ -633,7 +636,7 @@ def calc_Eaux_SC(specific_flow, Dp_collector, Leq, Aa):
 
     :param specific_flow: mass flow [kg/s]
     :param Dp_collector: pressure loss per module [Pa]
-    :param Leq: pipe length per aperture area [m]
+    :param Leq: total pipe length per aperture area [m]
     :param Aa: aperture area [m2]
     :return:
     """
@@ -710,7 +713,7 @@ def calc_optimal_mass_flow_2(m, q, dp):
 
 def optimal_angle_and_tilt(observers_all, latitude, worst_sh, worst_Az, transmittivity,
                            grid_side, module_lenght, angle_north, Min_Isol, Max_Isol):
-    #FIXME: this function is reserved for the calculation with argis
+    # FIXME [NOTE]: this function is reserved for the calculation in photovoltaic_arcgis.py
     def Calc_optimal_angle(teta_z, latitude, transmissivity):
         if transmissivity <= 0.15:
             gKt = 0.977
