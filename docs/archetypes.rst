@@ -17,7 +17,7 @@ renovation and a type of occupancy in the building.
 area. If you decide to use the existing please remember to acknowledge
 the authors:*
 
--  Fonseca, J. A., & Schlueter, A. (2015). Integrated model for
+-  Fonseca, J. A. and Schlueter, A. (2015). Integrated model for
    characterization of spatiotemporal building energy consumption
    patterns in neighborhoods and city districts. Applied Energy, 142,
    247–265.
@@ -32,6 +32,6 @@ The current version of the CEA uses the following archetype databases:
 .. toctree::
     :maxdepth: 2
 
-    building-schedules
     building-properties
+    building-schedules
 
