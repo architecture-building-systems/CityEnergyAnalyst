@@ -350,9 +350,9 @@ def calc_SC_module(tilt_angle, IAM_b_vector, IAM_d_vector, I_direct_vector, I_di
                     Tin_Seg = Tin
 
                 if Mfl > 0 and mode_seg == 1:  # same heat gain/ losses for all segments
-                    Tout_Seg = ((Mfl * Cp_fluid * (Tin_Seg + 273)) / A_seg - (C_eff * (Tin_Seg + 273)) / (2 * delts) + q_gain +
-                                (C_eff * (TflA[Iseg] + 273) / delts)) / (Mfl * Cp_fluid / A_seg + C_eff / (2 * delts))
-                    Tout_Seg = Tout_Seg - 273  # in [C]
+                    Tout_Seg = ((Mfl * Cp_fluid * (Tin_Seg + 273.15)) / A_seg - (C_eff * (Tin_Seg + 273.15)) / (2 * delts) + q_gain +
+                                (C_eff * (TflA[Iseg] + 273.15) / delts)) / (Mfl * Cp_fluid / A_seg + C_eff / (2 * delts))
+                    Tout_Seg = Tout_Seg - 273.15  # in [C]
                     TflB[Iseg] = (Tin_Seg + Tout_Seg) / 2
                 else: # heat losses based on each segment's inlet and outlet temperatures.
                     Tfl[1] = TflA[Iseg]

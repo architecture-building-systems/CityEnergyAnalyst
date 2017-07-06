@@ -401,9 +401,9 @@ def calc_PVT_module(tilt_angle, IAM_b_vector, IAM_d, I_direct_vector, I_diffuse_
                 else:
                     TinSeg = Tin
                 if Mfl > 0 and Mo_seg == 1:  # same heat gain/ losses for all segments
-                    ToutSeg = ((Mfl * Cp_fluid * (TinSeg + 273)) / Aseg - (C_eff * (TinSeg + 273)) / (2 * delts) + q_gain +
-                               (C_eff * (TflA[Iseg] + 273) / delts)) / (Mfl * Cp_fluid / Aseg + C_eff / (2 * delts))
-                    ToutSeg = ToutSeg - 273  # in [C]
+                    ToutSeg = ((Mfl * Cp_fluid * (TinSeg + 273.15)) / Aseg - (C_eff * (TinSeg + 273.15)) / (2 * delts) + q_gain +
+                               (C_eff * (TflA[Iseg] + 273.15) / delts)) / (Mfl * Cp_fluid / Aseg + C_eff / (2 * delts))
+                    ToutSeg = ToutSeg - 273.15  # in [C]
                     TflB[Iseg] = (TinSeg + ToutSeg) / 2
                 else: # heat losses based on each segment's inlet and outlet temperatures.
                     Tfl[1] = TflA[Iseg]
