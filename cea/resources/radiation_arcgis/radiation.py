@@ -3,17 +3,18 @@ Solar vertical insolation algorithm based on ArcGIS Solar Analyst
 """
 from __future__ import division
 
-from cea.interfaces.arcgis.modules import arcgisscripting
 import datetime
 import os
+import traceback
 
-from cea.interfaces.arcgis.modules import arcpy
-import ephem
 import numpy as np
 import pandas as pd
 from simpledbf import Dbf5
-import traceback
+from timezonefinder import TimezoneFinder
+import pytz
+from astral import Location
 
+# from cea.interfaces.arcgis.modules import arcpy
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
@@ -57,9 +58,9 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     """
     print(weather_path)
     # Set environment settings
-    arcpy.env.workspace = path_arcgis_db
-    arcpy.env.overwriteOutput = True
-    arcpy.CheckOutExtension("spatial")
+    # arcpy.env.workspace = path_arcgis_db
+    # arcpy.env.overwriteOutput = True
+    # arcpy.CheckOutExtension("spatial")
 
     # local variables
     aspect_slope = "FROM_DEM"
@@ -555,14 +556,25 @@ def Burn(Buildings, DEM, DEMfinal, locationtemp1, DEM_extent, gv):
 
 
 def calc_sunrise(sunrise, year_to_simulate, longitude, latitude):
-    o = ephem.Observer()
-    o.lat = str(latitude)
-    o.long = str(longitude)
-    s = ephem.Sun()
+
+    # get the time zone name
+    tf = TimezoneFinder()
+    time_zone = tf.timezone_at(lng=longitude, lat=latitude)
+
+    #define the city_name
+    l = Location()
+    l.name = 'name'
+    l.region = 'region'
+    l.latitude = latitude
+    l.longitude = longitude
+    l.timezone = time_zone
+    l.elevation = 0
+
     for day in range(1, 366):  # Calculated according to NOAA website
-        o.date = datetime.datetime(year_to_simulate, 1, 1) + datetime.timedelta(day - 1)
-        next_event = o.next_rising(s)
-        sunrise[day - 1] = next_event.datetime().hour
+        dt = datetime.datetime(year_to_simulate, 1, 1) + datetime.timedelta(day - 1)
+        dt = pytz.timezone(time_zone).localize(dt)
+        sun = l.sun(dt)
+        sunrise[day - 1] = sun['sunrise'].hour
     print('complete calculating sunrise')
     return sunrise
 
@@ -583,7 +595,6 @@ def get_longitude(scenario_path):
 
 
 def run_as_script(scenario_path=None, weather_path=None, latitude=None, longitude=None, year=None):
-    import cea.globalvar
     import cea.inputlocator
     gv = cea.globalvar.GlobalVariables()
     if scenario_path is None:
@@ -610,9 +621,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
     parser.add_argument('-w', '--weather', help='Path to the weather file')
-    parser.add_argument('--latitude', help='Latitutde', default=47.1628017306431)
-    parser.add_argument('--longitude', help='Longitude', default=8.31)
-    parser.add_argument('--year', help='Year', default=2010)
+    parser.add_argument('--latitude', help='Latitutde',)
+    parser.add_argument('--longitude', help='Longitude',)
+    parser.add_argument('--year', help='Year',)
     args = parser.parse_args()
 
     run_as_script(scenario_path=args.scenario, weather_path=args.weather, latitude=args.latitude,
