@@ -332,7 +332,7 @@ def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, 
                   heightoffset, path_arcgis_db):
     # Local Variables
     Latitude = str(latitude)
-    skySize = '400'  # max 10000
+    skySize = '1400'  # max 10000
     dayInterval = '1'
     hourInterval = '1'
     calcDirections = '32'
