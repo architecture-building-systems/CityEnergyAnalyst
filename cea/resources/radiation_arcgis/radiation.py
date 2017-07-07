@@ -581,6 +581,7 @@ def calc_sunrise(sunrise, year_to_simulate, longitude, latitude):
         o.date = datetime.datetime(year_to_simulate, 1, 1) + datetime.timedelta(day - 1)
         next_event = o.next_rising(s)
         sunrise[day - 1] = next_event.datetime().hour
+    print('sunrise: %s' % sunrise)
     print('complete calculating sunrise')
     return sunrise
 
