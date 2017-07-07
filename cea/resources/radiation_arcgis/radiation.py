@@ -14,7 +14,6 @@ from simpledbf import Dbf5
 from timezonefinder import TimezoneFinder
 
 from cea.interfaces.arcgis.modules import arcpy
-from cea.resources.radiation_arcgis.calculate_radiation_for_all_days import calculate_radiation_for_all_days
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
