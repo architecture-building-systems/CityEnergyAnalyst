@@ -19,7 +19,8 @@ with open('README.rst', 'r') as f:
 
 INSTALL_REQUIRES = ['setuptools', 'SALib', 'deap', 'descartes', 'doit==0.29.0', 'ephem', 'fiona',
                     'geopandas', 'lxml', 'pandas', 'plotly', 'pycollada', 'pyproj', 'pysal', 'pyshp', 'requests',
-                    'scikit-learn', 'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo>=0.1a8']
+                    'scikit-learn', 'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo>=0.1a8', 'timezonefinder',
+                    'astral']
 
 setup(name='cityenergyanalyst',
       version=__version__,
