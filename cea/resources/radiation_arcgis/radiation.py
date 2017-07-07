@@ -3,17 +3,18 @@ Solar vertical insolation algorithm based on ArcGIS Solar Analyst
 """
 from __future__ import division
 
-from cea.interfaces.arcgis.modules import arcgisscripting
 import datetime
 import os
+import traceback
 
-from cea.interfaces.arcgis.modules import arcpy
-import ephem
 import numpy as np
 import pandas as pd
 from simpledbf import Dbf5
-import traceback
+from timezonefinder import TimezoneFinder
+import pytz
+from astral import Location
 
+from cea.interfaces.arcgis.modules import arcpy
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
@@ -349,7 +350,7 @@ def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, 
                   heightoffset, path_arcgis_db):
     # Local Variables
     Latitude = str(latitude)
-    skySize = '400'  # max 10000
+    skySize = '1400'  # max 10000
     dayInterval = '1'
     hourInterval = '1'
     calcDirections = '32'
@@ -573,21 +574,45 @@ def Burn(Buildings, DEM, DEMfinal, locationtemp1, DEM_extent, gv):
 
 
 def calc_sunrise(sunrise, year_to_simulate, longitude, latitude):
-    o = ephem.Observer()
-    o.lat = str(latitude)
-    o.long = str(longitude)
-    s = ephem.Sun()
+
+    # get the time zone name
+    tf = TimezoneFinder()
+    time_zone = tf.timezone_at(lng=longitude, lat=latitude)
+
+    #define the city_name
+    l = Location()
+    l.name = 'name'
+    l.region = 'region'
+    l.latitude = latitude
+    l.longitude = longitude
+    l.timezone = time_zone
+    l.elevation = 0
+
     for day in range(1, 366):  # Calculated according to NOAA website
-        o.date = datetime.datetime(year_to_simulate, 1, 1) + datetime.timedelta(day - 1)
-        next_event = o.next_rising(s)
-        sunrise[day - 1] = next_event.datetime().hour
-    print('sunrise: %s' % sunrise)
+        dt = datetime.datetime(year_to_simulate, 1, 1) + datetime.timedelta(day - 1)
+        dt = pytz.timezone(time_zone).localize(dt)
+        sun = l.sun(dt)
+        sunrise[day - 1] = sun['sunrise'].hour
     print('complete calculating sunrise')
     return sunrise
 
 
+def get_latitude(scenario_path):
+    import fiona
+    import cea.inputlocator
+    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_building_geometry()) as shp:
+        lat = shp.crs['lat_0']
+    return lat
+
+def get_longitude(scenario_path):
+    import fiona
+    import cea.inputlocator
+    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_building_geometry()) as shp:
+        lon = shp.crs['lon_0']
+    return lon
+
+
 def run_as_script(scenario_path=None, weather_path=None, latitude=None, longitude=None, year=None):
-    import cea.globalvar
     import cea.inputlocator
     gv = cea.globalvar.GlobalVariables()
     if scenario_path is None:
@@ -596,11 +621,11 @@ def run_as_script(scenario_path=None, weather_path=None, latitude=None, longitud
     if weather_path is None:
         weather_path = locator.get_default_weather()
     if latitude is None:
-        latitude = 47.1628017306431
+        latitude = get_latitude(scenario_path)
     if longitude is None:
-        longitude = 8.31
+        longitude = get_longitude(scenario_path)
     if year is None:
-        year = 2010
+        year = 2016
     path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
 
     solar_radiation_vertical(locator=locator, path_arcgis_db=path_default_arcgis_db,
@@ -614,9 +639,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
     parser.add_argument('-w', '--weather', help='Path to the weather file')
-    parser.add_argument('--latitude', help='Latitutde', default=47.1628017306431)
-    parser.add_argument('--longitude', help='Longitude', default=8.31)
-    parser.add_argument('--year', help='Year', default=2010)
+    parser.add_argument('--latitude', help='Latitutde',)
+    parser.add_argument('--longitude', help='Longitude',)
+    parser.add_argument('--year', help='Year',)
     args = parser.parse_args()
 
     run_as_script(scenario_path=args.scenario, weather_path=args.weather, latitude=args.latitude,
