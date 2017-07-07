@@ -5,7 +5,6 @@ from __future__ import division
 
 import datetime
 import os
-import traceback
 
 import numpy as np
 import pandas as pd
@@ -64,8 +63,6 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     arcpy.CheckOutExtension("spatial")
 
     # local variables
-    aspect_slope = "FROM_DEM"
-    heightoffset = 1
     simple_cq_shp = locator.get_temporary_file('Simple_CQ_shp.shp')
     simple_context_shp = locator.get_temporary_file('Simple_Context.shp')
     dem_rasterfinal_path = os.path.join(path_arcgis_db, 'DEM_All2')
@@ -76,6 +73,8 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     sunrise = calculate_sunrise(year, longitude, latitude)
 
     T_G_day = calculate_daily_transmissivity_and_daily_diffusivity(weather_path)
+    T_G_day_path = locator.get_temporary_file('T_G_day.pickle')
+    T_G_day.to_pickle(T_G_day_path)
 
     dem_raster_extent = simplify_building_geometries(locator, simple_context_shp, simple_cq_shp)
 
@@ -87,8 +86,12 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
 
     calculate_observers(simple_cq_shp, observers_path, data_factors_boundaries_csv, path_arcgis_db)
 
-    calculate_radiation_for_all_days(T_G_day, aspect_slope, dem_rasterfinal_path, heightoffset, latitude, locator,
-                                     observers_path, path_arcgis_db)
+    run_script_in_subprocess('calculate_radiation_for_all_days',
+                             '--T-G-day-path', T_G_day_path,
+                             '--dem-rasterfinal-path', dem_rasterfinal_path,
+                             '--latitude', latitude,
+                             '--observers-path', observers_path,
+                             '--arcgis_db', path_arcgis_db)
 
     gv.log('complete raw radiation files')
 
@@ -126,18 +129,6 @@ def calculate_daily_transmissivity_and_daily_diffusivity(weather_path):
     T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
     T_G_day['trr'] = (1 - T_G_day['diff'])
     return T_G_day
-
-
-def _CalcRadiationAllDays(T_G_day_path, aspect_slope, dem_rasterfinal_path, heightoffset, latitude, observers_path,
-                          path_arcgis_db, temporary_folder):
-    try:
-        T_G_day = pd.read_pickle(T_G_day_path)
-        for day in range(1, 366):
-            CalcRadiation(day, dem_rasterfinal_path, observers_path, T_G_day, latitude,
-                          temporary_folder, aspect_slope, heightoffset, path_arcgis_db)
-    except:
-        print(traceback.format_exc())
-        raise
 
 
 def calculate_sunny_hours_of_year(locator, sunrise):
@@ -327,56 +318,6 @@ def calculate_sunny_hours_of_day(day, sunrise, temporary_folder):
                  'T24': 'T' + str(name + 23), 'ID': 'ID'}, inplace=True)
 
     return Table
-
-
-def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, locationtemp1, aspect_slope,
-                  heightoffset, path_arcgis_db):
-    # Local Variables
-    Latitude = str(latitude)
-    skySize = '1400'  # max 10000
-    dayInterval = '1'
-    hourInterval = '1'
-    calcDirections = '32'
-    zenithDivisions = '600'  # max 1200cor hlaf the skysize
-    azimuthDivisions = '80'  # max 160
-    diffuseProp = str(T_G_day.loc[day, 'diff'])
-    transmittivity = str(T_G_day.loc[day, 'trr'])
-    heightoffset = str(heightoffset)
-    global_radiation = locationtemp1 + '\\' + 'Day_' + str(day) + '.shp'
-    timeConfig = 'WithinDay    ' + str(day) + ', 0, 24'
-
-    # Run the extension of arcgis, retry max_retries times before giving up...
-    max_retries = 3
-    for _ in range(max_retries):
-        try:
-            _CalcRadiation(Latitude, aspect_slope, azimuthDivisions, calcDirections, dayInterval, diffuseProp, global_radiation,
-                           heightoffset, hourInterval, in_points_feature, in_surface_raster, skySize, timeConfig,
-                           transmittivity, zenithDivisions, path_arcgis_db)
-            print('complete calculating radiation of day No. %(day)i' % locals())
-            return arcpy.GetMessages()
-        except:
-            print(traceback.format_exc())
-    raise AssertionError('_CalcRadiation failed %(max_retries)i times... giving up!' % locals())
-
-
-
-def _CalcRadiation(Latitude, aspect_slope, azimuthDivisions, calcDirections, dayInterval, diffuseProp,
-                   global_radiation, heightoffset, hourInterval, in_points_feature, in_surface_raster, skySize,
-                   timeConfig, transmittivity, zenithDivisions, path_arcgis_db):
-    """Splitting off a possibly problematic piece of code to a separate process..."""
-    try:
-        # os.chdir(path_arcgis_db)  # make sure this process is in a writeable directory
-        arcpy.env.workspace = path_arcgis_db
-        arcpy.env.overwriteOutput = True
-        arcpy.CheckOutExtension("spatial")
-        arcpy.sa.PointsSolarRadiation(in_surface_raster, in_points_feature, global_radiation, heightoffset,
-                                      Latitude, skySize, timeConfig, dayInterval, hourInterval, "INTERVAL", "1",
-                                      aspect_slope,
-                                      calcDirections, zenithDivisions, azimuthDivisions, "STANDARD_OVERCAST_SKY",
-                                      diffuseProp, transmittivity, "#", "#", "#")
-    except:
-        print(traceback.format_exc())
-        raise
 
 
 def calculate_observers(simple_cq_shp, observers_path, data_factors_boundaries_csv, path_arcgis_db):
@@ -621,6 +562,37 @@ def run_as_script(scenario_path=None, weather_path=None, latitude=None, longitud
     solar_radiation_vertical(locator=locator, path_arcgis_db=path_default_arcgis_db,
                              latitude=latitude, longitude=longitude, year=year, gv=gv,
                              weather_path=weather_path)
+
+
+def run_script_in_subprocess(script_name, *args):
+    """Run the script `script_name` (in the same folder as this script) in a subprocess, printing the output"""
+    import subprocess
+    startupinfo = subprocess.STARTUPINFO()
+
+    script_full_path = os.path.join(os.path.dirname(__file__), script_name + '.py')
+
+    command = [get_python_exe(), '-u', script_full_path]
+    command.extend(map(str, args))
+    print(command)
+    process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    while True:
+        next_line = process.stdout.readline()
+        if next_line == '' and process.poll() is not None:
+            break
+        print(next_line.rstrip())
+    stdout, stderr = process.communicate()
+    print(stdout)
+    print(stderr)
+
+
+def get_python_exe():
+    """Return the path to the python interpreter that was used to install CEA"""
+    try:
+        with open(os.path.expanduser('~/cea_python.pth'), 'r') as f:
+            python_exe = f.read().strip()
+            return python_exe
+    except:
+        raise AssertionError("Could not find 'cea_python.pth' in home directory.")
 
 
 if __name__ == '__main__':
