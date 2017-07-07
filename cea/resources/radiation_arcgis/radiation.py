@@ -99,11 +99,11 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     gv.log('complete transformation radiation files')
 
     # Assign radiation to every surface of the buildings
-    Data_radiation = calculate_radiation_for_surfaces(observers_path, data_factors_centroids_csv, sunny_hours_of_year,
-                                                      locator.get_temporary_folder(), path_arcgis_db)
+    radiation = calculate_radiation_for_surfaces(observers_path, data_factors_centroids_csv, sunny_hours_of_year,
+                                                 locator.get_temporary_folder(), path_arcgis_db)
 
     # get solar insolation @ daren: this is a A BOTTLE NECK
-    CalcIncidentRadiation(Data_radiation, locator.get_radiation(), locator.get_surface_properties(), gv)
+    CalcIncidentRadiation(radiation, locator.get_radiation(), locator.get_surface_properties(), gv)
     gv.log('done')
 
 
@@ -164,7 +164,6 @@ def _calculate_sunny_hours_of_year(sunrise, temporary_folder, result_file_path):
 
 
 def CalcIncidentRadiation(radiation, path_radiation_year_final, surface_properties, gv):
-
     # export surfaces properties
     # radiation['Awall_all'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
     radiation = calculate_wall_areas(radiation)
@@ -227,7 +226,8 @@ def _calculate_wall_areas_subprocess(radiation_pickle_path):
     radiation.to_pickle(radiation_pickle_path)
 
 
-def calculate_radiation_for_surfaces(observers_path, DataFactorsCentroids, Radiationtable, temporary_folder, path_arcgis_db):
+def calculate_radiation_for_surfaces(observers_path, DataFactorsCentroids, Radiationtable, temporary_folder,
+                                     path_arcgis_db):
     # local variables
     CQSegments_centroid = os.path.join(path_arcgis_db, 'CQSegmentCentro')
     Outjoin = os.path.join(path_arcgis_db, 'Join')
@@ -378,7 +378,7 @@ def calculate_observers(simple_cq_shp, observers_path, data_factors_boundaries_c
     CleanDataNear.drop_duplicates(subset='Name_x', inplace=True)
     CleanDataNear.reset_index(inplace=True)
     rows = CleanDataNear.Name_x.count()
-    if rows > 0: #there are overlapping buildings
+    if rows > 0:  # there are overlapping buildings
         for row in range(rows):
             Field = "Name"  # select field where the name exists to iterate
             Value = CleanDataNear.loc[row, 'Name_x']  # set the value or name of the City quarter
@@ -439,7 +439,7 @@ def calculate_boundaries_of_buildings(simple_cq_shp, temporary_folder, path_arcg
     rows = SecondaryJoin.IN_FID.count()
     for row in range(rows):
         if (SecondaryJoin.loc[row, 'Name_x'] == SecondaryJoin.loc[row, 'Name_y']
-           or SecondaryJoin.loc[row, 'NEAR_DIST'] > 0.2):
+            or SecondaryJoin.loc[row, 'NEAR_DIST'] > 0.2):
             SecondaryJoin = SecondaryJoin.drop(row)
     SecondaryJoin.reset_index(inplace=True)
 
@@ -508,7 +508,7 @@ def calculate_sunrise(year_to_simulate, longitude, latitude):
     tf = TimezoneFinder()
     time_zone = tf.timezone_at(lng=longitude, lat=latitude)
 
-    #define the city_name
+    # define the city_name
     location = Location()
     location.name = 'name'
     location.region = 'region'
@@ -533,6 +533,7 @@ def get_latitude(scenario_path):
     with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_building_geometry()) as shp:
         lat = shp.crs['lat_0']
     return lat
+
 
 def get_longitude(scenario_path):
     import fiona
@@ -600,9 +601,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
     parser.add_argument('-w', '--weather', help='Path to the weather file')
-    parser.add_argument('--latitude', help='Latitutde',)
-    parser.add_argument('--longitude', help='Longitude',)
-    parser.add_argument('--year', help='Year',)
+    parser.add_argument('--latitude', help='Latitutde', )
+    parser.add_argument('--longitude', help='Longitude', )
+    parser.add_argument('--year', help='Year', )
     args = parser.parse_args()
 
     run_as_script(scenario_path=args.scenario, weather_path=args.weather, latitude=args.latitude,
