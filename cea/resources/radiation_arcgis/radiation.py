@@ -12,8 +12,10 @@ import pytz
 from astral import Location
 from simpledbf import Dbf5
 from timezonefinder import TimezoneFinder
+import pickle
 
 from cea.interfaces.arcgis.modules import arcpy
+from cea.resources.radiation_arcgis.calculate_sunny_hours_of_year import calculate_sunny_hours_of_year
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
@@ -70,6 +72,8 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     data_factors_centroids_csv = locator.get_temporary_file('DataFactorsCentroids.csv')
 
     sunrise = calculate_sunrise(year, longitude, latitude)
+    sunrise_pickle = locator.get_temporary_file('sunrise.pickle')
+    pickle.dump(sunrise, open(sunrise_pickle, 'wb'))
 
     T_G_day = calculate_daily_transmissivity_and_daily_diffusivity(weather_path)
     T_G_day_path = locator.get_temporary_file('T_G_day.pickle')
@@ -85,25 +89,44 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
 
     calculate_observers(simple_cq_shp, observers_path, data_factors_boundaries_csv, path_arcgis_db)
 
-    run_script_in_subprocess('calculate_radiation_for_all_days',
-                             '--T-G-day-path', T_G_day_path,
-                             '--dem-rasterfinal-path', dem_rasterfinal_path,
-                             '--latitude', latitude,
-                             '--observers-path', observers_path,
-                             '--arcgis_db', path_arcgis_db)
+    # run_script_in_subprocess('calculate_radiation_for_all_days',
+    #                          '--T-G-day-path', T_G_day_path,
+    #                          '--dem-rasterfinal-path', dem_rasterfinal_path,
+    #                          '--latitude', latitude,
+    #                          '--observers-path', observers_path,
+    #                          '--arcgis_db', path_arcgis_db)
 
     gv.log('complete raw radiation files')
 
-    sunny_hours_of_year = calculate_sunny_hours_of_year(locator, sunrise)
+    sunny_hours_pickle = locator.get_temporary_file('sunny_hours.pickle')
+    run_script_in_subprocess('calculate_sunny_hours_of_year',
+                             '--scenario', locator.scenario_path,
+                             '--sunrise-pickle', sunrise_pickle,
+                             '--sunny-hours-pickle', sunny_hours_pickle)
 
     gv.log('complete transformation radiation files')
 
     # Assign radiation to every surface of the buildings
-    radiation = calculate_radiation_for_surfaces(observers_path, data_factors_centroids_csv, sunny_hours_of_year,
-                                                 locator.get_temporary_folder(), path_arcgis_db)
+    radiation_pickle_path = locator.get_temporary_file('radiation.pickle')
+
+    run_script_in_subprocess('calculate_radiation_for_surfaces',
+                             '--observers-path', observers_path,
+                             '--data-factors-centroids', data_factors_centroids_csv,
+                             '--sunny-hours-pickle', sunny_hours_pickle,
+                             '--temp-folder', locator.get_temporary_folder(),
+                             '--arcgis-db', path_arcgis_db,
+                             '--radiation-pickle', radiation_pickle_path)
+
+    run_script_in_subprocess('calculate_wall_areas',
+                             '--radiation-pickle', radiation_pickle_path)
+
+    radiation = pd.read_pickle(radiation_pickle_path)
+    export_surface_properties(radiation, locator.get_surface_properties())
 
     # get solar insolation @ daren: this is a A BOTTLE NECK
-    CalcIncidentRadiation(radiation, locator.get_radiation(), locator.get_surface_properties(), gv)
+    run_script_in_subprocess('calculate_incident_radiation',
+                             '--radiation-pickle', radiation_pickle_path,
+                             '--radiation-csv', locator.get_radiation())
     gv.log('done')
 
 
@@ -130,193 +153,12 @@ def calculate_daily_transmissivity_and_daily_diffusivity(weather_path):
     return T_G_day
 
 
-def calculate_sunny_hours_of_year(locator, sunrise):
-    # run the transformation of files appending all and adding non-sunshine hours
-    temporary_folder = locator.get_temporary_folder()
-    result_file_path = os.path.join(temporary_folder, 'sunny_hours_of_year.pickle')
-
-    import multiprocessing
-    process = multiprocessing.Process(target=_calculate_sunny_hours_of_year,
-                                      args=(sunrise, temporary_folder, result_file_path))
-    process.start()
-    process.join()  ## block until process terminates
-
-    sunny_hours_of_year = pd.read_pickle(result_file_path)
-    return sunny_hours_of_year
-
-
-def _calculate_sunny_hours_of_year(sunrise, temporary_folder, result_file_path):
-    """Run this code in separate process to avoid MemoryError of #661"""
-    sunny_hours_per_day = []
-    for day in range(1, 366):
-        result = calculate_sunny_hours_of_day(day, sunrise, temporary_folder)
-        result = result.apply(pd.to_numeric, downcast='integer')
-        sunny_hours_per_day.append(result)
-    sunny_hours_of_year = sunny_hours_per_day[0]
-    for df in sunny_hours_per_day[1:]:
-        for column in df.columns:
-            if column.startswith('T'):
-                sunny_hours_of_year[column] = df[column].copy()
-                # sunny_hours_of_year = sunny_hours_of_year.merge(df, on='ID', how='outer')
-    sunny_hours_of_year = sunny_hours_of_year.fillna(value=0)
-    sunny_hours_of_year.to_pickle(result_file_path)
-    return None
-
-
-def CalcIncidentRadiation(radiation, path_radiation_year_final, surface_properties, gv):
+def export_surface_properties(radiation, surface_properties):
     # export surfaces properties
     # radiation['Awall_all'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
-    radiation = calculate_wall_areas(radiation)
     radiation[['Name', 'Freeheight', 'FactorShade', 'height_ag', 'Shape_Leng', 'Awall_all']].to_csv(surface_properties,
                                                                                                     index=False)
-    gv.log('saved surface properties to disk')
-
-    # Import Radiation table and compute the Irradiation in W in every building's surface
-    hours_in_year = 8760
-    column_names = ['T%i' % (i + 1) for i in range(hours_in_year)]
-    for column in column_names:
-        # transform all the points of solar radiation into Wh
-        radiation[column] = radiation[column] * radiation['Awall_all']
-
-    # sum up radiation load per building
-    # NOTE: this looks like an ugly hack because it is: in order to work around a pandas MemoryError, we group/sum the
-    # columns individually...
-    grouped_data_frames = {}
-    for column in column_names:
-        df = pd.DataFrame(data={'Name': radiation['Name'],
-                                column: radiation[column]})
-        grouped_data_frames[column] = df.groupby(by='Name').sum()
-    radiation_load = pd.DataFrame(index=grouped_data_frames.values()[0].index)
-    for column in column_names:
-        radiation_load[column] = grouped_data_frames[column][column]
-
-    incident_radiation = np.round(radiation_load[column_names], 2)
-    incident_radiation.to_csv(path_radiation_year_final)
-
-    return  # total solar radiation in areas exposed to radiation in Watts
-
-
-def calculate_wall_areas(radiation):
-    """Calculate Awall_all in radiation as the multiplication ``Shape_Leng * FactorShade * Freeheight``
-    Uses a subprocess to get around a MemoryError we are having (might have to do with conflicts with ArcGIS numpy?)
-    """
-    print('pickling radation dataframe to temp folder')
-    radiation_pickle_path = os.path.expandvars(r'$temp\radiation.pickle')
-    radiation.to_pickle(radiation_pickle_path)
-
-    import multiprocessing
-    process = multiprocessing.Process(target=_calculate_wall_areas_subprocess, args=(radiation_pickle_path,))
-    process.start()
-    process.join()  ## block until process terminates
-
-    del radiation
-    import gc
-    gc.collect()
-    radiation = pd.read_pickle(radiation_pickle_path)
-    return radiation
-
-
-def _calculate_wall_areas_subprocess(radiation_pickle_path):
-    """subprocess for calculating wall areas using multiprocessing. the data is passed in the pickled
-    dataframe ``radiation_pickle_path``"""
-
-    # use a temporary dataframe for calculations to avoid MemoryError (see #661)
-    radiation = pd.read_pickle(radiation_pickle_path)
-    radiation.loc[:, 'Awall_all'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
-    radiation.to_pickle(radiation_pickle_path)
-
-
-def calculate_radiation_for_surfaces(observers_path, DataFactorsCentroids, Radiationtable, temporary_folder,
-                                     path_arcgis_db):
-    # local variables
-    CQSegments_centroid = os.path.join(path_arcgis_db, 'CQSegmentCentro')
-    Outjoin = os.path.join(path_arcgis_db, 'Join')
-    CQSegments = os.path.join(path_arcgis_db, 'CQSegment')
-    OutTable = 'CentroidsIDobserver.dbf'
-    # Create Join of features Observers and CQ_sementscentroids to
-    # assign Names and IDS of observers (field TARGET_FID) to the centroids of the lines of the buildings,
-    # then create a table to import as a Dataframe
-    arcpy.SpatialJoin_analysis(CQSegments_centroid, observers_path, Outjoin, "JOIN_ONE_TO_ONE", "KEEP_ALL",
-                               match_option="CLOSEST", search_radius="10 METERS")
-    arcpy.JoinField_management(Outjoin, 'OBJECTID', CQSegments, 'OBJECTID')  # add the lenghts of the Lines to the File
-    arcpy.TableToTable_conversion(Outjoin, temporary_folder, OutTable)
-
-    # ORIG_FID represents the points in the segments of the simplified shape of the building
-    # ORIG_FID_1 is the observers ID
-    Centroids_ID_observers0_dbf5 = Dbf5(os.path.join(temporary_folder, OutTable)).to_dataframe()
-    Centroids_ID_observers_dbf5 = Centroids_ID_observers0_dbf5[
-        ['Name', 'height_ag', 'ORIG_FID', 'ORIG_FID_1', 'Shape_Leng']]
-    Centroids_ID_observers_dbf5.rename(columns={'ORIG_FID_1': 'ID'}, inplace=True)
-
-    # Create a Join of the Centroid_ID_observers and Datacentroids in the Second Chapter to get values of surfaces Shaded.
-    Datacentroids = pd.read_csv(DataFactorsCentroids)
-    DataCentroidsFull = pd.merge(Centroids_ID_observers_dbf5, Datacentroids, left_on='ORIG_FID', right_on='ORIG_FID')
-
-    # Read again the radiation table and merge values with the Centroid_ID_observers under the field ID in Radiationtable and 'ORIG_ID' in Centroids...
-    DataRadiation = pd.merge(left=DataCentroidsFull, right=Radiationtable, left_on='ID', right_on='ID')
-
-    return DataRadiation
-
-
-def calculate_sunny_hours_of_day(day, sunrise, temporary_folder):
-    """
-    :param day:
-    :type day: int
-    :param sunrise: what is this? seems to be a list of sunrise times, but for the ecocampus case, I get a list of
-                    ints like 22 and 23... that can't be right, right?
-    :type sunrise: list[int]
-    :param temporary_folder: path to temporary folder with the radiations per day
-    :return:
-    """
-    radiation_sunnyhours = np.round(Dbf5(os.path.join(temporary_folder, 'Day_%(day)i.dbf' % locals())).to_dataframe(),
-                                    2)
-
-    # Obtain the number of points modeled to do the iterations
-    radiation_sunnyhours['ID'] = 0
-    radiation_sunnyhours['ID'] = range(1, radiation_sunnyhours.ID.count() + 1)
-
-    # Table with empty values with the same range as the points.
-    Table = pd.DataFrame.copy(radiation_sunnyhours)
-    listtimes = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14', 'T15', 'T16',
-                 'T17', 'T18', 'T19', 'T20', 'T21', 'T22', 'T23', 'T24']
-    for x in listtimes:
-        Table[x] = 0
-    Table.drop('T0', axis=1, inplace=True)
-
-    # Counter of Columns in the Initial Table
-    Counter = radiation_sunnyhours.count(1)[0]
-    values = Counter - 1
-    # Condition to take into account daysavingtime in Switzerland as the radiation data in ArcGIS is calculated for 2013.
-    if 90 <= day < 300:
-        D = 1
-    else:
-        D = 0
-    # Calculation of Sunrise time
-    Sunrise_time = sunrise[day - 1]
-    # Calculation of table
-    for x in range(values):
-        Hour = int(Sunrise_time) + int(D) + int(x)
-        Table['T' + str(Hour)] = radiation_sunnyhours['T' + str(x)]
-
-    # rename the table for every T to get in 1 to 8760 hours.
-    if day <= 1:
-        name = 1
-    else:
-        name = int(day - 1) * 24 + 1
-
-    Table.rename(
-        columns={'T1': 'T' + str(name), 'T2': 'T' + str(name + 1), 'T3': 'T' + str(name + 2), 'T4': 'T' + str(name + 3),
-                 'T5': 'T' + str(name + 4),
-                 'T6': 'T' + str(name + 5), 'T7': 'T' + str(name + 6), 'T8': 'T' + str(name + 7),
-                 'T9': 'T' + str(name + 8), 'T10': 'T' + str(name + 9),
-                 'T11': 'T' + str(name + 10), 'T12': 'T' + str(name + 11), 'T13': 'T' + str(name + 12),
-                 'T14': 'T' + str(name + 13), 'T15': 'T' + str(name + 14),
-                 'T16': 'T' + str(name + 15), 'T17': 'T' + str(name + 16), 'T18': 'T' + str(name + 17),
-                 'T19': 'T' + str(name + 18), 'T20': 'T' + str(name + 19),
-                 'T21': 'T' + str(name + 20), 'T22': 'T' + str(name + 21), 'T23': 'T' + str(name + 22),
-                 'T24': 'T' + str(name + 23), 'ID': 'ID'}, inplace=True)
-
-    return Table
+    print('saved surface properties to disk')
 
 
 def calculate_observers(simple_cq_shp, observers_path, data_factors_boundaries_csv, path_arcgis_db):
@@ -579,10 +421,15 @@ def run_script_in_subprocess(script_name, *args):
         next_line = process.stdout.readline()
         if next_line == '' and process.poll() is not None:
             break
-        print(next_line.rstrip())
+        if len(next_line):
+            print(script_name + ': ' + next_line.rstrip())
     stdout, stderr = process.communicate()
-    print(stdout)
-    print(stderr)
+    if len(stdout):
+        print(script_name + ': ' + stdout.rstrip())
+    if len(stderr):
+        print(script_name + ': ERROR!\n' + stderr)
+    if process.returncode != 0:
+        raise Exception('Failed to execute ' + script_name)
 
 
 def get_python_exe():
