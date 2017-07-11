@@ -74,9 +74,9 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     sunrise_pickle = locator.get_temporary_file('sunrise.pickle')
     pickle.dump(sunrise, open(sunrise_pickle, 'wb'))
 
-    T_G_day = calculate_daily_transmissivity_and_daily_diffusivity(weather_path)
-    T_G_day_path = locator.get_temporary_file('T_G_day.pickle')
-    T_G_day.to_pickle(T_G_day_path)
+    daily_transmissivity = calculate_daily_transmissivity_and_daily_diffusivity(weather_path)
+    daily_transmissivity_pickle = locator.get_temporary_file('daily_transmissivity.pickle')
+    daily_transmissivity.to_pickle(daily_transmissivity_pickle)
 
     dem_raster_extent = simplify_building_geometries(locator, simple_context_shp, simple_cq_shp)
 
@@ -89,7 +89,7 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     calculate_observers(simple_cq_shp, observers_path, data_factors_boundaries_csv, path_arcgis_db)
 
     run_script_in_subprocess('calculate_radiation_for_all_days',
-                             '--T-G-day-path', T_G_day_path,
+                             '--daily-transmissivity-pickle', daily_transmissivity_pickle,
                              '--dem-rasterfinal-path', dem_rasterfinal_path,
                              '--latitude', latitude,
                              '--observers-path', observers_path,
@@ -146,10 +146,10 @@ def calculate_daily_transmissivity_and_daily_diffusivity(weather_path):
                                                        'glohorrad_Whm2', 'difhorrad_Whm2']]
     weather_data['diff'] = weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
     weather_data = weather_data[np.isfinite(weather_data['diff'])]
-    T_G_day = np.round(weather_data.groupby(['dayofyear']).mean(), 2)
-    T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
-    T_G_day['trr'] = (1 - T_G_day['diff'])
-    return T_G_day
+    daily_transmissivity = np.round(weather_data.groupby(['dayofyear']).mean(), 2)
+    daily_transmissivity['diff'] = daily_transmissivity['diff'].replace(1, 0.90)
+    daily_transmissivity['trr'] = (1 - daily_transmissivity['diff'])
+    return daily_transmissivity
 
 
 def export_surface_properties(radiation, surface_properties):
