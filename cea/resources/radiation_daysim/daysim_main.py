@@ -1,8 +1,10 @@
 import os
 import pandas as pd
 import pyliburo.py3dmodel.calculate as calculate
+from pyliburo import py3dmodel
 import pyliburo.py2radiance as py2radiance
 from cea.resources.radiation_daysim import settings
+import json
 
 import pyliburo.gml3dmodel as gml3dmodel
 __author__ = "Jimeno A. Fonseca"
@@ -24,71 +26,106 @@ def create_sensor_input_file(rad, chunk_n):
     rad.sensor_file_path = sensor_file_path
 
 
-def create_srf_dict(occface_list, srf_type, bldg_name):
-    srf_dict_list = []
-    for face in occface_list:
-        sensor_srfs, sensor_pts, sensor_dirs = \
-            gml3dmodel.generate_sensor_surfaces(face, settings.SEN_PARMS['X_DIM'], settings.SEN_PARMS['Y_DIM'])
+def generate_sensor_surfaces(occface, xdim, ydim, srf_type):
+    normal = py3dmodel.calculate.face_normal(occface)
+    mid_pt = py3dmodel.calculate.face_midpt(occface)
+    location_pt = py3dmodel.modify.move_pt(mid_pt, normal, 0.01)
+    moved_oface = py3dmodel.fetch.shape2shapetype(py3dmodel.modify.move(mid_pt, location_pt, occface))
+    # put it into occ and subdivide surfaces
+    sensor_surfaces = py3dmodel.construct.grid_face(moved_oface, xdim, ydim)
 
-        for scnt, sensor_srf in enumerate(sensor_srfs):
-            srf_dict = {}
-            srf_dict["bldg_name"] = bldg_name
-            srf_dict["occface"] = sensor_srf
-            srf_dict["srf_type"] = srf_type
-            srf_dict["sensor_pt"] = sensor_pts[scnt]
-            srf_dict["sensor_dir"] = sensor_dirs[scnt]
-            srf_dict_list.append(srf_dict)
-    return srf_dict_list
+    # calculate list of properties per surface
+    sensor_dir = [normal for x in sensor_surfaces]
+    sensor_cord = [py3dmodel.calculate.face_midpt(x) for x in sensor_surfaces]
+    sensor_type = [srf_type for x in sensor_surfaces]
+    sensor_area = [calculate.face_area(x)for x in sensor_surfaces]
 
-
-def calc_sensors(bldg_dict):
-    sensor_srf_dict_list = []
-    wall_list = bldg_dict["walls"]
-    window_list = bldg_dict["windows"]
-    roof_list = bldg_dict["roofs"]
-    bldg_name = bldg_dict["name"]
-
-    # grid up all the surfaces and return a srf dict that has all the information on the surface
-    wall_sensor_srf_dict_list = create_srf_dict(wall_list, "wall", bldg_name)
-    win_sensor_srf_dict_list = create_srf_dict(window_list, "window", bldg_name)
-    rf_sensor_srf_dict_list = create_srf_dict(roof_list, "roof", bldg_name)
-    sensor_srf_dict_list.extend(wall_sensor_srf_dict_list)
-    sensor_srf_dict_list.extend(win_sensor_srf_dict_list)
-    sensor_srf_dict_list.extend(rf_sensor_srf_dict_list)
-    return sensor_srf_dict_list
+    return sensor_dir, sensor_cord, sensor_type, sensor_area
 
 
-def isolation_daysim(chunk_n, rad, bldg_dict_list, aresults_path, rad_params, aweatherfile_path):
-
-    # calculate sensors
-    sensor_pt_list = []
+def calc_sensors_building(building_geometry_dict):
     sensor_dir_list = []
+    sensor_cord_list = []
+    sensor_type_list = []
+    sensor_area_list = []
+    surfaces_types = ['walls', 'windows', 'roofs']
+    for srf_type in surfaces_types:
+        occface_list = building_geometry_dict[srf_type]
+        for face in occface_list:
+            sensor_dir, sensor_cord, sensor_type, sensor_area \
+                = generate_sensor_surfaces(face, settings.SEN_PARMS['X_DIM'], settings.SEN_PARMS['Y_DIM'], srf_type)
+
+            sensor_dir_list.extend(sensor_dir)
+            sensor_cord_list.extend(sensor_cord)
+            sensor_type_list.extend(sensor_type)
+            sensor_area_list.extend(sensor_area)
+
+    return sensor_dir_list, sensor_cord_list, sensor_type_list, sensor_area_list
+
+
+def calc_sensors_zone(geometry_3D_zone, locator):
+    sensors_coords_zone = []
+    sensors_dir_zone = []
+    sensors_total_number_list = []
+    names_zone = []
+    sensors_code_zone = []
+    for building_geometry in geometry_3D_zone:
+        # building name
+        bldg_name = building_geometry["name"]
+        # get sensors in the building
+        sensors_dir_building, sensors_coords_building, \
+        sensors_type_building, sensors_area_building = calc_sensors_building(building_geometry)
+
+        # get the total number of sensors and store in lst
+        sensors_number = len(sensors_coords_building)
+        sensors_total_number_list.append(sensors_number)
+
+        sensors_code = ['srf' + str(x) for x in range(sensors_number)]
+        sensors_code_zone.append(sensors_code)
+
+        # get the total list of coordinates and directions to send to daysim
+        sensors_coords_zone.extend(sensors_coords_building)
+        sensors_dir_zone.extend(sensors_dir_building)
+
+        # get the name of all buildings
+        names_zone.append(bldg_name)
+
+        # save sensors geometry result to disk
+        pd.DataFrame({'BUILDING':bldg_name,
+                      'SURFACE': sensors_code,
+                      'Xcoor': [x[0] for x in sensors_coords_building],
+                      'Ycoor': [x[1] for x in sensors_coords_building],
+                      'Zcoor': [x[2] for x in sensors_coords_building],
+                      'Xdir': [x[0] for x in sensors_dir_building],
+                      'Ydir':[x[1] for x in sensors_dir_building],
+                      'Zdir':[x[2] for x in sensors_dir_building],
+                      'AREA_m2': sensors_area_building,
+                      'TYPE': sensors_type_building}).to_csv(locator.get_radiation_metadata(bldg_name), index=None)
+
+
+    return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone
+
+
+def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, rad_params, aweatherfile_path):
 
     # folder for data work
-    daysim_dir = os.path.join(aresults_path, "temp" + str(chunk_n))
+    daysim_dir = locator.get_temporary_file("temp" + str(chunk_n))
     rad.initialise_daysim(daysim_dir)
 
     # calculate sensors
-    if chunk_n == None: # do simple list when considering single buildings (single processing)
-        all_sensor_srf_dict_2dlist = calc_sensors(bldg_dict_list)
-        for srf_dict in all_sensor_srf_dict_2dlist:
-            sensor_pt = srf_dict["sensor_pt"]
-            sensor_pt_list.append(sensor_pt)
-            sensor_dir = srf_dict["sensor_dir"]
-            sensor_dir_list.append(sensor_dir)
-    else: # create bigger list when considering chunks of buildings (multi-processing)
-        all_sensor_srf_dict_2dlist = []
-        for bldg_dict in bldg_dict_list:
-            sensor_srf_dict_list = calc_sensors(bldg_dict)
-            all_sensor_srf_dict_2dlist.append(sensor_srf_dict_list)
-            for srf_dict in sensor_srf_dict_list:
-                sensor_pt = srf_dict["sensor_pt"]
-                sensor_pt_list.append(sensor_pt)
-                sensor_dir = srf_dict["sensor_dir"]
-                sensor_dir_list.append(sensor_dir)
-
-    rad.set_sensor_points(sensor_pt_list, sensor_dir_list)
+    print " calculating and sending sensor points"
+    sensors_coords_zone, sensors_dir_zone, sensors_number_zone, names_zone, \
+    sensors_code_zone = calc_sensors_zone(geometry_3D_zone, locator)
+    rad.set_sensor_points(sensors_coords_zone, sensors_dir_zone)
     create_sensor_input_file(rad, chunk_n)
+
+    num_sensors = sum(sensors_number_zone)
+    print "Daysim simulation starts for building(s)", names_zone
+    print "and the next number of total sensors", num_sensors
+    if num_sensors > 10000:
+        raise ValueError('You are sending more than 10000 sensors at the same time, this \
+                          will eventually crash a daysim instance. To solve it, reduce the number of buildings \
+                          in each chunk in the Settings.py file')
 
     rad.execute_epw2wea(aweatherfile_path)
     rad.execute_radfiles2daysim()
@@ -101,96 +138,11 @@ def isolation_daysim(chunk_n, rad, bldg_dict_list, aresults_path, rad_params, aw
     rad.execute_ds_illum()
     solar_res = rad.eval_ill_per_sensor()
 
-    #write the results
-    if chunk_n == None:
-        results_writer_single_processing(solar_res, all_sensor_srf_dict_2dlist, aresults_path)
-    else:
-        results_writer_multi_processing(solar_res, all_sensor_srf_dict_2dlist, aresults_path)
-
-def results_writer_single_processing(solar_res, all_sensor_srf_dict_2dlist, aresults_path):
-
-    srf_properties = []
-    srf_solar_results = []
-    nsrfs = len(all_sensor_srf_dict_2dlist)
-    res_columns = []
-    for _ in range(nsrfs):
-        res_columns.append("building_surface_name")
-    for scnt, srf_dict in enumerate(all_sensor_srf_dict_2dlist):
-        occface = srf_dict["occface"]
-        bldg_name = srf_dict["bldg_name"]
-        srf_name = "srf" + str(scnt)
-        mid_pt = srf_dict["sensor_pt"]
-        mid_ptx = mid_pt[0]
-        mid_pty = mid_pt[1]
-        mid_ptz = mid_pt[2]
-        nrml = srf_dict["sensor_dir"]
-        nrmlx = nrml[0]
-        nrmly = nrml[1]
-        nrmlz = nrml[2]
-        face_area = calculate.face_area(occface)
-        srf_type = srf_dict["srf_type"]
-        srf_properties.append(
-            (bldg_name, srf_name, mid_ptx, mid_pty, mid_ptz, nrmlx, nrmly, nrmlz, face_area, srf_type))
-
-        # create csv for 8760 hours of results
-        srf_res = solar_res[scnt]
-        asrf_solar_result = [srf_name]
-        for res in srf_res:
-            asrf_solar_result.append(res)
-
-        srf_solar_results.append(asrf_solar_result)
-        scnt +=1
-
-    srf_properties = pd.DataFrame(srf_properties, columns=['BUILDING', 'SURFACE', 'Xcoor', 'Ycoor', 'Zcoor',
-                                                           'Xdir', 'Ydir', 'Zdir', 'AREA_m2',
-                                                           'TYPE'])
-
-    srf_properties.to_csv(os.path.join(aresults_path, bldg_name + '_geometry.csv'), index=None)
-    zipped_solar_res = zip(*srf_solar_results)
-    srf_solar_results = pd.DataFrame(zipped_solar_res[1:], columns=zipped_solar_res[0])
-    srf_solar_results.to_csv(os.path.join(aresults_path, bldg_name + '_insolation_Whm2.csv'), index=None)
-
-def results_writer_multi_processing(solar_res, all_sensor_srf_dict_2dlist, aresults_path):
-
-    scnt = 0
-    for srf_dict_list in all_sensor_srf_dict_2dlist:
-        srf_properties = []
-        srf_solar_results = []
-        nsrfs = len(srf_dict_list)
-        res_columns = []
-        for _ in range(nsrfs):
-            res_columns.append("building_surface_name")
-        for srf_dict in srf_dict_list:
-            occface = srf_dict["occface"]
-            bldg_name = srf_dict["bldg_name"]
-            srf_name = "srf" + str(scnt)
-            mid_pt = srf_dict["sensor_pt"]
-            mid_ptx = mid_pt[0]
-            mid_pty = mid_pt[1]
-            mid_ptz = mid_pt[2]
-            nrml = srf_dict["sensor_dir"]
-            nrmlx = nrml[0]
-            nrmly = nrml[1]
-            nrmlz = nrml[2]
-            face_area = calculate.face_area(occface)
-            srf_type = srf_dict["srf_type"]
-            srf_properties.append(
-                (bldg_name, srf_name, mid_ptx, mid_pty, mid_ptz, nrmlx, nrmly, nrmlz, face_area, srf_type))
-
-            # create csv for 8760 hours of results
-            srf_res = solar_res[scnt]
-            asrf_solar_result = [srf_name]
-            for res in srf_res:
-                asrf_solar_result.append(res)
-
-            srf_solar_results.append(asrf_solar_result)
-            scnt +=1
-
-        srf_properties = pd.DataFrame(srf_properties, columns=['BUILDING', 'SURFACE', 'Xcoor', 'Ycoor', 'Zcoor',
-                                                               'Xdir', 'Ydir', 'Zdir', 'AREA_m2',
-                                                               'TYPE'])
-
-        srf_properties.to_csv(os.path.join(aresults_path, bldg_name + '_geometry.csv'), index=None)
-        zipped_solar_res = zip(*srf_solar_results)
-        srf_solar_results = pd.DataFrame(zipped_solar_res[1:], columns=zipped_solar_res[0])
-        srf_solar_results.to_csv(os.path.join(aresults_path, bldg_name + '_insolation_Whm2.csv'), index=None)
+    print "Writing results to disk"
+    index = 0
+    for building_name, sensors_number_building, sensor_code_building in zip(names_zone, sensors_number_zone, sensors_code_zone):
+        selection_of_results = solar_res[index:index+sensors_number_building]
+        items_sensor_name_and_result = dict(zip(sensor_code_building, selection_of_results))
+        with open(locator.get_radiation_building(building_name), 'w') as outfile:
+            json.dump(items_sensor_name_and_result, outfile)
+        index = sensors_number_building

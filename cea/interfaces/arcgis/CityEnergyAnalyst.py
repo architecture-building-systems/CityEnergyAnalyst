@@ -15,7 +15,7 @@ import arcpy
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Daren Thomas"]
+__credits__ = ["Daren Thomas", "Martin Mosteiro Romero", "Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -28,7 +28,8 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
-        self.tools = [OperationCostsTool, RetrofitPotentialTool, DemandTool, DataHelperTool, BenchmarkGraphsTool, EmissionsTool, EmbodiedEnergyTool, MobilityTool,
+        self.tools = [OperationCostsTool, RetrofitPotentialTool, DemandTool, DataHelperTool, BenchmarkGraphsTool,
+                      OperationTool, EmbodiedTool, MobilityTool,
                       DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool]
 
 
@@ -285,8 +286,6 @@ class RetrofitPotentialTool(object):
 
         run_cli(scenario_path, 'retrofit-potential', *args)
 
-
-
 class DemandTool(object):
     """integrate the demand script with ArcGIS"""
 
@@ -427,7 +426,8 @@ class BenchmarkGraphsTool(object):
     """Integrates the cea/analysis/benchmark.py tool with ArcGIS"""
     def __init__(self):
         self.label = 'Benchmark graphs'
-        self.description = 'Create benchmark plots of scenarios in a folder'
+        self.description = 'Plot life cycle primary energy demand and emissions compared to an established benchmark'
+        self.category = 'Mapping and Visualization'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -458,10 +458,11 @@ class BenchmarkGraphsTool(object):
         return
 
 
-class EmissionsTool(object):
+class OperationTool(object):
     def __init__(self):
-        self.label = 'Emissions Operation'
+        self.label = 'Operation'
         self.description = 'Calculate emissions and primary energy due to building operation'
+        self.category = 'Life Cycle Analysis'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -555,10 +556,11 @@ class EmissionsTool(object):
         run_cli(scenario_path, 'emissions', '--extra-files-to-create', *extra_files_to_create)
 
 
-class EmbodiedEnergyTool(object):
+class EmbodiedTool(object):
     def __init__(self):
-        self.label = 'Embodied Energy'
-        self.description = 'Calculate the Emissions for operation'
+        self.label = 'Construction'
+        self.description = 'Calculate the emissions and primary energy for building construction and decommissioning'
+        self.category = 'Life Cycle Analysis'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -588,8 +590,9 @@ class EmbodiedEnergyTool(object):
 class MobilityTool(object):
     """Integrates the cea/analysis/mobility.py script with ArcGIS."""
     def __init__(self):
-        self.label = 'Emissions Mobility'
+        self.label = 'Occupant Mobility'
         self.description = 'Calculate emissions and primary energy due to mobility'
+        self.category = 'Life Cycle Analysis'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -611,7 +614,8 @@ class MobilityTool(object):
 class DemandGraphsTool(object):
     def __init__(self):
         self.label = 'Demand graphs'
-        self.description = 'Calculate Graphs of the Demand'
+        self.description = 'Plot demand time-series data'
+        self.category = 'Mapping and Visualization'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -649,8 +653,9 @@ class DemandGraphsTool(object):
 
 class ScenarioPlotsTool(object):
     def __init__(self):
-        self.label = 'Scenario Plots'
+        self.label = 'Scenario plots'
         self.description = 'Create summary plots of scenarios in a folder'
+        self.category = 'Mapping and Visualization'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -886,7 +891,8 @@ def run_cli(scenario_path=None, *args):
 class HeatmapsTool(object):
     def __init__(self):
         self.label = 'Heatmaps'
-        self.description = 'Create heatmap data layers'
+        self.description = 'Generate maps representing hot and cold spots of energy consumption'
+        self.category = 'Mapping and Visualization'
         self.canRunInBackground = False
 
     def getParameterInfo(self):

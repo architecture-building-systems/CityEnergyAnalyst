@@ -40,8 +40,8 @@ def calc_mww(schedule, water_lpd, Pwater):
 
 # final hot water demand calculation
 
-def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, Vww_lpd, Vw_lpd, occupancy_densities,
-              list_uses, schedules, building_uses):
+def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, occupancy_densities,
+              schedules, bpr):
     # Refactored from CalcThermalLoads
     """
     This function calculates the distribution heat loss and final energy consumption of domestic hot water.
@@ -60,17 +60,17 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     :return:
 
     """
-    # calc schedule of use:
-    schedule = calc_Qww_schedule(list_uses, schedules, occupancy_densities, building_uses, Af)
-    # end-use demand
-    mww = schedule * Vww_lpd/ 1000
-    Vww = mww * gv.Pwater /3600 # kg/s
-    mw = schedule * Vww_lpd / 1000
-    Vw = mw * gv.Pwater /3600 # kg/s
+
+    # calc end-use demand
+    Vww = schedules['Vww'] * bpr.internal_loads['Vww_lpd'] * bpr.rc_model['Af'] / 1000   # m3/h
+    Vw = schedules['Vw'] * bpr.internal_loads['Vw_lpd'] * bpr.rc_model['Af'] / 1000      # m3/h
+    mww = Vww * gv.Pwater /3600 # kg/s
+
     Qww = np.vectorize(calc_Qww)(mww, Tww_sup_0, Tww_re, gv.Cpw)
     Qww_0 = Qww.max()
+
     # distribution and circulation losses
-    Vol_ls = Lsww_dis * (gv.D / 1000) ** (2 / 4) * pi #volume per meter of pipe
+    Vol_ls = Lsww_dis * (gv.D / 1000) ** (2 / 4) * pi # volume per meter of pipe
     Qww_dis_ls_r = np.vectorize(calc_Qww_dis_ls_r)(Ta, Qww, Lsww_dis, Lcww_dis, Y[1], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
                                            gv.Cpw, gv.Pwater, gv)
     Qww_dis_ls_nr = np.vectorize(calc_Qww_dis_ls_nr)(Ta, Qww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
@@ -85,45 +85,6 @@ def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_s
     return mww, Qww, Qww_st_ls, Qwwf, Qwwf_0, Tww_st, Vww, Vw, mcpwwf
 
 # end-use hot water demand calculation
-
-def calc_Qww_schedule(list_uses, schedules, occ_density, building_uses, Af):
-    """
-    Algoithm to calculate the schedule of Qww use
-
-    :param list_uses: The list of uses used in the project
-    :type list_uses: list
-
-    :param schedules: The list of schedules defined for the project - in the same order as `list_uses`
-    :type schedules: list[ndarray[float]]
-
-    :param occ_density: the list of occupancy densities per every schedule
-    :type occ_density: list[float]
-
-    :param building_uses: for each use in `list_uses`, the percentage of that use for this building.
-        Sum of values is 1.0
-    :type building_uses: dict[str, float]
-
-    :param Af: total conditioned floor area
-
-    :type Af: float
-
-    :returns:
-    :rtype: ndarray
-    """
-    # weighted average of schedules
-    def calc_average(last, current, share_of_use):
-        return last + current * share_of_use
-
-    occ = np.zeros(8760)
-    num_profiles = len(list_uses)
-    for num in range(num_profiles):
-        if occ_density[num] != 0:
-            current_share_of_use = building_uses[list_uses[num]]
-            share_time_occupancy_density = (1/occ_density[num])*current_share_of_use
-            occ = np.vectorize(calc_average)(occ, schedules[num][2], share_time_occupancy_density)
-    result = occ *Af
-    return result
-
 
 def calc_Qww(mww, Tww_sup_0, Tww_re, Cpw):
     mcpww = mww * Cpw * 1000  # W/K
