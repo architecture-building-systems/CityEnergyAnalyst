@@ -50,34 +50,34 @@ def operation_costs(args):
 
 def emissions(args):
     """Run the emissions script with the arguments provided."""
-    import cea.analysis.operation
+    import cea.analysis.lca.operation
     import cea.inputlocator
-    cea.analysis.operation.lca_operation(locator=cea.inputlocator.InputLocator(args.scenario),
-                                         Qww_flag='Qww' in args.extra_files_to_create,
-                                         Qhs_flag='Qhs' in args.extra_files_to_create,
-                                         Qcs_flag='Qcs' in args.extra_files_to_create,
-                                         Qcdata_flag='Qcdata' in args.extra_files_to_create,
-                                         Qcrefri_flag='Qcrefri' in args.extra_files_to_create,
-                                         Eal_flag='Eal' in args.extra_files_to_create,
-                                         Eaux_flag='Eaux' in args.extra_files_to_create,
-                                         Epro_flag='Epro' in args.extra_files_to_create,
-                                         Edata_flag='Edata' in args.extra_files_to_create, )
+    cea.analysis.lca.operation.lca_operation(locator=cea.inputlocator.InputLocator(args.scenario),
+                                             Qww_flag='Qww' in args.extra_files_to_create,
+                                             Qhs_flag='Qhs' in args.extra_files_to_create,
+                                             Qcs_flag='Qcs' in args.extra_files_to_create,
+                                             Qcdata_flag='Qcdata' in args.extra_files_to_create,
+                                             Qcrefri_flag='Qcrefri' in args.extra_files_to_create,
+                                             Eal_flag='Eal' in args.extra_files_to_create,
+                                             Eaux_flag='Eaux' in args.extra_files_to_create,
+                                             Epro_flag='Epro' in args.extra_files_to_create,
+                                             Edata_flag='Edata' in args.extra_files_to_create, )
 
 
 def embodied_energy(args):
     """Run the embodied energy script with the arguments provided."""
-    import cea.analysis.embodied
+    import cea.analysis.lca.embodied
     import cea.globalvar
     gv = cea.globalvar.GlobalVariables()
-    cea.analysis.embodied.lca_embodied(year_to_calculate=args.year_to_calculate,
-                                       locator=cea.inputlocator.InputLocator(args.scenario), gv=gv)
+    cea.analysis.lca.embodied.lca_embodied(year_to_calculate=args.year_to_calculate,
+                                           locator=cea.inputlocator.InputLocator(args.scenario), gv=gv)
 
 
 def mobility(args):
     """Run the mobility script with the arguments provided."""
-    import cea.analysis.mobility
+    import cea.analysis.lca.mobility
     import cea.inputlocator
-    cea.analysis.mobility.lca_mobility(locator=cea.inputlocator.InputLocator(args.scenario))
+    cea.analysis.lca.mobility.lca_mobility(locator=cea.inputlocator.InputLocator(args.scenario))
 
 
 def benchmark_graphs(args):
@@ -391,8 +391,8 @@ def main():
     test_parser.add_argument('--user', help='GitHub user with access to cea-reference-case repository')
     test_parser.add_argument('--token', help='Personal Access Token for the GitHub user')
     test_parser.add_argument('--save', action='store_true', default=False, help='Save user and token to disk.')
-    test_parser.add_argument('--reference-cases', default=[], nargs='+',
-                             choices=['open', 'zug/baseline', 'zurich/baseline', 'zurich/masterplan'],
+    test_parser.add_argument('--reference-cases', default=['open'], nargs='+',
+                             choices=['open', 'zug/baseline', 'zurich/baseline', 'zurich/masterplan', 'all'],
                              help='list of reference cases to test')
     test_parser.set_defaults(func=test)
 

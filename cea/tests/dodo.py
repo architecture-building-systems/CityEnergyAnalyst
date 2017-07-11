@@ -1,14 +1,21 @@
 """
 "Makefile" for doit to test the whole package with Jenkins.
 
+This file gets run with the ``cea test`` command as well as by the Jenkins continuous integration server. It runs all
+the unit tests in the ``cea/tests/`` folder as well as some of the CEA scripts, to make sure they at least run through.
+
+In order to run reference cases besides the one called "open", you will need to set up authentication to the private
+GitHub repository. The easiest way to do this is with ``cea test --save --user USERNAME --token PERSONAL_ACCESS_TOKEN``,
+adding your own user name and a GitHub personal access token.
+
 The reference cases can be found here: https://github.com/architecture-building-systems/cea-reference-case/archive/master.zip
 """
-import requests
 import os
 import shutil
+import sys
 import zipfile
 
-import sys
+import requests
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -198,13 +205,13 @@ def task_run_demand_graphs():
 
 def task_run_embodied_energy():
     """Run the embodied energy script for each reference case"""
-    import cea.analysis.embodied
+    import cea.analysis.lca.embodied
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
         yield {
             'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.analysis.embodied.run_as_script, [], {
+            'actions': [(cea.analysis.lca.embodied.run_as_script, [], {
                 'scenario_path': scenario_path,
                 'year_to_calculate': 2050
             })],
@@ -214,13 +221,13 @@ def task_run_embodied_energy():
 
 def task_run_emissions_operation():
     """run the emissions operation script for each reference case"""
-    import cea.analysis.operation
+    import cea.analysis.lca.operation
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
         yield {
             'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.analysis.operation.run_as_script, [], {
+            'actions': [(cea.analysis.lca.operation.run_as_script, [], {
                 'scenario_path': scenario_path
             })],
             'verbosity': 1,
@@ -229,13 +236,13 @@ def task_run_emissions_operation():
 
 def task_run_emissions_mobility():
     """run the emissions mobility script for each reference case"""
-    import cea.analysis.mobility
+    import cea.analysis.lca.mobility
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
         yield {
             'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.analysis.mobility.run_as_script, [], {
+            'actions': [(cea.analysis.lca.mobility.run_as_script, [], {
                 'scenario_path': scenario_path
             })],
             'verbosity': 1,
@@ -288,7 +295,7 @@ def main(user=None, token=None, reference_cases=None):
     if token:
         global _token
         _token = token
-    if reference_cases:
+    if reference_cases and 'all' not in reference_cases:
         global _reference_cases
         _reference_cases = reference_cases
     sys.exit(DoitMain(ModuleTaskLoader(globals())).run([]))
