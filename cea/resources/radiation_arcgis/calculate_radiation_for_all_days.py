@@ -13,7 +13,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calculate_radiation_for_all_days(T_G_day, dem_rasterfinal_path, latitude, locator, observers_path, path_arcgis_db):
+def calculate_radiation_for_all_days(daily_transmissivity, dem_rasterfinal_path, latitude, locator, observers_path, path_arcgis_db):
     # let's just be sure this is set
     arcpy.env.workspace = path_arcgis_db
     arcpy.env.overwriteOutput = True
@@ -24,7 +24,7 @@ def calculate_radiation_for_all_days(T_G_day, dem_rasterfinal_path, latitude, lo
 
     temporary_folder = locator.get_temporary_folder()
     for day in range(1, 366):
-        calculate_radiation_single_day(day, dem_rasterfinal_path, observers_path, T_G_day, latitude,
+        calculate_radiation_single_day(day, dem_rasterfinal_path, observers_path, daily_transmissivity, latitude,
                                        temporary_folder, aspect_slope, heightoffset, path_arcgis_db)
 
 
@@ -69,16 +69,16 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    parser.add_argument('--T-G-day-path', help='Path to a pickle of the T_G_day dataframe')
+    parser.add_argument('--daily-transmissivity-pickle', help='Path to a pickle of the daily_transmissivity dataframe')
     parser.add_argument('--latitude', help='Latitude', type=float)
-    parser.add_argument('--observers-path', help='path to observers layer')
+    parser.add_argument('--observers-path', help='path to observers feature layer')
     parser.add_argument('--dem-rasterfinal-path', help='path to the DEM with the burnt-in buildings')
     parser.add_argument('--arcgis_db', help='path to arcgis geodatabase')
     args = parser.parse_args()
 
     locator = cea.inputlocator.InputLocator(args.scenario)
-    T_G_day = pd.read_pickle(args.T_G_day_path)
+    daily_transmissivity = pd.read_pickle(args.daily_transmissivity_pickle)
 
-    calculate_radiation_for_all_days(T_G_day=T_G_day, dem_rasterfinal_path=args.dem_rasterfinal_path,
-                                     latitude=args.latitude, locator=locator, observers_path=args.observers_path,
-                                     path_arcgis_db=args.arcgis_db)
+    calculate_radiation_for_all_days(daily_transmissivity=daily_transmissivity,
+                                     dem_rasterfinal_path=args.dem_rasterfinal_path, latitude=args.latitude,
+                                     locator=locator, observers_path=args.observers_path, path_arcgis_db=args.arcgis_db)
