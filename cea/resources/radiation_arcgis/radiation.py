@@ -88,12 +88,12 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
 
     calculate_observers(simple_cq_shp, observers_path, data_factors_boundaries_csv, path_arcgis_db)
 
-    # run_script_in_subprocess('calculate_radiation_for_all_days',
-    #                          '--T-G-day-path', T_G_day_path,
-    #                          '--dem-rasterfinal-path', dem_rasterfinal_path,
-    #                          '--latitude', latitude,
-    #                          '--observers-path', observers_path,
-    #                          '--arcgis_db', path_arcgis_db)
+    run_script_in_subprocess('calculate_radiation_for_all_days',
+                             '--T-G-day-path', T_G_day_path,
+                             '--dem-rasterfinal-path', dem_rasterfinal_path,
+                             '--latitude', latitude,
+                             '--observers-path', observers_path,
+                             '--arcgis_db', path_arcgis_db)
 
     gv.log('complete raw radiation files')
 
