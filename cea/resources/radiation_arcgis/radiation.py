@@ -15,7 +15,6 @@ from timezonefinder import TimezoneFinder
 import pickle
 
 from cea.interfaces.arcgis.modules import arcpy
-from cea.resources.radiation_arcgis.calculate_sunny_hours_of_year import calculate_sunny_hours_of_year
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
@@ -427,7 +426,7 @@ def run_script_in_subprocess(script_name, *args):
     if len(stdout):
         print(script_name + ': ' + stdout.rstrip())
     if len(stderr):
-        print(script_name + ': ERROR!\n' + stderr)
+        print(script_name + '@STDERR:\n' + stderr)
     if process.returncode != 0:
         raise Exception('Failed to execute ' + script_name)
 
