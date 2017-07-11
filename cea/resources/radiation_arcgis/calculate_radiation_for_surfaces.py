@@ -8,6 +8,10 @@ from cea.interfaces.arcgis.modules import arcpy
 
 def calculate_radiation_for_surfaces(observers_path, data_factor_centroids_csv, sunny_hours_of_year, temporary_folder,
                                      path_arcgis_db):
+    arcpy.env.workspace = path_arcgis_db
+    arcpy.env.overwriteOutput = True
+    arcpy.CheckOutExtension("spatial")
+
     # local variables
     CQSegments_centroid = os.path.join(path_arcgis_db, 'CQSegmentCentro')
     Outjoin = os.path.join(path_arcgis_db, 'Outjoin')
