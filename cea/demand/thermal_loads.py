@@ -560,7 +560,9 @@ class BuildingProperties(object):
                                                                          right_index=True)
 
         # area of windows
-        df['Aw'] = df['Awall_all'] * df['win_wall'] * df['PFloor']
+        # TODO: wwe_south replaces wil_wall this is temporary it should not be need it anymore with the new geometry files of Daysim
+        df['Aw'] = df['Awall_all'] * df['wwr_south'] * df['PFloor']
+
 
         # opaque areas (PFloor represents a factor according to the amount of floors heated)
         df['Aop_sup'] = df['Awall_all'] * df['PFloor'] - df['Aw']
@@ -718,10 +720,13 @@ class BuildingPropertiesRow(object):
 
     def _calculate_pipe_transmittance_values(self):
         """linear trasmissivity coefficients of piping W/(m.K)"""
-        if self.age['built'] >= 1995 or self.age['HVAC'] > 0:
+        if self.age['built'] >= 1995 or self.age['HVAC'] > 1995:
             phi_pipes = [0.2, 0.3, 0.3]
-        elif 1985 <= self.age['built'] < 1995 and self.age['HVAC'] == 0:
+        # elif 1985 <= self.age['built'] < 1995 and self.age['HVAC'] == 0:
+        elif 1985 <= self.age['built'] < 1995:
             phi_pipes = [0.3, 0.4, 0.4]
+            if self.age['HVAC'] == self.age['built']:
+                print 'Incorrect HVAC renovation year: if HVAC has not been renovated, the year should be set to 0'
         else:
             phi_pipes = [0.4, 0.4, 0.4]
         return phi_pipes
@@ -739,7 +744,7 @@ class EnvelopeProperties(object):
     def __init__(self, envelope):
         self.a_roof = envelope['a_roof']
         self.n50 = envelope['n50']
-        self.win_wall = envelope['win_wall']
+        self.win_wall = envelope['wwr_south']
         self.a_wall = envelope['a_wall']
         self.rf_sh = envelope['rf_sh']
         self.e_wall = envelope['e_wall']
@@ -869,7 +874,8 @@ def get_envelope_properties(locator, prop_architecture):
     fields_construction = ['Name', 'Cm_Af']
     fields_leakage = ['Name', 'n50']
     fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof', 'Hs']
-    fields_wall = ['Name', 'win_wall','e_wall', 'a_wall', 'U_wall', 'U_base']
+    fields_wall = ['Name', 'wwr_north', 'wwr_west','wwr_east', 'wwr_south',
+                    'e_wall', 'a_wall', 'U_wall', 'U_base']
     fields_win = ['Name', 'e_win', 'G_win', 'U_win']
     fields_shading = ['Name', 'rf_sh']
 
