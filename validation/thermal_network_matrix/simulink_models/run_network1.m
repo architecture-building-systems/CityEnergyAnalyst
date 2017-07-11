@@ -4,9 +4,10 @@ Cpw = 4.184; %kJ/kgK
 
 
 % production plant
-% TUpstream = 338.3564; % Plant Supply temperature (K)
-% TDownstream = 60 + 273.15; 
-PUpstream = 1.01325*4; % bar
+plant_node = 6;
+[num,text,T_supply] = xlsread('network1_input.xlsx','T_Supply_DH');
+PUpstream = 0.101325*4; % MPa
+T_Upstream_array = T_supply(2:end,plant_node(1));
 
 % Soil properties
 kSoil = 1.6;   % (W/mK)
@@ -18,12 +19,6 @@ length = 125;  % Length (m)
 pipe_roughness = 2e-5; % steel pipe roughness (m)
 kInsulant = 0.023; % (W/mK)
 %rho0 = 998;  %water density
-
-% production plant
-plant_node = 6;
-[num,text,T_supply] = xlsread('network1_input.xlsx','T_Supply_DH');
-T_Upstream_array = T_supply(2:end,plant_node(1));
-
 
 % Read pipe properties and substation flow rates
 edge = xlsread('network1_input.xlsx','Edge_DH');     % pipe properties
@@ -55,19 +50,42 @@ end
 
 T_node_supply = zeros(8760,size(node_mass_flow,2));
 q_loss_supply = zeros(8760,size(edge,1));
+Phi_W_supply = zeros(8760,size(edge,1));
+Phi_A_supply = zeros(8760,size(edge,1));
+Phi_B_supply = zeros(8760,size(edge,1));
+k_supply = zeros(8760,size(edge,1));
+Nu_A_supply = zeros(8760,size(edge,1));
+Nu_B_supply = zeros(8760,size(edge,1));
+F_A_supply = zeros(8760,size(edge,1));
+F_B_supply = zeros(8760,size(edge,1));
 dP_supply = zeros(8760,1);
 load_system('pipelines_network1');
 
-for t=1:8760
+for t=10:12
     TUpstream = T_Upstream_array{t};
     T_initial = T_Upstream_array{t}; %K
     TDownstream = T_Upstream_array{t}-0.05; 
     if isnumeric(TUpstream)
+        T_supply_t = T_supply(t+1,:);
+        test_nan = cellfun(@ischar, T_supply_t);
+        T_supply_t(test_nan) = {nan};
+        T_supply_t = cell2mat(T_supply_t);
+        
+        % set initial temperatures
+        T_initial = min(T_supply_t); %K
+        TDownstream = nanmin(T_supply_t);
+        
         mdot = zeros(1,size(node_mass_flow,2));  
         for j = 1:size(node_mass_flow,2)
             mdot(j) = node_mass_flow(t,j); % mass flow rate {kg/s)
         end
-
+        % calculate the max temparature difference at each time step
+        max_T_diff = peak2peak([T_supply{t+1,:}]);
+        if  max_T_diff > 10
+            set_param('pipelines_network1','StopTime','30000')
+        else set_param('pipelines_network1','StopTime','8000')
+        end
+        
         % Initialization
         sim('pipelines_network1');
         % simlog.print  
@@ -147,6 +165,70 @@ for t=1:8760
         q_loss(6) = mdot_pipe(6) * Cpw * dT(6);
         q_loss(7) = mdot_pipe(7) * Cpw * dT(7);  
         q_loss(8) = mdot_pipe(8) * Cpw * dT(8);
+        
+        Phi_W(1) = simlog.E0.pipe_model.Q_H.series.values*(-1);
+        Phi_W(2) = simlog.E1.pipe_model.Q_H.series.values*(-1);
+        Phi_W(3) = simlog.E2.pipe_model.Q_H.series.values*(-1);
+        Phi_W(4) = simlog.E3.pipe_model.Q_H.series.values*(-1);
+        Phi_W(5) = simlog.E4.pipe_model.Q_H.series.values*(-1);
+        Phi_W(6) = simlog.E5.pipe_model.Q_H.series.values*(-1);
+        Phi_W(7) = simlog.E6.pipe_model.Q_H.series.values*(-1);
+        Phi_W(8) = simlog.E7.pipe_model.Q_H.series.values*(-1);
+        
+        Phi_A(1) = simlog.E0.pipe_model.Phi_A.series.values;
+        Phi_A(2) = simlog.E1.pipe_model.Phi_A.series.values;
+        Phi_A(3) = simlog.E2.pipe_model.Phi_A.series.values;
+        Phi_A(4) = simlog.E3.pipe_model.Phi_A.series.values;
+        Phi_A(5) = simlog.E4.pipe_model.Phi_A.series.values;
+        Phi_A(6) = simlog.E5.pipe_model.Phi_A.series.values;
+        Phi_A(7) = simlog.E6.pipe_model.Phi_A.series.values;
+        Phi_A(8) = simlog.E7.pipe_model.Phi_A.series.values;
+        
+        Phi_B(1) = simlog.E0.pipe_model.Phi_B.series.values;
+        Phi_B(2) = simlog.E1.pipe_model.Phi_B.series.values;
+        Phi_B(3) = simlog.E2.pipe_model.Phi_B.series.values;
+        Phi_B(4) = simlog.E3.pipe_model.Phi_B.series.values;
+        Phi_B(5) = simlog.E4.pipe_model.Phi_B.series.values;
+        Phi_B(6) = simlog.E5.pipe_model.Phi_B.series.values;
+        Phi_B(7) = simlog.E6.pipe_model.Phi_B.series.values;
+        Phi_B(8) = simlog.E7.pipe_model.Phi_B.series.values;
+        
+        Nu_A_fluid(1) = simlog.E0.pipe_model.Nu_A.series.values;
+        Nu_A_fluid(2) = simlog.E1.pipe_model.Nu_A.series.values;
+        Nu_A_fluid(3) = simlog.E2.pipe_model.Nu_A.series.values;
+        Nu_A_fluid(4) = simlog.E3.pipe_model.Nu_A.series.values;
+        Nu_A_fluid(5) = simlog.E4.pipe_model.Nu_A.series.values;
+        Nu_A_fluid(6) = simlog.E5.pipe_model.Nu_A.series.values;
+        Nu_A_fluid(7) = simlog.E6.pipe_model.Nu_A.series.values;
+        Nu_A_fluid(8) = simlog.E7.pipe_model.Nu_A.series.values;
+        
+        Nu_B_fluid(1) = simlog.E0.pipe_model.Nu_B.series.values;
+        Nu_B_fluid(2) = simlog.E1.pipe_model.Nu_B.series.values;
+        Nu_B_fluid(3) = simlog.E2.pipe_model.Nu_B.series.values;
+        Nu_B_fluid(4) = simlog.E3.pipe_model.Nu_B.series.values;
+        Nu_B_fluid(5) = simlog.E4.pipe_model.Nu_B.series.values;
+        Nu_B_fluid(6) = simlog.E5.pipe_model.Nu_B.series.values;
+        Nu_B_fluid(7) = simlog.E6.pipe_model.Nu_B.series.values;
+        Nu_B_fluid(8) = simlog.E7.pipe_model.Nu_B.series.values;
+        
+        T_wall(1) = simlog.E0.pipe_model.H.T.series.values;
+        T_wall(2) = simlog.E1.pipe_model.H.T.series.values;
+        T_wall(3) = simlog.E2.pipe_model.H.T.series.values;
+        T_wall(4) = simlog.E3.pipe_model.H.T.series.values;
+        T_wall(5) = simlog.E4.pipe_model.H.T.series.values;
+        T_wall(6) = simlog.E5.pipe_model.H.T.series.values;
+        T_wall(7) = simlog.E6.pipe_model.H.T.series.values;
+        T_wall(8) = simlog.E7.pipe_model.H.T.series.values;
+        
+        
+        T_fluid(1) = simlog.E0.pipe_model.T.series.values;
+        T_fluid(2) = simlog.E1.pipe_model.T.series.values;
+        T_fluid(3) = simlog.E2.pipe_model.T.series.values;
+        T_fluid(4) = simlog.E3.pipe_model.T.series.values;
+        T_fluid(5) = simlog.E4.pipe_model.T.series.values;
+        T_fluid(6) = simlog.E5.pipe_model.T.series.values;
+        T_fluid(7) = simlog.E6.pipe_model.T.series.values;
+        T_fluid(8) = simlog.E7.pipe_model.T.series.values;
 
         T_node(1) = simlog.N0.A.T.series.values; % K
         T_node(2) = simlog.N1.A.T.series.values; % K
@@ -157,6 +239,8 @@ for t=1:8760
         T_node(7) = simlog.N6.A.T.series.values; % K
         T_node(8) = simlog.N7.A.T.series.values; % K
         T_node(9) = simlog.N8.A.T.series.values; % K
+        
+        
 
         % E = {'E0', 'E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7'};
         % Pi = zeros(1,size(edge,1));
@@ -176,10 +260,20 @@ for t=1:8760
 
         T_node_supply(t,:) = vec2mat(T_node,size(T_node_supply,2));
         q_loss_supply(t,:) = vec2mat(q_loss,size(q_loss_supply,2));
+        Phi_W_supply(t,:) = vec2mat(Phi_W,size(Phi_W,2));
+        Phi_A_supply(t,:) = vec2mat(Phi_A,size(Phi_A,2));
+        Phi_B_supply(t,:) = vec2mat(Phi_B,size(Phi_B,2));
+        Nu_A_supply(t,:) = vec2mat(Nu_A_fluid,size(Nu_A_supply,2));
+        Nu_B_supply(t,:) = vec2mat(Nu_B_fluid,size(Nu_B_supply,2));
         dP_supply(t) = sum(dP);
     else
         T_node_supply(t,:) = str2double(T_supply(t+1,:));
         q_loss_supply(t,:) = 0;
+        Phi_W_supply(t,:) = 0;
+        Phi_A_supply(t,:) = 0;
+        Phi_B_supply(t,:) = 0;
+        Nu_A_supply(t,:) = 0;
+        Nu_B_supply(t,:) = 0;
         dP_supply(t) = 0;
     end
 end
@@ -187,6 +281,11 @@ end
 csvwrite('network1_T_node_supply.csv', T_node_supply)
 csvwrite('network1_qloss_supply.csv', q_loss_supply)
 csvwrite('network1_dP_supply.csv', dP_supply)
+csvwrite('network1_Phi_W.csv', Phi_W_supply)
+csvwrite('network1_Phi_A.csv', Phi_A_supply)
+csvwrite('network1_Phi_B.csv', Phi_B_supply)
+csvwrite('network1_Nu_A.csv', Nu_A_supply)
+csvwrite('network1_Nu_B.csv', Nu_B_supply)
 
 
 
