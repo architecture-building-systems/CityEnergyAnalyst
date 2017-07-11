@@ -37,6 +37,7 @@ class OperationCostsTool(object):
     def __init__(self):
         self.label = 'Operation Costs'
         self.description = 'Calculate energy costs due to building operation'
+        self.category = 'Cost Analysis'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -57,6 +58,7 @@ class OperationCostsTool(object):
 class RetrofitPotentialTool(object):
     def __init__(self):
         self.label = 'Building Retrofit Potential'
+        self.category = 'Retrofit Analysis'
         self.description = 'Select buildings according to specific criteria for retrofit'
         self.canRunInBackground = False
 
@@ -151,85 +153,85 @@ class RetrofitPotentialTool(object):
 
         cb_heating_costs_threshold = arcpy.Parameter(displayName="Enable threshold for heating costs",
                                                      name="cb_heating_costs_threshold", datatype="GPBoolean",
-                                                     parameterType="Required", direction="Input", category="costs")
+                                                     parameterType="Required", direction="Input", category="operation costs")
         cb_heating_costs_threshold.value = False
         cb_heating_costs_threshold.enabled = False
 
         heating_costs_threshold = arcpy.Parameter(displayName="Threshold for heating costs",
                                                   name="heating_costs_threshold", datatype="GPLong",
-                                                  parameterType="Optional", direction="Input", category="costs")
+                                                  parameterType="Optional", direction="Input", category="operation costs")
         heating_costs_threshold.value = 2
         heating_costs_threshold.enabled = False
 
         cb_hot_water_costs_threshold = arcpy.Parameter(displayName="Enable threshold for hot water costs",
                                                        name="cb_hot_water_costs_threshold", datatype="GPBoolean",
-                                                       parameterType="Required", direction="Input", category="costs")
+                                                       parameterType="Required", direction="Input", category="operation costs")
         cb_hot_water_costs_threshold.value = False
         cb_hot_water_costs_threshold.enabled = False
 
         hot_water_costs_threshold = arcpy.Parameter(displayName="Threshold for hot water costs",
                                                     name="hot_water_costs_threshold", datatype="GPLong",
-                                                    parameterType="Optional", direction="Input", category="costs")
+                                                    parameterType="Optional", direction="Input", category="operation costs")
         hot_water_costs_threshold.value = 2
         hot_water_costs_threshold.enabled = False
 
         cb_cooling_costs_threshold = arcpy.Parameter(displayName="Enable threshold for cooling costs",
                                                      name="cb_cooling_costs_threshold", datatype="GPBoolean",
-                                                     parameterType="Required", direction="Input", category="costs")
+                                                     parameterType="Required", direction="Input", category="operation costs")
         cb_cooling_costs_threshold.value = False
         cb_cooling_costs_threshold.enabled = False
 
         cooling_costs_threshold = arcpy.Parameter(displayName="Threshold for cooling costs",
                                                   name="cooling_costs_threshold", datatype="GPLong",
-                                                  parameterType="Optional", direction="Input", category="costs")
+                                                  parameterType="Optional", direction="Input", category="operation costs")
         cooling_costs_threshold.value = 2
         cooling_costs_threshold.enabled = False
 
         cb_electricity_costs_threshold = arcpy.Parameter(displayName="Enable threshold for electricity costs",
                                                          name="cb_electricity_costs_threshold", datatype="GPBoolean",
-                                                         parameterType="Required", direction="Input", category="costs")
+                                                         parameterType="Required", direction="Input", category="operation costs")
         cb_electricity_costs_threshold.value = False
         cb_electricity_costs_threshold.enabled = False
 
         electricity_costs_threshold = arcpy.Parameter(displayName="Threshold for electricity costs",
                                                       name="electricity_costs_threshold", datatype="GPLong",
-                                                      parameterType="Optional", direction="Input", category="costs")
+                                                      parameterType="Optional", direction="Input", category="operation costs")
         electricity_costs_threshold.value = 2
         electricity_costs_threshold.enabled = False
 
-        cb_heating_losses_threshold = arcpy.Parameter(displayName="Enable threshold for thermal losses from heating",
+        cb_heating_losses_threshold = arcpy.Parameter(displayName="Enable threshold for HVAC system losses from heating",
                                                       name="cb_heating_losses_threshold", datatype="GPBoolean",
-                                                      parameterType="Required", direction="Input", category="thermal losses")
+                                                      parameterType="Required", direction="Input", category="HVAC system losses")
         cb_heating_losses_threshold.value = False
         cb_heating_losses_threshold.enabled = False
 
-        heating_losses_threshold = arcpy.Parameter(displayName="Threshold for thermal losses from heating",
+        heating_losses_threshold = arcpy.Parameter(displayName="Threshold for HVAC system losses from heating",
                                                    name="heating_losses_threshold", datatype="GPLong",
-                                                   parameterType="Optional", direction="Input", category="thermal losses")
+                                                   parameterType="Optional", direction="Input", category="HVAC system losses")
         heating_losses_threshold.value = 15
         heating_losses_threshold.enabled = False
 
         cb_hot_water_losses_threshold = arcpy.Parameter(
-            displayName="Enable threshold for thermal losses from hot water", name="cb_hot_water_losses_threshold",
-            datatype="GPBoolean", parameterType="Required", direction="Input", category="thermal losses")
+            displayName="Enable threshold for HVAC system losses from hot water", name="cb_hot_water_losses_threshold",
+            datatype="GPBoolean", parameterType="Required", direction="Input", category="HVAC system losses")
         cb_hot_water_losses_threshold.value = False
         cb_hot_water_losses_threshold.enabled = False
 
-        hot_water_losses_threshold = arcpy.Parameter(displayName="Threshold for thermal losses from hot water",
+        hot_water_losses_threshold = arcpy.Parameter(displayName="Threshold for HVAC system losses from hot water",
                                                      name="hot_water_losses_threshold", datatype="GPLong",
-                                                     parameterType="Optional", direction="Input", category="thermal losses")
+                                                     parameterType="Optional", direction="Input", category="HVAC system losses")
         hot_water_losses_threshold.value = 15
         hot_water_losses_threshold.enabled = False
 
-        cb_cooling_losses_threshold = arcpy.Parameter(displayName="Enable threshold for thermal losses from cooling",
+        cb_cooling_losses_threshold = arcpy.Parameter(displayName="Enable threshold for HVAC system losses from cooling",
                                                       name="cb_cooling_losses_threshold", datatype="GPBoolean",
-                                                      parameterType="Required", direction="Input", category="thermal losses")
+                                                      parameterType="Required", direction="Input", category="HVAC system losses")
         cb_cooling_losses_threshold.value = False
         cb_cooling_losses_threshold.enabled = False
 
-        cooling_losses_threshold = arcpy.Parameter(displayName="Threshold for thermal losses from cooling",
+        cooling_losses_threshold = arcpy.Parameter(displayName="Threshold for HVAC system losses from cooling",
                                                    name="cooling_losses_threshold", datatype="GPLong",
-                                                   parameterType="Optional", direction="Input", category="thermal losses")
+                                                   parameterType="Optional", direction="Input", category="HVAC system losses")
         cooling_losses_threshold.value = 15
         cooling_losses_threshold.enabled = False
 
@@ -292,6 +294,7 @@ class DemandTool(object):
     def __init__(self):
         self.label = 'Demand'
         self.description = 'Calculate the Demand'
+        self.category = 'Dynamic Demand Forecasting'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -364,6 +367,7 @@ class DataHelperTool(object):
     def __init__(self):
         self.label = 'Data helper'
         self.description = 'Query characteristics of buildings and systems from statistical data'
+        self.category = 'Data Management'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -425,9 +429,9 @@ class DataHelperTool(object):
 class BenchmarkGraphsTool(object):
     """Integrates the cea/analysis/benchmark.py tool with ArcGIS"""
     def __init__(self):
-        self.label = 'Benchmark graphs'
+        self.label = '2000W Society Benchmark'
         self.description = 'Plot life cycle primary energy demand and emissions compared to an established benchmark'
-        self.category = 'Mapping and Visualization'
+        self.category = 'Benchmarking'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -460,7 +464,7 @@ class BenchmarkGraphsTool(object):
 
 class OperationTool(object):
     def __init__(self):
-        self.label = 'Operation'
+        self.label = 'LCA Operation'
         self.description = 'Calculate emissions and primary energy due to building operation'
         self.category = 'Life Cycle Analysis'
         self.canRunInBackground = False
@@ -558,7 +562,7 @@ class OperationTool(object):
 
 class EmbodiedTool(object):
     def __init__(self):
-        self.label = 'Construction'
+        self.label = 'LCA Construction'
         self.description = 'Calculate the emissions and primary energy for building construction and decommissioning'
         self.category = 'Life Cycle Analysis'
         self.canRunInBackground = False
@@ -590,7 +594,7 @@ class EmbodiedTool(object):
 class MobilityTool(object):
     """Integrates the cea/analysis/mobility.py script with ArcGIS."""
     def __init__(self):
-        self.label = 'Occupant Mobility'
+        self.label = 'LCA Mobility'
         self.description = 'Calculate emissions and primary energy due to mobility'
         self.category = 'Life Cycle Analysis'
         self.canRunInBackground = False
@@ -613,9 +617,9 @@ class MobilityTool(object):
 
 class DemandGraphsTool(object):
     def __init__(self):
-        self.label = 'Demand graphs'
+        self.label = 'Plots'
         self.description = 'Plot demand time-series data'
-        self.category = 'Mapping and Visualization'
+        self.category = 'Dynamic Demand Forecasting'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -687,7 +691,8 @@ class ScenarioPlotsTool(object):
 
 class RadiationTool(object):
     def __init__(self):
-        self.label = 'Radiation'
+        self.label = 'Solar Insolation'
+        self.category= 'Renewable Energy Assessment'
         self.description = 'Create radiation file'
         self.canRunInBackground = False
 
