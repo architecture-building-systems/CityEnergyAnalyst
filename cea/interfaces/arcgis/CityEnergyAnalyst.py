@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 import arcpy
 
-__author__ = "Daren Thomas"
+__author__ = "Daren Thomas, Martin Mosteiro Romero"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Daren Thomas"]
 __license__ = "MIT"
@@ -25,13 +25,11 @@ __status__ = "Production"
 
 class Toolbox(object):
     """List the tools to show in the toolbox."""
-
     def __init__(self):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
-        self.tools = [DemandTool, DataHelperTool, BenchmarkGraphsTool, EmissionsTool, EmbodiedEnergyTool, MobilityTool,
-                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, SolarTechnologyTool, HeatmapsTool]
-
+        self.tools = [DemandTool, DataHelperTool, BenchmarkGraphsTool, OperationTool, EmbodiedTool, MobilityTool,
+                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool]
 
 class DemandTool(object):
     """integrate the demand script with ArcGIS"""
@@ -171,10 +169,10 @@ class DataHelperTool(object):
 
 class BenchmarkGraphsTool(object):
     """Integrates the cea/analysis/benchmark.py tool with ArcGIS"""
-
     def __init__(self):
         self.label = 'Benchmark graphs'
-        self.description = 'Create benchmark plots of scenarios in a folder'
+        self.description = 'Plot life cycle primary energy demand and emissions compared to an established benchmark'
+        self.category = 'Mapping and Visualization'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -205,10 +203,11 @@ class BenchmarkGraphsTool(object):
         return
 
 
-class EmissionsTool(object):
+class OperationTool(object):
     def __init__(self):
-        self.label = 'Emissions Operation'
+        self.label = 'Operation'
         self.description = 'Calculate emissions and primary energy due to building operation'
+        self.category = 'Life Cycle Analysis'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -302,10 +301,11 @@ class EmissionsTool(object):
         run_cli(scenario_path, 'emissions', '--extra-files-to-create', *extra_files_to_create)
 
 
-class EmbodiedEnergyTool(object):
+class EmbodiedTool(object):
     def __init__(self):
-        self.label = 'Embodied Energy'
-        self.description = 'Calculate the Emissions for operation'
+        self.label = 'Construction'
+        self.description = 'Calculate the emissions and primary energy for building construction and decommissioning'
+        self.category = 'Life Cycle Analysis'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -334,13 +334,14 @@ class EmbodiedEnergyTool(object):
 
 class MobilityTool(object):
     """Integrates the cea/analysis/mobility.py script with ArcGIS."""
-
     def __init__(self):
-        self.label = 'Emissions Mobility'
+        self.label = 'Occupant Mobility'
         self.description = 'Calculate emissions and primary energy due to mobility'
+        self.category = 'Life Cycle Analysis'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
@@ -358,7 +359,8 @@ class MobilityTool(object):
 class DemandGraphsTool(object):
     def __init__(self):
         self.label = 'Demand graphs'
-        self.description = 'Calculate Graphs of the Demand'
+        self.description = 'Plot demand time-series data'
+        self.category = 'Mapping and Visualization'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -396,8 +398,9 @@ class DemandGraphsTool(object):
 
 class ScenarioPlotsTool(object):
     def __init__(self):
-        self.label = 'Scenario Plots'
+        self.label = 'Scenario plots'
         self.description = 'Create summary plots of scenarios in a folder'
+        self.category = 'Mapping and Visualization'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -714,7 +717,6 @@ def add_message(msg, **kwargs):
 
 def get_weather_names():
     """Shell out to cli.py and collect the list of weather files registered with the CEA"""
-
     def get_weather_names_inner():
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -726,7 +728,6 @@ def get_weather_names():
                 # end of input
                 break
             yield line.rstrip()
-
     return list(get_weather_names_inner())
 
 
@@ -806,7 +807,8 @@ def run_cli(scenario_path=None, *args):
 class HeatmapsTool(object):
     def __init__(self):
         self.label = 'Heatmaps'
-        self.description = 'Create heatmap data layers'
+        self.description = 'Generate maps representing hot and cold spots of energy consumption'
+        self.category = 'Mapping and Visualization'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -834,6 +836,7 @@ class HeatmapsTool(object):
         analysis_fields.parameterDependencies = ['path_variables']
 
         return [scenario_path, path_variables, analysis_fields]
+
 
     def updateParameters(self, parameters):
         # scenario_path

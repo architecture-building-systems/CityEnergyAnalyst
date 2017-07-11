@@ -44,34 +44,34 @@ def data_helper(args):
 
 def emissions(args):
     """Run the emissions script with the arguments provided."""
-    import cea.analysis.operation
+    import cea.analysis.lca.operation
     import cea.inputlocator
-    cea.analysis.operation.lca_operation(locator=cea.inputlocator.InputLocator(args.scenario),
-                                         Qww_flag='Qww' in args.extra_files_to_create,
-                                         Qhs_flag='Qhs' in args.extra_files_to_create,
-                                         Qcs_flag='Qcs' in args.extra_files_to_create,
-                                         Qcdata_flag='Qcdata' in args.extra_files_to_create,
-                                         Qcrefri_flag='Qcrefri' in args.extra_files_to_create,
-                                         Eal_flag='Eal' in args.extra_files_to_create,
-                                         Eaux_flag='Eaux' in args.extra_files_to_create,
-                                         Epro_flag='Epro' in args.extra_files_to_create,
-                                         Edata_flag='Edata' in args.extra_files_to_create, )
+    cea.analysis.lca.operation.lca_operation(locator=cea.inputlocator.InputLocator(args.scenario),
+                                             Qww_flag='Qww' in args.extra_files_to_create,
+                                             Qhs_flag='Qhs' in args.extra_files_to_create,
+                                             Qcs_flag='Qcs' in args.extra_files_to_create,
+                                             Qcdata_flag='Qcdata' in args.extra_files_to_create,
+                                             Qcrefri_flag='Qcrefri' in args.extra_files_to_create,
+                                             Eal_flag='Eal' in args.extra_files_to_create,
+                                             Eaux_flag='Eaux' in args.extra_files_to_create,
+                                             Epro_flag='Epro' in args.extra_files_to_create,
+                                             Edata_flag='Edata' in args.extra_files_to_create, )
 
 
 def embodied_energy(args):
     """Run the embodied energy script with the arguments provided."""
-    import cea.analysis.embodied
+    import cea.analysis.lca.embodied
     import cea.globalvar
     gv = cea.globalvar.GlobalVariables()
-    cea.analysis.embodied.lca_embodied(year_to_calculate=args.year_to_calculate,
-                                       locator=cea.inputlocator.InputLocator(args.scenario), gv=gv)
+    cea.analysis.lca.embodied.lca_embodied(year_to_calculate=args.year_to_calculate,
+                                           locator=cea.inputlocator.InputLocator(args.scenario), gv=gv)
 
 
 def mobility(args):
     """Run the mobility script with the arguments provided."""
-    import cea.analysis.mobility
+    import cea.analysis.lca.mobility
     import cea.inputlocator
-    cea.analysis.mobility.lca_mobility(locator=cea.inputlocator.InputLocator(args.scenario))
+    cea.analysis.lca.mobility.lca_mobility(locator=cea.inputlocator.InputLocator(args.scenario))
 
 
 def benchmark_graphs(args):
