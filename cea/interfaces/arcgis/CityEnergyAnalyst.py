@@ -29,7 +29,7 @@ class Toolbox(object):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
         self.tools = [DemandTool, DataHelperTool, BenchmarkGraphsTool, OperationTool, EmbodiedTool, MobilityTool,
-                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool]
+                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool, SolarTechnologyTool]
 
 class DemandTool(object):
     """integrate the demand script with ArcGIS"""
@@ -595,9 +595,15 @@ class SolarTechnologyTool(object):
         add_message('longitude: %s' % longitude)
         add_message('latitude: %s' % latitude)
 
-        run_cli(scenario_path, 'photovoltaic', '--latitude', latitude, '--longitude', longitude, '--weather-path',
-                weather_path, '--pvonroof', pvonroof, '--pvonwall', pvonwall, '--worst-hour', worst_hour,
-                '--type-PVpanel', type_PVpanel, '--min-radiation', min_radiation, '--date-start', date_start)
+        run_cli_arguments = [scenario_path, 'photovoltaic', '--latitude', latitude, '--longitude', longitude,
+                             '--weather-path', weather_path, '--worst-hour', worst_hour, '--type-PVpanel', type_PVpanel,
+                             '--min-radiation', min_radiation, '--date-start', date_start]
+        if pvonroof:
+            run_cli_arguments.append('--pvonroof')
+        if pvonwall:
+            run_cli_arguments.append('--pvonwall')
+
+        run_cli(*run_cli_arguments)
         return
 
 
