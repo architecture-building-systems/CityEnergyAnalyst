@@ -41,7 +41,7 @@ in both models
 +--------------------------------------+---------------------------+
 | Soil thermal conductivity            | 1.6 [W/mK]                |
 +--------------------------------------+---------------------------+
-| Pipe roughness                       | 2E-5 [m] (steel pipe)         |
+| Pipe roughness                       | 2E-5 [m] (steel pipe)     |
 +--------------------------------------+---------------------------+
 | Pipe length                          | 125 [m]                   |
 +--------------------------------------+---------------------------+
@@ -70,21 +70,93 @@ in both models
 Comparison of Results from CEA and Simulink
 ===========================================
 
+Network 1:
+
++-------------------------------------------+------------+----------------+-----------------------+
+| Parameter                                 | CEA Model  | Simulink Model | Notes                 |
++===========================================+============+================+=======================+
+| Annual heat supplied by the heating plant | 2685 MWh/a |                |                       |
++-------------------------------------------+------------+----------------+-----------------------+
+| Annual heating demand                     | 2303 MWh/a |                |                       |
++-------------------------------------------+------------+----------------+-----------------------+
+| Plant size                                | 2.7 MWh    |                | Max plant heat        |
+|                                           |            |                | requirement (t = 419) |
++-------------------------------------------+------------+----------------+-----------------------+
+| Max thermal loss (t = 419)                | 12.8 kWh   | 12.1 kWh       | difference = 6%       |
++-------------------------------------------+------------+----------------+-----------------------+
+| Annual thermal loss                       | 34 MWh/a   | 32 MWh/a       | difference = 6.4%     |
++-------------------------------------------+------------+----------------+-----------------------+
+| Max pressure loss (t = 419)               | 676 kPa    | 686 kPa        | difference = -1.5%     |
++-------------------------------------------+------------+----------------+-----------------------+
+| Annual pressure loss                      | 192 MPa    | 195 MPa        | difference = -1%      |
++-------------------------------------------+------------+----------------+-----------------------+
+| % thermal loss                            | 1.3%       |                |                       |
++-------------------------------------------+------------+----------------+-----------------------+
+| Average difference in thermal loss        | 7% higher  |                | Excluding t=438, 8667 |
++-------------------------------------------+------------+----------------+-----------------------+
+| Average difference in pressure loss       | 2% lower   |                | Excluding t=438, 8667 |
++-------------------------------------------+------------+----------------+-----------------------+
+| Hours when dP% > 10%,  t = 438            | 0.1% of the maximum flow rate                       |
++-------------------------------------------+-----------------------------------------------------+
+| Hours with dP% > 10%, t = 8304            | 1.27% of the maximum flow rate                      |
++-------------------------------------------+-----------------------------------------------------+
+| Hours with dP% > 10%, t = 8667            | 0.01% of the maximum flow rate                      |
++-------------------------------------------+-----------------------------------------------------+
+| Hours with dP% > 10%, t = 8668            | 1.94% of the maximum flow rate                      |
++-------------------------------------------+-----------------------------------------------------+
+
+Network 2:
+
++-------------------------------------------+------------+----------------+-----------------------+
+| Parameter                                 | CEA Model  | Simulink Model | Notes                 |
++===========================================+============+================+=======================+
+| Annual heat supplied by the heating plant | 1014 MWh/a |                | two plants            |
++-------------------------------------------+------------+----------------+-----------------------+
+| Annual heating demand                     | 2303 MWh/a |                |                       |
++-------------------------------------------+------------+----------------+-----------------------+
+| Plant size                                | 1028 MWh   |                | Max plant heat        |
+|                                           |            |                | requirement (t = 419) |
++-------------------------------------------+------------+----------------+-----------------------+
+| Max thermal loss (t = 419)                | 12.8 kWh   |   12.1 kWh     | difference = 5.8 %    |
++-------------------------------------------+------------+----------------+-----------------------+
+| Annual thermal loss                       | 34.8 MWh/a |   32.7 MWh/a   | difference = 6.4 %    |
++-------------------------------------------+------------+----------------+-----------------------+
+| Max pressure loss (t = 419)               | 675 kPa    |   686 kPa      | difference = -1.6 %   |
++-------------------------------------------+------------+----------------+-----------------------+
+| Annual pressure loss                      | 191 MPa    |   195 MPa      | difference = -2%      |
++-------------------------------------------+------------+----------------+-----------------------+
+| % thermal loss                            | 1.7 %      |                |                       |
++-------------------------------------------+------------+----------------+-----------------------+
+| Average difference in thermal loss        | 7% higher  |                | Excluding t=438, 8667 |
++-------------------------------------------+------------+----------------+-----------------------+
+| Average difference in pressure loss       | 4% lower   |                | Excluding t=438, 8667 |
++-------------------------------------------+------------+----------------+-----------------------+
+| Hours when dP% > 10%,  t = 438            | 0.1% of the maximum flow rate                       |
++-------------------------------------------+-----------------------------------------------------+
+| Hours with dP% > 10%, t = 8304            | 1.27% of the maximum flow rate                      |
++-------------------------------------------+-----------------------------------------------------+
+| Hours with dP% > 10%, t = 8667            | 0.01% of the maximum flow rate                      |
++-------------------------------------------+-----------------------------------------------------+
+| Hours with dP% > 10%, t = 8668            | 1.94% of the maximum flow rate                      |
++-------------------------------------------+-----------------------------------------------------+
+
+Network 3:
+
 +-------------------------------------------+------------+----------------+-----------------------+
 | Parameter                                 | CEA Model  | Simulink Model | Notes                 |
 +===========================================+============+================+=======================+
 | Annual heat supplied by the heating plant | 2350 MWh/a |                |                       |
 +-------------------------------------------+------------+----------------+-----------------------+
-| Annual heating demand                     | 2303 MWH/a |                |                       |
+| Annual heating demand                     | 2303 MWh/a |                |                       |
 +-------------------------------------------+------------+----------------+-----------------------+
 | Plant size                                | 2.4 MWh    |                | Max plant heat        |
 |                                           |            |                | requirement (t = 419) |
 +-------------------------------------------+------------+----------------+-----------------------+
-| Thermal loss @ t = 419 (max)              | 11.2 kWh   | 10.4 kWh       | difference = 0.4%     |
+| Thermal loss @ t = 419 (max)              | 11.2 kWh   | 10.4 kWh       | difference = 7.8%     |
 +-------------------------------------------+------------+----------------+-----------------------+
-| Annual thermal loss                       | 30 MWh/a   | 27 MWH/a       | difference = 11%      |
+| Annual thermal loss                       | 30 MWh/a   | 27 MWh/a       | difference = 11%      |
 +-------------------------------------------+------------+----------------+-----------------------+
-| Max pressure loss                         | 653 kPa    | 662 kPa (t=418)| difference = -1%      |
+| Max pressure loss  (t=419)                | 653 kPa    | 662 kPa        | difference = -1%      |
 +-------------------------------------------+------------+----------------+-----------------------+
 | Annual pressure loss                      | 185 MPa    | 187 MPa        | difference = -1%      |
 +-------------------------------------------+------------+----------------+-----------------------+
@@ -101,16 +173,18 @@ Comparison of Results from CEA and Simulink
 
 
 1. The plant capacity is sized at the maximum heat requirement, which include the heating demand
-from buildings and the thermal loss. At the time step with the maximum heating demand, the thermal
-loss is only 0.4% difference between CEA and Simulink
-2. The differences in total thermal losses between CEA and Simulink over 8760 hours is around 3MWh,
+from buildings and the thermal loss. At the time step with the maximum heating demand, the difference
+in thermal loss between CEA and Simulink is 0.03% of the total plant capacity.
+
+2. The differences in total thermal losses between CEA and Simulink over 8760 hours is around 3 MWh,
 which corresponds to 10% of annual heat loss. Since the total thermal losses over 8760 hours at the
 supply network accounts for 1.3% of the total heat supplied by the heating plant, the 10% difference
-in th thermal loss calculation is in acceptable range
-3. There are two instances (t = 438, 8667) where the thermal/hydraulic losses deviate more than 15%
-between the results from CEA and Simulink. This is because we assume all flows are turbulent in CEA,
-while Simulink considers different heat transfer resistances with different flow regimes (laminar,
-turbulent and transitional)
+in th thermal loss calculation is in acceptable range.
+
+3. There are four instances (t = 438, 8304, 8667, 8668) where the thermal/hydraulic losses deviate
+more than 10% between the results from CEA and Simulink. This is because we assume all flows are
+turbulent in CEA, while Simulink considers different heat transfer resistances with different flow
+regimes (laminar, turbulent and transitional).
 
 .. figure:: network1.png
 
