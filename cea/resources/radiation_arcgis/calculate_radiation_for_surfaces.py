@@ -29,7 +29,7 @@ def calculate_radiation_for_surfaces(observers_path, data_factor_centroids_csv, 
     # ORIG_FID_1 is the observers ID
     Centroids_ID_observers0_dbf5 = Dbf5(os.path.join(temporary_folder, OutTable)).to_dataframe()
     Centroids_ID_observers_dbf5 = Centroids_ID_observers0_dbf5[
-        ['Name', 'height_ag', 'ORIG_FID', 'ORIG_FID_1', 'Shape_Leng']]
+        ['Name', 'height_ag', 'ORIG_FID', 'ORIG_FID_1', 'Shape_Leng']].copy()
     Centroids_ID_observers_dbf5.rename(columns={'ORIG_FID_1': 'ID'}, inplace=True)
 
     # Create a Join of the Centroid_ID_observers and Datacentroids in the Second Chapter to get values of surfaces Shaded.
