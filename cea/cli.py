@@ -374,8 +374,8 @@ def main():
     photovoltaic_parser.add_argument('--latitude', help='Latitude to use for calculations.', type=float)
     photovoltaic_parser.add_argument('--longitude', help='Longitude to use for calculations.', type=float)
     photovoltaic_parser.add_argument('--weather-path', help='Path to weather file.')
-    photovoltaic_parser.add_argument('--pvonroof', help='flag for considering PV on roof', type=bool, default=True)
-    photovoltaic_parser.add_argument('--pvonwall', help='flag for considering PV on wall', type=bool, default=True)
+    photovoltaic_parser.add_argument('--pvonroof', help='flag for considering PV on roof', action='store_true')
+    photovoltaic_parser.add_argument('--pvonwall', help='flag for considering PV on wall', action='store_true')
     photovoltaic_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int,
                                      default=8744)
     photovoltaic_parser.add_argument('--type-PVpanel',
