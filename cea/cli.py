@@ -42,6 +42,12 @@ def data_helper(args):
                                                       prop_internal_loads_flag='internal-loads' in args.archetypes)
 
 
+def operation_costs(args):
+    """Run the operation costs script with the arguments provided (args.scenario)."""
+    import cea.analysis.operation_costs
+    cea.analysis.operation_costs.run_as_script(scenario_path=args.scenario)
+
+
 def emissions(args):
     """Run the emissions script with the arguments provided."""
     import cea.analysis.lca.operation
@@ -246,6 +252,28 @@ def compile(args):
     import cea.utilities.compile_pyd_files
     cea.utilities.compile_pyd_files.main()
 
+def retrofit_potential(args):
+    """Run the ``cea.analysis.retrofit.retrofit_potential`` module on the scenario"""
+    import cea.analysis.retrofit.retrofit_potential as retrofit_potential
+    import cea.inputlocator
+    locator_baseline = cea.inputlocator.InputLocator(args.scenario)
+    retrofit_potential.retrofit_main(locator_baseline=locator_baseline,
+                                     keep_partial_matches=args.keep_partial_matches,
+                                     name_new_scenario=args.name,
+                                     age_retrofit=args.retrofit_target_date,
+                                     age_criteria=args.age_threshold,
+                                     eui_heating_criteria=args.eui_heating_threshold,
+                                     eui_hotwater_criteria=args.eui_hot_water_threshold,
+                                     eui_cooling_criteria=args.eui_cooling_threshold,
+                                     eui_electricity_criteria=args.eui_electricity_threshold,
+                                     heating_costs_criteria=args.heating_costs_threshold,
+                                     hotwater_costs_criteria=args.hot_water_costs_threshold,
+                                     cooling_costs_criteria=args.cooling_costs_threshold,
+                                     electricity_costs_criteria=args.electricity_costs_threshold,
+                                     heating_losses_criteria=args.heating_losses_threshold,
+                                     hotwater_losses_criteria=args.hot_water_losses_threshold,
+                                     cooling_losses_criteria=args.cooling_losses_threshold,
+                                     emissions_operation_criteria=args.emissions_operation_threshold)
 
 def main():
     """Parse the arguments and run the program."""
@@ -376,6 +404,45 @@ def main():
 
     compile_parser = subparsers.add_parser('compile', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     compile_parser.set_defaults(func=compile)
+
+    operation_costs_parser = subparsers.add_parser('operation-costs',
+                                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    operation_costs_parser.set_defaults(func=operation_costs)
+
+    retrofit_potential_parser = subparsers.add_parser('retrofit-potential',
+                                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    retrofit_potential_parser.add_argument('--keep-partial-matches', default=False, action='store_true',
+                                           help='exclude buildings that only fit some of the criteria?')
+    retrofit_potential_parser.add_argument('--name', default="retrofit_HVAC", help="name for new scenario")
+    retrofit_potential_parser.add_argument('--retrofit-target-date', default=2020, type=int,
+                                           help="date to base retrofit age calculations on")
+    retrofit_potential_parser.add_argument('--age-threshold', default=None, type=int,
+                                           help="threshold age of HVAC (built / retrofitted)")
+    retrofit_potential_parser.add_argument('--eui-heating-threshold', default=None, type=int,
+                                           help="End use intensity threshold for heating")
+    retrofit_potential_parser.add_argument('--eui-hot-water-threshold', default=None, type=int,
+                                           help="End use intensity threshold for hot water")
+    retrofit_potential_parser.add_argument('--eui-cooling-threshold', default=None, type=int,
+                                           help="End use intensity threshold for cooling")
+    retrofit_potential_parser.add_argument('--eui-electricity-threshold', default=None, type=int,
+                                           help="End use intensity threshold for electricity")
+    retrofit_potential_parser.add_argument('--emissions-operation-threshold', default=None, type=int,
+                                           help="threshold for emissions due to operation")
+    retrofit_potential_parser.add_argument('--heating-costs-threshold', default=None, type=int,
+                                           help="threshold for heating costs")
+    retrofit_potential_parser.add_argument('--hot-water-costs-threshold', default=None, type=int,
+                                           help="threshold for hot water costs")
+    retrofit_potential_parser.add_argument('--cooling-costs-threshold', default=None, type=int,
+                                           help="threshold for hot water costs")
+    retrofit_potential_parser.add_argument('--electricity-costs-threshold', default=None, type=int,
+                                           help="threshold for electricity costs")
+    retrofit_potential_parser.add_argument('--heating-losses-threshold', default=None, type=int,
+                                           help="threshold for thermal losses from heating")
+    retrofit_potential_parser.add_argument('--hot-water-losses-threshold', default=None, type=int,
+                                           help="threshold for thermal losses from hot water")
+    retrofit_potential_parser.add_argument('--cooling-losses-threshold', default=None, type=int,
+                                           help="threshold for thermal losses from cooling")
+    retrofit_potential_parser.set_defaults(func=retrofit_potential)
 
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)
