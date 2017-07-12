@@ -490,13 +490,13 @@ Ntp163
 Rp164
 (dp165
 g7
-S'cea.inputlocator.InputLocator.get_building_geometry'
+S'cea.inputlocator.InputLocator.get_zone_geometry'
 p166
 sg9
 S'cea\\inputlocator.py'
 p167
 sg11
-S'get_building_geometry'
+S'get_zone_geometry'
 p168
 sg13
 g65
