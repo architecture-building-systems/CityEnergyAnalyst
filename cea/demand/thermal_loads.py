@@ -351,10 +351,10 @@ class BuildingProperties(object):
         self.gv = gv
         gv.log("read input files")
         surface_properties = pd.read_csv(locator.get_surface_properties())
-        prop_geometry = Gdf.from_file(locator.get_building_geometry())
+        prop_geometry = Gdf.from_file(locator.get_zone_geometry())
         prop_geometry['footprint'] = prop_geometry.area
         prop_geometry['perimeter'] = prop_geometry.length
-        prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(locator.get_building_geometry())
+        prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(locator.get_zone_geometry())
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
         prop_hvac = dbf2df(locator.get_building_hvac())
         prop_occupancy_df = dbf2df(locator.get_building_occupancy()).set_index('Name')
