@@ -337,7 +337,7 @@ class BuildingProperties(object):
 
         - get_radiation: C:\reference-case\baseline\outputs\data\solar-radiation\radiation.csv
         - get_surface_properties: C:\reference-case\baseline\outputs\data\solar-radiation\properties_surfaces.csv
-        - get_building_geometry: C:\reference-case\baseline\inputs\building-geometry\zone.shp
+        - get_zone_geometry: C:\reference-case\baseline\inputs\building-geometry\zone.shp
         - get_building_hvac: C:\reference-case\baseline\inputs\building-properties\technical_systems.shp
         - get_building_thermal: C:\reference-case\baseline\inputs\building-properties\thermal_properties.shp
         - get_building_occupancy: C:\reference-case\baseline\inputs\building-properties\occupancy.shp
