@@ -69,7 +69,7 @@ def retrofit_main(locator_baseline, name_new_scenario, keep_partial_matches,
 
     #load databases and select only buildings in geometry
     #geometry
-    geometry_df = gdf.from_file(locator_baseline.get_building_geometry())
+    geometry_df = gdf.from_file(locator_baseline.get_zone_geometry())
     names = geometry_df['Name'].values
     #age
     age = dbfreader.dbf2df(locator_baseline.get_building_age())
@@ -166,10 +166,10 @@ def retrofit_main(locator_baseline, name_new_scenario, keep_partial_matches,
     # Create a retrofit case with the buildings that pass the criteria
     retrofit_scenario_path = os.path.join(locator_baseline.get_project_path(), name_new_scenario)
     locator_retrofit = cea.inputlocator.InputLocator(scenario_path=retrofit_scenario_path)
-    retrofit_scenario_creator(locator_retrofit, geometry_df, age, architecture, internal_loads, comfort, hvac,
+    retrofit_scenario_creator(locator_baseline, locator_retrofit, geometry_df, age, architecture, internal_loads, comfort, hvac,
                               supply, occupancy, data, type_of_join)
 
-def retrofit_scenario_creator(locator_retrofit, geometry_df, age, architecture, internal_loads, comfort, hvac,
+def retrofit_scenario_creator(locator_baseline, locator_retrofit, geometry_df, age, architecture, internal_loads, comfort, hvac,
                               supply, occupancy, data, keep_partial_matches):
     """
     This creates a new retrofit scenario, based on the criteria we have selected as True
@@ -177,12 +177,16 @@ def retrofit_scenario_creator(locator_retrofit, geometry_df, age, architecture, 
     """
 
     #confirm that the builings selected are part of the zone
+
     new_geometry = geometry_df.merge(data, on='Name')
     if new_geometry.empty and keep_partial_matches:
         raise ValueError("The keep partial matches flag is on, Still, there is not a single building matching any of "
                          "the criteria, please try other criteria / thresholds instead")
 
-    new_geometry.to_file(locator_retrofit.get_building_geometry())
+
+    new_geometry.to_file(locator_retrofit.get_zone_geometry(), driver='ESRI Shapefile')
+    district = gdf.from_file(locator_baseline.get_district_geometry())
+    district.to_file(locator_retrofit.get_district_geometry())
     dbfreader.df2dbf(age.merge(data, on='Name'), locator_retrofit.get_building_age())
     dbfreader.df2dbf(architecture.merge(data, on='Name'), locator_retrofit.get_building_architecture())
     dbfreader.df2dbf(comfort.merge(data, on='Name'), locator_retrofit.get_building_comfort())
@@ -190,6 +194,7 @@ def retrofit_scenario_creator(locator_retrofit, geometry_df, age, architecture, 
     dbfreader.df2dbf(hvac.merge(data, on='Name'), locator_retrofit.get_building_hvac())
     dbfreader.df2dbf(supply.merge(data, on='Name'), locator_retrofit.get_building_supply())
     dbfreader.df2dbf(occupancy.merge(data, on='Name'), locator_retrofit.get_building_occupancy())
+    shutil.copy2(locator_baseline.get_terrain(), locator_retrofit.get_terrain())
 
 
 def run_as_script(scenario_path=None):

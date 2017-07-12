@@ -202,13 +202,13 @@ Ntp73
 Rp74
 (dp75
 g7
-S'cea.inputlocator.InputLocator.get_building_geometry'
+S'cea.inputlocator.InputLocator.get_zone_geometry'
 p76
 sg9
 S'cea\\inputlocator.py'
 p77
 sg11
-S'get_building_geometry'
+S'get_zone_geometry'
 p78
 sg13
 g14
