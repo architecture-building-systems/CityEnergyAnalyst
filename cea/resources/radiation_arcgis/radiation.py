@@ -133,9 +133,9 @@ def simplify_building_geometries(locator, simple_context_shp, simple_cq_shp):
     # Simplify building's geometry
     elevRaster = arcpy.sa.Raster(locator.get_terrain())
     dem_raster_extent = elevRaster.extent
-    arcpy.SimplifyBuilding_cartography(locator.get_building_geometry(), simple_cq_shp,
+    arcpy.SimplifyBuilding_cartography(locator.get_zone_geometry(), simple_cq_shp,
                                        simplification_tolerance=7, minimum_area=None)
-    arcpy.SimplifyBuilding_cartography(locator.get_district(), simple_context_shp,
+    arcpy.SimplifyBuilding_cartography(locator.get_district_geometry(), simple_context_shp,
                                        simplification_tolerance=7, minimum_area=None)
     return dem_raster_extent
 
@@ -371,7 +371,7 @@ def calculate_sunrise(year_to_simulate, longitude, latitude):
 def get_latitude(scenario_path):
     import fiona
     import cea.inputlocator
-    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_building_geometry()) as shp:
+    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry()) as shp:
         lat = shp.crs['lat_0']
     return lat
 
@@ -379,7 +379,7 @@ def get_latitude(scenario_path):
 def get_longitude(scenario_path):
     import fiona
     import cea.inputlocator
-    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_building_geometry()) as shp:
+    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry()) as shp:
         lon = shp.crs['lon_0']
     return lon
 

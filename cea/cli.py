@@ -143,7 +143,7 @@ def latitude(args):
 def _get_latitude(scenario_path):
     import fiona
     import cea.inputlocator
-    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_building_geometry()) as shp:
+    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry()) as shp:
         lat = shp.crs['lat_0']
     return lat
 
@@ -157,7 +157,7 @@ def longitude(args):
 def _get_longitude(scenario_path):
     import fiona
     import cea.inputlocator
-    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_building_geometry()) as shp:
+    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry()) as shp:
         lon = shp.crs['lon_0']
     return lon
 
