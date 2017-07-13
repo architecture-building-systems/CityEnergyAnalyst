@@ -15,7 +15,6 @@ from timezonefinder import TimezoneFinder
 import pickle
 
 from cea.interfaces.arcgis.modules import arcpy
-from cea.resources.radiation_arcgis.calculate_radiation_for_all_days import calculate_radiation_for_all_days
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
@@ -89,8 +88,12 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
 
     calculate_observers(simple_cq_shp, observers_path, data_factors_boundaries_csv, path_arcgis_db)
 
-    calculate_radiation_for_all_days(daily_transmissivity, dem_rasterfinal_path, latitude, locator, observers_path,
-                                     path_arcgis_db)
+    run_script_in_subprocess('calculate_radiation_for_all_days',
+                             '--daily-transmissivity-pickle', daily_transmissivity_pickle,
+                             '--dem-rasterfinal-path', dem_rasterfinal_path,
+                             '--latitude', latitude,
+                             '--observers-path', observers_path,
+                             '--arcgis_db', path_arcgis_db)
     gv.log('complete raw radiation files')
 
     sunny_hours_pickle = locator.get_temporary_file('sunny_hours.pickle')
