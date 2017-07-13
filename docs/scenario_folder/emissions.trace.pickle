@@ -13,7 +13,7 @@ Rp5
 (dp6
 S'fqname'
 p7
-S'cea.analysis.operation.lca_operation'
+S'cea.analysis.operation.cost_operation'
 p8
 sS'path'
 p9
@@ -21,7 +21,7 @@ S'cea\\analysis\\operation.py'
 p10
 sS'name'
 p11
-S'lca_operation'
+S'cost_operation'
 p12
 sS'module'
 p13
@@ -119,7 +119,7 @@ Ntp45
 Rp46
 (dp47
 g7
-S'cea.analysis.operation.lca_operation'
+S'cea.analysis.operation.cost_operation'
 p48
 sg9
 g10
@@ -152,7 +152,7 @@ Ntp56
 Rp57
 (dp58
 g7
-S'cea.analysis.operation.lca_operation'
+S'cea.analysis.operation.cost_operation'
 p59
 sg9
 g10
@@ -185,7 +185,7 @@ Ntp67
 Rp68
 (dp69
 g7
-S'cea.analysis.operation.lca_operation'
+S'cea.analysis.operation.cost_operation'
 p70
 sg9
 g10
@@ -218,7 +218,7 @@ Ntp78
 Rp79
 (dp80
 g7
-S'cea.analysis.operation.lca_operation'
+S'cea.analysis.operation.cost_operation'
 p81
 sg9
 g10

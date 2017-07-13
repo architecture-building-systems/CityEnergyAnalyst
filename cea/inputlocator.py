@@ -33,6 +33,13 @@ class InputLocator(object):
             os.makedirs(folder)
         return folder
 
+    def get_project_path(self):
+        """Returns the parent folder of a scenario - this is called a project or 'case-study'"""
+        return os.path.dirname(self.scenario_path)
+
+    def get_input_folder(self):
+        return os.path.join(self.scenario_path, "inputs")
+
     def get_optimization_results_folder(self):
         """scenario/outputs/data/optimization"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'optimization')
@@ -269,7 +276,12 @@ class InputLocator(object):
         Clustering results for disconnected buildings"""
         return self._ensure_folder(self.get_optimization_results_folder(), "clustering_main")
 
-    def get_potentials_results_folder(self):
+    # optimization
+    def get_sewage_heat_potential(self):
+        return os.path.join(self.get_potentials_folder(), "SWP.csv")
+
+    # POTENTIAL
+    def get_potentials_folder(self):
         """scenario/outputs/data/potentials"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'potentials')
 
@@ -277,16 +289,19 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar
         Contains raw solar files
         """
-        return self._ensure_folder(self.get_potentials_results_folder(), "solar")
+        return self._ensure_folder(self.get_potentials_folder(), "solar")
 
-    # optimization
-    def get_sewage_heat_potential(self):
-        return os.path.join(self.get_potentials_results_folder(), "SWP.csv")
-
-    # resource potential assessment
     def get_geothermal_potential(self):
-        """scenario/outputs/data/potentials/geothermal.csv"""
-        return os.path.join(self.get_potentials_results_folder(), "geothermal.csv")
+        """scenario/outputs/data/potentials/geothermal/geothermal.csv"""
+        return os.path.join(self.get_potentials_folder(), "geothermal", "geothermal.csv")
+
+    def get_potentials_retrofit_folder(self):
+        """scenario/outputs/data/potentials/retrofit.csv"""
+        return self._ensure_folder(self.get_potentials_folder(), "retrofit")
+
+    def get_retrofit_filters(self, name_retrofit):
+        """scenario/outputs/data/potentials/retrofit.csv"""
+        return os.path.join(self.get_potentials_retrofit_folder(), "potential_"+name_retrofit+".csv")
 
     # DATABASES
     def get_default_weather(self):
@@ -363,61 +378,68 @@ class InputLocator(object):
 
     def get_building_geometry_folder(self):
         """scenario/inputs/building-geometry/"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-geometry')
+        return self._ensure_folder(self.scenario_path, 'inputs', 'building-geometry')
 
-    def get_building_geometry(self):
+    def get_building_properties_folder(self):
+        """scenario/inputs/building-geometry/"""
+        return self._ensure_folder(self.scenario_path, 'inputs', 'building-properties')
+
+    def get_terrain_folder(self):
+        return self._ensure_folder(self.scenario_path, 'inputs', 'topography')
+
+    def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-geometry', 'zone.shp')
+        return os.path.join(self.get_building_geometry_folder(), 'zone.shp')
+
+    def get_district_geometry(self):
+        """scenario/inputs/building-geometry/district.shp"""
+        return os.path.join(self.get_building_geometry_folder(), 'district.shp')
 
     def get_building_geometry_citygml(self):
         """scenario/outputs/data/solar-radiation/district.gml"""
         return os.path.join(self.get_solar_radiation_folder(), 'district.gml')
 
-    def get_district(self):
-        """scenario/inputs/building-geometry/district.shp"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-geometry', 'district.shp')
-
     def get_building_age(self):
         """scenario/inputs/building-properties/age.dbf"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'age.dbf')
+        return os.path.join(self.get_building_properties_folder(), 'age.dbf')
 
     def get_building_occupancy(self):
         """scenario/inputs/building-properties/building_occupancy.dbf"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'occupancy.dbf')
+        return os.path.join(self.get_building_properties_folder(), 'occupancy.dbf')
 
     def get_building_supply(self):
         """scenario/inputs/building-properties/building_supply.dbf"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'supply_systems.dbf')
+        return os.path.join(self.get_building_properties_folder(), 'supply_systems.dbf')
 
     def get_building_internal(self):
         """scenario/inputs/building-properties/internal_loads.dbf"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'internal_loads.dbf')
+        return os.path.join(self.get_building_properties_folder(), 'internal_loads.dbf')
 
     def get_building_comfort(self):
         """scenario/inputs/building-properties/indoor_comfort.dbf"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'indoor_comfort.dbf')
+        return os.path.join(self.get_building_properties_folder(), 'indoor_comfort.dbf')
 
     def get_building_hvac(self):
         """scenario/inputs/building-properties/technical_systems.dbf"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'technical_systems.dbf')
+        return os.path.join(self.get_building_properties_folder(), 'technical_systems.dbf')
 
     def get_building_architecture(self):
         """scenario/inputs/building-properties/architecture.dbf
         This file is generated by the properties script.
         This file is used in the embodied energy script (cea/embodied.py)
         and the demand script (cea/demand_main.py)"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'architecture.dbf')
+        return os.path.join(self.get_building_properties_folder(), 'architecture.dbf')
 
     def get_building_overrides(self):
         """scenario/inputs/building-properties/overrides.csv
         This file contains overrides to the building properties input files. They are applied after reading
         those files and are matched by column name.
         """
-        return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'overrides.csv')
+        return os.path.join(self.get_building_properties_folder(), 'overrides.csv')
 
     def get_terrain(self):
         """scenario/inputs/topography/terrain.tif"""
-        return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain.tif')
+        return os.path.join(self.get_terrain_folder(), 'terrain.tif')
 
     def get_network_layout_edges_shapefile(self, network):
         """scenario/inputs/network/DH or DC/network-edges.shp"""
@@ -583,6 +605,27 @@ class InputLocator(object):
     def get_lca_mobility(self):
         """scenario/outputs/data/emissions/Total_LCA_mobility.csv"""
         return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_mobility.csv')
+
+
+    ##COSTS
+    def get_costs_folder(self):
+        """scenario/outputs/data/costs"""
+        return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'costs')
+
+    def get_costs_operation_file(self, load):
+        """scenario/outputs/data/costs/{load}_cost_operation.pdf"""
+        return os.path.join(self.get_costs_folder(), '%(load)s_cost_operation.csv' %locals())
+
+
+    ##RETROFIT POTENTIAL
+    def get_costs_folder(self):
+        """scenario/outputs/data/costs"""
+        return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'costs')
+
+    def get_costs_operation_file(self, load):
+        """scenario/outputs/data/costs/{load}_cost_operation.pdf"""
+        return os.path.join(self.get_costs_folder(), '%(load)s_cost_operation.csv' %locals())
+
 
     ##GRAPHS
     def get_demand_plots_folder(self):

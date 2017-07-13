@@ -1418,13 +1418,13 @@ Ntp475
 Rp476
 (dp477
 g7
-S'cea.inputlocator.InputLocator.get_building_geometry'
+S'cea.inputlocator.InputLocator.get_zone_geometry'
 p478
 sg9
 S'C:\\Users\\darthoma\\Documents\\GitHub\\CEAforArcGIS\\cea\\inputlocator.py'
 p479
 sg11
-S'get_building_geometry'
+S'get_zone_geometry'
 p480
 sg13
 g353
