@@ -40,13 +40,12 @@ def calc_mww(schedule, water_lpd, Pwater):
 
 # final hot water demand calculation
 
-def calc_Qwwf(Af, Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, occupancy_densities,
-              schedules, bpr):
+def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, occupancy_densities, schedules,
+              bpr):
     # Refactored from CalcThermalLoads
     """
     This function calculates the distribution heat loss and final energy consumption of domestic hot water.
     Final energy consumption of dhw includes dhw demand, sensible heat loss in hot water storage tank, and heat loss in the distribution network.
-    :param Af: Conditioned floor area in m2.
     :param Lcww_dis: Length of dhw usage circulation pipeline in m.
     :param Lsww_dis: Length of dhw usage distribution pipeline in m.
     :param Lvww_c: Length of dhw heating circulation pipeline in m.
