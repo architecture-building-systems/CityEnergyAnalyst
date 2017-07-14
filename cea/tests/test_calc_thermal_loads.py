@@ -61,6 +61,7 @@ class TestCalcThermalLoads(unittest.TestCase):
         # test the building csv file (output of the `calc_thermal_loads` call above)
         df = pd.read_csv(self.locator.get_demand_results_file('B01'))
 
+
         value_columns = json.loads(self.config.get('test_calc_thermal_loads', 'value_columns'))
         values = json.loads(self.config.get('test_calc_thermal_loads', 'values'))
 
