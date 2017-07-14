@@ -186,7 +186,7 @@ if __name__ == '__main__':
     # local variables
     output_folder = locator.get_building_geometry_citygml()
     district_shp = locator.get_district()
-    zone_shp = locator.get_building_geometry()
+    zone_shp = locator.get_zone_geometry()
     input_terrain_raster = locator.get_terrain()
 
     # run routine City GML LOD 1
