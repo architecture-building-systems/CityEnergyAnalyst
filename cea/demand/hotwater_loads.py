@@ -92,10 +92,10 @@ def calc_Qww(mww, Tww_sup_0, Tww_re, Cpw):
     :param Tww_sup_0: Domestic hot water supply set point temperature.
     :param Tww_re: Domestic hot water tank return temperature in C, this temperature is the ground water temperature, set according to norm.
     :param Cpw: heat capacity of water [kJ/kgK]
-    :return Qww: Heat demand for DHW in [W]
+    :return Qww: Heat demand for DHW in [Wh]
     """
     mcpww = mww * Cpw * 1000  # W/K
-    Qww = mcpww * (Tww_sup_0 - Tww_re)  # heating for dhw in W
+    Qww = mcpww * (Tww_sup_0 - Tww_re)  # heating for dhw in Wh
     return Qww
 
 # losess hot water demand calculation
@@ -154,7 +154,7 @@ def calc_disls(tamb, hotw, Flowtap, V, twws, Lsww_dis, p, cpw, Y, gv):
                 raise ZeroDivisionError
 
         tamb = tamb + (twws - tamb) * exponential
-        losses = (twws - tamb) * V * cpw * p / 1000 * 278
+        losses = (twws - tamb) * V * cpw * p * 1000 / 3600   # in Wh
     else:
         losses = 0
     return losses
@@ -165,10 +165,10 @@ def calc_Qww_st_ls(T_ext, Ta, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr, gv):
     Calculates the heat flows within a fully mixed water storage tank for 8760 time-steps.
     :param T_ext: external temperature in [C]
     :param Ta: room temperature in [C]
-    :param Qww: DHW demand in [W]
+    :param Qww: DHW demand in [Wh]
     :param Vww: DHW tank size in [m3]
-    :param Qww_dis_ls_r: recoverable loss in distribution in [W]
-    :param Qww_dis_ls_nr: non-recoverable loss in distribution in [W]
+    :param Qww_dis_ls_r: recoverable loss in distribution in [Wh]
+    :param Qww_dis_ls_nr: non-recoverable loss in distribution in [Wh]
     :param gv: globalvar.py
 
     :type T_ext: ndarray
