@@ -40,8 +40,7 @@ def calc_mww(schedule, water_lpd, Pwater):
 
 # final hot water demand calculation
 
-def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, occupancy_densities, schedules,
-              bpr):
+def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0, Y, gv, schedules, bpr):
     # Refactored from CalcThermalLoads
     """
     This function calculates the distribution heat loss and final energy consumption of domestic hot water.
@@ -53,7 +52,7 @@ def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0
     :param T_ext: Ambient temperature in C.
     :param Ta: Room temperature in C.
     :param Tww_re: Domestic hot water tank return temperature in C, this temperature is the ground water temperature, set according to norm.
-    :param Tww_sup_0: Domestic hot water supply set point temperature.
+    :param Tww_sup_0: Domestic hot water supply set point temperature in C.
     :param vw: specific fresh water consumption in m3/hr*m2.
     :param vww: specific domestic hot water consumption in m3/hr*m2.
     :param Y: linear trasmissivity coefficients of piping in W/m*K
@@ -71,9 +70,9 @@ def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0
 
     # distribution and circulation losses
     Vol_ls = Lsww_dis * ((gv.D / 1000)/2) ** 2 * pi # m3, volume inside distribution pipe
-    Qww_dis_ls_r = np.vectorize(calc_Qww_dis_ls_r)(Ta, Qww, Lsww_dis, Lcww_dis, Y[1], Qww_0, Vol_ls, gv.Flowtap,
+    Qww_dis_ls_r = np.vectorize(calc_Qww_dis_ls_r)(Ta, Qww, Vww, Lsww_dis, Lcww_dis, Y[1], Qww_0, Vol_ls, gv.Flowtap,
                                                    Tww_sup_0, gv.Cpw, gv.Pwater, gv)
-    Qww_dis_ls_nr = np.vectorize(calc_Qww_dis_ls_nr)(Ta, Qww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap,
+    Qww_dis_ls_nr = np.vectorize(calc_Qww_dis_ls_nr)(Ta, Qww, Vww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap,
                                                      Tww_sup_0, gv.Cpw, gv.Pwater, gv.Bf, T_ext, gv)
     # storage losses
     Qww_st_ls, Tww_st, Qwwf = calc_Qww_st_ls(T_ext, Ta, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr, gv)
@@ -101,7 +100,7 @@ def calc_Qww(mww, Tww_sup_0, Tww_re, Cpw):
 
 # losess hot water demand calculation
 
-def calc_Qww_dis_ls_r(Tair, Qww, Lsww_dis, Lcww_dis, Y, Qww_0, V, Flowtap, twws, Cpw, Pwater, gv):
+def calc_Qww_dis_ls_r(Tair, Qww, Vww, Lsww_dis, Lcww_dis, Y, Qww_0, V, Flowtap, twws, Cpw, Pwater, gv):
 
     if Qww > 0:
         # Calculate tamb in basement according to EN
@@ -119,7 +118,7 @@ def calc_Qww_dis_ls_r(Tair, Qww, Lsww_dis, Lcww_dis, Y, Qww_0, V, Flowtap, twws,
     return Qww_d_ls_r
 
 
-def calc_Qww_dis_ls_nr(tair, Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, Flowtap, twws, Cpw, Pwater, Bf, te, gv):
+def calc_Qww_dis_ls_nr(tair, Qww, Vww, Lvww_dis, Lvww_c, Y, Qww_0, V, Flowtap, twws, Cpw, Pwater, Bf, te, gv):
     if Qww > 0:
         # Calculate tamb in basement according to EN
         tamb = tair - Bf * (tair - te)
@@ -135,24 +134,26 @@ def calc_Qww_dis_ls_nr(tair, Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, Flowtap, twws, 
     return Qww_d_ls_nr
 
 
-def calc_disls(tamb, Qw, Flowtap, V, twws, Lsww_dis, p, cpw, Y, gv):
+def calc_disls(tamb, Vww, Flowtap, V, twws, Lsww_dis, p, cpw, Y, gv):
     """
-    Calculates distribution losses in Wh according to Fonseca & Schlueter (2015), eqs. 23 and 24.
+    Calculates distribution losses in Wh according to Fonseca & Schlueter (2015) eqs. 23 and 24, which is in turn based
+    on Annex A of ISO EN 15316 with pipe mass m_p,dis = 0.
     
     :param tamb: Room temperature in C
-    :param Qw: Heat demand for DHW in Wh
-    :param Flowtap: volumetric flow rate of tapping in m3/min
+    :param Vww: volumetric flow rate of hot water demand (in m3)
+    :param Flowtap: volumetric flow rate of tapping in m3 ( == 12 L/min for 3 min)
     :param V: volume of water accumulated in the distribution network in m3
-    :param twws: 
+    :param twws: Domestic hot water supply set point temperature in C
     :param Lsww_dis: length of circulation/distribution pipeline in m
     :param p: water density kg/m3
     :param cpw: heat capacity of water in kJ/kgK
     :param Y: linear trasmissivity coefficient of piping in distribution network in W/m*K
     :param gv: globalvar.py
+
     :return losses: recoverable/non-recoverable losses due to distribution of DHW
     """
-    if Qw > 0:
-        t = 3600 / ((Qw / 1000) / Flowtap)
+    if Vww > 0:
+        t = 3600 / ((Vww / 1000) / Flowtap)
         if t > 3600: t = 3600
         # q = (twws - tamb) * Y
         try:
@@ -161,14 +162,6 @@ def calc_disls(tamb, Qw, Flowtap, V, twws, Lsww_dis, p, cpw, Y, gv):
         except ZeroDivisionError:
             gv.log('twws: %(twws).2f, tamb: %(tamb).2f, p: %(p).2f, cpw: %(cpw).2f, V: %(V).2f',
                    twws=twws, tamb=tamb, p=p, cpw=cpw, V=V)
-            # if (p * cpw * V * (twws - tamb) * 1000 == 0) and (q * Lsww_dis * t != 0):
-            #     if (twws - tamb) == 0:
-            #         exponential = 0
-            #     else:
-            #         print 'Hot water distribution pipes have no volume!'
-            #         raise
-            # else:
-            #     raise ZeroDivisionError
             raise ZeroDivisionError
 
         tamb = tamb + (twws - tamb) * exponential
@@ -183,8 +176,8 @@ def calc_Qww_st_ls(T_ext, Ta, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr, gv):
     Calculates the heat flows within a fully mixed water storage tank for 8760 time-steps.
     :param T_ext: external temperature in [C]
     :param Ta: room temperature in [C]
-    :param Qww: DHW demand in [Wh]
-    :param Vww: DHW tank size in [m3]
+    :param Qww: hourly DHW demand in [Wh]
+    :param Vww: hourly DHW demand in [m3]
     :param Qww_dis_ls_r: recoverable loss in distribution in [Wh]
     :param Qww_dis_ls_nr: non-recoverable loss in distribution in [Wh]
     :param gv: globalvar.py
@@ -201,6 +194,7 @@ def calc_Qww_st_ls(T_ext, Ta, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr, gv):
     Qww_st_ls = np.zeros(8760)
     Tww_st = np.zeros(8760)
     Qd = np.zeros(8760)
+    # calculate DHW tank size [in m3] based on the peak DHW demand in the building
     Vww_0 = Vww.max()
     Tww_st_0 = gv.Tww_setpoint
 

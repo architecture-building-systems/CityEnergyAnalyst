@@ -191,7 +191,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         Mww, tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(
             bpr.building_systems['Lcww_dis'], bpr.building_systems['Lsww_dis'], bpr.building_systems['Lvww_c'],
             bpr.building_systems['Lvww_dis'], tsd['T_ext'], tsd['theta_a'], tsd['Twwf_re'],
-            bpr.building_systems['Tww_sup_0'], bpr.building_systems['Y'], gv, archetype_values['people'], schedules,
+            bpr.building_systems['Tww_sup_0'], bpr.building_systems['Y'], gv, schedules,
             bpr)
 
         # calc auxiliary loads
