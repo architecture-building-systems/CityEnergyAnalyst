@@ -88,5 +88,5 @@ doc/make.output.txt
 cea/.doit.db
 setup/cea_version.txt
 .doit.db
-docs/guide_about_files_generated.html
-docs/cascading-configuration-files.html
+
+docs/*.html
