@@ -2,7 +2,7 @@ from dbfpy import dbf
 
 ## create empty DBF, set fields
 
-path_architecture=r'C:\reference-case-test\baseline\inputs\building-properties\architecture.dbf'
+path_architecture=r'C:\UBG_to_CEA\baseline\inputs\building-properties\architecture.dbf'
 
 db = dbf.Dbf(path_architecture, new=True)
 

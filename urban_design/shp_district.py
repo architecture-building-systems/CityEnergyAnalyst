@@ -23,7 +23,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-dataframe_with_gis_info = gdf.from_file(r'C:\Users\Zhongming\Documents\GitHub\cea-reference-case\reference-case-zug\baseline\inputs\building-geometry/district.shp')
+dataframe_with_gis_info = gdf.from_file(r'F:\cea-reference-case\reference-case-zug\baseline\inputs\building-geometry/district.shp')
 
 #print dataframe_with_gis_info
 
@@ -426,7 +426,6 @@ district.loc[ 51 , 'HEIGHT_AG' ] = '33.0'
 
 
 # Insert number into 'height_bg' -column at index 0
-
 district.loc[ 0 , 'HEIGHT_BG' ] = '0.0'
 district.loc[ 1 , 'HEIGHT_BG' ] = '0.0'
 district.loc[ 2 , 'HEIGHT_BG' ] = '0.0'
@@ -484,7 +483,7 @@ district.loc[ 51 , 'HEIGHT_BG' ] = '0.0'
 print district
 
 # Create an output path for the data to zone.shp
-out_district=r"C:/trial/zone.shp"
+out_district=r"C:/UBG_to_CEA/baseline/inputs/building-geometry/district.shp"
 
 # Write district.shp
 district.to_file(out_district, driver='ESRI Shapefile')
