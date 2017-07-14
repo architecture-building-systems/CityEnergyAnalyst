@@ -42,36 +42,42 @@ def data_helper(args):
                                                       prop_internal_loads_flag='internal-loads' in args.archetypes)
 
 
+def operation_costs(args):
+    """Run the operation costs script with the arguments provided (args.scenario)."""
+    import cea.analysis.operation_costs
+    cea.analysis.operation_costs.run_as_script(scenario_path=args.scenario)
+
+
 def emissions(args):
     """Run the emissions script with the arguments provided."""
-    import cea.analysis.operation
+    import cea.analysis.lca.operation
     import cea.inputlocator
-    cea.analysis.operation.lca_operation(locator=cea.inputlocator.InputLocator(args.scenario),
-                                         Qww_flag='Qww' in args.extra_files_to_create,
-                                         Qhs_flag='Qhs' in args.extra_files_to_create,
-                                         Qcs_flag='Qcs' in args.extra_files_to_create,
-                                         Qcdata_flag='Qcdata' in args.extra_files_to_create,
-                                         Qcrefri_flag='Qcrefri' in args.extra_files_to_create,
-                                         Eal_flag='Eal' in args.extra_files_to_create,
-                                         Eaux_flag='Eaux' in args.extra_files_to_create,
-                                         Epro_flag='Epro' in args.extra_files_to_create,
-                                         Edata_flag='Edata' in args.extra_files_to_create, )
+    cea.analysis.lca.operation.lca_operation(locator=cea.inputlocator.InputLocator(args.scenario),
+                                             Qww_flag='Qww' in args.extra_files_to_create,
+                                             Qhs_flag='Qhs' in args.extra_files_to_create,
+                                             Qcs_flag='Qcs' in args.extra_files_to_create,
+                                             Qcdata_flag='Qcdata' in args.extra_files_to_create,
+                                             Qcrefri_flag='Qcrefri' in args.extra_files_to_create,
+                                             Eal_flag='Eal' in args.extra_files_to_create,
+                                             Eaux_flag='Eaux' in args.extra_files_to_create,
+                                             Epro_flag='Epro' in args.extra_files_to_create,
+                                             Edata_flag='Edata' in args.extra_files_to_create, )
 
 
 def embodied_energy(args):
     """Run the embodied energy script with the arguments provided."""
-    import cea.analysis.embodied
+    import cea.analysis.lca.embodied
     import cea.globalvar
     gv = cea.globalvar.GlobalVariables()
-    cea.analysis.embodied.lca_embodied(year_to_calculate=args.year_to_calculate,
-                                       locator=cea.inputlocator.InputLocator(args.scenario), gv=gv)
+    cea.analysis.lca.embodied.lca_embodied(year_to_calculate=args.year_to_calculate,
+                                           locator=cea.inputlocator.InputLocator(args.scenario), gv=gv)
 
 
 def mobility(args):
     """Run the mobility script with the arguments provided."""
-    import cea.analysis.mobility
+    import cea.analysis.lca.mobility
     import cea.inputlocator
-    cea.analysis.mobility.lca_mobility(locator=cea.inputlocator.InputLocator(args.scenario))
+    cea.analysis.lca.mobility.lca_mobility(locator=cea.inputlocator.InputLocator(args.scenario))
 
 
 def benchmark_graphs(args):
@@ -137,7 +143,7 @@ def latitude(args):
 def _get_latitude(scenario_path):
     import fiona
     import cea.inputlocator
-    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_building_geometry()) as shp:
+    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry()) as shp:
         lat = shp.crs['lat_0']
     return lat
 
@@ -151,7 +157,7 @@ def longitude(args):
 def _get_longitude(scenario_path):
     import fiona
     import cea.inputlocator
-    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_building_geometry()) as shp:
+    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry()) as shp:
         lon = shp.crs['lon_0']
     return lon
 
@@ -173,7 +179,8 @@ def radiation(args):
         args.weather_path = locator.get_weather(args.weather_path)
 
     cea.resources.radiation_arcgis.radiation.solar_radiation_vertical(locator=locator,
-                                                                      path_arcgis_db=args.arcgis_db, latitude=args.latitude,
+                                                                      path_arcgis_db=args.arcgis_db,
+                                                                      latitude=args.latitude,
                                                                       longitude=args.longitude, year=args.year,
                                                                       gv=cea.globalvar.GlobalVariables(),
                                                                       weather_path=args.weather_path)
@@ -191,6 +198,34 @@ def radiation_daysim(args):
         args.weather_path = locator.get_weather(args.weather_path)
 
     cea.resources.radiation_daysim.radiation_main.main(locator=locator, weather_path=args.weather_path)
+
+
+def photovoltaic(args):
+    import cea.inputlocator
+    import cea.utilities.dbfreader as dbfreader
+    from cea.technologies.photovoltaic import calc_PV
+
+    if not args.latitude:
+        args.latitude = _get_latitude(args.scenario)
+    if not args.longitude:
+        args.longitude = _get_longitude(args.scenario)
+
+    locator = cea.inputlocator.InputLocator(args.scenario)
+    if not args.weather_path:
+        args.weather_path = locator.get_default_weather()
+    elif args.weather_path in locator.get_weather_names():
+        args.weather_path = locator.get_weather(args.weather_path)
+
+    list_buildings_names = dbfreader.dbf2df(locator.get_building_occupancy())['Name']
+
+    for building in list_buildings_names:
+        radiation_csv = locator.get_radiation_building(building_name=building)
+        radiation_metadata = locator.get_radiation_metadata(building_name=building)
+        calc_PV(locator=locator, radiation_csv=radiation_csv, metadata_csv=radiation_metadata, latitude=args.latitude,
+                longitude=args.longitude, weather_path=args.weather_path, building_name=building,
+                pvonroof=args.pvonroof, pvonwall=args.pvonwall, worst_hour=args.worst_hour,
+                type_PVpanel=args.type_PVpanel, min_radiation=args.min_radiation, date_start=args.date_start)
+
 
 def install_toolbox(_):
     """Install the ArcGIS toolbox and sets up .pth files to access arcpy from the cea python interpreter."""
@@ -246,6 +281,28 @@ def compile(args):
     import cea.utilities.compile_pyd_files
     cea.utilities.compile_pyd_files.main()
 
+def retrofit_potential(args):
+    """Run the ``cea.analysis.retrofit.retrofit_potential`` module on the scenario"""
+    import cea.analysis.retrofit.retrofit_potential as retrofit_potential
+    import cea.inputlocator
+    locator_baseline = cea.inputlocator.InputLocator(args.scenario)
+    retrofit_potential.retrofit_main(locator_baseline=locator_baseline,
+                                     keep_partial_matches=args.keep_partial_matches,
+                                     name_new_scenario=args.name,
+                                     age_retrofit=args.retrofit_target_date,
+                                     age_criteria=args.age_threshold,
+                                     eui_heating_criteria=args.eui_heating_threshold,
+                                     eui_hotwater_criteria=args.eui_hot_water_threshold,
+                                     eui_cooling_criteria=args.eui_cooling_threshold,
+                                     eui_electricity_criteria=args.eui_electricity_threshold,
+                                     heating_costs_criteria=args.heating_costs_threshold,
+                                     hotwater_costs_criteria=args.hot_water_costs_threshold,
+                                     cooling_costs_criteria=args.cooling_costs_threshold,
+                                     electricity_costs_criteria=args.electricity_costs_threshold,
+                                     heating_losses_criteria=args.heating_losses_threshold,
+                                     hotwater_losses_criteria=args.hot_water_losses_threshold,
+                                     cooling_losses_criteria=args.cooling_losses_threshold,
+                                     emissions_operation_criteria=args.emissions_operation_threshold)
 
 def main():
     """Parse the arguments and run the program."""
@@ -340,6 +397,24 @@ def main():
     radiation_parser.add_argument('--weather-path', help='Path to weather file.')
     radiation_parser.set_defaults(func=radiation)
 
+    photovoltaic_parser = subparsers.add_parser('photovoltaic',
+                                                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    photovoltaic_parser.add_argument('--latitude', help='Latitude to use for calculations.', type=float)
+    photovoltaic_parser.add_argument('--longitude', help='Longitude to use for calculations.', type=float)
+    photovoltaic_parser.add_argument('--weather-path', help='Path to weather file.')
+    photovoltaic_parser.add_argument('--pvonroof', help='flag for considering PV on roof', action='store_true')
+    photovoltaic_parser.add_argument('--pvonwall', help='flag for considering PV on wall', action='store_true')
+    photovoltaic_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int,
+                                     default=8744)
+    photovoltaic_parser.add_argument('--type-PVpanel',
+                                     help='monocrystalline, T2 is poly and T3 is amorphous. (see relates to the database of technologies)',
+                                     default="PV1")
+    photovoltaic_parser.add_argument('--min-radiation',
+                                     help='points are selected with at least a minimum production of this % from the maximum in the area.',
+                                     type=float, default=0.75)
+    photovoltaic_parser.add_argument('--date-start', help='First day of the year', default='2016-01-01')
+    photovoltaic_parser.set_defaults(func=photovoltaic)
+
     radiation_daysim_parser = subparsers.add_parser('radiation-daysim',
                                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     radiation_daysim_parser.add_argument('--weather-path', help='Path to weather file.')
@@ -377,9 +452,47 @@ def main():
     compile_parser = subparsers.add_parser('compile', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     compile_parser.set_defaults(func=compile)
 
+    operation_costs_parser = subparsers.add_parser('operation-costs',
+                                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    operation_costs_parser.set_defaults(func=operation_costs)
+
+    retrofit_potential_parser = subparsers.add_parser('retrofit-potential',
+                                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    retrofit_potential_parser.add_argument('--keep-partial-matches', default=False, action='store_true',
+                                           help='exclude buildings that only fit some of the criteria?')
+    retrofit_potential_parser.add_argument('--name', default="retrofit_HVAC", help="name for new scenario")
+    retrofit_potential_parser.add_argument('--retrofit-target-date', default=2020, type=int,
+                                           help="date to base retrofit age calculations on")
+    retrofit_potential_parser.add_argument('--age-threshold', default=None, type=int,
+                                           help="threshold age of HVAC (built / retrofitted)")
+    retrofit_potential_parser.add_argument('--eui-heating-threshold', default=None, type=int,
+                                           help="End use intensity threshold for heating")
+    retrofit_potential_parser.add_argument('--eui-hot-water-threshold', default=None, type=int,
+                                           help="End use intensity threshold for hot water")
+    retrofit_potential_parser.add_argument('--eui-cooling-threshold', default=None, type=int,
+                                           help="End use intensity threshold for cooling")
+    retrofit_potential_parser.add_argument('--eui-electricity-threshold', default=None, type=int,
+                                           help="End use intensity threshold for electricity")
+    retrofit_potential_parser.add_argument('--emissions-operation-threshold', default=None, type=int,
+                                           help="threshold for emissions due to operation")
+    retrofit_potential_parser.add_argument('--heating-costs-threshold', default=None, type=int,
+                                           help="threshold for heating costs")
+    retrofit_potential_parser.add_argument('--hot-water-costs-threshold', default=None, type=int,
+                                           help="threshold for hot water costs")
+    retrofit_potential_parser.add_argument('--cooling-costs-threshold', default=None, type=int,
+                                           help="threshold for hot water costs")
+    retrofit_potential_parser.add_argument('--electricity-costs-threshold', default=None, type=int,
+                                           help="threshold for electricity costs")
+    retrofit_potential_parser.add_argument('--heating-losses-threshold', default=None, type=int,
+                                           help="threshold for thermal losses from heating")
+    retrofit_potential_parser.add_argument('--hot-water-losses-threshold', default=None, type=int,
+                                           help="threshold for thermal losses from hot water")
+    retrofit_potential_parser.add_argument('--cooling-losses-threshold', default=None, type=int,
+                                           help="threshold for thermal losses from cooling")
+    retrofit_potential_parser.set_defaults(func=retrofit_potential)
+
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)
-
 
 if __name__ == '__main__':
     main()

@@ -61,6 +61,7 @@ class TestCalcThermalLoads(unittest.TestCase):
         # test the building csv file (output of the `calc_thermal_loads` call above)
         df = pd.read_csv(self.locator.get_demand_results_file('B01'))
 
+
         value_columns = json.loads(self.config.get('test_calc_thermal_loads', 'value_columns'))
         values = json.loads(self.config.get('test_calc_thermal_loads', 'values'))
 
@@ -72,6 +73,7 @@ class TestCalcThermalLoads(unittest.TestCase):
     def test_calc_thermal_loads_other_buildings(self):
         """Test some other buildings just to make sure we have the proper data"""
         # randomly selected except for B302006716, which has `Af == 0`
+
         buildings = json.loads(self.config.get('test_calc_thermal_loads_other_buildings', 'results'))
         if self.gv.multiprocessing:
             import multiprocessing as mp

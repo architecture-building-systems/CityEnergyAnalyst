@@ -46,7 +46,7 @@ def lca_embodied(year_to_calculate, locator, gv):
     - age.shp: shapefile with the age and retrofit date of each building
         locator.get_building_age()
     - zone.shp: shapefile with the geometry of each building in the zone of study
-        locator.get_building_geometry()
+        locator.get_zone_geometry()
     - Archetypes_properties: csv file with the database of archetypes including embodied energy and emissions
         locator.get_archetypes_properties()
 
@@ -75,7 +75,7 @@ def lca_embodied(year_to_calculate, locator, gv):
     get_building_architecture
     get_building_occupancy
     get_building_age
-    get_building_geometry
+    get_zone_geometry
     get_archetypes_embodied_energy
     get_archetypes_embodied_emissions
 
@@ -102,7 +102,7 @@ def lca_embodied(year_to_calculate, locator, gv):
     prop_occupancy_df = dbf2df(locator.get_building_occupancy())
     occupancy_df = pd.DataFrame(prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)])
     age_df = dbf2df(locator.get_building_age())
-    geometry_df = Gdf.from_file(locator.get_building_geometry())
+    geometry_df = Gdf.from_file(locator.get_zone_geometry())
     geometry_df['footprint'] = geometry_df.area
     geometry_df['perimeter'] = geometry_df.length
     geometry_df = geometry_df.drop('geometry', axis=1)
@@ -118,7 +118,9 @@ def lca_embodied(year_to_calculate, locator, gv):
 
     # calculate building geometry
     ## total window area
-    cat_df['windows_ag'] = cat_df['win_wall'] * cat_df['perimeter'] * (cat_df['height_ag'] * cat_df['PFloor'])
+
+    average_wwr = [np.mean([a,b,c,d]) for a,b,c,d in zip(cat_df['wwr_south'],cat_df['wwr_north'],cat_df['wwr_west'],cat_df['wwr_east'])]
+    cat_df['windows_ag'] = average_wwr * cat_df['perimeter'] * (cat_df['height_ag'] * cat_df['PFloor'])
     ## wall area above ground
     cat_df['area_walls_ext_ag'] = cat_df['perimeter'] * (cat_df['height_ag'] * cat_df['PFloor']) - cat_df['windows_ag']
     ## wall area below ground
