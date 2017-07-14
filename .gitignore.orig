@@ -88,5 +88,9 @@ doc/make.output.txt
 cea/.doit.db
 setup/cea_version.txt
 .doit.db
-
-docs/*.html
+docs/guide_about_files_generated.html
+<<<<<<< HEAD
+docs/run_solar_technologies.html
+=======
+docs/cascading-configuration-files.html
+>>>>>>> refs/remotes/origin/master
