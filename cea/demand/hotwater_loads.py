@@ -53,7 +53,7 @@ def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0
     :param T_ext: Ambient temperature in C.
     :param Ta: Room temperature in C.
     :param Tww_re: Domestic hot water tank return temperature in C, this temperature is the ground water temperature, set according to norm.
-    :param Tww_sup_0: Domestic hot water suppply set point temperature.
+    :param Tww_sup_0: Domestic hot water supply set point temperature.
     :param vw: specific fresh water consumption in m3/hr*m2.
     :param vww: specific domestic hot water consumption in m3/hr*m2.
     :return:
@@ -69,7 +69,7 @@ def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0
     Qww_0 = Qww.max()
 
     # distribution and circulation losses
-    Vol_ls = Lsww_dis * ((gv.D / 1000)/2) ** 2 * pi # volume inside distribution pipe
+    Vol_ls = Lsww_dis * ((gv.D / 1000)/2) ** 2 * pi # m3, volume inside distribution pipe
     Qww_dis_ls_r = np.vectorize(calc_Qww_dis_ls_r)(Ta, Qww, Lsww_dis, Lcww_dis, Y[1], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
                                            gv.Cpw, gv.Pwater, gv)
     Qww_dis_ls_nr = np.vectorize(calc_Qww_dis_ls_nr)(Ta, Qww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
@@ -86,6 +86,14 @@ def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0
 # end-use hot water demand calculation
 
 def calc_Qww(mww, Tww_sup_0, Tww_re, Cpw):
+    """
+    Calculates the DHW demand according to the supply temperature and flow rate.
+    :param mww: required DHW flow rate in [kg/s]
+    :param Tww_sup_0: Domestic hot water supply set point temperature.
+    :param Tww_re: Domestic hot water tank return temperature in C, this temperature is the ground water temperature, set according to norm.
+    :param Cpw: heat capacity of water [kJ/kgK]
+    :return Qww: Heat demand for DHW in [W]
+    """
     mcpww = mww * Cpw * 1000  # W/K
     Qww = mcpww * (Tww_sup_0 - Tww_re)  # heating for dhw in W
     return Qww
@@ -93,6 +101,7 @@ def calc_Qww(mww, Tww_sup_0, Tww_re, Cpw):
 # losess hot water demand calculation
 
 def calc_Qww_dis_ls_r(Tair, Qww, lsww_dis, lcww_dis, Y, Qww_0, V, Flowtap, twws, Cpw, Pwater, gv):
+
     if Qww > 0:
         # Calculate tamb in basement according to EN
         tamb = Tair
@@ -114,10 +123,10 @@ def calc_Qww_dis_ls_nr(tair, Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, Flowtap, twws, 
         # Calculate tamb in basement according to EN
         tamb = tair - Bf * (tair - te)
 
-        # CIRUCLATION LOSSES
+        # Circulation losses
         d_circ_ls = (twws - tamb) * Y * (Lvww_c) * (Qww / Qww_0)
 
-        # DISTRIBUTION LOSSEs
+        # Distribution losses
         d_dis_ls = calc_disls(tamb, Qww, Flowtap, V, twws, Lvww_dis, Pwater, Cpw, Y, gv)
         Qww_d_ls_nr = d_dis_ls + d_circ_ls
     else:
@@ -152,6 +161,24 @@ def calc_disls(tamb, hotw, Flowtap, V, twws, Lsww_dis, p, cpw, Y, gv):
 
 
 def calc_Qww_st_ls(T_ext, Ta, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr, gv):
+    """
+    Calculates the heat flows within a fully mixed water storage tank for 8760 time-steps.
+    :param T_ext: external temperature in [C]
+    :param Ta: room temperature in [C]
+    :param Qww: DHW demand in [W]
+    :param Vww: DHW tank size in [m3]
+    :param Qww_dis_ls_r: recoverable loss in distribution in [W]
+    :param Qww_dis_ls_nr: non-recoverable loss in distribution in [W]
+    :param gv: globalvar.py
+
+    :type T_ext: ndarray
+    :type Ta: ndarray
+    :type Qww: ndarray
+    :type Vww: ndarray
+    :type Qww_dis_ls_r: ndarray
+    :type Qww_dis_ls_nr: ndarray
+    :return:
+    """
     Qwwf = np.zeros(8760)
     Qww_st_ls = np.zeros(8760)
     Tww_st = np.zeros(8760)
