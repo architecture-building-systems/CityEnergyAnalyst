@@ -88,8 +88,10 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
 
         # write to shapefile
         prop_architecture_df_merged = names_df.merge(prop_architecture_df, on="Name")
-        fields = ['Name', 'Hs', 'win_wall', 'type_cons', 'type_leak', 'type_roof', 'type_wall', 'type_win',
-                  'type_shade']
+
+        fields = ['Name', 'Hs', 'wwr_north', 'wwr_west','wwr_east', 'wwr_south',
+                  'type_cons', 'type_leak',  'type_roof', 'type_wall', 'type_win', 'type_shade']
+
         df2dbf(prop_architecture_df_merged[fields], locator.get_building_architecture())
 
     # get properties about types of HVAC systems
@@ -131,7 +133,8 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
         prop_internal_df_merged = names_df.merge(prop_internal_df, on="Name")
         prop_internal_df_merged = calculate_average_multiuse(prop_internal_df_merged, occupant_densities, list_uses,
                                                              internal_DB)
-        fields = ['Name', 'Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Ere_Wm2', 'Ed_Wm2', 'Vww_lpd', 'Vw_lpd']
+        fields = ['Name', 'Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Ere_Wm2', 'Ed_Wm2', 'Vww_lpd', 'Vw_lpd',
+                  'Qhpro_Wm2']
         df2dbf(prop_internal_df_merged[fields], locator.get_building_internal())
 
 
@@ -264,7 +267,7 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
                 else:
                     properties_df.loc[building, column] = 0
 
-        elif column in ['Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Ere_Wm2', 'Ed_Wm2']:
+        elif column in ['Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Ere_Wm2', 'Ed_Wm2', 'Qhpro_Wm2']:
             for building in properties_df.index:
                 average = 0
                 for use in list_uses:
@@ -276,6 +279,7 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
 
 def run_as_script(scenario_path=None, prop_thermal_flag=True, prop_architecture_flag=True, prop_hvac_flag=True,
                   prop_comfort_flag=True, prop_internal_loads_flag=True):
+
     """
     Run the properties script with input from the reference case and compare the results. This ensures that changes
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
