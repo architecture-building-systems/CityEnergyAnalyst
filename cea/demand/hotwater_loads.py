@@ -154,7 +154,7 @@ def calc_disls(tamb, hotw, Flowtap, V, twws, Lsww_dis, p, cpw, Y, gv):
                 raise ZeroDivisionError
 
         tamb = tamb + (twws - tamb) * exponential
-        losses = (twws - tamb) * V * cpw * p / 1000 * 278
+        losses = (twws - tamb) * V * cpw * p / 3.6 # in Wh
     else:
         losses = 0
     return losses
