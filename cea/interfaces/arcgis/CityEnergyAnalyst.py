@@ -690,8 +690,8 @@ class ScenarioPlotsTool(object):
 
 class SolarTechnologyTool(object):
     def __init__(self):
-        self.label = 'Solar Technologies'
-        self.description = 'Calculate heat and electricity production from solar energy technologies'
+        self.label = 'Photovoltaic Panels'
+        self.description = 'Calculate electricity production from solar photovoltaic technologies'
         self.category = 'Dynamic Supply Systems'
         self.canRunInBackground = False
 
