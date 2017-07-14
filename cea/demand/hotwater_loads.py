@@ -56,6 +56,7 @@ def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0
     :param Tww_sup_0: Domestic hot water supply set point temperature.
     :param vw: specific fresh water consumption in m3/hr*m2.
     :param vww: specific domestic hot water consumption in m3/hr*m2.
+    :param Y: linear trasmissivity coefficients of piping in W/m*K
     :return:
 
     """
@@ -70,10 +71,10 @@ def calc_Qwwf(Lcww_dis, Lsww_dis, Lvww_c, Lvww_dis, T_ext, Ta, Tww_re, Tww_sup_0
 
     # distribution and circulation losses
     Vol_ls = Lsww_dis * ((gv.D / 1000)/2) ** 2 * pi # m3, volume inside distribution pipe
-    Qww_dis_ls_r = np.vectorize(calc_Qww_dis_ls_r)(Ta, Qww, Lsww_dis, Lcww_dis, Y[1], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
-                                           gv.Cpw, gv.Pwater, gv)
-    Qww_dis_ls_nr = np.vectorize(calc_Qww_dis_ls_nr)(Ta, Qww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap, Tww_sup_0,
-                                             gv.Cpw, gv.Pwater, gv.Bf, T_ext, gv)
+    Qww_dis_ls_r = np.vectorize(calc_Qww_dis_ls_r)(Ta, Qww, Lsww_dis, Lcww_dis, Y[1], Qww_0, Vol_ls, gv.Flowtap,
+                                                   Tww_sup_0, gv.Cpw, gv.Pwater, gv)
+    Qww_dis_ls_nr = np.vectorize(calc_Qww_dis_ls_nr)(Ta, Qww, Lvww_dis, Lvww_c, Y[0], Qww_0, Vol_ls, gv.Flowtap,
+                                                     Tww_sup_0, gv.Cpw, gv.Pwater, gv.Bf, T_ext, gv)
     # storage losses
     Qww_st_ls, Tww_st, Qwwf = calc_Qww_st_ls(T_ext, Ta, Qww, Vww, Qww_dis_ls_r, Qww_dis_ls_nr, gv)
 
@@ -100,17 +101,17 @@ def calc_Qww(mww, Tww_sup_0, Tww_re, Cpw):
 
 # losess hot water demand calculation
 
-def calc_Qww_dis_ls_r(Tair, Qww, lsww_dis, lcww_dis, Y, Qww_0, V, Flowtap, twws, Cpw, Pwater, gv):
+def calc_Qww_dis_ls_r(Tair, Qww, Lsww_dis, Lcww_dis, Y, Qww_0, V, Flowtap, twws, Cpw, Pwater, gv):
 
     if Qww > 0:
         # Calculate tamb in basement according to EN
         tamb = Tair
 
         # Circulation circuit losses
-        circ_ls = (twws - tamb) * Y * lcww_dis * (Qww / Qww_0)
+        circ_ls = (twws - tamb) * Y * Lcww_dis * (Qww / Qww_0)
 
         # Distribtution circuit losses
-        dis_ls = calc_disls(tamb, Qww, Flowtap, V, twws, lsww_dis, Pwater, Cpw, Y, gv)
+        dis_ls = calc_disls(tamb, Qww, Flowtap, V, twws, Lsww_dis, Pwater, Cpw, Y, gv)
 
         Qww_d_ls_r = circ_ls + dis_ls
     else:
@@ -134,24 +135,41 @@ def calc_Qww_dis_ls_nr(tair, Qww, Lvww_dis, Lvww_c, Y, Qww_0, V, Flowtap, twws, 
     return Qww_d_ls_nr
 
 
-def calc_disls(tamb, hotw, Flowtap, V, twws, Lsww_dis, p, cpw, Y, gv):
-    if hotw > 0:
-        t = 3600 / ((hotw / 1000) / Flowtap)
+def calc_disls(tamb, Qw, Flowtap, V, twws, Lsww_dis, p, cpw, Y, gv):
+    """
+    Calculates distribution losses in Wh according to Fonseca & Schlueter (2015), eqs. 23 and 24.
+    
+    :param tamb: Room temperature in C
+    :param Qw: Heat demand for DHW in Wh
+    :param Flowtap: volumetric flow rate of tapping in m3/min
+    :param V: volume of water accumulated in the distribution network in m3
+    :param twws: 
+    :param Lsww_dis: length of circulation/distribution pipeline in m
+    :param p: water density kg/m3
+    :param cpw: heat capacity of water in kJ/kgK
+    :param Y: linear trasmissivity coefficient of piping in distribution network in W/m*K
+    :param gv: globalvar.py
+    :return losses: recoverable/non-recoverable losses due to distribution of DHW
+    """
+    if Qw > 0:
+        t = 3600 / ((Qw / 1000) / Flowtap)
         if t > 3600: t = 3600
-        q = (twws - tamb) * Y
+        # q = (twws - tamb) * Y
         try:
-            exponential = scipy.exp(-(q * Lsww_dis * t) / (p * cpw * V * (twws - tamb) * 1000))
+            # exponential = scipy.exp(-(q * Lsww_dis * t) / (p * cpw * V * (twws - tamb) * 1000))
+            exponential = scipy.exp(-(Y * Lsww_dis * t) / (p * cpw * V * 1000))
         except ZeroDivisionError:
             gv.log('twws: %(twws).2f, tamb: %(tamb).2f, p: %(p).2f, cpw: %(cpw).2f, V: %(V).2f',
                    twws=twws, tamb=tamb, p=p, cpw=cpw, V=V)
-            if (p * cpw * V * (twws - tamb) * 1000 == 0) and (q * Lsww_dis * t != 0):
-                if (twws - tamb) == 0:
-                    exponential = 0
-                else:
-                    print 'Hot water distribution pipes have no volume!'
-                    raise
-            else:
-                raise ZeroDivisionError
+            # if (p * cpw * V * (twws - tamb) * 1000 == 0) and (q * Lsww_dis * t != 0):
+            #     if (twws - tamb) == 0:
+            #         exponential = 0
+            #     else:
+            #         print 'Hot water distribution pipes have no volume!'
+            #         raise
+            # else:
+            #     raise ZeroDivisionError
+            raise ZeroDivisionError
 
         tamb = tamb + (twws - tamb) * exponential
         losses = (twws - tamb) * V * cpw * p / 3.6 # in Wh
