@@ -15,7 +15,7 @@ import arcpy
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Daren Thomas"]
+__credits__ = ["Daren Thomas", "Martin Mosteiro Romero", "Jimeno A. Fonseca"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -28,9 +28,265 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
-        self.tools = [DemandTool, DataHelperTool, BenchmarkGraphsTool, EmissionsTool, EmbodiedEnergyTool, MobilityTool,
-                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool, xls2dbfTool, dbf2xlsTool]
+        self.tools = [OperationCostsTool, RetrofitPotentialTool, DemandTool, DataHelperTool, BenchmarkGraphsTool,
+                      OperationTool, EmbodiedTool, MobilityTool,
+                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool]
 
+
+class OperationCostsTool(object):
+    def __init__(self):
+        self.label = 'Operation Costs'
+        self.description = 'Calculate energy costs due to building operation'
+        self.category = 'Cost Analysis'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        return [scenario_path]
+
+    def execute(self, parameters, _):
+        scenario_path = parameters[0].valueAsText
+        run_cli(scenario_path, 'operation-costs')
+
+
+class RetrofitPotentialTool(object):
+    def __init__(self):
+        self.label = 'Building Retrofit Potential'
+        self.category = 'Retrofit Analysis'
+        self.description = 'Select buildings according to specific criteria for retrofit'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenario_path = arcpy.Parameter(displayName="Path to the scenario", name="scenario_path", datatype="DEFolder",
+                                        parameterType="Required", direction="Input")
+        retrofit_target_date = arcpy.Parameter(displayName="Year when the retrofit will take place",
+                                               name="retrofit_target_date", datatype="GPLong", parameterType="Required",
+                                               direction="Input")
+        retrofit_target_date.value = 2020
+
+        keep_partial_matches = arcpy.Parameter(displayName="Keep buildings partially matching the selected criteria",
+                                                               name="keep_partial_matches",
+                                                  datatype="GPBoolean", parameterType="Required", direction="Input")
+        keep_partial_matches.value = False
+
+        name = arcpy.Parameter(displayName="Name for new scenario", name="name", datatype="String",
+                               parameterType="Required", direction="Input")
+        name.value = "retrofit_HVAC"
+
+        cb_age_threshold = arcpy.Parameter(displayName="Enable threshold age of HVAC (built / retrofitted)",
+                                           name="cb_age_threshold", datatype="GPBoolean", parameterType="Required",
+                                           direction="Input", category="age")
+        cb_age_threshold.value = False
+        cb_age_threshold.enabled = False
+
+        age_threshold = arcpy.Parameter(displayName="threshold age of HVAC (built / retrofitted)", name="age_threshold",
+                                        datatype="GPLong", parameterType="Optional", direction="Input", category="age")
+        age_threshold.value = 15
+        age_threshold.enabled = False
+
+        cb_eui_heating_threshold = arcpy.Parameter(displayName="Enable end use intensity threshold for heating",
+                                                   name="cb_eui_heating_threshold", datatype="GPBoolean",
+                                                   parameterType="Required", direction="Input",
+                                                   category="end use intensity")
+        cb_eui_heating_threshold.value = False
+        cb_eui_heating_threshold.enabled = True
+
+        eui_heating_threshold = arcpy.Parameter(displayName="End use intensity threshold for heating",
+                                                name="eui_heating_threshold", datatype="GPLong",
+                                                parameterType="Optional", direction="Input", category="end use intensity")
+        eui_heating_threshold.value = 50
+        eui_heating_threshold.enabled = False
+
+        cb_eui_hot_water_threshold = arcpy.Parameter(displayName="Enable end use intensity threshold for hot water",
+                                                     name="cb_eui_hot_water_threshold", datatype="GPBoolean",
+                                                     parameterType="Required", direction="Input", category="end use intensity")
+        cb_eui_hot_water_threshold.value = False
+        cb_eui_hot_water_threshold.enabled = False
+
+        eui_hot_water_threshold = arcpy.Parameter(displayName="End use intensity threshold for hot water",
+                                                  name="eui_hot_water_threshold", datatype="GPLong",
+                                                  parameterType="Optional", direction="Input", category="end use intensity")
+        eui_hot_water_threshold.value = 50
+        eui_hot_water_threshold.enabled = False
+
+        cb_eui_cooling_threshold = arcpy.Parameter(displayName="Enable end use intensity threshold for cooling",
+                                                   name="cb_eui_cooling_threshold", datatype="GPBoolean",
+                                                   parameterType="Required", direction="Input", category="end use intensity")
+        cb_eui_cooling_threshold.value = False
+        cb_eui_cooling_threshold.enabled = False
+
+        eui_cooling_threshold = arcpy.Parameter(displayName="End use intensity threshold for cooling",
+                                                name="eui_cooling_threshold", datatype="GPLong",
+                                                parameterType="Optional", direction="Input", category="end use intensity")
+        eui_cooling_threshold.value = 4
+        eui_cooling_threshold.enabled = False
+
+        cb_eui_electricity_threshold = arcpy.Parameter(displayName="Enable end use intensity threshold for electricity",
+                                                       name="cb_eui_electricity_threshold", datatype="GPBoolean",
+                                                       parameterType="Required", direction="Input", category="end use intensity")
+        cb_eui_electricity_threshold.value = False
+        cb_eui_electricity_threshold.enabled = False
+
+        eui_electricity_threshold = arcpy.Parameter(displayName="End use intensity threshold for electricity",
+                                                    name="eui_electricity_threshold", datatype="GPLong",
+                                                    parameterType="Optional", direction="Input", category="end use intensity")
+        eui_electricity_threshold.value = 20
+        eui_electricity_threshold.enabled = False
+
+        cb_emissions_operation_threshold = arcpy.Parameter(
+            displayName="Enable threshold for emissions due to operation", name="cb_emissions_operation_threshold",
+            datatype="GPBoolean", parameterType="Required", direction="Input", category="emissions")
+        cb_emissions_operation_threshold.value = False
+        cb_emissions_operation_threshold.enabled = False
+
+        emissions_operation_threshold = arcpy.Parameter(displayName="Threshold for emissions due to operation",
+                                                        name="emissions_operation_threshold", datatype="GPLong",
+                                                        parameterType="Optional", direction="Input", category="emissions")
+        emissions_operation_threshold.value = 30
+        emissions_operation_threshold.enabled = False
+
+        cb_heating_costs_threshold = arcpy.Parameter(displayName="Enable threshold for heating costs",
+                                                     name="cb_heating_costs_threshold", datatype="GPBoolean",
+                                                     parameterType="Required", direction="Input", category="operation costs")
+        cb_heating_costs_threshold.value = False
+        cb_heating_costs_threshold.enabled = False
+
+        heating_costs_threshold = arcpy.Parameter(displayName="Threshold for heating costs",
+                                                  name="heating_costs_threshold", datatype="GPLong",
+                                                  parameterType="Optional", direction="Input", category="operation costs")
+        heating_costs_threshold.value = 2
+        heating_costs_threshold.enabled = False
+
+        cb_hot_water_costs_threshold = arcpy.Parameter(displayName="Enable threshold for hot water costs",
+                                                       name="cb_hot_water_costs_threshold", datatype="GPBoolean",
+                                                       parameterType="Required", direction="Input", category="operation costs")
+        cb_hot_water_costs_threshold.value = False
+        cb_hot_water_costs_threshold.enabled = False
+
+        hot_water_costs_threshold = arcpy.Parameter(displayName="Threshold for hot water costs",
+                                                    name="hot_water_costs_threshold", datatype="GPLong",
+                                                    parameterType="Optional", direction="Input", category="operation costs")
+        hot_water_costs_threshold.value = 2
+        hot_water_costs_threshold.enabled = False
+
+        cb_cooling_costs_threshold = arcpy.Parameter(displayName="Enable threshold for cooling costs",
+                                                     name="cb_cooling_costs_threshold", datatype="GPBoolean",
+                                                     parameterType="Required", direction="Input", category="operation costs")
+        cb_cooling_costs_threshold.value = False
+        cb_cooling_costs_threshold.enabled = False
+
+        cooling_costs_threshold = arcpy.Parameter(displayName="Threshold for cooling costs",
+                                                  name="cooling_costs_threshold", datatype="GPLong",
+                                                  parameterType="Optional", direction="Input", category="operation costs")
+        cooling_costs_threshold.value = 2
+        cooling_costs_threshold.enabled = False
+
+        cb_electricity_costs_threshold = arcpy.Parameter(displayName="Enable threshold for electricity costs",
+                                                         name="cb_electricity_costs_threshold", datatype="GPBoolean",
+                                                         parameterType="Required", direction="Input", category="operation costs")
+        cb_electricity_costs_threshold.value = False
+        cb_electricity_costs_threshold.enabled = False
+
+        electricity_costs_threshold = arcpy.Parameter(displayName="Threshold for electricity costs",
+                                                      name="electricity_costs_threshold", datatype="GPLong",
+                                                      parameterType="Optional", direction="Input", category="operation costs")
+        electricity_costs_threshold.value = 2
+        electricity_costs_threshold.enabled = False
+
+        cb_heating_losses_threshold = arcpy.Parameter(displayName="Enable threshold for HVAC system losses from heating",
+                                                      name="cb_heating_losses_threshold", datatype="GPBoolean",
+                                                      parameterType="Required", direction="Input", category="HVAC system losses")
+        cb_heating_losses_threshold.value = False
+        cb_heating_losses_threshold.enabled = False
+
+        heating_losses_threshold = arcpy.Parameter(displayName="Threshold for HVAC system losses from heating",
+                                                   name="heating_losses_threshold", datatype="GPLong",
+                                                   parameterType="Optional", direction="Input", category="HVAC system losses")
+        heating_losses_threshold.value = 15
+        heating_losses_threshold.enabled = False
+
+        cb_hot_water_losses_threshold = arcpy.Parameter(
+            displayName="Enable threshold for HVAC system losses from hot water", name="cb_hot_water_losses_threshold",
+            datatype="GPBoolean", parameterType="Required", direction="Input", category="HVAC system losses")
+        cb_hot_water_losses_threshold.value = False
+        cb_hot_water_losses_threshold.enabled = False
+
+        hot_water_losses_threshold = arcpy.Parameter(displayName="Threshold for HVAC system losses from hot water",
+                                                     name="hot_water_losses_threshold", datatype="GPLong",
+                                                     parameterType="Optional", direction="Input", category="HVAC system losses")
+        hot_water_losses_threshold.value = 15
+        hot_water_losses_threshold.enabled = False
+
+        cb_cooling_losses_threshold = arcpy.Parameter(displayName="Enable threshold for HVAC system losses from cooling",
+                                                      name="cb_cooling_losses_threshold", datatype="GPBoolean",
+                                                      parameterType="Required", direction="Input", category="HVAC system losses")
+        cb_cooling_losses_threshold.value = False
+        cb_cooling_losses_threshold.enabled = False
+
+        cooling_losses_threshold = arcpy.Parameter(displayName="Threshold for HVAC system losses from cooling",
+                                                   name="cooling_losses_threshold", datatype="GPLong",
+                                                   parameterType="Optional", direction="Input", category="HVAC system losses")
+        cooling_losses_threshold.value = 15
+        cooling_losses_threshold.enabled = False
+
+        return [scenario_path, retrofit_target_date, keep_partial_matches, name, cb_age_threshold, age_threshold,
+                cb_eui_heating_threshold, eui_heating_threshold, cb_eui_hot_water_threshold, eui_hot_water_threshold,
+                cb_eui_cooling_threshold, eui_cooling_threshold, cb_eui_electricity_threshold,
+                eui_electricity_threshold, cb_emissions_operation_threshold, emissions_operation_threshold,
+                cb_heating_costs_threshold, heating_costs_threshold, cb_hot_water_costs_threshold,
+                hot_water_costs_threshold, cb_cooling_costs_threshold, cooling_costs_threshold,
+                cb_electricity_costs_threshold, electricity_costs_threshold, cb_heating_losses_threshold,
+                heating_losses_threshold, cb_hot_water_losses_threshold, hot_water_losses_threshold,
+                cb_cooling_losses_threshold, cooling_losses_threshold]
+
+    def updateParameters(self, parameters):
+        # only enable fields if scenario_path is set
+        for p in parameters[1:]:
+            p.enabled = False
+
+        scenario_path = parameters[0].valueAsText
+        if scenario_path is None:
+            return
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+        # this only get's run if a scenario is chosen
+        for p in parameters[1:]:
+            p.enabled = True
+
+        parameters = {p.name: p for p in parameters}
+        for parameter_name in parameters.keys():
+            if parameter_name.startswith('cb_'):
+                parameters[parameter_name].setErrorMessage(parameter_name[3:])
+                parameters[parameter_name[3:]].enabled = parameters[parameter_name].value
+
+    def execute(self, parameters, _):
+        scenario_path, retrofit_target_date, include_only_matches_to_all_criteria, name = parameters[:4]
+        scenario_path = scenario_path.valueAsText
+        retrofit_target_date = retrofit_target_date.value
+        include_only_matches_to_all_criteria = include_only_matches_to_all_criteria.value
+        name = name.valueAsText
+
+        args = ['--retrofit-target-date', str(retrofit_target_date), '--name', name]
+        if include_only_matches_to_all_criteria:
+            args.append('--keep-partial-matches')
+
+        parameters = {p.name: p for p in parameters[4:]}
+        for p_name in parameters.keys():
+            if p_name.startswith('cb_'):
+                checkbox = parameters[p_name]
+                parameter = parameters[p_name[3:]]
+                if checkbox.value and (parameter.value is not None):
+                    args.append('--%s' % parameter.name.replace('_', '-'))
+                    args.append(str(parameter.value))
+
+        run_cli(scenario_path, 'retrofit-potential', *args)
 
 class DemandTool(object):
     """integrate the demand script with ArcGIS"""
@@ -38,6 +294,7 @@ class DemandTool(object):
     def __init__(self):
         self.label = 'Demand'
         self.description = 'Calculate the Demand'
+        self.category = 'Dynamic Demand Forecasting'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -110,6 +367,7 @@ class DataHelperTool(object):
     def __init__(self):
         self.label = 'Data helper'
         self.description = 'Query characteristics of buildings and systems from statistical data'
+        self.category = 'Data Management'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -171,8 +429,9 @@ class DataHelperTool(object):
 class BenchmarkGraphsTool(object):
     """Integrates the cea/analysis/benchmark.py tool with ArcGIS"""
     def __init__(self):
-        self.label = 'Benchmark graphs'
-        self.description = 'Create benchmark plots of scenarios in a folder'
+        self.label = '2000W Society Benchmark'
+        self.description = 'Plot life cycle primary energy demand and emissions compared to an established benchmark'
+        self.category = 'Benchmarking'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -203,10 +462,11 @@ class BenchmarkGraphsTool(object):
         return
 
 
-class EmissionsTool(object):
+class OperationTool(object):
     def __init__(self):
-        self.label = 'Emissions Operation'
+        self.label = 'LCA Operation'
         self.description = 'Calculate emissions and primary energy due to building operation'
+        self.category = 'Life Cycle Analysis'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -300,10 +560,11 @@ class EmissionsTool(object):
         run_cli(scenario_path, 'emissions', '--extra-files-to-create', *extra_files_to_create)
 
 
-class EmbodiedEnergyTool(object):
+class EmbodiedTool(object):
     def __init__(self):
-        self.label = 'Embodied Energy'
-        self.description = 'Calculate the Emissions for operation'
+        self.label = 'LCA Construction'
+        self.description = 'Calculate the emissions and primary energy for building construction and decommissioning'
+        self.category = 'Life Cycle Analysis'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -333,8 +594,9 @@ class EmbodiedEnergyTool(object):
 class MobilityTool(object):
     """Integrates the cea/analysis/mobility.py script with ArcGIS."""
     def __init__(self):
-        self.label = 'Emissions Mobility'
+        self.label = 'LCA Mobility'
         self.description = 'Calculate emissions and primary energy due to mobility'
+        self.category = 'Life Cycle Analysis'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -355,8 +617,9 @@ class MobilityTool(object):
 
 class DemandGraphsTool(object):
     def __init__(self):
-        self.label = 'Demand graphs'
-        self.description = 'Calculate Graphs of the Demand'
+        self.label = 'Plots'
+        self.description = 'Plot demand time-series data'
+        self.category = 'Dynamic Demand Forecasting'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -394,8 +657,9 @@ class DemandGraphsTool(object):
 
 class ScenarioPlotsTool(object):
     def __init__(self):
-        self.label = 'Scenario Plots'
+        self.label = 'Scenario plots'
         self.description = 'Create summary plots of scenarios in a folder'
+        self.category = 'Mapping and Visualization'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -427,7 +691,8 @@ class ScenarioPlotsTool(object):
 
 class RadiationTool(object):
     def __init__(self):
-        self.label = 'Radiation'
+        self.label = 'Solar Insolation'
+        self.category= 'Renewable Energy Assessment'
         self.description = 'Create radiation file'
         self.canRunInBackground = False
 
@@ -631,7 +896,8 @@ def run_cli(scenario_path=None, *args):
 class HeatmapsTool(object):
     def __init__(self):
         self.label = 'Heatmaps'
-        self.description = 'Create heatmap data layers'
+        self.description = 'Generate maps representing hot and cold spots of energy consumption'
+        self.category = 'Mapping and Visualization'
         self.canRunInBackground = False
 
     def getParameterInfo(self):
@@ -701,65 +967,3 @@ class HeatmapsTool(object):
             file_to_analyze = os.path.join(_cli_output(scenario_path, 'locate', 'get_lca_emissions_results_folder'),
                                            file_to_analyze)
         run_cli(scenario_path, 'heatmaps', '--file-to-analyze', file_to_analyze, '--analysis-fields', *analysis_fields)
-
-class xls2dbfTool(object):
-    def __init__(self):
-        self.label = 'xls2dbf Toolbox'
-        self.description = 'xls => dbf'
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        input_path = arcpy.Parameter(
-            displayName="xls file path",
-            name="input_path",
-            datatype="String",
-            parameterType="Required",
-            direction="Input")
-        input_path.filter.list = ['xls']
-        output_path = arcpy.Parameter(
-            displayName="select output folder",
-            name="output_path",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        output_path.filter.list = []
-
-        return [input_path, output_path]
-
-    def execute(self,parameters):
-        input_path = parameters['input_path'].valueAsText
-        output_path = parameters['output_path'].valueAsText
-        parameters = [input_path,output_path]
-
-        run_cli(parameters, 'xls2dbf')
-
-class dbf2xlsTool(object):
-    def __init__(self):
-        self.label = 'dbf2xls Toolbox'
-        self.description = 'dbf => xls'
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        input_path = arcpy.Parameter(
-            displayName="dbf file path",
-            name="input_path",
-            datatype="String",
-            parameterType="Required",
-            direction="Input")
-        input_path.filter.list = ['dbf']
-        output_path = arcpy.Parameter(
-            displayName="select output folder",
-            name="output_path",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        output_path.filter.list = []
-
-        return [input_path, output_path]
-
-    def execute(self,parameters):
-        input_path = parameters['input_path'].valueAsText
-        output_path = parameters['output_path'].valueAsText
-        parameters = [input_path,output_path]
-
-        run_cli(parameters, 'dbf2xls')

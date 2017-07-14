@@ -235,8 +235,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     else:
         raise
 
-    # TODO: calculate process heat - this seems to be somehow forgotten
-    tsd['Qhprof'][:] = 0
+    tsd['Qhprof'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2'] * bpr.rc_model['Af'] # in kWh
 
     # calculate other quantities
     tsd['Qcsf_lat'] = abs(tsd['Qcsf_lat'])
@@ -338,7 +337,7 @@ class BuildingProperties(object):
 
         - get_radiation: C:\reference-case\baseline\outputs\data\solar-radiation\radiation.csv
         - get_surface_properties: C:\reference-case\baseline\outputs\data\solar-radiation\properties_surfaces.csv
-        - get_building_geometry: C:\reference-case\baseline\inputs\building-geometry\zone.shp
+        - get_zone_geometry: C:\reference-case\baseline\inputs\building-geometry\zone.shp
         - get_building_hvac: C:\reference-case\baseline\inputs\building-properties\technical_systems.shp
         - get_building_thermal: C:\reference-case\baseline\inputs\building-properties\thermal_properties.shp
         - get_building_occupancy: C:\reference-case\baseline\inputs\building-properties\occupancy.shp
@@ -352,10 +351,10 @@ class BuildingProperties(object):
         self.gv = gv
         gv.log("read input files")
         surface_properties = pd.read_csv(locator.get_surface_properties())
-        prop_geometry = Gdf.from_file(locator.get_building_geometry())
+        prop_geometry = Gdf.from_file(locator.get_zone_geometry())
         prop_geometry['footprint'] = prop_geometry.area
         prop_geometry['perimeter'] = prop_geometry.length
-        prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(locator.get_building_geometry())
+        prop_geometry['Blength'], prop_geometry['Bwidth'] = self.calc_bounding_box_geom(locator.get_zone_geometry())
         prop_geometry = prop_geometry.drop('geometry', axis=1).set_index('Name')
         prop_hvac = dbf2df(locator.get_building_hvac())
         prop_occupancy_df = dbf2df(locator.get_building_occupancy()).set_index('Name')
@@ -560,7 +559,9 @@ class BuildingProperties(object):
                                                                          right_index=True)
 
         # area of windows
-        df['Aw'] = df['Awall_all'] * df['win_wall'] * df['PFloor']
+        # TODO: wwe_south replaces wil_wall this is temporary it should not be need it anymore with the new geometry files of Daysim
+        df['Aw'] = df['Awall_all'] * df['wwr_south'] * df['PFloor']
+
 
         # opaque areas (PFloor represents a factor according to the amount of floors heated)
         df['Aop_sup'] = df['Awall_all'] * df['PFloor'] - df['Aw']
@@ -742,7 +743,7 @@ class EnvelopeProperties(object):
     def __init__(self, envelope):
         self.a_roof = envelope['a_roof']
         self.n50 = envelope['n50']
-        self.win_wall = envelope['win_wall']
+        self.win_wall = envelope['wwr_south']
         self.a_wall = envelope['a_wall']
         self.rf_sh = envelope['rf_sh']
         self.e_wall = envelope['e_wall']
@@ -872,7 +873,8 @@ def get_envelope_properties(locator, prop_architecture):
     fields_construction = ['Name', 'Cm_Af']
     fields_leakage = ['Name', 'n50']
     fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof', 'Hs']
-    fields_wall = ['Name', 'win_wall','e_wall', 'a_wall', 'U_wall', 'U_base']
+    fields_wall = ['Name', 'wwr_north', 'wwr_west','wwr_east', 'wwr_south',
+                    'e_wall', 'a_wall', 'U_wall', 'U_base']
     fields_win = ['Name', 'e_win', 'G_win', 'U_win']
     fields_shading = ['Name', 'rf_sh']
 
