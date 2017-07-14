@@ -313,7 +313,7 @@ if __name__ == '__main__':
 
     # local variables
     district_shp = locator.get_district()
-    zone_shp = locator.get_building_geometry()
+    zone_shp = locator.get_zone_geometry()
     architecture_dbf = locator.get_building_architecture()
     input_terrain_raster = locator.get_terrain()
 

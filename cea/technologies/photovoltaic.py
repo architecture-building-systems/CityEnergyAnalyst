@@ -2,20 +2,20 @@
 photovoltaic
 """
 
-
 from __future__ import division
+
+import time
+from math import *
+
 import numpy as np
 import pandas as pd
-import cea.globalvar
-import cea.inputlocator
-import math
-from math import *
-from cea.utilities import dbfreader
 from scipy import interpolate
 
+import cea.globalvar
+import cea.inputlocator
+from cea.utilities import dbfreader
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
-import time
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -26,9 +26,9 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+def calc_PV(locator, radiation_csv, metadata_csv, latitude, longitude, weather_path, building_name, pvonroof,
+            pvonwall, worst_hour, type_PVpanel, min_radiation, date_start):
 
-def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_path, building_name, pvonroof,
-            pvonwall, misc_losses, worst_hour, type_PVpanel, min_radiation, date_start):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -69,7 +69,7 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
 
     # select sensor point with sufficient solar radiation
     max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
-        filter_low_potential(weather_data, radiation_path, metadata_csv, min_radiation, pvonroof, pvonwall)
+        filter_low_potential(weather_data, radiation_csv, metadata_csv, min_radiation, pvonroof, pvonwall)
 
     print 'filtering low potential sensor points done'
 
@@ -85,7 +85,7 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
         print 'generating groups of sensor points done'
 
         results, Final = calc_pv_generation(type_PVpanel, hourlydata_groups, Number_groups, number_points,
-                                        prop_observers, weather_data, g, Sz, Az, ha, latitude, misc_losses, panel_properties)
+                                        prop_observers, weather_data, g, Sz, Az, ha, latitude, panel_properties)
 
 
         Final.to_csv(locator.PV_results(building_name= building_name), index=True, float_format='%.2f')  # print PV generation potential
@@ -131,20 +131,21 @@ def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, m
     sensors_metadata = pd.read_csv(metadata_csv_path)
 
     # join total radiation to sensor_metadata
-    sensors_rad_sum = sensors_rad.sum(0).values # add new row with yearly radiation
-    sensors_metadata['total_rad_Whm2'] = sensors_rad_sum    #[Wh/m2]
+
+    sensors_rad_sum = sensors_rad.sum(0).to_frame('total_rad_Whm2') # add new row with yearly radiation
+    sensors_metadata.set_index('SURFACE', inplace=True)
+    sensors_metadata = sensors_metadata.merge(sensors_rad_sum, left_index=True, right_index=True)    #[Wh/m2]
 
     # remove window surfaces
-    sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'window']
+    sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'windows']
 
     # keep sensors if allow pv installation on walls or on roofs
     if pvonroof is False:
-        sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'roof']
+        sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'roofs']
     if pvonwall is False:
-        sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'wall']
+        sensors_metadata = sensors_metadata[sensors_metadata.TYPE != 'walls']
 
     # keep sensors above min production in sensors_rad
-    sensors_metadata = sensors_metadata.set_index('SURFACE')
     max_yearly_radiation = yearly_horizontal_rad
     # set min yearly radiation threshold for sensor selection
     min_yearly_radiation = max_yearly_radiation * min_radiation
@@ -200,7 +201,7 @@ def calc_groups(sensors_rad_clean, sensors_metadata_cat):
 # =========================
 
 def calc_pv_generation(type_panel, hourly_radiation, number_groups, number_points, prop_observers, weather_data,
-                       g, Sz, Az, ha, latitude, misc_losses, panel_properties):
+                       g, Sz, Az, ha, latitude, panel_properties):
     """
     To calculate the electricity generated from PV panels.
     :param type_panel: type of PV panel used
@@ -250,6 +251,7 @@ def calc_pv_generation(type_panel, hourly_radiation, number_groups, number_point
     a3 = panel_properties['PV_a3']
     a4 = panel_properties['PV_a4']
     L = panel_properties['PV_th']
+    misc_losses = panel_properties['misc_losses'] # cabling, resistances etc..
 
     for group in range(number_groups):
         # read panel properties of each group
@@ -514,8 +516,8 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     """
     # calculate panel tilt angle (B) for flat roofs (tilt < 5 degrees), slope roofs and walls.
     optimal_angle_flat = calc_optimal_angle(180, latitude, transmissivity) # assume surface azimuth = 180 (N,E), south facing
-    sensors_metadata_clean['tilt']= np.vectorize(math.acos)(sensors_metadata_clean['Zdir']) #surface tilt angle in rad
-    sensors_metadata_clean['tilt'] = np.vectorize(math.degrees)(sensors_metadata_clean['tilt']) #surface tilt angle in degrees
+    sensors_metadata_clean['tilt']= np.vectorize(acos)(sensors_metadata_clean['Zdir']) #surface tilt angle in rad
+    sensors_metadata_clean['tilt'] = np.vectorize(degrees)(sensors_metadata_clean['tilt']) #surface tilt angle in degrees
     sensors_metadata_clean['B'] = np.where(sensors_metadata_clean['tilt'] >= 5, sensors_metadata_clean['tilt'],
                                            degrees(optimal_angle_flat)) # panel tilt angle in degrees
 
@@ -673,8 +675,8 @@ def calc_surface_azimuth(xdir, ydir, B):
     :rtype surface_azimuth: float
 
     """
-    B = math.radians(B)
-    teta_z = math.degrees(math.asin(xdir / math.sin(B)))
+    B = radians(B)
+    teta_z = degrees(asin(xdir / sin(B)))
     # set the surface azimuth with on the sing convention (E,N)=(+,+)
     if xdir < 0:
         if ydir <0:
@@ -700,7 +702,7 @@ def calc_properties_PV(database_path, type_PVpanel):
     """
 
     data = pd.read_excel(database_path, sheet='PV')
-    panel_properties = data[data['code'] == type_PVpanel].T.to_dict()[0]
+    panel_properties = data[data['code'] == type_PVpanel].reset_index().T.to_dict()[0]
 
     return panel_properties
 
@@ -792,21 +794,21 @@ def test_photovoltaic():
     list_buildings_names = dbfreader.dbf2df(locator.get_building_occupancy())['Name']
 
     min_radiation = 0.75  # points are selected with at least a minimum production of this % from the maximum in the area.
-    type_PVpanel = "PV1"  # monocrystalline, T2 is poly and T3 is amorphous. it relates to the database of technologies
-    worst_hour = 8744  # first hour of sun on the solar solstice
-    misc_losses = 0.1  # cabling, resistances etc..
-    pvonroof = True  # flag for considering PV on roof #FIXME: define
-    pvonwall = True  # flag for considering PV on wall #FIXME: define
+    type_PVpanel = "PV1"  # PV1 monocrystalline, PV2 is poly and PV3 is amorphous. it relates to the database of technologies
+    worst_hour = 8744  # first hour of sun on the solar solstice # TODO: write a function to extract this value automatically
+    pvonroof = True  # flag for considering PV on roof
+    pvonwall = True  # flag for considering PV on wall
     longitude = 7.439583333333333
     latitude = 46.95240555555556
     date_start = gv.date_start
 
     for building in list_buildings_names:
-        radiation = locator.get_radiation_building(building_name= building)
-        radiation_metadata = locator.get_radiation_metadata(building_name= building)
-        calc_PV(locator=locator, radiation_path= radiation, metadata_csv= radiation_metadata, latitude=latitude,
-                longitude=longitude, weather_path=weather_path, building_name = building,
-                pvonroof=pvonroof, pvonwall=pvonwall, misc_losses=misc_losses, worst_hour=worst_hour,
+
+        radiation = locator.get_radiation_building(building_name=building)
+        radiation_metadata = locator.get_radiation_metadata(building_name=building)
+        calc_PV(locator=locator, radiation_csv=radiation, metadata_csv=radiation_metadata, latitude=latitude,
+                longitude=longitude, weather_path=weather_path, building_name=building,
+                pvonroof=pvonroof, pvonwall=pvonwall, worst_hour=worst_hour,
                 type_PVpanel=type_PVpanel, min_radiation=min_radiation, date_start=date_start)
 
 

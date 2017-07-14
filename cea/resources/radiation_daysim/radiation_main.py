@@ -215,8 +215,8 @@ def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
 
 def main(locator, weather_path):
 
-    district_shp = locator.get_district()
-    zone_shp = locator.get_building_geometry()
+    district_shp = locator.get_district_geometry()
+    zone_shp = locator.get_zone_geometry()
     architecture_dbf = locator.get_building_architecture()
     input_terrain_raster = locator.get_terrain()
 

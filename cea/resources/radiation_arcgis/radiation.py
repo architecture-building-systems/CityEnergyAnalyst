@@ -3,16 +3,18 @@ Solar vertical insolation algorithm based on ArcGIS Solar Analyst
 """
 from __future__ import division
 
-from cea.interfaces.arcgis.modules import arcgisscripting
 import datetime
 import os
 
-from cea.interfaces.arcgis.modules import arcpy
-import ephem
 import numpy as np
 import pandas as pd
+import pytz
+from astral import Location
 from simpledbf import Dbf5
+from timezonefinder import TimezoneFinder
+import pickle
 
+from cea.interfaces.arcgis.modules import arcpy
 from cea.utilities import epwreader
 
 __author__ = "Jimeno A. Fonseca"
@@ -61,251 +63,125 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
     arcpy.CheckOutExtension("spatial")
 
     # local variables
-    aspect_slope = "FROM_DEM"
-    heightoffset = 1
-    Simple_CQ = path_arcgis_db + '\\' + 'Simple_CQ'
-    Simple_context = path_arcgis_db + '\\' + 'Simple_context'
-    dem_rasterfinal = path_arcgis_db + '\\' + 'DEM_All2'
-    observers = path_arcgis_db + '\\' + 'observers'
-    DataFactorsBoundaries = locator.get_temporary_file('DataFactorsBoundaries.csv')
-    DataFactorsCentroids = locator.get_temporary_file('DataFactorsCentroids.csv')
-    DataradiationLocation = locator.get_temporary_file('RadiationYear.csv')
+    simple_cq_shp = locator.get_temporary_file('Simple_CQ_shp.shp')
+    simple_context_shp = locator.get_temporary_file('Simple_Context.shp')
+    dem_rasterfinal_path = os.path.join(path_arcgis_db, 'DEM_All2')
+    observers_path = os.path.join(path_arcgis_db, 'observers')
+    data_factors_boundaries_csv = locator.get_temporary_file('DataFactorsBoundaries.csv')
+    data_factors_centroids_csv = locator.get_temporary_file('DataFactorsCentroids.csv')
 
-    # calculate sunrise
-    sunrise = calc_sunrise(range(1, 366), year, longitude, latitude, gv)
+    sunrise = calculate_sunrise(year, longitude, latitude)
+    sunrise_pickle = locator.get_temporary_file('sunrise.pickle')
+    pickle.dump(sunrise, open(sunrise_pickle, 'wb'))
 
+    daily_transmissivity = calculate_daily_transmissivity_and_daily_diffusivity(weather_path)
+    daily_transmissivity_pickle = locator.get_temporary_file('daily_transmissivity.pickle')
+    daily_transmissivity.to_pickle(daily_transmissivity_pickle)
+
+    dem_raster_extent = simplify_building_geometries(locator, simple_context_shp, simple_cq_shp)
+
+    burn_buildings_into_raster(simple_context_shp, locator.get_terrain(), dem_rasterfinal_path,
+                               locator.get_temporary_folder(), dem_raster_extent)
+
+    calculate_boundaries_of_buildings(simple_cq_shp, locator.get_temporary_folder(), path_arcgis_db,
+                                      data_factors_centroids_csv, data_factors_boundaries_csv)
+
+    calculate_observers(simple_cq_shp, observers_path, data_factors_boundaries_csv, path_arcgis_db)
+
+    run_script_in_subprocess('calculate_radiation_for_all_days',
+                             '--daily-transmissivity-pickle', daily_transmissivity_pickle,
+                             '--dem-rasterfinal-path', dem_rasterfinal_path,
+                             '--latitude', latitude,
+                             '--observers-path', observers_path,
+                             '--arcgis_db', path_arcgis_db)
+    gv.log('complete raw radiation files')
+
+    sunny_hours_pickle = locator.get_temporary_file('sunny_hours.pickle')
+    run_script_in_subprocess('calculate_sunny_hours_of_year',
+                             '--scenario', locator.scenario_path,
+                             '--sunrise-pickle', sunrise_pickle,
+                             '--sunny-hours-pickle', sunny_hours_pickle)
+
+    gv.log('complete transformation radiation files')
+
+    # Assign radiation to every surface of the buildings
+    radiation_pickle_path = locator.get_temporary_file('radiation.pickle')
+
+    run_script_in_subprocess('calculate_radiation_for_surfaces',
+                             '--observers-path', observers_path,
+                             '--data-factors-centroids', data_factors_centroids_csv,
+                             '--sunny-hours-pickle', sunny_hours_pickle,
+                             '--temp-folder', locator.get_temporary_folder(),
+                             '--arcgis-db', path_arcgis_db,
+                             '--radiation-pickle', radiation_pickle_path)
+
+    run_script_in_subprocess('calculate_wall_areas',
+                             '--radiation-pickle', radiation_pickle_path)
+
+    radiation = pd.read_pickle(radiation_pickle_path)
+    export_surface_properties(radiation, locator.get_surface_properties())
+
+    # get solar insolation @ daren: this is a A BOTTLE NECK
+    run_script_in_subprocess('calculate_incident_radiation',
+                             '--radiation-pickle', radiation_pickle_path,
+                             '--radiation-csv', locator.get_radiation())
+    gv.log('done')
+
+
+def simplify_building_geometries(locator, simple_context_shp, simple_cq_shp):
+    # Simplify building's geometry
+    elevRaster = arcpy.sa.Raster(locator.get_terrain())
+    dem_raster_extent = elevRaster.extent
+    arcpy.SimplifyBuilding_cartography(locator.get_zone_geometry(), simple_cq_shp,
+                                       simplification_tolerance=7, minimum_area=None)
+    arcpy.SimplifyBuilding_cartography(locator.get_district_geometry(), simple_context_shp,
+                                       simplification_tolerance=7, minimum_area=None)
+    return dem_raster_extent
+
+
+def calculate_daily_transmissivity_and_daily_diffusivity(weather_path):
     # calcuate daily transmissivity and daily diffusivity
     weather_data = epwreader.epw_reader(weather_path)[['dayofyear', 'exthorrad_Whm2',
                                                        'glohorrad_Whm2', 'difhorrad_Whm2']]
     weather_data['diff'] = weather_data.difhorrad_Whm2 / weather_data.glohorrad_Whm2
     weather_data = weather_data[np.isfinite(weather_data['diff'])]
-    T_G_day = np.round(weather_data.groupby(['dayofyear']).mean(), 2)
-    T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
-    T_G_day['trr'] = (1 - T_G_day['diff'])
-
-    # T_G_day.to_csv(r'C:\Users\Jimeno\Documents/test4.csv')
-
-    # Simplify building's geometry
-    elevRaster = arcpy.sa.Raster(locator.get_terrain())
-    dem_raster_extent = elevRaster.extent
-    arcpy.SimplifyBuilding_cartography(locator.get_building_geometry(), Simple_CQ,
-                                       simplification_tolerance=8, minimum_area=None)
-    arcpy.SimplifyBuilding_cartography(locator.get_district(), Simple_context,
-                                       simplification_tolerance=8, minimum_area=None)
-
-    # # burn buildings into raster
-    Burn(Simple_context, locator.get_terrain(), dem_rasterfinal, locator.get_temporary_folder(), dem_raster_extent, gv)
-
-    # Calculate boundaries of buildings
-    CalcBoundaries(Simple_CQ, locator.get_temporary_folder(), path_arcgis_db,
-                   DataFactorsCentroids, DataFactorsBoundaries, gv)
-
-    # calculate observers
-    CalcObservers(Simple_CQ, observers, DataFactorsBoundaries, path_arcgis_db, gv)
-
-    # Calculate radiation
-    for day in range(1, 366):
-        result = None
-        while result is None:  # trick to avoid that arcgis stops calculating the days and tries again.
-            try:
-                result = CalcRadiation(day, dem_rasterfinal, observers, T_G_day, latitude,
-                                       locator.get_temporary_folder(), aspect_slope, heightoffset, gv)
-            except arcgisscripting.ExecuteError:
-                # redo the calculation
-                pass
-
-    gv.log('complete raw radiation files')
-
-    # run the transformation of files appending all and adding non-sunshine hours
-    radiations = []
-    for day in range(1, 366):
-        radiations.append(calc_radiation_day(day, sunrise, locator.get_temporary_folder()))
-
-    radiationyear = radiations[0]
-    for r in radiations[1:]:
-        radiationyear = radiationyear.merge(r, on='ID', how='outer')
-    radiationyear.fillna(value=0, inplace=True)
-    radiationyear.to_csv(DataradiationLocation, index=True)
-
-    radiationyear = radiations = None
-    gv.log('complete transformation radiation files')
-
-    # Assign radiation to every surface of the buildings
-    Data_radiation_path = CalcRadiationSurfaces(observers, DataFactorsCentroids,
-                                                DataradiationLocation, locator.get_temporary_folder(), path_arcgis_db)
-
-    # get solar insolation @ daren: this is a A BOTTLE NECK
-    CalcIncidentRadiation(Data_radiation_path, locator.get_radiation(), locator.get_surface_properties(), gv)
-    gv.log('done')
+    daily_transmissivity = np.round(weather_data.groupby(['dayofyear']).mean(), 2)
+    daily_transmissivity['diff'] = daily_transmissivity['diff'].replace(1, 0.90)
+    daily_transmissivity['trr'] = (1 - daily_transmissivity['diff'])
+    return daily_transmissivity
 
 
-def CalcIncidentRadiation(path_radiation_data, path_radiation_year_final, surface_properties, gv):
-    radiation = pd.read_csv(path_radiation_data)
+def export_surface_properties(radiation, surface_properties):
     # export surfaces properties
-    radiation['Awall_all'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
-    radiation[['Name', 'Freeheight', 'FactorShade', 'height_ag', 'Shape_Leng', 'Awall_all']].to_csv(surface_properties, index=False)
-
-    # Import Radiation table and compute the Irradiation in W in every building's surface
-    hours_in_year = 8760
-    column_names = ['T%i' % (i + 1) for i in range(hours_in_year)]
-    for column in column_names:
-        # transform all the points of solar radiation into Wh
-        radiation[column] = radiation[column] * radiation['Awall_all']
-
-    # sum up radiation load per building
-    # NOTE: this looks like an ugly hack because it is: in order to work around a pandas MemoryError, we group/sum the
-    # columns individually...
-    grouped_data_frames = {}
-    for column in column_names:
-        df = pd.DataFrame(data={'Name': radiation['Name'],
-                                column: radiation[column]})
-        grouped_data_frames[column] = df.groupby(by='Name').sum()
-    radiation_load = pd.DataFrame(index=grouped_data_frames.values()[0].index)
-    for column in column_names:
-        radiation_load[column] = grouped_data_frames[column][column]
-
-    incident_radiation = np.round(radiation_load[column_names], 2)
-    incident_radiation.to_csv(path_radiation_year_final)
-
-    return  # total solar radiation in areas exposed to radiation in Watts
+    # radiation['Awall_all'] = radiation['Shape_Leng'] * radiation['FactorShade'] * radiation['Freeheight']
+    radiation[['Name', 'Freeheight', 'FactorShade', 'height_ag', 'Shape_Leng', 'Awall_all']].to_csv(surface_properties,
+                                                                                                    index=False)
+    print('saved surface properties to disk')
 
 
-def CalcRadiationSurfaces(Observers, DataFactorsCentroids, DataradiationLocation, locationtemp1, locationtemp2):
+def calculate_observers(simple_cq_shp, observers_path, data_factors_boundaries_csv, path_arcgis_db):
     # local variables
-    CQSegments_centroid = locationtemp2 + '\\' + 'CQSegmentCentro'
-    Outjoin = locationtemp2 + '\\' + 'Join'
-    CQSegments = locationtemp2 + '\\' + 'CQSegment'
-    OutTable = 'CentroidsIDobserver.dbf'
-    # Create Join of features Observers and CQ_sementscentroids to
-    # assign Names and IDS of observers (field TARGET_FID) to the centroids of the lines of the buildings,
-    # then create a table to import as a Dataframe
-    arcpy.SpatialJoin_analysis(CQSegments_centroid, Observers, Outjoin, "JOIN_ONE_TO_ONE", "KEEP_ALL",
-                               match_option="CLOSEST", search_radius="10 METERS")
-    arcpy.JoinField_management(Outjoin, 'OBJECTID', CQSegments, 'OBJECTID')  # add the lenghts of the Lines to the File
-    arcpy.TableToTable_conversion(Outjoin, locationtemp1, OutTable)
-
-    # ORIG_FID represents the points in the segments of the simplified shape of the building
-    # ORIG_FID_1 is the observers ID
-    Centroids_ID_observers0 = Dbf5(locationtemp1 + '\\' + OutTable).to_dataframe()
-    Centroids_ID_observers = Centroids_ID_observers0[['Name', 'height_ag', 'ORIG_FID', 'ORIG_FID_1', 'Shape_Leng']]
-    Centroids_ID_observers.rename(columns={'ORIG_FID_1': 'ID'}, inplace=True)
-
-    # Create a Join of the Centroid_ID_observers and Datacentroids in the Second Chapter to get values of surfaces Shaded.
-    Datacentroids = pd.read_csv(DataFactorsCentroids)
-    DataCentroidsFull = pd.merge(Centroids_ID_observers, Datacentroids, left_on='ORIG_FID', right_on='ORIG_FID')
-
-    # Read again the radiation table and merge values with the Centroid_ID_observers under the field ID in Radiationtable and 'ORIG_ID' in Centroids...
-    Radiationtable = pd.read_csv(DataradiationLocation, index_col='Unnamed: 0')
-    DataRadiation = pd.merge(left=DataCentroidsFull, right=Radiationtable, left_on='ID', right_on='ID')
-
-    Data_radiation_path = locationtemp1 + '\\' + 'tempradaition.csv'
-    DataRadiation.to_csv(Data_radiation_path, index=False)
-
-    return Data_radiation_path
-
-
-def calc_radiation_day(day, sunrise, route):
-    radiation_sunnyhours = np.round(Dbf5(route + '\\' + 'Day_' + str(day) + '.dbf').to_dataframe(), 2)
-
-    # Obtain the number of points modeled to do the iterations
-    radiation_sunnyhours['ID'] = 0
-    counter = radiation_sunnyhours.ID.count()
-    value = counter + 1
-    radiation_sunnyhours['ID'] = range(1, value)
-
-    # Table with empty values with the same range as the points.
-    Table = pd.DataFrame.copy(radiation_sunnyhours)
-    listtimes = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12', 'T13', 'T14', 'T15', 'T16',
-                 'T17', 'T18', 'T19', 'T20', 'T21', 'T22', 'T23', 'T24']
-    for x in listtimes:
-        Table[x] = 0
-    Table.drop('T0', axis=1, inplace=True)
-
-    # Counter of Columns in the Initial Table
-    Counter = radiation_sunnyhours.count(1)[0]
-    values = Counter - 1
-    # Condition to take into account daysavingtime in Switzerland as the radiation data in ArcGIS is calculated for 2013.
-    if 90 <= day < 300:
-        D = 1
-    else:
-        D = 0
-    # Calculation of Sunrise time
-    Sunrise_time = sunrise[day - 1]
-    # Calculation of table
-    for x in range(values):
-        Hour = int(Sunrise_time) + int(D) + int(x)
-        Table['T' + str(Hour)] = radiation_sunnyhours['T' + str(x)]
-
-    # rename the table for every T to get in 1 to 8760 hours.
-    if day <= 1:
-        name = 1
-    else:
-        name = int(day - 1) * 24 + 1
-
-    Table.rename(
-        columns={'T1': 'T' + str(name), 'T2': 'T' + str(name + 1), 'T3': 'T' + str(name + 2), 'T4': 'T' + str(name + 3),
-                 'T5': 'T' + str(name + 4),
-                 'T6': 'T' + str(name + 5), 'T7': 'T' + str(name + 6), 'T8': 'T' + str(name + 7),
-                 'T9': 'T' + str(name + 8), 'T10': 'T' + str(name + 9),
-                 'T11': 'T' + str(name + 10), 'T12': 'T' + str(name + 11), 'T13': 'T' + str(name + 12),
-                 'T14': 'T' + str(name + 13), 'T15': 'T' + str(name + 14),
-                 'T16': 'T' + str(name + 15), 'T17': 'T' + str(name + 16), 'T18': 'T' + str(name + 17),
-                 'T19': 'T' + str(name + 18), 'T20': 'T' + str(name + 19),
-                 'T21': 'T' + str(name + 20), 'T22': 'T' + str(name + 21), 'T23': 'T' + str(name + 22),
-                 'T24': 'T' + str(name + 23), 'ID': 'ID'}, inplace=True)
-
-    return Table
-
-
-def CalcRadiation(day, in_surface_raster, in_points_feature, T_G_day, latitude, locationtemp1, aspect_slope,
-                  heightoffset, gv):
-    # Local Variables
-    Latitude = str(latitude)
-    skySize = '1400'  # max 10000
-    dayInterval = '1'
-    hourInterval = '1'
-    calcDirections = '32'
-    zenithDivisions = '600'  # max 1200cor hlaf the skysize
-    azimuthDivisions = '80'  # max 160
-    diffuseProp = str(T_G_day.loc[day, 'diff'])
-    transmittivity = str(T_G_day.loc[day, 'trr'])
-    heightoffset = str(heightoffset)
-    global_radiation = locationtemp1 + '\\' + 'Day_' + str(day) + '.shp'
-    timeConfig = 'WithinDay    ' + str(day) + ', 0, 24'
-
-    # Run the extension of arcgis
-    arcpy.sa.PointsSolarRadiation(in_surface_raster, in_points_feature, global_radiation, heightoffset,
-                                  Latitude, skySize, timeConfig, dayInterval, hourInterval, "INTERVAL", "1",
-                                  aspect_slope,
-                                  calcDirections, zenithDivisions, azimuthDivisions, "STANDARD_OVERCAST_SKY",
-                                  diffuseProp, transmittivity, "#", "#", "#")
-    gv.log('complete calculating radiation of day No. ' + str(day))
-    return arcpy.GetMessages()
-
-
-def CalcObservers(Simple_CQ, Observers, DataFactorsBoundaries, locationtemporal2, gv):
-    # local variables
-    Buffer_CQ = locationtemporal2 + '\\' + 'BufferCQ'
-    temporal_lines = locationtemporal2 + '\\' + 'lines'
-    Points = locationtemporal2 + '\\' + 'Points'
-    AggregatedBuffer = locationtemporal2 + '\\' + 'BufferAggregated'
-    temporal_lines3 = locationtemporal2 + '\\' + 'lines3'
-    Points3 = locationtemporal2 + '\\' + 'Points3'
-    Points3Updated = locationtemporal2 + '\\' + 'Points3Updated'
-    EraseObservers = locationtemporal2 + '\\' + 'eraseobservers'
-    Observers0 = locationtemporal2 + '\\' + 'observers0'
-    NonoverlappingBuildings = locationtemporal2 + '\\' + 'Non_overlap'
-    templines = locationtemporal2 + '\\' + 'templines'
-    templines2 = locationtemporal2 + '\\' + 'templines2'
-    Buffer_CQ0 = locationtemporal2 + '\\' + 'Buffer_CQ0'
-    Buffer_CQ = locationtemporal2 + '\\' + 'Buffer_CQ'
-    Buffer_CQ1 = locationtemporal2 + '\\' + 'Buffer_CQ1'
-    Simple_CQcopy = locationtemporal2 + '\\' + 'Simple_CQcopy'
+    Buffer_CQ = path_arcgis_db + '\\' + 'BufferCQ'
+    temporal_lines = path_arcgis_db + '\\' + 'lines'
+    Points = path_arcgis_db + '\\' + 'Points'
+    AggregatedBuffer = path_arcgis_db + '\\' + 'BufferAggregated'
+    temporal_lines3 = path_arcgis_db + '\\' + 'lines3'
+    Points3 = path_arcgis_db + '\\' + 'Points3'
+    Points3Updated = path_arcgis_db + '\\' + 'Points3Updated'
+    EraseObservers = path_arcgis_db + '\\' + 'eraseobservers'
+    Observers0 = path_arcgis_db + '\\' + 'observers0'
+    NonoverlappingBuildings = path_arcgis_db + '\\' + 'Non_overlap'
+    templines = path_arcgis_db + '\\' + 'templines'
+    templines2 = path_arcgis_db + '\\' + 'templines2'
+    Buffer_CQ0 = path_arcgis_db + '\\' + 'Buffer_CQ0'
+    Buffer_CQ = path_arcgis_db + '\\' + 'Buffer_CQ'
+    Buffer_CQ1 = path_arcgis_db + '\\' + 'Buffer_CQ1'
+    Simple_CQcopy = path_arcgis_db + '\\' + 'Simple_CQcopy'
     # First increase the boundaries in 2m of each surface in the community to
     # analyze- this will avoid that the observers overlap the buildings and Simplify
     # the community vertices to only create 1 point per surface
 
-    arcpy.CopyFeatures_management(Simple_CQ, Simple_CQcopy)
+    arcpy.CopyFeatures_management(simple_cq_shp, Simple_CQcopy)
     # Make Square-like buffers
     arcpy.PolygonToLine_management(Simple_CQcopy, templines, "IGNORE_NEIGHBORS")
     arcpy.SplitLine_management(templines, templines2)
@@ -337,19 +213,19 @@ def CalcObservers(Simple_CQ, Observers, DataFactorsBoundaries, locationtemporal2
 
     #  Eliminate Observation points above roofs of the highest surfaces(a trick to make the
     # Import Overlaptable from function CalcBoundaries containing the data about buildings overlaping, eliminate duplicades, chose only those ones no overlaped and reindex
-    DataNear = pd.read_csv(DataFactorsBoundaries)
+    DataNear = pd.read_csv(data_factors_boundaries_csv)
     CleanDataNear = DataNear[DataNear['FactorShade'] == 1]
     CleanDataNear.drop_duplicates(subset='Name_x', inplace=True)
     CleanDataNear.reset_index(inplace=True)
     rows = CleanDataNear.Name_x.count()
-    if rows > 0: #there are overlapping buildings
+    if rows > 0:  # there are overlapping buildings
         for row in range(rows):
             Field = "Name"  # select field where the name exists to iterate
             Value = CleanDataNear.loc[row, 'Name_x']  # set the value or name of the City quarter
             Where_clausule = '''''' + '"' + Field + '"' + "=" + "\'" + str(
                 Value) + "\'" + ''''''  # strange writing to introduce in ArcGIS
             if row == 0:
-                arcpy.MakeFeatureLayer_management(Simple_CQ, 'Simple_lyr')
+                arcpy.MakeFeatureLayer_management(simple_cq_shp, 'Simple_lyr')
                 arcpy.SelectLayerByAttribute_management('Simple_lyr', "NEW_SELECTION", Where_clausule)
             else:
                 arcpy.SelectLayerByAttribute_management('Simple_lyr', "ADD_TO_SELECTION", Where_clausule)
@@ -357,30 +233,31 @@ def CalcObservers(Simple_CQ, Observers, DataFactorsBoundaries, locationtemporal2
             arcpy.CopyFeatures_management('simple_lyr', NonoverlappingBuildings)
         arcpy.ErasePoint_edit(Observers0, NonoverlappingBuildings, "INSIDE")
 
-    arcpy.CopyFeatures_management(Observers0, Observers)  # copy features to reset the OBJECTID
-    with arcpy.da.UpdateCursor(Observers, ["OBJECTID", "ORIG_FID"]) as cursor:
+    arcpy.CopyFeatures_management(Observers0, observers_path)  # copy features to reset the OBJECTID
+    with arcpy.da.UpdateCursor(observers_path, ["OBJECTID", "ORIG_FID"]) as cursor:
         for row in cursor:
             row[1] = row[0]
             cursor.updateRow(row)
-    gv.log('complete calculating observers')
+    print('complete calculating observers')
     return arcpy.GetMessages()
 
 
-def CalcBoundaries(Simple_CQ, locationtemp1, locationtemp2, DataFactorsCentroids, DataFactorsBoundaries, gv):
+def calculate_boundaries_of_buildings(simple_cq_shp, temporary_folder, path_arcgis_db, data_factors_centroids_csv,
+                                      data_factors_boundaries_csv):
     # local variables
-    NearTable = locationtemp1 + '\\' + 'NearTable.dbf'
-    CQLines = locationtemp2 + '\\' + '\CQLines'
-    CQVertices = locationtemp2 + '\\' + 'CQVertices'
-    CQSegments = locationtemp2 + '\\' + 'CQSegment'
-    CQSegments_centroid = locationtemp2 + '\\' + 'CQSegmentCentro'
+    NearTable = temporary_folder + '\\' + 'NearTable.dbf'
+    CQLines = path_arcgis_db + '\\' + '\CQLines'
+    CQVertices = path_arcgis_db + '\\' + 'CQVertices'
+    CQSegments = path_arcgis_db + '\\' + 'CQSegment'
+    CQSegments_centroid = path_arcgis_db + '\\' + 'CQSegmentCentro'
     centroidsTable_name = 'CentroidCQdata.dbf'
-    centroidsTable = locationtemp1 + '\\' + centroidsTable_name
-    Overlaptable = locationtemp1 + '\\' + 'overlapingTable.csv'
+    centroidsTable = temporary_folder + '\\' + centroidsTable_name
+    Overlaptable = temporary_folder + '\\' + 'overlapingTable.csv'
 
     # Create points in the centroid of segment line and table with near features:
-    # indentifying for each segment of line of building A the segment of line of building B in common.
-    arcpy.FeatureToLine_management(Simple_CQ, CQLines)
-    arcpy.FeatureVerticesToPoints_management(Simple_CQ, CQVertices, 'ALL')
+    # identifying for each segment of line of building A the segment of line of building B in common.
+    arcpy.FeatureToLine_management(simple_cq_shp, CQLines)
+    arcpy.FeatureVerticesToPoints_management(simple_cq_shp, CQVertices, 'ALL')
     arcpy.SplitLineAtPoint_management(CQLines, CQVertices, CQSegments, '2 METERS')
     arcpy.FeatureVerticesToPoints_management(CQSegments, CQSegments_centroid, 'MID')
     arcpy.GenerateNearTable_analysis(CQSegments_centroid, CQSegments_centroid, NearTable, "1 Meters", "NO_LOCATION",
@@ -390,9 +267,8 @@ def CalcBoundaries(Simple_CQ, locationtemp1, locationtemp2, DataFactorsCentroids
     NearMatches = Dbf5(NearTable).to_dataframe()
 
     # Import the table with attributes of the centroids of the Segments
-    arcpy.TableToTable_conversion(CQSegments_centroid, locationtemp1, centroidsTable_name)
-    DataCentroids0 = Dbf5(centroidsTable).to_dataframe()
-    DataCentroids = DataCentroids0[['Name', 'height_ag', 'ORIG_FID']]
+    arcpy.TableToTable_conversion(CQSegments_centroid, temporary_folder, centroidsTable_name)
+    DataCentroids = Dbf5(centroidsTable).to_dataframe()[['Name', 'height_ag', 'ORIG_FID']]
 
     # CreateJoin to Assign a Factor to every Centroid of the lines,
     FirstJoin = pd.merge(NearMatches, DataCentroids, left_on='IN_FID', right_on='ORIG_FID')
@@ -402,8 +278,8 @@ def CalcBoundaries(Simple_CQ, locationtemp1, locationtemp2, DataFactorsCentroids
     # also delete matches with a distance of more than 20 cm making room for mistakes during the simplicfication of buildings but avoiding deleten boundaries
     rows = SecondaryJoin.IN_FID.count()
     for row in range(rows):
-        if SecondaryJoin.loc[row, 'Name_x'] == SecondaryJoin.loc[row, 'Name_y'] or SecondaryJoin.loc[
-            row, 'NEAR_DIST'] > 0.2:
+        if (SecondaryJoin.loc[row, 'Name_x'] == SecondaryJoin.loc[row, 'Name_y']
+            or SecondaryJoin.loc[row, 'NEAR_DIST'] > 0.2):
             SecondaryJoin = SecondaryJoin.drop(row)
     SecondaryJoin.reset_index(inplace=True)
 
@@ -425,10 +301,11 @@ def CalcBoundaries(Simple_CQ, locationtemp1, locationtemp2, DataFactorsCentroids
                 SecondaryJoin.loc[row, 'height_ag_y'] - SecondaryJoin.loc[row, 'height_ag_x'])
 
     # Create and export Secondary Join with results, it will be Useful for the function CalcObservers
-    SecondaryJoin.to_csv(DataFactorsBoundaries, index=False)
+    SecondaryJoin.to_csv(data_factors_boundaries_csv, index=False)
 
     # Update table Datacentroids with the Fields Freeheight and Factor Shade. for those buildings without
     # shading boundaries these factors are equal to 1 and the field 'height' respectively.
+    pd.options.mode.chained_assignment = None
     DataCentroids['FactorShade'] = 1
     DataCentroids['Freeheight'] = DataCentroids.height_ag
     Results = DataCentroids.merge(SecondaryJoin, left_on='ORIG_FID', right_on='ORIG_FID_x', how='outer')
@@ -437,43 +314,76 @@ def CalcBoundaries(Simple_CQ, locationtemp1, locationtemp2, DataFactorsCentroids
     Results.rename(columns={'FactorShade_y': 'FactorShade', 'Freeheight_y': 'Freeheight'}, inplace=True)
     FinalDataCentroids = pd.DataFrame(Results, columns={'ORIG_FID', 'height', 'FactorShade', 'Freeheight'})
 
-    FinalDataCentroids.to_csv(DataFactorsCentroids, index=False)
-    gv.log('complete calculating boundaries')
+    FinalDataCentroids.to_csv(data_factors_centroids_csv, index=False)
+    print('complete calculating boundaries')
     return arcpy.GetMessages()
 
 
-def Burn(Buildings, DEM, DEMfinal, locationtemp1, DEM_extent, gv):
+def burn_buildings_into_raster(simple_context_shp, terrain_tif, dem_rasterfinal_path, temporary_folder,
+                               dem_raster_extent):
     # Create a raster with all the buildings
-    Outraster = locationtemp1 + '\\' + 'AllRaster'
-    arcpy.env.extent = DEM_extent  # These coordinates are extracted from the environment settings/once the DEM raster is selected directly in ArcGIS,
-    arcpy.FeatureToRaster_conversion(Buildings, 'height_ag', Outraster,
-                                     '0.5')  # creating raster of the footprints of the buildings
+    Outraster = temporary_folder + '\\' + 'AllRaster'
+    # These coordinates are extracted from the environment settings/once the DEM raster is selected directly in ArcGIS,
+    arcpy.env.extent = dem_raster_extent
+    # creating raster of the footprints of the buildings
+    arcpy.FeatureToRaster_conversion(simple_context_shp, 'height_ag', Outraster, '0.5')
 
     # Clear non values and add all the Buildings to the DEM
     OutNullRas = arcpy.sa.IsNull(Outraster)  # identify noData Locations
     Output = arcpy.sa.Con(OutNullRas == 1, 0, Outraster)
-    RadiationDEM = arcpy.sa.Raster(DEM) + Output
-    RadiationDEM.save(DEMfinal)
-    gv.log('complete burning buildings into raster')
+    RadiationDEM = arcpy.sa.Raster(terrain_tif) + Output
+    RadiationDEM.save(dem_rasterfinal_path)
+    print('complete burning buildings into raster')
 
     return arcpy.GetMessages()
 
 
-def calc_sunrise(sunrise, year_to_simulate, longitude, latitude, gv):
-    o = ephem.Observer()
-    o.lat = str(latitude)
-    o.long = str(longitude)
-    s = ephem.Sun()
+def calculate_sunrise(year_to_simulate, longitude, latitude):
+    """
+    Calculate the hour of sunrise for a given year, longitude and latitude. Returns an array
+    of hours.
+    """
+
+    # get the time zone name
+    tf = TimezoneFinder()
+    time_zone = tf.timezone_at(lng=longitude, lat=latitude)
+
+    # define the city_name
+    location = Location()
+    location.name = 'name'
+    location.region = 'region'
+    location.latitude = latitude
+    location.longitude = longitude
+    location.timezone = time_zone
+    location.elevation = 0
+
+    sunrise = []
     for day in range(1, 366):  # Calculated according to NOAA website
-        o.date = datetime.datetime(year_to_simulate, 1, 1) + datetime.timedelta(day - 1)
-        next_event = o.next_rising(s)
-        sunrise[day - 1] = next_event.datetime().hour
-    gv.log('complete calculating sunrise')
+        dt = datetime.datetime(year_to_simulate, 1, 1) + datetime.timedelta(day - 1)
+        dt = pytz.timezone(time_zone).localize(dt)
+        sun = location.sun(dt)
+        sunrise.append(sun['sunrise'].hour)
+    print('complete calculating sunrise')
     return sunrise
 
 
+def get_latitude(scenario_path):
+    import fiona
+    import cea.inputlocator
+    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry()) as shp:
+        lat = shp.crs['lat_0']
+    return lat
+
+
+def get_longitude(scenario_path):
+    import fiona
+    import cea.inputlocator
+    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry()) as shp:
+        lon = shp.crs['lon_0']
+    return lon
+
+
 def run_as_script(scenario_path=None, weather_path=None, latitude=None, longitude=None, year=None):
-    import cea.globalvar
     import cea.inputlocator
     gv = cea.globalvar.GlobalVariables()
     if scenario_path is None:
@@ -482,16 +392,52 @@ def run_as_script(scenario_path=None, weather_path=None, latitude=None, longitud
     if weather_path is None:
         weather_path = locator.get_default_weather()
     if latitude is None:
-        latitude = 47.1628017306431
+        latitude = get_latitude(scenario_path)
     if longitude is None:
-        longitude = 8.31
+        longitude = get_longitude(scenario_path)
     if year is None:
-        year = 2010
+        year = 2016
     path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
 
     solar_radiation_vertical(locator=locator, path_arcgis_db=path_default_arcgis_db,
                              latitude=latitude, longitude=longitude, year=year, gv=gv,
                              weather_path=weather_path)
+
+
+def run_script_in_subprocess(script_name, *args):
+    """Run the script `script_name` (in the same folder as this script) in a subprocess, printing the output"""
+    import subprocess
+    startupinfo = subprocess.STARTUPINFO()
+
+    script_full_path = os.path.join(os.path.dirname(__file__), script_name + '.py')
+
+    command = [get_python_exe(), '-u', script_full_path]
+    command.extend(map(str, args))
+    print(command)
+    process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    while True:
+        next_line = process.stdout.readline()
+        if next_line == '' and process.poll() is not None:
+            break
+        if len(next_line):
+            print(script_name + ': ' + next_line.rstrip())
+    stdout, stderr = process.communicate()
+    if len(stdout):
+        print(script_name + ': ' + stdout.rstrip())
+    if len(stderr):
+        print(script_name + '@STDERR:\n' + stderr)
+    if process.returncode != 0:
+        raise Exception('Failed to execute ' + script_name)
+
+
+def get_python_exe():
+    """Return the path to the python interpreter that was used to install CEA"""
+    try:
+        with open(os.path.expanduser('~/cea_python.pth'), 'r') as f:
+            python_exe = f.read().strip()
+            return python_exe
+    except:
+        raise AssertionError("Could not find 'cea_python.pth' in home directory.")
 
 
 if __name__ == '__main__':
@@ -500,9 +446,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
     parser.add_argument('-w', '--weather', help='Path to the weather file')
-    parser.add_argument('--latitude', help='Latitutde', default=47.1628017306431)
-    parser.add_argument('--longitude', help='Longitude', default=8.31)
-    parser.add_argument('--year', help='Year', default=2010)
+    parser.add_argument('--latitude', help='Latitutde', )
+    parser.add_argument('--longitude', help='Longitude', )
+    parser.add_argument('--year', help='Year', )
     args = parser.parse_args()
 
     run_as_script(scenario_path=args.scenario, weather_path=args.weather, latitude=args.latitude,
