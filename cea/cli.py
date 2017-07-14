@@ -304,6 +304,34 @@ def retrofit_potential(args):
                                      cooling_losses_criteria=args.cooling_losses_threshold,
                                      emissions_operation_criteria=args.emissions_operation_threshold)
 
+def read_config(args):
+    """Read a key from a section in the configuration"""
+    import cea.config
+    import ConfigParser
+    config = cea.config.Configuration(args.scenario)
+    try:
+        print(config._parser.get(args.section, args.key))
+    except ConfigParser.NoSectionError:
+        pass
+    except ConfigParser.NoOptionError:
+        pass
+
+
+
+def write_config(args):
+    """write a value to a section/key in the configuration in the scenario folder"""
+    import cea.config
+    import ConfigParser
+    config = cea.config.Configuration(args.scenario)
+    if not config._parser.has_section(args.section):
+        config._parser.add_section(args.section)
+    config._parser.set(args.section, args.key, args.value)
+    scenario_config = os.path.join(args.scenario, 'scenario.config')
+    with open(scenario_config, 'w') as f:
+        config._parser.write(f)
+
+
+
 def main():
     """Parse the arguments and run the program."""
     import argparse
@@ -434,24 +462,6 @@ def main():
                                  default=False)
     heatmaps_parser.set_defaults(func=heatmaps)
 
-    test_parser = subparsers.add_parser('test', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    test_parser.add_argument('--user', help='GitHub user with access to cea-reference-case repository')
-    test_parser.add_argument('--token', help='Personal Access Token for the GitHub user')
-    test_parser.add_argument('--save', action='store_true', default=False, help='Save user and token to disk.')
-    test_parser.add_argument('--reference-cases', default=['open'], nargs='+',
-                             choices=['open', 'zug/baseline', 'zurich/baseline', 'zurich/masterplan', 'all'],
-                             help='list of reference cases to test')
-    test_parser.set_defaults(func=test)
-
-    extract_reference_case_parser = subparsers.add_parser('extract-reference-case',
-                                                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    extract_reference_case_parser.add_argument('--to', help='Folder to extract the reference case to',
-                                               default='.')
-    extract_reference_case_parser.set_defaults(func=extract_reference_case)
-
-    compile_parser = subparsers.add_parser('compile', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    compile_parser.set_defaults(func=compile)
-
     operation_costs_parser = subparsers.add_parser('operation-costs',
                                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     operation_costs_parser.set_defaults(func=operation_costs)
@@ -491,8 +501,38 @@ def main():
                                            help="threshold for thermal losses from cooling")
     retrofit_potential_parser.set_defaults(func=retrofit_potential)
 
+    test_parser = subparsers.add_parser('test', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    test_parser.add_argument('--user', help='GitHub user with access to cea-reference-case repository')
+    test_parser.add_argument('--token', help='Personal Access Token for the GitHub user')
+    test_parser.add_argument('--save', action='store_true', default=False, help='Save user and token to disk.')
+    test_parser.add_argument('--reference-cases', default=['open'], nargs='+',
+                             choices=['open', 'zug/baseline', 'zurich/baseline', 'zurich/masterplan', 'all'],
+                             help='list of reference cases to test')
+    test_parser.set_defaults(func=test)
+
+    extract_reference_case_parser = subparsers.add_parser('extract-reference-case',
+                                                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    extract_reference_case_parser.add_argument('--to', help='Folder to extract the reference case to',
+                                               default='.')
+    extract_reference_case_parser.set_defaults(func=extract_reference_case)
+
+    compile_parser = subparsers.add_parser('compile', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    compile_parser.set_defaults(func=compile)
+
+    read_config_parser = subparsers.add_parser('read-config', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    read_config_parser.add_argument('--section', help='section to read from')
+    read_config_parser.add_argument('--key', help='key to read')
+    read_config_parser.set_defaults(func=read_config)
+
+    write_config_parser = subparsers.add_parser('write-config', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    write_config_parser.add_argument('--section', help='section to write to')
+    write_config_parser.add_argument('--key', help='key to write')
+    write_config_parser.add_argument('--value', help='value to write')
+    write_config_parser.set_defaults(func=write_config)
+
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)
+
 
 if __name__ == '__main__':
     main()
