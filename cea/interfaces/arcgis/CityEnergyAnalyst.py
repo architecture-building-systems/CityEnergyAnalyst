@@ -29,9 +29,8 @@ class Toolbox(object):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
         self.tools = [OperationCostsTool, RetrofitPotentialTool, DemandTool, DataHelperTool, BenchmarkGraphsTool,
-                      OperationTool, EmbodiedTool, MobilityTool,
+                      OperationTool, EmbodiedTool, MobilityTool,SolarTechnologyTool,
                       DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool]
-
 
 class OperationCostsTool(object):
     def __init__(self):
@@ -687,6 +686,184 @@ class ScenarioPlotsTool(object):
         output_file = parameters[1].valueAsText
         add_message(scenarios)
         run_cli(None, 'scenario-plots', '--output-file', output_file, '--scenarios', *scenarios)
+
+
+class SolarTechnologyTool(object):
+    def __init__(self):
+        self.label = 'Photovoltaic Panels'
+        self.description = 'Calculate electricity production from solar photovoltaic technologies'
+        self.category = 'Dynamic Supply Systems'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        weather_name = arcpy.Parameter(
+            displayName="Weather file (use the same one for solar radiation calculation)",
+            name="weather_name",
+            datatype="String",
+            parameterType="Required",
+            direction="Input")
+        weather_name.filter.list = get_weather_names()
+        weather_name.enabled = False
+
+        year = arcpy.Parameter(
+            displayName="Year",
+            name="year",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        year.value = 2014
+        year.enabled = False
+
+        latitude = arcpy.Parameter(
+            displayName="Latitude",
+            name="latitude",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        latitude.enabled = False
+
+        longitude = arcpy.Parameter(
+            displayName="Longitude",
+            name="longitude",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        longitude.enabled = False
+
+        pvonroof = arcpy.Parameter(
+            displayName="Considering panels on roofs",
+            name="pvonroof",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        pvonroof.value = True
+
+        pvonwall = arcpy.Parameter(
+            displayName="Considering panels on walls",
+            name="pvonwall",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        pvonwall.value = True
+
+        worst_hour = arcpy.Parameter(
+            displayName="worst hour (the hour of sunrise on the solar solstice at the site)",
+            name="worst_hour",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        worst_hour.value = 8744
+
+        type_PVpanel = arcpy.Parameter(
+            displayName="PV technology to use",
+            name="type_PVpanel",
+            datatype="String",
+            parameterType="Required",
+            direction="Input")
+        type_PVpanel.filter.list = ['monocrystalline', 'polycrystalline', 'amorphous']
+
+        min_radiation = arcpy.Parameter(
+            displayName="filtering surfaces with low radiation potential (% of the maximum radiation in the area)",
+            name="min_radiation",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        min_radiation.value = 0.75
+
+        return [scenario_path, weather_name, year, latitude, longitude, pvonroof, pvonwall, worst_hour,
+                type_PVpanel, min_radiation]
+
+    def updateParameters(self, parameters):
+        scenario_path = parameters[0].valueAsText
+        if scenario_path is None:
+            return
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+
+        radiation_csv = _cli_output(scenario_path, 'locate', 'get_radiation')
+        if not os.path.exists(radiation_csv):
+            parameters[0].setErrorMessage("No radiation file found - please run radiation tool first")
+            return
+
+        # scenario passes test
+        weather_parameter = parameters[1]
+        year_parameter = parameters[2]
+        latitude_parameter = parameters[3]
+        longitude_parameter = parameters[4]
+
+        weather_parameter.enabled = True
+        year_parameter.enabled = True
+
+        latitude_value = float(_cli_output(scenario_path, 'latitude'))
+        longitude_value = float(_cli_output(scenario_path, 'longitude'))
+        if not latitude_parameter.enabled:
+            # only overwrite on first try
+            latitude_parameter.value = latitude_value
+            latitude_parameter.enabled = True
+
+        if not longitude_parameter.enabled:
+            # only overwrite on first try
+            longitude_parameter.value = longitude_value
+            longitude_parameter.enabled = True
+        return
+
+    def updateMessages(self, parameters):
+        scenario_path = parameters[0].valueAsText
+        if scenario_path is None:
+            return
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+
+        radiation_csv = _cli_output(scenario_path, 'locate', 'get_radiation')
+        if not os.path.exists(radiation_csv):
+            parameters[0].setErrorMessage("No radiation file found - please run radiation tool first")
+            return
+
+    def execute(self, parameters, messages):
+        scenario_path = parameters[0].valueAsText
+        weather_name = parameters[1].valueAsText
+        year = parameters[2].value
+        latitude = parameters[3].value
+        longitude = parameters[4].value
+        pvonroof = parameters[5].value
+        pvonwall = parameters[6].value
+        worst_hour = parameters[7].value
+        type_PVpanel = {'monocrystalline': 'PV1',
+                        'polycrystalline': 'PV2',
+                        'amorphous': 'PV3'}[parameters[8].value]
+        min_radiation = parameters[9].value
+
+        date_start = str(year) + '-01-01'
+
+        if weather_name in get_weather_names():
+            weather_path = get_weather_path(weather_name)
+        elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
+            weather_path = weather_name
+        else:
+            weather_path = get_weather_path('.')
+
+        add_message('longitude: %s' % longitude)
+        add_message('latitude: %s' % latitude)
+
+        run_cli_arguments = [scenario_path, 'photovoltaic', '--latitude', latitude, '--longitude', longitude,
+                             '--weather-path', weather_path, '--worst-hour', worst_hour, '--type-PVpanel', type_PVpanel,
+                             '--min-radiation', min_radiation, '--date-start', date_start]
+        if pvonroof:
+            run_cli_arguments.append('--pvonroof')
+        if pvonwall:
+            run_cli_arguments.append('--pvonwall')
+
+        run_cli(*run_cli_arguments)
+        return
 
 
 class RadiationTool(object):
