@@ -1174,7 +1174,7 @@ class xls2dbfTool(object):
         output_path = parameters['output_path'].valueAsText
         parameters = [input_path,output_path]
 
-        run_cli(parameters, 'xls2dbf')
+        run_cli(parameters, 'xls2dbfTool')
 
 class dbf2xlsTool(object):
     def __init__(self):
@@ -1204,10 +1204,8 @@ class dbf2xlsTool(object):
 
 
     def execute(self,parameters, _):
-        from cea.utilities import dbfreader
-        dbfreader(parameters)
-    #     input_path = parameters['input_path'].valueAsText
-    #     output_path = parameters['output_path'].valueAsText
-    #     parameters = [input_path,output_path]
-    #
-    #     run_cli(parameters, 'dbf2xlsTool')
+        input_path = parameters['input_path'].valueAsText
+        output_path = parameters['output_path'].valueAsText
+        parameters = [input_path,output_path]
+
+        run_cli(parameters, 'dbf2xlsTool')
