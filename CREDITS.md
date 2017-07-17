@@ -1,6 +1,6 @@
 Credits
 =======
-The credits section is structured following the number of additions to CEA made by each contributor. It excludes merge
+The credits section is structured following the number of additions to CEA made by each contributor at the date of release.
 
   - Version 2.3
     * [Jimeno A. Fonseca](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/jimeno-fonseca.html)
