@@ -2,19 +2,21 @@
 photovoltaic
 """
 
-
 from __future__ import division
+
+import time
+from math import *
+
 import numpy as np
 import pandas as pd
+from scipy import interpolate
+
 import cea.globalvar
 import cea.inputlocator
 from math import *
 from cea.utilities import dbfreader
-from scipy import interpolate
-
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
-import time
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -25,9 +27,9 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
 def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_path, building_name, pvonroof,
-            pvonwall, misc_losses, worst_hour, type_PVpanel, min_radiation, date_start):
+            pvonwall, worst_hour, type_PVpanel, min_radiation, date_start):
+
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -84,8 +86,7 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
         print 'generating groups of sensor points done'
 
         results, Final = calc_pv_generation(hourlydata_groups, number_groups, number_points, prop_observers,
-                                            weather_data, g, Sz, Az, ha, latitude, misc_losses, panel_properties)
-
+                                            weather_data, g, Sz, Az, ha, latitude, panel_properties)
 
         Final.to_csv(locator.PV_results(building_name= building_name), index=True, float_format='%.2f')  # print PV generation potential
         sensors_metadata_cat.to_csv(locator.PV_metadata_results(building_name= building_name), index=True, float_format='%.2f')  # print selected metadata of the selected sensors
@@ -94,13 +95,12 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
     return
 
 
-
 # =========================
 # PV electricity generation
 # =========================
 
 def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_observers, weather_data, g, Sz, Az, ha,
-                       latitude, misc_losses, panel_properties):
+                       latitude, panel_properties):
     """
     To calculate the electricity generated from PV panels.
     :param hourly_radiation: mean hourly radiation of sensors in each group [Wh/m2]
@@ -121,7 +121,6 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
 
     :param ha: hour angle
     :param latitude: latitude of the case study location
-    :param misc_losses: expected system loss [-]
     :return:
     """
 
@@ -148,6 +147,7 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
     a3 = panel_properties['PV_a3']
     a4 = panel_properties['PV_a4']
     L = panel_properties['PV_th']
+    misc_losses = panel_properties['misc_losses'] # cabling, resistances etc..
 
     for group in range(number_groups):
         # read panel properties of each group
@@ -414,8 +414,8 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     """
     # calculate panel tilt angle (B) for flat roofs (tilt < 5 degrees), slope roofs and walls.
     optimal_angle_flat = calc_optimal_angle(180, latitude, transmissivity) # assume surface azimuth = 180 (N,E), south facing
-    sensors_metadata_clean['tilt']= np.vectorize(math.acos)(sensors_metadata_clean['Zdir']) #surface tilt angle in rad
-    sensors_metadata_clean['tilt'] = np.vectorize(math.degrees)(sensors_metadata_clean['tilt']) #surface tilt angle in degrees
+    sensors_metadata_clean['tilt']= np.vectorize(acos)(sensors_metadata_clean['Zdir']) #surface tilt angle in rad
+    sensors_metadata_clean['tilt'] = np.vectorize(degrees)(sensors_metadata_clean['tilt']) #surface tilt angle in degrees
     sensors_metadata_clean['B'] = np.where(sensors_metadata_clean['tilt'] >= 5, sensors_metadata_clean['tilt'],
                                            degrees(optimal_angle_flat)) # panel tilt angle in degrees
 
@@ -573,8 +573,8 @@ def calc_surface_azimuth(xdir, ydir, B):
     :rtype surface_azimuth: float
 
     """
-    B = math.radians(B)
-    teta_z = math.degrees(math.asin(xdir / math.sin(B)))
+    B = radians(B)
+    teta_z = degrees(asin(xdir / sin(B)))
     # set the surface azimuth with on the sing convention (E,N)=(+,+)
     if xdir < 0:
         if ydir <0:
@@ -697,7 +697,6 @@ def test_photovoltaic():
     min_radiation = 0.75  # points are selected with at least a minimum production of this % from the maximum in the area.
     type_PVpanel = "PV1"  # PV1: monocrystalline, PV2: poly, PV3: amorphous. please refer to supply system database.
     worst_hour = 8744  # first hour of sun on the solar solstice
-    misc_losses = 0.1  # cabling, resistances etc..# FIXME: delete
     panel_on_roof = True  # flag for considering PV on roof
     panel_on_wall = True  # flag for considering PV on wall
     longitude = 7.439583333333333
@@ -709,7 +708,7 @@ def test_photovoltaic():
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
         calc_PV(locator=locator, radiation_path= radiation, metadata_csv= radiation_metadata, latitude=latitude,
                 longitude=longitude, weather_path=weather_path, building_name = building,
-                pvonroof=panel_on_roof, pvonwall=panel_on_wall, misc_losses=misc_losses, worst_hour=worst_hour,
+                pvonroof=panel_on_roof, pvonwall=panel_on_wall, worst_hour=worst_hour,
                 type_PVpanel=type_PVpanel, min_radiation=min_radiation, date_start=date_start)
 
 

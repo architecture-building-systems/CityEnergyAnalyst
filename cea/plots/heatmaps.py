@@ -57,7 +57,7 @@ def heatmaps(locator, analysis_fields, file_to_analyze):
     tempfile_db = locator.get_temporary_file('data.dbf')
     arcpy.CopyRows_management(file_to_analyze, out_table=tempfile_db, config_keyword="")
     
-    arcpy.FeatureToPoint_management(locator.get_building_geometry(),tempfile, "CENTROID")
+    arcpy.FeatureToPoint_management(locator.get_zone_geometry(), tempfile, "CENTROID")
     arcpy.MakeFeatureLayer_management(tempfile, "lyr", "#", "#")
 
     gis_field_lookup = {}  # map csv_field -> gis_field
