@@ -33,7 +33,9 @@ def find_toolbox_src():
     Find the source path of the toolbox file (CityEnergyAnalyst.py) - hint: it is relative
     to the current file!
     """
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), 'CityEnergyAnalyst.py'))
+    toolbox_src = os.path.abspath(os.path.join(os.path.dirname(__file__), 'CityEnergyAnalyst.py'))
+    print('Copying toolbox from source: %s' % toolbox_src)
+    return toolbox_src
 
 
 def find_toolbox_dst():
@@ -41,8 +43,10 @@ def find_toolbox_dst():
     Find the destination path for the toolbox file (City Energy Analyst.pyt) - hint: the
     folder is "%APPDATA%\ESRI\Desktop10.4\ArcToolbox\My Toolboxes"
     """
-    return os.path.join(os.path.expandvars(r"%APPDATA%\ESRI\Desktop10.4\ArcToolbox\My Toolboxes"),
+    toolbox_dst = os.path.join(os.path.expandvars(r"%APPDATA%\ESRI\Desktop10.4\ArcToolbox\My Toolboxes"),
                         'City Energy Analyst.pyt')
+    print('Copying toolbox to destination: %s' % toolbox_dst)
+    return toolbox_dst
 
 
 if __name__ == '__main__':

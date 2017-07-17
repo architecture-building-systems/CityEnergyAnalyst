@@ -134,13 +134,13 @@ Ntp49
 Rp50
 (dp51
 g7
-S'cea.inputlocator.InputLocator.get_building_geometry'
+S'cea.inputlocator.InputLocator.get_zone_geometry'
 p52
 sg9
 S'cea\\inputlocator.py'
 p53
 sg11
-S'get_building_geometry'
+S'get_zone_geometry'
 p54
 sg13
 g21
