@@ -3,6 +3,8 @@
 Parameters used for solar technologies
 """
 
+## USER INPUTS
+
 # site specific input
 date_start = '2016-01-01'  # format: yyyy-mm-dd
 
@@ -16,12 +18,15 @@ panel_on_roof = True  # flag for considering panels on roof
 panel_on_wall = True  # flag for considering panels on wall
 min_radiation = 0.75  # filtering criteria: at least a minimum production of this % from the maximum in the area.
 
+# panel spacing
+solar_window_solstice = 4 # desired hours of solar window on the solstice
+
 # panel specific inputs
 T_in_SC = 75  # inlet temperature of solar collectors [C]
 T_in_PVT = 35 # inlet temperature of PVT panels [C]
 
-# panel spacing
-solar_window_solstice = 4 # desired hours of solar window on the solstice
+
+## INTERNAL PARAMETERS
 
 # solar collectors pumping requirements
 dpl = 200 # pressure losses per length of pipe according to Solar District Heating Guidelines, [Pa/m]
