@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Constant variables for solar technologies
+Parameters used for solar technologies
 """
 
 # site specific input
