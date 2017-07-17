@@ -5,18 +5,17 @@ photovoltaic
 from __future__ import division
 
 import time
-from math import *
-
 import numpy as np
 import pandas as pd
 from scipy import interpolate
-
+import fiona
 import cea.globalvar
 import cea.inputlocator
 from math import *
 from cea.utilities import dbfreader
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
+from cea.technologies.solar import settings
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -27,8 +26,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_path, building_name, pvonroof,
-            pvonwall, worst_hour, type_PVpanel, min_radiation, date_start):
+def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_path, building_name):
 
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
@@ -59,18 +57,18 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
     print 'reading weather data done'
 
     # solar properties
-    g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude,longitude, weather_data,
-                                                                                                        date_start,
-                                                                                                        worst_hour)
+    g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
+                                                                                      settings.date_start)
     print 'calculating solar properties done'
 
     # calculate properties of PV panel
-    panel_properties = calc_properties_PV_db(locator.get_supply_systems_database(), type_PVpanel)
+    panel_properties = calc_properties_PV_db(locator.get_supply_systems_database(), settings.type_PVpanel)
     print 'gathering properties of PV panel'
 
     # select sensor point with sufficient solar radiation
     max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_path, metadata_csv, min_radiation, pvonroof, pvonwall)
+        solar_equations.filter_low_potential(weather_data, radiation_path, metadata_csv, settings.min_radiation,
+                                             settings.panel_on_roof, settings.panel_on_wall)
 
     print 'filtering low potential sensor points done'
 
@@ -694,22 +692,15 @@ def test_photovoltaic():
     weather_path = locator.get_default_weather()
     list_buildings_names = dbfreader.dbf2df(locator.get_building_occupancy())['Name']
 
-    min_radiation = 0.75  # points are selected with at least a minimum production of this % from the maximum in the area.
-    type_PVpanel = "PV1"  # PV1: monocrystalline, PV2: poly, PV3: amorphous. please refer to supply system database.
-    worst_hour = 8744  # first hour of sun on the solar solstice
-    panel_on_roof = True  # flag for considering PV on roof
-    panel_on_wall = True  # flag for considering PV on wall
-    longitude = 7.439583333333333
-    latitude = 46.95240555555556
-    date_start = gv.date_start
+    with fiona.open(locator.get_zone_geometry()) as shp:
+        longitude = shp.crs['lon_0']
+        latitude = shp.crs['lat_0']
 
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name= building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
-        calc_PV(locator=locator, radiation_path= radiation, metadata_csv= radiation_metadata, latitude=latitude,
-                longitude=longitude, weather_path=weather_path, building_name = building,
-                pvonroof=panel_on_roof, pvonwall=panel_on_wall, worst_hour=worst_hour,
-                type_PVpanel=type_PVpanel, min_radiation=min_radiation, date_start=date_start)
+        calc_PV(locator=locator, radiation_path=radiation, metadata_csv=radiation_metadata, latitude=latitude,
+                longitude=longitude, weather_path=weather_path, building_name=building)
 
 
 if __name__ == '__main__':
