@@ -15,6 +15,7 @@ The credits section is structured following the number of additions to CEA made 
     * Paul Neitzel (-769.000 code, copyright infringement)
     * Fazel Kayathan
     * Amr Elesawy
+    * Zhongming Shi (http://www.systems.arch.ethz.ch/about-us/team/team-singapore/zhongming-shi.html)   
     * [Arno Schlueter](http://www.systems.arch.ethz.ch/about-us/team/arno-schlueter.html)
 
   - Version 2.2
@@ -29,6 +30,7 @@ The credits section is structured following the number of additions to CEA made 
     * Tim Vollrath
     * Paul Neitzel (-769.000 code, copyright infringement)
     * Amr Elesawy
+    * Zhongming Shi (http://www.systems.arch.ethz.ch/about-us/team/team-singapore/zhongming-shi.html)    
     * [Arno Schlueter](http://www.systems.arch.ethz.ch/about-us/team/arno-schlueter.html)
 
   - Version 1.0b
