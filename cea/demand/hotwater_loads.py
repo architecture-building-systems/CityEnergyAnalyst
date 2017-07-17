@@ -136,7 +136,7 @@ def calc_Qww_dis_ls_nr(tair, Qww, Vww, Lvww_dis, Lvww_c, Y, Qww_0, V, Flowtap, t
 
 def calc_disls(tamb, Vww, Flowtap, V, twws, Lsww_dis, p, cpw, Y, gv):
     """
-    Calculates distribution losses in Wh according to Fonseca & Schlueter (2015) eqs. 23 and 24, which is in turn based
+    Calculates distribution losses in Wh according to Fonseca & Schlueter (2015) Eq. 24, which is in turn based
     on Annex A of ISO EN 15316 with pipe mass m_p,dis = 0.
     
     :param tamb: Room temperature in C
@@ -153,18 +153,17 @@ def calc_disls(tamb, Vww, Flowtap, V, twws, Lsww_dis, p, cpw, Y, gv):
     :return losses: recoverable/non-recoverable losses due to distribution of DHW
     """
     if Vww > 0:
-        t = 3600 / ((Vww / 1000) / Flowtap)
-        if t > 3600: t = 3600
-        # q = (twws - tamb) * Y
+        TR = 3600 / ((Vww / 1000) / Flowtap) # Thermal response of insulated piping
+        if TR > 3600: TR = 3600
         try:
-            # exponential = scipy.exp(-(q * Lsww_dis * t) / (p * cpw * V * (twws - tamb) * 1000))
-            exponential = scipy.exp(-(Y * Lsww_dis * t) / (p * cpw * V * 1000))
+            exponential = scipy.exp(-(Y * Lsww_dis * TR) / (p * cpw * V * 1000))
         except ZeroDivisionError:
             gv.log('twws: %(twws).2f, tamb: %(tamb).2f, p: %(p).2f, cpw: %(cpw).2f, V: %(V).2f',
                    twws=twws, tamb=tamb, p=p, cpw=cpw, V=V)
             raise ZeroDivisionError
 
         tamb = tamb + (twws - tamb) * exponential
+
         losses = (twws - tamb) * V * cpw * p / 3.6 # in Wh
     else:
         losses = 0
