@@ -61,12 +61,11 @@ def calc_PVT(locator, radiation_json_path, metadata_csv_path, latitude, longitud
 
     # weather data
     weather_data = epwreader.epw_reader(weather_path)
-    worst_hour = solar_equations.calc_worst_hour(latitude, weather_data, settings.solar_window_solstice)
     print 'reading weather data done'
 
     # solar properties
     g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
-                                                                                      settings.date_start, worst_hour)
+                                                                                      settings.date_start)
     print 'calculating solar properties done'
 
     # get properties of the panel to evaluate # TODO: find a PVT module reference
@@ -82,7 +81,7 @@ def calc_PVT(locator, radiation_json_path, metadata_csv_path, latitude, longitud
     print 'filtering low potential sensor points done'
 
     # Calculate the heights of all buildings for length of vertical pipes
-    height = gpd.read_file(locator.get_building_geometry())['height_ag'].sum()
+    height = gpd.read_file(locator.get_zone_geometry())['height_ag'].sum()
 
     if not sensors_metadata_clean.empty:
 
@@ -521,7 +520,7 @@ def test_PVT():
     weather_path = locator.get_default_weather()
     list_buildings_names = dbfreader.dbf2df(locator.get_building_occupancy())['Name']
 
-    with fiona.open(locator.get_building_geometry()) as shp:
+    with fiona.open(locator.get_zone_geometry()) as shp:
         longitude = shp.crs['lon_0']
         latitude = shp.crs['lat_0']
 
