@@ -23,9 +23,9 @@ The credits section is structured following the number of additions to CEA made 
     * [Daren Thomas](http://www.systems.arch.ethz.ch/about-us/team/team-zurich/daren-thomas.html)
     * [Martín Mosteiro Romero](http://www.systems.arch.ethz.ch/about-us/team/team-zurich/martin-mosteiro-romero.html)
     * [Shanshan Hsieh](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/shanshan-hsieh.html)
-    * [Sreepathi Bhargava Krishna](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/sreepathi-bhargava-krishna.html)
     * Kian Wee Chen
     * [Gabriel Happle](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/gabriel-happle.html)
+    * [Sreepathi Bhargava Krishna](http://www.systems.arch.ethz.ch/about-us/team/team-singapore/sreepathi-bhargava-krishna.html)
     * Thuy-An Nguyen
     * Tim Vollrath
     * Paul Neitzel (-769.000 code, copyright infringement)
