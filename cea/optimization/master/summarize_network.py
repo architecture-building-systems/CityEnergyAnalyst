@@ -11,9 +11,9 @@ import numpy as np
 import pandas as pd
 import math
 
-__author__ = "Jimeno A. Fonseca"
-__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca", "Thuy-An Nguyen", "Tim Vollrath", ]
+__author__ = "Sreepathi Bhargava Krishna"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Sreepathi Bhargava Krishna","Jimeno A. Fonseca", "Thuy-An Nguyen", "Tim Vollrath", ]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -53,11 +53,11 @@ def network_main(locator, total_demand, building_names, gv, key):
     # empty vectors
     buildings = []
     substations = []
-    Qcdata_netw_total = np.zeros(8760)
+    Qcdata_netw_total_kWh = np.zeros(8760)
     mdotdata_netw_total = np.zeros(8760)
     Ecaf_netw_total = np.zeros(8760)
     Electr_netw_total = np.zeros(8760)
-    mdot_heat_netw_all = np.zeros(8760)
+    mdot_heat_netw_all_kgpers = np.zeros(8760)
     mdot_cool_netw_all = np.zeros(8760)
     Q_DH_building_netw_total = np.zeros(8760)
     Q_DC_building_netw_total = np.zeros(8760)
@@ -70,37 +70,37 @@ def network_main(locator, total_demand, building_names, gv, key):
         buildings.append(pd.read_csv(locator.get_demand_results_file(building_name),
                                      usecols=['mcpdataf_kWC', 'Qcdataf_kWh', 'Ecaf_kWh']))
         substations.append(pd.read_csv(locator.get_optimization_substations_results_file(building_name),
-                                       usecols=['Electr_array_all_flat', 'mdot_DH_result', 'mdot_DC_result',
-                                                'Q_heating',
-                                                'Q_dhw', 'Q_cool', 'T_return_DH_result', 'T_return_DC_result',
-                                                'T_supply_DH_result']))
+                                       usecols=['Electr_array_all_flat_W', 'mdot_DH_result_kgpers',
+                                                'mdot_DC_result_kgpers', 'Q_heating_W', 'Q_dhw_W', 'Q_cool_W',
+                                                'T_return_DH_result_K', 'T_return_DC_result_K',
+                                                'T_supply_DH_result_K']))
 
-        Qcdata_netw_total += buildings[iteration].Qcdataf_kWh.values
+        Qcdata_netw_total_kWh += buildings[iteration].Qcdataf_kWh.values
         mdotdata_netw_total += buildings[iteration].mcpdataf_kWC.values
         Ecaf_netw_total += buildings[iteration].Ecaf_kWh.values
-        Electr_netw_total += substations[iteration].Electr_array_all_flat.values
-        mdot_heat_netw_all += substations[iteration].mdot_DH_result.values
-        mdot_cool_netw_all += substations[iteration].mdot_DC_result.values
-        Q_DH_building_netw_total += (substations[iteration].Q_heating.values + substations[iteration].Q_dhw.values)
-        Q_DC_building_netw_total += (substations[iteration].Q_cool.values)
-        sum_tret_mdot_heat += substations[iteration].T_return_DH_result.values * substations[
-            iteration].mdot_DH_result.values
-        sum_tret_mdot_cool += substations[iteration].T_return_DC_result.values * substations[
-            iteration].mdot_DC_result.values
+        Electr_netw_total += substations[iteration].Electr_array_all_flat_W.values
+        mdot_heat_netw_all_kgpers += substations[iteration].mdot_DH_result_kgpers.values
+        mdot_cool_netw_all += substations[iteration].mdot_DC_result_kgpers.values
+        Q_DH_building_netw_total += (substations[iteration].Q_heating_W.values + substations[iteration].Q_dhw_W.values)
+        Q_DC_building_netw_total += (substations[iteration].Q_cool_W.values)
+        sum_tret_mdot_heat += substations[iteration].T_return_DH_result_K.values * substations[
+            iteration].mdot_DH_result_kgpers.values
+        sum_tret_mdot_cool += substations[iteration].T_return_DC_result_K.values * substations[
+            iteration].mdot_DC_result_kgpers.values
 
         # evaluate minimum flows
         mdot_heat_netw_min = np.vectorize(calc_min_flow)(mdot_heat_netw_min,
-                                                         substations[iteration].mdot_DH_result.values)
+                                                         substations[iteration].mdot_DH_result_kgpers.values)
         mdot_cool_netw_min = np.vectorize(calc_min_flow)(mdot_cool_netw_min,
-                                                         substations[iteration].mdot_DC_result.values)
+                                                         substations[iteration].mdot_DC_result_kgpers.values)
         iteration += 1
 
     # calculate thermal losses of distribution
-    T_sst_heat_return_netw_total = np.vectorize(calc_return_temp)(sum_tret_mdot_heat, mdot_heat_netw_all)
+    T_sst_heat_return_netw_total = np.vectorize(calc_return_temp)(sum_tret_mdot_heat, mdot_heat_netw_all_kgpers)
 
     T_sst_heat_supply_netw_total = np.vectorize(calc_supply_temp)(T_sst_heat_return_netw_total,
                                                                   Q_DH_building_netw_total,
-                                                                  mdot_heat_netw_all,
+                                                                  mdot_heat_netw_all_kgpers,
                                                                   gv.cp, "DH")
 
     T_sst_cool_return_netw_total = np.vectorize(calc_return_temp)(sum_tret_mdot_cool,
@@ -110,11 +110,11 @@ def network_main(locator, total_demand, building_names, gv, key):
                                                                   mdot_cool_netw_all, gv.cp, "DC")
 
     Q_DH_losses_supply = np.vectorize(calc_piping_thermal_losses)(T_sst_heat_supply_netw_total,
-                                                                  mdot_heat_netw_all, mdot_heat_netw_min,
+                                                                  mdot_heat_netw_all_kgpers, mdot_heat_netw_min,
                                                                   ntwk_length, gv.ground_temperature, gv.K_DH, gv.cp)
 
     Q_DH_losses_return = np.vectorize(calc_piping_thermal_losses)(T_sst_heat_return_netw_total,
-                                                                  mdot_heat_netw_all, mdot_heat_netw_min,
+                                                                  mdot_heat_netw_all_kgpers, mdot_heat_netw_min,
                                                                   ntwk_length, gv.ground_temperature, gv.K_DH, gv.cp)
     Q_DH_losses = Q_DH_losses_supply + Q_DH_losses_return
     Q_DH_building_netw_total_inclLosses = Q_DH_building_netw_total + Q_DH_losses
@@ -130,11 +130,11 @@ def network_main(locator, total_demand, building_names, gv, key):
     Q_DC_building_netw_total_inclLosses = Q_DC_building_netw_total + Q_DC_losses
 
     T_sst_heat_return_netw_total_inclLosses = np.vectorize(calc_temp_withlosses)(T_sst_heat_return_netw_total,
-                                                                                 Q_DH_losses_return, mdot_heat_netw_all,
+                                                                                 Q_DH_losses_return, mdot_heat_netw_all_kgpers,
                                                                                  gv.cp, "negative")
 
     T_sst_heat_supply_netw_total_inclLosses = np.vectorize(calc_temp_withlosses)(T_sst_heat_supply_netw_total,
-                                                                                 Q_DH_losses_supply, mdot_heat_netw_all,
+                                                                                 Q_DH_losses_supply, mdot_heat_netw_all_kgpers,
                                                                                  gv.cp, "positive")
 
     T_sst_cool_return_netw_total_inclLosses = np.vectorize(calc_temp_withlosses)(T_sst_cool_return_netw_total,
@@ -146,18 +146,18 @@ def network_main(locator, total_demand, building_names, gv, key):
                                                                                  gv.cp, "negative")
 
     day_of_max_heatmassflow_fin = np.zeros(8760)
-    day_of_max_heatmassflow = find_index_of_max(mdot_heat_netw_all)
+    day_of_max_heatmassflow = find_index_of_max(mdot_heat_netw_all_kgpers)
     day_of_max_heatmassflow_fin[:] = day_of_max_heatmassflow
 
-    results = pd.DataFrame({"mdot_DH_netw_total": mdot_heat_netw_all,
-                            "mdot_cool_netw_total": mdot_cool_netw_all,
+    results = pd.DataFrame({"mdot_DH_netw_total_kgpers": mdot_heat_netw_all_kgpers,
+                            "mdot_cool_netw_total_kgpers": mdot_cool_netw_all,
                             "Q_DH_building_netw_total": Q_DH_building_netw_total_inclLosses,
                             "Q_DC_building_netw_total": Q_DC_building_netw_total_inclLosses,
                             "T_sst_heat_return_netw_total": T_sst_heat_return_netw_total_inclLosses,
                             "T_sst_cool_return_netw_total": T_sst_cool_return_netw_total_inclLosses,
                             "T_sst_heat_supply_netw_total": T_sst_heat_supply_netw_total_inclLosses,
                             "T_sst_cool_supply_netw_total": T_sst_cool_supply_netw_total_inclLosses,
-                            "Qcdata_netw_total": Qcdata_netw_total,
+                            "Qcdata_netw_total": Qcdata_netw_total_kWh,
                             "Ecaf_netw_total": Ecaf_netw_total,
                             "day_of_max_heatmassflow": day_of_max_heatmassflow,
                             "mdotdata_netw_total": mdotdata_netw_total,

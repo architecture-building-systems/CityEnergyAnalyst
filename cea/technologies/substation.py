@@ -7,9 +7,9 @@ import time
 import numpy as np
 import scipy
 
-__author__ = "Jimeno A. Fonseca"
-__copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca", "Tim Vollrath", "Thuy-An Nguyen"]
+__author__ = "Sreepathi Bhargava Krishna"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Sreepathi Bhargava Krishna","Jimeno A. Fonseca", "Tim Vollrath", "Thuy-An Nguyen"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -177,26 +177,26 @@ def substation_model(locator, gv, building, t_DH, t_DH_supply, t_DC_supply, t_HS
     Electr_array_all_flat = building.Ef_kWh.values * 1000  # convert to #to W
 
     # save the results into a .csv file
-    results = pd.DataFrame({"mdot_DH_result": mdot_DH_result_flat,
-                            "T_return_DH_result": T_return_DH_result_flat,
-                            "T_supply_DH_result": T_supply_DH_result_flat,
-                            "mdot_heating_result": mdot_heating_result_flat,
-                            "mdot_dhw_result": mdot_dhw_result_flat,
-                            "mdot_DC_result": mdot_cool_result_flat,
-                            "T_r1_dhw_result": T_r1_dhw_result_flat,
-                            "T_r1_heating_result": T_r1_heating_result_flat,
-                            "T_return_DC_result": T_r1_cool_result_flat,
-                            "T_supply_DC_result": T_supply_DC_result_flat,
-                            "A_hex_heating_design": A_hex_hs,
-                            "A_hex_dhw_design": A_hex_ww,
-                            "A_hex_cool_design": A_hex_cs,
-                            "Q_heating": Qhsf,
-                            "Q_dhw": Qwwf,
-                            "Q_cool": Qcf,
-                            "T_total_supply_max_all_buildings_intern": T_supply_max_all_buildings_flat,
-                            "T_hotwater_max_all_buildings_intern": T_hotwater_max_all_buildings_flat,
-                            "T_heating_max_all_buildings_intern": T_heating_sup_max_all_buildings_flat,
-                            "Electr_array_all_flat": Electr_array_all_flat})
+    results = pd.DataFrame({"mdot_DH_result_kgpers": mdot_DH_result_flat,
+                            "T_return_DH_result_K": T_return_DH_result_flat,
+                            "T_supply_DH_result_K": T_supply_DH_result_flat,
+                            "mdot_heating_result_kgpers": mdot_heating_result_flat,
+                            "mdot_dhw_result_kgpers": mdot_dhw_result_flat,
+                            "mdot_DC_result_kgpers": mdot_cool_result_flat,
+                            "T_r1_dhw_result_K": T_r1_dhw_result_flat,
+                            "T_r1_heating_result_K": T_r1_heating_result_flat,
+                            "T_return_DC_result_K": T_r1_cool_result_flat,
+                            "T_supply_DC_result_K": T_supply_DC_result_flat,
+                            "A_hex_heating_design_m2": A_hex_hs,
+                            "A_hex_dhw_design_m2": A_hex_ww,
+                            "A_hex_cool_design_m2": A_hex_cs,
+                            "Q_heating_W": Qhsf,
+                            "Q_dhw_W": Qwwf,
+                            "Q_cool_W": Qcf,
+                            "T_total_supply_max_all_buildings_intern_K": T_supply_max_all_buildings_flat,
+                            "T_hotwater_max_all_buildings_intern_K": T_hotwater_max_all_buildings_flat,
+                            "T_heating_max_all_buildings_intern_K": T_heating_sup_max_all_buildings_flat,
+                            "Electr_array_all_flat_W": Electr_array_all_flat})
 
     results.to_csv(locator.get_optimization_substations_results_file(building.Name.values[0]), sep=',', index=False,
                    float_format='%.3f')
