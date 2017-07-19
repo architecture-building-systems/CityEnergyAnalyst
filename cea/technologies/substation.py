@@ -485,3 +485,30 @@ def calc_DH_supply(t_0, t_1):
     """
     tmax = max(t_0, t_1)
     return tmax
+
+# ============================
+# Test
+# ============================
+
+def run_as_script(scenario_path=None):
+    """
+    run the whole network summary routine
+    """
+    import cea.globalvar
+    import cea.inputlocator as inputlocator
+
+    gv = cea.globalvar.GlobalVariables()
+
+    if scenario_path is None:
+        scenario_path = gv.scenario_reference
+
+    locator = inputlocator.InputLocator(scenario_path=scenario_path)
+    total_demand = pd.read_csv(locator.get_total_demand())
+    building_names = pd.read_csv(locator.get_total_demand())['Name']
+
+    substation_main(locator, total_demand, total_demand['Name'], gv, False)
+
+    print 'substation_main() succeeded'
+
+if __name__ == '__main__':
+    run_as_script()
