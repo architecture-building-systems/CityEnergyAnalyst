@@ -33,6 +33,13 @@ class InputLocator(object):
             os.makedirs(folder)
         return folder
 
+    def get_project_path(self):
+        """Returns the parent folder of a scenario - this is called a project or 'case-study'"""
+        return os.path.dirname(self.scenario_path)
+
+    def get_input_folder(self):
+        return os.path.join(self.scenario_path, "inputs")
+
     def get_optimization_results_folder(self):
         """scenario/outputs/data/optimization"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'optimization')
@@ -139,10 +146,76 @@ class InputLocator(object):
         return self._ensure_folder(self.get_optimization_network_results_folder(), "layout")
 
     def get_optimization_network_layout_pipes_file(self):
-        """scenario/outputs/data/optimization/network/layout/PipesData_DH.csv
-        Network layout files for pipes of district heat networks
+        """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv
+        Optimized network layout files for pipes of district heating networks
         """
         return os.path.join(self.get_optimization_network_layout_folder(), "PipesData_DH.csv")
+
+    def get_optimization_network_layout_nodes_file(self):
+        """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv
+        Optimized network layout files for nodes of district heating networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "NodesData_DH.csv")
+
+    def get_optimization_network_edge_node_matrix_file(self, network):
+        """scenario/outputs/data/optimization/network/layout/DH_EdgeNode.csv or DC_EdgeNode.csv
+        Edge-node matrix for a heating or cooling network
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_EdgeNode.csv")
+
+    def get_optimization_network_node_list_file(self, network):
+        """scenario/outputs/data/optimization/network/layout/DH_AllNodes.csv or DC_AllNodes.csv
+        List of plant and consumer nodes in a district heating or cooling network and their building names
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_AllNodes.csv")
+
+    def get_optimization_network_edge_list_file(self, network):
+        """scenario/outputs/data/optimization/network/layout/DH_AllEdges.csv or DC_AllEdges.csv
+        List of edges in a district heating or cooling network and their start and end nodes
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_AllEdges.csv")
+
+    def get_optimization_network_layout_massflow_file(self, network):
+        """scenario/outputs/data/optimization/network/layout/DH_MassFlow.csv or DC_MassFlow.csv
+        Mass flow rates at each edge in a district heating or cooling network
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_MassFlow.csv")
+
+    def get_optimization_network_layout_supply_temperature_file(self, network):
+        """scenario/outputs/data/optimization/network/layout/DH_T_Supply.csv or DC_T_Supply.csv
+        Supply temperatures at each node for each time step for a district heating or cooling network
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_T_Supply.csv")
+
+    def get_optimization_network_layout_return_temperature_file(self, network):
+        """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
+        Return temperatures at each node for each time step for a district heating or cooling network
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_T_Return.csv")
+
+    def get_optimization_network_layout_supply_pressure_file(self, network):
+        """scenario/outputs/data/optimization/network/layout/DH_P_Supply.csv or DC_P_Supply.csv
+        Supply side pressure for each node in a district heating or cooling network at each time step
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_P_Supply.csv")
+
+    def get_optimization_network_layout_return_pressure_file(self, network):
+        """scenario/outputs/data/optimization/network/layout/DH_P_Return.csv or DC_P_Return.csv
+        Supply side pressure for each node in a district heating or cooling network at each time step
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_P_Return.csv")
+
+    def get_optimization_network_layout_pressure_drop_file(self, network):
+        """scenario/outputs/data/optimization/network/layout/DH_P_DeltaP.csv or DC_P_DeltaP.csv
+        Pressure drop over an entire district heating or cooling network at each time step
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_P_DeltaP.csv")
+
+    def get_optimization_network_layout_plant_heat_requirement_file(self, network):
+        """scenario/outputs/data/optimization/network/layout/DH_Plant_heat_requirement.csv or DC_Plant_heat_requirement.csv
+        Heat requirement at from the plants in a district heating or cooling network
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_Plant_heat_requirement.csv")
 
     def get_optimization_network_totals_folder(self):
         """scenario/outputs/data/optimization/network/totals
@@ -203,7 +276,12 @@ class InputLocator(object):
         Clustering results for disconnected buildings"""
         return self._ensure_folder(self.get_optimization_results_folder(), "clustering_main")
 
-    def get_potentials_results_folder(self):
+    # optimization
+    def get_sewage_heat_potential(self):
+        return os.path.join(self.get_potentials_folder(), "SWP.csv")
+
+    # POTENTIAL
+    def get_potentials_folder(self):
         """scenario/outputs/data/potentials"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'potentials')
 
@@ -211,16 +289,19 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar
         Contains raw solar files
         """
-        return self._ensure_folder(self.get_potentials_results_folder(), "solar")
+        return self._ensure_folder(self.get_potentials_folder(), "solar")
 
-    # optimization
-    def get_sewage_heat_potential(self):
-        return os.path.join(self.get_potentials_results_folder(), "SWP.csv")
-
-    # resource potential assessment
     def get_geothermal_potential(self):
-        """scenario/outputs/data/potentials/geothermal.csv"""
-        return os.path.join(self.get_potentials_results_folder(), "geothermal.csv")
+        """scenario/outputs/data/potentials/geothermal/geothermal.csv"""
+        return os.path.join(self.get_potentials_folder(), "geothermal", "geothermal.csv")
+
+    def get_potentials_retrofit_folder(self):
+        """scenario/outputs/data/potentials/retrofit.csv"""
+        return self._ensure_folder(self.get_potentials_folder(), "retrofit")
+
+    def get_retrofit_filters(self, name_retrofit):
+        """scenario/outputs/data/potentials/retrofit.csv"""
+        return os.path.join(self.get_potentials_retrofit_folder(), "potential_"+name_retrofit+".csv")
 
     # DATABASES
     def get_default_weather(self):
@@ -241,12 +322,12 @@ class InputLocator(object):
         return weather_names
 
     def get_archetypes_properties(self):
-        """databases/CH/Archetypes/Aconstruction_properties.xlsx
+        """db/Archetypes/Archetypes_properties.xlsx
         path to database of archetypes file Archetypes_properties.xlsx"""
         return os.path.join(self.db_path, 'archetypes', 'construction_properties_CH.xlsx')
 
     def get_archetypes_schedules(self):
-        """databases/CH/Archetypes/Archetypes_schedules.xlsx
+        """db/Archetypes/Archetypes_schedules.xlsx
         path to database of archetypes file Archetypes_HVAC_properties.xlsx"""
         return os.path.join(self.db_path, 'archetypes', 'occupancy_schedules_ASHRAE.xlsx')
 
@@ -265,6 +346,10 @@ class InputLocator(object):
     def get_envelope_systems(self):
         """databases/CH/Systems/emission_systems.csv"""
         return os.path.join(self.db_path, 'systems',  'envelope_systems.xls')
+
+    def get_thermal_networks(self):
+        """db/Systems/thermal_networks.xls"""
+        return os.path.join(self.db_path, 'Systems',  'thermal_networks.xls')
 
     def get_data_benchmark(self):
         """databases/CH/Benchmarks/benchmark_targets.xls"""
@@ -293,61 +378,95 @@ class InputLocator(object):
 
     def get_building_geometry_folder(self):
         """scenario/inputs/building-geometry/"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-geometry')
+        return self._ensure_folder(self.scenario_path, 'inputs', 'building-geometry')
 
-    def get_building_geometry(self):
+    def get_building_properties_folder(self):
+        """scenario/inputs/building-geometry/"""
+        return self._ensure_folder(self.scenario_path, 'inputs', 'building-properties')
+
+    def get_terrain_folder(self):
+        return self._ensure_folder(self.scenario_path, 'inputs', 'topography')
+
+    def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-geometry', 'zone.shp')
+        return os.path.join(self.get_building_geometry_folder(), 'zone.shp')
+
+    def get_district_geometry(self):
+        """scenario/inputs/building-geometry/district.shp"""
+        return os.path.join(self.get_building_geometry_folder(), 'district.shp')
 
     def get_building_geometry_citygml(self):
         """scenario/outputs/data/solar-radiation/district.gml"""
         return os.path.join(self.get_solar_radiation_folder(), 'district.gml')
 
-    def get_district(self):
-        """scenario/inputs/building-geometry/district.shp"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-geometry', 'district.shp')
-
     def get_building_age(self):
         """scenario/inputs/building-properties/age.dbf"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'age.dbf')
+        return os.path.join(self.get_building_properties_folder(), 'age.dbf')
 
     def get_building_occupancy(self):
         """scenario/inputs/building-properties/building_occupancy.dbf"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'occupancy.dbf')
+        return os.path.join(self.get_building_properties_folder(), 'occupancy.dbf')
 
     def get_building_supply(self):
         """scenario/inputs/building-properties/building_supply.dbf"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'supply_systems.dbf')
+        return os.path.join(self.get_building_properties_folder(), 'supply_systems.dbf')
 
     def get_building_internal(self):
         """scenario/inputs/building-properties/internal_loads.dbf"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'internal_loads.dbf')
+        return os.path.join(self.get_building_properties_folder(), 'internal_loads.dbf')
 
     def get_building_comfort(self):
         """scenario/inputs/building-properties/indoor_comfort.dbf"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'indoor_comfort.dbf')
+        return os.path.join(self.get_building_properties_folder(), 'indoor_comfort.dbf')
 
     def get_building_hvac(self):
         """scenario/inputs/building-properties/technical_systems.dbf"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'technical_systems.dbf')
+        return os.path.join(self.get_building_properties_folder(), 'technical_systems.dbf')
 
     def get_building_architecture(self):
         """scenario/inputs/building-properties/architecture.dbf
         This file is generated by the properties script.
         This file is used in the embodied energy script (cea/embodied.py)
         and the demand script (cea/demand_main.py)"""
-        return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'architecture.dbf')
+        return os.path.join(self.get_building_properties_folder(), 'architecture.dbf')
 
     def get_building_overrides(self):
         """scenario/inputs/building-properties/overrides.csv
         This file contains overrides to the building properties input files. They are applied after reading
         those files and are matched by column name.
         """
-        return os.path.join(self.scenario_path, 'inputs', 'building-properties', 'overrides.csv')
+        return os.path.join(self.get_building_properties_folder(), 'overrides.csv')
 
     def get_terrain(self):
         """scenario/inputs/topography/terrain.tif"""
-        return os.path.join(self.scenario_path, 'inputs', 'topography', 'terrain.tif')
+        return os.path.join(self.get_terrain_folder(), 'terrain.tif')
+
+    def get_network_layout_edges_shapefile(self, network):
+        """scenario/inputs/network/DH or DC/network-edges.shp"""
+        return os.path.join(self.scenario_path, 'inputs', 'network', network, 'network-edges.shp')
+
+    def get_network_layout_nodes_shapefile(self, network):
+        """scenario/inputs/network/DH or DC/network-nodes.shp"""
+        return os.path.join(self.scenario_path, 'inputs', 'network', network, 'network-nodes.shp')
+
+    def get_network_layout_pipes_csv_file(self, network):
+        """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv or DC_PipesData.csv
+        Network layout files for pipes of district heating or cooling networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "PipesData_"+network+".csv")
+
+    def get_network_layout_nodes_csv_file(self, network):
+        """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
+        Network layout files for nodes of district heating or cooling networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), "NodesData_"+network+".csv")
+
+    def get_edge_mass_flow_csv_file(self, network_type):
+        """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
+        Network layout files for nodes of district heating or cooling networks
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), 'NominalEdgeMassFlow_' +
+                             network_type + '.csv')
 
     def get_daysim_mat(self):
         """this gets the file that documents all of the radiance/default_materials"""
@@ -486,6 +605,27 @@ class InputLocator(object):
     def get_lca_mobility(self):
         """scenario/outputs/data/emissions/Total_LCA_mobility.csv"""
         return os.path.join(self.get_lca_emissions_results_folder(), 'Total_LCA_mobility.csv')
+
+
+    ##COSTS
+    def get_costs_folder(self):
+        """scenario/outputs/data/costs"""
+        return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'costs')
+
+    def get_costs_operation_file(self, load):
+        """scenario/outputs/data/costs/{load}_cost_operation.pdf"""
+        return os.path.join(self.get_costs_folder(), '%(load)s_cost_operation.csv' %locals())
+
+
+    ##RETROFIT POTENTIAL
+    def get_costs_folder(self):
+        """scenario/outputs/data/costs"""
+        return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'costs')
+
+    def get_costs_operation_file(self, load):
+        """scenario/outputs/data/costs/{load}_cost_operation.pdf"""
+        return os.path.join(self.get_costs_folder(), '%(load)s_cost_operation.csv' %locals())
+
 
     ##GRAPHS
     def get_demand_plots_folder(self):
