@@ -68,7 +68,7 @@ def network_main(locator, total_demand, building_names, gv, key):
     iteration = 0
     for building_name in building_names:
         buildings.append(pd.read_csv(locator.get_demand_results_file(building_name),
-                                     usecols=['mcpdataf_kWC', 'Qcdataf_kWh', 'Ecaf_kWh']))
+                                     usecols=['mcpdataf_kWperC', 'Qcdataf_kWh', 'Ecaf_kWh']))
         substations.append(pd.read_csv(locator.get_optimization_substations_results_file(building_name),
                                        usecols=['Electr_array_all_flat_W', 'mdot_DH_result_kgpers',
                                                 'mdot_DC_result_kgpers', 'Q_heating_W', 'Q_dhw_W', 'Q_cool_W',
@@ -76,7 +76,7 @@ def network_main(locator, total_demand, building_names, gv, key):
                                                 'T_supply_DH_result_K']))
 
         Qcdata_netw_total_kWh += buildings[iteration].Qcdataf_kWh.values
-        mdotdata_netw_total += buildings[iteration].mcpdataf_kWC.values
+        mdotdata_netw_total += buildings[iteration].mcpdataf_kWperC.values
         Ecaf_netw_total += buildings[iteration].Ecaf_kWh.values
         Electr_netw_total += substations[iteration].Electr_array_all_flat_W.values
         mdot_heat_netw_all_kgpers += substations[iteration].mdot_DH_result_kgpers.values
