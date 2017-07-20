@@ -71,7 +71,7 @@ def calc_Qgain_lat(schedules, X_ghp, Af, sys_e_cooling, sys_e_heating):
     if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
         w_int = humidity_schedule * Af / (1000 * 3600)  # kg/s
     else:
-        w_int = 0
+        w_int = np.zeros(8760)  # FIXME: should humidity gains also be considered for cooling = 'T2' ???
 
     return w_int
 
