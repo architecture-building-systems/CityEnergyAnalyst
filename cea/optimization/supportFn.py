@@ -64,7 +64,7 @@ def calcQmax(fName, filepath, gV):
     :return: Qmax: maximum heating power [W]
     :rtype: float
     """    
-    HeatfeatureList = ["T_sst_heat_return_netw_total", "T_sst_heat_supply_netw_total", "mdot_DH_netw_total"]
+    HeatfeatureList = ["T_sst_heat_return_netw_total_K", "T_sst_heat_supply_netw_total_K", "mdot_DH_netw_total_kgpers"]
     buildDemand = extractDemand(filepath+'//'+fName, HeatfeatureList, gV.DAYS_IN_YEAR)
     Qmax = np.max(buildDemand)
 
