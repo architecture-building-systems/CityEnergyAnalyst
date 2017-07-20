@@ -39,22 +39,22 @@ def import_network_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     # mass flows
     network_data = pd.read_csv(fName, nrows=24 * DAYS_IN_YEAR)
 
-    mdot_heat_netw_total = np.array(network_data['mdot_DH_netw_total'])
-    mdot_cool_netw_total = 0  # np.array(extract_csv(fName, "mdot_cool_netw_total", DAYS_IN_YEAR))
+    mdot_heat_netw_total_kgpers = np.array(network_data['mdot_DH_netw_total_kgpers'])
+    mdot_cool_netw_total_kgpers = 0  # np.array(extract_csv(fName, "mdot_cool_netw_total", DAYS_IN_YEAR))
 
-    Q_DH_building_netw_total = np.array(network_data['Q_DH_building_netw_total'])
-    Q_DC_building_netw_total = 0  # np.array(extract_csv(fName, "Q_DC_building_netw_total", DAYS_IN_YEAR))
+    Q_DH_building_netw_total_W = np.array(network_data['Q_DH_building_netw_total_W'])
+    Q_DC_building_netw_total_W = 0  # np.array(extract_csv(fName, "Q_DC_building_netw_total", DAYS_IN_YEAR))
 
-    T_sst_heat_return_netw_total = np.array(network_data['T_sst_heat_return_netw_total'])
-    T_sst_heat_supply_netw_total = np.array(network_data['T_sst_heat_supply_netw_total'])
-    T_sst_cool_return_netw_total = 0  # np.array(extract_csv(fName, "T_sst_cool_return_netw_total", DAYS_IN_YEAR))
+    T_sst_heat_return_netw_total_K = np.array(network_data['T_sst_heat_return_netw_total_K'])
+    T_sst_heat_supply_netw_total_K = np.array(network_data['T_sst_heat_supply_netw_total_K'])
+    T_sst_cool_return_netw_total_K = 0  # np.array(extract_csv(fName, "T_sst_cool_return_netw_total", DAYS_IN_YEAR))
 
-    Q_wasteheat_netw_total = np.array(network_data['Qcdata_netw_total'])
+    Q_wasteheat_netw_total_kWh = np.array(network_data['Qcdata_netw_total_kWh'])
     # print "sum of Qcdata_netw_total", Q_wasteheat_netw_total
-    Q_serverheat_netw_total = np.array(network_data['Ecaf_netw_total'])
+    Q_serverheat_netw_total_W = np.array(network_data['Ecaf_netw_total_kWh'])
 
-    return mdot_heat_netw_total, mdot_cool_netw_total, Q_DH_building_netw_total,Q_DC_building_netw_total,T_sst_heat_return_netw_total,\
-                        T_sst_cool_return_netw_total, T_sst_heat_supply_netw_total, Q_wasteheat_netw_total, Q_serverheat_netw_total
+    return mdot_heat_netw_total_kgpers, mdot_cool_netw_total_kgpers, Q_DH_building_netw_total_W,Q_DC_building_netw_total_W,T_sst_heat_return_netw_total_K,\
+                        T_sst_cool_return_netw_total_K, T_sst_heat_supply_netw_total_K, Q_wasteheat_netw_total_kWh, Q_serverheat_netw_total_W
     
 def import_solar_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     """
