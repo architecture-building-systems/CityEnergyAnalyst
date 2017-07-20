@@ -73,7 +73,7 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV):
         #ntot = len(buildList)
         
         os.chdir(network_results_folder)
-        df = pd.read_csv(dicoSupply.NETWORK_DATA_FILE, usecols=["mdot_DH_netw_total"])
+        df = pd.read_csv(dicoSupply.NETWORK_DATA_FILE, usecols=["mdot_DH_netw_total_kgpers"])
         mdotA = np.array(df)
         mdotnMax = np.amax(mdotA)
         

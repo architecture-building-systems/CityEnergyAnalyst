@@ -232,7 +232,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         if dicoSupply.WasteServersHeatRecovery == 1:
             df = pd.read_csv(
                 os.path.join(locator.get_optimization_network_results_folder(), dicoSupply.NETWORK_DATA_FILE),
-                usecols=["Qcdata_netw_total"])
+                usecols=["Qcdata_netw_total_kWh"])
             array = np.array(df)
             QhexMax = np.amax(array)
             StorageHEXCost += hex.calc_Cinv_HEX(QhexMax, gv)
@@ -249,7 +249,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         if dicoSupply.WasteCompressorHeatRecovery == 1:
             df = pd.read_csv(
                 os.path.join(locator.get_optimization_network_results_folder(), dicoSupply.NETWORK_DATA_FILE),
-                usecols=["Ecaf_netw_total"])
+                usecols=["Ecaf_netw_total_kWh"])
             array = np.array(df)
             QhexMax = np.amax(array)
         
@@ -317,7 +317,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         for (index, building_name) in zip(indCombi, buildList):
             if index == "1":
                 df = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
-                                 usecols=["Q_dhw", "Q_heating"])
+                                 usecols=["Q_dhw_W", "Q_heating_W"])
                 subsArray = np.array(df)
                 
                 Qmax = np.amax( subsArray[:,0] + subsArray[:,1] )

@@ -52,7 +52,7 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
 
     # Space cooling previously aggregated in the substation routine
     df = pd.read_csv(os.path.join(locator.get_optimization_network_results_folder(), "Network_summary_result_all.csv"),
-                     usecols=["T_sst_cool_return_netw_total", "mdot_cool_netw_total"])
+                     usecols=["T_sst_cool_return_netw_total_K", "mdot_cool_netw_total_kgpers"])
     coolArray = np.nan_to_num(np.array(df))
     TsupCool = gv.TsupCool
 
@@ -179,7 +179,7 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
                 buildName = arrayData[i][0]
                 print buildName
                 df = pd.read_csv(locator.get_demand_results_file(buildName),
-                                 usecols=["Tcdataf_sup_C", "Tcdataf_re_C", "mcpdataf_kWC"])
+                                 usecols=["Tcdataf_sup_C", "Tcdataf_re_C", "mcpdataf_kWperC"])
                 arrayBuild = np.array(df)
 
                 mdotMaxData = abs(np.amax(arrayBuild[:, -1]) / gv.cp * 1E3)
@@ -201,7 +201,7 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
         if arrayQice[i][1] > 0:
             buildName = arrayQice[i][0]
             print buildName
-            df = pd.read_csv(locator.pathRaw + "/" + buildName + ".csv", usecols=["Tsref_C", "Trref_C", "mcpref_kWC"])
+            df = pd.read_csv(locator.pathRaw + "/" + buildName + ".csv", usecols=["Tsref_C", "Trref_C", "mcpref_kWperC"])
             arrayBuild = np.array(df)
 
             mdotMaxice = abs(np.amax(arrayBuild[:, -1]) / gv.cp * 1E3)
