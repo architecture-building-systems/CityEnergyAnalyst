@@ -11,6 +11,8 @@ from __future__ import division
 
 import numpy as np
 import pandas as pd
+from cea.demand.preprocessing.properties import calc_mainuse
+from cea.demand.preprocessing.properties import calc_category
 from cea.utilities.dbfreader import dbf2df
 from geopandas import GeoDataFrame as Gdf
 import cea.globalvar
@@ -296,132 +298,8 @@ def calc_if_existing(x, y):
     else:
         return 0
 
-def calc_category_construction(a, x):
-    """
-    Function to assign a building its construction category based on its occupancy type and year of construction.
-    e.g., an office building built in 1975 will be assigned the category 'OFFICE3'.
-    These categories are then used to look up the reference values in the archetypes database.
-
-    :param a: Main use of the building being categorized (e.g., 'OFFICE')
-    :type a: str
-    :param x: Year of construction of the building
-    :type x: long
-
-    :return category: string with the building's construction category (e.g., 'OFFICE3')
-    :rtype category: str
-
-    """
-
-    # for each range of construction years, the building's occupancy + a value of 1 to 6 is assigned
-    if 0 <= x <= 1920:
-        result = '1'
-    elif 1920 < x <= 1970:
-        result = '2'
-    elif 1970 < x <= 1980:
-        result = '3'
-    elif 1980 < x <= 2000:
-        result = '4'
-    elif 2000 < x <= 2020:
-        result = '5'
-    else:
-        result = '6'
-
-    category = a + result
-
-    return category
-
-def calc_category_retrofit(a, y):
-    """
-    Function to assign a building component its retrofit category based on its occupancy type and year of renovation.
-    e.g., a window in an office building renovated in 1975 will be assigned the category 'OFFICE9'.
-    These categories are then used to look up the reference values in the archetypes database.
-
-    :param a: Main use of the building being categorized (e.g., 'OFFICE')
-    :type a: str
-    :param y: Year of renovation of the building component
-    :type y: long
-
-    :return category: string with the building component's renovation category (e.g., 'OFFICE9')
-    :rtype category: str
-
-    """
-
-    # for each range of construction years, the building's occupancy + a value of 1 to 6 is assigned
-    if 0 <= y <= 1920:
-        result = '7'
-    elif 1920 < y <= 1970:
-        result = '8'
-    elif 1970 < y <= 1980:
-        result = '9'
-    elif 1980 < y <= 2000:
-        result = '10'
-    elif 2000 < y <= 2020:
-        result = '11'
-    else:
-        result = '12'
-
-    category = a + result
-
-    return category
-
-def calc_mainuse(uses_df, uses):
-    """
-    Calculate a building's main use
-    :param uses_df: DataFrame containing the share of each building that corresponds to each occupancy type
-    :type uses_df: DataFrame
-    :param uses: list of building uses actually available in the area
-    :type uses: list
-
-    :return mainuse: array containing each building's main occupancy
-    :rtype mainuse: ndarray
-
-    """
-
-    databaseclean = uses_df[uses].transpose()
-    array_min = np.array(databaseclean[databaseclean[:] > 0].idxmin(skipna=True), dtype='S10')
-    array_max = np.array(databaseclean[databaseclean[:] > 0].idxmax(skipna=True), dtype='S10')
-    mainuse = np.array(map(calc_comparison, array_min, array_max))
-
-    return mainuse
-
-def calc_comparison(array_min, array_max):
-    """
-    This function reads the least and most common occupancy types in each building and, if the most common occupancy
-    type is 'PARKING', reassigns this building's occupancy type to its least common.
-
-    :param array_min: array containing the occupancy type that takes up the least space (>0) for each building
-    :type array_min: ndarray
-    :param array_max: array containing each building's predominant occupancy type
-    :type array_max: ndarray
-
-    :return array_max: array containing the predominant occupancy type in each building after clean up of any 'DEPO' values
-    :rtype array_max: ndarray
-
-    """
-
-    if array_max == 'PARKING':
-        if array_min != 'PARKING':
-            array_max = array_min
-    return array_max
-
 def calc_code(code1, code2, code3, code4):
     return str(code1) + str(code2) + str(code3) + str(code4)
-
-def calc_category(archetype_DB, age, field, type):
-    category = []
-    for row in age.index:
-        if age.loc[row, field] > 0:
-            category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, field]) & \
-                                         (archetype_DB['year_end'] >= age.loc[row, field]) & \
-                                         (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
-                                         (archetype_DB['standard'] == type)].Code.values[0])
-        else:
-            category.append(archetype_DB[(archetype_DB['year_start'] <= age.loc[row, 'built']) & \
-                                         (archetype_DB['year_end'] >= age.loc[row, 'built']) & \
-                                         (archetype_DB['building_use'] == age.loc[row, 'mainuse']) & \
-                                         (archetype_DB['standard'] == type)].Code.values[0])
-
-    return category
 
 def run_as_script(scenario_path=None, year_to_calculate=2050):
     gv = cea.globalvar.GlobalVariables()
