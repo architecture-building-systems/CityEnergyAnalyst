@@ -9,17 +9,16 @@ J. Fonseca  script development          27.10.16
 """
 from __future__ import division
 
+import os
 import time
 
 import pandas as pd
-
-import os, csv
-
 from cea.demand.calibration.clustering.sax import SAX
-from cea.demand.calibration.clustering.sax_optimization import sax_optimization
-from cea.plots.pareto_frontier_plot import frontier_2D_3OB
+
+from cea.analysis.clustering.sax_optimization import sax_optimization
 from cea.analysis.mcda import mcda_cluster_main
 from cea.plots.clusters_plot import clusters_day_mean
+from cea.plots.pareto_frontier_plot import frontier_2D_3OB
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
