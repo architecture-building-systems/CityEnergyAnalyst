@@ -29,6 +29,9 @@ import cea.globalvar
 import cea.inputlocator
 
 from cea.demand import demand_main
+from cea.demand.calibration.cal
+from cea.demand.calibration.settings import number_samples
+
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -41,26 +44,31 @@ __status__ = "Production"
 
 
 def calibration_main(gv, locator, weather_path, building_name, variables, building_load, retrieve_results, scenario_path,
-                     method, values_index, niter):
+                     method, values_index, niter)
+
+
+    # create demand samples
+    samples = sample_demand(locator, number_samples, variables):
+
 
     # create function of demand calculation and send to theano
     @as_op(itypes=[tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar], otypes=[tt.dvector])
     def demand_calculation(phi, err, var1, var2, var3, var4, var5):
 
         # create an overrides file which contains changes in the input variables.
-        prop_thermal = Gdf.from_file(loc.get_building_thermal()).set_index('Name')
+        prop_thermal = Gdf.from_file(locator.get_building_thermal()).set_index('Name')
         prop_overrides = pd.DataFrame(index=prop_thermal.index)
         samples = [var1, var2, var3, var4, var5]
         for i, key in enumerate(vars):
             prop_overrides[key] = samples[i]
-        prop_overrides.to_csv(loc.get_building_overrides())
+        prop_overrides.to_csv(locator.get_building_overrides())
 
         # call CEA demand calculation
         gv.multiprocessing = False # do not use multiprocessing while calculating the demand
         gv.print_totals = False # do not print yearly totals, it saves computational time
         gv.simulate_building_list = [building_name] # just tell CEA to run only this building.
-        demand_main.demand_calculation(loc, weather_path, gv)  # simulation
-        result = pd.read_csv(loc.get_demand_results_file(building_name), usecols=[building_load]) * (1 + phi + err)
+        demand_main.demand_calculation(locator, weather_path, gv)  # simulation
+        result = pd.read_csv(locator.get_demand_results_file(building_name), usecols=[building_load]) * (1 + phi + err)
 
         # get the results for the valid range of indexes
         if method is 'cvrmse':
@@ -77,7 +85,7 @@ def calibration_main(gv, locator, weather_path, building_name, variables, buildi
     if os.path.exists(simulation_path):
         shutil.rmtree(simulation_path)
     shutil.copytree(scenario_path, simulation_path)
-    loc = cea.inputlocator.InputLocator(scenario_path=simulation_path)
+    locator = cea.inputlocator.InputLocator(scenario_path=simulation_path)
 
     # import arguments of probability density functions (PDF) of variables and create priors:
     pdf = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1) for group in
@@ -95,7 +103,7 @@ def calibration_main(gv, locator, weather_path, building_name, variables, buildi
         for i, variable in enumerate(variables):
             lower = pdf.loc[variable, 'min']
             upper = pdf.loc[variable, 'max']
-            #c = pdf.loc[variable, 'mu']
+            #c = pdf.locator[variable, 'mu']
             globals()['var'+str(i+1)] = pm.Uniform('var'+str(i+1), lower=lower, upper=upper)
             vars.append('var'+str(i+1))
 
@@ -166,4 +174,4 @@ def run_as_script():
                      method, values_index, niter=10000)
 
 if __name__ == '__main__':
-    run_as_script()`````````````````````````````````````````````````````````
+    run_as_script()
