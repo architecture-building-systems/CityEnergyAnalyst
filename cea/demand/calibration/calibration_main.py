@@ -147,47 +147,6 @@ def calc_CVrmse(prediction, target):
     CVrmse = np.sqrt(((prediction - target) ** 2).mean()) / prediction.mean()
     return CVrmse
 
-
-#Create Triangular distributions
-class Triangular(Continuous):
-    """
-    Continuous Triangular log-likelihood
-    Implemented by J. A. Fonseca 22/12/16
-
-    Parameters
-    ----------
-    lower : float
-        Lower limit.
-    c: float
-        mode
-    upper : float
-        Upper limit.
-    """
-
-    def __init__(self, lower=0, upper=1, c=0.5,
-                 *args, **kwargs):
-        super(Triangular, self).__init__(*args, **kwargs)
-
-        self.c = c
-        self.lower = lower
-        self.upper = upper
-        self.mean = c
-        self.median = self.mean
-
-    def random(self, point=None, size=None):
-        lower, c, upper = draw_values([self.lower, self.c, self.upper],
-                                      point=point)
-        return generate_samples(stats.triang.rvs, c=c, loc=lower, scale=upper - lower,
-                                size=size, random_state=None)
-
-    def logp(self, value):
-        c = self.c
-        lower = self.lower
-        upper = self.upper
-        return tt.switch(alltrue([lower <= value, value <c]), tt.log(2 * (value - lower)) - tt.log((upper - lower) * (c - lower)),
-               tt.switch(alltrue([value == c]), tt.log(2) - tt.log(upper - lower),
-               tt.switch(alltrue([c < value, value  <= upper]), tt.log(2 * (upper - value)) - tt.log((upper - lower) * (upper - c)), np.inf)))
-
 def run_as_script():
     import cea.inputlocator as inputlocator
     gv = cea.globalvar.GlobalVariables()
