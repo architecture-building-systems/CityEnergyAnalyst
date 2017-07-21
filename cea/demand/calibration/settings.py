@@ -1,2 +1,2 @@
 
-number_samples = 7000
+number_samples = 2

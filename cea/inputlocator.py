@@ -329,7 +329,7 @@ class InputLocator(object):
     def get_archetypes_schedules(self):
         """db/Archetypes/Archetypes_schedules.xlsx
         path to database of archetypes file Archetypes_HVAC_properties.xlsx"""
-        return os.path.join(self.db_path, 'archetypes', 'occupancy_schedules_ASHRAE.xlsx')
+        return os.path.join(self.db_path, 'archetypes', 'occupancy_schedules_SIA.xlsx')
 
     def get_life_cycle_inventory_supply_systems(self):
         """databases/lifecycle/LCA_infrastructure.csv"""
@@ -544,6 +544,22 @@ class InputLocator(object):
     def get_calibration_folder(self):
         """scenario/outputs/data/calibration"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'calibration')
+
+    def get_calibration_cvrmse_file(self, building_name):
+        """scenario/outputs/data/calibration"""
+        return os.path.join(self.get_calibration_folder(), 'CVrmse_%(building_name)s.json' % locals())
+
+    def get_calibration_problem(self, building_name):
+        """scenario/outputs/data/calibration"""
+        return os.path.join(self.get_calibration_folder(), 'problem_%(building_name)s.json' % locals())
+
+    def get_calibration_samples(self, building_name):
+        """scenario/outputs/data/calibration"""
+        return os.path.join(self.get_calibration_folder(), 'samples_%(building_name)s.npy' % locals())
+
+    def get_calibration_gaussian_emulator(self, building_name):
+        """scenario/outputs/data/calibration"""
+        return os.path.join(self.get_calibration_folder(), 'emulator_%(building_name)s.pkl' % locals())
 
     def get_calibration_clustering_folder(self):
         """scenario/outputs/data/calibration"""
