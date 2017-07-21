@@ -27,7 +27,7 @@ import cea.globalvar
 import cea.inputlocator
 
 from cea.demand import demand_main
-from cea.demand.calibration.calibration_sampling import latin_sampler
+from cea.demand.calibration.latin_sampler import latin_sampler
 from cea.demand.calibration.settings import number_samples
 
 
@@ -47,7 +47,6 @@ def calibration_main(gv, locator, weather_path, building_name, variables, buildi
 
     # create list of samples with a LHC sampler
     samples = latin_sampler(locator, number_samples, variables)
-
 
     # create function of demand calculation and send to theano
     @as_op(itypes=[tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar], otypes=[tt.dvector])
