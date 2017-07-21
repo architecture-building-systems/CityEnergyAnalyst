@@ -27,7 +27,7 @@ import cea.globalvar
 import cea.inputlocator
 
 from cea.demand import demand_main
-from cea.demand.calibration.latin_sampler import latin_sampler
+from cea.demand.calibration.calibration_sampling import latin_sampler
 from cea.demand.calibration.settings import number_samples
 
 
@@ -44,13 +44,20 @@ __status__ = "Production"
 def calibration_main(gv, locator, weather_path, building_name, variables, building_load, retrieve_results, scenario_path,
                      method, values_index, niter):
 
-
     # create list of samples with a LHC sampler
     samples = latin_sampler(locator, number_samples, variables)
 
-    # create function of demand calculation and send to theano
+    # create function of cea demand and send to theano
+
+
+
+
     @as_op(itypes=[tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar], otypes=[tt.dvector])
-    def demand_calculation(phi, err, var1, var2, var3, var4, var5):
+
+
+
+
+    def cea_demand(phi, err, var1, var2, var3, var4, var5):
 
         # create an overrides file which contains changes in the input variables.
         prop_thermal = Gdf.from_file(locator.get_building_thermal()).set_index('Name')
@@ -109,7 +116,7 @@ def calibration_main(gv, locator, weather_path, building_name, variables, buildi
         err = pm.Uniform('err', lower=0, upper=0.02)
 
         # expected value of outcome
-        mu = pm.Deterministic('mu', demand_calculation(phi, err, var1, var2, var3, var4, var5))
+        mu = pm.Deterministic('mu', cea_demand(phi, err, var1, var2, var3, var4, var5))
 
         # Likelihood (sampling distribution) of observations
         if method is 'cvrmse':
@@ -141,16 +148,7 @@ def calibration_main(gv, locator, weather_path, building_name, variables, buildi
     return
 
 
-def calc_CVrmse(prediction, target):
-    """
-    This function calculates the covariance of the root square mean error between two vectors.
-    :param prediction: vector of predicted/simulated data
-    :param target: vector of target/measured data
-    :return:
-        float (0..1)
-    """
-    CVrmse = np.sqrt(((prediction - target) ** 2).mean()) / prediction.mean()
-    return CVrmse
+
 
 def run_as_script():
     import cea.inputlocator as inputlocator
