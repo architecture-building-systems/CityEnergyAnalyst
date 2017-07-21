@@ -10,7 +10,7 @@ from cea.demand import demand_main
 from geopandas import GeoDataFrame as Gdf
 import os
 import shutil
-from cea.demand.calibration.settings import number_samples
+from cea.demand.calibration_single.settings import number_samples
 import cea.inputlocator as inputlocator
 
 
@@ -68,7 +68,7 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
 
     return sample_locator
 
-def simulate_demand_sample(locator, time_series_measured, building_name):
+def simulate_demand_sample(locator, building_name, output_parameters):
     """
     Run a demand simulation for a single sample. This function expects a locator that is already initialized to the
     simulation folder, that has already been prepared with `apply_sample_parameters`.
@@ -89,14 +89,19 @@ def simulate_demand_sample(locator, time_series_measured, building_name):
     :rtype: pandas.DataFrame
     """
 
+
+    # force simulation to be sequential and to only do one building
     gv = cea.globalvar.GlobalVariables()
-    # force simulation to be sequential
     gv.multiprocessing = False
     gv.simulate_building_list = [building_name]
-    weather_path = locator.get_default_weather()
-    totals, time_series_simulation = demand_main.demand_calculation(locator, weather_path, gv)
 
-    cv_rmse = calc_cv_rmse(time_series_simulation, time_series_measured)
+    #import weather and measured data
+    weather_path = locator.get_default_weather()
+    time_series_measured = locator.get_measured(building_name)
+
+    #calculate demand timeseries for buidling an calculate cvrms
+    totals, time_series_simulation = demand_main.demand_calculation(locator, weather_path, gv)
+    cv_rmse = calc_cv_rmse(time_series_simulation[output_parameters], time_series_measured[output_parameters])
 
     return cv_rmse
 
@@ -152,7 +157,7 @@ def sampling_main(locator, variables, building_name, output_parameters):
        locator_sample = apply_sample_parameters(sample, variables, building_name)
 
        # run cea demand and calculate cv_rmse
-       cv_rmse = simulate_demand_sample(locator_sample, output_parameters)
+       cv_rmse = simulate_demand_sample(locator_sample, building_name, output_parameters)
 
     pd.DataFrame({'cv_rmse':cv_rmse}).to_csv(locator.get_calibration_cvrmse())
 
@@ -163,14 +168,12 @@ def run_as_script():
     scenario_path = gv.scenario_reference
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
 
-
     # based on the variables listed in the uncertainty database and selected
     # through a screening process. they need to be 5.
     variables = ['U_win', 'U_wall', 'Ths_setb_C', 'Ths_set_C', 'Cm']
     building_name = 'B01'
     output_parameters = 'Ef_kWh'
     sampling_main(locator, variables, building_name, output_parameters)
-
 
 if __name__ == '__main__':
     run_as_script()
