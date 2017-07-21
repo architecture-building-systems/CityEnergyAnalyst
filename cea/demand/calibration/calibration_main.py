@@ -27,8 +27,8 @@ import cea.globalvar
 import cea.inputlocator
 
 from cea.demand import demand_main
-from cea.demand.calibration.calibration_sampling import latin_sampler
-from cea.demand.calibration.settings import number_samples
+from cea.demand.calibration_single.calibration_sampling import latin_sampler
+from cea.demand.calibration_single.settings import number_samples
 
 
 __author__ = "Jimeno A. Fonseca"

@@ -13,7 +13,7 @@ import os
 import time
 
 import pandas as pd
-from cea.demand.calibration.clustering.sax import SAX
+from cea.demand.calibration_single.clustering.sax import SAX
 
 from cea.analysis.clustering.sax_optimization import sax_optimization
 from cea.analysis.mcda import mcda_cluster_main
