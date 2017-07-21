@@ -237,7 +237,7 @@ def calc_pv_generation(type_panel, hourly_radiation, number_groups, number_point
 
     result = list(range(number_groups))
     groups_area = list(range(number_groups))
-    Sum_PV = np.zeros(8760)
+    Sum_PV_kWh = np.zeros(8760)
 
     n = 1.526 # refractive index of glass
     Pg = 0.2  # ground reflectance
@@ -277,9 +277,9 @@ def calc_pv_generation(type_panel, hourly_radiation, number_groups, number_point
         result[group] = np.vectorize(calc_PV_power)(results[0], results[1], eff_nom, area_per_group, Bref, misc_losses)
         groups_area[group] = area_per_group
 
-        Sum_PV = Sum_PV + result[group] # in kWh
-    total_area = sum(groups_area)
-    Final = pd.DataFrame({'PV_kWh':Sum_PV,'Area':total_area})
+        Sum_PV_kWh = Sum_PV_kWh + result[group] # in kWh
+    total_area_m2 = sum(groups_area)
+    Final = pd.DataFrame({'E_PV_gen_kWh':Sum_PV_kWh,'A_PV_m2':total_area_m2})
     return result, Final
 
 def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):

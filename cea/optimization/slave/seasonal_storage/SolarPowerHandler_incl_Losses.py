@@ -11,20 +11,20 @@ They are called by either the operation or optimization of storage.
 import numpy as np
  
 
-def StorageGateway(Q_solar_available, Q_network_demand, P_HP_max, gv):
-    
+def StorageGateway(Q_thermal_available_Wh, Q_network_demand_W, P_HP_max_W, gv):
+
     """
     This function is a first filter for solar energy handling: 
         If there is excess solar power, this will be specified and stored.
         If there is not enough solar power, the lack will be calculated.
 
-    :param Q_solar_available: solar energy available at a given time step
-    :param Q_network_demand: network load at a given time step
-    :param P_HP_max: storage??
+    :param Q_thermal_available_Wh: solar energy and waste heat available at a given time step
+    :param Q_network_demand_W: network load at a given time step
+    :param P_HP_max_W: storage??
     :param gv: global variables
-    :type Q_solar_available: float
-    :type Q_network_demand: float
-    :type P_HP_max: float
+    :type Q_thermal_available_Wh: float
+    :type Q_network_demand_W: float
+    :type P_HP_max_W: float
     :type gv: class
     :return:Q_to_storage: Thermal Energy going to the Storage Tanks (excl. conversion losses)
             Q_from_storage: Thermal Energy required from storage (excl conversion losses)
@@ -33,27 +33,27 @@ def StorageGateway(Q_solar_available, Q_network_demand, P_HP_max, gv):
     :rtype: float, float, int
     """
     
-    if Q_solar_available > Q_network_demand:
-        Q_to_storage = (Q_solar_available - Q_network_demand) 
+    if Q_thermal_available_Wh > Q_network_demand_W:  # Wh is same as W if the time interval consideration is 1 hour
+        Q_to_storage_W = (Q_thermal_available_Wh - Q_network_demand_W)
         to_storage = 1
-        Q_from_storage = 0
+        Q_from_storage_W = 0
         
     else:
-        Q_to_storage = 0
+        Q_to_storage_W = 0
         to_storage = 0
-        Q_from_storage = Q_network_demand - Q_solar_available
+        Q_from_storage_W = Q_network_demand_W - Q_thermal_available_Wh
     
     
     if gv.StorageMaxUptakeLimitFlag == 1:
-        if Q_to_storage >= P_HP_max:
-            Q_to_storage = P_HP_max
+        if Q_to_storage_W >= P_HP_max_W:
+            Q_to_storage_W = P_HP_max_W
             #print "Storage charging at full power!"
             
-        if Q_from_storage >= P_HP_max:
-            Q_from_storage= P_HP_max    
+        if Q_from_storage_W >= P_HP_max_W:
+            Q_from_storage_W= P_HP_max_W
             #print "Storage discharging at full power!"
             
-    return Q_to_storage, Q_from_storage, to_storage
+    return Q_to_storage_W, Q_from_storage_W, to_storage
 
 
 def Temp_before_Powerplant(Q_network_demand, Q_solar_available, mdot_DH, T_return_DH, gv):
