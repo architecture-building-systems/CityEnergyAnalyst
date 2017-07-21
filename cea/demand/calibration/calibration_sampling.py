@@ -187,7 +187,7 @@ def run_as_script():
     # through a screening process. they need to be 5.
     variables = ['U_win', 'U_wall', 'Ths_setb_C', 'Ths_set_C', 'Cm_Af']
     building_name = 'B01'
-    building_load = 'Ef_kWh'
+    building_load = 'Qhsf_kWh'
     sampling_main(locator, variables, building_name, building_load)
 
 if __name__ == '__main__':
