@@ -18,18 +18,16 @@ import shutil, os
 from pymc3.backends import SQLite
 import theano.tensor as tt
 from theano import as_op
-from pymc3.distributions.distribution import Continuous, draw_values, generate_samples
-from pymc3.distributions.dist_math import logpow, alltrue
 from geopandas import GeoDataFrame as Gdf
 from scipy import stats
 import numpy as np
-import seaborn as sns
+#import seaborn as sns
 import matplotlib.pyplot as plt
 import cea.globalvar
 import cea.inputlocator
 
 from cea.demand import demand_main
-from cea.demand.calibration.cal
+from cea.demand.calibration.calibration_sampling import latin_sampler
 from cea.demand.calibration.settings import number_samples
 
 
@@ -44,11 +42,11 @@ __status__ = "Production"
 
 
 def calibration_main(gv, locator, weather_path, building_name, variables, building_load, retrieve_results, scenario_path,
-                     method, values_index, niter)
+                     method, values_index, niter):
 
 
-    # create demand samples
-    samples = sample_demand(locator, number_samples, variables):
+    # create list of samples with a LHC sampler
+    samples = latin_sampler(locator, number_samples, variables)
 
 
     # create function of demand calculation and send to theano
