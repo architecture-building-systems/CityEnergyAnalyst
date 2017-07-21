@@ -2,7 +2,11 @@ from __future__ import division
 from sklearn import preprocessing
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, RationalQuadratic,WhiteKernel, ExpSineSquared
-import pickle
+import json
+import numpy as np
+import cea.globalvar
+import cea.inputlocator
+import pandas as pd
 from sklearn.externals import joblib # this is like the python pickle package
 
 __author__ = "Adam Rysanek"
@@ -14,11 +18,11 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def gaussian_emulator(input_samples, sampling_results, output_path):
+def gaussian_emulator(locator, samples, cv_rmse, building_name):
 
     # this normalizes all the input variables independently 0 - 1. so this might not be neccesary
     min_max_scaler = preprocessing.MinMaxScaler()
-    Xnorm = min_max_scaler.fit_transform(input_samples)
+    Xnorm = min_max_scaler.fit_transform(samples)
 
     # Kernel with parameters given in GPML book for the gaussian surrogate models. The hyperparameters are optimized so you can get anything here.
     k1 = 5**2 * RBF(length_scale=1e-5)  # long term smooth rising trend RBF: radio basis functions (you can have many, this is one).
@@ -30,7 +34,23 @@ def gaussian_emulator(input_samples, sampling_results, output_path):
 
     # give the data to the regressor.
     gp = GaussianProcessRegressor(kernel=kernel, alpha=1e-7, normalize_y=True, n_restarts_optimizer=2)
-    gp.fit(Xnorm, sampling_results) # then fit the gp to your observations and the minmax. It takes 30 min - 1 h.
+    gp.fit(Xnorm, cv_rmse) # then fit the gp to your observations and the minmax. It takes 30 min - 1 h.
 
     # this is the result
-    joblib.dump(gp, output_path)
+    joblib.dump(gp, locator.get_calibration_gaussian_emulator(building_name))
+
+def run_as_script():
+
+    gv = cea.globalvar.GlobalVariables()
+    scenario_path = gv.scenario_reference
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+
+    # based on the variables listed in the uncertainty database and selected
+    # through a screening process. they need to be 5.
+    building_name = 'B01'
+    samples = np.load(locator.get_calibration_samples(building_name))
+    cv_rmse = json.load(file(locator.get_calibration_cvrmse_file(building_name)))['cv_rmse']
+    gaussian_emulator(locator, samples, cv_rmse, building_name)
+
+if __name__ == '__main__':
+    run_as_script()
