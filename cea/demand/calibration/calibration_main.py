@@ -25,10 +25,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cea.globalvar
 import cea.inputlocator
+import json
 
 from cea.demand import demand_main
-from cea.demand.calibration_single.calibration_sampling import latin_sampler
-from cea.demand.calibration_single.settings import number_samples
+from cea.demand.calibration.settings import max_iter_MCMC
+
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -41,62 +42,14 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calibration_main(gv, locator, weather_path, building_name, variables, building_load, retrieve_results, scenario_path,
-                     method, values_index, niter):
+def calibration_main(locator, problem, building_name):
 
-    # create list of samples with a LHC sampler
-    samples = latin_sampler(locator, number_samples, variables)
+    # get variables from problem
+    variables = problem.variables
+    building_load = problem.building_load
 
     # create function of cea demand and send to theano
-
-
-
-
     @as_op(itypes=[tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar], otypes=[tt.dvector])
-
-
-
-
-    def cea_demand(phi, err, var1, var2, var3, var4, var5):
-
-        # create an overrides file which contains changes in the input variables.
-        prop_thermal = Gdf.from_file(locator.get_building_thermal()).set_index('Name')
-        prop_overrides = pd.DataFrame(index=prop_thermal.index)
-        samples = [var1, var2, var3, var4, var5]
-        for i, key in enumerate(vars):
-            prop_overrides[key] = samples[i]
-        prop_overrides.to_csv(locator.get_building_overrides())
-
-        # call CEA demand calculation
-        gv.multiprocessing = False # do not use multiprocessing while calculating the demand
-        gv.print_totals = False # do not print yearly totals, it saves computational time
-        gv.simulate_building_list = [building_name] # just tell CEA to run only this building.
-        demand_main.demand_calculation(locator, weather_path, gv)  # simulation
-        result = pd.read_csv(locator.get_demand_results_file(building_name), usecols=[building_load]) * (1 + phi + err)
-
-        # get the results for the valid range of indexes
-        if method is 'cvrmse':
-            out = np.empty(1)
-            out[0] = calc_CVrmse(result[building_load].values[values_index], obs_data)
-        else:
-            out = result[building_load].values[values_index]
-
-        print out, phi, err, var1, var2, var3, var4, var5
-        return out
-
-    # copy scenario folder to do overides only there
-    simulation_path = locator.get_temporary_folder()+'//'+'test'
-    if os.path.exists(simulation_path):
-        shutil.rmtree(simulation_path)
-    shutil.copytree(scenario_path, simulation_path)
-    locator = cea.inputlocator.InputLocator(scenario_path=simulation_path)
-
-    # import arguments of probability density functions (PDF) of variables and create priors:
-    pdf = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1) for group in
-                     ['THERMAL', 'ARCHITECTURE', 'INDOOR_COMFORT', 'INTERNAL_LOADS']]).set_index('name')
-
-    # import measured data for building and building load:
-    obs_data = pd.read_csv(locator.get_demand_measured_file(building_name))[building_load].values[values_index]
 
     # create bayesian calibration model in PYMC3
     with pm.Model() as basic_model:
@@ -128,7 +81,7 @@ def calibration_main(gv, locator, weather_path, building_name, variables, buildi
     if retrieve_results:
         with basic_model:
             # plot posteriors
-            trace = pm.backends.text.load(locator.get_calibration_folder(niter))
+            trace = pm.backends.text.load(locator.get_calibration_folder(max_iter_MCMC))
             pm.traceplot(trace)
             plt.show()
 
@@ -143,7 +96,7 @@ def calibration_main(gv, locator, weather_path, building_name, variables, buildi
 
         with basic_model:
             step = pm.Metropolis()
-            trace = pm.sample(niter, step=step)
+            trace = pm.sample(max_iter_MCMC, step=step)
             pm.backends.text.dump(locator.get_calibration_folder(niter), trace)
     return
 
@@ -155,18 +108,12 @@ def run_as_script():
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
-    weather_path = locator.get_default_weather()
 
     # based on the variables listed in the uncertainty database and selected
     # through a screeing process. they need to be 5.
-    variables = ['U_win', 'U_wall', 'Ths_setb_C', 'Ths_set_C', 'Cm']
     building_name = 'B01'
-    building_load = 'Qhsf_kWh'
-    values_index = range(0,gv.seasonhours[0])+ range(gv.seasonhours[1],8760) #indexes of timeseries to consider
-    retrieve_results = False # flag to retrieve and analyze results from calibration
-    method = 'cvrmse' # cvrmse and normal distribution or 'poisson' with an entire timeseries
-    calibration_main(gv, locator, weather_path, building_name, variables, building_load, retrieve_results, scenario_path,
-                     method, values_index, niter=10000)
+    problem = json.load(locator.get_calibration_problem(building_name))
+    calibration_main(locator, problem, building_name)
 
 if __name__ == '__main__':
     run_as_script()
