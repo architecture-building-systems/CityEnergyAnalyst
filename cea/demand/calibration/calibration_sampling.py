@@ -97,7 +97,7 @@ def latin_sampler(locator, num_samples, variables, variable_groups = ('ENVELOPE'
 
     return design
 
-def sampling_main(locator, variables, building_name, output_parameters):
+def sampling_main(locator, variables, building_name, building_load):
 
     # create list of samples with a LHC sampler and save to disk
     samples = latin_sampler(locator, number_samples, variables)
@@ -105,7 +105,7 @@ def sampling_main(locator, variables, building_name, output_parameters):
 
     # create problem and save to disk as json
     problem = {'variables':variables, 'building_name':building_name,
-               'output_parameters':output_parameters}
+               'building_load':building_load}
     json.dump(problem, file(locator.get_calibration_problem(building_name),'w'))
 
     cv_rmse_list = []
@@ -118,7 +118,7 @@ def sampling_main(locator, variables, building_name, output_parameters):
         apply_sample_parameters(locator, sample)
 
         # run cea demand and calculate cv_rmse
-        cv_rmse = simulate_demand_sample(locator, building_name, output_parameters)
+        cv_rmse = simulate_demand_sample(locator, building_name, building_load)
         cv_rmse_list.append(cv_rmse)
         print "The cv_rmse for this iteration is:", cv_rmse
 
@@ -173,8 +173,8 @@ def run_as_script():
     # through a screening process. they need to be 5.
     variables = ['U_win', 'U_wall', 'Ths_setb_C', 'Ths_set_C', 'Cm_Af']
     building_name = 'B01'
-    output_parameter = 'Ef_kWh'
-    sampling_main(locator, variables, building_name, output_parameter)
+    building_load = 'Ef_kWh'
+    sampling_main(locator, variables, building_name, building_load)
 
 if __name__ == '__main__':
     run_as_script()
