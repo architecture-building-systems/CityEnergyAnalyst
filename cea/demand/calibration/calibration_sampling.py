@@ -1,3 +1,4 @@
+from __future__ import division
 import pandas as pd
 from scipy.stats import triang
 from scipy.stats import norm
@@ -7,10 +8,20 @@ import cea
 import numpy as np
 from cea.demand import demand_main
 from geopandas import GeoDataFrame as Gdf
+import pickle
 import json
 
 from cea.demand.calibration.settings import number_samples
 import cea.inputlocator as inputlocator
+
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 def simulate_demand_sample(locator, building_name, output_parameters):
     """
@@ -62,8 +73,9 @@ def calc_cv_rmse(prediction, target):
     mean = target.mean()
     sum_delta = delta.sum()
     n = len(prediction)
-    CVrmse = np.sqrt((sum_delta/n))/mean
-    return CVrmse
+    rmse = np.sqrt((sum_delta/n))
+    CVrmse = rmse/mean
+    return CVrmse, rmse
 
 
 def latin_sampler(locator, num_samples, variables, variable_groups = ('ENVELOPE', 'INDOOR_COMFORT', 'INTERNAL_LOADS')):
@@ -95,20 +107,21 @@ def latin_sampler(locator, num_samples, variables, variable_groups = ('ENVELOPE'
         else: # assume it is uniform
             design[:, i] = uniform(loc=min, scale=max).ppf(design[:, i])
 
-    return design
+    return design, pdf_list
 
 def sampling_main(locator, variables, building_name, building_load):
 
     # create list of samples with a LHC sampler and save to disk
-    samples = latin_sampler(locator, number_samples, variables)
+    samples, pdf_list = latin_sampler(locator, number_samples, variables)
     np.save(locator.get_calibration_samples(building_name), samples)
 
     # create problem and save to disk as json
-    problem = {'variables':variables, 'building_name':building_name,
-               'building_load':building_load}
-    json.dump(problem, file(locator.get_calibration_problem(building_name),'w'))
+    problem = {'variables':variables,
+               'building_load':building_load, 'probabiltiy_vars':pdf_list}
+    pickle.dump(problem, file(locator.get_calibration_problem(building_name), 'w'))
 
     cv_rmse_list = []
+    rmse_list = []
     for i in range(number_samples):
 
         #create list of tubles with variables and sample
@@ -118,11 +131,12 @@ def sampling_main(locator, variables, building_name, building_load):
         apply_sample_parameters(locator, sample)
 
         # run cea demand and calculate cv_rmse
-        cv_rmse = simulate_demand_sample(locator, building_name, building_load)
+        cv_rmse, rmse = simulate_demand_sample(locator, building_name, building_load)
         cv_rmse_list.append(cv_rmse)
+        rmse_list.append(rmse)
         print "The cv_rmse for this iteration is:", cv_rmse
 
-    json.dump({'cv_rmse':cv_rmse_list}, file(locator.get_calibration_cvrmse_file(building_name), 'w'))
+    json.dump({'cv_rmse':cv_rmse_list, 'rmse':rmse_list}, file(locator.get_calibration_cvrmse_file(building_name), 'w'))
 
 
 def apply_sample_parameters(locator, sample):

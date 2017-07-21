@@ -551,7 +551,7 @@ class InputLocator(object):
 
     def get_calibration_problem(self, building_name):
         """scenario/outputs/data/calibration"""
-        return os.path.join(self.get_calibration_folder(), 'problem_%(building_name)s.json' % locals())
+        return os.path.join(self.get_calibration_folder(), 'problem_%(building_name)s.pkl' % locals())
 
     def get_calibration_samples(self, building_name):
         """scenario/outputs/data/calibration"""
