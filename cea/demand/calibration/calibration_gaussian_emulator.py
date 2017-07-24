@@ -6,7 +6,6 @@ import json
 import numpy as np
 import cea.globalvar
 import cea.inputlocator
-import pandas as pd
 from sklearn.externals import joblib # this is like the python pickle package
 
 __author__ = "Adam Rysanek"
@@ -19,6 +18,21 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 def gaussian_emulator(locator, samples, cv_rmse, building_name):
+    """
+    Thi is a Gaussian process linear emulator. It is used to create a surrogate model of CEA whose
+    output is either rmse or cvrmse
+
+    for more details on the work behind this please check:
+    Rysanek A., Fonseca A., Schlueter, A. Bayesian calibration of Dyanmic building Energy Models. Applied Energy 2017.
+
+    :param locator: pointer to location of CEA files
+    :param samples: matrix m x n with samples simulated from CEA. m are the number of input variables
+    :param cv_rmse: array with results of cv_rmse after running n samples.
+    :param building_name: name of building whose calibration process is being acted upon
+    :return:
+           file with database of emulator stored in locator.get_calibration_cvrmse_file(building_name)
+
+    """
 
     # this normalizes all the input variables independently 0 - 1. so this might not be neccesary
     min_max_scaler = preprocessing.MinMaxScaler()
@@ -34,7 +48,7 @@ def gaussian_emulator(locator, samples, cv_rmse, building_name):
 
     # give the data to the regressor.
     gp = GaussianProcessRegressor(kernel=kernel, alpha=1e-7, normalize_y=True, n_restarts_optimizer=2)
-    gp.fit(Xnorm, cv_rmse) # then fit the gp to your observations and the minmax. It takes 30 min - 1 h.
+    gp.fit(samples, cv_rmse) # then fit the gp to your observations and the minmax. It takes 30 min - 1 h.
 
     # this is the result
     joblib.dump(gp, locator.get_calibration_gaussian_emulator(building_name))

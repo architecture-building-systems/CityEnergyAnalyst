@@ -13,7 +13,7 @@ J. Fonseca  script development          27.10.16
 from __future__ import division
 
 import pymc3 as pm
-import shutil, os
+import os
 from pymc3.backends import SQLite
 import theano.tensor as tt
 from theano import as_op
