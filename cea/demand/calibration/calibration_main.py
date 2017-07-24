@@ -49,13 +49,13 @@ def calibration_main(locator, problem, emulator, building_name):
     # create function of cea demand and send to theano
     @as_op(itypes=[tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar], otypes=[tt.dvector])
     def calc_result_emulator_and_bias(var1, var2, var3, var4, var5):
-        prediction = np.empty(1000)
+        prediction = np.empty(100)
         prediction[0] = emulator.predict([[var1,var2,var3, var4, var5]])
         calc_result_emulator_and_bias.grad = lambda *x: x[0]
         return prediction
 
     def calc_observed_synthetic():
-        observed_synthetic = np.random.uniform(0,0.30,1000)
+        observed_synthetic = np.random.uniform(0,0.30,100)
         return observed_synthetic
 
     # create bayesian calibration model in PYMC3
@@ -79,7 +79,7 @@ def calibration_main(locator, problem, emulator, building_name):
         mu = pm.Deterministic('mu', calc_result_emulator_and_bias(var1, var2, var3, var4, var5))
 
         # Likelihood (sampling distribution) of observations
-        sigma = pm.HalfNormal('sigma', sd=0.05)
+        sigma = pm.HalfNormal('sigma', sd=1)
         observed = calc_observed_synthetic()
         y_obs = pm.Normal('y_obs', mu=mu, sd=sigma, observed = observed)
 

@@ -59,12 +59,18 @@ def calc_cv_rmse(prediction, target):
         CVrmse: float
         rmse: float
     """
+
     delta = (prediction - target)**2
-    mean = target.mean()
     sum_delta = delta.sum()
-    n = len(prediction)
-    rmse = np.sqrt((sum_delta/n))
-    CVrmse = rmse/mean
+    if sum_delta > 0:
+        mean = target.mean()
+
+        n = len(prediction)
+        rmse = np.sqrt((sum_delta/n))
+        CVrmse = rmse/mean
+    else:
+        rmse = 0
+        CVrmse = 0
     return round(CVrmse,3), round(rmse,3) #keep only 3 significant digits
 
 
@@ -186,7 +192,7 @@ def run_as_script():
 
     # based on the variables listed in the uncertainty database and selected
     # through a screening process. they need to be 5.
-    variables = ['U_win', 'U_wall', 'Ths_setb_C', 'Ths_set_C', 'Cm_Af']
+    variables = ['U_win', 'U_wall', 'n50', 'Ths_set_C', 'Cm_Af']
     building_name = 'B01'
     building_load = 'Qhsf_kWh'
     sampling_main(locator, variables, building_name, building_load)
