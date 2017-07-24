@@ -108,13 +108,14 @@ def thermal_network_main(locator, gv, network_type, source):
 
     # calculate ground temperature
     weather_file = locator.get_default_weather()
-    T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
-    T_ground = geothermal.calc_ground_temperature(T_ambient.values, gv)
+    T_ambient_C = epwreader.epw_reader(weather_file)['drybulb_C']
+    network_depth_m = gv.NetworkDepth # [m]
+    T_ground = geothermal.calc_ground_temperature(locator, T_ambient_C.values, network_depth_m)
 
     # substation HEX design
     substations_HEX_specs, buildings_demands = substation.substation_HEX_design_main(locator, building_names, gv)
 
-    # get edge-node matrix from defined network
+    # get edge-node matrix from defined network, the input formats are either .csv or .shp
     if source == 'csv':
         edge_node_df, all_nodes_df, pipe_length_df = get_thermal_network_from_csv(locator, network_type)
     else:
@@ -166,7 +167,7 @@ def thermal_network_main(locator, gv, network_type, source):
 
         # calculate pressure at each node and pressure drop throughout the entire network
         P_supply_nodes, P_return_nodes, delta_P_network = calc_pressure_nodes(edge_node_df,
-                                                                              pipe_properties_df[:]['D_int':'D_int'].
+                                                                              pipe_properties_df[:]['D_int_m':'D_int_m'].
                                                                               values, pipe_length_df.values,
                                                                               edge_mass_flow_df.ix[t].values,
                                                                               T_supply_nodes, T_return_nodes, gv)
@@ -255,7 +256,8 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df):
 def assign_pipes_to_edges(mass_flow_df, locator, gv):
     """
     This function assigns pipes from the catalog to the network for a network with unspecified pipe properties.
-    Pipes are assigned based on each edge's minimum and maximum required flow rate (for now).
+    Pipes are assigned based on each edge's minimum and maximum required flow rate. Assuming max velocity for pipe
+    DN450-550 is 3 m/s; for DN600 is 3.5 m/s. min velocity for all pipes are 0.3 m/s.
 
     :param mass_flow_df: DataFrame containing the mass flow rate for each edge e at each time of the year t
     :param locator: an InputLocator instance set to the scenario to work on
@@ -266,20 +268,20 @@ def assign_pipes_to_edges(mass_flow_df, locator, gv):
 
     :return pipe_properties_df: DataFrame containing the pipe properties for each edge in the network
 
-    Sources of the pipe_catalog could be found in the excel file
+
     """
 
     # import pipe catalog from Excel file
     pipe_catalog = pd.read_excel(locator.get_thermal_networks(),sheetname=['PIPING CATALOG'])['PIPING CATALOG']
-    pipe_catalog['Vdot_min'] = pipe_catalog['Vdot_min'] * gv.Pwater
-    pipe_catalog['Vdot_max'] = pipe_catalog['Vdot_max'] * gv.Pwater
+    pipe_catalog['Vdot_min_m3s'] = pipe_catalog['Vdot_min_m3s'] * gv.Pwater
+    pipe_catalog['Vdot_max_m3s'] = pipe_catalog['Vdot_max_m3s'] * gv.Pwater
     pipe_properties_df = pd.DataFrame(data=None, index=pipe_catalog.columns.values, columns=mass_flow_df.columns.values)
     for pipe in mass_flow_df:
         pipe_found = False
         i = 0
         t0 = time.clock()
         while pipe_found == False:
-            if np.amax(np.absolute(mass_flow_df[pipe].values)) <= pipe_catalog['Vdot_max'][i] or i == len(pipe_catalog):
+            if np.amax(np.absolute(mass_flow_df[pipe].values)) <= pipe_catalog['Vdot_max_m3s'][i] or i == len(pipe_catalog):
                 pipe_properties_df[pipe] = np.transpose(pipe_catalog[:][i:i+1].values)
                 pipe_found = True
             else:
@@ -1089,6 +1091,8 @@ def calc_aggregated_heat_conduction_coefficient(locator, gv, L_pipe, pipe_proper
     """
     This function calculates the aggregated heat conduction coefficients of all the pipes.
     Following the reference from [Wang et al., 2016].
+    The pipe material properties are referenced from _[A. Kecabas et al., 2011], and the pipe catalogs are referenced
+    from _[J.A. Fonseca et al., 2016] and _[isoplus].
 
     :param locator: an InputLocator instance set to the scenario to work on
     :param gv: an instance of globalvar.GlobalVariables with the constants  to use (like `list_uses` etc.)
@@ -1101,24 +1105,31 @@ def calc_aggregated_heat_conduction_coefficient(locator, gv, L_pipe, pipe_proper
 
     :return K_all: DataFrame of aggregated heat conduction coefficients (1 x e) for all edges
 
-
     ..[Wang et al, 2016] Wang J., Zhou, Z., Zhao, J. (2016). A method for the steady-state thermal simulation of
     district heating systems and model parameters calibration. Eenergy Conversion and Management, 120, 294-305.
+
+    ..[A. Kecebas et al., 2011] A. Kecebas et al. Thermo-economic analysis of pipe insulation for district heating
+    piping systems. Applied Thermal Engineering, 2011.
+
+    ..[J.A. Fonseca et al., 2016] J.A. Fonseca et al. City Energy Analyst (CEA): Integrated framework for analysis and
+    optimization of building energy systems in neighborhoods and city districts. Energy and Buildings. 2016
+
+    ..[isoplus] isoplus piping systems. http://en.isoplus.dk/download-centre
     """
     material_properties = pd.read_excel(locator.get_thermal_networks(), sheetname=['MATERIAL PROPERTIES'])['MATERIAL PROPERTIES']
     material_properties = material_properties.set_index(material_properties['material'].values)
-    conductivity_pipe = material_properties.ix['Steel','lamda']     # [W/mC]
-    conductivity_insulation = material_properties.ix['PUR','lamda'] # [W/mC]
-    conductivity_ground = material_properties.ix['Soil','lamda']    # [W/mC]
+    conductivity_pipe = material_properties.ix['Steel','lamda_WmK']   # _[A. Kecebas et al., 2011]
+    conductivity_insulation = material_properties.ix['PUR','lamda_WmK']  # _[A. Kecebas et al., 2011]
+    conductivity_ground = material_properties.ix['Soil','lamda_WmK']  # _[A. Kecebas et al., 2011]
     network_depth = gv.NetworkDepth       # [m]
     extra_heat_transfer_coef = 0.2   # _[Wang et al, 2016] to represent heat losses from valves and other attachments
 
     K_all = []
     for pipe in L_pipe.index:
         # calculate heat resistances, equation (3) in Wang et al., 2016
-        R_pipe = np.log(pipe_properties_df.loc['D_ext', pipe]/pipe_properties_df.loc['D_int', pipe])/(2*math.pi*conductivity_pipe)     #[mC/W]
-        R_insulation = np.log((pipe_properties_df.loc['D_ins', pipe])/pipe_properties_df.loc['D_ext', pipe])/(2*math.pi*conductivity_insulation)
-        a= 2*network_depth/(pipe_properties_df.loc['D_ins', pipe])
+        R_pipe = np.log(pipe_properties_df.loc['D_ext_m', pipe]/pipe_properties_df.loc['D_int_m', pipe])/(2*math.pi*conductivity_pipe)     #[mC/W]
+        R_insulation = np.log((pipe_properties_df.loc['D_ins_m', pipe])/pipe_properties_df.loc['D_ext_m', pipe])/(2*math.pi*conductivity_insulation)
+        a= 2*network_depth/(pipe_properties_df.loc['D_ins_m', pipe])
         R_ground = np.log(a+(a**2-1)**0.5)/(2*math.pi*conductivity_ground) #[mC/W]  #
         # calculate the aggregated heat conduction coefficient, equation (4) in Wang et al., 2016
         k = L_pipe[pipe]*(1 + extra_heat_transfer_coef)/(R_pipe + R_insulation + R_ground)/1000   #[kW/C]
@@ -1519,11 +1530,11 @@ def run_as_script(scenario_path=None):
         scenario_path = gv.scenario_reference
 
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
-    weather_file = locator.get_default_weather()
+    # weather_file = locator.get_default_weather()
 
     # add geothermal part of pre-processing
-    T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
-    gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
+    # T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
+    # gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
 
     # add options for data sources: heating or cooling network, csv or shapefile
     network_type = ['DH', 'DC'] # set to either 'DH' or 'DC'
