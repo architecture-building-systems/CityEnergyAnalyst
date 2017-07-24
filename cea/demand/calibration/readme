@@ -1,0 +1,10 @@
+To run this script.
+
+select a name of a building and a building load.
+results for 8760 hours should exist for measured data for the building and the building load.
+select 5 variables to calibrate (they must be 5!)
+
+then excecute
+1. calibration_sampling
+2. calibration_gaussian_emulator
+3. calibration_main
