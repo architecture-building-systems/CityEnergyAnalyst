@@ -25,23 +25,12 @@ __status__ = "Production"
 
 def simulate_demand_sample(locator, building_name, output_parameters):
     """
-    Run a demand simulation for a single sample. This function expects a locator that is already initialized to the
-    simulation folder, that has already been prepared with `apply_sample_parameters`.
+    This script runs the cea demand tool in series and returns a single value of cvrmse and rmse.
 
-    :param locator: The InputLocator to use for the simulation
-    :type locator: InputLocator
-
-    :param weather: The path to the weather file (``*.epw``) to use for simulation. See the `weather_path` parameter in
-                    `cea.demand.demand_main.demand_calculation` for more information.
-    :type weather: str
-
-    :param output_parameters: The list of output parameters to save to disk. This is a column-wise subset of the
-                              output of `cea.demand.demand_main.demand_calculation`.
-    :type output_parameters: list of str
-
-    :return: Returns the columns of the results of `cea.demand.demand_main.demand_calculation` as defined in
-            `output_parameters`.
-    :rtype: pandas.DataFrame
+    :param locator: pointer to location of files in CEA
+    :param building_name: name of building
+    :param output_parameters: building load to consider in the anlysis
+    :return:
     """
 
     # force simulation to be sequential and to only do one building
@@ -57,9 +46,9 @@ def simulate_demand_sample(locator, building_name, output_parameters):
     #calculate demand timeseries for buidling an calculate cvrms
     demand_main.demand_calculation(locator, weather_path, gv)
     time_series_simulation = pd.read_csv(locator.get_demand_results_file(building_name), usecols=[output_parameters])
-    cv_rmse = calc_cv_rmse(time_series_simulation[output_parameters].values, time_series_measured[output_parameters].values)
+    cv_rmse, rmse = calc_cv_rmse(time_series_simulation[output_parameters].values, time_series_measured[output_parameters].values)
 
-    return cv_rmse
+    return cv_rmse, rmse
 
 def calc_cv_rmse(prediction, target):
     """
@@ -67,7 +56,8 @@ def calc_cv_rmse(prediction, target):
     :param prediction: vector of predicted/simulated data
     :param target: vector of target/measured data
     :return:
-        float (0..1)
+        CVrmse: float
+        rmse: float
     """
     delta = (prediction - target)**2
     mean = target.mean()
@@ -75,13 +65,25 @@ def calc_cv_rmse(prediction, target):
     n = len(prediction)
     rmse = np.sqrt((sum_delta/n))
     CVrmse = rmse/mean
-    return CVrmse, rmse
+    return round(CVrmse,3), round(rmse,3) #keep only 3 significant digits
 
 
-def latin_sampler(locator, num_samples, variables, variable_groups = ('ENVELOPE', 'INDOOR_COMFORT', 'INTERNAL_LOADS')):
+def latin_sampler(locator, num_samples, variables):
+    """
+    This script creates a matrix of m x n samples using the latin hypercube sampler.
+    for this, it uses the database of probability distribtutions stored in locator.get_uncertainty_db()
+
+    :param locator: pointer to locator of files of CEA
+    :param num_samples: number of samples to do
+    :param variables: list of variables to sample
+    :return:
+        1. design: a matrix m x n with the samples
+        2. pdf_list: a dataframe with properties of the probability density functions used in the excercise.
+    """
 
 
     # get probability density function PDF of variables of interest
+    variable_groups = ('ENVELOPE', 'INDOOR_COMFORT', 'INTERNAL_LOADS')
     database = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1)
                                                 for group in variable_groups])
     pdf_list = database[database['name'].isin(variables)].set_index('name')
@@ -110,6 +112,26 @@ def latin_sampler(locator, num_samples, variables, variable_groups = ('ENVELOPE'
     return design, pdf_list
 
 def sampling_main(locator, variables, building_name, building_load):
+    """
+    This script creates samples using a lating Hypercube sample of 5 variables of interest.
+    then runs the demand calculation of CEA for all the samples. It delivers a json file storing
+    the results of cv_rmse and rmse for each sample.
+
+    for more details on the work behind this please check:
+    Rysanek A., Fonseca A., Schlueter, A. Bayesian calibration of Dyanmic building Energy Models. Applied Energy 2017.
+
+    :param locator: pointer to location of CEA files
+    :param variables: input variables of CEA to sample. They must be 5!
+    :param building_name: name of building to calibrate
+    :param building_load: name of building load to calibrate
+    :return:
+
+        1. a file storing values of cv_rmse and rmse for all samples. the file is sotred in
+        file(locator.get_calibration_cvrmse_file(building_name)
+
+        2 a file storing information about varibles, the building_load and the probability distribtuions used in the
+          excercise. the file is stored in locator.get_calibration_problem(building_name)
+    """
 
     # create list of samples with a LHC sampler and save to disk
     samples, pdf_list = latin_sampler(locator, number_samples, variables)
@@ -141,32 +163,11 @@ def sampling_main(locator, variables, building_name, building_load):
 
 def apply_sample_parameters(locator, sample):
     """
-    Copy the scenario from the `scenario_path` to the `simulation_path`. Patch the parameters from
-    the problem statement. Return an `InputLocator` implementation that can be used to simulate the demand
-    of the resulting scenario.
+    This script structures samples in a format that can be read by a case study in cea.
 
-    The `simulation_path` is modified by the demand calculation. For the purposes of the sensitivity analysis, these
-    changes can be viewed as temporary and deleted / overwritten after each simulation.
-
-    :param sample_index: zero-based index into the samples list, which is read from the file `$samples_path/samples.npy`
-    :type sample_index: int
-
-    :param samples_path: path to the pre-calculated samples and problem statement (created by
-                        `sensitivity_demand_samples.py`)
-    :type samples_path: str
-
-    :param scenario_path: path to the scenario template
-    :type scenario_path: str
-
-    :param simulation_path: a (temporary) path for simulating a scenario that has been patched with a sample
-                            NOTE: When simulating in parallel, special care must be taken that each process has
-                            a unique `simulation_path` value. For the Euler cluster, this is solved by ensuring the
-                            simulation is done with `gv.multiprocessing = False` and setting the `simulation_path` to
-                            the special folder `$TMPDIR` that is set to a local scratch folder for each job by the
-                            job scheduler of the Euler cluster. Other setups will need to adopt an equivalent strategy.
-    :type simulation_path: str
-
-    :return: InputLocator that can be used to simulate the demand in the `simulation_path`
+    :param locator: pointer to location of CEA files
+    :param sample: array with values of m variables to modify in the input databases of CEA
+    :return: file with variables to overwrite in cea and stored in locator.get_building_overrides()
     """
 
     # make overides
