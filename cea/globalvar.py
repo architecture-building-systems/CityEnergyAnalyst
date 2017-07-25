@@ -77,7 +77,7 @@ class GlobalVariables(object):
         # Commands for the evolutionary algorithm
 
 
-        self.initialInd = 2  # number of initial individuals
+        self.initialInd = 10  # number of initial individuals
         self.NGEN = 5  # number of total generations
         self.fCheckPoint = 1  # frequency for the saving of checkpoints
         self.maxTime = 7 * 24 * 3600  # maximum computational time [seconds]
