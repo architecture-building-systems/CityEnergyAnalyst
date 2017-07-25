@@ -164,11 +164,11 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
         sBoiler = 0
         sBackup = 0
         Q_excess = 0
-        Q_HPSew, Q_HPLake, Q_GHP, Q_CC, Q_Furnace, Q_Boiler, Q_Backup = 0, 0, 0, 0, 0, 0, 0
-        E_el_HPSew, E_el_HPLake, E_el_GHP, E_el_CC_produced, E_el_Furnace_produced, E_el_BoilerBase, E_el_Backup = 0, 0, 0, 0, 0, 0, 0
+        Q_HPSew_W, Q_HPLake_W, Q_GHP_W, Q_CC, Q_Furnace, Q_Boiler, Q_Backup = 0, 0, 0, 0, 0, 0, 0
+        E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_el_CC_produced_W, E_el_Furnace_produced, E_el_BoilerBase, E_el_Backup = 0, 0, 0, 0, 0, 0, 0
         E_gas_HPSew, E_gas_HPLake, E_gas_GHP, E_gas_CC, E_gas_Furnace, E_gas_Boiler, E_gas_Backup = 0, 0, 0, 0, 0, 0, 0
         E_wood_HPSew, E_wood_HPLake, E_wood_GHP, E_wood_CC, E_wood_Furnace, E_wood_Boiler, E_wood_Backup = 0, 0, 0, 0, 0, 0, 0
-        E_coldsource_HPSew, E_coldsource_HPLake, E_coldsource_GHP, E_coldsource_CC, \
+        E_coldsource_HPSew_W, E_coldsource_HPLake_W, E_coldsource_GHP_W, E_coldsource_CC, \
         E_coldsource_Furnace, E_coldsource_Boiler, E_coldsource_Backup = 0, 0, 0, 0, 0, 0, 0
 
         # print "Slave has uncovered demand?", Q_therm_req, " (if zero then no)"
@@ -184,9 +184,9 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
                     sHPSew = 0
                     costHPSew = 0.0
-                    Q_HPSew = 0.0
-                    E_el_HPSew = 0.0
-                    E_coldsource_HPSew = 0.0
+                    Q_HPSew_W = 0.0
+                    E_HPSew_req_W = 0.0
+                    E_coldsource_HPSew_W = 0.0
 
                     if Q_therm_req_W > MS_Var.HPSew_maxSize:
                         Q_therm_Sew_W = MS_Var.HPSew_maxSize
@@ -208,10 +208,10 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                     if Q_HPSew_therm_W > 0:
                         sHPSew = 1
                     costHPSew = float(C_HPSew_el_pure)
-                    Q_HPSew = float(Q_HPSew_therm_W)
+                    Q_HPSew_W = float(Q_HPSew_therm_W)
                     # print "\n Q_HPSew", Q_HPSew
-                    E_el_HPSew = float(E_HPSew_req_W)
-                    E_coldsource_HPSew = float(Q_HPSew_cold_primary_W)
+                    E_HPSew_req_W = float(E_HPSew_req_W)
+                    E_coldsource_HPSew_W = float(Q_HPSew_cold_primary_W)
 
                 if (
                 MS_Var.GHP_on) == 1 and hour >= MS_Var.GHP_SEASON_ON and hour <= MS_Var.GHP_SEASON_OFF and Q_therm_req_W > 0:
@@ -220,57 +220,57 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                     # print "is GHP on?", MS_Var.GHP_on
                     srcGHP = 0
                     costGHP = 0.0
-                    Q_GHP = 0.0
-                    E_el_GHP = 0.0
-                    E_coldsource_GHP = 0.0
+                    Q_GHP_W = 0.0
+                    E_GHP_req_W = 0.0
+                    E_coldsource_GHP_W = 0.0
 
-                    Q_max, GHP_COP = GHP_Op_max(tdhsup_K, gv.TGround, MS_Var.GHP_number, gv)
+                    Q_max_W, GHP_COP = GHP_Op_max(tdhsup_K, gv.TGround, MS_Var.GHP_number, gv)
 
-                    if Q_therm_req_W > Q_max:
-                        mdot_DH_to_GHP = Q_max / (gv.cp * (tdhsup_K - tdhret_req_K))
-                        Q_therm_req_W -= Q_max
+                    if Q_therm_req_W > Q_max_W:
+                        mdot_DH_to_GHP_kgpers = Q_max_W / (gv.cp * (tdhsup_K - tdhret_req_K))
+                        Q_therm_req_W -= Q_max_W
 
                     else:  # regular operation possible, demand is covered
-                        mdot_DH_to_GHP = Q_therm_req_W.copy() / (gv.cp * (tdhsup_K - tdhret_req_K))
+                        mdot_DH_to_GHP_kgpers = Q_therm_req_W.copy() / (gv.cp * (tdhsup_K - tdhret_req_K))
                         Q_therm_req_W = 0
 
-                    GHP_Cost_Data = GHP_op_cost(mdot_DH_to_GHP, tdhsup_K, tdhret_req_K, gv, GHP_COP)
-                    C_GHP_el, Wdot_GHP, Q_GHP_cold_primary, Q_GHP_therm = GHP_Cost_Data
+                    GHP_Cost_Data = GHP_op_cost(mdot_DH_to_GHP_kgpers, tdhsup_K, tdhret_req_K, gv, GHP_COP)
+                    C_GHP_el, E_GHP_req_W, Q_GHP_cold_primary_W, Q_GHP_therm_W = GHP_Cost_Data
 
                     # Storing data for further processing
                     srcGHP = 1
                     costGHP = C_GHP_el
-                    Q_GHP = Q_GHP_therm
-                    E_el_GHP = Wdot_GHP
-                    E_coldsource_GHP = Q_GHP_cold_primary
+                    Q_GHP_W = Q_GHP_therm_W
+                    E_GHP_req_W = E_GHP_req_W
+                    E_coldsource_GHP_W = Q_GHP_cold_primary_W
 
                 if (MS_Var.HP_Lake_on) == 1 and Q_therm_req_W > 0 and gv.HPLake_allowed == 1:  # run Heat Pump Lake
                     sHPLake = 0
                     costHPLake = 0
-                    Q_HPLake = 0
-                    E_el_HPLake = 0
-                    E_coldsource_HPLake = 0
+                    Q_HPLake_W = 0
+                    E_HPLake_req_W = 0
+                    E_coldsource_HPLake_W = 0
 
                     if Q_therm_req_W > MS_Var.HPLake_maxSize:  # Scale down Load, 100% load achieved
-                        Q_therm_HPL = MS_Var.HPLake_maxSize
-                        mdot_DH_to_Lake = Q_therm_HPL / (
+                        Q_therm_HPL_W = MS_Var.HPLake_maxSize
+                        mdot_DH_to_Lake_kgpers = Q_therm_HPL_W / (
                         gv.cp * (tdhsup_K - tdhret_req_K))  # scale down the mass flow if the thermal demand is lowered
                         Q_therm_req_W -= MS_Var.HPLake_maxSize
 
                     else:  # regular operation possible
-                        Q_therm_HPL = Q_therm_req_W.copy()
-                        mdot_DH_to_Lake = Q_therm_HPL / (gv.cp * (tdhsup_K - tdhret_req_K))
+                        Q_therm_HPL_W = Q_therm_req_W.copy()
+                        mdot_DH_to_Lake_kgpers = Q_therm_HPL_W / (gv.cp * (tdhsup_K - tdhret_req_K))
                         Q_therm_req_W = 0
                     print tdhsup_K
-                    HP_Lake_Cost_Data = HPLake_op_cost(mdot_DH_to_Lake, tdhsup_K, tdhret_req_K, gv.TLake, gv)
-                    C_HPL_el, Wdot_HPLake, Q_HPL_cold_primary, Q_HPL_therm = HP_Lake_Cost_Data
+                    HP_Lake_Cost_Data = HPLake_op_cost(mdot_DH_to_Lake_kgpers, tdhsup_K, tdhret_req_K, gv.TLake, gv)
+                    C_HPL_el, E_HPLake_req_W, Q_HPL_cold_primary_W, Q_HPL_therm_W = HP_Lake_Cost_Data
 
                     # Storing Data
                     sHPLake = 1
                     costHPLake = C_HPL_el
-                    Q_HPLake = Q_therm_HPL
-                    E_el_HPLake = Wdot_HPLake
-                    E_coldsource_HPLake = Q_HPL_cold_primary
+                    Q_HPLake_W = Q_therm_HPL_W
+                    E_HPLake_req_W = E_HPLake_req_W
+                    E_coldsource_HPLake_W = Q_HPL_cold_primary_W
 
                     # print Q_therm_req, "Q left"
 
@@ -284,43 +284,43 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                 costCC = 0.0
                 Q_CC = 0.0
                 E_gas_CC = 0.0
-                E_el_CC_produced = 0
+                E_el_CC_produced_W = 0
 
                 if (
                 MS_Var.CC_on) == 1 and Q_therm_req_W > 0 and gv.CC_allowed == 1:  # only operate if the plant is available
                     CC_op_cost_data = CC_op_cost(MS_Var.CC_GT_SIZE, tdhsup_K, MS_Var.gt_fuel,
                                                  gv)  # create cost information
-                    Q_used_prim_CC_fn = CC_op_cost_data[1]
+                    Q_used_prim_CC_fn_W = CC_op_cost_data[1]
                     cost_per_Wh_CC_fn = CC_op_cost_data[2]  # gets interpolated cost function
-                    Q_CC_min = CC_op_cost_data[3]
-                    Q_CC_max = CC_op_cost_data[4]
+                    Q_CC_min_W = CC_op_cost_data[3]
+                    Q_CC_max_W = CC_op_cost_data[4]
                     eta_elec_interpol = CC_op_cost_data[5]
 
-                    if Q_therm_req_W > Q_CC_min:  # operation Possible if above minimal load
-                        print MS_Var.CC_GT_SIZE, MS_Var.gt_fuel, tdhsup_K, Q_therm_req_W, Q_CC_min, Q_CC_max
-                        if Q_therm_req_W < Q_CC_max:  # Normal operation Possible within partload regime
+                    if Q_therm_req_W > Q_CC_min_W:  # operation Possible if above minimal load
+                        print MS_Var.CC_GT_SIZE, MS_Var.gt_fuel, tdhsup_K, Q_therm_req_W, Q_CC_min_W, Q_CC_max_W
+                        if Q_therm_req_W < Q_CC_max_W:  # Normal operation Possible within partload regime
                             cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_therm_req_W)
-                            Q_used_prim_CC = Q_used_prim_CC_fn(Q_therm_req_W)
-                            Q_CC_delivered = Q_therm_req_W.copy()
+                            Q_used_prim_CC_W = Q_used_prim_CC_fn_W(Q_therm_req_W)
+                            Q_CC_delivered_W = Q_therm_req_W.copy()
                             Q_therm_req_W = 0
-                            E_el_CC_produced = np.float(eta_elec_interpol(Q_used_prim_CC)) * Q_used_prim_CC
+                            E_el_CC_produced_W = np.float(eta_elec_interpol(Q_used_prim_CC_W)) * Q_used_prim_CC_W
 
 
                         else:  # Only part of the demand can be delivered as 100% load achieved
-                            cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_CC_max)
-                            Q_used_prim_CC = Q_used_prim_CC_fn(Q_CC_max)
-                            Q_CC_delivered = Q_CC_max
-                            Q_therm_req_W -= Q_CC_max
+                            cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_CC_max_W)
+                            Q_used_prim_CC_W = Q_used_prim_CC_fn_W(Q_CC_max_W)
+                            Q_CC_delivered_W = Q_CC_max_W
+                            Q_therm_req_W -= Q_CC_max_W
                             # print "CC electric efficiency:", np.float(eta_elec_interpol(Q_CC_max))
                             # print "Q_CC_delivered", Q_CC_delivered
-                            E_el_CC_produced = np.float(eta_elec_interpol(Q_CC_max)) * Q_used_prim_CC
+                            E_el_CC_produced_W = np.float(eta_elec_interpol(Q_CC_max_W)) * Q_used_prim_CC_W
                             # print "E_el_CC", np.shape(E_el_CC), E_el_CC
 
-                        Cost_CC = cost_per_Wh_CC * Q_CC_delivered
+                        Cost_CC = cost_per_Wh_CC * Q_CC_delivered_W
                         sorcCC = 1
                         costCC = Cost_CC
-                        Q_CC = Q_CC_delivered
-                        E_gas_CC = Q_used_prim_CC
+                        Q_CC = Q_CC_delivered_W
+                        E_gas_CC = Q_used_prim_CC_W
                     else:
                         print "CC below part load"
 
@@ -497,11 +497,11 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
         cost_data_centralPlant_op = costHPSew, costHPLake, costGHP, costCC, costFurnace, costBoiler, costBackup
         source_info = sHPSew, sHPLake, srcGHP, sorcCC, sorcFurnace, sBoiler, sBackup
-        Q_source_data = Q_HPSew, Q_HPLake, Q_GHP, Q_CC, Q_Furnace, Q_Boiler, Q_Backup, Q_uncovered
-        E_PP_el_data = E_el_HPSew, E_el_HPLake, E_el_GHP, E_el_CC_produced, E_el_Furnace_produced, E_el_BoilerBase, E_el_Backup
+        Q_source_data = Q_HPSew_W, Q_HPLake_W, Q_GHP_W, Q_CC, Q_Furnace, Q_Boiler, Q_Backup, Q_uncovered
+        E_PP_el_data = E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_el_CC_produced_W, E_el_Furnace_produced, E_el_BoilerBase, E_el_Backup
         E_gas_data = E_gas_HPSew, E_gas_HPLake, E_gas_GHP, E_gas_CC, E_gas_Furnace, E_gas_Boiler, E_gas_Backup
         E_wood_data = E_wood_HPSew, E_wood_HPLake, E_wood_GHP, E_wood_CC, E_wood_Furnace, E_wood_Boiler, E_wood_Backup
-        E_coldsource_data = E_coldsource_HPSew, E_coldsource_HPLake, E_coldsource_GHP, E_coldsource_CC, \
+        E_coldsource_data = E_coldsource_HPSew_W, E_coldsource_HPLake_W, E_coldsource_GHP_W, E_coldsource_CC, \
                             E_coldsource_Furnace, E_coldsource_Boiler, E_coldsource_Backup
 
         return cost_data_centralPlant_op, source_info, Q_source_data, E_coldsource_data, E_PP_el_data, E_gas_data, E_wood_data, Q_excess
