@@ -222,18 +222,18 @@ def HPLake_Op(mdot, tsup, tret, tlake, gV):
 
     return wdot_el, qcolddot
 
-def HPSew_op_cost(mdot, tsup, tret, tsupsew, gV):
+def HPSew_op_cost(mdot_kgpers, tsup_K, tret_K, tsupsew_K, gV):
     """
     Operation cost of sewage water HP supplying DHN
 
-    :type mdot : float
-    :param mdot: supply mass flow rate to the DHN
-    :type tsup : float
-    :param tsup: supply temperature to the DHN (hot)
-    :type tret : float
-    :param tret: return temeprature from the DHN (cold)
-    :type tsupsew : float
-    :param tsupsew: sewage supply temperature
+    :type mdot_kgpers : float
+    :param mdot_kgpers: supply mass flow rate to the DHN
+    :type tsup_K : float
+    :param tsup_K: supply temperature to the DHN (hot)
+    :type tret_K : float
+    :param tret_K: return temeprature from the DHN (cold)
+    :type tsupsew_K : float
+    :param tsupsew_K: sewage supply temperature
     :param gV: globalvar.py
 
     :rtype C_HPSew_el_pure: float
@@ -257,16 +257,16 @@ def HPSew_op_cost(mdot, tsup, tret, tsupsew, gV):
 
     """
 
-    COP = gV.HP_etaex * ( tsup + gV.HP_deltaT_cond) / ( ( tsup + gV.HP_deltaT_cond ) - tsupsew )
-    q_therm = mdot * gV.cp *(tsup - tret)
-    qcoldot = q_therm*( 1 - ( 1 / COP ) )
+    COP = gV.HP_etaex * (tsup_K + gV.HP_deltaT_cond) / ((tsup_K + gV.HP_deltaT_cond) - tsupsew_K)
+    q_therm_W = mdot_kgpers * gV.cp * (tsup_K - tret_K)
+    qcoldot_W = q_therm_W*( 1 - ( 1 / COP ) )
 
-    wdot = q_therm / COP
+    E_HPSew_req_W = q_therm_W / COP
 
-    C_HPSew_el_pure = wdot * gV.ELEC_PRICE
-    C_HPSew_per_kWh_th_pure = C_HPSew_el_pure / (q_therm)
+    C_HPSew_el_pure = E_HPSew_req_W * gV.ELEC_PRICE
+    C_HPSew_per_kWh_th_pure = C_HPSew_el_pure / (q_therm_W)
 
-    return C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, qcoldot, q_therm, wdot
+    return C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, qcoldot_W, q_therm_W, E_HPSew_req_W
 
 
 

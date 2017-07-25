@@ -119,8 +119,8 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, 
     Tout_group_C = (Sum_qout_kWh / Sum_mcp) + Tin  # in C
 
     Final = pd.DataFrame(
-        {'Q_SC_gen_kWh': Sum_qout_kWh, 'T_SC_sup_C': Tin_array_C, 'T_SC_re_C': Tout_group_C, 'mcp_kWperC': Sum_mcp, 'Eaux_kW': Sum_Eaux,
-         'Qsc_l_KWH': Sum_qloss, 'Area': sum(listareasgroups)}, index=range(8760))
+        {'Q_SC_gen_kWh': Sum_qout_kWh, 'T_SC_sup_C': Tin_array_C, 'T_SC_re_C': Tout_group_C, 'mcp_SC_kWperC': Sum_mcp, 'Eauxf_SC_kWh': Sum_Eaux,
+         'Q_SC_l_kWh': Sum_qloss, 'A_SC_m2': sum(listareasgroups)}, index=range(8760))
 
     return listresults, Final
 
