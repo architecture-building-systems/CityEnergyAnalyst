@@ -75,16 +75,16 @@ def calc_Cop_GHP(mdot, tsup, tret, tground, gV):
 
     return wdot_el, qcolddot, qhotdot_missing, tsup2
 
-def GHP_op_cost(mdot, tsup, tret, gV, COP):
+def GHP_op_cost(mdot_kgpers, t_sup_K, t_ret_K, gV, COP):
     """
     Operation cost of GSHP supplying DHN
 
-    :type mdot : float
-    :param mdot: supply mass flow rate to the DHN
-    :type tsup : float
-    :param tsup: supply temperature to the DHN (hot)
-    :type tret : float
-    :param tret: return temeprature from the DHN (cold)
+    :type mdot_kgpers : float
+    :param mdot_kgpers: supply mass flow rate to the DHN
+    :type t_sup_K : float
+    :param t_sup_K: supply temperature to the DHN (hot)
+    :type t_ret_K : float
+    :param t_ret_K: return temeprature from the DHN (cold)
     :type COP: float
     :param COP: coefficient of performance of GSHP
     :param gV: globalvar.py
@@ -103,22 +103,22 @@ def GHP_op_cost(mdot, tsup, tret, gV, COP):
 
     """
 
-    q_therm = mdot * gV.cp *( tsup - tret) # Thermal Energy generated
-    qcoldot = q_therm * ( 1 - ( 1 / COP ) )
-    wdot = q_therm / COP
+    q_therm_W = mdot_kgpers * gV.cp * (t_sup_K - t_ret_K) # Thermal Energy generated
+    qcoldot_W = q_therm_W * ( 1 - ( 1 / COP ) )
+    E_GHP_req_W = q_therm_W / COP
 
-    C_GHP_el = wdot * gV.ELEC_PRICE
+    C_GHP_el = E_GHP_req_W * gV.ELEC_PRICE
 
-    return C_GHP_el, wdot, qcoldot, q_therm
+    return C_GHP_el, E_GHP_req_W, qcoldot_W, q_therm_W
 
-def GHP_Op_max(tsup, tground, nProbes, gV):
+def GHP_Op_max(tsup_K, tground_K, nProbes, gV):
     """
     For the operation of a Geothermal heat pump (GSHP) at maximum capacity supplying DHN.
 
-    :type tsup : float
-    :param tsup: supply temperature to the DHN (hot)
-    :type tground : float
-    :param tground: ground temperature
+    :type tsup_K : float
+    :param tsup_K: supply temperature to the DHN (hot)
+    :type tground_K : float
+    :param tground_K: ground temperature
     :type nProbes: float
     :param nProbes: bumber of probes
     :param gV: globalvar.py
@@ -130,22 +130,22 @@ def GHP_Op_max(tsup, tground, nProbes, gV):
 
     """
 
-    qcoldot = nProbes * gV.GHP_Cmax_Size_th   # maximum capacity from all probes
-    COP = gV.HP_etaex * ( tsup + gV.HP_deltaT_cond ) / ( ( tsup + gV.HP_deltaT_cond ) - tground)
-    qhotdot = qcoldot /( 1 - ( 1 / COP ) )
+    qcoldot_Wh = nProbes * gV.GHP_Cmax_Size_th   # maximum capacity from all probes
+    COP = gV.HP_etaex * (tsup_K + gV.HP_deltaT_cond) / ((tsup_K + gV.HP_deltaT_cond) - tground_K)
+    qhotdot_Wh = qcoldot_Wh /( 1 - ( 1 / COP ) )
 
-    return qhotdot, COP
+    return qhotdot_Wh, COP
 
-def HPLake_op_cost(mdot, tsup, tret, tlake, gV):
+def HPLake_op_cost(mdot_kgpers, t_sup_K, t_ret_K, tlake, gV):
     """
     For the operation of lake heat pump supplying DHN
 
-    :type mdot : float
-    :param mdot: supply mass flow rate to the DHN
-    :type tsup : float
-    :param tsup: supply temperature to the DHN (hot)
-    :type tret : float
-    :param tret: return temeprature from the DHN (cold)
+    :type mdot_kgpers : float
+    :param mdot_kgpers: supply mass flow rate to the DHN
+    :type t_sup_K : float
+    :param t_sup_K: supply temperature to the DHN (hot)
+    :type t_ret_K : float
+    :param t_ret_K: return temeprature from the DHN (cold)
     :type tlake : float
     :param tlake: lake temperature
     :param gV: globalvar.py
@@ -164,28 +164,28 @@ def HPLake_op_cost(mdot, tsup, tret, tlake, gV):
 
     """
 
-    wdot, qcolddot = HPLake_Op(mdot, tsup, tret, tlake, gV)
+    E_HPLake_req_W, qcolddot_W = HPLake_Op(mdot_kgpers, t_sup_K, t_ret_K, tlake, gV)
 
-    Q_therm = mdot * gV.cp *(tsup - tret)
+    Q_therm_W = mdot_kgpers * gV.cp * (t_sup_K - t_ret_K)
 
-    C_HPL_el = wdot * gV.ELEC_PRICE
+    C_HPL_el = E_HPLake_req_W * gV.ELEC_PRICE
 
-    Q_cold_primary = qcolddot
+    Q_cold_primary_W = qcolddot_W
 
-    return C_HPL_el, wdot, Q_cold_primary, Q_therm
+    return C_HPL_el, E_HPLake_req_W, Q_cold_primary_W, Q_therm_W
 
-def HPLake_Op(mdot, tsup, tret, tlake, gV):
+def HPLake_Op(mdot_kgpers, t_sup_K, t_ret_K, tlake_K, gV):
     """
     For the operation of a Heat pump between a district heating network and a lake
 
-    :type mdot : float
-    :param mdot: supply mass flow rate to the DHN
-    :type tsup : float
-    :param tsup: supply temperature to the DHN (hot)
-    :type tret : float
-    :param tret: return temeprature from the DHN (cold)
-    :type tlake : float
-    :param tlake: lake temperature
+    :type mdot_kgpers : float
+    :param mdot_kgpers: supply mass flow rate to the DHN
+    :type t_sup_K : float
+    :param t_sup_K: supply temperature to the DHN (hot)
+    :type t_ret_K : float
+    :param t_ret_K: return temeprature from the DHN (cold)
+    :type tlake_K : float
+    :param tlake_K: lake temperature
     :param gV: globalvar.py
 
     :rtype wdot_el : float
@@ -202,25 +202,25 @@ def HPLake_Op(mdot, tsup, tret, tlake, gV):
     """
 
     # calculate condenser temperature
-    tcond = tsup + gV.HP_deltaT_cond
-    print tcond
-    if tcond > gV.HP_maxT_cond:
+    tcond_K = t_sup_K + gV.HP_deltaT_cond
+    print tcond_K
+    if tcond_K > gV.HP_maxT_cond:
         raise ModelError
 
     # calculate evaporator temperature
-    tevap = tlake - gV.HP_deltaT_evap
-    COP = gV.HP_etaex / (1- tevap/tcond)   # [L. Girardin et al., 2010]_
-    qhotdot = mdot * gV.cp * (tsup - tret)
+    tevap_K = tlake_K - gV.HP_deltaT_evap
+    COP = gV.HP_etaex / (1- tevap_K/tcond_K)   # [L. Girardin et al., 2010]_
+    qhotdot_W = mdot_kgpers * gV.cp * (t_sup_K - t_ret_K)
 
-    if qhotdot > gV.HP_maxSize:
+    if qhotdot_W > gV.HP_maxSize:
         print "Qhot above max size on the market !"
 
-    wdot = qhotdot / COP
-    wdot_el = wdot / gV.HP_Auxratio     # compressor power [C. Montagud et al., 2014]_
+    wdot_W = qhotdot_W / COP
+    E_HPLake_req_W = wdot_W / gV.HP_Auxratio     # compressor power [C. Montagud et al., 2014]_
 
-    qcolddot =  qhotdot - wdot
+    qcolddot_W =  qhotdot_W - wdot_W
 
-    return wdot_el, qcolddot
+    return E_HPLake_req_W, qcolddot_W
 
 def HPSew_op_cost(mdot_kgpers, tsup_K, tret_K, tsupsew_K, gV):
     """
