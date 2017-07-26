@@ -1201,8 +1201,6 @@ class dbf2xlsTool(object):
         return [input_path, output_path]
 
 
-
-
     def execute(self,parameters, _):
         input_path = parameters['input_path'].valueAsText
         output_path = parameters['output_path'].valueAsText
