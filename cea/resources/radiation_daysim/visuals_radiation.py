@@ -16,7 +16,7 @@ __status__ = "Production"
 def calc_spatio_temporal_visuals(locator, period):
 
     date = pd.date_range('1/1/2010', periods=8760, freq='H')[period[0]: period[1]]
-    buildings = dbfreader.dbf2df(locator.get_building_occupancy())['Name']
+    buildings = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
     location = locator.get_solar_radiation_folder()
     time = date.strftime("%Y%m%d%H%M%S")
 
@@ -38,7 +38,7 @@ def calc_spatio_temporal_visuals(locator, period):
             else:
                 final = final.append(result, ignore_index=True)
 
-    dbfreader.df2dbf(final, locator.get_solar_radiation_folder()+"result_solar_48h.dbf")
+    dbfreader.dataframe_to_dbf(final, locator.get_solar_radiation_folder() + "result_solar_48h.dbf")
 
 def main(locator):
     # Create City GML file (this is necesssary only once).

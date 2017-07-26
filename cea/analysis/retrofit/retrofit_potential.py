@@ -72,25 +72,25 @@ def retrofit_main(locator_baseline, name_new_scenario, keep_partial_matches,
     geometry_df = gdf.from_file(locator_baseline.get_zone_geometry())
     names = geometry_df['Name'].values
     #age
-    age = dbfreader.dbf2df(locator_baseline.get_building_age())
+    age = dbfreader.dbf_to_dataframe(locator_baseline.get_building_age())
     age = age.loc[age['Name'].isin(names)]
 
-    architecture = dbfreader.dbf2df(locator_baseline.get_building_architecture())
+    architecture = dbfreader.dbf_to_dataframe(locator_baseline.get_building_architecture())
     architecture = architecture.loc[architecture['Name'].isin(names)]
 
-    comfort = dbfreader.dbf2df(locator_baseline.get_building_comfort())
+    comfort = dbfreader.dbf_to_dataframe(locator_baseline.get_building_comfort())
     comfort = comfort.loc[comfort['Name'].isin(names)]
 
-    internal_loads = dbfreader.dbf2df(locator_baseline.get_building_internal())
+    internal_loads = dbfreader.dbf_to_dataframe(locator_baseline.get_building_internal())
     internal_loads = internal_loads.loc[internal_loads['Name'].isin(names)]
 
-    hvac = dbfreader.dbf2df(locator_baseline.get_building_hvac())
+    hvac = dbfreader.dbf_to_dataframe(locator_baseline.get_building_hvac())
     hvac = hvac.loc[hvac['Name'].isin(names)]
 
-    supply = dbfreader.dbf2df(locator_baseline.get_building_supply())
+    supply = dbfreader.dbf_to_dataframe(locator_baseline.get_building_supply())
     supply = supply.loc[supply['Name'].isin(names)]
 
-    occupancy = dbfreader.dbf2df(locator_baseline.get_building_occupancy())
+    occupancy = dbfreader.dbf_to_dataframe(locator_baseline.get_building_occupancy())
     occupancy = occupancy.loc[occupancy['Name'].isin(names)]
 
 
@@ -187,13 +187,13 @@ def retrofit_scenario_creator(locator_baseline, locator_retrofit, geometry_df, a
     new_geometry.to_file(locator_retrofit.get_zone_geometry(), driver='ESRI Shapefile')
     district = gdf.from_file(locator_baseline.get_district_geometry())
     district.to_file(locator_retrofit.get_district_geometry())
-    dbfreader.df2dbf(age.merge(data, on='Name'), locator_retrofit.get_building_age())
-    dbfreader.df2dbf(architecture.merge(data, on='Name'), locator_retrofit.get_building_architecture())
-    dbfreader.df2dbf(comfort.merge(data, on='Name'), locator_retrofit.get_building_comfort())
-    dbfreader.df2dbf(internal_loads.merge(data, on='Name'), locator_retrofit.get_building_internal())
-    dbfreader.df2dbf(hvac.merge(data, on='Name'), locator_retrofit.get_building_hvac())
-    dbfreader.df2dbf(supply.merge(data, on='Name'), locator_retrofit.get_building_supply())
-    dbfreader.df2dbf(occupancy.merge(data, on='Name'), locator_retrofit.get_building_occupancy())
+    dbfreader.dataframe_to_dbf(age.merge(data, on='Name'), locator_retrofit.get_building_age())
+    dbfreader.dataframe_to_dbf(architecture.merge(data, on='Name'), locator_retrofit.get_building_architecture())
+    dbfreader.dataframe_to_dbf(comfort.merge(data, on='Name'), locator_retrofit.get_building_comfort())
+    dbfreader.dataframe_to_dbf(internal_loads.merge(data, on='Name'), locator_retrofit.get_building_internal())
+    dbfreader.dataframe_to_dbf(hvac.merge(data, on='Name'), locator_retrofit.get_building_hvac())
+    dbfreader.dataframe_to_dbf(supply.merge(data, on='Name'), locator_retrofit.get_building_supply())
+    dbfreader.dataframe_to_dbf(occupancy.merge(data, on='Name'), locator_retrofit.get_building_occupancy())
     shutil.copy2(locator_baseline.get_terrain(), locator_retrofit.get_terrain())
 
 
