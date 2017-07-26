@@ -64,6 +64,8 @@ def calcQmax(fName, filepath, gV):
     :return: Qmax: maximum heating power [W]
     :rtype: float
     """    
+    Q_DHNf_W = pd.read_csv(filepath + '//' + fName, usecols=["Q_DHNf_W"]).values
+    Qmax = Q_DHNf_W.max()
 
     return Qmax
     
