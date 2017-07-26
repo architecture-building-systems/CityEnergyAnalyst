@@ -96,53 +96,53 @@ def network_main(locator, total_demand, building_names, gv, key):
         iteration += 1
 
     # calculate thermal losses of distribution
-    T_sst_heat_return_netw_total_K = np.vectorize(calc_return_temp)(sum_tret_mdot_heat, mdot_heat_netw_all_kgpers)
+    T_DHN_withoutlosses_re_K = np.vectorize(calc_return_temp)(sum_tret_mdot_heat, mdot_heat_netw_all_kgpers)
 
-    T_sst_heat_supply_netw_total_K = np.vectorize(calc_supply_temp)(T_sst_heat_return_netw_total_K,
+    T_DHN_withoutlosses_sup_K = np.vectorize(calc_supply_temp)(T_DHN_withoutlosses_re_K,
                                                                   Q_DH_building_netw_total_W,
                                                                   mdot_heat_netw_all_kgpers,
                                                                   gv.cp, "DH")
 
-    T_sst_cool_return_netw_total_K = np.vectorize(calc_return_temp)(sum_tret_mdot_cool,
+    T_DCN_withoutlosses_re_K = np.vectorize(calc_return_temp)(sum_tret_mdot_cool,
                                                                   mdot_cool_netw_all_kgpers)
-    T_sst_cool_supply_netw_total_K = np.vectorize(calc_supply_temp)(T_sst_cool_return_netw_total_K,
+    T_DCN_withoutlosses_sup_K = np.vectorize(calc_supply_temp)(T_DCN_withoutlosses_re_K,
                                                                   Q_DC_building_netw_total_W,
                                                                   mdot_cool_netw_all_kgpers, gv.cp, "DC")
 
-    Q_DH_losses_supply_W = np.vectorize(calc_piping_thermal_losses)(T_sst_heat_supply_netw_total_K,
+    Q_DH_losses_sup_W = np.vectorize(calc_piping_thermal_losses)(T_DHN_withoutlosses_sup_K,
                                                                   mdot_heat_netw_all_kgpers, mdot_heat_netw_min_kgpers,
                                                                   ntwk_length, gv.ground_temperature, gv.K_DH, gv.cp)
 
-    Q_DH_losses_return_W = np.vectorize(calc_piping_thermal_losses)(T_sst_heat_return_netw_total_K,
+    Q_DH_losses_re_W = np.vectorize(calc_piping_thermal_losses)(T_DHN_withoutlosses_re_K,
                                                                   mdot_heat_netw_all_kgpers, mdot_heat_netw_min_kgpers,
                                                                   ntwk_length, gv.ground_temperature, gv.K_DH, gv.cp)
-    Q_DH_losses_W = Q_DH_losses_supply_W + Q_DH_losses_return_W
-    Q_DH_building_netw_total_inclLosses_W = Q_DH_building_netw_total_W + Q_DH_losses_W
+    Q_DH_losses_W = Q_DH_losses_sup_W + Q_DH_losses_re_W
+    Q_DHNf_W = Q_DH_building_netw_total_W + Q_DH_losses_W
 
-    Q_DC_losses_supply_W = np.vectorize(calc_piping_thermal_losses)(T_sst_cool_supply_netw_total_K,
+    Q_DC_losses_sup_W = np.vectorize(calc_piping_thermal_losses)(T_DCN_withoutlosses_sup_K,
                                                                   mdot_cool_netw_all_kgpers, mdot_cool_netw_min_kgpers,
                                                                   ntwk_length, gv.ground_temperature, gv.K_DH, gv.cp)
 
-    Q_DC_losses_return_W = np.vectorize(calc_piping_thermal_losses)(T_sst_heat_return_netw_total_K,
+    Q_DC_losses_re_W = np.vectorize(calc_piping_thermal_losses)(T_DHN_withoutlosses_re_K,
                                                                   mdot_cool_netw_all_kgpers, mdot_cool_netw_min_kgpers,
                                                                   ntwk_length, gv.ground_temperature, gv.K_DH, gv.cp)
-    Q_DC_losses_W = Q_DC_losses_supply_W + Q_DC_losses_return_W
-    Q_DC_building_netw_total_inclLosses_W = Q_DC_building_netw_total_W + Q_DC_losses_W
+    Q_DC_losses_W = Q_DC_losses_sup_W + Q_DC_losses_re_W
+    Q_DCNf_W = Q_DC_building_netw_total_W + Q_DC_losses_W
 
-    T_sst_heat_return_netw_total_inclLosses_K = np.vectorize(calc_temp_withlosses)(T_sst_heat_return_netw_total_K,
-                                                                                 Q_DH_losses_return_W, mdot_heat_netw_all_kgpers,
+    T_DHN_re_K = np.vectorize(calc_temp_withlosses)(T_DHN_withoutlosses_re_K,
+                                                                                 Q_DH_losses_re_W, mdot_heat_netw_all_kgpers,
                                                                                  gv.cp, "negative")
 
-    T_sst_heat_supply_netw_total_inclLosses_K = np.vectorize(calc_temp_withlosses)(T_sst_heat_supply_netw_total_K,
-                                                                                 Q_DH_losses_supply_W, mdot_heat_netw_all_kgpers,
+    T_DHN_sup_K = np.vectorize(calc_temp_withlosses)(T_DHN_withoutlosses_sup_K,
+                                                                                 Q_DH_losses_sup_W, mdot_heat_netw_all_kgpers,
                                                                                  gv.cp, "positive")
 
-    T_sst_cool_return_netw_total_inclLosses_K = np.vectorize(calc_temp_withlosses)(T_sst_cool_return_netw_total_K,
-                                                                                 Q_DC_losses_return_W, mdot_cool_netw_all_kgpers,
+    T_DCN_re_K = np.vectorize(calc_temp_withlosses)(T_DCN_withoutlosses_re_K,
+                                                                                 Q_DC_losses_re_W, mdot_cool_netw_all_kgpers,
                                                                                  gv.cp, "positive")
 
-    T_sst_cool_supply_netw_total_inclLosses_K = np.vectorize(calc_temp_withlosses)(T_sst_cool_supply_netw_total_K,
-                                                                                 Q_DC_losses_supply_W, mdot_cool_netw_all_kgpers,
+    T_DCN_sup_K = np.vectorize(calc_temp_withlosses)(T_DCN_withoutlosses_sup_K,
+                                                                                 Q_DC_losses_sup_W, mdot_cool_netw_all_kgpers,
                                                                                  gv.cp, "negative")
 
     day_of_max_heatmassflow_fin = np.zeros(8760)
@@ -151,12 +151,12 @@ def network_main(locator, total_demand, building_names, gv, key):
 
     results = pd.DataFrame({"mdot_DH_netw_total_kgpers": mdot_heat_netw_all_kgpers,
                             "mdot_cool_netw_total_kgpers": mdot_cool_netw_all_kgpers,
-                            "Q_DH_building_netw_total_W": Q_DH_building_netw_total_inclLosses_W,
-                            "Q_DC_building_netw_total_W": Q_DC_building_netw_total_inclLosses_W,
-                            "T_sst_heat_return_netw_total_K": T_sst_heat_return_netw_total_inclLosses_K,
-                            "T_sst_cool_return_netw_total_K": T_sst_cool_return_netw_total_inclLosses_K,
-                            "T_sst_heat_supply_netw_total_K": T_sst_heat_supply_netw_total_inclLosses_K,
-                            "T_sst_cool_supply_netw_total_K": T_sst_cool_supply_netw_total_inclLosses_K,
+                            "Q_DHNf_W": Q_DHNf_W,
+                            "Q_DCNf_W": Q_DCNf_W,
+                            "T_DHNf_re_K": T_DHN_re_K,
+                            "T_DCNf_re_K": T_DCN_re_K,
+                            "T_DHNf_sup_K": T_DHN_sup_K,
+                            "T_DCNf_sup_K": T_DCN_sup_K,
                             "Qcdata_netw_total_kWh": Qcdata_netw_total_kWh,
                             "Ecaf_netw_total_kWh": Ecaf_netw_total_kWh,
                             "day_of_max_heatmassflow": day_of_max_heatmassflow,
