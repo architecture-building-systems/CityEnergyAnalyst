@@ -29,8 +29,8 @@ class Toolbox(object):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
         self.tools = [OperationCostsTool, RetrofitPotentialTool, DemandTool, DataHelperTool, BenchmarkGraphsTool,
-                      OperationTool, EmbodiedTool, MobilityTool,SolarTechnologyTool,
-                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool,dbf2xlsTool,xls2dbfTool]
+                      OperationTool, EmbodiedTool, MobilityTool, SolarTechnologyTool,
+                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool, DbfToExcelTool, ExcelToDbfTool]
 
 class OperationCostsTool(object):
     def __init__(self):
@@ -1145,65 +1145,62 @@ class HeatmapsTool(object):
                                            file_to_analyze)
         run_cli(scenario_path, 'heatmaps', '--file-to-analyze', file_to_analyze, '--analysis-fields', *analysis_fields)
 
-class xls2dbfTool(object):
+class ExcelToDbfTool(object):
     def __init__(self):
-        self.label = 'xls2dbf Toolbox'
+        self.label = 'Convert Excel to DBF'
         self.description = 'xls => dbf'
         self.canRunInBackground = False
+        self.category = 'Utilities'
 
     def getParameterInfo(self):
         input_path = arcpy.Parameter(
-            displayName="xls file path",
+            displayName="Excel input file path",
             name="input_path",
             datatype="DEFile",
             parameterType="Required",
             direction="Input")
         input_path.filter.list = ['xls']
         output_path = arcpy.Parameter(
-            displayName="select output folder",
+            displayName="DBF output file path",
             name="output_path",
-            datatype="DEFolder",
+            datatype="DEFile",
             parameterType="Required",
-            direction="Input")
-        output_path.filter.list = []
+            direction="Output")
+        output_path.filter.list = ['dbf']
 
-        return [input_path, output_path]
+    def execute(self, parameters, _):
+        input_path = parameters[0].valueAsText
+        output_path = parameters[1].valueAsText
 
-    def execute(self,parameters, _):
-        input_path = parameters['input_path'].valueAsText
-        output_path = parameters['output_path'].valueAsText
-        parameters = [input_path,output_path]
+        run_cli(None, 'excel-to-dbf', '--input-path', input_path, '--output-path', output_path)
 
-        run_cli(parameters, 'xls2dbfTool')
-
-class dbf2xlsTool(object):
+class DbfToExcelTool(object):
     def __init__(self):
-        self.label = 'dbf2xls Toolbox'
+        self.label = 'Convert DBF to Excel'
         self.description = 'dbf => xls'
         self.canRunInBackground = False
+        self.category = 'Utilities'
 
     def getParameterInfo(self):
         input_path = arcpy.Parameter(
-            displayName="dbf file path",
+            displayName="DBF input file path",
             name="input_path",
             datatype="DEFile",
             parameterType="Required",
             direction="Input")
         input_path.filter.list = ['dbf']
         output_path = arcpy.Parameter(
-            displayName="select output folder",
+            displayName="Excel output file path",
             name="output_path",
-            datatype="DEFolder",
+            datatype="DEFile",
             parameterType="Required",
-            direction="Input")
-        output_path.filter.list = []
+            direction="Output")
+        output_path.filter.list = ['xls']
 
         return [input_path, output_path]
 
-
     def execute(self,parameters, _):
-        input_path = parameters['input_path'].valueAsText
-        output_path = parameters['output_path'].valueAsText
-        parameters = [input_path,output_path]
+        input_path = parameters[0].valueAsText
+        output_path = parameters[1].valueAsText
 
-        run_cli(parameters, 'dbf2xlsTool')
+        run_cli(None, 'dbf-to-excel', '--input-path', input_path, '--output-path', output_path)
