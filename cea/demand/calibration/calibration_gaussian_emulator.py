@@ -48,7 +48,7 @@ def gaussian_emulator(locator, samples, cv_rmse, building_name):
 
     # give the data to the regressor.
     gp = GaussianProcessRegressor(kernel=kernel, alpha=1e-7, normalize_y=True, n_restarts_optimizer=2)
-    gp.fit(samples, cv_rmse) # then fit the gp to your observations and the minmax. It takes 30 min - 1 h.
+    gp.fit(Xnorm, cv_rmse) # then fit the gp to your observations and the minmax. It takes 30 min - 1 h.
 
     # this is the result
     joblib.dump(gp, locator.get_calibration_gaussian_emulator(building_name))
