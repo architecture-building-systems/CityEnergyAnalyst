@@ -189,19 +189,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         # Hot water loads -> TODO: is it not possible to have water loads without conditioned area (Af == 0)?
         Mww, tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(
-            bpr.rc_model['Af'],
-            bpr.building_systems['Lcww_dis'],
-            bpr.building_systems['Lsww_dis'],
-            bpr.building_systems['Lvww_c'],
-            bpr.building_systems['Lvww_dis'],
-            tsd['T_ext'],
-            tsd['theta_a'],
-            tsd['Twwf_re'],
-            bpr.building_systems['Tww_sup_0'],
-            bpr.building_systems['Y'],
-            gv,
-            archetype_values['people'],
-            schedules,
+            bpr.building_systems['Lcww_dis'], bpr.building_systems['Lsww_dis'], bpr.building_systems['Lvww_c'],
+            bpr.building_systems['Lvww_dis'], tsd['T_ext'], tsd['theta_a'], tsd['Twwf_re'],
+            bpr.building_systems['Tww_sup_0'], bpr.building_systems['Y'], gv, schedules,
             bpr)
 
         # calc auxiliary loads
