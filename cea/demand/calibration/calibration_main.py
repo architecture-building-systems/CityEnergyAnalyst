@@ -18,6 +18,7 @@ from pymc3.backends import SQLite
 import theano.tensor as tt
 from theano import as_op
 from sklearn.externals import joblib
+from sklearn import preprocessing
 
 import numpy as np
 import pickle
@@ -29,7 +30,6 @@ import cea.inputlocator
 
 from cea.demand.calibration.settings import max_iter_MCMC, generate_plots, burn_in
 
-
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca", "Adam Rysanek"]
@@ -39,19 +39,28 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def calibration_main(locator, problem, emulator, building_name):
+def calibration_main(locator, problem, emulator, samples):
 
     # get variables from problem
     pdf_list = problem['probabiltiy_vars']
     variables = problem['variables']
     building_load = problem['building_load']
 
+    # introduce the scaler used in the gaussian process and applied in the new variables
+
     # create function of cea demand and send to theano
     @as_op(itypes=[tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar, tt.dscalar], otypes=[tt.dvector])
     def calc_result_emulator_and_bias(var1, var2, var3, var4, var5):
+
+        min_max_scaler = preprocessing.MinMaxScaler()
+        Xnorm = min_max_scaler.fit_transform(samples)
+        X_test = np.array([[var1,var2,var3, var4, var5]])
+        X_test_norm = min_max_scaler.transform(X_test)
+
+        # now witdhdraw the results from the emulator
         prediction = np.empty(100)
-        prediction[0] = emulator.predict([[var1,var2,var3, var4, var5]])
-        calc_result_emulator_and_bias.grad = lambda *x: x[0]
+        prediction[0] = emulator.predict(X_test_norm)
+        #calc_result_emulator_and_bias.grad = lambda *x: x[0]
         return prediction
 
     def calc_observed_synthetic():
@@ -68,18 +77,24 @@ def calibration_main(locator, problem, emulator, building_name):
             min = pdf_list.loc[variable, 'min']
             max = pdf_list.loc[variable, 'max']
             mu = pdf_list.loc[variable, 'mu']
+            stdv = pdf_list.loc[variable, 'stdv']
             if distribution == 'triangular':
                 loc = min
                 scale = max - min
                 c = (mu - min) / (max - min)
-                globals()['var' + str(i + 1)] = pm.Triangular('var' + str(i + 1), lower=loc, c=c, upper=scale)
+                globals()['var' + str(i + 1)] = pm.Triangular('var' + str(i + 1), lower=loc, c=c, upper=max)
+            elif distribution == 'normal':
+                globals()['var' + str(i + 1)] = pm.Normal('var' + str(i + 1), mu=mu, sd=stdv)
+            else:  # assume it is uniform
+                globals()['var' + str(i + 1)] = pm.Uniform('var' + str(i + 1), lower=min, upper=max)
+
             vars.append('var'+str(i+1))
 
         # expected value of outcome
         mu = pm.Deterministic('mu', calc_result_emulator_and_bias(var1, var2, var3, var4, var5))
 
         # Likelihood (sampling distribution) of observations
-        sigma = pm.HalfNormal('sigma', sd=1)
+        sigma = pm.HalfNormal('sigma', sd=0.10)
         observed = calc_observed_synthetic()
         y_obs = pm.Normal('y_obs', mu=mu, sd=sigma, observed = observed)
 
@@ -94,6 +109,8 @@ def calibration_main(locator, problem, emulator, building_name):
             step = pm.Metropolis()
             trace = pm.sample(max_iter_MCMC, tune=burn_in, step=step)
             pm.backends.text.dump(locator.get_calibration_folder(), trace)
+            pm.traceplot(trace)
+            plt.show()
     return
 
 def run_as_script():
@@ -107,7 +124,8 @@ def run_as_script():
     building_name = 'B01'
     problem = pickle.load(file(locator.get_calibration_problem(building_name)))
     emulator = joblib.load(locator.get_calibration_gaussian_emulator(building_name))
-    calibration_main(locator, problem, emulator, building_name)
+    samples = np.load(locator.get_calibration_samples(building_name))
+    calibration_main(locator, problem, emulator, samples)
 
 if __name__ == '__main__':
     run_as_script()
