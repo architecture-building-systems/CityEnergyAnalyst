@@ -189,19 +189,9 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
         # Hot water loads -> TODO: is it not possible to have water loads without conditioned area (Af == 0)?
         Mww, tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(
-            bpr.rc_model['Af'],
-            bpr.building_systems['Lcww_dis'],
-            bpr.building_systems['Lsww_dis'],
-            bpr.building_systems['Lvww_c'],
-            bpr.building_systems['Lvww_dis'],
-            tsd['T_ext'],
-            tsd['theta_a'],
-            tsd['Twwf_re'],
-            bpr.building_systems['Tww_sup_0'],
-            bpr.building_systems['Y'],
-            gv,
-            archetype_values['people'],
-            schedules,
+            bpr.building_systems['Lcww_dis'], bpr.building_systems['Lsww_dis'], bpr.building_systems['Lvww_c'],
+            bpr.building_systems['Lvww_dis'], tsd['T_ext'], tsd['theta_a'], tsd['Twwf_re'],
+            bpr.building_systems['Tww_sup_0'], bpr.building_systems['Y'], gv, schedules,
             bpr)
 
         # calc auxiliary loads
@@ -581,10 +571,10 @@ class BuildingProperties(object):
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
 
         for building in df.index.values:
-            if hvac_temperatures.loc[building,'type_hs'] == 'T0':
+            if hvac_temperatures.loc[building,'type_hs'] == 'T0' and hvac_temperatures.loc[building,'type_cs'] == 'T0':
                 df.loc[building,'Hs'] = 0
-                print 'Building %s has no heating system, Hs corrected to 0.' % building
-        df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated
+                print 'Building %s has no heating and cooling system, Hs corrected to 0.' % building
+        df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated/cooled
         df['Aef'] = df['GFA_m2'] * gv.Es  # conditioned area only those for electricity
 
         if 'Cm' in self.get_overrides_columns():
