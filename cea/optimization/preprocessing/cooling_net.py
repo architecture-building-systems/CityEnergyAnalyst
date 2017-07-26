@@ -52,7 +52,7 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
 
     # Space cooling previously aggregated in the substation routine
     df = pd.read_csv(os.path.join(locator.get_optimization_network_results_folder(), "Network_summary_result_all.csv"),
-                     usecols=["T_sst_cool_return_netw_total_K", "mdot_cool_netw_total_kgpers"])
+                     usecols=["T_DCNf_re_K", "mdot_cool_netw_total_kgpers"])
     coolArray = np.nan_to_num(np.array(df))
     TsupCool = gv.TsupCool
 
@@ -69,7 +69,7 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
         os.chdir(locator.get_optimization_slave_results_folder())
         fNameSlaveRes = configKey + "PPActivationPattern.csv"
 
-        dfSlave = pd.read_csv(fNameSlaveRes, usecols=["Qcold_HPLake"])
+        dfSlave = pd.read_csv(fNameSlaveRes, usecols=["Qcold_HPLake_W"])
 
         QlakeArray = np.array(dfSlave)
         Qlake = np.sum(QlakeArray)

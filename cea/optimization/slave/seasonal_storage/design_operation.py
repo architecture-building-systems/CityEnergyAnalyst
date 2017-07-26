@@ -53,7 +53,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
 
     # recover Network  Data:
     mdot_heat_netw_total_kgpers = Network_Data['mdot_DH_netw_total_kgpers'].values
-    Q_DH_networkload_W = Network_Data['Q_DH_building_netw_total_W'].values
+    Q_DH_networkload_W = Network_Data['Q_DHNf_W'].values
     T_DH_return_array_K = Network_Data['T_DHNf_re_K'].values
     T_DH_supply_array_K = Network_Data['T_DHNf_sup_K'].values
     Q_wasteheatServer_kWh = Network_Data['Qcdata_netw_total_kWh'].values #np.array(fn.extract_csv(fName, "Q_DH_building_netw_total", DAYS_IN_YEAR))
