@@ -143,7 +143,7 @@ def latitude(args):
 def _get_latitude(scenario_path):
     import fiona
     import cea.inputlocator
-    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_building_geometry()) as shp:
+    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry()) as shp:
         lat = shp.crs['lat_0']
     return lat
 
@@ -157,7 +157,7 @@ def longitude(args):
 def _get_longitude(scenario_path):
     import fiona
     import cea.inputlocator
-    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_building_geometry()) as shp:
+    with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry()) as shp:
         lon = shp.crs['lon_0']
     return lon
 
@@ -179,7 +179,8 @@ def radiation(args):
         args.weather_path = locator.get_weather(args.weather_path)
 
     cea.resources.radiation_arcgis.radiation.solar_radiation_vertical(locator=locator,
-                                                                      path_arcgis_db=args.arcgis_db, latitude=args.latitude,
+                                                                      path_arcgis_db=args.arcgis_db,
+                                                                      latitude=args.latitude,
                                                                       longitude=args.longitude, year=args.year,
                                                                       gv=cea.globalvar.GlobalVariables(),
                                                                       weather_path=args.weather_path)
@@ -197,6 +198,34 @@ def radiation_daysim(args):
         args.weather_path = locator.get_weather(args.weather_path)
 
     cea.resources.radiation_daysim.radiation_main.main(locator=locator, weather_path=args.weather_path)
+
+
+def photovoltaic(args):
+    import cea.inputlocator
+    import cea.utilities.dbfreader as dbfreader
+    from cea.technologies.photovoltaic import calc_PV
+
+    if not args.latitude:
+        args.latitude = _get_latitude(args.scenario)
+    if not args.longitude:
+        args.longitude = _get_longitude(args.scenario)
+
+    locator = cea.inputlocator.InputLocator(args.scenario)
+    if not args.weather_path:
+        args.weather_path = locator.get_default_weather()
+    elif args.weather_path in locator.get_weather_names():
+        args.weather_path = locator.get_weather(args.weather_path)
+
+    list_buildings_names = dbfreader.dbf2df(locator.get_building_occupancy())['Name']
+
+    for building in list_buildings_names:
+        radiation_csv = locator.get_radiation_building(building_name=building)
+        radiation_metadata = locator.get_radiation_metadata(building_name=building)
+        calc_PV(locator=locator, radiation_csv=radiation_csv, metadata_csv=radiation_metadata, latitude=args.latitude,
+                longitude=args.longitude, weather_path=args.weather_path, building_name=building,
+                pvonroof=args.pvonroof, pvonwall=args.pvonwall, worst_hour=args.worst_hour,
+                type_PVpanel=args.type_PVpanel, min_radiation=args.min_radiation, date_start=args.date_start)
+
 
 def install_toolbox(_):
     """Install the ArcGIS toolbox and sets up .pth files to access arcpy from the cea python interpreter."""
@@ -274,6 +303,34 @@ def retrofit_potential(args):
                                      hotwater_losses_criteria=args.hot_water_losses_threshold,
                                      cooling_losses_criteria=args.cooling_losses_threshold,
                                      emissions_operation_criteria=args.emissions_operation_threshold)
+
+def read_config(args):
+    """Read a key from a section in the configuration"""
+    import cea.config
+    import ConfigParser
+    config = cea.config.Configuration(args.scenario)
+    try:
+        print(config._parser.get(args.section, args.key))
+    except ConfigParser.NoSectionError:
+        pass
+    except ConfigParser.NoOptionError:
+        pass
+
+
+
+def write_config(args):
+    """write a value to a section/key in the configuration in the scenario folder"""
+    import cea.config
+    import ConfigParser
+    config = cea.config.Configuration(args.scenario)
+    if not config._parser.has_section(args.section):
+        config._parser.add_section(args.section)
+    config._parser.set(args.section, args.key, args.value)
+    scenario_config = os.path.join(args.scenario, 'scenario.config')
+    with open(scenario_config, 'w') as f:
+        config._parser.write(f)
+
+
 
 def main():
     """Parse the arguments and run the program."""
@@ -368,6 +425,24 @@ def main():
     radiation_parser.add_argument('--weather-path', help='Path to weather file.')
     radiation_parser.set_defaults(func=radiation)
 
+    photovoltaic_parser = subparsers.add_parser('photovoltaic',
+                                                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    photovoltaic_parser.add_argument('--latitude', help='Latitude to use for calculations.', type=float)
+    photovoltaic_parser.add_argument('--longitude', help='Longitude to use for calculations.', type=float)
+    photovoltaic_parser.add_argument('--weather-path', help='Path to weather file.')
+    photovoltaic_parser.add_argument('--pvonroof', help='flag for considering PV on roof', action='store_true')
+    photovoltaic_parser.add_argument('--pvonwall', help='flag for considering PV on wall', action='store_true')
+    photovoltaic_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int,
+                                     default=8744)
+    photovoltaic_parser.add_argument('--type-PVpanel',
+                                     help='monocrystalline, T2 is poly and T3 is amorphous. (see relates to the database of technologies)',
+                                     default="PV1")
+    photovoltaic_parser.add_argument('--min-radiation',
+                                     help='points are selected with at least a minimum production of this % from the maximum in the area.',
+                                     type=float, default=0.75)
+    photovoltaic_parser.add_argument('--date-start', help='First day of the year', default='2016-01-01')
+    photovoltaic_parser.set_defaults(func=photovoltaic)
+
     radiation_daysim_parser = subparsers.add_parser('radiation-daysim',
                                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     radiation_daysim_parser.add_argument('--weather-path', help='Path to weather file.')
@@ -386,24 +461,6 @@ def main():
     heatmaps_parser.add_argument('--list-fields', action='store_true', help='List available fields in the file.',
                                  default=False)
     heatmaps_parser.set_defaults(func=heatmaps)
-
-    test_parser = subparsers.add_parser('test', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    test_parser.add_argument('--user', help='GitHub user with access to cea-reference-case repository')
-    test_parser.add_argument('--token', help='Personal Access Token for the GitHub user')
-    test_parser.add_argument('--save', action='store_true', default=False, help='Save user and token to disk.')
-    test_parser.add_argument('--reference-cases', default=['open'], nargs='+',
-                             choices=['open', 'zug/baseline', 'zurich/baseline', 'zurich/masterplan', 'all'],
-                             help='list of reference cases to test')
-    test_parser.set_defaults(func=test)
-
-    extract_reference_case_parser = subparsers.add_parser('extract-reference-case',
-                                                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    extract_reference_case_parser.add_argument('--to', help='Folder to extract the reference case to',
-                                               default='.')
-    extract_reference_case_parser.set_defaults(func=extract_reference_case)
-
-    compile_parser = subparsers.add_parser('compile', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    compile_parser.set_defaults(func=compile)
 
     operation_costs_parser = subparsers.add_parser('operation-costs',
                                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -443,6 +500,35 @@ def main():
     retrofit_potential_parser.add_argument('--cooling-losses-threshold', default=None, type=int,
                                            help="threshold for thermal losses from cooling")
     retrofit_potential_parser.set_defaults(func=retrofit_potential)
+
+    test_parser = subparsers.add_parser('test', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    test_parser.add_argument('--user', help='GitHub user with access to cea-reference-case repository')
+    test_parser.add_argument('--token', help='Personal Access Token for the GitHub user')
+    test_parser.add_argument('--save', action='store_true', default=False, help='Save user and token to disk.')
+    test_parser.add_argument('--reference-cases', default=['open'], nargs='+',
+                             choices=['open', 'zug/baseline', 'zurich/baseline', 'zurich/masterplan', 'all'],
+                             help='list of reference cases to test')
+    test_parser.set_defaults(func=test)
+
+    extract_reference_case_parser = subparsers.add_parser('extract-reference-case',
+                                                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    extract_reference_case_parser.add_argument('--to', help='Folder to extract the reference case to',
+                                               default='.')
+    extract_reference_case_parser.set_defaults(func=extract_reference_case)
+
+    compile_parser = subparsers.add_parser('compile', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    compile_parser.set_defaults(func=compile)
+
+    read_config_parser = subparsers.add_parser('read-config', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    read_config_parser.add_argument('--section', help='section to read from')
+    read_config_parser.add_argument('--key', help='key to read')
+    read_config_parser.set_defaults(func=read_config)
+
+    write_config_parser = subparsers.add_parser('write-config', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    write_config_parser.add_argument('--section', help='section to write to')
+    write_config_parser.add_argument('--key', help='key to write')
+    write_config_parser.add_argument('--value', help='value to write')
+    write_config_parser.set_defaults(func=write_config)
 
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)
