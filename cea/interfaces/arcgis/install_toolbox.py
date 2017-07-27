@@ -24,9 +24,6 @@ def main():
     shutil.copy(find_toolbox_src(), toolbox_dst)
 
     with open(os.path.expanduser('~/cea_arcpy.pth'), 'w') as f:
-        f.writelines([os.path.expandvars(r'%ProgramFiles(x86)%\ArcGIS\Desktop10.4\bin' + '\n'),
-                      os.path.expandvars(r'%ProgramFiles(x86)%\ArcGIS\Desktop10.4\arcpy' + '\n'),
-                      os.path.expandvars(r'%ProgramFiles(x86)%\ArcGIS\Desktop10.4\Scripts' + '\n')])
         f.writelines('\n'.join(get_arcgis_paths()))
 
 
@@ -51,7 +48,7 @@ def find_toolbox_destination():
 
 def get_arcgis_paths():
     """
-    Using the result from ``get_arcgis_version``, figure out the paths to the following folders:
+    Use the windows registry to figure out the paths to the following folders:
 
     - bin
     - arcpy
