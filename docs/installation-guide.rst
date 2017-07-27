@@ -8,7 +8,8 @@ Prerequisites
 -------------
 
 -  GitHub Desktop (or your favorite ``git``)
--  Anaconda distribution (x86) - other pythons can work, but this is really recommended
+-  Anaconda distribution (64-bit) - other pythons can work, but this is really recommended
+   - alternatively, Miniconda2 64-bit will also work!
 -  PyCharm community edition - you can use your own favorite editor, but this is what we use
 -  ArcGIS 10.4 - only if you would like to use ArcGIS visuals.
 -  Git Large File Storage - only for working with the reference case repository (you need to be a core developer to
