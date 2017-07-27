@@ -14,7 +14,7 @@ allows to study the effects, trade-offs and synergies of urban design options an
 
 * Click `here <http://city-energy-analyst.readthedocs.io/en/latest/>`__   for documentation and installation of CEA Research
 
-* Click `here <https://github.com/architecture-building-systems/CEAforArcGIS/issues>`__ to report an issue
+* Click `here <https://github.com/architecture-building-systems/CityEnergyAnalyst/issues>`__ to report an issue
 
 * Click `here <mailto:cea@arch.ethz.ch>`__ to contact us
 

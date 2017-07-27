@@ -21,7 +21,7 @@ To install the research version of CEA:
 
 #. open Anaconda prompt (terminal console) from the start menu.
 #. create a conda environment and activate it: do ``conda create -n cea python=2.7``, do ``activate cea``
-#. install dependencies: do ``conda install -c conda-forge geopandas ephem "pandas<0.20" scikit-learn``
+#. install dependencies: do ``conda install -c conda-forge geopandas ephem "pandas<0.20" scikit-learn cvxopt``
 #. install dependencies: do ``conda install -c dlr-sc tbb freeimageplus gl2ps``
 #. install dependencies: do ``conda install -c oce -c pythonocc pythonocc-core=0.17.3``
 #. install cea: do ``pip install cityenergyanalyst``
@@ -39,9 +39,9 @@ To install the development environment of CEA:
 #. open Anaconda prompt (terminal console) from the start menu.
 #. create a conda environment and activate it. do ``conda create -n cea python=2.7``, do ``activate cea``
 #. choose location where to store the repository: do ``cd Documents``
-#. clone repository: do ``git clone https://github.com/architecture-building-systems/CEAforArcGIS.git``
-#. go to location where the repository was cloned: do ``cd CEAforArcGIS``
-#. install dependencies: do ``conda install -c conda-forge geopandas ephem "pandas<0.20" scikit-learn``
+#. clone repository: do ``git clone https://github.com/architecture-building-systems/CityEnergyAnalyst.git``
+#. go to location where the repository was cloned: do ``cd CityEnergyAnalyst``
+#. install dependencies: do ``conda install -c conda-forge geopandas ephem "pandas<0.20" scikit-learn cvxopt``
 #. install dependencies: do ``conda install -c dlr-sc tbb freeimageplus gl2ps``
 #. install dependencies: do ``conda install -c oce -c pythonocc pythonocc-core=0.17.3``
 #. install cea development: do ``python setup.py install``
@@ -66,9 +66,9 @@ Setting up PyCharm
 The developer team uses PyCharm Community edition as default. Here are
 the instructions to get PyCharm up and running:
 
-#. Access PyCharm and open project CEAforArcGIS
+#. Access PyCharm and open project CityEnergyAnalyst
 
-#. Open File>Settings>Project:CEAforArcGIS>Project Interpreter>Project
+#. Open File>Settings>Project:CityEnergyAnalyst>Project Interpreter>Project
    Interpreter
 
 #. Click on settings>addlocal and point to the location of your python
@@ -92,9 +92,9 @@ To set the custom dictionary used in PyCharm, do:
 
 #. Add a new Custom Dictionaries Folder
 
-#. Select the root source folder for CEAforArcGIS. It should be located
+#. Select the root source folder for CityEnergyAnalyst. It should be located
    in something like
-   ``C:\Users\your_name\Documents\GitHub\CEAforArcGIS``.
+   ``C:\Users\your_name\Documents\GitHub\CityEnergyAnalyst``.
 
 #. Click "Apply".
 
