@@ -1,6 +1,6 @@
 """
 ====================================
-Operation for diecentralized buildings
+Operation for decentralized buildings
 ====================================
 
 """
@@ -255,10 +255,10 @@ def decentralized_main(locator, building_names, gv):
                 Best[i+3][0] = - 1
         
         while not Bestfound and rank<el:
-            
-            optsearch[CostsS[rank][0]] -= 1
-            optsearch[CO2S[rank][0]] -= 1
-            optsearch[PrimS[rank][0]] -= 1
+
+            optsearch[int(CostsS[rank][0])] -= 1
+            optsearch[int(CO2S[rank][0])] -= 1
+            optsearch[int(PrimS[rank][0])] -= 1
             
             if np.count_nonzero(optsearch) != el:
                 Bestfound = True

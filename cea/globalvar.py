@@ -23,7 +23,7 @@ class GlobalVariables(object):
         self.print_totals = True  # print yearly values
         self.print_yearly_peak = True  # print peak values
         self.simulate_building_list = None  # fill it with a list of names of buildings in case not all the data set needs to be run
-        self.date_start = '2016-01-01'  # format: yyyy-mm-dd
+        self.date_start = '2015-01-01'  # format: yyyy-mm-dd
         self.seasonhours = [3216, 6192]
         self.multiprocessing = False  # use multiprocessing / parallel execution if possible
         self.Z = 3  # height of basement for every building in m
@@ -38,7 +38,7 @@ class GlobalVariables(object):
         self.Pwater = 998.0  # water density kg/m3
         self.PaCa = 1200  # Air constant J/m3K 
         self.Cpw = 4.184  # heat capacity of water in kJ/kgK
-        self.Flowtap = 0.036  # in m3/min == 12 l/min during 3 min every tap opening
+        self.Flowtap = 0.036  # in m3 == 12 l/min during 3 min every tap opening
         self.Es = 0.9 # franction of GFA that has electricity in every building
         # constant values for HVAC
         self.nrec_N = 0.75  # possible recovery
@@ -124,7 +124,10 @@ class GlobalVariables(object):
         self.Qloss_Disc = 0.05  # Heat losses within a disconnected building
         self.Qmargin_Disc = 0.20  # Reliability margin for the system nominal capacity for decentralized systems
         self.QminShare = 0.10  # Minimum percentage for the installed capacity
-        self.K_DH = 0.25  # linear heat loss coefficient district heating network twin pipes ground loss
+        self.K_DH = 0.25  # linear heat loss coefficient district heting network twin pipes groundfoss
+        self.roughness = 0.02/1000 # roughness coefficient for heating network pipe in m (for a steel pipe, from Li &
+                           # Svendsen (2012) "Energy and exergy analysis of low temperature district heating network")
+
 
         # pipes location properties
         self.Z0 = 1.5  # location of pipe underground in m
@@ -269,6 +272,7 @@ class GlobalVariables(object):
         self.PipeLifeTime = 40.0  # years, Data from A&W
         self.PipeInterestRate = 0.05  # 5% interest rate
         self.PipeCostPerMeterAnnual = self.PipeCostPerMeterInv / self.PipeLifeTime
+        self.NetworkDepth = 1 # m
 
         # Solar area to Wpeak
         self.eta_area_to_peak = 0.16  # Peak Capacity - Efficiency, how much kW per area there are, valid for PV and PVT (after Jimeno's J+)
