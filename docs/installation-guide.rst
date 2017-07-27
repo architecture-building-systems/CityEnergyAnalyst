@@ -21,7 +21,7 @@ To install the research version of CEA:
 
 #. open Anaconda prompt (terminal console) from the start menu.
 #. create a conda environment and activate it: do ``conda create -n cea python=2.7``, do ``activate cea``
-#. install dependencies: do ``conda install -c conda-forge geopandas ephem "pandas<0.20" scikit-learn cvxopt``
+#. install dependencies: do ``conda install -c conda-forge geopandas ephem "pandas<0.20" scikit-learn``
 #. install dependencies: do ``conda install -c dlr-sc tbb freeimageplus gl2ps``
 #. install dependencies: do ``conda install -c oce -c pythonocc pythonocc-core=0.17.3``
 #. install cea: do ``pip install cityenergyanalyst``
@@ -41,7 +41,7 @@ To install the development environment of CEA:
 #. choose location where to store the repository: do ``cd Documents``
 #. clone repository: do ``git clone https://github.com/architecture-building-systems/CityEnergyAnalyst.git``
 #. go to location where the repository was cloned: do ``cd CityEnergyAnalyst``
-#. install dependencies: do ``conda install -c conda-forge geopandas ephem "pandas<0.20" scikit-learn cvxopt``
+#. install dependencies: do ``conda install -c conda-forge geopandas ephem "pandas<0.20" scikit-learn``
 #. install dependencies: do ``conda install -c dlr-sc tbb freeimageplus gl2ps``
 #. install dependencies: do ``conda install -c oce -c pythonocc pythonocc-core=0.17.3``
 #. install cea development: do ``python setup.py install``
