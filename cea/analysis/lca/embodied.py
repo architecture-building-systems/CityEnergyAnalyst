@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 from cea.demand.preprocessing.properties import calc_mainuse
 from cea.demand.preprocessing.properties import calc_category
-from cea.utilities.dbfreader import dbf2df
+from cea.utilities.dbfreader import dbf_to_dataframe
 from geopandas import GeoDataFrame as Gdf
 import cea.globalvar
 import cea.inputlocator
@@ -100,10 +100,10 @@ def lca_embodied(year_to_calculate, locator, gv):
     """
 
     # local variables
-    architecture_df = dbf2df(locator.get_building_architecture())
-    prop_occupancy_df = dbf2df(locator.get_building_occupancy())
+    architecture_df = dbf_to_dataframe(locator.get_building_architecture())
+    prop_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
     occupancy_df = pd.DataFrame(prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)])
-    age_df = dbf2df(locator.get_building_age())
+    age_df = dbf_to_dataframe(locator.get_building_age())
     geometry_df = Gdf.from_file(locator.get_zone_geometry())
     geometry_df['footprint'] = geometry_df.area
     geometry_df['perimeter'] = geometry_df.length
