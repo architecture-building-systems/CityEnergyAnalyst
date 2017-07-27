@@ -1221,7 +1221,7 @@ def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     E_PV_Wh = np.array(centralized_plant_data['E_PV_Wh'])
     E_PVT_Wh = np.array(centralized_plant_data['E_PVT_Wh'])
     E_aux_HP_uncontrollable_Wh = np.array(centralized_plant_data['E_aux_HP_uncontrollable_Wh'])
-    Q_SCandPVT_gen_Wh = np.array(centralized_plant_data['Q_SCandPVT_coldstream_gen_Wh'])
+    Q_SCandPVT_gen_Wh = np.array(centralized_plant_data['Q_SCandPVT_gen_Wh'])
     HPServerHeatDesignArray_kWh = np.array(centralized_plant_data['HPServerHeatDesignArray_kWh'])
     HPpvt_designArray_Wh = np.array(centralized_plant_data['HPpvt_designArray_Wh'])
     HPCompAirDesignArray_kWh = np.array(centralized_plant_data['HPCompAirDesignArray_kWh'])

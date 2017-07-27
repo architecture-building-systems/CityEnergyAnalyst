@@ -368,7 +368,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
              "E_PV_Wh":E_PV_Wh,
              "E_PVT_Wh":E_PVT_Wh,
              "Storage_Size_m3":STORAGE_SIZE_m3,
-             "Q_SCandPVT_coldstream_gen_Wh":Q_SCandPVT_gen_Wh,
+             "Q_SCandPVT_gen_Wh":Q_SCandPVT_gen_Wh,
              "E_produced_total_W":E_produced_total_W,
              "E_consumed_total_without_buildingdemand_W":E_consumed_total_without_buildingdemand_W,
              "HPServerHeatDesignArray_kWh":HPServerHeatDesignArray_kWh,
