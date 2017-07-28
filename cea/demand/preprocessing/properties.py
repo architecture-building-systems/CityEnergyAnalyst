@@ -10,7 +10,7 @@ from __future__ import absolute_import
 
 import numpy as np
 import pandas as pd
-from cea.utilities.dbfreader import dbf2df, df2dbf
+from cea.utilities.dbfreader import dbf_to_dataframe, dataframe_to_dbf
 import cea.inputlocator
 
 __author__ = "Jimeno A. Fonseca"
@@ -51,9 +51,9 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
     """
 
     # get occupancy and age files
-    building_occupancy_df = dbf2df(locator.get_building_occupancy())
+    building_occupancy_df = dbf_to_dataframe(locator.get_building_occupancy())
     list_uses = list(building_occupancy_df.drop(['PFloor', 'Name'], axis=1).columns)  # parking excluded in U-Values
-    building_age_df = dbf2df(locator.get_building_age())
+    building_age_df = dbf_to_dataframe(locator.get_building_age())
 
     # get occupant densities from archetypes schedules
     occupant_densities = {}
@@ -92,7 +92,7 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
         fields = ['Name', 'Hs', 'wwr_north', 'wwr_west','wwr_east', 'wwr_south',
                   'type_cons', 'type_leak',  'type_roof', 'type_wall', 'type_win', 'type_shade']
 
-        df2dbf(prop_architecture_df_merged[fields], locator.get_building_architecture())
+        dataframe_to_dbf(prop_architecture_df_merged[fields], locator.get_building_architecture())
 
     # get properties about types of HVAC systems
     if prop_hvac_flag:
@@ -108,7 +108,7 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
         # write to shapefile
         prop_HVAC_df_merged = names_df.merge(prop_HVAC_df, on="Name")
         fields = ['Name', 'type_cs', 'type_hs', 'type_dhw', 'type_ctrl', 'type_vent']
-        df2dbf(prop_HVAC_df_merged[fields], locator.get_building_hvac())
+        dataframe_to_dbf(prop_HVAC_df_merged[fields], locator.get_building_hvac())
 
     if prop_comfort_flag:
         comfort_DB = get_database(locator.get_archetypes_properties(), 'INDOOR_COMFORT')
@@ -121,7 +121,7 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
         prop_comfort_df_merged = calculate_average_multiuse(prop_comfort_df_merged, occupant_densities, list_uses,
                                                             comfort_DB)
         fields = ['Name', 'Tcs_set_C', 'Ths_set_C', 'Tcs_setb_C', 'Ths_setb_C', 'Ve_lps']
-        df2dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
+        dataframe_to_dbf(prop_comfort_df_merged[fields], locator.get_building_comfort())
 
     if prop_internal_loads_flag:
         internal_DB = get_database(locator.get_archetypes_properties(), 'INTERNAL_LOADS')
@@ -135,7 +135,7 @@ def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_fla
                                                              internal_DB)
         fields = ['Name', 'Qs_Wp', 'X_ghp', 'Ea_Wm2', 'El_Wm2', 'Epro_Wm2', 'Ere_Wm2', 'Ed_Wm2', 'Vww_lpd', 'Vw_lpd',
                   'Qhpro_Wm2']
-        df2dbf(prop_internal_df_merged[fields], locator.get_building_internal())
+        dataframe_to_dbf(prop_internal_df_merged[fields], locator.get_building_internal())
 
 
 def calc_code(code1, code2, code3, code4):
