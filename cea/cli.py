@@ -216,7 +216,7 @@ def photovoltaic(args):
     elif args.weather_path in locator.get_weather_names():
         args.weather_path = locator.get_weather(args.weather_path)
 
-    list_buildings_names = dbfreader.dbf2df(locator.get_building_occupancy())['Name']
+    list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
     for building in list_buildings_names:
         radiation_csv = locator.get_radiation_building(building_name=building)
@@ -330,6 +330,17 @@ def write_config(args):
     with open(scenario_config, 'w') as f:
         config._parser.write(f)
 
+
+def excel_to_dbf(args):
+    """Convert an Excel file (*.xls) to a DBF file (*.dbf)"""
+    import cea.utilities.dbfreader
+    cea.utilities.dbfreader.run_as_script(args.input_path, args.output_path)
+
+
+def dbf_to_excel(args):
+    """Convert a DBF file (*.dbf) to an Excel file (*.xls)"""
+    import cea.utilities.dbfreader
+    cea.utilities.dbfreader.run_as_script(args.input_path, args.output_path)
 
 
 def main():
@@ -529,6 +540,16 @@ def main():
     write_config_parser.add_argument('--key', help='key to write')
     write_config_parser.add_argument('--value', help='value to write')
     write_config_parser.set_defaults(func=write_config)
+
+    excel_to_dbf_parser = subparsers.add_parser('excel-to-dbf', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    excel_to_dbf_parser.add_argument('--input-path', help='Excel input file path')
+    excel_to_dbf_parser.add_argument('--output-path', help='DBF output file path')
+    excel_to_dbf_parser.set_defaults(func=excel_to_dbf)
+
+    dbf_to_excel_parser = subparsers.add_parser('dbf-to-excel', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    dbf_to_excel_parser.add_argument('--input-path', help='DBF input file path')
+    dbf_to_excel_parser.add_argument('--output-path', help='Excel output file path')
+    dbf_to_excel_parser.set_defaults(func=dbf_to_excel)
 
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)
