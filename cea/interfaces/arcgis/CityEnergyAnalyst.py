@@ -30,7 +30,8 @@ class Toolbox(object):
         self.alias = 'cea'
         self.tools = [OperationCostsTool, RetrofitPotentialTool, DemandTool, DataHelperTool, BenchmarkGraphsTool,
                       OperationTool, EmbodiedTool, MobilityTool, SolarTechnologyTool,
-                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool, DbfToExcelTool, ExcelToDbfTool]
+                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool, DbfToExcelTool, ExcelToDbfTool,
+                      SensitivityDemandSamplesTool]
 
 class OperationCostsTool(object):
     def __init__(self):
@@ -600,7 +601,7 @@ class DemandGraphsTool(object):
             parameterType="Required",
             direction="Input")
         analysis_fields = arcpy.Parameter(
-            displayName="Variables to analyse",
+            displayName="Variables to analyze",
             name="analysis_fields",
             datatype="String",
             parameterType="Required",
@@ -674,14 +675,14 @@ class HeatmapsTool(object):
             parameterType="Required",
             direction="Input")
         path_variables = arcpy.Parameter(
-            displayName="Choose the file to analyse",
+            displayName="Choose the file to analyze",
             name="path_variables",
             datatype="String",
             parameterType="Required",
             direction="Input")
         path_variables.filter.list = []
         analysis_fields = arcpy.Parameter(
-            displayName="Variables to analyse",
+            displayName="Variables to analyze",
             name="analysis_fields",
             datatype="String",
             parameterType="Required",
@@ -1058,6 +1059,151 @@ class RadiationTool(object):
 
 # Sensitivity Analysis Tools
 
+class SensitivityDemandSamplesTool(object):
+    def __init__(self):
+        self.label = 'Create Samples'
+        self.category = 'Sensitivity Analysis'
+        self.description = 'Create samples for sensitivity analysis'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        method = arcpy.Parameter(
+            displayName="Sampling method",
+            name="method",
+            datatype="String",
+            parameterType="Required",
+            direction="Input")
+        method.filter.list = ['Morris', 'Sobol']
+        method.enabled = True
+
+        num_samples = arcpy.Parameter(
+            displayName="Sample size",
+            name="num_samples",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        num_samples.value = 1
+
+        variable_groups = arcpy.Parameter(
+            displayName="Groups of variables to analyze",
+            name="variable_groups",
+            datatype="String",
+            parameterType="Required",
+            multiValue=True,
+            direction="Input")
+        variable_groups.filter.list = ['Envelope variables', 'Indoor comfort variables', 'Internal load variables',
+                                       'Economic variables']
+
+        grid_jump = arcpy.Parameter(
+            displayName="Grid jump size for Morris method",
+            name="grid_jump",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        grid_jump.enabled = False
+        grid_jump.value = 2
+        grid_jump.parameterDependencies = ['method']
+
+        num_levels = arcpy.Parameter(
+            displayName="Number of grid levels for Morris method",
+            name="num_levels",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        num_levels.enabled = False
+        num_levels.value = 4
+        num_levels.parameterDependencies = ['method']
+
+        calc_second_order = arcpy.Parameter(
+            displayName="Calculate second-order sensitivities for Sobol method",
+            name="calc_second_order",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        calc_second_order.enabled = False
+        calc_second_order.value = False
+        calc_second_order.parameterDependencies = ['method']
+
+        samples_folder = arcpy.Parameter(
+            displayName="Folders in which samples will be saved",
+            name="samples_folder",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        return [method, num_samples, variable_groups, grid_jump, num_levels, calc_second_order, samples_folder]
+
+    def updateParameters(self, parameters):
+        # method
+        method = parameters[0].valueAsText
+        if method not in ['Morris', 'Sobol']:
+            parameters[0].setErrorMessage('Invalid method %s' % parameters[0])
+
+        # sampler parameters
+        grid_jump = parameters[3]
+        num_levels = parameters[4]
+        calc_second_order = parameters[5]
+        if method == 'Morris':
+            grid_jump.enabled = True
+            num_levels.enabled = True
+            calc_second_order.enabled = False
+        elif method == 'Sobol':
+            grid_jump.enabled = False
+            num_levels.enabled = False
+            calc_second_order.enabled = True
+
+        # samples folder
+        samples_folder = parameters[6].valueAsText
+        if samples_folder is None:
+            return
+        if not os.path.exists(samples_folder):
+            parameters[6].setErrorMessage('Scenario folder not found: %s' % samples_folder)
+            return
+
+        return
+
+    def execute(self, parameters, _):
+        method = parameters[0].valueAsText
+        num_samples = int(parameters[1].valueAsText)
+        # variable groups
+        variables = parameters[2].values
+        variable_groups = []
+        if 'Envelope variables' in variables:
+            variable_groups.append('ENVELOPE')
+        elif 'Indoor comfort variables' in variables:
+            variable_groups.append('INDOOR_COMFORT')
+        elif 'Internal load variables' in variables:
+            variable_groups.append('INTERNAL_LOADS')
+        elif 'Economic variables' in variables:
+            variable_groups.append('ECONOMIC')
+        # TODO: variable_groups being passed as a string, not a list!
+
+
+        samples_folder = parameters[6].valueAsText
+
+        if method == 'Morris':
+            method = 'morris'
+            grid_jump = int(parameters[3].valueAsText)
+            num_levels = int(parameters[4].valueAsText)
+        elif method == 'Sobol':
+            method = 'sobol'
+            calc_second_order = parameters[5].value
+        else:
+            raise
+
+        args = [None, 'sensitivity-demand-samples', '--method', method, '--num-samples', num_samples,
+                '--samples-folder', samples_folder, '--variable-groups', variable_groups]
+
+        if method == 'sobol':
+            args.append('--calc-second-order')
+            args.append(calc_second_order)
+        if method == 'morris':
+            args.append('--grid-jump')
+            args.append(grid_jump)
+            args.append('--num-levels')
+            args.append(num_levels)
+
+        run_cli(*args)
 
 
 def add_message(msg, **kwargs):
