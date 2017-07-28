@@ -1178,7 +1178,6 @@ class SensitivityDemandSamplesTool(object):
             variable_groups.append('ECONOMIC')
         # TODO: variable_groups being passed as a string, not a list!
 
-
         samples_folder = parameters[6].valueAsText
 
         if method == 'Morris':
