@@ -343,6 +343,22 @@ def dbf_to_excel(args):
     cea.utilities.dbfreader.run_as_script(args.input_path, args.output_path)
 
 
+def sensitivity_demand_samples(args):
+    """Run the sensitivitz demand samples script"""
+    import cea.analysis.sensitivity.sensitivity_demand_samples
+    sampler_parameters = {}
+    if args.method == 'morris':
+        sampler_parameters['grid_jump'] = args.grid_jump
+        sampler_parameters['num_levels'] = args.num_levels
+    elif args.method == 'sobol':
+        sampler_parameters['calc_second_order'] = args.calc_second_order
+
+    cea.analysis.sensitivity.sensitivity_demand_samples.run_as_script(method=args.method, num_samples=args.num_samples,
+                                                                      variable_groups=args.variable_groups,
+                                                                      sampler_parameters=sampler_parameters,
+                                                                      samples_folder=args.samples_folder)
+
+
 def main():
     """Parse the arguments and run the program."""
     import argparse
@@ -550,6 +566,21 @@ def main():
     dbf_to_excel_parser.add_argument('--input-path', help='DBF input file path')
     dbf_to_excel_parser.add_argument('--output-path', help='Excel output file path')
     dbf_to_excel_parser.set_defaults(func=dbf_to_excel)
+
+    sensitivity_demand_samples_parser = subparsers.add_parser('sensitivity-demand-samples',
+                                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    sensitivity_demand_samples_parser.add_argument('--method', help='Sampling method', required=True)
+    sensitivity_demand_samples_parser.add_argument('--num-samples', help='Number of samples', type=int, required=True)
+    sensitivity_demand_samples_parser.add_argument('--samples-folder', help='Folder to store samples', required=True)
+    sensitivity_demand_samples_parser.add_argument('--variable-groups', help='Groups of variables to be included',
+                                                   type=list, required=True)
+    sensitivity_demand_samples_parser.add_argument('--calc-second-order', help='Whether Sobol second order '
+                                                                               'sensitivities are  included',
+                                                   required=False)
+    sensitivity_demand_samples_parser.add_argument('--grid-jump', help='Grid jump for Morris method', required=False)
+    sensitivity_demand_samples_parser.add_argument('--num-levels', help='Number of grid levels for Morris method',
+                                                   required=False)
+    sensitivity_demand_samples_parser.set_defaults(func=sensitivity_demand_samples)
 
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)
