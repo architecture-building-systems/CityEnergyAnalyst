@@ -71,7 +71,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     Q_DH_networkload_W, E_aux_ch_W, E_aux_dech_W, Q_missing_W, Q_storage_content_W, Q_to_storage_W, Q_from_storage_W, \
     Q_uncontrollable_W, E_PV_Wh, E_PVT_Wh, E_aux_HP_uncontrollable_Wh, Q_SCandPVT_gen_Wh, HPServerHeatDesignArray_kWh, \
-    HPpvt_designArray_Wh, HPCompAirDesignArray_kWh, HPScDesignArray_Wh, E_produced_solarAndHPforSolar_W, \
+    HPpvt_designArray_Wh, HPCompAirDesignArray_kWh, HPScDesignArray_Wh, E_solarAndHPforSolar_gen_W, \
     E_consumed_without_buildingdemand_solarAndHPforSolar_W  = import_CentralizedPlant_data(CSV_NAME,
                                                                                          gv.DAYS_IN_YEAR, gv.HOURS_IN_DAY)
 
@@ -565,22 +565,22 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     save_file = 1
     # Sum up all electricity needs
-    E_PP_tot_used_W = E_PP_el_data_W[:, 0] + E_PP_el_data_W[:, 1] + E_PP_el_data_W[:, 2] + \
+    E_PP_req_W = E_PP_el_data_W[:, 0] + E_PP_el_data_W[:, 1] + E_PP_el_data_W[:, 2] + \
                     E_PP_el_data_W[:, 5] + E_PP_el_data_W[:, 6] + E_aux_AddBoiler_req_W
-    E_aux_storage_operation_W = E_aux_ch_W + E_aux_dech_W
-    E_aux_storage_operation_sum_W = np.sum(E_aux_storage_operation_W)
-    E_PP_and_storage_W = E_PP_tot_used_W + E_aux_storage_operation_W
+    E_aux_storage_req_W = E_aux_ch_W + E_aux_dech_W
+    E_aux_storage_operation_sum_W = np.sum(E_aux_storage_req_W)
+    E_PP_and_storage_req_W = E_PP_req_W + E_aux_storage_req_W
     E_HP_SolarAndHeatRecoverySum_W = np.sum(E_aux_HP_uncontrollable_Wh)
     # Sum up all electricity produced by CHP (CC and Furnace)
     # cost already accounted for in System Models (selling electricity --> cheaper thermal energy)
-    E_CC_tot_produced_W = E_PP_el_data_W[:, 3] + E_PP_el_data_W[:, 4]
+    E_CC_tot_gen_W = E_PP_el_data_W[:, 3] + E_PP_el_data_W[:, 4]
 
     # price from PV and PVT electricity (both are in E_PV_Wh, see Storage_Design_and..., about Line 133)
-    ESolarProduced_Wh = E_PV_Wh + E_PVT_Wh
+    E_solar_gen_Wh = E_PV_Wh + E_PVT_Wh
 
-    E_produed_total_W = E_produced_solarAndHPforSolar_W + E_CC_tot_produced_W
+    E_total_gen_W = E_solarAndHPforSolar_gen_W + E_CC_tot_gen_W
 
-    E_consumed_without_buildingdemand_W = E_consumed_without_buildingdemand_solarAndHPforSolar_W + E_PP_and_storage_W
+    E_without_buildingdemand_req_W = E_consumed_without_buildingdemand_solarAndHPforSolar_W + E_PP_and_storage_req_W
 
     if save_file == 1:
         results = pd.DataFrame({
@@ -609,15 +609,16 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
             "Q_BoilerPeak_W": Q_source_data_W[:, 6],
             "Q_uncontrollable_W": Q_uncontrollable_W,
             "Q_primaryAddBackupSum_W": Q_primaryAddBackupSum_W,
-            "E_PP_and_storage_W": E_PP_and_storage_W,
+            "E_PP_and_storage_req_W": E_PP_and_storage_req_W,
             "Q_uncovered_W": Q_source_data_W[:, 7],
             "Q_AddBoiler_W": QUncovered_W,
             "E_aux_HP_uncontrollable_W": E_aux_HP_uncontrollable_Wh,
-            "ESolarProducedPVandPVT_W": ESolarProduced_Wh,
-            "E_GHP_W": E_PP_el_data_W[:, 2],
+            "E_solar_gen_W": E_solar_gen_Wh,
+            "E_CC_gen_W": E_CC_tot_gen_W,
+            "E_GHP_req_W": E_PP_el_data_W[:, 2],
             "Qcold_HPLake_W": E_coldsource_data_W[:, 1],
-            "E_produced_total_W": E_produed_total_W,
-            "E_consumed_without_buildingdemand_W": E_consumed_without_buildingdemand_W,
+            "E_produced_total_W": E_total_gen_W,
+            "E_consumed_without_buildingdemand_W": E_without_buildingdemand_req_W,
             "Q_excess_W": Q_excess_W
         })
 
@@ -630,14 +631,14 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     CO2_emitted, Eprim_used = calc_primary_energy_and_CO2(Q_source_data_W, E_coldsource_data_W, E_PP_el_data_W,
                                                           E_gas_data_W, E_wood_data_W, Q_primaryAddBackupSum_W,
                                                           np.sum(E_aux_AddBoiler_req_W),
-                                                          np.sum(ESolarProduced_Wh), np.sum(Q_SCandPVT_gen_Wh), Q_storage_content_W,
+                                                          np.sum(E_solar_gen_Wh), np.sum(Q_SCandPVT_gen_Wh), Q_storage_content_W,
                                                           master_to_slave_vars, locator, E_HP_SolarAndHeatRecoverySum_W,
                                                           E_aux_storage_operation_sum_W, gv)
 
     # sum up results from PP Activation
     # E_HPSew_sum = np.sum(E_el_data) - Sums up the energy consumption of
-    E_el_sum_consumed = np.sum(E_PP_and_storage_W) + np.sum(E_aux_HP_uncontrollable_Wh)  # (excl. AddBoiler)
-    print "np.sum(E_PP_and_storage)", np.sum(E_PP_and_storage_W)
+    E_el_sum_consumed = np.sum(E_PP_and_storage_req_W) + np.sum(E_aux_HP_uncontrollable_Wh)  # (excl. AddBoiler)
+    print "np.sum(E_PP_and_storage)", np.sum(E_PP_and_storage_req_W)
     print "np.sum(E_aux_HP_uncontrollable)", np.sum(E_aux_HP_uncontrollable_Wh)
 
     # Differenciate between Normal and green electricity for
@@ -689,7 +690,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     # CHANGED AS THE COST_DATA INCLUDES COST_ELECTRICITY_TOTAL ALREADY! (= double accounting)
     cost_HP_aux_uncontrollable = np.sum(E_aux_HP_uncontrollable_Wh) * ELEC_PRICE
-    cost_HP_storage_operation = np.sum(E_aux_storage_operation_W) * ELEC_PRICE
+    cost_HP_storage_operation = np.sum(E_aux_storage_req_W) * ELEC_PRICE
 
     cost_sum = np.sum(
         cost_data_centralPlant_op) - price_obtained_from_KEV_for_PVandPVT + costAddBackup_total + cost_CC_maintenance + \
@@ -788,9 +789,9 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     EgasPrimary = Q_primaryAddBackupSum_W + np.sum(E_gas_data_W)
     EwoodPrimary = np.sum(E_wood_data_W)
     EelectrImportSlave = E_el_sum_consumed + np.sum(E_aux_AddBoiler_req_W)
-    EelExport = np.sum(E_produed_total_W)
+    EelExport = np.sum(E_total_gen_W)
     Egroundheat = np.sum(E_coldsource_data_W)
-    EsolarUsed = np.sum(ESolarProduced_Wh) + np.sum(Q_SCandPVT_gen_Wh)
+    EsolarUsed = np.sum(E_solar_gen_Wh) + np.sum(Q_SCandPVT_gen_Wh)
     EgasPrimaryPeakPower = np.amax(E_gas_data_W) + np.amax(Q_primaryAddBackup_W)
 
     costBenefitNotUsedHPs = 0

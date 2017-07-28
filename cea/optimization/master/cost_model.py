@@ -195,7 +195,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         # GHP
         if dicoSupply.GHP_on == 1:
             fNameSlavePP = locator.get_optimization_slave_pp_activation_pattern(dicoSupply.configKey)
-            dfGHP = pd.read_csv(fNameSlavePP, usecols=["E_GHP_W"])
+            dfGHP = pd.read_csv(fNameSlavePP, usecols=["E_GHP_req_W"])
             arrayGHP = np.array(dfGHP)
             
             GHP_Enom = np.amax(arrayGHP)
