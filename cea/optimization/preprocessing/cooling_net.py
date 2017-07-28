@@ -250,5 +250,18 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
     CO2 += extraElec * gv.EL_TO_CO2 * 3600E-6
     prim += extraElec * gv.EL_TO_OIL_EQ * 3600E-6
 
+    save_file = 1
+    if save_file == 1:
+        results = pd.DataFrame({
+            "costs": [costs],
+            "CO2": [CO2],
+            "prim":[prim]
+        })
+
+        results.to_csv(locator.get_optimization_slave_pp_activation_cooling_pattern(configKey), sep=',')
+
+        print "Cooling Results saved in : ", locator.get_optimization_slave_results_folder()
+        print " as : ", configKey + "_coolingresults.csv"
+
     return (costs, CO2, prim)
 
