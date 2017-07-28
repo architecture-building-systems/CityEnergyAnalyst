@@ -578,7 +578,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     # price from PV and PVT electricity (both are in E_PV_Wh, see Storage_Design_and..., about Line 133)
     E_solar_gen_Wh = E_PV_Wh + E_PVT_Wh
 
-    E_total_gen_W = E_solarAndHPforSolar_gen_W + E_CC_tot_gen_W
+    E_total_gen_W = E_solar_gen_Wh + E_CC_tot_gen_W
 
     E_without_buildingdemand_req_W = E_consumed_without_buildingdemand_solarAndHPforSolar_W + E_PP_and_storage_req_W
 
