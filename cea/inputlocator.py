@@ -449,38 +449,11 @@ class InputLocator(object):
 
     def get_network_layout_edges_shapefile(self, network):
         """scenario/inputs/network/DH or DC/network-edges.shp"""
-        return os.path.join(self.scenario_path, 'inputs', 'network', network, 'network-edges.shp')
+        return os.path.join(self.scenario_path, 'inputs', 'thermal-networks', network, 'network-edges.shp')
 
     def get_network_layout_nodes_shapefile(self, network):
         """scenario/inputs/network/DH or DC/network-nodes.shp"""
-        return os.path.join(self.scenario_path, 'inputs', 'network', network, 'network-nodes.shp')
-
-    def get_network_layout_pipes_csv_file(self, network):
-        """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv or DC_PipesData.csv
-        Network layout files for pipes of district heating or cooling networks
-        """
-        return os.path.join(self.get_optimization_network_layout_folder(), "PipesData_"+network+".csv")
-
-    def get_network_layout_nodes_csv_file(self, network):
-        """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
-        Network layout files for nodes of district heating or cooling networks
-        """
-        return os.path.join(self.get_optimization_network_layout_folder(), "NodesData_"+network+".csv")
-
-    def get_edge_mass_flow_csv_file(self, network_type):
-        """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv or DC_NodesData.csv
-        Network layout files for nodes of district heating or cooling networks
-        """
-        return os.path.join(self.get_optimization_network_layout_folder(), 'NominalEdgeMassFlow_' +
-                             network_type + '.csv')
-
-    def get_network_layout_edges_shapefile(self, network):
-        """scenario/inputs/network/DH or DC/network-edges.shp"""
-        return os.path.join(self.scenario_path, 'inputs', 'network', network, 'network-edges.shp')
-
-    def get_network_layout_nodes_shapefile(self, network):
-        """scenario/inputs/network/DH or DC/network-nodes.shp"""
-        return os.path.join(self.scenario_path, 'inputs', 'network', network, 'network-nodes.shp')
+        return os.path.join(self.scenario_path, 'inputs', 'thermal-networks', network, 'network-nodes.shp')
 
     def get_network_layout_pipes_csv_file(self, network):
         """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv or DC_PipesData.csv
