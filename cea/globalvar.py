@@ -38,7 +38,7 @@ class GlobalVariables(object):
         self.Pwater = 998.0  # water density kg/m3
         self.PaCa = 1200  # Air constant J/m3K 
         self.Cpw = 4.184  # heat capacity of water in kJ/kgK
-        self.Flowtap = 0.036  # in m3/min == 12 l/min during 3 min every tap opening
+        self.Flowtap = 0.036  # in m3 == 12 l/min during 3 min every tap opening
         self.Es = 0.9 # franction of GFA that has electricity in every building
         # constant values for HVAC
         self.nrec_N = 0.75  # possible recovery
