@@ -164,8 +164,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
         sBoiler = 0
         sBackup = 0
         Q_excess_W = 0
-        Q_HPSew_W, Q_HPLake_W, Q_GHP_W, Q_CC_W, Q_Furnace_W, Q_Boiler_W, Q_Backup_W = 0, 0, 0, 0, 0, 0, 0
-        E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_el_CC_produced_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_BackupBoiler_req_W = 0, 0, 0, 0, 0, 0, 0
+        Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CC_gen_W, Q_Furnace_gen_W, Q_Boiler_gen_W, Q_Backup_gen_W = 0, 0, 0, 0, 0, 0, 0
+        E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_CC_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_BackupBoiler_req_W = 0, 0, 0, 0, 0, 0, 0
         E_gas_HPSew_W, E_gas_HPLake_W, E_gas_GHP, E_gas_CC_W, E_gas_Furnace_W, E_gas_Boiler_W, E_gas_Backup_W = 0, 0, 0, 0, 0, 0, 0
         E_wood_HPSew_W, E_wood_HPLake_W, E_wood_GHP_W, E_wood_CC_W, E_wood_Furnace_W, E_wood_Boiler_W, E_wood_Backup_W = 0, 0, 0, 0, 0, 0, 0
         E_coldsource_HPSew_W, E_coldsource_HPLake_W, E_coldsource_GHP_W, E_coldsource_CC_W, \
@@ -184,7 +184,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
                     sHPSew = 0
                     costHPSew = 0.0
-                    Q_HPSew_W = 0.0
+                    Q_HPSew_gen_W = 0.0
                     E_HPSew_req_W = 0.0
                     E_coldsource_HPSew_W = 0.0
 
@@ -208,7 +208,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                     if Q_HPSew_therm_W > 0:
                         sHPSew = 1
                     costHPSew = float(C_HPSew_el_pure)
-                    Q_HPSew_W = float(Q_HPSew_therm_W)
+                    Q_HPSew_gen_W = float(Q_HPSew_therm_W)
                     # print "\n Q_HPSew", Q_HPSew
                     E_HPSew_req_W = float(E_HPSew_req_W)
                     E_coldsource_HPSew_W = float(Q_HPSew_cold_primary_W)
@@ -220,7 +220,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                     # print "is GHP on?", MS_Var.GHP_on
                     srcGHP = 0
                     costGHP = 0.0
-                    Q_GHP_W = 0.0
+                    Q_GHP_gen_W = 0.0
                     E_GHP_req_W = 0.0
                     E_coldsource_GHP_W = 0.0
 
@@ -240,14 +240,14 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                     # Storing data for further processing
                     srcGHP = 1
                     costGHP = C_GHP_el
-                    Q_GHP_W = Q_GHP_therm_W
+                    Q_GHP_gen_W = Q_GHP_therm_W
                     E_GHP_req_W = E_GHP_req_W
                     E_coldsource_GHP_W = Q_GHP_cold_primary_W
 
                 if (MS_Var.HP_Lake_on) == 1 and Q_therm_req_W > 0 and gv.HPLake_allowed == 1:  # run Heat Pump Lake
                     sHPLake = 0
                     costHPLake = 0
-                    Q_HPLake_W = 0
+                    Q_HPLake_gen_W = 0
                     E_HPLake_req_W = 0
                     E_coldsource_HPLake_W = 0
 
@@ -268,7 +268,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                     # Storing Data
                     sHPLake = 1
                     costHPLake = C_HPL_el
-                    Q_HPLake_W = Q_therm_HPL_W
+                    Q_HPLake_gen_W = Q_therm_HPL_W
                     E_HPLake_req_W = E_HPLake_req_W
                     E_coldsource_HPLake_W = Q_HPL_cold_primary_W
 
@@ -282,9 +282,9 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                 Cost_CC = 0.0
                 sorcCC = 0
                 costCC = 0.0
-                Q_CC_W = 0.0
+                Q_CC_gen_W = 0.0
                 E_gas_CC_W = 0.0
-                E_el_CC_produced_W = 0
+                E_CC_gen_W = 0
 
                 if (
                 MS_Var.CC_on) == 1 and Q_therm_req_W > 0 and gv.CC_allowed == 1:  # only operate if the plant is available
@@ -303,7 +303,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                             Q_used_prim_CC_W = Q_used_prim_CC_fn_W(Q_therm_req_W)
                             Q_CC_delivered_W = Q_therm_req_W.copy()
                             Q_therm_req_W = 0
-                            E_el_CC_produced_W = np.float(eta_elec_interpol(Q_used_prim_CC_W)) * Q_used_prim_CC_W
+                            E_CC_gen_W = np.float(eta_elec_interpol(Q_used_prim_CC_W)) * Q_used_prim_CC_W
 
 
                         else:  # Only part of the demand can be delivered as 100% load achieved
@@ -313,13 +313,13 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                             Q_therm_req_W -= Q_CC_max_W
                             # print "CC electric efficiency:", np.float(eta_elec_interpol(Q_CC_max))
                             # print "Q_CC_delivered", Q_CC_delivered
-                            E_el_CC_produced_W = np.float(eta_elec_interpol(Q_CC_max_W)) * Q_used_prim_CC_W
+                            E_CC_gen_W = np.float(eta_elec_interpol(Q_CC_max_W)) * Q_used_prim_CC_W
                             # print "E_el_CC", np.shape(E_el_CC), E_el_CC
 
                         Cost_CC = cost_per_Wh_CC * Q_CC_delivered_W
                         sorcCC = 1
                         costCC = Cost_CC
-                        Q_CC_W = Q_CC_delivered_W
+                        Q_CC_gen_W = Q_CC_delivered_W
                         E_gas_CC_W = Q_used_prim_CC_W
                     else:
                         print "CC below part load"
@@ -329,7 +329,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                     Q_Furn_therm_W = 0
                     sorcFurnace = 0
                     costFurnace = 0.0
-                    Q_Furnace_W = 0.0
+                    Q_Furnace_gen_W = 0.0
                     E_wood_Furnace_W = 0.0
                     Q_Furn_prim_W = 0.0
 
@@ -361,7 +361,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
                         sorcFurnace = 1
                         costFurnace = C_Furn_therm.copy()
-                        Q_Furnace_W = Q_Furn_therm_W
+                        Q_Furnace_gen_W = Q_Furn_therm_W
                         E_wood_Furnace_W = Q_Furn_prim_W
                         # print "Q_Furn_therm", Q_Furn_therm
                         # print "E_el_Furnace_produced", E_el_Furnace_produced
@@ -379,7 +379,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                 if (MS_Var.Boiler_on) == 1:
                     sBoiler = 0
                     costBoiler = 0.0
-                    Q_Boiler_W = 0.0
+                    Q_Boiler_gen_W = 0.0
                     E_gas_Boiler_W = 0.0
                     E_BaseBoiler_req_W = 0.0
 
@@ -397,7 +397,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
                         sBoiler = 1
                         costBoiler = C_boil_therm
-                        Q_Boiler_W = Q_therm_boiler_W
+                        Q_Boiler_gen_W = Q_therm_boiler_W
                         E_gas_Boiler_W = Q_primary_W
                         E_BaseBoiler_req_W = E_aux_Boiler_req_W
                         Q_therm_req_W -= Q_therm_boiler_W
@@ -414,7 +414,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                 if (MS_Var.BoilerPeak_on) == 1:
                     sBackup = 0
                     costBackup = 0.0
-                    Q_Backup_W = 0.0
+                    Q_Backup_gen_W = 0.0
                     E_gas_Backup_W = 0
                     E_BackupBoiler_req_W = 0
 
@@ -433,7 +433,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
                         sBackup = 1
                         costBackup = C_boil_thermP
-                        Q_Backup_W = Q_therm_boilerP_W
+                        Q_Backup_gen_W = Q_therm_boilerP_W
                         E_gas_Backup_W = Q_primaryP_W
                         E_BackupBoiler_req_W = E_aux_BoilerP_W
                         # print "Peak Boiler activated with ", Q_Backup
@@ -497,8 +497,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
         cost_data_centralPlant_op = costHPSew, costHPLake, costGHP, costCC, costFurnace, costBoiler, costBackup
         source_info = sHPSew, sHPLake, srcGHP, sorcCC, sorcFurnace, sBoiler, sBackup
-        Q_source_data_W = Q_HPSew_W, Q_HPLake_W, Q_GHP_W, Q_CC_W, Q_Furnace_W, Q_Boiler_W, Q_Backup_W, Q_uncovered_W
-        E_PP_el_data_W = E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_el_CC_produced_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_BackupBoiler_req_W
+        Q_source_data_W = Q_HPSew_gen_W, Q_HPLake_gen_W, Q_GHP_gen_W, Q_CC_gen_W, Q_Furnace_gen_W, Q_Boiler_gen_W, Q_Backup_gen_W, Q_uncovered_W
+        E_PP_el_data_W = E_HPSew_req_W, E_HPLake_req_W, E_GHP_req_W, E_CC_gen_W, E_Furnace_gen_W, E_BaseBoiler_req_W, E_BackupBoiler_req_W
         E_gas_data_W = E_gas_HPSew_W, E_gas_HPLake_W, E_gas_GHP, E_gas_CC_W, E_gas_Furnace_W, E_gas_Boiler_W, E_gas_Backup_W
         E_wood_data_W = E_wood_HPSew_W, E_wood_HPLake_W, E_wood_GHP_W, E_wood_CC_W, E_wood_Furnace_W, E_wood_Boiler_W, E_wood_Backup_W
         E_coldsource_data_W = E_coldsource_HPSew_W, E_coldsource_HPLake_W, E_coldsource_GHP_W, E_coldsource_CC_W, \
@@ -532,11 +532,11 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     # current_time = time.time()
 
     # sum up the uncovered demand, get average and peak load
-    QUncovered_W = Q_source_data_W[:, 7]
-    QUncoveredDesign_W = np.amax(QUncovered_W)
-    QUncoveredAnnual_W = np.sum(QUncovered_W)
+    Q_uncovered_W = Q_source_data_W[:, 7]
+    Q_uncovered_design_W = np.amax(Q_uncovered_W)
+    Q_uncovered_annual_W = np.sum(Q_uncovered_W)
     C_boil_thermAddBackup = np.zeros(gv.HOURS_IN_DAY * gv.DAYS_IN_YEAR)
-    Q_primaryAddBackup_W = np.zeros(gv.HOURS_IN_DAY * gv.DAYS_IN_YEAR)
+    Q_primary_AddBackup_W = np.zeros(gv.HOURS_IN_DAY * gv.DAYS_IN_YEAR)
     E_aux_AddBoiler_req_W = np.zeros(gv.HOURS_IN_DAY * gv.DAYS_IN_YEAR)
     costHPSew = cost_data_centralPlant_op[:, 0]
     costHPLake = cost_data_centralPlant_op[:, 1]
@@ -549,18 +549,18 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
         np.sum(costHPSew), np.sum(costHPLake), np.sum(costGHP), np.sum(costCC), np.sum(costFurnace), np.sum(
             costBoiler), np.sum(costBackup)
 
-    if QUncoveredDesign_W != 0:
+    if Q_uncovered_design_W != 0:
         for hour in range(gv.HOURS_IN_DAY * gv.DAYS_IN_YEAR):
             tdhret_req = tdhret_K[hour]
-            BoilerBackup_Cost_Data = cond_boiler_op_cost(QUncovered_W[hour], QUncoveredDesign_W, tdhret_req, \
+            BoilerBackup_Cost_Data = cond_boiler_op_cost(Q_uncovered_W[hour], Q_uncovered_design_W, tdhret_req, \
                                                          master_to_slave_vars.BoilerBackupType, master_to_slave_vars.EL_TYPE, gv)
-            C_boil_thermAddBackup[hour], C_boil_per_WhBackup, Q_primaryAddBackup_W[hour], E_aux_AddBoiler_req_W[
+            C_boil_thermAddBackup[hour], C_boil_per_WhBackup, Q_primary_AddBackup_W[hour], E_aux_AddBoiler_req_W[
                 hour] = BoilerBackup_Cost_Data
-        Q_primaryAddBackupSum_W = np.sum(Q_primaryAddBackup_W)
+        Q_primary_AddBackup_sum_W = np.sum(Q_primary_AddBackup_W)
         costAddBackup_total = np.sum(C_boil_thermAddBackup)
 
     else:
-        Q_primaryAddBackupSum_W = 0.0
+        Q_primary_AddBackup_sum_W = 0.0
         costAddBackup_total = 0.0
 
     save_file = 1
@@ -608,10 +608,10 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
             "Q_BoilerBase_W": Q_source_data_W[:, 5],
             "Q_BoilerPeak_W": Q_source_data_W[:, 6],
             "Q_uncontrollable_W": Q_uncontrollable_W,
-            "Q_primaryAddBackupSum_W": Q_primaryAddBackupSum_W,
+            "Q_primaryAddBackupSum_W": Q_primary_AddBackup_sum_W,
             "E_PP_and_storage_req_W": E_PP_and_storage_req_W,
             "Q_uncovered_W": Q_source_data_W[:, 7],
-            "Q_AddBoiler_W": QUncovered_W,
+            "Q_AddBoiler_W": Q_uncovered_W,
             "E_aux_HP_uncontrollable_W": E_aux_HP_uncontrollable_Wh,
             "E_solar_gen_W": E_solar_gen_Wh,
             "E_CC_gen_W": E_CC_tot_gen_W,
@@ -629,7 +629,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
 
     CO2_emitted, Eprim_used = calc_primary_energy_and_CO2(Q_source_data_W, E_coldsource_data_W, E_PP_el_data_W,
-                                                          E_gas_data_W, E_wood_data_W, Q_primaryAddBackupSum_W,
+                                                          E_gas_data_W, E_wood_data_W, Q_primary_AddBackup_sum_W,
                                                           np.sum(E_aux_AddBoiler_req_W),
                                                           np.sum(E_solar_gen_Wh), np.sum(Q_SCandPVT_gen_Wh), Q_storage_content_W,
                                                           master_to_slave_vars, locator, E_HP_SolarAndHeatRecoverySum_W,
@@ -637,7 +637,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     # sum up results from PP Activation
     # E_HPSew_sum = np.sum(E_el_data) - Sums up the energy consumption of
-    E_el_sum_consumed = np.sum(E_PP_and_storage_req_W) + np.sum(E_aux_HP_uncontrollable_Wh)  # (excl. AddBoiler)
+    E_consumed_sum_W = np.sum(E_PP_and_storage_req_W) + np.sum(E_aux_HP_uncontrollable_Wh)  # (excl. AddBoiler)
     print "np.sum(E_PP_and_storage)", np.sum(E_PP_and_storage_req_W)
     print "np.sum(E_aux_HP_uncontrollable)", np.sum(E_aux_HP_uncontrollable_Wh)
 
@@ -655,12 +655,12 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     print "MS_Var.SOLAR_PART_PV = ", MS_Var.SOLAR_PART_PV
     #    import from master
     eta_m2_to_kW = gv.eta_area_to_peak  # Data from Jimeno
-    PowerPeakAvailablePV = Area_AvailablePV * eta_m2_to_kW
-    PowerPeakAvailablePVT = Area_AvailablePVT * eta_m2_to_kW
+    Q_PowerPeakAvailablePV_kW = Area_AvailablePV * eta_m2_to_kW
+    Q_PowerPeakAvailablePVT_kW = Area_AvailablePVT * eta_m2_to_kW
     # calculate with conversion factor m'2-kWPeak
 
-    KEV_RpPerkWhPVT = calc_Crem_pv(PowerPeakAvailablePVT * 1000.0)
-    KEV_RpPerkWhPV = calc_Crem_pv(PowerPeakAvailablePV * 1000.0)
+    KEV_RpPerkWhPVT = calc_Crem_pv(Q_PowerPeakAvailablePVT_kW * 1000.0)
+    KEV_RpPerkWhPV = calc_Crem_pv(Q_PowerPeakAvailablePV_kW * 1000.0)
     print "\n", KEV_RpPerkWhPVT, "KEV PVT"
     print KEV_RpPerkWhPV, "KEV PV"
 
@@ -672,18 +672,18 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     print "E_PV_Wh", np.sum(E_PV_Wh)
     print "price_obtained_from_KEV_for_PVandPVT", price_obtained_from_KEV_for_PVandPVT, "\n"
 
-    print "E_el_sum_consumed (excl. AddBoiler)", E_el_sum_consumed
+    print "E_el_sum_consumed (excl. AddBoiler)", E_consumed_sum_W
     print "ELEC_PRICE", ELEC_PRICE
 
     cost_CC_maintenance = np.sum(E_PP_el_data_W[:, 3]) * gv.CC_Maintenance_per_kWhel / 1000.0
 
     # Fill up storage if end-of-season energy is lower than beginning of season
-    Q_Storage_SeasonEndReheat = Q_storage_content_W[-1] - Q_storage_content_W[0]
+    Q_Storage_SeasonEndReheat_W = Q_storage_content_W[-1] - Q_storage_content_W[0]
 
     gas_price = gv.NG_PRICE
 
-    if Q_Storage_SeasonEndReheat > 0:
-        cost_Boiler_for_Storage_reHeat_at_seasonend = float(Q_Storage_SeasonEndReheat) / 0.8 * gas_price
+    if Q_Storage_SeasonEndReheat_W > 0:
+        cost_Boiler_for_Storage_reHeat_at_seasonend = float(Q_Storage_SeasonEndReheat_W) / 0.8 * gas_price
         # print "cost_Boiler_for_Storage_reHeat_at_seasonend", np.shape(cost_Boiler_for_Storage_reHeat_at_seasonend)
     else:
         cost_Boiler_for_Storage_reHeat_at_seasonend = 0
@@ -731,7 +731,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     avgCostBoilerBaseRpkWh = 100 * 1000.0 * costBoiler_sum / np.sum(Q_source_data_W[:, 5])
     avgCostBoilerPeakRpkWh = 100 * 1000.0 * costBackup_sum / np.sum(Q_source_data_W[:, 6])
     avgCostUncontrollableSources = 100 * 1000.0 * cost_HP_aux_uncontrollable / np.sum(Q_uncontrollable_W)
-    avgCostAddBoiler = 100 * 1000.0 * costAddBackup_total / np.sum(QUncovered_W)
+    avgCostAddBoiler = 100 * 1000.0 * costAddBackup_total / np.sum(Q_uncovered_W)
     avgCostStorageOperation = 100 * 1000.0 * cost_HP_storage_operation / Q_StorageToDHNpipe_sum_W
 
     print "\n Q_uncontrollable produced", np.sum(Q_uncontrollable_W)
@@ -786,13 +786,13 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
 
         # Calculate primary energy from ressources:
-    EgasPrimary = Q_primaryAddBackupSum_W + np.sum(E_gas_data_W)
-    EwoodPrimary = np.sum(E_wood_data_W)
-    EelectrImportSlave = E_el_sum_consumed + np.sum(E_aux_AddBoiler_req_W)
-    EelExport = np.sum(E_total_gen_W)
-    Egroundheat = np.sum(E_coldsource_data_W)
-    EsolarUsed = np.sum(E_solar_gen_Wh) + np.sum(Q_SCandPVT_gen_Wh)
-    EgasPrimaryPeakPower = np.amax(E_gas_data_W) + np.amax(Q_primaryAddBackup_W)
+    E_gas_Primary_W = Q_primary_AddBackup_sum_W + np.sum(E_gas_data_W)
+    E_wood_Primary_W = np.sum(E_wood_data_W)
+    E_Import_Slave_req_W = E_consumed_sum_W + np.sum(E_aux_AddBoiler_req_W)
+    E_Export_gen_W = np.sum(E_total_gen_W)
+    E_groundheat_W = np.sum(E_coldsource_data_W)
+    E_solar_gen_Wh = np.sum(E_solar_gen_Wh) + np.sum(Q_SCandPVT_gen_Wh)
+    E_gas_PrimaryPeakPower_W = np.amax(E_gas_data_W) + np.amax(Q_primary_AddBackup_W)
 
     costBenefitNotUsedHPs = 0
 
@@ -825,13 +825,13 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     costBenefitNotUsedHPs = costBenefitNotUsedHPSew + costBenefitNotUsedHPLake
 
     results = pd.DataFrame({
-        "EgasPrimary": [EgasPrimary],
-        "EgasPrimaryPeakPower": [EgasPrimaryPeakPower],
-        "EwoodPrimary": [EwoodPrimary],
-        "EelectrImportSlave": [EelectrImportSlave],
-        "EelExport": [EelExport],
-        "Egroundheat": [Egroundheat],
-        "EsolarUsed": [EsolarUsed],
+        "E_gas_Primary_W": [E_gas_Primary_W],
+        "E_gas_PrimaryPeakPower_W": [E_gas_PrimaryPeakPower_W],
+        "E_wood_Primary_W": [E_wood_Primary_W],
+        "E_Import_Slave_req_W": [E_Import_Slave_req_W],
+        "E_Export_gen_W": [E_Export_gen_W],
+        "E_groundheat_W": [E_groundheat_W],
+        "E_solar_gen_Wh": [E_solar_gen_Wh],
         "costBenefitNotUsedHPs": [costBenefitNotUsedHPs]
     })
 
@@ -842,55 +842,55 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     cost_sum -= costBenefitNotUsedHPs
 
-    return E_oil_eq_MJ, CO2_kg_eq, cost_sum, QUncoveredDesign_W, QUncoveredAnnual_W
+    return E_oil_eq_MJ, CO2_kg_eq, cost_sum, Q_uncovered_design_W, Q_uncovered_annual_W
 
 
-def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
-                                Q_gas_data, Q_wood_data, Q_gas_AdduncoveredBoilerSum, E_aux_AddBoilerSum,
-                                ESolarProduced, Q_SCandPVT, Q_storage_content_Wh,
-                                master_to_slave_vars, locator, E_HP_SolarAndHeatRecoverySum,
-                                E_aux_storage_operation_sum, gv):
+def calc_primary_energy_and_CO2(Q_source_data_W, Q_coldsource_data_W, E_PP_el_data_W,
+                                Q_gas_data_W, Q_wood_data_W, Q_gas_AdduncoveredBoilerSum_W, E_aux_AddBoilerSum_W,
+                                E_solar_gen_Wh, Q_SCandPVT_gen_Wh, Q_storage_content_W,
+                                master_to_slave_vars, locator, E_HP_SolarAndHeatRecoverySum_W,
+                                E_aux_storage_operation_sum_W, gv):
     """
     This function calculates the emissions and primary energy consumption
 
-    :param Q_source_data: array with loads of different units for heating
-    :param Q_coldsource_data: array with loads of different units for cooling
-    :param E_PP_el_data: array with data of pattern activation for electrical loads
-    :param Q_gas_data: array with cconsumption of eergy due to gas
-    :param Q_wood_data: array with consumption of energy with wood..
-    :param Q_gas_AdduncoveredBoilerSum: load to be covered by auxiliary unit.
-    :param E_aux_AddBoilerSum: electricity needed by auxiliary unit
-    :param ESolarProduced: electricity produced from solar
-    :param Q_SCandPVT: thermal load of solar collector and pvt units.
-    :param Q_storage_content_Wh: thermal load stored in seasonal storage
+    :param Q_source_data_W: array with loads of different units for heating
+    :param Q_coldsource_data_W: array with loads of different units for cooling
+    :param E_PP_el_data_W: array with data of pattern activation for electrical loads
+    :param Q_gas_data_W: array with cconsumption of eergy due to gas
+    :param Q_wood_data_W: array with consumption of energy with wood..
+    :param Q_gas_AdduncoveredBoilerSum_W: load to be covered by auxiliary unit.
+    :param E_aux_AddBoilerSum_W: electricity needed by auxiliary unit
+    :param E_solar_gen_Wh: electricity produced from solar
+    :param Q_SCandPVT_gen_Wh: thermal load of solar collector and pvt units.
+    :param Q_storage_content_W: thermal load stored in seasonal storage
     :param master_to_slave_vars: class MastertoSlaveVars containing the value of variables to be passed to
     the slave optimization for each individual
     :param locator: path to results
-    :param E_HP_SolarAndHeatRecoverySum: auxiliary electricity of heat pump
-    :param E_aux_storage_operation_sum: auxiliary electricity of operation of storage
+    :param E_HP_SolarAndHeatRecoverySum_W: auxiliary electricity of heat pump
+    :param E_aux_storage_operation_sum_W: auxiliary electricity of operation of storage
     :param gv:  global variables class
-    :type Q_source_data: list
-    :type Q_coldsource_data: list
-    :type E_PP_el_data: list
-    :type Q_gas_data: list
-    :type Q_wood_data: list
-    :type Q_gas_AdduncoveredBoilerSum: list
-    :type E_aux_AddBoilerSum: list
-    :type ESolarProduced: list
-    :type Q_SCandPVT: list
-    :type Q_storage_content_Wh: list
+    :type Q_source_data_W: list
+    :type Q_coldsource_data_W: list
+    :type E_PP_el_data_W: list
+    :type Q_gas_data_W: list
+    :type Q_wood_data_W: list
+    :type Q_gas_AdduncoveredBoilerSum_W: list
+    :type E_aux_AddBoilerSum_W: list
+    :type E_solar_gen_Wh: list
+    :type Q_SCandPVT_gen_Wh: list
+    :type Q_storage_content_W: list
     :type master_to_slave_vars: class
     :type locator: string
-    :type E_HP_SolarAndHeatRecoverySum: list
-    :type E_aux_storage_operation_sum: list
+    :type E_HP_SolarAndHeatRecoverySum_W: list
+    :type E_aux_storage_operation_sum_W: list
     :type gv: class
     :return: CO2_emitted, Eprim_used
     :rtype float, float
     """
     
     MS_Var = master_to_slave_vars
-    StorageContentEndOfYear = Q_storage_content_Wh[-1]
-    StorageContentStartOfYear = Q_storage_content_Wh[0]
+    StorageContentEndOfYear = Q_storage_content_W[-1]
+    StorageContentStartOfYear = Q_storage_content_W[0]
     
     if StorageContentEndOfYear < StorageContentStartOfYear:
         QToCoverByStorageBoiler = float(StorageContentEndOfYear - StorageContentStartOfYear)
@@ -902,33 +902,33 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
     
     # copy data 
     
-    Q_HPSew = Q_source_data[:,0]
-    Q_HPLake = Q_source_data[:,1]
-    Q_GHP = Q_source_data[:,2]
-    print "sum of GHP", np.sum(Q_GHP)
-    Q_CC = Q_source_data[:,3]
-    Q_Furnace = Q_source_data[:,4]
-    Q_Boiler = Q_source_data[:,5]
-    Q_BoilerPeak = Q_source_data[:,6]
-    Q_uncovered = Q_source_data[:,7]
+    Q_HPSew_gen_W = Q_source_data_W[:, 0]
+    Q_HPLake_gen_W = Q_source_data_W[:, 1]
+    Q_GHP_gen_W = Q_source_data_W[:, 2]
+    print "sum of GHP", np.sum(Q_GHP_gen_W)
+    Q_CC_gen_W = Q_source_data_W[:, 3]
+    Q_Furnace_gen_W = Q_source_data_W[:, 4]
+    Q_Boiler_gen_W = Q_source_data_W[:, 5]
+    Q_BoilerPeak_gen_W = Q_source_data_W[:, 6]
+    Q_uncovered_W = Q_source_data_W[:, 7]
     
-    Q_coldsource_HPSew = Q_coldsource_data[:,0]
-    Q_coldsource_HPLake = Q_coldsource_data[:,1]
-    Q_coldsource_GHP = Q_coldsource_data[:,2]
+    Q_coldsource_HPSew_W = Q_coldsource_data_W[:, 0]
+    Q_coldsource_HPLake_W = Q_coldsource_data_W[:, 1]
+    Q_coldsource_GHP_W = Q_coldsource_data_W[:, 2]
 
-    Q_gas_CC = Q_gas_data[:,3]
-    Q_gas_Boiler = Q_gas_data[:,5]
-    Q_gas_Backup = Q_gas_data[:,6]
+    Q_gas_CC_W = Q_gas_data_W[:, 3]
+    Q_gas_Boiler_W = Q_gas_data_W[:, 5]
+    Q_gas_Backup_W = Q_gas_data_W[:, 6]
 
-    Q_wood_Furnace  = Q_wood_data[:,4]
+    Q_wood_Furnace_W  = Q_wood_data_W[:, 4]
 
-    E_el_CC_produced = E_PP_el_data[:,3]
-    E_el_Furnace_produced = E_PP_el_data[:,4]
-    E_el_AuxillaryBoilerAllSum = np.sum(E_PP_el_data[:,5]) + np.sum(E_PP_el_data[:,6]) + E_aux_AddBoilerSum
-    print "\n E_el_AuxillaryBoilerAllSum",E_el_AuxillaryBoilerAllSum
-    print "E_aux_AddBoilerSum", E_aux_AddBoilerSum
-    print "np.sum(E_PP_el_data[:,5]) (Base Boiler)", np.sum(E_PP_el_data[:,5])
-    print "np.sum(E_PP_el_data[:,6]) (Peak Boiler)", np.sum(E_PP_el_data[:,6])
+    E_CC_gen_W = E_PP_el_data_W[:, 3]
+    E_Furnace_gen_W = E_PP_el_data_W[:, 4]
+    E_AuxillaryBoilerAllSum_W = np.sum(E_PP_el_data_W[:, 5]) + np.sum(E_PP_el_data_W[:, 6]) + E_aux_AddBoilerSum_W
+    print "\n E_el_AuxillaryBoilerAllSum",E_AuxillaryBoilerAllSum_W
+    print "E_aux_AddBoilerSum", E_aux_AddBoilerSum_W
+    print "np.sum(E_PP_el_data[:,5]) (Base Boiler)", np.sum(E_PP_el_data_W[:, 5])
+    print "np.sum(E_PP_el_data[:,6]) (Peak Boiler)", np.sum(E_PP_el_data_W[:, 6])
 
     # Electricity is accounted for already, no double accounting --> leave it out. 
     # only CO2 / Eprim is not included in the installation part, neglected as its very small compared to operational values
@@ -982,53 +982,53 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
         
         
     #evaluate average efficiency, recover normalized data with this efficiency, if-else is there to avoid nan's
-    if np.sum(Q_Furnace)    != 0:
-        eta_furnace_avg     = np.sum(Q_Furnace) / np.sum(Q_wood_Furnace)
-        eta_furnace_el      = np.sum(E_el_Furnace_produced) / np.sum(Q_wood_Furnace)
+    if np.sum(Q_Furnace_gen_W)    != 0:
+        eta_furnace_avg     = np.sum(Q_Furnace_gen_W) / np.sum(Q_wood_Furnace_W)
+        eta_furnace_el      = np.sum(E_Furnace_gen_W) / np.sum(Q_wood_Furnace_W)
 
     else:
         eta_furnace_avg     = 1
         eta_furnace_el      = 1
     
     
-    if np.sum(Q_CC)         != 0:
-        eta_CC_avg          = np.sum(Q_CC) / np.sum(Q_gas_CC)
-        eta_CC_el           = np.sum(E_el_CC_produced) / np.sum(Q_gas_CC)
+    if np.sum(Q_CC_gen_W)         != 0:
+        eta_CC_avg          = np.sum(Q_CC_gen_W) / np.sum(Q_gas_CC_W)
+        eta_CC_el           = np.sum(E_CC_gen_W) / np.sum(Q_gas_CC_W)
     else:
         eta_CC_avg          = 1
         eta_CC_el           = 1
         
-    if np.sum(Q_Boiler)     != 0:
-        eta_Boiler_avg      = np.sum(Q_Boiler) / np.sum(Q_gas_Boiler)
+    if np.sum(Q_Boiler_gen_W)     != 0:
+        eta_Boiler_avg      = np.sum(Q_Boiler_gen_W) / np.sum(Q_gas_Boiler_W)
     else:
         eta_Boiler_avg      = 1
     
         
-    if np.sum(Q_BoilerPeak) != 0:
-        eta_PeakBoiler_avg  = np.sum(Q_BoilerPeak) / np.sum(Q_gas_Backup)
+    if np.sum(Q_BoilerPeak_gen_W) != 0:
+        eta_PeakBoiler_avg  = np.sum(Q_BoilerPeak_gen_W) / np.sum(Q_gas_Backup_W)
     else:
         eta_PeakBoiler_avg  = 1
     
-    if np.sum(Q_uncovered) != 0:
-        eta_AddBackup_avg      = np.sum(Q_uncovered) / np.sum(Q_gas_AdduncoveredBoilerSum)
+    if np.sum(Q_uncovered_W) != 0:
+        eta_AddBackup_avg      = np.sum(Q_uncovered_W) / np.sum(Q_gas_AdduncoveredBoilerSum_W)
     else:
         eta_AddBackup_avg      = 1
     
-    if np.sum(Q_HPSew)     != 0:
-        COP_HPSew_avg       = np.sum(Q_HPSew) / (-np.sum(Q_coldsource_HPSew) + np.sum(Q_HPSew))
+    if np.sum(Q_HPSew_gen_W)     != 0:
+        COP_HPSew_avg       = np.sum(Q_HPSew_gen_W) / (-np.sum(Q_coldsource_HPSew_W) + np.sum(Q_HPSew_gen_W))
     else:
         COP_HPSew_avg       = 100.0
         
     print "COP_HPSew_avg", COP_HPSew_avg
     
-    if np.sum(Q_GHP)       != 0:
-        COP_GHP_avg         = np.sum(Q_GHP) / (-np.sum(Q_coldsource_GHP) + np.sum(Q_GHP))
+    if np.sum(Q_GHP_gen_W)       != 0:
+        COP_GHP_avg         = np.sum(Q_GHP_gen_W) / (-np.sum(Q_coldsource_GHP_W) + np.sum(Q_GHP_gen_W))
     else:
         COP_GHP_avg         = 100
         print "COP_GHP_avg",COP_GHP_avg 
     
-    if np.sum(Q_HPLake)    != 0:
-        COP_HPLake_avg      = np.sum(Q_HPLake) / (-np.sum(Q_coldsource_HPLake) + np.sum(Q_HPLake))
+    if np.sum(Q_HPLake_gen_W)    != 0:
+        COP_HPLake_avg      = np.sum(Q_HPLake_gen_W) / (-np.sum(Q_coldsource_HPLake_W) + np.sum(Q_HPLake_gen_W))
         print "COP_HPLAKEAVG", COP_HPLake_avg
     
     else:
@@ -1038,17 +1038,17 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
     
     ######### COMPUTE THE GHG emissions
     
-    CO2_from_Sewage     = np.sum(Q_HPSew) / COP_HPSew_avg * gv.SEWAGEHP_TO_CO2_STD  * gv.Wh_to_J / 1.0E6
-    CO2_from_GHP        = np.sum(Q_GHP) / COP_GHP_avg * gv.GHP_TO_CO2_STD  * gv.Wh_to_J / 1.0E6
-    CO2_from_HPLake     = np.sum(Q_HPLake) / COP_HPLake_avg * gv.LAKEHP_TO_CO2_STD * gv.Wh_to_J / 1.0E6
+    CO2_from_Sewage     = np.sum(Q_HPSew_gen_W) / COP_HPSew_avg * gv.SEWAGEHP_TO_CO2_STD  * gv.Wh_to_J / 1.0E6
+    CO2_from_GHP        = np.sum(Q_GHP_gen_W) / COP_GHP_avg * gv.GHP_TO_CO2_STD  * gv.Wh_to_J / 1.0E6
+    CO2_from_HPLake     = np.sum(Q_HPLake_gen_W) / COP_HPLake_avg * gv.LAKEHP_TO_CO2_STD * gv.Wh_to_J / 1.0E6
     
     CO2_from_HP         = CO2_from_Sewage + CO2_from_GHP + CO2_from_HPLake
                              
     
-    CO2_from_CC_gas         = 1 /eta_CC_avg * np.sum(Q_CC) * gas_to_co2_CC_std  * gv.Wh_to_J / 1.0E6
-    CO2_from_BaseBoiler_gas = 1 /eta_Boiler_avg * np.sum(Q_Boiler) * gas_to_co2_BoilerBase_std   * gv.Wh_to_J / 1.0E6
-    CO2_from_PeakBoiler_gas = 1 /eta_PeakBoiler_avg * np.sum(Q_BoilerPeak) * gas_to_co2_BoilerPeak_std * gv.Wh_to_J / 1.0E6
-    CO2_from_AddBoiler_gas  = 1 /eta_AddBackup_avg * np.sum(Q_uncovered) * gas_to_co2_BoilerBackup_std * gv.Wh_to_J / 1.0E6
+    CO2_from_CC_gas         = 1 /eta_CC_avg * np.sum(Q_CC_gen_W) * gas_to_co2_CC_std  * gv.Wh_to_J / 1.0E6
+    CO2_from_BaseBoiler_gas = 1 /eta_Boiler_avg * np.sum(Q_Boiler_gen_W) * gas_to_co2_BoilerBase_std   * gv.Wh_to_J / 1.0E6
+    CO2_from_PeakBoiler_gas = 1 /eta_PeakBoiler_avg * np.sum(Q_BoilerPeak_gen_W) * gas_to_co2_BoilerPeak_std * gv.Wh_to_J / 1.0E6
+    CO2_from_AddBoiler_gas  = 1 /eta_AddBackup_avg * np.sum(Q_uncovered_W) * gas_to_co2_BoilerBackup_std * gv.Wh_to_J / 1.0E6
 
     CO2_from_fictiveBoilerStorage= E_gasPrim_fictiveBoiler * gv.NG_BOILER_TO_CO2_STD  * gv.Wh_to_J /1.0E6
     
@@ -1057,19 +1057,19 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
                                 + CO2_from_fictiveBoilerStorage
 
 
-    CO2_from_wood       = np.sum(Q_Furnace) * gv.FURNACE_TO_CO2_STD / eta_furnace_avg * gv.Wh_to_J / 1.0E6
+    CO2_from_wood       = np.sum(Q_Furnace_gen_W) * gv.FURNACE_TO_CO2_STD / eta_furnace_avg * gv.Wh_to_J / 1.0E6
 
     
-    CO2_from_elec_sold  = np.sum(E_el_Furnace_produced) * (- EL_TO_CO2)  * gv.Wh_to_J / 1.0E6\
-                            + np.sum(E_el_CC_produced) * (- EL_TO_CO2)  * gv.Wh_to_J / 1.0E6 \
-                            + ESolarProduced * (gv.EL_PV_TO_CO2 - EL_TO_CO2)  * gv.Wh_to_J / 1.0E6 # ESolarProduced contains PV and PVT values
+    CO2_from_elec_sold  = np.sum(E_Furnace_gen_W) * (- EL_TO_CO2)  * gv.Wh_to_J / 1.0E6\
+                            + np.sum(E_CC_gen_W) * (- EL_TO_CO2)  * gv.Wh_to_J / 1.0E6 \
+                          + E_solar_gen_Wh * (gv.EL_PV_TO_CO2 - EL_TO_CO2) * gv.Wh_to_J / 1.0E6 # ESolarProduced contains PV and PVT values
     
-    CO2_from_elec_usedAuxBoilersAll  = E_el_AuxillaryBoilerAllSum * EL_TO_CO2 * gv.Wh_to_J / 1E6
+    CO2_from_elec_usedAuxBoilersAll  = E_AuxillaryBoilerAllSum_W * EL_TO_CO2 * gv.Wh_to_J / 1E6
     
-    CO2_from_SCandPVT   = Q_SCandPVT * gv.SOLARCOLLECTORS_TO_CO2  * gv.Wh_to_J / 1.0E6
+    CO2_from_SCandPVT   = Q_SCandPVT_gen_Wh * gv.SOLARCOLLECTORS_TO_CO2 * gv.Wh_to_J / 1.0E6
     
-    CO2_from_HPSolarandHearRecovery = E_HP_SolarAndHeatRecoverySum * EL_TO_CO2 * gv.Wh_to_J / 1E6
-    CO2_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum * EL_TO_CO2 * gv.Wh_to_J / 1E6
+    CO2_from_HPSolarandHearRecovery = E_HP_SolarAndHeatRecoverySum_W * EL_TO_CO2 * gv.Wh_to_J / 1E6
+    CO2_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * EL_TO_CO2 * gv.Wh_to_J / 1E6
     
     # save data
     results = pd.DataFrame({
@@ -1096,39 +1096,39 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
     
     ################## Primary energy needs
     
-    Eprim_from_Sewage = np.sum(Q_HPSew) / COP_HPSew_avg  * gv.SEWAGEHP_TO_OIL_STD * gv.Wh_to_J / 1.0E6
-    Eprim_from_GHP    = np.sum(Q_GHP) / COP_GHP_avg * gv.GHP_TO_OIL_STD  * gv.Wh_to_J / 1.0E6
-    Eprim_from_HPLake = np.sum(Q_HPLake) / COP_HPLake_avg * gv.LAKEHP_TO_OIL_STD  * gv.Wh_to_J / 1.0E6
+    E_prim_from_Sewage_W = np.sum(Q_HPSew_gen_W) / COP_HPSew_avg  * gv.SEWAGEHP_TO_OIL_STD * gv.Wh_to_J / 1.0E6
+    E_prim_from_GHP_W    = np.sum(Q_GHP_gen_W) / COP_GHP_avg * gv.GHP_TO_OIL_STD  * gv.Wh_to_J / 1.0E6
+    E_prim_from_HPLake_W = np.sum(Q_HPLake_gen_W) / COP_HPLake_avg * gv.LAKEHP_TO_OIL_STD  * gv.Wh_to_J / 1.0E6
     
-    Eprim_from_HP       =  Eprim_from_Sewage + Eprim_from_GHP + Eprim_from_HPLake
+    E_prim_from_HP_W       =  E_prim_from_Sewage_W + E_prim_from_GHP_W + E_prim_from_HPLake_W
     
                                                                               
-    E_prim_from_CC_gas          = 1 / eta_CC_avg * np.sum(Q_CC) * gas_to_oil_CC_std  * gv.Wh_to_J/  1.0E6
-    E_prim_from_BaseBoiler_gas  = 1 /eta_Boiler_avg * np.sum(Q_Boiler) * gas_to_oil_BoilerBase_std   * gv.Wh_to_J / 1.0E6
-    E_prim_from_PeakBoiler_gas  = 1 /eta_PeakBoiler_avg * np.sum(Q_BoilerPeak) * gas_to_oil_BoilerPeak_std * gv.Wh_to_J / 1.0E6
-    E_prim_from_AddBoiler_gas   = 1 /eta_AddBackup_avg * np.sum(Q_uncovered) * gas_to_oil_BoilerBackup_std  * gv.Wh_to_J / 1.0E6
+    E_prim_from_CC_gas          = 1 / eta_CC_avg * np.sum(Q_CC_gen_W) * gas_to_oil_CC_std  * gv.Wh_to_J/  1.0E6
+    E_prim_from_BaseBoiler_gas  = 1 /eta_Boiler_avg * np.sum(Q_Boiler_gen_W) * gas_to_oil_BoilerBase_std   * gv.Wh_to_J / 1.0E6
+    E_prim_from_PeakBoiler_gas  = 1 /eta_PeakBoiler_avg * np.sum(Q_BoilerPeak_gen_W) * gas_to_oil_BoilerPeak_std * gv.Wh_to_J / 1.0E6
+    E_prim_from_AddBoiler_gas   = 1 /eta_AddBackup_avg * np.sum(Q_uncovered_W) * gas_to_oil_BoilerBackup_std  * gv.Wh_to_J / 1.0E6
     E_prim_from_FictiveBoiler_gas= E_gasPrim_fictiveBoiler * gv.NG_BOILER_TO_OIL_STD  * gv.Wh_to_J / 1.0E6
  
-    Eprim_from_gas      = E_prim_from_CC_gas + E_prim_from_BaseBoiler_gas + E_prim_from_PeakBoiler_gas\
+    E_prim_from_gas      = E_prim_from_CC_gas + E_prim_from_BaseBoiler_gas + E_prim_from_PeakBoiler_gas\
                                 + E_prim_from_AddBoiler_gas +E_prim_from_FictiveBoiler_gas
                                 
                                                
-    Eprim_from_wood     = 1 /eta_furnace_avg * np.sum(Q_Furnace) * gv.FURNACE_TO_OIL_STD * gv.Wh_to_J / 1.0E6
+    E_prim_from_wood     = 1 /eta_furnace_avg * np.sum(Q_Furnace_gen_W) * gv.FURNACE_TO_OIL_STD * gv.Wh_to_J / 1.0E6
 
-    EprimSaved_from_elec_sold_Furnace = np.sum(E_el_Furnace_produced) * (- EL_TO_OIL_EQ) * gv.Wh_to_J / 1.0E6
-    EprimSaved_from_elec_sold_CHP     = np.sum(E_el_CC_produced) * (- EL_TO_OIL_EQ) * gv.Wh_to_J / 1.0E6
-    EprimSaved_from_elec_sold_Solar   = ESolarProduced * (gv.EL_PV_TO_OIL_EQ - EL_TO_OIL_EQ)  * gv.Wh_to_J / 1.0E6
+    E_primSaved_from_elec_sold_Furnace = np.sum(E_Furnace_gen_W) * (- EL_TO_OIL_EQ) * gv.Wh_to_J / 1.0E6
+    E_primSaved_from_elec_sold_CHP     = np.sum(E_CC_gen_W) * (- EL_TO_OIL_EQ) * gv.Wh_to_J / 1.0E6
+    E_primSaved_from_elec_sold_Solar   = E_solar_gen_Wh * (gv.EL_PV_TO_OIL_EQ - EL_TO_OIL_EQ) * gv.Wh_to_J / 1.0E6
 
-    print "np.sum(E_el_CC_produced)",np.sum(E_el_CC_produced)
-    print "EprimSaved_from_elec_sold_CHP",EprimSaved_from_elec_sold_CHP
-    print "EprimSaved_from_elec_sold_Furnace", EprimSaved_from_elec_sold_Furnace
+    print "np.sum(E_el_CC_produced)",np.sum(E_CC_gen_W)
+    print "EprimSaved_from_elec_sold_CHP",E_primSaved_from_elec_sold_CHP
+    print "EprimSaved_from_elec_sold_Furnace", E_primSaved_from_elec_sold_Furnace
     print "\n eta_furnace_avg : ",eta_furnace_avg
-    print "E_el_Furnace_produced",np.sum(E_el_Furnace_produced)
+    print "E_el_Furnace_produced",np.sum(E_Furnace_gen_W)
     print "eta_CC_avg", eta_CC_avg
-    print "np.sum(E_el_CC_produced)", np.sum(E_el_CC_produced)
-    print "EprimSaved_from_elec_sold_Solar",EprimSaved_from_elec_sold_Solar
+    print "np.sum(E_el_CC_produced)", np.sum(E_CC_gen_W)
+    print "EprimSaved_from_elec_sold_Solar",E_primSaved_from_elec_sold_Solar
     
-    EprimSaved_from_elec_sold= EprimSaved_from_elec_sold_Furnace + EprimSaved_from_elec_sold_CHP + EprimSaved_from_elec_sold_Solar
+    E_primSaved_from_elec_sold= E_primSaved_from_elec_sold_Furnace + E_primSaved_from_elec_sold_CHP + E_primSaved_from_elec_sold_Solar
                            
                             # E_PV_Wh contains PV and PVT values (Units Wh * MJ/MJ, later on translated from Wh to MJ) 
                             
@@ -1136,32 +1136,32 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
     #                                                                                           of the machinery takes into account final energy
                            
     #print "Eprim_from_elec_sold",Eprim_from_elec_sold
-    Eprim_from_elec_usedAuxBoilersAll  = E_el_AuxillaryBoilerAllSum * EL_TO_OIL_EQ  * gv.Wh_to_J / 1.0E6
+    E_prim_from_elec_usedAuxBoilersAll  = E_AuxillaryBoilerAllSum_W * EL_TO_OIL_EQ  * gv.Wh_to_J / 1.0E6
 
-    Eprim_from_SCandPVT = Q_SCandPVT * gv.SOLARCOLLECTORS_TO_OIL * gv.Wh_to_J / 1.0E6
+    E_prim_from_SCandPVT = Q_SCandPVT_gen_Wh * gv.SOLARCOLLECTORS_TO_OIL * gv.Wh_to_J / 1.0E6
     #print "Eprim_from_SCandPVT", Eprim_from_SCandPVT             
                             
-    Eprim_from_HPSolarandHearRecovery = E_HP_SolarAndHeatRecoverySum * EL_TO_OIL_EQ  * gv.Wh_to_J / 1.0E6
-    Eprim_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum * EL_TO_CO2 * gv.Wh_to_J / 1E6
+    E_prim_from_HPSolarandHearRecovery = E_HP_SolarAndHeatRecoverySum_W * EL_TO_OIL_EQ * gv.Wh_to_J / 1.0E6
+    E_prim_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * EL_TO_CO2 * gv.Wh_to_J / 1E6
 
          
     # Save data
     results = pd.DataFrame({
-                            "Eprim_from_Sewage":[Eprim_from_Sewage],
-                            "Eprim_from_GHP":[Eprim_from_GHP],
-                            "Eprim_from_HPLake":[Eprim_from_HPLake],
+                            "E_prim_from_Sewage":[E_prim_from_Sewage_W],
+                            "E_prim_from_GHP":[E_prim_from_GHP_W],
+                            "E_prim_from_HPLake":[E_prim_from_HPLake_W],
                             "E_prim_from_CC_gas":[E_prim_from_CC_gas],
                             "E_prim_from_BaseBoiler_gas":[E_prim_from_BaseBoiler_gas],
                             "E_prim_from_PeakBoiler_gas":[E_prim_from_PeakBoiler_gas],
                             "E_prim_from_AddBoiler_gas":[E_prim_from_AddBoiler_gas],
                             "E_prim_from_FictiveBoiler_gas":[E_prim_from_FictiveBoiler_gas],
-                            "Eprim_from_wood":[Eprim_from_wood],
-                            "EprimSaved_from_elec_sold_Furnace":[EprimSaved_from_elec_sold_Furnace],
-                            "EprimSaved_from_elec_sold_CC":[EprimSaved_from_elec_sold_CHP],
-                            "EprimSaved_from_elec_sold_Solar":[EprimSaved_from_elec_sold_Solar],
-                            "Eprim_from_elec_usedAuxBoilersAll":[Eprim_from_elec_usedAuxBoilersAll],
-                            "Eprim_from_HPSolarandHearRecovery":[Eprim_from_HPSolarandHearRecovery],
-                            "Eprim_from_HP_StorageOperationChDeCh":[Eprim_from_HP_StorageOperationChDeCh]
+                            "E_prim_from_wood":[E_prim_from_wood],
+                            "E_primSaved_from_elec_sold_Furnace":[E_primSaved_from_elec_sold_Furnace],
+                            "E_primSaved_from_elec_sold_CC":[E_primSaved_from_elec_sold_CHP],
+                            "E_primSaved_from_elec_sold_Solar":[E_primSaved_from_elec_sold_Solar],
+                            "E_prim_from_elec_usedAuxBoilersAll":[E_prim_from_elec_usedAuxBoilersAll],
+                            "E_prim_from_HPSolarandHearRecovery":[E_prim_from_HPSolarandHearRecovery],
+                            "E_prim_from_HP_StorageOperationChDeCh":[E_prim_from_HP_StorageOperationChDeCh]
                             })
     results.to_csv(locator.get_optimization_slave_slave_detailed_e_prim_data(MS_Var.configKey), sep=',')
 
@@ -1169,28 +1169,28 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
     CO2_emitted     = (CO2_from_HP + CO2_from_gas + CO2_from_wood + CO2_from_elec_sold + CO2_from_SCandPVT + CO2_from_elec_usedAuxBoilersAll\
                                                                 + CO2_from_HPSolarandHearRecovery + CO2_from_HP_StorageOperationChDeCh) 
                                                                 
-    Eprim_used      = (Eprim_from_HP + Eprim_from_gas + Eprim_from_wood + EprimSaved_from_elec_sold\
-                                            + Eprim_from_SCandPVT + Eprim_from_elec_usedAuxBoilersAll + Eprim_from_HPSolarandHearRecovery\
-                                            + Eprim_from_HP_StorageOperationChDeCh) 
+    E_prim_used      = (E_prim_from_HP_W + E_prim_from_gas + E_prim_from_wood + E_primSaved_from_elec_sold\
+                                            + E_prim_from_SCandPVT + E_prim_from_elec_usedAuxBoilersAll + E_prim_from_HPSolarandHearRecovery\
+                                            + E_prim_from_HP_StorageOperationChDeCh)
     print "\n CO2_from_elec_sold",CO2_from_elec_sold
-    print "EprimSaved_from_elec_sold",EprimSaved_from_elec_sold 
+    print "EprimSaved_from_elec_sold",E_primSaved_from_elec_sold
     
     print "\n CO2_from_gas", CO2_from_gas
-    print "Eprim_from_gas", Eprim_from_gas
+    print "Eprim_from_gas", E_prim_from_gas
                              
     print "\n CO2_from_SCandPVT",CO2_from_SCandPVT
-    print "Eprim_from_SCandPVT", Eprim_from_SCandPVT
+    print "Eprim_from_SCandPVT", E_prim_from_SCandPVT
     
     print "\n CO2_from_elec_usedAuxBoilersAll",CO2_from_elec_usedAuxBoilersAll
-    print "Eprim_from_elec_usedAuxBoilersAll",Eprim_from_elec_usedAuxBoilersAll
+    print "Eprim_from_elec_usedAuxBoilersAll",E_prim_from_elec_usedAuxBoilersAll
     
     print "\nCO2_from_HP_StorageOperationChDeCh", CO2_from_HP_StorageOperationChDeCh    
-    print "Eprim_from_HP_StorageOperationChDeCh", Eprim_from_HP_StorageOperationChDeCh
+    print "Eprim_from_HP_StorageOperationChDeCh", E_prim_from_HP_StorageOperationChDeCh
     
     print "\n CO2_from_HPSolarandHearRecovery", CO2_from_HPSolarandHearRecovery
-    print "Eprim_from_HPSolarandHearRecovery",Eprim_from_HPSolarandHearRecovery
+    print "Eprim_from_HPSolarandHearRecovery",E_prim_from_HPSolarandHearRecovery
 
-    return CO2_emitted, Eprim_used
+    return CO2_emitted, E_prim_used
 
 def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     """

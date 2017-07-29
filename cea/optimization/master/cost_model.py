@@ -361,7 +361,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
     if indCombi.count("1") > 0:
         # import gas consumption data from:
         EgasPrimaryDataframe = pd.read_csv(locator.get_optimization_slave_primary_energy_by_source(dicoSupply.configKey),
-            usecols=["EgasPrimaryPeakPower"])
+            usecols=["E_gas_PrimaryPeakPower_W"])
         EgasPrimaryPeakPower = float(np.array(EgasPrimaryDataframe))
         GasConnectionInvCost = ngas.calc_Cinv_gas(EgasPrimaryPeakPower, gv)
     else:
