@@ -176,13 +176,13 @@ Installing the CEA itself is as simple as cloning it from GitHub:
 
 ::
 
-    git clone https://github.com/architecture-building-systems/CEAforArcGIS.git
+    git clone https://github.com/architecture-building-systems/CityEnergyAnalyst.git
 
 Alternatively, you can also clone a branch of the cea with:
 
 ::
 
-    git clone - b <my-branch>  https://github.com/architecture-building-systems/CEAforArcGIS.git
+    git clone - b <my-branch>  https://github.com/architecture-building-systems/CityEnergyAnalyst.git
 
 Running the CEA
 ---------------
@@ -195,8 +195,8 @@ user name) using a reference case previously cloned to the home folder:
 
 ::
 
-    cd $HOME/CEAforArcGIS/cea
-    export WEATHER=/cluster/home/darthoma/CEAforArcGIS/cea/databases/weather/Zug.epw
+    cd $HOME/CityEnergyAnalyst/cea
+    export WEATHER=/cluster/home/darthoma/CityEnergyAnalyst/cea/databases/weather/Zug.epw
     export SCENARIO=/cluster/home/darthoma/cea-reference-case/reference-case-zug/baseline
     python demand/demand_main.py --scenario $SCENARIO --weather $WEATHER
 
