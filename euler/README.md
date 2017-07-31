@@ -27,7 +27,7 @@ These are the steps to be performed for running the demand sensitivity analysis:
 
 The bash scripts make some assumptions on the installation of the CEA:
 
-- the CEAforArcGIS repository is cloned to `$HOME/CEAforArcGIS`
+- the CityEnergyAnalyst repository is cloned to `$HOME/CityEnergyAnalyst`
 - the default reference case is found in `$HOME/cea-reference-case/reference-case-open/baseline`
   - note: since git-lfs is not installed on Euler, you will need to manually copy the radiation files to the cluster 
     (`radiation.csv`, `properties_surfaces.csv`)
@@ -43,7 +43,7 @@ Due to the way the simulation tasks are split up, the simulation uses the follow
   - personal scratch storage: `/cluster/scratch/username` (not backed up, deleted after 15 days, alias: `$SCRATCH`)
   
 - the weather path: the path to the *.epw file used for simulation. This can be kept in the home folder.
-    - the default weather file used by the bash scripts is `$HOME/CEAforArcGIS/cea/databases/weather/Zurich.epw`
+    - the default weather file used by the bash scripts is `$HOME/CityEnergyAnalyst/cea/databases/weather/Zurich.epw`
   
 - the samples folder contains the inputs (list of samples and the problem statement) and the final outputs of the
   analysis. This should be stored in your personal scratch folder (as the home folder has a limit to 100k files).
@@ -60,7 +60,7 @@ Due to the way the simulation tasks are split up, the simulation uses the follow
 ## Running the scripts
 
 There are two ways to run the scripts. The first way is with the python modules as shown for the Windows case. On
-Euler, the scripts in the `euler` folder of the `CEAforArcGIS` repository contains a set of handy bash scripts that
+Euler, the scripts in the `euler` folder of the `CityEnergyAnalyst` repository contains a set of handy bash scripts that
 simplify running the scripts.
 
 ### On Windows
@@ -68,17 +68,17 @@ simplify running the scripts.
 Here is an example of running the scripts on windows. Replace paths according to your setup.
 
 ```bash
-[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
-> set PYTHONPATH=C:\Users\darthoma\Documents\GitHub\CEAforArcGIS;%PYTHONPATH%
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CityEnergyAnalyst
+> set PYTHONPATH=C:\Users\darthoma\Documents\GitHub\CityEnergyAnalyst;%PYTHONPATH%
 
-[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CityEnergyAnalyst
 > md %TEMP%\samples
                                                
-[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CityEnergyAnalyst
 > python cea\analysis\sensitivity\sensitivity_demand_samples.py --samples-folder "%TEMP%\samples" -n 1
 created 12 samples in C:\Users\darthoma\AppData\Local\Temp\samples
 
-[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CityEnergyAnalyst
 > dir %TEMP%\samples
  Volume in drive C has no label.
  Volume Serial Number is C84C-1BEB
@@ -92,10 +92,10 @@ created 12 samples in C:\Users\darthoma\AppData\Local\Temp\samples
                2 File(s)      1'058'023 bytes
                2 Dir(s)  528'840'749'056 bytes free
                                                                                          
-[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS       
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CityEnergyAnalyst       
 > md %TEMP%\simulations
 
-[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CityEnergyAnalyst
 > python cea\analysis\sensitivity\sensitivity_demand_simulate.py -i 0 -n 12 --scenario "C:\reference-case-open\baseline" --samples-folder %TEMP%\samples --simulation-folder %TEMP%\simulation --weather .\cea\databases\weather\Zurich.epw
 read input files
 done
@@ -113,7 +113,7 @@ done - time elapsed: 5.32 seconds
 
 # ... this is repeated 12 times...
 
-[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CityEnergyAnalyst
 > dir %TEMP%\simulation
  Volume in drive C has no label.
  Volume Serial Number is C84C-1BEB
@@ -127,7 +127,7 @@ done - time elapsed: 5.32 seconds
                0 File(s)              0 bytes
                4 Dir(s)  528'803'373'056 bytes free
 
-[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CityEnergyAnalyst
 > dir %temp%\samples
  Volume in drive C has no label.
  Volume Serial Number is C84C-1BEB
@@ -153,7 +153,7 @@ done - time elapsed: 5.32 seconds
               14 File(s)          7'029 bytes
                2 Dir(s)  528'819'286'016 bytes free
 
-[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CityEnergyAnalyst
 > type %TEMP%\samples\result.0.csv
 ,QHf_MWhyr,QCf_MWhyr,Ef_MWhyr,QEf_MWhyr
 0,381.043,18.824,156.259,556.126
@@ -182,7 +182,7 @@ which works well for the `reference-case-open`.
 The next step is to run the analysis on the results. This is done in a single process.
 
 ```
-[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CEAforArcGIS
+[esri104] darthoma@ITA-SCHLUE-W-17 C:\Users\darthoma\Documents\GitHub\CityEnergyAnalyst
 > python cea\analysis\sensitivity\sensitivity_demand_analyze.py --samples-folder %TEMP%\samples
 ```
 
@@ -208,12 +208,12 @@ The next step is to run the analysis on the results. This is done in a single pr
 
 To create the samples, you need to set up the parameters of the analysis first. These are used by the three scripts 
 `create-samples.sh`, `run-demand.sh` and `analyze-simulations.sh` bash scripts found in the euler folder 
-(`$HOME/CEAforArcGIS/euler`):
+(`$HOME/CityEnergyAnalyst/euler`):
 
 ```
 [darthoma@euler05 ~]$ export N=10
 [darthoma@euler05 ~]$ export METHOD=morris
-[darthoma@euler05 ~]$ sh CEAforArcGIS/euler/create-samples.sh
+[darthoma@euler05 ~]$ sh CityEnergyAnalyst/euler/create-samples.sh
 created 12 samples in /cluster/scratch/darthoma/samples_morris_1
 ```
 
@@ -225,7 +225,7 @@ When choosing your variables to analyze and the number of samples to be created,
 #### Run the simulations
 
 ```
-[darthoma@euler05 ~]$ sh CEAforArcGIS/euler/run-demand.sh
+[darthoma@euler05 ~]$ sh CityEnergyAnalyst/euler/run-demand.sh
 Generic job.
 Job <31205729> is submitted to queue <normal.4h>.
 ```

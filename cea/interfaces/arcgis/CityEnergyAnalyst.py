@@ -29,8 +29,8 @@ class Toolbox(object):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
         self.tools = [OperationCostsTool, RetrofitPotentialTool, DemandTool, DataHelperTool, BenchmarkGraphsTool,
-                      OperationTool, EmbodiedTool, MobilityTool,SolarTechnologyTool,
-                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool]
+                      OperationTool, EmbodiedTool, MobilityTool, SolarTechnologyTool,
+                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool, DbfToExcelTool, ExcelToDbfTool]
 
 class OperationCostsTool(object):
     def __init__(self):
@@ -304,20 +304,12 @@ class DemandTool(object):
             parameterType="Required",
             direction="Input")
         weather_name = arcpy.Parameter(
-            displayName="Weather file",
+            displayName="Weather file (choose from list or enter full path to .epw file)",
             name="weather_name",
             datatype="String",
             parameterType="Required",
             direction="Input")
-        weather_name.filter.list = get_weather_names() + ['<choose path from below>']
-
-        weather_path = arcpy.Parameter(
-            displayName="Path to .epw file",
-            name="weather_path",
-            datatype="DEFile",
-            parameterType="Optional",
-            direction="Input")
-        weather_path.filter.list = ['epw']
+        weather_name.filter.list = get_weather_names()
 
         dynamic_infiltration = arcpy.Parameter(
             displayName="Use dynamic infiltration model (slower)",
@@ -325,33 +317,15 @@ class DemandTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        return [scenario_path, weather_name, weather_path, dynamic_infiltration]
+        dynamic_infiltration.value = False
+
+        return [scenario_path, weather_name, dynamic_infiltration]
+
+    def isLicensed(self):
+        return True
 
     def updateParameters(self, parameters):
-        scenario_path = parameters[0].valueAsText
-        if scenario_path is None:
-            for p in parameters[1:]:
-                p.enabled = False
-            return
-        if not os.path.exists(scenario_path):
-            for p in parameters[1:]:
-                p.enabled = False
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
-            return
-
-        if not parameters[1].enabled:
-            for p in parameters[1:]:
-                p.enabled = True
-            parameters = {p.name: p for p in parameters}
-            previous_run = ConfigurationStore().read(scenario_path, 'demand')
-            if previous_run:
-                for key in previous_run.keys():
-                    p = parameters[key]
-                    p.value = previous_run[key]
-            parameters['weather_path'].enabled = parameters['weather_name'].value == '<choose path from below>'
-        else:
-            parameters = {p.name: p for p in parameters}
-            parameters['weather_path'].enabled = parameters['weather_name'].value == '<choose path from below>'
+        return
 
     def updateMessages(self, parameters):
         scenario_path = parameters[0].valueAsText
@@ -367,28 +341,21 @@ class DemandTool(object):
         return
 
     def execute(self, parameters, _):
-        parameters = {p.name: p for p in parameters}
-        scenario_path = parameters['scenario_path'].valueAsText
-        weather_name = parameters['weather_name'].valueAsText
-        weather_path_param = parameters['weather_path']
+        scenario_path = parameters[0].valueAsText
+        weather_name = parameters[1].valueAsText
         if weather_name in get_weather_names():
             weather_path = get_weather_path(weather_name)
-        elif weather_path_param.enabled:
-            if os.path.exists(weather_path_param.valueAsText) and weather_path_param.valueAsText.endswith('.epw'):
-                weather_path = weather_path_param.valueAsText
+        elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
+            weather_path = weather_name
         else:
             weather_path = get_weather_path()
 
-        use_dynamic_infiltration_calculation = parameters['dynamic_infiltration'].value
+        use_dynamic_infiltration_calculation = parameters[2].value
 
         args = [scenario_path, 'demand', '--weather', weather_path]
         if use_dynamic_infiltration_calculation:
             args.append('--use-dynamic-infiltration-calculation')
         run_cli(*args)
-        ConfigurationStore().write(scenario_path,
-                                   'demand', {'weather_name': weather_name,
-                                              'weather_path': weather_path,
-                                              'dynamic_infiltration': use_dynamic_infiltration_calculation})
 
 
 class DataHelperTool(object):
@@ -397,10 +364,6 @@ class DataHelperTool(object):
     """
 
     def __init__(self):
-        # map from CLI flag names to the parameter names used in the ArcGIS interface
-        self.flag_mapping = {'thermal': 'prop_thermal_flag', 'architecture': 'prop_architecture_flag',
-                             'HVAC': 'prop_HVAC_flag', 'comfort': 'prop_comfort_flag',
-                             'internal-loads': 'prop_internal_loads_flag'}
         self.label = 'Data helper'
         self.description = 'Query characteristics of buildings and systems from statistical data'
         self.category = 'Data Management'
@@ -419,61 +382,37 @@ class DataHelperTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        prop_thermal_flag.enabled = False
+        prop_thermal_flag.value = True
         prop_architecture_flag = arcpy.Parameter(
             displayName="Generate architectural properties",
             name="prop_architecture_flag",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        prop_architecture_flag.enabled = False
+        prop_architecture_flag.value = True
         prop_HVAC_flag = arcpy.Parameter(
             displayName="Generate technical systems properties",
             name="prop_HVAC_flag",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        prop_HVAC_flag.enabled = False
+        prop_HVAC_flag.value = True
         prop_comfort_flag = arcpy.Parameter(
             displayName="Generate comfort properties",
             name="prop_comfort_flag",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        prop_comfort_flag.enabled = False
+        prop_comfort_flag.value = True
         prop_internal_loads_flag = arcpy.Parameter(
             displayName="Generate internal loads properties",
             name="prop_internal_loads_flag",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        prop_internal_loads_flag.enabled = False
+        prop_internal_loads_flag.value = True
         return [scenario_path, prop_thermal_flag, prop_architecture_flag, prop_HVAC_flag, prop_comfort_flag,
                 prop_internal_loads_flag]
-
-    def updateParameters(self, parameters):
-        scenario_path = parameters[0].valueAsText
-        if scenario_path is None:
-            for p in parameters[1:]:
-                p.enabled = False
-            return
-        if not os.path.exists(scenario_path):
-            for p in parameters[1:]:
-                p.enabled = False
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
-            return
-
-        # first time only (for a new scenario_path)
-        if not parameters[1].enabled:
-            for p in parameters[1:]:
-                p.enabled = True
-            parameters = {p.name: p for p in parameters}
-            flags = ConfigurationStore().read(scenario_path, 'data-helper')
-            if flags:
-                for key in flags.keys():
-                    if key in self.flag_mapping:
-                        p = parameters[self.flag_mapping[key]]
-                        p.value = flags[key]
 
     def execute(self, parameters, _):
         scenario_path = parameters[0].valueAsText
@@ -482,9 +421,6 @@ class DataHelperTool(object):
                  'HVAC': parameters[3].value,
                  'comfort': parameters[4].value,
                  'internal-loads': parameters[5].value}
-
-        ConfigurationStore().write(scenario_path, 'data-helper', flags)
-
         archetypes = [key for key in flags.keys() if flags[key]]
         run_cli(scenario_path, 'data-helper', '--archetypes', *archetypes)
 
@@ -545,88 +481,82 @@ class OperationTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
+        Qww_flag.value = True
         Qhs_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to space heating.",
             name="Qhs_flag",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
+        Qhs_flag.value = True
         Qcs_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to space cooling.",
             name="Qcs_flag",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
+        Qcs_flag.value = True
         Qcdata_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to servers cooling.",
             name="Qcdata_flag",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
+        Qcdata_flag.value = True
         Qcrefri_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to refrigeration.",
             name="Qcrefri_flag",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
+        Qcrefri_flag.value = True
         Eal_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to appliances and lighting.",
             name="Eal_flag",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
+        Eal_flag.value = True
         Eaux_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to auxiliary electricity.",
             name="Eaux_flag",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
+        Eaux_flag.value = True
         Epro_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to electricity in industrial processes.",
             name="Epro_flag",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
+        Epro_flag.value = True
         Edata_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to electricity consumption in data centers.",
             name="Edata_flag",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
+        Edata_flag.value = True
 
         return [scenario_path, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_flag, Eal_flag, Eaux_flag, Epro_flag,
                 Edata_flag]
 
-    def updateParameters(self, parameters):
-        scenario_path = parameters[0].valueAsText
-        if scenario_path is None:
-            for p in parameters[1:]:
-                p.enabled = False
-            return
-        if not os.path.exists(scenario_path):
-            for p in parameters[1:]:
-                p.enabled = False
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
-            return
-        if not parameters[1].enabled:
-            for p in parameters[1:]:
-                p.enabled = True
-            parameters = {p.name: p for p in parameters}
-            previous_run = ConfigurationStore().read(scenario_path, 'emissions')
-            if previous_run:
-                for key in previous_run.keys():
-                    p = parameters[key + '_flag']
-                    p.value = previous_run[key]
-
-
     def execute(self, parameters, _):
-        parameters = {p.name: p for p in parameters}
-        scenario_path = parameters['scenario_path'].valueAsText
-        flags = {key.split('_')[0]: parameter.value for key, parameter in parameters.items()
-                 if not key == 'scenario_path'}
+        scenario_path = parameters[0].valueAsText
+        flags = {
+            'Qww': parameters[1].value,
+            'Qhs': parameters[2].value,
+            'Qcs': parameters[3].value,
+            'Qcdata': parameters[4].value,
+            'Qcrefri': parameters[5].value,
+            'Eal': parameters[6].value,
+            'Eaux': parameters[7].value,
+            'Epro': parameters[8].value,
+            'Edata': parameters[9].value,
+        }
         extra_files_to_create = [key for key in flags if flags[key]]
         run_cli(scenario_path, 'emissions', '--extra-files-to-create', *extra_files_to_create)
-        ConfigurationStore().write(scenario_path, 'emissions', flags)
 
 
 class EmbodiedTool(object):
@@ -637,6 +567,14 @@ class EmbodiedTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        yearcalc = arcpy.Parameter(
+            displayName="Year to calculate",
+            name="yearcalc",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        yearcalc.value = 2014
+
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
@@ -644,39 +582,12 @@ class EmbodiedTool(object):
             parameterType="Required",
             direction="Input")
 
-        yearcalc = arcpy.Parameter(
-            displayName="Year to calculate",
-            name="yearcalc",
-            datatype="GPLong",
-            parameterType="Required",
-            direction="Input")
-        return [scenario_path, yearcalc]
-
-    def updateParameters(self, parameters):
-        scenario_path = parameters[0].valueAsText
-        if scenario_path is None:
-            for p in parameters[1:]:
-                p.enabled = False
-            return
-        if not os.path.exists(scenario_path):
-            for p in parameters[1:]:
-                p.enabled = False
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
-            return
-        if not parameters[1].enabled:
-            for p in parameters[1:]:
-                p.enabled = True
-            parameters = {p.name: p for p in parameters}
-            previous_run = ConfigurationStore().read(scenario_path, 'embodied-energy')
-            if previous_run:
-                    parameters['yearcalc'].value = previous_run['yearcalc']
+        return [yearcalc, scenario_path]
 
     def execute(self, parameters, _):
-        parameters = {p.name: p for p in parameters}
-        scenario_path = parameters['scenario_path'].valueAsText
-        year_to_calculate = parameters['yearcalc'].value
+        year_to_calculate = int(parameters[0].valueAsText)
+        scenario_path = parameters[1].valueAsText
         run_cli(scenario_path, 'embodied-energy', '--year-to-calculate', year_to_calculate)
-        ConfigurationStore().write(scenario_path, 'embodied-energy', {'yearcalc': year_to_calculate})
 
 
 class MobilityTool(object):
@@ -729,26 +640,18 @@ class DemandGraphsTool(object):
 
     def updateParameters(self, parameters):
         scenario_path = parameters[0].valueAsText
-        analysis_fields = parameters[1]
-        if scenario_path is None:
-            analysis_fields.enabled = False
-            return
         if not os.path.exists(scenario_path):
-            analysis_fields.enabled = False
             parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
-        analysis_fields.enabled = True
+        analysis_fields = parameters[1]
         fields = _cli_output(scenario_path, 'demand-graphs', '--list-fields').split()
         analysis_fields.filter.list = list(fields)
-        previous_run = ConfigurationStore().read(scenario_path, 'demand-graphs')
-        if previous_run:
-            analysis_fields.value = previous_run['analysis_fields']
+        return
 
     def execute(self, parameters, messages):
         scenario_path = parameters[0].valueAsText
         analysis_fields = parameters[1].valueAsText.split(';')[:4]  # max 4 fields for analysis
         run_cli(scenario_path, 'demand-graphs', '--analysis-fields', *analysis_fields)
-        ConfigurationStore().write(scenario_path, 'demand-graphs', {'analysis_fields': analysis_fields})
 
 
 class ScenarioPlotsTool(object):
@@ -1242,20 +1145,62 @@ class HeatmapsTool(object):
                                            file_to_analyze)
         run_cli(scenario_path, 'heatmaps', '--file-to-analyze', file_to_analyze, '--analysis-fields', *analysis_fields)
 
-class ConfigurationStore(object):
-    """Read and write the parameters of a tool for populating the interface for subsequent runs.
-    The parameters are written to a section called "ArcGIS", with the tool name as the key. The value is
-    a json dictionary of the values for each parameter.
-    """
-    def read(self, scenario_path, tool):
-        import json
-        data = _cli_output(scenario_path, 'read-config', '--section', 'ArcGIS', '--key', tool)
-        if len(data):
-            return json.loads(data)
-        return None
+class ExcelToDbfTool(object):
+    def __init__(self):
+        self.label = 'Convert Excel to DBF'
+        self.description = 'xls => dbf'
+        self.canRunInBackground = False
+        self.category = 'Utilities'
 
-    def write(self, scenario_path, tool, parameters):
-        """Assuming parameters is a dictionary of values to store, write them as a json string to the store"""
-        import json
-        data = json.dumps(parameters)
-        run_cli(scenario_path, 'write-config', '--section', 'ArcGIS', '--key', tool, '--value', data)
+    def getParameterInfo(self):
+        input_path = arcpy.Parameter(
+            displayName="Excel input file path",
+            name="input_path",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Input")
+        input_path.filter.list = ['xls']
+        output_path = arcpy.Parameter(
+            displayName="DBF output file path",
+            name="output_path",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Output")
+        output_path.filter.list = ['dbf']
+
+    def execute(self, parameters, _):
+        input_path = parameters[0].valueAsText
+        output_path = parameters[1].valueAsText
+
+        run_cli(None, 'excel-to-dbf', '--input-path', input_path, '--output-path', output_path)
+
+class DbfToExcelTool(object):
+    def __init__(self):
+        self.label = 'Convert DBF to Excel'
+        self.description = 'dbf => xls'
+        self.canRunInBackground = False
+        self.category = 'Utilities'
+
+    def getParameterInfo(self):
+        input_path = arcpy.Parameter(
+            displayName="DBF input file path",
+            name="input_path",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Input")
+        input_path.filter.list = ['dbf']
+        output_path = arcpy.Parameter(
+            displayName="Excel output file path",
+            name="output_path",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Output")
+        output_path.filter.list = ['xls']
+
+        return [input_path, output_path]
+
+    def execute(self,parameters, _):
+        input_path = parameters[0].valueAsText
+        output_path = parameters[1].valueAsText
+
+        run_cli(None, 'dbf-to-excel', '--input-path', input_path, '--output-path', output_path)
