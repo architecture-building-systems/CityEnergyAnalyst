@@ -15,6 +15,7 @@ import math
 from cea.utilities import epwreader
 from cea.resources import geothermal
 import geopandas as gpd
+import networkx as nx
 
 
 __author__ = "Martin Mosteiro Romero, Shanshan Hsieh"
@@ -1254,32 +1255,8 @@ def get_thermal_network_from_shapefile(locator, network_type):
     # get node and pipe information
     node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df)
 
-    # create consumer and plant node vectors
-    node_names = node_df.index.values
-    consumer_nodes = []
-    plant_nodes = []
-    for node in node_names:
-        if node_df['consumer'][node] == 1:
-            consumer_nodes.append(node)
-        else:
-            consumer_nodes.append('')
-        if node_df['plant'][node] == 1:
-            plant_nodes.append(node)
-        else:
-            plant_nodes.append('')
-
     # create node catalogue indicating which nodes are plants and which consumers
-    all_nodes_df = pd.DataFrame(data=[node_df['consumer'], node_df['plant']], index=['consumer', 'plant'],
-                                columns=node_df.index)
-    for node in all_nodes_df:
-        if all_nodes_df[node]['consumer'] == 1:
-            all_nodes_df[node]['consumer'] = node_df['Name'][node]
-        else:
-            all_nodes_df[node]['consumer'] = ''
-        if all_nodes_df[node]['plant'] == 1:
-            all_nodes_df[node]['plant'] = node_df['Name'][node]
-        else:
-            all_nodes_df[node]['plant'] = ''
+    all_nodes_df = node_df[['Type', 'Building']]
     all_nodes_df = all_nodes_df.sort_index(axis=1)  # sort columns by node numbers
     all_nodes_df.to_csv(locator.get_optimization_network_node_list_file(network_type))
 
@@ -1298,14 +1275,16 @@ def get_thermal_network_from_shapefile(locator, network_type):
     # Since DataFrame doesn't indicate the direction of flow, an edge node matrix is generated as a first guess and
     # the mass flow at t = 0 is calculated with it. The direction of flow is then corrected by inverting negative flows.
     substation_mass_flows_df = pd.DataFrame(data=np.zeros([1,len(edge_node_df.index)]), columns=edge_node_df.index)
+    # TODO: what happens with the dummy nodes? those that are equal to 'none'?
     total_flow = 0
-    for node in consumer_nodes:
-        if node != '':
+    for node, row in all_nodes_df.iterrows():
+        if row['Type'] == 'CONSUMER':
             substation_mass_flows_df[node] = 1
             total_flow += 1
-    for plant in plant_nodes:
-        if plant != '':
-            substation_mass_flows_df[plant] = -total_flow
+    for node, row in all_nodes_df.iterrows():
+        if row['Type'] == 'PLANT':
+            substation_mass_flows_df[node] = - total_flow
+            total_flow += 1
     mass_flow_guess = calc_mass_flow_edges(edge_node_df, substation_mass_flows_df)[0]
 
     for i in range(len(mass_flow_guess)):
@@ -1340,43 +1319,42 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
 
     """
 
-    # import consumer and plant nodes
-    end_nodes = []
-    for node in node_shapefile_df['geometry']:
-        end_nodes.append(node.coords[0])
-    node_shapefile_df['geometry'] = end_nodes
-    node_shapefile_df['consumer'] = np.zeros(len(node_shapefile_df['Plant']))
-    for node in range(len(node_shapefile_df['consumer'])):
-        if node_shapefile_df['Qh'][node] > 0:
-            node_shapefile_df['consumer'][node] = 1
-
     # create node dictionary with plant and consumer nodes
+    node_shapefile_df.set_index("Name", inplace=True)
+    node_shapefile_df = node_shapefile_df.astype('object')
     node_dict = {}
-    node_columns = ['Node', 'Name', 'plant', 'consumer', 'coordinates']
-    for i in range(len(node_shapefile_df)):
-        node_dict[node_shapefile_df['geometry'][i]] = ['NODE'+str(i), node_shapefile_df['Name'][i],
-                                                       node_shapefile_df['Plant'][i], node_shapefile_df['consumer'][i],
-                                                       node_shapefile_df['geometry'][i]]
+    node_shapefile_df['plant'] = ''
+    node_shapefile_df['consumer'] = ''
+    node_shapefile_df['dummy'] = ''
+    node_shapefile_df['coordinates'] = node_shapefile_df['geometry'].apply(lambda x: x.coords[0])
+    for node, row in node_shapefile_df.iterrows():
+        coord_node = row['geometry'].coords[0]
+        if row['Type'] == "PLANT":
+            node_shapefile_df.loc[node, 'plant'] = node
+        elif row['Type']  == "CONSUMER": #TODO: add prosumer!
+            node_shapefile_df.loc[node, 'consumer'] = node
+        else:
+            node_shapefile_df.loc[node, 'none'] = node
+
+        node_dict[coord_node] = node
 
     # create edge dictionary with pipe lengths and start and end nodes
     # complete node dictionary with missing nodes (i.e., joints)
-    edge_dict = {}
-    edge_columns = ['pipe length', 'start node', 'end node']
-    pipe_nodes = []
-    for j in range(len(edge_shapefile_df)):
-        pipe = edge_shapefile_df['geometry'][j]
-        start_node = pipe.coords[0]
-        end_node = pipe.coords[len(pipe.coords)-1]
-        pipe_nodes.append(pipe.coords[0])
-        pipe_nodes.append(pipe.coords[len(pipe.coords)-1])
-        if start_node not in node_dict.keys():
-            i += 1
-            node_dict[start_node] = ['NODE'+str(i), 'TEE' + str(i - len(node_shapefile_df)), 0, 0, start_node]
-        if end_node not in node_dict.keys():
-            i += 1
-            node_dict[end_node] = ['NODE'+str(i), 'TEE' + str(i - len(node_shapefile_df)), 0, 0, end_node]
-        edge_dict['EDGE' + str(j)] = [edge_shapefile_df['Shape_Leng'][j], node_dict[start_node][0],
-                                      node_dict[end_node][0]]
+    edge_shapefile_df.set_index("Name", inplace=True)
+    edge_shapefile_df['pipe length'] = 0
+    edge_shapefile_df['start node'] = ''
+    edge_shapefile_df['end node'] = ''
+    for pipe, row in edge_shapefile_df.iterrows():
+        #get the length of the pipe and add to the datafram:
+        edge_shapefile_df.loc[pipe, 'pipe length'] = row['geometry'].length
+        # get the start and end notes and add to dataframe
+        edge_coords = row['geometry'].coords
+        start_node = edge_coords[0]
+        end_node = edge_coords[1]
+        if start_node in node_dict.keys():
+            edge_shapefile_df.loc[pipe, 'start node'] = node_dict[start_node]
+        if end_node in node_dict.keys():
+            edge_shapefile_df.loc[pipe, 'end node'] = node_dict[end_node]
 
     # # If a consumer node is not connected to the network, find the closest node and connect them with a new edge
     # # this part of the code was developed for a case in which the node and edge shapefiles were not defined
@@ -1393,14 +1371,7 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     #         j += 1
     #         edge_dict['EDGE' + str(j)] = [min_dist, node_dict[closest_node][0], node_dict[node][0]]
 
-    # create DataFrames containing all nodes and edges
-    node_df = pd.DataFrame.from_dict(node_dict, orient='index')
-    node_df.columns = node_columns
-    node_df = node_df.set_index(node_df['Node']).drop(['Node'], axis = 1)
-    edge_df = pd.DataFrame.from_dict(edge_dict, orient='index')
-    edge_df.columns = edge_columns
-
-    return node_df, edge_df
+    return node_shapefile_df, edge_shapefile_df
 
 
 def write_substation_massflows_to_nodes_df(all_nodes_df, df_value):
@@ -1424,8 +1395,8 @@ def write_substation_massflows_to_nodes_df(all_nodes_df, df_value):
     # (i.e., the amount supplied by each plant is not optimized)
     number_of_plants = 0
 
-    for node in all_nodes_df:
-        if all_nodes_df[node]['plant'] != '':
+    for row in all_nodes_df['Type'].values:
+        if row == 'PLANT':
             number_of_plants += 1
 
     # calculate mass flow and write all flow rates into nodes DataFrame
@@ -1448,15 +1419,11 @@ def write_substation_massflows_to_nodes_df(all_nodes_df, df_value):
         '''
 
     # assure only mass flow at network consumer substations are counted
-    for building in df_value.columns:
-        if not building in all_nodes_df.loc['consumer'].values:
-            df_value[building] = 0
-
-    for node in all_nodes_df:
-        if all_nodes_df[node]['consumer'] != '':
-            nodes_df[node] = df_value[all_nodes_df[node]['consumer']]
-        elif all_nodes_df[node]['plant'] != '':
-            nodes_df[node] = - df_value.sum(axis=1)/number_of_plants
+    for node, row in all_nodes_df.iterrows():
+        if row['Type'] == 'CONSUMER':
+            nodes_df[node] = df_value[row['Building']]
+        elif row['Type'] == 'PLANT':
+            nodes_df[node] = - df_value.sum(axis=1) / number_of_plants
         else:
             nodes_df[node] = 0
     nodes_df = nodes_df.sort_index(axis=1)  # sort dataframe columns by node numbers
@@ -1480,9 +1447,9 @@ def write_substation_temperatures_to_nodes_df(all_nodes_df, df_value):
 
     nodes_df = pd.DataFrame()
     # write temperature into nodes DataFrame
-    for node in all_nodes_df:
-        if all_nodes_df[node]['consumer'] != '':
-            nodes_df[node] = df_value[all_nodes_df[node]['consumer']]
+    for node, row in all_nodes_df.iterrows():
+        if row['Type'] == 'CONSUMER':
+            nodes_df[node] = df_value[row['Building']]
         else:
             nodes_df[node] = np.nan  # set temperature value to nan for non-substation nodes
 
