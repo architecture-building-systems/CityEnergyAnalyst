@@ -55,7 +55,7 @@ The repository admin merging a pull request to master is responsible for updatin
 
 .. _PyPI: https://pypi.python.org/pypi
 .. _PEP440: https://www.python.org/dev/peps/pep-0440
-.. _GitHub issues milestones list: https://github.com/architecture-building-systems/CEAforArcGIS/milestones
+.. _GitHub issues milestones list: https://github.com/architecture-building-systems/CityEnergyAnalyst/milestones
 
 
 Update the CREDITS.md file
