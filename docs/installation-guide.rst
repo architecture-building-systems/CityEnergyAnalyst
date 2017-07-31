@@ -46,8 +46,8 @@ To install the development environment of CEA:
 #. install dependencies: do ``conda install -c dlr-sc tbb freeimageplus gl2ps``
 #. install dependencies: do ``conda install -c oce -c pythonocc pythonocc-core=0.17.3``
 #. install cea development: do ``python setup.py install``
-#. set-up path to repository: do ``python setup.py develop``
-#. install additional dependencies only for developers: do ``pip install .[dev]``
+#. install additional dependencies only for developers: do ``pip install .[dev]``y
+
 #. download and install Daysim: ``http://daysim.ning.com/page/download``
 
 
