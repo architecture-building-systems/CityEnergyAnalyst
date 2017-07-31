@@ -17,6 +17,7 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.technologies import controllers
 from cea.utilities import helpers
 
+
 # demand model of thermal and electrical loads
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
@@ -85,8 +86,8 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     # calculate occupancy schedule and occupant-related parameters
     tsd['people'] = schedules['people'] * bpr.rc_model['Af']
-    tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6) * bpr.rc_model['Af'] # in m3/h
-    tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp'] * bpr.rc_model['Af'] # in W
+    tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6) * bpr.rc_model['Af']  # in m3/h
+    tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp'] * bpr.rc_model['Af']  # in W
 
     # get electrical loads (no auxiliary loads)
     tsd = electrical_loads.calc_Eint(tsd, bpr, schedules)
@@ -134,7 +135,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                     tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
                 # INFILTRATION IS FORCED NOT TO REACH ZERO IN ORDER TO AVOID THE RC MODEL TO FAIL
                 tsd['m_ve_inf'][hoy] = max(qm_sum_in / 3600, 1 / 3600)
-
 
             # ventilation air flows [kg/s]
             ventilation_air_flows_simple.calc_air_mass_flow_mechanical_ventilation(bpr, tsd, hoy)
@@ -225,7 +225,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     else:
         raise
 
-    tsd['Qhprof'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2'] * bpr.rc_model['Af'] # in kWh
+    tsd['Qhprof'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2'] * bpr.rc_model['Af']  # in kWh
 
     # calculate other quantities
     tsd['Qcsf_lat'] = abs(tsd['Qcsf_lat'])
@@ -376,9 +376,9 @@ class BuildingProperties(object):
                                                 prop_geometry, prop_HVAC_result, surface_properties,
                                                 gv)
 
-        #df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
-        #TODO: to check if the Win_op and height of window is necessary.
-        #TODO: maybe mergin branch i9 with CItyGML could help with this
+        # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
+        # TODO: to check if the Win_op and height of window is necessary.
+        # TODO: maybe mergin branch i9 with CItyGML could help with this
         gv.log("done")
 
         # save resulting data
@@ -552,7 +552,6 @@ class BuildingProperties(object):
         # TODO: wwe_south replaces wil_wall this is temporary it should not be need it anymore with the new geometry files of Daysim
         df['Aw'] = df['Awall_all'] * df['wwr_south'] * df['PFloor']
 
-
         # opaque areas (PFloor represents a factor according to the amount of floors heated)
         df['Aop_sup'] = df['Awall_all'] * df['PFloor'] - df['Aw']
 
@@ -571,8 +570,9 @@ class BuildingProperties(object):
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
 
         for building in df.index.values:
-            if hvac_temperatures.loc[building,'type_hs'] == 'T0' and hvac_temperatures.loc[building,'type_cs'] == 'T0':
-                df.loc[building,'Hs'] = 0
+            if hvac_temperatures.loc[building, 'type_hs'] == 'T0' and \
+                            hvac_temperatures.loc[building, 'type_cs'] == 'T0' and df.loc[building, 'Hs'] > 0:
+                df.loc[building, 'Hs'] = 0
                 print 'Building %s has no heating and cooling system, Hs corrected to 0.' % building
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated/cooled
         df['Aef'] = df['GFA_m2'] * gv.Es  # conditioned area only those for electricity
@@ -724,6 +724,7 @@ class BuildingPropertiesRow(object):
         factor = self.geometry['footprint'] / (self.geometry['Bwidth'] * self.geometry['Blength'])
         return factor
 
+
 class EnvelopeProperties(object):
     """Encapsulate a single row of the architecture input file for a building"""
     __slots__ = [u'a_roof', u'f_cros', u'n50', u'win_op', u'win_wall',
@@ -740,8 +741,8 @@ class EnvelopeProperties(object):
         self.e_roof = envelope['e_roof']
         self.G_win = envelope['G_win']
         self.e_win = envelope['e_win']
-        self.U_roof= envelope['U_roof']
-        self.Hs= envelope['Hs']
+        self.U_roof = envelope['U_roof']
+        self.Hs = envelope['Hs']
         self.Cm_Af = envelope['Cm_Af']
         self.U_wall = envelope['U_wall']
         self.U_base = envelope['U_base']
@@ -822,26 +823,29 @@ def get_properties_technical_systems(locator, prop_HVAC):
     prop_emission_heating = pd.read_excel(locator.get_technical_emission_systems(), 'heating')
     prop_emission_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'cooling')
     prop_emission_dhw = pd.read_excel(locator.get_technical_emission_systems(), 'dhw')
-    prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_technical_emission_systems(),'controller')
+    prop_emission_control_heating_and_cooling = pd.read_excel(locator.get_technical_emission_systems(), 'controller')
     prop_ventilation_system_and_control = pd.read_excel(locator.get_technical_emission_systems(), 'ventilation')
 
     df_emission_heating = prop_HVAC.merge(prop_emission_heating, left_on='type_hs', right_on='code')
     df_emission_cooling = prop_HVAC.merge(prop_emission_cooling, left_on='type_cs', right_on='code')
-    df_emission_control_heating_and_cooling = prop_HVAC.merge(prop_emission_control_heating_and_cooling, left_on='type_ctrl', right_on='code')
+    df_emission_control_heating_and_cooling = prop_HVAC.merge(prop_emission_control_heating_and_cooling,
+                                                              left_on='type_ctrl', right_on='code')
     df_emission_dhw = prop_HVAC.merge(prop_emission_dhw, left_on='type_dhw', right_on='code')
-    df_ventilation_system_and_control = prop_HVAC.merge(prop_ventilation_system_and_control, left_on='type_vent', right_on='code')
+    df_ventilation_system_and_control = prop_HVAC.merge(prop_ventilation_system_and_control, left_on='type_vent',
+                                                        right_on='code')
 
-
-    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl','type_vent', 'Tshs0_C', 'dThs0_C', 'Qhsmax_Wm2','dThs_C']
-    fields_emission_cooling = ['Name', 'Tscs0_C', 'dTcs0_C', 'Qcsmax_Wm2','dTcs_C']
-    fields_emission_control_heating_and_cooling = ['Name','dT_Qhs','dT_Qcs']
+    fields_emission_heating = ['Name', 'type_hs', 'type_cs', 'type_dhw', 'type_ctrl', 'type_vent', 'Tshs0_C', 'dThs0_C',
+                               'Qhsmax_Wm2', 'dThs_C']
+    fields_emission_cooling = ['Name', 'Tscs0_C', 'dTcs0_C', 'Qcsmax_Wm2', 'dTcs_C']
+    fields_emission_control_heating_and_cooling = ['Name', 'dT_Qhs', 'dT_Qcs']
     fields_emission_dhw = ['Name', 'Tsww0_C', 'dTww0_C', 'Qwwmax_Wm2']
     fields_system_ctrl_vent = ['Name', 'MECH_VENT', 'WIN_VENT', 'HEAT_REC', 'NIGHT_FLSH', 'ECONOMIZER']
 
     result = df_emission_heating[fields_emission_heating].merge(df_emission_cooling[fields_emission_cooling],
-                                                                on='Name').merge(df_emission_control_heating_and_cooling[fields_emission_control_heating_and_cooling],
-                                                                on='Name').merge(df_emission_dhw[fields_emission_dhw],
-                                                                                 on='Name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='Name')
+                                                                on='Name').merge(
+        df_emission_control_heating_and_cooling[fields_emission_control_heating_and_cooling],
+        on='Name').merge(df_emission_dhw[fields_emission_dhw],
+                         on='Name').merge(df_ventilation_system_and_control[fields_system_ctrl_vent], on='Name')
     return result
 
 
@@ -863,17 +867,18 @@ def get_envelope_properties(locator, prop_architecture):
     fields_construction = ['Name', 'Cm_Af']
     fields_leakage = ['Name', 'n50']
     fields_roof = ['Name', 'e_roof', 'a_roof', 'U_roof', 'Hs']
-    fields_wall = ['Name', 'wwr_north', 'wwr_west','wwr_east', 'wwr_south',
-                    'e_wall', 'a_wall', 'U_wall', 'U_base']
+    fields_wall = ['Name', 'wwr_north', 'wwr_west', 'wwr_east', 'wwr_south',
+                   'e_wall', 'a_wall', 'U_wall', 'U_base']
     fields_win = ['Name', 'e_win', 'G_win', 'U_win']
     fields_shading = ['Name', 'rf_sh']
 
     envelope_prop = df_roof[fields_roof].merge(df_wall[fields_wall],
-                    on='Name').merge(df_win[fields_win],
-                    on='Name').merge(df_shading[fields_shading],
-                    on='Name').merge(df_construction[fields_construction],
-                    on='Name').merge(df_leakage[fields_leakage],
-                    on='Name')
+                                               on='Name').merge(df_win[fields_win],
+                                                                on='Name').merge(df_shading[fields_shading],
+                                                                                 on='Name').merge(
+        df_construction[fields_construction],
+        on='Name').merge(df_leakage[fields_leakage],
+                         on='Name')
 
     return envelope_prop
 
