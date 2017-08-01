@@ -190,7 +190,13 @@ def substation_return_model_main(locator, gv, building_names, buildings_demands,
     mdot_sum_all = pd.DataFrame()
 
     for name in building_names:
+        for i in range(len(buildings_demands)):
+            # find index of building in the list of buildings_demands
+            if buildings_demands[i].Name[0] == name:
+                index = i
+        # load building demand from list
         building = buildings_demands[index].loc[[t]]
+
         if t_flag is True:
             # for the initialization step
             T_supply_target = T_target
