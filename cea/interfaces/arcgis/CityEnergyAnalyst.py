@@ -11,7 +11,7 @@ See the script ``install_toolbox.py`` for the mechanics of installing the toolbo
 import os
 import subprocess
 import tempfile
-import arcpy
+import arcpy  # NOTE to developers: this is provided by ArcGIS after doing `cea install-toolbox`
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -1296,58 +1296,58 @@ class SensitivityDemandSimulateTool(object):
 
         # scenario_path
         scenario_path = parameters[0].valueAsText
-        if not os.path.exists(scenario_path):
+        if scenario_path is None:
+            return
+        elif not os.path.exists(scenario_path):
             parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
 
         # num_simulations, sample_index
         samples_folder = parameters[2].valueAsText
-        samples_file = os.path.join(samples_folder,'samples.npy')
+        if samples_folder is None:
+            return
+        elif not os.path.exists(samples_folder):
+            parameters[2].setErrorMessage('Samples folder not found: %s' % samples_folder)
+            return
+        else:
+            samples_file = os.path.join(samples_folder,'samples.npy')
+            if not os.path.exists(samples_file):
+                parameters[2].setErrorMessage('Samples file not found in %s' % samples_folder)
+                return
+            else:
+                # num_simulations
+                parameters[4].enabled = True
+                parameters[4].value = np.load(os.path.join(samples_folder,'samples.npy')).shape[0]
+                # sample_index
+                parameters[5].enabled = True
+                return
 
+    def updateMessages(self, parameters):
+        # scenario_path
+        scenario_path = parameters[0].valueAsText
+        if scenario_path is None:
+            return
+        elif not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+        elif not os.path.exists(get_radiation(scenario_path)):
+            parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
+        elif not os.path.exists(get_surface_properties(scenario_path)):
+            parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
+
+        # samples_folder
+        samples_folder = parameters[2].valueAsText
         if samples_folder is None:
             return
         if not os.path.exists(samples_folder):
             parameters[2].setErrorMessage('Samples folder not found: %s' % samples_folder)
             return
-        if not os.path.exists(samples_file):
-            parameters[2].setErrorMessage('Samples file not found in %s' % samples_folder)
-            return
         else:
-            # num_simulations
-            parameters[4].enabled = True
-            parameters[4].value = np.load(os.path.join(samples_folder,'samples.npy')).shape[0]
-            # sample_index
-            parameters[5].enabled = True
+            samples_file = os.path.join(samples_folder, 'samples.npy')
+            if not os.path.exists(samples_file):
+                parameters[2].setErrorMessage('Samples file not found in %s' % samples_folder)
+                return
             return
-
-
-    # def updateMessages(self, parameters):
-    #     # scenario_path
-    #     scenario_path = parameters[0].valueAsText
-    #     if scenario_path is None:
-    #         return
-    #     if not os.path.exists(scenario_path):
-    #         parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
-    #         return
-    #     if not os.path.exists(get_radiation(scenario_path)):
-    #         parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
-    #     if not os.path.exists(get_surface_properties(scenario_path)):
-    #         parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
-    #     samples_folder = parameters[2].valueAsText
-    #     samples_file = os.path.join(samples_folder, 'samples.npy')
-    #
-    #     # samples_folder
-    #     if samples_folder is None:
-    #         return
-    #     if not os.path.exists(samples_folder):
-    #         parameters[2].setErrorMessage('Samples folder not found: %s' % samples_folder)
-    #         return
-    #     if not os.path.exists(samples_file):
-    #         parameters[2].setErrorMessage('Samples file not found in %s' % samples_folder)
-    #         return
-    #
-    #     return
-
 
     def execute(self, parameters, _):
 
