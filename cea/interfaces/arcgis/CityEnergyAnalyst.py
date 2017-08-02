@@ -33,6 +33,47 @@ class Toolbox(object):
                       DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool, DbfToExcelTool, ExcelToDbfTool,
                       SensitivityDemandSamplesTool]
 
+
+# Benchmarking Tools
+
+class BenchmarkGraphsTool(object):
+    """Integrates the cea/analysis/benchmark.py tool with ArcGIS"""
+    def __init__(self):
+        self.label = '2000W Society Benchmark'
+        self.description = 'Plot life cycle primary energy demand and emissions compared to an established benchmark'
+        self.category = 'Benchmarking'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenarios = arcpy.Parameter(
+            displayName="Path to the scenarios to plot",
+            name="scenarios",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input",
+            multiValue=True)
+        output_file = arcpy.Parameter(
+            displayName="Path to output PDF",
+            name="output_file",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Output")
+        output_file.filter.list = ['pdf']
+        return [scenarios, output_file]
+
+    def execute(self, parameters, messages):
+        scenarios = parameters[0].valueAsText
+        scenarios = scenarios.replace('"', '')
+        scenarios = scenarios.replace("'", '')
+        scenarios = scenarios.split(';')
+        arcpy.AddMessage(scenarios)
+        output_file = parameters[1].valueAsText
+        run_cli(None, 'benchmark-graphs', '--output-file', output_file, '--scenarios', *scenarios)
+        return
+
+
+# Costs Analysis Tools
+
 class OperationCostsTool(object):
     def __init__(self):
         self.label = 'Operation Costs'
@@ -54,6 +95,740 @@ class OperationCostsTool(object):
         scenario_path = parameters[0].valueAsText
         run_cli(scenario_path, 'operation-costs')
 
+
+# Data Management Tools
+
+class DataHelperTool(object):
+    """
+    integrate the cea/demand/preprocessing/properties.py script with ArcGIS.
+    """
+
+    def __init__(self):
+        self.label = 'Data helper'
+        self.description = 'Query characteristics of buildings and systems from statistical data'
+        self.category = 'Data Management'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+        prop_thermal_flag = arcpy.Parameter(
+            displayName="Generate thermal properties",
+            name="prop_thermal_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        prop_thermal_flag.value = True
+        prop_architecture_flag = arcpy.Parameter(
+            displayName="Generate architectural properties",
+            name="prop_architecture_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        prop_architecture_flag.value = True
+        prop_HVAC_flag = arcpy.Parameter(
+            displayName="Generate technical systems properties",
+            name="prop_HVAC_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        prop_HVAC_flag.value = True
+        prop_comfort_flag = arcpy.Parameter(
+            displayName="Generate comfort properties",
+            name="prop_comfort_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        prop_comfort_flag.value = True
+        prop_internal_loads_flag = arcpy.Parameter(
+            displayName="Generate internal loads properties",
+            name="prop_internal_loads_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        prop_internal_loads_flag.value = True
+        return [scenario_path, prop_thermal_flag, prop_architecture_flag, prop_HVAC_flag, prop_comfort_flag,
+                prop_internal_loads_flag]
+
+    def execute(self, parameters, _):
+        scenario_path = parameters[0].valueAsText
+        flags = {'thermal': parameters[1].value,
+                 'architecture': parameters[2].value,
+                 'HVAC': parameters[3].value,
+                 'comfort': parameters[4].value,
+                 'internal-loads': parameters[5].value}
+        archetypes = [key for key in flags.keys() if flags[key]]
+        run_cli(scenario_path, 'data-helper', '--archetypes', *archetypes)
+
+
+# Dynamic Demand Forecasting Tools
+
+class DemandTool(object):
+    """integrate the demand script with ArcGIS"""
+
+    def __init__(self):
+        self.label = 'Demand'
+        self.description = 'Calculate the Demand'
+        self.category = 'Dynamic Demand Forecasting'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+        weather_name = arcpy.Parameter(
+            displayName="Weather file (choose from list or enter full path to .epw file)",
+            name="weather_name",
+            datatype="String",
+            parameterType="Required",
+            direction="Input")
+        weather_name.filter.list = get_weather_names()
+
+        dynamic_infiltration = arcpy.Parameter(
+            displayName="Use dynamic infiltration model (slower)",
+            name="dynamic_infiltration",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        dynamic_infiltration.value = False
+
+        return [scenario_path, weather_name, dynamic_infiltration]
+
+    def isLicensed(self):
+        return True
+
+    def updateParameters(self, parameters):
+        return
+
+    def updateMessages(self, parameters):
+        scenario_path = parameters[0].valueAsText
+        if scenario_path is None:
+            return
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+        if not os.path.exists(get_radiation(scenario_path)):
+            parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
+        if not os.path.exists(get_surface_properties(scenario_path)):
+            parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
+        return
+
+    def execute(self, parameters, _):
+        scenario_path = parameters[0].valueAsText
+        weather_name = parameters[1].valueAsText
+        if weather_name in get_weather_names():
+            weather_path = get_weather_path(weather_name)
+        elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
+            weather_path = weather_name
+        else:
+            weather_path = get_weather_path()
+
+        use_dynamic_infiltration_calculation = parameters[2].value
+
+        args = [scenario_path, 'demand', '--weather', weather_path]
+        if use_dynamic_infiltration_calculation:
+            args.append('--use-dynamic-infiltration-calculation')
+        run_cli(*args)
+
+class DemandGraphsTool(object):
+    def __init__(self):
+        self.label = 'Plots'
+        self.description = 'Plot demand time-series data'
+        self.category = 'Dynamic Demand Forecasting'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+        analysis_fields = arcpy.Parameter(
+            displayName="Variables to analyze",
+            name="analysis_fields",
+            datatype="String",
+            parameterType="Required",
+            multiValue=True,
+            direction="Input")
+        analysis_fields.filter.list = []
+        return [scenario_path, analysis_fields]
+
+    def updateParameters(self, parameters):
+        scenario_path = parameters[0].valueAsText
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+        analysis_fields = parameters[1]
+        fields = _cli_output(scenario_path, 'demand-graphs', '--list-fields').split()
+        analysis_fields.filter.list = list(fields)
+        return
+
+    def execute(self, parameters, messages):
+        scenario_path = parameters[0].valueAsText
+        analysis_fields = parameters[1].valueAsText.split(';')[:4]  # max 4 fields for analysis
+        run_cli(scenario_path, 'demand-graphs', '--analysis-fields', *analysis_fields)
+
+
+# Dynamic Supply Systems
+
+class SolarTechnologyTool(object):
+    def __init__(self):
+        self.label = 'Photovoltaic Panels'
+        self.description = 'Calculate electricity production from solar photovoltaic technologies'
+        self.category = 'Dynamic Supply Systems'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        weather_name = arcpy.Parameter(
+            displayName="Weather file (use the same one for solar radiation calculation)",
+            name="weather_name",
+            datatype="String",
+            parameterType="Required",
+            direction="Input")
+        weather_name.filter.list = get_weather_names()
+        weather_name.enabled = False
+
+        year = arcpy.Parameter(
+            displayName="Year",
+            name="year",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        year.value = 2014
+        year.enabled = False
+
+        latitude = arcpy.Parameter(
+            displayName="Latitude",
+            name="latitude",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        latitude.enabled = False
+
+        longitude = arcpy.Parameter(
+            displayName="Longitude",
+            name="longitude",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        longitude.enabled = False
+
+        pvonroof = arcpy.Parameter(
+            displayName="Considering panels on roofs",
+            name="pvonroof",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        pvonroof.value = True
+
+        pvonwall = arcpy.Parameter(
+            displayName="Considering panels on walls",
+            name="pvonwall",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        pvonwall.value = True
+
+        worst_hour = arcpy.Parameter(
+            displayName="worst hour (the hour of sunrise on the solar solstice at the site)",
+            name="worst_hour",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        worst_hour.value = 8744
+
+        type_PVpanel = arcpy.Parameter(
+            displayName="PV technology to use",
+            name="type_PVpanel",
+            datatype="String",
+            parameterType="Required",
+            direction="Input")
+        type_PVpanel.filter.list = ['monocrystalline', 'polycrystalline', 'amorphous']
+
+        min_radiation = arcpy.Parameter(
+            displayName="filtering surfaces with low radiation potential (% of the maximum radiation in the area)",
+            name="min_radiation",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        min_radiation.value = 0.75
+
+        return [scenario_path, weather_name, year, latitude, longitude, pvonroof, pvonwall, worst_hour,
+                type_PVpanel, min_radiation]
+
+    def updateParameters(self, parameters):
+        scenario_path = parameters[0].valueAsText
+        if scenario_path is None:
+            return
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+
+        radiation_csv = _cli_output(scenario_path, 'locate', 'get_radiation')
+        if not os.path.exists(radiation_csv):
+            parameters[0].setErrorMessage("No radiation file found - please run radiation tool first")
+            return
+
+        # scenario passes test
+        weather_parameter = parameters[1]
+        year_parameter = parameters[2]
+        latitude_parameter = parameters[3]
+        longitude_parameter = parameters[4]
+
+        weather_parameter.enabled = True
+        year_parameter.enabled = True
+
+        latitude_value = float(_cli_output(scenario_path, 'latitude'))
+        longitude_value = float(_cli_output(scenario_path, 'longitude'))
+        if not latitude_parameter.enabled:
+            # only overwrite on first try
+            latitude_parameter.value = latitude_value
+            latitude_parameter.enabled = True
+
+        if not longitude_parameter.enabled:
+            # only overwrite on first try
+            longitude_parameter.value = longitude_value
+            longitude_parameter.enabled = True
+        return
+
+    def updateMessages(self, parameters):
+        scenario_path = parameters[0].valueAsText
+        if scenario_path is None:
+            return
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+
+        radiation_csv = _cli_output(scenario_path, 'locate', 'get_radiation')
+        if not os.path.exists(radiation_csv):
+            parameters[0].setErrorMessage("No radiation file found - please run radiation tool first")
+            return
+
+    def execute(self, parameters, messages):
+        scenario_path = parameters[0].valueAsText
+        weather_name = parameters[1].valueAsText
+        year = parameters[2].value
+        latitude = parameters[3].value
+        longitude = parameters[4].value
+        pvonroof = parameters[5].value
+        pvonwall = parameters[6].value
+        worst_hour = parameters[7].value
+        type_PVpanel = {'monocrystalline': 'PV1',
+                        'polycrystalline': 'PV2',
+                        'amorphous': 'PV3'}[parameters[8].value]
+        min_radiation = parameters[9].value
+
+        date_start = str(year) + '-01-01'
+
+        if weather_name in get_weather_names():
+            weather_path = get_weather_path(weather_name)
+        elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
+            weather_path = weather_name
+        else:
+            weather_path = get_weather_path('.')
+
+        add_message('longitude: %s' % longitude)
+        add_message('latitude: %s' % latitude)
+
+        run_cli_arguments = [scenario_path, 'photovoltaic', '--latitude', latitude, '--longitude', longitude,
+                             '--weather-path', weather_path, '--worst-hour', worst_hour, '--type-PVpanel', type_PVpanel,
+                             '--min-radiation', min_radiation, '--date-start', date_start]
+        if pvonroof:
+            run_cli_arguments.append('--pvonroof')
+        if pvonwall:
+            run_cli_arguments.append('--pvonwall')
+
+        run_cli(*run_cli_arguments)
+        return
+
+
+# Life Cycle Analysis Tools
+
+class OperationTool(object):
+    def __init__(self):
+        self.label = 'LCA Operation'
+        self.description = 'Calculate emissions and primary energy due to building operation'
+        self.category = 'Life Cycle Analysis'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+        Qww_flag = arcpy.Parameter(
+            displayName="Create a separate file with emissions due to hot water consumption.",
+            name="Qww_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        Qww_flag.value = True
+        Qhs_flag = arcpy.Parameter(
+            displayName="Create a separate file with emissions due to space heating.",
+            name="Qhs_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        Qhs_flag.value = True
+        Qcs_flag = arcpy.Parameter(
+            displayName="Create a separate file with emissions due to space cooling.",
+            name="Qcs_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        Qcs_flag.value = True
+        Qcdata_flag = arcpy.Parameter(
+            displayName="Create a separate file with emissions due to servers cooling.",
+            name="Qcdata_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        Qcdata_flag.value = True
+        Qcrefri_flag = arcpy.Parameter(
+            displayName="Create a separate file with emissions due to refrigeration.",
+            name="Qcrefri_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        Qcrefri_flag.value = True
+        Eal_flag = arcpy.Parameter(
+            displayName="Create a separate file with emissions due to appliances and lighting.",
+            name="Eal_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        Eal_flag.value = True
+        Eaux_flag = arcpy.Parameter(
+            displayName="Create a separate file with emissions due to auxiliary electricity.",
+            name="Eaux_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        Eaux_flag.value = True
+        Epro_flag = arcpy.Parameter(
+            displayName="Create a separate file with emissions due to electricity in industrial processes.",
+            name="Epro_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        Epro_flag.value = True
+        Edata_flag = arcpy.Parameter(
+            displayName="Create a separate file with emissions due to electricity consumption in data centers.",
+            name="Edata_flag",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        Edata_flag.value = True
+
+        return [scenario_path, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_flag, Eal_flag, Eaux_flag, Epro_flag,
+                Edata_flag]
+
+    def execute(self, parameters, _):
+        scenario_path = parameters[0].valueAsText
+        flags = {
+            'Qww': parameters[1].value,
+            'Qhs': parameters[2].value,
+            'Qcs': parameters[3].value,
+            'Qcdata': parameters[4].value,
+            'Qcrefri': parameters[5].value,
+            'Eal': parameters[6].value,
+            'Eaux': parameters[7].value,
+            'Epro': parameters[8].value,
+            'Edata': parameters[9].value,
+        }
+        extra_files_to_create = [key for key in flags if flags[key]]
+        run_cli(scenario_path, 'emissions', '--extra-files-to-create', *extra_files_to_create)
+
+class EmbodiedTool(object):
+    def __init__(self):
+        self.label = 'LCA Construction'
+        self.description = 'Calculate the emissions and primary energy for building construction and decommissioning'
+        self.category = 'Life Cycle Analysis'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        yearcalc = arcpy.Parameter(
+            displayName="Year to calculate",
+            name="yearcalc",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        yearcalc.value = 2014
+
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        return [yearcalc, scenario_path]
+
+    def execute(self, parameters, _):
+        year_to_calculate = int(parameters[0].valueAsText)
+        scenario_path = parameters[1].valueAsText
+        run_cli(scenario_path, 'embodied-energy', '--year-to-calculate', year_to_calculate)
+
+class MobilityTool(object):
+    """Integrates the cea/analysis/mobility.py script with ArcGIS."""
+    def __init__(self):
+        self.label = 'LCA Mobility'
+        self.description = 'Calculate emissions and primary energy due to mobility'
+        self.category = 'Life Cycle Analysis'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        return [scenario_path]
+
+    def execute(self, parameters, messages):
+        scenario_path = parameters[0].valueAsText
+        run_cli(scenario_path, 'mobility')
+
+
+# Mapping and Visualization Tools
+
+class HeatmapsTool(object):
+    def __init__(self):
+        self.label = 'Heatmaps'
+        self.description = 'Generate maps representing hot and cold spots of energy consumption'
+        self.category = 'Mapping and Visualization'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+        path_variables = arcpy.Parameter(
+            displayName="Choose the file to analyze",
+            name="path_variables",
+            datatype="String",
+            parameterType="Required",
+            direction="Input")
+        path_variables.filter.list = []
+        analysis_fields = arcpy.Parameter(
+            displayName="Variables to analyze",
+            name="analysis_fields",
+            datatype="String",
+            parameterType="Required",
+            multiValue=True,
+            direction="Input")
+        analysis_fields.filter.list = []
+        analysis_fields.parameterDependencies = ['path_variables']
+
+        return [scenario_path, path_variables, analysis_fields]
+
+
+    def updateParameters(self, parameters):
+        # scenario_path
+        scenario_path = parameters[0].valueAsText
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+        # path_variables
+        file_names = [os.path.basename(_cli_output(scenario_path, 'locate', 'get_total_demand'))]
+        file_names.extend(
+            [f for f in os.listdir(_cli_output(scenario_path, 'locate', 'get_lca_emissions_results_folder'))
+             if f.endswith('.csv')])
+        path_variables = parameters[1]
+        if not path_variables.value or path_variables.value not in file_names:
+            path_variables.filter.list = file_names
+            path_variables.value = file_names[0]
+        # analysis_fields
+        analysis_fields = parameters[2]
+        if path_variables.value == file_names[0]:
+            file_to_analyze = _cli_output(scenario_path, 'locate', 'get_total_demand')
+        else:
+            file_to_analyze = os.path.join(_cli_output(scenario_path, 'locate', 'get_lca_emissions_results_folder'),
+                                           path_variables.value)
+        import pandas as pd
+        df = pd.read_csv(file_to_analyze)
+        fields = df.columns.tolist()
+        fields.remove('Name')
+        analysis_fields.filter.list = list(fields)
+        return
+
+    def execute(self, parameters, _):
+        scenario_path = parameters[0].valueAsText
+        file_to_analyze = parameters[1].valueAsText
+        analysis_fields = parameters[2].valueAsText.split(';')
+
+        if file_to_analyze == os.path.basename(_cli_output(scenario_path, 'locate', 'get_total_demand')):
+            file_to_analyze = _cli_output(scenario_path, 'locate', 'get_total_demand')
+        else:
+            file_to_analyze = os.path.join(_cli_output(scenario_path, 'locate', 'get_lca_emissions_results_folder'),
+                                           file_to_analyze)
+        run_cli(scenario_path, 'heatmaps', '--file-to-analyze', file_to_analyze, '--analysis-fields', *analysis_fields)
+
+class ScenarioPlotsTool(object):
+    def __init__(self):
+        self.label = 'Scenario plots'
+        self.description = 'Create summary plots of scenarios in a folder'
+        self.category = 'Mapping and Visualization'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenarios = arcpy.Parameter(
+            displayName="Path to the scenarios to plot",
+            name="scenarios",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input",
+            multiValue=True)
+        output_file = arcpy.Parameter(
+            displayName="Path to output PDF",
+            name="output_file",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Output")
+        output_file.filter.list = ['pdf']
+        return [scenarios, output_file]
+
+    def execute(self, parameters, messages):
+        scenarios = parameters[0].valueAsText
+        scenarios = scenarios.replace("'", "")
+        scenarios = scenarios.replace('"', '')
+        scenarios = scenarios.split(';')
+        output_file = parameters[1].valueAsText
+        add_message(scenarios)
+        run_cli(None, 'scenario-plots', '--output-file', output_file, '--scenarios', *scenarios)
+
+
+# Renewable Energy Assessment Tools
+
+class RadiationTool(object):
+    def __init__(self):
+        self.label = 'Solar Insolation'
+        self.category= 'Renewable Energy Assessment'
+        self.description = 'Create radiation file'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        weather_name = arcpy.Parameter(
+            displayName="Weather file (choose from list or enter full path to .epw file)",
+            name="weather_name",
+            datatype="String",
+            parameterType="Required",
+            direction="Input")
+        weather_name.filter.list = get_weather_names()
+        weather_name.enabled = False
+
+        year = arcpy.Parameter(
+            displayName="Year",
+            name="year",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        year.value = 2014
+        year.enabled = False
+
+        latitude = arcpy.Parameter(
+            displayName="Latitude",
+            name="latitude",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        latitude.enabled = False
+
+        longitude = arcpy.Parameter(
+            displayName="Longitude",
+            name="longitude",
+            datatype="GPDouble",
+            parameterType="Required",
+            direction="Input")
+        longitude.enabled = False
+
+        return [scenario_path, weather_name, year, latitude, longitude]
+
+    def updateParameters(self, parameters):
+        scenario_path = parameters[0].valueAsText
+        if scenario_path is None:
+            return
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+
+        weather_parameter = parameters[1]
+        year_parameter = parameters[2]
+        latitude_parameter = parameters[3]
+        longitude_parameter = parameters[4]
+
+        weather_parameter.enabled = True
+        year_parameter.enabled = True
+
+        latitude_value = float(_cli_output(scenario_path, 'latitude'))
+        longitude_value = float(_cli_output(scenario_path, 'longitude'))
+        if not latitude_parameter.enabled:
+            # only overwrite on first try
+            latitude_parameter.value = latitude_value
+            latitude_parameter.enabled = True
+
+        if not longitude_parameter.enabled:
+            # only overwrite on first try
+            longitude_parameter.value = longitude_value
+            longitude_parameter.enabled = True
+        return
+
+    def execute(self, parameters, messages):
+        scenario_path = parameters[0].valueAsText
+        weather_name = parameters[1].valueAsText
+        year = parameters[2].value
+        latitude = parameters[3].value
+        longitude = parameters[4].value
+
+        if weather_name in get_weather_names():
+            weather_path = get_weather_path(weather_name)
+        elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
+            weather_path = weather_name
+        else:
+            weather_path = get_weather_path('.')
+
+        # FIXME: use current arcgis databases...
+        path_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
+
+        add_message('longitude: %s' % longitude)
+        add_message('latitude: %s' % latitude)
+
+        run_cli(scenario_path, 'radiation', '--arcgis-db', path_arcgis_db, '--latitude', latitude,
+                '--longitude', longitude, '--year', year, '--weather-path', weather_path)
+        return
+
+
+# Retrofit Analysis Tools
 
 class RetrofitPotentialTool(object):
     def __init__(self):
@@ -287,774 +1062,6 @@ class RetrofitPotentialTool(object):
                     args.append(str(parameter.value))
 
         run_cli(scenario_path, 'retrofit-potential', *args)
-
-
-# Dynamic Demand Forecasting Tools
-
-class DemandTool(object):
-    """integrate the demand script with ArcGIS"""
-
-    def __init__(self):
-        self.label = 'Demand'
-        self.description = 'Calculate the Demand'
-        self.category = 'Dynamic Demand Forecasting'
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        scenario_path = arcpy.Parameter(
-            displayName="Path to the scenario",
-            name="scenario_path",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        weather_name = arcpy.Parameter(
-            displayName="Weather file (choose from list or enter full path to .epw file)",
-            name="weather_name",
-            datatype="String",
-            parameterType="Required",
-            direction="Input")
-        weather_name.filter.list = get_weather_names()
-
-        dynamic_infiltration = arcpy.Parameter(
-            displayName="Use dynamic infiltration model (slower)",
-            name="dynamic_infiltration",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        dynamic_infiltration.value = False
-
-        return [scenario_path, weather_name, dynamic_infiltration]
-
-    def isLicensed(self):
-        return True
-
-    def updateParameters(self, parameters):
-        return
-
-    def updateMessages(self, parameters):
-        scenario_path = parameters[0].valueAsText
-        if scenario_path is None:
-            return
-        if not os.path.exists(scenario_path):
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
-            return
-        if not os.path.exists(get_radiation(scenario_path)):
-            parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
-        if not os.path.exists(get_surface_properties(scenario_path)):
-            parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
-        return
-
-    def execute(self, parameters, _):
-        scenario_path = parameters[0].valueAsText
-        weather_name = parameters[1].valueAsText
-        if weather_name in get_weather_names():
-            weather_path = get_weather_path(weather_name)
-        elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
-            weather_path = weather_name
-        else:
-            weather_path = get_weather_path()
-
-        use_dynamic_infiltration_calculation = parameters[2].value
-
-        args = [scenario_path, 'demand', '--weather', weather_path]
-        if use_dynamic_infiltration_calculation:
-            args.append('--use-dynamic-infiltration-calculation')
-        run_cli(*args)
-
-
-class DataHelperTool(object):
-    """
-    integrate the cea/demand/preprocessing/properties.py script with ArcGIS.
-    """
-
-    def __init__(self):
-        self.label = 'Data helper'
-        self.description = 'Query characteristics of buildings and systems from statistical data'
-        self.category = 'Data Management'
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        scenario_path = arcpy.Parameter(
-            displayName="Path to the scenario",
-            name="scenario_path",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        prop_thermal_flag = arcpy.Parameter(
-            displayName="Generate thermal properties",
-            name="prop_thermal_flag",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        prop_thermal_flag.value = True
-        prop_architecture_flag = arcpy.Parameter(
-            displayName="Generate architectural properties",
-            name="prop_architecture_flag",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        prop_architecture_flag.value = True
-        prop_HVAC_flag = arcpy.Parameter(
-            displayName="Generate technical systems properties",
-            name="prop_HVAC_flag",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        prop_HVAC_flag.value = True
-        prop_comfort_flag = arcpy.Parameter(
-            displayName="Generate comfort properties",
-            name="prop_comfort_flag",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        prop_comfort_flag.value = True
-        prop_internal_loads_flag = arcpy.Parameter(
-            displayName="Generate internal loads properties",
-            name="prop_internal_loads_flag",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        prop_internal_loads_flag.value = True
-        return [scenario_path, prop_thermal_flag, prop_architecture_flag, prop_HVAC_flag, prop_comfort_flag,
-                prop_internal_loads_flag]
-
-    def execute(self, parameters, _):
-        scenario_path = parameters[0].valueAsText
-        flags = {'thermal': parameters[1].value,
-                 'architecture': parameters[2].value,
-                 'HVAC': parameters[3].value,
-                 'comfort': parameters[4].value,
-                 'internal-loads': parameters[5].value}
-        archetypes = [key for key in flags.keys() if flags[key]]
-        run_cli(scenario_path, 'data-helper', '--archetypes', *archetypes)
-
-
-# Life Cycle Analysis Tools
-
-class OperationTool(object):
-    def __init__(self):
-        self.label = 'LCA Operation'
-        self.description = 'Calculate emissions and primary energy due to building operation'
-        self.category = 'Life Cycle Analysis'
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        scenario_path = arcpy.Parameter(
-            displayName="Path to the scenario",
-            name="scenario_path",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        Qww_flag = arcpy.Parameter(
-            displayName="Create a separate file with emissions due to hot water consumption.",
-            name="Qww_flag",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        Qww_flag.value = True
-        Qhs_flag = arcpy.Parameter(
-            displayName="Create a separate file with emissions due to space heating.",
-            name="Qhs_flag",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        Qhs_flag.value = True
-        Qcs_flag = arcpy.Parameter(
-            displayName="Create a separate file with emissions due to space cooling.",
-            name="Qcs_flag",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        Qcs_flag.value = True
-        Qcdata_flag = arcpy.Parameter(
-            displayName="Create a separate file with emissions due to servers cooling.",
-            name="Qcdata_flag",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        Qcdata_flag.value = True
-        Qcrefri_flag = arcpy.Parameter(
-            displayName="Create a separate file with emissions due to refrigeration.",
-            name="Qcrefri_flag",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        Qcrefri_flag.value = True
-        Eal_flag = arcpy.Parameter(
-            displayName="Create a separate file with emissions due to appliances and lighting.",
-            name="Eal_flag",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        Eal_flag.value = True
-        Eaux_flag = arcpy.Parameter(
-            displayName="Create a separate file with emissions due to auxiliary electricity.",
-            name="Eaux_flag",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        Eaux_flag.value = True
-        Epro_flag = arcpy.Parameter(
-            displayName="Create a separate file with emissions due to electricity in industrial processes.",
-            name="Epro_flag",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        Epro_flag.value = True
-        Edata_flag = arcpy.Parameter(
-            displayName="Create a separate file with emissions due to electricity consumption in data centers.",
-            name="Edata_flag",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        Edata_flag.value = True
-
-        return [scenario_path, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_flag, Eal_flag, Eaux_flag, Epro_flag,
-                Edata_flag]
-
-    def execute(self, parameters, _):
-        scenario_path = parameters[0].valueAsText
-        flags = {
-            'Qww': parameters[1].value,
-            'Qhs': parameters[2].value,
-            'Qcs': parameters[3].value,
-            'Qcdata': parameters[4].value,
-            'Qcrefri': parameters[5].value,
-            'Eal': parameters[6].value,
-            'Eaux': parameters[7].value,
-            'Epro': parameters[8].value,
-            'Edata': parameters[9].value,
-        }
-        extra_files_to_create = [key for key in flags if flags[key]]
-        run_cli(scenario_path, 'emissions', '--extra-files-to-create', *extra_files_to_create)
-
-
-class EmbodiedTool(object):
-    def __init__(self):
-        self.label = 'LCA Construction'
-        self.description = 'Calculate the emissions and primary energy for building construction and decommissioning'
-        self.category = 'Life Cycle Analysis'
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        yearcalc = arcpy.Parameter(
-            displayName="Year to calculate",
-            name="yearcalc",
-            datatype="GPLong",
-            parameterType="Required",
-            direction="Input")
-        yearcalc.value = 2014
-
-        scenario_path = arcpy.Parameter(
-            displayName="Path to the scenario",
-            name="scenario_path",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-
-        return [yearcalc, scenario_path]
-
-    def execute(self, parameters, _):
-        year_to_calculate = int(parameters[0].valueAsText)
-        scenario_path = parameters[1].valueAsText
-        run_cli(scenario_path, 'embodied-energy', '--year-to-calculate', year_to_calculate)
-
-
-class MobilityTool(object):
-    """Integrates the cea/analysis/mobility.py script with ArcGIS."""
-    def __init__(self):
-        self.label = 'LCA Mobility'
-        self.description = 'Calculate emissions and primary energy due to mobility'
-        self.category = 'Life Cycle Analysis'
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-
-        scenario_path = arcpy.Parameter(
-            displayName="Path to the scenario",
-            name="scenario_path",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-
-        return [scenario_path]
-
-    def execute(self, parameters, messages):
-        scenario_path = parameters[0].valueAsText
-        run_cli(scenario_path, 'mobility')
-
-
-# Mapping and Visualization Tools
-
-class DemandGraphsTool(object):
-    def __init__(self):
-        self.label = 'Plots'
-        self.description = 'Plot demand time-series data'
-        self.category = 'Dynamic Demand Forecasting'
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        scenario_path = arcpy.Parameter(
-            displayName="Path to the scenario",
-            name="scenario_path",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        analysis_fields = arcpy.Parameter(
-            displayName="Variables to analyze",
-            name="analysis_fields",
-            datatype="String",
-            parameterType="Required",
-            multiValue=True,
-            direction="Input")
-        analysis_fields.filter.list = []
-        return [scenario_path, analysis_fields]
-
-    def updateParameters(self, parameters):
-        scenario_path = parameters[0].valueAsText
-        if not os.path.exists(scenario_path):
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
-            return
-        analysis_fields = parameters[1]
-        fields = _cli_output(scenario_path, 'demand-graphs', '--list-fields').split()
-        analysis_fields.filter.list = list(fields)
-        return
-
-    def execute(self, parameters, messages):
-        scenario_path = parameters[0].valueAsText
-        analysis_fields = parameters[1].valueAsText.split(';')[:4]  # max 4 fields for analysis
-        run_cli(scenario_path, 'demand-graphs', '--analysis-fields', *analysis_fields)
-
-
-class ScenarioPlotsTool(object):
-    def __init__(self):
-        self.label = 'Scenario plots'
-        self.description = 'Create summary plots of scenarios in a folder'
-        self.category = 'Mapping and Visualization'
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        scenarios = arcpy.Parameter(
-            displayName="Path to the scenarios to plot",
-            name="scenarios",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input",
-            multiValue=True)
-        output_file = arcpy.Parameter(
-            displayName="Path to output PDF",
-            name="output_file",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Output")
-        output_file.filter.list = ['pdf']
-        return [scenarios, output_file]
-
-    def execute(self, parameters, messages):
-        scenarios = parameters[0].valueAsText
-        scenarios = scenarios.replace("'", "")
-        scenarios = scenarios.replace('"', '')
-        scenarios = scenarios.split(';')
-        output_file = parameters[1].valueAsText
-        add_message(scenarios)
-        run_cli(None, 'scenario-plots', '--output-file', output_file, '--scenarios', *scenarios)
-
-
-class HeatmapsTool(object):
-    def __init__(self):
-        self.label = 'Heatmaps'
-        self.description = 'Generate maps representing hot and cold spots of energy consumption'
-        self.category = 'Mapping and Visualization'
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        scenario_path = arcpy.Parameter(
-            displayName="Path to the scenario",
-            name="scenario_path",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        path_variables = arcpy.Parameter(
-            displayName="Choose the file to analyze",
-            name="path_variables",
-            datatype="String",
-            parameterType="Required",
-            direction="Input")
-        path_variables.filter.list = []
-        analysis_fields = arcpy.Parameter(
-            displayName="Variables to analyze",
-            name="analysis_fields",
-            datatype="String",
-            parameterType="Required",
-            multiValue=True,
-            direction="Input")
-        analysis_fields.filter.list = []
-        analysis_fields.parameterDependencies = ['path_variables']
-
-        return [scenario_path, path_variables, analysis_fields]
-
-
-    def updateParameters(self, parameters):
-        # scenario_path
-        scenario_path = parameters[0].valueAsText
-        if not os.path.exists(scenario_path):
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
-            return
-        # path_variables
-        file_names = [os.path.basename(_cli_output(scenario_path, 'locate', 'get_total_demand'))]
-        file_names.extend(
-            [f for f in os.listdir(_cli_output(scenario_path, 'locate', 'get_lca_emissions_results_folder'))
-             if f.endswith('.csv')])
-        path_variables = parameters[1]
-        if not path_variables.value or path_variables.value not in file_names:
-            path_variables.filter.list = file_names
-            path_variables.value = file_names[0]
-        # analysis_fields
-        analysis_fields = parameters[2]
-        if path_variables.value == file_names[0]:
-            file_to_analyze = _cli_output(scenario_path, 'locate', 'get_total_demand')
-        else:
-            file_to_analyze = os.path.join(_cli_output(scenario_path, 'locate', 'get_lca_emissions_results_folder'),
-                                           path_variables.value)
-        import pandas as pd
-        df = pd.read_csv(file_to_analyze)
-        fields = df.columns.tolist()
-        fields.remove('Name')
-        analysis_fields.filter.list = list(fields)
-        return
-
-    def execute(self, parameters, _):
-        scenario_path = parameters[0].valueAsText
-        file_to_analyze = parameters[1].valueAsText
-        analysis_fields = parameters[2].valueAsText.split(';')
-
-        if file_to_analyze == os.path.basename(_cli_output(scenario_path, 'locate', 'get_total_demand')):
-            file_to_analyze = _cli_output(scenario_path, 'locate', 'get_total_demand')
-        else:
-            file_to_analyze = os.path.join(_cli_output(scenario_path, 'locate', 'get_lca_emissions_results_folder'),
-                                           file_to_analyze)
-        run_cli(scenario_path, 'heatmaps', '--file-to-analyze', file_to_analyze, '--analysis-fields', *analysis_fields)
-
-
-class BenchmarkGraphsTool(object):
-    """Integrates the cea/analysis/benchmark.py tool with ArcGIS"""
-    def __init__(self):
-        self.label = '2000W Society Benchmark'
-        self.description = 'Plot life cycle primary energy demand and emissions compared to an established benchmark'
-        self.category = 'Benchmarking'
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        scenarios = arcpy.Parameter(
-            displayName="Path to the scenarios to plot",
-            name="scenarios",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input",
-            multiValue=True)
-        output_file = arcpy.Parameter(
-            displayName="Path to output PDF",
-            name="output_file",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Output")
-        output_file.filter.list = ['pdf']
-        return [scenarios, output_file]
-
-    def execute(self, parameters, messages):
-        scenarios = parameters[0].valueAsText
-        scenarios = scenarios.replace('"', '')
-        scenarios = scenarios.replace("'", '')
-        scenarios = scenarios.split(';')
-        arcpy.AddMessage(scenarios)
-        output_file = parameters[1].valueAsText
-        run_cli(None, 'benchmark-graphs', '--output-file', output_file, '--scenarios', *scenarios)
-        return
-
-
-# Solar Tools
-
-class SolarTechnologyTool(object):
-    def __init__(self):
-        self.label = 'Photovoltaic Panels'
-        self.description = 'Calculate electricity production from solar photovoltaic technologies'
-        self.category = 'Dynamic Supply Systems'
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        scenario_path = arcpy.Parameter(
-            displayName="Path to the scenario",
-            name="scenario_path",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-
-        weather_name = arcpy.Parameter(
-            displayName="Weather file (use the same one for solar radiation calculation)",
-            name="weather_name",
-            datatype="String",
-            parameterType="Required",
-            direction="Input")
-        weather_name.filter.list = get_weather_names()
-        weather_name.enabled = False
-
-        year = arcpy.Parameter(
-            displayName="Year",
-            name="year",
-            datatype="GPLong",
-            parameterType="Required",
-            direction="Input")
-        year.value = 2014
-        year.enabled = False
-
-        latitude = arcpy.Parameter(
-            displayName="Latitude",
-            name="latitude",
-            datatype="GPDouble",
-            parameterType="Required",
-            direction="Input")
-        latitude.enabled = False
-
-        longitude = arcpy.Parameter(
-            displayName="Longitude",
-            name="longitude",
-            datatype="GPDouble",
-            parameterType="Required",
-            direction="Input")
-        longitude.enabled = False
-
-        pvonroof = arcpy.Parameter(
-            displayName="Considering panels on roofs",
-            name="pvonroof",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        pvonroof.value = True
-
-        pvonwall = arcpy.Parameter(
-            displayName="Considering panels on walls",
-            name="pvonwall",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        pvonwall.value = True
-
-        worst_hour = arcpy.Parameter(
-            displayName="worst hour (the hour of sunrise on the solar solstice at the site)",
-            name="worst_hour",
-            datatype="GPLong",
-            parameterType="Required",
-            direction="Input")
-        worst_hour.value = 8744
-
-        type_PVpanel = arcpy.Parameter(
-            displayName="PV technology to use",
-            name="type_PVpanel",
-            datatype="String",
-            parameterType="Required",
-            direction="Input")
-        type_PVpanel.filter.list = ['monocrystalline', 'polycrystalline', 'amorphous']
-
-        min_radiation = arcpy.Parameter(
-            displayName="filtering surfaces with low radiation potential (% of the maximum radiation in the area)",
-            name="min_radiation",
-            datatype="GPDouble",
-            parameterType="Required",
-            direction="Input")
-        min_radiation.value = 0.75
-
-        return [scenario_path, weather_name, year, latitude, longitude, pvonroof, pvonwall, worst_hour,
-                type_PVpanel, min_radiation]
-
-    def updateParameters(self, parameters):
-        scenario_path = parameters[0].valueAsText
-        if scenario_path is None:
-            return
-        if not os.path.exists(scenario_path):
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
-            return
-
-        radiation_csv = _cli_output(scenario_path, 'locate', 'get_radiation')
-        if not os.path.exists(radiation_csv):
-            parameters[0].setErrorMessage("No radiation file found - please run radiation tool first")
-            return
-
-        # scenario passes test
-        weather_parameter = parameters[1]
-        year_parameter = parameters[2]
-        latitude_parameter = parameters[3]
-        longitude_parameter = parameters[4]
-
-        weather_parameter.enabled = True
-        year_parameter.enabled = True
-
-        latitude_value = float(_cli_output(scenario_path, 'latitude'))
-        longitude_value = float(_cli_output(scenario_path, 'longitude'))
-        if not latitude_parameter.enabled:
-            # only overwrite on first try
-            latitude_parameter.value = latitude_value
-            latitude_parameter.enabled = True
-
-        if not longitude_parameter.enabled:
-            # only overwrite on first try
-            longitude_parameter.value = longitude_value
-            longitude_parameter.enabled = True
-        return
-
-    def updateMessages(self, parameters):
-        scenario_path = parameters[0].valueAsText
-        if scenario_path is None:
-            return
-        if not os.path.exists(scenario_path):
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
-            return
-
-        radiation_csv = _cli_output(scenario_path, 'locate', 'get_radiation')
-        if not os.path.exists(radiation_csv):
-            parameters[0].setErrorMessage("No radiation file found - please run radiation tool first")
-            return
-
-    def execute(self, parameters, messages):
-        scenario_path = parameters[0].valueAsText
-        weather_name = parameters[1].valueAsText
-        year = parameters[2].value
-        latitude = parameters[3].value
-        longitude = parameters[4].value
-        pvonroof = parameters[5].value
-        pvonwall = parameters[6].value
-        worst_hour = parameters[7].value
-        type_PVpanel = {'monocrystalline': 'PV1',
-                        'polycrystalline': 'PV2',
-                        'amorphous': 'PV3'}[parameters[8].value]
-        min_radiation = parameters[9].value
-
-        date_start = str(year) + '-01-01'
-
-        if weather_name in get_weather_names():
-            weather_path = get_weather_path(weather_name)
-        elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
-            weather_path = weather_name
-        else:
-            weather_path = get_weather_path('.')
-
-        add_message('longitude: %s' % longitude)
-        add_message('latitude: %s' % latitude)
-
-        run_cli_arguments = [scenario_path, 'photovoltaic', '--latitude', latitude, '--longitude', longitude,
-                             '--weather-path', weather_path, '--worst-hour', worst_hour, '--type-PVpanel', type_PVpanel,
-                             '--min-radiation', min_radiation, '--date-start', date_start]
-        if pvonroof:
-            run_cli_arguments.append('--pvonroof')
-        if pvonwall:
-            run_cli_arguments.append('--pvonwall')
-
-        run_cli(*run_cli_arguments)
-        return
-
-
-class RadiationTool(object):
-    def __init__(self):
-        self.label = 'Solar Insolation'
-        self.category= 'Renewable Energy Assessment'
-        self.description = 'Create radiation file'
-        self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        scenario_path = arcpy.Parameter(
-            displayName="Path to the scenario",
-            name="scenario_path",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-
-        weather_name = arcpy.Parameter(
-            displayName="Weather file (choose from list or enter full path to .epw file)",
-            name="weather_name",
-            datatype="String",
-            parameterType="Required",
-            direction="Input")
-        weather_name.filter.list = get_weather_names()
-        weather_name.enabled = False
-
-        year = arcpy.Parameter(
-            displayName="Year",
-            name="year",
-            datatype="GPLong",
-            parameterType="Required",
-            direction="Input")
-        year.value = 2014
-        year.enabled = False
-
-        latitude = arcpy.Parameter(
-            displayName="Latitude",
-            name="latitude",
-            datatype="GPDouble",
-            parameterType="Required",
-            direction="Input")
-        latitude.enabled = False
-
-        longitude = arcpy.Parameter(
-            displayName="Longitude",
-            name="longitude",
-            datatype="GPDouble",
-            parameterType="Required",
-            direction="Input")
-        longitude.enabled = False
-
-        return [scenario_path, weather_name, year, latitude, longitude]
-
-    def updateParameters(self, parameters):
-        scenario_path = parameters[0].valueAsText
-        if scenario_path is None:
-            return
-        if not os.path.exists(scenario_path):
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
-            return
-
-        weather_parameter = parameters[1]
-        year_parameter = parameters[2]
-        latitude_parameter = parameters[3]
-        longitude_parameter = parameters[4]
-
-        weather_parameter.enabled = True
-        year_parameter.enabled = True
-
-        latitude_value = float(_cli_output(scenario_path, 'latitude'))
-        longitude_value = float(_cli_output(scenario_path, 'longitude'))
-        if not latitude_parameter.enabled:
-            # only overwrite on first try
-            latitude_parameter.value = latitude_value
-            latitude_parameter.enabled = True
-
-        if not longitude_parameter.enabled:
-            # only overwrite on first try
-            longitude_parameter.value = longitude_value
-            longitude_parameter.enabled = True
-        return
-
-    def execute(self, parameters, messages):
-        scenario_path = parameters[0].valueAsText
-        weather_name = parameters[1].valueAsText
-        year = parameters[2].value
-        latitude = parameters[3].value
-        longitude = parameters[4].value
-
-        if weather_name in get_weather_names():
-            weather_path = get_weather_path(weather_name)
-        elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
-            weather_path = weather_name
-        else:
-            weather_path = get_weather_path('.')
-
-        # FIXME: use current arcgis databases...
-        path_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
-
-        add_message('longitude: %s' % longitude)
-        add_message('latitude: %s' % latitude)
-
-        run_cli(scenario_path, 'radiation', '--arcgis-db', path_arcgis_db, '--latitude', latitude,
-                '--longitude', longitude, '--year', year, '--weather-path', weather_path)
-        return
 
 
 # Sensitivity Analysis Tools
