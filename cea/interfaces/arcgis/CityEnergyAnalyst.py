@@ -13,6 +13,7 @@ import subprocess
 import tempfile
 import arcpy
 
+
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Daren Thomas", "Martin Mosteiro Romero", "Jimeno A. Fonseca"]
@@ -31,7 +32,7 @@ class Toolbox(object):
         self.tools = [OperationCostsTool, RetrofitPotentialTool, DemandTool, DataHelperTool, BenchmarkGraphsTool,
                       OperationTool, EmbodiedTool, MobilityTool, SolarTechnologyTool,
                       DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool, DbfToExcelTool, ExcelToDbfTool,
-                      ExtractReferenceCaseTool]
+                      ExtractReferenceCaseTool, TestTool]
 
 class OperationCostsTool(object):
     def __init__(self):
@@ -1060,7 +1061,7 @@ def run_cli(scenario_path=None, *args):
     command.extend(map(str, args))
     add_message(command)
     process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                               env=get_environment())
+                               env=get_environment(), cwd=tempfile.gettempdir())
     while True:
         next_line = process.stdout.readline()
         if next_line == '' and process.poll() is not None:
@@ -1230,3 +1231,17 @@ class ExtractReferenceCaseTool(object):
         output_path = parameters[0].valueAsText
 
         run_cli(None, 'extract-reference-case', '--to', output_path)
+
+class TestTool(object):
+    """Run `cea test` for the user"""
+    def __init__(self):
+        self.label = 'Test CEA'
+        self.description = 'Run some tests on the CEA'
+        self.canRunInBackground = False
+        self.category = 'Utilities'
+
+    def getParameterInfo(self):
+        return []
+
+    def execute(self,parameters, _):
+        run_cli(None, 'test')
