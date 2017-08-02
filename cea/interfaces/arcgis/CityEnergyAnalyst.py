@@ -31,7 +31,7 @@ class Toolbox(object):
         self.tools = [OperationCostsTool, RetrofitPotentialTool, DemandTool, DataHelperTool, BenchmarkGraphsTool,
                       OperationTool, EmbodiedTool, MobilityTool, SolarTechnologyTool,
                       DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool, DbfToExcelTool, ExcelToDbfTool,
-                      SensitivityDemandSamplesTool]
+                      SensitivityDemandSamplesTool, SensitivityDemandSimulateTool]
 
 
 # Benchmarking Tools
@@ -1164,7 +1164,7 @@ class SensitivityDemandSamplesTool(object):
         if samples_folder is None:
             return
         if not os.path.exists(samples_folder):
-            parameters[6].setErrorMessage('Scenario folder not found: %s' % samples_folder)
+            parameters[6].setErrorMessage('Samples folder not found: %s' % samples_folder)
             return
 
         return
@@ -1208,6 +1208,179 @@ class SensitivityDemandSamplesTool(object):
             args.append(grid_jump)
             args.append('--num-levels')
             args.append(num_levels)
+
+        run_cli(*args)
+
+class SensitivityDemandSimulateTool(object):
+    def __init__(self):
+        self.label = 'Demand Simulation'
+        self.category = 'Sensitivity Analysis'
+        self.description = 'Simulate demand for sensitivity analysis samples'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        weather_name = arcpy.Parameter(
+            displayName="Weather file (choose from list or enter full path to .epw file)",
+            name="weather_name",
+            datatype="String",
+            parameterType="Required",
+            direction="Input")
+        weather_name.filter.list = get_weather_names()
+
+        samples_folder = arcpy.Parameter(
+            displayName="Folder that contains the samples",
+            name="samples_folder",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        simulation_folder = arcpy.Parameter(
+            displayName="Folder to which to copy the scenario folder for simulation",
+            name="simulation_folder",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        num_simulations = arcpy.Parameter(
+            displayName="Number of simulations to perform",
+            name="num_simulations",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        num_simulations.value = 1
+        num_simulations.parameterDependencies = ['samples_folder']
+        num_simulations.enabled = False
+
+        sample_index = arcpy.Parameter(
+            displayName="Sample from which to start simulations",
+            name="sample_index",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        sample_index.value = 1
+        sample_index.parameterDependencies = ['samples_folder']
+        sample_index.enabled = False
+
+        output_parameters = arcpy.Parameter(
+            displayName="Output parameters for sensitivity analysis",
+            name="output_parameters",
+            datatype="String",
+            parameterType="Required",
+            multiValue=True,
+            direction="Input")
+        output_parameters.filter.list = ['Eaf_MWhyr', 'Eaf0_kW', 'Ealf_MWhyr', 'Ealf0_kW', 'Eauxf_cs_MWhyr',
+                                         'Eauxf_cs0_kW', 'Eauxf_fw_MWhyr', 'Eauxf_fw0_kW', 'Eauxf_hs_MWhyr',
+                                         'Eauxf_hs0_kW', 'Eauxf_MWhyr', 'Eauxf_ve_MWhyr', 'Eauxf_ve0_kW',
+                                         'Eauxf_ww_MWhyr', 'Eauxf_ww0_kW', 'Eauxf0_kW', 'Ecaf_MWhyr', 'Ecaf0_kW',
+                                         'Edataf_MWhyr', 'Edataf0_kW', 'Ef_MWhyr', 'Ef0_kW', 'Elf_MWhyr', 'Elf0_kW',
+                                         'Eprof_MWhyr', 'Eprof0_kW', 'Eref_MWhyr', 'Eref0_kW', 'Qcdataf_MWhyr',
+                                         'Qcdataf0_kW', 'QCf_MWhyr', 'QCf0_kW', 'Qcref_MWhyr', 'Qcref0_kW', 'Qcs_MWhyr',
+                                         'Qcs0_kW', 'Qcsf_lat_MWhyr', 'Qcsf_lat0_kW', 'Qcsf_MWhyr', 'Qcsf0_kW',
+                                         'QEf_MWhyr', 'QEf0_kW', 'QHf_MWhyr', 'QHf0_kW', 'Qhprof_MWhyr', 'Qhprof0_kW',
+                                         'Qhs_MWhyr', 'Qhs0_kW', 'Qhsf_lat_MWhyr', 'Qhsf_lat0_kW', 'Qhsf_MWhyr',
+                                         'Qhsf0_kW', 'Qww_MWhyr', 'Qww0_kW', 'Qwwf_MWhyr', 'Qwwf0_kW']
+
+        return [scenario_path, weather_name, samples_folder, simulation_folder, num_simulations, sample_index,
+                output_parameters]
+
+    def updateParameters(self, parameters):
+        import numpy as np
+
+        # scenario_path
+        scenario_path = parameters[0].valueAsText
+        if not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+
+        # num_simulations, sample_index
+        samples_folder = parameters[2].valueAsText
+        samples_file = os.path.join(samples_folder,'samples.npy')
+
+        if samples_folder is None:
+            return
+        if not os.path.exists(samples_folder):
+            parameters[2].setErrorMessage('Samples folder not found: %s' % samples_folder)
+            return
+        if not os.path.exists(samples_file):
+            parameters[2].setErrorMessage('Samples file not found in %s' % samples_folder)
+            return
+        else:
+            # num_simulations
+            parameters[4].enabled = True
+            parameters[4].value = np.load(os.path.join(samples_folder,'samples.npy')).shape[0]
+            # sample_index
+            parameters[5].enabled = True
+            return
+
+
+    # def updateMessages(self, parameters):
+    #     # scenario_path
+    #     scenario_path = parameters[0].valueAsText
+    #     if scenario_path is None:
+    #         return
+    #     if not os.path.exists(scenario_path):
+    #         parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+    #         return
+    #     if not os.path.exists(get_radiation(scenario_path)):
+    #         parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
+    #     if not os.path.exists(get_surface_properties(scenario_path)):
+    #         parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
+    #     samples_folder = parameters[2].valueAsText
+    #     samples_file = os.path.join(samples_folder, 'samples.npy')
+    #
+    #     # samples_folder
+    #     if samples_folder is None:
+    #         return
+    #     if not os.path.exists(samples_folder):
+    #         parameters[2].setErrorMessage('Samples folder not found: %s' % samples_folder)
+    #         return
+    #     if not os.path.exists(samples_file):
+    #         parameters[2].setErrorMessage('Samples file not found in %s' % samples_folder)
+    #         return
+    #
+    #     return
+
+
+    def execute(self, parameters, _):
+
+        # scenario_path
+        scenario_path = parameters[0].valueAsText
+
+        # weather_path
+        weather_name = parameters[1].valueAsText
+        if weather_name in get_weather_names():
+            weather_path = get_weather_path(weather_name)
+        elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
+            weather_path = weather_name
+        else:
+            weather_path = get_weather_path()
+
+        # samples_folder
+        samples_folder = parameters[2].valueAsText
+
+        # simulation_folder
+        simulation_folder = parameters[3].valueAsText
+
+        # num_simulations
+        num_simulations = int(parameters[4].value) - 1
+
+        # sample_index
+        sample_index = int(parameters[5].value) - 1
+
+        # output_parameters
+        output_parameters = parameters[6].valueAsText.split(';')
+
+        args = [None, 'sensitivity-demand-simulate', '--scenario-path', scenario_path, '--weather-path', weather_path,
+                '--samples-folder', samples_folder, '--simulation-folder', simulation_folder, '--num-simulations',
+                num_simulations, '--sample-index', sample_index, '--output-parameters', output_parameters]
 
         run_cli(*args)
 
