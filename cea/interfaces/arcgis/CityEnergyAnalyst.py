@@ -1212,6 +1212,72 @@ class SensitivityDemandSamplesTool(object):
         run_cli(*args)
 
 
+# Utilities Tools
+
+class DbfToExcelTool(object):
+    def __init__(self):
+        self.label = 'Convert DBF to Excel'
+        self.description = 'dbf => xls'
+        self.canRunInBackground = False
+        self.category = 'Utilities'
+
+    def getParameterInfo(self):
+        input_path = arcpy.Parameter(
+            displayName="DBF input file path",
+            name="input_path",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Input")
+        input_path.filter.list = ['dbf']
+        output_path = arcpy.Parameter(
+            displayName="Excel output file path",
+            name="output_path",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Output")
+        output_path.filter.list = ['xls']
+
+        return [input_path, output_path]
+
+    def execute(self,parameters, _):
+        input_path = parameters[0].valueAsText
+        output_path = parameters[1].valueAsText
+
+        run_cli(None, 'dbf-to-excel', '--input-path', input_path, '--output-path', output_path)
+
+class ExcelToDbfTool(object):
+    def __init__(self):
+        self.label = 'Convert Excel to DBF'
+        self.description = 'xls => dbf'
+        self.canRunInBackground = False
+        self.category = 'Utilities'
+
+    def getParameterInfo(self):
+        input_path = arcpy.Parameter(
+            displayName="Excel input file path",
+            name="input_path",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Input")
+        input_path.filter.list = ['xls']
+        output_path = arcpy.Parameter(
+            displayName="DBF output file path",
+            name="output_path",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Output")
+        output_path.filter.list = ['dbf']
+        return [input_path, output_path]
+
+    def execute(self, parameters, _):
+        input_path = parameters[0].valueAsText
+        output_path = parameters[1].valueAsText
+
+        run_cli(None, 'excel-to-dbf', '--input-path', input_path, '--output-path', output_path)
+
+
+# Other functions
+
 def add_message(msg, **kwargs):
     """Log to arcpy.AddMessage() instead of print to STDOUT"""
     if len(kwargs):
@@ -1309,64 +1375,3 @@ def run_cli(scenario_path=None, *args):
     stdout, stderr = process.communicate()
     add_message(stdout)
     add_message(stderr)
-
-class ExcelToDbfTool(object):
-    def __init__(self):
-        self.label = 'Convert Excel to DBF'
-        self.description = 'xls => dbf'
-        self.canRunInBackground = False
-        self.category = 'Utilities'
-
-    def getParameterInfo(self):
-        input_path = arcpy.Parameter(
-            displayName="Excel input file path",
-            name="input_path",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        input_path.filter.list = ['xls']
-        output_path = arcpy.Parameter(
-            displayName="DBF output file path",
-            name="output_path",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Output")
-        output_path.filter.list = ['dbf']
-        return [input_path, output_path]
-
-    def execute(self, parameters, _):
-        input_path = parameters[0].valueAsText
-        output_path = parameters[1].valueAsText
-
-        run_cli(None, 'excel-to-dbf', '--input-path', input_path, '--output-path', output_path)
-
-class DbfToExcelTool(object):
-    def __init__(self):
-        self.label = 'Convert DBF to Excel'
-        self.description = 'dbf => xls'
-        self.canRunInBackground = False
-        self.category = 'Utilities'
-
-    def getParameterInfo(self):
-        input_path = arcpy.Parameter(
-            displayName="DBF input file path",
-            name="input_path",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        input_path.filter.list = ['dbf']
-        output_path = arcpy.Parameter(
-            displayName="Excel output file path",
-            name="output_path",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Output")
-        output_path.filter.list = ['xls']
-
-        return [input_path, output_path]
-
-    def execute(self,parameters, _):
-        input_path = parameters[0].valueAsText
-        output_path = parameters[1].valueAsText
-
-        run_cli(None, 'dbf-to-excel', '--input-path', input_path, '--output-path', output_path)
