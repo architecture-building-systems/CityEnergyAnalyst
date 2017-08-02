@@ -43,7 +43,7 @@ N=${N:-1}
 METHOD=${METHOD:-sobol}
 SCENARIO=${SCENARIO:-$HOME/cea-reference-case/reference-case-open/baseline}
 SAMPLES_FOLDER=${SAMPLES_FOLDER:-${SCRATCH}/samples_${METHOD}_${N}}
-WEATHER=${WEATHER:-$HOME/CEAforArcGIS/cea/databases/CH/Weather/Zurich.epw}
+WEATHER=${WEATHER:-$HOME/CityEnergyAnalyst/cea/databases/CH/Weather/Zurich.epw}
 NUM_SIMULATIONS=${NUM_SIMULATIONS:-100}
 
 mkdir -p $SAMPLES_FOLDER
@@ -62,5 +62,5 @@ for ((i=0;i<=SAMPLES_COUNT;i+=NUM_SIMULATIONS)) do
     export WEATHER
     export PYTHONUNBUFFERED=1
     echo "Submitting batch starting at sample $i with size $NUM_SIMULATIONS"
-    bsub sh $HOME/CEAforArcGIS/euler/run-demand-bsub.sh
+    bsub sh $HOME/CityEnergyAnalyst/euler/run-demand-bsub.sh
 done

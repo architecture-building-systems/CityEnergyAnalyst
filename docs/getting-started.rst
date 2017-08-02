@@ -3,7 +3,7 @@ Getting started
 
 The City Energy Analyst |version| is stored in a public repository in Github
 under the name of
-`CEAforArcGIS <https://github.com/architecture-building-systems/CEAforArcGIS>`__.
+`CityEnergyAnalyst <https://github.com/architecture-building-systems/CityEnergyAnalyst>`__.
 
 Folder Structure
 ----------------

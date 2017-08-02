@@ -1,7 +1,7 @@
 # City Energy Analyst for ArcGIS Desktop 10.4
 
 This file describes the installation of the City Energy Analyst (CEA) as performed by the installer 
-`Setup_CEAforArcGIS10.4.exe`.
+`Setup_CityEnergyAnalyst10.4.exe`.
 
 The city energy analyst (CEA) is an urban simulation engine created to assess multiple energy efficiency strategies 
 in urban areas. The CEA offers tools for the analysis of the carbon, financial and environmental benefits of the next 
@@ -12,13 +12,13 @@ strategies in an urban area.
 - **Infrastructure retrofits:** decentralized and centralized thermal micro-grids and conversion technologies.
 - **Modifications to urban form:** new zoning, changes in occupancy and building typology.
 
-You can find more information about the CEA here: https://github.com/architecture-building-systems/CEAforArcGIS
+You can find more information about the CEA here: https://github.com/architecture-building-systems/CityEnergyAnalyst
 
 ## Files installed
 
 The installer made the following changes to your computer:
  
-- Installation directory: (typically `C:\Program Files (x86)\CEAforArcGIS`)
+- Installation directory: (typically `C:\Program Files (x86)\CityEnergyAnalyst`)
   - `README.md` - this file
   - `LICENSE.md` - copy of the license file mentioned below
   - `site-packages` - contains python library dependencies
@@ -39,7 +39,7 @@ https://architecture-building-systems.gitbooks.io/cea-toolbox-for-arcgis-manual/
 ## License
 
 This software is under the MIT License. See here for more information: 
-https://github.com/architecture-building-systems/CEAforArcGIS/blob/master/LICENSE.md
+https://github.com/architecture-building-systems/CityEnergyAnalyst/blob/master/LICENSE.md
 
 ### Dependencies
 
