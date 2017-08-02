@@ -118,7 +118,7 @@ def thermal_network_main(locator, gv, network_type, source):
 
     # get edge-node matrix from defined network, the input formats are either .csv or .shp
     if source == 'csv':
-        edge_node_df, all_nodes_df, pipe_length_df = get_thermal_network_from_csv(locator, network_type)
+        edge_node_df, all_nodes_df, edge_df = get_thermal_network_from_csv(locator, network_type)
     else:
         edge_node_df, all_nodes_df, edge_df = get_thermal_network_from_shapefile(locator, network_type)
 
@@ -154,7 +154,7 @@ def thermal_network_main(locator, gv, network_type, source):
     pressure_loss_system = []
 
 
-    for t in range(8760):
+    for t in range(50):
 
         print('calculating network thermal hydraulic properties... time step', t)
         timer = time.clock()
@@ -252,11 +252,10 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df):
     Applied Thermal Engineering, 2016.
 
     """
-    #mass_flow_substation_df = mass_flow_substation_df.sort_index(axis=1) #TODO:delete after testing DC
 
-    ## remove one equation (at plant node) to build a well-determined matrix A
-    plant_index = np.where(all_nodes_df['Type']=='PLANT')[0][0]
-    A = edge_node_df.drop(edge_node_df.index[plant_index]) # TODO: Change to find plant node
+    ## remove one equation (at plant node) to build a well-determined matrix, A.
+    plant_index = np.where(all_nodes_df['Type']=='PLANT')[0][0] # find index of the first plant node
+    A = edge_node_df.drop(edge_node_df.index[plant_index])
     b = mass_flow_substation_df.T
     b.drop(b.index[plant_index], inplace=True)
     ## compute the exact solution of Ax = b
@@ -365,7 +364,6 @@ def calc_pressure_nodes(edge_node_df, pipe_diameter, pipe_length, edge_mass_flow
         np.transpose(np.linalg.lstsq(edge_node_transpose, np.transpose(pressure_loss_pipe_supply_Pa)*(-1))[0]), decimals=9)
     pressure_nodes_return_Pa = np.round(
         np.transpose(np.linalg.lstsq(-edge_node_transpose, np.transpose(pressure_loss_pipe_return_Pa)*(-1))[0]), decimals=9)
-
     return pressure_nodes_supply_Pa, pressure_nodes_return_Pa, pressure_loss_system_Pa
 
 
@@ -419,7 +417,7 @@ def calc_pressure_loss_pipe(pipe_diameter_m, pipe_length_m, mass_flow_rate_kgs, 
     # calculate the pressure losses through a pipe using the Darcy-Weisbach equation
     pressure_loss_edge_Pa = darcy * 8 * mass_flow_rate_kgs ** 2 * pipe_length_m / (math.pi ** 2 * pipe_diameter_m ** 5 * gv.Pwater)
 
-    return pressure_loss_edge_Pa
+    return np.nan_to_num(pressure_loss_edge_Pa)
 
 def calc_pressure_loss_system(pressure_loss_pipe_supply, pressure_loss_pipe_return):
     pressure_loss_system = np.full(3, np.nan)
@@ -486,42 +484,42 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     print('start calculating edge mass flow...')
 
     t0 = time.clock()
-    # for t in range(8760):
-    #     print('\n calculating edge mass flow... time step', t)
-    #
-    #     # set to the highest value in the network and assume no loss within the network
-    #     T_substation_supply = t_target_supply.ix[t].max() + 273.15  # in [K]
-    #
-    #     # calculate substation flow rates and return temperatures
-    #     if network_type == 'DH' or (network_type == 'DC' and math.isnan(T_substation_supply) is False):
-    #         T_return_all, \
-    #             mdot_all = substation.substation_return_model_main(locator, gv, building_names, buildings_demands,
-    #                                                                substations_HEX_specs, T_substation_supply, t,
-    #                                                                network_type,
-    #                                                                t_flag = True)
-    #         # t_flag = True: same temperature for all nodes
-    #     else:
-    #         T_return_all = np.full(building_names.size,T_substation_supply).T
-    #         mdot_all = pd.DataFrame(data=np.zeros(len(building_names)), index=building_names.values).T
-    #
-    #     # write consumer substation required flow rate to nodes
-    #     required_flow_rate_df = write_substation_massflows_to_nodes_df(all_nodes_df, mdot_all)
-    #     # (1 x n)
-    #
-    #     # solve mass flow rates on edges
-    #     edge_mass_flow_df[:][t:t + 1] = calc_mass_flow_edges(edge_node_df, required_flow_rate_df, all_nodes_df)
-    #     node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values
-    #
-    # # create csv file to store the nominal edge mass flow results
-    # edge_mass_flow_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'NominalEdgeMassFlow_' +
-    #                          network_type + '.csv')
-    # node_mass_flow_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'Node_MassFlow_' +
-    #                          network_type + '.csv')
-    # print (time.clock() - t0, "seconds process time for edge mass flow calculation\n")
+    for t in range(8760):
+        print('\n calculating edge mass flow... time step', t)
+
+        # set to the highest value in the network and assume no loss within the network
+        T_substation_supply = t_target_supply.ix[t].max() + 273.15  # in [K]
+
+        # calculate substation flow rates and return temperatures
+        if network_type == 'DH' or (network_type == 'DC' and math.isnan(T_substation_supply) is False):
+            T_return_all, \
+                mdot_all = substation.substation_return_model_main(locator, gv, building_names, buildings_demands,
+                                                                   substations_HEX_specs, T_substation_supply, t,
+                                                                   network_type,
+                                                                   t_flag = True)
+            # t_flag = True: same temperature for all nodes
+        else:
+            T_return_all = np.full(building_names.size,T_substation_supply).T
+            mdot_all = pd.DataFrame(data=np.zeros(len(building_names)), index=building_names.values).T
+
+        # write consumer substation required flow rate to nodes
+        required_flow_rate_df = write_substation_massflows_to_nodes_df(all_nodes_df, mdot_all)
+        # (1 x n)
+
+        # solve mass flow rates on edges
+        edge_mass_flow_df[:][t:t + 1] = calc_mass_flow_edges(edge_node_df, required_flow_rate_df, all_nodes_df)
+        node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values
+
+    # create csv file to store the nominal edge mass flow results
+    edge_mass_flow_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'NominalEdgeMassFlow_' +
+                             network_type + '.csv')
+    node_mass_flow_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'Node_MassFlow_' +
+                             network_type + '.csv')
+    print (time.clock() - t0, "seconds process time for edge mass flow calculation\n")
 
     ## The script below is to bypass the calculation from line 457-490, if the above calculation has been done once.
-    edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type))
-    del edge_mass_flow_df['Unnamed: 0']
+    # edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type))
+    # del edge_mass_flow_df['Unnamed: 0']
 
     # assign pipe properties based on max flow on edges
     max_edge_mass_flow = edge_mass_flow_df.max(axis=0)
@@ -1045,10 +1043,10 @@ def calc_return_temperatures(gv, T_ground, edge_node_df, mass_flow_df, mass_flow
                     T_node[j] = calc_return_node_temperature(j, M_d, T_e_out, t_return, Z_pipe_out, M_sub)
 
     # calculate temperature with merging flows from pipes at the plant node
-    node_index = np.where(T_node == 0)[0].max()
-
-    M_sub[node_index] = 0
-    T_node[node_index] = calc_return_node_temperature(node_index, M_d, T_e_out, t_return, Z_pipe_out, M_sub)
+    if len(np.where(T_node==0)[0]) != 0:
+        node_index = np.where(T_node == 0)[0][0]
+        M_sub[node_index] = 0
+        T_node[node_index] = calc_return_node_temperature(node_index, M_d, T_e_out, t_return, Z_pipe_out, M_sub)
 
     return T_node
 
@@ -1237,7 +1235,7 @@ def get_thermal_network_from_csv(locator, network_type):
 
     # get node and pipe data
     node_data_df = pd.read_csv(locator.get_network_layout_nodes_csv_file(network_type))
-    pipe_data_df = pd.read_csv(locator.get_network_layout_pipes_csv_file(network_type))
+    edge_df = pd.read_csv(locator.get_network_layout_pipes_csv_file(network_type))
 
     # create consumer and plant node vectors from node data
     for column in ['Plant','Sink']:
@@ -1248,27 +1246,36 @@ def get_thermal_network_from_csv(locator, network_type):
     plant_nodes = np.vstack((node_names,(node_data_df['Plant']*node_data_df['Name']).values))
 
     # create edge-node matrix from pipe data
-    pipe_data_df = pipe_data_df.set_index(pipe_data_df['DC_ID'].values, drop=True)
-    list_pipes = pipe_data_df['DC_ID']
-    list_nodes = sorted(set(pipe_data_df['NODE1']).union(set(pipe_data_df['NODE2'])))
-    edge_node_matrix = np.zeros((len(list_nodes),len(list_pipes)))
-    for j in range(len(list_pipes)):
+    edge_df = edge_df.set_index(edge_df['DC_ID'].values, drop=True)
+    edge_df.rename(columns = {'LENGTH':'pipe length'}, inplace= True)  #todo: could be removed when the input format of .csv is fixed
+    list_edges = edge_df['DC_ID']
+    list_nodes = sorted(set(edge_df['NODE1']).union(set(edge_df['NODE2'])), key=lambda x: int(x[1:]))  # sort the list by node numbers
+    edge_node_matrix = np.zeros((len(list_nodes),len(list_edges)))
+    for j in range(len(list_edges)):
         for i in range(len(list_nodes)):
-            if pipe_data_df['NODE2'][j] == list_nodes[i]:
+            if edge_df['NODE2'][j] == list_nodes[i]:
                 edge_node_matrix[i][j] = 1
-            elif pipe_data_df['NODE1'][j] == list_nodes[i]:
+            elif edge_df['NODE1'][j] == list_nodes[i]:
                 edge_node_matrix[i][j] = -1
-    edge_node_df = pd.DataFrame(data=edge_node_matrix, index=list_nodes, columns=list_pipes)
-
+    edge_node_df = pd.DataFrame(data=edge_node_matrix, index=list_nodes, columns=list_edges)
     edge_node_df.to_csv(locator.get_optimization_network_edge_node_matrix_file(network_type))
-    all_nodes_df = pd.DataFrame(data=[consumer_nodes[1][:], plant_nodes[1][:]], index=['consumer', 'plant'],
-                                columns=consumer_nodes[0][:])
-    all_nodes_df = all_nodes_df[edge_node_df.index.tolist()]
+
+    all_nodes_df = pd.DataFrame(index=list_nodes, columns=['Building','Type'])
+    for i in range(len(list_nodes)):
+        if consumer_nodes[1][i] != '':
+            all_nodes_df.loc[list_nodes[i],'Building'] = consumer_nodes[1][i]
+            all_nodes_df.loc[list_nodes[i],'Type'] = 'CONSUMER'
+        elif plant_nodes[1][i] != '':
+            all_nodes_df.loc[list_nodes[i],'Building'] = plant_nodes[1][i]
+            all_nodes_df.loc[list_nodes[i],'Type'] = 'PLANT'
+        else:
+            all_nodes_df.loc[list_nodes[i],'Building'] = 'NONE'
+            all_nodes_df.loc[list_nodes[i],'Type'] = 'NONE'
     all_nodes_df.to_csv(locator.get_optimization_network_node_list_file(network_type))
 
     print (time.clock() - t0, "seconds process time for Network summary\n")
 
-    return edge_node_df, all_nodes_df, pipe_data_df['LENGTH'] # todo: change .csv to output edge_df
+    return edge_node_df, all_nodes_df, edge_df
 
 
 def get_thermal_network_from_shapefile(locator, network_type):
@@ -1357,8 +1364,6 @@ def get_thermal_network_from_shapefile(locator, network_type):
         counter += 1
 
     edge_node_df.to_csv(locator.get_optimization_network_edge_node_matrix_file(network_type))
-    # edge_df.to_csv(locator.get_optimization_network_edge_list_file(network_type)) # TODO: delete after testing
-
     print (time.clock() - t0, "seconds process time for Network summary\n")
 
     return edge_node_df, all_nodes_df, edge_df
@@ -1385,13 +1390,13 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     node_dict = {}
     node_shapefile_df['plant'] = ''
     node_shapefile_df['consumer'] = ''
-    node_shapefile_df['dummy'] = '' # TODO: is this redundant? or should it be none?
+    node_shapefile_df['none'] = ''
     node_shapefile_df['coordinates'] = node_shapefile_df['geometry'].apply(lambda x: x.coords[0])
     for node, row in node_shapefile_df.iterrows():
         coord_node = row['geometry'].coords[0]
         if row['Type'] == "PLANT":
             node_shapefile_df.loc[node, 'plant'] = node
-        elif row['Type']  == "CONSUMER": #TODO: add prosumer!
+        elif row['Type']  == "CONSUMER": #TODO: add 'PROSUMER' by splitting nodes
             node_shapefile_df.loc[node, 'consumer'] = node
         else:
             node_shapefile_df.loc[node, 'none'] = node
@@ -1511,7 +1516,6 @@ def write_substation_temperatures_to_nodes_df(all_nodes_df, df_value):
         else:
             nodes_df[node] = np.nan  # set temperature value to nan for non-substation nodes
 
-    #nodes_df = nodes_df.sort_index(axis=1)  # sort dataframe columns by node numbers #TODO: delete when finish testing with DC
     return nodes_df
 
 
