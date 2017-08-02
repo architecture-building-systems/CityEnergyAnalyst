@@ -30,7 +30,8 @@ class Toolbox(object):
         self.alias = 'cea'
         self.tools = [OperationCostsTool, RetrofitPotentialTool, DemandTool, DataHelperTool, BenchmarkGraphsTool,
                       OperationTool, EmbodiedTool, MobilityTool, SolarTechnologyTool,
-                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool, DbfToExcelTool, ExcelToDbfTool]
+                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool, DbfToExcelTool, ExcelToDbfTool,
+                      ExtractReferenceCaseTool]
 
 class OperationCostsTool(object):
     def __init__(self):
@@ -1204,3 +1205,27 @@ class DbfToExcelTool(object):
         output_path = parameters[1].valueAsText
 
         run_cli(None, 'dbf-to-excel', '--input-path', input_path, '--output-path', output_path)
+
+
+class ExtractReferenceCaseTool(object):
+    """Extract the built-in reference case to a specified folder"""
+    def __init__(self):
+        self.label = 'Extract reference case'
+        self.description = 'Extract sample reference case to folder'
+        self.canRunInBackground = False
+        self.category = 'Utilities'
+
+    def getParameterInfo(self):
+        output_path = arcpy.Parameter(
+            displayName="Extract to folder",
+            name="output_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        return [output_path]
+
+    def execute(self,parameters, _):
+        output_path = parameters[0].valueAsText
+
+        run_cli(None, 'extract-reference-case', '--to', output_path)
