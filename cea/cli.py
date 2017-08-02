@@ -371,6 +371,21 @@ def sensitivity_demand_samples(args):
                                                                       sampler_parameters=sampler_parameters,
                                                                       samples_folder=args.samples_folder)
 
+def sensitivity_demand_simulate(args):
+    """Run the sensitivity demand simulate script"""
+    import numpy as np
+    import cea.analysis.sensitivity.sensitivity_demand_simulate
+
+    # save output parameters
+    np.save(os.path.join(args.samples_folder, 'output_parameters.npy'), np.array(args.output_parameters))
+
+    cea.analysis.sensitivity.sensitivity_demand_simulate.simulate_demand_batch(sample_index=args.sample_index,
+                                                                               batch_size=args.num_simulations,
+                                                                               samples_folder=args.samples_folder,
+                                                                               scenario=args.scenario_path,
+                                                                               simulation_folder=args.simulation_folder,
+                                                                               weather=args.weather_path,
+                                                                               output_parameters=args.output_parameters)
 
 def main():
     """Parse the arguments and run the program."""
@@ -597,6 +612,23 @@ def main():
     sensitivity_demand_samples_parser.add_argument('--num-levels', help='Number of grid levels for Morris method',
                                                    required=False)
     sensitivity_demand_samples_parser.set_defaults(func=sensitivity_demand_samples)
+
+    sensitivity_demand_simulate_parser = subparsers.add_parser('sensitivity-demand-simulate',
+                                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    sensitivity_demand_simulate_parser.add_argument('--scenario-path', help='Path to scenario to analyze',
+                                                    required=True)
+    sensitivity_demand_simulate_parser.add_argument('--weather-path', help='Path to weather file', required=True)
+    sensitivity_demand_simulate_parser.add_argument('--samples-folder', help='Folder where samples are stored',
+                                                   required=True)
+    sensitivity_demand_simulate_parser.add_argument('--simulation-folder', help='Folder to copy the reference case to '
+                                                                               'for simulation', required=True)
+    sensitivity_demand_simulate_parser.add_argument('--num-simulations', help='Number of simulations to perform',
+                                                   type=int, required=True)
+    sensitivity_demand_simulate_parser.add_argument('--sample-index', help='Zero-based index into the samples list to'
+                                                                          'simulate', type=int, required=True)
+    sensitivity_demand_simulate_parser.add_argument('--output-parameters', help='Output parameters for sensitivity '
+                                                                               'analysis', required=True)
+    sensitivity_demand_simulate_parser.set_defaults(func=sensitivity_demand_simulate)
 
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)
