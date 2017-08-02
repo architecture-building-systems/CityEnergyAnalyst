@@ -344,17 +344,30 @@ def dbf_to_excel(args):
 
 
 def sensitivity_demand_samples(args):
-    """Run the sensitivitz demand samples script"""
+    """Run the sensitivity demand samples script"""
     import cea.analysis.sensitivity.sensitivity_demand_samples
+
     sampler_parameters = {}
     if args.method == 'morris':
-        sampler_parameters['grid_jump'] = args.grid_jump
-        sampler_parameters['num_levels'] = args.num_levels
+        sampler_parameters['grid_jump'] = int(args.grid_jump)
+        sampler_parameters['num_levels'] = int(args.num_levels)
     elif args.method == 'sobol':
-        sampler_parameters['calc_second_order'] = args.calc_second_order
+        if args.calc_second_order == 'True':
+            sampler_parameters['calc_second_order'] = True
+        else:
+            sampler_parameters['calc_second_order'] = False
+
+    variable_groups = []
+
+    if args.envelope_flag == 'True':
+        variable_groups.append('ENVELOPE')
+    if args.indoor_comfort_flag == 'True':
+        variable_groups.append('INDOOR_COMFORT')
+    if args.internal_loads_flag == 'True':
+        variable_groups.append('INTERNAL_LOADS')
 
     cea.analysis.sensitivity.sensitivity_demand_samples.run_as_script(method=args.method, num_samples=args.num_samples,
-                                                                      variable_groups=args.variable_groups,
+                                                                      variable_groups=variable_groups,
                                                                       sampler_parameters=sampler_parameters,
                                                                       samples_folder=args.samples_folder)
 
@@ -572,10 +585,13 @@ def main():
     sensitivity_demand_samples_parser.add_argument('--method', help='Sampling method', required=True)
     sensitivity_demand_samples_parser.add_argument('--num-samples', help='Number of samples', type=int, required=True)
     sensitivity_demand_samples_parser.add_argument('--samples-folder', help='Folder to store samples', required=True)
-    sensitivity_demand_samples_parser.add_argument('--variable-groups', help='Groups of variables to be included',
-                                                   type=list, required=True)
+    sensitivity_demand_samples_parser.add_argument('--envelope-flag', help='Flag for envelope variables', required=True)
+    sensitivity_demand_samples_parser.add_argument('--indoor-comfort-flag', help='Flag for indoor comfort variables',
+                                                   required=True)
+    sensitivity_demand_samples_parser.add_argument('--internal-loads-flag', help='Flag for internal load variables',
+                                                   required=True)
     sensitivity_demand_samples_parser.add_argument('--calc-second-order', help='Whether Sobol second order '
-                                                                               'sensitivities are  included',
+                                                                               'sensitivities are included',
                                                    required=False)
     sensitivity_demand_samples_parser.add_argument('--grid-jump', help='Grid jump for Morris method', required=False)
     sensitivity_demand_samples_parser.add_argument('--num-levels', help='Number of grid levels for Morris method',
