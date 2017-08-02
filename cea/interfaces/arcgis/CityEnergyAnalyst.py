@@ -1174,16 +1174,15 @@ class SensitivityDemandSamplesTool(object):
         num_samples = int(parameters[1].valueAsText)
         # variable groups
         variables = parameters[2].values
-        variable_groups = []
+        envelope_flag = False
+        indoor_comfort_flag = False
+        internal_loads_flag = False
         if 'Envelope variables' in variables:
-            variable_groups.append('ENVELOPE')
-        elif 'Indoor comfort variables' in variables:
-            variable_groups.append('INDOOR_COMFORT')
-        elif 'Internal load variables' in variables:
-            variable_groups.append('INTERNAL_LOADS')
-        elif 'Economic variables' in variables:
-            variable_groups.append('ECONOMIC')
-        # TODO: variable_groups being passed as a string, not a list!
+            envelope_flag = True
+        if 'Indoor comfort variables' in variables:
+            indoor_comfort_flag = True
+        if 'Internal load variables' in variables:
+            internal_loads_flag = True
 
         samples_folder = parameters[6].valueAsText
 
@@ -1198,7 +1197,8 @@ class SensitivityDemandSamplesTool(object):
             raise
 
         args = [None, 'sensitivity-demand-samples', '--method', method, '--num-samples', num_samples,
-                '--samples-folder', samples_folder, '--variable-groups', variable_groups]
+                '--samples-folder', samples_folder, '--envelope-flag', envelope_flag, '--indoor-comfort-flag',
+                indoor_comfort_flag, '--internal-loads-flag', internal_loads_flag]
 
         if method == 'sobol':
             args.append('--calc-second-order')
