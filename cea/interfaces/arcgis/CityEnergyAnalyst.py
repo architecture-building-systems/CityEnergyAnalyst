@@ -1167,6 +1167,7 @@ class ExcelToDbfTool(object):
             parameterType="Required",
             direction="Output")
         output_path.filter.list = ['dbf']
+        return [input_path, output_path]
 
     def execute(self, parameters, _):
         input_path = parameters[0].valueAsText
