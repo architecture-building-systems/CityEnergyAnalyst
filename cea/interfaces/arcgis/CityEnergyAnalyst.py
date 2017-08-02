@@ -1304,6 +1304,8 @@ class SensitivityDemandSimulateTool(object):
 
         # num_simulations, sample_index
         samples_folder = parameters[2].valueAsText
+        num_simulations = parameters[4]
+        sample_index = parameters[5]
         if samples_folder is None:
             return
         elif not os.path.exists(samples_folder):
@@ -1315,11 +1317,11 @@ class SensitivityDemandSimulateTool(object):
                 parameters[2].setErrorMessage('Samples file not found in %s' % samples_folder)
                 return
             else:
-                # num_simulations
-                parameters[4].enabled = True
-                parameters[4].value = np.load(os.path.join(samples_folder,'samples.npy')).shape[0]
-                # sample_index
-                parameters[5].enabled = True
+                if not num_simulations.enabled:
+                    # only overwrite on first try
+                    num_simulations.enabled = True
+                    num_simulations.value = np.load(os.path.join(samples_folder,'samples.npy')).shape[0]
+                    sample_index.enabled = True
                 return
 
     def updateMessages(self, parameters):
@@ -1330,10 +1332,6 @@ class SensitivityDemandSimulateTool(object):
         elif not os.path.exists(scenario_path):
             parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
-        elif not os.path.exists(get_radiation(scenario_path)):
-            parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
-        elif not os.path.exists(get_surface_properties(scenario_path)):
-            parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
 
         # samples_folder
         samples_folder = parameters[2].valueAsText
