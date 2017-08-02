@@ -187,7 +187,7 @@ def main():
     """
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--sample-index', help='Zero-based index into the samples list so simulate', type=int)
+    parser.add_argument('-i', '--sample-index', help='Zero-based index into the samples list to simulate', type=int)
     parser.add_argument('-n', '--number-of-simulations', type=int, default=1,
                         help='number of simulations to perform, default 1')
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder (required)', required=True)
