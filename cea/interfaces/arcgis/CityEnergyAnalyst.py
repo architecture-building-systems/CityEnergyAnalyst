@@ -1368,7 +1368,7 @@ class SensitivityDemandSimulateTool(object):
         simulation_folder = parameters[3].valueAsText
 
         # num_simulations
-        num_simulations = int(parameters[4].value) - 1
+        num_simulations = int(parameters[4].value)
 
         # sample_index
         sample_index = int(parameters[5].value) - 1
