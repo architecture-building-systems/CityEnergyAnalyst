@@ -28,7 +28,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def thermal_network_main(locator, gv, network_type, source):
+def thermal_network_main(locator, gv, network_type, source, set_diameter):
     """
     This function performs thermal and hydraulic calculation of a "well-defined" network, namely, the plant/consumer
     substations, piping routes and the pipe properties (length/diameter/heat transfer coefficient) are already 
@@ -129,12 +129,12 @@ def thermal_network_main(locator, gv, network_type, source):
     ## assign pipe properties
     # calculate maximum edge mass flow
     edge_mass_flow_df_kgs, max_edge_mass_flow_df_kgs = calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands,
-                                                                      edge_node_df, gv, locator, substations_HEX_specs,
-                                                                      t_target_supply_C, network_type)
+                                                                          edge_node_df, gv, locator, substations_HEX_specs,
+                                                                          t_target_supply_C, network_type)
 
 
     # assign pipe id/od according to maximum edge mass flow
-    pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df_kgs, locator, gv)
+    pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df_kgs, locator, gv,set_diameter, edge_df)
     # merge pipe properties to edge_df and then output as .csv
     edge_df = edge_df.merge(pipe_properties_df.T, left_index=True, right_index=True)
     edge_df.to_csv(locator.get_optimization_network_edge_list_file(network_type))
@@ -154,7 +154,7 @@ def thermal_network_main(locator, gv, network_type, source):
     pressure_loss_system = []
 
 
-    for t in range(50):
+    for t in range(8760):
 
         print('calculating network thermal hydraulic properties... time step', t)
         timer = time.clock()
@@ -264,7 +264,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df):
     return mass_flow_edge
 
 
-def assign_pipes_to_edges(mass_flow_df, locator, gv):
+def assign_pipes_to_edges(mass_flow_df, locator, gv, set_diameter, edge_df):
     """
     This function assigns pipes from the catalog to the network for a network with unspecified pipe properties.
     Pipes are assigned based on each edge's minimum and maximum required flow rate. Assuming max velocity for pipe
@@ -284,19 +284,29 @@ def assign_pipes_to_edges(mass_flow_df, locator, gv):
 
     # import pipe catalog from Excel file
     pipe_catalog = pd.read_excel(locator.get_thermal_networks(),sheetname=['PIPING CATALOG'])['PIPING CATALOG']
-    pipe_catalog['Vdot_min_m3s'] = pipe_catalog['Vdot_min_m3s'] * gv.Pwater
-    pipe_catalog['Vdot_max_m3s'] = pipe_catalog['Vdot_max_m3s'] * gv.Pwater
+    pipe_catalog['mdot_min_kgs'] = pipe_catalog['Vdot_min_m3s'] * gv.Pwater
+    pipe_catalog['mdot_max_kgs'] = pipe_catalog['Vdot_max_m3s'] * gv.Pwater
     pipe_properties_df = pd.DataFrame(data=None, index=pipe_catalog.columns.values, columns=mass_flow_df.columns.values)
-    for pipe in mass_flow_df:
-        pipe_found = False
-        i = 0
-        t0 = time.clock()
-        while pipe_found == False:
-            if np.amax(np.absolute(mass_flow_df[pipe].values)) <= pipe_catalog['Vdot_max_m3s'][i] or i == len(pipe_catalog):
-                pipe_properties_df[pipe] = np.transpose(pipe_catalog[:][i:i+1].values)
-                pipe_found = True
-            else:
-                i += 1
+    if set_diameter:
+        for pipe in mass_flow_df:
+            pipe_found = False
+            i = 0
+            t0 = time.clock()
+            while pipe_found == False:
+                if np.amax(np.absolute(mass_flow_df[pipe].values)) <= pipe_catalog['mdot_max_kgs'][i] or i == len(pipe_catalog):
+                    pipe_properties_df[pipe] = np.transpose(pipe_catalog[:][i:i+1].values)
+                    pipe_found = True
+                else:
+                    i += 1
+    else:
+        for pipe, row in edge_df.iterrows():
+            index = pipe_catalog.Pipe_DN[pipe_catalog.Pipe_DN == row['Pipe_DN']].index
+            if len(index) == 0: # there is not match inthe pipecatalog
+                raise ValueError('A very specific bad thing happened!: One or more of the pipes diameters you indicated'
+                                 'are not in the pipe catalog!, please make sure your input network match the piping catalog,'
+                                 'otherwise :P')
+            pipe_properties_df[pipe] = np.transpose(pipe_catalog.loc[index].values)
+            print("e")
 
     return pipe_properties_df
 
@@ -484,42 +494,42 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     print('start calculating edge mass flow...')
 
     t0 = time.clock()
-    for t in range(8760):
-        print('\n calculating edge mass flow... time step', t)
-
-        # set to the highest value in the network and assume no loss within the network
-        T_substation_supply = t_target_supply.ix[t].max() + 273.15  # in [K]
-
-        # calculate substation flow rates and return temperatures
-        if network_type == 'DH' or (network_type == 'DC' and math.isnan(T_substation_supply) is False):
-            T_return_all, \
-                mdot_all = substation.substation_return_model_main(locator, gv, building_names, buildings_demands,
-                                                                   substations_HEX_specs, T_substation_supply, t,
-                                                                   network_type,
-                                                                   t_flag = True)
-            # t_flag = True: same temperature for all nodes
-        else:
-            T_return_all = np.full(building_names.size,T_substation_supply).T
-            mdot_all = pd.DataFrame(data=np.zeros(len(building_names)), index=building_names.values).T
-
-        # write consumer substation required flow rate to nodes
-        required_flow_rate_df = write_substation_massflows_to_nodes_df(all_nodes_df, mdot_all)
-        # (1 x n)
-
-        # solve mass flow rates on edges
-        edge_mass_flow_df[:][t:t + 1] = calc_mass_flow_edges(edge_node_df, required_flow_rate_df, all_nodes_df)
-        node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values
-
-    # create csv file to store the nominal edge mass flow results
-    edge_mass_flow_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'NominalEdgeMassFlow_' +
-                             network_type + '.csv')
-    node_mass_flow_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'Node_MassFlow_' +
-                             network_type + '.csv')
-    print (time.clock() - t0, "seconds process time for edge mass flow calculation\n")
+    # for t in range(8760):
+    #     print('\n calculating edge mass flow... time step', t)
+    #
+    #     # set to the highest value in the network and assume no loss within the network
+    #     T_substation_supply = t_target_supply.ix[t].max() + 273.15  # in [K]
+    #
+    #     # calculate substation flow rates and return temperatures
+    #     if network_type == 'DH' or (network_type == 'DC' and math.isnan(T_substation_supply) is False):
+    #         T_return_all, \
+    #             mdot_all = substation.substation_return_model_main(locator, gv, building_names, buildings_demands,
+    #                                                                substations_HEX_specs, T_substation_supply, t,
+    #                                                                network_type,
+    #                                                                t_flag = True)
+    #         # t_flag = True: same temperature for all nodes
+    #     else:
+    #         T_return_all = np.full(building_names.size,T_substation_supply).T
+    #         mdot_all = pd.DataFrame(data=np.zeros(len(building_names)), index=building_names.values).T
+    #
+    #     # write consumer substation required flow rate to nodes
+    #     required_flow_rate_df = write_substation_massflows_to_nodes_df(all_nodes_df, mdot_all)
+    #     # (1 x n)
+    #
+    #     # solve mass flow rates on edges
+    #     edge_mass_flow_df[:][t:t + 1] = calc_mass_flow_edges(edge_node_df, required_flow_rate_df, all_nodes_df)
+    #     node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values
+    #
+    # # create csv file to store the nominal edge mass flow results
+    # edge_mass_flow_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'NominalEdgeMassFlow_' +
+    #                          network_type + '.csv')
+    # node_mass_flow_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'Node_MassFlow_' +
+    #                          network_type + '.csv')
+    # print (time.clock() - t0, "seconds process time for edge mass flow calculation\n")
 
     ## The script below is to bypass the calculation from line 457-490, if the above calculation has been done once.
-    # edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type))
-    # del edge_mass_flow_df['Unnamed: 0']
+    edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type))
+    del edge_mass_flow_df['Unnamed: 0']
 
     # assign pipe properties based on max flow on edges
     max_edge_mass_flow = edge_mass_flow_df.max(axis=0)
@@ -1550,26 +1560,19 @@ def run_as_script(scenario_path=None):
     """
     import cea.globalvar
     import cea.inputlocator as inputlocator
-    from cea.utilities import epwreader
-    from cea.resources import geothermal
-
     gv = cea.globalvar.GlobalVariables()
 
     if scenario_path is None:
         scenario_path = gv.scenario_reference
 
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
-    # weather_file = locator.get_default_weather()
-
-    # add geothermal part of pre-processing
-    # T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
-    # gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
 
     # add options for data sources: heating or cooling network, csv or shapefile
     network_type = ['DH', 'DC'] # set to either 'DH' or 'DC'
     source = ['csv', 'shapefile'] # set to csv or shapefile
+    set_diameter = True # this does a rule of max and mn flow to set a diameter. if false it takes the input diamters
 
-    thermal_network_main(locator, gv, network_type[0], source[1])
+    thermal_network_main(locator, gv, network_type[0], source[1], set_diameter)
     print ('test thermal_network_main() succeeded')
 
 if __name__ == '__main__':
