@@ -105,23 +105,30 @@ def task_run_unit_tests():
 def task_download_reference_cases():
     """Download the (current) state of the reference-case-zug"""
     def download_reference_cases():
-        if os.path.exists(ARCHIVE_PATH):
-            os.remove(ARCHIVE_PATH)
-        r = requests.get(REPOSITORY_URL % REPOSITORY_NAME, auth=get_github_auth())
-        assert r.ok, 'could not download the reference case'
-        with open(ARCHIVE_PATH, 'wb') as f:
-            f.write(r.content)
-
-        # extract the reference cases to the temp folder
         if os.path.exists(REFERENCE_CASE_PATH):
             shutil.rmtree(REFERENCE_CASE_PATH)
-        archive = zipfile.ZipFile(ARCHIVE_PATH)
-        archive.extractall(REFERENCE_CASE_PATH)
+        if not _reference_cases or ('open' in {'open'} and len({'open'}) == 1):
+            # handle case of no reference cases selected or only 'open' selected
+            # (just use the built-in reference case)
+            # extract the reference-case-open to the folder
+            import cea.examples
+            archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+            archive.extractall(os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME))
+        else:
+            if os.path.exists(ARCHIVE_PATH):
+                os.remove(ARCHIVE_PATH)
+            r = requests.get(REPOSITORY_URL % REPOSITORY_NAME, auth=get_github_auth())
+            assert r.ok, 'could not download the reference case'
+            with open(ARCHIVE_PATH, 'wb') as f:
+                f.write(r.content)
+            # extract the reference cases to the temp folder
+            archive = zipfile.ZipFile(ARCHIVE_PATH)
+            archive.extractall(REFERENCE_CASE_PATH)
 
-        # extract the reference-case-open to the folder
-        import cea.examples
-        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
-        archive.extractall(os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME))
+            # extract the reference-case-open to the folder
+            import cea.examples
+            archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+            archive.extractall(os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME))
 
     return {
         'actions': [download_reference_cases],
