@@ -134,7 +134,7 @@ def thermal_network_main(locator, gv, network_type, source, set_diameter):
 
 
     # assign pipe id/od according to maximum edge mass flow
-    pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df_kgs, locator, gv,set_diameter, edge_df)
+    pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df_kgs, locator, gv,set_diameter, edge_df, network_type)
     # merge pipe properties to edge_df and then output as .csv
     edge_df = edge_df.merge(pipe_properties_df.T, left_index=True, right_index=True)
     edge_df.to_csv(locator.get_optimization_network_edge_list_file(network_type))
@@ -264,7 +264,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df):
     return mass_flow_edge
 
 
-def assign_pipes_to_edges(mass_flow_df, locator, gv, set_diameter, edge_df):
+def assign_pipes_to_edges(mass_flow_df, locator, gv, set_diameter, edge_df, network_type):
     """
     This function assigns pipes from the catalog to the network for a network with unspecified pipe properties.
     Pipes are assigned based on each edge's minimum and maximum required flow rate. Assuming max velocity for pipe
@@ -298,6 +298,10 @@ def assign_pipes_to_edges(mass_flow_df, locator, gv, set_diameter, edge_df):
                     pipe_found = True
                 else:
                     i += 1
+        # at the end save back the edges dataframe in the shapefile with the new pipe diameters
+        network_edges = gpd.read_file(locator.get_network_layout_edges_shapefile(network_type))
+        network_edges['Pipe_DN'] = pipe_properties_df.loc['Pipe_DN'].values
+        network_edges.to_file(locator.get_network_layout_edges_shapefile(network_type))
     else:
         for pipe, row in edge_df.iterrows():
             index = pipe_catalog.Pipe_DN[pipe_catalog.Pipe_DN == row['Pipe_DN']].index
@@ -306,7 +310,6 @@ def assign_pipes_to_edges(mass_flow_df, locator, gv, set_diameter, edge_df):
                                  'are not in the pipe catalog!, please make sure your input network match the piping catalog,'
                                  'otherwise :P')
             pipe_properties_df[pipe] = np.transpose(pipe_catalog.loc[index].values)
-            print("e")
 
     return pipe_properties_df
 
