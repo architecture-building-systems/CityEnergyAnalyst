@@ -387,6 +387,14 @@ def sensitivity_demand_simulate(args):
                                                                                weather=args.weather_path,
                                                                                output_parameters=args.output_parameters)
 
+def sensitivity_demand_analyze(args):
+    """Run the sensitivity demand analyze script"""
+    import numpy as np
+    import cea.analysis.sensitivity.sensitivity_demand_analyze
+
+    cea.analysis.sensitivity.sensitivity_demand_analyze.analyze_sensitivity(samples_path=args.samples_path,
+                                                                            temporal_scale=args.temporal_scale)
+
 def main():
     """Parse the arguments and run the program."""
     import argparse
@@ -629,6 +637,15 @@ def main():
     sensitivity_demand_simulate_parser.add_argument('--output-parameters', help='Output parameters for sensitivity '
                                                                                'analysis', required=True)
     sensitivity_demand_simulate_parser.set_defaults(func=sensitivity_demand_simulate)
+
+    sensitivity_demand_analyze_parser = subparsers.add_parser('sensitivity-demand-analyze',
+                                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    sensitivity_demand_analyze_parser.add_argument('--samples-path', help='Folder to place the output files '
+                                                                            '(samples.npy, problem.pickle) in',
+                                                    required=True)
+    sensitivity_demand_analyze_parser.add_argument('--temporal-scale', help='Temporal scale of analysis '
+                                                                            '(monthly or yearly)', required=True)
+    sensitivity_demand_analyze_parser.set_defaults(func=sensitivity_demand_analyze)
 
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)
