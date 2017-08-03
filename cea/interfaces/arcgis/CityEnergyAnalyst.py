@@ -1276,17 +1276,9 @@ class SensitivityDemandSimulateTool(object):
             parameterType="Required",
             multiValue=True,
             direction="Input")
-        output_parameters.filter.list = ['Eaf_MWhyr', 'Eaf0_kW', 'Ealf_MWhyr', 'Ealf0_kW', 'Eauxf_cs_MWhyr',
-                                         'Eauxf_cs0_kW', 'Eauxf_fw_MWhyr', 'Eauxf_fw0_kW', 'Eauxf_hs_MWhyr',
-                                         'Eauxf_hs0_kW', 'Eauxf_MWhyr', 'Eauxf_ve_MWhyr', 'Eauxf_ve0_kW',
-                                         'Eauxf_ww_MWhyr', 'Eauxf_ww0_kW', 'Eauxf0_kW', 'Ecaf_MWhyr', 'Ecaf0_kW',
-                                         'Edataf_MWhyr', 'Edataf0_kW', 'Ef_MWhyr', 'Ef0_kW', 'Elf_MWhyr', 'Elf0_kW',
-                                         'Eprof_MWhyr', 'Eprof0_kW', 'Eref_MWhyr', 'Eref0_kW', 'Qcdataf_MWhyr',
-                                         'Qcdataf0_kW', 'QCf_MWhyr', 'QCf0_kW', 'Qcref_MWhyr', 'Qcref0_kW', 'Qcs_MWhyr',
-                                         'Qcs0_kW', 'Qcsf_lat_MWhyr', 'Qcsf_lat0_kW', 'Qcsf_MWhyr', 'Qcsf0_kW',
-                                         'QEf_MWhyr', 'QEf0_kW', 'QHf_MWhyr', 'QHf0_kW', 'Qhprof_MWhyr', 'Qhprof0_kW',
-                                         'Qhs_MWhyr', 'Qhs0_kW', 'Qhsf_lat_MWhyr', 'Qhsf_lat0_kW', 'Qhsf_MWhyr',
-                                         'Qhsf0_kW', 'Qww_MWhyr', 'Qww0_kW', 'Qwwf_MWhyr', 'Qwwf0_kW']
+        output_parameters.filter.list = ['Eauxf_MWhyr', 'Eauxf0_kW', 'Eauxf_ve_MWhyr', 'Eauxf_ve0_kW', 'Ef_MWhyr',
+                                         'Ef0_kW', 'QCf_MWhyr', 'QCf0_kW', 'Qcsf_MWhyr', 'Qcsf0_kW', 'QEf_MWhyr',
+                                         'QEf0_kW', 'QHf_MWhyr', 'QHf0_kW', 'Qhsf_MWhyr', 'Qhsf0_kW']
 
         return [scenario_path, weather_name, samples_folder, simulation_folder, num_simulations, sample_index,
                 output_parameters]
