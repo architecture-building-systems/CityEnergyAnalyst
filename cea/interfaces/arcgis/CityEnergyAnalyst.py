@@ -31,7 +31,7 @@ class Toolbox(object):
         self.tools = [OperationCostsTool, RetrofitPotentialTool, DemandTool, DataHelperTool, BenchmarkGraphsTool,
                       OperationTool, EmbodiedTool, MobilityTool, SolarTechnologyTool,
                       DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool, DbfToExcelTool, ExcelToDbfTool,
-                      SensitivityDemandSamplesTool, SensitivityDemandSimulateTool]
+                      SensitivityDemandSamplesTool, SensitivityDemandSimulateTool, SensitivityDemandAnalyzeTool]
 
 
 # Benchmarking Tools
@@ -1374,6 +1374,71 @@ class SensitivityDemandSimulateTool(object):
 
         run_cli(*args)
 
+class SensitivityDemandAnalyzeTool(object):
+    def __init__(self):
+        self.label = 'Run Analysis'
+        self.category = 'Sensitivity Analysis'
+        self.description = 'Analyze the results in the samples folder and write them out to an Excel file.'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+
+        samples_path = arcpy.Parameter(
+            displayName="Folder that contains the samples created by the Create Samples tool.",
+            name="samples_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        temporal_scale = arcpy.Parameter(
+            displayName="Temporal scale at which to do the analysis",
+            name="temporal_scale",
+            datatype="String",
+            parameterType="Required",
+            direction="Input")
+        temporal_scale.filter.list = ['Yearly', 'Monthly']
+        temporal_scale.enabled = True
+
+        return [samples_path, temporal_scale]
+
+    def updateMessages(self, parameters):
+        # samples_path
+        samples_path = parameters[0].valueAsText
+        if samples_path is None:
+            return
+        elif not os.path.exists(samples_path):
+            parameters[0].setErrorMessage('Samples folder not found: %s' % samples_path)
+            return
+        else:
+            samples_file = os.path.join(samples_path, 'samples.npy')
+            if not os.path.exists(samples_file):
+                parameters[2].setErrorMessage('Samples file not found in %s' % samples_path)
+                return
+            return
+
+        # temporal_scale
+        temporal_scale = parameters[1].valueAsText
+        if temporal_scale is None:
+            return
+        if not temporal_scale not in ['Yearly', 'Monthly']:
+            parameters[1].setErrorMessage('Invalid temporal scale: %s' % temporal_scale)
+            return
+
+    def execute(self, parameters, _):
+
+        # samples_path
+        samples_path = parameters[0].valueAsText
+
+        # temporal_scale
+        temporal_scale = parameters[1].valueAsText
+        if temporal_scale == 'Yearly':
+            temporal_scale = 'yearly'
+        else:
+            temporal_scale = 'monthly'
+
+        args = [None, 'sensitivity-demand-analyze', '--samples-path', samples_path, '--temporal-scale', temporal_scale]
+
+        run_cli(*args)
 
 # Utilities Tools
 
