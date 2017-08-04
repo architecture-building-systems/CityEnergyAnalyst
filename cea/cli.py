@@ -216,7 +216,7 @@ def photovoltaic(args):
     elif args.weather_path in locator.get_weather_names():
         args.weather_path = locator.get_weather(args.weather_path)
 
-    list_buildings_names = dbfreader.dbf2df(locator.get_building_occupancy())['Name']
+    list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
     for building in list_buildings_names:
         radiation_csv = locator.get_radiation_building(building_name=building)
@@ -303,6 +303,45 @@ def retrofit_potential(args):
                                      hotwater_losses_criteria=args.hot_water_losses_threshold,
                                      cooling_losses_criteria=args.cooling_losses_threshold,
                                      emissions_operation_criteria=args.emissions_operation_threshold)
+
+def read_config(args):
+    """Read a key from a section in the configuration"""
+    import cea.config
+    import ConfigParser
+    config = cea.config.Configuration(args.scenario)
+    try:
+        print(config._parser.get(args.section, args.key))
+    except ConfigParser.NoSectionError:
+        pass
+    except ConfigParser.NoOptionError:
+        pass
+
+
+
+def write_config(args):
+    """write a value to a section/key in the configuration in the scenario folder"""
+    import cea.config
+    import ConfigParser
+    config = cea.config.Configuration(args.scenario)
+    if not config._parser.has_section(args.section):
+        config._parser.add_section(args.section)
+    config._parser.set(args.section, args.key, args.value)
+    scenario_config = os.path.join(args.scenario, 'scenario.config')
+    with open(scenario_config, 'w') as f:
+        config._parser.write(f)
+
+
+def excel_to_dbf(args):
+    """Convert an Excel file (*.xls) to a DBF file (*.dbf)"""
+    import cea.utilities.dbfreader
+    cea.utilities.dbfreader.run_as_script(args.input_path, args.output_path)
+
+
+def dbf_to_excel(args):
+    """Convert a DBF file (*.dbf) to an Excel file (*.xls)"""
+    import cea.utilities.dbfreader
+    cea.utilities.dbfreader.run_as_script(args.input_path, args.output_path)
+
 
 def main():
     """Parse the arguments and run the program."""
@@ -434,24 +473,6 @@ def main():
                                  default=False)
     heatmaps_parser.set_defaults(func=heatmaps)
 
-    test_parser = subparsers.add_parser('test', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    test_parser.add_argument('--user', help='GitHub user with access to cea-reference-case repository')
-    test_parser.add_argument('--token', help='Personal Access Token for the GitHub user')
-    test_parser.add_argument('--save', action='store_true', default=False, help='Save user and token to disk.')
-    test_parser.add_argument('--reference-cases', default=['open'], nargs='+',
-                             choices=['open', 'zug/baseline', 'zurich/baseline', 'zurich/masterplan', 'all'],
-                             help='list of reference cases to test')
-    test_parser.set_defaults(func=test)
-
-    extract_reference_case_parser = subparsers.add_parser('extract-reference-case',
-                                                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    extract_reference_case_parser.add_argument('--to', help='Folder to extract the reference case to',
-                                               default='.')
-    extract_reference_case_parser.set_defaults(func=extract_reference_case)
-
-    compile_parser = subparsers.add_parser('compile', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    compile_parser.set_defaults(func=compile)
-
     operation_costs_parser = subparsers.add_parser('operation-costs',
                                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     operation_costs_parser.set_defaults(func=operation_costs)
@@ -491,8 +512,48 @@ def main():
                                            help="threshold for thermal losses from cooling")
     retrofit_potential_parser.set_defaults(func=retrofit_potential)
 
+    test_parser = subparsers.add_parser('test', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    test_parser.add_argument('--user', help='GitHub user with access to cea-reference-case repository')
+    test_parser.add_argument('--token', help='Personal Access Token for the GitHub user')
+    test_parser.add_argument('--save', action='store_true', default=False, help='Save user and token to disk.')
+    test_parser.add_argument('--reference-cases', default=['open'], nargs='+',
+                             choices=['open', 'zug/baseline', 'zurich/baseline', 'zurich/masterplan', 'all'],
+                             help='list of reference cases to test')
+    test_parser.set_defaults(func=test)
+
+    extract_reference_case_parser = subparsers.add_parser('extract-reference-case',
+                                                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    extract_reference_case_parser.add_argument('--to', help='Folder to extract the reference case to',
+                                               default='.')
+    extract_reference_case_parser.set_defaults(func=extract_reference_case)
+
+    compile_parser = subparsers.add_parser('compile', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    compile_parser.set_defaults(func=compile)
+
+    read_config_parser = subparsers.add_parser('read-config', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    read_config_parser.add_argument('--section', help='section to read from')
+    read_config_parser.add_argument('--key', help='key to read')
+    read_config_parser.set_defaults(func=read_config)
+
+    write_config_parser = subparsers.add_parser('write-config', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    write_config_parser.add_argument('--section', help='section to write to')
+    write_config_parser.add_argument('--key', help='key to write')
+    write_config_parser.add_argument('--value', help='value to write')
+    write_config_parser.set_defaults(func=write_config)
+
+    excel_to_dbf_parser = subparsers.add_parser('excel-to-dbf', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    excel_to_dbf_parser.add_argument('--input-path', help='Excel input file path')
+    excel_to_dbf_parser.add_argument('--output-path', help='DBF output file path')
+    excel_to_dbf_parser.set_defaults(func=excel_to_dbf)
+
+    dbf_to_excel_parser = subparsers.add_parser('dbf-to-excel', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    dbf_to_excel_parser.add_argument('--input-path', help='DBF input file path')
+    dbf_to_excel_parser.add_argument('--output-path', help='Excel output file path')
+    dbf_to_excel_parser.set_defaults(func=dbf_to_excel)
+
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)
+
 
 if __name__ == '__main__':
     main()
