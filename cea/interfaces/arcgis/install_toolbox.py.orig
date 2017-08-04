@@ -32,7 +32,9 @@ def find_toolbox_src():
     Find the source path of the toolbox file (CityEnergyAnalyst.py) - hint: it is relative
     to the current file!
     """
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), 'CityEnergyAnalyst.py'))
+    toolbox_src = os.path.abspath(os.path.join(os.path.dirname(__file__), 'CityEnergyAnalyst.py'))
+    print('Copying toolbox from source: %s' % toolbox_src)
+    return toolbox_src
 
 
 def find_toolbox_destination():
@@ -77,6 +79,7 @@ def get_arcgis_version():
 
     returns the version string as ``"major.minor"``, so ``"10.4"`` or ``"10.5"``
     """
+<<<<<<< HEAD
     import _winreg
     registry = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
     try:
@@ -86,6 +89,12 @@ def get_arcgis_version():
     value, _ = _winreg.QueryValueEx(key, 'RealVersion')
     return '.'.join(value.split('.')[:2])
 
+=======
+    toolbox_dst = os.path.join(os.path.expandvars(r"%APPDATA%\ESRI\Desktop10.4\ArcToolbox\My Toolboxes"),
+                        'City Energy Analyst.pyt')
+    print('Copying toolbox to destination: %s' % toolbox_dst)
+    return toolbox_dst
+>>>>>>> refs/remotes/origin/master
 
 
 if __name__ == '__main__':

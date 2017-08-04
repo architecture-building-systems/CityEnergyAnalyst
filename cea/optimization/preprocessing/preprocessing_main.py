@@ -57,7 +57,8 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     # GET ENERGY POTENTIALS
     # geothermal
     T_ambient = epwreader.epw_reader(weather_file)['drybulb_C']
-    gv.ground_temperature = geothermal.calc_ground_temperature(T_ambient.values, gv)
+    network_depth_m = gv.NetworkDepth # [m]
+    gv.ground_temperature = geothermal.calc_ground_temperature(locator, T_ambient.values, network_depth_m)
 
     # solar
     print "Solar features extraction"
