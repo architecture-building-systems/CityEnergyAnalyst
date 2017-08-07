@@ -203,7 +203,7 @@ def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
     # do the interpolation
     x1 = [0.4999, 0.75, 1.1, 1.5, 2.2, 3, 4, 5.5, 7.5, 11, 15, 18.5, 22, 30, 37, 45, 55, 75, 90, 110, 132, 160, 200, 220, 260, 315, 335, 375] # Nominal load in kW
     y1 = [720, 680, 585, 425, 330, 275, 220, 195, 180, 150, 145, 143, 135, 120, 115, 114, 110, 100, 90, 88, 85, 80, 75, 74, 74, 73, 72, 71.9] # efficiency in %
-    InvC_mot= interp1d(x, y, kind='cubic')
+    InvC_mot= interp1d(x, y, kind='cubic')  # TODO: read formula
     InvC_VFC = interp1d(x1, y1, kind='cubic')
 
     InvC = 0.0

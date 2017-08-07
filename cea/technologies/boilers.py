@@ -210,7 +210,7 @@ def calc_Cinv_boiler(Q_design, Q_annual, gV):
     :rtype InvCa : float
     :returns InvCa: Annualized investment costs in CHF/a including Maintenance Cost
     """
-    # TODO[SH]: check source
+    # TODO[SH]: add source from Tim's thesis
     if Q_design >0:
         InvC = 28000 # after A+W
 
