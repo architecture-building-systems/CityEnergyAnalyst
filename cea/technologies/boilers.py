@@ -138,7 +138,7 @@ def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelT
     return C_boil_therm, C_boil_per_Wh, Q_primary_W, E_aux_Boiler_req_W
 
 
-def calc_Cop_boiler(Q_load, Q_design, T_return_to_boiler):
+def calc_Cop_boiler(Q_load_W, Q_design_W, T_return_to_boiler_K):
 
     """
     This function calculates efficiency for operation of condensing Boilers based on LHV.
@@ -148,14 +148,14 @@ def calc_Cop_boiler(Q_load, Q_design, T_return_to_boiler):
         http://www.greenshootscontrols.net/?p=153
 
 
-    :param Q_load: Load of time step
-    :type Q_load: float
+    :param Q_load_W: Load of time step
+    :type Q_load_W: float
 
-    :type Q_design: float
-    :param Q_design: Design Load of Boiler
+    :type Q_design_W: float
+    :param Q_design_W: Design Load of Boiler
 
-    :type T_return_to_boiler : float
-    :param T_return_to_boiler: Return Temperature of the network to the boiler [K]
+    :type T_return_to_boiler_K : float
+    :param T_return_to_boiler_K: Return Temperature of the network to the boiler [K]
 
 
     :retype boiler_eff: float
@@ -173,8 +173,8 @@ def calc_Cop_boiler(Q_load, Q_design, T_return_to_boiler):
     eff_of_phi = interp1d(x1, y1, kind='cubic')
 
     # get input variables
-    if Q_design > 0:
-        phi = float(Q_load) / float(Q_design)
+    if Q_design_W > 0:
+        phi = float(Q_load_W) / float(Q_design_W)
 
     else:
         phi = 0
@@ -184,9 +184,9 @@ def calc_Cop_boiler(Q_load, Q_design, T_return_to_boiler):
         #raise model error!!
 
 
-    T_return = T_return_to_boiler - 273
+    T_return_C = T_return_to_boiler_K - 273
     eff_score = eff_of_phi(phi) / eff_of_phi(1)
-    boiler_eff = (eff_score * eff_of_T_return(T_return) )/ 100.0
+    boiler_eff = (eff_score * eff_of_T_return(T_return_C) )/ 100.0
 
     return boiler_eff
 
@@ -194,16 +194,16 @@ def calc_Cop_boiler(Q_load, Q_design, T_return_to_boiler):
 
 # investment and maintenance costs
 
-def calc_Cinv_boiler(Q_design, Q_annual, gV):
+def calc_Cinv_boiler(Q_design_W, Q_annual_W, gV):
     """
     Calculates the annual cost of a boiler (based on A+W cost of oil boilers) [CHF / a]
     and Faz. 2012 data
 
-    :type Q_design : float
-    :param Q_design: Design Load of Boiler in [W]
+    :type Q_design_W : float
+    :param Q_design_W: Design Load of Boiler in [W]
 
-    :type Q_annual : float
-    :param Q_annual: Annual thermal load required from Boiler in [Wh]
+    :type Q_annual_W : float
+    :param Q_annual_W: Annual thermal load required from Boiler in [Wh]
 
     :param gV: globalvar.py
 
@@ -211,23 +211,23 @@ def calc_Cinv_boiler(Q_design, Q_annual, gV):
     :returns InvCa: Annualized investment costs in CHF/a including Maintenance Cost
     """
     # TODO[SH]: check source
-    if Q_design >0:
+    if Q_design_W >0:
         InvC = 28000 # after A+W
 
-        if Q_design <= 90000 and Q_design >= 28000:
-            InvC_exkl_MWST = 28000 + 0.275 * (Q_design - 28000) # linear interpolation of A+W data
+        if Q_design_W <= 90000 and Q_design_W >= 28000:
+            InvC_exkl_MWST = 28000 + 0.275 * (Q_design_W - 28000) # linear interpolation of A+W data
             InvC = (gV.MWST + 1) * InvC_exkl_MWST
 
-        elif Q_design > 90000 and Q_design  <= 320000: # 320kW = maximum Power of conventional Gas Boiler,
-            InvC = 45000 + 0.11 * (Q_design - 90000)
+        elif Q_design_W > 90000 and Q_design_W  <= 320000: # 320kW = maximum Power of conventional Gas Boiler,
+            InvC = 45000 + 0.11 * (Q_design_W - 90000)
 
         InvCa =  InvC * gV.Boiler_i * (1+ gV.Boiler_i) ** gV.Boiler_n / ((1+gV.Boiler_i) ** gV.Boiler_n - 1)
 
-        if Q_design > 320000: # 320kW = maximum Power of conventional Gas Boiler
-            InvCa = gV.EURO_TO_CHF * (84000 + 14 * Q_design / 1000) # after Faz.2012
+        if Q_design_W > 320000: # 320kW = maximum Power of conventional Gas Boiler
+            InvCa = gV.EURO_TO_CHF * (84000 + 14 * Q_design_W / 1000) # after Faz.2012
 
-        Maint_C_annual = gV.Boiler_C_maintainance_faz * Q_annual / 1E6 * gV.EURO_TO_CHF # 3.5 euro per MWh_th FAZ 2013
-        Labour_C = gV.Boiler_C_labour * Q_annual / 1E6 * gV.EURO_TO_CHF # approx 4 euro per MWh_th
+        Maint_C_annual = gV.Boiler_C_maintainance_faz * Q_annual_W / 1E6 * gV.EURO_TO_CHF # 3.5 euro per MWh_th FAZ 2013
+        Labour_C = gV.Boiler_C_labour * Q_annual_W / 1E6 * gV.EURO_TO_CHF # approx 4 euro per MWh_th
 
         InvCa += Maint_C_annual + Labour_C
 

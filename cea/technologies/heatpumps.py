@@ -21,18 +21,18 @@ __status__ = "Production"
 #operation costs
 #============================
 
-def calc_Cop_GHP(mdot, tsup, tret, tground, gV):
+def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, tground_K, gV):
     """
     For the operation of a Geothermal heat pump (GSHP) supplying DHN.
 
-    :type mdot : float
-    :param mdot: supply mass flow rate to the DHN
-    :type tsup : float
-    :param tsup: supply temperature to the DHN (hot)
-    :type tret : float
-    :param tret: return temeprature from the DHN (cold)
-    :type tground : float
-    :param tground: ground temperature
+    :type mdot_kgpers : float
+    :param mdot_kgpers: supply mass flow rate to the DHN
+    :type T_DH_sup_K : float
+    :param T_DH_sup_K: supply temperature to the DHN (hot)
+    :type T_re_K : float
+    :param T_re_K: return temeprature from the DHN (cold)
+    :type tground_K : float
+    :param tground_K: ground temperature
     :param gV: globalvar.py
 
     :rtype wdot_el : float
@@ -49,31 +49,31 @@ def calc_Cop_GHP(mdot, tsup, tret, tground, gV):
     ..[C. Montagud et al., 2014] C. Montagud, J.M. Corberan, A. Montero (2014). In situ optimization methodology for
     the water circulation pump frequency of ground source heat pump systems. Energy and Buildings
     """
-    tsup2 = tsup      # tsup2 = tsup, if all load can be provided by the HP
+    tsup2_K = T_DH_sup_K      # tsup2 = tsup, if all load can be provided by the HP
 
     # calculate condenser temperature
-    tcond = tsup + gV.HP_deltaT_cond
-    if tcond > gV.HP_maxT_cond:
+    tcond_K = T_DH_sup_K + gV.HP_deltaT_cond
+    if tcond_K > gV.HP_maxT_cond:
         #raise ModelError
-        tcond = gV.HP_maxT_cond
-        tsup2 = tcond - gV.HP_deltaT_cond  # lower the supply temp if necessary, tsup2 < tsup if max load is not enough
+        tcond_K = gV.HP_maxT_cond
+        tsup2_K = tcond_K - gV.HP_deltaT_cond  # lower the supply temp if necessary, tsup2 < tsup if max load is not enough
 
     # calculate evaporator temperature
-    tevap = tground - gV.HP_deltaT_evap
-    COP = gV.GHP_etaex / (1- tevap/tcond)     # [O. Ozgener et al., 2005]_
+    tevap_K = tground_K - gV.HP_deltaT_evap
+    COP = gV.GHP_etaex / (1- tevap_K/tcond_K)     # [O. Ozgener et al., 2005]_
 
-    qhotdot = mdot * gV.cp * (tsup2 - tret)
-    qhotdot_missing = mdot * gV.cp * (tsup - tsup2) #calculate the missing energy if tsup2 < tsup
+    qhotdot_W = mdot_kgpers * gV.cp * (tsup2_K - T_re_K)
+    qhotdot_missing_W = mdot_kgpers * gV.cp * (T_DH_sup_K - tsup2_K) #calculate the missing energy if tsup2 < tsup
 
-    wdot = qhotdot / COP
-    wdot_el = wdot / gV.GHP_Auxratio     # compressor power [C. Montagud et al., 2014]_
+    wdot_W = qhotdot_W / COP
+    wdot_el_W = wdot_W / gV.GHP_Auxratio     # compressor power [C. Montagud et al., 2014]_
 
-    qcolddot =  qhotdot - wdot
+    qcolddot_W =  qhotdot_W - wdot_W
 
     #if qcolddot > gV.GHP_CmaxSize:
     #    raise ModelError
 
-    return wdot_el, qcolddot, qhotdot_missing, tsup2
+    return wdot_el_W, qcolddot_W, qhotdot_missing_W, tsup2_K
 
 def GHP_op_cost(mdot_kgpers, t_sup_K, t_ret_K, gV, COP):
     """
