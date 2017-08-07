@@ -184,43 +184,49 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_MassFlow.csv or DC_MassFlow.csv
         Mass flow rates at each edge in a district heating or cooling network
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network+"_MassFlow.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_MassFlow_kgs.csv")
 
     def get_optimization_network_layout_supply_temperature_file(self, network):
         """scenario/outputs/data/optimization/network/layout/DH_T_Supply.csv or DC_T_Supply.csv
         Supply temperatures at each node for each time step for a district heating or cooling network
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network+"_T_Supply.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_T_Supply_K.csv")
 
     def get_optimization_network_layout_return_temperature_file(self, network):
         """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
         Return temperatures at each node for each time step for a district heating or cooling network
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network+"_T_Return.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_T_Return_K.csv")
+
+    def get_optimization_network_layout_qloss_file(self, network):
+        """scenario/outputs/data/optimization/network/layout/DH_T_Return.csv or DC_T_Return.csv
+        Return temperatures at each node for each time step for a district heating or cooling network
+        """
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_qloss_Supply_kW.csv")
 
     def get_optimization_network_layout_supply_pressure_file(self, network):
         """scenario/outputs/data/optimization/network/layout/DH_P_Supply.csv or DC_P_Supply.csv
         Supply side pressure for each node in a district heating or cooling network at each time step
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network+"_P_Supply.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_P_Supply_Pa.csv")
 
     def get_optimization_network_layout_return_pressure_file(self, network):
         """scenario/outputs/data/optimization/network/layout/DH_P_Return.csv or DC_P_Return.csv
         Supply side pressure for each node in a district heating or cooling network at each time step
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network+"_P_Return.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_P_Return_Pa.csv")
 
     def get_optimization_network_layout_pressure_drop_file(self, network):
         """scenario/outputs/data/optimization/network/layout/DH_P_DeltaP.csv or DC_P_DeltaP.csv
         Pressure drop over an entire district heating or cooling network at each time step
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network+"_P_DeltaP.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_P_DeltaP_Pa.csv")
 
     def get_optimization_network_layout_plant_heat_requirement_file(self, network):
         """scenario/outputs/data/optimization/network/layout/DH_Plant_heat_requirement.csv or DC_Plant_heat_requirement.csv
         Heat requirement at from the plants in a district heating or cooling network
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), network+"_Plant_heat_requirement.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), network+"_Plant_heat_requirement_kW.csv")
 
     def get_optimization_network_totals_folder(self):
         """scenario/outputs/data/optimization/network/totals
@@ -308,11 +314,14 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/retrofit.csv"""
         return os.path.join(self.get_potentials_retrofit_folder(), "potential_"+name_retrofit+".csv")
 
+    def get_weather_folder(self):
+        return self._ensure_folder(self.get_input_folder(), "weather")
+
     # DATABASES
     def get_default_weather(self):
         """weather/Zug-2010.epw
         path to database of archetypes file Archetypes_properties.xlsx"""
-        return os.path.join(self.weather_path, 'Zug.epw')
+        return os.path.join(self.get_weather_folder(), 'weather.epw')
 
     def get_weather(self, name):
         """weather/{name}.epw"""
@@ -354,7 +363,7 @@ class InputLocator(object):
 
     def get_thermal_networks(self):
         """db/Systems/thermal_networks.xls"""
-        return os.path.join(self.db_path, 'Systems',  'thermal_networks.xls')
+        return os.path.join(self.db_path, 'systems',  'thermal_networks.xls')
 
     def get_data_benchmark(self):
         """databases/CH/Benchmarks/benchmark_targets.xls"""
@@ -448,11 +457,11 @@ class InputLocator(object):
 
     def get_network_layout_edges_shapefile(self, network):
         """scenario/inputs/network/DH or DC/network-edges.shp"""
-        return os.path.join(self.scenario_path, 'inputs', 'network', network, 'network-edges.shp')
+        return os.path.join(self.scenario_path, 'inputs', 'thermal-networks', network, 'network-edges.shp')
 
     def get_network_layout_nodes_shapefile(self, network):
         """scenario/inputs/network/DH or DC/network-nodes.shp"""
-        return os.path.join(self.scenario_path, 'inputs', 'network', network, 'network-nodes.shp')
+        return os.path.join(self.scenario_path, 'inputs', 'thermal-networks', network, 'network-nodes.shp')
 
     def get_network_layout_pipes_csv_file(self, network):
         """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv or DC_PipesData.csv
