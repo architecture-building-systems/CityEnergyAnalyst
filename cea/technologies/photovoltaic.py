@@ -714,7 +714,7 @@ def calc_Cinv_pv(P_peak):
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
     if P_peak < 10:
-        InvCa = 3500.07 * P_peak /20  #FIXME: should be amortized?
+        InvCa = 3500.07 * P_peak /20
     else:
         InvCa = 2500.07 * P_peak /20
 
