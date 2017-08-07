@@ -344,12 +344,12 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
 
 # investment and maintenance costs
 
-def calc_Cinv_PVT(P_peak, gv):
+def calc_Cinv_PVT(P_peak_kW, gv):
     """
     P_peak in kW
     result in CHF
     """
-    InvCa = 5000 * P_peak / gv.PVT_n # CHF/y
+    InvCa = 5000 * P_peak_kW / gv.PVT_n # CHF/y
     # 2sol
 
     return InvCa

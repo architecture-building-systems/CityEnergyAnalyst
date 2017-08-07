@@ -148,7 +148,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
     
         # Boiler Base
         if dicoSupply.Boiler_on == 1:
-            Q_design = dicoSupply.Boiler_Q_max
+            Q_design_W = dicoSupply.Boiler_Q_max
 
             fNameSlavePP = locator.get_optimization_slave_pp_activation_pattern(dicoSupply.configKey)
             dfBoilerBase = pd.read_csv(fNameSlavePP, usecols=["Q_BoilerBase_W"])
@@ -158,13 +158,13 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
             for i in range(int(np.shape(arrayBoilerBase)[0])):
                 Q_annual_W += arrayBoilerBase[i][0]
                 
-            BoilerBInvCost = boiler.calc_Cinv_boiler(Q_design, Q_annual_W, gv)
+            BoilerBInvCost = boiler.calc_Cinv_boiler(Q_design_W, Q_annual_W, gv)
             addCosts += BoilerBInvCost
-            print boiler.calc_Cinv_boiler(Q_design, Q_annual_W, gv), " Boiler Base "
+            print boiler.calc_Cinv_boiler(Q_design_W, Q_annual_W, gv), " Boiler Base "
         
         # Boiler Peak
         if dicoSupply.BoilerPeak_on == 1:
-            Q_design = dicoSupply.BoilerPeak_Q_max
+            Q_design_W = dicoSupply.BoilerPeak_Q_max
 
             fNameSlavePP = locator.get_optimization_slave_pp_activation_pattern(dicoSupply.configKey)
             dfBoilerPeak = pd.read_csv(fNameSlavePP, usecols=["Q_BoilerPeak_W"])
@@ -173,9 +173,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
             Q_annual_W =  0
             for i in range(int(np.shape(arrayBoilerPeak)[0])):
                 Q_annual_W += arrayBoilerPeak[i][0]
-            BoilerPInvCost = boiler.calc_Cinv_boiler(Q_design, Q_annual_W, gv)
+            BoilerPInvCost = boiler.calc_Cinv_boiler(Q_design_W, Q_annual_W, gv)
             addCosts += BoilerPInvCost
-            print boiler.calc_Cinv_boiler(Q_design, Q_annual_W, gv), " Boiler Peak"
+            print boiler.calc_Cinv_boiler(Q_design_W, Q_annual_W, gv), " Boiler Peak"
 
         
         # HP Lake
@@ -210,16 +210,16 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
         addCosts += PVInvC
         print pv.calc_Cinv_pv(PV_peak), "PV peak"
         
-        SC_area = dicoSupply.SOLAR_PART_SC * solarFeat.SolarAreaSC
-        SCInvC = stc.calc_Cinv_SC(SC_area, gv)
+        SC_area_m2 = dicoSupply.SOLAR_PART_SC * solarFeat.SolarAreaSC
+        SCInvC = stc.calc_Cinv_SC(SC_area_m2, gv)
         addCosts += SCInvC
-        print stc.calc_Cinv_SC(SC_area, gv), "SC area"
+        print stc.calc_Cinv_SC(SC_area_m2, gv), "SC area"
         
 
-        PVT_peak = dicoSupply.SOLAR_PART_PVT * solarFeat.SolarAreaPVT * gv.nPVT #kW
-        PVTInvC = pvt.calc_Cinv_PVT(PVT_peak, gv)
+        PVT_peak_kW = dicoSupply.SOLAR_PART_PVT * solarFeat.SolarAreaPVT * gv.nPVT #kW
+        PVTInvC = pvt.calc_Cinv_PVT(PVT_peak_kW, gv)
         addCosts += PVTInvC
-        print pvt.calc_Cinv_PVT(PVT_peak, gv), "PVT peak"
+        print pvt.calc_Cinv_PVT(PVT_peak_kW, gv), "PVT peak"
         
         # Back-up boiler
         BoilerAddInvC = boiler.calc_Cinv_boiler(Q_uncovered_design_W, Q_uncovered_annual_W, gv)

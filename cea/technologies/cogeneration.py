@@ -344,7 +344,7 @@ def ST_Op(mdot_kgpers, texh_K, tDH_K, fuel, gV):
 #Fuel Cell
 #===========================
 
-def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
+def calc_eta_FC(Q_load_W, Q_design_W, phi_threshold, approach_call):
     """
     Efficiency for operation of a SOFC (based on LHV of NG) including all auxiliary losses
     Valid for Q_load in range of 1-10 [kW_el]
@@ -358,11 +358,11 @@ def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
         Approach B (Empiric Approach): [Iain Staffell]_
 
 
-    :type Q_load : float
-    :param Q_load: Load at each time step
+    :type Q_load_W : float
+    :param Q_load_W: Load at each time step
 
-    :type Q_design : float
-    :param Q_design: Design Load of FC
+    :type Q_design_W : float
+    :param Q_design_W: Design Load of FC
 
     :type phi_threshold : float
     :param phi_threshold: where Maximum Efficiency is reached, used for Approach A
@@ -388,7 +388,7 @@ def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
     ## Approach A - NREL Approach
     if approach_call == "A":
 
-        phi = float( Q_load ) / float( Q_design )
+        phi = float(Q_load_W) / float(Q_design_W)
         eta_max = 0.425 # from energy.gov
 
         if phi >= phi_threshold:  # from NREL-Shape
@@ -417,8 +417,8 @@ def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
     ## Approach B - Empiric Approach
     if approach_call == "B":
 
-        if Q_design > 0:
-            phi = float(Q_load) / float(Q_design)
+        if Q_design_W > 0:
+            phi = float(Q_load_W) / float(Q_design_W)
 
         else:
             phi = 0
