@@ -25,10 +25,12 @@ __status__ = "Production"
 
 def calc_Cop_CCT(GT_SIZE, T_DH_Supply, fuel, gV):
     """
-    The function iterate the CCT operation between its nominal capacity and minimum load and generate linear functions of
-    the GT operation.
+    This function calcualates the COP of a combined cycle, the gas turbine (GT) exhaust gas is used by
+    the steam turbine (ST) to generate electricity and heat.
+    This function iterates the combined cycle operation between its nominal capacity and minimum load and generate
+    linear functions of the GT operation.
 
-    This generated function calculates Operation Point and associated costs of the cogeneration at given
+    The generated function calculates operation points and associated costs of the cogeneration at given
     thermal load (Q_therm_requested).
 
     How to use the return functions : input Q_therm_requested into the output interpolation functions

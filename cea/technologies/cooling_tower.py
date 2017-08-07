@@ -18,11 +18,12 @@ __status__ = "Production"
 def calc_CT(qhotdot, Qdesign, gV):
     """
     For the operation of a water condenser + direct cooling tower based on [B. Stephane, 2012]_
+    Maximum cooling power is 10 MW.
     
     :type qhotdot : float
     :param qhotdot: heating power to condenser, From Model_VCC
     :type Qdesign : float
-    :param Qdesign: Max cooling power
+    :param Qdesign: Nominal cooling power
     
 
     :type wdot : float
@@ -59,6 +60,7 @@ def calc_Cinv_CT(CT_size, gV):
     if CT_size > 0:
         InvC = (0.0161 * CT_size * 1E-3 + 1457.3) * 1E3
         InvCa = InvC * gV.CT_a
+
     else:
         InvCa = 0
 

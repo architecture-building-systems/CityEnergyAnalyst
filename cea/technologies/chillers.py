@@ -77,7 +77,7 @@ def calc_Cinv_VCC(qcold, gV):
     :rtype InvCa: float
 
     """
-    InvCa = 0.65 * 23E6 * gV.USD_TO_CHF * qcold / 37E6 / 25  # todo: seperate the ammortized factor
+    InvCa = 0.65 * 23E6 * gV.USD_TO_CHF * qcold / 37E6 / 25
     
     return InvCa
 

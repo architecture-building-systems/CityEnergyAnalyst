@@ -19,7 +19,8 @@ __status__ = "Production"
 def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
     """
-    Efficiency for Furnace Plant (Wood Chip  CHP Plant, Condensing Boiler) based on LHV.
+    Efficiency for co-generation plant with wood chip furnace, based on LHV.
+    Electricity is produced through organic rankine cycle.
 
     Capacity : 1-10 [MW], Minimum Part Load: 30% of P_design
     Source: POLYCITY HANDBOOK 2012

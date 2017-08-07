@@ -296,7 +296,7 @@ def calc_Cinv_GHP(GHP_Size, gV):
     InvC_HP += nProbe * 6297 * (gV.GHP_WmaxSize * 1E-3) ** 0.49
     InvC_BH += nProbe * 8520 * (gV.GHP_WmaxSize * 1E-3) ** 0.74
 
-    InvC_HP += 6297 * (roundProbe * gV.GHP_WmaxSize * 1E-3) ** 0.49
+    InvC_HP += 6297 * (roundProbe * gV.GHP_WmaxSize * 1E-3) ** 0.49 # TODO: redundant?
     InvC_BH += 8520 * (roundProbe * gV.GHP_WmaxSize * 1E-3) ** 0.74
 
     InvCa = InvC_HP * gV.GHP_i * (1+ gV.GHP_i) ** gV.GHP_nHP / \
@@ -309,7 +309,7 @@ def calc_Cinv_GHP(GHP_Size, gV):
 
 def calc_Cinv_HP(HP_Size, gV):
     """
-    Calculates the annualized investment costs for the heat pump
+    Calculates the annualized investment costs for a water to water heat pump.
 
     :type HP_Size : float
     :param HP_Size: Design thermal size of the heat pump in [W]
