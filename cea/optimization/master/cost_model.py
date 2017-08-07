@@ -35,7 +35,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncoveredAnnual, solarFeat, ntwFeat, gv):
+def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_uncovered_annual_W, solarFeat, ntwFeat, gv):
     """
     Computes additional costs / GHG emisions / primary energy needs
     for the individual
@@ -47,8 +47,8 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
     :param buildList: list of buildings in the district
     :param locator: input locator set to scenario
     :param dicoSupply: class containing the features of a specific individual
-    :param QUncoveredDesign: hourly max of the heating uncovered demand
-    :param QUncoveredAnnual: total heating uncovered
+    :param Q_uncovered_design_W: hourly max of the heating uncovered demand
+    :param Q_uncovered_annual_W: total heating uncovered
     :param solarFeat: solar features
     :param ntwFeat: network features
     :param gv: global variables
@@ -56,8 +56,8 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
     :type buildList: list
     :type locator: string
     :type dicoSupply: class
-    :type QUncoveredDesign: float
-    :type QUncoveredAnnual: float
+    :type Q_uncovered_design_W: float
+    :type Q_uncovered_annual_W: float
     :type solarFeat: class
     :type ntwFeat: class
     :type gv: class
@@ -130,14 +130,14 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
             dfFurnace = pd.read_csv(fNameSlavePP, usecols=["Q_Furnace_W"])
             arrayFurnace = np.array(dfFurnace)
             
-            Q_annual =  0
+            Q_annual_W =  0
             for i in range(int(np.shape(arrayFurnace)[0])):
-                Q_annual += arrayFurnace[i][0]
+                Q_annual_W += arrayFurnace[i][0]
             
-            FurnaceInvCost = furnace.calc_Cinv_furnace(P_design, Q_annual, gv)
+            FurnaceInvCost = furnace.calc_Cinv_furnace(P_design, Q_annual_W, gv)
             addCosts += FurnaceInvCost
             
-            print furnace.calc_Cinv_furnace(P_design, Q_annual, gv), " Furnace"
+            print furnace.calc_Cinv_furnace(P_design, Q_annual_W, gv), " Furnace"
         
         # CC
         if dicoSupply.CC_on == 1:
@@ -154,13 +154,13 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
             dfBoilerBase = pd.read_csv(fNameSlavePP, usecols=["Q_BoilerBase_W"])
             arrayBoilerBase = np.array(dfBoilerBase)
             
-            Q_annual =  0
+            Q_annual_W =  0
             for i in range(int(np.shape(arrayBoilerBase)[0])):
-                Q_annual += arrayBoilerBase[i][0]
+                Q_annual_W += arrayBoilerBase[i][0]
                 
-            BoilerBInvCost = boiler.calc_Cinv_boiler(Q_design, Q_annual, gv)
+            BoilerBInvCost = boiler.calc_Cinv_boiler(Q_design, Q_annual_W, gv)
             addCosts += BoilerBInvCost
-            print boiler.calc_Cinv_boiler(Q_design, Q_annual, gv), " Boiler Base "
+            print boiler.calc_Cinv_boiler(Q_design, Q_annual_W, gv), " Boiler Base "
         
         # Boiler Peak
         if dicoSupply.BoilerPeak_on == 1:
@@ -170,12 +170,12 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
             dfBoilerPeak = pd.read_csv(fNameSlavePP, usecols=["Q_BoilerPeak_W"])
             arrayBoilerPeak = np.array(dfBoilerPeak)
             
-            Q_annual =  0
+            Q_annual_W =  0
             for i in range(int(np.shape(arrayBoilerPeak)[0])):
-                Q_annual += arrayBoilerPeak[i][0]
-            BoilerPInvCost = boiler.calc_Cinv_boiler(Q_design, Q_annual, gv)
+                Q_annual_W += arrayBoilerPeak[i][0]
+            BoilerPInvCost = boiler.calc_Cinv_boiler(Q_design, Q_annual_W, gv)
             addCosts += BoilerPInvCost
-            print boiler.calc_Cinv_boiler(Q_design, Q_annual, gv), " Boiler Peak"
+            print boiler.calc_Cinv_boiler(Q_design, Q_annual_W, gv), " Boiler Peak"
 
         
         # HP Lake
@@ -198,10 +198,10 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
             dfGHP = pd.read_csv(fNameSlavePP, usecols=["E_GHP_req_W"])
             arrayGHP = np.array(dfGHP)
             
-            GHP_Enom = np.amax(arrayGHP)
-            GHPInvC = hp.calc_Cinv_GHP(GHP_Enom, gv) * gv.EURO_TO_CHF
+            GHP_Enom_W = np.amax(arrayGHP)
+            GHPInvC = hp.calc_Cinv_GHP(GHP_Enom_W, gv) * gv.EURO_TO_CHF
             addCosts += GHPInvC
-            print hp.calc_Cinv_GHP(GHP_Enom, gv) * gv.EURO_TO_CHF, " GHP"
+            print hp.calc_Cinv_GHP(GHP_Enom_W, gv) * gv.EURO_TO_CHF, " GHP"
             
         # Solar technologies
 
@@ -222,9 +222,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         print pvt.calc_Cinv_PVT(PVT_peak, gv), "PVT peak"
         
         # Back-up boiler
-        BoilerAddInvC = boiler.calc_Cinv_boiler(QUncoveredDesign, QUncoveredAnnual, gv)
+        BoilerAddInvC = boiler.calc_Cinv_boiler(Q_uncovered_design_W, Q_uncovered_annual_W, gv)
         addCosts += BoilerAddInvC
-        print boiler.calc_Cinv_boiler(QUncoveredDesign, QUncoveredAnnual, gv), "backup boiler"
+        print boiler.calc_Cinv_boiler(Q_uncovered_design_W, Q_uncovered_annual_W, gv), "backup boiler"
         
     
         # Hex and HP for Heat recovery
@@ -234,74 +234,74 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
                 os.path.join(locator.get_optimization_network_results_folder(), dicoSupply.NETWORK_DATA_FILE),
                 usecols=["Qcdata_netw_total_kWh"])
             array = np.array(df)
-            QhexMax = np.amax(array)
-            StorageHEXCost += hex.calc_Cinv_HEX(QhexMax, gv)
+            QhexMax_kWh = np.amax(array)
+            StorageHEXCost += hex.calc_Cinv_HEX(QhexMax_kWh, gv)
             
-            print hex.calc_Cinv_HEX(QhexMax, gv), "Hex for data center"
+            print hex.calc_Cinv_HEX(QhexMax_kWh, gv), "Hex for data center"
 
             df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
                              usecols=["HPServerHeatDesignArray_kWh"])
             array = np.array(df)
-            QhpMax = np.amax(array)
-            StorageHEXCost += hp.calc_Cinv_HP(QhpMax, gv)
-            print hp.calc_Cinv_HP(QhpMax, gv), "HP for data center"
+            QhpMax_kWh = np.amax(array)
+            StorageHEXCost += hp.calc_Cinv_HP(QhpMax_kWh, gv)
+            print hp.calc_Cinv_HP(QhpMax_kWh, gv), "HP for data center"
             
         if dicoSupply.WasteCompressorHeatRecovery == 1:
             df = pd.read_csv(
                 os.path.join(locator.get_optimization_network_results_folder(), dicoSupply.NETWORK_DATA_FILE),
                 usecols=["Ecaf_netw_total_kWh"])
             array = np.array(df)
-            QhexMax = np.amax(array)
+            QhexMax_kWh = np.amax(array)
         
-            StorageHEXCost += hex.calc_Cinv_HEX(QhexMax, gv)
-            print hex.calc_Cinv_HEX(QhexMax, gv), "Hex for compressed air"
+            StorageHEXCost += hex.calc_Cinv_HEX(QhexMax_kWh, gv)
+            print hex.calc_Cinv_HEX(QhexMax_kWh, gv), "Hex for compressed air"
 
             df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
                              usecols=["HPCompAirDesignArray_kWh"])
             array = np.array(df)
-            QhpMax = np.amax(array)
+            QhpMax_kWh = np.amax(array)
 
-            StorageHEXCost += hp.calc_Cinv_HP(QhpMax, gv)
-            print hp.calc_Cinv_HP(QhpMax, gv), "HP for compressed air"
+            StorageHEXCost += hp.calc_Cinv_HP(QhpMax_kWh, gv)
+            print hp.calc_Cinv_HP(QhpMax_kWh, gv), "HP for compressed air"
         addCosts += StorageHEXCost
         
         # Heat pump solar to storage
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
                          usecols=["HPScDesignArray_Wh", "HPpvt_designArray_Wh"])
         array = np.array(df)
-        QhpMax_PVT = np.amax(array[:,1])
-        QhpMax_SC = np.amax(array[:,0])
+        QhpMax_PVT_Wh = np.amax(array[:,1])
+        QhpMax_SC_Wh = np.amax(array[:,0])
         
-        StorageHPCost += hp.calc_Cinv_HP(QhpMax_PVT, gv)
-        print hp.calc_Cinv_HP(QhpMax_PVT, gv), "HP for PVT"
+        StorageHPCost += hp.calc_Cinv_HP(QhpMax_PVT_Wh, gv)
+        print hp.calc_Cinv_HP(QhpMax_PVT_Wh, gv), "HP for PVT"
 
-        StorageHPCost += hp.calc_Cinv_HP(QhpMax_SC, gv)
-        print hp.calc_Cinv_HP(QhpMax_SC, gv), "HP for SC"
+        StorageHPCost += hp.calc_Cinv_HP(QhpMax_SC_Wh, gv)
+        print hp.calc_Cinv_HP(QhpMax_SC_Wh, gv), "HP for SC"
         
         # HP for storage operation
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
                          usecols=["E_aux_ch_W", "E_aux_dech_W", "Q_from_storage_used_W", "Q_to_storage_W"])
         array = np.array(df)
-        QmaxHPStorage = 0
+        Qmax_HP_storage_W = 0
         for i in range(gv.DAYS_IN_YEAR * gv.HOURS_IN_DAY):
             if array[i][0] > 0:
-                QmaxHPStorage = max(QmaxHPStorage, array[i][3] + array[i][0])
+                Qmax_HP_storage_W = max(Qmax_HP_storage_W, array[i][3] + array[i][0])
             elif array[i][1] > 0:
-                QmaxHPStorage = max(QmaxHPStorage, array[i][2] + array[i][1])
+                Qmax_HP_storage_W = max(Qmax_HP_storage_W, array[i][2] + array[i][1])
         
-        StorageHPCost += hp.calc_Cinv_HP(QmaxHPStorage, gv)
+        StorageHPCost += hp.calc_Cinv_HP(Qmax_HP_storage_W, gv)
         addCosts += StorageHPCost
 
-        print hp.calc_Cinv_HP(QmaxHPStorage, gv), "HP for storage"
+        print hp.calc_Cinv_HP(Qmax_HP_storage_W, gv), "HP for storage"
         
         
         # Storage
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
                          usecols=["Storage_Size_m3"], nrows=1)
-        StorageVol = np.array(df)[0][0]
-        StorageInvC += storage.calc_Cinv_storage(StorageVol, gv)
+        StorageVol_m3 = np.array(df)[0][0]
+        StorageInvC += storage.calc_Cinv_storage(StorageVol_m3, gv)
         addCosts += StorageInvC
-        print storage.calc_Cinv_storage(StorageVol, gv), "Storage Costs"
+        print storage.calc_Cinv_storage(StorageVol_m3, gv), "Storage Costs"
         
         
         # Costs from distribution configuration
@@ -320,33 +320,33 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
                                  usecols=["Q_dhw_W", "Q_heating_W"])
                 subsArray = np.array(df)
                 
-                Qmax = np.amax( subsArray[:,0] + subsArray[:,1] )
-                SubstHEXCost += hex.calc_Cinv_HEX(Qmax, gv)
-                print hex.calc_Cinv_HEX(Qmax, gv), "Hex", building_name
+                Q_max_W = np.amax( subsArray[:,0] + subsArray[:,1] )
+                SubstHEXCost += hex.calc_Cinv_HEX(Q_max_W, gv)
+                print hex.calc_Cinv_HEX(Q_max_W, gv), "Hex", building_name
         addCosts += SubstHEXCost
 
         # HEX for solar
-        roof_area = np.array(pd.read_csv(locator.get_total_demand(), usecols=["Aroof_m2"]))
+        roof_area_m2 = np.array(pd.read_csv(locator.get_total_demand(), usecols=["Aroof_m2"]))
 
         areaAvail = 0
         for i in range( len(indCombi) ):
             index = indCombi[i]
             if index == "1":
-                areaAvail += roof_area[i][0]
+                areaAvail += roof_area_m2[i][0]
                 
         for i in range( len(indCombi) ):
             index = indCombi[i]
             if index == "1":
-                share = roof_area[i][0] / areaAvail
+                share = roof_area_m2[i][0] / areaAvail
                 #print share, "solar area share", buildList[i]
                 
-                SC_Qmax = solarFeat.SC_Qnom * dicoSupply.SOLAR_PART_SC * share
-                SCHEXCost += hex.calc_Cinv_HEX(SC_Qmax, gv)
-                print hex.calc_Cinv_HEX(SC_Qmax, gv), "Hex SC", buildList[i]
+                Q_max_SC_Wh = solarFeat.SC_Qnom * dicoSupply.SOLAR_PART_SC * share
+                SCHEXCost += hex.calc_Cinv_HEX(Q_max_SC_Wh, gv)
+                print hex.calc_Cinv_HEX(Q_max_SC_Wh, gv), "Hex SC", buildList[i]
                 
-                PVT_Qmax = solarFeat.PVT_Qnom * dicoSupply.SOLAR_PART_PVT * share
-                PVTHEXCost += hex.calc_Cinv_HEX(PVT_Qmax, gv)
-                print hex.calc_Cinv_HEX(PVT_Qmax, gv), "Hex PVT", buildList[i]
+                Q_max_PVT_Wh = solarFeat.PVT_Qnom * dicoSupply.SOLAR_PART_PVT * share
+                PVTHEXCost += hex.calc_Cinv_HEX(Q_max_PVT_Wh, gv)
+                print hex.calc_Cinv_HEX(Q_max_PVT_Wh, gv), "Hex PVT", buildList[i]
         addCosts += SCHEXCost
         addCosts += PVTHEXCost
         
@@ -360,10 +360,10 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
 
     if indCombi.count("1") > 0:
         # import gas consumption data from:
-        EgasPrimaryDataframe = pd.read_csv(locator.get_optimization_slave_primary_energy_by_source(dicoSupply.configKey),
+        E_gas_PrimaryDataframe_W = pd.read_csv(locator.get_optimization_slave_primary_energy_by_source(dicoSupply.configKey),
             usecols=["E_gas_PrimaryPeakPower_W"])
-        EgasPrimaryPeakPower = float(np.array(EgasPrimaryDataframe))
-        GasConnectionInvCost = ngas.calc_Cinv_gas(EgasPrimaryPeakPower, gv)
+        E_gas_primary_peak_power_W = float(np.array(E_gas_PrimaryDataframe_W))
+        GasConnectionInvCost = ngas.calc_Cinv_gas(E_gas_primary_peak_power_W, gv)
     else:
         GasConnectionInvCost = 0.0
         
