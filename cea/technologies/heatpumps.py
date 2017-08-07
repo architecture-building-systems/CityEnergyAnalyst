@@ -307,12 +307,12 @@ def calc_Cinv_GHP(GHP_Size, gV):
     return InvCa
 
 
-def calc_Cinv_HP(HP_Size, gV):
+def calc_Cinv_HP(HP_Size_W, gV):
     """
     Calculates the annualized investment costs for the heat pump
 
-    :type HP_Size : float
-    :param HP_Size: Design thermal size of the heat pump in [W]
+    :type HP_Size_W : float
+    :param HP_Size_W: Design thermal size of the heat pump in [W]
 
     :rtype InvCa : float
     :returns InvCa: annualized investment costs in [CHF/a]
@@ -320,8 +320,8 @@ def calc_Cinv_HP(HP_Size, gV):
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
-    if HP_Size > 0:
-        InvC = (-493.53 * log(HP_Size * 1E-3) + 5484) * (HP_Size * 1E-3)
+    if HP_Size_W > 0:
+        InvC = (-493.53 * log(HP_Size_W * 1E-3) + 5484) * (HP_Size_W * 1E-3)
         InvCa = InvC * gV.HP_i * (1+ gV.HP_i) ** gV.HP_n / \
                 ((1+gV.HP_i) ** gV.HP_n - 1)
 
