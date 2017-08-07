@@ -707,16 +707,16 @@ def calc_properties_PV(database_path, type_PVpanel):
     return panel_properties
 
 # investment and maintenance costs
-def calc_Cinv_pv(P_peak):
+def calc_Cinv_pv(P_peak_kW):
     """
     To calculate capital cost of PV modules, assuming 20 year system lifetime.
-    :param P_peak: installed capacity of PV module [kW]
+    :param P_peak_kW: installed capacity of PV module [kW]
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
-    if P_peak < 10:
-        InvCa = 3500.07 * P_peak /20  #FIXME: should be amortized?
+    if P_peak_kW < 10:
+        InvCa = 3500.07 * P_peak_kW / 20  #FIXME: should be amortized?
     else:
-        InvCa = 2500.07 * P_peak /20
+        InvCa = 2500.07 * P_peak_kW / 20
 
     return InvCa
 

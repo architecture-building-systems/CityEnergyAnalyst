@@ -189,16 +189,16 @@ def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, gv)
 
 # investment and maintenance costs
 
-def calc_Cinv_furnace(Q_design, Q_annual, gv):
+def calc_Cinv_furnace(Q_design_W, Q_annual_W, gv):
     """
     Calculates the annualized investment cost of a Furnace
     based on Bioenergy 2020 (AFO) and POLYCITY Ostfildern 
 
-    :type Q_design : float
-    :param Q_design: Design Load of Boiler
+    :type Q_design_W : float
+    :param Q_design_W: Design Load of Boiler
         
-    :type Q_annual : float
-    :param Q_annual: annual thermal Power output [Wh]
+    :type Q_annual_W : float
+    :param Q_annual_W: annual thermal Power output [Wh]
 
     :param gV: globalvar.py
 
@@ -209,11 +209,11 @@ def calc_Cinv_furnace(Q_design, Q_annual, gv):
     :returns InvCa: annualized investment costs in [CHF] including O&M
         
     """
-    InvC = 0.670 * gv.EURO_TO_CHF * Q_design # 670 € /kW therm(Boiler) = 800 CHF /kW (A+W data)
+    InvC = 0.670 * gv.EURO_TO_CHF * Q_design_W # 670 € /kW therm(Boiler) = 800 CHF /kW (A+W data)
 
     Ca_invest =  (InvC * gv.Boiler_i * (1+ gv.Boiler_i) ** gv.Boiler_n / ((1+gv.Boiler_i) ** gv.Boiler_n - 1))
     Ca_maint = Ca_invest * gv.Boiler_C_maintainance
-    Ca_labour =  gv.Boiler_C_labour / 1000000.0 * gv.EURO_TO_CHF * Q_annual
+    Ca_labour =  gv.Boiler_C_labour / 1000000.0 * gv.EURO_TO_CHF * Q_annual_W
 
     InvCa = Ca_invest + Ca_maint + Ca_labour
     

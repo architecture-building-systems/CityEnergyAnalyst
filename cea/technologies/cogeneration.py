@@ -439,12 +439,12 @@ def calc_eta_FC(Q_load_W, Q_design_W, phi_threshold, approach_call):
 
 # investment and maintenance costs
 
-def calc_Cinv_CCT(CC_size, gV):
+def calc_Cinv_CCT(CC_size_W, gV):
     """
     Annualized investment costs for the Combined cycle
 
-    :type CC_size : float
-    :param CC_size: Electrical size of the CC
+    :type CC_size_W : float
+    :param CC_size_W: Electrical size of the CC
 
     :rtype InvCa : float
     :returns InvCa: annualized investment costs in CHF
@@ -453,26 +453,26 @@ def calc_Cinv_CCT(CC_size, gV):
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
 
-    InvC = 32978 * (CC_size * 1E-3) ** 0.5967  # [C. Weber, 2008]_
+    InvC = 32978 * (CC_size_W * 1E-3) ** 0.5967  # [C. Weber, 2008]_
     InvCa = InvC * gV.CC_i * (1+ gV.CC_i) ** gV.CC_n / ((1+gV.CC_i) ** gV.CC_n - 1)
 
     return InvCa
 
 
-def calc_Cinv_FC(P_design, gV):
+def calc_Cinv_FC(P_design_W, gV):
     """
     Calculates the investment cost of a Fuel Cell in CHF
 
     http://hexis.com/sites/default/files/media/publikationen/140623_hexis_galileo_ibb_profitpaket.pdf?utm_source=HEXIS+Mitarbeitende&utm_campaign=06d2c528a5-1_Newsletter_2014_Mitarbeitende_DE&utm_medium=email&utm_term=0_e97bc1703e-06d2c528a5-
 
-    :type P_design : float
-    :param P_design: Design thermal Load of Fuel Cell [W_th]
+    :type P_design_W : float
+    :param P_design_W: Design thermal Load of Fuel Cell [W_th]
 
     :rtype InvCa: float
     :returns InvCa: annualized investment costs in CHF
     """
 
-    InvC = (1 + gV.FC_overhead) * gV.FC_stack_cost * P_design / 1000 # FC_stack_cost = 55'000 CHF  / kW_therm, 10 % extra (overhead) cost
+    InvC = (1 + gV.FC_overhead) * gV.FC_stack_cost * P_design_W / 1000 # FC_stack_cost = 55'000 CHF  / kW_therm, 10 % extra (overhead) cost
     InvCa = InvC * gV.FC_i * (1 + gV.FC_i) ** gV.FC_n / (( 1 + gV.FC_i) ** gV.FC_n - 1)
 
     return InvCa
