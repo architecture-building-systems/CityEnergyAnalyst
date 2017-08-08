@@ -205,18 +205,18 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
             
         # Solar technologies
 
-        PV_peak_kW = dicoSupply.SOLAR_PART_PV * solarFeat.SolarAreaPV * gv.nPV #kW
+        PV_peak_kW = dicoSupply.SOLAR_PART_PV * solarFeat.A_PV_m2 * gv.nPV #kW
         PVInvC = pv.calc_Cinv_pv(PV_peak_kW)
         addCosts += PVInvC
         print pv.calc_Cinv_pv(PV_peak_kW), "PV peak"
         
-        SC_area_m2 = dicoSupply.SOLAR_PART_SC * solarFeat.SolarAreaSC
+        SC_area_m2 = dicoSupply.SOLAR_PART_SC * solarFeat.A_SC_m2
         SCInvC = stc.calc_Cinv_SC(SC_area_m2, gv)
         addCosts += SCInvC
         print stc.calc_Cinv_SC(SC_area_m2, gv), "SC area"
         
 
-        PVT_peak_kW = dicoSupply.SOLAR_PART_PVT * solarFeat.SolarAreaPVT * gv.nPVT #kW
+        PVT_peak_kW = dicoSupply.SOLAR_PART_PVT * solarFeat.A_PVT_m2 * gv.nPVT #kW
         PVTInvC = pvt.calc_Cinv_PVT(PVT_peak_kW, gv)
         addCosts += PVTInvC
         print pvt.calc_Cinv_PVT(PVT_peak_kW, gv), "PVT peak"
@@ -282,17 +282,17 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
                          usecols=["E_aux_ch_W", "E_aux_dech_W", "Q_from_storage_used_W", "Q_to_storage_W"])
         array = np.array(df)
-        Qmax_HP_storage_W = 0
+        Q_HP_max_storage_W = 0
         for i in range(gv.DAYS_IN_YEAR * gv.HOURS_IN_DAY):
             if array[i][0] > 0:
-                Qmax_HP_storage_W = max(Qmax_HP_storage_W, array[i][3] + array[i][0])
+                Q_HP_max_storage_W = max(Q_HP_max_storage_W, array[i][3] + array[i][0])
             elif array[i][1] > 0:
-                Qmax_HP_storage_W = max(Qmax_HP_storage_W, array[i][2] + array[i][1])
+                Q_HP_max_storage_W = max(Q_HP_max_storage_W, array[i][2] + array[i][1])
         
-        StorageHPCost += hp.calc_Cinv_HP(Qmax_HP_storage_W, gv)
+        StorageHPCost += hp.calc_Cinv_HP(Q_HP_max_storage_W, gv)
         addCosts += StorageHPCost
 
-        print hp.calc_Cinv_HP(Qmax_HP_storage_W, gv), "HP for storage"
+        print hp.calc_Cinv_HP(Q_HP_max_storage_W, gv), "HP for storage"
         
         
         # Storage
@@ -340,11 +340,11 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
                 share = roof_area_m2[i][0] / areaAvail
                 #print share, "solar area share", buildList[i]
                 
-                Q_max_SC_Wh = solarFeat.SC_Qnom * dicoSupply.SOLAR_PART_SC * share
+                Q_max_SC_Wh = solarFeat.Q_nom_SC_Wh * dicoSupply.SOLAR_PART_SC * share
                 SCHEXCost += hex.calc_Cinv_HEX(Q_max_SC_Wh, gv)
                 print hex.calc_Cinv_HEX(Q_max_SC_Wh, gv), "Hex SC", buildList[i]
                 
-                Q_max_PVT_Wh = solarFeat.PVT_Qnom * dicoSupply.SOLAR_PART_PVT * share
+                Q_max_PVT_Wh = solarFeat.Q_nom_PVT_Wh * dicoSupply.SOLAR_PART_PVT * share
                 PVTHEXCost += hex.calc_Cinv_HEX(Q_max_PVT_Wh, gv)
                 print hex.calc_Cinv_HEX(Q_max_PVT_Wh, gv), "Hex PVT", buildList[i]
         addCosts += SCHEXCost
