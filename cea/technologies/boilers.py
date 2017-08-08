@@ -6,6 +6,8 @@ condensing boilers
 
 from __future__ import division
 from scipy.interpolate import interp1d
+from math import log, exp
+import pandas as pd
 
 
 __author__ = "Thuy-An Nguyen"
@@ -194,7 +196,7 @@ def calc_Cop_boiler(Q_load, Q_design, T_return_to_boiler):
 
 # investment and maintenance costs
 
-def calc_Cinv_boiler(Q_design, Q_annual, gV):
+def calc_Cinv_boiler(Q_design, Q_annual, gV, locator, technology=0):
     """
     Calculates the annual cost of a boiler (based on A+W cost of oil boilers) [CHF / a]
     and Faz. 2012 data
@@ -212,6 +214,18 @@ def calc_Cinv_boiler(Q_design, Q_annual, gV):
     """
     # TODO[SH]: add source from Tim's thesis
     if Q_design >0:
+
+        boiler_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="Boiler")
+        technology_code = list(set(boiler_cost_data['code']))
+        boiler_cost_data[boiler_cost_data['code'] == technology_code[technology]]
+        cap_min = list(set(boiler_cost_data['cap_min']))
+        print (cap_min[:-1])
+        print (boiler_cost_data)
+        print (cap_min)
+
+        a = boiler_cost_data
+
+        InvC = a + b * (Q_design)^c + (d + e * Q_design) * log(Q_design) + (f + g * Q_design) * exp(Q_design)
         InvC = 28000 # after A+W
 
         if Q_design <= 90000 and Q_design >= 28000:

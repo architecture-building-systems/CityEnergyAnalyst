@@ -158,7 +158,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
             for i in range(int(np.shape(arrayBoilerBase)[0])):
                 Q_annual += arrayBoilerBase[i][0]
                 
-            BoilerBInvCost = boiler.calc_Cinv_boiler(Q_design, Q_annual, gv)
+            BoilerBInvCost = boiler.calc_Cinv_boiler(Q_design, Q_annual, gv, locator)
             addCosts += BoilerBInvCost
             print boiler.calc_Cinv_boiler(Q_design, Q_annual, gv), " Boiler Base "
         
@@ -173,9 +173,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
             Q_annual =  0
             for i in range(int(np.shape(arrayBoilerPeak)[0])):
                 Q_annual += arrayBoilerPeak[i][0]
-            BoilerPInvCost = boiler.calc_Cinv_boiler(Q_design, Q_annual, gv)
+            BoilerPInvCost = boiler.calc_Cinv_boiler(Q_design, Q_annual, gv, locator)
             addCosts += BoilerPInvCost
-            print boiler.calc_Cinv_boiler(Q_design, Q_annual, gv), " Boiler Peak"
+            print boiler.calc_Cinv_boiler(Q_design, Q_annual, gv, locator), " Boiler Peak"
 
         
         # HP Lake
@@ -222,9 +222,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         print pvt.calc_Cinv_PVT(PVT_peak, gv), "PVT peak"
         
         # Back-up boiler
-        BoilerAddInvC = boiler.calc_Cinv_boiler(QUncoveredDesign, QUncoveredAnnual, gv)
+        BoilerAddInvC = boiler.calc_Cinv_boiler(QUncoveredDesign, QUncoveredAnnual, gv, locator)
         addCosts += BoilerAddInvC
-        print boiler.calc_Cinv_boiler(QUncoveredDesign, QUncoveredAnnual, gv), "backup boiler"
+        print boiler.calc_Cinv_boiler(QUncoveredDesign, QUncoveredAnnual, gv, locator), "backup boiler"
         
     
         # Hex and HP for Heat recovery
