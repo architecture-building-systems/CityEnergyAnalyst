@@ -273,12 +273,12 @@ def HPSew_op_cost(mdot_kgpers, tsup_K, tret_K, tsupsew_K, gV):
 
 # investment and maintenance costs
 
-def calc_Cinv_GHP(GHP_Size, gV):
+def calc_Cinv_GHP(GHP_Size_W, gV):
     """
     Calculates the annualized investment costs for the geothermal heat pump
 
-    :type GHP_Size : float
-    :param GHP_Size: Design electrical size of the heat pump in [Wel]
+    :type GHP_Size_W : float
+    :param GHP_Size_W: Design electrical size of the heat pump in [Wel]
 
     :type InvCa : float
     :returns InvCa: annualized investment costs in [EUROS/a]
@@ -286,8 +286,8 @@ def calc_Cinv_GHP(GHP_Size, gV):
     ..[D. Bochatay et al., 2005] D. Bochatay, I. Blanc, O. Jolliet, F. Marechal, T. Manasse-Ratmandresy (2005). Project
     PACOGEN Evaluation economique et environmentale de systemes energetiques a usage residentiel., EPFL.
     """
-    nProbe = floor(GHP_Size / gV.GHP_WmaxSize)
-    roundProbe = GHP_Size / gV.GHP_WmaxSize - nProbe
+    nProbe = floor(GHP_Size_W / gV.GHP_WmaxSize)
+    roundProbe = GHP_Size_W / gV.GHP_WmaxSize - nProbe
 
     # calculate investment cost of GSHP and Boreholes
     InvC_HP = 0
@@ -331,18 +331,18 @@ def calc_Cinv_HP(HP_Size_W, gV):
     return InvCa
 
 
-def GHP_InvCost(GHP_Size, gV):
+def GHP_InvCost(GHP_Size_W, gV):
     """
     Calculates the annualized investment costs for the geothermal heat pump
 
-    :type GHP_Size : float
-    :param GHP_Size: Design electrical size of the heat pump in [Wel]
+    :type GHP_Size_W : float
+    :param GHP_Size_W: Design electrical size of the heat pump in [Wel]
 
     InvCa : float
         annualized investment costs in EUROS/a
     """
-    InvC_HP = 5247.5 * (GHP_Size * 1E-3) ** 0.49
-    InvC_BH = 7100 * (GHP_Size * 1E-3) ** 0.74
+    InvC_HP = 5247.5 * (GHP_Size_W * 1E-3) ** 0.49
+    InvC_BH = 7100 * (GHP_Size_W * 1E-3) ** 0.74
 
     InvCa = InvC_HP * gV.GHP_i * (1+ gV.GHP_i) ** gV.GHP_nHP / \
             ((1+gV.GHP_i) ** gV.GHP_nHP - 1) + \

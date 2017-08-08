@@ -649,14 +649,14 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
         ELEC_PRICE = gv.ELEC_PRICE
 
     # Area available in NEtwork
-    Area_AvailablePV = solar_features.SolarAreaPV * MS_Var.SOLAR_PART_PV
-    Area_AvailablePVT = solar_features.SolarAreaPVT * MS_Var.SOLAR_PART_PVT
+    Area_AvailablePV_m2 = solar_features.A_PV_m2 * MS_Var.SOLAR_PART_PV
+    Area_AvailablePVT_m2 = solar_features.A_PVT_m2 * MS_Var.SOLAR_PART_PVT
     print "MS_Var.SOLAR_PART_PVT = ", MS_Var.SOLAR_PART_PVT
     print "MS_Var.SOLAR_PART_PV = ", MS_Var.SOLAR_PART_PV
     #    import from master
     eta_m2_to_kW = gv.eta_area_to_peak  # Data from Jimeno
-    Q_PowerPeakAvailablePV_kW = Area_AvailablePV * eta_m2_to_kW
-    Q_PowerPeakAvailablePVT_kW = Area_AvailablePVT * eta_m2_to_kW
+    Q_PowerPeakAvailablePV_kW = Area_AvailablePV_m2 * eta_m2_to_kW
+    Q_PowerPeakAvailablePVT_kW = Area_AvailablePVT_m2 * eta_m2_to_kW
     # calculate with conversion factor m'2-kWPeak
 
     KEV_RpPerkWhPVT = calc_Crem_pv(Q_PowerPeakAvailablePVT_kW * 1000.0)

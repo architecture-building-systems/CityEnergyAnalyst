@@ -501,7 +501,7 @@ def calc_properties_SC(type_SCpanel):
 
 def calc_Eaux_SC(qV_des, Dp_collector, Leq, Aa):
     """
-    auxiliary electricity solar collectort
+    auxiliary electricity solar collector
 
     :param qV_des:
     :param Dp_collector:
@@ -657,11 +657,11 @@ def optimal_angle_and_tilt(observers_all, latitude, worst_sh, worst_Az, transmit
 
 # investment and maintenance costs
 
-def calc_Cinv_SC(Area, gv):
+def calc_Cinv_SC(Area_m2, gv):
     """
     Lifetime 35 years
     """
-    InvCa = 2050 * Area / gv.SC_n  # [CHF/y]
+    InvCa = 2050 * Area_m2 / gv.SC_n  # [CHF/y]
 
     return InvCa
 
