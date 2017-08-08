@@ -1099,8 +1099,7 @@ class SensitivityDemandSamplesTool(object):
             parameterType="Required",
             multiValue=True,
             direction="Input")
-        variable_groups.filter.list = ['Envelope variables', 'Indoor comfort variables', 'Internal load variables',
-                                       'Economic variables']
+        variable_groups.filter.list = ['Envelope variables', 'Indoor comfort variables', 'Internal load variables']
 
         grid_jump = arcpy.Parameter(
             displayName="Grid jump size for Morris method",
