@@ -31,7 +31,8 @@ class Toolbox(object):
         self.tools = [OperationCostsTool, RetrofitPotentialTool, DemandTool, DataHelperTool, BenchmarkGraphsTool,
                       OperationTool, EmbodiedTool, MobilityTool, SolarTechnologyTool,
                       DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool, DbfToExcelTool, ExcelToDbfTool,
-                      SensitivityDemandSamplesTool, SensitivityDemandSimulateTool, SensitivityDemandAnalyzeTool]
+                      SensitivityDemandSamplesTool, SensitivityDemandSimulateTool, SensitivityDemandAnalyzeTool,
+                      ExtractReferenceCaseTool, TestTool]
 
 
 # Benchmarking Tools
@@ -1473,6 +1474,7 @@ class DbfToExcelTool(object):
 
         run_cli(None, 'dbf-to-excel', '--input-path', input_path, '--output-path', output_path)
 
+
 class ExcelToDbfTool(object):
     def __init__(self):
         self.label = 'Convert Excel to DBF'
@@ -1502,6 +1504,45 @@ class ExcelToDbfTool(object):
         output_path = parameters[1].valueAsText
 
         run_cli(None, 'excel-to-dbf', '--input-path', input_path, '--output-path', output_path)
+
+
+class ExtractReferenceCaseTool(object):
+    """Extract the built-in reference case to a specified folder"""
+    def __init__(self):
+        self.label = 'Extract reference case'
+        self.description = 'Extract sample reference case to folder'
+        self.canRunInBackground = False
+        self.category = 'Utilities'
+
+    def getParameterInfo(self):
+        output_path = arcpy.Parameter(
+            displayName="Extract to folder",
+            name="output_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        return [output_path]
+
+    def execute(self,parameters, _):
+        output_path = parameters[0].valueAsText
+
+        run_cli(None, 'extract-reference-case', '--to', output_path)
+
+
+class TestTool(object):
+    """Run `cea test` for the user"""
+    def __init__(self):
+        self.label = 'Test CEA'
+        self.description = 'Run some tests on the CEA'
+        self.canRunInBackground = False
+        self.category = 'Utilities'
+
+    def getParameterInfo(self):
+        return []
+
+    def execute(self,parameters, _):
+        run_cli(None, 'test')
 
 
 # Other functions
