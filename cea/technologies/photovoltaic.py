@@ -722,13 +722,13 @@ def calc_Cinv_pv(P_peak_kW):
 
 
 # remuneration scheme
-def calc_Crem_pv(E_nom):
+def calc_Crem_pv(E_nom_Wh):
     """
     Calculates KEV (Kostendeckende Einspeise - Verguetung) for solar PV and PVT.
     Therefore, input the nominal capacity of EACH installation and get the according KEV as return in Rp/kWh
 
-    :param E_nom: Nominal Capacity of solar panels (PV or PVT) [Wh]
-    :type E_nom: float
+    :param E_nom_Wh: Nominal Capacity of solar panels (PV or PVT) [Wh]
+    :type E_nom_Wh: float
     :return KEV_obtained_in_RpPerkWh: KEV remuneration [Rp/kWh]
     :rtype KEV_obtained_in_RpPerkWh: float
     """
@@ -782,7 +782,7 @@ def calc_Crem_pv(E_nom):
                          2000,
                          1000000]
     KEV_interpolated_kW = interpolate.interp1d(P_installed_in_kW, KEV_regime, kind="linear")
-    KEV_obtained_in_RpPerkWh = KEV_interpolated_kW(E_nom / 1000.0)
+    KEV_obtained_in_RpPerkWh = KEV_interpolated_kW(E_nom_Wh / 1000.0)
     return KEV_obtained_in_RpPerkWh
 
 def test_photovoltaic():
