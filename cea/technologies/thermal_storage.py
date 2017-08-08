@@ -29,7 +29,7 @@ def calc_Cinv_storage(vol, gV):
 
     """
     if vol>0:
-        InvCa = 7224.8 * vol ** (-0.522) * vol * gV.EURO_TO_CHF / 60
+        InvCa = 7224.8 * vol ** (-0.522) * vol * gV.EURO_TO_CHF / 60 # TODO: make sure the cost of heat pump is added
     else:
         InvCa = 0
 
