@@ -34,7 +34,7 @@ def calc_pareto_Qhp(locator, total_demand, gv):
 
 
     if total_demand["Qhprof_MWhyr"].sum()>0:
-        df = total_demand[total_demand.Qhprof_kWh != 0]
+        df = total_demand[total_demand.Qhprof_MWhyr != 0]
 
         for name in df.Name :
             # Extract process heat needs
@@ -55,7 +55,7 @@ def calc_pareto_Qhp(locator, total_demand, gv):
                 hpPrim += Qgas * 3600E-6 * gv.NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
 
             # Investment costs
-            hpCosts += boilers.calc_Cinv_boiler(Qnom, Qannual, gv)
+            hpCosts += boilers.calc_Cinv_boiler(Qnom, Qannual, gv, locator)
     else:
         hpCosts = hpCO2 = hpPrim = 0
     return hpCosts, hpCO2, hpPrim
