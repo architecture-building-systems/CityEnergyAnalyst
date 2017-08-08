@@ -518,7 +518,7 @@ def test_PVT():
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     weather_path = locator.get_default_weather()
-    list_buildings_names = dbfreader.dbf2df(locator.get_building_occupancy())['Name']
+    list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
     with fiona.open(locator.get_zone_geometry()) as shp:
         longitude = shp.crs['lon_0']
