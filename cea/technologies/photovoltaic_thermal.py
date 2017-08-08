@@ -85,7 +85,7 @@ def calc_PVT_generation(type_panel, hourly_radiation, Number_groups, number_poin
     Sum_E_PVT_kWh = np.zeros(8760)
     Tin_array_C = np.zeros(8760) + Tin
     Sum_Area_m = (prop_observers['area_netpv'] * number_points).sum()
-    lv = 2  # grid lenght module length
+    lv = 2  # grid length module length
     Le = (2 * lv * number_points.sum()) / (Sum_Area_m * Aratio)
     Li = 2 * height / (Sum_Area_m * Aratio)
     Leq = Li + Le  # in m/m2
