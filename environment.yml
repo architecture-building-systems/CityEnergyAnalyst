@@ -1,4 +1,4 @@
-name: cea-2017-08-01
+name: cea
 channels:
 - omnia
 - pythonocc
@@ -135,4 +135,4 @@ dependencies:
   - urllib3==1.22
   - xlrd==1.0.0
   - xlwt==1.2.0
-prefix: C:\Users\darthoma\AppData\Local\conda\conda\envs\cea-2017-08-01
+
