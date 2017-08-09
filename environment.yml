@@ -98,7 +98,7 @@ dependencies:
   - cloudpickle==0.3.1
   - colorama==0.3.9
   - configparser==3.5.0
-  - deap==1.0.2
+  - deap>=1.0.1
   - decorator==4.1.2
   - docutils==0.14
   - doit==0.29.0
