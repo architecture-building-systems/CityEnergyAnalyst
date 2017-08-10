@@ -1132,7 +1132,7 @@ class SensitivityDemandSamplesTool(object):
         calc_second_order.parameterDependencies = ['method']
 
         samples_folder = arcpy.Parameter(
-            displayName="Folders in which samples will be saved",
+            displayName="Folder in which samples will be saved",
             name="samples_folder",
             datatype="DEFolder",
             parameterType="Required",
@@ -1236,7 +1236,7 @@ class SensitivityDemandSimulateTool(object):
         weather_name.filter.list = get_weather_names()
 
         samples_folder = arcpy.Parameter(
-            displayName="Folder that contains the samples",
+            displayName="Folder that contains the samples. The results will also be saved in this folder.",
             name="samples_folder",
             datatype="DEFolder",
             parameterType="Required",
@@ -1382,7 +1382,8 @@ class SensitivityDemandAnalyzeTool(object):
     def getParameterInfo(self):
 
         samples_path = arcpy.Parameter(
-            displayName="Folder that contains the samples created by the Create Samples tool.",
+            displayName="Folder that contains the samples created by the Create Samples tool and the results of the "
+                        "Demand Simulation tool.",
             name="samples_path",
             datatype="DEFolder",
             parameterType="Required",
