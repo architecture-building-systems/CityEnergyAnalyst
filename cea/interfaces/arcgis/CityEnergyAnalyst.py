@@ -1368,11 +1368,9 @@ class SensitivityDemandSimulateTool(object):
         # output_parameters
         output_parameters = parameters[6].valueAsText.split(';')
 
-        args = [None, 'sensitivity-demand-simulate', '--scenario-path', scenario_path, '--weather-path', weather_path,
+        run_cli(None, 'sensitivity-demand-simulate', '--scenario-path', scenario_path, '--weather-path', weather_path,
                 '--samples-folder', samples_folder, '--simulation-folder', simulation_folder, '--num-simulations',
-                num_simulations, '--sample-index', sample_index, '--output-parameters', output_parameters]
-
-        run_cli(*args)
+                num_simulations, '--sample-index', sample_index, '--output-parameters', *output_parameters)
 
 class SensitivityDemandAnalyzeTool(object):
     def __init__(self):
