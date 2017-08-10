@@ -112,6 +112,8 @@ def analyze_sensitivity(samples_path, temporal_scale):
                 pd.DataFrame(building_results, columns=problem['names']).to_excel(writer, worksheet_name)
             writer.save()
 
+    print 'Sensitivity analysis results saved to %s' % folder
+
 def sobol_analyze_function(problem, _, Y):
     """
     Use the SALib.analyze.sobol method to analyze the simulation results.
