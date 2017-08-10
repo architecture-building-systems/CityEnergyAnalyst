@@ -216,12 +216,18 @@ def calc_Cinv_boiler(Q_design, Q_annual, gV, locator, technology=0):
     if Q_design >0:
 
         boiler_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="Boiler")
+        boiler_cost_data = boiler_cost_data[:-1]
+        # print (boiler_cost_data)
         technology_code = list(set(boiler_cost_data['code']))
+        print (type(boiler_cost_data))
         boiler_cost_data[boiler_cost_data['code'] == technology_code[technology]]
-        cap_min = list(set(boiler_cost_data['cap_min']))
-        print (cap_min[:-1])
-        print (boiler_cost_data)
-        print (cap_min)
+        # print (boiler_cost_data)
+        # cap_min = list(set(boiler_cost_data['cap_min']))
+        # cap_max = list(set(boiler_cost_data['cap_max']))
+        c = boiler_cost_data[boiler_cost_data['cap_min'] >= Q_design]
+        print (c)
+        a = boiler_cost_data[(boiler_cost_data['cap_min'] <= Q_design) & (boiler_cost_data['cap_max'] >= Q_design)]
+        # print (a)
 
         a = boiler_cost_data
 
