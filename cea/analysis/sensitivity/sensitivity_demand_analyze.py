@@ -45,7 +45,7 @@ def analyze_sensitivity(samples_path, temporal_scale):
     """
     print("analyzing sensitivity in %(samples_path)s for temporal_scale=%(temporal_scale)s" % locals())
     # do checks
-    with open(os.path.join(args.samples_folder, 'problem.pickle'), 'r') as f:
+    with open(os.path.join(samples_path, 'problem.pickle'), 'r') as f:
         problem = pickle.load(f)
     method = problem['method']
     assert method in ('sobol', 'morris'), "Invalid analysis method: %s" % method
