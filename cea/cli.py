@@ -634,8 +634,8 @@ def main():
                                                    type=int, required=True)
     sensitivity_demand_simulate_parser.add_argument('--sample-index', help='Zero-based index into the samples list to'
                                                                           'simulate', type=int, required=True)
-    sensitivity_demand_simulate_parser.add_argument('--output-parameters', help='Output parameters for sensitivity '
-                                                                               'analysis', required=True)
+    sensitivity_demand_simulate_parser.add_argument('--output-parameters', nargs='+',
+                                                    help='Output parameters for sensitivity analysis', required=True)
     sensitivity_demand_simulate_parser.set_defaults(func=sensitivity_demand_simulate)
 
     sensitivity_demand_analyze_parser = subparsers.add_parser('sensitivity-demand-analyze',
