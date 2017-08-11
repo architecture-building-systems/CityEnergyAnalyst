@@ -6,6 +6,8 @@ from __future__ import division
 import numpy as np
 from scipy import interpolate
 import scipy
+import pandas as pd
+from math import log
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -441,7 +443,7 @@ def calc_eta_FC(Q_load, Q_design, phi_threshold, approach_call):
 
 # investment and maintenance costs
 
-def calc_Cinv_CCT(CC_size, gV):
+def calc_Cinv_CCT(CC_size, gV, locator, technology=0):
     """
     Annualized investment costs for the Combined cycle
 
@@ -454,14 +456,32 @@ def calc_Cinv_CCT(CC_size, gV):
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
+    CCGT_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="CCGT")
+    technology_code = list(set(CCGT_cost_data['code']))
+    CCGT_cost_data[CCGT_cost_data['code'] == technology_code[technology]]
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
+    if CC_size < CCGT_cost_data['cap_min'][0]:
+        CC_size = CCGT_cost_data['cap_min'][0]
+    CCGT_cost_data = CCGT_cost_data[
+        (CCGT_cost_data['cap_min'] <= CC_size) & (CCGT_cost_data['cap_max'] > CC_size)]
 
-    InvC = 32978 * (CC_size * 1E-3) ** 0.5967  # [C. Weber, 2008]_
-    InvCa = InvC * gV.CC_i * (1+ gV.CC_i) ** gV.CC_n / ((1+gV.CC_i) ** gV.CC_n - 1)
+    Inv_a = CCGT_cost_data.iloc[0]['a']
+    Inv_b = CCGT_cost_data.iloc[0]['b']
+    Inv_c = CCGT_cost_data.iloc[0]['c']
+    Inv_d = CCGT_cost_data.iloc[0]['d']
+    Inv_e = CCGT_cost_data.iloc[0]['e']
+    Inv_IR = (CCGT_cost_data.iloc[0]['IR_%']) / 100
+    Inv_LT = CCGT_cost_data.iloc[0]['LT_yr']
+
+    InvC = Inv_a + Inv_b * (CC_size) ** Inv_c + (Inv_d + Inv_e * CC_size) * log(CC_size)
+
+    InvCa = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
 
     return InvCa
 
 
-def calc_Cinv_FC(P_design, gV):
+def calc_Cinv_FC(P_design, gV, locator, technology=0):
     """
     Calculates the investment cost of a Fuel Cell in CHF
 
@@ -473,8 +493,26 @@ def calc_Cinv_FC(P_design, gV):
     :rtype InvCa: float
     :returns InvCa: annualized investment costs in CHF
     """
+    FC_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="FC")
+    technology_code = list(set(FC_cost_data['code']))
+    FC_cost_data[FC_cost_data['code'] == technology_code[technology]]
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
+    if P_design < FC_cost_data['cap_min'][0]:
+        P_design = FC_cost_data['cap_min'][0]
+    FC_cost_data = FC_cost_data[
+        (FC_cost_data['cap_min'] <= P_design) & (FC_cost_data['cap_max'] > P_design)]
 
-    InvC = (1 + gV.FC_overhead) * gV.FC_stack_cost * P_design / 1000 # FC_stack_cost = 55'000 CHF  / kW_therm, 10 % extra (overhead) cost
-    InvCa = InvC * gV.FC_i * (1 + gV.FC_i) ** gV.FC_n / (( 1 + gV.FC_i) ** gV.FC_n - 1)
+    Inv_a = FC_cost_data.iloc[0]['a']
+    Inv_b = FC_cost_data.iloc[0]['b']
+    Inv_c = FC_cost_data.iloc[0]['c']
+    Inv_d = FC_cost_data.iloc[0]['d']
+    Inv_e = FC_cost_data.iloc[0]['e']
+    Inv_IR = (FC_cost_data.iloc[0]['IR_%']) / 100
+    Inv_LT = FC_cost_data.iloc[0]['LT_yr']
+
+    InvC = Inv_a + Inv_b * (P_design) ** Inv_c + (Inv_d + Inv_e * P_design) * log(P_design)
+
+    InvCa = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
 
     return InvCa

@@ -202,7 +202,7 @@ def decentralized_main(locator, building_names, gv):
         InvCosts[0][0] = InvCaBoiler
         InvCosts[1][0] = InvCaBoiler
         
-        InvCosts[2][0] = FC.calc_Cinv_FC(Qnom, gv)
+        InvCosts[2][0] = FC.calc_Cinv_FC(Qnom, gv, locator)
         
         for i in range(10):
             result[3+i][0] = i/10

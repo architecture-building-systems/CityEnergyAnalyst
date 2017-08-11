@@ -6,7 +6,7 @@ condensing boilers
 
 from __future__ import division
 from scipy.interpolate import interp1d
-from math import log, exp
+from math import log
 import pandas as pd
 
 
@@ -216,40 +216,32 @@ def calc_Cinv_boiler(Q_design, Q_annual, gV, locator, technology=0):
     if Q_design >0:
 
         boiler_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="Boiler")
-        boiler_cost_data = boiler_cost_data[:-1]
-        # print (boiler_cost_data)
         technology_code = list(set(boiler_cost_data['code']))
-        print (type(boiler_cost_data))
         boiler_cost_data[boiler_cost_data['code'] == technology_code[technology]]
-        # print (boiler_cost_data)
-        # cap_min = list(set(boiler_cost_data['cap_min']))
-        # cap_max = list(set(boiler_cost_data['cap_max']))
-        c = boiler_cost_data[boiler_cost_data['cap_min'] >= Q_design]
-        print (c)
-        a = boiler_cost_data[(boiler_cost_data['cap_min'] <= Q_design) & (boiler_cost_data['cap_max'] >= Q_design)]
-        # print (a)
+        # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+        # capacity for the corresponding technology from the database
+        if Q_design < boiler_cost_data['cap_min'][0]:
+            Q_design = boiler_cost_data['cap_min'][0]
+        boiler_cost_data = boiler_cost_data[(boiler_cost_data['cap_min'] <= Q_design) & (boiler_cost_data['cap_max'] > Q_design)]
 
-        a = boiler_cost_data
+        Inv_a = boiler_cost_data.iloc[0]['a']
+        Inv_b = boiler_cost_data.iloc[0]['b']
+        Inv_c = boiler_cost_data.iloc[0]['c']
+        Inv_d = boiler_cost_data.iloc[0]['d']
+        Inv_e = boiler_cost_data.iloc[0]['e']
+        Inv_IR = (boiler_cost_data.iloc[0]['IR_%']) / 100
+        Inv_LT = boiler_cost_data.iloc[0]['LT_yr']
 
-        InvC = a + b * (Q_design)^c + (d + e * Q_design) * log(Q_design) + (f + g * Q_design) * exp(Q_design)
-        InvC = 28000 # after A+W
+        InvC = Inv_a + Inv_b * (Q_design)** Inv_c + (Inv_d + Inv_e * Q_design) * log(Q_design)
 
-        if Q_design <= 90000 and Q_design >= 28000:
-            InvC_exkl_MWST = 28000 + 0.275 * (Q_design - 28000) # linear interpolation of A+W data
-            InvC = (gV.MWST + 1) * InvC_exkl_MWST
+        InvCa =  InvC * (Inv_IR) * (1+ Inv_IR) ** Inv_LT / ((1+Inv_IR) ** Inv_LT - 1)
 
-        elif Q_design > 90000 and Q_design  <= 320000: # 320kW = maximum Power of conventional Gas Boiler,
-            InvC = 45000 + 0.11 * (Q_design - 90000)
-
-        InvCa =  InvC * gV.Boiler_i * (1+ gV.Boiler_i) ** gV.Boiler_n / ((1+gV.Boiler_i) ** gV.Boiler_n - 1)
-
-        if Q_design > 320000: # 320kW = maximum Power of conventional Gas Boiler
-            InvCa = gV.EURO_TO_CHF * (84000 + 14 * Q_design / 1000) # after Faz.2012
 
         Maint_C_annual = gV.Boiler_C_maintainance_faz * Q_annual / 1E6 * gV.EURO_TO_CHF # 3.5 euro per MWh_th FAZ 2013
         Labour_C = gV.Boiler_C_labour * Q_annual / 1E6 * gV.EURO_TO_CHF # approx 4 euro per MWh_th
 
         InvCa += Maint_C_annual + Labour_C
+        print (InvCa)
 
     else:
         InvCa = 0
