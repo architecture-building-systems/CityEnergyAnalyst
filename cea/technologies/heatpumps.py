@@ -5,6 +5,7 @@ heatpumps
 
 from __future__ import division
 from math import floor, log
+import pandas as pd
 
 
 __author__ = "Thuy-An Nguyen"
@@ -307,7 +308,7 @@ def calc_Cinv_GHP(GHP_Size, gV):
     return InvCa
 
 
-def calc_Cinv_HP(HP_Size, gV):
+def calc_Cinv_HP(HP_Size, gV, locator, technology=1):
     """
     Calculates the annualized investment costs for a water to water heat pump.
 
@@ -321,9 +322,27 @@ def calc_Cinv_HP(HP_Size, gV):
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
     if HP_Size > 0:
-        InvC = (-493.53 * log(HP_Size * 1E-3) + 5484) * (HP_Size * 1E-3)
-        InvCa = InvC * gV.HP_i * (1+ gV.HP_i) ** gV.HP_n / \
-                ((1+gV.HP_i) ** gV.HP_n - 1)
+        HP_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="HP")
+        technology_code = list(set(HP_cost_data['code']))
+        HP_cost_data[HP_cost_data['code'] == technology_code[technology]]
+        # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+        # capacity for the corresponding technology from the database
+        if HP_Size < HP_cost_data['cap_min'][0]:
+            HP_Size = HP_cost_data['cap_min'][0]
+        HP_cost_data = HP_cost_data[
+            (HP_cost_data['cap_min'] <= HP_Size) & (HP_cost_data['cap_max'] > HP_Size)]
+
+        Inv_a = HP_cost_data.iloc[0]['a']
+        Inv_b = HP_cost_data.iloc[0]['b']
+        Inv_c = HP_cost_data.iloc[0]['c']
+        Inv_d = HP_cost_data.iloc[0]['d']
+        Inv_e = HP_cost_data.iloc[0]['e']
+        Inv_IR = (HP_cost_data.iloc[0]['IR_%']) / 100
+        Inv_LT = HP_cost_data.iloc[0]['LT_yr']
+
+        InvC = Inv_a + Inv_b * (HP_Size) ** Inv_c + (Inv_d + Inv_e * HP_Size) * log(HP_Size)
+
+        InvCa = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
 
     else:
         InvCa = 0
@@ -331,7 +350,7 @@ def calc_Cinv_HP(HP_Size, gV):
     return InvCa
 
 
-def GHP_InvCost(GHP_Size, gV):
+def GHP_InvCost(GHP_Size, gV, locator, technology=0):
     """
     Calculates the annualized investment costs for the geothermal heat pump
 
@@ -341,13 +360,52 @@ def GHP_InvCost(GHP_Size, gV):
     InvCa : float
         annualized investment costs in EUROS/a
     """
-    InvC_HP = 5247.5 * (GHP_Size * 1E-3) ** 0.49
-    InvC_BH = 7100 * (GHP_Size * 1E-3) ** 0.74
 
-    InvCa = InvC_HP * gV.GHP_i * (1+ gV.GHP_i) ** gV.GHP_nHP / \
-            ((1+gV.GHP_i) ** gV.GHP_nHP - 1) + \
-            InvC_BH * gV.GHP_i * (1+ gV.GHP_i) ** gV.GHP_nBH / \
-            ((1+gV.GHP_i) ** gV.GHP_nBH - 1)
+    GHP_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="HP")
+    technology_code = list(set(GHP_cost_data['code']))
+    GHP_cost_data[GHP_cost_data['code'] == technology_code[technology]]
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
+    if GHP_Size < GHP_cost_data['cap_min'][0]:
+        GHP_Size = GHP_cost_data['cap_min'][0]
+    GHP_cost_data = GHP_cost_data[
+        (GHP_cost_data['cap_min'] <= GHP_Size) & (GHP_cost_data['cap_max'] > GHP_Size)]
+
+    Inv_a = GHP_cost_data.iloc[0]['a']
+    Inv_b = GHP_cost_data.iloc[0]['b']
+    Inv_c = GHP_cost_data.iloc[0]['c']
+    Inv_d = GHP_cost_data.iloc[0]['d']
+    Inv_e = GHP_cost_data.iloc[0]['e']
+    Inv_IR = (GHP_cost_data.iloc[0]['IR_%']) / 100
+    Inv_LT = GHP_cost_data.iloc[0]['LT_yr']
+
+    InvC = Inv_a + Inv_b * (GHP_Size) ** Inv_c + (Inv_d + Inv_e * GHP_Size) * log(GHP_Size)
+
+    InvCa_GHP = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+
+    BH_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="BH")
+    technology_code = list(set(BH_cost_data['code']))
+    BH_cost_data[BH_cost_data['code'] == technology_code[technology]]
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
+    if GHP_Size < BH_cost_data['cap_min'][0]:
+        GHP_Size = BH_cost_data['cap_min'][0]
+    BH_cost_data = BH_cost_data[
+        (BH_cost_data['cap_min'] <= GHP_Size) & (BH_cost_data['cap_max'] > GHP_Size)]
+
+    Inv_a = BH_cost_data.iloc[0]['a']
+    Inv_b = BH_cost_data.iloc[0]['b']
+    Inv_c = BH_cost_data.iloc[0]['c']
+    Inv_d = BH_cost_data.iloc[0]['d']
+    Inv_e = BH_cost_data.iloc[0]['e']
+    Inv_IR = (BH_cost_data.iloc[0]['IR_%']) / 100
+    Inv_LT = BH_cost_data.iloc[0]['LT_yr']
+
+    InvC = Inv_a + Inv_b * (GHP_Size) ** Inv_c + (Inv_d + Inv_e * GHP_Size) * log(GHP_Size)
+
+    InvCa_BH = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+
+    InvCa = InvCa_BH + InvCa_GHP
 
     return InvCa
 

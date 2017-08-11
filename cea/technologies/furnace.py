@@ -3,6 +3,8 @@
 furnaces
 """
 from __future__ import division
+import pandas as pd
+from math import log
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -190,7 +192,7 @@ def furnace_op_cost(Q_therm, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
 # investment and maintenance costs
 
-def calc_Cinv_furnace(Q_design, Q_annual, gv):
+def calc_Cinv_furnace(Q_design, Q_annual, gv, locator, technology=0):
     """
     Calculates the annualized investment cost of a Furnace
     based on Bioenergy 2020 (AFO) and POLYCITY Ostfildern 
@@ -210,13 +212,32 @@ def calc_Cinv_furnace(Q_design, Q_annual, gv):
     :returns InvCa: annualized investment costs in [CHF] including O&M
         
     """
-    InvC = 0.670 * gv.EURO_TO_CHF * Q_design # 670 € /kW therm(Boiler) = 800 CHF /kW (A+W data)
+    furnace_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="Furnace")
+    technology_code = list(set(furnace_cost_data['code']))
+    furnace_cost_data[furnace_cost_data['code'] == technology_code[technology]]
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
+    if Q_design < furnace_cost_data['cap_min'][0]:
+        Q_design = furnace_cost_data['cap_min'][0]
+    furnace_cost_data = furnace_cost_data[
+        (furnace_cost_data['cap_min'] <= Q_design) & (furnace_cost_data['cap_max'] > Q_design)]
 
-    Ca_invest =  (InvC * gv.Boiler_i * (1+ gv.Boiler_i) ** gv.Boiler_n / ((1+gv.Boiler_i) ** gv.Boiler_n - 1))
-    Ca_maint = Ca_invest * gv.Boiler_C_maintainance
+    Inv_a = furnace_cost_data.iloc[0]['a']
+    Inv_b = furnace_cost_data.iloc[0]['b']
+    Inv_c = furnace_cost_data.iloc[0]['c']
+    Inv_d = furnace_cost_data.iloc[0]['d']
+    Inv_e = furnace_cost_data.iloc[0]['e']
+    Inv_IR = (furnace_cost_data.iloc[0]['IR_%']) / 100
+    Inv_LT = furnace_cost_data.iloc[0]['LT_yr']
+
+    InvC = Inv_a + Inv_b * (Q_design) ** Inv_c + (Inv_d + Inv_e * Q_design) * log(Q_design)
+
+    InvCa = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+
+    Ca_maint = InvCa * gv.Boiler_C_maintainance
     Ca_labour =  gv.Boiler_C_labour / 1000000.0 * gv.EURO_TO_CHF * Q_annual
 
-    InvCa = Ca_invest + Ca_maint + Ca_labour
+    InvCa = InvCa + Ca_maint + Ca_labour
     
     return InvCa
 
