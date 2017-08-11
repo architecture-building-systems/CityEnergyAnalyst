@@ -657,11 +657,30 @@ def optimal_angle_and_tilt(observers_all, latitude, worst_sh, worst_Az, transmit
 
 # investment and maintenance costs
 
-def calc_Cinv_SC(Area, gv):
+def calc_Cinv_SC(Area, gv, locator, technology=0):
     """
     Lifetime 35 years
     """
-    InvCa = 2050 * Area / gv.SC_n  # [CHF/y]
+    SC_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="SC")
+    technology_code = list(set(SC_cost_data['code']))
+    SC_cost_data[SC_cost_data['code'] == technology_code[technology]]
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
+    if Area < SC_cost_data['cap_min'][0]:
+        Area = SC_cost_data['cap_min'][0]
+    SC_cost_data = SC_cost_data[
+        (SC_cost_data['cap_min'] <= Area) & (SC_cost_data['cap_max'] > Area)]
+
+    Inv_a = SC_cost_data.iloc[0]['a']
+    Inv_b = SC_cost_data.iloc[0]['b']
+    Inv_c = SC_cost_data.iloc[0]['c']
+    Inv_d = SC_cost_data.iloc[0]['d']
+    Inv_e = SC_cost_data.iloc[0]['e']
+    Inv_IR = (SC_cost_data.iloc[0]['IR_%']) / 100
+    Inv_LT = SC_cost_data.iloc[0]['LT_yr']
+
+    InvC = Inv_a + Inv_b * (Area) ** Inv_c + (Inv_d + Inv_e * Area) * log(Area)
+    InvCa = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
 
     return InvCa
 

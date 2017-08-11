@@ -2,7 +2,8 @@
 System Modeling: Cooling tower
 """
 from __future__ import division
-
+import pandas as pd
+from math import log
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -47,7 +48,7 @@ def calc_CT(qhotdot, Qdesign, gV):
 
 # Investment costs
 
-def calc_Cinv_CT(CT_size, gV):
+def calc_Cinv_CT(CT_size, gV, locator, technology=0):
     """
     Annualized investment costs for the Combined cycle
 
@@ -58,8 +59,27 @@ def calc_Cinv_CT(CT_size, gV):
     :returns InvCa: annualized investment costs in Dollars
     """
     if CT_size > 0:
-        InvC = (0.0161 * CT_size * 1E-3 + 1457.3) * 1E3
-        InvCa = InvC * gV.CT_a
+        CT_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="CT")
+        technology_code = list(set(CT_cost_data['code']))
+        CT_cost_data[CT_cost_data['code'] == technology_code[technology]]
+        # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+        # capacity for the corresponding technology from the database
+        if CT_size < CT_cost_data['cap_min'][0]:
+            CT_size = CT_cost_data['cap_min'][0]
+        CT_cost_data = CT_cost_data[
+            (CT_cost_data['cap_min'] <= CT_size) & (CT_cost_data['cap_max'] > CT_size)]
+
+        Inv_a = CT_cost_data.iloc[0]['a']
+        Inv_b = CT_cost_data.iloc[0]['b']
+        Inv_c = CT_cost_data.iloc[0]['c']
+        Inv_d = CT_cost_data.iloc[0]['d']
+        Inv_e = CT_cost_data.iloc[0]['e']
+        Inv_IR = (CT_cost_data.iloc[0]['IR_%']) / 100
+        Inv_LT = CT_cost_data.iloc[0]['LT_yr']
+
+        InvC = Inv_a + Inv_b * (CT_size) ** Inv_c + (Inv_d + Inv_e * CT_size) * log(CT_size)
+
+        InvCa = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
 
     else:
         InvCa = 0
