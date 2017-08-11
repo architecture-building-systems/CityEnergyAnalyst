@@ -344,13 +344,33 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
 
 # investment and maintenance costs
 
-def calc_Cinv_PVT(P_peak, gv):
+def calc_Cinv_PVT(P_peak, gv, locator, technology=0):
     """
     P_peak in kW
     result in CHF
     """
-    InvCa = 5000 * P_peak / gv.PVT_n # CHF/y
-    # 2sol
+    P_peak = P_peak * 1000
+    PVT_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="PVT")
+    technology_code = list(set(PVT_cost_data['code']))
+    PVT_cost_data[PVT_cost_data['code'] == technology_code[technology]]
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
+    if P_peak < PVT_cost_data['cap_min'][0]:
+        P_peak = PVT_cost_data['cap_min'][0]
+    PVT_cost_data = PVT_cost_data[
+        (PVT_cost_data['cap_min'] <= P_peak) & (PVT_cost_data['cap_max'] > P_peak)]
+
+    Inv_a = PVT_cost_data.iloc[0]['a']
+    Inv_b = PVT_cost_data.iloc[0]['b']
+    Inv_c = PVT_cost_data.iloc[0]['c']
+    Inv_d = PVT_cost_data.iloc[0]['d']
+    Inv_e = PVT_cost_data.iloc[0]['e']
+    Inv_IR = (PVT_cost_data.iloc[0]['IR_%']) / 100
+    Inv_LT = PVT_cost_data.iloc[0]['LT_yr']
+
+    InvC = Inv_a + Inv_b * (P_peak) ** Inv_c + (Inv_d + Inv_e * P_peak) * log(P_peak)
+
+    InvCa = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
 
     return InvCa
 

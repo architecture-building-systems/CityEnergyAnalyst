@@ -49,8 +49,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
         Q_source_data[:,7]: uncovered demand
     :rtype: float, float, float, array
     """
-
-    print "Least Cost Optimization Ready \n"
     MS_Var = master_to_slave_vars
 
     t = time.time()
@@ -261,7 +259,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                         Q_therm_HPL = Q_therm_req.copy()
                         mdot_DH_to_Lake = Q_therm_HPL / (gv.cp * (tdhsup - tdhret_req))
                         Q_therm_req = 0
-                    print tdhsup
                     HP_Lake_Cost_Data = HPLake_op_cost(mdot_DH_to_Lake, tdhsup, tdhret_req, gv.TLake, gv)
                     C_HPL_el, Wdot_HPLake, Q_HPL_cold_primary, Q_HPL_therm = HP_Lake_Cost_Data
 
@@ -297,7 +294,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                     eta_elec_interpol = CC_op_cost_data[5]
 
                     if Q_therm_req > Q_CC_min:  # operation Possible if above minimal load
-                        print MS_Var.CC_GT_SIZE, MS_Var.gt_fuel, tdhsup, Q_therm_req, Q_CC_min, Q_CC_max
                         if Q_therm_req < Q_CC_max:  # Normal operation Possible within partload regime
                             cost_per_Wh_CC = cost_per_Wh_CC_fn(Q_therm_req)
                             Q_used_prim_CC = Q_used_prim_CC_fn(Q_therm_req)
@@ -436,24 +432,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                         Q_Backup = Q_therm_boilerP
                         E_gas_Backup = Q_primaryP
                         E_el_Backup = E_aux_BoilerP
-                        # print "Peak Boiler activated with ", Q_Backup
-                        # print "E_el_Backup ",E_el_Backup
-
-
-                        # print Q_therm_req, "Q left"
-
-
-            print "\n currently activated source: ", current_source
-            print "available sources :", "\n Boiler", MS_Var.Boiler_on,\
-                                         "\n BoilerPeak_on", MS_Var.BoilerPeak_on, \
-                                         "\n Furnace_on", MS_Var.Furnace_on,\
-                                         "\n GHP_on", MS_Var.GHP_on,\
-                                         "\n HP_Lake_on", MS_Var.HP_Lake_on,\
-                                         "\n HP_Sew_on", MS_Var.HP_Sew_on,\
-                                         "\n CC_on",MS_Var.CC_on,\
-                                         "\n WasteServersHeatRecovery", MS_Var.WasteServersHeatRecovery,\
-                                         "\n WasteCompressorHeatRecovery", MS_Var.WasteCompressorHeatRecovery
-
 
             Q_excess = 0
             if np.floor(Q_therm_req) > 0:
@@ -468,25 +446,9 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                     # print "switch to", gv.act_fourth, "\n"
                 else:
                     Q_uncovered = Q_therm_req
-
-                    print "last source tested: ", current_source
-                    print "occured in hour: ", hour
-                    print "insufficient capacity installed! Cannot cover the distribution demand (check Slave code, find_least_cost_source_main"
-                    #break
-
-                    print "not sufficient capacity installed in hour : ", hour
-                    print Q_therm_req, "Wh missing"
-                    print "check least cost optimization (here the error comes from) but also the inputs: "
-                    print "It is not sufficient capacity available to the slave in order to fulfill the thermal "
-                    print "demand of the distribution (think about the bands or gaps that occur when a system has a minimum load)"
-                    print "This is now covered by a boiler"
-
-                    print Q_therm_req_COPY, "Wh was required \n"
-
                     break
 
             elif round(Q_therm_req, 0) != 0:
-                print "ERROR - TOO MUCH POWER! -     ", -Q_therm_req / 1000.0, "kWh in excess"
                 Q_uncovered = 0  # Q_therm_req
                 Q_excess = -Q_therm_req
                 Q_therm_req = 0
@@ -527,9 +489,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     # save data
 
     elapsed = time.time() - t
-
-    print np.round(elapsed, decimals=0), "seconds used for this optimization"
-    # current_time = time.time()
 
     # sum up the uncovered demand, get average and peak load
     QUncovered = Q_source_data[:, 7]
@@ -623,10 +582,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
         results.to_csv(locator.get_optimization_slave_pp_activation_pattern(MS_Var.configKey), sep=',')
 
-        print "PP Activation Results saved in : ", locator.get_optimization_slave_results_folder()
-        print " as : ", MS_Var.configKey + "PPActivationPattern.csv"
-
-
     CO2_emitted, Eprim_used = calc_primary_energy_and_CO2(Q_source_data, E_coldsource_data, E_PP_el_data,
                                                           E_gas_data, E_wood_data, Q_primaryAddBackupSum,
                                                           np.sum(E_aux_AddBoiler),
@@ -637,8 +592,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     # sum up results from PP Activation
     # E_HPSew_sum = np.sum(E_el_data) - Sums up the energy consumption of
     E_el_sum_consumed = np.sum(E_PP_and_storage) + np.sum(E_aux_HP_uncontrollable)  # (excl. AddBoiler)
-    print "np.sum(E_PP_and_storage)", np.sum(E_PP_and_storage)
-    print "np.sum(E_aux_HP_uncontrollable)", np.sum(E_aux_HP_uncontrollable)
 
     # Differenciate between Normal and green electricity for
     if MS_Var.EL_TYPE == 'green':
@@ -650,8 +603,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     # Area available in NEtwork
     Area_AvailablePV = solar_features.SolarAreaPV * MS_Var.SOLAR_PART_PV
     Area_AvailablePVT = solar_features.SolarAreaPVT * MS_Var.SOLAR_PART_PVT
-    print "MS_Var.SOLAR_PART_PVT = ", MS_Var.SOLAR_PART_PVT
-    print "MS_Var.SOLAR_PART_PV = ", MS_Var.SOLAR_PART_PV
     #    import from master
     eta_m2_to_kW = gv.eta_area_to_peak  # Data from Jimeno
     PowerPeakAvailablePV = Area_AvailablePV * eta_m2_to_kW
@@ -660,20 +611,11 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     KEV_RpPerkWhPVT = calc_Crem_pv(PowerPeakAvailablePVT * 1000.0)
     KEV_RpPerkWhPV = calc_Crem_pv(PowerPeakAvailablePV * 1000.0)
-    print "\n", KEV_RpPerkWhPVT, "KEV PVT"
-    print KEV_RpPerkWhPV, "KEV PV"
 
     KEV_total = KEV_RpPerkWhPVT / 100 * np.sum(E_PVT_Wh) / 1000 + KEV_RpPerkWhPV / 100 * np.sum(E_PV_Wh) / 1000
     # Units: from Rp/kWh to CHF/Wh
 
     price_obtained_from_KEV_for_PVandPVT = KEV_total
-    print "E_PVT_Wh", np.sum(E_PVT_Wh)
-    print "E_PV_Wh", np.sum(E_PV_Wh)
-    print "price_obtained_from_KEV_for_PVandPVT", price_obtained_from_KEV_for_PVandPVT, "\n"
-
-    print "E_el_sum_consumed (excl. AddBoiler)", E_el_sum_consumed
-    print "ELEC_PRICE", ELEC_PRICE
-
     cost_CC_maintenance = np.sum(E_PP_el_data[:, 3]) * gv.CC_Maintenance_per_kWhel / 1000.0
 
     # Fill up storage if end-of-season energy is lower than beginning of season
@@ -715,9 +657,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
             "cost_HP_storage_operation": [cost_HP_storage_operation]
         })
         results.to_csv(locator.get_optimization_slave_slave_cost_data(MS_Var.configKey), sep=',')
-        print "Slave to Master Variables saved in : ", locator.get_optimization_slave_results_folder()
-        print " as : ", MS_Var.configKey + "_SlaveCostData.csv"
-
     # Store out Average cost
 
     saveAverageCost = 1
@@ -732,10 +671,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     avgCostUncontrollableSources = 100 * 1000.0 * cost_HP_aux_uncontrollable / np.sum(Q_uncontrollable)
     avgCostAddBoiler = 100 * 1000.0 * costAddBackup_total / np.sum(QUncovered)
     avgCostStorageOperation = 100 * 1000.0 * cost_HP_storage_operation / Q_StorageToDHNpipe_sum
-
-    print "\n Q_uncontrollable produced", np.sum(Q_uncontrollable)
-    print "cost_HP_aux_uncontrollable", cost_HP_aux_uncontrollable
-    print "E_aux_HP_uncontrollable sum", np.sum(E_aux_HP_uncontrollable)
 
     if saveAverageCost == 1:
         results = pd.DataFrame({
@@ -753,37 +688,16 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
         results.to_csv(locator.get_optimization_slave_averaged_cost_data(MS_Var.configKey), sep=',')
 
-        print "Averaged Cost Results saved in : ", locator.get_optimization_slave_results_folder()
-        print " as : ", MS_Var.configKey + "AveragedCostData.csv"
-
     # print E_oil_eq_MJ, CO2_kg_eq, cost_sum
     # print type(E_oil_eq_MJ), type(CO2_kg_eq), type(cost_sum)
 
     E_oil_eq_MJ = Eprim_used
     CO2_kg_eq = CO2_emitted
 
-    print "\n Values found in Slave:"
-    print "cost_sum", cost_sum, np.shape(cost_sum)
-    print "E_oil_eq_MJ", E_oil_eq_MJ, np.shape(E_oil_eq_MJ)
-    print "CO2_kg_eq", CO2_kg_eq, np.shape(CO2_kg_eq)
 
     if save_file == 1:
         results = pd.DataFrame({"E_oil_eq_MJ": [E_oil_eq_MJ], "CO2_kg_eq": [CO2_kg_eq], "cost_sum": [cost_sum]})
         results.to_csv(locator.get_optimization_slave_slave_to_master_cost_emissions_prim_e(MS_Var.configKey), sep=',')
-        print "Slave to Master Variables saved in : ", locator.get_optimization_slave_results_folder()
-        print " as : ", MS_Var.configKey + "_SlaveToMasterCostEmissionsPrimE.csv"
-    printcost = 0
-    if printcost == 1:
-        print "Total_Cost_HPSew", np.sum(cost_data_centralPlant_op[:, 0])
-        print "Total_Cost_HPLake", np.sum(cost_data_centralPlant_op[:, 1])
-        print "Total_Cost_GHP", np.sum(cost_data_centralPlant_op[:, 2])
-        print "Total_Cost_CC", np.sum(cost_data_centralPlant_op[:, 3])
-        print "Total_Cost_Furnace", np.sum(cost_data_centralPlant_op[:, 4])
-        print "Total_Cost_BoilerBase", np.sum(cost_data_centralPlant_op[:, 5])
-        print "Total_Cost_BoilerPeak", np.sum(cost_data_centralPlant_op[:, 6])
-
-
-
         # Calculate primary energy from ressources:
     EgasPrimary = Q_primaryAddBackupSum + np.sum(E_gas_data)
     EwoodPrimary = np.sum(E_wood_data)
@@ -835,10 +749,6 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
     })
 
     results.to_csv(locator.get_optimization_slave_primary_energy_by_source(MS_Var.configKey), sep=',')
-    print "Averaged Cost Results saved in : ", locator.get_optimization_slave_results_folder()
-    print " as : ", os.path.join(locator.get_optimization_slave_results_folder(),
-                                 MS_Var.configKey + "PrimaryEnergyBySource.csv")
-
     cost_sum -= costBenefitNotUsedHPs
 
     return E_oil_eq_MJ, CO2_kg_eq, cost_sum, QUncoveredDesign, QUncoveredAnnual
@@ -904,7 +814,6 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
     Q_HPSew = Q_source_data[:,0]
     Q_HPLake = Q_source_data[:,1]
     Q_GHP = Q_source_data[:,2]
-    print "sum of GHP", np.sum(Q_GHP)
     Q_CC = Q_source_data[:,3]
     Q_Furnace = Q_source_data[:,4]
     Q_Boiler = Q_source_data[:,5]
@@ -924,10 +833,6 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
     E_el_CC_produced = E_PP_el_data[:,3]
     E_el_Furnace_produced = E_PP_el_data[:,4]
     E_el_AuxillaryBoilerAllSum = np.sum(E_PP_el_data[:,5]) + np.sum(E_PP_el_data[:,6]) + E_aux_AddBoilerSum
-    print "\n E_el_AuxillaryBoilerAllSum",E_el_AuxillaryBoilerAllSum
-    print "E_aux_AddBoilerSum", E_aux_AddBoilerSum
-    print "np.sum(E_PP_el_data[:,5]) (Base Boiler)", np.sum(E_PP_el_data[:,5])
-    print "np.sum(E_PP_el_data[:,6]) (Peak Boiler)", np.sum(E_PP_el_data[:,6])
 
     # Electricity is accounted for already, no double accounting --> leave it out. 
     # only CO2 / Eprim is not included in the installation part, neglected as its very small compared to operational values
@@ -1017,19 +922,15 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
         COP_HPSew_avg       = np.sum(Q_HPSew) / (-np.sum(Q_coldsource_HPSew) + np.sum(Q_HPSew))
     else:
         COP_HPSew_avg       = 100.0
-        
-    print "COP_HPSew_avg", COP_HPSew_avg
-    
+
     if np.sum(Q_GHP)       != 0:
         COP_GHP_avg         = np.sum(Q_GHP) / (-np.sum(Q_coldsource_GHP) + np.sum(Q_GHP))
     else:
         COP_GHP_avg         = 100
-        print "COP_GHP_avg",COP_GHP_avg 
-    
+
     if np.sum(Q_HPLake)    != 0:
         COP_HPLake_avg      = np.sum(Q_HPLake) / (-np.sum(Q_coldsource_HPLake) + np.sum(Q_HPLake))
-        print "COP_HPLAKEAVG", COP_HPLake_avg
-    
+
     else:
         COP_HPLake_avg      = 100
     #print "COP_HPLake_avg, COP_GHP_avg, COP_HPSew_avg = ", COP_HPLake_avg, COP_GHP_avg, COP_HPSew_avg
@@ -1118,15 +1019,6 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
     EprimSaved_from_elec_sold_CHP     = np.sum(E_el_CC_produced) * (- EL_TO_OIL_EQ) * gv.Wh_to_J / 1.0E6
     EprimSaved_from_elec_sold_Solar   = ESolarProduced * (gv.EL_PV_TO_OIL_EQ - EL_TO_OIL_EQ)  * gv.Wh_to_J / 1.0E6
 
-    print "np.sum(E_el_CC_produced)",np.sum(E_el_CC_produced)
-    print "EprimSaved_from_elec_sold_CHP",EprimSaved_from_elec_sold_CHP
-    print "EprimSaved_from_elec_sold_Furnace", EprimSaved_from_elec_sold_Furnace
-    print "\n eta_furnace_avg : ",eta_furnace_avg
-    print "E_el_Furnace_produced",np.sum(E_el_Furnace_produced)
-    print "eta_CC_avg", eta_CC_avg
-    print "np.sum(E_el_CC_produced)", np.sum(E_el_CC_produced)
-    print "EprimSaved_from_elec_sold_Solar",EprimSaved_from_elec_sold_Solar
-    
     EprimSaved_from_elec_sold= EprimSaved_from_elec_sold_Furnace + EprimSaved_from_elec_sold_CHP + EprimSaved_from_elec_sold_Solar
                            
                             # E_PV_Wh contains PV and PVT values (Units Wh * MJ/MJ, later on translated from Wh to MJ) 
@@ -1171,24 +1063,6 @@ def calc_primary_energy_and_CO2(Q_source_data, Q_coldsource_data, E_PP_el_data,
     Eprim_used      = (Eprim_from_HP + Eprim_from_gas + Eprim_from_wood + EprimSaved_from_elec_sold\
                                             + Eprim_from_SCandPVT + Eprim_from_elec_usedAuxBoilersAll + Eprim_from_HPSolarandHearRecovery\
                                             + Eprim_from_HP_StorageOperationChDeCh) 
-    print "\n CO2_from_elec_sold",CO2_from_elec_sold
-    print "EprimSaved_from_elec_sold",EprimSaved_from_elec_sold 
-    
-    print "\n CO2_from_gas", CO2_from_gas
-    print "Eprim_from_gas", Eprim_from_gas
-                             
-    print "\n CO2_from_SCandPVT",CO2_from_SCandPVT
-    print "Eprim_from_SCandPVT", Eprim_from_SCandPVT
-    
-    print "\n CO2_from_elec_usedAuxBoilersAll",CO2_from_elec_usedAuxBoilersAll
-    print "Eprim_from_elec_usedAuxBoilersAll",Eprim_from_elec_usedAuxBoilersAll
-    
-    print "\nCO2_from_HP_StorageOperationChDeCh", CO2_from_HP_StorageOperationChDeCh    
-    print "Eprim_from_HP_StorageOperationChDeCh", Eprim_from_HP_StorageOperationChDeCh
-    
-    print "\n CO2_from_HPSolarandHearRecovery", CO2_from_HPSolarandHearRecovery
-    print "Eprim_from_HPSolarandHearRecovery",Eprim_from_HPSolarandHearRecovery
-
     return CO2_emitted, Eprim_used
 
 def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
@@ -1263,7 +1137,5 @@ def import_solar_PeakPower(fNameTotalCSV, nBuildingsConnected, gv):
 
     if nBuildingsConnected == 0:
         PeakPowerAvgkW = 0
-
-    print "\n PeakPowerAvgkW \n", PeakPowerAvgkW
 
     return PeakPowerAvgkW

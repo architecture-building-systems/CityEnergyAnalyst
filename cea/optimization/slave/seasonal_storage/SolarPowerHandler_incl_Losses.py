@@ -76,7 +76,6 @@ def Temp_before_Powerplant(Q_network_demand, Q_solar_available, mdot_DH, T_retur
     """
 
     if Q_network_demand < Q_solar_available:
-        print "ERROR AT Temp_before_Powerplant ( see SolarPowerHandler, line 83)"
         T_before_PP = T_return_DH
         
     T_before_PP = T_return_DH  + Q_solar_available / (mdot_DH * gv.cp)

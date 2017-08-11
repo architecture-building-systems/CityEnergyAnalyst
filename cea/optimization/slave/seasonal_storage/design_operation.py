@@ -53,13 +53,10 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locat
     
     # recover Network  Data:
     mdot_heat_netw_total = Network_Data[0]
-    #mdot_cool_netw_total = Network_Data[1]
     Q_DH_networkload = Network_Data[2]
-    #Q_DC_networkload = Network_Data[3]
     T_DH_return_array = Network_Data[4]
     T_DH_supply_array = Network_Data[6]
-    #T_DC_return_array = Network_Data[5]
-    Q_wasteheatServer = Network_Data[8] #np.array(fn.extract_csv(fName, "Q_DH_building_netw_total", DAYS_IN_YEAR))
+    Q_wasteheatServer = Network_Data[8]
     Q_wasteheatCompAir = Network_Data[7]
     
     Solar_Data_SC = np.zeros((HOURS_IN_DAY* DAYS_IN_YEAR, 7))
@@ -93,55 +90,29 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locat
         if MS_Var.SOLCOL_TYPE_PVT != "NONE" and fName == MS_Var.SOLCOL_TYPE_PVT:
             Solar_Area_PVT, Solar_E_aux_kW_PVT, Solar_Q_th_kW_PVT, Solar_Tscs_th_PVT, Solar_mcp_kW_C_PVT, PV_kWh_PVT, Solar_Tscr_th_PVT \
                             = fn.import_solar_data(MS_Var.SOLCOL_TYPE_PVT, DAYS_IN_YEAR, HOURS_IN_DAY)
-            #Solar_Data_PVT= fn.import_solar_data(MS_Var.SOLCOL_TYPE_PVT, DAYS_IN_YEAR, HOURS_IN_DAY)
-    
+
         if MS_Var.SOLCOL_TYPE_PV != "NONE" and fName == MS_Var.SOLCOL_TYPE_PV:
             Solar_Area_PV, Solar_E_aux_kW_PV, Solar_Q_th_kW_PV, Solar_Tscs_th_PV, Solar_mcp_kW_C_PV, PV_kWh_PV, Solar_Tscr_th_PV\
                             = fn.import_solar_data(MS_Var.SOLCOL_TYPE_PV, DAYS_IN_YEAR, HOURS_IN_DAY)
 
-    #print "\n ........---------........."
-    #print "sum of PV_kWh_PVT in Storage desing op v2", np.sum(PV_kWh_PVT) 
-    # ADD SOLAR COLLECTOR AND SELL ELECTRICITY!
     
     # Recover Solar Data
-   # Solar_Area = Solar_Data_SC[0] * MS_Var.SOLAR_PART_SC + Solar_Data_PVT[0] * MS_Var.SOLAR_PART_PVT + Solar_Data_PV[0] * MS_Var.SOLAR_PART_PV
     Solar_E_aux_W = np.ravel(Solar_E_aux_kW_SC * 1000 * MS_Var.SOLAR_PART_SC) + np.ravel(Solar_E_aux_kW_PVT * 1000 * MS_Var.SOLAR_PART_PVT) \
                             + np.ravel(Solar_E_aux_kW_PV * 1000 * MS_Var.SOLAR_PART_PV)
-    #print "Solar_E_aux_W", np.shape(Solar_E_aux_W), Solar_E_aux_W
-    #print "Solar_Data_SC", Solar_Data_SC
+
     
     Q_SC = Solar_Q_th_kW_SC * 1000 * MS_Var.SOLAR_PART_SC
     #print Q_SC, "Q_SC"
     Q_PVT = Solar_Q_th_kW_PVT * 1000 * MS_Var.SOLAR_PART_PVT
     Q_SCandPVT = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
-    
-    #Q_SCandPVT = float(np.sum(Q_SC) + np.sum(Q_PVT))
-    #Q_SCandPVT = Q_SC + Q_PVT
+
     for hour in range(len(Q_SCandPVT)):
         Q_SCandPVT[hour] = Q_SC[hour] + Q_PVT[hour]
-        
-    #print Q_SCandPVT
-    #print "shape", np.shape(Q_SCandPVT)
+
     
     E_PV_Wh = PV_kWh_PV * 1000 * MS_Var.SOLAR_PART_PV
     E_PVT_Wh = PV_kWh_PVT * 1000  * MS_Var.SOLAR_PART_PVT
-    #print "PV_kWh_PV", np.shape(PV_kWh_PV)
-    #print "PV_kWh_PVT", np.shape(PV_kWh_PVT)
-    
-    
-    #if MS_Var.SOLCOL_TYPE_SC == 'SC_60.csv': #or MS_Var.SOLCOL_TYPE_SC == 'SC_ET50.csv':
-    #    Solar_Tscr_th_SC = 60 + 273.0 #K
-    
-    #else: 
-    #    Solar_Tscr_th_SC = 75 + 273.0 # K
-    
-    #Solar_Tscr_th_PVT = 35 + 273.0 #K 
-    
-    
-    #Solar_Tscs_th = Solar_Data_SC[3] + 273.0
-    #Solar_mcp_W_C = Solar_Data_SC[4] * 1000
-    
-    #iterate over this loop: 
+
     HOUR = 0
     Q_to_storage_avail = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
     Q_from_storage = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
@@ -291,8 +262,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locat
             Q_rejected_fin[HOUR] = Q_uncontrollable - Storage_Data[3]
             T_storage_new = min(T_storage_old, T_storage_new)
             E_aux_ch = 0
-            print "Storage Full!"
-            
+
 
             
         Q_storage_content_fin[HOUR] = Q_in_storage_new
@@ -383,10 +353,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locat
             })
         storage_operation_data_path = locator.get_optimization_slave_storage_operation_data(MS_Var.configKey)
         results.to_csv(storage_operation_data_path, sep= ',')
-        
-        print "Results saved in :", locator.get_optimization_slave_results_folder()
-        print " as : ", storage_operation_data_path
-    
+
     Q_stored_max = np.amax(Q_storage_content_fin)
     T_st_max = np.amax(T_storage_fin)
     T_st_min = np.amin(T_storage_fin)
