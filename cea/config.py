@@ -27,6 +27,10 @@ class Configuration(object):
     def weather(self):
         return self._parser.get('general', 'weather')
 
+    @property
+    def multiprocessing(self):
+        return self._parser.getboolean('general', 'multiprocessing')
+
     def _list_configuration_files(self, scenario):
         """Return the list of configuration files to try and load for a given scenario. The list is given in order
         of importance, with items at the end of the files overriding files at the beginning of the list."""
@@ -59,10 +63,6 @@ class DemandConfiguration(object):
     @property
     def cooling_season_end(self):
         return self._parser.get('demand', 'cooling-season-end')
-
-    @property
-    def multiprocessing(self):
-        return self._parser.getboolean('demand', 'multiprocessing')
 
     @property
     def use_dynamic_infiltration(self):
