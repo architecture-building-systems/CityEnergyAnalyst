@@ -695,7 +695,15 @@ class DemandGraphsTool(object):
             multiValue=True,
             direction="Input")
         analysis_fields.filter.list = []
-        return [scenario_path, analysis_fields]
+        analysis_fields.enabled = False
+        multiprocessing = arcpy.Parameter(
+            displayName="Use multiple cores to speed up processing",
+            name="multiprocessing",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        multiprocessing.enabled = False
+        return [scenario_path, analysis_fields, multiprocessing]
 
     def updateParameters(self, parameters):
         scenario_path = parameters[0].valueAsText
@@ -703,13 +711,19 @@ class DemandGraphsTool(object):
             parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
         analysis_fields = parameters[1]
-        fields = _cli_output(scenario_path, 'demand-graphs', '--list-fields').split()
-        analysis_fields.filter.list = list(fields)
-        return
+        if not analysis_fields.enabled:
+            analysis_fields.enabled = True
+            fields = _cli_output(scenario_path, 'demand-graphs', '--list-fields').split()
+            analysis_fields.filter.list = list(fields)
+
+            multiprocessing = parameters[2]
+            multiprocessing.value = read_config_boolean(scenario_path, 'general', 'multiprocessing')
+            multiprocessing.enabled = True
 
     def execute(self, parameters, messages):
         scenario_path = parameters[0].valueAsText
         analysis_fields = parameters[1].valueAsText.split(';')[:4]  # max 4 fields for analysis
+        write_config_boolean(scenario_path, 'general', 'multiprocessing', parameters[2].value)
         run_cli(scenario_path, 'demand-graphs', '--analysis-fields', *analysis_fields)
 
 

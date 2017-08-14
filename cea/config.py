@@ -5,6 +5,7 @@ Manage configuration information for the CEA. See the cascading configuration fi
 for more information on configuration files.
 """
 import os
+import tempfile
 import ConfigParser
 import cea.databases
 
@@ -12,9 +13,9 @@ import cea.databases
 class Configuration(object):
     def __init__(self, scenario=None):
         """Read in configuration information for a scenario (or the default scenario)"""
-        defaults = dict(os.environ)
-        defaults['CEA.SCENARIO'] = str(scenario)
-        defaults['CEA.DB'] = os.path.dirname(cea.databases.__file__)
+        defaults = {'TEMP': tempfile.gettempdir(),
+                    'CEA.SCENARIO': str(scenario),
+                    'CEA.DB': os.path.dirname(cea.databases.__file__)}
         self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
         self._parser.read(self._list_configuration_files(scenario))
         self.demand = DemandConfiguration(self._parser)
