@@ -723,7 +723,6 @@ def calc_Cinv_pv(P_peak, locator, technology=0):
         P_peak = PV_cost_data['cap_min'][0]
     PV_cost_data = PV_cost_data[
         (PV_cost_data['cap_min'] <= P_peak) & (PV_cost_data['cap_max'] > P_peak)]
-    print (PV_cost_data)
     Inv_a = PV_cost_data.iloc[0]['a']
     Inv_b = PV_cost_data.iloc[0]['b']
     Inv_c = PV_cost_data.iloc[0]['c']
