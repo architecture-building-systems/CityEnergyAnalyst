@@ -333,14 +333,11 @@ def read_config(args):
 def write_config(args):
     """write a value to a section/key in the configuration in the scenario folder"""
     import cea.config
-    import ConfigParser
     config = cea.config.Configuration(args.scenario)
     if not config._parser.has_section(args.section):
         config._parser.add_section(args.section)
     config._parser.set(args.section, args.key, args.value)
-    scenario_config = os.path.join(args.scenario, 'scenario.config')
-    with open(scenario_config, 'w') as f:
-        config._parser.write(f)
+    config.save()
 
 
 def excel_to_dbf(args):

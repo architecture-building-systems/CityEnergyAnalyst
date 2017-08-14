@@ -13,6 +13,7 @@ import cea.databases
 class Configuration(object):
     def __init__(self, scenario=None):
         """Read in configuration information for a scenario (or the default scenario)"""
+        self.scenario = scenario
         defaults = {'TEMP': tempfile.gettempdir(),
                     'CEA.SCENARIO': str(scenario),
                     'CEA.DB': os.path.dirname(cea.databases.__file__)}
@@ -43,6 +44,13 @@ class Configuration(object):
             cascade.append(os.path.join(scenario, '..', 'project.config'))
             cascade.append(os.path.join(scenario, 'scenario.config'))
         return cascade
+
+    def save(self):
+        """Write this configuration to the scenario folder"""
+        assert os.path.exists(self.scenario), "Can't save to scenario: %s" % self.scenario
+        scenario_config = os.path.join(self.scenario, 'scenario.config')
+        with open(scenario_config, 'w') as f:
+            self._parser.write(f)
 
 
 class DemandConfiguration(object):
