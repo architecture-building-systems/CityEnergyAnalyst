@@ -8,6 +8,7 @@ import os
 import ConfigParser
 import cea.databases
 
+
 class Configuration(object):
     def __init__(self, scenario=None):
         """Read in configuration information for a scenario (or the default scenario)"""
@@ -15,8 +16,7 @@ class Configuration(object):
         defaults['CEA.SCENARIO'] = str(scenario)
         defaults['CEA.DB'] = os.path.dirname(cea.databases.__file__)
         self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
-        files_found = self._parser.read(self._list_configuration_files(scenario))
-        print("Configuration files: " + ', '.join(files_found))
+        self._parser.read(self._list_configuration_files(scenario))
         self.demand = DemandConfiguration(self._parser)
 
     @property
@@ -63,6 +63,10 @@ class DemandConfiguration(object):
     @property
     def multiprocessing(self):
         return self._parser.getboolean('demand', 'multiprocessing')
+
+    @property
+    def use_dynamic_infiltration(self):
+        return self._parser.getboolean('demand', 'use-dynamic-infiltration')
 
 
 if __name__ == '__main__':
