@@ -46,6 +46,15 @@ def demand_calculation(locator, weather_path, gv, use_dynamic_infiltration_calcu
     :param gv: global variables
     :type gv: cea.globalvar.GlobalVariables
 
+    :param use_dynamic_infiltration_calculation: Set this to ``True`` if the (slower) dynamic infiltration
+        calculation method (:py:func:`cea.demand.ventilation_air_flows_detailed.calc_air_flows`) should be used instead
+        of the standard.
+    :type use_dynamic_infiltration_calculation: bool
+
+    :param multiprocessing: Set this to ``True`` if the :py:mod:`multiprocessing` module should be used to speed up
+        calculations by making use of multiple cores.
+    :type multiprocessing: bool
+
     :returns: None
     :rtype: NoneType
 
