@@ -360,7 +360,7 @@ class DemandTool(object):
 
             parameters['dynamic_infiltration'].value = read_config_boolean(scenario_path, 'demand',
                                                                            'use-dynamic-infiltration-calculation')
-            parameters['multiprocessing'].value = read_config_boolean(scenario_path, 'demand', 'multiprocessing')
+            parameters['multiprocessing'].value = read_config_boolean(scenario_path, 'general', 'multiprocessing')
 
             weather_path = read_config_string(scenario_path, 'general', 'weather')
             if is_builtin_weather_path(weather_path):
@@ -406,7 +406,7 @@ class DemandTool(object):
         write_config_string(scenario_path, 'general', 'weather', weather_path)
         write_config_boolean(scenario_path, 'demand', 'use-dynamic-infiltration-calculation',
                              use_dynamic_infiltration_calculation)
-        write_config_boolean(scenario_path, 'demand', 'multiprocessing', multiprocessing)
+        write_config_boolean(scenario_path, 'general', 'multiprocessing', multiprocessing)
 
         # run the demand script
         args = [scenario_path, 'demand', '--weather', weather_path]

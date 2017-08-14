@@ -34,7 +34,7 @@ def demand(args):
             args.weather = cea.inputlocator.InputLocator(None).get_default_weather()
     if not args.multiprocessing:
         # check config file, maybe it is turned on there
-        args.multiprocessing = config.demand.multiprocessing
+        args.multiprocessing = config.multiprocessing
 
     print('use_dynamic_infiltration_calculation: %s' % args.use_dynamic_infiltration_calculation)
     print('multiprocessing: %s' % args.multiprocessing)
@@ -137,8 +137,7 @@ def demand_graphs(args):
         import cea.inputlocator
         import cea.globalvar
         locator = cea.inputlocator.InputLocator(args.scenario)
-        gv = cea.globalvar.GlobalVariables()
-        cea.plots.graphs_demand.graphs_demand(locator, args.analysis_fields[:4], gv)
+        cea.plots.graphs_demand.graphs_demand(locator, args.analysis_fields[:4])
 
 
 def scenario_plots(args):

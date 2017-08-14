@@ -309,14 +309,18 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/retrofit.csv"""
         return os.path.join(self.get_potentials_retrofit_folder(), "potential_"+name_retrofit+".csv")
 
-    def get_weather_folder(self):
-        return self._ensure_folder(self.get_input_folder(), "weather")
-
     # DATABASES
     def get_default_weather(self):
         """weather/Zug-2010.epw
         path to database of archetypes file Archetypes_properties.xlsx"""
-        return os.path.join(self.get_weather_folder(), 'weather.epw')
+        import cea.config
+        config = cea.config.Configuration(self.scenario_path)
+        if not os.path.exists(config.weather):
+            if config.weather in self.get_weather_names():
+                return self.get_weather(config.weather)
+            else:
+                return self.get_weather(self.get_weather_names()[0])
+        return config.weather
 
     def get_weather(self, name):
         """weather/{name}.epw"""
