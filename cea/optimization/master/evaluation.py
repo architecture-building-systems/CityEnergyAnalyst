@@ -63,7 +63,6 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     costs = extraCosts
     CO2 = extraCO2
     prim = extraPrim
-
     QUncoveredDesign = 0
     QUncoveredAnnual = 0
 

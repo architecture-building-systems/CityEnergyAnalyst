@@ -61,20 +61,12 @@ def cond_boiler_operation(Q_load, Q_design, T_return_to_boiler):
     else:
         phi = 0
 
-    #if phi < gV.Boiler_min:
-    #    print "Boiler at too low part load, see Model_Boiler_condensing, line 100"
-
-        #raise model error!!
-
     if T_return_to_boiler == 0: # accounting with times with no flow
         T_return = 0
     else:
         T_return = T_return_to_boiler - 273
-
     eff_score = eff_of_phi(phi) / eff_of_phi(1)
-
     boiler_eff = (eff_score * eff_of_T_return(T_return) )/ 100.0
-
 
     return boiler_eff
 
@@ -107,24 +99,14 @@ def cond_boiler_op_cost(Q_therm, Q_design, T_return_to_boiler, BoilerFuelType, E
     :returns E_aux_Boiler: auxiliary electricity of boiler operation
     """
 
-    # Iterating for efficiency as Q_thermal_required is given as input
-
-    #if float(Q_therm) / float(Q_design) < gV.Boiler_min:
-    #    print "error expected in Boiler operation, below min part load!"
-
-    #print float(Q_therm) / float(Q_design)
-
     # boiler efficiency
     eta_boiler = cond_boiler_operation(Q_therm, Q_design, T_return_to_boiler)
 
 
     if BoilerFuelType == 'BG':
         GAS_PRICE = gV.BG_PRICE
-        #MaintananceCost = gV.Boiler_C_maintainance_fazBG
     else:
         GAS_PRICE = gV.NG_PRICE
-        #MaintananceCost = gV.Boiler_C_maintainance_fazNG
-
 
     if ElectricityType == 'green':
         ELEC_PRICE = gV.ELEC_PRICE_GREEN
@@ -180,19 +162,12 @@ def calc_Cop_boiler(Q_load, Q_design, T_return_to_boiler):
 
     else:
         phi = 0
-    #if phi < gV.Boiler_min:
-    #    print "Boiler at too low part load, see Model_Boiler_condensing, line 100"
-
-        #raise model error!!
-
 
     T_return = T_return_to_boiler - 273
     eff_score = eff_of_phi(phi) / eff_of_phi(1)
     boiler_eff = (eff_score * eff_of_T_return(T_return) )/ 100.0
 
     return boiler_eff
-
-
 
 # investment and maintenance costs
 
