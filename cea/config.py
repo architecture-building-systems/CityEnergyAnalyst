@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 """
 Manage configuration information for the CEA. See the cascading configuration files section in the documentation
 for more information on configuration files.
@@ -58,11 +60,13 @@ class DemandConfiguration(object):
     def cooling_season_end(self):
         return self._parser.get('demand', 'cooling-season-end')
 
-
+    @property
+    def multiprocessing(self):
+        return self._parser.getboolean('demand', 'multiprocessing')
 
 
 if __name__ == '__main__':
     config = Configuration(r'c:\reference-case-open\baseline')
-    print config.demand.heating_season_start
-    print config.default_scenario, os.path.exists(config.default_scenario)
-    print config.weather, os.path.exists(config.weather)
+    print(config.demand.heating_season_start)
+    print(config.default_scenario)
+    print(config.weather)

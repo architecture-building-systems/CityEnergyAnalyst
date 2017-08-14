@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 """
 This script implements the main command-line interface to the CEA. It allows running the various scripts through a
 standard interface.
@@ -5,6 +7,7 @@ standard interface.
 from __future__ import absolute_import
 
 import os
+import cea.config
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -19,16 +22,26 @@ __status__ = "Production"
 def demand(args):
     """Run the demand script with the arguments provided."""
     import cea.demand.demand_main
-    if args.weather and not os.path.exists(args.weather):
+    config = cea.config.Configuration(args.scenario)
+    if not args.weather:
+        args.weather = config.weather
+    if not os.path.exists(args.weather):
         try:
             # allow using shortcut
             import cea.inputlocator
             args.weather = cea.inputlocator.InputLocator(None).get_weather(args.weather)
         except:
-            pass
-    print 'use_dynamic_infiltration_calculation:', args.use_dynamic_infiltration_calculation
+            args.weather = cea.inputlocator.InputLocator(None).get_default_weather()
+    if not args.multiprocessing:
+        # check config file, maybe it is turned on there
+        args.multiprocessing = config.demand.multiprocessing
+
+    print('use_dynamic_infiltration_calculation: %s' % args.use_dynamic_infiltration_calculation)
+    print('multiprocessing: %s' % args.multiprocessing)
+    print('weather: %s' % args.weather)
     cea.demand.demand_main.run_as_script(scenario_path=args.scenario, weather_path=args.weather,
-                                         use_dynamic_infiltration_calculation=args.use_dynamic_infiltration_calculation)
+                                         use_dynamic_infiltration_calculation=args.use_dynamic_infiltration_calculation,
+                                         multiprocessing=args.multiprocessing)
 
 
 def data_helper(args):
@@ -355,6 +368,8 @@ def main():
     demand_parser.add_argument('-w', '--weather', help='Path to the weather file')
     demand_parser.add_argument('--use-dynamic-infiltration-calculation', action='store_true',
                                help='Use the dynamic infiltration calculation instead of default')
+    demand_parser.add_argument('--multiprocessing', action='store_true',
+                               help='Use the parallel processing to speed up computation')
     demand_parser.set_defaults(func=demand)
 
     data_helper_parser = subparsers.add_parser('data-helper',
