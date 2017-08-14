@@ -102,7 +102,6 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locat
 
     
     Q_SC = Solar_Q_th_kW_SC * 1000 * MS_Var.SOLAR_PART_SC
-    #print Q_SC, "Q_SC"
     Q_PVT = Solar_Q_th_kW_PVT * 1000 * MS_Var.SOLAR_PART_PVT
     Q_SCandPVT = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
 
@@ -155,12 +154,10 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locat
             QServerHeat = Q_wasteheatServer[HOUR]
         else:
             QServerHeat = 0
-        #print QServerHeat, "QServerHeat"
         if MS_Var.WasteCompressorHeatRecovery == 1:
             QCompAirHeat= Q_wasteheatCompAir[HOUR]
         else:
             QCompAirHeat = 0
-        #print Q_SC,"Q_SC", len(Q_SC)
         Qsc = Q_SC[HOUR]
         Qpvt = Q_PVT[HOUR]
         
@@ -203,7 +200,6 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locat
         if T_DH_sup > Solar_Tscr_th_SC[HOUR] - gV.dT_heat:# and checkpoint_SC == 1:
             #use a heat pump to bring it to distribution temp
             COP_th = T_DH_sup / (T_DH_sup - (Solar_Tscr_th_SC[HOUR] - gV.dT_heat)) 
-            #print Solar_Tscr_th_SC[HOUR], "Solar_Tscr_th_SC[HOUR]"
             COP = gV.HP_etaex * COP_th
             E_aux_SC = Qsc * (1/COP) # assuming the losses occur after the heat pump
             if E_aux_SC > 0:
@@ -220,31 +216,21 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locat
         
         
         E_aux_HP_uncontrollable = float(E_aux_SC + E_aux_PVT + E_aux_CAH + E_aux_Server)
-        
-        #print E_aux_HP_uncontrollable, len(E_aux_HP_uncontrollable), type(E_aux_HP_uncontrollable)
-        
+
         # Heat Recovery has some losses, these are taken into account as "overall Losses", i.e.: from Source to DH Pipe
         # hhhhhhhhhhhhhh GET VALUES
         Q_uncontrollable = (Qpvt + Qsc + QServerHeat * gV.etaServerToHeat + QCompAirHeat *gV.etaElToHeat ) 
 
-        #print "Q_uncontrollable = ", Q_uncontrollable
-        #print "E_aux_HP_uncontrollable = ", E_aux_HP_uncontrollable
-        
         Q_network_demand = Q_DH_networkload[HOUR]
         Q_to_storage_avail[HOUR], Q_from_storage[HOUR], to_storage[HOUR] = SPH_fn.StorageGateway(Q_uncontrollable, Q_network_demand, P_HP_max, gV)
-        
-       
-        #print HOUR, Q_to_storage_avail[HOUR], Q_from_storage[HOUR], to_storage[HOUR] 
+
         Storage_Data = SPH_fn.Storage_Operator(Q_uncontrollable, Q_network_demand, T_storage_old, T_DH_sup, T_amb, \
                                         Q_in_storage_old, T_DH_return, mdot_DH, STORAGE_SIZE, context, P_HP_max, gV)
     
         Q_in_storage_new = Storage_Data[0]
-        #print "Q_in_storage_new in Storage desing and operation: ", Q_in_storage_new
         T_storage_new = Storage_Data[1]
         Q_to_storage_final = Storage_Data[3]
         Q_from_storage_req_final = Storage_Data[2]
-        #print "Q_from_storage_req_final", Q_from_storage_req_final
-        #print "Q_to_storage_final", Q_to_storage_final
         E_aux_ch = Storage_Data[4]
         E_aux_dech = Storage_Data[5]
         Q_missing = Storage_Data[6]
@@ -263,8 +249,6 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locat
             T_storage_new = min(T_storage_old, T_storage_new)
             E_aux_ch = 0
 
-
-            
         Q_storage_content_fin[HOUR] = Q_in_storage_new
         Q_in_storage_old = Q_in_storage_new
         
@@ -272,7 +256,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locat
         T_storage_old = T_storage_new
         
         if T_storage_old < T_amb-1: # chatch an error if the storage temperature is too low
-            print "ERROR!"
+            # print "ERROR!"
             break
         
         Q_from_storage_fin[HOUR] = Q_from_storage_req_final
@@ -282,10 +266,7 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locat
         E_aux_solar[HOUR] = Solar_E_aux_W[HOUR]
         Q_missing_fin[HOUR] = Q_missing
         Q_uncontrollable_fin[HOUR] = Q_uncontrollable
-        
-        
         E_aux_HP_uncontrollable_fin[HOUR] = float(E_aux_HP_uncontrollable)
-        #print type(E_aux_HP_uncontrollable_fin[HOUR]),
         mdot_DH_fin[HOUR] = mdot_DH_afterSto
         
         Q_from_storage_fin[HOUR] = Q_DH_networkload[HOUR] - Q_missing
@@ -293,29 +274,12 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old, Q_in_storage_old, locat
         if T_storage_new <= T_storage_min:
             T_storage_min = T_storage_new
             Q_disc_seasonstart[0] += Q_from_storage_req_final
-            
-        
+
         HOUR += 1
         
         
         """ STORE DATA """
     E_aux_HP_uncontrollable_fin_flat = E_aux_HP_uncontrollable_fin.flatten()
-    #print len(E_aux_HP_uncontrollable_fin_flat), np.shape(E_aux_HP_uncontrollable_fin_flat)
-    #print "Q_storage_content_fin", np.shape(Q_storage_content_fin)
-    #print "Q_DH_networkload[:,0]", np.shape(Q_DH_networkload[:,0])
-    #print "Q_to_storage_fin", np.shape(Q_to_storage_fin)
-    #print "Q_from_storage_used_fin", np.shape(Q_from_storage_used_fin)
-    #print "E_aux_ch_fin", np.shape(E_aux_ch_fin)
-    #print "E_aux_dech_fin", np.shape(E_aux_dech_fin)
-    #print "Q_missing_fin", np.shape(Q_missing_fin)
-    #print "mdot_DH_fin", np.shape(mdot_DH_fin)
-    #print "E_PV_Wh", np.shape(E_PV_Wh)
-    
-    #print np.shape(E_aux_HP_uncontrollable_fin_flat[:,0])
-    #print "sum of uncontrollable auxPower: " , np.sum(E_aux_HP_uncontrollable_fin)
-    #print "sum of uncontrollable power: ", np.sum(Q_uncontrollable) 
-    
-    
     # Calculate imported and exported Electricity Arrays:
     E_produced_total = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
     E_consumed_total_without_buildingdemand = np.zeros(HOURS_IN_DAY*DAYS_IN_YEAR)
