@@ -1232,6 +1232,7 @@ class ExtractReferenceCaseTool(object):
 
         run_cli(None, 'extract-reference-case', '--to', output_path)
 
+
 class TestTool(object):
     """Run `cea test` for the user"""
     def __init__(self):
