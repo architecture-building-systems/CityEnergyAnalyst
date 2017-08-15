@@ -70,10 +70,7 @@ dependencies:
 - ssl_match_hostname
 - tbb
 - tornado
-- vc
-- vs2015_runtime
 - wheel
-- wincertstore
 - xerces-c
 - xz
 - zlib
@@ -81,7 +78,6 @@ dependencies:
 - numpy
 - scikit-learn
 - scipy
-- vs2008_runtime
 - freeimageplus
 - gl2ps
 - oce
