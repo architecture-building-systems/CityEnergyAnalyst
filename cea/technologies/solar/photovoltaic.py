@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 """
 photovoltaic
 """
@@ -54,34 +56,34 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
 
     # weather data
     weather_data = epwreader.epw_reader(weather_path)
-    print 'reading weather data done'
+    print('reading weather data done')
 
     # solar properties
     g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
                                                                                       settings.date_start)
-    print 'calculating solar properties done'
+    print('calculating solar properties done')
 
     # calculate properties of PV panel
     panel_properties = calc_properties_PV_db(locator.get_supply_systems_database(), settings.type_PVpanel)
-    print 'gathering properties of PV panel'
+    print('gathering properties of PV panel')
 
     # select sensor point with sufficient solar radiation
     max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
         solar_equations.filter_low_potential(weather_data, radiation_path, metadata_csv, settings.min_radiation,
                                              settings.panel_on_roof, settings.panel_on_wall)
 
-    print 'filtering low potential sensor points done'
+    print('filtering low potential sensor points done')
 
     if not sensors_metadata_clean.empty:
         # calculate optimal angle and tilt for panels
         sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az, trr_mean,
                                                       max_yearly_radiation, panel_properties)
-        print 'calculating optimal tile angle and separation done'
+        print('calculating optimal tile angle and separation done')
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
         number_groups, hourlydata_groups, number_points, prop_observers = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
 
-        print 'generating groups of sensor points done'
+        print('generating groups of sensor points done')
 
         results, Final = calc_pv_generation(hourlydata_groups, number_groups, number_points, prop_observers,
                                             weather_data, g, Sz, Az, ha, latitude, panel_properties)
@@ -89,7 +91,7 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
         Final.to_csv(locator.PV_results(building_name= building_name), index=True, float_format='%.2f')  # print PV generation potential
         sensors_metadata_cat.to_csv(locator.PV_metadata_results(building_name= building_name), index=True, float_format='%.2f')  # print selected metadata of the selected sensors
 
-        print 'done - time elapsed:', (time.clock() - t0), ' seconds'
+        print('done - time elapsed: %.2f seconds'  % (time.clock() - t0))
     return
 
 
