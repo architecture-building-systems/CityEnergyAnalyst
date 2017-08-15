@@ -86,9 +86,7 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV):
             
         investCosts = calc_Cinv_pump(deltaPmax, mdotnMax, gV.etaPump, gV) # investment of Machinery
         pumpCosts += investCosts
-        
-    print pumpCosts, " CHF - pump costs in pumps.py"
-    
+
     return pumpCosts
 
 
@@ -184,12 +182,9 @@ def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
 
     PmaxPumpkW = 375.0
     PpumpMinkW = 0.5
-    print P_motor_tot
-    print PmaxPumpkW
+
     nPumps = int( np.ceil ( P_motor_tot / 1000.0 / PmaxPumpkW))
     # if the nominal load (electric) > 375kW, a new pump is installed
-
-    print nPumps," nPumps"
 
     PpumpArray = np.zeros((nPumps))
     PpumpRemain = P_motor_tot
