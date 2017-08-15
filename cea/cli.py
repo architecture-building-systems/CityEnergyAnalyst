@@ -203,7 +203,7 @@ def radiation_daysim(args):
 def photovoltaic(args):
     import cea.inputlocator
     import cea.utilities.dbfreader as dbfreader
-    from cea.technologies.solar.photovoltaic import calc_PV
+    import cea.technologies.solar.photovoltaic
 
     if not args.latitude:
         args.latitude = _get_latitude(args.scenario)
@@ -219,12 +219,14 @@ def photovoltaic(args):
     list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
     for building in list_buildings_names:
-        radiation_csv = locator.get_radiation_building(building_name=building)
+        radiation_path = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
-        calc_PV(locator=locator, radiation_csv=radiation_csv, metadata_csv=radiation_metadata, latitude=args.latitude,
-                longitude=args.longitude, weather_path=args.weather_path, building_name=building,
-                pvonroof=args.pvonroof, pvonwall=args.pvonwall, worst_hour=args.worst_hour,
-                type_PVpanel=args.type_PVpanel, min_radiation=args.min_radiation, date_start=args.date_start)
+        cea.technologies.solar.photovoltaic.calc_PV(locator=locator, radiation_path=radiation_path,
+                                                    metadata_csv=radiation_metadata, latitude=args.latitude,
+                                                    longitude=args.longitude, weather_path=args.weather_path,
+                                                    building_name=building, panel_on_roof=args.pvonroof,
+                                                    panel_on_wall=args.pvonwall, type_PVpanel=args.type_PVpanel,
+                                                    min_radiation=args.min_radiation, date_start=args.date_start)
 
 
 def install_toolbox(_):
@@ -321,7 +323,6 @@ def read_config(args):
 def write_config(args):
     """write a value to a section/key in the configuration in the scenario folder"""
     import cea.config
-    import ConfigParser
     config = cea.config.Configuration(args.scenario)
     if not config._parser.has_section(args.section):
         config._parser.add_section(args.section)
