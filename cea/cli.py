@@ -203,7 +203,7 @@ def radiation_daysim(args):
 def photovoltaic(args):
     import cea.inputlocator
     import cea.utilities.dbfreader as dbfreader
-    from cea.technologies.photovoltaic import calc_PV
+    from cea.technologies.solar.photovoltaic import calc_PV
 
     if not args.latitude:
         args.latitude = _get_latitude(args.scenario)
