@@ -226,8 +226,10 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
 
     ########## Add investment costs
 
-    costs += VCCModel.calc_Cinv_VCC(VCCnom, gv, locator)
-    costs += CTModel.calc_Cinv_CT(CTnom, gv, locator)
+    Capex_a_VCC, Opex_fixed_VCC = VCCModel.calc_Cinv_VCC(VCCnom, gv, locator)
+    costs += (Capex_a_VCC + Opex_fixed_VCC)
+    Capex_a_CT, Opex_fixed_CT = CTModel.calc_Cinv_CT(CTnom, gv, locator)
+    costs += (Capex_a_CT + Opex_fixed_CT)
 
 
     ########### Adjust and add the pumps for filtering and pre-treatment of the water

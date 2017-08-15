@@ -76,15 +76,18 @@ def calc_Cinv_CT(CT_size, gV, locator, technology=0):
         Inv_e = CT_cost_data.iloc[0]['e']
         Inv_IR = (CT_cost_data.iloc[0]['IR_%']) / 100
         Inv_LT = CT_cost_data.iloc[0]['LT_yr']
+        Inv_OM = CT_cost_data.iloc[0]['O&M_%'] / 100
 
         InvC = Inv_a + Inv_b * (CT_size) ** Inv_c + (Inv_d + Inv_e * CT_size) * log(CT_size)
 
-        InvCa = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+        Capex_a =  InvC * (Inv_IR) * (1+ Inv_IR) ** Inv_LT / ((1+Inv_IR) ** Inv_LT - 1)
+        Opex_fixed = Capex_a * Inv_OM
 
     else:
-        InvCa = 0
+        Capex_a = 0
+        Opex_fixed = 0
 
-    return InvCa
+    return Capex_a, Opex_fixed
 
 
 
