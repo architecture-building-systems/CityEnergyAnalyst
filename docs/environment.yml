@@ -97,7 +97,7 @@ dependencies:
   - deap>
   - decorator
   - docutils
-  - doit
+  - doit==0.29.0
   - idna
   - imagesize
   - ipython-genutils
