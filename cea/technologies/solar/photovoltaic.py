@@ -17,7 +17,7 @@ from math import *
 from cea.utilities import dbfreader
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
-from cea.technologies.solar import settings
+#from cea.technologies.solar import settings
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -28,7 +28,9 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_path, building_name):
+
+def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_path, building_name, panel_on_roof,
+            panel_on_wall, type_PVpanel, min_radiation, date_start):
 
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
@@ -60,17 +62,17 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
 
     # solar properties
     g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
-                                                                                      settings.date_start)
+                                                                                      date_start)
     print('calculating solar properties done')
 
     # calculate properties of PV panel
-    panel_properties = calc_properties_PV_db(locator.get_supply_systems_database(), settings.type_PVpanel)
+    panel_properties = calc_properties_PV_db(locator.get_supply_systems_database(), type_PVpanel)
     print('gathering properties of PV panel')
 
     # select sensor point with sufficient solar radiation
     max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_path, metadata_csv, settings.min_radiation,
-                                             settings.panel_on_roof, settings.panel_on_wall)
+        solar_equations.filter_low_potential(weather_data, radiation_path, metadata_csv, min_radiation, panel_on_roof,
+                                             panel_on_wall)
 
     print('filtering low potential sensor points done')
 
@@ -89,7 +91,7 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
                                             weather_data, g, Sz, Az, ha, latitude, panel_properties)
 
         Final.to_csv(locator.PV_results(building_name= building_name), index=True, float_format='%.2f')  # print PV generation potential
-        sensors_metadata_cat.to_csv(locator.PV_metadata_results(building_name= building_name), index=True, float_format='%.2f')  # print selected metadata of the selected sensors
+        sensors_metadata_cat.to_csv(locator.PV_metadata_results(building_name=building_name), index=True, float_format='%.2f')  # print selected metadata of the selected sensors
 
         print('done - time elapsed: %.2f seconds'  % (time.clock() - t0))
     return
@@ -514,13 +516,13 @@ def calc_categoriesroof(teta_z, B, GB, Max_Isol):
     """
     if -122.5 < teta_z <= -67:
         CATteta_z = 1
-    elif -67 < teta_z <= -22.5:
+    elif -67.0 < teta_z <= -22.5:
         CATteta_z = 3
     elif -22.5 < teta_z <= 22.5:
         CATteta_z = 5
     elif 22.5 < teta_z <= 67:
         CATteta_z = 4
-    elif 67 <= teta_z <= 122.5:
+    elif 67.0 <= teta_z <= 122.5:
         CATteta_z = 2
     else:
         CATteta_z = 6
@@ -699,9 +701,9 @@ def test_photovoltaic():
         latitude = shp.crs['lat_0']
 
     for building in list_buildings_names:
-        radiation = locator.get_radiation_building(building_name= building)
+        radiation_path = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
-        calc_PV(locator=locator, radiation_path=radiation, metadata_csv=radiation_metadata, latitude=latitude,
+        calc_PV(locator=locator, radiation_path=radiation_path, metadata_csv=radiation_metadata, latitude=latitude,
                 longitude=longitude, weather_path=weather_path, building_name=building)
 
 
