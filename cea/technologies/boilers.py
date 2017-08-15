@@ -206,20 +206,16 @@ def calc_Cinv_boiler(Q_design, Q_annual, gV, locator, technology=0):
         Inv_e = boiler_cost_data.iloc[0]['e']
         Inv_IR = (boiler_cost_data.iloc[0]['IR_%']) / 100
         Inv_LT = boiler_cost_data.iloc[0]['LT_yr']
+        Inv_OM = boiler_cost_data.iloc[0]['O&M_%'] / 100
 
         InvC = Inv_a + Inv_b * (Q_design)** Inv_c + (Inv_d + Inv_e * Q_design) * log(Q_design)
 
-        InvCa =  InvC * (Inv_IR) * (1+ Inv_IR) ** Inv_LT / ((1+Inv_IR) ** Inv_LT - 1)
-
-
-        Maint_C_annual = gV.Boiler_C_maintainance_faz * Q_annual / 1E6 * gV.EURO_TO_CHF # 3.5 euro per MWh_th FAZ 2013
-        Labour_C = gV.Boiler_C_labour * Q_annual / 1E6 * gV.EURO_TO_CHF # approx 4 euro per MWh_th
-
-        InvCa += Maint_C_annual + Labour_C
-        print (InvCa)
+        Capex_a =  InvC * (Inv_IR) * (1+ Inv_IR) ** Inv_LT / ((1+Inv_IR) ** Inv_LT - 1)
+        Opex_fixed = Capex_a * Inv_OM
 
     else:
-        InvCa = 0
+        Capex_a = 0
+        Opex_fixed = 0
 
-    return InvCa
+    return Capex_a, Opex_fixed
 

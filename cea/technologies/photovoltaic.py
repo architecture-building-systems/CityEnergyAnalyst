@@ -730,12 +730,14 @@ def calc_Cinv_pv(P_peak, locator, technology=0):
     Inv_e = PV_cost_data.iloc[0]['e']
     Inv_IR = (PV_cost_data.iloc[0]['IR_%']) / 100
     Inv_LT = PV_cost_data.iloc[0]['LT_yr']
+    Inv_OM = PV_cost_data.iloc[0]['O&M_%'] / 100
 
     InvC = Inv_a + Inv_b * (P_peak) ** Inv_c + (Inv_d + Inv_e * P_peak) * log(P_peak)
 
-    InvCa = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed = Capex_a * Inv_OM
 
-    return InvCa
+    return Capex_a, Opex_fixed
 
 
 # remuneration scheme

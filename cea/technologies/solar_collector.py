@@ -678,11 +678,13 @@ def calc_Cinv_SC(Area, gv, locator, technology=0):
     Inv_e = SC_cost_data.iloc[0]['e']
     Inv_IR = (SC_cost_data.iloc[0]['IR_%']) / 100
     Inv_LT = SC_cost_data.iloc[0]['LT_yr']
+    Inv_OM = SC_cost_data.iloc[0]['O&M_%'] / 100
 
     InvC = Inv_a + Inv_b * (Area) ** Inv_c + (Inv_d + Inv_e * Area) * log(Area)
-    InvCa = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed = Capex_a * Inv_OM
 
-    return InvCa
+    return Capex_a, Opex_fixed
 
 
 def test_solar_collector():
