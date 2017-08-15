@@ -17,7 +17,7 @@ from math import *
 from cea.utilities import dbfreader
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
-#from cea.technologies.solar import settings
+import cea.config
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -29,9 +29,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_path, building_name, panel_on_roof,
-            panel_on_wall, type_PVpanel, min_radiation, date_start):
-
+def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_path, building_name):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -54,6 +52,8 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
     :return: Building_PV.csv with PV generation potential of each building, Building_sensors.csv with sensor data of
              each PV panel.
     """
+    settings = cea.config.Configuration(locator.scenario_path).photovoltaic
+
     t0 = time.clock()
 
     # weather data
@@ -62,38 +62,41 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
 
     # solar properties
     g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
-                                                                                      date_start)
+                                                                                      settings.date_start,
+                                                                                      settings.solar_window_solstice)
     print('calculating solar properties done')
 
     # calculate properties of PV panel
-    panel_properties = calc_properties_PV_db(locator.get_supply_systems_database(), type_PVpanel)
+    panel_properties = calc_properties_PV_db(locator.get_supply_systems_database(), settings.type_PVpanel)
     print('gathering properties of PV panel')
 
     # select sensor point with sufficient solar radiation
     max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_path, metadata_csv, min_radiation, panel_on_roof,
-                                             panel_on_wall)
+        solar_equations.filter_low_potential(weather_data, radiation_path, metadata_csv, settings.min_radiation,
+                                             settings.panel_on_roof, settings.panel_on_wall)
 
     print('filtering low potential sensor points done')
 
     if not sensors_metadata_clean.empty:
         # calculate optimal angle and tilt for panels
-        sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az, trr_mean,
-                                                      max_yearly_radiation, panel_properties)
+        sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh,
+                                                                      worst_Az, trr_mean, max_yearly_radiation,
+                                                                      panel_properties)
         print('calculating optimal tile angle and separation done')
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
-        number_groups, hourlydata_groups, number_points, prop_observers = solar_equations.calc_groups(sensors_rad_clean, sensors_metadata_cat)
+        number_groups, hourlydata_groups, number_points, prop_observers = solar_equations.calc_groups(sensors_rad_clean,
+                                                                                                      sensors_metadata_cat)
 
         print('generating groups of sensor points done')
 
-        results, Final = calc_pv_generation(hourlydata_groups, number_groups, number_points, prop_observers,
+        results, final = calc_pv_generation(hourlydata_groups, number_groups, number_points, prop_observers,
                                             weather_data, g, Sz, Az, ha, latitude, panel_properties)
 
-        Final.to_csv(locator.PV_results(building_name= building_name), index=True, float_format='%.2f')  # print PV generation potential
+        final.to_csv(locator.PV_results(building_name=building_name), index=True, float_format='%.2f')  # print PV generation potential
         sensors_metadata_cat.to_csv(locator.PV_metadata_results(building_name=building_name), index=True, float_format='%.2f')  # print selected metadata of the selected sensors
 
-        print('done - time elapsed: %.2f seconds'  % (time.clock() - t0))
+        print('done - time elapsed: %.2f seconds' % (time.clock() - t0))
     return
 
 
@@ -704,7 +707,7 @@ def test_photovoltaic():
         radiation_path = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
         calc_PV(locator=locator, radiation_path=radiation_path, metadata_csv=radiation_metadata, latitude=latitude,
-                longitude=longitude, weather_path=weather_path, building_name=building)
+                longitude=longitude, weather_path=weather_path, building_name=building, )
 
 
 if __name__ == '__main__':
