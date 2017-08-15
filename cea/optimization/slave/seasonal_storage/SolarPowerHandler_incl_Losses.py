@@ -202,7 +202,7 @@ def Storage_Loss(T_storage_old, T_amb, STORAGE_SIZE, context, gv):
     H_storage = (2.0 * V_storage / (9.0 * np.pi ))**(1.0/3.0)  #assume 3 : 1 (D : H) 
     # D_storage = 3.0 * H_storage
     
-    A_storage_ground = V_storage / H_storage 
+    A_storage_ground = V_storage / H_storage
     A_storage_rest = 2.0 * ( H_storage * np.pi * V_storage)**(1.0 / 2.0)
 
     Q_loss_uppersurf = MS_Var.alpha_loss * A_storage_ground * (T_storage_old - T_amb)

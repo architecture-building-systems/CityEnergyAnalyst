@@ -238,9 +238,9 @@ def GT_partLoadParam(wdot, gt_size, eta0, mdot0, fuel, gV):
 
     pload = (wdot + 1) / gt_size # avoid calculation errors
     if pload < gV.GT_minload:
-        print pload
-        print wdot
-        print gt_size
+        # print pload
+        # print wdot
+        # print gt_size
         raise ModelError
 
     eta = (0.4089 + 0.9624 * pload - 0.3726 * pload ** 2) * eta0  # [C. Weber, 2008]_

@@ -72,13 +72,12 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
     else:
         eta_therm = 0
-        #print "Furnace Boiler below minimum Power! 1"
-        #raise ModelError
+
 
     # calculate plant electrical efficiency
     if phi < gv.Furn_min_electric:
         eta_el = 0
-        #print "Furnace Boiler below minimum Power! 2"
+
 
     else:
         x = [2/7.0, 3/7.0, 4/7.0, 5/7.0, 6/7.0, 1] # part load regime, phi = Q / Q_max
@@ -97,7 +96,6 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
     if MOIST_TYPE == "dry":
         eff_therm_tot = eff_of_T_return(T_return_to_boiler - 273) * eta_therm / eff_of_T_return(60) + 0.087 # 8.7 % efficiency gain when using dry fuel
-        #print eff_therm_tot
         eta_el += 0.087
 
     Q_therm_prim = Q_load / eff_therm_tot  # primary energy requirement
@@ -163,7 +161,6 @@ def furnace_op_cost(Q_therm, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
         eta_therm_real, eta_el, Q_aux = Furnace_eff
 
         if eta_therm_real == 0:
-            print "error found in Cost Mapping Furnace"
             eta_el = 0
             Q_aux = 0
 
