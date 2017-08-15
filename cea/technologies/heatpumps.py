@@ -339,15 +339,18 @@ def calc_Cinv_HP(HP_Size, gV, locator, technology=1):
         Inv_e = HP_cost_data.iloc[0]['e']
         Inv_IR = (HP_cost_data.iloc[0]['IR_%']) / 100
         Inv_LT = HP_cost_data.iloc[0]['LT_yr']
+        Inv_OM = HP_cost_data.iloc[0]['O&M_%'] / 100
 
         InvC = Inv_a + Inv_b * (HP_Size) ** Inv_c + (Inv_d + Inv_e * HP_Size) * log(HP_Size)
 
-        InvCa = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+        Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+        Opex_fixed = Capex_a * Inv_OM
 
     else:
-        InvCa = 0
+        Capex_a = 0
+        Opex_fixed = 0
 
-    return InvCa
+    return Capex_a, Opex_fixed
 
 
 def GHP_InvCost(GHP_Size, gV, locator, technology=0):
@@ -378,10 +381,12 @@ def GHP_InvCost(GHP_Size, gV, locator, technology=0):
     Inv_e = GHP_cost_data.iloc[0]['e']
     Inv_IR = (GHP_cost_data.iloc[0]['IR_%']) / 100
     Inv_LT = GHP_cost_data.iloc[0]['LT_yr']
+    Inv_OM = GHP_cost_data.iloc[0]['O&M_%'] / 100
 
     InvC = Inv_a + Inv_b * (GHP_Size) ** Inv_c + (Inv_d + Inv_e * GHP_Size) * log(GHP_Size)
 
-    InvCa_GHP = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a_GHP = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed_GHP = Capex_a_GHP * Inv_OM
 
     BH_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="BH")
     technology_code = list(set(BH_cost_data['code']))
@@ -400,13 +405,16 @@ def GHP_InvCost(GHP_Size, gV, locator, technology=0):
     Inv_e = BH_cost_data.iloc[0]['e']
     Inv_IR = (BH_cost_data.iloc[0]['IR_%']) / 100
     Inv_LT = BH_cost_data.iloc[0]['LT_yr']
+    Inv_OM = BH_cost_data.iloc[0]['O&M_%'] / 100
 
     InvC = Inv_a + Inv_b * (GHP_Size) ** Inv_c + (Inv_d + Inv_e * GHP_Size) * log(GHP_Size)
 
-    InvCa_BH = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a_BH = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed_BH = Capex_a_BH * Inv_OM
 
-    InvCa = InvCa_BH + InvCa_GHP
+    Capex_a = Capex_a_BH + Capex_a_GHP
+    Opex_fixed = Opex_fixed_BH + Opex_fixed_GHP
 
-    return InvCa
+    return Capex_a, Opex_fixed
 
 

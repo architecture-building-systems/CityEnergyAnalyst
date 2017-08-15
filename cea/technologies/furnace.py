@@ -229,15 +229,13 @@ def calc_Cinv_furnace(Q_design, Q_annual, gv, locator, technology=0):
     Inv_e = furnace_cost_data.iloc[0]['e']
     Inv_IR = (furnace_cost_data.iloc[0]['IR_%']) / 100
     Inv_LT = furnace_cost_data.iloc[0]['LT_yr']
+    Inv_OM = furnace_cost_data.iloc[0]['O&M_%'] / 100
 
     InvC = Inv_a + Inv_b * (Q_design) ** Inv_c + (Inv_d + Inv_e * Q_design) * log(Q_design)
 
-    InvCa = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed = Capex_a * Inv_OM
 
-    Ca_maint = InvCa * gv.Boiler_C_maintainance
-    Ca_labour =  gv.Boiler_C_labour / 1000000.0 * gv.EURO_TO_CHF * Q_annual
-
-    InvCa = InvCa + Ca_maint + Ca_labour
     
-    return InvCa
+    return Capex_a, Opex_fixed
 

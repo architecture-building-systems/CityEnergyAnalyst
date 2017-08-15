@@ -473,12 +473,14 @@ def calc_Cinv_CCT(CC_size, gV, locator, technology=0):
     Inv_e = CCGT_cost_data.iloc[0]['e']
     Inv_IR = (CCGT_cost_data.iloc[0]['IR_%']) / 100
     Inv_LT = CCGT_cost_data.iloc[0]['LT_yr']
+    Inv_OM = CCGT_cost_data.iloc[0]['O&M_%'] / 100
 
     InvC = Inv_a + Inv_b * (CC_size) ** Inv_c + (Inv_d + Inv_e * CC_size) * log(CC_size)
 
-    InvCa = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed = Capex_a * Inv_OM
 
-    return InvCa
+    return Capex_a, Opex_fixed
 
 
 def calc_Cinv_FC(P_design, gV, locator, technology=0):

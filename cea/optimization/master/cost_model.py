@@ -65,7 +65,8 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
     :return: returns the objectives addCosts, addCO2, addPrim
     :rtype: tuple
     """
-    addCosts = 0
+    addcosts_Capex_a = 0
+    addcosts_Opex_fixed = 0
     addCO2 = 0
     addPrim = 0
     nBuildinNtw = 0
@@ -75,24 +76,27 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
     CostDiscBuild = 0
     CO2DiscBuild = 0
     PrimDiscBuild = 0
-    FurnaceInvCost = 0
-    CCInvCost = 0
-    BoilerBInvCost = 0
-    BoilerPInvCost = 0 
-    HPLakeInvC = 0
-    HPSewInvC = 0
-    GHPInvC = 0
-    PVInvC = 0
-    SCInvC = 0
-    PVTInvC = 0
-    BoilerAddInvC = 0
-    StorageHEXCost = 0
-    StorageHPCost = 0
+    Capex_a_furnace = 0
+    Capex_a_CCT = 0
+    Capex_a_Boiler = 0
+    Capex_a_Boiler_peak = 0
+    Capex_a_Lake = 0
+    Capex_a_Sewage = 0
+    Capex_a_GHP = 0
+    Capex_a_PV = 0
+    Capex_a_SC = 0
+    Capex_a_PVT = 0
+    Capex_a_Boiler_backup = 0
+    Capex_a_HEX = 0
+    Capex_a_storage_HP = 0
     StorageInvC = 0
     NetworkCost = 0
-    SubstHEXCost = 0
-    PVTHEXCost = 0
-    SCHEXCost = 0
+    SubstHEXCost_capex = 0
+    SubstHEXCost_opex = 0
+    PVTHEXCost_Capex = 0
+    PVTHEXCost_Opex = 0
+    SCHEXCost_Capex = 0
+    SCHEXCost_Opex = 0
     pumpCosts = 0
     GasConnectionInvCost = 0 
     
@@ -108,7 +112,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         else:
             nBuildinNtw += 1
     
-    addCosts += CostDiscBuild
+    addcosts_Capex_a += CostDiscBuild
     addCO2 += CO2DiscBuild
     addPrim += PrimDiscBuild
     
@@ -129,14 +133,16 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
             for i in range(int(np.shape(arrayFurnace)[0])):
                 Q_annual += arrayFurnace[i][0]
             
-            FurnaceInvCost = furnace.calc_Cinv_furnace(P_design, Q_annual, gv, locator)
-            addCosts += FurnaceInvCost
+            Capex_a_furnace, Opex_fixed_furnace = furnace.calc_Cinv_furnace(P_design, Q_annual, gv, locator)
+            addcosts_Capex_a += Capex_a_furnace
+            addcosts_Opex_fixed += Opex_fixed_furnace
 
         # CC
         if dicoSupply.CC_on == 1:
             CC_size = dicoSupply.CC_GT_SIZE 
-            CCInvCost = chp.calc_Cinv_CCT(CC_size, gv, locator)
-            addCosts += CCInvCost
+            Capex_a_CCT, Opex_fixed_CCT = chp.calc_Cinv_CCT(CC_size, gv, locator)
+            addcosts_Capex_a += Capex_a_CCT
+            addcosts_Opex_fixed += Opex_fixed_CCT
 
         # Boiler Base
         if dicoSupply.Boiler_on == 1:
@@ -150,8 +156,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
             for i in range(int(np.shape(arrayBoilerBase)[0])):
                 Q_annual += arrayBoilerBase[i][0]
                 
-            BoilerBInvCost = boiler.calc_Cinv_boiler(Q_design, Q_annual, gv, locator)
-            addCosts += BoilerBInvCost
+            Capex_a_Boiler, Opex_fixed_Boiler = boiler.calc_Cinv_boiler(Q_design, Q_annual, gv, locator)
+            addcosts_Capex_a += Capex_a_Boiler
+            addcosts_Opex_fixed += Opex_fixed_Boiler
 
         # Boiler Peak
         if dicoSupply.BoilerPeak_on == 1:
@@ -164,21 +171,23 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
             Q_annual =  0
             for i in range(int(np.shape(arrayBoilerPeak)[0])):
                 Q_annual += arrayBoilerPeak[i][0]
-            BoilerPInvCost = boiler.calc_Cinv_boiler(Q_design, Q_annual, gv, locator)
-            addCosts += BoilerPInvCost
-
+            Capex_a_Boiler_peak, Opex_fixed_Boiler_peak = boiler.calc_Cinv_boiler(Q_design, Q_annual, gv, locator)
+            addcosts_Capex_a += Capex_a_Boiler_peak
+            addcosts_Opex_fixed += Opex_fixed_Boiler_peak
         
         # HP Lake
         if dicoSupply.HP_Lake_on == 1:
             HP_Size = dicoSupply.HPLake_maxSize
-            HPLakeInvC = hp.calc_Cinv_HP(HP_Size, gv, locator)
-            addCosts += HPLakeInvC
+            Capex_a_Lake, Opex_fixed_Lake = hp.calc_Cinv_HP(HP_Size, gv, locator)
+            addcosts_Capex_a += Capex_a_Lake
+            addcosts_Opex_fixed += Opex_fixed_Lake
 
         # HP Sewage
         if dicoSupply.HP_Sew_on == 1:
             HP_Size = dicoSupply.HPSew_maxSize
-            HPSewInvC = hp.calc_Cinv_HP(HP_Size, gv, locator)
-            addCosts += HPSewInvC
+            Capex_a_Sewage, Opex_fixed_Sewage = hp.calc_Cinv_HP(HP_Size, gv, locator)
+            addcosts_Capex_a += Capex_a_Sewage
+            addcosts_Opex_fixed += Opex_fixed_Sewage
 
         # GHP
         if dicoSupply.GHP_on == 1:
@@ -187,26 +196,31 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
             arrayGHP = np.array(dfGHP)
             
             GHP_Enom = np.amax(arrayGHP)
-            GHPInvC = hp.GHP_InvCost(GHP_Enom, gv, locator) * gv.EURO_TO_CHF
-            addCosts += GHPInvC
+            Capex_a_GHP, Opex_fixed_GHP = hp.GHP_InvCost(GHP_Enom, gv, locator)
+            addcosts_Capex_a += Capex_a_GHP * gv.EURO_TO_CHF
+            addcosts_Opex_fixed += Opex_fixed_GHP * gv.EURO_TO_CHF
 
         # Solar technologies
 
         PV_peak = dicoSupply.SOLAR_PART_PV * solarFeat.SolarAreaPV * gv.nPV #kW
-        PVInvC = pv.calc_Cinv_pv(PV_peak, locator)
-        addCosts += PVInvC
+        Capex_a_PV, Opex_fixed_PV = pv.calc_Cinv_pv(PV_peak, locator)
+        addcosts_Capex_a += Capex_a_PV
+        addcosts_Opex_fixed += Opex_fixed_PV
 
         SC_area = dicoSupply.SOLAR_PART_SC * solarFeat.SolarAreaSC
-        SCInvC = stc.calc_Cinv_SC(SC_area, gv, locator)
-        addCosts += SCInvC
+        Capex_a_SC, Opex_fixed_SC = stc.calc_Cinv_SC(SC_area, gv, locator)
+        addcosts_Capex_a += Capex_a_SC
+        addcosts_Opex_fixed += Opex_fixed_SC
 
         PVT_peak = dicoSupply.SOLAR_PART_PVT * solarFeat.SolarAreaPVT * gv.nPVT #kW
-        PVTInvC = pvt.calc_Cinv_PVT(PVT_peak, gv, locator)
-        addCosts += PVTInvC
+        Capex_a_PVT, Opex_fixed_PVT = pvt.calc_Cinv_PVT(PVT_peak, gv, locator)
+        addcosts_Capex_a += Capex_a_PVT
+        addcosts_Opex_fixed += Opex_fixed_PVT
 
         # Back-up boiler
-        BoilerAddInvC = boiler.calc_Cinv_boiler(QUncoveredDesign, QUncoveredAnnual, gv, locator)
-        addCosts += BoilerAddInvC
+        Capex_a_Boiler_backup, Opex_fixed_Boiler_backup = boiler.calc_Cinv_boiler(QUncoveredDesign, QUncoveredAnnual, gv, locator)
+        addcosts_Capex_a += Capex_a_Boiler_backup
+        addcosts_Opex_fixed += Opex_fixed_Boiler_backup
 
         # Hex and HP for Heat recovery
         if dicoSupply.WasteServersHeatRecovery == 1:
@@ -215,13 +229,17 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
                 usecols=["Qcdata_netw_total"])
             array = np.array(df)
             QhexMax = np.amax(array)
-            StorageHEXCost += hex.calc_Cinv_HEX(QhexMax, gv)
+            Capex_a_storage_HEX, Opex_fixed_storage_HEX = hex.calc_Cinv_HEX(QhexMax, gv, locator)
+            addcosts_Capex_a += (Capex_a_storage_HEX)
+            addcosts_Opex_fixed += Opex_fixed_storage_HEX
             
             df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
                              usecols=["HPServerHeatDesignArray"])
             array = np.array(df)
             QhpMax = np.amax(array)
-            StorageHEXCost += hp.calc_Cinv_HP(QhpMax, gv, locator)
+            Capex_a_storage_HP, Opex_fixed_storage_HP = hp.calc_Cinv_HP(QhpMax, gv, locator)
+            addcosts_Capex_a += (Capex_a_storage_HP)
+            addcosts_Opex_fixed += Opex_fixed_storage_HP
 
         if dicoSupply.WasteCompressorHeatRecovery == 1:
             df = pd.read_csv(
@@ -229,14 +247,18 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
                 usecols=["Ecaf_netw_total"])
             array = np.array(df)
             QhexMax = np.amax(array)
-        
-            StorageHEXCost += hex.calc_Cinv_HEX(QhexMax, gv)
+
+            Capex_a_storage_HEX, Opex_fixed_storage_HEX = hex.calc_Cinv_HEX(QhexMax, gv, locator)
+            addcosts_Capex_a += (Capex_a_storage_HEX)
+            addcosts_Opex_fixed += Opex_fixed_storage_HEX
             df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
                              usecols=["HPCompAirDesignArray"])
             array = np.array(df)
             QhpMax = np.amax(array)
-            StorageHEXCost += hp.calc_Cinv_HP(QhpMax, gv, locator)
-        addCosts += StorageHEXCost
+            Capex_a_storage_HP, Opex_fixed_storage_HP = hp.calc_Cinv_HP(QhpMax, gv, locator)
+            addcosts_Capex_a += (Capex_a_storage_HP)
+            addcosts_Opex_fixed += Opex_fixed_storage_HP
+        addcosts_Capex_a += Capex_a_HEX
         
         # Heat pump solar to storage
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
@@ -244,10 +266,13 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         array = np.array(df)
         QhpMax_PVT = np.amax(array[:,1])
         QhpMax_SC = np.amax(array[:,0])
-        
-        StorageHPCost += hp.calc_Cinv_HP(QhpMax_PVT, gv, locator)
+        Capex_a_storage_HEX, Opex_fixed_storage_HEX = hp.calc_Cinv_HP(QhpMax_PVT, gv, locator)
+        Capex_a_storage_HP += (Capex_a_storage_HEX)
+        addcosts_Opex_fixed += Opex_fixed_storage_HEX
 
-        StorageHPCost += hp.calc_Cinv_HP(QhpMax_SC, gv, locator)
+        Capex_a_storage_HEX, Opex_fixed_storage_HEX = hp.calc_Cinv_HP(QhpMax_SC, gv, locator)
+        Capex_a_storage_HP += (Capex_a_storage_HEX)
+        addcosts_Opex_fixed += Opex_fixed_storage_HEX
 
         # HP for storage operation
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
@@ -259,17 +284,18 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
                 QmaxHPStorage = max(QmaxHPStorage, array[i][3] + array[i][0])
             elif array[i][1] > 0:
                 QmaxHPStorage = max(QmaxHPStorage, array[i][2] + array[i][1])
-        
-        StorageHPCost += hp.calc_Cinv_HP(QmaxHPStorage, gv, locator)
-        addCosts += StorageHPCost
 
-        
+        Capex_a_storage_HEX, Opex_fixed_storage_HEX = hp.calc_Cinv_HP(QmaxHPStorage, gv, locator)
+        addcosts_Capex_a += (Capex_a_storage_HEX)
+        addcosts_Opex_fixed += Opex_fixed_storage_HEX
+
         # Storage
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
                          usecols=["Storage_Size"], nrows=1)
         StorageVol = np.array(df)[0][0]
-        StorageInvC += storage.calc_Cinv_storage(StorageVol, gv)
-        addCosts += StorageInvC
+        Capex_a_storage_HEX = storage.calc_Cinv_storage(StorageVol, gv)
+        addcosts_Capex_a += Capex_a_storage_HEX
+
 
         
         # Costs from distribution configuration
@@ -277,7 +303,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
             NetworkCost += network.calc_Cinv_network_linear(gv.NetworkLengthZernez, gv) * nBuildinNtw / len(buildList)
         else:
             NetworkCost += ntwFeat.pipesCosts_DHN * nBuildinNtw / len(buildList)
-        addCosts += NetworkCost
+        addcosts_Capex_a += NetworkCost
 
         # HEX (1 per building in ntw)
         for (index, building_name) in zip(indCombi, buildList):
@@ -287,8 +313,10 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
                 subsArray = np.array(df)
                 
                 Qmax = np.amax( subsArray[:,0] + subsArray[:,1] )
-                SubstHEXCost += hex.calc_Cinv_HEX(Qmax, gv)
-        addCosts += SubstHEXCost
+                Capex_a_building, Opex_fixed_building = hex.calc_Cinv_HEX(Qmax, gv, locator)
+                addcosts_Capex_a += Capex_a_building
+                addcosts_Opex_fixed += Opex_fixed_building
+
 
         # HEX for solar
         roof_area = np.array(pd.read_csv(locator.get_total_demand(), usecols=["Aroof_m2"]))
@@ -306,16 +334,18 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
                 #print share, "solar area share", buildList[i]
                 
                 SC_Qmax = solarFeat.SC_Qnom * dicoSupply.SOLAR_PART_SC * share
-                SCHEXCost += hex.calc_Cinv_HEX(SC_Qmax, gv)
+                Capex_a_HEX_SC, Opex_fixed_HEX_SC = hex.calc_Cinv_HEX(SC_Qmax, gv, locator)
+                addcosts_Capex_a += Capex_a_HEX_SC
+                addcosts_Opex_fixed += Opex_fixed_HEX_SC
 
                 PVT_Qmax = solarFeat.PVT_Qnom * dicoSupply.SOLAR_PART_PVT * share
-                PVTHEXCost += hex.calc_Cinv_HEX(PVT_Qmax, gv)
-        addCosts += SCHEXCost
-        addCosts += PVTHEXCost
+                Capex_a_HEX_PVT, Opex_fixed_HEX_PVT = hex.calc_Cinv_HEX(PVT_Qmax, gv, locator)
+                addcosts_Capex_a += Capex_a_HEX_PVT
+                addcosts_Opex_fixed += Opex_fixed_HEX_PVT
 
         # Pump operation costs
         pumpCosts = pumps.calc_Ctot_pump(dicoSupply, buildList, locator.get_optimization_network_results_folder(), ntwFeat, gv)
-        addCosts += pumpCosts
+        addcosts_Capex_a += pumpCosts
 
     # import gas consumption data from:
 
@@ -328,34 +358,40 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
     else:
         GasConnectionInvCost = 0.0
         
-    addCosts += GasConnectionInvCost
+    addcosts_Capex_a += GasConnectionInvCost
     # Save data
     results = pd.DataFrame({
-                            "SCInvC":[SCInvC],
-                            "PVTInvC":[PVTInvC],
-                            "BoilerAddInvC":[BoilerAddInvC],
-                            "StorageHEXCost":[StorageHEXCost],
-                            "StorageHPCost":[StorageHPCost],
+                            "Capex_a_SC":[Capex_a_SC],
+                            "Opex_fixed_SC":[Opex_fixed_SC],
+                            "Capex_a_PVT":[Capex_a_PVT],
+                            "Opex_fixed_PVT":[Opex_fixed_PVT],
+                            "Capex_a_Boiler_backup":[Capex_a_Boiler_backup],
+                            "Opex_fixed_Boiler_backup":[Opex_fixed_Boiler_backup],
+                            "Capex_a_storage_HEX":[Capex_a_storage_HEX],
+                            "Opex_fixed_storage_HEX":[Opex_fixed_storage_HEX],
+                            "Capex_a_storage_HP":[Capex_a_storage_HP],
+                            "Opex_fixed_storage_HP":[Opex_fixed_storage_HP],
                             "StorageInvC":[StorageInvC],
-                            "StorageCostSum":[StorageInvC+StorageHPCost+StorageHEXCost],
+                            "StorageCostSum":[StorageInvC+Capex_a_storage_HP+Capex_a_HEX],
                             "NetworkCost":[NetworkCost],
-                            "SubstHEXCost":[SubstHEXCost],
-                            "DHNInvestCost":[addCosts - CostDiscBuild],
-                            "PVTHEXCost":[PVTHEXCost],
+                            "SubstHEXCost":[SubstHEXCost_capex],
+                            "DHNInvestCost":[addcosts_Capex_a - CostDiscBuild],
+                            "PVTHEXCost_Capex":[PVTHEXCost_Capex],
                             "CostDiscBuild":[CostDiscBuild],
                             "CO2DiscBuild":[CO2DiscBuild],
                             "PrimDiscBuild":[PrimDiscBuild],
-                            "FurnaceInvCost":[FurnaceInvCost],
-                            "BoilerBInvCost":[BoilerBInvCost],
-                            "BoilerPInvCost":[BoilerPInvCost],
-                            "HPLakeInvC":[HPLakeInvC],
-                            "HPSewInvC":[HPSewInvC],
-                            "SCHEXCost":[SCHEXCost],
+                            "Capex_a_furnace":[Capex_a_furnace],
+                            "Capex_a_Boiler":[Capex_a_Boiler],
+                            "Capex_a_Boiler_peak":[Capex_a_Boiler_peak],
+                            "Capex_a_Lake":[Capex_a_Lake],
+                            "Capex_a_Sewage":[Capex_a_Sewage],
+                            "SCHEXCost_Capex":[SCHEXCost_Capex],
                             "pumpCosts":[pumpCosts],
-                            "SumInvestCost":[addCosts],
+                            "Sum_CAPEX":[addcosts_Capex_a],
+                            "Sum_OPEX_fixed": [addcosts_Opex_fixed],
                             "GasConnectionInvCa":[GasConnectionInvCost]
                             })
     results.to_csv(locator.get_optimization_slave_investment_cost_detailed(dicoSupply.configKey), sep=',')
 
       
-    return (addCosts, addCO2, addPrim)
+    return (addcosts_Capex_a + addcosts_Opex_fixed, addCO2, addPrim)
