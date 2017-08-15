@@ -88,13 +88,13 @@ def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
 
 # solar properties
 
-def calc_sun_properties(latitude, longitude, weather_data, date_start):
+def calc_sun_properties(latitude, longitude, weather_data, date_start, solar_window_solstice):
 
     date = pd.date_range(date_start, periods=8760, freq='H')
     hour_date = date.hour
     min_date = date.minute
     day_date = date.dayofyear
-    worst_hour = calc_worst_hour(latitude, weather_data, settings.solar_window_solstice)
+    worst_hour = calc_worst_hour(latitude, weather_data, solar_window_solstice)
 
     # solar elevation, azuimuth and values for the 9-3pm period of no shading on the solar solstice
     sun_coords = pyephem(date, latitude, longitude)

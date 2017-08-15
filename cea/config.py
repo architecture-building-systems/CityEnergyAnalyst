@@ -16,6 +16,7 @@ class Configuration(object):
         files_found = self._parser.read(self._list_configuration_files(scenario))
         print("Configuration files: " + ', '.join(files_found))
         self.demand = DemandConfiguration(self._parser)
+        self.photovoltaic = PhotovoltaicConfiguration(self._parser)
 
     @property
     def default_scenario(self):
@@ -59,7 +60,86 @@ class DemandConfiguration(object):
         return self._parser.get('demand', 'cooling-season-end')
 
 
+class PhotovoltaicConfiguration(object):
+    def __init__(self, parser):
+        self._parser = parser
 
+    # site specific input
+    @property
+    def date_start(self):
+        """format: yyyy-mm-dd"""
+        return self._parser.get('photovoltaic', 'date-start')
+
+    @property
+    def type_PVpanel(self):
+        """type of panels
+        for PVT, please choose type_PVpanel = 'PV1', type_SCpanel = 'SC1'
+        PV1: monocrystalline, PV2: poly, PV3: amorphous. please refer to supply system database.
+        """
+        return self._parser.get('photovoltaic', 'type-PVpanel')
+
+    @property
+    def type_SCpanel(self):
+        """SC1: flat plat collectors, SC2: evacuated tubes"""
+        return self._parser.get('photovoltaic', 'type-SCpanel')
+
+    # installed locations
+    @property
+    def panel_on_roof(self):
+        """flag for considering panels on roof"""
+        return self._parser.getboolean('photovoltaic', 'panel-on-roof')
+
+    @property
+    def panel_on_wall(self):
+        """flag for considering panels on wall"""
+        return self._parser.getboolean('photovoltaic', 'panel-on-wall')
+
+    @property
+    def min_radiation(self):
+        """filtering criteria: at least a minimum production of this % from the maximum in the area."""
+        return self._parser.getfloat('photovoltaic', 'min-radiation')
+
+    # panel spacing
+    @property
+    def solar_window_solstice(self):
+        """desired hours of solar window on the solstice"""
+        return self._parser.getint('photovoltaic', 'solar-window-solstice')
+
+    @property
+    def T_in_SC(self):
+        """inlet temperature of solar collectors [C]"""
+        return self._parser.getfloat('photovoltaic', 'T-in-SC')
+
+    @property
+    def T_in_PVT(self):
+        """inlet temperature of PVT panels [C]"""
+        return self._parser.getfloat('photovoltaic', 'T-in-PVT')
+
+    @property
+    def dpl(self):
+        """pressure losses per length of pipe according to Solar District Heating Guidelines, [Pa/m]"""
+        return self._parser.getfloat('photovoltaic', 'dpl')
+
+    @property
+    def fcr(self):
+        """additional loss factor due to accessories"""
+        return self._parser.getfloat('photovoltaic', 'fcr')
+
+    @property
+    def Ro(self):
+        """water density [kg/m3]"""
+        return self._parser.getfloat('photovoltaic', 'Ro')
+
+    @property
+    def eff_pumping(self):
+        """pump efficiency"""
+        return self._parser.getfloat('photovoltaic', 'eff-pumping')
+
+    # solar collectors heat losses
+    @property
+    def k_msc_max(self):
+        """linear heat transmittance coefficient of piping (2*pi*k/ln(Do/Di))) [W/mK]"""
+        return self._parser.getfloat('photovoltaic', 'k-msc-max')
 
 if __name__ == '__main__':
     config = Configuration(r'c:\reference-case-open\baseline')
