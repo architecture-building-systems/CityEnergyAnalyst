@@ -370,7 +370,6 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
                             "Capex_a_storage_HEX":[Capex_a_storage_HEX],
                             "Opex_fixed_storage_HEX":[Opex_fixed_storage_HEX],
                             "Capex_a_storage_HP":[Capex_a_storage_HP],
-                            "Opex_fixed_storage_HP":[Opex_fixed_storage_HP],
                             "StorageInvC":[StorageInvC],
                             "StorageCostSum":[StorageInvC+Capex_a_storage_HP+Capex_a_HEX],
                             "NetworkCost":[NetworkCost],
