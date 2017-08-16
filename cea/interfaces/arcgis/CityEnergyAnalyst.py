@@ -739,29 +739,32 @@ class SolarTechnologyTool(object):
             direction="Input")
         longitude.enabled = False
 
-        pvonroof = arcpy.Parameter(
-            displayName="Considering panels on roofs",
-            name="pvonroof",
+        panel_on_roof = arcpy.Parameter(
+            displayName="Consider panels on roofs",
+            name="panel_on_roof",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        pvonroof.value = True
+        panel_on_roof.value = True
+        panel_on_roof.enabled = False
 
-        pvonwall = arcpy.Parameter(
-            displayName="Considering panels on walls",
-            name="pvonwall",
+        panel_on_wall = arcpy.Parameter(
+            displayName="Consider panels on walls",
+            name="panel_on_wall",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        pvonwall.value = True
+        panel_on_wall.value = True
+        panel_on_wall.enabled = False
 
-        worst_hour = arcpy.Parameter(
-            displayName="worst hour (the hour of sunrise on the solar solstice at the site)",
-            name="worst_hour",
+        solar_window_solstice = arcpy.Parameter(
+            displayName="Desired hours of solar window on the solstice",
+            name="solar_window_solstice",
             datatype="GPLong",
             parameterType="Required",
             direction="Input")
-        worst_hour.value = 8744
+        solar_window_solstice.value = 8744
+        solar_window_solstice.enabled = False
 
         type_PVpanel = arcpy.Parameter(
             displayName="PV technology to use",
@@ -770,6 +773,7 @@ class SolarTechnologyTool(object):
             parameterType="Required",
             direction="Input")
         type_PVpanel.filter.list = ['monocrystalline', 'polycrystalline', 'amorphous']
+        type_PVpanel.enabled = False
 
         min_radiation = arcpy.Parameter(
             displayName="filtering surfaces with low radiation potential (% of the maximum radiation in the area)",
@@ -778,9 +782,10 @@ class SolarTechnologyTool(object):
             parameterType="Required",
             direction="Input")
         min_radiation.value = 0.75
+        min_radiation.enabled = False
 
-        return [scenario_path, weather_name, year, latitude, longitude, pvonroof, pvonwall, worst_hour,
-                type_PVpanel, min_radiation]
+        return [scenario_path, weather_name, year, latitude, longitude, panel_on_roof, panel_on_wall,
+                solar_window_solstice, type_PVpanel, min_radiation]
 
     def updateParameters(self, parameters):
         scenario_path = parameters[0].valueAsText
@@ -795,26 +800,44 @@ class SolarTechnologyTool(object):
             parameters[0].setErrorMessage("No radiation file found - please run radiation tool first")
             return
 
-        # scenario passes test
-        weather_parameter = parameters[1]
-        year_parameter = parameters[2]
-        latitude_parameter = parameters[3]
-        longitude_parameter = parameters[4]
+        if parameters[1].enabled:
+            # only set values the first time
+            return
 
-        weather_parameter.enabled = True
-        year_parameter.enabled = True
+        # scenario passes test
+        parameters = {p.name: p for p in parameters}
+        latitude_parameter = parameters['latitude']
+        longitude_parameter = parameters['longitude']
 
         latitude_value = float(_cli_output(scenario_path, 'latitude'))
         longitude_value = float(_cli_output(scenario_path, 'longitude'))
         if not latitude_parameter.enabled:
             # only overwrite on first try
             latitude_parameter.value = latitude_value
-            latitude_parameter.enabled = True
 
         if not longitude_parameter.enabled:
             # only overwrite on first try
             longitude_parameter.value = longitude_value
-            longitude_parameter.enabled = True
+
+        # read values from scenario / or defaults
+        parameters['weather_name'].value = _cli_output(scenario_path, 'read-config', '--section', 'general', '--key',
+                                                  'weather')
+        parameters['year'].value = _cli_output(scenario_path, 'read-config', '--section', 'photovoltaic',
+                                                        '--key', 'date-start')[:4]
+        parameters['panel_on_roof'].value = _cli_output(scenario_path, 'read-config', '--section', 'photovoltaic',
+                                                        '--key', 'panel-on-roof')
+        parameters['panel_on_wall'].value = _cli_output(scenario_path, 'read-config', '--section', 'photovoltaic',
+                                                        '--key', 'panel-on-wall')
+        parameters['type_PVpanel'].value = {'PV1': 'monocrystalline', 'PV2': 'polycrystalline', 'PV3': 'amorphous'}[
+            _cli_output(scenario_path, 'read-config', '--section', 'photovoltaic', '--key', 'type-PVpanel')]
+        parameters['min_radiation'].value = _cli_output(scenario_path, 'read-config', '--section', 'photovoltaic',
+                                                        '--key', 'min-radiation')
+        parameters['solar_window_solstice'].value = _cli_output(scenario_path, 'read-config', '--section',
+                                                                'photovoltaic',
+                                                                '--key', 'solar-window-solstice')
+
+        for p in parameters.values():
+            p.enabled = True
         return
 
     def updateMessages(self, parameters):
@@ -836,8 +859,8 @@ class SolarTechnologyTool(object):
         year = parameters[2].value
         latitude = parameters[3].value
         longitude = parameters[4].value
-        pvonroof = parameters[5].value
-        pvonwall = parameters[6].value
+        panel_on_roof = parameters[5].value
+        panel_on_wall = parameters[6].value
         worst_hour = parameters[7].value
         type_PVpanel = {'monocrystalline': 'PV1',
                         'polycrystalline': 'PV2',
@@ -858,12 +881,9 @@ class SolarTechnologyTool(object):
 
         run_cli_arguments = [scenario_path, 'photovoltaic', '--latitude', latitude, '--longitude', longitude,
                              '--weather-path', weather_path, '--worst-hour', worst_hour, '--type-PVpanel', type_PVpanel,
-                             '--min-radiation', min_radiation, '--date-start', date_start]
-        if pvonroof:
-            run_cli_arguments.append('--pvonroof')
-        if pvonwall:
-            run_cli_arguments.append('--pvonwall')
-
+                             '--min-radiation', min_radiation, '--date-start', date_start,
+                             '--panel-on-roof', 'yes' if panel_on_roof else 'no',
+                             '--panel-on-wall', 'yes' if panel_on_wall else 'no']
         run_cli(*run_cli_arguments)
         return
 

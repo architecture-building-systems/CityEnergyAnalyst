@@ -9,12 +9,12 @@ import cea.databases
 class Configuration(object):
     def __init__(self, scenario=None):
         """Read in configuration information for a scenario (or the default scenario)"""
+        self.scenario = scenario
         defaults = dict(os.environ)
         defaults['CEA.SCENARIO'] = str(scenario)
         defaults['CEA.DB'] = os.path.dirname(cea.databases.__file__)
         self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
         files_found = self._parser.read(self._list_configuration_files(scenario))
-        print("Configuration files: " + ', '.join(files_found))
         self.demand = DemandConfiguration(self._parser)
         self.photovoltaic = PhotovoltaicConfiguration(self._parser)
 
@@ -37,6 +37,13 @@ class Configuration(object):
             cascade.append(os.path.join(scenario, '..', 'project.config'))
             cascade.append(os.path.join(scenario, 'scenario.config'))
         return cascade
+
+    def save(self):
+        """Write this configuration to the scenario folder"""
+        assert os.path.exists(self.scenario), "Can't save to scenario: %s" % self.scenario
+        scenario_config = os.path.join(self.scenario, 'scenario.config')
+        with open(scenario_config, 'w') as f:
+            self._parser.write(f)
 
 
 class DemandConfiguration(object):
@@ -70,6 +77,11 @@ class PhotovoltaicConfiguration(object):
         """format: yyyy-mm-dd"""
         return self._parser.get('photovoltaic', 'date-start')
 
+    @date_start.setter
+    def date_start(self, value):
+        """format: yyy-mm-dd"""
+        self._parser.set('photovoltaic', 'date-start', value)
+
     @property
     def type_PVpanel(self):
         """type of panels
@@ -78,10 +90,25 @@ class PhotovoltaicConfiguration(object):
         """
         return self._parser.get('photovoltaic', 'type-PVpanel')
 
+    @type_PVpanel.setter
+    def type_PVpanel(self, value):
+        """type of panels
+        for PVT, please choose type_PVpanel = 'PV1', type_SCpanel = 'SC1'
+        PV1: monocrystalline, PV2: poly, PV3: amorphous. please refer to supply system database.
+        """
+        assert value in {'PV1', 'PV2', 'PV3'}, 'invalid PV panel type: %s' % value
+        self._parser.set('photovoltaic', 'type-PVpanel', value)
+
     @property
     def type_SCpanel(self):
         """SC1: flat plat collectors, SC2: evacuated tubes"""
         return self._parser.get('photovoltaic', 'type-SCpanel')
+
+    @type_SCpanel.setter
+    def type_SCpanel(self, value):
+        """SC1: flat plat collectors, SC2: evacuated tubes"""
+        assert value in {'SC1', 'SC2'}
+        self._parser.set('photovoltaic', 'type-SCpanel', value)
 
     # installed locations
     @property
@@ -89,15 +116,30 @@ class PhotovoltaicConfiguration(object):
         """flag for considering panels on roof"""
         return self._parser.getboolean('photovoltaic', 'panel-on-roof')
 
+    @panel_on_roof.setter
+    def panel_on_roof(self, value):
+        """flag for considering panels on roof"""
+        self._parser.set('photovoltaic', 'panel-on-roof', 'yes' if value else 'no')
+
     @property
     def panel_on_wall(self):
         """flag for considering panels on wall"""
         return self._parser.getboolean('photovoltaic', 'panel-on-wall')
 
+    @panel_on_wall.setter
+    def panel_on_wall(self, value):
+        """flag for considering panels on wall"""
+        self._parser.set('photovoltaic', 'panel-on-wall', 'yes' if value else 'no')
+
     @property
     def min_radiation(self):
         """filtering criteria: at least a minimum production of this % from the maximum in the area."""
         return self._parser.getfloat('photovoltaic', 'min-radiation')
+
+    @min_radiation.setter
+    def min_radiation(self, value):
+        """filtering criteria: at least a minimum production of this % from the maximum in the area."""
+        self._parser.set('photovoltaic', 'min-radiation', '%.4f' % value)
 
     # panel spacing
     @property
@@ -105,15 +147,30 @@ class PhotovoltaicConfiguration(object):
         """desired hours of solar window on the solstice"""
         return self._parser.getint('photovoltaic', 'solar-window-solstice')
 
+    @solar_window_solstice.setter
+    def solar_window_solstice(self, value):
+        """desired hours of solar window on the solstice"""
+        self._parser.set('photovoltaic', 'solar-window-solstice', value)
+
     @property
     def T_in_SC(self):
         """inlet temperature of solar collectors [C]"""
         return self._parser.getfloat('photovoltaic', 'T-in-SC')
 
+    @T_in_SC.setter
+    def T_in_SC(self, value):
+        """inlet temperature of solar collectors [C]"""
+        self._parser.set('photovoltaic', 'T-in-SC', value)
+
     @property
     def T_in_PVT(self):
         """inlet temperature of PVT panels [C]"""
         return self._parser.getfloat('photovoltaic', 'T-in-PVT')
+
+    @T_in_PVT.setter
+    def T_in_PVT(self, value):
+        """inlet temperature of PVT panels [C]"""
+        self._parser.set('photovoltaic', 'T-in-PVT', value)
 
     @property
     def dpl(self):
