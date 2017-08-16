@@ -88,7 +88,7 @@ class PhotovoltaicConfiguration(object):
         for PVT, please choose type_PVpanel = 'PV1', type_SCpanel = 'SC1'
         PV1: monocrystalline, PV2: poly, PV3: amorphous. please refer to supply system database.
         """
-        return self._parser.get('photovoltaic', 'type-PVpanel')
+        return self._parser.get('solar', 'type-PVpanel')
 
     @type_PVpanel.setter
     def type_PVpanel(self, value):
@@ -97,106 +97,106 @@ class PhotovoltaicConfiguration(object):
         PV1: monocrystalline, PV2: poly, PV3: amorphous. please refer to supply system database.
         """
         assert value in {'PV1', 'PV2', 'PV3'}, 'invalid PV panel type: %s' % value
-        self._parser.set('photovoltaic', 'type-PVpanel', value)
+        self._parser.set('solar', 'type-PVpanel', value)
 
     @property
     def type_SCpanel(self):
         """SC1: flat plat collectors, SC2: evacuated tubes"""
-        return self._parser.get('photovoltaic', 'type-SCpanel')
+        return self._parser.get('solar', 'type-SCpanel')
 
     @type_SCpanel.setter
     def type_SCpanel(self, value):
         """SC1: flat plat collectors, SC2: evacuated tubes"""
         assert value in {'SC1', 'SC2'}
-        self._parser.set('photovoltaic', 'type-SCpanel', value)
+        self._parser.set('solar', 'type-SCpanel', value)
 
     # installed locations
     @property
     def panel_on_roof(self):
         """flag for considering panels on roof"""
-        return self._parser.getboolean('photovoltaic', 'panel-on-roof')
+        return self._parser.getboolean('solar', 'panel-on-roof')
 
     @panel_on_roof.setter
     def panel_on_roof(self, value):
         """flag for considering panels on roof"""
-        self._parser.set('photovoltaic', 'panel-on-roof', 'yes' if value else 'no')
+        self._parser.set('solar', 'panel-on-roof', 'yes' if value else 'no')
 
     @property
     def panel_on_wall(self):
         """flag for considering panels on wall"""
-        return self._parser.getboolean('photovoltaic', 'panel-on-wall')
+        return self._parser.getboolean('solar', 'panel-on-wall')
 
     @panel_on_wall.setter
     def panel_on_wall(self, value):
         """flag for considering panels on wall"""
-        self._parser.set('photovoltaic', 'panel-on-wall', 'yes' if value else 'no')
+        self._parser.set('solar', 'panel-on-wall', 'yes' if value else 'no')
 
     @property
     def min_radiation(self):
         """filtering criteria: at least a minimum production of this % from the maximum in the area."""
-        return self._parser.getfloat('photovoltaic', 'min-radiation')
+        return self._parser.getfloat('solar', 'min-radiation')
 
     @min_radiation.setter
     def min_radiation(self, value):
         """filtering criteria: at least a minimum production of this % from the maximum in the area."""
-        self._parser.set('photovoltaic', 'min-radiation', '%.4f' % value)
+        self._parser.set('solar', 'min-radiation', '%.4f' % value)
 
     # panel spacing
     @property
     def solar_window_solstice(self):
         """desired hours of solar window on the solstice"""
-        return self._parser.getint('photovoltaic', 'solar-window-solstice')
+        return self._parser.getint('solar', 'solar-window-solstice')
 
     @solar_window_solstice.setter
     def solar_window_solstice(self, value):
         """desired hours of solar window on the solstice"""
-        self._parser.set('photovoltaic', 'solar-window-solstice', value)
+        self._parser.set('solar', 'solar-window-solstice', value)
 
     @property
     def T_in_SC(self):
         """inlet temperature of solar collectors [C]"""
-        return self._parser.getfloat('photovoltaic', 'T-in-SC')
+        return self._parser.getfloat('solar', 'T-in-SC')
 
     @T_in_SC.setter
     def T_in_SC(self, value):
         """inlet temperature of solar collectors [C]"""
-        self._parser.set('photovoltaic', 'T-in-SC', value)
+        self._parser.set('solar', 'T-in-SC', value)
 
     @property
     def T_in_PVT(self):
         """inlet temperature of PVT panels [C]"""
-        return self._parser.getfloat('photovoltaic', 'T-in-PVT')
+        return self._parser.getfloat('solar', 'T-in-PVT')
 
     @T_in_PVT.setter
     def T_in_PVT(self, value):
         """inlet temperature of PVT panels [C]"""
-        self._parser.set('photovoltaic', 'T-in-PVT', value)
+        self._parser.set('solar', 'T-in-PVT', value)
 
     @property
     def dpl(self):
         """pressure losses per length of pipe according to Solar District Heating Guidelines, [Pa/m]"""
-        return self._parser.getfloat('photovoltaic', 'dpl')
+        return self._parser.getfloat('solar', 'dpl')
 
     @property
     def fcr(self):
         """additional loss factor due to accessories"""
-        return self._parser.getfloat('photovoltaic', 'fcr')
+        return self._parser.getfloat('solar', 'fcr')
 
     @property
     def Ro(self):
         """water density [kg/m3]"""
-        return self._parser.getfloat('photovoltaic', 'Ro')
+        return self._parser.getfloat('solar', 'Ro')
 
     @property
     def eff_pumping(self):
         """pump efficiency"""
-        return self._parser.getfloat('photovoltaic', 'eff-pumping')
+        return self._parser.getfloat('solar', 'eff-pumping')
 
     # solar collectors heat losses
     @property
     def k_msc_max(self):
         """linear heat transmittance coefficient of piping (2*pi*k/ln(Do/Di))) [W/mK]"""
-        return self._parser.getfloat('photovoltaic', 'k-msc-max')
+        return self._parser.getfloat('solar', 'k-msc-max')
 
 if __name__ == '__main__':
     config = Configuration(r'c:\reference-case-open\baseline')
