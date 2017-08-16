@@ -218,6 +218,11 @@ def photovoltaic(args):
 
     list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
+    # panel_on_roof=args.panel_on_roof,
+    # panel_on_wall=args.panel_on_wall, type_PVpanel=args.type_PVpanel,
+    # min_radiation=args.min_radiation, date_start=args.date_start,
+    # solar_window_solstice=args.solar_window_solstice
+
     for building in list_buildings_names:
         radiation_path = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
@@ -225,10 +230,6 @@ def photovoltaic(args):
                                                     metadata_csv=radiation_metadata, latitude=args.latitude,
                                                     longitude=args.longitude, weather_path=args.weather_path,
                                                     building_name=building)
-        # panel_on_roof=args.panel_on_roof,
-        # panel_on_wall=args.panel_on_wall, type_PVpanel=args.type_PVpanel,
-        # min_radiation=args.min_radiation, date_start=args.date_start,
-        # solar_window_solstice=args.solar_window_solstice
 
 
 def install_toolbox(_):
@@ -444,19 +445,17 @@ def main():
     photovoltaic_parser.add_argument('--latitude', help='Latitude to use for calculations.', type=float)
     photovoltaic_parser.add_argument('--longitude', help='Longitude to use for calculations.', type=float)
     photovoltaic_parser.add_argument('--weather-path', help='Path to weather file.')
-    photovoltaic_parser.add_argument('--panel-on-roof', help='flag for considering PV on roof', action='store_true')
-    photovoltaic_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall', action='store_true')
-    photovoltaic_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int,
-                                     default=8744)
+    photovoltaic_parser.add_argument('--panel-on-roof', help='flag for considering PV on roof', type=bool)
+    photovoltaic_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall', type=bool)
+    photovoltaic_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int)
     photovoltaic_parser.add_argument('--type-PVpanel',
-                                     help='monocrystalline, T2 is poly and T3 is amorphous. (see relates to the database of technologies)',
-                                     default="PV1")
+                                     help='monocrystalline, T2 is poly and T3 is amorphous. (see relates to the database of technologies)')
     photovoltaic_parser.add_argument('--min-radiation',
                                      help='points are selected with at least a minimum production of this % from the maximum in the area.',
-                                     type=float, default=0.75)
-    photovoltaic_parser.add_argument('--date-start', help='First day of the year', default='2016-01-01')
+                                     type=float)
+    photovoltaic_parser.add_argument('--date-start', help='First day of the year', type=str)
     photovoltaic_parser.add_argument('--solar-window-solstice', help='desired hours of solar window on the solstice',
-                                     default=4, type=int)
+                                     type=int)
     photovoltaic_parser.set_defaults(func=photovoltaic)
 
     radiation_daysim_parser = subparsers.add_parser('radiation-daysim',
