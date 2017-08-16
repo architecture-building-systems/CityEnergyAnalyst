@@ -512,9 +512,11 @@ def calc_Cinv_FC(P_design, gV, locator, technology=0):
     Inv_e = FC_cost_data.iloc[0]['e']
     Inv_IR = (FC_cost_data.iloc[0]['IR_%']) / 100
     Inv_LT = FC_cost_data.iloc[0]['LT_yr']
+    Inv_OM = FC_cost_data.iloc[0]['O&M_%'] / 100
 
     InvC = Inv_a + Inv_b * (P_design) ** Inv_c + (Inv_d + Inv_e * P_design) * log(P_design)
 
-    InvCa = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed = Capex_a * Inv_OM
 
-    return InvCa
+    return Capex_a, Opex_fixed
