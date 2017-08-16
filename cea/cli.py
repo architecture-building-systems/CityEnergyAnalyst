@@ -220,6 +220,7 @@ def photovoltaic(args):
     list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
     config = cea.config.Configuration(args.scenario)
+    config.weather = args.weather_path
     if args.panel_on_roof is not None:
         config.photovoltaic.panel_on_roof = args.panel_on_roof
     if args.panel_on_wall is not None:

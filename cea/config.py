@@ -26,6 +26,10 @@ class Configuration(object):
     def weather(self):
         return self._parser.get('general', 'weather')
 
+    @weather.setter
+    def weather(self, value):
+        self._parser.set('general', 'weather', value)
+
     def _list_configuration_files(self, scenario):
         """Return the list of configuration files to try and load for a given scenario. The list is given in order
         of importance, with items at the end of the files overriding files at the beginning of the list."""
@@ -75,12 +79,12 @@ class PhotovoltaicConfiguration(object):
     @property
     def date_start(self):
         """format: yyyy-mm-dd"""
-        return self._parser.get('photovoltaic', 'date-start')
+        return self._parser.get('solar', 'date-start')
 
     @date_start.setter
     def date_start(self, value):
         """format: yyy-mm-dd"""
-        self._parser.set('photovoltaic', 'date-start', value)
+        self._parser.set('solar', 'date-start', value)
 
     @property
     def type_PVpanel(self):
@@ -150,7 +154,7 @@ class PhotovoltaicConfiguration(object):
     @solar_window_solstice.setter
     def solar_window_solstice(self, value):
         """desired hours of solar window on the solstice"""
-        self._parser.set('solar', 'solar-window-solstice', value)
+        self._parser.set('solar', 'solar-window-solstice', '%i' % value)
 
     @property
     def T_in_SC(self):
