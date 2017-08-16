@@ -822,18 +822,18 @@ class SolarTechnologyTool(object):
         # read values from scenario / or defaults
         parameters['weather_name'].value = _cli_output(scenario_path, 'read-config', '--section', 'general', '--key',
                                                   'weather')
-        parameters['year'].value = _cli_output(scenario_path, 'read-config', '--section', 'photovoltaic',
+        parameters['year'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
                                                         '--key', 'date-start')[:4]
-        parameters['panel_on_roof'].value = _cli_output(scenario_path, 'read-config', '--section', 'photovoltaic',
+        parameters['panel_on_roof'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
                                                         '--key', 'panel-on-roof')
-        parameters['panel_on_wall'].value = _cli_output(scenario_path, 'read-config', '--section', 'photovoltaic',
+        parameters['panel_on_wall'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
                                                         '--key', 'panel-on-wall')
         parameters['type_PVpanel'].value = {'PV1': 'monocrystalline', 'PV2': 'polycrystalline', 'PV3': 'amorphous'}[
-            _cli_output(scenario_path, 'read-config', '--section', 'photovoltaic', '--key', 'type-PVpanel')]
-        parameters['min_radiation'].value = _cli_output(scenario_path, 'read-config', '--section', 'photovoltaic',
+            _cli_output(scenario_path, 'read-config', '--section', 'solar', '--key', 'type-PVpanel')]
+        parameters['min_radiation'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
                                                         '--key', 'min-radiation')
         parameters['solar_window_solstice'].value = _cli_output(scenario_path, 'read-config', '--section',
-                                                                'photovoltaic',
+                                                                'solar',
                                                                 '--key', 'solar-window-solstice')
 
         for p in parameters.values():
