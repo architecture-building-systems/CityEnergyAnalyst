@@ -260,7 +260,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
             addcosts_Opex_fixed += Opex_fixed_storage_HP
         addcosts_Capex_a += Capex_a_HEX
         
-        # Heat pump solar to storage
+        # Heat pump solar to DH
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
                          usecols=["HPScDesignArray", "HPpvt_designArray"])
         array = np.array(df)
@@ -274,7 +274,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         Capex_a_storage_HP += (Capex_a_storage_HEX)
         addcosts_Opex_fixed += Opex_fixed_storage_HEX
 
-        # HP for storage operation
+        # HP for storage operation, used for both charging from solar and discharging to DH
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
                          usecols=["E_aux_ch", "E_aux_dech", "Q_from_storage_used", "Q_to_storage"])
         array = np.array(df)
