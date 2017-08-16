@@ -64,7 +64,7 @@ def get_arcgis_paths():
     except WindowsError:
         key = _winreg.OpenKey(registry, r"SOFTWARE\ESRI\Desktop%s" % arcgis_version)
     install_dir, _ = _winreg.QueryValueEx(key, 'InstallDir')
-    paths = [os.path.join(install_dir, 'bin'),
+    paths = [os.path.join(install_dir, 'bin64'),
             os.path.join(install_dir, 'arcpy'),
             os.path.join(install_dir, 'scripts')]
     return paths
