@@ -5,6 +5,8 @@ standard interface.
 from __future__ import absolute_import
 
 import os
+import cea.config
+import cea.inputlocator
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -201,7 +203,6 @@ def radiation_daysim(args):
 
 
 def photovoltaic(args):
-    import cea.inputlocator
     import cea.utilities.dbfreader as dbfreader
     import cea.technologies.solar.photovoltaic
 
@@ -218,10 +219,20 @@ def photovoltaic(args):
 
     list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
-    # panel_on_roof=args.panel_on_roof,
-    # panel_on_wall=args.panel_on_wall, type_PVpanel=args.type_PVpanel,
-    # min_radiation=args.min_radiation, date_start=args.date_start,
-    # solar_window_solstice=args.solar_window_solstice
+    config = cea.config.Configuration(args.scenario)
+    if args.panel_on_roof is not None:
+        config.photovoltaic.panel_on_roof = args.panel_on_roof
+    if args.panel_on_wall is not None:
+        config.photovoltaic.panel_on_wall = args.panel_on_wall
+    if args.type_PVpanel is not None:
+        config.photovoltaic.type_PVpanel = args.type_PVpanel
+    if args.min_radiation is not None:
+        config.photovoltaic.min_radiation = args.min_radiation
+    if args.date_start is not None:
+        config.photovoltaic.date_start = args.date_start
+    if args.solar_window_solstice is not None:
+        config.photovoltaic.solar_window_solstice=args.solar_window_solstice
+    config.save()
 
     for building in list_buildings_names:
         radiation_path = locator.get_radiation_building(building_name=building)
