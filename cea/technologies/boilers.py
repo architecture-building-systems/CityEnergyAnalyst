@@ -42,10 +42,10 @@ def cond_boiler_operation(Q_load, Q_design, T_return_to_boiler):
     :retype boiler_eff: float
     :returns boiler_eff: efficiency of Boiler (Lower Heating Value), in abs. numbers
 
+    _[T. Vollrath, 2016] Tim Vollrath. Microgrid Modelling and Optimisation in the Context of Rural Transformation.
+    Master Thesis, ETH Zurich. 2016.
     """
-    #TODO[SH]: Operation efficiency Reference link doesn't work
 
-    #Implement Curves provided by http://www.greenshootscontrols.net/?p=153
     x = [0, 15.5, 21, 26.7, 32.2, 37.7, 43.3, 49, 54.4, 60, 65.6, 71.1, 100] # Return Temperature Dependency
     y = [96.8, 96.8, 96.2, 95.5, 94.7, 93.2, 91.2, 88.9, 87.3, 86.3, 86.0, 85.9, 85.8] # Return Temperature Dependency
     x1 = [0, 0.05, 0.25, 0.5, 0.75, 1] # Load Point dependency
@@ -187,7 +187,7 @@ def calc_Cinv_boiler(Q_design, Q_annual, gV, locator, technology=0):
     :rtype InvCa : float
     :returns InvCa: Annualized investment costs in CHF/a including Maintenance Cost
     """
-    # TODO[SH]: add source from Tim's thesis
+
     if Q_design >0:
 
         boiler_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="Boiler")
