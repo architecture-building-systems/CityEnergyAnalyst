@@ -196,7 +196,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
             arrayGHP = np.array(dfGHP)
             
             GHP_Enom = np.amax(arrayGHP)
-            Capex_a_GHP, Opex_fixed_GHP = hp.GHP_InvCost(GHP_Enom, gv, locator)
+            Capex_a_GHP, Opex_fixed_GHP = hp.calc_Cinv_GHP(GHP_Enom, gv, locator)
             addcosts_Capex_a += Capex_a_GHP * gv.EURO_TO_CHF
             addcosts_Opex_fixed += Opex_fixed_GHP * gv.EURO_TO_CHF
 

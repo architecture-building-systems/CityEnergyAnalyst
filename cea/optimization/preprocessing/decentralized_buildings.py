@@ -213,7 +213,7 @@ def decentralized_main(locator, building_names, gv):
             InvCaBoiler = Boiler.calc_Cinv_boiler(QnomBoiler, QannualB_GHP[i][0], gv)
             InvCosts[3+i][0] = InvCaBoiler
             
-            InvCaGHP = HP.GHP_InvCost( Wel_GHP[i][0] , gv)
+            InvCaGHP = HP.calc_Cinv_GHP(Wel_GHP[i][0], gv)
             InvCosts[3+i][0] += InvCaGHP * gv.EURO_TO_CHF
         
 
