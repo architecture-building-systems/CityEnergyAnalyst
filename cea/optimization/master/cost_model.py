@@ -229,17 +229,17 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
                 usecols=["Qcdata_netw_total"])
             array = np.array(df)
             QhexMax = np.amax(array)
-            Capex_a_storage_HEX, Opex_fixed_storage_HEX = hex.calc_Cinv_HEX(QhexMax, gv, locator)
-            addcosts_Capex_a += (Capex_a_storage_HEX)
-            addcosts_Opex_fixed += Opex_fixed_storage_HEX
+            Capex_a_wasteserver_HEX, Opex_fixed_wasteserver_HEX = hex.calc_Cinv_HEX(QhexMax, gv, locator)
+            addcosts_Capex_a += (Capex_a_wasteserver_HEX)
+            addcosts_Opex_fixed += Opex_fixed_wasteserver_HEX
             
             df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
                              usecols=["HPServerHeatDesignArray"])
             array = np.array(df)
             QhpMax = np.amax(array)
-            Capex_a_storage_HP, Opex_fixed_storage_HP = hp.calc_Cinv_HP(QhpMax, gv, locator)
-            addcosts_Capex_a += (Capex_a_storage_HP)
-            addcosts_Opex_fixed += Opex_fixed_storage_HP
+            Capex_a_wasteserver_HP, Opex_fixed_wasteserver_HP = hp.calc_Cinv_HP(QhpMax, gv, locator)
+            addcosts_Capex_a += (Capex_a_wasteserver_HP)
+            addcosts_Opex_fixed += Opex_fixed_wasteserver_HP
 
         if dicoSupply.WasteCompressorHeatRecovery == 1:
             df = pd.read_csv(
@@ -248,31 +248,30 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
             array = np.array(df)
             QhexMax = np.amax(array)
 
-            Capex_a_storage_HEX, Opex_fixed_storage_HEX = hex.calc_Cinv_HEX(QhexMax, gv, locator)
-            addcosts_Capex_a += (Capex_a_storage_HEX)
-            addcosts_Opex_fixed += Opex_fixed_storage_HEX
+            Capex_a_wastecompressor_HEX, Opex_fixed_wastecompressor_HEX = hex.calc_Cinv_HEX(QhexMax, gv, locator)
+            addcosts_Capex_a += (Capex_a_wastecompressor_HEX)
+            addcosts_Opex_fixed += Opex_fixed_wastecompressor_HEX
             df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
                              usecols=["HPCompAirDesignArray"])
             array = np.array(df)
             QhpMax = np.amax(array)
-            Capex_a_storage_HP, Opex_fixed_storage_HP = hp.calc_Cinv_HP(QhpMax, gv, locator)
-            addcosts_Capex_a += (Capex_a_storage_HP)
-            addcosts_Opex_fixed += Opex_fixed_storage_HP
-        addcosts_Capex_a += Capex_a_HEX
-        
+            Capex_a_wastecompressor_HP, Opex_fixed_wastecompressor_HP = hp.calc_Cinv_HP(QhpMax, gv, locator)
+            addcosts_Capex_a += (Capex_a_wastecompressor_HP)
+            addcosts_Opex_fixed += Opex_fixed_wastecompressor_HP
+
         # Heat pump solar to storage
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
                          usecols=["HPScDesignArray", "HPpvt_designArray"])
         array = np.array(df)
         QhpMax_PVT = np.amax(array[:,1])
         QhpMax_SC = np.amax(array[:,0])
-        Capex_a_storage_HEX, Opex_fixed_storage_HEX = hp.calc_Cinv_HP(QhpMax_PVT, gv, locator)
-        Capex_a_storage_HP += (Capex_a_storage_HEX)
-        addcosts_Opex_fixed += Opex_fixed_storage_HEX
+        Capex_a_storage_HEX_PVT, Opex_fixed_storage_HEX_PVT = hp.calc_Cinv_HP(QhpMax_PVT, gv, locator)
+        Capex_a_storage_HP += (Capex_a_storage_HEX_PVT)
+        addcosts_Opex_fixed += Opex_fixed_storage_HEX_PVT
 
-        Capex_a_storage_HEX, Opex_fixed_storage_HEX = hp.calc_Cinv_HP(QhpMax_SC, gv, locator)
-        Capex_a_storage_HP += (Capex_a_storage_HEX)
-        addcosts_Opex_fixed += Opex_fixed_storage_HEX
+        Capex_a_storage_HEX_SC, Opex_fixed_storage_HEX_SC = hp.calc_Cinv_HP(QhpMax_SC, gv, locator)
+        Capex_a_storage_HP += (Capex_a_storage_HEX_SC)
+        addcosts_Opex_fixed += Opex_fixed_storage_HEX_SC
 
         # HP for storage operation
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
@@ -293,8 +292,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
                          usecols=["Storage_Size"], nrows=1)
         StorageVol = np.array(df)[0][0]
-        Capex_a_storage_HEX = storage.calc_Cinv_storage(StorageVol, gv)
-        addcosts_Capex_a += Capex_a_storage_HEX
+        Capex_a_storage, Opex_fixed_storage = storage.calc_Cinv_storage(StorageVol, gv, locator)
+        addcosts_Capex_a += Capex_a_storage
+        addcosts_Opex_fixed += Opex_fixed_storage
 
 
         
