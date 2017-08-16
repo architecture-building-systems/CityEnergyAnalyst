@@ -31,15 +31,13 @@ def calc_Cinv_storage(vol, gV, locator, technology=0):
 
     """
     if vol>0:
-        storage_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="FC")
+        storage_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="TES")
         technology_code = list(set(storage_cost_data['code']))
         storage_cost_data[storage_cost_data['code'] == technology_code[technology]]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
         if vol < storage_cost_data['cap_min'][0]:
             vol = storage_cost_data['cap_min'][0]
-        print (storage_cost_data['cap_min'] <= vol)
-        print (storage_cost_data['cap_max'] > vol)
         storage_cost_data = storage_cost_data[
             (storage_cost_data['cap_min'] <= vol) & (storage_cost_data['cap_max'] > vol)]
 
