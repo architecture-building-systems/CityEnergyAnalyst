@@ -259,21 +259,21 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
             addcosts_Capex_a += (Capex_a_wastecompressor_HP)
             addcosts_Opex_fixed += Opex_fixed_wastecompressor_HP
 
-        # Heat pump solar to storage
+        # Heat pump from solar to DH
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
                          usecols=["HPScDesignArray", "HPpvt_designArray"])
         array = np.array(df)
         QhpMax_PVT = np.amax(array[:,1])
         QhpMax_SC = np.amax(array[:,0])
-        Capex_a_storage_HEX_PVT, Opex_fixed_storage_HEX_PVT = hp.calc_Cinv_HP(QhpMax_PVT, gv, locator)
-        Capex_a_storage_HP += (Capex_a_storage_HEX_PVT)
-        addcosts_Opex_fixed += Opex_fixed_storage_HEX_PVT
+        Capex_a_HP_PVT, Opex_fixed_HP_PVT = hp.calc_Cinv_HP(QhpMax_PVT, gv, locator)
+        Capex_a_storage_HP += (Capex_a_HP_PVT)
+        addcosts_Opex_fixed += Opex_fixed_HP_PVT
 
-        Capex_a_storage_HEX_SC, Opex_fixed_storage_HEX_SC = hp.calc_Cinv_HP(QhpMax_SC, gv, locator)
-        Capex_a_storage_HP += (Capex_a_storage_HEX_SC)
-        addcosts_Opex_fixed += Opex_fixed_storage_HEX_SC
+        Capex_a_HP_SC, Opex_fixed_HP_SC = hp.calc_Cinv_HP(QhpMax_SC, gv, locator)
+        Capex_a_storage_HP += (Capex_a_HP_SC)
+        addcosts_Opex_fixed += Opex_fixed_HP_SC
 
-        # HP for storage operation for discharging
+        # HP for storage operation for charging from solar and discharging to DH
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
                          usecols=["E_aux_ch", "E_aux_dech", "Q_from_storage_used", "Q_to_storage"])
         array = np.array(df)
@@ -284,9 +284,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
             elif array[i][1] > 0:
                 QmaxHPStorage = max(QmaxHPStorage, array[i][2] + array[i][1])
 
-        Capex_a_storage_HEX, Opex_fixed_storage_HEX = hp.calc_Cinv_HP(QmaxHPStorage, gv, locator)
-        addcosts_Capex_a += (Capex_a_storage_HEX)
-        addcosts_Opex_fixed += Opex_fixed_storage_HEX
+        Capex_a_HP_storage, Opex_fixed_HP_storage = hp.calc_Cinv_HP(QmaxHPStorage, gv, locator)
+        addcosts_Capex_a += (Capex_a_HP_storage)
+        addcosts_Opex_fixed += Opex_fixed_HP_storage
 
         # Storage
         df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
@@ -367,8 +367,8 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
                             "Opex_fixed_PVT":[Opex_fixed_PVT],
                             "Capex_a_Boiler_backup":[Capex_a_Boiler_backup],
                             "Opex_fixed_Boiler_backup":[Opex_fixed_Boiler_backup],
-                            "Capex_a_storage_HEX":[Capex_a_storage_HEX],
-                            "Opex_fixed_storage_HEX":[Opex_fixed_storage_HEX],
+                            "Capex_a_storage_HEX":[Capex_a_HP_storage],
+                            "Opex_fixed_storage_HEX":[Opex_fixed_HP_storage],
                             "Capex_a_storage_HP":[Capex_a_storage_HP],
                             "StorageInvC":[StorageInvC],
                             "StorageCostSum":[StorageInvC+Capex_a_storage_HP+Capex_a_HEX],
