@@ -767,12 +767,12 @@ class SolarTechnologyTool(object):
         panel_on_wall.enabled = False
 
         solar_window_solstice = arcpy.Parameter(
-            displayName="Desired hours of solar window on the solstice",
+            displayName="Desired hours of production on the winter solstice",
             name="solar_window_solstice",
             datatype="GPLong",
             parameterType="Required",
             direction="Input")
-        solar_window_solstice.value = 8744
+        solar_window_solstice.value = 4
         solar_window_solstice.enabled = False
 
         type_PVpanel = arcpy.Parameter(
