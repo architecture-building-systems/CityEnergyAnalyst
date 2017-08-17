@@ -298,12 +298,12 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
         module_width = module_length  # for PV
     else:
         module_width = panel_properties['module_area']/module_length # for FP, ET
-    surface_area_flat = module_width * (sensors_metadata_clean.array_s / 2 + module_length * cos(optimal_angle_flat))
-    module_area = module_width * module_length
+    module_flat_surface_area = module_width * (sensors_metadata_clean.array_s / 2 + module_length * cos(optimal_angle_flat))
+    area_per_module = module_width * module_length
 
     # calculate the pv/solar collector module area within the area of each sensor point
     sensors_metadata_clean['area_installed_module'] = np.where(sensors_metadata_clean['tilt'] >= 5, sensors_metadata_clean.AREA_m2,
-                                                     module_area * (sensors_metadata_clean.AREA_m2 / surface_area_flat))
+                                                     area_per_module * (sensors_metadata_clean.AREA_m2 / module_flat_surface_area))
 
     # categorize the sensors by surface_azimuth, B, GB
     result = np.vectorize(calc_categoriesroof)(sensors_metadata_clean.surface_azimuth, sensors_metadata_clean.B,
@@ -560,9 +560,9 @@ def calc_worst_hour(latitude, weather_data, solar_window_solstice):
     """
     if latitude > 0:
         northern_solstice = weather_data.query('month == 12 & day == 21')
-        worst_hour = northern_solstice[northern_solstice.hour == (12 - solar_window_solstice/2)].index[0]
+        worst_hour = northern_solstice[northern_solstice.hour == (12 - round(solar_window_solstice/2))].index[0]
     else:
         southern_solstice = weather_data.query('month == 6 & day == 21')
-        worst_hour = southern_solstice[southern_solstice.hour == (12 - solar_window_solstice/2)].index[0]
+        worst_hour = southern_solstice[southern_solstice.hour == (12 - round(solar_window_solstice/2))].index[0]
 
     return worst_hour
