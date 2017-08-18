@@ -21,7 +21,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def simulate_demand_sample(locator, building_name, output_parameters):
+def simulate_demand_sample(locator, building_name, full_report_boolean=False):
     """
     This script runs the cea demand tool in series and returns a single value of cvrmse and rmse.
 
@@ -36,17 +36,15 @@ def simulate_demand_sample(locator, building_name, output_parameters):
     gv.multiprocessing = False
     gv.print_totals = False
     gv.simulate_building_list = [building_name]
+    gv.testing = full_report_boolean
 
     #import weather and measured data
     weather_path = locator.get_default_weather()
-    time_series_measured = pd.read_csv(locator.get_demand_measured_file(building_name), usecols=[output_parameters])
 
-    #calculate demand timeseries for buidling an calculate cvrms
+    #calculate demand timeseries for buidling
     demand_main.demand_calculation(locator, weather_path, gv)
-    time_series_simulation = pd.read_csv(locator.get_demand_results_file(building_name), usecols=[output_parameters])
-    cv_rmse, rmse = calc_cv_rmse(time_series_simulation[output_parameters].values, time_series_measured[output_parameters].values)
 
-    return cv_rmse, rmse
+    return
 
 
 def calc_cv_rmse(prediction, target):
@@ -115,7 +113,15 @@ def sampling_main(locator, variables, building_name, building_load):
         apply_sample_parameters(locator, sample)
 
         # run cea demand and calculate cv_rmse
-        cv_rmse, rmse = simulate_demand_sample(locator, building_name, building_load)
+        simulate_demand_sample(locator, building_name)
+
+        #calculate cv_rmse
+        time_series_simulation = pd.read_csv(locator.get_demand_results_file(building_name),
+                                             usecols=[building_load])
+        time_series_measured = pd.read_csv(locator.get_demand_measured_file(building_name), usecols=[building_load])
+        cv_rmse, rmse = calc_cv_rmse(time_series_simulation[building_load].values,
+                                     time_series_measured[building_load].values)
+
         cv_rmse_list.append(cv_rmse)
         rmse_list.append(rmse)
         print "The cv_rmse for this iteration is:", cv_rmse
