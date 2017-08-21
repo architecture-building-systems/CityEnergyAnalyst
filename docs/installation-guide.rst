@@ -11,7 +11,7 @@ Prerequisites
 -  Anaconda distribution (64-bit) - other pythons can work, but this is really recommended
    - alternatively, Miniconda2 64-bit will also work!
 -  PyCharm community edition - you can use your own favorite editor, but this is what we use
--  ArcGIS 10.4 - only if you would like to use ArcGIS visuals.
+-  ArcGIS 10.5 - only if you would like to use ArcGIS visuals.
 -  Git Large File Storage - only for working with the reference case repository (you need to be a core developer to
    have access to the private reference case repository)
 
@@ -21,39 +21,19 @@ Installation CEA research
 To install the research version of CEA:
 
 #. open Anaconda prompt (terminal console) from the start menu.
-#. create a conda environment and activate it: do ``conda create -n cea python=2.7``, do ``activate cea``
-#. install dependencies: do ``conda install -c conda-forge geopandas ephem "pandas<0.20" scikit-learn``
-#. install dependencies: do ``conda install -c dlr-sc tbb freeimageplus gl2ps``
-#. install dependencies: do ``conda install -c oce -c pythonocc pythonocc-core=0.17.3``
-#. install cea: do ``pip install cityenergyanalyst``
+#. choose location where to store the repository: do ``cd Documents``
+#. clone repository: do ``git clone https://github.com/architecture-building-systems/CityEnergyAnalyst.git``
+#. create a conda environment and activate it: do ``conda env create``, then do ``activate cea``
+#. install cea: do ``pip install .``
 #. install arcgis plug-in: do ``cea install-toolbox``
-
-Note: Creating a conda environment is an optional step, but probably a good habit to get into: This creates a python
-environment separate from your other python environments - that way, version mismatches between packages don't bleed
-into your other work. (you can use any name, when creating an environment - "cea" is just an example)
 
 Installation CEA development environment
 ----------------------------------------
 
-To install the development environment of CEA:
+To install the development environment of CEA, perform the steps above, except, instead of ``pip install .``:
 
-#. open Anaconda prompt (terminal console) from the start menu.
-#. create a conda environment and activate it. do ``conda create -n cea python=2.7``, do ``activate cea``
-#. choose location where to store the repository: do ``cd Documents``
-#. clone repository: do ``git clone https://github.com/architecture-building-systems/CityEnergyAnalyst.git``
-#. go to location where the repository was cloned: do ``cd CityEnergyAnalyst``
-#. install dependencies: do ``conda install -c conda-forge geopandas ephem "pandas<0.20" scikit-learn``
-#. install dependencies: do ``conda install -c dlr-sc tbb freeimageplus gl2ps``
-#. install dependencies: do ``conda install -c oce -c pythonocc pythonocc-core=0.17.3``
-#. install cea development: do ``python setup.py install``
-#. set-up path to repository: do ``python setup.py develop``
-#. install additional dependencies only for developers: do ``pip install .[dev]``
+# do ``pip install -e .[dev]``
 #. download and install Daysim: ``http://daysim.ning.com/page/download``
-
-
-Note: Creating a conda environment is an optional step, but probably a good habit to get into: This creates a python
-environment separate from your other python environments - that way, version mismatches between packages don't bleed
-into your other work. (you can use any name, when creating an environment - "cea" is just an example)
 
 Note: Location where to store the repository can be any -"Documents" is just an example.
 
@@ -75,7 +55,7 @@ the instructions to get PyCharm up and running:
 #. Click on settings>addlocal and point to the location of your python
    installation in the environment ``cea``. It should be located in
    something like
-   ``C:\Users\your_name\Anaconda2\envs\cea/python.exe``
+   ``C:\Users\your_name\Anaconda2\envs\cea\python.exe``
 
 #. Click apply changes.
 
@@ -108,9 +88,9 @@ the ArcGIS environment. You should not need to do anything else. If, however, yo
 ``ImportError: no module named arcpy`` you can check your home directory
 for a file called ``cea_arcgis.pth`` containing these three lines::
 
-    C:\Program Files (x86)\ArcGIS\Desktop10.4\bin
-    C:\Program Files (x86)\ArcGIS\Desktop10.4\arcpy
-    C:\Program Files (x86)\ArcGIS\Desktop10.4\Scripts
+    C:\Program Files (x86)\ArcGIS\Desktop10.5\bin64
+    C:\Program Files (x86)\ArcGIS\Desktop10.5\arcpy
+    C:\Program Files (x86)\ArcGIS\Desktop10.5\Scripts
 
 Edit these folders to point to the appropriate ArcGIS folders as documented in the ArcGIS manuals.
 

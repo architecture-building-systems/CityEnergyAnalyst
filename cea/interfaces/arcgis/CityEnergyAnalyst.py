@@ -13,6 +13,7 @@ import subprocess
 import tempfile
 import arcpy
 
+
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Daren Thomas", "Martin Mosteiro Romero", "Jimeno A. Fonseca"]
@@ -30,7 +31,8 @@ class Toolbox(object):
         self.alias = 'cea'
         self.tools = [OperationCostsTool, RetrofitPotentialTool, DemandTool, DataHelperTool, BenchmarkGraphsTool,
                       OperationTool, EmbodiedTool, MobilityTool, SolarTechnologyTool,
-                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool, DbfToExcelTool, ExcelToDbfTool]
+                      DemandGraphsTool, ScenarioPlotsTool, RadiationTool, HeatmapsTool, DbfToExcelTool, ExcelToDbfTool,
+                      ExtractReferenceCaseTool, TestTool]
 
 class OperationCostsTool(object):
     def __init__(self):
@@ -1059,7 +1061,7 @@ def run_cli(scenario_path=None, *args):
     command.extend(map(str, args))
     add_message(command)
     process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                               env=get_environment())
+                               env=get_environment(), cwd=tempfile.gettempdir())
     while True:
         next_line = process.stdout.readline()
         if next_line == '' and process.poll() is not None:
@@ -1167,6 +1169,7 @@ class ExcelToDbfTool(object):
             parameterType="Required",
             direction="Output")
         output_path.filter.list = ['dbf']
+        return [input_path, output_path]
 
     def execute(self, parameters, _):
         input_path = parameters[0].valueAsText
@@ -1204,3 +1207,41 @@ class DbfToExcelTool(object):
         output_path = parameters[1].valueAsText
 
         run_cli(None, 'dbf-to-excel', '--input-path', input_path, '--output-path', output_path)
+
+
+class ExtractReferenceCaseTool(object):
+    """Extract the built-in reference case to a specified folder"""
+    def __init__(self):
+        self.label = 'Extract reference case'
+        self.description = 'Extract sample reference case to folder'
+        self.canRunInBackground = False
+        self.category = 'Utilities'
+
+    def getParameterInfo(self):
+        output_path = arcpy.Parameter(
+            displayName="Extract to folder",
+            name="output_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        return [output_path]
+
+    def execute(self,parameters, _):
+        output_path = parameters[0].valueAsText
+
+        run_cli(None, 'extract-reference-case', '--to', output_path)
+
+class TestTool(object):
+    """Run `cea test` for the user"""
+    def __init__(self):
+        self.label = 'Test CEA'
+        self.description = 'Run some tests on the CEA'
+        self.canRunInBackground = False
+        self.category = 'Utilities'
+
+    def getParameterInfo(self):
+        return []
+
+    def execute(self,parameters, _):
+        run_cli(None, 'test')
