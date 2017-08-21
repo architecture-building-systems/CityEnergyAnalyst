@@ -222,17 +222,17 @@ def photovoltaic(args):
     config = cea.config.Configuration(args.scenario)
     config.weather = args.weather_path
     if args.panel_on_roof is not None:
-        config.photovoltaic.panel_on_roof = args.panel_on_roof
+        config.solar.panel_on_roof = args.panel_on_roof
     if args.panel_on_wall is not None:
-        config.photovoltaic.panel_on_wall = args.panel_on_wall
+        config.solar.panel_on_wall = args.panel_on_wall
     if args.type_PVpanel is not None:
-        config.photovoltaic.type_PVpanel = args.type_PVpanel
+        config.solar.type_PVpanel = args.type_PVpanel
     if args.min_radiation is not None:
-        config.photovoltaic.min_radiation = args.min_radiation
+        config.solar.min_radiation = args.min_radiation
     if args.date_start is not None:
-        config.photovoltaic.date_start = args.date_start
+        config.solar.date_start = args.date_start
     if args.solar_window_solstice is not None:
-        config.photovoltaic.solar_window_solstice=args.solar_window_solstice
+        config.solar.solar_window_solstice=args.solar_window_solstice
     config.save()
 
     for building in list_buildings_names:
@@ -265,17 +265,17 @@ def solar_collector(args):
     config = cea.config.Configuration(args.scenario)
     config.weather = args.weather_path
     if args.panel_on_roof is not None:
-        config.photovoltaic.panel_on_roof = args.panel_on_roof
+        config.solar.panel_on_roof = args.panel_on_roof
     if args.panel_on_wall is not None:
-        config.photovoltaic.panel_on_wall = args.panel_on_wall
+        config.solar.panel_on_wall = args.panel_on_wall
     if args.type_SCpanel is not None:
-        config.photovoltaic.type_SCpanel = args.type_SCpanel
+        config.solar.type_SCpanel = args.type_SCpanel
     if args.min_radiation is not None:
-        config.photovoltaic.min_radiation = args.min_radiation
+        config.solar.min_radiation = args.min_radiation
     if args.date_start is not None:
-        config.photovoltaic.date_start = args.date_start
+        config.solar.date_start = args.date_start
     if args.solar_window_solstice is not None:
-        config.photovoltaic.solar_window_solstice = args.solar_window_solstice
+        config.solar.solar_window_solstice = args.solar_window_solstice
     config.save()
 
     for building in list_buildings_names:
@@ -522,7 +522,7 @@ def main():
     solar_collector_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall', type=bool)
     solar_collector_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int)
     solar_collector_parser.add_argument('--type-SCpanel',
-                                        help='Solar collector panel type (SC1: flat plat collectors, SC2: evacuated tubes)')
+                                        help='Solar collector panel type (SC1: flat plate collectors, SC2: evacuated tubes)')
     solar_collector_parser.add_argument('--min-radiation',
                                         help='points are selected with at least a minimum production of this % from the maximum in the area.',
                                         type=float)
