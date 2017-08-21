@@ -908,7 +908,7 @@ class SolarTechnologyTool(object):
 class SolarCollectorPanelsTool(object):
     def __init__(self):
         self.label = 'Solar Collector Panels'
-        self.description = 'Calculate electricity production from solar photovoltaic technologies'
+        self.description = 'Calculate heat production from solar collector technologies'
         self.category = 'Dynamic Supply Systems'
         self.canRunInBackground = False
 

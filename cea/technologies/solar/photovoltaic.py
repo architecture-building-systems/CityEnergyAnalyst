@@ -707,7 +707,7 @@ def test_photovoltaic():
         radiation_path = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
         calc_PV(locator=locator, radiation_path=radiation_path, metadata_csv=radiation_metadata, latitude=latitude,
-                longitude=longitude, weather_path=weather_path, building_name=building, )
+                longitude=longitude, weather_path=weather_path, building_name=building)
 
 
 if __name__ == '__main__':
