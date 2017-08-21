@@ -62,7 +62,8 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
 
     # solar properties
     g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
-                                                                                      settings.date_start)
+                                                                                      settings.date_start,
+                                                                                      settings.solar_window_solstice)
     print 'calculating solar properties done'
 
     # get properties of the panel to evaluate
@@ -835,9 +836,7 @@ def calc_Cinv_SC(Area, gv):
 
 
 def test_solar_collector():
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.ReferenceCaseOpenLocator()
     weather_path = locator.get_default_weather()
     list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
