@@ -93,6 +93,7 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
         results, final = calc_pv_generation(hourlydata_groups, number_groups, number_points, prop_observers,
                                             weather_data, g, Sz, Az, ha, latitude, panel_properties)
 
+
         final.to_csv(locator.PV_results(building_name=building_name), index=True, float_format='%.2f')  # print PV generation potential
         sensors_metadata_cat.to_csv(locator.PV_metadata_results(building_name=building_name), index=True, float_format='%.2f')  # print selected metadata of the selected sensors
 
@@ -139,6 +140,7 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
     result = list(range(number_groups))
     list_groups_area = list(range(number_groups))
     Sum_PV = np.zeros(8760)
+    Sum_radiation = np.zeros(8760)
 
     n = 1.526 # refractive index of glass
     Pg = 0.2  # ground reflectance
@@ -179,8 +181,9 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
         list_groups_area[group] = area_per_group
 
         Sum_PV = Sum_PV + result[group] # in kWh
+        Sum_radiation = Sum_radiation + radiation['I_sol']*area_per_group/1000 # kWh
 
-    Final = pd.DataFrame({'PV_kWh':Sum_PV,'Area':sum(list_groups_area)})
+    Final = pd.DataFrame({'PV_kWh':Sum_PV,'Area_m2':sum(list_groups_area),'radiation_kWh':Sum_radiation})
     return result, Final
 
 
@@ -343,15 +346,15 @@ def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg,
     kteta_eG = Ta_eG / Ta_n
 
     # absorbed solar radiation
-    S = M * Ta_n * (kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
+    S_Wperm2 = M * Ta_n * (kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
     1 - cos(tilt)) / 2)  # [W/m2] (5.12.1)
-    if S <= 0:  # when points are 0 and too much losses
-        S = 0
+    if S_Wperm2 <= 0:  # when points are 0 and too much losses
+        S_Wperm2 = 0
 
     # temperature of cell
-    Tcell = te + S * (NOCT - 20) / (800)   # assuming linear temperature rise vs radiation according to NOCT condition
+    Tcell_C = te + S_Wperm2 * (NOCT - 20) / (800)   # assuming linear temperature rise vs radiation according to NOCT condition
 
-    return S, Tcell
+    return S_Wperm2, Tcell_C
 
 def calc_PV_power(S, Tcell, eff_nom, areagroup, Bref, misc_losses):
     """
