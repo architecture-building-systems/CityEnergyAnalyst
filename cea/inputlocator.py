@@ -709,3 +709,7 @@ class ReferenceCaseOpenLocator(InputLocator):
         archive.extractall(tempfile.gettempdir())
         reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
         super(ReferenceCaseOpenLocator, self).__init__(scenario_path=reference_case)
+
+    def get_default_weather(self):
+        """The reference-case-open uses the Zug weather file..."""
+        return self.get_weather('Zug')
