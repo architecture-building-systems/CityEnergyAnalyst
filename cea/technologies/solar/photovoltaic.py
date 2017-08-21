@@ -52,7 +52,7 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
     :return: Building_PV.csv with PV generation potential of each building, Building_sensors.csv with sensor data of
              each PV panel.
     """
-    settings = cea.config.Configuration(locator.scenario_path).photovoltaic
+    settings = cea.config.Configuration(locator.scenario_path).solar
 
     t0 = time.clock()
 
