@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import math
 
-__author__ = "Sreepathi Bhargava Krishna"
+__author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Sreepathi Bhargava Krishna","Jimeno A. Fonseca", "Thuy-An Nguyen", "Tim Vollrath", ]
 __license__ = "MIT"

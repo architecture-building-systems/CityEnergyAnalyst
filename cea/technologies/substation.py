@@ -7,7 +7,7 @@ import time
 import numpy as np
 import scipy
 
-__author__ = "Sreepathi Bhargava Krishna"
+__author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Sreepathi Bhargava Krishna","Jimeno A. Fonseca", "Tim Vollrath", "Thuy-An Nguyen"]
 __license__ = "MIT"
