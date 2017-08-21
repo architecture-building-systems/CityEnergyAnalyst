@@ -29,13 +29,13 @@ T_in_PVT = 35 # inlet temperature of PVT panels [C]
 ## INTERNAL PARAMETERS
 
 # solar collectors pumping requirements
-dpl = 200 # pressure losses per length of pipe according to Solar District Heating Guidelines, [Pa/m]
+dpl_Paperm = 200 # pressure losses per length of pipe according to Solar District Heating Guidelines, [Pa/m]
 fcr = 1.3 # additional loss factor due to accessories
-Ro = 1000 # water density [kg/m3]
+Ro_kgperm3 = 1000 # water density [kg/m3]
 eff_pumping = 0.6 # pump efficiency
 
 # solar collectors heat losses
-k_msc_max = 0.217 # linear heat transmittance coefficient of piping (2*pi*k/ln(Do/Di))) [W/mK]
+k_msc_max_WpermK = 0.217 # linear heat transmittance coefficient of piping (2*pi*k/ln(Do/Di))) [W/mK]
 
 
 
