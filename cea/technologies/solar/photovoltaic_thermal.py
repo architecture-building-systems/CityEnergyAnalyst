@@ -65,7 +65,7 @@ def calc_PVT(locator, radiation_json_path, metadata_csv_path, latitude, longitud
 
     # solar properties
     g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
-                                                                                      settings.date_start)
+                                                                                      settings.date_start, settings.solar_window_solstice)
     print 'calculating solar properties done'
 
     # get properties of the panel to evaluate # TODO: find a PVT module reference
@@ -146,9 +146,9 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
     Az_rad = np.radians(Az)
 
     # empty lists to store results
-    result_PV = list(range(number_groups))
-    Sum_PV = np.zeros(8760)
     Sum_radiation = np.zeros(8760)
+    list_results_PVT = list(range(number_groups))
+    list_groups_areas = list(range(number_groups))
 
     n = 1.526  # refractive index of glass
     Pg = 0.2  # ground reflectance
@@ -183,8 +183,6 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
     dP4 = panel_properties_SC['dP4']
     Cp_fluid = panel_properties_SC['Cp_fluid']  # J/kgK
 
-    list_results_PVT = list(range(number_groups))
-    list_groups_areas = list(range(number_groups))
 
     ## prepare data for SC heat generation
     Sum_mcp = np.zeros(8760)
@@ -193,7 +191,7 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
     Sum_qloss = np.zeros(8760)
     Sum_PV = np.zeros(8760)
 
-    Tin_array = np.zeros(8760) + Tin
+    Tin_array_C = np.zeros(8760) + Tin
     aperature_area = Aratio * Apanel
     total_area_module = prop_observers['total_area_module'].sum() # total area for panel installation
 
@@ -205,46 +203,48 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
     # calculate equivalent length
     lv = panel_properties_PV['module_length']  # module length, same as PV
     number_modules = round(total_area_module/Apanel)
-    l_ext = (2 * lv * number_modules/ (total_area_module * Aratio))
-    l_int = 2 * height / (total_area_module * Aratio)
-    Leq = l_int + l_ext  # in m/m2 aperture
-
-
-
+    l_ext_mperm2 = (2 * lv * number_modules/ (total_area_module * Aratio))  # length of pipe connecting between panels
+    l_int_mperm2 = 2 * height / (total_area_module * Aratio)   # length of pipe that connects panels to the thermal network
+    Leq_mperm2 = l_int_mperm2 + l_ext_mperm2  # in m/m2 aperture
 
     for group in range(number_groups):
         # read panel properties of each group
         teta_z = prop_observers.loc[group,'surface_azimuth']
         area_per_group = prop_observers.loc[group,'total_area_module']
-        tilt_angle = prop_observers.loc[group,'B']
+        tilt_angle_deg = prop_observers.loc[group,'B']
         # degree to radians
-        tilt_rad = radians(tilt_angle) #tilt angle
+        tilt_rad = radians(tilt_angle_deg) #tilt angle
         teta_z_rad = radians(teta_z) #surface azimuth
 
         # read irradiation from group
-        radiation = pd.DataFrame({'I_sol': hourly_radiation[group]})
-        radiation['I_diffuse'] = weather_data.ratio_diffhout * radiation.I_sol  # calculate diffuse radiation
-        radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']     # calculate direct radiation
-        radiation.fillna(0, inplace=True)                                       # set nan to zero
+        radiation_Wperm2 = pd.DataFrame({'I_sol': hourly_radiation[group]})
+        radiation_Wperm2['I_diffuse'] = weather_data.ratio_diffhout * radiation_Wperm2.I_sol  # calculate diffuse radiation
+        radiation_Wperm2['I_direct'] = radiation_Wperm2['I_sol'] - radiation_Wperm2['I_diffuse']     # calculate direct radiation
+        radiation_Wperm2.fillna(0, inplace=True)                                       # set nan to zero
 
         ## calculate absorbed solar irradiation on tilt surfaces
         # calculate effective indicent angles necessary
         teta_rad = np.vectorize(solar_equations.calc_angle_of_incidence)(g_rad, lat_rad, ha_rad, tilt_rad, teta_z_rad)
         teta_ed_rad, teta_eg_rad = calc_diffuseground_comp(tilt_rad)
 
-        results_Sm = np.vectorize(calc_Sm_PV)(weather_data.drybulb_C, radiation.I_sol, radiation.I_direct,
-                                           radiation.I_diffuse, tilt_rad, Sz_rad, teta_rad, teta_ed_rad, teta_eg_rad, n, Pg,
+        results_Sm_PV = np.vectorize(calc_Sm_PV)(weather_data.drybulb_C, radiation_Wperm2.I_sol, radiation_Wperm2.I_direct,
+                                           radiation_Wperm2.I_diffuse, tilt_rad, Sz_rad, teta_rad, teta_ed_rad, teta_eg_rad, n, Pg,
                                            K, NOCT, a0, a1, a2, a3, a4, L)
 
         ## SC heat generation
         # calculate incidence angle modifier for beam radiation
-        IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle, panel_properties_SC['type'], Sz, latitude)
+        IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle_deg, panel_properties_SC['type'], Sz, latitude)
 
-        list_results_PVT[group] = calc_PVT_module(tilt_angle, IAM_b.copy(), IAM_d, radiation.I_direct.copy(),
-                                                  radiation.I_diffuse.copy(), weather_data.drybulb_C, n0, c1, c2, mB0_r,
-                                                  mB_max_r, mB_min_r, C_eff, t_max, aperature_area, dP1, dP2, dP3, dP4,
-                                                  Cp_fluid, Tin, Leq, l_ext, Nseg, eff_nom, Bref, results_Sm[0].copy(),
-                                                  results_Sm[1].copy(), misc_losses, area_per_group)
+        list_results_PVT[group] = calc_PVT_module(tilt_angle_deg, IAM_b.copy(), IAM_d,
+                                                                            radiation_Wperm2.I_direct.copy(),
+                                                                            radiation_Wperm2.I_diffuse.copy(),
+                                                                            weather_data.drybulb_C, n0, c1, c2, mB0_r,
+                                                                            mB_max_r, mB_min_r, C_eff, t_max,
+                                                                            aperature_area, dP1, dP2, dP3, dP4,
+                                                                            Cp_fluid, Tin, Leq_mperm2, l_ext_mperm2,
+                                                                            l_int_mperm2, Nseg, eff_nom, Bref,
+                                                                            results_Sm_PV[0].copy(), results_Sm_PV[1].copy(),
+                                                                            misc_losses, area_per_group)
 
         number_of_panels = area_per_group / Apanel
         Sum_mcp = Sum_mcp + list_results_PVT[group][5] * number_of_panels
@@ -252,52 +252,52 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
         Sum_qout = Sum_qout + list_results_PVT[group][1] * number_of_panels
         Sum_Eaux = Sum_Eaux + list_results_PVT[group][2] * number_of_panels
         Sum_PV = Sum_PV + list_results_PVT[group][6]
-        Sum_radiation = Sum_radiation + hourly_radiation[group]
+        Sum_radiation = Sum_radiation + hourly_radiation[group] * area_per_group /1000
         list_groups_areas[group] = area_per_group
 
     Tout_group = (Sum_qout / Sum_mcp) + Tin  # in C
     Final = pd.DataFrame(
-        {'Qsc_kWh': Sum_qout, 'Tscs': Tin_array, 'Tscr': Tout_group, 'mcp_kW/C': Sum_mcp, 'Eaux_kWh': Sum_Eaux,
+        {'Qsc_kWh': Sum_qout, 'Tscs': Tin_array_C, 'Tscr': Tout_group, 'mcp_kW/C': Sum_mcp, 'Eaux_kWh': Sum_Eaux,
          'Qsc_l_KWh': Sum_qloss, 'PV_kWh': Sum_PV, 'Area': sum(list_groups_areas), 'radiation_kWh': Sum_radiation}, index=range(8760))
 
     return list_results_PVT, Final
 
 
-def calc_PVT_module(tilt_angle, IAM_b_vector, IAM_d, I_direct_vector, I_diffuse_vector, Tamb_vector, n0, c1, c2, mB0_r,
-                    mB_max_r, mB_min_r, C_eff, t_max, aperture_area, dP1, dP2, dP3, dP4, Cp_fluid, Tin, Leq, l_ext,
-                    Nseg, eff_nom, Bref, Sm_PV, Tcell_PV, misc_losses, area_per_group):
+def calc_PVT_module(tilt_angle_deg, IAM_b_vector, IAM_d, I_direct_vector, I_diffuse_vector, Tamb_vector_C, n0, c1, c2,
+                    mB0_r, mB_max_r, mB_min_r, C_eff_Jperm2K, t_max, aperture_area_m2, dP1, dP2, dP3, dP4, Cp_fluid_JperkgK,
+                    Tin_C, Leq, l_ext, l_int, Nseg, eff_nom, Bref, Sm_PV_Wperm2, Tcell_PV_C, misc_losses, area_per_group):
     """
     This function calculates the heat & electricity production from PVT collectors. 
     The heat production calculation is adapted from calc_SC_module and then the updated cell temperature is used to 
     calculate PV electricity production.
     
-    :param tilt_angle: solar panel tilt angle [rad]
+    :param tilt_angle_deg: solar panel tilt angle [rad]
     :param IAM_b_vector: incident angle modifier for beam radiation [-]
     :param I_direct_vector: direct radiation [W/m2]
     :param I_diffuse_vector: diffuse radiation [W/m2]
-    :param Tamb_vector: dry bulb temperature [C]
+    :param Tamb_vector_C: dry bulb temperature [C]
     :param n0: zero loss efficiency at normal incidence [-]
     :param c1: collector heat loss coefficient at zero temperature difference and wind speed [W/m2K]
     :param c2: temperature difference dependency of the heat loss coefficient [W/m2K2]
     :param mB0_r: nominal flow rate per aperture area [kg/h/m2 aperture]
     :param mB_max_r: maximum flow rate per aperture area
     :param mB_min_r: minimum flow rate per aperture area
-    :param C_eff: thermal capacitance of module [J/m2K]
+    :param C_eff_Jperm2K: thermal capacitance of module [J/m2K]
     :param t_max: stagnation temperature [C]
     :param IAM_d_vector: incident angle modifier for diffuse radiation [-]
-    :param aperture_area: collector aperture area [m2]
+    :param aperture_area_m2: collector aperture area [m2]
     :param dP1: pressure drop [Pa/m2] at zero flow rate
     :param dP2: pressure drop [Pa/m2] at nominal flow rate (mB0)
     :param dP3: pressure drop [Pa/m2] at maximum flow rate (mB_max)
     :param dP4: pressure drop [Pa/m2] at minimum flow rate (mB_min)
-    :param Tin: Fluid inlet temperature (C)
+    :param Tin_C: Fluid inlet temperature (C)
     :param Leq: equivalent length of pipes per aperture area [m/m2 aperture)
     :param Le: equivalent length of collector pipes per aperture area [m/m2 aperture]
     :param Nseg: Number of collector segments in flow direction for heat capacitance calculation
     :param eff_nom: nominal efficiency of PV module [-]
     :param Bref: cell maximum power temperature coefficient [degree C^(-1)]
-    :param Sm_PV: absorbed solar radiation of PV module [Wh/m2]
-    :param Tcell_PV: PV cell temperature [C]
+    :param Sm_PV_Wperm2: absorbed solar radiation of PV module [Wh/m2]
+    :param Tcell_PV_C: PV cell temperature [C]
     :param misc_losses: expected system loss [-]
     :param area_per_group: PV module area [m2]
     :return:
@@ -307,30 +307,30 @@ def calc_PVT_module(tilt_angle, IAM_b_vector, IAM_d, I_direct_vector, I_diffuse_
     """
 
     # local variables
-    msc_max = mB_max_r * aperture_area / 3600  # maximum mass flow [kg/s]
+    msc_max_kgpers = mB_max_r * aperture_area_m2 / 3600  # maximum mass flow [kg/s]
 
     # Do the calculation of every time step for every possible flow condition
     # get states where highly performing values are obtained.
-    specific_flows = [np.zeros(8760), (np.zeros(8760) + mB0_r) * aperture_area / 3600,
-                      (np.zeros(8760) + mB_max_r) * aperture_area / 3600,
-                      (np.zeros(8760) + mB_min_r) * aperture_area / 3600, np.zeros(8760), np.zeros(8760)]  # in kg/s
-    specific_pressurelosses = [np.zeros(8760), (np.zeros(8760) + dP2) * aperture_area, (np.zeros(8760) + dP3) * aperture_area,
-                               (np.zeros(8760) + dP4) * aperture_area, np.zeros(8760), np.zeros(8760)]  # in Pa
+    specific_flows_kgpers = [np.zeros(8760), (np.zeros(8760) + mB0_r) * aperture_area_m2 / 3600,
+                             (np.zeros(8760) + mB_max_r) * aperture_area_m2 / 3600,
+                             (np.zeros(8760) + mB_min_r) * aperture_area_m2 / 3600, np.zeros(8760), np.zeros(8760)]  # in kg/s
+    specific_pressure_losses_Pa = [np.zeros(8760), (np.zeros(8760) + dP2) * aperture_area_m2, (np.zeros(8760) + dP3) * aperture_area_m2,
+                                   (np.zeros(8760) + dP4) * aperture_area_m2, np.zeros(8760), np.zeros(8760)]  # in Pa
 
     # generate empty lists to store results
     temperature_out = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
     temperature_in = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    supply_out = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    supply_losses = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
-    auxiliary_electricity = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
+    supply_out_kW = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
+    supply_losses_kW = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
+    auxiliary_electricity_kW = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
     temperature_mean = [np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760), np.zeros(8760)]
     supply_out_pre = np.zeros(8760)
-    supply_out_total = np.zeros(8760)
-    mcp = np.zeros(8760)
-    T_module = []
+    supply_out_total_kW = np.zeros(8760)
+    mcp_kWperK = np.zeros(8760)
+    T_module_C = []
 
     # calculate absorbed radiation
-    tilt = radians(tilt_angle)
+    tilt = radians(tilt_angle_deg)
     q_rad_vector = np.vectorize(calc_q_rad)(n0, IAM_b_vector, I_direct_vector, IAM_d, I_diffuse_vector,
                                             tilt)  # absorbed solar radiation in W/m2 is a mean of the group
     counter = 0
@@ -352,26 +352,26 @@ def calc_PVT_module(tilt_angle, IAM_b_vector, IAM_d, I_direct_vector, I_diffuse_
         q_gain_Seg = np.zeros([101, 1])  # maximum Iseg = maximum Nseg + 1 = 101
 
         for time in range(8760):
-            c1_pvt = c1 - eff_nom * Bref * Sm_PV[time]  # _[J. Allan et al., 2015] eq.(18)
-            Mfl = specific_flows[flow][time]
+            c1_pvt = c1 - eff_nom * Bref * Sm_PV_Wperm2[time]  # _[J. Allan et al., 2015] eq.(18)
+            Mfl_kgpers = specific_flows_kgpers[flow][time]
             if time < TIME0 + DELT / 2:
                 for Iseg in range(101, 501):  # 400 points with the data
-                    STORED[Iseg] = Tin
+                    STORED[Iseg] = Tin_C
             else:
                 for Iseg in range(1, Nseg):  # 400 points with the data
                     STORED[100 + Iseg] = STORED[200 + Iseg]
                     STORED[300 + Iseg] = STORED[400 + Iseg]
 
             # calculate stability criteria
-            if Mfl > 0:
-                stability_criteria = Mfl * Cp_fluid * Nseg * (DELT * 3600) / (C_eff * aperture_area)
+            if Mfl_kgpers > 0:
+                stability_criteria = Mfl_kgpers * Cp_fluid_JperkgK * Nseg * (DELT * 3600) / (C_eff_Jperm2K * aperture_area_m2)
                 if stability_criteria <= 0.5:
                     print ('ERROR: stability criteria' + str(stability_criteria) + 'is not reached. aperture_area: '
-                           + str(aperture_area) + 'mass flow: ' + str(Mfl))
+                           + str(aperture_area_m2) + 'mass flow: ' + str(Mfl_kgpers))
 
             # calculate average fluid temperature and average absorber temperature at the beginning of the time-step
-            Tamb = Tamb_vector[time]
-            q_rad = q_rad_vector[time]
+            Tamb_C = Tamb_vector_C[time]
+            q_rad_Wperm2 = q_rad_vector[time]
             Tfl[1] = 0  # mean fluid temperature
             Tabs[1] = 0  # mean absorber temperature
             for Iseg in range(1, Nseg + 1):
@@ -379,18 +379,18 @@ def calc_PVT_module(tilt_angle, IAM_b_vector, IAM_d, I_direct_vector, I_diffuse_
                 Tabs[1] = Tabs[1] + STORED[300 + Iseg] / Nseg  # mean absorber temperature
 
             # first guess for Delta T
-            if Mfl > 0:
-                Tout = Tin + (q_rad - ((c1_pvt) + 0.5) * (Tin - Tamb)) / (Mfl * Cp_fluid / aperture_area)
-                Tfl[2] = (Tin + Tout) / 2 # mean fluid temperature at present time-step
+            if Mfl_kgpers > 0:
+                Tout = Tin_C + (q_rad_Wperm2 - ((c1_pvt) + 0.5) * (Tin_C - Tamb_C)) / (Mfl_kgpers * Cp_fluid_JperkgK / aperture_area_m2)
+                Tfl[2] = (Tin_C + Tout) / 2 # mean fluid temperature at present time-step
             else:
-                Tout = Tamb + q_rad / (c1_pvt + 0.5)
+                Tout = Tamb_C + q_rad_Wperm2 / (c1_pvt + 0.5)
                 Tfl[2] = Tout  # fluid temperature same as output
-            DT[1] = Tfl[2] - Tamb # difference between mean absorber temperature and the ambient temperature
+            DT[1] = Tfl[2] - Tamb_C # difference between mean absorber temperature and the ambient temperature
 
             # calculate q_gain with the guess for DT[1]
-            q_gain = calc_q_gain(Tfl, Tabs, q_rad, DT, Tin, Tout, aperture_area, c1_pvt, c2, Mfl, delts, Cp_fluid, C_eff, Tamb)
+            q_gain_Wperm2 = calc_q_gain(Tfl, Tabs, q_rad_Wperm2, DT, Tin_C, Tout, aperture_area_m2, c1_pvt, c2, Mfl_kgpers, delts, Cp_fluid_JperkgK, C_eff_Jperm2K, Tamb_C)
 
-            Aseg = aperture_area / Nseg # aperture area per segment
+            Aseg_m2 = aperture_area_m2 / Nseg # aperture area per segment
             for Iseg in range(1, Nseg + 1):
                 # get temperatures of the previous time-step
                 TflA[Iseg] = STORED[100 + Iseg]
@@ -398,33 +398,33 @@ def calc_PVT_module(tilt_angle, IAM_b_vector, IAM_d, I_direct_vector, I_diffuse_
                 if Iseg > 1:
                     TinSeg = ToutSeg
                 else:
-                    TinSeg = Tin
-                if Mfl > 0 and Mo_seg == 1:  # same heat gain/ losses for all segments
-                    ToutSeg = ((Mfl * Cp_fluid * (TinSeg + 273.15)) / Aseg - (C_eff * (TinSeg + 273.15)) / (2 * delts) + q_gain +
-                               (C_eff * (TflA[Iseg] + 273.15) / delts)) / (Mfl * Cp_fluid / Aseg + C_eff / (2 * delts))
+                    TinSeg = Tin_C
+                if Mfl_kgpers > 0 and Mo_seg == 1:  # same heat gain/ losses for all segments
+                    ToutSeg = ((Mfl_kgpers * Cp_fluid_JperkgK * (TinSeg + 273.15)) / Aseg_m2 - (C_eff_Jperm2K * (TinSeg + 273.15)) / (2 * delts) + q_gain_Wperm2 +
+                               (C_eff_Jperm2K * (TflA[Iseg] + 273.15) / delts)) / (Mfl_kgpers * Cp_fluid_JperkgK / Aseg_m2 + C_eff_Jperm2K / (2 * delts))
                     ToutSeg = ToutSeg - 273.15  # in [C]
                     TflB[Iseg] = (TinSeg + ToutSeg) / 2
                 else: # heat losses based on each segment's inlet and outlet temperatures.
                     Tfl[1] = TflA[Iseg]
                     Tabs[1] = TabsA[Iseg]
-                    q_gain = calc_q_gain(Tfl, Tabs, q_rad, DT, TinSeg, Tout, Aseg, c1_pvt, c2, Mfl, delts, Cp_fluid, C_eff, Tamb)
+                    q_gain_Wperm2 = calc_q_gain(Tfl, Tabs, q_rad_Wperm2, DT, TinSeg, Tout, Aseg_m2, c1_pvt, c2, Mfl_kgpers, delts, Cp_fluid_JperkgK, C_eff_Jperm2K, Tamb_C)
                     ToutSeg = Tout
-                    if Mfl > 0:
+                    if Mfl_kgpers > 0:
                         TflB[Iseg] = (TinSeg + ToutSeg) / 2
-                        ToutSeg = TflA[Iseg] + (q_gain * delts) / C_eff
+                        ToutSeg = TflA[Iseg] + (q_gain_Wperm2 * delts) / C_eff_Jperm2K
                     else:
                         TflB[Iseg] = ToutSeg
 
                     # TflB[Iseg] = ToutSeg
-                    qfluid = (ToutSeg - TinSeg) * Mfl * Cp_fluid / Aseg
-                    q_mtherm = (TflB[Iseg] - TflA[Iseg]) * C_eff / delts
-                    qbal = q_gain - qfluid - q_mtherm
-                    if abs(qbal) > 1:
+                    q_fluid_Wperm2 = (ToutSeg - TinSeg) * Mfl_kgpers * Cp_fluid_JperkgK / Aseg_m2
+                    q_mtherm_Wperm2 = (TflB[Iseg] - TflA[Iseg]) * C_eff_Jperm2K / delts
+                    q_balance_error = q_gain_Wperm2 - q_fluid_Wperm2 - q_mtherm_Wperm2
+                    if abs(q_balance_error) > 1:
                         time = time # re-enter the iteration when energy balance not satisfied
-                q_gain_Seg[Iseg] = q_gain  # in W/m2
+                q_gain_Seg[Iseg] = q_gain_Wperm2  # in W/m2
 
             # resulting energy output
-            q_out = Mfl * Cp_fluid * (ToutSeg - Tin) / 1000 #[kW]
+            q_out_kW = Mfl_kgpers * Cp_fluid_JperkgK * (ToutSeg - Tin_C) / 1000 #[kW]
             Tabs[2] = 0
             # storage of the mean temperature
             for Iseg in range(1, Nseg + 1):
@@ -434,71 +434,72 @@ def calc_PVT_module(tilt_angle, IAM_b_vector, IAM_d, I_direct_vector, I_diffuse_
 
             # outputs
             temperature_out[flow][time] = ToutSeg
-            temperature_in[flow][time] = Tin
-            supply_out[flow][time] = q_out
-            temperature_mean[flow][time] = (Tin + ToutSeg) / 2  # Mean absorber temperature at present
+            temperature_in[flow][time] = Tin_C
+            supply_out_kW[flow][time] = q_out_kW
+            temperature_mean[flow][time] = (Tin_C + ToutSeg) / 2  # Mean absorber temperature at present
 
-            q_gain = 0
+            q_gain_Wperm2 = 0
             TavgB = 0
             TavgA = 0
             for Iseg in range(1, Nseg + 1):
-                q_gain = q_gain + q_gain_Seg * Aseg  # W
+                q_gain_Wperm2 = q_gain_Wperm2 + q_gain_Seg * Aseg_m2  # W
                 TavgA = TavgA + TflA[Iseg] / Nseg
                 TavgB = TavgB + TflB[Iseg] / Nseg
 
-            # OUT[9] = qgain/Area_a # in W/m2
-            q_mtherm = (TavgB - TavgA) * C_eff * aperture_area / delts
-            q_balance_error = q_gain - q_mtherm - q_out
+            # # OUT[9] = qgain/Area_a # in W/m2
+            # q_mtherm_Wperm2 = (TavgB - TavgA) * C_eff_Jperm2K * aperture_area_m2 / delts
+            # q_balance_error = q_gain_Wperm2 - q_mtherm_Wperm2 - q_out_kW
 
             # OUT[11] = q_mtherm
             # OUT[12] = q_balance_error
         if flow < 4:
-            auxiliary_electricity[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow], Leq,
-                                                         aperture_area)  # in kW
+            auxiliary_electricity_kW[flow] = np.vectorize(calc_Eaux_SC)(specific_flows_kgpers[flow], specific_pressure_losses_Pa[flow],
+                                                                        Leq, l_int, aperture_area_m2)  # in kW
         if flow == 3:
-            q1 = supply_out[0]
-            q2 = supply_out[1]
-            q3 = supply_out[2]
-            q4 = supply_out[3]
-            E1 = auxiliary_electricity[0]
-            E2 = auxiliary_electricity[1]
-            E3 = auxiliary_electricity[2]
-            E4 = auxiliary_electricity[3]
-            specific_flows[4], specific_pressurelosses[4] = calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, 0, mB0_r,
-                                                                                   mB_max_r, mB_min_r, 0, dP2, dP3, dP4,
-                                                                                   aperture_area)
+            q1 = supply_out_kW[0]
+            q2 = supply_out_kW[1]
+            q3 = supply_out_kW[2]
+            q4 = supply_out_kW[3]
+            E1 = auxiliary_electricity_kW[0]
+            E2 = auxiliary_electricity_kW[1]
+            E3 = auxiliary_electricity_kW[2]
+            E4 = auxiliary_electricity_kW[3]
+            specific_flows_kgpers[4], specific_pressure_losses_Pa[4] = calc_optimal_mass_flow(q1, q2, q3, q4, E1, E2, E3, E4, 0, mB0_r,
+                                                                                              mB_max_r, mB_min_r, 0, dP2, dP3, dP4,
+                                                                                              aperture_area_m2)
         if flow == 4:
-            auxiliary_electricity[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow], Leq,
-                                                         aperture_area)  # in kW
-            dp5 = specific_pressurelosses[flow]
-            q5 = supply_out[flow]
-            m5 = specific_flows[flow]
+            auxiliary_electricity_kW[flow] = np.vectorize(calc_Eaux_SC)(specific_flows_kgpers[flow], specific_pressure_losses_Pa[flow],
+                                                                        Leq, l_int, aperture_area_m2)  # in kW
+            dp5 = specific_pressure_losses_Pa[flow]
+            q5 = supply_out_kW[flow]
+            m5 = specific_flows_kgpers[flow]
             # set points to zero when load is negative
-            specific_flows[5], specific_pressurelosses[5] = calc_optimal_mass_flow_2(m5, q5, dp5)
+            specific_flows_kgpers[5], specific_pressure_losses_Pa[5] = calc_optimal_mass_flow_2(m5, q5, dp5)
 
         if flow == 5: # optimal mass flow
-            supply_losses[flow] = np.vectorize(calc_qloss_network)(specific_flows[flow], l_ext, aperture_area, temperature_mean[flow],
-                                                                   Tamb_vector, msc_max)
-            supply_out_pre = supply_out[flow].copy() + supply_losses[flow].copy()
-            auxiliary_electricity[flow] = np.vectorize(calc_Eaux_SC)(specific_flows[flow], specific_pressurelosses[flow], Leq,
-                                                         aperture_area)  # in kW
-            supply_out_total = supply_out + 0.5 * auxiliary_electricity[flow] - supply_losses[flow]
-            mcp = specific_flows[flow] * (Cp_fluid / 1000)  # mcp in kW/c
+            supply_losses_kW[flow] = np.vectorize(calc_qloss_network)(specific_flows_kgpers[flow], l_ext, aperture_area_m2, temperature_mean[flow],
+                                                                      Tamb_vector_C, msc_max_kgpers)
+            supply_out_pre = supply_out_kW[flow].copy() + supply_losses_kW[flow].copy()
+            auxiliary_electricity_kW[flow] = np.vectorize(calc_Eaux_SC)(specific_flows_kgpers[flow], specific_pressure_losses_Pa[flow],
+                                                                        Leq, l_int, aperture_area_m2)  # in kW
+            supply_out_total_kW = supply_out_kW + 0.5 * auxiliary_electricity_kW[flow] - supply_losses_kW[flow]
+            mcp_kWperK = specific_flows_kgpers[flow] * (Cp_fluid_JperkgK / 1000)  # mcp in kW/c
 
     for x in range(8760):
-        if supply_out_total[5][x] <= 0:  # the demand is zero
-            supply_out_total[5][x] = 0
-            auxiliary_electricity[5][x] = 0
+        if supply_out_total_kW[5][x] <= 0:  # the demand is zero
+            supply_out_total_kW[5][x] = 0
+            auxiliary_electricity_kW[5][x] = 0
             temperature_out[5][x] = 0
             temperature_in[5][x] = 0
-        T_module.append((temperature_out[5][x] + temperature_in[5][x]) / 2)
+        T_module_C.append((temperature_out[5][x] + temperature_in[5][x]) / 2)
 
-        if T_module[x] == 0:
-            T_module[x] = Tcell_PV[x]
+        if T_module_C[x] == 0:
+            T_module_C[x] = Tcell_PV_C[x]
 
-    PV_generation = np.vectorize(calc_PV_power)(Sm_PV, T_module, eff_nom, area_per_group, Bref, misc_losses)
-    result = [supply_losses[5], supply_out_total[5], auxiliary_electricity[5], temperature_out[flow], temperature_in[flow], mcp,
+    PV_generation = np.vectorize(calc_PV_power)(Sm_PV_Wperm2, T_module_C, eff_nom, area_per_group, Bref, misc_losses)
+    result = [supply_losses_kW[5], supply_out_total_kW[5], auxiliary_electricity_kW[5], temperature_out[5], temperature_in[5], mcp_kWperK,
               PV_generation]
+
     return result
 
 # investment and maintenance costs
