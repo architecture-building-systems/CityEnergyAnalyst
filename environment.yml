@@ -23,6 +23,7 @@ dependencies:
 - freetype=2.7=vc9_1
 - freexl=1.0.2=vc9_2
 - functools32=3.2.3.2=py27_1
+- gdal
 - geopandas=0.2.1=py27_4
 - geos=3.5.1=vc9_1
 - hdf4=4.2.12=vc9_0
