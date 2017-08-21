@@ -244,6 +244,49 @@ def photovoltaic(args):
                                                     building_name=building)
 
 
+def solar_collector(args):
+    """Run the solar-collector script (:py:mod:`cea.technologies.solar.solar_collector`."""
+    import cea.utilities.dbfreader as dbfreader
+    import cea.technologies.solar.solar_collector
+
+    if not args.latitude:
+        args.latitude = _get_latitude(args.scenario)
+    if not args.longitude:
+        args.longitude = _get_longitude(args.scenario)
+
+    locator = cea.inputlocator.InputLocator(args.scenario)
+    if not args.weather_path:
+        args.weather_path = locator.get_default_weather()
+    elif args.weather_path in locator.get_weather_names():
+        args.weather_path = locator.get_weather(args.weather_path)
+
+    list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
+
+    config = cea.config.Configuration(args.scenario)
+    config.weather = args.weather_path
+    if args.panel_on_roof is not None:
+        config.photovoltaic.panel_on_roof = args.panel_on_roof
+    if args.panel_on_wall is not None:
+        config.photovoltaic.panel_on_wall = args.panel_on_wall
+    if args.type_SCpanel is not None:
+        config.photovoltaic.type_SCpanel = args.type_SCpanel
+    if args.min_radiation is not None:
+        config.photovoltaic.min_radiation = args.min_radiation
+    if args.date_start is not None:
+        config.photovoltaic.date_start = args.date_start
+    if args.solar_window_solstice is not None:
+        config.photovoltaic.solar_window_solstice = args.solar_window_solstice
+    config.save()
+
+    for building in list_buildings_names:
+        radiation_path = locator.get_radiation_building(building_name=building)
+        radiation_metadata = locator.get_radiation_metadata(building_name=building)
+        cea.technologies.solar.solar_collector.calc_SC(locator=locator, radiation_csv=radiation_path,
+                                                       metadata_csv=radiation_metadata, latitude=args.latitude,
+                                                       longitude=args.longitude, weather_path=args.weather_path,
+                                                       building_name=building)
+
+
 def install_toolbox(_):
     """Install the ArcGIS toolbox and sets up .pth files to access arcpy from the cea python interpreter."""
     import cea.interfaces.arcgis.install_toolbox
@@ -453,7 +496,7 @@ def main():
     radiation_parser.set_defaults(func=radiation)
 
     photovoltaic_parser = subparsers.add_parser('photovoltaic',
-                                                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     photovoltaic_parser.add_argument('--latitude', help='Latitude to use for calculations.', type=float)
     photovoltaic_parser.add_argument('--longitude', help='Longitude to use for calculations.', type=float)
     photovoltaic_parser.add_argument('--weather-path', help='Path to weather file.')
@@ -461,14 +504,32 @@ def main():
     photovoltaic_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall', type=bool)
     photovoltaic_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int)
     photovoltaic_parser.add_argument('--type-PVpanel',
-                                     help='monocrystalline, T2 is poly and T3 is amorphous. (see relates to the database of technologies)')
+                                        help='monocrystalline, T2 is poly and T3 is amorphous. (see relates to the database of technologies)')
     photovoltaic_parser.add_argument('--min-radiation',
-                                     help='points are selected with at least a minimum production of this % from the maximum in the area.',
-                                     type=float)
+                                        help='points are selected with at least a minimum production of this % from the maximum in the area.',
+                                        type=float)
     photovoltaic_parser.add_argument('--date-start', help='First day of the year', type=str)
     photovoltaic_parser.add_argument('--solar-window-solstice', help='desired hours of solar window on the solstice',
-                                     type=int)
+                                        type=int)
     photovoltaic_parser.set_defaults(func=photovoltaic)
+
+    solar_collector_parser = subparsers.add_parser('solar-collector',
+                                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    solar_collector_parser.add_argument('--latitude', help='Latitude to use for calculations.', type=float)
+    solar_collector_parser.add_argument('--longitude', help='Longitude to use for calculations.', type=float)
+    solar_collector_parser.add_argument('--weather-path', help='Path to weather file.')
+    solar_collector_parser.add_argument('--panel-on-roof', help='flag for considering PV on roof', type=bool)
+    solar_collector_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall', type=bool)
+    solar_collector_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int)
+    solar_collector_parser.add_argument('--type-SCpanel',
+                                        help='Solar collector panel type (SC1: flat plat collectors, SC2: evacuated tubes)')
+    solar_collector_parser.add_argument('--min-radiation',
+                                        help='points are selected with at least a minimum production of this % from the maximum in the area.',
+                                        type=float)
+    solar_collector_parser.add_argument('--date-start', help='First day of the year', type=str)
+    solar_collector_parser.add_argument('--solar-window-solstice', help='desired hours of solar window on the solstice',
+                                        type=int)
+    solar_collector_parser.set_defaults(func=solar_collector)
 
     radiation_daysim_parser = subparsers.add_parser('radiation-daysim',
                                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
