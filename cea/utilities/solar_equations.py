@@ -142,16 +142,12 @@ def get_hour_angle(longitude_deg, min_date, hour_date, day_date):
 
 def get_solar_time(longitude_deg, min_date, hour_date, day_date):
     """
-    "returns solar time in hours for the specified longitude and time," \
-    " accurate only to the nearest minute."
-    Parameters
-    ----------
+    returns solar time in hours for the specified longitude and time,
+    accurate only to the nearest minute.
     longitude_deg
     min_date
     hour_date
     day_date
-    Returns
-    -------
     """
     solar_time_min = hour_date * 60 + min_date + 4 * longitude_deg + get_equation_of_time(day_date)
 
@@ -159,13 +155,6 @@ def get_solar_time(longitude_deg, min_date, hour_date, day_date):
 
 
 def get_equation_of_time(day_date):
-    """
-    Parameters
-    ----------
-    day_date
-    Returns
-    -------
-    """
     B = (day_date-1)*360/365
     E = 229.2*(0.000075 + 0.001868*math.cos(B) - 0.032077*math.sin(B) - 0.014615*math.cos(2*B) - 0.04089*math.sin(2*B))
     return E
