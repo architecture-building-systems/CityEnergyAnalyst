@@ -515,9 +515,7 @@ def calc_Cinv_PVT(P_peak, gv):
     return InvCa
 
 def test_PVT():
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.ReferenceCaseOpenLocator()
     weather_path = locator.get_default_weather()
     list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
