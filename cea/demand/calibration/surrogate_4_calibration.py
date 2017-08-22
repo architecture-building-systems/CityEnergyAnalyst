@@ -190,8 +190,8 @@ def sampling_main(locator, variables, building_name, building_load):
         'ta_hs_set','ta_cs_set','theta_a','Qhsf', 'Qcsf']
         file_path='C:\Reference-case-open\Baseline\outputs\data\demand\B153731.xls'
         calcs_outputs_xls = pd.read_excel(file_path)
-        calcs_outputs_xls.to_csv('out.csv', index=False, header=True, float_format='%.3f', decimal='.')
-        file_path2='C:\CEAforArcGIS\cea\surrogate\out.csv'
+        calcs_outputs_xls.to_csv('Temp.csv', index=False, header=True, float_format='%.3f', decimal='.')
+        file_path2='C:\CEAforArcGIS\cea\demand\calibration\Temp.csv'
         calcs_trimmed_csv=pd.read_csv(file_path2, usecols=intended_parameters)
         calcs_trimmed_csv['I_real'] = calcs_trimmed_csv['I_rad'] + calcs_trimmed_csv['I_sol']
         calcs_trimmed_csv['ta_hs_set'].fillna(0, inplace=True)
