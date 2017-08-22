@@ -344,8 +344,9 @@ def addCosts(indCombi, buildList, locator, dicoSupply, QUncoveredDesign, QUncove
                 addcosts_Opex_fixed += Opex_fixed_HEX_PVT
 
         # Pump operation costs
-        pumpCosts = pumps.calc_Ctot_pump(dicoSupply, buildList, locator.get_optimization_network_results_folder(), ntwFeat, gv)
-        addcosts_Capex_a += pumpCosts
+        Capex_a_pump, Opex_fixed_pump = pumps.calc_Ctot_pump(dicoSupply, buildList, locator.get_optimization_network_results_folder(), ntwFeat, gv, locator)
+        addcosts_Capex_a += Capex_a_pump
+        addcosts_Opex_fixed += Opex_fixed_pump
 
     # import gas consumption data from:
 
