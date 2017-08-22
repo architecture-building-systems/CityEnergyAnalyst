@@ -29,7 +29,7 @@ __status__ = "Production"
 
 # SC heat generation
 
-def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_path, building_name):
+def calc_SC(locator, radiation_json, metadata_csv, latitude, longitude, weather_path, building_name):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -37,8 +37,8 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
 
     :param locator: An InputLocator to locate input files
     :type locator: cea.inputlocator.InputLocator
-    :param radiation_csv: solar insulation data on all surfaces of each building
-    :type radiation_csv: .csv
+    :param radiation_json: solar insulation data on all surfaces of each building
+    :type radiation_json: .csv
     :param metadata_csv: data of sensor points measuring solar insulation of each building
     :type metadata_csv: .csv
     :param latitude: latitude of the case study location
@@ -72,7 +72,7 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
 
     # select sensor point with sufficient solar radiation
     max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_csv, metadata_csv, settings.min_radiation,
+        solar_equations.filter_low_potential(weather_data, radiation_json, metadata_csv, settings.min_radiation,
                                              settings.panel_on_roof, settings.panel_on_wall)
 
     print 'filtering low potential sensor points done'
@@ -857,7 +857,7 @@ def test_solar_collector():
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name= building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
-        calc_SC(locator=locator, radiation_csv=radiation, metadata_csv=radiation_metadata, latitude=latitude,
+        calc_SC(locator=locator, radiation_json=radiation, metadata_csv=radiation_metadata, latitude=latitude,
                 longitude=longitude, weather_path=weather_path, building_name=building)
 
 if __name__ == '__main__':
