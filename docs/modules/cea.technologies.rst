@@ -1,6 +1,13 @@
 cea\.technologies package
 =========================
 
+Subpackages
+-----------
+
+.. toctree::
+
+    cea.technologies.heating-network
+
 Submodules
 ----------
 
@@ -92,6 +99,14 @@ cea\.technologies\.photovoltaic module
     :undoc-members:
     :show-inheritance:
 
+cea\.technologies\.photovoltaic\_arcgis module
+----------------------------------------------
+
+.. automodule:: cea.technologies.photovoltaic_arcgis
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 cea\.technologies\.photovoltaic\_thermal module
 -----------------------------------------------
 
@@ -148,18 +163,18 @@ cea\.technologies\.substation module
     :undoc-members:
     :show-inheritance:
 
-cea\.technologies\.tabs module
-------------------------------
+cea\.technologies\.substation\_matrix module
+--------------------------------------------
 
-.. automodule:: cea.technologies.tabs
+.. automodule:: cea.technologies.substation_matrix
     :members:
     :undoc-members:
     :show-inheritance:
 
-cea\.technologies\.thermal\_network module
-------------------------------------------
+cea\.technologies\.tabs module
+------------------------------
 
-.. automodule:: cea.technologies.thermal_network
+.. automodule:: cea.technologies.tabs
     :members:
     :undoc-members:
     :show-inheritance:
