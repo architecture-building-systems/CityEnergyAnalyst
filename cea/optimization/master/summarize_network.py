@@ -54,7 +54,7 @@ def network_main(locator, total_demand, building_names, gv, key):
     buildings = []
     substations = []
     Qcdata_netw_total_kWh = np.zeros(8760)
-    mdotdata_netw_total_kWperC = np.zeros(8760)
+    mcpdata_netw_total_kWperC = np.zeros(8760)
     Ecaf_netw_total_kWh = np.zeros(8760)
     Electr_netw_total_W = np.zeros(8760)
     mdot_heat_netw_all_kgpers = np.zeros(8760)
@@ -76,7 +76,7 @@ def network_main(locator, total_demand, building_names, gv, key):
                                                 'T_supply_DH_result_K']))
 
         Qcdata_netw_total_kWh += buildings[iteration].Qcdataf_kWh.values
-        mdotdata_netw_total_kWperC += buildings[iteration].mcpdataf_kWperC.values
+        mcpdata_netw_total_kWperC += buildings[iteration].mcpdataf_kWperC.values
         Ecaf_netw_total_kWh += buildings[iteration].Ecaf_kWh.values
         Electr_netw_total_W += substations[iteration].Electr_array_all_flat_W.values
         mdot_heat_netw_all_kgpers += substations[iteration].mdot_DH_result_kgpers.values
@@ -160,7 +160,7 @@ def network_main(locator, total_demand, building_names, gv, key):
                             "Qcdata_netw_total_kWh": Qcdata_netw_total_kWh,
                             "Ecaf_netw_total_kWh": Ecaf_netw_total_kWh,
                             "day_of_max_heatmassflow": day_of_max_heatmassflow,
-                            "mdotdata_netw_total_kWperC": mdotdata_netw_total_kWperC,
+                            "mcpdata_netw_total_kWperC": mcpdata_netw_total_kWperC,
                             "Electr_netw_total_W": Electr_netw_total_W,
                             "Q_DH_losses_W": Q_DH_losses_W,
                             "Q_DC_losses_W": Q_DC_losses_W})
