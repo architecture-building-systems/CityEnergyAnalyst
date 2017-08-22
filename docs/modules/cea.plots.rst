@@ -23,10 +23,7 @@ cea\.plots\.graphs\_demand module
 cea\.plots\.graphs\_optimization module
 ---------------------------------------
 
-.. automodule:: cea.plots.graphs_optimization
-    :members:
-    :undoc-members:
-    :show-inheritance:
+(documentation pending)
 
 cea\.plots\.graphs\_solar\_potential module
 -------------------------------------------
@@ -36,6 +33,13 @@ cea\.plots\.graphs\_solar\_potential module
     :undoc-members:
     :show-inheritance:
 
+cea\.plots\.heatmaps module
+---------------------------
+
+.. automodule:: cea.plots.heatmaps
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 cea\.plots\.pareto\_frontier\_plot module
 -----------------------------------------
