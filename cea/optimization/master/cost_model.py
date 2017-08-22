@@ -9,7 +9,7 @@ from __future__ import division
 
 import os
 
-import cea.technologies.thermal_network as network
+import cea.technologies.heating_network.thermal_network as network
 import numpy as np
 import pandas as pd
 
