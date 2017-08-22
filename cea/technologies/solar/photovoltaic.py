@@ -29,7 +29,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_path, building_name):
+def calc_PV(locator, radiation_json_path, metadata_csv_path, latitude, longitude, weather_path, building_name):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -37,10 +37,10 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
 
     :param locator: An InputLocator to locate input files
     :type locator: cea.inputlocator.InputLocator
-    :param radiation_path: solar insulation data on all surfaces of each building (path
-    :type radiation_path: String
-    :param metadata_csv: data of sensor points measuring solar insulation of each building
-    :type metadata_csv: .csv
+    :param radiation_json_path: solar insulation data on all surfaces of each building (path
+    :type radiation_json_path: String
+    :param metadata_csv_path: data of sensor points measuring solar insulation of each building
+    :type metadata_csv_path: .csv
     :param latitude: latitude of the case study location
     :type latitude: float
     :param longitude: longitude of the case study location
@@ -72,7 +72,7 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
 
     # select sensor point with sufficient solar radiation
     max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
-        solar_equations.filter_low_potential(weather_data, radiation_path, metadata_csv, settings.min_radiation,
+        solar_equations.filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, settings.min_radiation,
                                              settings.panel_on_roof, settings.panel_on_wall)
 
     print('filtering low potential sensor points done')
@@ -709,7 +709,7 @@ def test_photovoltaic():
     for building in list_buildings_names:
         radiation_path = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
-        calc_PV(locator=locator, radiation_path=radiation_path, metadata_csv=radiation_metadata, latitude=latitude,
+        calc_PV(locator=locator, radiation_json_path=radiation_path, metadata_csv_path=radiation_metadata, latitude=latitude,
                 longitude=longitude, weather_path=weather_path, building_name=building)
 
 

@@ -238,8 +238,8 @@ def photovoltaic(args):
     for building in list_buildings_names:
         radiation_path = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
-        cea.technologies.solar.photovoltaic.calc_PV(locator=locator, radiation_path=radiation_path,
-                                                    metadata_csv=radiation_metadata, latitude=args.latitude,
+        cea.technologies.solar.photovoltaic.calc_PV(locator=locator, radiation_json_path=radiation_path,
+                                                    metadata_csv_path=radiation_metadata, latitude=args.latitude,
                                                     longitude=args.longitude, weather_path=args.weather_path,
                                                     building_name=building)
 
@@ -281,10 +281,54 @@ def solar_collector(args):
     for building in list_buildings_names:
         radiation_path = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
-        cea.technologies.solar.solar_collector.calc_SC(locator=locator, radiation_csv=radiation_path,
+        cea.technologies.solar.solar_collector.calc_SC(locator=locator, radiation_json=radiation_path,
                                                        metadata_csv=radiation_metadata, latitude=args.latitude,
                                                        longitude=args.longitude, weather_path=args.weather_path,
                                                        building_name=building)
+
+def photovoltaic_thermal(args):
+    """Run the photovoltaic-thermal script (:py:mod:`cea.technologies.solar.photovoltaic_thermal`."""
+    import cea.utilities.dbfreader as dbfreader
+    import cea.technologies.solar.photovoltaic_thermal
+
+    if not args.latitude:
+        args.latitude = _get_latitude(args.scenario)
+    if not args.longitude:
+        args.longitude = _get_longitude(args.scenario)
+
+    locator = cea.inputlocator.InputLocator(args.scenario)
+    if not args.weather_path:
+        args.weather_path = locator.get_default_weather()
+    elif args.weather_path in locator.get_weather_names():
+        args.weather_path = locator.get_weather(args.weather_path)
+
+    list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
+
+    config = cea.config.Configuration(args.scenario)
+    config.weather = args.weather_path
+    if args.panel_on_roof is not None:
+        config.solar.panel_on_roof = args.panel_on_roof
+    if args.panel_on_wall is not None:
+        config.solar.panel_on_wall = args.panel_on_wall
+    if args.type_PVpanel is not None:
+        config.solar.type_PVpanel = args.type_PVpanel
+    if args.type_SCpanel is not None:
+        config.solar.type_SCpanel = args.type_SCpanel
+    if args.min_radiation is not None:
+        config.solar.min_radiation = args.min_radiation
+    if args.date_start is not None:
+        config.solar.date_start = args.date_start
+    if args.solar_window_solstice is not None:
+        config.solar.solar_window_solstice = args.solar_window_solstice
+    config.save()
+
+    for building in list_buildings_names:
+        radiation_path = locator.get_radiation_building(building_name=building)
+        radiation_metadata = locator.get_radiation_metadata(building_name=building)
+        cea.technologies.solar.photovoltaic_thermal.calc_PVT(locator=locator, radiation_json_path=radiation_path,
+                                                             metadata_csv_path=radiation_metadata,
+                                                             latitude=args.latitude, longitude=args.longitude,
+                                                             weather_path=args.weather_path, building_name=building)
 
 
 def install_toolbox(_):
@@ -530,6 +574,26 @@ def main():
     solar_collector_parser.add_argument('--solar-window-solstice', help='desired hours of solar window on the solstice',
                                         type=int)
     solar_collector_parser.set_defaults(func=solar_collector)
+
+    photovoltaic_thermal_parser = subparsers.add_parser('photovoltaic-thermal',
+                                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    photovoltaic_thermal_parser.add_argument('--latitude', help='Latitude to use for calculations.', type=float)
+    photovoltaic_thermal_parser.add_argument('--longitude', help='Longitude to use for calculations.', type=float)
+    photovoltaic_thermal_parser.add_argument('--weather-path', help='Path to weather file.')
+    photovoltaic_thermal_parser.add_argument('--panel-on-roof', help='flag for considering PV on roof', type=bool)
+    photovoltaic_thermal_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall', type=bool)
+    photovoltaic_thermal_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int)
+    photovoltaic_thermal_parser.add_argument('--min-radiation',
+                                             help='points are selected with at least a minimum production of this % from the maximum in the area.',
+                                             type=float)
+    photovoltaic_thermal_parser.add_argument('--type-SCpanel',
+                                             help='Solar collector panel type (SC1: flat plate collectors, SC2: evacuated tubes)')
+    photovoltaic_thermal_parser.add_argument('--type-PVpanel',
+                                             help='monocrystalline, T2 is poly and T3 is amorphous. (see relates to the database of technologies)')
+    photovoltaic_thermal_parser.add_argument('--date-start', help='First day of the year', type=str)
+    photovoltaic_thermal_parser.add_argument('--solar-window-solstice', help='desired hours of solar window on the solstice',
+                                        type=int)
+    photovoltaic_thermal_parser.set_defaults(func=photovoltaic_thermal)
 
     radiation_daysim_parser = subparsers.add_parser('radiation-daysim',
                                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)

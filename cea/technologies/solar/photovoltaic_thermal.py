@@ -61,24 +61,24 @@ def calc_PVT(locator, radiation_json_path, metadata_csv_path, latitude, longitud
 
     # weather data
     weather_data = epwreader.epw_reader(weather_path)
-    print 'reading weather data done'
+    print('reading weather data done')
 
     # solar properties
     g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
                                                                                       settings.date_start, settings.solar_window_solstice)
-    print 'calculating solar properties done'
+    print('calculating solar properties done')
 
     # get properties of the panel to evaluate # TODO: find a PVT module reference
     panel_properties_PV = calc_properties_PV_db(locator.get_supply_systems_database(), settings.type_PVpanel)
     panel_properties_SC = calc_properties_SC_db(locator.get_supply_systems_database(), settings.type_SCpanel)
-    print 'gathering properties of PV collector panel'
+    print('gathering properties of PV collector panel')
 
     # select sensor point with sufficient solar radiation
     max_yearly_radiation, min_yearly_production, sensors_rad_clean, sensors_metadata_clean = \
         solar_equations.filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, settings.min_radiation,
                                              settings.panel_on_roof, settings.panel_on_wall)
 
-    print 'filtering low potential sensor points done'
+    print('filtering low potential sensor points done')
 
     # Calculate the heights of all buildings for length of vertical pipes
     height = gpd.read_file(locator.get_zone_geometry())['height_ag'].sum()
@@ -89,13 +89,13 @@ def calc_PVT(locator, radiation_json_path, metadata_csv_path, latitude, longitud
         sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh,
                                                                       worst_Az, trr_mean, max_yearly_radiation,
                                                                       panel_properties_PV)
-        print 'calculating optimal tile angle and separation done'
+        print('calculating optimal tile angle and separation done')
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
         number_groups, hourlydata_groups, number_points, prop_observers = solar_equations.calc_groups(sensors_rad_clean,
                                                                                                       sensors_metadata_cat)
 
-        print 'generating groups of sensor points done'
+        print('generating groups of sensor points done')
 
         result, Final = calc_PVT_generation(hourlydata_groups, weather_data, number_groups, prop_observers, g, Sz, Az,
                                             ha, settings.T_in_PVT, latitude, height, panel_properties_SC,
@@ -104,7 +104,7 @@ def calc_PVT(locator, radiation_json_path, metadata_csv_path, latitude, longitud
         Final.to_csv(locator.PVT_results(building_name= building_name), index=True, float_format='%.2f')
         sensors_metadata_cat.to_csv(locator.PVT_metadata_results(building_name= building_name), index=True, float_format='%.2f')  # print selected metadata of the selected sensors
 
-        print 'Building', building_name,'done - time elapsed:', (time.clock() - t0), ' seconds'
+        print('Building', building_name,'done - time elapsed:', (time.clock() - t0), ' seconds')
 
     return
 
