@@ -170,9 +170,10 @@ def radiation_singleprocessing(rad, bldg_dict_list, locator, aweatherfile_path):
 def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
                           input_terrain_raster, architecture_dbf):
     """
-        This function makes the calculation of solar insolation in X sensor points for every building in the zone
+    This function makes the calculation of solar insolation in X sensor points for every building in the zone
     of interest. the number of sensor points depends on the size of the grid selected in the SETTINGS.py file and
     are generated automatically.
+
     :param weatherfile_path:
     :param locator:
     :param zone_shp:
