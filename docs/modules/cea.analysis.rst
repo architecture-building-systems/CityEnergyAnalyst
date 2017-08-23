@@ -6,7 +6,10 @@ Subpackages
 
 .. toctree::
 
+    cea.analysis.lca
+    cea.analysis.retrofit
     cea.analysis.sensitivity
+    cea.analysis.uncertainty
 
 Submodules
 ----------
@@ -19,14 +22,6 @@ cea\.analysis\.benchmark module
     :undoc-members:
     :show-inheritance:
 
-cea\.analysis\.embodied module
-------------------------------
-
-.. automodule:: cea.analysis.embodied
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea\.analysis\.mcda module
 --------------------------
 
@@ -35,18 +30,10 @@ cea\.analysis\.mcda module
     :undoc-members:
     :show-inheritance:
 
-cea\.analysis\.mobility module
-------------------------------
+cea\.analysis\.operation\_costs module
+--------------------------------------
 
-.. automodule:: cea.analysis.mobility
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea\.analysis\.operation module
--------------------------------
-
-.. automodule:: cea.analysis.operation
+.. automodule:: cea.analysis.operation_costs
     :members:
     :undoc-members:
     :show-inheritance:

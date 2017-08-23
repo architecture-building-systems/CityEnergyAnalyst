@@ -19,8 +19,12 @@ Welcome to City Energy Analyst's documentation!
    interfaces
    databases
    documentation-guide
+   cascading-configuration-files
    how-to-create-a-new-release
-   modules/cea
+   how-to-test-the-cea
+   optimization_workflow/guide-to-prepare-workflow
+   run_solar_technologies
+   modules/modules
 
 
 Indices and tables
