@@ -1,4 +1,5 @@
 import cea
+import os
 import pandas as pd
 import numpy as np
 import pickle
@@ -16,6 +17,7 @@ import scipy.io
 from keras.models import Sequential
 from keras.callbacks import EarlyStopping
 from sklearn.preprocessing import MinMaxScaler
+
 
 __author__ = "Jimeno A. Fonseca; Fazel Khayatian"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -45,15 +47,17 @@ def simulate_demand_sample(locator, building_name, output_parameters):
     gv.testing = True
 
     #import weather and measured data
-    #weather_path = locator.get_default_weather()
-    weather_path = 'C:\CEAforArcGIS\cea\databases\weather\Zurich.epw'
+    weather_path = locator.get_default_weather()
+    #weather_path = 'C:\CEAforArcGIS\cea\databases\weather\Zurich.epw'
 
     #calculate demand timeseries for buidling an calculate cvrms
     demand_main.demand_calculation(locator, weather_path, gv)
-    file_path='C:\Reference-case-open\Baseline\outputs\data\demand\B153731.xls'
+    output_folder=locator.get_demand_results_folder()
+    file_path=os.path.join(output_folder, "%(building_name)s.xls" % locals())
+    #file_path=locator.get_demand_results_file(building_name)
 
-    init_calcs = pd.read_excel(file_path)
-    new_calcs = pd.DataFrame(init_calcs)
+    new_calcs = pd.read_excel(file_path)
+
     #cv_rmse, rmse = calc_cv_rmse(time_series_simulation[output_parameters].values, time_series_measured[output_parameters].values)
 
     return  new_calcs #cv_rmse, rmse
@@ -188,11 +192,11 @@ def sampling_main(locator, variables, building_name, building_load):
         simulate_demand_sample(locator, building_name, building_load)
         intended_parameters=['people','Eaf','Elf','Qwwf','I_rad','I_sol','T_ext','rh_ext',
         'ta_hs_set','ta_cs_set','theta_a','Qhsf', 'Qcsf']
-        file_path='C:\Reference-case-open\Baseline\outputs\data\demand\B153731.xls'
+        file_path = os.path.join(locator.get_demand_results_folder(), "%(building_name)s.xls" % locals())
         calcs_outputs_xls = pd.read_excel(file_path)
-        calcs_outputs_xls.to_csv('Temp.csv', index=False, header=True, float_format='%.3f', decimal='.')
-        file_path2='C:\CEAforArcGIS\cea\demand\calibration\Temp.csv'
-        calcs_trimmed_csv=pd.read_csv(file_path2, usecols=intended_parameters)
+        temp_file=os.path.join(locator.get_temporary_folder(), "%(building_name)s.csv" % locals())
+        calcs_outputs_xls.to_csv(temp_file, index=False, header=True, float_format='%.3f', decimal='.')
+        calcs_trimmed_csv=pd.read_csv(temp_file, usecols=intended_parameters)
         calcs_trimmed_csv['I_real'] = calcs_trimmed_csv['I_rad'] + calcs_trimmed_csv['I_sol']
         calcs_trimmed_csv['ta_hs_set'].fillna(0, inplace=True)
         calcs_trimmed_csv['ta_cs_set'].fillna(50, inplace=True)
@@ -252,24 +256,54 @@ def sampling_main(locator, variables, building_name, building_load):
 
 
 
-    #sampled_input_ht = pd.DataFrame(nn_X_ht)
+
+
+    sampled_input_ht = pd.DataFrame(nn_X_ht)
     #sampled_input_cl = pd.DataFrame(nn_X_cl)
-    #sampled_target_ht = pd.DataFrame(nn_T_ht)
+    sampled_target_ht = pd.DataFrame(nn_T_ht)
     #sampled_target_cl = pd.DataFrame(nn_T_cl)
+
+    test_NN_input_path = os.path.join(locator.get_calibration_folder(), "test_NN_input.csv" % locals())
+    sampled_input_ht.to_csv(test_NN_input_path, index=False, header=False, float_format='%.3f', decimal='.')
+    test_NN_target_path = os.path.join(locator.get_calibration_folder(), "test_NN_target.csv" % locals())
+    sampled_target_ht.to_csv(test_NN_target_path, index=False, header=False, float_format='%.3f', decimal='.')
 
     #sampled_input_ht.to_csv('in_ht.csv', index=False, header=False, float_format='%.3f', decimal='.')
     #sampled_input_cl.to_csv('in_cl.csv', index=False, header=False, float_format='%.3f', decimal='.')
     #sampled_target_ht.to_csv('tar_ht.csv', index=False, header=False, float_format='%.3f', decimal='.')
     #sampled_target_cl.to_csv('tar_cl.csv', index=False, header=False, float_format='%.3f', decimal='.')
 
-    filtered_outputs_t=neural_trainer(nn_X_ht, nn_T_ht)
-    out_NN = pd.DataFrame(filtered_outputs_t)
-    out_NN.to_csv('netout_ht.csv', index=False, header=False, float_format='%.3f', decimal='.')
-    #filtered_outputs_t = neural_trainer(nn_X_cl, nn_T_cl)
+    # heating perceptron
+    model=neural_trainer(nn_X_ht, nn_T_ht,locator)
+    # serialize model to JSON
+    json_NN_path = os.path.join(locator.get_calibration_folder(), "trained_network_ht.json" % locals())
+    weight_NN_path = os.path.join(locator.get_calibration_folder(), "trained_network_ht.h5" % locals())
+    model_json = model.to_json()
+    with open(json_NN_path, "w") as json_file:
+        json_file.write(model_json)
+    # serialize weights to HDF5
+    model.save_weights(weight_NN_path)
+    print("Saved model to ~reference-case-open\baseline\outputs\data\calibration")
     #out_NN = pd.DataFrame(filtered_outputs_t)
-    #out_NN.to_csv('netout_cl.csv', index=False, header=False, float_format='%.3f', decimal='.')
+    #out_NN_path = os.path.join(locator.get_calibration_folder(), "%(building_name)s-netout_ht.csv" % locals())
+    #out_NN.to_csv(out_NN_path, index=False, header=False, float_format='%.3f', decimal='.')
 
-def neural_trainer(inputs_x,targets_t):
+    # cooling perceptron
+    model = neural_trainer(nn_X_cl, nn_T_cl,locator)
+    # serialize model to JSON
+    json_NN_path = os.path.join(locator.get_calibration_folder(), "trained_network_cl.json" % locals())
+    weight_NN_path = os.path.join(locator.get_calibration_folder(), "trained_network_cl.h5" % locals())
+    model_json = model.to_json()
+    with open(json_NN_path, "w") as json_file:
+        json_file.write(model_json)
+    # serialize weights to HDF5
+    model.save_weights(weight_NN_path)
+    print("Saved model to ~reference-case-open\baseline\outputs\data\calibration")
+    #out_NN = pd.DataFrame(filtered_outputs_t)
+    #out_NN_path = os.path.join(locator.get_calibration_folder(), "%(building_name)s-netout_cl.csv" % locals())
+    #out_NN.to_csv(out_NN_path, index=False, header=False, float_format='%.3f', decimal='.')
+
+def neural_trainer(inputs_x,targets_t,locator):
     np.random.seed(7)
 
     inputs_x_rows, inputs_x_cols = inputs_x.shape
@@ -318,22 +352,20 @@ def neural_trainer(inputs_x,targets_t):
     # define early stopping to avoid overfitting
     estop = EarlyStopping(monitor='val_loss', min_delta=0, patience=e_stop_limit, verbose=1, mode='auto')
 
-
     # Fit the model
     model.fit(inputs_x, targets_t, validation_split=validation_split, epochs=1500, shuffle=True, batch_size=100000,callbacks=[estop])
 
+    ## predict ourputs
+    #outputs_t = model.predict(inputs_x)
+    #filtered_outputs_t = scalerT.inverse_transform(outputs_t)
 
-    # predict ourputs
-    outputs_t = model.predict(inputs_x)
-    resized_outputs_t = scalerT.inverse_transform(outputs_t)
-    #targets_t
+    #filter_logic=np.isin(targets_t, 0)
+    #target_anomalies=np.asarray(np.where(filter_logic),dtype=np.int)
+    #t_anomalies_rows, t_anomalies_cols=target_anomalies.shape
+    #anomalies_replacements=np.zeros(t_anomalies_cols)
+    #filtered_outputs_t[target_anomalies,0]=anomalies_replacements
 
-    filter_logic=np.isin(targets_t, 0)
-    target_anomalies=np.where(filter_logic)
-    anomalies_replacements=np.zeros(len(target_anomalies))
-    filtered_outputs_t=np.put(resized_outputs_t,target_anomalies,anomalies_replacements)
-
-    return filtered_outputs_t
+    return model
 
 def apply_sample_parameters(locator, sample):
     """
@@ -361,7 +393,7 @@ def run_as_script():
     # based on the variables listed in the uncertainty database and selected
     # through a screening process. they need to be 5.
     variables = ['U_win', 'U_wall', 'n50', 'Ths_set_C', 'Cm_Af']
-    building_name = 'B153731'
+    building_name = 'B155066'
     building_load = 'Qhsf_kWh'
     sampling_main(locator, variables, building_name, building_load)
 
