@@ -63,9 +63,8 @@ def calc_PVT(locator, latitude, longitude, weather_path, building_name):
     print('reading weather data done')
 
     # solar properties
-    g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
-                                                                                      settings.date_start,
-                                                                                      settings.solar_window_solstice)
+    sun_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, settings.date_start,
+                                                         settings.solar_window_solstice)
     print('calculating solar properties done')
 
     # get properties of the panel to evaluate # TODO: find a PVT module reference
@@ -86,9 +85,8 @@ def calc_PVT(locator, latitude, longitude, weather_path, building_name):
 
     if not sensors_metadata_clean.empty:
         # calculate optimal angle and tilt for panels according to PV module size
-        sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh,
-                                                                      worst_Az, trr_mean, max_yearly_radiation,
-                                                                      panel_properties_PV)
+        sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, sun_properties,
+                                                                      max_yearly_radiation, panel_properties_PV)
         print('calculating optimal tile angle and separation done')
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
@@ -97,11 +95,11 @@ def calc_PVT(locator, latitude, longitude, weather_path, building_name):
 
         print('generating groups of sensor points done')
 
-        result, Final = calc_PVT_generation(hourlydata_groups, weather_data, number_groups, prop_observers, g, Sz, Az,
-                                            ha, settings.T_in_PVT, latitude, height, panel_properties_SC,
+        result, final = calc_PVT_generation(hourlydata_groups, weather_data, number_groups, prop_observers,
+                                            sun_properties, settings.T_in_PVT, latitude, height, panel_properties_SC,
                                             panel_properties_PV)
 
-        Final.to_csv(locator.PVT_results(building_name=building_name), index=True, float_format='%.2f')
+        final.to_csv(locator.PVT_results(building_name=building_name), index=True, float_format='%.2f')
         sensors_metadata_cat.to_csv(locator.PVT_metadata_results(building_name=building_name), index=True,
                                     float_format='%.2f')  # print selected metadata of the selected sensors
 
@@ -110,7 +108,7 @@ def calc_PVT(locator, latitude, longitude, weather_path, building_name):
     return
 
 
-def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_observers, g, Sz, Az, ha, Tin, latitude,
+def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_observers, sun_properties, Tin, latitude,
                         height, panel_properties_SC, panel_properties_PV):
     """
     To calculate the heat and electricity generated from PVT panels.
@@ -123,13 +121,8 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
     :type number_groups: float
     :param weather_data: weather data read from the epw file
     :type weather_data: dataframe
-    :param g: declination
-    :type g: float
-    :param Sz: zenith angle
-    :type Sz: float
-    :param Az: solar azimuth
-    :type Az: float
-    :param ha: hour angle
+    :param sun_properties: SunProperties (g: declination, Sz: zenith angle, Az: solar azumuth, ha: hour angle)
+    :type sun_properties: cea.utilities.solar_equations.SunProperties
     :param Tin: Fluid inlet temperature (C)
     :param height: height of the building [m]
     :param panel_properties_SC: properties of solar collector part
@@ -141,10 +134,9 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
 
     # convert degree to radians
     lat_rad = radians(latitude)
-    g_rad = np.radians(g)
-    ha_rad = np.radians(ha)
-    Sz_rad = np.radians(Sz)
-    Az_rad = np.radians(Az)
+    g_rad = np.radians(sun_properties.g)
+    ha_rad = np.radians(sun_properties.ha)
+    Sz_rad = np.radians(sun_properties.Sz)
 
     # empty lists to store results
     Sum_radiation = np.zeros(8760)
@@ -237,7 +229,7 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
 
         ## SC heat generation
         # calculate incidence angle modifier for beam radiation
-        IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle_deg, panel_properties_SC['type'], Sz, latitude)
+        IAM_b = calc_IAM_beam_SC(sun_properties, teta_z, tilt_angle_deg, panel_properties_SC['type'], latitude)
 
         list_results_PVT[group] = calc_PVT_module(tilt_angle_deg, IAM_b.copy(), IAM_d,
                                                   radiation_Wperm2.I_direct.copy(),
