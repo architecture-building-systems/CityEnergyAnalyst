@@ -414,7 +414,12 @@ def run_script_in_subprocess(script_name, *args):
     command = [get_python_exe(), '-u', script_full_path]
     command.extend(map(str, args))
     print(command)
-    process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    env = os.environ.copy()
+    env['PATH'] = ';'.join((r'c:\Python27\ArcGISx6410.5', env['PATH']))
+
+    process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                               env=env)
     while True:
         next_line = process.stdout.readline()
         if next_line == '' and process.poll() is not None:
