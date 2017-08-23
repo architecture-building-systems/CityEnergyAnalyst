@@ -61,9 +61,8 @@ def calc_SC(locator, latitude, longitude, weather_path, building_name):
     print('reading weather data done')
 
     # solar properties
-    g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
-                                                                                      settings.date_start,
-                                                                                      settings.solar_window_solstice)
+    sun_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, settings.date_start,
+                                                         settings.solar_window_solstice)
     print('calculating solar properties done')
 
     # get properties of the panel to evaluate
@@ -83,10 +82,8 @@ def calc_SC(locator, latitude, longitude, weather_path, building_name):
 
     if not sensors_metadata_clean.empty:
         # calculate optimal angle and tilt for panels
-        sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude,
-                                                                      worst_sh, worst_Az, trr_mean,
-                                                                      max_yearly_radiation,
-                                                                      panel_properties)
+        sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, sun_properties,
+                                                                      max_yearly_radiation, panel_properties)
         print('calculating optimal tilt angle and separation done')
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
@@ -96,11 +93,11 @@ def calc_SC(locator, latitude, longitude, weather_path, building_name):
         print('generating groups of sensor points done')
 
         # calculate heat production from solar collectors
-        results, Final = SC_generation(hourlydata_groups, prop_observers, number_groups, weather_data, g, Sz, Az, ha,
+        results, final = SC_generation(hourlydata_groups, prop_observers, number_groups, weather_data, sun_properties,
                                        settings.T_in_SC, height, panel_properties, latitude)
 
         # save SC generation potential and metadata of the selected sensors
-        Final.to_csv(locator.SC_results(building_name=building_name), index=True, float_format='%.2f')
+        final.to_csv(locator.SC_results(building_name=building_name), index=True, float_format='%.2f')
         sensors_metadata_cat.to_csv(locator.SC_metadata_results(building_name=building_name), index=True,
                                     float_format='%.2f')
 
@@ -113,7 +110,7 @@ def calc_SC(locator, latitude, longitude, weather_path, building_name):
 # SC heat production
 # =========================
 
-def SC_generation(hourly_radiation, prop_observers, number_groups, weather_data, g, Sz, Az, ha, Tin_C, height,
+def SC_generation(hourly_radiation, prop_observers, number_groups, weather_data, sun_properties, Tin_C, height,
                   panel_properties, latitude):
     """
     To calculate the heat generated from SC panels.
@@ -126,13 +123,8 @@ def SC_generation(hourly_radiation, prop_observers, number_groups, weather_data,
     :type number_groups: float
     :param weather_data: weather data read from the epw file
     :type weather_data: dataframe
-    :param g: declination
-    :type g: float
-    :param Sz: zenith angle
-    :type Sz: float
-    :param Az: solar azimuth
-    :type Az: float
-    :param ha: hour angle
+    :param sun_properties: Sunproperties with g (declination), Sz (zenith angle), Az (solar azimuth), ha (hour angle)
+    :type sun_properties: cea.utilities.solar_equations.SunProperties
     :param Tin_C: Fluid inlet temperature (C)
     :param height: height of the building [m]
     :param panel_properties: properties of solar panels
@@ -196,7 +188,7 @@ def SC_generation(hourly_radiation, prop_observers, number_groups, weather_data,
         radiation.fillna(0, inplace=True)  # set nan to zero
 
         # calculate incidence angle modifier for beam radiation
-        IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle_deg, panel_properties['type'], Sz, latitude)
+        IAM_b = calc_IAM_beam_SC(sun_properties, teta_z, tilt_angle_deg, panel_properties['type'], latitude)
 
         # calculate heat production from a solar collector of each group
         list_results[group] = calc_SC_module(tilt_angle_deg, IAM_b, IAM_d, radiation.I_direct,
@@ -577,17 +569,15 @@ def calc_qloss_network(Mfl, Le, Area_a, Tm, Te, maxmsc):
     return qloss_kW  # in kW
 
 
-def calc_IAM_beam_SC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, type_SCpanel, Sz_vector, latitude):
+def calc_IAM_beam_SC(sun_properties, teta_z, tilt_angle, type_SCpanel, latitude):
     """
     Calculates Incidence angle modifier for beam radiation.
 
-    :param Az_vector: Solar azimuth angle
-    :param g_vector: declination
-    :param ha_vector: hour angle
+    :param sun_properties: SunProperties instance
+    :type sun_properties: cea.utilities.solar_equations.SunProperties
     :param teta_z: panel surface azimuth angle
     :param tilt_angle: panel tilt angle
     :param type_SCpanel: type of solar collector
-    :param Sz_vector: solar zenith angle
     :return IAM_b_vector:
     """
 
@@ -629,11 +619,11 @@ def calc_IAM_beam_SC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, type_SC
     teta_z = radians(teta_z)
     tilt = radians(tilt_angle)
 
-    g_vector = np.radians(g_vector)
-    ha_vector = np.radians(ha_vector)
+    g_vector = np.radians(sun_properties.g)
+    ha_vector = np.radians(sun_properties.ha)
     lat = radians(latitude)
-    Sz_vector = np.radians(Sz_vector)
-    Az_vector = np.radians(Az_vector)
+    Sz_vector = np.radians(sun_properties.Sz)
+    Az_vector = np.radians(sun_properties.Az)
     Incidence_vector = np.vectorize(solar_equations.calc_incident_angle_beam)(g_vector, lat, ha_vector, tilt,
                                                                               teta_z)  # incident angle in radians
 

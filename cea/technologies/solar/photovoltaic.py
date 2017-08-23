@@ -62,9 +62,9 @@ def calc_PV(locator, latitude, longitude, weather_path, building_name):
     print('reading weather data done')
 
     # solar properties
-    g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
-                                                                                      settings.date_start,
-                                                                                      settings.solar_window_solstice)
+    sun_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
+                                                         settings.date_start,
+                                                         settings.solar_window_solstice)
     print('calculating solar properties done')
 
     # calculate properties of PV panel
@@ -81,9 +81,8 @@ def calc_PV(locator, latitude, longitude, weather_path, building_name):
 
     if not sensors_metadata_clean.empty:
         # calculate optimal angle and tilt for panels
-        sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh,
-                                                                      worst_Az, trr_mean, max_yearly_radiation,
-                                                                      panel_properties)
+        sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, sun_properties,
+                                                                      max_yearly_radiation, panel_properties)
         print('calculating optimal tile angle and separation done')
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
@@ -92,8 +91,8 @@ def calc_PV(locator, latitude, longitude, weather_path, building_name):
 
         print('generating groups of sensor points done')
 
-        results, final = calc_pv_generation(hourlydata_groups, number_groups, number_points, prop_observers,
-                                            weather_data, g, Sz, Az, ha, latitude, panel_properties)
+        results, final = calc_pv_generation(hourlydata_groups, number_groups, prop_observers, weather_data,
+                                            sun_properties, latitude, panel_properties)
 
         final.to_csv(locator.PV_results(building_name=building_name), index=True,
                      float_format='%.2f')  # print PV generation potential
@@ -108,8 +107,8 @@ def calc_PV(locator, latitude, longitude, weather_path, building_name):
 # PV electricity generation
 # =========================
 
-def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_observers, weather_data, g, Sz, Az, ha,
-                       latitude, panel_properties):
+def calc_pv_generation(hourly_radiation, number_groups, prop_observers, weather_data, sun_properties, latitude,
+                       panel_properties):
     """
     To calculate the electricity generated from PV panels.
     :param hourly_radiation: mean hourly radiation of sensors in each group [Wh/m2]
@@ -122,23 +121,17 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
     :type prop_observers: dataframe
     :param weather_data: weather data read from the epw file
     :type weather_data: dataframe
-    :param g: declination
-    :type g: float
-    :param Sz: zenith angle
-    :type Sz: float
-    :param Az: solar azimuth
-
-    :param ha: hour angle
+    :param sun_properties: SunProperties with g (declination), Sz (zenith angle), Az (solar azimuth), ha (hour angle)
+    :type sun_properties: cea.utilities.solar_equations.SunProperties
     :param latitude: latitude of the case study location
     :return:
     """
 
     # convert degree to radians
     lat = radians(latitude)
-    g_vector = np.radians(g)
-    ha_vector = np.radians(ha)
-    Sz_vector = np.radians(Sz)
-    Az_vector = np.radians(Az)
+    g_vector = np.radians(sun_properties.g)
+    ha_vector = np.radians(sun_properties.ha)
+    Sz_vector = np.radians(sun_properties.Sz)
 
     result = list(range(number_groups))
     list_groups_area = list(range(number_groups))
@@ -353,14 +346,14 @@ def calc_Sm_PV(te, I_sol, I_direct, I_diffuse, tilt, Sz, teta, tetaed, tetaeg,
 
     # absorbed solar radiation
     S_Wperm2 = M * Ta_n * (
-    kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
-        1 - cos(tilt)) / 2)  # [W/m2] (5.12.1)
+        kteta_B * I_direct * Rb + kteta_D * I_diffuse * (1 + cos(tilt)) / 2 + kteta_eG * I_sol * Pg * (
+            1 - cos(tilt)) / 2)  # [W/m2] (5.12.1)
     if S_Wperm2 <= 0:  # when points are 0 and too much losses
         S_Wperm2 = 0
 
     # temperature of cell
     Tcell_C = te + S_Wperm2 * (NOCT - 20) / (
-    800)  # assuming linear temperature rise vs radiation according to NOCT condition
+        800)  # assuming linear temperature rise vs radiation according to NOCT condition
 
     return S_Wperm2, Tcell_C
 
@@ -455,7 +448,7 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     sensors_metadata_clean['area_module'] = np.where(sensors_metadata_clean['tilt'] >= 5,
                                                      sensors_metadata_clean.AREA_m2,
                                                      module_length ** 2 * (
-                                                     sensors_metadata_clean.AREA_m2 / surface_area_flat))
+                                                         sensors_metadata_clean.AREA_m2 / surface_area_flat))
 
     # categorize the sensors by surface_azimuth, B, GB
     result = np.vectorize(calc_categoriesroof)(sensors_metadata_clean.surface_azimuth, sensors_metadata_clean.B,
