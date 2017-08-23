@@ -323,12 +323,9 @@ def photovoltaic_thermal(args):
     config.save()
 
     for building in list_buildings_names:
-        radiation_path = locator.get_radiation_building(building_name=building)
-        radiation_metadata = locator.get_radiation_metadata(building_name=building)
-        cea.technologies.solar.photovoltaic_thermal.calc_PVT(locator=locator, radiation_json_path=radiation_path,
-                                                             metadata_csv_path=radiation_metadata,
-                                                             latitude=args.latitude, longitude=args.longitude,
-                                                             weather_path=args.weather_path, building_name=building)
+        cea.technologies.solar.photovoltaic_thermal.calc_PVT(locator=locator, latitude=args.latitude,
+                                                             longitude=args.longitude, weather_path=args.weather_path,
+                                                             building_name=building)
 
 
 def install_toolbox(_):

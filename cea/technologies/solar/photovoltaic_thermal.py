@@ -32,7 +32,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_PVT(locator, radiation_json_path, metadata_csv_path, latitude, longitude, weather_path, building_name):
+def calc_PVT(locator, latitude, longitude, weather_path, building_name):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -40,10 +40,6 @@ def calc_PVT(locator, radiation_json_path, metadata_csv_path, latitude, longitud
 
     :param locator: An InputLocator to locate input files
     :type locator: cea.inputlocator.InputLocator
-    :param radiation_json_path: path to solar insulation data on all surfaces of each building
-    :type radiation_json_path: string
-    :param metadata_csv_path: path to data of sensor points measuring solar insulation of each building
-    :type metadata_csv_path: string
     :param latitude: latitude of the case study location
     :type latitude: float
     :param longitude: longitude of the case study location
@@ -56,6 +52,10 @@ def calc_PVT(locator, radiation_json_path, metadata_csv_path, latitude, longitud
     :return: Building_PVT.csv with solar collectors heat generation potential of each building, Building_PVT_sensors.csv
     with sensor data of each PVT panel.
     """
+    # path to solar insulation data on all surfaces of each building
+    radiation_json_path = locator.get_radiation_building(building_name=building_name)
+    # path to data of sensor points measuring solar insulation of each building
+    metadata_csv_path = locator.get_radiation_metadata(building_name=building_name)
 
     t0 = time.clock()
 
@@ -524,10 +524,8 @@ def test_PVT():
         latitude = shp.crs['lat_0']
 
     for building in list_buildings_names:
-        radiation = locator.get_radiation_building(building_name= building)
-        radiation_metadata = locator.get_radiation_metadata(building_name= building)
-        calc_PVT(locator=locator, radiation_json_path=radiation, metadata_csv_path=radiation_metadata, latitude=latitude,
-                 longitude=longitude, weather_path=weather_path, building_name=building)
+        calc_PVT(locator=locator, latitude=latitude, longitude=longitude, weather_path=weather_path,
+                 building_name=building)
 
 if __name__ == '__main__':
     test_PVT()
