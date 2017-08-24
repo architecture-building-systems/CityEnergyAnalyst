@@ -199,6 +199,10 @@ def radiation_daysim(args):
     elif args.weather_path in locator.get_weather_names():
         args.weather_path = locator.get_weather(args.weather_path)
 
+    config = cea.config.Configuration(args.scenario)
+    config.weather = args.weather_path
+    config.save()
+    
     cea.resources.radiation_daysim.radiation_main.main(locator=locator, weather_path=args.weather_path)
 
 
