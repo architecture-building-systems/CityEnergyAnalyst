@@ -12,8 +12,6 @@ import pyliburo.py3dmodel.fetch as fetch
 import pyliburo.py2radiance as py2radiance
 
 from geopandas import GeoDataFrame as gpdf
-
-import cea.globalvar
 import cea.inputlocator
 
 __author__ = "Paul Neitzel, Kian Wee Chen"
@@ -167,19 +165,16 @@ def radiation_singleprocessing(rad, bldg_dict_list, locator, aweatherfile_path):
     for chunk_n, bldg_dict in enumerate(chunks):
         daysim_main.isolation_daysim(chunk_n, rad, bldg_dict, locator, settings.RAD_PARMS, aweatherfile_path)
 
-def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
-                          input_terrain_raster, architecture_dbf):
+def main(locator, weather_path):
     """
     This function makes the calculation of solar insolation in X sensor points for every building in the zone
     of interest. the number of sensor points depends on the size of the grid selected in the SETTINGS.py file and
     are generated automatically.
 
-    :param weatherfile_path:
-    :param locator:
-    :param zone_shp:
-    :param district_shp:
-    :param input_terrain_raster:
-    :param architecture_dbf:
+    :param weather_path: path to the weather file (*.epw) to use
+    :type weather_path: str
+    :param locator: a cea.inputlocator.InputLocator - provides access to file paths inside a scenario
+    :type locator: cea.inputlocator.InputLocator
     :return:
     """
 
@@ -190,8 +185,7 @@ def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
     print "creating 3D geometry and surfaces"
     # create geometrical faces of terrain and buildings
     simplification_params = settings.SIMPLIFICATION_PARAMS
-    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(zone_shp, district_shp,
-                                                                            input_terrain_raster, architecture_dbf,
+    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator,
                                                                                                     simplification_params)
 
     print "Sending the scene: geometry and materials to daysim"
@@ -208,27 +202,14 @@ def radiation_daysim_main(weatherfile_path, locator, zone_shp, district_shp,
 
     time1 = time.time()
     if settings.SIMUL_PARAMS['multiprocessing']:
-        radiation_multiprocessing(rad, geometry_3D_zone, locator, weatherfile_path)
+        radiation_multiprocessing(rad, geometry_3D_zone, locator, weather_path)
     else:
-        radiation_singleprocessing(rad, geometry_3D_zone, locator, weatherfile_path)
+        radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path)
 
     print "Daysim simulation finished in ", (time.time() - time1) / 60.0, " mins"
 
-def main(locator, weather_path):
-
-    district_shp = locator.get_district_geometry()
-    zone_shp = locator.get_zone_geometry()
-    architecture_dbf = locator.get_building_architecture()
-    input_terrain_raster = locator.get_terrain()
-
-    # calculate solar radiation
-    radiation_daysim_main(weather_path, locator, zone_shp=zone_shp, district_shp=district_shp,
-         input_terrain_raster=input_terrain_raster, architecture_dbf=architecture_dbf)
 
 if __name__ == '__main__':
-
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.ReferenceCaseOpenLocator()
     weather_path = locator.get_default_weather()
     main(locator=locator, weather_path=weather_path)
