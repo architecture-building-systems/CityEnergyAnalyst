@@ -21,12 +21,12 @@ from sklearn.preprocessing import MinMaxScaler
 
 __author__ = "Jimeno A. Fonseca; Fazel Khayatian"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca"]
+__credits__ = ["Jimeno A. Fonseca", "Fazel Khayatian"]
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
-__status__ = "Production"
+__status__ = "Testing"
 
 all_results=[]
 def simulate_demand_sample(locator, building_name, output_parameters):
