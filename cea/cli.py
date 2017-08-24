@@ -202,7 +202,7 @@ def radiation_daysim(args):
     config = cea.config.Configuration(args.scenario)
     config.weather = args.weather_path
     config.save()
-    
+
     cea.resources.radiation_daysim.radiation_main.main(locator=locator, weather_path=args.weather_path)
 
 
