@@ -31,8 +31,7 @@ def calc_intersection(terrain_intersection_curves, edges_coords, edges_dir):
     :param terrain_intersection_curves:
     :param edges_coords:
     :param edges_dir:
-    :return:
-            intersecting points, intersecting faces
+    :return: intersecting points, intersecting faces
     """
     building_line = gp_Lin(gp_Ax1(gp_Pnt(edges_coords[0], edges_coords[1], edges_coords[2]),
                                   gp_Dir(edges_dir[0], edges_dir[1], edges_dir[2])))
