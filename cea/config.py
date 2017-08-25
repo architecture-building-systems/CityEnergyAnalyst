@@ -232,41 +232,49 @@ class RadiationDaysimConfiguration(object):
             'RAD_DP': self._parser.getint('radiation-daysim', 'rad-dp'),
         }
 
-    @rad_parameters.setter
-    def rad_parameters(self, value):
-        self._parser.set('radiation-daysim', 'rad-n', value['RAD_N'])
-        self._parser.set('radiation-daysim', 'rad-af', value['RAD_AF'])
-        self._parser.set('radiation-daysim', 'rad-ab', value['RAD_AB'])
-        self._parser.set('radiation-daysim', 'rad-ad', value['RAD_AD'])
-        self._parser.set('radiation-daysim', 'rad-as', value['RAD_AS'])
-        self._parser.set('radiation-daysim', 'rad-ar', value['RAD_AR'])
-        self._parser.set('radiation-daysim', 'rad-aa', value['RAD_AA'])
-        self._parser.set('radiation-daysim', 'rad-lr', value['RAD_LR'])
-        self._parser.set('radiation-daysim', 'rad-st', value['RAD_ST'])
-        self._parser.set('radiation-daysim', 'rad-sj', value['RAD_SJ'])
-        self._parser.set('radiation-daysim', 'rad-lw', value['RAD_LW'])
-        self._parser.set('radiation-daysim', 'rad-dj', value['RAD_DJ'])
-        self._parser.set('radiation-daysim', 'rad-ds', value['RAD_DS'])
-        self._parser.set('radiation-daysim', 'rad-dr', value['RAD_DR'])
-        self._parser.set('radiation-daysim', 'rad-dp', value['RAD_DP'])
+    @property
+    def sensor_parameters(self):
+        """Grid for the sensors, use 100 (maximum) if you want only one point per surface"""
+        return {
+            'X_DIM': self._parser.getint('radiation-daysim', 'sensor-x-dim'),
+            'Y_DIM': self._parser.getint('radiation-daysim', 'sensor-y-dim'),
+        }
 
-    # GRID FOR THE SENSORS
-    SEN_PARMS = {
-        'X_DIM': 100,  # maximum so there is only one point per surface
-        'Y_DIM': 100,  # maximum so there is only one point per surface
-    }
-    # terrain parameters
-    TERRAIN_PARAMS = {'e_terrain': 0.8}  # reflection for the terrain.
 
-    # simulation parameters
-    SIMUL_PARAMS = {'n_build_in_chunk': 10,  # min number of buildings for multiprocessing
-                    'multiprocessing': False}  # limit the number if running out of memory
+    @property
+    def terrain_parameters(self):
+        """terrain parameters: e-terrain (reflection for the terrain)"""
+        return {
+            'e_terrain': self._parser.getfloat('radiation-daysim', 'e-terrain'),
+        }
 
-    # geometry simplification
-    SIMPLIFICATION_PARAMS = {'zone_geometry': 2,  # level of simplification of the zone geometry
-                             'surrounding_geometry': 5,  # level of simplification of the district geometry
-                             'consider_windows': True,  # boolean to consider or not windows in the geometry
-                             'consider_floors': True}  # boolean to consider or not floors in the geometry
+    @property
+    def simulation_parameters(self):
+        """simulation parameters:
+
+        - n_build_in_chunk: min number of buildings for multiprocessing
+        - multiprocessing: if set to true, run the process for chunk size ``n_build_in_chunk``
+        """
+        return {
+            'n_build_in_chunk': self._parser.getint('radiation-daysim', 'n-buildings-in-chunk'),
+            'multiprocessing': self._parser.getboolean('radiation-daysim', 'multiprocessing'),
+        }
+
+    @property
+    def simplification_parameters(self):
+        """geometry simplification:
+
+        - zone_geometry: level of simplification of the zone geometry
+        - surrounding_geometry: level of simplification of the district geometry
+        - consider_windows: boolean to consider or not windows in the geometry
+        - consider_floors: boolean to consider or not floors in the geometry
+        """
+        return {
+            'zone_geometry': self._parser.getint('radiation-daysim', 'zone-geometry'),
+            'surrounding_geometry': self._parser.getint('radiation-daysim', 'surrounding-geometry'),
+            'consider_windows': self._parser.getboolean('radiation-daysim', 'consider-windows'),
+            'consider_floors': self._parser.getboolean('radiation-daysim', 'consider-floors'),
+        }
 
 if __name__ == '__main__':
     config = Configuration(r'c:\reference-case-open\baseline')
