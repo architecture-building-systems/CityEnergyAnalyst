@@ -14,13 +14,12 @@ import pyliburo.py3dmodel.modify as modify
 
 import pyliburo.gml3dmodel as gml3dmodel
 
-from cea.resources.radiation_daysim import settings
 from OCC.IntCurvesFace import IntCurvesFace_ShapeIntersector
 from OCC.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
 from geopandas import GeoDataFrame as gdf
 
-import cea.globalvar
 import cea.inputlocator
+import cea.config
 import numpy as np
 import gdal
 import time
@@ -309,10 +308,10 @@ def geometry_main(locator, simplification_params):
 
 if __name__ == '__main__':
     locator = cea.inputlocator.ReferenceCaseOpenLocator()
+    simplification_params = cea.config.Configuration(locator.scenario_path).radiation_daysim.simplification_parameters
 
     # run routine City GML LOD 1
     time1 = time.time()
-    simplification_params = settings.SIMPLIFICATION_PARAMS
     geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_main(locator, simplification_params)
     print "Geometry of the scene created in", (time.time() - time1) / 60.0, " mins"
 

@@ -3,7 +3,6 @@ import pandas as pd
 import pyliburo.py3dmodel.calculate as calculate
 from pyliburo import py3dmodel
 import pyliburo.py2radiance as py2radiance
-from cea.resources.radiation_daysim import settings
 import json
 
 import pyliburo.gml3dmodel as gml3dmodel
@@ -43,7 +42,7 @@ def generate_sensor_surfaces(occface, xdim, ydim, srf_type):
     return sensor_dir, sensor_cord, sensor_type, sensor_area
 
 
-def calc_sensors_building(building_geometry_dict):
+def calc_sensors_building(building_geometry_dict, sensor_parameters):
     sensor_dir_list = []
     sensor_cord_list = []
     sensor_type_list = []
@@ -53,7 +52,7 @@ def calc_sensors_building(building_geometry_dict):
         occface_list = building_geometry_dict[srf_type]
         for face in occface_list:
             sensor_dir, sensor_cord, sensor_type, sensor_area \
-                = generate_sensor_surfaces(face, settings.SEN_PARMS['X_DIM'], settings.SEN_PARMS['Y_DIM'], srf_type)
+                = generate_sensor_surfaces(face, sensor_parameters['X_DIM'], sensor_parameters['Y_DIM'], srf_type)
 
             sensor_dir_list.extend(sensor_dir)
             sensor_cord_list.extend(sensor_cord)
@@ -63,7 +62,7 @@ def calc_sensors_building(building_geometry_dict):
     return sensor_dir_list, sensor_cord_list, sensor_type_list, sensor_area_list
 
 
-def calc_sensors_zone(geometry_3D_zone, locator):
+def calc_sensors_zone(geometry_3D_zone, locator, sensor_parameters):
     sensors_coords_zone = []
     sensors_dir_zone = []
     sensors_total_number_list = []
@@ -74,7 +73,7 @@ def calc_sensors_zone(geometry_3D_zone, locator):
         bldg_name = building_geometry["name"]
         # get sensors in the building
         sensors_dir_building, sensors_coords_building, \
-        sensors_type_building, sensors_area_building = calc_sensors_building(building_geometry)
+        sensors_type_building, sensors_area_building = calc_sensors_building(building_geometry, sensor_parameters)
 
         # get the total number of sensors and store in lst
         sensors_number = len(sensors_coords_building)
@@ -106,7 +105,7 @@ def calc_sensors_zone(geometry_3D_zone, locator):
     return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone
 
 
-def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, rad_params, aweatherfile_path):
+def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, aweatherfile_path):
 
     # folder for data work
     daysim_dir = locator.get_temporary_file("temp" + str(chunk_n))
@@ -115,7 +114,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, rad_params, aweath
     # calculate sensors
     print " calculating and sending sensor points"
     sensors_coords_zone, sensors_dir_zone, sensors_number_zone, names_zone, \
-    sensors_code_zone = calc_sensors_zone(geometry_3D_zone, locator)
+    sensors_code_zone = calc_sensors_zone(geometry_3D_zone, locator, settings.sensor_parameters)
     rad.set_sensor_points(sensors_coords_zone, sensors_dir_zone)
     create_sensor_input_file(rad, chunk_n)
 
@@ -129,6 +128,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, rad_params, aweath
 
     rad.execute_epw2wea(aweatherfile_path)
     rad.execute_radfiles2daysim()
+    rad_params = settings.rad_parameters
     rad.write_radiance_parameters(rad_params['RAD_AB'], rad_params['RAD_AD'], rad_params['RAD_AS'],
                                   rad_params['RAD_AR'], rad_params['RAD_AA'], rad_params['RAD_LR'],
                                   rad_params['RAD_ST'], rad_params['RAD_SJ'], rad_params['RAD_LW'],

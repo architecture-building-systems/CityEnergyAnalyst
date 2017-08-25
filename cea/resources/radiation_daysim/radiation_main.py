@@ -4,7 +4,6 @@ Radiation engine and geometry handler for CEA
 from __future__ import division
 import pandas as pd
 import time
-from cea.resources.radiation_daysim import settings
 from cea.resources.radiation_daysim import daysim_main, geometry_generator
 import multiprocessing as mp
 
@@ -13,6 +12,7 @@ import pyliburo.py2radiance as py2radiance
 
 from geopandas import GeoDataFrame as gpdf
 import cea.inputlocator
+import cea.config
 
 __author__ = "Paul Neitzel, Kian Wee Chen"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -137,39 +137,34 @@ def reader_surface_properties(locator, input_shp):
 
     return surface_properties.set_index('Name').round(decimals=2)
 
-def radiation_multiprocessing(rad, bldg_dict_list, aresults_path, aweatherfile_path):
+def radiation_multiprocessing(rad, bldg_dict_list, locator, weather_path, settings):
 
     config = cea.config.Configuration(locator.scenario_path)
 
-    # get chunks of buildings to iterate
-    simul_params = settings.SIMUL_PARAMS
-    rad_params = config.radiation_daysim.rad_parameters
     # get chunks to iterate and start multiprocessing
-    chunks = [bldg_dict_list[i:i +simul_params['n_build_in_chunk']] for i in range(0, len(bldg_dict_list),
-                                                                                   simul_params['n_build_in_chunk'])]
+    chunks = [bldg_dict_list[i:i + settings.simulation_parameters['n_build_in_chunk']] for i in
+              range(0, len(bldg_dict_list),
+                    settings.simulation_parameters['n_build_in_chunk'])]
 
     processes = []
     for chunk_n, bldg_dict in enumerate(chunks):
         process = mp.Process(target=daysim_main.isolation_daysim, args=(
-            chunk_n, rad, bldg_dict, aresults_path, rad_params, aweatherfile_path,))
+            chunk_n, rad, bldg_dict, locator, weather_path, settings))
         process.start()
         processes.append(process)
     for process in processes:
         process.join()
 
-def radiation_singleprocessing(rad, bldg_dict_list, locator, aweatherfile_path):
 
-    config = cea.config.Configuration(locator.scenario_path)
+def radiation_singleprocessing(rad, bldg_dict_list, locator, weather_path, settings):
 
     # get chunks of buildings to iterate
-    simul_params = settings.SIMUL_PARAMS
-    rad_params = config.radiation_daysim.rad_parameters
-
-    chunks = [bldg_dict_list[i:i + simul_params['n_build_in_chunk']] for i in range(0, len(bldg_dict_list),
-                                                                                    simul_params['n_build_in_chunk'])]
+    chunks = [bldg_dict_list[i:i + settings.simulation_parameters['n_build_in_chunk']] for i in
+              range(0, len(bldg_dict_list),
+                    settings.simulation_parameters['n_build_in_chunk'])]
 
     for chunk_n, bldg_dict in enumerate(chunks):
-        daysim_main.isolation_daysim(chunk_n, rad, bldg_dict, locator, rad_params, aweatherfile_path)
+        daysim_main.isolation_daysim(chunk_n, rad, bldg_dict, locator, settings, weather_path)
 
 def main(locator, weather_path):
     """
@@ -183,6 +178,7 @@ def main(locator, weather_path):
     :type locator: cea.inputlocator.InputLocator
     :return:
     """
+    settings = cea.config.Configuration(locator.scenario_path).radiation_daysim
 
     # import material properties of buildings
     building_surface_properties = reader_surface_properties(locator=locator,
@@ -190,9 +186,8 @@ def main(locator, weather_path):
 
     print "creating 3D geometry and surfaces"
     # create geometrical faces of terrain and buildings
-    simplification_params = settings.SIMPLIFICATION_PARAMS
     geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator,
-                                                                                                    simplification_params)
+                                                                                                    settings.simplification_parameters)
 
     print "Sending the scene: geometry and materials to daysim"
     # send materials
@@ -207,10 +202,10 @@ def main(locator, weather_path):
     rad.create_rad_input_file()
 
     time1 = time.time()
-    if settings.SIMUL_PARAMS['multiprocessing']:
-        radiation_multiprocessing(rad, geometry_3D_zone, locator, weather_path)
+    if settings.simulation_parameters['multiprocessing']:
+        radiation_multiprocessing(rad, geometry_3D_zone, locator, weather_path, settings)
     else:
-        radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path)
+        radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path, settings)
 
     print "Daysim simulation finished in ", (time.time() - time1) / 60.0, " mins"
 
