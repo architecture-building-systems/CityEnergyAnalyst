@@ -139,9 +139,11 @@ def reader_surface_properties(locator, input_shp):
 
 def radiation_multiprocessing(rad, bldg_dict_list, aresults_path, aweatherfile_path):
 
+    config = cea.config.Configuration(locator.scenario_path)
+
     # get chunks of buildings to iterate
     simul_params = settings.SIMUL_PARAMS
-    rad_params = settings.RAD_PARMS
+    rad_params = config.radiation_daysim.rad_parameters
     # get chunks to iterate and start multiprocessing
     chunks = [bldg_dict_list[i:i +simul_params['n_build_in_chunk']] for i in range(0, len(bldg_dict_list),
                                                                                    simul_params['n_build_in_chunk'])]
@@ -157,13 +159,17 @@ def radiation_multiprocessing(rad, bldg_dict_list, aresults_path, aweatherfile_p
 
 def radiation_singleprocessing(rad, bldg_dict_list, locator, aweatherfile_path):
 
+    config = cea.config.Configuration(locator.scenario_path)
+
     # get chunks of buildings to iterate
     simul_params = settings.SIMUL_PARAMS
+    rad_params = config.radiation_daysim.rad_parameters
+
     chunks = [bldg_dict_list[i:i + simul_params['n_build_in_chunk']] for i in range(0, len(bldg_dict_list),
                                                                                     simul_params['n_build_in_chunk'])]
 
     for chunk_n, bldg_dict in enumerate(chunks):
-        daysim_main.isolation_daysim(chunk_n, rad, bldg_dict, locator, settings.RAD_PARMS, aweatherfile_path)
+        daysim_main.isolation_daysim(chunk_n, rad, bldg_dict, locator, rad_params, aweatherfile_path)
 
 def main(locator, weather_path):
     """
