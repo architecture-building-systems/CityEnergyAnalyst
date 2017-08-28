@@ -12,6 +12,10 @@ cea\.utilities\.building\_info module
     :undoc-members:
     :show-inheritance:
 
+cea\.utilities\.compile\_pyd\_files module
+------------------------------------------
+
+(documentation pending)
 
 cea\.utilities\.dbfreader module
 --------------------------------
