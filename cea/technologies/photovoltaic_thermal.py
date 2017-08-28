@@ -78,14 +78,14 @@ def calc_PVT_generation(type_panel, hourly_radiation, Number_groups, number_poin
     listresults = list(range(Number_groups))
     listareasgroups = list(range(Number_groups))
 
-    Sum_mcp = np.zeros(8760)
-    Sum_qout = np.zeros(8760)
-    Sum_Eaux = np.zeros(8760)
-    Sum_qloss = np.zeros(8760)
-    Sum_PV = np.zeros(8760)
-    Tin_array = np.zeros(8760) + Tin
+    Sum_mcp_kWperC = np.zeros(8760)
+    Sum_qout_kWh = np.zeros(8760)
+    Sum_Eauxf_kWh = np.zeros(8760)
+    Sum_qloss_kWh = np.zeros(8760)
+    Sum_E_PVT_kWh = np.zeros(8760)
+    Tin_array_C = np.zeros(8760) + Tin
     Sum_Area_m = (prop_observers['area_netpv'] * number_points).sum()
-    lv = 2  # grid lenght module length
+    lv = 2  # grid length module length
     Le = (2 * lv * number_points.sum()) / (Sum_Area_m * Aratio)
     Li = 2 * height / (Sum_Area_m * Aratio)
     Leq = Li + Le  # in m/m2
@@ -134,17 +134,17 @@ def calc_PVT_generation(type_panel, hourly_radiation, Number_groups, number_poin
                                              eff_nom, Bref, results[0].copy(), results[1].copy(), misc_losses, areagroup)
 
         Kons = areagroup / Apanel
-        Sum_mcp = Sum_mcp + listresults[group][5] * Kons
-        Sum_qloss = Sum_qloss + listresults[group][0] * Kons
-        Sum_qout = Sum_qout + listresults[group][1] * Kons
-        Sum_Eaux = Sum_Eaux + listresults[group][2] * Kons
-        Sum_PV = Sum_PV + listresults[group][6]
+        Sum_mcp_kWperC = Sum_mcp_kWperC + listresults[group][5] * Kons
+        Sum_qloss_kWh = Sum_qloss_kWh + listresults[group][0] * Kons
+        Sum_qout_kWh = Sum_qout_kWh + listresults[group][1] * Kons
+        Sum_Eauxf_kWh = Sum_Eauxf_kWh + listresults[group][2] * Kons
+        Sum_E_PVT_kWh = Sum_E_PVT_kWh + listresults[group][6]
         listareasgroups[group] = areagroup
 
-    Tout_group = (Sum_qout / Sum_mcp) + Tin  # in C
+    Tout_group_C = (Sum_qout_kWh / Sum_mcp_kWperC) + Tin  # in C
     Final = pd.DataFrame(
-        {'Qsc_KWh': Sum_qout, 'Tscs': Tin_array, 'Tscr': Tout_group, 'mcp_kW/C': Sum_mcp, 'Eaux_kWh': Sum_Eaux,
-         'Qsc_l_KWh': Sum_qloss, 'PV_kWh': Sum_PV, 'Area': sum(listareasgroups)}, index=range(8760))
+        {'Q_PVT_gen_kWh': Sum_qout_kWh, 'T_PVT_sup_C': Tin_array_C, 'T_PVT_re_C': Tout_group_C, 'mcp_PVT_kWperC': Sum_mcp_kWperC, 'Eauxf_PVT_kWh': Sum_Eauxf_kWh,
+         'Q_PVT_l_kWh': Sum_qloss_kWh, 'E_PVT_gen_kWh': Sum_E_PVT_kWh, 'A_PVT_m2': sum(listareasgroups)}, index=range(8760))
 
     return listresults, Final
 
@@ -344,12 +344,12 @@ def Calc_PVT_module(tilt_angle, IAM_b_vector, I_direct_vector, I_diffuse_vector,
 
 # investment and maintenance costs
 
-def calc_Cinv_PVT(P_peak, gv):
+def calc_Cinv_PVT(P_peak_kW, gv):
     """
     P_peak in kW
     result in CHF
     """
-    InvCa = 5000 * P_peak / gv.PVT_n # CHF/y
+    InvCa = 5000 * P_peak_kW / gv.PVT_n # CHF/y
     # 2sol
 
     return InvCa
