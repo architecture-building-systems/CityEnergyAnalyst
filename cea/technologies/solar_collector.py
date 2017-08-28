@@ -67,10 +67,10 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, 
     listresults_perarea = [None] * listgroups
     listareasgroups = [None] * listgroups
     Sum_mcp = np.zeros(8760)
-    Sum_qout = np.zeros(8760)
+    Sum_qout_kWh = np.zeros(8760)
     Sum_Eaux = np.zeros(8760)
     Sum_qloss = np.zeros(8760)
-    Tin_array = np.zeros(8760) + Tin
+    Tin_array_C = np.zeros(8760) + Tin
     Sum_Area_m = (prop_observers['area_netpv'] * number_points).sum()
     lv = 2  # grid lenght module length
     Le = (2 * lv * number_points.sum()) / (Sum_Area_m * Aratio)
@@ -111,16 +111,16 @@ def SC_generation(type_SCpanel, group_radiation, prop_observers, number_points, 
         qloss_array = listresults[group][0]
         qout_array = listresults[group][1]
         Eaux_array = listresults[group][2]
-        Sum_qout = Sum_qout + qout_array
+        Sum_qout_kWh = Sum_qout_kWh + qout_array
         Sum_Eaux = Sum_Eaux + Eaux_array
         Sum_qloss = Sum_qloss + qloss_array
         Sum_mcp = Sum_mcp + mcp_array
 
-    Tout_group = (Sum_qout / Sum_mcp) + Tin  # in C
+    Tout_group_C = (Sum_qout_kWh / Sum_mcp) + Tin  # in C
 
     Final = pd.DataFrame(
-        {'Qsc_Kw': Sum_qout, 'Tscs': Tin_array, 'Tscr': Tout_group, 'mcp_kW/C': Sum_mcp, 'Eaux_kW': Sum_Eaux,
-         'Qsc_l_KWH': Sum_qloss, 'Area': sum(listareasgroups)}, index=range(8760))
+        {'Q_SC_gen_kWh': Sum_qout_kWh, 'T_SC_sup_C': Tin_array_C, 'T_SC_re_C': Tout_group_C, 'mcp_SC_kWperC': Sum_mcp, 'Eauxf_SC_kWh': Sum_Eaux,
+         'Q_SC_l_kWh': Sum_qloss, 'A_SC_m2': sum(listareasgroups)}, index=range(8760))
 
     return listresults, Final
 
@@ -501,7 +501,7 @@ def calc_properties_SC(type_SCpanel):
 
 def calc_Eaux_SC(qV_des, Dp_collector, Leq, Aa):
     """
-    auxiliary electricity solar collectort
+    auxiliary electricity solar collector
 
     :param qV_des:
     :param Dp_collector:
@@ -657,7 +657,7 @@ def optimal_angle_and_tilt(observers_all, latitude, worst_sh, worst_Az, transmit
 
 # investment and maintenance costs
 
-def calc_Cinv_SC(Area, gv, locator, technology=0):
+def calc_Cinv_SC(Area_m2, gv, locator, technology=0):
     """
     Lifetime 35 years
     """
@@ -666,10 +666,10 @@ def calc_Cinv_SC(Area, gv, locator, technology=0):
     SC_cost_data[SC_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database
-    if Area < SC_cost_data['cap_min'][0]:
-        Area = SC_cost_data['cap_min'][0]
+    if Area_m2 < SC_cost_data['cap_min'][0]:
+        Area_m2 = SC_cost_data['cap_min'][0]
     SC_cost_data = SC_cost_data[
-        (SC_cost_data['cap_min'] <= Area) & (SC_cost_data['cap_max'] > Area)]
+        (SC_cost_data['cap_min'] <= Area_m2) & (SC_cost_data['cap_max'] > Area_m2)]
 
     Inv_a = SC_cost_data.iloc[0]['a']
     Inv_b = SC_cost_data.iloc[0]['b']
@@ -680,11 +680,12 @@ def calc_Cinv_SC(Area, gv, locator, technology=0):
     Inv_LT = SC_cost_data.iloc[0]['LT_yr']
     Inv_OM = SC_cost_data.iloc[0]['O&M_%'] / 100
 
-    InvC = Inv_a + Inv_b * (Area) ** Inv_c + (Inv_d + Inv_e * Area) * log(Area)
+    InvC = Inv_a + Inv_b * (Area_m2) ** Inv_c + (Inv_d + Inv_e * Area_m2) * log(Area_m2)
     Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     Opex_fixed = Capex_a * Inv_OM
 
     return Capex_a, Opex_fixed
+
 
 
 def test_solar_collector():
