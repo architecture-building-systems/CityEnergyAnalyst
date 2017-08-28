@@ -1,6 +1,14 @@
 cea\.resources package
 ======================
 
+Subpackages
+-----------
+
+.. toctree::
+
+    cea.resources.radiation_arcgis
+    cea.resources.radiation_daysim
+
 Submodules
 ----------
 
@@ -16,14 +24,6 @@ cea\.resources\.natural\_gas module
 -----------------------------------
 
 .. automodule:: cea.resources.natural_gas
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-cea\.resources\.radiation module
---------------------------------
-
-.. automodule:: cea.resources.radiation
     :members:
     :undoc-members:
     :show-inheritance:
