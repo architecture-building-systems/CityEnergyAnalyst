@@ -82,11 +82,6 @@ class GlobalVariables(object):
         self.fCheckPoint = 1  # frequency for the saving of checkpoints
         self.maxTime = 7 * 24 * 3600  # maximum computational time [seconds]
 
-        # Set Flags for different system setup preferences
-
-        # self.NetworkLengthZernez = 864.0 #meters network length of maximum network, \
-        # then scaled by number of costumers (Zernez Specific), from J.Fonseca's Pipes Data
-
         self.ZernezFlag = 0
         self.FlagBioGasFromAgriculture = 0  # 1 = Biogas from Agriculture, 0 = Biogas normal
         self.HPSew_allowed = 1
@@ -292,11 +287,9 @@ class GlobalVariables(object):
         self.U_heat = 2500  # W/m2K
         self.dT_heat = 5  # K - pinch delta at design conditions
         self.dT_cool = 1  # K - pinch delta at design conditions
-
         # Heat pump
         self.HP_maxSize = 20.0E6  # max thermal design size [Wth]
         self.HP_minSize = 1.0E6  # min thermal design size [Wth]
-
 
         self.HP_etaex = 0.6  # exergetic efficiency of WSHP [L. Girardin et al., 2010]_
         self.HP_deltaT_cond = 2.0  # pinch for condenser [K]
@@ -327,18 +320,12 @@ class GlobalVariables(object):
         self.GHP_HmaxSize = 2E3  # max heating design size [Wth] FOR ONE PROBE
         self.GHP_WmaxSize = 1E3  # max electrical design size [Wel] FOR ONE PROBE
 
-        self.GHP_nBH = 50.0  # [years] for a borehole
-
-
         self.GHP_etaex = 0.677  # exergetic efficiency [O. Ozgener et al., 2005]_
         self.GHP_Auxratio = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
 
-        self.GHP_i = 0.06  # interest rate
         self.GHP_A = 25  # [m^2] area occupancy of one borehole Gultekin et al. 5 m separation at a penalty of 10% less efficeincy
 
         # Combined cycle
-
-        self.CC_i = 0.06
 
         self.GT_maxSize = 50.00000001E6  # max electrical design size in W = 50MW (NOT THERMAL capacity)
         self.GT_minSize = 0.2E6  # min electrical design size in W = 0.2 MW (NOT THERMAL capacity)
@@ -354,21 +341,15 @@ class GlobalVariables(object):
 
         self.STGen_eta = 0.9  # generator efficiency after steam turbine
         self.CC_Maintenance_per_kWhel = 0.03 * self.EURO_TO_CHF  # 0.03 € / kWh_el after Weber 2008, used in Slave Cost Calculation
-
         # Boiler
         # Operating figures, quality parameters and investment costs for district heating systems (AFO)
 
         # ELCO-Loesungsbeispiel-Huber.pdf
 
         self.Boiler_C_fuel = 20.0  # € / MWh_therm_bought(for LHV), AFO
-        self.Boiler_C_labour = 4.0  # [€ /MWh_therm_sold]
         self.Boiler_P_aux = 0.026  # 0.026 Wh/Wh_th_sold = 26 kWh_el / MWh_th_sold, bioenergy 2020
         self.Boiler_min = 0.05  # minimum Part Load of Boiler
         self.Boiler_equ_ratio = 0.2  # 20% own capital required (equity ratio)
-        self.Boiler_C_maintainance = 0.05  # 5 % of capital cost (3% boiler, 2% techn. facilities) by AFO, currently not used
-        # Boiler_C_maintainance_fazNG = 3.5  /1E6 * EURO_TO_CHF # 3.5 Euro  /MWh_th
-        # Boiler_C_maintainance_fazBG = 10.4 /1E6 * EURO_TO_CHF # 10.4 Euro /MWh_th
-        self.Boiler_C_maintainance_faz = 3.5
         self.Boiler_eta_hp = 0.9
 
         # Furnace
@@ -380,22 +361,10 @@ class GlobalVariables(object):
         # Substation Heat Exchangers
 
 
-        # Fuel Cells
-        self.FC_OP_HOURS_PER_YEAR = 4000.0  # hours / year
-        self.FC_LIFETIME = 40000.0  # hours of operation
-
-        self.FC_stack_cost = 12000.0  # CHF /kW_th for a Hexis 1000 N 1kWe/1.8kWth
-        self.FC_overhead = 0.1  # 10 % higher cost due to final installation
-
         # Vapor compressor chiller
-        self.VCC_maxSize = 3500.0E3  # maximum size [W]
-        self.VCC_n = 25.0  # service life
         self.VCC_tcoolin = 30 + 273.0  # entering condenser water temperature [K]
         self.VCC_minload = 0.1  # min load for cooling power
 
-        # Cooling tower
-        self.CT_maxSize = 10.0E6  # cooling power desin size [W]
-        self.CT_n = 20.0
 
 
         # Storage
@@ -446,7 +415,6 @@ class GlobalVariables(object):
         # solar PV and PVT
         self.nPV = 0.16
         self.nPVT = 0.16
-
         # ==============================================================================================================
         # solar thermal collector
         # ==============================================================================================================
@@ -497,14 +465,6 @@ class GlobalVariables(object):
         self.initial_temp_air_prev = 21
         self.initial_temp_m_prev = 16
 
-        self.HP_n = 20  # lifetime [years] default 20
-        self.GHP_nHP = 20  # for the geothermal heat pump default 20
-        self.Boiler_n = 20  # lifetime, after A+W, default 20
-        self.CC_n = 25  # lifetime default 25
-        self.FC_n = 10  # years of operation default 10
-        self.PVT_n = 20  # years of operation default 20
-        self.SC_n = self.PVT_n  # years of operation default 20
-        self.CT_a = 0.15  # annuity factor default 0.15
         self.Subst_n = 20  # Lifetime after A+W default 20
         self.ELEC_PRICE = 0.2 * self.EURO_TO_CHF / 1000.0  # default 0.2
         # self.ELEC_PRICE_KEV = 1.5 * ELEC_PRICE # MAKE RESEARCH ABOUT A PROPER PRICE AND DOCUMENT THAT!
@@ -513,9 +473,7 @@ class GlobalVariables(object):
         self.BG_PRICE = 0.076 * self.EURO_TO_CHF / 1000.0  # [CHF / wh] # default 0.076
         self.cPump = self.ELEC_PRICE * 24. * 365.  # coupled to electricity cost
         self.Subst_i = 0.05 # default 0.05
-        self.FC_i = 0.05 # interest rate default 0.05
-        self.HP_i = 0.05  # interest rate default 0.05
-        self.Boiler_i = 0.05  # interest rate default 0.05
+
 
         # ==============================================================================================================
         # TABS

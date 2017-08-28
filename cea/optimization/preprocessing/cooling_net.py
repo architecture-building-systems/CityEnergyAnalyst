@@ -166,8 +166,8 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
     Qavail = QavailCopy
 
     mdotMax = np.amax(coolArray[:, 1])
-    costs += PumpModel.Pump_Cost(2 * ntwFeat.DeltaP_DCN, mdotMax, gv.etaPump, gv)
-
+    Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdotMax, gv.etaPump, gv, locator)
+    costs += (Capex_pump + Opex_fixed_pump)
     if HRdata == 0:
         for i in range(nBuild):
             if arrayData[i][1] > 0:
@@ -178,8 +178,8 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
                 arrayBuild = np.array(df)
 
                 mdotMaxData = abs(np.amax(arrayBuild[:, -1]) / gv.cp * 1E3)
-                costs += PumpModel.Pump_Cost(2 * ntwFeat.DeltaP_DCN, mdotMaxData, gv.etaPump, gv)
-
+                Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdotMaxData, gv.etaPump, gv, locator)
+                costs += (Capex_pump + Opex_fixed_pump)
                 toCosts, toCO2, toPrim, toCalfactor, toTotalCool, QavailCopy, VCCnomIni = coolOperation(arrayBuild,
                                                                                                         nHour, Qavail)
                 costs += toCosts
@@ -198,8 +198,8 @@ def coolingMain(locator, configKey, ntwFeat, HRdata, gv):
             arrayBuild = np.array(df)
 
             mdotMaxice = abs(np.amax(arrayBuild[:, -1]) / gv.cp * 1E3)
-            costs += PumpModel.Pump_Cost(2 * ntwFeat.DeltaP_DCN, mdotMaxice, gv.etaPump, gv)
-
+            Capex_pump, Opex_fixed_pump = PumpModel.calc_Cinv_pump(2 * ntwFeat.DeltaP_DCN, mdotMaxice, gv.etaPump, gv, locator)
+            costs += (Capex_pump + Opex_fixed_pump)
             toCosts, toCO2, toPrim, toCalfactor, toTotalCool, QavailCopy, VCCnomIni = coolOperation(arrayBuild, nHour,
                                                                                                     Qavail)
             costs += toCosts
