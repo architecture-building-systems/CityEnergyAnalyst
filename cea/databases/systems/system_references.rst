@@ -6,6 +6,8 @@ References for supply technologies
 
 Data about technology operation and cost of energy supply systems are stored
 in ``..cea/databases/systems/supply_systems.xls``. This document provides references of information in the spreadsheet.
+All costs are recorded using a constant currency ($USD in 2015), a guide on converting the cost into $USD-2015 is
+presented in the session "Constant Currency".
 
 
 +-----------------+--------------------------------------------------------------------------+
@@ -347,6 +349,26 @@ Pump
 :Cost of Motor [CHF/kW] : 630, 580, 500, 420, 350, 315, 285, 260, 240, 220, 210, 205, 195, 190, 185, 182, 180, 176, 175, 174, 173, 170, 169, 168, 167, 165, 162, 161.9
 :Cost of Variable Frequency Drive [CHF/kW] : 720, 680, 585, 425, 330, 275, 220, 195, 180, 150, 145, 143, 135, 120, 115, 114, 110, 100, 90, 88, 85, 80, 75, 74, 74, 73, 72, 71.9
 
+
+Constant U.S. Dollar
+====================
+In the system database in CEA, all costs are recorded in $USD in 2015. We used the same methodology followed by The
+World Bank [8]_.
+The cost data is converted into $USD-2015 following these two steps:
+1. Adjust the cost value to the value in 2015 with the Consumer Price Index (CPI) of the country.
+2. Convert the cost value in 2015 to $USD-2015 according to the exchange rate in 2015.
+The official exchange rate from The World Bank is used [9]_.
+
++-----------------------------+----------------+---------------------------------------------------+
+|Example                      | Cost value     | Note                                              |
++=============================+================+===================================================+
+|Cost data retrived in 2010   | 10,000 SGD     |                                                   |
++-----------------------------+----------------+---------------------------------------------------+
+|$SGD-2015                    | 11,322 SGD     | cost (2015) = S$10,000 * 99.461/87.848 [10]_      |
+|-----------------------------+----------------+---------------------------------------------------+
+|$USD-2015                    |  8,234 USD     | 1 USD = 1.375 SGD (2015)                          |
+|-----------------------------+----------------+---------------------------------------------------+
+
 References
 ~~~~~~~~~~
 
@@ -370,3 +392,14 @@ References
 
 ..[7] J. Rager. Urban energy system design from the heat perspective using mathematical programming including thermal
     storage. PhD Thesis, EPFL. 2015
+
+..[8] What is your constant U.S. dollar methodology? (n.d.). Retrieved August 28, 2017,
+    from https://datahelpdesk.worldbank.org/knowledgebase/articles/114943-what-is-your-constant-u-s-dollar-methodology
+
+..[9] Official exchange rate (LCU per US$, period average). The World Bank. Retrieved August 28, 2017,
+    from http://data.worldbank.org/indicator/PA.NUS.FCRF?end=2015&page=5&start=2009
+
+..[10] Consumer Price Index, Annual. (n.d.). Retrieved August 28, 2017,
+    from https://data.gov.sg/dataset/consumer-price-index-annual
+
+
