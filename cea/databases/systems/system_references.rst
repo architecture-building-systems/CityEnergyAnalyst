@@ -24,7 +24,7 @@ presented in the session "Constant Currency".
 |currency         | currency of the cost correlation                                         |
 +-----------------+--------------------------------------------------------------------------+
 |a,b,c,d,e,f,g    | constants in the cost correlation equation of the investment cost        |
-|                 | f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x) + f*exp(x) + g*x*exp(x)          |
+|                 | f(x) = a + b*x^c + d*ln(x) + e*x*ln*(x)                                  |
 +-----------------+--------------------------------------------------------------------------+
 |LT_yr            | lifetime of the technology in years                                      |
 +-----------------+--------------------------------------------------------------------------+
