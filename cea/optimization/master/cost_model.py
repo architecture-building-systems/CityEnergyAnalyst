@@ -202,17 +202,17 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
 
         # Solar technologies
 
-        PV_peak_kW = dicoSupply.SOLAR_PART_PV * solarFeat.SolarAreaPV * gv.nPV #kW
+        PV_peak_kW = dicoSupply.SOLAR_PART_PV * solarFeat.A_PV_m2 * gv.nPV #kW
         Capex_a_PV, Opex_fixed_PV = pv.calc_Cinv_pv(PV_peak_kW, locator)
         addcosts_Capex_a += Capex_a_PV
         addcosts_Opex_fixed += Opex_fixed_PV
 
-        SC_area_m2 = dicoSupply.SOLAR_PART_SC * solarFeat.SolarAreaSC
+        SC_area_m2 = dicoSupply.SOLAR_PART_SC * solarFeat.A_SC_m2
         Capex_a_SC, Opex_fixed_SC = stc.calc_Cinv_SC(SC_area_m2, gv, locator)
         addcosts_Capex_a += Capex_a_SC
         addcosts_Opex_fixed += Opex_fixed_SC
 
-        PVT_peak_kW = dicoSupply.SOLAR_PART_PVT * solarFeat.SolarAreaPVT * gv.nPVT #kW
+        PVT_peak_kW = dicoSupply.SOLAR_PART_PVT * solarFeat.A_PVT_m2 * gv.nPVT #kW
         Capex_a_PVT, Opex_fixed_PVT = pvt.calc_Cinv_PVT(PVT_peak_kW, gv, locator)
         addcosts_Capex_a += Capex_a_PVT
         addcosts_Opex_fixed += Opex_fixed_PVT
@@ -333,12 +333,12 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
                 share = roof_area_m2[i][0] / areaAvail
                 #print share, "solar area share", buildList[i]
                 
-                Q_max_SC_Wh = solarFeat.SC_Qnom * dicoSupply.SOLAR_PART_SC * share
+                Q_max_SC_Wh = solarFeat.Q_nom_SC_Wh * dicoSupply.SOLAR_PART_SC * share
                 Capex_a_HEX_SC, Opex_fixed_HEX_SC = hex.calc_Cinv_HEX(Q_max_SC_Wh, gv, locator)
                 addcosts_Capex_a += Capex_a_HEX_SC
                 addcosts_Opex_fixed += Opex_fixed_HEX_SC
 
-                Q_max_PVT_Wh = solarFeat.PVT_Qnom * dicoSupply.SOLAR_PART_PVT * share
+                Q_max_PVT_Wh = solarFeat.Q_nom_PVT_Wh * dicoSupply.SOLAR_PART_PVT * share
                 Capex_a_HEX_PVT, Opex_fixed_HEX_PVT = hex.calc_Cinv_HEX(Q_max_PVT_Wh, gv, locator)
                 addcosts_Capex_a += Capex_a_HEX_PVT
                 addcosts_Opex_fixed += Opex_fixed_HEX_PVT

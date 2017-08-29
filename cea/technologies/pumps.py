@@ -6,6 +6,7 @@ from __future__ import division
 import os
 import pandas as pd
 from scipy.interpolate import interp1d
+from math import log
 import numpy as np
 
 __author__ = "Thuy-An Nguyen"
@@ -46,7 +47,7 @@ def Pump_operation(P_design):
     return eta_pumping, eta_pump_fluid, eta_motor
 
 
-def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV):
+def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV, locator):
     """
     Computes the total pump investment cost
     :type dicoSupply : class context
@@ -80,7 +81,7 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV):
             pumpCosts += deltaP * mdotA_kgpers[i][0] / 1000 * gV.ELEC_PRICE / gV.etaPump
             deltaPmax = ntwFeat.DeltaP_DHN
 
-        Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, gV.etaPump, gV)  # investment of Machinery
+        Capex_a, Opex_fixed = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, gV.etaPump, gV, locator)  # investment of Machinery
         pumpCosts += Opex_fixed
 
     print pumpCosts, " CHF - pump costs in pumps.py"

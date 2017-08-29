@@ -509,25 +509,26 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
             "Furnace_Status": source_info[:, 4],
             "BoilerBase_Status": source_info[:, 5],
             "BoilerPeak_Status": source_info[:, 6],
-            "Q_HPSew": Q_source_data_W[:, 0],
-            "Q_HPLake": Q_source_data_W[:, 1],
-            "Q_GHP": Q_source_data_W[:, 2], \
-            "Q_CC": Q_source_data_W[:, 3],
-            "Q_Furnace": Q_source_data_W[:, 4],
-            "Q_BoilerBase": Q_source_data_W[:, 5],
-            "Q_BoilerPeak": Q_source_data_W[:, 6],
-            "Q_uncontrollable": Q_uncontrollable_W,
-            "Q_primaryAddBackupSum": Q_primary_AddBackup_sum_W,
-            "E_PP_and_storage": E_PP_and_storage_req_W,
-            "Q_uncovered": Q_source_data_W[:, 7],
-            "Q_AddBoiler": Q_uncovered_W,
-            "E_aux_HP_uncontrollable": E_aux_HP_uncontrollable_Wh,
-            "ESolarProducedPVandPVT": E_solar_gen_Wh,
-            "E_GHP": E_PP_el_data_W[:, 2],
-            "Qcold_HPLake": E_coldsource_data_W[:, 1],
-            "E_produced_total": E_total_gen_W,
-            "E_consumed_without_buildingdemand": E_without_buildingdemand_req_W,
-            "Q_excess": Q_excess_W
+            "Q_HPSew_W": Q_source_data_W[:, 0],
+            "Q_HPLake_W": Q_source_data_W[:, 1],
+            "Q_GHP_W": Q_source_data_W[:, 2], \
+            "Q_CC_W": Q_source_data_W[:, 3],
+            "Q_Furnace_W": Q_source_data_W[:, 4],
+            "Q_BoilerBase_W": Q_source_data_W[:, 5],
+            "Q_BoilerPeak_W": Q_source_data_W[:, 6],
+            "Q_uncontrollable_W": Q_uncontrollable_W,
+            "Q_primaryAddBackupSum_W": Q_primary_AddBackup_sum_W,
+            "E_PP_and_storage_W": E_PP_and_storage_req_W,
+            "Q_uncovered_W": Q_source_data_W[:, 7],
+            "Q_AddBoiler_W": Q_uncovered_W,
+            "E_aux_HP_uncontrollable_W": E_aux_HP_uncontrollable_Wh,
+            "E_solar_gen_W": E_solar_gen_Wh,
+            "E_CC_gen_W": E_CC_tot_gen_W,
+            "E_GHP_req_W": E_PP_el_data_W[:, 2],
+            "Qcold_HPLake_W": E_coldsource_data_W[:, 1],
+            "E_produced_total_W": E_total_gen_W,
+            "E_consumed_without_buildingdemand_W": E_without_buildingdemand_req_W,
+            "Q_excess_W": Q_excess_W
         })
 
         results.to_csv(locator.get_optimization_slave_pp_activation_pattern(MS_Var.configKey), sep=',')
@@ -550,8 +551,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
         ELEC_PRICE = gv.ELEC_PRICE
 
     # Area available in NEtwork
-    Area_AvailablePV_m2 = solar_features.SolarAreaPV * MS_Var.SOLAR_PART_PV
-    Area_AvailablePVT_m2 = solar_features.SolarAreaPVT * MS_Var.SOLAR_PART_PVT
+    Area_AvailablePV_m2 = solar_features.A_PV_m2 * MS_Var.SOLAR_PART_PV
+    Area_AvailablePVT_m2 = solar_features.A_PVT_m2 * MS_Var.SOLAR_PART_PVT
     #    import from master
     eta_m2_to_kW = gv.eta_area_to_peak  # Data from Jimeno
     Q_PowerPeakAvailablePV_kW = Area_AvailablePV_m2 * eta_m2_to_kW
@@ -1003,7 +1004,7 @@ def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
     E_aux_HP_uncontrollable_Wh = np.array(centralized_plant_data['E_aux_HP_uncontrollable_Wh'])
     Q_SCandPVT_gen_Wh = np.array(centralized_plant_data['Q_SCandPVT_gen_Wh'])
     HPServerHeatDesignArray_kWh = np.array(centralized_plant_data['HPServerHeatDesignArray_kWh'])
-    HPpvt_designArray_kWh = np.array(centralized_plant_data['HPpvt_designArray_kWh'])
+    HPpvt_designArray_Wh = np.array(centralized_plant_data['HPpvt_designArray_Wh'])
     HPCompAirDesignArray_kWh = np.array(centralized_plant_data['HPCompAirDesignArray_kWh'])
     HPScDesignArray_Wh = np.array(centralized_plant_data['HPScDesignArray_Wh'])
     E_produced_solarAndHPforSolar_W = np.array(centralized_plant_data['E_produced_total_W'])
@@ -1012,7 +1013,7 @@ def import_CentralizedPlant_data(fName, DAYS_IN_YEAR, HOURS_IN_DAY):
 
     return Q_DH_networkload_W, E_aux_ch_W, E_aux_dech_W, Q_missing_W, Q_storage_content_W, Q_to_storage_W, Q_from_storage_W, \
            Q_uncontrollable_W, E_PV_Wh, E_PVT_Wh, E_aux_HP_uncontrollable_Wh, Q_SCandPVT_gen_Wh, HPServerHeatDesignArray_kWh, \
-           HPpvt_designArray_kWh, HPCompAirDesignArray_kWh, HPScDesignArray_Wh, E_produced_solarAndHPforSolar_W, \
+           HPpvt_designArray_Wh, HPCompAirDesignArray_kWh, HPScDesignArray_Wh, E_produced_solarAndHPforSolar_W, \
            E_consumed_without_buildingdemand_solarAndHPforSolar_W
 
 
