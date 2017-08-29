@@ -49,15 +49,15 @@ def Storage_Design(CSV_NAME, SOLCOL_TYPE, T_storage_old_K, Q_in_storage_old_W, l
     DAYS_IN_YEAR = 365
 
     # Import Network Data
-    Network_Data = fn.import_network_data(CSV_NAME, DAYS_IN_YEAR, HOURS_IN_DAY)
-    
+    Network_Data = pd.read_csv(CSV_NAME)
+
     # recover Network  Data:
-    mdot_heat_netw_total_kgpers = Network_Data[0]
-    Q_DH_networkload_W = Network_Data[2]
-    T_DH_return_array_K = Network_Data[4]
-    T_DH_supply_array_K = Network_Data[6]
-    Q_wasteheatServer_kWh = Network_Data[8]
-    Q_wasteheatCompAir_kWh = Network_Data[7]
+    mdot_heat_netw_total_kgpers = Network_Data['mdot_DH_netw_total_kgpers'].values
+    Q_DH_networkload_W = Network_Data['Q_DHNf_W'].values
+    T_DH_return_array_K =  Network_Data['T_DHNf_re_K'].values
+    T_DH_supply_array_K = Network_Data['T_DHNf_sup_K'].values
+    Q_wasteheatServer_kWh =  Network_Data['Qcdata_netw_total_kWh'].values
+    Q_wasteheatCompAir_kWh = Network_Data['Ecaf_netw_total_kWh'].values
     
     Solar_Data_SC = np.zeros((HOURS_IN_DAY* DAYS_IN_YEAR, 7))
     Solar_Data_PVT = np.zeros((HOURS_IN_DAY* DAYS_IN_YEAR, 7))
