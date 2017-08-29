@@ -126,12 +126,12 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
             P_design_W = dicoSupply.Furnace_Q_max
 
             fNameSlavePP = locator.get_optimization_slave_pp_activation_pattern(dicoSupply.configKey)
-            dfFurnace = pd.read_csv(fNameSlavePP, usecols=["Q_Furnace"])
-            arrayFurnace = np.array(dfFurnace)
+            dfFurnace = pd.read_csv(fNameSlavePP, usecols=["Q_Furnace_W"])
+            arrayFurnace_W = np.array(dfFurnace)
             
             Q_annual_W =  0
-            for i in range(int(np.shape(arrayFurnace)[0])):
-                Q_annual_W += arrayFurnace[i][0]
+            for i in range(int(np.shape(arrayFurnace_W)[0])):
+                Q_annual_W += arrayFurnace_W[i][0]
             
             Capex_a_furnace, Opex_fixed_furnace = furnace.calc_Cinv_furnace(P_design_W, Q_annual_W, gv, locator)
             addcosts_Capex_a += Capex_a_furnace
@@ -149,12 +149,12 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
             Q_design_W = dicoSupply.Boiler_Q_max
 
             fNameSlavePP = locator.get_optimization_slave_pp_activation_pattern(dicoSupply.configKey)
-            dfBoilerBase = pd.read_csv(fNameSlavePP, usecols=["Q_BoilerBase"])
-            arrayBoilerBase = np.array(dfBoilerBase)
+            dfBoilerBase = pd.read_csv(fNameSlavePP, usecols=["Q_BoilerBase_W"])
+            arrayBoilerBase_W = np.array(dfBoilerBase)
             
             Q_annual_W =  0
-            for i in range(int(np.shape(arrayBoilerBase)[0])):
-                Q_annual_W += arrayBoilerBase[i][0]
+            for i in range(int(np.shape(arrayBoilerBase_W)[0])):
+                Q_annual_W += arrayBoilerBase_W[i][0]
                 
             Capex_a_Boiler, Opex_fixed_Boiler = boiler.calc_Cinv_boiler(Q_design_W, Q_annual_W, gv, locator)
             addcosts_Capex_a += Capex_a_Boiler
@@ -165,7 +165,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
             Q_design_W = dicoSupply.BoilerPeak_Q_max
 
             fNameSlavePP = locator.get_optimization_slave_pp_activation_pattern(dicoSupply.configKey)
-            dfBoilerPeak = pd.read_csv(fNameSlavePP, usecols=["Q_BoilerPeak"])
+            dfBoilerPeak = pd.read_csv(fNameSlavePP, usecols=["Q_BoilerPeak_W"])
             arrayBoilerPeak_W = np.array(dfBoilerPeak)
             
             Q_annual_W =  0
@@ -192,11 +192,11 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
         # GHP
         if dicoSupply.GHP_on == 1:
             fNameSlavePP = locator.get_optimization_slave_pp_activation_pattern(dicoSupply.configKey)
-            dfGHP = pd.read_csv(fNameSlavePP, usecols=["E_GHP"])
-            arrayGHP = np.array(dfGHP)
+            dfGHP = pd.read_csv(fNameSlavePP, usecols=["E_GHP_req_W"])
+            arrayGHP_W = np.array(dfGHP)
             
-            GHP_Enom = np.amax(arrayGHP)
-            Capex_a_GHP, Opex_fixed_GHP = hp.calc_Cinv_GHP(GHP_Enom, gv, locator)
+            GHP_Enom_W = np.amax(arrayGHP_W)
+            Capex_a_GHP, Opex_fixed_GHP = hp.calc_Cinv_GHP(GHP_Enom_W, gv, locator)
             addcosts_Capex_a += Capex_a_GHP * gv.EURO_TO_CHF
             addcosts_Opex_fixed += Opex_fixed_GHP * gv.EURO_TO_CHF
 
@@ -244,7 +244,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
         if dicoSupply.WasteCompressorHeatRecovery == 1:
             df = pd.read_csv(
                 os.path.join(locator.get_optimization_network_results_folder(), dicoSupply.NETWORK_DATA_FILE),
-                usecols=["Ecaf_netw_total"])
+                usecols=["Ecaf_netw_total_kWh"])
             array = np.array(df)
             Q_HEX_max_kWh = np.amax(array)
 
@@ -252,7 +252,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
             addcosts_Capex_a += (Capex_a_wastecompressor_HEX)
             addcosts_Opex_fixed += Opex_fixed_wastecompressor_HEX
             df = pd.read_csv(locator.get_optimization_slave_storage_operation_data(dicoSupply.configKey),
-                             usecols=["HPCompAirDesignArray"])
+                             usecols=["HPCompAirDesignArray_kWh"])
             array = np.array(df)
             Q_HP_max_kWh = np.amax(array)
             Capex_a_wastecompressor_HP, Opex_fixed_wastecompressor_HP = hp.calc_Cinv_HP(Q_HP_max_kWh, gv, locator)
@@ -353,7 +353,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
     if indCombi.count("1") > 0:
         # import gas consumption data from:
         EgasPrimaryDataframe_W = pd.read_csv(locator.get_optimization_slave_primary_energy_by_source(dicoSupply.configKey),
-            usecols=["EgasPrimaryPeakPower_W"])
+            usecols=["E_gas_PrimaryPeakPower_W"])
         E_gas_primary_peak_power_W = float(np.array(EgasPrimaryDataframe_W))
         GasConnectionInvCost = ngas.calc_Cinv_gas(E_gas_primary_peak_power_W, gv)
     else:
