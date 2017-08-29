@@ -19,12 +19,12 @@ __status__ = "Production"
 
 # investment and maintenance costs
 
-def calc_Cinv_HEX(Q_design, gV, locator, technology=0):
+def calc_Cinv_HEX(Q_design_W, gV, locator, technology=0):
     """
     Calculates the cost of a heat exchanger (based on A+W cost of oil boilers) [CHF / a]
 
-    :type Q_design : float
-    :param Q_design: Design Load of Boiler
+    :type Q_design_W : float
+    :param Q_design_W: Design Load of Boiler
 
     :param gV: globalvar.py
 
@@ -35,16 +35,16 @@ def calc_Cinv_HEX(Q_design, gV, locator, technology=0):
     :returns InvCa: annualized investment costs in [CHF/a]
 
     """
-    if Q_design > 0:
+    if Q_design_W > 0:
         HEX_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="HEX")
         technology_code = list(set(HEX_cost_data['code']))
         HEX_cost_data[HEX_cost_data['code'] == technology_code[technology]]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
         # capacity for the corresponding technology from the database
-        if Q_design < HEX_cost_data['cap_min'][0]:
-            Q_design = HEX_cost_data['cap_min'][0]
+        if Q_design_W < HEX_cost_data['cap_min'][0]:
+            Q_design_W = HEX_cost_data['cap_min'][0]
         HEX_cost_data = HEX_cost_data[
-            (HEX_cost_data['cap_min'] <= Q_design) & (HEX_cost_data['cap_max'] > Q_design)]
+            (HEX_cost_data['cap_min'] <= Q_design_W) & (HEX_cost_data['cap_max'] > Q_design_W)]
 
         Inv_a = HEX_cost_data.iloc[0]['a']
         Inv_b = HEX_cost_data.iloc[0]['b']
@@ -55,7 +55,7 @@ def calc_Cinv_HEX(Q_design, gV, locator, technology=0):
         Inv_LT = HEX_cost_data.iloc[0]['LT_yr']
         Inv_OM = HEX_cost_data.iloc[0]['O&M_%'] / 100
 
-        InvC = Inv_a + Inv_b * (Q_design) ** Inv_c + (Inv_d + Inv_e * Q_design) * log(Q_design)
+        InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
 
         Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
         Opex_fixed = Capex_a * Inv_OM
