@@ -107,18 +107,18 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
 # operation costs
 
-def furnace_op_cost(Q_therm, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
+def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, gv):
     """
     Calculates the operation cost of a furnace plant (only operation, no annualized cost!)
 
-    :type Q_therm : float
-    :param Q_therm: thermal energy required from furnace plant in [Wh]
+    :type Q_therm_W : float
+    :param Q_therm_W: thermal energy required from furnace plant in [Wh]
 
-    :type Q_design : float
-    :param Q_design: Design Load of Boiler [W]
+    :type Q_design_W : float
+    :param Q_design_W: Design Load of Boiler [W]
 
-    :type T_return_to_boiler : float
-    :param T_return_to_boiler: return temperature to the boiler
+    :type T_return_to_boiler_K : float
+    :param T_return_to_boiler_K: return temperature to the boiler
 
     :type MOIST_TYPE : float
     :param MOIST_TYPE: moisture type of the fuel, set in MasterToSlaveVariables ('wet' or 'dry')
@@ -152,53 +152,53 @@ def furnace_op_cost(Q_therm, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
         if i != 0:
             eta_therm_in = eta_therm_real
         i += 1
-        Q_th_load = Q_therm / eta_therm_real # primary energy needed
-        if Q_design < Q_th_load:
-            Q_th_load = Q_design -1
+        Q_th_load_W = Q_therm_W / eta_therm_real # primary energy needed
+        if Q_design_W < Q_th_load_W:
+            Q_th_load_W = Q_design_W - 1
 
-        Furnace_eff = Furnace_eff(Q_th_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv)
+        Furnace_eff = Furnace_eff(Q_th_load_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, gv)
 
-        eta_therm_real, eta_el, Q_aux = Furnace_eff
+        eta_therm_real, eta_el, Q_aux_W = Furnace_eff
 
         if eta_therm_real == 0:
             eta_el = 0
-            Q_aux = 0
+            Q_aux_W = 0
 
             break
 
-    Q_prim = Q_th_load
-    Q_th_load = Q_therm
+    Q_prim_W = Q_th_load_W
+    Q_th_load_W = Q_therm_W
 
     if MOIST_TYPE == "dry":
-        C_furn_therm = Q_prim * gv.Furn_FuelCost_dry #  [CHF / Wh] fuel cost of thermal energy
-        C_furn_el_sold = (Q_prim * eta_el - Q_aux)* gv.ELEC_PRICE #  [CHF / Wh] cost gain by selling el. to the grid.
+        C_furn_therm = Q_prim_W * gv.Furn_FuelCost_dry #  [CHF / Wh] fuel cost of thermal energy
+        C_furn_el_sold = (Q_prim_W * eta_el - Q_aux_W)* gv.ELEC_PRICE #  [CHF / Wh] cost gain by selling el. to the grid.
         C_furn = C_furn_therm - C_furn_el_sold
-        C_furn_per_Wh = C_furn / Q_th_load
+        C_furn_per_Wh = C_furn / Q_th_load_W
 
     else:
-        C_furn_therm = Q_th_load * 1 / eta_therm_real * gv.Furn_FuelCost_wet
-        C_furn_el_sold = (Q_prim * eta_el - Q_aux) * gv.ELEC_PRICE
+        C_furn_therm = Q_th_load_W * 1 / eta_therm_real * gv.Furn_FuelCost_wet
+        C_furn_el_sold = (Q_prim_W * eta_el - Q_aux_W) * gv.ELEC_PRICE
         C_furn = C_furn_therm - C_furn_el_sold
-        C_furn_per_Wh = C_furn / Q_th_load # in CHF / Wh
+        C_furn_per_Wh = C_furn / Q_th_load_W # in CHF / Wh
 
-    E_furn_el_produced = eta_el * Q_prim - Q_aux
+    E_furn_el_produced = eta_el * Q_prim_W - Q_aux_W
 
-    return C_furn, C_furn_per_Wh, Q_prim, Q_th_load, E_furn_el_produced
+    return C_furn, C_furn_per_Wh, Q_prim_W, Q_th_load_W, E_furn_el_produced
 
 
 
 # investment and maintenance costs
 
-def calc_Cinv_furnace(Q_design, Q_annual, gv, locator, technology=0):
+def calc_Cinv_furnace(Q_design_W, Q_annual_W, gv, locator, technology=0):
     """
     Calculates the annualized investment cost of a Furnace
     based on Bioenergy 2020 (AFO) and POLYCITY Ostfildern 
 
-    :type Q_design : float
-    :param Q_design: Design Load of Boiler
+    :type Q_design_W : float
+    :param Q_design_W: Design Load of Boiler
         
-    :type Q_annual : float
-    :param Q_annual: annual thermal Power output [Wh]
+    :type Q_annual_W : float
+    :param Q_annual_W: annual thermal Power output [Wh]
 
     :param gV: globalvar.py
 
@@ -214,10 +214,10 @@ def calc_Cinv_furnace(Q_design, Q_annual, gv, locator, technology=0):
     furnace_cost_data[furnace_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
     # capacity for the corresponding technology from the database
-    if Q_design < furnace_cost_data['cap_min'][0]:
-        Q_design = furnace_cost_data['cap_min'][0]
+    if Q_design_W < furnace_cost_data['cap_min'][0]:
+        Q_design_W = furnace_cost_data['cap_min'][0]
     furnace_cost_data = furnace_cost_data[
-        (furnace_cost_data['cap_min'] <= Q_design) & (furnace_cost_data['cap_max'] > Q_design)]
+        (furnace_cost_data['cap_min'] <= Q_design_W) & (furnace_cost_data['cap_max'] > Q_design_W)]
 
     Inv_a = furnace_cost_data.iloc[0]['a']
     Inv_b = furnace_cost_data.iloc[0]['b']
@@ -228,7 +228,7 @@ def calc_Cinv_furnace(Q_design, Q_annual, gv, locator, technology=0):
     Inv_LT = furnace_cost_data.iloc[0]['LT_yr']
     Inv_OM = furnace_cost_data.iloc[0]['O&M_%'] / 100
 
-    InvC = Inv_a + Inv_b * (Q_design) ** Inv_c + (Inv_d + Inv_e * Q_design) * log(Q_design)
+    InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
 
     Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     Opex_fixed = Capex_a * Inv_OM

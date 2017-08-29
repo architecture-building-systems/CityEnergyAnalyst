@@ -237,7 +237,7 @@ def calc_pv_generation(type_panel, hourly_radiation, number_groups, number_point
 
     result = list(range(number_groups))
     groups_area = list(range(number_groups))
-    Sum_PV = np.zeros(8760)
+    Sum_PV_kWh = np.zeros(8760)
 
     n = 1.526 # refractive index of glass
     Pg = 0.2  # ground reflectance
@@ -277,9 +277,9 @@ def calc_pv_generation(type_panel, hourly_radiation, number_groups, number_point
         result[group] = np.vectorize(calc_PV_power)(results[0], results[1], eff_nom, area_per_group, Bref, misc_losses)
         groups_area[group] = area_per_group
 
-        Sum_PV = Sum_PV + result[group] # in kWh
-    total_area = sum(groups_area)
-    Final = pd.DataFrame({'PV_kWh':Sum_PV,'Area':total_area})
+        Sum_PV_kWh = Sum_PV_kWh + result[group] # in kWh
+    total_area_m2 = sum(groups_area)
+    Final = pd.DataFrame({'PV_kWh':Sum_PV_kWh,'Area':total_area_m2})
     return result, Final
 
 def calc_angle_of_incidence(g, lat, ha, tilt, teta_z):
@@ -707,13 +707,13 @@ def calc_properties_PV(database_path, type_PVpanel):
     return panel_properties
 
 # investment and maintenance costs
-def calc_Cinv_pv(P_peak, locator, technology=0):
+def calc_Cinv_pv(P_peak_kW, locator, technology=0):
     """
     To calculate capital cost of PV modules, assuming 20 year system lifetime.
     :param P_peak: installed capacity of PV module [kW]
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
-    P_peak = P_peak * 1000 # converting to W from kW
+    P_peak = P_peak_kW * 1000 # converting to W from kW
     PV_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="PV")
     technology_code = list(set(PV_cost_data['code']))
     PV_cost_data[PV_cost_data['code'] == technology_code[technology]]
@@ -741,13 +741,13 @@ def calc_Cinv_pv(P_peak, locator, technology=0):
 
 
 # remuneration scheme
-def calc_Crem_pv(E_nom):
+def calc_Crem_pv(E_nom_Wh):
     """
     Calculates KEV (Kostendeckende Einspeise - Verguetung) for solar PV and PVT.
     Therefore, input the nominal capacity of EACH installation and get the according KEV as return in Rp/kWh
 
-    :param E_nom: Nominal Capacity of solar panels (PV or PVT) [Wh]
-    :type E_nom: float
+    :param E_nom_Wh: Nominal Capacity of solar panels (PV or PVT) [Wh]
+    :type E_nom_Wh: float
     :return KEV_obtained_in_RpPerkWh: KEV remuneration [Rp/kWh]
     :rtype KEV_obtained_in_RpPerkWh: float
     """
@@ -801,7 +801,7 @@ def calc_Crem_pv(E_nom):
                          2000,
                          1000000]
     KEV_interpolated_kW = interpolate.interp1d(P_installed_in_kW, KEV_regime, kind="linear")
-    KEV_obtained_in_RpPerkWh = KEV_interpolated_kW(E_nom / 1000.0)
+    KEV_obtained_in_RpPerkWh = KEV_interpolated_kW(E_nom_Wh / 1000.0)
     return KEV_obtained_in_RpPerkWh
 
 def test_photovoltaic():
