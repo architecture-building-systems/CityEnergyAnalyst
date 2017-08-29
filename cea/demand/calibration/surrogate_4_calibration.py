@@ -19,9 +19,9 @@ from keras.callbacks import EarlyStopping
 from sklearn.preprocessing import MinMaxScaler
 
 
-__author__ = "Jimeno A. Fonseca; Fazel Khayatian"
+__author__ = ""
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca", "Fazel Khayatian"]
+__credits__ = []
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -283,7 +283,7 @@ def sampling_main(locator, variables, building_name, building_load):
         json_file.write(model_json)
     # serialize weights to HDF5
     model.save_weights(weight_NN_path)
-    print("Saved model to ~reference-case-open\baseline\outputs\data\calibration")
+    print(r"Saved model to ~reference-case-open\baseline\outputs\data\calibration")
     #out_NN = pd.DataFrame(filtered_outputs_t)
     #out_NN_path = os.path.join(locator.get_calibration_folder(), "%(building_name)s-netout_ht.csv" % locals())
     #out_NN.to_csv(out_NN_path, index=False, header=False, float_format='%.3f', decimal='.')
