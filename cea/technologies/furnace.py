@@ -106,18 +106,18 @@ def calc_eta_furnace(Q_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
 # operation costs
 
-def furnace_op_cost(Q_therm, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
+def furnace_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, gv):
     """
     Calculates the operation cost of a furnace plant (only operation, no annualized cost!)
 
-    :type Q_therm : float
-    :param Q_therm: thermal energy required from furnace plant in [Wh]
+    :type Q_therm_W : float
+    :param Q_therm_W: thermal energy required from furnace plant in [Wh]
 
-    :type Q_design : float
-    :param Q_design: Design Load of Boiler [W]
+    :type Q_design_W : float
+    :param Q_design_W: Design Load of Boiler [W]
 
-    :type T_return_to_boiler : float
-    :param T_return_to_boiler: return temperature to the boiler
+    :type T_return_to_boiler_K : float
+    :param T_return_to_boiler_K: return temperature to the boiler
 
     :type MOIST_TYPE : float
     :param MOIST_TYPE: moisture type of the fuel, set in MasterToSlaveVariables ('wet' or 'dry')
@@ -151,11 +151,11 @@ def furnace_op_cost(Q_therm, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
         if i != 0:
             eta_therm_in = eta_therm_real
         i += 1
-        Q_th_load = Q_therm / eta_therm_real # primary energy needed
-        if Q_design < Q_th_load:
-            Q_th_load = Q_design -1
+        Q_th_load_W = Q_therm_W / eta_therm_real # primary energy needed
+        if Q_design_W < Q_th_load_W:
+            Q_th_load_W = Q_design_W - 1
 
-        Furnace_eff = Furnace_eff(Q_th_load, Q_design, T_return_to_boiler, MOIST_TYPE, gv)
+        Furnace_eff = Furnace_eff(Q_th_load_W, Q_design_W, T_return_to_boiler_K, MOIST_TYPE, gv) # todo no function is being called here
 
         eta_therm_real, eta_el, Q_aux = Furnace_eff
 
@@ -166,39 +166,39 @@ def furnace_op_cost(Q_therm, Q_design, T_return_to_boiler, MOIST_TYPE, gv):
 
             break
 
-    Q_prim = Q_th_load
-    Q_th_load = Q_therm
+    Q_prim_W = Q_th_load_W
+    Q_th_load_W = Q_therm_W
 
     if MOIST_TYPE == "dry":
-        C_furn_therm = Q_prim * gv.Furn_FuelCost_dry #  [CHF / Wh] fuel cost of thermal energy
-        C_furn_el_sold = (Q_prim * eta_el - Q_aux)* gv.ELEC_PRICE #  [CHF / Wh] cost gain by selling el. to the grid.
+        C_furn_therm = Q_prim_W * gv.Furn_FuelCost_dry #  [CHF / Wh] fuel cost of thermal energy
+        C_furn_el_sold = (Q_prim_W * eta_el - Q_aux)* gv.ELEC_PRICE #  [CHF / Wh] cost gain by selling el. to the grid.
         C_furn = C_furn_therm - C_furn_el_sold
-        C_furn_per_Wh = C_furn / Q_th_load
+        C_furn_per_Wh = C_furn / Q_th_load_W
 
     else:
-        C_furn_therm = Q_th_load * 1 / eta_therm_real * gv.Furn_FuelCost_wet
-        C_furn_el_sold = (Q_prim * eta_el - Q_aux) * gv.ELEC_PRICE
+        C_furn_therm = Q_th_load_W * 1 / eta_therm_real * gv.Furn_FuelCost_wet
+        C_furn_el_sold = (Q_prim_W * eta_el - Q_aux) * gv.ELEC_PRICE
         C_furn = C_furn_therm - C_furn_el_sold
-        C_furn_per_Wh = C_furn / Q_th_load # in CHF / Wh
+        C_furn_per_Wh = C_furn / Q_th_load_W # in CHF / Wh
 
-    E_furn_el_produced = eta_el * Q_prim - Q_aux
+    E_furn_el_produced_W = eta_el * Q_prim_W - Q_aux
 
-    return C_furn, C_furn_per_Wh, Q_prim, Q_th_load, E_furn_el_produced
+    return C_furn, C_furn_per_Wh, Q_prim_W, Q_th_load_W, E_furn_el_produced_W
 
 
 
 # investment and maintenance costs
 
-def calc_Cinv_furnace(Q_design, Q_annual, gv):
+def calc_Cinv_furnace(Q_design_W, Q_annual_W, gv):
     """
     Calculates the annualized investment cost of a Furnace
     based on Bioenergy 2020 (AFO) and POLYCITY Ostfildern 
 
-    :type Q_design : float
-    :param Q_design: Design Load of Boiler
+    :type Q_design_W : float
+    :param Q_design_W: Design Load of Boiler
         
-    :type Q_annual : float
-    :param Q_annual: annual thermal Power output [Wh]
+    :type Q_annual_W : float
+    :param Q_annual_W: annual thermal Power output [Wh]
 
     :param gV: globalvar.py
 
@@ -209,11 +209,11 @@ def calc_Cinv_furnace(Q_design, Q_annual, gv):
     :returns InvCa: annualized investment costs in [CHF] including O&M
         
     """
-    InvC = 0.670 * gv.EURO_TO_CHF * Q_design # 670 € /kW therm(Boiler) = 800 CHF /kW (A+W data)
+    InvC = 0.670 * gv.EURO_TO_CHF * Q_design_W # 670 € /kW therm(Boiler) = 800 CHF /kW (A+W data)
 
     Ca_invest =  (InvC * gv.Boiler_i * (1+ gv.Boiler_i) ** gv.Boiler_n / ((1+gv.Boiler_i) ** gv.Boiler_n - 1))
     Ca_maint = Ca_invest * gv.Boiler_C_maintainance
-    Ca_labour =  gv.Boiler_C_labour / 1000000.0 * gv.EURO_TO_CHF * Q_annual
+    Ca_labour =  gv.Boiler_C_labour / 1000000.0 * gv.EURO_TO_CHF * Q_annual_W
 
     InvCa = Ca_invest + Ca_maint + Ca_labour
     
