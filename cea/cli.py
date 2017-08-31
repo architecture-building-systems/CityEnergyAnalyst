@@ -201,6 +201,15 @@ def radiation_daysim(args):
 
     config = cea.config.Configuration(args.scenario)
     config.weather = args.weather_path
+
+    options = ['rad-n', 'rad-af', 'rad-ab', 'rad-ad', 'rad-as', 'rad-ar', 'rad-aa', 'rad-lr', 'rad-st', 'rad-sj',
+               'rad-lw', 'rad-dj', 'rad-ds', 'rad-dr', 'rad-dp', 'sensor-x-dim', 'sensor-y-dim', 'e-terrain',
+               'n-buildings-in-chunk', 'multiprocessing', 'zone-geometry', 'surrounding-geometry', 'consider-windows',
+               'consider-floors']
+    for option in options:
+        value = getattr(args, option.replace('-', '_'))
+        if value is not None:
+            config._parser.set('radiation-daysim', option, value)
     config.save()
 
     cea.resources.radiation_daysim.radiation_main.main(locator=locator, weather_path=args.weather_path)
@@ -592,6 +601,47 @@ def main():
     radiation_daysim_parser = subparsers.add_parser('radiation-daysim',
                                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     radiation_daysim_parser.add_argument('--weather-path', help='Path to weather file.')
+    radiation_daysim_parser.add_argument('--rad-n', type=int)
+    radiation_daysim_parser.add_argument('--rad-af', type=str)
+    radiation_daysim_parser.add_argument('--rad-ab', type=int)
+    radiation_daysim_parser.add_argument('--rad-ad', type=int)
+    radiation_daysim_parser.add_argument('--rad-as', type=int)
+    radiation_daysim_parser.add_argument('--rad-ar', type=int)
+    radiation_daysim_parser.add_argument('--rad-aa', type=float)
+    radiation_daysim_parser.add_argument('--rad-lr', type=int)
+    radiation_daysim_parser.add_argument('--rad-st', type=float)
+    radiation_daysim_parser.add_argument('--rad-sj', type=float)
+    radiation_daysim_parser.add_argument('--rad-lw', type=float)
+    radiation_daysim_parser.add_argument('--rad-dj', type=float)
+    radiation_daysim_parser.add_argument('--rad-ds', type=float)
+    radiation_daysim_parser.add_argument('--rad-dr', type=int)
+    radiation_daysim_parser.add_argument('--rad-dp', type=int)
+
+    # GRID FOR THE SENSORS
+    # use 100 (maximum) if you want only one point per surface
+    radiation_daysim_parser.add_argument('--sensor-x-dim', type=int)
+    radiation_daysim_parser.add_argument('--sensor-y-dim', type=int)
+
+    # terrain parameters
+    # reflection for the terrain
+    radiation_daysim_parser.add_argument('--e-terrain', type=float, help='reflection for the terrain')
+
+    # simulation parameters
+    # min number of buildings for multiprocessing
+    radiation_daysim_parser.add_argument('--n-buildings-in-chunk', type=int,
+                                         help='min number of buildings for multiprocessing')
+    # limit the number if running out of memory
+    radiation_daysim_parser.add_argument('--multiprocessing', type=bool,
+                                         help='use multiprocessing to speed up calculations')
+
+    # geometry simplification
+    radiation_daysim_parser.add_argument('--zone-geometry', type=int,
+                                         help='level of simplification of the zone geometry')
+    radiation_daysim_parser.add_argument('--surrounding-geometry', type=int,
+                                         help='level of simplification of the district geometry')
+    radiation_daysim_parser.add_argument('--consider-windows', type=bool,
+                                         help='consider windows in the geometry')
+    radiation_daysim_parser.add_argument('--consider-floors', type=bool, help='consider floors in the geometry')
     radiation_daysim_parser.set_defaults(func=radiation_daysim)
 
     install_toolbox_parser = subparsers.add_parser('install-toolbox',
