@@ -209,7 +209,7 @@ def radiation_daysim(args):
     for option in options:
         value = getattr(args, option.replace('-', '_'))
         if value is not None:
-            config._parser.set('radiation-daysim', option, value)
+            config._parser.set('radiation-daysim', option, str(value))
     config.save()
 
     cea.resources.radiation_daysim.radiation_main.main(locator=locator, weather_path=args.weather_path)
