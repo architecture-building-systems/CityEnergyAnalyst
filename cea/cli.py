@@ -424,6 +424,22 @@ def read_config(args):
         pass
 
 
+def read_config_section(args):
+    """Read all keys from a section in the configuration into a json dictionary and print that"""
+    import cea.config
+    import ConfigParser
+    import json
+    config = cea.config.Configuration(args.scenario)
+    try:
+        keys = config._parser.options(args.section)
+        section_dict = {key: config._parser.get(args.section, key) for key in keys}
+        print(json.dumps(section_dict))
+    except ConfigParser.NoSectionError:
+        pass
+    except ConfigParser.NoOptionError:
+        pass
+
+
 
 def write_config(args):
     """write a value to a section/key in the configuration in the scenario folder"""
@@ -719,6 +735,10 @@ def main():
     read_config_parser.add_argument('--section', help='section to read from')
     read_config_parser.add_argument('--key', help='key to read')
     read_config_parser.set_defaults(func=read_config)
+
+    read_config_section_parser = subparsers.add_parser('read-config-section', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    read_config_section_parser.add_argument('--section', help='section to read from')
+    read_config_section_parser.set_defaults(func=read_config_section)
 
     write_config_parser = subparsers.add_parser('write-config', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     write_config_parser.add_argument('--section', help='section to write to')
