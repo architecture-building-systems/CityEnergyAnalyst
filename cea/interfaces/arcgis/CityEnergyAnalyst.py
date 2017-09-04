@@ -1360,6 +1360,11 @@ class RadiationDaysimTool(object):
         self.description = 'Use Daysim to calculate solar radiation for a scenario'
         self.category = 'Renewable Energy Assessment'
         self.canRunInBackground = False
+        self.options = {'rad-n', 'rad-af', 'rad-ab', 'rad-ad', 'rad-as', 'rad-ar', 'rad-aa', 'rad-lr', 'rad-st', 'rad-sj',
+                   'rad-lw', 'rad-dj', 'rad-ds', 'rad-dr', 'rad-dp', 'sensor-x-dim', 'sensor-y-dim', 'e-terrain',
+                   'n-buildings-in-chunk', 'multiprocessing', 'zone-geometry', 'surrounding-geometry',
+                   'consider-windows',
+                   'consider-floors'}
 
     def getParameterInfo(self):
         scenario_path = arcpy.Parameter(
@@ -1387,7 +1392,109 @@ class RadiationDaysimTool(object):
         weather_path.filter.list = ['epw']
         weather_path.enabled = False
 
-        return [scenario_path, weather_name, weather_path]
+        rad_n = arcpy.Parameter(displayName="rad-n", category="Daysism radiation simulation parameters", name="rad_n", datatype="Long",
+                                parameterType="Required", direction="Input")
+        rad_n.enabled = False
+
+        rad_af = arcpy.Parameter(displayName="rad-af", category="Daysism radiation simulation parameters", name="rad_af", datatype="GPString",
+                                 parameterType="Required", direction="Input")
+        rad_af.enabled = False
+
+        rad_ab = arcpy.Parameter(displayName="rad-ab", category="Daysism radiation simulation parameters", name="rad_ab", datatype="Long",
+                                 parameterType="Required", direction="Input")
+        rad_ab.enabled = False
+
+        rad_ad = arcpy.Parameter(displayName="rad-ad", category="Daysism radiation simulation parameters", name="rad_ad", datatype="Long",
+                                 parameterType="Required", direction="Input")
+        rad_ad.enabled = False
+
+        rad_as = arcpy.Parameter(displayName="rad-as", category="Daysism radiation simulation parameters", name="rad_as", datatype="Long",
+                                 parameterType="Required", direction="Input")
+        rad_as.enabled = False
+
+        rad_ar = arcpy.Parameter(displayName="rad-ar", category="Daysism radiation simulation parameters", name="rad_ar", datatype="Long",
+                                 parameterType="Required", direction="Input")
+        rad_ar.enabled = False
+
+        rad_aa = arcpy.Parameter(displayName="rad-aa", category="Daysism radiation simulation parameters", name="rad_aa", datatype="GPDouble",
+                                 parameterType="Required", direction="Input")
+        rad_aa.enabled = False
+
+        rad_lr = arcpy.Parameter(displayName="rad-lr", category="Daysism radiation simulation parameters", name="rad_lr", datatype="Long",
+                                 parameterType="Required", direction="Input")
+        rad_lr.enabled = False
+
+        rad_st = arcpy.Parameter(displayName="rad-st", category="Daysism radiation simulation parameters", name="rad_st", datatype="GPDouble",
+                                 parameterType="Required", direction="Input")
+        rad_st.enabled = False
+
+        rad_sj = arcpy.Parameter(displayName="rad-sj", category="Daysism radiation simulation parameters", name="rad_sj", datatype="GPDouble",
+                                 parameterType="Required", direction="Input")
+        rad_sj.enabled = False
+
+        rad_lw = arcpy.Parameter(displayName="rad-lw", category="Daysism radiation simulation parameters", name="rad_lw", datatype="GPDouble",
+                                 parameterType="Required", direction="Input")
+        rad_lw.enabled = False
+
+        rad_dj = arcpy.Parameter(displayName="rad-dj", category="Daysism radiation simulation parameters", name="rad_dj", datatype="GPDouble",
+                                 parameterType="Required", direction="Input")
+        rad_dj.enabled = False
+
+        rad_ds = arcpy.Parameter(displayName="rad-ds", category="Daysism radiation simulation parameters", name="rad_ds", datatype="GPDouble",
+                                 parameterType="Required", direction="Input")
+        rad_ds.enabled = False
+
+        rad_dr = arcpy.Parameter(displayName="rad-dr", category="Daysism radiation simulation parameters", name="rad_dr", datatype="Long",
+                                 parameterType="Required", direction="Input")
+        rad_dr.enabled = False
+
+        rad_dp = arcpy.Parameter(displayName="rad-dp", category="Daysism radiation simulation parameters", name="rad_dp", datatype="Long",
+                                 parameterType="Required", direction="Input")
+        rad_dp.enabled = False
+
+        sensor_x_dim = arcpy.Parameter(displayName="X-dim", category="Grid for the sensors", name="sensor_x_dim", datatype="Long",
+                                       parameterType="Required", direction="Input")
+        sensor_x_dim.enabled = False
+
+        sensor_y_dim = arcpy.Parameter(displayName="Y-dim", category="Grid for the sensors", name="sensor_y_dim", datatype="Long",
+                                       parameterType="Required", direction="Input")
+        sensor_y_dim.enabled = False
+
+        e_terrain = arcpy.Parameter(displayName="e-terrain", category="Terrain parameters", name="e_terrain", datatype="GPDouble",
+                                    parameterType="Required", direction="Input")
+        e_terrain.enabled = False
+
+        n_buildings_in_chunk = arcpy.Parameter(displayName="n-buildings-in-chunk", category="Simulation parameters", name="n_buildings_in_chunk",
+                                               datatype="Long", parameterType="Required", direction="Input")
+        n_buildings_in_chunk.enabled = False
+
+        multiprocessing = arcpy.Parameter(displayName="multiprocessing", category="Simulation parameters",
+                                          name="multiprocessing", datatype="GPBoolean", parameterType="Required",
+                                          direction="Input")
+        multiprocessing.enabled = False
+
+        zone_geometry = arcpy.Parameter(displayName="zone-geometry", category="Geometry simplification", name="zone_geometry", datatype="Long",
+                                        parameterType="Required", direction="Input")
+        zone_geometry.enabled = False
+
+        surrounding_geometry = arcpy.Parameter(displayName="surrounding-geometry", category="Geometry simplification", name="surrounding_geometry",
+                                               datatype="Long", parameterType="Required", direction="Input")
+        surrounding_geometry.enabled = False
+
+        consider_windows = arcpy.Parameter(displayName="consider-windows", category="Geometry simplification",
+                                           name="consider_windows", datatype="GPBoolean", parameterType="Required",
+                                           direction="Input")
+        consider_windows.enabled = False
+
+        consider_floors = arcpy.Parameter(displayName="consider-floors", category="Geometry simplification",
+                                          name="consider_floors", datatype="GPBoolean", parameterType="Required",
+                                          direction="Input")
+        consider_floors.enabled = False
+
+        return [scenario_path, weather_name, weather_path, rad_n, rad_af, rad_ab, rad_ad, rad_as, rad_ar, rad_aa,
+                rad_lr, rad_st, rad_sj, rad_lw, rad_dj, rad_ds, rad_dr, rad_dp, sensor_x_dim, sensor_y_dim, e_terrain,
+                n_buildings_in_chunk, multiprocessing, zone_geometry, surrounding_geometry, consider_windows,
+                consider_floors]
 
     def updateParameters(self, parameters):
         scenario_path = parameters[0].valueAsText
