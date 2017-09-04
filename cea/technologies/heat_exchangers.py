@@ -17,12 +17,12 @@ __status__ = "Production"
 
 # investment and maintenance costs
 
-def calc_Cinv_HEX(Q_design, gV):
+def calc_Cinv_HEX(Q_design_W, gV):
     """
     Calculates the cost of a heat exchanger (based on A+W cost of oil boilers) [CHF / a]
 
-    :type Q_design : float
-    :param Q_design: Design Load of Boiler
+    :type Q_design_W : float
+    :param Q_design_W: Design Load of Boiler
 
     :param gV: globalvar.py
 
@@ -33,18 +33,18 @@ def calc_Cinv_HEX(Q_design, gV):
     :returns InvCa: annualized investment costs in [CHF/a]
 
     """
-    if Q_design > 0:
+    if Q_design_W > 0:
         InvC = 3000 # after A+W
 
-        if Q_design >= 50000 and Q_design <= 80000:
-            InvC = 3000 + 2.0/30 * (Q_design - 50000) # linear interpolation of A+W data
+        if Q_design_W >= 50000 and Q_design_W <= 80000:
+            InvC = 3000 + 2.0/30 * (Q_design_W - 50000) # linear interpolation of A+W data
 
-        if Q_design  >= 80000 and Q_design < 100000:
+        if Q_design_W  >= 80000 and Q_design_W < 100000:
             InvC = 5000.0
             #print "A"
 
-        if Q_design > 100000:
-            InvC = 80 * Q_design / 1000.0 - 3000
+        if Q_design_W > 100000:
+            InvC = 80 * Q_design_W / 1000.0 - 3000
             #print "B"
 
         InvCa =  InvC * gV.Subst_i * (1+ gV.Subst_i) ** gV.Subst_n / ((1+gV.Subst_i) ** gV.Subst_n - 1)

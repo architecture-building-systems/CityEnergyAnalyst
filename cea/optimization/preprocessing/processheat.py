@@ -34,7 +34,7 @@ def calc_pareto_Qhp(locator, total_demand, gv):
 
 
     if total_demand["Qhprof_MWhyr"].sum()>0:
-        df = total_demand[total_demand.Qhprof_kWh != 0]
+        df = total_demand[total_demand.Qhprof_MWhyr != 0]
 
         for name in df.Name :
             # Extract process heat needs
