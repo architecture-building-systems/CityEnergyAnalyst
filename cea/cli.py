@@ -209,6 +209,7 @@ def radiation_daysim(args):
     for option in options:
         value = getattr(args, option.replace('-', '_'))
         if value is not None:
+            print 'radiation-daysim', option, str(value)
             config._parser.set('radiation-daysim', option, str(value))
     config.save()
 
