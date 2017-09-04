@@ -1618,6 +1618,15 @@ class RadiationDaysimTool(object):
 
         run_cli_arguments = [scenario_path, 'radiation-daysim',
                              '--weather-path', weather_path]
+        options = ['rad-n', 'rad-af', 'rad-ab', 'rad-ad', 'rad-as', 'rad-ar', 'rad-aa', 'rad-lr', 'rad-st', 'rad-sj',
+                   'rad-lw', 'rad-dj', 'rad-ds', 'rad-dr', 'rad-dp', 'sensor-x-dim', 'sensor-y-dim', 'e-terrain',
+                   'n-buildings-in-chunk', 'multiprocessing', 'zone-geometry', 'surrounding-geometry',
+                   'consider-windows',
+                   'consider-floors']
+        for option in options:
+            run_cli_arguments.append('--' + option)
+            run_cli_arguments.append(parameters[option.replace('-', '_')].value)
+            
         run_cli(*run_cli_arguments)
         return
 
