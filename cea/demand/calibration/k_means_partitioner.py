@@ -1,4 +1,5 @@
 from __future__ import print_function
+from sklearn.metrics import silhouette_samples, silhouette_score, calinski_harabaz_score
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -8,158 +9,113 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
 from sklearn import metrics
 from sklearn.cluster import KMeans, MiniBatchKMeans
+from sklearn.preprocessing import MinMaxScaler
 import logging
 from optparse import OptionParser
 import sys
+import cea
 from time import time
 import numpy as np
-
-# Display progress logs on stdout
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s %(levelname)s %(message)s')
-
-# parse commandline arguments
-op = OptionParser()
-op.add_option("--lsa",
-              dest="n_components", type="int",
-              help="Preprocess documents with latent semantic analysis.")
-op.add_option("--no-minibatch",
-              action="store_false", dest="minibatch", default=True,
-              help="Use ordinary k-means algorithm (in batch mode).")
-op.add_option("--no-idf",
-              action="store_false", dest="use_idf", default=True,
-              help="Disable Inverse Document Frequency feature weighting.")
-op.add_option("--use-hashing",
-              action="store_true", default=False,
-              help="Use a hashing feature vectorizer")
-op.add_option("--n-features", type=int, default=10000,
-              help="Maximum number of features (dimensions)"
-                   " to extract from text.")
-op.add_option("--verbose",
-              action="store_true", dest="verbose", default=False,
-              help="Print progress reports inside k-means algorithm.")
-
-
-def is_interactive():
-    return not hasattr(sys.modules['__main__'], '__file__')
-
-# work-around for Jupyter notebook and IPython console
-argv = [] if is_interactive() else sys.argv[1:]
-(opts, args) = op.parse_args(argv)
-if len(args) > 0:
-    op.error("this script takes no arguments.")
-    sys.exit(1)
-
-
-# #############################################################################
-# Load some categories from the training set
-categories = [
-    'alt.atheism',
-    'talk.religion.misc',
-    'comp.graphics',
-    'sci.space',
-]
-# Uncomment the following to do the analysis on all the categories
-# categories = None
-
-print("Loading 20 newsgroups dataset for categories:")
-print(categories)
-
-dataset = fetch_20newsgroups(subset='all', categories=categories,
-                             shuffle=True, random_state=42)
-
-print("%d documents" % len(dataset.data))
-print("%d categories" % len(dataset.target_names))
-print()
-
-labels = dataset.target
-true_k = np.unique(labels).shape[0]
-
-print("Extracting features from the training dataset using a sparse vectorizer")
-t0 = time()
-if opts.use_hashing:
-    if opts.use_idf:
-        # Perform an IDF normalization on the output of HashingVectorizer
-        hasher = HashingVectorizer(n_features=opts.n_features,
-                                   stop_words='english', alternate_sign=False,
-                                   norm=None, binary=False)
-        vectorizer = make_pipeline(hasher, TfidfTransformer())
-    else:
-        vectorizer = HashingVectorizer(n_features=opts.n_features,
-                                       stop_words='english',
-                                       alternate_sign=False, norm='l2',
-                                       binary=False)
-else:
-    vectorizer = TfidfVectorizer(max_df=0.5, max_features=opts.n_features,
-                                 min_df=2, stop_words='english',
-                                 use_idf=opts.use_idf)
-
-X = vectorizer.fit_transform(dataset.data)
-
-print("done in %fs" % (time() - t0))
-print("n_samples: %d, n_features: %d" % X.shape)
-print()
-
-if opts.n_components:
-    print("Performing dimensionality reduction using LSA")
-    t0 = time()
-    # Vectorizer results are normalized, which makes KMeans behave as
-    # spherical k-means for better results. Since LSA/SVD results are
-    # not normalized, we have to redo the normalization.
-    svd = TruncatedSVD(opts.n_components)
-    normalizer = Normalizer(copy=False)
-    lsa = make_pipeline(svd, normalizer)
-
-    X = lsa.fit_transform(X)
-
-    print("done in %fs" % (time() - t0))
-
-    explained_variance = svd.explained_variance_ratio_.sum()
-    print("Explained variance of the SVD step: {}%".format(
-        int(explained_variance * 100)))
-
-    print()
+import pandas as pd
+import cea.globalvar
+import cea.inputlocator as inputlocator
 
 
 # #############################################################################
 # Do the actual clustering
+word_size = 9
+alphabet_size = 7
+gv = cea.globalvar.GlobalVariables()
+scenario_path = r'C:\reference-case-open\baseline'
+locator = inputlocator.InputLocator(scenario_path=scenario_path)
+building_name = 'B155066'
+ht_cl_el=['Qhsf_kWh', 'Qcsf_kWh', 'Ef_kWh']
+measued_dataset = pd.read_csv(locator.get_demand_measured_file(building_name),
+                           usecols=ht_cl_el )
+
+inputs_x=np.asarray(measued_dataset)
 
 
-range_n_clusters = [2, 3, 4, 5, 6]
 
+
+#################################################################################
+from sklearn.preprocessing import MinMaxScaler
+from keras.layers import Input, Dense
+from keras.models import Model
+
+np.random.seed(7)
+
+inputs_x_rows, inputs_x_cols, = inputs_x.shape
+# scaling and normalizing inputs
+scalerX = MinMaxScaler(feature_range=(0, 1))
+inputs_x = scalerX.fit_transform(inputs_x)
+encoding_dim = 1
+over_complete_dim = 4
+AE_input_dim = int(inputs_x_cols)
+
+#sparsing inputs
+input_AEI = Input(shape=(AE_input_dim,))
+encoded = Dense(over_complete_dim, activation='relu')(input_AEI)
+encoded = Dense(encoding_dim, activation='softplus')(encoded)
+
+decoded = Dense(over_complete_dim, activation='softplus')(encoded)
+decoded = Dense(inputs_x_cols, activation='relu')(decoded)
+
+autoencoder = Model(input_AEI, decoded)
+autoencoder.compile(optimizer='Adamax', loss='mse')
+autoencoder.fit(inputs_x,inputs_x,epochs=10000, batch_size= 100000, shuffle=True)
+encoder = Model(input_AEI, encoded)
+encoded_input=Input(shape=(encoding_dim,))
+encoded_x=encoder.predict(inputs_x)
+
+
+
+#################################################################################
+
+X=np.reshape(encoded_x,(365,24))
+
+range_n_clusters = np.arange(2,50)
+scores_list=np.empty([48, 2])
 for n_clusters in range_n_clusters:
-    km = KMeans(n_clusters=n_clusters, init='k-means++', max_iter=100, n_init=1,
-                    verbose=opts.verbose)
-
-    print("Clustering sparse data with %s" % km)
-    t0 = time()
-    km.fit(X)
-    print("done in %0.3fs" % (time() - t0))
-    print()
-
-    print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_))
-    print("Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_))
-    print("V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_))
-    print("Adjusted Rand-Index: %.3f"
-          % metrics.adjusted_rand_score(labels, km.labels_))
-    print("Silhouette Coefficient: %0.3f"
-          % metrics.silhouette_score(X, km.labels_, sample_size=1000))
-
-    print()
 
 
-    if not opts.use_hashing:
-        print("Top terms per cluster:")
+    # Initialize the clusterer with n_clusters value and a random generator
+    # seed of 10 for reproducibility.
+    clusterer = KMeans(n_clusters=n_clusters, random_state=10, n_init=100)
+    cluster_labels = clusterer.fit_predict(X)
 
-        if opts.n_components:
-            original_space_centroids = svd.inverse_transform(km.cluster_centers_)
-            order_centroids = original_space_centroids.argsort()[:, ::-1]
-        else:
-            order_centroids = km.cluster_centers_.argsort()[:, ::-1]
+    # The silhouette_score gives the average value for all the samples.
+    # This gives a perspective into the density and separation of the formed
+    # clusters
+    sil_score = silhouette_score(X, cluster_labels, sample_size=1000)
+    ch_score=calinski_harabaz_score(X, cluster_labels)
 
-        terms = vectorizer.get_feature_names()
-        for i in range(true_k):
-            print("Cluster %d:" % i, end='')
-            for ind in order_centroids[i, :10]:
-                print(' %s' % terms[ind], end='')
-            print()
+
+
+    #print("For n_clusters =", n_clusters,
+    #          "The average silhouette_score is :", sil_score, ch_score)
+
+    scores_array=np.asarray([sil_score,ch_score])
+    counter_dummy=n_clusters-2
+
+    scores_list[counter_dummy,:]=scores_array
+
+
+    print (scores_list)
+    # Compute the silhouette scores for each sample
+    #sample_silhouette_values = silhouette_samples(X, cluster_labels)
+
+
+scaler_sil = MinMaxScaler(feature_range=(0, 1))
+scaler_ch = MinMaxScaler(feature_range=(0, 1))
+sil_score = scaler_sil.fit_transform(scores_list[:,0])
+ch_score = scaler_ch.fit_transform(scores_list[:,1])
+real_score = np.sqrt([(np.square(sil_score))+(np.square(ch_score))])
+best_idx=np.argmax(real_score)
+n_clusters=best_idx+2
+
+clusterer = KMeans(n_clusters=n_clusters, init='k-means++', n_init=100, max_iter=3000, tol=0.0001,
+                   precompute_distances='auto', verbose=0, random_state=None, copy_x=True, n_jobs=1, algorithm='auto')
+cluster_labels = clusterer.fit_predict(X)
+
+print (cluster_labels)

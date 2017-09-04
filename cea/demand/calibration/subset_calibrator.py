@@ -87,7 +87,6 @@ def run_as_script():
     scenario_path = gv.scenario_reference
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
     variables = ['U_win', 'U_wall', 'n50', 'Ths_set_C', 'Cm_Af']
-    variables = ['U_win', 'U_wall', 'n50', 'Ths_set_C', 'Cm_Af']
     building_name = 'B155066'
     building_load = 'Qhsf_kWh'
     res_mbe, res_cvRMSE = subset_engine(locator, variables, building_name, building_load)
