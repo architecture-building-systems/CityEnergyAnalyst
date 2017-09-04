@@ -105,7 +105,7 @@ def calc_sensors_zone(geometry_3D_zone, locator, sensor_parameters):
     return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone
 
 
-def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, settings, aweatherfile_path):
+def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, settings):
 
     # folder for data work
     daysim_dir = locator.get_temporary_file("temp" + str(chunk_n))
