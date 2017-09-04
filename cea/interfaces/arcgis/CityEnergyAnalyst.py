@@ -13,7 +13,6 @@ import subprocess
 import tempfile
 import arcpy
 
-
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Daren Thomas", "Martin Mosteiro Romero", "Jimeno A. Fonseca"]
@@ -26,6 +25,7 @@ __status__ = "Production"
 
 class Toolbox(object):
     """List the tools to show in the toolbox."""
+
     def __init__(self):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
@@ -74,8 +74,8 @@ class RetrofitPotentialTool(object):
         retrofit_target_date.value = 2020
 
         keep_partial_matches = arcpy.Parameter(displayName="Keep buildings partially matching the selected criteria",
-                                                               name="keep_partial_matches",
-                                                  datatype="GPBoolean", parameterType="Required", direction="Input")
+                                               name="keep_partial_matches",
+                                               datatype="GPBoolean", parameterType="Required", direction="Input")
         keep_partial_matches.value = False
 
         name = arcpy.Parameter(displayName="Name for new scenario", name="name", datatype="String",
@@ -102,43 +102,50 @@ class RetrofitPotentialTool(object):
 
         eui_heating_threshold = arcpy.Parameter(displayName="End use intensity threshold for heating",
                                                 name="eui_heating_threshold", datatype="GPLong",
-                                                parameterType="Optional", direction="Input", category="end use intensity")
+                                                parameterType="Optional", direction="Input",
+                                                category="end use intensity")
         eui_heating_threshold.value = 50
         eui_heating_threshold.enabled = False
 
         cb_eui_hot_water_threshold = arcpy.Parameter(displayName="Enable end use intensity threshold for hot water",
                                                      name="cb_eui_hot_water_threshold", datatype="GPBoolean",
-                                                     parameterType="Required", direction="Input", category="end use intensity")
+                                                     parameterType="Required", direction="Input",
+                                                     category="end use intensity")
         cb_eui_hot_water_threshold.value = False
         cb_eui_hot_water_threshold.enabled = False
 
         eui_hot_water_threshold = arcpy.Parameter(displayName="End use intensity threshold for hot water",
                                                   name="eui_hot_water_threshold", datatype="GPLong",
-                                                  parameterType="Optional", direction="Input", category="end use intensity")
+                                                  parameterType="Optional", direction="Input",
+                                                  category="end use intensity")
         eui_hot_water_threshold.value = 50
         eui_hot_water_threshold.enabled = False
 
         cb_eui_cooling_threshold = arcpy.Parameter(displayName="Enable end use intensity threshold for cooling",
                                                    name="cb_eui_cooling_threshold", datatype="GPBoolean",
-                                                   parameterType="Required", direction="Input", category="end use intensity")
+                                                   parameterType="Required", direction="Input",
+                                                   category="end use intensity")
         cb_eui_cooling_threshold.value = False
         cb_eui_cooling_threshold.enabled = False
 
         eui_cooling_threshold = arcpy.Parameter(displayName="End use intensity threshold for cooling",
                                                 name="eui_cooling_threshold", datatype="GPLong",
-                                                parameterType="Optional", direction="Input", category="end use intensity")
+                                                parameterType="Optional", direction="Input",
+                                                category="end use intensity")
         eui_cooling_threshold.value = 4
         eui_cooling_threshold.enabled = False
 
         cb_eui_electricity_threshold = arcpy.Parameter(displayName="Enable end use intensity threshold for electricity",
                                                        name="cb_eui_electricity_threshold", datatype="GPBoolean",
-                                                       parameterType="Required", direction="Input", category="end use intensity")
+                                                       parameterType="Required", direction="Input",
+                                                       category="end use intensity")
         cb_eui_electricity_threshold.value = False
         cb_eui_electricity_threshold.enabled = False
 
         eui_electricity_threshold = arcpy.Parameter(displayName="End use intensity threshold for electricity",
                                                     name="eui_electricity_threshold", datatype="GPLong",
-                                                    parameterType="Optional", direction="Input", category="end use intensity")
+                                                    parameterType="Optional", direction="Input",
+                                                    category="end use intensity")
         eui_electricity_threshold.value = 20
         eui_electricity_threshold.enabled = False
 
@@ -150,67 +157,78 @@ class RetrofitPotentialTool(object):
 
         emissions_operation_threshold = arcpy.Parameter(displayName="Threshold for emissions due to operation",
                                                         name="emissions_operation_threshold", datatype="GPLong",
-                                                        parameterType="Optional", direction="Input", category="emissions")
+                                                        parameterType="Optional", direction="Input",
+                                                        category="emissions")
         emissions_operation_threshold.value = 30
         emissions_operation_threshold.enabled = False
 
         cb_heating_costs_threshold = arcpy.Parameter(displayName="Enable threshold for heating costs",
                                                      name="cb_heating_costs_threshold", datatype="GPBoolean",
-                                                     parameterType="Required", direction="Input", category="operation costs")
+                                                     parameterType="Required", direction="Input",
+                                                     category="operation costs")
         cb_heating_costs_threshold.value = False
         cb_heating_costs_threshold.enabled = False
 
         heating_costs_threshold = arcpy.Parameter(displayName="Threshold for heating costs",
                                                   name="heating_costs_threshold", datatype="GPLong",
-                                                  parameterType="Optional", direction="Input", category="operation costs")
+                                                  parameterType="Optional", direction="Input",
+                                                  category="operation costs")
         heating_costs_threshold.value = 2
         heating_costs_threshold.enabled = False
 
         cb_hot_water_costs_threshold = arcpy.Parameter(displayName="Enable threshold for hot water costs",
                                                        name="cb_hot_water_costs_threshold", datatype="GPBoolean",
-                                                       parameterType="Required", direction="Input", category="operation costs")
+                                                       parameterType="Required", direction="Input",
+                                                       category="operation costs")
         cb_hot_water_costs_threshold.value = False
         cb_hot_water_costs_threshold.enabled = False
 
         hot_water_costs_threshold = arcpy.Parameter(displayName="Threshold for hot water costs",
                                                     name="hot_water_costs_threshold", datatype="GPLong",
-                                                    parameterType="Optional", direction="Input", category="operation costs")
+                                                    parameterType="Optional", direction="Input",
+                                                    category="operation costs")
         hot_water_costs_threshold.value = 2
         hot_water_costs_threshold.enabled = False
 
         cb_cooling_costs_threshold = arcpy.Parameter(displayName="Enable threshold for cooling costs",
                                                      name="cb_cooling_costs_threshold", datatype="GPBoolean",
-                                                     parameterType="Required", direction="Input", category="operation costs")
+                                                     parameterType="Required", direction="Input",
+                                                     category="operation costs")
         cb_cooling_costs_threshold.value = False
         cb_cooling_costs_threshold.enabled = False
 
         cooling_costs_threshold = arcpy.Parameter(displayName="Threshold for cooling costs",
                                                   name="cooling_costs_threshold", datatype="GPLong",
-                                                  parameterType="Optional", direction="Input", category="operation costs")
+                                                  parameterType="Optional", direction="Input",
+                                                  category="operation costs")
         cooling_costs_threshold.value = 2
         cooling_costs_threshold.enabled = False
 
         cb_electricity_costs_threshold = arcpy.Parameter(displayName="Enable threshold for electricity costs",
                                                          name="cb_electricity_costs_threshold", datatype="GPBoolean",
-                                                         parameterType="Required", direction="Input", category="operation costs")
+                                                         parameterType="Required", direction="Input",
+                                                         category="operation costs")
         cb_electricity_costs_threshold.value = False
         cb_electricity_costs_threshold.enabled = False
 
         electricity_costs_threshold = arcpy.Parameter(displayName="Threshold for electricity costs",
                                                       name="electricity_costs_threshold", datatype="GPLong",
-                                                      parameterType="Optional", direction="Input", category="operation costs")
+                                                      parameterType="Optional", direction="Input",
+                                                      category="operation costs")
         electricity_costs_threshold.value = 2
         electricity_costs_threshold.enabled = False
 
-        cb_heating_losses_threshold = arcpy.Parameter(displayName="Enable threshold for HVAC system losses from heating",
-                                                      name="cb_heating_losses_threshold", datatype="GPBoolean",
-                                                      parameterType="Required", direction="Input", category="HVAC system losses")
+        cb_heating_losses_threshold = arcpy.Parameter(
+            displayName="Enable threshold for HVAC system losses from heating",
+            name="cb_heating_losses_threshold", datatype="GPBoolean",
+            parameterType="Required", direction="Input", category="HVAC system losses")
         cb_heating_losses_threshold.value = False
         cb_heating_losses_threshold.enabled = False
 
         heating_losses_threshold = arcpy.Parameter(displayName="Threshold for HVAC system losses from heating",
                                                    name="heating_losses_threshold", datatype="GPLong",
-                                                   parameterType="Optional", direction="Input", category="HVAC system losses")
+                                                   parameterType="Optional", direction="Input",
+                                                   category="HVAC system losses")
         heating_losses_threshold.value = 15
         heating_losses_threshold.enabled = False
 
@@ -222,19 +240,22 @@ class RetrofitPotentialTool(object):
 
         hot_water_losses_threshold = arcpy.Parameter(displayName="Threshold for HVAC system losses from hot water",
                                                      name="hot_water_losses_threshold", datatype="GPLong",
-                                                     parameterType="Optional", direction="Input", category="HVAC system losses")
+                                                     parameterType="Optional", direction="Input",
+                                                     category="HVAC system losses")
         hot_water_losses_threshold.value = 15
         hot_water_losses_threshold.enabled = False
 
-        cb_cooling_losses_threshold = arcpy.Parameter(displayName="Enable threshold for HVAC system losses from cooling",
-                                                      name="cb_cooling_losses_threshold", datatype="GPBoolean",
-                                                      parameterType="Required", direction="Input", category="HVAC system losses")
+        cb_cooling_losses_threshold = arcpy.Parameter(
+            displayName="Enable threshold for HVAC system losses from cooling",
+            name="cb_cooling_losses_threshold", datatype="GPBoolean",
+            parameterType="Required", direction="Input", category="HVAC system losses")
         cb_cooling_losses_threshold.value = False
         cb_cooling_losses_threshold.enabled = False
 
         cooling_losses_threshold = arcpy.Parameter(displayName="Threshold for HVAC system losses from cooling",
                                                    name="cooling_losses_threshold", datatype="GPLong",
-                                                   parameterType="Optional", direction="Input", category="HVAC system losses")
+                                                   parameterType="Optional", direction="Input",
+                                                   category="HVAC system losses")
         cooling_losses_threshold.value = 15
         cooling_losses_threshold.enabled = False
 
@@ -290,6 +311,7 @@ class RetrofitPotentialTool(object):
                     args.append(str(parameter.value))
 
         run_cli(scenario_path, 'retrofit-potential', *args)
+
 
 class DemandTool(object):
     """integrate the demand script with ArcGIS"""
@@ -431,6 +453,7 @@ class DataHelperTool(object):
 
 class BenchmarkGraphsTool(object):
     """Integrates the cea/analysis/benchmark.py tool with ArcGIS"""
+
     def __init__(self):
         self.label = '2000W Society Benchmark'
         self.description = 'Plot life cycle primary energy demand and emissions compared to an established benchmark'
@@ -596,6 +619,7 @@ class EmbodiedTool(object):
 
 class MobilityTool(object):
     """Integrates the cea/analysis/mobility.py script with ArcGIS."""
+
     def __init__(self):
         self.label = 'LCA Mobility'
         self.description = 'Calculate emissions and primary energy due to mobility'
@@ -603,7 +627,6 @@ class MobilityTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
@@ -906,6 +929,7 @@ class PhotovoltaicPannelsTool(object):
                              '--panel-on-wall', 'yes' if panel_on_wall else 'no']
         run_cli(*run_cli_arguments)
         return
+
 
 class SolarCollectorPanelsTool(object):
     def __init__(self):
@@ -1360,11 +1384,12 @@ class RadiationDaysimTool(object):
         self.description = 'Use Daysim to calculate solar radiation for a scenario'
         self.category = 'Renewable Energy Assessment'
         self.canRunInBackground = False
-        self.options = {'rad-n', 'rad-af', 'rad-ab', 'rad-ad', 'rad-as', 'rad-ar', 'rad-aa', 'rad-lr', 'rad-st', 'rad-sj',
-                   'rad-lw', 'rad-dj', 'rad-ds', 'rad-dr', 'rad-dp', 'sensor-x-dim', 'sensor-y-dim', 'e-terrain',
-                   'n-buildings-in-chunk', 'multiprocessing', 'zone-geometry', 'surrounding-geometry',
-                   'consider-windows',
-                   'consider-floors'}
+        self.options = {'rad-n', 'rad-af', 'rad-ab', 'rad-ad', 'rad-as', 'rad-ar', 'rad-aa', 'rad-lr', 'rad-st',
+                        'rad-sj',
+                        'rad-lw', 'rad-dj', 'rad-ds', 'rad-dr', 'rad-dp', 'sensor-x-dim', 'sensor-y-dim', 'e-terrain',
+                        'n-buildings-in-chunk', 'multiprocessing', 'zone-geometry', 'surrounding-geometry',
+                        'consider-windows',
+                        'consider-floors'}
 
     def getParameterInfo(self):
         scenario_path = arcpy.Parameter(
@@ -1392,79 +1417,98 @@ class RadiationDaysimTool(object):
         weather_path.filter.list = ['epw']
         weather_path.enabled = False
 
-        rad_n = arcpy.Parameter(displayName="rad-n", category="Daysism radiation simulation parameters", name="rad_n", datatype="Long",
+        rad_n = arcpy.Parameter(displayName="rad-n", category="Daysism radiation simulation parameters", name="rad_n",
+                                datatype="Long",
                                 parameterType="Required", direction="Input")
         rad_n.enabled = False
 
-        rad_af = arcpy.Parameter(displayName="rad-af", category="Daysism radiation simulation parameters", name="rad_af", datatype="GPString",
+        rad_af = arcpy.Parameter(displayName="rad-af", category="Daysism radiation simulation parameters",
+                                 name="rad_af", datatype="GPString",
                                  parameterType="Required", direction="Input")
         rad_af.enabled = False
 
-        rad_ab = arcpy.Parameter(displayName="rad-ab", category="Daysism radiation simulation parameters", name="rad_ab", datatype="Long",
+        rad_ab = arcpy.Parameter(displayName="rad-ab", category="Daysism radiation simulation parameters",
+                                 name="rad_ab", datatype="Long",
                                  parameterType="Required", direction="Input")
         rad_ab.enabled = False
 
-        rad_ad = arcpy.Parameter(displayName="rad-ad", category="Daysism radiation simulation parameters", name="rad_ad", datatype="Long",
+        rad_ad = arcpy.Parameter(displayName="rad-ad", category="Daysism radiation simulation parameters",
+                                 name="rad_ad", datatype="Long",
                                  parameterType="Required", direction="Input")
         rad_ad.enabled = False
 
-        rad_as = arcpy.Parameter(displayName="rad-as", category="Daysism radiation simulation parameters", name="rad_as", datatype="Long",
+        rad_as = arcpy.Parameter(displayName="rad-as", category="Daysism radiation simulation parameters",
+                                 name="rad_as", datatype="Long",
                                  parameterType="Required", direction="Input")
         rad_as.enabled = False
 
-        rad_ar = arcpy.Parameter(displayName="rad-ar", category="Daysism radiation simulation parameters", name="rad_ar", datatype="Long",
+        rad_ar = arcpy.Parameter(displayName="rad-ar", category="Daysism radiation simulation parameters",
+                                 name="rad_ar", datatype="Long",
                                  parameterType="Required", direction="Input")
         rad_ar.enabled = False
 
-        rad_aa = arcpy.Parameter(displayName="rad-aa", category="Daysism radiation simulation parameters", name="rad_aa", datatype="GPDouble",
+        rad_aa = arcpy.Parameter(displayName="rad-aa", category="Daysism radiation simulation parameters",
+                                 name="rad_aa", datatype="GPDouble",
                                  parameterType="Required", direction="Input")
         rad_aa.enabled = False
 
-        rad_lr = arcpy.Parameter(displayName="rad-lr", category="Daysism radiation simulation parameters", name="rad_lr", datatype="Long",
+        rad_lr = arcpy.Parameter(displayName="rad-lr", category="Daysism radiation simulation parameters",
+                                 name="rad_lr", datatype="Long",
                                  parameterType="Required", direction="Input")
         rad_lr.enabled = False
 
-        rad_st = arcpy.Parameter(displayName="rad-st", category="Daysism radiation simulation parameters", name="rad_st", datatype="GPDouble",
+        rad_st = arcpy.Parameter(displayName="rad-st", category="Daysism radiation simulation parameters",
+                                 name="rad_st", datatype="GPDouble",
                                  parameterType="Required", direction="Input")
         rad_st.enabled = False
 
-        rad_sj = arcpy.Parameter(displayName="rad-sj", category="Daysism radiation simulation parameters", name="rad_sj", datatype="GPDouble",
+        rad_sj = arcpy.Parameter(displayName="rad-sj", category="Daysism radiation simulation parameters",
+                                 name="rad_sj", datatype="GPDouble",
                                  parameterType="Required", direction="Input")
         rad_sj.enabled = False
 
-        rad_lw = arcpy.Parameter(displayName="rad-lw", category="Daysism radiation simulation parameters", name="rad_lw", datatype="GPDouble",
+        rad_lw = arcpy.Parameter(displayName="rad-lw", category="Daysism radiation simulation parameters",
+                                 name="rad_lw", datatype="GPDouble",
                                  parameterType="Required", direction="Input")
         rad_lw.enabled = False
 
-        rad_dj = arcpy.Parameter(displayName="rad-dj", category="Daysism radiation simulation parameters", name="rad_dj", datatype="GPDouble",
+        rad_dj = arcpy.Parameter(displayName="rad-dj", category="Daysism radiation simulation parameters",
+                                 name="rad_dj", datatype="GPDouble",
                                  parameterType="Required", direction="Input")
         rad_dj.enabled = False
 
-        rad_ds = arcpy.Parameter(displayName="rad-ds", category="Daysism radiation simulation parameters", name="rad_ds", datatype="GPDouble",
+        rad_ds = arcpy.Parameter(displayName="rad-ds", category="Daysism radiation simulation parameters",
+                                 name="rad_ds", datatype="GPDouble",
                                  parameterType="Required", direction="Input")
         rad_ds.enabled = False
 
-        rad_dr = arcpy.Parameter(displayName="rad-dr", category="Daysism radiation simulation parameters", name="rad_dr", datatype="Long",
+        rad_dr = arcpy.Parameter(displayName="rad-dr", category="Daysism radiation simulation parameters",
+                                 name="rad_dr", datatype="Long",
                                  parameterType="Required", direction="Input")
         rad_dr.enabled = False
 
-        rad_dp = arcpy.Parameter(displayName="rad-dp", category="Daysism radiation simulation parameters", name="rad_dp", datatype="Long",
+        rad_dp = arcpy.Parameter(displayName="rad-dp", category="Daysism radiation simulation parameters",
+                                 name="rad_dp", datatype="Long",
                                  parameterType="Required", direction="Input")
         rad_dp.enabled = False
 
-        sensor_x_dim = arcpy.Parameter(displayName="X-dim", category="Grid for the sensors", name="sensor_x_dim", datatype="Long",
+        sensor_x_dim = arcpy.Parameter(displayName="X-dim", category="Grid for the sensors", name="sensor_x_dim",
+                                       datatype="Long",
                                        parameterType="Required", direction="Input")
         sensor_x_dim.enabled = False
 
-        sensor_y_dim = arcpy.Parameter(displayName="Y-dim", category="Grid for the sensors", name="sensor_y_dim", datatype="Long",
+        sensor_y_dim = arcpy.Parameter(displayName="Y-dim", category="Grid for the sensors", name="sensor_y_dim",
+                                       datatype="Long",
                                        parameterType="Required", direction="Input")
         sensor_y_dim.enabled = False
 
-        e_terrain = arcpy.Parameter(displayName="e-terrain", category="Terrain parameters", name="e_terrain", datatype="GPDouble",
+        e_terrain = arcpy.Parameter(displayName="e-terrain", category="Terrain parameters", name="e_terrain",
+                                    datatype="GPDouble",
                                     parameterType="Required", direction="Input")
         e_terrain.enabled = False
 
-        n_buildings_in_chunk = arcpy.Parameter(displayName="n-buildings-in-chunk", category="Simulation parameters", name="n_buildings_in_chunk",
+        n_buildings_in_chunk = arcpy.Parameter(displayName="n-buildings-in-chunk", category="Simulation parameters",
+                                               name="n_buildings_in_chunk",
                                                datatype="Long", parameterType="Required", direction="Input")
         n_buildings_in_chunk.enabled = False
 
@@ -1473,11 +1517,13 @@ class RadiationDaysimTool(object):
                                           direction="Input")
         multiprocessing.enabled = False
 
-        zone_geometry = arcpy.Parameter(displayName="zone-geometry", category="Geometry simplification", name="zone_geometry", datatype="Long",
+        zone_geometry = arcpy.Parameter(displayName="zone-geometry", category="Geometry simplification",
+                                        name="zone_geometry", datatype="Long",
                                         parameterType="Required", direction="Input")
         zone_geometry.enabled = False
 
-        surrounding_geometry = arcpy.Parameter(displayName="surrounding-geometry", category="Geometry simplification", name="surrounding_geometry",
+        surrounding_geometry = arcpy.Parameter(displayName="surrounding-geometry", category="Geometry simplification",
+                                               name="surrounding_geometry",
                                                datatype="Long", parameterType="Required", direction="Input")
         surrounding_geometry.enabled = False
 
@@ -1497,6 +1543,8 @@ class RadiationDaysimTool(object):
                 consider_floors]
 
     def updateParameters(self, parameters):
+        import json
+
         scenario_path = parameters[0].valueAsText
         if scenario_path is None:
             return
@@ -1520,6 +1568,35 @@ class RadiationDaysimTool(object):
             for p in parameters.values():
                 p.enabled = True
             parameters['scenario_path'].enabled = False  # user need to re-open dialog to change scenario path...
+
+            # read values for the parameters
+            radiation_config = json.loads(
+                _cli_output(scenario_path, 'read-config-section', '--section', 'radiation-daysim'))
+            parameters['rad_n'].value = radiation_config['rad-n']
+            parameters['rad_af'].value = radiation_config['rad-af']
+            parameters['rad_ab'].value = radiation_config['rad-ab']
+            parameters['rad_ad'].value = radiation_config['rad-ad']
+            parameters['rad_as'].value = radiation_config['rad-as']
+            parameters['rad_ar'].value = radiation_config['rad-ar']
+            parameters['rad_aa'].value = radiation_config['rad-aa']
+            parameters['rad_lr'].value = radiation_config['rad-lr']
+            parameters['rad_st'].value = radiation_config['rad-st']
+            parameters['rad_sj'].value = radiation_config['rad-sj']
+            parameters['rad_lw'].value = radiation_config['rad-lw']
+            parameters['rad_dj'].value = radiation_config['rad-dj']
+            parameters['rad_ds'].value = radiation_config['rad-ds']
+            parameters['rad_dr'].value = radiation_config['rad-dr']
+            parameters['rad_dp'].value = radiation_config['rad-dp']
+            parameters['sensor_x_dim'].value = radiation_config['sensor-x-dim']
+            parameters['sensor_y_dim'].value = radiation_config['sensor-y-dim']
+            parameters['e_terrain'].value = radiation_config['e-terrain']
+            parameters['n_buildings_in_chunk'].value = radiation_config['n-buildings-in-chunk']
+            parameters['multiprocessing'].value = parse_boolean(radiation_config['multiprocessing'])
+            parameters['zone_geometry'].value = radiation_config['zone-geometry']
+            parameters['surrounding_geometry'].value = radiation_config['surrounding-geometry']
+            parameters['consider_windows'].value = parse_boolean(radiation_config['consider-windows'])
+            parameters['consider_floors'].value = parse_boolean(radiation_config['consider-floors'])
+
         parameters['weather_path'].enabled = parameters['weather_name'].value == '<choose path from below>'
 
     def updateMessages(self, parameters):
@@ -1548,7 +1625,7 @@ class RadiationDaysimTool(object):
 class RadiationTool(object):
     def __init__(self):
         self.label = 'Solar Insolation'
-        self.category= 'Renewable Energy Assessment'
+        self.category = 'Renewable Energy Assessment'
         self.description = 'Create radiation file'
         self.canRunInBackground = False
 
@@ -1662,6 +1739,7 @@ def add_message(msg, **kwargs):
 
 def get_weather_names():
     """Shell out to cli.py and collect the list of weather files registered with the CEA"""
+
     def get_weather_names_inner():
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -1673,6 +1751,7 @@ def get_weather_names():
                 # end of input
                 break
             yield line.rstrip()
+
     return list(get_weather_names_inner())
 
 
@@ -1766,6 +1845,22 @@ def run_cli(scenario_path=None, *args):
     add_message(stderr)
 
 
+def parse_boolean(s):
+    """Return True or False, depending on the value of ``s`` as defined by the ConfigParser library."""
+    boolean_states = {'0': False,
+                      '1': True,
+                      'false': False,
+                      'no': False,
+                      'off': False,
+                      'on': True,
+                      'true': True,
+                      'yes': True}
+    if s.lower() in boolean_states:
+        return boolean_states[s.lower()]
+    return False
+
+
+
 class HeatmapsTool(object):
     def __init__(self):
         self.label = 'Heatmaps'
@@ -1798,7 +1893,6 @@ class HeatmapsTool(object):
         analysis_fields.parameterDependencies = ['path_variables']
 
         return [scenario_path, path_variables, analysis_fields]
-
 
     def updateParameters(self, parameters):
         # scenario_path
@@ -1841,6 +1935,7 @@ class HeatmapsTool(object):
                                            file_to_analyze)
         run_cli(scenario_path, 'heatmaps', '--file-to-analyze', file_to_analyze, '--analysis-fields', *analysis_fields)
 
+
 class ExcelToDbfTool(object):
     def __init__(self):
         self.label = 'Convert Excel to DBF'
@@ -1871,6 +1966,7 @@ class ExcelToDbfTool(object):
 
         run_cli(None, 'excel-to-dbf', '--input-path', input_path, '--output-path', output_path)
 
+
 class DbfToExcelTool(object):
     def __init__(self):
         self.label = 'Convert DBF to Excel'
@@ -1896,7 +1992,7 @@ class DbfToExcelTool(object):
 
         return [input_path, output_path]
 
-    def execute(self,parameters, _):
+    def execute(self, parameters, _):
         input_path = parameters[0].valueAsText
         output_path = parameters[1].valueAsText
 
@@ -1905,6 +2001,7 @@ class DbfToExcelTool(object):
 
 class ExtractReferenceCaseTool(object):
     """Extract the built-in reference case to a specified folder"""
+
     def __init__(self):
         self.label = 'Extract reference case'
         self.description = 'Extract sample reference case to folder'
@@ -1921,13 +2018,15 @@ class ExtractReferenceCaseTool(object):
 
         return [output_path]
 
-    def execute(self,parameters, _):
+    def execute(self, parameters, _):
         output_path = parameters[0].valueAsText
 
         run_cli(None, 'extract-reference-case', '--to', output_path)
 
+
 class TestTool(object):
     """Run `cea test` for the user"""
+
     def __init__(self):
         self.label = 'Test CEA'
         self.description = 'Run some tests on the CEA'
@@ -1937,5 +2036,5 @@ class TestTool(object):
     def getParameterInfo(self):
         return []
 
-    def execute(self,parameters, _):
+    def execute(self, parameters, _):
         run_cli(None, 'test')
