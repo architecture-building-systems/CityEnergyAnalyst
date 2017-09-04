@@ -50,16 +50,19 @@ inputs_x_rows, inputs_x_cols, = inputs_x.shape
 scalerX = MinMaxScaler(feature_range=(0, 1))
 inputs_x = scalerX.fit_transform(inputs_x)
 encoding_dim = 1
-over_complete_dim = 4
+middle_dim = 3
+over_complete_dim = 6
 AE_input_dim = int(inputs_x_cols)
 
 #sparsing inputs
 input_AEI = Input(shape=(AE_input_dim,))
-encoded = Dense(over_complete_dim, activation='relu')(input_AEI)
+encoded = Dense(over_complete_dim, activation='softplus')(input_AEI)
+encoded = Dense(middle_dim, activation='softplus')(encoded)
 encoded = Dense(encoding_dim, activation='softplus')(encoded)
 
-decoded = Dense(over_complete_dim, activation='softplus')(encoded)
-decoded = Dense(inputs_x_cols, activation='relu')(decoded)
+decoded = Dense(middle_dim, activation='softplus')(encoded)
+decoded = Dense(over_complete_dim, activation='softplus')(decoded)
+decoded = Dense(inputs_x_cols, activation='softplus')(decoded)
 
 autoencoder = Model(input_AEI, decoded)
 autoencoder.compile(optimizer='Adamax', loss='mse')
