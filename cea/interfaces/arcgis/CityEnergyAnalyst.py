@@ -1629,7 +1629,6 @@ class RadiationDaysimTool(object):
             if parameter.dataType == 'Boolean':
                 run_cli_arguments.append('yes' if parameter.value else 'no')
             else:
-                add_message('%(name)s, %(dataType)s', name=parameter.name, dataType=parameter.dataType)
                 run_cli_arguments.append(parameter.value)
 
         run_cli(*run_cli_arguments)
