@@ -18,7 +18,7 @@ __status__ = "Production"
 class GlobalVariables(object):
     def __init__(self):
 
-        self.scenario_reference = r'C:\reference-case-open\baseline'
+        self.scenario_reference = r'c:\reference-case-zug\baseline'
         self.print_partial = 'hourly'  # hourly or monthly for the demand script
         self.print_totals = True  # print yearly values
         self.print_yearly_peak = True  # print peak values
@@ -77,7 +77,7 @@ class GlobalVariables(object):
         # Commands for the evolutionary algorithm
 
 
-        self.initialInd = 2  # number of initial individuals
+        self.initialInd = 5  # number of initial individuals
         self.NGEN = 5  # number of total generations
         self.fCheckPoint = 1  # frequency for the saving of checkpoints
         self.maxTime = 7 * 24 * 3600  # maximum computational time [seconds]

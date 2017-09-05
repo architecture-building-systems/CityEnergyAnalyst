@@ -63,11 +63,11 @@ This section deals with the files saved in ``<SCENARIO>\outputs\data\demand``
 - ``Eauxf_fw_kWh``
 - ``Eprof_kWh``
 - ``Ecaf_kWh``
-- ``mcphsf_kWC``
-- ``mcpcsf_kWC``
-- ``mcpwwf_kWC``
-- ``mcpdataf_kWC``
-- ``mcpref_kWC``
+- ``mcphsf_kWperC``
+- ``mcpcsf_kWperC``
+- ``mcpwwf_kWperC``
+- ``mcpdataf_kWperC``
+- ``mcpref_kWperC``
 - ``Twwf_sup_C``
 - ``Twwf_re_C``
 - ``Thsf_sup_C``
@@ -386,42 +386,41 @@ Each of these files have the following fields:
 All the ``Network_summary_result_<BUILDINGNETWORK>.csv`` Each of these files has a header plus one row per hour in the
 simulated year. Each have an index column and 15 columns corresponding to the following fields:
 
-@bhargavakrishna: one such for each building? Nope. It is one for <BUILDINGNETWORK>
 
-- ``Ecaf_netw_total``
-- ``Electr_netw_total``
-- ``Q_DC_building_netw_total``
-- ``Q_DC_losses``
-- ``Q_DH_building_netw_total``
-- ``Q_DH_losses``
-- ``Qcdata_netw_total``
-- ``T_sst_cool_return_netw_total``
-- ``T_sst_cool_supply_netw_total``
-- ``T_sst_heat_return_netw_total``
-- ``T_sst_heat_supply_netw_total``
+- ``Ecaf_netw_total_kWh``
+- ``Electr_netw_total_W``
+- ``Q_DC_building_netw_total_W``
+- ``Q_DC_losses_W``
+- ``Q_DH_building_netw_total_W``
+- ``Q_DH_losses_W``
+- ``Qcdata_netw_total_kWh``
+- ``T_sst_cool_return_netw_total_K``
+- ``T_sst_cool_supply_netw_total_K``
+- ``T_sst_heat_return_netw_total_K``
+- ``T_sst_heat_supply_netw_total_K``
 - ``day_of_max_heatmassflow``
-- ``mdot_DH_netw_total``
-- ``mdot_cool_netw_total``
-- ``mdotdata_netw_total``
+- ``mdot_DH_netw_total_kgpers``
+- ``mdot_cool_netw_total_kgpers``
+- ``mdotdata_netw_total_kWperC``
 
 The file ``Network_summary_result_all.csv`` has a header row plus one row for each hour in the simulated year.
 It has an index column and 15 columns corresponding to the following fields:
 
-- ``Ecaf_netw_total``
-- ``Electr_netw_total``
-- ``Q_DC_building_netw_total``
-- ``Q_DC_losses``
-- ``Q_DH_building_netw_total``
-- ``Q_DH_losses``
-- ``Qcdata_netw_total``
-- ``T_sst_cool_return_netw_total``
-- ``T_sst_cool_supply_netw_total``
-- ``T_sst_heat_return_netw_total``
-- ``T_sst_heat_supply_netw_total``
+- ``Ecaf_netw_total_kWh``
+- ``Electr_netw_total_W``
+- ``Q_DC_building_netw_total_W``
+- ``Q_DC_losses_W``
+- ``Q_DH_building_netw_total_W``
+- ``Q_DH_losses_W``
+- ``Qcdata_netw_total_kWh``
+- ``T_sst_cool_return_netw_total_K``
+- ``T_sst_cool_supply_netw_total_K``
+- ``T_sst_heat_return_netw_total_K``
+- ``T_sst_heat_supply_netw_total_K``
 - ``day_of_max_heatmassflow``
-- ``mdot_DH_netw_total``
-- ``mdot_cool_netw_total``
-- ``mdotdata_netw_total``
+- ``mdot_DH_netw_total_kgpers``
+- ``mdot_cool_netw_total_kgpers``
+- ``mdotdata_netw_total_kWperC``
 
 
 3.1 Network/Totals
