@@ -126,7 +126,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, sett
                           will eventually crash a daysim instance. To solve it, reduce the number of buildings \
                           in each chunk in the Settings.py file')
 
-    rad.execute_epw2wea(aweatherfile_path)
+    rad.execute_epw2wea(weather_path)
     rad.execute_radfiles2daysim()
     rad_params = settings.rad_parameters
     rad.write_radiance_parameters(rad_params['RAD_AB'], rad_params['RAD_AD'], rad_params['RAD_AS'],
