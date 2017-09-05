@@ -164,7 +164,7 @@ def radiation_singleprocessing(rad, bldg_dict_list, locator, weather_path, setti
                     settings.simulation_parameters['n_build_in_chunk'])]
 
     for chunk_n, bldg_dict in enumerate(chunks):
-        daysim_main.isolation_daysim(chunk_n, rad, bldg_dict, locator, settings, weather_path)
+        daysim_main.isolation_daysim(chunk_n, rad, bldg_dict, locator, weather_path, settings)
 
 def main(locator, weather_path):
     """

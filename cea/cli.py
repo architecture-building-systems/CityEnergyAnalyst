@@ -466,6 +466,21 @@ def dbf_to_excel(args):
     cea.utilities.dbfreader.run_as_script(args.input_path, args.output_path)
 
 
+def _parse_boolean(s):
+    """Return True or False, depending on the value of ``s`` as defined by the ConfigParser library."""
+    boolean_states = {'0': False,
+                      '1': True,
+                      'false': False,
+                      'no': False,
+                      'off': False,
+                      'on': True,
+                      'true': True,
+                      'yes': True}
+    if s.lower() in boolean_states:
+        return boolean_states[s.lower()]
+    return False
+
+
 def main():
     """Parse the arguments and run the program."""
     import argparse
@@ -564,8 +579,8 @@ def main():
     photovoltaic_parser.add_argument('--latitude', help='Latitude to use for calculations.', type=float)
     photovoltaic_parser.add_argument('--longitude', help='Longitude to use for calculations.', type=float)
     photovoltaic_parser.add_argument('--weather-path', help='Path to weather file.')
-    photovoltaic_parser.add_argument('--panel-on-roof', help='flag for considering PV on roof', type=bool)
-    photovoltaic_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall', type=bool)
+    photovoltaic_parser.add_argument('--panel-on-roof', help='flag for considering PV on roof', type=_parse_boolean)
+    photovoltaic_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall', type=_parse_boolean)
     photovoltaic_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int)
     photovoltaic_parser.add_argument('--type-PVpanel',
                                         help='monocrystalline, T2 is poly and T3 is amorphous. (see relates to the database of technologies)')
@@ -582,8 +597,8 @@ def main():
     solar_collector_parser.add_argument('--latitude', help='Latitude to use for calculations.', type=float)
     solar_collector_parser.add_argument('--longitude', help='Longitude to use for calculations.', type=float)
     solar_collector_parser.add_argument('--weather-path', help='Path to weather file.')
-    solar_collector_parser.add_argument('--panel-on-roof', help='flag for considering PV on roof', type=bool)
-    solar_collector_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall', type=bool)
+    solar_collector_parser.add_argument('--panel-on-roof', help='flag for considering PV on roof', type=_parse_boolean)
+    solar_collector_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall', type=_parse_boolean)
     solar_collector_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int)
     solar_collector_parser.add_argument('--type-SCpanel',
                                         help='Solar collector panel type (SC1: flat plate collectors, SC2: evacuated tubes)')
@@ -600,8 +615,10 @@ def main():
     photovoltaic_thermal_parser.add_argument('--latitude', help='Latitude to use for calculations.', type=float)
     photovoltaic_thermal_parser.add_argument('--longitude', help='Longitude to use for calculations.', type=float)
     photovoltaic_thermal_parser.add_argument('--weather-path', help='Path to weather file.')
-    photovoltaic_thermal_parser.add_argument('--panel-on-roof', help='flag for considering PV on roof', type=bool)
-    photovoltaic_thermal_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall', type=bool)
+    photovoltaic_thermal_parser.add_argument('--panel-on-roof', help='flag for considering PV on roof',
+                                             type=_parse_boolean)
+    photovoltaic_thermal_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall',
+                                             type=_parse_boolean)
     photovoltaic_thermal_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int)
     photovoltaic_thermal_parser.add_argument('--min-radiation',
                                              help='points are selected with at least a minimum production of this % from the maximum in the area.',
@@ -648,7 +665,7 @@ def main():
     radiation_daysim_parser.add_argument('--n-buildings-in-chunk', type=int,
                                          help='min number of buildings for multiprocessing')
     # limit the number if running out of memory
-    radiation_daysim_parser.add_argument('--multiprocessing', type=bool,
+    radiation_daysim_parser.add_argument('--multiprocessing', type=_parse_boolean,
                                          help='use multiprocessing to speed up calculations')
 
     # geometry simplification
@@ -656,9 +673,10 @@ def main():
                                          help='level of simplification of the zone geometry')
     radiation_daysim_parser.add_argument('--surrounding-geometry', type=int,
                                          help='level of simplification of the district geometry')
-    radiation_daysim_parser.add_argument('--consider-windows', type=bool,
+    radiation_daysim_parser.add_argument('--consider-windows', type=_parse_boolean,
                                          help='consider windows in the geometry')
-    radiation_daysim_parser.add_argument('--consider-floors', type=bool, help='consider floors in the geometry')
+    radiation_daysim_parser.add_argument('--consider-floors', type=_parse_boolean,
+                                         help='consider floors in the geometry')
     radiation_daysim_parser.set_defaults(func=radiation_daysim)
 
     install_toolbox_parser = subparsers.add_parser('install-toolbox',
