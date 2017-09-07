@@ -25,12 +25,9 @@ def subset_engine (locator, variables, building_name, building_load,
                    subset_threshold,subset_generations) :
     estimated_loads=nn_estimator(subset_generations)
 
-def nn_estimator(subset_generations) :
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = inputlocator.InputLocator(scenario_path=scenario_path)
+def nn_estimator(subset_generations , locator) :
     json_NN_path = os.path.join(locator.get_calibration_folder(), "trained_network_ht.json" % locals())
-    weight_NN_path = os.path.join(locator.get_calibration_folder(), "trained_network_cl.h5" % locals())
+    weight_NN_path = os.path.join(locator.get_calibration_folder(), "trained_network_ht.h5" % locals())
 
     # load json and create model
     json_file = open(json_NN_path, 'r')
@@ -40,7 +37,6 @@ def nn_estimator(subset_generations) :
 
     # load weights into new model
     perceptron_ht.load_weights(weight_NN_path)
-    print("model loaded")
 
     # predict new outputs and estimate the error
     test_NN_input_path = os.path.join(locator.get_calibration_folder(), "test_NN_input.csv" % locals())
