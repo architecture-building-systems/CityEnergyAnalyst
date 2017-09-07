@@ -137,6 +137,8 @@ def partitioner(building_name):
     list_medians=np.empty([n_clusters, 24])
     cluster_index_counter=0
 
+
+
     for cluster_index in unique_clusters:
         first_group=np.where(cluster_labels==cluster_index)[0]
         first_mat=all_reshaped[first_group,:]

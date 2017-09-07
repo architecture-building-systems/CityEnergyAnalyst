@@ -24,6 +24,8 @@ __status__ = "Testing"
 def subset_engine (locator, variables, building_name, building_load,
                    subset_threshold,subset_generations) :
     estimated_loads=nn_estimator(subset_generations)
+    targets_e = np.reshape(estimated_loads, (365, 24))
+
 
 def nn_estimator(subset_generations , locator) :
     json_NN_path = os.path.join(locator.get_calibration_folder(), "trained_network_ht.json" % locals())
@@ -62,21 +64,19 @@ def nn_estimator(subset_generations , locator) :
 
     return estimated_loads
 
-def subset_sampler(design):
-    rows_design, cols_design = design.shape
-    i=0
-    while i<rows_design:
-        temp_sample=design[i,:]
-        
+def subset_sampler(design , estimated_loads):
+    from cea.demand.calibration.k_means_partitioner import partitioner
+    building_name = 'B155066'  # intended building
+    list_median, cluster_labels = partitioner(building_name)
+    targets_e=np.reshape(estimated_loads,(365,24))
+    unique_clusters = np.unique(cluster_labels)
 
-
-
-    huy=1
-    min_cv_rmse = 1
-    while min_cv_rmse < subset_threshold:
-        simon_and_garfunkel=1
-
-    return list_of_samples
+    for cluster_index in unique_clusters:
+        first_group=np.where(cluster_labels==cluster_index)[0]
+        first_mat=all_reshaped[first_group,:]
+        average_first_mat = np.median(first_mat, axis=0)
+        list_medians[cluster_index_counter,:]=average_first_mat
+        cluster_index_counter=cluster_index_counter+1
 
 def run_as_script():
     gv = cea.globalvar.GlobalVariables()
