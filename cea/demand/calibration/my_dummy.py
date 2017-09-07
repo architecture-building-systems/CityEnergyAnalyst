@@ -3,7 +3,7 @@ import pandas as pd
 
 eso_path=r"F:\outcalib\DB6new\LHS-000000\eplusout.eso"
 eso = esoreader.read_from_path(eso_path)
-f_vars=eso.find_variable('Mean')
+f_vars=eso.find_variable('Temperature')
 f_vars2=f_vars[300:]
 #df = pd.DataFrame.from_items(f_vars[1:30])
 #df = eso.to_frame('heating energy')

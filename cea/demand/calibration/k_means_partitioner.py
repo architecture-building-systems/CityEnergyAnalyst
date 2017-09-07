@@ -10,10 +10,13 @@ from sklearn.preprocessing import Normalizer
 from sklearn import metrics
 from sklearn.cluster import KMeans, MiniBatchKMeans
 from sklearn.preprocessing import MinMaxScaler
+from keras.layers import Input, Dense
+from keras.models import Model
 import logging
 from optparse import OptionParser
 import sys
 import cea
+import  os
 from time import time
 import numpy as np
 import pandas as pd
@@ -21,104 +24,134 @@ import cea.globalvar
 import cea.inputlocator as inputlocator
 
 
-# #############################################################################
-# Do the actual clustering
-word_size = 9
-alphabet_size = 7
-gv = cea.globalvar.GlobalVariables()
-scenario_path = r'C:\reference-case-open\baseline'
-locator = inputlocator.InputLocator(scenario_path=scenario_path)
-building_name = 'B155066'
-ht_cl_el=['Qhsf_kWh', 'Qcsf_kWh', 'Ef_kWh']
-measued_dataset = pd.read_csv(locator.get_demand_measured_file(building_name),
-                           usecols=ht_cl_el )
-
-inputs_x=np.asarray(measued_dataset)
+__author__ = ""
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = []
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Testing"
 
 
+def partitioner(building_name):
+    metered_path=r'C:\reference-case-open\baseline\inputs\building-metering'
+    metered_building=os.path.join(metered_path, '%s.csv' % building_name)
+    #ht_cl_el=['Qhsf_kWh', 'Qcsf_kWh', 'Ef_kWh'] # this is in case of multivaribale calibration
+    ht_cl_el=['Qhsf_kWh'] # disactivate this line if the previous line is active
+    measured_data = pd.read_csv(metered_building,
+                               usecols=ht_cl_el)
 
+    target_m=np.asarray(measured_data)
 
-#################################################################################
-from sklearn.preprocessing import MinMaxScaler
-from keras.layers import Input, Dense
-from keras.models import Model
+    # scaling data
+    scaler_target_m = MinMaxScaler(feature_range=(0, 1))
+    target_m = scaler_target_m.fit_transform(target_m)
 
-np.random.seed(7)
+    # data sparsing
+    # activate this if you are doing multivariable calibration
+    # np.random.seed(7)
 
-inputs_x_rows, inputs_x_cols, = inputs_x.shape
-# scaling and normalizing inputs
-scalerX = MinMaxScaler(feature_range=(0, 1))
-inputs_x = scalerX.fit_transform(inputs_x)
-encoding_dim = 1
-middle_dim = 3
-over_complete_dim = 6
-AE_input_dim = int(inputs_x_cols)
+    # inputs_x_rows, inputs_x_cols, = target_m.shape
+    # scaling and normalizing inputs
 
-#sparsing inputs
-input_AEI = Input(shape=(AE_input_dim,))
-encoded = Dense(over_complete_dim, activation='softplus')(input_AEI)
-encoded = Dense(middle_dim, activation='softplus')(encoded)
-encoded = Dense(encoding_dim, activation='softplus')(encoded)
-
-decoded = Dense(middle_dim, activation='softplus')(encoded)
-decoded = Dense(over_complete_dim, activation='softplus')(decoded)
-decoded = Dense(inputs_x_cols, activation='softplus')(decoded)
-
-autoencoder = Model(input_AEI, decoded)
-autoencoder.compile(optimizer='Adamax', loss='mse')
-autoencoder.fit(inputs_x,inputs_x,epochs=10000, batch_size= 100000, shuffle=True)
-encoder = Model(input_AEI, encoded)
-encoded_input=Input(shape=(encoding_dim,))
-encoded_x=encoder.predict(inputs_x)
-
-
-
-#################################################################################
-
-X=np.reshape(encoded_x,(365,24))
-
-range_n_clusters = np.arange(2,50)
-scores_list=np.empty([48, 2])
-for n_clusters in range_n_clusters:
-
-
-    # Initialize the clusterer with n_clusters value and a random generator
-    # seed of 10 for reproducibility.
-    clusterer = KMeans(n_clusters=n_clusters, random_state=10, n_init=100)
-    cluster_labels = clusterer.fit_predict(X)
-
-    # The silhouette_score gives the average value for all the samples.
-    # This gives a perspective into the density and separation of the formed
-    # clusters
-    sil_score = silhouette_score(X, cluster_labels, sample_size=1000)
-    ch_score=calinski_harabaz_score(X, cluster_labels)
+    # encoding_dim = 1
+    # AE_input_dim = int(inputs_x_cols)
+    # over_complete_dim = int(inputs_x_cols*2)
+    # middle_dim = int((over_complete_dim/2)+1)
+    #
+    # #sparsing inputs
+    # input_AEI = Input(shape=(AE_input_dim,))
+    # encoded = Dense(over_complete_dim, activation='softplus')(input_AEI)
+    # encoded = Dense(middle_dim, activation='softplus')(encoded)
+    # encoded = Dense(encoding_dim, activation='softplus')(encoded)
+    #
+    # decoded = Dense(middle_dim, activation='softplus')(encoded)
+    # decoded = Dense(over_complete_dim, activation='softplus')(decoded)
+    # decoded = Dense(inputs_x_cols, activation='softplus')(decoded)
+    #
+    # autoencoder = Model(input_AEI, decoded)
+    # autoencoder.compile(optimizer='Adamax', loss='mse')
+    # autoencoder.fit(target_m, target_m, epochs=10000, batch_size= 100000, shuffle=True)
+    # encoder = Model(input_AEI, encoded)
+    # encoded_input=Input(shape=(encoding_dim,))
+    # encoded_x=encoder.predict(target_m)
 
 
 
-    #print("For n_clusters =", n_clusters,
-    #          "The average silhouette_score is :", sil_score, ch_score)
+    #################################################################################
+    encoded_x=target_m # disactivate if you are doing multivariable calibration
 
-    scores_array=np.asarray([sil_score,ch_score])
-    counter_dummy=n_clusters-2
+    X=np.reshape(encoded_x,(365,24))
 
-    scores_list[counter_dummy,:]=scores_array
+    min_clust=2     # define the minimum number of cluster (x>1)
+    max_clust=50    # define the maximum number of clusters
+    num_clust= max_clust-2
+
+    range_n_clusters = np.arange(min_clust,max_clust)
+    scores_list=np.empty([num_clust, 2])
+
+    for n_clusters in range_n_clusters:
+
+        clusterer = KMeans(n_clusters=n_clusters, random_state=10, n_init=100)
+        cluster_labels = clusterer.fit_predict(X)
+
+        sil_score = silhouette_score(X, cluster_labels, sample_size=1000)
+        ch_score=calinski_harabaz_score(X, cluster_labels)
+
+        #print("For n_clusters =", n_clusters,
+        #          "The average silhouette_score is :", sil_score, ch_score)
+
+        scores_array=np.asarray([sil_score,ch_score])
+        counter_dummy=n_clusters-2
+
+        scores_list[counter_dummy,:]=scores_array
 
 
-    print (scores_list)
-    # Compute the silhouette scores for each sample
-    #sample_silhouette_values = silhouette_samples(X, cluster_labels)
+        #print (scores_list)
+        # Compute the silhouette scores for each sample
+        #sample_silhouette_values = silhouette_samples(X, cluster_labels)
 
 
-scaler_sil = MinMaxScaler(feature_range=(0, 1))
-scaler_ch = MinMaxScaler(feature_range=(0, 1))
-sil_score = scaler_sil.fit_transform(scores_list[:,0])
-ch_score = scaler_ch.fit_transform(scores_list[:,1])
-real_score = np.sqrt([(np.square(sil_score))+(np.square(ch_score))])
-best_idx=np.argmax(real_score)
-n_clusters=best_idx+2
+    scaler_scores = MinMaxScaler(feature_range=(0, 1))
+    scaler_scores = scaler_scores.fit_transform(scores_list)
 
-clusterer = KMeans(n_clusters=n_clusters, init='k-means++', n_init=100, max_iter=3000, tol=0.0001,
-                   precompute_distances='auto', verbose=0, random_state=None, copy_x=True, n_jobs=1, algorithm='auto')
-cluster_labels = clusterer.fit_predict(X)
+    sil_score = scaler_scores[:,0]
+    ch_score = scaler_scores[:,1]
 
-print (cluster_labels)
+    real_score = np.sqrt([(np.square(sil_score))+(np.square(ch_score))])
+    best_idx=np.argmax(real_score)
+    n_clusters=best_idx+2
+
+    clusterer = KMeans(n_clusters=n_clusters, init='k-means++', n_init=100, max_iter=3000, tol=0.0001,
+                       precompute_distances='auto', verbose=0, random_state=None, copy_x=True, n_jobs=1, algorithm='auto')
+    cluster_labels = np.array(clusterer.fit_predict(X))
+
+    print (cluster_labels)
+
+    target_m_new2=np.asarray(measured_data)
+    target_m_new=target_m_new2[:,0]
+    all_reshaped=np.reshape(target_m_new,(365,24))
+
+    unique_clusters=np.unique(cluster_labels)
+    list_medians=np.empty([n_clusters, 24])
+    cluster_index_counter=0
+
+    for cluster_index in unique_clusters:
+        first_group=np.where(cluster_labels==cluster_index)[0]
+        first_mat=all_reshaped[first_group,:]
+        average_first_mat = np.median(first_mat, axis=0)
+        list_medians[cluster_index_counter,:]=average_first_mat
+        cluster_index_counter=cluster_index_counter+1
+
+    return list_medians , cluster_labels
+
+
+def run_as_script():
+
+    building_name = 'B155066' # intended building
+    list_median , cluster_labels=partitioner(building_name)
+
+
+if __name__ == '__main__':
+    run_as_script()
