@@ -132,10 +132,10 @@ def prep_NN_inputs(NN_input,NN_target,NN_delays):
         input_matrix_targets[j:aS, n1:n2]=target1
         i=i+1
 
-    trimmed_inputn = input_matrix_features[aD:nS,:]
-    trimmed_inputt = input_matrix_targets[aD:nS, 2:]
+    trimmed_inputn = input_matrix_features[nD:nS,:]
+    trimmed_inputt = input_matrix_targets[nD:nS, 2:]
     NN_input_ready=np.concatenate([trimmed_inputn, trimmed_inputt], axis=1)
-    NN_target_ready=target1[aD:nS,:]
+    NN_target_ready=target1[nD:nS,:]
 
     return NN_input_ready, NN_target_ready
 
@@ -242,7 +242,7 @@ def sampling_main(locator, variables, building_name, building_load):
         combined_inputs_ht=np.concatenate((NN_input_ready_ht,random_variables_matrix),axis=1)
         combined_inputs_cl=np.concatenate((NN_input_ready_cl, random_variables_matrix), axis=1)
 
-        if i<2:
+        if i<1:
             nn_X_ht=combined_inputs_ht
             nn_X_cl=combined_inputs_cl
             nn_T_ht=NN_target_ready_ht
