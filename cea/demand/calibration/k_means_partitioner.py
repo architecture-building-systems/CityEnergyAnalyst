@@ -38,12 +38,20 @@ def partitioner(building_name):
     metered_path=r'C:\reference-case-open\baseline\inputs\building-metering'
     metered_building=os.path.join(metered_path, '%s.csv' % building_name)
     #ht_cl_el=['Qhsf_kWh', 'Qcsf_kWh', 'Ef_kWh'] # this is in case of multivaribale calibration
-    ht_cl_el=['Qhsf_kWh'] # disactivate this line if the previous line is active
+    ht_cl_el=['Qhsf'] # disactivate this line if the previous line is active
     measured_data = pd.read_csv(metered_building,
                                usecols=ht_cl_el)
 
+    discritization_lvl=2 # lower discritization equals more generalization
     target_m=np.asarray(measured_data)
+    max_measured=np.max(target_m)
+    num_inetegers=np.divide(max_measured,discritization_lvl)
 
+    temp1=np.divide(target_m,num_inetegers)
+    temp2=np.round(temp1)
+    temp3=np.multiply(temp2,num_inetegers)
+
+    target_m=temp3
     # scaling data
     scaler_target_m = MinMaxScaler(feature_range=(0, 1))
     target_m = scaler_target_m.fit_transform(target_m)
@@ -85,7 +93,7 @@ def partitioner(building_name):
     X=np.reshape(encoded_x,(365,24))
 
     min_clust=2     # define the minimum number of cluster (x>1)
-    max_clust=50    # define the maximum number of clusters
+    max_clust=3    # define the maximum number of clusters
     num_clust= max_clust-2
 
     range_n_clusters = np.arange(min_clust,max_clust)
