@@ -33,20 +33,37 @@ def gmm_random_sampler(filtered_samples,lhs_samples):
     return design
 
 def neural_output_generator(nn_X_ht,scalerX,perceptron_ht,scalerT,nn_T_ht,avg_cluster_measured):
+    rows_X_ht, cols_X_ht = nn_X_ht.shape
+    nn_X_ht_h = nn_X_ht
+    predictor_counter=0
+    while predictor_counter < rows_X_ht:
+        inputs_x = scalerX.transform(nn_X_ht_h)
+        predict_NN_ht = perceptron_ht.predict(inputs_x)
+        filtered_predict = scalerT.inverse_transform(predict_NN_ht)
+        target_filter_node = nn_T_ht[:, 0]
+        filter_logic = np.isin(target_filter_node, 0)
+        target_anomalies = np.asarray(np.where(filter_logic), dtype=np.int)
+        t_anomalies_rows, t_anomalies_cols = target_anomalies.shape
+        anomalies_replacements = np.zeros(t_anomalies_cols)
+        anomalies_replacements = np.transpose(anomalies_replacements)
+        filtered_predict[target_anomalies, 0] = anomalies_replacements
+        replace_temp_vect=filtered_predict[predictor_counter, :]
+        if predictor_counter < rows_X_ht-1:
+            nn_X_ht_h[predictor_counter+1,18:20]=replace_temp_vect
+        avg_cluster_single = np.average(avg_cluster_measured)
+        trim_avg_cluster = avg_cluster_measured[1:24]
+        main_filtered_predict = filtered_predict[:, 0]
+        predictor_counter=predictor_counter+1
 
-    inputs_x = scalerX.transform(nn_X_ht)
-    predict_NN_ht = perceptron_ht.predict(inputs_x)
-    filtered_predict = scalerT.inverse_transform(predict_NN_ht)
-    target_filter_node = nn_T_ht[:, 0]
-    filter_logic = np.isin(target_filter_node, 0)
-    target_anomalies = np.asarray(np.where(filter_logic), dtype=np.int)
-    t_anomalies_rows, t_anomalies_cols = target_anomalies.shape
-    anomalies_replacements = np.zeros(t_anomalies_cols)
-    anomalies_replacements = np.transpose(anomalies_replacements)
-    filtered_predict[target_anomalies, 0] = anomalies_replacements
-    avg_cluster_single = np.average(avg_cluster_measured)
-    trim_avg_cluster = avg_cluster_measured[1:24]
-    main_filtered_predict = filtered_predict[:, 0]
+    second_anomalies=np.asarray(np.where(main_filtered_predict<0), dtype=np.int)
+    sec_anomalies_rows, sec_anomalies_cols = second_anomalies.shape
+    if sec_anomalies_cols > 0:
+        sec_anomalies_replacements = np.zeros(sec_anomalies_cols)
+        sec_anomalies_replacements = np.transpose(sec_anomalies_replacements)
+        #second_anomalies = pd.DataFrame(second_anomalies)
+        #second_anomalies = np.array(second_anomalies.ix[:,:])
+        second_anomalies=np.squeeze(second_anomalies)
+        main_filtered_predict[second_anomalies] = sec_anomalies_replacements
     CV_RMSE = np.divide((sqrt(mean_squared_error(trim_avg_cluster, main_filtered_predict))), avg_cluster_single)
 
     return CV_RMSE
@@ -220,17 +237,17 @@ def ss_calibrator(building_name):
 
 
         ####LHS#
-        lhs_samples=1000
-        #design = gmm_random_sampler(random_variables_matrix2, lhs_samples)
-        design = lhs(5, samples=lhs_samples)
-        lower = [0.9*random_variables_matrix2[0,0],0.9 * random_variables_matrix2[0, 1],0.9 * random_variables_matrix2[0, 2],
-                 0.9 * random_variables_matrix2[0, 3],0.9 * random_variables_matrix2[0, 4]]
-        upper = [1.1*random_variables_matrix2[0,0],1.1 * random_variables_matrix2[0, 1],1.1 * random_variables_matrix2[0, 2],
-                 1.1 * random_variables_matrix2[0, 3],1.1 * random_variables_matrix2[0, 4]]
+        lhs_samples_num=1000
+        #design = gmm_random_sampler(random_variables_matrix2, lhs_samples_num)
+        design = lhs(5, samples=lhs_samples_num)
+        lower = [0.5*random_variables_matrix2[0,0],0.5 * random_variables_matrix2[0, 1],0.5 * random_variables_matrix2[0, 2],
+                 0.5 * random_variables_matrix2[0, 3],0.5 * random_variables_matrix2[0, 4]]
+        upper = [1.5*random_variables_matrix2[0,0],1.5 * random_variables_matrix2[0, 1],1.5 * random_variables_matrix2[0, 2],
+                 1.5 * random_variables_matrix2[0, 3],1.5 * random_variables_matrix2[0, 4]]
         for i in xrange(4):
             design[:, i] = uniform(loc=lower[i], scale=upper[i]).ppf(design[:, i])
 
-        CV_RMSE_mat = ss_loop(design, lhs_samples, NN_input_ready_ht, scalerX, perceptron_ht, scalerT, nn_T_ht, avg_cluster_measured)
+        CV_RMSE_mat = ss_loop(design, lhs_samples_num, NN_input_ready_ht, scalerX, perceptron_ht, scalerT, nn_T_ht, avg_cluster_measured)
         min_CV_RMSE=np.ndarray.min(CV_RMSE_mat)
 
         counter_while=0
@@ -249,13 +266,14 @@ def ss_calibrator(building_name):
             #          momentum_up*np.ndarray.max(filtered_samples[:,3]),momentum_up*np.ndarray.max(filtered_samples[:, 4]),
             #          momentum_up*np.ndarray.max(filtered_samples[:,5])]
             # for i in xrange(4):
-            #     design = lhs(5, samples=lhs_samples)
+            #     design = lhs(5, samples=lhs_samples_num)
             #     design[:, i] = uniform(loc=lower[i], scale=upper[i]).ppf(design[:, i])
+            gmm_samples_num=100
             gmm_input=filtered_samples[:,1:6]
-            design=gmm_random_sampler(gmm_input,lhs_samples)
+            design=gmm_random_sampler(gmm_input,gmm_samples_num)
             #design = list(design)
             design = np.array(design[0])
-            CV_RMSE_mat = ss_loop(design, lhs_samples, NN_input_ready_ht, scalerX, perceptron_ht, scalerT, nn_T_ht,
+            CV_RMSE_mat = ss_loop(design, gmm_samples_num, NN_input_ready_ht, scalerX, perceptron_ht, scalerT, nn_T_ht,
                                   avg_cluster_measured)
             min_CV_RMSE = np.ndarray.min(CV_RMSE_mat)
             counter_while = counter_while+1
