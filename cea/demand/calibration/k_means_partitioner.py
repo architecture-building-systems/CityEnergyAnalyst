@@ -93,7 +93,7 @@ def partitioner(building_name):
     X=np.reshape(encoded_x,(365,24))
 
     min_clust=2     # define the minimum number of cluster (x>1)
-    max_clust=3    # define the maximum number of clusters
+    max_clust=100    # define the maximum number of clusters
     num_clust= max_clust-2
 
     range_n_clusters = np.arange(min_clust,max_clust)
@@ -135,7 +135,7 @@ def partitioner(building_name):
                        precompute_distances='auto', verbose=0, random_state=None, copy_x=True, n_jobs=1, algorithm='auto')
     cluster_labels = np.array(clusterer.fit_predict(X))
 
-    print (cluster_labels)
+    print (n_clusters)
 
     target_m_new2=np.asarray(measured_data)
     target_m_new=target_m_new2[:,0]
