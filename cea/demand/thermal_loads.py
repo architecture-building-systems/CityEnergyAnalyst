@@ -568,6 +568,7 @@ class BuildingProperties(object):
         df['Atot'] = df[['Aw', 'Aop_sup', 'footprint', 'Aop_bel']].sum(axis=1) + (df['Aroof'] * (df['floors'] - 1))
 
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
+        df['surface_volume'] = (df['Aop_sup']+ df['Aroof'])/(df['GFA_m2']*gv.Z) # surface to volume ratio
 
         for building in df.index.values:
             if hvac_temperatures.loc[building, 'type_hs'] == 'T0' and \
