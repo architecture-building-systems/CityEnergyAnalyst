@@ -73,18 +73,18 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV):
         #ntot = len(buildList)
         
         os.chdir(network_results_folder)
-        df = pd.read_csv(dicoSupply.NETWORK_DATA_FILE, usecols=["mdot_DH_netw_total"])
-        mdotA = np.array(df)
-        mdotnMax = np.amax(mdotA)
+        df = pd.read_csv(dicoSupply.NETWORK_DATA_FILE, usecols=["mdot_DH_netw_total_kgpers"])
+        mdotA_kgpers = np.array(df)
+        mdotnMax_kgpers = np.amax(mdotA_kgpers)
         
         #mdot0Max = np.amax( np.array( pd.read_csv("Network_summary_result_all.csv", usecols=["mdot_heat_netw_total"]) ) )
         
-        for i in range(int(np.shape(mdotA)[0])):
-            deltaP = 2* (104.81 * mdotA[i][0] + 59016)
-            pumpCosts += deltaP * mdotA[i][0] / 1000 * gV.ELEC_PRICE / gV.etaPump
+        for i in range(int(np.shape(mdotA_kgpers)[0])):
+            deltaP = 2* (104.81 * mdotA_kgpers[i][0] + 59016)
+            pumpCosts += deltaP * mdotA_kgpers[i][0] / 1000 * gV.ELEC_PRICE / gV.etaPump
             deltaPmax = ntwFeat.DeltaP_DHN
             
-        investCosts = calc_Cinv_pump(deltaPmax, mdotnMax, gV.etaPump, gV) # investment of Machinery
+        investCosts = calc_Cinv_pump(deltaPmax, mdotnMax_kgpers, gV.etaPump, gV) # investment of Machinery
         pumpCosts += investCosts
         
     print pumpCosts, " CHF - pump costs in pumps.py"
@@ -92,7 +92,7 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV):
     return pumpCosts
 
 
-def Pump_Cost(deltaP, mdot, eta_pumping, gV):
+def Pump_Cost(deltaP, mdot_kgpers, eta_pumping, gV):
     """
     Calculates the cost of a pumping device.
     if the nominal load (electric) > 375kW, a new pump is installed
@@ -103,8 +103,8 @@ def Pump_Cost(deltaP, mdot, eta_pumping, gV):
     :type deltaP : float
     :param deltaP: nominal pressure drop that has to be overcome with the pump
 
-    :type mdot : float
-    :param mdot: nominal mass flow
+    :type mdot_kgpers : float
+    :param mdot_kgpers: nominal mass flow
 
     :type eta_pumping : float
     :param pump efficiency: (set 0.8 as standard value, eta = E_pumping / E_elec)
@@ -113,16 +113,16 @@ def Pump_Cost(deltaP, mdot, eta_pumping, gV):
     :returns InvCa: annualized investment costs in CHF/year
     """
 
-    E_pumping_required = mdot * deltaP /gV.rho_60
-    P_motor_tot = E_pumping_required / eta_pumping
+    E_pumping_required_W = mdot_kgpers * deltaP / gV.rho_60
+    P_motor_tot_W = E_pumping_required_W / eta_pumping
 
-    PmaxPumpkW = 375.0
-    PpumpMinkW = 0.5
+    Pump_max_kW = 375.0
+    Pump_min_kW = 0.5
 
-    nPumps = int(np.ceil(P_motor_tot / 1000.0 / PmaxPumpkW))
+    nPumps = int(np.ceil(P_motor_tot_W / 1000.0 / Pump_max_kW))
 
-    PpumpArray = np.zeros((nPumps))
-    PpumpRemain = P_motor_tot
+    Pump_Array_W = np.zeros((nPumps))
+    Pump_Remain_W = P_motor_tot_W
 
     #if PpumpRemain < PpumpMinkW * 1000:
      #   PpumpRemain = PpumpMinkW * 1000
@@ -142,20 +142,20 @@ def Pump_Cost(deltaP, mdot, eta_pumping, gV):
     for pump_i in range(nPumps):
         # calculate pump nominal capacity
 
-        PpumpArray[pump_i] =  min(PpumpRemain, PmaxPumpkW*1000)
-        if PpumpArray[pump_i] < PpumpMinkW * 1000:
-            PpumpArray[pump_i] = PpumpMinkW * 1000
-        PpumpRemain -= PpumpArray[pump_i]
+        Pump_Array_W[pump_i] =  min(Pump_Remain_W, Pump_max_kW*1000)
+        if Pump_Array_W[pump_i] < Pump_min_kW * 1000:
+            Pump_Array_W[pump_i] = Pump_min_kW * 1000
+        Pump_Remain_W -= Pump_Array_W[pump_i]
 
         # Calculate cost
-        InvC += InvC_mot(PpumpArray[pump_i]/1000.0) + InvC_VFC(PpumpArray[pump_i]/1000.0)
+        InvC += InvC_mot(Pump_Array_W[pump_i]/1000.0) + InvC_VFC(Pump_Array_W[pump_i]/1000.0)
         InvCa +=  InvC * gV.GHP_i * (1+ gV.GHP_i) ** gV.GHP_nHP / ((1+gV.GHP_i) ** gV.GHP_nHP - 1)
 
     return InvCa
 
 # investment and maintenance costs
 
-def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
+def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gV):
     """
     Calculates the cost of a pumping device.
     if the nominal load (electric) > 375kW, a new pump is installed
@@ -166,8 +166,8 @@ def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
     :type deltaP : float
     :param deltaP: nominal pressure drop that has to be overcome with the pump
 
-    :type mdot : float
-    :param mdot: nominal mass flow
+    :type mdot_kgpers : float
+    :param mdot_kgpers: nominal mass flow
 
     :type eta_pumping : float
     :param pump efficiency: (set 0.8 as standard value, eta = E_pumping / E_elec)
@@ -179,20 +179,20 @@ def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
     :returns InvCa: annualized investment costs in CHF/year
     """
 
-    E_pumping_required = mdot * deltaP / gV.rho_60
-    P_motor_tot = E_pumping_required / eta_pumping    # electricty to run the motor
+    E_pumping_required_W = mdot_kgpers * deltaP / gV.rho_60
+    P_motor_tot_W = E_pumping_required_W / eta_pumping    # electricty to run the motor
 
-    PmaxPumpkW = 375.0
-    PpumpMinkW = 0.5
-    print P_motor_tot
-    print PmaxPumpkW
-    nPumps = int( np.ceil ( P_motor_tot / 1000.0 / PmaxPumpkW))
+    Pump_max_kW = 375.0
+    Pump_min_kW = 0.5
+    print P_motor_tot_W
+    print Pump_max_kW
+    nPumps = int( np.ceil ( P_motor_tot_W / 1000.0 / Pump_max_kW))
     # if the nominal load (electric) > 375kW, a new pump is installed
 
     print nPumps," nPumps"
 
-    PpumpArray = np.zeros((nPumps))
-    PpumpRemain = P_motor_tot
+    Pump_Array_W = np.zeros((nPumps))
+    Pump_Remain_W = P_motor_tot_W
 
     #if PpumpRemain < PpumpMinkW * 1000:
      #   PpumpRemain = PpumpMinkW * 1000
@@ -211,13 +211,13 @@ def calc_Cinv_pump(deltaP, mdot, eta_pumping, gV):
 
     for pump_i in range(nPumps):
         # calculate pump nominal capacity
-        PpumpArray[pump_i] =  min(PpumpRemain, PmaxPumpkW*1000)
-        if PpumpArray[pump_i] < PpumpMinkW * 1000:
-            PpumpArray[pump_i] = PpumpMinkW * 1000
-        PpumpRemain -= PpumpArray[pump_i]
+        Pump_Array_W[pump_i] =  min(Pump_Remain_W, Pump_max_kW*1000)
+        if Pump_Array_W[pump_i] < Pump_min_kW * 1000:
+            Pump_Array_W[pump_i] = Pump_min_kW * 1000
+        Pump_Remain_W -= Pump_Array_W[pump_i]
 
         # Calculate cost
-        InvC += InvC_mot(PpumpArray[pump_i]/1000.0) + InvC_VFC(PpumpArray[pump_i]/1000.0)
+        InvC += InvC_mot(Pump_Array_W[pump_i]/1000.0) + InvC_VFC(Pump_Array_W[pump_i]/1000.0)
         InvCa += InvC * gV.GHP_i * (1+ gV.GHP_i) ** gV.GHP_nHP / ((1+gV.GHP_i) ** gV.GHP_nHP - 1)
 
     return InvCa
