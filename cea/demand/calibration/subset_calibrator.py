@@ -253,7 +253,7 @@ def ss_calibrator(building_name):
         counter_while=0
         counter_max=100
 
-        while min_CV_RMSE<15 and counter_while<counter_max:
+        while min_CV_RMSE<0.15 and counter_while<counter_max:
             # momentum_low= 0.9 + ((float(counter_while)/float(counter_max))/float(10))
             # momentum_up = 1.1 - ((float(counter_while) / float(counter_max)) / float(10))
             jumbo_outputs=np.concatenate((CV_RMSE_mat,design),axis=1)

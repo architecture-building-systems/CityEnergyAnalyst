@@ -93,7 +93,7 @@ def partitioner(building_name):
     X=np.reshape(encoded_x,(365,24))
 
     min_clust=2     # define the minimum number of cluster (x>1)
-    max_clust=100    # define the maximum number of clusters
+    max_clust=10    # define the maximum number of clusters
     num_clust= max_clust-2
 
     range_n_clusters = np.arange(min_clust,max_clust)
