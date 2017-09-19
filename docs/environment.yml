@@ -71,7 +71,6 @@ dependencies:
 - tbb=2017_20170226
 - tornado=4.5.1=py27_0
 - wheel=0.29.0=py27_0
-- wincertstore=0.2=py27_0
 - xerces-c=3.1.4
 - xz=5.2.2=0
 - zlib=1.2.11
