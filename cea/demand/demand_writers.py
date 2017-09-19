@@ -35,7 +35,7 @@ class DemandWriter(object):
         data = dict((x + '_kWh', tsd[x] / 1000) for x in self.vars_to_print[LOAD_VARS])
 
         # treating time series data of mass_flows from W/C to kW/C
-        data.update(dict((x + '_kWC', tsd[x] / 1000) for x in self.vars_to_print[MASS_FLOW_VARS]))
+        data.update(dict((x + '_kWperC', tsd[x] / 1000) for x in self.vars_to_print[MASS_FLOW_VARS]))
 
         # treating time series data of temperatures from W/C to kW/C
         data.update(dict((x + '_C', tsd[x]) for x in self.vars_to_print[TEMPERATURE_VARS]))
@@ -43,7 +43,7 @@ class DemandWriter(object):
         # get order of columns
         columns = ['Name', 'people']
         columns.extend([x + '_kWh' for x in self.vars_to_print[LOAD_VARS]])
-        columns.extend([x + '_kWC' for x in self.vars_to_print[MASS_FLOW_VARS]])
+        columns.extend([x + '_kWperC' for x in self.vars_to_print[MASS_FLOW_VARS]])
         columns.extend([x + '_C' for x in self.vars_to_print[TEMPERATURE_VARS]])
 
         # add other default elements
