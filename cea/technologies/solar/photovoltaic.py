@@ -139,8 +139,8 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
 
     result = list(range(number_groups))
     list_groups_area = list(range(number_groups))
-    Sum_PV = np.zeros(8760)
-    Sum_radiation = np.zeros(8760)
+    Sum_PV_kWh = np.zeros(8760)
+    Sum_radiation_kWh = np.zeros(8760)
 
     n = 1.526 # refractive index of glass
     Pg = 0.2  # ground reflectance
@@ -159,7 +159,7 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
     for group in range(number_groups):
         # read panel properties of each group
         teta_z = prop_observers.loc[group,'surface_azimuth']
-        area_per_group = prop_observers.loc[group,'total_area_module']
+        area_per_group_m2 = prop_observers.loc[group,'total_area_module']
         tilt_angle = prop_observers.loc[group,'B']
         # degree to radians
         tilt = radians(tilt_angle) #tilt angle
@@ -177,13 +177,13 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
         results = np.vectorize(calc_Sm_PV)(weather_data.drybulb_C, radiation.I_sol, radiation.I_direct,
                                            radiation.I_diffuse, tilt, Sz_vector, teta_vector, teta_ed, teta_eg, n, Pg,
                                            K, NOCT, a0, a1, a2, a3, a4, L)
-        result[group] = np.vectorize(calc_PV_power)(results[0], results[1], eff_nom, area_per_group, Bref, misc_losses)
-        list_groups_area[group] = area_per_group
+        result[group] = np.vectorize(calc_PV_power)(results[0], results[1], eff_nom, area_per_group_m2, Bref, misc_losses)
+        list_groups_area[group] = area_per_group_m2
+        Sum_PV_kWh = Sum_PV_kWh + result[group] # in kWh
+        Sum_radiation_kWh = Sum_radiation_kWh + radiation['I_sol']*area_per_group_m2/1000 # kWh
 
-        Sum_PV = Sum_PV + result[group] # in kWh
-        Sum_radiation = Sum_radiation + radiation['I_sol']*area_per_group/1000 # kWh
+    Final = pd.DataFrame({'E_PV_gen_kWh':Sum_PV_kWh, 'Area_PV_m2':sum(list_groups_area), 'radiation_kWh':Sum_radiation_kWh})
 
-    Final = pd.DataFrame({'PV_kWh':Sum_PV,'Area_m2':sum(list_groups_area),'radiation_kWh':Sum_radiation})
     return result, Final
 
 
@@ -616,28 +616,28 @@ def calc_properties_PV_db(database_path, type_PVpanel):
     return panel_properties
 
 # investment and maintenance costs
-def calc_Cinv_pv(P_peak):
+def calc_Cinv_pv(P_peak_kW):
     """
     To calculate capital cost of PV modules, assuming 20 year system lifetime.
-    :param P_peak: installed capacity of PV module [kW]
+    :param P_peak_kW: installed capacity of PV module [kW]
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
-    if P_peak < 10:
-        InvCa = 3500.07 * P_peak /20  #FIXME: should be amortized?
+    if P_peak_kW < 10:
+        InvCa = 3500.07 * P_peak_kW / 20  #FIXME: should be amortized?
     else:
-        InvCa = 2500.07 * P_peak /20
+        InvCa = 2500.07 * P_peak_kW / 20
 
     return InvCa
 
 
 # remuneration scheme
-def calc_Crem_pv(E_nom):
+def calc_Crem_pv(E_nom_Wh):
     """
     Calculates KEV (Kostendeckende Einspeise - Verguetung) for solar PV and PVT.
     Therefore, input the nominal capacity of EACH installation and get the according KEV as return in Rp/kWh
 
-    :param E_nom: Nominal Capacity of solar panels (PV or PVT) [Wh]
-    :type E_nom: float
+    :param E_nom_Wh: Nominal Capacity of solar panels (PV or PVT) [Wh]
+    :type E_nom_Wh: float
     :return KEV_obtained_in_RpPerkWh: KEV remuneration [Rp/kWh]
     :rtype KEV_obtained_in_RpPerkWh: float
     """
@@ -691,7 +691,7 @@ def calc_Crem_pv(E_nom):
                          2000,
                          1000000]
     KEV_interpolated_kW = interpolate.interp1d(P_installed_in_kW, KEV_regime, kind="linear")
-    KEV_obtained_in_RpPerkWh = KEV_interpolated_kW(E_nom / 1000.0)
+    KEV_obtained_in_RpPerkWh = KEV_interpolated_kW(E_nom_Wh / 1000.0)
     return KEV_obtained_in_RpPerkWh
 
 def test_photovoltaic():

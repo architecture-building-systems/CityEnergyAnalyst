@@ -32,9 +32,9 @@ Variable interopolation and special variables
 List of configuration settings
 ------------------------------
 
-.. sourcecode::
+.. code-block:: none
 
-    scenario=%(TEMP)s/reference-case-open/baseline
+    scenario=\%(TEMP)s/reference-case-open/baseline
     multiprocessing=on
 
 

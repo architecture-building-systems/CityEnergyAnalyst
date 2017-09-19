@@ -50,23 +50,22 @@ def extractDemand(fName, colNameList, nDay):
     return result
 
 
-def calcQmax(fName, filepath, gV):
+def calcQmax(file_name, path, gV):
     """
     Calculates the peak heating power in fName file
     
-    :param fName: name of the csv file
-    :param filepath: path to the file
+    :param file_name: name of the csv file
+    :param path: path to the file
     :param gV: global variables
-    :type fName: string
-    :type filepath: string
+    :type file_name: string
+    :type path: string
     :type gV: class
 
     :return: Qmax: maximum heating power [W]
     :rtype: float
     """    
-    HeatfeatureList = ["T_sst_heat_return_netw_total", "T_sst_heat_supply_netw_total", "mdot_DH_netw_total"]
-    buildDemand = extractDemand(filepath+'//'+fName, HeatfeatureList, gV.DAYS_IN_YEAR)
-    Qmax = np.max(buildDemand)
+    Q_DHNf_W = pd.read_csv(os.path.join(path, file_name), usecols=["Q_DHNf_W"]).values
+    Qmax = Q_DHNf_W.max()
 
     return Qmax
     

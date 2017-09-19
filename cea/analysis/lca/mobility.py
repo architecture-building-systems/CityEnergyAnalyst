@@ -46,6 +46,10 @@ def lca_mobility(locator):
     - total_LCA_mobility (.csv)
       csv file of yearly non-renewable primary energy demand and emissions due to mobility for each building
 
+    Additional references:
+
+    - [SIA_Effizienzpfad_2011]_
+
     :param locator: an InputLocator instance set to the scenario to work on
     :type locator: InputLocator
 
