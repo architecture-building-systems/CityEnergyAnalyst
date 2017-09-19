@@ -86,7 +86,7 @@ for name in list_building_names:
 
     # indoor comfort
     schedules, tsd = initialize_inputs(building, gv, schedules_dict, weather_data)
-    tsd = controllers.calc_simple_temp_control(tsd, building.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
+    tsdc = controllers.calc_simple_temp_control(tsd, building.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
                                                date.dayofweek)
 
     np.place(tsd['ta_hs_set'], np.isnan(tsd['ta_hs_set']),-100)
@@ -96,11 +96,10 @@ for name in list_building_names:
 
     # internal loads
     array_electricity = tsd['Eaf']+ tsd['Edataf'] + tsd ['Elf'] + tsd ['Eprof'] + tsd['Eref']
-    array_sensible_gain = tsd['Qs'] + tsd['Qhp']
-    array_X = tsd['X']
+    array_sensible_gain = tsd['Qs'] + tsd['Qhprof']
+    array_latent_gain = tsd['w_int']
     array_ve = tsd['ve']
-    array_Vww = np.empty(8760)
-    array_Vww.fill(building.internal_loads['Vww'])
+    array_Vww=schedules['Vww']
 
     # HVAC systems
     ##heating system
@@ -111,11 +110,21 @@ for name in list_building_names:
     array_dTcs_C.fill(building.hvac['dTcs_C'])
     ## ventilation
     array_economizer = np.empty(8760)
-    array_economizer.fill(int(building.hvac['ECONOMIZER'] == 'true'))
-    ##todo for heat recovery, mech vent, night flush, win_vent
+    array_economizer.fill(1*(building.hvac['ECONOMIZER']))
+    array_win_vent = np.empty(8760)
+    array_win_vent.fill(1*(building.hvac['WIN_VENT']))
+    array_mech_vent = np.empty(8760)
+    array_mech_vent.fill(1*(building.hvac['MECH_VENT']))
+    array_heat_rec = np.empty(8760)
+    array_heat_rec.fill(1 * (building.hvac['HEAT_REC']))
+    array_night_flsh = np.empty(8760)
+    array_night_flsh.fill(1 * (building.hvac['NIGHT_FLSH']))
     ##controller
-    ##todo for the controller out of dT_Qhs, and dT_Qcs
-
+    array_ctrl_Qhs = np.empty(8760)
+    array_ctrl_Qhs.fill(1 * (building.hvac['dT_Qhs']))
+    array_ctrl_Qcs = np.empty(8760)
+    array_ctrl_Qcs.fill(1 * (building.hvac['dT_Qcs']))
+    print (1)
 
 
 

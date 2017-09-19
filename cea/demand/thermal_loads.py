@@ -87,9 +87,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd = controllers.calc_simple_temp_control(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
                                                    date.dayofweek)
 
-        # # latent heat gains
-        tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr.internal_loads['X_ghp'], bpr.rc_model['Af'],
-                                                     bpr.hvac['type_cs'], bpr.hvac['type_hs'])
+
 
         # end-use demand calculation
         for t in range(-720, 8760):
@@ -230,7 +228,9 @@ def initialize_inputs(bpr, gv, usage_schedules, weather_data):
     tsd['people'] = schedules['people'] * bpr.rc_model['Af']
     tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6) * bpr.rc_model['Af']  # in m3/h
     tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp'] * bpr.rc_model['Af']  # in W
-
+    # # latent heat gains
+    tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr.internal_loads['X_ghp'], bpr.rc_model['Af'],
+                                                 bpr.hvac['type_cs'], bpr.hvac['type_hs'])
     # get electrical loads (no auxiliary loads)
     tsd = electrical_loads.calc_Eint(tsd, bpr, schedules)
     # get refrigeration loads
