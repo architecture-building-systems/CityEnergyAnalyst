@@ -51,11 +51,11 @@ def slave_main(locator, master_to_slave_vars, solar_features, gv):
     
     # run activation pattern
     E_oil_eq_MJ, CO2_kg_eq, cost_sum,\
-    QUncoveredDesign, QUncoveredAnnual = least_cost.least_cost_main(locator, master_to_slave_vars,
+    Q_uncovered_design_W, Q_uncovered_annual_W = least_cost.least_cost_main(locator, master_to_slave_vars,
                                                                     solar_features, gv)
 
     print " Slave Optimization done (", round(time.time()-t0, 1), " seconds used for this task)"
 
-    return E_oil_eq_MJ, CO2_kg_eq, cost_sum, QUncoveredDesign, QUncoveredAnnual
+    return E_oil_eq_MJ, CO2_kg_eq, cost_sum, Q_uncovered_design_W, Q_uncovered_annual_W
     
     
