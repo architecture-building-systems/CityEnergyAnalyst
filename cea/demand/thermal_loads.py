@@ -76,35 +76,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :returns: This function does not return anything
     :rtype: NoneType
 """
-    tsd = initialize_timestep_data(bpr, weather_data)
-
-    # get schedules
-    list_uses = usage_schedules['list_uses']
-    archetype_schedules = usage_schedules['archetype_schedules']
-    archetype_values = usage_schedules['archetype_values']
-    schedules = occupancy_model.calc_schedules(list_uses, archetype_schedules, bpr.occupancy, archetype_values)
-
-    # calculate occupancy schedule and occupant-related parameters
-    tsd['people'] = schedules['people'] * bpr.rc_model['Af']
-    tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6) * bpr.rc_model['Af']  # in m3/h
-    tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp'] * bpr.rc_model['Af']  # in W
-
-    # get electrical loads (no auxiliary loads)
-    tsd = electrical_loads.calc_Eint(tsd, bpr, schedules)
-
-    # get refrigeration loads
-    tsd['Qcref'], tsd['mcpref'], \
-    tsd['Tcref_re'], tsd['Tcref_sup'] = np.vectorize(refrigeration_loads.calc_Qcref)(tsd['Eref'])
-
-    # get server loads
-    tsd['Qcdataf'], tsd['mcpdataf'], \
-    tsd['Tcdataf_re'], tsd['Tcdataf_sup'] = np.vectorize(datacenter_loads.calc_Qcdataf)(tsd['Edataf'])
-
-    # ground water temperature in C during heating season (winter) according to norm
-    tsd['Twwf_re'][:] = bpr.building_systems['Tww_re_0']
-
-    # ground water temperature in C during non-heating season (summer) according to norm  -  FIXME: which norm?
-    tsd['Twwf_re'][gv.seasonhours[0] + 1:gv.seasonhours[1] - 1] = 14
+    schedules, tsd = initialize_inputs(bpr, gv, usage_schedules, weather_data)
 
     if bpr.rc_model['Af'] > 0:  # building has conditioned area
 
@@ -243,6 +215,36 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     gv.report(tsd, locator.get_demand_results_folder(), building_name)
 
     return
+
+
+def initialize_inputs(bpr, gv, usage_schedules, weather_data):
+    #this is used in the NN please do not erase or change!!
+    tsd = initialize_timestep_data(bpr, weather_data)
+    # get schedules
+    list_uses = usage_schedules['list_uses']
+    archetype_schedules = usage_schedules['archetype_schedules']
+    archetype_values = usage_schedules['archetype_values']
+    schedules = occupancy_model.calc_schedules(list_uses, archetype_schedules, bpr.occupancy, archetype_values)
+
+    # calculate occupancy schedule and occupant-related parameters
+    tsd['people'] = schedules['people'] * bpr.rc_model['Af']
+    tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6) * bpr.rc_model['Af']  # in m3/h
+    tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp'] * bpr.rc_model['Af']  # in W
+
+    # get electrical loads (no auxiliary loads)
+    tsd = electrical_loads.calc_Eint(tsd, bpr, schedules)
+    # get refrigeration loads
+    tsd['Qcref'], tsd['mcpref'], \
+    tsd['Tcref_re'], tsd['Tcref_sup'] = np.vectorize(refrigeration_loads.calc_Qcref)(tsd['Eref'])
+    # get server loads
+    tsd['Qcdataf'], tsd['mcpdataf'], \
+    tsd['Tcdataf_re'], tsd['Tcdataf_sup'] = np.vectorize(datacenter_loads.calc_Qcdataf)(tsd['Edataf'])
+    # ground water temperature in C during heating season (winter) according to norm
+    tsd['Twwf_re'][:] = bpr.building_systems['Tww_re_0']
+    # ground water temperature in C during non-heating season (summer) according to norm  -  FIXME: which norm?
+    tsd['Twwf_re'][gv.seasonhours[0] + 1:gv.seasonhours[1] - 1] = 14
+
+    return schedules, tsd
 
 
 def initialize_timestep_data(bpr, weather_data):
@@ -600,7 +602,7 @@ class BuildingProperties(object):
         df['Htr_is'] = gv.his * df['Atot']
 
         fields = ['Awall_all', 'Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',
-                  'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'Htr_w', 'GFA_m2']
+                  'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'Htr_w', 'GFA_m2', 'surface_volume']
         result = df[fields]
         return result
 
