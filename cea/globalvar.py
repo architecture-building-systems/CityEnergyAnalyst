@@ -18,7 +18,7 @@ __status__ = "Production"
 class GlobalVariables(object):
     def __init__(self):
 
-        self.scenario_reference = r'c:\reference-case-zug\baseline'
+        self.scenario_reference = r'c:\reference-case-open\baseline'
         self.print_partial = 'hourly'  # hourly or monthly for the demand script
         self.print_totals = True  # print yearly values
         self.print_yearly_peak = True  # print peak values
@@ -419,7 +419,7 @@ class GlobalVariables(object):
         self.SIGMAP = 0.2
         self.epsMargin = 0.001
 
-        # Data for clustering_main
+        # Data for clustering_sax
         self.nPeriodMin = 2
         self.nPeriodMax = 15
         self.gam = 0.2
