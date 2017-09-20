@@ -3,8 +3,6 @@ channels:
 - defaults
 dependencies:
 - backports_abc=0.5=py27_0
-- ca-certificates=2017.7.27.1=0
-- certifi=2017.7.27.1=py27_0
 - click=6.7=py27_0
 - click-plugins=1.0.3=py27_0
 - cligj=0.4.0=py27_0
