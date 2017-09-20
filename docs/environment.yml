@@ -1,5 +1,10 @@
 name: cityenergyanalyst_docs
 channels:
+- omnia
+- pythonocc
+- dlr-sc
+- oce
+- conda-forge
 - defaults
 dependencies:
 - backports_abc=0.5=py27_0
