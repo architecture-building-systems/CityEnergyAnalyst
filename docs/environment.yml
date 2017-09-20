@@ -6,7 +6,6 @@ dependencies:
 - click=6.7=py27_0
 - click-plugins=1.0.3=py27_0
 - cligj=0.4.0=py27_0
-- curl=7.49.1
 - cycler=0.10.0=py27_0
 - descartes=1.1.0=py27_0
 - enum34=1.1.6=py27_1
