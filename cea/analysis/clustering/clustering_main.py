@@ -13,11 +13,11 @@ import os
 import time
 
 import pandas as pd
-from cea.demand.calibration_single.clustering.sax import SAX
+from cea.analysis.clustering.sax import SAX
 
 from cea.analysis.clustering.sax_optimization import sax_optimization
 from cea.analysis.mcda import mcda_cluster_main
-from cea.plots.clusters_plot import clusters_day_mean
+from cea.plots.clusters_plot import plot_day
 from cea.plots.pareto_frontier_plot import frontier_2D_3OB
 
 __author__ = "Jimeno A. Fonseca"
@@ -30,7 +30,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def clustering_main(locator, data,  word_size, alphabet_size, gv):
+def clustering_sax(locator, data, word_size, alphabet_size, gv):
     """
     Function to cluster different days of the year following the SAX method (see class for more info)
     :param locator: locator class
@@ -55,8 +55,9 @@ def clustering_main(locator, data,  word_size, alphabet_size, gv):
     sax = [s.to_letter_representation(x)[0] for x in data]
 
     # calculate dict with data per hour for the whole year and create groups per pattern
-    hours_of_day = range(24)
-    days_of_year = range(365)
+    hours_of_day = range(data[0].size)
+    days_of_year = range(len(data))
+    print 'the days of the year evaluated are:', len(data)
     list_of_timeseries_transposed = [list(x) for x in zip(*data)]
     dict_data = dict((group, x) for group, x in zip(hours_of_day, list_of_timeseries_transposed))
     dict_data.update({'sax': sax, 'day': days_of_year})
@@ -132,8 +133,8 @@ def demand_CEA_reader(locator, building_name, building_load, type="simulated"):
         print 'Error: Make sure you select type equal to either "measured" or "simulated'
 
     data.set_index(pd.to_datetime(data.index), inplace=True)
-    data['day'] = data.index.dayofyear
 
+    data['day'] = [str(x)+str(y) for x,y in zip(data.index.dayofyear, data.index.year)]
     # transform into dicts where key = day and value = 24 h array
     groups = data.groupby(data.day)
     list_of_timeseries = [group[1][building_load].values for group in groups]
@@ -148,12 +149,13 @@ def run_as_script():
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
 
     #Options
-    optimize = True
-    multicriteria = True
+    optimize = False
+    raw_data_plot = False
+    multicriteria = False
     plot_pareto = True
-    clustering = True
-    cluster_plot = True
-    building_names = ['M01']#['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']#['B01']#['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']
+    clustering = False
+    cluster_plot = False
+    building_names = ['dorm', 'lab', 'office'] #['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']#['B01']#['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']
     building_load = 'Ef_kWh'
     type_data = 'measured'
 
@@ -163,16 +165,16 @@ def run_as_script():
                                      type=type_data)
             start_generation = None  # or the number of generation to start from
             number_individuals = 16
-            number_generations = 100
+            number_generations = 50
             optimization_clustering_main(locator=locator, data=data, start_generation=start_generation,
                                          number_individuals=number_individuals, number_generations=number_generations,
                                          building_name=name, gv=gv)
     if multicriteria:
         for i,name in enumerate(building_names):
-            generation = 100
+            generation = 50
             weight_fitness1 = 100 # accurracy
-            weight_fitness2 = 80 # complexity
-            weight_fitness3 = 80 # compression
+            weight_fitness2 = 100 # complexity
+            weight_fitness3 = 70 # compression
             what_to_plot = "paretofrontier"
             output_path = locator.get_calibration_cluster_mcda(generation)
 
@@ -189,8 +191,11 @@ def run_as_script():
         result_final.to_csv(output_path)
 
     if plot_pareto:
-        for name in building_names:
-            generation_to_plot = 100
+        for name in building_names[:1]:
+            data = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load,
+                                     type=type_data)
+            days_of_analysis = len(data)
+            generation_to_plot = 50
             annotate_benchmarks = True
             annotate_fitness = False
             show_in_screen = False
@@ -208,18 +213,22 @@ def run_as_script():
             input_path = locator.get_calibration_cluster_opt_checkpoint(generation_to_plot, name)
             frontier_2D_3OB(input_path=input_path, what_to_plot = what_to_plot, output_path=output,
                             labelx= labelx,
-                            labely = labely, labelz = labelz, show_benchmarks= annotate_benchmarks,
+                            labely = labely, labelz = labelz,
+                            days_of_analysis=days_of_analysis,
+                            show_benchmarks= annotate_benchmarks,
                             show_fitness=annotate_fitness,
                             show_in_screen = show_in_screen,
                             save_to_disc=save_to_disc,
-                            optimal_individual= optimal_individual)
+                            optimal_individual= optimal_individual,
+                            )
     if clustering:
-        name = 'M01'
+        name = 'office'
         data = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load,
                                  type=type_data)
-        word_size = 9
-        alphabet_size = 7
-        clustering_main(locator=locator, data=data, word_size=word_size, alphabet_size=alphabet_size, gv=gv)
+        word_size = 24
+        alphabet_size = 24
+
+        clustering_sax(locator=locator, data=data, word_size=word_size, alphabet_size=alphabet_size, gv=gv)
 
         if cluster_plot:
             show_benchmark = True
@@ -228,18 +237,35 @@ def run_as_script():
             show_legend = False
             labelx = "Hour of the day"
             labely = "Electrical load [kW]"
-            # input_path = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load,
-            #                  type=type_data)
-            #
-            # input_path = pd.DataFrame(dict((str(key), value) for (key, value) in enumerate(input_path)))
 
             input_path = locator.get_calibration_cluster('clusters_mean')
+            data = pd.read_csv(input_path)
             output_path = os.path.join(locator.get_calibration_clustering_plots_folder(),
                                  "w_a_"+str(word_size)+"_"+str(alphabet_size)+"_building_name_"+name+".png")
 
-            clusters_day_mean(input_path=input_path, output_path=output_path,labelx=labelx,
-                              labely=labely, save_to_disc=save_to_disc, show_in_screen=show_in_screen,
-                              show_legend=show_legend)#, show_benchmark=show_benchmark)
+            plot_day(data=data, output_path=output_path, labelx=labelx,
+                     labely=labely, save_to_disc=save_to_disc, show_in_screen=show_in_screen,
+                     show_legend=show_legend)#, show_benchmark=show_benchmark)
+
+    if raw_data_plot:
+        name = 'dorm'
+        show_benchmark = True
+        save_to_disc = True
+        show_in_screen = False
+        show_legend = False
+        labelx = "Hour of the day"
+        labely = "Electrical load [kW]"
+        data = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load,
+                                     type=type_data)
+
+        data = pd.DataFrame(dict((str(key), value) for (key, value) in enumerate(data)))
+
+        # input_path = locator.get_calibration_cluster('clusters_mean')
+        output_path = os.path.join(locator.get_calibration_clustering_plots_folder(), "raw_building_name_" + name + ".png")
+
+        plot_day(data=data, output_path=output_path, labelx=labelx,
+                 labely=labely, save_to_disc=save_to_disc, show_in_screen=show_in_screen,
+                 show_legend=show_legend)  # , show_benchmark=show_benchmark)
 
 if __name__ == '__main__':
     run_as_script()

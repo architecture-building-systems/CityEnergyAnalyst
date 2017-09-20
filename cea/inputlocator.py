@@ -283,9 +283,9 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_substations_folder(),  "Total_%(genome)s.csv" % locals())
 
     def get_optimization_clustering_folder(self):
-        """scenario/outputs/data/optimization/clustering_main
+        """scenario/outputs/data/optimization/clustering_sax
         Clustering results for disconnected buildings"""
-        return self._ensure_folder(self.get_optimization_results_folder(), "clustering_main")
+        return self._ensure_folder(self.get_optimization_results_folder(), "clustering_sax")
 
     # optimization
     def get_sewage_heat_potential(self):
