@@ -124,7 +124,7 @@ dependencies:
   - sphinx==1.6.3
   - sphinxcontrib-websupport==1.0.1
   - timezonefinder==2.1.0
-  - tqdm==4.15.0
+  - tqdm
   - traitlets==4.3.2
   - twine==1.9.1
   - typing==3.6.2
