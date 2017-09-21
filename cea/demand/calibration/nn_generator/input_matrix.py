@@ -151,9 +151,13 @@ def get_cea_inputs(building_name):
     raw_nn_inputs=np.transpose(building_array)
     return raw_nn_inputs
 
+
 def run_as_script(building_name):
     raw_nn_inputs = get_cea_inputs(building_name)
     return raw_nn_inputs
 
 if __name__ == '__main__':
     run_as_script()
+
+## todo change the structure of run as script: add global variables and locator
+## todo write documentation on te script
