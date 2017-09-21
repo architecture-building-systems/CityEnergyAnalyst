@@ -28,10 +28,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def get_cea_inputs(building_name):
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+def get_cea_inputs(locator, building_name, gv):
 
     # Geometry properties
     data_architecture = dbf_to_dataframe(locator.get_building_architecture())
@@ -152,9 +149,12 @@ def get_cea_inputs(building_name):
     return raw_nn_inputs
 
 
-def run_as_script(building_name):
-    raw_nn_inputs = get_cea_inputs(building_name)
-    return raw_nn_inputs
+def run_as_script():
+    gv = cea.globalvar.GlobalVariables()
+    scenario_path = gv.scenario_reference
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    building_name = 'B01'
+    get_cea_inputs(locator=locator, building_name=building_name, gv=gv)
 
 if __name__ == '__main__':
     run_as_script()
