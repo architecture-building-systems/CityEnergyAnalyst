@@ -37,7 +37,6 @@ dependencies:
 - libspatialite
 - libtiff=4.0.6
 - libxml2=2.9.4
-- matplotlib=2.0.2=py27_2
 - munch=2.2.0=py27_0
 - openjpeg=2.1.2
 - openssl=1.0.2l
