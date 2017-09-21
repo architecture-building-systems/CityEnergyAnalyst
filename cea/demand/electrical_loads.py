@@ -165,7 +165,7 @@ def calc_Eauxf_ve(tsd, gv):
 
     # mechanical ventilation system air flow [m3/s] = outdoor air + recirculation air
     q_ve_mech = tsd['m_ve_mech']/physics.calc_rho_air(tsd['theta_ve_mech']) \
-        + tsd['m_ve_recirculation']/physics.calc_rho_air(tsd['theta_a'])
+        + tsd['m_ve_recirculation']/physics.calc_rho_air(tsd['T_int'])
 
     Eve_aux = fan_power * q_ve_mech * 3600
 

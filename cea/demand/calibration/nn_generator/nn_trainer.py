@@ -75,7 +75,7 @@ def neural_trainer(inputs_x,targets_t,locator):
         json_file.write(model_json)
     # serialize weights to HDF5
     model.save_weights(weight_NN_path)
-    print(r"Saved model to ~reference-case-open\baseline\outputs\data\calibration")
+    print("neural network model saved")
 
 def run_as_script():
     gv = cea.globalvar.GlobalVariables()
@@ -83,7 +83,7 @@ def run_as_script():
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
     list_building_names = building_properties.list_building_names()
-    target_parameters = ['Qhsf', 'Qcsf', 'Qwwf', 'Ef', 'theta_a']
+    target_parameters = ['Qhsf', 'Qcsf', 'Qwwf', 'Ef', 'T_int']
     urban_input_matrix, urban_taget_matrix=input_prepare_main(list_building_names, locator, target_parameters)
     save_inputs=pd.DataFrame(urban_input_matrix)
     save_targets=pd.DataFrame(urban_taget_matrix)

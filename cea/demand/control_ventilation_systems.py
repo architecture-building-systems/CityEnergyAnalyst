@@ -77,13 +77,13 @@ def is_mechanical_ventilation_heat_recovery_active(bpr, tsd, t):
     elif is_mechanical_ventilation_active(bpr, tsd, t)\
             and has_mechanical_ventilation_heat_recovery(bpr)\
             and helpers.is_coolingseason_hoy(t)\
-            and tsd['theta_a'][t-1] < tsd['T_ext'][t]:
+            and tsd['T_int'][t-1] < tsd['T_ext'][t]:
 
         return True
 
     elif is_mechanical_ventilation_active(bpr, tsd, t) \
             and helpers.is_coolingseason_hoy(t) \
-            and tsd['theta_a'][t-1] >= tsd['T_ext'][t]:
+            and tsd['T_int'][t-1] >= tsd['T_ext'][t]:
 
         # heat recovery is deactivated in the cooling case,
         #  if outdoor air conditions are colder than indoor (free cooling)
@@ -105,8 +105,8 @@ def is_night_flushing_active(bpr, tsd, t):
     if has_night_flushing(bpr) \
             and helpers.is_coolingseason_hoy(t) \
             and helpers.is_nighttime_hoy(t) \
-            and tsd['theta_a'][t-1] > temperature_zone_control \
-            and tsd['theta_a'][t-1] > tsd['T_ext'][t] + delta_t:
+            and tsd['T_int'][t-1] > temperature_zone_control \
+            and tsd['T_int'][t-1] > tsd['T_ext'][t] + delta_t:
 
         return True
 
@@ -138,7 +138,7 @@ def is_economizer_active(bpr, tsd, t):
 
     if has_mechanical_ventilation_economizer(bpr) \
             and helpers.is_coolingseason_hoy(t) \
-            and tsd['theta_a'][t-1] > tsd['ta_cs_set'][t] >= tsd['T_ext'][t]:
+            and tsd['T_int'][t-1] > tsd['ta_cs_set'][t] >= tsd['T_ext'][t]:
 
         return True
 
