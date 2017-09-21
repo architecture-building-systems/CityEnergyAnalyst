@@ -8,10 +8,18 @@ import os
 from keras.models import Sequential
 from keras.callbacks import EarlyStopping
 import cea
+from cea.demand.calibration.nn_generator.input_prepare import input_prepare_main
+from cea.demand.demand_main import properties_and_schedule
 
 def neural_trainer(inputs_x,targets_t,locator):
+    '''
+    This function executes the training if the NN
+    :param inputs_x:
+    :param targets_t:
+    :param locator:
+    :return:
+    '''
     np.random.seed(7)
-
     inputs_x_rows, inputs_x_cols = inputs_x.shape
     #scaling and normalizing inputs
     scalerX = MinMaxScaler(feature_range=(0, 1))
@@ -61,8 +69,7 @@ def neural_trainer(inputs_x,targets_t,locator):
     # Fit the model
     model.fit(inputs_x, targets_t, validation_split=validation_split, epochs=1500, shuffle=True, batch_size=100000,callbacks=[estop])
 
-    json_NN_path = os.path.join(locator.get_calibration_folder(), "trained_network.json" % locals())
-    weight_NN_path = os.path.join(locator.get_calibration_folder(), "trained_network.h5" % locals())
+    json_NN_path , weight_NN_path = locator.get_neural_network_model()
     model_json = model.to_json()
     with open(json_NN_path, "w") as json_file:
         json_file.write(model_json)
@@ -71,11 +78,13 @@ def neural_trainer(inputs_x,targets_t,locator):
     print(r"Saved model to ~reference-case-open\baseline\outputs\data\calibration")
 
 def run_as_script():
-    from cea.demand.calibration.nn_generator.input_prepare import run_as_script
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    urban_input_matrix, urban_taget_matrix = run_as_script()
+    building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
+    list_building_names = building_properties.list_building_names()
+    target_parameters = ['Qhsf', 'Qcsf', 'Qwwf', 'Ef', 'theta_a']
+    urban_input_matrix, urban_taget_matrix=input_prepare_main(list_building_names, locator, target_parameters)
     save_inputs=pd.DataFrame(urban_input_matrix)
     save_targets=pd.DataFrame(urban_taget_matrix)
     temp_file = r'C:\reference-case-open\baseline\outputs\data\calibration\inputs.csv'

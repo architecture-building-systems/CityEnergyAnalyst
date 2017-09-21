@@ -698,6 +698,19 @@ class InputLocator(object):
         """Returns the path to a file in the temporary folder with the name `filename`"""
         return os.path.join(self.get_temporary_folder(), filename)
 
+    def get_surrogate_folder(self):
+        """scenario/outputs/data/surrogate"""
+        return self._ensure_folder(self.scenario_path, 'outputs', 'surrogate_model')
+
+    def get_neural_network_folder(self):
+        """scenario/outputs/data/surrogate/neural_network_folder"""
+        return self._ensure_folder(self.get_surrogate_folder(), 'neural_network')
+
+    def get_neural_network_model(self):
+        """scenario/outputs/data/surrogate/neural_network_folder"""
+        structure = os.path.join(self.get_neural_network_folder(), 'nn_structure.json')
+        matrix = os.path.join(self.get_neural_network_folder(), 'nn_matrix.h5')
+        return structure, matrix
 
 class ReferenceCaseOpenLocator(InputLocator):
     """This is a special InputLocator that extracts the builtin reference case
