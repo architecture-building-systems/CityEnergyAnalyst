@@ -22,6 +22,15 @@ __status__ = "Production"
 
 
 def prep_NN_delay(NN_input,NN_target,NN_delays):
+    '''
+
+    :param NN_input: the inputs to be prepared and sent to NN for training
+    :type   NN_input: numpy array
+    :param NN_target:
+    :param NN_delays:
+    :return: NN_inpuy_ready , NN_target_ready
+    :rtype: numpy arrays
+    '''
     input1=NN_input
     target1=NN_target
     nS, nF = input1.shape
