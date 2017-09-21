@@ -106,7 +106,7 @@ def run_as_script():
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
     list_building_names = building_properties.list_building_names()
-    target_parameters=['Qhsf', 'Qcsf', 'Qwwf','Ef', 'theta_a']
+    target_parameters=['Qhsf', 'Qcsf', 'Qwwf','Ef', 'T_int']
     input_prepare_main(list_building_names, locator, target_parameters)
 
 

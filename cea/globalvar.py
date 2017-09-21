@@ -532,7 +532,7 @@ class GlobalVariables(object):
              'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
              'Eprof', 'Ecaf'],
             ['mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf', 'mcpref'],
-            ['Twwf_sup','Theta_a'
+            ['Twwf_sup','T_int',
              'Twwf_re', 'Thsf_sup', 'Thsf_re',
              'Tcsf_sup', 'Tcsf_re',
              'Tcdataf_re',

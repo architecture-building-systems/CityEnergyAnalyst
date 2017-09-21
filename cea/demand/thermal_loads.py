@@ -101,7 +101,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                 # OVERWRITE STATIC INFILTRATION WITH DYNAMIC INFILTRATION RATE
                 dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
                 qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(
-                    tsd['theta_a'][hoy - 1] if not np.isnan(tsd['theta_a'][hoy - 1]) else tsd['T_ext'][hoy - 1],
+                    tsd['T_int'][hoy - 1] if not np.isnan(tsd['T_int'][hoy - 1]) else tsd['T_ext'][hoy - 1],
                     tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
                 # INFILTRATION IS FORCED NOT TO REACH ZERO IN ORDER TO AVOID THE RC MODEL TO FAIL
                 tsd['m_ve_inf'][hoy] = max(qm_sum_in / 3600, 1 / 3600)
@@ -123,7 +123,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['Qcs_sen_incl_em_ls'] = tsd['Qcs_sen_sys'] + tsd['Qcs_em_ls']
 
         # Calc of Qhs_dis_ls/Qcs_dis_ls - losses due to distribution of heating/cooling coils
-        Qhs_d_ls, Qcs_d_ls = np.vectorize(sensible_loads.calc_Qhs_Qcs_dis_ls)(tsd['theta_a'], tsd['T_ext'],
+        Qhs_d_ls, Qcs_d_ls = np.vectorize(sensible_loads.calc_Qhs_Qcs_dis_ls)(tsd['T_int'], tsd['T_ext'],
                                                                               tsd['Qhs_sen_incl_em_ls'],
                                                                               tsd['Qcs_sen_incl_em_ls'],
                                                                               bpr.building_systems['Ths_sup_0'],
@@ -160,7 +160,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # Hot water loads -> TODO: is it not possible to have water loads without conditioned area (Af == 0)?
         Mww, tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(
             bpr.building_systems['Lcww_dis'], bpr.building_systems['Lsww_dis'], bpr.building_systems['Lvww_c'],
-            bpr.building_systems['Lvww_dis'], tsd['T_ext'], tsd['theta_a'], tsd['Twwf_re'],
+            bpr.building_systems['Lvww_dis'], tsd['T_ext'], tsd['T_int'], tsd['Twwf_re'],
             bpr.building_systems['Tww_sup_0'], bpr.building_systems['Y'], gv, schedules,
             bpr)
 
@@ -262,7 +262,7 @@ def initialize_timestep_data(bpr, weather_data):
            'T_sky': weather_data.skytemp_C.values,
            'u_wind': weather_data.windspd_ms}
     # fill data with nan values
-    nan_fields = ['Qhs_lat_sys', 'Qhs_sen_sys', 'Qcs_lat_sys', 'Qcs_sen_sys', 'theta_a', 'theta_m', 'theta_c',
+    nan_fields = ['Qhs_lat_sys', 'Qhs_sen_sys', 'Qcs_lat_sys', 'Qcs_sen_sys', 'T_int', 'theta_m', 'theta_c',
                   'theta_o', 'Qhs_sen', 'Qcs_sen', 'Ehs_lat_aux', 'Qhs_em_ls', 'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs',
                   'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs', 'I_sol', 'w_int', 'I_rad', 'QEf', 'QHf', 'QCf',
                   'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat',
