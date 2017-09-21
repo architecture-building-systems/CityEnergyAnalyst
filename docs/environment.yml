@@ -18,7 +18,6 @@ dependencies:
 - expat=2.1.0
 - fiona=1.7.8
 - freexl=1.0.2
-- freetype=2.7.*
 - functools32=3.2.3.2=py27_1
 - geopandas
 - geos=3.5.1
