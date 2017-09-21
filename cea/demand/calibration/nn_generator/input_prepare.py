@@ -21,7 +21,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def input_prepare_main(list_building_names, locator, target_parameters):
+def input_prepare_main(list_building_names, locator, target_parameters, gv):
     '''
     this function prepares the final inputs and targets to be fed into the NN
     :param list_building_names:
@@ -31,7 +31,7 @@ def input_prepare_main(list_building_names, locator, target_parameters):
     '''
     for counter, building_name in enumerate(list_building_names):
         raw_nn_targets = get_cea_outputs(building_name, locator, target_parameters)
-        raw_nn_inputs = get_cea_inputs(building_name)
+        raw_nn_inputs = get_cea_inputs(locator, building_name, gv)
         NN_input_ready, NN_target_ready = prep_NN_delay(raw_nn_inputs, raw_nn_targets, nn_delay)
         if counter == 0:
             urban_input_matrix = NN_input_ready
@@ -106,8 +106,8 @@ def run_as_script():
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
     list_building_names = building_properties.list_building_names()
-    target_parameters=['Qhsf', 'Qcsf', 'Qwwf','Ef', 'T_int']
-    input_prepare_main(list_building_names, locator, target_parameters)
+    target_parameters=['Qhsf_kWh', 'Qcsf_kWh', 'Qwwf_kWh','Ef_kWh', 'T_int_C']
+    input_prepare_main(list_building_names, locator, target_parameters, gv)
 
 
 
