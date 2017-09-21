@@ -45,11 +45,13 @@ def input_prepare_main(list_building_names, locator, target_parameters):
 
 def prep_NN_delay(NN_input,NN_target,NN_delays):
     '''
-    This function adds delay to the inputs
-    :param NN_input:
+    :param NN_input: the inputs to be prepared and sent to NN for training
+    :type   NN_input: numpy array
     :param NN_target:
     :param NN_delays:
-    :return:
+    :return: NN_inpuy_ready , NN_target_ready
+    :rtype: numpy arrays
+
     '''
     input1=NN_input
     target1=NN_target

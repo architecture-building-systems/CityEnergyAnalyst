@@ -148,6 +148,7 @@ def get_cea_inputs(locator, building_name, gv):
     raw_nn_inputs=np.transpose(building_array)
     return raw_nn_inputs
 
+
 def run_as_script():
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
@@ -157,3 +158,6 @@ def run_as_script():
 
 if __name__ == '__main__':
     run_as_script()
+
+## todo change the structure of run as script: add global variables and locator
+## todo write documentation on te script
