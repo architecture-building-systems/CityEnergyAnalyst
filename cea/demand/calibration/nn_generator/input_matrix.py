@@ -30,18 +30,38 @@ __status__ = "Production"
 
 def get_cea_inputs(locator, building_name, gv):
 
-    # Geometry properties
-    data_architecture = dbf_to_dataframe(locator.get_building_architecture())
-    data_architecture.set_index('Name', inplace=True)
-    weather_data = epwreader.epw_reader(locator.get_default_weather())[['drybulb_C', 'relhum_percent', 'glohorrad_Whm2',
-                                                                        'dirnorrad_Whm2', 'difhorrad_Whm2', 'skytemp_C',
-                                                                        'windspd_ms']]
-    weather_array=np.transpose(np.asarray(weather_data))
+    # TODO: make comments in line
+    weather_array, weather_data = get_array_weather_variables(locator)
 
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
 
     building = building_properties[building_name]
 
+    array_geom = get_array_geometry_variables(building)
+
+    array_arch = get_array_architecture_variables(building, building_name, locator)
+
+    array_cmfrt, schedules, tsd = get_array_comfort_variables(building, date, gv, schedules_dict, weather_data)
+
+    array_int_load = get_array_internal_loads_variables(schedules, tsd)
+
+    array_hvac = get_array_HVAC_variables(building)
+
+    building_array=np.concatenate((weather_array,array_geom, array_arch, array_cmfrt,
+                                   array_int_load, array_hvac))
+    raw_nn_inputs=np.transpose(building_array)
+    return raw_nn_inputs
+
+
+def get_array_weather_variables(locator):
+    weather_data = epwreader.epw_reader(locator.get_default_weather())[['drybulb_C', 'relhum_percent', 'glohorrad_Whm2',
+                                                                        'dirnorrad_Whm2', 'difhorrad_Whm2', 'skytemp_C',
+                                                                        'windspd_ms']]
+    weather_array = np.transpose(np.asarray(weather_data))
+    return weather_array, weather_data
+
+
+def get_array_geometry_variables(building):
     # Geometry properties
     ## aconditioned floor area
     array_Af = np.empty(8760)
@@ -50,14 +70,20 @@ def get_cea_inputs(locator, building_name, gv):
     array_sv = np.empty(8760)
     array_sv.fill(building.rc_model['surface_volume'])
     ### final array of geometry properties
-    array_geom=np.stack((array_Af,array_sv))
+    array_geom = np.stack((array_Af, array_sv))
+    return array_geom
 
+
+def get_array_architecture_variables(building, building_name, locator):
+
+    data_architecture = dbf_to_dataframe(locator.get_building_architecture())
+    data_architecture.set_index('Name', inplace=True)
     # Architecture
     ##Window to wall ratio
     array_wwr = np.empty(8760)
     average_wwr = np.mean([data_architecture.ix[building_name, 'wwr_south'],
                            data_architecture.ix[building_name, 'wwr_north'],
-                          data_architecture.ix[building_name, 'wwr_west'],
+                           data_architecture.ix[building_name, 'wwr_west'],
                            data_architecture.ix[building_name, 'wwr_east']])
     array_wwr.fill(average_wwr)
     ##Type of construction
@@ -88,34 +114,42 @@ def get_cea_inputs(locator, building_name, gv):
     array_rfsh = np.empty(8760)
     array_rfsh.fill(building.architecture.rf_sh)
     ### final array of architecture properties
-    array_arch=np.stack((array_wwr,array_cm,array_n50,array_Uroof,array_aroof,array_Uwall,array_awall,array_Ubase,
-                array_Uwin,array_Gwin,array_rfsh))
+    array_arch = np.stack(
+        (array_wwr, array_cm, array_n50, array_Uroof, array_aroof, array_Uwall, array_awall, array_Ubase,
+         array_Uwin, array_Gwin, array_rfsh))
+    return array_arch
 
+
+def get_array_comfort_variables(building, date, gv, schedules_dict, weather_data):
     # indoor comfort
     schedules, tsd = initialize_inputs(building, gv, schedules_dict, weather_data)
     tsd = controllers.calc_simple_temp_control(tsd, building.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
                                                date.dayofweek)
-
-    np.place(tsd['ta_hs_set'], np.isnan(tsd['ta_hs_set']),-100)
+    np.place(tsd['ta_hs_set'], np.isnan(tsd['ta_hs_set']), -100)
     np.place(tsd['ta_cs_set'], np.isnan(tsd['ta_cs_set']), 100)
     array_Thset = tsd['ta_hs_set']
     array_Tcset = tsd['ta_cs_set']
     ### final array of indoor comfor
-    array_cmfrt=np.empty((1,8760))
-    array_cmfrt [0,:] = array_Thset
-    array_cmfrt[0,gv.seasonhours[0] + 1:gv.seasonhours[1]]= array_Tcset[gv.seasonhours[0] + 1:gv.seasonhours[1]]
-    #array_cmfrt=np.squeeze((array_cmfrt))
+    array_cmfrt = np.empty((1, 8760))
+    array_cmfrt[0, :] = array_Thset
+    array_cmfrt[0, gv.seasonhours[0] + 1:gv.seasonhours[1]] = array_Tcset[gv.seasonhours[0] + 1:gv.seasonhours[1]]
+    return array_cmfrt, schedules, tsd
 
+
+def get_array_internal_loads_variables(schedules, tsd):
     # internal loads
-    array_electricity = tsd['Eaf']+ tsd['Edataf'] + tsd ['Elf'] + tsd ['Eprof'] + tsd['Eref']
+    array_electricity = tsd['Eaf'] + tsd['Edataf'] + tsd['Elf'] + tsd['Eprof'] + tsd['Eref']
     np.place(tsd['Qhprof'], np.isnan(tsd['Qhprof']), 0)
     array_sensible_gain = tsd['Qs'] + tsd['Qhprof']
     array_latent_gain = tsd['w_int']
     array_ve = tsd['ve']
-    array_Vww=schedules['Vww']
+    array_Vww = schedules['Vww']
     ### final array of internal loads
-    array_int_load=np.stack((array_electricity,array_sensible_gain,array_latent_gain,array_ve,array_Vww))
+    array_int_load = np.stack((array_electricity, array_sensible_gain, array_latent_gain, array_ve, array_Vww))
+    return array_int_load
 
+
+def get_array_HVAC_variables(building):
     # HVAC systems
     ##heating system
     array_dThs_C = np.empty(8760)
@@ -125,11 +159,11 @@ def get_cea_inputs(locator, building_name, gv):
     array_dTcs_C.fill(building.hvac['dTcs_C'])
     ## ventilation
     array_economizer = np.empty(8760)
-    array_economizer.fill(1*(building.hvac['ECONOMIZER']))
+    array_economizer.fill(1 * (building.hvac['ECONOMIZER']))
     array_win_vent = np.empty(8760)
-    array_win_vent.fill(1*(building.hvac['WIN_VENT']))
+    array_win_vent.fill(1 * (building.hvac['WIN_VENT']))
     array_mech_vent = np.empty(8760)
-    array_mech_vent.fill(1*(building.hvac['MECH_VENT']))
+    array_mech_vent.fill(1 * (building.hvac['MECH_VENT']))
     array_heat_rec = np.empty(8760)
     array_heat_rec.fill(1 * (building.hvac['HEAT_REC']))
     array_night_flsh = np.empty(8760)
@@ -140,13 +174,9 @@ def get_cea_inputs(locator, building_name, gv):
     array_ctrl_Qcs = np.empty(8760)
     array_ctrl_Qcs.fill(1 * (building.hvac['dT_Qcs']))
     ### final array of HVAC systems
-    array_hvac=np.stack((array_dThs_C,array_dTcs_C,array_economizer,array_win_vent,array_mech_vent,
-                         array_heat_rec,array_night_flsh,array_ctrl_Qhs,array_ctrl_Qcs))
-
-    building_array=np.concatenate((weather_array,array_geom, array_arch, array_cmfrt,
-                                   array_int_load, array_hvac))
-    raw_nn_inputs=np.transpose(building_array)
-    return raw_nn_inputs
+    array_hvac = np.stack((array_dThs_C, array_dTcs_C, array_economizer, array_win_vent, array_mech_vent,
+                           array_heat_rec, array_night_flsh, array_ctrl_Qhs, array_ctrl_Qcs))
+    return array_hvac
 
 
 def run_as_script():
