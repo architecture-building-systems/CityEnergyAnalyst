@@ -6,6 +6,8 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from cea.demand.demand_main import properties_and_schedule
+from cea.demand.calibration.nn_generator.input_matrix import get_cea_inputs
+from cea.demand.calibration.nn_generator.nn_settings import nn_delay
 import cea.inputlocator
 import os
 
@@ -17,8 +19,6 @@ __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
-
-
 
 
 def prep_NN_delay(NN_input,NN_target,NN_delays):
@@ -66,8 +66,7 @@ def get_cea_outputs(building_name,locator):
     return raw_nn_targets
 
 def run_as_script():
-    from cea.demand.calibration.nn_generator.input_matrix import get_cea_inputs
-    from cea.demand.calibration.nn_generator.nn_settings import nn_delay
+
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
