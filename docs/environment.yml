@@ -16,7 +16,7 @@ dependencies:
 - enum34=1.1.6=py27_1
 - ephem=3.7.6.0=py27_1
 - expat=2.1.0
-- fiona=1.7.8=py27_1
+- fiona=1.7.8
 - freexl=1.0.2
 - freetype=2.7.*
 - functools32=3.2.3.2=py27_1
@@ -48,7 +48,7 @@ dependencies:
 - psycopg2=2.7.1=py27_0
 - pyparsing=2.2.0=py27_0
 - pyproj=1.9.5.1=py27_0
-- pyqt=5.6.0=py27_4
+- pyqt=5.6.0
 - pysal=1.13.0=py27_0
 - python=2.7.13=1
 - python-dateutil=2.6.1=py27_0
