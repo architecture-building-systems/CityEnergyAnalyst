@@ -83,7 +83,6 @@ def get_cea_outputs(building_name,locator, target_parameters):
     '''
     raw_nn_targets = pd.read_csv(locator.get_demand_results_file(building_name), usecols=target_parameters)
     raw_nn_targets = np.array(raw_nn_targets)
-    raw_nn_targets=np.nan_to_num(raw_nn_targets)
     return raw_nn_targets
 
 def get_cea_inputs(locator, building_name, gv):

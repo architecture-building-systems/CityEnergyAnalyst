@@ -702,9 +702,13 @@ class InputLocator(object):
         """scenario/outputs/data/surrogate"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'surrogate_model')
 
+    def get_nn_inout_folder(self):
+        """scenario/outputs/data/surrogate"""
+        return self._ensure_folder(self.scenario_path, 'outputs', 'surrogate_model','inputs_outputs')
+
     def get_neural_network_folder(self):
         """scenario/outputs/data/surrogate/neural_network_folder"""
-        return self._ensure_folder(self.get_surrogate_folder(), 'neural_network')
+        return self._ensure_folder(self.scenario_path, 'outputs', 'surrogate_model','neural_network')
 
     def get_neural_network_model(self):
         """scenario/outputs/data/surrogate/neural_network_folder"""
