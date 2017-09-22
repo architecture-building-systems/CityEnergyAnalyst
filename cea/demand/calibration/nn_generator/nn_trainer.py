@@ -1,4 +1,5 @@
 from sklearn.preprocessing import MinMaxScaler
+from cea.demand.calibration.nn_generator.nn_settings import target_parameters
 import numpy as np
 import pandas as pd
 from keras.layers import Input, Dense
@@ -69,7 +70,7 @@ def neural_trainer(inputs_x,targets_t,locator):
     # Fit the model
     model.fit(inputs_x, targets_t, validation_split=validation_split, epochs=1500, shuffle=True, batch_size=100000,callbacks=[estop])
 
-    json_NN_path , weight_NN_path = locator.get_neural_network_model()
+    json_NN_path , weight_NN_path = locator.get_neural_network_folder()
     model_json = model.to_json()
     with open(json_NN_path, "w") as json_file:
         json_file.write(model_json)
@@ -83,14 +84,13 @@ def run_as_script():
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
     list_building_names = building_properties.list_building_names()
-    target_parameters = ['Qhsf_kWh', 'Qcsf_kWh', 'Qwwf_kWh', 'Ef_kWh', 'T_int_C']
     urban_input_matrix, urban_taget_matrix=input_prepare_main(list_building_names, locator, target_parameters, gv)
     save_inputs=pd.DataFrame(urban_input_matrix)
     save_targets=pd.DataFrame(urban_taget_matrix)
-    temp_file = r'C:\reference-case-open\baseline\outputs\data\calibration\inputs.csv'
-    save_inputs.to_csv(temp_file)
-    temp_file = r'C:\reference-case-open\baseline\outputs\data\calibration\targets.csv'
-    save_targets.to_csv(temp_file)
+    temp_file_inputs = r'C:\reference-case-open\baseline\outputs\data\calibration\inputs.csv'
+    save_inputs.to_csv(temp_file_inputs)
+    temp_file_targets = r'C:\reference-case-open\baseline\outputs\data\calibration\targets.csv'
+    save_targets.to_csv(temp_file_targets)
     neural_trainer(urban_input_matrix, urban_taget_matrix, locator)
 
 if __name__ == '__main__':

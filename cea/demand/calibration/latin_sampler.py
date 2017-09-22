@@ -4,6 +4,8 @@ from scipy.stats import norm
 from scipy.stats import uniform
 from pyDOE import lhs
 import pandas as pd
+import numpy as np
+import numpy.ma as ma
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -29,7 +31,7 @@ def latin_sampler(locator, num_samples, variables):
 
 
     # get probability density function PDF of variables of interest
-    variable_groups = ('ENVELOPE', 'INDOOR_COMFORT', 'INTERNAL_LOADS')
+    variable_groups = ('ENVELOPE', 'INDOOR_COMFORT', 'INTERNAL_LOADS','SYSTEMS')
     database = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1)
                                                 for group in variable_groups])
     pdf_list = database[database['name'].isin(variables)].set_index('name')
@@ -52,6 +54,8 @@ def latin_sampler(locator, num_samples, variables):
             design[:, i] = triang(loc=loc, c=c, scale=scale).ppf(design[:, i])
         elif distribution == 'normal':
             design[:, i] = norm(loc=mu, scale=stdv).ppf(design[:, i])
+        elif distribution == 'boolean': # converts a uniform (0-1) into True/False
+            design[:, i] = ma.make_mask(np.rint(uniform(loc=min, scale=max).ppf(design[:, i])))
         else: # assume it is uniform
             design[:, i] = uniform(loc=min, scale=max).ppf(design[:, i])
 
