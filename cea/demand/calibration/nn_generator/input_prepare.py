@@ -36,7 +36,6 @@ def input_prepare_main(list_building_names, locator, target_parameters, gv):
     pool = mp.Pool()
     gv.log("Using %i CPU's" % mp.cpu_count())
     joblist = []
-    num_buildings = len(list_building_names)
     for building_name in list_building_names:
         job = pool.apply_async(input_matrix.input_prepare_multi_processing,
                                [building_name, gv, locator, target_parameters])
@@ -51,8 +50,23 @@ def input_prepare_main(list_building_names, locator, target_parameters, gv):
             urban_input_matrix = np.concatenate((urban_input_matrix, NN_input_ready))
             urban_taget_matrix = np.concatenate((urban_taget_matrix, NN_target_ready))
 
-        print (i)
     pool.close()
+
+    # from cea.demand.calibration.nn_generator.input_matrix import input_prepare_multi_processing
+    # for counter, building_name in enumerate(list_building_names):
+    #     NN_input_ready, NN_target_ready =input_prepare_multi_processing(building_name, gv, locator, target_parameters)
+    #     check_nan=np.isnan(np.sum(NN_input_ready))
+    #     print (check_nan)
+    #     if counter == 0:
+    #         urban_input_matrix = NN_input_ready
+    #         urban_taget_matrix = NN_target_ready
+    #     else:
+    #         urban_input_matrix = np.concatenate((urban_input_matrix, NN_input_ready))
+    #         urban_taget_matrix = np.concatenate((urban_taget_matrix, NN_target_ready))
+    #
+    #     print (counter)
+
+    return urban_input_matrix, urban_taget_matrix
 
     print (len(urban_input_matrix))
     # for counter, building_name in enumerate(list_building_names):
