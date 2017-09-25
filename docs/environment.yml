@@ -16,10 +16,8 @@ dependencies:
 - enum34=1.1.6=py27_1
 - ephem=3.7.6.0=py27_1
 - expat=2.1.0
-- fiona=1.7.8
 - freexl=1.0.2
 - functools32=3.2.3.2=py27_1
-- geopandas
 - geos=3.5.1
 - hdf4=4.2.12
 - hdf5=1.8.18
@@ -27,7 +25,6 @@ dependencies:
 - jpeg=9b
 - kealib=1.4.7
 - krb5=1.14.2
-- libgdal=2.1.4
 - libiconv=1.14
 - libnetcdf=4.4.1.1
 - libpng=1.6.28
