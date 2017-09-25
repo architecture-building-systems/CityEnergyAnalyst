@@ -11,6 +11,12 @@ from keras.callbacks import EarlyStopping
 import cea
 from cea.demand.calibration.nn_generator.input_prepare import input_prepare_main
 from cea.demand.demand_main import properties_and_schedule
+import theano
+import multiprocessing
+
+num_cpu_threads=multiprocessing.cpu_count()
+theano.config.openmp = True
+OMP_NUM_THREADS=num_cpu_threads
 
 def neural_trainer(inputs_x,targets_t,locator):
     '''

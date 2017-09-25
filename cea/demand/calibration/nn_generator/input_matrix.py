@@ -25,26 +25,26 @@ __status__ = "Production"
 
 def input_prepare_multi_processing(building_name, gv, locator, target_parameters):
     raw_nn_targets = get_cea_outputs(building_name, locator, target_parameters)
-    raw_nn_inputs = get_cea_inputs(locator, building_name, gv)
-    NN_input_ready, NN_target_ready = prep_NN_delay(raw_nn_inputs, raw_nn_targets, nn_delay)
+    raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, gv)
+    NN_input_ready, NN_target_ready = prep_NN_delay(raw_nn_inputs_D, raw_nn_inputs_S, raw_nn_targets, nn_delay)
     return NN_input_ready, NN_target_ready
 
 
-def prep_NN_delay(NN_input,NN_target,NN_delays):
+def prep_NN_delay(raw_nn_inputs_D, raw_nn_inputs_S, raw_nn_targets, nn_delay):
     '''
-    :param NN_input: the inputs to be prepared and sent to NN for training
-    :type   NN_input: numpy array
-    :param NN_target:
-    :param NN_delays:
+    :param raw_nn_inputs_D: the inputs to be prepared and sent to NN for training
+    :type   raw_nn_inputs_D: numpy array
+    :param raw_nn_targets:
+    :param nn_delay:
     :return: NN_inpuy_ready , NN_target_ready
     :rtype: numpy arrays
 
     '''
-    input1=NN_input
-    target1=NN_target
+    input1=raw_nn_inputs_D
+    target1=raw_nn_targets
     nS, nF = input1.shape
     nSS, nT = target1.shape
-    nD=NN_delays-1
+    nD= nn_delay - 1
     aD=nD+1
     rD=aD+1
     rS=nS+1
@@ -67,7 +67,8 @@ def prep_NN_delay(NN_input,NN_target,NN_delays):
 
     trimmed_inputn = input_matrix_features[aD:nS,:]
     trimmed_inputt = input_matrix_targets[aD:nS, nT:]
-    NN_input_ready=np.concatenate([trimmed_inputn, trimmed_inputt], axis=1)
+    trimmed_input_S = raw_nn_inputs_S [aD:aS,:]
+    NN_input_ready=np.concatenate([trimmed_inputn, trimmed_inputt, trimmed_input_S], axis=1)
     NN_target_ready=target1[aD:aS,:]
 
     return NN_input_ready , NN_target_ready
@@ -104,10 +105,12 @@ def get_cea_inputs(locator, building_name, gv):
 
     array_hvac = get_array_HVAC_variables(building)
 
-    building_array=np.concatenate((weather_array,array_geom, array_arch, array_cmfrt,
-                                   array_int_load, array_hvac))
-    raw_nn_inputs=np.transpose(building_array)
-    return raw_nn_inputs
+    building_array_D=np.concatenate((weather_array, array_cmfrt,array_int_load))
+    building_array_S = np.concatenate((array_geom, array_arch, array_hvac))
+
+    raw_nn_inputs_D=np.transpose(building_array_D)
+    raw_nn_inputs_S = np.transpose(building_array_S)
+    return raw_nn_inputs_D , raw_nn_inputs_S
 
 
 def get_array_weather_variables(locator):

@@ -9,15 +9,17 @@ import h5py
 import os
 import numpy as np
 import pandas as pd
-from cea.demand.calibration.nn_generator.nn_settings import number_samples, random_variables, target_parameters
+from cea.demand.calibration.nn_generator.nn_settings import number_samples, random_variables, target_parameters, boolean_vars
 from cea.demand.calibration.nn_generator.input_prepare import input_prepare_main
 
 def sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, gv):
 
     for i in range(number_samples):
+        bld_counter=0
         for building_name in (list_building_names):
             # create list of samples with a LHC sampler and save to disk
-            samples, pdf_list = latin_sampler(locator, number_samples, random_variables)
+            samples, pdf_list = latin_sampler(locator, 1, random_variables)
+
             np.save(locator.get_calibration_samples(building_name), samples)
 
             # create problem and save to disk as json
@@ -26,7 +28,25 @@ def sampling_main(locator, random_variables, target_parameters, list_building_na
             pickle.dump(problem, file(locator.get_calibration_problem(building_name), 'w'))
 
             sample = zip(random_variables, samples[i, :])
-            apply_sample_parameters(locator, sample)
+            sample = pd.DataFrame(sample)
+            for boolean_mask in (boolean_vars):
+                if sample[boolean_mask]==0:
+                    sample.loc[sample.boolean_mask]='False'
+                else:
+                    sample.loc[sample.boolean_mask] = 'True'
+
+
+            if bld_counter<1:
+                apply_sample_parameters(locator, sample)
+                overwritten=pd.read_csv(locator.get_building_overrides())
+                bld_counter=bld_counter+1
+            else:
+                # replace_index= overwritten[overwritten['Name'] == building_name].index[0]
+                # a=overwritten.iloc[replace_index,1:]
+                # overwritten.iloc[replace_index,random_variables]=sample
+                overwritten.loc[overwritten.Name == building_name, random_variables] = samples
+
+        overwritten.to_csv(locator.get_building_overrides())
 
         # run cea demand
         demand_main.demand_calculation(locator, weather_path, gv)
