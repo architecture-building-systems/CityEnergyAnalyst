@@ -31,7 +31,12 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
             return MagicMock()
 
-MOCK_MODULES = ['pythonocc']
+
+MOCK_MODULES = ['pythonocc', 'SALib', 'deap', 'descartes', 'doit', 'ephem', 'fiona',
+                'geopandas', 'lxml', 'pandas', 'plotly', 'pycollada', 'pyproj', 'pysal', 'pyshp', 'requests',
+                'scikit-learn', 'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo', 'timezonefinder',
+                'astral', 'cvxopt', 'xlwt', 'python-dateutil']
+
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration ------------------------------------------------
