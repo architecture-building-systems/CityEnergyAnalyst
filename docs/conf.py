@@ -33,7 +33,7 @@ class Mock(MagicMock):
 
 
 MOCK_MODULES = ['pythonocc', 'SALib', 'deap', 'descartes', 'doit', 'ephem', 'fiona',
-                'geopandas', 'lxml', 'pandas', 'plotly', 'pycollada', 'pyproj', 'pysal', 'pyshp', 'requests',
+                'geopandas', 'lxml', 'pandas', 'plotly', 'pycollada', 'pyproj', 'pysal', 'pyshp',
                 'scikit-learn', 'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo', 'timezonefinder',
                 'astral', 'cvxopt', 'xlwt', 'python-dateutil']
 
