@@ -9,16 +9,18 @@ import h5py
 import os
 import numpy as np
 import pandas as pd
-from cea.demand.calibration.nn_generator.nn_settings import number_samples, random_variables, target_parameters, boolean_vars
+from cea.demand.calibration.nn_generator.nn_settings import number_samples, random_variables,\
+    target_parameters, boolean_vars, size_city
 from cea.demand.calibration.nn_generator.input_prepare import input_prepare_main
 
 def sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, gv):
 
     for i in range(number_samples):
         bld_counter=0
+        # create list of samples with a LHC sampler and save to disk
+        samples, pdf_list = latin_sampler(locator, size_city, random_variables)
+
         for building_name in (list_building_names):
-            # create list of samples with a LHC sampler and save to disk
-            samples, pdf_list = latin_sampler(locator, 1, random_variables)
 
             np.save(locator.get_calibration_samples(building_name), samples)
 
@@ -26,29 +28,22 @@ def sampling_main(locator, random_variables, target_parameters, list_building_na
             problem = {'variables': random_variables,
                        'building_load': target_parameters, 'probabiltiy_vars': pdf_list}
             pickle.dump(problem, file(locator.get_calibration_problem(building_name), 'w'))
-
-            sample = zip(random_variables, samples[i, :])
-            sample = pd.DataFrame(sample)
-            for boolean_mask in (boolean_vars):
-                if sample[boolean_mask]==0:
-                    sample.loc[sample.boolean_mask]='False'
-                else:
-                    sample.loc[sample.boolean_mask] = 'True'
-
+            sample = np.asarray(zip(random_variables, samples[i, :]))
 
             if bld_counter<1:
                 apply_sample_parameters(locator, sample)
                 overwritten=pd.read_csv(locator.get_building_overrides())
                 bld_counter=bld_counter+1
             else:
-                # replace_index= overwritten[overwritten['Name'] == building_name].index[0]
-                # a=overwritten.iloc[replace_index,1:]
-                # overwritten.iloc[replace_index,random_variables]=sample
-                overwritten.loc[overwritten.Name == building_name, random_variables] = samples
+                overwritten.loc[overwritten.Name == building_name, random_variables] = sample[:,1]
 
+        for boolean_mask in (boolean_vars):
+            overwritten[boolean_mask]=overwritten[boolean_mask].replace(0,'False')
+            overwritten[boolean_mask] = overwritten[boolean_mask].replace(1, 'True')
         overwritten.to_csv(locator.get_building_overrides())
 
         # run cea demand
+
         demand_main.demand_calculation(locator, weather_path, gv)
         urban_input_matrix, urban_taget_matrix=input_prepare_main(list_building_names, locator, target_parameters, gv)
 
