@@ -94,8 +94,8 @@ def sampling_main(locator, variables, building_name, building_load):
     """
 
     # create list of samples with a LHC sampler and save to disk
-    samples, pdf_list = latin_sampler.latin_sampler(locator, number_samples, variables)
-    np.save(locator.get_calibration_samples(building_name), samples)
+    samples, samples_norm, pdf_list = latin_sampler.latin_sampler(locator, number_samples, variables)
+    np.save(locator.get_calibration_samples(building_name), samples, samples_norm)
 
     # create problem and save to disk as json
     problem = {'variables':variables,
