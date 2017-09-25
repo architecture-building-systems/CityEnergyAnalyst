@@ -7,3 +7,4 @@ random_variables = ['win_wall','Cm_Af','n50',
                     'dThs_C','dTcs_C','ECONOMIZER','WIN_VENT','MECH_VENT','HEAT_REC','NIGHT_FLSH','dT_Qhs','dT_Qcs']
 number_samples=10
 boolean_vars = ['ECONOMIZER','WIN_VENT','MECH_VENT','HEAT_REC','NIGHT_FLSH']
+size_city=273
