@@ -103,7 +103,6 @@ dependencies:
   - pyshp==1.2.11
   - requests==2.18.3
   - requests-toolbelt==0.8.0
-  - salib==1.0.3
   - setuptools-scm==1.15.6
   - simpledbf==0.2.6
   - snowballstemmer==1.2.1
