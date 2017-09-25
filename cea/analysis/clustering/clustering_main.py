@@ -150,11 +150,11 @@ def run_as_script():
 
     #Options
     optimize = False
-    raw_data_plot = False
+    raw_data_plot = True
     multicriteria = False
-    plot_pareto = True
-    clustering = False
-    cluster_plot = False
+    plot_pareto = False
+    clustering = True
+    cluster_plot = True
     building_names = ['dorm', 'lab', 'office'] #['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']#['B01']#['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09']
     building_load = 'Ef_kWh'
     type_data = 'measured'
@@ -222,11 +222,11 @@ def run_as_script():
                             optimal_individual= optimal_individual,
                             )
     if clustering:
-        name = 'office'
+        name = 'lab'
         data = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load,
                                  type=type_data)
-        word_size = 24
-        alphabet_size = 24
+        word_size = 4
+        alphabet_size = 17
 
         clustering_sax(locator=locator, data=data, word_size=word_size, alphabet_size=alphabet_size, gv=gv)
 
@@ -248,11 +248,11 @@ def run_as_script():
                      show_legend=show_legend)#, show_benchmark=show_benchmark)
 
     if raw_data_plot:
-        name = 'dorm'
+        name = 'lab'
         show_benchmark = True
         save_to_disc = True
         show_in_screen = False
-        show_legend = False
+        show_legend = True
         labelx = "Hour of the day"
         labely = "Electrical load [kW]"
         data = demand_CEA_reader(locator=locator, building_name=name, building_load=building_load,
