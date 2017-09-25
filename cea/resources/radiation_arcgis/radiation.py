@@ -5,6 +5,8 @@ from __future__ import division
 
 import datetime
 import os
+from datetime import timedelta
+from datetime import datetime as datetime2
 
 import numpy as np
 import pandas as pd
@@ -363,9 +365,14 @@ def calculate_sunrise(year_to_simulate, longitude, latitude):
         dt = pytz.timezone(time_zone).localize(dt)
         sun = location.sun(dt)
         sunrise.append(sun['sunrise'].hour)
+        print is_dst(time_zone)
     print('complete calculating sunrise')
     return sunrise
 
+def is_dst(zonename):
+    tz = pytz.timezone(zonename)
+    now = pytz.utc.localize(datetime2.utcnow())
+    return now.astimezone(tz).dst() != timedelta(0)
 
 def get_latitude(scenario_path):
     import fiona
