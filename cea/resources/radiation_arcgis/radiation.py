@@ -365,7 +365,6 @@ def calculate_sunrise(year_to_simulate, longitude, latitude):
         dt = pytz.timezone(time_zone).localize(dt)
         sun = location.sun(dt)
         sunrise.append(sun['sunrise'].hour)
-        print is_dst(time_zone)
     print('complete calculating sunrise')
     return sunrise
 
