@@ -20,6 +20,7 @@ class Configuration(object):
 
         self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
         self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
+        self._parser.read(self._list_configuration_files(scenario))
         self.demand = DemandConfiguration(self._parser)
         self.solar = PhotovoltaicConfiguration(self._parser)
         self.radiation_daysim = RadiationDaysimConfiguration(self._parser)
@@ -272,8 +273,6 @@ class RadiationDaysimConfiguration(object):
     @property
     def simplification_parameters(self):
         """geometry simplification:
->>>>>>> refs/remotes/origin/master
-
         - zone_geometry: level of simplification of the zone geometry
         - surrounding_geometry: level of simplification of the district geometry
         - consider_windows: boolean to consider or not windows in the geometry
