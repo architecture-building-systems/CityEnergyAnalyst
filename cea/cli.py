@@ -5,6 +5,8 @@ standard interface.
 from __future__ import absolute_import
 
 import os
+import cea.config
+import cea.inputlocator
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -201,9 +203,8 @@ def radiation_daysim(args):
 
 
 def photovoltaic(args):
-    import cea.inputlocator
     import cea.utilities.dbfreader as dbfreader
-    from cea.technologies.photovoltaic import calc_PV
+    import cea.technologies.solar.photovoltaic
 
     if not args.latitude:
         args.latitude = _get_latitude(args.scenario)
@@ -218,13 +219,29 @@ def photovoltaic(args):
 
     list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
+    config = cea.config.Configuration(args.scenario)
+    config.weather = args.weather_path
+    if args.panel_on_roof is not None:
+        config.photovoltaic.panel_on_roof = args.panel_on_roof
+    if args.panel_on_wall is not None:
+        config.photovoltaic.panel_on_wall = args.panel_on_wall
+    if args.type_PVpanel is not None:
+        config.photovoltaic.type_PVpanel = args.type_PVpanel
+    if args.min_radiation is not None:
+        config.photovoltaic.min_radiation = args.min_radiation
+    if args.date_start is not None:
+        config.photovoltaic.date_start = args.date_start
+    if args.solar_window_solstice is not None:
+        config.photovoltaic.solar_window_solstice=args.solar_window_solstice
+    config.save()
+
     for building in list_buildings_names:
-        radiation_csv = locator.get_radiation_building(building_name=building)
+        radiation_path = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name=building)
-        calc_PV(locator=locator, radiation_csv=radiation_csv, metadata_csv=radiation_metadata, latitude=args.latitude,
-                longitude=args.longitude, weather_path=args.weather_path, building_name=building,
-                pvonroof=args.pvonroof, pvonwall=args.pvonwall, worst_hour=args.worst_hour,
-                type_PVpanel=args.type_PVpanel, min_radiation=args.min_radiation, date_start=args.date_start)
+        cea.technologies.solar.photovoltaic.calc_PV(locator=locator, radiation_path=radiation_path,
+                                                    metadata_csv=radiation_metadata, latitude=args.latitude,
+                                                    longitude=args.longitude, weather_path=args.weather_path,
+                                                    building_name=building)
 
 
 def install_toolbox(_):
@@ -321,7 +338,6 @@ def read_config(args):
 def write_config(args):
     """write a value to a section/key in the configuration in the scenario folder"""
     import cea.config
-    import ConfigParser
     config = cea.config.Configuration(args.scenario)
     if not config._parser.has_section(args.section):
         config._parser.add_section(args.section)
@@ -441,17 +457,17 @@ def main():
     photovoltaic_parser.add_argument('--latitude', help='Latitude to use for calculations.', type=float)
     photovoltaic_parser.add_argument('--longitude', help='Longitude to use for calculations.', type=float)
     photovoltaic_parser.add_argument('--weather-path', help='Path to weather file.')
-    photovoltaic_parser.add_argument('--pvonroof', help='flag for considering PV on roof', action='store_true')
-    photovoltaic_parser.add_argument('--pvonwall', help='flag for considering PV on wall', action='store_true')
-    photovoltaic_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int,
-                                     default=8744)
+    photovoltaic_parser.add_argument('--panel-on-roof', help='flag for considering PV on roof', type=bool)
+    photovoltaic_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall', type=bool)
+    photovoltaic_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int)
     photovoltaic_parser.add_argument('--type-PVpanel',
-                                     help='monocrystalline, T2 is poly and T3 is amorphous. (see relates to the database of technologies)',
-                                     default="PV1")
+                                     help='monocrystalline, T2 is poly and T3 is amorphous. (see relates to the database of technologies)')
     photovoltaic_parser.add_argument('--min-radiation',
                                      help='points are selected with at least a minimum production of this % from the maximum in the area.',
-                                     type=float, default=0.75)
-    photovoltaic_parser.add_argument('--date-start', help='First day of the year', default='2016-01-01')
+                                     type=float)
+    photovoltaic_parser.add_argument('--date-start', help='First day of the year', type=str)
+    photovoltaic_parser.add_argument('--solar-window-solstice', help='desired hours of solar window on the solstice',
+                                     type=int)
     photovoltaic_parser.set_defaults(func=photovoltaic)
 
     radiation_daysim_parser = subparsers.add_parser('radiation-daysim',

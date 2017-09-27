@@ -31,7 +31,6 @@ Installation CEA development environment
 ----------------------------------------
 
 To install the development environment of CEA, perform the steps above, except, instead of ``pip install .``:
-
 # do ``pip install -e .[dev]``
 #. download and install Daysim: ``http://daysim.ning.com/page/download``
 
