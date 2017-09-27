@@ -321,7 +321,9 @@ class InputLocator(object):
     def get_default_weather(self):
         """weather/Zug-2010.epw
         path to database of archetypes file Archetypes_properties.xlsx"""
+
         return os.path.join(self.weather_path, 'Zug.epw')
+
 
     def get_weather(self, name):
         """weather/{name}.epw"""
@@ -535,10 +537,30 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), '%s_PV.csv' % building_name)
 
-    def metadata_results(self, building_name):
-        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+    def PV_metadata_results(self, building_name):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV_sensors.csv"""
         solar_potential_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'potentials','solar')
-        return os.path.join(solar_potential_folder, '%s_sensors.csv' % building_name)
+        return os.path.join(solar_potential_folder, '%s_PV_sensors.csv' % building_name)
+
+    def SC_results(self, building_name):
+        """scenario/outputs/data/potentials/solar/{building_name}_SC.csv"""
+        return os.path.join(self.solar_potential_folder(), '%s_SC.csv' % building_name)
+
+    def SC_metadata_results(self, building_name):
+        """scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv"""
+        solar_potential_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'potentials','solar')
+        return os.path.join(solar_potential_folder, '%s_SC_sensors.csv' % building_name)
+
+    def PVT_results(self, building_name):
+        """scenario/outputs/data/potentials/solar/{building_name}_SC.csv"""
+        return os.path.join(self.solar_potential_folder(), '%s_PVT.csv' % building_name)
+
+    def PVT_metadata_results(self, building_name):
+        """scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv"""
+        solar_potential_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'potentials','solar')
+        return os.path.join(solar_potential_folder, '%s_PVT_sensors.csv' % building_name)
+
+
 
     # DEMAND
 
