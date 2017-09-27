@@ -31,7 +31,6 @@ Installation CEA development environment
 ----------------------------------------
 
 To install the development environment of CEA, perform the steps above, except, instead of ``pip install .``:
-
 # do ``pip install -e .[dev]``
 #. download and install Daysim: ``http://daysim.ning.com/page/download``
 
@@ -55,7 +54,8 @@ the instructions to get PyCharm up and running:
 #. Click on settings>addlocal and point to the location of your python
    installation in the environment ``cea``. It should be located in
    something like
-   ``C:\Users\your_name\Anaconda2\envs\cea\python.exe``
+   ``C:\Users\your_name\Anaconda2\envs\cea\python.exe`` or ``C:\Users\your_name\AppData\Local\conda\conda\envs\cea\python.exe``
+
 
 #. Click apply changes.
 
