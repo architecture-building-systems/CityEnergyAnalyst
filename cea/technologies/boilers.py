@@ -6,6 +6,8 @@ condensing boilers
 
 from __future__ import division
 from scipy.interpolate import interp1d
+from math import log
+import pandas as pd
 
 
 __author__ = "Thuy-An Nguyen"
@@ -40,10 +42,10 @@ def cond_boiler_operation(Q_load_W, Q_design_W, T_return_to_boiler_K):
     :retype boiler_eff: float
     :returns boiler_eff: efficiency of Boiler (Lower Heating Value), in abs. numbers
 
+    _[T. Vollrath, 2016] Tim Vollrath. Microgrid Modelling and Optimisation in the Context of Rural Transformation.
+    Master Thesis, ETH Zurich. 2016.
     """
-    #TODO[SH]: Operation efficiency Reference link doesn't work
 
-    #Implement Curves provided by http://www.greenshootscontrols.net/?p=153
     x = [0, 15.5, 21, 26.7, 32.2, 37.7, 43.3, 49, 54.4, 60, 65.6, 71.1, 100] # Return Temperature Dependency
     y = [96.8, 96.8, 96.2, 95.5, 94.7, 93.2, 91.2, 88.9, 87.3, 86.3, 86.0, 85.9, 85.8] # Return Temperature Dependency
     x1 = [0, 0.05, 0.25, 0.5, 0.75, 1] # Load Point dependency
@@ -59,20 +61,12 @@ def cond_boiler_operation(Q_load_W, Q_design_W, T_return_to_boiler_K):
     else:
         phi = 0
 
-    #if phi < gV.Boiler_min:
-    #    print "Boiler at too low part load, see Model_Boiler_condensing, line 100"
-
-        #raise model error!!
-
     if T_return_to_boiler_K == 0: # accounting with times with no flow
         T_return = 0
     else:
         T_return = T_return_to_boiler_K - 273
-
     eff_score = eff_of_phi(phi) / eff_of_phi(1)
-
     boiler_eff = (eff_score * eff_of_T_return(T_return) )/ 100.0
-
 
     return boiler_eff
 
@@ -105,24 +99,14 @@ def cond_boiler_op_cost(Q_therm_W, Q_design_W, T_return_to_boiler_K, BoilerFuelT
     :returns E_aux_Boiler: auxiliary electricity of boiler operation
     """
 
-    # Iterating for efficiency as Q_thermal_required is given as input
-
-    #if float(Q_therm) / float(Q_design) < gV.Boiler_min:
-    #    print "error expected in Boiler operation, below min part load!"
-
-    #print float(Q_therm) / float(Q_design)
-
     # boiler efficiency
     eta_boiler = cond_boiler_operation(Q_therm_W, Q_design_W, T_return_to_boiler_K)
 
 
     if BoilerFuelType == 'BG':
         GAS_PRICE = gV.BG_PRICE
-        #MaintananceCost = gV.Boiler_C_maintainance_fazBG
     else:
         GAS_PRICE = gV.NG_PRICE
-        #MaintananceCost = gV.Boiler_C_maintainance_fazNG
-
 
     if ElectricityType == 'green':
         ELEC_PRICE = gV.ELEC_PRICE_GREEN
@@ -178,11 +162,6 @@ def calc_Cop_boiler(Q_load_W, Q_design_W, T_return_to_boiler_K):
 
     else:
         phi = 0
-    #if phi < gV.Boiler_min:
-    #    print "Boiler at too low part load, see Model_Boiler_condensing, line 100"
-
-        #raise model error!!
-
 
     T_return_C = T_return_to_boiler_K - 273
     eff_score = eff_of_phi(phi) / eff_of_phi(1)
@@ -190,11 +169,9 @@ def calc_Cop_boiler(Q_load_W, Q_design_W, T_return_to_boiler_K):
 
     return boiler_eff
 
-
-
 # investment and maintenance costs
 
-def calc_Cinv_boiler(Q_design_W, Q_annual_W, gV):
+def calc_Cinv_boiler(Q_design_W, Q_annual_W, gV, locator, technology=0):
     """
     Calculates the annual cost of a boiler (based on A+W cost of oil boilers) [CHF / a]
     and Faz. 2012 data
@@ -210,29 +187,35 @@ def calc_Cinv_boiler(Q_design_W, Q_annual_W, gV):
     :rtype InvCa : float
     :returns InvCa: Annualized investment costs in CHF/a including Maintenance Cost
     """
-    # TODO[SH]: check source
+
     if Q_design_W >0:
-        InvC = 28000 # after A+W
 
-        if Q_design_W <= 90000 and Q_design_W >= 28000:
-            InvC_exkl_MWST = 28000 + 0.275 * (Q_design_W - 28000) # linear interpolation of A+W data
-            InvC = (gV.MWST + 1) * InvC_exkl_MWST
+        boiler_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="Boiler")
+        technology_code = list(set(boiler_cost_data['code']))
+        boiler_cost_data[boiler_cost_data['code'] == technology_code[technology]]
+        # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+        # capacity for the corresponding technology from the database
+        if Q_design_W < boiler_cost_data['cap_min'][0]:
+            Q_design_W = boiler_cost_data['cap_min'][0]
+        boiler_cost_data = boiler_cost_data[(boiler_cost_data['cap_min'] <= Q_design_W) & (boiler_cost_data['cap_max'] > Q_design_W)]
 
-        elif Q_design_W > 90000 and Q_design_W  <= 320000: # 320kW = maximum Power of conventional Gas Boiler,
-            InvC = 45000 + 0.11 * (Q_design_W - 90000)
+        Inv_a = boiler_cost_data.iloc[0]['a']
+        Inv_b = boiler_cost_data.iloc[0]['b']
+        Inv_c = boiler_cost_data.iloc[0]['c']
+        Inv_d = boiler_cost_data.iloc[0]['d']
+        Inv_e = boiler_cost_data.iloc[0]['e']
+        Inv_IR = (boiler_cost_data.iloc[0]['IR_%']) / 100
+        Inv_LT = boiler_cost_data.iloc[0]['LT_yr']
+        Inv_OM = boiler_cost_data.iloc[0]['O&M_%'] / 100
 
-        InvCa =  InvC * gV.Boiler_i * (1+ gV.Boiler_i) ** gV.Boiler_n / ((1+gV.Boiler_i) ** gV.Boiler_n - 1)
+        InvC = Inv_a + Inv_b * (Q_design_W) ** Inv_c + (Inv_d + Inv_e * Q_design_W) * log(Q_design_W)
 
-        if Q_design_W > 320000: # 320kW = maximum Power of conventional Gas Boiler
-            InvCa = gV.EURO_TO_CHF * (84000 + 14 * Q_design_W / 1000) # after Faz.2012
-
-        Maint_C_annual = gV.Boiler_C_maintainance_faz * Q_annual_W / 1E6 * gV.EURO_TO_CHF # 3.5 euro per MWh_th FAZ 2013
-        Labour_C = gV.Boiler_C_labour * Q_annual_W / 1E6 * gV.EURO_TO_CHF # approx 4 euro per MWh_th
-
-        InvCa += Maint_C_annual + Labour_C
+        Capex_a =  InvC * (Inv_IR) * (1+ Inv_IR) ** Inv_LT / ((1+Inv_IR) ** Inv_LT - 1)
+        Opex_fixed = Capex_a * Inv_OM
 
     else:
-        InvCa = 0
+        Capex_a = 0
+        Opex_fixed = 0
 
-    return InvCa
+    return Capex_a, Opex_fixed
 

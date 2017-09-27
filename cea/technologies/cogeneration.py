@@ -6,6 +6,8 @@ from __future__ import division
 import numpy as np
 from scipy import interpolate
 import scipy
+import pandas as pd
+from math import log
 
 __author__ = "Thuy-An Nguyen"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -25,10 +27,12 @@ __status__ = "Production"
 
 def calc_Cop_CCT(GT_SIZE_W, T_DH_Supply_K, fuel, gV):
     """
-    The function iterate the CCT operation between its nominal capacity and minimum load and generate linear functions of
-    the GT operation.
+    This function calcualates the COP of a combined cycle, the gas turbine (GT) exhaust gas is used by
+    the steam turbine (ST) to generate electricity and heat.
+    This function iterates the combined cycle operation between its nominal capacity and minimum load and generate
+    linear functions of the GT operation.
 
-    This generated function calculates Operation Point and associated costs of the cogeneration at given
+    The generated function calculates operation points and associated costs of the cogeneration at given
     thermal load (Q_therm_requested).
 
     How to use the return functions : input Q_therm_requested into the output interpolation functions
@@ -234,9 +238,9 @@ def GT_partLoadParam(wdot_W, gt_size_W, eta0, mdot0, fuel, gV):
 
     pload = (wdot_W + 1) / gt_size_W # avoid calculation errors
     if pload < gV.GT_minload:
-        print pload
-        print wdot_W
-        print gt_size_W
+        # print pload
+        # print wdot
+        # print gt_size
         raise ModelError
 
     eta = (0.4089 + 0.9624 * pload - 0.3726 * pload ** 2) * eta0  # [C. Weber, 2008]_
@@ -307,10 +311,10 @@ def ST_Op(mdot_kgpers, texh_K, tDH_K, fuel, gV):
                   mdot_kgpers * cp_exh * (534.5 - 431.8)])
     [mdotHP_kgpers, mdotLP_kgpers] = np.linalg.solve(a, b)   # HP and LP mass flow of a double pressure steam turbine
 
-    temp0_K = tDH_K + gV.CC_deltaT_DH    # condensation temperature constrained by the DH network temperature
-    pres0 = (0.0261 * (temp0_K-273) ** 2 -2.1394 * (temp0_K-273) + 52.893) * 1E3
+    temp0 = tDH_K + gV.CC_deltaT_DH    # condensation temperature constrained by the DH network temperature
+    pres0 = (0.0261 * (temp0-273) ** 2 -2.1394 * (temp0-273) + 52.893) * 1E3
 
-    deltaHevap = (-2.4967 * (temp0_K-273) + 2507) * 1E3
+    deltaHevap = (-2.4967 * (temp0-273) + 2507) * 1E3
     qdot_W = (mdotHP_kgpers + mdotLP_kgpers) * deltaHevap       # thermal output of ST
 
 
@@ -329,7 +333,7 @@ def ST_Op(mdot_kgpers, texh_K, tDH_K, fuel, gV):
 
     h_HP_Jperkg = (2.5081 * (texh_K - gV.ST_deltaT - 273) + 2122.7) * 1E3  # J/kg
     h_LP_Jperkg = (2.3153 * (temp_i_K - 273) + 2314.7) * 1E3  # J/kg
-    h_cond_Jperkg = (1.6979 * (temp0_K - 273) + 2506.6) * 1E3  # J/kg
+    h_cond_Jperkg = (1.6979 * (temp0 - 273) + 2506.6) * 1E3  # J/kg
     spec_vol_m3perkg = 0.0010  # m3/kg
 
     wdotST_W = mdotHP_kgpers * (h_HP_Jperkg - h_LP_Jperkg) + (mdotHP_kgpers + mdotLP_kgpers) * (h_LP_Jperkg - h_cond_Jperkg)  # turbine electricity output
@@ -439,7 +443,7 @@ def calc_eta_FC(Q_load_W, Q_design_W, phi_threshold, approach_call):
 
 # investment and maintenance costs
 
-def calc_Cinv_CCT(CC_size_W, gV):
+def calc_Cinv_CCT(CC_size_W, gV, locator, technology=0):
     """
     Annualized investment costs for the Combined cycle
 
@@ -452,14 +456,34 @@ def calc_Cinv_CCT(CC_size_W, gV):
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
+    CCGT_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="CCGT")
+    technology_code = list(set(CCGT_cost_data['code']))
+    CCGT_cost_data[CCGT_cost_data['code'] == technology_code[technology]]
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
+    if CC_size_W < CCGT_cost_data['cap_min'][0]:
+        CC_size_W = CCGT_cost_data['cap_min'][0]
+    CCGT_cost_data = CCGT_cost_data[
+        (CCGT_cost_data['cap_min'] <= CC_size_W) & (CCGT_cost_data['cap_max'] > CC_size_W)]
 
-    InvC = 32978 * (CC_size_W * 1E-3) ** 0.5967  # [C. Weber, 2008]_
-    InvCa = InvC * gV.CC_i * (1+ gV.CC_i) ** gV.CC_n / ((1+gV.CC_i) ** gV.CC_n - 1)
+    Inv_a = CCGT_cost_data.iloc[0]['a']
+    Inv_b = CCGT_cost_data.iloc[0]['b']
+    Inv_c = CCGT_cost_data.iloc[0]['c']
+    Inv_d = CCGT_cost_data.iloc[0]['d']
+    Inv_e = CCGT_cost_data.iloc[0]['e']
+    Inv_IR = (CCGT_cost_data.iloc[0]['IR_%']) / 100
+    Inv_LT = CCGT_cost_data.iloc[0]['LT_yr']
+    Inv_OM = CCGT_cost_data.iloc[0]['O&M_%'] / 100
 
-    return InvCa
+    InvC = Inv_a + Inv_b * (CC_size_W) ** Inv_c + (Inv_d + Inv_e * CC_size_W) * log(CC_size_W)
+
+    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed = Capex_a * Inv_OM
+
+    return Capex_a, Opex_fixed
 
 
-def calc_Cinv_FC(P_design_W, gV):
+def calc_Cinv_FC(P_design_W, gV, locator, technology=0):
     """
     Calculates the investment cost of a Fuel Cell in CHF
 
@@ -471,8 +495,28 @@ def calc_Cinv_FC(P_design_W, gV):
     :rtype InvCa: float
     :returns InvCa: annualized investment costs in CHF
     """
+    FC_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="FC")
+    technology_code = list(set(FC_cost_data['code']))
+    FC_cost_data[FC_cost_data['code'] == technology_code[technology]]
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
+    if P_design_W < FC_cost_data['cap_min'][0]:
+        P_design_W = FC_cost_data['cap_min'][0]
+    FC_cost_data = FC_cost_data[
+        (FC_cost_data['cap_min'] <= P_design_W) & (FC_cost_data['cap_max'] > P_design_W)]
 
-    InvC = (1 + gV.FC_overhead) * gV.FC_stack_cost * P_design_W / 1000 # FC_stack_cost = 55'000 CHF  / kW_therm, 10 % extra (overhead) cost
-    InvCa = InvC * gV.FC_i * (1 + gV.FC_i) ** gV.FC_n / (( 1 + gV.FC_i) ** gV.FC_n - 1)
+    Inv_a = FC_cost_data.iloc[0]['a']
+    Inv_b = FC_cost_data.iloc[0]['b']
+    Inv_c = FC_cost_data.iloc[0]['c']
+    Inv_d = FC_cost_data.iloc[0]['d']
+    Inv_e = FC_cost_data.iloc[0]['e']
+    Inv_IR = (FC_cost_data.iloc[0]['IR_%']) / 100
+    Inv_LT = FC_cost_data.iloc[0]['LT_yr']
+    Inv_OM = FC_cost_data.iloc[0]['O&M_%'] / 100
 
-    return InvCa
+    InvC = Inv_a + Inv_b * (P_design_W) ** Inv_c + (Inv_d + Inv_e * P_design_W) * log(P_design_W)
+
+    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed = Capex_a * Inv_OM
+
+    return Capex_a, Opex_fixed
