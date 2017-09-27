@@ -180,7 +180,8 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
         result[group] = np.vectorize(calc_PV_power)(results[0], results[1], eff_nom, area_per_group_m2, Bref, misc_losses)
         list_groups_area[group] = area_per_group_m2
         Sum_PV_kWh = Sum_PV_kWh + result[group] # in kWh
-        Sum_radiation_kWh = Sum_radiation_kWh + radiation['I_sol']*area_per_group_m2/1000 # kWh
+
+    Sum_radiation_kWh = Sum_radiation_kWh + radiation['I_sol']*area_per_group_m2/1000 # kWh
 
     Final = pd.DataFrame({'E_PV_gen_kWh':Sum_PV_kWh, 'Area_PV_m2':sum(list_groups_area), 'radiation_kWh':Sum_radiation_kWh})
 
@@ -616,18 +617,37 @@ def calc_properties_PV_db(database_path, type_PVpanel):
     return panel_properties
 
 # investment and maintenance costs
-def calc_Cinv_pv(P_peak_kW):
+def calc_Cinv_pv(P_peak_kW, locator, technology=0):
     """
     To calculate capital cost of PV modules, assuming 20 year system lifetime.
-    :param P_peak_kW: installed capacity of PV module [kW]
+    :param P_peak: installed capacity of PV module [kW]
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
-    if P_peak_kW < 10:
-        InvCa = 3500.07 * P_peak_kW / 20  #FIXME: should be amortized?
-    else:
-        InvCa = 2500.07 * P_peak_kW / 20
+    P_peak = P_peak_kW * 1000 # converting to W from kW
+    PV_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="PV")
+    technology_code = list(set(PV_cost_data['code']))
+    PV_cost_data[PV_cost_data['code'] == technology_code[technology]]
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
+    if P_peak < PV_cost_data['cap_min'][0]:
+        P_peak = PV_cost_data['cap_min'][0]
+    PV_cost_data = PV_cost_data[
+        (PV_cost_data['cap_min'] <= P_peak) & (PV_cost_data['cap_max'] > P_peak)]
+    Inv_a = PV_cost_data.iloc[0]['a']
+    Inv_b = PV_cost_data.iloc[0]['b']
+    Inv_c = PV_cost_data.iloc[0]['c']
+    Inv_d = PV_cost_data.iloc[0]['d']
+    Inv_e = PV_cost_data.iloc[0]['e']
+    Inv_IR = (PV_cost_data.iloc[0]['IR_%']) / 100
+    Inv_LT = PV_cost_data.iloc[0]['LT_yr']
+    Inv_OM = PV_cost_data.iloc[0]['O&M_%'] / 100
 
-    return InvCa
+    InvC = Inv_a + Inv_b * (P_peak) ** Inv_c + (Inv_d + Inv_e * P_peak) * log(P_peak)
+
+    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed = Capex_a * Inv_OM
+
+    return Capex_a, Opex_fixed
 
 
 # remuneration scheme
