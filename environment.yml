@@ -110,6 +110,7 @@ dependencies:
   - jupyter-core==4.3.0
   - lxml==3.8.0
   - markupsafe==1.0
+  - mock
   - nbformat==4.3.0
   - networkx==1.11
   - pkginfo==1.4.1
