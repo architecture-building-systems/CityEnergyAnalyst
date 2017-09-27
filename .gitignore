@@ -91,3 +91,4 @@ setup/cea_version.txt
 
 docs/*.html
 cea/surrogate/dummy_file.py
+*.orig

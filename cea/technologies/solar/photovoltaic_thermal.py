@@ -108,7 +108,6 @@ def calc_PVT(locator, radiation_json_path, metadata_csv_path, latitude, longitud
 
     return
 
-
 def calc_PVT_generation(hourly_radiation_Wh, weather_data, number_groups, prop_observers, g, Sz, Az, ha, Tin, latitude,
                         height, panel_properties_SC, panel_properties_PV):
     """
@@ -212,6 +211,7 @@ def calc_PVT_generation(hourly_radiation_Wh, weather_data, number_groups, prop_o
         teta_z = prop_observers.loc[group,'surface_azimuth']
         area_per_group_m2 = prop_observers.loc[group,'total_area_module']
         tilt_angle_deg = prop_observers.loc[group,'B']
+
         # degree to radians
         tilt_rad = radians(tilt_angle_deg) #tilt angle
         teta_z_rad = radians(teta_z) #surface azimuth

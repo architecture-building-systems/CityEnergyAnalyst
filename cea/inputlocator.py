@@ -13,13 +13,11 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-
 class InputLocator(object):
     """The InputLocator locates files and folders for input to the scripts. This works, because we
     have a convention for the folder structure of a scenario.
     It also provides locations of other files, such as those in the databases folder (e.g. archetypes).
     """
-
     # SCENARIO
     def __init__(self, scenario_path):
         self.scenario_path = scenario_path

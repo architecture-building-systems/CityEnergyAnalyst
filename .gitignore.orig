@@ -88,9 +88,10 @@ doc/make.output.txt
 cea/.doit.db
 setup/cea_version.txt
 .doit.db
-docs/guide_about_files_generated.html
+
+docs/*.html
 <<<<<<< HEAD
-docs/run_solar_technologies.html
+cea/surrogate/dummy_file.py
 =======
-docs/cascading-configuration-files.html
+*.orig
 >>>>>>> refs/remotes/origin/master
