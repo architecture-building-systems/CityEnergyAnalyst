@@ -14,13 +14,12 @@ import pyliburo.py3dmodel.modify as modify
 
 import pyliburo.gml3dmodel as gml3dmodel
 
-from cea.resources.radiation_daysim import settings
 from OCC.IntCurvesFace import IntCurvesFace_ShapeIntersector
 from OCC.gp import gp_Pnt, gp_Lin, gp_Ax1, gp_Dir
 from geopandas import GeoDataFrame as gdf
 
-import cea.globalvar
 import cea.inputlocator
+import cea.config
 import numpy as np
 import gdal
 import time
@@ -102,27 +101,36 @@ def create_hollowed_facade(surface_facade, window):
 
     return hollowed_facade_clean, hole_facade
 
-def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architecture_path, simplification_params,
-                  height_col, nfloor_col):
-    """
 
-    :param zone_shp_path: path to zone geometrydatabase
-    :param district_shp_path: path to district geometry database
-    :param tin_occface_list: list of faces of terrain
-    :param architecture_path: path to database of architecture properties
+def building2d23d(locator, simplification_params, height_col, nfloor_col):
+    """
+    :param locator: InputLocator - provides paths to files in a scenario
+    :type locator: cea.inputlocator.InputLocator
     :param simplification_params: parameters that configure the level of simplification of geometry
     :param height_col: name of the columns storing the height of buildings
     :param nfloor_col: name ofthe column storing the number of floors in buildings.
     :return:
     """
+
+    district_shp_path = locator.get_district_geometry()
+
+    # path to zone geometry database
+    zone_shp_path = locator.get_zone_geometry()
+
+    # path to database of architecture properties
+    architecture_dbf_path = locator.get_building_architecture()
+
+    # list of faces of terrain
+    geometry_terrain = raster2tin(locator.get_terrain())
+
     # read district shapefile and names of buildings of the zone of analysis
     district_building_records = gdf.from_file(district_shp_path).set_index('Name')
     district_building_names = district_building_records.index.values
     zone_building_names = gdf.from_file(zone_shp_path)['Name'].values
-    architecture_wwr = gdf.from_file(architecture_path).set_index('Name')
+    architecture_wwr = gdf.from_file(architecture_dbf_path).set_index('Name')
 
     #make shell out of tin_occface_list and create OCC object
-    terrain_shell = construct.make_shell_frm_faces(tin_occface_list)[0]
+    terrain_shell = construct.make_shell_frm_faces(geometry_terrain)[0]
     terrain_intersection_curves = IntCurvesFace_ShapeIntersector()
     terrain_intersection_curves.Load(terrain_shell, 1e-6)
 
@@ -201,7 +209,7 @@ def building2d23d(zone_shp_path, district_shp_path, tin_occface_list, architectu
             geometry_3D_surroundings.append({"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
                                  "footprint": footprint_list})
 
-    return geometry_3D_zone, geometry_3D_surroundings
+    return geometry_terrain, geometry_3D_zone, geometry_3D_surroundings
 
 
 def burn_buildings(geometry, terrain_intersection_curves):
@@ -291,37 +299,20 @@ def raster2tin(input_terrain_raster):
 
     return tin_occface_list
 
-def geometry_main(zone_shp_path, district_shp_path, input_terrain_raster, architecture_path, simplification_params):
-
-    # transform terrain from raster to tin
-    geometry_terrain = raster2tin(input_terrain_raster)
-    
+def geometry_main(locator, simplification_params):
     # transform buildings 2D to 3D and add windows
-    geometry_3D_zone, geometry_3D_surroundings = building2d23d(zone_shp_path, district_shp_path, geometry_terrain,
-                                                               architecture_path, simplification_params,
-                                                               height_col='height_ag', nfloor_col="floors_ag")
+    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = building2d23d(locator, simplification_params, height_col='height_ag',
+                                                               nfloor_col="floors_ag")
 
-    return geometry_terrain, geometry_3D_zone,geometry_3D_surroundings
+    return geometry_terrain, geometry_3D_zone, geometry_3D_surroundings
 
 if __name__ == '__main__':
-
-    # import modules
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-
-    # local variables
-    district_shp = locator.get_district()
-    zone_shp = locator.get_zone_geometry()
-    architecture_dbf = locator.get_building_architecture()
-    input_terrain_raster = locator.get_terrain()
+    locator = cea.inputlocator.ReferenceCaseOpenLocator()
+    simplification_params = cea.config.Configuration(locator.scenario_path).radiation_daysim.simplification_parameters
 
     # run routine City GML LOD 1
     time1 = time.time()
-    simplification_params = settings.SIMPLIFICATION_PARAMS
-    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings  = geometry_main(zone_shp, district_shp,
-                                                                                   input_terrain_raster, architecture_dbf,
-                                                                                  simplification_params)
+    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_main(locator, simplification_params)
     print "Geometry of the scene created in", (time.time() - time1) / 60.0, " mins"
 
 

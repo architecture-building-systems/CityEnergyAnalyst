@@ -63,7 +63,6 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     costs = extraCosts
     CO2 = extraCO2
     prim = extraPrim
-
     QUncoveredDesign = 0
     QUncoveredAnnual = 0
 
@@ -80,7 +79,6 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     else:
         Qheatmax = 0
 
-    print Qheatmax, "Qheatmax in distribution"
     Qnom = Qheatmax * (1 + gv.Qmargin_ntw)
 
     # Modify the individual with the extra GHP constraint
@@ -105,7 +103,6 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
 
     if individual_barcode.count("1") > 0:
 
-        print "Slave routine on", master_to_slave_vars.configKey
         (slavePrim, slaveCO2, slaveCosts, QUncoveredDesign, QUncoveredAnnual) = sM.slave_main(locator,
                                                                                               master_to_slave_vars,
                                                                                               solar_features, gv)
@@ -161,7 +158,6 @@ def check_invalid(individual, nBuildings, gv):
 
     for i in range(gv.nHeat):
         if individual[2 * i] > 0 and individual[2 * i + 1] < 0.01:
-            print "Share too low : modified"
             oldValue = individual[2 * i + 1]
             shareGain = oldValue - 0.01
             individual[2 * i + 1] = 0.01
@@ -173,14 +169,12 @@ def check_invalid(individual, nBuildings, gv):
     frank = gv.nHeat * 2 + gv.nHR
     for i in range(gv.nSolar):
         if individual[frank + 2 * i + 1] < 0:
-            print individual[frank + 2 * i + 1], "Negative solar share ! Modified"
             individual[frank + 2 * i + 1] = 0
 
     sharePlants = 0
     for i in range(gv.nHeat):
         sharePlants += individual[2 * i + 1]
     if abs(sharePlants - 1) > 1E-3:
-        print "Wrong plant share !", sharePlants
         valid = False
 
     shareSolar = 0
@@ -189,11 +183,9 @@ def check_invalid(individual, nBuildings, gv):
         nSol += individual[frank + 2 * i]
         shareSolar += individual[frank + 2 * i + 1]
     if nSol > 0 and abs(shareSolar - 1) > 1E-3:
-        print "Wrong solar share !", shareSolar
         valid = False
 
     if not valid:
-        print "Non valid individual ! Replace by new one. \n"
         newInd = generation.generate_main(nBuildings, gv)
 
         L = (gv.nHeat + gv.nSolar) * 2 + gv.nHR
@@ -235,13 +227,11 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
         if gv.Furnace_allowed == 1:
             master_to_slave_vars.Furnace_on = 1
             master_to_slave_vars.Furnace_Q_max = max(individual[1] * Qnom, gv.QminShare * Qnom)
-            print master_to_slave_vars.Furnace_Q_max, "Furnace wet"
             master_to_slave_vars.Furn_Moist_type = "wet"
         elif gv.CC_allowed == 1:
             master_to_slave_vars.CC_on = 1
             master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Qnom * 1.3, gv.QminShare * Qnom * 1.3)
             #1.3 is the conversion factor between the GT_Elec_size NG and Q_DHN
-            print master_to_slave_vars.CC_GT_SIZE, "CC NG"
             master_to_slave_vars.gt_fuel = "NG"
      
     #CHP units with BG& furnace with biomass dry       
@@ -249,62 +239,53 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
         if gv.Furnace_allowed == 1:
             master_to_slave_vars.Furnace_on = 1
             master_to_slave_vars.Furnace_Q_max = max(individual[1] * Qnom, gv.QminShare * Qnom)
-            print master_to_slave_vars.Furnace_Q_max, "Furnace dry"
             master_to_slave_vars.Furn_Moist_type = "dry"
         elif gv.CC_allowed == 1:
             master_to_slave_vars.CC_on = 1
             master_to_slave_vars.CC_GT_SIZE = max(individual[1] * Qnom * 1.5, gv.QminShare * Qnom * 1.5)
             #1.5 is the conversion factor between the GT_Elec_size BG and Q_DHN
-            print master_to_slave_vars.CC_GT_SIZE, "CC BG"
             master_to_slave_vars.gt_fuel = "BG"
 
     # Base boiler NG 
     if individual[2] == 1:
         master_to_slave_vars.Boiler_on = 1
         master_to_slave_vars.Boiler_Q_max = max(individual[3] * Qnom, gv.QminShare * Qnom)
-        print master_to_slave_vars.Boiler_Q_max, "Boiler base NG"
         master_to_slave_vars.BoilerType = "NG"
     
     # Base boiler BG    
     if individual[2] == 2:
         master_to_slave_vars.Boiler_on = 1
         master_to_slave_vars.Boiler_Q_max = max(individual[3] * Qnom, gv.QminShare * Qnom)
-        print master_to_slave_vars.Boiler_Q_max, "Boiler base BG"
         master_to_slave_vars.BoilerType = "BG"
     
     # peak boiler NG         
     if individual[4] == 1:
         master_to_slave_vars.BoilerPeak_on = 1
         master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Qnom, gv.QminShare * Qnom)
-        print master_to_slave_vars.BoilerPeak_Q_max, "Boiler peak NG"
         master_to_slave_vars.BoilerPeakType = "NG"
     
     # peak boiler BG   
     if individual[4] == 2:
         master_to_slave_vars.BoilerPeak_on = 1
         master_to_slave_vars.BoilerPeak_Q_max = max(individual[5] * Qnom, gv.QminShare * Qnom)
-        print master_to_slave_vars.BoilerPeak_Q_max, "Boiler peak BG"
         master_to_slave_vars.BoilerPeakType = "BG"
     
     # lake - heat pump
     if individual[6] == 1  and gv.HPLake_allowed == 1:
         master_to_slave_vars.HP_Lake_on = 1
         master_to_slave_vars.HPLake_maxSize = max(individual[7] * Qnom, gv.QminShare * Qnom)
-        print master_to_slave_vars.HPLake_maxSize, "Lake"
-    
+
     # sewage - heatpump    
     if individual[8] == 1 and gv.HPSew_allowed == 1:
         master_to_slave_vars.HP_Sew_on = 1
         master_to_slave_vars.HPSew_maxSize = max(individual[9] * Qnom, gv.QminShare * Qnom)
-        print master_to_slave_vars.HPSew_maxSize, "Sewage"
-    
+
     # Gwound source- heatpump
     if individual[10] == 1 and gv.GHP_allowed == 1:
         master_to_slave_vars.GHP_on = 1
         GHP_Qmax = max(individual[11] * Qnom, gv.QminShare * Qnom)
         master_to_slave_vars.GHP_number = GHP_Qmax / gv.GHP_HmaxSize
-        print GHP_Qmax, "GHP"
-    
+
     # heat recovery servers and compresor
     irank = gv.nHeat * 2
     master_to_slave_vars.WasteServersHeatRecovery = individual[irank]
@@ -325,12 +306,9 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     
     irank = gv.nHeat * 2 + gv.nHR
     master_to_slave_vars.SOLAR_PART_PV = max(individual[irank] * individual[irank + 1] * individual[irank + 6] * shareAvail,0)
-    print master_to_slave_vars.SOLAR_PART_PV, "PV"
     master_to_slave_vars.SOLAR_PART_PVT = max(individual[irank + 2] * individual[irank + 3] * individual[irank + 6] * shareAvail,0)
-    print master_to_slave_vars.SOLAR_PART_PVT, "PVT"
     master_to_slave_vars.SOLAR_PART_SC = max(individual[irank + 4] * individual[irank + 5] * individual[irank + 6] * shareAvail,0)
-    print master_to_slave_vars.SOLAR_PART_SC, "SC"
-    
+
     return master_to_slave_vars
 
 
@@ -348,8 +326,7 @@ def checkNtw(individual, ntwList, locator, gv):
     :rtype: Nonetype
     """
     indCombi = sFn.individual_to_barcode(individual, gv)
-    print indCombi,2
-    
+
     if not (indCombi in ntwList) and indCombi.count("1") > 0:
         ntwList.append(indCombi)
         
@@ -357,7 +334,6 @@ def checkNtw(individual, ntwList, locator, gv):
             total_demand = pd.read_csv(
                 os.path.join(locator.get_optimization_network_results_folder(), "Total_%(indCombi)s.csv" % locals()))
             building_names = total_demand.Name.values
-            print "Direct launch of distribution summary routine for", indCombi
             nM.network_main(locator, total_demand, building_names, gv, indCombi)
 
         else:
@@ -365,10 +341,8 @@ def checkNtw(individual, ntwList, locator, gv):
             building_names = total_demand.Name.values
 
             # Run the substation and distribution routines
-            print "Re-run the substation routine for new distribution configuration", indCombi
             sMain.substation_main(locator, total_demand, building_names, gv, indCombi)
-            
-            print "Launch distribution summary routine"
+
             nM.network_main(locator, total_demand, building_names, gv, indCombi)
 
 

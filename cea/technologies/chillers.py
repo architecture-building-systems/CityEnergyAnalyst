@@ -2,6 +2,8 @@
 Vapor-compressor chiller
 """
 from __future__ import division
+import pandas as pd
+from math import log
 
 
 __author__ = "Thuy-An Nguyen"
@@ -16,17 +18,17 @@ __status__ = "Production"
 
 # technical model
 
-def calc_VCC(mdot, tsup, tret, gV):
+def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, gV):
     """
     For the operation of a Vapor-compressor chiller between a district cooling network and a condenser with fresh water
     to a cooling tower following [D.J. Swider, 2003]_.
 
-    :type mdot : float
-    :param mdot: plant supply mass flow rate to the district cooling network
-    :type tsup : float
-    :param tsup: plant supply temperature to DCN
-    :type tret : float
-    :param tret: plant return temperature from DCN
+    :type mdot_kgpers : float
+    :param mdot_kgpers: plant supply mass flow rate to the district cooling network
+    :type T_sup_K : float
+    :param T_sup_K: plant supply temperature to DCN
+    :type T_re_K : float
+    :param T_re_K: plant return temperature from DCN
     :param gV: globalvar.py
 
     :rtype wdot : float
@@ -38,11 +40,11 @@ def calc_VCC(mdot, tsup, tret, gV):
     vapor-compression liquid chillers. Applied Thermal Engineering.
 
     """
-    qcolddot = mdot * gV.cp * (tret - tsup)      # required cooling at the chiller evaporator
-    tcoolin = gV.VCC_tcoolin                     # condenser water inlet temperature in [K]
+    qcolddot_W = mdot_kgpers * gV.cp * (T_re_K - T_sup_K)      # required cooling at the chiller evaporator
+    tcoolin_K = gV.VCC_tcoolin                     # condenser water inlet temperature in [K]
     
-    if qcolddot == 0:
-        wdot = 0
+    if qcolddot_W == 0:
+        wdot_W = 0
         
     else: 
         #Tim Change:
@@ -50,36 +52,59 @@ def calc_VCC(mdot, tsup, tret, gV):
         #  (0.1980E3 * tret / qcolddot + 168.1846E3 * (tcoolin - tret) / (tcoolin * qcolddot) \
         #  + 0.0201E-3 * qcolddot / tcoolin + 1 - tret / tcoolin)
         
-        A = 0.0201E-3 * qcolddot / tcoolin 
-        B = tret / tcoolin
-        C = 0.1980E3 * tret / qcolddot + 168.1846E3 * (tcoolin - tret) / (tcoolin * qcolddot)
+        A = 0.0201E-3 * qcolddot_W / tcoolin_K
+        B = T_re_K / tcoolin_K
+        C = 0.1980E3 * T_re_K / qcolddot_W + 168.1846E3 * (tcoolin_K - T_re_K) / (tcoolin_K * qcolddot_W)
         
         COP = 1 /( (1+C) / (B-A) -1 )
         
-        wdot = qcolddot / COP
+        wdot_W = qcolddot_W / COP
          
-    qhotdot = wdot + qcolddot
+    qhotdot_W = wdot_W + qcolddot_W
     
-    return wdot, qhotdot
+    return wdot_W, qhotdot_W
 
 
 # Investment costs
 
-def calc_Cinv_VCC(qcold, gV):
+def calc_Cinv_VCC(qcold_W, gV, locator, technology=1):
     """
     Annualized investment costs for the vapor compressor chiller
 
-    :type qcold : float
-    :param qcold: peak cooling demand in [W]
+    :type qcold_W : float
+    :param qcold_W: peak cooling demand in [W]
     :param gV: globalvar.py
 
     :returns InvCa: annualized chiller investment cost in CHF/a
     :rtype InvCa: float
 
     """
-    InvCa = 0.65 * 23E6 * gV.USD_TO_CHF * qcold / 37E6 / 25
+
+    VCC_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="Chiller")
+    technology_code = list(set(VCC_cost_data['code']))
+    VCC_cost_data[VCC_cost_data['code'] == technology_code[technology]]
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
+    if qcold_W < VCC_cost_data['cap_min'][0]:
+        qcold_W = VCC_cost_data['cap_min'][0]
+    VCC_cost_data = VCC_cost_data[
+        (VCC_cost_data['cap_min'] <= qcold_W) & (VCC_cost_data['cap_max'] > qcold_W)]
+
+    Inv_a = VCC_cost_data.iloc[0]['a']
+    Inv_b = VCC_cost_data.iloc[0]['b']
+    Inv_c = VCC_cost_data.iloc[0]['c']
+    Inv_d = VCC_cost_data.iloc[0]['d']
+    Inv_e = VCC_cost_data.iloc[0]['e']
+    Inv_IR = (VCC_cost_data.iloc[0]['IR_%']) / 100
+    Inv_LT = VCC_cost_data.iloc[0]['LT_yr']
+    Inv_OM = VCC_cost_data.iloc[0]['O&M_%'] / 100
+
+    InvC = Inv_a + Inv_b * (qcold_W) ** Inv_c + (Inv_d + Inv_e * qcold_W) * log(qcold_W)
+    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed = Capex_a * Inv_OM
+
     
-    return InvCa
+    return Capex_a, Opex_fixed
 
 
 
