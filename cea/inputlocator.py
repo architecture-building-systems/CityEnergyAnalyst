@@ -321,7 +321,9 @@ class InputLocator(object):
     def get_default_weather(self):
         """weather/Zug-2010.epw
         path to database of archetypes file Archetypes_properties.xlsx"""
-        return os.path.join(self.get_weather_folder(), 'Zug-2010.epw')
+
+        return os.path.join(self.weather_path, 'Zug.epw')
+
 
     def get_weather(self, name):
         """weather/{name}.epw"""
@@ -344,6 +346,10 @@ class InputLocator(object):
         """db/Archetypes/Archetypes_schedules.xlsx
         path to database of archetypes file Archetypes_HVAC_properties.xlsx"""
         return os.path.join(self.db_path, 'archetypes', 'occupancy_schedules_ASHRAE.xlsx')
+
+    def get_supply_systems_cost(self):
+        "path to supply systems cost present in cea/databases/systems"
+        return os.path.join(self.db_path, 'systems', 'supply_systems.xls')
 
     def get_life_cycle_inventory_supply_systems(self):
         """databases/lifecycle/LCA_infrastructure.csv"""
@@ -497,7 +503,7 @@ class InputLocator(object):
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'solar-radiation')
 
     def get_radiation_building(self, building_name):
-        """scenario/outputs/data/solar-radiation/radiation.csv"""
+        """scenario/outputs/data/solar-radiation/${building_name}_insolation_Whm2.json"""
         return os.path.join(self.get_solar_radiation_folder(), '%s_insolation_Whm2.json' %building_name)
 
     def get_radiation_metadata(self, building_name):
@@ -535,10 +541,30 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), '%s_PV.csv' % building_name)
 
-    def metadata_results(self, building_name):
-        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+    def PV_metadata_results(self, building_name):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV_sensors.csv"""
         solar_potential_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'potentials','solar')
-        return os.path.join(solar_potential_folder, '%s_sensors.csv' % building_name)
+        return os.path.join(solar_potential_folder, '%s_PV_sensors.csv' % building_name)
+
+    def SC_results(self, building_name):
+        """scenario/outputs/data/potentials/solar/{building_name}_SC.csv"""
+        return os.path.join(self.solar_potential_folder(), '%s_SC.csv' % building_name)
+
+    def SC_metadata_results(self, building_name):
+        """scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv"""
+        solar_potential_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'potentials','solar')
+        return os.path.join(solar_potential_folder, '%s_SC_sensors.csv' % building_name)
+
+    def PVT_results(self, building_name):
+        """scenario/outputs/data/potentials/solar/{building_name}_SC.csv"""
+        return os.path.join(self.solar_potential_folder(), '%s_PVT.csv' % building_name)
+
+    def PVT_metadata_results(self, building_name):
+        """scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv"""
+        solar_potential_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'potentials','solar')
+        return os.path.join(solar_potential_folder, '%s_PVT_sensors.csv' % building_name)
+
+
 
     # DEMAND
 
@@ -694,3 +720,7 @@ class ReferenceCaseOpenLocator(InputLocator):
         archive.extractall(tempfile.gettempdir())
         reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
         super(ReferenceCaseOpenLocator, self).__init__(scenario_path=reference_case)
+
+    def get_default_weather(self):
+        """The reference-case-open uses the Zug weather file..."""
+        return self.get_weather('Zug')

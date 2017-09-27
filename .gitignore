@@ -90,3 +90,4 @@ setup/cea_version.txt
 .doit.db
 
 docs/*.html
+*.orig
