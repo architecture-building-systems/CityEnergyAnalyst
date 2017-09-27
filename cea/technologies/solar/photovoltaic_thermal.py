@@ -108,13 +108,14 @@ def calc_PVT(locator, latitude, longitude, weather_path, building_name):
     return
 
 
-def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_observers, sun_properties, Tin, latitude,
+
+def calc_PVT_generation(hourly_radiation_Wh, weather_data, number_groups, prop_observers, g, Sz, Az, ha, Tin, latitude,
                         height, panel_properties_SC, panel_properties_PV):
     """
     To calculate the heat and electricity generated from PVT panels.
 
-    :param hourly_radiation: mean hourly radiation of sensors in each group [Wh/m2]
-    :type hourly_radiation: dataframe
+    :param hourly_radiation_Wh: mean hourly radiation of sensors in each group [Wh/m2]
+    :type hourly_radiation_Wh: dataframe
     :param prop_observers: mean values of sensor properties of each group of sensors
     :type prop_observers: dataframe
     :param number_groups: number of groups of sensor points
@@ -139,7 +140,7 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
     Sz_rad = np.radians(sun_properties.Sz)
 
     # empty lists to store results
-    Sum_radiation = np.zeros(8760)
+    Sum_radiation_kWh = np.zeros(8760)
     list_results_PVT = list(range(number_groups))
     list_groups_areas = list(range(number_groups))
 
@@ -176,11 +177,11 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
     Cp_fluid = panel_properties_SC['Cp_fluid']  # J/kgK
 
     ## prepare data for SC heat generation
-    Sum_mcp = np.zeros(8760)
-    Sum_qout = np.zeros(8760)
-    Sum_Eaux = np.zeros(8760)
-    Sum_qloss = np.zeros(8760)
-    Sum_PV = np.zeros(8760)
+    Sum_mcp_kWperC = np.zeros(8760)
+    Sum_qout_kWh = np.zeros(8760)
+    Sum_Eaux_kWh = np.zeros(8760)
+    Sum_qloss_kWh = np.zeros(8760)
+    Sum_PVT_gen_kWh = np.zeros(8760)
 
     Tin_array_C = np.zeros(8760) + Tin
     aperature_area = Aratio * Apanel
@@ -201,20 +202,21 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
 
     for group in range(number_groups):
         # read panel properties of each group
-        teta_z = prop_observers.loc[group, 'surface_azimuth']
-        area_per_group = prop_observers.loc[group, 'total_area_module']
-        tilt_angle_deg = prop_observers.loc[group, 'B']
+
+        teta_z = prop_observers.loc[group,'surface_azimuth']
+        area_per_group_m2 = prop_observers.loc[group,'total_area_module']
+        tilt_angle_deg = prop_observers.loc[group,'B']
+
         # degree to radians
         tilt_rad = radians(tilt_angle_deg)  # tilt angle
         teta_z_rad = radians(teta_z)  # surface azimuth
 
         # read irradiation from group
-        radiation_Wperm2 = pd.DataFrame({'I_sol': hourly_radiation[group]})
-        radiation_Wperm2[
-            'I_diffuse'] = weather_data.ratio_diffhout * radiation_Wperm2.I_sol  # calculate diffuse radiation
-        radiation_Wperm2['I_direct'] = radiation_Wperm2['I_sol'] - radiation_Wperm2[
-            'I_diffuse']  # calculate direct radiation
-        radiation_Wperm2.fillna(0, inplace=True)  # set nan to zero
+
+        radiation_Wperm2 = pd.DataFrame({'I_sol': hourly_radiation_Wh[group]})
+        radiation_Wperm2['I_diffuse'] = weather_data.ratio_diffhout * radiation_Wperm2.I_sol  # calculate diffuse radiation
+        radiation_Wperm2['I_direct'] = radiation_Wperm2['I_sol'] - radiation_Wperm2['I_diffuse']     # calculate direct radiation
+        radiation_Wperm2.fillna(0, inplace=True)                                       # set nan to zero
 
         ## calculate absorbed solar irradiation on tilt surfaces
         # calculate effective indicent angles necessary
@@ -232,30 +234,29 @@ def calc_PVT_generation(hourly_radiation, weather_data, number_groups, prop_obse
         IAM_b = calc_IAM_beam_SC(sun_properties, teta_z, tilt_angle_deg, panel_properties_SC['type'], latitude)
 
         list_results_PVT[group] = calc_PVT_module(tilt_angle_deg, IAM_b.copy(), IAM_d,
-                                                  radiation_Wperm2.I_direct.copy(),
-                                                  radiation_Wperm2.I_diffuse.copy(),
-                                                  weather_data.drybulb_C, n0, c1, c2, mB0_r,
-                                                  mB_max_r, mB_min_r, C_eff, t_max,
-                                                  aperature_area, dP1, dP2, dP3, dP4,
-                                                  Cp_fluid, Tin, Leq_mperm2, l_ext_mperm2,
-                                                  l_int_mperm2, Nseg, eff_nom, Bref,
-                                                  results_Sm_PV[0].copy(), results_Sm_PV[1].copy(),
-                                                  misc_losses, area_per_group)
+                                                                            radiation_Wperm2.I_direct.copy(),
+                                                                            radiation_Wperm2.I_diffuse.copy(),
+                                                                            weather_data.drybulb_C, n0, c1, c2, mB0_r,
+                                                                            mB_max_r, mB_min_r, C_eff, t_max,
+                                                                            aperature_area, dP1, dP2, dP3, dP4,
+                                                                            Cp_fluid, Tin, Leq_mperm2, l_ext_mperm2,
+                                                                            l_int_mperm2, Nseg, eff_nom, Bref,
+                                                                            results_Sm_PV[0].copy(), results_Sm_PV[1].copy(),
+                                                                            misc_losses, area_per_group_m2)
 
-        number_of_panels = area_per_group / Apanel
-        Sum_mcp = Sum_mcp + list_results_PVT[group][5] * number_of_panels
-        Sum_qloss = Sum_qloss + list_results_PVT[group][0] * number_of_panels
-        Sum_qout = Sum_qout + list_results_PVT[group][1] * number_of_panels
-        Sum_Eaux = Sum_Eaux + list_results_PVT[group][2] * number_of_panels
-        Sum_PV = Sum_PV + list_results_PVT[group][6]
-        Sum_radiation = Sum_radiation + hourly_radiation[group] * area_per_group / 1000
-        list_groups_areas[group] = area_per_group
+        number_of_panels = area_per_group_m2 / Apanel
+        Sum_mcp_kWperC = Sum_mcp_kWperC + list_results_PVT[group][5] * number_of_panels
+        Sum_qloss_kWh = Sum_qloss_kWh + list_results_PVT[group][0] * number_of_panels
+        Sum_qout_kWh = Sum_qout_kWh + list_results_PVT[group][1] * number_of_panels
+        Sum_Eaux_kWh = Sum_Eaux_kWh + list_results_PVT[group][2] * number_of_panels
+        Sum_PVT_gen_kWh = Sum_PVT_gen_kWh + list_results_PVT[group][6]
+        Sum_radiation_kWh = Sum_radiation_kWh + hourly_radiation_Wh[group] * area_per_group_m2 / 1000
+        list_groups_areas[group] = area_per_group_m2
 
-    Tout_group = (Sum_qout / Sum_mcp) + Tin  # in C
+    Tout_group_C = (Sum_qout_kWh / Sum_mcp_kWperC) + Tin  # in C
     Final = pd.DataFrame(
-        {'Qsc_kWh': Sum_qout, 'Tscs': Tin_array_C, 'Tscr': Tout_group, 'mcp_kW/C': Sum_mcp, 'Eaux_kWh': Sum_Eaux,
-         'Qsc_l_KWh': Sum_qloss, 'PV_kWh': Sum_PV, 'Area': sum(list_groups_areas), 'radiation_kWh': Sum_radiation},
-        index=range(8760))
+        {'Q_PVT_gen_kWh': Sum_qout_kWh, 'T_PVT_sup_C': Tin_array_C, 'T_PVT_re_C': Tout_group_C, 'mcp_PVT_kWperC': Sum_mcp_kWperC, 'Eaux_PVT_kWh': Sum_Eaux_kWh,
+         'Q_PVT_l_kWh': Sum_qloss_kWh, 'E_PVT_gen_kWh': Sum_PVT_gen_kWh, 'Area_PVT_m2': sum(list_groups_areas), 'radiation_kWh': Sum_radiation_kWh}, index=range(8760))
 
     return list_results_PVT, Final
 

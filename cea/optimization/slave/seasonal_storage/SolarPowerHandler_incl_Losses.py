@@ -11,18 +11,18 @@ They are called by either the operation or optimization of storage.
 import numpy as np
  
 
-def StorageGateway(Q_thermal_available_Wh, Q_network_demand_W, P_HP_max_W, gv):
+def StorageGateway(Q_solar_available_Wh, Q_network_demand_W, P_HP_max_W, gv):
 
     """
     This function is a first filter for solar energy handling: 
         If there is excess solar power, this will be specified and stored.
         If there is not enough solar power, the lack will be calculated.
 
-    :param Q_thermal_available_Wh: solar energy and waste heat available at a given time step
+    :param Q_solar_available_Wh: solar energy available at a given time step
     :param Q_network_demand_W: network load at a given time step
     :param P_HP_max_W: storage??
     :param gv: global variables
-    :type Q_thermal_available_Wh: float
+    :type Q_solar_available_Wh: float
     :type Q_network_demand_W: float
     :type P_HP_max_W: float
     :type gv: class
@@ -33,15 +33,15 @@ def StorageGateway(Q_thermal_available_Wh, Q_network_demand_W, P_HP_max_W, gv):
     :rtype: float, float, int
     """
     
-    if Q_thermal_available_Wh > Q_network_demand_W:  # Wh is same as W if the time interval consideration is 1 hour
-        Q_to_storage_W = (Q_thermal_available_Wh - Q_network_demand_W)
+    if Q_solar_available_Wh > Q_network_demand_W:
+        Q_to_storage_W = (Q_solar_available_Wh - Q_network_demand_W)
         to_storage = 1
         Q_from_storage_W = 0
         
     else:
         Q_to_storage_W = 0
         to_storage = 0
-        Q_from_storage_W = Q_network_demand_W - Q_thermal_available_Wh
+        Q_from_storage_W = Q_network_demand_W - Q_solar_available_Wh
     
     
     if gv.StorageMaxUptakeLimitFlag == 1:
@@ -76,7 +76,6 @@ def Temp_before_Powerplant(Q_network_demand, Q_solar_available, mdot_DH, T_retur
     """
 
     if Q_network_demand < Q_solar_available:
-        print "ERROR AT Temp_before_Powerplant ( see SolarPowerHandler, line 83)"
         T_before_PP = T_return_DH
         
     T_before_PP = T_return_DH  + Q_solar_available / (mdot_DH * gv.cp)
@@ -112,19 +111,19 @@ def Storage_Charger(T_storage_old_K, Q_to_storage_lossfree_W, T_DH_ret_K, Q_in_s
         COP_th = T_storage_old_K / (T_storage_old_K - T_DH_ret_K)
         COP = gv.HP_etaex * COP_th
         E_aux_W = Q_to_storage_lossfree_W * (1 + MS_Var.Storage_conv_loss) * (1 / COP) # assuming the losses occur after the heat pump
-        Q_to_storage_new_W = (E_aux_W + Q_to_storage_lossfree_W) * (1 - MS_Var.Storage_conv_loss)
+        Q_to_storage_new = (E_aux_W + Q_to_storage_lossfree_W) * (1 - MS_Var.Storage_conv_loss)
         #print "HP operation Charging"
     else: 
         E_aux_W = 0
-        Q_to_storage_new_W = Q_to_storage_lossfree_W * (1 - MS_Var.Storage_conv_loss)
+        Q_to_storage_new = Q_to_storage_lossfree_W * (1 - MS_Var.Storage_conv_loss)
         #print "HEX charging"
     
-    Q_in_storage_new_W = Q_in_storage_old_W + Q_to_storage_new_W
+    Q_in_storage_new_W = Q_in_storage_old_W + Q_to_storage_new
 
     T_storage_new_K = MS_Var.T_storage_zero + Q_in_storage_new_W * gv.Wh_to_J / (float(STORAGE_SIZE_m3) * float(gv.cp) * float(gv.rho_60))
 
     
-    return T_storage_new_K, Q_to_storage_new_W, E_aux_W, Q_in_storage_new_W
+    return T_storage_new_K, Q_to_storage_new, E_aux_W, Q_in_storage_new_W
 
 
 def Storage_DeCharger(T_storage_old_K, Q_from_storage_req_W, T_DH_sup_K, Q_in_storage_old_W, STORAGE_SIZE, context, gv):
@@ -278,8 +277,8 @@ def Storage_Operator(Q_solar_available_Wh, Q_network_demand_W, T_storage_old_K, 
             if Q_in_storage_new_W < 0: # if storage is almost empty, to not go below 10 degC, just do not provide more energy than possible.
                 #T_storage_new = gv.T_storage_min
                 #Q_from_storage_1 = math.floor((MS_Var.STORAGE_SIZE * gv.cp * gv.rho_60 * 1/gv.Wh_to_J) * (T_storage_old - T_storage_new))
-                Q_from_storage_poss_W = Q_in_storage_old_W
-                Q_missing_W = Q_network_demand_W - Q_solar_available_Wh - Q_from_storage_poss_W
+                Q_from_storage_poss = Q_in_storage_old_W
+                Q_missing_W = Q_network_demand_W - Q_solar_available_Wh - Q_from_storage_poss
                 #Q_from_storage_poss = min(Q_from_storage_1, Q_from_storage_2)
                 #print Q_from_storage_poss, "taken from storage as max"
                 
@@ -287,7 +286,7 @@ def Storage_Operator(Q_solar_available_Wh, Q_network_demand_W, T_storage_old_K, 
                     Q_missing_W = 0
                 
                 E_aux_dech_W, Q_from_storage_used_W, Q_in_storage_new_W, T_storage_new_K, COP = \
-                            Storage_DeCharger(T_storage_old_K, Q_from_storage_poss_W, T_DH_sup_K, Q_in_storage_old_W, STORAGE_SIZE_m3, context, gv)
+                            Storage_DeCharger(T_storage_old_K, Q_from_storage_poss, T_DH_sup_K, Q_in_storage_old_W, STORAGE_SIZE_m3, context, gv)
     
                 #print "limited decharging"
                 

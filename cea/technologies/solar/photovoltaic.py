@@ -135,8 +135,8 @@ def calc_pv_generation(hourly_radiation, number_groups, prop_observers, weather_
 
     result = list(range(number_groups))
     list_groups_area = list(range(number_groups))
-    Sum_PV = np.zeros(8760)
-    Sum_radiation = np.zeros(8760)
+    Sum_PV_kWh = np.zeros(8760)
+    Sum_radiation_kWh = np.zeros(8760)
 
     n = 1.526  # refractive index of glass
     Pg = 0.2  # ground reflectance
@@ -154,8 +154,9 @@ def calc_pv_generation(hourly_radiation, number_groups, prop_observers, weather_
 
     for group in range(number_groups):
         # read panel properties of each group
+
         teta_z = prop_observers.loc[group, 'surface_azimuth']
-        area_per_group = prop_observers.loc[group, 'total_area_module']
+        area_per_group_m2 = prop_observers.loc[group, 'total_area_module']
         tilt_angle = prop_observers.loc[group, 'B']
         # degree to radians
         tilt = radians(tilt_angle)  # tilt angle
@@ -173,13 +174,16 @@ def calc_pv_generation(hourly_radiation, number_groups, prop_observers, weather_
         results = np.vectorize(calc_Sm_PV)(weather_data.drybulb_C, radiation.I_sol, radiation.I_direct,
                                            radiation.I_diffuse, tilt, Sz_vector, teta_vector, teta_ed, teta_eg, n, Pg,
                                            K, NOCT, a0, a1, a2, a3, a4, L)
-        result[group] = np.vectorize(calc_PV_power)(results[0], results[1], eff_nom, area_per_group, Bref, misc_losses)
-        list_groups_area[group] = area_per_group
+        result[group] = np.vectorize(calc_PV_power)(results[0], results[1], eff_nom, area_per_group_m2, Bref,
+                                                    misc_losses)
+        list_groups_area[group] = area_per_group_m2
+        Sum_PV_kWh = Sum_PV_kWh + result[group]  # in kWh
 
-        Sum_PV = Sum_PV + result[group]  # in kWh
-        Sum_radiation = Sum_radiation + radiation['I_sol'] * area_per_group / 1000  # kWh
+    Sum_radiation_kWh = Sum_radiation_kWh + radiation['I_sol'] * area_per_group_m2 / 1000  # kWh
 
-    Final = pd.DataFrame({'PV_kWh': Sum_PV, 'Area_m2': sum(list_groups_area), 'radiation_kWh': Sum_radiation})
+    Final = pd.DataFrame(
+        {'E_PV_gen_kWh': Sum_PV_kWh, 'Area_PV_m2': sum(list_groups_area), 'radiation_kWh': Sum_radiation_kWh})
+
     return result, Final
 
 
@@ -448,7 +452,7 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     sensors_metadata_clean['area_module'] = np.where(sensors_metadata_clean['tilt'] >= 5,
                                                      sensors_metadata_clean.AREA_m2,
                                                      module_length ** 2 * (
-                                                         sensors_metadata_clean.AREA_m2 / surface_area_flat))
+                                                     sensors_metadata_clean.AREA_m2 / surface_area_flat))
 
     # categorize the sensors by surface_azimuth, B, GB
     result = np.vectorize(calc_categoriesroof)(sensors_metadata_clean.surface_azimuth, sensors_metadata_clean.B,
@@ -630,18 +634,38 @@ def calc_properties_PV_db(database_path, type_PVpanel):
 
 
 # investment and maintenance costs
-def calc_Cinv_pv(P_peak):
+def calc_Cinv_pv(P_peak_kW, locator, technology=0):
     """
     To calculate capital cost of PV modules, assuming 20 year system lifetime.
     :param P_peak: installed capacity of PV module [kW]
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
-    if P_peak < 10:
-        InvCa = 3500.07 * P_peak / 20  # FIXME: should be amortized?
-    else:
-        InvCa = 2500.07 * P_peak / 20
 
-    return InvCa
+    P_peak = P_peak_kW * 1000  # converting to W from kW
+    PV_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="PV")
+    technology_code = list(set(PV_cost_data['code']))
+    PV_cost_data[PV_cost_data['code'] == technology_code[technology]]
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
+    if P_peak < PV_cost_data['cap_min'][0]:
+        P_peak = PV_cost_data['cap_min'][0]
+    PV_cost_data = PV_cost_data[
+        (PV_cost_data['cap_min'] <= P_peak) & (PV_cost_data['cap_max'] > P_peak)]
+    Inv_a = PV_cost_data.iloc[0]['a']
+    Inv_b = PV_cost_data.iloc[0]['b']
+    Inv_c = PV_cost_data.iloc[0]['c']
+    Inv_d = PV_cost_data.iloc[0]['d']
+    Inv_e = PV_cost_data.iloc[0]['e']
+    Inv_IR = (PV_cost_data.iloc[0]['IR_%']) / 100
+    Inv_LT = PV_cost_data.iloc[0]['LT_yr']
+    Inv_OM = PV_cost_data.iloc[0]['O&M_%'] / 100
+
+    InvC = Inv_a + Inv_b * (P_peak) ** Inv_c + (Inv_d + Inv_e * P_peak) * log(P_peak)
+
+    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed = Capex_a * Inv_OM
+
+    return Capex_a, Opex_fixed
 
 
 # remuneration scheme

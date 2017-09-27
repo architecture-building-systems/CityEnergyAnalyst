@@ -152,13 +152,13 @@ def SC_generation(hourly_radiation, prop_observers, number_groups, weather_data,
     # create lists to store results
     list_results = [None] * number_groups
     list_areas_groups = [None] * number_groups
-    Sum_mcp = np.zeros(8760)
-    Sum_qout = np.zeros(8760)
-    Sum_Eaux = np.zeros(8760)
+    Sum_mcp_kWperC = np.zeros(8760)
+    Sum_qout_kWh = np.zeros(8760)
+    Sum_Eaux_kWh = np.zeros(8760)
     Sum_qloss = np.zeros(8760)
-    Sum_radiation = np.zeros(8760)
+    Sum_radiation_kWh = np.zeros(8760)
 
-    Tin_array = np.zeros(8760) + Tin_C
+    Tin_array_C = np.zeros(8760) + Tin_C
     aperature_area_per_module = Aratio * Apanel
     total_area_module = prop_observers['total_area_module'].sum()  # total area for panel installation
 
@@ -182,38 +182,39 @@ def SC_generation(hourly_radiation, prop_observers, number_groups, weather_data,
         tilt_angle_deg = prop_observers.loc[group, 'tilt']  # tilt angle of panels
 
         # create dataframe with irradiation from group
-        radiation = pd.DataFrame({'I_sol': hourly_radiation[group]})
-        radiation['I_diffuse'] = weather_data.ratio_diffhout * radiation.I_sol  # calculate diffuse radiation
-        radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']  # calculate direct radiation
-        radiation.fillna(0, inplace=True)  # set nan to zero
+
+        radiation_Wh = pd.DataFrame({'I_sol': hourly_radiation[group]})
+        radiation_Wh['I_diffuse'] = weather_data.ratio_diffhout * radiation_Wh.I_sol  # calculate diffuse radiation
+        radiation_Wh['I_direct'] = radiation_Wh['I_sol'] - radiation_Wh['I_diffuse']     # calculate direct radiation
+        radiation_Wh.fillna(0, inplace=True)                                       # set nan to zero
 
         # calculate incidence angle modifier for beam radiation
         IAM_b = calc_IAM_beam_SC(sun_properties, teta_z, tilt_angle_deg, panel_properties['type'], latitude)
 
         # calculate heat production from a solar collector of each group
-        list_results[group] = calc_SC_module(tilt_angle_deg, IAM_b, IAM_d, radiation.I_direct,
-                                             radiation.I_diffuse, weather_data.drybulb_C, n0,
-                                             c1, c2, mB0_r, mB_max_r, mB_min_r, C_eff, t_max,
-                                             aperature_area_per_module, dP1, dP2, dP3, dP4,
-                                             Cp_fluid_JperkgK, Tin_C, Leq_mperm2, l_ext_mperm2,
-                                             l_int_mperm2, Nseg)
+        list_results[group] = calc_SC_module(tilt_angle_deg, IAM_b, IAM_d, radiation_Wh.I_direct,
+                                                                       radiation_Wh.I_diffuse, weather_data.drybulb_C, n0,
+                                                                       c1, c2, mB0_r, mB_max_r, mB_min_r, C_eff, t_max,
+                                                                       aperature_area_per_module, dP1, dP2, dP3, dP4,
+                                                                       Cp_fluid_JperkgK, Tin_C, Leq_mperm2, l_ext_mperm2,
+                                                                       l_int_mperm2, Nseg)
+
 
         # multiplying the results with the number of panels in each group and write to list
         number_modules_per_group = area_per_group / Apanel
         list_areas_groups[group] = area_per_group
-        radiation_array = hourly_radiation[group] * list_areas_groups[group] / 1000  # kWh
-        Sum_qout = Sum_qout + list_results[group][1] * number_modules_per_group
-        Sum_Eaux = Sum_Eaux + list_results[group][2] * number_modules_per_group
+        radiation_array = hourly_radiation[group] * list_areas_groups[group] / 1000 # kWh
+        Sum_qout_kWh = Sum_qout_kWh + list_results[group][1] * number_modules_per_group
+        Sum_Eaux_kWh = Sum_Eaux_kWh + list_results[group][2] * number_modules_per_group
         Sum_qloss = Sum_qloss + list_results[group][0] * number_modules_per_group
-        Sum_mcp = Sum_mcp + list_results[group][5] * number_modules_per_group
-        Sum_radiation = Sum_radiation + radiation['I_sol'] * area_per_group / 1000
+        Sum_mcp_kWperC = Sum_mcp_kWperC + list_results[group][5] * number_modules_per_group
+        Sum_radiation_kWh = Sum_radiation_kWh + radiation_Wh['I_sol']*area_per_group/1000
 
-    Tout_group = (Sum_qout / Sum_mcp) + Tin_C  # in C assuming all collectors are connected in parallel
+    Tout_group_C = (Sum_qout_kWh / Sum_mcp_kWperC) + Tin_C  # in C assuming all collectors are connected in parallel
 
     Final = pd.DataFrame(
-        {'Qsc_kWh': Sum_qout, 'Ts_C': Tin_array, 'Tr_C': Tout_group, 'mcp_kW/C': Sum_mcp, 'Eaux_kWh': Sum_Eaux,
-         'Qsc_loss_kWh': Sum_qloss, 'module_area_m2': sum(list_areas_groups), 'radiation_kWh': Sum_radiation},
-        index=range(8760))
+        {'Q_SC_gen_kWh': Sum_qout_kWh, 'T_SC_sup_C': Tin_array_C, 'T_SC_re_C': Tout_group_C, 'mcp_SC_kWperC': Sum_mcp_kWperC, 'Eaux_SC_kWh': Sum_Eaux_kWh,
+         'Q_SC_l_kWh': Sum_qloss, 'Area_SC_m2': sum(list_areas_groups), 'radiation_kWh': Sum_radiation_kWh}, index=range(8760))
 
     return list_results, Final
 
