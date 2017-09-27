@@ -711,8 +711,17 @@ class SolarTechnologyTool(object):
             datatype="String",
             parameterType="Required",
             direction="Input")
-        weather_name.filter.list = get_weather_names()
+        weather_name.filter.list = get_weather_names() + ['<choose path from below>']
         weather_name.enabled = False
+
+        weather_path = arcpy.Parameter(
+            displayName="Path to .epw file",
+            name="weather_path",
+            datatype="DEFile",
+            parameterType="Optional",
+            direction="Input")
+        weather_path.filter.list = ['epw']
+        weather_path.enabled = False
 
         year = arcpy.Parameter(
             displayName="Year",
@@ -739,29 +748,32 @@ class SolarTechnologyTool(object):
             direction="Input")
         longitude.enabled = False
 
-        pvonroof = arcpy.Parameter(
-            displayName="Considering panels on roofs",
-            name="pvonroof",
+        panel_on_roof = arcpy.Parameter(
+            displayName="Consider panels on roofs",
+            name="panel_on_roof",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        pvonroof.value = True
+        panel_on_roof.value = True
+        panel_on_roof.enabled = False
 
-        pvonwall = arcpy.Parameter(
-            displayName="Considering panels on walls",
-            name="pvonwall",
+        panel_on_wall = arcpy.Parameter(
+            displayName="Consider panels on walls",
+            name="panel_on_wall",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        pvonwall.value = True
+        panel_on_wall.value = True
+        panel_on_wall.enabled = False
 
-        worst_hour = arcpy.Parameter(
-            displayName="worst hour (the hour of sunrise on the solar solstice at the site)",
-            name="worst_hour",
+        solar_window_solstice = arcpy.Parameter(
+            displayName="Desired hours of production on the winter solstice",
+            name="solar_window_solstice",
             datatype="GPLong",
             parameterType="Required",
             direction="Input")
-        worst_hour.value = 8744
+        solar_window_solstice.value = 4
+        solar_window_solstice.enabled = False
 
         type_PVpanel = arcpy.Parameter(
             displayName="PV technology to use",
@@ -770,6 +782,7 @@ class SolarTechnologyTool(object):
             parameterType="Required",
             direction="Input")
         type_PVpanel.filter.list = ['monocrystalline', 'polycrystalline', 'amorphous']
+        type_PVpanel.enabled = False
 
         min_radiation = arcpy.Parameter(
             displayName="filtering surfaces with low radiation potential (% of the maximum radiation in the area)",
@@ -778,9 +791,10 @@ class SolarTechnologyTool(object):
             parameterType="Required",
             direction="Input")
         min_radiation.value = 0.75
+        min_radiation.enabled = False
 
-        return [scenario_path, weather_name, year, latitude, longitude, pvonroof, pvonwall, worst_hour,
-                type_PVpanel, min_radiation]
+        return [scenario_path, weather_name, weather_path, year, latitude, longitude, panel_on_roof, panel_on_wall,
+                solar_window_solstice, type_PVpanel, min_radiation]
 
     def updateParameters(self, parameters):
         scenario_path = parameters[0].valueAsText
@@ -790,32 +804,56 @@ class SolarTechnologyTool(object):
             parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
 
-        radiation_csv = _cli_output(scenario_path, 'locate', 'get_radiation')
-        if not os.path.exists(radiation_csv):
-            parameters[0].setErrorMessage("No radiation file found - please run radiation tool first")
-            return
+        parameters = {p.name: p for p in parameters}
+        if not parameters['weather_name'].enabled:
+            # user just chose scenario, read in defaults etc.
 
-        # scenario passes test
-        weather_parameter = parameters[1]
-        year_parameter = parameters[2]
-        latitude_parameter = parameters[3]
-        longitude_parameter = parameters[4]
+            radiation_csv = _cli_output(scenario_path, 'locate', 'get_radiation')
+            if not os.path.exists(radiation_csv):
+                parameters['scenario_path'].setErrorMessage("No radiation file found - please run radiation tool first")
+                return
 
-        weather_parameter.enabled = True
-        year_parameter.enabled = True
+            latitude_parameter = parameters['latitude']
+            longitude_parameter = parameters['longitude']
 
-        latitude_value = float(_cli_output(scenario_path, 'latitude'))
-        longitude_value = float(_cli_output(scenario_path, 'longitude'))
-        if not latitude_parameter.enabled:
-            # only overwrite on first try
-            latitude_parameter.value = latitude_value
-            latitude_parameter.enabled = True
+            latitude_value = float(_cli_output(scenario_path, 'latitude'))
+            longitude_value = float(_cli_output(scenario_path, 'longitude'))
+            if not latitude_parameter.enabled:
+                # only overwrite on first try
+                latitude_parameter.value = latitude_value
 
-        if not longitude_parameter.enabled:
-            # only overwrite on first try
-            longitude_parameter.value = longitude_value
-            longitude_parameter.enabled = True
-        return
+            if not longitude_parameter.enabled:
+                # only overwrite on first try
+                longitude_parameter.value = longitude_value
+
+            # read values from scenario / or defaults
+            parameters['year'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
+                                                   '--key', 'date-start')[:4]
+            parameters['panel_on_roof'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
+                                                            '--key', 'panel-on-roof')
+            parameters['panel_on_wall'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
+                                                            '--key', 'panel-on-wall')
+            pv_panel_types = {'PV1': 'monocrystalline', 'PV2': 'polycrystalline', 'PV3': 'amorphous'}
+            parameters['type_PVpanel'].value = pv_panel_types[
+                _cli_output(scenario_path, 'read-config', '--section', 'solar', '--key', 'type-PVpanel')]
+            parameters['min_radiation'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
+                                                            '--key', 'min-radiation')
+            parameters['solar_window_solstice'].value = _cli_output(scenario_path, 'read-config', '--section',
+                                                                    'solar',
+                                                                    '--key', 'solar-window-solstice')
+
+            weather_path = _cli_output(scenario_path, 'read-config', '--section', 'general', '--key', 'weather')
+            if is_db_weather(weather_path):
+                parameters['weather_name'].value = get_db_weather_name(weather_path)
+                parameters['weather_path'].value = ''
+            else:
+                parameters['weather_name'].value = '<choose path from below>'
+                parameters['weather_path'].value = weather_path
+
+            for p in parameters.values():
+                p.enabled = True
+            parameters['scenario_path'].enabled = False  # user need to re-open dialog to change scenario path...
+        parameters['weather_path'].enabled = parameters['weather_name'].value == '<choose path from below>'
 
     def updateMessages(self, parameters):
         scenario_path = parameters[0].valueAsText
@@ -831,39 +869,39 @@ class SolarTechnologyTool(object):
             return
 
     def execute(self, parameters, messages):
-        scenario_path = parameters[0].valueAsText
-        weather_name = parameters[1].valueAsText
-        year = parameters[2].value
-        latitude = parameters[3].value
-        longitude = parameters[4].value
-        pvonroof = parameters[5].value
-        pvonwall = parameters[6].value
-        worst_hour = parameters[7].value
+        parameters = {p.name: p for p in parameters}
+        scenario_path = parameters['scenario_path'].valueAsText
+        weather_name = parameters['weather_name'].valueAsText
+        weather_path = parameters['weather_path'].valueAsText
+        year = parameters['year'].value
+        latitude = parameters['latitude'].value
+        longitude = parameters['longitude'].value
+        panel_on_roof = parameters['panel_on_roof'].value
+        panel_on_wall = parameters['panel_on_wall'].value
+        solar_window_solstice = parameters['solar_window_solstice'].value
         type_PVpanel = {'monocrystalline': 'PV1',
                         'polycrystalline': 'PV2',
-                        'amorphous': 'PV3'}[parameters[8].value]
-        min_radiation = parameters[9].value
+                        'amorphous': 'PV3'}[parameters['type_PVpanel'].value]
+        min_radiation = parameters['min_radiation'].value
 
         date_start = str(year) + '-01-01'
 
         if weather_name in get_weather_names():
             weather_path = get_weather_path(weather_name)
-        elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
-            weather_path = weather_name
-        else:
-            weather_path = get_weather_path('.')
 
         add_message('longitude: %s' % longitude)
         add_message('latitude: %s' % latitude)
 
-        run_cli_arguments = [scenario_path, 'photovoltaic', '--latitude', latitude, '--longitude', longitude,
-                             '--weather-path', weather_path, '--worst-hour', worst_hour, '--type-PVpanel', type_PVpanel,
-                             '--min-radiation', min_radiation, '--date-start', date_start]
-        if pvonroof:
-            run_cli_arguments.append('--pvonroof')
-        if pvonwall:
-            run_cli_arguments.append('--pvonwall')
-
+        run_cli_arguments = [scenario_path, 'photovoltaic',
+                             '--latitude', latitude,
+                             '--longitude', longitude,
+                             '--weather-path', weather_path,
+                             '--solar-window-solstice', solar_window_solstice,
+                             '--type-PVpanel', type_PVpanel,
+                             '--min-radiation', min_radiation,
+                             '--date-start', date_start,
+                             '--panel-on-roof', 'yes' if panel_on_roof else 'no',
+                             '--panel-on-wall', 'yes' if panel_on_wall else 'no']
         run_cli(*run_cli_arguments)
         return
 
@@ -999,6 +1037,22 @@ def get_weather_names():
     return list(get_weather_names_inner())
 
 
+def is_db_weather(weather_path):
+    """True, if the ``weather_path`` is one of the pre-installed weather files that came with the CEA"""
+    weather_name = get_db_weather_name(weather_path)
+    if weather_name in get_weather_names():
+        # could still be a custom weather file...
+        db_weather_path = get_weather_path(weather_name)
+        if os.path.dirname(db_weather_path) == os.path.dirname(weather_path):
+            return True
+    return False
+
+
+def get_db_weather_name(weather_path):
+    weather_name = os.path.splitext(os.path.basename(weather_path))[0]
+    return weather_name
+
+
 def get_weather_path(weather_name='default'):
     """Shell out to cli.py and find the path to the weather file"""
     return _cli_output(None, 'weather-path', weather_name)
@@ -1029,7 +1083,8 @@ def get_environment():
     interpreter in ``get_python_exe``"""
     root_dir = os.path.dirname(get_python_exe())
     scripts_dir = os.path.join(root_dir, 'Scripts')
-    os.environ['PATH'] = ';'.join((root_dir, scripts_dir, os.environ['PATH']))
+    env = os.environ.copy()
+    env['PATH'] = ';'.join((root_dir, scripts_dir, os.environ['PATH']))
     return os.environ
 
 

@@ -19,10 +19,12 @@ import cea.technologies.cogeneration as chp
 import cea.technologies.furnace as furnace
 import cea.technologies.heat_exchangers as hex
 import cea.technologies.heatpumps as hp
-import cea.technologies.photovoltaic as pv
-import cea.technologies.photovoltaic_thermal as pvt
+
 import cea.technologies.pumps as pumps
-import cea.technologies.solar_collector as stc
+import cea.technologies.solar.photovoltaic as pv
+import cea.technologies.solar.photovoltaic_thermal as pvt
+import cea.technologies.solar.solar_collector as stc
+import cea.technologies.thermal_network as network
 import cea.technologies.thermal_storage as storage
 
 __author__ = "Tim Vollrath"
