@@ -5,6 +5,7 @@ heatpumps
 
 from __future__ import division
 from math import floor, log
+import pandas as pd
 
 
 __author__ = "Thuy-An Nguyen"
@@ -75,7 +76,7 @@ def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, tground_K, gV):
 
     return wdot_el_W, qcolddot_W, qhotdot_missing_W, tsup2_K
 
-def GHP_op_cost(mdot_kgpers, t_sup_K, t_ret_K, gV, COP):
+def GHP_op_cost(mdot_kgpers, t_sup_K, t_re_K, gV, COP):
     """
     Operation cost of GSHP supplying DHN
 
@@ -83,8 +84,8 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_ret_K, gV, COP):
     :param mdot_kgpers: supply mass flow rate to the DHN
     :type t_sup_K : float
     :param t_sup_K: supply temperature to the DHN (hot)
-    :type t_ret_K : float
-    :param t_ret_K: return temeprature from the DHN (cold)
+    :type t_re_K : float
+    :param t_re_K: return temeprature from the DHN (cold)
     :type COP: float
     :param COP: coefficient of performance of GSHP
     :param gV: globalvar.py
@@ -103,7 +104,7 @@ def GHP_op_cost(mdot_kgpers, t_sup_K, t_ret_K, gV, COP):
 
     """
 
-    q_therm_W = mdot_kgpers * gV.cp * (t_sup_K - t_ret_K) # Thermal Energy generated
+    q_therm_W = mdot_kgpers * gV.cp * (t_sup_K - t_re_K) # Thermal Energy generated
     qcoldot_W = q_therm_W * ( 1 - ( 1 / COP ) )
     E_GHP_req_W = q_therm_W / COP
 
@@ -136,16 +137,16 @@ def GHP_Op_max(tsup_K, tground_K, nProbes, gV):
 
     return qhotdot_Wh, COP
 
-def HPLake_op_cost(mdot_kgpers, t_sup_K, t_ret_K, tlake, gV):
+def HPLake_op_cost(mdot_kgpers, tsup_K, tret_K, tlake, gV):
     """
     For the operation of lake heat pump supplying DHN
 
     :type mdot_kgpers : float
     :param mdot_kgpers: supply mass flow rate to the DHN
-    :type t_sup_K : float
-    :param t_sup_K: supply temperature to the DHN (hot)
-    :type t_ret_K : float
-    :param t_ret_K: return temeprature from the DHN (cold)
+    :type tsup_K : float
+    :param tsup_K: supply temperature to the DHN (hot)
+    :type tret_K : float
+    :param tret_K: return temeprature from the DHN (cold)
     :type tlake : float
     :param tlake: lake temperature
     :param gV: globalvar.py
@@ -164,9 +165,9 @@ def HPLake_op_cost(mdot_kgpers, t_sup_K, t_ret_K, tlake, gV):
 
     """
 
-    E_HPLake_req_W, qcolddot_W = HPLake_Op(mdot_kgpers, t_sup_K, t_ret_K, tlake, gV)
+    E_HPLake_req_W, qcolddot_W = HPLake_Op(mdot_kgpers, tsup_K, tret_K, tlake, gV)
 
-    Q_therm_W = mdot_kgpers * gV.cp * (t_sup_K - t_ret_K)
+    Q_therm_W = mdot_kgpers * gV.cp * (tsup_K - tret_K)
 
     C_HPL_el = E_HPLake_req_W * gV.ELEC_PRICE
 
@@ -174,7 +175,7 @@ def HPLake_op_cost(mdot_kgpers, t_sup_K, t_ret_K, tlake, gV):
 
     return C_HPL_el, E_HPLake_req_W, Q_cold_primary_W, Q_therm_W
 
-def HPLake_Op(mdot_kgpers, t_sup_K, t_ret_K, tlake_K, gV):
+def HPLake_Op(mdot_kgpers, t_sup_K, t_re_K, tlake_K, gV):
     """
     For the operation of a Heat pump between a district heating network and a lake
 
@@ -182,8 +183,8 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_ret_K, tlake_K, gV):
     :param mdot_kgpers: supply mass flow rate to the DHN
     :type t_sup_K : float
     :param t_sup_K: supply temperature to the DHN (hot)
-    :type t_ret_K : float
-    :param t_ret_K: return temeprature from the DHN (cold)
+    :type t_re_K : float
+    :param t_re_K: return temeprature from the DHN (cold)
     :type tlake_K : float
     :param tlake_K: lake temperature
     :param gV: globalvar.py
@@ -202,15 +203,14 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_ret_K, tlake_K, gV):
     """
 
     # calculate condenser temperature
-    tcond_K = t_sup_K + gV.HP_deltaT_cond
-    print tcond_K
-    if tcond_K > gV.HP_maxT_cond:
+    tcond = t_sup_K + gV.HP_deltaT_cond
+    if tcond > gV.HP_maxT_cond:
         raise ModelError
 
     # calculate evaporator temperature
     tevap_K = tlake_K - gV.HP_deltaT_evap
-    COP = gV.HP_etaex / (1- tevap_K/tcond_K)   # [L. Girardin et al., 2010]_
-    qhotdot_W = mdot_kgpers * gV.cp * (t_sup_K - t_ret_K)
+    COP = gV.HP_etaex / (1- tevap_K/tcond)   # [L. Girardin et al., 2010]_
+    qhotdot_W = mdot_kgpers * gV.cp * (t_sup_K - t_re_K)
 
     if qhotdot_W > gV.HP_maxSize:
         print "Qhot above max size on the market !"
@@ -222,18 +222,18 @@ def HPLake_Op(mdot_kgpers, t_sup_K, t_ret_K, tlake_K, gV):
 
     return E_HPLake_req_W, qcolddot_W
 
-def HPSew_op_cost(mdot_kgpers, tsup_K, tret_K, tsupsew_K, gV):
+def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, gV):
     """
     Operation cost of sewage water HP supplying DHN
 
     :type mdot_kgpers : float
     :param mdot_kgpers: supply mass flow rate to the DHN
-    :type tsup_K : float
-    :param tsup_K: supply temperature to the DHN (hot)
-    :type tret_K : float
-    :param tret_K: return temeprature from the DHN (cold)
-    :type tsupsew_K : float
-    :param tsupsew_K: sewage supply temperature
+    :type t_sup_K : float
+    :param t_sup_K: supply temperature to the DHN (hot)
+    :type t_re_K : float
+    :param t_re_K: return temeprature from the DHN (cold)
+    :type t_sup_sew_K : float
+    :param t_sup_sew_K: sewage supply temperature
     :param gV: globalvar.py
 
     :rtype C_HPSew_el_pure: float
@@ -257,62 +257,24 @@ def HPSew_op_cost(mdot_kgpers, tsup_K, tret_K, tsupsew_K, gV):
 
     """
 
-    COP = gV.HP_etaex * (tsup_K + gV.HP_deltaT_cond) / ((tsup_K + gV.HP_deltaT_cond) - tsupsew_K)
-    q_therm_W = mdot_kgpers * gV.cp * (tsup_K - tret_K)
-    qcoldot_W = q_therm_W*( 1 - ( 1 / COP ) )
+    COP = gV.HP_etaex * (t_sup_K + gV.HP_deltaT_cond) / ((t_sup_K + gV.HP_deltaT_cond) - t_sup_sew_K)
+    q_therm = mdot_kgpers * gV.cp * (t_sup_K - t_re_K)
+    qcoldot = q_therm*( 1 - ( 1 / COP ) )
 
-    E_HPSew_req_W = q_therm_W / COP
+    wdot = q_therm / COP
 
-    C_HPSew_el_pure = E_HPSew_req_W * gV.ELEC_PRICE
-    C_HPSew_per_kWh_th_pure = C_HPSew_el_pure / (q_therm_W)
+    C_HPSew_el_pure = wdot * gV.ELEC_PRICE
+    C_HPSew_per_kWh_th_pure = C_HPSew_el_pure / (q_therm)
 
-    return C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, qcoldot_W, q_therm_W, E_HPSew_req_W
-
-
+    return C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, qcoldot, q_therm, wdot
 
 
-# investment and maintenance costs
-
-def calc_Cinv_GHP(GHP_Size_W, gV):
+def calc_Cinv_HP(HP_Size, gV, locator, technology=1):
     """
-    Calculates the annualized investment costs for the geothermal heat pump
+    Calculates the annualized investment costs for a water to water heat pump.
 
-    :type GHP_Size_W : float
-    :param GHP_Size_W: Design electrical size of the heat pump in [Wel]
-
-    :type InvCa : float
-    :returns InvCa: annualized investment costs in [EUROS/a]
-
-    ..[D. Bochatay et al., 2005] D. Bochatay, I. Blanc, O. Jolliet, F. Marechal, T. Manasse-Ratmandresy (2005). Project
-    PACOGEN Evaluation economique et environmentale de systemes energetiques a usage residentiel., EPFL.
-    """
-    nProbe = floor(GHP_Size_W / gV.GHP_WmaxSize)
-    roundProbe = GHP_Size_W / gV.GHP_WmaxSize - nProbe
-
-    # calculate investment cost of GSHP and Boreholes
-    InvC_HP = 0
-    InvC_BH = 0
-
-    InvC_HP += nProbe * 6297 * (gV.GHP_WmaxSize * 1E-3) ** 0.49
-    InvC_BH += nProbe * 8520 * (gV.GHP_WmaxSize * 1E-3) ** 0.74
-
-    InvC_HP += 6297 * (roundProbe * gV.GHP_WmaxSize * 1E-3) ** 0.49
-    InvC_BH += 8520 * (roundProbe * gV.GHP_WmaxSize * 1E-3) ** 0.74
-
-    InvCa = InvC_HP * gV.GHP_i * (1+ gV.GHP_i) ** gV.GHP_nHP / \
-            ((1+gV.GHP_i) ** gV.GHP_nHP - 1) + \
-            InvC_BH * gV.GHP_i * (1+ gV.GHP_i) ** gV.GHP_nBH / \
-            ((1+gV.GHP_i) ** gV.GHP_nBH - 1)
-
-    return InvCa
-
-
-def calc_Cinv_HP(HP_Size_W, gV):
-    """
-    Calculates the annualized investment costs for the heat pump
-
-    :type HP_Size_W : float
-    :param HP_Size_W: Design thermal size of the heat pump in [W]
+    :type HP_Size : float
+    :param HP_Size: Design thermal size of the heat pump in [W]
 
     :rtype InvCa : float
     :returns InvCa: annualized investment costs in [CHF/a]
@@ -320,18 +282,39 @@ def calc_Cinv_HP(HP_Size_W, gV):
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
-    if HP_Size_W > 0:
-        InvC = (-493.53 * log(HP_Size_W * 1E-3) + 5484) * (HP_Size_W * 1E-3)
-        InvCa = InvC * gV.HP_i * (1+ gV.HP_i) ** gV.HP_n / \
-                ((1+gV.HP_i) ** gV.HP_n - 1)
+    if HP_Size > 0:
+        HP_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="HP")
+        technology_code = list(set(HP_cost_data['code']))
+        HP_cost_data[HP_cost_data['code'] == technology_code[technology]]
+        # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+        # capacity for the corresponding technology from the database
+        if HP_Size < HP_cost_data['cap_min'][0]:
+            HP_Size = HP_cost_data['cap_min'][0]
+        HP_cost_data = HP_cost_data[
+            (HP_cost_data['cap_min'] <= HP_Size) & (HP_cost_data['cap_max'] > HP_Size)]
+
+        Inv_a = HP_cost_data.iloc[0]['a']
+        Inv_b = HP_cost_data.iloc[0]['b']
+        Inv_c = HP_cost_data.iloc[0]['c']
+        Inv_d = HP_cost_data.iloc[0]['d']
+        Inv_e = HP_cost_data.iloc[0]['e']
+        Inv_IR = (HP_cost_data.iloc[0]['IR_%']) / 100
+        Inv_LT = HP_cost_data.iloc[0]['LT_yr']
+        Inv_OM = HP_cost_data.iloc[0]['O&M_%'] / 100
+
+        InvC = Inv_a + Inv_b * (HP_Size) ** Inv_c + (Inv_d + Inv_e * HP_Size) * log(HP_Size)
+
+        Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+        Opex_fixed = Capex_a * Inv_OM
 
     else:
-        InvCa = 0
+        Capex_a = 0
+        Opex_fixed = 0
 
-    return InvCa
+    return Capex_a, Opex_fixed
 
 
-def GHP_InvCost(GHP_Size_W, gV):
+def calc_Cinv_GHP(GHP_Size_W, gV, locator, technology=0):
     """
     Calculates the annualized investment costs for the geothermal heat pump
 
@@ -341,14 +324,58 @@ def GHP_InvCost(GHP_Size_W, gV):
     InvCa : float
         annualized investment costs in EUROS/a
     """
-    InvC_HP = 5247.5 * (GHP_Size_W * 1E-3) ** 0.49
-    InvC_BH = 7100 * (GHP_Size_W * 1E-3) ** 0.74
 
-    InvCa = InvC_HP * gV.GHP_i * (1+ gV.GHP_i) ** gV.GHP_nHP / \
-            ((1+gV.GHP_i) ** gV.GHP_nHP - 1) + \
-            InvC_BH * gV.GHP_i * (1+ gV.GHP_i) ** gV.GHP_nBH / \
-            ((1+gV.GHP_i) ** gV.GHP_nBH - 1)
+    GHP_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="HP")
+    technology_code = list(set(GHP_cost_data['code']))
+    GHP_cost_data[GHP_cost_data['code'] == technology_code[technology]]
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
+    if GHP_Size_W < GHP_cost_data['cap_min'][0]:
+        GHP_Size_W = GHP_cost_data['cap_min'][0]
+    GHP_cost_data = GHP_cost_data[
+        (GHP_cost_data['cap_min'] <= GHP_Size_W) & (GHP_cost_data['cap_max'] > GHP_Size_W)]
 
-    return InvCa
+    Inv_a = GHP_cost_data.iloc[0]['a']
+    Inv_b = GHP_cost_data.iloc[0]['b']
+    Inv_c = GHP_cost_data.iloc[0]['c']
+    Inv_d = GHP_cost_data.iloc[0]['d']
+    Inv_e = GHP_cost_data.iloc[0]['e']
+    Inv_IR = (GHP_cost_data.iloc[0]['IR_%']) / 100
+    Inv_LT = GHP_cost_data.iloc[0]['LT_yr']
+    Inv_OM = GHP_cost_data.iloc[0]['O&M_%'] / 100
+
+    InvC = Inv_a + Inv_b * (GHP_Size_W) ** Inv_c + (Inv_d + Inv_e * GHP_Size_W) * log(GHP_Size_W)
+
+    Capex_a_GHP = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed_GHP = Capex_a_GHP * Inv_OM
+
+    BH_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="BH")
+    technology_code = list(set(BH_cost_data['code']))
+    BH_cost_data[BH_cost_data['code'] == technology_code[technology]]
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
+    if GHP_Size_W < BH_cost_data['cap_min'][0]:
+        GHP_Size_W = BH_cost_data['cap_min'][0]
+    BH_cost_data = BH_cost_data[
+        (BH_cost_data['cap_min'] <= GHP_Size_W) & (BH_cost_data['cap_max'] > GHP_Size_W)]
+
+    Inv_a = BH_cost_data.iloc[0]['a']
+    Inv_b = BH_cost_data.iloc[0]['b']
+    Inv_c = BH_cost_data.iloc[0]['c']
+    Inv_d = BH_cost_data.iloc[0]['d']
+    Inv_e = BH_cost_data.iloc[0]['e']
+    Inv_IR = (BH_cost_data.iloc[0]['IR_%']) / 100
+    Inv_LT = BH_cost_data.iloc[0]['LT_yr']
+    Inv_OM = BH_cost_data.iloc[0]['O&M_%'] / 100
+
+    InvC = Inv_a + Inv_b * (GHP_Size_W) ** Inv_c + (Inv_d + Inv_e * GHP_Size_W) * log(GHP_Size_W)
+
+    Capex_a_BH = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed_BH = Capex_a_BH * Inv_OM
+
+    Capex_a = Capex_a_BH + Capex_a_GHP
+    Opex_fixed = Opex_fixed_BH + Opex_fixed_GHP
+
+    return Capex_a, Opex_fixed
 
 

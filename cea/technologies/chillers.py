@@ -2,6 +2,8 @@
 Vapor-compressor chiller
 """
 from __future__ import division
+import pandas as pd
+from math import log
 
 
 __author__ = "Thuy-An Nguyen"
@@ -65,21 +67,44 @@ def calc_VCC(mdot_kgpers, T_sup_K, T_re_K, gV):
 
 # Investment costs
 
-def calc_Cinv_VCC(q_cold_W, gV):
+def calc_Cinv_VCC(qcold_W, gV, locator, technology=1):
     """
     Annualized investment costs for the vapor compressor chiller
 
-    :type q_cold_W : float
-    :param q_cold_W: peak cooling demand in [W]
+    :type qcold_W : float
+    :param qcold_W: peak cooling demand in [W]
     :param gV: globalvar.py
 
     :returns InvCa: annualized chiller investment cost in CHF/a
     :rtype InvCa: float
 
     """
-    InvCa = 0.65 * 23E6 * gV.USD_TO_CHF * q_cold_W / 37E6 / 25
+
+    VCC_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="Chiller")
+    technology_code = list(set(VCC_cost_data['code']))
+    VCC_cost_data[VCC_cost_data['code'] == technology_code[technology]]
+    # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
+    # capacity for the corresponding technology from the database
+    if qcold_W < VCC_cost_data['cap_min'][0]:
+        qcold_W = VCC_cost_data['cap_min'][0]
+    VCC_cost_data = VCC_cost_data[
+        (VCC_cost_data['cap_min'] <= qcold_W) & (VCC_cost_data['cap_max'] > qcold_W)]
+
+    Inv_a = VCC_cost_data.iloc[0]['a']
+    Inv_b = VCC_cost_data.iloc[0]['b']
+    Inv_c = VCC_cost_data.iloc[0]['c']
+    Inv_d = VCC_cost_data.iloc[0]['d']
+    Inv_e = VCC_cost_data.iloc[0]['e']
+    Inv_IR = (VCC_cost_data.iloc[0]['IR_%']) / 100
+    Inv_LT = VCC_cost_data.iloc[0]['LT_yr']
+    Inv_OM = VCC_cost_data.iloc[0]['O&M_%'] / 100
+
+    InvC = Inv_a + Inv_b * (qcold_W) ** Inv_c + (Inv_d + Inv_e * qcold_W) * log(qcold_W)
+    Capex_a = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
+    Opex_fixed = Capex_a * Inv_OM
+
     
-    return InvCa
+    return Capex_a, Opex_fixed
 
 
 
