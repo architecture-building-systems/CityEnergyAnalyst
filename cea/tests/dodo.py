@@ -53,17 +53,17 @@ REFERENCE_CASES = {
 
 REFERENCE_CASES_DATA = {
     'open': {'weather': 'Zug', 'latitude': 47.1628017306431, 'longitude': 8.31,
-             'radiation': 'https://shared.ethz.ch/owncloud/s/uF6f4EWhPF31ko4/download',
-             'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/NALgN4Tlhho6QEC/download'},
+             'radiation': 'open.baseline.radiation.csv',
+             'properties_surfaces': 'open.baseline.properties_surfaces.csv'},
     'zug/baseline': {'weather': 'Zug', 'latitude': 47.1628017306431, 'longitude': 8.31,
-                     'radiation': 'https://shared.ethz.ch/owncloud/s/qgra4F2RJfKXzOp/download',
-                     'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/9w5ueJbXWSKaxvF/download'},
+                     'radiation': 'zug.baseline.radiation.csv',
+                     'properties_surfaces': 'zug.baseline.properties_surfaces.csv'},
     'zurich/baseline': {'weather': 'Zurich', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
-                        'radiation': 'https://shared.ethz.ch/owncloud/s/8PNp6U1jpR0HnzC/download',
-                        'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/tYLGZcBGLO9Wpy9/download'},
+                        'radiation': 'hq.baseline.radiation.csv',
+                        'properties_surfaces': 'hq.baseline.properties_surfaces.csv'},
     'zurich/masterplan': {'weather': 'Zurich', 'latitude': 46.9524055556, 'longitude': 7.43958333333,
-                          'radiation': 'https://shared.ethz.ch/owncloud/s/MG3FeiSMVnIekwp/download',
-                          'properties_surfaces': 'https://shared.ethz.ch/owncloud/s/HFHttennomZSbSf/download'}}
+                          'radiation': 'hq.masterplan.radiation.csv',
+                          'properties_surfaces': 'hq.masterplan.properties_surfaces.csv'}}
 
 # set to github user and personal access token in main
 _user = None
@@ -158,14 +158,11 @@ def task_download_radiation():
         import cea.inputlocator
         locator = cea.inputlocator.InputLocator(scenario_path)
         data = REFERENCE_CASES_DATA[reference_case]
-        r = requests.get(data['properties_surfaces'])
-        assert r.ok, 'could not download the properties_surfaces.csv file'
-        with open(locator.get_surface_properties(), 'w') as f:
-            f.write(r.content)
-        r = requests.get(data['radiation'])
-        assert r.ok, 'could not download the radiation.csv file'
-        with open(locator.get_radiation(), 'w') as f:
-            f.write(r.content)
+        properties_surfaces_csv = os.path.join(os.path.dirname(__file__), 'radiation_data', data['properties_surfaces'])
+        radiation_csv = os.path.join(os.path.dirname(__file__), 'radiation_data', data['radiation'])
+        shutil.copyfile(properties_surfaces_csv, locator.get_surface_properties())
+        shutil.copyfile(radiation_csv, locator.get_radiation())
+
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
