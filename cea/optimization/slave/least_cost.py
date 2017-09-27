@@ -6,15 +6,15 @@ USING PRESET ORDER
 
 """
 
+import copy
 import os
 import time
 
 import numpy as np
 import pandas as pd
 
-from cea.technologies.photovoltaic import calc_Crem_pv
 from cea.technologies.boilers import cond_boiler_op_cost
-import copy
+from cea.technologies.solar.photovoltaic import calc_Crem_pv
 
 __author__ = "Tim Vollrath"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"

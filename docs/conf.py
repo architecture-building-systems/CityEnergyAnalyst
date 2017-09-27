@@ -18,10 +18,26 @@
 #
 import os
 import sys
-
+from mock import Mock as MagicMock
 import cea
 
 sys.path.insert(0, os.path.abspath('..'))
+
+
+
+# mock out some imports so we don't have conflicts on the readthedocs server...
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return MagicMock()
+
+
+MOCK_MODULES = ['pythonocc', 'SALib', 'deap', 'descartes', 'doit', 'ephem', 'fiona',
+                'geopandas', 'lxml', 'pandas', 'plotly', 'pycollada', 'pyproj', 'pysal', 'pyshp',
+                'scikit-learn', 'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo', 'timezonefinder',
+                'astral', 'cvxopt', 'xlwt', 'python-dateutil']
+
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration ------------------------------------------------
 
