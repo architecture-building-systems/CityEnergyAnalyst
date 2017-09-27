@@ -3,6 +3,7 @@ Manage configuration information for the CEA. See the cascading configuration fi
 for more information on configuration files.
 """
 import os
+import tempfile
 import ConfigParser
 import cea.databases
 
@@ -10,13 +11,15 @@ class Configuration(object):
     def __init__(self, scenario=None):
         """Read in configuration information for a scenario (or the default scenario)"""
         self.scenario = scenario
-        defaults = dict(os.environ)
-        defaults['CEA.SCENARIO'] = str(scenario)
-        defaults['CEA.DB'] = os.path.dirname(cea.databases.__file__)
+        defaults = {'TEMP': tempfile.gettempdir(),
+                    'CEA.SCENARIO': str(scenario),
+                    'CEA.DB': os.path.dirname(cea.databases.__file__)}
+        self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
         self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
         files_found = self._parser.read(self._list_configuration_files(scenario))
         self.demand = DemandConfiguration(self._parser)
-        self.photovoltaic = PhotovoltaicConfiguration(self._parser)
+        self.solar = PhotovoltaicConfiguration(self._parser)
+        self.radiation_daysim = RadiationDaysimConfiguration(self._parser)
 
     @property
     def default_scenario(self):
@@ -201,6 +204,79 @@ class PhotovoltaicConfiguration(object):
     def k_msc_max(self):
         """linear heat transmittance coefficient of piping (2*pi*k/ln(Do/Di))) [W/mK]"""
         return self._parser.getfloat('solar', 'k-msc-max')
+
+class RadiationDaysimConfiguration(object):
+
+    def __init__(self, parser):
+        """
+        :param parser: the SafeConfigParser used in the background
+        :type parser: ConfigParser.SafeConfigParser
+        """
+        self._parser = parser
+
+    @property
+    def rad_parameters(self):
+        return {
+            'RAD_N': self._parser.getint('radiation-daysim', 'rad-n'),
+            'RAD_AF': self._parser.get('radiation-daysim', 'rad-af'),
+            'RAD_AB': self._parser.getint('radiation-daysim', 'rad-ab'),
+            'RAD_AD': self._parser.getint('radiation-daysim', 'rad-ad'),
+            'RAD_AS': self._parser.getint('radiation-daysim', 'rad-as'),
+            'RAD_AR': self._parser.getint('radiation-daysim', 'rad-ar'),
+            'RAD_AA': self._parser.getfloat('radiation-daysim', 'rad-aa'),
+            'RAD_LR': self._parser.getint('radiation-daysim', 'rad-lr'),
+            'RAD_ST': self._parser.getfloat('radiation-daysim', 'rad-st'),
+            'RAD_SJ': self._parser.getfloat('radiation-daysim', 'rad-sj'),
+            'RAD_LW': self._parser.getfloat('radiation-daysim', 'rad-lw'),
+            'RAD_DJ': self._parser.getfloat('radiation-daysim', 'rad-dj'),
+            'RAD_DS': self._parser.getfloat('radiation-daysim', 'rad-ds'),
+            'RAD_DR': self._parser.getint('radiation-daysim', 'rad-dr'),
+            'RAD_DP': self._parser.getint('radiation-daysim', 'rad-dp'),
+        }
+
+    @property
+    def sensor_parameters(self):
+        """Grid for the sensors, use 100 (maximum) if you want only one point per surface"""
+        return {
+            'X_DIM': self._parser.getint('radiation-daysim', 'sensor-x-dim'),
+            'Y_DIM': self._parser.getint('radiation-daysim', 'sensor-y-dim'),
+        }
+
+
+    @property
+    def terrain_parameters(self):
+        """terrain parameters: e-terrain (reflection for the terrain)"""
+        return {
+            'e_terrain': self._parser.getfloat('radiation-daysim', 'e-terrain'),
+        }
+
+    @property
+    def simulation_parameters(self):
+        """simulation parameters:
+
+        - n_build_in_chunk: min number of buildings for multiprocessing
+        - multiprocessing: if set to true, run the process for chunk size ``n_build_in_chunk``
+        """
+        return {
+            'n_build_in_chunk': self._parser.getint('radiation-daysim', 'n-buildings-in-chunk'),
+            'multiprocessing': self._parser.getboolean('radiation-daysim', 'multiprocessing'),
+        }
+
+    @property
+    def simplification_parameters(self):
+        """geometry simplification:
+
+        - zone_geometry: level of simplification of the zone geometry
+        - surrounding_geometry: level of simplification of the district geometry
+        - consider_windows: boolean to consider or not windows in the geometry
+        - consider_floors: boolean to consider or not floors in the geometry
+        """
+        return {
+            'zone_geometry': self._parser.getint('radiation-daysim', 'zone-geometry'),
+            'surrounding_geometry': self._parser.getint('radiation-daysim', 'surrounding-geometry'),
+            'consider_windows': self._parser.getboolean('radiation-daysim', 'consider-windows'),
+            'consider_floors': self._parser.getboolean('radiation-daysim', 'consider-floors'),
+        }
 
 if __name__ == '__main__':
     config = Configuration(r'c:\reference-case-open\baseline')

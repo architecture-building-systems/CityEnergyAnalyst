@@ -158,9 +158,11 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
 
     for group in range(number_groups):
         # read panel properties of each group
-        teta_z = prop_observers.loc[group,'surface_azimuth']
-        area_per_group_m2 = prop_observers.loc[group,'total_area_module']
-        tilt_angle = prop_observers.loc[group,'B']
+
+
+        teta_z = prop_observers.loc[group, 'surface_azimuth']
+        area_per_group_m2 = prop_observers.loc[group, 'total_area_module']
+        tilt_angle = prop_observers.loc[group, 'B']
         # degree to radians
         tilt = radians(tilt_angle) #tilt angle
         teta_z = radians(teta_z) #surface azimuth
@@ -177,13 +179,14 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
         results = np.vectorize(calc_Sm_PV)(weather_data.drybulb_C, radiation.I_sol, radiation.I_direct,
                                            radiation.I_diffuse, tilt, Sz_vector, teta_vector, teta_ed, teta_eg, n, Pg,
                                            K, NOCT, a0, a1, a2, a3, a4, L)
-        result[group] = np.vectorize(calc_PV_power)(results[0], results[1], eff_nom, area_per_group_m2, Bref, misc_losses)
+        result[group] = np.vectorize(calc_PV_power)(results[0], results[1], eff_nom, area_per_group_m2, Bref,
+                                                    misc_losses)
         list_groups_area[group] = area_per_group_m2
         Sum_PV_kWh = Sum_PV_kWh + result[group] # in kWh
+        Sum_radiation_kWh = Sum_radiation_kWh + radiation['I_sol']*area_per_group_m2/1000 # kWh
 
-    Sum_radiation_kWh = Sum_radiation_kWh + radiation['I_sol']*area_per_group_m2/1000 # kWh
-
-    Final = pd.DataFrame({'E_PV_gen_kWh':Sum_PV_kWh, 'Area_PV_m2':sum(list_groups_area), 'radiation_kWh':Sum_radiation_kWh})
+    Final = pd.DataFrame(
+        {'E_PV_gen_kWh': Sum_PV_kWh, 'Area_PV_m2': sum(list_groups_area), 'radiation_kWh': Sum_radiation_kWh})
 
     return result, Final
 
@@ -441,8 +444,10 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     sensors_metadata_clean.array_s / 2 + module_length * [cos(optimal_angle_flat)])
 
     # calculate the pv module area within the area of each sensor point
-    sensors_metadata_clean['area_module'] = np.where(sensors_metadata_clean['tilt'] >= 5, sensors_metadata_clean.AREA_m2,
-                                                    module_length**2 * (sensors_metadata_clean.AREA_m2/surface_area_flat))
+    sensors_metadata_clean['area_module'] = np.where(sensors_metadata_clean['tilt'] >= 5,
+                                                     sensors_metadata_clean.AREA_m2,
+                                                     module_length ** 2 * (
+                                                     sensors_metadata_clean.AREA_m2 / surface_area_flat))
 
     # categorize the sensors by surface_azimuth, B, GB
     result = np.vectorize(calc_categoriesroof)(sensors_metadata_clean.surface_azimuth, sensors_metadata_clean.B,
@@ -623,7 +628,7 @@ def calc_Cinv_pv(P_peak_kW, locator, technology=0):
     :param P_peak: installed capacity of PV module [kW]
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
-    P_peak = P_peak_kW * 1000 # converting to W from kW
+    P_peak = P_peak_kW * 1000  # converting to W from kW
     PV_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="PV")
     technology_code = list(set(PV_cost_data['code']))
     PV_cost_data[PV_cost_data['code'] == technology_code[technology]]
@@ -651,13 +656,13 @@ def calc_Cinv_pv(P_peak_kW, locator, technology=0):
 
 
 # remuneration scheme
-def calc_Crem_pv(E_nom_Wh):
+def calc_Crem_pv(E_nom):
     """
     Calculates KEV (Kostendeckende Einspeise - Verguetung) for solar PV and PVT.
     Therefore, input the nominal capacity of EACH installation and get the according KEV as return in Rp/kWh
 
-    :param E_nom_Wh: Nominal Capacity of solar panels (PV or PVT) [Wh]
-    :type E_nom_Wh: float
+    :param E_nom: Nominal Capacity of solar panels (PV or PVT) [Wh]
+    :type E_nom: float
     :return KEV_obtained_in_RpPerkWh: KEV remuneration [Rp/kWh]
     :rtype KEV_obtained_in_RpPerkWh: float
     """
@@ -711,7 +716,7 @@ def calc_Crem_pv(E_nom_Wh):
                          2000,
                          1000000]
     KEV_interpolated_kW = interpolate.interp1d(P_installed_in_kW, KEV_regime, kind="linear")
-    KEV_obtained_in_RpPerkWh = KEV_interpolated_kW(E_nom_Wh / 1000.0)
+    KEV_obtained_in_RpPerkWh = KEV_interpolated_kW(E_nom / 1000.0)
     return KEV_obtained_in_RpPerkWh
 
 def test_photovoltaic():

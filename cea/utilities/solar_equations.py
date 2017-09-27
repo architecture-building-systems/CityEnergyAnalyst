@@ -8,9 +8,8 @@ import numpy as np
 import pandas as pd
 import ephem
 import datetime
-import math
-from cea.technologies.solar import settings
-from math import *
+import collections
+from math import degrees, radians, cos, acos, tan, atan, sin, asin, pi
 
 
 __author__ = "Jimeno A. Fonseca"
@@ -87,6 +86,8 @@ def pyephem(time, latitude, longitude, altitude=0, pressure=101325,
     return sun_coords
 
 # solar properties
+SunProperties = collections.namedtuple('SunProperties',  ['g', 'Sz', 'Az', 'ha', 'trr_mean', 'worst_sh', 'worst_Az'])
+
 
 def calc_sun_properties(latitude, longitude, weather_data, date_start, solar_window_solstice):
 
@@ -110,8 +111,8 @@ def calc_sun_properties(latitude, longitude, weather_data, date_start, solar_win
     T_G_day['diff'] = T_G_day['diff'].replace(1, 0.90)
     transmittivity = (1 - T_G_day['diff']).mean()
 
-    return sun_coords['declination'], sun_coords['zenith'], sun_coords['azimuth'], sun_coords['hour_angle'], \
-           transmittivity, worst_sh, worst_Az
+    return SunProperties(g=sun_coords['declination'], Sz=sun_coords['zenith'], Az=sun_coords['azimuth'],
+                         ha=sun_coords['hour_angle'], trr_mean=transmittivity, worst_sh=worst_sh, worst_Az=worst_Az)
 
 
 def calc_sunrise(sunrise, Yearsimul, longitude, latitude):
@@ -135,7 +136,7 @@ def declination_degree(day_date, TY):
     .. [1] http://pysolar.org/
     """
 
-    return 23.45 * np.vectorize(math.sin)((2 * math.pi / (TY)) * (day_date - 81))
+    return 23.45 * np.vectorize(sin)((2 * pi / (TY)) * (day_date - 81))
 
 
 def get_hour_angle(longitude_deg, min_date, hour_date, day_date):
@@ -159,7 +160,7 @@ def get_solar_time(longitude_deg, min_date, hour_date, day_date):
 
 def get_equation_of_time(day_date):
     B = (day_date-1)*360/365
-    E = 229.2*(0.000075 + 0.001868*math.cos(B) - 0.032077*math.sin(B) - 0.014615*math.cos(2*B) - 0.04089*math.sin(2*B))
+    E = 229.2 * (0.000075 + 0.001868 * cos(B) - 0.032077 * sin(B) - 0.014615 * cos(2 * B) - 0.04089 * sin(2 * B))
     return E
 
 
@@ -231,8 +232,7 @@ def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, m
 
 # optimal tilt angle and spacing of solar panels
 
-def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az, transmissivity,
-                           Max_Isol, panel_properties):
+def optimal_angle_and_tilt(sensors_metadata_clean, latitude, sun_properties, Max_Isol, panel_properties):
     """
     This function first determines the optimal tilt angle, row spacing and surface azimuth of panels installed at each
     sensor point. Secondly, the installed PV module areas at each sensor point are calculated. Lastly, all the modules
@@ -243,12 +243,9 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
     :type sensors_metadata_clean: dataframe
     :param latitude: latitude of the case study location
     :type latitude: float
-    :param worst_sh: solar elevation at the worst hour [degree]
-    :type worst_sh: float
-    :param worst_Az: solar azimuth at the worst hour [degree]
-    :type worst_Az: float
-    :param transmissivity: transmissivity: clearness index [-]
-    :type transmissivity: float
+    :param sun_properties: A SunProperties, using worst_sh: solar elevation at the worst hour [degree], worst_Az: solar azimuth at the worst hour [degree]
+                           and trr_mean: transmissivity / clearness index [-]
+    :type sun_properties: cea.utilities.solar_equations.SunProperties
     :param module_length: length of the PV module [m]
     :type module_length: float
     :param Max_Isol: max radiation potential (equals to global horizontal radiation) [Wh/m2/year]
@@ -268,15 +265,15 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh, worst_Az,
         same as the roof. Sensors on flat roofs are all south facing.
     """
     # calculate panel tilt angle (B) for flat roofs (tilt < 5 degrees), slope roofs and walls.
-    optimal_angle_flat = calc_optimal_angle(180, latitude, transmissivity) # assume surface azimuth = 180 (N,E), south facing
-    sensors_metadata_clean['tilt']= np.vectorize(math.acos)(sensors_metadata_clean['Zdir']) #surface tilt angle in rad
-    sensors_metadata_clean['tilt'] = np.vectorize(math.degrees)(sensors_metadata_clean['tilt']) #surface tilt angle in degrees
+    optimal_angle_flat = calc_optimal_angle(180, latitude, sun_properties.trr_mean) # assume surface azimuth = 180 (N,E), south facing
+    sensors_metadata_clean['tilt']= np.vectorize(acos)(sensors_metadata_clean['Zdir']) #surface tilt angle in rad
+    sensors_metadata_clean['tilt'] = np.vectorize(degrees)(sensors_metadata_clean['tilt']) #surface tilt angle in degrees
     sensors_metadata_clean['B'] = np.where(sensors_metadata_clean['tilt'] >= 5, sensors_metadata_clean['tilt'],
                                            degrees(optimal_angle_flat)) # panel tilt angle in degrees
 
     # calculate spacing and surface azimuth of the panels for flat roofs
     module_length = panel_properties['module_length']
-    optimal_spacing_flat = calc_optimal_spacing(worst_sh, worst_Az, optimal_angle_flat, module_length)
+    optimal_spacing_flat = calc_optimal_spacing(sun_properties, optimal_angle_flat, module_length)
     sensors_metadata_clean['array_s'] = np.where(sensors_metadata_clean['tilt'] >= 5, 0, optimal_spacing_flat)
     sensors_metadata_clean['surface_azimuth'] = np.vectorize(calc_surface_azimuth)(sensors_metadata_clean['Xdir'],
                                                                                    sensors_metadata_clean['Ydir'],
@@ -332,14 +329,13 @@ def calc_optimal_angle(teta_z, latitude, transmissivity):
     b = atan((cos(a) * tan(l)) * (1 / (1 + ((Tad * gKt - Tar * Pg) / (2 * (1 - gKt))))))  # eq.(11)
     return abs(b)
 
-def calc_optimal_spacing(Sh, Az, tilt_angle, module_length):
+def calc_optimal_spacing(sun_properties, tilt_angle, module_length):
     """
     To calculate the optimal spacing between each panel to avoid shading.
 
-    :param Sh: Solar elevation at the worst hour [degree]
-    :type Sh: float
-    :param Az: Solar Azimuth [degree]
-    :type Az: float
+    :param sun_properties: SunProperties, using worst_sh (Solar elevation at the worst hour [degree]) and worst_Az
+                           (Solar Azimuth [degree] at the worst hour)
+    :type sun_properties: SunProperties
     :param tilt_angle: optimal tilt angle for panels on flat surfaces [degree]
     :type tilt_angle: float
     :param module_length: [m]
@@ -348,8 +344,8 @@ def calc_optimal_spacing(Sh, Az, tilt_angle, module_length):
     :rtype D: float
     """
     h = module_length * sin(tilt_angle)
-    D1 = h / tan(radians(Sh))
-    D = max(D1 * cos(radians(180 - Az)), D1 * cos(radians(Az - 180)))
+    D1 = h / tan(radians(sun_properties.worst_sh))
+    D = max(D1 * cos(radians(180 - sun_properties.worst_Az)), D1 * cos(radians(sun_properties.worst_Az - 180)))
     return D
 
 def calc_categoriesroof(teta_z, B, GB, Max_Isol):
@@ -432,8 +428,8 @@ def calc_surface_azimuth(xdir, ydir, B):
     :rtype surface_azimuth: float
 
     """
-    B = math.radians(B)
-    teta_z = math.degrees(math.asin(xdir / math.sin(B)))
+    B = radians(B)
+    teta_z = degrees(asin(xdir / sin(B)))
     # set the surface azimuth with on the sing convention (E,N)=(+,+)
     if xdir < 0:
         if ydir <0:
