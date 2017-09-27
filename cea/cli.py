@@ -199,6 +199,20 @@ def radiation_daysim(args):
     elif args.weather_path in locator.get_weather_names():
         args.weather_path = locator.get_weather(args.weather_path)
 
+    config = cea.config.Configuration(args.scenario)
+    config.weather = args.weather_path
+
+    options = ['rad-n', 'rad-af', 'rad-ab', 'rad-ad', 'rad-as', 'rad-ar', 'rad-aa', 'rad-lr', 'rad-st', 'rad-sj',
+               'rad-lw', 'rad-dj', 'rad-ds', 'rad-dr', 'rad-dp', 'sensor-x-dim', 'sensor-y-dim', 'e-terrain',
+               'n-buildings-in-chunk', 'multiprocessing', 'zone-geometry', 'surrounding-geometry', 'consider-windows',
+               'consider-floors']
+    for option in options:
+        value = getattr(args, option.replace('-', '_'))
+        if value is not None:
+            print 'radiation-daysim', option, str(value)
+            config._parser.set('radiation-daysim', option, str(value))
+    config.save()
+
     cea.resources.radiation_daysim.radiation_main.main(locator=locator, weather_path=args.weather_path)
 
 
@@ -411,6 +425,22 @@ def read_config(args):
         pass
 
 
+def read_config_section(args):
+    """Read all keys from a section in the configuration into a json dictionary and print that"""
+    import cea.config
+    import ConfigParser
+    import json
+    config = cea.config.Configuration(args.scenario)
+    try:
+        keys = config._parser.options(args.section)
+        section_dict = {key: config._parser.get(args.section, key) for key in keys}
+        print(json.dumps(section_dict))
+    except ConfigParser.NoSectionError:
+        pass
+    except ConfigParser.NoOptionError:
+        pass
+
+
 
 def write_config(args):
     """write a value to a section/key in the configuration in the scenario folder"""
@@ -434,6 +464,21 @@ def dbf_to_excel(args):
     """Convert a DBF file (*.dbf) to an Excel file (*.xls)"""
     import cea.utilities.dbfreader
     cea.utilities.dbfreader.run_as_script(args.input_path, args.output_path)
+
+
+def _parse_boolean(s):
+    """Return True or False, depending on the value of ``s`` as defined by the ConfigParser library."""
+    boolean_states = {'0': False,
+                      '1': True,
+                      'false': False,
+                      'no': False,
+                      'off': False,
+                      'on': True,
+                      'true': True,
+                      'yes': True}
+    if s.lower() in boolean_states:
+        return boolean_states[s.lower()]
+    return False
 
 
 def main():
@@ -534,8 +579,8 @@ def main():
     photovoltaic_parser.add_argument('--latitude', help='Latitude to use for calculations.', type=float)
     photovoltaic_parser.add_argument('--longitude', help='Longitude to use for calculations.', type=float)
     photovoltaic_parser.add_argument('--weather-path', help='Path to weather file.')
-    photovoltaic_parser.add_argument('--panel-on-roof', help='flag for considering PV on roof', type=bool)
-    photovoltaic_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall', type=bool)
+    photovoltaic_parser.add_argument('--panel-on-roof', help='flag for considering PV on roof', type=_parse_boolean)
+    photovoltaic_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall', type=_parse_boolean)
     photovoltaic_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int)
     photovoltaic_parser.add_argument('--type-PVpanel',
                                         help='monocrystalline, T2 is poly and T3 is amorphous. (see relates to the database of technologies)')
@@ -552,8 +597,8 @@ def main():
     solar_collector_parser.add_argument('--latitude', help='Latitude to use for calculations.', type=float)
     solar_collector_parser.add_argument('--longitude', help='Longitude to use for calculations.', type=float)
     solar_collector_parser.add_argument('--weather-path', help='Path to weather file.')
-    solar_collector_parser.add_argument('--panel-on-roof', help='flag for considering PV on roof', type=bool)
-    solar_collector_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall', type=bool)
+    solar_collector_parser.add_argument('--panel-on-roof', help='flag for considering PV on roof', type=_parse_boolean)
+    solar_collector_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall', type=_parse_boolean)
     solar_collector_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int)
     solar_collector_parser.add_argument('--type-SCpanel',
                                         help='Solar collector panel type (SC1: flat plate collectors, SC2: evacuated tubes)')
@@ -570,8 +615,10 @@ def main():
     photovoltaic_thermal_parser.add_argument('--latitude', help='Latitude to use for calculations.', type=float)
     photovoltaic_thermal_parser.add_argument('--longitude', help='Longitude to use for calculations.', type=float)
     photovoltaic_thermal_parser.add_argument('--weather-path', help='Path to weather file.')
-    photovoltaic_thermal_parser.add_argument('--panel-on-roof', help='flag for considering PV on roof', type=bool)
-    photovoltaic_thermal_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall', type=bool)
+    photovoltaic_thermal_parser.add_argument('--panel-on-roof', help='flag for considering PV on roof',
+                                             type=_parse_boolean)
+    photovoltaic_thermal_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall',
+                                             type=_parse_boolean)
     photovoltaic_thermal_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int)
     photovoltaic_thermal_parser.add_argument('--min-radiation',
                                              help='points are selected with at least a minimum production of this % from the maximum in the area.',
@@ -588,6 +635,48 @@ def main():
     radiation_daysim_parser = subparsers.add_parser('radiation-daysim',
                                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     radiation_daysim_parser.add_argument('--weather-path', help='Path to weather file.')
+    radiation_daysim_parser.add_argument('--rad-n', type=int)
+    radiation_daysim_parser.add_argument('--rad-af', type=str)
+    radiation_daysim_parser.add_argument('--rad-ab', type=int)
+    radiation_daysim_parser.add_argument('--rad-ad', type=int)
+    radiation_daysim_parser.add_argument('--rad-as', type=int)
+    radiation_daysim_parser.add_argument('--rad-ar', type=int)
+    radiation_daysim_parser.add_argument('--rad-aa', type=float)
+    radiation_daysim_parser.add_argument('--rad-lr', type=int)
+    radiation_daysim_parser.add_argument('--rad-st', type=float)
+    radiation_daysim_parser.add_argument('--rad-sj', type=float)
+    radiation_daysim_parser.add_argument('--rad-lw', type=float)
+    radiation_daysim_parser.add_argument('--rad-dj', type=float)
+    radiation_daysim_parser.add_argument('--rad-ds', type=float)
+    radiation_daysim_parser.add_argument('--rad-dr', type=int)
+    radiation_daysim_parser.add_argument('--rad-dp', type=int)
+
+    # GRID FOR THE SENSORS
+    # use 100 (maximum) if you want only one point per surface
+    radiation_daysim_parser.add_argument('--sensor-x-dim', type=int)
+    radiation_daysim_parser.add_argument('--sensor-y-dim', type=int)
+
+    # terrain parameters
+    # reflection for the terrain
+    radiation_daysim_parser.add_argument('--e-terrain', type=float, help='reflection for the terrain')
+
+    # simulation parameters
+    # min number of buildings for multiprocessing
+    radiation_daysim_parser.add_argument('--n-buildings-in-chunk', type=int,
+                                         help='min number of buildings for multiprocessing')
+    # limit the number if running out of memory
+    radiation_daysim_parser.add_argument('--multiprocessing', type=_parse_boolean,
+                                         help='use multiprocessing to speed up calculations')
+
+    # geometry simplification
+    radiation_daysim_parser.add_argument('--zone-geometry', type=int,
+                                         help='level of simplification of the zone geometry')
+    radiation_daysim_parser.add_argument('--surrounding-geometry', type=int,
+                                         help='level of simplification of the district geometry')
+    radiation_daysim_parser.add_argument('--consider-windows', type=_parse_boolean,
+                                         help='consider windows in the geometry')
+    radiation_daysim_parser.add_argument('--consider-floors', type=_parse_boolean,
+                                         help='consider floors in the geometry')
     radiation_daysim_parser.set_defaults(func=radiation_daysim)
 
     install_toolbox_parser = subparsers.add_parser('install-toolbox',
@@ -665,6 +754,10 @@ def main():
     read_config_parser.add_argument('--section', help='section to read from')
     read_config_parser.add_argument('--key', help='key to read')
     read_config_parser.set_defaults(func=read_config)
+
+    read_config_section_parser = subparsers.add_parser('read-config-section', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    read_config_section_parser.add_argument('--section', help='section to read from')
+    read_config_section_parser.set_defaults(func=read_config_section)
 
     write_config_parser = subparsers.add_parser('write-config', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     write_config_parser.add_argument('--section', help='section to write to')
