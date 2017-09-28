@@ -94,3 +94,4 @@ cea/surrogate/dummy_file.py
 >>>>>>> refs/remotes/origin/master
 cea/demand/calibration/clustering/
 cea/demand/calibration/nn_generator/
+*.orig
