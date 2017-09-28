@@ -14,6 +14,7 @@ import os
 import shutil
 import sys
 import zipfile
+import cea.inputlocator
 
 import requests
 
@@ -285,6 +286,61 @@ def task_run_scenario_plots():
             'actions': [(cea.plots.scenario_plots.run_as_script, [], {
                 'scenario_folders': [scenario_path],
                 'output_file': None  # use default
+            })],
+            'verbosity': 1,
+        }
+
+
+def task_run_calibration():
+    """run the calibration_sampling for each reference case"""
+    import cea.demand.calibration.calibration_sampling
+    import cea.demand.calibration.calibration_main
+    import cea.demand.calibration.calibration_gaussian_emulator
+
+    def run_calibration(scenario_path):
+        import numpy as np
+        import json
+        import pickle
+        import joblib
+        import cea.demand.calibration.settings
+        cea.demand.calibration.settings.number_samples = 50
+        cea.demand.calibration.settings.max_iter_MCMC = 50
+
+        locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+        building_name = 'B01'
+
+        # run calibration_sampling
+        cea.demand.calibration.calibration_sampling.sampling_main(
+            locator=locator,
+            variables=['U_win', 'U_wall', 'U_base', 'n50', 'Ths_set_C'],
+            building_name=building_name, building_load='Qhsf_kWh')
+
+        # run calibration_gaussian_emulator
+        samples = np.load(locator.get_calibration_samples(building_name))
+        samples_norm = samples[1]
+        cv_rmse = json.load(open(locator.get_calibration_cvrmse_file(building_name)))['cv_rmse']
+        cea.demand.calibration.calibration_gaussian_emulator.gaussian_emulator(locator, samples_norm, cv_rmse,
+                                                                               building_name)
+
+        # run calibration_main
+        problem = pickle.load(open(locator.get_calibration_problem(building_name)))
+        emulator = joblib.load(locator.get_calibration_gaussian_emulator(building_name))
+        cea.demand.calibration.calibration_main.calibration_main(locator=locator, problem=problem, emulator=emulator)
+
+        # make sure the files were created
+        assert os.path.exists(locator.get_calibration_samples(building_name))
+        assert os.path.exists(locator.get_calibration_problem(building_name))
+        assert os.path.exists(locator.get_calibration_cvrmse_file(building_name))
+        assert os.path.exists(locator.get_calibration_gaussian_emulator(building_name))
+        assert os.path.exists(os.path.join(locator.get_calibration_folder(), 'chain-0.csv'))
+
+    for reference_case, scenario_path in REFERENCE_CASES.items():
+        if _reference_cases and reference_case not in _reference_cases:
+            continue
+        yield {
+            'name': '%(reference_case)s' % locals(),
+            'actions': [(run_calibration, [], {
+                'scenario_path': scenario_path
             })],
             'verbosity': 1,
         }

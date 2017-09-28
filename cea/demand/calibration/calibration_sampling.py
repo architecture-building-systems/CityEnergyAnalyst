@@ -16,7 +16,7 @@ from geopandas import GeoDataFrame as Gdf
 import pickle
 import json
 
-from cea.demand.calibration.settings import number_samples
+import cea.demand.calibration.settings
 import cea.inputlocator as inputlocator
 
 __author__ = "Jimeno A. Fonseca"
@@ -53,6 +53,7 @@ def sampling_main(locator, variables, building_name, building_load):
     """
 
     # create list of samples with a LHC sampler and save to disk
+    number_samples = cea.demand.calibration.settings.number_samples
     samples, pdf_list = latin_sampler.latin_sampler(locator, number_samples, variables)
     np.save(locator.get_calibration_samples(building_name), samples)
 

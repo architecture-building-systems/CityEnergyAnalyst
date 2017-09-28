@@ -60,7 +60,7 @@ def run_as_script():
     building_name = 'B01'
     samples = np.load(locator.get_calibration_samples(building_name))
     samples_norm = samples[1]
-    cv_rmse = json.load(file(locator.get_calibration_cvrmse_file(building_name)))['cv_rmse']
+    cv_rmse = json.load(open(locator.get_calibration_cvrmse_file(building_name)))['cv_rmse']
     gaussian_emulator(locator, samples_norm, cv_rmse, building_name)
 
 if __name__ == '__main__':
