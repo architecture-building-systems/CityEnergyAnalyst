@@ -1,5 +1,5 @@
 
-number_samples = 100
+number_samples = 1000
 max_iter_MCMC = 10000
 burn_in = 100
 generate_plots = False
