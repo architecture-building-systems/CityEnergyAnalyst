@@ -52,8 +52,7 @@ def calibration_main(locator, problem, emulator):
     def calc_result_emulator_and_bias(var1, var2, var3, var4, var5):
 
         # now witdhdraw the results from the emulator
-        prediction = np.empty(100)
-        prediction[0] = emulator.predict([var1,var2,var3, var4, var5])
+        prediction = emulator.predict([var1,var2,var3, var4, var5])
         #calc_result_emulator_and_bias.grad = lambda *x: x[0]
         return prediction
 
@@ -99,7 +98,7 @@ def calibration_main(locator, problem, emulator):
         # Likelihood (sampling distribution) of observations
         sigma = pm.HalfNormal('sigma', sd=0.10)
         observed = calc_observed_synthetic()
-        y_obs = pm.Normal('y_obs', mu=mu, sd=sigma, observed = observed)
+        y_obs = pm.Normal('y_obs', mu=mu, sd=sigma, observed = 0)
 
     if generate_plots:
         with basic_model:
