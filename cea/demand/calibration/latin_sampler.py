@@ -21,7 +21,7 @@ def latin_sampler(locator, num_samples, variables):
     """
     This script creates a matrix of m x n samples using the latin hypercube sampler.
     for this, it uses the database of probability distribtutions stored in locator.get_uncertainty_db()
-
+    it returns clean and normalized samples.
 
     :param locator: pointer to locator of files of CEA
     :param num_samples: number of samples to do
@@ -80,4 +80,4 @@ def latin_sampler(locator, num_samples, variables):
         else:  # assume it is uniform
             samples_norm[:, i] = uniform(loc=min, scale=max).ppf(samples_norm[:, i])
 
-    return samples, samples_norm, pdf_list
+    return [samples, samples_norm], pdf_list

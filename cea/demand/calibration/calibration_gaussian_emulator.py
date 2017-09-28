@@ -58,7 +58,8 @@ def run_as_script():
     # based on the variables listed in the uncertainty database and selected
     # through a screening process. they need to be 5.
     building_name = 'B01'
-    samples_norm = np.load(locator.get_calibration_samples(building_name))[1]
+    samples = np.load(locator.get_calibration_samples(building_name))
+    samples_norm = samples[1]
     cv_rmse = json.load(file(locator.get_calibration_cvrmse_file(building_name)))['cv_rmse']
     gaussian_emulator(locator, samples_norm, cv_rmse, building_name)
 

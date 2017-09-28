@@ -53,8 +53,8 @@ def sampling_main(locator, variables, building_name, building_load):
     """
 
     # create list of samples with a LHC sampler and save to disk
-    samples, samples_norm, pdf_list = latin_sampler.latin_sampler(locator, number_samples, variables)
-    np.save(locator.get_calibration_samples(building_name), samples, samples_norm)
+    samples, pdf_list = latin_sampler.latin_sampler(locator, number_samples, variables)
+    np.save(locator.get_calibration_samples(building_name), samples)
 
     # create problem and save to disk as json
     problem = {'variables':variables,
@@ -66,7 +66,7 @@ def sampling_main(locator, variables, building_name, building_load):
     for i in range(number_samples):
 
         #create list of tubles with variables and sample
-        sample = zip(variables,samples[i,:])
+        sample = zip(variables,samples[0][i,:])
 
         #create overrides and return pointer to files
         apply_sample_parameters(locator, sample)
@@ -164,7 +164,7 @@ def run_as_script():
 
     # based on the variables listed in the uncertainty database and selected
     # through a screening process. they need to be 5.
-    variables = ['U_win', 'U_wall', 'n50', 'Ths_set_C', 'Cm_Af']
+    variables = ['U_win', 'U_wall', 'U_base', 'n50', 'Ths_set_C']
     building_name = 'B01'
     building_load = 'Qhsf_kWh'
     sampling_main(locator, variables, building_name, building_load)
