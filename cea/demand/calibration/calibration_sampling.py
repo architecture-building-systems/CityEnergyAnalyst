@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+This script creates samples using a lating Hypercube sample of 5 variables of interest.
+    then runs the demand calculation of CEA for all the samples. It delivers a json file storing
+    the results of cv_rmse and rmse for each sample.
+"""
+
 from __future__ import division
 import pandas as pd
 import cea
@@ -21,54 +28,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def simulate_demand_sample(locator, building_name, full_report_boolean=False):
-    """
-    This script runs the cea demand tool in series and returns a single value of cvrmse and rmse.
-
-    :param locator: pointer to location of files in CEA
-    :param building_name: name of building
-    :param output_parameters: building load to consider in the anlysis
-    :return:
-    """
-
-    # force simulation to be sequential and to only do one building
-    gv = cea.globalvar.GlobalVariables()
-    gv.multiprocessing = False
-    gv.print_totals = False
-    gv.simulate_building_list = [building_name]
-    gv.testing = full_report_boolean
-
-    #import weather and measured data
-    weather_path = locator.get_default_weather()
-
-    #calculate demand timeseries for buidling
-    demand_main.demand_calculation(locator, weather_path, gv)
-
-    return
-
-
-def calc_cv_rmse(prediction, target):
-    """
-    This function calculates the covariance of the root square mean error between two vectors.
-    :param prediction: vector of predicted/simulated data
-    :param target: vector of target/measured data
-    :return:
-        CVrmse: float
-        rmse: float
-    """
-
-    delta = (prediction - target)**2
-    sum_delta = delta.sum()
-    if sum_delta > 0:
-        mean = target.mean()
-
-        n = len(prediction)
-        rmse = np.sqrt((sum_delta/n))
-        CVrmse = rmse/mean
-    else:
-        rmse = 0
-        CVrmse = 0
-    return round(CVrmse,3), round(rmse,3) #keep only 3 significant digits
 
 
 def sampling_main(locator, variables, building_name, building_load):
@@ -127,6 +86,57 @@ def sampling_main(locator, variables, building_name, building_load):
         print "The cv_rmse for this iteration is:", cv_rmse
 
     json.dump({'cv_rmse':cv_rmse_list, 'rmse':rmse_list}, file(locator.get_calibration_cvrmse_file(building_name), 'w'))
+
+
+def simulate_demand_sample(locator, building_name, full_report_boolean=False):
+    """
+    This script runs the cea demand tool in series and returns a single value of cvrmse and rmse.
+
+    :param locator: pointer to location of files in CEA
+    :param building_name: name of building
+    :param output_parameters: building load to consider in the anlysis
+    :return:
+    """
+
+    # force simulation to be sequential and to only do one building
+    gv = cea.globalvar.GlobalVariables()
+    gv.multiprocessing = False
+    gv.print_totals = False
+    gv.simulate_building_list = [building_name]
+    gv.testing = full_report_boolean
+
+    #import weather and measured data
+    weather_path = locator.get_default_weather()
+
+    #calculate demand timeseries for buidling
+    demand_main.demand_calculation(locator, weather_path, gv)
+
+    return
+
+
+def calc_cv_rmse(prediction, target):
+    """
+    This function calculates the covariance of the root square mean error between two vectors.
+    :param prediction: vector of predicted/simulated data
+    :param target: vector of target/measured data
+    :return:
+        CVrmse: float
+        rmse: float
+    """
+
+    delta = (prediction - target)**2
+    sum_delta = delta.sum()
+    if sum_delta > 0:
+        mean = target.mean()
+
+        n = len(prediction)
+        rmse = np.sqrt((sum_delta/n))
+        CVrmse = rmse/mean
+    else:
+        rmse = 0
+        CVrmse = 0
+    return round(CVrmse,3), round(rmse,3) #keep only 3 significant digits
+
 
 
 def apply_sample_parameters(locator, sample):
