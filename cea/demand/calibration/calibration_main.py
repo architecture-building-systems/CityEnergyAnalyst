@@ -12,7 +12,7 @@ J. Fonseca  script development          27.10.16
 
 from __future__ import division
 
-import pymc3 as pm
+import pymc3
 import os
 from pymc3.backends import SQLite
 import theano.tensor as tt
@@ -27,8 +27,7 @@ import matplotlib.pyplot as plt
 import cea.globalvar
 import cea.inputlocator
 
-
-from cea.demand.calibration.settings import max_iter_MCMC, generate_plots, burn_in
+import cea.demand.calibration.settings
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -61,7 +60,7 @@ def calibration_main(locator, problem, emulator):
         return observed_synthetic
 
     # create bayesian calibration model in PYMC3
-    with pm.Model() as basic_model:
+    with pymc3.Model() as basic_model:
         # add all priors of selected varialbles to the model and assign a triangular distribution
         # for this we create a global variable out of the strings included in the list variables
         vars = []
@@ -84,34 +83,35 @@ def calibration_main(locator, problem, emulator):
                 loc = min
                 scale = max - min
                 c = (mu - min) / (max - min)
-                globals()['var' + str(i + 1)] = pm.Triangular('var' + str(i + 1), lower=loc, c=c, upper=max)
+                globals()['var' + str(i + 1)] = pymc3.Triangular('var' + str(i + 1), lower=loc, c=c, upper=max)
             elif distribution == 'normal':
-                globals()['var' + str(i + 1)] = pm.Normal('var' + str(i + 1), mu=mu, sd=stdv)
+                globals()['var' + str(i + 1)] = pymc3.Normal('var' + str(i + 1), mu=mu, sd=stdv)
             else:  # assume it is uniform
-                globals()['var' + str(i + 1)] = pm.Uniform('var' + str(i + 1), lower=min, upper=max)
+                globals()['var' + str(i + 1)] = pymc3.Uniform('var' + str(i + 1), lower=min, upper=max)
 
             vars.append('var'+str(i+1))
 
         # expected value of outcome
-        mu = pm.Deterministic('mu', calc_result_emulator_and_bias(var1, var2, var3, var4, var5))
+        mu = pymc3.Deterministic('mu', calc_result_emulator_and_bias(var1, var2, var3, var4, var5))
 
         # Likelihood (sampling distribution) of observations
-        sigma = pm.HalfNormal('sigma', sd=0.10)
+        sigma = pymc3.HalfNormal('sigma', sd=0.10)
         observed = calc_observed_synthetic()
-        y_obs = pm.Normal('y_obs', mu=mu, sd=sigma, observed = 0)
+        y_obs = pymc3.Normal('y_obs', mu=mu, sd=sigma, observed = 0)
 
-    if generate_plots:
+    if cea.demand.calibration.settings.generate_plots:
         with basic_model:
             # plot posteriors
-            trace = pm.backends.text.load(os.path.join(locator.get_calibration_folder()))
-            pm.traceplot(trace)
+            trace = pymc3.backends.text.load(os.path.join(locator.get_calibration_folder()))
+            pymc3.traceplot(trace)
             plt.show()
     else:
         with basic_model:
-            step = pm.Metropolis()
-            trace = pm.sample(max_iter_MCMC, tune=burn_in, step=step)
-            pm.backends.text.dump(locator.get_calibration_folder(), trace)
-            pm.traceplot(trace)
+            step = pymc3.Metropolis()
+            trace = pymc3.sample(cea.demand.calibration.settings.max_iter_MCMC,
+                              tune=cea.demand.calibration.settings.burn_in, step=step)
+            pymc3.backends.text.dump(locator.get_calibration_folder(), trace)
+            pymc3.traceplot(trace)
             plt.show()
     return
 
@@ -124,7 +124,7 @@ def run_as_script():
     # based on the variables listed in the uncertainty database and selected
     # through a screeing process. they need to be 5.
     building_name = 'B01'
-    problem = pickle.load(file(locator.get_calibration_problem(building_name)))
+    problem = pickle.load(open(locator.get_calibration_problem(building_name)))
     emulator = joblib.load(locator.get_calibration_gaussian_emulator(building_name))
     calibration_main(locator, problem, emulator)
 
