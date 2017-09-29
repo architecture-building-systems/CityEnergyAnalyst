@@ -60,7 +60,7 @@ def sampling_main(locator, variables, building_name, building_load):
     # create problem and save to disk as json
     problem = {'variables':variables,
                'building_load':building_load, 'probabiltiy_vars':pdf_list}
-    pickle.dump(problem, file(locator.get_calibration_problem(building_name), 'w'))
+    pickle.dump(problem, open(locator.get_calibration_problem(building_name), 'w'))
 
     cv_rmse_list = []
     rmse_list = []
@@ -84,9 +84,9 @@ def sampling_main(locator, variables, building_name, building_load):
 
         cv_rmse_list.append(cv_rmse)
         rmse_list.append(rmse)
-        print "The cv_rmse for this iteration is:", cv_rmse
+        print("The cv_rmse for this iteration is:", cv_rmse)
 
-    json.dump({'cv_rmse':cv_rmse_list, 'rmse':rmse_list}, file(locator.get_calibration_cvrmse_file(building_name), 'w'))
+    json.dump({'cv_rmse':cv_rmse_list, 'rmse':rmse_list}, open(locator.get_calibration_cvrmse_file(building_name), 'w'))
 
 
 def simulate_demand_sample(locator, building_name, full_report_boolean=False):
