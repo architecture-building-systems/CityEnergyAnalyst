@@ -318,7 +318,7 @@ def task_run_calibration():
         # run calibration_gaussian_emulator
         samples = np.load(locator.get_calibration_samples(building_name))
         samples_norm = samples[1]
-        cv_rmse = json.load(open(locator.get_calibration_cvrmse_file(building_name)))['cv_rmse']
+        cv_rmse = json.load(locator.get_calibration_cvrmse_file(building_name))['cv_rmse']
         cea.demand.calibration.calibration_gaussian_emulator.gaussian_emulator(locator, samples_norm, cv_rmse,
                                                                                building_name)
 

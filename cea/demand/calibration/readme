@@ -1,7 +1,7 @@
 
 Description:
 
-the bayesian calibrator consists of 4 scripts called in the next order.
+the bayesian calibrator consists of 4 scripts called in the following order.
 - cea/demand/calibration/calibration_sampling.py
 - cea/demand/calibration/calibration_gaussian_emulator.py
 - cea/demand/calibration/calibration_main.py
