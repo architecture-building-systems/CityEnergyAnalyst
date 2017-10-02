@@ -31,6 +31,7 @@ from SALib.sample.saltelli import sample as sampler_sobol
 from SALib.sample.morris import sample as sampler_morris
 from cea.inputlocator import InputLocator
 
+
 __author__ = "Jimeno A. Fonseca; Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca", "Daren Thomas"]
