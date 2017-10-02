@@ -9,14 +9,14 @@ from __future__ import division
 import math
 import pickle
 
-import numpy as np
 import deap.base
+import deap.benchmarks.tools
 import deap.creator
 import deap.tools
-import deap.benchmarks.tools
+import numpy as np
 from numpy import random
 
-from cea.demand.calibration.clustering.sax import SAX
+from cea.analysis.clustering.sax import SAX
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -34,7 +34,7 @@ def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, 
     1. Compound function of accurracy, complexity and compression based on the work of
     D. Garcia-Lopez1 and H. Acosta-Mesa 2009
     2. Classic Shiluette and
-    3. Carlinski indicators of clustering_main.
+    3. Carlinski indicators of clustering_sax.
 
     The variables to maximize are wordsize and alphabet size.
 
@@ -212,7 +212,7 @@ def calc_compression(word_size, time_series_len=24):
     :param time_series_len: length of time_series group. integer
     :return: level of compression which penalizes the objective function
     """
-    result = 1- (word_size / time_series_len)  # 24 hours
+    result = 1 - (word_size / time_series_len)  # time series lenght of 24 hours
     return result
 
 def calc_accuracy(names_of_clusters):
