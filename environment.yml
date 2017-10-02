@@ -50,7 +50,6 @@ dependencies:
 - pip=9.0.1=py27_0
 - proj4=4.9.3=vc9_4
 - psycopg2=2.7.1=py27_0
-- pymc3
 - pyparsing=2.2.0=py27_0
 - pyproj=1.9.5.1=py27_0
 - pyqt=5.6.0=py27_4
@@ -120,6 +119,7 @@ dependencies:
   - pycollada==0.5
   - pygments==2.2.0
   - pyliburo==0.1a12
+  - pymc3
   - pymf==0.1.9
   - pyshp==1.2.11
   - requests==2.18.3
