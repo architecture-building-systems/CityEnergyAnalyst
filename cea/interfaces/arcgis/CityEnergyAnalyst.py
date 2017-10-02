@@ -2160,9 +2160,6 @@ class SensitivityDemandSimulateTool(object):
             parameterType="Required",
             multiValue=True,
             direction="Input")
-        output_parameters.filter.list = ['Eauxf_MWhyr', 'Eauxf0_kW', 'Eauxf_ve_MWhyr', 'Eauxf_ve0_kW', 'Ef_MWhyr',
-                                         'Ef0_kW', 'QCf_MWhyr', 'QCf0_kW', 'Qcsf_MWhyr', 'Qcsf0_kW', 'QEf_MWhyr',
-                                         'QEf0_kW', 'QHf_MWhyr', 'QHf0_kW', 'Qhsf_MWhyr', 'Qhsf0_kW']
 
         return [scenario_path, weather_name, samples_folder, simulation_folder, num_simulations, sample_index,
                 output_parameters]
