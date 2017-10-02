@@ -119,6 +119,7 @@ dependencies:
   - pycollada==0.5
   - pygments==2.2.0
   - pyliburo==0.1a12
+  - pymc3
   - pymf==0.1.9
   - pyshp==1.2.11
   - requests==2.18.3

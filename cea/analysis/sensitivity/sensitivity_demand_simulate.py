@@ -9,6 +9,7 @@ This script runs the samples `--sample-index` through `--sample-index + --number
 out to the samples folder as files of the form `results.$i.csv` (with `$i` set to the index into the samples array).
 """
 
+from __future__ import division
 import os
 import shutil
 import pickle
