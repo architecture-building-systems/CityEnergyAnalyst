@@ -88,15 +88,29 @@ def run_as_script():
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
-    list_building_names = building_properties.list_building_names()
-    urban_input_matrix, urban_taget_matrix=input_prepare_main(list_building_names, locator, target_parameters, gv)
-    save_inputs=pd.DataFrame(urban_input_matrix)
-    save_targets=pd.DataFrame(urban_taget_matrix)
-    temp_file_inputs = r'C:\reference-case-open\baseline\outputs\data\calibration\inputs.csv'
-    save_inputs.to_csv(temp_file_inputs)
-    temp_file_targets = r'C:\reference-case-open\baseline\outputs\data\calibration\targets.csv'
-    save_targets.to_csv(temp_file_targets)
+    #building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
+    #list_building_names = building_properties.list_building_names()
+    from cea.demand.calibration.nn_generator.nn_settings import number_samples
+    #urban_input_matrix, urban_taget_matrix=input_prepare_main(list_building_names, locator, target_parameters, gv)
+    #save_inputs=pd.DataFrame(urban_input_matrix)
+    #save_targets=pd.DataFrame(urban_taget_matrix)
+    #temp_file_inputs = r'C:\reference-case-open\baseline\outputs\surrogate_model\inputs_outputs\inputs.csv'
+    #save_inputs.to_csv(temp_file_inputs)
+    #temp_file_targets = r'C:\reference-case-open\baseline\outputs\surrogate_model\inputs_outputs\targets.csv'
+    #save_targets.to_csv(temp_file_targets)
+    nn_inout_path = locator.get_nn_inout_folder()
+    for i in range (number_samples):
+        file_path_inputs = os.path.join(nn_inout_path, "input0.csv" % locals())
+        file_path_targets = os.path.join(nn_inout_path, "target0.csv" % locals())
+        batch_input_matrix = np.asarray(pd.read_csv(file_path_inputs))
+        batch_taget_matrix = np.asarray(pd.read_csv(file_path_targets))
+        if i<1:
+            urban_input_matrix=batch_input_matrix
+            urban_taget_matrix=batch_taget_matrix
+        else:
+            urban_input_matrix=np.concatenate((urban_input_matrix,batch_input_matrix),axis=0)
+            urban_taget_matrix=np.concatenate((urban_taget_matrix,batch_taget_matrix),axis=0)
+
     neural_trainer(urban_input_matrix, urban_taget_matrix, locator)
 
 if __name__ == '__main__':
