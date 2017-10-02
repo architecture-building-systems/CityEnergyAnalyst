@@ -376,6 +376,59 @@ def test(args):
         traceback.print_exc()
 
 
+def sensitivity_demand_samples(args):
+    """Run the sensitivity demand samples script"""
+    import cea.analysis.sensitivity.sensitivity_demand_samples
+
+    sampler_parameters = {}
+    if args.method == 'morris':
+        sampler_parameters['grid_jump'] = int(args.grid_jump)
+        sampler_parameters['num_levels'] = int(args.num_levels)
+    elif args.method == 'sobol':
+        if args.calc_second_order == 'True':
+            sampler_parameters['calc_second_order'] = True
+        else:
+            sampler_parameters['calc_second_order'] = False
+
+    variable_groups = []
+
+    if args.envelope_flag == 'True':
+        variable_groups.append('ENVELOPE')
+    if args.indoor_comfort_flag == 'True':
+        variable_groups.append('INDOOR_COMFORT')
+    if args.internal_loads_flag == 'True':
+        variable_groups.append('INTERNAL_LOADS')
+
+    cea.analysis.sensitivity.sensitivity_demand_samples.run_as_script(method=args.method, num_samples=args.num_samples,
+                                                                      variable_groups=variable_groups,
+                                                                      sampler_parameters=sampler_parameters,
+                                                                      samples_folder=args.samples_folder)
+
+def sensitivity_demand_simulate(args):
+    """Run the sensitivity demand simulate script"""
+    import numpy as np
+    import cea.analysis.sensitivity.sensitivity_demand_simulate
+
+    # save output parameters
+    np.save(os.path.join(args.samples_folder, 'output_parameters.npy'), np.array(args.output_parameters))
+
+    cea.analysis.sensitivity.sensitivity_demand_simulate.simulate_demand_batch(sample_index=args.sample_index,
+                                                                               batch_size=args.num_simulations,
+                                                                               samples_folder=args.samples_folder,
+                                                                               scenario=args.scenario_path,
+                                                                               simulation_folder=args.simulation_folder,
+                                                                               weather=args.weather_path,
+                                                                               output_parameters=args.output_parameters)
+
+def sensitivity_demand_analyze(args):
+    """Run the sensitivity demand analyze script"""
+    import numpy as np
+    import cea.analysis.sensitivity.sensitivity_demand_analyze
+
+    cea.analysis.sensitivity.sensitivity_demand_analyze.analyze_sensitivity(samples_path=args.samples_path,
+                                                                            temporal_scale=args.temporal_scale)
+
+
 def extract_reference_case(args):
     """extract the reference case to a folder"""
     import zipfile
@@ -774,6 +827,50 @@ def main():
     dbf_to_excel_parser.add_argument('--input-path', help='DBF input file path')
     dbf_to_excel_parser.add_argument('--output-path', help='Excel output file path')
     dbf_to_excel_parser.set_defaults(func=dbf_to_excel)
+
+    sensitivity_demand_samples_parser = subparsers.add_parser('sensitivity-demand-samples',
+                                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    sensitivity_demand_samples_parser.add_argument('--method', help='Sampling method', required=True)
+    sensitivity_demand_samples_parser.add_argument('--num-samples', help='Number of samples', type=int, required=True)
+    sensitivity_demand_samples_parser.add_argument('--samples-folder', help='Folder to store samples', required=True)
+    sensitivity_demand_samples_parser.add_argument('--envelope-flag', help='Flag for envelope variables', required=True)
+    sensitivity_demand_samples_parser.add_argument('--indoor-comfort-flag', help='Flag for indoor comfort variables',
+                                                   required=True)
+    sensitivity_demand_samples_parser.add_argument('--internal-loads-flag', help='Flag for internal load variables',
+                                                   required=True)
+    sensitivity_demand_samples_parser.add_argument('--calc-second-order', help='Whether Sobol second order '
+                                                                               'sensitivities are included',
+                                                   required=False)
+    sensitivity_demand_samples_parser.add_argument('--grid-jump', help='Grid jump for Morris method', required=False)
+    sensitivity_demand_samples_parser.add_argument('--num-levels', help='Number of grid levels for Morris method',
+                                                   required=False)
+    sensitivity_demand_samples_parser.set_defaults(func=sensitivity_demand_samples)
+
+    sensitivity_demand_simulate_parser = subparsers.add_parser('sensitivity-demand-simulate',
+                                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    sensitivity_demand_simulate_parser.add_argument('--scenario-path', help='Path to scenario to analyze',
+                                                    required=True)
+    sensitivity_demand_simulate_parser.add_argument('--weather-path', help='Path to weather file', required=True)
+    sensitivity_demand_simulate_parser.add_argument('--samples-folder', help='Folder where samples are stored',
+                                                   required=True)
+    sensitivity_demand_simulate_parser.add_argument('--simulation-folder', help='Folder to copy the reference case to '
+                                                                               'for simulation', required=True)
+    sensitivity_demand_simulate_parser.add_argument('--num-simulations', help='Number of simulations to perform',
+                                                   type=int, required=True)
+    sensitivity_demand_simulate_parser.add_argument('--sample-index', help='Zero-based index into the samples list to'
+                                                                          'simulate', type=int, required=True)
+    sensitivity_demand_simulate_parser.add_argument('--output-parameters', nargs='+',
+                                                    help='Output parameters for sensitivity analysis', required=True)
+    sensitivity_demand_simulate_parser.set_defaults(func=sensitivity_demand_simulate)
+
+    sensitivity_demand_analyze_parser = subparsers.add_parser('sensitivity-demand-analyze',
+                                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    sensitivity_demand_analyze_parser.add_argument('--samples-path', help='Folder to place the output files '
+                                                                            '(samples.npy, problem.pickle) in',
+                                                    required=True)
+    sensitivity_demand_analyze_parser.add_argument('--temporal-scale', help='Temporal scale of analysis '
+                                                                            '(monthly or yearly)', required=True)
+    sensitivity_demand_analyze_parser.set_defaults(func=sensitivity_demand_analyze)
 
     parsed_args = parser.parse_args()
     parsed_args.func(parsed_args)

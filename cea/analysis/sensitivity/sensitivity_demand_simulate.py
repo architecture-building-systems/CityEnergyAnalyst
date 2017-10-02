@@ -188,7 +188,7 @@ def main():
     """
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--sample-index', help='Zero-based index into the samples list so simulate', type=int)
+    parser.add_argument('-i', '--sample-index', help='Zero-based index into the samples list to simulate', type=int)
     parser.add_argument('-n', '--number-of-simulations', type=int, default=1,
                         help='number of simulations to perform, default 1')
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder (required)', required=True)
@@ -198,8 +198,7 @@ def main():
                         help='folder to copy the reference case to for simulation')
     parser.add_argument('-w', '--weather', help='Path to the weather file (omit for default)')
     parser.add_argument('-o', '--output-parameters', help='output parameters to use', nargs='+',
-                        default=['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'QEf_MWhyr', 'QHf0_kW', 'QCf0_kW',
-                                 'Ef0_kW'])
+                        default=['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'QEf_MWhyr', 'QHf0_kW', 'QCf0_kW', 'Ef0_kW'])
     args = parser.parse_args()
 
     # save output parameters
