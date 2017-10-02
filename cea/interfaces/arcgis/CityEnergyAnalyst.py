@@ -8,10 +8,10 @@ we would decouple the python version used by CEA from the ArcGIS version.
 
 See the script ``install_toolbox.py`` for the mechanics of installing the toolbox into the ArcGIS system.
 """
-import os
+import os   
 import subprocess
 import tempfile
-import arcpy
+import arcpy  # NOTE to developers: this is provided by ArcGIS after doing `cea install-toolbox`
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -33,6 +33,7 @@ class Toolbox(object):
                       OperationTool, EmbodiedTool, MobilityTool, PhotovoltaicPannelsTool, SolarCollectorPanelsTool,
                       PhotovoltaicThermalPanelsTool, DemandGraphsTool, ScenarioPlotsTool, RadiationTool,
                       RadiationDaysimTool, HeatmapsTool, DbfToExcelTool, ExcelToDbfTool, ExtractReferenceCaseTool,
+                      SensitivityDemandSamplesTool, SensitivityDemandSimulateTool, SensitivityDemandAnalyzeTool,
                       TestTool]
 
 
@@ -1947,6 +1948,379 @@ class HeatmapsTool(object):
             file_to_analyze = os.path.join(_cli_output(scenario_path, 'locate', 'get_lca_emissions_results_folder'),
                                            file_to_analyze)
         run_cli(scenario_path, 'heatmaps', '--file-to-analyze', file_to_analyze, '--analysis-fields', *analysis_fields)
+
+# Sensitivity Analysis Tools
+
+class SensitivityDemandSamplesTool(object):
+    def __init__(self):
+        self.label = 'Create Samples'
+        self.category = 'Sensitivity Analysis'
+        self.description = 'Create samples for sensitivity analysis'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        method = arcpy.Parameter(
+            displayName="Sampling method",
+            name="method",
+            datatype="String",
+            parameterType="Required",
+            direction="Input")
+        method.filter.list = ['Morris', 'Sobol']
+        method.enabled = True
+
+        num_samples = arcpy.Parameter(
+            displayName="Sample size",
+            name="num_samples",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        num_samples.value = 1
+
+        variable_groups = arcpy.Parameter(
+            displayName="Groups of variables to analyze",
+            name="variable_groups",
+            datatype="String",
+            parameterType="Required",
+            multiValue=True,
+            direction="Input")
+        variable_groups.filter.list = ['Envelope variables', 'Indoor comfort variables', 'Internal load variables']
+
+        grid_jump = arcpy.Parameter(
+            displayName="Grid jump size for Morris method",
+            name="grid_jump",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        grid_jump.enabled = False
+        grid_jump.value = 2
+        grid_jump.parameterDependencies = ['method']
+
+        num_levels = arcpy.Parameter(
+            displayName="Number of grid levels for Morris method",
+            name="num_levels",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        num_levels.enabled = False
+        num_levels.value = 4
+        num_levels.parameterDependencies = ['method']
+
+        calc_second_order = arcpy.Parameter(
+            displayName="Calculate second-order sensitivities for Sobol method",
+            name="calc_second_order",
+            datatype="GPBoolean",
+            parameterType="Required",
+            direction="Input")
+        calc_second_order.enabled = False
+        calc_second_order.value = False
+        calc_second_order.parameterDependencies = ['method']
+
+        samples_folder = arcpy.Parameter(
+            displayName="Folder in which samples will be saved",
+            name="samples_folder",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        return [method, num_samples, variable_groups, grid_jump, num_levels, calc_second_order, samples_folder]
+
+    def updateParameters(self, parameters):
+        # method
+        method = parameters[0].valueAsText
+        if method not in ['Morris', 'Sobol']:
+            parameters[0].setErrorMessage('Invalid method %s' % parameters[0])
+
+        # sampler parameters
+        grid_jump = parameters[3]
+        num_levels = parameters[4]
+        calc_second_order = parameters[5]
+        if method == 'Morris':
+            grid_jump.enabled = True
+            num_levels.enabled = True
+            calc_second_order.enabled = False
+        elif method == 'Sobol':
+            grid_jump.enabled = False
+            num_levels.enabled = False
+            calc_second_order.enabled = True
+
+        # samples folder
+        samples_folder = parameters[6].valueAsText
+        if samples_folder is None:
+            return
+        if not os.path.exists(samples_folder):
+            parameters[6].setErrorMessage('Samples folder not found: %s' % samples_folder)
+            return
+
+        return
+
+    def execute(self, parameters, _):
+        method = parameters[0].valueAsText
+        num_samples = int(parameters[1].valueAsText)
+        # variable groups
+        variables = parameters[2].values
+        envelope_flag = False
+        indoor_comfort_flag = False
+        internal_loads_flag = False
+        if 'Envelope variables' in variables:
+            envelope_flag = True
+        if 'Indoor comfort variables' in variables:
+            indoor_comfort_flag = True
+        if 'Internal load variables' in variables:
+            internal_loads_flag = True
+
+        samples_folder = parameters[6].valueAsText
+
+        if method == 'Morris':
+            method = 'morris'
+            grid_jump = int(parameters[3].valueAsText)
+            num_levels = int(parameters[4].valueAsText)
+        elif method == 'Sobol':
+            method = 'sobol'
+            calc_second_order = parameters[5].value
+        else:
+            raise
+
+        args = [None, 'sensitivity-demand-samples', '--method', method, '--num-samples', num_samples,
+                '--samples-folder', samples_folder, '--envelope-flag', envelope_flag, '--indoor-comfort-flag',
+                indoor_comfort_flag, '--internal-loads-flag', internal_loads_flag]
+
+        if method == 'sobol':
+            args.append('--calc-second-order')
+            args.append(calc_second_order)
+        if method == 'morris':
+            args.append('--grid-jump')
+            args.append(grid_jump)
+            args.append('--num-levels')
+            args.append(num_levels)
+
+        run_cli(*args)
+
+class SensitivityDemandSimulateTool(object):
+    def __init__(self):
+        self.label = 'Demand Simulation'
+        self.category = 'Sensitivity Analysis'
+        self.description = 'Simulate demand for sensitivity analysis samples'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+
+        scenario_path = arcpy.Parameter(
+            displayName="Path to the scenario",
+            name="scenario_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        weather_name = arcpy.Parameter(
+            displayName="Weather file (choose from list or enter full path to .epw file)",
+            name="weather_name",
+            datatype="String",
+            parameterType="Required",
+            direction="Input")
+        weather_name.filter.list = get_weather_names()
+
+        samples_folder = arcpy.Parameter(
+            displayName="Folder that contains the samples. The results will also be saved in this folder.",
+            name="samples_folder",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        simulation_folder = arcpy.Parameter(
+            displayName="Folder to which to copy the scenario folder for simulation",
+            name="simulation_folder",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        num_simulations = arcpy.Parameter(
+            displayName="Number of simulations to perform",
+            name="num_simulations",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        num_simulations.value = 1
+        num_simulations.parameterDependencies = ['samples_folder']
+        num_simulations.enabled = False
+
+        sample_index = arcpy.Parameter(
+            displayName="Sample from which to start simulations",
+            name="sample_index",
+            datatype="GPLong",
+            parameterType="Required",
+            direction="Input")
+        sample_index.value = 1
+        sample_index.parameterDependencies = ['samples_folder']
+        sample_index.enabled = False
+
+        output_parameters = arcpy.Parameter(
+            displayName="Output parameters for sensitivity analysis",
+            name="output_parameters",
+            datatype="String",
+            parameterType="Required",
+            multiValue=True,
+            direction="Input")
+        output_parameters.filter.list = sorted(['QEf_MWhyr', 'QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'Qhsf_MWhyr', 'Qcsf_MWhyr',
+                                         'QEf0_kW', 'QHf0_kW', 'QCf0_kW', 'Ef0_kW', 'Qhsf0_kW', 'Qcsf0_kW'])
+
+        return [scenario_path, weather_name, samples_folder, simulation_folder, num_simulations, sample_index,
+                output_parameters]
+
+    def updateParameters(self, parameters):
+        import numpy as np
+
+        # scenario_path
+        scenario_path = parameters[0].valueAsText
+        if scenario_path is None:
+            return
+        elif not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+
+        # num_simulations, sample_index
+        samples_folder = parameters[2].valueAsText
+        num_simulations = parameters[4]
+        sample_index = parameters[5]
+        if samples_folder is None:
+            return
+        elif not os.path.exists(samples_folder):
+            parameters[2].setErrorMessage('Samples folder not found: %s' % samples_folder)
+            return
+        else:
+            samples_file = os.path.join(samples_folder,'samples.npy')
+            if not os.path.exists(samples_file):
+                parameters[2].setErrorMessage('Samples file not found in %s' % samples_folder)
+                return
+            else:
+                if not num_simulations.enabled:
+                    # only overwrite on first try
+                    num_simulations.enabled = True
+                    num_simulations.value = np.load(os.path.join(samples_folder,'samples.npy')).shape[0]
+                    sample_index.enabled = True
+                return
+
+    def updateMessages(self, parameters):
+        # scenario_path
+        scenario_path = parameters[0].valueAsText
+        if scenario_path is None:
+            return
+        elif not os.path.exists(scenario_path):
+            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            return
+
+        # samples_folder
+        samples_folder = parameters[2].valueAsText
+        if samples_folder is None:
+            return
+        if not os.path.exists(samples_folder):
+            parameters[2].setErrorMessage('Samples folder not found: %s' % samples_folder)
+            return
+        else:
+            samples_file = os.path.join(samples_folder, 'samples.npy')
+            if not os.path.exists(samples_file):
+                parameters[2].setErrorMessage('Samples file not found in %s' % samples_folder)
+                return
+            return
+
+    def execute(self, parameters, _):
+
+        # scenario_path
+        scenario_path = parameters[0].valueAsText
+
+        # weather_path
+        weather_name = parameters[1].valueAsText
+        if weather_name in get_weather_names():
+            weather_path = get_weather_path(weather_name)
+        elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
+            weather_path = weather_name
+        else:
+            weather_path = get_weather_path()
+
+        # samples_folder
+        samples_folder = parameters[2].valueAsText
+
+        # simulation_folder
+        simulation_folder = parameters[3].valueAsText
+
+        # num_simulations
+        num_simulations = int(parameters[4].value)
+
+        # sample_index
+        sample_index = int(parameters[5].value) - 1
+
+        # output_parameters
+        output_parameters = parameters[6].valueAsText.split(';')
+
+        run_cli(None, 'sensitivity-demand-simulate', '--scenario-path', scenario_path, '--weather-path', weather_path,
+                '--samples-folder', samples_folder, '--simulation-folder', simulation_folder, '--num-simulations',
+                num_simulations, '--sample-index', sample_index, '--output-parameters', *output_parameters)
+
+class SensitivityDemandAnalyzeTool(object):
+    def __init__(self):
+        self.label = 'Run Analysis'
+        self.category = 'Sensitivity Analysis'
+        self.description = 'Analyze the results in the samples folder and write them out to an Excel file.'
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+
+        samples_path = arcpy.Parameter(
+            displayName="Folder that contains the samples created by the Create Samples tool and the results of the "
+                        "Demand Simulation tool.",
+            name="samples_path",
+            datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+
+        temporal_scale = arcpy.Parameter(
+            displayName="Temporal scale at which to do the analysis",
+            name="temporal_scale",
+            datatype="String",
+            parameterType="Required",
+            direction="Input")
+        temporal_scale.filter.list = ['Yearly', 'Monthly']
+        temporal_scale.enabled = True
+
+        return [samples_path, temporal_scale]
+
+    def updateMessages(self, parameters):
+        # samples_path
+        samples_path = parameters[0].valueAsText
+        if samples_path is None:
+            return
+        elif not os.path.exists(samples_path):
+            parameters[0].setErrorMessage('Samples folder not found: %s' % samples_path)
+            return
+        else:
+            samples_file = os.path.join(samples_path, 'samples.npy')
+            if not os.path.exists(samples_file):
+                parameters[2].setErrorMessage('Samples file not found in %s' % samples_path)
+                return
+            return
+
+        # temporal_scale
+        temporal_scale = parameters[1].valueAsText
+        if temporal_scale is None:
+            return
+        if not temporal_scale not in ['Yearly', 'Monthly']:
+            parameters[1].setErrorMessage('Invalid temporal scale: %s' % temporal_scale)
+            return
+
+    def execute(self, parameters, _):
+
+        # samples_path
+        samples_path = parameters[0].valueAsText
+
+        # temporal_scale
+        temporal_scale = parameters[1].valueAsText
+        if temporal_scale == 'Yearly':
+            temporal_scale = 'yearly'
+        else:
+            temporal_scale = 'monthly'
+
+        args = [None, 'sensitivity-demand-analyze', '--samples-path', samples_path, '--temporal-scale', temporal_scale]
+
+        run_cli(*args)
 
 
 class ExcelToDbfTool(object):
