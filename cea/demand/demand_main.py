@@ -88,8 +88,9 @@ def demand_calculation(locator, weather_path, gv, use_dynamic_infiltration_calcu
 
     if gv.print_totals:
         totals, time_series = gv.demand_writer.write_totals_csv(building_properties, locator)
-        gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
         return totals, time_series
+
+    gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
 
 
 def thermal_loads_all_buildings(building_properties, date, gv, locator, list_building_names, usage_schedules,
