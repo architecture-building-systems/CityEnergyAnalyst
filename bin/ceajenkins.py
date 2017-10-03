@@ -9,6 +9,7 @@ import subprocess
 import socket
 import sys
 import traceback
+import os
 
 
 class AppServerSvc(win32serviceutil.ServiceFramework):
@@ -43,7 +44,7 @@ class AppServerSvc(win32serviceutil.ServiceFramework):
             servicemanager.LogInfoMsg('restarting subprocess')
             try:
                 output = subprocess.check_output(
-                    [r'%APPDATA%\npm\lt.cmd', '--port', '8080', '--subdomain', 'ceajenkins'],
+                    [os.path.expandvars(r'%APPDATA%\npm\lt.cmd'), '--port', '8080', '--subdomain', 'ceajenkins'],
                     stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError:
                 servicemanager.LogInfoMsg('restarting localtunnel')
