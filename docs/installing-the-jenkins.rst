@@ -1,6 +1,8 @@
 How to set up the Jenkins server on a new PC
 ============================================
 
+NOTE: you only need to do this when the current Jenkins server dies.
+
 	* download & install jenkins from https://jenkins.io
 
 		* LTS version Jenkins 2.60.3 for Windows
