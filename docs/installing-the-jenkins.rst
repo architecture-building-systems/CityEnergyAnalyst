@@ -1,3 +1,5 @@
+How to set up the Jenkins server on a new PC
+============================================
 
 	* download & install jenkins from https://jenkins.io
 
