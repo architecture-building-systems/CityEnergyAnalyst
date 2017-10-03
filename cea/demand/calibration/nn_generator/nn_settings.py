@@ -1,4 +1,5 @@
 nn_delay=1
+nn_passes=100
 target_parameters = ['Qhsf_kWh', 'Qcsf_kWh', 'Qwwf_kWh', 'Ef_kWh', 'T_int_C']
 random_variables = ['win_wall','Cm_Af','n50',
                     'U_roof','a_roof','U_wall','a_wall','U_base','U_win','G_win','rf_sh',

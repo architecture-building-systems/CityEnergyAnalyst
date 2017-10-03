@@ -63,6 +63,8 @@ def sampling_main(locator, random_variables, target_parameters, list_building_na
         data_file_targets = pd.DataFrame(urban_taget_matrix)
         data_file_targets.to_csv(file_path_targets,header=False,index=False)
 
+    return urban_input_matrix, urban_taget_matrix
+
 
 def run_as_script():
     gv = cea.globalvar.GlobalVariables()
