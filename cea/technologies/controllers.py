@@ -4,6 +4,7 @@ controllers
 """
 from __future__ import division
 import numpy as np
+from cea.utilities import helpers
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -19,7 +20,7 @@ __status__ = "Production"
 
 def calc_simple_temp_control(tsd, prop_comfort, limit_inf_season, limit_sup_season, weekday):
     def get_hsetpoint(a, b, Thset, Thsetback, weekday):
-        if (b < limit_inf_season or b >= limit_sup_season):
+        if helpers.is_heatingseason_hoy(b):  # FIXME  # b < limit_inf_season or b >= limit_sup_season):
             if a == 0:
                 if 5 <= weekday <= 6:  # system is off on the weekend
                     return np.nan  # huge so the system will be off
@@ -31,7 +32,7 @@ def calc_simple_temp_control(tsd, prop_comfort, limit_inf_season, limit_sup_seas
             return np.nan  # huge so the system will be off
 
     def get_csetpoint(a, b, Tcset, Tcsetback, weekday):
-        if limit_inf_season <= b < limit_sup_season:
+        if helpers.is_coolingseason_hoy(b):  # FIXME  #limit_inf_season <= b < limit_sup_season:
             if a == 0:
                 if 5 <= weekday <= 6:  # system is off on the weekend
                     return np.nan  # huge so the system will be off

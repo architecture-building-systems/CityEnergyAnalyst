@@ -68,7 +68,7 @@ def calc_Qgain_lat(schedules, X_ghp, Af, sys_e_cooling, sys_e_heating):
     # calc yearly humidity gains based on occupancy schedule and specific humidity gains for each occupancy type in the
     # building
     humidity_schedule = schedules['X'] * X_ghp  # in g/h/m2
-    if sys_e_heating == 'T3' or sys_e_cooling == 'T3':
+    if sys_e_heating == 'T3' or sys_e_cooling in {'T2', 'T3'}:  # FIXME: workaround treat T2=mini split as T3= centralized -> change to is_ac()
         w_int = humidity_schedule * Af / (1000 * 3600)  # kg/s
     else:
         w_int = np.zeros(8760)  # FIXME: should humidity gains also be considered for cooling = 'T2' ???
@@ -189,7 +189,7 @@ def calc_temperatures_emission_systems(tsd, bpr, Qcsf_0, Qhsf_0, gv):
                                                                                bpr.building_systems['Ths_sup_0'], bpr.building_systems['Ths_re_0'], tsd['ma_sup_hs'],ma_sup_0,
                                                                                Ta_sup_0, Ta_re_0, gv.Cpa, gv)
 
-    if bpr.hvac['type_cs'] == 'T3':  # air conditioning
+    if bpr.hvac['type_cs'] in {'T2', 'T3'}:  # air conditioning  # FIXME: workaround: treat T2= mini split as T3= centralized
 
         index = np.where(tsd['Qcsf'] == Qcsf_0)
         ma_sup_0 = tsd['ma_sup_cs'][index[0][0]]

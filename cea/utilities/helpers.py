@@ -223,8 +223,8 @@ def is_heatingseason_hoy(hoy):
         location = 'CH'
 
         #TODO: get start heating season f(location)
-        seasonhours = [3216, 6192]
-
+        # seasonhours = [3216, 6192]
+        seasonhours = [0, 8670]  # FIXME Singapore workaround
         if hoy > seasonhours[1] or hoy < seasonhours[0]:
             return True
         else:
