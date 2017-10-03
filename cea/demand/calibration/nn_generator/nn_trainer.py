@@ -14,9 +14,6 @@ from cea.demand.demand_main import properties_and_schedule
 import theano
 import multiprocessing
 
-num_cpu_threads=multiprocessing.cpu_count()
-theano.config.openmp = True
-OMP_NUM_THREADS=num_cpu_threads
 
 def neural_trainer(inputs_x,targets_t,locator):
     '''
@@ -26,6 +23,7 @@ def neural_trainer(inputs_x,targets_t,locator):
     :param locator:
     :return:
     '''
+
     np.random.seed(7)
     inputs_x_rows, inputs_x_cols = inputs_x.shape
     #scaling and normalizing inputs
@@ -62,6 +60,7 @@ def neural_trainer(inputs_x,targets_t,locator):
 
     # multi-layer perceptron
     model = Sequential()
+
     model.add(Dense(hidden_units_L1, input_dim=encoded_x_cols, activation='relu')) #logistic layer
 
     model.add(Dense(hidden_units_L2, activation='relu')) #logistic layer
@@ -74,9 +73,9 @@ def neural_trainer(inputs_x,targets_t,locator):
     estop = EarlyStopping(monitor='val_loss', min_delta=0, patience=e_stop_limit, verbose=1, mode='auto')
 
     # Fit the model
-    model.fit(inputs_x, targets_t, validation_split=validation_split, epochs=1500, shuffle=True, batch_size=100000,callbacks=[estop])
+    model.fit(inputs_x, targets_t, validation_split=validation_split, epochs=2, shuffle=True, batch_size=100000,callbacks=[estop])
 
-    json_NN_path , weight_NN_path = locator.get_neural_network_folder()
+    json_NN_path , weight_NN_path = locator.get_neural_network_model()
     model_json = model.to_json()
     with open(json_NN_path, "w") as json_file:
         json_file.write(model_json)
@@ -85,6 +84,9 @@ def neural_trainer(inputs_x,targets_t,locator):
     print("neural network model saved")
 
 def run_as_script():
+    num_cpu_threads = multiprocessing.cpu_count()
+    theano.config.openmp = True
+    OMP_NUM_THREADS = int(1)
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
@@ -99,9 +101,9 @@ def run_as_script():
     #temp_file_targets = r'C:\reference-case-open\baseline\outputs\surrogate_model\inputs_outputs\targets.csv'
     #save_targets.to_csv(temp_file_targets)
     nn_inout_path = locator.get_nn_inout_folder()
-    for i in range (number_samples):
-        file_path_inputs = os.path.join(nn_inout_path, "input0.csv" % locals())
-        file_path_targets = os.path.join(nn_inout_path, "target0.csv" % locals())
+    for i in range (2):
+        file_path_inputs = os.path.join(nn_inout_path, "input%(i)s.csv" % locals())
+        file_path_targets = os.path.join(nn_inout_path, "target%(i)s.csv" % locals())
         batch_input_matrix = np.asarray(pd.read_csv(file_path_inputs))
         batch_taget_matrix = np.asarray(pd.read_csv(file_path_targets))
         if i<1:
@@ -111,6 +113,7 @@ def run_as_script():
             urban_input_matrix=np.concatenate((urban_input_matrix,batch_input_matrix),axis=0)
             urban_taget_matrix=np.concatenate((urban_taget_matrix,batch_taget_matrix),axis=0)
 
+        print(i)
     neural_trainer(urban_input_matrix, urban_taget_matrix, locator)
 
 if __name__ == '__main__':
