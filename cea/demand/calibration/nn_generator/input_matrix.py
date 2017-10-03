@@ -105,11 +105,14 @@ def get_cea_inputs(locator, building_name, gv):
 
     array_hvac = get_array_HVAC_variables(building)
 
-    building_array_D=np.concatenate((weather_array, array_cmfrt,array_int_load))
-    building_array_S = np.concatenate((array_geom, array_arch, array_hvac))
+    weather_array=np.transpose(weather_array)
+    array_cmfrt=np.transpose(array_cmfrt)
 
-    raw_nn_inputs_D=np.transpose(building_array_D)
-    raw_nn_inputs_S = np.transpose(building_array_S)
+    building_array_D=np.concatenate((weather_array, array_cmfrt,array_int_load), axis=1)
+    building_array_S = np.concatenate((array_geom, array_arch, array_hvac),axis=1)
+
+    raw_nn_inputs_D = building_array_D
+    raw_nn_inputs_S = building_array_S
     return raw_nn_inputs_D , raw_nn_inputs_S
 
 
@@ -130,7 +133,7 @@ def get_array_geometry_variables(building):
     array_sv = np.empty(8760)
     array_sv.fill(building.rc_model['surface_volume'])
     ### final array of geometry properties
-    array_geom = np.stack((array_Af, array_sv))
+    array_geom = np.column_stack((array_Af, array_sv))
     return array_geom
 
 
@@ -174,7 +177,7 @@ def get_array_architecture_variables(building, building_name, locator):
     array_rfsh = np.empty(8760)
     array_rfsh.fill(building.architecture.rf_sh)
     ### final array of architecture properties
-    array_arch = np.stack(
+    array_arch = np.column_stack(
         (array_wwr, array_cm, array_n50, array_Uroof, array_aroof, array_Uwall, array_awall, array_Ubase,
          array_Uwin, array_Gwin, array_rfsh))
     return array_arch
@@ -205,7 +208,7 @@ def get_array_internal_loads_variables(schedules, tsd):
     array_ve = tsd['ve']
     array_Vww = schedules['Vww']
     ### final array of internal loads
-    array_int_load = np.stack((array_electricity, array_sensible_gain, array_latent_gain, array_ve, array_Vww))
+    array_int_load = np.column_stack((array_electricity, array_sensible_gain, array_latent_gain, array_ve, array_Vww))
     return array_int_load
 
 
@@ -234,7 +237,7 @@ def get_array_HVAC_variables(building):
     array_ctrl_Qcs = np.empty(8760)
     array_ctrl_Qcs.fill(1 * (building.hvac['dT_Qcs']))
     ### final array of HVAC systems
-    array_hvac = np.stack((array_dThs_C, array_dTcs_C, array_economizer, array_win_vent, array_mech_vent,
+    array_hvac = np.column_stack((array_dThs_C, array_dTcs_C, array_economizer, array_win_vent, array_mech_vent,
                            array_heat_rec, array_night_flsh, array_ctrl_Qhs, array_ctrl_Qcs))
     return array_hvac
 
@@ -243,7 +246,7 @@ def run_as_script():
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    building_name = 'B01'
+    building_name = 'B155066'
     get_cea_inputs(locator=locator, building_name=building_name, gv=gv)
 
 if __name__ == '__main__':

@@ -53,24 +53,25 @@ def input_prepare_main(list_building_names, locator, target_parameters, gv):
                 urban_taget_matrix = np.concatenate((urban_taget_matrix, NN_target_ready))
 
     pool.close()
+    return urban_input_matrix, urban_taget_matrix
 
     # from cea.demand.calibration.nn_generator.input_matrix import input_prepare_multi_processing
     # for counter, building_name in enumerate(list_building_names):
     #     NN_input_ready, NN_target_ready =input_prepare_multi_processing(building_name, gv, locator, target_parameters)
-    #     check_nan=np.isnan(np.sum(NN_input_ready))
-    #     print (check_nan)
-    #     if counter == 0:
-    #         urban_input_matrix = NN_input_ready
-    #         urban_taget_matrix = NN_target_ready
-    #     else:
-    #         urban_input_matrix = np.concatenate((urban_input_matrix, NN_input_ready))
-    #         urban_taget_matrix = np.concatenate((urban_taget_matrix, NN_target_ready))
+    #     check_nan = 1 * (np.isnan(np.sum(NN_input_ready)))
+    #     if check_nan == 0:
+    #         if counter == 0:
+    #             urban_input_matrix = NN_input_ready
+    #             urban_taget_matrix = NN_target_ready
+    #         else:
+    #             urban_input_matrix = np.concatenate((urban_input_matrix, NN_input_ready))
+    #             urban_taget_matrix = np.concatenate((urban_taget_matrix, NN_target_ready))
     #
     #     print (counter)
+    #
+    #return urban_input_matrix, urban_taget_matrix
 
-    return urban_input_matrix, urban_taget_matrix
 
-    print (len(urban_input_matrix))
     # for counter, building_name in enumerate(list_building_names):
     #     NN_input_ready, NN_target_ready = input_prepare_multi_processing(building_name, gv, locator, target_parameters)
     #     if counter == 0:
