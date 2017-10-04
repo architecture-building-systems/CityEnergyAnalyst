@@ -339,31 +339,30 @@ class InputLocator(object):
         weather_names = [os.path.splitext(f)[0] for f in os.listdir(self.weather_path)]
         return weather_names
 
+    def _get_region_specific_db_file(self, folder, filename):
+        """Copy a region-specific file from the database to a scenario if it doesn't exist there yet and return the
+        full path"""
+        result_folder = self._ensure_folder(self.scenario_path, 'databases', folder)
+        result_file = os.path.join(result_folder, filename)
+        if not os.path.exists(result_file):
+            # copy it from the database
+            shutil.copyfile(os.path.join(self.db_path, self.config.region, folder, filename), result_file)
+        return result_file
+
     def get_archetypes_properties(self):
         """Returns the database of construction properties to be used by the data-helper. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        scenario_archetypes_folder = self._ensure_folder(self.scenario_path, 'input', 'archetypes')
-        archetypes_properties = os.path.join(scenario_archetypes_folder, 'construction_properties.xlsx')
-        if not os.path.exists(archetypes_properties):
-            # copy them from the database
-            shutil.copyfile(os.path.join(self.db_path, self.config.region, 'archetypes', 'construction_properties.xlsx'),
-                            archetypes_properties)
-        return archetypes_properties
+        return self._get_region_specific_db_file('archetypes', 'construction_properties.xlsx')
 
     def get_archetypes_schedules(self):
         """Returns the database of schedules to be used by the data-helper. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        scenario_archetypes_folder = self._ensure_folder(self.scenario_path, 'input', 'archetypes')
-        archetypes_schedules = os.path.join(scenario_archetypes_folder, 'occupancy_schedules.xlsx')
-        if not os.path.exists(archetypes_schedules):
-            # copy them from the database
-            shutil.copyfile(os.path.join(self.db_path, self.config.region, 'archetypes', 'occupancy_schedules.xlsx'),
-                            archetypes_schedules)
-        return archetypes_schedules
+        return self._get_region_specific_db_file('archetypes', 'occupancy_schedules.xlsx')
 
     def get_supply_systems_cost(self):
-        "path to supply systems cost present in cea/databases/systems"
-        return os.path.join(self.db_path, 'economics', 'supply_systems.xls')
+        """Returns the database of supply systems for cost analysis. These are copied
+        to the scenario if they are not yet present, based on the configured region for the scenario."""
+        return self._get_region_specific_db_file('economics', 'supply_systems.xls')
 
     def get_life_cycle_inventory_supply_systems(self):
         """databases/lifecycle/LCA_infrastructure.csv"""
