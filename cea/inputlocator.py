@@ -370,8 +370,9 @@ class InputLocator(object):
         return self._get_region_specific_db_file('lifecycle', 'LCA_infrastructure.xlsx')
 
     def get_life_cycle_inventory_building_systems(self):
-        """databases/lifecycle/LCA_infrastructure.csv"""
-        return os.path.join(self.db_path, 'lifecycle', 'LCA_buildings.xlsx')
+        """Returns the database of life cycle inventory for buildings systems. These are copied
+        to the scenario if they are not yet present, based on the configured region for the scenario."""
+        return self._get_region_specific_db_file('lifecycle', 'LCA_buildings.xlsx')
 
     def get_technical_emission_systems(self):
         """databases/Systems/emission_systems.csv"""
