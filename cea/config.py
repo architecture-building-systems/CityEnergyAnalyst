@@ -26,6 +26,10 @@ class Configuration(object):
         return self._parser.get('general', 'default-scenario')
 
     @property
+    def region(self):
+        return self._parser.get('general', 'region')
+
+    @property
     def weather(self):
         return self._parser.get('general', 'weather')
 

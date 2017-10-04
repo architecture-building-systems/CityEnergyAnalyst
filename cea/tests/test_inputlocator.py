@@ -4,11 +4,19 @@ import cea.inputlocator
 
 class TestInputLocator(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        cls.locator = cea.inputlocator.ReferenceCaseOpenLocator()
+
     def test_weather_names(self):
-        locator = cea.inputlocator.InputLocator(None)
-        self.assertTrue(len(locator.get_weather_names()) > 0)
+        self.assertTrue(len(self.locator.get_weather_names()) > 0)
 
     def test_weather(self):
-        locator = cea.inputlocator.InputLocator(None)
-        weather = locator.get_weather_names()[0]
-        self.assertTrue(os.path.exists(locator.get_weather(weather)))
+        for weather in self.locator.get_weather_names():
+            self.assertTrue(os.path.exists(self.locator.get_weather(weather)))
+
+    def test_get_archetypes_properties(self):
+        archetypes_properties = self.locator.get_archetypes_properties()
+        self.assertTrue(os.path.exists(archetypes_properties))
+        self.assertTrue(os.path.realpath(archetypes_properties).startswith(
+            os.path.realpath(self.locator.scenario_path)))
