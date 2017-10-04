@@ -89,8 +89,7 @@ def run_as_script(scenario_path=None, analysis_fields=["Ealf_kWh", "Qhsf_kWh", "
     import cea.globalvar
     import cea.inputlocator
     gv = cea.globalvar.GlobalVariables()
-    analysis_fields = ["Ealf_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh", "Qcs_lat_kWh",
-                       "Qhs_lat_kWh"]
+    analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
     if scenario_path is None:
         scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
