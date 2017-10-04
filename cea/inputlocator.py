@@ -2,6 +2,7 @@
 inputlocator.py - locate input files by name based on the reference folder structure.
 """
 import os
+import shutil
 import tempfile
 import cea.config
 
@@ -339,9 +340,15 @@ class InputLocator(object):
         return weather_names
 
     def get_archetypes_properties(self):
-        """db/Archetypes/Archetypes_properties.xlsx
-        path to database of archetypes file Archetypes_properties.xlsx"""
-        return os.path.join(self.db_path, 'archetypes', 'construction_properties.xlsx')
+        """Returns the database of construction properties to be used by the data-helper. These are copied
+        to the scenario if they are not yet present."""
+        scenario_archetypes_folder = self._ensure_folder(self.scenario_path, 'input', 'archetypes')
+        archetypes_properties = os.path.join(scenario_archetypes_folder, 'construction_properties.xlsx')
+        if not os.path.exists(archetypes_properties):
+            # copy them from the database
+            shutil.copyfile(os.path.join(self.db_path, self.config.region, 'archetypes', 'construction_properties.xlsx'),
+                            archetypes_properties)
+        return archetypes_properties
 
     def get_archetypes_schedules(self):
         """db/Archetypes/Archetypes_schedules.xlsx
