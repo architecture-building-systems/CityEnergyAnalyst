@@ -3,6 +3,7 @@ inputlocator.py - locate input files by name based on the reference folder struc
 """
 import os
 import tempfile
+import cea.config
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -23,6 +24,7 @@ class InputLocator(object):
         self.scenario_path = scenario_path
         self.db_path = os.path.join(os.path.dirname(__file__), 'databases')
         self.weather_path = os.path.join(self.db_path, 'weather')
+        self.config = cea.config.Configuration(scenario=scenario_path)
 
     @staticmethod
     def _ensure_folder(*components):
