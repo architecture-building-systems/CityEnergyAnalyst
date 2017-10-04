@@ -348,7 +348,7 @@ class InputLocator(object):
 
     def get_supply_systems_cost(self):
         "path to supply systems cost present in cea/databases/systems"
-        return os.path.join(self.db_path, 'systems', 'supply_systems.xls')
+        return os.path.join(self.db_path, 'economics', 'supply_systems.xls')
 
     def get_life_cycle_inventory_supply_systems(self):
         """databases/lifecycle/LCA_infrastructure.csv"""
@@ -359,11 +359,11 @@ class InputLocator(object):
         return os.path.join(self.db_path, 'lifecycle', 'LCA_buildings.xlsx')
 
     def get_technical_emission_systems(self):
-        """databases/CH/Systems/emission_systems.csv"""
+        """databases/Systems/emission_systems.csv"""
         return os.path.join(self.db_path, 'systems', 'emission_systems.xls')
 
     def get_envelope_systems(self):
-        """databases/CH/Systems/emission_systems.csv"""
+        """databases/Systems/emission_systems.csv"""
         return os.path.join(self.db_path, 'systems', 'envelope_systems.xls')
 
     def get_thermal_networks(self):
@@ -371,12 +371,8 @@ class InputLocator(object):
         return os.path.join(self.db_path, 'systems', 'thermal_networks.xls')
 
     def get_data_benchmark(self):
-        """databases/CH/Benchmarks/benchmark_targets.xls"""
+        """databases/Benchmarks/benchmark_targets.xls"""
         return os.path.join(self.db_path, 'benchmarks', 'benchmark_2000W.xls')
-
-    def get_data_mobility(self):
-        """databases/CH/Benchmarks/mobility.xls"""
-        return os.path.join(self.db_path, 'benchmarks', 'mobility.xls')
 
     def get_uncertainty_db(self):
         """databases/CH/Uncertainty/uncertainty_distributions.xls"""
@@ -390,8 +386,8 @@ class InputLocator(object):
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'uncertainty')
 
     def get_supply_systems_database(self):
-        """databases/CH/Systems/etechnologies.xls"""
-        return os.path.join(self.db_path, 'systems', 'supply_systems.xls')
+        """databases/Systems/supply_systems.xls"""
+        return os.path.join(self.db_path, 'economics', 'supply_systems.xls')
 
     # INPUTS
 
