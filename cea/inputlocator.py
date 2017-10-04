@@ -400,10 +400,6 @@ class InputLocator(object):
     def get_uncertainty_results_folder(self):
         return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'uncertainty')
 
-    def get_supply_systems_database(self):
-        """databases/Systems/supply_systems.xls"""
-        return os.path.join(self.db_path, 'economics', 'supply_systems.xls')
-
     # INPUTS
 
     def get_building_geometry_folder(self):

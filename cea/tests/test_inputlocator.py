@@ -26,3 +26,9 @@ class TestInputLocator(unittest.TestCase):
         self.assertTrue(os.path.exists(archetypes_schedules))
         self.assertTrue(os.path.realpath(archetypes_schedules).startswith(
             os.path.realpath(self.locator.scenario_path)))
+
+    def test_get_supply_systems_cost(self):
+        archetypes_schedules = self.locator.get_archetypes_schedules()
+        self.assertTrue(os.path.exists(archetypes_schedules))
+        self.assertTrue(os.path.realpath(archetypes_schedules).startswith(
+            os.path.realpath(self.locator.scenario_path)))
