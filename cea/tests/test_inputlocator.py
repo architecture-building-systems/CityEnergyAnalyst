@@ -46,3 +46,10 @@ class TestInputLocator(unittest.TestCase):
         self.assertTrue(os.path.realpath(life_cycle_inventory_building_systems).startswith(
             os.path.realpath(self.locator.scenario_path)),
             msg='Path not in scenario: %s' % life_cycle_inventory_building_systems)
+
+    def test_get_data_benchmark(self):
+        data_benchmark = self.locator.get_data_benchmark()
+        self.assertTrue(os.path.exists(data_benchmark))
+        self.assertTrue(os.path.realpath(data_benchmark).startswith(
+            os.path.realpath(self.locator.scenario_path)),
+            msg='Path not in scenario: %s' % data_benchmark)

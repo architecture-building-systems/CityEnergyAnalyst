@@ -387,8 +387,9 @@ class InputLocator(object):
         return os.path.join(self.db_path, 'systems', 'thermal_networks.xls')
 
     def get_data_benchmark(self):
-        """databases/Benchmarks/benchmark_targets.xls"""
-        return os.path.join(self.db_path, 'benchmarks', 'benchmark_2000W.xls')
+        """Returns the database of life cycle inventory for supply systems. These are copied
+        to the scenario if they are not yet present, based on the configured region for the scenario."""
+        return self._get_region_specific_db_file('benchmarks', 'benchmark_2000W.xls')
 
     def get_uncertainty_db(self):
         """databases/CH/Uncertainty/uncertainty_distributions.xls"""
