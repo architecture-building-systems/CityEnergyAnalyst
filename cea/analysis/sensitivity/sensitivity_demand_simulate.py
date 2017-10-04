@@ -110,7 +110,7 @@ def simulate_demand_sample(locator, weather_path, output_parameters):
     gv = cea.globalvar.GlobalVariables()
     gv.demand_writer = cea.demand.demand_writers.MonthlyDemandWriter(gv)
     # force simulation to be sequential
-    totals, time_series = demand_main.demand_calculation(locator, weather_path, multiprocessing=False)
+    totals, time_series = demand_main.demand_calculation(locator, weather_path, gv, multiprocessing=False)
     return totals[output_parameters], time_series
 
 def simulate_demand_batch(sample_index, batch_size, samples_folder, scenario, simulation_folder, weather,
