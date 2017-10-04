@@ -66,7 +66,7 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
     print 'calculating solar properties done'
 
     # get properties of the panel to evaluate
-    panel_properties = calc_properties_SC_db(locator.get_supply_systems_database(), settings.type_SCpanel)
+    panel_properties = calc_properties_SC_db(locator.get_supply_systems_cost(), settings.type_SCpanel)
     print 'gathering properties of Solar collector panel'
 
     # select sensor point with sufficient solar radiation
