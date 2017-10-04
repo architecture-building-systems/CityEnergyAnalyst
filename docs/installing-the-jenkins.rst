@@ -102,3 +102,13 @@ NOTE: you only need to do this when the current Jenkins server dies.
 				* check "GitHub hook trigger for GITScm pooling
 
 
+::
+    set PATH=C:\Users\darthoma\Miniconda2\Scripts\;%PATH%
+    echo %USERPROFILE%
+    conda env remove -y -q --name cea
+    conda env create -q
+    set PATH=C:\Users\darthoma\AppData\Local\conda\conda\envs\cea;%PATH%
+    set PATH=C:\Users\darthoma\AppData\Local\conda\conda\envs\cea\Scripts;%PATH%
+    pip install .[dev]
+    where cea
+    cea test
