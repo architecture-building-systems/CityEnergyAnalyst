@@ -18,7 +18,7 @@ __status__ = "Production"
 class GlobalVariables(object):
     def __init__(self):
 
-        self.scenario_reference = r'C:\reference-case-zug\baseline'
+        self.scenario_reference = r'c:\reference-case-open\baseline'
         self.print_partial = 'hourly'  # hourly or monthly for the demand script
         self.print_totals = True  # print yearly values
         self.print_yearly_peak = True  # print peak values
@@ -39,7 +39,7 @@ class GlobalVariables(object):
         self.PaCa = 1200  # Air constant J/m3K 
         self.Cpw = 4.184  # heat capacity of water in kJ/kgK
         self.Flowtap = 0.036  # in m3 == 12 l/min during 3 min every tap opening
-        self.Es = 0.9 # franction of GFA that has electricity in every building
+        self.Es = 0.9  # franction of GFA that has electricity in every building
         # constant values for HVAC
         self.nrec_N = 0.75  # possible recovery
         self.NACH_inf_non_occ = 0.2  # num air exchanges due to infiltration when no occupied
@@ -120,8 +120,8 @@ class GlobalVariables(object):
         self.Qmargin_Disc = 0.20  # Reliability margin for the system nominal capacity for decentralized systems
         self.QminShare = 0.10  # Minimum percentage for the installed capacity
         self.K_DH = 0.25  # linear heat loss coefficient district heting network twin pipes groundfoss
-        self.roughness = 0.02/1000 # roughness coefficient for heating network pipe in m (for a steel pipe, from Li &
-                           # Svendsen (2012) "Energy and exergy analysis of low temperature district heating network")
+        self.roughness = 0.02 / 1000  # roughness coefficient for heating network pipe in m (for a steel pipe, from Li &
+        # Svendsen (2012) "Energy and exergy analysis of low temperature district heating network")
 
 
         # pipes location properties
@@ -267,7 +267,7 @@ class GlobalVariables(object):
         self.PipeLifeTime = 40.0  # years, Data from A&W
         self.PipeInterestRate = 0.05  # 5% interest rate
         self.PipeCostPerMeterAnnual = self.PipeCostPerMeterInv / self.PipeLifeTime
-        self.NetworkDepth = 1 # m
+        self.NetworkDepth = 1  # m
 
         # Solar area to Wpeak
         self.eta_area_to_peak = 0.16  # Peak Capacity - Efficiency, how much kW per area there are, valid for PV and PVT (after Jimeno's J+)
@@ -297,7 +297,6 @@ class GlobalVariables(object):
         self.HP_maxT_cond = 140 + 273.0  # max temperature at condenser [K]
 
         self.HP_Auxratio = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
-
 
         # Sewage resource
 
@@ -365,8 +364,6 @@ class GlobalVariables(object):
         self.VCC_tcoolin = 30 + 273.0  # entering condenser water temperature [K]
         self.VCC_minload = 0.1  # min load for cooling power
 
-
-
         # Storage
         self.T_storage_min = 10 + 273.0  # K  - Minimum Storage Temperature
         self.StorageMaxUptakeLimitFlag = 1  # set a maximum for the HP Power for storage charging / decharging
@@ -381,14 +378,14 @@ class GlobalVariables(object):
 
         # Data for Evolutionary algorithm
         self.nHeat = 6  # number of heating
-        self.nHR = 2 # number of heat recovery options
-        self.nSolar = 3 # number of solar technologies
+        self.nHR = 2  # number of heat recovery options
+        self.nSolar = 3  # number of solar technologies
 
         self.PROBA = 0.5
         self.SIGMAP = 0.2
         self.epsMargin = 0.001
 
-        # Data for clustering_main
+        # Data for clustering_sax
         self.nPeriodMin = 2
         self.nPeriodMax = 15
         self.gam = 0.2
@@ -472,8 +469,7 @@ class GlobalVariables(object):
         self.NG_PRICE = 0.068 * self.EURO_TO_CHF / 1000.0  # [CHF / wh] # default 0.068
         self.BG_PRICE = 0.076 * self.EURO_TO_CHF / 1000.0  # [CHF / wh] # default 0.076
         self.cPump = self.ELEC_PRICE * 24. * 365.  # coupled to electricity cost
-        self.Subst_i = 0.05 # default 0.05
-
+        self.Subst_i = 0.05  # default 0.05
 
         # ==============================================================================================================
         # TABS
