@@ -1840,9 +1840,6 @@ def get_weather_names():
     return list(get_weather_names_inner())
 
 
-<<<<<<< HEAD
-def get_weather_path(weather_name='Zug'):
-=======
 def is_db_weather(weather_path):
     """True, if the ``weather_path`` is one of the pre-installed weather files that came with the CEA"""
     weather_name = get_db_weather_name(weather_path)
@@ -1859,8 +1856,7 @@ def get_db_weather_name(weather_path):
     return weather_name
 
 
-def get_weather_path(weather_name='default'):
->>>>>>> refs/remotes/origin/master
+def get_weather_path(weather_name='Zug'):
     """Shell out to cli.py and find the path to the weather file"""
     return _cli_output(None, 'weather-path', weather_name)
 
