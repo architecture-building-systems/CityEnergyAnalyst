@@ -24,6 +24,9 @@ You will need to install these softwares:
 - Miniconda2 (Python 2.7, 64-bit, download here: https://conda.io/miniconda.html)
   - this setup expects you installed Miniconda with the "Just for me" option. You might need to change some paths along
     the way if you install for all users.
+  - to the default folder (`%USERPROFILE%\Miniconda2`),
+  - you don't need to add it to the PATH environment variable
+  - I registered it as the default Python 2.7 (but I don't think that is necessary)
 - git (I think any version will do, make sure `git.exe` is in your `PATH` by opening a command prompt and typing
   `git --version`)
 - NodeJS (https://nodejs.org/en/download/current/)
@@ -54,7 +57,6 @@ Installation of Jenkins
      -  set "#  of executors" to 1 (let's just make it dead simple, no concurrency, less headache)
 
 
-
 Installation of a tunnel to the Jenkins server
 ----------------------------------------------
 
@@ -63,15 +65,28 @@ to tunnel webhooks triggered by GitHub back to the Jenkins server.
 
 .. _localtunel.me: https://localtunnel.github.io/www/
 
-* Set up a localtunnel to route traffic to the PC (this is optional if you have a server facing the internet) - we use this to react to webhooks by GitHub
-
-        * download and install NodeJS (https://nodejs.org/en/download/current/)
-        * run `npm install -g localtunnel`
-
-            * following this guide: https://localtunnel.github.io/www/
-            * test it with this: `lt --port 8080 --subdomain ceajenkins`
-        * create a folder in `%APPDATA%` called `bin`
-        * copy the `CityEnergyAnalyst\bin\ceajenkins.py` file to `%APPDATA%\bin`
+- run `npm install -g localtunnel` on the command line
+- (`npm` is the NodeJS package manager and was installed in the prerequisites section
+- test it with this: `lt --port 8080 --subdomain ceajenkins
+  - you should now be able to access your Jenkins installation by going to https://ceajenkins.localtunnel.me
+    from any computer with access to the internet
+  - press CTRL+C to shutdown the tunnel
+- create a folder in `%APPDATA%` called `bin`
+- copy the `CityEnergyAnalyst\bin\ceajenkins.py` file to `%APPDATA%\bin`
+- open the Anaconda Prompt and do `conda create --name ceajenkins python=2.7 pywin32`, then do `activate ceajenkins`
+- open a new Anaconda Prompt with administrator rights (right click, then "Run as Administrator")
+- run `python %APPDATA%\bin\ceajenkins.py install`
+- in order for the service to find required DLL's, ensure the PATH includes the following folders (use the windows
+  search function to find the control panel item "Edit System Environment Variables"):
+  - `%USERPROFILE%\Miniconda2\envs\ceajenkins\`
+  - `%USERPROFILE%\Miniconda2\envs\ceajenkins\lib\site-packages\win32`
+- open the windows services panel (just search for "Services" in the windows menu)
+  - locate "CEA Jenkins keepalive", right click, "Properties"
+  - set Startup type to "Automatic"
+  - set the account in the "Log On" tab to your user account (the one that you used to install all of the above stuff)
+  - start the service!
+  - you should now be able to access your Jenkins installation by going to https://ceajenkins.localtunnel.me
+    from any computer with access to the internet (test this)
 
 
 
@@ -112,21 +127,7 @@ to tunnel webhooks triggered by GitHub back to the Jenkins server.
 
         * using Miniconda, Python 2.7, 64-bit version
         * I installed for "Just Me (recommended)", to the default folder (`%USERPROFILE%\Miniconda2`), not adding it to the PATH environment variable, but registering as default Python 2.7
-        * open Anaconda Prompt and do `conda create --name ceajenkins python=2.7 pywin32`, then `activate ceajenkins`
-        * open a new Anaconda Prompt with administrator rights (right click, then "Run as Administrator")
-        * run `python %APPDATA%\bin\ceajenkins.py install`
-        * ensure the SYSTEM PATH includes the following folders (use the windows search function to find the control panel item "Edit System Environment Variables")
-
-            * c:\Users\<your_user_name>\Miniconda2\envs\ceajenkins\
-            * C:\Users\<your_user_name>\Miniconda2\envs\ceajenkins\lib\site-packages\win32\
-            * NOTE: if you have installed the `ceajenkins` environment to a different location, adjust accordingly
-            * (this is needed for the service to find required DLL's)
-    * open the windows services panel (just search for "Services" in the windows menu)
-
-        * locate "CEA Jenkins keepalive", right click, "Properties"
-        * set Startup type to "Automatic"
-        * set the account in the "Log On" tab to your user account (the one that you used to install all of the above stuff)
-        * start the service!
+        *
     * click "New Item"
 
         * Enter an item name: "cea test"
