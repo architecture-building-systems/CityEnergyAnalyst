@@ -1,7 +1,31 @@
 How to set up the Jenkins server on a new PC
 ============================================
 
-NOTE: you only need to do this when the current Jenkins server dies.
+.. note:: you only need to do this when the current Jenkins server dies
+
+.. note:: this guide assumes you are installing on a Windows 10 Professional system. Adjust accordingly for other
+    systems, but keep in mind that some functionality of the CEA is dependant on Windows.
+
+There are a few steps to take to setting up a Jenkins server:
+
+- installation of some prerequisites
+- installation of Jenkins
+- installation of a tunnel to the Jenkins server
+- configuration of the Jenkins items
+  - cea test for new pull requests
+  - cea test for merges to master
+
+
+Installation of some prerequisites
+----------------------------------
+
+You will need to install these softwares:
+
+- Miniconda2
+- git (any version will do, make sure `git.exe` is in your `PATH`)
+- NodeJS (https://nodejs.org/en/download/current/)
+
+----
 
 	* download & install jenkins from https://jenkins.io
 
@@ -100,15 +124,3 @@ NOTE: you only need to do this when the current Jenkins server dies.
 			* Build Triggers
 
 				* check "GitHub hook trigger for GITScm pooling
-
-
-::
-    set PATH=C:\Users\darthoma\Miniconda2\Scripts\;%PATH%
-    echo %USERPROFILE%
-    conda env remove -y -q --name cea
-    conda env create -q
-    set PATH=C:\Users\darthoma\AppData\Local\conda\conda\envs\cea;%PATH%
-    set PATH=C:\Users\darthoma\AppData\Local\conda\conda\envs\cea\Scripts;%PATH%
-    pip install .[dev]
-    where cea
-    cea test
