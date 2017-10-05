@@ -318,8 +318,14 @@ class InputLocator(object):
     def get_default_weather(self):
         """weather/Zug-2010.epw
         path to database of archetypes file Archetypes_properties.xlsx"""
-
-        return os.path.join(self.weather_path, 'Zug.epw')
+        import cea.config
+        config = cea.config.Configuration(self.scenario_path)
+        if not os.path.exists(config.weather):
+            if config.weather in self.get_weather_names():
+                return self.get_weather(config.weather)
+            else:
+                return self.get_weather(self.get_weather_names()[0])
+        return config.weather
 
     def get_weather(self, name):
         """weather/{name}.epw"""
