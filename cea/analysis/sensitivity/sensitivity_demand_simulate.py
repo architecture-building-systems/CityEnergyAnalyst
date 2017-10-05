@@ -55,7 +55,7 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
     :param simulation_path: a (temporary) path for simulating a scenario that has been patched with a sample
                             NOTE: When simulating in parallel, special care must be taken that each process has
                             a unique `simulation_path` value. For the Euler cluster, this is solved by ensuring the
-                            simulation is done with `gv.multiprocessing = False` and setting the `simulation_path` to
+                            simulation is done with `multiprocessing = False` and setting the `simulation_path` to
                             the special folder `$TMPDIR` that is set to a local scratch folder for each job by the
                             job scheduler of the Euler cluster. Other setups will need to adopt an equivalent strategy.
     :type simulation_path: str
@@ -110,8 +110,7 @@ def simulate_demand_sample(locator, weather_path, output_parameters):
     gv = cea.globalvar.GlobalVariables()
     gv.demand_writer = cea.demand.demand_writers.MonthlyDemandWriter(gv)
     # force simulation to be sequential
-    gv.multiprocessing = False
-    totals, time_series = demand_main.demand_calculation(locator, weather_path, gv)
+    totals, time_series = demand_main.demand_calculation(locator, weather_path, gv, multiprocessing=False)
     return totals[output_parameters], time_series
 
 def simulate_demand_batch(sample_index, batch_size, samples_folder, scenario, simulation_folder, weather,
