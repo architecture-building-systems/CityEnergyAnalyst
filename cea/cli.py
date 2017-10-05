@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 """
 This script implements the main command-line interface to the CEA. It allows running the various scripts through a
 standard interface.
@@ -21,16 +23,26 @@ __status__ = "Production"
 def demand(args):
     """Run the demand script with the arguments provided."""
     import cea.demand.demand_main
-    if args.weather and not os.path.exists(args.weather):
+    config = cea.config.Configuration(args.scenario)
+    if not args.weather:
+        args.weather = config.weather
+    if not os.path.exists(args.weather):
         try:
             # allow using shortcut
             import cea.inputlocator
             args.weather = cea.inputlocator.InputLocator(None).get_weather(args.weather)
         except:
-            pass
-    print 'use_dynamic_infiltration_calculation:', args.use_dynamic_infiltration_calculation
+            args.weather = cea.inputlocator.InputLocator(None).get_default_weather()
+    if not args.multiprocessing:
+        # check config file, maybe it is turned on there
+        args.multiprocessing = config.multiprocessing
+
+    print('use_dynamic_infiltration_calculation: %s' % args.use_dynamic_infiltration_calculation)
+    print('multiprocessing: %s' % args.multiprocessing)
+    print('weather: %s' % args.weather)
     cea.demand.demand_main.run_as_script(scenario_path=args.scenario, weather_path=args.weather,
-                                         use_dynamic_infiltration_calculation=args.use_dynamic_infiltration_calculation)
+                                         use_dynamic_infiltration_calculation=args.use_dynamic_infiltration_calculation,
+                                         multiprocessing=args.multiprocessing)
 
 
 def data_helper(args):
@@ -126,8 +138,7 @@ def demand_graphs(args):
         import cea.inputlocator
         import cea.globalvar
         locator = cea.inputlocator.InputLocator(args.scenario)
-        gv = cea.globalvar.GlobalVariables()
-        cea.plots.graphs_demand.graphs_demand(locator, args.analysis_fields[:4], gv)
+        cea.plots.graphs_demand.graphs_demand(locator, args.analysis_fields[:4])
 
 
 def scenario_plots(args):
@@ -209,7 +220,7 @@ def radiation_daysim(args):
     for option in options:
         value = getattr(args, option.replace('-', '_'))
         if value is not None:
-            print 'radiation-daysim', option, str(value)
+            print('radiation-daysim', option, str(value))
             config._parser.set('radiation-daysim', option, str(value))
     config.save()
 
@@ -246,7 +257,7 @@ def photovoltaic(args):
     if args.date_start is not None:
         config.solar.date_start = args.date_start
     if args.solar_window_solstice is not None:
-        config.solar.solar_window_solstice=args.solar_window_solstice
+        config.solar.solar_window_solstice = args.solar_window_solstice
     config.save()
 
     for building in list_buildings_names:
@@ -292,6 +303,7 @@ def solar_collector(args):
         cea.technologies.solar.solar_collector.calc_SC(locator=locator, latitude=args.latitude,
                                                        longitude=args.longitude, weather_path=args.weather_path,
                                                        building_name=building)
+
 
 def photovoltaic_thermal(args):
     """Run the photovoltaic-thermal script (:py:mod:`cea.technologies.solar.photovoltaic_thermal`."""
@@ -442,6 +454,7 @@ def compile(args):
     import cea.utilities.compile_pyd_files
     cea.utilities.compile_pyd_files.main()
 
+
 def retrofit_potential(args):
     """Run the ``cea.analysis.retrofit.retrofit_potential`` module on the scenario"""
     import cea.analysis.retrofit.retrofit_potential as retrofit_potential
@@ -464,6 +477,7 @@ def retrofit_potential(args):
                                      hotwater_losses_criteria=args.hot_water_losses_threshold,
                                      cooling_losses_criteria=args.cooling_losses_threshold,
                                      emissions_operation_criteria=args.emissions_operation_threshold)
+
 
 def read_config(args):
     """Read a key from a section in the configuration"""
@@ -494,7 +508,6 @@ def read_config_section(args):
         pass
 
 
-
 def write_config(args):
     """write a value to a section/key in the configuration in the scenario folder"""
     import cea.config
@@ -502,9 +515,7 @@ def write_config(args):
     if not config._parser.has_section(args.section):
         config._parser.add_section(args.section)
     config._parser.set(args.section, args.key, args.value)
-    scenario_config = os.path.join(args.scenario, 'scenario.config')
-    with open(scenario_config, 'w') as f:
-        config._parser.write(f)
+    config.save()
 
 
 def excel_to_dbf(args):
@@ -546,6 +557,8 @@ def main():
     demand_parser.add_argument('-w', '--weather', help='Path to the weather file')
     demand_parser.add_argument('--use-dynamic-infiltration-calculation', action='store_true',
                                help='Use the dynamic infiltration calculation instead of default')
+    demand_parser.add_argument('--multiprocessing', action='store_true',
+                               help='Use the parallel processing to speed up computation')
     demand_parser.set_defaults(func=demand)
 
     data_helper_parser = subparsers.add_parser('data-helper',
@@ -628,7 +641,7 @@ def main():
     radiation_parser.set_defaults(func=radiation)
 
     photovoltaic_parser = subparsers.add_parser('photovoltaic',
-                                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                                                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     photovoltaic_parser.add_argument('--latitude', help='Latitude to use for calculations.', type=float)
     photovoltaic_parser.add_argument('--longitude', help='Longitude to use for calculations.', type=float)
     photovoltaic_parser.add_argument('--weather-path', help='Path to weather file.')
@@ -636,13 +649,13 @@ def main():
     photovoltaic_parser.add_argument('--panel-on-wall', help='flag for considering PV on wall', type=_parse_boolean)
     photovoltaic_parser.add_argument('--worst-hour', help='first hour of sun on the solar solstice', type=int)
     photovoltaic_parser.add_argument('--type-PVpanel',
-                                        help='monocrystalline, T2 is poly and T3 is amorphous. (see relates to the database of technologies)')
+                                     help='monocrystalline, T2 is poly and T3 is amorphous. (see relates to the database of technologies)')
     photovoltaic_parser.add_argument('--min-radiation',
-                                        help='points are selected with at least a minimum production of this % from the maximum in the area.',
-                                        type=float)
+                                     help='points are selected with at least a minimum production of this % from the maximum in the area.',
+                                     type=float)
     photovoltaic_parser.add_argument('--date-start', help='First day of the year', type=str)
     photovoltaic_parser.add_argument('--solar-window-solstice', help='desired hours of solar window on the solstice',
-                                        type=int)
+                                     type=int)
     photovoltaic_parser.set_defaults(func=photovoltaic)
 
     solar_collector_parser = subparsers.add_parser('solar-collector',
@@ -664,7 +677,7 @@ def main():
     solar_collector_parser.set_defaults(func=solar_collector)
 
     photovoltaic_thermal_parser = subparsers.add_parser('photovoltaic-thermal',
-                                                   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                                                        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     photovoltaic_thermal_parser.add_argument('--latitude', help='Latitude to use for calculations.', type=float)
     photovoltaic_thermal_parser.add_argument('--longitude', help='Longitude to use for calculations.', type=float)
     photovoltaic_thermal_parser.add_argument('--weather-path', help='Path to weather file.')
@@ -681,8 +694,9 @@ def main():
     photovoltaic_thermal_parser.add_argument('--type-PVpanel',
                                              help='monocrystalline, T2 is poly and T3 is amorphous. (see relates to the database of technologies)')
     photovoltaic_thermal_parser.add_argument('--date-start', help='First day of the year', type=str)
-    photovoltaic_thermal_parser.add_argument('--solar-window-solstice', help='desired hours of solar window on the solstice',
-                                        type=int)
+    photovoltaic_thermal_parser.add_argument('--solar-window-solstice',
+                                             help='desired hours of solar window on the solstice',
+                                             type=int)
     photovoltaic_thermal_parser.set_defaults(func=photovoltaic_thermal)
 
     radiation_daysim_parser = subparsers.add_parser('radiation-daysim',
@@ -808,7 +822,8 @@ def main():
     read_config_parser.add_argument('--key', help='key to read')
     read_config_parser.set_defaults(func=read_config)
 
-    read_config_section_parser = subparsers.add_parser('read-config-section', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    read_config_section_parser = subparsers.add_parser('read-config-section',
+                                                       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     read_config_section_parser.add_argument('--section', help='section to read from')
     read_config_section_parser.set_defaults(func=read_config_section)
 
