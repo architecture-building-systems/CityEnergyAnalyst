@@ -2531,7 +2531,6 @@ class TestTool(object):
     def getParameterInfo(self):
         return []
 
-<<<<<<< HEAD
     def execute(self,parameters, _):
         run_cli(None, 'test')
 
@@ -2543,7 +2542,3 @@ def is_builtin_weather_path(weather_path):
 def builtin_weather_name(weather_path):
     """Return the name of the builtin weather file (assumes ``is_builtin_weather_path(weather_path) == True``"""
     return os.path.splitext(os.path.basename(weather_path))[0]
-=======
-    def execute(self, parameters, _):
-        run_cli(None, 'test')
->>>>>>> refs/remotes/origin/master
