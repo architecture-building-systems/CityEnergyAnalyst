@@ -11,6 +11,7 @@ There are a few steps to take to setting up a Jenkins server:
 - installation of some prerequisites
 - installation of Jenkins
 - installation of a tunnel to the Jenkins server
+- global configuration of Jenkins
 - configuration of the Jenkins items
   - cea test for new pull requests
   - cea test for merges to master
@@ -44,7 +45,7 @@ Installation of Jenkins
      - on the tab "Log On", select "This account" instead of "Local System account" and enter in your credentials
        - this will allow the Jenkins to have access to your user profile. You can create an account just for this
          service and use that for the rest of this guide.
-- open browser to http://localhost:8080/login?from=%2F
+- open browser to http://localhost:8080
   - follow instructions to enter initial admin password
    - click "install suggested plugins"
    - create first admin user
@@ -55,7 +56,6 @@ Installation of Jenkins
    - Click "Manage Jenkins"
      - click "Configure System" (following this guide here: https://wiki.jenkins.io/display/JENKINS/Github+Plugin#GitHubPlugin-GitHubhooktriggerforGITScmpolling)
      -  set "#  of executors" to 1 (let's just make it dead simple, no concurrency, less headache)
-
 
 Installation of a tunnel to the Jenkins server
 ----------------------------------------------
@@ -89,62 +89,82 @@ to tunnel webhooks triggered by GitHub back to the Jenkins server.
     from any computer with access to the internet (test this)
 
 
+Global configuration of Jenkins
+-------------------------------
 
-        * click "Configure System" (following this guide here: https://wiki.jenkins.io/display/JENKINS/Github+Plugin#GitHubPlugin-GitHubhooktriggerforGITScmpolling)
-        * set "#  of executors" to 1 (let's just make it dead simple, no concurrency, less headache)
-        * scroll to "GitHub" section
+Now that we have a tunnel set up, we can start configuring the Jenkins server, mainly following this guide_:
 
-            * click "Advanced"
-            * dropdown "Manage additional GitHub actions", click "Convert login and password to token
-            * choose "From login and password", enter GitHub user and password, click "Create token credentials"
-            * Click "Add GitHub Server"
+.. _guide: https://wiki.jenkins.io/display/JENKINS/Github+Plugin#GitHubPlugin-GitHubhooktriggerforGITScmpolling
 
-                * Name: (leave blank)
-                * Credentials: (choose the GitHub credentials auto-generated for your username)
-                * click "Test connection" - expect this message: "Credentials verified for user <username>"
-            * check "Override Hook URL"
+- open browser to http://localhost:8080 and log in
+- click "Manage Jenkins" and then "Configure System"
+  - set "#  of executors" to 1 (let's just make it dead simple, no concurrency, less headache)
+  - scroll to "GitHub" section
+  - click "Advanced"
+  - dropdown "Manage additional GitHub actions", click "Convert login and password to token
+  - choose "From login and password", enter GitHub user and password, click "Create token credentials"
+  - Click "Add GitHub Server"
+    - Name: (leave blank)
+    - Credentials: (choose the GitHub credentials auto-generated for your username)
+    - click "Test connection" - expect this message: "Credentials verified for user <username>"
+    - check "Override Hook URL"
+    - enter hook url https://ceajenkins.localtunnel.me
+  - click "Save"
 
-                * enter hook url (see ceajenkins.py script...)
-        * click "Save"
-        * click "Manage Plugins"
+Next, we make sure all the required Jenkins plugins are installed
 
-            * install the following plugins / make sure they're installed:
+- open browser to http://localhost:8080 and log in
+- click "Manage Jenkins" and then "Manage Plugins"
+  - install the following plugins / make sure they're installed:
+    - github-api plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+API+Plugin)
+    - github plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+Plugin)
+    - git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
+    - credentials plugin (https://wiki.jenkins-ci.org/display/JENKINS/Credentials+Plugin)
+    - plain credentials plugin (https://wiki.jenkins-ci.org/display/JENKINS/Plain+Credentials+Plugin)
+    - github pull request builder plugin (https://github.com/jenkinsci/ghprb-plugin)
 
-                * github-api plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+API+Plugin)
-                * github plugin (https://wiki.jenkins-ci.org/display/JENKINS/GitHub+Plugin)
-                * git plugin (https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin)
-                * credentials plugin (https://wiki.jenkins-ci.org/display/JENKINS/Credentials+Plugin)
-                * plain credentials plugin (https://wiki.jenkins-ci.org/display/JENKINS/Plain+Credentials+Plugin)
-                * github pull request builder plugin (https://github.com/jenkinsci/ghprb-plugin)
-            * We're following the instructions here: https://github.com/jenkinsci/ghprb-plugin
 
-                * Go to Manage Jenkins -> Configure System -> GitHub Pull Request Builder section
-                * Jenkins URL overrride: `https://ceajenkins.localtunnel.me`
-                * enter admin list etc. (look this up once working!!)
-    * Make sure `git.exe` is in the System PATH
+Next, we configure the GitHub Pull Request Builder plugin, following the instructions here:
+https://github.com/jenkinsci/ghprb-plugin
 
-    * Install a conda distribution
+- open browser to http://localhost:8080 and log in
+- click "Manage Jenkins" and then "Configure System"
+- scroll down to the "GitHub Pull Request Builder" section
+  - leave the GitHub Server API URL: `https://api.github.com`
+  - set the Jenkins URL overrride: `https://ceajenkins.localtunnel.me`
+  - leave the Shared secret: (bunch of *'s... idk...)
+  - select the credentials (This should be the GitHub auto generated token credentials you created above)
+  - select Auto-manage webhooks
+  - set the Admin list to the two lines `daren-thomas` and `JIMENOFONSECA`
+- click Save
 
-        * using Miniconda, Python 2.7, 64-bit version
-        * I installed for "Just Me (recommended)", to the default folder (`%USERPROFILE%\Miniconda2`), not adding it to the PATH environment variable, but registering as default Python 2.7
-        *
-    * click "New Item"
 
-        * Enter an item name: "cea test"
-        * Choose "Freestyle project"
-        * Project name: "cea test"
-        * Description: "Check out the CityEnergyAnalyst, create a conda environment for it and run `cea test`"
-        * check "Discard old builds"
+Configuration of the Jenkins items
+----------------------------------
 
-            * Strategy: "Log Rotation"
-            * Max # of builds to keep: 10
-        * check "GitHub project"
+First, we configure a Jenkins item for pull requests:
 
-            * Project url: "https://github.com/architecture-building-systems/CityEnergyAnalyst"
-        * Source Code Management: check "Git"
-
-            * Repository URL: "https://github.com/architecture-building-systems/CityEnergyAnalyst.git"
-            * Branches to build: "refs/heads/master"
-        * Build Triggers
-
-            * check "GitHub hook trigger for GITScm pooling
+- open browser to http://localhost:8080 and log in
+- click "New Item"
+- Enter an item name: `run cea test for pull requests`
+  - Choose "Freestyle project"
+  - Project name: "run cea test for pull requests"
+  - Description: "Check out the CityEnergyAnalyst, create a conda environment for it and run `cea test`"
+  - check "Discard old builds"
+    - Strategy: "Log Rotation"
+    - Max # of builds to keep: 10
+  - check "GitHub project"
+  - Project url: "https://github.com/architecture-building-systems/CityEnergyAnalyst"
+  - section "Source Code Management":
+    - select "Git"
+    - Repository URL: `https://github.com/architecture-building-systems/CityEnergyAnalyst.git`
+    - Credentials: (use the ones created above)
+    - Branches to build: `${ghprbActualCommit}`
+  - section "Build Triggers":
+    - check "GitHub Pull Request Builder"
+    - GitHub API credentials: choose your credentials from the list
+    - check "Use github hooks for build triggering"
+    - click "Advanced"
+    - List of organizations. Their members will be whitelisted: `architecture-building-systems`
+  - section "Build"
+    - Execute Windows batch command: `bin\ceatest.bat`
