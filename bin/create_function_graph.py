@@ -93,11 +93,14 @@ def trace_function(function_to_trace):
         return
 
     import cea.globalvar
+    import cea.config
 
     scenario_path = extract_ninecubes()
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     gv = cea.globalvar.GlobalVariables()
-    gv.multiprocessing = False
+    config = cea.config.Configuration(scenario_path=scenario_path)
+    config._parser.set('global', 'multiprocessing', False)
+    config.save()
     download_radiation(locator)
     weather_path = locator.get_default_weather()
 
