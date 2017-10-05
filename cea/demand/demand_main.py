@@ -132,7 +132,7 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
 
 
 def run_as_script(scenario_path=None, weather_path=None, use_dynamic_infiltration_calculation=False,
-                  multiprocessing=False):
+                  multiprocessing=True):
     gv = cea.globalvar.GlobalVariables()
     if scenario_path is None:
         scenario_path = gv.scenario_reference
