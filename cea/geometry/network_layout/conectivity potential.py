@@ -3,26 +3,26 @@ This script uses libraries in arcgis to create connections from
 a series of points (buildings) to the closest street
 """
 
-import pandas as pd
 import os
 import cea.globalvar
 import cea.inputlocator
 from cea.interfaces.arcgis.modules import arcpy
 
 def calc_connectivity_network(locator, path_arcgis_db, streets_shp, connection_point_buildings_shp, potential_network):
-
     # first add distribution network to each building form the roads
-    memorybuildings = locator.get_temporary_file("points")
+
+    arcpy.env.overwriteOutput = True
+    memorybuildings = locator.get_temporary_file("points.shp")
     merge = locator.get_temporary_file("merge")
     Newlines = path_arcgis_db + "\\" + "linesToerase"
     arcpy.CopyFeatures_management(connection_point_buildings_shp, memorybuildings)
     arcpy.Near_analysis(memorybuildings, streets_shp, location=True, angle=True)
-    arcpy.MakeXYEventLayer_management(memorybuildings, "Near_X", "Near_Y", "Line_Points_Layer")
+    arcpy.MakeXYEventLayer_management(memorybuildings, "POINT_X", "POINT_Y", "Line_Points_Layer")
     arcpy.FeatureClassToFeatureClass_conversion("Line_Points_Layer", path_arcgis_db, "Line_points")
     arcpy.Append_management(path_arcgis_db + '\\' + "Line_points", memorybuildings, "No_Test")
     arcpy.MakeFeatureLayer_management(memorybuildings, "POINTS_layer")
     arcpy.env.workspace = path_arcgis_db
-    arcpy.PointsToLine_management(memorybuildings, Newlines, "ID", "#", "NO_CLOSE")
+    arcpy.PointsToLine_management(memorybuildings, Newlines, "Name", "#", "NO_CLOSE")
     arcpy.Merge_management((streets_shp, Newlines), merge)
     arcpy.FeatureToLine_management(merge + "\\" + "merge", potential_network)  # necessary to match vertices
 
