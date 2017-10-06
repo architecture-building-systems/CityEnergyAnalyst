@@ -46,21 +46,22 @@ def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K, gV):
 
     + reverse cycle
     """
+    if mdot_cp_WC > 0:
+        # calculate condenser temperature
+        tcond_K = tsource_K + gV.HP_deltaT_cond
+        # calculate evaporator temperature
+        tevap_K = t_sup_K - gV.HP_deltaT_evap
+        # calculate COP
+        COP = gV.HP_etaex * tevap_K/(tcond_K - tevap_K)
+        qcolddot_W = mdot_cp_WC * (t_re_K - t_sup_K)
 
-    # calculate condenser temperature
-    tcond_K = tsource_K + gV.HP_deltaT_cond
-    # calculate evaporator temperature
-    tevap_K = t_sup_K - gV.HP_deltaT_evap
-    # calculate COP
-    COP = gV.HP_etaex * tevap_K/(tcond_K - tevap_K)
-    qcolddot_W = mdot_cp_WC * (t_re_K - t_sup_K)
+        wdot_W = qcolddot_W / COP
+        E_req_W = wdot_W / gV.HP_Auxratio     # compressor power [C. Montagud et al., 2014]_
 
-    wdot_W = qcolddot_W / COP
-    E_req_W = wdot_W / gV.HP_Auxratio     # compressor power [C. Montagud et al., 2014]_
+    else:
+        E_req_W = 0
 
-    qcolddot_W =  qcolddot_W - wdot_W
-
-    return E_req_W, qcolddot_W
+    return E_req_W
 
 
 def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, tground_K, gV):

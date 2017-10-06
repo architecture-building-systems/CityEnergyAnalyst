@@ -482,7 +482,7 @@ class GlobalVariables(object):
             ['QEf', 'QHf', 'QCf', 'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Qwwf', 'Qww', 'Qcsf',
              'Qcs', 'Qcsf_lat', 'Qcdataf', 'Qcref', 'Qhprof', 'Edataf', 'Ealf', 'Eaf', 'Elf',
              'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
-             'Eprof', 'Ecaf'],
+             'Eprof', 'Ecaf', 'Egenf_cs'],
             ['mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf', 'mcpref'],
             ['Twwf_sup',
              'Twwf_re', 'Thsf_sup', 'Thsf_re',
