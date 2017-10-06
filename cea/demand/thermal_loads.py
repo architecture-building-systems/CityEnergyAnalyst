@@ -17,6 +17,7 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.technologies import controllers, heatpumps
 from cea.utilities import helpers
 
+
 # demand model of thermal and electrical loads
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
@@ -224,7 +225,6 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     else:
         raise
 
-
     # calculate other quantities
     ##processese
     tsd['Qhprof'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2'] * bpr.rc_model['Af']  # in kWh
@@ -235,12 +235,17 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     tsd['Qcs'] = abs(tsd['Qcs'])
 
     ## electricity demand due to heatpumps/cooling units in the building
-    #TODO: do it for heatpumps tsd['Egenf_cs']
-    tsd['Egenf_cs'], = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf'], (tsd['Tcsf_sup'] + 273), (tsd['Tcsf_re'] + 273), (tsd['T_ext'] + 273), gv)
+    # TODO: do it for heatpumps tsd['Egenf_cs']
+    if bpr.supply['type_cs'] == 'T2' or bpr.supply['type_cs'] == 'T3':
+        if bpr.supply['type_cs'] == 'T2':
+            tsource = (tsd['T_ext'] + 273)
+        if bpr.supply['type_cs'] == 'T3':
+            tsource = (tsd['T_ext_wetbulb'] + 273)
+        tsd['Egenf_cs'] = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf'], (tsd['Tcsf_sup'] + 273),
+                                                             (tsd['Tcsf_re'] + 273), tsource, gv)
 
     ## number of people
     tsd['people'] = np.floor(tsd['people'])
-
 
     tsd['QHf'] = tsd['Qhsf'] + tsd['Qwwf'] + tsd['Qhprof']
     tsd['QCf'] = tsd['Qcsf'] + tsd['Qcdataf'] + tsd['Qcref']
@@ -266,6 +271,7 @@ def initialize_timestep_data(bpr, weather_data):
     # Initialize dict with weather variables
     tsd = {'Twwf_sup': bpr.building_systems['Tww_sup_0'],
            'T_ext': weather_data.drybulb_C.values,
+           'T_ext_wetbulb': weather_data.wetbulb_C.values,
            'rh_ext': weather_data.relhum_percent.values,
            'T_sky': weather_data.skytemp_C.values,
            'u_wind': weather_data.windspd_ms}
@@ -273,7 +279,7 @@ def initialize_timestep_data(bpr, weather_data):
     nan_fields = ['Qhs_lat_sys', 'Qhs_sen_sys', 'Qcs_lat_sys', 'Qcs_sen_sys', 'theta_a', 'theta_m', 'theta_c',
                   'theta_o', 'Qhs_sen', 'Qcs_sen', 'Ehs_lat_aux', 'Qhs_em_ls', 'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs',
                   'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs', 'I_sol', 'w_int', 'I_rad', 'QEf', 'QHf', 'QCf',
-                  'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat',
+                  'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Egenf_cs',
                   'Qwwf', 'Qww', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qhprof', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs',
                   'Eauxf_ww', 'Eauxf_fw', 'mcphsf', 'mcpcsf', 'mcpwwf', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup',
                   'Tcsf_re', 'Tcdataf_re', 'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'theta_ve_mech', 'm_ve_window',
@@ -305,7 +311,8 @@ def update_timestep_data_no_conditioned_area(tsd):
     zero_fields = ['Qhs_lat_sys', 'Qhs_sen_sys', 'Qcs_lat_sys', 'Qcs_sen_sys', 'Qhs_sen', 'Qcs_sen', 'Ehs_lat_aux',
                    'Qhs_em_ls', 'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs', 'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs',
                    'Qhsf', 'Qhs', 'Qhsf_lat', 'Qcsf', 'Qcs', 'Qcsf_lat', 'Qcsf', 'Qcs', 'Qhsf', 'Qhs', 'Eauxf',
-                   'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ve', 'Eauxf_ww', 'Eauxf_fw', 'Egenf_cs', 'mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf',
+                   'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ve', 'Eauxf_ww', 'Eauxf_fw', 'Egenf_cs', 'mcphsf', 'mcpcsf', 'mcpwwf',
+                   'mcpdataf',
                    'mcpref', 'Twwf_sup', 'Twwf_re', 'Thsf_sup', 'Thsf_re', 'Tcsf_sup', 'Tcsf_re', 'Tcdataf_re',
                    'Tcdataf_sup', 'Tcref_re', 'Tcref_sup', 'Qwwf', 'Qww']
 
@@ -364,6 +371,7 @@ class BuildingProperties(object):
         prop_age = dbf_to_dataframe(locator.get_building_age()).set_index('Name')
         prop_comfort = dbf_to_dataframe(locator.get_building_comfort()).set_index('Name')
         prop_internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
+        prop_supply_systems = dbf_to_dataframe(locator.get_building_supply()).set_index('Name')
 
         # get solar properties
         solar = get_prop_solar(locator).set_index('Name')
@@ -392,6 +400,7 @@ class BuildingProperties(object):
         gv.log("done")
 
         # save resulting data
+        self._prop_supply_systems = prop_supply_systems
         self._prop_surface = surface_properties
         self._prop_geometry = prop_geometry
         self._prop_envelope = prop_envelope
@@ -444,6 +453,10 @@ class BuildingProperties(object):
     def list_uses(self):
         """get list of all uses (occupancy types)"""
         return list(self._prop_occupancy.drop('PFloor', axis=1).columns)
+
+    def get_prop_supply_systems(self, name_building):
+        """get geometry of a building by name"""
+        return self._prop_supply_systems.ix[name_building].to_dict()
 
     def get_prop_geometry(self, name_building):
         """get geometry of a building by name"""
@@ -639,7 +652,8 @@ class BuildingProperties(object):
                                      comfort=self.get_prop_comfort(building_name),
                                      internal_loads=self.get_prop_internal_loads(building_name),
                                      age=self.get_prop_age(building_name),
-                                     solar=self.get_solar(building_name), gv=self.gv)
+                                     solar=self.get_solar(building_name),
+                                     supply=self.get_prop_supply_systems(building_name), gv=self.gv)
 
     def get_overrides_columns(self):
         """Return the list of column names in the `overrides.csv` file or an empty list if no such file
@@ -654,7 +668,7 @@ class BuildingPropertiesRow(object):
     read-only."""
 
     def __init__(self, geometry, envelope, occupancy, hvac,
-                 rc_model, comfort, internal_loads, age, solar, gv):
+                 rc_model, comfort, internal_loads, age, solar, supply, gv):
         """Create a new instance of BuildingPropertiesRow - meant to be called by BuildingProperties[building_name].
         Each of the arguments is a pandas Series object representing a row in the corresponding DataFrame."""
         self.geometry = geometry
@@ -666,6 +680,7 @@ class BuildingPropertiesRow(object):
         self.internal_loads = internal_loads
         self.age = age
         self.solar = SolarProperties(solar)
+        self.supply = supply
         self.building_systems = self._get_properties_building_systems(gv)
 
     def _get_properties_building_systems(self, gv):
