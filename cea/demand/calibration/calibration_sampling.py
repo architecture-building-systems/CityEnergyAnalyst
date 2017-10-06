@@ -101,7 +101,6 @@ def simulate_demand_sample(locator, building_name, full_report_boolean=False):
 
     # force simulation to be sequential and to only do one building
     gv = cea.globalvar.GlobalVariables()
-    gv.multiprocessing = False
     gv.print_totals = False
     gv.simulate_building_list = [building_name]
     gv.testing = full_report_boolean
@@ -110,7 +109,7 @@ def simulate_demand_sample(locator, building_name, full_report_boolean=False):
     weather_path = locator.get_default_weather()
 
     #calculate demand timeseries for buidling
-    demand_main.demand_calculation(locator, weather_path, gv)
+    demand_main.demand_calculation(locator, weather_path, gv, multiprocessing=False)
 
     return
 

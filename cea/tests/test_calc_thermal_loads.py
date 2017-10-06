@@ -75,40 +75,18 @@ class TestCalcThermalLoads(unittest.TestCase):
         # randomly selected except for B302006716, which has `Af == 0`
 
         buildings = json.loads(self.config.get('test_calc_thermal_loads_other_buildings', 'results'))
-        if self.gv.multiprocessing:
-            import multiprocessing as mp
-            pool = mp.Pool()
-            joblist = []
-            for building in buildings.keys():
-                bpr = self.building_properties[building]
-                job = pool.apply_async(run_for_single_building,
-                                       [building, bpr, self.weather_data, self.usage_schedules, self.date, self.gv,
-                                        self.locator])
-                joblist.append(job)
-            for job in joblist:
-                b, qcf_kwh, qhf_kwh = job.get(120)
-                b0 = buildings[b][0]
-                b1 = buildings[b][1]
-                self.assertAlmostEqual(b0, qcf_kwh,
-                                       msg="qcf_kwh for %(b)s should be: %(qcf_kwh).5f, was %(b0).5f" % locals(),
-                                       places=3)
-                self.assertAlmostEqual(b1, qhf_kwh,
-                                       msg="qhf_kwh for %(b)s should be: %(qhf_kwh).5f, was %(b1).5f" % locals(),
-                                       places=3)
-            pool.close()
-        else:
-            for building in buildings.keys():
-                bpr = self.building_properties[building]
-                b, qcf_kwh, qhf_kwh = run_for_single_building(building, bpr, self.weather_data, self.usage_schedules,
-                                                              self.date, self.gv, self.locator)
-                b0 = buildings[b][0]
-                b1 = buildings[b][1]
-                self.assertAlmostEqual(b0, qcf_kwh,
-                                       msg="qcf_kwh for %(b)s should be: %(qcf_kwh).5f, was %(b0).5f" % locals(),
-                                       places=3)
-                self.assertAlmostEqual(b1, qhf_kwh,
-                                       msg="qhf_kwh for %(b)s should be: %(qhf_kwh).5f, was %(b1).5f" % locals(),
-                                       places=3)
+        for building in buildings.keys():
+            bpr = self.building_properties[building]
+            b, qcf_kwh, qhf_kwh = run_for_single_building(building, bpr, self.weather_data, self.usage_schedules,
+                                                          self.date, self.gv, self.locator)
+            b0 = buildings[b][0]
+            b1 = buildings[b][1]
+            self.assertAlmostEqual(b0, qcf_kwh,
+                                   msg="qcf_kwh for %(b)s should be: %(qcf_kwh).5f, was %(b0).5f" % locals(),
+                                   places=3)
+            self.assertAlmostEqual(b1, qhf_kwh,
+                                   msg="qhf_kwh for %(b)s should be: %(qhf_kwh).5f, was %(b1).5f" % locals(),
+                                   places=3)
 
 
 def run_for_single_building(building, bpr, weather_data, usage_schedules, date, gv, locator):
