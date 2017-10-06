@@ -225,16 +225,27 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     else:
         raise
 
-    tsd['Qhprof'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2'] * bpr.rc_model['Af']  # in kWh
 
     # calculate other quantities
+    ##processese
+    tsd['Qhprof'][:] = schedules['Qhpro'] * bpr.internal_loads['Qhpro_Wm2'] * bpr.rc_model['Af']  # in kWh
+
+    ##change sign to latent and sensible cooling loads
     tsd['Qcsf_lat'] = abs(tsd['Qcsf_lat'])
     tsd['Qcsf'] = abs(tsd['Qcsf'])
     tsd['Qcs'] = abs(tsd['Qcs'])
+
+    ## electricity demand due to heatpumps/cooling units in the building
+    #TODO: do it for heatpumps tsd['Egenf_cs']
+    tsd['Egenf_cs'] = 
+
+    ## number of people
     tsd['people'] = np.floor(tsd['people'])
+
+
     tsd['QHf'] = tsd['Qhsf'] + tsd['Qwwf'] + tsd['Qhprof']
     tsd['QCf'] = tsd['Qcsf'] + tsd['Qcdataf'] + tsd['Qcref']
-    tsd['Ef'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref']
+    tsd['Ef'] = tsd['Ealf'] + tsd['Edataf'] + tsd['Eprof'] + tsd['Ecaf'] + tsd['Eauxf'] + tsd['Eref'] + tsd['Egenf_cs']
     tsd['QEf'] = tsd['QHf'] + tsd['QCf'] + tsd['Ef']
 
     # write results to csv
