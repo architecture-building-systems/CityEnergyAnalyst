@@ -21,7 +21,8 @@ def basenetwork(Allroads,output,buildings,temp,temp2,NetworkType,Database):
     #first add distribution network to each building form the roads
     memorybuildings = temp+"\\" + "points"
     Newlines = Database+"\\" + "linesToerase"
-    arcpy.CopyFeatures_management(buildings,memorybuildings)
+
+    arcpy.FeatureClassToGeodatabase_conversion(buildings,memorybuildings)
 
     arcpy.Near_analysis(memorybuildings,Allroads,location=True, angle=True)
     arcpy.MakeXYEventLayer_management(memorybuildings,"Near_X","Near_Y","Line_Points_Layer")
