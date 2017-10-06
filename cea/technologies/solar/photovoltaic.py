@@ -131,10 +131,10 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
 
     # convert degree to radians
     lat = radians(latitude)
-    g_vector = np.radians(solar_properties.g)
-    ha_vector = np.radians(solar_properties.ha)
-    Sz_vector = np.radians(solar_properties.Sz)
-    Az_vector = np.radians(solar_properties.Az)
+    g_rad = np.radians(solar_properties.g)
+    ha_rad = np.radians(solar_properties.ha)
+    Sz_rad = np.radians(solar_properties.Sz)
+    Az_rad = np.radians(solar_properties.Az)
 
     result = list(range(number_groups))
     list_groups_area = list(range(number_groups))
@@ -157,12 +157,12 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
 
     for group in range(number_groups):
         # read panel properties of each group
-        teta_z = prop_observers.loc[group, 'surface_azimuth']
-        area_per_group_m2 = prop_observers.loc[group, 'total_area_module']
-        tilt_angle = prop_observers.loc[group, 'B']
+        teta_z_deg = prop_observers.loc[group, 'surface_azimuth_deg']
+        area_per_group_m2 = prop_observers.loc[group, 'total_area_module_m2']
+        tilt_angle_deg = prop_observers.loc[group, 'B_deg']
         # degree to radians
-        tilt = radians(tilt_angle) #tilt angle
-        teta_z = radians(teta_z) #surface azimuth
+        tilt_rad = radians(tilt_angle_deg) #tilt angle
+        teta_z_deg = radians(teta_z_deg) #surface azimuth
 
         # read radiation data of each group
         radiation = pd.DataFrame({'I_sol':hourly_radiation[group]})
@@ -170,11 +170,11 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
         radiation['I_direct'] = radiation['I_sol'] - radiation['I_diffuse']   #calculat direct radaition
 
         #calculate effective indicent angles necessary
-        teta_vector = np.vectorize(solar_equations.calc_angle_of_incidence)(g_vector, lat, ha_vector, tilt, teta_z)
-        teta_ed, teta_eg  = calc_diffuseground_comp(tilt)
+        teta_vector = np.vectorize(solar_equations.calc_angle_of_incidence)(g_rad, lat, ha_rad, tilt_rad, teta_z_deg)
+        teta_ed, teta_eg  = calc_diffuseground_comp(tilt_rad)
 
         results = np.vectorize(calc_Sm_PV)(weather_data.drybulb_C, radiation.I_sol, radiation.I_direct,
-                                           radiation.I_diffuse, tilt, Sz_vector, teta_vector, teta_ed, teta_eg, n, Pg,
+                                           radiation.I_diffuse, tilt_rad, Sz_rad, teta_vector, teta_ed, teta_eg, n, Pg,
                                            K, NOCT, a0, a1, a2, a3, a4, L)
         result[group] = np.vectorize(calc_PV_power)(results[0], results[1], eff_nom, area_per_group_m2, Bref,
                                                     misc_losses)
