@@ -96,8 +96,8 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     # Heat Pumps
     if (MS_Var.GHP_on) == 1 or (MS_Var.HP_Lake_on) == 1 or (MS_Var.HP_Sew_on) == 1:
-        import cea.technologies.heatpumps.heatpumps as CMHP
-        import cea.technologies.heatpumps.heatpumps as ESMHP
+        import cea.technologies.heatpumps as CMHP
+        import cea.technologies.heatpumps as ESMHP
         HPLake_op_cost = CMHP.HPLake_op_cost
         HPSew_op_cost = CMHP.HPSew_op_cost
         GHP_op_cost = CMHP.GHP_op_cost

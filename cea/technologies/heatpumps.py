@@ -22,6 +22,54 @@ __status__ = "Production"
 #operation costs
 #============================
 
+def HP_mini_split(mdot_kgpers, t_sup_K, t_re_K, tlake_K, gV):
+    """
+    For the operation of a heat pump (direct expansion unit) connected to minisplit units
+
+    :type mdot_kgpers : float
+    :param mdot_kgpers: supply mass flow rate to the DHN
+    :type t_sup_K : float
+    :param t_sup_K: supply temperature to the DHN (hot)
+    :type t_re_K : float
+    :param t_re_K: return temeprature from the DHN (cold)
+    :type tlake_K : float
+    :param tlake_K: lake temperature
+    :param gV: globalvar.py
+
+    :rtype wdot_el : float
+    :returns wdot_el: total electric power requirement for compressor and auxiliary el.
+    :rtype qcolddot : float
+    :returns qcolddot: cold power requirement
+
+    ..[L. Girardin et al., 2010] L. Girardin, F. Marechal, M. Dubuis, N. Calame-Darbellay, D. Favrat (2010). EnerGis:
+    a geographical information based system for the evaluation of integrated energy conversion systems in urban areas,
+    Energy.
+
+    ..[C. Montagud et al., 2014] C. Montagud, J.M. Corberan, A. Montero (2014). In situ optimization methodology for
+    the water circulation pump frequency of ground source heat pump systems. Energy and Buildings
+    """
+
+    # calculate condenser temperature
+    tcond = t_sup_K + gV.HP_deltaT_cond
+    if tcond > gV.HP_maxT_cond:
+        raise ModelError
+
+    # calculate evaporator temperature
+    tevap_K = tlake_K - gV.HP_deltaT_evap
+    COP = gV.HP_etaex / (1- tevap_K/tcond)   # [L. Girardin et al., 2010]_
+    qhotdot_W = mdot_kgpers * gV.cp * (t_sup_K - t_re_K)
+
+    if qhotdot_W > gV.HP_maxSize:
+        print "Qhot above max size on the market !"
+
+    wdot_W = qhotdot_W / COP
+    E_HPLake_req_W = wdot_W / gV.HP_Auxratio     # compressor power [C. Montagud et al., 2014]_
+
+    qcolddot_W =  qhotdot_W - wdot_W
+
+    return E_HPLake_req_W, qcolddot_W
+
+
 def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, tground_K, gV):
     """
     For the operation of a Geothermal heat pump (GSHP) supplying DHN.
