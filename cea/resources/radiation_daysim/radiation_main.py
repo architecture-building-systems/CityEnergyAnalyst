@@ -211,6 +211,5 @@ def main(locator, weather_path):
 
 
 if __name__ == '__main__':
-    locator = cea.inputlocator.ReferenceCaseOpenLocator()
     weather_path = locator.get_default_weather()
     main(locator=locator, weather_path=weather_path)
