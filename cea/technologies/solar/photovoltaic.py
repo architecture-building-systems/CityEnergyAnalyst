@@ -61,9 +61,8 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
     print('reading weather data done')
 
     # solar properties
-    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
-                                                                                      settings.date_start,
-                                                                                      settings.solar_window_solstice)
+    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, settings.date_start,
+                                                           settings.solar_window_solstice)
     print('calculating solar properties done')
 
     # calculate properties of PV panel
