@@ -52,7 +52,7 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
     :return: Building_PV.csv with PV generation potential of each building, Building_sensors.csv with sensor data of
              each PV panel.
     """
-    settings = cea.config.Configuration(locator.scenario_path).photovoltaic
+    settings = cea.config.Configuration(locator.scenario_path).solar
 
     t0 = time.clock()
 
@@ -61,7 +61,7 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
     print('reading weather data done')
 
     # solar properties
-    g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
+    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
                                                                                       settings.date_start,
                                                                                       settings.solar_window_solstice)
     print('calculating solar properties done')
@@ -79,9 +79,8 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
 
     if not sensors_metadata_clean.empty:
         # calculate optimal angle and tilt for panels
-        sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, worst_sh,
-                                                                      worst_Az, trr_mean, max_yearly_radiation,
-                                                                      panel_properties)
+        sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude, solar_properties,
+                                                                      max_yearly_radiation, panel_properties)
         print('calculating optimal tile angle and separation done')
 
         # group the sensors with the same tilt, surface azimuth, and total radiation
