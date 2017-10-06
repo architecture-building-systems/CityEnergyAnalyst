@@ -294,7 +294,6 @@ class GlobalVariables(object):
         self.HP_deltaT_cond = 2.0  # pinch for condenser [K]
         self.HP_deltaT_evap = 2.0  # pinch for evaporator [K]
         self.HP_maxT_cond = 140 + 273.0  # max temperature at condenser [K]
-
         self.HP_Auxratio = 0.83  # Wdot_comp / Wdot_total (circulating pumps)
 
         # Sewage resource

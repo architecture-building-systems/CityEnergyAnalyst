@@ -5,14 +5,15 @@ Operation for decentralized buildings
 
 """
 from __future__ import division
-import os
-import pandas as pd
-import numpy as np
+
 import time
+
+import numpy as np
+import pandas as pd
 
 import cea.technologies.boilers as Boiler
 import cea.technologies.cogeneration as FC
-import cea.technologies.heatpumps as HP
+import cea.technologies.heatpumps.heatpumps as HP
 
 
 def decentralized_main(locator, building_names, gv):
