@@ -14,7 +14,7 @@ from cea.utilities.dbfreader import dbf_to_dataframe
 from cea.demand import occupancy_model, rc_model_crank_nicholson_procedure, ventilation_air_flows_simple
 from cea.demand import ventilation_air_flows_detailed
 from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrigeration_loads, datacenter_loads
-from cea.technologies import controllers
+from cea.technologies import controllers, heatpumps
 from cea.utilities import helpers
 
 # demand model of thermal and electrical loads
@@ -236,7 +236,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     ## electricity demand due to heatpumps/cooling units in the building
     #TODO: do it for heatpumps tsd['Egenf_cs']
-    tsd['Egenf_cs'], = HP_mini_split(mdot_kgpers, t_sup_K, t_re_K, tlake_K, gV)
+    tsd['Egenf_cs'], = np.vectorize(heatpumps.HP_air_air)(tsd['mcpcsf'], (tsd['Tcsf_sup'] + 273), (tsd['Tcsf_re'] + 273), (tsd['T_ext'] + 273), gv)
 
     ## number of people
     tsd['people'] = np.floor(tsd['people'])
