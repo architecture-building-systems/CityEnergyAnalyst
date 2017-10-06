@@ -272,7 +272,7 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, solar_properties, M
                                            degrees(optimal_angle_flat)) # panel tilt angle in degrees
 
     # calculate spacing and surface azimuth of the panels for flat roofs
-    module_length = panel_properties['PV_L']
+    module_length = panel_properties['module_length']
     optimal_spacing_flat = calc_optimal_spacing(solar_properties, optimal_angle_flat, module_length)
     sensors_metadata_clean['array_s'] = np.where(sensors_metadata_clean['tilt'] >= 5, 0, optimal_spacing_flat)
     sensors_metadata_clean['surface_azimuth'] = np.vectorize(calc_surface_azimuth)(sensors_metadata_clean['Xdir'],

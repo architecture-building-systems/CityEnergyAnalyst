@@ -90,7 +90,7 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
         print('generating groups of sensor points done')
 
         results, final = calc_pv_generation(hourlydata_groups, number_groups, number_points, prop_observers,
-                                            weather_data, g, Sz, Az, ha, latitude, panel_properties)
+                                            weather_data, solar_properties, latitude, panel_properties)
 
 
         final.to_csv(locator.PV_results(building_name=building_name), index=True, float_format='%.2f')  # print PV generation potential
@@ -104,7 +104,7 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
 # PV electricity generation
 # =========================
 
-def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_observers, weather_data, g, Sz, Az, ha,
+def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_observers, weather_data, solar_properties,
                        latitude, panel_properties):
     """
     To calculate the electricity generated from PV panels.
@@ -131,10 +131,10 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
 
     # convert degree to radians
     lat = radians(latitude)
-    g_vector = np.radians(g)
-    ha_vector = np.radians(ha)
-    Sz_vector = np.radians(Sz)
-    Az_vector = np.radians(Az)
+    g_vector = np.radians(solar_properties.g)
+    ha_vector = np.radians(solar_properties.ha)
+    Sz_vector = np.radians(solar_properties.Sz)
+    Az_vector = np.radians(solar_properties.Az)
 
     result = list(range(number_groups))
     list_groups_area = list(range(number_groups))
@@ -157,8 +157,6 @@ def calc_pv_generation(hourly_radiation, number_groups, number_points, prop_obse
 
     for group in range(number_groups):
         # read panel properties of each group
-
-
         teta_z = prop_observers.loc[group, 'surface_azimuth']
         area_per_group_m2 = prop_observers.loc[group, 'total_area_module']
         tilt_angle = prop_observers.loc[group, 'B']
