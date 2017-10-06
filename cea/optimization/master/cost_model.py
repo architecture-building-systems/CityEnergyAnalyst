@@ -21,7 +21,7 @@ import cea.technologies.cogeneration as chp
 import cea.technologies.furnace as furnace
 import cea.technologies.heat_exchangers as hex
 import cea.technologies.heating_network.thermal_network as network
-import cea.technologies.heatpumps.heatpumps as hp
+import cea.technologies.heatpumps as hp
 import cea.technologies.pumps as pumps
 import cea.technologies.thermal_storage as storage
 

@@ -17,7 +17,6 @@ from cea.demand import sensible_loads, electrical_loads, hotwater_loads, refrige
 from cea.technologies import controllers
 from cea.utilities import helpers
 
-
 # demand model of thermal and electrical loads
 
 def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, gv, locator,
@@ -237,7 +236,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
 
     ## electricity demand due to heatpumps/cooling units in the building
     #TODO: do it for heatpumps tsd['Egenf_cs']
-    tsd['Egenf_cs'] = 
+    tsd['Egenf_cs'], = HP_mini_split(mdot_kgpers, t_sup_K, t_re_K, tlake_K, gV)
 
     ## number of people
     tsd['people'] = np.floor(tsd['people'])
