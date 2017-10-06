@@ -22,18 +22,18 @@ __status__ = "Production"
 #operation costs
 #============================
 
-def HP_mini_split(mdot_kgpers, t_sup_K, t_re_K, tlake_K, gV):
+def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K, gV):
     """
     For the operation of a heat pump (direct expansion unit) connected to minisplit units
 
-    :type mdot_kgpers : float
-    :param mdot_kgpers: supply mass flow rate to the DHN
+    :type mdot_cp_WC : float
+    :param mdot_cp_WC: capacity mass flow rate.
     :type t_sup_K : float
-    :param t_sup_K: supply temperature to the DHN (hot)
+    :param t_sup_K: supply temperature to the minisplit unit (cold)
     :type t_re_K : float
-    :param t_re_K: return temeprature from the DHN (cold)
-    :type tlake_K : float
-    :param tlake_K: lake temperature
+    :param t_re_K: return temeprature from the minisplit unit (hot)
+    :type tsource_K : float
+    :param tsource_K: temperature of the source
     :param gV: globalvar.py
 
     :rtype wdot_el : float
@@ -41,33 +41,26 @@ def HP_mini_split(mdot_kgpers, t_sup_K, t_re_K, tlake_K, gV):
     :rtype qcolddot : float
     :returns qcolddot: cold power requirement
 
-    ..[L. Girardin et al., 2010] L. Girardin, F. Marechal, M. Dubuis, N. Calame-Darbellay, D. Favrat (2010). EnerGis:
-    a geographical information based system for the evaluation of integrated energy conversion systems in urban areas,
-    Energy.
-
     ..[C. Montagud et al., 2014] C. Montagud, J.M. Corberan, A. Montero (2014). In situ optimization methodology for
     the water circulation pump frequency of ground source heat pump systems. Energy and Buildings
+
+    + reverse cycle
     """
 
     # calculate condenser temperature
-    tcond = t_sup_K + gV.HP_deltaT_cond
-    if tcond > gV.HP_maxT_cond:
-        raise ModelError
-
+    tcond_K = tsource_K + gV.HP_deltaT_cond
     # calculate evaporator temperature
-    tevap_K = tlake_K - gV.HP_deltaT_evap
-    COP = gV.HP_etaex / (1- tevap_K/tcond)   # [L. Girardin et al., 2010]_
-    qhotdot_W = mdot_kgpers * gV.cp * (t_sup_K - t_re_K)
+    tevap_K = t_sup_K - gV.HP_deltaT_evap
+    # calculate COP
+    COP = gV.HP_etaex * tevap_K/(tcond_K - tevap_K)
+    qcolddot_W = mdot_cp_WC * (t_re_K - t_sup_K)
 
-    if qhotdot_W > gV.HP_maxSize:
-        print "Qhot above max size on the market !"
+    wdot_W = qcolddot_W / COP
+    E_req_W = wdot_W / gV.HP_Auxratio     # compressor power [C. Montagud et al., 2014]_
 
-    wdot_W = qhotdot_W / COP
-    E_HPLake_req_W = wdot_W / gV.HP_Auxratio     # compressor power [C. Montagud et al., 2014]_
+    qcolddot_W =  qcolddot_W - wdot_W
 
-    qcolddot_W =  qhotdot_W - wdot_W
-
-    return E_HPLake_req_W, qcolddot_W
+    return E_req_W, qcolddot_W
 
 
 def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, tground_K, gV):
