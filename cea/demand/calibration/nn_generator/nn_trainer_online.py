@@ -24,7 +24,7 @@ def neural_trainer(inputs_x,targets_t,locator):
     :return:
     '''
 
-    np.random.seed(7)
+    #np.random.seed(7)
     inputs_x_rows, inputs_x_cols = inputs_x.shape
     #scaling and normalizing inputs
     scalerX = MinMaxScaler(feature_range=(0, 1))
@@ -55,7 +55,7 @@ def neural_trainer(inputs_x,targets_t,locator):
     targets_t_rows, targets_t_cols = targets_t.shape
     hidden_units_L1=int(encoded_x_cols*1.1)
     hidden_units_L2=int(encoded_x_cols+1)
-    validation_split = 0.5
+    validation_split = 0.3
     e_stop_limit=10
 
     # multi-layer perceptron
@@ -73,7 +73,7 @@ def neural_trainer(inputs_x,targets_t,locator):
     estop = EarlyStopping(monitor='val_loss', min_delta=0, patience=e_stop_limit, verbose=1, mode='auto')
 
     # Fit the model
-    model.fit(inputs_x, targets_t, validation_split=validation_split, epochs=200, shuffle=True, batch_size=100000,callbacks=[estop])
+    model.fit(inputs_x, targets_t, validation_split=validation_split, epochs=30, shuffle=True, batch_size=100000,callbacks=[estop])
 
     return scalerX, scalerT, model
 
@@ -123,14 +123,14 @@ def neural_trainer_online(inputs_x,targets_t,scalerX,scalerT,model):
     estop = EarlyStopping(monitor='val_loss', min_delta=0, patience=e_stop_limit, verbose=1, mode='auto')
 
     # Fit the model
-    model.fit(inputs_x, targets_t, validation_split=validation_split, epochs=200, shuffle=True, batch_size=100000,callbacks=[estop])
+    model.fit(inputs_x, targets_t, validation_split=validation_split, epochs=10, shuffle=True, batch_size=100000,callbacks=[estop])
 
     return model
 
 def run_as_script():
     num_cpu_threads = multiprocessing.cpu_count()
     theano.config.openmp = True
-    OMP_NUM_THREADS = int(1)
+    OMP_NUM_THREADS = num_cpu_threads
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)

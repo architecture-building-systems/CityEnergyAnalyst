@@ -1,9 +1,11 @@
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.externals import joblib
 from cea.demand.calibration.nn_generator.nn_settings import target_parameters
 import numpy as np
 import pandas as pd
 from keras.layers import Input, Dense
 from keras.models import Model
+from keras.models import load_model
 import scipy.io
 import os
 from keras.models import Sequential
@@ -56,7 +58,7 @@ def neural_trainer(inputs_x,targets_t,locator):
     hidden_units_L1=int(encoded_x_cols*1.1)
     hidden_units_L2=int(encoded_x_cols+1)
     validation_split = 0.5
-    e_stop_limit=100000
+    e_stop_limit=10
 
     # multi-layer perceptron
     model = Sequential()
@@ -73,7 +75,7 @@ def neural_trainer(inputs_x,targets_t,locator):
     estop = EarlyStopping(monitor='val_loss', min_delta=0, patience=e_stop_limit, verbose=1, mode='auto')
 
     # Fit the model
-    model.fit(inputs_x, targets_t, validation_split=validation_split, epochs=2, shuffle=True, batch_size=100000,callbacks=[estop])
+    model.fit(inputs_x, targets_t, validation_split=validation_split, epochs=10, shuffle=True, batch_size=100000,callbacks=[estop])
 
     json_NN_path , weight_NN_path = locator.get_neural_network_model()
     model_json = model.to_json()
@@ -81,7 +83,35 @@ def neural_trainer(inputs_x,targets_t,locator):
         json_file.write(model_json)
     # serialize weights to HDF5
     model.save_weights(weight_NN_path)
+    print("neural network properties saved")
+
+    model_resume=locator.get_neural_network_resume()
+    model.save(model_resume)  # creates a HDF5 file 'model_resume.h5'
     print("neural network model saved")
+
+    scalerX_file , scalerT_file=locator.get_minmaxscalar_model()
+    joblib.dump(scalerX, scalerX_file)
+    joblib.dump(scalerT, scalerT_file)
+    print("scalers saved")
+
+
+def nn_input_collector(locator):
+    nn_inout_path = locator.get_nn_inout_folder()
+    for i in range(10):
+        file_path_inputs = os.path.join(nn_inout_path, "input%(i)s.csv" % locals())
+        file_path_targets = os.path.join(nn_inout_path, "target%(i)s.csv" % locals())
+        batch_input_matrix = np.asarray(pd.read_csv(file_path_inputs))
+        batch_taget_matrix = np.asarray(pd.read_csv(file_path_targets))
+        if i < 1:
+            urban_input_matrix = batch_input_matrix
+            urban_taget_matrix = batch_taget_matrix
+        else:
+            urban_input_matrix = np.concatenate((urban_input_matrix, batch_input_matrix), axis=0)
+            urban_taget_matrix = np.concatenate((urban_taget_matrix, batch_taget_matrix), axis=0)
+
+        print(i)
+    return urban_input_matrix, urban_taget_matrix
+
 
 def run_as_script():
     num_cpu_threads = multiprocessing.cpu_count()
@@ -100,21 +130,12 @@ def run_as_script():
     #save_inputs.to_csv(temp_file_inputs)
     #temp_file_targets = r'C:\reference-case-open\baseline\outputs\surrogate_model\inputs_outputs\targets.csv'
     #save_targets.to_csv(temp_file_targets)
-    nn_inout_path = locator.get_nn_inout_folder()
-    for i in range (2):
-        file_path_inputs = os.path.join(nn_inout_path, "input%(i)s.csv" % locals())
-        file_path_targets = os.path.join(nn_inout_path, "target%(i)s.csv" % locals())
-        batch_input_matrix = np.asarray(pd.read_csv(file_path_inputs))
-        batch_taget_matrix = np.asarray(pd.read_csv(file_path_targets))
-        if i<1:
-            urban_input_matrix=batch_input_matrix
-            urban_taget_matrix=batch_taget_matrix
-        else:
-            urban_input_matrix=np.concatenate((urban_input_matrix,batch_input_matrix),axis=0)
-            urban_taget_matrix=np.concatenate((urban_taget_matrix,batch_taget_matrix),axis=0)
-
-        print(i)
+    urban_input_matrix, urban_taget_matrix = nn_input_collector(locator)
     neural_trainer(urban_input_matrix, urban_taget_matrix, locator)
+
+
+
+
 
 if __name__ == '__main__':
     run_as_script()

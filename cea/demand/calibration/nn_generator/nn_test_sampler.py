@@ -5,7 +5,7 @@ from cea.demand import demand_main
 import pickle
 import cea
 import json
-import h5py
+#import h5py
 import os
 import numpy as np
 import pandas as pd
@@ -13,11 +13,11 @@ from cea.demand.calibration.nn_generator.nn_settings import number_samples, rand
     target_parameters, boolean_vars
 from cea.demand.calibration.nn_generator.input_prepare import input_prepare_main
 
-def sampling_main_online(locator, random_variables, target_parameters, list_building_names, weather_path, gv):
+def sampling_single(locator, random_variables, target_parameters, list_building_names, weather_path, gv):
     size_city = np.shape(list_building_names)
     size_city=size_city[0]
-    bld_counter=0
 
+    bld_counter=0
     # create list of samples with a LHC sampler and save to disk
     samples, pdf_list = latin_sampler(locator, size_city, random_variables)
     for building_name in (list_building_names):
@@ -29,7 +29,6 @@ def sampling_main_online(locator, random_variables, target_parameters, list_buil
         apply_sample_parameters(locator, sample)
         bld_counter = bld_counter + 1
     overwritten = pd.read_csv(locator.get_building_overrides())
-
     bld_counter = 0
     for building_name in (list_building_names):
         sample = np.asarray(zip(random_variables, samples[bld_counter, :]))
@@ -43,12 +42,26 @@ def sampling_main_online(locator, random_variables, target_parameters, list_buil
 
         overwritten.loc[overwritten.Name == building_name, random_variables] = sample[:,1]
         bld_counter = bld_counter + 1
+
+    # for boolean_mask in (boolean_vars):
+    #     fazel1=overwritten.replace([0],'False')
+    #     overwritten[boolean_mask] = fazel1
+    #     overwritten[boolean_mask] = overwritten[boolean_mask].replace(1, 'True')
     overwritten.to_csv(locator.get_building_overrides())
 
     # run cea demand
+
     demand_main.demand_calculation(locator, weather_path, gv)
     urban_input_matrix, urban_taget_matrix=input_prepare_main(list_building_names, locator, target_parameters, gv)
 
+    nn_inout_path = locator.get_nn_inout_folder()
+    file_path_inputs=os.path.join(nn_inout_path,"input_test.csv")
+    data_file_inputs = pd.DataFrame(urban_input_matrix)
+    data_file_inputs.to_csv(file_path_inputs,header=False,index=False)
+
+    file_path_targets = os.path.join(nn_inout_path, "target_test.csv")
+    data_file_targets = pd.DataFrame(urban_taget_matrix)
+    data_file_targets.to_csv(file_path_targets,header=False,index=False)
 
     return urban_input_matrix, urban_taget_matrix
 
@@ -60,7 +73,7 @@ def run_as_script():
     weather_path = locator.get_default_weather()
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
     list_building_names = building_properties.list_building_names()
-    sampling_main_online(locator, random_variables, target_parameters, list_building_names, weather_path, gv)
+    urban_input_matrix, urban_taget_matrix=sampling_single(locator, random_variables, target_parameters, list_building_names, weather_path, gv)
 
 
 

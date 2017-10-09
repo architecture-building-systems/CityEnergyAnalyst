@@ -716,6 +716,22 @@ class InputLocator(object):
         matrix = os.path.join(self.get_neural_network_folder(), 'nn_matrix.h5')
         return structure, matrix
 
+    def get_neural_network_resume(self):
+        """scenario/outputs/data/surrogate/neural_network_folder"""
+        model_resume = os.path.join(self.get_neural_network_folder(), 'model_resume.h5')
+        return model_resume
+
+    def get_minmaxscalar_model(self):
+        """scenario/outputs/data/surrogate/neural_network_folder"""
+        scalerX_file = os.path.join(self.get_neural_network_folder(), 'scalerX.save')
+        scalerT_file = os.path.join(self.get_neural_network_folder(), 'scalerT.save')
+        return scalerX_file, scalerT_file
+
+    def get_neural_network_estimates(self):
+        """scenario/outputs/data/surrogate/neural_network_folder"""
+        model_estimates = os.path.join(self.get_neural_network_folder(), 'model_estimates.csv')
+        return model_estimates
+
 class ReferenceCaseOpenLocator(InputLocator):
     """This is a special InputLocator that extracts the builtin reference case
     (``cea/examples/reference-case-open.zip``) to the temporary folder and uses the baseline scenario in there"""
