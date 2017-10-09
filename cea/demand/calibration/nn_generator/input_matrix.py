@@ -100,16 +100,16 @@ def get_cea_inputs(locator, building_name, gv):
 
     array_arch = get_array_architecture_variables(building, building_name, locator)
 
-    array_cmfrt, schedules, tsd = get_array_comfort_variables(building, date, gv, schedules_dict, weather_data)
+    array_cmfrts, schedules, tsd = get_array_comfort_variables(building, date, gv, schedules_dict, weather_data)
 
     array_int_load = get_array_internal_loads_variables(schedules, tsd, building, gv)
 
     array_hvac = get_array_HVAC_variables(building)
 
     weather_array=np.transpose(weather_array)
-    array_cmfrt=np.transpose(array_cmfrt)
+    array_cmfrts=np.transpose(array_cmfrts)
 
-    building_array_D=np.concatenate((weather_array, array_cmfrt,array_int_load), axis=1)
+    building_array_D=np.concatenate((weather_array, array_cmfrts,array_int_load), axis=1)
     building_array_S = np.concatenate((array_geom, array_arch, array_hvac),axis=1)
 
     raw_nn_inputs_D = building_array_D
@@ -197,7 +197,20 @@ def get_array_comfort_variables(building, date, gv, schedules_dict, weather_data
     array_cmfrt = np.empty((1, 8760))
     array_cmfrt[0, :] = array_Thset
     array_cmfrt[0, gv.seasonhours[0] + 1:gv.seasonhours[1]] = array_Tcset[gv.seasonhours[0] + 1:gv.seasonhours[1]]
-    return array_cmfrt, schedules, tsd
+
+    array_HVAC_status=np.where(array_cmfrt > 99, 0,
+             (np.where(array_cmfrt < -99, 0, 1)))
+
+    array_HVAC_heating = np.empty((1, 8760))
+    array_HVAC_heating[0,:] = np.where(array_Thset < -99, 0,1)
+    array_HVAC_cooling = np.empty((1, 8760))
+    array_HVAC_cooling[0,:] = np.where(array_Tcset > 99, 0, 1)
+
+    array_cmfrts=np.concatenate((array_cmfrt,array_HVAC_status),axis=0)
+    array_cmfrts=np.concatenate((array_cmfrts,array_HVAC_heating),axis=0)
+    array_cmfrts=np.concatenate((array_cmfrts,array_HVAC_cooling),axis=0)
+
+    return array_cmfrts, schedules, tsd
 
 
 def get_array_internal_loads_variables(schedules, tsd, building, gv):
