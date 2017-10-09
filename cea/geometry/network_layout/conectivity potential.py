@@ -17,7 +17,7 @@ def calc_connectivity_network(path_arcgis_db, streets_shp, connection_point_buil
     :param path_arcgis_db: path to default ArcGIS database
     :param streets_shp: path to street shapefile
     :param connection_point_buildings_shp: path to substations in buildings (or close by)
-    :param potential_network: path output shapefile
+    :param potential_network: output shapefile
     :return:
     """
     # first add distribution network to each building form the roads
@@ -28,21 +28,17 @@ def calc_connectivity_network(path_arcgis_db, streets_shp, connection_point_buil
     merge = path_arcgis_db + "\\" + "merge"
     Newlines = path_arcgis_db + "\\" + "linesToerase"
     Finallines = path_arcgis_db + "\\" + "final_line"
-    memorystreets = path_arcgis_db + "\\" + "streets"
 
     arcpy.CopyFeatures_management(connection_point_buildings_shp, memorybuildings)
-    arcpy.CopyFeatures_management(streets_shp, memorystreets)
-    arcpy.Near_analysis(memorybuildings,  memorystreets, location=True, angle=True)
+    arcpy.Near_analysis(memorybuildings,  streets_shp, location=True, angle=True)
     arcpy.MakeXYEventLayer_management(memorybuildings, "NEAR_X", "NEAR_Y", "Line_Points_Layer", spatialReference)
     arcpy.FeatureClassToFeatureClass_conversion("Line_Points_Layer", path_arcgis_db, "Line_points")
     arcpy.Append_management(path_arcgis_db + '\\' + "Line_points", memorybuildings, "No_Test")
     arcpy.MakeFeatureLayer_management(memorybuildings, "POINTS_layer")
     arcpy.env.workspace = path_arcgis_db
     arcpy.PointsToLine_management(memorybuildings, Newlines, "Name", "#", "NO_CLOSE")
-    arcpy.Merge_management([memorystreets, Newlines], merge)
-    arcpy.FeatureToLine_management(merge, Finallines)  # necessary to match vertices
-    arcpy.CopyFeatures_management(Finallines, potential_network)
-    print potential_network
+    arcpy.Merge_management([streets_shp, Newlines], merge)
+    arcpy.FeatureToLine_management(merge, potential_network)  # necessary to match vertices
 
 def run_as_script():
     gv = cea.globalvar.GlobalVariables()
@@ -55,7 +51,6 @@ def run_as_script():
     path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
     calc_connectivity_network(path_default_arcgis_db, streets_shp, connection_point_buildings_shp,
                               potential_network)
-
 
 if __name__ == '__main__':
     run_as_script()
