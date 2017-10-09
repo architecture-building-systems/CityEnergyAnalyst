@@ -168,3 +168,28 @@ First, we configure a Jenkins item for pull requests:
     - List of organizations. Their members will be whitelisted: `architecture-building-systems`
   - section "Build"
     - Execute Windows batch command: `bin\ceatest.bat`
+
+Next, we configure a Jenkins item for merging to master:
+
+- open browser to http://localhost:8080 and log in
+- click "New Item"
+- Enter an item name: `run cea test on merge to master`
+  - Choose "Freestyle project"
+  - Project name: "run cea test on merge to master"
+  - Description: "Check out the CityEnergyAnalyst, create a conda environment for it and run
+    `cea test --reference-case all`"
+  - check "Discard old builds"
+    - Strategy: "Log Rotation"
+    - Max # of builds to keep: 10
+  - check "GitHub project"
+  - Project url: "https://github.com/architecture-building-systems/CityEnergyAnalyst"
+  - section "Source Code Management":
+    - select "Git"
+    - Repository URL: `https://github.com/architecture-building-systems/CityEnergyAnalyst.git`
+    - Credentials: (use the ones created above)
+    - Branches to build: `refs/heads/master`
+  - section "Build Triggers":
+    - check "GitHub hook trigger for GITScm polling"
+  - section "Build"
+    - Execute Windows batch command: `bin\ceatest.bat`
+
