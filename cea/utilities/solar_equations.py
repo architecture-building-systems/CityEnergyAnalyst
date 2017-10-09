@@ -232,7 +232,7 @@ def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, m
 
 # optimal tilt angle and spacing of solar panels
 
-def optimal_angle_and_tilt(sensors_metadata_clean, latitude, sun_properties, Max_Isol, panel_properties):
+def optimal_angle_and_tilt(sensors_metadata_clean, latitude, solar_properties, Max_Isol_Whperm2yr, panel_properties):
     """
     This function first determines the optimal tilt angle, row spacing and surface azimuth of panels installed at each
     sensor point. Secondly, the installed PV module areas at each sensor point are calculated. Lastly, all the modules
@@ -243,13 +243,13 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, sun_properties, Max
     :type sensors_metadata_clean: dataframe
     :param latitude: latitude of the case study location
     :type latitude: float
-    :param sun_properties: A SunProperties, using worst_sh: solar elevation at the worst hour [degree], worst_Az: solar azimuth at the worst hour [degree]
+    :param solar_properties: A SunProperties, using worst_sh: solar elevation at the worst hour [degree], worst_Az: solar azimuth at the worst hour [degree]
                            and trr_mean: transmissivity / clearness index [-]
-    :type sun_properties: cea.utilities.solar_equations.SunProperties
-    :param module_length: length of the PV module [m]
-    :type module_length: float
-    :param Max_Isol: max radiation potential (equals to global horizontal radiation) [Wh/m2/year]
-    :type Max_Isol: float
+    :type solar_properties: cea.utilities.solar_equations.SunProperties
+    :param module_length_m: length of the PV module [m]
+    :type module_length_m: float
+    :param Max_Isol_Whperm2yr: max radiation potential (equals to global horizontal radiation) [Wh/m2/year]
+    :type Max_Isol_Whperm2yr: float
 
     :returns sensors_metadata_clean: data of filtered sensor points categorized with module tilt angle, array spacing,
     surface azimuth, installed PV module area of each sensor point and the categories
@@ -265,35 +265,38 @@ def optimal_angle_and_tilt(sensors_metadata_clean, latitude, sun_properties, Max
         same as the roof. Sensors on flat roofs are all south facing.
     """
     # calculate panel tilt angle (B) for flat roofs (tilt < 5 degrees), slope roofs and walls.
-    optimal_angle_flat = calc_optimal_angle(180, latitude, sun_properties.trr_mean) # assume surface azimuth = 180 (N,E), south facing
-    sensors_metadata_clean['tilt']= np.vectorize(acos)(sensors_metadata_clean['Zdir']) #surface tilt angle in rad
-    sensors_metadata_clean['tilt'] = np.vectorize(degrees)(sensors_metadata_clean['tilt']) #surface tilt angle in degrees
-    sensors_metadata_clean['B'] = np.where(sensors_metadata_clean['tilt'] >= 5, sensors_metadata_clean['tilt'],
-                                           degrees(optimal_angle_flat)) # panel tilt angle in degrees
+    optimal_angle_flat_deg = calc_optimal_angle(180, latitude, solar_properties.trr_mean) # assume surface azimuth = 180 (N,E), south facing
+    sensors_metadata_clean['tilt_deg']= np.vectorize(acos)(sensors_metadata_clean['Zdir']) #surface tilt angle in rad
+    sensors_metadata_clean['tilt_deg'] = np.vectorize(degrees)(sensors_metadata_clean['tilt_deg']) #surface tilt angle in degrees
+    sensors_metadata_clean['B_deg'] = np.where(sensors_metadata_clean['tilt_deg'] >= 5, sensors_metadata_clean['tilt_deg'],
+                                           degrees(optimal_angle_flat_deg)) # panel tilt angle in degrees
 
     # calculate spacing and surface azimuth of the panels for flat roofs
-    module_length = panel_properties['module_length']
-    optimal_spacing_flat = calc_optimal_spacing(sun_properties, optimal_angle_flat, module_length)
-    sensors_metadata_clean['array_s'] = np.where(sensors_metadata_clean['tilt'] >= 5, 0, optimal_spacing_flat)
-    sensors_metadata_clean['surface_azimuth'] = np.vectorize(calc_surface_azimuth)(sensors_metadata_clean['Xdir'],
-                                                                                   sensors_metadata_clean['Ydir'],
-                                                                                   sensors_metadata_clean['B'])  # degrees
+    module_length_m = panel_properties['module_length_m']
+    optimal_spacing_flat_m = calc_optimal_spacing(solar_properties, optimal_angle_flat_deg, module_length_m)
+    sensors_metadata_clean['array_spacing_m'] = np.where(sensors_metadata_clean['tilt_deg'] >= 5, 0, optimal_spacing_flat_m)
+    sensors_metadata_clean['surface_azimuth_deg'] = np.vectorize(calc_surface_azimuth)(sensors_metadata_clean['Xdir'],
+                                                                                       sensors_metadata_clean['Ydir'],
+                                                                                       sensors_metadata_clean['B_deg'])  # degrees
 
     # calculate the surface area required to install one pv panel on flat roofs with defined tilt angle and array spacing
     if panel_properties['type'] == 'PV':
-        module_width = module_length  # for PV
+        module_width_m = module_length_m  # for PV
     else:
-        module_width = panel_properties['module_area']/module_length # for FP, ET
-    module_flat_surface_area = module_width * (sensors_metadata_clean.array_s / 2 + module_length * cos(optimal_angle_flat))
-    area_per_module = module_width * module_length
+        module_width_m = panel_properties['module_area_m2']/module_length_m # for FP, ET
+    module_flat_surface_area_m2 = module_width_m * (sensors_metadata_clean.array_spacing_m / 2 +
+                                                    module_length_m * cos(optimal_angle_flat_deg))
+    area_per_module_m2 = module_width_m * module_length_m
 
     # calculate the pv/solar collector module area within the area of each sensor point
-    sensors_metadata_clean['area_installed_module'] = np.where(sensors_metadata_clean['tilt'] >= 5, sensors_metadata_clean.AREA_m2,
-                                                     area_per_module * (sensors_metadata_clean.AREA_m2 / module_flat_surface_area))
+    sensors_metadata_clean['area_installed_module_m2'] = np.where(sensors_metadata_clean['tilt_deg'] >= 5,
+                                                                  sensors_metadata_clean.AREA_m2,
+                                                                  area_per_module_m2 *
+                                                                  (sensors_metadata_clean.AREA_m2 / module_flat_surface_area_m2))
 
     # categorize the sensors by surface_azimuth, B, GB
-    result = np.vectorize(calc_categoriesroof)(sensors_metadata_clean.surface_azimuth, sensors_metadata_clean.B,
-                                               sensors_metadata_clean.total_rad_Whm2, Max_Isol)
+    result = np.vectorize(calc_categoriesroof)(sensors_metadata_clean.surface_azimuth_deg, sensors_metadata_clean.B_deg,
+                                               sensors_metadata_clean.total_rad_Whm2, Max_Isol_Whperm2yr)
     sensors_metadata_clean['CATteta_z'] = result[0]
     sensors_metadata_clean['CATB'] = result[1]
     sensors_metadata_clean['CATGB'] = result[2]
@@ -508,8 +511,8 @@ def calc_groups(sensors_rad_clean, sensors_metadata_cat):
     groups_ob = sensors_metadata_cat.groupby(['CATB', 'CATGB', 'CATteta_z']) # group the sensors by categories
     prop_observers = groups_ob.mean().reset_index()
     prop_observers = pd.DataFrame(prop_observers)
-    total_area_installed_module = groups_ob['area_installed_module'].sum().reset_index()['area_installed_module']
-    prop_observers['total_area_module'] = total_area_installed_module
+    total_area_installed_module_m2 = groups_ob['area_installed_module_m2'].sum().reset_index()['area_installed_module_m2']
+    prop_observers['total_area_module_m2'] = total_area_installed_module_m2
     number_groups = groups_ob.size().count()
     sensors_list = groups_ob.groups.values()
 

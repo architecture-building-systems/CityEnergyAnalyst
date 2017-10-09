@@ -61,8 +61,8 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
     print 'reading weather data done'
 
     # solar properties
-    g, Sz, Az, ha, trr_mean, worst_sh, worst_Az = solar_equations.calc_sun_properties(latitude, longitude, weather_data,
-                                                                                      settings.date_start, settings.solar_window_solstice)
+    solar_properties = solar_equations.calc_sun_properties(latitude, longitude, weather_data, settings.date_start,
+                                                           settings.solar_window_solstice)
     print 'calculating solar properties done'
 
     # get properties of the panel to evaluate
@@ -82,7 +82,7 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
     if not sensors_metadata_clean.empty:
         # calculate optimal angle and tilt for panels
         sensors_metadata_cat = solar_equations.optimal_angle_and_tilt(sensors_metadata_clean, latitude,
-                                                                      worst_sh, worst_Az, trr_mean, max_yearly_radiation,
+                                                                      solar_properties, max_yearly_radiation,
                                                                       panel_properties)
         print 'calculating optimal tilt angle and separation done'
 
@@ -93,7 +93,7 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
         print 'generating groups of sensor points done'
 
         #calculate heat production from solar collectors
-        results, Final = SC_generation(hourlydata_groups, prop_observers, number_groups, weather_data, g, Sz, Az, ha,
+        results, Final = SC_generation(hourlydata_groups, prop_observers, number_groups, weather_data, solar_properties,
                                        settings.T_in_SC, height, panel_properties, latitude)
 
 
@@ -109,7 +109,7 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
 # SC heat production
 # =========================
 
-def SC_generation(hourly_radiation, prop_observers, number_groups, weather_data, g, Sz, Az, ha, Tin_C, height,
+def SC_generation(hourly_radiation, prop_observers, number_groups, weather_data, solar_properties, Tin_C, height,
                   panel_properties, latitude):
     """
     To calculate the heat generated from SC panels.
@@ -136,7 +136,7 @@ def SC_generation(hourly_radiation, prop_observers, number_groups, weather_data,
     :return:
     """
 
-
+    # read values from panel_properties and solar_properties
     n0 = panel_properties['n0']
     c1 = panel_properties['c1']
     c2 = panel_properties['c2']
@@ -147,12 +147,13 @@ def SC_generation(hourly_radiation, prop_observers, number_groups, weather_data,
     t_max = panel_properties['t_max']
     IAM_d = panel_properties['IAM_d']
     Aratio = panel_properties['aperture_area_ratio']
-    Apanel = panel_properties['module_area']
+    Apanel = panel_properties['module_area_m2']
     dP1 = panel_properties['dP1']
     dP2 = panel_properties['dP2']
     dP3 = panel_properties['dP3']
     dP4 = panel_properties['dP4']
     Cp_fluid_JperkgK = panel_properties['Cp_fluid']  # J/kgK
+
 
     # create lists to store results
     list_results = [None] * number_groups
@@ -165,10 +166,10 @@ def SC_generation(hourly_radiation, prop_observers, number_groups, weather_data,
 
     Tin_array_C = np.zeros(8760) + Tin_C
     aperature_area_per_module = Aratio * Apanel
-    total_area_module = prop_observers['total_area_module'].sum() # total area for panel installation
+    total_area_module = prop_observers['total_area_module_m2'].sum() # total area for panel installation
 
     # calculate equivalent length of pipes
-    lv = panel_properties['module_length']  # module length
+    lv = panel_properties['module_length_m']  # module length
     number_modules = round(total_area_module/Apanel)  # this is an estimation
     l_ext_mperm2 = (2 * lv * number_modules/ (total_area_module * Aratio)) # pipe length within the collectors
     l_int_mperm2 = 2 * height / (total_area_module * Aratio) # pipe length from building substation to roof top collectors
@@ -181,9 +182,9 @@ def SC_generation(hourly_radiation, prop_observers, number_groups, weather_data,
 
     for group in range(number_groups):
         # load panel angles from group
-        teta_z = prop_observers.loc[group, 'surface_azimuth']  # azimuth of panels of group
-        area_per_group = prop_observers.loc[group, 'total_area_module']
-        tilt_angle_deg = prop_observers.loc[group, 'tilt']  # tilt angle of panels
+        teta_z_deg = prop_observers.loc[group, 'surface_azimuth_deg']  # azimuth of panels of group
+        area_per_group_m2 = prop_observers.loc[group, 'total_area_module_m2']
+        tilt_angle_deg = prop_observers.loc[group, 'tilt_deg']  # tilt angle of panels
 
         # create dataframe with irradiation from group
 
@@ -193,7 +194,7 @@ def SC_generation(hourly_radiation, prop_observers, number_groups, weather_data,
         radiation_Wh.fillna(0, inplace=True)                                       # set nan to zero
 
         # calculate incidence angle modifier for beam radiation
-        IAM_b = calc_IAM_beam_SC(Az, g, ha, teta_z, tilt_angle_deg, panel_properties['type'], Sz, latitude)
+        IAM_b = calc_IAM_beam_SC(solar_properties, teta_z_deg, tilt_angle_deg, panel_properties['type'], latitude)
 
         # calculate heat production from a solar collector of each group
         list_results[group] = calc_SC_module(tilt_angle_deg, IAM_b, IAM_d, radiation_Wh.I_direct,
@@ -205,14 +206,14 @@ def SC_generation(hourly_radiation, prop_observers, number_groups, weather_data,
 
 
         # multiplying the results with the number of panels in each group and write to list
-        number_modules_per_group = area_per_group / Apanel
-        list_areas_groups[group] = area_per_group
+        number_modules_per_group = area_per_group_m2 / Apanel
+        list_areas_groups[group] = area_per_group_m2
         radiation_array = hourly_radiation[group] * list_areas_groups[group] / 1000 # kWh
         Sum_qout_kWh = Sum_qout_kWh + list_results[group][1] * number_modules_per_group
         Sum_Eaux_kWh = Sum_Eaux_kWh + list_results[group][2] * number_modules_per_group
         Sum_qloss = Sum_qloss + list_results[group][0] * number_modules_per_group
         Sum_mcp_kWperC = Sum_mcp_kWperC + list_results[group][5] * number_modules_per_group
-        Sum_radiation_kWh = Sum_radiation_kWh + radiation_Wh['I_sol']*area_per_group/1000
+        Sum_radiation_kWh = Sum_radiation_kWh + radiation_Wh['I_sol']*area_per_group_m2/1000
 
     Tout_group_C = (Sum_qout_kWh / Sum_mcp_kWperC) + Tin_C  # in C assuming all collectors are connected in parallel
 
@@ -551,14 +552,14 @@ def calc_qloss_network(Mfl, Le, Area_a, Tm, Te, maxmsc):
     return qloss_kW  # in kW
 
 
-def calc_IAM_beam_SC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, type_SCpanel, Sz_vector, latitude):
+def calc_IAM_beam_SC(solar_properties, teta_z_deg, tilt_angle_deg, type_SCpanel, latitude):
     """
     Calculates Incidence angle modifier for beam radiation.
 
-    :param Az_vector: Solar azimuth angle
-    :param g_vector: declination
-    :param ha_vector: hour angle
-    :param teta_z: panel surface azimuth angle
+    :param Az_rad: Solar azimuth angle [rad]
+    :param g_rad: declination [rad]
+    :param ha_rad: hour angle [rad]
+    :param teta_z_rad: panel surface azimuth angle [rad]
     :param tilt_angle: panel tilt angle
     :param type_SCpanel: type of solar collector
     :param Sz_vector: solar zenith angle
@@ -567,28 +568,28 @@ def calc_IAM_beam_SC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, type_SC
 
     def calc_teta_L(Az, teta_z, tilt, Sz):
         teta_la = tan(Sz) * cos(teta_z - Az)
-        teta_l = degrees(abs(atan(teta_la) - tilt))
-        if teta_l < 0:
-            teta_l = min(89, abs(teta_l))
-        if teta_l >= 90:
-            teta_l = 89.999
-        return teta_l  # longitudinal incidence angle in degrees
+        teta_l_deg = degrees(abs(atan(teta_la) - tilt))
+        if teta_l_deg < 0:
+            teta_l_deg = min(89, abs(teta_l_deg))
+        if teta_l_deg >= 90:
+            teta_l_deg = 89.999
+        return teta_l_deg  # longitudinal incidence angle in degrees
 
     def calc_teta_T(Az, Sz, teta_z):
         teta_ta = sin(Sz) * sin(abs(teta_z - Az))
-        teta_T = degrees(atan(teta_ta / cos(teta_ta)))
-        if teta_T < 0:
-            teta_T = min(89, abs(teta_T))
-        if teta_T >= 90:
-            teta_T = 89.999
-        return teta_T  # transversal incidence angle in degrees
+        teta_T_deg = degrees(atan(teta_ta / cos(teta_ta)))
+        if teta_T_deg < 0:
+            teta_T_deg = min(89, abs(teta_T_deg))
+        if teta_T_deg >= 90:
+            teta_T_deg = 89.999
+        return teta_T_deg  # transversal incidence angle in degrees
 
-    def calc_teta_L_max(teta_L):
-        if teta_L < 0:
-            teta_L = min(89, abs(teta_L))
-        if teta_L >= 90:
-            teta_L = 89.999
-        return teta_L
+    def calc_teta_L_max(teta_L_deg):
+        if teta_L_deg < 0:
+            teta_L_deg = min(89, abs(teta_L_deg))
+        if teta_L_deg >= 90:
+            teta_L_deg = 89.999
+        return teta_L_deg
 
     def calc_IAMb(teta_l, teta_T, type_SCpanel):
         if type_SCpanel == 'FP':  # # Flat plate collector   1636: SOLEX BLU, SPF, 2012
@@ -600,28 +601,28 @@ def calc_IAM_beam_SC(Az_vector, g_vector, ha_vector, teta_z, tilt_angle, type_SC
         return IAM_b
 
     # convert to radians
-    teta_z = radians(teta_z)
-    tilt = radians(tilt_angle)
+    g_rad = np.radians(solar_properties.g)
+    ha_rad = np.radians(solar_properties.ha)
+    Sz_rad = np.radians(solar_properties.Sz)
+    Az_rad = np.radians(solar_properties.Az)
+    lat_rad = radians(latitude)
+    teta_z_rad = radians(teta_z_deg)
+    tilt_rad = radians(tilt_angle_deg)
 
-    g_vector = np.radians(g_vector)
-    ha_vector = np.radians(ha_vector)
-    lat = radians(latitude)
-    Sz_vector = np.radians(Sz_vector)
-    Az_vector = np.radians(Az_vector)
-    Incidence_vector = np.vectorize(solar_equations.calc_incident_angle_beam)(g_vector, lat, ha_vector, tilt,
-                                                              teta_z)  # incident angle in radians
+    Incidence_angle_rad = np.vectorize(solar_equations.calc_incident_angle_beam)(g_rad, lat_rad, ha_rad, tilt_rad,
+                                                                              teta_z_rad)  # incident angle in radians
 
     # calculate incident angles
     if type_SCpanel == 'FP':
-        incident_angle = np.degrees(Incidence_vector)
-        Teta_L = np.vectorize(calc_teta_L_max)(incident_angle)
-        Teta_T = 0  # not necessary for flat plate collectors
+        incident_angle_deg = np.degrees(Incidence_angle_rad)
+        Teta_L_deg = np.vectorize(calc_teta_L_max)(incident_angle_deg)
+        Teta_T_deg = 0  # not necessary for flat plate collectors
     if type_SCpanel == 'ET':
-        Teta_L = np.vectorize(calc_teta_L)(Az_vector, teta_z, tilt, Sz_vector)  # in degrees
-        Teta_T = np.vectorize(calc_teta_T)(Az_vector, Sz_vector, teta_z)  # in degrees
+        Teta_L_deg = np.vectorize(calc_teta_L)(Az_rad, teta_z_rad, tilt_rad, Sz_rad)  # in degrees
+        Teta_T_deg = np.vectorize(calc_teta_T)(Az_rad, Sz_rad, teta_z_rad)  # in degrees
 
     # calculate incident angle modifier for beam radiation
-    IAM_b_vector = np.vectorize(calc_IAMb)(Teta_L, Teta_T, type_SCpanel)
+    IAM_b_vector = np.vectorize(calc_IAMb)(Teta_L_deg, Teta_T_deg, type_SCpanel)
 
     return IAM_b_vector
 
