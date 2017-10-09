@@ -33,7 +33,7 @@ class TestCalcThermalLoads(unittest.TestCase):
         cls.gv = GlobalVariables()
         weather_path = cls.locator.get_default_weather()
         cls.weather_data = epwreader.epw_reader(weather_path)[
-            ['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
+            ['drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
         cls.config = ConfigParser.SafeConfigParser()
         cls.config.read(os.path.join(os.path.dirname(__file__), 'test_calc_thermal_loads.config'))
 
