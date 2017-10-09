@@ -11,8 +11,16 @@ import cea.inputlocator
 
 def calc_minimum_spanning_tree(network_shp):
 
+    # read sahpefile into networxk format
     graph = nx.read_shp(network_shp)
-    graph.edge
+    nodes = graph.nodes
+    edges = graph.edges
+    iterator_edges = graph.edges_iter(data=True)
+
+    # get weights:
+    weights = []
+    for (x,y,data) in iterator_edges:
+        print edge
 
 
 
