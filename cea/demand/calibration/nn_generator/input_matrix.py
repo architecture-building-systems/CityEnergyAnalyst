@@ -11,6 +11,7 @@ from cea.demand.thermal_loads import initialize_inputs
 from cea.utilities.dbfreader import dbf_to_dataframe
 from cea.technologies import controllers
 from cea.utilities import epwreader
+from cea.demand.sensible_loads import calc_I_sol
 import numpy as np
 from cea.demand.calibration.nn_generator.nn_settings import nn_delay
 
@@ -101,7 +102,7 @@ def get_cea_inputs(locator, building_name, gv):
 
     array_cmfrt, schedules, tsd = get_array_comfort_variables(building, date, gv, schedules_dict, weather_data)
 
-    array_int_load = get_array_internal_loads_variables(schedules, tsd)
+    array_int_load = get_array_internal_loads_variables(schedules, tsd, building, gv)
 
     array_hvac = get_array_HVAC_variables(building)
 
@@ -199,16 +200,22 @@ def get_array_comfort_variables(building, date, gv, schedules_dict, weather_data
     return array_cmfrt, schedules, tsd
 
 
-def get_array_internal_loads_variables(schedules, tsd):
+def get_array_internal_loads_variables(schedules, tsd, building, gv):
+
     # internal loads
     array_electricity = tsd['Eaf'] + tsd['Edataf'] + tsd['Elf'] + tsd['Eprof'] + tsd['Eref']
     np.place(tsd['Qhprof'], np.isnan(tsd['Qhprof']), 0)
     array_sensible_gain = tsd['Qs'] + tsd['Qhprof']
     array_latent_gain = tsd['w_int']
+    for t in range(8760):
+        tsd['I_sol'][t], tsd['I_rad'][t]=calc_I_sol(t, building, tsd, gv)
+
+    array_solar_gain=tsd['I_sol']+tsd['I_rad']
+        
     array_ve = tsd['ve']
     array_Vww = schedules['Vww']
     ### final array of internal loads
-    array_int_load = np.column_stack((array_electricity, array_sensible_gain, array_latent_gain, array_ve, array_Vww))
+    array_int_load = np.column_stack((array_electricity, array_sensible_gain, array_latent_gain, array_solar_gain, array_ve, array_Vww))
     return array_int_load
 
 
