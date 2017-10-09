@@ -194,3 +194,9 @@ Next, we configure a Jenkins item for merging to master:
   - section "Build"
     - Execute Windows batch command: `bin\ceatest.bat`
 
+- open GitHub Integrations & services (https://github.com/architecture-building-systems/CityEnergyAnalyst/settings/installations)
+  - dropdown "Add service"
+    - select "Jenkins (GitHub plugin)"
+    - enter Jenkins hook url: `https://ceajenkins.localtunnel.me`
+    - click "Add service" to save
+
