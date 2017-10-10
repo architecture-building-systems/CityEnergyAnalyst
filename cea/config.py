@@ -24,6 +24,7 @@ class Configuration(object):
         if not scenario:
             self.scenario = self.default_scenario
             # re-read configuration from default-scenario
+            defaults['CEA.SCENARIO'] = str(self.scenario)
             self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
             self._parser.read(self._list_configuration_files(self.scenario))
 
