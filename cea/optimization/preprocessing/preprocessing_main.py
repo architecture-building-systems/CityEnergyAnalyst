@@ -10,6 +10,7 @@ from __future__ import division
 import os
 
 import pandas as pd
+import numpy as np
 
 import cea.optimization.preprocessing.processheat as process_heat
 from cea.optimization.master import summarize_network
@@ -62,7 +63,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
 
     # solar
     print "Solar features extraction"
-    solar_features = SolarFeatures(locator)
+    solar_features = SolarFeatures(locator, building_names)
 
     # GET LOADS IN SUBSTATIONS
     # prepocess space heating, domestic hot water and space cooling to substation.
@@ -97,14 +98,34 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
 
 
 class SolarFeatures(object):
-    def __init__(self, locator):
-        self.Peak_PV_Wh = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "Pv.csv"), usecols=["E_PV_gen_kWh"]).values.max() * 1000
-        self.A_PV_m2 = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "Pv.csv"), usecols=["A_PV_m2"]).values.max()
-        self.Peak_PVT_Wh = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "PVT_35.csv"), usecols=["E_PVT_gen_kWh"]).values.max() * 1000
-        self.Q_nom_PVT_Wh = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "PVT_35.csv"), usecols=["Q_PVT_gen_kWh"]).values.max() * 1000
-        self.A_PVT_m2 = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "PVT_35.csv"), usecols=["A_PVT_m2"]).values.max()
-        self.Q_nom_SC_Wh = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "SC_75.csv"), usecols=["Q_SC_gen_kWh"]).values.max() * 1000
-        self.A_SC_m2 = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), "SC_75.csv"), usecols=["A_SC_m2"]).values.max()
+    def __init__(self, locator, building_names):
+        E_PV_gen_kWh = np.zeros(8760)
+        E_PVT_gen_kWh = np.zeros(8760)
+        Q_PVT_gen_kWh = np.zeros(8760)
+        Q_SC_gen_kWh = np.zeros(8760)
+        A_PV_m2 = np.zeros(8760)
+        A_PVT_m2 = np.zeros(8760)
+        A_SC_m2 = np.zeros(8760)
+        for name in building_names:
+            building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
+            building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PVT.csv'))
+            building_SC = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC.csv'))
+            E_PV_gen_kWh = E_PV_gen_kWh + building_PV['E_PV_gen_kWh']
+            E_PVT_gen_kWh = E_PVT_gen_kWh + building_PVT['E_PVT_gen_kWh']
+            Q_PVT_gen_kWh = Q_PVT_gen_kWh + building_PVT['Q_PVT_gen_kWh']
+            Q_SC_gen_kWh = Q_SC_gen_kWh + building_SC['Q_SC_gen_kWh']
+            A_PV_m2 = A_PV_m2 + building_PV['Area_PV_m2']
+            A_PVT_m2 = A_PVT_m2 + building_PVT['Area_PVT_m2']
+            A_SC_m2 = A_SC_m2 + building_SC['Area_SC_m2']
+
+        print (A_PV_m2.values.max())
+        self.Peak_PV_Wh = E_PV_gen_kWh.values.max() * 1000
+        self.A_PV_m2 = A_PV_m2.values.max()
+        self.Peak_PVT_Wh = E_PVT_gen_kWh.values.max() * 1000
+        self.Q_nom_PVT_Wh = Q_PVT_gen_kWh.values.max() * 1000
+        self.A_PVT_m2 = A_PVT_m2.values.max()
+        self.Q_nom_SC_Wh = Q_SC_gen_kWh.values.max() * 1000
+        self.A_SC_m2 = A_SC_m2.values.max()
 
 #============================
 #test
