@@ -133,9 +133,7 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
 
 def run_as_script(scenario_path=None, weather_path=None, use_dynamic_infiltration_calculation=False,
                   multiprocessing=True):
-    gv = cea.globalvar.GlobalVariables()
-    if scenario_path is None:
-        scenario_path = gv.scenario_reference
+    assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     # for the interface, the user should pick a file out of of those in ...DB/Weather/...
     if weather_path is None:
@@ -146,7 +144,7 @@ def run_as_script(scenario_path=None, weather_path=None, use_dynamic_infiltratio
     print('Running demand calculation with dynamic infiltration=%(use_dynamic_infiltration_calculation)s' % locals())
     print('Running demand calculation with multiprocessing=%(use_dynamic_infiltration_calculation)s' % locals())
 
-    demand_calculation(locator=locator, weather_path=weather_path, gv=gv,
+    demand_calculation(locator=locator, weather_path=weather_path, gv=cea.globalvar.GlobalVariables(),
                        use_dynamic_infiltration_calculation=use_dynamic_infiltration_calculation,
                        multiprocessing=multiprocessing)
 

@@ -22,10 +22,10 @@ class Configuration(object):
         self._parser.read(self._list_configuration_files(scenario))
 
         if not scenario:
-            scenario = self.default_scenario
+            self.scenario = self.default_scenario
             # re-read configuration from default-scenario
             self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
-            self._parser.read(self._list_configuration_files(scenario))
+            self._parser.read(self._list_configuration_files(self.scenario))
 
         self.demand = DemandConfiguration(self._parser)
         self.solar = PhotovoltaicConfiguration(self._parser)
