@@ -124,11 +124,6 @@ def task_download_reference_cases():
             archive = zipfile.ZipFile(ARCHIVE_PATH)
             archive.extractall(REFERENCE_CASE_PATH)
 
-            # extract the reference-case-open to the folder
-            import cea.examples
-            archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
-            archive.extractall(os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME))
-
     return {
         'actions': [download_reference_cases],
         'verbosity': 1,
