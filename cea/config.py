@@ -36,6 +36,7 @@ class Configuration(object):
         self.demand = DemandConfiguration(self._parser)
         self.solar = PhotovoltaicConfiguration(self._parser)
         self.radiation_daysim = RadiationDaysimConfiguration(self._parser)
+        self.data_helper = DataHelperConfiguration(self._parser)
 
     @property
     def default_scenario(self):
@@ -300,6 +301,14 @@ class RadiationDaysimConfiguration(object):
             'consider_windows': self._parser.getboolean('radiation-daysim', 'consider-windows'),
             'consider_floors': self._parser.getboolean('radiation-daysim', 'consider-floors'),
         }
+
+class DataHelperConfiguration(object):
+    def __init__(self, parser):
+        self._parser = parser
+
+    @property
+    def archetypes(self):
+        return self._parser.get('data-helper', 'archetypes').split()
 
 if __name__ == '__main__':
     config = Configuration(r'c:\reference-case-open\baseline')

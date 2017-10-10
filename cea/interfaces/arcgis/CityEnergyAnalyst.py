@@ -444,7 +444,7 @@ class DemandTool(object):
 
 class DataHelperTool(object):
     """
-    integrate the cea/demand/preprocessing/properties.py script with ArcGIS.
+    integrate the cea/demand/preprocessing/data_helper.py script with ArcGIS.
     """
 
     def __init__(self):

@@ -14,9 +14,9 @@ import ConfigParser
 from pandas.util.testing import assert_frame_equal
 from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.globalvar import GlobalVariables
-from cea.demand.preprocessing.properties import calculate_average_multiuse
-from cea.demand.preprocessing.properties import correct_archetype_areas
-from cea.demand.preprocessing.properties import get_database
+from cea.demand.preprocessing.data_helper import calculate_average_multiuse
+from cea.demand.preprocessing.data_helper import correct_archetype_areas
+from cea.demand.preprocessing.data_helper import get_database
 from cea.demand.occupancy_model import calc_schedules
 from cea.demand.occupancy_model import schedule_maker
 

@@ -38,8 +38,8 @@ class TestCalcThermalLoads(unittest.TestCase):
         cls.config.read(os.path.join(os.path.dirname(__file__), 'test_calc_thermal_loads.config'))
 
         # run properties script
-        import cea.demand.preprocessing.properties
-        cea.demand.preprocessing.properties.properties(cls.locator, True, True, True, True)
+        import cea.demand.preprocessing.data_helper
+        cea.demand.preprocessing.data_helper.data_helper(cls.locator, True, True, True, True)
 
         cls.building_properties = BuildingProperties(cls.locator, cls.gv)
         cls.date = pd.date_range(cls.gv.date_start, periods=8760, freq='H')

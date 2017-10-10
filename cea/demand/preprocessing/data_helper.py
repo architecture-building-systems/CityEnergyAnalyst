@@ -8,10 +8,12 @@ building properties algorithm
 from __future__ import division
 from __future__ import absolute_import
 
+import os
 import numpy as np
 import pandas as pd
 from cea.utilities.dbfreader import dbf_to_dataframe, dataframe_to_dbf
 import cea.inputlocator
+import cea.config
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -23,7 +25,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def properties(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_flag, prop_internal_loads_flag):
+def data_helper(locator, prop_architecture_flag, prop_hvac_flag, prop_comfort_flag, prop_internal_loads_flag):
     """
     algorithm to query building properties from statistical database
     Archetypes_HVAC_properties.csv. for more info check the integrated demand
@@ -322,28 +324,23 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
     return properties_df
 
 
-def run_as_script(scenario_path=None, prop_thermal_flag=True, prop_architecture_flag=True, prop_hvac_flag=True,
-                  prop_comfort_flag=True, prop_internal_loads_flag=True):
+def run_as_script(scenario_path, prop_architecture_flag=True, prop_hvac_flag=True, prop_comfort_flag=True,
+                  prop_internal_loads_flag=True):
 
     """
     Run the properties script with input from the reference case and compare the results. This ensures that changes
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
     """
-    import cea.globalvar
-    gv = cea.globalvar.GlobalVariables()
-    if not scenario_path:
-        scenario_path = gv.scenario_reference
+    assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    properties(locator=locator, prop_architecture_flag=prop_architecture_flag,
-               prop_hvac_flag=prop_hvac_flag, prop_comfort_flag=prop_comfort_flag,
-               prop_internal_loads_flag=prop_internal_loads_flag)
+    data_helper(locator=locator, prop_architecture_flag=prop_architecture_flag, prop_hvac_flag=prop_hvac_flag,
+                prop_comfort_flag=prop_comfort_flag, prop_internal_loads_flag=prop_internal_loads_flag)
 
 
 if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    args = parser.parse_args()
-
-    run_as_script(scenario_path=args.scenario)
+    config = cea.config.Configuration()
+    run_as_script(scenario_path=config.scenario,
+                  prop_architecture_flag='architecture' in config.data_helper.archetypes,
+                  prop_hvac_flag='HVAC' in config.data_helper.archetypes,
+                  prop_comfort_flag='comfort' in config.data_helper.archetypes,
+                  prop_internal_loads_flag='internal-loads' in config.data_helper.archetypes)

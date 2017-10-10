@@ -47,13 +47,12 @@ def demand(args):
 
 def data_helper(args):
     """Run the demand helper script with the arguments provided."""
-    import cea.demand.preprocessing.properties
-    cea.demand.preprocessing.properties.run_as_script(scenario_path=args.scenario,
-                                                      prop_thermal_flag='thermal' in args.archetypes,
-                                                      prop_architecture_flag='architecture' in args.archetypes,
-                                                      prop_hvac_flag='HVAC' in args.archetypes,
-                                                      prop_comfort_flag='comfort' in args.archetypes,
-                                                      prop_internal_loads_flag='internal-loads' in args.archetypes)
+    import cea.demand.preprocessing.data_helper
+    cea.demand.preprocessing.data_helper.run_as_script(scenario_path=args.scenario,
+                                                       prop_architecture_flag='architecture' in args.archetypes,
+                                                       prop_hvac_flag='HVAC' in args.archetypes,
+                                                       prop_comfort_flag='comfort' in args.archetypes,
+                                                       prop_internal_loads_flag='internal-loads' in args.archetypes)
 
 
 def operation_costs(args):
@@ -564,8 +563,8 @@ def main():
     data_helper_parser = subparsers.add_parser('data-helper',
                                                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     data_helper_parser.add_argument('--archetypes', help='List of archetypes process', nargs="*",
-                                    default=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'],
-                                    choices=['thermal', 'comfort', 'architecture', 'HVAC', 'internal-loads'])
+                                    default=['comfort', 'architecture', 'HVAC', 'internal-loads'],
+                                    choices=['comfort', 'architecture', 'HVAC', 'internal-loads'])
     data_helper_parser.set_defaults(func=data_helper)
 
     emissions_parser = subparsers.add_parser('emissions',

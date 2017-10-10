@@ -33,8 +33,8 @@ def main(output_file):
         ['drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
     # run properties script
-    import cea.demand.preprocessing.properties
-    cea.demand.preprocessing.properties.properties(locator, True, True, True, True)
+    import cea.demand.preprocessing.data_helper
+    cea.demand.preprocessing.data_helper.data_helper(locator, True, True, True, True)
 
     building_properties = BuildingProperties(locator, gv)
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
