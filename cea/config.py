@@ -27,6 +27,11 @@ class Configuration(object):
             defaults['CEA.SCENARIO'] = str(self.scenario)
             self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
             self._parser.read(self._list_configuration_files(self.scenario))
+            try:
+                # add configuration file to default scenario
+                self.save()
+            except:
+                print('failed to save configuration file to default scenario.')
 
         self.demand = DemandConfiguration(self._parser)
         self.solar = PhotovoltaicConfiguration(self._parser)
