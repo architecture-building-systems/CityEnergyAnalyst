@@ -188,17 +188,12 @@ def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_f
 
 
 def run_as_script(scenario_path=None):
-    gv = cea.globalvar.GlobalVariables()
-    if not scenario_path:
-        scenario_path = gv.scenario_reference
+    assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     lca_operation(locator=locator)
 
 if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    args = parser.parse_args()
-    run_as_script(scenario_path=args.scenario)
+    import cea.config
+    config = cea.config.Configuration()
+    run_as_script(scenario_path=config.scenario)
 
