@@ -37,6 +37,7 @@ class Configuration(object):
         self.solar = PhotovoltaicConfiguration(self._parser)
         self.radiation_daysim = RadiationDaysimConfiguration(self._parser)
         self.data_helper = DataHelperConfiguration(self._parser)
+        self.embodied_energy = EmbodiedEnergyConfiguration(self._parser)
 
     @property
     def default_scenario(self):
@@ -309,6 +310,16 @@ class DataHelperConfiguration(object):
     @property
     def archetypes(self):
         return self._parser.get('data-helper', 'archetypes').split()
+
+
+class EmbodiedEnergyConfiguration(object):
+    def __init__(self, parser):
+        self._parser = parser
+
+    @property
+    def year_to_calculate(self):
+        return self._parser.getint('embodied-energy', 'year-to-calculate')
+
 
 if __name__ == '__main__':
     config = Configuration(r'c:\reference-case-open\baseline')
