@@ -6,12 +6,12 @@ set PATH=%PROGRAMDATA%\Miniconda2\Scripts\;%PATH%
 echo %USERPROFILE%
 where conda
 set CONDA_ENVS_PATH=%LOCALAPPDATA%\conda\conda\envs
-conda env remove -y -q --name cea
-conda env create -q
-set PATH=%LOCALAPPDATA%\conda\conda\envs\cea;%PATH%
-set PATH=%LOCALAPPDATA%\conda\conda\envs\cea\Scripts;%PATH%
-set CONDA_DEFAULT_ENV=cea
-%LOCALAPPDATA%\conda\conda\envs\cea\Scripts\pip.exe install .[dev]
+conda env remove -y -q --name ceatestall
+conda env create -q  --name ceatestall
+set PATH=%LOCALAPPDATA%\conda\conda\envs\ceatestall;%PATH%
+set PATH=%LOCALAPPDATA%\conda\conda\envs\ceatestall\Scripts;%PATH%
+set CONDA_DEFAULT_ENV=ceatestall
+%LOCALAPPDATA%\conda\conda\envs\ceatestall\Scripts\pip.exe install .[dev]
 where cea
 cea test --reference-case all
 
