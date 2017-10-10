@@ -39,8 +39,8 @@ To install the development environment of CEA, perform the steps above, except, 
 Note: Location where to store the repository can be any -"Documents" is just an example.
 
 Note: If after the installation you experience an error concerning geopandas or fiona, i.e., ``ImportError: DLL load
- failed: The specified module could not be found.`` Try copying ``C:\Users\your_name\Anaconda2\envs\cea\proj.dll`` to
-``C:\Users\your_name\Anaconda2\envs\cea\Library\bin`` and CEA should run.
+ failed: The specified module could not be found.`` Try copying ``C:\Users\your_name\Anaconda2\envs\cea\proj.dll`` OR ``C:\Users\your_name\AppData\Local\conda\conda\envs\cea\proj.dll`` to
+``C:\Users\your_name\Anaconda2\envs\cea\Library\bin`` OR ``C:\Users\your_name\AppData\Local\conda\conda\envs\Library\bin``and CEA should run.
 
 Setting up PyCharm
 ..................
