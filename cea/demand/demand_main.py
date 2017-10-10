@@ -152,13 +152,6 @@ def run_as_script(scenario_path=None, weather_path=None, use_dynamic_infiltratio
 if __name__ == '__main__':
     import cea.config
     config = cea.config.Configuration()
-
-    try:
-        # add configuration file to default scenario
-        config.save()
-    except:
-        print('failed to save configuration file to default scenario.')
-
     run_as_script(scenario_path=config.scenario, weather_path=config.weather,
                   use_dynamic_infiltration_calculation=config.demand.use_dynamic_infiltration_calculation,
                   multiprocessing=config.multiprocessing)
