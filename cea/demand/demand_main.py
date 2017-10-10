@@ -70,7 +70,7 @@ def demand_calculation(locator, weather_path, gv, use_dynamic_infiltration_calcu
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
 
     # weather model
-    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
     # building properties model
     building_properties = BuildingProperties(locator, gv)
@@ -132,7 +132,7 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
 
 
 def run_as_script(scenario_path=None, weather_path=None, use_dynamic_infiltration_calculation=False,
-                  multiprocessing=False):
+                  multiprocessing=True):
     gv = cea.globalvar.GlobalVariables()
     if scenario_path is None:
         scenario_path = gv.scenario_reference

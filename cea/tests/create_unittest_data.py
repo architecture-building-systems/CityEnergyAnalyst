@@ -30,7 +30,7 @@ def main(output_file):
     gv = GlobalVariables()
     weather_path = locator.get_default_weather()
     weather_data = epwreader.epw_reader(weather_path)[
-        ['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
+        ['drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
     # run properties script
     import cea.demand.preprocessing.properties

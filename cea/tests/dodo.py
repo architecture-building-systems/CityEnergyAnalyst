@@ -108,14 +108,12 @@ def task_download_reference_cases():
     def download_reference_cases():
         if os.path.exists(REFERENCE_CASE_PATH):
             shutil.rmtree(REFERENCE_CASE_PATH)
-        if not _reference_cases or ('open' in {'open'} and len({'open'}) == 1):
-            # handle case of no reference cases selected or only 'open' selected
-            # (just use the built-in reference case)
-            # extract the reference-case-open to the folder
-            import cea.examples
-            archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
-            archive.extractall(os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME))
-        else:
+        # extract the bundled reference case (we will use this anyways
+        import cea.examples
+        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+        archive.extractall(os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME))
+
+        if len([rc for rc in _reference_cases if rc.lower() != 'open']):
             if os.path.exists(ARCHIVE_PATH):
                 os.remove(ARCHIVE_PATH)
             r = requests.get(REPOSITORY_URL % REPOSITORY_NAME, auth=get_github_auth())
@@ -355,9 +353,13 @@ def main(user=None, token=None, reference_cases=None):
     if token:
         global _token
         _token = token
-    if reference_cases and 'all' not in reference_cases:
-        global _reference_cases
-        _reference_cases = reference_cases
+    global _reference_cases
+    if not reference_cases:
+        _reference_cases = ['open']
+    elif 'all' in reference_cases:
+        _reference_cases = REFERENCE_CASES.keys()
+    else:
+        _reference_cases = [rc for rc in reference_cases if rc in REFERENCE_CASES.keys()]
     sys.exit(DoitMain(ModuleTaskLoader(globals())).run([]))
 
 
