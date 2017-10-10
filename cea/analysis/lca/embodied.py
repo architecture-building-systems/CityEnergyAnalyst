@@ -9,6 +9,7 @@ M. Mosteiro fixed calculation errors    07.11.16
 """
 from __future__ import division
 
+import os
 import numpy as np
 import pandas as pd
 from cea.demand.preprocessing.data_helper import calc_mainuse
@@ -302,17 +303,11 @@ def calc_code(code1, code2, code3, code4):
     return str(code1) + str(code2) + str(code3) + str(code4)
 
 def run_as_script(scenario_path=None, year_to_calculate=2050):
-    gv = cea.globalvar.GlobalVariables()
-    if not scenario_path:
-        scenario_path = gv.scenario_reference
+    assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    lca_embodied(locator=locator, year_to_calculate=year_to_calculate, gv=gv)
+    lca_embodied(locator=locator, year_to_calculate=year_to_calculate, gv=cea.globalvar.GlobalVariables())
 
 if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    parser.add_argument('-y', '--year', default=2020, help='Year to calculate')
-    args = parser.parse_args()
-    run_as_script(scenario_path=args.scenario, year_to_calculate=args.year)
+    import cea.config
+    config = cea.config.Configuration()
+    run_as_script(scenario_path=config.scenario, year_to_calculate=config.embodied_energy.year_to_calculate)
