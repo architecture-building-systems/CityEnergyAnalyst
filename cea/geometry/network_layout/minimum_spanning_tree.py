@@ -16,7 +16,7 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def calc_minimum_spanning_tree(input_network_shp, output_network_folder, output_edges, output_nodes, weight_field):
+def calc_minimum_spanning_tree(input_network_shp, output_network_folder,  weight_field):
     # read shapefile into networxk format
     graph = nx.read_shp(input_network_shp)
     iterator_edges = graph.edges_iter(data=True)
@@ -42,9 +42,7 @@ def run_as_script():
     weight_field = 'Shape_Leng'
     type_network = 'DC'  # DC or DH
     output_network_folder = locator.get_input_network_folder(type_network)
-    output_edges = locator.get_network_layout_edges_shapefile(type_network)
-    output_nodes = locator.get_network_layout_nodes_shapefile(type_network)
-    calc_minimum_spanning_tree(input_network_shp, output_network_folder, output_edges, output_nodes, weight_field)
+    calc_minimum_spanning_tree(input_network_shp, output_network_folder, weight_field)
 
 
 if __name__ == '__main__':
