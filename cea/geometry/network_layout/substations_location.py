@@ -3,15 +3,23 @@ This script caclulates the location of substations in case we do not have it.
 it is estimated as the centroid of buildings.
 """
 
-import geopandas as gpd
+from geopandas import GeoDataFrame as gdf
 import cea.globalvar
 import cea.inputlocator
 
+__author__ = "Jimeno A. Fonseca"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Jimeno A. Fonseca"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
 
 def calc_substation_location(input_buildings_shp, output_substations_shp):
 
     # GeoDataFrame creation
-    poly = gpd.read_file(input_buildings_shp)
+    poly = gdf.from_file(input_buildings_shp)
     points = poly.copy()
 
     # creation of centroid
