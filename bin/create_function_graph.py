@@ -270,10 +270,10 @@ def run_demand_graphs(gv, locator, weather_path):
 
 
 def run_data_helper(gv, locator, weather_path):
-    import cea.demand.preprocessing.properties
-    cea.demand.preprocessing.properties.properties(locator=locator, prop_thermal_flag=True, prop_architecture_flag=True,
-                                                   prop_hvac_flag=True, prop_comfort_flag=True,
-                                                   prop_internal_loads_flag=True, gv=gv)
+    import cea.demand.preprocessing.data_helper
+    cea.demand.preprocessing.data_helper.data_helper(locator=locator, prop_thermal_flag=True, prop_architecture_flag=True,
+                                                     prop_hvac_flag=True, prop_comfort_flag=True,
+                                                     prop_internal_loads_flag=True, gv=gv)
 
 
 def run_demand(gv, locator, weather_path):

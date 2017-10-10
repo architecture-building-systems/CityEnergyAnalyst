@@ -137,14 +137,14 @@ def task_download_reference_cases():
 
 def task_run_data_helper():
     """Run the data helper for each reference case"""
-    import cea.demand.preprocessing.properties
+    import cea.demand.preprocessing.data_helper
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
         yield {
             'name': reference_case,
             'actions': [
-                (cea.demand.preprocessing.properties.run_as_script, [], {
+                (cea.demand.preprocessing.data_helper.run_as_script, [], {
                     'scenario_path': scenario_path})],
             'verbosity': 1,
         }
