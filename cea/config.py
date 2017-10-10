@@ -19,8 +19,15 @@ class Configuration(object):
                     'CEA.DB': os.path.dirname(cea.databases.__file__)}
 
         self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
-        self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
         self._parser.read(self._list_configuration_files(scenario))
+
+        if not scenario:
+            self.scenario = self.default_scenario
+            # re-read configuration from default-scenario
+            defaults['CEA.SCENARIO'] = str(self.scenario)
+            self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
+            self._parser.read(self._list_configuration_files(self.scenario))
+
         self.demand = DemandConfiguration(self._parser)
         self.solar = PhotovoltaicConfiguration(self._parser)
         self.radiation_daysim = RadiationDaysimConfiguration(self._parser)
@@ -82,8 +89,8 @@ class DemandConfiguration(object):
         return self._parser.get('demand', 'cooling-season-end')
 
     @property
-    def use_dynamic_infiltration(self):
-        return self._parser.getboolean('demand', 'use-dynamic-infiltration')
+    def use_dynamic_infiltration_calculation(self):
+        return self._parser.getboolean('demand', 'use-dynamic-infiltration-calculation')
 
 
 class PhotovoltaicConfiguration(object):
