@@ -14,6 +14,7 @@ import os
 import shutil
 import sys
 import zipfile
+import cea.inputlocator
 
 import requests
 
@@ -107,14 +108,12 @@ def task_download_reference_cases():
     def download_reference_cases():
         if os.path.exists(REFERENCE_CASE_PATH):
             shutil.rmtree(REFERENCE_CASE_PATH)
-        if not _reference_cases or ('open' in {'open'} and len({'open'}) == 1):
-            # handle case of no reference cases selected or only 'open' selected
-            # (just use the built-in reference case)
-            # extract the reference-case-open to the folder
-            import cea.examples
-            archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
-            archive.extractall(os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME))
-        else:
+        # extract the bundled reference case (we will use this anyways
+        import cea.examples
+        archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
+        archive.extractall(os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME))
+
+        if len([rc for rc in _reference_cases if rc.lower() != 'open']):
             if os.path.exists(ARCHIVE_PATH):
                 os.remove(ARCHIVE_PATH)
             r = requests.get(REPOSITORY_URL % REPOSITORY_NAME, auth=get_github_auth())
@@ -124,11 +123,6 @@ def task_download_reference_cases():
             # extract the reference cases to the temp folder
             archive = zipfile.ZipFile(ARCHIVE_PATH)
             archive.extractall(REFERENCE_CASE_PATH)
-
-            # extract the reference-case-open to the folder
-            import cea.examples
-            archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
-            archive.extractall(os.path.join(REFERENCE_CASE_PATH, "cea-reference-case-%s" % REPOSITORY_NAME))
 
     return {
         'actions': [download_reference_cases],
@@ -290,6 +284,61 @@ def task_run_scenario_plots():
         }
 
 
+# def task_run_calibration():
+#     """run the calibration_sampling for each reference case"""
+#     import cea.demand.calibration.calibration_sampling
+#     import cea.demand.calibration.calibration_main
+#     import cea.demand.calibration.calibration_gaussian_emulator
+#
+#     def run_calibration(scenario_path):
+#         import numpy as np
+#         import json
+#         import pickle
+#         import joblib
+#         import cea.demand.calibration.settings
+#         cea.demand.calibration.settings.number_samples = 50
+#         cea.demand.calibration.settings.max_iter_MCMC = 50
+#
+#         locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+#         building_name = 'B01'
+#
+#         # run calibration_sampling
+#         cea.demand.calibration.calibration_sampling.sampling_main(
+#             locator=locator,
+#             variables=['U_win', 'U_wall', 'U_base', 'n50', 'Ths_set_C'],
+#             building_name=building_name, building_load='Qhsf_kWh')
+#
+#         # run calibration_gaussian_emulator
+#         samples = np.load(locator.get_calibration_samples(building_name))
+#         samples_norm = samples[1]
+#         cv_rmse = json.load(locator.get_calibration_cvrmse_file(building_name))['cv_rmse']
+#         cea.demand.calibration.calibration_gaussian_emulator.gaussian_emulator(locator, samples_norm, cv_rmse,
+#                                                                                building_name)
+#
+#         # run calibration_main
+#         problem = pickle.load(open(locator.get_calibration_problem(building_name)))
+#         emulator = joblib.load(locator.get_calibration_gaussian_emulator(building_name))
+#         cea.demand.calibration.calibration_main.calibration_main(locator=locator, problem=problem, emulator=emulator)
+#
+#         # make sure the files were created
+#         assert os.path.exists(locator.get_calibration_samples(building_name))
+#         assert os.path.exists(locator.get_calibration_problem(building_name))
+#         assert os.path.exists(locator.get_calibration_cvrmse_file(building_name))
+#         assert os.path.exists(locator.get_calibration_gaussian_emulator(building_name))
+#         assert os.path.exists(os.path.join(locator.get_calibration_folder(), 'chain-0.csv'))
+#
+#     for reference_case, scenario_path in REFERENCE_CASES.items():
+#         if _reference_cases and reference_case not in _reference_cases:
+#             continue
+#         yield {
+#             'name': '%(reference_case)s' % locals(),
+#             'actions': [(run_calibration, [], {
+#                 'scenario_path': scenario_path
+#             })],
+#             'verbosity': 1,
+#         }
+
+
 def main(user=None, token=None, reference_cases=None):
     from doit.api import DoitMain
     from doit.api import ModuleTaskLoader
@@ -299,9 +348,13 @@ def main(user=None, token=None, reference_cases=None):
     if token:
         global _token
         _token = token
-    if reference_cases and 'all' not in reference_cases:
-        global _reference_cases
-        _reference_cases = reference_cases
+    global _reference_cases
+    if not reference_cases:
+        _reference_cases = ['open']
+    elif 'all' in reference_cases:
+        _reference_cases = REFERENCE_CASES.keys()
+    else:
+        _reference_cases = [rc for rc in reference_cases if rc in REFERENCE_CASES.keys()]
     sys.exit(DoitMain(ModuleTaskLoader(globals())).run([]))
 
 
