@@ -200,6 +200,7 @@ def filter_low_potential(weather_data, radiation_json_path, metadata_csv_path, m
     yearly_horizontal_rad = weather_data.glohorrad_Whm2.sum()  # [Wh/m2/year]
 
     # read radiation file
+    print (radiation_json_path)
     sensors_rad = pd.read_json(radiation_json_path)
     sensors_metadata = pd.read_csv(metadata_csv_path)
 
