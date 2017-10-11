@@ -22,6 +22,48 @@ __status__ = "Production"
 #operation costs
 #============================
 
+def HP_air_air(mdot_cp_WC, t_sup_K, t_re_K, tsource_K, gV):
+    """
+    For the operation of a heat pump (direct expansion unit) connected to minisplit units
+
+    :type mdot_cp_WC : float
+    :param mdot_cp_WC: capacity mass flow rate.
+    :type t_sup_K : float
+    :param t_sup_K: supply temperature to the minisplit unit (cold)
+    :type t_re_K : float
+    :param t_re_K: return temeprature from the minisplit unit (hot)
+    :type tsource_K : float
+    :param tsource_K: temperature of the source
+    :param gV: globalvar.py
+
+    :rtype wdot_el : float
+    :returns wdot_el: total electric power requirement for compressor and auxiliary el.
+    :rtype qcolddot : float
+    :returns qcolddot: cold power requirement
+
+    ..[C. Montagud et al., 2014] C. Montagud, J.M. Corberan, A. Montero (2014). In situ optimization methodology for
+    the water circulation pump frequency of ground source heat pump systems. Energy and Buildings
+
+    + reverse cycle
+    """
+    if mdot_cp_WC > 0:
+        # calculate condenser temperature
+        tcond_K = tsource_K + gV.HP_deltaT_cond
+        # calculate evaporator temperature
+        tevap_K = t_sup_K - gV.HP_deltaT_evap
+        # calculate COP
+        COP = gV.HP_etaex * tevap_K/(tcond_K - tevap_K)
+        qcolddot_W = mdot_cp_WC * (t_re_K - t_sup_K)
+
+        wdot_W = qcolddot_W / COP
+        E_req_W = wdot_W / gV.HP_Auxratio     # compressor power [C. Montagud et al., 2014]_
+
+    else:
+        E_req_W = 0
+
+    return E_req_W
+
+
 def calc_Cop_GHP(mdot_kgpers, T_DH_sup_K, T_re_K, tground_K, gV):
     """
     For the operation of a Geothermal heat pump (GSHP) supplying DHN.
