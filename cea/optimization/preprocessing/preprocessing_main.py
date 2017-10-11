@@ -118,7 +118,6 @@ class SolarFeatures(object):
             A_PVT_m2 = A_PVT_m2 + building_PVT['Area_PVT_m2']
             A_SC_m2 = A_SC_m2 + building_SC['Area_SC_m2']
 
-        print (A_PV_m2.values.max())
         self.Peak_PV_Wh = E_PV_gen_kWh.values.max() * 1000
         self.A_PV_m2 = A_PV_m2.values.max()
         self.Peak_PVT_Wh = E_PVT_gen_kWh.values.max() * 1000
