@@ -295,7 +295,8 @@ if __name__ == '__main__':
     # tree_edges = get_steiner_tree(g, terminals)
     # render_steiner_solution(g, terminals, tree_edges)
 
-    sp = dict(nx.all_pairs_shortest_path(G))
-    terminals = frozenset([(11660.95859999981, 37003.7689999986), (10874.735399999998, 36299.36360000107), (11822.31289877841, 37004.44691943291)])
+    sp = nx.all_pairs_node_connectivity(G)
+    sp2 = {(str(key),value) for (key,value) in sp}
+    terminals = frozenset(['(11660.95859999981, 37003.7689999986)', '(10874.735399999998, 36299.36360000107)', '(11822.31289877841, 37004.44691943291)'])
     tree_edges = get_steiner_tree(sp, terminals)
     render_steiner_solution(sp, terminals, tree_edges)
