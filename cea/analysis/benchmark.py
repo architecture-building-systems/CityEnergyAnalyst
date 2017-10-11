@@ -283,8 +283,9 @@ def calc_benchmark_today(locator):
     return values_today
 
 
-def test_benchmark():
-    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case-zug\baseline')
+def test_benchmark(scenario_path):
+    assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
+    locator = inputlocator.InputLocator(scenario_path=scenario_path)
     locator_list = [locator, locator, locator, locator]
     output_file = os.path.expandvars(r'%TEMP%\test_benchmark.pdf')
     benchmark(locator_list=locator_list, output_file=output_file)
@@ -297,4 +298,7 @@ def test_benchmark_targets():
 
 
 if __name__ == '__main__':
-    test_benchmark()
+    import cea.config
+
+    config = cea.config.Configuration()
+    test_benchmark(scenario_path=config.scenario)
