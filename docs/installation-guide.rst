@@ -23,10 +23,16 @@ To install the research version of CEA:
 #. open Anaconda prompt (terminal console) from the start menu.
 #. choose location where to store the repository: do ``cd Documents``
 #. clone repository: do ``git clone https://github.com/architecture-building-systems/CityEnergyAnalyst.git``
-#. in the Anaconda prompt navigate to the folder CityEnergyAnalyst wherever you cloned it. In this case do: ``cd Documents\CityEnergyAnalyst``
+#. in the Anaconda prompt navigate to the folder CityEnergyAnalyst wherever you cloned it. In this case do:
+   ``cd Documents\CityEnergyAnalyst``
 #. create a conda environment and activate it: do ``conda env create``, then do ``activate cea``
 #. install cea: do ``pip install .``
 #. install arcgis plug-in: do ``cea install-toolbox``
+  - this also installs the user configuration file (``cea.config``, located in your home folder)
+  - this also extracts the reference case (reference-case-open) to the temporary folder
+    (``%TEMP%\reference-case-open\baseline``) for test-driving the CEA
+#. edit the file ``%USERPROFILE%\cea.config`` (normally something like ``C:\Users\USERNAME\cea.config``) and
+   set the ``default-scenario`` property of your
 
 Installation CEA development environment
 ----------------------------------------
