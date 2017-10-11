@@ -53,8 +53,8 @@ def substation_HEX_design_main(locator, building_names, gv):
                                      usecols=['Name', 'Thsf_sup_C', 'Thsf_re_C', 'Twwf_sup_C', 'Twwf_re_C',
                                               'Tcsf_sup_C', 'Tcsf_re_C', 'Tcdataf_sup_C', 'Tcdataf_re_C',
                                               'Tcref_sup_C', 'Tcref_re_C', 'Qhsf_kWh','Qwwf_kWh', 'Qcsf_kWh',
-                                              'Qcsf_lat_kWh', 'Qcdataf_kWh', 'Qcref_kWh', 'mcphsf_kWC',
-                                              'mcpwwf_kWC', 'mcpcsf_kWC', 'Ef_kWh']))
+                                              'Qcsf_lat_kWh', 'Qcdataf_kWh', 'Qcref_kWh', 'mcphsf_kWperC',
+                                              'mcpwwf_kWperC', 'mcpcsf_kWperC', 'Ef_kWh']))
         Q_substation_heating = buildings_demands[iteration].Qhsf_kWh + buildings_demands[iteration].Qwwf_kWh
         Q_substation_cooling = buildings_demands[iteration].Qcsf_kWh + buildings_demands[iteration].Qcsf_lat_kWh + \
                                buildings_demands[iteration].Qcdataf_kWh + buildings_demands[iteration].Qcref_kWh
@@ -118,7 +118,7 @@ def substation_HEX_sizing(locator, gv, building):
     if Qnom > 0:
         tco = building.Thsf_sup_C.values + 273  # in K
         tci = building.Thsf_re_C.values + 273  # in K
-        cc = building.mcphsf_kWC.values * 1000  # in W/K
+        cc = building.mcphsf_kWperC.values * 1000  # in W/K
         index = np.where(Qhsf == Qnom)[0][0]
         thi_0 = thi[index]
         tci_0 = tci[index]
@@ -135,7 +135,7 @@ def substation_HEX_sizing(locator, gv, building):
     if Qnom > 0:
         tco = building.Twwf_sup_C.values + 273  # in K
         tci = building.Twwf_re_C.values + 273  # in K
-        cc = building.mcpwwf_kWC.values * 1000  # in W/K
+        cc = building.mcpwwf_kWperC.values * 1000  # in W/K
         index = np.where(Qwwf == Qnom)[0][0]
         thi_0 = thi[index]
         tci_0 = tci[index]
@@ -154,7 +154,7 @@ def substation_HEX_sizing(locator, gv, building):
         tci = t_DC_supply + 273  # in K
         tho = building.Tcsf_sup_C.values + 273  # in K
         thi = building.Tcsf_re_C.values + 273  # in K
-        ch = (abs(building.mcpcsf_kWC.values)) * 1000  # in W/K
+        ch = (abs(building.mcpcsf_kWperC.values)) * 1000  # in W/K
         index = np.where(Qcf == Qnom)[0][0]
         tci_0 = tci[index]  # in K
         thi_0 = thi[index]
@@ -236,7 +236,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs):
     if Qhsf.max() > 0:
         tco = building.Thsf_sup_C.values + 273  # in K
         tci = building.Thsf_re_C.values + 273  # in K
-        cc = building.mcphsf_kWC.values * 1000  # in W/K
+        cc = building.mcphsf_kWperC.values * 1000  # in W/K
         t_DH_return_hs, mcp_DH_hs = calc_HEX_heating(Qhsf, UA_heating_hs, thi, tco, tci, cc)
             # calc_required_flow_and_t_return(Qhsf, UA_heating_hs, thi, tco, tci, cc)
     else:
@@ -247,7 +247,7 @@ def calc_substation_return_DH(building, T_DH_supply_K, substation_HEX_specs):
     if Qwwf.max() > 0:
         tco = building.Twwf_sup_C.values + 273  # in K
         tci = building.Twwf_re_C.values + 273  # in K
-        cc = building.mcpwwf_kWC.values * 1000  # in W/K
+        cc = building.mcpwwf_kWperC.values * 1000  # in W/K
         t_DH_return_ww, mcp_DH_ww = calc_HEX_heating(Qwwf, UA_heating_ww, thi, tco, tci, cc)   #[kW/K]
     else:
         t_DH_return_ww = T_DH_supply_K
@@ -274,7 +274,7 @@ def calc_substation_return_DC(building, T_DC_supply, substation_HEX_specs):
         tci = T_DC_supply  # in K
         tho = building.Tcsf_sup_C.values + 273  # in K
         thi = building.Tcsf_re_C.values + 273  # in K
-        ch = (abs(building.mcpcsf_kWC.values)) * 1000  # in W/K
+        ch = (abs(building.mcpcsf_kWperC.values)) * 1000  # in W/K
         t_DC_return_cs, mcp_DC_cs = calc_HEX_cooling(Qcf, UA_cooling_cs, thi, tho, tci, ch)
     else:
         t_DC_return_cs = T_DC_supply
