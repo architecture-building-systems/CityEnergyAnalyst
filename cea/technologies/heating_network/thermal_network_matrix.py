@@ -1423,7 +1423,7 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     edge_shapefile_df['start node'] = ''
     edge_shapefile_df['end node'] = ''
     for pipe, row in edge_shapefile_df.iterrows():
-        #get the length of the pipe and add to the datafram:
+        # get the length of the pipe and add to dataframe
         edge_shapefile_df.loc[pipe, 'pipe length'] = row['geometry'].length
         # get the start and end notes and add to dataframe
         edge_coords = row['geometry'].coords
@@ -1468,7 +1468,6 @@ def write_substation_massflows_to_nodes_df(all_nodes_df, df_value):
     """
 
     nodes_df = pd.DataFrame(index=[0],columns=all_nodes_df.index)
-
     # it is assumed that if there is more than one plant, they all supply the same amount of heat at each time step
     # (i.e., the amount supplied by each plant is not optimized)
     number_of_plants = sum(all_nodes_df['Type']=='PLANT')
