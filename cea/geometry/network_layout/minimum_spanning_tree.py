@@ -23,14 +23,15 @@ def calc_minimum_spanning_tree(input_network_shp, output_network_folder, buildin
     graph = nx.read_shp(input_network_shp)
 
     # transform to an undirected graph
-    iterator_edges = graph.edges_iter(data=True)
+    iterator_edges = graph.edges(data=True)
+
     G = nx.Graph()
+    #plant = (11660.95859999981, 37003.7689999986)
     for (x, y, data) in iterator_edges:
         G.add_edge(x, y, weight=data[weight_field])
-        plant = x
     # calculate minimum spanning tree of undirected graph
-    mst_non_directed = nx.minimum_spanning_edges(G, data=False) # nx.single_source_dijkstra_path(graph, source = plant)#  # a generator of MST edges
-    #mst_non_directed = sorted(list(mst))
+
+    mst_non_directed = nx.minimum_spanning_edges(G, data=False)
 
     # transform back directed graph and save:
     mst_directed = nx.DiGraph()
