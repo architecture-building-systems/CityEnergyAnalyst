@@ -366,11 +366,6 @@ def calculate_sunrise(year_to_simulate, longitude, latitude):
     print('complete calculating sunrise')
     return sunrise
 
-def is_dst(zonename):
-    tz = pytz.timezone(zonename)
-    now = pytz.utc.localize(datetime.datetime.utcnow())
-    return now.astimezone(tz).dst() != datetime.timedelta(0)
-
 def get_latitude(scenario_path):
     import fiona
     import cea.inputlocator
