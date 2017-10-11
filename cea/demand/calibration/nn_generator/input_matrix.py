@@ -130,11 +130,23 @@ def get_array_geometry_variables(building):
     ## aconditioned floor area
     array_Af = np.empty(8760)
     array_Af.fill(building.rc_model['Af'])
+    ## walls area
+    array_OPwall = np.empty(8760)
+    array_OPwall.fill(building.rc_model['Aop_sup'])
+    ## Basement walls area
+    array_OPwallB = np.empty(8760)
+    array_OPwallB.fill(building.rc_model['Aop_bel'])
+    ## window area
+    array_GLwin = np.empty(8760)
+    array_GLwin.fill(building.rc_model['Aw'])
+    ## roof/floor area
+    array_OProof = np.empty(8760)
+    array_OProof.fill(building.rc_model['footprint'])
     ## surface to volume ratio
     array_sv = np.empty(8760)
     array_sv.fill(building.rc_model['surface_volume'])
     ### final array of geometry properties
-    array_geom = np.column_stack((array_Af, array_sv))
+    array_geom = np.column_stack((array_Af, array_OPwall, array_OPwallB, array_GLwin, array_OProof, array_sv))
     return array_geom
 
 

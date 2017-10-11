@@ -372,11 +372,15 @@ class BuildingProperties(object):
             prop_envelope = self.apply_overrides(prop_envelope)
             prop_internal_loads = self.apply_overrides(prop_internal_loads)
             prop_comfort = self.apply_overrides(prop_comfort)
+            prop_HVAC_result = self.apply_overrides(prop_HVAC_result)
 
         # get properties of rc demand model
         prop_rc_model = self.calc_prop_rc_model(prop_occupancy, prop_envelope,
                                                 prop_geometry, prop_HVAC_result, surface_properties,
                                                 gv)
+
+
+
 
         # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         # TODO: to check if the Win_op and height of window is necessary.
@@ -580,7 +584,7 @@ class BuildingProperties(object):
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated/cooled
         df['Aef'] = df['GFA_m2'] * gv.Es  # conditioned area only those for electricity
 
-        if 'Cm' in self.get_overrides_columns():
+        if 'Cm_Af' in self.get_overrides_columns():
             # Internal heat capacity is not part of input, calculate [J/K]
             df['Cm'] = self._overrides['Cm_Af'] * df['Af']
         else:
@@ -602,7 +606,8 @@ class BuildingProperties(object):
         df['Htr_is'] = gv.his * df['Atot']
 
         fields = ['Awall_all', 'Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',
-                  'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'Htr_w', 'GFA_m2', 'surface_volume']
+                  'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'Htr_w', 'GFA_m2', 'surface_volume', 'Aop_sup', 'Aop_bel',
+                  'footprint']
         result = df[fields]
         return result
 
