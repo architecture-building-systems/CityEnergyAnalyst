@@ -1,7 +1,10 @@
-from __future__ import print_function
+
 import collections
 import itertools
 import random
+import cea.globalvar
+import cea.inputlocator
+from geopandas import GeoDataFrame as gdf
 
 import graphviz
 
@@ -257,7 +260,42 @@ def algorithm_u(ns, m):
     return f(m, n, 0, n, a)
 
 if __name__ == '__main__':
+    import networkx as nx
+    gv = cea.globalvar.GlobalVariables()
+    scenario_path = gv.scenario_reference
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    input_network_shp = locator.get_connectivity_potential()  # shapefile, location of output.
+    weight_field = 'Shape_Leng'
+
+    # network_df = gdf.from_file(input_network_shp)
+    # start_node = network_df['geometry'].apply(
+    #     lambda x: (round(x.coords[0][0], 4), round(x.coords[0][1], 4)))
+    # end_node = network_df['geometry'].apply(
+    #     lambda x: (round(x.coords[1][0], 4), round(x.coords[1][1], 4)))
+    #
+
+
+    # G = nx.Graph()
+    # # plant = (11660.95859999981, 37003.7689999986)
+    # for node, x, y in enumerate(zip(start_node, end_node)):
+    #     G.add_edge(x, y, weight=data[weight_field])
+    # calculate minimum spanning tree of undirected graph
+
+    graph = nx.read_shp(input_network_shp)
+
+    # transform to an undirected graph
+    iterator_edges = graph.edges(data=True)
+
+    G = nx.Graph()
+    for (x, y, data) in iterator_edges:
+        G.add_edge(x, y, weight=data[weight_field])
+
     g = create_random_graph(20, 0.10)
     terminals = pick_random_terminals(g)
-    tree_edges = get_steiner_tree(g, terminals)
-    render_steiner_solution(g, terminals, tree_edges)
+    # tree_edges = get_steiner_tree(g, terminals)
+    # render_steiner_solution(g, terminals, tree_edges)
+
+    sp = dict(nx.all_pairs_shortest_path(G))
+    terminals = frozenset([(11660.95859999981, 37003.7689999986), (10874.735399999998, 36299.36360000107), (11822.31289877841, 37004.44691943291)])
+    tree_edges = get_steiner_tree(sp, terminals)
+    render_steiner_solution(sp, terminals, tree_edges)
