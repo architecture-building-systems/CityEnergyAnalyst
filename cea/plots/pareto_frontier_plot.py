@@ -15,7 +15,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def frontier_2D_3OB(input_path, what_to_plot, output_path, labelx, labely, labelz,
+
+def frontier_2D_3OB(input_path, what_to_plot, output_path, labelx, labely, labelz, days_of_analysis,
                     show_benchmarks=True, show_fitness=True, show_in_screen=False, save_to_disc=True,
                     optimal_individual=None):
     """
@@ -35,21 +36,25 @@ def frontier_2D_3OB(input_path, what_to_plot, output_path, labelx, labely, label
     :param optimal_individual: dafault None, passes data to scatter the top individual.
     :return:
     """
+    plt.rcParams.update({'font.size': 18})
 
-    #needed to
+    # needed to
     deap.creator.create("Fitness", deap.base.Fitness, weights=(1.0, 1.0, 1.0))  # maximize shilluette and calinski
     deap.creator.create("Individual", list, fitness=deap.creator.Fitness)
 
-    #read data form pickle file:
+    # read data form pickle file:
     cp = pickle.load(open(input_path, "rb"))
     frontier = cp[what_to_plot]
     xs, ys, zs = zip(*[ind.fitness.values for ind in frontier])
     individuals = [str(ind) for ind in frontier]
+    list_results = {str(ind):ind.fitness.values for ind in frontier}
+    import pandas
+    pandas.DataFrame(list_results).to_csv(r'C:\reference-case-open\baseline\outputs\data\calibration/xx.csv')
 
     # create figure
     fig = plt.figure()
     scalarMap = cmx.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=min(zs),
-                                  vmax=max(zs)), cmap=plt.get_cmap('jet'))
+                                                                    vmax=max(zs)), cmap=plt.get_cmap('jet'))
     scalarMap.set_array(zs)
     fig.colorbar(scalarMap, label=labelz)
 
@@ -58,7 +63,7 @@ def frontier_2D_3OB(input_path, what_to_plot, output_path, labelx, labely, label
     ax.set_xlabel(labelx)
     ax.set_ylabel(labely)
 
-    #add optimal individual accoridng to multicriteria
+    # add optimal individual accoridng to multicriteria
     xs_opt, ys_opt = optimal_individual["fitness1"].values, optimal_individual["fitness2"].values
     ax.plot(xs_opt, ys_opt, marker='o', color='w', markersize=20)
     for i, txt in enumerate(optimal_individual["Individual"].values):
@@ -68,22 +73,22 @@ def frontier_2D_3OB(input_path, what_to_plot, output_path, labelx, labely, label
     len_series = len(individuals)
     if show_fitness:
         for i, txt in enumerate(individuals):
-            #if xs[i] == max(xs) or xs[i] == min(xs):
+            # if xs[i] == max(xs) or xs[i] == min(xs):
             ax.annotate(txt, xy=(xs[i], ys[i]))
-            #elif xs[i]==xs_opt[0] and ys[i] == ys_opt[0]:
+            # elif xs[i]==xs_opt[0] and ys[i] == ys_opt[0]:
             #    ax.annotate(optimal_individual["Individual"].values[0], xy=(xs[i], ys[i]))
 
     if show_benchmarks:
-        #number_individuals = len(individuals)
-        n_clusters_opt = str(round((1- optimal_individual["fitness2"].values[0])*365,0))
-        #diversity = round(cp['diversity'], 3)
-        plt.title("n'= "+n_clusters_opt)
+        # number_individuals = len(individuals)
+        n_clusters_opt = str(round((1 - optimal_individual["fitness2"].values[0]) * days_of_analysis, 0))
+        # diversity = round(cp['diversity'], 3)
+        plt.title("n'= " + n_clusters_opt)
 
     # get formatting
     plt.grid(True)
-    plt.rcParams.update({'font.size': 24})
+
     plt.tight_layout()
-    #plt.gcf().subplots_adjust(bottom=0.15)
+    # plt.gcf().subplots_adjust(bottom=0.15)
     if save_to_disc:
         plt.savefig(output_path)
     if show_in_screen:

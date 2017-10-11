@@ -23,6 +23,7 @@ To install the research version of CEA:
 #. open Anaconda prompt (terminal console) from the start menu.
 #. choose location where to store the repository: do ``cd Documents``
 #. clone repository: do ``git clone https://github.com/architecture-building-systems/CityEnergyAnalyst.git``
+#. in the Anaconda prompt navigate to the folder CityEnergyAnalyst wherever you cloned it. In this case do: ``cd Documents\CityEnergyAnalyst``
 #. create a conda environment and activate it: do ``conda env create``, then do ``activate cea``
 #. install cea: do ``pip install .``
 #. install arcgis plug-in: do ``cea install-toolbox``
@@ -31,7 +32,8 @@ Installation CEA development environment
 ----------------------------------------
 
 To install the development environment of CEA, perform the steps above, except, instead of ``pip install .``:
-# do ``pip install -e .[dev]``
+
+#. do ``pip install -e .[dev]``
 #. download and install Daysim: ``http://daysim.ning.com/page/download``
 
 Note: Location where to store the repository can be any -"Documents" is just an example.

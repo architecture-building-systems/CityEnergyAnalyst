@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 """
 Manage configuration information for the CEA. See the cascading configuration files section in the documentation
 for more information on configuration files.
@@ -7,6 +9,7 @@ import tempfile
 import ConfigParser
 import cea.databases
 
+
 class Configuration(object):
     def __init__(self, scenario=None):
         """Read in configuration information for a scenario (or the default scenario)"""
@@ -14,9 +17,10 @@ class Configuration(object):
         defaults = {'TEMP': tempfile.gettempdir(),
                     'CEA.SCENARIO': str(scenario),
                     'CEA.DB': os.path.dirname(cea.databases.__file__)}
+
         self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
         self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
-        files_found = self._parser.read(self._list_configuration_files(scenario))
+        self._parser.read(self._list_configuration_files(scenario))
         self.demand = DemandConfiguration(self._parser)
         self.solar = PhotovoltaicConfiguration(self._parser)
         self.radiation_daysim = RadiationDaysimConfiguration(self._parser)
@@ -29,9 +33,9 @@ class Configuration(object):
     def weather(self):
         return self._parser.get('general', 'weather')
 
-    @weather.setter
-    def weather(self, value):
-        self._parser.set('general', 'weather', value)
+    @property
+    def multiprocessing(self):
+        return self._parser.getboolean('general', 'multiprocessing')
 
     def _list_configuration_files(self, scenario):
         """Return the list of configuration files to try and load for a given scenario. The list is given in order
@@ -72,6 +76,10 @@ class DemandConfiguration(object):
     @property
     def cooling_season_end(self):
         return self._parser.get('demand', 'cooling-season-end')
+
+    @property
+    def use_dynamic_infiltration(self):
+        return self._parser.getboolean('demand', 'use-dynamic-infiltration')
 
 
 class PhotovoltaicConfiguration(object):
@@ -265,7 +273,6 @@ class RadiationDaysimConfiguration(object):
     @property
     def simplification_parameters(self):
         """geometry simplification:
-
         - zone_geometry: level of simplification of the zone geometry
         - surrounding_geometry: level of simplification of the district geometry
         - consider_windows: boolean to consider or not windows in the geometry
@@ -280,6 +287,6 @@ class RadiationDaysimConfiguration(object):
 
 if __name__ == '__main__':
     config = Configuration(r'c:\reference-case-open\baseline')
-    print config.demand.heating_season_start
-    print config.default_scenario, os.path.exists(config.default_scenario)
-    print config.weather, os.path.exists(config.weather)
+    print(config.demand.heating_season_start)
+    print(config.default_scenario)
+    print(config.weather)
