@@ -47,9 +47,17 @@ class Configuration(object):
     def _list_configuration_files(self, scenario):
         """Return the list of configuration files to try and load for a given scenario. The list is given in order
         of importance, with items at the end of the files overriding files at the beginning of the list."""
+        default_config = os.path.join(os.path.dirname(__file__), 'default.config')
+        user_config = os.path.expanduser(r'~/cea.config')
+
+        # clone the default configuration file if the user configuration file (~/cea.config) doesn't exist yet
+        if not os.path.exists(user_config):
+            import shutil
+            shutil.copy(default_config, user_config)
+
         cascade = [
-            os.path.join(os.path.dirname(__file__), 'default.config'),
-            os.path.join(os.path.expanduser(r'~/cea.config')),
+            default_config,
+            user_config,
         ]
         if scenario:
             cascade.append(os.path.join(scenario, '..', 'project.config'))
