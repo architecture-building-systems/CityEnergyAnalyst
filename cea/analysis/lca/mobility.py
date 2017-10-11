@@ -9,8 +9,7 @@ from __future__ import division
 import os
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
-
-from cea import inputlocator
+import cea.inputlocator
 
 __author__ = "Martin Mosteiro Romero"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
