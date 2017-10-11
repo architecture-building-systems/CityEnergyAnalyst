@@ -192,7 +192,7 @@ Next, we configure a Jenkins item for merging to master:
   - section "Build Triggers":
     - check "GitHub hook trigger for GITScm polling"
   - section "Build"
-    - Execute Windows batch command: `bin\ceatest.bat`
+    - Execute Windows batch command: `bin\ceatestall.bat`
 
 - open GitHub Integrations & services (https://github.com/architecture-building-systems/CityEnergyAnalyst/settings/installations)
   - dropdown "Add service"
