@@ -26,7 +26,7 @@ def calc_minimum_spanning_tree(input_network_shp, output_network_folder, buildin
     iterator_edges = graph.edges(data=True)
 
     G = nx.Graph()
-    #plant = (11660.95859999981, 37003.7689999986)
+    # plant = (11660.95859999981, 37003.7689999986)
     for (x, y, data) in iterator_edges:
         G.add_edge(x, y, weight=data[weight_field])
     # calculate minimum spanning tree of undirected graph
@@ -44,26 +44,30 @@ def calc_minimum_spanning_tree(input_network_shp, output_network_folder, buildin
     mst_edges['Pipe_DN'] = pipe_diameter_default
     mst_edges['Name'] = ["PIPE" + str(x) for x in mst_edges['FID']]
     mst_edges.drop("FID", axis=1, inplace=True)
-    mst_edges.crs = gdf.from_file(input_network_shp).crs # to add coordinate system
+    mst_edges.crs = gdf.from_file(input_network_shp).crs  # to add coordinate system
     mst_edges.to_file(output_edges, driver='ESRI Shapefile')
 
     # populate fields Building, Type, Name
     mst_nodes = gdf.from_file(output_nodes)
 
     buiding_nodes_df = gdf.from_file(building_nodes_shp)
-    mst_nodes.crs = buiding_nodes_df.crs # to add same coordinate system
-    buiding_nodes_df['coordinates'] = buiding_nodes_df['geometry'].apply(lambda x: (round(x.coords[0][0],4), round(x.coords[0][1],4)))
-    mst_nodes['coordinates'] = mst_nodes['geometry'].apply(lambda x: (round(x.coords[0][0],4), round(x.coords[0][1],4)))
+    mst_nodes.crs = buiding_nodes_df.crs  # to add same coordinate system
+    buiding_nodes_df['coordinates'] = buiding_nodes_df['geometry'].apply(
+        lambda x: (round(x.coords[0][0], 4), round(x.coords[0][1], 4)))
+    mst_nodes['coordinates'] = mst_nodes['geometry'].apply(
+        lambda x: (round(x.coords[0][0], 4), round(x.coords[0][1], 4)))
     names_temporary = ["NODE" + str(x) for x in mst_nodes['FID']]
 
-    new_mst_nodes = mst_nodes.merge(buiding_nodes_df, suffixes = ['','_y'], on= "coordinates", how='outer')
+    new_mst_nodes = mst_nodes.merge(buiding_nodes_df, suffixes=['', '_y'], on="coordinates", how='outer')
     new_mst_nodes.fillna(value="NONE", inplace=True)
     new_mst_nodes['Building'] = new_mst_nodes['Name']
 
     new_mst_nodes['Name'] = names_temporary
     new_mst_nodes['Type'] = new_mst_nodes['Building'].apply(lambda x: 'CONSUMER' if x != "NONE" else x)
-    new_mst_nodes.drop(["FID", "coordinates", 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'geometry_y'], axis=1, inplace=True)
+    new_mst_nodes.drop(["FID", "coordinates", 'floors_bg', 'floors_ag', 'height_bg', 'height_ag', 'geometry_y'], axis=1,
+                       inplace=True)
     new_mst_nodes.to_file(output_nodes, driver='ESRI Shapefile')
+
 
 def run_as_script():
     gv = cea.globalvar.GlobalVariables()
