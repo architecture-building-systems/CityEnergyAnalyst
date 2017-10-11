@@ -352,6 +352,13 @@ def install_toolbox(_):
     import cea.interfaces.arcgis.install_toolbox
     cea.interfaces.arcgis.install_toolbox.main()
 
+    # this will trigger copying the default configuration file to the home folder as `cea.config`.
+    config = cea.config.Configuration()
+
+    # this will extract the reference-case-open to the temp folder
+    import cea.inputlocator
+    cea.inputlocator.ReferenceCaseOpenLocator()
+
 
 def heatmaps(args):
     """Run the heatmaps tool"""
