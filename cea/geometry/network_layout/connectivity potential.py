@@ -20,7 +20,7 @@ __status__ = "Production"
 def calc_connectivity_network(path_arcgis_db, streets_shp, connection_point_buildings_shp, potential_network):
     """
     This script outputs a potential network connecting a series of building points to the closest street network
-    the street network is assumed to be a good path to the district heating or cooling nertowrok
+    the street network is assumed to be a good path to the district heating or cooling network
 
     :param path_arcgis_db: path to default ArcGIS database
     :param streets_shp: path to street shapefile

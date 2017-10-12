@@ -1,5 +1,5 @@
 """
-This script caclulates the minimum spanning tree of a shapefile network
+This script calculates the minimum spanning tree of a shapefile network
 """
 
 import networkx as nx
@@ -19,7 +19,7 @@ __status__ = "Production"
 
 def calc_minimum_spanning_tree(input_network_shp, output_network_folder, building_nodes_shp, output_edges, output_nodes,
                                weight_field, type_mat_default, pipe_diameter_default):
-    # read shapefile into networxk format into a directed graph
+    # read shapefile into networkx format into a directed graph
     graph = nx.read_shp(input_network_shp)
 
     # transform to an undirected graph
