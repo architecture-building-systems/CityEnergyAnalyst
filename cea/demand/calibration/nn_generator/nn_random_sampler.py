@@ -13,6 +13,16 @@ from cea.demand.calibration.nn_generator.nn_settings import number_samples, rand
     target_parameters, boolean_vars
 from cea.demand.calibration.nn_generator.input_prepare import input_prepare_main
 
+def input_dropout(urban_input_matrix, urban_taget_matrix):
+    rows, cols = urban_input_matrix.shape
+    drop_random_array=np.random.rand(rows)
+    drop_idx_filter=drop_random_array>0.5
+    drop_idx=np.where(drop_idx_filter)
+    urban_input_matrix=np.delete(urban_input_matrix,drop_idx,0)
+    urban_taget_matrix=np.delete(urban_taget_matrix,drop_idx,0)
+
+    return urban_input_matrix, urban_taget_matrix
+
 def sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, gv):
     size_city = np.shape(list_building_names)
     size_city=size_city[0]
@@ -53,6 +63,8 @@ def sampling_main(locator, random_variables, target_parameters, list_building_na
 
         demand_main.demand_calculation(locator, weather_path, gv)
         urban_input_matrix, urban_taget_matrix=input_prepare_main(list_building_names, locator, target_parameters, gv)
+
+        urban_input_matrix, urban_taget_matrix=input_dropout(urban_input_matrix, urban_taget_matrix)
 
         nn_inout_path = locator.get_nn_inout_folder()
         file_path_inputs=os.path.join(nn_inout_path,"input%(i)s.csv" % locals())
