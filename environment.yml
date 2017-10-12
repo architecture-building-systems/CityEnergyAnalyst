@@ -32,7 +32,7 @@ dependencies:
 - jpeg=9b=vc9_0
 - kealib>=1.4.7
 - krb5=1.14.2=vc9_0
-- libgdal=2.1.4=vc9_2
+- libgdal>=2.1.4
 - libiconv=1.14=vc9_4
 - libnetcdf=4.4.1.1=vc9_5
 - libpng=1.6.28=vc9_0
