@@ -137,7 +137,7 @@ def reader_surface_properties(locator, input_shp):
 
     return surface_properties.set_index('Name').round(decimals=2)
 
-def radiation_multiprocessing(rad, bldg_dict_list, locator, weather_path, settings):
+def radiation_multiprocessing(rad, bldg_dict_list, locator, weather_path, settings, selected_buildings):
 
     config = cea.config.Configuration(locator.scenario_path)
 
@@ -156,17 +156,28 @@ def radiation_multiprocessing(rad, bldg_dict_list, locator, weather_path, settin
         process.join()
 
 
-def radiation_singleprocessing(rad, bldg_dict_list, locator, weather_path, settings):
+def radiation_singleprocessing(rad, bldg_dict_list, locator, weather_path, settings, selected_buildings):
 
-    # get chunks of buildings to iterate
-    chunks = [bldg_dict_list[i:i + settings.simulation_parameters['n_build_in_chunk']] for i in
-              range(0, len(bldg_dict_list),
-                    settings.simulation_parameters['n_build_in_chunk'])]
+    if settings.simulation_parameters['run_all_buildings']:
+        # get chunks of buildings to iterate
+        chunks = [bldg_dict_list[i:i + settings.simulation_parameters['n_build_in_chunk']] for i in
+                  range(0, len(bldg_dict_list),
+                        settings.simulation_parameters['n_build_in_chunk'])]
+
+    else:
+        list_of_building_names = selected_buildings
+        chunks = []
+        for bldg_dict in bldg_dict_list:
+            if bldg_dict['name'] in list_of_building_names:
+                chunks.append([bldg_dict])
 
     for chunk_n, bldg_dict in enumerate(chunks):
         daysim_main.isolation_daysim(chunk_n, rad, bldg_dict, locator, weather_path, settings)
 
-def main(locator, weather_path):
+
+
+
+def main(locator, weather_path, selected_buildings):
     """
     This function makes the calculation of solar insolation in X sensor points for every building in the zone
     of interest. the number of sensor points depends on the size of the grid selected in the SETTINGS.py file and
@@ -203,9 +214,9 @@ def main(locator, weather_path):
 
     time1 = time.time()
     if settings.simulation_parameters['multiprocessing']:
-        radiation_multiprocessing(rad, geometry_3D_zone, locator, weather_path, settings)
+        radiation_multiprocessing(rad, geometry_3D_zone, locator, weather_path, settings, selected_buildings)
     else:
-        radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path, settings)
+        radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path, settings, selected_buildings)
 
     print "Daysim simulation finished in ", (time.time() - time1) / 60.0, " mins"
 
@@ -213,4 +224,5 @@ def main(locator, weather_path):
 if __name__ == '__main__':
     locator = cea.inputlocator.InputLocator(scenario_path=r'c:\reference-case-ecocampus\baseline')
     weather_path = locator.get_default_weather()
-    main(locator=locator, weather_path=weather_path)
+    selected_buildings = ['B191', 'B003', 'B004', 'B005', 'B006', 'B021', 'B182', 'B191', 'B212', 'B216']
+    main(locator=locator, weather_path=weather_path, selected_buildings=selected_buildings)

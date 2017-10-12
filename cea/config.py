@@ -268,6 +268,7 @@ class RadiationDaysimConfiguration(object):
         return {
             'n_build_in_chunk': self._parser.getint('radiation-daysim', 'n-buildings-in-chunk'),
             'multiprocessing': self._parser.getboolean('radiation-daysim', 'multiprocessing'),
+            'run_all_buildings': self._parser.getboolean('radiation-daysim', 'run_all_buildings')
         }
 
     @property
