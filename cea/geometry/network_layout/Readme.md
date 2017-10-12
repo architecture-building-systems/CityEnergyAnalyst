@@ -9,5 +9,5 @@ The steps to get a preliminar network layout.
 6. now you can modify the nodes and edges stored in the input/networks folder.
 
 Limitations:
-- The minimum spanning tree consider all nodes, and a way around could not be found. The best is to edit the points manually
-at the moment.
+The minimum spanning tree consider all nodes, and a way around could not be found. The best is to edit the points
+manually at the moment.
