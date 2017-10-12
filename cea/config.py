@@ -9,7 +9,6 @@ import tempfile
 import ConfigParser
 import cea.databases
 
-
 class Configuration(object):
     def __init__(self, scenario=None):
         """Read in configuration information for a scenario (or the default scenario)"""
@@ -38,6 +37,7 @@ class Configuration(object):
         self.radiation_daysim = RadiationDaysimConfiguration(self._parser)
         self.data_helper = DataHelperConfiguration(self._parser)
         self.embodied_energy = EmbodiedEnergyConfiguration(self._parser)
+        self.demand_graphs = DemandGraphsConfiguration(self._parser)
 
     @property
     def default_scenario(self):
@@ -327,6 +327,14 @@ class EmbodiedEnergyConfiguration(object):
     @property
     def year_to_calculate(self):
         return self._parser.getint('embodied-energy', 'year-to-calculate')
+
+class DemandGraphsConfiguration(object):
+    def __init__(self, parser):
+        self._parser = parser
+
+    @property
+    def analysis_fields(self):
+        return self._parser.get('demand-graphs', 'analysis-fields').split()
 
 
 if __name__ == '__main__':

@@ -4,6 +4,8 @@ graphs algorithm
 """
 from __future__ import division
 
+import os
+
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -113,11 +115,8 @@ def run_as_script(scenario_path=None, analysis_fields=["Ealf_kWh", "Qhsf_kWh", "
     # HINTS FOR ARCGIS INTERFACE:
     # the user should see all the column names of the total_demands.csv
     # the user can select a maximum of 4 of those column names to graph (analysis fields!
-    config = cea.config.Configuration()
-    if scenario_path is None:
-        scenario_path = config.default_scenario
+    assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-
     graphs_demand(locator=locator, analysis_fields=analysis_fields)
     print('done.')
 
@@ -139,13 +138,9 @@ def demand_graph_fields(scenario_path):
     return list(fields)
 
 if __name__ == '__main__':
-    import argparse
+    import cea.config
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    parser.add_argument('-a', '--analysis_fields', default='Ealf_kWh;Qhsf_kWh;Qwwf_kWh;Qcsf_kWh',
-                        help='Fields to analyse (separated by ";")')
-    args = parser.parse_args()
-    run_as_script(scenario_path=args.scenario, analysis_fields=args.analysis_fields.split(';')[:MAX_ANALYSIS_FIELDS])
+    config = cea.config.Configuration()
+    run_as_script(scenario_path=config.scenario, analysis_fields=config.demand_graphs.analysis_fields)
 
 
