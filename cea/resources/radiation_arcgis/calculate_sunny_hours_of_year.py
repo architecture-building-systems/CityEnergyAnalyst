@@ -54,16 +54,11 @@ def calculate_sunny_hours_of_day(day, sunrise, temporary_folder):
     # Counter of Columns in the Initial Table
     Counter = radiation_sunnyhours.count(1)[0]
     values = Counter - 1
-    # Condition to take into account daysavingtime in Switzerland as the radiation data in ArcGIS is calculated for 2013.
-    if 90 <= day < 300:
-        D = 1
-    else:
-        D = 0
     # Calculation of Sunrise time
     Sunrise_time = sunrise[day - 1]
     # Calculation of table
     for x in range(values):
-        Hour = int(Sunrise_time) + int(D) + int(x)
+        Hour = int(Sunrise_time) + int(x)
         Table['T' + str(Hour)] = radiation_sunnyhours['T' + str(x)]
 
     # rename the table for every T to get in 1 to 8760 hours.
