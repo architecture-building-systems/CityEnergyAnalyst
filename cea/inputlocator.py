@@ -710,6 +710,10 @@ class InputLocator(object):
         """scenario/outputs/data/surrogate/neural_network_folder"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'surrogate_model','neural_network')
 
+    def get_minmaxscaler_folder(self):
+        """scenario/outputs/data/surrogate/neural_network_folder"""
+        return self._ensure_folder(self.scenario_path, 'outputs', 'surrogate_model', 'minmaxscalar')
+
     def get_neural_network_model(self):
         """scenario/outputs/data/surrogate/neural_network_folder"""
         structure = os.path.join(self.get_neural_network_folder(), 'nn_structure.json')
