@@ -1,3 +1,21 @@
+# coding=utf-8
+"""
+'nn_pipeline.py" script is a pipeline of the following jobs:
+    (1) calls "sampling_main" function for random generation of features
+    (2) calls "neural_trainer" function for training a first neural network and saving the model
+    (3) executes a loop in which "sampling_main" and "neural_training" are iteratively called for
+        sequential training of the neural network.
+"""
+
+__author__ = "Fazel Khayatian"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Fazel Khayatian"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 from cea.demand.calibration.latin_sampler import latin_sampler
 from cea.demand.demand_main import properties_and_schedule
 from cea.demand.calibration.calibration_sampling import apply_sample_parameters
@@ -24,9 +42,22 @@ def input_dropout(urban_input_matrix, urban_taget_matrix):
     return urban_input_matrix, urban_taget_matrix
 
 def sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, gv):
+    '''
+    this function creates a number of random samples for the entire district (city)
+    :param locator: points to the variables
+    :param random_variables: a list containing the names of variables associated with uncertainty (can be accessed from 'nn_settings.py')
+    :param target_parameters: a list containing the name of desirable outputs (can be accessed from 'nn_settings.py')
+    :param list_building_names: a list containing the name of desired buildings
+    :param weather_path: weather path
+    :param gv: global variables
+    :return: -
+    '''
+
+    #   get number of buildings
     size_city = np.shape(list_building_names)
     size_city=size_city[0]
-    for i in range(number_samples):
+    #   create random samples of the entire district
+    for i in range(number_samples): #the parameter "number_samples" is accessible from 'nn_settings.py'
         bld_counter=0
         # create list of samples with a LHC sampler and save to disk
         samples, pdf_list = latin_sampler(locator, size_city, random_variables)
@@ -38,6 +69,7 @@ def sampling_main(locator, random_variables, target_parameters, list_building_na
             sample = np.asarray(zip(random_variables, samples[bld_counter, :]))
             apply_sample_parameters(locator, sample)
             bld_counter = bld_counter + 1
+        # read the saved *.csv file and replace Boolean with logical (True/False)
         overwritten = pd.read_csv(locator.get_building_overrides())
         bld_counter = 0
         for building_name in (list_building_names):
