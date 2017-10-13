@@ -5,75 +5,108 @@ Manage configuration information for the CEA. See the cascading configuration fi
 for more information on configuration files.
 """
 import os
-import tempfile
 import ConfigParser
-import cea.databases
+
 
 class Configuration(object):
-    def __init__(self, scenario=None):
-        """Read in configuration information for a scenario (or the default scenario)"""
-        self.scenario = scenario
-        defaults = {'TEMP': tempfile.gettempdir(),
-                    'CEA.SCENARIO': str(scenario),
-                    'CEA.DB': os.path.dirname(cea.databases.__file__)}
+    def __init__(self, config_file=None):
+        """Read in the configuration file and configure the sections and parameters."""
+        self._read_config_file(config_file)
+        self._sections = {}
 
-        self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
-        self._parser.read(self._list_configuration_files(scenario))
+        ## ADD NEW PARAMETERS HERE
+        self.add_section('general',
+                         PathParameter('default-scenario'),
+                         ChoiceParameter('region', ['CH', 'SIN']),
+                         WeatherPathParameter('weather'),
+                         BooleanParameter('multiprocessing'))
 
-        if not scenario:
-            self.scenario = self.default_scenario
-            # re-read configuration from default-scenario
-            defaults['CEA.SCENARIO'] = str(self.scenario)
-            self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
-            self._parser.read(self._list_configuration_files(self.scenario))
-            try:
-                # add configuration file to default scenario
-                self.save()
-            except:
-                print('failed to save configuration file to default scenario.')
+        self.add_section('data-helper',
+                         ListParameter('archetypes'))
 
-        self.demand = DemandConfiguration(self._parser)
-        self.solar = PhotovoltaicConfiguration(self._parser)
-        self.radiation_daysim = RadiationDaysimConfiguration(self._parser)
-        self.data_helper = DataHelperConfiguration(self._parser)
-        self.embodied_energy = EmbodiedEnergyConfiguration(self._parser)
-        self.demand_graphs = DemandGraphsConfiguration(self._parser)
+        self.add_section('demand-graphs',
+                         ListParameter('analysis-fields'))
 
-    @property
-    def default_scenario(self):
-        return self._parser.get('general', 'default-scenario')
+        self.add_section('embodied-energy',
+                         IntegerParameter('year-to-calculate'))
 
-    @property
-    def region(self):
-        return self._parser.get('general', 'region')
+        self.add_section('demand',
+                         DateParameter('heating-season-start'),
+                         DateParameter('heating-season-end'),
+                         BooleanParameter('has-heating-season'),
+                         DateParameter('cooling-season-start'),
+                         DateParameter('cooling-season-end'),
+                         BooleanParameter('has-cooling-season'),
+                         BooleanParameter('use-dynamic-infiltration-calculation'))
 
-    @property
-    def weather(self):
-        return self._parser.get('general', 'weather')
+        self.add_section('solar',
+                         DateParameter('date-start'),
+                         ChoiceParameter('type-pvpanel', ['PV1', 'PV2', 'PV3']),
+                         ChoiceParameter('type-scpanel', ['SC1', 'SC2']),
+                         BooleanParameter('panel-on-roof'),
+                         BooleanParameter('panel-on-wall'),
+                         RealParameter('min-radiation'),
+                         IntegerParameter('solar-window-solstice'),
+                         RealParameter('t-in-sc'),
+                         RealParameter('t-in-pvt'),
+                         RealParameter('dpl'),
+                         RealParameter('fcr'),
+                         RealParameter('ro'),
+                         RealParameter('eff-pumping'),
+                         RealParameter('k-msc-max'))
 
-    @property
-    def multiprocessing(self):
-        return self._parser.getboolean('general', 'multiprocessing')
+        self.add_section('radiation-daysim',
+                         IntegerParameter('rad-n'),
+                         StringParameter('rad-af'),
+                         IntegerParameter('rad-ab'),
+                         IntegerParameter('rad-ad'),
+                         IntegerParameter('rad-as'),
+                         IntegerParameter('rad-ar'),
+                         RealParameter('rad-aa'),
+                         IntegerParameter('rad-lr'),
+                         RealParameter('rad-st'),
+                         RealParameter('rad-sj'),
+                         RealParameter('rad-lw'),
+                         RealParameter('rad-dj'),
+                         RealParameter('rad-ds'),
+                         IntegerParameter('rad-dr'),
+                         IntegerParameter('rad-dp'),
+                         IntegerParameter('sensor-x-dim'),
+                         IntegerParameter('sensor-y-dim'),
+                         RealParameter('e-terrain'),
+                         IntegerParameter('n-buildings-in-chunk'),
+                         BooleanParameter('multiprocessing'),
+                         IntegerParameter('zone-geometry'),
+                         IntegerParameter('surrounding-geometry'),
+                         BooleanParameter('consider-windows'),
+                         BooleanParameter('consider-floors'))
 
-    def _list_configuration_files(self, scenario):
-        """Return the list of configuration files to try and load for a given scenario. The list is given in order
-        of importance, with items at the end of the files overriding files at the beginning of the list."""
-        default_config = os.path.join(os.path.dirname(__file__), 'default.config')
-        user_config = os.path.expanduser(r'~/cea.config')
 
-        # clone the default configuration file if the user configuration file (~/cea.config) doesn't exist yet
-        if not os.path.exists(user_config):
-            import shutil
-            shutil.copy(default_config, user_config)
+        ## ADD NEW SECTIONS HERE
 
-        cascade = [
-            default_config,
-            user_config,
-        ]
-        if scenario:
-            cascade.append(os.path.join(scenario, '..', 'project.config'))
-            cascade.append(os.path.join(scenario, 'scenario.config'))
-        return cascade
+    def _read_config_file(self, config_file):
+        """Read in the configuration information from the home folder (cea.config)"""
+        if not config_file:
+            config_file = [os.path.expanduser('~/cea.config'),
+                           os.path.join(os.path.dirname(__file__), 'default.config')]
+        self._config_file = config_file
+        self.config_parser = ConfigParser.SafeConfigParser()
+        # read from the user config file, with the default.config as a backup
+        self.config_parser.read(config_file)
+
+    def add_section(self, name, *parameters):
+        section = Section(name=name, config=self)
+        self._sections[name] = section
+        for parameter in parameters:
+            section.add_parameter(parameter)
+
+    def __getattr__(self, attr):
+        identifier = config_identifier(attr)
+        if identifier in self._sections:
+            return self._sections[identifier]
+        else:
+            # assume the default section [general]
+            return getattr(self._sections['general'], identifier)
 
     def save(self):
         """Write this configuration to the scenario folder"""
@@ -83,262 +116,117 @@ class Configuration(object):
             self._parser.write(f)
 
 
-class DemandConfiguration(object):
-    def __init__(self, parser):
-        self._parser = parser
+def config_identifier(python_identifier):
+    """For vanity, keep keys and section names in the config file with dashes instead of underscores and all-lowercase"""
+    return python_identifier.lower().replace('_', '-')
 
-    @property
-    def heating_season_start(self):
-        return self._parser.get('demand', 'heating-season-start')
+class Section(object):
+    """Instances of ``Section`` describe a section in the configuration file."""
+    def __init__(self, name, config):
+        self._name = name
+        self._config = config
+        self._parameters = {}
 
-    @property
-    def heating_season_end(self):
-        return self._parser.get('demand', 'heating-season-end')
+    def __getattr__(self, attr):
+        return self._parameters[config_identifier(attr)].read(config.config_parser, self._name)
 
-    @property
-    def cooling_season_start(self):
-        return self._parser.get('demand', 'cooling-season-start')
+    def add_parameter(self, parameter):
+        """Add a new parameter to a section, using ``parameter_type`` to parse and unparse the values"""
+        self._parameters[parameter.name] = parameter
 
-    @property
-    def cooling_season_end(self):
-        return self._parser.get('demand', 'cooling-season-end')
+class Parameter(object):
+    def __init__(self, name):
+        self.name = name
 
-    @property
-    def use_dynamic_infiltration_calculation(self):
-        return self._parser.getboolean('demand', 'use-dynamic-infiltration-calculation')
+    def read(self, config_parser, section):
+        """Read a value from a ``ConfigParser``"""
+        return self.decode(config_parser.get(section, self.name))
 
+    def write(self, config_parser, section, value):
+        """Write a value to a ``ConfigParser``"""
+        config_parser.set(section, self.name, self.encode(value))
 
-class PhotovoltaicConfiguration(object):
-    def __init__(self, parser):
-        self._parser = parser
+    def encode(self, value):
+        """Encode ``value`` to a string representation for writing to the configuration file"""
+        return str(value)
 
-    # site specific input
-    @property
-    def date_start(self):
-        """format: yyyy-mm-dd"""
-        return self._parser.get('solar', 'date-start')
-
-    @date_start.setter
-    def date_start(self, value):
-        """format: yyy-mm-dd"""
-        self._parser.set('solar', 'date-start', value)
-
-    @property
-    def type_PVpanel(self):
-        """type of panels
-        for PVT, please choose type_PVpanel = 'PV1', type_SCpanel = 'SC1'
-        PV1: monocrystalline, PV2: poly, PV3: amorphous. please refer to supply system database.
-        """
-        return self._parser.get('solar', 'type-PVpanel')
-
-    @type_PVpanel.setter
-    def type_PVpanel(self, value):
-        """type of panels
-        for PVT, please choose type_PVpanel = 'PV1', type_SCpanel = 'SC1'
-        PV1: monocrystalline, PV2: poly, PV3: amorphous. please refer to supply system database.
-        """
-        assert value in {'PV1', 'PV2', 'PV3'}, 'invalid PV panel type: %s' % value
-        self._parser.set('solar', 'type-PVpanel', value)
-
-    @property
-    def type_SCpanel(self):
-        """SC1: flat plat collectors, SC2: evacuated tubes"""
-        return self._parser.get('solar', 'type-SCpanel')
-
-    @type_SCpanel.setter
-    def type_SCpanel(self, value):
-        """SC1: flat plat collectors, SC2: evacuated tubes"""
-        assert value in {'SC1', 'SC2'}
-        self._parser.set('solar', 'type-SCpanel', value)
-
-    # installed locations
-    @property
-    def panel_on_roof(self):
-        """flag for considering panels on roof"""
-        return self._parser.getboolean('solar', 'panel-on-roof')
-
-    @panel_on_roof.setter
-    def panel_on_roof(self, value):
-        """flag for considering panels on roof"""
-        self._parser.set('solar', 'panel-on-roof', 'yes' if value else 'no')
-
-    @property
-    def panel_on_wall(self):
-        """flag for considering panels on wall"""
-        return self._parser.getboolean('solar', 'panel-on-wall')
-
-    @panel_on_wall.setter
-    def panel_on_wall(self, value):
-        """flag for considering panels on wall"""
-        self._parser.set('solar', 'panel-on-wall', 'yes' if value else 'no')
-
-    @property
-    def min_radiation(self):
-        """filtering criteria: at least a minimum production of this % from the maximum in the area."""
-        return self._parser.getfloat('solar', 'min-radiation')
-
-    @min_radiation.setter
-    def min_radiation(self, value):
-        """filtering criteria: at least a minimum production of this % from the maximum in the area."""
-        self._parser.set('solar', 'min-radiation', '%.4f' % value)
-
-    # panel spacing
-    @property
-    def solar_window_solstice(self):
-        """desired hours of solar window on the solstice"""
-        return self._parser.getint('solar', 'solar-window-solstice')
-
-    @solar_window_solstice.setter
-    def solar_window_solstice(self, value):
-        """desired hours of solar window on the solstice"""
-        self._parser.set('solar', 'solar-window-solstice', '%i' % value)
-
-    @property
-    def T_in_SC(self):
-        """inlet temperature of solar collectors [C]"""
-        return self._parser.getfloat('solar', 'T-in-SC')
-
-    @T_in_SC.setter
-    def T_in_SC(self, value):
-        """inlet temperature of solar collectors [C]"""
-        self._parser.set('solar', 'T-in-SC', value)
-
-    @property
-    def T_in_PVT(self):
-        """inlet temperature of PVT panels [C]"""
-        return self._parser.getfloat('solar', 'T-in-PVT')
-
-    @T_in_PVT.setter
-    def T_in_PVT(self, value):
-        """inlet temperature of PVT panels [C]"""
-        self._parser.set('solar', 'T-in-PVT', value)
-
-    @property
-    def dpl(self):
-        """pressure losses per length of pipe according to Solar District Heating Guidelines, [Pa/m]"""
-        return self._parser.getfloat('solar', 'dpl')
-
-    @property
-    def fcr(self):
-        """additional loss factor due to accessories"""
-        return self._parser.getfloat('solar', 'fcr')
-
-    @property
-    def Ro(self):
-        """water density [kg/m3]"""
-        return self._parser.getfloat('solar', 'Ro')
-
-    @property
-    def eff_pumping(self):
-        """pump efficiency"""
-        return self._parser.getfloat('solar', 'eff-pumping')
-
-    # solar collectors heat losses
-    @property
-    def k_msc_max(self):
-        """linear heat transmittance coefficient of piping (2*pi*k/ln(Do/Di))) [W/mK]"""
-        return self._parser.getfloat('solar', 'k-msc-max')
-
-class RadiationDaysimConfiguration(object):
-
-    def __init__(self, parser):
-        """
-        :param parser: the SafeConfigParser used in the background
-        :type parser: ConfigParser.SafeConfigParser
-        """
-        self._parser = parser
-
-    @property
-    def rad_parameters(self):
-        return {
-            'RAD_N': self._parser.getint('radiation-daysim', 'rad-n'),
-            'RAD_AF': self._parser.get('radiation-daysim', 'rad-af'),
-            'RAD_AB': self._parser.getint('radiation-daysim', 'rad-ab'),
-            'RAD_AD': self._parser.getint('radiation-daysim', 'rad-ad'),
-            'RAD_AS': self._parser.getint('radiation-daysim', 'rad-as'),
-            'RAD_AR': self._parser.getint('radiation-daysim', 'rad-ar'),
-            'RAD_AA': self._parser.getfloat('radiation-daysim', 'rad-aa'),
-            'RAD_LR': self._parser.getint('radiation-daysim', 'rad-lr'),
-            'RAD_ST': self._parser.getfloat('radiation-daysim', 'rad-st'),
-            'RAD_SJ': self._parser.getfloat('radiation-daysim', 'rad-sj'),
-            'RAD_LW': self._parser.getfloat('radiation-daysim', 'rad-lw'),
-            'RAD_DJ': self._parser.getfloat('radiation-daysim', 'rad-dj'),
-            'RAD_DS': self._parser.getfloat('radiation-daysim', 'rad-ds'),
-            'RAD_DR': self._parser.getint('radiation-daysim', 'rad-dr'),
-            'RAD_DP': self._parser.getint('radiation-daysim', 'rad-dp'),
-        }
-
-    @property
-    def sensor_parameters(self):
-        """Grid for the sensors, use 100 (maximum) if you want only one point per surface"""
-        return {
-            'X_DIM': self._parser.getint('radiation-daysim', 'sensor-x-dim'),
-            'Y_DIM': self._parser.getint('radiation-daysim', 'sensor-y-dim'),
-        }
+    def decode(self, value):
+        """Decode ``value`` to the type supported by this Parameter"""
+        return value
 
 
-    @property
-    def terrain_parameters(self):
-        """terrain parameters: e-terrain (reflection for the terrain)"""
-        return {
-            'e_terrain': self._parser.getfloat('radiation-daysim', 'e-terrain'),
-        }
+class PathParameter(Parameter):
+    pass
 
-    @property
-    def simulation_parameters(self):
-        """simulation parameters:
+class WeatherPathParameter(Parameter):
+    pass
 
-        - n_build_in_chunk: min number of buildings for multiprocessing
-        - multiprocessing: if set to true, run the process for chunk size ``n_build_in_chunk``
-        """
-        return {
-            'n_build_in_chunk': self._parser.getint('radiation-daysim', 'n-buildings-in-chunk'),
-            'multiprocessing': self._parser.getboolean('radiation-daysim', 'multiprocessing'),
-        }
+class BooleanParameter(Parameter):
+    """Read / write boolean parameters to the config file."""
+    _boolean_states = {'1': True, 'yes': True, 'true': True, 'on': True,
+                       '0': False, 'no': False, 'false': False, 'off': False}
+    def encode(self, value):
+        return 'true' if value else 'false'
 
-    @property
-    def simplification_parameters(self):
-        """geometry simplification:
-        - zone_geometry: level of simplification of the zone geometry
-        - surrounding_geometry: level of simplification of the district geometry
-        - consider_windows: boolean to consider or not windows in the geometry
-        - consider_floors: boolean to consider or not floors in the geometry
-        """
-        return {
-            'zone_geometry': self._parser.getint('radiation-daysim', 'zone-geometry'),
-            'surrounding_geometry': self._parser.getint('radiation-daysim', 'surrounding-geometry'),
-            'consider_windows': self._parser.getboolean('radiation-daysim', 'consider-windows'),
-            'consider_floors': self._parser.getboolean('radiation-daysim', 'consider-floors'),
-        }
+    def decode(self, value):
+        return self._boolean_states[value.lower()]
 
-class DataHelperConfiguration(object):
-    def __init__(self, parser):
-        self._parser = parser
+class IntegerParameter(Parameter):
+    """Read / write integer parameters to the config file."""
+    def encode(self, value):
+        return str(int(value))
 
-    @property
-    def archetypes(self):
-        return self._parser.get('data-helper', 'archetypes').split()
+    def decode(self, value):
+        return int(value)
 
+class RealParameter(Parameter):
+    """Read / write floating point parameters to the config file."""
+    def __init__(self, name, decimal_places=2):
+        self._decimal_places = decimal_places
+        super(RealParameter, self).__init__(name)
 
-class EmbodiedEnergyConfiguration(object):
-    def __init__(self, parser):
-        self._parser = parser
+    def encode(self, value):
+        return format(value, ".%i" % self._decimal_places)
 
-    @property
-    def year_to_calculate(self):
-        return self._parser.getint('embodied-energy', 'year-to-calculate')
+    def decode(self, value):
+        return float(value)
 
-class DemandGraphsConfiguration(object):
-    def __init__(self, parser):
-        self._parser = parser
+class ListParameter(Parameter):
+    """A parameter that is a list of whitespace-separated strings. An error is raised when writing
+    strings that contain whitespace themselves."""
+    def encode(self, value):
+        strings = [str(s).strip() for s in value]
+        for s in strings:
+            assert len(s.split()) == 1, 'No whitespace allowed in values of ListParameter'
+        return ' '.join(strings)
 
-    @property
-    def analysis_fields(self):
-        return self._parser.get('demand-graphs', 'analysis-fields').split()
+    def decode(self, value):
+        return value.split()
 
+class StringParameter(Parameter):
+    pass
+
+class DateParameter(Parameter):
+    pass
+
+class ChoiceParameter(Parameter):
+    """A parameter that can only take on values from a specific set of values"""
+    def __init__(self, name, choices):
+        self._choices = set(choices)
+        super(ChoiceParameter, self).__init__(name)
+
+    def encode(self, value):
+        assert str(value) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
+        return str(value)
+
+    def decode(self, value):
+        assert str(value) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
+        return str(value)
 
 if __name__ == '__main__':
-    config = Configuration(r'c:\reference-case-open\baseline')
+    config = Configuration()
+    print(config.general.default_scenario)
+    print(config.general.multiprocessing)
     print(config.demand.heating_season_start)
     print(config.default_scenario)
     print(config.weather)
