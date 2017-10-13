@@ -6,7 +6,7 @@ from cea.demand.calibration.nn_generator.nn_test_sampler import sampling_single
 from cea.demand.calibration.nn_generator.nn_trainer_resume import nn_model_collector
 from cea.demand.calibration.nn_generator.nn_settings import random_variables, target_parameters
 from cea.demand.demand_main import properties_and_schedule
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 def get_nn_estimations(model, scalerT, scalerX, urban_input_matrix, urban_taget_matrix, locator):
     input_NN_x=urban_input_matrix
@@ -28,23 +28,19 @@ def get_nn_estimations(model, scalerT, scalerX, urban_input_matrix, urban_taget_
     rmse_Ef = sqrt(mean_squared_error(target_NN_t[:, 3], filtered_predict[:, 3]))
     rmse_T_int = sqrt(mean_squared_error(target_NN_t[:, 4], filtered_predict[:, 4]))
 
-    mean_target_Qhsf = np.mean(target_NN_t[:, 0])
-    mean_target_Qcsf = np.mean(target_NN_t[:, 1])
-    mean_target_Qwwf = np.mean(target_NN_t[:, 2])
-    mean_target_Ef = np.mean(target_NN_t[:, 3])
-    mean_target_T_int = np.mean(target_NN_t[:, 4])
+    mbe_Qhsf = mean_absolute_error(target_NN_t[:, 0], filtered_predict[:, 0])
+    mbe_Qcsf = mean_absolute_error(target_NN_t[:, 1], filtered_predict[:, 1])
+    mbe_Qwwf = mean_absolute_error(target_NN_t[:, 2], filtered_predict[:, 2])
+    mbe_Ef = mean_absolute_error(target_NN_t[:, 3], filtered_predict[:, 3])
+    mbe_T_int = mean_absolute_error(target_NN_t[:, 4], filtered_predict[:, 4])
 
-    cv_rmse_Qhsf = np.divide(rmse_Qhsf, mean_target_Qhsf)
-    cv_rmse_Qcsf = np.divide(rmse_Qcsf, mean_target_Qcsf)
-    cv_rmse_Qwwf = np.divide(rmse_Qwwf, mean_target_Qwwf)
-    cv_rmse_Ef = np.divide(rmse_Ef, mean_target_Ef)
-    cv_rmse_T_int = np.divide(rmse_T_int, mean_target_T_int)
 
-    print (rmse_Qhsf,cv_rmse_Qhsf)
-    print (rmse_Qcsf,cv_rmse_Qcsf)
-    print (rmse_Qwwf,cv_rmse_Qwwf)
-    print (rmse_Ef,cv_rmse_Ef)
-    print (rmse_T_int,cv_rmse_T_int)
+
+    print (rmse_Qhsf,mbe_Qhsf)
+    print (rmse_Qcsf,mbe_Qcsf)
+    print (rmse_Qwwf,mbe_Qwwf)
+    print (rmse_Ef,mbe_Ef)
+    print (rmse_T_int,mbe_T_int)
 
     model_estimates = locator.get_neural_network_estimates()
     filtered_predict=pd.DataFrame(filtered_predict)
