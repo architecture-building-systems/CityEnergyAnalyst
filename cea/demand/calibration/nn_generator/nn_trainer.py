@@ -1,3 +1,17 @@
+# coding=utf-8
+"""
+'nn_trainer.py' script fits a neural net on inputs and targets
+"""
+
+__author__ = "Fazel Khayatian"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Fazel Khayatian"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.externals import joblib
 from cea.demand.calibration.nn_generator.nn_settings import target_parameters
@@ -13,6 +27,7 @@ from keras.callbacks import EarlyStopping
 import cea
 from cea.demand.calibration.nn_generator.input_prepare import input_prepare_main
 from cea.demand.demand_main import properties_and_schedule
+from cea.demand.calibration.nn_generator.nn_settings import number_samples
 import theano
 import multiprocessing
 
@@ -26,7 +41,6 @@ def neural_trainer(inputs_x,targets_t,locator):
     :return:
     '''
 
-    np.random.seed(7)
     inputs_x_rows, inputs_x_cols = inputs_x.shape
     #scaling and normalizing inputs
     scalerX = MinMaxScaler(feature_range=(0, 1))
@@ -37,7 +51,7 @@ def neural_trainer(inputs_x,targets_t,locator):
     over_complete_dim =int(encoding_dim*2)
     AE_input_dim=int(inputs_x_cols)
 
-    #sparsing inputs: use this if you have more than 50 input features
+    #   sparsing inputs: this option is recommended if you have more than 50 input features
     # input_AEI = Input(shape=(AE_input_dim,))
     # encoded = Dense(over_complete_dim, activation='relu')(input_AEI)
     # encoded = Dense(encoding_dim, activation='softplus')(encoded)
@@ -51,7 +65,7 @@ def neural_trainer(inputs_x,targets_t,locator):
     # encoder = Model(input_AEI, encoded)
     # encoded_input=Input(shape=(encoding_dim,))
     # encoded_x=encoder.predict(inputs_x)
-    #print encoded_x
+    # inputs_x=encoded_x
 
     encoded_x_rows, encoded_x_cols = inputs_x.shape
     targets_t_rows, targets_t_cols = targets_t.shape
@@ -71,24 +85,24 @@ def neural_trainer(inputs_x,targets_t,locator):
 
     model.compile(loss='mean_squared_error', optimizer='Adamax') # compile the network
 
-    # define early stopping to avoid overfitting
+    #   define early stopping to avoid overfitting
     estop = EarlyStopping(monitor='val_loss', min_delta=0, patience=e_stop_limit, verbose=1, mode='auto')
 
-    # Fit the model
+    #   Fit the model
     model.fit(inputs_x, targets_t, validation_split=validation_split, epochs=10, shuffle=True, batch_size=100000,callbacks=[estop])
-
+    #   save model structure
     json_NN_path , weight_NN_path = locator.get_neural_network_model()
     model_json = model.to_json()
     with open(json_NN_path, "w") as json_file:
         json_file.write(model_json)
-    # serialize weights to HDF5
+    #   serialize weights based on model structure
     model.save_weights(weight_NN_path)
     print("neural network properties saved")
-
+    #   save resume-enables model
     model_resume=locator.get_neural_network_resume()
     model.save(model_resume)  # creates a HDF5 file 'model_resume.h5'
     print("neural network model saved")
-
+    #   save resume-enabled normalizer
     scalerX_file , scalerT_file=locator.get_minmaxscalar_model()
     joblib.dump(scalerX, scalerX_file)
     joblib.dump(scalerT, scalerT_file)
@@ -97,7 +111,7 @@ def neural_trainer(inputs_x,targets_t,locator):
 
 def nn_input_collector(locator):
     nn_inout_path = locator.get_nn_inout_folder()
-    for i in range(10):
+    for i in range(number_samples):
         file_path_inputs = os.path.join(nn_inout_path, "input%(i)s.csv" % locals())
         file_path_targets = os.path.join(nn_inout_path, "target%(i)s.csv" % locals())
         batch_input_matrix = np.asarray(pd.read_csv(file_path_inputs))
@@ -110,6 +124,7 @@ def nn_input_collector(locator):
             urban_taget_matrix = np.concatenate((urban_taget_matrix, batch_taget_matrix), axis=0)
 
         print(i)
+
     return urban_input_matrix, urban_taget_matrix
 
 

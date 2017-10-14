@@ -1,10 +1,6 @@
 # coding=utf-8
 """
-'nn_pipeline.py" script is a pipeline of the following jobs:
-    (1) calls "sampling_main" function for random generation of features
-    (2) calls "neural_trainer" function for training a first neural network and saving the model
-    (3) executes a loop in which "sampling_main" and "neural_training" are iteratively called for
-        sequential training of the neural network.
+'nn_random_sampler.py' script is a generator of random properties for the entire case-study
 """
 
 __author__ = "Fazel Khayatian"
@@ -59,7 +55,7 @@ def sampling_main(locator, random_variables, target_parameters, list_building_na
     #   create random samples of the entire district
     for i in range(number_samples): #the parameter "number_samples" is accessible from 'nn_settings.py'
         bld_counter=0
-        # create list of samples with a LHC sampler and save to disk
+        # create list of samples with a LHC sampler and save to disk (*.csv)
         samples, pdf_list = latin_sampler(locator, size_city, random_variables)
         for building_name in (list_building_names):
             np.save(locator.get_calibration_samples(building_name), samples)
@@ -85,24 +81,22 @@ def sampling_main(locator, random_variables, target_parameters, list_building_na
             overwritten.loc[overwritten.Name == building_name, random_variables] = sample[:,1]
             bld_counter = bld_counter + 1
 
-        # for boolean_mask in (boolean_vars):
-        #     fazel1=overwritten.replace([0],'False')
-        #     overwritten[boolean_mask] = fazel1
-        #     overwritten[boolean_mask] = overwritten[boolean_mask].replace(1, 'True')
+        #   write to csv format
         overwritten.to_csv(locator.get_building_overrides())
 
-        # run cea demand
-
+        #   run cea demand
         demand_main.demand_calculation(locator, weather_path, gv)
+        #   prepare the inputs for feeding into the neural network
         urban_input_matrix, urban_taget_matrix=input_prepare_main(list_building_names, locator, target_parameters, gv)
-
+        #   drop half the inputs and targets to avoid overfitting and save RAM / Disk space
         urban_input_matrix, urban_taget_matrix=input_dropout(urban_input_matrix, urban_taget_matrix)
-
+        #   get the pathfor saving the files
         nn_inout_path = locator.get_nn_inout_folder()
+        #   save inputs with sequential naming
         file_path_inputs=os.path.join(nn_inout_path,"input%(i)s.csv" % locals())
         data_file_inputs = pd.DataFrame(urban_input_matrix)
         data_file_inputs.to_csv(file_path_inputs,header=False,index=False)
-
+        #   save inputs with sequential naming
         file_path_targets = os.path.join(nn_inout_path, "target%(i)s.csv" % locals())
         data_file_targets = pd.DataFrame(urban_taget_matrix)
         data_file_targets.to_csv(file_path_targets,header=False,index=False)
