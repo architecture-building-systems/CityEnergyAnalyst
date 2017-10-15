@@ -9,8 +9,9 @@ from sklearn.externals import joblib
 def range_collector(locator,counter):
     nn_inout_path = locator.get_nn_inout_folder()
     i=counter
-    file_path_inputs = os.path.join(nn_inout_path, "input%(i)s.csv" % locals())
-    file_path_targets = os.path.join(nn_inout_path, "target%(i)s.csv" % locals())
+    scaler_inout_path = locator.get_minmaxscaler_folder()
+    file_path_inputs = os.path.join(scaler_inout_path, "input%(i)s.csv" % locals())
+    file_path_targets = os.path.join(scaler_inout_path, "target%(i)s.csv" % locals())
     urban_input_matrix = np.asarray(pd.read_csv(file_path_inputs))
     urban_taget_matrix = np.asarray(pd.read_csv(file_path_targets))
 
@@ -49,7 +50,7 @@ def range_finder(locator):
         inputs_scaler_min[counter,:] = inputs_min
         targets_scaler_max[counter,:] = targets_max
         targets_scaler_min[counter,:] = targets_min
-    print(counter)
+        print(counter)
 
     nn_inout_path = locator.get_nn_inout_folder()
     file_path_inputs = os.path.join(nn_inout_path, "ranges_max.csv")

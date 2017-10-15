@@ -32,9 +32,9 @@ def neural_trainer_resume(inputs_x,targets_t,model,scalerX,scalerT,locator):
 
     #scaling and normalizing inputs
     #scalerX = MinMaxScaler(feature_range=(0, 1))
-    inputs_x=scalerX.fit_transform(inputs_x)
+    inputs_x=scalerX.transform(inputs_x)
     #scalerT = MinMaxScaler(feature_range=(0, 1))
-    targets_t=scalerT.fit_transform(targets_t)
+    targets_t=scalerT.transform(targets_t)
     #encoding_dim = int(np.ceil(inputs_x_cols/2)+np.ceil(inputs_x_cols * 0.1))
     #over_complete_dim =int(encoding_dim*2)
     #AE_input_dim=int(inputs_x_cols)

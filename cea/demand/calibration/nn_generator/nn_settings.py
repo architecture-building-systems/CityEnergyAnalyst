@@ -17,7 +17,7 @@ nn_delay=1
 #   neural net training properties
 nn_passes=20
 #   scaler random generation properties
-number_samples_scaler=5
+number_samples_scaler=200
 #   neural net random generation properties
 number_samples=15
 #   feature that are not float numbers (instead are classes) and should have Boolean properties

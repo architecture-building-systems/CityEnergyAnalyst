@@ -22,7 +22,8 @@ from sklearn.externals import joblib
 from cea.demand.calibration.nn_generator.nn_random_sampler import sampling_main
 from cea.demand.calibration.nn_generator.nn_trainer import neural_trainer, nn_input_collector
 from cea.demand.calibration.nn_generator.nn_trainer_resume import neural_trainer_resume, nn_model_collector
-from cea.demand.calibration.nn_generator.nn_settings import nn_passes, random_variables, target_parameters
+from cea.demand.calibration.nn_generator.nn_settings import number_samples_scaler, random_variables, target_parameters
+from cea.demand.calibration.nn_generator.nn_presampled_caller import presampled_collector
 from cea.demand.demand_main import properties_and_schedule
 
 def run_nn_pipeline(locator, random_variables, target_parameters, list_building_names, weather_path, gv, scalerX, scalerT):
@@ -36,25 +37,25 @@ def run_nn_pipeline(locator, random_variables, target_parameters, list_building_
     :param gv: global variables
     :return: -
     '''
-    #   create n random sample of the whole dataset of buildings. n is accessible from 'nn_settings.py'
-    sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, gv)
+
+
+    collect_count=0
     #   reads the n random files from the previous step and creat the input and targets for the neural net
-    urban_input_matrix, urban_taget_matrix = nn_input_collector(locator)
+    urban_input_matrix, urban_taget_matrix, collect_count = presampled_collector(locator,collect_count)
     #   train the neural net
     neural_trainer(urban_input_matrix, urban_taget_matrix, locator,scalerX,scalerT)
     #   do nn_passes additional training (nn_passes can be accessed from 'nn_settings.py')
-    for i in range(nn_passes):
+    while (collect_count<number_samples_scaler):
         #   fix a different seed number (for random generation) in each loop
-        np.random.seed(i)
-        #   create n random sample of the whole dataset of buildings. n is accessible from 'nn_settings.py'
-        sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, gv)
+        np.random.seed(collect_count)
         #   reads the n random files from the previous step and creat the input and targets for the neural net
-        urban_input_matrix, urban_taget_matrix = nn_input_collector(locator)
+        urban_input_matrix, urban_taget_matrix, collect_count = presampled_collector(locator,collect_count)
         #   reads the saved model and the normalizer
         model, scalerT, scalerX = nn_model_collector(locator)
         #   resume training of the neural net
         neural_trainer_resume(urban_input_matrix, urban_taget_matrix, model, scalerX, scalerT, locator)
-        print (i)
+
+        print (collect_count)
 
 def run_as_script():
     gv = cea.globalvar.GlobalVariables()
