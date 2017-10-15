@@ -32,7 +32,7 @@ import theano
 import multiprocessing
 
 
-def neural_trainer(inputs_x,targets_t,locator):
+def neural_trainer(inputs_x,targets_t,locator,scalerX,scalerT):
     '''
     This function executes the training if the NN
     :param inputs_x:
@@ -43,10 +43,9 @@ def neural_trainer(inputs_x,targets_t,locator):
 
     inputs_x_rows, inputs_x_cols = inputs_x.shape
     #scaling and normalizing inputs
-    scalerX = MinMaxScaler(feature_range=(0, 1))
-    inputs_x=scalerX.fit_transform(inputs_x)
-    scalerT = MinMaxScaler(feature_range=(0, 1))
-    targets_t=scalerT.fit_transform(targets_t)
+    inputs_x=scalerX.transform(inputs_x)
+    targets_t=scalerT.transform(targets_t)
+
     encoding_dim = int(np.ceil(inputs_x_cols/2)+np.ceil(inputs_x_cols * 0.1))
     over_complete_dim =int(encoding_dim*2)
     AE_input_dim=int(inputs_x_cols)
@@ -129,24 +128,15 @@ def nn_input_collector(locator):
 
 
 def run_as_script():
-    num_cpu_threads = multiprocessing.cpu_count()
     theano.config.openmp = True
-    OMP_NUM_THREADS = int(1)
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    #building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
-    #list_building_names = building_properties.list_building_names()
-    from cea.demand.calibration.nn_generator.nn_settings import number_samples
-    #urban_input_matrix, urban_taget_matrix=input_prepare_main(list_building_names, locator, target_parameters, gv)
-    #save_inputs=pd.DataFrame(urban_input_matrix)
-    #save_targets=pd.DataFrame(urban_taget_matrix)
-    #temp_file_inputs = r'C:\reference-case-open\baseline\outputs\surrogate_model\inputs_outputs\inputs.csv'
-    #save_inputs.to_csv(temp_file_inputs)
-    #temp_file_targets = r'C:\reference-case-open\baseline\outputs\surrogate_model\inputs_outputs\targets.csv'
-    #save_targets.to_csv(temp_file_targets)
     urban_input_matrix, urban_taget_matrix = nn_input_collector(locator)
-    neural_trainer(urban_input_matrix, urban_taget_matrix, locator)
+    scalerX_file, scalerT_file = locator.get_minmaxscalar_model()
+    scalerX = joblib.load(scalerX_file)
+    scalerT = joblib.load(scalerT_file)
+    neural_trainer(urban_input_matrix, urban_taget_matrix, locator,scalerX,scalerT)
 
 
 
