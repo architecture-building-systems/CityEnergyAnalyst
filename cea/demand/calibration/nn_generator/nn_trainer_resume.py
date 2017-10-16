@@ -91,6 +91,10 @@ def neural_trainer_resume(inputs_x,targets_t,model,scalerX,scalerT,locator):
     model.save(model_resume)  # creates a HDF5 file 'model_resume.h5'
     print("neural network model saved")
 
+    del inputs_x
+    del targets_t
+    del model
+
 
 def nn_model_collector(locator):
     # locate the saved neural network
