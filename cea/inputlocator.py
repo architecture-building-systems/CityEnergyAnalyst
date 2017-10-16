@@ -460,6 +460,9 @@ class InputLocator(object):
         """scenario/inputs/topography/terrain.tif"""
         return os.path.join(self.get_terrain_folder(), 'terrain.tif')
 
+    def get_input_network_folder(self, network):
+        return os.path.join(self.scenario_path, 'inputs', 'networks', network)
+
     def get_network_layout_edges_shapefile(self, network):
         """scenario/inputs/network/DH or DC/network-edges.shp"""
         return os.path.join(self.scenario_path, 'inputs', 'network', network, 'network-edges.shp')
@@ -467,6 +470,7 @@ class InputLocator(object):
     def get_network_layout_nodes_shapefile(self, network):
         """scenario/inputs/network/DH or DC/network-nodes.shp"""
         return os.path.join(self.scenario_path, 'inputs', 'network', network, 'network-nodes.shp')
+
 
     def get_network_layout_pipes_csv_file(self, network):
         """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv or DC_PipesData.csv
@@ -491,6 +495,17 @@ class InputLocator(object):
         """this gets the file that documents all of the radiance/default_materials"""
         return os.path.join(self.get_solar_radiation_folder(), 'materials.rad')
 
+    def get_street_network(self):
+        return os.path.join(self.scenario_path, 'inputs', 'networks', "streets.shp")
+
+    def get_connection_point(self):
+        return os.path.join(self.scenario_path, 'inputs', 'networks', "nodes_buildings.shp")
+
+    def get_connectivity_potential(self):
+        return os.path.join(self.scenario_path, 'inputs', 'networks', "potential_network.shp")
+
+    def get_minimum_spanning_tree(self):
+        return os.path.join(self.scenario_path, 'inputs', 'networks', "mst_network.shp")
     # OUTPUTS
 
     #SOLAR-RADIATION

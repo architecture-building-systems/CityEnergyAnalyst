@@ -19,8 +19,15 @@ class Configuration(object):
                     'CEA.DB': os.path.dirname(cea.databases.__file__)}
 
         self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
-        self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
         self._parser.read(self._list_configuration_files(scenario))
+
+        if not scenario:
+            self.scenario = self.default_scenario
+            # re-read configuration from default-scenario
+            defaults['CEA.SCENARIO'] = str(self.scenario)
+            self._parser = ConfigParser.SafeConfigParser(defaults=defaults)
+            self._parser.read(self._list_configuration_files(self.scenario))
+
         self.demand = DemandConfiguration(self._parser)
         self.solar = PhotovoltaicConfiguration(self._parser)
         self.radiation_daysim = RadiationDaysimConfiguration(self._parser)
@@ -40,9 +47,17 @@ class Configuration(object):
     def _list_configuration_files(self, scenario):
         """Return the list of configuration files to try and load for a given scenario. The list is given in order
         of importance, with items at the end of the files overriding files at the beginning of the list."""
+        default_config = os.path.join(os.path.dirname(__file__), 'default.config')
+        user_config = os.path.expanduser(r'~/cea.config')
+
+        # clone the default configuration file if the user configuration file (~/cea.config) doesn't exist yet
+        if not os.path.exists(user_config):
+            import shutil
+            shutil.copy(default_config, user_config)
+
         cascade = [
-            os.path.join(os.path.dirname(__file__), 'default.config'),
-            os.path.join(os.path.expanduser(r'~/cea.config')),
+            default_config,
+            user_config,
         ]
         if scenario:
             cascade.append(os.path.join(scenario, '..', 'project.config'))
@@ -78,8 +93,8 @@ class DemandConfiguration(object):
         return self._parser.get('demand', 'cooling-season-end')
 
     @property
-    def use_dynamic_infiltration(self):
-        return self._parser.getboolean('demand', 'use-dynamic-infiltration')
+    def use_dynamic_infiltration_calculation(self):
+        return self._parser.getboolean('demand', 'use-dynamic-infiltration-calculation')
 
 
 class PhotovoltaicConfiguration(object):

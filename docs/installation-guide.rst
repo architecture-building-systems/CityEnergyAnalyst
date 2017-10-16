@@ -23,10 +23,16 @@ To install the research version of CEA:
 #. open Anaconda prompt (terminal console) from the start menu.
 #. choose location where to store the repository: do ``cd Documents``
 #. clone repository: do ``git clone https://github.com/architecture-building-systems/CityEnergyAnalyst.git``
-#. in the Anaconda prompt navigate to the folder CityEnergyAnalyst wherever you cloned it. In this case do: ``cd Documents\CityEnergyAnalyst``
+#. in the Anaconda prompt navigate to the folder CityEnergyAnalyst wherever you cloned it. In this case do:
+   ``cd Documents\CityEnergyAnalyst``
 #. create a conda environment and activate it: do ``conda env create``, then do ``activate cea``
 #. install cea: do ``pip install .``
 #. install arcgis plug-in: do ``cea install-toolbox``
+  - this also installs the user configuration file (``cea.config``, located in your home folder)
+  - this also extracts the reference case (reference-case-open) to the temporary folder
+    (``%TEMP%\reference-case-open\baseline``) for test-driving the CEA
+#. edit the file ``%USERPROFILE%\cea.config`` (normally something like ``C:\Users\USERNAME\cea.config``) and
+   set the ``default-scenario`` property of your
 
 Installation CEA development environment
 ----------------------------------------
@@ -39,8 +45,8 @@ To install the development environment of CEA, perform the steps above, except, 
 Note: Location where to store the repository can be any -"Documents" is just an example.
 
 Note: If after the installation you experience an error concerning geopandas or fiona, i.e., ``ImportError: DLL load
- failed: The specified module could not be found.`` Try copying ``C:\Users\your_name\Anaconda2\envs\cea\proj.dll`` to
-``C:\Users\your_name\Anaconda2\envs\cea\Library\bin`` and CEA should run.
+ failed: The specified module could not be found.`` Try copying ``C:\Users\your_name\Anaconda2\envs\cea\proj.dll`` OR ``C:\Users\your_name\AppData\Local\conda\conda\envs\cea\proj.dll`` to
+``C:\Users\your_name\Anaconda2\envs\cea\Library\bin`` OR ``C:\Users\your_name\AppData\Local\conda\conda\envs\Library\bin``and CEA should run.
 
 Setting up PyCharm
 ..................
