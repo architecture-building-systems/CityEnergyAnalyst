@@ -259,7 +259,9 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df):
     b = mass_flow_substation_df.T
     b.drop(b.index[plant_index], inplace=True)
     ## compute the exact solution of Ax = b
-    mass_flow_edge = np.round(np.transpose(np.linalg.solve(A.values, b.values)), decimals=5)
+    solution = np.linalg.lstsq(A.values, b.values)[3] # fixme: which solution to read
+    round_solution = np.round(solution, decimals=5)
+    mass_flow_edge = np.transpose(round_solution)  # FIXME: find out why linalg.solve wouldn't work
 
     return mass_flow_edge
 
@@ -1341,7 +1343,7 @@ def get_thermal_network_from_shapefile(locator, network_type):
     list_pipes = edge_df.index.values
     list_nodes = sorted(set(edge_df['start node']).union(set(edge_df['end node'])),key=lambda x : int(x[4:])) # sort the list by node numbers
     edge_node_matrix = np.zeros((len(list_nodes), len(list_pipes)))
-    for j in range(len(list_pipes)):
+    for j in range(len(list_pipes)):  # TODO: find ways to accelerate
         for i in range(len(list_nodes)):
             if edge_df['end node'][j] == list_nodes[i]:
                 edge_node_matrix[i][j] = 1
@@ -1351,17 +1353,17 @@ def get_thermal_network_from_shapefile(locator, network_type):
 
     # An edge node matrix is generated as a first guess and then virtual substation mass flows are imposed to
     # calculate mass flows in each edge (mass_flow_guess).
-    substation_mass_flows_df = pd.DataFrame(data=np.zeros([1, len(edge_node_df.index)]), columns=edge_node_df.index)
+    node_mass_flows_df = pd.DataFrame(data=np.zeros([1, len(edge_node_df.index)]), columns=edge_node_df.index)
     total_flow = 0
     number_of_plants = sum(all_nodes_df['Type']=='PLANT')
     for node, row in all_nodes_df.iterrows():
         if row['Type'] == 'CONSUMER':
-            substation_mass_flows_df[node] = 1 # virtual consumer mass flow requirement
+            node_mass_flows_df[node] = 1 # virtual consumer mass flow requirement
             total_flow += 1
     for node, row in all_nodes_df.iterrows():
         if row['Type'] == 'PLANT':
-            substation_mass_flows_df[node] = - total_flow / number_of_plants  # virtual plant supply mass flow
-    mass_flow_guess = calc_mass_flow_edges(edge_node_df, substation_mass_flows_df, all_nodes_df)[0]
+            node_mass_flows_df[node] = - total_flow / number_of_plants  # virtual plant supply mass flow
+    mass_flow_guess = calc_mass_flow_edges(edge_node_df, node_mass_flows_df, all_nodes_df)[0]
 
     # The direction of flow is then corrected by inverting negative flows in mass_flow_guess.
     counter = 0
@@ -1373,7 +1375,7 @@ def get_thermal_network_from_shapefile(locator, network_type):
                 new_nodes = [edge_df['end node'][i], edge_df['start node'][i]]
                 edge_df['start node'][i] = new_nodes[0]
                 edge_df['end node'][i] = new_nodes[1]
-        mass_flow_guess = calc_mass_flow_edges(edge_node_df, substation_mass_flows_df, all_nodes_df)[0]
+        mass_flow_guess = calc_mass_flow_edges(edge_node_df, node_mass_flows_df, all_nodes_df)[0]
         counter += 1
 
     edge_node_df.to_csv(locator.get_optimization_network_edge_node_matrix_file(network_type))
@@ -1425,8 +1427,6 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     edge_shapefile_df['pipe length'] = 0
     edge_shapefile_df['start node'] = ''
     edge_shapefile_df['end node'] = ''
-    no_start_node = []
-    no_end_node = []
     for pipe, row in edge_shapefile_df.iterrows():
         # get the length of the pipe and add to dataframe
         edge_shapefile_df.loc[pipe, 'pipe length'] = row['geometry'].length
