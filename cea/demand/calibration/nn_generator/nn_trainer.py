@@ -102,10 +102,13 @@ def neural_trainer(inputs_x,targets_t,locator,scalerX,scalerT):
     model.save(model_resume)  # creates a HDF5 file 'model_resume.h5'
     print("neural network model saved")
     #   save resume-enabled normalizer
-    scalerX_file , scalerT_file=locator.get_minmaxscalar_model()
-    joblib.dump(scalerX, scalerX_file)
-    joblib.dump(scalerT, scalerT_file)
-    print("scalers saved")
+    # scalerX_file , scalerT_file=locator.get_minmaxscalar_model()
+    # joblib.dump(scalerX, scalerX_file)
+    # joblib.dump(scalerT, scalerT_file)
+    # print("scalers saved")
+    del inputs_x
+    del targets_t
+    del model
 
 
 def nn_input_collector(locator):
