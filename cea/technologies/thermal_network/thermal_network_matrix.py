@@ -1396,7 +1396,8 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     :rtype edge_df: DataFrame
 
     """
-
+    # set precision of coordinates
+    decimals = 6
     # create node dictionary with plant and consumer nodes
     node_shapefile_df.set_index("Name", inplace=True)
     node_shapefile_df = node_shapefile_df.astype('object')
@@ -1413,8 +1414,10 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
             node_shapefile_df.loc[node, 'consumer'] = node
         else:
             node_shapefile_df.loc[node, 'none'] = node
+        coord_node_round = (round(coord_node[0],decimals),round(coord_node[1],decimals))
+        node_dict[coord_node_round] = node
 
-        node_dict[coord_node] = node
+
 
     # create edge dictionary with pipe lengths and start and end nodes
     # complete node dictionary with missing nodes (i.e., joints)
@@ -1422,17 +1425,23 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     edge_shapefile_df['pipe length'] = 0
     edge_shapefile_df['start node'] = ''
     edge_shapefile_df['end node'] = ''
+    no_start_node = []
+    no_end_node = []
     for pipe, row in edge_shapefile_df.iterrows():
         # get the length of the pipe and add to dataframe
         edge_shapefile_df.loc[pipe, 'pipe length'] = row['geometry'].length
         # get the start and end notes and add to dataframe
         edge_coords = row['geometry'].coords
-        start_node = edge_coords[0]
-        end_node = edge_coords[1]
+        start_node = (round(edge_coords[0][0],decimals),round(edge_coords[0][1],decimals))
+        end_node = (round(edge_coords[1][0],decimals),round(edge_coords[1][1],decimals))
         if start_node in node_dict.keys():
             edge_shapefile_df.loc[pipe, 'start node'] = node_dict[start_node]
+        else:
+            print('The start node of ',pipe,'has no match in node_dict, check precision of the coordinates.' )
         if end_node in node_dict.keys():
             edge_shapefile_df.loc[pipe, 'end node'] = node_dict[end_node]
+        else:
+            print('The end node of ', pipe, 'has no match in node_dict, check precision of the coordinates.')
 
     # # If a consumer node is not connected to the network, find the closest node and connect them with a new edge
     # # this part of the code was developed for a case in which the node and edge shapefiles were not defined
@@ -1574,7 +1583,7 @@ def run_as_script(scenario_path=None):
     source = ['csv', 'shapefile'] # set to csv or shapefile
     set_diameter = True # this does a rule of max and mn flow to set a diameter. if false it takes the input diamters
 
-    thermal_network_main(locator, gv, network_type[0], source[1], set_diameter)
+    thermal_network_main(locator, gv, network_type[1], source[1], set_diameter)
     print ('test thermal_network_main() succeeded')
 
 if __name__ == '__main__':
