@@ -17,16 +17,11 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 from cea.demand.metamodel.nn_generator.nn_presampled_caller import presampled_collector
-from cea.demand.metamodel.nn_generator.nn_settings import number_sweeps, number_samples_scaler, random_variables, \
-    target_parameters
-from sklearn.externals import joblib
-
-import cea
-from cea.demand.demand_main import properties_and_schedule
+from cea.demand.metamodel.nn_generator.nn_settings import number_sweeps, number_samples_scaler, autoencoder
 from cea.demand.metamodel.nn_generator.nn_trainer_resume import neural_trainer_resume, nn_model_collector
 
 
-def run_nn_continue(locator, random_variables, target_parameters, list_building_names, weather_path, gv, scalerX, scalerT):
+def run_nn_continue(locator, autoencoder):
     '''
     this function continues a pipeline of tasks by calling a random sampler and a neural network trainer
     :param locator: points to the variables
@@ -48,19 +43,13 @@ def run_nn_continue(locator, random_variables, target_parameters, list_building_
             #   reads the saved model and the normalizer
             model, scalerT, scalerX = nn_model_collector(locator)
             #   resume training of the neural net
-            neural_trainer_resume(urban_input_matrix, urban_taget_matrix, model, scalerX, scalerT, locator)
+            neural_trainer_resume(urban_input_matrix, urban_taget_matrix, model, scalerX, scalerT, locator, autoencoder)
 
 def run_as_script():
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    weather_path = locator.get_default_weather()
-    building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
-    list_building_names = building_properties.list_building_names()
-    scalerX_file, scalerT_file = locator.get_minmaxscalar_model()
-    scalerX = joblib.load(scalerX_file)
-    scalerT = joblib.load(scalerT_file)
-    run_nn_continue(locator, random_variables, target_parameters, list_building_names, weather_path, gv, scalerX, scalerT)
+    import cea.config
+    config = cea.config.Configuration()
+    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
+    run_nn_continue(locator, autoencoder)
 
 if __name__ == '__main__':
     run_as_script()
