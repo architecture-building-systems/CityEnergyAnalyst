@@ -16,19 +16,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from cea.demand.calibration.latin_sampler import latin_sampler
-from cea.demand.demand_main import properties_and_schedule
-from cea.demand.calibration.bayesian_calibrator.calibration_sampling import apply_sample_parameters
-from cea.demand import demand_main
-import pickle
-import cea
-#import h5py
-import os
-import numpy as np
-import pandas as pd
-from cea.demand.metamodel.nn_generator import number_samples_scaler, random_variables,\
-    target_parameters, boolean_vars
-from cea.demand.metamodel.nn_generator import input_prepare_main
 # import h5py
 import os
 import pickle
@@ -41,8 +28,8 @@ from cea.demand import demand_main
 from cea.demand.calibration.bayesian_calibrator.calibration_sampling import apply_sample_parameters
 from cea.demand.calibration.latin_sampler import latin_sampler
 from cea.demand.demand_main import properties_and_schedule
-from cea.demand.metamodel.nn_generator import input_prepare_main
-from cea.demand.metamodel.nn_generator import number_samples_scaler, random_variables, \
+from cea.demand.metamodel.nn_generator.input_prepare import input_prepare_main
+from cea.demand.metamodel.nn_generator.nn_settings import number_samples_scaler, random_variables, \
     target_parameters, boolean_vars
 
 
@@ -66,38 +53,23 @@ def sampling_scaler(locator, random_variables, target_parameters, list_building_
         bld_counter=0
         # create list of samples with a LHC sampler and save to disk
         samples, pdf_list = latin_sampler(locator, size_city, random_variables)
-        for building_name in (list_building_names):
-            np.save(locator.get_calibration_samples(building_name), samples)
-            problem = {'variables': random_variables,
-                       'building_load': target_parameters, 'probabiltiy_vars': pdf_list}
-            pickle.dump(problem, file(locator.get_calibration_problem(building_name), 'w'))
-            sample = np.asarray(zip(random_variables, samples[bld_counter, :]))
-            apply_sample_parameters(locator, sample)
-            bld_counter = bld_counter + 1
-        # read the saved *.csv file and replace Boolean with logical (True/False)
-        overwritten = pd.read_csv(locator.get_building_overrides())
-        bld_counter = 0
-        for building_name in (list_building_names):
-            sample = np.asarray(zip(random_variables, samples[bld_counter, :]))
-            for boolean_mask in (boolean_vars):
-                indices=np.where(sample == boolean_mask)
+        samples = samples[0] # extract the non-normalized samples
 
-                if  sample[indices[0], 1] == '0.0':
-                    sample[indices[0], 1] = 'False'
-                else:
-                    sample[indices[0], 1] = 'True'
+        # create a file of overides with the samples
+        dictionary = dict(zip(random_variables, samples.transpose()))
+        overides_dataframe = pd.DataFrame(dictionary)
+        overides_dataframe['Name'] = list_building_names
 
-            overwritten.loc[overwritten.Name == building_name, random_variables] = sample[:,1]
-            bld_counter = bld_counter + 1
+        # replace the 1, 0 with True and False
+        for var in boolean_vars:
+            overides_dataframe[var].replace(1,"True", inplace=True)
+            overides_dataframe[var].replace(0, "False", inplace=True)
+            overides_dataframe[var].replace(0.0, "False", inplace=True)
 
-        # for boolean_mask in (boolean_vars):
-        #     fazel1=overwritten.replace([0],'False')
-        #     overwritten[boolean_mask] = fazel1
-        #     overwritten[boolean_mask] = overwritten[boolean_mask].replace(1, 'True')
-        overwritten.to_csv(locator.get_building_overrides())
+        # save file so the demand calculation can know about it.
+        overides_dataframe.to_csv(locator.get_building_overrides())
 
         # run cea demand
-
         demand_main.demand_calculation(locator, weather_path, gv)
         urban_input_matrix, urban_taget_matrix=input_prepare_main(list_building_names, locator, target_parameters, gv)
 
@@ -111,7 +83,6 @@ def sampling_scaler(locator, random_variables, target_parameters, list_building_
         data_file_targets.to_csv(file_path_targets,header=False,index=False)
 
     #return urban_input_matrix, urban_taget_matrix
-
 
 def run_as_script():
     gv = cea.globalvar.GlobalVariables()
