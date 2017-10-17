@@ -231,6 +231,5 @@ if __name__ == '__main__':
     weather_path = locator.get_default_weather()
     #  the selected buildings are the ones for which the individual radiation script is run for
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
-    #  For now, individual buildings will only run in single processing and not multi processing
     selected_buildings = ['B191', 'B003', 'B004', 'B005', 'B006', 'B021', 'B182', 'B191', 'B212', 'B216']
     main(locator=locator, weather_path=weather_path, selected_buildings=selected_buildings)
