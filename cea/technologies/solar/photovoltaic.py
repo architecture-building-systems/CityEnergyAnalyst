@@ -96,6 +96,10 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
         sensors_metadata_cat.to_csv(locator.PV_metadata_results(building_name=building_name), index=True, float_format='%.2f')  # print selected metadata of the selected sensors
 
         print('done - time elapsed: %.2f seconds' % (time.clock() - t0))
+    else:  # This loop is activated when a building has not sufficient solar potential
+        Final = pd.DataFrame(
+            {'E_PV_gen_kWh': 0, 'Area_PV_m2': 0, 'radiation_kWh': 0}, index=range(8760))
+        Final.to_csv(locator.PV_results(building_name= building_name), index=True, float_format='%.2f')
     return
 
 
@@ -727,6 +731,7 @@ def test_photovoltaic():
         longitude = shp.crs['lon_0']
         latitude = shp.crs['lat_0']
 
+    list_buildings_names = ['B026']
     for building in list_buildings_names:
         radiation_path = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
