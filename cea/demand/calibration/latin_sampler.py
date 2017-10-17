@@ -67,19 +67,23 @@ def latin_sampler(locator, num_samples, variables):
             samples[:, i] = uniform(loc=min, scale=max).ppf(samples[:, i])
 
         #sampling into lhs normalized
-        arguments = [min, max, mu,stdv]
-        min_max_scaler = preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
-        arguments_norm = min_max_scaler.fit_transform(arguments)
-        min = arguments_norm[0]
-        max = arguments_norm[1]
-        mu = arguments_norm[2]
-        stdv = arguments_norm[3]
         if distribution == 'triangular':
+            arguments = [min, max, mu]
+            min_max_scaler = preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
+            arguments_norm = min_max_scaler.fit_transform(arguments)
+            min = arguments_norm[0]
+            max = arguments_norm[1]
+            mu = arguments_norm[2]
             loc = min
             scale = max - min
             c = (mu - min) / (max - min)
             samples_norm[:, i] = triang(loc=loc, c=c, scale=scale).ppf(samples_norm[:, i])
         elif distribution == 'normal':
+            arguments = [min, max, mu, stdv]
+            min_max_scaler = preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
+            arguments_norm = min_max_scaler.fit_transform(arguments)
+            mu = arguments_norm[2]
+            stdv = arguments_norm[3]
             samples_norm[:, i] = norm(loc=mu, scale=stdv).ppf(samples_norm[:, i])
         elif distribution == 'boolean': # converts a uniform (0-1) into True/False
             samples_norm[:, i] = ma.make_mask(np.rint(uniform(loc=min, scale=max).ppf(samples_norm[:, i])))

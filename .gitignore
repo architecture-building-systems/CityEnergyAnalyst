@@ -96,8 +96,8 @@ cea/databases/uncertainty/uncertainty_distributions.xls
 =======
 >>>>>>> refs/remotes/origin/master
 cea/demand/calibration/clustering/
-cea/demand/calibration/nn_generator/
+cea/demand/metamodel/nn_generator/
 *.orig
 >>>>>>> refs/remotes/origin/master
-!/cea/demand/calibration/nn_generator/
+!/cea/demand/metamodel/nn_generator/
 !/cea/databases/uncertainty/uncertainty_distributions.xls
