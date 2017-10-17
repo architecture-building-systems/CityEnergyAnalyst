@@ -23,15 +23,16 @@ dependencies:
 - freetype=2.7=vc9_1
 - freexl=1.0.2=vc9_2
 - functools32=3.2.3.2=py27_1
+- gdal
 - geopandas=0.2.1=py27_4
 - geos=3.5.1=vc9_1
 - hdf4=4.2.12=vc9_0
 - hdf5=1.8.18=vc9_0
 - icu=58.1=vc9_1
 - jpeg=9b=vc9_0
-- kealib=1.4.7=vc9_2
+- kealib>=1.4.7
 - krb5=1.14.2=vc9_0
-- libgdal=2.1.4=vc9_2
+- libgdal>=2.1.4
 - libiconv=1.14=vc9_4
 - libnetcdf=4.4.1.1=vc9_5
 - libpng=1.6.28=vc9_0
@@ -110,6 +111,7 @@ dependencies:
   - jupyter-core==4.3.0
   - lxml==3.8.0
   - markupsafe==1.0
+  - mock
   - nbformat==4.3.0
   - networkx==1.11
   - pkginfo==1.4.1
@@ -117,6 +119,7 @@ dependencies:
   - pycollada==0.5
   - pygments==2.2.0
   - pyliburo==0.1a12
+  - pymc3
   - pymf==0.1.9
   - pyshp==1.2.11
   - requests==2.18.3

@@ -9,7 +9,8 @@ import pandas as pd
 
 import cea
 import cea.inputlocator
-import multiprocessing as mp
+import cea.config
+import multiprocessing
 
 MAX_ANALYSIS_FIELDS = 4
 
@@ -22,7 +23,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-def graphs_demand(locator, analysis_fields, gv):
+
+def graphs_demand(locator, analysis_fields):
     """
     algorithm to print graphs in PDF concerning the dynamics of each and all buildings
 
@@ -45,10 +47,10 @@ def graphs_demand(locator, analysis_fields, gv):
     num_buildings = len(building_names)
 
     print('Storing results in: %s' % locator.get_demand_plots_folder())
-
-    if gv.multiprocessing and mp.cpu_count() > 1:
-        pool = mp.Pool()
-        gv.log("Using %i CPU's" % mp.cpu_count())
+    config = cea.config.Configuration(locator.scenario_path)
+    if config.multiprocessing and multiprocessing.cpu_count() > 1:
+        pool = multiprocessing.Pool()
+        print("Using %i CPU's" % multiprocessing.cpu_count())
         joblist = []
         for name in building_names:
             job = pool.apply_async(create_demand_graph_for_building,
@@ -57,15 +59,15 @@ def graphs_demand(locator, analysis_fields, gv):
             joblist.append(job)
         for i, job in enumerate(joblist):
             job.get(60)
-            gv.log('Building No. %(bno)i completed out of %(btot)i: %(bname)s', bno=i + 1, btot=num_buildings,
-                   bname=building_names[i])
+            print('Building No. %(bno)i completed out of %(btot)i: %(bname)s' % {'bno': i + 1, 'btot': num_buildings,
+                                                                                 'bname': building_names[i]})
         pool.close()
     else:
         for i, name in enumerate(building_names):
             create_demand_graph_for_building(analysis_fields, area_df, color_palette, fields_date, locator, name,
                                              total_demand)
-            gv.log('Building No. %(bno)i completed out of %(btot)i: %(bname)s', bno=i+1, btot=num_buildings,
-                   bname=building_names[i])
+            print('Building No. %(bno)i completed out of %(btot)i: %(bname)s' % {'bno': i + 1, 'btot': num_buildings,
+                                                                                 'bname': building_names[i]})
 
 
 def create_demand_graph_for_building(analysis_fields, area_df, color_palette, fields_date, locator, name, total_demand):
@@ -111,14 +113,12 @@ def run_as_script(scenario_path=None, analysis_fields=["Ealf_kWh", "Qhsf_kWh", "
     # HINTS FOR ARCGIS INTERFACE:
     # the user should see all the column names of the total_demands.csv
     # the user can select a maximum of 4 of those column names to graph (analysis fields!
-    import cea.globalvar
-    gv = cea.globalvar.GlobalVariables()
-
+    config = cea.config.Configuration()
     if scenario_path is None:
-        scenario_path = gv.scenario_reference
+        scenario_path = config.default_scenario
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
 
-    graphs_demand(locator=locator, analysis_fields=analysis_fields, gv=gv)
+    graphs_demand(locator=locator, analysis_fields=analysis_fields)
     print('done.')
 
 

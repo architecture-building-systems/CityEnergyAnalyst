@@ -195,8 +195,8 @@ def calc_Eauxf_ww(Qww, Qwwf, Qwwf0, Imax, deltaP_des, b, qV_des):
 
 def calc_Eauxf_fw(freshw, nf, gv):
     Eaux_fw = np.zeros(8760)
-    # for domesticFreshwater
-    # the power of the pump in Watts Assuming the best performance of the pump of 0.6 and an accumulation tank
+    # for domestic freshwater
+    # the power of the pump in Watts assuming the best performance of the pump of 0.6 and an accumulation tank
     for day in range(1, 366):
         balance = 0
         t0 = (day - 1) * 24

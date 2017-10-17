@@ -55,7 +55,7 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
     :param simulation_path: a (temporary) path for simulating a scenario that has been patched with a sample
                             NOTE: When simulating in parallel, special care must be taken that each process has
                             a unique `simulation_path` value. For the Euler cluster, this is solved by ensuring the
-                            simulation is done with `gv.multiprocessing = False` and setting the `simulation_path` to
+                            simulation is done with `multiprocessing = False` and setting the `simulation_path` to
                             the special folder `$TMPDIR` that is set to a local scratch folder for each job by the
                             job scheduler of the Euler cluster. Other setups will need to adopt an equivalent strategy.
     :type simulation_path: str
@@ -110,8 +110,7 @@ def simulate_demand_sample(locator, weather_path, output_parameters):
     gv = cea.globalvar.GlobalVariables()
     gv.demand_writer = cea.demand.demand_writers.MonthlyDemandWriter(gv)
     # force simulation to be sequential
-    gv.multiprocessing = False
-    totals, time_series = demand_main.demand_calculation(locator, weather_path, gv)
+    totals, time_series = demand_main.demand_calculation(locator, weather_path, gv, multiprocessing=False)
     return totals[output_parameters], time_series
 
 def simulate_demand_batch(sample_index, batch_size, samples_folder, scenario, simulation_folder, weather,
@@ -188,7 +187,7 @@ def main():
     """
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--sample-index', help='Zero-based index into the samples list so simulate', type=int)
+    parser.add_argument('-i', '--sample-index', help='Zero-based index into the samples list to simulate', type=int)
     parser.add_argument('-n', '--number-of-simulations', type=int, default=1,
                         help='number of simulations to perform, default 1')
     parser.add_argument('-s', '--scenario', help='Path to the scenario folder (required)', required=True)
@@ -198,8 +197,7 @@ def main():
                         help='folder to copy the reference case to for simulation')
     parser.add_argument('-w', '--weather', help='Path to the weather file (omit for default)')
     parser.add_argument('-o', '--output-parameters', help='output parameters to use', nargs='+',
-                        default=['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'QEf_MWhyr', 'QHf0_kW', 'QCf0_kW',
-                                 'Ef0_kW'])
+                        default=['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'QEf_MWhyr', 'QHf0_kW', 'QCf0_kW', 'Ef0_kW'])
     args = parser.parse_args()
 
     # save output parameters

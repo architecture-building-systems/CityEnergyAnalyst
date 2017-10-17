@@ -55,7 +55,8 @@ def calc_pareto_Qhp(locator, total_demand, gv):
                 hpPrim += Qgas * 3600E-6 * gv.NG_BACKUPBOILER_TO_OIL_STD # [MJ-oil-eq]
 
             # Investment costs
-            hpCosts += boilers.calc_Cinv_boiler(Qnom, Qannual, gv)
+            Capex_a_hp, Opex_fixed_hp = boilers.calc_Cinv_boiler(Qnom, Qannual, gv, locator)
+            hpCosts += (Capex_a_hp + Opex_fixed_hp)
     else:
         hpCosts = hpCO2 = hpPrim = 0
     return hpCosts, hpCO2, hpPrim

@@ -27,7 +27,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def demand_calculation(locator, weather_path, gv, use_dynamic_infiltration_calculation=False):
+def demand_calculation(locator, weather_path, gv, use_dynamic_infiltration_calculation=False, multiprocessing=False):
     """
     Algorithm to calculate the hourly demand of energy services in buildings
     using the integrated model of [Fonseca2015]_.
@@ -46,6 +46,15 @@ def demand_calculation(locator, weather_path, gv, use_dynamic_infiltration_calcu
     :param gv: global variables
     :type gv: cea.globalvar.GlobalVariables
 
+    :param use_dynamic_infiltration_calculation: Set this to ``True`` if the (slower) dynamic infiltration
+        calculation method (:py:func:`cea.demand.ventilation_air_flows_detailed.calc_air_flows`) should be used instead
+        of the standard.
+    :type use_dynamic_infiltration_calculation: bool
+
+    :param multiprocessing: Set this to ``True`` if the :py:mod:`multiprocessing` module should be used to speed up
+        calculations by making use of multiple cores.
+    :type multiprocessing: bool
+
     :returns: None
     :rtype: NoneType
 
@@ -59,7 +68,7 @@ def demand_calculation(locator, weather_path, gv, use_dynamic_infiltration_calcu
     t0 = time.clock()
 
     # weather model
-    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
+    weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
 
@@ -70,7 +79,7 @@ def demand_calculation(locator, weather_path, gv, use_dynamic_infiltration_calcu
         list_building_names = building_properties.list_building_names()
 
     # demand
-    if gv.multiprocessing and mp.cpu_count() > 1:
+    if multiprocessing and mp.cpu_count() > 1:
         thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, locator, list_building_names,
                                                     schedules_dict, weather_data, use_dynamic_infiltration_calculation)
     else:
@@ -127,30 +136,34 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
     pool.close()
 
 
-def run_as_script(scenario_path=None, weather_path=None, use_dynamic_infiltration_calculation=False):
-    gv = cea.globalvar.GlobalVariables()
-    if scenario_path is None:
-        scenario_path = gv.scenario_reference
+def run_as_script(scenario_path=None, weather_path=None, use_dynamic_infiltration_calculation=False,
+                  multiprocessing=True):
+    assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     # for the interface, the user should pick a file out of of those in ...DB/Weather/...
     if weather_path is None:
         weather_path = locator.get_default_weather()
 
-    gv.log('Running demand calculation for scenario %(scenario)s', scenario=scenario_path)
-    gv.log('Running demand calculation with weather file %(weather)s', weather=weather_path)
-    demand_calculation(locator=locator, weather_path=weather_path, gv=gv,
-                       use_dynamic_infiltration_calculation=use_dynamic_infiltration_calculation)
+    print('Running demand calculation for scenario %(scenario_path)s' % locals())
+    print('Running demand calculation with weather file %(weather_path)s' % locals())
+    print('Running demand calculation with dynamic infiltration=%(use_dynamic_infiltration_calculation)s' % locals())
+    print('Running demand calculation with multiprocessing=%(use_dynamic_infiltration_calculation)s' % locals())
+
+    demand_calculation(locator=locator, weather_path=weather_path, gv=cea.globalvar.GlobalVariables(),
+                       use_dynamic_infiltration_calculation=use_dynamic_infiltration_calculation,
+                       multiprocessing=multiprocessing)
 
 
 if __name__ == '__main__':
-    import argparse
+    import cea.config
+    config = cea.config.Configuration()
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    parser.add_argument('-w', '--weather', help='Path to the weather file')
-    parser.add_argument('--use-dynamic-infiltration-calculation', action='store_true',
-                        help='Use the dynamic infiltration calculation instead of default')
-    args = parser.parse_args()
+    try:
+        # add configuration file to default scenario
+        config.save()
+    except:
+        print('failed to save configuration file to default scenario.')
 
-    run_as_script(scenario_path=args.scenario, weather_path=args.weather,
-                  use_dynamic_infiltration_calculation=args.use_dynamic_infiltration_calculation)
+    run_as_script(scenario_path=config.scenario, weather_path=config.weather,
+                  use_dynamic_infiltration_calculation=config.demand.use_dynamic_infiltration_calculation,
+                  multiprocessing=config.multiprocessing)

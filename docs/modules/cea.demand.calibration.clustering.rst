@@ -7,7 +7,7 @@ Submodules
 cea\.demand\.calibration\.clustering\.clustering\_main module
 -------------------------------------------------------------
 
-.. automodule:: cea.demand.calibration.clustering.clustering_main
+.. automodule:: cea.demand.calibration.clustering.clustering_sax
     :members:
     :undoc-members:
     :show-inheritance:
