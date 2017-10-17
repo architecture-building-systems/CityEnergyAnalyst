@@ -1,3 +1,4 @@
+import os
 import cea
 import numpy as np
 import pandas as pd
@@ -11,7 +12,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 def get_nn_estimations(model, scalerT, scalerX, urban_input_matrix, urban_taget_matrix, locator):
     input_NN_x=urban_input_matrix
     target_NN_t=urban_taget_matrix
-    inputs_x = scalerX.fit_transform(input_NN_x)
+    inputs_x = scalerX.transform(input_NN_x)
 
     model_estimates = model.predict(inputs_x)
     filtered_predict = scalerT.inverse_transform(model_estimates)
@@ -47,8 +48,17 @@ def get_nn_estimations(model, scalerT, scalerX, urban_input_matrix, urban_taget_
     filtered_predict.to_csv(model_estimates, index=False, header=False, float_format='%.3f', decimal='.')
 
 
+def test_sample_collector(locator):
+    test_sample_path = locator.get_nn_inout_folder()
+    file_path_inputs = os.path.join(test_sample_path, "input_test.csv")
+    file_path_targets = os.path.join(test_sample_path, "target_test.csv")
+    urban_input_matrix = np.asarray(pd.read_csv(file_path_inputs))
+    urban_taget_matrix = np.asarray(pd.read_csv(file_path_targets))
+
+    return urban_input_matrix, urban_taget_matrix
+
 def test_nn_performance(locator, random_variables, target_parameters, list_building_names, weather_path, gv):
-    urban_input_matrix, urban_taget_matrix=sampling_single(locator, random_variables, target_parameters, list_building_names, weather_path, gv)
+    urban_input_matrix, urban_taget_matrix = test_sample_collector(locator)
     model, scalerT, scalerX = nn_model_collector(locator)
     get_nn_estimations(model, scalerT, scalerX, urban_input_matrix, urban_taget_matrix, locator)
 
