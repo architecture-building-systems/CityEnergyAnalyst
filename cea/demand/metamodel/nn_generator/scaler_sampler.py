@@ -18,14 +18,12 @@ __status__ = "Production"
 
 # import h5py
 import os
-import pickle
+
 
 import numpy as np
 import pandas as pd
 
-import cea
 from cea.demand import demand_main
-from cea.demand.calibration.bayesian_calibrator.calibration_sampling import apply_sample_parameters
 from cea.demand.calibration.latin_sampler import latin_sampler
 from cea.demand.demand_main import properties_and_schedule
 from cea.demand.metamodel.nn_generator.input_prepare import input_prepare_main
@@ -33,7 +31,7 @@ from cea.demand.metamodel.nn_generator.nn_settings import number_samples_scaler,
     target_parameters, boolean_vars
 
 
-def sampling_scaler(locator, random_variables, target_parameters, list_building_names, weather_path, gv):
+def sampling_scaler(locator, random_variables, target_parameters, list_building_names, weather_path, gv, multiprocessing):
     '''
     this function creates a number of random samples for the entire district (city)
     :param locator: points to the variables
@@ -47,13 +45,13 @@ def sampling_scaler(locator, random_variables, target_parameters, list_building_
 
     #   get number of buildings
     size_city = np.shape(list_building_names)
-    size_city=size_city[0]
+    size_city = size_city[0]
     #   create random samples of the entire district
-    for i in range(number_samples_scaler): #the parameter "number_samples" is accessible from 'nn_settings.py'
-        bld_counter=0
+    for i in range(number_samples_scaler):  # the parameter "number_samples" is accessible from 'nn_settings.py'
+        bld_counter = 0
         # create list of samples with a LHC sampler and save to disk
         samples, pdf_list = latin_sampler(locator, size_city, random_variables)
-        samples = samples[0] # extract the non-normalized samples
+        samples = samples[0]  # extract the non-normalized samples
 
         # create a file of overides with the samples
         dictionary = dict(zip(random_variables, samples.transpose()))
@@ -62,7 +60,7 @@ def sampling_scaler(locator, random_variables, target_parameters, list_building_
 
         # replace the 1, 0 with True and False
         for var in boolean_vars:
-            overides_dataframe[var].replace(1,"True", inplace=True)
+            overides_dataframe[var].replace(1, "True", inplace=True)
             overides_dataframe[var].replace(0, "False", inplace=True)
             overides_dataframe[var].replace(0.0, "False", inplace=True)
 
@@ -70,29 +68,34 @@ def sampling_scaler(locator, random_variables, target_parameters, list_building_
         overides_dataframe.to_csv(locator.get_building_overrides())
 
         # run cea demand
-        demand_main.demand_calculation(locator, weather_path, gv)
-        urban_input_matrix, urban_taget_matrix=input_prepare_main(list_building_names, locator, target_parameters, gv)
+        demand_main.demand_calculation(locator, weather_path, gv, multiprocessing=multiprocessing)
+        urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters, gv)
 
         scaler_inout_path = locator.get_minmaxscaler_folder()
-        file_path_inputs=os.path.join(scaler_inout_path,"input%(i)s.csv" % locals())
+        file_path_inputs = os.path.join(scaler_inout_path, "input%(i)s.csv" % locals())
         data_file_inputs = pd.DataFrame(urban_input_matrix)
-        data_file_inputs.to_csv(file_path_inputs,header=False,index=False)
+        data_file_inputs.to_csv(file_path_inputs, header=False, index=False)
 
         file_path_targets = os.path.join(scaler_inout_path, "target%(i)s.csv" % locals())
         data_file_targets = pd.DataFrame(urban_taget_matrix)
-        data_file_targets.to_csv(file_path_targets,header=False,index=False)
+        data_file_targets.to_csv(file_path_targets, header=False, index=False)
 
-    #return urban_input_matrix, urban_taget_matrix
+        # return urban_input_matrix, urban_taget_matrix
+
 
 def run_as_script():
+    import cea.globalvar
+    import cea.inputlocator
+    import cea.config
+    config = cea.config.Configuration()
+
     gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    weather_path = locator.get_default_weather()
+    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
     list_building_names = building_properties.list_building_names()
-    sampling_scaler(locator, random_variables, target_parameters, list_building_names, weather_path, gv)
 
+    sampling_scaler(locator, random_variables, target_parameters, list_building_names, config.weather, gv,
+                    multiprocessing=config.multiprocessing)
 
 
 if __name__ == '__main__':

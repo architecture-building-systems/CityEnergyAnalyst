@@ -2,11 +2,17 @@ import os
 import cea
 import numpy as np
 import pandas as pd
-from cea.demand.metamodel.nn_generator import number_samples_scaler
+from cea.demand.metamodel.nn_generator.nn_settings import number_samples_scaler
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.externals import joblib
 
 def range_collector(locator,counter):
+    '''
+    This function finds the right file and sends it back to the range_finder function.
+    :param locator:
+    :param counter:
+    :return:
+    '''
     nn_inout_path = locator.get_nn_inout_folder()
     i=counter
     scaler_inout_path = locator.get_minmaxscaler_folder()
@@ -25,6 +31,12 @@ def range_collector(locator,counter):
 
 
 def range_finder(locator):
+    '''
+    This function collects the randomly sampled inputs and targets and finds the maximum and minimum value
+    for each colum of the inputs and targets.
+    :param locator:
+    :return:
+    '''
     counter=0
     inputs_max, targets_max, inputs_min, targets_min = range_collector(locator, counter)
     columns_input_max=inputs_max.shape
@@ -71,9 +83,7 @@ def range_finder(locator):
 
     # scaling and normalizing inputs
     scalerX = MinMaxScaler(feature_range=(0, 1))
-    inputs_x = scalerX.fit_transform(xscaler_array)
     scalerT = MinMaxScaler(feature_range=(0, 1))
-    targets_t = scalerT.fit_transform(tscaler_array)
 
     scalerX_file, scalerT_file = locator.get_minmaxscalar_model()
     joblib.dump(scalerX, scalerX_file)
@@ -81,11 +91,11 @@ def range_finder(locator):
     print("scalers saved")
 
 def run_as_script():
-    from cea import globalvar
-    from cea import inputlocator
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    import cea.config
+    import cea.inputlocator
+    config = cea.config.Configuration()
+
+    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
     range_finder(locator)
 
 if __name__ == '__main__':
