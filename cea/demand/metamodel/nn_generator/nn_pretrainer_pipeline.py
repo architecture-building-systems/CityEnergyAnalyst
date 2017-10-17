@@ -17,7 +17,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 from cea.demand.metamodel.nn_generator.nn_presampled_caller import presampled_collector
-from cea.demand.metamodel.nn_generator.nn_settings import number_samples_scaler, random_variables, number_sweeps
+from cea.demand.metamodel.nn_generator.nn_settings import number_samples_scaler, number_sweeps
 from cea.demand.metamodel.nn_generator.nn_trainer import neural_trainer
 from sklearn.externals import joblib
 

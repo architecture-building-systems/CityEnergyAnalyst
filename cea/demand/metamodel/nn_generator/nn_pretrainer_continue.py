@@ -16,8 +16,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from cea.demand.calibration.nn_generator.nn_presampled_caller import presampled_collector
-from cea.demand.calibration.nn_generator.nn_settings import number_sweeps, number_samples_scaler, random_variables, \
+from cea.demand.metamodel.nn_generator.nn_presampled_caller import presampled_collector
+from cea.demand.metamodel.nn_generator.nn_settings import number_sweeps, number_samples_scaler, random_variables, \
     target_parameters
 from sklearn.externals import joblib
 
