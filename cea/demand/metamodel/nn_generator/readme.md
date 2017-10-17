@@ -3,6 +3,8 @@ Prerequisites:
 to run the neural net you will need a minimum of 100 GB of hardisk available
 for every 100 samples of a city of 230 buildings. i.e., 1GB/sample.
 
+Install theano, and meke sure to include: conda install m2w64-toolchain
+
 The radiation file should be already generated.
 
 To run do:
@@ -13,7 +15,7 @@ To run do:
 4. Now there are two posibilities for starting the training:
 4.1. the first is to generate x number of samples (100 in this example)
 and then train the network (these samples will be constant in all epocs).
-    - run nn_pretrainer_pipelie.py
+    - run nn_pretrainer_pipeline.py
 4.2. the second is to randomly generate a smaller number of samples (max 10)
 and train the NN (these 10 samples will be updated in each epoc).
     - run random_pipeline.py
