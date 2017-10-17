@@ -67,7 +67,7 @@ def neural_trainer(inputs_x, targets_t, locator, scalerX, scalerT, autoencoder):
     validation_split = 0.5
     e_stop_limit = 10
 
-    # multi-layer perceptron
+    # multi-layer perceptron: here we start the training for the first time
     model = Sequential()
 
     model.add(Dense(hidden_units_L1, input_dim=encoded_x_cols, activation='relu'))  # logistic layer
@@ -122,10 +122,9 @@ def nn_input_collector(locator):
 
 
 def run_as_script():
-    theano.config.openmp = True
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    import cea.config
+    config = cea.config.Configuration()
+    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
     urban_input_matrix, urban_taget_matrix = nn_input_collector(locator)
     scalerX_file, scalerT_file = locator.get_minmaxscalar_model()
     scalerX = joblib.load(scalerX_file)
