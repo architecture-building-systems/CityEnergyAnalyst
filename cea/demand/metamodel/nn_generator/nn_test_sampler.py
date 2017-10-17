@@ -21,7 +21,7 @@ import pickle
 import cea
 import numpy as np
 import pandas as pd
-from cea.demand.metamodel.nn_generator.nn_settings import number_samples, random_variables,\
+from cea.demand.metamodel.nn_generator.nn_settings import random_variables,\
     target_parameters, boolean_vars
 from cea.demand.metamodel.nn_generator.input_prepare import input_prepare_main
 
