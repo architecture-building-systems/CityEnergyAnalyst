@@ -17,9 +17,9 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 import numpy as np
-from cea.demand.calibration.nn_generator.nn_random_sampler import sampling_main
-from cea.demand.calibration.nn_generator.nn_settings import nn_passes, random_variables, target_parameters
-from cea.demand.calibration.nn_generator.nn_trainer import neural_trainer, nn_input_collector
+from cea.demand.metamodel.nn_generator.nn_random_sampler import sampling_main
+from cea.demand.metamodel.nn_generator.nn_settings import nn_passes, random_variables, target_parameters, autoencoder
+from cea.demand.metamodel.nn_generator.nn_trainer import neural_trainer, nn_input_collector
 from sklearn.externals import joblib
 
 import cea
@@ -27,7 +27,8 @@ from cea.demand.demand_main import properties_and_schedule
 from cea.demand.metamodel.nn_generator.nn_trainer_resume import neural_trainer_resume, nn_model_collector
 
 
-def run_nn_pipeline(locator, random_variables, target_parameters, list_building_names, weather_path, gv, scalerX, scalerT):
+def run_nn_pipeline(locator, random_variables, target_parameters, list_building_names, weather_path, gv, scalerX,
+                    scalerT, multiprocessing):
     '''
     this function enables a pipeline of tasks by calling a random sampler and a neural network trainer
     :param locator: points to the variables
@@ -39,36 +40,43 @@ def run_nn_pipeline(locator, random_variables, target_parameters, list_building_
     :return: -
     '''
     #   create n random sample of the whole dataset of buildings. n is accessible from 'nn_settings.py'
-    sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, gv)
+    sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, gv,
+                  multiprocessing=multiprocessing)
     #   reads the n random files from the previous step and creat the input and targets for the neural net
     urban_input_matrix, urban_taget_matrix = nn_input_collector(locator)
     #   train the neural net
-    neural_trainer(urban_input_matrix, urban_taget_matrix, locator,scalerX,scalerT)
+    neural_trainer(urban_input_matrix, urban_taget_matrix, locator, scalerX, scalerT, autoencoder)
     #   do nn_passes additional training (nn_passes can be accessed from 'nn_settings.py')
     for i in range(nn_passes):
         #   fix a different seed number (for random generation) in each loop
         np.random.seed(i)
         #   create n random sample of the whole dataset of buildings. n is accessible from 'nn_settings.py'
-        sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, gv)
+        sampling_main(locator, random_variables, target_parameters, list_building_names, weather_path, gv,
+                      multiprocessing=multiprocessing)
         #   reads the n random files from the previous step and creat the input and targets for the neural net
         urban_input_matrix, urban_taget_matrix = nn_input_collector(locator)
         #   reads the saved model and the normalizer
         model, scalerT, scalerX = nn_model_collector(locator)
         #   resume training of the neural net
-        neural_trainer_resume(urban_input_matrix, urban_taget_matrix, model, scalerX, scalerT, locator)
-        print (i)
+        neural_trainer_resume(urban_input_matrix, urban_taget_matrix, model, scalerX, scalerT, locator, autoencoder)
+        print ("%d random sample passes of the city have been completed" %i)
+
 
 def run_as_script():
+    import cea.config
+    config = cea.config.Configuration()
     gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    weather_path = locator.get_default_weather()
+
+    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
+
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
     list_building_names = building_properties.list_building_names()
     scalerX_file, scalerT_file = locator.get_minmaxscalar_model()
     scalerX = joblib.load(scalerX_file)
     scalerT = joblib.load(scalerT_file)
-    run_nn_pipeline(locator, random_variables, target_parameters, list_building_names, weather_path, gv, scalerX, scalerT)
+    run_nn_pipeline(locator, random_variables, target_parameters, list_building_names, config.weather, gv, scalerX,
+                    scalerT, multiprocessing=config.multiprocessing)
+
 
 if __name__ == '__main__':
     run_as_script()
