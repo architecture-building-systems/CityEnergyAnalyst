@@ -539,7 +539,7 @@ def test_PVT():
         longitude = shp.crs['lon_0']
         latitude = shp.crs['lat_0']
 
-    list_buildings_names = ['B026']
+    # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name= building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
