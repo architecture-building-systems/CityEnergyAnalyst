@@ -17,7 +17,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 from cea.demand.metamodel.nn_generator.nn_presampled_caller import presampled_collector
-from cea.demand.metamodel.nn_generator.nn_settings import number_samples_scaler, number_sweeps
+from cea.demand.metamodel.nn_generator.nn_settings import number_samples_scaler, number_sweeps, autoencoder
 from cea.demand.metamodel.nn_generator.nn_trainer import neural_trainer
 from sklearn.externals import joblib
 
@@ -41,7 +41,7 @@ def run_nn_pipeline(locator, scalerX, scalerT):
         #   reads the n random files from the previous step and creat the input and targets for the neural net
         urban_input_matrix, urban_taget_matrix, collect_count = presampled_collector(locator, collect_count)
         #   train the neural net
-        neural_trainer(urban_input_matrix, urban_taget_matrix, locator, scalerX, scalerT)
+        neural_trainer(urban_input_matrix, urban_taget_matrix, locator, scalerX, scalerT, autoencoder)
         #   do nn_passes additional training (nn_passes can be accessed from 'nn_settings.py')
         while (collect_count < number_samples_scaler):
             #   fix a different seed number (for random generation) in each loop
@@ -51,7 +51,7 @@ def run_nn_pipeline(locator, scalerX, scalerT):
             #   reads the saved model and the normalizer
             model, scalerT, scalerX = nn_model_collector(locator)
             #   resume training of the neural net
-            neural_trainer_resume(urban_input_matrix, urban_taget_matrix, model, scalerX, scalerT, locator)
+            neural_trainer_resume(urban_input_matrix, urban_taget_matrix, model, scalerX, scalerT, locator, autoencoder)
 
 
 def run_as_script():
