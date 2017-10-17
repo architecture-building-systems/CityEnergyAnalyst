@@ -1,7 +1,8 @@
 import os
-
+import multiprocessing as mp
 import numpy as np
 import pandas as pd
+from cea.demand.metamodel.nn_generator import input_matrix
 from cea.demand.metamodel.nn_generator.nn_trainer_resume import nn_model_collector
 
 
@@ -33,6 +34,23 @@ def test_sample_collector(locator):
 
     return urban_input_matrix
 
+def input_estimate_prepare_multi_processing(building_name, gv, locator):
+    '''
+    this function gathers the final inputs and targets
+    :param building_name: the intended building name from the list of buildings
+    :param gv: global variables
+    :param locator: points to the variables
+    :param target_parameters: a list containing the name of desirable outputs(can be accessed from 'nn_settings.py')
+    :return: array of final hourly input and target matrices for a single building (NN_input_ready, NN_target_ready)
+    '''
+
+    #   collect inputs from the input reader function
+    raw_nn_inputs_D, raw_nn_inputs_S = get_cea_inputs(locator, building_name, gv)
+    #   pass the inputs and targets for delay incorporation
+    NN_input_ready = prep_NN_delay(raw_nn_inputs_D, raw_nn_inputs_S, raw_nn_targets, nn_delay)
+
+    return NN_input_ready, NN_target_ready
+
 def input_prepare_estimate(list_building_names, locator, target_parameters, gv):
     '''
     this function prepares the inputs and targets for the neural net by splitting the jobs between different processors
@@ -51,8 +69,8 @@ def input_prepare_estimate(list_building_names, locator, target_parameters, gv):
     joblist = []
     #   create one job for each data preparation task i.e. each building
     for building_name in list_building_names:
-        job = pool.apply_async(input_matrix.input_prepare_multi_processing,
-                               [building_name, gv, locator, target_parameters])
+        job = pool.apply_async(input_estimate_prepare_multi_processing,
+                               [building_name, gv, locator])
         joblist.append(job)
     #   run the input/target preperation for all buildings in the list (here called jobs)
     for i, job in enumerate(joblist):
@@ -71,7 +89,7 @@ def input_prepare_estimate(list_building_names, locator, target_parameters, gv):
     #   close the multiprocessing
     pool.close()
 
-    return urban_input_matrix, urban_taget_matrix
+    return urban_input_matrix
 
 
 def test_nn_performance(locator):
