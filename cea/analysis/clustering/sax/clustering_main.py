@@ -13,9 +13,9 @@ import os
 import time
 
 import pandas as pd
-from cea.analysis.clustering.sax import SAX
 
-from cea.analysis.clustering.sax_optimization import sax_optimization
+from cea.analysis.clustering.sax import SAX
+from cea.analysis.clustering.sax.sax_optimization import sax_optimization
 from cea.analysis.mcda import mcda_cluster_main
 from cea.plots.clusters_plot import plot_day
 from cea.plots.pareto_frontier_plot import frontier_2D_3OB
@@ -50,7 +50,7 @@ def clustering_sax(locator, data, word_size, alphabet_size, gv):
     """
     t0 = time.clock()
 
-    # calculate sax for timesieries data
+    # calculate clustering for timesieries data
     s = SAX(word_size, alphabet_size)
     sax = [s.to_letter_representation(x)[0] for x in data]
 
@@ -60,19 +60,19 @@ def clustering_sax(locator, data, word_size, alphabet_size, gv):
     print 'the days of the year evaluated are:', len(data)
     list_of_timeseries_transposed = [list(x) for x in zip(*data)]
     dict_data = dict((group, x) for group, x in zip(hours_of_day, list_of_timeseries_transposed))
-    dict_data.update({'sax': sax, 'day': days_of_year})
+    dict_data.update({'clustering': sax, 'day': days_of_year})
 
     # save all names and days of occurrence of each profile
     df = pd.DataFrame(dict_data)
-    df[['sax', 'day']].to_csv(locator.get_calibration_clusters_names())
+    df[['clustering', 'day']].to_csv(locator.get_calibration_clusters_names())
 
     # save individual results to disk # create group by pattern
-    grouped_sax = df.groupby('sax')
+    grouped_sax = df.groupby('clustering')
     means = pd.DataFrame()
     counter = 0
     for name, group in grouped_sax:
-        # total of time series and every sax
-        result = group.T.drop(['day','sax'], axis=0)
+        # total of time series and every clustering
+        result = group.T.drop(['day','clustering'], axis=0)
         result.to_csv(locator.get_calibration_cluster(name))
 
         # calculate mean
