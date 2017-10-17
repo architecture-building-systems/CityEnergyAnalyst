@@ -99,3 +99,4 @@ cea/demand/calibration/clustering/
 cea/demand/calibration/nn_generator/
 *.orig
 >>>>>>> refs/remotes/origin/master
+!/cea/demand/calibration/nn_generator/
