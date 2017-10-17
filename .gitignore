@@ -100,3 +100,4 @@ cea/demand/calibration/nn_generator/
 *.orig
 >>>>>>> refs/remotes/origin/master
 !/cea/demand/calibration/nn_generator/
+!/cea/databases/uncertainty/uncertainty_distributions.xls
