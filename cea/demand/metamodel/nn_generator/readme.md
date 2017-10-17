@@ -3,7 +3,10 @@ Prerequisites:
 to run the neural net you will need a minimum of 100 GB of hardisk available
 for every 100 samples of a city of 230 buildings. i.e., 1GB/sample.
 
-Install theano, and meke sure to include: conda install m2w64-toolchain
+Install theano like this:
+conda install numpy scipy mkl-service libpython m2w64-toolchain nose nose-parameterized sphinx pydot-ng
+
+ and meke sure to include: conda install m2w64-toolchain
 
 The radiation file should be already generated.
 
