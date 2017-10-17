@@ -7,12 +7,15 @@ photovoltaic
 
 
 from __future__ import division
+
+from math import *
+
 import numpy as np
 import pandas as pd
-from math import *
+
+from cea.technologies.solar.solar_collector import optimal_angle_and_tilt, calc_groups, calc_incident_angle_beam
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
-from cea.technologies.solar_collector import optimal_angle_and_tilt, calc_groups, Calc_incidenteangleB
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -94,7 +97,7 @@ def Calc_pv_generation(type_panel, hourly_radiation, Number_groups, number_point
         teta_z = radians(teta_z) #azimuth of panel
 
         #calculate angles necesary
-        teta_vector = np.vectorize(Calc_incidenteangleB)(g_vector, lat, ha_vector, tilt, teta_z)
+        teta_vector = np.vectorize(calc_incident_angle_beam)(g_vector, lat, ha_vector, tilt, teta_z)
         teta_ed, teta_eG  = Calc_diffuseground_comp(tilt)
 
         results = np.vectorize(Calc_Sm_PV)(weather_data.drybulb_C,radiation.I_sol, radiation.I_direct, radiation.I_diffuse, tilt,
@@ -223,6 +226,118 @@ def calc_properties_PV(type_PVpanel):
         L = 0.0002 # glazing tickness
 
     return eff_nom,NOCT,Bref,a0,a1,a2,a3,a4,L
+
+# optimal angle and tilt
+
+def optimal_angle_and_tilt(observers_all, latitude, worst_sh, worst_Az, transmittivity,
+                           grid_side, module_lenght, angle_north, Min_Isol, Max_Isol):
+    # FIXME [NOTE]: this function is reserved for the calculation in photovoltaic_arcgis.py
+    def Calc_optimal_angle(teta_z, latitude, transmissivity):
+        if transmissivity <= 0.15:
+            gKt = 0.977
+        elif 0.15 < transmissivity <= 0.7:
+            gKt = 1.237 - 1.361 * transmissivity
+        else:
+            gKt = 0.273
+        Tad = 0.98
+        Tar = 0.97
+        Pg = 0.2  # ground reflectance of 0.2
+        l = radians(latitude)
+        a = radians(teta_z)  # this is surface azimuth
+        b = atan((cos(a) * tan(l)) * (1 / (1 + ((Tad * gKt - Tar * Pg) / (2 * (1 - gKt))))))
+        return degrees(b)
+
+    def Calc_optimal_spacing(Sh, Az, tilt_angle, module_lenght):
+        h = module_lenght * sin(radians(tilt_angle))
+        D1 = h / tan(radians(Sh))
+        D = max(D1 * cos(radians(180 - Az)), D1 * cos(radians(Az - 180)))
+        return D
+
+    def Calc_categoriesroof(teta_z, B, GB, Max_Isol):
+        if -122.5 < teta_z <= -67:
+            CATteta_z = 1
+        elif -67 < teta_z <= -22.5:
+            CATteta_z = 3
+        elif -22.5 < teta_z <= 22.5:
+            CATteta_z = 5
+        elif 22.5 < teta_z <= 67:
+            CATteta_z = 4
+        elif 67 <= teta_z <= 122.5:
+            CATteta_z = 2
+
+        if 0 < B <= 5:
+            CATB = 1  # flat roof
+        elif 5 < B <= 15:
+            CATB = 2  # tilted 25 degrees
+        elif 15 < B <= 25:
+            CATB = 3  # tilted 25 degrees
+        elif 25 < B <= 40:
+            CATB = 4  # tilted 25 degrees
+        elif 40 < B <= 60:
+            CATB = 5  # tilted 25 degrees
+        elif B > 60:
+            CATB = 6  # tilted 25 degrees
+
+        GB_percent = GB / Max_Isol
+        if 0 < GB_percent <= 0.25:
+            CATGB = 1  # flat roof
+        elif 0.25 < GB_percent <= 0.50:
+            CATGB = 2
+        elif 0.50 < GB_percent <= 0.75:
+            CATGB = 3
+        elif 0.75 < GB_percent <= 0.90:
+            CATGB = 4
+        elif 0.90 < GB_percent <= 1:
+            CATGB = 5
+
+        return CATB, CATGB, CATteta_z
+
+    # calculate values for flat roofs Slope < 5 degrees.
+    optimal_angle_flat = Calc_optimal_angle(0, latitude, transmittivity)
+    optimal_spacing_flat = Calc_optimal_spacing(worst_sh, worst_Az, optimal_angle_flat, module_lenght)
+    arcpy.AddField_management(observers_all, "array_s", "DOUBLE")
+    arcpy.AddField_management(observers_all, "area_netpv", "DOUBLE")
+    arcpy.AddField_management(observers_all, "CATB", "SHORT")
+    arcpy.AddField_management(observers_all, "CATGB", "SHORT")
+    arcpy.AddField_management(observers_all, "CATteta_z", "SHORT")
+    fields = ('aspect', 'slope', 'GB', "array_s", "area_netpv", "CATB", "CATGB", "CATteta_z")
+    # go inside the database and perform the changes
+    with arcpy.da.UpdateCursor(observers_all, fields) as cursor:
+        for row in cursor:
+            aspect = row[0]
+            slope = row[1]
+            if slope > 5:  # no t a flat roof.
+                B = slope
+                array_s = 0
+                if 180 <= aspect < 360:  # convert the aspect of arcgis to azimuth
+                    teta_z = aspect - 180
+                elif 0 < aspect < 180:
+                    teta_z = aspect - 180  # negative in the east band
+                elif aspect == 0 or aspect == 360:
+                    teta_z = 180
+                if -angle_north <= teta_z <= angle_north and row[2] > Min_Isol:
+                    row[0] = teta_z
+                    row[1] = B
+                    row[3] = array_s
+                    row[4] = (grid_side - array_s) / cos(radians(abs(B))) * grid_side
+                    row[5], row[6], row[7] = Calc_categoriesroof(teta_z, B, row[2], Max_Isol)
+                    cursor.updateRow(row)
+                else:
+                    cursor.deleteRow()
+            else:
+                teta_z = 0  # flat surface, all panels will be oriented towards south # optimal angle in degrees
+                B = optimal_angle_flat
+                array_s = optimal_spacing_flat
+                if row[2] > Min_Isol:
+                    row[0] = teta_z
+                    row[1] = B
+                    row[3] = array_s
+                    row[4] = (grid_side - array_s) / cos(radians(abs(B))) * grid_side
+                    row[5], row[6], row[7] = Calc_categoriesroof(teta_z, B, row[2], Max_Isol)
+                    cursor.updateRow(row)
+                else:
+                    cursor.deleteRow()
+
 
 
 """

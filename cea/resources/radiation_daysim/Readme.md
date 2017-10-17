@@ -14,3 +14,6 @@ to run radiation_main.py:
 
 4.) known issues: If the error message is: 'rtrace_dc: fatal - ("path"): truncated octree. It might be that daysim has
  problems with the scenario path. either because it is to long, includes twice the same folder name or spaces.
+ On the other hand, the script will fail if the number of sensors is too high. modify the settings in this case
+
+5.) Run daysim_main. the settings are stored in the config file.

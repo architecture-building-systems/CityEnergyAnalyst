@@ -5,10 +5,11 @@ Operation for decentralized buildings
 
 """
 from __future__ import division
-import os
-import pandas as pd
-import numpy as np
+
 import time
+
+import numpy as np
+import pandas as pd
 
 import cea.technologies.boilers as Boiler
 import cea.technologies.cogeneration as FC
@@ -202,7 +203,7 @@ def decentralized_main(locator, building_names, gv):
         InvCosts[0][0] = InvCaBoiler
         InvCosts[1][0] = InvCaBoiler
         
-        InvCosts[2][0] = FC.calc_Cinv_FC(Qnom, gv)
+        InvCosts[2][0] = FC.calc_Cinv_FC(Qnom, gv, locator)
         
         for i in range(10):
             result[3+i][0] = i/10
@@ -213,7 +214,7 @@ def decentralized_main(locator, building_names, gv):
             InvCaBoiler = Boiler.calc_Cinv_boiler(QnomBoiler, QannualB_GHP[i][0], gv)
             InvCosts[3+i][0] = InvCaBoiler
             
-            InvCaGHP = HP.GHP_InvCost( Wel_GHP[i][0] , gv)
+            InvCaGHP = HP.calc_Cinv_GHP(Wel_GHP[i][0], gv)
             InvCosts[3+i][0] += InvCaGHP * gv.EURO_TO_CHF
         
 

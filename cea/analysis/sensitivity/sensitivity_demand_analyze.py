@@ -45,7 +45,7 @@ def analyze_sensitivity(samples_path, temporal_scale):
     """
     print("analyzing sensitivity in %(samples_path)s for temporal_scale=%(temporal_scale)s" % locals())
     # do checks
-    with open(os.path.join(args.samples_folder, 'problem.pickle'), 'r') as f:
+    with open(os.path.join(samples_path, 'problem.pickle'), 'r') as f:
         problem = pickle.load(f)
     method = problem['method']
     assert method in ('sobol', 'morris'), "Invalid analysis method: %s" % method
@@ -111,6 +111,8 @@ def analyze_sensitivity(samples_path, temporal_scale):
                 building_results = [result[analysis_variable] for result in analysis_results]
                 pd.DataFrame(building_results, columns=problem['names']).to_excel(writer, worksheet_name)
             writer.save()
+
+    print 'Sensitivity analysis results saved to %s' % folder
 
 def sobol_analyze_function(problem, _, Y):
     """

@@ -91,4 +91,11 @@ setup/cea_version.txt
 
 docs/*.html
 cea/surrogate/dummy_file.py
+<<<<<<< HEAD
 cea/databases/uncertainty/uncertainty_distributions.xls
+=======
+>>>>>>> refs/remotes/origin/master
+cea/demand/calibration/clustering/
+cea/demand/calibration/nn_generator/
+*.orig
+>>>>>>> refs/remotes/origin/master

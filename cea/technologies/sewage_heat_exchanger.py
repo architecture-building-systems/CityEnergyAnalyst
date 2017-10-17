@@ -57,7 +57,6 @@ def calc_sewage_heat_exchanger(locator, Length_HEX_available, gv):
     pd.DataFrame( { "Qsw_kW" : Q_source, "ts_C" : t_source, "tout_sw_C" : t_out, "tin_sw_C" : twaste_zone,
                     "tout_HP_C" : tout_e, "tin_HP_C" : tin_e}).to_csv( SW_gen, index=False, float_format='%.3f')
 
-    print "done!"
 
 
 # Calc Sewage heat
