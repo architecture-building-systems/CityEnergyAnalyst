@@ -17,9 +17,9 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 import numpy as np
-from cea.demand.calibration.nn_generator.nn_random_sampler import sampling_main
+from cea.demand.metamodel.nn_generator.nn_random_sampler import sampling_main
 from cea.demand.calibration.nn_generator.nn_settings import nn_passes, random_variables, target_parameters
-from cea.demand.calibration.nn_generator.nn_trainer import nn_input_collector
+from cea.demand.metamodel.nn_generator.nn_trainer import nn_input_collector
 
 import cea
 from cea.demand.demand_main import properties_and_schedule

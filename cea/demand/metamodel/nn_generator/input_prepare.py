@@ -5,11 +5,8 @@
     (2) stacks the results into a single matrix
 """
 from __future__ import division
-
 import multiprocessing as mp
-
 import numpy as np
-
 import cea.inputlocator
 from cea.demand.demand_main import properties_and_schedule
 from cea.demand.metamodel.nn_generator import input_matrix
