@@ -1,6 +1,6 @@
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.externals import joblib
-from cea.demand.calibration.nn_generator.nn_settings import target_parameters
+from cea.demand.metamodel.nn_generator import target_parameters
 import numpy as np
 import pandas as pd
 from keras.layers import Input, Dense
@@ -12,11 +12,11 @@ from keras.models import Sequential
 from keras.models import load_model
 from keras.callbacks import EarlyStopping
 import cea
-from cea.demand.calibration.nn_generator.input_prepare import input_prepare_main
+from cea.demand.metamodel.nn_generator import input_prepare_main
 from cea.demand.demand_main import properties_and_schedule
 import theano
 import multiprocessing
-from cea.demand.calibration.nn_generator.nn_trainer import nn_input_collector
+from cea.demand.metamodel.nn_generator import nn_input_collector
 
 
 def neural_trainer_resume(inputs_x,targets_t,model,scalerX,scalerT,locator):

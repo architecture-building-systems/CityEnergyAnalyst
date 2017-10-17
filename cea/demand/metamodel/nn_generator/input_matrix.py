@@ -17,7 +17,7 @@ from cea.technologies import controllers
 from cea.utilities import epwreader
 from cea.demand.sensible_loads import calc_I_sol
 import numpy as np
-from cea.demand.calibration.nn_generator.nn_settings import nn_delay, climatic_variables
+from cea.demand.metamodel.nn_generator import nn_delay, climatic_variables
 
 __author__ = "Jimeno A. Fonseca","Fazel Khayatian"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
