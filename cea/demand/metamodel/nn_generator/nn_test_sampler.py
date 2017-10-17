@@ -19,14 +19,11 @@ from cea.demand.calibration.bayesian_calibrator.calibration_sampling import appl
 from cea.demand import demand_main
 import pickle
 import cea
-import json
-#import h5py
-import os
 import numpy as np
 import pandas as pd
-from cea.demand.metamodel.nn_generator import number_samples, random_variables,\
+from cea.demand.metamodel.nn_generator.nn_settings import number_samples, random_variables,\
     target_parameters, boolean_vars
-from cea.demand.metamodel.nn_generator import input_prepare_main
+from cea.demand.metamodel.nn_generator.input_prepare import input_prepare_main
 
 def sampling_single(locator, random_variables, target_parameters, list_building_names, weather_path, gv):
     size_city = np.shape(list_building_names)
@@ -66,18 +63,6 @@ def sampling_single(locator, random_variables, target_parameters, list_building_
     demand_main.demand_calculation(locator, weather_path, gv)
     #   prepare the inputs for feeding into the neural network
     urban_input_matrix, urban_taget_matrix = input_prepare_main(list_building_names, locator, target_parameters, gv)
-    #   drop half the inputs and targets to avoid overfitting and save RAM / Disk space
-    urban_input_matrix, urban_taget_matrix = input_dropout(urban_input_matrix, urban_taget_matrix)
-    #   get the pathfor saving the files
-    nn_inout_path = locator.get_nn_inout_folder()
-    #   save inputs with sequential naming
-    file_path_inputs = os.path.join(nn_inout_path, "input%(i)s.csv" % locals())
-    data_file_inputs = pd.DataFrame(urban_input_matrix)
-    data_file_inputs.to_csv(file_path_inputs, header=False, index=False)
-    #   save inputs with sequential naming
-    file_path_targets = os.path.join(nn_inout_path, "target%(i)s.csv" % locals())
-    data_file_targets = pd.DataFrame(urban_taget_matrix)
-    data_file_targets.to_csv(file_path_targets, header=False, index=False)
 
     return urban_input_matrix, urban_taget_matrix
 

@@ -12,9 +12,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
-from sklearn.preprocessing import MinMaxScaler
+
 from sklearn.externals import joblib
-from cea.demand.metamodel.nn_generator import target_parameters
 import numpy as np
 import pandas as pd
 from keras.layers import Input, Dense
@@ -25,11 +24,9 @@ import os
 from keras.models import Sequential
 from keras.callbacks import EarlyStopping
 import cea
-from cea.demand.metamodel.nn_generator import input_prepare_main
-from cea.demand.demand_main import properties_and_schedule
-from cea.demand.metamodel.nn_generator import number_samples
+from cea.demand.metamodel.nn_generator.nn_settings import number_samples
 import theano
-import multiprocessing
+
 
 
 def neural_trainer(inputs_x,targets_t,locator,scalerX,scalerT):
@@ -101,11 +98,7 @@ def neural_trainer(inputs_x,targets_t,locator,scalerX,scalerT):
     model_resume=locator.get_neural_network_resume()
     model.save(model_resume)  # creates a HDF5 file 'model_resume.h5'
     print("neural network model saved")
-    #   save resume-enabled normalizer
-    # scalerX_file , scalerT_file=locator.get_minmaxscalar_model()
-    # joblib.dump(scalerX, scalerX_file)
-    # joblib.dump(scalerT, scalerT_file)
-    # print("scalers saved")
+
     del inputs_x
     del targets_t
     del model
