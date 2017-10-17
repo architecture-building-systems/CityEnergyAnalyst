@@ -107,21 +107,16 @@ class SolarFeatures(object):
         A_PVT_m2 = np.zeros(8760)
         A_SC_m2 = np.zeros(8760)
         for name in building_names:
-            PV_path = locator.get_potentials_solar_folder() + '\\' + name + '_PV.csv'
-            if os.path.exists(PV_path):
-                building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
-                building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PVT.csv'))
-                building_SC = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC.csv'))
-                E_PV_gen_kWh = E_PV_gen_kWh + building_PV['E_PV_gen_kWh']
-                E_PVT_gen_kWh = E_PVT_gen_kWh + building_PVT['E_PVT_gen_kWh']
-                Q_PVT_gen_kWh = Q_PVT_gen_kWh + building_PVT['Q_PVT_gen_kWh']
-                Q_SC_gen_kWh = Q_SC_gen_kWh + building_SC['Q_SC_gen_kWh']
-                A_PV_m2 = A_PV_m2 + building_PV['Area_PV_m2']
-                A_PVT_m2 = A_PVT_m2 + building_PVT['Area_PVT_m2']
-                A_SC_m2 = A_SC_m2 + building_SC['Area_SC_m2']
-            else:
-                print ('not sufficient potential for building ' + name)
-
+            building_PV = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PV.csv'))
+            building_PVT = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_PVT.csv'))
+            building_SC = pd.read_csv(os.path.join(locator.get_potentials_solar_folder(), name + '_SC.csv'))
+            E_PV_gen_kWh = E_PV_gen_kWh + building_PV['E_PV_gen_kWh']
+            E_PVT_gen_kWh = E_PVT_gen_kWh + building_PVT['E_PVT_gen_kWh']
+            Q_PVT_gen_kWh = Q_PVT_gen_kWh + building_PVT['Q_PVT_gen_kWh']
+            Q_SC_gen_kWh = Q_SC_gen_kWh + building_SC['Q_SC_gen_kWh']
+            A_PV_m2 = A_PV_m2 + building_PV['Area_PV_m2']
+            A_PVT_m2 = A_PVT_m2 + building_PVT['Area_PVT_m2']
+            A_SC_m2 = A_SC_m2 + building_SC['Area_SC_m2']
 
         self.Peak_PV_Wh = E_PV_gen_kWh.values.max() * 1000
         self.A_PV_m2 = A_PV_m2.values.max()
