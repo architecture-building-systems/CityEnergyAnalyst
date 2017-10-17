@@ -5,16 +5,14 @@
     (2) stacks the results into a single matrix
 """
 from __future__ import division
-import numpy as np
-import pandas as pd
-from cea.demand.demand_main import properties_and_schedule
-from cea.demand.calibration.nn_generator import input_matrix
 
-from cea.demand.calibration.nn_generator.input_matrix import get_cea_inputs
-from cea.demand.calibration.nn_generator.nn_settings import nn_delay
-import cea.inputlocator
 import multiprocessing as mp
-import os
+
+import numpy as np
+
+import cea.inputlocator
+from cea.demand.demand_main import properties_and_schedule
+from cea.demand.metamodel.nn_generator import input_matrix
 
 __author__ = "Fazel Khayatian"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"

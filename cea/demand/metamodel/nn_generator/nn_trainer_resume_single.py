@@ -1,10 +1,10 @@
+from cea.demand.calibration.nn_generator.nn_settings import random_variables, target_parameters
+from cea.demand.calibration.nn_generator.nn_trainer import nn_input_collector
+
 import cea
-import numpy as np
-from cea.demand.calibration.nn_generator.nn_random_sampler import sampling_main
-from cea.demand.calibration.nn_generator.nn_trainer import neural_trainer, nn_input_collector
-from cea.demand.calibration.nn_generator.nn_trainer_resume import neural_trainer_resume, nn_model_collector
-from cea.demand.calibration.nn_generator.nn_settings import nn_passes, random_variables, target_parameters
 from cea.demand.demand_main import properties_and_schedule
+from cea.demand.metamodel.nn_generator.nn_trainer_resume import neural_trainer_resume, nn_model_collector
+
 
 def run_nn_resume_single(locator, random_variables, target_parameters, list_building_names, weather_path, gv):
 

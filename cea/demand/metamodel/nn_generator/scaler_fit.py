@@ -2,7 +2,7 @@ import os
 import cea
 import numpy as np
 import pandas as pd
-from cea.demand.calibration.nn_generator.nn_settings import number_samples_scaler
+from cea.demand.metamodel.nn_generator import number_samples_scaler
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.externals import joblib
 

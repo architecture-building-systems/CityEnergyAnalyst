@@ -24,9 +24,9 @@ import json
 import os
 import numpy as np
 import pandas as pd
-from cea.demand.calibration.nn_generator.nn_settings import number_samples, random_variables,\
+from cea.demand.metamodel.nn_generator import number_samples, random_variables,\
     target_parameters, boolean_vars
-from cea.demand.calibration.nn_generator.input_prepare import input_prepare_main
+from cea.demand.metamodel.nn_generator import input_prepare_main
 
 def sampling_single(locator, random_variables, target_parameters, list_building_names, weather_path, gv):
     size_city = np.shape(list_building_names)

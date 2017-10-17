@@ -13,15 +13,15 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 #   data preperation properties
-nn_delay=1
+nn_delay=1 #recommended is 1
 #   neural net training properties
-nn_passes=20
+nn_passes=1 #recommended is 20
 #   scaler random generation properties
-number_samples_scaler=200
+number_samples_scaler=1 #recommended is 200 but it is a function of the number of features.
 #   neural net random generation properties
-number_samples=20
+number_samples=1 #recommended is 10, it is a function of the ram we have, in this case each sample requires 1GB of ram.
 #   neural net random generation properties
-number_sweeps=20
+number_sweeps=1 #recommended is 10,
 #   feature that are not float numbers (instead are classes) and should have Boolean properties
 boolean_vars = ['ECONOMIZER','WIN_VENT','MECH_VENT','HEAT_REC','NIGHT_FLSH']
 #   features selected from the weather data file

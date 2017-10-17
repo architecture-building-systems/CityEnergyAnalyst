@@ -15,8 +15,8 @@ __status__ = "Production"
 import os
 import numpy as np
 import pandas as pd
-from cea.demand.calibration.nn_generator.nn_random_sampler import input_dropout
-from cea.demand.calibration.nn_generator.nn_settings import number_samples
+from cea.demand.metamodel.nn_generator import input_dropout
+from cea.demand.metamodel.nn_generator import number_samples
 
 def presampled_collector(locator,collect_count):
     nn_presample_path = locator.get_minmaxscaler_folder()

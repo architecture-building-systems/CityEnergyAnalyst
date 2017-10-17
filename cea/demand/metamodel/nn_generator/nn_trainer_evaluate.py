@@ -1,13 +1,15 @@
 import os
-import cea
+from math import sqrt
+
 import numpy as np
 import pandas as pd
-from math import sqrt
-from cea.demand.calibration.nn_generator.nn_test_sampler import sampling_single
-from cea.demand.calibration.nn_generator.nn_trainer_resume import nn_model_collector
 from cea.demand.calibration.nn_generator.nn_settings import random_variables, target_parameters
-from cea.demand.demand_main import properties_and_schedule
+from cea.demand.calibration.nn_generator.nn_trainer_resume import nn_model_collector
 from sklearn.metrics import mean_squared_error, mean_absolute_error
+
+import cea
+from cea.demand.demand_main import properties_and_schedule
+
 
 def get_nn_estimations(model, scalerT, scalerX, urban_input_matrix, urban_taget_matrix, locator):
     input_NN_x=urban_input_matrix
