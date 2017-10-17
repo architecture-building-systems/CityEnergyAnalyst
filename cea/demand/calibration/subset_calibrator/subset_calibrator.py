@@ -1,19 +1,18 @@
-from cea.demand.calibration.latin_sampler import latin_sampler
-from cea.demand.calibration.settings import subset_generations
-from cea.demand.calibration.settings import subset_threshold
-from math import sqrt
-from sklearn.metrics import mean_squared_error
-import cea.inputlocator as inputlocator
-from pyDOE import lhs
-import cea
 import os
-import cea.globalvar
-from keras.models import model_from_json
-from sklearn.preprocessing import MinMaxScaler
-import pandas as pd
+from math import sqrt
+
 import numpy as np
+import pandas as pd
+from keras.models import model_from_json
+from pyDOE import lhs
 from scipy.stats.distributions import uniform
+from sklearn.metrics import mean_squared_error
 from sklearn.mixture import GaussianMixture
+from sklearn.preprocessing import MinMaxScaler
+
+import cea
+import cea.globalvar
+import cea.inputlocator as inputlocator
 
 __author__ = ""
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -90,7 +89,7 @@ def ss_loop(design, lhs_samples, NN_input_ready_ht,scalerX,perceptron_ht,scalerT
 
 def ss_calibrator(building_name):
 
-    from cea.demand.calibration.k_means_partitioner import partitioner
+    from cea.analysis.clustering.kmeans.k_means_partitioner import partitioner
     list_median, cluster_labels = partitioner(building_name)
     intended_parameters = ['people', 'Eaf', 'Elf', 'Qwwf', 'I_rad', 'I_sol', 'T_ext', 'rh_ext',
                            'ta_hs_set', 'ta_cs_set', 'theta_a', 'Qhsf', 'Qcsf']
@@ -149,7 +148,7 @@ def ss_calibrator(building_name):
     NN_target_cl = np.array(NN_target_cl)
 
     # return NN_input, NN_target_ht, NN_target_cl
-    from cea.demand.calibration.surrogate_4_calibration import prep_NN_inputs
+    from cea.demand.calibration.subset_calibrator.surrogate_4_calibration import prep_NN_inputs
     NN_delays = 1
     NN_input_ready_ht, NN_target_ready_ht = prep_NN_inputs(NN_input, NN_target_ht, NN_delays)
     NN_input_ready_cl, NN_target_ready_cl = prep_NN_inputs(NN_input, NN_target_cl, NN_delays)
