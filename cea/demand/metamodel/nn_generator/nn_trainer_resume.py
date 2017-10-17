@@ -25,17 +25,16 @@ def neural_trainer_resume(inputs_x, targets_t, model, scalerX, scalerT, locator,
     :return:
     '''
 
+    inputs_x_rows, inputs_x_cols = inputs_x.shape
+
+    # scaling and normalizing inputs
+    inputs_x = scalerX.transform(inputs_x)
+    targets_t = scalerT.transform(targets_t)
+    encoding_dim = int(np.ceil(inputs_x_cols/2)+np.ceil(inputs_x_cols * 0.1))
+    over_complete_dim =int(encoding_dim*2)
+    AE_input_dim=int(inputs_x_cols)
+
     if autoencoder:
-
-        inputs_x_rows, inputs_x_cols = inputs_x.shape
-
-        # scaling and normalizing inputs
-        inputs_x = scalerX.transform(inputs_x)
-        targets_t = scalerT.transform(targets_t)
-        encoding_dim = int(np.ceil(inputs_x_cols/2)+np.ceil(inputs_x_cols * 0.1))
-        over_complete_dim =int(encoding_dim*2)
-        AE_input_dim=int(inputs_x_cols)
-
         # sparsing inputs: use this if you have more than 50 input features
         input_AEI = Input(shape=(AE_input_dim,))
         encoded = Dense(over_complete_dim, activation='relu')(input_AEI)
