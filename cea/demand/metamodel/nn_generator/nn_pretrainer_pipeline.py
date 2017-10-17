@@ -1,6 +1,6 @@
 # coding=utf-8
 """
-'random_pipeline.py' script is a pipeline of the following jobs:
+'nn_random_pipeline.py' script is a pipeline of the following jobs:
     (1) calls "sampling_main" function for random generation of features
     (2) calls "neural_trainer" function for training a first neural network and saving the model
     (3) executes a loop in which "sampling_main" and "neural_training" are iteratively called for
