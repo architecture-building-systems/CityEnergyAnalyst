@@ -3,14 +3,14 @@ import multiprocessing as mp
 import numpy as np
 import pandas as pd
 from cea.demand.demand_main import properties_and_schedule
-from cea.demand.metamodel.nn_generator.nn_settings import nn_delay, target_parameters
+from cea.demand.metamodel.nn_generator.nn_settings import nn_delay, target_parameters, warmup_period
 from cea.demand.metamodel.nn_generator.input_matrix import get_cea_inputs
 from cea.demand.metamodel.nn_generator.nn_trainer_resume import nn_model_collector
 
 
 def get_nn_estimations(model, scalerT, scalerX, urban_input_matrix, locator):
     input_NN_x = urban_input_matrix
-    inputs_x = scalerX.transform(input_NN_x) #TODO: change scalerX.fit_transform to scalerX.transform
+    inputs_x = scalerX.transform(input_NN_x)  # TODO: change scalerX.fit_transform to scalerX.transform
 
     model_estimates = model.predict(inputs_x)
     filtered_predict = scalerT.inverse_transform(model_estimates)
@@ -28,14 +28,15 @@ def get_nn_estimations(model, scalerT, scalerX, urban_input_matrix, locator):
 
 def test_sample_collector(locator):
     test_sample_path = locator.get_nn_inout_folder()
-    overrides_path=locator.get_building_overrides()
+    overrides_path = locator.get_building_overrides()
     # TODO: try remove
-    #os.remove(overrides_path)
+    # os.remove(overrides_path)
 
     # file_path_inputs = os.path.join(test_sample_path, "input_predict.csv")
     # urban_input_matrix = np.asarray(pd.read_csv(file_path_inputs))
     #
     # return urban_input_matrix
+
 
 def prep_NN_delay_estimate(raw_nn_inputs_D, raw_nn_inputs_S, nn_delay):
     '''
@@ -86,6 +87,7 @@ def prep_NN_delay_estimate(raw_nn_inputs_D, raw_nn_inputs_S, nn_delay):
 
     return NN_input_ready
 
+
 def input_estimate_prepare_multi_processing(building_name, gv, locator):
     '''
     this function gathers the final inputs and targets
@@ -102,6 +104,7 @@ def input_estimate_prepare_multi_processing(building_name, gv, locator):
     NN_input_ready = prep_NN_delay_estimate(raw_nn_inputs_D, raw_nn_inputs_S, nn_delay)
 
     return NN_input_ready
+
 
 def input_prepare_estimate(list_building_names, locator, gv):
     '''
@@ -124,19 +127,19 @@ def input_prepare_estimate(list_building_names, locator, gv):
         job = pool.apply_async(input_estimate_prepare_multi_processing,
                                [building_name, gv, locator])
         joblist.append(job)
-    #   run the input/target preperation for all buildings in the list (here called jobs)
+    # run the input/target preperation for all buildings in the list (here called jobs)
     for i, job in enumerate(joblist):
-        NN_input_ready =job.get(240)
+        NN_input_ready = job.get(240)
         #   remove buildings that have "NaN" in their input (e.g. if heating/cooling is off, the indoor temperature
         #   will be returned as "NaN"). Afterwards, stack the inputs/targets of all buildings
-        check_nan=1*(np.isnan(np.sum(NN_input_ready)))
+        check_nan = 1 * (np.isnan(np.sum(NN_input_ready)))
         if check_nan == 0:
             if i == 0:
                 urban_input_matrix = NN_input_ready
             else:
                 urban_input_matrix = np.concatenate((urban_input_matrix, NN_input_ready))
 
-    #   close the multiprocessing
+    # close the multiprocessing
     pool.close()
 
     model, scalerT, scalerX = nn_model_collector(locator)
@@ -145,23 +148,34 @@ def input_prepare_estimate(list_building_names, locator, gv):
     num_buildings = len(list_building_names)
     num_features = len(urban_input_matrix[0])
     num_outputs = len(target_parameters)
-    matrix = np.empty([num_buildings, num_outputs, 8759])
-    reshaped_input_matrix = urban_input_matrix.reshape([8759, num_features, num_buildings])
-    for i in range(8759):
-        one_hour_step = reshaped_input_matrix[:,:,i]
-        inputs_x = scalerX.transform(one_hour_step)  # TODO: change scalerX.fit_transform to scalerX.transform
+    matrix = np.empty([num_buildings, 8759+warmup_period, num_outputs])
+    reshaped_input_matrix = urban_input_matrix.reshape(num_buildings, 8759, num_features)
+
+    # including warm up period
+    warmup_period_input_matrix = reshaped_input_matrix[:,(8759-warmup_period):,:]
+    concat_input_matrix = np.hstack((warmup_period_input_matrix, reshaped_input_matrix))
+
+    for i in range(8759+warmup_period):
+        one_hour_step = concat_input_matrix[:, i, :]
+        inputs_x = scalerX.transform(one_hour_step)
 
         model_estimates = model.predict(inputs_x)
-        matrix[:,:,i] = scalerT.inverse_transform(model_estimates)
-    reshaped_matrix = matrix.reshape([num_buildings*8759, num_features])
+        matrix[:, i, :] = scalerT.inverse_transform(model_estimates)
+
+    # lets save:
+    for i, name in enumerate(list_building_names):
+        vector = matrix[i][758:, :].T
+        dict_to_dataframe = dict(zip(target_parameters, vector ))
+        pd.DataFrame(dict_to_dataframe).to_csv(locator.get_result_building_NN(name), float_format='%.3f')
+
     print "done"
 
     return
 
 
-
 def test_nn_performance(list_building_names, locator, gv):
     filtered_predict = input_prepare_estimate(list_building_names, locator, gv)
+
 
 def run_as_script():
     import cea.config

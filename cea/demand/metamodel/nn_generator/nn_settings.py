@@ -12,6 +12,8 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+# burn-in period for estimation:
+warmup_period = 759 # in hourse taken form the end of the year.
 #   data preperation properties
 nn_delay=1 #recommended is 1
 #   neural net training properties
