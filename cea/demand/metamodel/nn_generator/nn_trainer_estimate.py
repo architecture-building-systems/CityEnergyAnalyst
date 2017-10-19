@@ -164,18 +164,13 @@ def input_prepare_estimate(list_building_names, locator, gv):
 
     # lets save:
     for i, name in enumerate(list_building_names):
-        vector = matrix[i][758:, :].T
+        vector = matrix[i][warmup_period-1:, :].T
         dict_to_dataframe = dict(zip(target_parameters, vector ))
         pd.DataFrame(dict_to_dataframe).to_csv(locator.get_result_building_NN(name), float_format='%.3f')
 
     print "done"
 
     return
-
-
-def test_nn_performance(list_building_names, locator, gv):
-    filtered_predict = input_prepare_estimate(list_building_names, locator, gv)
-
 
 def run_as_script():
     import cea.config
@@ -184,7 +179,7 @@ def run_as_script():
     locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
     building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
     list_building_names = building_properties.list_building_names()
-    test_nn_performance(list_building_names, locator, gv)
+    input_prepare_estimate(list_building_names, locator, gv)
 
 
 if __name__ == '__main__':
