@@ -83,7 +83,10 @@ def range_finder(locator):
 
     # scaling and normalizing inputs
     scalerX = MinMaxScaler(feature_range=(0, 1))
+    scalerX.fit(xscaler_array)
     scalerT = MinMaxScaler(feature_range=(0, 1))
+    scalerT.fit(tscaler_array)
+
 
     scalerX_file, scalerT_file = locator.get_minmaxscalar_model()
     joblib.dump(scalerX, scalerX_file)
