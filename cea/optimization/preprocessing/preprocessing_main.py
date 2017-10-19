@@ -11,7 +11,6 @@ import os
 
 import pandas as pd
 import numpy as np
-
 import cea.optimization.preprocessing.processheat as process_heat
 from cea.optimization.master import summarize_network
 from cea.optimization.preprocessing import electricity
@@ -125,7 +124,6 @@ class SolarFeatures(object):
         self.A_PVT_m2 = A_PVT_m2.values.max()
         self.Q_nom_SC_Wh = Q_SC_gen_kWh.values.max() * 1000
         self.A_SC_m2 = A_SC_m2.values.max()
-
 #============================
 #test
 #============================

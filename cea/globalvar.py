@@ -18,6 +18,7 @@ __status__ = "Production"
 class GlobalVariables(object):
     def __init__(self):
 
+
         self.scenario_reference = r'c:\reference-case-ecocampus\baseline'
         self.print_partial = 'hourly'  # hourly or monthly for the demand script
         self.print_totals = True  # print yearly values
