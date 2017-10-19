@@ -771,8 +771,11 @@ class InputLocator(object):
 
     def get_neural_network_estimates(self):
         """scenario/outputs/data/surrogate/neural_network_folder"""
-        model_estimates = os.path.join(self.get_neural_network_folder(), 'model_estimates.csv')
-        return model_estimates
+        return os.path.join(self.get_neural_network_folder(), 'model_estimates.csv')
+
+    def get_result_building_NN(self, name):
+        """scenario/outputs/data/surrogate/neural_network_folder"""
+        return os.path.join(self.get_neural_network_folder(), name+'.csv')
 
 class ReferenceCaseOpenLocator(InputLocator):
     """This is a special InputLocator that extracts the builtin reference case
