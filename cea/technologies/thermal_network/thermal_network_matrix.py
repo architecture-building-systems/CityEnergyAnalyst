@@ -1589,8 +1589,11 @@ def run_as_script(scenario_path=None):
     import cea.inputlocator as inputlocator
     gv = cea.globalvar.GlobalVariables()
 
+    import cea.config
+    config = cea.config.Configuration()
+
     if scenario_path is None:
-        scenario_path = gv.scenario_reference
+        scenario_path = config.scenario
 
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
 
