@@ -139,14 +139,29 @@ def input_prepare_estimate(list_building_names, locator, gv):
     #   close the multiprocessing
     pool.close()
 
-    return urban_input_matrix
+    model, scalerT, scalerX = nn_model_collector(locator)
+
+    # reshape file to get a tensor of buildings, features, time.
+    num_buildings = len(list_building_names)
+    num_features = len(urban_input_matrix[0])
+    num_outputs = len(target_parameters)
+    matrix = np.empty([num_buildings, num_outputs, 8759])
+    reshaped_input_matrix = urban_input_matrix.reshape([num_buildings, num_features, 8759])
+    for i in range(8759):
+        one_hour_step = reshaped_input_matrix[:,:,i]
+        inputs_x = scalerX.transform(one_hour_step)  # TODO: change scalerX.fit_transform to scalerX.transform
+
+        model_estimates = model.predict(inputs_x)
+        matrix[:,:,i] = scalerT.inverse_transform(model_estimates)
+    reshaped_matrix = matrix.reshape([num_buildings*8759, num_features])
+    print "done"
+
+    return
+
 
 
 def test_nn_performance(list_building_names, locator, gv):
-    urban_input_matrix = input_prepare_estimate(list_building_names, locator, gv)
-    model, scalerT, scalerX = nn_model_collector(locator)
-    get_nn_estimations(model, scalerT, scalerX, urban_input_matrix, locator)
-
+    filtered_predict = input_prepare_estimate(list_building_names, locator, gv)
 
 def run_as_script():
     import cea.config
