@@ -30,5 +30,6 @@ and train the NN (these 10 samples will be updated in each epoc).
 6. Evaluate the network (test the perforamnce based on a random sample)
 6.1. you can evaluate based on a random sample
     - run nn_trainer_evaluate.py
-6.2 you can evaluate based on the current inputs of CEA.
+6.2 you can estimate the outputs based on the current inputs of CEA.
+    - run nn-trainer_estimate.py
 
