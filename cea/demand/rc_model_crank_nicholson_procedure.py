@@ -48,7 +48,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
 
         # write to tsd
-        tsd['theta_a'][t] = rc_model_temperatures['theta_a']
+        tsd['T_int'][t] = rc_model_temperatures['T_int']
         tsd['theta_m'][t] = rc_model_temperatures['theta_m']
         tsd['theta_c'][t] = rc_model_temperatures['theta_c']
         tsd['theta_o'][t] = rc_model_temperatures['theta_o']
@@ -68,7 +68,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         # calculate temperatures with 0 heating power
         rc_model_temperatures_0 = rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
 
-        theta_a_0 = rc_model_temperatures_0['theta_a']
+        T_int_0 = rc_model_temperatures_0['T_int']
 
         # STEP 2
         # ******
@@ -76,13 +76,13 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         phi_hc_10 = 10 * bpr.rc_model['Af']
         rc_model_temperatures_10 = rc_model_SIA.calc_rc_model_temperatures_heating(phi_hc_10, bpr, tsd, t)
 
-        theta_a_10 = rc_model_temperatures_10['theta_a']
+        T_int_10 = rc_model_temperatures_10['T_int']
 
-        theta_a_set = tsd['ta_hs_set'][t]
+        T_int_set = tsd['ta_hs_set'][t]
 
         # interpolate heating power
         # (64) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-        phi_hc_ul = phi_hc_10*(theta_a_set - theta_a_0) / (theta_a_10 - theta_a_0)
+        phi_hc_ul = phi_hc_10*(T_int_set - T_int_0) / (T_int_10 - T_int_0)
 
         # STEP 3
         # ******
@@ -106,7 +106,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         # ******
         rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_heating(phi_h_act, bpr, tsd, t)
         # write necessary parameters for AC calculation to tsd
-        tsd['theta_a'][t] = rc_model_temperatures['theta_a']
+        tsd['T_int'][t] = rc_model_temperatures['T_int']
         tsd['theta_m'][t] = rc_model_temperatures['theta_m']
         tsd['theta_c'][t] = rc_model_temperatures['theta_c']
         tsd['theta_o'][t] = rc_model_temperatures['theta_o']
@@ -134,7 +134,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
                     t)
 
                 # update temperatures
-                tsd['theta_a'][t] = rc_model_temperatures['theta_a']
+                tsd['T_int'][t] = rc_model_temperatures['T_int']
                 tsd['theta_m'][t] = rc_model_temperatures['theta_m']
                 tsd['theta_c'][t] = rc_model_temperatures['theta_c']
                 tsd['theta_o'][t] = rc_model_temperatures['theta_o']
@@ -154,7 +154,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         q_em_ls_heating = space_emission_systems.calc_q_em_ls_heating(bpr, tsd, t)
 
         # set temperatures to tsd for heating
-        tsd['theta_a'][t] = rc_model_temperatures['theta_a']
+        tsd['T_int'][t] = rc_model_temperatures['T_int']
         tsd['theta_m'][t] = rc_model_temperatures['theta_m']
         tsd['theta_c'][t] = rc_model_temperatures['theta_c']
         tsd['theta_o'][t] = rc_model_temperatures['theta_o']
@@ -178,7 +178,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         # calculate temperatures with 0 heating power
         rc_model_temperatures_0 = rc_model_SIA.calc_rc_model_temperatures_no_heating_cooling(bpr, tsd, t)
 
-        theta_a_0 = rc_model_temperatures_0['theta_a']
+        T_int_0 = rc_model_temperatures_0['T_int']
 
         # STEP 2
         # ******
@@ -186,13 +186,13 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         phi_hc_10 = 10 * bpr.rc_model['Af']
         rc_model_temperatures_10 = rc_model_SIA.calc_rc_model_temperatures_cooling(phi_hc_10, bpr, tsd, t)
 
-        theta_a_10 = rc_model_temperatures_10['theta_a']
+        T_int_10 = rc_model_temperatures_10['T_int']
 
-        theta_a_set = tsd['ta_cs_set'][t]
+        T_int_set = tsd['ta_cs_set'][t]
 
         # interpolate heating power
         # (64) in SIA 2044 / Korrigenda C1 zum Merkblatt SIA 2044:2011 / Korrigenda C2 zum Mekblatt SIA 2044:2011
-        phi_hc_ul = phi_hc_10 * (theta_a_set - theta_a_0) / (theta_a_10 - theta_a_0)
+        phi_hc_ul = phi_hc_10 * (T_int_set - T_int_0) / (T_int_10 - T_int_0)
 
         # STEP 3
         # ******
@@ -217,7 +217,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_cooling(phi_c_act, bpr, tsd, t)
 
         # write necessary parameters for AC calculation to tsd
-        tsd['theta_a'][t] = rc_model_temperatures['theta_a']
+        tsd['T_int'][t] = rc_model_temperatures['T_int']
         tsd['theta_m'][t] = rc_model_temperatures['theta_m']
         tsd['theta_c'][t] = rc_model_temperatures['theta_c']
         tsd['theta_o'][t] = rc_model_temperatures['theta_o']
@@ -242,7 +242,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
                 rc_model_temperatures = rc_model_SIA.calc_rc_model_temperatures_cooling(phi_c_act_over_cooling, bpr, tsd,
                                                                                         t)
                 # update temperatures
-                tsd['theta_a'][t] = rc_model_temperatures['theta_a']
+                tsd['T_int'][t] = rc_model_temperatures['T_int']
                 tsd['theta_m'][t] = rc_model_temperatures['theta_m']
                 tsd['theta_c'][t] = rc_model_temperatures['theta_c']
                 tsd['theta_o'][t] = rc_model_temperatures['theta_o']
@@ -262,7 +262,7 @@ def calc_rc_model_demand_heating_cooling(bpr, tsd, t, gv):
         q_em_ls_cooling = space_emission_systems.calc_q_em_ls_cooling(bpr, tsd, t)
 
         # set temperatures to tsd for heating
-        tsd['theta_a'][t] = rc_model_temperatures['theta_a']
+        tsd['T_int'][t] = rc_model_temperatures['T_int']
         tsd['theta_m'][t] = rc_model_temperatures['theta_m']
         tsd['theta_c'][t] = rc_model_temperatures['theta_c']
         tsd['theta_o'][t] = rc_model_temperatures['theta_o']

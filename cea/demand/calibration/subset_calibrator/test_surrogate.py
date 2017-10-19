@@ -16,7 +16,7 @@ def run_as_script():
     scenario_path = gv.scenario_reference
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
     json_NN_path = os.path.join(locator.get_calibration_folder(), "trained_network_ht.json" % locals())
-    weight_NN_path = os.path.join(locator.get_calibration_folder(), "trained_network_cl.h5" % locals())
+    weight_NN_path = os.path.join(locator.get_calibration_folder(), "trained_network_ht.h5" % locals())
 
     # load json and create model
     json_file = open(json_NN_path, 'r')
@@ -26,7 +26,6 @@ def run_as_script():
 
     # load weights into new model
     perceptron_ht.load_weights(weight_NN_path)
-    print("model loaded")
 
     # predict new outputs and estimate the error
     test_NN_input_path = os.path.join(locator.get_calibration_folder(), "test_NN_input.csv" % locals())
@@ -50,9 +49,18 @@ def run_as_script():
     filtered_predict[target_anomalies,0]=anomalies_replacements
 
 
-    rmse = sqrt(mean_squared_error(target_NN_t, filtered_predict))
+    final_target = pd.DataFrame(target_NN_t)
+    final_output = pd.DataFrame(filtered_predict)
+    save_target_path = os.path.join(locator.get_calibration_folder(), "saved_targets.csv" % locals())
+    save_output_path = os.path.join(locator.get_calibration_folder(), "saved_outputs.csv" % locals())
+    final_target.to_csv(save_target_path, index=False, header=False, float_format='%.3f', decimal='.')
+    final_output.to_csv(save_output_path, index=False, header=False, float_format='%.3f', decimal='.')
 
-    print rmse
+    rmse = sqrt(mean_squared_error(target_NN_t[:,0], filtered_predict[:,0]))
+    mean_target=np.mean(target_NN_t[:,0])
+    cv_rmse=np.divide(rmse,mean_target)
+
+    print (rmse , cv_rmse)
 
 if __name__ == '__main__':
     run_as_script()

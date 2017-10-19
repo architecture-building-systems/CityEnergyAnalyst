@@ -176,7 +176,7 @@ def calc_temperatures_emission_systems(tsd, bpr, Qcsf_0, Qhsf_0, gv):
 
     if bpr.hvac['type_hs'] == 'T1' or bpr.hvac['type_hs'] == 'T2':  # radiators
 
-        Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(tsd['Qhsf'], tsd['theta_a'], Qhsf_0, Ta_0,
+        Ths_sup, Ths_re, mcphs = np.vectorize(radiators.calc_radiator)(tsd['Qhsf'], tsd['T_int'], Qhsf_0, Ta_0,
                                                                         bpr.building_systems['Ths_sup_0'],
                                                                         bpr.building_systems['Ths_re_0'])
 
