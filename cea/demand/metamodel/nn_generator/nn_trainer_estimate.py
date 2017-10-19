@@ -146,7 +146,7 @@ def input_prepare_estimate(list_building_names, locator, gv):
     num_features = len(urban_input_matrix[0])
     num_outputs = len(target_parameters)
     matrix = np.empty([num_buildings, num_outputs, 8759])
-    reshaped_input_matrix = urban_input_matrix.reshape([num_buildings, num_features, 8759])
+    reshaped_input_matrix = urban_input_matrix.reshape([8759, num_features, num_buildings])
     for i in range(8759):
         one_hour_step = reshaped_input_matrix[:,:,i]
         inputs_x = scalerX.transform(one_hour_step)  # TODO: change scalerX.fit_transform to scalerX.transform
