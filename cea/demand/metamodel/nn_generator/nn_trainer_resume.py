@@ -50,7 +50,7 @@ def neural_trainer_resume(inputs_x, targets_t, model, scalerX, scalerT, locator,
         encoded_x=encoder.predict(inputs_x)
         inputs_x=encoded_x
 
-    validation_split = 0.5
+    validation_split = 0.3
     e_stop_limit = 10
 
     # define early stopping to avoid overfitting
