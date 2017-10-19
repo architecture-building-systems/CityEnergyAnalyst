@@ -10,7 +10,7 @@ from cea.demand.metamodel.nn_generator.nn_trainer_resume import nn_model_collect
 
 def get_nn_estimations(model, scalerT, scalerX, urban_input_matrix, locator):
     input_NN_x = urban_input_matrix
-    inputs_x = scalerX.transform(input_NN_x)
+    inputs_x = scalerX.transform(input_NN_x) #TODO: change scalerX.fit_transform to scalerX.transform
 
     model_estimates = model.predict(inputs_x)
     filtered_predict = scalerT.inverse_transform(model_estimates)
