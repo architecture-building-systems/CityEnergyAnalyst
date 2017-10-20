@@ -701,6 +701,10 @@ class InputLocator(object):
         """scenario/outputs/plots/timeseries"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'plots', 'timeseries')
 
+    def get_4D_demand_plot(self, period):
+        """scenario/outputs/plots/timeseries"""
+        return os.path.join(self.get_demand_plots_folder(), '4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+
     def get_demand_plots_file(self, building_name):
         """scenario/outputs/plots/timeseries/{building_name}.pdf"""
         return os.path.join(self.get_demand_plots_folder(), '%(building_name)s.pdf' % locals())
