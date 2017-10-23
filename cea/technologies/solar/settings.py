@@ -16,7 +16,7 @@ type_SCpanel = 'SC1'  # SC1: flat plat collectors, SC2: evacuated tubes
 # installed locations
 panel_on_roof = True  # flag for considering panels on roof
 panel_on_wall = True  # flag for considering panels on wall
-min_radiation = 0.25  # filtering criteria: at least a minimum production of this % from the maximum in the area.
+min_radiation = 0.01  # filtering criteria: at least a minimum production of this % from the maximum in the area.
 
 # panel spacing
 solar_window_solstice = 4 # desired hours of solar window on the solstice
