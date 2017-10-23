@@ -30,6 +30,11 @@ class Configuration(object):
         self.add_section('embodied-energy',
                          IntegerParameter('year-to-calculate'))
 
+        self.add_section('scenario-plots',
+                         PathParameter('project'),
+                         ListParameter('scenarios'),
+                         PathParameter('output-path'))
+
         self.add_section('demand',
                          DateParameter('heating-season-start'),
                          DateParameter('heating-season-end'),
@@ -128,7 +133,6 @@ class Section(object):
         self._parameters = {}
 
     def __getattr__(self, attr):
-        print('getting attr:', attr, type(self))
         return self._parameters[config_identifier(attr)].read(self._config.config_parser, self._name)
 
     def add_parameter(self, parameter):

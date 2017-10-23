@@ -174,19 +174,18 @@ def plot_lca_operation(ax, locators, scenario_names, column, title, unit):
 
 def run_as_script(scenario_folders=None, output_file=None):
     if not scenario_folders:
-        import cea.globalvar
-        gv = cea.globalvar.GlobalVariables()
-        scenario_folders = [gv.scenario_reference]
+        import cea.config
+        config = cea.config.Configuration()
+        scenario_folders = [config.scenario]
     if not output_file:
         output_file = os.path.expandvars(r'%TEMP%\scenario_plots.pdf')
     plot_scenarios(scenario_folders, output_file)
 
 
 if __name__ == '__main__':
-    import argparse
+    import cea.config
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--scenarios', nargs='+', help='List of scenario folders', default=None)
-    parser.add_argument('-o', '--output', help='Output file', default=os.path.expandvars(r'%TEMP%\scenario_plots.pdf'))
-    args = parser.parse_args()
-    run_as_script(scenario_folders=args.scenarios, output_file=args.output)
+    config = cea.config.Configuration()
+    scenario_folders = [os.path.join(config.scenario_plots.project, scenario) for scenario in
+                        config.scenario_plots.scenarios]
+    run_as_script(scenario_folders=scenario_folders, output_file=config.scenario_plots.output_path)
