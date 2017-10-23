@@ -106,6 +106,21 @@ def calc_PVT(locator, radiation_json_path, metadata_csv_path, latitude, longitud
 
         print 'Building', building_name,'done - time elapsed:', (time.clock() - t0), ' seconds'
 
+    else:  # This loop is activated when a building has not sufficient solar potential
+        Final = pd.DataFrame(
+            {'Q_PVT_gen_kWh': 0, 'T_PVT_sup_C': 0, 'T_PVT_re_C': 0,
+             'mcp_PVT_kWperC': 0, 'Eaux_PVT_kWh': 0,
+             'Q_PVT_l_kWh': 0, 'E_PVT_gen_kWh': 0, 'Area_PVT_m2': 0,
+             'radiation_kWh': 0}, index=range(8760))
+        Final.to_csv(locator.PVT_results(building_name= building_name), index=True, float_format='%.2f')
+        sensors_metadata_cat = pd.DataFrame(
+            {'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0,
+             'Ycoor': 0, 'Ydir': 0, 'Zcoor': 0, 'Zdir': 0, 'total_rad_Whm2': 0,
+             'tilt_deg': 0, 'B_deg': 0, 'array_spacing_m': 0, 'surface_azimuth_deg': 0,
+             'area_installed_module_m2': 0, 'CATteta_z': 0, 'CATB': 0, 'CATGB': 0}, index=range(2))
+        sensors_metadata_cat.to_csv(locator.PVT_metadata_results(building_name=building_name), index=True,
+                                    float_format='%.2f')
+
     return
 
 def calc_PVT_generation(hourly_radiation_Wh, weather_data, number_groups, prop_observers, solar_properties, Tin, latitude,
@@ -524,6 +539,7 @@ def test_PVT():
         longitude = shp.crs['lon_0']
         latitude = shp.crs['lat_0']
 
+    # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name= building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)

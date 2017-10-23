@@ -102,6 +102,19 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
         sensors_metadata_cat.to_csv(locator.SC_metadata_results(building_name= building_name), index=True, float_format='%.2f')
 
         print 'Building', building_name,'done - time elapsed:', (time.clock() - t0), ' seconds'
+    else:  # This loop is activated when a building has not sufficient solar potential
+        Final = pd.DataFrame(
+            {'Q_SC_gen_kWh': 0, 'T_SC_sup_C': 0, 'T_SC_re_C': 0,
+             'mcp_SC_kWperC': 0, 'Eaux_SC_kWh': 0,
+             'Q_SC_l_kWh': 0, 'Area_SC_m2': 0, 'radiation_kWh': 0},
+            index=range(8760))
+        Final.to_csv(locator.SC_results(building_name= building_name), index=True, float_format='%.2f')
+        sensors_metadata_cat = pd.DataFrame(
+            {'AREA_m2': 0, 'BUILDING': 0, 'TYPE': 0, 'Xcoor': 0, 'Xdir': 0,
+             'Ycoor': 0, 'Ydir': 0, 'Zcoor': 0, 'Zdir': 0, 'total_rad_Whm2':0,
+             'tilt_deg': 0, 'B_deg': 0, 'array_spacing_m': 0, 'surface_azimuth_deg': 0,
+             'area_installed_module_m2': 0, 'CATteta_z': 0, 'CATB': 0, 'CATGB': 0}, index=range(2))
+        sensors_metadata_cat.to_csv(locator.SC_metadata_results(building_name= building_name), index=True, float_format='%.2f')
 
     return
 
@@ -746,6 +759,7 @@ def test_solar_collector():
         longitude = shp.crs['lon_0']
         latitude = shp.crs['lat_0']
 
+    # list_buildings_names =['B026', 'B036', 'B039', 'B043', 'B050'] for missing buildings
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name= building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)

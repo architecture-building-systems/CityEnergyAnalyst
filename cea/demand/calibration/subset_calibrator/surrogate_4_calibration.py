@@ -19,9 +19,9 @@ from keras.callbacks import EarlyStopping
 from sklearn.preprocessing import MinMaxScaler
 
 
-__author__ = "Jimeno A. Fonseca; Fazel Khayatian"
+__author__ = ""
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
-__credits__ = ["Jimeno A. Fonseca", "Fazel Khayatian"]
+__credits__ = []
 __license__ = "MIT"
 __version__ = "0.1"
 __maintainer__ = "Daren Thomas"
@@ -132,10 +132,10 @@ def prep_NN_inputs(NN_input,NN_target,NN_delays):
         input_matrix_targets[j:aS, n1:n2]=target1
         i=i+1
 
-    trimmed_inputn = input_matrix_features[aD:nS,:]
-    trimmed_inputt = input_matrix_targets[aD:nS, 2:]
+    trimmed_inputn = input_matrix_features[nD:nS,:]
+    trimmed_inputt = input_matrix_targets[nD:nS, 2:]
     NN_input_ready=np.concatenate([trimmed_inputn, trimmed_inputt], axis=1)
-    NN_target_ready=target1[aD:nS,:]
+    NN_target_ready=target1[nD:nS,:]
 
     return NN_input_ready, NN_target_ready
 
@@ -186,12 +186,11 @@ def sampling_main(locator, variables, building_name, building_load):
 
         #create overrides and return pointer to files
         apply_sample_parameters(locator, sample)
-
-        # run cea demand and calculate cv_rmse
-        #cv_rmse, rmse = simulate_demand_sample(locator, building_name, building_load)
         simulate_demand_sample(locator, building_name, building_load)
+        # define the inputs
         intended_parameters=['people','Eaf','Elf','Qwwf','I_rad','I_sol','T_ext','rh_ext',
         'ta_hs_set','ta_cs_set','theta_a','Qhsf', 'Qcsf']
+        # collect the simulation results
         file_path = os.path.join(locator.get_demand_results_folder(), "%(building_name)s.xls" % locals())
         calcs_outputs_xls = pd.read_excel(file_path)
         temp_file=os.path.join(locator.get_temporary_folder(), "%(building_name)s.csv" % locals())
@@ -243,7 +242,7 @@ def sampling_main(locator, variables, building_name, building_load):
         combined_inputs_ht=np.concatenate((NN_input_ready_ht,random_variables_matrix),axis=1)
         combined_inputs_cl=np.concatenate((NN_input_ready_cl, random_variables_matrix), axis=1)
 
-        if i<2:
+        if i<1:
             nn_X_ht=combined_inputs_ht
             nn_X_cl=combined_inputs_cl
             nn_T_ht=NN_target_ready_ht
@@ -283,7 +282,7 @@ def sampling_main(locator, variables, building_name, building_load):
         json_file.write(model_json)
     # serialize weights to HDF5
     model.save_weights(weight_NN_path)
-    print("Saved model to ~reference-case-open\baseline\outputs\data\calibration")
+    print(r"Saved model to ~reference-case-open\baseline\outputs\data\calibration")
     #out_NN = pd.DataFrame(filtered_outputs_t)
     #out_NN_path = os.path.join(locator.get_calibration_folder(), "%(building_name)s-netout_ht.csv" % locals())
     #out_NN.to_csv(out_NN_path, index=False, header=False, float_format='%.3f', decimal='.')
@@ -298,7 +297,7 @@ def sampling_main(locator, variables, building_name, building_load):
         json_file.write(model_json)
     # serialize weights to HDF5
     model.save_weights(weight_NN_path)
-    print("Saved model to ~reference-case-open\baseline\outputs\data\calibration")
+    print(r"Saved model to ~reference-case-open\baseline\outputs\data\calibration")
     #out_NN = pd.DataFrame(filtered_outputs_t)
     #out_NN_path = os.path.join(locator.get_calibration_folder(), "%(building_name)s-netout_cl.csv" % locals())
     #out_NN.to_csv(out_NN_path, index=False, header=False, float_format='%.3f', decimal='.')
@@ -316,7 +315,7 @@ def neural_trainer(inputs_x,targets_t,locator):
     over_complete_dim =int(encoding_dim*2)
     AE_input_dim=int(inputs_x_cols)
 
-    #sparsing inputs
+    #sparsing inputs: use this if you have more than 50 input features
     # input_AEI = Input(shape=(AE_input_dim,))
     # encoded = Dense(over_complete_dim, activation='relu')(input_AEI)
     # encoded = Dense(encoding_dim, activation='softplus')(encoded)
@@ -392,9 +391,9 @@ def run_as_script():
 
     # based on the variables listed in the uncertainty database and selected
     # through a screening process. they need to be 5.
-    variables = ['U_win', 'U_wall', 'n50', 'Ths_set_C', 'Cm_Af']
-    building_name = 'B155066'
-    building_load = 'Qhsf_kWh'
+    variables = ['U_win', 'U_wall', 'n50', 'Ths_set_C', 'Cm_Af'] #uncertain variables
+    building_name = 'B155066' # intended building
+    building_load = 'Qhsf_kWh' # target of prediction
     sampling_main(locator, variables, building_name, building_load)
 
 

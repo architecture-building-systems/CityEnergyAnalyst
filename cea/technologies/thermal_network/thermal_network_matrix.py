@@ -258,8 +258,9 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df):
     A = edge_node_df.drop(edge_node_df.index[plant_index])
     b = mass_flow_substation_df.T
     b.drop(b.index[plant_index], inplace=True)
-    ## compute the exact solution of Ax = b
-    mass_flow_edge = np.round(np.transpose(np.linalg.solve(A.values, b.values)), decimals=5)
+    solution = np.linalg.solve(A.values, b.values)
+    round_solution = np.round(solution, decimals=5)
+    mass_flow_edge = np.transpose(round_solution)  
 
     return mass_flow_edge
 
@@ -878,7 +879,7 @@ def calc_supply_temperatures(gv, T_ground_K, edge_node_df, mass_flow_df, K, t_ta
     # start node temperature calculation
     flag = 0
     # set initial supply temperature guess to the target substation supply temperature
-    T_plant_sup_0 = 273.15 + t_target_supply_C.max()
+    T_plant_sup_0 = 273.15 + t_target_supply_C.max() if network_type=='DH' else 273.15 + t_target_supply_C.min()
     T_plant_sup = T_plant_sup_0
     iteration = 0
     while flag == 0:
@@ -1329,6 +1330,14 @@ def get_thermal_network_from_shapefile(locator, network_type):
     network_edges_df = gpd.read_file(locator.get_network_layout_edges_shapefile(network_type))
     network_nodes_df = gpd.read_file(locator.get_network_layout_nodes_shapefile(network_type))
 
+    # check duplicated NODE/PIPE IDs
+    duplicated_nodes = network_nodes_df[network_nodes_df.Name.duplicated(keep=False)]
+    duplicated_edges = network_edges_df[network_edges_df.Name.duplicated(keep=False)]
+    if duplicated_nodes.size > 0:
+        raise ValueError('There are duplicated NODE IDs:', duplicated_nodes)
+    if duplicated_edges.size > 0:
+        raise ValueError('There are duplicated PIPE IDs:', duplicated_nodes)
+
     # get node and pipe information
     node_df, edge_df = extract_network_from_shapefile(network_edges_df, network_nodes_df)
 
@@ -1341,7 +1350,7 @@ def get_thermal_network_from_shapefile(locator, network_type):
     list_pipes = edge_df.index.values
     list_nodes = sorted(set(edge_df['start node']).union(set(edge_df['end node'])),key=lambda x : int(x[4:])) # sort the list by node numbers
     edge_node_matrix = np.zeros((len(list_nodes), len(list_pipes)))
-    for j in range(len(list_pipes)):
+    for j in range(len(list_pipes)):  # TODO: find ways to accelerate
         for i in range(len(list_nodes)):
             if edge_df['end node'][j] == list_nodes[i]:
                 edge_node_matrix[i][j] = 1
@@ -1349,19 +1358,20 @@ def get_thermal_network_from_shapefile(locator, network_type):
                 edge_node_matrix[i][j] = -1
     edge_node_df = pd.DataFrame(data=edge_node_matrix, index=list_nodes, columns=list_pipes)  # first edge-node matrix
 
-    # An edge node matrix is generated as a first guess and then virtual substation mass flows are imposed to
-    # calculate mass flows in each edge (mass_flow_guess).
-    substation_mass_flows_df = pd.DataFrame(data=np.zeros([1, len(edge_node_df.index)]), columns=edge_node_df.index)
+    ## An edge node matrix is generated as a first guess and then virtual substation mass flows are imposed to
+    ## calculate mass flows in each edge (mass_flow_guess).
+    node_mass_flows_df = pd.DataFrame(data=np.zeros([1, len(edge_node_df.index)]), columns=edge_node_df.index)
     total_flow = 0
     number_of_plants = sum(all_nodes_df['Type']=='PLANT')
+
     for node, row in all_nodes_df.iterrows():
         if row['Type'] == 'CONSUMER':
-            substation_mass_flows_df[node] = 1 # virtual consumer mass flow requirement
+            node_mass_flows_df[node] = 1 # virtual consumer mass flow requirement
             total_flow += 1
     for node, row in all_nodes_df.iterrows():
         if row['Type'] == 'PLANT':
-            substation_mass_flows_df[node] = - total_flow / number_of_plants  # virtual plant supply mass flow
-    mass_flow_guess = calc_mass_flow_edges(edge_node_df, substation_mass_flows_df, all_nodes_df)[0]
+            node_mass_flows_df[node] = - total_flow / number_of_plants  # virtual plant supply mass flow
+    mass_flow_guess = calc_mass_flow_edges(edge_node_df, node_mass_flows_df, all_nodes_df)[0]
 
     # The direction of flow is then corrected by inverting negative flows in mass_flow_guess.
     counter = 0
@@ -1373,8 +1383,16 @@ def get_thermal_network_from_shapefile(locator, network_type):
                 new_nodes = [edge_df['end node'][i], edge_df['start node'][i]]
                 edge_df['start node'][i] = new_nodes[0]
                 edge_df['end node'][i] = new_nodes[1]
-        mass_flow_guess = calc_mass_flow_edges(edge_node_df, substation_mass_flows_df, all_nodes_df)[0]
+        mass_flow_guess = calc_mass_flow_edges(edge_node_df, node_mass_flows_df, all_nodes_df)[0]
         counter += 1
+
+    # make sure there are no NONE-node at dead ends before proceeding
+    plant_counter = 0
+    for i in range(edge_node_df.shape[0]):
+        if np.count_nonzero(edge_node_df.iloc[i]==1) == 0:
+            plant_counter += 1
+    if number_of_plants != plant_counter:
+        raise ValueError('Please erase ', (plant_counter - number_of_plants), ' end node(s) that are neither buildings nor plants.')
 
     edge_node_df.to_csv(locator.get_optimization_network_edge_node_matrix_file(network_type))
     print (time.clock() - t0, "seconds process time for Network summary\n")
@@ -1396,7 +1414,8 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     :rtype edge_df: DataFrame
 
     """
-
+    # set precision of coordinates
+    decimals = 6
     # create node dictionary with plant and consumer nodes
     node_shapefile_df.set_index("Name", inplace=True)
     node_shapefile_df = node_shapefile_df.astype('object')
@@ -1413,8 +1432,10 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
             node_shapefile_df.loc[node, 'consumer'] = node
         else:
             node_shapefile_df.loc[node, 'none'] = node
+        coord_node_round = (round(coord_node[0],decimals),round(coord_node[1],decimals))
+        node_dict[coord_node_round] = node
 
-        node_dict[coord_node] = node
+
 
     # create edge dictionary with pipe lengths and start and end nodes
     # complete node dictionary with missing nodes (i.e., joints)
@@ -1427,12 +1448,16 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
         edge_shapefile_df.loc[pipe, 'pipe length'] = row['geometry'].length
         # get the start and end notes and add to dataframe
         edge_coords = row['geometry'].coords
-        start_node = edge_coords[0]
-        end_node = edge_coords[1]
+        start_node = (round(edge_coords[0][0],decimals),round(edge_coords[0][1],decimals))
+        end_node = (round(edge_coords[1][0],decimals),round(edge_coords[1][1],decimals))
         if start_node in node_dict.keys():
             edge_shapefile_df.loc[pipe, 'start node'] = node_dict[start_node]
+        else:
+            print('The start node of ',pipe,'has no match in node_dict, check precision of the coordinates.' )
         if end_node in node_dict.keys():
             edge_shapefile_df.loc[pipe, 'end node'] = node_dict[end_node]
+        else:
+            print('The end node of ', pipe, 'has no match in node_dict, check precision of the coordinates.')
 
     # # If a consumer node is not connected to the network, find the closest node and connect them with a new edge
     # # this part of the code was developed for a case in which the node and edge shapefiles were not defined
@@ -1564,17 +1589,20 @@ def run_as_script(scenario_path=None):
     import cea.inputlocator as inputlocator
     gv = cea.globalvar.GlobalVariables()
 
+    import cea.config
+    config = cea.config.Configuration()
+
     if scenario_path is None:
-        scenario_path = gv.scenario_reference
+        scenario_path = config.scenario
 
     locator = inputlocator.InputLocator(scenario_path=scenario_path)
 
     # add options for data sources: heating or cooling network, csv or shapefile
     network_type = ['DH', 'DC'] # set to either 'DH' or 'DC'
     source = ['csv', 'shapefile'] # set to csv or shapefile
-    set_diameter = True # this does a rule of max and mn flow to set a diameter. if false it takes the input diamters
+    set_diameter = True # this does a rule of max and min flow to set a diameter. if false it takes the input diameters
 
-    thermal_network_main(locator, gv, network_type[0], source[1], set_diameter)
+    thermal_network_main(locator, gv, network_type[1], source[1], set_diameter)
     print ('test thermal_network_main() succeeded')
 
 if __name__ == '__main__':

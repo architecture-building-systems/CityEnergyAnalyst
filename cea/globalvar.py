@@ -17,6 +17,7 @@ __status__ = "Production"
 
 class GlobalVariables(object):
     def __init__(self):
+
         self.print_partial = 'hourly'  # hourly or monthly for the demand script
         self.print_totals = True  # print yearly values
         self.print_yearly_peak = True  # print peak values
@@ -482,7 +483,7 @@ class GlobalVariables(object):
              'Eref', 'Eauxf', 'Eauxf_ve', 'Eauxf_hs', 'Eauxf_cs', 'Eauxf_ww', 'Eauxf_fw',
              'Eprof', 'Ecaf', 'Egenf_cs'],
             ['mcphsf', 'mcpcsf', 'mcpwwf', 'mcpdataf', 'mcpref'],
-            ['Twwf_sup',
+            ['Twwf_sup','T_int',
              'Twwf_re', 'Thsf_sup', 'Thsf_re',
              'Tcsf_sup', 'Tcsf_re',
              'Tcdataf_re',
