@@ -6,6 +6,8 @@ from sklearn import preprocessing
 
 from cea.utilities import latin_hypercube
 import pandas as pd
+import numpy as np
+import numpy.ma as ma
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -33,7 +35,7 @@ def latin_sampler(locator, num_samples, variables):
     """
 
     # get probability density function PDF of variables of interest
-    variable_groups = ('ENVELOPE', 'INDOOR_COMFORT', 'INTERNAL_LOADS')
+    variable_groups = ('ENVELOPE', 'INDOOR_COMFORT', 'INTERNAL_LOADS','SYSTEMS')
     database = pd.concat([pd.read_excel(locator.get_uncertainty_db(), group, axis=1)
                           for group in variable_groups])
     pdf_list = database[database['name'].isin(variables)].set_index('name')
@@ -59,25 +61,38 @@ def latin_sampler(locator, num_samples, variables):
             samples[:, i] = triang(loc=loc, c=c, scale=scale).ppf(samples[:, i])
         elif distribution == 'normal':
             samples[:, i] = norm(loc=mu, scale=stdv).ppf(samples[:, i])
+        elif distribution == 'boolean': # converts a uniform (0-1) into True/False
+            samples[:, i] = ma.make_mask(np.rint(uniform(loc=min, scale=max).ppf(samples[:, i])))
         else:  # assume it is uniform
             samples[:, i] = uniform(loc=min, scale=max).ppf(samples[:, i])
 
         #sampling into lhs normalized
-        arguments = [min, max, mu,stdv]
-        min_max_scaler = preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
-        arguments_norm = min_max_scaler.fit_transform(arguments)
-        min = arguments_norm[0]
-        max = arguments_norm[1]
-        mu = arguments_norm[2]
-        stdv = arguments_norm[3]
         if distribution == 'triangular':
+            arguments = np.array([min, max, mu]).reshape(-1,1)
+            min_max_scaler = preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
+            arguments_norm = min_max_scaler.fit_transform(arguments)
+            min = arguments_norm[0]
+            max = arguments_norm[1]
+            mu = arguments_norm[2]
             loc = min
             scale = max - min
             c = (mu - min) / (max - min)
             samples_norm[:, i] = triang(loc=loc, c=c, scale=scale).ppf(samples_norm[:, i])
         elif distribution == 'normal':
+            arguments = np.array([min, max, mu, stdv]).reshape(-1,1)
+            min_max_scaler = preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
+            arguments_norm = min_max_scaler.fit_transform(arguments)
+            mu = arguments_norm[2]
+            stdv = arguments_norm[3]
             samples_norm[:, i] = norm(loc=mu, scale=stdv).ppf(samples_norm[:, i])
-        else:  # assume it is uniform
+        elif distribution == 'boolean': # converts a uniform (0-1) into True/False
+            samples_norm[:, i] = ma.make_mask(np.rint(uniform(loc=min, scale=max).ppf(samples_norm[:, i])))
+        else: # assume it is uniform
+            arguments = np.array([min, max]).reshape(-1,1)
+            min_max_scaler = preprocessing.MinMaxScaler(copy=True, feature_range=(0, 1))
+            arguments_norm = min_max_scaler.fit_transform(arguments)
+            min = arguments_norm[0]
+            max = arguments_norm[1]
             samples_norm[:, i] = uniform(loc=min, scale=max).ppf(samples_norm[:, i])
 
     return [samples, samples_norm], pdf_list

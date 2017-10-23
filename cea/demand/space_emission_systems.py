@@ -41,7 +41,7 @@ def calc_q_em_ls_cooling(bpr, tsd, hoy):
 
     # get properties
     theta_e = tsd['T_ext'][hoy]
-    theta_int_ini = tsd['theta_a'][hoy]
+    theta_int_ini = tsd['T_int'][hoy]
     q_em_out = tsd['Qcs_sen_sys'][hoy]
 
     q_em_max = -bpr.hvac['Qcsmax_Wm2'] * bpr.rc_model['Af']
@@ -75,7 +75,7 @@ def calc_q_em_ls_heating(bpr, tsd, hoy):
 
     # get properties
     theta_e = tsd['T_ext'][hoy]
-    theta_int_ini = tsd['theta_a'][hoy]
+    theta_int_ini = tsd['T_int'][hoy]
     q_em_out = tsd['Qhs_sen_sys'][hoy]
 
     q_em_max = bpr.hvac['Qhsmax_Wm2'] * bpr.rc_model['Af']

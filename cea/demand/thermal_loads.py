@@ -76,35 +76,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :returns: This function does not return anything
     :rtype: NoneType
 """
-    tsd = initialize_timestep_data(bpr, weather_data)
-
-    # get schedules
-    list_uses = usage_schedules['list_uses']
-    archetype_schedules = usage_schedules['archetype_schedules']
-    archetype_values = usage_schedules['archetype_values']
-    schedules = occupancy_model.calc_schedules(list_uses, archetype_schedules, bpr.occupancy, archetype_values)
-
-    # calculate occupancy schedule and occupant-related parameters
-    tsd['people'] = schedules['people'] * bpr.rc_model['Af']
-    tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6) * bpr.rc_model['Af']  # in m3/h
-    tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp'] * bpr.rc_model['Af']  # in W
-
-    # get electrical loads (no auxiliary loads)
-    tsd = electrical_loads.calc_Eint(tsd, bpr, schedules)
-
-    # get refrigeration loads
-    tsd['Qcref'], tsd['mcpref'], \
-    tsd['Tcref_re'], tsd['Tcref_sup'] = np.vectorize(refrigeration_loads.calc_Qcref)(tsd['Eref'])
-
-    # get server loads
-    tsd['Qcdataf'], tsd['mcpdataf'], \
-    tsd['Tcdataf_re'], tsd['Tcdataf_sup'] = np.vectorize(datacenter_loads.calc_Qcdataf)(tsd['Edataf'])
-
-    # ground water temperature in C during heating season (winter) according to norm
-    tsd['Twwf_re'][:] = bpr.building_systems['Tww_re_0']
-
-    # ground water temperature in C during non-heating season (summer) according to norm  -  FIXME: which norm?
-    tsd['Twwf_re'][gv.seasonhours[0] + 1:gv.seasonhours[1] - 1] = 14
+    schedules, tsd = initialize_inputs(bpr, gv, usage_schedules, weather_data)
 
     if bpr.rc_model['Af'] > 0:  # building has conditioned area
 
@@ -115,9 +87,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd = controllers.calc_simple_temp_control(tsd, bpr.comfort, gv.seasonhours[0] + 1, gv.seasonhours[1],
                                                    date.dayofweek)
 
-        # # latent heat gains
-        tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr.internal_loads['X_ghp'], bpr.rc_model['Af'],
-                                                     bpr.hvac['type_cs'], bpr.hvac['type_hs'])
+
 
         # end-use demand calculation
         for t in range(-720, 8760):
@@ -131,7 +101,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
                 # OVERWRITE STATIC INFILTRATION WITH DYNAMIC INFILTRATION RATE
                 dict_props_nat_vent = ventilation_air_flows_detailed.get_properties_natural_ventilation(bpr, gv)
                 qm_sum_in, qm_sum_out = ventilation_air_flows_detailed.calc_air_flows(
-                    tsd['theta_a'][hoy - 1] if not np.isnan(tsd['theta_a'][hoy - 1]) else tsd['T_ext'][hoy - 1],
+                    tsd['T_int'][hoy - 1] if not np.isnan(tsd['T_int'][hoy - 1]) else tsd['T_ext'][hoy - 1],
                     tsd['u_wind'][hoy], tsd['T_ext'][hoy], dict_props_nat_vent)
                 # INFILTRATION IS FORCED NOT TO REACH ZERO IN ORDER TO AVOID THE RC MODEL TO FAIL
                 tsd['m_ve_inf'][hoy] = max(qm_sum_in / 3600, 1 / 3600)
@@ -153,7 +123,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         tsd['Qcs_sen_incl_em_ls'] = tsd['Qcs_sen_sys'] + tsd['Qcs_em_ls']
 
         # Calc of Qhs_dis_ls/Qcs_dis_ls - losses due to distribution of heating/cooling coils
-        Qhs_d_ls, Qcs_d_ls = np.vectorize(sensible_loads.calc_Qhs_Qcs_dis_ls)(tsd['theta_a'], tsd['T_ext'],
+        Qhs_d_ls, Qcs_d_ls = np.vectorize(sensible_loads.calc_Qhs_Qcs_dis_ls)(tsd['T_int'], tsd['T_ext'],
                                                                               tsd['Qhs_sen_incl_em_ls'],
                                                                               tsd['Qcs_sen_incl_em_ls'],
                                                                               bpr.building_systems['Ths_sup_0'],
@@ -190,7 +160,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
         # calc hot water load
         Mww, tsd['Qww'], Qww_ls_st, tsd['Qwwf'], Qwwf_0, Tww_st, Vww, Vw, tsd['mcpwwf'] = hotwater_loads.calc_Qwwf(
             bpr.building_systems['Lcww_dis'], bpr.building_systems['Lsww_dis'], bpr.building_systems['Lvww_c'],
-            bpr.building_systems['Lvww_dis'], tsd['T_ext'], tsd['theta_a'], tsd['Twwf_re'],
+            bpr.building_systems['Lvww_dis'], tsd['T_ext'], tsd['T_int'], tsd['Twwf_re'],
             bpr.building_systems['Tww_sup_0'], bpr.building_systems['Y'], gv, schedules,
             bpr)
 
@@ -260,6 +230,38 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     return
 
 
+def initialize_inputs(bpr, gv, usage_schedules, weather_data):
+    #this is used in the NN please do not erase or change!!
+    tsd = initialize_timestep_data(bpr, weather_data)
+    # get schedules
+    list_uses = usage_schedules['list_uses']
+    archetype_schedules = usage_schedules['archetype_schedules']
+    archetype_values = usage_schedules['archetype_values']
+    schedules = occupancy_model.calc_schedules(list_uses, archetype_schedules, bpr.occupancy, archetype_values)
+
+    # calculate occupancy schedule and occupant-related parameters
+    tsd['people'] = schedules['people'] * bpr.rc_model['Af']
+    tsd['ve'] = schedules['ve'] * (bpr.comfort['Ve_lps'] * 3.6) * bpr.rc_model['Af']  # in m3/h
+    tsd['Qs'] = schedules['Qs'] * bpr.internal_loads['Qs_Wp'] * bpr.rc_model['Af']  # in W
+    # # latent heat gains
+    tsd['w_int'] = sensible_loads.calc_Qgain_lat(schedules, bpr.internal_loads['X_ghp'], bpr.rc_model['Af'],
+                                                 bpr.hvac['type_cs'], bpr.hvac['type_hs'])
+    # get electrical loads (no auxiliary loads)
+    tsd = electrical_loads.calc_Eint(tsd, bpr, schedules)
+    # get refrigeration loads
+    tsd['Qcref'], tsd['mcpref'], \
+    tsd['Tcref_re'], tsd['Tcref_sup'] = np.vectorize(refrigeration_loads.calc_Qcref)(tsd['Eref'])
+    # get server loads
+    tsd['Qcdataf'], tsd['mcpdataf'], \
+    tsd['Tcdataf_re'], tsd['Tcdataf_sup'] = np.vectorize(datacenter_loads.calc_Qcdataf)(tsd['Edataf'])
+    # ground water temperature in C during heating season (winter) according to norm
+    tsd['Twwf_re'][:] = bpr.building_systems['Tww_re_0']
+    # ground water temperature in C during non-heating season (summer) according to norm  -  FIXME: which norm?
+    tsd['Twwf_re'][gv.seasonhours[0] + 1:gv.seasonhours[1] - 1] = 14
+
+    return schedules, tsd
+
+
 def initialize_timestep_data(bpr, weather_data):
     """
     initializes the time step data with the weather data and the minimum set of variables needed for computation.
@@ -276,7 +278,7 @@ def initialize_timestep_data(bpr, weather_data):
            'T_sky': weather_data.skytemp_C.values,
            'u_wind': weather_data.windspd_ms}
     # fill data with nan values
-    nan_fields = ['Qhs_lat_sys', 'Qhs_sen_sys', 'Qcs_lat_sys', 'Qcs_sen_sys', 'theta_a', 'theta_m', 'theta_c',
+    nan_fields = ['Qhs_lat_sys', 'Qhs_sen_sys', 'Qcs_lat_sys', 'Qcs_sen_sys', 'T_int', 'theta_m', 'theta_c',
                   'theta_o', 'Qhs_sen', 'Qcs_sen', 'Ehs_lat_aux', 'Qhs_em_ls', 'Qcs_em_ls', 'ma_sup_hs', 'ma_sup_cs',
                   'Ta_sup_hs', 'Ta_sup_cs', 'Ta_re_hs', 'Ta_re_cs', 'I_sol', 'w_int', 'I_rad', 'QEf', 'QHf', 'QCf',
                   'Ef', 'Qhsf', 'Qhs', 'Qhsf_lat', 'Egenf_cs',
@@ -388,11 +390,15 @@ class BuildingProperties(object):
             prop_envelope = self.apply_overrides(prop_envelope)
             prop_internal_loads = self.apply_overrides(prop_internal_loads)
             prop_comfort = self.apply_overrides(prop_comfort)
+            prop_HVAC_result = self.apply_overrides(prop_HVAC_result)
 
         # get properties of rc demand model
         prop_rc_model = self.calc_prop_rc_model(prop_occupancy, prop_envelope,
                                                 prop_geometry, prop_HVAC_result, surface_properties,
                                                 gv)
+
+
+
 
         # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         # TODO: to check if the Win_op and height of window is necessary.
@@ -591,6 +597,7 @@ class BuildingProperties(object):
         df['Atot'] = df[['Aw', 'Aop_sup', 'footprint', 'Aop_bel']].sum(axis=1) + (df['Aroof'] * (df['floors'] - 1))
 
         df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
+        df['surface_volume'] = (df['Aop_sup']+ df['Aroof'])/(df['GFA_m2']*gv.Z) # surface to volume ratio
 
         for building in df.index.values:
             if hvac_temperatures.loc[building, 'type_hs'] == 'T0' and \
@@ -600,7 +607,7 @@ class BuildingProperties(object):
         df['Af'] = df['GFA_m2'] * df['Hs']  # conditioned area - areas not heated/cooled
         df['Aef'] = df['GFA_m2'] * gv.Es  # conditioned area only those for electricity
 
-        if 'Cm' in self.get_overrides_columns():
+        if 'Cm_Af' in self.get_overrides_columns():
             # Internal heat capacity is not part of input, calculate [J/K]
             df['Cm'] = self._overrides['Cm_Af'] * df['Af']
         else:
@@ -622,7 +629,8 @@ class BuildingProperties(object):
         df['Htr_is'] = gv.his * df['Atot']
 
         fields = ['Awall_all', 'Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',
-                  'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'Htr_w', 'GFA_m2']
+                  'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'Htr_w', 'GFA_m2', 'surface_volume', 'Aop_sup', 'Aop_bel',
+                  'footprint']
         result = df[fields]
         return result
 

@@ -85,8 +85,8 @@ def sax_optimization(locator, data, time_series_len, BOUND_LOW, BOUND_UP, NGEN, 
         complexity = calc_complexity(sax)
         compression = calc_compression(ind[0], time_series_len)
         f1 = accurracy#0.7 * accurracy + 0.17 * complexity + 0.13 * compression #information objective to maximize
-        f2 = complexity #silhouette_score(np.array(data), np.array(sax))  # metrics.silhuette score_score(data, sax)
-        f3 = compression#silhouette_score(np.array(data), np.array(sax))#len(set(sax)) # number of clusters to minimize
+        f2 = complexity #silhouette_score(np.array(data), np.array(clustering))  # metrics.silhuette score_score(data, clustering)
+        f3 = compression#silhouette_score(np.array(data), np.array(clustering))#len(set(clustering)) # number of clusters to minimize
 
         return f1, f2, f3
 
