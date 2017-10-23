@@ -727,7 +727,7 @@ def calc_Crem_pv(E_nom):
     KEV_obtained_in_RpPerkWh = KEV_interpolated_kW(E_nom / 1000.0)
     return KEV_obtained_in_RpPerkWh
 
-def test_photovoltaic():
+def run_as_script():
     import cea.config
 
     config = cea.config.Configuration()
@@ -748,4 +748,4 @@ def test_photovoltaic():
 
 
 if __name__ == '__main__':
-    test_photovoltaic()
+    run_as_script()
