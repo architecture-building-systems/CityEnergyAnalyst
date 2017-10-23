@@ -382,14 +382,12 @@ def get_longitude(scenario_path):
     return lon
 
 
-def run_as_script(scenario_path=None, weather_path=None, latitude=None, longitude=None, year=None):
+def run_as_script(scenario_path, weather_path=None, latitude=None, longitude=None, year=None):
     import cea.inputlocator
     gv = cea.globalvar.GlobalVariables()
-    if scenario_path is None:
-        scenario_path = gv.scenario_reference
     locator = cea.inputlocator.InputLocator(scenario_path)
-    if weather_path is None:
-        weather_path = locator.get_default_weather()
+    weather_path = locator.get_weather(weather_path)
+
     if latitude is None:
         latitude = get_latitude(scenario_path)
     if longitude is None:
@@ -445,15 +443,8 @@ def get_python_exe():
 
 
 if __name__ == '__main__':
-    import argparse
+    import cea.config
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    parser.add_argument('-w', '--weather', help='Path to the weather file')
-    parser.add_argument('--latitude', help='Latitutde', )
-    parser.add_argument('--longitude', help='Longitude', )
-    parser.add_argument('--year', help='Year', )
-    args = parser.parse_args()
-
-    run_as_script(scenario_path=args.scenario, weather_path=args.weather, latitude=args.latitude,
-                  longitude=args.longitude, year=args.year)
+    config = cea.config.Configuration()
+    run_as_script(scenario_path=config.scenario, weather_path=config.weather, latitude=config.radiation.latitude,
+                  longitude=config.radiation.longitude, year=config.radiation.year)
