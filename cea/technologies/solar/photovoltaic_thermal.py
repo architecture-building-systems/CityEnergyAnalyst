@@ -10,7 +10,6 @@ import pandas as pd
 import time
 import fiona
 from math import *
-import cea.globalvar
 import cea.inputlocator
 from cea.technologies.solar.photovoltaic import calc_properties_PV_db, calc_PV_power, calc_diffuseground_comp, \
     calc_Sm_PV
@@ -528,11 +527,12 @@ def calc_Cinv_PVT(P_peak, gv):
 
     return InvCa
 
-def test_PVT():
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    weather_path = locator.get_default_weather()
+def run_as_script():
+    import cea.config
+
+    config = cea.config.Configuration()
+    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
+    weather_path = locator.get_weather(config.weather)
     list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
     with fiona.open(locator.get_zone_geometry()) as shp:
@@ -547,4 +547,4 @@ def test_PVT():
                  longitude=longitude, weather_path=weather_path, building_name=building)
 
 if __name__ == '__main__':
-    test_PVT()
+    run_as_script()
