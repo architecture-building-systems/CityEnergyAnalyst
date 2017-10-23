@@ -51,7 +51,7 @@ def run_as_script():
     variables_to_plot = ['E_PV_gen_kWh', 'radiation_kWh']
     initial_date = '1/1/2015'
     list_of_buildings = ['all']  # 'all' for all buildings or else provide a list of building names
-    period = [1, 8750] # period in hours of the year to viualize
+    period = [1, 168] # period in hours of the year to viualize
     calc_spatio_temporal_visuals(locator, period, variables_to_plot, list_of_buildings, initial_date)
 
 if __name__ == '__main__':
