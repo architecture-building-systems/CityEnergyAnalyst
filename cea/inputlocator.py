@@ -25,7 +25,6 @@ class InputLocator(object):
         self.scenario_path = scenario_path
         self.db_path = os.path.join(os.path.dirname(__file__), 'databases')
         self.weather_path = os.path.join(self.db_path, 'weather')
-        self.config = cea.config.Configuration(scenario=scenario_path)
 
     @staticmethod
     def _ensure_folder(*components):
@@ -322,7 +321,7 @@ class InputLocator(object):
         """weather/Zug-2010.epw
         path to database of archetypes file Archetypes_properties.xlsx"""
         import cea.config
-        config = cea.config.Configuration(self.scenario_path)
+        config = cea.config.Configuration()
         if not os.path.exists(config.weather):
             if config.weather in self.get_weather_names():
                 return self.get_weather(config.weather)
@@ -331,7 +330,13 @@ class InputLocator(object):
         return config.weather
 
     def get_weather(self, name):
-        """weather/{name}.epw"""
+        """weather/{name}.epw Returns the path to a weather file with the name ``name``. This can either be one
+        of the pre-configured weather files (see ``get_weather_names``) or a path to an existing weather file.
+        Returns the default weather file if no other file can be resolved."""
+        if not name:
+            return self.get_default_weather()
+        if os.path.exists(name) and name.endswith('.epw'):
+            return name
         weather_file = os.path.join(self.weather_path, name + '.epw')
         if not os.path.exists(weather_file):
             return self.get_default_weather()
@@ -349,7 +354,8 @@ class InputLocator(object):
         result_file = os.path.join(result_folder, filename)
         if not os.path.exists(result_file):
             # copy it from the database
-            shutil.copyfile(os.path.join(self.db_path, self.config.region, folder, filename), result_file)
+            config = cea.config.Configuration()
+            shutil.copyfile(os.path.join(self.db_path, config.region, folder, filename), result_file)
         return result_file
 
     def get_archetypes_properties(self):

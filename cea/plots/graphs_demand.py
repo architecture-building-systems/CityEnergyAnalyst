@@ -49,7 +49,7 @@ def graphs_demand(locator, analysis_fields):
     num_buildings = len(building_names)
 
     print('Storing results in: %s' % locator.get_demand_plots_folder())
-    config = cea.config.Configuration(locator.scenario_path)
+    config = cea.config.Configuration()
     if config.multiprocessing and multiprocessing.cpu_count() > 1:
         pool = multiprocessing.Pool()
         print("Using %i CPU's" % multiprocessing.cpu_count())
