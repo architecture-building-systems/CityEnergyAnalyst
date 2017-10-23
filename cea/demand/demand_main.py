@@ -135,9 +135,7 @@ def run_as_script(scenario_path=None, weather_path=None, use_dynamic_infiltratio
                   multiprocessing=True):
     assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    # for the interface, the user should pick a file out of of those in ...DB/Weather/...
-    if weather_path is None:
-        weather_path = locator.get_default_weather()
+    weather_path = locator.get_weather(weather_path)
 
     print('Running demand calculation for scenario %(scenario_path)s' % locals())
     print('Running demand calculation with weather file %(weather_path)s' % locals())

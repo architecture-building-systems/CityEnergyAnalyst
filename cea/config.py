@@ -16,7 +16,7 @@ class Configuration(object):
 
         ## ADD NEW PARAMETERS HERE
         self.add_section('general',
-                         PathParameter('default-scenario'),
+                         PathParameter('scenario'),
                          ChoiceParameter('region', ['CH', 'SIN']),
                          WeatherPathParameter('weather'),
                          BooleanParameter('multiprocessing'))
@@ -87,8 +87,8 @@ class Configuration(object):
     def _read_config_file(self, config_file):
         """Read in the configuration information from the home folder (cea.config)"""
         if not config_file:
-            config_file = [os.path.expanduser('~/cea.config'),
-                           os.path.join(os.path.dirname(__file__), 'default.config')]
+            config_file = [os.path.join(os.path.dirname(__file__), 'default.config'),
+                           os.path.expanduser('~/cea.config')]
         self._config_file = config_file
         self.config_parser = ConfigParser.SafeConfigParser()
         # read from the user config file, with the default.config as a backup
@@ -128,7 +128,8 @@ class Section(object):
         self._parameters = {}
 
     def __getattr__(self, attr):
-        return self._parameters[config_identifier(attr)].read(config.config_parser, self._name)
+        print('getting attr:', attr, type(self))
+        return self._parameters[config_identifier(attr)].read(self._config.config_parser, self._name)
 
     def add_parameter(self, parameter):
         """Add a new parameter to a section, using ``parameter_type`` to parse and unparse the values"""
@@ -225,8 +226,8 @@ class ChoiceParameter(Parameter):
 
 if __name__ == '__main__':
     config = Configuration()
-    print(config.general.default_scenario)
+    print(config.general.scenario)
     print(config.general.multiprocessing)
     print(config.demand.heating_season_start)
-    print(config.default_scenario)
+    print(config.scenario)
     print(config.weather)
