@@ -748,11 +748,14 @@ def calc_Cinv_SC(Area, gv):
 
 
 
-def test_solar_collector():
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
+def run_as_script():
+    import cea.config
+
+    config = cea.config.Configuration()
+    scenario_path = config.scenario
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    weather_path = locator.get_default_weather()
+    weather_path = locator.get_weather(config.weather)
+
     list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
     with fiona.open(locator.get_zone_geometry()) as shp:
@@ -767,4 +770,4 @@ def test_solar_collector():
                 longitude=longitude, weather_path=weather_path, building_name=building)
 
 if __name__ == '__main__':
-    test_solar_collector()
+    run_as_script()
