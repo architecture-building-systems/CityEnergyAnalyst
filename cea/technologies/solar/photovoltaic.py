@@ -52,7 +52,7 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
     :return: Building_PV.csv with PV generation potential of each building, Building_sensors.csv with sensor data of
              each PV panel.
     """
-    settings = cea.config.Configuration(locator.scenario_path).solar
+    settings = cea.config.Configuration().solar
 
     t0 = time.clock()
 
@@ -728,11 +728,11 @@ def calc_Crem_pv(E_nom):
     return KEV_obtained_in_RpPerkWh
 
 def test_photovoltaic():
+    import cea.config
 
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    weather_path = locator.get_default_weather()
+    config = cea.config.Configuration()
+    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
+    weather_path = locator.get_weather(config.weather)
     list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
     with fiona.open(locator.get_zone_geometry()) as shp:
