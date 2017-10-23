@@ -60,6 +60,11 @@ class Configuration(object):
                          RealParameter('eff-pumping'),
                          RealParameter('k-msc-max'))
 
+        self.add_section('radiation',
+                         RealParameter('longitude'),
+                         RealParameter('latitude'),
+                         IntegerParameter('year'))
+
         self.add_section('radiation-daysim',
                          IntegerParameter('rad-n'),
                          StringParameter('rad-af'),
@@ -194,7 +199,10 @@ class RealParameter(Parameter):
         return format(value, ".%i" % self._decimal_places)
 
     def decode(self, value):
-        return float(value)
+        try:
+            return float(value)
+        except ValueError:
+            return None
 
 class ListParameter(Parameter):
     """A parameter that is a list of whitespace-separated strings. An error is raised when writing
