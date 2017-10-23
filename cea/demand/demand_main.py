@@ -67,19 +67,10 @@ def demand_calculation(locator, weather_path, gv, use_dynamic_infiltration_calcu
 
     t0 = time.clock()
 
-    date = pd.date_range(gv.date_start, periods=8760, freq='H')
-
     # weather model
     weather_data = epwreader.epw_reader(weather_path)[['drybulb_C', 'wetbulb_C', 'relhum_percent', 'windspd_ms', 'skytemp_C']]
 
-    # building properties model
-    building_properties = BuildingProperties(locator, gv)
-
-    # schedules model
-    list_uses = list(building_properties._prop_occupancy.drop('PFloor', axis=1).columns)
-    archetype_schedules, archetype_values = occupancy_model.schedule_maker(date, locator, list_uses)
-    schedules_dict = {'list_uses': list_uses, 'archetype_schedules': archetype_schedules, 'occupancy_densities':
-        archetype_values['people'], 'archetype_values': archetype_values}
+    building_properties, schedules_dict, date = properties_and_schedule(gv, locator)
 
     # in case gv passes a list of specific buildings to simulate.
     if gv.simulate_building_list:
@@ -100,6 +91,20 @@ def demand_calculation(locator, weather_path, gv, use_dynamic_infiltration_calcu
         return totals, time_series
 
     gv.log('done - time elapsed: %(time_elapsed).2f seconds', time_elapsed=time.clock() - t0)
+
+
+def properties_and_schedule(gv, locator):
+    # this script is called from the Neural network please do not mes up with it!.
+
+    date = pd.date_range(gv.date_start, periods=8760, freq='H')
+    # building properties model
+    building_properties = BuildingProperties(locator, gv)
+    # schedules model
+    list_uses = list(building_properties._prop_occupancy.drop('PFloor', axis=1).columns)
+    archetype_schedules, archetype_values = occupancy_model.schedule_maker(date, locator, list_uses)
+    schedules_dict = {'list_uses': list_uses, 'archetype_schedules': archetype_schedules, 'occupancy_densities':
+        archetype_values['people'], 'archetype_values': archetype_values}
+    return building_properties, schedules_dict, date
 
 
 def thermal_loads_all_buildings(building_properties, date, gv, locator, list_building_names, usage_schedules,

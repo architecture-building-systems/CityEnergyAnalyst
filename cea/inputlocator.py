@@ -734,6 +734,46 @@ class InputLocator(object):
         """Returns the path to a file in the temporary folder with the name `filename`"""
         return os.path.join(self.get_temporary_folder(), filename)
 
+    def get_surrogate_folder(self):
+        """scenario/outputs/data/surrogate"""
+        return self._ensure_folder(self.scenario_path, 'outputs', 'surrogate_model')
+
+    def get_nn_inout_folder(self):
+        """scenario/outputs/data/surrogate"""
+        return self._ensure_folder(self.scenario_path, 'outputs', 'surrogate_model','inputs_outputs')
+
+    def get_neural_network_folder(self):
+        """scenario/outputs/data/surrogate/neural_network_folder"""
+        return self._ensure_folder(self.scenario_path, 'outputs', 'surrogate_model','neural_network')
+
+    def get_minmaxscaler_folder(self):
+        """scenario/outputs/data/surrogate/neural_network_folder"""
+        return self._ensure_folder(self.scenario_path, 'outputs', 'surrogate_model', 'minmaxscalar')
+
+    def get_neural_network_model(self):
+        """scenario/outputs/data/surrogate/neural_network_folder"""
+        structure = os.path.join(self.get_neural_network_folder(), 'nn_structure.json')
+        matrix = os.path.join(self.get_neural_network_folder(), 'nn_matrix.h5')
+        return structure, matrix
+
+    def get_neural_network_resume(self):
+        """scenario/outputs/data/surrogate/neural_network_folder"""
+        model_resume = os.path.join(self.get_neural_network_folder(), 'model_resume.h5')
+        return model_resume
+
+    def get_minmaxscalar_model(self):
+        """scenario/outputs/data/surrogate/neural_network_folder"""
+        scalerX_file = os.path.join(self.get_neural_network_folder(), 'scalerX.save')
+        scalerT_file = os.path.join(self.get_neural_network_folder(), 'scalerT.save')
+        return scalerX_file, scalerT_file
+
+    def get_neural_network_estimates(self):
+        """scenario/outputs/data/surrogate/neural_network_folder"""
+        return os.path.join(self.get_neural_network_folder(), 'model_estimates.csv')
+
+    def get_result_building_NN(self, name):
+        """scenario/outputs/data/surrogate/neural_network_folder"""
+        return os.path.join(self.get_neural_network_folder(), name+'.csv')
 
 class ReferenceCaseOpenLocator(InputLocator):
     """This is a special InputLocator that extracts the builtin reference case
