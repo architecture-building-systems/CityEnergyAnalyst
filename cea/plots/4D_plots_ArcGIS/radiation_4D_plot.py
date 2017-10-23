@@ -30,6 +30,7 @@ def calc_spatio_temporal_visuals(locator, period, variables_to_plot, initial_dat
         geometry = data.set_index('SURFACE')
         solar = pd.read_json(locator.get_radiation_building(building))
         surfaces = solar.columns.values
+        print (building)
 
         for surface in surfaces:
             Xcoor = geometry.loc[surface, 'Xcoor']
