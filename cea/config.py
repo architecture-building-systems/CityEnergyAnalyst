@@ -38,6 +38,10 @@ class Configuration(object):
                          ListParameter('scenarios'),
                          PathParameter('output-path'))
 
+        self.add_section('heatmaps', config_parser,
+                         RelativePathParameter('file-to-analyze'),
+                         ListParameter('analysis-fields'))
+
         self.add_section('demand', config_parser,
                          DateParameter('heating-season-start'),
                          DateParameter('heating-season-end'),
@@ -163,6 +167,9 @@ class Parameter(object):
 
 
 class PathParameter(Parameter):
+    pass
+
+class RelativePathParameter(Parameter):
     pass
 
 class WeatherPathParameter(Parameter):
