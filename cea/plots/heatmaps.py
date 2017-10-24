@@ -47,7 +47,8 @@ def heatmaps(locator, analysis_fields, file_to_analyze):
         path_results = locator.get_heatmaps_emission_folder()
     else:
         raise ValueError(
-            'file_to_analyze must be either the demand totals file or a file in the emissions results folder')
+            'file_to_analyze must be either the demand totals file or a file in the emissions results folder: %s'
+            % file_to_analyze)
     
     # local variables
     # create dbf file
@@ -107,7 +108,7 @@ def run_as_script(scenario_path=None, file_to_analyze=None, analysis_fields=None
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
 
     if not file_to_analyze or not os.path.exists(file_to_analyze):
-        file_to_analyze = os.path.join(config.scenario, config.heatmaps.file_to_analyze)
+        file_to_analyze = os.path.join(scenario_path, config.heatmaps.file_to_analyze)
 
     if not analysis_fields:
         analysis_fields = config.heatmaps.analysis_fields
