@@ -8,34 +8,37 @@ import os
 import ConfigParser
 
 
+CONFIG_FILE = [os.path.join(os.path.dirname(__file__), 'default.config'), os.path.expanduser('~/cea.config')]
+
+
 class Configuration(object):
     def __init__(self, config_file=None):
         """Read in the configuration file and configure the sections and parameters."""
-        self._read_config_file(config_file)
+        config_parser = self._read_config_file(config_file)
         self._sections = {}
 
         ## ADD NEW PARAMETERS HERE
-        self.add_section('general',
+        self.add_section('general', config_parser,
                          PathParameter('scenario'),
                          ChoiceParameter('region', ['CH', 'SIN']),
                          WeatherPathParameter('weather'),
                          BooleanParameter('multiprocessing'))
 
-        self.add_section('data-helper',
+        self.add_section('data-helper', config_parser,
                          ListParameter('archetypes'))
 
-        self.add_section('demand-graphs',
+        self.add_section('demand-graphs', config_parser,
                          ListParameter('analysis-fields'))
 
-        self.add_section('embodied-energy',
+        self.add_section('embodied-energy', config_parser,
                          IntegerParameter('year-to-calculate'))
 
-        self.add_section('scenario-plots',
+        self.add_section('scenario-plots', config_parser,
                          PathParameter('project'),
                          ListParameter('scenarios'),
                          PathParameter('output-path'))
 
-        self.add_section('demand',
+        self.add_section('demand', config_parser,
                          DateParameter('heating-season-start'),
                          DateParameter('heating-season-end'),
                          BooleanParameter('has-heating-season'),
@@ -44,7 +47,7 @@ class Configuration(object):
                          BooleanParameter('has-cooling-season'),
                          BooleanParameter('use-dynamic-infiltration-calculation'))
 
-        self.add_section('solar',
+        self.add_section('solar', config_parser,
                          DateParameter('date-start'),
                          ChoiceParameter('type-pvpanel', ['PV1', 'PV2', 'PV3']),
                          ChoiceParameter('type-scpanel', ['SC1', 'SC2']),
@@ -60,12 +63,13 @@ class Configuration(object):
                          RealParameter('eff-pumping'),
                          RealParameter('k-msc-max'))
 
-        self.add_section('radiation',
+        self.add_section('radiation', config_parser,
                          RealParameter('longitude'),
                          RealParameter('latitude'),
                          IntegerParameter('year'))
 
-        self.add_section('radiation-daysim',
+        self.add_section('radiation-daysim', config_parser,
+                         ListParameter('buildings'),
                          IntegerParameter('rad-n'),
                          StringParameter('rad-af'),
                          IntegerParameter('rad-ab'),
@@ -85,7 +89,6 @@ class Configuration(object):
                          IntegerParameter('sensor-y-dim'),
                          RealParameter('e-terrain'),
                          IntegerParameter('n-buildings-in-chunk'),
-                         BooleanParameter('multiprocessing'),
                          IntegerParameter('zone-geometry'),
                          IntegerParameter('surrounding-geometry'),
                          BooleanParameter('consider-windows'),
@@ -94,55 +97,49 @@ class Configuration(object):
 
         ## ADD NEW SECTIONS HERE
 
-    def _read_config_file(self, config_file):
+    def _read_config_file(self, config_file=None):
         """Read in the configuration information from the home folder (cea.config)"""
         if not config_file:
-            config_file = [os.path.join(os.path.dirname(__file__), 'default.config'),
-                           os.path.expanduser('~/cea.config')]
+            config_file = CONFIG_FILE
         self._config_file = config_file
-        self.config_parser = ConfigParser.SafeConfigParser()
+        config_parser = ConfigParser.SafeConfigParser()
         # read from the user config file, with the default.config as a backup
-        self.config_parser.read(config_file)
+        config_parser.read(config_file)
+        return config_parser
 
-    def add_section(self, name, *parameters):
-        section = Section(name=name, config=self)
+    def add_section(self, name, config_parser, *parameters):
+        section = Section(name=name)
         self._sections[name] = section
         for parameter in parameters:
-            section.add_parameter(parameter)
-
-    def __getattr__(self, attr):
-        identifier = config_identifier(attr)
-        if identifier in self._sections:
-            return self._sections[identifier]
-        else:
-            # assume the default section [general]
-            return getattr(self._sections['general'], identifier)
-
-    def save(self):
-        """Write this configuration to the scenario folder"""
-        assert os.path.exists(self.scenario), "Can't save to scenario: %s" % self.scenario
-        scenario_config = os.path.join(self.scenario, 'scenario.config')
-        with open(scenario_config, 'w') as f:
-            self._parser.write(f)
+            section.add_parameter(parameter, config_parser=config_parser)
+        setattr(self, python_identifier(name), section)
+        if name == 'general':
+            # treat [general] specially
+            for parameter in parameters:
+                setattr(self, python_identifier(parameter.name), getattr(section, python_identifier(parameter.name)))
 
 
 def config_identifier(python_identifier):
-    """For vanity, keep keys and section names in the config file with dashes instead of underscores and all-lowercase"""
+    """For vanity, keep keys and section names in the config file with dashes instead of underscores and
+    all-lowercase"""
     return python_identifier.lower().replace('_', '-')
+
+
+def python_identifier(config_identifier):
+    """For vanity, keep keys and section names in the config file with dashes instead of underscores and
+    all-lowercase, but use underscores for python identifiers"""
+    return config_identifier.lower().replace('-', '_')
 
 class Section(object):
     """Instances of ``Section`` describe a section in the configuration file."""
-    def __init__(self, name, config):
+    def __init__(self, name):
         self._name = name
-        self._config = config
         self._parameters = {}
 
-    def __getattr__(self, attr):
-        return self._parameters[config_identifier(attr)].read(self._config.config_parser, self._name)
-
-    def add_parameter(self, parameter):
+    def add_parameter(self, parameter, config_parser):
         """Add a new parameter to a section, using ``parameter_type`` to parse and unparse the values"""
         self._parameters[parameter.name] = parameter
+        setattr(self, python_identifier(parameter.name), parameter.read(config_parser, self._name))
 
 class Parameter(object):
     def __init__(self, name):
@@ -243,3 +240,6 @@ if __name__ == '__main__':
     print(config.demand.heating_season_start)
     print(config.scenario)
     print(config.weather)
+
+    import pickle
+    pickle.loads(pickle.dumps(config))
