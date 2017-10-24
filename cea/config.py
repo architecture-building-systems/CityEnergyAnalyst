@@ -37,6 +37,17 @@ class Configuration(object):
                          PathParameter('project'),
                          ListParameter('scenarios'),
                          PathParameter('output-path'))
+        
+        self.add_section('operation-costs', config_parser,
+                         BooleanParameter('plot-qww'),
+                         BooleanParameter('plot-qhs'),
+                         BooleanParameter('plot-qcs'),
+                         BooleanParameter('plot-qcdata'),
+                         BooleanParameter('plot-qcrefri'),
+                         BooleanParameter('plot-eal'),
+                         BooleanParameter('plot-eaux'),
+                         BooleanParameter('plot-epro'),
+                         BooleanParameter('plot-edata'))
 
         self.add_section('heatmaps', config_parser,
                          RelativePathParameter('file-to-analyze'),
