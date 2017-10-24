@@ -98,7 +98,7 @@ def trace_function(function_to_trace):
     scenario_path = extract_ninecubes()
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     gv = cea.globalvar.GlobalVariables()
-    config = cea.config.Configuration(scenario_path=scenario_path)
+    config = cea.config.Configuration()
     config._parser.set('global', 'multiprocessing', False)
     config.save()
     download_radiation(locator)
