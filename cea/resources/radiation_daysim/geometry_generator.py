@@ -102,11 +102,12 @@ def create_hollowed_facade(surface_facade, window):
     return hollowed_facade_clean, hole_facade
 
 
-def building2d23d(locator, simplification_params, height_col, nfloor_col):
+def building2d23d(locator, settings, height_col, nfloor_col):
     """
     :param locator: InputLocator - provides paths to files in a scenario
     :type locator: cea.inputlocator.InputLocator
-    :param simplification_params: parameters that configure the level of simplification of geometry
+    :param settings: parameters that configure the level of simplification of geometry
+    :type settings: cea.config.Section
     :param height_col: name of the columns storing the height of buildings
     :param nfloor_col: name ofthe column storing the number of floors in buildings.
     :return:
@@ -143,30 +144,30 @@ def building2d23d(locator, simplification_params, height_col, nfloor_col):
         nfloors = int(district_building_records.loc[name, nfloor_col])
 
         # simplify geometry tol =1 for buildings of interest, tol = 5 for surroundings
-        if (name in zone_building_names) and (simplification_params['consider_floors']== True) :
+        if (name in zone_building_names) and settings.consider_floors:
             range_floors = range(nfloors+1)
             flr2flr_height = height / nfloors
-            geometry = district_building_records.ix[name].geometry.simplify(simplification_params['zone_geometry'],
+            geometry = district_building_records.ix[name].geometry.simplify(settings.zone_geometry,
                                                                             preserve_topology=True)
         else:
             range_floors = [0,1]
             flr2flr_height = height
-            geometry = district_building_records.ix[name].geometry.simplify(simplification_params['surrounding_geometry'],
+            geometry = district_building_records.ix[name].geometry.simplify(settings.surrounding_geometry,
                                                                             preserve_topology=True)
 
         # burn buildings footprint into the terrain and return the location of the new face
         face_footprint = burn_buildings(geometry, terrain_intersection_curves)
 
         # create floors and form a solid
-        bldg_solid = calc_solid(face_footprint, range_floors, flr2flr_height)
+        building_solid = calc_solid(face_footprint, range_floors, flr2flr_height)
 
         # now get all surfaces and create windows only if the buildings are in the area of study
         window_list =[]
         wall_list = []
         if (name in zone_building_names):
-            if (simplification_params['consider_windows']== True):
+            if (settings.consider_windows):
                 # identify building surfaces according to angle:
-                face_list = py3dmodel.fetch.faces_frm_solid(bldg_solid)
+                face_list = py3dmodel.fetch.faces_frm_solid(building_solid)
                 facade_list_north, facade_list_west, \
                 facade_list_east, facade_list_south, roof_list, footprint_list = identify_surfaces_type(face_list)
 
@@ -199,12 +200,12 @@ def building2d23d(locator, simplification_params, height_col, nfloor_col):
                                      "footprint": footprint_list})
 
             else:
-                facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(bldg_solid)
+                facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(building_solid)
                 wall_list = facade_list
                 geometry_3D_zone.append({"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
                                      "footprint": footprint_list})
         else:
-            facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(bldg_solid)
+            facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(building_solid)
             wall_list = facade_list
             geometry_3D_surroundings.append({"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
                                  "footprint": footprint_list})
@@ -243,7 +244,7 @@ def calc_solid(face_footprint, range_floors, flr2flr_height):
         moved_face_list.append(moved_face)
 
     # make checks to satisfy a closed geometry also called a shell
-    bldg_solid = None
+    building_solid = None
     vertical_shell = construct.make_loft(moved_face_list)
     vertical_face_list = fetch.geom_explorer(vertical_shell, "face")
     roof = moved_face_list[-1]
@@ -252,14 +253,14 @@ def calc_solid(face_footprint, range_floors, flr2flr_height):
     all_faces.append(footprint)
     all_faces.extend(vertical_face_list)
     all_faces.append(roof)
-    bldg_shell_list = construct.make_shell_frm_faces(all_faces)
+    building_shell_list = construct.make_shell_frm_faces(all_faces)
 
-    if bldg_shell_list:
+    if building_shell_list:
         # make sure all the normals are correct (they are pointing out)
-        bldg_solid = construct.make_solid(bldg_shell_list[0])
-        bldg_solid = modify.fix_close_solid(bldg_solid)
+        building_solid = construct.make_solid(building_shell_list[0])
+        building_solid = modify.fix_close_solid(building_solid)
 
-    return bldg_solid
+    return building_solid
 
 def calc_windows_walls(facade_list, wwr):
     window_list = []
@@ -299,21 +300,22 @@ def raster2tin(input_terrain_raster):
 
     return tin_occface_list
 
-def geometry_main(locator, simplification_params):
+def geometry_main(locator, settings):
     # transform buildings 2D to 3D and add windows
-    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = building2d23d(locator, simplification_params, height_col='height_ag',
+    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = building2d23d(locator, settings, height_col='height_ag',
                                                                nfloor_col="floors_ag")
 
     return geometry_terrain, geometry_3D_zone, geometry_3D_surroundings
 
 if __name__ == '__main__':
-    locator = cea.inputlocator.ReferenceCaseOpenLocator()
-    simplification_params = cea.config.Configuration(locator.scenario_path).radiation_daysim.simplification_parameters
+    config = cea.config.Configuration()
+    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
+    settings = config.radiation_daysim
 
     # run routine City GML LOD 1
     time1 = time.time()
-    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_main(locator, simplification_params)
-    print "Geometry of the scene created in", (time.time() - time1) / 60.0, " mins"
+    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_main(locator, settings)
+    print("Geometry of the scene created in %.2f mins" % (time.time() - time1) / 60.0)
 
 
     # to visualize the results
