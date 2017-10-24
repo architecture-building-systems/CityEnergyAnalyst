@@ -108,6 +108,24 @@ class Configuration(object):
                          IntegerParameter('surrounding-geometry'),
                          BooleanParameter('consider-windows'),
                          BooleanParameter('consider-floors'))
+        
+        self.add_section('retrofit-potential', config_parser,
+                         BooleanParameter('keep-partial-matches'),
+                         StringParameter('retrofit-scenario-name'),
+                         IntegerParameter('retrofit-target-year'),
+                         IntegerParameter('age-threshold'),
+                         IntegerParameter('eui-heating-threshold'),
+                         IntegerParameter('eui-hot-water-threshold'),
+                         IntegerParameter('eui-cooling-threshold'),
+                         IntegerParameter('eui-electricity-threshold'),
+                         IntegerParameter('emissions-operation-threshold'),
+                         IntegerParameter('heating-costs-threshold'),
+                         IntegerParameter('hot-water-costs-threshold'),
+                         IntegerParameter('cooling-costs-threshold'),
+                         IntegerParameter('electricity-costs-threshold'),
+                         IntegerParameter('heating-losses-threshold'),
+                         IntegerParameter('hot-water-losses-threshold'),
+                         IntegerParameter('cooling-losses-threshold'))
 
 
         ## ADD NEW SECTIONS HERE

@@ -468,21 +468,21 @@ def retrofit_potential(args):
     locator_baseline = cea.inputlocator.InputLocator(args.scenario)
     retrofit_potential.retrofit_main(locator_baseline=locator_baseline,
                                      keep_partial_matches=args.keep_partial_matches,
-                                     name_new_scenario=args.name,
-                                     age_retrofit=args.retrofit_target_date,
-                                     age_criteria=args.age_threshold,
-                                     eui_heating_criteria=args.eui_heating_threshold,
+                                     retrofit_scenario_name=args.name,
+                                     retrofit_target_year=args.retrofit_target_date,
+                                     age_threshold=args.age_threshold,
+                                     eui_heating_threshold=args.eui_heating_threshold,
                                      eui_hotwater_criteria=args.eui_hot_water_threshold,
-                                     eui_cooling_criteria=args.eui_cooling_threshold,
-                                     eui_electricity_criteria=args.eui_electricity_threshold,
-                                     heating_costs_criteria=args.heating_costs_threshold,
+                                     eui_cooling_threshold=args.eui_cooling_threshold,
+                                     eui_electricity_threshold=args.eui_electricity_threshold,
+                                     heating_costs_threshold=args.heating_costs_threshold,
                                      hotwater_costs_criteria=args.hot_water_costs_threshold,
-                                     cooling_costs_criteria=args.cooling_costs_threshold,
-                                     electricity_costs_criteria=args.electricity_costs_threshold,
-                                     heating_losses_criteria=args.heating_losses_threshold,
+                                     cooling_costs_threshold=args.cooling_costs_threshold,
+                                     electricity_costs_threshold=args.electricity_costs_threshold,
+                                     heating_losses_threshold=args.heating_losses_threshold,
                                      hotwater_losses_criteria=args.hot_water_losses_threshold,
-                                     cooling_losses_criteria=args.cooling_losses_threshold,
-                                     emissions_operation_criteria=args.emissions_operation_threshold)
+                                     cooling_losses_threshold=args.cooling_losses_threshold,
+                                     emissions_operation_threshold=args.emissions_operation_threshold)
 
 
 def read_config(args):
