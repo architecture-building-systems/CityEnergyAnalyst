@@ -85,46 +85,6 @@ def cooling_system_is_ac(bpr):
         return False
 
 
-def cooling_system_is_mini_split(bpr):
-    """
-    determines whether a building's cooling system is mini-split unit ac (T2)
-
-    :param bpr: building properties row object
-    :type bpr: BuildingPropertiesRow
-
-    :return: True/False
-    :rtype: bool
-    """
-
-    if bpr.hvac['type_cs'] in {'T2'}:
-        return True
-    elif bpr.hvac['type_cs'] in {'T0','T1','T3'}:
-        return False
-    else:
-        print('Error: Unknown cooling system')
-        return False
-
-
-def cooling_system_is_central_ac(bpr):
-    """
-    determines whether a building's cooling system is central ac (T3)
-
-    :param bpr: building properties row object
-    :type bpr: BuildingPropertiesRow
-
-    :return: True/False
-    :rtype: bool
-    """
-
-    if bpr.hvac['type_cs'] in {'T3'}:
-        return True
-    elif bpr.hvac['type_cs'] in {'T0', 'T1', 'T2'}:
-        return False
-    else:
-        print('Error: Unknown cooling system')
-        return False
-
-
 def is_active_heating_system(bpr, tsd, t):
 
     # check for heating system in building
