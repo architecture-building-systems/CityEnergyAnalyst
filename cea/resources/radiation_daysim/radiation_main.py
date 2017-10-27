@@ -227,7 +227,7 @@ if __name__ == '__main__':
 
     config = cea.config.Configuration()
     #  reference case need to be provided here
-    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     weather_path = locator.get_weather(config.weather)
 
     #  the selected buildings are the ones for which the individual radiation script is run for

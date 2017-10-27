@@ -22,7 +22,7 @@ def plot_scenarios(scenarios, output_file):
     from matplotlib.backends.backend_pdf import PdfPages
 
     locators = [cea.inputlocator.InputLocator(scenario) for scenario in scenarios]
-    scenario_names = [os.path.basename(locator.scenario_path) for locator in locators]
+    scenario_names = [os.path.basename(locator.scenario) for locator in locators]
 
     pdf = PdfPages(output_file)
     try:

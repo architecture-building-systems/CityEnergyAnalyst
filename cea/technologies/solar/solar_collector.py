@@ -753,7 +753,7 @@ def run_as_script():
 
     config = cea.config.Configuration()
     scenario_path = config.scenario
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
     weather_path = locator.get_weather(config.weather)
 
     list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']

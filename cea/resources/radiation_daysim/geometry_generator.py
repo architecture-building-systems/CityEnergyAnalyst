@@ -309,7 +309,7 @@ def geometry_main(locator, settings):
 
 if __name__ == '__main__':
     config = cea.config.Configuration()
-    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     settings = config.radiation_daysim
 
     # run routine City GML LOD 1

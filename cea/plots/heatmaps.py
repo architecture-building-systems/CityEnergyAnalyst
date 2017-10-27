@@ -105,7 +105,7 @@ def run_as_script(scenario_path=None, file_to_analyze=None, analysis_fields=None
     config = cea.config.Configuration()
     if not scenario_path:
         scenario_path = config.scenario
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
 
     if not file_to_analyze or not os.path.exists(file_to_analyze):
         file_to_analyze = os.path.join(scenario_path, config.heatmaps.file_to_analyze)

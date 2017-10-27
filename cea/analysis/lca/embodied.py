@@ -304,7 +304,7 @@ def calc_code(code1, code2, code3, code4):
 
 def run_as_script(scenario_path=None, year_to_calculate=2050):
     assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
     lca_embodied(locator=locator, year_to_calculate=year_to_calculate, gv=cea.globalvar.GlobalVariables())
 
 if __name__ == '__main__':

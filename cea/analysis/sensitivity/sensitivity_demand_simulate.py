@@ -65,7 +65,7 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
     if os.path.exists(simulation_path):
         shutil.rmtree(simulation_path)
     shutil.copytree(scenario_path, simulation_path)
-    locator = InputLocator(scenario_path=simulation_path)
+    locator = InputLocator(scenario=simulation_path)
 
     with open(os.path.join(samples_path, 'problem.pickle'), 'r') as f:
         problem = pickle.load(f)
@@ -81,7 +81,7 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
         print("Setting prop_overrides['%s'] to %s" % (key, sample[i]))
         prop_overrides[key] = sample[i]
 
-    sample_locator = InputLocator(scenario_path=simulation_path)
+    sample_locator = InputLocator(scenario=simulation_path)
     prop_overrides.to_csv(sample_locator.get_building_overrides())
 
     return sample_locator

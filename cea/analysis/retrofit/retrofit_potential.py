@@ -165,7 +165,7 @@ def retrofit_main(locator_baseline, retrofit_scenario_name, keep_partial_matches
 
     # Create a retrofit case with the buildings that pass the criteria
     retrofit_scenario_path = os.path.join(locator_baseline.get_project_path(), retrofit_scenario_name)
-    locator_retrofit = cea.inputlocator.InputLocator(scenario_path=retrofit_scenario_path)
+    locator_retrofit = cea.inputlocator.InputLocator(scenario=retrofit_scenario_path)
     retrofit_scenario_creator(locator_baseline, locator_retrofit, geometry_df, age, architecture, internal_loads, comfort, hvac,
                               supply, occupancy, data, type_of_join)
 
@@ -203,7 +203,7 @@ def run_as_script(scenario_path=None):
     if scenario_path is None:
         scenario_path = config.scenario
 
-    locator_baseline = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator_baseline = cea.inputlocator.InputLocator(scenario=scenario_path)
     retrofit_main(locator_baseline=locator_baseline,
                   retrofit_scenario_name=config.retrofit_potential.retrofit_scenario_name,
                   keep_partial_matches=config.retrofit_potential.keep_partial_matches,
