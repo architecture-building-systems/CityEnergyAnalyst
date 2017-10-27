@@ -285,7 +285,7 @@ def calc_benchmark_today(locator):
 
 def test_benchmark(scenario_path):
     assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
-    locator = inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = inputlocator.InputLocator(scenario=scenario_path)
     locator_list = [locator, locator, locator, locator]
     output_file = os.path.expandvars(r'%TEMP%\test_benchmark.pdf')
     benchmark(locator_list=locator_list, output_file=output_file)
@@ -293,7 +293,7 @@ def test_benchmark(scenario_path):
 
 
 def test_benchmark_targets():
-    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case-zug\baseline')
+    locator = inputlocator.InputLocator(scenario=r'C:\reference-case-zug\baseline')
     calc_benchmark_targets(locator)
 
 

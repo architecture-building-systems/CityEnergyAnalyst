@@ -21,8 +21,8 @@ class InputLocator(object):
     It also provides locations of other files, such as those in the databases folder (e.g. archetypes).
     """
     # SCENARIO
-    def __init__(self, scenario_path):
-        self.scenario_path = scenario_path
+    def __init__(self, scenario):
+        self.scenario = scenario
         self.db_path = os.path.join(os.path.dirname(__file__), 'databases')
         self.weather_path = os.path.join(self.db_path, 'weather')
 
@@ -37,14 +37,14 @@ class InputLocator(object):
 
     def get_project_path(self):
         """Returns the parent folder of a scenario - this is called a project or 'case-study'"""
-        return os.path.dirname(self.scenario_path)
+        return os.path.dirname(self.scenario)
 
     def get_input_folder(self):
-        return os.path.join(self.scenario_path, "inputs")
+        return os.path.join(self.scenario, "inputs")
 
     def get_optimization_results_folder(self):
         """scenario/outputs/data/optimization"""
-        return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'optimization')
+        return self._ensure_folder(self.scenario, 'outputs', 'data', 'optimization')
 
     def get_optimization_master_results_folder(self):
         """scenario/outputs/data/optimization/master
@@ -264,7 +264,7 @@ class InputLocator(object):
     def get_measurements(self):
         """scenario/inputs/
         Operation pattern for disconnected buildings"""
-        return self._ensure_folder(self.scenario_path, 'inputs', 'building-metering', )
+        return self._ensure_folder(self.scenario, 'inputs', 'building-metering', )
 
     def get_optimization_disconnected_result_file(self, building_name):
         """scenario/outputs/data/optimization/disconnected/DiscOp_${building_name}_result.csv"""
@@ -296,7 +296,7 @@ class InputLocator(object):
     # POTENTIAL
     def get_potentials_folder(self):
         """scenario/outputs/data/potentials"""
-        return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'potentials')
+        return self._ensure_folder(self.scenario, 'outputs', 'data', 'potentials')
 
     def get_potentials_solar_folder(self):
         """scenario/outputs/data/potentials/solar
@@ -350,7 +350,7 @@ class InputLocator(object):
     def _get_region_specific_db_file(self, folder, filename):
         """Copy a region-specific file from the database to a scenario if it doesn't exist there yet and return the
         full path"""
-        result_folder = self._ensure_folder(self.scenario_path, 'databases', folder)
+        result_folder = self._ensure_folder(self.scenario, 'databases', folder)
         result_file = os.path.join(result_folder, filename)
         if not os.path.exists(result_file):
             # copy it from the database
@@ -409,20 +409,20 @@ class InputLocator(object):
         return os.path.join(self.db_path, 'uncertainty')
 
     def get_uncertainty_results_folder(self):
-        return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'uncertainty')
+        return self._ensure_folder(self.scenario, 'outputs', 'data', 'uncertainty')
 
     # INPUTS
 
     def get_building_geometry_folder(self):
         """scenario/inputs/building-geometry/"""
-        return self._ensure_folder(self.scenario_path, 'inputs', 'building-geometry')
+        return self._ensure_folder(self.scenario, 'inputs', 'building-geometry')
 
     def get_building_properties_folder(self):
         """scenario/inputs/building-geometry/"""
-        return self._ensure_folder(self.scenario_path, 'inputs', 'building-properties')
+        return self._ensure_folder(self.scenario, 'inputs', 'building-properties')
 
     def get_terrain_folder(self):
-        return self._ensure_folder(self.scenario_path, 'inputs', 'topography')
+        return self._ensure_folder(self.scenario, 'inputs', 'topography')
 
     def get_zone_geometry(self):
         """scenario/inputs/building-geometry/zone.shp"""
@@ -479,7 +479,7 @@ class InputLocator(object):
         return os.path.join(self.get_terrain_folder(), 'terrain.tif')
 
     def get_input_network_folder(self, network):
-        return os.path.join(self.scenario_path, 'inputs', 'networks', network)
+        return os.path.join(self.scenario, 'inputs', 'networks', network)
 
     def get_network_layout_edges_shapefile(self, network):
         """scenario/inputs/network/DH or DC/network-edges.shp"""
@@ -513,16 +513,16 @@ class InputLocator(object):
         return os.path.join(self.get_solar_radiation_folder(), 'materials.rad')
 
     def get_street_network(self):
-        return os.path.join(self.scenario_path, 'inputs', 'networks', "streets.shp")
+        return os.path.join(self.scenario, 'inputs', 'networks', "streets.shp")
 
     def get_connection_point(self):
-        return os.path.join(self.scenario_path, 'inputs', 'networks', "nodes_buildings.shp")
+        return os.path.join(self.scenario, 'inputs', 'networks', "nodes_buildings.shp")
 
     def get_connectivity_potential(self):
-        return os.path.join(self.scenario_path, 'inputs', 'networks', "potential_network.shp")
+        return os.path.join(self.scenario, 'inputs', 'networks', "potential_network.shp")
 
     def get_minimum_spanning_tree(self):
-        return os.path.join(self.scenario_path, 'inputs', 'networks', "mst_network.shp")
+        return os.path.join(self.scenario, 'inputs', 'networks', "mst_network.shp")
     # OUTPUTS
 
     #SOLAR-RADIATION
@@ -532,7 +532,7 @@ class InputLocator(object):
 
     def get_solar_radiation_folder(self):
         """scenario/outputs/data/solar-radiation"""
-        return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+        return self._ensure_folder(self.scenario, 'outputs', 'data', 'solar-radiation')
 
     def get_radiation_building(self, building_name):
         """scenario/outputs/data/solar-radiation/${building_name}_insolation_Whm2.json"""
@@ -544,12 +544,12 @@ class InputLocator(object):
 
     def get_building_list(self):
         """scenario/outputs/data/solar-radiation/radiation.csv"""
-        solar_radiation_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'solar-radiation')
+        solar_radiation_folder = os.path.join(self.scenario, 'outputs', 'data', 'solar-radiation')
         return os.path.join(solar_radiation_folder, 'radiation.csv')
 
     def get_3D_geometry_folder(self):
         """scenario/inputs/3D-geometries"""
-        return self._ensure_folder(os.path.join(self.scenario_path, 'inputs', '3D-geometries'))
+        return self._ensure_folder(os.path.join(self.scenario, 'inputs', '3D-geometries'))
 
     def get_surface_properties(self):
         """scenario/outputs/data/solar-radiation/properties_surfaces.csv"""
@@ -557,17 +557,17 @@ class InputLocator(object):
 
     def get_sensitivity_output(self, method, samples):
         """scenario/outputs/data/sensitivity-analysis/sensitivity_${METHOD}_${SAMPLES}.xls"""
-        return os.path.join(self.scenario_path, 'outputs', 'data', 'sensitivity-analysis',
+        return os.path.join(self.scenario, 'outputs', 'data', 'sensitivity-analysis',
                             'sensitivity_%(method)s_%(samples)s.xls' % locals())
 
     def get_sensitivity_plots_file(self, parameter):
         """scenario/outputs/plots/sensitivity/${PARAMETER}.pdf"""
-        return os.path.join(self.scenario_path, 'outputs', 'plots', 'sensitivity', '%s.pdf' % parameter)
+        return os.path.join(self.scenario, 'outputs', 'plots', 'sensitivity', '%s.pdf' % parameter)
 
     ## POTENTIALS #FIXME: find better placement for these two locators
 
     def solar_potential_folder(self):
-        return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'potentials', 'solar')
+        return self._ensure_folder(self.scenario, 'outputs', 'data', 'potentials', 'solar')
 
     def PV_results(self, building_name):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
@@ -575,7 +575,7 @@ class InputLocator(object):
 
     def PV_metadata_results(self, building_name):
         """scenario/outputs/data/potentials/solar/{building_name}_PV_sensors.csv"""
-        solar_potential_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'potentials', 'solar')
+        solar_potential_folder = os.path.join(self.scenario, 'outputs', 'data', 'potentials', 'solar')
         return os.path.join(solar_potential_folder, '%s_PV_sensors.csv' % building_name)
 
     def SC_results(self, building_name):
@@ -584,7 +584,7 @@ class InputLocator(object):
 
     def SC_metadata_results(self, building_name):
         """scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv"""
-        solar_potential_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'potentials', 'solar')
+        solar_potential_folder = os.path.join(self.scenario, 'outputs', 'data', 'potentials', 'solar')
         return os.path.join(solar_potential_folder, '%s_SC_sensors.csv' % building_name)
 
     def PVT_results(self, building_name):
@@ -593,14 +593,14 @@ class InputLocator(object):
 
     def PVT_metadata_results(self, building_name):
         """scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv"""
-        solar_potential_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'potentials', 'solar')
+        solar_potential_folder = os.path.join(self.scenario, 'outputs', 'data', 'potentials', 'solar')
         return os.path.join(solar_potential_folder, '%s_PVT_sensors.csv' % building_name)
 
     # DEMAND
 
     def get_demand_results_folder(self):
         """scenario/outputs/data/demand"""
-        return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'demand')
+        return self._ensure_folder(self.scenario, 'outputs', 'data', 'demand')
 
     def get_total_demand(self):
         """scenario/outputs/data/demand/Total_demand.csv"""
@@ -613,7 +613,7 @@ class InputLocator(object):
     # CALIBRATION
     def get_calibration_folder(self):
         """scenario/outputs/data/calibration"""
-        return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'calibration')
+        return self._ensure_folder(self.scenario, 'outputs', 'data', 'calibration')
 
     def get_calibration_cvrmse_file(self, building_name):
         """scenario/outputs/data/calibration"""
@@ -641,7 +641,7 @@ class InputLocator(object):
 
     def get_demand_measured_folder(self):
         """scenario/outputs/data/demand"""
-        return self._ensure_folder(self.scenario_path, 'inputs', 'building-metering')
+        return self._ensure_folder(self.scenario, 'inputs', 'building-metering')
 
     def get_demand_measured_file(self, building_name):
         """scenario/outputs/data/demand/{building_name}.csv"""
@@ -676,7 +676,7 @@ class InputLocator(object):
     #EMISSIONS
     def get_lca_emissions_results_folder(self):
         """scenario/outputs/data/emissions"""
-        lca_emissions_results_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'emissions')
+        lca_emissions_results_folder = os.path.join(self.scenario, 'outputs', 'data', 'emissions')
         if not os.path.exists(lca_emissions_results_folder):
             os.makedirs(lca_emissions_results_folder)
         return lca_emissions_results_folder
@@ -696,7 +696,7 @@ class InputLocator(object):
     #COSTS
     def get_costs_folder(self):
         """scenario/outputs/data/costs"""
-        return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'costs')
+        return self._ensure_folder(self.scenario, 'outputs', 'data', 'costs')
 
     def get_costs_operation_file(self, load):
         """scenario/outputs/data/costs/{load}_cost_operation.pdf"""
@@ -705,7 +705,7 @@ class InputLocator(object):
     #RETROFIT POTENTIAL
     def get_costs_folder(self):
         """scenario/outputs/data/costs"""
-        return self._ensure_folder(self.scenario_path, 'outputs', 'data', 'costs')
+        return self._ensure_folder(self.scenario, 'outputs', 'data', 'costs')
 
     def get_costs_operation_file(self, load):
         """scenario/outputs/data/costs/{load}_cost_operation.pdf"""
@@ -714,7 +714,7 @@ class InputLocator(object):
     #GRAPHS
     def get_demand_plots_folder(self):
         """scenario/outputs/plots/timeseries"""
-        return self._ensure_folder(self.scenario_path, 'outputs', 'plots', 'timeseries')
+        return self._ensure_folder(self.scenario, 'outputs', 'plots', 'timeseries')
 
     def get_demand_plots_file(self, building_name):
         """scenario/outputs/plots/timeseries/{building_name}.pdf"""
@@ -726,21 +726,21 @@ class InputLocator(object):
 
     def get_benchmark_plots_file(self):
         """scenario/outputs/plots/graphs/Benchmark_scenarios.pdf"""
-        return os.path.join(self._ensure_folder(self.scenario_path, 'outputs', 'plots', 'graphs'),
+        return os.path.join(self._ensure_folder(self.scenario, 'outputs', 'plots', 'graphs'),
                             'Benchmark_scenarios.pdf')
 
     def get_optimization_plots_folder(self):
         """scenario/outputs/plots/graphs/Benchmark_scenarios.pdf"""
-        return os.path.join(self._ensure_folder(self.scenario_path, 'outputs', 'plots', 'graphs'))
+        return os.path.join(self._ensure_folder(self.scenario, 'outputs', 'plots', 'graphs'))
 
     # HEATMAPS
     def get_heatmaps_demand_folder(self):
         """scenario/outputs/plots/heatmaps"""
-        return self._ensure_folder(self.scenario_path, 'outputs', 'plots', 'heatmaps')
+        return self._ensure_folder(self.scenario, 'outputs', 'plots', 'heatmaps')
 
     def get_heatmaps_emission_folder(self):
         """scenario/outputs/plots/heatmaps"""
-        return self._ensure_folder(self.scenario_path, 'outputs', 'plots', 'heatmaps')
+        return self._ensure_folder(self.scenario, 'outputs', 'plots', 'heatmaps')
 
     # OTHER
     def get_temporary_folder(self):
@@ -753,19 +753,19 @@ class InputLocator(object):
 
     def get_surrogate_folder(self):
         """scenario/outputs/data/surrogate"""
-        return self._ensure_folder(self.scenario_path, 'outputs', 'surrogate_model')
+        return self._ensure_folder(self.scenario, 'outputs', 'surrogate_model')
 
     def get_nn_inout_folder(self):
         """scenario/outputs/data/surrogate"""
-        return self._ensure_folder(self.scenario_path, 'outputs', 'surrogate_model','inputs_outputs')
+        return self._ensure_folder(self.scenario, 'outputs', 'surrogate_model', 'inputs_outputs')
 
     def get_neural_network_folder(self):
         """scenario/outputs/data/surrogate/neural_network_folder"""
-        return self._ensure_folder(self.scenario_path, 'outputs', 'surrogate_model','neural_network')
+        return self._ensure_folder(self.scenario, 'outputs', 'surrogate_model', 'neural_network')
 
     def get_minmaxscaler_folder(self):
         """scenario/outputs/data/surrogate/neural_network_folder"""
-        return self._ensure_folder(self.scenario_path, 'outputs', 'surrogate_model', 'minmaxscalar')
+        return self._ensure_folder(self.scenario, 'outputs', 'surrogate_model', 'minmaxscalar')
 
     def get_neural_network_model(self):
         """scenario/outputs/data/surrogate/neural_network_folder"""
@@ -802,7 +802,7 @@ class ReferenceCaseOpenLocator(InputLocator):
         archive = zipfile.ZipFile(os.path.join(os.path.dirname(cea.examples.__file__), 'reference-case-open.zip'))
         archive.extractall(tempfile.gettempdir())
         reference_case = os.path.join(tempfile.gettempdir(), 'reference-case-open', 'baseline')
-        super(ReferenceCaseOpenLocator, self).__init__(scenario_path=reference_case)
+        super(ReferenceCaseOpenLocator, self).__init__(scenario=reference_case)
 
     def get_default_weather(self):
         """The reference-case-open uses the Zug weather file..."""

@@ -82,7 +82,7 @@ def lca_mobility(locator):
 
 def run_as_script(scenario_path=None):
     assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
     lca_mobility(locator=locator)
 
 if __name__ == '__main__':

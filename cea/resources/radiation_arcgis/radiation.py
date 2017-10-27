@@ -98,7 +98,7 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
 
     sunny_hours_pickle = locator.get_temporary_file('sunny_hours.pickle')
     run_script_in_subprocess('calculate_sunny_hours_of_year',
-                             '--scenario', locator.scenario_path,
+                             '--scenario', locator.scenario,
                              '--sunrise-pickle', sunrise_pickle,
                              '--sunny-hours-pickle', sunny_hours_pickle)
 

@@ -362,7 +362,7 @@ def get_array_HVAC_variables(building):
 def run_as_script():
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
     building_name = 'B155066'
     get_cea_inputs(locator=locator, building_name=building_name, gv=gv)
 

@@ -195,7 +195,7 @@ def task_run_demand_graphs():
             continue
         yield {
             'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.plots.graphs_demand.run_as_script, [], {
+            'actions': [(cea.plots.graphs_demand.main, [], {
                 'scenario_path': scenario_path
             })],
             'verbosity': 1,

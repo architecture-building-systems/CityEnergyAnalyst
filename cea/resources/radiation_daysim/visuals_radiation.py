@@ -49,5 +49,5 @@ if __name__ == '__main__':
 
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
     main(locator=locator)

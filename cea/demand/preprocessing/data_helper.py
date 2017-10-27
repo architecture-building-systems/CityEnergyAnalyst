@@ -332,7 +332,7 @@ def run_as_script(scenario_path, prop_architecture_flag=True, prop_hvac_flag=Tru
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
     """
     assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
     data_helper(locator=locator, prop_architecture_flag=prop_architecture_flag, prop_hvac_flag=prop_hvac_flag,
                 prop_comfort_flag=prop_comfort_flag, prop_internal_loads_flag=prop_internal_loads_flag)
 

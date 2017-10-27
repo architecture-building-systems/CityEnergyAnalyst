@@ -519,7 +519,7 @@ def write_config(args):
     import cea.config
     config = cea.config.Configuration(args.scenario)
     if not config._parser.has_section(args.section):
-        config._parser.add_section(args.section)
+        config._parser._add_section(args.section)
     config._parser.set(args.section, args.key, args.value)
     config.save()
 

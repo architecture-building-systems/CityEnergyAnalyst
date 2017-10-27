@@ -10,6 +10,9 @@
   - scripts should be runnable from the commandline with ``cea template --parameter value``
   - scripts should be runnable from PyCharm
   - all arguments to the scripts have a default value in ``default.config``
+- place path names in double quotes when used as command lines
+- parameter names should be unique throughout the tempalte (create a unit test for this)
+- print out parameters
 
 .. source:: python
 

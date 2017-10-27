@@ -160,7 +160,7 @@ def run_as_script():
 
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
-    locator = inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = inputlocator.InputLocator(scenario=scenario_path)
 
     # based on the variables listed in the uncertainty database and selected
     # through a screening process. they need to be 5.

@@ -114,7 +114,7 @@ def run_as_script(scenario_path=None):
     config = cea.config.Configuration()
     if not scenario_path:
         scenario_path = config.scenario
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
     oc = config.operation_costs
     operation_costs(locator=locator, plot_Qww=oc.plot_qww, plot_Qhs=oc.plot_qhs, plot_Qcs=oc.plot_qcs,
                     plot_Qcdata=oc.plot_qcdata, plot_Qcrefri=oc.plot_qcrefri, plot_Eal=oc.plot_eal,

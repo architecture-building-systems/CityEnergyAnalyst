@@ -110,17 +110,6 @@ def create_demand_graph_for_building(analysis_fields, area_df, color_palette, fi
     plt.clf()
     pdf.close()
 
-
-def run_as_script(scenario_path=None, analysis_fields=["Ealf_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]):
-    # HINTS FOR ARCGIS INTERFACE:
-    # the user should see all the column names of the total_demands.csv
-    # the user can select a maximum of 4 of those column names to graph (analysis fields!
-    assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    graphs_demand(locator=locator, analysis_fields=analysis_fields)
-    print('done.')
-
-
 def demand_graph_fields(scenario_path):
     """Lists the available fields for the demand graphs - these are fields that are present in both the
     building demand results files as well as the totals file (albeit with different units)."""
@@ -137,10 +126,13 @@ def demand_graph_fields(scenario_path):
     fields = fields - bad_fields
     return list(fields)
 
-if __name__ == '__main__':
-    import cea.config
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    graphs_demand(locator=locator, analysis_fields=config.demand_graphs.demand_fields)
 
-    config = cea.config.Configuration()
-    run_as_script(scenario_path=config.scenario, analysis_fields=config.demand_graphs.analysis_fields)
+if __name__ == '__main__':
+    main(config = cea.config.Configuration())
+
 
 

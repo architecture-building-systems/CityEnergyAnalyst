@@ -5,142 +5,102 @@ Manage configuration information for the CEA. See the cascading configuration fi
 for more information on configuration files.
 """
 import os
+import sys
 import ConfigParser
 
-
-CONFIG_FILE = [os.path.join(os.path.dirname(__file__), 'default.config'), os.path.expanduser('~/cea.config')]
+DEFAULT_CONFIG = os.path.join(os.path.dirname(__file__), 'default.config')
+CEA_CONFIG = os.path.expanduser('~/cea.config')
 
 
 class Configuration(object):
     def __init__(self, config_file=None):
-        """Read in the configuration file and configure the sections and parameters."""
-        config_parser = self._read_config_file(config_file)
+        """
+        Read in the configuration file and configure the sections and parameters.
+        As a first step, the ``default.config`` is read to build the structure of the file.
+        Next, the ``cea.config`` file is parsed to update user-specific parameter values.
+        Finally apply any command line arguments.
+        """
         self._sections = {}
-
-        ## ADD NEW PARAMETERS HERE
-        self.add_section('general', config_parser,
-                         PathParameter('scenario'),
-                         ChoiceParameter('region', ['CH', 'SIN']),
-                         WeatherPathParameter('weather'),
-                         BooleanParameter('multiprocessing'))
-
-        self.add_section('data-helper', config_parser,
-                         ListParameter('archetypes'))
-
-        self.add_section('demand-graphs', config_parser,
-                         ListParameter('analysis-fields'))
-
-        self.add_section('embodied-energy', config_parser,
-                         IntegerParameter('year-to-calculate'))
-
-        self.add_section('scenario-plots', config_parser,
-                         PathParameter('project'),
-                         ListParameter('scenarios'),
-                         PathParameter('output-path'))
-        
-        self.add_section('operation-costs', config_parser,
-                         BooleanParameter('plot-qww'),
-                         BooleanParameter('plot-qhs'),
-                         BooleanParameter('plot-qcs'),
-                         BooleanParameter('plot-qcdata'),
-                         BooleanParameter('plot-qcrefri'),
-                         BooleanParameter('plot-eal'),
-                         BooleanParameter('plot-eaux'),
-                         BooleanParameter('plot-epro'),
-                         BooleanParameter('plot-edata'))
-
-        self.add_section('heatmaps', config_parser,
-                         RelativePathParameter('file-to-analyze'),
-                         ListParameter('analysis-fields'))
-
-        self.add_section('demand', config_parser,
-                         DateParameter('heating-season-start'),
-                         DateParameter('heating-season-end'),
-                         BooleanParameter('has-heating-season'),
-                         DateParameter('cooling-season-start'),
-                         DateParameter('cooling-season-end'),
-                         BooleanParameter('has-cooling-season'),
-                         BooleanParameter('use-dynamic-infiltration-calculation'))
-
-        self.add_section('solar', config_parser,
-                         DateParameter('date-start'),
-                         ChoiceParameter('type-pvpanel', ['PV1', 'PV2', 'PV3']),
-                         ChoiceParameter('type-scpanel', ['SC1', 'SC2']),
-                         BooleanParameter('panel-on-roof'),
-                         BooleanParameter('panel-on-wall'),
-                         RealParameter('min-radiation'),
-                         IntegerParameter('solar-window-solstice'),
-                         RealParameter('t-in-sc'),
-                         RealParameter('t-in-pvt'),
-                         RealParameter('dpl'),
-                         RealParameter('fcr'),
-                         RealParameter('ro'),
-                         RealParameter('eff-pumping'),
-                         RealParameter('k-msc-max'))
-
-        self.add_section('radiation', config_parser,
-                         RealParameter('longitude'),
-                         RealParameter('latitude'),
-                         IntegerParameter('year'))
-
-        self.add_section('radiation-daysim', config_parser,
-                         ListParameter('buildings'),
-                         IntegerParameter('rad-n'),
-                         StringParameter('rad-af'),
-                         IntegerParameter('rad-ab'),
-                         IntegerParameter('rad-ad'),
-                         IntegerParameter('rad-as'),
-                         IntegerParameter('rad-ar'),
-                         RealParameter('rad-aa'),
-                         IntegerParameter('rad-lr'),
-                         RealParameter('rad-st'),
-                         RealParameter('rad-sj'),
-                         RealParameter('rad-lw'),
-                         RealParameter('rad-dj'),
-                         RealParameter('rad-ds'),
-                         IntegerParameter('rad-dr'),
-                         IntegerParameter('rad-dp'),
-                         IntegerParameter('sensor-x-dim'),
-                         IntegerParameter('sensor-y-dim'),
-                         RealParameter('e-terrain'),
-                         IntegerParameter('n-buildings-in-chunk'),
-                         IntegerParameter('zone-geometry'),
-                         IntegerParameter('surrounding-geometry'),
-                         BooleanParameter('consider-windows'),
-                         BooleanParameter('consider-floors'))
-        
-        self.add_section('retrofit-potential', config_parser,
-                         BooleanParameter('keep-partial-matches'),
-                         StringParameter('retrofit-scenario-name'),
-                         IntegerParameter('retrofit-target-year'),
-                         IntegerParameter('age-threshold'),
-                         IntegerParameter('eui-heating-threshold'),
-                         IntegerParameter('eui-hot-water-threshold'),
-                         IntegerParameter('eui-cooling-threshold'),
-                         IntegerParameter('eui-electricity-threshold'),
-                         IntegerParameter('emissions-operation-threshold'),
-                         IntegerParameter('heating-costs-threshold'),
-                         IntegerParameter('hot-water-costs-threshold'),
-                         IntegerParameter('cooling-costs-threshold'),
-                         IntegerParameter('electricity-costs-threshold'),
-                         IntegerParameter('heating-losses-threshold'),
-                         IntegerParameter('hot-water-losses-threshold'),
-                         IntegerParameter('cooling-losses-threshold'))
-
-
-        ## ADD NEW SECTIONS HERE
-
-    def _read_config_file(self, config_file=None):
-        """Read in the configuration information from the home folder (cea.config)"""
+        self._read_default_config()
         if not config_file:
-            config_file = CONFIG_FILE
-        self._config_file = config_file
-        config_parser = ConfigParser.SafeConfigParser()
-        # read from the user config file, with the default.config as a backup
-        config_parser.read(config_file)
-        return config_parser
+            config_file = CEA_CONFIG
+        self._read_cea_config(config_file)
+        self._copy_general()
 
-    def add_section(self, name, config_parser, *parameters):
+
+    def _read_default_config(self):
+        parser = ConfigParser.SafeConfigParser()
+        parser.read(DEFAULT_CONFIG)
+        for section_name in parser.sections():
+            section = Section(name=section_name)
+
+            for parameter_name in parser.options(section_name):
+                if '.' in parameter_name:
+                    # ignore the 'parameter.type', 'parameter.help' etc. keys - they're not parameter names
+                    continue
+                try:
+                    parameter_type = parser.get(section_name, parameter_name + '.type')
+                except ConfigParser.NoOptionError:
+                    parameter_type = 'StringParameter'
+                assert parameter_type in globals(), 'Bad parameter type in default.config: ' + parameter_type
+                parameter = globals()[parameter_type](parameter_name, section_name, parser)
+                section.add_parameter(parameter, parser)
+            setattr(self, python_identifier(section_name), section)
+            self._sections[section_name] = section
+
+    def _read_cea_config(self, config_file):
+        parser = ConfigParser.SafeConfigParser()
+        parser.readfp(open(DEFAULT_CONFIG))
+        parser.read(config_file)
+        for section in self._sections.values():
+            for parameter in section._parameters.values():
+                setattr(section, python_identifier(parameter.name), parameter.read(parser, section._name))
+        for parameter in self._sections['general']._parameters.values():
+            setattr(self, python_identifier(parameter.name), parameter.read(parser, 'general'))
+
+    def _apply_command_line_args(self, args, args_sections):
+        if not len(args):
+            # no arguments to apply
+            return
+        if args[0].endswith('.py'):
+            # remove script name from list of arguments
+            args = args[1:]
+        parameters = self._parse_command_line_args(args)
+        print(parameters)
+        section_names_to_check = set(sn.split(':')[0] if ':' in sn else sn for sn in args_sections)
+        for section_name in section_names_to_check:
+            section = self._sections[section_name]
+            for parameter_name in parameters.keys():
+                if parameter_name in section._parameters:
+                    setattr(section, python_identifier(parameter_name),
+                            section._parameters[parameter_name].decode(parameters[parameter_name]))
+                    del parameters[parameter_name]
+        assert len(parameters) == 0, 'Unexpected parameters: %s' % parameters
+
+    def _parse_command_line_args(self, args):
+        """Group the arguments into a dictionary: parameter-name -> value"""
+        parameters = {}
+        values = []
+        argument_stack = list(args)
+        while len(argument_stack):
+            token = argument_stack.pop()
+            if token.startswith('--'):
+                parameter_name = token[2:]
+                parameters[parameter_name] = ' '.join(reversed(values))
+                values = []
+            else:
+                values.append(token)
+        assert len(values) == 0, 'Bad arguments: %s' % args
+        return parameters
+
+    def _copy_general(self):
+        """Copy parameters from the 'genera' section to self for easy access"""
+        general_section = self._sections['general']
+        for parameter in general_section._parameters.values():
+            setattr(self, python_identifier(parameter.name),
+                    getattr(general_section, python_identifier(parameter.name)))
+
+    def _add_section(self, name, config_parser, *parameters):
         section = Section(name=name)
         self._sections[name] = section
         for parameter in parameters:
@@ -175,8 +135,15 @@ class Section(object):
         setattr(self, python_identifier(parameter.name), parameter.read(config_parser, self._name))
 
 class Parameter(object):
-    def __init__(self, name):
+    def __init__(self, name, section, parser):
         self.name = name
+        self.initialize(section, parser)
+
+    def initialize(self, section, parser):
+        """
+        Override this function to initialize a parameter with values as read from
+        the default.config
+        """
 
     def read(self, config_parser, section):
         """Read a value from a ``ConfigParser``"""
@@ -257,9 +224,12 @@ class DateParameter(Parameter):
 
 class ChoiceParameter(Parameter):
     """A parameter that can only take on values from a specific set of values"""
-    def __init__(self, name, choices):
-        self._choices = set(choices)
-        super(ChoiceParameter, self).__init__(name)
+    def initialize(self, section, parser):
+        # when called for the first time, make sure there is a `.choices` parameter
+        self._choices = parser.get(section, self.name + '.choices').split()
+
+    def read(self, config_parser, section):
+        return self.decode(config_parser.get(section, self.name))
 
     def encode(self, value):
         assert str(value) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
@@ -276,6 +246,13 @@ if __name__ == '__main__':
     print(config.demand.heating_season_start)
     print(config.scenario)
     print(config.weather)
+    print(config.sensitivity_demand.samples_folder)
 
     import pickle
     pickle.loads(pickle.dumps(config))
+
+    args = ['--weather', 'Zurich',
+            '--scenario', 'C:\\reference-case-test\\baseline']
+    config._apply_command_line_args(args, ['general', 'sensitivity-demand'])
+    assert config.general.weather.endswith == 'Zurich.epw', config.weather
+    assert config.weather.endswith == 'Zurich.epw', config.weather

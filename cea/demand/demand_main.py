@@ -139,7 +139,7 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
 def run_as_script(scenario_path=None, weather_path=None, use_dynamic_infiltration_calculation=False,
                   multiprocessing=True):
     assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
     weather_path = locator.get_weather(weather_path)
 
     print('Running demand calculation for scenario %(scenario_path)s' % locals())
