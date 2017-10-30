@@ -42,7 +42,7 @@ class Configuration(object):
                     parameter_type = parser.get(section_name, parameter_name + '.type')
                 except ConfigParser.NoOptionError:
                     parameter_type = 'StringParameter'
-                assert parameter_type in globals(), 'Bad parameter type in default.config: ' + parameter_type
+                assert parameter_type in globals(), 'Bad parameter type in default.config: %(section_name)s/%(parameter_name)s=%(parameter_type)s' % locals()
                 parameter = globals()[parameter_type](parameter_name, section_name, parser)
                 section.add_parameter(parameter, parser)
             setattr(self, python_identifier(section_name), section)
@@ -76,6 +76,10 @@ class Configuration(object):
                             section._parameters[parameter_name].decode(parameters[parameter_name]))
                     del parameters[parameter_name]
         assert len(parameters) == 0, 'Unexpected parameters: %s' % parameters
+        # copy [general] to self
+        for parameter in self._sections['general']._parameters.values():
+            setattr(self, python_identifier(parameter.name),
+                    getattr(self._sections['general'], python_identifier(parameter.name)))
 
     def _parse_command_line_args(self, args):
         """Group the arguments into a dictionary: parameter-name -> value"""
@@ -169,7 +173,16 @@ class RelativePathParameter(Parameter):
     pass
 
 class WeatherPathParameter(Parameter):
-    pass
+    def decode(self, value):
+        import cea.inputlocator
+        locator = cea.inputlocator.InputLocator(None)
+        if value in locator.get_weather_names():
+            weather_path = locator.get_weather(value)
+        elif os.path.exists(value) and value.endswith('.epw'):
+                weather_path = value
+        else:
+            weather_path = locator.get_weather('Zug')
+        return weather_path
 
 class BooleanParameter(Parameter):
     """Read / write boolean parameters to the config file."""
@@ -191,9 +204,12 @@ class IntegerParameter(Parameter):
 
 class RealParameter(Parameter):
     """Read / write floating point parameters to the config file."""
-    def __init__(self, name, decimal_places=2):
-        self._decimal_places = decimal_places
-        super(RealParameter, self).__init__(name)
+    def initialize(self, section, parser):
+        # when called for the first time, make sure there is a `.choices` parameter
+        try:
+            self._decimal_places = int(parser.get(section, self.name + '.decimal-places'))
+        except ConfigParser.NoOptionError:
+            self._decimal_places = 4
 
     def encode(self, value):
         return format(value, ".%i" % self._decimal_places)
@@ -243,16 +259,20 @@ if __name__ == '__main__':
     config = Configuration()
     print(config.general.scenario)
     print(config.general.multiprocessing)
-    print(config.demand.heating_season_start)
+    #print(config.demand.heating_season_start)
     print(config.scenario)
     print(config.weather)
     print(config.sensitivity_demand.samples_folder)
 
+    # make sure the config can be pickled (for multiprocessing)
     import pickle
     pickle.loads(pickle.dumps(config))
 
+    # test overriding
     args = ['--weather', 'Zurich',
             '--scenario', 'C:\\reference-case-test\\baseline']
     config._apply_command_line_args(args, ['general', 'sensitivity-demand'])
-    assert config.general.weather.endswith == 'Zurich.epw', config.weather
-    assert config.weather.endswith == 'Zurich.epw', config.weather
+
+    # make sure the WeatherPathParameter resolves weather names...
+    assert config.general.weather.endswith('Zurich.epw'), config.general.weather
+    assert config.weather.endswith('Zurich.epw'), config.weather
