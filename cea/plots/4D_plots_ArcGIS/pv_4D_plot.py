@@ -33,6 +33,7 @@ def calc_spatio_temporal_visuals(locator, period, variables_to_plot, list_of_bui
         data = pd.read_csv(locator.PV_results(building))[variables_to_plot][period[0]: period[1]]
         data['date'] = time
         data['Name'] = building
+        data['kWhperm2'] = data['radiation_kWh'] / data['Area_PV_m2']
 
         if i == 0:
             final = data
@@ -48,10 +49,10 @@ def run_as_script():
 
     locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
 
-    variables_to_plot = ['E_PV_gen_kWh', 'radiation_kWh']
+    variables_to_plot = ['E_PV_gen_kWh', 'radiation_kWh', 'Area_PV_m2']
     initial_date = '1/1/2015'
     list_of_buildings = ['all']  # 'all' for all buildings or else provide a list of building names
-    period = [1, 168] # period in hours of the year to viualize
+    period = [1680, 1848] # period in hours of the year to viualize
     calc_spatio_temporal_visuals(locator, period, variables_to_plot, list_of_buildings, initial_date)
 
 if __name__ == '__main__':
