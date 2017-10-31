@@ -62,9 +62,9 @@ def decentralized_main(locator, building_names, gv):
     for building_name in building_names:
         print building_name
         loads = pd.read_csv(locator.get_optimization_substations_results_file(building_name),
-                            usecols=["T_supply_DH_result", "T_return_DH_result", "mdot_DH_result"])
-        Qload = np.vectorize(calc_new_load)(loads["mdot_DH_result"], loads["T_supply_DH_result"],
-                                            loads["T_return_DH_result"], gv)
+                            usecols=["T_supply_DH_result_K", "T_return_DH_result_K", "mdot_DH_result_kgpers"])
+        Qload = np.vectorize(calc_new_load)(loads["mdot_DH_result_kgpers"], loads["T_supply_DH_result_K"],
+                                            loads["T_return_DH_result_K"], gv)
         Qannual = Qload.sum()
         Qnom = Qload.max()* (1+gv.Qmargin_Disc) # 1% reliability margin on installed capacity
 
@@ -79,9 +79,9 @@ def decentralized_main(locator, building_names, gv):
         Wel_GHP = np.zeros((10,1)) # For the investment costs of the GHP
         
         # Supply with the Boiler / FC / GHP
-        Tret = loads["T_return_DH_result"].values
-        TsupDH = loads["T_supply_DH_result"].values
-        mdot = loads["mdot_DH_result"].values
+        Tret = loads["T_return_DH_result_K"].values
+        TsupDH = loads["T_supply_DH_result_K"].values
+        mdot = loads["mdot_DH_result_kgpers"].values
         for hour in range(8760):
 
             if Tret[hour] == 0:
@@ -199,22 +199,24 @@ def decentralized_main(locator, building_names, gv):
                     resourcesRes[3+i][0] += QtoBoiler
 
         # Investment Costs / CO2 / Prim
-        InvCaBoiler = Boiler.calc_Cinv_boiler(Qnom, Qannual, gv)
-        InvCosts[0][0] = InvCaBoiler
-        InvCosts[1][0] = InvCaBoiler
+        Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(Qnom, Qannual, gv, locator)
+        InvCosts[0][0] = Capex_a_Boiler + Opex_Boiler
+        InvCosts[1][0] = Capex_a_Boiler + Opex_Boiler
         
-        InvCosts[2][0] = FC.calc_Cinv_FC(Qnom, gv, locator)
-        
+        Capex_a_FC, Opex_FC = FC.calc_Cinv_FC(Qnom, gv, locator)
+        InvCosts[2][0] = Capex_a_FC + Opex_FC
+
         for i in range(10):
             result[3+i][0] = i/10
             result[3+i][3] = 1-i/10
 
             QnomBoiler = i/10 * Qnom
-            
-            InvCaBoiler = Boiler.calc_Cinv_boiler(QnomBoiler, QannualB_GHP[i][0], gv)
-            InvCosts[3+i][0] = InvCaBoiler
-            
-            InvCaGHP = HP.calc_Cinv_GHP(Wel_GHP[i][0], gv)
+
+            Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(QnomBoiler, QannualB_GHP[i][0], gv, locator)
+            InvCosts[3+i][0] = Capex_a_Boiler + Opex_Boiler
+
+            Capex_a_GHP, Opex_GHP = HP.calc_Cinv_GHP(Wel_GHP[i][0], gv, locator)
+            InvCaGHP = Capex_a_GHP + Opex_GHP
             InvCosts[3+i][0] += InvCaGHP * gv.EURO_TO_CHF
         
 
