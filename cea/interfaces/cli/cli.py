@@ -25,7 +25,8 @@ def main(config=None):
         print_help(cli_config)
         sys.exit(1)
     script_name = args.pop(0)
-    config.apply_command_line_args(args)
+    option_list = cli_config.get('config', script_name).split()
+    config.apply_command_line_args(args, option_list)
 
     module_path = cli_config.get('scripts', script_name)
     script_module = importlib.import_module(module_path)

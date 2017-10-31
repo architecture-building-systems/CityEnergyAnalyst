@@ -64,10 +64,9 @@ class Configuration(object):
         for section in self._sections.values():
             for parameter in section._parameters.values():
                 setattr(section, python_identifier(parameter.name), parameter.read(parser, section._name))
-        for parameter in self._sections['general']._parameters.values():
-            setattr(self, python_identifier(parameter.name), parameter.read(parser, 'general'))
+        self._copy_general()
 
-    def apply_command_line_args(self, args):
+    def apply_command_line_args(self, args, option_list):
         """Apply the command line args as passed to cea.interfaces.cli.cli (the ``cea`` command). Each argument
         is assumed to follow this pattern: ``--PARAMETER-NAME VALUE``,  with ``PARAMETER-NAME`` being one of the options
         in the config file and ``VALUE`` being the value to override that option with."""
@@ -77,16 +76,34 @@ class Configuration(object):
         if args[0].endswith('.py'):
             # remove script name from list of arguments
             args = args[1:]
-        parameters = self._parse_command_line_args(args)
-        for section in self._sections.values():
-            for parameter_name in parameters.keys():
-                if parameter_name in section._parameters:
-                    setattr(section, python_identifier(parameter_name),
-                            section._parameters[parameter_name].decode(parameters[parameter_name]))
-                    del parameters[parameter_name]
-        assert len(parameters) == 0, 'Unexpected parameters: %s' % parameters
-        # copy [general] to self
+        command_line_args = self._parse_command_line_args(args)
+
+        for section, parameter in self._matching_parameters(option_list):
+            if parameter.name in command_line_args:
+                setattr(section, python_identifier(parameter.name), parameter.decode(command_line_args[parameter.name]))
+                del command_line_args[parameter.name]
         self._copy_general()
+
+        assert len(command_line_args) == 0, 'Unexpected parameters: %s' % command_line_args
+
+    def _matching_parameters(self, option_list):
+        """Return a tuple (Section, Parameter) for all parameters that match the parameters in the ``option_list``.
+        ``option_list`` is a sequence of parameter names in the form ``section[:parameter]``
+        if only a section is mentioned, all the parameters of that section are added. Otherwise, only the specified
+        parameter is added to the resulting list.
+        """
+        for option in option_list:
+            if ':' in option:
+                section_name, parameter_name = option.split(':')
+                section = self._sections[section_name]
+                parameter = section._parameters[parameter_name]
+                yield (section, parameter)
+            else:
+                section = self._sections[option]
+                for parameter in section._parameters.values():
+                    yield (section, parameter)
+
+
 
     def _parse_command_line_args(self, args):
         """Group the arguments into a dictionary: parameter-name -> value"""
