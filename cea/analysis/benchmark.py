@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
 
-from cea import inputlocator
+import cea.inputlocator
+import cea.config
 
 __author__ = "Martin Mosteiro Romero"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -72,7 +73,7 @@ def benchmark(locator_list, output_file):
     # run for each locator (i.e., for each scenario)
     for n in range(len(locator_list)):
         locator = locator_list[n]
-        scenario_name = os.path.basename(locator.scenario_path)
+        scenario_name = os.path.basename(locator.scenario)
 
         # get embodied and operation PEN and GHG for each building from CSV files
         demand = pd.read_csv(locator.get_total_demand())
@@ -283,22 +284,19 @@ def calc_benchmark_today(locator):
     return values_today
 
 
-def test_benchmark(scenario_path):
-    assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
-    locator = inputlocator.InputLocator(scenario=scenario_path)
-    locator_list = [locator, locator, locator, locator]
-    output_file = os.path.expandvars(r'%TEMP%\test_benchmark.pdf')
-    benchmark(locator_list=locator_list, output_file=output_file)
-    print 'test_benchmark() succeeded'
+def main(config):
+    assert os.path.exists(config.benchmark_graphs.project), 'Project not found: %s' % config.benchmark_graphs.project
 
+    print("Running benchmark-graphs with project = %s" % config.benchmark_graphs.project)
+    print("Running benchmark-graphs with scenarios = %s" % config.benchmark_graphs.scenarios)
+    print("Running benchmark-graphs with output-file = %s" % config.benchmark_graphs.output_file)
 
-def test_benchmark_targets():
-    locator = inputlocator.InputLocator(scenario=r'C:\reference-case-zug\baseline')
-    calc_benchmark_targets(locator)
+    locator_list = [cea.inputlocator.InputLocator(scenario=os.path.join(config.benchmark_graphs.project, scenario)) for
+                    scenario in config.benchmark_graphs.scenarios]
+
+    benchmark(locator_list=locator_list, output_file=config.benchmark_graphs.output_file)
 
 
 if __name__ == '__main__':
-    import cea.config
+    main(cea.config.Configuration())
 
-    config = cea.config.Configuration()
-    test_benchmark(scenario_path=config.scenario)
