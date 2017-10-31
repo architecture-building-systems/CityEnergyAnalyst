@@ -48,7 +48,7 @@ def demand(args):
 def data_helper(args):
     """Run the demand helper script with the arguments provided."""
     import cea.demand.preprocessing.data_helper
-    cea.demand.preprocessing.data_helper.run_as_script(scenario_path=args.scenario,
+    cea.demand.preprocessing.data_helper.run_as_script(scenario=args.scenario,
                                                        prop_architecture_flag='architecture' in args.archetypes,
                                                        prop_hvac_flag='HVAC' in args.archetypes,
                                                        prop_comfort_flag='comfort' in args.archetypes,

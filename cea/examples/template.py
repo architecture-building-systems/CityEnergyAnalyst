@@ -39,6 +39,11 @@ def main(config):
     :return:
     """
     locator = cea.inputlocator.InputLocator(config.scenario)
+
+    # print out all configuration variables used by this script
+    print("Running template for scenario %s" % config.scenario)
+    print("Running template with archetypes %s" % config.archetypes)
+
     template(locator, config.archetypes)
 
 
