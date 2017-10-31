@@ -121,5 +121,5 @@ try:
     from storagetank_cc import (ode)
 except ImportError:
     # fall back to using the python version
-    print('failed to import from storagetank_cc.pyd, falling back to pure python functions')
+    # print('failed to import from storagetank_cc.pyd, falling back to pure python functions')
     pass

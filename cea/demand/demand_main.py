@@ -12,6 +12,7 @@ import time
 
 import cea.globalvar
 import cea.inputlocator
+import cea.config
 from cea.demand import occupancy_model
 from cea.demand import thermal_loads
 from cea.demand.thermal_loads import BuildingProperties
@@ -136,25 +137,19 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
     pool.close()
 
 
-def run_as_script(scenario_path=None, weather_path=None, use_dynamic_infiltration_calculation=False,
-                  multiprocessing=True):
-    assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
-    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
-    weather_path = locator.get_weather(weather_path)
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    print('Running demand calculation for scenario %s' % config.scenario)
+    print('Running demand calculation with weather file %s' % config.weather)
+    print('Running demand calculation with dynamic infiltration=%s' % config.demand.use_dynamic_infiltration_calculation)
+    print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
 
-    print('Running demand calculation for scenario %(scenario_path)s' % locals())
-    print('Running demand calculation with weather file %(weather_path)s' % locals())
-    print('Running demand calculation with dynamic infiltration=%(use_dynamic_infiltration_calculation)s' % locals())
-    print('Running demand calculation with multiprocessing=%(use_dynamic_infiltration_calculation)s' % locals())
-
-    demand_calculation(locator=locator, weather_path=weather_path, gv=cea.globalvar.GlobalVariables(),
-                       use_dynamic_infiltration_calculation=use_dynamic_infiltration_calculation,
-                       multiprocessing=multiprocessing)
+    demand_calculation(locator=locator, weather_path=config.weather, gv=cea.globalvar.GlobalVariables(),
+                       use_dynamic_infiltration_calculation=config.demand.use_dynamic_infiltration_calculation,
+                       multiprocessing=config.multiprocessing)
 
 
 if __name__ == '__main__':
-    import cea.config
-    config = cea.config.Configuration()
-    run_as_script(scenario_path=config.scenario, weather_path=config.weather,
-                  use_dynamic_infiltration_calculation=config.demand.use_dynamic_infiltration_calculation,
-                  multiprocessing=config.multiprocessing)
+    main(cea.config.Configuration())
+
