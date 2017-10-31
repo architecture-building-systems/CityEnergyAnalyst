@@ -12,7 +12,10 @@ import ConfigParser
 import cea.config
 
 
-def main(config):
+def main(config=None):
+    if not config:
+        config = cea.config.Configuration()
+
     cli_config = ConfigParser.SafeConfigParser()
     cli_config.read(os.path.join(os.path.dirname(__file__), 'cli.config'))
 
