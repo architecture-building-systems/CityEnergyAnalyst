@@ -29,11 +29,12 @@ def calc_spatio_temporal_visuals(locator, period, variables_to_plot, list_of_bui
         building_names = list_of_buildings
 
     for i, building in enumerate(building_names):
-        # importing corresponding variables of each building and then slicing it to take just a single period value i.e a time step
+        # importing corresponding variables of each building and then slicing it to take just a single period value
+        # i.e a time step
         data = pd.read_csv(locator.PV_results(building))[variables_to_plot][period[0]: period[1]]
         data['date'] = time
         data['Name'] = building
-        data['kWhperm2'] = data['radiation_kWh'] / data['Area_PV_m2']
+        data['rad_kWh/m2'] = data['radiation_kWh'] / data['Area_PV_m2']
 
         if i == 0:
             final = data
