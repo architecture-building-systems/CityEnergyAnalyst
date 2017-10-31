@@ -324,23 +324,26 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
     return properties_df
 
 
-def run_as_script(scenario_path, prop_architecture_flag=True, prop_hvac_flag=True, prop_comfort_flag=True,
-                  prop_internal_loads_flag=True):
-
+def main(config):
     """
     Run the properties script with input from the reference case and compare the results. This ensures that changes
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
     """
-    assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
-    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+
+    print('Running data-helper with scenario = %s' % config.scenario)
+    print('Running data-helper with archetypes = %s' % config.data_helper.archetypes)
+
+    prop_architecture_flag = 'architecture' in config.data_helper.archetypes
+    prop_hvac_flag = 'HVAC' in config.data_helper.archetypes
+    prop_comfort_flag = 'comfort' in config.data_helper.archetypes
+    prop_internal_loads_flag = 'internal-loads' in config.data_helper.archetypes
+
     data_helper(locator=locator, prop_architecture_flag=prop_architecture_flag, prop_hvac_flag=prop_hvac_flag,
                 prop_comfort_flag=prop_comfort_flag, prop_internal_loads_flag=prop_internal_loads_flag)
 
 
 if __name__ == '__main__':
-    config = cea.config.Configuration()
-    run_as_script(scenario_path=config.scenario,
-                  prop_architecture_flag='architecture' in config.data_helper.archetypes,
-                  prop_hvac_flag='HVAC' in config.data_helper.archetypes,
-                  prop_comfort_flag='comfort' in config.data_helper.archetypes,
-                  prop_internal_loads_flag='internal-loads' in config.data_helper.archetypes)
+    main(cea.config.Configuration())
+
