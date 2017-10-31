@@ -29,10 +29,12 @@ def calc_spatio_temporal_visuals(locator, period, variables_to_plot, list_of_bui
         building_names = list_of_buildings
 
     for i, building in enumerate(building_names):
-        # importing corresponding variables of each building and then slicing it to take just a single period value i.e a time step
+        # importing corresponding variables of each building and then slicing it to take just a single period value
+        # i.e a time step
         data = pd.read_csv(locator.SC_results(building))[variables_to_plot][period[0]: period[1]]
         data['date'] = time
         data['Name'] = building
+        data['rad_kWh/m2'] = data['radiation_kWh'] / data['Area_SC_m2']
 
         if i == 0:
             final = data
@@ -48,10 +50,10 @@ def run_as_script():
 
     locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
 
-    variables_to_plot = ['Q_SC_gen_kWh', 'radiation_kWh']
+    variables_to_plot = ['Q_SC_gen_kWh', 'radiation_kWh', 'Area_SC_m2']
     initial_date = '1/1/2015'
     list_of_buildings = ['all']  # 'all' for all buildings or else provide a list of building names
-    period = [1, 168] # period in hours of the year to viualize
+    period = [1, 168] # period in hours of the year to visualize
     calc_spatio_temporal_visuals(locator, period, variables_to_plot, list_of_buildings, initial_date)
 
 if __name__ == '__main__':
