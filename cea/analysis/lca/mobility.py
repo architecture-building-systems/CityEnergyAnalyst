@@ -80,12 +80,14 @@ def lca_mobility(locator):
 
     mobility[fields_to_plot].to_csv(locator.get_lca_mobility(), index=False, float_format='%.2f')
 
-def run_as_script(scenario_path=None):
-    assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
-    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+
+    print("Running mobility with scenario = %s" % config.scenario)
+
     lca_mobility(locator=locator)
 
 if __name__ == '__main__':
-    import cea.config
-    config = cea.config.Configuration()
-    run_as_script(scenario_path=config.scenario)
+    main(cea.config.Configuration())
+
