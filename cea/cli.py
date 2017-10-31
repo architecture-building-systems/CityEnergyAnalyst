@@ -143,7 +143,7 @@ def demand_graphs(args):
 def scenario_plots(args):
     """Run the scenario plots script with the provided arguments (``output_file`` and ``scenarios``)."""
     import cea.plots.scenario_plots
-    cea.plots.scenario_plots.plot_scenarios(scenarios=args.scenarios, output_file=args.output_file)
+    cea.plots.scenario_plots.plot_scenarios(scenario_folders=args.scenarios, output_file=args.output_file)
 
 
 def latitude(args):
