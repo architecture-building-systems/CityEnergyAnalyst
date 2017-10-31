@@ -18,6 +18,7 @@ from cea.utilities.dbfreader import dbf_to_dataframe
 from geopandas import GeoDataFrame as Gdf
 import cea.globalvar
 import cea.inputlocator
+import cea.config
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -302,12 +303,17 @@ def calc_if_existing(x, y):
 def calc_code(code1, code2, code3, code4):
     return str(code1) + str(code2) + str(code3) + str(code4)
 
-def run_as_script(scenario_path=None, year_to_calculate=2050):
-    assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
-    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
-    lca_embodied(locator=locator, year_to_calculate=year_to_calculate, gv=cea.globalvar.GlobalVariables())
+
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+
+    print('Running embodied-energy with scenario = %s' % config.scenario)
+    print('Running embodied-energy with year-to-calculate = %s' % config.embodied_energy.year_to_calculate)
+
+    lca_embodied(locator=locator, year_to_calculate=config.embodied_energy.year_to_calculate,
+                 gv=cea.globalvar.GlobalVariables())
+
 
 if __name__ == '__main__':
-    import cea.config
-    config = cea.config.Configuration()
-    run_as_script(scenario_path=config.scenario, year_to_calculate=config.embodied_energy.year_to_calculate)
+    main(cea.config.Configuration())
