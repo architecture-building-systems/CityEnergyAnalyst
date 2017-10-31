@@ -12,7 +12,7 @@ import pandas as pd
 import cea
 import cea.inputlocator
 import cea.config
-import multiprocessing
+import multiprocessing as mp
 
 MAX_ANALYSIS_FIELDS = 4
 
@@ -26,7 +26,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def graphs_demand(locator, analysis_fields):
+def graphs_demand(locator, analysis_fields, multiprocessing):
     """
     algorithm to print graphs in PDF concerning the dynamics of each and all buildings
 
@@ -35,6 +35,9 @@ def graphs_demand(locator, analysis_fields):
 
     :param analysis_fields: list of fields (column names in Totals.csv) to analyse
     :type analysis_fields: list[string]
+
+    :param multiprocessing: if set to True, use multiple CPU' for the calculation
+    :type multiprocessing: bool
 
     :returns: - Graphs of each building and total: .Pdf
               - heat map file per variable of interest n.
@@ -49,10 +52,9 @@ def graphs_demand(locator, analysis_fields):
     num_buildings = len(building_names)
 
     print('Storing results in: %s' % locator.get_demand_plots_folder())
-    config = cea.config.Configuration()
-    if config.multiprocessing and multiprocessing.cpu_count() > 1:
-        pool = multiprocessing.Pool()
-        print("Using %i CPU's" % multiprocessing.cpu_count())
+    if multiprocessing and mp.cpu_count() > 1:
+        pool = mp.Pool()
+        print("Using %i CPU's" % mp.cpu_count())
         joblist = []
         for name in building_names:
             job = pool.apply_async(create_demand_graph_for_building,
@@ -110,6 +112,7 @@ def create_demand_graph_for_building(analysis_fields, area_df, color_palette, fi
     plt.clf()
     pdf.close()
 
+
 def demand_graph_fields(scenario_path):
     """Lists the available fields for the demand graphs - these are fields that are present in both the
     building demand results files as well as the totals file (albeit with different units)."""
@@ -126,13 +129,20 @@ def demand_graph_fields(scenario_path):
     fields = fields - bad_fields
     return list(fields)
 
+
 def main(config):
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+
+    print('Running demand-graphs with scenario = %s' % config.scenario)
+    print('Running demand-graphs with multiprocessing = %s' % config.multiprocessing)
+    print('Running demand-graphs with analysis-fields = %s' % config.demand_graphs.analysis_fields)
+
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    graphs_demand(locator=locator, analysis_fields=config.demand_graphs.demand_fields)
+    graphs_demand(locator=locator, analysis_fields=config.demand_graphs.analysis_fields,
+                  multiprocessing=config.multiprocessing)
 
 if __name__ == '__main__':
-    main(config = cea.config.Configuration())
+    main(cea.config.Configuration())
 
 
 
