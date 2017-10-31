@@ -41,8 +41,8 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     # print out all configuration variables used by this script
-    print("Running template for scenario %s" % config.scenario)
-    print("Running template with archetypes %s" % config.archetypes)
+    print("Running template for scenario = %s" % config.scenario)
+    print("Running template with archetypes = %s" % config.data_helper.archetypes)
 
     template(locator, config.archetypes)
 
