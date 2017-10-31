@@ -8,6 +8,15 @@ import os
 import sys
 import ConfigParser
 
+__author__ = "Daren Thomas"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Daren Thomas"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
 DEFAULT_CONFIG = os.path.join(os.path.dirname(__file__), 'default.config')
 CEA_CONFIG = os.path.expanduser('~/cea.config')
 
@@ -58,7 +67,10 @@ class Configuration(object):
         for parameter in self._sections['general']._parameters.values():
             setattr(self, python_identifier(parameter.name), parameter.read(parser, 'general'))
 
-    def _apply_command_line_args(self, args, args_sections):
+    def apply_command_line_args(self, args):
+        """Apply the command line args as passed to cea.interfaces.cli.cli (the ``cea`` command). Each argument
+        is assumed to follow this pattern: ``--PARAMETER-NAME VALUE``,  with ``PARAMETER-NAME`` being one of the options
+        in the config file and ``VALUE`` being the value to override that option with."""
         if not len(args):
             # no arguments to apply
             return
@@ -66,10 +78,7 @@ class Configuration(object):
             # remove script name from list of arguments
             args = args[1:]
         parameters = self._parse_command_line_args(args)
-        print(parameters)
-        section_names_to_check = set(sn.split(':')[0] if ':' in sn else sn for sn in args_sections)
-        for section_name in section_names_to_check:
-            section = self._sections[section_name]
+        for section in self._sections.values():
             for parameter_name in parameters.keys():
                 if parameter_name in section._parameters:
                     setattr(section, python_identifier(parameter_name),
@@ -77,9 +86,7 @@ class Configuration(object):
                     del parameters[parameter_name]
         assert len(parameters) == 0, 'Unexpected parameters: %s' % parameters
         # copy [general] to self
-        for parameter in self._sections['general']._parameters.values():
-            setattr(self, python_identifier(parameter.name),
-                    getattr(self._sections['general'], python_identifier(parameter.name)))
+        self._copy_general()
 
     def _parse_command_line_args(self, args):
         """Group the arguments into a dictionary: parameter-name -> value"""
@@ -271,7 +278,7 @@ if __name__ == '__main__':
     # test overriding
     args = ['--weather', 'Zurich',
             '--scenario', 'C:\\reference-case-test\\baseline']
-    config._apply_command_line_args(args, ['general', 'sensitivity-demand'])
+    config.apply_command_line_args(args, ['general', 'sensitivity-demand'])
 
     # make sure the WeatherPathParameter resolves weather names...
     assert config.general.weather.endswith('Zurich.epw'), config.general.weather
