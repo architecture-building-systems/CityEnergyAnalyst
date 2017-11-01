@@ -6,6 +6,7 @@ photovoltaic
 
 from __future__ import division
 
+import os
 import time
 import numpy as np
 import pandas as pd
@@ -66,7 +67,7 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
     print('calculating solar properties done')
 
     # calculate properties of PV panel
-    panel_properties = calc_properties_PV_db(locator.get_supply_systems_cost(), settings.type_PVpanel)
+    panel_properties = calc_properties_PV_db(locator.get_supply_systems_cost(), settings.type_pvpanel)
     print('gathering properties of PV panel')
 
     # select sensor point with sufficient solar radiation
@@ -727,12 +728,27 @@ def calc_Crem_pv(E_nom):
     KEV_obtained_in_RpPerkWh = KEV_interpolated_kW(E_nom / 1000.0)
     return KEV_obtained_in_RpPerkWh
 
-def run_as_script():
-    import cea.config
 
-    config = cea.config.Configuration()
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    weather_path = locator.get_weather(config.weather)
+
+    print('Running photovoltaic with scenario = %s' % config.scenario)
+    print('Running photovoltaic with date-start = %s' % config.solar.date_start)
+    print('Running photovoltaic with dpl = %s' % config.solar.dpl)
+    print('Running photovoltaic with eff-pumping = %s' % config.solar.eff_pumping)
+    print('Running photovoltaic with fcr = %s' % config.solar.fcr)
+    print('Running photovoltaic with k-msc-max = %s' % config.solar.k_msc_max)
+    print('Running photovoltaic with min-radiation = %s' % config.solar.min_radiation)
+    print('Running photovoltaic with panel-on-roof = %s' % config.solar.panel_on_roof)
+    print('Running photovoltaic with panel-on-wall = %s' % config.solar.panel_on_wall)
+    print('Running photovoltaic with ro = %s' % config.solar.ro)
+    print('Running photovoltaic with solar-window-solstice = %s' % config.solar.solar_window_solstice)
+    print('Running photovoltaic with t-in-pvt = %s' % config.solar.t_in_pvt)
+    print('Running photovoltaic with t-in-sc = %s' % config.solar.t_in_sc)
+    print('Running photovoltaic with type-pvpanel = %s' % config.solar.type_pvpanel)
+    print('Running photovoltaic with type-scpanel = %s' % config.solar.type_scpanel)
+
     list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
     with fiona.open(locator.get_zone_geometry()) as shp:
@@ -744,8 +760,8 @@ def run_as_script():
         radiation_path = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
         calc_PV(locator=locator, radiation_path=radiation_path, metadata_csv=radiation_metadata, latitude=latitude,
-                longitude=longitude, weather_path=weather_path, building_name=building, )
+                longitude=longitude, weather_path=config.weather, building_name=building, )
 
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
