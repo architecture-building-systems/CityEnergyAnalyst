@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import time
 import fiona
+import os
 from math import *
 import cea.inputlocator
 from cea.technologies.solar.photovoltaic import calc_properties_PV_db, calc_PV_power, calc_diffuseground_comp, \
@@ -527,12 +528,27 @@ def calc_Cinv_PVT(P_peak, gv):
 
     return InvCa
 
-def run_as_script():
-    import cea.config
 
-    config = cea.config.Configuration()
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    weather_path = locator.get_weather(config.weather)
+
+    print('Running photovoltaic-thermal with scenario = %s' % config.scenario)
+    print('Running photovoltaic-thermal with date-start = %s' % config.solar.date_start)
+    print('Running photovoltaic-thermal with dpl = %s' % config.solar.dpl)
+    print('Running photovoltaic-thermal with eff-pumping = %s' % config.solar.eff_pumping)
+    print('Running photovoltaic-thermal with fcr = %s' % config.solar.fcr)
+    print('Running photovoltaic-thermal with k-msc-max = %s' % config.solar.k_msc_max)
+    print('Running photovoltaic-thermal with min-radiation = %s' % config.solar.min_radiation)
+    print('Running photovoltaic-thermal with panel-on-roof = %s' % config.solar.panel_on_roof)
+    print('Running photovoltaic-thermal with panel-on-wall = %s' % config.solar.panel_on_wall)
+    print('Running photovoltaic-thermal with ro = %s' % config.solar.ro)
+    print('Running photovoltaic-thermal with solar-window-solstice = %s' % config.solar.solar_window_solstice)
+    print('Running photovoltaic-thermal with t-in-pvt = %s' % config.solar.t_in_pvt)
+    print('Running photovoltaic-thermal with t-in-sc = %s' % config.solar.t_in_sc)
+    print('Running photovoltaic-thermal with type-pvpanel = %s' % config.solar.type_pvpanel)
+    print('Running photovoltaic-thermal with type-scpanel = %s' % config.solar.type_scpanel)
+
     list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
     with fiona.open(locator.get_zone_geometry()) as shp:
@@ -544,7 +560,8 @@ def run_as_script():
         radiation = locator.get_radiation_building(building_name= building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
         calc_PVT(locator=locator, radiation_json_path=radiation, metadata_csv_path=radiation_metadata, latitude=latitude,
-                 longitude=longitude, weather_path=weather_path, building_name=building)
+                 longitude=longitude, weather_path=config.weather, building_name=building)
+
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
