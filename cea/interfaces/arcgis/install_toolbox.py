@@ -1,10 +1,10 @@
-"""Install the toolbox into ArcGIS Desktop 10.4"""
+"""Install the toolbox into ArcGIS Desktop 10.4 and 10.5"""
 import sys
 import shutil
 import os.path
 
 
-def main():
+def main(_):
     """
     Perform the following steps:
 
@@ -25,6 +25,7 @@ def main():
 
     with open(os.path.expanduser('~/cea_arcpy.pth'), 'w') as f:
         f.writelines('\n'.join(get_arcgis_paths()))
+    print('toolbox installed.')
 
 
 def find_toolbox_src():
