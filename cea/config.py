@@ -193,8 +193,18 @@ class Parameter(object):
 class PathParameter(Parameter):
     pass
 
-class RelativePathParameter(Parameter):
-    pass
+class RelativePathParameter(PathParameter):
+    """A PathParameter that is relative to the scenario."""
+    def initialize(self, section, parser):
+        """
+        Override this function to initialize a parameter with values as read from
+        the default.config
+        """
+        self._parser = parser
+
+    def decode(self, value):
+        """return a full path"""
+        return os.path.normpath(os.path.join(self._parser.get('general', 'scenario'), value))
 
 class WeatherPathParameter(Parameter):
     def decode(self, value):
@@ -287,6 +297,7 @@ if __name__ == '__main__':
     print(config.scenario)
     print(config.weather)
     print(config.sensitivity_demand.samples_folder)
+    print(config.heatmaps.file_to_analyze)
 
     # make sure the config can be pickled (for multiprocessing)
     import pickle
