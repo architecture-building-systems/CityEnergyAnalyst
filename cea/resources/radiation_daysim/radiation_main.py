@@ -177,19 +177,24 @@ def radiation_singleprocessing(rad, building_dict_list, locator, weather_path, s
     for chunk_n, building_dict in enumerate(chunks):
         daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, weather_path, settings)
 
-def main(locator, weather_path, selected_buildings):
+def main(config):
     """
     This function makes the calculation of solar insolation in X sensor points for every building in the zone
     of interest. the number of sensor points depends on the size of the grid selected in the SETTINGS.py file and
     are generated automatically.
 
-    :param weather_path: path to the weather file (*.epw) to use
-    :type weather_path: str
-    :param locator: a cea.inputlocator.InputLocator - provides access to file paths inside a scenario
-    :type locator: cea.inputlocator.InputLocator
+    :param config: Configuration object with the settings (genera and radiation-daysim)
+    :type config: cea.config.Configuartion
     :return:
     """
-    config = cea.config.Configuration()
+
+    #  reference case need to be provided here
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+
+    #  the selected buildings are the ones for which the individual radiation script is run for
+    #  this is only activated when in default.config, run_all_buildings is set as 'False'
+    selected_buildings = config.radiation_daysim.buildings
+
     settings = config.radiation_daysim
 
     # import material properties of buildings
@@ -199,7 +204,6 @@ def main(locator, weather_path, selected_buildings):
     print("creating 3D geometry and surfaces")
     # create geometrical faces of terrain and buildings
     geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator, settings)
-
 
     print("Sending the scene: geometry and materials to daysim")
     # send materials
@@ -215,22 +219,12 @@ def main(locator, weather_path, selected_buildings):
 
     time1 = time.time()
     if config.multiprocessing:
-        radiation_multiprocessing(rad, geometry_3D_zone, locator, weather_path, settings, selected_buildings)
+        radiation_multiprocessing(rad, geometry_3D_zone, locator, config.weather, settings, selected_buildings)
     else:
-        radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path, settings, selected_buildings)
+        radiation_singleprocessing(rad, geometry_3D_zone, locator, config.weather, settings, selected_buildings)
 
     print("Daysim simulation finished in %.2f mins" % ((time.time() - time1) / 60.0))
 
 
 if __name__ == '__main__':
-    import cea.config
-
-    config = cea.config.Configuration()
-    #  reference case need to be provided here
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    weather_path = locator.get_weather(config.weather)
-
-    #  the selected buildings are the ones for which the individual radiation script is run for
-    #  this is only activated when in default.config, run_all_buildings is set as 'False'
-    selected_buildings = config.radiation_daysim.buildings
-    main(locator=locator, weather_path=weather_path, selected_buildings=selected_buildings)
+    main(cea.config.Configuration())
