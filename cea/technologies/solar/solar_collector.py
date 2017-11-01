@@ -11,7 +11,9 @@ import cea.inputlocator
 from math import *
 import re
 import time
+import os
 import fiona
+import cea.config
 from cea.utilities import dbfreader
 from cea.utilities import epwreader
 from cea.utilities import solar_equations
@@ -748,13 +750,25 @@ def calc_Cinv_SC(Area, gv):
 
 
 
-def run_as_script():
-    import cea.config
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
-    config = cea.config.Configuration()
-    scenario_path = config.scenario
-    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
-    weather_path = locator.get_weather(config.weather)
+    print('Running solar-collector with scenario = %s' % config.scenario)
+    print('Running solar-collector with date-start = %s' % config.solar.date_start)
+    print('Running solar-collector with dpl = %s' % config.solar.dpl)
+    print('Running solar-collector with eff-pumping = %s' % config.solar.eff_pumping)
+    print('Running solar-collector with fcr = %s' % config.solar.fcr)
+    print('Running solar-collector with k-msc-max = %s' % config.solar.k_msc_max)
+    print('Running solar-collector with min-radiation = %s' % config.solar.min_radiation)
+    print('Running solar-collector with panel-on-roof = %s' % config.solar.panel_on_roof)
+    print('Running solar-collector with panel-on-wall = %s' % config.solar.panel_on_wall)
+    print('Running solar-collector with ro = %s' % config.solar.ro)
+    print('Running solar-collector with solar-window-solstice = %s' % config.solar.solar_window_solstice)
+    print('Running solar-collector with t-in-pvt = %s' % config.solar.t_in_pvt)
+    print('Running solar-collector with t-in-sc = %s' % config.solar.t_in_sc)
+    print('Running solar-collector with type-pvpanel = %s' % config.solar.type_pvpanel)
+    print('Running solar-collector with type-scpanel = %s' % config.solar.type_scpanel)
 
     list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
@@ -767,7 +781,7 @@ def run_as_script():
         radiation = locator.get_radiation_building(building_name= building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
         calc_SC(locator=locator, radiation_csv=radiation, metadata_csv=radiation_metadata, latitude=latitude,
-                longitude=longitude, weather_path=weather_path, building_name=building)
+                longitude=longitude, weather_path=config.weather, building_name=building)
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
