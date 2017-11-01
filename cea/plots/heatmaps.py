@@ -7,6 +7,7 @@ import os
 
 import cea.inputlocator
 import cea.globalvar
+import cea.config
 from cea.interfaces.arcgis.modules import arcpy
 
 
@@ -99,22 +100,17 @@ def get_gis_field(csv_field, gis_field_lookup):
     return gis_field
 
 
-def run_as_script(scenario_path=None, file_to_analyze=None, analysis_fields=None):
-    import cea.config
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
-    config = cea.config.Configuration()
-    if not scenario_path:
-        scenario_path = config.scenario
-    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
+    print('Running heatmaps with scenario = %s' % config.scenario)
+    print('Running heatmaps with file-to-analyze = %s' % config.heatmaps.file_to_analyze)
+    print('Running heatmaps with analysis-fields = %s' % config.heatmaps.analysis_fields)
 
-    if not file_to_analyze or not os.path.exists(file_to_analyze):
-        file_to_analyze = os.path.join(scenario_path, config.heatmaps.file_to_analyze)
-
-    if not analysis_fields:
-        analysis_fields = config.heatmaps.analysis_fields
-
-    heatmaps(locator=locator, analysis_fields=analysis_fields, file_to_analyze=file_to_analyze)
+    heatmaps(locator=locator, analysis_fields=config.heatmaps.analysis_fields,
+             file_to_analyze=config.heatmaps.file_to_analyze)
 
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())

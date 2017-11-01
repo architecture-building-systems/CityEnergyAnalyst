@@ -261,7 +261,7 @@ def task_run_heatmaps():
             continue
         yield {
             'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.plots.heatmaps.run_as_script, [], {
+            'actions': [(cea.plots.heatmaps.main, [], {
                 'scenario_path': scenario_path
             })],
             'verbosity': 1,
