@@ -3,6 +3,7 @@ costs according to supply systems
 """
 from __future__ import division
 
+import os
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
 import cea.inputlocator
@@ -110,15 +111,25 @@ def operation_costs(locator, plot_Qww=True, plot_Qhs=True, plot_Qcs=True, plot_Q
     result[fields_to_plot].to_csv(locator.get_costs_operation_file("Total"), index=False, float_format='%.2f')
 
 
-def run_as_script(scenario_path=None):
-    config = cea.config.Configuration()
-    if not scenario_path:
-        scenario_path = config.scenario
-    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+
+    print('Running operation-costs with scenario = %s' % config.scenario)
+    print('Running operation-costs with plot-qww = %s' % config.operation_costs.plot_qww)
+    print('Running operation-costs with plot-epro = %s' % config.operation_costs.plot_epro)
+    print('Running operation-costs with plot-eaux = %s' % config.operation_costs.plot_eaux)
+    print('Running operation-costs with plot-qcs = %s' % config.operation_costs.plot_qcs)
+    print('Running operation-costs with plot-qhs = %s' % config.operation_costs.plot_qhs)
+    print('Running operation-costs with plot-edata = %s' % config.operation_costs.plot_edata)
+    print('Running operation-costs with plot-eal = %s' % config.operation_costs.plot_eal)
+    print('Running operation-costs with plot-qcdata = %s' % config.operation_costs.plot_qcdata)
+    print('Running operation-costs with plot-qcrefri = %s' % config.operation_costs.plot_qcrefri)
+
     oc = config.operation_costs
     operation_costs(locator=locator, plot_Qww=oc.plot_qww, plot_Qhs=oc.plot_qhs, plot_Qcs=oc.plot_qcs,
                     plot_Qcdata=oc.plot_qcdata, plot_Qcrefri=oc.plot_qcrefri, plot_Eal=oc.plot_eal,
                     plot_Eaux=oc.plot_eaux, plot_Epro=oc.plot_epro, plot_Edata=oc.plot_edata)
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
