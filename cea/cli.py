@@ -58,7 +58,7 @@ def data_helper(args):
 def operation_costs(args):
     """Run the operation costs script with the arguments provided (args.scenario)."""
     import cea.analysis.operation_costs
-    cea.analysis.operation_costs.run_as_script(scenario_path=args.scenario)
+    cea.analysis.operation_costs.main(scenario_path=args.scenario)
 
 
 def emissions(args):

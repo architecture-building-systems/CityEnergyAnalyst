@@ -13,6 +13,8 @@ In the above example, ``template`` is the name of the script (as in ``cea templa
 refers to the list of sections in the default.config file that this script uses as parameters. If you only need some
 parameters from a section, you can use the form ``section:key`` to specify a specific parameter in a section.
 """
+from __future__ import division
+
 import sys
 import cea.config
 import cea.inputlocator
