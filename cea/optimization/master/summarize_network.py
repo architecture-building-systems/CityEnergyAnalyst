@@ -47,7 +47,7 @@ def network_main(locator, total_demand, building_names, gv, key):
 
     # import properties of distribution
     num_buildings_network = total_demand.Name.count()
-    pipes_tot_length = pd.read_csv(locator.get_optimization_network_layout_pipes_file(), usecols=['LENGTH'])
+    pipes_tot_length = pd.read_csv(locator.get_optimization_network_layout_pipes_file(), usecols=['pipe length'])
     ntwk_length = pipes_tot_length.sum() * num_buildings_network / len(building_names) #gv.num_tot_buildings
 
     # empty vectors
