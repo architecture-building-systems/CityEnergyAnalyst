@@ -19,13 +19,8 @@ import os
 import cea.config
 import cea.inputlocator
 
-# list the sections in the configuration file that are used by this script
-# this value is used to generate the help menu for the command-line interface
-CEA_CONFIG_SECTIONS = ['general:scenario', 'general:region', 'data-helper']
-
-
 def template(locator, archetypes):
-    # is this where the action happens????
+    # this is where the action happens if it is more than a few lines in ``main``.
     pass
 
 
