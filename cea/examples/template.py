@@ -15,7 +15,7 @@ parameters from a section, you can use the form ``section:key`` to specify a spe
 """
 from __future__ import division
 
-import sys
+import os
 import cea.config
 import cea.inputlocator
 
@@ -40,6 +40,7 @@ def main(config):
     :type config: cea.config.Configuration
     :return:
     """
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     # print out all configuration variables used by this script
