@@ -197,13 +197,28 @@ def retrofit_scenario_creator(locator_baseline, locator_retrofit, geometry_df, a
     shutil.copy2(locator_baseline.get_terrain(), locator_retrofit.get_terrain())
 
 
-def run_as_script(scenario_path=None):
-    config = cea.config.Configuration()
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator_baseline = cea.inputlocator.InputLocator(scenario=config.scenario)
 
-    if scenario_path is None:
-        scenario_path = config.scenario
+    print("Running retrofit-potential for scenario = %s" % config.scenario)
+    print('Running retrofit-potential with hot-water-costs-threshold = %s' % config.retrofit_potential.hot_water_costs_threshold)
+    print('Running retrofit-potential with age-threshold = %s' % config.retrofit_potential.age_threshold)
+    print('Running retrofit-potential with emissions-operation-threshold = %s' % config.retrofit_potential.emissions_operation_threshold)
+    print('Running retrofit-potential with eui-electricity-threshold = %s' % config.retrofit_potential.eui_electricity_threshold)
+    print('Running retrofit-potential with heating-costs-threshold = %s' % config.retrofit_potential.heating_costs_threshold)
+    print('Running retrofit-potential with eui-hot-water-threshold = %s' % config.retrofit_potential.eui_hot_water_threshold)
+    print('Running retrofit-potential with electricity-costs-threshold = %s' % config.retrofit_potential.electricity_costs_threshold)
+    print('Running retrofit-potential with heating-losses-threshold = %s' % config.retrofit_potential.heating_losses_threshold)
+    print('Running retrofit-potential with cooling-losses-threshold = %s' % config.retrofit_potential.cooling_losses_threshold)
+    print('Running retrofit-potential with keep-partial-matches = %s' % config.retrofit_potential.keep_partial_matches)
+    print('Running retrofit-potential with retrofit-target-year = %s' % config.retrofit_potential.retrofit_target_year)
+    print('Running retrofit-potential with eui-cooling-threshold = %s' % config.retrofit_potential.eui_cooling_threshold)
+    print('Running retrofit-potential with hot-water-losses-threshold = %s' % config.retrofit_potential.hot_water_losses_threshold)
+    print('Running retrofit-potential with eui-heating-threshold = %s' % config.retrofit_potential.eui_heating_threshold)
+    print('Running retrofit-potential with cooling-costs-threshold = %s' % config.retrofit_potential.cooling_costs_threshold)
+    print('Running retrofit-potential with retrofit-scenario-name = %s' % config.retrofit_potential.retrofit_scenario_name)
 
-    locator_baseline = cea.inputlocator.InputLocator(scenario=scenario_path)
     retrofit_main(locator_baseline=locator_baseline,
                   retrofit_scenario_name=config.retrofit_potential.retrofit_scenario_name,
                   keep_partial_matches=config.retrofit_potential.keep_partial_matches,
@@ -224,4 +239,4 @@ def run_as_script(scenario_path=None):
 
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
