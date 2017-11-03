@@ -187,8 +187,6 @@ def main(config):
 
     Run this script with the argument `--help` to get an overview of the parameters.
     """
-    config.apply_command_line_args(sys.argv[1:], ['general', 'sensitivity-demand'])
-
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
 
     print("Running sensitivity-demand-simulate for scenario = %s" % config.scenario)
@@ -215,4 +213,6 @@ def main(config):
 
 
 if __name__ == '__main__':
-    main(cea.config.Configuration())
+    config = cea.config.Configuration()
+    config.apply_command_line_args(sys.argv[1:], ['general', 'sensitivity-demand'])
+    main(config)
