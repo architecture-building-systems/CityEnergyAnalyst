@@ -360,24 +360,19 @@ def task_run_scenario_plots():
 #         }
 
 
-def main(user=None, token=None, reference_cases=None):
+def main(config):
     from doit.api import DoitMain
     from doit.api import ModuleTaskLoader
-    if user:
-        global _user
-        _user = user
-    if token:
-        global _token
-        _token = token
+
     global _reference_cases
-    if not reference_cases:
+    if not config.test.reference_cases:
         _reference_cases = ['open']
-    elif 'all' in reference_cases:
+    elif 'all' in config.test.reference_cases:
         _reference_cases = REFERENCE_CASES.keys()
     else:
-        _reference_cases = [rc for rc in reference_cases if rc in REFERENCE_CASES.keys()]
+        _reference_cases = [rc for rc in config.test.reference_cases if rc in REFERENCE_CASES.keys()]
     sys.exit(DoitMain(ModuleTaskLoader(globals())).run([]))
 
 
 if __name__ == '__main__':
-    main()
+    main(cea.config.Configuration())
