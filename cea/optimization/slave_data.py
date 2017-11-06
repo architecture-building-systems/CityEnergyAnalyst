@@ -87,9 +87,9 @@ class SlaveData(object):
         self.T_ST_MIN = 10 + 273.0
         
         # Solar
-        self.SOLCOL_TYPE_PVT     = "PVT_35.csv" # file used as PVT type of collectors
-        self.SOLCOL_TYPE_SC      = "SC_75.csv"
-        self.SOLCOL_TYPE_PV      = "Pv.csv"
+        self.SOLCOL_TYPE_PVT     = "PVT_total.csv" # file used as PVT type of collectors
+        self.SOLCOL_TYPE_SC      = "SC_total.csv"
+        self.SOLCOL_TYPE_PV      = "PV_total.csv"
         self.SOLAR_PART_PVT      = 0.0  # [%] How much of the total area is available for PVT
         self.SOLAR_PART_SC       = 0.0  # How much of the total area is available for Solar Collectors
         self.SOLAR_PART_PV       = 0.0  # How much of the total area is available for PV (no thermal output, selling electricity)
