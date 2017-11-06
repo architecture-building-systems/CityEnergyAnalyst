@@ -729,8 +729,10 @@ def calc_Crem_pv(E_nom):
 
 def test_photovoltaic():
 
+    import cea.config
+    config = cea.config.Configuration()
     gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
+    scenario_path = config.scenario
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     weather_path = locator.get_default_weather()
     list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
@@ -745,6 +747,15 @@ def test_photovoltaic():
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
         calc_PV(locator=locator, radiation_path=radiation_path, metadata_csv=radiation_metadata, latitude=latitude,
                 longitude=longitude, weather_path=weather_path, building_name=building, )
+
+    for i, building in enumerate(list_buildings_names):
+        data = pd.read_csv(locator.PV_results(building))
+        if i == 0:
+            df = data
+        else:
+            df = df + data
+
+    df.to_csv(locator.PV_totals(), index=True,float_format='%.2f')
 
 
 if __name__ == '__main__':
