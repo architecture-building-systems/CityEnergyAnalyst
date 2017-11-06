@@ -718,6 +718,22 @@ class InputLocator(object):
         """scenario/outputs/plots/timeseries"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'plots', 'timeseries')
 
+    def get_4D_demand_plot(self, period):
+        """scenario/outputs/plots/timeseries"""
+        return os.path.join(self.get_demand_plots_folder(), 'Demand_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+
+    def get_4D_pv_plot(self, period):
+        """scenario/outputs/plots/timeseries"""
+        return os.path.join(self.get_demand_plots_folder(), 'PV_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+
+    def get_4D_pvt_plot(self, period):
+        """scenario/outputs/plots/timeseries"""
+        return os.path.join(self.get_demand_plots_folder(), 'PVT_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+
+    def get_4D_sc_plot(self, period):
+        """scenario/outputs/plots/timeseries"""
+        return os.path.join(self.get_demand_plots_folder(), 'SC_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+
     def get_demand_plots_file(self, building_name):
         """scenario/outputs/plots/timeseries/{building_name}.pdf"""
         return os.path.join(self.get_demand_plots_folder(), '%(building_name)s.pdf' % locals())
