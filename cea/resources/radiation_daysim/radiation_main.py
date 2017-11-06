@@ -139,8 +139,6 @@ def reader_surface_properties(locator, input_shp):
 
 def radiation_multiprocessing(rad, bldg_dict_list, locator, weather_path, settings, selected_buildings):
 
-    config = cea.config.Configuration(locator.scenario_path)
-
     # get chunks to iterate and start multiprocessing
     if settings.simulation_parameters['run_all_buildings']:
         # get chunks of buildings to iterate
@@ -227,9 +225,11 @@ def main(locator, weather_path, selected_buildings):
 
 if __name__ == '__main__':
     #  reference case need to be provided here
-    locator = cea.inputlocator.InputLocator(scenario_path=r'c:\reference-case-ecocampus\baseline')
-    weather_path = locator.get_default_weather()
+    import cea.config
+    config = cea.config.Configuration()
+    scenario_path = config.scenario
+    locator = cea.inputlocator.InputLocator(scenario_path)
     #  the selected buildings are the ones for which the individual radiation script is run for
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
     selected_buildings = ['B191', 'B003', 'B004', 'B005', 'B006', 'B021', 'B182', 'B191', 'B212', 'B216']
-    main(locator=locator, weather_path=weather_path, selected_buildings=selected_buildings)
+    main(locator=locator, weather_path=config.weather, selected_buildings=selected_buildings)
