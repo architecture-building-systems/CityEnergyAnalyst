@@ -2,7 +2,6 @@
 ====================================
 Operation for decentralized buildings
 ====================================
-
 """
 from __future__ import division
 
@@ -22,7 +21,6 @@ def decentralized_main(locator, building_names, gv):
     output results in csv files.
     There is no optimization at this point. The different technologies are calculated and compared 1 to 1 to
     each technology. it is a classical combinatorial problem.
-
     :param locator: locator class
     :param building_names: list with names of buildings
     :param gv: global variables class
@@ -31,7 +29,6 @@ def decentralized_main(locator, building_names, gv):
     :type gv: class
     :return: results of operation of buildings located in locator.get_optimization_disconnected_folder
     :rtype: Nonetype
-
     """
     t0 = time.clock()
     geothermal_potential = pd.read_csv(locator.get_geothermal_potential(), index_col="Name")
@@ -40,7 +37,6 @@ def decentralized_main(locator, building_names, gv):
     def calc_new_load(mdot, TsupDH, Tret, gv):
         """
         This function calculates the load distribution side of the district heating distribution.
-
         :param mdot: mass flow
         :param TsupDH: supply temeperature
         :param Tret: return temperature
@@ -77,7 +73,7 @@ def decentralized_main(locator, building_names, gv):
         resourcesRes = np.zeros((13,4))
         QannualB_GHP = np.zeros((10,1)) # For the investment costs of the boiler used with GHP
         Wel_GHP = np.zeros((10,1)) # For the investment costs of the GHP
-        
+
         # Supply with the Boiler / FC / GHP
         Tret = loads["T_return_DH_result_K"].values
         TsupDH = loads["T_supply_DH_result_K"].values
@@ -86,113 +82,113 @@ def decentralized_main(locator, building_names, gv):
 
             if Tret[hour] == 0:
                 Tret[hour] = TsupDH[hour]
-                
+
             # Boiler NG
             BoilerEff = Boiler.calc_Cop_boiler(Qload[hour], Qnom, Tret[hour])
-            
+
             Qgas = Qload[hour] / BoilerEff
-            
+
             result[0][4] += gv.NG_PRICE * Qgas # CHF
             result[0][5] += gv.NG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6 # kgCO2
             result[0][6] += gv.NG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6 # MJ-oil-eq
             resourcesRes[0][0] += Qload[hour]
-            
+
             if gv.DiscBioGasFlag == 1:
                 result[0][4] += gv.BG_PRICE * Qgas # CHF
                 result[0][5] += gv.BG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6 # kgCO2
                 result[0][6] += gv.BG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6 # MJ-oil-eq
-                
+
             # Boiler BG
             result[1][4] += gv.BG_PRICE * Qgas # CHF
             result[1][5] += gv.BG_BACKUPBOILER_TO_CO2_STD * Qgas * 3600E-6 # kgCO2
             result[1][6] += gv.BG_BACKUPBOILER_TO_OIL_STD * Qgas * 3600E-6 # MJ-oil-eq
             resourcesRes[1][1] += Qload[hour]
-                
+
             # FC
             (FC_Effel, FC_Effth) = FC.calc_eta_FC(Qload[hour], Qnom, 1, "B")
             Qgas = Qload[hour] / (FC_Effth+FC_Effel)
-            Qelec = Qgas * FC_Effel            
-            
+            Qelec = Qgas * FC_Effel
+
             result[2][4] += gv.NG_PRICE * Qgas - gv.ELEC_PRICE * Qelec # CHF, extra electricity sold to grid
             result[2][5] += 0.0874 * Qgas * 3600E-6 + 773 * 0.45 * Qelec * 1E-6 - gv.EL_TO_CO2 * Qelec * 3600E-6 # kgCO2
             # Bloom box emissions within the FC: 773 lbs / MWh_el (and 1 lbs = 0.45 kg)
             # http://www.carbonlighthouse.com/2011/09/16/bloom-box/
             result[2][6] += 1.51 * Qgas * 3600E-6 - gv.EL_TO_OIL_EQ * Qelec * 3600E-6 # MJ-oil-eq
-            
+
             resourcesRes[2][0] += Qload[hour]
             resourcesRes[2][2] += Qelec
-            
+
             # GHP
             for i in range(10):
-                
+
                 QnomBoiler = i/10 * Qnom
                 QnomGHP = Qnom - QnomBoiler
-                
+
                 if Qload[hour] <= QnomGHP:
-                
+
                     (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TsupDH[hour], Tret[hour],
                                                                                   gv.TGround, gv)
-                    
+
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
-                    
+
                     result[3+i][4] += gv.ELEC_PRICE * wdot_el   # CHF
                     result[3+i][5] += gv.SMALL_GHP_TO_CO2_STD  * wdot_el   * 3600E-6 # kgCO2
                     result[3+i][6] += gv.SMALL_GHP_TO_OIL_STD  * wdot_el   * 3600E-6 # MJ-oil-eq
-                    
+
                     resourcesRes[3+i][2] -= wdot_el
                     resourcesRes[3+i][3] += Qload[hour] - qhotdot_missing
-                    
+
                     if qhotdot_missing > 0:
                         print "GHP unable to cover the whole demand, boiler activated!"
                         BoilerEff = Boiler.calc_Cop_boiler(qhotdot_missing, QnomBoiler, tsup2)
                         Qgas = qhotdot_missing / BoilerEff
-                        
+
                         result[3+i][4] += gv.NG_PRICE * Qgas   # CHF
                         result[3+i][5] += gv.NG_BACKUPBOILER_TO_CO2_STD * Qgas   * 3600E-6 # kgCO2
                         result[3+i][6] += gv.NG_BACKUPBOILER_TO_OIL_STD * Qgas   * 3600E-6 # MJ-oil-eq
-                        
+
                         QannualB_GHP[i][0] += qhotdot_missing
                         resourcesRes[3+i][0] += qhotdot_missing
-    
+
                 else:
                     #print "Boiler activated to compensate GHP", i
                     #if gv.DiscGHPFlag == 0:
                     #    print QnomGHP
-                    #   QnomGHP = 0 
+                    #   QnomGHP = 0
                     #   print "GHP not allowed 2, set QnomGHP to zero"
-                        
+
                     TexitGHP = QnomGHP / (mdot[hour] * gv.cp) + Tret[hour]
                     (wdot_el, qcolddot, qhotdot_missing, tsup2) = HP.calc_Cop_GHP(mdot[hour], TexitGHP, Tret[hour], gv.TGround, gv)
-                    
+
                     if Wel_GHP[i][0] < wdot_el:
                         Wel_GHP[i][0] = wdot_el
-                        
+
                     result[3+i][4] += gv.ELEC_PRICE * wdot_el   # CHF
                     result[3+i][5] += gv.SMALL_GHP_TO_CO2_STD  * wdot_el   * 3600E-6 # kgCO2
                     result[3+i][6] += gv.SMALL_GHP_TO_OIL_STD  * wdot_el   * 3600E-6 # MJ-oil-eq
-                    
+
                     resourcesRes[3+i][2] -= wdot_el
                     resourcesRes[3+i][3] += QnomGHP - qhotdot_missing
-                    
+
                     if qhotdot_missing > 0:
                         print "GHP unable to cover the whole demand, boiler activated!"
                         BoilerEff = Boiler.calc_Cop_boiler(qhotdot_missing, QnomBoiler, tsup2)
                         Qgas = qhotdot_missing / BoilerEff
-                        
+
                         result[3+i][4] += gv.NG_PRICE * Qgas   # CHF
                         result[3+i][5] += gv.NG_BACKUPBOILER_TO_CO2_STD * Qgas   * 3600E-6 # kgCO2
                         result[3+i][6] += gv.NG_BACKUPBOILER_TO_OIL_STD * Qgas   * 3600E-6 # MJ-oil-eq
-                        
+
                         QannualB_GHP[i][0] += qhotdot_missing
                         resourcesRes[3+i][0] += qhotdot_missing
-                        
+
                     QtoBoiler = Qload[hour] - QnomGHP
                     QannualB_GHP[i][0] += QtoBoiler
-                    
+
                     BoilerEff = Boiler.calc_Cop_boiler(QtoBoiler, QnomBoiler, TexitGHP)
                     Qgas = QtoBoiler / BoilerEff
-                    
+
                     result[3+i][4] += gv.NG_PRICE * Qgas   # CHF
                     result[3+i][5] += gv.NG_BACKUPBOILER_TO_CO2_STD * Qgas   * 3600E-6 # kgCO2
                     result[3+i][6] += gv.NG_BACKUPBOILER_TO_OIL_STD * Qgas   * 3600E-6 # MJ-oil-eq
@@ -202,7 +198,7 @@ def decentralized_main(locator, building_names, gv):
         Capex_a_Boiler, Opex_Boiler = Boiler.calc_Cinv_boiler(Qnom, Qannual, gv, locator)
         InvCosts[0][0] = Capex_a_Boiler + Opex_Boiler
         InvCosts[1][0] = Capex_a_Boiler + Opex_Boiler
-        
+
         Capex_a_FC, Opex_FC = FC.calc_Cinv_FC(Qnom, gv, locator)
         InvCosts[2][0] = Capex_a_FC + Opex_FC
 
@@ -218,7 +214,7 @@ def decentralized_main(locator, building_names, gv):
             Capex_a_GHP, Opex_GHP = HP.calc_Cinv_GHP(Wel_GHP[i][0], gv, locator)
             InvCaGHP = Capex_a_GHP + Opex_GHP
             InvCosts[3+i][0] += InvCaGHP * gv.EURO_TO_CHF
-        
+
 
         # Best configuration
         Best = np.zeros((13,1))
@@ -227,46 +223,46 @@ def decentralized_main(locator, building_names, gv):
         TotalCosts = np.zeros((13,2))
         TotalCO2 = np.zeros((13,2))
         TotalPrim = np.zeros((13,2))
-        
+
         for i in range(13):
             TotalCosts[i][0] = TotalCO2[i][0] = TotalPrim[i][0] = i
 
             TotalCosts[i][1] = InvCosts[i][0] + result[i][4]
             TotalCO2[i][1] = result[i][5]
             TotalPrim[i][1] = result[i][6]
-        
+
         CostsS = TotalCosts[np.argsort(TotalCosts[:,1])]
         CO2S = TotalCO2[np.argsort(TotalCO2[:,1])]
         PrimS = TotalPrim[np.argsort(TotalPrim[:,1])]
-        
+
         el = len(CostsS)
         rank = 0
         Bestfound = False
-        
+
         optsearch = np.empty(el)
         optsearch.fill(3)
         indexBest = 0
-        
+
         # Check the GHP area constraint
         for i in range(10):
             QGHP = (1-i/10) * Qnom
             areaAvail = geothermal_potential.ix[building_name,"Area_geo"]
             Qallowed = np.ceil(areaAvail/gv.GHP_A) * gv.GHP_HmaxSize #[W_th]
-            
+
             if Qallowed < QGHP:
                 optsearch[i+3] += 1
                 Best[i+3][0] = - 1
-        
+
         while not Bestfound and rank<el:
 
             optsearch[int(CostsS[rank][0])] -= 1
             optsearch[int(CO2S[rank][0])] -= 1
             optsearch[int(PrimS[rank][0])] -= 1
-            
+
             if np.count_nonzero(optsearch) != el:
                 Bestfound = True
                 indexBest = np.where(optsearch == 0)[0][0]
-                
+
             rank += 1
 
         # get the best option according to the ranking.
@@ -295,8 +291,8 @@ def decentralized_main(locator, building_names, gv):
         results_to_csv = pd.DataFrame(dico)
         fName_result = locator.get_optimization_disconnected_folder_building_result(building_name)
         results_to_csv.to_csv(fName_result, sep= ',')
-        
-    
+
+
         BestComb = {}
         BestComb[ "BoilerNG Share" ] = result[indexBest,0]
         BestComb[ "BoilerBG Share" ] = result[indexBest,1]
@@ -309,7 +305,7 @@ def decentralized_main(locator, building_names, gv):
         BestComb[ "Total Costs [CHF]" ] = TotalCosts[indexBest,1]
         BestComb[ "Best configuration" ] = Best[indexBest,0]
         BestComb[ "Nominal Power" ] = Qnom
-        
+
         BestData[building_name] = BestComb
 
     if 0:

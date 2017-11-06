@@ -126,11 +126,16 @@ class InputLocator(object):
 
     def get_optimization_network_results_summary(self, key):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
+        return os.path.join(self.get_optimization_network_results_folder(), 'Network_summary_result_' + hex(int(str(key),2)) + '.csv')
+
+    def get_optimization_network_all_results_summary(self, key):
+        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_network_results_folder(), 'Network_summary_result_' + key + '.csv')
+
 
     def get_optimization_network_totals_folder_total(self, indCombi):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_network_totals_folder(), "Total_" + indCombi + ".csv")
+        return os.path.join(self.get_optimization_network_totals_folder(), "Total_" + hex(int(str(indCombi),2)) + ".csv")
 
     def get_optimization_network_results_folder(self):
         """scenario/outputs/data/optimization/network
@@ -154,7 +159,7 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_PipesData.csv
         Optimized network layout files for pipes of district heating networks
         """
-        return os.path.join(self.get_optimization_network_layout_folder(), "PipesData_DH.csv")
+        return os.path.join(self.get_optimization_network_layout_folder(), "DC_AllEdges.csv")
 
     def get_optimization_network_layout_nodes_file(self):
         """scenario/outputs/data/optimization/network/layout/DH_NodesData.csv
@@ -556,6 +561,10 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), '%s_PV.csv' % building_name)
 
+    def PV_totals(self):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), 'PV_total.csv')
+
     def PV_metadata_results(self, building_name):
         """scenario/outputs/data/potentials/solar/{building_name}_PV_sensors.csv"""
         solar_potential_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'potentials', 'solar')
@@ -565,6 +574,10 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar/{building_name}_SC.csv"""
         return os.path.join(self.solar_potential_folder(), '%s_SC.csv' % building_name)
 
+    def SC_totals(self):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), 'SC_total.csv')
+
     def SC_metadata_results(self, building_name):
         """scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv"""
         solar_potential_folder = os.path.join(self.scenario_path, 'outputs', 'data', 'potentials', 'solar')
@@ -573,6 +586,10 @@ class InputLocator(object):
     def PVT_results(self, building_name):
         """scenario/outputs/data/potentials/solar/{building_name}_SC.csv"""
         return os.path.join(self.solar_potential_folder(), '%s_PVT.csv' % building_name)
+
+    def PVT_totals(self):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), 'PVT_total.csv')
 
     def PVT_metadata_results(self, building_name):
         """scenario/outputs/data/potentials/solar/{building_name}_SC_sensors.csv"""
@@ -698,6 +715,22 @@ class InputLocator(object):
     def get_demand_plots_folder(self):
         """scenario/outputs/plots/timeseries"""
         return self._ensure_folder(self.scenario_path, 'outputs', 'plots', 'timeseries')
+
+    def get_4D_demand_plot(self, period):
+        """scenario/outputs/plots/timeseries"""
+        return os.path.join(self.get_demand_plots_folder(), 'Demand_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+
+    def get_4D_pv_plot(self, period):
+        """scenario/outputs/plots/timeseries"""
+        return os.path.join(self.get_demand_plots_folder(), 'PV_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+
+    def get_4D_pvt_plot(self, period):
+        """scenario/outputs/plots/timeseries"""
+        return os.path.join(self.get_demand_plots_folder(), 'PVT_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+
+    def get_4D_sc_plot(self, period):
+        """scenario/outputs/plots/timeseries"""
+        return os.path.join(self.get_demand_plots_folder(), 'SC_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
     def get_demand_plots_file(self, building_name):
         """scenario/outputs/plots/timeseries/{building_name}.pdf"""
