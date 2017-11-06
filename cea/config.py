@@ -30,41 +30,23 @@ class Configuration(object):
         Finally apply any command line arguments.
         """
         self._sections = {}
+        self._parser = ConfigParser.SafeConfigParser()
         self._read_default_config()
+        self._copy_general()
         if not config_file:
             config_file = CEA_CONFIG
-        self._read_cea_config(config_file)
-        self._copy_general()
-
+        self._parser.read(config_file)
 
     def _read_default_config(self):
-        parser = ConfigParser.SafeConfigParser()
-        parser.read(DEFAULT_CONFIG)
-        for section_name in parser.sections():
-            section = Section(name=section_name)
-
-            for parameter_name in parser.options(section_name):
-                if '.' in parameter_name:
-                    # ignore the 'parameter.type', 'parameter.help' etc. keys - they're not parameter names
-                    continue
-                try:
-                    parameter_type = parser.get(section_name, parameter_name + '.type')
-                except ConfigParser.NoOptionError:
-                    parameter_type = 'StringParameter'
-                assert parameter_type in globals(), 'Bad parameter type in default.config: %(section_name)s/%(parameter_name)s=%(parameter_type)s' % locals()
-                parameter = globals()[parameter_type](parameter_name, section_name, parser)
-                section.add_parameter(parameter, parser)
+        """Read in the ``default.config`` file and build the parameters and sections with the appropriate types"""
+        self._parser.readfp(open(DEFAULT_CONFIG))
+        for section_name in self._parser.sections():
+            section_class = create_section_type(self._parser, section_name)
+            section = section_class(name=section_name, config=self)
             setattr(self, python_identifier(section_name), section)
             self._sections[section_name] = section
 
-    def _read_cea_config(self, config_file):
-        parser = ConfigParser.SafeConfigParser()
-        parser.readfp(open(DEFAULT_CONFIG))
-        parser.read(config_file)
-        for section in self._sections.values():
-            for parameter in section._parameters.values():
-                setattr(section, python_identifier(parameter.name), parameter.read(parser, section._name))
-        self._copy_general()
+
 
     def apply_command_line_args(self, args, option_list):
         """Apply the command line args as passed to cea.interfaces.cli.cli (the ``cea`` command). Each argument
@@ -80,10 +62,8 @@ class Configuration(object):
 
         for section, parameter in self._matching_parameters(option_list):
             if parameter.name in command_line_args:
-                setattr(section, python_identifier(parameter.name), parameter.decode(command_line_args[parameter.name]))
+                parameter.__set__(section, command_line_args[parameter.name])
                 del command_line_args[parameter.name]
-        self._copy_general()
-
         assert len(command_line_args) == 0, 'Unexpected parameters: %s' % command_line_args
 
     def _matching_parameters(self, option_list):
@@ -122,22 +102,33 @@ class Configuration(object):
         return parameters
 
     def _copy_general(self):
-        """Copy parameters from the 'genera' section to self for easy access"""
+        """Copy parameters from the 'general' section to self for easy access"""
         general_section = self._sections['general']
         for parameter in general_section._parameters.values():
-            setattr(self, python_identifier(parameter.name),
-                    getattr(general_section, python_identifier(parameter.name)))
+            setattr(self.__class__, python_identifier(parameter.name),
+                    general_section._parameters[parameter.name])
+            pass
 
-    def _add_section(self, name, config_parser, *parameters):
-        section = Section(name=name)
-        self._sections[name] = section
-        for parameter in parameters:
-            section.add_parameter(parameter, config_parser=config_parser)
-        setattr(self, python_identifier(name), section)
-        if name == 'general':
-            # treat [general] specially
-            for parameter in parameters:
-                setattr(self, python_identifier(parameter.name), getattr(section, python_identifier(parameter.name)))
+
+    def __getstate__(self):
+        """make sure we don't save the copies of the general section - we'll add them afterwards again"""
+        import StringIO
+        config_data = StringIO.StringIO()
+        self._parser.write(config_data)
+        return {'config_data': config_data.getvalue()}
+
+    def __setstate__(self, state):
+        """re-create the sections as attributes"""
+        self._sections = {}
+        self._parser = ConfigParser.SafeConfigParser()
+        self._read_default_config()
+        self._copy_general()
+
+        # read in state data
+        import StringIO
+        config_data = StringIO.StringIO(state['config_data'])
+        self._parser.readfp(config_data)
+
 
 
 def config_identifier(python_identifier):
@@ -151,35 +142,50 @@ def python_identifier(config_identifier):
     all-lowercase, but use underscores for python identifiers"""
     return config_identifier.lower().replace('-', '_')
 
+
+def create_section_type(parser, section_name):
+    """Create a subclass of ``Section`` with properties for each parameter in the section"""
+    section_class = type('Section_' + python_identifier(section_name), (Section,), {'_parameters': {}})
+    for parameter_name in parser.options(section_name):
+        if '.' in parameter_name:
+            # ignore the 'parameter.type', 'parameter.help' etc. keys - they're not parameter names
+            continue
+        try:
+            parameter_type = parser.get(section_name, parameter_name + '.type')
+        except ConfigParser.NoOptionError:
+            parameter_type = 'StringParameter'
+        assert parameter_type in globals(), 'Bad parameter type in default.config: %(section_name)s/%(parameter_name)s=%(parameter_type)s' % locals()
+        parameter = globals()[parameter_type](parameter_name, section_name, parser)
+        setattr(section_class, python_identifier(parameter.name), parameter)
+        section_class._parameters[parameter.name] = parameter
+
+        section_class.__reduce__ = lambda self: (create_section_instance, (parser, section_name))
+    return section_class
+
+
+def create_section_instance(parser, section_name):
+    """Return a new instance of the custom type for the section in the config file"""
+    section_class = create_section_type(parser, section_name)
+    section = section_class(section_name)
+    return section
+
 class Section(object):
     """Instances of ``Section`` describe a section in the configuration file."""
-    def __init__(self, name):
+    def __init__(self, name, config):
         self._name = name
-        self._parameters = {}
-
-    def add_parameter(self, parameter, config_parser):
-        """Add a new parameter to a section, using ``parameter_type`` to parse and unparse the values"""
-        self._parameters[parameter.name] = parameter
-        setattr(self, python_identifier(parameter.name), parameter.read(config_parser, self._name))
+        self._config = config
 
 class Parameter(object):
     def __init__(self, name, section, parser):
         self.name = name
-        self.initialize(section, parser)
+        self.section = section
+        self.initialize(parser)
 
-    def initialize(self, section, parser):
+    def initialize(self, parser):
         """
         Override this function to initialize a parameter with values as read from
         the default.config
         """
-
-    def read(self, config_parser, section):
-        """Read a value from a ``ConfigParser``"""
-        return self.decode(config_parser.get(section, self.name))
-
-    def write(self, config_parser, section, value):
-        """Write a value to a ``ConfigParser``"""
-        config_parser.set(section, self.name, self.encode(value))
 
     def encode(self, value):
         """Encode ``value`` to a string representation for writing to the configuration file"""
@@ -189,22 +195,41 @@ class Parameter(object):
         """Decode ``value`` to the type supported by this Parameter"""
         return value
 
+    def __get__(self, obj, objtype=None):
+        """Make the property a "descriptor" so we can get/set values. It can either be on a Constructor or on a Section
+        instance (depending if 'general' or not..."""
+        if isinstance(obj, Configuration):
+            return self.decode(obj._parser.get(self.section, self.name))
+        else:
+            return self.decode(obj._config._parser.get(self.section, self.name))
+
+    def __set__(self, obj, value):
+        if isinstance(obj, Configuration):
+            obj._parser.set(self.section, self.name, self.encode(value))
+        else:
+            obj._config._parser.set(self.section, self.name, self.encode(value))
+
 
 class PathParameter(Parameter):
     pass
 
+
 class RelativePathParameter(PathParameter):
     """A PathParameter that is relative to the scenario."""
-    def initialize(self, section, parser):
-        """
-        Override this function to initialize a parameter with values as read from
-        the default.config
-        """
-        self._parser = parser
+    def initialize(self, parser):
+        # allow the relative-to option to be set to something other than general:scenario
+        try:
+            self._relative_to_section, self._relative_to_option = parser.get(self.section,
+                                                                                  self.name + '.relative-to').split(':')
+        except ConfigParser.NoOptionError:
+            self._relative_to_section = 'general'
+            self._relative_to_option = 'scenario'
 
     def decode(self, value):
         """return a full path"""
-        return os.path.normpath(os.path.join(self._parser.get('general', 'scenario'), value))
+        return os.path.normpath(os.path.join(parser.get(self._relative_to_section,
+                                                             self._relative_to_option), value))
+
 
 class WeatherPathParameter(Parameter):
     def decode(self, value):
@@ -218,6 +243,7 @@ class WeatherPathParameter(Parameter):
             weather_path = locator.get_weather('Zug')
         return weather_path
 
+
 class BooleanParameter(Parameter):
     """Read / write boolean parameters to the config file."""
     _boolean_states = {'1': True, 'yes': True, 'true': True, 'on': True,
@@ -227,6 +253,7 @@ class BooleanParameter(Parameter):
 
     def decode(self, value):
         return self._boolean_states[value.lower()]
+
 
 class IntegerParameter(Parameter):
     """Read / write integer parameters to the config file."""
@@ -238,10 +265,10 @@ class IntegerParameter(Parameter):
 
 class RealParameter(Parameter):
     """Read / write floating point parameters to the config file."""
-    def initialize(self, section, parser):
-        # when called for the first time, make sure there is a `.choices` parameter
+    def initialize(self):
+        # allow user to override the amount of decimal places to use
         try:
-            self._decimal_places = int(parser.get(section, self.name + '.decimal-places'))
+            self._decimal_places = int(self.parser.get(self.section, self.name + '.decimal-places'))
         except ConfigParser.NoOptionError:
             self._decimal_places = 4
 
@@ -274,12 +301,9 @@ class DateParameter(Parameter):
 
 class ChoiceParameter(Parameter):
     """A parameter that can only take on values from a specific set of values"""
-    def initialize(self, section, parser):
+    def initialize(self, parser):
         # when called for the first time, make sure there is a `.choices` parameter
-        self._choices = parser.get(section, self.name + '.choices').split()
-
-    def read(self, config_parser, section):
-        return self.decode(config_parser.get(section, self.name))
+        self._choices = parser.get(self.section, self.name + '.choices').split()
 
     def encode(self, value):
         assert str(value) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
@@ -301,7 +325,7 @@ if __name__ == '__main__':
 
     # make sure the config can be pickled (for multiprocessing)
     import pickle
-    pickle.loads(pickle.dumps(config))
+    config = pickle.loads(pickle.dumps(config))
 
     # test overriding
     args = ['--weather', 'Zurich',
@@ -311,3 +335,17 @@ if __name__ == '__main__':
     # make sure the WeatherPathParameter resolves weather names...
     assert config.general.weather.endswith('Zurich.epw'), config.general.weather
     assert config.weather.endswith('Zurich.epw'), config.weather
+
+    config.weather = 'Zug'
+    assert config.general.weather.endswith('Zug.epw')
+    print(config.general.weather)
+
+    # test if pickling keeps state
+    config.weather = 'Singapore'
+    print(config.weather)
+    config = pickle.loads(pickle.dumps(config))
+    print(config.weather)
+
+    # test changing scenario (and resulting RelativePathParameters)
+    config.scenario = r'C:\reference-case-open'
+    print(config.heatmaps.file_to_analyze)
