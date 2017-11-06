@@ -72,7 +72,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     if individual_barcode.count("0") == 0:
         network_file_name = "Network_summary_result_all.csv"
     else:
-        network_file_name = "Network_summary_result_" + individual_barcode + ".csv"
+        network_file_name = "Network_summary_result_" + hex(int(str(individual_barcode), 2)) + ".csv"
 
     if individual_barcode.count("1") > 0:
         Qheatmax = sFn.calcQmax(network_file_name, locator.get_optimization_network_results_folder(), gv)
