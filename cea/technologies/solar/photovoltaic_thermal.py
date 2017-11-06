@@ -529,8 +529,10 @@ def calc_Cinv_PVT(P_peak, gv):
     return InvCa
 
 def test_PVT():
+    import cea.config
+    config = cea.config.Configuration()
     gv = cea.globalvar.GlobalVariables()
-    scenario_path = gv.scenario_reference
+    scenario_path = config.scenario
     locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
     weather_path = locator.get_default_weather()
     list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
@@ -545,6 +547,15 @@ def test_PVT():
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
         calc_PVT(locator=locator, radiation_json_path=radiation, metadata_csv_path=radiation_metadata, latitude=latitude,
                  longitude=longitude, weather_path=weather_path, building_name=building)
+
+    for i, building in enumerate(list_buildings_names):
+        data = pd.read_csv(locator.PVT_results(building))
+        if i == 0:
+            df = data
+        else:
+            df = df + data
+
+    df.to_csv(locator.PVT_totals(), index=True,float_format='%.2f')
 
 if __name__ == '__main__':
     test_PVT()

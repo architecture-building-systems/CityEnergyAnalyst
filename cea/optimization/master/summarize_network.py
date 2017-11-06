@@ -47,7 +47,7 @@ def network_main(locator, total_demand, building_names, gv, key):
 
     # import properties of distribution
     num_buildings_network = total_demand.Name.count()
-    pipes_tot_length = pd.read_csv(locator.get_optimization_network_layout_pipes_file(), usecols=['LENGTH'])
+    pipes_tot_length = pd.read_csv(locator.get_optimization_network_layout_pipes_file(), usecols=['pipe length'])
     ntwk_length = pipes_tot_length.sum() * num_buildings_network / len(building_names) #gv.num_tot_buildings
 
     # empty vectors
@@ -166,7 +166,10 @@ def network_main(locator, total_demand, building_names, gv, key):
                             "Q_DC_losses_W": Q_DC_losses_W})
 
     # the key depicts weather this is the distribution of all customers or a distribution of a gorup of them.
-    results.to_csv(locator.get_optimization_network_results_summary(key), sep=',')
+    if key == 'all':
+        results.to_csv(locator.get_optimization_network_all_results_summary(key), sep=',')
+    else:
+        results.to_csv(locator.get_optimization_network_results_summary(key), sep=',')
 
     print time.clock() - t0, "seconds process time for Network summary for configuration", key, "\n"
 

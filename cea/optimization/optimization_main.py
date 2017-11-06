@@ -69,14 +69,13 @@ def run_as_script(scenario_path=None):
     run the whole optimization routine
     """
     import cea.globalvar
+    import cea.config
+    config = cea.config.Configuration()
     gv = cea.globalvar.GlobalVariables()
 
-    if scenario_path is None:
-        scenario_path = gv.scenario_reference
-
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    weather_file = locator.get_default_weather()
-    moo_optimization(locator=locator, weather_file= weather_file, gv=gv)
+    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
+    weather_file = config.weather
+    moo_optimization(locator=locator, weather_file= weather_file, gv= gv)
 
     print 'test_optimization_main() succeeded'
 
