@@ -187,11 +187,11 @@ class Parameter(object):
         the default.config
         """
 
-    def encode(self, value):
+    def encode(self, value, parser):
         """Encode ``value`` to a string representation for writing to the configuration file"""
         return str(value)
 
-    def decode(self, value):
+    def decode(self, value, parser):
         """Decode ``value`` to the type supported by this Parameter"""
         return value
 
@@ -199,15 +199,21 @@ class Parameter(object):
         """Make the property a "descriptor" so we can get/set values. It can either be on a Constructor or on a Section
         instance (depending if 'general' or not..."""
         if isinstance(obj, Configuration):
-            return self.decode(obj._parser.get(self.section, self.name))
+            parser = obj._parser
         else:
-            return self.decode(obj._config._parser.get(self.section, self.name))
+            parser = obj._config._parser
+
+        return self.decode(parser.get(self.section, self.name), parser)
+
 
     def __set__(self, obj, value):
         if isinstance(obj, Configuration):
-            obj._parser.set(self.section, self.name, self.encode(value))
+            parser = obj._parser
         else:
-            obj._config._parser.set(self.section, self.name, self.encode(value))
+            parser = obj._config._parser
+
+        parser.set(self.section, self.name, self.encode(value, parser))
+
 
 
 class PathParameter(Parameter):
@@ -220,19 +226,19 @@ class RelativePathParameter(PathParameter):
         # allow the relative-to option to be set to something other than general:scenario
         try:
             self._relative_to_section, self._relative_to_option = parser.get(self.section,
-                                                                                  self.name + '.relative-to').split(':')
+                                                                             self.name + '.relative-to').split(':')
         except ConfigParser.NoOptionError:
             self._relative_to_section = 'general'
             self._relative_to_option = 'scenario'
 
-    def decode(self, value):
+    def decode(self, value, parser):
         """return a full path"""
         return os.path.normpath(os.path.join(parser.get(self._relative_to_section,
                                                              self._relative_to_option), value))
 
 
 class WeatherPathParameter(Parameter):
-    def decode(self, value):
+    def decode(self, value, _):
         import cea.inputlocator
         locator = cea.inputlocator.InputLocator(None)
         if value in locator.get_weather_names():
@@ -251,31 +257,31 @@ class BooleanParameter(Parameter):
     def encode(self, value):
         return 'true' if value else 'false'
 
-    def decode(self, value):
+    def decode(self, value, _):
         return self._boolean_states[value.lower()]
 
 
 class IntegerParameter(Parameter):
     """Read / write integer parameters to the config file."""
-    def encode(self, value):
+    def encode(self, value, _):
         return str(int(value))
 
-    def decode(self, value):
+    def decode(self, value, _):
         return int(value)
 
 class RealParameter(Parameter):
     """Read / write floating point parameters to the config file."""
-    def initialize(self):
+    def initialize(self, parser):
         # allow user to override the amount of decimal places to use
         try:
-            self._decimal_places = int(self.parser.get(self.section, self.name + '.decimal-places'))
+            self._decimal_places = int(parser.get(self.section, self.name + '.decimal-places'))
         except ConfigParser.NoOptionError:
             self._decimal_places = 4
 
-    def encode(self, value):
+    def encode(self, value, _):
         return format(value, ".%i" % self._decimal_places)
 
-    def decode(self, value):
+    def decode(self, value, _):
         try:
             return float(value)
         except ValueError:
@@ -284,13 +290,13 @@ class RealParameter(Parameter):
 class ListParameter(Parameter):
     """A parameter that is a list of whitespace-separated strings. An error is raised when writing
     strings that contain whitespace themselves."""
-    def encode(self, value):
+    def encode(self, value, _):
         strings = [str(s).strip() for s in value]
         for s in strings:
             assert len(s.split()) == 1, 'No whitespace allowed in values of ListParameter'
         return ' '.join(strings)
 
-    def decode(self, value):
+    def decode(self, value, _):
         return value.split()
 
 class StringParameter(Parameter):
@@ -305,11 +311,11 @@ class ChoiceParameter(Parameter):
         # when called for the first time, make sure there is a `.choices` parameter
         self._choices = parser.get(self.section, self.name + '.choices').split()
 
-    def encode(self, value):
+    def encode(self, value, _):
         assert str(value) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
         return str(value)
 
-    def decode(self, value):
+    def decode(self, value, _):
         assert str(value) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
         return str(value)
 
@@ -325,7 +331,8 @@ if __name__ == '__main__':
 
     # make sure the config can be pickled (for multiprocessing)
     import pickle
-    config = pickle.loads(pickle.dumps(config))
+    pickle.loads(pickle.dumps(config))
+    # config = pickle.loads(pickle.dumps(config))
 
     # test overriding
     args = ['--weather', 'Zurich',
