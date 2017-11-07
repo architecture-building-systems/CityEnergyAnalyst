@@ -563,5 +563,14 @@ def main(config):
                  longitude=longitude, weather_path=config.weather, building_name=building)
 
 
+    for i, building in enumerate(list_buildings_names):
+        data = pd.read_csv(locator.PVT_results(building))
+        if i == 0:
+            df = data
+        else:
+            df = df + data
+
+    df.to_csv(locator.PVT_totals(), index=True,float_format='%.2f')
+
 if __name__ == '__main__':
     main(cea.config.Configuration())
