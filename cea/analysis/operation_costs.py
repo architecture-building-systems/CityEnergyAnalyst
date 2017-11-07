@@ -19,7 +19,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def operation_costs(locator, plot_Qww=True, plot_Qhs=True, plot_Qcs=True, plot_Qcdata=True, plot_Qcrefri=True,
+def operation_costs(locator, config, plot_Qww=True, plot_Qhs=True, plot_Qcs=True, plot_Qcdata=True, plot_Qcrefri=True,
                     plot_Eal=True, plot_Eaux=True, plot_Epro=True, plot_Edata=True):
 
     # get local files
@@ -28,7 +28,7 @@ def operation_costs(locator, plot_Qww=True, plot_Qhs=True, plot_Qcs=True, plot_Q
     ## get the supply systems for each building in the scenario
     supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
     ## get the non-renewable primary energy and greenhouse gas emissions factors for each supply system in the database
-    data_LCI = locator.get_life_cycle_inventory_supply_systems()
+    data_LCI = locator.get_life_cycle_inventory_supply_systems(config.region)
     factors_heating = pd.read_excel(data_LCI, sheetname='heating')
     factors_dhw = pd.read_excel(data_LCI, sheetname='dhw')
     factors_cooling = pd.read_excel(data_LCI, sheetname='cooling')
@@ -127,7 +127,7 @@ def main(config):
     print('Running operation-costs with plot-qcrefri = %s' % config.operation_costs.plot_qcrefri)
 
     oc = config.operation_costs
-    operation_costs(locator=locator, plot_Qww=oc.plot_qww, plot_Qhs=oc.plot_qhs, plot_Qcs=oc.plot_qcs,
+    operation_costs(locator=locator, config=config, plot_Qww=oc.plot_qww, plot_Qhs=oc.plot_qhs, plot_Qcs=oc.plot_qcs,
                     plot_Qcdata=oc.plot_qcdata, plot_Qcrefri=oc.plot_qcrefri, plot_Eal=oc.plot_eal,
                     plot_Eaux=oc.plot_eaux, plot_Epro=oc.plot_epro, plot_Edata=oc.plot_edata)
 

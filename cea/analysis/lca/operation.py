@@ -25,7 +25,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_flag=True, Qcrefri_flag=True,
+def lca_operation(locator, config, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_flag=True, Qcrefri_flag=True,
                   Eal_flag=True, Eaux_flag=True, Epro_flag=True, Edata_flag=True):
     """
     Algorithm to calculate the primary energy and CO2 emissions of buildings according to the method used in the
@@ -92,7 +92,7 @@ def lca_operation(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_f
     ## get the supply systems for each building in the scenario
     supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
     ## get the non-renewable primary energy and greenhouse gas emissions factors for each supply system in the database
-    data_LCI = locator.get_life_cycle_inventory_supply_systems()
+    data_LCI = locator.get_life_cycle_inventory_supply_systems(config.region)
     factors_heating = pd.read_excel(data_LCI, sheetname='heating')
     factors_dhw = pd.read_excel(data_LCI, sheetname='dhw')
     factors_cooling = pd.read_excel(data_LCI, sheetname='cooling')
@@ -213,7 +213,7 @@ def main(config):
     Epro_flag = 'Epro' in config.emissions.emissions_variables
     Edata_flag = 'Edata' in config.emissions.emissions_variables
 
-    lca_operation(locator=locator, Qww_flag=Qww_flag, Qhs_flag=Qhs_flag, Qcs_flag=Qcs_flag, Qcdata_flag=Qcdata_flag,
+    lca_operation(locator=locator, config=config, Qww_flag=Qww_flag, Qhs_flag=Qhs_flag, Qcs_flag=Qcs_flag, Qcdata_flag=Qcdata_flag,
                   Qcrefri_flag=Qcrefri_flag, Eal_flag=Eal_flag, Eaux_flag=Eaux_flag, Epro_flag=Epro_flag,
                   Edata_flag=Edata_flag)
 

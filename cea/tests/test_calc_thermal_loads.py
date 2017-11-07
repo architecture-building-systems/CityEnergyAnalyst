@@ -39,12 +39,13 @@ class TestCalcThermalLoads(unittest.TestCase):
 
         # run properties script
         import cea.demand.preprocessing.data_helper
-        cea.demand.preprocessing.data_helper.data_helper(cls.locator, True, True, True, True)
+        cea.demand.preprocessing.data_helper.data_helper(cls.locator, cls.gv.config, True, True, True, True)
 
         cls.building_properties = BuildingProperties(cls.locator, cls.gv)
         cls.date = pd.date_range(cls.gv.date_start, periods=8760, freq='H')
         cls.list_uses = cls.building_properties.list_uses()
-        cls.archetype_schedules, cls.archetype_values = schedule_maker(cls.date, cls.locator, cls.list_uses)
+        cls.archetype_schedules, cls.archetype_values = schedule_maker(cls.gv.config.region, cls.date, cls.locator,
+                                                                       cls.list_uses)
         cls.occupancy_densities = cls.archetype_values['people']
         cls.usage_schedules = {'list_uses': cls.list_uses, 'archetype_schedules': cls.archetype_schedules,
                                'occupancy_densities': cls.occupancy_densities, 'archetype_values': cls.archetype_values}

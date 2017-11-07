@@ -31,7 +31,7 @@ __status__ = "Production"
 
 # SC heat generation
 
-def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_path, building_name):
+def calc_SC(locator, config, radiation_csv, metadata_csv, latitude, longitude, weather_path, building_name):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -68,7 +68,7 @@ def calc_SC(locator, radiation_csv, metadata_csv, latitude, longitude, weather_p
     print 'calculating solar properties done'
 
     # get properties of the panel to evaluate
-    panel_properties = calc_properties_SC_db(locator.get_supply_systems_cost(), settings.type_SCpanel)
+    panel_properties = calc_properties_SC_db(locator.get_supply_systems(config.region), settings.type_SCpanel)
     print 'gathering properties of Solar collector panel'
 
     # select sensor point with sufficient solar radiation
@@ -780,7 +780,7 @@ def main(config):
     for building in list_buildings_names:
         radiation = locator.get_radiation_building(building_name= building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
-        calc_SC(locator=locator, radiation_csv=radiation, metadata_csv=radiation_metadata, latitude=latitude,
+        calc_SC(locator=locator, config=config, radiation_csv=radiation, metadata_csv=radiation_metadata, latitude=latitude,
                 longitude=longitude, weather_path=config.weather, building_name=building)
 
     for i, building in enumerate(list_buildings_names):
