@@ -56,7 +56,7 @@ class OperationCostsTool(object):
 
     def execute(self, parameters, _):
         scenario_path = parameters[0].valueAsText
-        run_cli(scenario_path, 'operation-costs')
+        run_cli('operation-costs', scenario=scenario_path)
 
 
 class RetrofitPotentialTool(object):
@@ -1897,7 +1897,7 @@ def _cli_output(scenario_path=None, *args):
     startupinfo = subprocess.STARTUPINFO()
     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
-    command = [get_python_exe(), '-m', 'cea.cli']
+    command = [get_python_exe(), '-m', 'cea.interfaces.cli.cli']
     if scenario_path:
         command.append('--scenario')
         command.append(scenario_path)
@@ -1940,16 +1940,15 @@ def write_config_boolean(scenario_path, section, key, value):
     run_cli(scenario_path, 'write-config', '--section', section, '--key', key, '--value', value)
 
 
-def run_cli(scenario_path=None, *args):
+def run_cli(script_name, **parameters):
     """Run the CLI in a subprocess without showing windows"""
     startupinfo = subprocess.STARTUPINFO()
     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
-    command = [get_python_exe(), '-u', '-m', 'cea.cli']
-    if scenario_path:
-        command.append('--scenario')
-        command.append(scenario_path)
-    command.extend(map(str, args))
+    command = [get_python_exe(), '-u', '-m', 'cea.interfaces.cli.cli', script_name]
+    for parameter_name, parameter_value in parameters.items():
+        command.append('--' + parameter_name)
+        command.append(str(parameter_value))
     add_message(command)
     process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                env=get_environment(), cwd=tempfile.gettempdir())
