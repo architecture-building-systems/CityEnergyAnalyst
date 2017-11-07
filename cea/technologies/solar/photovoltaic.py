@@ -762,6 +762,15 @@ def main(config):
         calc_PV(locator=locator, radiation_path=radiation_path, metadata_csv=radiation_metadata, latitude=latitude,
                 longitude=longitude, weather_path=config.weather, building_name=building, )
 
+    for i, building in enumerate(list_buildings_names):
+        data = pd.read_csv(locator.PV_results(building))
+        if i == 0:
+            df = data
+        else:
+            df = df + data
+
+    df.to_csv(locator.PV_totals(), index=True,float_format='%.2f')
+
 
 if __name__ == '__main__':
     main(cea.config.Configuration())

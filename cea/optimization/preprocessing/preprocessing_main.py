@@ -73,7 +73,7 @@ def preproccessing(locator, total_demand, building_names, weather_file, gv):
     # estimate what would be the operation of single buildings only for heating.
     # For cooling all buildings are assumed to be connected to the cooling distribution on site.
     print "Run decentralized model for buildings"
-    # decentralized_buildings.decentralized_main(locator, building_names, gv)
+    decentralized_buildings.decentralized_main(locator, building_names, gv)
 
     # GET DH NETWORK
     # at first estimate a distribution with all the buildings connected at it.
@@ -133,17 +133,15 @@ def run_as_script(scenario_path=None):
     """
     run the whole preprocessing routine
     """
-    import cea.globalvar
-
+    import cea.config
+    config = cea.config.Configuration()
     gv = cea.globalvar.GlobalVariables()
 
-    if scenario_path is None:
-        scenario_path = gv.scenario_reference
 
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = pd.read_csv(locator.get_total_demand())['Name']
-    weather_file = locator.get_default_weather()
+    weather_file = config.weather
     preproccessing(locator, total_demand, building_names, weather_file, gv)
 
     print 'test_preprocessing_main() succeeded'

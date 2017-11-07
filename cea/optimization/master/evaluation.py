@@ -72,7 +72,7 @@ def evaluation_main(individual, building_names, locator, extraCosts, extraCO2, e
     if individual_barcode.count("0") == 0:
         network_file_name = "Network_summary_result_all.csv"
     else:
-        network_file_name = "Network_summary_result_" + individual_barcode + ".csv"
+        network_file_name = "Network_summary_result_" + hex(int(str(individual_barcode), 2)) + ".csv"
 
     if individual_barcode.count("1") > 0:
         Qheatmax = sFn.calcQmax(network_file_name, locator.get_optimization_network_results_folder(), gv)
@@ -330,20 +330,13 @@ def checkNtw(individual, ntwList, locator, gv):
     if not (indCombi in ntwList) and indCombi.count("1") > 0:
         ntwList.append(indCombi)
         
-        if indCombi.count("1") == 1:
-            total_demand = pd.read_csv(
-                os.path.join(locator.get_optimization_network_results_folder(), "Total_%(indCombi)s.csv" % locals()))
-            building_names = total_demand.Name.values
-            nM.network_main(locator, total_demand, building_names, gv, indCombi)
+        total_demand = sFn.createTotalNtwCsv(indCombi, locator)
+        building_names = total_demand.Name.values
 
-        else:
-            total_demand = sFn.createTotalNtwCsv(indCombi, locator)
-            building_names = total_demand.Name.values
+        # Run the substation and distribution routines
+        sMain.substation_main(locator, total_demand, building_names, gv, indCombi)
 
-            # Run the substation and distribution routines
-            sMain.substation_main(locator, total_demand, building_names, gv, indCombi)
-
-            nM.network_main(locator, total_demand, building_names, gv, indCombi)
+        nM.network_main(locator, total_demand, building_names, gv, indCombi)
 
 
 def epsIndicator(frontOld, frontNew):
