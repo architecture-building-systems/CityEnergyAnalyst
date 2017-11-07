@@ -35,9 +35,10 @@ def decentralized_main(locator, building_names, gv):
     """
     t0 = time.clock()
     prop_geometry = Gdf.from_file(locator.get_zone_geometry())
+    geometry = pd.DataFrame({'Name': prop_geometry.Name, 'Area': prop_geometry.area})
     geothermal_potential_data = dbfreader.dbf_to_dataframe(locator.get_building_supply())
-    geothermal_potential = geothermal_potential_data[['Name', 'restr_geo']]
-    geothermal_potential['Area_geo'] = geothermal_potential['restr_geo'] * prop_geometry.area
+    geothermal_potential_data = pd.merge(geothermal_potential_data, geometry, on='Name')
+    geothermal_potential_data['Area_geo'] = geothermal_potential_data['restr_geo'] * geothermal_potential_data['Area']
     BestData = {}
 
     def calc_new_load(mdot, TsupDH, Tret, gv):
@@ -252,9 +253,10 @@ def decentralized_main(locator, building_names, gv):
         # Check the GHP area constraint
         for i in range(10):
             QGHP = (1-i/10) * Qnom
-            areaAvail = geothermal_potential.ix[geothermal_potential['Name'] == building_name, 'Area_geo']
+            geothermal_potential = geothermal_potential_data.set_index('Name')
+            areaAvail = geothermal_potential.ix[building_name, 'Area_geo']
             Qallowed = np.ceil(areaAvail/gv.GHP_A) * gv.GHP_HmaxSize #[W_th]
-            if Qallowed[0] < QGHP:
+            if Qallowed < QGHP:
                 optsearch[i+3] += 1
                 Best[i+3][0] = - 1
 
