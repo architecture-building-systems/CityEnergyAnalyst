@@ -30,7 +30,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_path, building_name):
+def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, weather_path, building_name):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -53,7 +53,7 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
     :return: Building_PV.csv with PV generation potential of each building, Building_sensors.csv with sensor data of
              each PV panel.
     """
-    settings = cea.config.Configuration().solar
+    settings = config.solar
 
     t0 = time.clock()
 
@@ -67,7 +67,7 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
     print('calculating solar properties done')
 
     # calculate properties of PV panel
-    panel_properties = calc_properties_PV_db(locator.get_supply_systems_cost(), settings.type_pvpanel)
+    panel_properties = calc_properties_PV_db(locator.get_supply_systems(config.region), settings.type_pvpanel)
     print('gathering properties of PV panel')
 
     # select sensor point with sufficient solar radiation
@@ -631,14 +631,15 @@ def calc_properties_PV_db(database_path, type_PVpanel):
     return panel_properties
 
 # investment and maintenance costs
-def calc_Cinv_pv(P_peak_kW, locator, technology=0):
+# FIXME: it looks like this function is never used!!! (REMOVE)
+def calc_Cinv_pv(P_peak_kW, locator, config, technology=0):
     """
     To calculate capital cost of PV modules, assuming 20 year system lifetime.
     :param P_peak: installed capacity of PV module [kW]
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
     P_peak = P_peak_kW * 1000  # converting to W from kW
-    PV_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="PV")
+    PV_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="PV")
     technology_code = list(set(PV_cost_data['code']))
     PV_cost_data[PV_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -759,7 +760,7 @@ def main(config):
     for building in list_buildings_names:
         radiation_path = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
-        calc_PV(locator=locator, radiation_path=radiation_path, metadata_csv=radiation_metadata, latitude=latitude,
+        calc_PV(locator=locator, config=config, radiation_path=radiation_path, metadata_csv=radiation_metadata, latitude=latitude,
                 longitude=longitude, weather_path=config.weather, building_name=building, )
 
     for i, building in enumerate(list_buildings_names):

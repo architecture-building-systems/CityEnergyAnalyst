@@ -23,7 +23,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def benchmark(locator_list, output_file):
+def benchmark(locator_list, output_file, config):
     """
     Print PDF graphs comparing the selected scenarios to the 2000 Watt society benchmark for construction, operation
     and mobility. The calculation is based on the database read by and described in calc_benchmark_today and
@@ -58,9 +58,9 @@ def benchmark(locator_list, output_file):
         scenario_max[graphs[i] + fields[2]] = scenario_max[graphs[i] + fields[3]] = 0
 
     # calculate target values based on the baseline case
-    targets = calc_benchmark_targets(locator_list[0])
+    targets = calc_benchmark_targets(locator_list[0], config)
     # calculate current values based on the baseline case
-    values_today = calc_benchmark_today(locator_list[0])
+    values_today = calc_benchmark_today(locator_list[0], config)
 
     # start graphs
     fig, (ax1, ax2, ax3, ax4, ax5, ax6) = plt.subplots(6, figsize=(16, 12))
@@ -133,7 +133,7 @@ def benchmark(locator_list, output_file):
     plt.close()
 
 
-def calc_benchmark_targets(locator):
+def calc_benchmark_targets(locator, config):
     """
     This function calculates the embodied, operation, mobility and total targets (ghg_kgm2 and pen_MJm2) for all
     buildings in a scenario.
@@ -167,7 +167,7 @@ def calc_benchmark_targets(locator):
     # local files
     demand = pd.read_csv(locator.get_total_demand())
     prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
-    data_benchmark = locator.get_data_benchmark()
+    data_benchmark = locator.get_data_benchmark(config.region)
     occupancy = prop_occupancy.merge(demand, on='Name')
 
     categories = ['EMBODIED', 'OPERATION', 'MOBILITY', 'TOTAL']
@@ -201,7 +201,7 @@ def calc_benchmark_targets(locator):
     return targets
 
 
-def calc_benchmark_today(locator):
+def calc_benchmark_today(locator, config):
     '''
     This function calculates the embodied, operation, mobility and total targets (ghg_kgm2 and pen_MJm2)
     for the area for the current national trend.
@@ -252,7 +252,7 @@ def calc_benchmark_today(locator):
     # local files
     demand = pd.read_csv(locator.get_total_demand())
     prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
-    data_benchmark_today = locator.get_data_benchmark()
+    data_benchmark_today = locator.get_data_benchmark(config.region)
     occupancy = prop_occupancy.merge(demand, on='Name')
 
     fields = ['Name', 'pen_GJ', 'ghg_ton', 'pen_MJm2', 'ghg_kgm2']
@@ -294,7 +294,7 @@ def main(config):
     locator_list = [cea.inputlocator.InputLocator(scenario=os.path.join(config.benchmark_graphs.project, scenario)) for
                     scenario in config.benchmark_graphs.scenarios]
 
-    benchmark(locator_list=locator_list, output_file=config.benchmark_graphs.output_file)
+    benchmark(locator_list=locator_list, output_file=config.benchmark_graphs.output_file, config=config)
 
 
 if __name__ == '__main__':

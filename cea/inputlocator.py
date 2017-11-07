@@ -4,7 +4,6 @@ inputlocator.py - locate input files by name based on the reference folder struc
 import os
 import shutil
 import tempfile
-import cea.config
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -322,6 +321,7 @@ class InputLocator(object):
         return os.path.join(self.get_potentials_retrofit_folder(), "potential_" + name_retrofit + ".csv")
 
     # DATABASES
+    # FIXME: remove get_default_weather (use config instead)
     def get_default_weather(self):
         """weather/Zug-2010.epw
         path to database of archetypes file Archetypes_properties.xlsx"""
@@ -352,41 +352,43 @@ class InputLocator(object):
         weather_names = [os.path.splitext(f)[0] for f in os.listdir(self.weather_path)]
         return weather_names
 
-    def _get_region_specific_db_file(self, folder, filename):
-        """Copy a region-specific file from the database to a scenario if it doesn't exist there yet and return the
-        full path"""
+    def _get_region_specific_db_file(self, region, folder, filename):
+        """Copy a region-specific file from the database to a scenario, overwriting any existing one, unless the
+        ``config.region`` is set to ``custom`` (in that case, raise an error if the file does not exist)
+        if it doesn't exist there yet and return the full path"""
         result_folder = self._ensure_folder(self.scenario, 'databases', folder)
         result_file = os.path.join(result_folder, filename)
-        if not os.path.exists(result_file):
-            # copy it from the database
-            config = cea.config.Configuration()
-            shutil.copyfile(os.path.join(self.db_path, config.region, folder, filename), result_file)
+        if region == 'custom' and not os.path.exists(result_file):
+            raise IOError('Could not find region specific db file in scenario: (%s/%s)' % (folder, filename))
+        else:
+            # copy it from the database, overwriting the existing file
+            shutil.copyfile(os.path.join(self.db_path, region, folder, filename), result_file)
         return result_file
 
-    def get_archetypes_properties(self):
+    def get_archetypes_properties(self, region):
         """Returns the database of construction properties to be used by the data-helper. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return self._get_region_specific_db_file('archetypes', 'construction_properties.xlsx')
+        return self._get_region_specific_db_file(region, 'archetypes', 'construction_properties.xlsx')
 
-    def get_archetypes_schedules(self):
+    def get_archetypes_schedules(self, region):
         """Returns the database of schedules to be used by the data-helper. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return self._get_region_specific_db_file('archetypes', 'occupancy_schedules.xlsx')
+        return self._get_region_specific_db_file(region, 'archetypes', 'occupancy_schedules.xlsx')
 
-    def get_supply_systems_cost(self):
+    def get_supply_systems(self, region):
         """Returns the database of supply systems for cost analysis. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return self._get_region_specific_db_file('economics', 'supply_systems.xls')
+        return self._get_region_specific_db_file(region, 'economics', 'supply_systems.xls')
 
-    def get_life_cycle_inventory_supply_systems(self):
+    def get_life_cycle_inventory_supply_systems(self, region):
         """Returns the database of life cycle inventory for supply systems. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return self._get_region_specific_db_file('lifecycle', 'LCA_infrastructure.xlsx')
+        return self._get_region_specific_db_file(region, 'lifecycle', 'LCA_infrastructure.xlsx')
 
-    def get_life_cycle_inventory_building_systems(self):
+    def get_life_cycle_inventory_building_systems(self, region):
         """Returns the database of life cycle inventory for buildings systems. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return self._get_region_specific_db_file('lifecycle', 'LCA_buildings.xlsx')
+        return self._get_region_specific_db_file(region, 'lifecycle', 'LCA_buildings.xlsx')
 
     def get_technical_emission_systems(self):
         """databases/Systems/emission_systems.csv"""
@@ -400,10 +402,10 @@ class InputLocator(object):
         """db/Systems/thermal_networks.xls"""
         return os.path.join(self.db_path, 'systems', 'thermal_networks.xls')
 
-    def get_data_benchmark(self):
+    def get_data_benchmark(self, region):
         """Returns the database of life cycle inventory for supply systems. These are copied
         to the scenario if they are not yet present, based on the configured region for the scenario."""
-        return self._get_region_specific_db_file('benchmarks', 'benchmark_2000W.xls')
+        return self._get_region_specific_db_file(region, 'benchmarks', 'benchmark_2000W.xls')
 
     def get_uncertainty_db(self):
         """databases/CH/Uncertainty/uncertainty_distributions.xls"""

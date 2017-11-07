@@ -34,12 +34,12 @@ def main(output_file):
 
     # run properties script
     import cea.demand.preprocessing.data_helper
-    cea.demand.preprocessing.data_helper.data_helper(locator, True, True, True, True)
+    cea.demand.preprocessing.data_helper.data_helper(locator, gv.config, True, True, True, True)
 
     building_properties = BuildingProperties(locator, gv)
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
     list_uses = building_properties.list_uses()
-    archetype_schedules, archetype_values = schedule_maker(date, locator, list_uses)
+    archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
     usage_schedules = {'list_uses': list_uses, 'archetype_schedules': archetype_schedules,
                        'occupancy_densities': archetype_values['people'], 'archetype_values': archetype_values}
 

@@ -102,7 +102,7 @@ def properties_and_schedule(gv, locator):
     building_properties = BuildingProperties(locator, gv)
     # schedules model
     list_uses = list(building_properties._prop_occupancy.drop('PFloor', axis=1).columns)
-    archetype_schedules, archetype_values = occupancy_model.schedule_maker(date, locator, list_uses)
+    archetype_schedules, archetype_values = occupancy_model.schedule_maker(gv.config.region, date, locator, list_uses)
     schedules_dict = {'list_uses': list_uses, 'archetype_schedules': archetype_schedules, 'occupancy_densities':
         archetype_values['people'], 'archetype_values': archetype_values}
     return building_properties, schedules_dict, date

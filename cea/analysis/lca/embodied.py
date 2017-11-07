@@ -30,7 +30,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def lca_embodied(year_to_calculate, locator, gv):
+def lca_embodied(year_to_calculate, locator, config, gv):
     """
     Algorithm to calculate the embodied emissions and non-renewable primary energy of buildings according to the method
     of [Fonseca et al., 2015] and [Thoma et al., 2014]. The calculation method assumes a 60 year payoff for the embodied
@@ -145,9 +145,9 @@ def lca_embodied(year_to_calculate, locator, gv):
     # calculate contributions to embodied energy and emissions
     ## calculated by multiplying the area of the given component by the energy and emissions per square meter for the
     ## given category according to the data in the archetype database
-    result_energy = calculate_contributions('EMBODIED_ENERGY', cat_df, gv, locator, year_to_calculate,
+    result_energy = calculate_contributions('EMBODIED_ENERGY', cat_df, config, gv, locator, year_to_calculate,
                                             total_column='GEN_GJ', specific_column='GEN_MJm2')
-    result_emissions = calculate_contributions('EMBODIED_EMISSIONS', cat_df, gv, locator, year_to_calculate,
+    result_emissions = calculate_contributions('EMBODIED_EMISSIONS', cat_df, config, gv, locator, year_to_calculate,
                                                total_column='CO2_ton', specific_column='CO2_kgm2')
 
     # export the results for embodied emissions (E_ghg_) and non-renewable primary energy (E_nre_pen_) for each
@@ -161,7 +161,7 @@ def lca_embodied(year_to_calculate, locator, gv):
     print('done!')
 
 
-def calculate_contributions(archetype, cat_df, gv, locator, year_to_calculate, total_column, specific_column):
+def calculate_contributions(archetype, cat_df, config, gv, locator, year_to_calculate, total_column, specific_column):
     """
     Calculate the embodied energy/emissions for each building based on their construction year, and the area and 
     renovation year of each building component.
@@ -189,7 +189,7 @@ def calculate_contributions(archetype, cat_df, gv, locator, year_to_calculate, t
     :rtype result: DataFrame
     """
     # get archetype properties from the database
-    database_df = pd.read_excel(locator.get_life_cycle_inventory_building_systems(), archetype)
+    database_df = pd.read_excel(locator.get_life_cycle_inventory_building_systems(config.region), archetype)
     database_df['Code'] = database_df.apply(lambda x: calc_code(x['building_use'], x['year_start'],
                                                                         x['year_end'], x['standard']), axis=1)
 
@@ -227,7 +227,7 @@ def calculate_contributions(archetype, cat_df, gv, locator, year_to_calculate, t
                              built_df['footprint'] * built_df['Wall_int_nosup'] * gv.fwratio) +
                             (basement_df['footprint'] * basement_df['Floor_g'] +
                              basement_df['Wall_ext_bg'] * basement_df['area_walls_ext_bg']) +
-                            (built_df['footprint'] * built_df['Excavation'])) / gv.sl_materials + \
+                            (built_df['footprint'] * built_df['Excavation'])) / gv.sl_materials +
                            ((HVAC_df['floor_area_ag'] + HVAC_df['footprint']) * HVAC_df[
                                'Services']) / gv.sl_services) * built_df['confirm']
     
@@ -311,7 +311,7 @@ def main(config):
     print('Running embodied-energy with scenario = %s' % config.scenario)
     print('Running embodied-energy with year-to-calculate = %s' % config.embodied_energy.year_to_calculate)
 
-    lca_embodied(locator=locator, year_to_calculate=config.embodied_energy.year_to_calculate,
+    lca_embodied(locator=locator, year_to_calculate=config.embodied_energy.year_to_calculate, config=config,
                  gv=cea.globalvar.GlobalVariables())
 
 
