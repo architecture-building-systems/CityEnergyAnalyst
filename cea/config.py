@@ -291,6 +291,9 @@ class ListParameter(Parameter):
     """A parameter that is a list of whitespace-separated strings. An error is raised when writing
     strings that contain whitespace themselves."""
     def encode(self, value, _):
+        if isinstance(value, basestring):
+            # should be a list
+            value = value.split()
         strings = [str(s).strip() for s in value]
         for s in strings:
             assert len(s.split()) == 1, 'No whitespace allowed in values of ListParameter'
