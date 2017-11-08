@@ -285,7 +285,7 @@ class InputLocator(object):
 
     def get_optimization_substations_total_file(self, genome):
         """scenario/outputs/data/optimization/substations/Total_${genome}.csv"""
-        return os.path.join(self.get_optimization_substations_folder(), "Total_%(genome)s.csv" % locals())
+        return os.path.join(self.get_optimization_substations_folder(), "Total_" + hex(int(str(genome),2)) + ".csv" )
 
     def get_optimization_clustering_folder(self):
         """scenario/outputs/data/optimization/clustering_sax
