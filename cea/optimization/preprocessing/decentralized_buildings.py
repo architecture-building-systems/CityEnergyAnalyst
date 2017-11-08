@@ -249,11 +249,11 @@ def decentralized_main(locator, building_names, gv):
         optsearch = np.empty(el)
         optsearch.fill(3)
         indexBest = 0
+        geothermal_potential = geothermal_potential_data.set_index('Name')
 
         # Check the GHP area constraint
         for i in range(10):
             QGHP = (1-i/10) * Qnom
-            geothermal_potential = geothermal_potential_data.set_index('Name')
             areaAvail = geothermal_potential.ix[building_name, 'Area_geo']
             Qallowed = np.ceil(areaAvail/gv.GHP_A) * gv.GHP_HmaxSize #[W_th]
             if Qallowed < QGHP:
