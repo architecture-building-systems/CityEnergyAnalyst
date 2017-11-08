@@ -14,6 +14,7 @@ import tempfile
 import arcpy  # NOTE to developers: this is provided by ArcGIS after doing `cea install-toolbox`
 
 import cea.config
+import cea.inputlocator
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -24,6 +25,9 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
+# I know this is bad form, but the locator will never really change, so I'm making it global to this file
+locator = cea.inputlocator.InputLocator(None)
 
 class Toolbox(object):
     """List the tools to show in the toolbox."""
@@ -336,20 +340,24 @@ class DemandTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        config = cea.config.Configuration()
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
+        scenario_path.value = config.scenario
+
         weather_name = arcpy.Parameter(
             displayName="Weather file (choose from list or enter full path to .epw file)",
             name="weather_name",
             datatype="String",
             parameterType="Required",
             direction="Input")
-        weather_name.filter.list = get_weather_names() + ['<choose path from below>']
-        weather_name.enabled = False
+        weather_name.filter.list = get_weather_names() + ['<custom>']
+        weather_name.enabled = is_db_weather(config.weather)
+        weather_name.value = get_db_weather_name(config.weather) if is_db_weather(config.weather) else '<custom>'
 
         weather_path = arcpy.Parameter(
             displayName="Path to .epw file",
@@ -358,7 +366,7 @@ class DemandTool(object):
             parameterType="Optional",
             direction="Input")
         weather_path.filter.list = ['epw']
-        weather_path.enabled = False
+        weather_path.enabled = not is_db_weather(config.weather)
 
         dynamic_infiltration = arcpy.Parameter(
             displayName="Use dynamic infiltration model (slower)",
@@ -366,7 +374,7 @@ class DemandTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        dynamic_infiltration.enabled = False
+        dynamic_infiltration.value = config.demand.use_dynamic_infiltration_calculation
 
         multiprocessing = arcpy.Parameter(
             displayName="Use multiple cores to speed up processing",
@@ -374,53 +382,40 @@ class DemandTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        multiprocessing.enabled = False
+        multiprocessing.value = config.multiprocessing
 
         return [scenario_path, weather_name, weather_path, dynamic_infiltration, multiprocessing]
 
     def updateParameters(self, parameters):
-        scenario_path = parameters[0].valueAsText
-        if scenario_path is None:
-            for p in parameters[1:]:
-                p.enabled = False
-            return
+        parameters = {p.name: p for p in parameters}
+        scenario_path = parameters['scenario_path'].valueAsText
         if not os.path.exists(scenario_path):
-            for p in parameters[1:]:
-                p.enabled = False
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
-            return
+            parameters['scenario_path'].setErrorMessage('Scenario folder not found: %s' % scenario_path)
 
-        if not parameters[1].enabled:
-            for p in parameters[1:]:
-                p.enabled = True
-            parameters = {p.name: p for p in parameters}
+        parameters['weather_path'].enabled = parameters['weather_name'].value == '<custom>'
+        weather_path = parameters['weather_path'].valueAsText
+        if is_builtin_weather_path(weather_path):
+            parameters['weather_path'].enabled = False
+            parameters['weather_name'].value = get_db_weather_name(weather_path)
 
-            parameters['dynamic_infiltration'].value = read_config_boolean(scenario_path, 'demand',
-                                                                           'use-dynamic-infiltration-calculation')
-            parameters['multiprocessing'].value = read_config_boolean(scenario_path, 'general', 'multiprocessing')
+        if parameters['weather_name'].value != '<custom>':
+            parameters['weather_path'].value = locator.get_weather(parameters['weather_name'].value)
 
-            weather_path = read_config_string(scenario_path, 'general', 'weather')
-            if is_builtin_weather_path(weather_path):
-                parameters['weather_path'].enabled = False
-                parameters['weather_name'].value = builtin_weather_name(weather_path)
-            else:
-                parameters['weather_name'].value = '<choose path from below>'
-                parameters['weather_path'].value = weather_path
-        else:
-            parameters = {p.name: p for p in parameters}
-            parameters['weather_path'].enabled = parameters['weather_name'].value == '<choose path from below>'
 
     def updateMessages(self, parameters):
-        scenario_path = parameters[0].valueAsText
+        parameters = {p.name: p for p in parameters}
+        scenario_path = parameters['scenario_path'].valueAsText
         if scenario_path is None:
             return
         if not os.path.exists(scenario_path):
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            parameters['scenario_path'].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
-        if not os.path.exists(get_radiation(scenario_path)):
-            parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
-        if not os.path.exists(get_surface_properties(scenario_path)):
-            parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
+
+        locator = cea.inputlocator.InputLocator(scenario_path)
+        if not os.path.exists(locator.get_radiation()):
+            parameters['scenario_path'].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
+        if not os.path.exists(locator.get_surface_properties()):
+            parameters['scenario_path'].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
         return
 
     def execute(self, parameters, _):
@@ -429,29 +424,22 @@ class DemandTool(object):
         weather_name = parameters['weather_name'].valueAsText
         weather_path_param = parameters['weather_path']
         if weather_name in get_weather_names():
-            weather_path = get_weather_path(weather_name)
+            weather_path = locator.get_weather(weather_name)
         elif weather_path_param.enabled:
             if os.path.exists(weather_path_param.valueAsText) and weather_path_param.valueAsText.endswith('.epw'):
                 weather_path = weather_path_param.valueAsText
+            else:
+                weather_path = locator.get_default_weather()
         else:
-            weather_path = get_weather_path()
+            weather_path = locator.get_default_weather()
 
         use_dynamic_infiltration_calculation = parameters['dynamic_infiltration'].value
         multiprocessing = parameters['multiprocessing'].value
 
-        # save the configuration to the scenario.config file
-        write_config_string(scenario_path, 'general', 'weather', weather_path)
-        write_config_boolean(scenario_path, 'demand', 'use-dynamic-infiltration-calculation',
-                             use_dynamic_infiltration_calculation)
-        write_config_boolean(scenario_path, 'general', 'multiprocessing', multiprocessing)
-
         # run the demand script
-        args = [scenario_path, 'demand', '--weather', weather_path]
-        if use_dynamic_infiltration_calculation:
-            args.append('--use-dynamic-infiltration-calculation')
-        if multiprocessing:
-            args.append('--multiprocessing')
-        run_cli(*args)
+        run_cli('demand', scenario=scenario_path, weather=weather_path,
+                use_dynamic_infiltration_calculation=use_dynamic_infiltration_calculation,
+                multiprocessing=multiprocessing)
 
 
 class DataHelperTool(object):
@@ -996,7 +984,7 @@ class PhotovoltaicPannelsTool(object):
         date_start = str(year) + '-01-01'
 
         if weather_name in get_weather_names():
-            weather_path = get_weather_path(weather_name)
+            weather_path = locator.get_weather(weather_name)
 
         add_message('longitude: %s' % longitude)
         add_message('latitude: %s' % latitude)
@@ -1212,7 +1200,7 @@ class SolarCollectorPanelsTool(object):
         date_start = str(year) + '-01-01'
 
         if weather_name in get_weather_names():
-            weather_path = get_weather_path(weather_name)
+            weather_path = locator.get_weather(weather_name)
 
         add_message('longitude: %s' % longitude)
         add_message('latitude: %s' % latitude)
@@ -1442,7 +1430,7 @@ class PhotovoltaicThermalPanelsTool(object):
         date_start = str(year) + '-01-01'
 
         if weather_name in get_weather_names():
-            weather_path = get_weather_path(weather_name)
+            weather_path = locator.get_weather(weather_name)
 
         add_message('longitude: %s' % longitude)
         add_message('latitude: %s' % latitude)
@@ -1698,7 +1686,7 @@ class RadiationDaysimTool(object):
         weather_path = parameters['weather_path'].valueAsText
 
         if weather_name in get_weather_names():
-            weather_path = get_weather_path(weather_name)
+            weather_path = locator.get_weather(weather_name)
 
         run_cli_arguments = [scenario_path, 'radiation-daysim',
                              '--weather-path', weather_path]
@@ -1807,11 +1795,11 @@ class RadiationTool(object):
         longitude = parameters[4].value
 
         if weather_name in get_weather_names():
-            weather_path = get_weather_path(weather_name)
+            weather_path = locator.get_weather(weather_name)
         elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
             weather_path = weather_name
         else:
-            weather_path = get_weather_path('.')
+            weather_path = locator.get_weather('.')
 
         # FIXME: use current arcgis databases...
         path_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
@@ -1857,7 +1845,7 @@ def is_db_weather(weather_path):
     weather_name = get_db_weather_name(weather_path)
     if weather_name in get_weather_names():
         # could still be a custom weather file...
-        db_weather_path = get_weather_path(weather_name)
+        db_weather_path = locator.get_weather(weather_name)
         if os.path.dirname(db_weather_path) == os.path.dirname(weather_path):
             return True
     return False
@@ -1866,21 +1854,6 @@ def is_db_weather(weather_path):
 def get_db_weather_name(weather_path):
     weather_name = os.path.splitext(os.path.basename(weather_path))[0]
     return weather_name
-
-
-def get_weather_path(weather_name='Zug'):
-    """Shell out to cli.py and find the path to the weather file"""
-    return _cli_output(None, 'weather-path', weather_name)
-
-
-def get_radiation(scenario_path):
-    """Shell out to cli.py and find the path to the ``radiation.csv`` file for the scenario."""
-    return _cli_output(scenario_path, 'locate', 'get_radiation')
-
-
-def get_surface_properties(scenario_path):
-    """Shell out to cli.py and find the path to the ``surface_properties.csv`` file for the scenario."""
-    return _cli_output(scenario_path, 'locate', 'get_surface_properties')
 
 
 def get_python_exe():
@@ -1959,6 +1932,7 @@ def run_cli(script_name, **parameters):
 
     command = [get_python_exe(), '-u', '-m', 'cea.interfaces.cli.cli', script_name]
     for parameter_name, parameter_value in parameters.items():
+        parameter_name = parameter_name.replace('_', '-')
         command.append('--' + parameter_name)
         command.append(str(parameter_value))
     add_message(command)
@@ -2347,11 +2321,11 @@ class SensitivityDemandSimulateTool(object):
         # weather_path
         weather_name = parameters[1].valueAsText
         if weather_name in get_weather_names():
-            weather_path = get_weather_path(weather_name)
+            weather_path = locator.get_weather(weather_name)
         elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
             weather_path = weather_name
         else:
-            weather_path = get_weather_path()
+            weather_path = locator.get_weather()
 
         # samples_folder
         samples_folder = parameters[2].valueAsText
@@ -2550,8 +2524,6 @@ class TestTool(object):
 
 def is_builtin_weather_path(weather_path):
     """Return True, if the weather path resolves to one of the builtin weather files shipped with the CEA."""
-    return os.path.dirname(weather_path) == os.path.dirname(get_weather_path(weather_name='Zug'))
-
-def builtin_weather_name(weather_path):
-    """Return the name of the builtin weather file (assumes ``is_builtin_weather_path(weather_path) == True``"""
-    return os.path.splitext(os.path.basename(weather_path))[0]
+    if weather_path is None:
+        return False
+    return os.path.dirname(weather_path) == os.path.dirname(locator.get_weather('Zug'))
