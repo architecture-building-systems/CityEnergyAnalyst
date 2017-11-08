@@ -514,6 +514,7 @@ class BenchmarkGraphsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        config = cea.config.Configuration()
         scenarios = arcpy.Parameter(
             displayName="Path to the scenarios to plot",
             name="scenarios",
@@ -521,6 +522,7 @@ class BenchmarkGraphsTool(object):
             parameterType="Required",
             direction="Input",
             multiValue=True)
+
         output_file = arcpy.Parameter(
             displayName="Path to output PDF",
             name="output_file",
@@ -702,12 +704,14 @@ class DemandGraphsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        config = cea.config.Configuration()
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
+        scenario_path.value = config.scenario
         analysis_fields = arcpy.Parameter(
             displayName="Variables to analyse",
             name="analysis_fields",
@@ -716,36 +720,33 @@ class DemandGraphsTool(object):
             multiValue=True,
             direction="Input")
         analysis_fields.filter.list = []
-        analysis_fields.enabled = False
         multiprocessing = arcpy.Parameter(
             displayName="Use multiple cores to speed up processing",
             name="multiprocessing",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        multiprocessing.enabled = False
+        multiprocessing.value = config.multiprocessing
+
         return [scenario_path, analysis_fields, multiprocessing]
 
     def updateParameters(self, parameters):
-        scenario_path = parameters[0].valueAsText
+        config = cea.config.Configuration()
+        parameters = {p.name: p for p in parameters}
+        scenario_path = parameters['scenario_path'].valueAsText
         if not os.path.exists(scenario_path):
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            parameters['scenario_path'].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
-        analysis_fields = parameters[1]
-        if not analysis_fields.enabled:
-            analysis_fields.enabled = True
-            fields = _cli_output(scenario_path, 'demand-graphs', '--list-fields').split()
-            analysis_fields.filter.list = list(fields)
-
-            multiprocessing = parameters[2]
-            multiprocessing.value = read_config_boolean(scenario_path, 'general', 'multiprocessing')
-            multiprocessing.enabled = True
+        analysis_fields = parameters['analysis_fields']
+        analysis_fields.filter.list = list(demand_graph_fields(scenario_path))
 
     def execute(self, parameters, messages):
-        scenario_path = parameters[0].valueAsText
-        analysis_fields = parameters[1].valueAsText.split(';')[:4]  # max 4 fields for analysis
-        write_config_boolean(scenario_path, 'general', 'multiprocessing', parameters[2].value)
-        run_cli(scenario_path, 'demand-graphs', '--analysis-fields', *analysis_fields)
+        parameters = {p.name: p for p in parameters}
+        scenario_path = parameters['scenario_path'].valueAsText
+        analysis_fields = ' '.join(parameters['analysis_fields'].valueAsText.split(';')[:4])  # max 4 fields for analysis
+        multiprocessing = parameters['multiprocessing'].value
+        run_cli('demand-graphs', scenario=scenario_path, analysis_fields=analysis_fields,
+                multiprocessing=multiprocessing)
 
 
 class ScenarioPlotsTool(object):
@@ -1887,28 +1888,6 @@ def _cli_output(scenario_path=None, *args):
     return result.strip()
 
 
-def read_config_string(scenario_path, section, key):
-    """Read a string value from the configuration file"""
-    return _cli_output(scenario_path, 'read-config', '--section', section, '--key', key)
-
-
-def read_config_boolean(scenario_path, section, key):
-    """Read a boolean value from the configuration file"""
-    boolean_states = {'0': False,
-                      '1': True,
-                      'false': False,
-                      'no': False,
-                      'off': False,
-                      'on': True,
-                      'true': True,
-                      'yes': True}
-    value = read_config_string(scenario_path, section, key).lower()
-    if value in boolean_states:
-        return boolean_states[value]
-    else:
-        return False
-
-
 def write_config_string(scenario_path, section, key, value):
     """Write a string value to the configuration file"""
     run_cli(scenario_path, 'write-config', '--section', section, '--key', key, '--value', value)
@@ -2522,3 +2501,20 @@ def is_builtin_weather_path(weather_path):
     if weather_path is None:
         return False
     return os.path.dirname(weather_path) == os.path.dirname(locator.get_weather('Zug'))
+
+def demand_graph_fields(scenario):
+    """Lists the available fields for the demand graphs - these are fields that are present in both the
+    building demand results files as well as the totals file (albeit with different units)."""
+    import pandas as pd
+    locator = cea.inputlocator.InputLocator(scenario)
+    df_total_demand = pd.read_csv(locator.get_total_demand())
+    total_fields = set(df_total_demand.columns.tolist())
+    first_building = df_total_demand['Name'][0]
+    df_building = pd.read_csv(locator.get_demand_results_file(first_building))
+    fields = set(df_building.columns.tolist())
+    fields.remove('DATE')
+    fields.remove('Name')
+    # remove fields in demand results files that do not have a corresponding field in the totals file
+    bad_fields = set(field for field in fields if not field.split('_')[0] + "_MWhyr" in total_fields)
+    fields = fields - bad_fields
+    return list(fields)
