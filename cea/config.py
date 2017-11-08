@@ -35,6 +35,8 @@ class Configuration(object):
         self._copy_general()
         if not config_file:
             config_file = CEA_CONFIG
+        if not os.path.exists(config_file):
+            self.save(config_file)
         self._parser.read(config_file)
 
     def _read_default_config(self):
@@ -114,6 +116,16 @@ class Configuration(object):
                     general_section._parameters[parameter.name])
             pass
 
+    def save(self, config_file):
+        """Save the sections and properties to a config file. This does not save all the type info
+        in the default.config..."""
+        parser = ConfigParser.SafeConfigParser()
+        for section in self._sections.values():
+            parser.add_section(section._name)
+            for parameter in section._parameters.values():
+                parser.set(section._name, parameter.name, parameter.encode(parameter.__get__(self), self._parser))
+        with open(config_file, 'w') as f:
+            parser.write(f)
 
     def __getstate__(self):
         """make sure we don't save the copies of the general section - we'll add them afterwards again"""
