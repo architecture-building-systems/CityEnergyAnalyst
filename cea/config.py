@@ -38,6 +38,7 @@ class Configuration(object):
         if not os.path.exists(config_file):
             self.save(config_file)
         self._parser.read(config_file)
+        self.save(config_file)
 
     def _read_default_config(self):
         """Read in the ``default.config`` file and build the parameters and sections with the appropriate types"""
