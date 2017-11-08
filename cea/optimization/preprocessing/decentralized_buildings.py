@@ -13,6 +13,9 @@ import pandas as pd
 import cea.technologies.boilers as Boiler
 import cea.technologies.cogeneration as FC
 import cea.technologies.heatpumps as HP
+from cea.utilities import dbfreader
+from geopandas import GeoDataFrame as Gdf
+
 
 
 def decentralized_main(locator, building_names, gv):
@@ -31,7 +34,11 @@ def decentralized_main(locator, building_names, gv):
     :rtype: Nonetype
     """
     t0 = time.clock()
-    geothermal_potential = pd.read_csv(locator.get_geothermal_potential(), index_col="Name")
+    prop_geometry = Gdf.from_file(locator.get_zone_geometry())
+    geometry = pd.DataFrame({'Name': prop_geometry.Name, 'Area': prop_geometry.area})
+    geothermal_potential_data = dbfreader.dbf_to_dataframe(locator.get_building_supply())
+    geothermal_potential_data = pd.merge(geothermal_potential_data, geometry, on='Name')
+    geothermal_potential_data['Area_geo'] = geothermal_potential_data['restr_geo'] * geothermal_potential_data['Area']
     BestData = {}
 
     def calc_new_load(mdot, TsupDH, Tret, gv):
@@ -242,13 +249,13 @@ def decentralized_main(locator, building_names, gv):
         optsearch = np.empty(el)
         optsearch.fill(3)
         indexBest = 0
+        geothermal_potential = geothermal_potential_data.set_index('Name')
 
         # Check the GHP area constraint
         for i in range(10):
             QGHP = (1-i/10) * Qnom
-            areaAvail = geothermal_potential.ix[building_name,"Area_geo"]
+            areaAvail = geothermal_potential.ix[building_name, 'Area_geo']
             Qallowed = np.ceil(areaAvail/gv.GHP_A) * gv.GHP_HmaxSize #[W_th]
-
             if Qallowed < QGHP:
                 optsearch[i+3] += 1
                 Best[i+3][0] = - 1
