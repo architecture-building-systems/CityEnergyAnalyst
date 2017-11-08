@@ -11,6 +11,7 @@ def main(_):
     - add a link to the python.exe that ran setup.py to user's home directory in the file cea_python.pth
     - copy the file "CityEnergyAnalyst.py" to the "My Toolboxes" folder of ArcGIS Desktop and rename the
       extension to ".pyt"
+    - copy cea.config and the default.config to the "My Toolboxes/cea" folder.
     - sets up .pth files to access arcpy from the cea python interpreter.
     """
     # write out path to python.exe to the file cea_python.pth
@@ -23,10 +24,25 @@ def main(_):
         os.makedirs(toolbox_folder)
     shutil.copy(find_toolbox_src(), toolbox_dst)
 
+    copy_config(toolbox_folder)
+
     with open(os.path.expanduser('~/cea_arcpy.pth'), 'w') as f:
         f.writelines('\n'.join(get_arcgis_paths()))
     print('toolbox installed.')
 
+
+def copy_config(toolbox_folder):
+    """Copy the cea/config.py, cea/default.config and an empty __init__.py file to the toolbox_folder"""
+    import cea.config
+
+    cea_dst_folder = os.path.join(toolbox_folder, 'cea')
+    if not os.path.exists(cea_dst_folder):
+        os.makedirs(cea_dst_folder)
+
+    cea_src_folder = os.path.dirname(cea.config.__file__)
+    shutil.copy(os.path.join(cea_src_folder, 'config.py'), cea_dst_folder)
+    shutil.copy(os.path.join(cea_src_folder, 'default.config'), cea_dst_folder)
+    shutil.copy(os.path.join(cea_src_folder, '__init__.py'), cea_dst_folder)
 
 def find_toolbox_src():
     """

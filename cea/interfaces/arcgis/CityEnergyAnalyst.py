@@ -8,10 +8,12 @@ we would decouple the python version used by CEA from the ArcGIS version.
 
 See the script ``install_toolbox.py`` for the mechanics of installing the toolbox into the ArcGIS system.
 """
-import os   
+import os
 import subprocess
 import tempfile
 import arcpy  # NOTE to developers: this is provided by ArcGIS after doing `cea install-toolbox`
+
+import cea.config
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -67,21 +69,25 @@ class RetrofitPotentialTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        config = cea.config.Configuration()
+
         scenario_path = arcpy.Parameter(displayName="Path to the scenario", name="scenario_path", datatype="DEFolder",
                                         parameterType="Required", direction="Input")
-        retrofit_target_date = arcpy.Parameter(displayName="Year when the retrofit will take place",
-                                               name="retrofit_target_date", datatype="GPLong", parameterType="Required",
+        scenario_path.value = config.scenario
+
+        retrofit_target_year = arcpy.Parameter(displayName="Year when the retrofit will take place",
+                                               name="retrofit_target_year", datatype="GPLong", parameterType="Required",
                                                direction="Input")
-        retrofit_target_date.value = 2020
+        retrofit_target_year.value = config.retrofit_potential.retrofit_target_year
 
         keep_partial_matches = arcpy.Parameter(displayName="Keep buildings partially matching the selected criteria",
                                                name="keep_partial_matches",
                                                datatype="GPBoolean", parameterType="Required", direction="Input")
-        keep_partial_matches.value = False
+        keep_partial_matches.value = config.retrofit_potential.keep_partial_matches
 
         name = arcpy.Parameter(displayName="Name for new scenario", name="name", datatype="String",
                                parameterType="Required", direction="Input")
-        name.value = "retrofit_HVAC"
+        name.value = config.retrofit_potential.retrofit_scenario_name
 
         cb_age_threshold = arcpy.Parameter(displayName="Enable threshold age of HVAC (built / retrofitted)",
                                            name="cb_age_threshold", datatype="GPBoolean", parameterType="Required",
@@ -91,7 +97,7 @@ class RetrofitPotentialTool(object):
 
         age_threshold = arcpy.Parameter(displayName="threshold age of HVAC (built / retrofitted)", name="age_threshold",
                                         datatype="GPLong", parameterType="Optional", direction="Input", category="age")
-        age_threshold.value = 15
+        age_threshold.value = config.retrofit_potential.age_threshold
         age_threshold.enabled = False
 
         cb_eui_heating_threshold = arcpy.Parameter(displayName="Enable end use intensity threshold for heating",
@@ -105,7 +111,7 @@ class RetrofitPotentialTool(object):
                                                 name="eui_heating_threshold", datatype="GPLong",
                                                 parameterType="Optional", direction="Input",
                                                 category="end use intensity")
-        eui_heating_threshold.value = 50
+        eui_heating_threshold.value = config.retrofit_potential.eui_heating_threshold
         eui_heating_threshold.enabled = False
 
         cb_eui_hot_water_threshold = arcpy.Parameter(displayName="Enable end use intensity threshold for hot water",
@@ -119,7 +125,7 @@ class RetrofitPotentialTool(object):
                                                   name="eui_hot_water_threshold", datatype="GPLong",
                                                   parameterType="Optional", direction="Input",
                                                   category="end use intensity")
-        eui_hot_water_threshold.value = 50
+        eui_hot_water_threshold.value = config.retrofit_potential.eui_hot_water_threshold
         eui_hot_water_threshold.enabled = False
 
         cb_eui_cooling_threshold = arcpy.Parameter(displayName="Enable end use intensity threshold for cooling",
@@ -133,7 +139,7 @@ class RetrofitPotentialTool(object):
                                                 name="eui_cooling_threshold", datatype="GPLong",
                                                 parameterType="Optional", direction="Input",
                                                 category="end use intensity")
-        eui_cooling_threshold.value = 4
+        eui_cooling_threshold.value = config.retrofit_potential.eui_cooling_threshold
         eui_cooling_threshold.enabled = False
 
         cb_eui_electricity_threshold = arcpy.Parameter(displayName="Enable end use intensity threshold for electricity",
@@ -147,7 +153,7 @@ class RetrofitPotentialTool(object):
                                                     name="eui_electricity_threshold", datatype="GPLong",
                                                     parameterType="Optional", direction="Input",
                                                     category="end use intensity")
-        eui_electricity_threshold.value = 20
+        eui_electricity_threshold.value = config.retrofit_potential.eui_electricity_threshold
         eui_electricity_threshold.enabled = False
 
         cb_emissions_operation_threshold = arcpy.Parameter(
@@ -160,7 +166,7 @@ class RetrofitPotentialTool(object):
                                                         name="emissions_operation_threshold", datatype="GPLong",
                                                         parameterType="Optional", direction="Input",
                                                         category="emissions")
-        emissions_operation_threshold.value = 30
+        emissions_operation_threshold.value = config.retrofit_potential.emissions_operation_threshold
         emissions_operation_threshold.enabled = False
 
         cb_heating_costs_threshold = arcpy.Parameter(displayName="Enable threshold for heating costs",
@@ -174,7 +180,7 @@ class RetrofitPotentialTool(object):
                                                   name="heating_costs_threshold", datatype="GPLong",
                                                   parameterType="Optional", direction="Input",
                                                   category="operation costs")
-        heating_costs_threshold.value = 2
+        heating_costs_threshold.value = config.retrofit_potential.heating_costs_threshold
         heating_costs_threshold.enabled = False
 
         cb_hot_water_costs_threshold = arcpy.Parameter(displayName="Enable threshold for hot water costs",
@@ -188,7 +194,7 @@ class RetrofitPotentialTool(object):
                                                     name="hot_water_costs_threshold", datatype="GPLong",
                                                     parameterType="Optional", direction="Input",
                                                     category="operation costs")
-        hot_water_costs_threshold.value = 2
+        hot_water_costs_threshold.value = config.retrofit_potential.hot_water_costs_threshold
         hot_water_costs_threshold.enabled = False
 
         cb_cooling_costs_threshold = arcpy.Parameter(displayName="Enable threshold for cooling costs",
@@ -202,7 +208,7 @@ class RetrofitPotentialTool(object):
                                                   name="cooling_costs_threshold", datatype="GPLong",
                                                   parameterType="Optional", direction="Input",
                                                   category="operation costs")
-        cooling_costs_threshold.value = 2
+        cooling_costs_threshold.value = config.retrofit_potential.cooling_costs_threshold
         cooling_costs_threshold.enabled = False
 
         cb_electricity_costs_threshold = arcpy.Parameter(displayName="Enable threshold for electricity costs",
@@ -216,7 +222,7 @@ class RetrofitPotentialTool(object):
                                                       name="electricity_costs_threshold", datatype="GPLong",
                                                       parameterType="Optional", direction="Input",
                                                       category="operation costs")
-        electricity_costs_threshold.value = 2
+        electricity_costs_threshold.value = config.retrofit_potential.electricity_costs_threshold
         electricity_costs_threshold.enabled = False
 
         cb_heating_losses_threshold = arcpy.Parameter(
@@ -230,7 +236,7 @@ class RetrofitPotentialTool(object):
                                                    name="heating_losses_threshold", datatype="GPLong",
                                                    parameterType="Optional", direction="Input",
                                                    category="HVAC system losses")
-        heating_losses_threshold.value = 15
+        heating_losses_threshold.value = config.retrofit_potential.heating_losses_threshold
         heating_losses_threshold.enabled = False
 
         cb_hot_water_losses_threshold = arcpy.Parameter(
@@ -243,7 +249,7 @@ class RetrofitPotentialTool(object):
                                                      name="hot_water_losses_threshold", datatype="GPLong",
                                                      parameterType="Optional", direction="Input",
                                                      category="HVAC system losses")
-        hot_water_losses_threshold.value = 15
+        hot_water_losses_threshold.value = config.retrofit_potential.hot_water_losses_threshold
         hot_water_losses_threshold.enabled = False
 
         cb_cooling_losses_threshold = arcpy.Parameter(
@@ -257,10 +263,10 @@ class RetrofitPotentialTool(object):
                                                    name="cooling_losses_threshold", datatype="GPLong",
                                                    parameterType="Optional", direction="Input",
                                                    category="HVAC system losses")
-        cooling_losses_threshold.value = 15
+        cooling_losses_threshold.value = config.retrofit_potential.cooling_losses_threshold
         cooling_losses_threshold.enabled = False
 
-        return [scenario_path, retrofit_target_date, keep_partial_matches, name, cb_age_threshold, age_threshold,
+        return [scenario_path, retrofit_target_year, keep_partial_matches, name, cb_age_threshold, age_threshold,
                 cb_eui_heating_threshold, eui_heating_threshold, cb_eui_hot_water_threshold, eui_hot_water_threshold,
                 cb_eui_cooling_threshold, eui_cooling_threshold, cb_eui_electricity_threshold,
                 eui_electricity_threshold, cb_emissions_operation_threshold, emissions_operation_threshold,
@@ -292,26 +298,32 @@ class RetrofitPotentialTool(object):
                 parameters[parameter_name[3:]].enabled = parameters[parameter_name].value
 
     def execute(self, parameters, _):
-        scenario_path, retrofit_target_date, include_only_matches_to_all_criteria, name = parameters[:4]
+        scenario_path, retrofit_target_year, include_only_matches_to_all_criteria, name = parameters[:4]
         scenario_path = scenario_path.valueAsText
-        retrofit_target_date = retrofit_target_date.value
+        retrofit_target_year = retrofit_target_year.value
         include_only_matches_to_all_criteria = include_only_matches_to_all_criteria.value
         name = name.valueAsText
-
-        args = ['--retrofit-target-date', str(retrofit_target_date), '--name', name]
-        if include_only_matches_to_all_criteria:
-            args.append('--keep-partial-matches')
-
         parameters = {p.name: p for p in parameters[4:]}
-        for p_name in parameters.keys():
-            if p_name.startswith('cb_'):
-                checkbox = parameters[p_name]
-                parameter = parameters[p_name[3:]]
-                if checkbox.value and (parameter.value is not None):
-                    args.append('--%s' % parameter.name.replace('_', '-'))
-                    args.append(str(parameter.value))
-
-        run_cli(scenario_path, 'retrofit-potential', *args)
+        args = {
+            'scenario': scenario_path,
+            'retrofit-scenario-name': name,
+            'retrofit-target-year': retrofit_target_year,
+            'keep-partial-matches': include_only_matches_to_all_criteria,
+            'age-threshold': parameters['age_threshold'].value if parameters['cb_age_threshold'].value else None,
+            'hot-water-costs-threshold': parameters['hot_water_costs_threshold'].value if parameters['cb_hot_water_costs_threshold'].value else None,
+            'emissions-operation-threshold': parameters['emissions_operation_threshold'].value if parameters['cb_emissions_operation_threshold'].value else None,
+            'eui-electricity-threshold': parameters['eui_electricity_threshold'].value if parameters['cb_eui_electricity_threshold'].value else None,
+            'heating-costs-threshold': parameters['heating_costs_threshold'].value if parameters['cb_heating_costs_threshold'].value else None,
+            'eui-hot-water-threshold': parameters['eui_hot_water_threshold'].value if parameters['cb_eui_hot_water_threshold'].value else None,
+            'electricity-costs-threshold': parameters['electricity_costs_threshold'].value if parameters['cb_electricity_costs_threshold'].value else None,
+            'heating-losses-threshold': parameters['heating_losses_threshold'].value if parameters['cb_heating_losses_threshold'].value else None,
+            'cooling-losses-threshold': parameters['cooling_losses_threshold'].value if parameters['cb_cooling_losses_threshold'].value else None,
+            'eui-cooling-threshold': parameters['eui_cooling_threshold'].value if parameters['cb_eui_cooling_threshold'].value else None,
+            'hot-water-losses-threshold': parameters['hot_water_losses_threshold'].value if parameters['cb_hot_water_losses_threshold'].value else None,
+            'eui-heating-threshold': parameters['eui_heating_threshold'].value if parameters['cb_eui_heating_threshold'].value else None,
+            'cooling-costs-threshold': parameters['cooling_costs_threshold'].value if parameters['cb_cooling_costs_threshold'].value else None,
+        }
+        run_cli('retrofit-potential', **args)
 
 
 class DemandTool(object):
@@ -1960,6 +1972,8 @@ def run_cli(script_name, **parameters):
     stdout, stderr = process.communicate()
     add_message(stdout)
     add_message(stderr)
+    if process.returncode != 0:
+        raise Exception('Tool did not run successfully')
 
 
 def parse_boolean(s):
@@ -2527,7 +2541,11 @@ class TestTool(object):
         return []
 
     def execute(self,parameters, _):
-        run_cli(None, 'test')
+        add_message('importing cea.config')
+        import cea.config
+        config = cea.config.Configuration()
+        add_message('config.scenario = %s' % config.scenario)
+        run_cli('test')
 
 
 def is_builtin_weather_path(weather_path):
