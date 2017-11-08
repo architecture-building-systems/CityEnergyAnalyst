@@ -454,59 +454,54 @@ class DataHelperTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        config = cea.config.Configuration()
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
-        prop_thermal_flag = arcpy.Parameter(
-            displayName="Generate thermal properties",
-            name="prop_thermal_flag",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        prop_thermal_flag.value = True
+        scenario_path.value = config.scenario
         prop_architecture_flag = arcpy.Parameter(
             displayName="Generate architectural properties",
-            name="prop_architecture_flag",
+            name="architecture",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        prop_architecture_flag.value = True
+        prop_architecture_flag.value = 'architecture' in config.data_helper.archetypes
         prop_HVAC_flag = arcpy.Parameter(
             displayName="Generate technical systems properties",
-            name="prop_HVAC_flag",
+            name="HVAC",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        prop_HVAC_flag.value = True
+        prop_HVAC_flag.value = 'HVAC' in config.data_helper.archetypes
         prop_comfort_flag = arcpy.Parameter(
             displayName="Generate comfort properties",
-            name="prop_comfort_flag",
+            name="comfort",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        prop_comfort_flag.value = True
+        prop_comfort_flag.value = 'comfort' in config.data_helper.archetypes
         prop_internal_loads_flag = arcpy.Parameter(
             displayName="Generate internal loads properties",
-            name="prop_internal_loads_flag",
+            name="internal_loads",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        prop_internal_loads_flag.value = True
-        return [scenario_path, prop_thermal_flag, prop_architecture_flag, prop_HVAC_flag, prop_comfort_flag,
+        prop_internal_loads_flag.value = 'internal-loads' in config.data_helper.archetypes
+        return [scenario_path, prop_architecture_flag, prop_HVAC_flag, prop_comfort_flag,
                 prop_internal_loads_flag]
 
     def execute(self, parameters, _):
-        scenario_path = parameters[0].valueAsText
-        flags = {'thermal': parameters[1].value,
-                 'architecture': parameters[2].value,
-                 'HVAC': parameters[3].value,
-                 'comfort': parameters[4].value,
-                 'internal-loads': parameters[5].value}
-        archetypes = [key for key in flags.keys() if flags[key]]
-        run_cli(scenario_path, 'data-helper', '--archetypes', *archetypes)
+        parameters = {p.name: p for p in parameters}
+        scenario_path = parameters['scenario_path'].valueAsText
+        flags = {'architecture': parameters['architecture'].value,
+                 'HVAC': parameters['HVAC'].value,
+                 'comfort': parameters['comfort'].value,
+                 'internal-loads': parameters['internal_loads'].value}
+        archetypes = ' '.join([key for key in flags.keys() if flags[key]])
+        run_cli('data-helper', scenario=scenario_path, archetypes=archetypes)
 
 
 class BenchmarkGraphsTool(object):
