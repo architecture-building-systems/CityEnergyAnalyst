@@ -62,7 +62,12 @@ class Configuration(object):
 
         for section, parameter in self._matching_parameters(option_list):
             if parameter.name in command_line_args:
-                parameter.__set__(section, command_line_args[parameter.name])
+                try:
+                    parameter.__set__(section, parameter.decode(command_line_args[parameter.name], self._parser))
+                except:
+                    print('ERROR setting %s:%s to %s' % (
+                          section._name, parameter.name, command_line_args[parameter.name]))
+                    raise
                 del command_line_args[parameter.name]
         assert len(command_line_args) == 0, 'Unexpected parameters: %s' % command_line_args
 
@@ -254,7 +259,7 @@ class BooleanParameter(Parameter):
     """Read / write boolean parameters to the config file."""
     _boolean_states = {'1': True, 'yes': True, 'true': True, 'on': True,
                        '0': False, 'no': False, 'false': False, 'off': False}
-    def encode(self, value):
+    def encode(self, value, _):
         return 'true' if value else 'false'
 
     def decode(self, value, _):
@@ -264,10 +269,16 @@ class BooleanParameter(Parameter):
 class IntegerParameter(Parameter):
     """Read / write integer parameters to the config file."""
     def encode(self, value, _):
-        return str(int(value))
+        try:
+            return str(int(value))
+        except TypeError:
+            return ''
 
     def decode(self, value, _):
-        return int(value)
+        try:
+            return int(value)
+        except ValueError:
+            return None
 
 class RealParameter(Parameter):
     """Read / write floating point parameters to the config file."""
@@ -279,7 +290,10 @@ class RealParameter(Parameter):
             self._decimal_places = 4
 
     def encode(self, value, _):
-        return format(value, ".%i" % self._decimal_places)
+        try:
+            return format(value, ".%i" % self._decimal_places)
+        except ValueError:
+            return 'None'
 
     def decode(self, value, _):
         try:
