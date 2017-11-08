@@ -21,8 +21,7 @@ class SlaveData(object):
     def __init__(self):            
         
         # Name the file which should be loaded:
-        self.configKey_systems = ""
-        self.configKey_network = ""
+        self.configKey = ""
         self.NETWORK_DATA_FILE = ""
         self.nBuildingsConnected = 0
         self.fNameTotalCSV = ""
