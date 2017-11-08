@@ -306,6 +306,8 @@ class GlobalVariables(object):
         self.DeltaU = 12500.0E6  # [Wh], maximum change in the lake energy content at the end of the year (positive or negative)
         self.TLake = 5 + 273.0  # K
 
+        self.CT_maxSize = 10.0E6  # cooling power desin size [W]
+
         # Geothermal heat pump
 
         self.TGround = 6.5 + 273.0
