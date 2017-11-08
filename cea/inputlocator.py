@@ -22,8 +22,20 @@ class InputLocator(object):
     # SCENARIO
     def __init__(self, scenario):
         self.scenario = scenario
-        self.db_path = os.path.join(os.path.dirname(__file__), 'databases')
+        self.db_path = self.find_db_path()
         self.weather_path = os.path.join(self.db_path, 'weather')
+
+    def find_db_path(self):
+        """The path to the databases file is either a subfolder of the folder containing inputlocator.py
+        (normal mode, part of the cea) or needs to be read from a file `databases.pth` (ArcGIS mode)"""
+        db_path = os.path.join(os.path.dirname(__file__), 'databases')
+        if os.path.exists(db_path):
+            return db_path
+        else:
+            databases_pth = os.path.join(os.path.dirname(__file__), 'databases.pth')
+            assert os.path.exists(databases_pth), 'File not found: %s' % databases_pth
+            with open(databases_pth) as f:
+                return f.read().strip()
 
     @staticmethod
     def _ensure_folder(*components):
