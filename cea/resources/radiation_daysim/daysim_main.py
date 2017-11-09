@@ -53,7 +53,6 @@ def calc_sensors_building(building_geometry_dict, sensor_parameters):
         for face in occface_list:
             sensor_dir, sensor_cord, sensor_type, sensor_area \
                 = generate_sensor_surfaces(face, sensor_parameters['X_DIM'], sensor_parameters['Y_DIM'], srf_type)
-
             sensor_dir_list.extend(sensor_dir)
             sensor_cord_list.extend(sensor_cord)
             sensor_type_list.extend(sensor_type)
@@ -126,7 +125,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, sett
                           will eventually crash a daysim instance. To solve it, reduce the number of buildings \
                           in each chunk in the Settings.py file')
 
-    rad.execute_epw2wea(weather_path)
+    rad.execute_epw2wea(weather_path, ground_reflectance = settings.terrain_parameters['albedo'])
     rad.execute_radfiles2daysim()
     rad_params = settings.rad_parameters
     rad.write_radiance_parameters(rad_params['RAD_AB'], rad_params['RAD_AD'], rad_params['RAD_AS'],
