@@ -140,32 +140,15 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         offspring = list(pop)
 
         # Apply crossover and mutation on the pop
-        print "CrossOver"
         for ind1, ind2 in zip(pop[::2], pop[1::2]):
             child1, child2 = cx.cxUniform(ind1, ind2, PROBA, gv)
             offspring += [child1, child2]
 
-        # First half of the master: create new un-correlated configurations
-        if g < gv.NGEN/2:
-            for mutant in pop:
-                offspring.append(mut.mutFlip(mutant, PROBA, gv))
-                offspring.append(mut.mutShuffle(mutant, PROBA, gv))
-                offspring.append(mut.mutGU(mutant, PROBA, gv))
+        for mutant in pop:
+            mutant = mut.mutFlip(mutant, PROBA, gv)
+            mutant = mut.mutShuffle(mutant, PROBA, gv)
+            offspring.append(mut.mutGU(mutant, PROBA, gv))
 
-        # Third quarter of the master: keep the good individuals but modify the shares uniformly
-        elif g < gv.NGEN * 3/4:
-            for mutant in pop:
-                offspring.append(mut.mutUniformCap(mutant, gv))
-
-        # Last quarter: keep the very good individuals and modify the shares with Gauss distribution
-        else:
-            for mutant in pop:
-                offspring.append(mut.mutGaussCap(mutant, SIGMAP, gv))
-
-
-        # Evaluate the individuals with an invalid fitness
-        # NB: every generation leads to the reevaluation of (n/2) / (n/4) / (n/4) individuals
-        # (n being the number of individuals in the previous generation)
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
         for ind in invalid_ind:
             evaluation.checkNtw(ind, ntwList, locator, gv)
