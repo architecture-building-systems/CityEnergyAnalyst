@@ -515,32 +515,49 @@ class BenchmarkGraphsTool(object):
 
     def getParameterInfo(self):
         config = cea.config.Configuration()
-        scenarios = arcpy.Parameter(
-            displayName="Path to the scenarios to plot",
-            name="scenarios",
+        project = arcpy.Parameter(
+            displayName="Path to the folder containing the scenarios",
+            name="project",
             datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+        project.value = config.benchmark_graphs.project
+        scenarios = arcpy.Parameter(
+            displayName="List of scenarios to plot (subdirectories of the project)",
+            name="scenarios",
+            datatype="String",
             parameterType="Required",
             direction="Input",
             multiValue=True)
-
+        scenarios.filter.list = []
         output_file = arcpy.Parameter(
             displayName="Path to output PDF",
             name="output_file",
             datatype="DEFile",
             parameterType="Required",
-            direction="Output")
+            direction="Input")
         output_file.filter.list = ['pdf']
-        return [scenarios, output_file]
+        output_file.value = config.benchmark_graphs.output_file
+        return [project, scenarios, output_file]
+
+    def updateParameters(self, parameters):
+        config = cea.config.Configuration()
+        parameters = {p.name: p for p in parameters}
+        project_path = parameters['project'].valueAsText
+        if not os.path.exists(project_path):
+            parameters['project'].setErrorMessage('Project folder not found: %s' % project_path)
+            return
+        scenarios = parameters['scenarios']
+        scenarios.filter.list = [f for f in os.listdir(project_path) if os.path.isdir(os.path.join(project_path, f))]
 
     def execute(self, parameters, messages):
-        scenarios = parameters[0].valueAsText
-        scenarios = scenarios.replace('"', '')
-        scenarios = scenarios.replace("'", '')
-        scenarios = scenarios.split(';')
-        arcpy.AddMessage(scenarios)
-        output_file = parameters[1].valueAsText
-        run_cli(None, 'benchmark-graphs', '--output-file', output_file, '--scenarios', *scenarios)
-        return
+        parameters = {p.name: p for p in parameters}
+        project_path = parameters['project'].valueAsText
+        add_message(repr(parameters['scenarios'].value))
+        value_table = parameters['scenarios'].value
+        scenarios = ' '.join([value_table.getValue(i, 0) for i in range(value_table.rowCount)])
+        output_file = parameters['output_file'].valueAsText
+        run_cli('benchmark-graphs', project=project_path, scenarios=scenarios, output_file=output_file)
 
 
 class OperationTool(object):
@@ -1909,7 +1926,7 @@ def run_cli(script_name, **parameters):
         parameter_name = parameter_name.replace('_', '-')
         command.append('--' + parameter_name)
         command.append(str(parameter_value))
-    add_message(command)
+    add_message('Executing: ' + ' '.join(command))
     process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                env=get_environment(), cwd=tempfile.gettempdir())
     while True:
