@@ -203,12 +203,23 @@ def building2d23d(locator, simplification_params, height_col, nfloor_col):
                 wall_list = facade_list
                 geometry_3D_zone.append({"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
                                      "footprint": footprint_list})
+
+            # DO this to visualize progress while debugging!:
+            # edges1 = calculate.visualise_face_normal_as_edges(wall_list,5)
+            # edges2 = calculate.visualise_face_normal_as_edges(roof_list, 5)
+            # edges3 = calculate.visualise_face_normal_as_edges(footprint_list, 5)
+            # construct.visualise([wall_list, roof_list ,footprint_list , edges1, edges2, edges3],["WHITE","WHITE","WHITE","BLACK", "BLACK","BLACK"])
         else:
             facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(bldg_solid)
             wall_list = facade_list
             geometry_3D_surroundings.append({"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
                                  "footprint": footprint_list})
 
+            ## DO this to visualize progress while debugging!:
+            # edges1 = calculate.visualise_face_normal_as_edges(wall_list,5)
+            # edges2 = calculate.visualise_face_normal_as_edges(roof_list, 5)
+            # edges3 = calculate.visualise_face_normal_as_edges(footprint_list, 5)
+            # construct.visualise([wall_list, roof_list ,footprint_list , edges1, edges2, edges3],["WHITE","WHITE","WHITE","BLACK", "BLACK","BLACK"])
     return geometry_terrain, geometry_3D_zone, geometry_3D_surroundings
 
 
@@ -243,7 +254,6 @@ def calc_solid(face_footprint, range_floors, flr2flr_height):
         moved_face_list.append(moved_face)
 
     # make checks to satisfy a closed geometry also called a shell
-    bldg_solid = None
     vertical_shell = construct.make_loft(moved_face_list)
     vertical_face_list = fetch.geom_explorer(vertical_shell, "face")
     roof = moved_face_list[-1]
@@ -254,11 +264,14 @@ def calc_solid(face_footprint, range_floors, flr2flr_height):
     all_faces.append(roof)
     bldg_shell_list = construct.make_shell_frm_faces(all_faces)
 
-    if bldg_shell_list:
-        # make sure all the normals are correct (they are pointing out)
-        bldg_solid = construct.make_solid(bldg_shell_list[0])
-        bldg_solid = modify.fix_close_solid(bldg_solid)
+    # make sure all the normals are correct (they are pointing out)
+    bldg_solid = construct.make_solid(bldg_shell_list[0])
+    bldg_solid = modify.fix_close_solid(bldg_solid)
 
+    ##dO this to visualize progress while debugging!:
+    #face_list = fetch.geom_explorer(bldg_solid, "face")
+    # edges = calculate.visualise_face_normal_as_edges(face_list,5)
+    # construct.visualise([face_list,edges],["WHITE","BLACK"])
     return bldg_solid
 
 def calc_windows_walls(facade_list, wwr):
@@ -307,7 +320,10 @@ def geometry_main(locator, simplification_params):
     return geometry_terrain, geometry_3D_zone, geometry_3D_surroundings
 
 if __name__ == '__main__':
-    locator = cea.inputlocator.ReferenceCaseOpenLocator()
+    import cea.config
+    config = cea.config.Configuration()
+    scenario_path = config.scenario
+    locator = cea.inputlocator.InputLocator(scenario_path)
     simplification_params = cea.config.Configuration(locator.scenario_path).radiation_daysim.simplification_parameters
 
     # run routine City GML LOD 1
@@ -334,7 +350,7 @@ if __name__ == '__main__':
     geometry_buildings.extend(windows_s)
     geometry_buildings.extend(roof_s)
 
-    construct.visualise([geometry_terrain, geometry_buildings], ["GREEN","WHITE"], backend = "wx") #install Wxpython
+    construct.visualise([geometry_terrain, geometry_buildings], ["GREEN","WHITE"]) #install Wxpython
 
 
 

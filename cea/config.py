@@ -270,7 +270,7 @@ class RadiationDaysimConfiguration(object):
     def terrain_parameters(self):
         """terrain parameters: e-terrain (reflection for the terrain)"""
         return {
-            'e_terrain': self._parser.getfloat('radiation-daysim', 'e-terrain'),
+            'albedo': self._parser.getfloat('radiation-daysim', 'albedo'),
         }
 
     @property
