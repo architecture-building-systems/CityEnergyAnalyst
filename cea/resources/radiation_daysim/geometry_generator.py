@@ -102,7 +102,7 @@ def create_hollowed_facade(surface_facade, window):
     return hollowed_facade_clean, hole_facade
 
 
-def building2d23d(locator, simplification_params, height_col, nfloor_col):
+def building2d23d(locator, geometry_terrain, simplification_params, height_col, nfloor_col):
     """
     :param locator: InputLocator - provides paths to files in a scenario
     :type locator: cea.inputlocator.InputLocator
@@ -119,9 +119,6 @@ def building2d23d(locator, simplification_params, height_col, nfloor_col):
 
     # path to database of architecture properties
     architecture_dbf_path = locator.get_building_architecture()
-
-    # list of faces of terrain
-    geometry_terrain = raster2tin(locator.get_terrain())
 
     # read district shapefile and names of buildings of the zone of analysis
     district_building_records = gdf.from_file(district_shp_path).set_index('Name')
@@ -220,7 +217,7 @@ def building2d23d(locator, simplification_params, height_col, nfloor_col):
             # edges2 = calculate.visualise_face_normal_as_edges(roof_list, 5)
             # edges3 = calculate.visualise_face_normal_as_edges(footprint_list, 5)
             # construct.visualise([wall_list, roof_list ,footprint_list , edges1, edges2, edges3],["WHITE","WHITE","WHITE","BLACK", "BLACK","BLACK"])
-    return geometry_terrain, geometry_3D_zone, geometry_3D_surroundings
+    return geometry_3D_zone, geometry_3D_surroundings
 
 
 def burn_buildings(geometry, terrain_intersection_curves):
@@ -306,18 +303,24 @@ def raster2tin(input_terrain_raster):
     x_coords = x_index * x_size + upper_left_x + (x_size / 2)  # add half the cell size
     y_coords = y_index * y_size + upper_left_y + (y_size / 2)  # to centre the point
 
+    elevation_mean = int(a[y_index, x_index].mean())
+
     raster_points = [(x, y, z) for x, y, z in zip(x_coords, y_coords, a[y_index, x_index])]
 
     tin_occface_list = construct.delaunay3d(raster_points)
 
-    return tin_occface_list
+    return elevation_mean, tin_occface_list
 
 def geometry_main(locator, simplification_params):
+
+    # list of faces of terrain
+    elevation_mean, geometry_terrain = raster2tin(locator.get_terrain())
+
     # transform buildings 2D to 3D and add windows
-    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = building2d23d(locator, simplification_params, height_col='height_ag',
+    geometry_3D_zone, geometry_3D_surroundings = building2d23d(locator, geometry_terrain, simplification_params, height_col='height_ag',
                                                                nfloor_col="floors_ag")
 
-    return geometry_terrain, geometry_3D_zone, geometry_3D_surroundings
+    return elevation_mean, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings
 
 if __name__ == '__main__':
     import cea.config
@@ -328,7 +331,7 @@ if __name__ == '__main__':
 
     # run routine City GML LOD 1
     time1 = time.time()
-    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_main(locator, simplification_params)
+    elevation_mean, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_main(locator, simplification_params)
     print "Geometry of the scene created in", (time.time() - time1) / 60.0, " mins"
 
 
@@ -350,7 +353,9 @@ if __name__ == '__main__':
     geometry_buildings.extend(windows_s)
     geometry_buildings.extend(roof_s)
 
-    construct.visualise([geometry_terrain, geometry_buildings], ["GREEN","WHITE"]) #install Wxpython
+    # DO this to visualize progress while debugging!:
+    normals_terrain = calculate.visualise_face_normal_as_edges(geometry_terrain,5)
+    construct.visualise([normals_terrain, geometry_terrain, geometry_buildings], ["BLACK", "GREEN","WHITE"]) #install Wxpython
 
 
 

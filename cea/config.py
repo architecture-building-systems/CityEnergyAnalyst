@@ -240,8 +240,6 @@ class RadiationDaysimConfiguration(object):
     @property
     def rad_parameters(self):
         return {
-            'RAD_N': self._parser.getint('radiation-daysim', 'rad-n'),
-            'RAD_AF': self._parser.get('radiation-daysim', 'rad-af'),
             'RAD_AB': self._parser.getint('radiation-daysim', 'rad-ab'),
             'RAD_AD': self._parser.getint('radiation-daysim', 'rad-ad'),
             'RAD_AS': self._parser.getint('radiation-daysim', 'rad-as'),

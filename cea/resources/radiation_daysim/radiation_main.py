@@ -14,6 +14,9 @@ from geopandas import GeoDataFrame as gpdf
 import cea.inputlocator
 import cea.config
 
+import fiona
+import pytz, datetime
+
 __author__ = "Paul Neitzel, Kian Wee Chen"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Paul Neitzel", "Kian Wee Chen", "Jimeno A. Fonseca"]
@@ -23,6 +26,21 @@ __maintainer__ = "Daren Thomas"
 __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
+
+def calc_location_properties(geometry_zone_shp):
+
+    from timezonefinder import TimezoneFinder
+    with fiona.open(geometry_zone_shp) as shp:
+        latitude = round(shp.crs['lat_0'],3)
+        longitude = round(shp.crs['lon_0'],3)
+
+    # get the time zone name
+    tf = TimezoneFinder()
+    time_zone = tf.timezone_at(lng=longitude, lat=latitude)
+    time = pytz.timezone(time_zone).localize(datetime.datetime(2011,1,1)).strftime('%z')
+    time_zone_num = int(time[:3])
+
+    return latitude, longitude, time_zone_num
 
 def create_radiance_srf(occface, srfname, srfmat, rad):
     bface_pts = fetch.pyptlist_frm_occface(occface)
@@ -144,7 +162,8 @@ def reader_surface_properties(locator, input_shp):
     return surface_properties.set_index('Name').round(decimals=2)
 
 
-def radiation_multiprocessing(rad, geometry_3D_zone, locator, weather_path, settings, selected_buildings):
+def radiation_multiprocessing(rad, geometry_3D_zone, locator, weather_path, elevation, latitude, longitude, timezone,
+                              settings, selected_buildings):
     # get chunks to iterate and start multiprocessing
     if settings.simulation_parameters['run_all_buildings']:
         # get chunks of buildings to iterate
@@ -161,14 +180,15 @@ def radiation_multiprocessing(rad, geometry_3D_zone, locator, weather_path, sett
     processes = []
     for chunk_n, bldg_dict in enumerate(chunks):
         process = mp.Process(target=daysim_main.isolation_daysim, args=(
-            chunk_n, rad, bldg_dict, locator, weather_path, settings))
+            chunk_n, rad, bldg_dict, locator, weather_path, elevation, latitude, longitude, timezone, settings))
         process.start()
         processes.append(process)
     for process in processes:
         process.join()
 
 
-def radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path, settings, selected_buildings):
+def radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path, elevation, latitude, longitude, timezone,
+                               settings, selected_buildings):
     if settings.simulation_parameters['run_all_buildings']:
         # get chunks of buildings to iterate
         chunks = [geometry_3D_zone[i:i + settings.simulation_parameters['n_build_in_chunk']] for i in
@@ -182,7 +202,8 @@ def radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path, set
                 chunks.append([bldg_dict])
 
     for chunk_n, bldg_dict in enumerate(chunks):
-        daysim_main.isolation_daysim(chunk_n, rad, bldg_dict, locator, weather_path, settings)
+        daysim_main.isolation_daysim(chunk_n, rad, bldg_dict, locator, weather_path, elevation, latitude, longitude,
+                                     timezone, settings)
 
 
 def main(locator, weather_path, selected_buildings):
@@ -205,8 +226,11 @@ def main(locator, weather_path, selected_buildings):
 
     print "creating 3D geometry and surfaces"
     # create geometrical faces of terrain and buildingsL
-    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator,
+    elevation, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator,
                                                                                                     settings.simplification_parameters)
+
+
+    latitude, longitude, timezone = calc_location_properties(locator.get_zone_geometry())
 
     print "Sending the scene: geometry and materials to daysim"
     # send materials
@@ -222,9 +246,11 @@ def main(locator, weather_path, selected_buildings):
 
     time1 = time.time()
     if settings.simulation_parameters['multiprocessing']:
-        radiation_multiprocessing(rad, geometry_3D_zone, locator, weather_path, settings, selected_buildings)
+        radiation_multiprocessing(rad, geometry_3D_zone, locator, weather_path, elevation, latitude, longitude,
+                                  timezone, settings, selected_buildings)
     else:
-        radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path, settings, selected_buildings)
+        radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path, elevation, latitude, longitude,
+                                   timezone, settings, selected_buildings)
 
     print "Daysim simulation finished in ", (time.time() - time1) / 60.0, " mins"
 
