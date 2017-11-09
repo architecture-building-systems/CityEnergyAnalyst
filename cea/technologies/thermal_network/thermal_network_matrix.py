@@ -154,7 +154,7 @@ def thermal_network_main(locator, gv, network_type, source, set_diameter):
     pressure_loss_system = []
 
 
-    for t in range(8760):
+    for t in range(10):
 
         print('calculating network thermal hydraulic properties... time step', t)
         timer = time.clock()
@@ -498,7 +498,7 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     print('start calculating edge mass flow...')
 
     t0 = time.clock()
-    for t in range(8760):
+    for t in range(10):
         print('\n calculating edge mass flow... time step', t)
 
         # set to the highest value in the network and assume no loss within the network

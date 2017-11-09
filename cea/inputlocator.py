@@ -470,11 +470,9 @@ class InputLocator(object):
 
     def get_network_layout_edges_shapefile(self, network):
         """scenario/inputs/network/DH or DC/network-edges.shp"""
-        return os.path.join(self.scenario_path, 'inputs', 'network', network, 'network-edges.shp')
 
     def get_network_layout_nodes_shapefile(self, network):
         """scenario/inputs/network/DH or DC/network-nodes.shp"""
-        return os.path.join(self.scenario_path, 'inputs', 'network', network, 'network-nodes.shp')
 
 
     def get_network_layout_pipes_csv_file(self, network):
