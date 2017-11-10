@@ -568,94 +568,87 @@ class OperationTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        config = cea.config.Configuration()
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
+        scenario_path.value = config.scenario
         Qww_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to hot water consumption.",
-            name="Qww_flag",
+            name="Qww",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        Qww_flag.value = True
+        Qww_flag.value = 'Qww' in config.emissions.emissions_variables
         Qhs_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to space heating.",
-            name="Qhs_flag",
+            name="Qhs",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        Qhs_flag.value = True
+        Qhs_flag.value = 'Qhs' in config.emissions.emissions_variables
         Qcs_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to space cooling.",
-            name="Qcs_flag",
+            name="Qcs",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        Qcs_flag.value = True
+        Qcs_flag.value = 'Qcs' in config.emissions.emissions_variables
         Qcdata_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to servers cooling.",
-            name="Qcdata_flag",
+            name="Qcdata",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        Qcdata_flag.value = True
+        Qcdata_flag.value = 'Qcdata' in config.emissions.emissions_variables
         Qcrefri_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to refrigeration.",
-            name="Qcrefri_flag",
+            name="Qcrefri",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        Qcrefri_flag.value = True
+        Qcrefri_flag.value = 'Qcrefri' in config.emissions.emissions_variables
         Eal_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to appliances and lighting.",
-            name="Eal_flag",
+            name="Eal",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        Eal_flag.value = True
+        Eal_flag.value = 'Eal' in config.emissions.emissions_variables
         Eaux_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to auxiliary electricity.",
-            name="Eaux_flag",
+            name="Eaux",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        Eaux_flag.value = True
+        Eaux_flag.value = 'Eaux' in config.emissions.emissions_variables
         Epro_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to electricity in industrial processes.",
-            name="Epro_flag",
+            name="Epro",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        Epro_flag.value = True
+        Epro_flag.value = 'Epro' in config.emissions.emissions_variables
         Edata_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to electricity consumption in data centers.",
-            name="Edata_flag",
+            name="Edata",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        Edata_flag.value = True
+        Edata_flag.value = 'Edata' in config.emissions.emissions_variables
 
         return [scenario_path, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_flag, Eal_flag, Eaux_flag, Epro_flag,
                 Edata_flag]
 
     def execute(self, parameters, _):
-        scenario_path = parameters[0].valueAsText
-        flags = {
-            'Qww': parameters[1].value,
-            'Qhs': parameters[2].value,
-            'Qcs': parameters[3].value,
-            'Qcdata': parameters[4].value,
-            'Qcrefri': parameters[5].value,
-            'Eal': parameters[6].value,
-            'Eaux': parameters[7].value,
-            'Epro': parameters[8].value,
-            'Edata': parameters[9].value,
-        }
-        extra_files_to_create = [key for key in flags if flags[key]]
-        run_cli(scenario_path, 'emissions', '--extra-files-to-create', *extra_files_to_create)
+        parameters = {p.name: p for p in parameters}
+        scenario_path = parameters['scenario_path'].valueAsText
+        variables = {'Qww', 'Qhs', 'Qcs', 'Qcdata', 'Qcrefri', 'Eal', 'Eaux', 'Epro', 'Edata'}
+        emissions_variables = ' '.join([p.name for p in parameters.values() if p.value and p.name in variables])
+        run_cli('emissions', scenario=scenario_path, emissions_variables=emissions_variables)
 
 
 class EmbodiedTool(object):
