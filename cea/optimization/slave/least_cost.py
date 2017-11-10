@@ -660,6 +660,7 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
             "E_solar_gen_Wh": [E_solar_gen_Wh],
             "costBenefitNotUsedHPs": [costBenefitNotUsedHPs]
         })
+        results.to_csv(locator.get_optimization_slave_cost_prime_primary_energy_data(MS_Var.configKey), sep=',')
 
     cost_sum -= costBenefitNotUsedHPs
 
