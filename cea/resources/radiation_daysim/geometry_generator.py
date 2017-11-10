@@ -354,8 +354,8 @@ if __name__ == '__main__':
     geometry_buildings.extend(roof_s)
 
     # DO this to visualize progress while debugging!:
-    normals_terrain = calculate.visualise_face_normal_as_edges(geometry_terrain,5)
-    construct.visualise([normals_terrain, geometry_terrain, geometry_buildings], ["BLACK", "GREEN","WHITE"]) #install Wxpython
+    #normals_terrain = calculate.visualise_face_normal_as_edges(geometry_terrain,5)
+    construct.visualise([geometry_terrain, geometry_buildings], ["BLUE","WHITE"]) #install Wxpython
 
 
 

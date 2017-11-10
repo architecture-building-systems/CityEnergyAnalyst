@@ -122,8 +122,8 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, elev
     num_sensors = sum(sensors_number_zone)
     print "Daysim simulation starts for building(s)", names_zone
     print "and the next number of total sensors", num_sensors
-    if num_sensors > 20000:
-        raise ValueError('You are sending more than 10000 sensors at the same time, this \
+    if num_sensors > 50000:
+        raise ValueError('You are sending more than 50000 sensors at the same time, this \
                           will eventually crash a daysim instance. To solve it, reduce the number of buildings \
                           in each chunk in the Settings.py file')
 
@@ -145,9 +145,8 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, elev
     # check inconsistencies and replace by max value of weather file
     weatherfile = epwreader.epw_reader(weather_path)['glohorrad_Whm2'].values
     max_global = weatherfile.max()
-    for value in solar_res:
-        [max_global if x > max_global else x for x in value]
-        value[value > max_global] = max_global
+    for i, value in enumerate(solar_res):
+        solar_res[i] =  [0 if x > max_global else x for x in value]
 
     print "Writing results to disk"
     index = 0
@@ -157,7 +156,6 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, elev
         with open(locator.get_radiation_building(building_name), 'w') as outfile:
             json.dump(items_sensor_name_and_result, outfile)
         index = sensors_number_building
-
 
 def execute_epw2wea(rad, epwweatherfile, elevation, latitude, longitude, timezone, ground_reflectance):
     # prepare inputs
