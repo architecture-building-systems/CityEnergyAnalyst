@@ -659,13 +659,14 @@ class EmbodiedTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        yearcalc = arcpy.Parameter(
+        config = cea.config.Configuration()
+        year_to_calculate = arcpy.Parameter(
             displayName="Year to calculate",
-            name="yearcalc",
+            name="year_to_calculate",
             datatype="GPLong",
             parameterType="Required",
             direction="Input")
-        yearcalc.value = 2014
+        year_to_calculate.value = config.embodied_energy.year_to_calculate
 
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
@@ -673,13 +674,15 @@ class EmbodiedTool(object):
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
+        scenario_path.value = config.scenario
 
-        return [yearcalc, scenario_path]
+        return [year_to_calculate, scenario_path]
 
     def execute(self, parameters, _):
-        year_to_calculate = int(parameters[0].valueAsText)
-        scenario_path = parameters[1].valueAsText
-        run_cli(scenario_path, 'embodied-energy', '--year-to-calculate', year_to_calculate)
+        parameters = {p.name: p for p in parameters}
+        year_to_calculate = int(parameters['year_to_calculate'].valueAsText)
+        scenario_path = parameters['scenario_path'].valueAsText
+        run_cli('embodied-energy', scenario=scenario_path, year_to_calculate=year_to_calculate)
 
 
 class MobilityTool(object):
