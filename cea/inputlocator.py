@@ -71,35 +71,15 @@ class InputLocator(object):
         return os.path.join(self.get_optimization_slave_results_folder(),
                             '%(configkey)s_coolingresults.csv' % locals())
 
-    def get_optimization_slave_slave_cost_data(self, configkey):
+    def get_optimization_slave_cost_prime_primary_energy_data(self, configkey):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(),
                             '%(configkey)s_SlaveCostData.csv' % locals())
 
-    def get_optimization_slave_averaged_cost_data(self, configkey):
+    def get_optimization_slave_slave_detailed_emission_and_eprim_data(self, configkey):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
         return os.path.join(self.get_optimization_slave_results_folder(),
-                            '%(configkey)s_AveragedCostData.csv' % locals())
-
-    def get_optimization_slave_slave_to_master_cost_emissions_prim_e(self, configkey):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_slave_results_folder(),
-                            '%(configkey)s_SlaveToMasterCostEmissionsPrimE.csv' % locals())
-
-    def get_optimization_slave_primary_energy_by_source(self, configkey):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_slave_results_folder(),
-                            '%(configkey)s_PrimaryEnergyBySource.csv' % locals())
-
-    def get_optimization_slave_slave_detailed_emission_data(self, configkey):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_slave_results_folder(),
-                            '%(configkey)s_SlaveDetailedEmissionData.csv' % locals())
-
-    def get_optimization_slave_slave_detailed_e_prim_data(self, configkey):
-        """scenario/outputs/data/calibration/clustering/checkpoints/..."""
-        return os.path.join(self.get_optimization_slave_results_folder(),
-                            '%(configkey)s_SlaveDetailedEprimData.csv' % locals())
+                            '%(configkey)s_SlaveDetailedEmissionandEprimData.csv' % locals())
 
     def get_optimization_slave_investment_cost_detailed(self, configkey):
         """scenario/outputs/data/calibration/clustering/checkpoints/..."""
