@@ -214,10 +214,10 @@ def calc_master_to_slave_variables(individual, Qmax, locator, gv):
     # initialise class storing dynamic variables transfered from master to slave optimization
     master_to_slave_vars = slave_data.SlaveData()
     configkey = "".join(str(e)[0:4] for e in individual)
+
     individual_barcode = sFn.individual_to_barcode(individual, gv)
     configkey = configkey[:-len(individual_barcode)] + hex(int(str(individual_barcode),2))
     master_to_slave_vars.configKey = configkey
-
     master_to_slave_vars.nBuildingsConnected = individual_barcode.count("1") # counting the number of buildings connected
     
     Qnom = Qmax * (1+gv.Qmargin_ntw)
