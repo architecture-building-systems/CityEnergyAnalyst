@@ -36,7 +36,7 @@ class Toolbox(object):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
         self.tools = [OperationCostsTool, RetrofitPotentialTool, DemandTool, DataHelperTool, BenchmarkGraphsTool,
-                      OperationTool, EmbodiedTool, MobilityTool, PhotovoltaicPannelsTool, SolarCollectorPanelsTool,
+                      OperationTool, EmbodiedTool, MobilityTool, PhotovoltaicPanelsTool, SolarCollectorPanelsTool,
                       PhotovoltaicThermalPanelsTool, DemandGraphsTool, ScenarioPlotsTool, RadiationTool,
                       RadiationDaysimTool, HeatmapsTool, DbfToExcelTool, ExcelToDbfTool, ExtractReferenceCaseTool,
                       SensitivityDemandSamplesTool, SensitivityDemandSimulateTool, SensitivityDemandAnalyzeTool,
@@ -356,7 +356,6 @@ class DemandTool(object):
             parameterType="Required",
             direction="Input")
         weather_name.filter.list = get_weather_names() + ['<custom>']
-        weather_name.enabled = is_db_weather(config.weather)
         weather_name.value = get_db_weather_name(config.weather) if is_db_weather(config.weather) else '<custom>'
 
         weather_path = arcpy.Parameter(
@@ -798,7 +797,7 @@ class ScenarioPlotsTool(object):
         run_cli(None, 'scenario-plots', '--output-file', output_file, '--scenarios', *scenarios)
 
 
-class PhotovoltaicPannelsTool(object):
+class PhotovoltaicPanelsTool(object):
     def __init__(self):
         self.label = 'Photovoltaic Panels'
         self.description = 'Calculate electricity production from solar photovoltaic technologies'
@@ -806,21 +805,23 @@ class PhotovoltaicPannelsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        config = cea.config.Configuration()
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
+        scenario_path.value = config.scenario
 
         weather_name = arcpy.Parameter(
-            displayName="Weather file (use the same one for solar radiation calculation)",
+            displayName="Weather file (choose from list or enter full path to .epw file)",
             name="weather_name",
             datatype="String",
             parameterType="Required",
             direction="Input")
-        weather_name.filter.list = get_weather_names() + ['<choose path from below>']
-        weather_name.enabled = False
+        weather_name.filter.list = get_weather_names() + ['<custom>']
+        weather_name.value = get_db_weather_name(config.weather) if is_db_weather(config.weather) else '<custom>'
 
         weather_path = arcpy.Parameter(
             displayName="Path to .epw file",
@@ -829,7 +830,9 @@ class PhotovoltaicPannelsTool(object):
             parameterType="Optional",
             direction="Input")
         weather_path.filter.list = ['epw']
-        weather_path.enabled = False
+        weather_path.value = config.weather
+        weather_path.enabled = not is_db_weather(config.weather)
+
 
         year = arcpy.Parameter(
             displayName="Year",
@@ -837,24 +840,7 @@ class PhotovoltaicPannelsTool(object):
             datatype="GPLong",
             parameterType="Required",
             direction="Input")
-        year.value = 2014
-        year.enabled = False
-
-        latitude = arcpy.Parameter(
-            displayName="Latitude",
-            name="latitude",
-            datatype="GPDouble",
-            parameterType="Required",
-            direction="Input")
-        latitude.enabled = False
-
-        longitude = arcpy.Parameter(
-            displayName="Longitude",
-            name="longitude",
-            datatype="GPDouble",
-            parameterType="Required",
-            direction="Input")
-        longitude.enabled = False
+        year.value = config.solar.date_start[:4]
 
         panel_on_roof = arcpy.Parameter(
             displayName="Consider panels on roofs",
@@ -862,8 +848,7 @@ class PhotovoltaicPannelsTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        panel_on_roof.value = True
-        panel_on_roof.enabled = False
+        panel_on_roof.value = config.solar.panel_on_roof
 
         panel_on_wall = arcpy.Parameter(
             displayName="Consider panels on walls",
@@ -871,8 +856,7 @@ class PhotovoltaicPannelsTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        panel_on_wall.value = True
-        panel_on_wall.enabled = False
+        panel_on_wall.value = config.solar.panel_on_wall
 
         solar_window_solstice = arcpy.Parameter(
             displayName="Desired hours of production on the winter solstice",
@@ -880,17 +864,18 @@ class PhotovoltaicPannelsTool(object):
             datatype="GPLong",
             parameterType="Required",
             direction="Input")
-        solar_window_solstice.value = 4
-        solar_window_solstice.enabled = False
+        solar_window_solstice.value = config.solar.solar_window_solstice
 
-        type_PVpanel = arcpy.Parameter(
+        type_pvpanel = arcpy.Parameter(
             displayName="PV technology to use",
-            name="type_PVpanel",
+            name="type_pvpanel",
             datatype="String",
             parameterType="Required",
             direction="Input")
-        type_PVpanel.filter.list = ['monocrystalline', 'polycrystalline', 'amorphous']
-        type_PVpanel.enabled = False
+        type_pvpanel.filter.list = ['monocrystalline', 'polycrystalline', 'amorphous']
+        type_pvpanel.value = {'PV1': 'monocrystalline',
+                              'PV2': 'polycrystalline',
+                              'PV3': 'amorphous'}[config.solar.type_pvpanel]
 
         min_radiation = arcpy.Parameter(
             displayName="filtering surfaces with low radiation potential (% of the maximum radiation in the area)",
@@ -898,70 +883,35 @@ class PhotovoltaicPannelsTool(object):
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        min_radiation.value = 0.75
-        min_radiation.enabled = False
+        min_radiation.value = config.solar.min_radiation
 
-        return [scenario_path, weather_name, weather_path, year, latitude, longitude, panel_on_roof, panel_on_wall,
-                solar_window_solstice, type_PVpanel, min_radiation]
+        return [scenario_path, weather_name, weather_path, year, panel_on_roof, panel_on_wall, solar_window_solstice,
+                type_pvpanel, min_radiation]
 
     def updateParameters(self, parameters):
-        scenario_path = parameters[0].valueAsText
+        parameters = {p.name: p for p in parameters}
+        scenario_path = parameters['scenario_path'].valueAsText
         if scenario_path is None:
             return
         if not os.path.exists(scenario_path):
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            parameters['scenario_path'].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
 
-        parameters = {p.name: p for p in parameters}
-        if not parameters['weather_name'].enabled:
-            # user just chose scenario, read in defaults etc.
+        locator = cea.inputlocator.InputLocator(scenario_path)
+        radiation_csv = locator.get_radiation()
+        if not os.path.exists(radiation_csv):
+            parameters['scenario_path'].setErrorMessage("No radiation file found - please run radiation tool first")
+            return
 
-            radiation_csv = _cli_output(scenario_path, 'locate', 'get_radiation')
-            if not os.path.exists(radiation_csv):
-                parameters['scenario_path'].setErrorMessage("No radiation file found - please run radiation tool first")
-                return
+        parameters['weather_path'].enabled = parameters['weather_name'].value == '<custom>'
+        weather_path = parameters['weather_path'].valueAsText
+        if is_builtin_weather_path(weather_path):
+            parameters['weather_path'].enabled = False
+            parameters['weather_name'].value = get_db_weather_name(weather_path)
 
-            latitude_parameter = parameters['latitude']
-            longitude_parameter = parameters['longitude']
+        if parameters['weather_name'].value != '<custom>':
+            parameters['weather_path'].value = locator.get_weather(parameters['weather_name'].value)
 
-            latitude_value = float(_cli_output(scenario_path, 'latitude'))
-            longitude_value = float(_cli_output(scenario_path, 'longitude'))
-            if not latitude_parameter.enabled:
-                # only overwrite on first try
-                latitude_parameter.value = latitude_value
-
-            if not longitude_parameter.enabled:
-                # only overwrite on first try
-                longitude_parameter.value = longitude_value
-
-            # read values from scenario / or defaults
-            parameters['year'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
-                                                   '--key', 'date-start')[:4]
-            parameters['panel_on_roof'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
-                                                            '--key', 'panel-on-roof')
-            parameters['panel_on_wall'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
-                                                            '--key', 'panel-on-wall')
-            pv_panel_types = {'PV1': 'monocrystalline', 'PV2': 'polycrystalline', 'PV3': 'amorphous'}
-            parameters['type_PVpanel'].value = pv_panel_types[
-                _cli_output(scenario_path, 'read-config', '--section', 'solar', '--key', 'type-PVpanel')]
-            parameters['min_radiation'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
-                                                            '--key', 'min-radiation')
-            parameters['solar_window_solstice'].value = _cli_output(scenario_path, 'read-config', '--section',
-                                                                    'solar',
-                                                                    '--key', 'solar-window-solstice')
-
-            weather_path = _cli_output(scenario_path, 'read-config', '--section', 'general', '--key', 'weather')
-            if is_db_weather(weather_path):
-                parameters['weather_name'].value = get_db_weather_name(weather_path)
-                parameters['weather_path'].value = ''
-            else:
-                parameters['weather_name'].value = '<choose path from below>'
-                parameters['weather_path'].value = weather_path
-
-            for p in parameters.values():
-                p.enabled = True
-            parameters['scenario_path'].enabled = False  # user need to re-open dialog to change scenario path...
-        parameters['weather_path'].enabled = parameters['weather_name'].value == '<choose path from below>'
 
     def updateMessages(self, parameters):
         scenario_path = parameters[0].valueAsText
@@ -971,7 +921,8 @@ class PhotovoltaicPannelsTool(object):
             parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
 
-        radiation_csv = _cli_output(scenario_path, 'locate', 'get_radiation')
+        locator = cea.inputlocator.InputLocator(scenario_path)
+        radiation_csv = locator.get_radiation()
         if not os.path.exists(radiation_csv):
             parameters[0].setErrorMessage("No radiation file found - please run radiation tool first")
             return
@@ -980,38 +931,29 @@ class PhotovoltaicPannelsTool(object):
         parameters = {p.name: p for p in parameters}
         scenario_path = parameters['scenario_path'].valueAsText
         weather_name = parameters['weather_name'].valueAsText
-        weather_path = parameters['weather_path'].valueAsText
+        weather_path_param = parameters['weather_path']
+        if weather_name in get_weather_names():
+            weather_path = locator.get_weather(weather_name)
+        elif weather_path_param.enabled:
+            if os.path.exists(weather_path_param.valueAsText) and weather_path_param.valueAsText.endswith('.epw'):
+                weather_path = weather_path_param.valueAsText
+            else:
+                weather_path = locator.get_default_weather()
+        else:
+            weather_path = locator.get_default_weather()
         year = parameters['year'].value
-        latitude = parameters['latitude'].value
-        longitude = parameters['longitude'].value
         panel_on_roof = parameters['panel_on_roof'].value
         panel_on_wall = parameters['panel_on_wall'].value
         solar_window_solstice = parameters['solar_window_solstice'].value
-        type_PVpanel = {'monocrystalline': 'PV1',
+        type_pvpanel = {'monocrystalline': 'PV1',
                         'polycrystalline': 'PV2',
-                        'amorphous': 'PV3'}[parameters['type_PVpanel'].value]
+                        'amorphous': 'PV3'}[parameters['type_pvpanel'].value]
         min_radiation = parameters['min_radiation'].value
 
         date_start = str(year) + '-01-01'
-
-        if weather_name in get_weather_names():
-            weather_path = locator.get_weather(weather_name)
-
-        add_message('longitude: %s' % longitude)
-        add_message('latitude: %s' % latitude)
-
-        run_cli_arguments = [scenario_path, 'photovoltaic',
-                             '--latitude', latitude,
-                             '--longitude', longitude,
-                             '--weather-path', weather_path,
-                             '--solar-window-solstice', solar_window_solstice,
-                             '--type-PVpanel', type_PVpanel,
-                             '--min-radiation', min_radiation,
-                             '--date-start', date_start,
-                             '--panel-on-roof', 'yes' if panel_on_roof else 'no',
-                             '--panel-on-wall', 'yes' if panel_on_wall else 'no']
-        run_cli(*run_cli_arguments)
-        return
+        run_cli('photovoltaic', scenario=scenario_path, weather=weather_path,
+                solar_window_solstice=solar_window_solstice, type_pvpanel=type_pvpanel, min_radiation=min_radiation,
+                date_start=date_start, panel_on_roof=panel_on_roof, panel_on_wall=panel_on_wall)
 
 
 class SolarCollectorPanelsTool(object):
@@ -1857,6 +1799,13 @@ def is_db_weather(weather_path):
     if weather_name in get_weather_names():
         # could still be a custom weather file...
         db_weather_path = locator.get_weather(weather_name)
+        db_weather_path = os.path.normpath(db_weather_path)
+        db_weather_path = os.path.normcase(db_weather_path)
+
+        weather_path = locator.get_weather(weather_path)
+        weather_path = os.path.normpath(weather_path)
+        weather_path = os.path.normcase(weather_path)
+        
         if os.path.dirname(db_weather_path) == os.path.dirname(weather_path):
             return True
     return False
