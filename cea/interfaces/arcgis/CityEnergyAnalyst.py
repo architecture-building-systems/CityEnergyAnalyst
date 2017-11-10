@@ -695,18 +695,20 @@ class MobilityTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        config = cea.config.Configuration()
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
+        scenario_path.value = config.scenario
 
         return [scenario_path]
 
     def execute(self, parameters, messages):
         scenario_path = parameters[0].valueAsText
-        run_cli(scenario_path, 'mobility')
+        run_cli('mobility', scenario=scenario_path)
 
 
 class DemandGraphsTool(object):
