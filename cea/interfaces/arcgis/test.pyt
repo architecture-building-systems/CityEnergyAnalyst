@@ -14,13 +14,13 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [MobilityTool]
+        self.tools = [DemandGraphsTool]
 
 
-class MobilityTool(CeaTool):
+class DemandGraphsTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'mobility'
-        self.label = 'LCA Mobility'
-        self.description = 'Calculate emissions and primary energy due to mobility'
-        self.category = 'Life Cycle Analysis'
+        self.cea_tool = 'demand-graphs'
+        self.label = 'Plots'
+        self.description = 'Plot demand time-series data'
+        self.category = 'Dynamic Demand Forecasting'
         self.canRunInBackground = False
