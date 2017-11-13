@@ -50,7 +50,7 @@ class TestConfiguration(unittest.TestCase):
         self.assertEquals(config.weather, config.general.weather)
         config.weather = 'Brussels'
         self.assertEquals(config.weather, config.general.weather)
-        self.assert_(config.weather.endswith('Brussels.epw'))
+        self.assert_(config.weather.endswith('Brussels.epw'), config.weather)
 
     def test_setting_weather_pickling(self):
         config = cea.config.Configuration()
