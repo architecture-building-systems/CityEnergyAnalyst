@@ -14,9 +14,7 @@ import arcpy  # NOTE to developers: this is provided by ArcGIS after doing `cea 
 
 import cea.config
 import cea.inputlocator
-from cea.interfaces.arcgis.arcgishelper import add_message, _cli_output, run_cli, demand_graph_fields, \
-    create_weather_parameters, check_senario_exists, check_radiation_exists, update_weather_parameters, \
-    get_weather_path_from_parameters, get_parameter_info
+from cea.interfaces.arcgis.arcgishelper import *
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -46,23 +44,13 @@ class Toolbox(object):
                       TestTool]
 
 
-class OperationCostsTool(object):
+class OperationCostsTool(CeaTool):
     def __init__(self):
+        self.cea_tool = 'operation-costs'
         self.label = 'Operation Costs'
         self.description = 'Calculate energy costs due to building operation'
         self.category = 'Cost Analysis'
         self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        scenario = get_parameter_info('general', 'scenario')
-        return [scenario]
-
-    def updateParameters(self, parameters):
-        scenario_path, parameters = check_senario_exists(parameters)
-
-    def execute(self, parameters, _):
-        scenario, parameters = check_senario_exists(parameters)
-        run_cli('operation-costs', scenario=scenario)
 
 
 class RetrofitPotentialTool(object):
@@ -315,75 +303,15 @@ class RetrofitPotentialTool(object):
         run_cli('retrofit-potential', **args)
 
 
-class DemandTool(object):
+class DemandTool(CeaTool):
     """integrate the demand script with ArcGIS"""
 
     def __init__(self):
+        self.cea_tool = 'demand'
         self.label = 'Demand'
         self.description = 'Calculate the Demand'
         self.category = 'Dynamic Demand Forecasting'
         self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        config = cea.config.Configuration()
-        scenario = arcpy.Parameter(
-            displayName="Path to the scenario",
-            name="scenario",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        scenario.value = config.scenario
-
-        weather_name, weather_path = create_weather_parameters(config)
-
-
-        dynamic_infiltration = arcpy.Parameter(
-            displayName="Use dynamic infiltration model (slower)",
-            name="dynamic_infiltration",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        dynamic_infiltration.value = config.demand.use_dynamic_infiltration_calculation
-
-        multiprocessing = arcpy.Parameter(
-            displayName="Use multiple cores to speed up processing",
-            name="multiprocessing",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        multiprocessing.value = config.multiprocessing
-
-        return [scenario, weather_name, weather_path, dynamic_infiltration, multiprocessing]
-
-    def updateMessages(self, parameters):
-        scenario, parameters = check_senario_exists(parameters)
-        check_radiation_exists(parameters, scenario)
-
-    def updateParameters(self, parameters):
-        scenario, parameters = check_senario_exists(parameters)
-        update_weather_parameters(parameters)
-
-    def execute(self, parameters, _):
-        scenario, parameters = check_senario_exists(parameters)
-        weather_name = parameters['weather_name'].valueAsText
-        weather_path_param = parameters['weather_path']
-        if weather_name in LOCATOR.get_weather_names():
-            weather_path = LOCATOR.get_weather(weather_name)
-        elif weather_path_param.enabled:
-            if os.path.exists(weather_path_param.valueAsText) and weather_path_param.valueAsText.endswith('.epw'):
-                weather_path = weather_path_param.valueAsText
-            else:
-                weather_path = LOCATOR.get_default_weather()
-        else:
-            weather_path = LOCATOR.get_default_weather()
-
-        use_dynamic_infiltration_calculation = parameters['dynamic_infiltration'].value
-        multiprocessing = parameters['multiprocessing'].value
-
-        # run the demand script
-        run_cli('demand', scenario=scenario, weather=weather_path,
-                use_dynamic_infiltration_calculation=use_dynamic_infiltration_calculation,
-                multiprocessing=multiprocessing)
 
 class DataHelperTool(object):
     """
