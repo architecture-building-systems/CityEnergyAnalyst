@@ -14,13 +14,13 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [ScenarioPlotsTool]
+        self.tools = [BenchmarkGraphsTool]
 
 
-class ScenarioPlotsTool(CeaTool):
+class BenchmarkGraphsTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'scenario-plots'
-        self.label = 'Scenario plots'
-        self.description = 'Create summary plots of scenarios in a folder'
-        self.category = 'Mapping and Visualization'
+        self.cea_tool = 'benchmark-graphs'
+        self.label = '2000W Society Benchmark'
+        self.description = 'Plot life cycle primary energy demand and emissions compared to an established benchmark'
+        self.category = 'Benchmarking'
         self.canRunInBackground = False
