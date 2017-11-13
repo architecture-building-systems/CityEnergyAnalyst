@@ -32,11 +32,30 @@ class CeaTool(object):
         return parameter_infos
 
     def updateParameters(self, parameters):
-        scenario_path, parameters = check_senario_exists(parameters)
+        parameters = dict_parameters(parameters)
+        if 'general:scenario' in parameters:
+            check_senario_exists(parameters)
+        if 'weather_name' in parameters:
+            update_weather_parameters(parameters)
 
     def execute(self, parameters, _):
-        scenario, parameters = check_senario_exists(parameters)
-        run_cli('operation-costs', scenario=scenario)
+        parameters = dict_parameters(parameters)
+        check_senario_exists(parameters)
+        kwargs = {}
+        if 'weather_name' in parameters:
+            kwargs['weather'] = get_weather_path_from_parameters(parameters)
+        for parameter_key in parameters.keys():
+            if not ':' in parameter_key:
+                # skip this parameter
+                continue
+            parameter_name = parameter_key.split(':')[1]
+            parameter = parameters[parameter_key]
+            if parameter.multivalue:
+                parameter_value = ' '.join(parameter.valueAsText.split(';'))
+            else:
+                parameter_value = parameter.valueAsText
+            kwargs[parameter_name] = parameter_value
+        run_cli(self.cea_tool, **kwargs)
 
 
 def get_parameters(cea_tool):
@@ -205,7 +224,6 @@ def create_weather_parameters(config):
 
 def check_senario_exists(parameters):
     """Makes sure the scenario exists. Create a dictionary of the parameters at the same time"""
-    parameters = {p.name: p for p in parameters}
     scenario_parameter = parameters['general:scenario']
     scenario = scenario_parameter.valueAsText
     if scenario is None:
@@ -213,9 +231,6 @@ def check_senario_exists(parameters):
         scenario_parameter.value = config.scenario
     else:
         scenario_parameter.value = scenario
-    #if not os.path.exists(scenario):
-    #    scenario_parameter.setErrorMessage('Scenario folder not found: %s' % scenario)
-    return scenario, parameters
 
 
 def check_radiation_exists(parameters, scenario):
