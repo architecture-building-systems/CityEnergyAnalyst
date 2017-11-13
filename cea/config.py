@@ -130,6 +130,10 @@ class Configuration(object):
         with open(config_file, 'w') as f:
             parser.write(f)
 
+    def parameter(self, section_name, parameter_name):
+        """Return the parameter object associated with an option"""
+        return self._sections[section_name]._parameters[parameter_name]
+
     def __getstate__(self):
         """make sure we don't save the copies of the general section - we'll add them afterwards again"""
         import StringIO
@@ -196,9 +200,13 @@ class Section(object):
         self._config = config
 
 class Parameter(object):
-    def __init__(self, name, section, parser):
+    def __init__(self, name, section_name, parser):
         self.name = name
-        self.section = section
+        self.section_name = section_name
+        try:
+            self.help = parser.get(section_name, name + ".help", raw=True)
+        except ConfigParser.NoOptionError:
+            self.help = "FIXME: Add help to %s:%s" % (section_name, name)
         self.initialize(parser)
 
     def initialize(self, parser):
@@ -223,7 +231,7 @@ class Parameter(object):
         else:
             parser = obj._config._parser
 
-        return self.decode(parser.get(self.section, self.name), parser)
+        return self.decode(parser.get(self.section_name, self.name), parser)
 
 
     def __set__(self, obj, value):
@@ -232,7 +240,7 @@ class Parameter(object):
         else:
             parser = obj._config._parser
 
-        parser.set(self.section, self.name, self.encode(value, parser))
+        parser.set(self.section_name, self.name, self.encode(value, parser))
 
 
 
@@ -245,7 +253,7 @@ class RelativePathParameter(PathParameter):
     def initialize(self, parser):
         # allow the relative-to option to be set to something other than general:scenario
         try:
-            self._relative_to_section, self._relative_to_option = parser.get(self.section,
+            self._relative_to_section, self._relative_to_option = parser.get(self.section_name,
                                                                              self.name + '.relative-to').split(':')
         except ConfigParser.NoOptionError:
             self._relative_to_section = 'general'
@@ -300,7 +308,7 @@ class RealParameter(Parameter):
     def initialize(self, parser):
         # allow user to override the amount of decimal places to use
         try:
-            self._decimal_places = int(parser.get(self.section, self.name + '.decimal-places'))
+            self._decimal_places = int(parser.get(self.section_name, self.name + '.decimal-places'))
         except ConfigParser.NoOptionError:
             self._decimal_places = 4
 
@@ -341,7 +349,7 @@ class ChoiceParameter(Parameter):
     """A parameter that can only take on values from a specific set of values"""
     def initialize(self, parser):
         # when called for the first time, make sure there is a `.choices` parameter
-        self._choices = parser.get(self.section, self.name + '.choices').split()
+        self._choices = parser.get(self.section_name, self.name + '.choices').split()
 
     def encode(self, value, _):
         assert str(value) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
