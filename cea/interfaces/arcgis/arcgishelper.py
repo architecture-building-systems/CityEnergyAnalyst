@@ -4,6 +4,7 @@ A library module with helper functions for creating the City Energy Analyst pyth
 import os
 import subprocess
 import tempfile
+import ConfigParser
 
 import cea.config
 import cea.inputlocator
@@ -11,6 +12,40 @@ from cea.interfaces.arcgis.modules import arcpy
 
 LOCATOR = cea.inputlocator.InputLocator(None)
 CONFIG = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+
+
+class CeaTool(object):
+    """A base class for creating tools in an ArcGIS toolbox. Basically, the user just needs to subclass this,
+    specify the usual ArcGIS stuff in the __init__ method as well as set `self.cea_tool` to the corresponding
+    tool name. The rest is auto-configured based on default.config and cli.config"""
+
+    def getParameterInfo(self):
+        """Return the list of arcgis Parameter objects for this tool. The general:weather parameter is treated
+        specially: it is represented as two parameter_infos, weather_name and weather_path."""
+        config = cea.config.Configuration()
+        parameter_infos = []
+        for parameter in get_parameters(self.cea_tool):
+            if parameter.name == 'weather':
+                parameter_infos.extend(get_weather_parameter_info(config))
+            else:
+                parameter_infos.append(get_parameter_info(parameter, config))
+        return parameter_infos
+
+    def updateParameters(self, parameters):
+        scenario_path, parameters = check_senario_exists(parameters)
+
+    def execute(self, parameters, _):
+        scenario, parameters = check_senario_exists(parameters)
+        run_cli('operation-costs', scenario=scenario)
+
+
+def get_parameters(cea_tool):
+    """Return a list of cea.config.Parameter objects for each parameter associated with the tool."""
+    cli_config = ConfigParser.SafeConfigParser()
+    cli_config.read(os.path.join(os.path.dirname(__file__), 'cli.config'))
+    option_list = cli_config.get('config', cea_tool).split()
+    for _, parameter in CONFIG._matching_parameters(option_list):
+        yield parameter
 
 def add_message(msg, **kwargs):
     """Log to arcpy.AddMessage() instead of print to STDOUT"""
@@ -79,17 +114,6 @@ def _cli_output(scenario=None, *args):
 
     result = subprocess.check_output(command, startupinfo=startupinfo, env=get_environment())
     return result.strip()
-
-
-def write_config_string(scenario, section, key, value):
-    """Write a string value to the configuration file"""
-    run_cli(scenario, 'write-config', '--section', section, '--key', key, '--value', value)
-
-
-def write_config_boolean(scenario, section, key, value):
-    """Write a boolean value to the configuration file"""
-    value = 'true' if value else 'false'
-    run_cli(scenario, 'write-config', '--section', section, '--key', key, '--value', value)
 
 
 def run_cli(script_name, **parameters):
@@ -223,25 +247,50 @@ def get_weather_path_from_parameters(parameters):
         return LOCATOR.get_weather(parameters['weather_name'].value)
 
 
-def get_parameter_object(section_name, parameter_name):
+def get_parameter_info(cea_parameter, config):
     """Create an arcpy Parameter object based on the configuration in the Default-config.
     The name is set to "section_name:parameter_name" so parameters created with this function are
     easily identified (```':' in parameter.name``)"""
-    cea_parameter = CONFIG.parameter(section_name, parameter_name)
-    data_type_map = {
-        cea.config.PathParameter: 'DEFolder',
-        cea.config.StringParameter: 'String',
-        cea.config.BooleanParameter: 'GPBoolean',
-        cea.config.RealParameter: 'GPDouble',
-        cea.config.IntegerParameter: 'GPInteger'
+    section_name = cea_parameter.section_name
+    parameter_name = cea_parameter.name
+    data_type_map = {  # (arcgis data type, multivalue)
+        cea.config.PathParameter: ('DEFolder', False),
+        cea.config.StringParameter: ('String', False),
+        cea.config.BooleanParameter: ('GPBoolean', False),
+        cea.config.RealParameter: ('GPDouble', False),
+        cea.config.IntegerParameter: ('GPInteger', False),
+        cea.config.MultiChoiceParameter: ('String', True),
     }
-    data_type = data_type_map[type(cea_parameter)]
-    return arcpy.Parameter(
-        displayName="Path to the scenario",
-        name="%(section_name)s:%(parameter_name)s" % locals(),
-        datatype=data_type,
+    data_type, multivalue = data_type_map[type(cea_parameter)]
+    parameter_info = arcpy.Parameter(displayName=cea_parameter.help,
+                                     name="%(section_name)s:%(parameter_name)s" % locals(),
+                                     datatype=data_type, parameterType="Required", direction="Input",
+                                     multiValue=multivalue)
+    if isinstance(cea_parameter, cea.config.ChoiceParameter):
+        parameter_info.filter.list = cea_parameter._choices
+        parameter_info.value = cea_parameter.__get__(config)
+    return parameter_info
+
+def get_weather_parameter_info(config):
+    """Create two arcpy Parameter objects to deal with the weather"""
+    weather_name = arcpy.Parameter(
+        displayName="Weather file (choose from list or enter full path to .epw file)",
+        name="weather_name",
+        datatype="String",
         parameterType="Required",
         direction="Input")
+    weather_name.filter.list = LOCATOR.get_weather_names() + ['<custom>']
+    weather_name.value = get_db_weather_name(config.weather) if is_db_weather(config.weather) else '<custom>'
+    weather_path = arcpy.Parameter(
+        displayName="Path to .epw file",
+        name="weather_path",
+        datatype="DEFile",
+        parameterType="Optional",
+        direction="Input")
+    weather_path.filter.list = ['epw']
+    weather_path.value = config.weather
+    weather_path.enabled = not is_db_weather(config.weather)
+    return weather_name, weather_path
 
 
 def dict_parameters(parameters):

@@ -339,11 +339,14 @@ class ListParameter(Parameter):
     def decode(self, value, _):
         return value.split()
 
+
 class StringParameter(Parameter):
     pass
 
+
 class DateParameter(Parameter):
     pass
+
 
 class ChoiceParameter(Parameter):
     """A parameter that can only take on values from a specific set of values"""
@@ -358,6 +361,21 @@ class ChoiceParameter(Parameter):
     def decode(self, value, _):
         assert str(value) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
         return str(value)
+
+
+class MultiChoiceParameter(ChoiceParameter):
+    """Like ChoiceParameter, but multiple values from the choices list can be used"""
+    def encode(self, value, _):
+        assert not isinstance(value, basestring)
+        for choice in value:
+            assert str(choice) in self._choices, 'Invalid parameter, choose from: %s' % self._choices
+        return ' '.join(map(str, value))
+
+    def decode(self, value, _):
+        choices = value.split()
+        for choice in choices:
+            assert choice in self._choices, 'Invalid parameter, choose from: %s' % self._choices
+        return choices
 
 if __name__ == '__main__':
     config = Configuration()

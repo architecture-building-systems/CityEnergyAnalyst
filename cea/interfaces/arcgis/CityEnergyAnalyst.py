@@ -16,7 +16,7 @@ import cea.config
 import cea.inputlocator
 from cea.interfaces.arcgis.arcgishelper import add_message, _cli_output, run_cli, demand_graph_fields, \
     create_weather_parameters, check_senario_exists, check_radiation_exists, update_weather_parameters, \
-    get_weather_path_from_parameters, get_parameter_object
+    get_weather_path_from_parameters, get_parameter_info
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -54,7 +54,7 @@ class OperationCostsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        scenario = get_parameter_object('general', 'scenario')
+        scenario = get_parameter_info('general', 'scenario')
         return [scenario]
 
     def updateParameters(self, parameters):
