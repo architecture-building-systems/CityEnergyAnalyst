@@ -28,8 +28,14 @@ class CeaTool(object):
             if parameter.name == 'weather':
                 parameter_infos.extend(get_weather_parameter_info(config))
             else:
-                parameter_infos.append(get_parameter_info(parameter, config))
+                parameter_info = get_parameter_info(parameter, config)
+                parameter_info = self.override_parameter_info(parameter_info, parameter)
+                parameter_infos.append(parameter_info)
         return parameter_infos
+
+    def override_parameter_info(self, parameter_info, parameter):
+        """Override this method if you need to use a non-default ArcGIS parameter handling"""
+        return parameter_info
 
     def updateParameters(self, parameters):
         parameters = dict_parameters(parameters)
@@ -278,6 +284,8 @@ def get_parameter_info(cea_parameter, config):
         cea.config.MultiChoiceParameter: ('String', True),
         cea.config.SubfoldersParameter: ('String', True),
         cea.config.FileParameter: ('DEFile', False),
+        cea.config.ListParameter: ('String', True),
+        cea.config.RelativePathParameter: ('String', False),
     }
     data_type, multivalue = data_type_map[type(cea_parameter)]
     parameter_type = 'Optional' if parameter_name in {'longitude', 'latitude'} else 'Required'
