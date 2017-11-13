@@ -443,7 +443,7 @@ def calc_eta_FC(Q_load_W, Q_design_W, phi_threshold, approach_call):
 
 # investment and maintenance costs
 
-def calc_Cinv_CCT(CC_size_W, gV, locator, technology=0):
+def calc_Cinv_CCT(CC_size_W, gv, locator, technology=0):
     """
     Annualized investment costs for the Combined cycle
 
@@ -456,7 +456,7 @@ def calc_Cinv_CCT(CC_size_W, gV, locator, technology=0):
     ..[C. Weber, 2008] C.Weber, Multi-objective design and optimization of district energy systems including
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
-    CCGT_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="CCGT")
+    CCGT_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="CCGT")
     technology_code = list(set(CCGT_cost_data['code']))
     CCGT_cost_data[CCGT_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -483,7 +483,7 @@ def calc_Cinv_CCT(CC_size_W, gV, locator, technology=0):
     return Capex_a, Opex_fixed
 
 
-def calc_Cinv_FC(P_design_W, gV, locator, technology=0):
+def calc_Cinv_FC(P_design_W, gv, locator, technology=0):
     """
     Calculates the investment cost of a Fuel Cell in CHF
 
@@ -495,7 +495,7 @@ def calc_Cinv_FC(P_design_W, gV, locator, technology=0):
     :rtype InvCa: float
     :returns InvCa: annualized investment costs in CHF
     """
-    FC_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="FC")
+    FC_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="FC")
     technology_code = list(set(FC_cost_data['code']))
     FC_cost_data[FC_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least

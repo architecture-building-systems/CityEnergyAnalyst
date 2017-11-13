@@ -93,8 +93,8 @@ def run_as_script(scenario_path=None, analysis_fields=["Ef_kWh", "Qhsf_kWh", "Qw
     gv = cea.globalvar.GlobalVariables()
     analysis_fields = ["Ef_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]
     if scenario_path is None:
-        scenario_path = cea.config.Configuration().default_scenario
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+        scenario_path = cea.config.Configuration().scenario
+    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
 
     timeseries_graph(locator=locator, analysis_fields=analysis_fields)
     print('done.')

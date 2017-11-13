@@ -33,7 +33,7 @@ def calc_substation_location(input_buildings_shp, output_substations_shp):
 def run_as_script():
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
     input_buildings_shp = locator.get_zone_geometry()
     output_substations_shp = locator.get_connection_point()
     calc_substation_location(input_buildings_shp, output_substations_shp)

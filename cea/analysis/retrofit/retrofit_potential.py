@@ -49,21 +49,21 @@ def losses_filter_HVAC(demand, load_withlosses, load_enduse, threshold):
     return demand[(demand.losses >= threshold)].Name.values
 
 
-def retrofit_main(locator_baseline, name_new_scenario, keep_partial_matches,
-                  age_retrofit=None,
-                  age_criteria=None,
-                  eui_heating_criteria=None,
-                  eui_hotwater_criteria=None,
-                  eui_cooling_criteria=None,
-                  eui_electricity_criteria=None,
-                  heating_costs_criteria=None,
-                  hotwater_costs_criteria=None,
-                  cooling_costs_criteria=None,
-                  electricity_costs_criteria=None,
-                  heating_losses_criteria=None,
-                  hotwater_losses_criteria=None,
-                  cooling_losses_criteria=None,
-                  emissions_operation_criteria=None):
+def retrofit_main(locator_baseline, retrofit_scenario_name, keep_partial_matches,
+                  retrofit_target_year=None,
+                  age_threshold=None,
+                  eui_heating_threshold=None,
+                  eui_hot_water_threshold=None,
+                  eui_cooling_threshold=None,
+                  eui_electricity_threshold=None,
+                  heating_costs_threshold=None,
+                  hot_water_costs_threshold=None,
+                  cooling_costs_threshold=None,
+                  electricity_costs_threshold=None,
+                  heating_losses_threshold=None,
+                  hot_water_losses_threshold=None,
+                  cooling_losses_threshold=None,
+                  emissions_operation_threshold=None):
     selection_names = []  # list to store names of selected buildings to retrofit
 
 
@@ -95,17 +95,17 @@ def retrofit_main(locator_baseline, name_new_scenario, keep_partial_matches,
 
 
     # CASE 1
-    age_crit = [["age", age_criteria]]
+    age_crit = [["age", age_threshold]]
     for criteria_name, criteria_threshold in age_crit:
         if criteria_threshold is not None:
-            age_difference = age_retrofit - criteria_threshold
+            age_difference = retrofit_target_year - criteria_threshold
             selection_names.append(("Crit_" + criteria_name, age_filter_HVAC(age, age_difference)))
 
     # CASE 2
-    eui_crit = [["Qhsf", eui_heating_criteria],
-                ["Qwwf", eui_hotwater_criteria],
-                ["Qcsf", eui_cooling_criteria],
-                ["Ef", eui_electricity_criteria]]
+    eui_crit = [["Qhsf", eui_heating_threshold],
+                ["Qwwf", eui_hot_water_threshold],
+                ["Qcsf", eui_cooling_threshold],
+                ["Ef", eui_electricity_threshold]]
     for criteria_name, criteria_threshold in eui_crit:
         if criteria_threshold is not None:
             demand_totals = pd.read_csv(locator_baseline.get_total_demand())
@@ -113,10 +113,10 @@ def retrofit_main(locator_baseline, name_new_scenario, keep_partial_matches,
                 ("c_eui_" + criteria_name, eui_filter_HVAC(demand_totals, criteria_name, criteria_threshold)))
 
     # CASE 3
-    op_costs_crit = [["Qhsf", heating_costs_criteria],
-                     ["Qwwf", hotwater_costs_criteria],
-                     ["Qcsf", cooling_costs_criteria],
-                     ["Ef", electricity_costs_criteria]]
+    op_costs_crit = [["Qhsf", heating_costs_threshold],
+                     ["Qwwf", hot_water_costs_threshold],
+                     ["Qcsf", cooling_costs_threshold],
+                     ["Ef", electricity_costs_threshold]]
     for criteria_name, criteria_threshold in op_costs_crit:
         if criteria_threshold is not None:
             costs_totals = pd.read_csv(locator_baseline.get_costs_operation_file(criteria_name))
@@ -125,9 +125,9 @@ def retrofit_main(locator_baseline, name_new_scenario, keep_partial_matches,
                                                                   criteria_threshold)))
 
     # CASE 4
-    losses_crit = [["Qhsf", "Qhsf_MWhyr", "Qhs_MWhyr", heating_losses_criteria],
-                   ["Qwwf", "Qwwf_MWhyr", "Qww_MWhyr", hotwater_losses_criteria],
-                   ["Qcsf", "Qcsf_MWhyr", "Qcs_MWhyr", cooling_losses_criteria]]
+    losses_crit = [["Qhsf", "Qhsf_MWhyr", "Qhs_MWhyr", heating_losses_threshold],
+                   ["Qwwf", "Qwwf_MWhyr", "Qww_MWhyr", hot_water_losses_threshold],
+                   ["Qcsf", "Qcsf_MWhyr", "Qcs_MWhyr", cooling_losses_threshold]]
     for criteria_name, load_with_losses, load_end_use, criteria_threshold in losses_crit:
         if criteria_threshold is not None:
             demand_totals = pd.read_csv(locator_baseline.get_total_demand())
@@ -135,7 +135,7 @@ def retrofit_main(locator_baseline, name_new_scenario, keep_partial_matches,
                                     losses_filter_HVAC(demand_totals, load_with_losses, load_end_use,
                                                        criteria_threshold)))
     # CASE 5
-    LCA_crit = [["ghg", "O_ghg_ton", emissions_operation_criteria]]
+    LCA_crit = [["ghg", "O_ghg_ton", emissions_operation_threshold]]
     for criteria_name, lca_name, criteria_threshold in LCA_crit:
         if criteria_threshold is not None:
             emissions_totals = pd.read_csv(locator_baseline.get_lca_operation())
@@ -164,8 +164,8 @@ def retrofit_main(locator_baseline, name_new_scenario, keep_partial_matches,
                          "try to keep those buildings that partially match the criteria")
 
     # Create a retrofit case with the buildings that pass the criteria
-    retrofit_scenario_path = os.path.join(locator_baseline.get_project_path(), name_new_scenario)
-    locator_retrofit = cea.inputlocator.InputLocator(scenario_path=retrofit_scenario_path)
+    retrofit_scenario_path = os.path.join(locator_baseline.get_project_path(), retrofit_scenario_name)
+    locator_retrofit = cea.inputlocator.InputLocator(scenario=retrofit_scenario_path)
     retrofit_scenario_creator(locator_baseline, locator_retrofit, geometry_df, age, architecture, internal_loads, comfort, hvac,
                               supply, occupancy, data, type_of_join)
 
@@ -197,67 +197,46 @@ def retrofit_scenario_creator(locator_baseline, locator_retrofit, geometry_df, a
     shutil.copy2(locator_baseline.get_terrain(), locator_retrofit.get_terrain())
 
 
-def run_as_script(scenario_path=None):
-    gv = cea.globalvar.GlobalVariables()
-    if scenario_path is None:
-        scenario_path = gv.scenario_reference
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator_baseline = cea.inputlocator.InputLocator(scenario=config.scenario)
 
-    # INPUTS
-    locator_baseline = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    # for the interface it would be good if the default values where calculated as 2 standard deviations of
+    print("Running retrofit-potential for scenario = %s" % config.scenario)
+    print('Running retrofit-potential with hot-water-costs-threshold = %s' % config.retrofit_potential.hot_water_costs_threshold)
+    print('Running retrofit-potential with age-threshold = %s' % config.retrofit_potential.age_threshold)
+    print('Running retrofit-potential with emissions-operation-threshold = %s' % config.retrofit_potential.emissions_operation_threshold)
+    print('Running retrofit-potential with eui-electricity-threshold = %s' % config.retrofit_potential.eui_electricity_threshold)
+    print('Running retrofit-potential with heating-costs-threshold = %s' % config.retrofit_potential.heating_costs_threshold)
+    print('Running retrofit-potential with eui-hot-water-threshold = %s' % config.retrofit_potential.eui_hot_water_threshold)
+    print('Running retrofit-potential with electricity-costs-threshold = %s' % config.retrofit_potential.electricity_costs_threshold)
+    print('Running retrofit-potential with heating-losses-threshold = %s' % config.retrofit_potential.heating_losses_threshold)
+    print('Running retrofit-potential with cooling-losses-threshold = %s' % config.retrofit_potential.cooling_losses_threshold)
+    print('Running retrofit-potential with keep-partial-matches = %s' % config.retrofit_potential.keep_partial_matches)
+    print('Running retrofit-potential with retrofit-target-year = %s' % config.retrofit_potential.retrofit_target_year)
+    print('Running retrofit-potential with eui-cooling-threshold = %s' % config.retrofit_potential.eui_cooling_threshold)
+    print('Running retrofit-potential with hot-water-losses-threshold = %s' % config.retrofit_potential.hot_water_losses_threshold)
+    print('Running retrofit-potential with eui-heating-threshold = %s' % config.retrofit_potential.eui_heating_threshold)
+    print('Running retrofit-potential with cooling-costs-threshold = %s' % config.retrofit_potential.cooling_costs_threshold)
+    print('Running retrofit-potential with retrofit-scenario-name = %s' % config.retrofit_potential.retrofit_scenario_name)
 
-    # FLAGS
-    keep_partial_matches = True # keep buildings that attained one or more of the criteria
-
-    # CRITERIA AGE
-    name_new_scenario = "retrofit_HVAC"
-    age_retrofit = 2020  # [true or false, threshold]
-    age_criteria = 15  # [years] threshold age of HVAC (built / retrofitted)
-
-    # CRITERIA ENERGY USE INTENSITY
-    eui_heating_criteria = 150  # load to verify, threshold
-    eui_hotwater_criteria = 50  # load to verify
-    eui_cooling_criteria = 4  # load to verify, threshold
-    eui_electricity_criteria = 20  # load to verify, threshold
-    #
-    # # CRITERIA EMISSIONS
-    emissions_operation_criteria = 30  # threshold
-    #
-    # # CRITERIA COSTS
-    heating_costs_criteria = 2  # threshold
-    hotwater_costs_criteria = 2  # threshold
-    cooling_costs_criteria = 2  # threshold
-    electricity_costs_criteria = 2  # threshold
-    #
-    # # CASE OF THERMAL LOSSES
-    heating_losses_criteria = 15  # threshold
-    hotwater_losses_criteria = 15  # threshold
-    cooling_losses_criteria = 15  # threshold
-
-    # PROCESS
-    retrofit_main(locator_baseline=locator_baseline, name_new_scenario=name_new_scenario,
-                  keep_partial_matches=keep_partial_matches,
-                  age_retrofit=age_retrofit,
-                  age_criteria=age_criteria,
-                  eui_heating_criteria=eui_heating_criteria,
-                  eui_hotwater_criteria=eui_hotwater_criteria,
-                  eui_cooling_criteria=eui_cooling_criteria,
-                  eui_electricity_criteria=eui_electricity_criteria,
-                  heating_costs_criteria=heating_costs_criteria,
-                  hotwater_costs_criteria=hotwater_costs_criteria,
-                  cooling_costs_criteria=cooling_costs_criteria,
-                  electricity_costs_criteria=electricity_costs_criteria,
-                  heating_losses_criteria=heating_losses_criteria,
-                  hotwater_losses_criteria=hotwater_losses_criteria,
-                  cooling_losses_criteria=cooling_losses_criteria,
-                  emissions_operation_criteria=emissions_operation_criteria)
+    retrofit_main(locator_baseline=locator_baseline,
+                  retrofit_scenario_name=config.retrofit_potential.retrofit_scenario_name,
+                  keep_partial_matches=config.retrofit_potential.keep_partial_matches,
+                  retrofit_target_year=config.retrofit_potential.retrofit_target_year,
+                  age_threshold=config.retrofit_potential.age_threshold,
+                  eui_heating_threshold=config.retrofit_potential.eui_heating_threshold,
+                  eui_hot_water_threshold=config.retrofit_potential.eui_hot_water_threshold,
+                  eui_cooling_threshold=config.retrofit_potential.eui_cooling_threshold,
+                  eui_electricity_threshold=config.retrofit_potential.eui_electricity_threshold,
+                  heating_costs_threshold=config.retrofit_potential.heating_costs_threshold,
+                  hot_water_costs_threshold=config.retrofit_potential.hot_water_costs_threshold,
+                  cooling_costs_threshold=config.retrofit_potential.cooling_costs_threshold,
+                  electricity_costs_threshold=config.retrofit_potential.electricity_costs_threshold,
+                  heating_losses_threshold=config.retrofit_potential.heating_losses_threshold,
+                  hot_water_losses_threshold=config.retrofit_potential.hot_water_losses_threshold,
+                  cooling_losses_threshold=config.retrofit_potential.cooling_losses_threshold,
+                  emissions_operation_threshold=config.retrofit_potential.emissions_operation_threshold)
 
 
 if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    args = parser.parse_args()
-
-    run_as_script(scenario_path=args.scenario)
+    main(cea.config.Configuration())

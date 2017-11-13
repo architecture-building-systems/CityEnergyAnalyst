@@ -20,7 +20,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values):
+def calc_schedules(region, list_uses, archetype_schedules, occupancy, archetype_values):
     """
     Given schedule data for archetypal building uses, `calc_schedule` calculates the schedule for a building
     with possibly a mixed schedule as defined in `building_uses` using a weighted average approach. The schedules are
@@ -113,7 +113,7 @@ def calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values):
     return schedules
 
 # read schedules and archetypal values from excel file
-def schedule_maker(dates, locator, list_uses):
+def schedule_maker(region, dates, locator, list_uses):
     """
     Reads schedules from the archetype schedule Excel file along with the corresponding internal loads and ventilation
     demands.
@@ -135,80 +135,9 @@ def schedule_maker(dates, locator, list_uses):
     :type ventilation: list[float]
     """
 
-    def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule):
-        """
-        For a given use type, this script generates yearly schedules for occupancy, electricity demand,
-        hot water demand, process electricity demand based on the daily and monthly schedules obtained from the
-        archetype database.
-
-        :param dates: dates and times throughout the year
-        :type dates: DatetimeIndex
-        :param occ_schedules: occupancy schedules for a weekdays, Saturdays and Sundays from the archetype database
-        :type occ_schedules: list[array]
-        :param el_schedules: electricity schedules for a weekdays, Saturdays and Sundays from the archetype database
-        :type el_schedules: list[array]
-        :param dhw_schedules: domestic hot water schedules for a weekdays, Saturdays and Sundays from the archetype
-        database
-        :type dhw_schedules: list[array]
-        :param pro_schedules: process electricity schedules for a weekdays, Saturdays and Sundays from the archetype
-        database
-        :type pro_schedules: list[array]
-        :param month_schedule: monthly schedules from the archetype database
-        :type month_schedule: ndarray
-
-        :return occ: occupancy schedule for each hour of the year
-        :type occ: list[float]
-        :return el: electricity schedule for each hour of the year
-        :type el: list[float]
-        :return dhw: domestic hot water schedule for each hour of the year
-        :type dhw: list[float]
-        :return pro: process electricity schedule for each hour of the year
-        :type pro: list[float]
-
-        """
-
-        occ = []
-        el = []
-        dhw = []
-        pro = []
-
-        if dhw_schedules[0].sum() != 0:
-            dhw_weekday_max = dhw_schedules[0].sum() ** -1
-        else: dhw_weekday_max = 0
-
-        if dhw_schedules[1].sum() != 0:
-            dhw_sat_max = dhw_schedules[1].sum() ** -1
-        else: dhw_sat_max = 0
-
-        if dhw_schedules[2].sum() != 0:
-            dhw_sun_max = dhw_schedules[2].sum() ** -1
-        else: dhw_sun_max = 0
-
-        for date in dates:
-            month_year = month_schedule[date.month - 1]
-            hour_day = date.hour
-            dayofweek = date.dayofweek
-            if 0 <= dayofweek < 5:  # weekday
-                occ.append(occ_schedules[0][hour_day] * month_year)
-                el.append(el_schedules[0][hour_day] * month_year)
-                dhw.append(dhw_schedules[0][hour_day] * month_year * dhw_weekday_max) # normalized dhw demand flow rates
-                pro.append(pro_schedules[0][hour_day] * month_year)
-            elif dayofweek is 5:  # saturday
-                occ.append(occ_schedules[1][hour_day] * month_year)
-                el.append(el_schedules[1][hour_day] * month_year)
-                dhw.append(dhw_schedules[1][hour_day] * month_year * dhw_sat_max) # normalized dhw demand flow rates
-                pro.append(pro_schedules[1][hour_day] * month_year)
-            else:  # sunday
-                occ.append(occ_schedules[2][hour_day] * month_year)
-                el.append(el_schedules[2][hour_day] * month_year)
-                dhw.append(dhw_schedules[2][hour_day] * month_year * dhw_sun_max) # normalized dhw demand flow rates
-                pro.append(pro_schedules[2][hour_day] * month_year)
-
-        return occ, el, dhw, pro
-
     # get internal loads and indoor comfort from archetypes
-    archetypes_internal_loads = pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS').set_index('Code')
-    archetypes_indoor_comfort = pd.read_excel(locator.get_archetypes_properties(), 'INDOOR_COMFORT').set_index('Code')
+    archetypes_internal_loads = pd.read_excel(locator.get_archetypes_properties(region), 'INTERNAL_LOADS').set_index('Code')
+    archetypes_indoor_comfort = pd.read_excel(locator.get_archetypes_properties(region), 'INDOOR_COMFORT').set_index('Code')
 
     # create empty list of archetypal schedules and occupant densities
     schedules = []
@@ -229,7 +158,7 @@ def schedule_maker(dates, locator, list_uses):
 
     for use in list_uses:
         # read from archetypes_schedules and properties
-        archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(), use).T
+        archetypes_schedules = pd.read_excel(locator.get_archetypes_schedules(region), use).T
 
         # read lists of every daily profile
         occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule, area_per_occupant = read_schedules(
@@ -263,6 +192,77 @@ def schedule_maker(dates, locator, list_uses):
                         'Vw': Vw_ldm2, 've': Ve_lsm2, 'Qhpro': Qhpro_Wm2}
 
     return schedules, archetype_values
+
+def get_yearly_vectors(dates, occ_schedules, el_schedules, dhw_schedules, pro_schedules, month_schedule):
+    """
+    For a given use type, this script generates yearly schedules for occupancy, electricity demand,
+    hot water demand, process electricity demand based on the daily and monthly schedules obtained from the
+    archetype database.
+
+    :param dates: dates and times throughout the year
+    :type dates: DatetimeIndex
+    :param occ_schedules: occupancy schedules for a weekdays, Saturdays and Sundays from the archetype database
+    :type occ_schedules: list[array]
+    :param el_schedules: electricity schedules for a weekdays, Saturdays and Sundays from the archetype database
+    :type el_schedules: list[array]
+    :param dhw_schedules: domestic hot water schedules for a weekdays, Saturdays and Sundays from the archetype
+    database
+    :type dhw_schedules: list[array]
+    :param pro_schedules: process electricity schedules for a weekdays, Saturdays and Sundays from the archetype
+    database
+    :type pro_schedules: list[array]
+    :param month_schedule: monthly schedules from the archetype database
+    :type month_schedule: ndarray
+
+    :return occ: occupancy schedule for each hour of the year
+    :type occ: list[float]
+    :return el: electricity schedule for each hour of the year
+    :type el: list[float]
+    :return dhw: domestic hot water schedule for each hour of the year
+    :type dhw: list[float]
+    :return pro: process electricity schedule for each hour of the year
+    :type pro: list[float]
+
+    """
+
+    occ = []
+    el = []
+    dhw = []
+    pro = []
+
+    if dhw_schedules[0].sum() != 0:
+        dhw_weekday_max = dhw_schedules[0].sum() ** -1
+    else: dhw_weekday_max = 0
+
+    if dhw_schedules[1].sum() != 0:
+        dhw_sat_max = dhw_schedules[1].sum() ** -1
+    else: dhw_sat_max = 0
+
+    if dhw_schedules[2].sum() != 0:
+        dhw_sun_max = dhw_schedules[2].sum() ** -1
+    else: dhw_sun_max = 0
+
+    for date in dates:
+        month_year = month_schedule[date.month - 1]
+        hour_day = date.hour
+        dayofweek = date.dayofweek
+        if 0 <= dayofweek < 5:  # weekday
+            occ.append(occ_schedules[0][hour_day] * month_year)
+            el.append(el_schedules[0][hour_day] * month_year)
+            dhw.append(dhw_schedules[0][hour_day] * month_year * dhw_weekday_max) # normalized dhw demand flow rates
+            pro.append(pro_schedules[0][hour_day] * month_year)
+        elif dayofweek is 5:  # saturday
+            occ.append(occ_schedules[1][hour_day] * month_year)
+            el.append(el_schedules[1][hour_day] * month_year)
+            dhw.append(dhw_schedules[1][hour_day] * month_year * dhw_sat_max) # normalized dhw demand flow rates
+            pro.append(pro_schedules[1][hour_day] * month_year)
+        else:  # sunday
+            occ.append(occ_schedules[2][hour_day] * month_year)
+            el.append(el_schedules[2][hour_day] * month_year)
+            dhw.append(dhw_schedules[2][hour_day] * month_year * dhw_sun_max) # normalized dhw demand flow rates
+            pro.append(pro_schedules[2][hour_day] * month_year)
+
+    return occ, el, dhw, pro
 
 def read_schedules(use, x):
     """

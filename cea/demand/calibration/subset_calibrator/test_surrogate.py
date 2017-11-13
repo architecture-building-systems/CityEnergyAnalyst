@@ -14,7 +14,7 @@ def run_as_script():
 
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
-    locator = inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = inputlocator.InputLocator(scenario=scenario_path)
     json_NN_path = os.path.join(locator.get_calibration_folder(), "trained_network_ht.json" % locals())
     weight_NN_path = os.path.join(locator.get_calibration_folder(), "trained_network_ht.h5" % locals())
 
