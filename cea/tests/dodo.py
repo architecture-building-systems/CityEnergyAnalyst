@@ -137,7 +137,7 @@ def task_run_data_helper():
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
-        config = cea.config.Configuration()
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
         yield {
             'name': reference_case,
@@ -179,7 +179,7 @@ def task_run_demand():
         locator = cea.inputlocator.InputLocator(scenario_path)
         weather = REFERENCE_CASES_DATA[reference_case]['weather']
 
-        config = cea.config.Configuration()
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
         config.weather = weather
 
@@ -198,7 +198,7 @@ def task_run_demand_graphs():
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
-        config = cea.config.Configuration()
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
         yield {
             'name': '%(reference_case)s' % locals(),
@@ -214,7 +214,7 @@ def task_run_embodied_energy():
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
-        config = cea.config.Configuration()
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
         config.embodied_energy.year_to_calculate = 2050
         yield {
@@ -232,7 +232,7 @@ def task_run_emissions_operation():
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
-        config = cea.config.Configuration()
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
         yield {
             'name': '%(reference_case)s' % locals(),
@@ -249,7 +249,7 @@ def task_run_emissions_mobility():
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
-        config = cea.config.Configuration()
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
         yield {
             'name': '%(reference_case)s' % locals(),
@@ -272,7 +272,7 @@ def task_run_heatmaps():
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
-        config = cea.config.Configuration()
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario = scenario_path
         yield {
             'name': '%(reference_case)s' % locals(),
@@ -292,7 +292,7 @@ def task_run_scenario_plots():
         project = os.path.normpath(os.path.join(scenario_path, '..'))
         output_file = os.path.join(project, 'scenarios.pdf')
 
-        config = cea.config.Configuration()
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
         config.scenario_plots.project = project
         config.scenario_plots.scenarios = ['baseline']
         config.scenario_plots.output_file = output_file
