@@ -396,30 +396,13 @@ class EmbodiedEnergyTool(CeaTool):
         self.canRunInBackground = False
 
 
-class MobilityTool(object):
-    """Integrates the cea/analysis/mobility.py script with ArcGIS."""
-
+class MobilityTool(CeaTool):
     def __init__(self):
+        self.cea_tool = 'mobility'
         self.label = 'LCA Mobility'
         self.description = 'Calculate emissions and primary energy due to mobility'
         self.category = 'Life Cycle Analysis'
         self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        config = cea.config.Configuration()
-        scenario = arcpy.Parameter(
-            displayName="Path to the scenario",
-            name="scenario",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        scenario.value = config.scenario
-
-        return [scenario]
-
-    def execute(self, parameters, messages):
-        scenario, parameters = check_senario_exists(parameters)
-        run_cli('mobility', scenario=scenario)
 
 
 class DemandGraphsTool(object):
