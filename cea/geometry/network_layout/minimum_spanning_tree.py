@@ -72,7 +72,7 @@ def calc_minimum_spanning_tree(input_network_shp, output_network_folder, buildin
 def run_as_script():
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
     input_network_shp = locator.get_connectivity_potential()  # shapefile, location of output.
     type_mat_default = "T1"
     pipe_diameter_default = 150

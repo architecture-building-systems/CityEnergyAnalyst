@@ -10,7 +10,7 @@ conda env remove -y -q --name ceatest
 conda env create -q --name ceatest
 set PATH=%LOCALAPPDATA%\conda\conda\envs\ceatest;%PATH%
 set PATH=%LOCALAPPDATA%\conda\conda\envs\ceatest\Scripts;%PATH%
-set CONDA_DEFAULT_ENV=ceatestall
+set CONDA_DEFAULT_ENV=ceatest
 %LOCALAPPDATA%\conda\conda\envs\ceatest\Scripts\pip.exe install .[dev]
 where cea
 cea test

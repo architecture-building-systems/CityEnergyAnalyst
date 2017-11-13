@@ -7,6 +7,7 @@ import os
 
 import cea.inputlocator
 import cea.globalvar
+import cea.config
 from cea.interfaces.arcgis.modules import arcpy
 
 
@@ -47,7 +48,8 @@ def heatmaps(locator, analysis_fields, file_to_analyze):
         path_results = locator.get_heatmaps_emission_folder()
     else:
         raise ValueError(
-            'file_to_analyze must be either the demand totals file or a file in the emissions results folder')
+            'file_to_analyze must be either the demand totals file or a file in the emissions results folder: %s'
+            % file_to_analyze)
     
     # local variables
     # create dbf file
@@ -98,20 +100,17 @@ def get_gis_field(csv_field, gis_field_lookup):
     return gis_field
 
 
-def run_as_script(scenario_path=None):
-    gv = cea.globalvar.GlobalVariables()
-    if scenario_path is None:
-        scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    file_to_analyze = locator.get_total_demand()
-    analysis_field_variables = ["Qhsf_MWhyr", "Qcsf_MWhyr"]
-    heatmaps(locator=locator, analysis_fields=analysis_field_variables, file_to_analyze=file_to_analyze)
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+
+    print('Running heatmaps with scenario = %s' % config.scenario)
+    print('Running heatmaps with file-to-analyze = %s' % config.heatmaps.file_to_analyze)
+    print('Running heatmaps with analysis-fields = %s' % config.heatmaps.analysis_fields)
+
+    heatmaps(locator=locator, analysis_fields=config.heatmaps.analysis_fields,
+             file_to_analyze=config.heatmaps.file_to_analyze)
 
 
 if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    args = parser.parse_args()
-    run_as_script(scenario_path=args.scenario)
+    main(cea.config.Configuration())

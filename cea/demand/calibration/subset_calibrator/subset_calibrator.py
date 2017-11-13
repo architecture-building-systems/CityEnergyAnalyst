@@ -96,7 +96,7 @@ def ss_calibrator(building_name):
     # collect the simulation results
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
-    locator = inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = inputlocator.InputLocator(scenario=scenario_path)
     metered_path=r'C:\reference-case-open\baseline\inputs\building-metering'
     metered_building=os.path.join(metered_path, '%s.csv' % building_name)
     ht_cl_el = ['Qhsf']
@@ -284,7 +284,7 @@ def ss_calibrator(building_name):
 def run_as_script():
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
-    locator = inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = inputlocator.InputLocator(scenario=scenario_path)
 
 
     building_name = 'B155066' # intended building

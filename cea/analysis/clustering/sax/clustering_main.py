@@ -146,7 +146,7 @@ def run_as_script():
     import cea.inputlocator as inputlocator
     gv = gv.GlobalVariables()
     scenario_path = gv.scenario_reference
-    locator = inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = inputlocator.InputLocator(scenario=scenario_path)
 
     #Options
     optimize = False

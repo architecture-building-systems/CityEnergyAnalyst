@@ -263,7 +263,7 @@ if __name__ == '__main__':
     import networkx as nx
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
     input_network_shp = locator.get_connectivity_potential()  # shapefile, location of output.
     weight_field = 'Shape_Leng'
 

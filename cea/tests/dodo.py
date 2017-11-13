@@ -15,6 +15,7 @@ import shutil
 import sys
 import zipfile
 import cea.inputlocator
+import cea.config
 
 import requests
 
@@ -132,15 +133,17 @@ def task_download_reference_cases():
 
 def task_run_data_helper():
     """Run the data helper for each reference case"""
-    import cea.demand.preprocessing.properties
+    import cea.demand.preprocessing.data_helper
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        config.scenario = scenario_path
         yield {
             'name': reference_case,
             'actions': [
-                (cea.demand.preprocessing.properties.run_as_script, [], {
-                    'scenario_path': scenario_path})],
+                (cea.demand.preprocessing.data_helper.main, [], {
+                    'config': config})],
             'verbosity': 1,
         }
 
@@ -149,7 +152,6 @@ def task_download_radiation():
     """For some reference cases, the radiation and properties_surfaces.csv files are too big for git and are stored
     with git lfs... For these cases we download a known good version from a url"""
     def download_radiation(scenario_path, reference_case):
-        import cea.inputlocator
         locator = cea.inputlocator.InputLocator(scenario_path)
         data = REFERENCE_CASES_DATA[reference_case]
         properties_surfaces_csv = os.path.join(os.path.dirname(__file__), 'radiation_data', data['properties_surfaces'])
@@ -171,17 +173,20 @@ def task_download_radiation():
 def task_run_demand():
     """run the demand script for each reference cases and weather file"""
     import cea.demand.demand_main
-    import cea.inputlocator
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
         locator = cea.inputlocator.InputLocator(scenario_path)
         weather = REFERENCE_CASES_DATA[reference_case]['weather']
+
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        config.scenario = scenario_path
+        config.weather = weather
+
         yield {
             'name': '%(reference_case)s@%(weather)s' % locals(),
-            'actions': [(cea.demand.demand_main.run_as_script, [], {
-                'scenario_path': scenario_path,
-                'weather_path': locator.get_weather(weather)
+            'actions': [(cea.demand.demand_main.main, [], {
+                'config': config,
             })],
             'verbosity': 1,
         }
@@ -193,10 +198,12 @@ def task_run_demand_graphs():
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        config.scenario = scenario_path
         yield {
             'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.plots.graphs_demand.run_as_script, [], {
-                'scenario_path': scenario_path
+            'actions': [(cea.plots.graphs_demand.main, [], {
+                'config': config
             })],
             'verbosity': 1,
         }
@@ -207,11 +214,13 @@ def task_run_embodied_energy():
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        config.scenario = scenario_path
+        config.embodied_energy.year_to_calculate = 2050
         yield {
             'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.analysis.lca.embodied.run_as_script, [], {
-                'scenario_path': scenario_path,
-                'year_to_calculate': 2050
+            'actions': [(cea.analysis.lca.embodied.main, [], {
+                'config': config,
             })],
             'verbosity': 1,
         }
@@ -223,10 +232,12 @@ def task_run_emissions_operation():
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        config.scenario = scenario_path
         yield {
             'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.analysis.lca.operation.run_as_script, [], {
-                'scenario_path': scenario_path
+            'actions': [(cea.analysis.lca.operation.main, [], {
+                'config': config
             })],
             'verbosity': 1,
         }
@@ -238,10 +249,12 @@ def task_run_emissions_mobility():
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        config.scenario = scenario_path
         yield {
             'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.analysis.lca.mobility.run_as_script, [], {
-                'scenario_path': scenario_path
+            'actions': [(cea.analysis.lca.mobility.main, [], {
+                'config': config
             })],
             'verbosity': 1,
         }
@@ -259,10 +272,12 @@ def task_run_heatmaps():
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        config.scenario = scenario_path
         yield {
             'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.plots.heatmaps.run_as_script, [], {
-                'scenario_path': scenario_path
+            'actions': [(cea.plots.heatmaps.main, [], {
+                'config': config
             })],
             'verbosity': 1,
         }
@@ -274,11 +289,17 @@ def task_run_scenario_plots():
     for reference_case, scenario_path in REFERENCE_CASES.items():
         if _reference_cases and reference_case not in _reference_cases:
             continue
+        project = os.path.normpath(os.path.join(scenario_path, '..'))
+        output_file = os.path.join(project, 'scenarios.pdf')
+
+        config = cea.config.Configuration(cea.config.DEFAULT_CONFIG)
+        config.scenario_plots.project = project
+        config.scenario_plots.scenarios = ['baseline']
+        config.scenario_plots.output_file = output_file
         yield {
             'name': '%(reference_case)s' % locals(),
-            'actions': [(cea.plots.scenario_plots.run_as_script, [], {
-                'scenario_folders': [scenario_path],
-                'output_file': None  # use default
+            'actions': [(cea.plots.scenario_plots.main, [], {
+                'config': config,
             })],
             'verbosity': 1,
         }
@@ -339,24 +360,19 @@ def task_run_scenario_plots():
 #         }
 
 
-def main(user=None, token=None, reference_cases=None):
+def main(config):
     from doit.api import DoitMain
     from doit.api import ModuleTaskLoader
-    if user:
-        global _user
-        _user = user
-    if token:
-        global _token
-        _token = token
+
     global _reference_cases
-    if not reference_cases:
+    if not config.test.reference_cases:
         _reference_cases = ['open']
-    elif 'all' in reference_cases:
+    elif 'all' in config.test.reference_cases:
         _reference_cases = REFERENCE_CASES.keys()
     else:
-        _reference_cases = [rc for rc in reference_cases if rc in REFERENCE_CASES.keys()]
+        _reference_cases = [rc for rc in config.test.reference_cases if rc in REFERENCE_CASES.keys()]
     sys.exit(DoitMain(ModuleTaskLoader(globals())).run([]))
 
 
 if __name__ == '__main__':
-    main()
+    main(cea.config.Configuration())

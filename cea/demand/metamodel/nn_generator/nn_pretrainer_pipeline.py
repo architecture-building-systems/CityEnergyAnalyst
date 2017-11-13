@@ -60,7 +60,7 @@ def run_as_script():
     import cea.config
     config = cea.config.Configuration()
 
-    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     scalerX_file, scalerT_file = locator.get_minmaxscalar_model()
     scalerX = joblib.load(scalerX_file)
