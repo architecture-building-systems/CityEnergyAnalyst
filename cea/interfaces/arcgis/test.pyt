@@ -19,7 +19,7 @@ class Toolbox(object):
 
 class OperationCostsTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'emissions'
+        self.cea_tool = 'operation-costs'
         self.label = 'Operation Costs'
         self.description = 'Calculate energy costs due to building operation'
         self.category = 'Cost Analysis'

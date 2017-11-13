@@ -283,7 +283,7 @@ def get_parameter_info(cea_parameter, config):
                                      multiValue=multivalue)
     if isinstance(cea_parameter, cea.config.ChoiceParameter):
         parameter_info.filter.list = cea_parameter._choices
-        parameter_info.value = cea_parameter.__get__(config)
+    parameter_info.value = cea_parameter.__get__(config)
     return parameter_info
 
 def get_weather_parameter_info(config):
