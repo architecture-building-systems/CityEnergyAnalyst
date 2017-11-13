@@ -22,68 +22,6 @@ __maintainer__ = "Daren Thomas"
 __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
-def manualCheck(individual):
-    '''
-    This function is used to manually check the results of a certain configuration.
-    This function is otherwise not called.
-
-    :param individual: list with variables included in each individual.
-    :type individual: list
-
-    :return: None
-    :rtype: 'NoneType'
-    '''
-
-    # CHP
-    individual[0] = 0
-    individual[1] = 0
-    
-    # Base boiler
-    individual[2] = 0
-    individual[3] = 0
-    
-    # Peak boiler
-    individual[4] = 1
-    individual[5] = 1
-    
-    # HP Lake
-    individual[6] = 0
-    individual[7] = 0
-    
-    # Sewage
-    individual[8] = 0
-    individual[9] = 0
-    
-    # GHP
-    individual[10] = 0
-    individual[11] = 0
-    
-    # HR Data center + Compressed Air
-    individual[12] = 0
-    individual[13] = 0
-    
-    # PV
-    individual[14] = 0
-    individual[15] = 0
-    
-    # PVT
-    individual[16] = 0
-    individual[17] = 0
-    
-    # SC
-    individual[18] = 0
-    individual[19] = 0
-    
-    # Total Solar
-    individual[20] = 0
-
-    # Buildings
-    i = 21
-    while i < len(individual):
-        individual[i] = 1
-        i +=1
-
-
 def putToRef(individual):
     """
     This function is to be used on a population with only ONE individual
