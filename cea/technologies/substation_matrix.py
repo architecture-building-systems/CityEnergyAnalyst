@@ -584,7 +584,7 @@ def run_as_script(scenario_path=None):
     if scenario_path is None:
         scenario_path = gv.scenario_reference
 
-    locator = inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = inputlocator.InputLocator(scenario=scenario_path)
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = pd.read_csv(locator.get_total_demand())['Name']
     weather_file = locator.get_default_weather()

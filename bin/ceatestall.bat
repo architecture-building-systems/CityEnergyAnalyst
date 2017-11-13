@@ -13,5 +13,5 @@ set PATH=%LOCALAPPDATA%\conda\conda\envs\ceatestall\Scripts;%PATH%
 set CONDA_DEFAULT_ENV=ceatestall
 %LOCALAPPDATA%\conda\conda\envs\ceatestall\Scripts\pip.exe install .[dev]
 where cea
-cea test --reference-case all
+cea test --reference-cases all
 

@@ -51,7 +51,7 @@ def calc_connectivity_network(path_arcgis_db, streets_shp, connection_point_buil
 def run_as_script():
     gv = cea.globalvar.GlobalVariables()
     scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = cea.inputlocator.InputLocator(scenario=scenario_path)
 
     streets_shp = locator.get_street_network()  # shapefile with the stations
     connection_point_buildings_shp = locator.get_connection_point()  # substation, it can be the centroid of the building

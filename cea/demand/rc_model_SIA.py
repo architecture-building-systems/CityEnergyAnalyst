@@ -837,5 +837,5 @@ try:
                                  calc_h_ea, calc_theta_m_t, calc_theta_ea, calc_h_em, calc_h_3)
 except ImportError:
     # fall back to using the python version
-    print('failed to import from rc_model_sia_cc.pyd, falling back to pure python functions')
+    # print('failed to import from rc_model_sia_cc.pyd, falling back to pure python functions')
     pass

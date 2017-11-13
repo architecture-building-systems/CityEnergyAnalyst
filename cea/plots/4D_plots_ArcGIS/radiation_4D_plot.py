@@ -1,8 +1,8 @@
 import pandas as pd
 import os
 from cea.utilities import dbfreader
-import cea.globalvar
 import cea.inputlocator
+import cea.config
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -30,7 +30,7 @@ def calc_spatio_temporal_visuals(locator, period, variables_to_plot, initial_dat
         geometry = data.set_index('SURFACE')
         solar = pd.read_json(locator.get_radiation_building(building))
         surfaces = solar.columns.values
-        print (building)
+        print(building)
 
         for surface in surfaces:
             Xcoor = geometry.loc[surface, 'Xcoor']
@@ -46,13 +46,11 @@ def calc_spatio_temporal_visuals(locator, period, variables_to_plot, initial_dat
 
     dbfreader.dataframe_to_dbf(final, locator.get_solar_radiation_folder() + "result_solar_48h.dbf")
 
-def run_as_script():
-    import cea.inputlocator
-    import cea.config
+def main(config):
     config = cea.config.Configuration()
-
     locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
 
+    # these are candidates for the config file!
     variables_to_plot = ['E_PV_gen_kWh', 'radiation_kWh']
     initial_date = '1/1/2015'
     list_of_buildings = ['all']  # 'all' for all buildings or else provide a list of building names
@@ -61,5 +59,4 @@ def run_as_script():
     calc_spatio_temporal_visuals(locator, period, variables_to_plot, initial_date, list_of_buildings)
 
 if __name__ == '__main__':
-
-    run_as_script()
+    main(cea.config.Configuration())

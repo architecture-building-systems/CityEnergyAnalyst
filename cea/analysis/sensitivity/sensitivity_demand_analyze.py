@@ -187,13 +187,14 @@ def read_results(samples_folder, samples_count, output_parameter, temporal_scale
     return results
 
 
-if __name__ == '__main__':
-    import argparse
+def main(config):
+    print("Running sensitivity-demand-analyze with samples-path = %s" % config.sensitivity_demand.samples_folder)
+    print("Running sensitivity-demand-analyze with temporal-scale = %s" % config.sensitivity_demand.temporal_scale)
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-S', '--samples-folder', default='.',
-                        help='folder to place the output files (samples.npy, problem.pickle) in')
-    parser.add_argument('-t', '--temporal-scale', default='yearly', choices=['yearly', 'monthly'],
-                        help='temporal scale of analysis (monthly or yearly)')
-    args = parser.parse_args()
-    analyze_sensitivity(samples_path=args.samples_folder, temporal_scale=args.temporal_scale)
+    analyze_sensitivity(samples_path=config.sensitivity_demand.samples_folder,
+                        temporal_scale=config.sensitivity_demand.temporal_scale)
+
+
+if __name__ == '__main__':
+    main(cea.config.Configuration())
+

@@ -14,9 +14,9 @@ import ConfigParser
 from pandas.util.testing import assert_frame_equal
 from cea.inputlocator import ReferenceCaseOpenLocator
 from cea.globalvar import GlobalVariables
-from cea.demand.preprocessing.properties import calculate_average_multiuse
-from cea.demand.preprocessing.properties import correct_archetype_areas
-from cea.demand.preprocessing.properties import get_database
+from cea.demand.preprocessing.data_helper import calculate_average_multiuse
+from cea.demand.preprocessing.data_helper import correct_archetype_areas
+from cea.demand.preprocessing.data_helper import get_database
 from cea.demand.occupancy_model import calc_schedules
 from cea.demand.occupancy_model import schedule_maker
 
@@ -44,7 +44,7 @@ class TestBuildingPreprocessing(unittest.TestCase):
                 self.assertIn(building, calculated_results[column])
                 self.assertAlmostEqual(value, calculated_results[column][building], 4)
 
-        architecture_DB = get_database(locator.get_archetypes_properties(), 'ARCHITECTURE')
+        architecture_DB = get_database(locator.get_archetypes_properties('CH'), 'ARCHITECTURE')
         architecture_DB['Code'] = architecture_DB.apply(lambda x: x['building_use'] + str(x['year_start']) +
                                                                   str(x['year_end']) + x['standard'], axis=1)
 
@@ -66,8 +66,8 @@ class TestScheduleCreation(unittest.TestCase):
         occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
         gv = GlobalVariables()
         date = pd.date_range(gv.date_start, periods=8760, freq='H')
-        archetype_schedules, archetype_values = schedule_maker(date, locator, list_uses)
-        calculated_schedules = calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values)
+        archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
+        calculated_schedules = calc_schedules('CH', list_uses, archetype_schedules, occupancy, archetype_values)
 
         config = ConfigParser.SafeConfigParser()
         config.read(get_test_config_path())
@@ -89,14 +89,14 @@ def get_test_config_path():
 def calculate_test_mixed_use_archetype_values_results(locator):
     """calculate the results for the test - refactored, so we can also use it to write the results to the
     config file."""
-    office_occ = float(pd.read_excel(locator.get_archetypes_schedules(), 'OFFICE').T['density'].values[:1][0])
-    gym_occ = float(pd.read_excel(locator.get_archetypes_schedules(), 'GYM').T['density'].values[:1][0])
+    office_occ = float(pd.read_excel(locator.get_archetypes_schedules('CH'), 'OFFICE').T['density'].values[:1][0])
+    gym_occ = float(pd.read_excel(locator.get_archetypes_schedules('CH'), 'GYM').T['density'].values[:1][0])
     calculated_results = calculate_average_multiuse(
         properties_df=pd.DataFrame(data=[['B1', 0.5, 0.5, 0.0, 0.0], ['B2', 0.25, 0.75, 0.0, 0.0]],
                                    columns=['Name', 'OFFICE', 'GYM', 'X_ghp', 'El_Wm2']),
         occupant_densities={'OFFICE': 1 / office_occ, 'GYM': 1 / gym_occ},
         list_uses=['OFFICE', 'GYM'],
-        properties_DB=pd.read_excel(locator.get_archetypes_properties(), 'INTERNAL_LOADS')).set_index('Name')
+        properties_DB=pd.read_excel(locator.get_archetypes_properties('CH'), 'INTERNAL_LOADS')).set_index('Name')
     return calculated_results
 
 
@@ -117,7 +117,7 @@ def create_test_data():
     occupancy = {'OFFICE': 0.5, 'INDUSTRIAL': 0.5}
     gv = GlobalVariables()
     date = pd.date_range(gv.date_start, periods=8760, freq='H')
-    archetype_schedules, archetype_values = schedule_maker(date, locator, list_uses)
+    archetype_schedules, archetype_values = schedule_maker('CH', date, locator, list_uses)
     calculated_schedules = calc_schedules(list_uses, archetype_schedules, occupancy, archetype_values)
     if not config.has_section('test_mixed_use_schedules'):
         config.add_section('test_mixed_use_schedules')

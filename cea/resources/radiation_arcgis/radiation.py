@@ -16,6 +16,7 @@ import pickle
 
 from cea.interfaces.arcgis.modules import arcpy
 from cea.utilities import epwreader
+import cea.config
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2013, Architecture and Building Systems - ETH Zurich"
@@ -98,7 +99,7 @@ def solar_radiation_vertical(locator, path_arcgis_db, latitude, longitude, year,
 
     sunny_hours_pickle = locator.get_temporary_file('sunny_hours.pickle')
     run_script_in_subprocess('calculate_sunny_hours_of_year',
-                             '--scenario', locator.scenario_path,
+                             '--scenario', locator.scenario,
                              '--sunrise-pickle', sunrise_pickle,
                              '--sunny-hours-pickle', sunny_hours_pickle)
 
@@ -366,6 +367,7 @@ def calculate_sunrise(year_to_simulate, longitude, latitude):
     print('complete calculating sunrise')
     return sunrise
 
+
 def get_latitude(scenario_path):
     import fiona
     import cea.inputlocator
@@ -380,28 +382,6 @@ def get_longitude(scenario_path):
     with fiona.open(cea.inputlocator.InputLocator(scenario_path).get_zone_geometry()) as shp:
         lon = shp.crs['lon_0']
     return lon
-
-
-def run_as_script(scenario_path=None, weather_path=None, latitude=None, longitude=None, year=None):
-    import cea.inputlocator
-    gv = cea.globalvar.GlobalVariables()
-    if scenario_path is None:
-        scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path)
-    if weather_path is None:
-        weather_path = locator.get_default_weather()
-    if latitude is None:
-        latitude = get_latitude(scenario_path)
-    if longitude is None:
-        longitude = get_longitude(scenario_path)
-    if year is None:
-        year = 2016
-    path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
-
-    solar_radiation_vertical(locator=locator, path_arcgis_db=path_default_arcgis_db,
-                             latitude=latitude, longitude=longitude, year=year, gv=gv,
-                             weather_path=weather_path)
-
 
 def run_script_in_subprocess(script_name, *args):
     """Run the script `script_name` (in the same folder as this script) in a subprocess, printing the output"""
@@ -444,16 +424,34 @@ def get_python_exe():
         raise AssertionError("Could not find 'cea_python.pth' in home directory.")
 
 
+def main(config):
+    import cea.inputlocator
+
+    print('Running radiation with scenario = %s' % config.scenario)
+    print('Running radiation with weather = %s' % config.weather)
+    print('Running radiation with latitude = %s' % config.radiation.latitude)
+    print('Running radiation with longitude = %s' % config.radiation.longitude)
+    print('Running radiation with year = %s' % config.radiation.year)
+
+    gv = cea.globalvar.GlobalVariables()
+    locator = cea.inputlocator.InputLocator(config.scenario)
+    weather_path = config.weather
+
+    latitude = config.radiation.latitude
+    longitude = config.radiation.longitude
+
+
+    if latitude is None:
+        latitude = get_latitude(config.scenario)
+    if longitude is None:
+        longitude = get_longitude(config.scenario)
+
+    path_default_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
+
+    solar_radiation_vertical(locator=locator, path_arcgis_db=path_default_arcgis_db,
+                             latitude=latitude, longitude=longitude, year=config.radiation.year, gv=gv,
+                             weather_path=weather_path)
+
+
 if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    parser.add_argument('-w', '--weather', help='Path to the weather file')
-    parser.add_argument('--latitude', help='Latitutde', )
-    parser.add_argument('--longitude', help='Longitude', )
-    parser.add_argument('--year', help='Year', )
-    args = parser.parse_args()
-
-    run_as_script(scenario_path=args.scenario, weather_path=args.weather, latitude=args.latitude,
-                  longitude=args.longitude, year=args.year)
+    main(cea.config.Configuration())

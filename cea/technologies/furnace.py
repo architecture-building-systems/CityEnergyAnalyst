@@ -200,7 +200,7 @@ def calc_Cinv_furnace(Q_design_W, Q_annual_W, gv, locator, technology=0):
     :type Q_annual_W : float
     :param Q_annual_W: annual thermal Power output [Wh]
 
-    :param gV: globalvar.py
+    :param gv: globalvar.py
 
     :rtype InvC_return : float
     :returns InvC_return: total investment Cost for building the plant
@@ -209,7 +209,7 @@ def calc_Cinv_furnace(Q_design_W, Q_annual_W, gv, locator, technology=0):
     :returns InvCa: annualized investment costs in [CHF] including O&M
         
     """
-    furnace_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="Furnace")
+    furnace_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Furnace")
     technology_code = list(set(furnace_cost_data['code']))
     furnace_cost_data[furnace_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
