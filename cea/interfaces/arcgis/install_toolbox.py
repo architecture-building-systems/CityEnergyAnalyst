@@ -48,12 +48,17 @@ def copy_library(toolbox_folder):
     shutil.copy(os.path.join(lib_src_folder, 'modules.py'), lib_dst_folder)
 
     # we also need access to the cli.config file (arcgishelper.CeaTool uses this to figure out the parameters)
-    shutil.copy(os.path.join(lib_src_folder, '..', 'cli', 'cli.config'), lib_dst_folder)
+    lib_cli_dst_folder = os.path.join(toolbox_folder, 'cea', 'interfaces', 'cli')
+    if not os.path.exists(lib_cli_dst_folder):
+        os.makedirs(lib_cli_dst_folder)
+    shutil.copy(os.path.join(lib_src_folder, '..', 'cli', 'cli.config'), lib_cli_dst_folder)
 
     # add `__init__.py` files to interfaces and arcgis folders
     with open(os.path.join(lib_dst_folder, '..', '__init__.py'), 'w') as f:
         f.write('')
     with open(os.path.join(lib_dst_folder, '__init__.py'), 'w') as f:
+        f.write('')
+    with open(os.path.join(lib_cli_dst_folder, '__init__.py'), 'w') as f:
         f.write('')
 
 

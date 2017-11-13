@@ -313,65 +313,13 @@ class DemandTool(CeaTool):
         self.category = 'Dynamic Demand Forecasting'
         self.canRunInBackground = False
 
-class DataHelperTool(object):
-    """
-    integrate the cea/demand/preprocessing/data_helper.py script with ArcGIS.
-    """
-
+class DataHelperTool(CeaTool):
     def __init__(self):
+        self.cea_tool = 'data-helper'
         self.label = 'Data helper'
         self.description = 'Query characteristics of buildings and systems from statistical data'
         self.category = 'Data Management'
         self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        config = cea.config.Configuration()
-        scenario = arcpy.Parameter(
-            displayName="Path to the scenario",
-            name="scenario",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        scenario.value = config.scenario
-        prop_architecture_flag = arcpy.Parameter(
-            displayName="Generate architectural properties",
-            name="architecture",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        prop_architecture_flag.value = 'architecture' in config.data_helper.archetypes
-        prop_HVAC_flag = arcpy.Parameter(
-            displayName="Generate technical systems properties",
-            name="HVAC",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        prop_HVAC_flag.value = 'HVAC' in config.data_helper.archetypes
-        prop_comfort_flag = arcpy.Parameter(
-            displayName="Generate comfort properties",
-            name="comfort",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        prop_comfort_flag.value = 'comfort' in config.data_helper.archetypes
-        prop_internal_loads_flag = arcpy.Parameter(
-            displayName="Generate internal loads properties",
-            name="internal_loads",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        prop_internal_loads_flag.value = 'internal-loads' in config.data_helper.archetypes
-        return [scenario, prop_architecture_flag, prop_HVAC_flag, prop_comfort_flag,
-                prop_internal_loads_flag]
-
-    def execute(self, parameters, _):
-        scenario, parameters = check_senario_exists(parameters)
-        flags = {'architecture': parameters['architecture'].value,
-                 'HVAC': parameters['HVAC'].value,
-                 'comfort': parameters['comfort'].value,
-                 'internal-loads': parameters['internal_loads'].value}
-        archetypes = ' '.join([key for key in flags.keys() if flags[key]])
-        run_cli('data-helper', scenario=scenario, archetypes=archetypes)
 
 
 class BenchmarkGraphsTool(object):
@@ -430,94 +378,13 @@ class BenchmarkGraphsTool(object):
         run_cli('benchmark-graphs', project=project_path, scenarios=scenarios, output_file=output_file)
 
 
-class OperationTool(object):
+class OperationTool(CeaTool):
     def __init__(self):
+        self.cea_tool = 'emissions'
         self.label = 'LCA Operation'
         self.description = 'Calculate emissions and primary energy due to building operation'
         self.category = 'Life Cycle Analysis'
         self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        config = cea.config.Configuration()
-        scenario = arcpy.Parameter(
-            displayName="Path to the scenario",
-            name="scenario",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        scenario.value = config.scenario
-        Qww_flag = arcpy.Parameter(
-            displayName="Create a separate file with emissions due to hot water consumption.",
-            name="Qww",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        Qww_flag.value = 'Qww' in config.emissions.emissions_variables
-        Qhs_flag = arcpy.Parameter(
-            displayName="Create a separate file with emissions due to space heating.",
-            name="Qhs",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        Qhs_flag.value = 'Qhs' in config.emissions.emissions_variables
-        Qcs_flag = arcpy.Parameter(
-            displayName="Create a separate file with emissions due to space cooling.",
-            name="Qcs",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        Qcs_flag.value = 'Qcs' in config.emissions.emissions_variables
-        Qcdata_flag = arcpy.Parameter(
-            displayName="Create a separate file with emissions due to servers cooling.",
-            name="Qcdata",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        Qcdata_flag.value = 'Qcdata' in config.emissions.emissions_variables
-        Qcrefri_flag = arcpy.Parameter(
-            displayName="Create a separate file with emissions due to refrigeration.",
-            name="Qcrefri",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        Qcrefri_flag.value = 'Qcrefri' in config.emissions.emissions_variables
-        Eal_flag = arcpy.Parameter(
-            displayName="Create a separate file with emissions due to appliances and lighting.",
-            name="Eal",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        Eal_flag.value = 'Eal' in config.emissions.emissions_variables
-        Eaux_flag = arcpy.Parameter(
-            displayName="Create a separate file with emissions due to auxiliary electricity.",
-            name="Eaux",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        Eaux_flag.value = 'Eaux' in config.emissions.emissions_variables
-        Epro_flag = arcpy.Parameter(
-            displayName="Create a separate file with emissions due to electricity in industrial processes.",
-            name="Epro",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        Epro_flag.value = 'Epro' in config.emissions.emissions_variables
-        Edata_flag = arcpy.Parameter(
-            displayName="Create a separate file with emissions due to electricity consumption in data centers.",
-            name="Edata",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        Edata_flag.value = 'Edata' in config.emissions.emissions_variables
-
-        return [scenario, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_flag, Eal_flag, Eaux_flag, Epro_flag,
-                Edata_flag]
-
-    def execute(self, parameters, _):
-        scenario, parameters = check_senario_exists(parameters)
-        variables = {'Qww', 'Qhs', 'Qcs', 'Qcdata', 'Qcrefri', 'Eal', 'Eaux', 'Epro', 'Edata'}
-        emissions_variables = ' '.join([p.name for p in parameters.values() if p.value and p.name in variables])
-        run_cli('emissions', scenario=scenario, emissions_variables=emissions_variables)
 
 
 class EmbodiedTool(object):
