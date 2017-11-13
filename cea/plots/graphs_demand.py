@@ -4,13 +4,15 @@ graphs algorithm
 """
 from __future__ import division
 
+import os
+
 import matplotlib.pyplot as plt
 import pandas as pd
 
 import cea
 import cea.inputlocator
 import cea.config
-import multiprocessing
+import multiprocessing as mp
 
 MAX_ANALYSIS_FIELDS = 4
 
@@ -24,7 +26,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def graphs_demand(locator, analysis_fields):
+def graphs_demand(locator, analysis_fields, multiprocessing):
     """
     algorithm to print graphs in PDF concerning the dynamics of each and all buildings
 
@@ -33,6 +35,9 @@ def graphs_demand(locator, analysis_fields):
 
     :param analysis_fields: list of fields (column names in Totals.csv) to analyse
     :type analysis_fields: list[string]
+
+    :param multiprocessing: if set to True, use multiple CPU' for the calculation
+    :type multiprocessing: bool
 
     :returns: - Graphs of each building and total: .Pdf
               - heat map file per variable of interest n.
@@ -47,10 +52,9 @@ def graphs_demand(locator, analysis_fields):
     num_buildings = len(building_names)
 
     print('Storing results in: %s' % locator.get_demand_plots_folder())
-    config = cea.config.Configuration(locator.scenario_path)
-    if config.multiprocessing and multiprocessing.cpu_count() > 1:
-        pool = multiprocessing.Pool()
-        print("Using %i CPU's" % multiprocessing.cpu_count())
+    if multiprocessing and mp.cpu_count() > 1:
+        pool = mp.Pool()
+        print("Using %i CPU's" % mp.cpu_count())
         joblist = []
         for name in building_names:
             job = pool.apply_async(create_demand_graph_for_building,
@@ -109,43 +113,22 @@ def create_demand_graph_for_building(analysis_fields, area_df, color_palette, fi
     pdf.close()
 
 
-def run_as_script(scenario_path=None, analysis_fields=["Ealf_kWh", "Qhsf_kWh", "Qwwf_kWh", "Qcsf_kWh"]):
-    # HINTS FOR ARCGIS INTERFACE:
-    # the user should see all the column names of the total_demands.csv
-    # the user can select a maximum of 4 of those column names to graph (analysis fields!
-    config = cea.config.Configuration()
-    if scenario_path is None:
-        scenario_path = config.default_scenario
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-
-    graphs_demand(locator=locator, analysis_fields=analysis_fields)
-    print('done.')
 
 
-def demand_graph_fields(scenario_path):
-    """Lists the available fields for the demand graphs - these are fields that are present in both the
-    building demand results files as well as the totals file (albeit with different units)."""
-    locator = cea.inputlocator.InputLocator(scenario_path)
-    df_total_demand = pd.read_csv(locator.get_total_demand())
-    total_fields = set(df_total_demand.columns.tolist())
-    first_building = df_total_demand['Name'][0]
-    df_building = pd.read_csv(locator.get_demand_results_file(first_building))
-    fields = set(df_building.columns.tolist())
-    fields.remove('DATE')
-    fields.remove('Name')
-    # remove fields in demand results files that do not have a corresponding field in the totals file
-    bad_fields = set(field for field in fields if not field.split('_')[0] + "_MWhyr" in total_fields)
-    fields = fields - bad_fields
-    return list(fields)
+
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+
+    print('Running demand-graphs with scenario = %s' % config.scenario)
+    print('Running demand-graphs with multiprocessing = %s' % config.multiprocessing)
+    print('Running demand-graphs with analysis-fields = %s' % config.demand_graphs.analysis_fields)
+
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    graphs_demand(locator=locator, analysis_fields=config.demand_graphs.analysis_fields,
+                  multiprocessing=config.multiprocessing)
 
 if __name__ == '__main__':
-    import argparse
+    main(cea.config.Configuration())
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    parser.add_argument('-a', '--analysis_fields', default='Ealf_kWh;Qhsf_kWh;Qwwf_kWh;Qcsf_kWh',
-                        help='Fields to analyse (separated by ";")')
-    args = parser.parse_args()
-    run_as_script(scenario_path=args.scenario, analysis_fields=args.analysis_fields.split(';')[:MAX_ANALYSIS_FIELDS])
 
 

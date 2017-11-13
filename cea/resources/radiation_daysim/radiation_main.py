@@ -104,10 +104,10 @@ def buildings2radiance(rad, ageometry_table, geometry_3D_zone, geometry_3D_surro
         ## for the surrounding buildings only, walls and roofs
         id = 0
         for pypolygon in building_surfaces['walls']:
-            create_radiance_srf(pypolygon, "surroundingbldgs" + str(id), "reflectance0.2" , rad)
+            create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2" , rad)
             id += 1
         for pypolygon in building_surfaces['roofs']:
-            create_radiance_srf(pypolygon, "surroundingbldgs" + str(id), "reflectance0.2", rad)
+            create_radiance_srf(pypolygon, "surroundingbuildings" + str(id), "reflectance0.2", rad)
             id += 1
 
     return
@@ -137,74 +137,75 @@ def reader_surface_properties(locator, input_shp):
 
     return surface_properties.set_index('Name').round(decimals=2)
 
-def radiation_multiprocessing(rad, bldg_dict_list, locator, weather_path, settings, selected_buildings):
-
-    config = cea.config.Configuration(locator.scenario_path)
-
+def radiation_multiprocessing(rad, building_dict_list, locator, weather_path, settings, selected_buildings):
     # get chunks to iterate and start multiprocessing
-    if settings.simulation_parameters['run_all_buildings']:
+    if len(selected_buildings) == 0:
         # get chunks of buildings to iterate
-        chunks = [bldg_dict_list[i:i + settings.simulation_parameters['n_build_in_chunk']] for i in
-                range(0, len(bldg_dict_list),
-                        settings.simulation_parameters['n_build_in_chunk'])]
+        chunks = [building_dict_list[i:i + settings.n_buildings_in_chunk] for i in
+                range(0, len(building_dict_list),
+                        settings.n_buildings_in_chunk)]
     else:
         list_of_building_names = selected_buildings
         chunks = []
-        for bldg_dict in bldg_dict_list:
-            if bldg_dict['name'] in list_of_building_names:
-                chunks.append([bldg_dict])
+        for building_dict in building_dict_list:
+            if building_dict['name'] in list_of_building_names:
+                chunks.append([building_dict])
 
     processes = []
-    for chunk_n, bldg_dict in enumerate(chunks):
+    for chunk_n, building_dict in enumerate(chunks):
         process = mp.Process(target=daysim_main.isolation_daysim, args=(
-            chunk_n, rad, bldg_dict, locator, weather_path, settings))
+            chunk_n, rad, building_dict, locator, weather_path, settings))
         process.start()
         processes.append(process)
     for process in processes:
         process.join()
 
 
-def radiation_singleprocessing(rad, bldg_dict_list, locator, weather_path, settings, selected_buildings):
-
-    if settings.simulation_parameters['run_all_buildings']:
+def radiation_singleprocessing(rad, building_dict_list, locator, weather_path, settings, selected_buildings):
+    if len(selected_buildings) == 0:
         # get chunks of buildings to iterate
-        chunks = [bldg_dict_list[i:i + settings.simulation_parameters['n_build_in_chunk']] for i in
-                range(0, len(bldg_dict_list),
-                        settings.simulation_parameters['n_build_in_chunk'])]
+        chunks = [building_dict_list[i:i + settings.n_buildings_in_chunk] for i in
+                range(0, len(building_dict_list),
+                        settings.n_buildings_in_chunk)]
     else:
         list_of_building_names = selected_buildings
         chunks = []
-        for bldg_dict in bldg_dict_list:
-            if bldg_dict['name'] in list_of_building_names:
-                chunks.append([bldg_dict])
+        for building_dict in building_dict_list:
+            if building_dict['name'] in list_of_building_names:
+                chunks.append([building_dict])
 
-    for chunk_n, bldg_dict in enumerate(chunks):
-        daysim_main.isolation_daysim(chunk_n, rad, bldg_dict, locator, weather_path, settings)
+    for chunk_n, building_dict in enumerate(chunks):
+        daysim_main.isolation_daysim(chunk_n, rad, building_dict, locator, weather_path, settings)
 
-def main(locator, weather_path, selected_buildings):
+def main(config):
     """
     This function makes the calculation of solar insolation in X sensor points for every building in the zone
     of interest. the number of sensor points depends on the size of the grid selected in the SETTINGS.py file and
     are generated automatically.
 
-    :param weather_path: path to the weather file (*.epw) to use
-    :type weather_path: str
-    :param locator: a cea.inputlocator.InputLocator - provides access to file paths inside a scenario
-    :type locator: cea.inputlocator.InputLocator
+    :param config: Configuration object with the settings (genera and radiation-daysim)
+    :type config: cea.config.Configuartion
     :return:
     """
-    settings = cea.config.Configuration(locator.scenario_path).radiation_daysim
+
+    #  reference case need to be provided here
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+
+    #  the selected buildings are the ones for which the individual radiation script is run for
+    #  this is only activated when in default.config, run_all_buildings is set as 'False'
+    selected_buildings = config.radiation_daysim.buildings
+
+    settings = config.radiation_daysim
 
     # import material properties of buildings
     building_surface_properties = reader_surface_properties(locator=locator,
                                                             input_shp=locator.get_building_architecture())
 
-    print "creating 3D geometry and surfaces"
+    print("creating 3D geometry and surfaces")
     # create geometrical faces of terrain and buildings
-    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator,
-                                                                                                    settings.simplification_parameters)
+    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator, settings)
 
-    print "Sending the scene: geometry and materials to daysim"
+    print("Sending the scene: geometry and materials to daysim")
     # send materials
     daysim_mat = locator.get_temporary_file('default_materials.rad')
     rad = py2radiance.Rad(daysim_mat, locator.get_temporary_folder())
@@ -217,19 +218,13 @@ def main(locator, weather_path, selected_buildings):
     rad.create_rad_input_file()
 
     time1 = time.time()
-    if settings.simulation_parameters['multiprocessing']:
-        radiation_multiprocessing(rad, geometry_3D_zone, locator, weather_path, settings, selected_buildings)
+    if config.multiprocessing:
+        radiation_multiprocessing(rad, geometry_3D_zone, locator, config.weather, settings, selected_buildings)
     else:
-        radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path, settings, selected_buildings)
+        radiation_singleprocessing(rad, geometry_3D_zone, locator, config.weather, settings, selected_buildings)
 
-    print "Daysim simulation finished in ", (time.time() - time1) / 60.0, " mins"
+    print("Daysim simulation finished in %.2f mins" % ((time.time() - time1) / 60.0))
 
 
 if __name__ == '__main__':
-    #  reference case need to be provided here
-    locator = cea.inputlocator.InputLocator(scenario_path=r'c:\reference-case-ecocampus\baseline')
-    weather_path = locator.get_default_weather()
-    #  the selected buildings are the ones for which the individual radiation script is run for
-    #  this is only activated when in default.config, run_all_buildings is set as 'False'
-    selected_buildings = ['B191', 'B003', 'B004', 'B005', 'B006', 'B021', 'B182', 'B191', 'B212', 'B216']
-    main(locator=locator, weather_path=weather_path, selected_buildings=selected_buildings)
+    main(cea.config.Configuration())

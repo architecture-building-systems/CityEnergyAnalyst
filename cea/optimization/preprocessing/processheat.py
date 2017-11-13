@@ -14,7 +14,7 @@ import pandas as pd
 from cea.technologies import boilers
 
 
-def calc_pareto_Qhp(locator, total_demand, gv):
+def calc_pareto_Qhp(locator, total_demand, gv, config):
     """
     This function calculates the contribution to the pareto optimal results of process heating,
 

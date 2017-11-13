@@ -98,7 +98,7 @@ def run_as_script():
     import cea.inputlocator
     config = cea.config.Configuration()
 
-    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     range_finder(locator)
 
 if __name__ == '__main__':

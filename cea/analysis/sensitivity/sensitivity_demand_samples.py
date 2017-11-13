@@ -27,10 +27,11 @@ import os
 
 import numpy as np
 import pandas as pd
+import pickle
 from SALib.sample.saltelli import sample as sampler_sobol
 from SALib.sample.morris import sample as sampler_morris
 from cea.inputlocator import InputLocator
-
+import cea.config
 
 __author__ = "Jimeno A. Fonseca; Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -115,47 +116,47 @@ def sampler(method, problem, num_samples, sampler_parameters):
         raise ValueError("Sampler method unknown: %s" % method)
 
 
-def run_as_script(method, num_samples, variable_groups, sampler_parameters, samples_folder):
-    import pickle
+def main(config):
+    scenario = config.scenario
+    method = config.sensitivity_demand.method
+    num_samples = config.sensitivity_demand.num_samples
+    calc_second_order = config.sensitivity_demand.calc_second_order
+    grid_jump = config.sensitivity_demand.grid_jump
+    num_levels = config.sensitivity_demand.num_levels
+    samples_folder = config.sensitivity_demand.samples_folder
+    variable_groups = config.sensitivity_demand.variable_groups
 
-    samples, problem_dict = create_demand_samples(method=method, num_samples=num_samples,
+    assert os.path.exists(scenario), 'Scenario not found: %s' % scenario
+
+    print("Running sensitivity-demand-samples for scenario = %s" % scenario)
+    print("Running sensitivity-demand-samples with method = %s" % method)
+    print("Running sensitivity-demand-samples with num-samples = %s" % num_samples)
+    print("Running sensitivity-demand-samples with calc-second-order = %s" % calc_second_order)
+    print("Running sensitivity-demand-samples with grid-jump = %s" % grid_jump)
+    print("Running sensitivity-demand-samples with num-levels = %s" % num_levels)
+    print("Running sensitivity-demand-samples with samples-folder = %s" % samples_folder)
+    print("Running sensitivity-demand-samples with variable-groups = %s" % variable_groups)
+
+    sampler_parameters = {}
+    if method == 'morris':
+        sampler_parameters['grid_jump'] = grid_jump
+        sampler_parameters['num_levels'] = num_levels
+    else:
+        sampler_parameters['calc_second_order'] = calc_second_order
+
+    samples, problem_dict = create_demand_samples(method=method,
+                                                  num_samples=num_samples,
                                                   variable_groups=variable_groups,
                                                   sampler_parameters=sampler_parameters)
 
     # save `samples.npy` and `problem.pickle` to the samples folder
+    if not os.path.exists(samples_folder):
+        os.makedirs(samples_folder)
     np.save(os.path.join(samples_folder, 'samples.npy'), samples)
     with open(os.path.join(samples_folder, 'problem.pickle'), 'w') as f:
         pickle.dump(problem_dict, f)
     print('created %i samples in %s' % (samples.shape[0], samples_folder))
 
+
 if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-m', '--method', help='Method to use valid values: "morris" (default), "sobol"',
-                        default='sobol', choices=['sobol', 'morris'])
-    parser.add_argument('-n', '--num-samples', help='number of samples (generally 1000 or until it converges)',
-                        default=1000, type=int)
-    parser.add_argument('--calc-second-order', help='(sobol) calc_second_order parameter', type=bool,
-                        default=False)
-    parser.add_argument('--grid-jump', help='(morris) grid_jump parameter', type=int,
-                        default=2)
-    parser.add_argument('--num-levels', help='(morris) num_levels parameter', type=int,
-                        default=4)
-    parser.add_argument('-S', '--samples-folder', default='.',
-                        help='folder to place the output files (samples.npy, problem.pickle) in')
-    parser.add_argument('-V', '--variable-groups', default=['ENVELOPE', 'INDOOR_COMFORT', 'INTERNAL_LOADS'], nargs='+',
-                        help=('list of variable groups. Valid values: ENVELOPE, ' +
-                              'INDOOR_COMFORT, INTERNAL_LOADS'))
-    args = parser.parse_args()
-
-    # valid parameters to pass to the sampler method vary between methods, based on the method used, create
-    # a dictionary with the parameters.
-    sampler_params = {}
-    if args.method == 'morris':
-        sampler_params['grid_jump'] = args.grid_jump
-        sampler_params['num_levels'] = args.num_levels
-    elif args.method == 'sobol':
-        sampler_params['calc_second_order'] = args.calc_second_order
-
-    run_as_script(args.method, args.num_samples, args.variable_groups, sampler_params, args.samples_folder)
+    main(cea.config.Configuration())

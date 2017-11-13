@@ -8,10 +8,13 @@ we would decouple the python version used by CEA from the ArcGIS version.
 
 See the script ``install_toolbox.py`` for the mechanics of installing the toolbox into the ArcGIS system.
 """
-import os   
+import os
 import subprocess
 import tempfile
 import arcpy  # NOTE to developers: this is provided by ArcGIS after doing `cea install-toolbox`
+
+import cea.config
+import cea.inputlocator
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -23,6 +26,9 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
+# I know this is bad form, but the locator will never really change, so I'm making it global to this file
+locator = cea.inputlocator.InputLocator(None)
+
 class Toolbox(object):
     """List the tools to show in the toolbox."""
 
@@ -30,7 +36,7 @@ class Toolbox(object):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
         self.tools = [OperationCostsTool, RetrofitPotentialTool, DemandTool, DataHelperTool, BenchmarkGraphsTool,
-                      OperationTool, EmbodiedTool, MobilityTool, PhotovoltaicPannelsTool, SolarCollectorPanelsTool,
+                      OperationTool, EmbodiedTool, MobilityTool, PhotovoltaicPanelsTool, SolarCollectorPanelsTool,
                       PhotovoltaicThermalPanelsTool, DemandGraphsTool, ScenarioPlotsTool, RadiationTool,
                       RadiationDaysimTool, HeatmapsTool, DbfToExcelTool, ExcelToDbfTool, ExtractReferenceCaseTool,
                       SensitivityDemandSamplesTool, SensitivityDemandSimulateTool, SensitivityDemandAnalyzeTool,
@@ -56,7 +62,7 @@ class OperationCostsTool(object):
 
     def execute(self, parameters, _):
         scenario_path = parameters[0].valueAsText
-        run_cli(scenario_path, 'operation-costs')
+        run_cli('operation-costs', scenario=scenario_path)
 
 
 class RetrofitPotentialTool(object):
@@ -67,21 +73,25 @@ class RetrofitPotentialTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        config = cea.config.Configuration()
+
         scenario_path = arcpy.Parameter(displayName="Path to the scenario", name="scenario_path", datatype="DEFolder",
                                         parameterType="Required", direction="Input")
-        retrofit_target_date = arcpy.Parameter(displayName="Year when the retrofit will take place",
-                                               name="retrofit_target_date", datatype="GPLong", parameterType="Required",
+        scenario_path.value = config.scenario
+
+        retrofit_target_year = arcpy.Parameter(displayName="Year when the retrofit will take place",
+                                               name="retrofit_target_year", datatype="GPLong", parameterType="Required",
                                                direction="Input")
-        retrofit_target_date.value = 2020
+        retrofit_target_year.value = config.retrofit_potential.retrofit_target_year
 
         keep_partial_matches = arcpy.Parameter(displayName="Keep buildings partially matching the selected criteria",
                                                name="keep_partial_matches",
                                                datatype="GPBoolean", parameterType="Required", direction="Input")
-        keep_partial_matches.value = False
+        keep_partial_matches.value = config.retrofit_potential.keep_partial_matches
 
         name = arcpy.Parameter(displayName="Name for new scenario", name="name", datatype="String",
                                parameterType="Required", direction="Input")
-        name.value = "retrofit_HVAC"
+        name.value = config.retrofit_potential.retrofit_scenario_name
 
         cb_age_threshold = arcpy.Parameter(displayName="Enable threshold age of HVAC (built / retrofitted)",
                                            name="cb_age_threshold", datatype="GPBoolean", parameterType="Required",
@@ -91,7 +101,7 @@ class RetrofitPotentialTool(object):
 
         age_threshold = arcpy.Parameter(displayName="threshold age of HVAC (built / retrofitted)", name="age_threshold",
                                         datatype="GPLong", parameterType="Optional", direction="Input", category="age")
-        age_threshold.value = 15
+        age_threshold.value = config.retrofit_potential.age_threshold
         age_threshold.enabled = False
 
         cb_eui_heating_threshold = arcpy.Parameter(displayName="Enable end use intensity threshold for heating",
@@ -105,7 +115,7 @@ class RetrofitPotentialTool(object):
                                                 name="eui_heating_threshold", datatype="GPLong",
                                                 parameterType="Optional", direction="Input",
                                                 category="end use intensity")
-        eui_heating_threshold.value = 50
+        eui_heating_threshold.value = config.retrofit_potential.eui_heating_threshold
         eui_heating_threshold.enabled = False
 
         cb_eui_hot_water_threshold = arcpy.Parameter(displayName="Enable end use intensity threshold for hot water",
@@ -119,7 +129,7 @@ class RetrofitPotentialTool(object):
                                                   name="eui_hot_water_threshold", datatype="GPLong",
                                                   parameterType="Optional", direction="Input",
                                                   category="end use intensity")
-        eui_hot_water_threshold.value = 50
+        eui_hot_water_threshold.value = config.retrofit_potential.eui_hot_water_threshold
         eui_hot_water_threshold.enabled = False
 
         cb_eui_cooling_threshold = arcpy.Parameter(displayName="Enable end use intensity threshold for cooling",
@@ -133,7 +143,7 @@ class RetrofitPotentialTool(object):
                                                 name="eui_cooling_threshold", datatype="GPLong",
                                                 parameterType="Optional", direction="Input",
                                                 category="end use intensity")
-        eui_cooling_threshold.value = 4
+        eui_cooling_threshold.value = config.retrofit_potential.eui_cooling_threshold
         eui_cooling_threshold.enabled = False
 
         cb_eui_electricity_threshold = arcpy.Parameter(displayName="Enable end use intensity threshold for electricity",
@@ -147,7 +157,7 @@ class RetrofitPotentialTool(object):
                                                     name="eui_electricity_threshold", datatype="GPLong",
                                                     parameterType="Optional", direction="Input",
                                                     category="end use intensity")
-        eui_electricity_threshold.value = 20
+        eui_electricity_threshold.value = config.retrofit_potential.eui_electricity_threshold
         eui_electricity_threshold.enabled = False
 
         cb_emissions_operation_threshold = arcpy.Parameter(
@@ -160,7 +170,7 @@ class RetrofitPotentialTool(object):
                                                         name="emissions_operation_threshold", datatype="GPLong",
                                                         parameterType="Optional", direction="Input",
                                                         category="emissions")
-        emissions_operation_threshold.value = 30
+        emissions_operation_threshold.value = config.retrofit_potential.emissions_operation_threshold
         emissions_operation_threshold.enabled = False
 
         cb_heating_costs_threshold = arcpy.Parameter(displayName="Enable threshold for heating costs",
@@ -174,7 +184,7 @@ class RetrofitPotentialTool(object):
                                                   name="heating_costs_threshold", datatype="GPLong",
                                                   parameterType="Optional", direction="Input",
                                                   category="operation costs")
-        heating_costs_threshold.value = 2
+        heating_costs_threshold.value = config.retrofit_potential.heating_costs_threshold
         heating_costs_threshold.enabled = False
 
         cb_hot_water_costs_threshold = arcpy.Parameter(displayName="Enable threshold for hot water costs",
@@ -188,7 +198,7 @@ class RetrofitPotentialTool(object):
                                                     name="hot_water_costs_threshold", datatype="GPLong",
                                                     parameterType="Optional", direction="Input",
                                                     category="operation costs")
-        hot_water_costs_threshold.value = 2
+        hot_water_costs_threshold.value = config.retrofit_potential.hot_water_costs_threshold
         hot_water_costs_threshold.enabled = False
 
         cb_cooling_costs_threshold = arcpy.Parameter(displayName="Enable threshold for cooling costs",
@@ -202,7 +212,7 @@ class RetrofitPotentialTool(object):
                                                   name="cooling_costs_threshold", datatype="GPLong",
                                                   parameterType="Optional", direction="Input",
                                                   category="operation costs")
-        cooling_costs_threshold.value = 2
+        cooling_costs_threshold.value = config.retrofit_potential.cooling_costs_threshold
         cooling_costs_threshold.enabled = False
 
         cb_electricity_costs_threshold = arcpy.Parameter(displayName="Enable threshold for electricity costs",
@@ -216,7 +226,7 @@ class RetrofitPotentialTool(object):
                                                       name="electricity_costs_threshold", datatype="GPLong",
                                                       parameterType="Optional", direction="Input",
                                                       category="operation costs")
-        electricity_costs_threshold.value = 2
+        electricity_costs_threshold.value = config.retrofit_potential.electricity_costs_threshold
         electricity_costs_threshold.enabled = False
 
         cb_heating_losses_threshold = arcpy.Parameter(
@@ -230,7 +240,7 @@ class RetrofitPotentialTool(object):
                                                    name="heating_losses_threshold", datatype="GPLong",
                                                    parameterType="Optional", direction="Input",
                                                    category="HVAC system losses")
-        heating_losses_threshold.value = 15
+        heating_losses_threshold.value = config.retrofit_potential.heating_losses_threshold
         heating_losses_threshold.enabled = False
 
         cb_hot_water_losses_threshold = arcpy.Parameter(
@@ -243,7 +253,7 @@ class RetrofitPotentialTool(object):
                                                      name="hot_water_losses_threshold", datatype="GPLong",
                                                      parameterType="Optional", direction="Input",
                                                      category="HVAC system losses")
-        hot_water_losses_threshold.value = 15
+        hot_water_losses_threshold.value = config.retrofit_potential.hot_water_losses_threshold
         hot_water_losses_threshold.enabled = False
 
         cb_cooling_losses_threshold = arcpy.Parameter(
@@ -257,10 +267,10 @@ class RetrofitPotentialTool(object):
                                                    name="cooling_losses_threshold", datatype="GPLong",
                                                    parameterType="Optional", direction="Input",
                                                    category="HVAC system losses")
-        cooling_losses_threshold.value = 15
+        cooling_losses_threshold.value = config.retrofit_potential.cooling_losses_threshold
         cooling_losses_threshold.enabled = False
 
-        return [scenario_path, retrofit_target_date, keep_partial_matches, name, cb_age_threshold, age_threshold,
+        return [scenario_path, retrofit_target_year, keep_partial_matches, name, cb_age_threshold, age_threshold,
                 cb_eui_heating_threshold, eui_heating_threshold, cb_eui_hot_water_threshold, eui_hot_water_threshold,
                 cb_eui_cooling_threshold, eui_cooling_threshold, cb_eui_electricity_threshold,
                 eui_electricity_threshold, cb_emissions_operation_threshold, emissions_operation_threshold,
@@ -292,26 +302,32 @@ class RetrofitPotentialTool(object):
                 parameters[parameter_name[3:]].enabled = parameters[parameter_name].value
 
     def execute(self, parameters, _):
-        scenario_path, retrofit_target_date, include_only_matches_to_all_criteria, name = parameters[:4]
+        scenario_path, retrofit_target_year, include_only_matches_to_all_criteria, name = parameters[:4]
         scenario_path = scenario_path.valueAsText
-        retrofit_target_date = retrofit_target_date.value
+        retrofit_target_year = retrofit_target_year.value
         include_only_matches_to_all_criteria = include_only_matches_to_all_criteria.value
         name = name.valueAsText
-
-        args = ['--retrofit-target-date', str(retrofit_target_date), '--name', name]
-        if include_only_matches_to_all_criteria:
-            args.append('--keep-partial-matches')
-
         parameters = {p.name: p for p in parameters[4:]}
-        for p_name in parameters.keys():
-            if p_name.startswith('cb_'):
-                checkbox = parameters[p_name]
-                parameter = parameters[p_name[3:]]
-                if checkbox.value and (parameter.value is not None):
-                    args.append('--%s' % parameter.name.replace('_', '-'))
-                    args.append(str(parameter.value))
-
-        run_cli(scenario_path, 'retrofit-potential', *args)
+        args = {
+            'scenario': scenario_path,
+            'retrofit-scenario-name': name,
+            'retrofit-target-year': retrofit_target_year,
+            'keep-partial-matches': include_only_matches_to_all_criteria,
+            'age-threshold': parameters['age_threshold'].value if parameters['cb_age_threshold'].value else None,
+            'hot-water-costs-threshold': parameters['hot_water_costs_threshold'].value if parameters['cb_hot_water_costs_threshold'].value else None,
+            'emissions-operation-threshold': parameters['emissions_operation_threshold'].value if parameters['cb_emissions_operation_threshold'].value else None,
+            'eui-electricity-threshold': parameters['eui_electricity_threshold'].value if parameters['cb_eui_electricity_threshold'].value else None,
+            'heating-costs-threshold': parameters['heating_costs_threshold'].value if parameters['cb_heating_costs_threshold'].value else None,
+            'eui-hot-water-threshold': parameters['eui_hot_water_threshold'].value if parameters['cb_eui_hot_water_threshold'].value else None,
+            'electricity-costs-threshold': parameters['electricity_costs_threshold'].value if parameters['cb_electricity_costs_threshold'].value else None,
+            'heating-losses-threshold': parameters['heating_losses_threshold'].value if parameters['cb_heating_losses_threshold'].value else None,
+            'cooling-losses-threshold': parameters['cooling_losses_threshold'].value if parameters['cb_cooling_losses_threshold'].value else None,
+            'eui-cooling-threshold': parameters['eui_cooling_threshold'].value if parameters['cb_eui_cooling_threshold'].value else None,
+            'hot-water-losses-threshold': parameters['hot_water_losses_threshold'].value if parameters['cb_hot_water_losses_threshold'].value else None,
+            'eui-heating-threshold': parameters['eui_heating_threshold'].value if parameters['cb_eui_heating_threshold'].value else None,
+            'cooling-costs-threshold': parameters['cooling_costs_threshold'].value if parameters['cb_cooling_costs_threshold'].value else None,
+        }
+        run_cli('retrofit-potential', **args)
 
 
 class DemandTool(object):
@@ -324,20 +340,23 @@ class DemandTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        config = cea.config.Configuration()
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
+        scenario_path.value = config.scenario
+
         weather_name = arcpy.Parameter(
             displayName="Weather file (choose from list or enter full path to .epw file)",
             name="weather_name",
             datatype="String",
             parameterType="Required",
             direction="Input")
-        weather_name.filter.list = get_weather_names() + ['<choose path from below>']
-        weather_name.enabled = False
+        weather_name.filter.list = get_weather_names() + ['<custom>']
+        weather_name.value = get_db_weather_name(config.weather) if is_db_weather(config.weather) else '<custom>'
 
         weather_path = arcpy.Parameter(
             displayName="Path to .epw file",
@@ -346,7 +365,7 @@ class DemandTool(object):
             parameterType="Optional",
             direction="Input")
         weather_path.filter.list = ['epw']
-        weather_path.enabled = False
+        weather_path.enabled = not is_db_weather(config.weather)
 
         dynamic_infiltration = arcpy.Parameter(
             displayName="Use dynamic infiltration model (slower)",
@@ -354,7 +373,7 @@ class DemandTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        dynamic_infiltration.enabled = False
+        dynamic_infiltration.value = config.demand.use_dynamic_infiltration_calculation
 
         multiprocessing = arcpy.Parameter(
             displayName="Use multiple cores to speed up processing",
@@ -362,53 +381,40 @@ class DemandTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        multiprocessing.enabled = False
+        multiprocessing.value = config.multiprocessing
 
         return [scenario_path, weather_name, weather_path, dynamic_infiltration, multiprocessing]
 
     def updateParameters(self, parameters):
-        scenario_path = parameters[0].valueAsText
-        if scenario_path is None:
-            for p in parameters[1:]:
-                p.enabled = False
-            return
+        parameters = {p.name: p for p in parameters}
+        scenario_path = parameters['scenario_path'].valueAsText
         if not os.path.exists(scenario_path):
-            for p in parameters[1:]:
-                p.enabled = False
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
-            return
+            parameters['scenario_path'].setErrorMessage('Scenario folder not found: %s' % scenario_path)
 
-        if not parameters[1].enabled:
-            for p in parameters[1:]:
-                p.enabled = True
-            parameters = {p.name: p for p in parameters}
+        parameters['weather_path'].enabled = parameters['weather_name'].value == '<custom>'
+        weather_path = parameters['weather_path'].valueAsText
+        if is_builtin_weather_path(weather_path):
+            parameters['weather_path'].enabled = False
+            parameters['weather_name'].value = get_db_weather_name(weather_path)
 
-            parameters['dynamic_infiltration'].value = read_config_boolean(scenario_path, 'demand',
-                                                                           'use-dynamic-infiltration-calculation')
-            parameters['multiprocessing'].value = read_config_boolean(scenario_path, 'general', 'multiprocessing')
+        if parameters['weather_name'].value != '<custom>':
+            parameters['weather_path'].value = locator.get_weather(parameters['weather_name'].value)
 
-            weather_path = read_config_string(scenario_path, 'general', 'weather')
-            if is_builtin_weather_path(weather_path):
-                parameters['weather_path'].enabled = False
-                parameters['weather_name'].value = builtin_weather_name(weather_path)
-            else:
-                parameters['weather_name'].value = '<choose path from below>'
-                parameters['weather_path'].value = weather_path
-        else:
-            parameters = {p.name: p for p in parameters}
-            parameters['weather_path'].enabled = parameters['weather_name'].value == '<choose path from below>'
 
     def updateMessages(self, parameters):
-        scenario_path = parameters[0].valueAsText
+        parameters = {p.name: p for p in parameters}
+        scenario_path = parameters['scenario_path'].valueAsText
         if scenario_path is None:
             return
         if not os.path.exists(scenario_path):
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            parameters['scenario_path'].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
-        if not os.path.exists(get_radiation(scenario_path)):
-            parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
-        if not os.path.exists(get_surface_properties(scenario_path)):
-            parameters[0].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
+
+        locator = cea.inputlocator.InputLocator(scenario_path)
+        if not os.path.exists(locator.get_radiation()):
+            parameters['scenario_path'].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
+        if not os.path.exists(locator.get_surface_properties()):
+            parameters['scenario_path'].setErrorMessage("No radiation data found for scenario. Run radiation script first.")
         return
 
     def execute(self, parameters, _):
@@ -417,34 +423,27 @@ class DemandTool(object):
         weather_name = parameters['weather_name'].valueAsText
         weather_path_param = parameters['weather_path']
         if weather_name in get_weather_names():
-            weather_path = get_weather_path(weather_name)
+            weather_path = locator.get_weather(weather_name)
         elif weather_path_param.enabled:
             if os.path.exists(weather_path_param.valueAsText) and weather_path_param.valueAsText.endswith('.epw'):
                 weather_path = weather_path_param.valueAsText
+            else:
+                weather_path = locator.get_default_weather()
         else:
-            weather_path = get_weather_path()
+            weather_path = locator.get_default_weather()
 
         use_dynamic_infiltration_calculation = parameters['dynamic_infiltration'].value
         multiprocessing = parameters['multiprocessing'].value
 
-        # save the configuration to the scenario.config file
-        write_config_string(scenario_path, 'general', 'weather', weather_path)
-        write_config_boolean(scenario_path, 'demand', 'use-dynamic-infiltration-calculation',
-                             use_dynamic_infiltration_calculation)
-        write_config_boolean(scenario_path, 'general', 'multiprocessing', multiprocessing)
-
         # run the demand script
-        args = [scenario_path, 'demand', '--weather', weather_path]
-        if use_dynamic_infiltration_calculation:
-            args.append('--use-dynamic-infiltration-calculation')
-        if multiprocessing:
-            args.append('--multiprocessing')
-        run_cli(*args)
+        run_cli('demand', scenario=scenario_path, weather=weather_path,
+                use_dynamic_infiltration_calculation=use_dynamic_infiltration_calculation,
+                multiprocessing=multiprocessing)
 
 
 class DataHelperTool(object):
     """
-    integrate the cea/demand/preprocessing/properties.py script with ArcGIS.
+    integrate the cea/demand/preprocessing/data_helper.py script with ArcGIS.
     """
 
     def __init__(self):
@@ -454,59 +453,54 @@ class DataHelperTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        config = cea.config.Configuration()
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
-        prop_thermal_flag = arcpy.Parameter(
-            displayName="Generate thermal properties",
-            name="prop_thermal_flag",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        prop_thermal_flag.value = True
+        scenario_path.value = config.scenario
         prop_architecture_flag = arcpy.Parameter(
             displayName="Generate architectural properties",
-            name="prop_architecture_flag",
+            name="architecture",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        prop_architecture_flag.value = True
+        prop_architecture_flag.value = 'architecture' in config.data_helper.archetypes
         prop_HVAC_flag = arcpy.Parameter(
             displayName="Generate technical systems properties",
-            name="prop_HVAC_flag",
+            name="HVAC",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        prop_HVAC_flag.value = True
+        prop_HVAC_flag.value = 'HVAC' in config.data_helper.archetypes
         prop_comfort_flag = arcpy.Parameter(
             displayName="Generate comfort properties",
-            name="prop_comfort_flag",
+            name="comfort",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        prop_comfort_flag.value = True
+        prop_comfort_flag.value = 'comfort' in config.data_helper.archetypes
         prop_internal_loads_flag = arcpy.Parameter(
             displayName="Generate internal loads properties",
-            name="prop_internal_loads_flag",
+            name="internal_loads",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        prop_internal_loads_flag.value = True
-        return [scenario_path, prop_thermal_flag, prop_architecture_flag, prop_HVAC_flag, prop_comfort_flag,
+        prop_internal_loads_flag.value = 'internal-loads' in config.data_helper.archetypes
+        return [scenario_path, prop_architecture_flag, prop_HVAC_flag, prop_comfort_flag,
                 prop_internal_loads_flag]
 
     def execute(self, parameters, _):
-        scenario_path = parameters[0].valueAsText
-        flags = {'thermal': parameters[1].value,
-                 'architecture': parameters[2].value,
-                 'HVAC': parameters[3].value,
-                 'comfort': parameters[4].value,
-                 'internal-loads': parameters[5].value}
-        archetypes = [key for key in flags.keys() if flags[key]]
-        run_cli(scenario_path, 'data-helper', '--archetypes', *archetypes)
+        parameters = {p.name: p for p in parameters}
+        scenario_path = parameters['scenario_path'].valueAsText
+        flags = {'architecture': parameters['architecture'].value,
+                 'HVAC': parameters['HVAC'].value,
+                 'comfort': parameters['comfort'].value,
+                 'internal-loads': parameters['internal_loads'].value}
+        archetypes = ' '.join([key for key in flags.keys() if flags[key]])
+        run_cli('data-helper', scenario=scenario_path, archetypes=archetypes)
 
 
 class BenchmarkGraphsTool(object):
@@ -519,31 +513,50 @@ class BenchmarkGraphsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        scenarios = arcpy.Parameter(
-            displayName="Path to the scenarios to plot",
-            name="scenarios",
+        config = cea.config.Configuration()
+        project = arcpy.Parameter(
+            displayName="Path to the folder containing the scenarios",
+            name="project",
             datatype="DEFolder",
+            parameterType="Required",
+            direction="Input")
+        project.value = config.benchmark_graphs.project
+        scenarios = arcpy.Parameter(
+            displayName="List of scenarios to plot (subdirectories of the project)",
+            name="scenarios",
+            datatype="String",
             parameterType="Required",
             direction="Input",
             multiValue=True)
+        scenarios.filter.list = []
         output_file = arcpy.Parameter(
             displayName="Path to output PDF",
             name="output_file",
             datatype="DEFile",
             parameterType="Required",
-            direction="Output")
+            direction="Input")
         output_file.filter.list = ['pdf']
-        return [scenarios, output_file]
+        output_file.value = config.benchmark_graphs.output_file
+        return [project, scenarios, output_file]
+
+    def updateParameters(self, parameters):
+        config = cea.config.Configuration()
+        parameters = {p.name: p for p in parameters}
+        project_path = parameters['project'].valueAsText
+        if not os.path.exists(project_path):
+            parameters['project'].setErrorMessage('Project folder not found: %s' % project_path)
+            return
+        scenarios = parameters['scenarios']
+        scenarios.filter.list = [f for f in os.listdir(project_path) if os.path.isdir(os.path.join(project_path, f))]
 
     def execute(self, parameters, messages):
-        scenarios = parameters[0].valueAsText
-        scenarios = scenarios.replace('"', '')
-        scenarios = scenarios.replace("'", '')
-        scenarios = scenarios.split(';')
-        arcpy.AddMessage(scenarios)
-        output_file = parameters[1].valueAsText
-        run_cli(None, 'benchmark-graphs', '--output-file', output_file, '--scenarios', *scenarios)
-        return
+        parameters = {p.name: p for p in parameters}
+        project_path = parameters['project'].valueAsText
+        add_message(repr(parameters['scenarios'].value))
+        value_table = parameters['scenarios'].value
+        scenarios = ' '.join([value_table.getValue(i, 0) for i in range(value_table.rowCount)])
+        output_file = parameters['output_file'].valueAsText
+        run_cli('benchmark-graphs', project=project_path, scenarios=scenarios, output_file=output_file)
 
 
 class OperationTool(object):
@@ -554,94 +567,87 @@ class OperationTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        config = cea.config.Configuration()
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
+        scenario_path.value = config.scenario
         Qww_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to hot water consumption.",
-            name="Qww_flag",
+            name="Qww",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        Qww_flag.value = True
+        Qww_flag.value = 'Qww' in config.emissions.emissions_variables
         Qhs_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to space heating.",
-            name="Qhs_flag",
+            name="Qhs",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        Qhs_flag.value = True
+        Qhs_flag.value = 'Qhs' in config.emissions.emissions_variables
         Qcs_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to space cooling.",
-            name="Qcs_flag",
+            name="Qcs",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        Qcs_flag.value = True
+        Qcs_flag.value = 'Qcs' in config.emissions.emissions_variables
         Qcdata_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to servers cooling.",
-            name="Qcdata_flag",
+            name="Qcdata",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        Qcdata_flag.value = True
+        Qcdata_flag.value = 'Qcdata' in config.emissions.emissions_variables
         Qcrefri_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to refrigeration.",
-            name="Qcrefri_flag",
+            name="Qcrefri",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        Qcrefri_flag.value = True
+        Qcrefri_flag.value = 'Qcrefri' in config.emissions.emissions_variables
         Eal_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to appliances and lighting.",
-            name="Eal_flag",
+            name="Eal",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        Eal_flag.value = True
+        Eal_flag.value = 'Eal' in config.emissions.emissions_variables
         Eaux_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to auxiliary electricity.",
-            name="Eaux_flag",
+            name="Eaux",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        Eaux_flag.value = True
+        Eaux_flag.value = 'Eaux' in config.emissions.emissions_variables
         Epro_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to electricity in industrial processes.",
-            name="Epro_flag",
+            name="Epro",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        Epro_flag.value = True
+        Epro_flag.value = 'Epro' in config.emissions.emissions_variables
         Edata_flag = arcpy.Parameter(
             displayName="Create a separate file with emissions due to electricity consumption in data centers.",
-            name="Edata_flag",
+            name="Edata",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        Edata_flag.value = True
+        Edata_flag.value = 'Edata' in config.emissions.emissions_variables
 
         return [scenario_path, Qww_flag, Qhs_flag, Qcs_flag, Qcdata_flag, Qcrefri_flag, Eal_flag, Eaux_flag, Epro_flag,
                 Edata_flag]
 
     def execute(self, parameters, _):
-        scenario_path = parameters[0].valueAsText
-        flags = {
-            'Qww': parameters[1].value,
-            'Qhs': parameters[2].value,
-            'Qcs': parameters[3].value,
-            'Qcdata': parameters[4].value,
-            'Qcrefri': parameters[5].value,
-            'Eal': parameters[6].value,
-            'Eaux': parameters[7].value,
-            'Epro': parameters[8].value,
-            'Edata': parameters[9].value,
-        }
-        extra_files_to_create = [key for key in flags if flags[key]]
-        run_cli(scenario_path, 'emissions', '--extra-files-to-create', *extra_files_to_create)
+        parameters = {p.name: p for p in parameters}
+        scenario_path = parameters['scenario_path'].valueAsText
+        variables = {'Qww', 'Qhs', 'Qcs', 'Qcdata', 'Qcrefri', 'Eal', 'Eaux', 'Epro', 'Edata'}
+        emissions_variables = ' '.join([p.name for p in parameters.values() if p.value and p.name in variables])
+        run_cli('emissions', scenario=scenario_path, emissions_variables=emissions_variables)
 
 
 class EmbodiedTool(object):
@@ -652,13 +658,14 @@ class EmbodiedTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
-        yearcalc = arcpy.Parameter(
+        config = cea.config.Configuration()
+        year_to_calculate = arcpy.Parameter(
             displayName="Year to calculate",
-            name="yearcalc",
+            name="year_to_calculate",
             datatype="GPLong",
             parameterType="Required",
             direction="Input")
-        yearcalc.value = 2014
+        year_to_calculate.value = config.embodied_energy.year_to_calculate
 
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
@@ -666,13 +673,15 @@ class EmbodiedTool(object):
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
+        scenario_path.value = config.scenario
 
-        return [yearcalc, scenario_path]
+        return [year_to_calculate, scenario_path]
 
     def execute(self, parameters, _):
-        year_to_calculate = int(parameters[0].valueAsText)
-        scenario_path = parameters[1].valueAsText
-        run_cli(scenario_path, 'embodied-energy', '--year-to-calculate', year_to_calculate)
+        parameters = {p.name: p for p in parameters}
+        year_to_calculate = int(parameters['year_to_calculate'].valueAsText)
+        scenario_path = parameters['scenario_path'].valueAsText
+        run_cli('embodied-energy', scenario=scenario_path, year_to_calculate=year_to_calculate)
 
 
 class MobilityTool(object):
@@ -685,18 +694,20 @@ class MobilityTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        config = cea.config.Configuration()
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
+        scenario_path.value = config.scenario
 
         return [scenario_path]
 
     def execute(self, parameters, messages):
         scenario_path = parameters[0].valueAsText
-        run_cli(scenario_path, 'mobility')
+        run_cli('mobility', scenario=scenario_path)
 
 
 class DemandGraphsTool(object):
@@ -707,12 +718,14 @@ class DemandGraphsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        config = cea.config.Configuration()
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
+        scenario_path.value = config.scenario
         analysis_fields = arcpy.Parameter(
             displayName="Variables to analyse",
             name="analysis_fields",
@@ -721,36 +734,33 @@ class DemandGraphsTool(object):
             multiValue=True,
             direction="Input")
         analysis_fields.filter.list = []
-        analysis_fields.enabled = False
         multiprocessing = arcpy.Parameter(
             displayName="Use multiple cores to speed up processing",
             name="multiprocessing",
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        multiprocessing.enabled = False
+        multiprocessing.value = config.multiprocessing
+
         return [scenario_path, analysis_fields, multiprocessing]
 
     def updateParameters(self, parameters):
-        scenario_path = parameters[0].valueAsText
+        config = cea.config.Configuration()
+        parameters = {p.name: p for p in parameters}
+        scenario_path = parameters['scenario_path'].valueAsText
         if not os.path.exists(scenario_path):
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            parameters['scenario_path'].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
-        analysis_fields = parameters[1]
-        if not analysis_fields.enabled:
-            analysis_fields.enabled = True
-            fields = _cli_output(scenario_path, 'demand-graphs', '--list-fields').split()
-            analysis_fields.filter.list = list(fields)
-
-            multiprocessing = parameters[2]
-            multiprocessing.value = read_config_boolean(scenario_path, 'general', 'multiprocessing')
-            multiprocessing.enabled = True
+        analysis_fields = parameters['analysis_fields']
+        analysis_fields.filter.list = list(demand_graph_fields(scenario_path))
 
     def execute(self, parameters, messages):
-        scenario_path = parameters[0].valueAsText
-        analysis_fields = parameters[1].valueAsText.split(';')[:4]  # max 4 fields for analysis
-        write_config_boolean(scenario_path, 'general', 'multiprocessing', parameters[2].value)
-        run_cli(scenario_path, 'demand-graphs', '--analysis-fields', *analysis_fields)
+        parameters = {p.name: p for p in parameters}
+        scenario_path = parameters['scenario_path'].valueAsText
+        analysis_fields = ' '.join(parameters['analysis_fields'].valueAsText.split(';')[:4])  # max 4 fields for analysis
+        multiprocessing = parameters['multiprocessing'].value
+        run_cli('demand-graphs', scenario=scenario_path, analysis_fields=analysis_fields,
+                multiprocessing=multiprocessing)
 
 
 class ScenarioPlotsTool(object):
@@ -787,7 +797,7 @@ class ScenarioPlotsTool(object):
         run_cli(None, 'scenario-plots', '--output-file', output_file, '--scenarios', *scenarios)
 
 
-class PhotovoltaicPannelsTool(object):
+class PhotovoltaicPanelsTool(object):
     def __init__(self):
         self.label = 'Photovoltaic Panels'
         self.description = 'Calculate electricity production from solar photovoltaic technologies'
@@ -795,21 +805,23 @@ class PhotovoltaicPannelsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        config = cea.config.Configuration()
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
+        scenario_path.value = config.scenario
 
         weather_name = arcpy.Parameter(
-            displayName="Weather file (use the same one for solar radiation calculation)",
+            displayName="Weather file (choose from list or enter full path to .epw file)",
             name="weather_name",
             datatype="String",
             parameterType="Required",
             direction="Input")
-        weather_name.filter.list = get_weather_names() + ['<choose path from below>']
-        weather_name.enabled = False
+        weather_name.filter.list = get_weather_names() + ['<custom>']
+        weather_name.value = get_db_weather_name(config.weather) if is_db_weather(config.weather) else '<custom>'
 
         weather_path = arcpy.Parameter(
             displayName="Path to .epw file",
@@ -818,7 +830,9 @@ class PhotovoltaicPannelsTool(object):
             parameterType="Optional",
             direction="Input")
         weather_path.filter.list = ['epw']
-        weather_path.enabled = False
+        weather_path.value = config.weather
+        weather_path.enabled = not is_db_weather(config.weather)
+
 
         year = arcpy.Parameter(
             displayName="Year",
@@ -826,24 +840,7 @@ class PhotovoltaicPannelsTool(object):
             datatype="GPLong",
             parameterType="Required",
             direction="Input")
-        year.value = 2014
-        year.enabled = False
-
-        latitude = arcpy.Parameter(
-            displayName="Latitude",
-            name="latitude",
-            datatype="GPDouble",
-            parameterType="Required",
-            direction="Input")
-        latitude.enabled = False
-
-        longitude = arcpy.Parameter(
-            displayName="Longitude",
-            name="longitude",
-            datatype="GPDouble",
-            parameterType="Required",
-            direction="Input")
-        longitude.enabled = False
+        year.value = config.solar.date_start[:4]
 
         panel_on_roof = arcpy.Parameter(
             displayName="Consider panels on roofs",
@@ -851,8 +848,7 @@ class PhotovoltaicPannelsTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        panel_on_roof.value = True
-        panel_on_roof.enabled = False
+        panel_on_roof.value = config.solar.panel_on_roof
 
         panel_on_wall = arcpy.Parameter(
             displayName="Consider panels on walls",
@@ -860,8 +856,7 @@ class PhotovoltaicPannelsTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        panel_on_wall.value = True
-        panel_on_wall.enabled = False
+        panel_on_wall.value = config.solar.panel_on_wall
 
         solar_window_solstice = arcpy.Parameter(
             displayName="Desired hours of production on the winter solstice",
@@ -869,17 +864,18 @@ class PhotovoltaicPannelsTool(object):
             datatype="GPLong",
             parameterType="Required",
             direction="Input")
-        solar_window_solstice.value = 4
-        solar_window_solstice.enabled = False
+        solar_window_solstice.value = config.solar.solar_window_solstice
 
-        type_PVpanel = arcpy.Parameter(
+        type_pvpanel = arcpy.Parameter(
             displayName="PV technology to use",
-            name="type_PVpanel",
+            name="type_pvpanel",
             datatype="String",
             parameterType="Required",
             direction="Input")
-        type_PVpanel.filter.list = ['monocrystalline', 'polycrystalline', 'amorphous']
-        type_PVpanel.enabled = False
+        type_pvpanel.filter.list = ['monocrystalline', 'polycrystalline', 'amorphous']
+        type_pvpanel.value = {'PV1': 'monocrystalline',
+                              'PV2': 'polycrystalline',
+                              'PV3': 'amorphous'}[config.solar.type_pvpanel]
 
         min_radiation = arcpy.Parameter(
             displayName="filtering surfaces with low radiation potential (% of the maximum radiation in the area)",
@@ -887,70 +883,35 @@ class PhotovoltaicPannelsTool(object):
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        min_radiation.value = 0.75
-        min_radiation.enabled = False
+        min_radiation.value = config.solar.min_radiation
 
-        return [scenario_path, weather_name, weather_path, year, latitude, longitude, panel_on_roof, panel_on_wall,
-                solar_window_solstice, type_PVpanel, min_radiation]
+        return [scenario_path, weather_name, weather_path, year, panel_on_roof, panel_on_wall, solar_window_solstice,
+                type_pvpanel, min_radiation]
 
     def updateParameters(self, parameters):
-        scenario_path = parameters[0].valueAsText
+        parameters = {p.name: p for p in parameters}
+        scenario_path = parameters['scenario_path'].valueAsText
         if scenario_path is None:
             return
         if not os.path.exists(scenario_path):
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            parameters['scenario_path'].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
 
-        parameters = {p.name: p for p in parameters}
-        if not parameters['weather_name'].enabled:
-            # user just chose scenario, read in defaults etc.
+        locator = cea.inputlocator.InputLocator(scenario_path)
+        radiation_csv = locator.get_radiation()
+        if not os.path.exists(radiation_csv):
+            parameters['scenario_path'].setErrorMessage("No radiation file found - please run radiation tool first")
+            return
 
-            radiation_csv = _cli_output(scenario_path, 'locate', 'get_radiation')
-            if not os.path.exists(radiation_csv):
-                parameters['scenario_path'].setErrorMessage("No radiation file found - please run radiation tool first")
-                return
+        parameters['weather_path'].enabled = parameters['weather_name'].value == '<custom>'
+        weather_path = parameters['weather_path'].valueAsText
+        if is_builtin_weather_path(weather_path):
+            parameters['weather_path'].enabled = False
+            parameters['weather_name'].value = get_db_weather_name(weather_path)
 
-            latitude_parameter = parameters['latitude']
-            longitude_parameter = parameters['longitude']
+        if parameters['weather_name'].value != '<custom>':
+            parameters['weather_path'].value = locator.get_weather(parameters['weather_name'].value)
 
-            latitude_value = float(_cli_output(scenario_path, 'latitude'))
-            longitude_value = float(_cli_output(scenario_path, 'longitude'))
-            if not latitude_parameter.enabled:
-                # only overwrite on first try
-                latitude_parameter.value = latitude_value
-
-            if not longitude_parameter.enabled:
-                # only overwrite on first try
-                longitude_parameter.value = longitude_value
-
-            # read values from scenario / or defaults
-            parameters['year'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
-                                                   '--key', 'date-start')[:4]
-            parameters['panel_on_roof'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
-                                                            '--key', 'panel-on-roof')
-            parameters['panel_on_wall'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
-                                                            '--key', 'panel-on-wall')
-            pv_panel_types = {'PV1': 'monocrystalline', 'PV2': 'polycrystalline', 'PV3': 'amorphous'}
-            parameters['type_PVpanel'].value = pv_panel_types[
-                _cli_output(scenario_path, 'read-config', '--section', 'solar', '--key', 'type-PVpanel')]
-            parameters['min_radiation'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
-                                                            '--key', 'min-radiation')
-            parameters['solar_window_solstice'].value = _cli_output(scenario_path, 'read-config', '--section',
-                                                                    'solar',
-                                                                    '--key', 'solar-window-solstice')
-
-            weather_path = _cli_output(scenario_path, 'read-config', '--section', 'general', '--key', 'weather')
-            if is_db_weather(weather_path):
-                parameters['weather_name'].value = get_db_weather_name(weather_path)
-                parameters['weather_path'].value = ''
-            else:
-                parameters['weather_name'].value = '<choose path from below>'
-                parameters['weather_path'].value = weather_path
-
-            for p in parameters.values():
-                p.enabled = True
-            parameters['scenario_path'].enabled = False  # user need to re-open dialog to change scenario path...
-        parameters['weather_path'].enabled = parameters['weather_name'].value == '<choose path from below>'
 
     def updateMessages(self, parameters):
         scenario_path = parameters[0].valueAsText
@@ -960,7 +921,8 @@ class PhotovoltaicPannelsTool(object):
             parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
 
-        radiation_csv = _cli_output(scenario_path, 'locate', 'get_radiation')
+        locator = cea.inputlocator.InputLocator(scenario_path)
+        radiation_csv = locator.get_radiation()
         if not os.path.exists(radiation_csv):
             parameters[0].setErrorMessage("No radiation file found - please run radiation tool first")
             return
@@ -969,38 +931,29 @@ class PhotovoltaicPannelsTool(object):
         parameters = {p.name: p for p in parameters}
         scenario_path = parameters['scenario_path'].valueAsText
         weather_name = parameters['weather_name'].valueAsText
-        weather_path = parameters['weather_path'].valueAsText
+        weather_path_param = parameters['weather_path']
+        if weather_name in get_weather_names():
+            weather_path = locator.get_weather(weather_name)
+        elif weather_path_param.enabled:
+            if os.path.exists(weather_path_param.valueAsText) and weather_path_param.valueAsText.endswith('.epw'):
+                weather_path = weather_path_param.valueAsText
+            else:
+                weather_path = locator.get_default_weather()
+        else:
+            weather_path = locator.get_default_weather()
         year = parameters['year'].value
-        latitude = parameters['latitude'].value
-        longitude = parameters['longitude'].value
         panel_on_roof = parameters['panel_on_roof'].value
         panel_on_wall = parameters['panel_on_wall'].value
         solar_window_solstice = parameters['solar_window_solstice'].value
-        type_PVpanel = {'monocrystalline': 'PV1',
+        type_pvpanel = {'monocrystalline': 'PV1',
                         'polycrystalline': 'PV2',
-                        'amorphous': 'PV3'}[parameters['type_PVpanel'].value]
+                        'amorphous': 'PV3'}[parameters['type_pvpanel'].value]
         min_radiation = parameters['min_radiation'].value
 
         date_start = str(year) + '-01-01'
-
-        if weather_name in get_weather_names():
-            weather_path = get_weather_path(weather_name)
-
-        add_message('longitude: %s' % longitude)
-        add_message('latitude: %s' % latitude)
-
-        run_cli_arguments = [scenario_path, 'photovoltaic',
-                             '--latitude', latitude,
-                             '--longitude', longitude,
-                             '--weather-path', weather_path,
-                             '--solar-window-solstice', solar_window_solstice,
-                             '--type-PVpanel', type_PVpanel,
-                             '--min-radiation', min_radiation,
-                             '--date-start', date_start,
-                             '--panel-on-roof', 'yes' if panel_on_roof else 'no',
-                             '--panel-on-wall', 'yes' if panel_on_wall else 'no']
-        run_cli(*run_cli_arguments)
-        return
+        run_cli('photovoltaic', scenario=scenario_path, weather=weather_path,
+                solar_window_solstice=solar_window_solstice, type_pvpanel=type_pvpanel, min_radiation=min_radiation,
+                date_start=date_start, panel_on_roof=panel_on_roof, panel_on_wall=panel_on_wall)
 
 
 class SolarCollectorPanelsTool(object):
@@ -1011,21 +964,24 @@ class SolarCollectorPanelsTool(object):
         self.canRunInBackground = False
 
     def getParameterInfo(self):
+        config = cea.config.Configuration()
+
         scenario_path = arcpy.Parameter(
             displayName="Path to the scenario",
             name="scenario_path",
             datatype="DEFolder",
             parameterType="Required",
             direction="Input")
+        scenario_path.value = config.scenario
 
         weather_name = arcpy.Parameter(
-            displayName="Weather file (use the same one for solar radiation calculation)",
+            displayName="Weather file (choose from list or enter full path to .epw file)",
             name="weather_name",
             datatype="String",
             parameterType="Required",
             direction="Input")
-        weather_name.filter.list = get_weather_names() + ['<choose path from below>']
-        weather_name.enabled = False
+        weather_name.filter.list = get_weather_names() + ['<custom>']
+        weather_name.value = get_db_weather_name(config.weather) if is_db_weather(config.weather) else '<custom>'
 
         weather_path = arcpy.Parameter(
             displayName="Path to .epw file",
@@ -1034,7 +990,8 @@ class SolarCollectorPanelsTool(object):
             parameterType="Optional",
             direction="Input")
         weather_path.filter.list = ['epw']
-        weather_path.enabled = False
+        weather_path.value = config.weather
+        weather_path.enabled = not is_db_weather(config.weather)
 
         year = arcpy.Parameter(
             displayName="Year",
@@ -1042,24 +999,7 @@ class SolarCollectorPanelsTool(object):
             datatype="GPLong",
             parameterType="Required",
             direction="Input")
-        year.value = 2014
-        year.enabled = False
-
-        latitude = arcpy.Parameter(
-            displayName="Latitude",
-            name="latitude",
-            datatype="GPDouble",
-            parameterType="Required",
-            direction="Input")
-        latitude.enabled = False
-
-        longitude = arcpy.Parameter(
-            displayName="Longitude",
-            name="longitude",
-            datatype="GPDouble",
-            parameterType="Required",
-            direction="Input")
-        longitude.enabled = False
+        year.value = config.solar.date_start[:4]
 
         panel_on_roof = arcpy.Parameter(
             displayName="Consider panels on roofs",
@@ -1067,8 +1007,7 @@ class SolarCollectorPanelsTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        panel_on_roof.value = True
-        panel_on_roof.enabled = False
+        panel_on_roof.value = config.solar.panel_on_roof
 
         panel_on_wall = arcpy.Parameter(
             displayName="Consider panels on walls",
@@ -1076,8 +1015,7 @@ class SolarCollectorPanelsTool(object):
             datatype="GPBoolean",
             parameterType="Required",
             direction="Input")
-        panel_on_wall.value = True
-        panel_on_wall.enabled = False
+        panel_on_wall.value = config.solar.panel_on_wall
 
         solar_window_solstice = arcpy.Parameter(
             displayName="Desired hours of production on the winter solstice",
@@ -1085,17 +1023,17 @@ class SolarCollectorPanelsTool(object):
             datatype="GPLong",
             parameterType="Required",
             direction="Input")
-        solar_window_solstice.value = 4
-        solar_window_solstice.enabled = False
+        solar_window_solstice.value = config.solar.solar_window_solstice
 
-        type_SCpanel = arcpy.Parameter(
+        type_scpanel = arcpy.Parameter(
             displayName="Solar collector technology to use",
-            name="type_SCpanel",
+            name="type_scpanel",
             datatype="String",
             parameterType="Required",
             direction="Input")
-        type_SCpanel.filter.list = ['flat plate collectors', 'evacuated tubes']
-        type_SCpanel.enabled = False
+        type_scpanel.filter.list = ['flat plate collectors', 'evacuated tubes']
+        type_scpanel.value = {'SC1': 'flat plate collectors',
+                              'SC2': 'evacuated tubes'}[config.solar.type_scpanel]
 
         min_radiation = arcpy.Parameter(
             displayName="filtering surfaces with low radiation potential (% of the maximum radiation in the area)",
@@ -1103,70 +1041,34 @@ class SolarCollectorPanelsTool(object):
             datatype="GPDouble",
             parameterType="Required",
             direction="Input")
-        min_radiation.value = 0.75
-        min_radiation.enabled = False
+        min_radiation.value = config.solar.min_radiation
 
-        return [scenario_path, weather_name, weather_path, year, latitude, longitude, panel_on_roof, panel_on_wall,
-                solar_window_solstice, type_SCpanel, min_radiation]
+        return [scenario_path, weather_name, weather_path, year, panel_on_roof, panel_on_wall, solar_window_solstice,
+                type_scpanel, min_radiation]
 
     def updateParameters(self, parameters):
-        scenario_path = parameters[0].valueAsText
+        parameters = {p.name: p for p in parameters}
+        scenario_path = parameters['scenario_path'].valueAsText
         if scenario_path is None:
             return
         if not os.path.exists(scenario_path):
-            parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
+            parameters['scenario_path'].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
 
-        parameters = {p.name: p for p in parameters}
-        if not parameters['weather_name'].enabled:
-            # user just chose scenario, read in defaults etc.
+        locator = cea.inputlocator.InputLocator(scenario_path)
+        radiation_csv = locator.get_radiation()
+        if not os.path.exists(radiation_csv):
+            parameters['scenario_path'].setErrorMessage("No radiation file found - please run radiation tool first")
+            return
 
-            radiation_csv = _cli_output(scenario_path, 'locate', 'get_radiation')
-            if not os.path.exists(radiation_csv):
-                parameters['scenario_path'].setErrorMessage("No radiation file found - please run radiation tool first")
-                return
+        parameters['weather_path'].enabled = parameters['weather_name'].value == '<custom>'
+        weather_path = parameters['weather_path'].valueAsText
+        if is_builtin_weather_path(weather_path):
+            parameters['weather_path'].enabled = False
+            parameters['weather_name'].value = get_db_weather_name(weather_path)
 
-            latitude_parameter = parameters['latitude']
-            longitude_parameter = parameters['longitude']
-
-            latitude_value = float(_cli_output(scenario_path, 'latitude'))
-            longitude_value = float(_cli_output(scenario_path, 'longitude'))
-            if not latitude_parameter.enabled:
-                # only overwrite on first try
-                latitude_parameter.value = latitude_value
-
-            if not longitude_parameter.enabled:
-                # only overwrite on first try
-                longitude_parameter.value = longitude_value
-
-            # read values from scenario / or defaults
-            parameters['year'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
-                                                   '--key', 'date-start')[:4]
-            parameters['panel_on_roof'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
-                                                            '--key', 'panel-on-roof')
-            parameters['panel_on_wall'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
-                                                            '--key', 'panel-on-wall')
-            sc_panel_types = {'SC1': 'flat plate collectors', 'SC2': 'evacuated tubes'}
-            parameters['type_SCpanel'].value = sc_panel_types[
-                _cli_output(scenario_path, 'read-config', '--section', 'solar', '--key', 'type-SCpanel')]
-            parameters['min_radiation'].value = _cli_output(scenario_path, 'read-config', '--section', 'solar',
-                                                            '--key', 'min-radiation')
-            parameters['solar_window_solstice'].value = _cli_output(scenario_path, 'read-config', '--section',
-                                                                    'solar',
-                                                                    '--key', 'solar-window-solstice')
-
-            weather_path = _cli_output(scenario_path, 'read-config', '--section', 'general', '--key', 'weather')
-            if is_db_weather(weather_path):
-                parameters['weather_name'].value = get_db_weather_name(weather_path)
-                parameters['weather_path'].value = ''
-            else:
-                parameters['weather_name'].value = '<choose path from below>'
-                parameters['weather_path'].value = weather_path
-
-            for p in parameters.values():
-                p.enabled = True
-            parameters['scenario_path'].enabled = False  # user need to re-open dialog to change scenario path...
-        parameters['weather_path'].enabled = parameters['weather_name'].value == '<choose path from below>'
+        if parameters['weather_name'].value != '<custom>':
+            parameters['weather_path'].value = locator.get_weather(parameters['weather_name'].value)
 
     def updateMessages(self, parameters):
         scenario_path = parameters[0].valueAsText
@@ -1176,10 +1078,10 @@ class SolarCollectorPanelsTool(object):
             parameters[0].setErrorMessage('Scenario folder not found: %s' % scenario_path)
             return
 
-        radiation_csv = _cli_output(scenario_path, 'locate', 'get_radiation')
+        locator = cea.inputlocator.InputLocator(scenario_path)
+        radiation_csv = locator.get_radiation()
         if not os.path.exists(radiation_csv):
             parameters[0].setErrorMessage("No radiation file found - please run radiation tool first")
-            return
 
     def execute(self, parameters, messages):
         parameters = {p.name: p for p in parameters}
@@ -1187,36 +1089,21 @@ class SolarCollectorPanelsTool(object):
         weather_name = parameters['weather_name'].valueAsText
         weather_path = parameters['weather_path'].valueAsText
         year = parameters['year'].value
-        latitude = parameters['latitude'].value
-        longitude = parameters['longitude'].value
         panel_on_roof = parameters['panel_on_roof'].value
         panel_on_wall = parameters['panel_on_wall'].value
         solar_window_solstice = parameters['solar_window_solstice'].value
-        type_SCpanel = {'flat plate collectors': 'SC1',
-                        'evacuated tubes': 'SC2'}[parameters['type_SCpanel'].value]
-        # : flat plat collectors, SC2: evacuated tubes
+        type_scpanel = {'flat plate collectors': 'SC1',
+                        'evacuated tubes': 'SC2'}[parameters['type_scpanel'].value]
         min_radiation = parameters['min_radiation'].value
 
         date_start = str(year) + '-01-01'
 
         if weather_name in get_weather_names():
-            weather_path = get_weather_path(weather_name)
+            weather_path = locator.get_weather(weather_name)
 
-        add_message('longitude: %s' % longitude)
-        add_message('latitude: %s' % latitude)
-
-        run_cli_arguments = [scenario_path, 'solar-collector',
-                             '--latitude', latitude,
-                             '--longitude', longitude,
-                             '--weather-path', weather_path,
-                             '--solar-window-solstice', solar_window_solstice,
-                             '--type-SCpanel', type_SCpanel,
-                             '--min-radiation', min_radiation,
-                             '--date-start', date_start,
-                             '--panel-on-roof', 'yes' if panel_on_roof else 'no',
-                             '--panel-on-wall', 'yes' if panel_on_wall else 'no']
-        run_cli(*run_cli_arguments)
-        return
+        run_cli('solar-collector', scenario=scenario_path, weather=weather_path,
+                solar_window_solstice=solar_window_solstice, type_scpanel=type_scpanel, min_radiation=min_radiation,
+                date_start=date_start, panel_on_roof=panel_on_roof, panel_on_wall=panel_on_wall)
 
 
 class PhotovoltaicThermalPanelsTool(object):
@@ -1430,7 +1317,7 @@ class PhotovoltaicThermalPanelsTool(object):
         date_start = str(year) + '-01-01'
 
         if weather_name in get_weather_names():
-            weather_path = get_weather_path(weather_name)
+            weather_path = locator.get_weather(weather_name)
 
         add_message('longitude: %s' % longitude)
         add_message('latitude: %s' % latitude)
@@ -1686,7 +1573,7 @@ class RadiationDaysimTool(object):
         weather_path = parameters['weather_path'].valueAsText
 
         if weather_name in get_weather_names():
-            weather_path = get_weather_path(weather_name)
+            weather_path = locator.get_weather(weather_name)
 
         run_cli_arguments = [scenario_path, 'radiation-daysim',
                              '--weather-path', weather_path]
@@ -1795,11 +1682,11 @@ class RadiationTool(object):
         longitude = parameters[4].value
 
         if weather_name in get_weather_names():
-            weather_path = get_weather_path(weather_name)
+            weather_path = locator.get_weather(weather_name)
         elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
             weather_path = weather_name
         else:
-            weather_path = get_weather_path('.')
+            weather_path = locator.get_weather('.')
 
         # FIXME: use current arcgis databases...
         path_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
@@ -1845,7 +1732,14 @@ def is_db_weather(weather_path):
     weather_name = get_db_weather_name(weather_path)
     if weather_name in get_weather_names():
         # could still be a custom weather file...
-        db_weather_path = get_weather_path(weather_name)
+        db_weather_path = locator.get_weather(weather_name)
+        db_weather_path = os.path.normpath(db_weather_path)
+        db_weather_path = os.path.normcase(db_weather_path)
+
+        weather_path = locator.get_weather(weather_path)
+        weather_path = os.path.normpath(weather_path)
+        weather_path = os.path.normcase(weather_path)
+        
         if os.path.dirname(db_weather_path) == os.path.dirname(weather_path):
             return True
     return False
@@ -1854,21 +1748,6 @@ def is_db_weather(weather_path):
 def get_db_weather_name(weather_path):
     weather_name = os.path.splitext(os.path.basename(weather_path))[0]
     return weather_name
-
-
-def get_weather_path(weather_name='Zug'):
-    """Shell out to cli.py and find the path to the weather file"""
-    return _cli_output(None, 'weather-path', weather_name)
-
-
-def get_radiation(scenario_path):
-    """Shell out to cli.py and find the path to the ``radiation.csv`` file for the scenario."""
-    return _cli_output(scenario_path, 'locate', 'get_radiation')
-
-
-def get_surface_properties(scenario_path):
-    """Shell out to cli.py and find the path to the ``surface_properties.csv`` file for the scenario."""
-    return _cli_output(scenario_path, 'locate', 'get_surface_properties')
 
 
 def get_python_exe():
@@ -1897,7 +1776,7 @@ def _cli_output(scenario_path=None, *args):
     startupinfo = subprocess.STARTUPINFO()
     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
-    command = [get_python_exe(), '-m', 'cea.cli']
+    command = [get_python_exe(), '-m', 'cea.interfaces.cli.cli']
     if scenario_path:
         command.append('--scenario')
         command.append(scenario_path)
@@ -1905,28 +1784,6 @@ def _cli_output(scenario_path=None, *args):
 
     result = subprocess.check_output(command, startupinfo=startupinfo, env=get_environment())
     return result.strip()
-
-
-def read_config_string(scenario_path, section, key):
-    """Read a string value from the configuration file"""
-    return _cli_output(scenario_path, 'read-config', '--section', section, '--key', key)
-
-
-def read_config_boolean(scenario_path, section, key):
-    """Read a boolean value from the configuration file"""
-    boolean_states = {'0': False,
-                      '1': True,
-                      'false': False,
-                      'no': False,
-                      'off': False,
-                      'on': True,
-                      'true': True,
-                      'yes': True}
-    value = read_config_string(scenario_path, section, key).lower()
-    if value in boolean_states:
-        return boolean_states[value]
-    else:
-        return False
 
 
 def write_config_string(scenario_path, section, key, value):
@@ -1940,17 +1797,17 @@ def write_config_boolean(scenario_path, section, key, value):
     run_cli(scenario_path, 'write-config', '--section', section, '--key', key, '--value', value)
 
 
-def run_cli(scenario_path=None, *args):
+def run_cli(script_name, **parameters):
     """Run the CLI in a subprocess without showing windows"""
     startupinfo = subprocess.STARTUPINFO()
     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
-    command = [get_python_exe(), '-u', '-m', 'cea.cli']
-    if scenario_path:
-        command.append('--scenario')
-        command.append(scenario_path)
-    command.extend(map(str, args))
-    add_message(command)
+    command = [get_python_exe(), '-u', '-m', 'cea.interfaces.cli.cli', script_name]
+    for parameter_name, parameter_value in parameters.items():
+        parameter_name = parameter_name.replace('_', '-')
+        command.append('--' + parameter_name)
+        command.append(str(parameter_value))
+    add_message('Executing: ' + ' '.join(command))
     process = subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                env=get_environment(), cwd=tempfile.gettempdir())
     while True:
@@ -1961,6 +1818,8 @@ def run_cli(scenario_path=None, *args):
     stdout, stderr = process.communicate()
     add_message(stdout)
     add_message(stderr)
+    if process.returncode != 0:
+        raise Exception('Tool did not run successfully')
 
 
 def parse_boolean(s):
@@ -2334,11 +2193,11 @@ class SensitivityDemandSimulateTool(object):
         # weather_path
         weather_name = parameters[1].valueAsText
         if weather_name in get_weather_names():
-            weather_path = get_weather_path(weather_name)
+            weather_path = locator.get_weather(weather_name)
         elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
             weather_path = weather_name
         else:
-            weather_path = get_weather_path()
+            weather_path = locator.get_weather()
 
         # samples_folder
         samples_folder = parameters[2].valueAsText
@@ -2528,13 +2387,32 @@ class TestTool(object):
         return []
 
     def execute(self,parameters, _):
-        run_cli(None, 'test')
+        add_message('importing cea.config')
+        import cea.config
+        config = cea.config.Configuration()
+        add_message('config.scenario = %s' % config.scenario)
+        run_cli('test')
 
 
 def is_builtin_weather_path(weather_path):
     """Return True, if the weather path resolves to one of the builtin weather files shipped with the CEA."""
-    return os.path.dirname(weather_path) == os.path.dirname(get_weather_path(weather_name='Zug'))
+    if weather_path is None:
+        return False
+    return os.path.dirname(weather_path) == os.path.dirname(locator.get_weather('Zug'))
 
-def builtin_weather_name(weather_path):
-    """Return the name of the builtin weather file (assumes ``is_builtin_weather_path(weather_path) == True``"""
-    return os.path.splitext(os.path.basename(weather_path))[0]
+def demand_graph_fields(scenario):
+    """Lists the available fields for the demand graphs - these are fields that are present in both the
+    building demand results files as well as the totals file (albeit with different units)."""
+    import pandas as pd
+    locator = cea.inputlocator.InputLocator(scenario)
+    df_total_demand = pd.read_csv(locator.get_total_demand())
+    total_fields = set(df_total_demand.columns.tolist())
+    first_building = df_total_demand['Name'][0]
+    df_building = pd.read_csv(locator.get_demand_results_file(first_building))
+    fields = set(df_building.columns.tolist())
+    fields.remove('DATE')
+    fields.remove('Name')
+    # remove fields in demand results files that do not have a corresponding field in the totals file
+    bad_fields = set(field for field in fields if not field.split('_')[0] + "_MWhyr" in total_fields)
+    fields = fields - bad_fields
+    return list(fields)

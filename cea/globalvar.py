@@ -17,7 +17,7 @@ __status__ = "Production"
 
 class GlobalVariables(object):
     def __init__(self):
-
+        self.config = cea.config.Configuration()  # FIXME: this needs to be refactored away when we refactor gv->config
         self.print_partial = 'hourly'  # hourly or monthly for the demand script
         self.print_totals = True  # print yearly values
         self.print_yearly_peak = True  # print peak values

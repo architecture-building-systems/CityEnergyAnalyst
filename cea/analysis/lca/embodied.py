@@ -9,14 +9,16 @@ M. Mosteiro fixed calculation errors    07.11.16
 """
 from __future__ import division
 
+import os
 import numpy as np
 import pandas as pd
-from cea.demand.preprocessing.properties import calc_mainuse
-from cea.demand.preprocessing.properties import calc_category
+from cea.demand.preprocessing.data_helper import calc_mainuse
+from cea.demand.preprocessing.data_helper import calc_category
 from cea.utilities.dbfreader import dbf_to_dataframe
 from geopandas import GeoDataFrame as Gdf
 import cea.globalvar
 import cea.inputlocator
+import cea.config
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -28,7 +30,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def lca_embodied(year_to_calculate, locator, gv):
+def lca_embodied(year_to_calculate, locator, config, gv):
     """
     Algorithm to calculate the embodied emissions and non-renewable primary energy of buildings according to the method
     of [Fonseca et al., 2015] and [Thoma et al., 2014]. The calculation method assumes a 60 year payoff for the embodied
@@ -143,9 +145,9 @@ def lca_embodied(year_to_calculate, locator, gv):
     # calculate contributions to embodied energy and emissions
     ## calculated by multiplying the area of the given component by the energy and emissions per square meter for the
     ## given category according to the data in the archetype database
-    result_energy = calculate_contributions('EMBODIED_ENERGY', cat_df, gv, locator, year_to_calculate,
+    result_energy = calculate_contributions('EMBODIED_ENERGY', cat_df, config, gv, locator, year_to_calculate,
                                             total_column='GEN_GJ', specific_column='GEN_MJm2')
-    result_emissions = calculate_contributions('EMBODIED_EMISSIONS', cat_df, gv, locator, year_to_calculate,
+    result_emissions = calculate_contributions('EMBODIED_EMISSIONS', cat_df, config, gv, locator, year_to_calculate,
                                                total_column='CO2_ton', specific_column='CO2_kgm2')
 
     # export the results for embodied emissions (E_ghg_) and non-renewable primary energy (E_nre_pen_) for each
@@ -159,7 +161,7 @@ def lca_embodied(year_to_calculate, locator, gv):
     print('done!')
 
 
-def calculate_contributions(archetype, cat_df, gv, locator, year_to_calculate, total_column, specific_column):
+def calculate_contributions(archetype, cat_df, config, gv, locator, year_to_calculate, total_column, specific_column):
     """
     Calculate the embodied energy/emissions for each building based on their construction year, and the area and 
     renovation year of each building component.
@@ -187,7 +189,7 @@ def calculate_contributions(archetype, cat_df, gv, locator, year_to_calculate, t
     :rtype result: DataFrame
     """
     # get archetype properties from the database
-    database_df = pd.read_excel(locator.get_life_cycle_inventory_building_systems(), archetype)
+    database_df = pd.read_excel(locator.get_life_cycle_inventory_building_systems(config.region), archetype)
     database_df['Code'] = database_df.apply(lambda x: calc_code(x['building_use'], x['year_start'],
                                                                         x['year_end'], x['standard']), axis=1)
 
@@ -225,7 +227,7 @@ def calculate_contributions(archetype, cat_df, gv, locator, year_to_calculate, t
                              built_df['footprint'] * built_df['Wall_int_nosup'] * gv.fwratio) +
                             (basement_df['footprint'] * basement_df['Floor_g'] +
                              basement_df['Wall_ext_bg'] * basement_df['area_walls_ext_bg']) +
-                            (built_df['footprint'] * built_df['Excavation'])) / gv.sl_materials + \
+                            (built_df['footprint'] * built_df['Excavation'])) / gv.sl_materials +
                            ((HVAC_df['floor_area_ag'] + HVAC_df['footprint']) * HVAC_df[
                                'Services']) / gv.sl_services) * built_df['confirm']
     
@@ -301,18 +303,17 @@ def calc_if_existing(x, y):
 def calc_code(code1, code2, code3, code4):
     return str(code1) + str(code2) + str(code3) + str(code4)
 
-def run_as_script(scenario_path=None, year_to_calculate=2050):
-    gv = cea.globalvar.GlobalVariables()
-    if not scenario_path:
-        scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    lca_embodied(locator=locator, year_to_calculate=year_to_calculate, gv=gv)
+
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+
+    print('Running embodied-energy with scenario = %s' % config.scenario)
+    print('Running embodied-energy with year-to-calculate = %s' % config.embodied_energy.year_to_calculate)
+
+    lca_embodied(locator=locator, year_to_calculate=config.embodied_energy.year_to_calculate, config=config,
+                 gv=cea.globalvar.GlobalVariables())
+
 
 if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    parser.add_argument('-y', '--year', default=2020, help='Year to calculate')
-    args = parser.parse_args()
-    run_as_script(scenario_path=args.scenario, year_to_calculate=args.year)
+    main(cea.config.Configuration())

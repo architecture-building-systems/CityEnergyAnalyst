@@ -311,7 +311,7 @@ def HPSew_op_cost(mdot_kgpers, t_sup_K, t_re_K, t_sup_sew_K, gV):
     return C_HPSew_el_pure, C_HPSew_per_kWh_th_pure, qcoldot, q_therm, wdot
 
 
-def calc_Cinv_HP(HP_Size, gV, locator, technology=1):
+def calc_Cinv_HP(HP_Size, gv, locator, technology=1):
     """
     Calculates the annualized investment costs for a water to water heat pump.
 
@@ -325,7 +325,7 @@ def calc_Cinv_HP(HP_Size, gV, locator, technology=1):
     polygeneration energy conversion technologies., PhD Thesis, EPFL
     """
     if HP_Size > 0:
-        HP_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="HP")
+        HP_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="HP")
         technology_code = list(set(HP_cost_data['code']))
         HP_cost_data[HP_cost_data['code'] == technology_code[technology]]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -356,7 +356,7 @@ def calc_Cinv_HP(HP_Size, gV, locator, technology=1):
     return Capex_a, Opex_fixed
 
 
-def calc_Cinv_GHP(GHP_Size_W, gV, locator, technology=0):
+def calc_Cinv_GHP(GHP_Size_W, gv, locator, technology=0):
     """
     Calculates the annualized investment costs for the geothermal heat pump
 
@@ -367,7 +367,7 @@ def calc_Cinv_GHP(GHP_Size_W, gV, locator, technology=0):
         annualized investment costs in EUROS/a
     """
 
-    GHP_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="HP")
+    GHP_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="HP")
     technology_code = list(set(GHP_cost_data['code']))
     GHP_cost_data[GHP_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -391,7 +391,7 @@ def calc_Cinv_GHP(GHP_Size_W, gV, locator, technology=0):
     Capex_a_GHP = InvC * (Inv_IR) * (1 + Inv_IR) ** Inv_LT / ((1 + Inv_IR) ** Inv_LT - 1)
     Opex_fixed_GHP = Capex_a_GHP * Inv_OM
 
-    BH_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="BH")
+    BH_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="BH")
     technology_code = list(set(BH_cost_data['code']))
     BH_cost_data[BH_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
