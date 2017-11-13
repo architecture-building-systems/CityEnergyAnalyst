@@ -414,38 +414,13 @@ class DemandGraphsTool(CeaTool):
         self.canRunInBackground = False
 
 
-class ScenarioPlotsTool(object):
+class ScenarioPlotsTool(CeaTool):
     def __init__(self):
+        self.cea_tool = 'scenario-plots'
         self.label = 'Scenario plots'
         self.description = 'Create summary plots of scenarios in a folder'
         self.category = 'Mapping and Visualization'
         self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        scenarios = arcpy.Parameter(
-            displayName="Path to the scenarios to plot",
-            name="scenarios",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input",
-            multiValue=True)
-        output_file = arcpy.Parameter(
-            displayName="Path to output PDF",
-            name="output_file",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Output")
-        output_file.filter.list = ['pdf']
-        return [scenarios, output_file]
-
-    def execute(self, parameters, messages):
-        scenarios = parameters[0].valueAsText
-        scenarios = scenarios.replace("'", "")
-        scenarios = scenarios.replace('"', '')
-        scenarios = scenarios.split(';')
-        output_file = parameters[1].valueAsText
-        add_message(scenarios)
-        run_cli(None, 'scenario-plots', '--output-file', output_file, '--scenarios', *scenarios)
 
 
 class PhotovoltaicPanelsTool(object):

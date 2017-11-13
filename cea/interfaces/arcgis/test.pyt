@@ -14,13 +14,13 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [DemandGraphsTool]
+        self.tools = [ScenarioPlotsTool]
 
 
-class DemandGraphsTool(CeaTool):
+class ScenarioPlotsTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'demand-graphs'
-        self.label = 'Plots'
-        self.description = 'Plot demand time-series data'
-        self.category = 'Dynamic Demand Forecasting'
+        self.cea_tool = 'scenario-plots'
+        self.label = 'Scenario plots'
+        self.description = 'Create summary plots of scenarios in a folder'
+        self.category = 'Mapping and Visualization'
         self.canRunInBackground = False

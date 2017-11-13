@@ -248,6 +248,12 @@ class PathParameter(Parameter):
     pass
 
 
+class FileParameter(Parameter):
+    """Describes a file in the system."""
+    def initialize(self, parser):
+        self._extensions = parser.get(self.section_name, self.name + '.extensions').split()
+
+
 class RelativePathParameter(PathParameter):
     """A PathParameter that is relative to the scenario."""
     def initialize(self, parser):
@@ -263,7 +269,6 @@ class RelativePathParameter(PathParameter):
         """return a full path"""
         return os.path.normpath(os.path.join(parser.get(self._relative_to_section,
                                                              self._relative_to_option), value))
-
 
 class WeatherPathParameter(Parameter):
     def decode(self, value, _):
@@ -338,6 +343,23 @@ class ListParameter(Parameter):
 
     def decode(self, value, _):
         return value.split()
+
+
+class SubfoldersParameter(ListParameter):
+    """A list of subfolder names of a parent folder."""
+    def initialize(self, parser):
+        # allow the parent option to be set
+        self._parent_section, self._parent_option = parser.get(self.section_name,
+                                                               self.name + '.parent').split(':')
+
+    def decode(self, value, parser):
+        """Only return the folders that exist"""
+        folders = value.split()
+        return [folder for folder in folders if folder in self.get_folders(parser)]
+
+    def get_folders(self, parser):
+        parent = os.path.join(parser.get(self._parent_section, self._parent_option))
+        return os.listdir(parent)
 
 
 class StringParameter(Parameter):
