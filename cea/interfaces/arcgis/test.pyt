@@ -14,13 +14,13 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [OperationCostsTool]
+        self.tools = [DataHelperTool]
 
 
-class OperationCostsTool(CeaTool):
+class DataHelperTool(object):
     def __init__(self):
-        self.cea_tool = 'operation-costs'
-        self.label = 'Operation Costs'
-        self.description = 'Calculate energy costs due to building operation'
-        self.category = 'Cost Analysis'
+        self.cea_tool = 'data-helper'
+        self.label = 'Data helper'
+        self.description = 'Query characteristics of buildings and systems from statistical data'
+        self.category = 'Data Management'
         self.canRunInBackground = False
