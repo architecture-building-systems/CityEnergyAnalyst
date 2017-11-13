@@ -14,13 +14,13 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [BenchmarkGraphsTool]
+        self.tools = [RadiationTool]
 
 
-class BenchmarkGraphsTool(CeaTool):
+class RadiationTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'benchmark-graphs'
-        self.label = '2000W Society Benchmark'
-        self.description = 'Plot life cycle primary energy demand and emissions compared to an established benchmark'
-        self.category = 'Benchmarking'
+        self.cea_tool = 'radiation'
+        self.label = 'Solar Insolation'
+        self.category = 'Renewable Energy Assessment'
+        self.description = 'Create radiation file'
         self.canRunInBackground = False

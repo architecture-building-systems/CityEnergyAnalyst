@@ -280,9 +280,10 @@ def get_parameter_info(cea_parameter, config):
         cea.config.FileParameter: ('DEFile', False),
     }
     data_type, multivalue = data_type_map[type(cea_parameter)]
+    parameter_type = 'Optional' if parameter_name in {'longitude', 'latitude'} else 'Required'
     parameter_info = arcpy.Parameter(displayName=cea_parameter.help,
                                      name="%(section_name)s:%(parameter_name)s" % locals(),
-                                     datatype=data_type, parameterType="Required", direction="Input",
+                                     datatype=data_type, parameterType=parameter_type, direction="Input",
                                      multiValue=multivalue)
 
     if isinstance(cea_parameter, cea.config.ChoiceParameter):
