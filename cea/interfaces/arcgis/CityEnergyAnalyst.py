@@ -893,96 +893,13 @@ class RadiationDaysimTool(object):
         return
 
 
-class RadiationTool(object):
+class RadiationTool(CeaTool):
     def __init__(self):
+        self.cea_tool = 'radiation'
         self.label = 'Solar Insolation'
         self.category = 'Renewable Energy Assessment'
         self.description = 'Create radiation file'
         self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        config = cea.config.Configuration()
-        scenario = arcpy.Parameter(
-            displayName="Path to the scenario",
-            name="scenario",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-
-        weather_name, weather_path = create_weather_parameters(config)
-
-        year = arcpy.Parameter(
-            displayName="Year",
-            name="year",
-            datatype="GPLong",
-            parameterType="Required",
-            direction="Input")
-        year.value = 2014
-        year.enabled = False
-
-        latitude = arcpy.Parameter(
-            displayName="Latitude",
-            name="latitude",
-            datatype="GPDouble",
-            parameterType="Required",
-            direction="Input")
-        latitude.enabled = False
-
-        longitude = arcpy.Parameter(
-            displayName="Longitude",
-            name="longitude",
-            datatype="GPDouble",
-            parameterType="Required",
-            direction="Input")
-        longitude.enabled = False
-
-        return [scenario, weather_name, year, latitude, longitude]
-
-    def updateParameters(self, parameters):
-        scenario, parameters = check_senario_exists(parameters)
-        update_weather_parameters(parameters)
-
-        year_parameter = parameters[2]
-        latitude_parameter = parameters[3]
-        longitude_parameter = parameters[4]
-        year_parameter.enabled = True
-
-        latitude_value = float(_cli_output(scenario, 'latitude'))
-        longitude_value = float(_cli_output(scenario, 'longitude'))
-        if not latitude_parameter.enabled:
-            # only overwrite on first try
-            latitude_parameter.value = latitude_value
-            latitude_parameter.enabled = True
-
-        if not longitude_parameter.enabled:
-            # only overwrite on first try
-            longitude_parameter.value = longitude_value
-            longitude_parameter.enabled = True
-        return
-
-    def execute(self, parameters, messages):
-        scenario, parameters = check_senario_exists(parameters)
-        weather_name = parameters[1].valueAsText
-        year = parameters[2].value
-        latitude = parameters[3].value
-        longitude = parameters[4].value
-
-        if weather_name in LOCATOR.get_weather_names():
-            weather_path = LOCATOR.get_weather(weather_name)
-        elif os.path.exists(weather_name) and weather_name.endswith('.epw'):
-            weather_path = weather_name
-        else:
-            weather_path = LOCATOR.get_weather('.')
-
-        # FIXME: use current arcgis databases...
-        path_arcgis_db = os.path.expanduser(os.path.join('~', 'Documents', 'ArcGIS', 'Default.gdb'))
-
-        add_message('longitude: %s' % longitude)
-        add_message('latitude: %s' % latitude)
-
-        run_cli(scenario, 'radiation', '--arcgis-db', path_arcgis_db, '--latitude', latitude,
-                '--longitude', longitude, '--year', year, '--weather-path', weather_path)
-        return
 
 
 class HeatmapsTool(object):
