@@ -4,7 +4,7 @@ Global variables - this object contains context information and is expected to b
 """
 from __future__ import absolute_import
 import cea.demand.demand_writers
-
+import cea.config
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca", "Daren Thomas"]
