@@ -273,7 +273,7 @@ def get_parameter_info(cea_parameter, config):
         cea.config.StringParameter: ('String', False),
         cea.config.BooleanParameter: ('GPBoolean', False),
         cea.config.RealParameter: ('GPDouble', False),
-        cea.config.IntegerParameter: ('GPInteger', False),
+        cea.config.IntegerParameter: ('GPLong', False),
         cea.config.MultiChoiceParameter: ('String', True),
     }
     data_type, multivalue = data_type_map[type(cea_parameter)]

@@ -14,13 +14,13 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [OperationTool]
+        self.tools = [EmbodiedTool]
 
 
-class OperationTool(CeaTool):
+class EmbodiedTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'emissions'
-        self.label = 'LCA Operation'
-        self.description = 'Calculate emissions and primary energy due to building operation'
+        self.cea_tool = 'embodied-energy'
+        self.label = 'LCA Construction'
+        self.description = 'Calculate the emissions and primary energy for building construction and decommissioning'
         self.category = 'Life Cycle Analysis'
         self.canRunInBackground = False

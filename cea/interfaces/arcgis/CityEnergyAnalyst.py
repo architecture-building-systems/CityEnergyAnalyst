@@ -37,7 +37,7 @@ class Toolbox(object):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
         self.tools = [OperationCostsTool, RetrofitPotentialTool, DemandTool, DataHelperTool, BenchmarkGraphsTool,
-                      OperationTool, EmbodiedTool, MobilityTool, PhotovoltaicPanelsTool, SolarCollectorPanelsTool,
+                      OperationTool, EmbodiedEnergyTool, MobilityTool, PhotovoltaicPanelsTool, SolarCollectorPanelsTool,
                       PhotovoltaicThermalPanelsTool, DemandGraphsTool, ScenarioPlotsTool, RadiationTool,
                       RadiationDaysimTool, HeatmapsTool, DbfToExcelTool, ExcelToDbfTool, ExtractReferenceCaseTool,
                       SensitivityDemandSamplesTool, SensitivityDemandSimulateTool, SensitivityDemandAnalyzeTool,
@@ -387,37 +387,13 @@ class OperationTool(CeaTool):
         self.canRunInBackground = False
 
 
-class EmbodiedTool(object):
+class EmbodiedEnergyTool(CeaTool):
     def __init__(self):
+        self.cea_tool = 'embodied-energy'
         self.label = 'LCA Construction'
         self.description = 'Calculate the emissions and primary energy for building construction and decommissioning'
         self.category = 'Life Cycle Analysis'
         self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        config = cea.config.Configuration()
-        year_to_calculate = arcpy.Parameter(
-            displayName="Year to calculate",
-            name="year_to_calculate",
-            datatype="GPLong",
-            parameterType="Required",
-            direction="Input")
-        year_to_calculate.value = config.embodied_energy.year_to_calculate
-
-        scenario = arcpy.Parameter(
-            displayName="Path to the scenario",
-            name="scenario",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        scenario.value = config.scenario
-
-        return [year_to_calculate, scenario]
-
-    def execute(self, parameters, _):
-        scenario, parameters = check_senario_exists(parameters)
-        year_to_calculate = int(parameters['year_to_calculate'].valueAsText)
-        run_cli('embodied-energy', scenario=scenario, year_to_calculate=year_to_calculate)
 
 
 class MobilityTool(object):
