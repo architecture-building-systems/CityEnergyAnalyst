@@ -405,52 +405,13 @@ class MobilityTool(CeaTool):
         self.canRunInBackground = False
 
 
-class DemandGraphsTool(object):
+class DemandGraphsTool(CeaTool):
     def __init__(self):
+        self.cea_tool = 'demand-graphs'
         self.label = 'Plots'
         self.description = 'Plot demand time-series data'
         self.category = 'Dynamic Demand Forecasting'
         self.canRunInBackground = False
-
-    def getParameterInfo(self):
-        config = cea.config.Configuration()
-        scenario = arcpy.Parameter(
-            displayName="Path to the scenario",
-            name="scenario",
-            datatype="DEFolder",
-            parameterType="Required",
-            direction="Input")
-        scenario.value = config.scenario
-        analysis_fields = arcpy.Parameter(
-            displayName="Variables to analyse",
-            name="analysis_fields",
-            datatype="String",
-            parameterType="Required",
-            multiValue=True,
-            direction="Input")
-        analysis_fields.filter.list = []
-        multiprocessing = arcpy.Parameter(
-            displayName="Use multiple cores to speed up processing",
-            name="multiprocessing",
-            datatype="GPBoolean",
-            parameterType="Required",
-            direction="Input")
-        multiprocessing.value = config.multiprocessing
-
-        return [scenario, analysis_fields, multiprocessing]
-
-    def updateParameters(self, parameters):
-        scenario, parameters = check_senario_exists(parameters)
-
-        analysis_fields = parameters['analysis_fields']
-        analysis_fields.filter.list = list(demand_graph_fields(scenario))
-
-    def execute(self, parameters, messages):
-        scenario, parameters = check_senario_exists(parameters)
-        analysis_fields = ' '.join(parameters['analysis_fields'].valueAsText.split(';')[:4])  # max 4 fields for analysis
-        multiprocessing = parameters['multiprocessing'].value
-        run_cli('demand-graphs', scenario=scenario, analysis_fields=analysis_fields,
-                multiprocessing=multiprocessing)
 
 
 class ScenarioPlotsTool(object):
