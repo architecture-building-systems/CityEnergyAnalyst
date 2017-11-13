@@ -61,7 +61,7 @@ class CeaTool(object):
 def get_parameters(cea_tool):
     """Return a list of cea.config.Parameter objects for each parameter associated with the tool."""
     cli_config = ConfigParser.SafeConfigParser()
-    cli_config.read(os.path.join(os.path.dirname(__file__), 'cli.config'))
+    cli_config.read(os.path.join(os.path.dirname(__file__), '..', 'cli', 'cli.config'))
     option_list = cli_config.get('config', cea_tool).split()
     for _, parameter in CONFIG._matching_parameters(option_list):
         yield parameter
