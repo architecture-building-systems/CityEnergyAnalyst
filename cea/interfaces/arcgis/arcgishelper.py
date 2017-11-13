@@ -40,7 +40,8 @@ class CeaTool(object):
 
     def execute(self, parameters, _):
         parameters = dict_parameters(parameters)
-        check_senario_exists(parameters)
+        if 'general:scenario' in parameters:
+            check_senario_exists(parameters)
         kwargs = {}
         if 'weather_name' in parameters:
             kwargs['weather'] = get_weather_path_from_parameters(parameters)
@@ -275,14 +276,22 @@ def get_parameter_info(cea_parameter, config):
         cea.config.RealParameter: ('GPDouble', False),
         cea.config.IntegerParameter: ('GPLong', False),
         cea.config.MultiChoiceParameter: ('String', True),
+        cea.config.SubfoldersParameter: ('String', True),
+        cea.config.FileParameter: ('DEFile', False),
     }
     data_type, multivalue = data_type_map[type(cea_parameter)]
     parameter_info = arcpy.Parameter(displayName=cea_parameter.help,
                                      name="%(section_name)s:%(parameter_name)s" % locals(),
                                      datatype=data_type, parameterType="Required", direction="Input",
                                      multiValue=multivalue)
+
     if isinstance(cea_parameter, cea.config.ChoiceParameter):
         parameter_info.filter.list = cea_parameter._choices
+    if isinstance(cea_parameter, cea.config.SubfoldersParameter):
+        parameter_info.filter.list = cea_parameter.get_folders(config._parser)
+    if isinstance(cea_parameter, cea.config.FileParameter):
+        parameter_info.filter.list = cea_parameter._extensions
+
     parameter_info.value = cea_parameter.__get__(config)
     return parameter_info
 
