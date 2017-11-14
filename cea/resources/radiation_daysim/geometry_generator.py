@@ -102,7 +102,8 @@ def create_hollowed_facade(surface_facade, window):
     return hollowed_facade_clean, hole_facade
 
 
-def building2d23d(locator, settings, height_col, nfloor_col):
+
+def building2d23d(locator, geometry_terrain, settings, height_col, nfloor_col):
     """
     :param locator: InputLocator - provides paths to files in a scenario
     :type locator: cea.inputlocator.InputLocator
@@ -120,9 +121,6 @@ def building2d23d(locator, settings, height_col, nfloor_col):
 
     # path to database of architecture properties
     architecture_dbf_path = locator.get_building_architecture()
-
-    # list of faces of terrain
-    geometry_terrain = raster2tin(locator.get_terrain())
 
     # read district shapefile and names of buildings of the zone of analysis
     district_building_records = gdf.from_file(district_shp_path).set_index('Name')
@@ -204,13 +202,24 @@ def building2d23d(locator, settings, height_col, nfloor_col):
                 wall_list = facade_list
                 geometry_3D_zone.append({"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
                                      "footprint": footprint_list})
+
+            # DO this to visualize progress while debugging!:
+            # edges1 = calculate.visualise_face_normal_as_edges(wall_list,5)
+            # edges2 = calculate.visualise_face_normal_as_edges(roof_list, 5)
+            # edges3 = calculate.visualise_face_normal_as_edges(footprint_list, 5)
+            # construct.visualise([wall_list, roof_list ,footprint_list , edges1, edges2, edges3],["WHITE","WHITE","WHITE","BLACK", "BLACK","BLACK"])
         else:
             facade_list, roof_list, footprint_list = gml3dmodel.identify_building_surfaces(building_solid)
             wall_list = facade_list
             geometry_3D_surroundings.append({"name": name, "windows": window_list, "walls": wall_list, "roofs": roof_list,
                                  "footprint": footprint_list})
 
-    return geometry_terrain, geometry_3D_zone, geometry_3D_surroundings
+            ## DO this to visualize progress while debugging!:
+            # edges1 = calculate.visualise_face_normal_as_edges(wall_list,5)
+            # edges2 = calculate.visualise_face_normal_as_edges(roof_list, 5)
+            # edges3 = calculate.visualise_face_normal_as_edges(footprint_list, 5)
+            # construct.visualise([wall_list, roof_list ,footprint_list , edges1, edges2, edges3],["WHITE","WHITE","WHITE","BLACK", "BLACK","BLACK"])
+    return geometry_3D_zone, geometry_3D_surroundings
 
 
 def burn_buildings(geometry, terrain_intersection_curves):
@@ -244,7 +253,7 @@ def calc_solid(face_footprint, range_floors, flr2flr_height):
         moved_face_list.append(moved_face)
 
     # make checks to satisfy a closed geometry also called a shell
-    building_solid = None
+
     vertical_shell = construct.make_loft(moved_face_list)
     vertical_face_list = fetch.geom_explorer(vertical_shell, "face")
     roof = moved_face_list[-1]
@@ -255,12 +264,15 @@ def calc_solid(face_footprint, range_floors, flr2flr_height):
     all_faces.append(roof)
     building_shell_list = construct.make_shell_frm_faces(all_faces)
 
-    if building_shell_list:
-        # make sure all the normals are correct (they are pointing out)
-        building_solid = construct.make_solid(building_shell_list[0])
-        building_solid = modify.fix_close_solid(building_solid)
+    # make sure all the normals are correct (they are pointing out)
+    bldg_solid = construct.make_solid(building_shell_list[0])
+    bldg_solid = modify.fix_close_solid(bldg_solid)
 
-    return building_solid
+    ##dO this to visualize progress while debugging!:
+    #face_list = fetch.geom_explorer(bldg_solid, "face")
+    # edges = calculate.visualise_face_normal_as_edges(face_list,5)
+    # construct.visualise([face_list,edges],["WHITE","BLACK"])
+    return bldg_solid
 
 def calc_windows_walls(facade_list, wwr):
     window_list = []
@@ -294,18 +306,24 @@ def raster2tin(input_terrain_raster):
     x_coords = x_index * x_size + upper_left_x + (x_size / 2)  # add half the cell size
     y_coords = y_index * y_size + upper_left_y + (y_size / 2)  # to centre the point
 
+    elevation_mean = int(a[y_index, x_index].mean())
+
     raster_points = [(x, y, z) for x, y, z in zip(x_coords, y_coords, a[y_index, x_index])]
 
     tin_occface_list = construct.delaunay3d(raster_points)
 
-    return tin_occface_list
+    return elevation_mean, tin_occface_list
 
-def geometry_main(locator, settings):
+def geometry_main(locator, simplification_params):
+
+    # list of faces of terrain
+    elevation_mean, geometry_terrain = raster2tin(locator.get_terrain())
+
     # transform buildings 2D to 3D and add windows
-    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = building2d23d(locator, settings, height_col='height_ag',
+    geometry_3D_zone, geometry_3D_surroundings = building2d23d(locator, geometry_terrain, simplification_params, height_col='height_ag',
                                                                nfloor_col="floors_ag")
 
-    return geometry_terrain, geometry_3D_zone, geometry_3D_surroundings
+    return elevation_mean, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings
 
 if __name__ == '__main__':
     config = cea.config.Configuration()
@@ -314,7 +332,7 @@ if __name__ == '__main__':
 
     # run routine City GML LOD 1
     time1 = time.time()
-    geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_main(locator, settings)
+    elevation_mean, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_main(locator, settings)
     print("Geometry of the scene created in %.2f mins" % (time.time() - time1) / 60.0)
 
 
@@ -336,7 +354,9 @@ if __name__ == '__main__':
     geometry_buildings.extend(windows_s)
     geometry_buildings.extend(roof_s)
 
-    construct.visualise([geometry_terrain, geometry_buildings], ["GREEN","WHITE"], backend = "wx") #install Wxpython
+    # DO this to visualize progress while debugging!:
+    #normals_terrain = calculate.visualise_face_normal_as_edges(geometry_terrain,5)
+    construct.visualise([geometry_terrain, geometry_buildings], ["BLUE","WHITE"]) #install Wxpython
 
 
 
