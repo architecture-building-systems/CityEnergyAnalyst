@@ -15,14 +15,14 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [ExtractReferenceCaseTool]
+        self.tools = [TestTool]
 
 
-class ExtractReferenceCaseTool(CeaTool):
+class TestTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'extract-reference-case'
-        self.label = 'Extract reference case'
-        self.description = 'Extract sample reference case to folder'
+        self.cea_tool = 'test'
+        self.label = 'Test CEA'
+        self.description = 'Run some tests on the CEA'
         self.canRunInBackground = False
         self.category = 'Utilities'
 

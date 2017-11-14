@@ -29,7 +29,9 @@ class Configuration(object):
         self.user_config.read([config_file, DEFAULT_CONFIG])
         self.sections = {section_name: Section(section_name, config=self)
                          for section_name in self.default_config.sections()}
-        pass
+
+        # update cea.config with new options
+        self.save(config_file)
 
     def __getattr__(self, item):
         """Return either a Section object or the value of a Parameter"""
@@ -86,7 +88,7 @@ class Configuration(object):
         for section, parameter in self.matching_parameters(option_list):
             if parameter.name in command_line_args:
                 try:
-                    parameter.set(command_line_args[parameter.name])
+                    parameter.set(parameter.decode(command_line_args[parameter.name]))
                 except:
                     raise ValueError('ERROR setting %s:%s to %s' % (
                         section.name, parameter.name, command_line_args[parameter.name]))
@@ -109,6 +111,22 @@ class Configuration(object):
                 section = self.sections[option]
                 for parameter in section.parameters.values():
                     yield (section, parameter)
+
+    def save(self, config_file=CEA_CONFIG):
+        """Save the current configuration to a file."""
+        config_file = os.path.normcase(os.path.normpath(os.path.abspath(config_file)))
+        default_config = os.path.normcase(os.path.normpath(os.path.abspath(DEFAULT_CONFIG)))
+        if config_file == default_config:
+            # don't overwrite the default.config
+            return
+
+        parser = ConfigParser.SafeConfigParser()
+        for section in self.sections.values():
+            parser.add_section(section.name)
+            for parameter in section.parameters.values():
+                parser.set(section.name, parameter.name, parameter.encode(parameter.get()))
+        with open(config_file, 'w') as f:
+            parser.write(f)
 
 
 def parse_command_line_args(args):
@@ -369,7 +387,7 @@ class SubfoldersParameter(ListParameter):
         return [folder for folder in folders if folder in self.get_folders()]
 
     def get_folders(self):
-        parent = config.sections[self._parent_section].parameters[self._parent_option].get()
+        parent = self.config.sections[self._parent_section].parameters[self._parent_option].get()
         return os.listdir(parent)
 
 
@@ -413,7 +431,8 @@ class MultiChoiceParameter(ChoiceParameter):
         return choices
 
 
-if __name__ == '__main__':
+def main():
+    """Run some tests on the configuration module"""
     config = Configuration()
     print(config.general.scenario)
     print(config.general.multiprocessing)
@@ -422,32 +441,33 @@ if __name__ == '__main__':
     print(config.weather)
     print(config.sensitivity_demand.samples_folder)
     print(config.heatmaps.file_to_analyze)
-
     # make sure the config can be pickled (for multiprocessing)
     import pickle
-
     pickle.loads(pickle.dumps(config))
     # config = pickle.loads(pickle.dumps(config))
-
     # test overriding
     args = ['--weather', 'Zurich',
             '--scenario', 'C:\\reference-case-test\\baseline']
     config.apply_command_line_args(args, ['general', 'sensitivity-demand'])
-
     # make sure the WeatherPathParameter resolves weather names...
     assert config.general.weather.endswith('Zurich.epw'), config.general.weather
     assert config.weather.endswith('Zurich.epw'), config.weather
-
     config.weather = 'Zug'
     assert config.general.weather.endswith('Zug.epw')
     print(config.general.weather)
-
     # test if pickling keeps state
     config.weather = 'Singapore'
     print(config.weather)
     config = pickle.loads(pickle.dumps(config))
     print(config.weather)
-
     # test changing scenario (and resulting RelativePathParameters)
     config.scenario = r'C:\reference-case-open'
     print(config.heatmaps.file_to_analyze)
+    args = ['--reference-cases', 'zurich/baseline']
+    config.apply_command_line_args(args, ['test'])
+    print(config.test.reference_cases)
+    print(config.scenario_plots.scenarios)
+
+
+if __name__ == '__main__':
+    main()

@@ -26,12 +26,12 @@ class TestConfiguration(unittest.TestCase):
 
     def test_update_parameter_value(self):
         config = cea.config.Configuration()
-        config.general._parameters['scenario'].__set__(config.general, 'test')
+        config.general.parameters['scenario'].set('test')
         self.assertEquals(config.scenario, 'test')
 
     def test_update_parameter_values_after_pickling(self):
         config = cea.config.Configuration()
-        config.general._parameters['scenario'].__set__(config.general, 'test')
+        config.general.parameters['scenario'].set('test')
         config = pickle.loads(pickle.dumps(config))
         self.assertEquals(config.scenario, 'test')
 
