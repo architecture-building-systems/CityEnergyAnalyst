@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 index = pd.date_range('1/1/2016', periods=8760, freq='H')
-file = pd.read_json(r'C:\Users\Jimeno\Documents\Github\cea-reference-case\reference-case-ecocampus\baseline\outputs\data\solar-radiation/B115_insolation_Whm2.json')
+file = pd.read_json(r'C:\reference-case-ecocampus\baseline\outputs\data\solar-radiation/B001_insolation_Whm2.json')
 file.set_index(index, inplace=True)
 print file.sum(axis = 0 )/1000
 
