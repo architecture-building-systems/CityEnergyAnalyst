@@ -128,7 +128,7 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, sett
                           in each chunk in the Settings.py file')
 
     # add_elevation_weather_file(weather_path)
-    rad.execute_epw2wea(weather_path, ground_reflectance = settings.terrain_parameters['albedo'])
+    rad.execute_epw2wea(weather_path, ground_reflectance = settings.albedo)
     rad.execute_radfiles2daysim()
     rad.write_radiance_parameters(settings.rad_ab, settings.rad_ad, settings.rad_as, settings.rad_ar, settings.rad_aa,
                                   settings.rad_lr, settings.rad_st, settings.rad_sj, settings.rad_lw, settings.rad_dj,

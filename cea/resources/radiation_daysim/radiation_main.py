@@ -161,14 +161,14 @@ def reader_surface_properties(locator, input_shp):
 
     return surface_properties.set_index('Name').round(decimals=2)
 
-def radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path, settings, selected_buildings):
-    if settings.simulation_parameters['run_all_buildings']:
+def radiation_singleprocessing(rad, geometry_3D_zone, locator, weather_path, settings):
+    if settings.buildings == []:
         # get chunks of buildings to iterate
-        chunks = [geometry_3D_zone[i:i + settings.simulation_parameters['n_build_in_chunk']] for i in
+        chunks = [geometry_3D_zone[i:i + settings.n_buildings_in_chunk] for i in
                   range(0, len(geometry_3D_zone),
-                        settings.simulation_parameters['n_build_in_chunk'])]
+                        settings.n_buildings_in_chunk)]
     else:
-        list_of_building_names = selected_buildings
+        list_of_building_names = settings.buildings
         chunks = []
         for bldg_dict in geometry_3D_zone:
             if bldg_dict['name'] in list_of_building_names:
@@ -193,7 +193,6 @@ def main(config):
 
     #  the selected buildings are the ones for which the individual radiation script is run for
     #  this is only activated when in default.config, run_all_buildings is set as 'False'
-    selected_buildings = config.radiation_daysim.buildings
 
     settings = config.radiation_daysim
 
@@ -204,7 +203,7 @@ def main(config):
     print "creating 3D geometry and surfaces"
     # create geometrical faces of terrain and buildingsL
     elevation, geometry_terrain, geometry_3D_zone, geometry_3D_surroundings = geometry_generator.geometry_main(locator,
-                                                                                                    settings.simplification_parameters)
+                                                                                                    settings)
 
     print "Sending the scene: geometry and materials to daysim"
     # send materials
@@ -219,7 +218,7 @@ def main(config):
     rad.create_rad_input_file()
 
     time1 = time.time()
-    radiation_singleprocessing(rad, geometry_3D_zone, locator, config.weather, settings, selected_buildings)
+    radiation_singleprocessing(rad, geometry_3D_zone, locator, config.weather, settings)
 
     print("Daysim simulation finished in %.2f mins" % ((time.time() - time1) / 60.0))
 

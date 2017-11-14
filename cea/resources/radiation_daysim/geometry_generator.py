@@ -103,7 +103,7 @@ def create_hollowed_facade(surface_facade, window):
 
 
 
-def building2d23d(locator, settings, height_col, nfloor_col):
+def building2d23d(locator, geometry_terrain, settings, height_col, nfloor_col):
     """
     :param locator: InputLocator - provides paths to files in a scenario
     :type locator: cea.inputlocator.InputLocator
