@@ -3,6 +3,7 @@ import subprocess
 import tempfile
 
 import cea.config
+reload(cea.config)
 import cea.inputlocator
 import cea.interfaces.arcgis.arcgishelper
 reload(cea.interfaces.arcgis.arcgishelper)
@@ -14,21 +15,16 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [RadiationDaysimTool]
+        self.tools = [DbfToExcelTool]
 
 
-class RadiationDaysimTool(CeaTool):
+class DbfToExcelTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'radiation-daysim'
-        self.label = 'Urban solar radiation'
-        self.description = 'Use Daysim to calculate solar radiation for a scenario'
-        self.category = 'Renewable Energy Assessment'
+        self.cea_tool = 'dbf-to-excel'
+        self.label = 'Convert DBF to Excel'
+        self.description = 'dbf => xls'
         self.canRunInBackground = False
+        self.category = 'Utilities'
 
-    def override_parameter_info(self, parameter_info, parameter):
-        if parameter.name == 'buildings':
-            return None
-        else:
-            return parameter_info
 
 

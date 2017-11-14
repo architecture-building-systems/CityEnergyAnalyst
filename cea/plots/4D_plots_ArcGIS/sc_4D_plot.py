@@ -5,6 +5,7 @@ import pandas as pd
 import os
 from cea.utilities import dbfreader
 import cea.globalvar
+import cea.config
 import cea.inputlocator
 
 __author__ = "Jimeno A. Fonseca"
@@ -43,12 +44,9 @@ def calc_spatio_temporal_visuals(locator, period, variables_to_plot, list_of_bui
 
     dbfreader.dataframe_to_dbf(final, locator.get_4D_sc_plot(period))
 
-def run_as_script():
-    import cea.inputlocator
-    import cea.config
-    config = cea.config.Configuration()
+def main(config):
 
-    locator = cea.inputlocator.InputLocator(scenario_path=config.scenario)
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     variables_to_plot = ['Q_SC_gen_kWh', 'radiation_kWh', 'Area_SC_m2']
     initial_date = '1/1/2015'
@@ -57,7 +55,7 @@ def run_as_script():
     calc_spatio_temporal_visuals(locator, period, variables_to_plot, list_of_buildings, initial_date)
 
 if __name__ == '__main__':
-    run_as_script()
+    main(cea.config.Configuration())
 
 
 
