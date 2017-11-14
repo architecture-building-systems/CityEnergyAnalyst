@@ -592,6 +592,10 @@ class InputLocator(object):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), '%s_PV.csv' % building_name)
 
+    def radiation_results(self, building_name):
+        """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
+        return os.path.join(self.solar_potential_folder(), '%s_radiation.csv' % building_name)
+
     def PV_totals(self):
         """scenario/outputs/data/potentials/solar/{building_name}_PV.csv"""
         return os.path.join(self.solar_potential_folder(), 'PV_total.csv')
@@ -750,6 +754,10 @@ class InputLocator(object):
     def get_4D_demand_plot(self, period):
         """scenario/outputs/plots/timeseries"""
         return os.path.join(self.get_demand_plots_folder(), 'Demand_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
+
+    def get_4D_radiation_plot(self, period):
+        """scenario/outputs/plots/timeseries"""
+        return os.path.join(self.get_demand_plots_folder(), 'Radiation_4D_plot_' + str(period[0]) + '_' + str(period[1]) + '.dbf')
 
     def get_4D_pv_plot(self, period):
         """scenario/outputs/plots/timeseries"""
