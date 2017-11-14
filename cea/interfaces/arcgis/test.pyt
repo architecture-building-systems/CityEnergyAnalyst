@@ -15,14 +15,14 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'Testing the City Energy Analyst'
         self.alias = 'testcea'
-        self.tools = [DbfToExcelTool]
+        self.tools = [ExtractReferenceCaseTool]
 
 
-class DbfToExcelTool(CeaTool):
+class ExtractReferenceCaseTool(CeaTool):
     def __init__(self):
-        self.cea_tool = 'dbf-to-excel'
-        self.label = 'Convert DBF to Excel'
-        self.description = 'dbf => xls'
+        self.cea_tool = 'extract-reference-case'
+        self.label = 'Extract reference case'
+        self.description = 'Extract sample reference case to folder'
         self.canRunInBackground = False
         self.category = 'Utilities'
 
