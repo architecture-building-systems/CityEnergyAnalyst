@@ -1141,67 +1141,22 @@ class SensitivityDemandAnalyzeTool(object):
         run_cli(*args)
 
 
-class ExcelToDbfTool(object):
+class ExcelToDbfTool(CeaTool):
     def __init__(self):
+        self.cea_tool = 'excel-to-dbf'
         self.label = 'Convert Excel to DBF'
         self.description = 'xls => dbf'
         self.canRunInBackground = False
         self.category = 'Utilities'
 
-    def getParameterInfo(self):
-        input_path = arcpy.Parameter(
-            displayName="Excel input file path",
-            name="input_path",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        input_path.filter.list = ['xls']
-        output_path = arcpy.Parameter(
-            displayName="DBF output file path",
-            name="output_path",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Output")
-        output_path.filter.list = ['dbf']
-        return [input_path, output_path]
 
-    def execute(self, parameters, _):
-        input_path = parameters[0].valueAsText
-        output_path = parameters[1].valueAsText
-
-        run_cli(None, 'excel-to-dbf', '--input-path', input_path, '--output-path', output_path)
-
-
-class DbfToExcelTool(object):
+class DbfToExcelTool(CeaTool):
     def __init__(self):
+        self.cea_tool = 'dbf-to-excel'
         self.label = 'Convert DBF to Excel'
         self.description = 'dbf => xls'
         self.canRunInBackground = False
         self.category = 'Utilities'
-
-    def getParameterInfo(self):
-        input_path = arcpy.Parameter(
-            displayName="DBF input file path",
-            name="input_path",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Input")
-        input_path.filter.list = ['dbf']
-        output_path = arcpy.Parameter(
-            displayName="Excel output file path",
-            name="output_path",
-            datatype="DEFile",
-            parameterType="Required",
-            direction="Output")
-        output_path.filter.list = ['xls']
-
-        return [input_path, output_path]
-
-    def execute(self, parameters, _):
-        input_path = parameters[0].valueAsText
-        output_path = parameters[1].valueAsText
-
-        run_cli(None, 'dbf-to-excel', '--input-path', input_path, '--output-path', output_path)
 
 
 class ExtractReferenceCaseTool(object):

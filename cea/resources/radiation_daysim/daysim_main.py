@@ -1,3 +1,4 @@
+from __future__ import division
 import os
 import pandas as pd
 import pyliburo.py3dmodel.calculate as calculate
@@ -5,7 +6,8 @@ from pyliburo import py3dmodel
 import pyliburo.py2radiance as py2radiance
 import json
 
-import pyliburo.gml3dmodel as gml3dmodel
+from cea.utilities import epwreader
+
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca", "Kian Wee Chen"]
@@ -53,7 +55,6 @@ def calc_sensors_building(building_geometry_dict, settings):
         for face in occface_list:
             sensor_dir, sensor_cord, sensor_type, sensor_area \
                 = generate_sensor_surfaces(face, settings.sensor_x_dim, settings.sensor_y_dim, srf_type)
-
             sensor_dir_list.extend(sensor_dir)
             sensor_cord_list.extend(sensor_cord)
             sensor_type_list.extend(sensor_type)
@@ -121,19 +122,27 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, sett
     num_sensors = sum(sensors_number_zone)
     print "Daysim simulation starts for building(s)", names_zone
     print "and the next number of total sensors", num_sensors
-    if num_sensors > 20000:
-        raise ValueError('You are sending more than 10000 sensors at the same time, this \
+    if num_sensors > 50000:
+        raise ValueError('You are sending more than 50000 sensors at the same time, this \
                           will eventually crash a daysim instance. To solve it, reduce the number of buildings \
                           in each chunk in the Settings.py file')
 
-    rad.execute_epw2wea(weather_path)
+    # add_elevation_weather_file(weather_path)
+    rad.execute_epw2wea(weather_path, ground_reflectance = settings.albedo)
     rad.execute_radfiles2daysim()
     rad.write_radiance_parameters(settings.rad_ab, settings.rad_ad, settings.rad_as, settings.rad_ar, settings.rad_aa,
                                   settings.rad_lr, settings.rad_st, settings.rad_sj, settings.rad_lw, settings.rad_dj,
                                   settings.rad_ds, settings.rad_dr, settings.rad_dp)
+
     rad.execute_gen_dc("w/m2")
     rad.execute_ds_illum()
     solar_res = rad.eval_ill_per_sensor()
+
+    # check inconsistencies and replace by max value of weather file
+    weatherfile = epwreader.epw_reader(weather_path)['glohorrad_Whm2'].values
+    max_global = weatherfile.max()
+    for i, value in enumerate(solar_res):
+        solar_res[i] =  [0 if x > max_global else x for x in value]
 
     print "Writing results to disk"
     index = 0
@@ -143,3 +152,4 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, sett
         with open(locator.get_radiation_building(building_name), 'w') as outfile:
             json.dump(items_sensor_name_and_result, outfile)
         index = sensors_number_building
+
