@@ -30,7 +30,8 @@ class CeaTool(object):
             else:
                 parameter_info = get_parameter_info(parameter, config)
                 parameter_info = self.override_parameter_info(parameter_info, parameter)
-                parameter_infos.append(parameter_info)
+                if parameter_info:
+                    parameter_infos.append(parameter_info)
         return parameter_infos
 
     def override_parameter_info(self, parameter_info, parameter):
@@ -70,7 +71,7 @@ def get_parameters(cea_tool):
     cli_config = ConfigParser.SafeConfigParser()
     cli_config.read(os.path.join(os.path.dirname(__file__), '..', 'cli', 'cli.config'))
     option_list = cli_config.get('config', cea_tool).split()
-    for _, parameter in CONFIG._matching_parameters(option_list):
+    for _, parameter in CONFIG.matching_parameters(option_list):
         yield parameter
 
 def add_message(msg, **kwargs):
@@ -273,7 +274,7 @@ def get_parameter_info(cea_parameter, config):
     """Create an arcpy Parameter object based on the configuration in the Default-config.
     The name is set to "section_name:parameter_name" so parameters created with this function are
     easily identified (```':' in parameter.name``)"""
-    section_name = cea_parameter.section_name
+    section_name = cea_parameter.section.name
     parameter_name = cea_parameter.name
     data_type_map = {  # (arcgis data type, multivalue)
         cea.config.PathParameter: ('DEFolder', False),
@@ -297,11 +298,14 @@ def get_parameter_info(cea_parameter, config):
     if isinstance(cea_parameter, cea.config.ChoiceParameter):
         parameter_info.filter.list = cea_parameter._choices
     if isinstance(cea_parameter, cea.config.SubfoldersParameter):
-        parameter_info.filter.list = cea_parameter.get_folders(config._parser)
+        parameter_info.filter.list = cea_parameter.get_folders()
     if isinstance(cea_parameter, cea.config.FileParameter):
         parameter_info.filter.list = cea_parameter._extensions
 
-    parameter_info.value = cea_parameter.__get__(config)
+    if not cea_parameter.category is None:
+        parameter_info.category = cea_parameter.category
+
+    parameter_info.value = cea_parameter.get()
     return parameter_info
 
 def get_weather_parameter_info(config):
