@@ -39,15 +39,25 @@ def calc_spatio_temporal_visuals(locator, list_of_buildings, initial_date, confi
         sensors_metadata_walls = sensors_metadata[sensors_metadata.TYPE == 'walls']
         sensors_metadata_windows = sensors_metadata[sensors_metadata.TYPE == 'windows']
 
+        #  segregating the surfaces with SURFACE TYPE as roof
         roof_cols = [c for c in sensors_rad.columns if c in sensors_metadata_roof.SURFACE.tolist()]
-        sensors_rad_roof = sensors_rad[roof_cols]
+        sensors_rad_roof = pd.DataFrame()
+        #  Calculating weighted average for all the surfaces with SURFACE TYPE as roof
+        for i in roof_cols:
+            sensors_rad_roof[i] = sensors_rad[i] * (sensors_metadata_roof[sensors_metadata_roof.SURFACE == i].AREA_m2.values)
+        sensors_rad_roof = sensors_rad_roof /  (sensors_metadata_roof.AREA_m2.sum(0))
 
+        #  segregating the surfaces with SURFACE TYPE as walls
         walls_cols = [c for c in sensors_rad.columns if c in sensors_metadata_walls.SURFACE.tolist()]
-        sensors_rad_walls = sensors_rad[walls_cols]
+        sensors_rad_walls = pd.DataFrame()
+        #  Calculating weighted average for all the surfaces with SURFACE TYPE as walls
+        for i in walls_cols:
+            sensors_rad_walls[i] = sensors_rad[i] * (sensors_metadata_walls[sensors_metadata_walls.SURFACE == i].AREA_m2.values)
+        sensors_rad_walls = sensors_rad_walls / (sensors_metadata_walls.AREA_m2.sum(0))
 
         sensors_rad_final = pd.DataFrame()
-        sensors_rad_final['total_roof_rad_Whperm2'] = sensors_rad_roof.sum(1)
-        sensors_rad_final['total_wall_rad_Whperm2'] = sensors_rad_walls.sum(1)
+        sensors_rad_final['total_roof_rad_Wperm2'] = sensors_rad_roof.sum(1)
+        sensors_rad_final['total_wall_rad_Wperm2'] = sensors_rad_walls.sum(1)
         sensors_rad_final['date'] = time
         sensors_rad_final.to_csv(locator.radiation_results(building_name=building), index=True, float_format='%.2f')
 
