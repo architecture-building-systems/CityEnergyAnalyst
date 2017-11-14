@@ -44,7 +44,7 @@ def calc_spatio_temporal_visuals(locator, period, variables_to_plot, list_of_bui
 def main(config):
 
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
-    variables_to_plot = ['total_roof_rad_Whperm2', 'total_wall_rad_Whperm2']
+    variables_to_plot = ['total_roof_rad_Wperm2', 'total_wall_rad_Wperm2']
     initial_date = '1/1/2015'
     list_of_buildings = ['all']  # 'all' for all buildings or else provide a list of building names
     period = [1680, 1848] # period in hours of the year to viualize
