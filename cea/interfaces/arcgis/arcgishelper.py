@@ -283,6 +283,7 @@ def get_parameter_info(cea_parameter, config):
         cea.config.RealParameter: ('GPDouble', False),
         cea.config.IntegerParameter: ('GPLong', False),
         cea.config.MultiChoiceParameter: ('String', True),
+        cea.config.ChoiceParameter: ('String', False),
         cea.config.SubfoldersParameter: ('String', True),
         cea.config.FileParameter: ('DEFile', False),
         cea.config.ListParameter: ('String', True),
@@ -301,6 +302,8 @@ def get_parameter_info(cea_parameter, config):
         parameter_info.filter.list = cea_parameter.get_folders()
     if isinstance(cea_parameter, cea.config.FileParameter):
         parameter_info.filter.list = cea_parameter._extensions
+    if isinstance(cea_parameter, cea.config.ListParameter):
+        parameter_info.filter.list = cea_parameter.get()
 
     if not cea_parameter.category is None:
         parameter_info.category = cea_parameter.category
