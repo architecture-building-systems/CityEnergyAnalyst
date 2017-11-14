@@ -5,11 +5,8 @@ import pandas as pd
 
 import math
 import cea.inputlocator
-import cea.globalvar as globalvar
 import numpy as np
 from cea.utilities.physics import BOLTZMANN
-
-gv = globalvar.GlobalVariables()
 
 __author__ = "Clayton Miller"
 __copyright__ = "Copyright 2014, Architecture and Building Systems - ETH Zurich"
@@ -54,12 +51,12 @@ def calc_wetbulb(Tdrybulb, RH):
     return Tw  # wetbulb temperature in C
 
 
-def test_reader():
-    locator = cea.inputlocator.InputLocator(r'C:\reference-case\baseline')
+def main(config):
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     # for the interface, the user should pick a file out of of those in ...DB/Weather/...
     weather_path = locator.get_default_weather()
     epw_reader(weather_path=weather_path)
 
 
 if __name__ == '__main__':
-    test_reader()
+    main(cea.config.Configuration())
