@@ -324,13 +324,31 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
     return properties_df
 
 
+<<<<<<< HEAD:cea/demand/preprocessing/properties.py
+def run_as_script(scenario_path=None, prop_thermal_flag=False, prop_architecture_flag=True, prop_hvac_flag=True,
+                  prop_comfort_flag=True, prop_internal_loads_flag=True):
+
+=======
 def main(config):
+>>>>>>> refs/remotes/origin/master:cea/demand/preprocessing/data_helper.py
     """
     Run the properties script with input from the reference case and compare the results. This ensures that changes
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
     """
+<<<<<<< HEAD:cea/demand/preprocessing/properties.py
+    import cea.config
+    config = cea.config.Configuration()
+
+    if not scenario_path:
+        scenario_path = config.scenario
+    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
+    properties(locator=locator, prop_architecture_flag=prop_architecture_flag,
+               prop_hvac_flag=prop_hvac_flag, prop_comfort_flag=prop_comfort_flag,
+               prop_internal_loads_flag=prop_internal_loads_flag)
+=======
     assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
     locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+>>>>>>> refs/remotes/origin/master:cea/demand/preprocessing/data_helper.py
 
     print('Running data-helper with scenario = %s' % config.scenario)
     print('Running data-helper with archetypes = %s' % config.data_helper.archetypes)
