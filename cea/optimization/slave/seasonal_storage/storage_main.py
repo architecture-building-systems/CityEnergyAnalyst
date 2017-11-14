@@ -202,9 +202,6 @@ def storage_optimization(locator, master_to_slave_vars, gv):
             else:
                 storageDeviation6 = (abs(InitialStorageContent - FinalStorageContent) / FinalStorageContent)
 
-            if 0.05 < InitialStorageContent / abs(InitialStorageContent - FinalStorageContent):
-                result = pd.DataFrame([storageDeviation6, InitialStorageContent, FinalStorageContent])
-                result.to_csv(locator.get_optimization_slave_storage_flag(MS_Var.configKey), sep=',')
 
     """ EVALUATION AND FURTHER PROCESSING """
 
@@ -239,8 +236,3 @@ def storage_optimization(locator, master_to_slave_vars, gv):
 
         plt.show()
 
-    # Save Files
-    if save_file == 1:
-        results = pd.DataFrame({"Storage_Size_opt": [V5], "T_initial": [T_initial], "Q_initial": [Q_initial]})
-        Name = locator.get_optimization_slave_storage_sizing_parameters(MS_Var.configKey)
-        results.to_csv(Name, sep=',')
