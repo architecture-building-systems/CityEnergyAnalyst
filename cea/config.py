@@ -238,6 +238,9 @@ class Parameter(object):
         # give subclasses a chance to specialize their behavior
         self.initialize(config.default_config)
 
+    def __repr__(self):
+        return "<Parameter %s:%s=%s>" % (self.section.name, self.name, self.get())
+
     def initialize(self, parser):
         """
         Override this function to initialize a parameter with values as read from
