@@ -23,8 +23,6 @@ def calc_spatio_temporal_visuals(locator, list_of_buildings, initial_date, confi
     # now the dates in which the building demand is calculated is stored in 'date'
     date = pd.date_range(initial_date, periods=8760, freq='H')
     time = date.strftime("%Y%m%d%H%M%S")
-    weather_data = epwreader.epw_reader(config.weather)
-
 
     # this loop checks if all the buildings are selected and gets the building names from Total demand.csv file
     if 'all' in list_of_buildings:
@@ -33,9 +31,7 @@ def calc_spatio_temporal_visuals(locator, list_of_buildings, initial_date, confi
         building_names = list_of_buildings
 
     for i, building in enumerate(building_names):
-        # importing corresponding variables of each building and then slicing it to take just a single period value
-        # i.e a time step
-        # read radiation file
+
         sensors_rad = pd.read_json(locator.get_radiation_building(building_name=building))
         sensors_metadata = pd.read_csv(locator.get_radiation_metadata(building_name= building))
 
@@ -53,9 +49,7 @@ def calc_spatio_temporal_visuals(locator, list_of_buildings, initial_date, confi
         sensors_rad_final['total_roof_rad_Whperm2'] = sensors_rad_roof.sum(1)
         sensors_rad_final['total_wall_rad_Whperm2'] = sensors_rad_walls.sum(1)
         sensors_rad_final['date'] = time
-        sensors_rad_final.to_csv(locator.radiation_results(building_name=building), index=True, float_format='%.2f')  # print PV generation potential
-
-
+        sensors_rad_final.to_csv(locator.radiation_results(building_name=building), index=True, float_format='%.2f')
 
 def main(config):
 
@@ -63,7 +57,6 @@ def main(config):
     initial_date = '1/1/2015'
     list_of_buildings = ['all']  # 'all' for all buildings or else provide a list of building names
     calc_spatio_temporal_visuals(locator, list_of_buildings, initial_date, config)
-
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
