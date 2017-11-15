@@ -8,6 +8,7 @@ import os
 import ConfigParser
 import cea.inputlocator
 import collections
+import datetime
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -426,7 +427,15 @@ class StringParameter(Parameter):
 
 
 class DateParameter(Parameter):
-    pass
+    def encode(self, value):
+        return datetime.datetime.strftime(value, '%Y-%m-%d')
+
+    def decode(self, value):
+        try:
+            return datetime.datetime.strptime(value, '%Y-%m-%d')
+        except ValueError:
+            # try with system's locale
+            return datetime.datetime.strptime(value, '%x')
 
 
 class ChoiceParameter(Parameter):
