@@ -26,9 +26,7 @@ def main(_):
         os.makedirs(toolbox_folder)
     shutil.copy(find_toolbox_src(), toolbox_dst)
 
-    # during development of the toolbox, this will refresh quicker
     copy_library(toolbox_folder)
-
     copy_config(toolbox_folder)
     copy_inputlocator(toolbox_folder)
 
@@ -64,7 +62,7 @@ def copy_library(toolbox_folder):
 
 
     # during development, copy this file too
-    shutil.copy(os.path.join(lib_src_folder, 'test.pyt'), toolbox_folder)
+    # shutil.copy(os.path.join(lib_src_folder, 'test.pyt'), toolbox_folder)
 
 
 def copy_config(toolbox_folder):

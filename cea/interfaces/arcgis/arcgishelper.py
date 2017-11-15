@@ -56,12 +56,13 @@ class CeaTool(object):
             if not ':' in parameter_key:
                 # skip this parameter
                 continue
-            parameter_name = parameter_key.split(':')[1]
+            section_name, parameter_name = parameter_key.split(':')
             parameter = parameters[parameter_key]
             if parameter.multivalue:
                 parameter_value = ' '.join(parameter.valueAsText.split(';'))
             else:
-                parameter_value = parameter.valueAsText
+                cea_parameter = CONFIG.sections[section_name].parameters[parameter_name]
+                parameter_value = cea_parameter.encode(parameter.value)
             kwargs[parameter_name] = parameter_value
         run_cli(self.cea_tool, **kwargs)
 
@@ -291,6 +292,7 @@ def get_parameter_info(cea_parameter, config):
         cea.config.RelativePathParameter: ('String', False),
         cea.config.NullableIntegerParameter: ('String', False),
         cea.config.NullableRealParameter: ('String', False),
+        cea.config.DateParameter: ('GPDate', False),
     }
     data_type, multivalue = data_type_map[type(cea_parameter)]
     parameter_type = 'Optional' if 'Nullable' in str(type(cea_parameter)) else 'Required'
