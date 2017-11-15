@@ -7,6 +7,7 @@ in ``default.config``.
 import os
 import ConfigParser
 import cea.inputlocator
+import collections
 
 __author__ = "Daren Thomas"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
@@ -27,8 +28,8 @@ class Configuration(object):
         self.default_config.read(DEFAULT_CONFIG)
         self.user_config = ConfigParser.SafeConfigParser()
         self.user_config.read([config_file, DEFAULT_CONFIG])
-        self.sections = {section_name: Section(section_name, config=self)
-                         for section_name in self.default_config.sections()}
+        self.sections = collections.OrderedDict([(section_name, Section(section_name, self))
+                                                 for section_name in self.default_config.sections()])
 
         # update cea.config with new options
         self.save(config_file)
@@ -165,9 +166,9 @@ class Section(object):
         assert name == name.lower(), 'Section names must be lowercase'
         self.name = name
         self.config = config
-        self.parameters = {parameter_name: construct_parameter(parameter_name, section=self, config=config)
-                                       for parameter_name in config.default_config.options(self.name)
-                                       if not '.' in parameter_name}
+        self.parameters = collections.OrderedDict([(pn, construct_parameter(pn, self, config))
+                                                   for pn in config.default_config.options(self.name)
+                                                   if not '.' in pn])
 
     def __getattr__(self, item):
         """Return the value of the parameter with that name."""
@@ -257,8 +258,12 @@ class Parameter(object):
 
     def get(self):
         """Return the value from the config file"""
-        encoded_value = self.config.user_config.get(self.section.name, self.name)
-        return self.decode(encoded_value)
+        try:
+            encoded_value = self.config.user_config.get(self.section.name, self.name)
+            return self.decode(encoded_value)
+        except ValueError as ex:
+            raise ValueError('%s:%s - %s' % (self.section.name, self.name, ex.message))
+
 
     def set(self, value):
         encoded_value = self.encode(value)
@@ -322,7 +327,14 @@ class BooleanParameter(Parameter):
 
 class IntegerParameter(Parameter):
     """Read / write integer parameters to the config file."""
+    def encode(self, value):
+        return str(int(value))
 
+    def decode(self, value):
+        return int(value)
+
+class NullableIntegerParameter(Parameter):
+    """Read / write integer parameters to the config file."""
     def encode(self, value):
         try:
             return str(int(value))
@@ -339,6 +351,21 @@ class IntegerParameter(Parameter):
 class RealParameter(Parameter):
     """Read / write floating point parameters to the config file."""
 
+    def initialize(self, parser):
+        # allow user to override the amount of decimal places to use
+        try:
+            self._decimal_places = int(parser.get(self.section.name, self.name + '.decimal-places'))
+        except ConfigParser.NoOptionError:
+            self._decimal_places = 4
+
+    def encode(self, value):
+        return format(value, ".%i" % self._decimal_places)
+
+    def decode(self, value):
+        return float(value)
+
+class NullableRealParameter(Parameter):
+    """Read / write floating point parameters to the config file."""
     def initialize(self, parser):
         # allow user to override the amount of decimal places to use
         try:
