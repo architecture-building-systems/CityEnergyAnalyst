@@ -74,6 +74,7 @@ def get_parameters(cea_tool):
     for _, parameter in CONFIG.matching_parameters(option_list):
         yield parameter
 
+
 def add_message(msg, **kwargs):
     """Log to arcpy.AddMessage() instead of print to STDOUT"""
     if len(kwargs):
@@ -288,12 +289,17 @@ def get_parameter_info(cea_parameter, config):
         cea.config.FileParameter: ('DEFile', False),
         cea.config.ListParameter: ('String', True),
         cea.config.RelativePathParameter: ('String', False),
+        cea.config.NullableIntegerParameter: ('String', False),
+        cea.config.NullableRealParameter: ('String', False),
     }
     data_type, multivalue = data_type_map[type(cea_parameter)]
-    parameter_type = 'Optional' if parameter_name in {'longitude', 'latitude'} else 'Required'
+    parameter_type = 'Optional' if 'Nullable' in str(type(cea_parameter)) else 'Required'
+
     parameter_info = arcpy.Parameter(displayName=cea_parameter.help,
                                      name="%(section_name)s:%(parameter_name)s" % locals(),
-                                     datatype=data_type, parameterType=parameter_type, direction="Input",
+                                     datatype=data_type,
+                                     parameterType=parameter_type,
+                                     direction="Input",
                                      multiValue=multivalue)
 
     if isinstance(cea_parameter, cea.config.ChoiceParameter):
@@ -308,8 +314,12 @@ def get_parameter_info(cea_parameter, config):
     if not cea_parameter.category is None:
         parameter_info.category = cea_parameter.category
 
-    parameter_info.value = cea_parameter.get()
+    if parameter_info.datatype == 'String':
+        parameter_info.value = cea_parameter.encode(cea_parameter.get())
+    else:
+        parameter_info.value = cea_parameter.get()
     return parameter_info
+
 
 def get_weather_parameter_info(config):
     """Create two arcpy Parameter objects to deal with the weather"""
