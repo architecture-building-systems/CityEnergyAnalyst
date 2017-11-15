@@ -1,3 +1,4 @@
+from __future__ import division
 import os
 import pandas as pd
 import pyliburo.py3dmodel.calculate as calculate
@@ -5,7 +6,8 @@ from pyliburo import py3dmodel
 import pyliburo.py2radiance as py2radiance
 import json
 
-import pyliburo.gml3dmodel as gml3dmodel
+from cea.utilities import epwreader
+
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca", "Kian Wee Chen"]
@@ -42,7 +44,7 @@ def generate_sensor_surfaces(occface, xdim, ydim, srf_type):
     return sensor_dir, sensor_cord, sensor_type, sensor_area
 
 
-def calc_sensors_building(building_geometry_dict, sensor_parameters):
+def calc_sensors_building(building_geometry_dict, settings):
     sensor_dir_list = []
     sensor_cord_list = []
     sensor_type_list = []
@@ -52,8 +54,7 @@ def calc_sensors_building(building_geometry_dict, sensor_parameters):
         occface_list = building_geometry_dict[srf_type]
         for face in occface_list:
             sensor_dir, sensor_cord, sensor_type, sensor_area \
-                = generate_sensor_surfaces(face, sensor_parameters['X_DIM'], sensor_parameters['Y_DIM'], srf_type)
-
+                = generate_sensor_surfaces(face, settings.sensor_x_dim, settings.sensor_y_dim, srf_type)
             sensor_dir_list.extend(sensor_dir)
             sensor_cord_list.extend(sensor_cord)
             sensor_type_list.extend(sensor_type)
@@ -62,7 +63,7 @@ def calc_sensors_building(building_geometry_dict, sensor_parameters):
     return sensor_dir_list, sensor_cord_list, sensor_type_list, sensor_area_list
 
 
-def calc_sensors_zone(geometry_3D_zone, locator, sensor_parameters):
+def calc_sensors_zone(geometry_3D_zone, locator, settings):
     sensors_coords_zone = []
     sensors_dir_zone = []
     sensors_total_number_list = []
@@ -70,10 +71,10 @@ def calc_sensors_zone(geometry_3D_zone, locator, sensor_parameters):
     sensors_code_zone = []
     for building_geometry in geometry_3D_zone:
         # building name
-        bldg_name = building_geometry["name"]
+        building_name = building_geometry["name"]
         # get sensors in the building
         sensors_dir_building, sensors_coords_building, \
-        sensors_type_building, sensors_area_building = calc_sensors_building(building_geometry, sensor_parameters)
+        sensors_type_building, sensors_area_building = calc_sensors_building(building_geometry, settings)
 
         # get the total number of sensors and store in lst
         sensors_number = len(sensors_coords_building)
@@ -87,10 +88,10 @@ def calc_sensors_zone(geometry_3D_zone, locator, sensor_parameters):
         sensors_dir_zone.extend(sensors_dir_building)
 
         # get the name of all buildings
-        names_zone.append(bldg_name)
+        names_zone.append(building_name)
 
         # save sensors geometry result to disk
-        pd.DataFrame({'BUILDING':bldg_name,
+        pd.DataFrame({'BUILDING':building_name,
                       'SURFACE': sensors_code,
                       'Xcoor': [x[0] for x in sensors_coords_building],
                       'Ycoor': [x[1] for x in sensors_coords_building],
@@ -99,7 +100,7 @@ def calc_sensors_zone(geometry_3D_zone, locator, sensor_parameters):
                       'Ydir':[x[1] for x in sensors_dir_building],
                       'Zdir':[x[2] for x in sensors_dir_building],
                       'AREA_m2': sensors_area_building,
-                      'TYPE': sensors_type_building}).to_csv(locator.get_radiation_metadata(bldg_name), index=None)
+                      'TYPE': sensors_type_building}).to_csv(locator.get_radiation_metadata(building_name), index=None)
 
 
     return sensors_coords_zone, sensors_dir_zone, sensors_total_number_list, names_zone, sensors_code_zone
@@ -114,29 +115,34 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, sett
     # calculate sensors
     print " calculating and sending sensor points"
     sensors_coords_zone, sensors_dir_zone, sensors_number_zone, names_zone, \
-    sensors_code_zone = calc_sensors_zone(geometry_3D_zone, locator, settings.sensor_parameters)
+    sensors_code_zone = calc_sensors_zone(geometry_3D_zone, locator, settings)
     rad.set_sensor_points(sensors_coords_zone, sensors_dir_zone)
     create_sensor_input_file(rad, chunk_n)
 
     num_sensors = sum(sensors_number_zone)
     print "Daysim simulation starts for building(s)", names_zone
     print "and the next number of total sensors", num_sensors
-    if num_sensors > 20000:
-        raise ValueError('You are sending more than 10000 sensors at the same time, this \
+    if num_sensors > 50000:
+        raise ValueError('You are sending more than 50000 sensors at the same time, this \
                           will eventually crash a daysim instance. To solve it, reduce the number of buildings \
                           in each chunk in the Settings.py file')
 
-    rad.execute_epw2wea(weather_path)
+    # add_elevation_weather_file(weather_path)
+    rad.execute_epw2wea(weather_path, ground_reflectance = settings.albedo)
     rad.execute_radfiles2daysim()
-    rad_params = settings.rad_parameters
-    rad.write_radiance_parameters(rad_params['RAD_AB'], rad_params['RAD_AD'], rad_params['RAD_AS'],
-                                  rad_params['RAD_AR'], rad_params['RAD_AA'], rad_params['RAD_LR'],
-                                  rad_params['RAD_ST'], rad_params['RAD_SJ'], rad_params['RAD_LW'],
-                                  rad_params['RAD_DJ'], rad_params['RAD_DS'], rad_params['RAD_DR'],
-                                  rad_params['RAD_DP'])
+    rad.write_radiance_parameters(settings.rad_ab, settings.rad_ad, settings.rad_as, settings.rad_ar, settings.rad_aa,
+                                  settings.rad_lr, settings.rad_st, settings.rad_sj, settings.rad_lw, settings.rad_dj,
+                                  settings.rad_ds, settings.rad_dr, settings.rad_dp)
+
     rad.execute_gen_dc("w/m2")
     rad.execute_ds_illum()
     solar_res = rad.eval_ill_per_sensor()
+
+    # check inconsistencies and replace by max value of weather file
+    weatherfile = epwreader.epw_reader(weather_path)['glohorrad_Whm2'].values
+    max_global = weatherfile.max()
+    for i, value in enumerate(solar_res):
+        solar_res[i] =  [0 if x > max_global else x for x in value]
 
     print "Writing results to disk"
     index = 0
@@ -146,3 +152,4 @@ def isolation_daysim(chunk_n, rad, geometry_3D_zone, locator, weather_path, sett
         with open(locator.get_radiation_building(building_name), 'w') as outfile:
             json.dump(items_sensor_name_and_result, outfile)
         index = sensors_number_building
+

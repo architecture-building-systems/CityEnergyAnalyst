@@ -91,7 +91,7 @@ def calc_Ctot_pump(dicoSupply, buildList, network_results_folder, ntwFeat, gV, l
 
 # investment and maintenance costs
 
-def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gV, locator, technology=0):
+def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gv, locator, technology=0):
     """
     Calculates the cost of a pumping device.
     if the nominal load (electric) > 375kW, a new pump is installed
@@ -109,7 +109,7 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gV, locator, technology=0):
     :returns InvCa: annualized investment costs in CHF/year
     """
 
-    E_pumping_required_W = mdot_kgpers * deltaP / gV.rho_60
+    E_pumping_required_W = mdot_kgpers * deltaP / gv.rho_60
     P_motor_tot_W = E_pumping_required_W / eta_pumping  # electricty to run the motor
 
     Pump_max_kW = 375.0
@@ -150,7 +150,7 @@ def calc_Cinv_pump(deltaP, mdot_kgpers, eta_pumping, gV, locator, technology=0):
             Pump_Array_W[pump_i] = Pump_min_kW * 1000
         Pump_Remain_W -= Pump_Array_W[pump_i]
 
-        pump_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="Pump")
+        pump_cost_data = pd.read_excel(locator.get_supply_systems(gv.config.region), sheetname="Pump")
         technology_code = list(set(pump_cost_data['code']))
         pump_cost_data[pump_cost_data['code'] == technology_code[technology]]
         # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least

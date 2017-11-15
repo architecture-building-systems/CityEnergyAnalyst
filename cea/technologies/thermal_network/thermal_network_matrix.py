@@ -1595,7 +1595,7 @@ def run_as_script(scenario_path=None):
     if scenario_path is None:
         scenario_path = config.scenario
 
-    locator = inputlocator.InputLocator(scenario_path=scenario_path)
+    locator = inputlocator.InputLocator(scenario=scenario_path)
 
     # add options for data sources: heating or cooling network, csv or shapefile
     network_type = ['DH', 'DC'] # set to either 'DH' or 'DC'

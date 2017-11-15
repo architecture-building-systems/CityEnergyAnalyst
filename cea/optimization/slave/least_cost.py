@@ -587,64 +587,12 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
                cost_Boiler_for_Storage_reHeat_at_seasonend + cost_HP_aux_uncontrollable + cost_HP_storage_operation
 
     save_cost = 1
-    if save_cost == 1:
-        results = pd.DataFrame({
-            "total cost": [cost_sum],
-            "PPoperation_exclAddBackup": [np.sum(cost_data_centralPlant_op)],
-            "KEV_Remuneration": [price_obtained_from_KEV_for_PVandPVT],
-            "costAddBackup_total": [costAddBackup_total],
-            "cost_CC_maintenance": [cost_CC_maintenance],
-            "costHPSew_sum": [costHPSew_sum],
-            "costHPLake_sum": [costHPLake_sum],
-            "costGHP_sum": [costGHP_sum],
-            "costCC_sum": [costCC_sum],
-            "costFurnace_sum": [costFurnace_sum],
-            "costBoiler_sum": [costBoiler_sum],
-            "costBackup_sum": [costBackup_sum],
-            "cost_Boiler_for_Storage_reHeat_at_seasonend": [cost_Boiler_for_Storage_reHeat_at_seasonend],
-            "cost_HP_aux_uncontrollable": [cost_HP_aux_uncontrollable],
-            "cost_HP_storage_operation": [cost_HP_storage_operation]
-        })
-        results.to_csv(locator.get_optimization_slave_slave_cost_data(MS_Var.configKey), sep=',')
-    # Store out Average cost
 
-    saveAverageCost = 1
-
-    avgCostHPSewRpkWh = 100 * 1000.0 * costHPSew_sum / np.sum(Q_source_data_W[:, 0])
-    avgCostHPLakeRpkWh = 100 * 1000.0 * costHPLake_sum / np.sum(Q_source_data_W[:, 1])
-    avgCostGHPRpkWh = 100 * 1000.0 * costGHP_sum / np.sum(Q_source_data_W[:, 2])
-    avgCostCCRpkWh = 100 * 1000.0 * costCC_sum / np.sum(Q_source_data_W[:, 3])
-    avgCostFurnaceRpkWh = 100 * 1000.0 * costFurnace_sum / np.sum(Q_source_data_W[:, 4])
-    avgCostBoilerBaseRpkWh = 100 * 1000.0 * costBoiler_sum / np.sum(Q_source_data_W[:, 5])
-    avgCostBoilerPeakRpkWh = 100 * 1000.0 * costBackup_sum / np.sum(Q_source_data_W[:, 6])
-    avgCostUncontrollableSources = 100 * 1000.0 * cost_HP_aux_uncontrollable / np.sum(Q_uncontrollable_W)
-    avgCostAddBoiler = 100 * 1000.0 * costAddBackup_total / np.sum(Q_uncovered_W)
-    avgCostStorageOperation = 100 * 1000.0 * cost_HP_storage_operation / Q_StorageToDHNpipe_sum
-
-    if saveAverageCost == 1:
-        results = pd.DataFrame({
-            "avgCostHPSewRpkWh": [avgCostHPSewRpkWh],
-            "avgCostHPLakeRpkWh": [avgCostHPLakeRpkWh],
-            "avgCostGHPRpkWh": [avgCostGHPRpkWh],
-            "avgCostCCRpkWh": [avgCostCCRpkWh],
-            "avgCostFurnaceRpkWh": [avgCostFurnaceRpkWh],
-            "avgCostBoilerBaseRpkWh": [avgCostBoilerBaseRpkWh],
-            "avgCostBoilerPeakRpkWh": [avgCostBoilerPeakRpkWh],
-            "avgCostUncontrollableSources": [avgCostUncontrollableSources],
-            "avgCostAddBoiler": [avgCostAddBoiler],
-            "avgCostStorageOperation": [avgCostStorageOperation]
-        })
-
-        results.to_csv(locator.get_optimization_slave_averaged_cost_data(MS_Var.configKey), sep=',')
 
     E_oil_eq_MJ = Eprim_used
     CO2_kg_eq = CO2_emitted
 
-
-    if save_file == 1:
-        results = pd.DataFrame({"E_oil_eq_MJ": [E_oil_eq_MJ], "CO2_kg_eq": [CO2_kg_eq], "cost_sum": [cost_sum]})
-        results.to_csv(locator.get_optimization_slave_slave_to_master_cost_emissions_prim_e(MS_Var.configKey), sep=',')
-        # Calculate primary energy from ressources:
+    # Calculate primary energy from ressources:
     E_gas_Primary_W = Q_primary_AddBackup_sum_W + np.sum(E_gas_data_W)
     E_wood_Primary_W = np.sum(E_wood_data_W)
     E_Import_Slave_req_W = E_consumed_sum_W + np.sum(E_aux_AddBoiler_req_W)
@@ -683,17 +631,37 @@ def least_cost_main(locator, master_to_slave_vars, solar_features, gv):
 
     costBenefitNotUsedHPs = costBenefitNotUsedHPSew + costBenefitNotUsedHPLake
 
-    results = pd.DataFrame({
-        "E_gas_Primary_W": [E_gas_Primary_W],
-        "E_gas_PrimaryPeakPower_W": [E_gas_PrimaryPeakPower_W],
-        "E_wood_Primary_W": [E_wood_Primary_W],
-        "E_Import_Slave_req_W": [E_Import_Slave_req_W],
-        "E_Export_gen_W": [E_Export_gen_W],
-        "E_groundheat_W": [E_groundheat_W],
-        "E_solar_gen_Wh": [E_solar_gen_Wh],
-        "costBenefitNotUsedHPs": [costBenefitNotUsedHPs]
-    })
-    results.to_csv(locator.get_optimization_slave_primary_energy_by_source(MS_Var.configKey), sep=',')
+    if save_cost == 1:
+        results = pd.DataFrame({
+            "total cost": [cost_sum],
+            "PPoperation_exclAddBackup": [np.sum(cost_data_centralPlant_op)],
+            "KEV_Remuneration": [price_obtained_from_KEV_for_PVandPVT],
+            "costAddBackup_total": [costAddBackup_total],
+            "cost_CC_maintenance": [cost_CC_maintenance],
+            "costHPSew_sum": [costHPSew_sum],
+            "costHPLake_sum": [costHPLake_sum],
+            "costGHP_sum": [costGHP_sum],
+            "costCC_sum": [costCC_sum],
+            "costFurnace_sum": [costFurnace_sum],
+            "costBoiler_sum": [costBoiler_sum],
+            "costBackup_sum": [costBackup_sum],
+            "cost_Boiler_for_Storage_reHeat_at_seasonend": [cost_Boiler_for_Storage_reHeat_at_seasonend],
+            "cost_HP_aux_uncontrollable": [cost_HP_aux_uncontrollable],
+            "cost_HP_storage_operation": [cost_HP_storage_operation],
+            "E_oil_eq_MJ": [E_oil_eq_MJ],
+            "CO2_kg_eq": [CO2_kg_eq],
+            "cost_sum": [cost_sum],
+            "E_gas_Primary_W": [E_gas_Primary_W],
+            "E_gas_PrimaryPeakPower_W": [E_gas_PrimaryPeakPower_W],
+            "E_wood_Primary_W": [E_wood_Primary_W],
+            "E_Import_Slave_req_W": [E_Import_Slave_req_W],
+            "E_Export_gen_W": [E_Export_gen_W],
+            "E_groundheat_W": [E_groundheat_W],
+            "E_solar_gen_Wh": [E_solar_gen_Wh],
+            "costBenefitNotUsedHPs": [costBenefitNotUsedHPs]
+        })
+        results.to_csv(locator.get_optimization_slave_cost_prime_primary_energy_data(MS_Var.configKey), sep=',')
+
     cost_sum -= costBenefitNotUsedHPs
 
     return E_oil_eq_MJ, CO2_kg_eq, cost_sum, Q_uncovered_design_W, Q_uncovered_annual_W
@@ -891,25 +859,6 @@ def calc_primary_energy_and_CO2(Q_source_data_W, Q_coldsource_data_W, E_PP_el_da
     CO2_from_SCandPVT   = Q_SCandPVT_gen_Wh * gv.SOLARCOLLECTORS_TO_CO2 * gv.Wh_to_J / 1.0E6
     CO2_from_HPSolarandHearRecovery = E_HP_SolarAndHeatRecoverySum_W * EL_TO_CO2 * gv.Wh_to_J / 1E6
     CO2_from_HP_StorageOperationChDeCh = E_aux_storage_operation_sum_W * EL_TO_CO2 * gv.Wh_to_J / 1E6
-    
-    # save data
-    results = pd.DataFrame({
-                            "CO2_from_Sewage":[CO2_from_Sewage],
-                            "CO2_from_GHP":[CO2_from_GHP],
-                            "CO2_from_HPLake":[CO2_from_HPLake],
-                            "CO2_from_CC_gas":[CO2_from_CC_gas],
-                            "CO2_from_BaseBoiler_gas":[CO2_from_BaseBoiler_gas],
-                            "CO2_from_PeakBoiler_gas":[CO2_from_PeakBoiler_gas],
-                            "CO2_from_AddBoiler_gas":[CO2_from_AddBoiler_gas],
-                            "CO2_from_fictiveBoilerStorage":[CO2_from_fictiveBoilerStorage],
-                            "CO2_from_wood":[CO2_from_wood],
-                            "CO2_from_elec_sold":[CO2_from_elec_sold],
-                            "CO2_from_SCandPVT":[CO2_from_SCandPVT],
-                            "CO2_from_elec_usedAuxBoilersAll":[CO2_from_elec_usedAuxBoilersAll],
-                            "CO2_from_HPSolarandHearRecovery":[CO2_from_HPSolarandHearRecovery],
-                            "CO2_from_HP_StorageOperationChDeCh":[CO2_from_HP_StorageOperationChDeCh]
-                            })
-    results.to_csv(locator.get_optimization_slave_slave_detailed_emission_data(MS_Var.configKey), sep=',')
 
     ################## Primary energy needs
     
@@ -945,23 +894,38 @@ def calc_primary_energy_and_CO2(Q_source_data_W, Q_coldsource_data_W, E_PP_el_da
 
     # Save data
     results = pd.DataFrame({
-                            "E_prim_from_Sewage":[Eprim_from_Sewage],
-                            "E_prim_from_GHP":[Eprim_from_GHP],
-                            "E_prim_from_HPLake":[Eprim_from_HPLake],
-                            "E_prim_from_CC_gas":[E_prim_from_CC_gas],
-                            "E_prim_from_BaseBoiler_gas":[E_prim_from_BaseBoiler_gas],
-                            "E_prim_from_PeakBoiler_gas":[E_prim_from_PeakBoiler_gas],
-                            "E_prim_from_AddBoiler_gas":[E_prim_from_AddBoiler_gas],
-                            "E_prim_from_FictiveBoiler_gas":[E_prim_from_FictiveBoiler_gas],
-                            "E_prim_from_wood":[E_prim_from_wood],
-                            "E_primSaved_from_elec_sold_Furnace":[E_primSaved_from_elec_sold_Furnace],
-                            "E_primSaved_from_elec_sold_CC":[E_primSaved_from_elec_sold_CHP],
-                            "E_primSaved_from_elec_sold_Solar":[E_primSaved_from_elec_sold_Solar],
-                            "E_prim_from_elec_usedAuxBoilersAll":[Eprim_from_elec_usedAuxBoilersAll],
-                            "E_prim_from_HPSolarandHearRecovery":[Eprim_from_HPSolarandHearRecovery],
-                            "E_prim_from_HP_StorageOperationChDeCh":[Eprim_from_HP_StorageOperationChDeCh]
+                            "CO2_from_Sewage":[CO2_from_Sewage],
+                            "CO2_from_GHP":[CO2_from_GHP],
+                            "CO2_from_HPLake":[CO2_from_HPLake],
+                            "CO2_from_CC_gas":[CO2_from_CC_gas],
+                            "CO2_from_BaseBoiler_gas":[CO2_from_BaseBoiler_gas],
+                            "CO2_from_PeakBoiler_gas":[CO2_from_PeakBoiler_gas],
+                            "CO2_from_AddBoiler_gas":[CO2_from_AddBoiler_gas],
+                            "CO2_from_fictiveBoilerStorage":[CO2_from_fictiveBoilerStorage],
+                            "CO2_from_wood":[CO2_from_wood],
+                            "CO2_from_elec_sold":[CO2_from_elec_sold],
+                            "CO2_from_SCandPVT":[CO2_from_SCandPVT],
+                            "CO2_from_elec_usedAuxBoilersAll":[CO2_from_elec_usedAuxBoilersAll],
+                            "CO2_from_HPSolarandHearRecovery":[CO2_from_HPSolarandHearRecovery],
+                            "CO2_from_HP_StorageOperationChDeCh":[CO2_from_HP_StorageOperationChDeCh],
+                            "E_prim_from_Sewage": [Eprim_from_Sewage],
+                            "E_prim_from_GHP": [Eprim_from_GHP],
+                            "E_prim_from_HPLake": [Eprim_from_HPLake],
+                            "E_prim_from_CC_gas": [E_prim_from_CC_gas],
+                            "E_prim_from_BaseBoiler_gas": [E_prim_from_BaseBoiler_gas],
+                            "E_prim_from_PeakBoiler_gas": [E_prim_from_PeakBoiler_gas],
+                            "E_prim_from_AddBoiler_gas": [E_prim_from_AddBoiler_gas],
+                            "E_prim_from_FictiveBoiler_gas": [E_prim_from_FictiveBoiler_gas],
+                            "E_prim_from_wood": [E_prim_from_wood],
+                            "E_primSaved_from_elec_sold_Furnace": [E_primSaved_from_elec_sold_Furnace],
+                            "E_primSaved_from_elec_sold_CC": [E_primSaved_from_elec_sold_CHP],
+                            "E_primSaved_from_elec_sold_Solar": [E_primSaved_from_elec_sold_Solar],
+                            "E_prim_from_elec_usedAuxBoilersAll": [Eprim_from_elec_usedAuxBoilersAll],
+                            "E_prim_from_HPSolarandHearRecovery": [Eprim_from_HPSolarandHearRecovery],
+                            "E_prim_from_HP_StorageOperationChDeCh": [Eprim_from_HP_StorageOperationChDeCh]
                             })
-    results.to_csv(locator.get_optimization_slave_slave_detailed_e_prim_data(MS_Var.configKey), sep=',')
+    results.to_csv(locator.get_optimization_slave_slave_detailed_emission_and_eprim_data(MS_Var.configKey), sep=',')
+
 
     ######### Summed up results    
     CO2_emitted     = (CO2_from_HP + CO2_from_gas + CO2_from_wood + CO2_from_elec_sold + CO2_from_SCandPVT + CO2_from_elec_usedAuxBoilersAll\

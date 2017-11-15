@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
 
-from cea import inputlocator
+import cea.inputlocator
+import cea.config
 
 __author__ = "Martin Mosteiro Romero"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -22,7 +23,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def benchmark(locator_list, output_file):
+def benchmark(locator_list, output_file, config):
     """
     Print PDF graphs comparing the selected scenarios to the 2000 Watt society benchmark for construction, operation
     and mobility. The calculation is based on the database read by and described in calc_benchmark_today and
@@ -57,9 +58,9 @@ def benchmark(locator_list, output_file):
         scenario_max[graphs[i] + fields[2]] = scenario_max[graphs[i] + fields[3]] = 0
 
     # calculate target values based on the baseline case
-    targets = calc_benchmark_targets(locator_list[0])
+    targets = calc_benchmark_targets(locator_list[0], config)
     # calculate current values based on the baseline case
-    values_today = calc_benchmark_today(locator_list[0])
+    values_today = calc_benchmark_today(locator_list[0], config)
 
     # start graphs
     fig, (ax1, ax2, ax3, ax4, ax5, ax6) = plt.subplots(6, figsize=(16, 12))
@@ -72,7 +73,7 @@ def benchmark(locator_list, output_file):
     # run for each locator (i.e., for each scenario)
     for n in range(len(locator_list)):
         locator = locator_list[n]
-        scenario_name = os.path.basename(locator.scenario_path)
+        scenario_name = os.path.basename(locator.scenario)
 
         # get embodied and operation PEN and GHG for each building from CSV files
         demand = pd.read_csv(locator.get_total_demand())
@@ -132,7 +133,7 @@ def benchmark(locator_list, output_file):
     plt.close()
 
 
-def calc_benchmark_targets(locator):
+def calc_benchmark_targets(locator, config):
     """
     This function calculates the embodied, operation, mobility and total targets (ghg_kgm2 and pen_MJm2) for all
     buildings in a scenario.
@@ -166,7 +167,7 @@ def calc_benchmark_targets(locator):
     # local files
     demand = pd.read_csv(locator.get_total_demand())
     prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
-    data_benchmark = locator.get_data_benchmark()
+    data_benchmark = locator.get_data_benchmark(config.region)
     occupancy = prop_occupancy.merge(demand, on='Name')
 
     categories = ['EMBODIED', 'OPERATION', 'MOBILITY', 'TOTAL']
@@ -200,7 +201,7 @@ def calc_benchmark_targets(locator):
     return targets
 
 
-def calc_benchmark_today(locator):
+def calc_benchmark_today(locator, config):
     '''
     This function calculates the embodied, operation, mobility and total targets (ghg_kgm2 and pen_MJm2)
     for the area for the current national trend.
@@ -251,7 +252,7 @@ def calc_benchmark_today(locator):
     # local files
     demand = pd.read_csv(locator.get_total_demand())
     prop_occupancy = gpdf.from_file(locator.get_building_occupancy()).drop('geometry', axis=1)
-    data_benchmark_today = locator.get_data_benchmark()
+    data_benchmark_today = locator.get_data_benchmark(config.region)
     occupancy = prop_occupancy.merge(demand, on='Name')
 
     fields = ['Name', 'pen_GJ', 'ghg_ton', 'pen_MJm2', 'ghg_kgm2']
@@ -283,18 +284,19 @@ def calc_benchmark_today(locator):
     return values_today
 
 
-def test_benchmark():
-    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case-zug\baseline')
-    locator_list = [locator, locator, locator, locator]
-    output_file = os.path.expandvars(r'%TEMP%\test_benchmark.pdf')
-    benchmark(locator_list=locator_list, output_file=output_file)
-    print 'test_benchmark() succeeded'
+def main(config):
+    assert os.path.exists(config.benchmark_graphs.project), 'Project not found: %s' % config.benchmark_graphs.project
 
+    print("Running benchmark-graphs with project = %s" % config.benchmark_graphs.project)
+    print("Running benchmark-graphs with scenarios = %s" % config.benchmark_graphs.scenarios)
+    print("Running benchmark-graphs with output-file = %s" % config.benchmark_graphs.output_file)
 
-def test_benchmark_targets():
-    locator = inputlocator.InputLocator(scenario_path=r'C:\reference-case-zug\baseline')
-    calc_benchmark_targets(locator)
+    locator_list = [cea.inputlocator.InputLocator(scenario=os.path.join(config.benchmark_graphs.project, scenario)) for
+                    scenario in config.benchmark_graphs.scenarios]
+
+    benchmark(locator_list=locator_list, output_file=config.benchmark_graphs.output_file, config=config)
 
 
 if __name__ == '__main__':
-    test_benchmark()
+    main(cea.config.Configuration())
+

@@ -6,6 +6,7 @@ photovoltaic
 
 from __future__ import division
 
+import os
 import time
 import numpy as np
 import pandas as pd
@@ -29,7 +30,7 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_path, building_name):
+def calc_PV(locator, config, radiation_path, metadata_csv, latitude, longitude, weather_path, building_name):
     """
     This function first determines the surface area with sufficient solar radiation, and then calculates the optimal
     tilt angles of panels at each surface location. The panels are categorized into groups by their surface azimuths,
@@ -52,7 +53,7 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
     :return: Building_PV.csv with PV generation potential of each building, Building_sensors.csv with sensor data of
              each PV panel.
     """
-    settings = cea.config.Configuration(locator.scenario_path).solar
+    settings = config.solar
 
     t0 = time.clock()
 
@@ -66,7 +67,7 @@ def calc_PV(locator, radiation_path, metadata_csv, latitude, longitude, weather_
     print('calculating solar properties done')
 
     # calculate properties of PV panel
-    panel_properties = calc_properties_PV_db(locator.get_supply_systems_database(), settings.type_PVpanel)
+    panel_properties = calc_properties_PV_db(locator.get_supply_systems(config.region), settings.type_pvpanel)
     print('gathering properties of PV panel')
 
     # select sensor point with sufficient solar radiation
@@ -630,14 +631,15 @@ def calc_properties_PV_db(database_path, type_PVpanel):
     return panel_properties
 
 # investment and maintenance costs
-def calc_Cinv_pv(P_peak_kW, locator, technology=0):
+# FIXME: it looks like this function is never used!!! (REMOVE)
+def calc_Cinv_pv(P_peak_kW, locator, config, technology=0):
     """
     To calculate capital cost of PV modules, assuming 20 year system lifetime.
     :param P_peak: installed capacity of PV module [kW]
     :return InvCa: capital cost of the installed PV module [CHF/Y]
     """
     P_peak = P_peak_kW * 1000  # converting to W from kW
-    PV_cost_data = pd.read_excel(locator.get_supply_systems_cost(), sheetname="PV")
+    PV_cost_data = pd.read_excel(locator.get_supply_systems(config.region), sheetname="PV")
     technology_code = list(set(PV_cost_data['code']))
     PV_cost_data[PV_cost_data['code'] == technology_code[technology]]
     # if the Q_design is below the lowest capacity available for the technology, then it is replaced by the least
@@ -727,14 +729,27 @@ def calc_Crem_pv(E_nom):
     KEV_obtained_in_RpPerkWh = KEV_interpolated_kW(E_nom / 1000.0)
     return KEV_obtained_in_RpPerkWh
 
-def test_photovoltaic():
 
-    import cea.config
-    config = cea.config.Configuration()
-    gv = cea.globalvar.GlobalVariables()
-    scenario_path = config.scenario
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    weather_path = locator.get_default_weather()
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+
+    print('Running photovoltaic with scenario = %s' % config.scenario)
+    print('Running photovoltaic with date-start = %s' % config.solar.date_start)
+    print('Running photovoltaic with dpl = %s' % config.solar.dpl)
+    print('Running photovoltaic with eff-pumping = %s' % config.solar.eff_pumping)
+    print('Running photovoltaic with fcr = %s' % config.solar.fcr)
+    print('Running photovoltaic with k-msc-max = %s' % config.solar.k_msc_max)
+    print('Running photovoltaic with min-radiation = %s' % config.solar.min_radiation)
+    print('Running photovoltaic with panel-on-roof = %s' % config.solar.panel_on_roof)
+    print('Running photovoltaic with panel-on-wall = %s' % config.solar.panel_on_wall)
+    print('Running photovoltaic with ro = %s' % config.solar.ro)
+    print('Running photovoltaic with solar-window-solstice = %s' % config.solar.solar_window_solstice)
+    print('Running photovoltaic with t-in-pvt = %s' % config.solar.t_in_pvt)
+    print('Running photovoltaic with t-in-sc = %s' % config.solar.t_in_sc)
+    print('Running photovoltaic with type-pvpanel = %s' % config.solar.type_pvpanel)
+    print('Running photovoltaic with type-scpanel = %s' % config.solar.type_scpanel)
+
     list_buildings_names = dbfreader.dbf_to_dataframe(locator.get_building_occupancy())['Name']
 
     with fiona.open(locator.get_zone_geometry()) as shp:
@@ -745,8 +760,8 @@ def test_photovoltaic():
     for building in list_buildings_names:
         radiation_path = locator.get_radiation_building(building_name=building)
         radiation_metadata = locator.get_radiation_metadata(building_name= building)
-        calc_PV(locator=locator, radiation_path=radiation_path, metadata_csv=radiation_metadata, latitude=latitude,
-                longitude=longitude, weather_path=weather_path, building_name=building, )
+        calc_PV(locator=locator, config=config, radiation_path=radiation_path, metadata_csv=radiation_metadata, latitude=latitude,
+                longitude=longitude, weather_path=config.weather, building_name=building, )
 
     for i, building in enumerate(list_buildings_names):
         data = pd.read_csv(locator.PV_results(building))
@@ -759,4 +774,4 @@ def test_photovoltaic():
 
 
 if __name__ == '__main__':
-    test_photovoltaic()
+    main(cea.config.Configuration())

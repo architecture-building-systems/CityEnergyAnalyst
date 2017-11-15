@@ -3,10 +3,11 @@ costs according to supply systems
 """
 from __future__ import division
 
+import os
 import pandas as pd
 from geopandas import GeoDataFrame as gpdf
-import cea.globalvar
 import cea.inputlocator
+import cea.config
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
@@ -18,8 +19,8 @@ __email__ = "cea@arch.ethz.ch"
 __status__ = "Production"
 
 
-def operation_costs(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata_flag=True, Qcrefri_flag=True,
-                    Eal_flag=True, Eaux_flag=True, Epro_flag=True, Edata_flag=True):
+def operation_costs(locator, config, plot_Qww=True, plot_Qhs=True, plot_Qcs=True, plot_Qcdata=True, plot_Qcrefri=True,
+                    plot_Eal=True, plot_Eaux=True, plot_Epro=True, plot_Edata=True):
 
     # get local files
     ## get demand results for the scenario
@@ -27,14 +28,14 @@ def operation_costs(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata
     ## get the supply systems for each building in the scenario
     supply_systems = gpdf.from_file(locator.get_building_supply()).drop('geometry', axis=1)
     ## get the non-renewable primary energy and greenhouse gas emissions factors for each supply system in the database
-    data_LCI = locator.get_life_cycle_inventory_supply_systems()
+    data_LCI = locator.get_life_cycle_inventory_supply_systems(config.region)
     factors_heating = pd.read_excel(data_LCI, sheetname='heating')
     factors_dhw = pd.read_excel(data_LCI, sheetname='dhw')
     factors_cooling = pd.read_excel(data_LCI, sheetname='cooling')
     factors_electricity = pd.read_excel(data_LCI, sheetname='electricity')
 
     # local variables
-    QC_flag = E_flag = True # minimum output values
+    plot_QC = plot_E = True # minimum output values
 
     # calculate the total operational non-renewable primary energy demand and CO2 emissions
     ## create data frame for each type of end use energy containing the type of supply system use, the final energy
@@ -45,7 +46,7 @@ def operation_costs(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata
     electricity = supply_systems.merge(demand,on='Name').merge(factors_electricity, left_on='type_el', right_on='code')
 
 
-    heating_services = [[Qhs_flag, 'Qhsf_MWhyr', 'Qhsf', 'Af_m2']]
+    heating_services = [[plot_Qhs, 'Qhsf_MWhyr', 'Qhsf', 'Af_m2']]
     for x in heating_services:
         fields_to_plot = ['Name', 'GFA_m2',
                           x[2] + '_cost', x[2] + '_cost_m2']
@@ -54,11 +55,11 @@ def operation_costs(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata
         heating[fields_to_plot[3]] =  heating[fields_to_plot[2]]/heating['GFA_m2']
 
         if x[0]:
-            # if Qhs_flag is True, create the corresponding csv file
+            # if plot_Qhs is True, create the corresponding csv file
             heating[fields_to_plot].to_csv(locator.get_costs_operation_file(x[2]), index=False, float_format='%.2f')
 
     ## calculate the operational primary energy and emissions for domestic hot water services
-    dhw_services = [[Qww_flag, 'Qwwf_MWhyr', 'Qwwf', 'Af_m2']]
+    dhw_services = [[plot_Qww, 'Qwwf_MWhyr', 'Qwwf', 'Af_m2']]
     for x in dhw_services:
         fields_to_plot = ['Name', 'GFA_m2',
                           x[2] + '_cost', x[2] + '_cost_m2']
@@ -66,12 +67,12 @@ def operation_costs(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata
         dhw[fields_to_plot[2]] = dhw[x[1]] * dhw['costs_kWh'] * 1000
         dhw[fields_to_plot[3]] = dhw[fields_to_plot[2]] / dhw['GFA_m2']
         if x[0]:
-            # if Qww_flag is True, create the corresponding csv file
+            # if plot_Qww is True, create the corresponding csv file
             dhw[fields_to_plot].to_csv(locator.get_costs_operation_file(x[2]), index=False, float_format='%.2f')
 
     ## calculate the operational primary energy and emissions for cooling services
-    cooling_services = [(QC_flag, 'QCf_MWhyr', 'QCf'), (Qcs_flag, 'Qcsf_MWhyr', 'Qcsf'),
-                        (Qcdata_flag, 'Qcdataf_MWhyr', 'Qcdataf'), (Qcrefri_flag, 'Qcref_MWhyr', 'Qcref')]
+    cooling_services = [(plot_QC, 'QCf_MWhyr', 'QCf'), (plot_Qcs, 'Qcsf_MWhyr', 'Qcsf'),
+                        (plot_Qcdata, 'Qcdataf_MWhyr', 'Qcdataf'), (plot_Qcrefri, 'Qcref_MWhyr', 'Qcref')]
     for x in cooling_services:
         fields_to_plot = ['Name', 'GFA_m2',
                           x[2] + '_cost', x[2] + '_cost_m2']
@@ -79,13 +80,13 @@ def operation_costs(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata
         cooling[fields_to_plot[2]] = cooling[x[1]] * cooling['costs_kWh'] * 1000
         cooling[fields_to_plot[3]] =  cooling[fields_to_plot[2]]/cooling['GFA_m2']
         if x[0]:
-            # if QC_flag, Qcs_flag, Qcsdata_flag or Qcrefri_flag is True, create the corresponding csv file
+            # if plot_QC, plot_Qcs, plot_Qcsdata or plot_Qcrefri is True, create the corresponding csv file
             cooling[fields_to_plot].to_csv(locator.get_costs_operation_file(x[2]), index=False, float_format='%.2f')
 
     ## calculate the operational primary energy and emissions for electrical services
-    electrical_services = [(E_flag, 'Ef_MWhyr', 'Ef'), (Eal_flag, 'Ealf_MWhyr', 'Ealf'),
-                           (Eaux_flag, 'Eauxf_MWhyr', 'Eauxf'), (Epro_flag, 'Eprof_MWhyr', 'Eprof'),
-                           (Edata_flag, 'Edataf_MWhyr', 'Edataf')]
+    electrical_services = [(plot_E, 'Ef_MWhyr', 'Ef'), (plot_Eal, 'Ealf_MWhyr', 'Ealf'),
+                           (plot_Eaux, 'Eauxf_MWhyr', 'Eauxf'), (plot_Epro, 'Eprof_MWhyr', 'Eprof'),
+                           (plot_Edata, 'Edataf_MWhyr', 'Edataf')]
     for x in electrical_services:
         fields_to_plot = ['Name', 'GFA_m2',
                           x[2] + '_cost', x[2] + '_cost_m2']
@@ -93,7 +94,7 @@ def operation_costs(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata
         electricity[fields_to_plot[2]] = electricity[x[1]] * electricity['costs_kWh'] * 1000
         electricity[fields_to_plot[3]] =  electricity[fields_to_plot[2]] /electricity['GFA_m2']
         if x[0]:
-            # if E_flag, Eal_flag, Eaux_flag, Epro_flag or Edata_flag is True, create the corresponding csv file
+            # if plot_E, plot_Eal, plot_Eaux, plot_Epro or plot_Edata is True, create the corresponding csv file
             electricity[fields_to_plot].to_csv(locator.get_costs_operation_file(x[2]), index=False, float_format='%.2f')
 
     # create a dataframe with the results for each energy service
@@ -110,17 +111,25 @@ def operation_costs(locator, Qww_flag=True, Qhs_flag=True, Qcs_flag=True, Qcdata
     result[fields_to_plot].to_csv(locator.get_costs_operation_file("Total"), index=False, float_format='%.2f')
 
 
-def run_as_script(scenario_path=None):
-    if not scenario_path:
-        gv = cea.globalvar.GlobalVariables()
-        scenario_path = gv.scenario_reference
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    operation_costs(locator=locator)
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+
+    print('Running operation-costs with scenario = %s' % config.scenario)
+    print('Running operation-costs with plot-qww = %s' % config.operation_costs.plot_qww)
+    print('Running operation-costs with plot-epro = %s' % config.operation_costs.plot_epro)
+    print('Running operation-costs with plot-eaux = %s' % config.operation_costs.plot_eaux)
+    print('Running operation-costs with plot-qcs = %s' % config.operation_costs.plot_qcs)
+    print('Running operation-costs with plot-qhs = %s' % config.operation_costs.plot_qhs)
+    print('Running operation-costs with plot-edata = %s' % config.operation_costs.plot_edata)
+    print('Running operation-costs with plot-eal = %s' % config.operation_costs.plot_eal)
+    print('Running operation-costs with plot-qcdata = %s' % config.operation_costs.plot_qcdata)
+    print('Running operation-costs with plot-qcrefri = %s' % config.operation_costs.plot_qcrefri)
+
+    oc = config.operation_costs
+    operation_costs(locator=locator, config=config, plot_Qww=oc.plot_qww, plot_Qhs=oc.plot_qhs, plot_Qcs=oc.plot_qcs,
+                    plot_Qcdata=oc.plot_qcdata, plot_Qcrefri=oc.plot_qcrefri, plot_Eal=oc.plot_eal,
+                    plot_Eaux=oc.plot_eaux, plot_Epro=oc.plot_epro, plot_Edata=oc.plot_edata)
 
 if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--scenario', help='Path to the scenario folder')
-    args = parser.parse_args()
-    run_as_script(scenario_path=args.scenario)
+    main(cea.config.Configuration())

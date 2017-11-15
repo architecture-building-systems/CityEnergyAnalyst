@@ -11,6 +11,7 @@ out to the samples folder as files of the form `results.$i.csv` (with `$i` set t
 
 from __future__ import division
 import os
+import sys
 import shutil
 import pickle
 import numpy as np
@@ -21,6 +22,7 @@ import cea.demand.demand_writers
 import cea.globalvar
 from cea.demand import demand_main
 from cea.inputlocator import InputLocator
+import cea.config
 
 
 __author__ = "Jimeno A. Fonseca; Daren Thomas"
@@ -65,7 +67,7 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
     if os.path.exists(simulation_path):
         shutil.rmtree(simulation_path)
     shutil.copytree(scenario_path, simulation_path)
-    locator = InputLocator(scenario_path=simulation_path)
+    locator = InputLocator(scenario=simulation_path)
 
     with open(os.path.join(samples_path, 'problem.pickle'), 'r') as f:
         problem = pickle.load(f)
@@ -81,7 +83,7 @@ def apply_sample_parameters(sample_index, samples_path, scenario_path, simulatio
         print("Setting prop_overrides['%s'] to %s" % (key, sample[i]))
         prop_overrides[key] = sample[i]
 
-    sample_locator = InputLocator(scenario_path=simulation_path)
+    sample_locator = InputLocator(scenario=simulation_path)
     prop_overrides.to_csv(sample_locator.get_building_overrides())
 
     return sample_locator
@@ -175,7 +177,7 @@ def simulate_demand_batch(sample_index, batch_size, samples_folder, scenario, si
         for j, item in enumerate(time_series):
             item.to_csv(os.path.join(samples_folder, 'result.%i.%i.csv' % (i , j)))
 
-def main():
+def main(config):
     """
     Parse the arguments passed to the script and run `simulate_demand_sample` for each sample in the current
     batch.
@@ -185,30 +187,32 @@ def main():
 
     Run this script with the argument `--help` to get an overview of the parameters.
     """
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--sample-index', help='Zero-based index into the samples list to simulate', type=int)
-    parser.add_argument('-n', '--number-of-simulations', type=int, default=1,
-                        help='number of simulations to perform, default 1')
-    parser.add_argument('-s', '--scenario', help='Path to the scenario folder (required)', required=True)
-    parser.add_argument('-S', '--samples-folder', default='.',
-                        help='folder to place the output files (samples.npy, problem.pickle) in')
-    parser.add_argument('-t', '--simulation-folder',
-                        help='folder to copy the reference case to for simulation')
-    parser.add_argument('-w', '--weather', help='Path to the weather file (omit for default)')
-    parser.add_argument('-o', '--output-parameters', help='output parameters to use', nargs='+',
-                        default=['QHf_MWhyr', 'QCf_MWhyr', 'Ef_MWhyr', 'QEf_MWhyr', 'QHf0_kW', 'QCf0_kW', 'Ef0_kW'])
-    args = parser.parse_args()
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+
+    print("Running sensitivity-demand-simulate for scenario = %s" % config.scenario)
+    print("Running sensitivity-demand-simulate with weather = %s" % config.weather)
+    print("Running sensitivity-demand-simulate with sample-index = %s" % config.sensitivity_demand.sample_index)
+    print("Running sensitivity-demand-simulate with number-of-simulations = %s" % config.sensitivity_demand.number_of_simulations)
+    print("Running sensitivity-demand-simulate with samples-folder = %s" % config.sensitivity_demand.samples_folder)
+    print("Running sensitivity-demand-simulate with simulation-folder = %s" % config.sensitivity_demand.simulation_folder)
+    print("Running sensitivity-demand-simulate with output-parameters = %s" % config.sensitivity_demand.output_parameters)
 
     # save output parameters
-    np.save(os.path.join(args.samples_folder, 'output_parameters.npy'), np.array(args.output_parameters))
+    if not os.path.exists(config.sensitivity_demand.samples_folder):
+        os.makedirs(config.sensitivity_demand.samples_folder)
+    np.save(os.path.join(config.sensitivity_demand.samples_folder, 'output_parameters.npy'), np.array(config.sensitivity_demand.output_parameters))
 
-    simulate_demand_batch(sample_index=args.sample_index, batch_size=args.number_of_simulations,
-                          samples_folder=args.samples_folder, scenario=args.scenario,
-                          simulation_folder=args.simulation_folder, weather=args.weather,
-                          output_parameters=args.output_parameters)
+    simulate_demand_batch(sample_index=config.sensitivity_demand.sample_index,
+                          batch_size=config.sensitivity_demand.number_of_simulations,
+                          samples_folder=config.sensitivity_demand.samples_folder,
+                          scenario=config.scenario,
+                          simulation_folder=config.sensitivity_demand.simulation_folder,
+                          weather=config.weather,
+                          output_parameters=config.sensitivity_demand.output_parameters)
 
 
 
 if __name__ == '__main__':
-    main()
+    config = cea.config.Configuration()
+    config.apply_command_line_args(sys.argv[1:], ['general', 'sensitivity-demand'])
+    main(config)

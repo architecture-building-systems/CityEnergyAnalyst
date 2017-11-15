@@ -12,6 +12,7 @@ import time
 
 import cea.globalvar
 import cea.inputlocator
+import cea.config
 from cea.demand import occupancy_model
 from cea.demand import thermal_loads
 from cea.demand.thermal_loads import BuildingProperties
@@ -101,7 +102,7 @@ def properties_and_schedule(gv, locator):
     building_properties = BuildingProperties(locator, gv)
     # schedules model
     list_uses = list(building_properties._prop_occupancy.drop('PFloor', axis=1).columns)
-    archetype_schedules, archetype_values = occupancy_model.schedule_maker(date, locator, list_uses)
+    archetype_schedules, archetype_values = occupancy_model.schedule_maker(gv.config.region, date, locator, list_uses)
     schedules_dict = {'list_uses': list_uses, 'archetype_schedules': archetype_schedules, 'occupancy_densities':
         archetype_values['people'], 'archetype_values': archetype_values}
     return building_properties, schedules_dict, date
@@ -136,34 +137,19 @@ def thermal_loads_all_buildings_multiprocessing(building_properties, date, gv, l
     pool.close()
 
 
-def run_as_script(scenario_path, weather_path, use_dynamic_infiltration_calculation,
-                  multiprocessing):
-    assert os.path.exists(scenario_path), 'Scenario not found: %s' % scenario_path
-    locator = cea.inputlocator.InputLocator(scenario_path=scenario_path)
-    # for the interface, the user should pick a file out of of those in ...DB/Weather/...
-    if weather_path is None:
-        weather_path = locator.get_default_weather()
+def main(config):
+    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
+    print('Running demand calculation for scenario %s' % config.scenario)
+    print('Running demand calculation with weather file %s' % config.weather)
+    print('Running demand calculation with dynamic infiltration=%s' % config.demand.use_dynamic_infiltration_calculation)
+    print('Running demand calculation with multiprocessing=%s' % config.multiprocessing)
 
-    print('Running demand calculation for scenario %(scenario_path)s' % locals())
-    print('Running demand calculation with weather file %(weather_path)s' % locals())
-    print('Running demand calculation with dynamic infiltration=%(use_dynamic_infiltration_calculation)s' % locals())
-    print('Running demand calculation with multiprocessing=%(multiprocessing)s' % locals())
-
-    demand_calculation(locator=locator, weather_path=weather_path, gv=cea.globalvar.GlobalVariables(),
-                       use_dynamic_infiltration_calculation=use_dynamic_infiltration_calculation,
-                       multiprocessing=multiprocessing)
+    demand_calculation(locator=locator, weather_path=config.weather, gv=cea.globalvar.GlobalVariables(),
+                       use_dynamic_infiltration_calculation=config.demand.use_dynamic_infiltration_calculation,
+                       multiprocessing=config.multiprocessing)
 
 
 if __name__ == '__main__':
-    import cea.config
-    config = cea.config.Configuration()
+    main(cea.config.Configuration())
 
-    try:
-        # add configuration file to default scenario
-        config.save()
-    except:
-        print('failed to save configuration file to default scenario.')
-
-    run_as_script(scenario_path=config.scenario, weather_path=config.weather,
-                  use_dynamic_infiltration_calculation=config.demand.use_dynamic_infiltration_calculation,
-                  multiprocessing=config.multiprocessing)

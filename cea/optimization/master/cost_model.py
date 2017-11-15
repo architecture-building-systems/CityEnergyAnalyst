@@ -218,7 +218,8 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
         addcosts_Opex_fixed += Opex_fixed_PVT
 
         # Back-up boiler
-        Capex_a_Boiler_backup, Opex_fixed_Boiler_backup = boiler.calc_Cinv_boiler(Q_uncovered_design_W, Q_uncovered_annual_W, gv, locator)
+        Capex_a_Boiler_backup, Opex_fixed_Boiler_backup = boiler.calc_Cinv_boiler(Q_uncovered_design_W,
+                                                                                  Q_uncovered_annual_W, gv, locator)
         addcosts_Capex_a += Capex_a_Boiler_backup
         addcosts_Opex_fixed += Opex_fixed_Boiler_backup
 
@@ -352,7 +353,7 @@ def addCosts(indCombi, buildList, locator, dicoSupply, Q_uncovered_design_W, Q_u
 
     if indCombi.count("1") > 0:
         # import gas consumption data from:
-        EgasPrimaryDataframe_W = pd.read_csv(locator.get_optimization_slave_primary_energy_by_source(dicoSupply.configKey),
+        EgasPrimaryDataframe_W = pd.read_csv(locator.get_optimization_slave_cost_prime_primary_energy_data(dicoSupply.configKey),
             usecols=["E_gas_PrimaryPeakPower_W"])
         E_gas_primary_peak_power_W = float(np.array(EgasPrimaryDataframe_W))
         GasConnectionInvCost = ngas.calc_Cinv_gas(E_gas_primary_peak_power_W, gv)

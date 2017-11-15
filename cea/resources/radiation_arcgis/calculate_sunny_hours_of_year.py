@@ -90,7 +90,7 @@ if __name__ == '__main__':
     parser.add_argument('--sunny-hours-pickle', help='path to pickle of the result (STORE result here)')
     args = parser.parse_args()
 
-    locator = cea.inputlocator.InputLocator(scenario_path=args.scenario)
+    locator = cea.inputlocator.InputLocator(scenario=args.scenario)
     sunrise = pickle.load(open(args.sunrise_pickle, 'r'))
 
     sunny_hours_of_year = calculate_sunny_hours_of_year(locator=locator, sunrise=sunrise)

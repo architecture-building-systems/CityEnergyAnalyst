@@ -4,7 +4,7 @@ Global variables - this object contains context information and is expected to b
 """
 from __future__ import absolute_import
 import cea.demand.demand_writers
-
+import cea.config
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2015, Architecture and Building Systems - ETH Zurich"
 __credits__ = ["Jimeno A. Fonseca", "Daren Thomas"]
@@ -17,9 +17,7 @@ __status__ = "Production"
 
 class GlobalVariables(object):
     def __init__(self):
-
-
-        self.scenario_reference = r'c:\reference-case-ecocampus\baseline'
+        self.config = cea.config.Configuration()  # FIXME: this needs to be refactored away when we refactor gv->config
         self.print_partial = 'hourly'  # hourly or monthly for the demand script
         self.print_totals = True  # print yearly values
         self.print_yearly_peak = True  # print peak values
