@@ -32,10 +32,13 @@ class Mock(MagicMock):
             return MagicMock()
 
 
-MOCK_MODULES = ['pythonocc', 'SALib', 'deap', 'descartes', 'doit', 'ephem', 'fiona',
-                'geopandas', 'lxml', 'pandas', 'plotly', 'pycollada', 'pyproj', 'pysal', 'pyshp',
-                'scikit-learn', 'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo', 'timezonefinder',
-                'astral', 'cvxopt', 'xlwt', 'python-dateutil']
+MOCK_MODULES = ['pythonocc',
+                'SALib', 'SALib.analyze', 'SALib.analyze', 'SALib.sample', 'SALib.sample.saltelli',
+                'SALib.sample.morris',
+                'deap', 'descartes', 'doit',
+                'ephem', 'fiona', 'geopandas', 'lxml', 'pandas', 'plotly', 'pycollada', 'pyproj', 'pysal', 'pyshp',
+                'scikit-learn', 'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo', 'timezonefinder', 'astral',
+                'cvxopt', 'xlwt', 'python-dateutil']
 
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
