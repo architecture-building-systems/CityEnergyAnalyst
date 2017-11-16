@@ -329,8 +329,6 @@ def main(config):
     Run the properties script with input from the reference case and compare the results. This ensures that changes
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
     """
-    import cea.config
-    config = cea.config.Configuration()
 
     print('Running data-helper with scenario = %s' % config.scenario)
     print('Running data-helper with archetypes = %s' % config.data_helper.archetypes)

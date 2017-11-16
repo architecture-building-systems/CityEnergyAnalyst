@@ -419,8 +419,11 @@ class SubfoldersParameter(ListParameter):
 
     def get_folders(self):
         parent = self.config.sections[self._parent_section].parameters[self._parent_option].get()
-        return os.listdir(parent)
-
+        try:
+            return os.listdir(parent)
+        except:
+            # parent doesn't exist?
+            return []
 
 class StringParameter(Parameter):
     pass
@@ -481,8 +484,11 @@ def main():
     print(config.sensitivity_demand.samples_folder)
     print(config.heatmaps.file_to_analyze)
     # make sure the config can be pickled (for multiprocessing)
+    config.scenario = r'C:\reference-case-zurich'
     import pickle
-    pickle.loads(pickle.dumps(config))
+    config = pickle.loads(pickle.dumps(config))
+    assert config.scenario == r'C:\reference-case-zurich'
+    print('reference case: %s' % config.scenario)
     # config = pickle.loads(pickle.dumps(config))
     # test overriding
     args = ['--weather', 'Zurich',
