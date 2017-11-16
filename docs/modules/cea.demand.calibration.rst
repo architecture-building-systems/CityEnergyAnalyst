@@ -6,7 +6,6 @@ Subpackages
 
 .. toctree::
 
-    cea.demand.calibration.clustering
 
 Module contents
 ---------------

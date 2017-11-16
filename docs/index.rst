@@ -25,6 +25,9 @@ Welcome to City Energy Analyst's documentation!
    optimization_workflow/guide-to-prepare-workflow
    run_solar_technologies
    modules/modules
+   how-to-publish-cea
+   installing-the-jenkins
+   template-for-scripts
 
 
 Indices and tables
