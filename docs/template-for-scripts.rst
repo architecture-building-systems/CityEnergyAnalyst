@@ -1,9 +1,14 @@
+Template for scripts
+====================
+
 - config.scripts
   - list of script names (keys) and the module to call (values)
 - script file follows a naming convention
+
   - module variable ``CEA_CONFIG_SECTIONS = ['general', 'demand']`` returns a list of configuration sections that are
     used by this script
   - module level function ``main`` is called to run script
+
 - always call the scenario "scenario_path"??
 - how to add a new option to the config file?
 - purposes and principals
@@ -11,10 +16,10 @@
   - scripts should be runnable from PyCharm
   - all arguments to the scripts have a default value in ``default.config``
 - place path names in double quotes when used as command lines
-- parameter names should be unique throughout the tempalte (create a unit test for this)
+- parameter names should be unique throughout the template (create a unit test for this)
 - print out parameters
 
-.. source:: python
+.. sourcecode:: python
 
     """
     Each script requires a documentation block at the top describing purpose and main principles of the script.
