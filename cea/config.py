@@ -28,7 +28,7 @@ class Configuration(object):
         self.default_config = ConfigParser.SafeConfigParser()
         self.default_config.read(DEFAULT_CONFIG)
         self.user_config = ConfigParser.SafeConfigParser()
-        self.user_config.read([config_file, DEFAULT_CONFIG])
+        self.user_config.read([DEFAULT_CONFIG, config_file])
         self.sections = collections.OrderedDict([(section_name, Section(section_name, self))
                                                  for section_name in self.default_config.sections()])
 
