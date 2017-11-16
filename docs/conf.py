@@ -41,7 +41,8 @@ MOCK_MODULES = ['pythonocc',
                 'scikit-learn', 'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo', 'pyliburo.py3dmodel', 'pyliburo.py3dmodel.fetch', 'pyliburo.py3dmodel.construct', 'timezonefinder', 'astral',
                 'cvxopt', 'xlwt', 'python-dateutil',
                 'pyliburo.py3dmodel.calculate', 'pyliburo.py3dmodel.modify', 'pyliburo.pycitygml',
-                'pyliburo.gml3dmodel', 
+                'pyliburo.gml3dmodel', 'pyliburo.shp2citygml', 'pyliburo.py2radiance',
+                
                 ]
 
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
