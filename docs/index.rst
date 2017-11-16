@@ -14,12 +14,12 @@ Welcome to City Energy Analyst's documentation!
    installation-guide
    license
    disclaimer
+   the-configuration-file
    developer-walk-through
    files-generated-by-the-cea
    interfaces
    databases
    documentation-guide
-   the-configuration-file
    how-to-create-a-new-release
    how-to-test-the-cea
    optimization_workflow/guide-to-prepare-workflow
@@ -27,7 +27,6 @@ Welcome to City Energy Analyst's documentation!
    modules/modules
    how-to-publish-cea
    installing-the-jenkins
-   template-for-scripts
 
 
 Indices and tables

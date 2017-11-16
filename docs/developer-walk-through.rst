@@ -1,5 +1,15 @@
+Developer Walk-through
+======================
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   template-for-scripts
+
+
 Architecture
-============
+------------
 
 The architecture of the CEA is still a bit in flux, but some main
 components have already been developed and will be explained in this
