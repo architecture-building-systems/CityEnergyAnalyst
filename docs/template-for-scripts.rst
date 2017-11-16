@@ -1,5 +1,6 @@
-Template for scripts
-====================
+How to add a new script to the CEA
+==================================
+
 
 - config.scripts
   - list of script names (keys) and the module to call (values)
