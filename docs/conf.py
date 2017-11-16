@@ -42,7 +42,7 @@ MOCK_MODULES = ['pythonocc',
                 'cvxopt', 'xlwt', 'python-dateutil',
                 'pyliburo.py3dmodel.calculate', 'pyliburo.py3dmodel.modify', 'pyliburo.pycitygml',
                 'pyliburo.gml3dmodel', 'pyliburo.shp2citygml', 'pyliburo.py2radiance',
-                
+                'pandas.util', 'pandas.util.testing',
                 ]
 
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
