@@ -105,8 +105,7 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
     # # prepare data for calculation
 
     # read building names from the entire district
-    total_demand = pd.read_csv(locator.get_total_demand())
-    building_names = total_demand['Name']
+    building_names = pd.read_csv(locator.get_total_demand())['Name'].values
 
     # get edge-node matrix from defined network, the input formats are either .csv or .shp
     if source == 'csv':
