@@ -15,6 +15,7 @@ import math
 from cea.utilities import epwreader
 from cea.resources import geothermal
 import geopandas as gpd
+import os
 import networkx as nx
 
 
@@ -28,7 +29,7 @@ __email__ = "thomas@arch.ethz.ch"
 __status__ = "Production"
 
 
-def thermal_network_main(locator, gv, network_type, source, set_diameter):
+def thermal_network_main(locator, gv, network_type, network_name, source, set_diameter):
     """
     This function performs thermal and hydraulic calculation of a "well-defined" network, namely, the plant/consumer
     substations, piping routes and the pipe properties (length/diameter/heat transfer coefficient) are already 
@@ -103,9 +104,15 @@ def thermal_network_main(locator, gv, network_type, source, set_diameter):
 
     # # prepare data for calculation
 
-    # read building names
+    # read building names from the entire district
     total_demand = pd.read_csv(locator.get_total_demand())
     building_names = total_demand['Name']
+
+    # get edge-node matrix from defined network, the input formats are either .csv or .shp
+    if source == 'csv':
+        edge_node_df, all_nodes_df, edge_df = get_thermal_network_from_csv(locator, network_type)
+    else:
+        edge_node_df, all_nodes_df, edge_df, building_names = get_thermal_network_from_shapefile(locator, network_type, network_name)
 
     # calculate ground temperature
     weather_file = locator.get_default_weather()
@@ -115,12 +122,6 @@ def thermal_network_main(locator, gv, network_type, source, set_diameter):
 
     # substation HEX design
     substations_HEX_specs, buildings_demands = substation.substation_HEX_design_main(locator, building_names, gv)
-
-    # get edge-node matrix from defined network, the input formats are either .csv or .shp
-    if source == 'csv':
-        edge_node_df, all_nodes_df, edge_df = get_thermal_network_from_csv(locator, network_type)
-    else:
-        edge_node_df, all_nodes_df, edge_df = get_thermal_network_from_shapefile(locator, network_type)
 
     # get hourly heat requirement and target supply temperature from each substation
     t_target_supply_C = read_properties_from_buildings(building_names, buildings_demands, 'T_sup_target_' + network_type)
@@ -134,10 +135,10 @@ def thermal_network_main(locator, gv, network_type, source, set_diameter):
 
 
     # assign pipe id/od according to maximum edge mass flow
-    pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df_kgs, locator, gv,set_diameter, edge_df, network_type)
+    pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df_kgs, locator, gv,set_diameter, edge_df, network_type, network_name)
     # merge pipe properties to edge_df and then output as .csv
     edge_df = edge_df.merge(pipe_properties_df.T, left_index=True, right_index=True)
-    edge_df.to_csv(locator.get_optimization_network_edge_list_file(network_type))
+    edge_df.to_csv(locator.get_optimization_network_edge_list_file(network_type, network_name))
 
     # calculate pipe aggregated heat conduction coefficient
     K_pipe_kWK = calc_aggregated_heat_conduction_coefficient(locator, gv, edge_df, pipe_properties_df)  # (exe)[kW/K]
@@ -156,7 +157,7 @@ def thermal_network_main(locator, gv, network_type, source, set_diameter):
 
     for t in range(8760):
 
-        print('calculating network thermal hydraulic properties... time step', t)
+        print('calculating thermal hydraulic properties of network:', network_type, '_', network_name,'...  time step', t)
         timer = time.clock()
 
         ## solve network temperatures
@@ -191,36 +192,36 @@ def thermal_network_main(locator, gv, network_type, source, set_diameter):
     # save results
     # edge flow rates (flow direction corresponding to edge_node_df)
     pd.DataFrame(edge_mass_flow_df_kgs, columns=edge_node_df.columns).to_csv(
-        locator.get_optimization_network_layout_massflow_file(network_type),
+        locator.get_optimization_network_layout_massflow_file(network_type, network_name),
         na_rep='NaN', index=False, float_format='%.3f')
     # node temperatures
     pd.DataFrame(T_supply_nodes_list, columns=edge_node_df.index).to_csv(
-        locator.get_optimization_network_layout_supply_temperature_file(network_type),
+        locator.get_optimization_network_layout_supply_temperature_file(network_type, network_name),
         na_rep='NaN', index=False, float_format='%.3f')
     pd.DataFrame(T_return_nodes_list, columns=edge_node_df.index).to_csv(
-        locator.get_optimization_network_layout_return_temperature_file(network_type),
+        locator.get_optimization_network_layout_return_temperature_file(network_type, network_name),
         na_rep='NaN', index=False, float_format='%.3f')
 
     # save edge heat losses in the supply line
     pd.DataFrame(q_loss_supply_edges_list, columns=edge_node_df.columns).to_csv(
-        locator.get_optimization_network_layout_qloss_file(network_type),
+        locator.get_optimization_network_layout_qloss_file(network_type, network_name),
         na_rep='NaN', index=False, float_format='%.3f')
 
     # plant heat requirements
     pd.DataFrame(plant_heat_requirements, columns=filter(None,all_nodes_df[all_nodes_df.Type=='PLANT'].Building.values)).to_csv(
-        locator.get_optimization_network_layout_plant_heat_requirement_file(network_type), index=False,
+        locator.get_optimization_network_layout_plant_heat_requirement_file(network_type, network_name), index=False,
         float_format='%.3f')
     # node pressures
     pd.DataFrame(pressure_nodes_supply, columns=edge_node_df.index).to_csv(
-        locator.get_optimization_network_layout_supply_pressure_file(network_type), index=False, float_format='%.3f')
+        locator.get_optimization_network_layout_supply_pressure_file(network_type, network_name), index=False, float_format='%.3f')
     pd.DataFrame(pressure_nodes_return, columns=edge_node_df.index).to_csv(
-        locator.get_optimization_network_layout_return_pressure_file(network_type), index=False, float_format='%.3f')
+        locator.get_optimization_network_layout_return_pressure_file(network_type, network_name), index=False, float_format='%.3f')
     # pressure losses over entire network
     pd.DataFrame(pressure_loss_system, columns=['pressure_loss_supply_Pa','pressure_loss_return_Pa',
                                                 'pressure_loss_total_Pa']).to_csv(
-        locator.get_optimization_network_layout_pressure_drop_file(network_type), index=False, float_format='%.3f')
+        locator.get_optimization_network_layout_pressure_drop_file(network_type, network_name), index=False, float_format='%.3f')
 
-    print (time.clock() - t0, "seconds process time for network thermal-hydraulic calculation \n")
+    print (time.clock() - t0, "seconds process time for thermal-hydraulic calculation of network:",network_type, '_', network_name, "\n")
 
 
 # ===========================
@@ -265,7 +266,7 @@ def calc_mass_flow_edges(edge_node_df, mass_flow_substation_df, all_nodes_df):
     return mass_flow_edge
 
 
-def assign_pipes_to_edges(mass_flow_df, locator, gv, set_diameter, edge_df, network_type):
+def assign_pipes_to_edges(mass_flow_df, locator, gv, set_diameter, edge_df, network_type, network_name):
     """
     This function assigns pipes from the catalog to the network for a network with unspecified pipe properties.
     Pipes are assigned based on each edge's minimum and maximum required flow rate. Assuming max velocity for pipe
@@ -300,9 +301,9 @@ def assign_pipes_to_edges(mass_flow_df, locator, gv, set_diameter, edge_df, netw
                 else:
                     i += 1
         # at the end save back the edges dataframe in the shapefile with the new pipe diameters
-        network_edges = gpd.read_file(locator.get_network_layout_edges_shapefile(network_type))
+        network_edges = gpd.read_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
         network_edges['Pipe_DN'] = pipe_properties_df.loc['Pipe_DN'].values
-        network_edges.to_file(locator.get_network_layout_edges_shapefile(network_type))
+        network_edges.to_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
     else:
         for pipe, row in edge_df.iterrows():
             index = pipe_catalog.Pipe_DN[pipe_catalog.Pipe_DN == row['Pipe_DN']].index
@@ -1287,12 +1288,12 @@ def get_thermal_network_from_csv(locator, network_type):
             all_nodes_df.loc[list_nodes[i],'Type'] = 'NONE'
     all_nodes_df.to_csv(locator.get_optimization_network_node_list_file(network_type))
 
-    print (time.clock() - t0, "seconds process time for Network summary\n")
+    print (time.clock() - t0, "seconds process time for Network Summary\n")
 
     return edge_node_df, all_nodes_df, edge_df
 
 
-def get_thermal_network_from_shapefile(locator, network_type):
+def get_thermal_network_from_shapefile(locator, network_type, network_name):
     """
     This function reads the existing node and pipe network from a shapefile and produces an edge-node incidence matrix
     (as defined by Oppelt et al., 2016) as well as the edge properties (length, start node, and end node) and node
@@ -1327,8 +1328,8 @@ def get_thermal_network_from_shapefile(locator, network_type):
     t0 = time.clock()
 
     # import shapefiles containing the network's edges and nodes
-    network_edges_df = gpd.read_file(locator.get_network_layout_edges_shapefile(network_type))
-    network_nodes_df = gpd.read_file(locator.get_network_layout_nodes_shapefile(network_type))
+    network_edges_df = gpd.read_file(locator.get_network_layout_edges_shapefile(network_type, network_name))
+    network_nodes_df = gpd.read_file(locator.get_network_layout_nodes_shapefile(network_type, network_name))
 
     # check duplicated NODE/PIPE IDs
     duplicated_nodes = network_nodes_df[network_nodes_df.Name.duplicated(keep=False)]
@@ -1344,7 +1345,9 @@ def get_thermal_network_from_shapefile(locator, network_type):
     # create node catalogue indicating which nodes are plants and which consumers
     all_nodes_df = node_df[['Type', 'Building']]
     all_nodes_df = all_nodes_df.sort_index(axis=1)  # sort columns by node numbers
-    all_nodes_df.to_csv(locator.get_optimization_network_node_list_file(network_type))
+    all_nodes_df.to_csv(locator.get_optimization_network_node_list_file(network_type, network_name))
+    # extract the list of buildings in the current network
+    building_names = all_nodes_df.Building[all_nodes_df.Type == 'CONSUMER'].reset_index(drop=True)
 
     # create first edge-node matrix
     list_pipes = edge_df.index.values
@@ -1394,10 +1397,10 @@ def get_thermal_network_from_shapefile(locator, network_type):
     if number_of_plants != plant_counter:
         raise ValueError('Please erase ', (plant_counter - number_of_plants), ' end node(s) that are neither buildings nor plants.')
 
-    edge_node_df.to_csv(locator.get_optimization_network_edge_node_matrix_file(network_type))
-    print (time.clock() - t0, "seconds process time for Network summary\n")
+    edge_node_df.to_csv(locator.get_optimization_network_edge_node_matrix_file(network_type, network_name))
+    print (time.clock() - t0, "seconds process time for Network Summary\n")
 
-    return edge_node_df, all_nodes_df, edge_df
+    return edge_node_df, all_nodes_df, edge_df, building_names
 
 def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     """
@@ -1599,10 +1602,17 @@ def run_as_script(scenario_path=None):
 
     # add options for data sources: heating or cooling network, csv or shapefile
     network_type = ['DH', 'DC'] # set to either 'DH' or 'DC'
-    source = ['csv', 'shapefile'] # set to csv or shapefile
+    file_type = ['csv', 'shapefile'] # set to csv or shapefile
     set_diameter = True # this does a rule of max and min flow to set a diameter. if false it takes the input diameters
 
-    thermal_network_main(locator, gv, network_type[1], source[1], set_diameter)
+    path, list_network, files = os.walk(locator.get_input_network_folder(network_type[1])).next()
+    if len(list_network) == 0:
+        network_name = ''
+        thermal_network_main(locator, gv, network_type[1], network_name, file_type[1], set_diameter)
+    else:
+        for network in range(len(list_network)):
+            network_name = list_network[network]
+            thermal_network_main(locator, gv, network_type[1], network_name, file_type[1], set_diameter)
     print ('test thermal_network_main() succeeded')
 
 if __name__ == '__main__':
