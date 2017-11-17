@@ -8,6 +8,7 @@ from __future__ import division
 import os
 
 import pandas as pd
+import numpy as np
 from geopandas import GeoDataFrame as Gdf
 from cea.utilities.dbfreader import dbf_to_dataframe
 
@@ -65,7 +66,7 @@ class BuildingProperties(object):
         prop_supply_systems = dbf_to_dataframe(locator.get_building_supply()).set_index('Name')
 
         # get solar properties
-        solar = get_prop_solar(locator).set_index('Name')
+        solar = get_prop_solar(locator, use_daysim_radiation).set_index('Name')
 
         # get temperatures of operation
         prop_HVAC_result = get_properties_technical_systems(locator, prop_hvac).set_index('Name')
@@ -82,7 +83,7 @@ class BuildingProperties(object):
             prop_HVAC_result = self.apply_overrides(prop_HVAC_result)
 
         # get properties of rc demand model
-        prop_rc_model = self.calc_prop_rc_model(prop_occupancy, prop_envelope,
+        prop_rc_model = self.calc_prop_rc_model(locator, prop_occupancy, prop_envelope,
                                                 prop_geometry, prop_HVAC_result, surface_properties,
                                                 gv, use_daysim_radiation)
 
@@ -194,7 +195,7 @@ class BuildingProperties(object):
         return self._prop_windows.loc[self._prop_windows['name_building'] == name_building].to_dict('list')
 
 
-    def calc_prop_rc_model(self, occupancy, envelope, geometry, hvac_temperatures,
+    def calc_prop_rc_model(self, locator, occupancy, envelope, geometry, hvac_temperatures,
                            surface_properties,
                            gv, use_daysim_radiation):
         """
@@ -259,8 +260,7 @@ class BuildingProperties(object):
 
         # calculate building geometry in case of arcgis radiation
         if use_daysim_radiation:
-            print('oops')
-
+            df = self.geometry_reader_radiation_daysim(locator, envelope, occupancy, geometry, gv.Z)
 
         elif not use_daysim_radiation:
             df = self.geometry_reader_radiation_arcgis(envelope, geometry, gv.Z, occupancy, surface_properties)
@@ -296,12 +296,58 @@ class BuildingProperties(object):
         df['Htr_em'] = 1 / (1 / df['Htr_op'] - 1 / df['Htr_ms'])  # Coupling conductance 2 in W/K
         df['Htr_is'] = gv.his * df['Atot']
 
-        fields = ['Awall_all', 'Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',
+        fields = ['Atot', 'Aw', 'Am', 'Aef', 'Af', 'Cm', 'Htr_is', 'Htr_em', 'Htr_ms', 'Htr_op', 'Hg',
                   'HD', 'Aroof', 'U_wall', 'U_roof', 'U_win', 'Htr_w', 'GFA_m2', 'surface_volume', 'Aop_sup', 'Aop_bel',
                   'footprint']
         result = df[fields]
         return result
 
+    def geometry_reader_radiation_daysim(self, locator, envelope, occupancy, geometry, floor_height):
+        """
+        TODO: documentation
+
+        :param locator:
+        :param envelope:
+        :param occupancy:
+        :param geometry:
+        :param floor_height:
+        :return:
+        """
+
+        # add result columns to envelope df
+        envelope['Awall'] = np.nan
+        envelope['Awin'] = np.nan
+        envelope['Aroof'] = np.nan
+
+        # call all building geometry files in a loop
+        for building_name in envelope.index:
+
+            geometry_data = pd.read_csv(locator.get_radiation_metadata(building_name))
+            # FIXME:
+            # TODO: sum up exposed and non-exposed walls separately, see issue 897
+            geometry_data_sum = geometry_data.groupby(by='TYPE').sum()
+
+            envelope.ix[building_name,'Awall'] = geometry_data_sum.ix['walls','AREA_m2']
+            envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['windows', 'AREA_m2']
+            envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
+
+        df = envelope.merge(occupancy, left_index=True, right_index=True)
+
+        # adjust envelope areas with PFloor
+        df['Aw'] = df['Awin'] * df['PFloor']
+        # opaque areas (PFloor represents a factor according to the amount of floors heated)
+        df['Aop_sup'] = df['Awall'] * df['PFloor']
+        # Areas below ground
+        df = df.merge(geometry, left_index=True, right_index=True)
+        df['floors'] = df['floors_bg'] + df['floors_ag']
+        # opague areas in [m2] below ground including floor
+        df['Aop_bel'] = df['height_bg'] * df['perimeter'] + df['footprint']
+        # total area of the building envelope in [m2], the roof is considered to be flat
+        df['Atot'] = df[['Aw', 'Aop_sup', 'footprint', 'Aop_bel']].sum(axis=1) + (df['Aroof'] * (df['floors'] - 1))
+        df['GFA_m2'] = df['footprint'] * df['floors']  # gross floor area
+        df['surface_volume'] = (df['Aop_sup'] + df['Aroof']) / (df['GFA_m2'] * floor_height)  # surface to volume ratio
+
+        return df
 
     def geometry_reader_radiation_arcgis(self, envelope, geometry, floor_height, occupancy,
                                          surface_properties):
@@ -325,7 +371,9 @@ class BuildingProperties(object):
                                                                          right_index=True)
         # area of windows
         # TODO: wwe_south replaces wil_wall this is temporary it should not be need it anymore with the new geometry files of Daysim
-        df['Aw'] = df['Awall_all'] * df['wwr_south'] * df['PFloor']
+        # calculate average wwr
+        wwr_mean = 0.25*(df['wwr_south']+df['wwr_east']+df['wwr_north']+df['wwr_west'])
+        df['Aw'] = df['Awall_all'] * wwr_mean * df['PFloor']
         # opaque areas (PFloor represents a factor according to the amount of floors heated)
         df['Aop_sup'] = df['Awall_all'] * df['PFloor'] - df['Aw']
         # Areas below ground
@@ -624,16 +672,26 @@ def get_envelope_properties(locator, prop_architecture):
     return envelope_prop
 
 
-def get_prop_solar(locator):
-    solar = pd.read_csv(locator.get_radiation()).set_index('Name')
-    solar_list = solar.values.tolist()
-    surface_properties = pd.read_csv(locator.get_surface_properties())
-    surface_properties['Awall'] = (
+def get_prop_solar(locator, use_daysim_radiation):
+
+    if use_daysim_radiation:
+
+        I_wall = 0
+        I_roof = 0
+        I_win = 0
+
+    elif not use_daysim_radiation:
+
+        solar = pd.read_csv(locator.get_radiation()).set_index('Name')
+        solar_list = solar.values.tolist()
+        surface_properties = pd.read_csv(locator.get_surface_properties())
+        surface_properties['Awall'] = (
         surface_properties['Shape_Leng'] * surface_properties['FactorShade'] * surface_properties['Freeheight'])
-    sum_surface = surface_properties[['Awall', 'Name']].groupby(['Name']).sum().values
+        sum_surface = surface_properties[['Awall', 'Name']].groupby(['Name']).sum().values
 
-    I_sol = I_roof = I_win = [a / b for a, b in zip(solar_list, sum_surface)]
 
-    result = pd.DataFrame({'Name': solar.index, 'I_win': I_sol, 'I_roof': I_roof, 'I_wall': I_win})
+        I_sol_average_Wperm2 = [a / b for a, b in zip(solar_list, sum_surface)]
+
+        result = pd.DataFrame({'Name': solar.index, 'I_win': I_win, 'I_roof': I_roof, 'I_wall': I_wall})
 
     return result

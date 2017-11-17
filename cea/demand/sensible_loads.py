@@ -6,7 +6,6 @@ EN-13970
 from __future__ import division
 import numpy as np
 from cea.utilities.physics import BOLTZMANN
-from cea.demand import occupancy_model
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2016, Architecture and Building Systems - ETH Zurich"
@@ -120,7 +119,7 @@ def calc_I_rad(t, tsd, bpr, Rse):
     I_rad_roof = Rse * bpr.rc_model['U_roof'] * calc_hr(bpr.architecture.e_roof, theta_ss) * bpr.rc_model[
         'Aroof'] * theta_ss
     I_rad_wall = Rse * bpr.rc_model['U_wall'] * calc_hr(bpr.architecture.e_wall, theta_ss) * bpr.rc_model[
-        'Awall_all'] * theta_ss
+        'Aop_sup'] * theta_ss
     I_rad = Fform_wall * I_rad_wall + Fform_win * I_rad_win + Fform_roof * I_rad_roof
 
     return I_rad
@@ -151,7 +150,7 @@ def calc_Asol(t, bpr, gv):
     """
     from cea.technologies import blinds
     Fsh_win = blinds.calc_blinds_activation(bpr.solar.I_win[t], bpr.architecture.G_win, bpr.architecture.rf_sh)
-    Asol_wall = bpr.rc_model['Awall_all'] * bpr.architecture.a_wall * gv.Rse * bpr.rc_model['U_wall']
+    Asol_wall = bpr.rc_model['Aop_sup'] * bpr.architecture.a_wall * gv.Rse * bpr.rc_model['U_wall']
     Asol_roof = bpr.rc_model['Aroof'] * bpr.architecture.a_roof * gv.Rse * bpr.rc_model['U_roof']
     Asol_win = Fsh_win * bpr.rc_model['Aw'] * (1 - gv.F_f)
 
