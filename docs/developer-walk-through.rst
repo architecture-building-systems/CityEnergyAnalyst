@@ -5,7 +5,7 @@ Developer Walk-through
    :maxdepth: 2
    :caption: Contents:
 
-   template-for-scripts
+   how-to-add-a-new-script-to-the-cea
 
 
 Architecture
