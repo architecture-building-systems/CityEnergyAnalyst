@@ -665,6 +665,17 @@ def get_envelope_properties(locator, prop_architecture):
 
 
 def get_prop_solar(locator, prop_rc_model, prop_envelope, gv, use_daysim_radiation):
+    """
+
+    :param locator:
+    :param prop_rc_model:
+    :param prop_envelope:
+    :param gv:
+    :param use_daysim_radiation:
+    :return:
+    """
+    # FIXME: add documentation
+
     # load gv
     thermal_resistance_surface = gv.Rse
     window_frame_fraction = gv.F_f
@@ -676,48 +687,8 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, gv, use_daysim_radiati
 
         # for every building
         for building_name in prop_envelope.index:
-            # read daysim geometry
-            geometry_data = pd.read_csv(locator.get_radiation_metadata(building_name)).set_index('SURFACE')
-            # read daysim radiation
-            radiation_data = pd.read_json(locator.get_radiation_building(building_name))
-
-            # sum wall
-            geometry_data_walls = geometry_data[geometry_data.TYPE == 'walls']
-            # solar incident on all walls [W]
-            I_sol_wall = np.array([geometry_data_walls.ix[surface, 'AREA_m2'] * radiation_data[surface] for surface in
-                                   geometry_data_walls.index]).sum(axis=0)
-            # sensible gain on all walls [W]
-            I_sol_wall = I_sol_wall * prop_envelope.ix[building_name, 'a_wall'] * thermal_resistance_surface * \
-                         prop_rc_model.ix[
-                             building_name, 'U_wall']
-
-            # sum roof
-            geometry_data_roofs = geometry_data[geometry_data.TYPE == 'roofs']
-            # solar incident on all roofs [W]
-            I_sol_roof = np.array([geometry_data_roofs.ix[surface, 'AREA_m2'] * radiation_data[surface] for surface in
-                                   geometry_data_roofs.index]).sum(axis=0)
-            # sensible gain on all roofs [W]
-            I_sol_roof = I_sol_roof * prop_envelope.ix[building_name, 'a_roof'] * thermal_resistance_surface * \
-                         prop_rc_model.ix[
-                             building_name, 'U_roof']
-
-            # sum window, considering shading
-            from cea.technologies import blinds
-
-            geometry_data_windows = geometry_data[geometry_data.TYPE == 'windows']
-
-            Fsh_win = [np.vectorize(blinds.calc_blinds_activation)(radiation_data[surface],
-                                                                   prop_envelope.ix[building_name, 'G_win'],
-                                                                   prop_envelope.ix[building_name, 'rf_sh']) for surface
-                       in geometry_data_windows.index]
-
-            Fsh_win_dict = dict(zip(geometry_data_windows.index, Fsh_win))
-
-            I_sol_win = np.array([geometry_data_windows.ix[surface, 'AREA_m2'] * radiation_data[surface] * Fsh_win_dict[
-                surface] * (1 - window_frame_fraction) for surface in geometry_data_windows.index]).sum(axis=0)
-
-            # sum
-            I_sol = I_sol_wall + I_sol_roof + I_sol_win
+            I_sol = calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface,
+                                     window_frame_fraction)
             list_Isol.append(I_sol)
 
         result = pd.DataFrame({'Name': prop_envelope.index, 'I_sol': list_Isol})
@@ -741,6 +712,58 @@ def get_prop_solar(locator, prop_rc_model, prop_envelope, gv, use_daysim_radiati
         result = pd.DataFrame({'Name': solar.index, 'I_sol': array_Isol_all_buildings_W})
 
     return result
+
+
+def calc_Isol_daysim(building_name, locator, prop_envelope, prop_rc_model, thermal_resistance_surface,
+                     window_frame_fraction):
+    """
+
+    :param building_name:
+    :param locator:
+    :param prop_envelope:
+    :param prop_rc_model:
+    :param thermal_resistance_surface:
+    :param window_frame_fraction:
+    :return:
+    """
+    # FIXME: add documentation
+
+    # read daysim geometry
+    geometry_data = pd.read_csv(locator.get_radiation_metadata(building_name)).set_index('SURFACE')
+    # read daysim radiation
+    radiation_data = pd.read_json(locator.get_radiation_building(building_name))
+    # sum wall
+    geometry_data_walls = geometry_data[geometry_data.TYPE == 'walls']
+    # solar incident on all walls [W]
+    I_sol_wall = np.array([geometry_data_walls.ix[surface, 'AREA_m2'] * radiation_data[surface] for surface in
+                           geometry_data_walls.index]).sum(axis=0)
+    # sensible gain on all walls [W]
+    I_sol_wall = I_sol_wall * prop_envelope.ix[building_name, 'a_wall'] * thermal_resistance_surface * \
+                 prop_rc_model.ix[
+                     building_name, 'U_wall']
+    # sum roof
+    geometry_data_roofs = geometry_data[geometry_data.TYPE == 'roofs']
+    # solar incident on all roofs [W]
+    I_sol_roof = np.array([geometry_data_roofs.ix[surface, 'AREA_m2'] * radiation_data[surface] for surface in
+                           geometry_data_roofs.index]).sum(axis=0)
+    # sensible gain on all roofs [W]
+    I_sol_roof = I_sol_roof * prop_envelope.ix[building_name, 'a_roof'] * thermal_resistance_surface * \
+                 prop_rc_model.ix[
+                     building_name, 'U_roof']
+    # sum window, considering shading
+    from cea.technologies import blinds
+    geometry_data_windows = geometry_data[geometry_data.TYPE == 'windows']
+    Fsh_win = [np.vectorize(blinds.calc_blinds_activation)(radiation_data[surface],
+                                                           prop_envelope.ix[building_name, 'G_win'],
+                                                           prop_envelope.ix[building_name, 'rf_sh']) for surface
+               in geometry_data_windows.index]
+    Fsh_win_dict = dict(zip(geometry_data_windows.index, Fsh_win))
+    I_sol_win = np.array([geometry_data_windows.ix[surface, 'AREA_m2'] * radiation_data[surface] * Fsh_win_dict[
+        surface] * (1 - window_frame_fraction) for surface in geometry_data_windows.index]).sum(axis=0)
+    # sum
+    I_sol = I_sol_wall + I_sol_roof + I_sol_win
+
+    return I_sol
 
 
 def calc_Isol_arcgis(I_sol_average, prop_rc_model, prop_envelope, window_frame_fraction, thermal_resistance_surface):
