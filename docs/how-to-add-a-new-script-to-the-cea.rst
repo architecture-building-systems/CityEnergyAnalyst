@@ -6,10 +6,12 @@ So you want to extend the |CEA| with a new script? This guide will get you up an
 The main steps you need to take are:
 
 # copy the template script and rename it
+# develop your script
 # add a section to the ``default.config`` file for any parameters your script requires
 # update the ``cli.config`` file to link your script name to the module
 # update the ``cli.config`` file to specify the parameters your script requires
 # add an ArcGIS interface to ``cea.interfaces.arcgis.CityEnergyAnalyst.py``
+
 
 Step 1: The template script
 ---------------------------
