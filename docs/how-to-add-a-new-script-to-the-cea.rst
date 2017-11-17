@@ -8,8 +8,7 @@ The main steps you need to take are:
 #. copy the template script and rename it
 #. update the module-level documentation and credits
 #. develop your script
-#. update the ``cli.config`` file to link your script name to the module
-#. update the ``cli.config`` file to specify the parameters your script requires
+#. add your script to the ``cli.config`` file
 #. add a section to the ``default.config`` file for any parameters your script requires
 #. add an ArcGIS interface to ``cea.interfaces.arcgis.CityEnergyAnalyst.py``
 
@@ -41,7 +40,7 @@ The other parameters are much more dependant on the requirements of your script.
 than a few parameters, consider just passing in the ``config`` variable instead, as long parameter lists in functions
 can make your code hard to read.
 
-Step 2: update the module-level documentation and credits
+Step 2: Update the module-level documentation and credits
 ---------------------------------------------------------
 
 While you're at it:
@@ -84,8 +83,8 @@ Each script is unique. But to fit nicely into the CEA ecosystem, pay attention t
 - if you think you need to use ``os.chdir``, you're doing it wrong!
 
 
-Step 4: update the ``cli.config`` file to link your script name to the module
------------------------------------------------------------------------------
+Step 4: Add your script to the ``cli.config`` file
+--------------------------------------------------
 
 The ``cli.config`` file (located in ``cea/interfaces/cli/``) tells the ``cea`` command line program
 
@@ -96,6 +95,11 @@ The ``cli.config`` file (located in ``cea/interfaces/cli/``) tells the ``cea`` c
 By adding your script to the ``cli.config`` file, your script becomes executable from the command line like this::
 
     $ cea your-script-name --scenario C:\reference-case-open\baseline --your-parameter 123
+
+During development of your script, you will probably not be too interested in this feature - you will probably just be
+running your script from PyCharm. Please take the time to do this anyway, since it is a requirement for adding it to
+the ArcGIS interface and other interfaces yet to come (e.g. Rhino/Grasshopper interface)
+
 
 
 
