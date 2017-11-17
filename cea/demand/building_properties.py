@@ -65,9 +65,6 @@ class BuildingProperties(object):
         prop_internal_loads = dbf_to_dataframe(locator.get_building_internal()).set_index('Name')
         prop_supply_systems = dbf_to_dataframe(locator.get_building_supply()).set_index('Name')
 
-        # get solar properties
-        solar = get_prop_solar(locator, use_daysim_radiation).set_index('Name')
-
         # get temperatures of operation
         prop_HVAC_result = get_properties_technical_systems(locator, prop_hvac).set_index('Name')
 
@@ -87,8 +84,8 @@ class BuildingProperties(object):
                                                 prop_geometry, prop_HVAC_result, surface_properties,
                                                 gv, use_daysim_radiation)
 
-
-
+        # get solar properties
+        solar = get_prop_solar(locator, prop_rc_model, prop_envelope, gv, use_daysim_radiation).set_index('Name')
 
         # df_windows = geometry_reader.create_windows(surface_properties, prop_envelope)
         # TODO: to check if the Win_op and height of window is necessary.
@@ -194,7 +191,6 @@ class BuildingProperties(object):
         """get windows and their properties of a building by name"""
         return self._prop_windows.loc[self._prop_windows['name_building'] == name_building].to_dict('list')
 
-
     def calc_prop_rc_model(self, locator, occupancy, envelope, geometry, hvac_temperatures,
                            surface_properties,
                            gv, use_daysim_radiation):
@@ -260,10 +256,10 @@ class BuildingProperties(object):
 
         # calculate building geometry in case of arcgis radiation
         if use_daysim_radiation:
-            df = self.geometry_reader_radiation_daysim(locator, envelope, occupancy, geometry, gv.Z)
+            df = self.geometry_reader_radiation_daysim(locator, envelope, occupancy, geometry, gv.hf)
 
         elif not use_daysim_radiation:
-            df = self.geometry_reader_radiation_arcgis(envelope, geometry, gv.Z, occupancy, surface_properties)
+            df = self.geometry_reader_radiation_arcgis(envelope, geometry, gv.hf, occupancy, surface_properties)
 
         df = df.merge(hvac_temperatures, left_index=True, right_index=True)
 
@@ -321,13 +317,12 @@ class BuildingProperties(object):
 
         # call all building geometry files in a loop
         for building_name in envelope.index:
-
             geometry_data = pd.read_csv(locator.get_radiation_metadata(building_name))
             # FIXME:
             # TODO: sum up exposed and non-exposed walls separately, see issue 897
             geometry_data_sum = geometry_data.groupby(by='TYPE').sum()
 
-            envelope.ix[building_name,'Awall'] = geometry_data_sum.ix['walls','AREA_m2']
+            envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2']
             envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['windows', 'AREA_m2']
             envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
 
@@ -372,7 +367,7 @@ class BuildingProperties(object):
         # area of windows
         # TODO: wwe_south replaces wil_wall this is temporary it should not be need it anymore with the new geometry files of Daysim
         # calculate average wwr
-        wwr_mean = 0.25*(df['wwr_south']+df['wwr_east']+df['wwr_north']+df['wwr_west'])
+        wwr_mean = 0.25 * (df['wwr_south'] + df['wwr_east'] + df['wwr_north'] + df['wwr_west'])
         df['Aw'] = df['Awall_all'] * wwr_mean * df['PFloor']
         # opaque areas (PFloor represents a factor according to the amount of floors heated)
         df['Aop_sup'] = df['Awall_all'] * df['PFloor'] - df['Aw']
@@ -388,7 +383,6 @@ class BuildingProperties(object):
         df['surface_volume'] = (df['Aop_sup'] + df['Aroof']) / (df['GFA_m2'] * floor_height)  # surface to volume ratio
 
         return df
-
 
     def lookup_effective_mass_area_factor(self, cm):
         """
@@ -540,12 +534,10 @@ class EnvelopeProperties(object):
 
 class SolarProperties(object):
     """Encapsulates the solar properties of a building"""
-    __slots__ = ['I_roof', 'I_wall', 'I_win']
+    __slots__ = ['I_sol']
 
     def __init__(self, solar):
-        self.I_roof = solar['I_roof']
-        self.I_wall = solar['I_wall']
-        self.I_win = solar['I_win']
+        self.I_sol = solar['I_sol']
 
 
 def get_properties_technical_systems(locator, prop_HVAC):
@@ -672,13 +664,63 @@ def get_envelope_properties(locator, prop_architecture):
     return envelope_prop
 
 
-def get_prop_solar(locator, use_daysim_radiation):
+def get_prop_solar(locator, prop_rc_model, prop_envelope, gv, use_daysim_radiation):
+    # load gv
+    thermal_resistance_surface = gv.Rse
+    window_frame_fraction = gv.F_f
 
     if use_daysim_radiation:
 
-        I_wall = 0
-        I_roof = 0
-        I_win = 0
+        # create result data frame
+        list_Isol = []
+
+        # for every building
+        for building_name in prop_envelope.index:
+            # read daysim geometry
+            geometry_data = pd.read_csv(locator.get_radiation_metadata(building_name)).set_index('SURFACE')
+            # read daysim radiation
+            radiation_data = pd.read_json(locator.get_radiation_building(building_name))
+
+            # sum wall
+            geometry_data_walls = geometry_data[geometry_data.TYPE == 'walls']
+            # solar incident on all walls [W]
+            I_sol_wall = np.array([geometry_data_walls.ix[surface, 'AREA_m2'] * radiation_data[surface] for surface in
+                                   geometry_data_walls.index]).sum(axis=0)
+            # sensible gain on all walls [W]
+            I_sol_wall = I_sol_wall * prop_envelope.ix[building_name, 'a_wall'] * thermal_resistance_surface * \
+                         prop_rc_model.ix[
+                             building_name, 'U_wall']
+
+            # sum roof
+            geometry_data_roofs = geometry_data[geometry_data.TYPE == 'roofs']
+            # solar incident on all roofs [W]
+            I_sol_roof = np.array([geometry_data_roofs.ix[surface, 'AREA_m2'] * radiation_data[surface] for surface in
+                                   geometry_data_roofs.index]).sum(axis=0)
+            # sensible gain on all roofs [W]
+            I_sol_roof = I_sol_roof * prop_envelope.ix[building_name, 'a_roof'] * thermal_resistance_surface * \
+                         prop_rc_model.ix[
+                             building_name, 'U_roof']
+
+            # sum window, considering shading
+            from cea.technologies import blinds
+
+            geometry_data_windows = geometry_data[geometry_data.TYPE == 'windows']
+
+            Fsh_win = [np.vectorize(blinds.calc_blinds_activation)(radiation_data[surface],
+                                                                   prop_envelope.ix[building_name, 'G_win'],
+                                                                   prop_envelope.ix[building_name, 'rf_sh']) for surface
+                       in geometry_data_windows.index]
+
+            Fsh_win_dict = dict(zip(geometry_data_windows.index, Fsh_win))
+
+            I_sol_win = np.array([geometry_data_windows.ix[surface, 'AREA_m2'] * radiation_data[surface] * Fsh_win_dict[
+                surface] * (1 - window_frame_fraction) for surface in geometry_data_windows.index]).sum(axis=0)
+
+            # sum
+            I_sol = I_sol_wall + I_sol_roof + I_sol_win
+            list_Isol.append(I_sol)
+
+        result = pd.DataFrame({'Name': prop_envelope.index, 'I_sol': list_Isol})
 
     elif not use_daysim_radiation:
 
@@ -686,12 +728,38 @@ def get_prop_solar(locator, use_daysim_radiation):
         solar_list = solar.values.tolist()
         surface_properties = pd.read_csv(locator.get_surface_properties())
         surface_properties['Awall'] = (
-        surface_properties['Shape_Leng'] * surface_properties['FactorShade'] * surface_properties['Freeheight'])
+            surface_properties['Shape_Leng'] * surface_properties['FactorShade'] * surface_properties['Freeheight'])
         sum_surface = surface_properties[['Awall', 'Name']].groupby(['Name']).sum().values
 
-
         I_sol_average_Wperm2 = [a / b for a, b in zip(solar_list, sum_surface)]
+        I_sol_average_Wperm2_dict = dict(zip(solar.index, I_sol_average_Wperm2))
 
-        result = pd.DataFrame({'Name': solar.index, 'I_win': I_win, 'I_roof': I_roof, 'I_wall': I_wall})
+        array_Isol_all_buildings_W = [
+            calc_Isol_arcgis(I_sol_average_Wperm2_dict[name], prop_rc_model.ix[name], prop_envelope.ix[name],
+                             window_frame_fraction, thermal_resistance_surface) for name in solar.index]
+
+        result = pd.DataFrame({'Name': solar.index, 'I_sol': array_Isol_all_buildings_W})
 
     return result
+
+
+def calc_Isol_arcgis(I_sol_average, prop_rc_model, prop_envelope, window_frame_fraction, thermal_resistance_surface):
+    """
+    This function calculates the effective collecting solar area accounting for use of blinds according to ISO 13790,
+    for the sake of simplicity and to avoid iterations, the delta is calculated based on the last time step.
+
+    :param t: time of the year
+    :param bpr: building properties object
+    :param gv: global variables class
+    :return:
+    """
+    from cea.technologies import blinds
+    Fsh_win = np.vectorize(blinds.calc_blinds_activation)(I_sol_average, prop_envelope.G_win, prop_envelope.rf_sh)
+
+    Asol_wall = prop_rc_model['Aop_sup'] * prop_envelope.a_wall * thermal_resistance_surface * prop_rc_model['U_wall']
+    Asol_roof = prop_rc_model['Aroof'] * prop_envelope.a_roof * thermal_resistance_surface * prop_rc_model['U_roof']
+    Asol_win = Fsh_win * prop_rc_model['Aw'] * (1 - window_frame_fraction)
+
+    I_sol = I_sol_average * (Asol_wall + Asol_roof + Asol_win)
+
+    return I_sol
