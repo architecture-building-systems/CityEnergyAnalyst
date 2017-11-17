@@ -88,9 +88,12 @@ def calc_I_sol(t, bpr, tsd, gv):
         I_rad: vector solar radiation re-irradiated to the sky.
     """
 
-    Asol_wall, Asol_roof, Asol_win = calc_Asol(t, bpr, gv)
+    # calc re-radiatioin
     I_rad = calc_I_rad(t, tsd, bpr, gv.Rse)
-    I_sol = bpr.solar.I_roof[t] * Asol_roof + bpr.solar.I_win[t] * Asol_win + bpr.solar.I_wall[t] * Asol_wall
+
+    # get incident radiation
+    I_sol = bpr.solar.I_sol[t]
+
     I_sol_net = I_sol - I_rad
 
     return I_sol_net, I_rad # vector in W
@@ -138,23 +141,7 @@ def calc_hr(emissivity, theta_ss):
     return 4.0 * emissivity * BOLTZMANN * (theta_ss + 273.0) ** 3.0
 
 
-def calc_Asol(t, bpr, gv):
-    """
-    This function calculates the effective collecting solar area accounting for use of blinds according to ISO 13790,
-    for the sake of simplicity and to avoid iterations, the delta is calculated based on the last time step.
 
-    :param t: time of the year
-    :param bpr: building properties object
-    :param gv: global variables class
-    :return:
-    """
-    from cea.technologies import blinds
-    Fsh_win = blinds.calc_blinds_activation(bpr.solar.I_win[t], bpr.architecture.G_win, bpr.architecture.rf_sh)
-    Asol_wall = bpr.rc_model['Aop_sup'] * bpr.architecture.a_wall * gv.Rse * bpr.rc_model['U_wall']
-    Asol_roof = bpr.rc_model['Aroof'] * bpr.architecture.a_roof * gv.Rse * bpr.rc_model['U_roof']
-    Asol_win = Fsh_win * bpr.rc_model['Aw'] * (1 - gv.F_f)
-
-    return Asol_wall, Asol_roof, Asol_win
 
 
 # temperature of emission/control system
