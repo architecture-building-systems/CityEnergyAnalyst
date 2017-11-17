@@ -97,22 +97,49 @@ By adding your script to the ``cli.config`` file, your script becomes executable
     $ cea your-script-name --scenario C:\reference-case-open\baseline --your-parameter 123
 
 During development of your script, you will probably not be too interested in this feature - you will probably just be
-running your script from PyCharm. Please take the time to do this anyway, since it is a requirement for adding it to
-the ArcGIS interface and other interfaces yet to come (e.g. Rhino/Grasshopper interface)
+running your script from PyCharm. Please take the time to do this anyway, since it is a *requirement for adding it to
+the ArcGIS interface* and other interfaces yet to come (e.g. Rhino/Grasshopper interface)
+
+The name of your script should be the same as the module name and the core function name from
+`Step 3: Develop your script`_  - except replace any underscores (``_``) with hyphens (``-``).
+
+The ``cli.config`` file has two sections: ``[scripts]`` and ``[config]``. You need to add your script to both sections,
+using the script name as the key.
+
+- in the ``[scripts]`` section, set the value to the module path of your script, that is, the path you would use to
+  import your script (e.g. ``cea.examples.template``)
+
+  - since all CEA scripts use the convention of having a ``main`` function that accepts a ``config`` object as it's
+    first parameter, this allows the various interfaces (command line, ArcGIS, Rhino/Grasshopper) to  invoke the script.
+
+- in the ``[config]`` section, set the value to the (whitespace separated) list of parameters that your script uses
+
+  - use the notation ``section:parameter`` to specify a specific parameter defined in the ``default.config`` file.
+  - use the notation ``section`` as a shorthand to specify that your script uses all the parameters from that section
+    in the ``default.config`` file.
+  - by defining the parameters used by the script, interfaces such as the command line, ArcGIS and Rhino/Grasshopper
+    "know" what parameters to offer the user for a script.
+
+Here is an example of the input for the template script::
+
+    [scripts]
+    template = cea.examples.template
+
+    # ...
+
+    [config]
+    template = general:scenario data_helper
+
+
+Step 5: Add a section to the ``default.config`` file for any parameters your script requires
+--------------------------------------------------------------------------------------------
+
+The file ``default.config`` (found in the ``cea`` folder) specifies the list of parameters the user can set for the CEA.
+This file has the same sections and parameters as the ``cea.config`` file in the user's home folder, except it also
+includes additional information like parameter type and a description of the parameter.
 
 
 
-
-- config.scripts
-  - list of script names (keys) and the module to call (values)
-- script file follows a naming convention
-
-  - module variable ``CEA_CONFIG_SECTIONS = ['general', 'demand']`` returns a list of configuration sections that are
-    used by this script
-  - module level function ``main`` is called to run script
-
-- always call the scenario "scenario_path"??
-- how to add a new option to the config file?
 - purposes and principals
   - scripts should be runnable from the commandline with ``cea template --parameter value``
   - scripts should be runnable from PyCharm
