@@ -26,12 +26,43 @@ def main(_):
         os.makedirs(toolbox_folder)
     shutil.copy(find_toolbox_src(), toolbox_dst)
 
+    copy_library(toolbox_folder)
     copy_config(toolbox_folder)
     copy_inputlocator(toolbox_folder)
 
     with open(os.path.expanduser('~/cea_arcpy.pth'), 'w') as f:
         f.writelines('\n'.join(get_arcgis_paths()))
     print('toolbox installed.')
+
+
+def copy_library(toolbox_folder):
+    """Copy the library functions"""
+    lib_dst_folder = os.path.join(toolbox_folder, 'cea', 'interfaces', 'arcgis')
+    if not os.path.exists(lib_dst_folder):
+        os.makedirs(lib_dst_folder)
+
+    lib_src_folder = os.path.dirname(__file__)
+    shutil.copy(os.path.join(lib_src_folder, 'arcgishelper.py'), lib_dst_folder)
+    shutil.copy(os.path.join(lib_src_folder, 'modules.py'), lib_dst_folder)
+
+    # we also need access to the cli.config file (arcgishelper.CeaTool uses this to figure out the parameters)
+    lib_cli_dst_folder = os.path.join(toolbox_folder, 'cea', 'interfaces', 'cli')
+    if not os.path.exists(lib_cli_dst_folder):
+        os.makedirs(lib_cli_dst_folder)
+    shutil.copy(os.path.join(lib_src_folder, '..', 'cli', 'cli.config'), lib_cli_dst_folder)
+
+    # add `__init__.py` files to interfaces and arcgis folders
+    with open(os.path.join(lib_dst_folder, '..', '__init__.py'), 'w') as f:
+        f.write('')
+    with open(os.path.join(lib_dst_folder, '__init__.py'), 'w') as f:
+        f.write('')
+    with open(os.path.join(lib_cli_dst_folder, '__init__.py'), 'w') as f:
+        f.write('')
+
+
+
+    # during development, copy this file too
+    # shutil.copy(os.path.join(lib_src_folder, 'test.pyt'), toolbox_folder)
 
 
 def copy_config(toolbox_folder):
