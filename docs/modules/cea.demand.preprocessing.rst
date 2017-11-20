@@ -7,7 +7,7 @@ Submodules
 cea\.demand\.preprocessing\.properties module
 ---------------------------------------------
 
-.. automodule:: cea.demand.preprocessing.properties
+.. automodule:: cea.demand.preprocessing.data_helper
     :members:
     :undoc-members:
     :show-inheritance:

@@ -1,17 +1,7 @@
 """
 This is a template script - an example of how a CEA script should be set up.
 
-Add such a script by appending to the ``cea/cli.config`` file like this:
-
-.. source::
-
-    [scripts]
-    template = cea.example.template
-    template.sections = general:scenario general:region data-helper
-
-In the above example, ``template`` is the name of the script (as in ``cea template``) and ``template.sections``
-refers to the list of sections in the default.config file that this script uses as parameters. If you only need some
-parameters from a section, you can use the form ``section:key`` to specify a specific parameter in a section.
+NOTE: ADD YOUR SCRIPT'S DOCUMENTATION HERE (what, why, include literature references)
 """
 from __future__ import division
 
@@ -19,8 +9,21 @@ import os
 import cea.config
 import cea.inputlocator
 
+__author__ = "Daren Thomas"
+__copyright__ = "Copyright 2017, Architecture and Building Systems - ETH Zurich"
+__credits__ = ["Daren Thomas"]
+__license__ = "MIT"
+__version__ = "0.1"
+__maintainer__ = "Daren Thomas"
+__email__ = "cea@arch.ethz.ch"
+__status__ = "Production"
+
+
 def template(locator, archetypes):
-    # this is where the action happens if it is more than a few lines in ``main``.
+    """this is where the action happens if it is more than a few lines in ``main``.
+    NOTE: ADD YOUR SCRIPT'S DOCUMENATION HERE (how)
+    NOTE: RENAME THIS FUNCTION (SHOULD PROBABLY BE THE SAME NAME AS THE MODULE)
+    """
     pass
 
 
@@ -39,10 +42,10 @@ def main(config):
     locator = cea.inputlocator.InputLocator(config.scenario)
 
     # print out all configuration variables used by this script
-    print("Running template for scenario = %s" % config.scenario)
+    print("Running template with scenario = %s" % config.scenario)
     print("Running template with archetypes = %s" % config.data_helper.archetypes)
 
-    template(locator, config.archetypes)
+    template(locator, config.scenario)
 
 
 if __name__ == '__main__':
