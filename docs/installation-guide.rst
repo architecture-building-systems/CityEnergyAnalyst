@@ -32,7 +32,9 @@ To install the research version of CEA:
   - this also extracts the reference case (reference-case-open) to the temporary folder
     (``%TEMP%\reference-case-open\baseline``) for test-driving the CEA
 #. edit the file ``%USERPROFILE%\cea.config`` (normally something like ``C:\Users\USERNAME\cea.config``) and
-   set the ``default-scenario`` property of your
+   set the ``default-scenario`` property of yours.
+
+Note: Never, Never skip any step. do not try to create an env on your own. we created the conda env create comand to install all compilers cea
 
 Installation CEA development environment
 ----------------------------------------
