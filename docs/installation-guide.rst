@@ -34,7 +34,13 @@ To install the research version of CEA:
 #. edit the file ``%USERPROFILE%\cea.config`` (normally something like ``C:\Users\USERNAME\cea.config``) and
    set the ``default-scenario`` property of yours.
 
-Note: Never, Never skip any step. do not try to create an env on your own. we created the conda env create comand to install all compilers cea
+.. note:: We advise to follow the above guide precisely. Especially the ``conda env create`` command can trip up users
+    with previous experience in Anaconda / Miniconda as it looks very similar to the ``conda create`` command often
+    used to create new conda environments.
+    In addition to creating an environment, ``conda env create`` reads in the ``environment.yml`` file which contains a
+    list of packages (and versions) to install as well as a definition of the channels to check. If you
+    need to create a conda environment for the CEA that has a specific name (the default is ``cea``) then use the
+    ``name`` parameter: ``conda env create --name your-env-name-here``
 
 Installation CEA development environment
 ----------------------------------------
