@@ -8,8 +8,9 @@ we would decouple the python version used by CEA from the ArcGIS version.
 
 See the script ``install_toolbox.py`` for the mechanics of installing the toolbox into the ArcGIS system.
 """
-import os
 
+import os
+import inspect
 import cea.config
 import cea.inputlocator
 from cea.interfaces.arcgis.arcgishelper import *
@@ -36,13 +37,8 @@ class Toolbox(object):
     def __init__(self):
         self.label = 'City Energy Analyst'
         self.alias = 'cea'
-        # self.tools = [OperationCostsTool, RetrofitPotentialTool, DemandTool, DataHelperTool, BenchmarkGraphsTool,
-        #               OperationTool, EmbodiedEnergyTool, MobilityTool, PhotovoltaicPanelsTool, SolarCollectorPanelsTool,
-        #               PhotovoltaicThermalPanelsTool, DemandGraphsTool, ScenarioPlotsTool, RadiationTool,
-        #               RadiationDaysimTool, HeatmapsTool, DbfToExcelTool, ExcelToDbfTool, ExtractReferenceCaseTool,
-        #               SensitivityDemandSamplesTool, SensitivityDemandSimulateTool, SensitivityDemandAnalyzeTool,
-        #               TestTool]
-        self.tools = [globals()[tool] for tool in globals().keys() if issubclass(tool, CeaTool)]
+        self.tools = [tool for tool in globals().values()
+                      if inspect.isclass(tool) and issubclass(tool, CeaTool) and not tool is CeaTool]
 
 
 class OperationCostsTool(CeaTool):
