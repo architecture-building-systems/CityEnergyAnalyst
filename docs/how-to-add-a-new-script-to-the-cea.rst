@@ -208,4 +208,7 @@ The key differences to the definition of text-book ArcGIS tools is that you:
   when you click ``run``)
 - add the attribute ``self.cea_tool`` (setting it to the script name, use the kebab-case_ version)
 - the other properties are standard
-- NOTE: You don't need to specify the ``
+
+.. note:: You don't need to add your tool to the ``Toolbox.tools`` variable as you would normally need to in an
+    ArcGIS python toolbox - the :py:class`cea.interfaces.arcgis.CityEnergyAnalyst.Toolbox` class already implements
+    code to find all subclasses of :py:class`cea.interfaces.arcgis.arcgishelper.CeaTool` defined in the same file.
