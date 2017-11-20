@@ -101,7 +101,7 @@ running your script from PyCharm. Please take the time to do this anyway, since 
 the ArcGIS interface* and other interfaces yet to come (e.g. Rhino/Grasshopper interface)
 
 The name of your script should be the same as the module name and the core function name from
-`Step 3: Develop your script`_  - except replace any underscores (``_``) with hyphens (``-``).
+`Step 3: Develop your script`_  - except replace any underscores (``_``) with dashes (``-``).
 
 The ``cli.config`` file has two sections: ``[scripts]`` and ``[config]``. You need to add your script to both sections,
 using the script name as the key.
@@ -128,7 +128,20 @@ Here is an example of the input for the template script::
     # ...
 
     [config]
-    template = general:scenario data_helper
+    template = general:scenario data-helper
+
+
+This specifies that the CEA has a script called ``template`` and that it can be found at ``cea/examples/template.py``.
+This script follows the CEA convention and therefore has a function called ``main`` that is defined like this::
+
+    def main(config):
+        # contents of the main function
+        # calls the core function
+
+It also specifies that the template script uses the ``general:scenario`` parameter and all the parameters defined in
+the ``data-helper`` section of the ``default.config`` file. That means, the template script can be called like this::
+
+    $ cea template --scenario C:\reference-case-open\baseline --archetypes HVAC internal-loads
 
 
 Step 5: Add a section to the ``default.config`` file for any parameters your script requires
@@ -138,28 +151,61 @@ The file ``default.config`` (found in the ``cea`` folder) specifies the list of 
 This file has the same sections and parameters as the ``cea.config`` file in the user's home folder, except it also
 includes additional information like parameter type and a description of the parameter.
 
+The configuration is split up into sections. The main section ``[general]`` contains parameters that are considered
+global to most scripts, e.g. ``scenario``, ``weather``, ``region``, ``multiprocessing``. All other parameters reside
+in a section with the same name as the script that uses them (e.g. ``[demand]``, ``[data-helper]`` etc.) with exceptions
+for tools that are closely related and share parameters (e.g. ``[solar]`` for ``photovoltaic``, ``solar-collector`` and
+``photovoltaic-thermal``, ``[dbf-tools]`` for ``dbf-to-excel`` and ``excel-to-dbf``).
+
+Follow these steps to add a new parameter for your script:
+
+- add a section to ``default.config`` with the same name as the script or locate the appropriate section
+- add a parameter name: CEA parameter names follow the naming conventions of python variable names, except they use
+  kebab-case_ instead of snake_case_, i.e. dashes instead of underscores.
+- set the default value
+- add a line specifying the type (key: ``parameter-name.type``, value: one of the ``Parameter`` subclasses from
+  ``cea.config``, e.g. ``IntegerParameter``, ``RealParameter``, ``MultiChoiceParameter``, ``PathParameter`` etc.)
+- add a line specifying the documentation for the parameter (key: ``parameter-name.help``, value: the text to show in
+  interfaces for that parameter - future users of your tool will be grateful for good help texts!)
+- (optional) add a line specifying the category of the tool (key: ``parameter-name.category``, value: the category name)
+  The category is used in the ArcGIS interface to group parameters for tools with a lot of parameters.
+- (optional) add a line for tool-specific properties (e.g.: ``archetypes = comfort architecture HVAC internal-loads``)
 
 
-- purposes and principals
-  - scripts should be runnable from the commandline with ``cea template --parameter value``
-  - scripts should be runnable from PyCharm
-  - all arguments to the scripts have a default value in ``default.config``
-- place path names in double quotes when used as command lines
-- parameter names should be unique throughout the template (create a unit test for this)
-- print out parameters
+Example::
+
+    [data-helper]
+    archetypes = comfort architecture HVAC internal-loads
+    archetypes.type = MultiChoiceParameter
+    archetypes.choices = comfort architecture HVAC internal-loads
+    archetypes.help = List of archetypes to process
 
 
-Step N:
--------
+.. _kebab-case: http://wiki.c2.com/?KebabCase
+.. _snake_case: https://en.wikipedia.org/wiki/Snake_case
 
-Add such a script by appending to the ``cea/cli.config`` file like this:
+Step 6: Add an ArcGIS interface
+-------------------------------
 
-::
+In order to include your script in the ArcGIS interface, you need to add a few lines to the file
+``cea/interfaces/arcgis/CityEnergyAnalyst.py``. Since the parameters to the script have already been defined above,
+You just need to create a class (call it the same as your script, but in CamelCase, adding the word ``Tool`` at the end)
+and subclassing ``cea.interfaces.arcgis.CeaTool`` and set some attributes in the ``__init__`` method. Take the
+``data-helper`` script, for example::
 
-    [scripts]
-    template = cea.example.template
-    template.sections = general:scenario general:region data-helper
+    class DataHelperTool(CeaTool):
+        def __init__(self):
+            self.cea_tool = 'data-helper'
+            self.label = 'Data helper'
+            self.description = 'Query characteristics of buildings and systems from statistical data'
+            self.category = 'Data Management'
+            self.canRunInBackground = False
 
-In the above example, ``template`` is the name of the script (as in ``cea template``) and ``template.sections``
-refers to the list of sections in the default.config file that this script uses as parameters. If you only need some
-parameters from a section, you can use the form ``section:key`` to specify a specific parameter in a section.
+
+The key differences to the definition of text-book ArcGIS tools is that you:
+
+- subclass from ``CeaTool`` (this adds behaviour to automatically populate the parameters and execute the CEA script
+  when you click ``run``)
+- add the attribute ``self.cea_tool`` (setting it to the script name, use the kebab-case_ version)
+- the other properties are standard
+- NOTE: You don't need to specify the ``
