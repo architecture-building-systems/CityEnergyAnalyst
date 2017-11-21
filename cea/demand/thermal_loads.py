@@ -29,7 +29,7 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     The structure of ``usage_schedules`` is:
 
     .. code-block:: python
-        :emphasize-lines: 3,5
+        :emphasize-lines: 2,4
 
         {
             'list_uses': ['ADMIN', 'GYM', ...],
@@ -73,8 +73,12 @@ def calc_thermal_loads(building_name, bpr, weather_data, usage_schedules, date, 
     :param gv: global variables / context
     :type gv: GlobalVariables
 
+    :param locator:
+    :param use_dynamic_infiltration_calculation:
+
     :returns: This function does not return anything
     :rtype: NoneType
+
 """
     schedules, tsd = initialize_inputs(bpr, gv, usage_schedules, weather_data)
 
