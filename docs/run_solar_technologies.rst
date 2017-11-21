@@ -29,7 +29,7 @@ Following are the steps to run the solar technology scripts: (take ``photovoltai
 
 
 References
-~~~~~~~~~~
+----------
 
-.. [1] Schweizerischer Ingenieur- und Architektenverein (SIA). (2006).
-    Standard-Nutzungsbedingungen für die Energie- und Gebäudetechnik Merkbatt 2024. Zürich.
+Schweizerischer Ingenieur- und Architektenverein (SIA). (2006). Standard-Nutzungsbedingungen für die Energie- und
+Gebäudetechnik Merkbatt 2024. Zürich.

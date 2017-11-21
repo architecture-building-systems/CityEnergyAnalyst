@@ -32,8 +32,8 @@ If you want to persist these changes to disk, you need to explicitly save them w
 :py:meth:`cea.config.Configuration.save`.
 
 .. note:: It is a bad idea to have multiple instances of :py:class:`cea.config.Configuration`, as if one part of a
-script changes a parameter, this will not be reflected in the other instances. Each CEA script accepts a ``config``
-argument to it's ``main`` function and should only use that.
+    script changes a parameter, this will not be reflected in the other instances. Each CEA script accepts a ``config``
+    argument to it's ``main`` function and should only use that.
 
 Overview
 --------
