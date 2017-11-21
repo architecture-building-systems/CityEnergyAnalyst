@@ -325,14 +325,10 @@ def calculate_average_multiuse(properties_df, occupant_densities, list_uses, pro
 
 
 def main(config):
-
     """
     Run the properties script with input from the reference case and compare the results. This ensures that changes
     made to this script (e.g. refactorings) do not stop the script from working and also that the results stay the same.
     """
-
-    assert os.path.exists(config.scenario), 'Scenario not found: %s' % config.scenario
-    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
 
     print('Running data-helper with scenario = %s' % config.scenario)
     print('Running data-helper with archetypes = %s' % config.data_helper.archetypes)
@@ -342,6 +338,8 @@ def main(config):
     prop_comfort_flag = 'comfort' in config.data_helper.archetypes
     prop_internal_loads_flag = 'internal-loads' in config.data_helper.archetypes
 
+    locator=cea.inputlocator.InputLocator(config.scenario)
+
     data_helper(locator=locator, config=config, prop_architecture_flag=prop_architecture_flag,
                 prop_hvac_flag=prop_hvac_flag, prop_comfort_flag=prop_comfort_flag,
                 prop_internal_loads_flag=prop_internal_loads_flag)
@@ -349,4 +347,3 @@ def main(config):
 
 if __name__ == '__main__':
     main(cea.config.Configuration())
-

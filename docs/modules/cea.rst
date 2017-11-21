@@ -20,14 +20,6 @@ Subpackages
 Submodules
 ----------
 
-cea\.cli module
----------------
-
-.. automodule:: cea.cli
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 cea\.config module
 ------------------
 
