@@ -17,6 +17,7 @@ import pickle
 from cea.interfaces.arcgis.modules import arcpy
 from cea.utilities import epwreader
 import cea.config
+import cea.globalvar
 
 __author__ = "Jimeno A. Fonseca"
 __copyright__ = "Copyright 2013, Architecture and Building Systems - ETH Zurich"
