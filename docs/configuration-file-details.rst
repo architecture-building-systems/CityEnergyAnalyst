@@ -123,3 +123,15 @@ How a value is saved to the config file
 The mechanism for saving a value to the config file works similarly: :py:meth:`cea.config.Parameter.set` is called,
 which in turn calls :py:meth:`cea.config.Parameter.encode` - subclasses can override this to provide type specific
 behaviour.
+
+How to create new parameter types
+---------------------------------
+
+Steps:
+
+#. subclass :py:class:`cea.config.Parameter`
+#. optional: override ``initialize`` to settings
+#. optional: override ``encode`` to format the parameter value as a string
+#. optional: override ``decode`` to read the parameter value from a string
+
+Check the existing parameter types for ideas!
