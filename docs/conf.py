@@ -18,10 +18,34 @@
 #
 import os
 import sys
-
+from mock import Mock as MagicMock
 import cea
 
 sys.path.insert(0, os.path.abspath('..'))
+
+
+
+# mock out some imports so we don't have conflicts on the readthedocs server...
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return MagicMock()
+
+
+MOCK_MODULES = ['pythonocc',
+                'SALib', 'SALib.analyze', 'SALib.analyze', 'SALib.sample', 'SALib.sample.saltelli',
+                'SALib.sample.morris',
+                'deap', 'descartes', 'doit',
+                'ephem', 'fiona', 'geopandas', 'lxml', 'pandas', 'plotly', 'plotly.offline', 'plotly.graph_objs',
+                'pycollada', 'pyproj', 'pysal', 'pyshp',
+                'scikit-learn', 'shapely', 'simpledbf', 'xlrd', 'networkx', 'pyliburo', 'pyliburo.py3dmodel', 'pyliburo.py3dmodel.fetch', 'pyliburo.py3dmodel.construct', 'timezonefinder', 'astral',
+                'cvxopt', 'xlwt', 'python-dateutil',
+                'pyliburo.py3dmodel.calculate', 'pyliburo.py3dmodel.modify', 'pyliburo.pycitygml',
+                'pyliburo.gml3dmodel', 'pyliburo.shp2citygml', 'pyliburo.py2radiance',
+                'pandas.util', 'pandas.util.testing',
+                ]
+
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration ------------------------------------------------
 

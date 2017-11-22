@@ -45,7 +45,7 @@ def calc_hvac_cooling(tsd, hoy, gv):
     :rtype: Dict[str, numpy.float64]
     """
 
-    temp_zone_set = tsd['theta_a'][hoy]  # zone set temperature according to scheduled set points
+    temp_zone_set = tsd['T_int'][hoy]  # zone set temperature according to scheduled set points
     qe_sen = tsd['Qcs_sen'][hoy] / 1000  # get the total sensible load from the RC model in [W]
     m_ve_mech = tsd['m_ve_mech'][hoy]  # mechanical ventilation flow rate according to ventilation control
     wint = tsd['w_int'][hoy]  # internal moisture gains from occupancy
@@ -164,7 +164,7 @@ def calc_hvac_heating(tsd, hoy, gv):
     :rtype: Dict[str, numpy.float64]
     """
 
-    temp_zone_set = tsd['theta_a'][hoy]  # zone set temperature according to scheduled set points
+    temp_zone_set = tsd['T_int'][hoy]  # zone set temperature according to scheduled set points
     qe_sen = tsd['Qhs_sen'][hoy] / 1000  # get the total sensible load from the RC model in [W]
     m_ve_mech = tsd['m_ve_mech'][hoy]  # (kg/s) mechanical ventilation flow rate according to ventilation control
     wint = tsd['w_int'][hoy]  # internal moisture gains from occupancy

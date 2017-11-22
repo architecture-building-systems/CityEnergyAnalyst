@@ -11,18 +11,18 @@ import pandas as pd
 import cea.inputlocator
 
 
-def plot_scenarios(scenarios, output_file):
+def plot_scenarios(scenario_folders, output_file):
     """
     List each scenario in the folder `scenario_root` and plot demand and lca (operations, embodied) data.
 
-    :param scenarios: A list of scenario folders.
+    :param scenario_folders: A list of scenario folders.
     :param output_file: The filename (pdf) to save the results as.
     :return: (None)
     """
     from matplotlib.backends.backend_pdf import PdfPages
 
-    locators = [cea.inputlocator.InputLocator(scenario) for scenario in scenarios]
-    scenario_names = [os.path.basename(locator.scenario_path) for locator in locators]
+    locators = [cea.inputlocator.InputLocator(scenario) for scenario in scenario_folders]
+    scenario_names = [os.path.basename(locator.scenario) for locator in locators]
 
     pdf = PdfPages(output_file)
     try:
@@ -172,21 +172,18 @@ def plot_lca_operation(ax, locators, scenario_names, column, title, unit):
     ax2.set_ylabel('Per Scenario [%(unit)s]' % locals())
 
 
-def run_as_script(scenario_folders=None, output_file=None):
-    if not scenario_folders:
-        import cea.globalvar
-        gv = cea.globalvar.GlobalVariables()
-        scenario_folders = [gv.scenario_reference]
-    if not output_file:
-        output_file = os.path.expandvars(r'%TEMP%\scenario_plots.pdf')
-    plot_scenarios(scenario_folders, output_file)
+def main(config):
 
+    print('Running scenario-plots with project = %s' % config.scenario_plots.project)
+    print('Running scenario-plots with scenarios = %s' % config.scenario_plots.scenarios)
+    print('Running scenario-plots with output-file = %s' % config.scenario_plots.output_file)
+
+    scenario_folders = [os.path.join(config.scenario_plots.project, scenario) for scenario in
+                        config.scenario_plots.scenarios]
+    for scenario in scenario_folders:
+        assert os.path.exists(scenario), "Scenario not found: %s" % scenario
+
+    plot_scenarios(scenario_folders=scenario_folders, output_file=config.scenario_plots.output_file)
 
 if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--scenarios', nargs='+', help='List of scenario folders', default=None)
-    parser.add_argument('-o', '--output', help='Output file', default=os.path.expandvars(r'%TEMP%\scenario_plots.pdf'))
-    args = parser.parse_args()
-    run_as_script(scenario_folders=args.scenarios, output_file=args.output)
+    main(cea.config.Configuration())

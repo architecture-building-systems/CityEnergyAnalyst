@@ -108,7 +108,6 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
 
         for ind, fit in zip(pop, fitnesses):
             ind.fitness.values = fit
-            print ind.fitness.values, "fit"
 
         # Save initial population
         print "Save Initial population \n"
@@ -141,51 +140,23 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         offspring = list(pop)
 
         # Apply crossover and mutation on the pop
-        print "CrossOver"
         for ind1, ind2 in zip(pop[::2], pop[1::2]):
             child1, child2 = cx.cxUniform(ind1, ind2, PROBA, gv)
             offspring += [child1, child2]
 
-        # First half of the master: create new un-correlated configurations
-        if g < gv.NGEN/2:
-            for mutant in pop:
-                print "Mutation Flip"
-                offspring.append(mut.mutFlip(mutant, PROBA, gv))
-                print "Mutation Shuffle"
-                offspring.append(mut.mutShuffle(mutant, PROBA, gv))
-                print "Mutation GU \n"
-                offspring.append(mut.mutGU(mutant, PROBA, gv))
+        for mutant in pop:
+            mutant = mut.mutFlip(mutant, PROBA, gv)
+            mutant = mut.mutShuffle(mutant, PROBA, gv)
+            offspring.append(mut.mutGU(mutant, PROBA, gv))
 
-        # Third quarter of the master: keep the good individuals but modify the shares uniformly
-        elif g < gv.NGEN * 3/4:
-            for mutant in pop:
-                print "Mutation Uniform"
-                offspring.append(mut.mutUniformCap(mutant, gv))
-
-        # Last quarter: keep the very good individuals and modify the shares with Gauss distribution
-        else:
-            for mutant in pop:
-                print "Mutation Gauss"
-                offspring.append(mut.mutGaussCap(mutant, SIGMAP, gv))
-
-
-        # Evaluate the individuals with an invalid fitness
-        # NB: every generation leads to the reevaluation of (n/2) / (n/4) / (n/4) individuals
-        # (n being the number of individuals in the previous generation)
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-
-        print "Update Network list \n"
         for ind in invalid_ind:
             evaluation.checkNtw(ind, ntwList, locator, gv)
 
-        print "Re-evaluate the population"
         fitnesses = map(toolbox.evaluate, invalid_ind)
 
-        print "......................................."
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
-            print ind.fitness.values, "new fit"
-        print "....................................... \n"
 
         # Select the Pareto Optimal individuals
         selection = sel.selectPareto(offspring,gv)
@@ -198,13 +169,7 @@ def evolutionary_algo_main(locator, building_names, extra_costs, extra_CO2, extr
         #        stopCrit = True
 
         # The population is entirely replaced by the best individuals
-        print "Replace the population \n"
         pop[:] = selection
-
-        print "....................................... \n GENERATION ", g
-        for ind in pop:
-            print ind.fitness.values, "selected fit"
-        print "....................................... \n"
 
         # Create Checkpoint if necessary
         if g % gv.fCheckPoint == 0:

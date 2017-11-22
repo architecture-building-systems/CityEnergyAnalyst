@@ -45,7 +45,7 @@ def analyze_sensitivity(samples_path, temporal_scale):
     """
     print("analyzing sensitivity in %(samples_path)s for temporal_scale=%(temporal_scale)s" % locals())
     # do checks
-    with open(os.path.join(args.samples_folder, 'problem.pickle'), 'r') as f:
+    with open(os.path.join(samples_path, 'problem.pickle'), 'r') as f:
         problem = pickle.load(f)
     method = problem['method']
     assert method in ('sobol', 'morris'), "Invalid analysis method: %s" % method
@@ -111,6 +111,8 @@ def analyze_sensitivity(samples_path, temporal_scale):
                 building_results = [result[analysis_variable] for result in analysis_results]
                 pd.DataFrame(building_results, columns=problem['names']).to_excel(writer, worksheet_name)
             writer.save()
+
+    print 'Sensitivity analysis results saved to %s' % folder
 
 def sobol_analyze_function(problem, _, Y):
     """
@@ -185,13 +187,14 @@ def read_results(samples_folder, samples_count, output_parameter, temporal_scale
     return results
 
 
-if __name__ == '__main__':
-    import argparse
+def main(config):
+    print("Running sensitivity-demand-analyze with samples-path = %s" % config.sensitivity_demand.samples_folder)
+    print("Running sensitivity-demand-analyze with temporal-scale = %s" % config.sensitivity_demand.temporal_scale)
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-S', '--samples-folder', default='.',
-                        help='folder to place the output files (samples.npy, problem.pickle) in')
-    parser.add_argument('-t', '--temporal-scale', default='yearly', choices=['yearly', 'monthly'],
-                        help='temporal scale of analysis (monthly or yearly)')
-    args = parser.parse_args()
-    analyze_sensitivity(samples_path=args.samples_folder, temporal_scale=args.temporal_scale)
+    analyze_sensitivity(samples_path=config.sensitivity_demand.samples_folder,
+                        temporal_scale=config.sensitivity_demand.temporal_scale)
+
+
+if __name__ == '__main__':
+    main(cea.config.Configuration())
+

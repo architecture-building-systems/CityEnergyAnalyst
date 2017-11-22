@@ -3,12 +3,10 @@ Energyplus file reader
 """
 import pandas as pd
 
+import math
 import cea.inputlocator
-import cea.globalvar as globalvar
 import numpy as np
 from cea.utilities.physics import BOLTZMANN
-
-gv = globalvar.GlobalVariables()
 
 __author__ = "Clayton Miller"
 __copyright__ = "Copyright 2014, Architecture and Building Systems - ETH Zurich"
@@ -32,6 +30,7 @@ def epw_reader(weather_path):
     result['dayofyear'] = pd.date_range('1/1/2016', periods=8760, freq='H').dayofyear
     result['ratio_diffhout'] = result['difhorrad_Whm2'] / result['glohorrad_Whm2']
     result['skycover'] = result['ratio_diffhout'].fillna(1)
+    result['wetbulb_C'] = np.vectorize(calc_wetbulb)(result['drybulb_C'], result['relhum_percent'])
     result['skytemp_C'] = np.vectorize(calc_skytemp)(result['drybulb_C'], result['dewpoint_C'], result['skycover'])
 
     return result
@@ -45,12 +44,19 @@ def calc_skytemp(Tdrybulb, Tdewpoint, N):
     return sky_T  # sky temperature in C
 
 
-def test_reader():
-    locator = cea.inputlocator.InputLocator(r'C:\reference-case\baseline')
+def calc_wetbulb(Tdrybulb, RH):
+    Tw = Tdrybulb * math.atan(0.151977 * ((RH + 8.313659) ** (0.5))) + math.atan(Tdrybulb + RH) - math.atan(
+        RH - 1.676331) + (0.00391838 * (RH** (3 / 2))) * math.atan(0.023101*RH) - 4.686035
+
+    return Tw  # wetbulb temperature in C
+
+
+def main(config):
+    locator = cea.inputlocator.InputLocator(scenario=config.scenario)
     # for the interface, the user should pick a file out of of those in ...DB/Weather/...
     weather_path = locator.get_default_weather()
     epw_reader(weather_path=weather_path)
 
 
 if __name__ == '__main__':
-    test_reader()
+    main(cea.config.Configuration())

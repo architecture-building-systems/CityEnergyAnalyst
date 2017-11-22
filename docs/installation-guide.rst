@@ -8,9 +8,10 @@ Prerequisites
 -------------
 
 -  GitHub Desktop (or your favorite ``git``)
--  Anaconda distribution (x86) - other pythons can work, but this is really recommended
+-  Anaconda distribution (64-bit) - other pythons can work, but this is really recommended
+   - alternatively, Miniconda2 64-bit will also work!
 -  PyCharm community edition - you can use your own favorite editor, but this is what we use
--  ArcGIS 10.4 - only if you would like to use ArcGIS visuals.
+-  ArcGIS 10.5 - only if you would like to use ArcGIS visuals.
 -  Git Large File Storage - only for working with the reference case repository (you need to be a core developer to
    have access to the private reference case repository)
 
@@ -20,45 +21,34 @@ Installation CEA research
 To install the research version of CEA:
 
 #. open Anaconda prompt (terminal console) from the start menu.
-#. create a conda environment and activate it: do ``conda create -n cea python=2.7``, do ``activate cea``
-#. install dependencies: do ``conda install -c conda-forge geopandas ephem "pandas<0.20"``
-#. install dependencies: do ``conda install -c dlr-sc tbb freeimageplus gl2ps``
-#. install dependencies: do ``conda install -c oce -c pythonocc pythonocc-core=0.17.3``
-#. install cea: do ``pip install cityenergyanalyst``
+#. choose location where to store the repository: do ``cd Documents``
+#. clone repository: do ``git clone https://github.com/architecture-building-systems/CityEnergyAnalyst.git``
+#. in the Anaconda prompt navigate to the folder CityEnergyAnalyst wherever you cloned it. In this case do:
+   ``cd Documents\CityEnergyAnalyst``
+#. create a conda environment and activate it: do ``conda env create``, then do ``activate cea``
+#. install cea: do ``pip install .``
 #. install arcgis plug-in: do ``cea install-toolbox``
+  - this also installs the user configuration file (``cea.config``, located in your home folder)
+  - this also extracts the reference case (reference-case-open) to the temporary folder
+    (``%TEMP%\reference-case-open\baseline``) for test-driving the CEA
+#. edit the file ``%USERPROFILE%\cea.config`` (normally something like ``C:\Users\USERNAME\cea.config``) and
+   set the ``default-scenario`` property of yours.
 
-Note: Creating a conda environment is an optional step, but probably a good habit to get into: This creates a python
-environment separate from your other python environments - that way, version mismatches between packages don't bleed
-into your other work. (you can use any name, when creating an environment - "cea" is just an example)
+Note: Never, Never skip any step. do not try to create an env on your own. we created the conda env create comand to install all compilers cea
 
 Installation CEA development environment
 ----------------------------------------
 
-To install the development environment of CEA:
+To install the development environment of CEA, perform the steps above, except, instead of ``pip install .``:
 
-#. open Anaconda prompt (terminal console) from the start menu.
-#. create a conda environment and activate it. do ``conda create -n cea python=2.7``, do ``activate cea``
-#. choose location where to store the repository: do ``cd Documents``
-#. clone repository: do ``git clone https://github.com/architecture-building-systems/CEAforArcGIS.git``
-#. go to location where the repository was cloned: do ``cd CEAforArcGIS``
-#. install dependencies: do ``conda install -c conda-forge geopandas ephem "pandas<0.20"``
-#. install dependencies: do ``conda install -c dlr-sc tbb freeimageplus gl2ps``
-#. install dependencies: do ``conda install -c oce -c pythonocc pythonocc-core=0.17.3``
-#. install cea development: do ``python setup.py install``
-#. set-up path to repository: do ``python setup.py develop``
-#. install additional dependencies only for developers: do ``pip install .[dev]``
+#. do ``pip install -e .[dev]``
 #. download and install Daysim: ``http://daysim.ning.com/page/download``
-
-
-Note: Creating a conda environment is an optional step, but probably a good habit to get into: This creates a python
-environment separate from your other python environments - that way, version mismatches between packages don't bleed
-into your other work. (you can use any name, when creating an environment - "cea" is just an example)
 
 Note: Location where to store the repository can be any -"Documents" is just an example.
 
 Note: If after the installation you experience an error concerning geopandas or fiona, i.e., ``ImportError: DLL load
- failed: The specified module could not be found.`` Try copying ``C:\Users\your_name\Anaconda2\envs\cea\proj.dll`` to
-``C:\Users\your_name\Anaconda2\envs\cea\Library\bin`` and CEA should run.
+ failed: The specified module could not be found.`` Try copying ``C:\Users\your_name\Anaconda2\envs\cea\proj.dll`` OR ``C:\Users\your_name\AppData\Local\conda\conda\envs\cea\proj.dll`` to
+``C:\Users\your_name\Anaconda2\envs\cea\Library\bin`` OR ``C:\Users\your_name\AppData\Local\conda\conda\envs\Library\bin``and CEA should run.
 
 Setting up PyCharm
 ..................
@@ -66,15 +56,16 @@ Setting up PyCharm
 The developer team uses PyCharm Community edition as default. Here are
 the instructions to get PyCharm up and running:
 
-#. Access PyCharm and open project CEAforArcGIS
+#. Access PyCharm and open project CityEnergyAnalyst
 
-#. Open File>Settings>Project:CEAforArcGIS>Project Interpreter>Project
+#. Open File>Settings>Project:CityEnergyAnalyst>Project Interpreter>Project
    Interpreter
 
 #. Click on settings>addlocal and point to the location of your python
    installation in the environment ``cea``. It should be located in
    something like
-   ``C:\Users\your_name\Anaconda2\envs\cea/python.exe``
+   ``C:\Users\your_name\Anaconda2\envs\cea\python.exe`` or ``C:\Users\your_name\AppData\Local\conda\conda\envs\cea\python.exe``
+
 
 #. Click apply changes.
 
@@ -92,9 +83,9 @@ To set the custom dictionary used in PyCharm, do:
 
 #. Add a new Custom Dictionaries Folder
 
-#. Select the root source folder for CEAforArcGIS. It should be located
+#. Select the root source folder for CityEnergyAnalyst. It should be located
    in something like
-   ``C:\Users\your_name\Documents\GitHub\CEAforArcGIS``.
+   ``C:\Users\your_name\Documents\GitHub\CityEnergyAnalyst``.
 
 #. Click "Apply".
 
@@ -107,9 +98,9 @@ the ArcGIS environment. You should not need to do anything else. If, however, yo
 ``ImportError: no module named arcpy`` you can check your home directory
 for a file called ``cea_arcgis.pth`` containing these three lines::
 
-    C:\Program Files (x86)\ArcGIS\Desktop10.4\bin
-    C:\Program Files (x86)\ArcGIS\Desktop10.4\arcpy
-    C:\Program Files (x86)\ArcGIS\Desktop10.4\Scripts
+    C:\Program Files (x86)\ArcGIS\Desktop10.5\bin64
+    C:\Program Files (x86)\ArcGIS\Desktop10.5\arcpy
+    C:\Program Files (x86)\ArcGIS\Desktop10.5\Scripts
 
 Edit these folders to point to the appropriate ArcGIS folders as documented in the ArcGIS manuals.
 

@@ -5,7 +5,7 @@
 !include "MUI2.nsh"
 
 # download miniconda from here:
-!define MINICONDA "https://repo.continuum.io/miniconda/Miniconda2-latest-Windows-x86.exe"
+!define MINICONDA "https://repo.continuum.io/miniconda/Miniconda2-latest-Windows-x86_64.exe"
 
 !define CEA "City Energy Analyst"
 
@@ -67,8 +67,10 @@ download_ok:
 # install miniconda...
 nsExec::ExecToLog '"$INSTDIR\miniconda.exe" /S /AddToPath=0 /RegisterPython=0 /NoRegistry=1 /D=$INSTDIR'
 # use conda to install some stuff
-nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c conda-forge -y geopandas ephem'
-
+nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c conda-forge geopandas ephem "pandas<0.20" scikit-learn'
+nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c dlr-sc tbb freeimageplus gl2ps'
+nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c oce -c pythonocc pythonocc-core=0.17.3'
+nsExec::ExecToLog '"$INSTDIR\Scripts\conda.exe" install -c omnia cvxopt'
 nsExec::ExecToLog '"$INSTDIR\Scripts\pip.exe" install cityenergyanalyst==${VER}'
 nsExec::ExecToLog '"$INSTDIR\Scripts\cea.exe" install-toolbox'
 
