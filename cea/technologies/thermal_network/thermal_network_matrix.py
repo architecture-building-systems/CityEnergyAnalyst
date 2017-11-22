@@ -133,7 +133,8 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
                                                                               buildings_demands,
                                                                               edge_node_df, gv, locator,
                                                                               substations_HEX_specs,
-                                                                              t_target_supply_C, network_type)
+                                                                              t_target_supply_C, network_type,
+                                                                              network_name)
 
     # assign pipe id/od according to maximum edge mass flow
     pipe_properties_df = assign_pipes_to_edges(max_edge_mass_flow_df_kgs, locator, gv, set_diameter, edge_df,
@@ -157,7 +158,7 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
     pressure_loss_system = []
 
     for t in range(8760):
-        print('calculating thermal hydraulic properties of ', network_type, ' network ', network_name,
+        print('calculating thermal hydraulic properties of', network_type, 'network', network_name,
               '...  time step', t)
         timer = time.clock()
 
@@ -230,7 +231,7 @@ def thermal_network_main(locator, gv, network_type, network_name, source, set_di
         locator.get_optimization_network_layout_pressure_drop_file(network_type, network_name), index=False,
         float_format='%.3f')
 
-    print(time.clock() - t0, "seconds process time for thermal-hydraulic calculation of network:", network_type, '_',
+    print("\n", time.clock() - t0, "seconds process time for thermal-hydraulic calculation of", network_type," network ",
           network_name, "\n")
 
 
@@ -475,7 +476,7 @@ def calc_kinematic_viscosity(temperature):
 
 
 def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge_node_df, gv, locator,
-                           substations_HEX_specs, t_target_supply, network_type):
+                           substations_HEX_specs, t_target_supply, network_type, network_name):
     """
     Calculates the maximum flow rate in the network in order to assign the pipe diameter required at each edge. This is
     done by calculating the mass flow rate required at each substation to supply the calculated demand at the target
@@ -515,11 +516,11 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
     node_mass_flow_df = pd.DataFrame(data=np.zeros((8760, len(edge_node_df.index))),
                                      columns=edge_node_df.index.values)  # input parameters for validation
 
-    print('start calculating edge mass flow...')
+    print('start calculating mass flows in edges...')
 
     t0 = time.clock()
     for t in range(8760):
-        print('\n calculating edge mass flow... time step', t)
+        print('\n calculating mass flows in edges... time step', t)
 
         # set to the highest value in the network and assume no loss within the network
         T_substation_supply = t_target_supply.ix[t].max() + 273.15  # in [K]
@@ -537,27 +538,23 @@ def calc_max_edge_flowrate(all_nodes_df, building_names, buildings_demands, edge
             mdot_all = pd.DataFrame(data=np.zeros(len(building_names)), index=building_names.values).T
 
         # write consumer substation required flow rate to nodes
-        required_flow_rate_df = write_substation_massflows_to_nodes_df(all_nodes_df, mdot_all)
+        required_flow_rate_df = write_substation_values_to_nodes_df(all_nodes_df, mdot_all)
         # (1 x n)
 
         # solve mass flow rates on edges
         edge_mass_flow_df[:][t:t + 1] = calc_mass_flow_edges(edge_node_df, required_flow_rate_df, all_nodes_df)
         node_mass_flow_df[:][t:t + 1] = required_flow_rate_df.values
 
-    # create csv file to store the nominal edge mass flow results
-    edge_mass_flow_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'NominalEdgeMassFlow_' +
-                             network_type + '.csv')
-    node_mass_flow_df.to_csv(locator.get_optimization_network_layout_folder() + '//' + 'Node_MassFlow_' +
-                             network_type + '.csv')
+    edge_mass_flow_df.to_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
+    node_mass_flow_df.to_csv(locator.get_node_mass_flow_csv_file(network_type, network_name))
     print (time.clock() - t0, "seconds process time for edge mass flow calculation\n")
 
     ## The script below is to bypass the calculation from line 457-490, if the above calculation has been done once.
-    # edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type))
+    # edge_mass_flow_df = pd.read_csv(locator.get_edge_mass_flow_csv_file(network_type, network_name))
     # del edge_mass_flow_df['Unnamed: 0']
 
     # assign pipe properties based on max flow on edges
-    max_edge_mass_flow = edge_mass_flow_df.max(axis=0)
-    max_edge_mass_flow_df = pd.DataFrame(data=[max_edge_mass_flow], columns=edge_node_df.columns)
+    max_edge_mass_flow_df = pd.DataFrame(data=[edge_mass_flow_df.max(axis=0)], columns=edge_node_df.columns)
 
     return edge_mass_flow_df, max_edge_mass_flow_df
 
@@ -688,7 +685,7 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
                                                                                  network_type)
 
         # write supply temperatures to substation nodes
-        T_substation_supply_K = write_nodes_to_substations(T_supply_nodes_K, all_nodes_df, plant_node)
+        T_substation_supply_K = write_nodes_values_to_substations(T_supply_nodes_K, all_nodes_df, plant_node)
 
         ## iterations to find out the corresponding node supply temperature and substation mass flow
         flag = 0
@@ -706,7 +703,7 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
 
             # write consumer substation return T and required flow rate to nodes
             T_substation_return_df = write_substation_temperatures_to_nodes_df(all_nodes_df, T_return_all_K)  # (1 x n)
-            mass_flow_substations_nodes_df = write_substation_massflows_to_nodes_df(all_nodes_df, mdot_all_kgs)
+            mass_flow_substations_nodes_df = write_substation_values_to_nodes_df(all_nodes_df, mdot_all_kgs)
 
             # solve for the required mass flow rate on each pipe
             edge_mass_flow_df_2_kgs = calc_mass_flow_edges(edge_node_df, mass_flow_substations_nodes_df, all_nodes_df)
@@ -726,11 +723,10 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
                                                                                          t_target_supply_df.loc[t],
                                                                                          network_type)
             # write supply temperatures to substation nodes
-            T_substation_supply_2 = write_nodes_to_substations(T_supply_nodes_2_K, all_nodes_df, plant_node)
+            T_substation_supply_2 = write_nodes_values_to_substations(T_supply_nodes_2_K, all_nodes_df, plant_node)
 
             # check if the supply temperature at substations converged
             node_dT = T_substation_supply_2 - T_substation_supply_K
-            # if all(np.isnan(T_substation_supply)) and all(np.isnan(T_substation_supply_2)) is False:
             if len(abs(node_dT).dropna(axis=1)) == 0:
                 max_node_dT = 0
             else:
@@ -757,17 +753,17 @@ def solve_network_temperatures(locator, gv, T_ground, edge_node_df, all_nodes_df
                 # write consumer substation return T and required flow rate to nodes
                 T_substation_return_df_2 = write_substation_temperatures_to_nodes_df(all_nodes_df,
                                                                                      T_return_all_2)  # (1xn)
-                mass_flow_substations_nodes_df_2 = write_substation_massflows_to_nodes_df(all_nodes_df, mdot_all_2)
+                mass_flow_substations_nodes_df_2 = write_substation_values_to_nodes_df(all_nodes_df, mdot_all_2)
                 # solve for the required mass flow rate on each pipe, using the nominal edge node matrix
                 edge_mass_flow_df_2_kgs = calc_mass_flow_edges(edge_node_df, mass_flow_substations_nodes_df_2,
                                                                all_nodes_df)
                 # exit iteration
                 flag = 1
                 if max_node_dT < 1:
-                    print('supply temperature converged after', iteration, 'iterations', 'dT:', max_node_dT)
+                    print('supply temperature converged after', iteration, 'iterations.', 'dT:', max_node_dT)
                 else:
                     print('Warning: supply temperature did not converge after', iteration, 'iterations at timestep', t,
-                          'dT:', max_node_dT)
+                          '. dT:', max_node_dT)
 
         # calculate node temperatures on the return network
         edge_mass_flow_df_t = calc_mass_flow_edges(edge_node_df_2, mass_flow_substations_nodes_df_2,
@@ -812,7 +808,7 @@ def calc_plant_heat_requirement(plant_node, T_supply_nodes, T_return_nodes, mass
     return plant_heat_requirement_kW
 
 
-def write_nodes_to_substations(T_supply_nodes, all_nodes_df, plant_node):
+def write_nodes_values_to_substations(T_supply_nodes, all_nodes_df, plant_node):
     """
     This function writes node values to the corresponding building substations.
 
@@ -828,39 +824,10 @@ def write_nodes_to_substations(T_supply_nodes, all_nodes_df, plant_node):
     :return T_substation_supply: dataframe with node values matched to building substations
     :rtype T_substation_supply: DataFrame
     """
-    # T_substation_supply = all_nodes_df.copy().sort_index(axis=1)
-    # T_substation_supply.columns = all_nodes_df.sort_index(axis=1).sum()
-    # T_substation_supply.loc['T_supply'] = T_supply_nodes
-    # T_substation_supply = T_substation_supply.drop('consumer')
-    # T_substation_supply = T_substation_supply.drop('plant')
-
     all_nodes_df['T_supply'] = T_supply_nodes
     T_substation_supply = all_nodes_df[all_nodes_df.Building != 'NONE'].set_index(['Building'])
     T_substation_supply = T_substation_supply.drop('Type', axis=1)
     return T_substation_supply.T
-
-
-def write_nodes_to_substations_1(T_supply_nodes, all_nodes_df, plant_node):
-    """
-    This function writes node values to the corresponding building substations.
-
-    :param T_supply_nodes: DataFrame of supply line node temperatures (nx1)
-    :param all_nodes_df: DataFrame that contains all nodes, whether a node is a consumer, plant, or neither,
-                        and, if it is a consumer or plant, the name of the corresponding building               (2 x n)
-    :param plant_node: the indices of the plant node(s)
-
-    :type T_supply_nodes: DataFrame
-    :type all_nodes_df: DataFrame
-    :type plant_node: numpy array
-
-    :return T_substation_supply
-    :rtype T_substation_supply: float
-    """
-    T_substation_supply = all_nodes_df.copy().sort_index(axis=1)
-    T_substation_supply.columns = all_nodes_df.sort_index(axis=1).sum()
-    T_substation_supply.loc['T_supply'] = T_supply_nodes
-
-    return T_substation_supply.astype(float)
 
 
 def calc_supply_temperatures(gv, T_ground_K, edge_node_df, mass_flow_df, K, t_target_supply_C, network_type):
@@ -933,6 +900,9 @@ def calc_supply_temperatures(gv, T_ground_K, edge_node_df, mass_flow_df, K, t_ta
                     part1 = np.dot(M_d, T_e_out[j]).sum()
                     part2 = np.dot(M_d, Z_pipe_out[j]).sum()
                     T_node[j] = part1 / part2
+                    if T_node[j] is np.nan:
+                        raise ValueError('The are no flow entering/existing ', edge_node_df.index[j],
+                                         '. Please check if the edge_node_df make sense.')
                     # write the node temperature to the corresponding pipe inlet
                     T_e_in[j] = T_e_in[j] * T_node[j]
 
@@ -1375,15 +1345,13 @@ def get_thermal_network_from_shapefile(locator, network_type, network_name):
 
     # create node catalogue indicating which nodes are plants and which consumers
     all_nodes_df = node_df[['Type', 'Building']]
-    all_nodes_df = all_nodes_df.sort_index(axis=1)  # sort columns by node numbers
     all_nodes_df.to_csv(locator.get_optimization_network_node_list_file(network_type, network_name))
     # extract the list of buildings in the current network
     building_names = all_nodes_df.Building[all_nodes_df.Type == 'CONSUMER'].reset_index(drop=True)
 
     # create first edge-node matrix
     list_pipes = edge_df.index.values
-    list_nodes = sorted(set(edge_df['start node']).union(set(edge_df['end node'])),
-                        key=lambda x: int(x[4:]))  # sort the list by node numbers
+    list_nodes = node_df.index.values
     edge_node_matrix = np.zeros((len(list_nodes), len(list_pipes)))
     for j in range(len(list_pipes)):  # TODO: find ways to accelerate
         for i in range(len(list_nodes)):
@@ -1454,13 +1422,19 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     # set precision of coordinates
     decimals = 6
     # create node dictionary with plant and consumer nodes
+    node_dict = {}
     node_shapefile_df.set_index("Name", inplace=True)
     node_shapefile_df = node_shapefile_df.astype('object')
-    node_dict = {}
+    node_shapefile_df['coordinates'] = node_shapefile_df['geometry'].apply(lambda x: x.coords[0])
+    # sort node_df by index number
+    node_sorted_index = node_shapefile_df.index.to_series().str.split('NODE', expand=True)[1].apply(int).sort_values(
+        ascending=True)
+    node_shapefile_df = node_shapefile_df.reindex(index=node_sorted_index.index)
+    # assign node properties (plant/consumer/none)
     node_shapefile_df['plant'] = ''
     node_shapefile_df['consumer'] = ''
     node_shapefile_df['none'] = ''
-    node_shapefile_df['coordinates'] = node_shapefile_df['geometry'].apply(lambda x: x.coords[0])
+
     for node, row in node_shapefile_df.iterrows():
         coord_node = row['geometry'].coords[0]
         if row['Type'] == "PLANT":
@@ -1475,9 +1449,17 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     # create edge dictionary with pipe lengths and start and end nodes
     # complete node dictionary with missing nodes (i.e., joints)
     edge_shapefile_df.set_index("Name", inplace=True)
+    edge_shapefile_df = edge_shapefile_df.astype('object')
+    edge_shapefile_df['coordinates'] = edge_shapefile_df['geometry'].apply(lambda x: x.coords[0])
+    # sort edge_df by index number
+    edge_sorted_index = edge_shapefile_df.index.to_series().str.split('PIPE', expand=True)[1].apply(int).sort_values(
+        ascending=True)
+    edge_shapefile_df = edge_shapefile_df.reindex(index=edge_sorted_index.index)
+    # assign edge properties
     edge_shapefile_df['pipe length'] = 0
     edge_shapefile_df['start node'] = ''
     edge_shapefile_df['end node'] = ''
+
     for pipe, row in edge_shapefile_df.iterrows():
         # get the length of the pipe and add to dataframe
         edge_shapefile_df.loc[pipe, 'pipe length'] = row['geometry'].length
@@ -1512,7 +1494,7 @@ def extract_network_from_shapefile(edge_shapefile_df, node_shapefile_df):
     return node_shapefile_df, edge_shapefile_df
 
 
-def write_substation_massflows_to_nodes_df(all_nodes_df, df_value):
+def write_substation_values_to_nodes_df(all_nodes_df, df_value):
     """
     The function writes values (temperatures or mass flows) from each substations to the corresponding nodes in the
     edge node matrix.
@@ -1561,7 +1543,6 @@ def write_substation_massflows_to_nodes_df(all_nodes_df, df_value):
             nodes_df[node] = - plant_mass_flow
         else:
             nodes_df[node] = 0
-    # nodes_df = nodes_df.sort_index(axis=1)  # sort dataframe columns by node numbers
     return nodes_df
 
 
